@@ -142,19 +142,17 @@ dtest('broadcast benchmark', () => {
         } catch {}
       }
       await Promise.all(
-        workers.map(
-          async (w) => {
-            await new Promise<void>((resolve) => {
-              const t = setTimeout(() => {
-                resolve()
-              }, 5000)
-              w.once('exit', () => {
-                clearTimeout(t)
-                resolve()
-              })
+        workers.map(async (w) => {
+          await new Promise<void>((resolve) => {
+            const t = setTimeout(() => {
+              resolve()
+            }, 5000)
+            w.once('exit', () => {
+              clearTimeout(t)
+              resolve()
             })
-          }
-        )
+          })
+        })
       )
     }
     try {
@@ -261,27 +259,25 @@ dtest('broadcast benchmark', () => {
       const perSubMissing: number[] = []
       let consistencyMissing = 0
       await Promise.all(
-        workers.map(
-          async (w) => {
-            await new Promise<void>((resolve) => {
-              const onMsg = (msg: any): void => {
-                if (msg?.type === 'snapshot-result') {
-                  w.off('message', onMsg)
-                  perSubMissing.push(msg.count ?? 0)
-                  consistencyMissing += msg.count ?? 0
-                  resolve()
-                } else if (msg?.type === 'error') {
-                  w.off('message', onMsg)
-                  perSubMissing.push(sentIds.length)
-                  consistencyMissing += sentIds.length
-                  resolve()
-                }
+        workers.map(async (w) => {
+          await new Promise<void>((resolve) => {
+            const onMsg = (msg: any): void => {
+              if (msg?.type === 'snapshot-result') {
+                w.off('message', onMsg)
+                perSubMissing.push(msg.count ?? 0)
+                consistencyMissing += msg.count ?? 0
+                resolve()
+              } else if (msg?.type === 'error') {
+                w.off('message', onMsg)
+                perSubMissing.push(sentIds.length)
+                consistencyMissing += sentIds.length
+                resolve()
               }
-              w.on('message', onMsg)
-              w.postMessage({ type: 'snapshot', sentIds })
-            })
-          }
-        )
+            }
+            w.on('message', onMsg)
+            w.postMessage({ type: 'snapshot', sentIds })
+          })
+        })
       )
 
       const result = {
