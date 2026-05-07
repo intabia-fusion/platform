@@ -59,7 +59,7 @@
 </script>
 
 {#if widgetState !== undefined && room}
-  <div>
+  <div data-id="meeting-widget">
     <MeetingWidgetHeader doc={meetingMinutes} {room} on:close={handleClose} />
   </div>
   <div style="height: 100%; overflow: scroll" bind:clientHeight={contentHeight}>

@@ -16,5 +16,7 @@
 import { reportStats } from './stats'
 
 export default async function globalTeardown (): Promise<void> {
-  await reportStats()
+  if (process.env.STATS === '1' || process.env.STATS === 'true') {
+    await reportStats()
+  }
 }

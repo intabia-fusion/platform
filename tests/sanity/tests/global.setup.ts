@@ -16,5 +16,7 @@
 import { wipeStats } from './stats'
 
 export default async function globalSetup (): Promise<void> {
-  await wipeStats()
+  if (process.env.STATS === '1' || process.env.STATS === 'true') {
+    await wipeStats()
+  }
 }

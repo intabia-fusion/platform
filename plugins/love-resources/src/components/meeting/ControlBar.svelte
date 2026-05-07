@@ -51,7 +51,7 @@
   }
 </script>
 
-<div class="control-bar">
+<div class="control-bar" data-id="control-bar" data-connected={$lkSessionConnected ? 'true' : 'false'}>
   <ControlBarContainer>
     <svelte:fragment slot="left">
       {#if room._id !== love.ids.Reception && $lkSessionConnected}

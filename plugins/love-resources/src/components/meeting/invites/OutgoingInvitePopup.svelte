@@ -49,7 +49,7 @@
   }
 </script>
 
-<div class="antiPopup invite-popup flex-gap-4">
+<div class="antiPopup invite-popup flex-gap-4" data-id="outgoing-invite-popup">
   <div class="popup-header">
     <Label label={love.string.YouInvite} />
     {#if timeLeft <= 10}

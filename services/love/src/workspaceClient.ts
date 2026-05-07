@@ -40,6 +40,7 @@ import love, {
   RecordingState,
   Room,
   TranscriptionState,
+  UserMeetingInvite,
   getFreeRoomPlace
 } from '@hcengineering/love'
 import { Asset, IntlString } from '@hcengineering/platform'
@@ -259,6 +260,29 @@ export class WorkspaceClient {
 
     // Clean up all ParticipantInfo entries for this meeting
     await this.cleanupParticipantInfosForMeeting(ref)
+    // Clean up any pending invites that point to this meeting so the
+    // recipient's "knock" UI/sound stops once the meeting is over.
+    await this.cleanupInvitesForMeeting(ref)
+  }
+
+  private async cleanupInvitesForMeeting (meeting: Ref<MeetingMinutes>): Promise<void> {
+    try {
+      const invites = await this.client.findAll(love.class.UserMeetingInvite, { meeting })
+      for (const invite of invites) {
+        await this.client.remove(invite as UserMeetingInvite)
+      }
+      if (invites.length > 0) {
+        this.ctx.info('[WorkspaceClient.cleanupInvitesForMeeting] Removed invites', {
+          meeting,
+          count: invites.length
+        })
+      }
+    } catch (err: any) {
+      this.ctx.error('[WorkspaceClient.cleanupInvitesForMeeting] Failed', {
+        error: err?.message ?? String(err),
+        meeting
+      })
+    }
   }
 
   /**
