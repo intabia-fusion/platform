@@ -40,6 +40,7 @@
   kind="primary"
   size="small"
   tooltip={{ label: tooltipLabel, direction: 'bottom' }}
+  dataId={type === 'incoming' ? 'incoming-invite-trigger' : 'outgoing-invite-trigger'}
   on:click={(e) => {
     onClick(e, invite, person)
   }}

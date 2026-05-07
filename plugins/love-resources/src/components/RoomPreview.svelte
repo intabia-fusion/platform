@@ -315,7 +315,7 @@
                   adaptiveName
                 />
                 {#if isBusy}
-                  <div class="busy-badge">
+                  <div class="busy-badge" data-id="busy-badge">
                     <Label label={love.string.Busy} />
                   </div>
                 {/if}
