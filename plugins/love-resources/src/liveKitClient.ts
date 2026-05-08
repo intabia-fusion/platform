@@ -222,8 +222,8 @@ export class LiveKitClient {
     lkReconnected.update((v) => v + 1)
   }
 
-  onDisconnected = (): void => {
-    console.log('[LiveKitClient.onDisconnected] Disconnected event fired')
+  onDisconnected = (reason?: unknown): void => {
+    console.log('[LiveKitClient.onDisconnected] Disconnected event fired', { reason, state: this.liveKitRoom.state })
     lkSessionConnected.set(false)
     lkIsConnecting.set(false)
     this.liveKitRoom.off(RoomEvent.ParticipantConnected, this.onParticipantConnected)
