@@ -147,7 +147,7 @@ Keep existing copyright lines, add `Intabia Fusion` line if missing.
 
 ## Sanity tests (Playwright)
 
-Run from `tests/sanity/`. Stand must be up at `localhost:8083` (front) and `localhost:3003` (LOCAL_URL). Tests build their own bundle via setup project; do NOT use `rushx uitest` without permission (it opens dev UI).
+Run from `tests/sanity/`. Stand must be up at `localhost:8083` (front) and `localhost:3003` (LOCAL_URL). Tests build their own bundle via setup project; do use `rushx uitest` with `--reporter=list --retries=0`.
 
 Required: load `.env` and pass `LOCAL_URL`. Iteration loop must be fast — disable retries and html report server.
 

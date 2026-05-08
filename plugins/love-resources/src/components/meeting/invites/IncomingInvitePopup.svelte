@@ -81,7 +81,9 @@
   </div>
 
   <div class="popup-message">
-    {#if invite.meeting}
+    {#if invite.isKnock === true}
+      <Label label={love.string.IsKnocking} params={{ name: person?.name ?? '' }} />
+    {:else if invite.meeting}
       <Label label={love.string.JoinMeeting} params={{ name: person?.name ?? '' }} />
     {:else}
       <Label label={love.string.InvitingYou} params={{ name: person?.name ?? '' }} />

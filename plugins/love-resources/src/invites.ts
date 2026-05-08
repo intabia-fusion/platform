@@ -18,12 +18,19 @@ import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import { AccountRole, getCurrentAccount, type AccountUuid, type Ref } from '@hcengineering/core'
 import love, { type MeetingMinutes, type UserMeetingInvite } from '@hcengineering/love'
 import { createQuery, getClient, playSound } from '@hcengineering/presentation'
-import { type PopupResult } from '@hcengineering/ui'
+import { addNotification, NotificationSeverity, type PopupResult } from '@hcengineering/ui'
+import { translate } from '@hcengineering/platform'
+import { getCurrentLanguage } from '@hcengineering/theme'
 import { derived, get, writable, type Writable } from 'svelte/store'
 import { createMeeting, joinOrCreateMeetingByInvite } from './meetings'
 import { currentMeetingMinutes } from './stores'
+import KnockResolutionToast from './components/meeting/invites/KnockResolutionToast.svelte'
 
 export const inviteRequestSecondsToLive = 30
+const knockHeartbeatMs = 60_000
+const knockHeartbeatExtendMs = 10 * 60 * 1000
+
+let knockHeartbeatTimer: ReturnType<typeof setInterval> | undefined
 
 let requestPopup: PopupResult | undefined
 let responsePopup: PopupResult | undefined
@@ -40,7 +47,7 @@ export const outgoingInvitesStore = derived(allInvites, (all) => {
 // All waiting for confirmation
 export const incomingInvitesStore = derived(allInvites, (all) => {
   const now = Date.now()
-  const incoming = all.filter((it) => it.kind === 'invite-response' && it.expiresAt > now)
+  const incoming = all.filter((it) => it.kind === 'invite-response' && it.isKnock !== true && it.expiresAt > now)
 
   if (incoming.length > 0 && stopIncomingSound == null) {
     stopIncomingSound = playIncomingSound()
@@ -49,6 +56,17 @@ export const incomingInvitesStore = derived(allInvites, (all) => {
   }
 
   return incoming
+})
+
+// Pending knock-to-join requests addressed to me as a meeting owner.
+// No 30s expiry, no sound — they go into a side panel until the owner acts
+// or the meeting ends (server-side cleanup). Filter out invites whose
+// knocker stopped renewing the heartbeat (likely closed the tab).
+export const knockingInvitesStore = derived(allInvites, (all) => {
+  const now = Date.now()
+  return all.filter(
+    (it) => it.kind === 'invite-response' && it.isKnock === true && it.status === 'pending' && it.expiresAt > now
+  )
 })
 
 // Active sound stop function
@@ -178,9 +196,80 @@ export function subscribeToIncomingInvites (): void {
   const mySpace = getCurrentEmployeeSpace()
   if (mySpace === undefined) return
 
+  let previous: UserMeetingInvite[] = []
   incomingInvitesQuery.query(love.class.UserMeetingInvite, { space: mySpace }, (invites) => {
+    void notifyOnKnockResolution(previous, invites)
+    previous = invites
     allInvites.set(invites)
   })
+
+  if (knockHeartbeatTimer === undefined) {
+    knockHeartbeatTimer = setInterval(() => {
+      void renewOutgoingKnocks()
+    }, knockHeartbeatMs)
+  }
+}
+
+async function renewOutgoingKnocks (): Promise<void> {
+  const me = getCurrentEmployee()
+  if (me === undefined) return
+  const client = getClient()
+  const all = get(allInvites)
+  const newExpiry = Date.now() + knockHeartbeatExtendMs
+  for (const invite of all) {
+    if (invite.kind !== 'invite-request' || invite.from !== me || invite.isKnock !== true) continue
+    if (invite.status !== 'pending') continue
+    if (invite.expiresAt - Date.now() > knockHeartbeatExtendMs / 2) continue
+    try {
+      await client.update(invite, { expiresAt: newExpiry })
+    } catch {
+      // Best effort — invite may have been removed concurrently.
+    }
+  }
+}
+
+/**
+ * Track the last observed status of every outgoing knock-request. We only
+ * want to notify the knocker when their request was explicitly declined —
+ * acceptance (the request is consumed by `checkAndJoinIfRecipientJoined`)
+ * and meeting-end cleanup must stay silent.
+ */
+const lastKnockStatus = new Map<Ref<UserMeetingInvite>, 'pending' | 'accepted' | 'declined'>()
+
+async function notifyOnKnockResolution (previous: UserMeetingInvite[], current: UserMeetingInvite[]): Promise<void> {
+  const me = getCurrentEmployee()
+  if (me === undefined) return
+
+  // Refresh known statuses from the latest snapshot.
+  const currentMap = new Map<Ref<UserMeetingInvite>, UserMeetingInvite>()
+  for (const inv of current) currentMap.set(inv._id, inv)
+  for (const inv of current) {
+    if (inv.kind === 'invite-request' && inv.from === me && inv.isKnock === true) {
+      lastKnockStatus.set(inv._id, inv.status)
+    }
+  }
+
+  if (previous.length === 0) return
+  for (const prev of previous) {
+    if (currentMap.has(prev._id)) continue
+    if (prev.kind !== 'invite-request') continue
+    if (prev.from !== me) continue
+    if (prev.isKnock !== true) continue
+    // Only show the declined toast if the last observed status was 'declined'.
+    // Accepted invites are removed by checkAndJoinIfRecipientJoined; meeting
+    // cleanup also removes them — both must stay silent here.
+    const lastStatus = lastKnockStatus.get(prev._id) ?? prev.status
+    lastKnockStatus.delete(prev._id)
+    if (lastStatus !== 'declined') continue
+    addNotification(
+      await translate(love.string.KnockingTo, {}, getCurrentLanguage()),
+      await translate(love.string.KnockDeclined, {}, getCurrentLanguage()),
+      KnockResolutionToast,
+      undefined,
+      NotificationSeverity.Info,
+      'love'
+    )
+  }
 }
 
 /**
@@ -269,29 +358,38 @@ export async function stopIncomingInviteSound (): Promise<void> {
  */
 export function unsubscribeFromIncomingInvites (): void {
   incomingInvitesQuery.unsubscribe()
+  if (knockHeartbeatTimer !== undefined) {
+    clearInterval(knockHeartbeatTimer)
+    knockHeartbeatTimer = undefined
+  }
 }
+
+// Guard against re-entry from concurrent store recalculations.
+const handlingInvites = new Set<Ref<UserMeetingInvite>>()
 
 export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[]): Promise<void> {
   const client = getClient()
   const me = getCurrentEmployee()
   if (me === undefined) return
 
-  // Use cached outgoing invite-requests instead of querying
   for (const invite of invites) {
+    if (handlingInvites.has(invite._id)) continue
     if (invite.status === 'accepted' && invite.meeting !== undefined) {
-      // Check if we're already in this meeting
-      const currentMeeting = get(currentMeetingMinutes)
-      if (currentMeeting?._id === invite.meeting) {
-        // Already joined, delete the invite request
-        await client.remove(invite)
-      } else {
-        // Try to join the meeting
-        await joinOrCreateMeetingByInvite(invite.meeting)
-        // After successful join, delete the invite
-        await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
+      handlingInvites.add(invite._id)
+      try {
+        const currentMeeting = get(currentMeetingMinutes)
+        if (currentMeeting?._id !== invite.meeting) {
+          await joinOrCreateMeetingByInvite(invite.meeting)
+        }
+      } finally {
+        try {
+          await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
+        } catch {
+          // Already removed concurrently — ignore.
+        }
+        handlingInvites.delete(invite._id)
       }
     } else if (invite.status === 'declined') {
-      // Remove declined or expired invites
       await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
     }
   }

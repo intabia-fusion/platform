@@ -47,7 +47,15 @@ async function inviteByLastName (page: Page, lastName: string): Promise<void> {
   const search = popup.getByPlaceholder(/Search/i)
   await expect(search).toBeVisible({ timeout: 5000 })
   await search.fill(lastName)
-  await popup.locator('button.row').filter({ hasText: lastName }).first().click()
+  const row = popup.locator('button.row').filter({ hasText: lastName }).first()
+  // The UsersList re-queries on every fill and the row can briefly detach
+  // when an incoming invite-response simultaneously re-renders the popup
+  // stack. Retry on detach.
+  await expect(row).toBeVisible({ timeout: 10000 })
+  await row.click({ timeout: 10000, trial: false }).catch(async () => {
+    await expect(row).toBeVisible({ timeout: 5000 })
+    await row.click()
+  })
   const ok = popup.locator('.hulyModal-footer').getByRole('button', { name: /^Invite$/i })
   await expect(ok).toBeEnabled({ timeout: 5000 })
   await ok.click()

@@ -32,6 +32,7 @@
   import ShareScreenButton from './meeting/controls/ShareScreenButton.svelte'
   import LeaveRoomButton from './meeting/controls/LeaveRoomButton.svelte'
   import MeetingHeader from './meeting/MeetingHeader.svelte'
+  import KnockingList from './meeting/invites/KnockingList.svelte'
   import { createMeeting } from '../meetings'
 
   export let room: Room
@@ -109,6 +110,9 @@
       </div>
     </Scroller>
   </div>
+  {#if meeting !== undefined}
+    <KnockingList compact meetingId={meeting._id} />
+  {/if}
   <div class="flex-between gap-2">
     {#if joined && $lkSessionConnected}
       <div class="flex-between gap-2">

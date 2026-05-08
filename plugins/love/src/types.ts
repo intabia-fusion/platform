@@ -262,4 +262,12 @@ export interface UserMeetingInvite extends Doc {
   expiresAt: Timestamp
   /** Status of the invite */
   status: 'pending' | 'accepted' | 'declined'
+  /**
+   * Marks an invite that was inverted by the server when the original
+   * sender wasn't a member of a private meeting but the recipient was.
+   * On accept, the knocker (`from`) is added to the meeting members
+   * and gets a follow-up invite to auto-join — instead of the usual
+   * "recipient joins sender's room" semantics.
+   */
+  isKnock?: boolean
 }
