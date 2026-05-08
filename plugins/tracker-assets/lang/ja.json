@@ -255,7 +255,7 @@
     "EightHoursLength": "8時間",
     "HourLabel": "時間",
     "MinuteLabel": "分",
-    "AlreadyReportedThisDay": "この日すでに報告済み: {hours}時間",
+    "AlreadyReportedThisDay": "この日の合計: {hours}時間",
     "FixToEightHours": "8時間に調整",
     "Saved": "保存済み...",
     "CreatedIssue": "イシューを作成しました",
