@@ -8,6 +8,7 @@
 
 import { expect, test, type Page } from '@playwright/test'
 import { PlatformURI } from '../utils'
+import { closeMeetingContexts } from './meeting-helpers'
 
 const meetingsWs = 'meetings-ws'
 const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
@@ -95,10 +96,10 @@ test.describe('meeting minutes - extended scenarios', () => {
       await toggle.click()
       await expect(page3.locator('[data-id="busy-badge"]')).toHaveCount(0, { timeout: 15000 })
     } finally {
-      await page2.close()
-      await page3.close()
-      await ctx2.close()
-      await ctx3.close()
+      await closeMeetingContexts([
+        { ctx: ctx2, pages: [page2] },
+        { ctx: ctx3, pages: [page3] }
+      ])
     }
   })
 
@@ -150,12 +151,11 @@ test.describe('meeting minutes - extended scenarios', () => {
       // but the receiver (user1) must NOT get any incoming trigger.
       await expect(page1.locator('[data-id="incoming-invite-trigger"]')).toBeHidden({ timeout: 15000 })
     } finally {
-      await page1.close()
-      await page2.close()
-      await page3.close()
-      await ctx1.close()
-      await ctx2.close()
-      await ctx3.close()
+      await closeMeetingContexts([
+        { ctx: ctx1, pages: [page1] },
+        { ctx: ctx2, pages: [page2] },
+        { ctx: ctx3, pages: [page3] }
+      ])
     }
   })
 
@@ -203,12 +203,11 @@ test.describe('meeting minutes - extended scenarios', () => {
         (await page3.locator('[data-id="incoming-invite-trigger"]').count())
       expect(incomingTotal).toBe(1)
     } finally {
-      await page1.close()
-      await page2.close()
-      await page3.close()
-      await ctx1.close()
-      await ctx2.close()
-      await ctx3.close()
+      await closeMeetingContexts([
+        { ctx: ctx1, pages: [page1] },
+        { ctx: ctx2, pages: [page2] },
+        { ctx: ctx3, pages: [page3] }
+      ])
     }
   })
 
@@ -241,10 +240,10 @@ test.describe('meeting minutes - extended scenarios', () => {
       // user2 must still be connected
       await expect(page2.locator('[data-id="meeting-widget"]')).toBeVisible()
     } finally {
-      await page2.close()
-      await page3.close()
-      await ctx2.close()
-      await ctx3.close()
+      await closeMeetingContexts([
+        { ctx: ctx2, pages: [page2] },
+        { ctx: ctx3, pages: [page3] }
+      ])
     }
   })
 })

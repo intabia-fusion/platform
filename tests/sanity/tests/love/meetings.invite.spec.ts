@@ -9,6 +9,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { PlatformURI } from '../utils'
 import { OfficePage } from '../model/love/office-page'
+import { closeMeetingContexts } from './meeting-helpers'
 
 const meetingsWs = 'meetings-ws'
 const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
@@ -88,10 +89,10 @@ test.describe('meeting minutes - invite variants', () => {
       // user3 must not have joined the meeting (no meeting widget on page3).
       await expect(page3.locator('[data-id="meeting-widget"]')).toBeHidden()
     } finally {
-      await page2.close()
-      await page3.close()
-      await ctx2.close()
-      await ctx3.close()
+      await closeMeetingContexts([
+        { ctx: ctx2, pages: [page2] },
+        { ctx: ctx3, pages: [page3] }
+      ])
     }
   })
 
@@ -135,10 +136,10 @@ test.describe('meeting minutes - invite variants', () => {
       await expect(page3.locator('[data-id="outgoing-invite-trigger"]')).toBeVisible({ timeout: 15000 })
       await expect(page3.locator('[data-id="incoming-invite-trigger"]')).toBeVisible({ timeout: 15000 })
     } finally {
-      await page2.close()
-      await page3.close()
-      await ctx2.close()
-      await ctx3.close()
+      await closeMeetingContexts([
+        { ctx: ctx2, pages: [page2] },
+        { ctx: ctx3, pages: [page3] }
+      ])
     }
   })
 
@@ -163,8 +164,7 @@ test.describe('meeting minutes - invite variants', () => {
       // Either the list is empty or the matching row is absent.
       await expect(popup.locator('button.row').filter({ hasText: 'Dirak Kainin' })).toHaveCount(0)
     } finally {
-      await page.close()
-      await ctx.close()
+      await closeMeetingContexts([{ ctx, pages: [page] }])
     }
   })
 
@@ -198,10 +198,10 @@ test.describe('meeting minutes - invite variants', () => {
       // finished (cleanupInvitesForMeeting).
       await expect(page3.locator('[data-id="incoming-invite-trigger"]')).toBeHidden({ timeout: 30000 })
     } finally {
-      await page2.close()
-      await page3.close()
-      await ctx2.close()
-      await ctx3.close()
+      await closeMeetingContexts([
+        { ctx: ctx2, pages: [page2] },
+        { ctx: ctx3, pages: [page3] }
+      ])
     }
   })
 })
