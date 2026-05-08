@@ -21,7 +21,11 @@ const config: PlaywrightTestConfig = {
           args: [
             '--use-fake-ui-for-media-stream',
             '--use-fake-device-for-media-stream',
-            '--autoplay-policy=no-user-gesture-required'
+            '--autoplay-policy=no-user-gesture-required',
+            // WebRTC ICE: on Linux CI runners mDNS .local hostnames don't
+            // resolve, which kills DTLS handshake. Disable mDNS obfuscation so
+            // LiveKit gets a real loopback/host IP candidate.
+            '--disable-features=WebRtcHideLocalIpsWithMdns'
           ]
         },
         ...devices['Desktop Chrome'],
