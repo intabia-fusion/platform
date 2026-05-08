@@ -9,6 +9,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { PlatformURI } from '../utils'
 import { OfficePage } from '../model/love/office-page'
+import { closeMeetingContexts } from './meeting-helpers'
 
 const meetingsWs = 'meetings-ws'
 const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
@@ -76,8 +77,7 @@ test.describe('meeting minutes - real connect', () => {
       // Sanity: invite button is present once we are inside the meeting.
       await expect(page.locator('[data-id="invite-button"]').first()).toBeVisible({ timeout: 10000 })
     } finally {
-      await page.close()
-      await ctx.close()
+      await closeMeetingContexts([{ ctx, pages: [page] }])
     }
   })
 
@@ -120,10 +120,10 @@ test.describe('meeting minutes - real connect', () => {
       await expect(page3.locator('[data-id="incoming-invite-trigger"]')).toBeHidden({ timeout: 10000 })
       await expect(page2.locator('[data-id="outgoing-invite-trigger"]')).toBeHidden({ timeout: 10000 })
     } finally {
-      await page2.close()
-      await page3.close()
-      await ctx2.close()
-      await ctx3.close()
+      await closeMeetingContexts([
+        { ctx: ctx2, pages: [page2] },
+        { ctx: ctx3, pages: [page3] }
+      ])
     }
   })
 
@@ -162,10 +162,10 @@ test.describe('meeting minutes - real connect', () => {
       await expect(page2.locator('[data-id="outgoing-invite-trigger"]')).toBeHidden({ timeout: 15000 })
       await expect(page3.locator('[data-id="incoming-invite-trigger"]')).toBeHidden({ timeout: 5000 })
     } finally {
-      await page2.close()
-      await page3.close()
-      await ctx2.close()
-      await ctx3.close()
+      await closeMeetingContexts([
+        { ctx: ctx2, pages: [page2] },
+        { ctx: ctx3, pages: [page3] }
+      ])
     }
   })
 
@@ -198,10 +198,10 @@ test.describe('meeting minutes - real connect', () => {
       await expect(page2.locator('[data-id="meeting-widget"]')).toBeVisible()
       await expect(page3.locator('[data-id="meeting-widget"]')).toBeVisible()
     } finally {
-      await page2.close()
-      await page3.close()
-      await ctx2.close()
-      await ctx3.close()
+      await closeMeetingContexts([
+        { ctx: ctx2, pages: [page2] },
+        { ctx: ctx3, pages: [page3] }
+      ])
     }
   })
 })
