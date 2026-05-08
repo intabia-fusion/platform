@@ -19,14 +19,7 @@
   import presentation, { Card, createQuery, getClient } from '@hcengineering/presentation'
   import { UserBox } from '@hcengineering/contact-resources'
   import { Issue, type Project, TimeReportDayType, TimeSpendReport, TrackerEvents } from '@hcengineering/tracker'
-  import {
-    Button,
-    DatePresenter,
-    EditBox,
-    IconChevronLeft,
-    IconChevronRight,
-    Label
-  } from '@hcengineering/ui'
+  import { Button, DatePresenter, EditBox, IconChevronLeft, IconChevronRight, Label } from '@hcengineering/ui'
   import tracker from '../../../plugin'
   import TitlePresenter from '../TitlePresenter.svelte'
   import { Analytics } from '@hcengineering/analytics'
@@ -318,12 +311,7 @@
               shiftDay(-1)
             }}
           />
-          <DatePresenter
-            bind:value={data.date}
-            editable={canEdit}
-            kind={'regular'}
-            size={'large'}
-          />
+          <DatePresenter bind:value={data.date} editable={canEdit} kind={'regular'} size={'large'} />
           <Button
             icon={IconChevronRight}
             kind={'regular'}
