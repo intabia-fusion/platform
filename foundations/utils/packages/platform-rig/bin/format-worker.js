@@ -45,6 +45,14 @@ function resolvePluginList(plugins, cwd) {
   return result
 }
 
+// Must stay in sync with cache.js SRC_EXTENSIONS for the format cache to be
+// coherent: every file the worker may rewrite has to participate in the hash.
+const FORMATTABLE_EXTENSIONS = [
+  '.ts', '.tsx', '.cts', '.mts',
+  '.js', '.jsx', '.cjs', '.mjs',
+  '.svelte'
+]
+
 function collectSourceFiles(dir, result = []) {
   if (!existsSync(dir)) return result
   for (const entry of readdirSync(dir)) {
@@ -55,7 +63,7 @@ function collectSourceFiles(dir, result = []) {
     } else {
       const name = basename(full)
       if (name.endsWith('.d.ts')) continue
-      if (name.endsWith('.ts') || name.endsWith('.js') || name.endsWith('.svelte')) {
+      if (FORMATTABLE_EXTENSIONS.some((ext) => name.endsWith(ext))) {
         result.push(full)
       }
     }
@@ -195,4 +203,4 @@ if (parentPort) {
   parentPort.postMessage({ type: 'ready', threadId })
 }
 
-module.exports = { formatPackage }
+module.exports = { formatPackage, collectSourceFiles, FORMATTABLE_EXTENSIONS }

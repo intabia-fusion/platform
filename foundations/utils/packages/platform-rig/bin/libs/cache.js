@@ -33,6 +33,20 @@ const { xxh64 } = require('@node-rs/xxhash')
 const CACHE_VERSION = 2
 
 /**
+ * Find repository root by looking for rush.json
+ * Walks up from the given directory until found
+ */
+function findRepoRoot(startPath) {
+  let current = startPath
+  while (true) {
+    if (fs.existsSync(join(current, 'rush.json'))) return current
+    const parent = join(current, '..')
+    if (parent === current) return null
+    current = parent
+  }
+}
+
+/**
  * Output directories for each phase that need to be verified
  */
 const phaseOutputDirs = {
@@ -119,14 +133,67 @@ function collectFileSignatures(dir, extensions = null) {
   return signatures
 }
 
+// Source file extensions tracked by package hash.
+// Must stay in sync with format-worker.js collectSourceFiles.
+const SRC_EXTENSIONS = new Set([
+  '.ts', '.tsx', '.cts', '.mts',
+  '.js', '.jsx', '.cjs', '.mjs',
+  '.svelte', '.json'
+])
+const TEST_EXTENSIONS = new Set([
+  '.ts', '.tsx', '.cts', '.mts',
+  '.js', '.jsx', '.cjs', '.mjs',
+  '.json'
+])
+
+// Format/lint config files. Their content participates in the package hash so
+// editing prettier/eslint rules invalidates the format cache for every package
+// that walks through them (package-level first, then up to repo root).
+const CONFIG_FILE_PATTERNS = [
+  '.prettierrc', '.prettierrc.json', '.prettierrc.js', '.prettierrc.cjs',
+  '.prettierrc.yaml', '.prettierrc.yml', '.prettierrc.toml',
+  'prettier.config.js', 'prettier.config.cjs', 'prettier.config.mjs',
+  '.prettierignore',
+  '.eslintrc', '.eslintrc.json', '.eslintrc.js', '.eslintrc.cjs',
+  '.eslintrc.yaml', '.eslintrc.yml',
+  '.eslintignore'
+]
+
+/**
+ * Walk from packagePath up to (and including) repoRoot collecting absolute
+ * paths of every CONFIG_FILE_PATTERNS file found. Closer files win in prettier
+ * resolution but every encountered file is hashed so any change invalidates.
+ */
+function collectFormatConfigFiles(packagePath, repoRoot) {
+  const result = []
+  const stop = repoRoot ? join(repoRoot, '..') : null
+  let current = packagePath
+  const seen = new Set()
+  while (current && current !== stop) {
+    if (seen.has(current)) break
+    seen.add(current)
+    for (const name of CONFIG_FILE_PATTERNS) {
+      const p = join(current, name)
+      if (fs.existsSync(p)) result.push(p)
+    }
+    if (repoRoot && current === repoRoot) break
+    const parent = join(current, '..')
+    if (parent === current) break
+    current = parent
+  }
+  return result
+}
+
 /**
  * Calculate unified package hash based on all source inputs
  * This hash is used across all phases to detect changes
  *
  * Includes:
  * - src/ directory (source files)
- * - package.json
- * - tsconfig.json (if exists)
+ * - tests/ directory (if exists)
+ * - package.json, tsconfig.json, Dockerfile
+ * - common/scripts/version.txt (global version file)
+ * - prettier/eslint configs walking from package up to repo root
  * - Any additional config files provided
  *
  * @param {string} packagePath - Path to package directory
@@ -139,8 +206,7 @@ function calculatePackageHash(packagePath, extraFiles = []) {
   // Hash src/ directory
   const srcPath = join(packagePath, 'src')
   if (fs.existsSync(srcPath)) {
-    const srcExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.svelte', '.json'])
-    const sigs = collectFileSignatures(srcPath, srcExtensions)
+    const sigs = collectFileSignatures(srcPath, SRC_EXTENSIONS)
     const sortedKeys = Object.keys(sigs).sort()
     for (const key of sortedKeys) {
       parts.push(`src:${key}=${sigs[key]}`)
@@ -150,8 +216,7 @@ function calculatePackageHash(packagePath, extraFiles = []) {
   // Hash tests/ directory if exists
   const testsPath = join(packagePath, 'tests')
   if (fs.existsSync(testsPath)) {
-    const testExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.json'])
-    const sigs = collectFileSignatures(testsPath, testExtensions)
+    const sigs = collectFileSignatures(testsPath, TEST_EXTENSIONS)
     const sortedKeys = Object.keys(sigs).sort()
     for (const key of sortedKeys) {
       parts.push(`tests:${key}=${sigs[key]}`)
@@ -173,6 +238,19 @@ function calculatePackageHash(packagePath, extraFiles = []) {
   pushFileSig('package.json', join(packagePath, 'package.json'))
   pushFileSig('tsconfig.json', join(packagePath, 'tsconfig.json'))
   pushFileSig('Dockerfile', join(packagePath, 'Dockerfile'))
+
+  // Global version file — when it changes, all packages must rebuild.
+  const rootDir = findRepoRoot(packagePath)
+  if (rootDir) {
+    pushFileSig('common/scripts/version.txt', join(rootDir, 'common', 'scripts', 'version.txt'))
+  }
+
+  // Prettier / ESLint configs (package level → repo root).
+  // Editing any of them must invalidate the format cache.
+  const configFiles = collectFormatConfigFiles(packagePath, rootDir)
+  for (const cfg of configFiles) {
+    pushFileSig(`config:${cfg}`, cfg)
+  }
 
   for (const file of extraFiles) {
     pushFileSig(file, join(packagePath, file))
@@ -411,5 +489,10 @@ module.exports = {
   markPhaseCompleted,
   getPhaseMetadata,
   getCompletedPhases,
-  invalidateCache
+  invalidateCache,
+  collectFormatConfigFiles,
+  findRepoRoot,
+  SRC_EXTENSIONS,
+  TEST_EXTENSIONS,
+  CONFIG_FILE_PATTERNS
 }
