@@ -24,7 +24,9 @@ export async function leaveIfInMeeting (page: Page): Promise<void> {
         .first()
         .isVisible()
         .catch(() => false))
-    ) { return }
+    ) {
+      return
+    }
     const leave = page.locator('[data-id="meeting-leave"]').first()
     if ((await leave.count()) === 0) return
     await leave.click({ timeout: 5000 }).catch(() => undefined)
