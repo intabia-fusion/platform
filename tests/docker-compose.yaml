@@ -330,6 +330,7 @@ services:
       - ENABLE_COMPRESSION=true
       - RATE_LIMIT_MAX=25000
       - RATE_LIMIT_WINDOW=1000
+      - WS_SLOW_CLIENT_DROP=${WS_SLOW_CLIENT_DROP:-1}
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
   transactor1:
     image: intabiafusion/transactor
@@ -366,6 +367,7 @@ services:
       - ENABLE_COMPRESSION=true
       - RATE_LIMIT_MAX=25000
       - RATE_LIMIT_WINDOW=1000
+      - WS_SLOW_CLIENT_DROP=${WS_SLOW_CLIENT_DROP:-1}
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
   collaborator0:
     image: intabiafusion/collaborator

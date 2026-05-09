@@ -690,6 +690,17 @@ export interface ConnectionSocket {
   isBackpressure: () => boolean // In bytes
   backpressure: (ctx: MeasureContext) => Promise<void>
   checkState: () => boolean
+
+  // Returns true if outgoing buffer crossed the drop threshold (WS_DROP_THRESHOLD).
+  // Callers should skip sendResponse and accumulate classes via addDroppedClasses.
+  isOverloaded?: () => boolean
+  // Accumulate classes from broadcast tx that were skipped because the socket is overloaded.
+  // Server uses this to flush a single TxWorkspaceEvent.BulkUpdate once the buffer drains.
+  addDroppedClasses?: (classes: Ref<Class<Doc>>[]) => void
+  // If outgoing buffer is below WS_RESUME_THRESHOLD and there are accumulated classes,
+  // returns and clears them; otherwise returns null. Server prefixes the next broadcast
+  // with a refresh event so client query cache invalidates without a manual reconnect.
+  takePendingRefresh?: () => Ref<Class<Doc>>[] | null
 }
 
 /**

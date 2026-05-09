@@ -13,13 +13,17 @@
 // limitations under the License.
 //
 
-import {
+import core, {
   AccountRole,
   generateId,
   MeasureMetricsContext,
   systemAccountUuid,
   type AccountUuid,
   type MeasureContext,
+  type Tx,
+  type TxCUD,
+  type TxWorkspaceEvent,
+  WorkspaceEvent,
   type WorkspaceUuid
 } from '@hcengineering/core'
 import type { Token } from '@hcengineering/server-token'
@@ -27,6 +31,9 @@ import type { Token } from '@hcengineering/server-token'
 // Import the module under test after mocks are set up
 // eslint-disable-next-line import/first
 import { TSessionManager, type Timeouts } from '../sessionManager'
+import { sendResponse as sendResponseRaw } from '../utils'
+
+const sendResponseMock = sendResponseRaw as unknown as jest.Mock
 
 // Mock modules before importing the module under test
 jest.mock('@hcengineering/account-client', () => ({
@@ -605,6 +612,247 @@ describe('TSessionManager', () => {
 
       expect(stats[0].clientsTotal).toBe(2) // 2 unique users
       expect(stats[0].sessionsTotal).toBe(3) // 3 sessions
+    })
+  })
+
+  describe('doBroadcast slow-client protection', () => {
+    function createSocketStub (overloaded = false): any {
+      let pending: any[] = []
+      const sock: any = {
+        send: jest.fn().mockResolvedValue(undefined),
+        isClosed: false,
+        id: 'sock-' + generateId(),
+        isBackpressure: () => false,
+        backpressure: jest.fn().mockResolvedValue(undefined),
+        checkState: () => true,
+        sendPong: jest.fn(),
+        data: () => ({}),
+        readRequest: jest.fn(),
+        close: jest.fn(),
+        // slow-client api
+        isOverloaded: jest.fn(() => overloaded),
+        addDroppedClasses: (classes: any[]) => {
+          for (const c of classes) {
+            if (!pending.includes(c)) pending.push(c)
+          }
+        },
+        takePendingRefresh: jest.fn(() => {
+          if (overloaded) return null
+          if (pending.length === 0) return null
+          const r = [...pending]
+          pending = []
+          return r
+        }),
+        _setOverloaded: (v: boolean) => {
+          overloaded = v
+          ;(sock.isOverloaded as jest.Mock).mockImplementation(() => v)
+        },
+        _pending: () => pending
+      }
+      return sock
+    }
+
+    function createSession (uuid: string): any {
+      return {
+        getUser: jest.fn().mockReturnValue(uuid as AccountUuid),
+        binaryMode: false,
+        useCompression: false
+      }
+    }
+
+    function makeCud (cls: string, attachedToClass?: string): TxCUD<any> {
+      const tx: any = {
+        _id: generateId(),
+        _class: core.class.TxCreateDoc,
+        space: core.space.Tx,
+        objectId: generateId(),
+        objectClass: cls,
+        objectSpace: core.space.Workspace,
+        modifiedBy: core.account.System,
+        modifiedOn: Date.now(),
+        attributes: {}
+      }
+      if (attachedToClass !== undefined) {
+        tx.attachedTo = generateId()
+        tx.attachedToClass = attachedToClass
+      }
+      return tx as TxCUD<any>
+    }
+
+    it('drops broadcast for overloaded socket and accumulates classes', async () => {
+      const sock = createSocketStub(true)
+      const session = createSession('user-1')
+      const ws: any = {
+        sessions: new Map([['s', { session, socket: sock }]]),
+        maintenance: false
+      }
+
+      const tx: Tx[] = [makeCud('test:class:A'), makeCud('test:class:B')]
+      sessionManager.doBroadcast(mockContext, ws, tx)
+      // Wait microtask.
+      await new Promise((resolve) => setImmediate(resolve))
+
+      expect(sock.send).not.toHaveBeenCalled()
+      expect(sock._pending()).toEqual(['test:class:A', 'test:class:B'])
+    })
+
+    it('flushes a single BulkUpdate refresh when buffer drains', async () => {
+      sendResponseMock.mockClear()
+      const sendResponse = sendResponseMock
+
+      const sock = createSocketStub(true)
+      const session = createSession('user-1')
+      const ws: any = {
+        sessions: new Map([['s', { session, socket: sock }]]),
+        maintenance: false
+      }
+
+      // First broadcast: dropped.
+      sessionManager.doBroadcast(mockContext, ws, [makeCud('test:class:A'), makeCud('test:class:B')])
+      await new Promise((resolve) => setImmediate(resolve))
+      expect(sendResponse).not.toHaveBeenCalled()
+
+      // Buffer drained.
+      sock._setOverloaded(false)
+
+      // Second broadcast: must be prefixed with TxWorkspaceEvent.BulkUpdate carrying A and B.
+      const nextTx = [makeCud('test:class:C')]
+      sessionManager.doBroadcast(mockContext, ws, nextTx)
+      await new Promise((resolve) => setImmediate(resolve))
+
+      expect(sendResponse).toHaveBeenCalledTimes(1)
+      const payload = sendResponse.mock.calls[0][3]
+      expect(payload.result.length).toBe(2)
+      const first = payload.result[0] as TxWorkspaceEvent
+      expect(first._class).toBe(core.class.TxWorkspaceEvent)
+      expect(first.event).toBe(WorkspaceEvent.BulkUpdate)
+      expect(first.params._class).toEqual(['test:class:A', 'test:class:B'])
+      expect(payload.result[1]).toBe(nextTx[0])
+    })
+
+    it('does not prefix refresh when there are no pending classes', async () => {
+      sendResponseMock.mockClear()
+      const sendResponse = sendResponseMock
+
+      const sock = createSocketStub(false)
+      const session = createSession('user-1')
+      const ws: any = {
+        sessions: new Map([['s', { session, socket: sock }]]),
+        maintenance: false
+      }
+
+      const tx = [makeCud('test:class:A')]
+      sessionManager.doBroadcast(mockContext, ws, tx)
+      await new Promise((resolve) => setImmediate(resolve))
+
+      expect(sendResponse).toHaveBeenCalledTimes(1)
+      const payload = sendResponse.mock.calls[0][3]
+      expect(payload.result.length).toBe(1)
+      expect(payload.result[0]).toBe(tx[0])
+    })
+
+    it('accumulates many unique classes across multiple drops', async () => {
+      sendResponseMock.mockClear()
+      const sendResponse = sendResponseMock
+
+      const sock = createSocketStub(true)
+      const session = createSession('user-1')
+      const ws: any = {
+        sessions: new Map([['s', { session, socket: sock }]]),
+        maintenance: false
+      }
+      const big: Tx[] = []
+      for (let i = 0; i < 250; i++) big.push(makeCud('test:class:C' + i))
+      sessionManager.doBroadcast(mockContext, ws, big)
+      await new Promise((resolve) => setImmediate(resolve))
+
+      sock._setOverloaded(false)
+      sessionManager.doBroadcast(mockContext, ws, [makeCud('test:class:Z')])
+      await new Promise((resolve) => setImmediate(resolve))
+
+      const payload = sendResponse.mock.calls[0][3]
+      const refresh = payload.result[0] as TxWorkspaceEvent
+      expect(refresh.event).toBe(WorkspaceEvent.BulkUpdate)
+      expect(refresh.params._class.length).toBe(250)
+      expect(refresh.params._class).toContain('test:class:C0')
+      expect(refresh.params._class).toContain('test:class:C249')
+    })
+
+    it('refresh includes attachedToClass alongside objectClass', async () => {
+      sendResponseMock.mockClear()
+      const sendResponse = sendResponseMock
+
+      const sock = createSocketStub(true)
+      const session = createSession('user-1')
+      const ws: any = {
+        sessions: new Map([['s', { session, socket: sock }]]),
+        maintenance: false
+      }
+
+      // Drop a broadcast carrying a CUD with both objectClass and attachedToClass.
+      sessionManager.doBroadcast(mockContext, ws, [makeCud('test:class:Comment', 'test:class:Issue')])
+      await new Promise((resolve) => setImmediate(resolve))
+      sock._setOverloaded(false)
+      sessionManager.doBroadcast(mockContext, ws, [makeCud('test:class:Other')])
+      await new Promise((resolve) => setImmediate(resolve))
+
+      const payload = sendResponse.mock.calls[0][3]
+      const refresh = payload.result[0] as TxWorkspaceEvent
+      expect(refresh.params._class.sort()).toEqual(['test:class:Comment', 'test:class:Issue'].sort())
+    })
+
+    it('per-session pending classes are isolated (no cross-talk)', async () => {
+      sendResponseMock.mockClear()
+      const sendResponse = sendResponseMock
+
+      // sockA overloaded, sockB normal.
+      const sockA = createSocketStub(true)
+      const sockB = createSocketStub(false)
+      const ws: any = {
+        sessions: new Map([
+          ['a', { session: createSession('user-A'), socket: sockA }],
+          ['b', { session: createSession('user-B'), socket: sockB }]
+        ]),
+        maintenance: false
+      }
+
+      sessionManager.doBroadcast(mockContext, ws, [makeCud('test:class:A')])
+      await new Promise((resolve) => setImmediate(resolve))
+
+      // sockA dropped, sockB received normally without prefix.
+      expect(sockA._pending()).toEqual(['test:class:A'])
+      // sendResponse called only for sockB.
+      expect(sendResponse).toHaveBeenCalledTimes(1)
+      const bPayload = sendResponse.mock.calls[0][3]
+      expect(bPayload.result.length).toBe(1)
+      expect(bPayload.result[0]._class).not.toBe(core.class.TxWorkspaceEvent)
+    })
+
+    it('flushed refresh tx is independent across sessions', async () => {
+      sendResponseMock.mockClear()
+      const sendResponse = sendResponseMock
+
+      const sockA = createSocketStub(true)
+      const sockB = createSocketStub(true)
+      const ws: any = {
+        sessions: new Map([
+          ['a', { session: createSession('user-A'), socket: sockA }],
+          ['b', { session: createSession('user-B'), socket: sockB }]
+        ]),
+        maintenance: false
+      }
+
+      sessionManager.doBroadcast(mockContext, ws, [makeCud('test:class:Foo')])
+      await new Promise((resolve) => setImmediate(resolve))
+
+      // Drain only sockA.
+      sockA._setOverloaded(false)
+      sessionManager.doBroadcast(mockContext, ws, [makeCud('test:class:Bar')])
+      await new Promise((resolve) => setImmediate(resolve))
+
+      // sockA flushed, sockB still dropped.
+      expect(sendResponse).toHaveBeenCalledTimes(1)
+      expect(sockB._pending()).toEqual(['test:class:Foo', 'test:class:Bar'])
     })
   })
 
