@@ -100,8 +100,7 @@
           '$lookup.attachedTo._id': { $exists: true }
         },
         (res) => {
-          const docs: { doc: Doc, chat: Chat }[] = res
-            .map((it) => ({ doc: it.$lookup?.attachedTo as Doc, chat: it }))
+          const docs: { doc: Doc, chat: Chat }[] = res.map((it) => ({ doc: it.$lookup?.attachedTo as Doc, chat: it }))
           objectsByClass = objectsByClass.set(_class, { docs, total: res.total })
         },
         {
