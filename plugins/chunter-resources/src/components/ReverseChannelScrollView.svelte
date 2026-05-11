@@ -710,7 +710,7 @@
     {#if loadMoreAllowed && $canLoadNextForwardStore}
       <HistoryLoading isLoading={$isLoadingMoreStore} />
     {/if}
-    {#if !fixedInput && withInput && !readonly}
+    {#if !fixedInput && withInput}
       <ChannelInput
         {object}
         {readonly}
@@ -735,7 +735,7 @@
   {/if}
 </div>
 
-{#if fixedInput && withInput && !readonly}
+{#if fixedInput && withInput}
   <ChannelInput
     {object}
     {readonly}

@@ -19,7 +19,6 @@ import { mergeIds } from '@hcengineering/platform'
 
 export default mergeIds(coreId, core, {
   string: {
-    Archived: '' as IntlString,
     ClassLabel: '' as IntlString,
     ClassPropertyLabel: '' as IntlString,
     Blob: '' as IntlString,

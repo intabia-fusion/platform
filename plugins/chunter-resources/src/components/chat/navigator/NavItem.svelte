@@ -37,8 +37,9 @@
   export let count: number | null = null
   export let secondaryNotifyMarker: boolean = false
   export let title: string | undefined = undefined
+  export let subTitle: string | undefined = undefined
   export let intlTitle: IntlString | undefined = undefined
-  export let description: string | undefined = undefined
+  export let identifier: string | undefined = undefined
   export let actions: Action[] = []
   export let elementsCount: number = 0
   export let type: 'type-link' | 'type-tag' | 'type-anchor-link' | 'type-object' = 'type-link'
@@ -70,8 +71,9 @@
   {iconProps}
   {iconSize}
   label={intlTitle}
-  {title}
-  {description}
+  title={identifier ?? title}
+  {subTitle}
+  description={identifier ? title : undefined}
   selected={isSelected}
   count={elementsCount > 0 ? elementsCount : null}
   {type}

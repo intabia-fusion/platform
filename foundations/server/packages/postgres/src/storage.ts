@@ -1229,7 +1229,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
     if (join.isReverse) {
       return `${join.toAlias}->'${tKey}'`
     }
-    if (isDataField(domain, tKey)) {
+    if (isDataField(join.table, tKey)) {
       if (isDataArray) {
         return `${join.toAlias}."data"->'${tKey}'`
       }
