@@ -54,30 +54,28 @@ async function hydrateNotificationAsYouCan (
   }
 
   let intlTitle: IntlString | undefined
-  let titleParams
+  let intlParams: Record<string, any> = {}
 
   if (lastNotification._class === notification.class.CommonInboxNotification) {
     intlTitle = (lastNotification as CommonInboxNotification).message
-    titleParams = (lastNotification as CommonInboxNotification).props
+    intlParams = { ...(lastNotification as CommonInboxNotification).props }
   } else if (lastNotification._class === notification.class.ActivityInboxNotification) {
     intlTitle = (lastNotification as ActivityInboxNotification).title
-    titleParams = (lastNotification as ActivityInboxNotification).intlParams
+    intlParams = { ...(lastNotification as ActivityInboxNotification).intlParams }
   }
 
   if (intlTitle !== undefined && lastNotification.body !== undefined) {
-    const intlParams = lastNotification.intlParams ?? {}
-
     if (lastNotification.intlParamsNotLocalized !== undefined) {
       for (const param in lastNotification.intlParamsNotLocalized) {
         const value = lastNotification.intlParamsNotLocalized[param]
-        intlParams[param] = await translate(value, {})
+        intlParams[param] = await translate(value, intlParams)
       }
     }
-    const title = await translate(intlTitle, titleParams ?? {})
-    const body = await translate(lastNotification.body, lastNotification.intlParams ?? {})
+    const title = await translate(intlTitle, intlParams)
+    const body = await translate(lastNotification.body, intlParams)
 
     // Do not show notification if there is no translate
-    if (title === (intlTitle as string) || body === (lastNotification.body as string)) {
+    if (title === intlTitle || body === lastNotification.body) {
       return undefined
     }
 
