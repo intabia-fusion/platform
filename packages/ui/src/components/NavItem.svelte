@@ -143,7 +143,7 @@
         {#if subTitle}<span class="subtitle lower">{subTitle}</span>{/if}
         <slot />
       </span>
-      {description} 1
+      {description}
     {:else}
       {#if label}<Label {label} />{/if}
       {#if title}{title}{/if}
