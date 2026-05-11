@@ -303,6 +303,14 @@ export function createModel (builder: Builder): void {
     func: serverProcess.transform.Floor
   })
 
+  builder.mixin(process.function.Min, process.class.ProcessFunction, serverProcess.mixin.FuncImpl, {
+    func: serverProcess.transform.Min
+  })
+
+  builder.mixin(process.function.Max, process.class.ProcessFunction, serverProcess.mixin.FuncImpl, {
+    func: serverProcess.transform.Max
+  })
+
   builder.mixin(process.function.Offset, process.class.ProcessFunction, serverProcess.mixin.FuncImpl, {
     func: serverProcess.transform.Offset
   })
@@ -470,6 +478,15 @@ export function createModel (builder: Builder): void {
     trigger: serverProcess.trigger.OnCardCreate,
     txMatch: {
       _class: core.class.TxCreateDoc,
+      objectClass: cardPlugin.class.Card
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverProcess.trigger.OnCardRemove,
+    txMatch: {
+      _class: core.class.TxRemoveDoc,
       objectClass: cardPlugin.class.Card
     },
     isAsync: true
