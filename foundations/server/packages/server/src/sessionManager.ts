@@ -298,7 +298,8 @@ export class TSessionManager implements SessionManager {
       }
     }
     for (const [wsId, workspace] of this.workspaces.entries()) {
-      for (const [k, v] of Array.from(workspace.tickHandlers.entries())) {
+      // Map allows delete during iteration in JS; no need to spread to a temp array.
+      for (const [k, v] of workspace.tickHandlers) {
         v.ticks--
         if (v.ticks === 0) {
           workspace.tickHandlers.delete(k)
@@ -1383,18 +1384,23 @@ export class TSessionManager implements SessionManager {
       role: AccountRole
     }
     >()
-    for (const s of [...Array.from(ws.sessions.values()).map((it) => it.session), ...extra]) {
+    const populate = (s: Session): void => {
       const sessionAccount = s.getUser()
       if (sessionAccount === systemAccountUuid) {
-        continue
+        return
       }
+      const role = s.getRawAccount().role
       const userSocialIds = s.getUserSocialIds()
-      for (const id of userSocialIds) {
-        res.set(id, {
-          accountUuid: sessionAccount,
-          role: s.getRawAccount().role
-        })
+      for (let i = 0; i < userSocialIds.length; i++) {
+        res.set(userSocialIds[i], { accountUuid: sessionAccount, role })
       }
+    }
+    // Iterate Map directly - no intermediate Array.from / map / spread alloc.
+    for (const entry of ws.sessions.values()) {
+      populate(entry.session)
+    }
+    for (let i = 0; i < extra.length; i++) {
+      populate(extra[i])
     }
     return res
   }
