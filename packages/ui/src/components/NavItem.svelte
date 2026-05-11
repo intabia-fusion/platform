@@ -34,6 +34,7 @@
   export let iconSize: IconSize = 'small'
   export let label: IntlString | undefined = undefined
   export let title: string | undefined = undefined
+  export let subTitle: string | undefined = undefined
   export let description: string | undefined = undefined
   export let type: 'type-link' | 'type-tag' | 'type-anchor-link' | 'type-object' = 'type-link'
   export let color: string | null = null
@@ -139,12 +140,14 @@
       <span class="hulyNavItem-label font-medium-12 line-height-auto mr-0-5">
         {#if label}<Label {label} />{/if}
         {#if title}{title}{/if}
+        {#if subTitle}<span class="subtitle lower">{subTitle}</span>{/if}
         <slot />
       </span>
-      {description}
+      {description} 1
     {:else}
       {#if label}<Label {label} />{/if}
       {#if title}{title}{/if}
+      {#if subTitle}<span class="subtitle lower">{subTitle}</span>{/if}
       <slot />
     {/if}
     {#if $$slots.afterTitle}<slot name="afterTitle" />{/if}
@@ -357,5 +360,11 @@
     flex-direction: column;
     min-width: 0;
     min-height: 0;
+  }
+
+  .subtitle {
+    color: var(--global-tertiary-TextColor);
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
   }
 </style>

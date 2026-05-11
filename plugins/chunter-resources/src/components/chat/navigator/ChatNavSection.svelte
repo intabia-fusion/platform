@@ -18,7 +18,7 @@
   import { statusByUserStore } from '@hcengineering/contact-resources'
   import core, { Class, Doc, notEmpty, reduceCalls, Ref, WithLookup } from '@hcengineering/core'
   import { getResource, IntlString, translate } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
+  import { getClient, isSpace } from '@hcengineering/presentation'
   import ui, {
     Action,
     AnySvelteComponent,
@@ -98,7 +98,7 @@
       ? items.sort((a, b) => {
         const scoreDiff = getScore(b) - getScore(a)
         if (scoreDiff !== 0) return scoreDiff
-        return (a.description ?? a.title).localeCompare(b.description ?? b.title)
+        return (a.title ?? a.identifier).localeCompare(b.title ?? b.identifier)
       })
       : sortFn(items, {
         contextByDoc: $contextByDocStore,
@@ -148,8 +148,9 @@
           id: doc._id,
           object: doc,
           chat,
-          title: identifier ?? name,
-          description: identifier ? name : undefined,
+          identifier,
+          title: name,
+          subTitle: isSpace(doc) && doc.archived ? `(${await translate(core.string.Archived, {}, lang)})` : undefined,
           icon: icon ?? getObjectIcon(_class),
           iconProps: { showStatus: true },
           iconSize,
