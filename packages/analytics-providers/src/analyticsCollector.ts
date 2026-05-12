@@ -17,16 +17,24 @@ import { type AnalyticProvider } from '@hcengineering/analytics'
 import { AnalyticEventType } from '@hcengineering/analytics-collector'
 import { getMetadata } from '@hcengineering/platform'
 import presentation from '@hcengineering/presentation'
+import { RPCHandler } from '@hcengineering/rpc'
+import { compress } from 'snappyjs'
 import { type QueuedEvent } from './types'
 import { collectEventMetadata, triggerUrlChange } from './utils'
+
+const rpcHandler = new RPCHandler()
 
 export class AnalyticsCollectorProvider implements AnalyticProvider {
   private readonly collectIntervalMs = 5000
   private readonly maxRetries = 3
   private readonly maxBatchSize = 100
   private readonly maxBatchSizeBytes = 5 * 1024 * 1024 // 5MB
+  // Cap in-memory queue. Beyond this we drop oldest events to keep RAM bounded
+  // when the network is offline or the server is rejecting batches.
+  private readonly maxQueueSize = 5000
   private readonly events: QueuedEvent[] = []
   private collectTimer: any = null
+  private sending: boolean = false
   private url: string = ''
   private email: string | undefined = undefined
   private anonymousId: string = ''
@@ -80,31 +88,54 @@ export class AnalyticsCollectorProvider implements AnalyticProvider {
   }
 
   async sendEvents (): Promise<void> {
+    if (this.sending) return
     if (this.events.length === 0) return
 
     const token = getMetadata(presentation.metadata.Token) ?? ''
     if (token === '') return
 
-    const batches = this.createBatches(this.events)
-    this.events.length = 0
+    this.sending = true
+    // Atomically dequeue: splice replaces the previous non-atomic
+    // createBatches+length=0 pair, which could race with a concurrent
+    // invocation and lose events.
+    const pending = this.events.splice(0)
+    const batches = this.createBatches(pending)
 
-    for (const batch of batches) {
-      try {
-        const response = await fetch(`${this.url}/collect`, {
-          method: 'POST',
-          headers: {
-            Authorization: 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(batch)
-        })
+    try {
+      for (const batch of batches) {
+        try {
+          // Wrap batch as an RPC-style request so the server can readRequest() it
+          // with the existing RPCHandler. msgpack + snappy reduce wire size ~14x
+          // for typical telemetry batches versus uncompressed JSON.
+          const encoded = rpcHandler.serialize({ method: 'collect', params: [batch] }, true) as Uint8Array
+          const compressed = compress(encoded)
+          const response = await fetch(`${this.url}/collect`, {
+            method: 'POST',
+            headers: {
+              Authorization: 'Bearer ' + token,
+              'Content-Type': 'application/octet-stream',
+              // Custom header avoids Express body-parser rejecting standard
+              // Content-Encoding=snappy with UnsupportedMediaTypeError.
+              'X-Encoding': 'snappy'
+            },
+            body: compressed as unknown as BodyInit
+          })
 
-        if (!response.ok) {
+          if (!response.ok) {
+            // Drop on auth/permission/payload errors - retrying is futile.
+            // Retry only transient (5xx, 408, 429).
+            const transient = response.status >= 500 || response.status === 408 || response.status === 429
+            if (transient) {
+              this.handleFailedEvents(batch)
+            }
+          }
+        } catch (err) {
+          // Network error - retry with backoff bound by maxRetries.
           this.handleFailedEvents(batch)
         }
-      } catch (err) {
-        this.handleFailedEvents(batch)
       }
+    } finally {
+      this.sending = false
     }
   }
 
@@ -166,12 +197,19 @@ export class AnalyticsCollectorProvider implements AnalyticProvider {
 
     let eventMetadata: Record<string, any> = {}
 
+    // Lightweight events skip the heavy per-event metadata harvest:
+    // - Metric: backend only needs {metric, value, labels}.
+    // - Error: backend only needs {error_message, error_type, error_stack}.
+    // The metadata block (~1KB UA/screen/timezone/etc.) duplicates per-event
+    // and is recoverable from setUser/setTag at session start.
+    const skipMeta = eventType === AnalyticEventType.Metric || eventType === AnalyticEventType.Error
+
     try {
-      eventMetadata = collectEventMetadata(baseProperties)
+      eventMetadata = skipMeta ? { ...baseProperties } : { ...baseProperties, ...collectEventMetadata(baseProperties) }
     } catch (err: any) {
-      // Ignore metadata collection errors
+      eventMetadata = { ...baseProperties }
     }
-    if (eventType === AnalyticEventType.CustomEvent && (eventName !== '' || eventName != null)) {
+    if (eventType === AnalyticEventType.CustomEvent && eventName != null && eventName !== '') {
       eventMetadata.event = eventName
     }
     if (this.data != null) {
@@ -190,6 +228,9 @@ export class AnalyticsCollectorProvider implements AnalyticProvider {
       distinct_id: currentId
     }
     this.events.push(event)
+    if (this.events.length > this.maxQueueSize) {
+      this.events.splice(0, this.events.length - this.maxQueueSize)
+    }
   }
 
   private normalizeUserData (data: Record<string, any>): Record<string, any> {

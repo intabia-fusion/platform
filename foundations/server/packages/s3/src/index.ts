@@ -71,7 +71,17 @@ export class S3Service implements StorageAdapter {
   expireTime: number
   client: S3
   constructor (readonly opt: S3Config) {
-    const endpoint = Number.isInteger(opt.port) ? `${opt.endpoint}:${opt.port}` : opt.endpoint
+    let endpoint = opt.endpoint
+    if (Number.isInteger(opt.port)) {
+      try {
+        const u = new URL(opt.endpoint)
+        u.port = String(opt.port)
+        endpoint = u.toString()
+        if (endpoint.endsWith('/') && !opt.endpoint.endsWith('/')) endpoint = endpoint.slice(0, -1)
+      } catch {
+        endpoint = `${opt.endpoint}:${opt.port}`
+      }
+    }
     this.client = new S3({
       endpoint,
       credentials: {

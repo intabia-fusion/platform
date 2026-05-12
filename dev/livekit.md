@@ -133,7 +133,7 @@ webhook:
 Egress — отдельный сервис, который экспортирует и записывает сессии LiveKit (MP4, HLS, RTMP и т.д.) и загружает результаты в S3-совместимое хранилище. Для локальной разработки выполнены базовые настройки, позволяющие проверить запись в вашем окружении.
 
 Ключевые изменения и файлы:
-- Конфиг Egress: `foundation/dev/livekit-egress-config.yaml` (настроен на `ws://huly.local:7880`, `redis: redis:6379`, загрузка в Minio `minio:9000`, bucket `livekit-recordings`).
+- Конфиг Egress: `foundation/dev/livekit-egress-config.yaml` (настроен на `ws://localhost:7880`, `redis: redis:6379`, загрузка в Minio `minio:9000`, bucket `livekit-recordings`).
 - Обновлён LiveKit dev-config: `foundation/dev/livekit-dev-config.yaml` — добавлен блок `redis: 127.0.0.1:6379`, чтобы сервер LiveKit (запущенный на хосте) использовал тот же Redis, что и Egress.
 - Docker: в `dev/docker-compose.yaml` добавлен сервис `livekit-egress` (image `livekit/egress`), монтирующий конфиг и подключённый к `redis`/`minio`.
 

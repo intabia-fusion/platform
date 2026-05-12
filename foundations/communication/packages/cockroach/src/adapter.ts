@@ -39,7 +39,9 @@ import {
   FindPeersParams,
   Peer,
   FindThreadMetaParams,
-  MessageMeta, ThreadMeta, BlobID,
+  MessageMeta,
+  ThreadMeta,
+  BlobID,
   FindMessagesMetaParams
 } from '@hcengineering/communication-types'
 import type {
@@ -51,7 +53,9 @@ import type {
   NotificationContextQuery,
   NotificationContextUpdate,
   NotificationQuery,
-  NotificationUpdate, ThreadMetaQuery, ThreadMetaUpdate
+  NotificationUpdate,
+  ThreadMetaQuery,
+  ThreadMetaUpdate
 } from '@hcengineering/communication-sdk-types'
 
 import { MessagesDb } from './db/message'
@@ -102,12 +106,7 @@ export class CockroachAdapter implements DbAdapter {
   }
 
   // ThreadsIndex
-  async attachThreadMeta (
-    cardId: CardID,
-    messageId: MessageID,
-    threadId: CardID,
-    threadType: CardType
-  ): Promise<void> {
+  async attachThreadMeta (cardId: CardID, messageId: MessageID, threadId: CardID, threadType: CardType): Promise<void> {
     await this.message.attachThreadMeta(cardId, messageId, threadId, threadType)
   }
 
@@ -176,9 +175,7 @@ export class CockroachAdapter implements DbAdapter {
     return await this.notification.updateNotification(query, update)
   }
 
-  async removeNotifications (
-    query: NotificationQuery
-  ): Promise<NotificationID[]> {
+  async removeNotifications (query: NotificationQuery): Promise<NotificationID[]> {
     return await this.notification.removeNotifications(query)
   }
 
@@ -210,7 +207,13 @@ export class CockroachAdapter implements DbAdapter {
   }
 
   // Labels
-  createLabel (cardId: CardID, cardType: CardType, labelId: LabelID, account: AccountUuid, created: Date): Promise<void> {
+  createLabel (
+    cardId: CardID,
+    cardType: CardType,
+    labelId: LabelID,
+    account: AccountUuid,
+    created: Date
+  ): Promise<void> {
     return this.label.createLabel(labelId, cardId, cardType, account, created)
   }
 
@@ -239,10 +242,7 @@ export class CockroachAdapter implements DbAdapter {
     await this.peer.createPeer(workspaceId, cardId, kind, value, extra, date, options)
   }
 
-  async removePeer (workspaceId: WorkspaceUuid,
-    cardId: CardID,
-    kind: PeerKind,
-    value: string): Promise<void> {
+  async removePeer (workspaceId: WorkspaceUuid, cardId: CardID, kind: PeerKind, value: string): Promise<void> {
     await this.peer.removePeer(workspaceId, cardId, kind, value)
   }
 

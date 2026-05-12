@@ -509,9 +509,14 @@ export async function startConversationAction (docs?: Employee | Employee[]): Pr
 
 export async function toggleChannelIcon (channel: Channel, icon?: Asset, emoji?: number | number[]): Promise<void> {
   const client = getClient()
-  const curEmoji = channel?.emoji == null || Array.isArray(channel.emoji) ? channel.emoji?.join('') : channel.emoji
-  const newEmoji = emoji == null || Array.isArray(emoji) ? emoji?.join('') : emoji
-  if (channel.icon === icon && curEmoji === newEmoji) {
+  const normalizeEmoji = (e?: number | number[]): string => {
+    if (e == null) return ''
+    return Array.isArray(e) ? e.join('') : String(e)
+  }
+  const currentEmoji = normalizeEmoji(channel.emoji)
+  const nextEmoji = normalizeEmoji(emoji)
+
+  if (channel.icon === icon && currentEmoji === nextEmoji) {
     await client.update(channel, { $unset: { icon: true, emoji: true } })
   } else {
     await client.update(channel, { icon, emoji })

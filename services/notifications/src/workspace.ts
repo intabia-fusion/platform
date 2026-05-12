@@ -268,7 +268,10 @@ class Workspace {
     if (space === undefined) return []
 
     const res: TxCUD<Doc>[] = []
-    const doc = txAttachedToDoc ?? txObject
+    const doc = hierarchy.isDerived(txObject._class, activity.class.ActivityMessage)
+      ? (txAttachedToDoc ?? txObject)
+      : txObject
+
     const contexts = await this.cache.getContexts(doc._id)
     const sender = await this.cache.getSender(tx.modifiedBy)
 
@@ -289,16 +292,7 @@ class Workspace {
           )
         )
       }
-      const result = await createMentionsData(
-        client,
-        this.cache,
-        tx,
-        contexts,
-        txAttachedToDoc,
-        txObject,
-        settings,
-        mentionType
-      )
+      const result = await createMentionsData(client, this.cache, tx, contexts, doc, txObject, settings, mentionType)
       res.push(...result.txes)
 
       for (const d of result.data) {
@@ -306,7 +300,7 @@ class Workspace {
           ...(await this.createNotifications(
             notification.class.MentionInboxNotification,
             d.data,
-            await getMentionNotificationContent(client, txAttachedToDoc ?? txObject, txObject, d.data.markup, sender),
+            await getMentionNotificationContent(client, doc, txObject, d.data.markup, sender),
             doc,
             tx.modifiedOn,
             tx.modifiedBy,

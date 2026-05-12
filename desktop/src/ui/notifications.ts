@@ -43,7 +43,9 @@ import { get } from 'svelte/store'
 
 let client: TxOperations
 
-async function hydrateNotificationAsYouCan (lastNotification: InboxNotification): Promise<{ title: string, body: string } | undefined> {
+async function hydrateNotificationAsYouCan (
+  lastNotification: InboxNotification
+): Promise<{ title: string, body: string } | undefined> {
   // Let's try to do our best and figure out from who we have an notification
 
   if (client === undefined) {
@@ -55,30 +57,28 @@ async function hydrateNotificationAsYouCan (lastNotification: InboxNotification)
   }
 
   let intlTitle: IntlString | undefined
-  let titleParams
+  let intlParams: Record<string, any> = {}
 
   if (lastNotification._class === notification.class.CommonInboxNotification) {
     intlTitle = (lastNotification as CommonInboxNotification).message
-    titleParams = (lastNotification as CommonInboxNotification).props
+    intlParams = { ...(lastNotification as CommonInboxNotification).props }
   } else if (lastNotification._class === notification.class.ActivityInboxNotification) {
     intlTitle = (lastNotification as ActivityInboxNotification).title
-    titleParams = (lastNotification as ActivityInboxNotification).intlParams
+    intlParams = { ...(lastNotification as ActivityInboxNotification).intlParams }
   }
 
   if (intlTitle !== undefined && lastNotification.body !== undefined) {
-    const intlParams = lastNotification.intlParams ?? {}
-
     if (lastNotification.intlParamsNotLocalized !== undefined) {
       for (const param in lastNotification.intlParamsNotLocalized) {
         const value = lastNotification.intlParamsNotLocalized[param]
-        intlParams[param] = await translate(value, {})
+        intlParams[param] = await translate(value, intlParams)
       }
     }
-    const title = await translate(intlTitle, titleParams ?? {})
-    const body = await translate(lastNotification.body, lastNotification.intlParams ?? {})
+    const title = await translate(intlTitle, intlParams)
+    const body = await translate(lastNotification.body, intlParams)
 
     // Do not show notification if there is no translate
-    if (title === intlTitle as string || body === lastNotification.body as string) {
+    if (title === intlTitle || body === lastNotification.body) {
       return undefined
     }
 
@@ -88,7 +88,7 @@ async function hydrateNotificationAsYouCan (lastNotification: InboxNotification)
   const title = await translate(desktopPreferences.string.HaveGotANotification, {})
 
   // Do not show notification if there is no translate
-  if (title === lastNotification.title as string) {
+  if (title === (lastNotification.title as string)) {
     return undefined
   }
 
@@ -184,7 +184,7 @@ export function configureNotifications (): void {
     const isCommunicationEnabled = getMetadata(communication.metadata.Enabled) ?? false
 
     if (isCommunicationEnabled) {
-      notificationsCountQuery.query({ read: false, limit: 1, strict: true, total: true }, res => {
+      notificationsCountQuery.query({ read: false, limit: 1, strict: true, total: true }, (res) => {
         newUnreadNotifications = res.getTotal()
 
         updateBadge()
@@ -197,37 +197,42 @@ export function configureNotifications (): void {
 
     function startNotificationQuery (): void {
       if (!isCommunicationEnabled) return
-      notificationsQuery.query({
-        read: false,
-        limit: 1,
-        strict: true,
-        order: SortingOrder.Descending,
-        created: {
-          greaterOrEqual: new Date()
+      notificationsQuery.query(
+        {
+          read: false,
+          limit: 1,
+          strict: true,
+          order: SortingOrder.Descending,
+          created: {
+            greaterOrEqual: new Date()
+          }
+        },
+        (res) => {
+          if (!preferences.showNotifications) return
+          const notification = res.getResult()[0]
+          if (notification !== undefined && !notificationHistory.has(notification.id)) {
+            notificationHistory.set(notification.id, notification.created.getTime())
+            electronAPI.sendNotification({
+              silent: !preferences.playSound,
+              application: inboxId,
+              title: notification.content.title,
+              body: `${notification.content.senderName}: ${notification.content.shortText}`,
+              cardId: notification.cardId,
+              objectId: notification.content.objectId,
+              objectClass: notification.content.objectClass
+            })
+          }
         }
-      }, (res) => {
-        if (!preferences.showNotifications) return
-        const notification = res.getResult()[0]
-        if (notification !== undefined && !notificationHistory.has(notification.id)) {
-          notificationHistory.set(notification.id, notification.created.getTime())
-          electronAPI.sendNotification({
-            silent: !preferences.playSound,
-            application: inboxId,
-            title: notification.content.title,
-            body: `${notification.content.senderName}: ${notification.content.shortText}`,
-            cardId: notification.cardId,
-            objectId: notification.content.objectId,
-            objectClass: notification.content.objectClass
-          })
-        }
-      })
+      )
     }
 
     if (preferences.showNotifications) {
       startNotificationQuery()
     }
 
-    async function handleNotifications (notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>): Promise<void> {
+    async function handleNotifications (
+      notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+    ): Promise<void> {
       const inboxData = getDisplayInboxData(notificationsByContext)
 
       if (notificationHistory.size === 0) {
@@ -238,7 +243,9 @@ export function configureNotifications (): void {
         }
       }
 
-      const unViewedNotifications: InboxNotification[] = Array.from(inboxData.values()).flat().filter(({ isViewed }) => !isViewed)
+      const unViewedNotifications: InboxNotification[] = Array.from(inboxData.values())
+        .flat()
+        .filter(({ isViewed }) => !isViewed)
       // const notificationsAfterLaunch = notifications.filter((p) => p.txes.some((p) => p.modifiedOn > initTimestamp))
       // We need to get the most recent notifications
 
@@ -281,7 +288,7 @@ export function configureNotifications (): void {
       }
     }
 
-    inboxClient.inboxNotificationsByContext.subscribe(data => {
+    inboxClient.inboxNotificationsByContext.subscribe((data) => {
       void handleNotifications(data)
     })
 

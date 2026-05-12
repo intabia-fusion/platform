@@ -4,20 +4,20 @@
   import presentation, { type OverviewStatistics } from '@hcengineering/presentation'
   import { Button, DropdownLabels, Expandable, IconArrowRight, ticker } from '@hcengineering/ui'
   import MetricsStats from './MetricsStats.svelte'
+  import TopProblems from './statistics/TopProblems.svelte'
+  import { fetchStatsJson } from './statistics/statsFetch'
 
   const token: string = getMetadata(presentation.metadata.Token) ?? ''
 
   const endpoint = getMetadata(presentation.metadata.StatsUrl)
 
   async function fetchStats (time: number): Promise<void> {
-    await fetch(endpoint + `/api/v1/overview?token=${token}`, {})
-      .then(async (json) => {
-        data = await json.json()
-        admin = data?.admin ?? false
-      })
-      .catch((err) => {
-        console.error(err)
-      })
+    try {
+      data = await fetchStatsJson<OverviewStatistics>(endpoint + `/api/v1/overview?token=${token}`)
+      admin = data?.admin ?? false
+    } catch (err) {
+      console.error(err)
+    }
   }
   let data: OverviewStatistics | undefined
 
@@ -65,6 +65,14 @@
     <DropdownLabels bind:selected={sortingOrder} items={sortOrder}></DropdownLabels>
   </div>
   <div class="flex-column p-3 h-full" style:overflow="auto">
+    {#if admin}
+      <Expandable bordered expandable showChevron>
+        <svelte:fragment slot="title">
+          <div class="ml-2">Top Problems</div>
+        </svelte:fragment>
+        <TopProblems />
+      </Expandable>
+    {/if}
     {#each Object.entries(data.data).sort((a, b) => a[1].serviceName.localeCompare(b[1].serviceName)) as kv}
       <Expandable bordered expandable showChevron>
         <svelte:fragment slot="title">

@@ -222,7 +222,8 @@
   iconProps={{ ...item.iconProps, value: item.object }}
   {count}
   title={item.title}
-  description={item.description}
+  subTitle={item.subTitle}
+  identifier={item.identifier}
   secondaryNotifyMarker={(context?.lastView ?? 0) < (context?.lastUpdate ?? 0) &&
     (context?.lastNotifiedMessage ?? 0) < (context?.lastUpdate ?? 0)}
   {actions}

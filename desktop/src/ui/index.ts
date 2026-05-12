@@ -47,7 +47,18 @@ import { isOwnerOrMaintainer, getCurrentAccount, Ref } from '@hcengineering/core
 import { configurePlatform } from './platform'
 import { setupTitleBarMenu } from './titleBarMenu'
 import { defineScreenShare, defineGetDisplayMedia } from './screenShare'
-import { CommandLogout, CommandSelectWorkspace, CommandOpenSettings, CommandOpenInbox, CommandOpenPlanner, CommandOpenOffice, CommandOpenApplication, LaunchApplication, NotificationParams, CommandCloseTab } from './types'
+import {
+  CommandLogout,
+  CommandSelectWorkspace,
+  CommandOpenSettings,
+  CommandOpenInbox,
+  CommandOpenPlanner,
+  CommandOpenOffice,
+  CommandOpenApplication,
+  LaunchApplication,
+  NotificationParams,
+  CommandCloseTab
+} from './types'
 import { ipcMainExposed } from './typesUtils'
 import { IpcMessage } from './ipcMessages'
 
@@ -85,11 +96,14 @@ window.addEventListener('DOMContentLoaded', () => {
         })
 
         if (menuBar.lastUsedThemeIsUnknown()) {
-          void ipcMain.isOsUsingDarkTheme().then((isDarkTheme) => {
-            menuBar.setTheme(isDarkTheme ? ThemeVariant.Dark : ThemeVariant.Light)
-          }).catch(() => {
-            menuBar.setTheme(ThemeVariant.Light) // fallback
-          })
+          void ipcMain
+            .isOsUsingDarkTheme()
+            .then((isDarkTheme) => {
+              menuBar.setTheme(isDarkTheme ? ThemeVariant.Dark : ThemeVariant.Light)
+            })
+            .catch(() => {
+              menuBar.setTheme(ThemeVariant.Light) // fallback
+            })
         }
       })
     }
@@ -219,24 +233,25 @@ window.addEventListener('DOMContentLoaded', () => {
     if (notificationParams.objectId != null && notificationParams.objectClass != null) {
       const encodedObjectURI = encodeObjectURI(notificationParams.objectId, notificationParams.objectClass)
       const notificationLocation = {
-        path: notificationParams.threadId != null
-          ? [workbenchId, workspace, app, encodedObjectURI, notificationParams.threadId]
-          : [workbenchId, workspace, app, encodedObjectURI],
+        path:
+          notificationParams.threadId != null
+            ? [workbenchId, workspace, app, encodedObjectURI, notificationParams.threadId]
+            : [workbenchId, workspace, app, encodedObjectURI],
         fragment: undefined,
-        query: notificationParams.messageId != null
-          ? { message: notificationParams.messageId }
-          : undefined
+        query: notificationParams.messageId != null ? { message: notificationParams.messageId } : undefined
       }
 
-      void resolveLocation(notificationLocation).then((resolvedLocation) => {
-        if (resolvedLocation?.loc != null) {
-          navigate(resolvedLocation.loc)
-        } else {
-          navigateToUrl(`${workbenchId}/${workspace}/${app}/${encodedObjectURI}`)
-        }
-      }).catch(() => {
-        navigateToUrl(getBasicNotificationPath(workspace, app))
-      })
+      void resolveLocation(notificationLocation)
+        .then((resolvedLocation) => {
+          if (resolvedLocation?.loc != null) {
+            navigate(resolvedLocation.loc)
+          } else {
+            navigateToUrl(`${workbenchId}/${workspace}/${app}/${encodedObjectURI}`)
+          }
+        })
+        .catch(() => {
+          navigateToUrl(getBasicNotificationPath(workspace, app))
+        })
     } else {
       // Fallback to basic notification navigation
       navigateToUrl(getBasicNotificationPath(workspace, app))
@@ -294,9 +309,12 @@ window.addEventListener('DOMContentLoaded', () => {
   })
 
   ipcMain.on('backup', (evt: any, ...args: any) => {
-    pushRootBarProgressComponent('backup',
+    pushRootBarProgressComponent(
+      'backup',
       getEmbeddedLabel('Backup'),
-      () => { return args[0] },
+      () => {
+        return args[0]
+      },
       () => {
         ipcMain.cancelBackup()
       },

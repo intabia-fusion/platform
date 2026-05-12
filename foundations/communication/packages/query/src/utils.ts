@@ -22,11 +22,18 @@ import {
   type FindNotificationsParams,
   type Message,
   MessagesDoc,
-  type Notification, TranslatedMessage, TranslatedMessagesDoc
+  type Notification,
+  TranslatedMessage,
+  TranslatedMessagesDoc
 } from '@hcengineering/communication-types'
 import { type HulylakeWorkspaceClient } from '@hcengineering/hulylake-client'
 
-export async function loadTranslatedMessages (client: HulylakeWorkspaceClient, cardId: CardID, blobId: BlobID, lang: string): Promise<TranslatedMessage[]> {
+export async function loadTranslatedMessages (
+  client: HulylakeWorkspaceClient,
+  cardId: CardID,
+  blobId: BlobID,
+  lang: string
+): Promise<TranslatedMessage[]> {
   try {
     const res = await client.getJson<TranslatedMessagesDoc>(`${cardId}/messages/${lang}/${blobId}`)
     if (res?.body == null) return []
@@ -37,7 +44,14 @@ export async function loadTranslatedMessages (client: HulylakeWorkspaceClient, c
   }
 }
 
-export async function loadMessages (client: HulylakeWorkspaceClient, cardId: CardID, blobId: BlobID, params: FindMessagesParams, options?: FindMessagesOptions, cache?: Map<BlobID, Promise<MessagesDoc | undefined>>): Promise<Message[]> {
+export async function loadMessages (
+  client: HulylakeWorkspaceClient,
+  cardId: CardID,
+  blobId: BlobID,
+  params: FindMessagesParams,
+  options?: FindMessagesOptions,
+  cache?: Map<BlobID, Promise<MessagesDoc | undefined>>
+): Promise<Message[]> {
   const doc = await loadMessagesDoc(client, cardId, blobId, cache)
 
   if (doc === undefined) {
@@ -47,7 +61,11 @@ export async function loadMessages (client: HulylakeWorkspaceClient, cardId: Car
   return parseMessagesDoc(doc, params, options)
 }
 
-async function requestMessagesDoc (client: HulylakeWorkspaceClient, cardId: CardID, blobId: BlobID): Promise<MessagesDoc | undefined> {
+async function requestMessagesDoc (
+  client: HulylakeWorkspaceClient,
+  cardId: CardID,
+  blobId: BlobID
+): Promise<MessagesDoc | undefined> {
   const res = await client.getJson<MessagesDoc>(`${cardId}/messages/${blobId}`, {
     maxRetries: 3,
     isRetryable: () => true,

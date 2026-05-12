@@ -14,6 +14,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -31,6 +32,7 @@ type errorMsg struct {
 
 type diffMsg struct {
 	hash string
+	key  string // hash or hash|file identifying which loader filled it
 	diff string
 }
 
@@ -45,6 +47,20 @@ type migrateResultMsg struct {
 	hashes   []string
 	worktree string
 	err      error
+}
+
+type applyResultMsg struct {
+	branch   string
+	worktree string
+	applied  []string
+	failed   []string
+	err      error
+}
+
+type loadFileDiffMsg struct {
+	hash string
+	file string
+	diff string
 }
 
 // progressMsg is emitted while long operations are running
@@ -108,32 +124,20 @@ func loadIncoming(upstream string) tea.Cmd {
 }
 
 func loadOutgoing(upstream string) tea.Cmd {
-	// Channel buffer big enough to avoid stalls between progress ticks and UI reads
 	loadProgressCh = make(chan tea.Msg, 8)
 	go func() {
 		defer close(loadProgressCh)
-		commits, err := GetOutgoingCommits(upstream)
+		files, err := GetChangedFilesVsUpstream(upstream)
 		if err != nil {
 			loadProgressCh <- errorMsg{err: err}
 			return
 		}
-		total := len(commits)
 		started := time.Now()
-		loadProgressCh <- progressMsg{done: 0, total: total, started: started}
-		files := make(map[string][]string, total)
-		lastTick := time.Now()
-		for i, c := range commits {
-			fs, err := GetCommitFiles(c.Hash)
-			if err == nil {
-				files[c.Hash] = fs
-			}
-			// Emit progress periodically (every 50ms or every 10 commits)
-			if time.Since(lastTick) > 50*time.Millisecond || (i+1)%10 == 0 || i == total-1 {
-				loadProgressCh <- progressMsg{done: i + 1, total: total, started: started}
-				lastTick = time.Now()
-			}
-		}
-		loadProgressCh <- commitsMsg{commits: commits, files: files}
+		loadProgressCh <- progressMsg{done: len(files), total: len(files), started: started}
+		// Synthesize a single pseudo-commit holding all files so that existing
+		// outgoingFiles map and tree builder keep working unchanged.
+		fmap := map[string][]string{"HEAD": files}
+		loadProgressCh <- commitsMsg{commits: nil, files: fmap}
 	}()
 	return waitForProgress()
 }
@@ -144,7 +148,7 @@ func loadDiff(hash string) tea.Cmd {
 		if err != nil {
 			return errorMsg{err: err}
 		}
-		return diffMsg{hash: hash, diff: diff}
+		return diffMsg{hash: hash, key: hash, diff: diff}
 	}
 }
 
@@ -159,7 +163,7 @@ func loadDiffFiltered(hash, folder string) tea.Cmd {
 		if err != nil {
 			return errorMsg{err: err}
 		}
-		return diffMsg{hash: hash, diff: diff}
+		return diffMsg{hash: hash, key: hash + "|" + folder, diff: diff}
 	}
 }
 
@@ -170,8 +174,35 @@ func loadDiffForFiles(hash string, files []string) tea.Cmd {
 		if err != nil {
 			return errorMsg{err: err}
 		}
-		return diffMsg{hash: hash, diff: diff}
+		key := hash
+		if len(files) > 0 {
+			key = hash + "|" + strings.Join(files, ",")
+		}
+		return diffMsg{hash: hash, key: key, diff: diff}
 	}
+}
+
+// loadDiffForRow loads diff for the current central row.
+//
+//	rowFile   - cumulative diff of file: upstream...HEAD
+//	rowCommit - full commit diff (incoming flow)
+func (m Model) loadDiffForRow(r centerRow) tea.Cmd {
+	if r.kind == rowFile {
+		upstream := m.upstream
+		file := r.file
+		return func() tea.Msg {
+			diff, err := GetFileDiffVsUpstream(upstream, file)
+			if err != nil {
+				return errorMsg{err: err}
+			}
+			return diffMsg{hash: "", key: "file:" + file, diff: diff}
+		}
+	}
+	if r.itemIdx < 0 || r.itemIdx >= len(m.items) {
+		return nil
+	}
+	hash := m.items[r.itemIdx].commit.Hash
+	return m.loadDiffCmd(hash)
 }
 
 // loadDiffCmd picks the right diff loader based on mode/folder/partial state.
@@ -187,6 +218,44 @@ func (m Model) loadDiffCmd(hash string) tea.Cmd {
 		}
 	}
 	return loadDiff(hash)
+}
+
+// applyFilesCmd applies cumulative diff (upstream...HEAD) of each given file
+// to the outgoing worktree. If session.Worktree is empty, creates worktree
+// from upstream first. Patches go into working tree (no commit, no index).
+func applyFilesCmd(session *Session, branch, upstream string, files []string) tea.Cmd {
+	return func() tea.Msg {
+		if session.Worktree == "" {
+			repoRoot, err := GitExec("rev-parse", "--show-toplevel")
+			if err != nil {
+				return applyResultMsg{err: fmt.Errorf("repo root: %w", err)}
+			}
+			root := trimNL(repoRoot)
+			wtDir := filepath.Join(filepath.Dir(root), "merges", branch)
+			if err := WorktreeAdd(wtDir, branch, upstream); err != nil {
+				return applyResultMsg{err: fmt.Errorf("worktree add: %w", err)}
+			}
+			session.Branch = branch
+			session.Worktree = wtDir
+			if err := session.Save(); err != nil {
+				return applyResultMsg{err: fmt.Errorf("session save: %w", err)}
+			}
+		}
+		var applied, failed []string
+		for _, f := range files {
+			if err := ApplyFileFullDiff(session.Worktree, upstream, f); err != nil {
+				failed = append(failed, f)
+				continue
+			}
+			applied = append(applied, f)
+		}
+		return applyResultMsg{
+			branch:   session.Branch,
+			worktree: session.Worktree,
+			applied:  applied,
+			failed:   failed,
+		}
+	}
 }
 
 // migrateCmd creates a new branch from upstream and cherry-picks the selected

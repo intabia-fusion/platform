@@ -13,7 +13,8 @@
 
 import { DbAdapter } from '@hcengineering/communication-sdk-types'
 import type {
-  CardID, FindMessagesOptions,
+  CardID,
+  FindMessagesOptions,
   Message,
   MessageID,
   MessageMeta,
@@ -41,7 +42,11 @@ export class LowLevelClient {
     private readonly metadata: Metadata,
     private readonly workspace: WorkspaceUuid
   ) {
-    this.lake = getWorkspaceClient(metadata.hulylakeUrl, workspace, generateToken(systemAccountUuid, workspace, undefined, metadata.secret))
+    this.lake = getWorkspaceClient(
+      metadata.hulylakeUrl,
+      workspace,
+      generateToken(systemAccountUuid, workspace, undefined, metadata.secret)
+    )
   }
 
   async findMessage (cardId: CardID, messageId: MessageID, options?: FindMessagesOptions): Promise<Message | undefined> {
@@ -50,16 +55,27 @@ export class LowLevelClient {
       return undefined
     }
 
-    return (await loadMessages(this.lake, meta.blobId, {
-      cardId,
-      id: messageId
-    }, options))[0]
+    return (
+      await loadMessages(
+        this.lake,
+        meta.blobId,
+        {
+          cardId,
+          id: messageId
+        },
+        options
+      )
+    )[0]
   }
 
-  async findPersonUuid (ctx: {
-    ctx: MeasureContext
-    account: Account
-  }, socialId: SocialID, requireAccount: boolean = false): Promise<PersonUuid | undefined> {
+  async findPersonUuid (
+    ctx: {
+      ctx: MeasureContext
+      account: Account
+    },
+    socialId: SocialID,
+    requireAccount: boolean = false
+  ): Promise<PersonUuid | undefined> {
     if (ctx.account.socialIds.includes(socialId)) {
       return ctx.account.uuid
     }

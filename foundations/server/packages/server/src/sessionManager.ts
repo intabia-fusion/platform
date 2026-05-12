@@ -41,9 +41,15 @@ import core, {
   SocialIdType,
   systemAccount,
   systemAccountUuid,
+  type Class,
+  type Doc,
+  type Ref,
   type Tx,
+  type TxCUD,
   TxFactory,
+  TxProcessor,
   type TxWorkspaceEvent,
+  type BulkUpdateEvent,
   type Version,
   versionToString,
   withContext,
@@ -929,12 +935,57 @@ export class TSessionManager implements SessionManager {
       const tt = it.session.getUser()
       return (target === undefined && !(exclude ?? []).includes(tt)) || (target?.includes(tt) ?? false)
     })
+    // Compute the set of classes that this broadcast touches. We include both
+    // objectClass and attachedToClass so collaborator-driven live queries on the
+    // parent doc also get refreshed after a drop.
+    const computeClasses = (txes: Tx[]): Ref<Class<Doc>>[] => {
+      const set = new Set<Ref<Class<Doc>>>()
+      for (const t of txes) {
+        if (TxProcessor.isExtendsCUD(t._class)) {
+          const cud = t as TxCUD<Doc>
+          if (cud.objectClass != null) set.add(cud.objectClass)
+          if (cud.attachedToClass != null) set.add(cud.attachedToClass)
+        }
+      }
+      return Array.from(set)
+    }
+    let cachedClasses: Ref<Class<Doc>>[] | null = null
+    const droppedClasses = (): Ref<Class<Doc>>[] => {
+      if (cachedClasses === null) cachedClasses = computeClasses(tx)
+      return cachedClasses
+    }
+    const buildRefreshTx = (classes: Ref<Class<Doc>>[]): TxWorkspaceEvent => ({
+      _id: generateId(),
+      _class: core.class.TxWorkspaceEvent,
+      event: WorkspaceEvent.BulkUpdate,
+      modifiedBy: core.account.System,
+      modifiedOn: Date.now(),
+      objectSpace: core.space.DerivedTx,
+      space: core.space.DerivedTx,
+      createdBy: core.account.System,
+      params: { _class: classes } satisfies BulkUpdateEvent
+    })
     function send (): void {
       const promises: Promise<void>[] = []
       for (const session of sessions) {
         try {
+          const sock = session.socket
+          // Slow client - drop tx for this socket and accumulate classes for a later refresh.
+          if (sock.isOverloaded?.() === true) {
+            sock.addDroppedClasses?.(droppedClasses())
+            ctx.measure('broadcast-dropped', tx.length)
+            continue
+          }
+          // Buffer drained enough - emit a single BulkUpdate event covering all dropped classes
+          // before delivering the current broadcast so client query cache invalidates.
+          const pending = sock.takePendingRefresh?.() ?? null
+          let outTx = tx
+          if (pending !== null && pending.length > 0) {
+            outTx = [buildRefreshTx(pending), ...tx]
+            ctx.measure('broadcast-flushed-refresh', pending.length)
+          }
           promises.push(
-            sendResponse(ctx, session.session, session.socket, { result: tx }).catch((err) => {
+            sendResponse(ctx, session.session, sock, { result: outTx }).catch((err) => {
               ctx.error('failed to send', err)
             })
           )

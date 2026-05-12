@@ -337,7 +337,7 @@
     gap: 0.5rem;
   }
 
-  .header .title-row > .form-button {
+  .header .title-row > :global(.form-button) {
     position: absolute;
     left: 0;
     top: 50%;

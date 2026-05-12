@@ -20,7 +20,9 @@ const createMockStore = (): { get: jest.Mock, set: jest.Mock } => {
   const store: Record<string, any> = {}
   return {
     get: jest.fn((key: string) => store[key]),
-    set: jest.fn((key: string, value: any) => { store[key] = value })
+    set: jest.fn((key: string, value: any) => {
+      store[key] = value
+    })
   }
 }
 
@@ -50,7 +52,7 @@ describe('Settings', () => {
 
       const actualUrl = systemUnderTest.readServerUrl()
 
-      expect(actualUrl).toBe('http://huly.local:8087')
+      expect(actualUrl).toBe('http://localhost:8087')
     })
 
     test('isDev is true and FRONT_URL is set', () => {

@@ -41,37 +41,35 @@ func (m *Model) rebuildTree() {
 		files:        map[string]bool{},
 		commitHashes: map[string]bool{},
 	}
-	for hash, files := range m.outgoingFiles {
-		for _, f := range files {
-			parts := strings.Split(f, "/")
-			cur := root
-			cur.commitHashes[hash] = true
-			for i := 0; i < len(parts)-1; i++ {
-				name := parts[i]
-				child, ok := cur.children[name]
-				if !ok {
-					fullPath := strings.Join(parts[:i+1], "/")
-					depth := i + 1
-					exp := false
-					if v, ok := prev[fullPath]; ok {
-						exp = v
-					}
-					child = &treeNode{
-						name:         name,
-						path:         fullPath,
-						depth:        depth,
-						expanded:     exp,
-						children:     map[string]*treeNode{},
-						files:        map[string]bool{},
-						commitHashes: map[string]bool{},
-					}
-					cur.children[name] = child
+	for _, f := range m.outgoingPaths {
+		parts := strings.Split(f, "/")
+		cur := root
+		cur.commitHashes[f] = true
+		for i := 0; i < len(parts)-1; i++ {
+			name := parts[i]
+			child, ok := cur.children[name]
+			if !ok {
+				fullPath := strings.Join(parts[:i+1], "/")
+				depth := i + 1
+				exp := false
+				if v, ok := prev[fullPath]; ok {
+					exp = v
 				}
-				cur = child
-				cur.commitHashes[hash] = true
+				child = &treeNode{
+					name:         name,
+					path:         fullPath,
+					depth:        depth,
+					expanded:     exp,
+					children:     map[string]*treeNode{},
+					files:        map[string]bool{},
+					commitHashes: map[string]bool{},
+				}
+				cur.children[name] = child
 			}
-			cur.files[parts[len(parts)-1]] = true
+			cur = child
+			cur.commitHashes[f] = true
 		}
+		cur.files[parts[len(parts)-1]] = true
 	}
 	m.tree = root
 	m.rebuildTreeFlat()

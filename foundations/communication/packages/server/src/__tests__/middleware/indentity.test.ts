@@ -125,10 +125,7 @@ describe('IdentityMiddleware', () => {
       await middleware.event(session, event, false)
 
       expect(event.personUuid).toBe(personUuid)
-      expect(findPersonUuidMock).toHaveBeenCalledWith(
-        { ctx: mockMeasureCtx, account: session.account },
-        socialId
-      )
+      expect(findPersonUuidMock).toHaveBeenCalledWith({ ctx: mockMeasureCtx, account: session.account }, socialId)
       expect(mockNext.event).toHaveBeenCalledWith(session, event, false)
     })
 
@@ -147,10 +144,7 @@ describe('IdentityMiddleware', () => {
       await middleware.event(session, event, false)
 
       expect(event.personUuid).toBe(personUuid)
-      expect(findPersonUuidMock).toHaveBeenCalledWith(
-        { ctx: mockMeasureCtx, account: session.account },
-        socialId
-      )
+      expect(findPersonUuidMock).toHaveBeenCalledWith({ ctx: mockMeasureCtx, account: session.account }, socialId)
       expect(mockNext.event).toHaveBeenCalledWith(session, event, false)
     })
 
@@ -179,7 +173,11 @@ describe('IdentityMiddleware', () => {
         type: MessageEventType.ThreadPatch,
         cardId: 'card-123' as CardID,
         messageId: 'msg-123' as MessageID,
-        operation: { opcode: 'update', threadId: 'thread-123' as CardID, update: { threadType: 'threadType' as CardType } }
+        operation: {
+          opcode: 'update',
+          threadId: 'thread-123' as CardID,
+          update: { threadType: 'threadType' as CardType }
+        }
       }
 
       await middleware.event(session, event, false)
@@ -261,11 +259,7 @@ describe('IdentityMiddleware', () => {
       const params = { contextId: 'ctx-123' as any }
       await middleware.findNotifications(session, params)
 
-      expect(mockNext.findNotifications).toHaveBeenCalledWith(
-        session,
-        { ...params, account: accountUuid },
-        undefined
-      )
+      expect(mockNext.findNotifications).toHaveBeenCalledWith(session, { ...params, account: accountUuid }, undefined)
     })
 
     it('should not enrich params for system account', async () => {
@@ -298,11 +292,7 @@ describe('IdentityMiddleware', () => {
       const params = { cardId: 'card-123' as CardID }
       await middleware.findLabels(session, params)
 
-      expect(mockNext.findLabels).toHaveBeenCalledWith(
-        session,
-        { ...params, account: accountUuid },
-        undefined
-      )
+      expect(mockNext.findLabels).toHaveBeenCalledWith(session, { ...params, account: accountUuid }, undefined)
     })
 
     it('should not enrich params for system account', async () => {

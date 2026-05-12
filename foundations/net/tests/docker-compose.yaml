@@ -3,7 +3,7 @@ services:
     image: hardcoreeng/network-pod
     pull_policy: never
     extra_hosts:
-      - 'huly.local:host-gateway'
+      - 'localhost:host-gateway'
     environment:
       - PORT=3737
       - HOST=*

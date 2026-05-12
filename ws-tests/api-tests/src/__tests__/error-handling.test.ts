@@ -48,10 +48,10 @@ describe('error-handling', () => {
   let accountClient: AccountClient
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://huly.local:8083')
+    config = await loadServerConfig('http://localhost:8083')
 
     apiWorkspace = await getWorkspaceToken(
-      'http://huly.local:8083',
+      'http://localhost:8083',
       {
         email: 'user1',
         password: '1234',

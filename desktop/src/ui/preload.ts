@@ -185,22 +185,32 @@ const expose: IPCMainExposed = {
 
   getScreenAccess: () => ipcRenderer.invoke(IpcMessage.GetScreenAccess),
   getScreenSources: () => ipcRenderer.invoke(IpcMessage.GetScreenSources),
-  cancelBackup: () => { ipcRenderer.send(IpcMessage.CancelBackup) },
-  startBackup: (token, endpoint, wsIds) => { ipcRenderer.send(IpcMessage.StartBackup, token, endpoint, wsIds) },
+  cancelBackup: () => {
+    ipcRenderer.send(IpcMessage.CancelBackup)
+  },
+  startBackup: (token, endpoint, wsIds) => {
+    ipcRenderer.send(IpcMessage.StartBackup, token, endpoint, wsIds)
+  },
 
-  rebuildJumpList: (spares: JumpListSpares) => { ipcRenderer.send(IpcMessage.RebuildUserJumpList, spares) },
+  rebuildJumpList: (spares: JumpListSpares) => {
+    ipcRenderer.send(IpcMessage.RebuildUserJumpList, spares)
+  },
 
   isMinimizeToTrayEnabled: async () => {
     return await ipcRenderer.invoke(IpcMessage.GetMinimizeToTrayEnabled)
   },
   onMinimizeToTraySettingChanged: (callback: (enabled: boolean) => void) => {
-    ipcRenderer.on(IpcMessage.MinimizeToTraySettingChanged, (_event, enabled: boolean) => { callback(enabled) })
+    ipcRenderer.on(IpcMessage.MinimizeToTraySettingChanged, (_event, enabled: boolean) => {
+      callback(enabled)
+    })
   },
   isAutoLaunchEnabled: async () => {
     return await ipcRenderer.invoke(IpcMessage.GetAutoLaunchEnabled)
   },
   onAutoLaunchSettingChanged: (callback: (enabled: boolean) => void) => {
-    ipcRenderer.on(IpcMessage.AutoLaunchSettingChanged, (_event, enabled: boolean) => { callback(enabled) })
+    ipcRenderer.on(IpcMessage.AutoLaunchSettingChanged, (_event, enabled: boolean) => {
+      callback(enabled)
+    })
   }
 }
 contextBridge.exposeInMainWorld('electron', expose)

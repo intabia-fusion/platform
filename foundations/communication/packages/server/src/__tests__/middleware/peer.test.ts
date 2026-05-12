@@ -19,8 +19,10 @@ import {
   Event,
   MessageEventType,
   NotificationEventType,
-  PeerEventType, RemovePatchEvent,
-  SessionData, UpdatePatchEvent
+  PeerEventType,
+  RemovePatchEvent,
+  SessionData,
+  UpdatePatchEvent
 } from '@hcengineering/communication-sdk-types'
 import {
   AccountUuid,
@@ -170,9 +172,7 @@ describe('PeerMiddleware', () => {
     })
 
     it('should fetch and attach peers for CreateMessage event', async () => {
-      const peers = [
-        { kind: 'card', members: [{ workspaceId: workspace, cardId: 'peer-card' }] }
-      ]
+      const peers = [{ kind: 'card', members: [{ workspaceId: workspace, cardId: 'peer-card' }] }]
       mockHead.findPeers.mockResolvedValue(peers)
 
       const event: Enriched<CreateMessageEvent> = {

@@ -26,7 +26,8 @@ import {
   type CardType,
   NotificationContent,
   NotificationType,
-  PeerKind, PeerExtra
+  PeerKind,
+  PeerExtra
 } from '@hcengineering/communication-types'
 import { Domain } from '@hcengineering/communication-sdk-types'
 
@@ -111,7 +112,10 @@ export type DbModelColumn<D extends Domain> = keyof DomainDbModel[D] & string
 
 export type DbModelColumnType<D extends Domain> = DomainDbModel[D][DbModelColumn<D>]
 
-export interface DbModelFilterRow<D extends Domain> { column: DbModelColumn<D>, value: DbModelColumnType<D> | DbModelColumnType<D>[] }
+export interface DbModelFilterRow<D extends Domain> {
+  column: DbModelColumn<D>
+  value: DbModelColumnType<D> | DbModelColumnType<D>[]
+}
 export type DbModelFilter<D extends Domain> = Array<DbModelFilterRow<D>>
 export type DbModelUpdate<D extends Domain> = Array<{
   column: DbModelColumn<D>

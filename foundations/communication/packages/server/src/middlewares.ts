@@ -19,13 +19,18 @@ import type {
   CardID,
   Collaborator,
   FindCollaboratorsParams,
-  FindLabelsParams, FindMessagesGroupParams, FindMessagesMetaParams,
+  FindLabelsParams,
+  FindMessagesGroupParams,
+  FindMessagesMetaParams,
   FindNotificationContextParams,
   FindNotificationsParams,
   FindPeersParams,
-  Label, MessageMeta, MessagesGroup,
+  Label,
+  MessageMeta,
+  MessagesGroup,
   Notification,
-  NotificationContext, Peer,
+  NotificationContext,
+  Peer,
   WorkspaceUuid
 } from '@hcengineering/communication-types'
 
@@ -80,7 +85,7 @@ export async function buildMiddlewares (
     metadata,
     workspace,
     client,
-    cadsWithPeers: new Set(peers.map(it => it.cardId))
+    cadsWithPeers: new Set(peers.map((it) => it.cardId))
   }
 
   return await Middlewares.create(ctx, context, createFns)
@@ -94,8 +99,7 @@ export class Middlewares {
   private constructor (
     private readonly ctx: MeasureContext,
     private readonly context: MiddlewareContext
-  ) {
-  }
+  ) {}
 
   static async create (
     ctx: MeasureContext,

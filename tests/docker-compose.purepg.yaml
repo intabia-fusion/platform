@@ -45,7 +45,7 @@ services:
     image: intabiafusion/datalake
     pull_policy: never
     extra_hosts:
-      - 'huly.local:host-gateway'
+      - 'localhost:host-gateway'
     depends_on:
       minio:
         condition: service_healthy

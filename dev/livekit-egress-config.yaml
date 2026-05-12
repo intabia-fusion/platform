@@ -1,5 +1,5 @@
 # LiveKit Egress config for local development
-# - Connects to self-hosted LiveKit at ws://huly.local:7880
+# - Connects to self-hosted LiveKit at ws://localhost:7880
 # - Redis is the redis container in dev compose (redis:6379)
 # - Uploads output to Minio running in dev compose (minio:9000)
 # - Buckets/credentials below are defaults for local Minio (minioadmin/minioadmin)
@@ -9,7 +9,7 @@ api_key: devkey
 api_secret: secret
 
 # Websocket URL for the running LiveKit server (as seen from containers)
-ws_url: ws://huly.local:7880
+ws_url: ws://host.docker.internal:7880
 
 # Allow insecure (non-wss / self-signed) connections in local dev
 insecure: true

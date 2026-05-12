@@ -87,6 +87,8 @@
           : {
               hidden: false
             }
+
+      const isSpace = hierarchy.isDerived(_class, core.class.Space)
       query.query(
         chunter.class.Chat,
         {
@@ -94,12 +96,11 @@
           account: me.uuid,
           attachedToClass: _class,
           ...searchQuery,
+          ...(isSpace ? { '$lookup.attachedTo.archived': false } : {}),
           '$lookup.attachedTo._id': { $exists: true }
         },
         (res) => {
-          const docs: { doc: Doc, chat: Chat }[] = res
-            .filter((it) => it.$lookup?.attachedTo != null)
-            .map((it) => ({ doc: it.$lookup?.attachedTo as Doc, chat: it }))
+          const docs: { doc: Doc, chat: Chat }[] = res.map((it) => ({ doc: it.$lookup?.attachedTo as Doc, chat: it }))
           objectsByClass = objectsByClass.set(_class, { docs, total: res.total })
         },
         {

@@ -14,7 +14,10 @@
 //
 
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import serverNotification from '@hcengineering/server-notification'
+import serverNotification, {
+  NOTIFICATION_BODY_SIZE,
+  PUSH_NOTIFICATION_TITLE_SIZE
+} from '@hcengineering/server-notification'
 import { AccountUuid, Class, concatLink, Doc, Hierarchy, Ref, Tx, TxCreateDoc, TxProcessor } from '@hcengineering/core'
 import notification, {
   ActivityInboxNotification,
@@ -44,7 +47,13 @@ async function createPush (
   receiverSpace: Ref<PersonSpace>,
   subscriptions: PushSubscription[]
 ): Promise<Tx | undefined> {
-  const { title, body } = await getTranslatedNotificationContent(n, control.branding?.defaultLanguage ?? 'en')
+  const { title: _title, body: _body } = await getTranslatedNotificationContent(
+    n,
+    control.branding?.defaultLanguage ?? 'en'
+  )
+
+  const title = _title.slice(0, PUSH_NOTIFICATION_TITLE_SIZE)
+  const body = _body.slice(0, NOTIFICATION_BODY_SIZE)
 
   const objectIdentity = await getObjectIdentity(n, control)
 

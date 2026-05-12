@@ -14,7 +14,22 @@
 //
 
 import { config as dotenvConfig } from 'dotenv'
-import { globalShortcut, Event, BrowserWindow, CookiesSetDetails, Notification, app, desktopCapturer, dialog, ipcMain, nativeImage, session, shell, systemPreferences, nativeTheme } from 'electron'
+import {
+  globalShortcut,
+  Event,
+  BrowserWindow,
+  CookiesSetDetails,
+  Notification,
+  app,
+  desktopCapturer,
+  dialog,
+  ipcMain,
+  nativeImage,
+  session,
+  shell,
+  systemPreferences,
+  nativeTheme
+} from 'electron'
 import contextMenu from 'electron-context-menu'
 import log from 'electron-log'
 import Store from 'electron-store'
@@ -183,16 +198,16 @@ function runTheApp (): void {
 
   function setupCookieHandler (config: Config): void {
     const normalizedAccountsUrl = config.ACCOUNTS_URL.endsWith('/') ? config.ACCOUNTS_URL : config.ACCOUNTS_URL + '/'
-    const urls = [
-      normalizedAccountsUrl,
-      normalizedAccountsUrl + '*'
-    ]
+    const urls = [normalizedAccountsUrl, normalizedAccountsUrl + '*']
 
     session.defaultSession.webRequest.onHeadersReceived({ urls }, handleSetCookie)
     session.fromPartition(sessionPartition).webRequest.onHeadersReceived({ urls }, handleSetCookie)
   }
 
-  function handleSetCookie (details: Electron.OnHeadersReceivedListenerDetails, callback: (headersReceivedResponse: Electron.HeadersReceivedResponse) => void): void {
+  function handleSetCookie (
+    details: Electron.OnHeadersReceivedListenerDetails,
+    callback: (headersReceivedResponse: Electron.HeadersReceivedResponse) => void
+  ): void {
     if (details.responseHeaders !== undefined) {
       for (const header in details.responseHeaders) {
         if (header.toLowerCase() === 'set-cookie') {
@@ -443,9 +458,17 @@ function runTheApp (): void {
 
     setupCookieHandler(config)
 
-    const updatesUrl = process.env.DESKTOP_UPDATES_URL ?? config.DESKTOP_UPDATES_URL ?? 'https://platform.intabia.ru/_dist'
+    const updatesUrl =
+      process.env.DESKTOP_UPDATES_URL ?? config.DESKTOP_UPDATES_URL ?? 'https://platform.intabia.ru/_dist'
     // NOTE: env format is: default_value;key1:value1;key2:value2...
-    const updatesChannels = (process.env.DESKTOP_UPDATES_CHANNEL ?? config.DESKTOP_UPDATES_CHANNELS ?? config.DESKTOP_UPDATES_CHANNEL ?? 'platform').split(';').map(c => c.trim().split(':'))
+    const updatesChannels = (
+      process.env.DESKTOP_UPDATES_CHANNEL ??
+      config.DESKTOP_UPDATES_CHANNELS ??
+      config.DESKTOP_UPDATES_CHANNEL ??
+      'platform'
+    )
+      .split(';')
+      .map((c) => c.trim().split(':'))
     const updateChannelsMap: Record<string, string> = {}
     for (const channelInfo of updatesChannels) {
       if (channelInfo.length === 1) {
@@ -534,15 +557,17 @@ function runTheApp (): void {
 
   ipcMain.handle(IpcMessage.GetScreenAccess, () => systemPreferences.getMediaAccessStatus('screen') === 'granted')
   ipcMain.handle(IpcMessage.GetScreenSources, () => {
-    return desktopCapturer.getSources({ types: ['window', 'screen'], fetchWindowIcons: true, thumbnailSize: { width: 225, height: 135 } }).then(async sources => {
-      return sources.map((source: any) => {
-        return {
-          ...source,
-          appIconURL: source.appIcon?.toDataURL(),
-          thumbnailURL: source.thumbnail.toDataURL()
-        }
+    return desktopCapturer
+      .getSources({ types: ['window', 'screen'], fetchWindowIcons: true, thumbnailSize: { width: 225, height: 135 } })
+      .then(async (sources) => {
+        return sources.map((source: any) => {
+          return {
+            ...source,
+            appIconURL: source.appIcon?.toDataURL(),
+            thumbnailURL: source.thumbnail.toDataURL()
+          }
+        })
       })
-    })
   })
 
   ipcMain.handle('get-minimize-to-tray-enabled', () => {

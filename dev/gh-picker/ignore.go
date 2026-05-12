@@ -29,11 +29,13 @@ const (
 	KindMigrated IgnoreKind = "migrated"
 )
 
-// IgnoreStore holds all ignored hashes grouped by kind
+// IgnoreStore holds all ignored hashes grouped by kind, plus per-file applied pairs.
 type IgnoreStore struct {
 	Incoming map[string]bool
 	Outgoing map[string]bool
 	Migrated map[string]bool
+	// Applied: hash -> set of file paths already applied to outgoing worktree.
+	Applied map[string]map[string]bool
 }
 
 // NewIgnoreStore creates empty store
@@ -42,6 +44,7 @@ func NewIgnoreStore() *IgnoreStore {
 		Incoming: map[string]bool{},
 		Outgoing: map[string]bool{},
 		Migrated: map[string]bool{},
+		Applied:  map[string]map[string]bool{},
 	}
 }
 
@@ -53,7 +56,11 @@ func ignoreFilePath() (string, error) {
 	return filepath.Join(strings.TrimSpace(out), ignoreFileName), nil
 }
 
-// LoadIgnoreStore reads ignore file. Format: "<kind> <hash>" per line.
+// LoadIgnoreStore reads ignore file. Format:
+//
+//	"<kind> <hash>"          - ignore/migrated marker
+//	"applied <hash> <file>"  - per-file applied marker
+//
 // Bare hash lines treated as legacy incoming.
 func LoadIgnoreStore() (*IgnoreStore, error) {
 	s := NewIgnoreStore()
@@ -80,14 +87,23 @@ func LoadIgnoreStore() (*IgnoreStore, error) {
 			s.Incoming[parts[0]] = true
 			continue
 		}
-		kind, hash := IgnoreKind(parts[0]), parts[1]
+		kind := IgnoreKind(parts[0])
 		switch kind {
+		case "applied":
+			if len(parts) < 3 {
+				continue
+			}
+			hash, file := parts[1], strings.Join(parts[2:], " ")
+			if s.Applied[hash] == nil {
+				s.Applied[hash] = map[string]bool{}
+			}
+			s.Applied[hash][file] = true
 		case KindIncoming:
-			s.Incoming[hash] = true
+			s.Incoming[parts[1]] = true
 		case KindOutgoing:
-			s.Outgoing[hash] = true
+			s.Outgoing[parts[1]] = true
 		case KindMigrated:
-			s.Migrated[hash] = true
+			s.Migrated[parts[1]] = true
 		}
 	}
 	return s, sc.Err()
@@ -121,6 +137,13 @@ func (s *IgnoreStore) Save() error {
 	}
 	if err := write(KindMigrated, s.Migrated); err != nil {
 		return err
+	}
+	for hash, files := range s.Applied {
+		for file := range files {
+			if _, err := w.WriteString("applied " + hash + " " + file + "\n"); err != nil {
+				return err
+			}
+		}
 	}
 	return w.Flush()
 }
@@ -160,4 +183,30 @@ func (s *IgnoreStore) Has(kind IgnoreKind, hash string) bool {
 		return s.Migrated[hash]
 	}
 	return false
+}
+
+// MarkApplied records (hash,file) pair as applied.
+func (s *IgnoreStore) MarkApplied(hash, file string) {
+	if s.Applied[hash] == nil {
+		s.Applied[hash] = map[string]bool{}
+	}
+	s.Applied[hash][file] = true
+}
+
+// IsApplied reports whether (hash,file) has been applied.
+func (s *IgnoreStore) IsApplied(hash, file string) bool {
+	files := s.Applied[hash]
+	if files == nil {
+		return false
+	}
+	return files[file]
+}
+
+// countApplied returns total number of (hash,file) applied pairs.
+func countApplied(s *IgnoreStore) int {
+	n := 0
+	for _, files := range s.Applied {
+		n += len(files)
+	}
+	return n
 }

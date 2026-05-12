@@ -16,7 +16,8 @@ import { Event, MessageEventType, ReactionPatchEvent, SessionData } from '@hceng
 import {
   AccountUuid,
   CardID,
-  CardType, Emoji,
+  CardType,
+  Emoji,
   Markdown,
   MessageID,
   MessageType,

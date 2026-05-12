@@ -70,6 +70,7 @@ import { getPlatformQueue } from '@hcengineering/kafka'
 import { buildStorageFromConfig, createStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 import { program, type Command } from 'commander'
 import { updateField } from './workspace'
+import { dumpIndexes, syncIndexes } from './indexes'
 
 import { RatingCalculator, ratingEvents, type QueueRatingMessage } from '@hcengineering/pod-rating'
 
@@ -200,8 +201,12 @@ export function devTool (
   }
 
   const transactorUrl = process.env.TRANSACTOR_URL
-  if (transactorUrl === undefined) {
-    console.error('please provide transactor url.')
+  if (
+    transactorUrl === undefined &&
+    process.env.REGION_CONFIG === undefined &&
+    process.env.REGION_CONFIG_JSON === undefined
+  ) {
+    console.error('please provide transactor url or REGION_CONFIG/REGION_CONFIG_JSON.')
   }
 
   setMetadata(accountPlugin.metadata.Transactors, transactorUrl)
@@ -2541,6 +2546,23 @@ export function devTool (
       await filterMergedAccountsInMembers(toolCtx, dbUrl, accDb)
     }, dbUrl)
   })
+
+  program
+    .command('dump-indexes <file>')
+    .description('Dump indexes for all model domains to single YAML file (grouped by domain)')
+    .action(async (file: string) => {
+      const { dbUrl, txes } = prepareTools()
+      await dumpIndexes(toolCtx, dbUrl, txes, file)
+    })
+
+  program
+    .command('sync-indexes <file>')
+    .description('Create missing indexes from model + YAML file (dry-run by default)')
+    .option('--apply', 'actually create missing indexes (otherwise prints SQL only)', false)
+    .action(async (file: string, cmd: { apply: boolean }) => {
+      const { dbUrl, txes } = prepareTools()
+      await syncIndexes(toolCtx, dbUrl, txes, file, cmd.apply)
+    })
 
   // program
   // .command('perfomance')

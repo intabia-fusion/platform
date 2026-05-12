@@ -18,7 +18,11 @@ import { MenuBarAction, CommandLogout, CommandSelectWorkspace, CommandOpenSettin
 import { OsIntegration } from './osIntegration'
 import { IpcMessage } from '../ui/ipcMessages'
 
-export function dispatchMenuBarAction (mainWindow: BrowserWindow | undefined, action: MenuBarAction, os: OsIntegration | undefined): void {
+export function dispatchMenuBarAction (
+  mainWindow: BrowserWindow | undefined,
+  action: MenuBarAction,
+  os: OsIntegration | undefined
+): void {
   if (mainWindow == null) {
     return
   }

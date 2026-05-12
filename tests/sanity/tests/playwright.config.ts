@@ -8,6 +8,8 @@ if (process.env.TESTS_MAX_FAILURES !== undefined) {
 }
 
 const config: PlaywrightTestConfig = {
+  globalSetup: require.resolve('./global.setup.ts'),
+  globalTeardown: require.resolve('./global.teardown.ts'),
   projects: [
     { name: 'setup', testMatch: /.*\.setup\.ts/ },
     {

@@ -60,13 +60,22 @@ export const CONFIG_KIND = 'minio'
 export class MinioService implements StorageAdapter {
   client: Client
   constructor (readonly opt: MinioConfig) {
+    let endPoint = opt.endpoint
+    let port = opt.port
+    let useSSL = opt.useSSL === 'true'
+    if (endPoint.includes('://')) {
+      const u = new URL(endPoint)
+      endPoint = u.hostname
+      if (u.port !== '') port = parseInt(u.port)
+      useSSL = u.protocol === 'https:'
+    }
     this.client = new Client({
-      endPoint: opt.endpoint,
+      endPoint,
       accessKey: opt.accessKey,
       secretKey: opt.secretKey,
       region: opt.region ?? 'us-east-1',
-      port: opt.port ?? 9000,
-      useSSL: opt.useSSL === 'true'
+      port: port ?? 9000,
+      useSSL
     })
   }
 

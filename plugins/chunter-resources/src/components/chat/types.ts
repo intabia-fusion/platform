@@ -50,7 +50,8 @@ export interface ChatNavItemModel {
   id: Ref<Doc>
   object: Doc
   title: string
-  description?: string
+  subTitle?: string
+  identifier?: string
   icon: Asset | AnySvelteComponent | undefined
   iconSize?: IconSize
   iconProps: Record<string, any>

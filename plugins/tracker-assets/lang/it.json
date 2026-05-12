@@ -255,7 +255,7 @@
     "EightHoursLength": "Otto ore",
     "HourLabel": "h",
     "MinuteLabel": "m",
-    "AlreadyReportedThisDay": "Già registrato in questa giornata: {hours} h",
+    "AlreadyReportedThisDay": "Totale per questo giorno: {hours}h",
     "FixToEightHours": "Adatta a 8 h",
     "Saved": "Salvato...",
     "CreatedIssue": "Issue creata",
