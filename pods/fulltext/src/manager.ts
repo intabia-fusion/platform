@@ -137,21 +137,24 @@ export class WorkspaceManager {
     )
 
     let txMessages: number = 0
-    this.txConsumer = this.opt.queue.createConsumer<TxCUD<Doc> | TxDomainEvent<QueueSourced<Event>>>(
+    const txBatchSize = parseInt(process.env.FULLTEXT_TX_BATCH_SIZE ?? '100')
+    const txBatchTimeout = parseInt(process.env.FULLTEXT_TX_BATCH_TIMEOUT ?? '100')
+    this.txConsumer = this.opt.queue.createBatchConsumer<TxCUD<Doc> | TxDomainEvent<QueueSourced<Event>>>(
       this.ctx,
       QueueTopic.Tx,
       this.opt.queue.getClientId(),
-      async (ctx, msg, control) => {
+      async (ctx, msgs, control) => {
         clearTimeout(this.txInformer)
         this.txInformer = setTimeout(() => {
           this.ctx.info('tx message', { count: txMessages })
           txMessages = 0
         }, 5000)
 
-        txMessages += 1
+        txMessages += msgs.length
 
-        await this.processTransactions(msg, control)
-      }
+        await this.processTransactions(msgs, control)
+      },
+      { batchSize: txBatchSize, batchTimeout: txBatchTimeout }
     )
 
     this.txDeadLetterProducer = this.opt.queue.getProducer<TxCUD<Doc> | TxDomainEvent<QueueSourced<Event>>>(
@@ -161,30 +164,51 @@ export class WorkspaceManager {
   }
 
   private async processTransactions (
-    m: ConsumerMessage<TxCUD<Doc<Space>> | TxDomainEvent<QueueSourced<Event>>>,
+    msgs: ConsumerMessage<TxCUD<Doc<Space>> | TxDomainEvent<QueueSourced<Event>>>[],
     control: ConsumerControl
   ): Promise<void> {
-    try {
-      const ws = m.workspace
+    if (msgs.length === 0) return
 
-      let token: string
-      try {
-        token = generateToken(systemAccountUuid, ws, { service: 'fulltext' })
-      } catch (err: any) {
-        this.ctx.error('Error generating token', { err, systemAccountUuid, ws })
-        throw err
-      }
-
-      await this.withIndexer(this.ctx, ws, token, true, async (indexer) => {
-        await indexer.fulltext.processTransactions(this.ctx, [m.value], control)
-      })
-    } catch (err: any) {
-      if (this.txDeadLetterProducer !== undefined) {
-        await this.txDeadLetterProducer.send(this.ctx, m?.workspace ?? 'N/A', [m.value])
+    // Group by workspace - one batch may contain messages from multiple workspaces
+    const byWs = new Map<WorkspaceUuid, typeof msgs>()
+    for (const m of msgs) {
+      const arr = byWs.get(m.workspace)
+      if (arr === undefined) {
+        byWs.set(m.workspace, [m])
       } else {
-        this.ctx.error('Could not send failed transaction to dead letter queue - no producer available', { m })
+        arr.push(m)
       }
-      this.ctx.error('Could not process transactions', { err, m })
+    }
+
+    for (const [ws, wsMsgs] of byWs) {
+      try {
+        let token: string
+        try {
+          token = generateToken(systemAccountUuid, ws, { service: 'fulltext' })
+        } catch (err: any) {
+          this.ctx.error('Error generating token', { err, systemAccountUuid, ws })
+          throw err
+        }
+
+        const values = wsMsgs.map((m) => m.value)
+        await this.withIndexer(this.ctx, ws, token, true, async (indexer) => {
+          await indexer.fulltext.processTransactions(this.ctx, values, control)
+        })
+      } catch (err: any) {
+        if (this.txDeadLetterProducer !== undefined) {
+          await this.txDeadLetterProducer.send(
+            this.ctx,
+            ws ?? 'N/A',
+            wsMsgs.map((m) => m.value)
+          )
+        } else {
+          this.ctx.error('Could not send failed transactions to dead letter queue - no producer available', {
+            ws,
+            count: wsMsgs.length
+          })
+        }
+        this.ctx.error('Could not process transactions', { err, ws, count: wsMsgs.length })
+      }
     }
   }
 
