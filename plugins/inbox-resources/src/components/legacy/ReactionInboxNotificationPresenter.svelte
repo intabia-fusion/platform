@@ -14,11 +14,9 @@
 -->
 <script lang="ts">
   import { ActivityMessagePreview } from '@hcengineering/activity-resources'
-  import { ReactionInboxNotification } from '@hcengineering/notification'
   import { createQuery } from '@hcengineering/presentation'
   import { ActivityMessage } from '@hcengineering/activity'
   import { Doc } from '@hcengineering/core'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Person } from '@hcengineering/contact'
   import { Label } from '@hcengineering/ui'
   import { EmojiPresenter } from '@hcengineering/emoji-resources'
@@ -27,7 +25,7 @@
   import inbox from '../../plugin'
 
   export let object: Doc
-  export let value: ReactionInboxNotification
+  export let value: any
 
   const query = createQuery()
 
@@ -35,7 +33,7 @@
   let person: Person | undefined = undefined
 
   query.query(value.attachedToClass, { _id: value.attachedTo }, (res) => {
-    message = res[0]
+    message = res[0] as any
   })
   $: socialId = value.createdBy ?? value.modifiedBy
   $: date = new Date(value.createdOn ?? value.modifiedOn)

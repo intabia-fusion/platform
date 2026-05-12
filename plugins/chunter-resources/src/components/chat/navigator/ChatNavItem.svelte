@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import notification, { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
+  import notification, { DocNotifyContext } from '@hcengineering/notification'
   import { translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { Action, languageStore, lowercaseFirstLetter, Menu, showPopup } from '@hcengineering/ui'
@@ -60,7 +60,7 @@
 
   function countNotifications (
     context: DocNotifyContext | undefined,
-    notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+    notificationsByContext: Map<Ref<DocNotifyContext>, any[]>
   ): number | null {
     if (context === undefined) {
       return null
@@ -213,6 +213,10 @@
   }
 </script>
 
+<!--(context?.lastView ?? 0) < (context?.lastUpdate ?? 0) &&-->
+<!--(context?.lastNotifiedMessage ?? 0) < (context?.lastUpdate ?? 0)-->
+
+<!--context?.settings?.mode === 'mute'-->
 <NavItem
   _id={item.id}
   icon={item.icon}
@@ -224,11 +228,10 @@
   title={item.title}
   subTitle={item.subTitle}
   identifier={item.identifier}
-  secondaryNotifyMarker={(context?.lastView ?? 0) < (context?.lastUpdate ?? 0) &&
-    (context?.lastNotifiedMessage ?? 0) < (context?.lastUpdate ?? 0)}
+  secondaryNotifyMarker={false}
   {actions}
   {type}
-  muted={context?.settings?.mode === 'mute'}
+  muted={false}
   {pressed}
   on:click={() => {
     const select = { chat: item.chat, object: item.object }

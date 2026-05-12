@@ -30,12 +30,7 @@ import core, {
   TxCUD,
   TxUpdateDoc
 } from '@hcengineering/core'
-import notification, {
-  InboxNotification,
-  MentionInboxNotification,
-  NotificationProviderSetting,
-  NotificationType
-} from '@hcengineering/notification'
+import notification, { NotificationProviderSetting, NotificationType } from '@hcengineering/notification'
 import { getAccountBySocialId } from '@hcengineering/server-contact'
 import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@hcengineering/server-core'
 import {
@@ -186,7 +181,7 @@ function activityMessageToHtml (message: ActivityMessage): string | undefined {
 async function getTranslatedData (
   control: TriggerControl,
   doc: Doc,
-  inboxNotification: InboxNotification,
+  inboxNotification: any,
   message?: ActivityMessage
 ): Promise<{
     title: string
@@ -196,21 +191,21 @@ async function getTranslatedData (
   }> {
   const { hierarchy } = control
 
-  let { title, body } = await getTranslatedNotificationContent(
+  const { title, body } = await getTranslatedNotificationContent(
     inboxNotification,
     control.branding?.defaultLanguage ?? 'en'
   )
   let quote: string | undefined
 
-  if (hierarchy.isDerived(inboxNotification._class, notification.class.MentionInboxNotification)) {
-    const markup = message?.message ?? (inboxNotification as MentionInboxNotification).markup
-    body = markup !== undefined ? jsonToHTML(markupToJSON(markup)) : body
-  } else if (message !== undefined) {
-    const html = activityMessageToHtml(message)
-    if (html !== undefined) {
-      body = html
-    }
-  }
+  // if (hierarchy.isDerived(inboxNotification._class, notification.class.MentionInboxNotification)) {
+  //   const markup = message?.message ?? (inboxNotification as MentionInboxNotification).markup
+  //   body = markup !== undefined ? jsonToHTML(markupToJSON(markup)) : body
+  // } else if (message !== undefined) {
+  //   const html = activityMessageToHtml(message)
+  //   if (html !== undefined) {
+  //     body = html
+  //   }
+  // }
 
   if (hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
     const html = activityMessageToHtml(doc as ActivityMessage)
@@ -242,10 +237,10 @@ function hasAttachments (doc: ActivityMessage | undefined, hierarchy: Hierarchy)
 
 const telegramNotificationCacheKey = 'telegram.notification.cache'
 
-async function NotificationsHandler (txes: TxCreateDoc<InboxNotification>[], control: TriggerControl): Promise<Tx[]> {
+async function NotificationsHandler (txes: TxCreateDoc<any>[], control: TriggerControl): Promise<Tx[]> {
   if (control.queue === undefined) return []
 
-  const all: InboxNotification[] = txes
+  const all: any[] = txes
     .map((tx) => TxProcessor.createDoc2Doc(tx))
     .filter((it) => (it.allowedProviders[telegram.providers.TelegramNotificationProvider]?.length ?? 0) > 0)
 
@@ -266,7 +261,7 @@ async function NotificationsHandler (txes: TxCreateDoc<InboxNotification>[], con
 async function processNotification (
   control: TriggerControl,
   producer: PlatformQueueProducer<TelegramQueueMessage>,
-  n: InboxNotification
+  n: any
 ): Promise<void> {
   const cache: Map<Ref<Doc>, Doc> = control.contextCache.get(telegramNotificationCacheKey) ?? new Map()
   control.contextCache.set(telegramNotificationCacheKey, cache)

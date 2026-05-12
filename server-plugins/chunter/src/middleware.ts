@@ -22,7 +22,6 @@ import core, {
   type FindOptions,
   type FindResult
 } from '@hcengineering/core'
-import notification, { InboxNotification } from '@hcengineering/notification'
 import chunter, { Chat, type DirectMessage } from '@hcengineering/chunter'
 import { PersonSpace } from '@hcengineering/contact'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
@@ -41,32 +40,32 @@ export class ChunterMiddleware extends BaseMiddleware {
 
   async tx (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
     const { hierarchy } = this.context
-    const factory = new TxFactory(core.account.System, true)
+    // const factory = new TxFactory(core.account.System, true)
 
     for (const _tx of txes) {
       if (!TxProcessor.isExtendsCUD(_tx._class)) continue
       const tx = _tx as TxCUD<Doc>
-      if (
-        _tx._class === core.class.TxCreateDoc &&
-        hierarchy.isDerived(tx.objectClass, notification.class.InboxNotification)
-      ) {
-        if (hierarchy.isDerived(tx.objectClass, notification.class.ReactionInboxNotification)) continue
-        if (
-          hierarchy.isDerived(tx.objectClass, notification.class.CommonInboxNotification) &&
-          !hierarchy.isDerived(tx.objectClass, notification.class.MentionInboxNotification)
-        ) {
-          continue
-        }
-
-        const createTx = _tx as TxCreateDoc<InboxNotification>
-        const n = TxProcessor.createDoc2Doc(createTx)
-        const chats = await this.getHiddenChats(n.objectId)
-
-        const ttxes = this.getUnhideChatsTx(factory, n.objectId, chats)
-        if (ttxes.length > 0) {
-          await this.context.derived?.tx(ctx, ttxes)
-        }
-      }
+      // if (
+      //   _tx._class === core.class.TxCreateDoc &&
+      //   hierarchy.isDerived(tx.objectClass, notification.class.InboxNotification)
+      // ) {
+      //   if (hierarchy.isDerived(tx.objectClass, notification.class.ReactionInboxNotification)) continue
+      //   if (
+      //     hierarchy.isDerived(tx.objectClass, notification.class.CommonInboxNotification) &&
+      //     !hierarchy.isDerived(tx.objectClass, notification.class.MentionInboxNotification)
+      //   ) {
+      //     continue
+      //   }
+      //
+      //   const createTx = _tx as TxCreateDoc<InboxNotification>
+      //   const n = TxProcessor.createDoc2Doc(createTx)
+      //   const chats = await this.getHiddenChats(n.objectId)
+      //
+      //   const ttxes = this.getUnhideChatsTx(factory, n.objectId, chats)
+      //   if (ttxes.length > 0) {
+      //     await this.context.derived?.tx(ctx, ttxes)
+      //   }
+      // }
 
       if (
         _tx._class === core.class.TxCreateDoc &&

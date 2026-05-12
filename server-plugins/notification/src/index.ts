@@ -15,8 +15,8 @@
 //
 
 import { Employee, Person, PersonSpace } from '@hcengineering/contact'
-import { PersonId, Class, Doc, Mixin, Ref, TxCUD, AccountUuid, Markup, Data } from '@hcengineering/core'
-import { CommonInboxNotification, NotificationContent, NotificationType } from '@hcengineering/notification'
+import { PersonId, Class, Doc, Mixin, Ref, TxCUD, AccountUuid, Markup } from '@hcengineering/core'
+import { NotificationContent, NotificationType } from '@hcengineering/notification'
 import { Metadata, Plugin, Resource, plugin } from '@hcengineering/platform'
 import type { TriggerControl, TriggerFunc } from '@hcengineering/server-core'
 import { ActivityMessage } from '@hcengineering/activity'
@@ -52,10 +52,11 @@ export type TypeMatchFunc = (
 ) => Promise<boolean> | boolean
 
 export type TypeMatchFuncResource = Resource<TypeMatchFunc>
-export type CreateNotificationResult = Omit<
-Data<CommonInboxNotification>,
-'archived' | 'user' | 'allowedProviders' | 'docNotifyContext' | 'isViewed' | 'objectId' | 'objectClass'
->
+// export type CreateNotificationResult = Omit<
+// Data<CommonInboxNotification>,
+// 'archived' | 'user' | 'allowedProviders' | 'docNotifyContext' | 'isViewed' | 'objectId' | 'objectClass'
+// >
+export type CreateNotificationResult = Record<string, any>
 export type CreateNotificationFunc = (
   client: TypeMatchClient,
   tx: TxCUD<Doc>,

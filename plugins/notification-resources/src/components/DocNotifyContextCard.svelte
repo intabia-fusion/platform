@@ -24,12 +24,7 @@
     showPopup,
     Spinner
   } from '@hcengineering/ui'
-  import notification, {
-    ActivityNotificationViewlet,
-    DisplayInboxNotification,
-    DocNotifyContext,
-    InboxNotification
-  } from '@hcengineering/notification'
+  import notification, { ActivityNotificationViewlet, DocNotifyContext } from '@hcengineering/notification'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { getDocTitle, getDocIdentifier, Menu, getDocLabel } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
@@ -43,7 +38,7 @@
   import { isActivityNotification, isMentionNotification } from '../utils'
 
   export let value: DocNotifyContext
-  export let notifications: WithLookup<DisplayInboxNotification>[]
+  export let notifications: WithLookup<any>[]
   export let viewlets: ActivityNotificationViewlet[] = []
   export let isClearing = false
 
@@ -94,7 +89,7 @@
 
   $: presenterMixin = hierarchy.classHierarchyMixin(value.objectClass, notification.mixin.NotificationContextPresenter)
 
-  let groupedNotifications: Array<InboxNotification[]> = []
+  let groupedNotifications: Array<any[]> = []
 
   $: void groupNotificationsByUser(notifications).then((res) => {
     groupedNotifications = res
@@ -104,7 +99,7 @@
     return hierarchy.isDerived(_class, chunter.class.ChatMessage)
   }
 
-  const canGroup = (it: InboxNotification): boolean => {
+  const canGroup = (it: any): boolean => {
     if (isActivityNotification(it) && isTextMessage(it.attachedToClass)) {
       return true
     }
@@ -112,11 +107,9 @@
     return isMentionNotification(it) && isTextMessage(it.mentionedInClass)
   }
 
-  async function groupNotificationsByUser (
-    notifications: WithLookup<InboxNotification>[]
-  ): Promise<Array<InboxNotification[]>> {
-    const result: Array<InboxNotification[]> = []
-    let group: InboxNotification[] = []
+  async function groupNotificationsByUser (notifications: WithLookup<any>[]): Promise<Array<any[]>> {
+    const result: Array<any[]> = []
+    let group: any[] = []
     let person: Ref<Person> | undefined = undefined
     const personRefByPersonId = await getPersonRefsByPersonIds(notifications.map((it) => it.createdBy ?? it.modifiedBy))
 
@@ -181,13 +174,13 @@
     dispatch('clear')
   }
 
-  // function canShowTooltip (group: InboxNotification[]): boolean {
+  // function canShowTooltip (group: any[]): boolean {
   //   const first = group[0]
   //
   //   return canGroup(first)
   // }
 
-  function getKey (group: InboxNotification[]): string {
+  function getKey (group: any[]): string {
     return group.map((it) => it._id).join('-')
   }
 </script>

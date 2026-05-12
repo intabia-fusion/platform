@@ -36,6 +36,7 @@ import core, {
   UserStatus
 } from '@hcengineering/core'
 import notification, {
+  DocNotificationSetting,
   DocNotifyContext,
   type NotificationProviderSetting,
   type NotificationTypeSetting,
@@ -50,6 +51,7 @@ class WsCache {
   private readonly collaborators = new Map<Ref<Doc>, Collaborator[]>()
 
   private readonly contexts = new Map<Ref<Doc>, DocNotifyContext[]>()
+  private readonly settingsByDoc = new Map<Ref<Doc>, DocNotificationSetting[]>()
   private readonly docs = new Map<Ref<Doc>, Doc>()
 
   private readonly readStateByDoc = new Map<Ref<Doc>, ReadState>()
@@ -120,6 +122,15 @@ class WsCache {
       }
     }
 
+    if (hierarchy.isDerived(doc._class, notification.class.DocNotificationSetting)) {
+      const setting = doc as DocNotificationSetting
+      if (!this.settingsByDoc.has(setting.attachedTo)) return
+      const current = this.settingsByDoc.get(setting.attachedTo) ?? []
+      if (!current.some((it) => it._id === setting._id)) {
+        this.settingsByDoc.set(setting.attachedTo, [...current, setting])
+      }
+    }
+
     if (this.isSettingsLoaded && hierarchy.isDerived(doc._class, notification.class.NotificationProviderSetting)) {
       const setting = doc as NotificationProviderSetting
       this.notificationProviderSettings.set(setting._id, setting)
@@ -178,6 +189,18 @@ class WsCache {
       const current = this.contexts.get(updated.objectId) ?? []
       this.contexts.set(
         updated.objectId,
+        current.map((it) => (it._id === updated._id ? updated : it))
+      )
+    }
+
+    if (hierarchy.isDerived(tx.objectClass, notification.class.DocNotificationSetting)) {
+      const settings = Array.from(this.settingsByDoc.values()).flat()
+      const setting = settings.find((s) => s._id === tx.objectId)
+      if (setting === undefined) return
+      const updated = this.updateOrMixin(tx, setting)
+      const current = this.settingsByDoc.get(updated.attachedTo) ?? []
+      this.settingsByDoc.set(
+        updated.attachedTo,
         current.map((it) => (it._id === updated._id ? updated : it))
       )
     }
@@ -256,6 +279,19 @@ class WsCache {
       this.contexts.set(
         context.objectId,
         current.filter((it) => it._id !== context._id)
+      )
+      return
+    }
+
+    if (hierarchy.isDerived(tx.objectClass, notification.class.DocNotificationSetting)) {
+      this.settingsByDoc.delete(tx.objectId)
+      const settings = Array.from(this.settingsByDoc.values()).flat()
+      const setting = settings.find((s) => s._id === tx.objectId)
+      if (setting === undefined) return
+      const current = this.settingsByDoc.get(setting.attachedTo) ?? []
+      this.settingsByDoc.set(
+        setting.attachedTo,
+        current.filter((it) => it._id !== setting._id)
       )
       return
     }
@@ -389,6 +425,15 @@ class WsCache {
     this.contexts.set(_id, contexts)
 
     return contexts
+  }
+
+  public async getDocSettings (_id: Ref<Doc>): Promise<DocNotificationSetting[]> {
+    if (this.settingsByDoc.has(_id)) return this.settingsByDoc.get(_id) ?? []
+
+    const settings = await this.client.findAll(notification.class.DocNotificationSetting, { attachedTo: _id })
+    this.settingsByDoc.set(_id, settings)
+
+    return settings
   }
 
   public storeContext (context: DocNotifyContext): void {
@@ -639,6 +684,9 @@ class WsCache {
     }
     if (this.contexts.size > maxSize) {
       this.contexts.clear()
+    }
+    if (this.settingsByDoc.size > maxSize) {
+      this.settingsByDoc.clear()
     }
     if (this.readStateByDoc.size > maxSize) {
       this.readStateByDoc.clear()

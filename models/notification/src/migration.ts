@@ -47,9 +47,7 @@ import notification, {
   type PushSubscription,
   type BrowserNotification,
   type DocNotifyContext,
-  type InboxNotification,
-  type ReadState,
-  type CommonInboxNotification
+  type ReadState
 } from '@hcengineering/notification'
 import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
 import {
@@ -91,17 +89,17 @@ export async function removeNotifications (
     const ids = contexts.map(({ _id }) => _id)
 
     await client.deleteMany(DOMAIN_NOTIFICATION, {
-      _class: notification.class.CommonInboxNotification,
+      _class: 'notification:class:CommonInboxNotification' as any,
       docNotifyContext: { $in: ids }
     })
 
     await client.deleteMany(DOMAIN_NOTIFICATION, {
-      _class: notification.class.ActivityInboxNotification,
+      _class: 'notification:class:ActivityInboxNotification' as any,
       docNotifyContext: { $in: ids }
     })
 
     await client.deleteMany(DOMAIN_NOTIFICATION, {
-      _class: notification.class.MentionInboxNotification,
+      _class: 'notification:class:MentionInboxNotification' as any,
       docNotifyContext: { $in: ids }
     })
 
@@ -136,7 +134,7 @@ export async function migrateNotificationsSpace (client: MigrationClient): Promi
     await client.update(
       DOMAIN_NOTIFICATION,
       {
-        _class: notification.class.ActivityInboxNotification,
+        _class: 'notification:class:ActivityInboxNotification' as any,
         user: { $in: space.members }
       },
       { space: space._id }
@@ -144,7 +142,7 @@ export async function migrateNotificationsSpace (client: MigrationClient): Promi
     await client.update(
       DOMAIN_NOTIFICATION,
       {
-        _class: notification.class.CommonInboxNotification,
+        _class: 'notification:class:CommonInboxNotification' as any,
         user: { $in: space.members }
       },
       { space: space._id }
@@ -152,7 +150,7 @@ export async function migrateNotificationsSpace (client: MigrationClient): Promi
     await client.update(
       DOMAIN_NOTIFICATION,
       {
-        _class: notification.class.MentionInboxNotification,
+        _class: 'notification:class:MentionInboxNotification' as any,
         user: { $in: space.members }
       },
       { space: space._id }
@@ -161,15 +159,15 @@ export async function migrateNotificationsSpace (client: MigrationClient): Promi
 
   await client.deleteMany(DOMAIN_DOC_NOTIFY, { space: { $nin: personSpaces.map(({ _id }) => _id) } })
   await client.deleteMany(DOMAIN_NOTIFICATION, {
-    _class: notification.class.ActivityInboxNotification,
+    _class: 'notification:class:ActivityInboxNotification' as any,
     space: { $nin: personSpaces.map(({ _id }) => _id) }
   })
   await client.deleteMany(DOMAIN_NOTIFICATION, {
-    _class: notification.class.CommonInboxNotification,
+    _class: 'notification:class:CommonInboxNotification' as any,
     space: { $nin: personSpaces.map(({ _id }) => _id) }
   })
   await client.deleteMany(DOMAIN_NOTIFICATION, {
-    _class: notification.class.MentionInboxNotification,
+    _class: 'notification:class:MentionInboxNotification' as any,
     space: { $nin: personSpaces.map(({ _id }) => _id) }
   })
 
@@ -225,7 +223,7 @@ export async function migrateDuplicateContexts (client: MigrationClient): Promis
   const personSpaces = await client.find<PersonSpace>(DOMAIN_SPACE, { _class: contact.class.PersonSpace }, {})
 
   for (const space of personSpaces) {
-    const contexts = await client.find<DocNotifyContext>(
+    const contexts: any[] = await client.find<DocNotifyContext>(
       DOMAIN_DOC_NOTIFY,
       { _class: notification.class.DocNotifyContext, space: space._id },
       {}
@@ -235,7 +233,7 @@ export async function migrateDuplicateContexts (client: MigrationClient): Promis
 
     for (const context of contexts) {
       const key = context.objectId + '.' + context.user
-      const existContext = contextByUser.get(key)
+      const existContext: any = contextByUser.get(key) as any
 
       if (existContext != null) {
         const existLastViewedTimestamp = existContext.lastView ?? 0
@@ -330,19 +328,19 @@ async function migrateCollaborators (client: MigrationClient): Promise<void> {
 async function migrateCommonNotificationFields (client: MigrationClient): Promise<void> {
   await client.update(
     DOMAIN_NOTIFICATION,
-    { _class: notification.class.CommonInboxNotification },
+    { _class: 'notification:class:CommonInboxNotification' as any },
     { $rename: { messageHtml: 'markup' } }
   )
 
   await client.update(
     DOMAIN_NOTIFICATION,
-    { _class: notification.class.MentionInboxNotification },
+    { _class: 'notification:class:MentionInboxNotification' as any },
     { $rename: { messageHtml: 'markup' } }
   )
 
   await client.update(
     DOMAIN_NOTIFICATION,
-    { _class: notification.class.ReactionInboxNotification },
+    { _class: 'notification:class:ReactionInboxNotification' as any },
     { $rename: { messageHtml: 'markup' } }
   )
 }
@@ -449,9 +447,9 @@ async function migrateAccounts (client: MigrationClient): Promise<void> {
     _class: {
       $in: [
         notification.class.BrowserNotification,
-        notification.class.InboxNotification,
-        notification.class.ActivityInboxNotification,
-        notification.class.CommonInboxNotification
+        'notification:class:InboxNotification' as any,
+        'notification:class:ActivityInboxNotification' as any,
+        'notification:class:CommonInboxNotification' as any
       ]
     }
   })
@@ -467,9 +465,9 @@ async function migrateAccounts (client: MigrationClient): Promise<void> {
         _class: {
           $in: [
             notification.class.BrowserNotification,
-            notification.class.InboxNotification,
-            notification.class.ActivityInboxNotification,
-            notification.class.CommonInboxNotification
+            'notification:class:InboxNotification' as any,
+            'notification:class:ActivityInboxNotification' as any,
+            'notification:class:CommonInboxNotification' as any
           ]
         }
       },
@@ -638,7 +636,7 @@ export async function migrateSettings (client: MigrationClient): Promise<void> {
 
 export async function migrateNotificationsObject (client: MigrationClient): Promise<void> {
   while (true) {
-    const notifications = await client.find<InboxNotification>(
+    const notifications = await client.find<any>(
       DOMAIN_NOTIFICATION,
       { objectId: { $exists: false }, docNotifyContext: { $exists: true } },
       { limit: 500 }
@@ -657,7 +655,7 @@ export async function migrateNotificationsObject (client: MigrationClient): Prom
       )
     }
 
-    const toDelete: Ref<InboxNotification>[] = []
+    const toDelete: Ref<any>[] = []
 
     for (const notification of notifications) {
       const context = contexts.find((c) => c._id === notification.docNotifyContext)
@@ -760,11 +758,11 @@ async function initReadStates (client: MigrationClient): Promise<void> {
 
 async function clearNotificationTx (client: MigrationClient): Promise<void> {
   const _classes = [
-    notification.class.InboxNotification,
-    notification.class.ActivityInboxNotification,
-    notification.class.ReactionInboxNotification,
-    notification.class.MentionInboxNotification,
-    notification.class.CommonInboxNotification,
+    'notification:class:InboxNotification' as any,
+    'notification:class:ActivityInboxNotification' as any,
+    'notification:class:ReactionInboxNotification' as any,
+    'notification:class:MentionInboxNotification' as any,
+    'notification:class:CommonInboxNotification' as any,
     notification.class.DocNotifyContext
   ]
   for (const objectClass of _classes) {
@@ -849,12 +847,12 @@ async function initBadgeStatuses (client: MigrationClient): Promise<void> {
 }
 
 async function migrateCommonNotificationProps (client: MigrationClient): Promise<void> {
-  type CommonInboxNotificationOld = CommonInboxNotification & {
+  type CommonInboxNotificationOld = any & {
     props?: Record<string, any>
     propsIntl?: Record<string, IntlString>
   }
   const iterator = await client.traverse<CommonInboxNotificationOld>(DOMAIN_NOTIFICATION, {
-    _class: notification.class.CommonInboxNotification
+    _class: 'notification:class:CommonInboxNotification'
   })
 
   try {
@@ -864,8 +862,8 @@ async function migrateCommonNotificationProps (client: MigrationClient): Promise
       if (docs.length === 0) break
 
       const updates: {
-        filter: MigrationDocumentQuery<CommonInboxNotification>
-        update: MigrateUpdate<CommonInboxNotification>
+        filter: MigrationDocumentQuery<any>
+        update: MigrateUpdate<any>
       }[] = []
       for (const doc of docs) {
         const { props, propsIntl, intlParams, intlParamsNotLocalized } = doc
@@ -1020,19 +1018,19 @@ export const notificationOperation: MigrateOperation = {
         state: 'fill-notification-archived-field-v1',
         mode: 'upgrade',
         func: async (client) => {
-          await client.update<InboxNotification>(
+          await client.update(
             DOMAIN_NOTIFICATION,
-            { _class: notification.class.ActivityInboxNotification, archived: { $exists: false } },
+            { _class: 'notification:class:ActivityInboxNotification' as any, archived: { $exists: false } },
             { archived: false }
           )
-          await client.update<InboxNotification>(
+          await client.update(
             DOMAIN_NOTIFICATION,
-            { _class: notification.class.CommonInboxNotification, archived: { $exists: false } },
+            { _class: 'notification:class:CommonInboxNotification' as any, archived: { $exists: false } },
             { archived: false }
           )
-          await client.update<InboxNotification>(
+          await client.update(
             DOMAIN_NOTIFICATION,
-            { _class: notification.class.MentionInboxNotification, archived: { $exists: false } },
+            { _class: 'notification:class:MentionInboxNotification' as any, archived: { $exists: false } },
             { archived: false }
           )
         }

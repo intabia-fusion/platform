@@ -26,11 +26,7 @@ import { inboxId } from '@hcengineering/inbox'
 import { type MessageID, type Notification } from '@hcengineering/communication-types'
 import { decodeObjectURI, encodeObjectURI } from '@hcengineering/view'
 import activity, { type ActivityMessage } from '@hcengineering/activity'
-import {
-  type ActivityInboxNotification,
-  type DocNotifyContext,
-  type InboxNotification
-} from '@hcengineering/notification'
+import { type DocNotifyContext } from '@hcengineering/notification'
 import { getResource } from '@hcengineering/platform'
 import chunter, { type ThreadMessage } from '@hcengineering/chunter'
 import { isActivityMessageClass, messageInFocus } from '@hcengineering/activity-resources'
@@ -75,13 +71,9 @@ export function getMessageInfoFromLocation (loc: Location):
   }
 }
 
-export function navigateToDoc (
-  navItem: NavigationItem,
-  doc: Doc,
-  notification?: InboxNotification | Notification
-): void {
+export function navigateToDoc (navItem: NavigationItem, doc: Doc, notification?: any | Notification): void {
   if (navItem.type === 'legacy') {
-    void selectInboxContext(navItem.context, doc, notification as InboxNotification)
+    void selectInboxContext(navItem.context, doc, notification)
     return
   }
 
@@ -157,7 +149,7 @@ async function navigateToInboxDoc (
 export async function selectInboxContext (
   context: DocNotifyContext,
   doc?: Doc,
-  notification?: WithLookup<InboxNotification>
+  notification?: WithLookup<any>
 ): Promise<void> {
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -200,7 +192,7 @@ export async function selectInboxContext (
   }
 
   if (hierarchy.isDerived(objectClass, activity.class.ActivityMessage)) {
-    const message = (notification as WithLookup<ActivityInboxNotification>)?.$lookup?.attachedTo
+    const message = notification?.$lookup?.attachedTo
 
     if (objectClass === chunter.class.ThreadMessage) {
       const thread =
@@ -224,7 +216,7 @@ export async function selectInboxContext (
       return
     }
 
-    const selectedMsg = (notification as ActivityInboxNotification)?.attachedTo
+    const selectedMsg = notification?.attachedTo
     const thread = selectedMsg !== objectId ? objectId : loc.path[4] === objectId ? objectId : undefined
     const channelId = (doc as ActivityMessage)?.attachedTo ?? message?.attachedTo ?? objectId
     const channelClass = (doc as ActivityMessage)?.attachedToClass ?? message?.attachedToClass ?? objectClass
@@ -239,11 +231,5 @@ export async function selectInboxContext (
     return
   }
 
-  void navigateToInboxDoc(
-    context._id,
-    objectId,
-    objectClass,
-    undefined,
-    (notification as ActivityInboxNotification)?.attachedTo
-  )
+  void navigateToInboxDoc(context._id, objectId, objectClass, undefined, notification?.attachedTo)
 }

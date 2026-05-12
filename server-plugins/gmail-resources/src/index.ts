@@ -33,7 +33,7 @@ import {
 } from '@hcengineering/core'
 import gmail, { Message } from '@hcengineering/gmail'
 import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@hcengineering/server-core'
-import { InboxNotification, NotificationType } from '@hcengineering/notification'
+import { NotificationType } from '@hcengineering/notification'
 import serverNotification, { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
 import { getMetadata } from '@hcengineering/platform'
 import { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
@@ -147,7 +147,7 @@ async function notifyByEmail (
   types: Ref<NotificationType>[],
   doc: Doc,
   email: string,
-  inboxNotification: InboxNotification,
+  inboxNotification: any,
   message: ActivityMessage | undefined
 ): Promise<void> {
   const content = await getContentByTemplate(control, doc, types, inboxNotification, message)
@@ -185,7 +185,7 @@ async function getEmployeeEmails (control: TriggerControl, employeeId: Ref<Perso
 async function processEmailNotifications (
   control: TriggerControl,
   producer: PlatformQueueProducer<EmailNotification>,
-  notifications: InboxNotification[]
+  notifications: any[]
 ): Promise<void> {
   if (notifications.length === 0) return
 
@@ -225,11 +225,11 @@ async function processEmailNotifications (
   }
 }
 
-async function NotificationsHandler (txes: TxCreateDoc<InboxNotification>[], control: TriggerControl): Promise<Tx[]> {
+async function NotificationsHandler (txes: TxCreateDoc<any>[], control: TriggerControl): Promise<Tx[]> {
   if (!isMailConfigured()) return []
   if (control.queue == null) return []
 
-  const all: InboxNotification[] = txes
+  const all: any[] = txes
     .map((tx) => TxProcessor.createDoc2Doc(tx))
     .filter((it) => (it.allowedProviders?.[gmail.providers.EmailNotificationProvider]?.length ?? 0) > 0)
 

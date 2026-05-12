@@ -31,7 +31,7 @@
   import { SpacesNavModel } from '@hcengineering/workbench'
   import { createEventDispatcher } from 'svelte'
   import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
+  import { DocNotifyContext } from '@hcengineering/notification'
 
   import plugin from '../../plugin'
   import TreeSeparator from './TreeSeparator.svelte'
@@ -87,7 +87,7 @@
   function isChanged (
     space: Space,
     notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext>,
-    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, any[]>
   ): boolean {
     const context = notifyContextByDoc.get(space._id)
 

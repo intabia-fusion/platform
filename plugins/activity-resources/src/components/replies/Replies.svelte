@@ -15,12 +15,7 @@
 <script lang="ts">
   import { Doc, Ref, WithLookup } from '@hcengineering/core'
   import activity, { ActivityMessage } from '@hcengineering/activity'
-  import notification, {
-    ActivityInboxNotification,
-    DocNotifyContext,
-    InboxNotification,
-    InboxNotificationsClient
-  } from '@hcengineering/notification'
+  import notification, { DocNotifyContext, InboxNotificationsClient } from '@hcengineering/notification'
   import { getResource } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
 
@@ -50,7 +45,7 @@
   function hasNewReplies (
     message: ActivityMessage,
     notifyContexts?: Map<Ref<Doc>, DocNotifyContext>,
-    inboxNotificationsByContext?: Map<Ref<DocNotifyContext>, WithLookup<InboxNotification>[]>
+    inboxNotificationsByContext?: Map<Ref<DocNotifyContext>, WithLookup<any>[]>
   ): boolean {
     const context: DocNotifyContext | undefined = notifyContexts?.get(message._id)
 
@@ -58,15 +53,16 @@
       return false
     }
 
-    return (inboxNotificationsByContext?.get(context._id) ?? [])
-      .filter((it) => {
-        const activityNotifications = it as ActivityInboxNotification
-        return (
-          activityNotifications.attachedToClass !== activity.class.DocUpdateMessage &&
-          it._class !== notification.class.ReactionInboxNotification
-        )
-      })
-      .some(({ isViewed }) => !isViewed)
+    return false
+    // return (inboxNotificationsByContext?.get(context._id) ?? [])
+    // .filter((it) => {
+    //   const activityNotifications = it as ActivityInboxNotification
+    //   return (
+    //     activityNotifications.attachedToClass !== activity.class.DocUpdateMessage &&
+    //     it._class !== notification.class.ReactionInboxNotification
+    //   )
+    // })
+    // .some(({ isViewed }) => !isViewed)
   }
 
   const replyProvider = client.getModel().findAllSync(activity.class.ReplyProvider, {})[0]

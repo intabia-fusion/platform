@@ -72,14 +72,14 @@ export function createModel (builder: Builder): void {
     }
   )
 
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverTelegram.trigger.NotificationsHandler,
-    isAsync: true,
-    txMatch: {
-      _class: core.class.TxCreateDoc,
-      objectClass: notification.class.InboxNotification
-    }
-  })
+  // builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+  //   trigger: serverTelegram.trigger.NotificationsHandler,
+  //   isAsync: true,
+  //   txMatch: {
+  //     _class: core.class.TxCreateDoc,
+  //     objectClass: notification.class.InboxNotification
+  //   }
+  // })
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverTelegram.trigger.ProviderSettingsHandler,
     isAsync: true,

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { ActivityMessage, Reaction } from '@hcengineering/activity'
+import { ActivityMessage } from '@hcengineering/activity'
 import {
   PersonId,
   Class,
@@ -21,12 +21,10 @@ import {
   DocumentQuery,
   type Domain,
   IdMap,
-  Markup,
   Mixin,
   Ref,
   Space,
   Timestamp,
-  TxCUD,
   TxOperations,
   AccountUuid,
   Tx,
@@ -238,62 +236,26 @@ export interface NotificationContextPresenter extends Class<Doc> {
   labelPresenter?: AnyComponent
 }
 
-/**
- * @public
- */
-export interface InboxNotification extends Doc<PersonSpace> {
-  user: AccountUuid
-  isViewed: boolean
+export type ContextNotification = MessageNotification
 
-  docNotifyContext: Ref<DocNotifyContext>
-  objectId: Ref<Doc>
-  objectClass: Ref<Class<Doc>>
+export interface MessageNotification<T extends ActivityMessage = ActivityMessage> {
+  type: 'message'
+  id: Ref<T>
 
-  // For browser notifications
-  title?: IntlString
-  body?: IntlString
-  data?: Markup
-  intlParams?: Record<string, string | number>
-  intlParamsNotLocalized?: Record<string, IntlString>
-  archived: boolean
+  message: T
+  attachments?: { name: string }[]
 
-  allowedProviders: Record<Ref<NotificationProvider>, Ref<NotificationType>[]>
+  createdBy: PersonId
+  createdOn: Timestamp
+
+  // emoji?: string
+  // reactionId?: Ref<Reaction>
+  //
+  // mentionedIn?: Ref<Doc>
+  // mentionedInClass?: Ref<Class<Doc>>
+  //
+  // markup?: Markup
 }
-
-export interface ActivityInboxNotification extends InboxNotification {
-  attachedTo: Ref<ActivityMessage>
-  attachedToClass: Ref<Class<ActivityMessage>>
-}
-
-export interface CommonInboxNotification extends InboxNotification {
-  header?: IntlString
-  headerIcon?: Asset
-  headerObjectId?: Ref<Doc>
-  headerObjectClass?: Ref<Class<Doc>>
-  message?: IntlString
-  markup?: Markup
-  icon?: Asset
-  iconProps?: Record<string, any>
-}
-
-export interface ReactionInboxNotification extends CommonInboxNotification {
-  emoji: string
-  ref: Ref<Reaction>
-  attachedTo: Ref<ActivityMessage>
-  attachedToClass: Ref<Class<ActivityMessage>>
-}
-
-export interface MentionInboxNotification extends CommonInboxNotification {
-  mentionedIn: Ref<Doc>
-  mentionedInClass: Ref<Class<Doc>>
-}
-
-export interface DisplayActivityInboxNotification extends ActivityInboxNotification {
-  combinedIds: Ref<ActivityInboxNotification>[]
-  combinedMessages: ActivityMessage[]
-}
-
-export type DisplayInboxNotification = DisplayActivityInboxNotification | InboxNotification
 
 /**
  * @public
@@ -303,26 +265,54 @@ export type DocNotificationMode = 'all' | 'mentions' | 'mute'
 
 export interface DocNotifyContext extends Doc<PersonSpace> {
   user: AccountUuid
+
   // Context
   objectId: Ref<Doc>
   objectClass: Ref<Class<Doc>>
   objectSpace: Ref<Space>
 
-  lastView?: Timestamp
-  lastUpdate?: Timestamp
-  lastNotify?: Timestamp
-  lastNotifiedMessage?: Timestamp
+  // Data to display in inbox without requests
+  objectIdentifier?: string
+  objectTitle?: string
+  objectIconProps?: Record<string, any> // props for specific icons, like issue status
 
-  // Only for debug
-  tx?: Ref<TxCUD<Doc>>
+  lastNotify: Timestamp
 
-  settings?: {
-    mode?: DocNotificationMode
-  }
+  latestNotifications: ContextNotification[] // store 5 latest notifications to show in inbox
+
+  unreadReactions: ContextNotification[] // store unread reaction notifications
+  unreadMentions: ContextNotification[] // store unread mention notifications
+  unreadCommons: ContextNotification[] // store unread common notifications
+
+  unread: boolean
+  unreadMessagesCount: number
+  unreadMessages: UnreadMessage[] // unified timeline of unread messages and chunks
+
+  archived: boolean // mark archived then lazy delete it on service
 }
 
-// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+export interface UnreadMessageId {
+  _id: Ref<ActivityMessage>
+  createdOn: Timestamp
+}
+
+export interface UnreadMessageChunk {
+  from: Timestamp
+  to: Timestamp
+  count: number
+}
+
+export type UnreadMessage = UnreadMessageId | UnreadMessageChunk
+
+export interface DocNotificationSetting extends Preference {
+  attachedTo: Ref<Doc>
+  account: AccountUuid
+  mode?: DocNotificationMode
+}
+
 export interface ReadState extends AttachedDoc {
+  latestMessageId?: Ref<ActivityMessage>
+  latestMessageTimestamp?: Timestamp
   [key: AccountUuid]: ReadPosition
 }
 
@@ -341,13 +331,13 @@ export interface InboxNotificationsClient {
 
   readStateByDoc: Readable<Map<Ref<Doc>, ReadState | null>>
 
-  inboxNotifications: Readable<InboxNotification[]>
-  activityInboxNotifications: Writable<ActivityInboxNotification[]>
-  inboxNotificationsByContext: Readable<Map<Ref<DocNotifyContext>, InboxNotification[]>>
+  inboxNotifications: Readable<any[]>
+  activityInboxNotifications: Writable<any[]>
+  inboxNotificationsByContext: Readable<Map<Ref<DocNotifyContext>, any[]>>
 
   readDoc: (_id: Ref<Doc>) => Promise<void>
   forceReadDoc: (doc: Doc) => Promise<void>
-  readNotifications: (client: TxOperations, ids: Array<Ref<InboxNotification>>) => Promise<void>
+  readNotifications: (client: TxOperations, ids: Array<Ref<Doc>>) => Promise<void>
   removeAllNotifications: () => Promise<void>
   readAllNotifications: () => Promise<void>
 
@@ -391,12 +381,6 @@ const notification = plugin(notificationId, {
     MessageNotificationType: '' as Ref<Class<MessageNotificationType>>,
     TxNotificationType: '' as Ref<Class<TxNotificationType>>,
 
-    InboxNotification: '' as Ref<Class<InboxNotification>>,
-    ActivityInboxNotification: '' as Ref<Class<ActivityInboxNotification>>,
-    CommonInboxNotification: '' as Ref<Class<CommonInboxNotification>>,
-    MentionInboxNotification: '' as Ref<Class<MentionInboxNotification>>,
-    ReactionInboxNotification: '' as Ref<Class<ReactionInboxNotification>>,
-
     BrowserNotification: '' as Ref<Class<BrowserNotification>>,
     PushSubscription: '' as Ref<Class<PushSubscription>>,
     PushSubscriptionSetting: '' as Ref<Class<PushSubscriptionSetting>>,
@@ -412,7 +396,8 @@ const notification = plugin(notificationId, {
     NotificationProviderDefaults: '' as Ref<Mixin<NotificationProviderDefaults>>,
 
     ReadState: '' as Ref<Class<ReadState>>,
-    NotificationAppearancePreference: '' as Ref<Class<NotificationAppearancePreference>>
+    NotificationAppearancePreference: '' as Ref<Class<NotificationAppearancePreference>>,
+    DocNotificationSetting: '' as Ref<Class<DocNotificationSetting>>
   },
   ids: {
     NotificationSettings: '' as Ref<Doc>,
@@ -537,9 +522,7 @@ const notification = plugin(notificationId, {
     Notify: '' as Resource<NotifyFunc>,
     CheckPushPermission: '' as Resource<(value: boolean) => Promise<boolean>>,
     GetInboxNotificationsClient: '' as Resource<InboxNotificationsClientFactory>,
-    HasInboxNotifications: '' as Resource<
-    (notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>) => Promise<boolean>
-    >,
+    HasInboxNotifications: '' as Resource<(contexts: DocNotifyContext[]) => Promise<boolean>>,
     IsNotificationAllowed: '' as Resource<(type: NotificationType, providerId: Ref<NotificationProvider>) => boolean>,
     EditDocNotificationsVisibilityTester: '' as Resource<(doc: Doc | Doc[] | undefined) => Promise<boolean>>
   },

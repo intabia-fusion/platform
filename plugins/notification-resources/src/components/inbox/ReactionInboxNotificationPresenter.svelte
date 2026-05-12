@@ -14,7 +14,6 @@
 -->
 <script lang="ts">
   import { ActivityMessagePreview, BasePreview } from '@hcengineering/activity-resources'
-  import { ReactionInboxNotification } from '@hcengineering/notification'
   import { createQuery } from '@hcengineering/presentation'
   import { ActivityMessage } from '@hcengineering/activity'
   import { Doc } from '@hcengineering/core'
@@ -22,14 +21,14 @@
   import { EmojiPresenter } from '@hcengineering/emoji-resources'
 
   export let object: Doc | undefined
-  export let value: ReactionInboxNotification
+  export let value: any
 
   const query = createQuery()
 
   let message: ActivityMessage | undefined = undefined
 
   query.query(value.attachedToClass, { _id: value.attachedTo }, (res) => {
-    message = res[0]
+    message = res[0] as any
   })
   $: socialId = value.createdBy ?? value.modifiedBy
   $: date = new Date(value.createdOn ?? value.modifiedOn)

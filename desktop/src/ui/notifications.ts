@@ -17,10 +17,7 @@ import { formatName, getPersonByPersonId } from '@hcengineering/contact'
 import { Doc, Ref, SortingOrder, TxOperations, WithLookup, Hierarchy } from '@hcengineering/core'
 import notification, {
   notificationId,
-  ActivityInboxNotification,
-  CommonInboxNotification,
   DocNotifyContext,
-  InboxNotification,
   getNotificationMessageId,
   getNotificationThreadId
 } from '@hcengineering/notification'
@@ -33,8 +30,6 @@ import { activePreferences } from '@hcengineering/desktop-preferences-resources'
 import { getDisplayInboxData, InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
 import { inboxId } from '@hcengineering/inbox'
 import communication from '@hcengineering/communication'
-import activity from '@hcengineering/activity'
-import chunter, { ThreadMessage } from '@hcengineering/chunter'
 import { workspacesNotificationStore, workspacesStore } from '@hcengineering/workbench-resources'
 
 import { ipcMainExposed } from './typesUtils'
@@ -43,7 +38,7 @@ import { get } from 'svelte/store'
 let client: TxOperations
 
 async function hydrateNotificationAsYouCan (
-  lastNotification: InboxNotification
+  lastNotification: any
 ): Promise<{ title: string, body: string } | undefined> {
   // Let's try to do our best and figure out from who we have an notification
 
@@ -56,15 +51,15 @@ async function hydrateNotificationAsYouCan (
   }
 
   let intlTitle: IntlString | undefined
-  let intlParams: Record<string, any> = {}
+  const intlParams: Record<string, any> = {}
 
-  if (lastNotification._class === notification.class.CommonInboxNotification) {
-    intlTitle = lastNotification.title ?? (lastNotification as CommonInboxNotification).message
-    intlParams = { ...(lastNotification as CommonInboxNotification).intlParams }
-  } else if (lastNotification._class === notification.class.ActivityInboxNotification) {
-    intlTitle = lastNotification.title
-    intlParams = { ...(lastNotification as ActivityInboxNotification).intlParams }
-  }
+  // if (lastNotification._class === notification.class.CommonInboxNotification) {
+  //   intlTitle = lastNotification.title ?? (lastNotification as CommonInboxNotification).message
+  //   intlParams = { ...(lastNotification as CommonInboxNotification).intlParams }
+  // } else if (lastNotification._class === notification.class.ActivityInboxNotification) {
+  //   intlTitle = lastNotification.title
+  //   intlParams = { ...(lastNotification as ActivityInboxNotification).intlParams }
+  // }
 
   if (intlTitle !== undefined && lastNotification.body !== undefined) {
     if (lastNotification.intlParamsNotLocalized !== undefined) {
@@ -107,10 +102,7 @@ async function hydrateNotificationAsYouCan (
   }
 }
 
-function getLasUnViewedNotification (
-  notifications: InboxNotification[],
-  notificationHistory: Map<string, number>
-): InboxNotification | undefined {
+function getLasUnViewedNotification (notifications: any[], notificationHistory: Map<string, number>): any | undefined {
   let lastNotification
   let lastTime = 0
 
@@ -235,9 +227,7 @@ export function configureNotifications (): void {
       startNotificationQuery()
     }
 
-    async function handleNotifications (
-      notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
-    ): Promise<void> {
+    async function handleNotifications (notificationsByContext: Map<Ref<DocNotifyContext>, any[]>): Promise<void> {
       const inboxData = getDisplayInboxData(notificationsByContext)
 
       if (notificationHistory.size === 0) {
@@ -248,9 +238,8 @@ export function configureNotifications (): void {
         }
       }
 
-      const unViewedNotifications: InboxNotification[] = Array.from(inboxData.values())
-        .flat()
-        .filter(({ isViewed }) => !isViewed)
+      const unViewedNotifications: any[] = Array.from(inboxData.values()).flat()
+      // .filter(({ isViewed }) => !isViewed)
       // const notificationsAfterLaunch = notifications.filter((p) => p.txes.some((p) => p.modifiedOn > initTimestamp))
       // We need to get the most recent notifications
 
@@ -322,25 +311,26 @@ export function configureNotifications (): void {
 }
 
 function getNotificationObjectIdentity (
-  inboxNotification: WithLookup<InboxNotification>,
+  inboxNotification: WithLookup<any>,
   hierarchy: Hierarchy
 ): Pick<Doc, '_id' | '_class'> {
-  if (!hierarchy.isDerived(inboxNotification._class, notification.class.ActivityInboxNotification)) {
-    return { _id: inboxNotification.objectId, _class: inboxNotification.objectClass }
-  }
+  // if (!hierarchy.isDerived(inboxNotification._class, notification.class.ActivityInboxNotification)) {
+  //   return { _id: inboxNotification.objectId, _class: inboxNotification.objectClass }
+  // }
+  //
+  // const activityNotification = inboxNotification as WithLookup<ActivityInboxNotification>
 
-  const activityNotification = inboxNotification as WithLookup<ActivityInboxNotification>
-
-  if (
-    hierarchy.isDerived(activityNotification.attachedToClass, chunter.class.ThreadMessage) &&
-    hierarchy.isDerived(activityNotification.objectClass, activity.class.ActivityMessage)
-  ) {
-    const attachedTo = activityNotification.$lookup?.attachedTo as ThreadMessage | undefined
-
-    if (attachedTo != null) {
-      return { _id: attachedTo.objectId, _class: attachedTo.objectClass }
-    }
-  }
-
-  return { _id: activityNotification.objectId, _class: activityNotification.objectClass }
+  // if (
+  //   hierarchy.isDerived(activityNotification.attachedToClass, chunter.class.ThreadMessage) &&
+  //   hierarchy.isDerived(activityNotification.objectClass, activity.class.ActivityMessage)
+  // ) {
+  //   const attachedTo = activityNotification.$lookup?.attachedTo as ThreadMessage | undefined
+  //
+  //   if (attachedTo != null) {
+  //     return { _id: attachedTo.objectId, _class: attachedTo.objectClass }
+  //   }
+  // }
+  //
+  // return { _id: activityNotification.objectId, _class: activityNotification.objectClass }
+  return {} as any
 }

@@ -23,7 +23,8 @@
   $: object = Array.isArray(value) ? value[0] : value
   $: void updateContext(object._id, $contextByDocStore)
 
-  $: mode = context?.settings?.mode ?? 'all'
+  // $: mode = context?.settings?.mode ?? 'all'
+  $: mode = 'all'
   async function updateContext (objectId: Ref<Doc>, contextByDoc: Map<Ref<Doc>, DocNotifyContext>): Promise<void> {
     context = contextByDoc.get(objectId)
 
@@ -48,24 +49,24 @@
   async function select (id: DocNotificationMode): Promise<void> {
     try {
       progress = true
-      const current = context?.settings?.mode ?? 'all'
-
+      // const current = context?.settings?.mode ?? 'all'
+      const current = 'all'
       if (id === current) {
         dispatch('close')
         return
       }
 
-      if (context == null) {
-        await client.createDoc(notification.class.DocNotifyContext, mySpace, {
-          objectId: object._id,
-          objectClass: object._class,
-          objectSpace: object.space,
-          user: getCurrentAccount().uuid,
-          settings: { mode: id }
-        })
-      } else {
-        await client.update(context, { settings: { mode: id } })
-      }
+      // if (context == null) {
+      //   await client.createDoc(notification.class.DocNotifyContext, mySpace, {
+      //     objectId: object._id,
+      //     objectClass: object._class,
+      //     objectSpace: object.space,
+      //     user: getCurrentAccount().uuid,
+      //     settings: { mode: id }
+      //   })
+      // } else {
+      //   await client.update(context, { settings: { mode: id } })
+      // }
       dispatch('close')
     } finally {
       progress = false

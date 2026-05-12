@@ -17,7 +17,7 @@
   import type { Channel, ChannelProvider } from '@hcengineering/contact'
   import contact from '@hcengineering/contact'
   import { AttachedData, Doc, Ref, toIdMap } from '@hcengineering/core'
-  import notification, { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
+  import notification, { DocNotifyContext } from '@hcengineering/notification'
   import { Asset, IntlString, getResource } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
   import {
@@ -53,7 +53,7 @@
   export let restricted: Ref<ChannelProvider>[] = []
 
   let contextByDocStore: Writable<Map<Ref<Doc>, DocNotifyContext>> = writable(new Map())
-  let inboxNotificationsByContextStore: Readable<Map<Ref<DocNotifyContext>, InboxNotification[]>> = readable(new Map())
+  let inboxNotificationsByContextStore: Readable<Map<Ref<DocNotifyContext>, any[]>> = readable(new Map())
 
   getResource(notification.function.GetInboxNotificationsClient).then((res) => {
     const inboxClient = res()
@@ -81,7 +81,7 @@
     item: AttachedData<Channel>,
     map: Map<Ref<ChannelProvider>, ChannelProvider>,
     notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext>,
-    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, any[]>
   ): Item | undefined {
     const provider = map.get(item.provider)
     if (provider) {
@@ -109,7 +109,7 @@
   function isNew (
     item: Channel,
     notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext>,
-    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, any[]>
   ): boolean {
     const notifyContext = notifyContextByDoc.get(item._id)
 
@@ -125,7 +125,7 @@
   async function update (
     value: AttachedData<Channel>[] | Channel | null,
     notifyContextByDoc: Map<Ref<Doc>, DocNotifyContext>,
-    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>,
+    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, any[]>,
     channelProviders: ChannelProvider[]
   ) {
     if (value == null) {

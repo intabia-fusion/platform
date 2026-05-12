@@ -17,7 +17,6 @@
   import { Widget } from '@hcengineering/workbench'
   import { getResource } from '@hcengineering/platform'
   import { ChatWidgetTab } from '@hcengineering/chunter'
-  import { InboxNotification } from '@hcengineering/notification'
   import {
     getNotificationsCount,
     InboxNotificationsClientImpl,
@@ -46,7 +45,7 @@
       icon = res
     })
   }
-  let notifications: InboxNotification[] = []
+  let notifications: any[] = []
 
   let count: number = 0
 
@@ -59,7 +58,7 @@
       return
     }
 
-    notifications = (res.get(context._id) ?? []).filter((n) => {
+    notifications = (res.get(context._id) ?? []).filter((n: any) => {
       if (isActivityNotification(n)) return true
 
       return isMentionNotification(n) && hierarchy.isDerived(n.mentionedInClass, chunter.class.ChatMessage)

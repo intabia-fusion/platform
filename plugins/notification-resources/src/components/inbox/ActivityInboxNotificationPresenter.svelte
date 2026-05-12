@@ -15,12 +15,7 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
   import { Ref, Space, matchQuery, Doc } from '@hcengineering/core'
-  import notification, {
-    ActivityInboxNotification,
-    ActivityNotificationViewlet,
-    DisplayActivityInboxNotification,
-    NotificationType
-  } from '@hcengineering/notification'
+  import notification, { ActivityNotificationViewlet, NotificationType } from '@hcengineering/notification'
   import { ActivityMessagePreview, BasePreview, sortActivityMessages } from '@hcengineering/activity-resources'
   import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
   import { Action, Component } from '@hcengineering/ui'
@@ -29,7 +24,7 @@
   import { Analytics } from '@hcengineering/analytics'
 
   export let object: Doc | undefined
-  export let value: DisplayActivityInboxNotification
+  export let value: any
   export let viewlets: ActivityNotificationViewlet[] = []
   export let space: Ref<Space> | undefined = undefined
 
@@ -92,18 +87,18 @@
     viewlet = undefined
   }
 
-  async function getAllActions (value: ActivityInboxNotification): Promise<Action[]> {
-    const notificationActions = await getActions(client, value, notification.class.InboxNotification)
+  async function getAllActions (value: any): Promise<Action[]> {
+    // const notificationActions = await getActions(client, value, notification.class.InboxNotification)
 
     const result: Action[] = []
 
-    for (const action of notificationActions) {
-      const actionImpl = await getResource(action.action)
-      result.push({
-        ...action,
-        action: (event?: any) => actionImpl(value, event, action.actionProps)
-      })
-    }
+    // for (const action of notificationActions) {
+    //   const actionImpl = await getResource(action.action)
+    //   result.push({
+    //     ...action,
+    //     action: (event?: any) => actionImpl(value, event, action.actionProps)
+    //   })
+    // }
 
     return result
   }

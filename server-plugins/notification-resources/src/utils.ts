@@ -21,16 +21,12 @@ import core, {
   Data,
   Doc,
   includesAny,
-  Markup,
   notEmpty,
   Ref,
   Space,
   Tx
 } from '@hcengineering/core'
 import notification, {
-  ActivityInboxNotification,
-  InboxNotification,
-  MentionInboxNotification,
   MessageNotificationType,
   NotificationGroup,
   notificationId,
@@ -45,7 +41,6 @@ import { workbenchId } from '@hcengineering/workbench'
 import { encodeObjectURI } from '@hcengineering/view'
 import serverView from '@hcengineering/server-view'
 import { getDocIdentifier, getDocTitle, getDocUrl } from '@hcengineering/server-activity-resources'
-import { markupToText } from '@hcengineering/text-core'
 
 import { TemplateContent } from './types'
 
@@ -159,44 +154,46 @@ export function generateAttributeNotificationType (
 
 export async function getNotificationMessages (
   control: TriggerControl,
-  notifications: InboxNotification[]
-): Promise<Map<Ref<InboxNotification>, ActivityMessage | undefined>> {
-  const { hierarchy } = control
+  notifications: any[][]
+): Promise<Map<Ref<any>, ActivityMessage | undefined>> {
+  // const { hierarchy } = control
+  //
+  // const ids: Ref<ActivityMessage>[] = []
+  // const map = new Map<Ref<InboxNotification>, Ref<ActivityMessage> | undefined>()
+  //
+  // for (const n of notifications) {
+  //   if (hierarchy.isDerived(n._class, notification.class.ActivityInboxNotification)) {
+  //     const activityNotification = n as ActivityInboxNotification
+  //     ids.push(activityNotification.attachedTo)
+  //     map.set(n._id, activityNotification.attachedTo)
+  //   } else if (hierarchy.isDerived(n._class, notification.class.MentionInboxNotification)) {
+  //     const mentionNotification = n as MentionInboxNotification
+  //     if (hierarchy.isDerived(mentionNotification.mentionedInClass, activity.class.ActivityMessage)) {
+  //       ids.push(mentionNotification.mentionedIn as Ref<ActivityMessage>)
+  //       map.set(n._id, mentionNotification.mentionedIn as Ref<ActivityMessage>)
+  //     }
+  //   }
+  // }
+  //
+  // if (ids.length === 0) return new Map()
+  //
+  // const messages = await control.findAll(control.ctx, activity.class.ActivityMessage, { _id: { $in: ids } })
+  //
+  // return new Map(
+  //   map.entries().map(([notificationId, messageId]) => [notificationId, messages.find((msg) => msg._id === messageId)])
+  // )
 
-  const ids: Ref<ActivityMessage>[] = []
-  const map = new Map<Ref<InboxNotification>, Ref<ActivityMessage> | undefined>()
-
-  for (const n of notifications) {
-    if (hierarchy.isDerived(n._class, notification.class.ActivityInboxNotification)) {
-      const activityNotification = n as ActivityInboxNotification
-      ids.push(activityNotification.attachedTo)
-      map.set(n._id, activityNotification.attachedTo)
-    } else if (hierarchy.isDerived(n._class, notification.class.MentionInboxNotification)) {
-      const mentionNotification = n as MentionInboxNotification
-      if (hierarchy.isDerived(mentionNotification.mentionedInClass, activity.class.ActivityMessage)) {
-        ids.push(mentionNotification.mentionedIn as Ref<ActivityMessage>)
-        map.set(n._id, mentionNotification.mentionedIn as Ref<ActivityMessage>)
-      }
-    }
-  }
-
-  if (ids.length === 0) return new Map()
-
-  const messages = await control.findAll(control.ctx, activity.class.ActivityMessage, { _id: { $in: ids } })
-
-  return new Map(
-    map.entries().map(([notificationId, messageId]) => [notificationId, messages.find((msg) => msg._id === messageId)])
-  )
+  return new Map()
 }
 
 export async function getTranslatedNotificationContent (
-  data: Data<InboxNotification>,
+  data: Data<any>,
   language: string
 ): Promise<{ title: string, body: string, [key: string]: string }> {
   const params = { ...data.intlParams }
 
   for (const [k, v] of Object.entries(data.intlParamsNotLocalized ?? {})) {
-    params[k] = await translate(v, params, language)
+    params[k] = await translate(v as any, params, language)
   }
 
   const title = await translate(data.title ?? notification.string.CommonNotificationTitle, params, language)
@@ -209,10 +206,10 @@ export async function getContentByTemplate (
   control: TriggerControl,
   doc: Doc,
   _types: Ref<NotificationType>[],
-  inboxNotification: InboxNotification,
+  inboxNotification: any,
   message: ActivityMessage | undefined
 ): Promise<TemplateContent | undefined> {
-  const { hierarchy, modelDb } = control
+  const { modelDb } = control
   const language = control.branding?.defaultLanguage ?? 'en'
   const types = _types.map((it) => modelDb.getObject(it)).filter(notEmpty)
 
@@ -240,16 +237,16 @@ export async function getContentByTemplate (
     params.identifier = identifier
   }
 
-  if (hierarchy.isDerived(inboxNotification._class, notification.class.MentionInboxNotification)) {
-    const markup: Markup | undefined = message?.message ?? (inboxNotification as MentionInboxNotification).markup
-    const text = markup !== undefined ? markupToText(markup) : undefined
-    params.body = text ?? params.body
-    params.message = text ?? params.message
-  } else if (message !== undefined) {
-    params.message = message.message !== undefined ? markupToText(message.message) : (params.message ?? '')
-  } else if (params.message === undefined) {
-    params.message = params.body ?? ''
-  }
+  // if (hierarchy.isDerived(inboxNotification._class, notification.class.MentionInboxNotification)) {
+  //   const markup: Markup | undefined = message?.message ?? (inboxNotification as MentionInboxNotification).markup
+  //   const text = markup !== undefined ? markupToText(markup) : undefined
+  //   params.body = text ?? params.body
+  //   params.message = text ?? params.message
+  // } else if (message !== undefined) {
+  //   params.message = message.message !== undefined ? markupToText(message.message) : (params.message ?? '')
+  // } else if (params.message === undefined) {
+  //   params.message = params.body ?? ''
+  // }
 
   const inboxLink = await getNotificationInboxLink(control, doc, message?._id)
   const app = control.branding?.title ?? 'Platform'
@@ -332,7 +329,7 @@ async function fillTemplate (
 async function getUrlWithMessage (
   control: TriggerControl,
   doc: Doc,
-  inboxNotification: InboxNotification,
+  inboxNotification: any,
   messageId?: Ref<ActivityMessage>
 ): Promise<string | undefined> {
   const baseUrl = inboxNotification.intlParams?.url?.toString() ?? (await getDocUrl(control, doc))?.toString()

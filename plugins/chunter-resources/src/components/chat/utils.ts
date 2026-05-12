@@ -211,29 +211,31 @@ function sortDirects (items: ChatNavItemModel[], option: SortFnOptions): ChatNav
 }
 
 function sortActivityChannels (items: ChatNavItemModel[], option: SortFnOptions): ChatNavItemModel[] {
-  const { contextByDoc } = option
+  // const { contextByDoc } = option
+  //
+  // return items.sort((i1, i2) => {
+  //   const context1 = contextByDoc.get(i1.id)
+  //   const context2 = contextByDoc.get(i2.id)
+  //
+  //   const hasNewMessages1 = (context1?.lastUpdate ?? 0) > (context1?.lastView ?? 0)
+  //   const hasNewMessages2 = (context2?.lastUpdate ?? 0) > (context2?.lastView ?? 0)
+  //
+  //   if (hasNewMessages1 && hasNewMessages2) {
+  //     return (context2?.lastUpdate ?? 0) - (context1?.lastUpdate ?? 0)
+  //   }
+  //
+  //   if (hasNewMessages1 && !hasNewMessages2) {
+  //     return -1
+  //   }
+  //
+  //   if (hasNewMessages2 && !hasNewMessages1) {
+  //     return 1
+  //   }
+  //
+  //   return (context2?.lastUpdate ?? i2.object.modifiedOn) - (context1?.lastUpdate ?? i2.object.modifiedOn)
+  // })
 
-  return items.sort((i1, i2) => {
-    const context1 = contextByDoc.get(i1.id)
-    const context2 = contextByDoc.get(i2.id)
-
-    const hasNewMessages1 = (context1?.lastUpdate ?? 0) > (context1?.lastView ?? 0)
-    const hasNewMessages2 = (context2?.lastUpdate ?? 0) > (context2?.lastView ?? 0)
-
-    if (hasNewMessages1 && hasNewMessages2) {
-      return (context2?.lastUpdate ?? 0) - (context1?.lastUpdate ?? 0)
-    }
-
-    if (hasNewMessages1 && !hasNewMessages2) {
-      return -1
-    }
-
-    if (hasNewMessages2 && !hasNewMessages1) {
-      return 1
-    }
-
-    return (context2?.lastUpdate ?? i2.object.modifiedOn) - (context1?.lastUpdate ?? i2.object.modifiedOn)
-  })
+  return []
 }
 
 function getPinnedActions (): Action[] {

@@ -548,20 +548,22 @@ export class ChannelDataProvider implements IChannelDataProvider {
       return -1
     }
 
-    const lastViewedTimestamp = this.context.lastView
-    const client = getClient()
-    const firstNotification = await client.findOne(
-      notification.class.InboxNotification,
-      {
-        _class: {
-          $in: [notification.class.MentionInboxNotification, notification.class.ActivityInboxNotification]
-        },
-        space: this.context.space,
-        docNotifyContext: this.context._id,
-        isViewed: false
-      },
-      { sort: { createdOn: SortingOrder.Ascending } }
-    )
+    // const lastViewedTimestamp = this.context.lastView
+    // const client = getClient()
+    const lastViewedTimestamp = Date.now()
+    const firstNotification: any | undefined = undefined
+    // const firstNotification = await client.findOne(
+    //   notification.class.InboxNotification,
+    //   {
+    //     _class: {
+    //       $in: [notification.class.MentionInboxNotification, notification.class.ActivityInboxNotification]
+    //     },
+    //     space: this.context.space,
+    //     docNotifyContext: this.context._id,
+    //     isViewed: false
+    //   },
+    //   { sort: { createdOn: SortingOrder.Ascending } }
+    // )
 
     if (lastViewedTimestamp === undefined && firstNotification === undefined) {
       return -1

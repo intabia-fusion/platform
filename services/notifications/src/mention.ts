@@ -13,14 +13,12 @@
 // limitations under the License.
 //
 import core, {
-  AccountUuid,
   AnyAttribute,
   type Class,
   Doc,
   getTxOperations,
   type Markup,
   Ref,
-  Space,
   TxCUD,
   Blob,
   type TxRemoveDoc
@@ -28,12 +26,12 @@ import core, {
 import notification, { DocNotifyContext, NotificationContent, TxNotificationType } from '@hcengineering/notification'
 import activity, { ActivityMessage, UserMentionInfo } from '@hcengineering/activity'
 import { areEqualJson, extractReferences, jsonToMarkup, markupToJSON, markupToText } from '@hcengineering/text-core'
-import { Receiver, MentionRef, Sender, getSenderName, normalizeTextMessage } from '@hcengineering/server-notification'
-import contact, { type Employee, Person } from '@hcengineering/contact'
+import { MentionRef, Sender, getSenderName, normalizeTextMessage } from '@hcengineering/server-notification'
+import contact, { Person } from '@hcengineering/contact'
 import { IntlString } from '@hcengineering/platform'
 
-import { Client, NotificationSettings, NotifyResult, MentionResult } from './types'
-import { getDocIdentifier, getDocTitle, getDocUrl, getTxNotifyResult } from './utils'
+import { Client, NotificationSettings, MentionResult } from './types'
+import { getDocIdentifier, getDocTitle, getDocUrl } from './utils'
 import Cache from './cache'
 
 export async function createMentionsData (
@@ -89,83 +87,83 @@ export async function createMentionsData (
   const space = await cache.getDocSpace(message ?? doc)
   if (space == null) return res
 
-  const notified = new Set<AccountUuid>()
-  for (const reference of references) {
-    const receivers = await getReceivers(client, cache, reference, space)
-
-    for (const receiver of receivers) {
-      if (notified.has(receiver.account)) continue
-      notified.add(receiver.account)
-
-      const context = contexts.find((it) => it.user === receiver.account)
-      const mode = context?.settings?.mode ?? 'all'
-      if (mode === 'mute') continue
-      const notifyResult = await getTxNotifyResult(client, tx, doc, receiver, settings, [type], mode)
-
-      if ((notifyResult[notification.providers.InboxNotificationProvider]?.length ?? 0) === 0) continue
-
-      const mention = mentions.find((it) => it.user === receiver.employeeRef)
-
-      res.txes.push(getUpdateMentionTx(client, receiver.employeeRef, reference, space._id, mention))
-      res.data.push(...(await getMentionNotificationData(context, receiver, doc, message, notifyResult, reference)))
-    }
-  }
-
-  return res
-}
-
-async function getMentionNotificationData (
-  context: DocNotifyContext | undefined,
-  receiver: Receiver,
-  doc: Doc,
-  message: ActivityMessage | undefined,
-  notifyResult: NotifyResult,
-  reference: MentionRef
-): Promise<MentionResult['data']> {
-  const res: MentionResult['data'] = []
-
-  res.push({
-    data: {
-      header: activity.string.MentionedYouIn,
-      markup: message?.message ?? reference.markup,
-      mentionedIn: message?._id ?? doc._id,
-      mentionedInClass: message?._class ?? doc._class
-    },
-    context,
-    receiver,
-    notifyResult
-  })
+  // const notified = new Set<AccountUuid>()
+  // for (const reference of references) {
+  //   const receivers = await getReceivers(client, cache, reference, space)
+  //
+  //   for (const receiver of receivers) {
+  //     // if (notified.has(receiver.account)) continue
+  //     // notified.add(receiver.account)
+  //     //
+  //     // const context = contexts.find((it) => it.user === receiver.account)
+  //     // const mode = context?.settings?.mode ?? 'all'
+  //     // if (mode === 'mute') continue
+  //     // const notifyResult = await getTxNotifyResult(client, tx, doc, receiver, settings, [type], mode)
+  //     //
+  //     // if ((notifyResult[notification.providers.InboxNotificationProvider]?.length ?? 0) === 0) continue
+  //     //
+  //     // const mention = mentions.find((it) => it.user === receiver.employeeRef)
+  //     //
+  //     // res.txes.push(getUpdateMentionTx(client, receiver.employeeRef, reference, space._id, mention))
+  //     // res.data.push(...(await getMentionNotificationData(context, receiver, doc, message, notifyResult, reference)))
+  //   }
+  // }
 
   return res
 }
 
-async function getReceivers (client: Client, cache: Cache, reference: MentionRef, space: Space): Promise<Receiver[]> {
-  if (reference.mentionId === contact.mention.Everyone) {
-    const collaborators = (await cache.getCollaborators(reference.docId, reference.docClass)).filter(
-      (it) => !space.private || space.members.includes(it.collaborator)
-    )
-    return await cache.getReceivers(collaborators.map((it) => it.collaborator))
-  } else if (reference.mentionId === contact.mention.Here) {
-    const collaborators = (await cache.getCollaborators(reference.docId, reference.docClass)).filter(
-      (it) => !space.private || space.members.includes(it.collaborator)
-    )
-    const statuses = await cache.getUserStatuses()
+// async function getMentionNotificationData (
+//   context: DocNotifyContext | undefined,
+//   receiver: Receiver,
+//   doc: Doc,
+//   message: ActivityMessage | undefined,
+//   notifyResult: NotifyResult,
+//   reference: MentionRef
+// ): Promise<MentionResult['data']> {
+//   const res: MentionResult['data'] = []
+//
+//   res.push({
+//     data: {
+//       header: activity.string.MentionedYouIn,
+//       markup: message?.message ?? reference.markup,
+//       mentionedIn: message?._id ?? doc._id,
+//       mentionedInClass: message?._class ?? doc._class
+//     },
+//     context,
+//     receiver,
+//     notifyResult
+//   })
+//
+//   return res
+// }
 
-    return await cache.getReceivers(
-      collaborators
-        .filter((it) => statuses.some((s) => s.user === it.collaborator && s.online))
-        .map((it) => it.collaborator)
-    )
-  } else {
-    const employee = await client.findOne(contact.mixin.Employee, { _id: reference.mentionId as Ref<Employee> })
-
-    if (employee?.personUuid != null && (!space.private || space.members.includes(employee.personUuid))) {
-      return await cache.getReceivers([employee.personUuid])
-    }
-  }
-
-  return []
-}
+// async function getReceivers (client: Client, cache: Cache, reference: MentionRef, space: Space): Promise<Receiver[]> {
+//   if (reference.mentionId === contact.mention.Everyone) {
+//     const collaborators = (await cache.getCollaborators(reference.docId, reference.docClass)).filter(
+//       (it) => !space.private || space.members.includes(it.collaborator)
+//     )
+//     return await cache.getReceivers(collaborators.map((it) => it.collaborator))
+//   } else if (reference.mentionId === contact.mention.Here) {
+//     const collaborators = (await cache.getCollaborators(reference.docId, reference.docClass)).filter(
+//       (it) => !space.private || space.members.includes(it.collaborator)
+//     )
+//     const statuses = await cache.getUserStatuses()
+//
+//     return await cache.getReceivers(
+//       collaborators
+//         .filter((it) => statuses.some((s) => s.user === it.collaborator && s.online))
+//         .map((it) => it.collaborator)
+//     )
+//   } else {
+//     const employee = await client.findOne(contact.mixin.Employee, { _id: reference.mentionId as Ref<Employee> })
+//
+//     if (employee?.personUuid != null && (!space.private || space.members.includes(employee.personUuid))) {
+//       return await cache.getReceivers([employee.personUuid])
+//     }
+//   }
+//
+//   return []
+// }
 
 async function getMentionRefs (
   client: Client,
@@ -244,55 +242,56 @@ function getMentionRefsData (
 }
 
 async function getRemoveMentionTxes (client: Client, mention: UserMentionInfo, tx: TxCUD<Doc>): Promise<TxCUD<Doc>[]> {
-  const { txFactory, hierarchy } = client
-  const res: TxCUD<Doc>[] = []
-
-  res.push(txFactory.createTxRemoveDoc(mention._class, mention.space, mention._id))
-
-  if (!hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) return res
-
-  const _id = tx.objectId as Ref<ActivityMessage>
-
-  const person = await client.findOne(contact.class.Person, { _id: mention.user })
-
-  if (person?.personUuid == null) return res
-  const account = person.personUuid as AccountUuid
-
-  const notifications = await client.findAll(notification.class.MentionInboxNotification, {
-    mentionedIn: _id,
-    user: account
-  })
-
-  res.push(...notifications.map((it) => txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
-
-  return res
+  // const { txFactory, hierarchy } = client
+  // const res: TxCUD<Doc>[] = []
+  //
+  // res.push(txFactory.createTxRemoveDoc(mention._class, mention.space, mention._id))
+  //
+  // if (!hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) return res
+  //
+  // const _id = tx.objectId as Ref<ActivityMessage>
+  //
+  // const person = await client.findOne(contact.class.Person, { _id: mention.user })
+  //
+  // if (person?.personUuid == null) return res
+  // const account = person.personUuid as AccountUuid
+  //
+  // const notifications = await client.findAll(notification.class.MentionInboxNotification, {
+  //   mentionedIn: _id,
+  //   user: account
+  // })
+  //
+  // res.push(...notifications.map((it) => txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
+  //
+  // return res
+  return []
 }
 
-function getUpdateMentionTx (
-  client: Client,
-  person: Ref<Person>,
-  reference: MentionRef,
-  space: Ref<Space>,
-  mention: UserMentionInfo | undefined
-): TxCUD<Doc> {
-  const { txFactory } = client
-  if (mention == null) {
-    return txFactory.createTxCreateDoc(activity.class.UserMentionInfo, space, {
-      attachedTo: reference.messageId ?? reference.docId,
-      attachedToClass: reference.messageClass ?? reference.docClass,
-      user: person,
-      content: reference.markup,
-      collection: 'mentions'
-    })
-  }
-
-  return txFactory.createTxUpdateDoc(mention._class, mention.space, mention._id, {
-    content: reference.markup
-  })
-}
+// function getUpdateMentionTx (
+//   client: Client,
+//   person: Ref<Person>,
+//   reference: MentionRef,
+//   space: Ref<Space>,
+//   mention: UserMentionInfo | undefined
+// ): TxCUD<Doc> {
+//   const { txFactory } = client
+//   if (mention == null) {
+//     return txFactory.createTxCreateDoc(activity.class.UserMentionInfo, space, {
+//       attachedTo: reference.messageId ?? reference.docId,
+//       attachedToClass: reference.messageClass ?? reference.docClass,
+//       user: person,
+//       content: reference.markup,
+//       collection: 'mentions'
+//     })
+//   }
+//
+//   return txFactory.createTxUpdateDoc(mention._class, mention.space, mention._id, {
+//     content: reference.markup
+//   })
+// }
 
 async function removeMentionNotifications (client: Client, tx: TxRemoveDoc<Doc>): Promise<MentionResult> {
-  const { hierarchy, txFactory } = client
+  const { hierarchy } = client
   const attributes = hierarchy.getAllAttributes(tx.objectClass)
 
   let hasMarkdown = false
@@ -307,14 +306,14 @@ async function removeMentionNotifications (client: Client, tx: TxRemoveDoc<Doc>)
   if (hasMarkdown) {
     const txes: TxCUD<Doc>[] = []
 
-    const notifications = await client.findAll(notification.class.MentionInboxNotification, {
-      mentionedIn: tx.objectId
-    })
+    // const notifications = await client.findAll(notification.class.MentionInboxNotification, {
+    // mentionedIn: tx.objectId
+    // })
 
-    for (const notification of notifications) {
-      const removeTx = txFactory.createTxRemoveDoc(notification._class, notification.space, notification._id)
-      txes.push(removeTx)
-    }
+    //   for (const notification of notifications) {
+    //   const removeTx = txFactory.createTxRemoveDoc(notification._class, notification.space, notification._id)
+    // txes.push(removeTx)
+    // }
 
     return { txes, data: [] }
   }

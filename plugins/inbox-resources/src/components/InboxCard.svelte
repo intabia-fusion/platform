@@ -16,7 +16,7 @@
   import { createNotificationsQuery, createQuery } from '@hcengineering/presentation'
   import { CheckBox, Loading, Spinner } from '@hcengineering/ui'
   import { AccountRole, Doc, getCurrentAccount } from '@hcengineering/core'
-  import notification, { ActivityNotificationViewlet, InboxNotification } from '@hcengineering/notification'
+  import { ActivityNotificationViewlet } from '@hcengineering/notification'
   import { Card } from '@hcengineering/card'
   import { Notification, NotificationType } from '@hcengineering/communication-types'
 
@@ -71,17 +71,17 @@
     )
   } else {
     modernNotificationsQuery.unsubscribe()
-    legacyNotificationsQuery.query(
-      notification.class.InboxNotification,
-      { isViewed: false, docNotifyContext: navItem.context._id },
-      (res) => {
-        total = res.total
-      },
-      {
-        total: true,
-        limit: 1
-      }
-    )
+    // legacyNotificationsQuery.query(
+    //   notification.class.InboxNotification,
+    //   { isViewed: false, docNotifyContext: navItem.context._id },
+    //   (res) => {
+    //     total = res.total
+    //   },
+    //   {
+    //     total: true,
+    //     limit: 1
+    //   }
+    // )
   }
 
   let isRemoving = false
@@ -98,7 +98,7 @@
     return doc as Card
   }
 
-  function onNotification (event: CustomEvent<InboxNotification | Notification>): void {
+  function onNotification (event: CustomEvent<any | Notification>): void {
     if (doc == null) return
     dispatch('select', { doc, notification: event.detail })
   }

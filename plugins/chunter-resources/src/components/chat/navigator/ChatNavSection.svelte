@@ -42,7 +42,7 @@
     NotifyMarker
   } from '@hcengineering/notification-resources'
   import { Chat } from '@hcengineering/chunter'
-  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
+  import { DocNotifyContext } from '@hcengineering/notification'
 
   import { createEventDispatcher } from 'svelte'
   import chunter from '../../../plugin'
@@ -188,7 +188,7 @@
 
   async function calculateNotifications (
     contexts: DocNotifyContext[],
-    notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+    notificationsByContext: Map<Ref<DocNotifyContext>, any[]>
   ): Promise<void> {
     const notifications = contexts
       .flatMap((context) => notificationsByContext.get(context._id) ?? [])
@@ -203,10 +203,11 @@
 
   $: void calculateNotifications(contexts, $notificationsByContextStore)
 
-  $: notify = sortedItems.some((it) => {
-    const c = $contextByDocStore.get(it.id)
-    return (c?.lastView ?? 0) < (c?.lastUpdate ?? 0) && (c?.lastNotifiedMessage ?? 0) < (c?.lastUpdate ?? 0)
-  })
+  // $: notify = sortedItems.some((it) => {
+  //   const c = $contextByDocStore.get(it.id)
+  //   return (c?.lastView ?? 0) < (c?.lastUpdate ?? 0) && (c?.lastNotifiedMessage ?? 0) < (c?.lastUpdate ?? 0)
+  // })
+  $: notify = false
 </script>
 
 {#if sortedItems.length > 0 || showEmpty}

@@ -30,14 +30,13 @@
   import { inboxId } from '@hcengineering/inbox'
   import view from '@hcengineering/view'
   import { Class, Doc, getCurrentAccount, Ref } from '@hcengineering/core'
-  import notification, { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
+  import notification, { DocNotifyContext } from '@hcengineering/notification'
   import { Notification } from '@hcengineering/communication-types'
   import chunter from '@hcengineering/chunter'
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import { getResource } from '@hcengineering/platform'
   import { get } from 'svelte/store'
-  import cardPlugin from '@hcengineering/card'
 
   import InboxNavigation from './InboxNavigation.svelte'
   import { closeDoc, getDocInfoFromLocation, getMessageInfoFromLocation, navigateToDoc } from '../location'
@@ -127,7 +126,7 @@
     event: CustomEvent<{
       navItem: NavigationItem
       doc: Doc
-      notification?: InboxNotification | Notification
+      notification?: any | Notification
     }>
   ): void {
     const { navItem, notification, doc: ddoc } = event.detail
@@ -135,7 +134,7 @@
 
     const loc = getCurrentLocation()
 
-    const notificationId = (notification as any)?._id ?? (notification as any)?.id
+    const notificationId = notification?._id ?? notification?.id
     if (
       navItem.type === 'modern' &&
       doc?._id === navItem._id &&
@@ -178,24 +177,24 @@
     selectedContext?: DocNotifyContext,
     urlObjectClass?: Ref<Class<Doc>>
   ): Promise<void> {
-    if (doc == null) return
-    const isChunter = isChunterChannel(doc._class, urlObjectClass)
-
-    const contextNotifications = $notificationsByContextStore.get(selectedContext?._id ?? ('' as any)) ?? []
-
-    const ops = getClient().apply(undefined, 'readNotifications')
-    try {
-      await inboxClient.readNotifications(
-        ops,
-        contextNotifications
-          .filter(({ _class, isViewed }) =>
-            isChunter ? _class === notification.class.CommonInboxNotification : !isViewed
-          )
-          .map(({ _id }) => _id)
-      )
-    } finally {
-      await ops.commit()
-    }
+    // if (doc == null) return
+    // const isChunter = isChunterChannel(doc._class, urlObjectClass)
+    //
+    // const contextNotifications = $notificationsByContextStore.get(selectedContext?._id ?? ('' as any)) ?? []
+    //
+    // const ops = getClient().apply(undefined, 'readNotifications')
+    // try {
+    //   await inboxClient.readNotifications(
+    //     ops,
+    //     contextNotifications
+    //       .filter(({ _class, isViewed }) =>
+    //         isChunter ? _class === notification.class.CommonInboxNotification : !isViewed
+    //       )
+    //       .map(({ _id }) => _id)
+    //   )
+    // } finally {
+    //   await ops.commit()
+    // }
   }
 
   onDestroy(

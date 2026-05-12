@@ -14,7 +14,6 @@
 -->
 <script lang="ts">
   import { ActivityMessagePreview } from '@hcengineering/activity-resources'
-  import { MentionInboxNotification } from '@hcengineering/notification'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import { Doc } from '@hcengineering/core'
@@ -24,7 +23,7 @@
   import PreviewTemplate from '../preview/PreviewTemplate.svelte'
 
   export let object: Doc
-  export let value: MentionInboxNotification
+  export let value: any
 
   const client = getClient()
   const hierarchy = client.getHierarchy()

@@ -14,7 +14,7 @@
 import { type Card } from '@hcengineering/card'
 import { type Class, type Doc, type Ref } from '@hcengineering/core'
 import { type NotificationContext } from '@hcengineering/communication-types'
-import { type DisplayInboxNotification, type DocNotifyContext } from '@hcengineering/notification'
+import { type DocNotifyContext } from '@hcengineering/notification'
 
 export type NavigationItem =
   | {
@@ -30,5 +30,5 @@ export type NavigationItem =
     _class: Ref<Class<Doc>>
     context: DocNotifyContext
     date: Date
-    notifications: DisplayInboxNotification[]
+    notifications: any[]
   }

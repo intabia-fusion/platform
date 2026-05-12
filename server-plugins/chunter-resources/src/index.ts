@@ -42,7 +42,6 @@ import core, {
   type MeasureContext,
   Collaborator,
   TxRemoveDoc,
-  SortingOrder,
   getClassCollaborators,
   AccountUuid
 } from '@hcengineering/core'
@@ -63,7 +62,7 @@ import { JoinChannelTypeMatch } from './utils'
 import { ChatSearchTitleProvider } from './search'
 
 const updateChatInfoDelay = 24 * 60 * 60 * 1000 // 24 hours
-const hideChannelDelay = 7 * 24 * 60 * 60 * 1000 // 7 days
+// const hideChannelDelay = 7 * 24 * 60 * 60 * 1000 // 7 days
 
 const channelTitlePresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const channel = doc as ChunterSpace
@@ -267,30 +266,30 @@ async function getDirectsToHide (
 
   const toHide: { direct: Chat, lastUpdate: Timestamp }[] = []
 
-  for (const direct of directs) {
-    const context = contexts.find((it) => it.objectId === direct.attachedTo)
-    if (context != null) {
-      const { lastUpdate = 0, lastView = 0 } = context
-      if (lastView === 0) continue
-      if (lastUpdate > lastView) continue
-      if (date - lastUpdate > hideChannelDelay) {
-        toHide.push({ lastUpdate, direct })
-      }
-    } else {
-      const lastMessage = (
-        await control.findAll(
-          control.ctx,
-          activity.class.ActivityMessage,
-          { attachedTo: direct.attachedTo },
-          { limit: 1, sort: { createdOn: SortingOrder.Descending } }
-        )
-      )[0]
-      const lastUpdate = lastMessage.modifiedOn ?? direct.modifiedOn
-      if (date - lastUpdate > hideChannelDelay) {
-        toHide.push({ lastUpdate, direct })
-      }
-    }
-  }
+  // for (const direct of directs) {
+  //   const context = contexts.find((it) => it.objectId === direct.attachedTo)
+  //   if (context != null) {
+  //     const { lastUpdate = 0, lastView = 0 } = context
+  //     if (lastView === 0) continue
+  //     if (lastUpdate > lastView) continue
+  //     if (date - lastUpdate > hideChannelDelay) {
+  //       toHide.push({ lastUpdate, direct })
+  //     }
+  //   } else {
+  //     const lastMessage = (
+  //       await control.findAll(
+  //         control.ctx,
+  //         activity.class.ActivityMessage,
+  //         { attachedTo: direct.attachedTo },
+  //         { limit: 1, sort: { createdOn: SortingOrder.Descending } }
+  //       )
+  //     )[0]
+  //     const lastUpdate = lastMessage.modifiedOn ?? direct.modifiedOn
+  //     if (date - lastUpdate > hideChannelDelay) {
+  //       toHide.push({ lastUpdate, direct })
+  //     }
+  //   }
+  // }
 
   toHide.sort((a, b) => (a.lastUpdate ?? 0) - (b.lastUpdate ?? 0))
 
@@ -306,30 +305,30 @@ async function getActivityToHide (
   if (chats.length === 0) return []
   const toHide: Chat[] = []
 
-  for (const chat of chats) {
-    const context = contexts.find((it) => it.objectId === chat.attachedTo)
-    if (context != null) {
-      const { lastUpdate = 0, lastView = 0 } = context
-      if (lastView === 0) continue
-      if (lastUpdate > lastView) continue
-      if (date - lastUpdate > hideChannelDelay) {
-        toHide.push(chat)
-      }
-    } else {
-      const lastMessage = (
-        await control.findAll(
-          control.ctx,
-          activity.class.ActivityMessage,
-          { attachedTo: chat.attachedTo },
-          { limit: 1, sort: { createdOn: SortingOrder.Descending } }
-        )
-      )[0]
-      const lastUpdate = lastMessage.modifiedOn ?? chat.modifiedOn
-      if (date - lastUpdate > hideChannelDelay) {
-        toHide.push(chat)
-      }
-    }
-  }
+  // for (const chat of chats) {
+  //   const context = contexts.find((it) => it.objectId === chat.attachedTo)
+  //   if (context != null) {
+  //     const { lastUpdate = 0, lastView = 0 } = context
+  //     if (lastView === 0) continue
+  //     if (lastUpdate > lastView) continue
+  //     if (date - lastUpdate > hideChannelDelay) {
+  //       toHide.push(chat)
+  //     }
+  //   } else {
+  //     const lastMessage = (
+  //       await control.findAll(
+  //         control.ctx,
+  //         activity.class.ActivityMessage,
+  //         { attachedTo: chat.attachedTo },
+  //         { limit: 1, sort: { createdOn: SortingOrder.Descending } }
+  //       )
+  //     )[0]
+  //     const lastUpdate = lastMessage.modifiedOn ?? chat.modifiedOn
+  //     if (date - lastUpdate > hideChannelDelay) {
+  //       toHide.push(chat)
+  //     }
+  //   }
+  // }
 
   return toHide
 }

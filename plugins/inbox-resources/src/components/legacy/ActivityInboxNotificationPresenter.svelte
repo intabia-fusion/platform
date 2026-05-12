@@ -15,7 +15,7 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
   import { matchQuery, Doc } from '@hcengineering/core'
-  import { ActivityNotificationViewlet, DisplayActivityInboxNotification } from '@hcengineering/notification'
+  import { ActivityNotificationViewlet } from '@hcengineering/notification'
   import { ActivityMessagePreview, sortActivityMessages } from '@hcengineering/activity-resources'
   import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
   import { Component } from '@hcengineering/ui'
@@ -24,7 +24,7 @@
   import PreviewTemplate from '../preview/PreviewTemplate.svelte'
 
   export let object: Doc
-  export let value: DisplayActivityInboxNotification
+  export let value: any
   export let viewlets: ActivityNotificationViewlet[] = []
 
   const client = getClient()

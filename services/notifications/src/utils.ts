@@ -27,19 +27,18 @@ import core, {
   PersonId,
   Ref,
   type RefTo,
+  Space,
   type Tx,
-  TxCreateDoc,
   TxCUD,
-  TxProcessor,
   WorkspaceInfoWithStatus
 } from '@hcengineering/core'
+import contact, { Employee } from '@hcengineering/contact'
 import activity, { DocUpdateMessage, ActivityMessage } from '@hcengineering/activity'
 import notification, {
   NotificationProvider,
   NotificationType,
   MessageNotificationType,
   TxNotificationType,
-  InboxNotification,
   NotificationContent,
   DocNotificationMode
 } from '@hcengineering/notification'
@@ -57,9 +56,35 @@ import serverActivity, { IdentifierPresenter, TitlePresenter, UrlPresenter } fro
 
 import { Client, NotificationSettings, NotifyResult } from './types'
 import config from './config'
+import Cache from './cache'
 
 export const MAX_NOTIFICATION_TYPE_PRIORITY = Number.MAX_SAFE_INTEGER
 const externalRegions = process.env.EXTERNAL_REGIONS?.split(';') ?? []
+
+export async function getCollaboratorAccounts (
+  client: Client,
+  cache: Cache,
+  doc: Doc,
+  space: Space
+): Promise<AccountUuid[]> {
+  const collaborators = await cache.getCollaborators(doc._id, doc._class)
+
+  const filtered = !space.private
+    ? collaborators
+    : collaborators.filter((it) => space.members.includes(it.collaborator))
+
+  const accounts = new Set(filtered.map((it) => it.collaborator))
+
+  if (client.hierarchy.isDerived(doc._class, contact.mixin.Employee)) {
+    const account = (doc as Employee).personUuid
+
+    if (account != null) {
+      accounts.add(account)
+    }
+  }
+
+  return Array.from(accounts)
+}
 
 export async function getWorkspaceInfo (
   token: string
@@ -428,13 +453,14 @@ function getTxOperationsKeys (tx: TxCUD<Doc>): string[] {
 }
 
 export function getNotifiedUsers (hierarchy: Hierarchy, txes: Tx[]): AccountUuid[] {
-  return txes
-    .filter(
-      (it) =>
-        it._class === core.class.TxCreateDoc &&
-        hierarchy.isDerived((it as TxCUD<Doc>).objectClass, notification.class.InboxNotification)
-    )
-    .map((it) => TxProcessor.createDoc2Doc(it as TxCreateDoc<InboxNotification>).user)
+  // return txes
+  //   .filter(
+  //     (it) =>
+  //       it._class === core.class.TxCreateDoc &&
+  //       hierarchy.isDerived((it as TxCUD<Doc>).objectClass, notification.class.InboxNotification)
+  //   )
+  //   .map((it) => TxProcessor.createDoc2Doc(it as TxCreateDoc<InboxNotification>).user)
+  return []
 }
 
 export function getTypeMatchClient (client: Client): TypeMatchClient {

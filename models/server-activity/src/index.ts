@@ -68,7 +68,7 @@ export function createModel (builder: Builder): void {
       objectClass: { $ne: activity.class.ActivityReference },
       attachedToClass: {
         $nin: [
-          notification.class.InboxNotification,
+          notification.class.ReadState,
           notification.class.DocNotifyContext,
           notification.class.BrowserNotification
         ]

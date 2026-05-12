@@ -76,8 +76,8 @@ import core, {
   type WithLookup
 } from '@hcengineering/core'
 import login from '@hcengineering/login'
-import notification, { type DocNotifyContext, type InboxNotification } from '@hcengineering/notification'
-import { getMetadata, getResource, type IntlString, translate } from '@hcengineering/platform'
+import { type DocNotifyContext } from '@hcengineering/notification'
+import { getMetadata, type IntlString, translate } from '@hcengineering/platform'
 import presentation, { addTxListener, createQuery, getClient, onClient } from '@hcengineering/presentation'
 import { type TemplateDataProvider } from '@hcengineering/templates'
 import {
@@ -142,15 +142,17 @@ export async function filterChannelHasNewMessagesResult (
   filter: Filter,
   onUpdate: () => void
 ): Promise<ObjQueryType<any>> {
-  const inboxClient = (await getResource(notification.function.GetInboxNotificationsClient))()
-  const result = await getRefs(
-    filter,
-    onUpdate,
-    undefined,
-    get(inboxClient.contextByDoc),
-    get(inboxClient.inboxNotificationsByContext)
-  )
-  return { $in: result }
+  // TODO:
+  // const inboxClient = (await getResource(notification.function.GetInboxNotificationsClient))()
+  // const result = await getRefs(
+  //   filter,
+  //   onUpdate,
+  //   undefined,
+  //   get(inboxClient.contextByDoc),
+  //   get(inboxClient.inboxNotificationsByContext)
+  // )
+  // return { $in: result }
+  return {}
 }
 
 export async function filterChannelInResult (filter: Filter, onUpdate: () => void): Promise<ObjQueryType<any>> {
@@ -167,8 +169,8 @@ export async function getRefs (
   filter: Filter,
   onUpdate: () => void,
   hasMessages?: boolean,
-  docUpdates?: Map<Ref<Doc>, DocNotifyContext>,
-  inboxNotificationsByContext?: Map<Ref<DocNotifyContext>, InboxNotification[]>
+  docUpdates?: Map<Ref<Doc>, DocNotifyContext>
+  // inboxNotificationsByContext?: Map<Ref<DocNotifyContext>, InboxNotification[]>
 ): Promise<Array<Ref<Doc>>> {
   const lq = FilterQuery.getLiveQuery(filter.index)
   const client = getClient()
@@ -183,19 +185,20 @@ export async function getRefs (
         ...hasMessagesQuery
       },
       (refs) => {
-        const filteredRefs =
-          docUpdates !== undefined && inboxNotificationsByContext !== undefined
-            ? refs.filter((channel) => {
-              const docUpdate = docUpdates.get(channel._id)
-              return docUpdate != null
-                ? inboxNotificationsByContext.get(docUpdate._id)?.some(({ isViewed }) => !isViewed)
-                : (channel.items ?? 0) > 0
-            })
-            : refs
-        const result = Array.from(new Set(filteredRefs.map((p) => p.attachedTo)))
-        FilterQuery.results.set(filter.index, result)
-        resolve(result)
-        onUpdate()
+        // TODO
+        // const filteredRefs =
+        //   docUpdates !== undefined && inboxNotificationsByContext !== undefined
+        //     ? refs.filter((channel) => {
+        //       const docUpdate = docUpdates.get(channel._id)
+        //       return docUpdate != null
+        //         ? inboxNotificationsByContext.get(docUpdate._id)?.some(({ isViewed }) => !isViewed)
+        //         : (channel.items ?? 0) > 0
+        //     })
+        //     : refs
+        // const result = Array.from(new Set(filteredRefs.map((p) => p.attachedTo)))
+        // FilterQuery.results.set(filter.index, result)
+        // resolve(result)
+        // onUpdate()
       }
     )
     if (!refresh) {

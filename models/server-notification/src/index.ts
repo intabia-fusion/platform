@@ -72,14 +72,15 @@ export function createModel (builder: Builder): void {
     }
   })
 
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverNotification.trigger.PushNotificationsHandler,
-    isAsync: true,
-    txMatch: {
-      _class: core.class.TxCreateDoc,
-      objectClass: notification.class.InboxNotification
-    }
-  })
+  // TODO: listen queue in service
+  // builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+  //   trigger: serverNotification.trigger.PushNotificationsHandler,
+  //   isAsync: true,
+  //   txMatch: {
+  //     _class: core.class.TxUpdateDoc,
+  //     objectClass: notification.class.DocNotifyContext
+  //   }
+  // })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverNotification.trigger.OnCollaboratorRemoved,

@@ -16,7 +16,7 @@
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import chunter from '@hcengineering/chunter'
   import { Class, Doc, Ref } from '@hcengineering/core'
-  import { DocNotifyContext, InboxNotification, notificationId } from '@hcengineering/notification'
+  import { DocNotifyContext, notificationId } from '@hcengineering/notification'
   import { ActionContext, getClient } from '@hcengineering/presentation'
   import {
     AnyComponent,
@@ -205,7 +205,7 @@
       return
     }
 
-    const selectedNotification: InboxNotification | undefined = event?.detail?.notification
+    const selectedNotification: any | undefined = event?.detail?.notification
 
     void selectInboxContext(linkProviders, selectedContext, selectedNotification, event?.detail.object)
   }
@@ -234,21 +234,21 @@
 
     selectedComponent = panelComponent?.component ?? view.component.EditDoc
 
-    const contextNotifications = $notificationsByContextStore.get(selectedContext._id) ?? []
+    // const contextNotifications = $notificationsByContextStore.get(selectedContext._id) ?? []
 
-    const ops = getClient().apply(undefined, 'readNotifications')
-    try {
-      await inboxClient.readNotifications(
-        ops,
-        contextNotifications
-          .filter(({ _class, isViewed }) =>
-            isChunter ? _class === notification.class.CommonInboxNotification : !isViewed
-          )
-          .map(({ _id }) => _id)
-      )
-    } finally {
-      await ops.commit()
-    }
+    // const ops = getClient().apply(undefined, 'readNotifications')
+    // try {
+    //   await inboxClient.readNotifications(
+    //     ops,
+    //     contextNotifications
+    //       .filter(({ _class, isViewed }) =>
+    //         isChunter ? _class === notification.class.CommonInboxNotification : !isViewed
+    //       )
+    //       .map(({ _id }) => _id)
+    //   )
+    // } finally {
+    //   await ops.commit()
+    // }
   }
 
   function filterData (

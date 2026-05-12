@@ -38,7 +38,7 @@ import core, {
   type WorkspaceUuid
 } from '@hcengineering/core'
 import drive, { createFile, Drive } from '@hcengineering/drive'
-import exportPlugin, { type TransformConfig, type RelationDefinition } from '@hcengineering/export'
+import { type TransformConfig, type RelationDefinition } from '@hcengineering/export'
 import {
   ContextNameMiddleware,
   DBAdapterInitMiddleware,
@@ -48,8 +48,6 @@ import {
   LowLevelMiddleware,
   ModelMiddleware
 } from '@hcengineering/middleware'
-import notification from '@hcengineering/notification'
-import contact from '@hcengineering/contact'
 import { setMetadata } from '@hcengineering/platform'
 import { createClient, getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
 import {
@@ -693,33 +691,33 @@ async function sendSuccessNotification (
   exportDrive: Ref<Drive>,
   archiveName: string
 ): Promise<void> {
-  const personSpace = await client.findOne(contact.class.PersonSpace, { account })
-  if (personSpace == null) return
-
-  const context = await client.findOne(notification.class.DocNotifyContext, { objectId: exportDrive, user: account })
-  const docNotifyContextId =
-    context?._id ??
-    (await client.createDoc(notification.class.DocNotifyContext, personSpace._id, {
-      objectId: exportDrive,
-      objectClass: drive.class.Drive,
-      objectSpace: core.space.Space,
-      user: account
-    }))
-
-  await client.createDoc(notification.class.CommonInboxNotification, personSpace._id, {
-    user: account,
-    objectId: exportDrive,
-    objectClass: drive.class.Drive,
-    icon: exportPlugin.icon.Export,
-    message: exportPlugin.string.ExportCompleted,
-    intlParams: {
-      fileName: archiveName
-    },
-    isViewed: false,
-    archived: false,
-    docNotifyContext: docNotifyContextId,
-    allowedProviders: {}
-  })
+  // const personSpace = await client.findOne(contact.class.PersonSpace, { account })
+  // if (personSpace == null) return
+  //
+  // const context = await client.findOne(notification.class.DocNotifyContext, { objectId: exportDrive, user: account })
+  // const docNotifyContextId =
+  //   context?._id ??
+  //   (await client.createDoc(notification.class.DocNotifyContext, personSpace._id, {
+  //     objectId: exportDrive,
+  //     objectClass: drive.class.Drive,
+  //     objectSpace: core.space.Space,
+  //     user: account
+  //   }))
+  //
+  // await client.createDoc(notification.class.CommonInboxNotification, personSpace._id, {
+  //   user: account,
+  //   objectId: exportDrive,
+  //   objectClass: drive.class.Drive,
+  //   icon: exportPlugin.icon.Export,
+  //   message: exportPlugin.string.ExportCompleted,
+  //   intlParams: {
+  //     fileName: archiveName
+  //   },
+  //   isViewed: false,
+  //   archived: false,
+  //   docNotifyContext: docNotifyContextId,
+  //   allowedProviders: {}
+  // })
 }
 
 async function sendFailureNotification (
@@ -730,37 +728,37 @@ async function sendFailureNotification (
   objectId?: Ref<Doc>,
   objectSpace?: Ref<Space>
 ): Promise<void> {
-  const _objectSpace = objectSpace ?? core.space.Space
-
-  if (objectId === undefined || objectClass === undefined) {
-    return
-  }
-
-  const personSpace = await client.findOne(contact.class.PersonSpace, { account })
-  if (personSpace == null) return
-
-  const context = await client.findOne(notification.class.DocNotifyContext, { objectId, user: account })
-  const docNotifyContextId =
-    context?._id ??
-    (await client.createDoc(notification.class.DocNotifyContext, personSpace._id, {
-      objectId,
-      objectClass,
-      objectSpace: _objectSpace,
-      user: account
-    }))
-
-  await client.createDoc(notification.class.CommonInboxNotification, personSpace._id, {
-    user: account,
-    objectId,
-    objectClass,
-    icon: exportPlugin.icon.Export,
-    message: exportPlugin.string.ExportFailed,
-    intlParams: {
-      error
-    },
-    isViewed: false,
-    archived: false,
-    docNotifyContext: docNotifyContextId,
-    allowedProviders: {}
-  })
+  // const _objectSpace = objectSpace ?? core.space.Space
+  //
+  // if (objectId === undefined || objectClass === undefined) {
+  //   return
+  // }
+  //
+  // const personSpace = await client.findOne(contact.class.PersonSpace, { account })
+  // if (personSpace == null) return
+  //
+  // const context = await client.findOne(notification.class.DocNotifyContext, { objectId, user: account })
+  // const docNotifyContextId =
+  //   context?._id ??
+  //   (await client.createDoc(notification.class.DocNotifyContext, personSpace._id, {
+  //     objectId,
+  //     objectClass,
+  //     objectSpace: _objectSpace,
+  //     user: account
+  //   }))
+  //
+  // await client.createDoc(notification.class.CommonInboxNotification, personSpace._id, {
+  //   user: account,
+  //   objectId,
+  //   objectClass,
+  //   icon: exportPlugin.icon.Export,
+  //   message: exportPlugin.string.ExportFailed,
+  //   intlParams: {
+  //     error
+  //   },
+  //   isViewed: false,
+  //   archived: false,
+  //   docNotifyContext: docNotifyContextId,
+  //   allowedProviders: {}
+  // })
 }

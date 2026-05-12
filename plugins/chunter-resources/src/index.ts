@@ -13,19 +13,13 @@
 // limitations under the License.
 //
 
-import activity, { type ActivityMessage } from '@hcengineering/activity'
+import { type ActivityMessage } from '@hcengineering/activity'
 import { type Channel, type ChatMessage } from '@hcengineering/chunter'
 import { type Resources } from '@hcengineering/platform'
 import { MessageBox, getClient } from '@hcengineering/presentation'
 import { getLocation, navigate, showPopup } from '@hcengineering/ui'
-import { get, writable } from 'svelte/store'
+import { writable } from 'svelte/store'
 import { type DocNotifyContext, type NotificationAppearancePreference } from '@hcengineering/notification'
-import {
-  getNotificationsCount,
-  InboxNotificationsClientImpl,
-  isActivityNotification,
-  isMentionNotification
-} from '@hcengineering/notification-resources'
 
 import chunter from './plugin'
 
@@ -231,28 +225,9 @@ export default async (): Promise<Resources> => ({
       contexts: DocNotifyContext[],
       preference?: NotificationAppearancePreference
     ): Promise<boolean> => {
-      if (preference?.showChatBadge === false) return false
-
-      const hasUpdates = contexts.some((context) => (context.lastUpdate ?? 0) > (context.lastView ?? 0))
-      if (!hasUpdates) return false
-
-      const notificationClient = InboxNotificationsClientImpl.getClient()
-      const client = getClient()
-      const hierarchy = client.getHierarchy()
-
-      for (const context of contexts) {
-        if ((context.lastUpdate ?? 0) <= (context.lastView ?? 0)) continue
-
-        const notifications = get(notificationClient.inboxNotificationsByContext).get(context._id) ?? []
-        const activityNotifications = notifications.filter(isActivityNotification)
-        const mentionNotifications = notifications
-          .filter(isMentionNotification)
-          .filter((it) => hierarchy.isDerived(it.mentionedInClass, activity.class.ActivityMessage))
-        const unreadCount = getNotificationsCount(context, [...activityNotifications, ...mentionNotifications])
-        if (unreadCount > 0) {
-          return true
-        }
-      }
+      // if (preference?.showChatBadge === false) return false
+      //
+      // return contexts.some((context) => (context.lastUpdate ?? 0) > (context.lastView ?? 0))
       return false
     }
   },

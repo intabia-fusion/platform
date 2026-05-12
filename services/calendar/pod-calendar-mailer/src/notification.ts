@@ -14,8 +14,7 @@
 //
 import calendar, { Event } from '@hcengineering/calendar'
 import contact from '@hcengineering/contact'
-import { AccountUuid, Doc, MeasureContext, PersonId, Ref, Space, WorkspaceUuid } from '@hcengineering/core'
-import notification from '@hcengineering/notification'
+import { MeasureContext, PersonId, WorkspaceUuid } from '@hcengineering/core'
 import { IntlString } from '@hcengineering/platform'
 import { getClient } from './utils'
 
@@ -52,10 +51,10 @@ export async function createNotification (
     throw new Error(`Person space not found for person ${person._id}`)
   }
 
-  const user = personUuid as AccountUuid
-  let objectId: Ref<Doc<Space>> = forEvent._id
-  let objectClass = forEvent._class
-  let objectSpace = forEvent.space
+  // const user = personUuid as AccountUuid
+  // let objectId: Ref<Doc<Space>> = forEvent._id
+  // let objectClass = forEvent._class
+  // let objectSpace = forEvent.space
 
   if (type === MeetingNotificationType.Canceled) {
     const calendr = await client.findOne(
@@ -66,21 +65,21 @@ export async function createNotification (
     if (calendr === undefined) {
       throw new Error(`Calendar not found for event ${forEvent._id}`)
     }
-    objectId = calendr._id
-    objectClass = calendar.class.Calendar
-    objectSpace = calendr.space
+    // objectId = calendr._id
+    // objectClass = calendar.class.Calendar
+    // objectSpace = calendr.space
   }
 
-  const docNotifyContext = await client.findOne(notification.class.DocNotifyContext, { objectId, user })
-  let docNotifyContextId = docNotifyContext?._id
-  if (docNotifyContextId === undefined) {
-    docNotifyContextId = await client.createDoc(notification.class.DocNotifyContext, space._id, {
-      objectId,
-      objectClass,
-      objectSpace,
-      user
-    })
-  }
+  // const docNotifyContext = await client.findOne(notification.class.DocNotifyContext, { objectId, user })
+  // const docNotifyContextId = docNotifyContext?._id
+  // if (docNotifyContextId === undefined) {
+  //   docNotifyContextId = await client.createDoc(notification.class.DocNotifyContext, space._id, {
+  //     objectId,
+  //     objectClass,
+  //     objectSpace,
+  //     user
+  //   })
+  // }
 
   if (notificationMessages[type] === undefined) {
     throw new Error('Invalid notification type')
@@ -88,20 +87,20 @@ export async function createNotification (
 
   // Here we need another client with that account who created the event
   // to make the notification in the inbox displaying the author name
-  const { client: txClient } = await getClient(workspaceUuid, modifiedBy)
+  // const { client: txClient } = await getClient(workspaceUuid, modifiedBy)
 
-  await txClient.createDoc(notification.class.CommonInboxNotification, space._id, {
-    user,
-    objectId,
-    objectClass,
-    icon: calendar.icon.Calendar,
-    message: notificationMessages[type],
-    intlParams: { title: forEvent.title },
-    isViewed: false,
-    archived: false,
-    docNotifyContext: docNotifyContextId,
-    allowedProviders: {}
-  })
+  // await txClient.createDoc(notification.class.CommonInboxNotification, space._id, {
+  //   user,
+  //   objectId,
+  //   objectClass,
+  //   icon: calendar.icon.Calendar,
+  //   message: notificationMessages[type],
+  //   intlParams: { title: forEvent.title },
+  //   isViewed: false,
+  //   archived: false,
+  //   docNotifyContext: docNotifyContextId,
+  //   allowedProviders: {}
+  // })
 
   ctx.info('Notification created', {
     personUuid,

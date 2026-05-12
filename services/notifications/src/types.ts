@@ -24,14 +24,15 @@ import {
   MeasureContext,
   ModelDb,
   Ref,
+  TxCreateDoc,
   TxCUD,
   TxFactory,
+  TxUpdateDoc,
   type WithLookup,
   WorkspaceInfoWithStatus
 } from '@hcengineering/core'
 import {
   DocNotifyContext,
-  MentionInboxNotification,
   NotificationProvider,
   type NotificationProviderSetting,
   NotificationType,
@@ -77,9 +78,16 @@ export interface Client {
 export interface MentionResult {
   txes: TxCUD<Doc>[]
   data: {
-    data: Partial<MentionInboxNotification>
+    // data: Partial<MentionInboxNotification>
+    data: Record<string, any>
     context: DocNotifyContext | undefined
     receiver: Receiver
     notifyResult: NotifyResult
   }[]
+}
+
+export interface Result {
+  updateContextTx: TxUpdateDoc<DocNotifyContext>[]
+  updateContextOpTx: TxUpdateDoc<DocNotifyContext>[]
+  createContextTx: TxCreateDoc<DocNotifyContext>[]
 }

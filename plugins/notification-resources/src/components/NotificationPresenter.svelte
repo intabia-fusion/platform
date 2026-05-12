@@ -27,7 +27,8 @@
   $: notifyContext = $contextByDocStore.get(value._id)
   $: inboxNotifications = notifyContext ? ($inboxNotificationsByContextStore.get(notifyContext._id) ?? []) : []
 
-  $: hasNotification = inboxNotifications.some(({ isViewed }) => !isViewed)
+  // $: hasNotification = inboxNotifications.some(({ isViewed }) => !isViewed)
+  $: hasNotification = false
 </script>
 
 {#if hasNotification}

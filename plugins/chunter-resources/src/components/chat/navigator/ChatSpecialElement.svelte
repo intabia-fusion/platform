@@ -17,7 +17,7 @@
   import { SpecialNavModel } from '@hcengineering/workbench'
   import { getResource } from '@hcengineering/platform'
   import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
+  import { DocNotifyContext } from '@hcengineering/notification'
   import { Ref } from '@hcengineering/core'
   import { SavedAttachments } from '@hcengineering/attachment'
   import { SavedMessage } from '@hcengineering/activity'
@@ -45,7 +45,7 @@
 
   async function getNotificationsCount (
     special: SpecialNavModel,
-    notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+    notificationsByContext: Map<Ref<DocNotifyContext>, any[]>
   ): Promise<number> {
     if (!special.notificationsCountProvider) {
       return 0

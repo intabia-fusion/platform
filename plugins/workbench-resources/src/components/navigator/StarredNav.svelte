@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { Class, Doc, Ref, Space } from '@hcengineering/core'
-  import { DocNotifyContext, InboxNotification } from '@hcengineering/notification'
+  import { DocNotifyContext } from '@hcengineering/notification'
   import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
@@ -49,7 +49,7 @@
   function isChanged (
     space: Space,
     docUpdates: Map<Ref<Doc>, DocNotifyContext>,
-    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
+    inboxNotificationsByContext: Map<Ref<DocNotifyContext>, any[]>
   ): boolean {
     const notifyContext = docUpdates.get(space._id)
     if (notifyContext === undefined) return false

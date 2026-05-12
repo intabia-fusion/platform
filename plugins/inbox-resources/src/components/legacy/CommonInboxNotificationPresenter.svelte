@@ -14,7 +14,6 @@
 -->
 <script lang="ts">
   import core, { Doc, Markup } from '@hcengineering/core'
-  import { CommonInboxNotification } from '@hcengineering/notification'
   import { getEmbeddedLabel, IntlString, translateCB } from '@hcengineering/platform'
   import { Icon, Label, themeStore, tooltip } from '@hcengineering/ui'
   import { Person } from '@hcengineering/contact'
@@ -23,7 +22,7 @@
 
   import PreviewTemplate from '../preview/PreviewTemplate.svelte'
 
-  export let value: CommonInboxNotification
+  export let value: any
 
   const client = getClient()
 

@@ -23,7 +23,6 @@ import core, {
   Doc,
   getClassCollaborators,
   Ref,
-  SortingOrder,
   Space,
   Tx,
   TxCreateDoc,
@@ -35,7 +34,7 @@ import core, {
 } from '@hcengineering/core'
 import notification, { DocNotifyContext } from '@hcengineering/notification'
 import { type TriggerControl } from '@hcengineering/server-core'
-import { isActivityDoc } from '@hcengineering/server-activity-resources'
+import { isActivityDoc } from '@hcengineering/server-activity'
 
 import { PushNotificationsHandler } from './push'
 import {
@@ -70,22 +69,23 @@ async function removeContexts (
 }
 
 async function removeContextNotifications (control: TriggerControl, contextId: Ref<DocNotifyContext>[]): Promise<Tx[]> {
-  const inboxNotifications = await control.findAll(
-    control.ctx,
-    notification.class.InboxNotification,
-    {
-      docNotifyContext: { $in: contextId }
-    },
-    {
-      projection: {
-        _id: 1,
-        _class: 1,
-        space: 1
-      }
-    }
-  )
-
-  return inboxNotifications.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id))
+  // const inboxNotifications = await control.findAll(
+  //   control.ctx,
+  //   notification.class.InboxNotification,
+  //   {
+  //     docNotifyContext: { $in: contextId }
+  //   },
+  //   {
+  //     projection: {
+  //       _id: 1,
+  //       _class: 1,
+  //       space: 1
+  //     }
+  //   }
+  // )
+  //
+  // return inboxNotifications.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id))
+  return []
 }
 async function removeCollaboratorDoc (tx: TxRemoveDoc<Doc>, control: TriggerControl): Promise<Tx[]> {
   const mixin = getClassCollaborators(control.modelDb, control.hierarchy, tx.objectClass)
@@ -177,51 +177,52 @@ async function OnCollaboratorRemoved (txes: TxRemoveDoc<Collaborator>[], control
 }
 
 async function OnActivityMessageRemove (message: ActivityMessage, control: TriggerControl): Promise<Tx[]> {
-  if (control.removedMap.has(message.attachedTo)) {
-    return []
-  }
-
-  const res: Tx[] = []
-
-  const reactionNotifications = await control.findAll(control.ctx, notification.class.ReactionInboxNotification, {
-    attachedTo: message._id
-  })
-  const mentionNotifications = await control.findAll(control.ctx, notification.class.MentionInboxNotification, {
-    mentionedIn: message._id
-  })
-  const activityNotifications = await control.findAll(control.ctx, notification.class.ActivityInboxNotification, {
-    attachedTo: message._id
-  })
-
-  res.push(...activityNotifications.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
-  res.push(...reactionNotifications.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
-  res.push(...mentionNotifications.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
-
-  const contexts = await control.findAll(control.ctx, notification.class.DocNotifyContext, {
-    objectId: message.attachedTo,
-    lastUpdate: message.createdOn
-  })
-  if (contexts.length === 0) return res
-
-  const lastMessage = (
-    await control.findAll(
-      control.ctx,
-      activity.class.ActivityMessage,
-      { attachedTo: message.attachedTo, space: message.space },
-      { sort: { createdOn: SortingOrder.Descending }, limit: 1 }
-    )
-  )[0]
-  if (lastMessage === undefined) return res
-
-  for (const context of contexts) {
-    res.push(
-      control.txFactory.createTxUpdateDoc(context._class, context.space, context._id, {
-        lastUpdate: lastMessage.createdOn ?? lastMessage.modifiedOn
-      })
-    )
-  }
-
-  return res
+  // if (control.removedMap.has(message.attachedTo)) {
+  //   return []
+  // }
+  //
+  // const res: Tx[] = []
+  //
+  // const reactionNotifications = await control.findAll(control.ctx, notification.class.ReactionInboxNotification, {
+  //   attachedTo: message._id
+  // })
+  // const mentionNotifications = await control.findAll(control.ctx, notification.class.MentionInboxNotification, {
+  //   mentionedIn: message._id
+  // })
+  // const activityNotifications = await control.findAll(control.ctx, notification.class.ActivityInboxNotification, {
+  //   attachedTo: message._id
+  // })
+  //
+  // res.push(...activityNotifications.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
+  // res.push(...reactionNotifications.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
+  // res.push(...mentionNotifications.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
+  //
+  // const contexts = await control.findAll(control.ctx, notification.class.DocNotifyContext, {
+  //   objectId: message.attachedTo,
+  //   lastUpdate: message.createdOn
+  // })
+  // if (contexts.length === 0) return res
+  //
+  // const lastMessage = (
+  //   await control.findAll(
+  //     control.ctx,
+  //     activity.class.ActivityMessage,
+  //     { attachedTo: message.attachedTo, space: message.space },
+  //     { sort: { createdOn: SortingOrder.Descending }, limit: 1 }
+  //   )
+  // )[0]
+  // if (lastMessage === undefined) return res
+  //
+  // for (const context of contexts) {
+  //   res.push(
+  //     control.txFactory.createTxUpdateDoc(context._class, context.space, context._id, {
+  //       lastUpdate: lastMessage.createdOn ?? lastMessage.modifiedOn
+  //     })
+  //   )
+  // }
+  //
+  // return res
+  return []
 }
 
 async function OnEmployeeDeactivate (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {

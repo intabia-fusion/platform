@@ -24,11 +24,7 @@
   import { inboxId } from '@hcengineering/inbox'
   import { getMetadata, getResource } from '@hcengineering/platform'
   import { InboxNotificationsClientImpl, appearancePreferences } from '@hcengineering/notification-resources'
-  import notification, {
-    DocNotifyContext,
-    InboxNotification,
-    NotificationAppearancePreference
-  } from '@hcengineering/notification'
+  import notification, { DocNotifyContext, NotificationAppearancePreference } from '@hcengineering/notification'
   import { NotificationType } from '@hcengineering/communication-types'
 
   import AppItem from './AppItem.svelte'
@@ -111,12 +107,11 @@
   const inboxContextsStore = inboxClient.contexts
   const inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
 
-  let hasNotificationsFn: ((data: Map<Ref<DocNotifyContext>, InboxNotification[]>) => Promise<boolean>) | undefined =
-    undefined
+  let hasNotificationsFn: ((data: Map<Ref<DocNotifyContext>, any[]>) => Promise<boolean>) | undefined = undefined
   let hasInboxNotifications = false
 
   void getResource(notification.function.HasInboxNotifications).then((f) => {
-    hasNotificationsFn = f
+    hasNotificationsFn = f as any
   })
 
   $: void hasNotificationsFn?.($inboxNotificationsByContextStore).then((res) => {

@@ -31,7 +31,7 @@
   import { ChannelDataProvider, MessageMetadata } from '../channelDataProvider'
   import chunter from '../plugin'
   import { getScrollToDateOffset, getSelectedDate, jumpToDate, messageInView, readViewportMessages } from '../scroll'
-  import { chatReadMessagesStore, recheckNotifications } from '../utils'
+  import { recheckNotifications } from '../utils'
   import BlankView from './BlankView.svelte'
   import ChannelInput from './ChannelInput.svelte'
   import ActivityMessagesSeparator from './ChannelMessagesSeparator.svelte'
@@ -414,23 +414,23 @@
     await inboxClient.readDoc(doc._id)
   }
 
-  let forceRead = false
+  // let forceRead = false
   $: void forceReadContext(isScrollAtBottom, notifyContext)
 
   async function forceReadContext (isScrollAtBottom: boolean, context?: DocNotifyContext): Promise<void> {
-    if (context === undefined || !isScrollAtBottom || forceRead || isFreeze()) return
-    const { lastUpdate = 0, lastView = 0 } = context
-
-    if (lastView >= lastUpdate) return
-
-    const notifications = $notificationsByContextStore.get(context._id) ?? []
-    const unViewed = notifications.filter(({ isViewed }) => !isViewed)
-
-    if (unViewed.length === 0) {
-      forceRead = true
-      await inboxClient.readDoc(object._id)
-      forceRead = false
-    }
+    // if (context === undefined || !isScrollAtBottom || forceRead || isFreeze()) return
+    // const { lastUpdate = 0, lastView = 0 } = context
+    //
+    // if (lastView >= lastUpdate) return
+    //
+    // const notifications = $notificationsByContextStore.get(context._id) ?? []
+    // const unViewed = notifications.filter(({ isViewed }) => !isViewed)
+    //
+    // if (unViewed.length === 0) {
+    //   forceRead = true
+    //   await inboxClient.readDoc(object._id)
+    //   forceRead = false
+    // }
   }
 
   function shouldLoadMoreUp (): boolean {
@@ -577,7 +577,7 @@
   })
 
   onMount(() => {
-    chatReadMessagesStore.update(() => new Set())
+    // chatReadMessagesStore.update(() => new Set())
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('focus', handleWindowFocus)
     window.addEventListener('blur', handleWindowBlur)

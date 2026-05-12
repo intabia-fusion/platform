@@ -20,28 +20,24 @@ import serverNotification, {
 } from '@hcengineering/server-notification'
 import { AccountUuid, Class, concatLink, Doc, Hierarchy, Ref, Tx, TxCreateDoc, TxProcessor } from '@hcengineering/core'
 import notification, {
-  ActivityInboxNotification,
   getNotificationMessageId,
   getNotificationThreadId,
-  InboxNotification,
-  MentionInboxNotification,
   notificationId,
   PushData,
   PushSubscription
 } from '@hcengineering/notification'
-import activity, { ActivityMessage } from '@hcengineering/activity'
+import { ActivityMessage } from '@hcengineering/activity'
 import serverView from '@hcengineering/server-view'
 import { getMetadata, getResource } from '@hcengineering/platform'
 import { workbenchId } from '@hcengineering/workbench'
 import { encodeObjectURI } from '@hcengineering/view'
 import { PersonSpace } from '@hcengineering/contact'
-import chunter, { ThreadMessage } from '@hcengineering/chunter'
 
 import { getTranslatedNotificationContent } from './utils'
 
 async function createPush (
   control: TriggerControl,
-  n: InboxNotification,
+  n: any,
   receiver: AccountUuid,
   soundAlert: boolean,
   receiverSpace: Ref<PersonSpace>,
@@ -112,40 +108,40 @@ async function createPush (
 }
 
 function getMessageInfo (
-  n: InboxNotification,
+  n: any,
   hierarchy: Hierarchy
 ): {
     _id?: Ref<ActivityMessage>
     _class?: Ref<Class<ActivityMessage>>
   } {
-  if (hierarchy.isDerived(n._class, notification.class.ActivityInboxNotification)) {
-    const activityNotification = n as ActivityInboxNotification
-
-    if (
-      activityNotification.attachedToClass === activity.class.DocUpdateMessage &&
-      hierarchy.isDerived(activityNotification.objectClass, activity.class.ActivityMessage)
-    ) {
-      return {
-        _id: activityNotification.objectId as Ref<ActivityMessage>,
-        _class: activityNotification.objectClass
-      }
-    }
-
-    return {
-      _id: activityNotification.attachedTo,
-      _class: activityNotification.attachedToClass
-    }
-  }
-
-  if (hierarchy.isDerived(n._class, notification.class.MentionInboxNotification)) {
-    const mentionNotification = n as MentionInboxNotification
-    if (hierarchy.isDerived(mentionNotification.mentionedInClass, activity.class.ActivityMessage)) {
-      return {
-        _id: mentionNotification.mentionedIn as Ref<ActivityMessage>,
-        _class: mentionNotification.mentionedInClass
-      }
-    }
-  }
+  // if (hierarchy.isDerived(n._class, notification.class.ActivityInboxNotification)) {
+  //   const activityNotification = n as ActivityInboxNotification
+  //
+  //   if (
+  //     activityNotification.attachedToClass === activity.class.DocUpdateMessage &&
+  //     hierarchy.isDerived(activityNotification.objectClass, activity.class.ActivityMessage)
+  //   ) {
+  //     return {
+  //       _id: activityNotification.objectId as Ref<ActivityMessage>,
+  //       _class: activityNotification.objectClass
+  //     }
+  //   }
+  //
+  //   return {
+  //     _id: activityNotification.attachedTo,
+  //     _class: activityNotification.attachedToClass
+  //   }
+  // }
+  //
+  // if (hierarchy.isDerived(n._class, notification.class.MentionInboxNotification)) {
+  //   const mentionNotification = n as MentionInboxNotification
+  //   if (hierarchy.isDerived(mentionNotification.mentionedInClass, activity.class.ActivityMessage)) {
+  //     return {
+  //       _id: mentionNotification.mentionedIn as Ref<ActivityMessage>,
+  //       _class: mentionNotification.mentionedInClass
+  //     }
+  //   }
+  // }
 
   return {}
 }
@@ -223,11 +219,8 @@ async function sendPushToSubscription (
   }
 }
 
-export async function PushNotificationsHandler (
-  txes: TxCreateDoc<InboxNotification>[],
-  control: TriggerControl
-): Promise<Tx[]> {
-  const all: InboxNotification[] = txes
+export async function PushNotificationsHandler (txes: TxCreateDoc<any>[], control: TriggerControl): Promise<Tx[]> {
+  const all: any[] = txes
     .map((tx) => TxProcessor.createDoc2Doc(tx))
     .filter((it) => (it.allowedProviders?.[notification.providers.PushNotificationProvider]?.length ?? 0) !== 0)
 
@@ -269,33 +262,35 @@ export async function PushNotificationsHandler (
 }
 
 async function getObjectIdentity (
-  inboxNotification: InboxNotification,
+  inboxNotification: any,
   control: TriggerControl
 ): Promise<Pick<Doc, '_id' | '_class'>> {
-  const { hierarchy } = control
-  if (!hierarchy.isDerived(inboxNotification._class, notification.class.ActivityInboxNotification)) {
-    return {
-      _id: inboxNotification.objectId,
-      _class: inboxNotification.objectClass
-    }
-  }
+  // const { hierarchy } = control
+  // if (!hierarchy.isDerived(inboxNotification._class, notification.class.ActivityInboxNotification)) {
+  //   return {
+  //     _id: inboxNotification.objectId,
+  //     _class: inboxNotification.objectClass
+  //   }
+  // }
+  //
+  // const activityNotification = inboxNotification as ActivityInboxNotification
+  //
+  // if (
+  //   hierarchy.isDerived(activityNotification.attachedToClass, chunter.class.ThreadMessage) &&
+  //   hierarchy.isDerived(activityNotification.objectClass, activity.class.ActivityMessage)
+  // ) {
+  //   const attachedTo = (
+  //     await control.findAll<ThreadMessage>(control.ctx, activityNotification.attachedToClass, {
+  //       _id: activityNotification.attachedTo as Ref<ThreadMessage>
+  //     })
+  //   )[0]
+  //
+  //   if (attachedTo != null) {
+  //     return { _id: attachedTo.objectId, _class: attachedTo.objectClass }
+  //   }
+  // }
+  //
+  // return { _id: activityNotification.objectId, _class: activityNotification.objectClass }
 
-  const activityNotification = inboxNotification as ActivityInboxNotification
-
-  if (
-    hierarchy.isDerived(activityNotification.attachedToClass, chunter.class.ThreadMessage) &&
-    hierarchy.isDerived(activityNotification.objectClass, activity.class.ActivityMessage)
-  ) {
-    const attachedTo = (
-      await control.findAll<ThreadMessage>(control.ctx, activityNotification.attachedToClass, {
-        _id: activityNotification.attachedTo as Ref<ThreadMessage>
-      })
-    )[0]
-
-    if (attachedTo != null) {
-      return { _id: attachedTo.objectId, _class: attachedTo.objectClass }
-    }
-  }
-
-  return { _id: activityNotification.objectId, _class: activityNotification.objectClass }
+  return {} as any
 }

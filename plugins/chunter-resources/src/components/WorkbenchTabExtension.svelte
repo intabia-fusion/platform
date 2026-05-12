@@ -22,7 +22,6 @@
     NotifyMarker
   } from '@hcengineering/notification-resources'
   import { getClient } from '@hcengineering/presentation'
-  import { InboxNotification } from '@hcengineering/notification'
   import { onDestroy } from 'svelte'
   import { concatLink, Doc, Ref } from '@hcengineering/core'
   import view, { decodeObjectURI } from '@hcengineering/view'
@@ -40,7 +39,7 @@
   const contextByDocStore = notificationClient.contextByDoc
 
   let objectId: Ref<Doc> | undefined = undefined
-  let notifications: InboxNotification[] = []
+  let notifications: any[] = []
   let count = 0
 
   $: context = objectId !== undefined ? $contextByDocStore.get(objectId) : undefined
@@ -69,7 +68,7 @@
       return
     }
 
-    notifications = (res.get(context._id) ?? []).filter((n) => {
+    notifications = (res.get(context._id) ?? []).filter((n: any) => {
       if (isActivityNotification(n)) return true
 
       return isMentionNotification(n) && hierarchy.isDerived(n.mentionedInClass, chunter.class.ChatMessage)

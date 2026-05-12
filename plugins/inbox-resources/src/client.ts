@@ -68,7 +68,7 @@ export class NavigationClient {
 
   constructor (private readonly oldClient: InboxNotificationsClient) {
     this.legacyNavigationItemsStore = derived(
-      [this.oldClient.inboxNotificationsByContext, this.oldClient.contextById],
+      [this.oldClient.inboxNotificationsByContext ?? writable(new Map()), this.oldClient.contextById],
       ([notificationsByContext, contextById]) => {
         const inboxData = getDisplayInboxData(notificationsByContext)
         return Array.from(inboxData.entries())

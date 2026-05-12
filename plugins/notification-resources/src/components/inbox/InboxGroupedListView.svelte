@@ -14,11 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import notification, {
-    ActivityNotificationViewlet,
-    DisplayInboxNotification,
-    DocNotifyContext
-  } from '@hcengineering/notification'
+  import notification, { ActivityNotificationViewlet, DocNotifyContext } from '@hcengineering/notification'
   import { Ref } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
   import { ListView } from '@hcengineering/ui'
@@ -48,7 +44,7 @@
     viewlets = res
   })
 
-  let displayData: [Ref<DocNotifyContext>, DisplayInboxNotification[]][] = []
+  let displayData: [Ref<DocNotifyContext>, any[]][] = []
 
   $: displayData = Array.from(data.entries()).sort(([, a], [, b]) => notificationsComparator(a[0], b[0]))
 

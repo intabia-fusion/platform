@@ -15,7 +15,6 @@
 
 import { ActivityMessage } from '@hcengineering/activity'
 import { AccountUuid, Ref } from '@hcengineering/core'
-import { InboxNotification } from '@hcengineering/notification'
 
 export type TelegramQueueMessage = TelegramNotificationQueueMessage | TelegramWorkspaceSubscriptionQueueMessage
 
@@ -26,7 +25,8 @@ export enum TelegramQueueMessageType {
 
 export interface TelegramNotificationQueueMessage {
   type: TelegramQueueMessageType.Notification
-  notificationId: Ref<InboxNotification>
+  notificationId: string
+  // notificationId: Ref<InboxNotification>
   messageId?: Ref<ActivityMessage>
   attachments: boolean
   account: AccountUuid

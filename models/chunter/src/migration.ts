@@ -47,7 +47,7 @@ import chunter from './plugin'
 import { createHash } from 'crypto'
 import { type Attachment } from '@hcengineering/attachment'
 import { DOMAIN_ATTACHMENT } from '@hcengineering/model-attachment'
-import { type DocNotifyContext, type InboxNotification } from '@hcengineering/notification'
+import { type DocNotifyContext } from '@hcengineering/notification'
 
 export const DOMAIN_COMMENT = 'comment' as Domain
 
@@ -286,7 +286,7 @@ async function migrateDuplicatedDirects (client: MigrationClient): Promise<void>
 
     const toContexts = await client.find<DocNotifyContext>(DOMAIN_DOC_NOTIFY, { objectId: to })
     for (const context of toContexts) {
-      await client.update<InboxNotification>(
+      await client.update(
         DOMAIN_NOTIFICATION,
         { objectId: from, user: context.user },
         { objectId: to, docNotifyContext: context._id }

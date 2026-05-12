@@ -13,58 +13,46 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@hcengineering/presentation'
   import { Doc, type Ref, type Space } from '@hcengineering/core'
-  import notification, {
-    ActivityNotificationViewlet,
-    CommonInboxNotification,
-    DisplayActivityInboxNotification,
-    DisplayInboxNotification,
-    MentionInboxNotification,
-    ReactionInboxNotification
-  } from '@hcengineering/notification'
-  import ActivityInboxNotificationPresenter from './ActivityInboxNotificationPresenter.svelte'
-  import MentionInboxNotificationPresenter from './MentionInboxNotificationPresenter.svelte'
-  import ReactionInboxNotificationPresenter from './ReactionInboxNotificationPresenter.svelte'
-  import CommonInboxNotificationPresenter from './CommonInboxNotificationPresenter.svelte'
+  import { ActivityNotificationViewlet } from '@hcengineering/notification'
 
-  export let value: DisplayInboxNotification
+  export let value: any
   export let object: Doc | undefined
   export let viewlets: ActivityNotificationViewlet[] = []
   export let space: Ref<Space> | undefined = undefined
 
-  const client = getClient()
-  const hierarchy = client.getHierarchy()
+  // const client = getClient()
+  // const hierarchy = client.getHierarchy()
 
-  function asDisplayActivityNotification (notification: DisplayInboxNotification): DisplayActivityInboxNotification {
-    return notification as DisplayActivityInboxNotification
-  }
-
-  function asMentionNotification (notification: DisplayInboxNotification): MentionInboxNotification {
-    return notification as MentionInboxNotification
-  }
-
-  function asReactionNotification (notification: DisplayInboxNotification): ReactionInboxNotification {
-    return notification as ReactionInboxNotification
-  }
-
-  function asCommonNotification (notification: DisplayInboxNotification): CommonInboxNotification {
-    return notification as CommonInboxNotification
-  }
+  // function asDisplayActivityNotification (notification: DisplayInboxNotification): DisplayActivityInboxNotification {
+  //   return notification as DisplayActivityInboxNotification
+  // }
+  //
+  // function asMentionNotification (notification: DisplayInboxNotification): MentionInboxNotification {
+  //   return notification as MentionInboxNotification
+  // }
+  //
+  // function asReactionNotification (notification: DisplayInboxNotification): ReactionInboxNotification {
+  //   return notification as ReactionInboxNotification
+  // }
+  //
+  // function asCommonNotification (notification: DisplayInboxNotification): CommonInboxNotification {
+  //   return notification as CommonInboxNotification
+  // }
 </script>
 
-{#if hierarchy.isDerived(value._class, notification.class.ActivityInboxNotification)}
-  <ActivityInboxNotificationPresenter
-    value={asDisplayActivityNotification(value)}
-    {object}
-    {viewlets}
-    {space}
-    on:click
-  />
-{:else if hierarchy.isDerived(value._class, notification.class.MentionInboxNotification)}
-  <MentionInboxNotificationPresenter value={asMentionNotification(value)} {object} {space} on:click />
-{:else if hierarchy.isDerived(value._class, notification.class.ReactionInboxNotification)}
-  <ReactionInboxNotificationPresenter value={asReactionNotification(value)} {object} on:click />
-{:else if hierarchy.isDerived(value._class, notification.class.CommonInboxNotification)}
-  <CommonInboxNotificationPresenter value={asCommonNotification(value)} />
-{/if}
+<!--{#if hierarchy.isDerived(value._class, notification.class.ActivityInboxNotification)}-->
+<!--  <ActivityInboxNotificationPresenter-->
+<!--    value={asDisplayActivityNotification(value)}-->
+<!--    {object}-->
+<!--    {viewlets}-->
+<!--    {space}-->
+<!--    on:click-->
+<!--  />-->
+<!--{:else if hierarchy.isDerived(value._class, notification.class.MentionInboxNotification)}-->
+<!--  <MentionInboxNotificationPresenter value={asMentionNotification(value)} {object} {space} on:click />-->
+<!--{:else if hierarchy.isDerived(value._class, notification.class.ReactionInboxNotification)}-->
+<!--  <ReactionInboxNotificationPresenter value={asReactionNotification(value)} {object} on:click />-->
+<!--{:else if hierarchy.isDerived(value._class, notification.class.CommonInboxNotification)}-->
+<!--  <CommonInboxNotificationPresenter value={asCommonNotification(value)} />-->
+<!--{/if}-->

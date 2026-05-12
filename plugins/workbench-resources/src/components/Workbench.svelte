@@ -27,7 +27,7 @@
     Space
   } from '@hcengineering/core'
   import login, { loginId } from '@hcengineering/login'
-  import notification, { DocNotifyContext, InboxNotification, notificationId } from '@hcengineering/notification'
+  import notification, { DocNotifyContext, notificationId } from '@hcengineering/notification'
   import { BrowserNotificatator, InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import inbox, { inboxId } from '@hcengineering/inbox'
   import { broadcastEvent, getMetadata, getResource, IntlString, translate } from '@hcengineering/platform'
@@ -273,12 +273,11 @@
   const inboxClient = InboxNotificationsClientImpl.createClient()
   const inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
 
-  let hasNotificationsFn: ((data: Map<Ref<DocNotifyContext>, InboxNotification[]>) => Promise<boolean>) | undefined =
-    undefined
+  let hasNotificationsFn: ((data: Map<Ref<DocNotifyContext>, any[]>) => Promise<boolean>) | undefined = undefined
   let hasInboxNotifications = false
 
   void getResource(notification.function.HasInboxNotifications).then((f) => {
-    hasNotificationsFn = f
+    hasNotificationsFn = f as any
   })
 
   $: void hasNotificationsFn?.($inboxNotificationsByContextStore).then((res) => {

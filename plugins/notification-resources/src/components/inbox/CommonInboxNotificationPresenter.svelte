@@ -15,12 +15,11 @@
 <script lang="ts">
   import { BasePreview } from '@hcengineering/activity-resources'
   import { Doc, Markup } from '@hcengineering/core'
-  import { CommonInboxNotification } from '@hcengineering/notification'
   import { IntlString, translate, translateCB } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { themeStore } from '@hcengineering/ui'
 
-  export let value: CommonInboxNotification
+  export let value: any
 
   const client = getClient()
 
@@ -32,7 +31,7 @@
     const intlParams = value.intlParams ?? {}
     const intlParamsNotLocalized = value.intlParamsNotLocalized ?? {}
     for (const [key, v] of Object.entries(intlParamsNotLocalized)) {
-      intlParams[key] = await translate(v, intlParams, $themeStore.language)
+      intlParams[key] = await translate(v as any, intlParams, $themeStore.language)
     }
     return intlParams
   }
