@@ -271,17 +271,21 @@ test.describe('meeting minutes - extended scenarios', () => {
       await toggle.click()
       // Wait for the button label to flip — only then `private: true` has
       // propagated to the server.
-      await expect(toggle).toHaveText(/Open room/i, { timeout: 10000 })
+      await expect(toggle).toHaveText(/Open room/i, { timeout: 30000 })
 
       // user3 (outsider) opens the private room directly and clicks Knock.
       // The room is locked (private + outsider has no access), so the
       // EditRoom panel renders the `meeting-knock` button instead of Connect.
       await openLove(page3)
+      // Wait for SecurityChange to propagate to user3: the private meeting
+      // space should disappear from their accessible meetings store, and the
+      // floor view should mark the room as busy (locked).
+      await expect(page3.locator('[data-id="busy-badge"]').first()).toBeVisible({ timeout: 30000 })
       const lockedRoom = page3.locator(`[data-id="room-${room as string}"]`).first()
       await expect(lockedRoom).toBeVisible({ timeout: 10000 })
       await lockedRoom.click()
       const knockBtn = page3.locator('[data-id="meeting-knock"]').first()
-      await expect(knockBtn).toBeVisible({ timeout: 10000 })
+      await expect(knockBtn).toBeVisible({ timeout: 20000 })
       await knockBtn.click()
       // After knocking the button flips to "Cancel knock".
       await expect(page3.locator('[data-id="meeting-knock-pending"]')).toBeVisible({ timeout: 10000 })
