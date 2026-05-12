@@ -712,7 +712,7 @@ async function sendSuccessNotification (
     objectClass: drive.class.Drive,
     icon: exportPlugin.icon.Export,
     message: exportPlugin.string.ExportCompleted,
-    props: {
+    intlParams: {
       fileName: archiveName
     },
     isViewed: false,
@@ -755,7 +755,7 @@ async function sendFailureNotification (
     objectClass,
     icon: exportPlugin.icon.Export,
     message: exportPlugin.string.ExportFailed,
-    props: {
+    intlParams: {
       error
     },
     isViewed: false,

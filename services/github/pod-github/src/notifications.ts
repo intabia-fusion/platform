@@ -38,7 +38,7 @@ export async function createNotification (
       objectClass: forDoc._class,
       icon: github.icon.Github,
       message: data.message,
-      props: data.props,
+      intlParams: data.props,
       isViewed: false,
       archived: false,
       docNotifyContext: docNotifyContext?._id as Ref<DocNotifyContext>,

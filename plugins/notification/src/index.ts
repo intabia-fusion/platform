@@ -270,8 +270,6 @@ export interface CommonInboxNotification extends InboxNotification {
   headerObjectId?: Ref<Doc>
   headerObjectClass?: Ref<Class<Doc>>
   message?: IntlString
-  props?: Record<string, any>
-  propsIntl?: Record<string, IntlString>
   markup?: Markup
   icon?: Asset
   iconProps?: Record<string, any>

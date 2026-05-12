@@ -46,7 +46,8 @@ import notification, {
   type BrowserNotification,
   type DocNotifyContext,
   type InboxNotification,
-  type ReadState
+  type ReadState,
+  type CommonInboxNotification
 } from '@hcengineering/notification'
 import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
 import {
@@ -58,6 +59,7 @@ import {
 } from '@hcengineering/model-core'
 import activity from '@hcengineering/activity'
 import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_USER_NOTIFY, DOMAIN_READ_STATE } from './index'
+import { type IntlString } from '@hcengineering/platform'
 
 interface OldCollaborators extends Doc {
   collaborators: AccountUuid[]
@@ -765,6 +767,45 @@ async function clearNotificationTx (client: MigrationClient): Promise<void> {
   }
 }
 
+async function migrateCommonNotificationProps (client: MigrationClient): Promise<void> {
+  type CommonInboxNotificationOld = CommonInboxNotification & {
+    props?: Record<string, any>
+    propsIntl?: Record<string, IntlString>
+  }
+  const iterator = await client.traverse<CommonInboxNotificationOld>(DOMAIN_NOTIFICATION, {
+    _class: notification.class.CommonInboxNotification
+  })
+
+  try {
+    while (true) {
+      const docs = (await iterator.next(500)) ?? []
+
+      if (docs.length === 0) break
+
+      const updates: {
+        filter: MigrationDocumentQuery<CommonInboxNotification>
+        update: MigrateUpdate<CommonInboxNotification>
+      }[] = []
+      for (const doc of docs) {
+        const { props, propsIntl, intlParams, intlParamsNotLocalized } = doc
+        if (props == null && propsIntl == null) continue
+
+        updates.push({
+          filter: { _id: doc._id },
+          update: {
+            intlParams: { ...intlParams, ...props },
+            intlParamsNotLocalized: { ...intlParamsNotLocalized, ...propsIntl }
+          }
+        })
+      }
+
+      await client.bulk(DOMAIN_NOTIFICATION, updates)
+    }
+  } catch (e) {
+    await iterator.close()
+  }
+}
+
 export const notificationOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, notificationId, [
@@ -997,6 +1038,11 @@ export const notificationOperation: MigrateOperation = {
         state: 'clear-notification-tx-v1',
         mode: 'upgrade',
         func: clearNotificationTx
+      },
+      {
+        state: 'migrame-common-notification-props-v2',
+        mode: 'upgrade',
+        func: migrateCommonNotificationProps
       }
     ])
   },
