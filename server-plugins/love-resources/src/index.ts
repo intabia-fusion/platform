@@ -530,10 +530,6 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
             name: senderName,
             senderName
           },
-          props: {
-            name: senderName,
-            senderName
-          },
           title: love.string.MeetingRequest,
           body: love.string.InvitingYou,
           header: love.string.MeetingRequest,
