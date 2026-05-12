@@ -96,7 +96,7 @@ export async function createNotification (
     objectClass,
     icon: calendar.icon.Calendar,
     message: notificationMessages[type],
-    props: { title: forEvent.title },
+    intlParams: { title: forEvent.title },
     isViewed: false,
     archived: false,
     docNotifyContext: docNotifyContextId,

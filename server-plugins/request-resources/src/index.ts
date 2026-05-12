@@ -158,7 +158,7 @@ export const sendRequestCreateNotification: CreateNotificationFunc = async (
   return {
     icon: clazz.icon,
     message: request.string.NewRequestNotification,
-    propsIntl: { name: clazz.label }
+    intlParamsNotLocalized: { name: clazz.label }
   }
 }
 
@@ -194,7 +194,7 @@ export const removeRequestCreateNotification: CreateNotificationFunc = async (
   return {
     icon: clazz.icon,
     message: request.string.CancelRequestNotification,
-    propsIntl: { name: clazz.label }
+    intlParamsNotLocalized: { name: clazz.label }
   }
 }
 

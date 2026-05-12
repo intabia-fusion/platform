@@ -348,10 +348,10 @@ class Workspace {
           content = await f(getTypeMatchClient(client), type, tx, txAttachedToDoc ?? txObject, txObject, sender)
         } else {
           const intlParams: Record<string, string | number> = {
-            ...data.props,
+            ...data.intlParams,
             senderName: getSenderName(sender, client.branding?.lastNameFirst)
           }
-          const intlParamsNotLocalized: Record<string, IntlString> = { ...data.propsIntl }
+          const intlParamsNotLocalized: Record<string, IntlString> = { ...data.intlParamsNotLocalized }
 
           if (data.markup != null) {
             intlParams.message = normalizeTextMessage(markupToText(data.markup))
