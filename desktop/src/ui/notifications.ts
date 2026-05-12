@@ -37,7 +37,6 @@ import activity from '@hcengineering/activity'
 import chunter, { ThreadMessage } from '@hcengineering/chunter'
 import { workspacesNotificationStore, workspacesStore } from '@hcengineering/workbench-resources'
 
-
 import { ipcMainExposed } from './typesUtils'
 import { get } from 'svelte/store'
 
@@ -172,11 +171,11 @@ export function configureNotifications (): void {
       }
     }
 
-    workspacesNotificationStore.subscribe(state => {
+    workspacesNotificationStore.subscribe((state) => {
       if (state != null) {
         const currentWorkspace = getCurrentWorkspaceUuid()
         const workspaces = get(workspacesStore)
-        hasOtherWorkspaceNotifications = workspaces.some(it => it.uuid !== currentWorkspace && state?.[it.uuid])
+        hasOtherWorkspaceNotifications = workspaces.some((it) => it.uuid !== currentWorkspace && state?.[it.uuid])
       }
       updateBadge()
     })
