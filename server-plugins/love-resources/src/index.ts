@@ -48,7 +48,7 @@ import { getMetadata } from '@hcengineering/platform'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import view from '@hcengineering/view'
 import { workbenchId } from '@hcengineering/workbench'
-import { getSocialStrings } from '@hcengineering/server-contact'
+import { getAccountBySocialId, getSocialStrings } from '@hcengineering/server-contact'
 import notification, { CommonInboxNotification } from '@hcengineering/notification'
 
 import { getInviteAllowedProviders } from './utils'
@@ -337,35 +337,53 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
       // Skip self-invites
       if (invite.from === invite.to) continue
 
-      // Check if meeting is private - only owners can invite.
-      // Also resolve recipient's account so we can add them to meeting members on the server
-      // (clients are not allowed to push members of private spaces).
+      // Knock-flow: if the recipient is currently inside a private meeting
+      // that the sender doesn't have access to, treat this invite as a knock
+      // and re-target it at that meeting's owners (request to join). This
+      // applies even when the sender already has their own active meeting —
+      // sending an invite to a person who's locked in another private room
+      // is naturally a join-request.
+      let isKnock = false
       let inviteMeeting: MeetingMinutes | undefined
-      if (invite.meeting !== undefined) {
+      const senderPerson = await control
+        .findAll(control.ctx, contact.class.Person, { _id: invite.from }, { limit: 1 })
+        .then((r) => r[0])
+      const senderAccount = senderPerson?.personUuid as AccountUuid | undefined
+      const recipientInfos = await control.findAll(control.ctx, love.class.ParticipantInfo, { person: invite.to })
+      for (const recipientInfo of recipientInfos) {
+        if (recipientInfo.meeting === undefined) continue
+        const recipientMeeting = await control
+          .findAll(control.ctx, love.class.MeetingMinutes, { _id: recipientInfo.meeting }, { limit: 1 })
+          .then((r) => r[0])
+        if (recipientMeeting === undefined || recipientMeeting.status === MeetingStatus.Finished) continue
+        if (!recipientMeeting.private) continue
+        if (senderAccount !== undefined && recipientMeeting.members.includes(senderAccount)) continue
+        inviteMeeting = recipientMeeting
+        isKnock = true
+        break
+      }
+      if (!isKnock && invite.meeting !== undefined) {
         inviteMeeting = await control
           .findAll(control.ctx, love.class.MeetingMinutes, { _id: invite.meeting }, { limit: 1 })
           .then((r) => r[0])
-        if (inviteMeeting?.private === true) {
-          // Get sender's account
-          const senderEmployee = await control
-            .findAll(control.ctx, contact.class.Person, { _id: invite.from }, { limit: 1 })
-            .then((r) => r[0])
-          const senderAccount = senderEmployee?.personUuid as AccountUuid | undefined
-          // Only owners can invite to private meetings
-          if (
-            senderAccount === undefined ||
-            inviteMeeting.owners === undefined ||
-            !inviteMeeting.owners.includes(senderAccount)
-          ) {
-            // Skip this invite - sender is not an owner
-            continue
-          }
+      }
+
+      if (inviteMeeting?.private === true && !isKnock) {
+        // Only owners can invite to private meetings.
+        // (knock-case is handled above and never reaches this branch.)
+        if (
+          senderAccount === undefined ||
+          inviteMeeting.owners === undefined ||
+          !inviteMeeting.owners.includes(senderAccount)
+        ) {
+          continue
         }
       }
 
       // Add recipient to MeetingMinutes members on the server (after owner-check passed)
       // so the recipient can access the meeting space and receive knock/invite notifications.
-      if (inviteMeeting !== undefined) {
+      // For a knock the recipient is already a meeting owner, so skip.
+      if (inviteMeeting !== undefined && !isKnock) {
         const recipientPerson = await control
           .findAll(control.ctx, contact.class.Person, { _id: invite.to }, { limit: 1 })
           .then((r) => r[0])
@@ -381,9 +399,35 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
 
       // Find recipient's personal space (PersonSpace)
       const recipientSpace = await getPersonSpace(control, invite.to)
-      if (recipientSpace === undefined) continue
+      if (recipientSpace === undefined) {
+        control.ctx.warn('[OnUserMeetingInvite] no PersonSpace for recipient — skipping invite-response', {
+          to: invite.to,
+          isKnock
+        })
+        continue
+      }
 
-      // Create invite-response in recipient's space
+      // For knock-requests use a longer TTL (10 min) renewable from the
+      // knocker's client; if the knocker closes the tab the invite expires
+      // and is cleaned up. The meeting-end cleanup also wipes any lingering
+      // invites (cleanupInvitesForMeeting in services/love).
+      const knockTTLMs = 10 * 60 * 1000
+      const responseExpiresAt = isKnock ? Date.now() + knockTTLMs : invite.expiresAt
+
+      // For knock we patch the source invite-request with meeting+isKnock+
+      // expiresAt so subsequent sync carries the meeting ref and the outgoing
+      // UI doesn't auto-cancel in 30 seconds. Single tx — order matters.
+      if (isKnock && inviteMeeting !== undefined) {
+        result.push(
+          control.txFactory.createTxUpdateDoc(love.class.UserMeetingInvite, createTx.objectSpace, createTx.objectId, {
+            meeting: inviteMeeting._id,
+            isKnock: true,
+            expiresAt: responseExpiresAt
+          })
+        )
+      }
+
+      // Create invite-response in recipient's space.
       const responseId = generateId<UserMeetingInvite>()
       result.push(
         control.txFactory.createTxCreateDoc(
@@ -393,9 +437,10 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
             kind: 'invite-response',
             from: invite.from,
             to: invite.to,
-            meeting: invite.meeting,
-            expiresAt: invite.expiresAt,
-            status: 'pending'
+            meeting: inviteMeeting?._id ?? invite.meeting,
+            expiresAt: responseExpiresAt,
+            status: 'pending',
+            isKnock
           },
           responseId
         )
@@ -558,6 +603,9 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
         // Recipient removed their invite-response (e.g. joined the meeting via
         // MeetingMinutes link, not via the popup). Drop the matching
         // invite-request on sender side so the outgoing popup goes away too.
+        // Skip knock-responses: the request must remain so the knocker's client
+        // sees status='accepted' and auto-joins via checkAndJoinIfRecipientJoined.
+        if (sourceDoc.isKnock === true) continue
         const inviteRequests = await control.findAll(control.ctx, love.class.UserMeetingInvite, {
           kind: 'invite-request',
           from: sourceDoc.from,
@@ -581,6 +629,66 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
 
         // If nothing changed, skip
         if (newStatus === undefined && newMeeting === undefined) continue
+
+        // Knock: owner accepted/declined -> sync to knocker's invite-request.
+        if (sourceDoc.isKnock === true && (newStatus === 'accepted' || newStatus === 'declined')) {
+          // Authorize: the actor must be a meeting owner; if owners list is empty,
+          // any current member may accept/decline. Otherwise non-owners receiving
+          // the invite-response could grant themselves access to a private meeting.
+          const knockMeeting =
+            sourceDoc.meeting !== undefined
+              ? (
+                  await control.findAll(
+                    control.ctx,
+                    love.class.MeetingMinutes,
+                    { _id: sourceDoc.meeting },
+                    { limit: 1 }
+                  )
+                )[0]
+              : undefined
+          if (knockMeeting === undefined) continue
+          const actorAccount = await getAccountBySocialId(control, updateTx.modifiedBy)
+          const owners = knockMeeting.owners ?? []
+          const authorized =
+            actorAccount !== null &&
+            (owners.length > 0 ? owners.includes(actorAccount) : knockMeeting.members.includes(actorAccount))
+          if (!authorized) continue
+
+          const request = inviteRequests[0]
+          if (newStatus === 'accepted') {
+            const knockerEmployee = (
+              await control.findAll(
+                control.ctx,
+                contact.mixin.Employee,
+                { _id: sourceDoc.from as Ref<Employee> },
+                { limit: 1 }
+              )
+            )[0]
+            const knockerAccount = knockerEmployee?.personUuid
+            if (knockerAccount !== undefined && !knockMeeting.members.includes(knockerAccount)) {
+              result.push(
+                control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, knockMeeting.space, knockMeeting._id, {
+                  $push: { members: knockerAccount }
+                })
+              )
+            }
+          }
+          // Drop the owner-side invite-response.
+          result.push(
+            control.txFactory.createTxRemoveDoc(love.class.UserMeetingInvite, updateTx.objectSpace, updateTx.objectId)
+          )
+          // Sync status (+ meeting on accept) to the knocker's invite-request.
+          if (request !== undefined) {
+            const upd: DocumentUpdate<UserMeetingInvite> = { status: newStatus }
+            if (newStatus === 'accepted' && request.meeting !== sourceDoc.meeting) {
+              upd.meeting = sourceDoc.meeting
+            }
+            result.push(
+              control.txFactory.createTxUpdateDoc(love.class.UserMeetingInvite, request.space, request._id, upd)
+            )
+          }
+          continue
+        }
 
         if (newStatus === 'declined' || (newStatus === 'accepted' && newMeeting !== undefined)) {
           // If we declined or accepted and meeting is set, we can remove the invite-response as it's no longer needed

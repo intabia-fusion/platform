@@ -18,11 +18,16 @@
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
 
   import love from '../../../plugin'
-  import { cancelInvites, inviteRequestSecondsToLive } from '../../../invites'
+  import { cancelInvites, inviteRequestSecondsToLive, allInvites } from '../../../invites'
   import { UserMeetingInvite } from '@hcengineering/love'
 
   export let person: Person
   export let invite: UserMeetingInvite
+
+  // Re-resolve the invite from the live store so a server-side patch
+  // (e.g. isKnock=true after a knock-detection on TxCreate) is reflected
+  // in the popup without re-opening.
+  $: liveInvite = $allInvites.find((it) => it._id === invite._id) ?? invite
 
   const dispatch = createEventDispatcher()
 
@@ -51,8 +56,12 @@
 
 <div class="antiPopup invite-popup flex-gap-4" data-id="outgoing-invite-popup">
   <div class="popup-header">
-    <Label label={love.string.YouInvite} />
-    {#if timeLeft <= 10}
+    {#if liveInvite.isKnock === true}
+      <Label label={love.string.KnockingTo} />
+    {:else}
+      <Label label={love.string.YouInvite} />
+    {/if}
+    {#if liveInvite.isKnock !== true && timeLeft <= 10}
       <span class="timer urgent">{timeLeft}s</span>
     {/if}
   </div>

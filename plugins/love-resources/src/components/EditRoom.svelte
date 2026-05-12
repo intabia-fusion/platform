@@ -23,11 +23,12 @@
 
   import love from '../plugin'
   import { getRoomName } from '../utils'
-  import { infos, myOffice, currentRoom, meetings, myConnectingSessionId } from '../stores'
+  import { infos, myOffice, currentRoom, meetings, myConnectingSessionId, aiBotPerson } from '../stores'
   import { lkSessionConnected } from '../liveKitClient'
   import { createMeeting, joinMeeting } from '../meetings'
   import { get } from 'svelte/store'
   import RoomPreview from './RoomPreview.svelte'
+  import { cancelInvites, sendInvites, outgoingInvitesStore } from '../invites'
 
   export let object: Room
   export let readonly: boolean = false
@@ -116,6 +117,25 @@
     roomInfos.length > 0 &&
     !roomInfos.some((p) => p.person === me) &&
     !$meetings.some((m) => m.roomId === object._id && m.status !== MeetingStatus.Finished)
+
+  // Track whether we already sent a knock-request for this room.
+  // Pick a real human (skip ai-bot and agent participants) so the server's
+  // knock-detection sees a sensible recipient.
+  $: knockTarget = roomInfos.find((p) => p.kind !== 'agent' && p.person !== $aiBotPerson)?.person
+  $: pendingKnock = $outgoingInvitesStore.find(
+    (it) => it.from === me && knockTarget !== undefined && it.to === knockTarget && it.isKnock === true
+  )
+  $: hasOutgoingKnock = pendingKnock !== undefined
+
+  async function knock (): Promise<void> {
+    if (knockTarget === undefined) return
+    await sendInvites([knockTarget])
+  }
+
+  async function cancelKnock (): Promise<void> {
+    if (pendingKnock === undefined) return
+    await cancelInvites(undefined, [pendingKnock])
+  }
 </script>
 
 <div class="flex flex-col">
@@ -128,6 +148,28 @@
       {#if !isLockedByPrivateMeeting && showConnectionButton(object, connecting, $lkSessionConnected, $infos, $myOffice, $currentRoom) && connectLabel != null}
         <div data-id="meeting-connect">
           <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={connecting} />
+        </div>
+      {:else if isLockedByPrivateMeeting && knockTarget !== undefined && !hasOutgoingKnock}
+        <div data-id="meeting-knock">
+          <ModernButton
+            label={love.string.KnockAction}
+            size="large"
+            kind={'primary'}
+            on:click={() => {
+              void knock()
+            }}
+          />
+        </div>
+      {:else if isLockedByPrivateMeeting && hasOutgoingKnock}
+        <div data-id="meeting-knock-pending">
+          <ModernButton
+            label={love.string.CancelKnock}
+            size="large"
+            kind={'secondary'}
+            on:click={() => {
+              void cancelKnock()
+            }}
+          />
         </div>
       {/if}
     </div>

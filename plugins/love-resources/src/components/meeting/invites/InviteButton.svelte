@@ -25,10 +25,19 @@
   export let type: 'outgoing' | 'incoming'
   export let onClick: (e: MouseEvent, invite: UserMeetingInvite, person: Person) => void
 
-  $: label = type === 'incoming' ? love.string.KnockingLabel : love.string.YouInvite
+  $: label =
+    type === 'incoming'
+      ? love.string.KnockingLabel
+      : invite.isKnock === true
+        ? love.string.KnockingTo
+        : love.string.YouInvite
 
   $: tooltipLabel =
-    type === 'outgoing' ? getEmbeddedLabel(`Inviting ${person.name}`) : getEmbeddedLabel(`Invited by ${person.name}`)
+    type === 'outgoing'
+      ? invite.isKnock === true
+        ? getEmbeddedLabel(`Knocking to ${person.name}`)
+        : getEmbeddedLabel(`Inviting ${person.name}`)
+      : getEmbeddedLabel(`Invited by ${person.name}`)
 
   $: if (invite.expiresAt < $ticker1) {
     void getClient().remove(invite)
@@ -49,9 +58,11 @@
     <div class="combined-avatar tiny">
       <Avatar name={person.name} size={'card'} {person} />
     </div>
-    <div class="p-1 time">
-      <TimeLeft time={invite.expiresAt} />
-    </div>
+    {#if invite.isKnock !== true}
+      <div class="p-1 time">
+        <TimeLeft time={invite.expiresAt} />
+      </div>
+    {/if}
   </div>
 </ModernButton>
 

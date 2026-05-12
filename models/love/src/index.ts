@@ -348,6 +348,10 @@ export class TUserMeetingInvite extends TDoc implements UserMeetingInvite {
 
   @Prop(TypeString(), love.string.Status)
     status!: 'pending' | 'accepted' | 'declined'
+
+  @Prop(TypeBoolean(), getEmbeddedLabel('IsKnock'))
+  @Hidden()
+    isKnock?: boolean
 }
 
 export default love

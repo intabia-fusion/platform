@@ -246,4 +246,62 @@ test.describe('meeting minutes - extended scenarios', () => {
       ])
     }
   })
+
+  test('knock-to-join: outsider invites a private-meeting owner -> owner accepts -> outsider auto-joins', async ({
+    browser
+  }) => {
+    test.setTimeout(180000)
+
+    const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
+    const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
+    const page2 = await ctx2.newPage()
+    const page3 = await ctx3.newPage()
+    try {
+      await openLove(page2)
+      await openLove(page3)
+
+      // user2 starts a meeting and closes the room (private).
+      const room = await clickFirstAvailableRoom(page2)
+      test.skip(room === null, 'No regular room available')
+      await startOrJoin(page2)
+      await waitConnected(page2)
+      await openMeetingMinutes(page2, room as string)
+      const toggle = page2.locator('[data-id="meeting-toggle-private"]').first()
+      await expect(toggle).toBeVisible({ timeout: 10000 })
+      await toggle.click()
+      // Wait for the button label to flip — only then `private: true` has
+      // propagated to the server.
+      await expect(toggle).toHaveText(/Open room/i, { timeout: 10000 })
+
+      // user3 (outsider) opens the private room directly and clicks Knock.
+      // The room is locked (private + outsider has no access), so the
+      // EditRoom panel renders the `meeting-knock` button instead of Connect.
+      await openLove(page3)
+      const lockedRoom = page3.locator(`[data-id="room-${room as string}"]`).first()
+      await expect(lockedRoom).toBeVisible({ timeout: 10000 })
+      await lockedRoom.click()
+      const knockBtn = page3.locator('[data-id="meeting-knock"]').first()
+      await expect(knockBtn).toBeVisible({ timeout: 10000 })
+      await knockBtn.click()
+      // After knocking the button flips to "Cancel knock".
+      await expect(page3.locator('[data-id="meeting-knock-pending"]')).toBeVisible({ timeout: 10000 })
+
+      // user2 (owner of the private meeting) should see an incoming knock in
+      // the KnockingList side panel (no popup, no sound).
+      const knockingItem = page2.locator('[data-id="knocking-item"]').first()
+      await expect(knockingItem).toBeVisible({ timeout: 15000 })
+
+      // Owner admits the knocker.
+      await knockingItem.locator('[data-id="knock-accept"]').click()
+
+      // user3 should be auto-joined to user2's meeting (their widget switches
+      // rooms; we only verify the widget stays connected).
+      await expect(page3.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 30000 })
+    } finally {
+      await closeMeetingContexts([
+        { ctx: ctx2, pages: [page2] },
+        { ctx: ctx3, pages: [page3] }
+      ])
+    }
+  })
 })
