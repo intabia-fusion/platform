@@ -376,16 +376,24 @@ export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[
     if (handlingInvites.has(invite._id)) continue
     if (invite.status === 'accepted' && invite.meeting !== undefined) {
       handlingInvites.add(invite._id)
+      let joined = false
       try {
         const currentMeeting = get(currentMeetingMinutes)
-        if (currentMeeting?._id !== invite.meeting) {
-          await joinOrCreateMeetingByInvite(invite.meeting)
+        if (currentMeeting?._id === invite.meeting) {
+          joined = true
+        } else {
+          joined = await joinOrCreateMeetingByInvite(invite.meeting)
         }
+      } catch (err) {
+        // Keep invite for next derived-store recompute so the client can retry.
+        console.warn('Failed to auto-join via accepted invite', err)
       } finally {
-        try {
-          await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
-        } catch {
-          // Already removed concurrently — ignore.
+        if (joined) {
+          try {
+            await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
+          } catch {
+            // Already removed concurrently — ignore.
+          }
         }
         handlingInvites.delete(invite._id)
       }

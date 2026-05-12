@@ -131,7 +131,7 @@ export async function joinMeeting (meeting: MeetingMinutes): Promise<void> {
   await connectToMeeting(meeting)
 }
 
-export async function joinOrCreateMeetingByInvite (meetingId: Ref<MeetingMinutes>): Promise<void> {
+export async function joinOrCreateMeetingByInvite (meetingId: Ref<MeetingMinutes>): Promise<boolean> {
   const client = getClient()
 
   // Retry finding meeting - it may take time to propagate
@@ -157,10 +157,11 @@ export async function joinOrCreateMeetingByInvite (meetingId: Ref<MeetingMinutes
 
   if (meeting === undefined) {
     console.error('[joinOrCreateMeetingByInvite] MeetingMinutes not found after all retries', { meetingId })
-    return
+    return false
   }
 
   await connectToMeeting(meeting)
+  return true
 }
 
 export async function kick (person: Ref<Person>): Promise<void> {

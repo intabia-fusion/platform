@@ -48,7 +48,7 @@ import { getMetadata } from '@hcengineering/platform'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import view from '@hcengineering/view'
 import { workbenchId } from '@hcengineering/workbench'
-import { getSocialStrings } from '@hcengineering/server-contact'
+import { getAccountBySocialId, getSocialStrings } from '@hcengineering/server-contact'
 import notification, { CommonInboxNotification } from '@hcengineering/notification'
 
 import { getInviteAllowedProviders } from './utils'
@@ -633,28 +633,45 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
 
         // Knock: owner accepted/declined -> sync to knocker's invite-request.
         if (sourceDoc.isKnock === true && (newStatus === 'accepted' || newStatus === 'declined')) {
+          // Authorize: the actor must be a meeting owner; if owners list is empty,
+          // any current member may accept/decline. Otherwise non-owners receiving
+          // the invite-response could grant themselves access to a private meeting.
+          const knockMeeting =
+            sourceDoc.meeting !== undefined
+              ? (
+                  await control.findAll(
+                    control.ctx,
+                    love.class.MeetingMinutes,
+                    { _id: sourceDoc.meeting },
+                    { limit: 1 }
+                  )
+                )[0]
+              : undefined
+          if (knockMeeting === undefined) continue
+          const actorAccount = await getAccountBySocialId(control, updateTx.modifiedBy)
+          const owners = knockMeeting.owners ?? []
+          const authorized =
+            actorAccount !== null &&
+            (owners.length > 0 ? owners.includes(actorAccount) : knockMeeting.members.includes(actorAccount))
+          if (!authorized) continue
+
           const request = inviteRequests[0]
-          if (newStatus === 'accepted' && sourceDoc.meeting !== undefined) {
-            const knockMeeting = (
-              await control.findAll(control.ctx, love.class.MeetingMinutes, { _id: sourceDoc.meeting }, { limit: 1 })
+          if (newStatus === 'accepted') {
+            const knockerEmployee = (
+              await control.findAll(
+                control.ctx,
+                contact.mixin.Employee,
+                { _id: sourceDoc.from as Ref<Employee> },
+                { limit: 1 }
+              )
             )[0]
-            if (knockMeeting !== undefined) {
-              const knockerEmployee = (
-                await control.findAll(
-                  control.ctx,
-                  contact.mixin.Employee,
-                  { _id: sourceDoc.from as Ref<Employee> },
-                  { limit: 1 }
-                )
-              )[0]
-              const knockerAccount = knockerEmployee?.personUuid
-              if (knockerAccount !== undefined && !knockMeeting.members.includes(knockerAccount)) {
-                result.push(
-                  control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, knockMeeting.space, knockMeeting._id, {
-                    $push: { members: knockerAccount }
-                  })
-                )
-              }
+            const knockerAccount = knockerEmployee?.personUuid
+            if (knockerAccount !== undefined && !knockMeeting.members.includes(knockerAccount)) {
+              result.push(
+                control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, knockMeeting.space, knockMeeting._id, {
+                  $push: { members: knockerAccount }
+                })
+              )
             }
           }
           // Drop the owner-side invite-response.
