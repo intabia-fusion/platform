@@ -1,8 +1,8 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testMatch: ['**/?(*.)+(spec|test|bench).[jt]s?(x)'],
+  testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
+  testPathIgnorePatterns: ['/node_modules/', '\\.bench\\.[jt]sx?$'],
   roots: ['./src'],
-  coverageReporters: ['text-summary', 'html'],
-  testTimeout: 600000
+  coverageReporters: ['text-summary', 'html']
 }

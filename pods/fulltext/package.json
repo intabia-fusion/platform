@@ -23,6 +23,7 @@
     "docker:push": "../../common/scripts/docker_tag.sh intabiafusion/fulltext",
     "format": "format src",
     "test": "jest --passWithNoTests --silent --forceExit",
+    "bench": "jest --config jest.bench.config.js --runInBand --forceExit",
     "_phase:build": "compile transpile src",
     "_phase:test": "jest --passWithNoTests --silent --forceExit",
     "_phase:format": "format src",

@@ -424,10 +424,13 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
       sessionTimeout?: number // Optional session timeout in milliseconds
     }
   ) {
+    const rawMaxWait = this.options?.batchTimeout
+    const sanitizedMaxWait =
+      typeof rawMaxWait === 'number' && Number.isFinite(rawMaxWait) && rawMaxWait >= 0 ? rawMaxWait : undefined
     this.cc = this.kafka.consumer({
       groupId: `${getKafkaTopicId(this.topic, this.config)}-${groupId}`,
       sessionTimeout: this.options?.sessionTimeout,
-      maxWaitTimeInMs: this.options?.batchTimeout,
+      maxWaitTimeInMs: sanitizedMaxWait,
       allowAutoTopicCreation: true
     })
 
@@ -440,7 +443,12 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
     await this.doConnect()
     await this.doSubscribe()
 
-    const batchSize = this.options?.batchSize ?? 1
+    // Clamp batchSize >= 1 to avoid zero/NaN producing an infinite chunk loop
+    const rawBatchSize = this.options?.batchSize
+    const batchSize =
+      typeof rawBatchSize === 'number' && Number.isFinite(rawBatchSize) && rawBatchSize >= 1
+        ? Math.floor(rawBatchSize)
+        : 1
     const retryDelay = this.options?.retryDelay ?? 1000
     const maxRetryDelay = this.options?.maxRetryDelay ?? 10
 

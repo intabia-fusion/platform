@@ -137,8 +137,15 @@ export class WorkspaceManager {
     )
 
     let txMessages: number = 0
-    const txBatchSize = parseInt(process.env.FULLTEXT_TX_BATCH_SIZE ?? '100')
-    const txBatchTimeout = parseInt(process.env.FULLTEXT_TX_BATCH_TIMEOUT ?? '100')
+    const parseIntInRange = (raw: string | undefined, def: number, min: number, max: number): number => {
+      const n = parseInt(raw ?? '')
+      if (!Number.isFinite(n) || n < min || n > max) return def
+      return n
+    }
+    // batchSize: chunk size for handler invocation. Min 1, max 500
+    const txBatchSize = parseIntInRange(process.env.FULLTEXT_TX_BATCH_SIZE, 100, 1, 500)
+    // batchTimeout: maps to kafkajs maxWaitTimeInMs. Cap at 5s to avoid multi-second broker waits
+    const txBatchTimeout = parseIntInRange(process.env.FULLTEXT_TX_BATCH_TIMEOUT, 100, 0, 5000)
     this.txConsumer = this.opt.queue.createBatchConsumer<TxCUD<Doc> | TxDomainEvent<QueueSourced<Event>>>(
       this.ctx,
       QueueTopic.Tx,
