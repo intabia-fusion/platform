@@ -36,7 +36,7 @@
     if (markup !== undefined) {
       content = markup
     } else if (message !== undefined) {
-      translateCB(message, value.props, $themeStore.language, (res) => {
+      translateCB(message, value.intlParams, $themeStore.language, (res) => {
         content = res
       })
     }

@@ -60,7 +60,7 @@ async function hydrateNotificationAsYouCan (
 
   if (lastNotification._class === notification.class.CommonInboxNotification) {
     intlTitle = (lastNotification as CommonInboxNotification).message
-    intlParams = { ...(lastNotification as CommonInboxNotification).props }
+    intlParams = { ...(lastNotification as CommonInboxNotification).intlParams }
   } else if (lastNotification._class === notification.class.ActivityInboxNotification) {
     intlTitle = (lastNotification as ActivityInboxNotification).title
     intlParams = { ...(lastNotification as ActivityInboxNotification).intlParams }

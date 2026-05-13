@@ -46,10 +46,36 @@ export const emptyModelResult = Promise.resolve<Tx[]>([])
  * @public
  */
 export abstract class BaseMiddleware implements Middleware {
+  // Per-method shortcut pointers. After pipeline build, wireShortcuts() sets each
+  // to the next middleware down the chain that ACTUALLY overrides that method.
+  // Provide* uses these to skip middlewares that don't override the method,
+  // avoiding 20+ no-op delegation hops per call. Default to `next` for safety
+  // before wiring runs (or for ad-hoc instantiations like in tests).
+  nextFindAll?: Middleware
+  nextTx?: Middleware
+  nextGroupBy?: Middleware
+  nextSearchFulltext?: Middleware
+  nextLoadModel?: Middleware
+  nextHandleBroadcast?: Middleware
+  nextDomainRequest?: Middleware
+  nextCloseSession?: Middleware
+
   protected constructor (
     readonly context: PipelineContext,
     protected readonly next?: Middleware
-  ) {}
+  ) {
+    // Pre-wire to `next` so an un-wired pipeline still works (BaseMiddleware can be
+    // instantiated directly in tests). pipeline.wireShortcuts() overrides these
+    // with proper per-method skip targets.
+    this.nextFindAll = next
+    this.nextTx = next
+    this.nextGroupBy = next
+    this.nextSearchFulltext = next
+    this.nextLoadModel = next
+    this.nextHandleBroadcast = next
+    this.nextDomainRequest = next
+    this.nextCloseSession = next
+  }
 
   findAll<T extends Doc>(
     ctx: MeasureContext<SessionData>,
@@ -65,7 +91,7 @@ export abstract class BaseMiddleware implements Middleware {
     lastModelTx: Timestamp,
     hash?: string
   ): Promise<Tx[] | LoadModelResponse> {
-    return this.next?.loadModel(ctx, lastModelTx, hash) ?? emptyModelResult
+    return this.nextLoadModel?.loadModel(ctx, lastModelTx, hash) ?? emptyModelResult
   }
 
   loadModel (
@@ -82,8 +108,8 @@ export abstract class BaseMiddleware implements Middleware {
     field: string,
     query?: DocumentQuery<P>
   ): Promise<Map<T, number>> {
-    if (this.next !== undefined) {
-      return this.next.groupBy(ctx, domain, field, query)
+    if (this.nextGroupBy !== undefined) {
+      return this.nextGroupBy.groupBy(ctx, domain, field, query)
     }
     return Promise.resolve(new Map<T, number>())
   }
@@ -104,16 +130,16 @@ export abstract class BaseMiddleware implements Middleware {
   }
 
   handleBroadcast (ctx: MeasureContext<SessionData>): Promise<void> {
-    return this.next?.handleBroadcast(ctx) ?? emptyBroadcastResult
+    return this.nextHandleBroadcast?.handleBroadcast(ctx) ?? emptyBroadcastResult
   }
 
   provideBroadcast (ctx: MeasureContext<SessionData>): Promise<void> {
-    return this.next?.handleBroadcast(ctx) ?? emptyBroadcastResult
+    return this.nextHandleBroadcast?.handleBroadcast(ctx) ?? emptyBroadcastResult
   }
 
   protected provideTx (ctx: MeasureContext<SessionData>, tx: Tx[]): Promise<TxMiddlewareResult> {
-    if (this.next !== undefined) {
-      return this.next.tx(ctx, tx)
+    if (this.nextTx !== undefined) {
+      return this.nextTx.tx(ctx, tx)
     }
     return emptyTxResult
   }
@@ -128,8 +154,8 @@ export abstract class BaseMiddleware implements Middleware {
     query: DocumentQuery<T>,
     options?: FindOptions<T>
   ): Promise<FindResult<T>> {
-    if (this.next !== undefined) {
-      return this.next.findAll(ctx, _class, query, options)
+    if (this.nextFindAll !== undefined) {
+      return this.nextFindAll.findAll(ctx, _class, query, options)
     }
     return emptyFindResult
   }
@@ -139,8 +165,8 @@ export abstract class BaseMiddleware implements Middleware {
     query: SearchQuery,
     options: SearchOptions
   ): Promise<SearchResult> {
-    if (this.next !== undefined) {
-      return this.next.searchFulltext(ctx, query, options)
+    if (this.nextSearchFulltext !== undefined) {
+      return this.nextSearchFulltext.searchFulltext(ctx, query, options)
     }
     return emptySearchResult
   }
@@ -154,15 +180,15 @@ export abstract class BaseMiddleware implements Middleware {
     domain: OperationDomain,
     params: DomainParams
   ): Promise<DomainResult> {
-    if (this.next !== undefined) {
-      return await this.next.domainRequest(ctx, domain, params)
+    if (this.nextDomainRequest !== undefined) {
+      return await this.nextDomainRequest.domainRequest(ctx, domain, params)
     }
     return { domain, value: null }
   }
 
   provideCloseSession (ctx: MeasureContext, sessionId: string): Promise<void> {
-    if (this.next !== undefined) {
-      return this.next.closeSession(ctx, sessionId)
+    if (this.nextCloseSession !== undefined) {
+      return this.nextCloseSession.closeSession(ctx, sessionId)
     }
     return Promise.resolve()
   }

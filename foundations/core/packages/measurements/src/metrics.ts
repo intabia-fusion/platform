@@ -82,29 +82,37 @@ export function updateMeasure (
   const ed = platformNow()
 
   const fParams = typeof fullParams === 'function' ? fullParams() : fullParams
-  // Update params if required
-  const pparams = Object.entries(params)
-  if (pparams.length > 0) {
-    const [k, v] = pparams[0]
-    let params = metrics.params[k]
-    if (params === undefined) {
-      params = {}
-      metrics.params[k] = params
+  // Update params if required. Fast path: skip Object.entries alloc when empty
+  // (the common case from middleware ctx.with('name', {}, op)).
+  let firstKey: string | undefined
+  let extraCount = 0
+  for (const fk in params) {
+    if (!Object.prototype.hasOwnProperty.call(params, fk)) continue
+    if (firstKey === undefined) {
+      firstKey = fk
+    } else {
+      extraCount++
+    }
+  }
+  if (firstKey !== undefined) {
+    const k = firstKey
+    const v = params[k]
+    let bucket = metrics.params[k]
+    if (bucket === undefined) {
+      bucket = {}
+      metrics.params[k] = bucket
     }
     const vKey = `${v?.toString() ?? ''}`
-    let param = params[vKey]
+    let param = bucket[vKey]
     if (param === undefined) {
-      param = {
-        operations: 0,
-        value: 0
-      }
-      params[vKey] = param
+      param = { operations: 0, value: 0 }
+      bucket[vKey] = param
     }
     if (override === true) {
       if (value === 0) {
         // We need to delete value, to preserve sending zero values.
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete params[vKey]
+        delete bucket[vKey]
       } else {
         param.operations = value ?? ed - st
       }
@@ -112,22 +120,27 @@ export function updateMeasure (
       param.value += value ?? ed - st
       param.operations++
     }
-    // Do not update top results for params.
-    if (pparams.length > 1) {
-      // We need to update all other params as counters.
+    // Update top results for params after the first one. Walk params again
+    // without Object.entries alloc; skip the first key we already used.
+    if (extraCount > 0) {
       if (param.topResult === undefined) {
         param.topResult = []
       }
-      for (const [, v] of pparams.slice(1)) {
-        const r = (param.topResult ?? []).find((it) => it.params[`${v}`] === true)
+      const top = param.topResult
+      const dt = value ?? ed - st
+      for (const fk in params) {
+        if (fk === k || !Object.prototype.hasOwnProperty.call(params, fk)) continue
+        const ev = params[fk]
+        const evKey = `${ev}`
+        const r = top.find((it) => it.params[evKey] === true)
         if (r !== undefined) {
-          r.value += 1 // Counter of operations
-          r.time = (r.time ?? 0) + (value ?? ed - st)
+          r.value += 1
+          r.time = (r.time ?? 0) + dt
         } else {
-          param.topResult.push({ params: { [`${v}`]: true }, value: 1, time: value ?? ed - st })
+          top.push({ params: { [evKey]: true }, value: 1, time: dt })
         }
       }
-      param.topResult.sort((a, b) => b.value - a.value)
+      top.sort((a, b) => b.value - a.value)
     }
   }
   // Update leaf data
@@ -146,14 +159,41 @@ export function updateMeasure (
  * @public
  */
 export function childMetrics (root: Metrics, path: string[]): Metrics {
-  const segments = path
+  // Single-segment fast path - hot from MeasureMetricsContext.newChild which
+  // always passes a one-element array. Skips the for-of/segments alias overhead.
+  if (path.length === 1) {
+    const p = path[0]
+    let v = root.measurements[p]
+    if (v === undefined) {
+      v = { operations: 0, value: 0, measurements: {}, params: {}, namedParams: {} }
+      root.measurements[p] = v
+    }
+    return v
+  }
   let oop = root
-  for (const p of segments) {
-    const v = oop.measurements[p] ?? { operations: 0, value: 0, measurements: {}, params: {} }
-    oop.measurements[p] = v
+  for (const p of path) {
+    let v = oop.measurements[p]
+    if (v === undefined) {
+      v = { operations: 0, value: 0, measurements: {}, params: {}, namedParams: {} }
+      oop.measurements[p] = v
+    }
     oop = v
   }
   return oop
+}
+
+/**
+ * Same as childMetrics for a single name, but avoids the caller having to
+ * allocate a temporary `[name]` array. Used by MeasureMetricsContext.newChild.
+ * @public
+ */
+export function childMetricsSingle (root: Metrics, name: string): Metrics {
+  let v = root.measurements[name]
+  if (v === undefined) {
+    v = { operations: 0, value: 0, measurements: {}, params: {}, namedParams: {} }
+    root.measurements[name] = v
+  }
+  return v
 }
 
 export function metricsClean (m: Metrics): Metrics {

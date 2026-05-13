@@ -29,12 +29,12 @@
   $: void updateContent(value.message, value.markup)
 
   async function getProps (): Promise<Record<string, any>> {
-    const result = value.props ?? {}
-    const propsIntl = value.propsIntl ?? {}
-    for (const [key, v] of Object.entries(propsIntl)) {
-      result[key] = await translate(v, value.props, $themeStore.language)
+    const intlParams = value.intlParams ?? {}
+    const intlParamsNotLocalized = value.intlParamsNotLocalized ?? {}
+    for (const [key, v] of Object.entries(intlParamsNotLocalized)) {
+      intlParams[key] = await translate(v, intlParams, $themeStore.language)
     }
-    return result
+    return intlParams
   }
 
   async function updateContent (message?: IntlString, markup?: Markup): Promise<void> {

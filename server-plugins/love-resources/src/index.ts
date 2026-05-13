@@ -437,10 +437,12 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           docNotifyContext: contextId,
           user: receiverInfo.account,
           message: love.string.InvitingYou,
-          props: {
+          intlParams: {
             name: senderName,
             senderName
           },
+          title: love.string.MeetingRequest,
+          body: love.string.InvitingYou,
           header: love.string.MeetingRequest,
           headerIcon: love.icon.Invite,
           objectId: notificationObjectId,
