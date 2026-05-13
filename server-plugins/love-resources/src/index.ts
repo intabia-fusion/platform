@@ -608,6 +608,14 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           to: sourceDoc.to
         })
         for (const request of inviteRequests) {
+          // Preserve accepted invite-request: the knocker's liveQuery may
+          // observe the remove before the update that sets status='accepted'
+          // + meeting, which would skip auto-join. The knocker's client
+          // removes the request itself once it has finished auto-joining
+          // (see checkAndJoinIfRecipientJoined in plugins/love-resources).
+          // Meeting-end cleanup (cleanupInvitesForMeeting in services/love)
+          // catches any leftover accepted requests when the meeting finishes.
+          if (request.status === 'accepted' && request.meeting !== undefined) continue
           result.push(control.txFactory.createTxRemoveDoc(love.class.UserMeetingInvite, request.space, request._id))
         }
       } else if (sourceDoc.kind === 'invite-response' && tx._class === core.class.TxUpdateDoc) {

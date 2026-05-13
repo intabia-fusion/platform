@@ -21,6 +21,7 @@ import {
   navigateToOfficeDoc
 } from './utils'
 import { get } from 'svelte/store'
+import { LoveServiceError } from './loveClient'
 import { infos, myInfo, myOffice, rooms, myConnectingSessionId, meetings } from './stores'
 import { getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
@@ -160,8 +161,33 @@ export async function joinOrCreateMeetingByInvite (meetingId: Ref<MeetingMinutes
     return false
   }
 
-  await connectToMeeting(meeting)
-  return true
+  // After a knock is accepted the server pushes the knocker into the meeting's
+  // members, but the membership write and the broadcast of the resulting
+  // SecurityChange are not synchronous with the `status: 'accepted'` update
+  // the knocker's client observes. The `/getToken` endpoint enforces
+  // membership on private meetings, so the first attempt may race the
+  // membership write and come back with 403. Retry with backoff before
+  // surfacing the failure.
+  let lastErr: LoveServiceError | undefined
+  for (let attempt = 0; attempt < 20; attempt++) {
+    try {
+      await connectToMeeting(meeting)
+      return true
+    } catch (err) {
+      if (!(err instanceof LoveServiceError) || err.status !== 403) throw err
+      lastErr = err
+      await new Promise((resolve) => setTimeout(resolve, 250))
+      // Re-fetch in case members propagated since the snapshot we have.
+      const refreshed = await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
+      if (refreshed === undefined || refreshed.status === MeetingStatus.Finished) {
+        // Meeting is gone — stop hammering.
+        return false
+      }
+      meeting = refreshed
+    }
+  }
+  console.warn(`[joinOrCreateMeetingByInvite] connect failed after retries: ${lastErr?.message ?? 'unknown'}`)
+  return false
 }
 
 export async function kick (person: Ref<Person>): Promise<void> {

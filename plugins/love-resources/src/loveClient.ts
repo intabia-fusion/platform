@@ -12,6 +12,16 @@ export function getLoveClient (): LoveClient {
   return new LoveClient()
 }
 
+export class LoveServiceError extends Error {
+  constructor (
+    readonly status: number,
+    message: string
+  ) {
+    super(message)
+    this.name = 'LoveServiceError'
+  }
+}
+
 export class LoveClient {
   async getRoomToken (meetingMinutes: MeetingMinutes): Promise<string> {
     return await this.refreshRoomToken(meetingMinutes)
@@ -118,6 +128,14 @@ export class LoveClient {
         y
       })
     })
+    if (!res.ok) {
+      // Surface the status — callers (auto-join after knock-accept) need to
+      // distinguish a transient 403 (membership propagation race) from a
+      // permanent denial. Returning the response body as the token would
+      // otherwise be passed straight into LiveKit and fail opaquely.
+      const text = await res.text().catch(() => '')
+      throw new LoveServiceError(res.status, `getToken failed: ${res.status} ${text}`)
+    }
     return await res.text()
   }
 
