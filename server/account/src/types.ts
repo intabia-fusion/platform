@@ -296,7 +296,6 @@ export interface Subscription {
 
 export type SubscriptionData = Omit<Subscription, 'createdOn' | 'updatedOn'>
 
-
 export interface AccountWorkspaceBadgeStatus {
   accountUuid: AccountUuid
   workspaceUuid: WorkspaceUuid

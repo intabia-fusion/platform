@@ -28,8 +28,7 @@ import {
   type WorkspaceUuid,
   type AccountUuid,
   type UsageStatus,
-  readOnlyGuestAccountUuid,
-  systemAccountUuid
+  readOnlyGuestAccountUuid
 } from '@hcengineering/core'
 import platform, { getMetadata, PlatformError, Severity, Status, unknownError } from '@hcengineering/platform'
 import { decodeTokenVerbose } from '@hcengineering/server-token'
@@ -120,7 +119,6 @@ export async function listAccounts (
 
   return await db.listAccounts(search, skip, limit)
 }
-
 
 export async function performWorkspaceOperation (
   ctx: MeasureContext,

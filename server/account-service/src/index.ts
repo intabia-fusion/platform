@@ -32,11 +32,7 @@ import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import os from 'os'
 import { getPlatformQueue } from '@hcengineering/kafka'
-import {
-  QueueTopic,
-  type QueueUserMessage,
-  type QueueOnlineUserTx
-} from '@hcengineering/server-core'
+import { QueueTopic, type QueueUserMessage, type QueueOnlineUserTx } from '@hcengineering/server-core'
 import { randomBytes } from 'node:crypto'
 
 import { handlePresenceBatch } from './presence'
@@ -166,7 +162,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       console.log('Migrations verified/done')
     }
   })
-
 
   const onlineUserTxProducer = platformQueue.getProducer<QueueOnlineUserTx>(
     measureCtx.newChild('online-user-tx-producer', {}, { span: false }),

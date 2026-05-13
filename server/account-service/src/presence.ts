@@ -20,7 +20,8 @@ import core, {
   type Ref,
   generateId,
   type TxCreateDoc,
-  type WorkspaceUuid, groupByArray
+  type WorkspaceUuid,
+  groupByArray
 } from '@hcengineering/core'
 import {
   QueueUserEvent,

@@ -963,7 +963,6 @@ export class MongoAccountDB implements AccountDB {
     return results.map((r) => r.accountUuid)
   }
 
-
   async getAccountWorkspaceBadgeStatuses (accountId: AccountUuid): Promise<AccountWorkspaceBadgeStatus[]> {
     throw new Error('Not implemented')
   }

@@ -820,7 +820,7 @@ async function initBadgeStatuses (client: MigrationClient): Promise<void> {
 
   if (cache.size > 0) {
     const chunkSize = 500
-    const cacheArray = Array.from(cache.entries()).filter(([_, hasUnread]) => hasUnread)
+    const cacheArray = Array.from(cache.entries())
     for (let i = 0; i < cacheArray.length; i += chunkSize) {
       const chunk = cacheArray.slice(i, i + chunkSize)
       try {
@@ -844,7 +844,7 @@ async function initBadgeStatuses (client: MigrationClient): Promise<void> {
     }
   }
 
-  console.log('Badge statuses cache generated', { usersCount: cache.size })
+  console.log('Badge statuses cache generated', { usersCount: cache.size, ...client.wsIds })
 }
 
 async function migrateCommonNotificationProps (client: MigrationClient): Promise<void> {

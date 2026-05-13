@@ -1309,7 +1309,6 @@ export class PostgresAccountDB implements AccountDB {
     return results.map((r) => r.accountUuid)
   }
 
-
   async getAccountWorkspaceBadgeStatuses (accountId: AccountUuid): Promise<AccountWorkspaceBadgeStatus[]> {
     return await this.accountWorkspaceBadgeStatus.find({ accountUuid: accountId })
   }

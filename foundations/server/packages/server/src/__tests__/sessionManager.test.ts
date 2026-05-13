@@ -133,7 +133,6 @@ describe('TSessionManager', () => {
       close: jest.fn().mockResolvedValue(undefined)
     }
 
-
     mockUsersProducer = {
       send: jest.fn().mockResolvedValue(undefined),
       close: jest.fn().mockResolvedValue(undefined)

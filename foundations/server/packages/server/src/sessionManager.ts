@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import os from 'os'
 import {
   getClient as getAccountClient,
   type LoginInfoWithWorkspaces,
@@ -137,7 +136,6 @@ export class TSessionManager implements SessionManager {
   workspaceConsumer: ConsumerHandle
   onlineUserTxConsumer: ConsumerHandle
 
-
   ticksContext: MeasureContext
 
   hungSessionsWarnPercent = parseInt(process.env.HUNG_SESSIONS_WARN_PERCENT ?? '25')
@@ -168,7 +166,6 @@ export class TSessionManager implements SessionManager {
     }
     this.workspaceProducer = this.queue.getProducer(ctx.newChild('ws-queue', {}, { span: false }), QueueTopic.Workspace)
     this.usersProducer = this.queue.getProducer(ctx.newChild('user-queue', {}, { span: false }), QueueTopic.Users)
-
 
     this.workspaceConsumer = this.queue.createConsumer<QueueWorkspaceMessage>(
       ctx.newChild('ws-queue-consume', {}, { span: false }),
@@ -214,7 +211,6 @@ export class TSessionManager implements SessionManager {
             'transactor'
           )
           await pipeline.tx(ctx, [tx])
-          // TODO: wait async triggers?
           await pipeline.handleBroadcast(ctx)
         })
       }
@@ -839,19 +835,14 @@ export class TSessionManager implements SessionManager {
 
         const accountUuid = account.account
         if (accountUuid !== systemAccountUuid && accountUuid !== guestAccount) {
-          await this.usersProducer.send(
-            ctx,
-            workspace.wsId.uuid,
-            [
-              userEvents.login({
-                user: accountUuid,
-                sessions: this.countUserSessions(workspace, accountUuid),
-                socialIds: account.socialIds.map((it) => it._id),
-                timestamp: Date.now()
-              })
-            ],
-            accountUuid
-          )
+          await this.usersProducer.send(ctx, workspace.wsId.uuid, [
+            userEvents.login({
+              user: accountUuid,
+              sessions: this.countUserSessions(workspace, accountUuid),
+              socialIds: account.socialIds.map((it) => it._id),
+              timestamp: Date.now()
+            })
+          ])
         }
 
         // Mark workspace as init completed and we had at least one client.
@@ -1198,19 +1189,14 @@ export class TSessionManager implements SessionManager {
         workspace.sessions.delete(sessionRef.session.sessionId)
 
         const userUuid = sessionRef.session.getUser()
-        await this.usersProducer.send(
-          ctx,
-          workspaceUuid,
-          [
-            userEvents.logout({
-              user: userUuid,
-              sessions: this.countUserSessions(workspace, userUuid),
-              socialIds: sessionRef.session.getUserSocialIds(),
-              timestamp: Date.now()
-            })
-          ],
-          userUuid
-        )
+        await this.usersProducer.send(ctx, workspaceUuid, [
+          userEvents.logout({
+            user: userUuid,
+            sessions: this.countUserSessions(workspace, userUuid),
+            socialIds: sessionRef.session.getUserSocialIds(),
+            timestamp: Date.now()
+          })
+        ])
 
         if (this.doHandleTick) {
           workspace.tickHandlers.set(sessionRef.session.sessionId, {
@@ -1339,7 +1325,6 @@ export class TSessionManager implements SessionManager {
 
   async closeWorkspaces (ctx: MeasureContext): Promise<void> {
     clearInterval(this.checkInterval)
-
 
     for (const w of this.workspaces) {
       await this.doCloseAll(w[1], 1, 'shutdown')

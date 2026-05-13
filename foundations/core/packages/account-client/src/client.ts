@@ -1350,7 +1350,6 @@ class AccountClientImpl implements AccountClient {
     })
   }
 
-
   async getAccountWorkspaceBadgeStatuses (account: AccountUuid): Promise<AccountWorkspaceBadgeStatus[]> {
     const request = {
       method: 'getAccountWorkspaceBadgeStatuses' as const,
