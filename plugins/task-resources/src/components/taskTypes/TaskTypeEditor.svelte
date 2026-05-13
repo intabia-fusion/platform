@@ -38,7 +38,6 @@
   import { taskTypeStore } from '../..'
   import plugin from '../../plugin'
   import StatesProjectEditor from '../state/StatesProjectEditor.svelte'
-  import TaskTypeKindEditor from '../taskTypes/TaskTypeKindEditor.svelte'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
   import TaskTypeRefEditorTable from './TaskTypeRefEditorTable.svelte'
 
@@ -178,22 +177,6 @@
           <div class="hulyComponent-content__column-group mt-4">
             <div class="hulyComponent-content__header mb-6">
               <div class="flex-row-center gap-1-5">
-                <TaskTypeKindEditor
-                  kind={taskType.kind}
-                  on:change={(evt) => {
-                    if (taskType === undefined) {
-                      return
-                    }
-                    const newKind = evt.detail
-                    // When switching to 'task' (no parent allowed), clear allowedAsChildOf
-                    if (newKind === 'task') {
-                      void client.diffUpdate(taskType, { kind: newKind, allowedAsChildOf: [] })
-                    } else {
-                      void client.diffUpdate(taskType, { kind: newKind })
-                    }
-                  }}
-                  {readonly}
-                />
                 {#if !readonly}
                   <ButtonIcon
                     icon={TaskTypeIcon}
@@ -242,20 +225,18 @@
             </div>
           </div>
 
-          {#if taskType.kind === 'subtask' || taskType.kind === 'both'}
-            <div class="hulyTableAttr-container">
-              <TaskTypeRefEditorTable
-                value={taskType.allowedAsChildOf}
-                types={taskTypes.filter((it) => it.kind === 'task' || it.kind === 'both')}
-                onChange={(evt) => {
-                  if (taskType === undefined) {
-                    return
-                  }
-                  void client.diffUpdate(taskType, { allowedAsChildOf: evt })
-                }}
-              />
-            </div>
-          {/if}
+          <div class="hulyTableAttr-container">
+            <TaskTypeRefEditorTable
+              value={taskType.allowedAsChildOf}
+              types={taskTypes}
+              onChange={(evt) => {
+                if (taskType === undefined) {
+                  return
+                }
+                void client.diffUpdate(taskType, { allowedAsChildOf: evt })
+              }}
+            />
+          </div>
 
             <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
               <ToggleWithLabel

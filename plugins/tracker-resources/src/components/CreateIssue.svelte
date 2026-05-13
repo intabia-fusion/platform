@@ -132,26 +132,18 @@
   let object = getDefaultObjectFromDraft() ?? getDefaultObject(id)
   let isAssigneeTouched = false
   let kind: Ref<TaskType> | undefined = undefined
-  let kindTaskType: TaskType | undefined = undefined
 
   $: if (kind !== undefined) {
     void client.findOne(task.class.TaskType, { _id: kind }).then((tt) => {
-      kindTaskType = tt
-      // Clear parent if it's no longer a valid parent type for the new kind.
-      // Only clear if a parent is actually set and its type is known.
+      // Clear parent if it's no longer a valid parent type for the new kind
       if (parentIssue !== undefined && tt !== undefined) {
         const allowed = tt.allowedAsChildOf ?? []
-        if (!allowed.includes(parentIssue.kind)) {
+        if (allowed.length > 0 && !allowed.includes(parentIssue.kind)) {
           clearParentIssue()
         }
       }
     })
-  } else {
-    kindTaskType = undefined
   }
-
-  // True when the selected task type cannot have a parent at all
-  $: parentNotAllowed = kindTaskType !== undefined && (kindTaskType.allowedAsChildOf ?? []).length === 0
 
   let templateId: Ref<IssueTemplate> | undefined = draft?.template?.template
   let appliedTemplateId: Ref<IssueTemplate> | undefined = draft?.template?.template
@@ -1037,14 +1029,9 @@
     </div>
     <div id="parentissue-editor" class="new-line">
       <Button
-        disabled={parentNotAllowed}
         focusIndex={11}
         icon={tracker.icon.Parent}
-        label={parentNotAllowed
-          ? tracker.string.ParentNotApplicable
-          : object.parentIssue != null
-            ? tracker.string.RemoveParent
-            : tracker.string.SetParent}
+        label={object.parentIssue != null ? tracker.string.RemoveParent : tracker.string.SetParent}
         kind={'regular'}
         size={'large'}
         notSelected={object.parentIssue === undefined}

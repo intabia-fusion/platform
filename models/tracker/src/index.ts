@@ -700,7 +700,6 @@ function defineSpaceType (builder: Builder): void {
       statuses: classicStatuses,
       descriptor: tracker.descriptors.Issue,
       name: 'Issue',
-      kind: 'both',
       ofClass: tracker.class.Issue,
       targetClass: tracker.mixin.IssueTypeData,
       statusClass: tracker.class.IssueStatus,

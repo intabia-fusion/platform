@@ -80,11 +80,6 @@ export interface ProjectStatus extends IconProps {
 /**
  * @public
  */
-export type TaskTypeKind = 'task' | 'subtask' | 'both'
-
-/**
- * @public
- */
 export interface TaskTypeDescriptor extends Doc {
   name: IntlString
   description: IntlString
@@ -114,8 +109,6 @@ export interface TaskType extends Doc, IconProps {
   descriptor: Ref<TaskTypeDescriptor>
 
   name: string
-
-  kind: TaskTypeKind
   // Specify if task is allowed to be used as subtask of following tasks.
   allowedAsChildOf?: Ref<TaskType>[]
 

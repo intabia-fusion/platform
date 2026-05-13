@@ -32,15 +32,11 @@
 
   $: effectiveKind = kind ?? (!Array.isArray(value) && 'kind' in value ? value.kind : undefined)
 
-  let effectiveTaskType: TaskType | undefined = undefined
-
   $: if (effectiveKind !== undefined) {
     void client.findOne(task.class.TaskType, { _id: effectiveKind }).then((taskType) => {
-      effectiveTaskType = taskType
       allowedParentKinds = taskType?.allowedAsChildOf
     })
   } else {
-    effectiveTaskType = undefined
     allowedParentKinds = undefined
   }
 
@@ -51,20 +47,13 @@
     sort: { modifiedOn: SortingOrder.Descending }
   }
 
-  // Only block when kind is explicitly 'task' — empty allowedAsChildOf on subtask/both means "any"
-  $: parentNotAllowed = effectiveTaskType !== undefined && effectiveTaskType.kind === 'task'
-
   $: docQuery =
-    allowedParentKinds !== undefined && allowedParentKinds.length > 0
-      ? { kind: { $in: allowedParentKinds } }
-      : parentNotAllowed
-        ? { kind: { $in: [] } }
-        : {}
+    allowedParentKinds !== undefined && allowedParentKinds.length > 0 ? { kind: { $in: allowedParentKinds } } : {}
 
   let noParentIssuesExist: boolean = false
 
   // Checking if parent issues exist
-  $: if (!parentNotAllowed && allowedParentKinds !== undefined && allowedParentKinds.length > 0) {
+  $: if (allowedParentKinds !== undefined && allowedParentKinds.length > 0) {
     void client
       .findOne(tracker.class.Issue, { kind: { $in: allowedParentKinds } }, { projection: { _id: 1 } })
       .then((found) => {
@@ -142,11 +131,7 @@
   category={tracker.completion.IssueCategory}
   multiSelect={false}
   allowDeselect={true}
-  placeholder={noParentIssuesExist
-    ? tracker.string.NoParentIssuesExist
-    : parentNotAllowed
-      ? tracker.string.ParentNotApplicable
-      : tracker.string.SetParent}
+  placeholder={noParentIssuesExist ? tracker.string.NoParentIssuesExist : tracker.string.SetParent}
   create={undefined}
   {ignoreObjects}
   shadows={true}

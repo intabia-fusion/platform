@@ -27,7 +27,6 @@
   } from '@hcengineering/task'
   import { DropdownIntlItem, Modal, ModernEditbox, Label, ButtonMenu } from '@hcengineering/ui'
   import task from '../../plugin'
-  import TaskTypeKindEditor from './TaskTypeKindEditor.svelte'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import TaskTypeRefEditor from './TaskTypeRefEditor.svelte'
 
@@ -39,7 +38,6 @@
 
   function defaultTaskType (type: ProjectType): Data<TaskType> {
     return {
-      kind: 'task',
       name: '',
       parent: type._id,
       descriptor: '' as Ref<TaskTypeDescriptor>,
@@ -67,13 +65,8 @@
     )
     .filter((p) => hasResource(p._id as any as Resource<any>))
 
-  let { kind, name, targetClass, statusCategories, statuses, allowedAsChildOf } =
+  let { name, targetClass, statusCategories, statuses, allowedAsChildOf } =
     taskType !== undefined ? { ...taskType } : { ...defaultTaskType(type) }
-
-  // When kind switches to 'task', clear allowedAsChildOf — a pure task cannot have parents
-  $: if (kind === 'task') {
-    allowedAsChildOf = []
-  }
 
   function findStatusClass (_class: Ref<Class<Task>>): Ref<Class<Status>> | undefined {
     const h = getClient().getHierarchy()
@@ -95,7 +88,6 @@
 
     const ofClass = descr.baseClass
     const _taskType = {
-      kind,
       name,
       ofClass,
       descriptor: taskTypeDescriptor._id,
@@ -182,12 +174,6 @@
     <ModernEditbox bind:value={name} label={task.string.TaskName} size={'large'} kind={'ghost'} autoFocus />
   </div>
   <div class="hulyModal-content__settingsSet">
-    <div class="hulyModal-content__settingsSet-line">
-      <span class="label">
-        <Label label={task.string.TaskType} />
-      </span>
-      <TaskTypeKindEditor bind:kind />
-    </div>
     {#if taskTypeDescriptors.length > 1}
       <div class="hulyModal-content__settingsSet-line">
         <span class="label">
@@ -209,14 +195,12 @@
         />
       </div>
     {/if}
-    {#if kind === 'subtask' || kind === 'both'}
-      <TaskTypeRefEditor
-        value={allowedAsChildOf}
-        types={taskTypes.filter((it) => it.kind === 'task' || it.kind === 'both')}
-        onChange={(evt) => {
-          allowedAsChildOf = evt
-        }}
-      />
-    {/if}
+    <TaskTypeRefEditor
+      value={allowedAsChildOf}
+      types={taskTypes}
+      onChange={(evt) => {
+        allowedAsChildOf = evt
+      }}
+    />
   </div>
 </Modal>

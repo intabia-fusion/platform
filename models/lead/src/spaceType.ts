@@ -153,7 +153,6 @@ export function defineSpaceType (builder: Builder): void {
         task.statusCategory.Won,
         task.statusCategory.Lost
       ],
-      kind: 'task',
       parent: plugin.template.DefaultFunnel,
       statuses: defaultStatuses,
       icon: plugin.icon.Lead
