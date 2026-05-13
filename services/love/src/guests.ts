@@ -238,7 +238,6 @@ export class GuestManager {
 
       res.status(200).send({
         token: roomToken,
-        wsUrl: config.LiveKitHost,
         roomName,
         person: personRef
       })

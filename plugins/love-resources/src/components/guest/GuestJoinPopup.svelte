@@ -22,7 +22,7 @@
   import { get } from 'svelte/store'
   import { getEmbeddedLabel, getMetadata, IntlString } from '@hcengineering/platform'
   import love from '../../plugin'
-  import { liveKitClient, lk } from '../../utils'
+  import { getLiveKitEndpoint, liveKitClient, lk } from '../../utils'
   import { lkSessionConnected } from '../../liveKitClient'
   import { closePanel, CheckBox } from '@hcengineering/ui'
   import type { RemoteTrack, RemoteTrackPublication } from 'livekit-client'
@@ -253,7 +253,6 @@
 
       const data = await resp.json()
       const roomToken = data.token as string
-      const wsUrl = data.wsUrl as string
       const personRef = data.person as string | undefined
 
       // Persist guest identity locally (associate by workspaceId or meetingId)
@@ -268,7 +267,7 @@
       }
 
       // Connect to LiveKit with video allowed based on user's choice
-      await liveKitClient.connect(wsUrl, roomToken, startWithVideo)
+      await liveKitClient.connect(getLiveKitEndpoint(), roomToken, startWithVideo)
 
       // Attach handlers and existing tracks
       lk.on(RoomEvent.TrackSubscribed, handleTrackSubscribed)
