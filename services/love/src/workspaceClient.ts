@@ -408,6 +408,23 @@ export class WorkspaceClient {
       }
       const attachedRoom: Ref<Room> | undefined = meetingDoc.roomId
 
+      // Clean up any stale ParticipantInfo for this person from previous
+      // sessions or other meetings. Without this the client-side dedup
+      // (filterParticipantInfo in plugins/love-resources/src/stores.ts keeps
+      // a single PI per person) can pick the stale one and end up with no
+      // PI in the active meeting room — every observer then sees the room
+      // as empty and EditRoom never resolves to the knock button.
+      const stalePIs = await this.client.findAll(love.class.ParticipantInfo, { person })
+      for (const stale of stalePIs) {
+        if (stale.meeting === meeting && stale.sessionId === sessionId) continue
+        await this.client.remove(stale).catch((err: any) => {
+          this.ctx.warn('[WorkspaceClient.upsertParticipantFromLivekit] Failed to drop stale PI', {
+            id: stale._id,
+            error: err?.message ?? String(err)
+          })
+        })
+      }
+
       const infos = await this.client.findAll(love.class.ParticipantInfo, {
         person,
         meeting,

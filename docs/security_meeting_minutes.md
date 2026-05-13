@@ -358,6 +358,126 @@ rushx upgrade --workspace <workspace-name>
 
 ---
 
+## Сценарии приглашений и звонков
+
+### Все варианты "позвать / быть позванным"
+
+Матрица всех путей попасть в митинг. Столбцы:
+- **Инициатор** — кто запускает действие;
+- **Цель** — кому/куда направлено;
+- **Объект-документ** — что появляется в системе (`invite-request` отправителя, `invite-response` получателя);
+- **Кто создаёт MeetingMinutes** — где физически рождается док;
+- **В какой комнате** — какой `Office`/`Room` хостит митинг.
+
+| # | Сценарий | Инициатор | Цель | Триггер UI | invite-request | invite-response | Кто создаёт MeetingMinutes | В какой комнате | Auto-join? |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | Звонок 1-to-1 без активного митинга | User1 | User2 | "Позвонить" в карточке User2 | да, у User1 | да, у User2 (kind=invite-response) | **User2** при accept (`createMeeting(myOffice)`), `invites.ts:300` | Office User2 (получателя) | да, User1 авто-подключается по `meeting` в invite-request после accept |
+| 2 | Приглашение в свой активный митинг (паблик) | User1 (уже в митинге) | User2 | "Invite" в панели митинга | да, `invite.meeting = M` | да | уже существует (`M`) | комната User1 | да, User2 жмёт accept → `joinOrCreateMeetingByInvite(M)` |
+| 3 | Приглашение в свой активный митинг (приватный, отправитель — owner) | User1 (owner) | User2 | "Invite" | да | да; сервер добавит User2 в `members` (`index.ts:391-397`) | уже существует | комната User1 | да |
+| 4 | Приглашение в приватный митинг от не-owner | UserX (member) | User2 | "Invite" | да | **отбрасывается** сервером (`index.ts:371-381`) | n/a | n/a | n/a |
+| 5 | Звонок Person заблокированному в чужом приватном митинге (knock-flow) | User1 | User2 (уже в private митинге M другого) | "Позвонить" | да | да у **owners митинга M**, `isKnock=true`, `meeting=M` (`index.ts:340-364, 420-427`) | уже существует (`M`) | комната M | да: owner accept → сервер $push knocker в `members`, status=accepted+meeting → клиент `joinOrCreateMeetingByInvite` |
+| 6 | Стук в персональный офис (private) | User1 | Office User2 | "Knock" в EditRoom | да | да у User2 как owner офисного митинга | уже существует (офисный митинг User2) | Office User2 | да (тот же путь что #5) |
+| 7 | Стук в приватную переговорку | User1 | приватная Room с активным митингом | "Knock" в EditRoom | да | да у owner'ов митинга | уже существует | переговорка | да |
+| 8 | Приглашение в офис другого пользователя (без активного митинга у него) | User1 | Office User2 | "Connect" на чужом офисе (`isOffice && room.person !== me`) → ветка `createMeeting`, `meetings.ts:44-46` | да, **без `meeting`** | да у User2 | **User2** при accept в своём офисе | Office User2 | да (User1 ждёт `invite-request.meeting` появления) |
+| 9 | Подключение к публичной переговорке без митинга | User1 | пустая публичная Room | "Connect" | n/a | n/a | **User1** в этой комнате | Room | n/a (свой митинг) |
+| 10 | Self-invite | User1 | User1 | — | отфильтрован клиентом, `invites.ts:103` | n/a | n/a | n/a | n/a |
+| 11 | Guest по гостевой ссылке (не залогинен) | Guest | конкретный митинг через `/guestToken` | гостевая ссылка | n/a | n/a | уже существует | комната митинга | да, через `/guestToken` (отдельный путь, не invite) |
+| 12 | Guest залогинен, открыл публичный офис | Guest | Office User2 | "Connect" | да, `joinMeeting → sendInvites([officePerson], meeting)`, `meetings.ts:127-128` | да у User2 | уже существует | Office User2 | да после accept |
+| 13 | Календарное событие с участниками | Event organizer | invitees | OnEventUpdate-триггер | n/a | n/a | при старте митинга — **тот кто первый зашёл** | связанная комната | invitees добавляются в `members` через триггер до старта |
+
+### Ключевая асимметрия (что предлагает поменять)
+
+**Сейчас (сценарий #1):** Звонит User1, но MeetingMinutes создаётся **в офисе User2** и User2 является `owner`/`members[0]`. User1 получает auto-join через `invite-request.meeting` после accept. Логика — в `responseToInviteRequest`, `plugins/love-resources/src/invites.ts:293-315`.
+
+**Последствия текущей модели:**
+- Owner митинга — получатель звонка, не инициатор.
+- Митинг привязан к комнате получателя (`room.person === User2`). Если у User2 нет офиса (`Office` не найден) — митинг вообще не создаётся, accept молча падает в `decline`.
+- Запись/транскрипция стартует в офисе получателя, ссылки на MeetingMinutes лежат в его пространстве.
+- Гостевой код, история, имена комнат — всё с точки зрения User2.
+
+**Если развернуть наоборот (митинг создаёт звонящий):**
+
+| Аспект | Изменение |
+|---|---|
+| Где создаётся MeetingMinutes | На клиенте User1 при отправке invite (`sendInvites` → `createMeeting(myOffice)` перед `createDoc(UserMeetingInvite)`) или серверным триггером `OnUserMeetingInvite` при `tx._class === TxCreateDoc && invite.meeting === undefined && !isKnock`. |
+| `invite.meeting` | Передаётся уже заполненным с момента создания invite-request → invite-response сразу несёт ссылку → User2 жмёт accept и сразу `joinOrCreateMeetingByInvite(meeting)`. Текущая ветка "Create new meeting in MY office" в `responseToInviteRequest` (`invites.ts:293-321`) удаляется. |
+| Owner | User1 (звонящий). |
+| Комната | Office User1. Если User1 — guest без офиса → fallback на временную room (пока неподдерживаемо). |
+| Сценарий #8 ("позвонить в чужой офис без митинга") | Симметрично: User1 создаёт митинг в **своём** офисе, не в чужом. UX-вопрос: ожидается ли что "Connect на чужом офисе" приведёт собеседника к тебе или тебя к нему? Сейчас — тебя к нему. |
+| Knock-flow (#5-#7) | Не меняется: митинг уже существует, инициатор стучит в него. |
+| Permission/owner-check для invite в приватный | Логика остаётся: только owner приватного может звать. Так как owner = звонящий, авторизация инвайта тривиализуется (звонящий всегда owner своего митинга). |
+
+**Сложность ревёрса:**
+1. **Низкая для модели:** одна функция `createMeeting` уже умеет создавать митинг в офисе текущего пользователя. Достаточно вызвать её в `sendInvites` перед записью `invite-request` и заполнить `invite.meeting`.
+2. **Средняя для server trigger:** `OnUserMeetingInvite` сейчас разрешает `invite.meeting === undefined` для нового митинга и заполняет его при accept (через клиента получателя). Нужно либо запретить `meeting === undefined` на входе, либо серверу создавать митинг от имени звонящего (что сложнее: транзакции от чужого аккаунта, права на office).
+3. **Высокая для UX/edge-cases:**
+   - User1 без офиса (guest, читай-only) — текущая модель работает (получатель хостит), новая — нет.
+   - User2 онлайн в чужом приватном митинге → knock-flow уже работает; новая модель не задевает.
+   - "Reverse charges" сценарии (мобильные конференции, бот-вызовы) — мигрируют в офис инициатора.
+   - Записи и календарные ссылки переносятся в пространство User1; миграция существующих MeetingMinutes не нужна (новые работают по новому).
+4. **Тесты:** sanity-тест `meetings.scenarios.spec.ts` (knock-flow + базовый звонок) нужно переписать в части "кто owner после accept". Тест `meetings.knock-office.spec.ts` (#6) остаётся как есть.
+
+**Рекомендация:** Реверс делается за ~1 день кода (`responseToInviteRequest` ветка убирается, `sendInvites` создаёт митинг до отправки, серверный триггер дополняется проверкой `invite.meeting !== undefined` для non-knock). Главный риск — guest и read-only сценарии: нужен fallback "если у инициатора нет офиса — митинг создаёт получатель" (откатывается на текущее поведение). Можно сделать поэтапно: сначала перевести только пары host↔host, оставив guest-путь на старой ветке.
+
+### Выбранный подход: lazy-create на сервере при первом accept
+
+**Идея:** invite-request создаётся **без** `meeting`. Митинг рождается серверным триггером в момент первого `accept` — в офисе **звонящего** (`invite.from`), с `owners=[from]`. Это решает одновременно:
+- "Звонящий = owner" (сценарий #1 в матрице теряет асимметрию);
+- "Не ответил — нечего удалять" (митинга нет до подтверждения);
+- Permission-проверки тривиальны (owner создаётся системой по факту).
+
+**Поток:**
+
+1. **Клиент звонящего:** `sendInvites([User2])` → `TxCreateDoc(UserMeetingInvite, kind: 'invite-request', from: User1, to: User2, meeting: undefined, expiresAt)`. Никакого `createMeeting` на стороне инициатора.
+2. **Сервер, `OnUserMeetingInvite` на `TxCreateDoc(invite-request)`:** как сейчас — knock-detection, owner-check, создание `invite-response` в `PersonSpace(User2)`. Поле `meeting` в invite-response остаётся `undefined` (для not-knock и без явного `invite.meeting`).
+3. **Получатель жмёт accept:** `TxUpdateDoc(invite-response, { status: 'accepted' })`. Клиент **не** создаёт митинг.
+4. **Сервер, `OnUserMeetingInvite` на `TxUpdateDoc(invite-response, status=accepted, meeting=undefined, isKnock=false)`:** ветка lazy-create:
+   - Найти `Office` инициатора: `findAll(Office, { person: invite.from })`.
+   - Если офиса нет (guest/readonly) → синхронизировать `status: declined` обратно в invite-request, очистить invite-response. Опционально: вернуть клиенту получателя инфо для тоста "у звонящего нет офиса".
+   - Если офис есть, проверить нет ли уже Active/Pending `MeetingMinutes` в этой комнате (race с обычным "Connect" звонящего). Если есть — переиспользовать.
+   - Иначе **system tx** `TxCreateDoc(MeetingMinutes, …)` с:
+     - `roomId = office._id`
+     - `owners: [fromAccount]`, `members: [fromAccount, toAccount]`
+     - `private: office.startPrivate ?? false`
+     - `status: Pending`
+     - `modifiedBy: invite.from` (через `txFactory` от инициатора — не system, чтобы права/триггеры сработали корректно)
+   - Применить `TxUpdateDoc(invite-response, { meeting: M })` — клиент получателя по liveQuery увидит `meeting`, дёрнет `joinOrCreateMeetingByInvite(M)`.
+   - Применить `TxUpdateDoc(invite-request, { status: 'accepted', meeting: M })` — клиент звонящего auto-join через ту же ручку.
+
+5. **Cleanup на decline / TTL / removeDoc invite-request:** ничего удалять не нужно — митинга нет. Если он успел появиться (groupcall: первый принял, остальные declined) — он жив, в нём уже есть участники.
+
+**Edge-cases и решения:**
+
+| Случай | Решение |
+|---|---|
+| Звонящий — guest без `Office` | На сервере при lazy-create обнаружили `office === undefined` → синхронизируем decline + причина "no host office". UX-tost на клиенте звонящего. |
+| Звонящий уже в активном митинге своего офиса | Lazy-create находит существующий Active/Pending — добавляет получателя в `members`, возвращает существующий `_id`. |
+| Групповой звонок (`sendInvites([User2, User3])`) | Два отдельных invite-request. Первый accept → создаёт митинг. Второй accept → ветка "митинг уже есть" → просто $push в members + sync `meeting` обратно. |
+| Race двух accept'ов одновременно | `apply().notMatch(MeetingMinutes, { roomId: office._id, status: Active/Pending })` (как в `createMeetingDocument`). Проигравший читает выигравший митинг. |
+| Knock-flow (#5-#7) | Не затрагивается: invite-request там сразу создаётся с `meeting=M` (`isKnock=true`), lazy-create-ветка не активируется. |
+| Сценарий #8 ("звоню в чужой офис без митинга") | Сейчас: User1 жмёт "Connect" на офисе User2 → `meetings.ts:44-46` шлёт invite без `meeting`. После реверса: тот же путь, lazy-create создаст митинг в офисе **User1** (звонящего), не User2. UX-вопрос остаётся — но семантически "я зову собеседника к себе" логичнее. |
+| Сценарий #1 без офиса инициатора (мобильный гость звонит хосту) | Decline с причиной. Можно потом ввести fallback "если у `from` нет офиса — fallback на офис `to`" (откат на текущее поведение), но это уже после MVP. |
+| MeetingMinutes в `PersonSpace` инициатора? | Нет — митинг сам Space (`DOMAIN_SPACE`), его `space` = собственный `_id` (как в `createMeetingDocument`). PersonSpace инициатора используется только для размещения invite-request, не митинга. |
+
+**Изменения файлов (план, не делаем сейчас):**
+
+1. `plugins/love-resources/src/invites.ts`
+   - `responseToInviteRequest` ветка `invite.meeting === undefined` → удаляется (`L292-321`). Остаётся только `client.update(invite, { status: 'accepted' })`. Сервер сделает остальное.
+2. `server-plugins/love-resources/src/index.ts`
+   - В блоке `TxUpdateDoc(invite-response)`, ветка `newStatus === 'accepted' && newMeeting === undefined && !sourceDoc.isKnock` → новая логика lazy-create.
+   - Helper `lazyCreateMeetingForCall(control, fromPerson, toPerson)` → возвращает `Ref<MeetingMinutes>` или `undefined` (если у from нет офиса).
+   - После create — patch invite-response с `meeting` + patch invite-request с `status: 'accepted', meeting`.
+3. `plugins/love-resources/src/meetings.ts`
+   - `createMeeting`: ветка `isOffice(room) && room.person !== currentPerson` (`L44-46`) переосмыслить — теперь звонящий должен создавать митинг **у себя** и приглашать. Но проще оставить как сейчас (отправить invite без meeting) и положиться на серверный lazy-create. Этот же путь использует и UI кнопки "Connect" на чужом офисе.
+4. Тесты:
+   - `meetings.scenarios.spec.ts` — owner после accept = звонящий, не получатель.
+   - Новый тест: User1 без офиса → invite автоматически declined.
+   - `meetings.knock-office.spec.ts` — без изменений.
+
+**Сложность:** ~1-1.5 дня. Самое тонкое — `modifiedBy` при system-create митинга (нужно от имени `invite.from` чтобы `OnEmployee`/`OnSpaceCreate` и spaceSecurity отработали корректно). Альтернатива — bypass через `core.account.System` и явный `owners: [fromAccount]`.
+
+---
+
 ## Приоритеты для smoke-теста
 
 Если время ограничено, проверить в первую очередь:

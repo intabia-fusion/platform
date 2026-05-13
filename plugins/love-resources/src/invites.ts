@@ -15,14 +15,14 @@
 
 import { getCurrentEmployee, getCurrentEmployeeSpace, type Person } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
-import { AccountRole, getCurrentAccount, type AccountUuid, type Ref } from '@hcengineering/core'
+import { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
 import love, { type MeetingMinutes, type UserMeetingInvite } from '@hcengineering/love'
 import { createQuery, getClient, playSound } from '@hcengineering/presentation'
 import { addNotification, NotificationSeverity, type PopupResult } from '@hcengineering/ui'
 import { translate } from '@hcengineering/platform'
 import { getCurrentLanguage } from '@hcengineering/theme'
 import { derived, get, writable, type Writable } from 'svelte/store'
-import { createMeeting, joinOrCreateMeetingByInvite } from './meetings'
+import { joinOrCreateMeetingByInvite } from './meetings'
 import { currentMeetingMinutes } from './stores'
 import KnockResolutionToast from './components/meeting/invites/KnockResolutionToast.svelte'
 
@@ -40,6 +40,10 @@ export const allInvites: Writable<UserMeetingInvite[]> = writable([])
 // All invites we send to somebody.
 export const outgoingInvitesStore = derived(allInvites, (all) => {
   const outgoing = all.filter((it) => it.kind === 'invite-request')
+  console.log('[outgoingInvitesStore] recompute', {
+    total: all.length,
+    outgoing: outgoing.map((o) => ({ id: o._id, status: o.status, meeting: o.meeting }))
+  })
   void checkAndJoinIfRecipientJoined(outgoing)
   return outgoing
 })
@@ -47,12 +51,25 @@ export const outgoingInvitesStore = derived(allInvites, (all) => {
 // All waiting for confirmation
 export const incomingInvitesStore = derived(allInvites, (all) => {
   const now = Date.now()
-  const incoming = all.filter((it) => it.kind === 'invite-response' && it.isKnock !== true && it.expiresAt > now)
+  const incoming = all.filter(
+    (it) => it.kind === 'invite-response' && it.isKnock !== true && it.status === 'pending' && it.expiresAt > now
+  )
 
   if (incoming.length > 0 && stopIncomingSound == null) {
     stopIncomingSound = playIncomingSound()
   } else if (stopIncomingSound != null) {
     void stopIncomingInviteSound()
+  }
+
+  // After accept, the server lazy-creates a meeting in the caller's office
+  // and patches our invite-response with `meeting`. Watch for accepted +
+  // meeting-set responses and auto-join them (mirrors the caller-side
+  // `checkAndJoinIfRecipientJoined`).
+  const acceptedWithMeeting = all.filter(
+    (it) => it.kind === 'invite-response' && it.isKnock !== true && it.status === 'accepted' && it.meeting !== undefined
+  )
+  if (acceptedWithMeeting.length > 0) {
+    void checkAndJoinIfRecipientAccepted(acceptedWithMeeting)
   }
 
   return incoming
@@ -197,7 +214,9 @@ export function subscribeToIncomingInvites (): void {
   if (mySpace === undefined) return
 
   let previous: UserMeetingInvite[] = []
+  console.log('[subscribeToIncomingInvites] starting query', { mySpace })
   incomingInvitesQuery.query(love.class.UserMeetingInvite, { space: mySpace }, (invites) => {
+    console.log('[invites liveQuery] update', { count: invites.length, mySpace })
     void notifyOnKnockResolution(previous, invites)
     previous = invites
     allInvites.set(invites)
@@ -276,6 +295,13 @@ async function notifyOnKnockResolution (previous: UserMeetingInvite[], current: 
  * Respond to an invite request (accept or decline)
  * This function is called from IncomingInvitePanel component
  * Updates invite-response, server trigger syncs to invite-request
+ *
+ * For invites without `meeting`: the server lazy-creates one in the
+ * caller's office on accept and patches it back into our invite-response.
+ * We do not create a meeting on the recipient side anymore — that path
+ * used to host the meeting in the recipient's office and made the
+ * recipient the owner, which was the wrong semantic. See
+ * `checkAndJoinIfRecipientAccepted` for the lazy-create auto-join.
  */
 export async function responseToInviteRequest (invite: UserMeetingInvite, accept: boolean): Promise<void> {
   const client = getClient()
@@ -284,40 +310,17 @@ export async function responseToInviteRequest (invite: UserMeetingInvite, accept
 
   try {
     if (accept) {
-      // Check if this is an invite to an existing meeting
       if (invite.meeting !== undefined) {
-        // Join existing meeting
+        // Existing meeting: join immediately, then mark accepted. The server
+        // removes the invite-response once status flips.
         await joinOrCreateMeetingByInvite(invite.meeting)
         await client.update(invite, { status: 'accepted' })
       } else {
-        // Create new meeting in MY office (the recipient's office)
-        const myOffice = await client.findOne(love.class.Office, {
-          person: me
-        })
-
-        if (myOffice !== undefined) {
-          // Create meeting in MY office and join
-          const meeting = await createMeeting(myOffice)
-
-          if (meeting !== undefined) {
-            // Add invite sender to meeting members (for private Space access)
-            const senderPerson = await getPersonByPersonRef(invite.from)
-            if (senderPerson?.personUuid != null && !meeting.members.includes(senderPerson.personUuid as AccountUuid)) {
-              await client.update(meeting, {
-                $push: { members: senderPerson.personUuid as AccountUuid }
-              })
-            }
-
-            // Update invite-response with meeting reference
-            await client.update(invite, {
-              status: 'accepted',
-              meeting: meeting._id
-            })
-          } else {
-            // If meeting creation failed, decline the invite
-            await client.update(invite, { status: 'declined' })
-          }
-        }
+        // Lazy-create path: just flip status. The server will create the
+        // meeting in the caller's office, patch our invite-response with
+        // the meeting ref, and we'll auto-join via liveQuery in
+        // `checkAndJoinIfRecipientAccepted` below.
+        await client.update(invite, { status: 'accepted' })
       }
     } else {
       // Just decline the invite
@@ -366,6 +369,45 @@ export function unsubscribeFromIncomingInvites (): void {
 
 // Guard against re-entry from concurrent store recalculations.
 const handlingInvites = new Set<Ref<UserMeetingInvite>>()
+const handlingAccepted = new Set<Ref<UserMeetingInvite>>()
+
+/**
+ * Receiver-side auto-join after the server lazy-created the meeting in the
+ * caller's office. Mirrors {@link checkAndJoinIfRecipientJoined} (caller
+ * side): when we observe our own invite-response in `accepted` with a
+ * `meeting` ref, connect to it and then remove the invite-response.
+ */
+export async function checkAndJoinIfRecipientAccepted (invites: UserMeetingInvite[]): Promise<void> {
+  const client = getClient()
+  for (const invite of invites) {
+    if (invite.meeting === undefined) continue
+    if (invite.status !== 'accepted') continue
+    if (handlingAccepted.has(invite._id)) continue
+    console.log('[checkAndJoinIfRecipientAccepted] auto-joining', { invite: invite._id, meeting: invite.meeting })
+    handlingAccepted.add(invite._id)
+    let joined = false
+    try {
+      const currentMeeting = get(currentMeetingMinutes)
+      if (currentMeeting?._id === invite.meeting) {
+        joined = true
+      } else {
+        joined = await joinOrCreateMeetingByInvite(invite.meeting)
+      }
+      console.log('[checkAndJoinIfRecipientAccepted] join result', { invite: invite._id, joined })
+    } catch (err) {
+      console.warn('Failed to auto-join via lazy-created meeting', err)
+    } finally {
+      if (joined) {
+        try {
+          await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
+        } catch {
+          // Already removed concurrently — ignore.
+        }
+      }
+      handlingAccepted.delete(invite._id)
+    }
+  }
+}
 
 export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[]): Promise<void> {
   const client = getClient()
@@ -375,6 +417,7 @@ export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[
   for (const invite of invites) {
     if (handlingInvites.has(invite._id)) continue
     if (invite.status === 'accepted' && invite.meeting !== undefined) {
+      console.log('[checkAndJoinIfRecipientJoined] auto-joining', { invite: invite._id, meeting: invite.meeting })
       handlingInvites.add(invite._id)
       let joined = false
       try {
@@ -384,6 +427,7 @@ export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[
         } else {
           joined = await joinOrCreateMeetingByInvite(invite.meeting)
         }
+        console.log('[checkAndJoinIfRecipientJoined] join result', { invite: invite._id, joined })
       } catch (err) {
         // Keep invite for next derived-store recompute so the client can retry.
         console.warn('Failed to auto-join via accepted invite', err)
@@ -398,6 +442,32 @@ export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[
         handlingInvites.delete(invite._id)
       }
     } else if (invite.status === 'declined') {
+      if (invite.declineReason === 'no-host-office') {
+        // Server auto-declined because the caller (us) has no Office to
+        // host the meeting in.
+        addNotification(
+          await translate(love.string.NoHostOffice, {}, getCurrentLanguage()),
+          await translate(love.string.NoHostOfficeBody, {}, getCurrentLanguage()),
+          KnockResolutionToast,
+          undefined,
+          NotificationSeverity.Warning,
+          'love'
+        )
+      } else if (invite.isKnock !== true) {
+        // Recipient explicitly declined a normal call. Knock-declines are
+        // notified separately in `notifyOnKnockResolution` so the toast
+        // reads "your knock was declined" with knock-specific copy.
+        const recipient = await getPersonByPersonRef(invite.to)
+        const name = recipient?.name ?? ''
+        addNotification(
+          await translate(love.string.CallDeclined, {}, getCurrentLanguage()),
+          await translate(love.string.CallDeclinedBody, { name }, getCurrentLanguage()),
+          KnockResolutionToast,
+          undefined,
+          NotificationSeverity.Info,
+          'love'
+        )
+      }
       await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
     }
   }

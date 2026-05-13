@@ -270,4 +270,11 @@ export interface UserMeetingInvite extends Doc {
    * "recipient joins sender's room" semantics.
    */
   isKnock?: boolean
+  /**
+   * Set by the server when an invite is declined automatically (not by the
+   * recipient). Used to surface the cause on the caller side — e.g. when
+   * the caller has no personal office to host the meeting in. Optional;
+   * normal user-initiated decline leaves it unset.
+   */
+  declineReason?: 'no-host-office'
 }

@@ -6,7 +6,56 @@
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
 
+import { createRestClient, getWorkspaceToken, loadServerConfig, type RestClient } from '@hcengineering/api-client'
+import love, { MeetingStatus, type MeetingMinutes, type ParticipantInfo } from '@hcengineering/love'
+import { PlatformURI, PlatformUserSecond } from '../utils'
 import type { BrowserContext, Page } from '@playwright/test'
+
+const MEETINGS_WS = 'meetings-ws'
+
+let cachedRestClient: RestClient | undefined
+
+async function getMeetingsRestClient (): Promise<RestClient> {
+  if (cachedRestClient !== undefined) return cachedRestClient
+  const baseUrl = (PlatformURI ?? 'http://localhost:8083').replace(/\/$/, '')
+  const config = await loadServerConfig(baseUrl)
+  const token = await getWorkspaceToken(
+    baseUrl,
+    { email: PlatformUserSecond, password: '1234', workspace: MEETINGS_WS },
+    config
+  )
+  cachedRestClient = createRestClient(token.endpoint, token.workspaceId, token.token)
+  return cachedRestClient
+}
+
+/**
+ * Poll the transactor (via REST) until no MeetingMinutes is Active or
+ * Pending — i.e. the previous test's meeting has been Finished by the
+ * LiveKit `room_finished` webhook (which fires after the 3s
+ * departureTimeout). Reusing the still-Pending meeting in the next test
+ * would carry over the prior owners/members and break owner-only and
+ * locked-room checks.
+ */
+export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise<void> {
+  const client = await getMeetingsRestClient()
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const [meetings, participants] = await Promise.all([
+      client.findAll<MeetingMinutes>(
+        love.class.MeetingMinutes,
+        { status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] } },
+        { limit: 1 }
+      ),
+      // Also drain ParticipantInfo with a non-null `meeting` ref — a leftover
+      // PI makes the server treat a subsequent invite as a knock to that
+      // meeting (see OnUserMeetingInvite's recipientInfo loop), so the
+      // caller never enters the lazy-create branch.
+      client.findAll<ParticipantInfo>(love.class.ParticipantInfo, { meeting: { $exists: true } as any }, { limit: 1 })
+    ])
+    if (meetings.length === 0 && participants.length === 0) return
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+}
 
 /**
  * Click "Leave" on the page if it's currently inside a meeting. Use in test
@@ -56,4 +105,9 @@ export async function closeMeetingContexts (entries: Array<{ ctx: BrowserContext
   for (const { ctx } of entries) {
     await ctx.close().catch(() => undefined)
   }
+  // Server-side: wait for the LiveKit `room_finished` webhook to fire, the
+  // meeting to be marked Finished and the resulting ParticipantInfo cleanup
+  // to land. Without this the next test sees stale PIs (the owner is "still
+  // in a meeting") and floor-grid rendering misses their office.
+  await waitForActiveMeetingsToFinish()
 }

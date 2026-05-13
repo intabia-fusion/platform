@@ -352,6 +352,10 @@ export class TUserMeetingInvite extends TDoc implements UserMeetingInvite {
   @Prop(TypeBoolean(), getEmbeddedLabel('IsKnock'))
   @Hidden()
     isKnock?: boolean
+
+  @Prop(TypeString(), getEmbeddedLabel('DeclineReason'))
+  @Hidden()
+    declineReason?: 'no-host-office'
 }
 
 export default love

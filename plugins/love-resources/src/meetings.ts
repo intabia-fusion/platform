@@ -92,21 +92,26 @@ export async function leaveMeeting (): Promise<void> {
     return
   }
 
-  if (office === undefined) {
-    await client.update(currentParticipationInfo, { room: love.ids.Reception, x: 0, y: 0 })
-  } else {
-    if (currentParticipationInfo.room !== office._id) {
-      await client.update(currentParticipationInfo, { room: office._id, x: 0, y: 0 })
+  // Drop ParticipantInfo on leave. Keeping a stale PI with a now-finished
+  // `meeting` reference poisons busyPersons / RoomPreview locked detection
+  // on other clients (they see "user in some meeting we can't access" =
+  // busy). The server will create a fresh PI on the next participant_joined
+  // webhook from LiveKit. The kick-others-in-own-office behavior is
+  // preserved: we still drop their PIs (same effect for them).
+  try {
+    if (office === undefined || currentParticipationInfo.room !== office._id) {
+      await client.remove(currentParticipationInfo)
     } else {
-      // kick all participants in case of own office
-      const allRooms = get(rooms)
+      // Own office: drop all other participants' PIs too, then ours.
       const participantsInfo = get(infos)
       const otherParticipants = participantsInfo.filter((p) => p.room === office._id && p !== currentParticipationInfo)
       for (const participantInfo of otherParticipants) {
-        const participantOffice = allRooms.find((r) => isOffice(r) && r.person === participantInfo.person)
-        await client.update(participantInfo, { room: participantOffice?._id ?? love.ids.Reception, x: 0, y: 0 })
+        await client.remove(participantInfo)
       }
+      await client.remove(currentParticipationInfo)
     }
+  } catch (err) {
+    console.warn('[leaveMeeting] failed to drop ParticipantInfo', err)
   }
   await liveKitClient.disconnect()
   currentMeeting = undefined

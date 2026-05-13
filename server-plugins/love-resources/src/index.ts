@@ -39,9 +39,12 @@ import love, {
   loveId,
   MeetingMinutes,
   MeetingStatus,
+  Office,
   ParticipantInfo,
+  RecordingState,
   RoomAccess,
   RoomInfo,
+  TranscriptionState,
   UserMeetingInvite
 } from '@hcengineering/love'
 import { getMetadata } from '@hcengineering/platform'
@@ -313,6 +316,89 @@ async function OnRoomInfo (txes: TxCUD<RoomInfo>[], control: TriggerControl): Pr
 async function getPersonSpace (control: TriggerControl, person: Ref<Person>): Promise<PersonSpace> {
   // Find recipient's personal space (PersonSpace)
   return (await control.findAll(control.ctx, contact.class.PersonSpace, { person }, { limit: 1 }))[0]
+}
+
+/**
+ * Lazy-create a MeetingMinutes in the caller's personal office when an
+ * invite-response is accepted but no meeting reference was attached yet.
+ *
+ * Returns the meeting ref + the txs needed to create it, or `undefined`
+ * when the caller has no `Office` (e.g. guest, read-only) — in that case
+ * the calling code decides to decline with a reason.
+ *
+ * If the office already has an Active/Pending meeting, that meeting is
+ * reused (no new doc is created) — covers the race where the caller's
+ * own "Connect" started a meeting concurrently with the accept.
+ */
+async function lazyCreateMeetingForInvite (
+  control: TriggerControl,
+  fromPerson: Ref<Person>,
+  toAccount: AccountUuid | undefined,
+  fromAccount: AccountUuid | undefined
+): Promise<{ meeting: Ref<MeetingMinutes>, txs: Tx[] } | undefined> {
+  const office = (await control.findAll(control.ctx, love.class.Office, { person: fromPerson }, { limit: 1 }))[0] as
+    | Office
+    | undefined
+  if (office === undefined) return undefined
+
+  // Reuse an existing active/pending meeting in this office to avoid
+  // creating a duplicate when the caller is mid-Connect already.
+  const existing = (
+    await control.findAll(
+      control.ctx,
+      love.class.MeetingMinutes,
+      { roomId: office._id, status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] } },
+      { limit: 1 }
+    )
+  )[0]
+  if (existing !== undefined) {
+    const members = new Set<AccountUuid>(existing.members)
+    const memberTxs: Tx[] = []
+    const toAdd: AccountUuid[] = []
+    if (fromAccount !== undefined && !members.has(fromAccount)) toAdd.push(fromAccount)
+    if (toAccount !== undefined && !members.has(toAccount)) toAdd.push(toAccount)
+    if (toAdd.length > 0) {
+      memberTxs.push(
+        control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, existing.space, existing._id, {
+          $push: { members: { $each: toAdd, $position: 0 } }
+        })
+      )
+    }
+    return { meeting: existing._id, txs: memberTxs }
+  }
+
+  const meetingId = generateId<MeetingMinutes>()
+  const initialMembers: AccountUuid[] = []
+  if (fromAccount !== undefined) initialMembers.push(fromAccount)
+  if (toAccount !== undefined && toAccount !== fromAccount) initialMembers.push(toAccount)
+
+  const title = `${office.name} ${new Date()
+    .toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+    .replace(',', ' at')}`
+
+  const createTx = control.txFactory.createTxCreateDoc<MeetingMinutes>(
+    love.class.MeetingMinutes,
+    meetingId as unknown as Ref<Space>,
+    {
+      name: title,
+      description: '',
+      private: office.startPrivate ?? false,
+      archived: false,
+      members: initialMembers,
+      owners: fromAccount !== undefined ? [fromAccount] : [],
+      descriptionRef: null,
+      summary: null,
+      roomId: office._id,
+      status: MeetingStatus.Pending,
+      transcriptionState: TranscriptionState.NotStarted,
+      recordingState: RecordingState.NotStarted,
+      language: office.language,
+      startWithRecording: office.startWithRecording ?? false,
+      startWithTranscription: office.startWithTranscription ?? false
+    },
+    meetingId
+  )
+  return { meeting: meetingId, txs: [createTx] }
 }
 
 /**
@@ -602,6 +688,14 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
         // Skip knock-responses: the request must remain so the knocker's client
         // sees status='accepted' and auto-joins via checkAndJoinIfRecipientJoined.
         if (sourceDoc.isKnock === true) continue
+        // If the invite-response we just observed was already accepted with a
+        // meeting attached (lazy-create / explicit-meeting accept paths), the
+        // caller's invite-request must stay so the auto-join handler on the
+        // caller side fires (checkAndJoinIfRecipientJoined). Without this
+        // short-circuit a race between the sync-invite-request TxUpdateDoc
+        // and the recipient's TxRemoveDoc may leave the request still in
+        // 'pending' when we look it up below, which would falsely drop it.
+        if (sourceDoc.status === 'accepted' && sourceDoc.meeting !== undefined) continue
         const inviteRequests = await control.findAll(control.ctx, love.class.UserMeetingInvite, {
           kind: 'invite-request',
           from: sourceDoc.from,
@@ -624,6 +718,11 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           kind: 'invite-request',
           from: sourceDoc.from,
           to: sourceDoc.to
+        })
+        control.ctx.info('[OnUserMeetingInvite] sync invite-requests', {
+          count: inviteRequests.length,
+          requestIds: inviteRequests.map((r) => r._id),
+          resultLengthBefore: result.length
         })
 
         const updateTx = tx as TxUpdateDoc<UserMeetingInvite>
@@ -694,8 +793,87 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           continue
         }
 
-        if (newStatus === 'declined' || (newStatus === 'accepted' && newMeeting !== undefined)) {
-          // If we declined or accepted and meeting is set, we can remove the invite-response as it's no longer needed
+        // Lazy-create: recipient accepted a call without an attached meeting
+        // (caller wasn't in a meeting when sending the invite). Create the
+        // meeting in the **caller's** personal office so the caller is owner
+        // and the meeting belongs to their space. If the caller has no
+        // Office, decline the invite with a reason so the caller's UI can
+        // show a toast.
+        let lazyMeeting: Ref<MeetingMinutes> | undefined
+        control.ctx.info('[OnUserMeetingInvite] response update', {
+          inviteId: sourceDoc._id,
+          newStatus,
+          newMeeting,
+          sourceMeeting: sourceDoc.meeting,
+          isKnock: sourceDoc.isKnock
+        })
+        if (
+          newStatus === 'accepted' &&
+          newMeeting === undefined &&
+          sourceDoc.meeting === undefined &&
+          sourceDoc.isKnock !== true
+        ) {
+          control.ctx.info('[OnUserMeetingInvite] entering lazy-create branch', {
+            from: sourceDoc.from,
+            to: sourceDoc.to
+          })
+          const callerPerson = (
+            await control.findAll(control.ctx, contact.class.Person, { _id: sourceDoc.from }, { limit: 1 })
+          )[0]
+          const callerAccount = callerPerson?.personUuid as AccountUuid | undefined
+          const recipientPerson = (
+            await control.findAll(control.ctx, contact.class.Person, { _id: sourceDoc.to }, { limit: 1 })
+          )[0]
+          const recipientAccount = recipientPerson?.personUuid as AccountUuid | undefined
+
+          const created = await lazyCreateMeetingForInvite(control, sourceDoc.from, recipientAccount, callerAccount)
+          control.ctx.info('[OnUserMeetingInvite] lazyCreate result', {
+            created: created?.meeting,
+            callerAccount,
+            recipientAccount
+          })
+          if (created === undefined) {
+            // No Office on caller side -> auto-decline. Sync to invite-request
+            // and clean up the invite-response. The caller's client renders
+            // a toast based on declineReason.
+            for (const request of inviteRequests) {
+              result.push(
+                control.txFactory.createTxUpdateDoc(love.class.UserMeetingInvite, request.space, request._id, {
+                  status: 'declined',
+                  declineReason: 'no-host-office'
+                })
+              )
+            }
+            result.push(
+              control.txFactory.createTxRemoveDoc(love.class.UserMeetingInvite, updateTx.objectSpace, updateTx.objectId)
+            )
+            continue
+          }
+          lazyMeeting = created.meeting
+          for (const tx of created.txs) result.push(tx)
+        }
+
+        // Treat lazy-created meeting as the new meeting reference so the
+        // remaining sync logic (sync to request) works uniformly with the
+        // explicit-meeting path.
+        const effectiveNewMeeting = newMeeting ?? lazyMeeting
+
+        if (lazyMeeting !== undefined) {
+          // Patch the invite-response with the lazy-created meeting ref so the
+          // recipient's client can observe it via liveQuery and auto-join.
+          // The recipient is responsible for removing the invite-response
+          // after joining (mirrors checkAndJoinIfRecipientJoined on the
+          // caller side). We do NOT remove it here — that would race with
+          // the recipient's liveQuery and skip the auto-join.
+          result.push(
+            control.txFactory.createTxUpdateDoc(love.class.UserMeetingInvite, updateTx.objectSpace, updateTx.objectId, {
+              meeting: lazyMeeting
+            })
+          )
+        } else if (newStatus === 'declined' || (newStatus === 'accepted' && newMeeting !== undefined)) {
+          // Explicit-meeting accept or decline: invite-response is no longer
+          // needed (recipient already joined the existing meeting on the
+          // client). Lazy-create path keeps it for the auto-join window.
           result.push(
             control.txFactory.createTxRemoveDoc(love.class.UserMeetingInvite, updateTx.objectSpace, updateTx.objectId)
           )
@@ -738,11 +916,17 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           if (newStatus !== undefined && request.status !== newStatus) {
             upd.status = newStatus
           }
-          // Sync meeting reference if provided (recipient created/joined a meeting)
-          if (newMeeting !== undefined && request.meeting !== newMeeting) {
-            upd.meeting = newMeeting
+          // Sync meeting reference if provided (recipient created/joined a
+          // meeting OR the server lazy-created one in the caller's office).
+          if (effectiveNewMeeting !== undefined && request.meeting !== effectiveNewMeeting) {
+            upd.meeting = effectiveNewMeeting
           }
           if (Object.keys(upd).length > 0) {
+            control.ctx.info('[OnUserMeetingInvite] syncing invite-request', {
+              requestId: request._id,
+              space: request.space,
+              upd
+            })
             result.push(
               control.txFactory.createTxUpdateDoc(love.class.UserMeetingInvite, request.space, request._id, upd)
             )
@@ -752,6 +936,14 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
     }
   }
 
+  control.ctx.info('[OnUserMeetingInvite] returning result', {
+    txes: result.map((t) => ({
+      cls: t._class,
+      obj: (t as any).objectClass,
+      id: (t as any).objectId,
+      ops: (t as any).operations
+    }))
+  })
   return result
 }
 
