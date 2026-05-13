@@ -37,8 +37,89 @@ import {
   type Tx,
   type TxResult
 } from '@hcengineering/core'
-import { emptyBroadcastResult } from './base'
+import { BaseMiddleware, emptyBroadcastResult } from './base'
 import { type Middleware, type MiddlewareCreator, type Pipeline, type PipelineContext } from './types'
+
+/**
+ * Methods that participate in shortcut wiring.
+ * For each method we precompute the next middleware down the chain that
+ * actually overrides it, so provideXxx() skips no-op delegations.
+ */
+const SHORTCUT_METHODS = [
+  ['findAll', 'nextFindAll'],
+  ['tx', 'nextTx'],
+  ['groupBy', 'nextGroupBy'],
+  ['searchFulltext', 'nextSearchFulltext'],
+  ['loadModel', 'nextLoadModel'],
+  ['handleBroadcast', 'nextHandleBroadcast'],
+  ['domainRequest', 'nextDomainRequest'],
+  ['closeSession', 'nextCloseSession']
+] as const
+
+function overridesMethod (mw: Middleware, method: string): boolean {
+  const fn = (mw as any)[method]
+  const base = (BaseMiddleware.prototype as any)[method]
+  if (typeof fn !== 'function' || typeof base !== 'function') return false
+  return fn !== base
+}
+
+/**
+ * After buildChain produced a linked list (head -> ... -> tail) where each
+ * middleware refers to the next one via `this.next`, walk each method and set
+ * `mw[nextFooKey]` to the first downstream middleware that overrides `foo`.
+ *
+ * Pipeline builders should pass the full chain array (head-to-tail) so we
+ * don't depend on a non-public `.next` field that custom middleware may not
+ * expose. If only `head` is provided, we walk `.next` defensively and bail
+ * out (leaving shortcuts at their constructor defaults) when an opaque
+ * middleware breaks the chain - this preserves correct delegation through
+ * non-BaseMiddleware adapters.
+ *
+ * Middlewares that don't extend BaseMiddleware (no shortcut fields) are left
+ * untouched - they continue to use their own `next` reference.
+ */
+export function wireShortcuts (headOrChain: Middleware | Middleware[] | undefined): void {
+  if (headOrChain === undefined) return
+
+  let chain: Middleware[]
+  if (Array.isArray(headOrChain)) {
+    if (headOrChain.length === 0) return
+    chain = headOrChain
+  } else {
+    // Fallback path: walk `.next`. If a non-BaseMiddleware appears mid-chain
+    // and doesn't expose `.next`, treat it as a barrier: stop walking AND
+    // skip wiring entirely, since we cannot see what lies beyond it. Wiring
+    // partial visibility would overwrite valid pointers with undefined.
+    chain = []
+    let cur: Middleware | undefined = headOrChain
+    while (cur !== undefined) {
+      chain.push(cur)
+      const nextRef: unknown = (cur as { next?: Middleware }).next
+      if (nextRef === undefined && !(cur instanceof BaseMiddleware)) {
+        // Opaque tail-like middleware - cannot verify it's truly the end.
+        // Refuse to wire to avoid overwriting safe defaults with empty results.
+        return
+      }
+      cur = nextRef as Middleware | undefined
+    }
+  }
+
+  for (let i = 0; i < chain.length; i++) {
+    const entry = chain[i]
+    if (!(entry instanceof BaseMiddleware)) continue
+    const mw = entry as unknown as Record<string, unknown>
+    for (const [method, nextKey] of SHORTCUT_METHODS) {
+      let target: Middleware | undefined
+      for (let j = i + 1; j < chain.length; j++) {
+        if (overridesMethod(chain[j], method)) {
+          target = chain[j]
+          break
+        }
+      }
+      mw[nextKey] = target
+    }
+  }
+}
 
 /**
  * @public
@@ -66,6 +147,9 @@ class PipelineImpl implements Pipeline {
     const pipeline = new PipelineImpl(context)
 
     pipeline.head = await pipeline.buildChain(ctx, constructors, pipeline.context)
+    // Pass the materialized chain array (head-to-tail) instead of `head` to
+    // avoid relying on the non-public `.next` field for traversal.
+    wireShortcuts(pipeline.middlewares)
     context.head = pipeline.head
     return pipeline
   }
