@@ -13,7 +13,7 @@ export class CommonRecruitingPage extends CalendarPage {
 
   readonly inputComment = (): Locator => this.page.locator('div.text-input div.tiptap')
   readonly buttonSendComment = (): Locator => this.page.locator('g#Send')
-  readonly textComment = (): Locator => this.page.locator('div.showMore-content p')
+  readonly textComment = (): Locator => this.page.locator('.activityMessage .text-markup-view p')
   readonly inputAddAttachment = (): Locator => this.page.locator('div.antiSection #file').first()
   readonly textAttachmentName = (): Locator => this.page.locator('div.attachment-container > a')
   readonly buttonCreateFirstReview = (): Locator => this.page.locator('span:has-text("Create review")')
