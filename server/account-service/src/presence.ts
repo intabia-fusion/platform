@@ -13,22 +13,18 @@
 // limitations under the License.
 //
 
-import { type AccountDB, type AccountWorkspaceBadgeStatus, type AccountWorkspacePresence } from '@hcengineering/account'
+import { type AccountDB } from '@hcengineering/account'
 import core, {
   type AccountUuid,
   type MeasureContext,
   type Ref,
   generateId,
   type TxCreateDoc,
-  type WorkspaceUuid
+  type WorkspaceUuid, groupByArray
 } from '@hcengineering/core'
 import {
   QueueUserEvent,
-  type QueueUserLogin,
-  type QueueUserLogout,
   type QueueUserMessage,
-  QueueTransactorEvent,
-  type QueueTransactorMessage,
   type ConsumerMessage,
   type QueueOnlineUserTx,
   type PlatformQueueProducer
@@ -36,43 +32,12 @@ import {
 import pulse, { type WorkspacesNotification } from '@hcengineering/pulse'
 import { type PersonSpace } from '@hcengineering/contact'
 
-export async function handleTransactorLifecycle (
-  ctx: MeasureContext,
-  msg: ConsumerMessage<QueueTransactorMessage>,
-  _db: Promise<[AccountDB, () => void]>
-): Promise<void> {
-  const { type, transactorId, timestamp } = msg.value
-  if (type === QueueTransactorEvent.started || type === QueueTransactorEvent.stopped) {
-    const [db] = await _db
-    ctx.info(`Transactor ${transactorId} ${type}. Clearing its previous sessions.`)
-    await db.clearPresenceForTransactor(transactorId, timestamp)
-  }
-}
-
 export async function handlePresenceBatch (
   ctx: MeasureContext,
   msgs: ConsumerMessage<QueueUserMessage>[],
   _db: Promise<[AccountDB, () => void]>,
   onlineUserTxProducer: PlatformQueueProducer<QueueOnlineUserTx>
 ): Promise<void> {
-  const presences: AccountWorkspacePresence[] = msgs
-    .filter((msg) => [QueueUserEvent.login, QueueUserEvent.logout].includes(msg.value.type))
-    .map((msg) => {
-      const { type, user, sessions, transactorId, timestamp } = msg.value as QueueUserLogin | QueueUserLogout
-      return {
-        accountUuid: user,
-        workspaceUuid: msg.workspace,
-        online: type === QueueUserEvent.login || (sessions ?? 0) > 0,
-        updatedOn: timestamp,
-        transactorId
-      }
-    })
-
-  if (presences.length > 0) {
-    const [db] = await _db
-    await db.batchUpsertPresence(presences)
-  }
-
   const [db] = await _db
   const usersWithBadgeUpdates = new Set<AccountUuid>()
   const badgeUpdatesMap = new Map<string, { accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>()
@@ -97,36 +62,16 @@ export async function handlePresenceBatch (
 
   if (usersWithBadgeUpdates.size > 0) {
     const userIds = Array.from(usersWithBadgeUpdates)
-
-    // Batch fetch all statuses and presences for these users
-    const [allStatuses, allPresences] = await Promise.all([
-      db.accountWorkspaceBadgeStatus.find({ accountUuid: { $in: userIds } }),
-      db.userWorkspacePresence.find({ accountUuid: { $in: userIds }, online: true })
-    ])
-
-    // Group by user
-    const statusesByUser = new Map<AccountUuid, AccountWorkspaceBadgeStatus[]>()
-    for (const status of allStatuses) {
-      const arr = statusesByUser.get(status.accountUuid) ?? []
-      arr.push(status)
-      statusesByUser.set(status.accountUuid, arr)
-    }
-
-    const onlineWorkspacesByUser = new Map<AccountUuid, Set<WorkspaceUuid>>()
-    for (const p of allPresences) {
-      const set = onlineWorkspacesByUser.get(p.accountUuid) ?? new Set<WorkspaceUuid>()
-      set.add(p.workspaceUuid)
-      onlineWorkspacesByUser.set(p.accountUuid, set)
-    }
+    const allStatuses = await db.accountWorkspaceBadgeStatus.find({ accountUuid: { $in: userIds } })
+    const statusesByUser = groupByArray(allStatuses, (it) => it.accountUuid)
 
     for (const user of userIds) {
-      const dbStatuses = statusesByUser.get(user) ?? []
+      const userStatuses = statusesByUser.get(user) ?? []
       const unreadStatusByWorkspace: Record<WorkspaceUuid, boolean> = {}
-      for (const s of dbStatuses) unreadStatusByWorkspace[s.workspaceUuid] = s.hasUnread
+      for (const s of userStatuses) unreadStatusByWorkspace[s.workspaceUuid] = s.hasUnread
+      const workspaces = new Set<WorkspaceUuid>(userStatuses.map((it) => it.workspaceUuid))
 
-      const onlineWorkspaces = onlineWorkspacesByUser.get(user) ?? new Set<WorkspaceUuid>()
-      if (onlineWorkspaces.size > 0 && onlineUserTxProducer !== undefined) {
-        // Send OnlineUserTx to each online workspace
+      if (onlineUserTxProducer !== undefined) {
         const tx: TxCreateDoc<WorkspacesNotification> = {
           _id: generateId(),
           _class: core.class.TxCreateDoc,
@@ -143,7 +88,7 @@ export async function handlePresenceBatch (
           }
         }
 
-        for (const wsUuid of onlineWorkspaces) {
+        for (const wsUuid of workspaces) {
           await onlineUserTxProducer.send(ctx, wsUuid, [{ workspaceUuid: wsUuid, tx, account: user }])
         }
       }

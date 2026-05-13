@@ -39,9 +39,7 @@ export enum QueueTopic {
 
   TimeMachine = 'timeMachine',
 
-  CrmQueue = 'crm',
-
-  TransactorLifecycle = 'transactorLifecycle'
+  CrmQueue = 'crm'
 }
 
 export interface ConsumerHandle {

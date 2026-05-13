@@ -51,8 +51,7 @@ import type {
   WorkspaceEvent,
   WorkspaceInfoWithStatus,
   WorkspaceOperation,
-  WorkspaceStatus,
-  AccountWorkspacePresence
+  WorkspaceStatus
 } from './types'
 import {
   integrationServices,
@@ -122,35 +121,6 @@ export async function listAccounts (
   return await db.listAccounts(search, skip, limit)
 }
 
-export async function getPresence (
-  ctx: MeasureContext,
-  db: AccountDB,
-  branding: Branding | null,
-  token: string,
-  params: {
-    account?: AccountUuid
-    workspace?: WorkspaceUuid
-    online?: boolean
-  }
-): Promise<AccountWorkspacePresence[]> {
-  const { account: tokenAccount } = decodeTokenVerbose(ctx, token)
-
-  if (tokenAccount !== systemAccountUuid) {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-  }
-
-  const { account, workspace, online } = params
-  const filter: {
-    accountUuid?: AccountUuid
-    workspaceUuid?: WorkspaceUuid
-    online?: boolean
-  } = {}
-  if (account !== undefined) filter.accountUuid = account
-  if (workspace !== undefined) filter.workspaceUuid = workspace
-  if (online !== undefined) filter.online = online
-
-  return await db.userWorkspacePresence.find(filter)
-}
 
 export async function performWorkspaceOperation (
   ctx: MeasureContext,
@@ -1179,7 +1149,6 @@ export type AccountServiceMethods =
   | 'findFullSocialIds'
   | 'getSubscriptionByProviderId'
   | 'upsertSubscription'
-  | 'getPresence'
   | 'getAccountWorkspaceBadgeStatuses'
   | 'setWorkspaceBadgeStatuses'
 
@@ -1217,7 +1186,6 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     listAccounts: wrap(listAccounts),
     getSubscriptionByProviderId: wrap(getSubscriptionByProviderId),
     upsertSubscription: wrap(upsertSubscription),
-    getPresence: wrap(getPresence),
     getAccountWorkspaceBadgeStatuses: wrap(getAccountWorkspaceBadgeStatuses),
     setWorkspaceBadgeStatuses: wrap(setWorkspaceBadgeStatuses)
   }

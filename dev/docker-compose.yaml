@@ -202,11 +202,6 @@ services:
     volumes:
       - ./branding.json:/var/cfg/branding.json
       - ./region-config.yaml:/var/cfg/region-config.yaml
-    depends_on:
-      redpanda:
-        condition: service_started
-      postgres:
-        condition: service_started
     environment:
       - ACCOUNT_PORT=3000
       - IGNORE_EMAIL_SIGNUP=false # Set to true if you want to disable email/otp confirmations
@@ -429,7 +424,6 @@ services:
       - HYLYLAKE_URL=http://love:8096
       - AI_BOT_URL=http://aibot:4010
       - WEB_PUSH_URL=http://notification:3335
-      - TRANSACTOR_ID=transactor-dev0
     restart: unless-stopped
   rekoni:
     image: intabiafusion/rekoni-service

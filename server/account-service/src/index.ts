@@ -34,13 +34,12 @@ import os from 'os'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import {
   QueueTopic,
-  type QueueTransactorMessage,
   type QueueUserMessage,
   type QueueOnlineUserTx
 } from '@hcengineering/server-core'
 import { randomBytes } from 'node:crypto'
 
-import { handlePresenceBatch, handleTransactorLifecycle } from './presence'
+import { handlePresenceBatch } from './presence'
 import { migrateFromOldAccounts } from './migration/migration'
 export * from './migration/utils'
 export * from './migration/types'
@@ -168,14 +167,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     }
   })
 
-  const transactorLifecycleConsumer = platformQueue.createConsumer<QueueTransactorMessage>(
-    measureCtx.newChild('transactor-lifecycle-consumer', {}, { span: false }),
-    QueueTopic.TransactorLifecycle,
-    'transactor-lifecycle-tracker',
-    async (ctx, msg) => {
-      await handleTransactorLifecycle(ctx, msg, accountsDb)
-    }
-  )
 
   const onlineUserTxProducer = platformQueue.getProducer<QueueOnlineUserTx>(
     measureCtx.newChild('online-user-tx-producer', {}, { span: false }),
@@ -623,7 +614,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     void notificationProducer.close()
     void crmProducer.close()
     void usersConsumer.close()
-    void transactorLifecycleConsumer.close()
     void platformQueue.shutdown()
     void accountsDb.then(([, closeAccountsDb]) => {
       closeAccountsDb()

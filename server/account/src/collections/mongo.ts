@@ -60,7 +60,6 @@ import type {
   WorkspaceStatus,
   WorkspaceStatusData,
   WorkspacePermission,
-  AccountWorkspacePresence,
   AccountWorkspaceBadgeStatus
 } from '../types'
 import { isShallowEqual } from '../utils'
@@ -415,7 +414,6 @@ export class MongoAccountDB implements AccountDB {
 
   workspaceMembers: MongoDbCollection<WorkspaceMember>
   workspacePermission: MongoDbCollection<WorkspacePermission>
-  userWorkspacePresence: MongoDbCollection<AccountWorkspacePresence>
   accountWorkspaceBadgeStatus: MongoDbCollection<AccountWorkspaceBadgeStatus>
 
   constructor (readonly db: Db) {
@@ -438,7 +436,6 @@ export class MongoAccountDB implements AccountDB {
 
     this.workspaceMembers = new MongoDbCollection<WorkspaceMember>('workspaceMembers', db)
     this.workspacePermission = new MongoDbCollection<WorkspacePermission>('workspacePermissions', db)
-    this.userWorkspacePresence = new MongoDbCollection<AccountWorkspacePresence>('accountWorkspacePresence', db)
     this.accountWorkspaceBadgeStatus = new MongoDbCollection<AccountWorkspaceBadgeStatus>(
       'accountWorkspaceBadgeStatus',
       db
@@ -494,12 +491,6 @@ export class MongoAccountDB implements AccountDB {
         options: {
           name: 'hc_account_workspace_members_account_uuid_1'
         }
-      }
-    ])
-    await this.userWorkspacePresence.ensureIndices([
-      {
-        key: { accountUuid: 1, workspaceUuid: 1 },
-        options: { unique: true, name: 'hc_account_account_workspace_presence_pk' }
       }
     ])
     await this.shortLink.ensureIndices([
@@ -972,21 +963,6 @@ export class MongoAccountDB implements AccountDB {
     return results.map((r) => r.accountUuid)
   }
 
-  async upsertPresence (data: AccountWorkspacePresence): Promise<void> {
-    throw new Error('Not implemented')
-  }
-
-  async batchUpsertPresence (data: AccountWorkspacePresence[]): Promise<void> {
-    throw new Error('Not implemented')
-  }
-
-  async clearPresenceForTransactor (transactorId: string, beforeTimestamp: number): Promise<void> {
-    throw new Error('Not implemented')
-  }
-
-  async resetPresenceOffline (beforeTimestamp: number): Promise<void> {
-    throw new Error('Not implemented')
-  }
 
   async getAccountWorkspaceBadgeStatuses (accountId: AccountUuid): Promise<AccountWorkspaceBadgeStatus[]> {
     throw new Error('Not implemented')

@@ -113,7 +113,6 @@ describe('TSessionManager', () => {
   let mockQueue: any
   let mockPipelineFactory: any
   let mockWorkspaceProducer: any
-  let mockTransactorProducer: any
   let mockUsersProducer: any
   let mockWorkspaceConsumer: any
 
@@ -134,10 +133,6 @@ describe('TSessionManager', () => {
       close: jest.fn().mockResolvedValue(undefined)
     }
 
-    mockTransactorProducer = {
-      send: jest.fn().mockResolvedValue(undefined),
-      close: jest.fn().mockResolvedValue(undefined)
-    }
 
     mockUsersProducer = {
       send: jest.fn().mockResolvedValue(undefined),
@@ -152,7 +147,6 @@ describe('TSessionManager', () => {
       getProducer: jest.fn((ctx: any, topic: string) => {
         if (topic === QueueTopic.Workspace) return mockWorkspaceProducer
         if (topic === QueueTopic.Users) return mockUsersProducer
-        if (topic === QueueTopic.TransactorLifecycle) return mockTransactorProducer
         return null
       }),
       createConsumer: jest.fn().mockReturnValue(mockWorkspaceConsumer)
@@ -192,7 +186,7 @@ describe('TSessionManager', () => {
     })
 
     it('should setup queue producers and consumers', () => {
-      expect(mockQueue.getProducer).toHaveBeenCalledTimes(3)
+      expect(mockQueue.getProducer).toHaveBeenCalledTimes(2)
       expect(mockQueue.createConsumer).toHaveBeenCalledTimes(2)
       expect(sessionManager.workspaceProducer).toBeDefined()
       expect(sessionManager.usersProducer).toBeDefined()

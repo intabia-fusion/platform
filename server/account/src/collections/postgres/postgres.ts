@@ -51,7 +51,6 @@ import type {
   Subscription,
   DBFlavor,
   WorkspacePermission,
-  AccountWorkspacePresence,
   AccountWorkspaceBadgeStatus,
   ShortLink
 } from '../../types'
@@ -543,7 +542,6 @@ export class PostgresAccountDB implements AccountDB {
   userProfile: PostgresDbCollection<UserProfile, 'personUuid'>
   subscription: PostgresDbCollection<Subscription, 'id'>
   workspacePermission: PostgresDbCollection<WorkspacePermission>
-  userWorkspacePresence: PostgresDbCollection<AccountWorkspacePresence>
   accountWorkspaceBadgeStatus: PostgresDbCollection<AccountWorkspaceBadgeStatus>
 
   constructor (
@@ -620,15 +618,6 @@ export class PostgresAccountDB implements AccountDB {
       timestampFields: ['createdOn'],
       withRetryClient
     })
-    this.userWorkspacePresence = new PostgresDbCollection<AccountWorkspacePresence>(
-      'account_workspace_presence',
-      client,
-      {
-        ns,
-        timestampFields: ['updatedOn'],
-        withRetryClient
-      }
-    )
     this.accountWorkspaceBadgeStatus = new PostgresDbCollection<AccountWorkspaceBadgeStatus>(
       'account_workspace_badge_status',
       client,
@@ -1320,92 +1309,6 @@ export class PostgresAccountDB implements AccountDB {
     return results.map((r) => r.accountUuid)
   }
 
-  async upsertPresence (data: AccountWorkspacePresence): Promise<void> {
-    const snakeData = convertKeysToSnakeCase(data)
-    const keys = Object.keys(snakeData)
-    const columns = keys.map((k) => `"${k}"`).join(', ')
-    const values = keys.map((_, i) => `$${i + 1}`).join(', ')
-    const updates = keys
-      .filter((k) => k !== 'account_uuid' && k !== 'workspace_uuid')
-      .map((k) => `"${k}" = EXCLUDED."${k}"`)
-      .join(', ')
-
-    const selectColumns = Object.keys(snakeData)
-      .map((k) => {
-        if (k === 'account_uuid' || k === 'workspace_uuid') return `v."${k}"::uuid`
-        if (k === 'online') return `v."${k}"::boolean`
-        if (k === 'updated_on') return `v."${k}"::bigint`
-        return `v."${k}"`
-      })
-      .join(', ')
-
-    const sql = `
-      INSERT INTO ${this.userWorkspacePresence.getTableName()} (${columns})
-      SELECT ${selectColumns} FROM (VALUES (${values})) AS v(${columns})
-      WHERE EXISTS (
-        SELECT 1 FROM ${this.getWsMembersTableName()} wm
-        WHERE wm.account_uuid = v.account_uuid::uuid AND wm.workspace_uuid = v.workspace_uuid::uuid
-      )
-      ON CONFLICT (account_uuid, workspace_uuid) DO UPDATE SET ${updates}
-      WHERE account_workspace_presence.updated_on < EXCLUDED.updated_on
-    `
-    await this.userWorkspacePresence.unsafe(sql, Object.values(snakeData))
-  }
-
-  async batchUpsertPresence (data: AccountWorkspacePresence[]): Promise<void> {
-    if (data.length === 0) return
-    const snakeData = convertKeysToSnakeCase(data)
-    const keys = Object.keys(snakeData[0])
-    const columns = keys.map((k) => `"${k}"`).join(', ')
-    const updates = keys
-      .filter((k) => k !== 'account_uuid' && k !== 'workspace_uuid')
-      .map((k) => `"${k}" = EXCLUDED."${k}"`)
-      .join(', ')
-
-    const values: any[] = []
-    const rows = snakeData
-      .map((d: any, i: number) => {
-        const rowValues = keys.map((k) => d[k])
-        values.push(...rowValues)
-        return `(${rowValues.map((_, j) => `$${i * keys.length + j + 1}`).join(', ')})`
-      })
-      .join(', ')
-
-    const selectColumns = keys
-      .map((k) => {
-        if (k === 'account_uuid' || k === 'workspace_uuid') return `v."${k}"::uuid`
-        if (k === 'online') return `v."${k}"::boolean`
-        if (k === 'updated_on') return `v."${k}"::bigint`
-        return `v."${k}"`
-      })
-      .join(', ')
-
-    const sql = `
-      INSERT INTO ${this.userWorkspacePresence.getTableName()} (${columns})
-      SELECT ${selectColumns} FROM (VALUES ${rows}) AS v(${columns})
-      WHERE EXISTS (
-        SELECT 1 FROM ${this.getWsMembersTableName()} wm
-        WHERE wm.account_uuid = v.account_uuid::uuid AND wm.workspace_uuid = v.workspace_uuid::uuid
-      )
-      ON CONFLICT (account_uuid, workspace_uuid) DO UPDATE SET ${updates}
-      WHERE account_workspace_presence.updated_on < EXCLUDED.updated_on
-    `
-    await this.userWorkspacePresence.unsafe(sql, values)
-  }
-
-  async clearPresenceForTransactor (transactorId: string, beforeTimestamp: number): Promise<void> {
-    await this.userWorkspacePresence.update(
-      { transactorId, online: true, updatedOn: { $lt: beforeTimestamp } },
-      { online: false, updatedOn: beforeTimestamp }
-    )
-  }
-
-  async resetPresenceOffline (beforeTimestamp: number): Promise<void> {
-    await this.userWorkspacePresence.update(
-      { online: true, updatedOn: { $lt: beforeTimestamp } },
-      { online: false, updatedOn: beforeTimestamp }
-    )
-  }
 
   async getAccountWorkspaceBadgeStatuses (accountId: AccountUuid): Promise<AccountWorkspaceBadgeStatus[]> {
     return await this.accountWorkspaceBadgeStatus.find({ accountUuid: accountId })

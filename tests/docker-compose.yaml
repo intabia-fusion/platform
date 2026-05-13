@@ -332,7 +332,6 @@ services:
       - RATE_LIMIT_WINDOW=1000
       - WS_SLOW_CLIENT_DROP=${WS_SLOW_CLIENT_DROP:-1}
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-      - TRANSACTOR_ID=transactor0
   transactor1:
     image: intabiafusion/transactor
     pull_policy: never
@@ -370,7 +369,6 @@ services:
       - RATE_LIMIT_WINDOW=1000
       - WS_SLOW_CLIENT_DROP=${WS_SLOW_CLIENT_DROP:-1}
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-      - TRANSACTOR_ID=transactor1
   collaborator0:
     image: intabiafusion/collaborator
     pull_policy: never

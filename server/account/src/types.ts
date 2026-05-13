@@ -296,16 +296,6 @@ export interface Subscription {
 
 export type SubscriptionData = Omit<Subscription, 'createdOn' | 'updatedOn'>
 
-/**
- * Account presence status within a specific workspace
- */
-export interface AccountWorkspacePresence {
-  accountUuid: AccountUuid
-  workspaceUuid: WorkspaceUuid
-  online: boolean
-  updatedOn: Timestamp
-  transactorId: string
-}
 
 export interface AccountWorkspaceBadgeStatus {
   accountUuid: AccountUuid
@@ -349,7 +339,6 @@ export interface AccountDB {
   userProfile: DbCollection<UserProfile>
   subscription: DbCollection<Subscription>
   workspacePermission: DbCollection<WorkspacePermission>
-  userWorkspacePresence: DbCollection<AccountWorkspacePresence>
   accountWorkspaceBadgeStatus: DbCollection<AccountWorkspaceBadgeStatus>
 
   init: () => Promise<void>
@@ -390,10 +379,6 @@ export interface AccountDB {
   deleteAccount: (accountId: AccountUuid) => Promise<void>
   listAccounts: (search?: string, skip?: number, limit?: number) => Promise<AccountAggregatedInfo[]>
   generatePersonUuid: () => Promise<PersonUuid>
-  upsertPresence: (data: AccountWorkspacePresence) => Promise<void>
-  batchUpsertPresence: (data: AccountWorkspacePresence[]) => Promise<void>
-  clearPresenceForTransactor: (transactorId: string, beforeTimestamp: number) => Promise<void>
-  resetPresenceOffline: (beforeTimestamp: number) => Promise<void>
   getAccountWorkspaceBadgeStatuses: (accountId: AccountUuid) => Promise<AccountWorkspaceBadgeStatus[]>
   setAccountWorkspaceBadgeStatus: (
     accountId: AccountUuid,

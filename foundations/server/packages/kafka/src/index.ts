@@ -193,7 +193,6 @@ class PlatformQueueImpl implements PlatformQueue {
       await this.checkCreateTopic(admin, QueueTopic.Fulltext, topics, 5)
       await this.checkCreateTopic(admin, QueueTopic.Workspace, topics, 1)
       await this.checkCreateTopic(admin, QueueTopic.Users, topics, 1)
-      await this.checkCreateTopic(admin, QueueTopic.TransactorLifecycle, topics, 1)
       await this.checkCreateTopic(admin, QueueTopic.Process, topics, 1)
       await this.checkCreateTopic(admin, QueueTopic.AIQueue, topics, 10)
       await this.checkCreateTopic(admin, QueueTopic.TranscriptionQueue, topics, 10)
@@ -231,7 +230,6 @@ class PlatformQueueImpl implements PlatformQueue {
         await this.checkDeleteTopic(admin, QueueTopic.Fulltext, existing)
         await this.checkDeleteTopic(admin, QueueTopic.Workspace, existing)
         await this.checkDeleteTopic(admin, QueueTopic.Users, existing)
-        await this.checkDeleteTopic(admin, QueueTopic.TransactorLifecycle, existing)
       }
     } finally {
       await admin.disconnect()

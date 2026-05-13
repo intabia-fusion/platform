@@ -57,7 +57,6 @@ import type {
   WorkspaceInviteInfo,
   WorkspaceLoginInfo,
   WorkspaceOperation,
-  AccountWorkspacePresence,
   AccountWorkspaceBadgeStatus
 } from './types'
 import { getClientTimezone, isNetworkError } from './utils'
@@ -265,11 +264,6 @@ export interface AccountClient {
 
   setCookie: () => Promise<void>
   deleteCookie: () => Promise<void>
-  getPresence: (params?: {
-    account?: AccountUuid
-    workspace?: WorkspaceUuid
-    online?: boolean
-  }) => Promise<AccountWorkspacePresence[]>
   getAccountWorkspaceBadgeStatuses: (account: AccountUuid) => Promise<AccountWorkspaceBadgeStatus[]>
   setWorkspaceBadgeStatuses: (
     data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>
@@ -1356,18 +1350,6 @@ class AccountClientImpl implements AccountClient {
     })
   }
 
-  async getPresence (params?: {
-    account?: AccountUuid
-    workspace?: WorkspaceUuid
-    online?: boolean
-  }): Promise<AccountWorkspacePresence[]> {
-    const request = {
-      method: 'getPresence' as const,
-      params: params ?? {}
-    }
-
-    return await this.rpc(request)
-  }
 
   async getAccountWorkspaceBadgeStatuses (account: AccountUuid): Promise<AccountWorkspaceBadgeStatus[]> {
     const request = {

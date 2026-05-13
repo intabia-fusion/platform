@@ -83,7 +83,6 @@ import {
   type PlatformQueueProducer,
   type QueueOnlineUserTx,
   QueueTopic,
-  type QueueTransactorMessage,
   type QueueUserMessage,
   QueueWorkspaceEvent,
   type QueueWorkspaceMessage,
@@ -91,7 +90,6 @@ import {
   SessionDataImpl,
   type SessionHealth,
   type SessionManager,
-  transactorEvents,
   userEvents,
   type UserStatistics,
   workspaceEvents,
@@ -136,11 +134,9 @@ export class TSessionManager implements SessionManager {
 
   workspaceProducer: PlatformQueueProducer<QueueWorkspaceMessage>
   usersProducer: PlatformQueueProducer<QueueUserMessage>
-  lifecycleProducer: PlatformQueueProducer<QueueTransactorMessage>
   workspaceConsumer: ConsumerHandle
   onlineUserTxConsumer: ConsumerHandle
 
-  transactorId: string
 
   ticksContext: MeasureContext
 
@@ -172,15 +168,7 @@ export class TSessionManager implements SessionManager {
     }
     this.workspaceProducer = this.queue.getProducer(ctx.newChild('ws-queue', {}, { span: false }), QueueTopic.Workspace)
     this.usersProducer = this.queue.getProducer(ctx.newChild('user-queue', {}, { span: false }), QueueTopic.Users)
-    this.lifecycleProducer = this.queue.getProducer(
-      ctx.newChild('lifecycle-queue', {}, { span: false }),
-      QueueTopic.TransactorLifecycle
-    )
 
-    this.transactorId = process.env.TRANSACTOR_ID ?? os.hostname()
-    void this.lifecycleProducer.send(ctx, '' as WorkspaceUuid, [
-      transactorEvents.started(this.transactorId, Date.now())
-    ])
 
     this.workspaceConsumer = this.queue.createConsumer<QueueWorkspaceMessage>(
       ctx.newChild('ws-queue-consume', {}, { span: false }),
@@ -859,7 +847,6 @@ export class TSessionManager implements SessionManager {
                 user: accountUuid,
                 sessions: this.countUserSessions(workspace, accountUuid),
                 socialIds: account.socialIds.map((it) => it._id),
-                transactorId: this.transactorId,
                 timestamp: Date.now()
               })
             ],
@@ -1219,7 +1206,6 @@ export class TSessionManager implements SessionManager {
               user: userUuid,
               sessions: this.countUserSessions(workspace, userUuid),
               socialIds: sessionRef.session.getUserSocialIds(),
-              transactorId: this.transactorId,
               timestamp: Date.now()
             })
           ],
@@ -1354,16 +1340,12 @@ export class TSessionManager implements SessionManager {
   async closeWorkspaces (ctx: MeasureContext): Promise<void> {
     clearInterval(this.checkInterval)
 
-    await this.lifecycleProducer.send(ctx, '' as WorkspaceUuid, [
-      transactorEvents.stopped(this.transactorId, Date.now())
-    ])
 
     for (const w of this.workspaces) {
       await this.doCloseAll(w[1], 1, 'shutdown')
     }
     await this.workspaceProducer.close()
     await this.usersProducer.close()
-    await this.lifecycleProducer.close()
   }
 
   private async performWorkspaceCloseCheck (workspace: Workspace): Promise<void> {

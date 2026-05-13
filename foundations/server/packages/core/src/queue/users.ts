@@ -26,7 +26,6 @@ export type QueueUserMessage = QueueUserLogin | QueueUserLogout | QueueUserNotif
 export interface QueueUserLogin {
   type: QueueUserEvent.login
   user: AccountUuid
-  transactorId: string
   timestamp: number
   sessions: number
   socialIds: PersonId[]
@@ -35,7 +34,6 @@ export interface QueueUserLogin {
 export interface QueueUserLogout {
   type: QueueUserEvent.logout
   user: AccountUuid
-  transactorId: string
   timestamp: number
   sessions: number
   socialIds: PersonId[]
