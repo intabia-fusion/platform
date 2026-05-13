@@ -471,7 +471,7 @@
           <div class="message flex justify-center">{love.string.CheckingLink}</div>
         </div>
       {:else if $lkSessionConnected}
-        <div bind:this={roomEl} class="flex-col-center w-full h-full">
+        <div bind:this={roomEl} data-id="guest-connected" class="flex-col-center w-full h-full">
           <div class="room-container" class:sharing={withScreenSharing}>
             <div class="screenContainer">
               <ScreenSharingView bind:hasActiveTrack={withScreenSharing} />
