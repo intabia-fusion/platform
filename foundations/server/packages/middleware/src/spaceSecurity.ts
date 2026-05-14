@@ -515,13 +515,13 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
       }
 
       // In private spaces with owners, only owners can change members.
-      // Otherwise non-owners (or non-members) could push themselves or others into a private space.
+      // Two exceptions:
+      // 1. self-push into autoJoin spaces — workspace join, chat unhide, etc.
+      // 2. self-leave — a member may remove only themselves from members.
       if (space.private && !isOwner) {
         const hasMembersUpdate =
           ops.members !== undefined || ops.$push?.members !== undefined || ops.$pull?.members !== undefined
         if (hasMembersUpdate) {
-          // Allow self-add into autoJoin spaces (system trigger pushes the new user
-          // into spaces marked as autoJoin during workspace join).
           const pushVal = ops.$push?.members
           const pushedSelfOnly =
             pushVal !== undefined &&
@@ -531,7 +531,17 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
                 (pushVal as any).$each[0] === account.uuid))
           const onlyPushSelfToAutoJoin =
             space.autoJoin && pushedSelfOnly && ops.members === undefined && ops.$pull?.members === undefined
-          if (!onlyPushSelfToAutoJoin) {
+
+          const pullVal = ops.$pull?.members
+          const pulledSelfOnly =
+            pullVal !== undefined &&
+            (pullVal === account.uuid ||
+              (typeof pullVal === 'object' &&
+                (pullVal as any).$in?.length === 1 &&
+                (pullVal as any).$in[0] === account.uuid))
+          const onlyPullSelf = pulledSelfOnly && ops.members === undefined && ops.$push?.members === undefined
+
+          if (!onlyPushSelfToAutoJoin && !onlyPullSelf) {
             throw new Error('Only owners can change members of private spaces')
           }
         }

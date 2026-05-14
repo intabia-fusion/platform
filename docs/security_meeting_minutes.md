@@ -33,6 +33,11 @@
 | Сменить `private` | я не в `owners` | `Only owners can change space privacy` |
 | Сменить `private` | я в `owners` | OK |
 | Сменить `owners` (set/$push/$pull) | я не в `owners` | `Only owners can change space owners` |
+| Сменить `members` приватного space | я не в `owners` | `Only owners can change members of private spaces` |
+| `$pull: { members: я }` (self-leave) | я в `members` приватного space, не owner | OK |
+| `$pull: { members: { $in: [я] } }` (self-leave одиночный) | я в `members`, не owner | OK |
+| `$pull: { members: { $in: [я, X] } }` (self + другие) | я не в `owners` | `Only owners can change members of private spaces` |
+| `$push: { members: я }` в `autoJoin` приватный space | я не в `owners` | OK (workspace join, chat unhide и т.п.) |
 | Любые изменения space с `owners.size === 0` | — | OK (legacy) |
 
 Системный аккаунт и `AccountRole.Owner` — обход проверок.

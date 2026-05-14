@@ -71,7 +71,13 @@ function createSessionData (account: Account, overrides: Partial<SessionData> = 
 function createSpace (
   id: string,
   members: string[],
-  opts: { private?: boolean, archived?: boolean, _class?: Ref<Class<Space>>, owners?: string[] } = {}
+  opts: {
+    private?: boolean
+    archived?: boolean
+    _class?: Ref<Class<Space>>
+    owners?: string[]
+    autoJoin?: boolean
+  } = {}
 ): Space {
   return {
     _id: id as Ref<Space>,
@@ -83,6 +89,7 @@ function createSpace (
     archived: opts.archived ?? false,
     members: members as AccountUuid[],
     owners: (opts.owners as AccountUuid[]) ?? [],
+    autoJoin: opts.autoJoin,
     modifiedOn: Date.now(),
     modifiedBy: core.account.System
   } satisfies Space
@@ -919,6 +926,81 @@ describe('SpaceSecurityMiddleware', () => {
 
       const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
         $pull: { members: 'user3' as AccountUuid }
+      })
+
+      await expect(mw.tx(ctx, [updateTx])).rejects.toThrow('Only owners can change members of private spaces')
+    })
+
+    it('should allow non-owner member to pull themselves from private space (self-leave)', async () => {
+      const mw = await createMiddleware([
+        createSpace('space1', ['user1', 'user2'], { private: true, owners: ['user1'] })
+      ])
+
+      const account = createAccount('user2')
+      ctx.contextData = createSessionData(account)
+
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        $pull: { members: 'user2' as AccountUuid }
+      })
+
+      await expect(mw.tx(ctx, [updateTx])).resolves.not.toThrow()
+    })
+
+    it('should allow non-owner member to pull themselves via $in (single self) from private space', async () => {
+      const mw = await createMiddleware([
+        createSpace('space1', ['user1', 'user2'], { private: true, owners: ['user1'] })
+      ])
+
+      const account = createAccount('user2')
+      ctx.contextData = createSessionData(account)
+
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        $pull: { members: { $in: ['user2'] as AccountUuid[] } }
+      })
+
+      await expect(mw.tx(ctx, [updateTx])).resolves.not.toThrow()
+    })
+
+    it('should throw when non-owner tries to pull self together with someone else', async () => {
+      const mw = await createMiddleware([
+        createSpace('space1', ['user1', 'user2', 'user3'], { private: true, owners: ['user1'] })
+      ])
+
+      const account = createAccount('user2')
+      ctx.contextData = createSessionData(account)
+
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        $pull: { members: { $in: ['user2', 'user3'] as AccountUuid[] } }
+      })
+
+      await expect(mw.tx(ctx, [updateTx])).rejects.toThrow('Only owners can change members of private spaces')
+    })
+
+    it('should allow autoJoin self-push into private space', async () => {
+      const mw = await createMiddleware([
+        createSpace('space1', ['user1'], { private: true, owners: ['user1'], autoJoin: true })
+      ])
+
+      const account = createAccount('user2')
+      ctx.contextData = createSessionData(account)
+
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        $push: { members: 'user2' as AccountUuid }
+      })
+
+      await expect(mw.tx(ctx, [updateTx])).resolves.not.toThrow()
+    })
+
+    it('should NOT allow self-push into non-autoJoin private space', async () => {
+      const mw = await createMiddleware([
+        createSpace('space1', ['user1'], { private: true, owners: ['user1'], autoJoin: false })
+      ])
+
+      const account = createAccount('user2')
+      ctx.contextData = createSessionData(account)
+
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        $push: { members: 'user2' as AccountUuid }
       })
 
       await expect(mw.tx(ctx, [updateTx])).rejects.toThrow('Only owners can change members of private spaces')
