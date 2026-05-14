@@ -43,11 +43,12 @@ async function clickOfficeOf (page: Page, lastName: string): Promise<Locator> {
  * office cell. The popup renders a "Start meeting" action (data-id
  * `start-own-meeting`) — clicking it calls createMeeting(office).
  */
-async function connectToOwnOffice (page: Page, lastName: string): Promise<void> {
-  const office = page
-    .locator('div.floorGrid-room')
-    .filter({ hasText: new RegExp(lastName, 'i') })
-    .first()
+async function connectToOwnOffice (page: Page, _lastName: string): Promise<void> {
+  // Use the `myOffice` CSS class instead of filtering by the resolved owner
+  // name — the office label is resolved asynchronously via
+  // `getPersonByPersonRef`, so the name filter is flaky on cold render.
+  const office = page.locator('div.floorGrid-room.myOffice').first()
+  await expect(office).toBeVisible({ timeout: 15000 })
   const avatarCell = office.locator('.floorGrid-room__field').first()
   await avatarCell.hover()
   await avatarCell.click()

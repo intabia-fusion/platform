@@ -173,7 +173,7 @@ export function registerInviteTests (): void {
         // user2 is Dirak Kainin — must not appear in their own invite list.
         await search.fill('Dirak')
         // Either the list is empty or the matching row is absent.
-        await expect(popup.locator('button.row').filter({ hasText: 'Dirak Kainin' })).toHaveCount(0)
+        await expect(popup.locator('button.row').filter({ hasText: 'Dirak Kainin' })).toHaveCount(0, { timeout: 3000 })
       } finally {
         await closeMeetingContexts([{ ctx, pages: [page] }])
       }

@@ -46,11 +46,11 @@ export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise
         { status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] } },
         { limit: 1 }
       ),
-      // Also drain ParticipantInfo with a non-null `meeting` ref — a leftover
-      // PI makes the server treat a subsequent invite as a knock to that
-      // meeting (see OnUserMeetingInvite's recipientInfo loop), so the
-      // caller never enters the lazy-create branch.
-      client.findAll<ParticipantInfo>(love.class.ParticipantInfo, { meeting: { $exists: true } as any }, { limit: 1 })
+      // Drain *all* ParticipantInfo — a leftover PI in a non-Reception room
+      // makes the office owner appear "in a meeting" on the next test's
+      // floor grid (the office cell renders without the resolved name) and
+      // also tricks the server's knock detection.
+      client.findAll<ParticipantInfo>(love.class.ParticipantInfo, {}, { limit: 1 })
     ])
     if (meetings.length === 0 && participants.length === 0) return
     await new Promise((resolve) => setTimeout(resolve, 500))

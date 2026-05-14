@@ -52,8 +52,6 @@ export function registerStartTests (): void {
         await expect(connect).toBeVisible({ timeout: 10000 })
         await connect.click()
 
-        // Give the broadcast a moment then open the room on user2 side.
-        await page2.waitForTimeout(2000)
         const room2 = page2.locator(`[data-id="room-${name as string}"]`).first()
         await room2.click()
         // The "Meeting minutes" section in the room panel must list at least one
@@ -77,7 +75,6 @@ export function registerStartTests (): void {
         test.skip(name === null, 'No regular room available')
         const connect = page.getByRole('button', { name: /Start meeting|Join meeting/i }).first()
         await connect.click()
-        await page.waitForTimeout(2000)
         meetingLink = page.getByRole('link', { name: /\d{4}/ }).first()
       }
       await expect(meetingLink).toBeVisible({ timeout: 15000 })
