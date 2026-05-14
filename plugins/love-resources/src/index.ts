@@ -23,6 +23,10 @@ import EditRoom from './components/EditRoom.svelte'
 import FloorAttributePresenter from './components/FloorAttributePresenter.svelte'
 import FloorView from './components/FloorView.svelte'
 import MeetingMinutesTable from './components/MeetingMinutesTable.svelte'
+import FloorMeetingMinutesList from './components/FloorMeetingMinutesList.svelte'
+import RoomAttributePresenter from './components/RoomAttributePresenter.svelte'
+import MeetingMinutesMessagesPresenter from './components/MeetingMinutesMessagesPresenter.svelte'
+import MeetingMinutesTranscriptionPresenter from './components/MeetingMinutesTranscriptionPresenter.svelte'
 import RoomPresenter from './components/RoomPresenter.svelte'
 import MeetingMinutesDocEditor from './components/MeetingMinutesDocEditor.svelte'
 import MeetingMinutesStatusPresenter from './components/MeetingMinutesStatusPresenter.svelte'
@@ -38,6 +42,11 @@ import PendingRecordingPresenter from './components/PendingRecordingPresenter.sv
 import GuestMeetingApp from './components/guest/GuestMeetingApp.svelte'
 import RoomMeetingsFooter from './components/RoomMeetingsFooter.svelte'
 import MeetingMinutesBreadcrumb from './components/MeetingMinutesBreadcrumb.svelte'
+import MeetingMinutesView from './components/MeetingMinutesView.svelte'
+import MeetingMinutesListItem from './components/MeetingMinutesListItem.svelte'
+import RoomsView from './components/RoomsView.svelte'
+import RoomTablePresenter from './components/RoomTablePresenter.svelte'
+import RoomListItem from './components/RoomListItem.svelte'
 
 import {
   copyGuestLink,
@@ -106,6 +115,10 @@ export default async (): Promise<Resources> => ({
     FloorAttributePresenter,
     FloorView,
     MeetingMinutesTable,
+    FloorMeetingMinutesList,
+    RoomAttributePresenter,
+    MeetingMinutesMessagesPresenter,
+    MeetingMinutesTranscriptionPresenter,
     RoomPresenter,
     MeetingMinutesDocEditor,
     MeetingMinutesStatusPresenter,
@@ -120,7 +133,12 @@ export default async (): Promise<Resources> => ({
     PendingRecordingPresenter,
     GuestMeetingApp,
     RoomMeetingsFooter,
-    MeetingMinutesBreadcrumb
+    MeetingMinutesBreadcrumb,
+    MeetingMinutesView,
+    MeetingMinutesListItem,
+    RoomsView,
+    RoomTablePresenter,
+    RoomListItem
   },
   function: {
     CreateMeeting: createMeeting,

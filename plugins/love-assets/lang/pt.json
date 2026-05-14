@@ -142,6 +142,18 @@
     "OpenRoom": "Abrir sala",
     "Private": "Privata",
     "Busy": "Ocupado",
-    "Organizators": "Organizadores"
+    "Organizators": "Organizadores",
+    "ShowArchived": "Mostrar arquivados",
+    "HideArchived": "Ocultar arquivados",
+    "IncludeArchived": "Incluir arquivados",
+    "MeetingMinutesList": "Lista de atas",
+    "MeetingMinutesTable_": "Tabela de atas",
+    "RoomsTable": "Tabela de salas",
+    "RoomsList": "Lista de salas",
+    "RoomsFloor": "Andar",
+    "GroupByRoom": "Por sala",
+    "GroupByOwner": "Por proprietário",
+    "GroupByStatus": "Por estado",
+    "GroupByDate": "Por data"
   }
 }

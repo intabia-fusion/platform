@@ -143,6 +143,18 @@
     "OpenRoom": "Raum öffnen",
     "Private": "Privat",
     "Busy": "Beschäftigt",
-    "Organizators": "Organisatoren"
+    "Organizators": "Organisatoren",
+    "ShowArchived": "Archivierte anzeigen",
+    "HideArchived": "Archivierte ausblenden",
+    "IncludeArchived": "Archivierte einschließen",
+    "MeetingMinutesList": "Protokollliste",
+    "MeetingMinutesTable_": "Protokolltabelle",
+    "RoomsTable": "Raumtabelle",
+    "RoomsList": "Raumliste",
+    "RoomsFloor": "Etage",
+    "GroupByRoom": "Nach Raum",
+    "GroupByOwner": "Nach Eigentümer",
+    "GroupByStatus": "Nach Status",
+    "GroupByDate": "Nach Datum"
   }
 }

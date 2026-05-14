@@ -142,6 +142,18 @@
     "OpenRoom": "Open room",
     "Private": "Private",
     "Busy": "Busy",
-    "Organizators": "Organizers"
+    "Organizators": "Organizers",
+    "ShowArchived": "Show archived",
+    "HideArchived": "Hide archived",
+    "IncludeArchived": "Include archived",
+    "MeetingMinutesList": "List",
+    "MeetingMinutesTable_": "Table",
+    "RoomsTable": "Table",
+    "RoomsList": "List",
+    "RoomsFloor": "Floor",
+    "GroupByRoom": "By room",
+    "GroupByOwner": "By owner",
+    "GroupByStatus": "By status",
+    "GroupByDate": "By date"
   }
 }

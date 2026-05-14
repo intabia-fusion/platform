@@ -142,6 +142,18 @@
     "OpenRoom": "Odayı aç",
     "Private": "Özel",
     "Busy": "Meşgul",
-    "Organizators": "Organizatörler"
+    "Organizators": "Organizatörler",
+    "ShowArchived": "Arşivlenenleri göster",
+    "HideArchived": "Arşivlenenleri gizle",
+    "IncludeArchived": "Arşivlenenleri dahil et",
+    "MeetingMinutesList": "Tutanak listesi",
+    "MeetingMinutesTable_": "Tutanak tablosu",
+    "RoomsTable": "Oda tablosu",
+    "RoomsList": "Oda listesi",
+    "RoomsFloor": "Kat",
+    "GroupByRoom": "Odaya göre",
+    "GroupByOwner": "Sahibine göre",
+    "GroupByStatus": "Duruma göre",
+    "GroupByDate": "Tarihe göre"
   }
 }

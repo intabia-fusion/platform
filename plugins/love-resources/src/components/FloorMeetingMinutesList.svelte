@@ -13,7 +13,7 @@
 -->
 <script lang="ts">
   import { Floor, MeetingMinutes, Room } from '@hcengineering/love'
-  import { Component, Scroller, SearchInput } from '@hcengineering/ui'
+  import { Component, SearchInput } from '@hcengineering/ui'
   import view, { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import core, { DocumentQuery, FindOptions, WithLookup } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
@@ -57,7 +57,7 @@
   void client
     .findAll(
       view.class.Viewlet,
-      { _id: lovePlg.viewlet.TableMeetingMinutes },
+      { _id: lovePlg.viewlet.ListMeetingMinutes },
       { lookup: { descriptor: view.class.ViewletDescriptor } }
     )
     .then((res) => {
@@ -68,7 +68,7 @@
     view.class.ViewletPreference,
     {
       space: core.space.Workspace,
-      attachedTo: lovePlg.viewlet.TableMeetingMinutes
+      attachedTo: lovePlg.viewlet.ListMeetingMinutes
     },
     (res) => {
       preference = res[0]
@@ -78,8 +78,8 @@
 </script>
 
 {#if viewlet?.$lookup?.descriptor?.component}
-  <div class="meetings-table-wrapper">
-    <div class="meetings-table-header">
+  <div class="meetings-list-wrapper">
+    <div class="meetings-list-header">
       <FilterButton _class={lovePlg.class.MeetingMinutes} />
       <SearchInput bind:value={search} collapsed />
       <div class="header-spacer" />
@@ -91,7 +91,7 @@
       viewOptions={effectiveViewOptions}
       on:change={(e) => (resultQuery = e.detail)}
     />
-    <Scroller horizontal>
+    <div class="meetings-list-body">
       <Component
         is={viewlet.$lookup.descriptor.component}
         props={{
@@ -106,19 +106,19 @@
           preferredSorting: 'createdOn'
         }}
       />
-    </Scroller>
+    </div>
   </div>
 {/if}
 
 <style lang="scss">
-  .meetings-table-wrapper {
+  .meetings-list-wrapper {
     display: flex;
     flex-direction: column;
     height: 100%;
     min-height: 0;
   }
 
-  .meetings-table-header {
+  .meetings-list-header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -130,8 +130,10 @@
     flex: 1 1 auto;
   }
 
-  :global(.meetings-table-wrapper > .scroller) {
+  .meetings-list-body {
     flex: 1 1 0;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 </style>

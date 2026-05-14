@@ -19,6 +19,7 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
   import { tooltip, Icon } from '@hcengineering/ui'
+  import Lock from './icons/Lock.svelte'
 
   export let value: WithLookup<MeetingMinutes>
   export let inline: boolean = false
@@ -42,12 +43,30 @@
         {/if}
         <div class="label nowrap flex flex-gap-2" class:no-underline={noUnderline || disabled} class:fs-bold={accent}>
           <span>{value.name}</span>
+          {#if value.private}
+            <span class="lock-icon" use:tooltip={{ label: getEmbeddedLabel('Private') }}>
+              <Lock size={'small'} />
+            </span>
+          {/if}
         </div>
       </div>
     </DocNavLink>
   {:else if type === 'text'}
-    <span class="overflow-label" use:tooltip={{ label: getEmbeddedLabel(value.name) }}>
-      {value.name}
+    <span class="overflow-label flex flex-gap-2 items-center" use:tooltip={{ label: getEmbeddedLabel(value.name) }}>
+      <span>{value.name}</span>
+      {#if value.private}
+        <span class="lock-icon" use:tooltip={{ label: getEmbeddedLabel('Private') }}>
+          <Lock size={'small'} />
+        </span>
+      {/if}
     </span>
   {/if}
 {/if}
+
+<style lang="scss">
+  .lock-icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--theme-dark-color);
+  }
+</style>

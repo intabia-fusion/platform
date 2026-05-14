@@ -26,7 +26,8 @@ import {
   IndexKind,
   type AccountUuid,
   SocialIdType,
-  DOMAIN_SPACE
+  DOMAIN_SPACE,
+  SortingOrder
 } from '@hcengineering/core'
 import {
   type DevicesPreference,
@@ -75,7 +76,8 @@ import calendar, { TEvent, TSchedule } from '@hcengineering/model-calendar'
 import core, { TAttachedDoc, TDoc, TSpace } from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
 import presentation from '@hcengineering/model-presentation'
-import view, { createAction, createAttributePresenter } from '@hcengineering/model-view'
+import view, { createAction, createAttributePresenter, showColorsViewOption } from '@hcengineering/model-view'
+import { type ViewOptionModel } from '@hcengineering/view'
 import media from '@hcengineering/media'
 import notification, { type MessageNotificationType, type TxNotificationType } from '@hcengineering/notification'
 import { getEmbeddedLabel } from '@hcengineering/platform'
@@ -614,6 +616,10 @@ export function createModel (builder: Builder): void {
     presenter: love.component.RoomPresenter
   })
 
+  builder.mixin(love.class.Room, core.class.Class, view.mixin.AttributePresenter, {
+    presenter: love.component.RoomAttributePresenter
+  })
+
   builder.mixin(love.class.MeetingMinutes, core.class.Class, view.mixin.CollectionEditor, {
     editor: love.component.MeetingMinutesSection
   })
@@ -638,6 +644,25 @@ export function createModel (builder: Builder): void {
     inlineEditor: love.component.FloorAttributePresenter
   })
 
+  builder.mixin(love.class.MeetingMinutes, core.class.Class, view.mixin.ClassFilters, {
+    filters: ['status', 'owners', 'members', 'roomId', 'private', 'createdOn', 'meetingEnd'],
+    ignoreKeys: ['description', 'summary', 'transcription', 'messages', 'attachments', 'recordings']
+  })
+
+  builder.mixin(love.class.Room, core.class.Class, view.mixin.ClassFilters, {
+    filters: ['language'],
+    ignoreKeys: ['floor', 'width', 'height', 'x', 'y', 'type', 'access']
+  })
+
+  const hideArchivedOption: ViewOptionModel = {
+    key: 'hideArchived',
+    type: 'toggle',
+    defaultValue: true,
+    actionTarget: 'options',
+    action: view.function.HideArchived,
+    label: view.string.HideArchived
+  }
+
   builder.createDoc(
     view.class.Viewlet,
     core.space.Model,
@@ -647,9 +672,19 @@ export function createModel (builder: Builder): void {
       config: [
         '',
         { key: 'status', presenter: love.component.MeetingMinutesStatusPresenter, label: love.string.Status },
-        { key: 'messages', displayProps: { key: 'messages', suffix: true } },
-        { key: 'transcription', displayProps: { key: 'transcription', suffix: true } },
-        'owners',
+        {
+          key: '',
+          label: activity.string.Messages,
+          presenter: love.component.MeetingMinutesMessagesPresenter,
+          displayProps: { key: 'messages', suffix: true }
+        },
+        {
+          key: '',
+          label: love.string.Transcription,
+          presenter: love.component.MeetingMinutesTranscriptionPresenter,
+          displayProps: { key: 'transcription', suffix: true }
+        },
+        { key: 'members', props: { noJoin: true } },
         { key: 'private', displayProps: { key: 'private', suffix: true } },
         'createdOn',
         'meetingEnd'
@@ -657,6 +692,16 @@ export function createModel (builder: Builder): void {
       configOptions: {
         hiddenKeys: ['description'],
         sortable: true
+      },
+      viewOptions: {
+        groupBy: [],
+        orderBy: [
+          ['modifiedOn', SortingOrder.Descending],
+          ['meetingStart', SortingOrder.Descending],
+          ['meetingEnd', SortingOrder.Descending],
+          ['createdOn', SortingOrder.Descending]
+        ],
+        other: [hideArchivedOption, showColorsViewOption]
       },
       options: {}
     },
@@ -672,14 +717,34 @@ export function createModel (builder: Builder): void {
       config: [
         '',
         { key: 'status', presenter: love.component.MeetingMinutesStatusPresenter, label: love.string.Status },
-        { key: 'messages', displayProps: { key: 'messages', suffix: true } },
-        { key: 'transcription', displayProps: { key: 'transcription', suffix: true } },
+        {
+          key: '',
+          label: activity.string.Messages,
+          presenter: love.component.MeetingMinutesMessagesPresenter,
+          displayProps: { key: 'messages', suffix: true }
+        },
+        {
+          key: '',
+          label: love.string.Transcription,
+          presenter: love.component.MeetingMinutesTranscriptionPresenter,
+          displayProps: { key: 'transcription', suffix: true }
+        },
         'createdOn',
         'meetingEnd'
       ],
       configOptions: {
         hiddenKeys: ['description'],
         sortable: true
+      },
+      viewOptions: {
+        groupBy: [],
+        orderBy: [
+          ['modifiedOn', SortingOrder.Descending],
+          ['meetingStart', SortingOrder.Descending],
+          ['meetingEnd', SortingOrder.Descending],
+          ['createdOn', SortingOrder.Descending]
+        ],
+        other: [hideArchivedOption, showColorsViewOption]
       },
       variant: 'embedded'
     },
@@ -728,6 +793,163 @@ export function createModel (builder: Builder): void {
       config: []
     },
     love.viewlet.FloorMeetingMinutes
+  )
+
+  // ListMeetingMinutesDescriptor — used for Floor-switcher third viewlet
+  builder.createDoc(
+    view.class.ViewletDescriptor,
+    core.space.Model,
+    {
+      label: love.string.MeetingMinutesList,
+      icon: view.icon.List,
+      component: love.component.FloorMeetingMinutesList
+    },
+    love.viewlet.ListMeetingMinutesDescriptor
+  )
+
+  // 3rd Floor-switcher viewlet: List of MeetingMinutes by rooms on the floor.
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: love.class.Floor,
+      descriptor: love.viewlet.ListMeetingMinutesDescriptor,
+      config: []
+    },
+    love.viewlet.FloorMeetingMinutesListViewlet
+  )
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: love.class.MeetingMinutes,
+      descriptor: view.viewlet.List,
+      viewOptions: {
+        groupBy: ['roomId', 'status', 'createdBy'],
+        orderBy: [
+          ['modifiedOn', SortingOrder.Descending],
+          ['meetingStart', SortingOrder.Descending],
+          ['meetingEnd', SortingOrder.Descending],
+          ['createdOn', SortingOrder.Descending]
+        ],
+        other: [hideArchivedOption, showColorsViewOption]
+      },
+      configOptions: {
+        strict: true,
+        hiddenKeys: ['description', 'summary', 'attachments', 'recordings']
+      },
+      config: [
+        {
+          key: '',
+          label: love.string.MeetingMinutes,
+          displayProps: { fixed: 'left', key: 'name' }
+        },
+        {
+          key: 'status',
+          presenter: love.component.MeetingMinutesStatusPresenter,
+          label: love.string.Status,
+          displayProps: { key: 'status' }
+        },
+        {
+          key: '',
+          label: activity.string.Messages,
+          presenter: love.component.MeetingMinutesMessagesPresenter,
+          displayProps: { key: 'messages', suffix: true }
+        },
+        {
+          key: '',
+          label: love.string.Transcription,
+          presenter: love.component.MeetingMinutesTranscriptionPresenter,
+          displayProps: { key: 'transcription', suffix: true }
+        },
+        { key: '', displayProps: { grow: true } },
+        {
+          key: 'members',
+          props: { noJoin: true, kind: 'link', size: 'small' },
+          displayProps: { key: 'members', compression: true }
+        },
+        {
+          key: 'createdOn',
+          displayProps: { key: 'createdOn', fixed: 'right', dividerBefore: true }
+        },
+        {
+          key: 'meetingEnd',
+          displayProps: { key: 'meetingEnd', fixed: 'right' }
+        }
+      ]
+    },
+    love.viewlet.ListMeetingMinutes
+  )
+
+  // TableRooms descriptor and viewlet
+  builder.createDoc(
+    view.class.ViewletDescriptor,
+    core.space.Model,
+    {
+      label: love.string.RoomsTable,
+      icon: view.icon.Table,
+      component: love.component.RoomsView
+    },
+    love.viewlet.TableRoomsDescriptor
+  )
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: love.class.Room,
+      descriptor: love.viewlet.TableRoomsDescriptor,
+      viewOptions: {
+        groupBy: [],
+        orderBy: [
+          ['name', SortingOrder.Ascending],
+          ['modifiedOn', SortingOrder.Descending]
+        ],
+        other: []
+      },
+      configOptions: {
+        hiddenKeys: ['description'],
+        sortable: true
+      },
+      config: [{ key: '', presenter: love.component.RoomTablePresenter }, 'members']
+    },
+    love.viewlet.TableRooms
+  )
+
+  // ListRooms descriptor and viewlet
+  builder.createDoc(
+    view.class.ViewletDescriptor,
+    core.space.Model,
+    {
+      label: love.string.RoomsList,
+      icon: view.icon.List,
+      component: love.component.RoomsView
+    },
+    love.viewlet.ListRoomsDescriptor
+  )
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: love.class.Room,
+      descriptor: love.viewlet.ListRoomsDescriptor,
+      viewOptions: {
+        groupBy: ['floor'],
+        orderBy: [
+          ['name', SortingOrder.Ascending],
+          ['modifiedOn', SortingOrder.Descending]
+        ],
+        other: []
+      },
+      configOptions: {
+        strict: true,
+        hiddenKeys: ['description']
+      },
+      config: [{ key: '', presenter: love.component.RoomListItem }, 'members']
+    },
+    love.viewlet.ListRooms
   )
 
   builder.createDoc<MessageNotificationType>(

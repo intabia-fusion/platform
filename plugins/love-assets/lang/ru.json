@@ -142,6 +142,18 @@
     "OpenRoom": "Открыть комнату",
     "Organizators": "Организаторы",
     "Private": "Приватная",
-    "Busy": "Занят"
+    "Busy": "Занят",
+    "ShowArchived": "Показать архивные",
+    "HideArchived": "Скрыть архивные",
+    "IncludeArchived": "Включить архивные",
+    "MeetingMinutesList": "Список протоколов",
+    "MeetingMinutesTable_": "Таблица протоколов",
+    "RoomsTable": "Таблица комнат",
+    "RoomsList": "Список комнат",
+    "RoomsFloor": "Этаж",
+    "GroupByRoom": "По комнате",
+    "GroupByOwner": "По владельцу",
+    "GroupByStatus": "По статусу",
+    "GroupByDate": "По дате"
   }
 }

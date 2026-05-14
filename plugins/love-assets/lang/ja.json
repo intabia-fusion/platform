@@ -142,6 +142,18 @@
     "OpenRoom": "ルームを開く",
     "Private": "プライベート",
     "Busy": "忙しい",
-    "Organizators": "主催者"
+    "Organizators": "主催者",
+    "ShowArchived": "アーカイブ済みを表示",
+    "HideArchived": "アーカイブ済みを非表示",
+    "IncludeArchived": "アーカイブ済みを含める",
+    "MeetingMinutesList": "議事録一覧",
+    "MeetingMinutesTable_": "議事録テーブル",
+    "RoomsTable": "ルームテーブル",
+    "RoomsList": "ルーム一覧",
+    "RoomsFloor": "フロア",
+    "GroupByRoom": "ルーム別",
+    "GroupByOwner": "オーナー別",
+    "GroupByStatus": "ステータス別",
+    "GroupByDate": "日付別"
   }
 }

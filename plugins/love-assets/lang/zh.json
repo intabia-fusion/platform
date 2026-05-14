@@ -142,6 +142,18 @@
     "OpenRoom": "打开房间",
     "Private": "私密",
     "Busy": "忙碌",
-    "Organizators": "组织者"
+    "Organizators": "组织者",
+    "ShowArchived": "显示已归档",
+    "HideArchived": "隐藏已归档",
+    "IncludeArchived": "包含已归档",
+    "MeetingMinutesList": "会议记录列表",
+    "MeetingMinutesTable_": "会议记录表格",
+    "RoomsTable": "房间表格",
+    "RoomsList": "房间列表",
+    "RoomsFloor": "楼层",
+    "GroupByRoom": "按房间",
+    "GroupByOwner": "按负责人",
+    "GroupByStatus": "按状态",
+    "GroupByDate": "按日期"
   }
 }
