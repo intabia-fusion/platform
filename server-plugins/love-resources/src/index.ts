@@ -333,6 +333,7 @@ async function getPersonSpace (control: TriggerControl, person: Ref<Person>): Pr
 async function lazyCreateMeetingForInvite (
   control: TriggerControl,
   fromPerson: Ref<Person>,
+  toPerson: Ref<Person>,
   toAccount: AccountUuid | undefined,
   fromAccount: AccountUuid | undefined
 ): Promise<{ meeting: Ref<MeetingMinutes>, txs: Tx[] } | undefined> {
@@ -372,10 +373,31 @@ async function lazyCreateMeetingForInvite (
   if (fromAccount !== undefined) initialMembers.push(fromAccount)
   if (toAccount !== undefined && toAccount !== fromAccount) initialMembers.push(toAccount)
 
-  const title = `${office.name} ${new Date()
-    .toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-    .replace(',', ' at')}`
+  // Title format: "{Caller} <-> {Recipient}" with a fallback to the office
+  // name + today's date when person names cannot be resolved (e.g. AI bot,
+  // guest, or removed account).
+  const [callerEmployee, recipientEmployee] = await Promise.all([
+    control.findAll(control.ctx, contact.class.Person, { _id: fromPerson }, { limit: 1 }).then((r) => r[0]),
+    control.findAll(control.ctx, contact.class.Person, { _id: toPerson }, { limit: 1 }).then((r) => r[0])
+  ])
+  const callerName = callerEmployee !== undefined ? formatName(callerEmployee.name) : undefined
+  const recipientName = recipientEmployee !== undefined ? formatName(recipientEmployee.name) : undefined
+  const title =
+    callerName !== undefined && recipientName !== undefined
+      ? `${callerName} <-> ${recipientName}`
+      : `${office.name} ${new Date()
+          .toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+          .replace(',', ' at')}`
 
+  // Include the recipient in the initial owners list so the create passes
+  // `SpaceSecurityMiddleware` — the trigger runs under the recipient's
+  // account context and the middleware requires `account.uuid ∈ owners`.
+  // We immediately rotate owners back to the caller-only set via a follow-up
+  // TxUpdate so the recipient does not retain owner rights past the
+  // create-and-broadcast window.
+  const initialOwners: AccountUuid[] = []
+  if (fromAccount !== undefined) initialOwners.push(fromAccount)
+  if (toAccount !== undefined && toAccount !== fromAccount) initialOwners.push(toAccount)
   const createTx = control.txFactory.createTxCreateDoc<MeetingMinutes>(
     love.class.MeetingMinutes,
     meetingId as unknown as Ref<Space>,
@@ -385,7 +407,7 @@ async function lazyCreateMeetingForInvite (
       private: office.startPrivate ?? false,
       archived: false,
       members: initialMembers,
-      owners: fromAccount !== undefined ? [fromAccount] : [],
+      owners: initialOwners,
       descriptionRef: null,
       summary: null,
       roomId: office._id,
@@ -398,7 +420,14 @@ async function lazyCreateMeetingForInvite (
     },
     meetingId
   )
-  return { meeting: meetingId, txs: [createTx] }
+  const rotateOwnersTx =
+    fromAccount !== undefined && toAccount !== undefined && toAccount !== fromAccount
+      ? control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, meetingId as unknown as Ref<Space>, meetingId, {
+          owners: [fromAccount]
+        })
+      : undefined
+  const txs: Tx[] = rotateOwnersTx !== undefined ? [createTx, rotateOwnersTx] : [createTx]
+  return { meeting: meetingId, txs }
 }
 
 /**
@@ -793,6 +822,12 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           continue
         }
 
+        // Skip the second pass: when we ourselves patched the invite-response
+        // with `meeting` (or `status: 'accepted'`) the trigger fires again on
+        // our own derived TxUpdate. There is nothing left to do — bail out
+        // so we don't broadcast yet another duplicate derived tx.
+        if (sourceDoc.status === 'accepted' && sourceDoc.meeting !== undefined) continue
+
         // Lazy-create: recipient accepted a call without an attached meeting
         // (caller wasn't in a meeting when sending the invite). Create the
         // meeting in the **caller's** personal office so the caller is owner
@@ -826,7 +861,13 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           )[0]
           const recipientAccount = recipientPerson?.personUuid as AccountUuid | undefined
 
-          const created = await lazyCreateMeetingForInvite(control, sourceDoc.from, recipientAccount, callerAccount)
+          const created = await lazyCreateMeetingForInvite(
+            control,
+            sourceDoc.from,
+            sourceDoc.to,
+            recipientAccount,
+            callerAccount
+          )
           control.ctx.info('[OnUserMeetingInvite] lazyCreate result', {
             created: created?.meeting,
             callerAccount,
@@ -939,9 +980,13 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
   control.ctx.info('[OnUserMeetingInvite] returning result', {
     txes: result.map((t) => ({
       cls: t._class,
+      txSpace: t.space,
       obj: (t as any).objectClass,
-      id: (t as any).objectId,
-      ops: (t as any).operations
+      objId: (t as any).objectId,
+      objSpace: (t as any).objectSpace,
+      ops: (t as any).operations,
+      attrs: (t as any).attributes,
+      modBy: t.modifiedBy
     }))
   })
   return result

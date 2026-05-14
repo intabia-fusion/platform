@@ -17,7 +17,7 @@ import { getCurrentEmployee, getCurrentEmployeeSpace, type Person } from '@hceng
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
 import love, { type MeetingMinutes, type UserMeetingInvite } from '@hcengineering/love'
-import { createQuery, getClient, playSound } from '@hcengineering/presentation'
+import { createQuery, getClient, onClient, playSound } from '@hcengineering/presentation'
 import { addNotification, NotificationSeverity, type PopupResult } from '@hcengineering/ui'
 import { translate } from '@hcengineering/platform'
 import { getCurrentLanguage } from '@hcengineering/theme'
@@ -42,7 +42,13 @@ export const outgoingInvitesStore = derived(allInvites, (all) => {
   const outgoing = all.filter((it) => it.kind === 'invite-request')
   console.log('[outgoingInvitesStore] recompute', {
     total: all.length,
-    outgoing: outgoing.map((o) => ({ id: o._id, status: o.status, meeting: o.meeting }))
+    outgoing: outgoing.map((o) => ({
+      id: o._id,
+      status: o.status,
+      meeting: o.meeting,
+      isKnock: o.isKnock,
+      modOn: o.modifiedOn
+    }))
   })
   void checkAndJoinIfRecipientJoined(outgoing)
   return outgoing
@@ -68,6 +74,14 @@ export const incomingInvitesStore = derived(allInvites, (all) => {
   const acceptedWithMeeting = all.filter(
     (it) => it.kind === 'invite-response' && it.isKnock !== true && it.status === 'accepted' && it.meeting !== undefined
   )
+  console.log('[incomingInvitesStore] recompute', {
+    total: all.length,
+    incoming: incoming.length,
+    acceptedWithMeeting: acceptedWithMeeting.length,
+    invites: all
+      .filter((it) => it.kind === 'invite-response')
+      .map((i) => ({ id: i._id, status: i.status, meeting: i.meeting, isKnock: i.isKnock, modOn: i.modifiedOn }))
+  })
   if (acceptedWithMeeting.length > 0) {
     void checkAndJoinIfRecipientAccepted(acceptedWithMeeting)
   }
@@ -210,23 +224,50 @@ export async function cancelInvites (
  * - invite-response: incoming invites to us, show accept/decline panel
  */
 export function subscribeToIncomingInvites (): void {
-  const mySpace = getCurrentEmployeeSpace()
-  if (mySpace === undefined) return
+  // Defer until the client *and* the current employee space are both ready.
+  // `onClient` only guarantees a live transactor connection — `setCurrentEmployeeSpace`
+  // runs later in the workbench connect flow (it depends on a PersonSpace
+  // findOne). Subscribing before the space is known fixed a class of test
+  // races where the caller's `liveQuery` never landed, and the auto-join
+  // handler on the caller side never observed the synced invite-request.
+  onClient(() => {
+    const trySubscribe = (): void => {
+      const mySpace = getCurrentEmployeeSpace()
+      if (mySpace === undefined) {
+        setTimeout(trySubscribe, 100)
+        return
+      }
 
-  let previous: UserMeetingInvite[] = []
-  console.log('[subscribeToIncomingInvites] starting query', { mySpace })
-  incomingInvitesQuery.query(love.class.UserMeetingInvite, { space: mySpace }, (invites) => {
-    console.log('[invites liveQuery] update', { count: invites.length, mySpace })
-    void notifyOnKnockResolution(previous, invites)
-    previous = invites
-    allInvites.set(invites)
+      let previous: UserMeetingInvite[] = []
+      console.log('[subscribeToIncomingInvites] starting query', { mySpace })
+      incomingInvitesQuery.query(love.class.UserMeetingInvite, { space: mySpace }, (invites) => {
+        console.log('[invites liveQuery] update', {
+          count: invites.length,
+          mySpace,
+          invites: invites.map((i) => ({
+            _id: i._id,
+            kind: i.kind,
+            status: i.status,
+            meeting: i.meeting,
+            isKnock: i.isKnock,
+            from: i.from,
+            to: i.to,
+            modOn: i.modifiedOn
+          }))
+        })
+        void notifyOnKnockResolution(previous, invites)
+        previous = invites
+        allInvites.set(invites)
+      })
+
+      if (knockHeartbeatTimer === undefined) {
+        knockHeartbeatTimer = setInterval(() => {
+          void renewOutgoingKnocks()
+        }, knockHeartbeatMs)
+      }
+    }
+    trySubscribe()
   })
-
-  if (knockHeartbeatTimer === undefined) {
-    knockHeartbeatTimer = setInterval(() => {
-      void renewOutgoingKnocks()
-    }, knockHeartbeatMs)
-  }
 }
 
 async function renewOutgoingKnocks (): Promise<void> {
@@ -414,6 +455,10 @@ export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[
   const me = getCurrentEmployee()
   if (me === undefined) return
 
+  console.log('[checkAndJoinIfRecipientJoined] called', {
+    invites: invites.map((i) => ({ id: i._id, status: i.status, meeting: i.meeting, modOn: i.modifiedOn })),
+    handling: [...handlingInvites]
+  })
   for (const invite of invites) {
     if (handlingInvites.has(invite._id)) continue
     if (invite.status === 'accepted' && invite.meeting !== undefined) {
