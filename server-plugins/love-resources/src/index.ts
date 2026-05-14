@@ -423,8 +423,8 @@ async function lazyCreateMeetingForInvite (
   const rotateOwnersTx =
     fromAccount !== undefined && toAccount !== undefined && toAccount !== fromAccount
       ? control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, meetingId as unknown as Ref<Space>, meetingId, {
-          owners: [fromAccount]
-        })
+        owners: [fromAccount]
+      })
       : undefined
   const txs: Tx[] = rotateOwnersTx !== undefined ? [createTx, rotateOwnersTx] : [createTx]
   return { meeting: meetingId, txs }
@@ -515,10 +515,6 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
       // Find recipient's personal space (PersonSpace)
       const recipientSpace = await getPersonSpace(control, invite.to)
       if (recipientSpace === undefined) {
-        control.ctx.warn('[OnUserMeetingInvite] no PersonSpace for recipient — skipping invite-response', {
-          to: invite.to,
-          isKnock
-        })
         continue
       }
 
@@ -748,11 +744,6 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           from: sourceDoc.from,
           to: sourceDoc.to
         })
-        control.ctx.info('[OnUserMeetingInvite] sync invite-requests', {
-          count: inviteRequests.length,
-          requestIds: inviteRequests.map((r) => r._id),
-          resultLengthBefore: result.length
-        })
 
         const updateTx = tx as TxUpdateDoc<UserMeetingInvite>
         // Update from recipient (accept/decline) - sync to sender's invite-request
@@ -835,23 +826,12 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
         // Office, decline the invite with a reason so the caller's UI can
         // show a toast.
         let lazyMeeting: Ref<MeetingMinutes> | undefined
-        control.ctx.info('[OnUserMeetingInvite] response update', {
-          inviteId: sourceDoc._id,
-          newStatus,
-          newMeeting,
-          sourceMeeting: sourceDoc.meeting,
-          isKnock: sourceDoc.isKnock
-        })
         if (
           newStatus === 'accepted' &&
           newMeeting === undefined &&
           sourceDoc.meeting === undefined &&
           sourceDoc.isKnock !== true
         ) {
-          control.ctx.info('[OnUserMeetingInvite] entering lazy-create branch', {
-            from: sourceDoc.from,
-            to: sourceDoc.to
-          })
           const callerPerson = (
             await control.findAll(control.ctx, contact.class.Person, { _id: sourceDoc.from }, { limit: 1 })
           )[0]
@@ -868,11 +848,6 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
             recipientAccount,
             callerAccount
           )
-          control.ctx.info('[OnUserMeetingInvite] lazyCreate result', {
-            created: created?.meeting,
-            callerAccount,
-            recipientAccount
-          })
           if (created === undefined) {
             // No Office on caller side -> auto-decline. Sync to invite-request
             // and clean up the invite-response. The caller's client renders
@@ -963,11 +938,6 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
             upd.meeting = effectiveNewMeeting
           }
           if (Object.keys(upd).length > 0) {
-            control.ctx.info('[OnUserMeetingInvite] syncing invite-request', {
-              requestId: request._id,
-              space: request.space,
-              upd
-            })
             result.push(
               control.txFactory.createTxUpdateDoc(love.class.UserMeetingInvite, request.space, request._id, upd)
             )
@@ -977,18 +947,6 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
     }
   }
 
-  control.ctx.info('[OnUserMeetingInvite] returning result', {
-    txes: result.map((t) => ({
-      cls: t._class,
-      txSpace: t.space,
-      obj: (t as any).objectClass,
-      objId: (t as any).objectId,
-      objSpace: (t as any).objectSpace,
-      ops: (t as any).operations,
-      attrs: (t as any).attributes,
-      modBy: t.modifiedBy
-    }))
-  })
   return result
 }
 

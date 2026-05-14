@@ -111,7 +111,7 @@ export async function leaveMeeting (): Promise<void> {
       await client.remove(currentParticipationInfo)
     }
   } catch (err) {
-    console.warn('[leaveMeeting] failed to drop ParticipantInfo', err)
+    console.warn('Failed to drop ParticipantInfo on leave', err)
   }
   await liveKitClient.disconnect()
   currentMeeting = undefined
@@ -191,7 +191,7 @@ export async function joinOrCreateMeetingByInvite (meetingId: Ref<MeetingMinutes
       meeting = refreshed
     }
   }
-  console.warn(`[joinOrCreateMeetingByInvite] connect failed after retries: ${lastErr?.message ?? 'unknown'}`)
+  console.warn(`joinOrCreateMeetingByInvite: connect failed after retries: ${lastErr?.message ?? 'unknown'}`)
   return false
 }
 
@@ -269,7 +269,7 @@ async function connectToMeeting (mm: MeetingMinutes, room?: Room): Promise<void>
       await client.remove(invite)
     }
   } catch (err: any) {
-    console.warn('[connectToMeeting] Failed to cleanup pending invites:', err)
+    console.warn('Failed to cleanup pending invites:', err)
   }
 }
 

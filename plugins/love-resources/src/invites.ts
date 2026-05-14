@@ -40,16 +40,6 @@ export const allInvites: Writable<UserMeetingInvite[]> = writable([])
 // All invites we send to somebody.
 export const outgoingInvitesStore = derived(allInvites, (all) => {
   const outgoing = all.filter((it) => it.kind === 'invite-request')
-  console.log('[outgoingInvitesStore] recompute', {
-    total: all.length,
-    outgoing: outgoing.map((o) => ({
-      id: o._id,
-      status: o.status,
-      meeting: o.meeting,
-      isKnock: o.isKnock,
-      modOn: o.modifiedOn
-    }))
-  })
   void checkAndJoinIfRecipientJoined(outgoing)
   return outgoing
 })
@@ -74,14 +64,6 @@ export const incomingInvitesStore = derived(allInvites, (all) => {
   const acceptedWithMeeting = all.filter(
     (it) => it.kind === 'invite-response' && it.isKnock !== true && it.status === 'accepted' && it.meeting !== undefined
   )
-  console.log('[incomingInvitesStore] recompute', {
-    total: all.length,
-    incoming: incoming.length,
-    acceptedWithMeeting: acceptedWithMeeting.length,
-    invites: all
-      .filter((it) => it.kind === 'invite-response')
-      .map((i) => ({ id: i._id, status: i.status, meeting: i.meeting, isKnock: i.isKnock, modOn: i.modifiedOn }))
-  })
   if (acceptedWithMeeting.length > 0) {
     void checkAndJoinIfRecipientAccepted(acceptedWithMeeting)
   }
@@ -239,22 +221,7 @@ export function subscribeToIncomingInvites (): void {
       }
 
       let previous: UserMeetingInvite[] = []
-      console.log('[subscribeToIncomingInvites] starting query', { mySpace })
       incomingInvitesQuery.query(love.class.UserMeetingInvite, { space: mySpace }, (invites) => {
-        console.log('[invites liveQuery] update', {
-          count: invites.length,
-          mySpace,
-          invites: invites.map((i) => ({
-            _id: i._id,
-            kind: i.kind,
-            status: i.status,
-            meeting: i.meeting,
-            isKnock: i.isKnock,
-            from: i.from,
-            to: i.to,
-            modOn: i.modifiedOn
-          }))
-        })
         void notifyOnKnockResolution(previous, invites)
         previous = invites
         allInvites.set(invites)
@@ -424,7 +391,6 @@ export async function checkAndJoinIfRecipientAccepted (invites: UserMeetingInvit
     if (invite.meeting === undefined) continue
     if (invite.status !== 'accepted') continue
     if (handlingAccepted.has(invite._id)) continue
-    console.log('[checkAndJoinIfRecipientAccepted] auto-joining', { invite: invite._id, meeting: invite.meeting })
     handlingAccepted.add(invite._id)
     let joined = false
     try {
@@ -434,7 +400,6 @@ export async function checkAndJoinIfRecipientAccepted (invites: UserMeetingInvit
       } else {
         joined = await joinOrCreateMeetingByInvite(invite.meeting)
       }
-      console.log('[checkAndJoinIfRecipientAccepted] join result', { invite: invite._id, joined })
     } catch (err) {
       console.warn('Failed to auto-join via lazy-created meeting', err)
     } finally {
@@ -455,14 +420,9 @@ export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[
   const me = getCurrentEmployee()
   if (me === undefined) return
 
-  console.log('[checkAndJoinIfRecipientJoined] called', {
-    invites: invites.map((i) => ({ id: i._id, status: i.status, meeting: i.meeting, modOn: i.modifiedOn })),
-    handling: [...handlingInvites]
-  })
   for (const invite of invites) {
     if (handlingInvites.has(invite._id)) continue
     if (invite.status === 'accepted' && invite.meeting !== undefined) {
-      console.log('[checkAndJoinIfRecipientJoined] auto-joining', { invite: invite._id, meeting: invite.meeting })
       handlingInvites.add(invite._id)
       let joined = false
       try {
@@ -472,7 +432,6 @@ export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[
         } else {
           joined = await joinOrCreateMeetingByInvite(invite.meeting)
         }
-        console.log('[checkAndJoinIfRecipientJoined] join result', { invite: invite._id, joined })
       } catch (err) {
         // Keep invite for next derived-store recompute so the client can retry.
         console.warn('Failed to auto-join via accepted invite', err)

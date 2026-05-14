@@ -271,14 +271,8 @@ export class WorkspaceClient {
       for (const invite of invites) {
         await this.client.remove(invite as UserMeetingInvite)
       }
-      if (invites.length > 0) {
-        this.ctx.info('[WorkspaceClient.cleanupInvitesForMeeting] Removed invites', {
-          meeting,
-          count: invites.length
-        })
-      }
     } catch (err: any) {
-      this.ctx.error('[WorkspaceClient.cleanupInvitesForMeeting] Failed', {
+      this.ctx.error('cleanupInvitesForMeeting failed', {
         error: err?.message ?? String(err),
         meeting
       })
@@ -418,7 +412,7 @@ export class WorkspaceClient {
       for (const stale of stalePIs) {
         if (stale.meeting === meeting && stale.sessionId === sessionId) continue
         await this.client.remove(stale).catch((err: any) => {
-          this.ctx.warn('[WorkspaceClient.upsertParticipantFromLivekit] Failed to drop stale PI', {
+          this.ctx.warn('Failed to drop stale ParticipantInfo', {
             id: stale._id,
             error: err?.message ?? String(err)
           })
