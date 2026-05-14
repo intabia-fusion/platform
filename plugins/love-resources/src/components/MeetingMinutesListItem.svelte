@@ -45,7 +45,7 @@
     </DocNavLink>
   </div>
   <div class="flex-row-center flex-gap-3 flex-no-shrink">
-    <MeetingMinutesStatusPresenter {value} />
+    <MeetingMinutesStatusPresenter object={value} value={value.status} attributeKey={'status'} />
     {#if value.createdOn}
       <span class="text-sm content-dark-color">
         <TimeSince value={value.createdOn} />

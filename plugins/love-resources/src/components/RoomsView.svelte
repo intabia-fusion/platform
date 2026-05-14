@@ -67,7 +67,13 @@
     <ViewletSettingButton bind:viewOptions bind:viewlet />
   </svelte:fragment>
 </SpaceHeader>
-<FilterBar _class={love.class.Room} query={searchQuery} {viewOptions} on:change={(e) => (resultQuery = e.detail)} />
+<FilterBar
+  _class={love.class.Room}
+  space={undefined}
+  query={searchQuery}
+  {viewOptions}
+  on:change={(e) => (resultQuery = e.detail)}
+/>
 {#if viewlet !== undefined && viewOptions !== undefined}
-  <ViewletContentView _class={love.class.Room} {viewlet} query={resultQuery} {viewOptions} />
+  <ViewletContentView _class={love.class.Room} space={undefined} {viewlet} query={resultQuery} {viewOptions} />
 {/if}

@@ -87,6 +87,7 @@
     </div>
     <FilterBar
       _class={lovePlg.class.MeetingMinutes}
+      space={undefined}
       query={baseQuery}
       viewOptions={effectiveViewOptions}
       on:change={(e) => (resultQuery = e.detail)}

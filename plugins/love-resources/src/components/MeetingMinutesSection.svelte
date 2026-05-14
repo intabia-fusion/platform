@@ -78,6 +78,7 @@
       {#if viewlet}
         <FilterBar
           _class={love.class.MeetingMinutes}
+          space={undefined}
           query={baseQuery}
           viewOptions={effectiveViewOptions}
           on:change={(e) => (resultQuery = e.detail)}
