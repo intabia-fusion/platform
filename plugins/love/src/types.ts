@@ -277,4 +277,12 @@ export interface UserMeetingInvite extends Doc {
    * normal user-initiated decline leaves it unset.
    */
   declineReason?: 'no-host-office'
+  /**
+   * Recipient's browser session ID set when the user accepts the invite.
+   * When the recipient is logged in from multiple tabs/windows the same
+   * invite-response is delivered to all of them; only the tab whose
+   * `presentation.metadata.SessionId` matches this value should auto-join
+   * the meeting. Other tabs just close their popup.
+   */
+  acceptedSessionId?: string
 }

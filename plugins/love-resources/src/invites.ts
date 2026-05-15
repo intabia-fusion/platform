@@ -16,10 +16,10 @@
 import { getCurrentEmployee, getCurrentEmployeeSpace, type Person } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
-import love, { type MeetingMinutes, type UserMeetingInvite } from '@hcengineering/love'
-import { createQuery, getClient, onClient, playSound } from '@hcengineering/presentation'
+import love, { MeetingStatus, type MeetingMinutes, type UserMeetingInvite } from '@hcengineering/love'
+import presentation, { createQuery, getClient, onClient, playSound } from '@hcengineering/presentation'
 import { addNotification, NotificationSeverity, type PopupResult } from '@hcengineering/ui'
-import { translate } from '@hcengineering/platform'
+import { getMetadata, translate } from '@hcengineering/platform'
 import { getCurrentLanguage } from '@hcengineering/theme'
 import { derived, get, writable, type Writable } from 'svelte/store'
 import { joinOrCreateMeetingByInvite } from './meetings'
@@ -38,10 +38,22 @@ let responsePopup: PopupResult | undefined
 export const allInvites: Writable<UserMeetingInvite[]> = writable([])
 
 // All invites we send to somebody.
+// We pass ALL invite-request entries (including accepted/declined) to
+// `checkAndJoinIfRecipientJoined` because that handler must observe the
+// status transition to drive auto-join, the no-host-office toast, and the
+// removal of consumed invites. The store-visible list however only shows
+// invites that should still be rendered as an outgoing trigger:
+//   - pending and not expired (a normal in-flight call), or
+//   - knock-requests (long TTL, renewed by heartbeat).
+// Accepted / declined entries that linger past auto-join (e.g. transactor
+// broadcast missed the remove) no longer keep a dead button on screen.
 export const outgoingInvitesStore = derived(allInvites, (all) => {
+  const now = Date.now()
   const outgoing = all.filter((it) => it.kind === 'invite-request')
   void checkAndJoinIfRecipientJoined(outgoing)
-  return outgoing
+  return outgoing.filter(
+    (it) => it.status === 'pending' && (it.isKnock === true || it.expiresAt > now)
+  )
 })
 
 // All waiting for confirmation
@@ -318,17 +330,21 @@ export async function responseToInviteRequest (invite: UserMeetingInvite, accept
 
   try {
     if (accept) {
+      // Stamp the accepting tab's session id so only this tab auto-joins
+      // when the recipient is signed in from multiple windows. Other tabs
+      // observing the same invite-response just close their popup.
+      const acceptedSessionId = getMetadata(presentation.metadata.SessionId) ?? undefined
       if (invite.meeting !== undefined) {
         // Existing meeting: join immediately, then mark accepted. The server
         // removes the invite-response once status flips.
         await joinOrCreateMeetingByInvite(invite.meeting)
-        await client.update(invite, { status: 'accepted' })
+        await client.update(invite, { status: 'accepted', acceptedSessionId })
       } else {
         // Lazy-create path: just flip status. The server will create the
         // meeting in the caller's office, patch our invite-response with
         // the meeting ref, and we'll auto-join via liveQuery in
         // `checkAndJoinIfRecipientAccepted` below.
-        await client.update(invite, { status: 'accepted' })
+        await client.update(invite, { status: 'accepted', acceptedSessionId })
       }
     } else {
       // Just decline the invite
@@ -387,9 +403,27 @@ const handlingAccepted = new Set<Ref<UserMeetingInvite>>()
  */
 export async function checkAndJoinIfRecipientAccepted (invites: UserMeetingInvite[]): Promise<void> {
   const client = getClient()
+  const mySessionId = getMetadata(presentation.metadata.SessionId) ?? undefined
   for (const invite of invites) {
     if (invite.meeting === undefined) continue
     if (invite.status !== 'accepted') continue
+    // Multi-tab guard: only the tab that actually pressed "Accept" should
+    // auto-join. Other tabs of the same recipient see the same accepted
+    // invite-response via liveQuery — they must close their popup and stay
+    // out of the meeting. If `acceptedSessionId` is missing (older client
+    // that didn't stamp it), fall back to the legacy behavior so we don't
+    // break existing in-flight calls.
+    if (invite.acceptedSessionId !== undefined && invite.acceptedSessionId !== mySessionId) {
+      // Not our session: drop the local invite so the popup closes here too
+      // without affecting the accepting tab (which already removed it on
+      // successful connect).
+      // Note: we intentionally do NOT call client.removeDoc — that would
+      // race with the accepting tab. Instead let the server's own cleanup
+      // (after the meeting starts / finishes) remove the document, while
+      // the local store filter in `outgoingInvitesStore` / popup
+      // seen-in-store guard handle the UI fade-out.
+      continue
+    }
     if (handlingAccepted.has(invite._id)) continue
     handlingAccepted.add(invite._id)
     let joined = false
@@ -425,18 +459,31 @@ export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[
     if (invite.status === 'accepted' && invite.meeting !== undefined) {
       handlingInvites.add(invite._id)
       let joined = false
+      let meetingGone = false
       try {
         const currentMeeting = get(currentMeetingMinutes)
         if (currentMeeting?._id === invite.meeting) {
           joined = true
         } else {
           joined = await joinOrCreateMeetingByInvite(invite.meeting)
+          if (!joined) {
+            // `joinOrCreateMeetingByInvite` returns false when the target
+            // meeting has been finished (or was never found). Treat that as
+            // a terminal state so we drop the invite below — otherwise the
+            // accepted+meeting tuple keeps the outgoing trigger on screen
+            // forever, because the transactor's TxRemoveDoc broadcast for
+            // `cleanupInvitesForMeeting` may not reach this session.
+            const refreshed = await client.findOne(love.class.MeetingMinutes, { _id: invite.meeting })
+            if (refreshed === undefined || refreshed.status === MeetingStatus.Finished) {
+              meetingGone = true
+            }
+          }
         }
       } catch (err) {
         // Keep invite for next derived-store recompute so the client can retry.
         console.warn('Failed to auto-join via accepted invite', err)
       } finally {
-        if (joined) {
+        if (joined || meetingGone) {
           try {
             await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
           } catch {

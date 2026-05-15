@@ -358,6 +358,10 @@ export class TUserMeetingInvite extends TDoc implements UserMeetingInvite {
   @Prop(TypeString(), getEmbeddedLabel('DeclineReason'))
   @Hidden()
     declineReason?: 'no-host-office'
+
+  @Prop(TypeString(), getEmbeddedLabel('AcceptedSessionId'))
+  @Hidden()
+    acceptedSessionId?: string
 }
 
 export default love

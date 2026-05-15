@@ -18,12 +18,41 @@
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
 
   import love from '../../../plugin'
-  import { responseToInviteRequest } from '../../../invites'
+  import { responseToInviteRequest, allInvites } from '../../../invites'
   import { type UserMeetingInvite } from '@hcengineering/love'
+  import presentation from '@hcengineering/presentation'
+  import { getMetadata } from '@hcengineering/platform'
 
   export let invite: UserMeetingInvite
 
   const dispatch = createEventDispatcher()
+  const mySessionId = getMetadata(presentation.metadata.SessionId) ?? undefined
+
+  // Close the popup when the underlying invite disappears from the store
+  // (cancelled by sender, accepted/declined and removed, expired, server
+  // cleanup on meeting-finished). Otherwise the popup lingers until the
+  // user manually closes it or refreshes the page.
+  let seenInStore = false
+  let closed = false
+  $: storeInvite = $allInvites.find((it) => it._id === invite._id)
+  $: if (storeInvite !== undefined) seenInStore = true
+  $: if (!closed && seenInStore && storeInvite === undefined) {
+    closed = true
+    dispatch('close')
+  }
+  // Multi-tab: another tab of the same recipient already accepted/declined
+  // this invite. Close the popup here without taking any action so the
+  // accepting tab is the only one that auto-joins.
+  $: if (
+    !closed &&
+    storeInvite !== undefined &&
+    storeInvite.status !== 'pending' &&
+    (storeInvite.status === 'declined' ||
+      (storeInvite.acceptedSessionId !== undefined && storeInvite.acceptedSessionId !== mySessionId))
+  ) {
+    closed = true
+    dispatch('close')
+  }
 
   let person: Person | undefined = undefined
   let timeLeft: number = 30

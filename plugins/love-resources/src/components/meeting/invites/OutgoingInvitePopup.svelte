@@ -24,12 +24,22 @@
   export let person: Person
   export let invite: UserMeetingInvite
 
+  const dispatch = createEventDispatcher()
+
   // Re-resolve the invite from the live store so a server-side patch
   // (e.g. isKnock=true after a knock-detection on TxCreate) is reflected
-  // in the popup without re-opening.
-  $: liveInvite = $allInvites.find((it) => it._id === invite._id) ?? invite
-
-  const dispatch = createEventDispatcher()
+  // in the popup without re-opening. When the invite is removed from the
+  // store (auto-join, cancel, expiry, server cleanup) close the popup
+  // so it does not linger as a dead overlay.
+  let seenInStore = false
+  let closed = false
+  $: storeInvite = $allInvites.find((it) => it._id === invite._id)
+  $: liveInvite = storeInvite ?? invite
+  $: if (storeInvite !== undefined) seenInStore = true
+  $: if (!closed && seenInStore && storeInvite === undefined) {
+    closed = true
+    dispatch('close')
+  }
 
   let timeLeft: number = inviteRequestSecondsToLive
   let countdownInterval: ReturnType<typeof setInterval>
