@@ -7,13 +7,21 @@
 //
 
 import { createRestClient, getWorkspaceToken, loadServerConfig, type RestClient } from '@hcengineering/api-client'
-import love, { MeetingStatus, type MeetingMinutes, type ParticipantInfo } from '@hcengineering/love'
+import { systemAccountUuid } from '@hcengineering/core'
+import love, {
+  MeetingStatus,
+  type MeetingMinutes,
+  type ParticipantInfo,
+  type UserMeetingInvite
+} from '@hcengineering/love'
+import { generateToken } from '@hcengineering/server-token'
 import { PlatformURI, PlatformUserSecond } from '../utils'
 import type { BrowserContext, Page } from '@playwright/test'
 
 const MEETINGS_WS = 'meetings-ws'
 
 let cachedRestClient: RestClient | undefined
+let cachedSystemRestClient: RestClient | undefined
 
 async function getMeetingsRestClient (): Promise<RestClient> {
   if (cachedRestClient !== undefined) return cachedRestClient
@@ -28,6 +36,38 @@ async function getMeetingsRestClient (): Promise<RestClient> {
   return cachedRestClient
 }
 
+async function getSystemRestClient (): Promise<RestClient> {
+  if (cachedSystemRestClient !== undefined) return cachedSystemRestClient
+  const baseUrl = (PlatformURI ?? 'http://localhost:8083').replace(/\/$/, '')
+  const config = await loadServerConfig(baseUrl)
+  const token = await getWorkspaceToken(
+    baseUrl,
+    { email: PlatformUserSecond, password: '1234', workspace: MEETINGS_WS },
+    config
+  )
+  const systemToken = generateToken(systemAccountUuid, token.workspaceId, undefined, 'secret')
+  cachedSystemRestClient = createRestClient(token.endpoint, token.workspaceId, systemToken)
+  return cachedSystemRestClient
+}
+
+/**
+ * Active drain of leftover UserMeetingInvite documents — bypasses the 30s
+ * TransientTTL. Uses a system-token REST client because invites live in
+ * per-user PersonSpaces (only the owner — or system — can removeDoc).
+ */
+async function drainPendingInvites (): Promise<void> {
+  try {
+    const sys = await getSystemRestClient()
+    const all = await sys.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, {})
+    await Promise.all(
+      all.map((it) => sys.removeDoc(love.class.UserMeetingInvite, it.space, it._id).catch(() => undefined))
+    )
+  } catch {
+    // Best-effort; if system token isn't configured the polling loop below
+    // still drains via TTL (just slower).
+  }
+}
+
 /**
  * Poll the transactor (via REST) until no MeetingMinutes is Active or
  * Pending — i.e. the previous test's meeting has been Finished by the
@@ -38,9 +78,11 @@ async function getMeetingsRestClient (): Promise<RestClient> {
  */
 export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise<void> {
   const client = await getMeetingsRestClient()
+  // Force-drop leftover invites instead of waiting 30s for TTL.
+  await drainPendingInvites()
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
-    const [meetings, participants] = await Promise.all([
+    const [meetings, participants, invites] = await Promise.all([
       client.findAll<MeetingMinutes>(
         love.class.MeetingMinutes,
         { status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] } },
@@ -50,43 +92,30 @@ export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise
       // makes the office owner appear "in a meeting" on the next test's
       // floor grid (the office cell renders without the resolved name) and
       // also tricks the server's knock detection.
-      client.findAll<ParticipantInfo>(love.class.ParticipantInfo, {}, { limit: 1 })
+      client.findAll<ParticipantInfo>(love.class.ParticipantInfo, {}, { limit: 1 }),
+      // Drain UserMeetingInvite — stale invites from a previous test (a
+      // request/response that wasn't cleaned up because the meeting was
+      // never created or the recipient's accept tx was lost) trip up
+      // toHaveCount/toBeHidden assertions in subsequent tests.
+      client.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, {}, { limit: 1 })
     ])
-    if (meetings.length === 0 && participants.length === 0) return
+    if (meetings.length === 0 && participants.length === 0 && invites.length === 0) return
     await new Promise((resolve) => setTimeout(resolve, 500))
   }
 }
 
 /**
- * Click "Leave" on the page if it's currently inside a meeting. Use in test
- * teardown so no LiveKit session is left active between tests — stale
- * ParticipantInfo on the server can race the next test's `connect()`
- * (LiveKit identity collision, DTLS handshake on top of a half-closed
- * session). Errors during teardown are swallowed.
+ * No-op in the new lifecycle: the page is about to close anyway, and the
+ * LiveKit `participant_left` webhook (fired on socket disconnect) drives
+ * the server-side cleanup of ParticipantInfo + MeetingMinutes status.
+ * Kept as a thin shim so existing call sites don't have to change.
  */
-export async function leaveIfInMeeting (page: Page): Promise<void> {
-  const widget = page.locator('[data-id="meeting-widget"]')
-  try {
-    if ((await widget.count()) === 0) return
-    if (
-      !(await widget
-        .first()
-        .isVisible()
-        .catch(() => false))
-    ) {
-      return
-    }
-    const leave = page.locator('[data-id="meeting-leave"]').first()
-    if ((await leave.count()) === 0) return
-    await leave.click({ timeout: 5000 }).catch(() => undefined)
-    await widget.waitFor({ state: 'hidden', timeout: 15000 }).catch(() => undefined)
-  } catch {
-    // Page was already closed or in a state where leave is impossible.
-  }
+export async function leaveIfInMeeting (_page: Page): Promise<void> {
+  // Intentionally empty.
 }
 
-export async function leaveAllMeetings (pages: Page[]): Promise<void> {
-  await Promise.all(pages.map(leaveIfInMeeting))
+export async function leaveAllMeetings (_pages: Page[]): Promise<void> {
+  // Intentionally empty — see leaveIfInMeeting.
 }
 
 /**

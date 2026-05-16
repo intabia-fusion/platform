@@ -15,7 +15,6 @@ import {
   ParticipantInfo,
   PendingRecording,
   Room,
-  RoomAccess,
   RoomInfo,
   UserMeetingInvite
 } from './types'
@@ -52,9 +51,6 @@ const love = plugin(loveId, {
     MeetingRequest: '' as IntlString,
     Kind: '' as IntlString,
     RoomType: '' as IntlString,
-    Knock: '' as IntlString,
-    Open: '' as IntlString,
-    DND: '' as IntlString,
     StartTranscription: '' as IntlString,
     StopTranscription: '' as IntlString,
     Meeting: '' as IntlString,
@@ -109,6 +105,8 @@ const love = plugin(loveId, {
     NoHostOfficeBody: '' as IntlString,
     CallDeclined: '' as IntlString,
     CallDeclinedBody: '' as IntlString,
+    WaitingForMeeting: '' as IntlString,
+    WaitingForMeetingFrom: '' as IntlString,
     MeetingDeclinedOrFinished: '' as IntlString,
     CancelKnock: '' as IntlString,
     AdmitKnock: '' as IntlString,
@@ -209,17 +207,5 @@ const love = plugin(loveId, {
     ListRoomsDescriptor: '' as Ref<ViewletDescriptor>
   }
 })
-
-export const roomAccessIcon = {
-  [RoomAccess.Open]: love.icon.Open,
-  [RoomAccess.Knock]: love.icon.Knock,
-  [RoomAccess.DND]: love.icon.DND
-}
-
-export const roomAccessLabel = {
-  [RoomAccess.Open]: love.string.Open,
-  [RoomAccess.Knock]: love.string.Knock,
-  [RoomAccess.DND]: love.string.DND
-}
 
 export default love

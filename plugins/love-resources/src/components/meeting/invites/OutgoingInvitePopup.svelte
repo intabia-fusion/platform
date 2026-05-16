@@ -15,10 +15,10 @@
   import { Person, formatName } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
   import { Label, ModernButton, Scroller } from '@hcengineering/ui'
-  import { createEventDispatcher, onDestroy, onMount } from 'svelte'
+  import { createEventDispatcher } from 'svelte'
 
   import love from '../../../plugin'
-  import { cancelInvites, inviteRequestSecondsToLive, allInvites } from '../../../invites'
+  import { cancelInvites, allInvites } from '../../../invites'
   import { UserMeetingInvite } from '@hcengineering/love'
 
   export let person: Person
@@ -26,11 +26,8 @@
 
   const dispatch = createEventDispatcher()
 
-  // Re-resolve the invite from the live store so a server-side patch
-  // (e.g. isKnock=true after a knock-detection on TxCreate) is reflected
-  // in the popup without re-opening. When the invite is removed from the
-  // store (auto-join, cancel, expiry, server cleanup) close the popup
-  // so it does not linger as a dead overlay.
+  // Close the popup when the invite disappears (cancel, accept, TTL expire,
+  // sender stopped heartbeating, etc).
   let seenInStore = false
   let closed = false
   $: storeInvite = $allInvites.find((it) => it._id === invite._id)
@@ -41,23 +38,6 @@
     dispatch('close')
   }
 
-  let timeLeft: number = inviteRequestSecondsToLive
-  let countdownInterval: ReturnType<typeof setInterval>
-
-  onMount(() => {
-    // Start countdown
-    countdownInterval = setInterval(() => {
-      timeLeft--
-      if (timeLeft <= 0) {
-        clearInterval(countdownInterval)
-      }
-    }, 1000)
-  })
-
-  onDestroy(() => {
-    clearInterval(countdownInterval)
-  })
-
   async function handleCancel (): Promise<void> {
     await cancelInvites(undefined, [invite])
     dispatch('close')
@@ -66,13 +46,10 @@
 
 <div class="antiPopup invite-popup flex-gap-4" data-id="outgoing-invite-popup">
   <div class="popup-header">
-    {#if liveInvite.isKnock === true}
+    {#if liveInvite.room !== undefined}
       <Label label={love.string.KnockingTo} />
     {:else}
       <Label label={love.string.YouInvite} />
-    {/if}
-    {#if liveInvite.isKnock !== true && timeLeft <= 10}
-      <span class="timer urgent">{timeLeft}s</span>
     {/if}
   </div>
 

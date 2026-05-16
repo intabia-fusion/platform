@@ -7,12 +7,10 @@ import love, {
   type Room,
   RoomType,
   isOffice,
-  RoomAccess,
   type MeetingMinutes
 } from '@hcengineering/love'
 import presentation, { getClient } from '@hcengineering/presentation'
 import {
-  closeMeetingMinutes,
   getLiveKitEndpoint,
   getRoomName,
   liveKitClient,
@@ -22,21 +20,17 @@ import {
 } from './utils'
 import { get } from 'svelte/store'
 import { LoveServiceError } from './loveClient'
-import { infos, myInfo, myOffice, rooms, myConnectingSessionId, meetings } from './stores'
+import { infos, myInfo, rooms, myConnectingSessionId, meetings } from './stores'
 import { getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import { getMetadata } from '@hcengineering/platform'
-import { sendInvites, unsubscribeFromIncomingInvites } from './invites'
+import { sendInvites } from './invites'
 import { lkIsConnecting } from './liveKitClient'
 
 export let currentMeetingRoom: Ref<Room> | undefined
 export let currentMeeting: Ref<MeetingMinutes> | undefined
 
 export async function createMeeting (room: Room, meeting?: MeetingMinutes): Promise<MeetingMinutes | undefined> {
-  if (room.access === RoomAccess.DND) {
-    return
-  }
-
   const client = getClient()
   const me = getCurrentEmployee()
   const currentPerson = await getPersonByPersonRef(me)
@@ -78,41 +72,12 @@ export async function leaveMeeting (): Promise<void> {
     return
   }
 
-  const client = getClient()
-
-  const currentParticipationInfo = get(myInfo)
-  const office = get(myOffice)
-  if (currentParticipationInfo === undefined) {
-    // If there was no active ParticipantInfo, ensure we still disconnect/cleanup state
-    await liveKitClient.disconnect()
-    unsubscribeFromIncomingInvites()
-    closeMeetingMinutes()
-    currentMeeting = undefined
-    currentMeetingRoom = undefined
-    return
-  }
-
-  // Drop ParticipantInfo on leave. Keeping a stale PI with a now-finished
-  // `meeting` reference poisons busyPersons / RoomPreview locked detection
-  // on other clients (they see "user in some meeting we can't access" =
-  // busy). The server will create a fresh PI on the next participant_joined
-  // webhook from LiveKit. The kick-others-in-own-office behavior is
-  // preserved: we still drop their PIs (same effect for them).
-  try {
-    if (office === undefined || currentParticipationInfo.room !== office._id) {
-      await client.remove(currentParticipationInfo)
-    } else {
-      // Own office: drop all other participants' PIs too, then ours.
-      const participantsInfo = get(infos)
-      const otherParticipants = participantsInfo.filter((p) => p.room === office._id && p !== currentParticipationInfo)
-      for (const participantInfo of otherParticipants) {
-        await client.remove(participantInfo)
-      }
-      await client.remove(currentParticipationInfo)
-    }
-  } catch (err) {
-    console.warn('Failed to drop ParticipantInfo on leave', err)
-  }
+  // Disconnect from LiveKit. The love service receives a `participant_left`
+  // webhook and removes our ParticipantInfo there — clients must NOT delete
+  // documents directly. When the meeting owner leaves their own office, the
+  // service also closes the LiveKit room (`leaveMeetingAsOwner` →
+  // RoomService.deleteRoom) which forces every other participant to
+  // disconnect, generating their own `participant_left` webhooks.
   await liveKitClient.disconnect()
   currentMeeting = undefined
   currentMeetingRoom = undefined
@@ -246,12 +211,6 @@ async function connectToMeeting (mm: MeetingMinutes, room?: Room): Promise<void>
   await navigateToOfficeDoc(mm) // TODO: Select room?
   await moveToMeetingRoom(mm, room)
 
-  // Resolve current person so we can cleanup pending entries after connect
-  const me = getCurrentEmployee()
-  const currentPerson = await getPersonByPersonRef(me)
-  if (currentPerson == null) {
-    return
-  }
   const token = await loveClient.getRoomToken(mm)
   const wsURL = getLiveKitEndpoint()
 
@@ -271,24 +230,6 @@ async function connectToMeeting (mm: MeetingMinutes, room?: Room): Promise<void>
 
   // Connection completed successfully: clear connecting flag
   myConnectingSessionId.set(null)
-
-  // We are now in the meeting - drop any incoming invite-response for this
-  // meeting so the knock popup/sound stops even if the user joined via the
-  // MeetingMinutes link instead of clicking "Join" on the invite popup.
-  try {
-    const client = getClient()
-    const invites = await client.findAll(love.class.UserMeetingInvite, {
-      kind: 'invite-response',
-      to: currentPerson._id,
-      meeting: mm._id,
-      status: 'pending'
-    })
-    for (const invite of invites) {
-      await client.remove(invite)
-    }
-  } catch (err: any) {
-    console.warn('Failed to cleanup pending invites:', err)
-  }
 }
 
 async function moveToMeetingRoom (mm: MeetingMinutes, room?: Room): Promise<void> {

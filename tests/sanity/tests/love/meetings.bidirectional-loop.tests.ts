@@ -63,7 +63,7 @@ export function registerBidirectionalLoopTests (): void {
      * FIRST call works but the SECOND reverse call leaves the caller stuck
      * (no widget, stale outgoing trigger). This test reproduces that flow
      * end-to-end in one pass; use Playwright's `--repeat-each=N` flag to
-     * stress the lazy-create + auto-join path when investigating
+     * stress the client-create + auto-join path when investigating
      * concurrency reports:
      *
      *   npx playwright test -c ./tests/playwright.config.ts \
@@ -90,9 +90,17 @@ export function registerBidirectionalLoopTests (): void {
           await waitConnected(page3)
           await expect(page2.locator('[data-id="outgoing-invite-trigger"]')).toBeHidden({ timeout: 15000 })
           await expect(page3.locator('[data-id="incoming-invite-trigger"]')).toBeHidden({ timeout: 15000 })
+          // Caller (Dirak) leaves their own office meeting — server closes
+          // the LiveKit room and disconnects Muram automatically (no manual
+          // leave on page3).
           await leaveMeeting(page2)
-          await leaveMeeting(page3)
+          await waitDisconnected(page3)
           await waitForActiveMeetingsToFinish()
+          // Re-open the love floor on both pages: after leaving the meeting
+          // both clients land on the MeetingMinutes Summary panel which
+          // covers the floor grid and intercepts hover/click events.
+          await openLove(page2)
+          await openLove(page3)
         })
 
         // Reverse direction — the path the user reported as broken after
@@ -105,8 +113,10 @@ export function registerBidirectionalLoopTests (): void {
           await waitConnected(page2)
           await expect(page3.locator('[data-id="outgoing-invite-trigger"]')).toBeHidden({ timeout: 15000 })
           await expect(page2.locator('[data-id="incoming-invite-trigger"]')).toBeHidden({ timeout: 15000 })
+          // Reverse: meeting is hosted in Muram's office (caller).
+          // Muram leaves → server closes room → Dirak disconnects.
           await leaveMeeting(page3)
-          await leaveMeeting(page2)
+          await waitDisconnected(page2)
           await waitForActiveMeetingsToFinish()
         })
       } finally {

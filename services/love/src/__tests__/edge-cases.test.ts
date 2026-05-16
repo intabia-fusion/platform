@@ -16,17 +16,9 @@
  * Edge case tests for meeting management
  */
 
-import { parseRoomName, RoomAccess } from '@hcengineering/love'
+import { parseRoomName } from '@hcengineering/love'
 
-describe('Edge Cases - RoomAccess and Security', () => {
-  describe('RoomAccess enum', () => {
-    it('should have correct values', () => {
-      expect(RoomAccess.Open).toBe(0)
-      expect(RoomAccess.Knock).toBe(1)
-      expect(RoomAccess.DND).toBe(2)
-    })
-  })
-
+describe('Edge Cases - Room name parsing', () => {
   describe('Room name edge cases', () => {
     // Room name format: `${WorkspaceUuid}_${Ref<MeetingMinutes>}`.
     // Both identifiers are machine-generated and never contain `_`,

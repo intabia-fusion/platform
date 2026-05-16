@@ -43,33 +43,18 @@ export function registerMeetingsTests (): void {
       })
     })
 
-    test('click-regular-room-opens-popup', async () => {
+    test('click-regular-room-opens-edit-panel', async ({ page }) => {
       await officePage.navigateToOffice()
       await expect(officePage.floorGrid()).toBeVisible({ timeout: 15000 })
 
-      // Find non-office rooms (rooms without Employee info in aside)
-      // Regular rooms should show RoomPopup on click
-      const rooms = officePage.page.locator('div.floorGrid-room')
-      const roomCount = await rooms.count()
+      // Regular rooms (Meeting Room 1, etc.) open the EditRoom aside panel
+      // with a Connect/Knock button — not a popup. The popup variant is
+      // only rendered for already-active meetings (see ControlExt.svelte).
+      const room = page.locator('[data-id="room-Meeting Room 1"]').first()
+      await expect(room).toBeVisible({ timeout: 10000 })
+      await room.click()
 
-      // Try rooms starting from the last (more likely to be regular rooms)
-      for (let i = roomCount - 1; i >= 0; i--) {
-        await rooms.nth(i).click()
-
-        // Check if popup appeared (regular room) or panel (office)
-        const popup = officePage.roomPopup()
-        const isPopup = await popup.isVisible().catch(() => false)
-        if (isPopup) {
-          await expect(officePage.enterRoomButton()).toBeVisible()
-          return
-        }
-
-        // Close panel if opened (press Escape)
-        await officePage.page.keyboard.press('Escape')
-        await officePage.page.waitForTimeout(500)
-      }
-      // If no regular rooms found, skip
-      test.skip(true, 'No regular rooms found in workspace')
+      await expect(page.locator('[data-id="meeting-connect"]').first()).toBeVisible({ timeout: 10000 })
     })
   })
 }

@@ -42,9 +42,12 @@ echo "Creating workspace api-tests..."
 echo "Creating workspace api-tests-cr..."
 ./tool-europe.sh create-workspace api-tests-cr email:user1 --region 'europe'
 
-echo "Assigning user1 to workspaces..."
+echo "Assigning users to workspaces..."
 ./tool.sh assign-workspace user1 api-tests
 ./tool.sh assign-workspace user1 api-tests-cr
+# user2 is needed by love-flow tests (caller/recipient pair) so they both
+# have PersonSpace + Employee in the same api-tests workspace.
+./tool.sh assign-workspace user2 api-tests
 ./tool.sh assign-workspace user3 api-tests-fail
 
 rm -rf ./sanity/.auth

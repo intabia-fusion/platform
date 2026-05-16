@@ -31,6 +31,8 @@
     "NoHostOfficeBody": "У вас нет персонального офиса для размещения митинга.",
     "CallDeclined": "Звонок отклонён",
     "CallDeclinedBody": "{name} отклонил(а) ваш звонок.",
+    "WaitingForMeeting": "Ожидаем",
+    "WaitingForMeetingFrom": "Ожидаем, пока {name} начнёт митинг…",
     "MeetingDeclinedOrFinished": "Митинг больше недоступен",
     "CancelKnock": "Отменить стук",
     "AdmitKnock": "Впустить",

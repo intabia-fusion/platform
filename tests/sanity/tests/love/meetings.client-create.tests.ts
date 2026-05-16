@@ -22,29 +22,28 @@ async function waitConnected (page: Page): Promise<void> {
 }
 
 /**
- * Reverse-call (lazy-create) scenario: caller is NOT in a meeting yet.
+ * Reverse-call (client-side create) scenario: caller is NOT in a meeting yet.
  * Both users are online and have personal offices on the floor.
  * Caller clicks the recipient's avatar (rendered inside the recipient's
  * personal office cell), opens the PersonActionPopup and presses the
  * "Invite" action — this sends an invite without a meeting reference.
  *
- * The server is expected to:
- *   - detect the accept and lazy-create a MeetingMinutes in the **caller's**
- *     office (not the recipient's),
- *   - patch the caller's invite-request and the recipient's invite-response
- *     with the new meeting ref,
- *   - drop the invite-response after both sides auto-join.
- *
- * Before this change the meeting was hosted in the recipient's office and
- * the recipient was the owner — see docs/security_meeting_minutes.md.
+ * Per docs/knock.md, the **caller's client** creates the MeetingMinutes
+ * once it observes invite-request.status='accepted' (server trigger does
+ * NOT create the meeting). The server-trigger only syncs status between
+ * invite-request and invite-response.
+ *   - Caller-client creates MeetingMinutes in its own office, pushes
+ *     recipient as member, connects.
+ *   - Recipient-client live-queries MeetingMinutes (members ⊇ [me, from],
+ *     roomId === from's office) and auto-joins.
  */
-export function registerLazyCreateTests (): void {
-  test.describe('meeting minutes - lazy-create on accept', () => {
+export function registerClientCreateTests (): void {
+  test.describe('meeting minutes - client-side create on accept', () => {
     test.beforeEach(async () => {
-      // Drain any stale Active/Pending MeetingMinutes left from previous specs
-      // so the caller's lazy-create branch sees a clean state (otherwise the
-      // caller's office may already have an unfinished MeetingMinutes that
-      // breaks the auto-join sync).
+      // Drain stale Active/Pending MeetingMinutes from previous specs so the
+      // caller-side create sees a clean state (otherwise the caller's office
+      // may already have an unfinished MeetingMinutes that breaks the
+      // auto-join sync).
       await waitForActiveMeetingsToFinish()
     })
 

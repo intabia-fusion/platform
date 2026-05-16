@@ -35,7 +35,7 @@ const config: PlaywrightTestConfig = {
           height: 900
         },
         trace: {
-          mode: 'retain-on-failure',
+          mode: 'on',
           snapshots: true,
           screenshots: true,
           sources: true

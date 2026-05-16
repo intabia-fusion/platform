@@ -17,7 +17,7 @@
  */
 
 import { Ref, AccountUuid, WorkspaceUuid, MeasureContext, PersonId, Class, Space } from '@hcengineering/core'
-import { MeetingMinutes, MeetingStatus, ParticipantInfo, Room, RoomAccess, RoomType, Floor } from '@hcengineering/love'
+import { MeetingMinutes, MeetingStatus, ParticipantInfo, Room, RoomType, Floor } from '@hcengineering/love'
 import { Person } from '@hcengineering/contact'
 
 // Test IDs
@@ -155,7 +155,6 @@ export function createMockRoom (overrides?: Partial<Room>): Room {
     space: 'core.space.Workspace' as Ref<Space>,
     name: 'Test Room',
     type: RoomType.Video,
-    access: RoomAccess.Open,
     floor: 'floor-1' as Ref<Floor>,
     width: 4,
     height: 3,
@@ -180,7 +179,6 @@ export function createMockOffice (overrides?: Partial<Room>): Room {
     _class: 'love.class.Office' as Ref<Class<Room>>,
     name: 'Test Office',
     type: RoomType.Audio,
-    access: RoomAccess.Knock,
     ...overrides
   })
 }

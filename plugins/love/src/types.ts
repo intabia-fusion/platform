@@ -3,12 +3,6 @@ import { Person } from '@hcengineering/contact'
 import { AccountUuid, AttachedDoc, Doc, MarkupBlobRef, Ref, Space, Timestamp, WorkspaceUuid } from '@hcengineering/core'
 import { Preference } from '@hcengineering/preference'
 
-export enum RoomAccess {
-  Open,
-  Knock,
-  DND
-}
-
 export enum RoomType {
   Video,
   Audio,
@@ -105,7 +99,6 @@ export interface ParticipantMetadata {
 export interface Room extends Doc {
   name: string
   type: RoomType
-  access: RoomAccess
   floor: Ref<Floor>
   width: number
   height: number
@@ -243,46 +236,31 @@ export interface PendingRecording extends AttachedDoc {
 }
 
 /**
- * User meeting invite - stored in user's personal space
- * Used for knock/invite notifications with 30-second TTL
+ * User meeting invite - stored in user's personal space.
+ * Lives in DOMAIN_TRANSIENT with TransientTTL=30s; sender refreshes the
+ * TTL via a 15s heartbeat (no-op update) while still calling.
  *
- * kind: 'invite-request' - created in sender's space, tracks outgoing invites
- * kind: 'invite-response' - created in recipient's space by server trigger, used for display
+ * kind: 'invite-request' - created in sender's space, tracks outgoing invites.
+ * kind: 'invite-response' - created in recipient's space (or each owner's
+ *   space for a knock) by the server trigger.
  */
 export interface UserMeetingInvite extends Doc {
-  /** Type of invite record */
   kind: 'invite-request' | 'invite-response'
-  /** Person who sent the invite */
   from: Ref<Person>
-  /** Person who should receive the invite */
   to: Ref<Person>
-  /** Meeting ID if already created */
+  /** Existing meeting ref (A1, or set on Б by trigger after accept). */
   meeting?: Ref<MeetingMinutes>
-  /** Expiration timestamp (30 seconds from creation) */
-  expiresAt: Timestamp
-  /** Status of the invite */
+  /**
+   * Room ref — set ONLY for Б (knock) flow. Sender knows the room but not
+   * the meeting; trigger uses it to fan-out to all owners of the active
+   * private meeting in that room.
+   */
+  room?: Ref<Room>
   status: 'pending' | 'accepted' | 'declined'
   /**
-   * Marks an invite that was inverted by the server when the original
-   * sender wasn't a member of a private meeting but the recipient was.
-   * On accept, the knocker (`from`) is added to the meeting members
-   * and gets a follow-up invite to auto-join — instead of the usual
-   * "recipient joins sender's room" semantics.
-   */
-  isKnock?: boolean
-  /**
-   * Set by the server when an invite is declined automatically (not by the
-   * recipient). Used to surface the cause on the caller side — e.g. when
-   * the caller has no personal office to host the meeting in. Optional;
-   * normal user-initiated decline leaves it unset.
-   */
-  declineReason?: 'no-host-office'
-  /**
-   * Recipient's browser session ID set when the user accepts the invite.
-   * When the recipient is logged in from multiple tabs/windows the same
-   * invite-response is delivered to all of them; only the tab whose
-   * `presentation.metadata.SessionId` matches this value should auto-join
-   * the meeting. Other tabs just close their popup.
+   * Recipient's browser session ID set on accept. Multi-tab guard: only
+   * the tab whose `presentation.metadata.SessionId` matches this value
+   * auto-joins the meeting.
    */
   acceptedSessionId?: string
 }

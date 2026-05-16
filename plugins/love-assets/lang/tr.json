@@ -23,6 +23,8 @@
     "NoHostOfficeBody": "Bu toplantıyı barındıracak kişisel bir ofisiniz yok.",
     "CallDeclined": "Arama reddedildi",
     "CallDeclinedBody": "{name} aramanızı reddetti.",
+    "WaitingForMeeting": "Bekleniyor",
+    "WaitingForMeetingFrom": "{name} toplantıyı başlatmasını bekliyoruz…",
     "MeetingDeclinedOrFinished": "Toplantı artık mevcut değil",
     "CancelKnock": "Kapı çalmayı iptal et",
     "AdmitKnock": "Kabul et",

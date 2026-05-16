@@ -57,7 +57,6 @@
   <Breadcrumbs items={breadcrumbs} currentOnly />
   <svelte:fragment slot="actions">
     {#if $currentRoom !== undefined}
-      <!-- <RoomAccessButton {room} kind="tertiary" size="small" /> -->
       <RecordingButton kind="tertiary" size="small" />
       <TranscriptionButton kind="tertiary" size="small" />
       <MeetingOptionsButton {room} meetingMinutes={doc} kind="tertiary" size="small" />

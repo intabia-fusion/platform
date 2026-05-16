@@ -28,7 +28,7 @@
   import { createMeeting, joinMeeting } from '../meetings'
   import { get } from 'svelte/store'
   import RoomPreview from './RoomPreview.svelte'
-  import { cancelInvites, sendInvites, outgoingInvitesStore } from '../invites'
+  import { cancelInvites, sendKnockRequest, outgoingInvitesStore } from '../invites'
 
   export let object: Room
   export let readonly: boolean = false
@@ -118,18 +118,15 @@
     !roomInfos.some((p) => p.person === me) &&
     !$meetings.some((m) => m.roomId === object._id && m.status !== MeetingStatus.Finished)
 
-  // Track whether we already sent a knock-request for this room.
-  // Pick a real human (skip ai-bot and agent participants) so the server's
-  // knock-detection sees a sensible recipient.
+  // Track whether we already sent a knock-request for this room. Knock
+  // requests are tied to the room, not a specific recipient — the server
+  // fans them out to the meeting's owners.
   $: knockTarget = roomInfos.find((p) => p.kind !== 'agent' && p.person !== $aiBotPerson)?.person
-  $: pendingKnock = $outgoingInvitesStore.find(
-    (it) => it.from === me && knockTarget !== undefined && it.to === knockTarget && it.isKnock === true
-  )
+  $: pendingKnock = $outgoingInvitesStore.find((it) => it.from === me && it.room === object._id)
   $: hasOutgoingKnock = pendingKnock !== undefined
 
   async function knock (): Promise<void> {
-    if (knockTarget === undefined) return
-    await sendInvites([knockTarget])
+    await sendKnockRequest(object._id)
   }
 
   async function cancelKnock (): Promise<void> {

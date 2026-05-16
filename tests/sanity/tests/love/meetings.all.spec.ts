@@ -13,8 +13,9 @@ import { registerBidirectionalLoopTests } from './meetings.bidirectional-loop.te
 import { registerConnectTests } from './meetings.connect.tests'
 import { registerGuestTests } from './meetings.guest.tests'
 import { registerInviteTests } from './meetings.invite.tests'
+import { registerInviteUiTests } from './meetings.invite-ui.tests'
 import { registerKnockOfficeTests } from './meetings.knock-office.tests'
-import { registerLazyCreateTests } from './meetings.lazy-create.tests'
+import { registerClientCreateTests } from './meetings.client-create.tests'
 import { registerMeetingsTests } from './meetings.tests'
 import { registerMigrationTests } from './meetings.migration.tests'
 import { registerPrivacyTests } from './meetings.privacy.tests'
@@ -31,9 +32,10 @@ test.describe('love (meetings) — suite', () => {
   registerStartTests()
   registerSessionTests()
   registerInviteTests()
+  registerInviteUiTests()
   registerConnectTests()
   registerKnockOfficeTests()
-  registerLazyCreateTests()
+  registerClientCreateTests()
   registerScenariosTests()
   registerWorkspaceOwnerTests()
   registerBidirectionalLoopTests()

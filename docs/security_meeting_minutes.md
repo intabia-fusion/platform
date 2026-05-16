@@ -44,53 +44,22 @@
 
 Фильтрация `findAll` теперь в БД-адаптере (PostgreSQL) по аккаунту из сессии. `searchFulltext` получает явный список разрешённых space.
 
-### 5. Lazy-create митинга на сервере при первом accept
+### 5-8. Invite + knock протокол → **рефакторинг → см. [`knock.md`](knock.md)**
 
-Главная архитектурная развязка: митинг **создаётся в офисе звонящего**, не получателя.
+Текущая реализация (lazy-create на сервере, `isKnock`/`declineReason`/`expiresAt` поля, owner rotation, same-pair consolidation, knock-specific heartbeat 60s + TTL 10min) **была признана переусложнённой и нестабильной под нагрузкой** (benchmark `love-invite-flow.benchmark.test.ts` падает при parallel=20×200 на race в `findAll {kind,from,to}` без `_id` disambiguator).
 
-**Поток (сценарий `User1` звонит `User2`, никто пока не в митинге):**
+**Целевая модель** (rollback к origin/develop стилю + минимальные добавки):
+- `UserMeetingInvite` переезжает в `DOMAIN_TRANSIENT` с `TransientTTL = 30s` (safety net).
+- Поля `isKnock`, `declineReason`, `expiresAt` удаляются. Остаются `kind`, `from`, `to`, `meeting?`, `room?`, `status`, `acceptedSessionId?`.
+- **Митинг создаёт клиент-caller** в A2 (lazy-create уходит с сервера). Recipient ждёт через live-query `MeetingMinutes { members: {$all:[me, from]} }`.
+- **Knock** в private митинг — клиент шлёт `invite-request { room: roomId }`, сервер делает fanout invite-response каждому owner. Первый accept удаляет sibling responses.
+- **Heartbeat 15s** от sender (универсальный, не только для knock) ресетит TTL — trigger проксирует update в invite-response.
+- **Cleanup**: клиент удаляет свои документы при наблюдении accept/decline; TTL = safety net.
+- **Notification** `CommonInboxNotification(InvitingYou)` остаётся persistent (missed-call indicator, как в origin).
 
-1. Клиент `User1`: `sendInvites([User2])` → создаёт `UserMeetingInvite(kind: 'invite-request', meeting: undefined)` в своём `PersonSpace`. На клиенте никакой митинг не создаётся.
-2. Серверный триггер `OnUserMeetingInvite` на `TxCreateDoc(invite-request)` — knock-detection, owner-check для приватных, создаёт `invite-response` в `PersonSpace(User2)`.
-3. Получатель жмёт accept → `TxUpdateDoc(invite-response, { status: 'accepted' })`. Клиент **не** создаёт митинг.
-4. Серверный триггер на `TxUpdateDoc(invite-response, status=accepted, meeting=undefined, isKnock=false)` — ветка lazy-create:
-   - найти `Office` инициатора (`invite.from`);
-   - если офиса нет → синхронизировать invite-request как `declined` с `declineReason: 'no-host-office'`, удалить invite-response, клиент звонящего показывает toast;
-   - если есть — создать `MeetingMinutes` с `owners: [callerAccount]`, `members: [callerAccount, recipientAccount]`, `roomId = office._id`, статус `Pending`. Имя — `{Caller} <-> {Recipient}` (или fallback на `{office.name} <date>`);
-   - запатчить invite-response с `meeting: M`, синхронизировать invite-request с `status: 'accepted', meeting: M`.
-5. Клиент `User1` через liveQuery видит `invite-request.meeting` и auto-join через `joinOrCreateMeetingByInvite` (`checkAndJoinIfRecipientJoined`). Клиент `User2` через liveQuery видит `invite-response.meeting` и auto-join (`checkAndJoinIfRecipientAccepted`).
-6. После join клиент-инициатор каждой стороны удаляет свой invite.
+Полная спецификация со сценариями (A1, A2, Б), правилами-инвариантами, псевдокодом trigger, планом рефакторинга по шагам, оценкой упрощения и тестовой матрицей — в [`docs/knock.md`](knock.md).
 
-**Решённый воркараунд для middleware:** при create в `owners` временно кладутся оба `[caller, recipient]`, сразу за этим следует `TxUpdateDoc` который оставляет только `[caller]`. Это обходит `checkSpacePermissions` (recipient на момент создания должен быть в owners, иначе middleware блокирует), но финальное состояние — caller единственный owner.
-
-### 6. Knock-flow для приватных митингов
-
-Сценарии 5-7 из матрицы (стук в чужой приватный митинг / офис / переговорку):
-- Клиент создаёт `invite-request(isKnock=true, meeting=M)`;
-- Сервер находит owners митинга `M`, создаёт invite-response в `PersonSpace` каждого owner-а с `meeting=M, isKnock=true`;
-- Любой owner принимает → сервер $push knocker-а в `members` митинга, syncает `status: 'accepted'` обратно в invite-request → клиент knocker-а auto-join;
-- Любой owner отклоняет → invite-request синхронизируется в `declined`, knocker видит toast `KnockResolutionToast`.
-
-TTL knock-invite — 10 минут, продлевается knock-heartbeat-ом каждые 60 сек со стороны клиента-knocker-а. Если вкладка закрылась — invite истекает естественно.
-
-### 7. Invite-проверки в `OnUserMeetingInvite` для приватных
-
-При invite в приватный митинг:
-
-| Сценарий | Результат |
-|---|---|
-| Публичный митинг | OK |
-| Приватный, отправитель в `owners` | OK; recipient добавляется в `members` |
-| Приватный, отправитель не в `owners` | invite молча отбрасывается |
-| Приватный, `owners` не задан (legacy) | отбрасывается (fail-closed) |
-| Self-invite | отбрасывается |
-| Отправитель без `personUuid` | отбрасывается для приватного |
-
-### 8. Cleanup invites
-
-- На `room_finished` webhook `services/love` → `cleanupInvitesForMeeting(meeting)` удаляет все `UserMeetingInvite` с этим `meeting`.
-- На `participant_left` → `cleanupParticipantInfosForMeeting` чистит ParticipantInfo если митинг завершился.
-- Stale ParticipantInfo от прошлых сессий чистятся при upsert текущей (`upsertParticipantFromLivekit`).
+Текущее состояние кода (текущий PR) — описание ниже сохранено для справки, но **большая часть выпиливается по плану из knock.md**.
 
 ### 9. Account/Person надёжность
 

@@ -23,6 +23,8 @@
     "NoHostOfficeBody": "您没有可用于举办此会议的个人办公室。",
     "CallDeclined": "通话被拒绝",
     "CallDeclinedBody": "{name} 拒绝了您的通话。",
+    "WaitingForMeeting": "等待中",
+    "WaitingForMeetingFrom": "等待 {name} 开始会议…",
     "MeetingDeclinedOrFinished": "会议已不再可用",
     "CancelKnock": "取消敲门",
     "AdmitKnock": "允许进入",

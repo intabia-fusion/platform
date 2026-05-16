@@ -23,6 +23,8 @@
     "NoHostOfficeBody": "No tienes una oficina personal para alojar esta reunión.",
     "CallDeclined": "Llamada rechazada",
     "CallDeclinedBody": "{name} rechazó tu llamada.",
+    "WaitingForMeeting": "Esperando",
+    "WaitingForMeetingFrom": "Esperando a que {name} inicie la reunión…",
     "MeetingDeclinedOrFinished": "La reunión ya no está disponible",
     "CancelKnock": "Cancelar llamada",
     "AdmitKnock": "Admitir",

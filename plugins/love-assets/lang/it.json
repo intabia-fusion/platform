@@ -23,6 +23,8 @@
     "NoHostOfficeBody": "Non hai un ufficio personale per ospitare questa riunione.",
     "CallDeclined": "Chiamata rifiutata",
     "CallDeclinedBody": "{name} ha rifiutato la tua chiamata.",
+    "WaitingForMeeting": "In attesa",
+    "WaitingForMeetingFrom": "In attesa che {name} avvii la riunione…",
     "MeetingDeclinedOrFinished": "La riunione non è più disponibile",
     "CancelKnock": "Annulla la bussata",
     "AdmitKnock": "Ammetti",

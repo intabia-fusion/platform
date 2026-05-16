@@ -23,6 +23,8 @@
     "NoHostOfficeBody": "Sie haben kein persönliches Büro, in dem dieses Meeting stattfinden kann.",
     "CallDeclined": "Anruf abgelehnt",
     "CallDeclinedBody": "{name} hat Ihren Anruf abgelehnt.",
+    "WaitingForMeeting": "Warten",
+    "WaitingForMeetingFrom": "Warten, bis {name} das Meeting startet…",
     "MeetingDeclinedOrFinished": "Das Meeting ist nicht mehr verfügbar",
     "CancelKnock": "Anklopfen abbrechen",
     "AdmitKnock": "Einlassen",

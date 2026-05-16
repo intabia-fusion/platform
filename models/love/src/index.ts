@@ -42,7 +42,6 @@ import {
   type PendingRecording,
   type RecordingFormat,
   type Room,
-  type RoomAccess,
   type RoomInfo,
   type RoomLanguage,
   type RoomType,
@@ -108,8 +107,6 @@ export class TRoom extends TDoc implements Room {
     description!: MarkupBlobRef | null
 
   type!: RoomType
-
-  access!: RoomAccess
 
   @Prop(TypeRef(love.class.Floor), love.string.Floor)
   @ReadOnly()
@@ -324,9 +321,7 @@ export class TMeetingSchedule extends TSchedule implements MeetingSchedule {
 @Model(love.class.LegacyMeetingMinutes, core.class.Doc, DOMAIN_MEETING_MINUTES)
 export class TLegacyMeetingMinutes extends TDoc {}
 
-export const DOMAIN_USER_MEETING_INVITE = 'user-meeting-invite' as Domain
-
-@Model(love.class.UserMeetingInvite, core.class.Doc, DOMAIN_USER_MEETING_INVITE)
+@Model(love.class.UserMeetingInvite, core.class.Doc, DOMAIN_TRANSIENT)
 @UX(love.string.MeetingRequest, love.icon.Invite)
 export class TUserMeetingInvite extends TDoc implements UserMeetingInvite {
   @Prop(TypeString(), love.string.Kind)
@@ -344,20 +339,11 @@ export class TUserMeetingInvite extends TDoc implements UserMeetingInvite {
   @Prop(TypeRef(love.class.MeetingMinutes), love.string.Meeting)
     meeting?: Ref<MeetingMinutes>
 
-  @Prop(TypeTimestamp(), love.string.ExpiresAt)
-  @Index(IndexKind.Indexed)
-    expiresAt!: Timestamp
+  @Prop(TypeRef(love.class.Room), love.string.Room)
+    room?: Ref<Room>
 
   @Prop(TypeString(), love.string.Status)
     status!: 'pending' | 'accepted' | 'declined'
-
-  @Prop(TypeBoolean(), getEmbeddedLabel('IsKnock'))
-  @Hidden()
-    isKnock?: boolean
-
-  @Prop(TypeString(), getEmbeddedLabel('DeclineReason'))
-  @Hidden()
-    declineReason?: 'no-host-office'
 
   @Prop(TypeString(), getEmbeddedLabel('AcceptedSessionId'))
   @Hidden()
@@ -634,6 +620,10 @@ export function createModel (builder: Builder): void {
 
   builder.mixin(love.class.UserMeetingInvite, core.class.Class, view.mixin.ObjectTitle, {
     titleProvider: love.function.UserMeetingInviteTitleProvider
+  })
+
+  builder.mixin(love.class.UserMeetingInvite, core.class.Class, core.mixin.TransientTTL, {
+    ttl: 30
   })
 
   builder.mixin(love.class.Room, core.class.Class, view.mixin.ObjectEditor, {

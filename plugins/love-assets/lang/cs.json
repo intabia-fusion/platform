@@ -23,6 +23,8 @@
     "NoHostOfficeBody": "Nemáte osobní kancelář, ve které by se schůzka mohla konat.",
     "CallDeclined": "Hovor odmítnut",
     "CallDeclinedBody": "{name} odmítl(a) váš hovor.",
+    "WaitingForMeeting": "Čekání",
+    "WaitingForMeetingFrom": "Čekáme, až {name} zahájí schůzku…",
     "MeetingDeclinedOrFinished": "Schůzka již není dostupná",
     "CancelKnock": "Zrušit klepání",
     "AdmitKnock": "Vpustit",

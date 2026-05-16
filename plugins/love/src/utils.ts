@@ -2,7 +2,7 @@ import { Employee, Person } from '@hcengineering/contact'
 import { Data, generateId, Ref, WorkspaceUuid } from '@hcengineering/core'
 
 import love from './plugin'
-import { MeetingMinutes, Office, ParticipantInfo, Room, RoomAccess, RoomType } from './types'
+import { MeetingMinutes, Office, ParticipantInfo, Room, RoomType } from './types'
 
 /**
  * Parsed LiveKit room name components
@@ -59,7 +59,6 @@ export function createDefaultRooms (
       _id,
       name: '',
       type: RoomType.Video,
-      access: RoomAccess.Knock,
       floor: love.ids.MainFloor,
       width: 2,
       height: 1,
@@ -80,7 +79,6 @@ export function createDefaultRooms (
     _id: allHands,
     name: 'All hands',
     type: RoomType.Video,
-    access: RoomAccess.Open,
     floor: love.ids.MainFloor,
     width: 9,
     height: 3,
@@ -98,7 +96,6 @@ export function createDefaultRooms (
     _id: meetingRoom1,
     name: 'Meeting Room 1',
     type: RoomType.Video,
-    access: RoomAccess.Open,
     floor: love.ids.MainFloor,
     width: 4,
     height: 3,
@@ -115,7 +112,6 @@ export function createDefaultRooms (
     _id: meetingRoom2,
     name: 'Meeting Room 2',
     type: RoomType.Video,
-    access: RoomAccess.Open,
     floor: love.ids.MainFloor,
     width: 4,
     height: 3,
@@ -132,7 +128,6 @@ export function createDefaultRooms (
     _id: voiceRoom1,
     name: 'Voice Room 1',
     type: RoomType.Audio,
-    access: RoomAccess.Open,
     floor: love.ids.MainFloor,
     width: 4,
     height: 3,
@@ -149,7 +144,6 @@ export function createDefaultRooms (
     _id: voiceRoom2,
     name: 'Voice Room 2',
     type: RoomType.Audio,
-    access: RoomAccess.Open,
     floor: love.ids.MainFloor,
     width: 4,
     height: 3,

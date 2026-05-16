@@ -31,6 +31,8 @@
     "NoHostOfficeBody": "You don't have a personal office to host this meeting in.",
     "CallDeclined": "Call declined",
     "CallDeclinedBody": "{name} declined your call.",
+    "WaitingForMeeting": "Waiting",
+    "WaitingForMeetingFrom": "Waiting for {name} to start the meeting…",
     "MeetingDeclinedOrFinished": "The meeting is no longer available",
     "CancelKnock": "Cancel knock",
     "AdmitKnock": "Admit",

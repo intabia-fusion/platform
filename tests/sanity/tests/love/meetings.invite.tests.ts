@@ -188,7 +188,7 @@ export function registerInviteTests (): void {
       }
     })
 
-    test('bug 3: invite is cleaned up when sender leaves and meeting finishes', async ({ browser }) => {
+    test('invite UI: sender sees "You are inviting", recipient sees "is asking you to join"', async ({ browser }) => {
       test.setTimeout(60000)
 
       const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
@@ -206,17 +206,25 @@ export function registerInviteTests (): void {
 
         await inviteByLastName(page2, 'Muram')
 
-        // user3 sees the incoming trigger but does nothing
-        await expect(page3.locator('[data-id="incoming-invite-trigger"]')).toBeVisible({ timeout: 15000 })
+        // Sender (page2) — outgoing trigger button must show YouInvite label
+        // and there must be NO incoming trigger on the sender.
+        const senderOutgoing = page2.locator('[data-id="outgoing-invite-trigger"]')
+        await expect(senderOutgoing).toBeVisible({ timeout: 10000 })
+        await expect(senderOutgoing).toContainText(/You are inviting/i, { timeout: 5000 })
+        await expect(page2.locator('[data-id="incoming-invite-trigger"]')).toHaveCount(0, { timeout: 1000 })
 
-        // user2 leaves — they were the only participant, so meeting should finish
-        // and finishMeeting() must clean up any pending invites for that meeting.
-        await page2.locator('[data-id="meeting-leave"]').first().click()
-        await expect(page2.locator('[data-id="meeting-widget"]')).toBeHidden({ timeout: 15000 })
+        // Recipient (page3) — incoming trigger must show "Knocking" label
+        // (incoming-side label) and NO outgoing trigger on recipient.
+        const recipientIncoming = page3.locator('[data-id="incoming-invite-trigger"]')
+        await expect(recipientIncoming).toBeVisible({ timeout: 10000 })
+        await expect(recipientIncoming).toContainText(/Knocking/i, { timeout: 5000 })
+        await expect(page3.locator('[data-id="outgoing-invite-trigger"]')).toHaveCount(0, { timeout: 1000 })
 
-        // Bug 3: incoming trigger on user3 must disappear because the meeting is
-        // finished (cleanupInvitesForMeeting).
-        await expect(page3.locator('[data-id="incoming-invite-trigger"]')).toBeHidden({ timeout: 30000 })
+        // Open the popup on the recipient and verify the message body.
+        await recipientIncoming.click()
+        const popup = page3.locator('[data-id="invite-popup"]')
+        await expect(popup).toBeVisible({ timeout: 5000 })
+        await expect(popup).toContainText(/asking you to join|is knocking|Join meeting/i, { timeout: 3000 })
       } finally {
         await closeMeetingContexts([
           { ctx: ctx2, pages: [page2] },

@@ -1,6 +1,6 @@
 <script lang="ts">
   import core, { Class, Data, generateId, type Doc, Ref } from '@hcengineering/core'
-  import { Floor, getFreePosition, Office, Room, RoomAccess, RoomType } from '@hcengineering/love'
+  import { Floor, getFreePosition, Office, Room, RoomType } from '@hcengineering/love'
   import { translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import setting, { type OfficeSettings } from '@hcengineering/setting'
@@ -19,7 +19,6 @@
     id: TypeIds
     type: RoomType
     _class: Ref<Class<Room>>
-    access: RoomAccess
   }
 
   const items: Item[] = [
@@ -27,22 +26,19 @@
       id: 'meetingRoom',
       label: love.string.MeetingRoom,
       type: RoomType.Video,
-      _class: love.class.Room,
-      access: RoomAccess.Open
+      _class: love.class.Room
     },
     {
       id: 'teamRoom',
       label: love.string.TeamRoom,
       type: RoomType.Audio,
-      _class: love.class.Room,
-      access: RoomAccess.Open
+      _class: love.class.Room
     },
     {
       id: 'office',
       label: love.string.Office,
       type: RoomType.Video,
-      _class: love.class.Office,
-      access: RoomAccess.Knock
+      _class: love.class.Office
     }
   ] as const
 
@@ -74,7 +70,6 @@
       width: 2,
       height: 1,
       type: val.type,
-      access: val.access,
       language: 'en',
       startWithTranscription: defaultTranscription,
       startWithRecording: defaultRecording,

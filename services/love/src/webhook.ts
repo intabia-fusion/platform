@@ -21,7 +21,7 @@ import { getRecordingPreset } from './preset'
 import { saveFile } from './storage'
 import { WorkspaceClient } from './workspaceClient'
 import platform, { PlatformError } from '@hcengineering/platform'
-import { parseParticipantMetadata } from './utils'
+import { getRoomName, parseParticipantMetadata } from './utils'
 
 export class WebhookProcessor {
   constructor (
@@ -209,12 +209,38 @@ export class WebhookProcessor {
         await saveParticipantSessionBilling(
           this.ctx,
           roomName.workspace,
-          `${roomName.workspace}_${roomName.meetingId}`,
+          getRoomName(roomName.workspace, roomName.meetingId),
           participant.identity ?? personRef,
           participant.sid,
           joinedAt,
           Date.now()
         )
+      }
+
+      // Office owner left their own office meeting → close the LiveKit room
+      // so every remaining participant is disconnected (and produces their
+      // own `participant_left` webhook to clean up their ParticipantInfo).
+      // Clients never delete participants directly; the lifecycle is driven
+      // by LiveKit events only.
+      const meetingDoc = await wsClient.findMeetingById(roomName.meetingId)
+      if (meetingDoc?.roomId !== undefined) {
+        const officeOwner = await wsClient.findOfficeOwner(meetingDoc.roomId)
+        if (officeOwner !== undefined && officeOwner === personRef) {
+          const lkRoomName = getRoomName(roomName.workspace, roomName.meetingId)
+          try {
+            await this.roomClient.deleteRoom(lkRoomName)
+            this.ctx.info('[Webhook] Owner office left, closed LiveKit room', {
+              meeting: roomName.meetingId,
+              owner: personRef,
+              lkRoomName
+            })
+          } catch (err: any) {
+            this.ctx.warn('[Webhook] Failed to close LiveKit room on owner-leave', {
+              error: err?.message ?? String(err),
+              lkRoomName
+            })
+          }
+        }
       }
     }
   }

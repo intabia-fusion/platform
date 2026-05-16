@@ -33,6 +33,7 @@ import core, {
 import love, {
   MeetingMinutes,
   MeetingStatus,
+  Office,
   ParticipantInfo,
   ParticipantMetadata,
   PendingRecording,
@@ -40,7 +41,6 @@ import love, {
   RecordingState,
   Room,
   TranscriptionState,
-  UserMeetingInvite,
   getFreeRoomPlace
 } from '@hcengineering/love'
 import { Asset, IntlString } from '@hcengineering/platform'
@@ -260,23 +260,6 @@ export class WorkspaceClient {
 
     // Clean up all ParticipantInfo entries for this meeting
     await this.cleanupParticipantInfosForMeeting(ref)
-    // Clean up any pending invites that point to this meeting so the
-    // recipient's "knock" UI/sound stops once the meeting is over.
-    await this.cleanupInvitesForMeeting(ref)
-  }
-
-  private async cleanupInvitesForMeeting (meeting: Ref<MeetingMinutes>): Promise<void> {
-    try {
-      const invites = await this.client.findAll(love.class.UserMeetingInvite, { meeting })
-      for (const invite of invites) {
-        await this.client.remove(invite as UserMeetingInvite)
-      }
-    } catch (err: any) {
-      this.ctx.error('cleanupInvitesForMeeting failed', {
-        error: err?.message ?? String(err),
-        meeting
-      })
-    }
   }
 
   /**
@@ -402,23 +385,6 @@ export class WorkspaceClient {
       }
       const attachedRoom: Ref<Room> | undefined = meetingDoc.roomId
 
-      // Clean up any stale ParticipantInfo for this person from previous
-      // sessions or other meetings. Without this the client-side dedup
-      // (filterParticipantInfo in plugins/love-resources/src/stores.ts keeps
-      // a single PI per person) can pick the stale one and end up with no
-      // PI in the active meeting room — every observer then sees the room
-      // as empty and EditRoom never resolves to the knock button.
-      const stalePIs = await this.client.findAll(love.class.ParticipantInfo, { person })
-      for (const stale of stalePIs) {
-        if (stale.meeting === meeting && stale.sessionId === sessionId) continue
-        await this.client.remove(stale).catch((err: any) => {
-          this.ctx.warn('Failed to drop stale ParticipantInfo', {
-            id: stale._id,
-            error: err?.message ?? String(err)
-          })
-        })
-      }
-
       const infos = await this.client.findAll(love.class.ParticipantInfo, {
         person,
         meeting,
@@ -525,9 +491,16 @@ export class WorkspaceClient {
     sessionId: string
   ): Promise<void> {
     try {
-      const allInfos = await this.client.findAll(love.class.ParticipantInfo, { meeting, sessionId, person })
-      const infos = allInfos.filter((it) => it.person === person)
-      for (const info of infos) {
+      // Drop every ParticipantInfo for this person in this meeting plus
+      // any row carrying the exact LK sessionId. LiveKit guarantees one
+      // live participant per (room, identity); rows that survive into a
+      // `participant_left` are by definition stale, so leaving sessionId
+      // filter narrow (origin behavior) lets prior crashed/reconnected
+      // sessions linger and confuses the client-side dedup.
+      const infos = await this.client.findAll(love.class.ParticipantInfo, { person, meeting })
+      const bySid = await this.client.findAll(love.class.ParticipantInfo, { person, sessionId })
+      const all = [...infos, ...bySid.filter((b) => !infos.some((i) => i._id === b._id))]
+      for (const info of all) {
         await this.client.remove(info)
       }
     } catch (err: any) {
@@ -594,6 +567,20 @@ export class WorkspaceClient {
       return await this.client.findOne(love.class.MeetingMinutes, { _id: meetingId })
     } catch (err: any) {
       this.ctx.error('[WorkspaceClient.findMeetingById] Failed', { error: err?.message ?? String(err), meetingId })
+      return undefined
+    }
+  }
+
+  /**
+   * Returns the Person ref of the Office's owner if `roomRef` points to an
+   * Office, otherwise `undefined`.
+   */
+  async findOfficeOwner (roomRef: Ref<Room>): Promise<Ref<Person> | undefined> {
+    try {
+      const office = await this.client.findOne(love.class.Office, { _id: roomRef as Ref<Office> })
+      return office?.person ?? undefined
+    } catch (err: any) {
+      this.ctx.error('[WorkspaceClient.findOfficeOwner] Failed', { error: err?.message ?? String(err), roomRef })
       return undefined
     }
   }

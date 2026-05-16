@@ -15,7 +15,7 @@
   import { Person, formatName } from '@hcengineering/contact'
   import { Avatar, getPersonByPersonRefCb } from '@hcengineering/contact-resources'
   import { Label, ModernButton } from '@hcengineering/ui'
-  import { createEventDispatcher, onDestroy, onMount } from 'svelte'
+  import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../../../plugin'
   import { responseToInviteRequest, allInvites } from '../../../invites'
@@ -29,9 +29,7 @@
   const mySessionId = getMetadata(presentation.metadata.SessionId) ?? undefined
 
   // Close the popup when the underlying invite disappears from the store
-  // (cancelled by sender, accepted/declined and removed, expired, server
-  // cleanup on meeting-finished). Otherwise the popup lingers until the
-  // user manually closes it or refreshes the page.
+  // (cancelled by sender, accepted/declined and removed, TTL expired, etc).
   let seenInStore = false
   let closed = false
   $: storeInvite = $allInvites.find((it) => it._id === invite._id)
@@ -40,9 +38,7 @@
     closed = true
     dispatch('close')
   }
-  // Multi-tab: another tab of the same recipient already accepted/declined
-  // this invite. Close the popup here without taking any action so the
-  // accepting tab is the only one that auto-joins.
+  // Multi-tab: another tab already responded.
   $: if (
     !closed &&
     storeInvite !== undefined &&
@@ -55,32 +51,11 @@
   }
 
   let person: Person | undefined = undefined
-  let timeLeft: number = 30
-  let interval: ReturnType<typeof setInterval>
-
-  // Reactive update when invite.expiresAt changes
-  $: {
-    timeLeft = Math.max(0, Math.floor((invite.expiresAt - Date.now()) / 1000))
-  }
 
   onMount(async () => {
-    // Load person details (sender)
     getPersonByPersonRefCb(invite.from, (p) => {
       person = p ?? undefined
     })
-
-    // Start countdown
-    interval = setInterval(() => {
-      timeLeft = Math.max(0, Math.floor((invite.expiresAt - Date.now()) / 1000))
-      if (timeLeft <= 0) {
-        clearInterval(interval)
-        void handleReject()
-      }
-    }, 1000)
-  })
-
-  onDestroy(() => {
-    clearInterval(interval)
   })
 
   async function handleJoin (): Promise<void> {
@@ -104,13 +79,10 @@
     {:else}
       <Label label={love.string.JoinMeeting} />
     {/if}
-    {#if timeLeft <= 10}
-      <span class="timer urgent">{timeLeft}s</span>
-    {/if}
   </div>
 
   <div class="popup-message">
-    {#if invite.isKnock === true}
+    {#if invite.room !== undefined}
       <Label label={love.string.IsKnocking} params={{ name: person?.name ?? '' }} />
     {:else if invite.meeting}
       <Label label={love.string.JoinMeeting} params={{ name: person?.name ?? '' }} />

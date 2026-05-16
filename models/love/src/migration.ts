@@ -29,7 +29,6 @@ import drive from '@hcengineering/drive'
 import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 import {
   MeetingStatus,
-  RoomAccess,
   type RoomLanguage,
   RoomType,
   type TranscriptionState,
@@ -72,7 +71,6 @@ interface OldMeetingMinutes extends AttachedDoc {
   messages?: number
   attachments?: number
   recordings?: number
-  access: RoomAccess
   language: RoomLanguage
   startWithRecording?: boolean
   startWithTranscription?: boolean
@@ -133,7 +131,6 @@ async function createReception (client: MigrationUpgradeClient): Promise<void> {
     {
       name: 'Reception',
       type: RoomType.Reception,
-      access: RoomAccess.Open,
       floor: '' as Ref<Floor>,
       width: 100,
       height: 0,

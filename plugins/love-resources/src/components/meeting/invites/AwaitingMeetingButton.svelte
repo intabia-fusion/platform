@@ -16,37 +16,20 @@
   import { Avatar } from '@hcengineering/contact-resources'
   import { ModernButton } from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { UserMeetingInvite } from '@hcengineering/love'
   import love from '../../../plugin'
 
   export let person: Person
-  export let invite: UserMeetingInvite
-  export let type: 'outgoing' | 'incoming'
-  export let onClick: (e: MouseEvent, invite: UserMeetingInvite, person: Person) => void
-
-  $: label =
-    type === 'incoming'
-      ? love.string.KnockingLabel
-      : invite.room !== undefined
-        ? love.string.KnockingTo
-        : love.string.YouInvite
-
-  $: tooltipLabel =
-    type === 'outgoing'
-      ? invite.room !== undefined
-        ? getEmbeddedLabel(`Knocking to ${person.name}`)
-        : getEmbeddedLabel(`Inviting ${person.name}`)
-      : getEmbeddedLabel(`Invited by ${person.name}`)
+  export let onClick: (e: MouseEvent, person: Person) => void
 </script>
 
 <ModernButton
-  {label}
+  label={love.string.WaitingForMeeting}
   kind="primary"
   size="small"
-  tooltip={{ label: tooltipLabel, direction: 'bottom' }}
-  dataId={type === 'incoming' ? 'incoming-invite-trigger' : 'outgoing-invite-trigger'}
+  tooltip={{ label: getEmbeddedLabel(`Waiting for ${person.name} to start the meeting`), direction: 'bottom' }}
+  dataId="awaiting-meeting-trigger"
   on:click={(e) => {
-    onClick(e, invite, person)
+    onClick(e, person)
   }}
 >
   <div class="avatars-container">
@@ -58,39 +41,20 @@
 
 <style lang="scss">
   .avatars-container {
-    display: inline-flex;
+    display: flex;
+    flex-direction: row-reverse;
     align-items: center;
     margin-left: 0.5rem;
   }
-
-  .time {
-    /* background: rgba(0, 0, 0, 0.5); */
-    color: var(--accent-color-base);
-  }
-
   .combined-avatar {
     position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
+    margin-left: -0.5rem;
+    &:first-child {
+      margin-left: 0;
+    }
     &.tiny {
       width: 1.5rem;
       height: 1.5rem;
-    }
-
-    &[data-over]::after {
-      content: attr(data-over);
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.5);
-      color: white;
-      font-size: 0.625rem;
-      font-weight: 600;
-      border-radius: 50%;
     }
   }
 </style>
