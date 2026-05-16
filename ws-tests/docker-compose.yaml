@@ -57,9 +57,11 @@ services:
       - redpanda
       - start
       - --kafka-addr internal://0.0.0.0:9093,external://0.0.0.0:19093
-      - --advertise-kafka-addr internal://redpanda:9093,external://localhost:19093
+      - --advertise-kafka-addr
+        internal://redpanda:9093,external://localhost:19093
       - --pandaproxy-addr internal://0.0.0.0:8084,external://0.0.0.0:18084
-      - --advertise-pandaproxy-addr internal://redpanda:8084,external://localhost:18084
+      - --advertise-pandaproxy-addr
+        internal://redpanda:8084,external://localhost:18084
       - --schema-registry-addr internal://0.0.0.0:8083,external://0.0.0.0:18083
       - --rpc-addr redpanda:33145
       - --advertise-rpc-addr redpanda:33145
@@ -70,7 +72,17 @@ services:
     ports:
       - 19093:19093
     healthcheck:
-      test: ['CMD', 'rpk', 'cluster', 'info', '-X', 'user=superuser', '-X', 'pass=secretpassword']
+      test:
+        [
+          'CMD',
+          'rpk',
+          'cluster',
+          'info',
+          '-X',
+          'user=superuser',
+          '-X',
+          'pass=secretpassword',
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -136,7 +148,10 @@ services:
   elastic:
     image: 'elasticsearch:8.19.1'
     command: >
-      /bin/sh -c "./bin/elasticsearch-plugin list | grep -q analysis-icu || ./bin/elasticsearch-plugin install --batch analysis-icu; exec /usr/local/bin/docker-entrypoint.sh eswrapper -Ediscovery.type=single-node -Expack.security.enabled=false -Expack.security.http.ssl.enabled=false"
+      /bin/sh -c "./bin/elasticsearch-plugin list | grep -q analysis-icu ||
+      ./bin/elasticsearch-plugin install --batch analysis-icu; exec
+      /usr/local/bin/docker-entrypoint.sh eswrapper -Ediscovery.type=single-node
+      -Expack.security.enabled=false -Expack.security.http.ssl.enabled=false"
     ports:
       - 9201:9200
     volumes:
@@ -424,6 +439,7 @@ services:
       - OPENAI_SUMMARY_MODEL=openai/gpt-oss-20b
       - OPENAI_TRANSLATE_MODEL=openai/gpt-oss-20b
       - OPENAI_BASE_URL=http://host.docker.internal:1234/v1/
+      - CHUNK_STORAGE_CONFIG="minio|minio?accessKey=minioadmin&secretKey=minioadmin&rootBucket=chunks"
   activity:
     image: intabiafusion/activity
     depends_on:
