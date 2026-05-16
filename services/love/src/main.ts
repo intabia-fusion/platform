@@ -18,7 +18,7 @@ import {
   type AccountClient
 } from '@hcengineering/account-client'
 import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { MeasureContext, newMetrics, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
+import { AccountRole, MeasureContext, newMetrics, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
 import {
   parseRoomName,
   ParticipantMetadata,
@@ -268,9 +268,27 @@ export const main = async (): Promise<void> => {
         const wsClient = await WorkspaceClient.create(workspaceId, ctx)
         const meetingDoc = await wsClient.findMeetingById(meetingId)
         if (meetingDoc !== undefined && meetingDoc.private && !meetingDoc.members.includes(accountUuid)) {
-          ctx.warn('Access denied to private meeting', { meetingId, account: accountUuid })
-          res.status(403).send({ error: 'Access denied to private meeting' })
-          return
+          // Workspace owners (AccountRole.Owner) bypass private-meeting
+          // membership the same way SpaceSecurityMiddleware bypasses
+          // owner-only checks for them server-side. The client is expected
+          // to self-add the owner to `members` before calling getToken;
+          // we recheck role here to keep the endpoint authoritative even
+          // if the membership write races the token request or fails.
+          let isWorkspaceOwner = false
+          try {
+            const wsLoginInfo = await getAccountClient(token).getLoginInfoByToken()
+            isWorkspaceOwner = isWorkspaceLoginInfo(wsLoginInfo) && wsLoginInfo.role === AccountRole.Owner
+          } catch (err: any) {
+            ctx.warn('Failed to resolve role for owner-bypass check', {
+              error: err?.message ?? String(err),
+              account: accountUuid
+            })
+          }
+          if (!isWorkspaceOwner) {
+            ctx.warn('Access denied to private meeting', { meetingId, account: accountUuid })
+            res.status(403).send({ error: 'Access denied to private meeting' })
+            return
+          }
         }
       }
     } catch (err: any) {

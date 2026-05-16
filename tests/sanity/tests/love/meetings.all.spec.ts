@@ -9,6 +9,7 @@
 import { test } from '@playwright/test'
 
 import { registerAccessTests } from './meetings.access.tests'
+import { registerBidirectionalLoopTests } from './meetings.bidirectional-loop.tests'
 import { registerConnectTests } from './meetings.connect.tests'
 import { registerGuestTests } from './meetings.guest.tests'
 import { registerInviteTests } from './meetings.invite.tests'
@@ -20,6 +21,7 @@ import { registerPrivacyTests } from './meetings.privacy.tests'
 import { registerScenariosTests } from './meetings.scenarios.tests'
 import { registerSessionTests } from './meetings.session.tests'
 import { registerStartTests } from './meetings.start.tests'
+import { registerWorkspaceOwnerTests } from './meetings.workspace-owner.tests'
 
 test.describe('love (meetings) — suite', () => {
   registerMeetingsTests()
@@ -33,5 +35,7 @@ test.describe('love (meetings) — suite', () => {
   registerKnockOfficeTests()
   registerLazyCreateTests()
   registerScenariosTests()
+  registerWorkspaceOwnerTests()
+  registerBidirectionalLoopTests()
   registerGuestTests()
 })

@@ -121,9 +121,27 @@ export async function leaveMeeting (): Promise<void> {
 export async function joinMeeting (meeting: MeetingMinutes): Promise<void> {
   if (meeting.roomId == null) return
   const room = getRoomById(meeting.roomId)
-  if (meeting.private && !meeting.members.includes(getCurrentAccount().uuid)) return
+  const me = getCurrentAccount()
+  const isWorkspaceOwner = me.role === AccountRole.Owner
 
-  const isGuest = getCurrentAccount().role === AccountRole.Guest
+  if (meeting.private && !meeting.members.includes(me.uuid)) {
+    // Workspace owner has full access to every space (SpaceSecurityMiddleware
+    // bypasses the owner-only checks for AccountRole.Owner), so they may
+    // self-add to the meeting members and walk straight in — they are
+    // effectively a trusted moderator across the workspace. Everyone else
+    // bails out and (if the UI offered Connect) gets the knock flow instead.
+    if (!isWorkspaceOwner) return
+    try {
+      const client = getClient()
+      await client.update(meeting, { $push: { members: me.uuid } })
+      meeting = { ...meeting, members: [...meeting.members, me.uuid] }
+    } catch (err) {
+      console.warn('Failed to self-add workspace owner to private meeting members', err)
+      return
+    }
+  }
+
+  const isGuest = me.role === AccountRole.Guest
 
   // Check if this is the user's own office - allow direct connection without knock
   const isOwnOffice = room !== undefined && isOffice(room) && room.person === getCurrentEmployee()
