@@ -27,6 +27,7 @@ import {
   createRestTxOperations,
   getWorkspaceToken,
   loadServerConfig,
+  NodeWebSocketFactory,
   type PlatformClient,
   type RestClient,
   type WorkspaceToken
@@ -79,8 +80,23 @@ describe('love invite flow (api-tests)', () => {
       config
     )
 
-    user1Client = await connect(PLATFORM_URL, { email: 'user1', password: '1234', workspace: WORKSPACE })
-    user2Client = await connect(PLATFORM_URL, { email: 'user2', password: '1234', workspace: WORKSPACE })
+    // In Jest (testEnvironment: 'node'), global WebSocket is not available
+    // (jest swaps the runtime such that Node 22+ native WebSocket is hidden),
+    // so the default client-resources factory throws `WebSocket is not
+    // defined`. Pass NodeWebSocketFactory explicitly — same approach used by
+    // any non-browser consumer of @hcengineering/api-client.
+    user1Client = await connect(PLATFORM_URL, {
+      email: 'user1',
+      password: '1234',
+      workspace: WORKSPACE,
+      socketFactory: NodeWebSocketFactory
+    })
+    user2Client = await connect(PLATFORM_URL, {
+      email: 'user2',
+      password: '1234',
+      workspace: WORKSPACE,
+      socketFactory: NodeWebSocketFactory
+    })
 
     user1Rest = createRestClient(user1Token.endpoint, user1Token.workspaceId, user1Token.token)
     systemRest = createRestClient(

@@ -57,7 +57,7 @@ export const outgoingInvitesStore = derived([allInvites, infos], ([all, allInfos
   if (toDrop.length > 0) {
     const client = getClient()
     for (const inv of toDrop) {
-      client.removeDoc(love.class.UserMeetingInvite, inv.space, inv._id).catch(() => undefined)
+      client.removeDoc(love.class.UserMeetingInvite, inv.space, inv._id).catch((): void => undefined)
     }
   }
 
