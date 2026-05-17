@@ -35,11 +35,11 @@ import core, {
   makeDocCollabId,
   type Markup,
   type MarkupBlobRef,
+  type Mixin,
   type Ref,
   type RelatedDocument,
   type Space,
   type TxOperations,
-  type VersionableClass,
   type WithLookup
 } from '@hcengineering/core'
 import { toRank } from '@hcengineering/rank'
@@ -71,12 +71,12 @@ import workbench, { type LocationData, type Widget, type WidgetTab } from '@hcen
 import { createWidgetTab } from '@hcengineering/workbench-resources'
 
 import attachment from '@hcengineering/attachment'
+import { makeRank } from '@hcengineering/rank'
+import { writable } from 'svelte/store'
 import CardSearchItem from './components/CardSearchItem.svelte'
 import CreateSpace from './components/navigator/CreateSpace.svelte'
 import card from './plugin'
 import { type NavigatorConfig } from './types'
-import { writable } from 'svelte/store'
-import { makeRank } from '@hcengineering/rank'
 
 export async function deleteMasterTag (tag: MasterTag | undefined, onDelete?: () => void): Promise<void> {
   if (tag !== undefined) {
@@ -280,10 +280,16 @@ export async function createTypePermissions (masterTag: MasterTag | Tag): Promis
   }
 }
 
+interface CopySettings {
+  excludedProperties?: string[]
+  excludedRelations?: string[] // ${associationId}_${a|b}
+  excludeMixins?: Array<Ref<Mixin<Doc>>>
+}
+
 async function cloneCard (
   origin: Card,
   overrideProps: Record<string, any>,
-  versionableClass?: VersionableClass,
+  config?: CopySettings,
   copyIds: boolean = false
 ): Promise<Ref<Card>> {
   const client = getClient()
@@ -298,7 +304,7 @@ async function cloneCard (
   const systemFields = ['_class', 'id', 'createdOn', 'modifiedOn', 'modifiedBy', 'createdBy', 'createdOn', 'rank']
 
   for (const [key, attr] of attrs) {
-    if (versionableClass?.excludedProperties?.includes(key) === true || systemFields.includes(key)) {
+    if (config?.excludedProperties?.includes(key) === true || systemFields.includes(key)) {
       continue
     }
     if (attr.type._class === core.class.Collection) {
@@ -315,7 +321,7 @@ async function cloneCard (
   const relationsA = await client.findAll(core.class.Relation, { docA: origin._id })
   const relationsB = await client.findAll(core.class.Relation, { docB: origin._id })
 
-  if (versionableClass?.excludedProperties?.includes('content') !== true) {
+  if (config?.excludedProperties?.includes('content') !== true) {
     const markup = await getMarkup(makeDocCollabId(origin, 'content'), origin.content)
     if (!isEmptyMarkup(markup)) {
       const collabId = makeCollabId(base, targetId, 'content')
@@ -326,7 +332,7 @@ async function cloneCard (
   const ops = client.apply(`Duplicate_card_${origin._id}`)
   await ops.createDoc(base, origin.space, props, targetId)
   for (const mixin of mixins) {
-    if (versionableClass?.excludeMixins?.includes(mixin) === true) {
+    if (config?.excludeMixins?.includes(mixin) === true) {
       continue
     }
     const mixinAttrs = h.getOwnAttributes(mixin)
@@ -339,7 +345,7 @@ async function cloneCard (
   }
 
   for (const rel of relationsA) {
-    if (versionableClass?.excludedRelations?.includes(`${rel.association}_b`) !== true) {
+    if (config?.excludedRelations?.includes(`${rel.association}_b`) !== true) {
       await ops.createDoc(core.class.Relation, core.space.Workspace, {
         docA: targetId,
         docB: rel.docB,
@@ -348,7 +354,7 @@ async function cloneCard (
     }
   }
   for (const rel of relationsB) {
-    if (versionableClass?.excludedRelations?.includes(`${rel.association}_a`) !== true) {
+    if (config?.excludedRelations?.includes(`${rel.association}_a`) !== true) {
       await ops.createDoc(core.class.Relation, core.space.Workspace, {
         docA: rel.docA,
         docB: targetId,
@@ -358,7 +364,7 @@ async function cloneCard (
   }
   await ops.commit()
 
-  if (versionableClass?.excludedProperties?.includes('attachments') !== true) {
+  if (config?.excludedProperties?.includes('attachments') !== true) {
     const attachments = await client.findAll(attachment.class.Attachment, { attachedTo: origin._id })
     const attachmentOps = client.apply(`Duplicate_attachments_${origin._id}`)
     for (const att of attachments) {
@@ -371,10 +377,14 @@ async function cloneCard (
   return targetId
 }
 
-export async function duplicateCard (origin: Card): Promise<void> {
-  const targetId = await cloneCard(origin, {
-    title: `${origin.title} (Copy)`
-  })
+export async function duplicateCard (origin: Card, config?: CopySettings): Promise<void> {
+  const targetId = await cloneCard(
+    origin,
+    {
+      title: `${origin.title} (Copy)`
+    },
+    config
+  )
 
   const loc = getCurrentLocation()
   loc.path[2] = cardId
