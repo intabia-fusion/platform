@@ -52,6 +52,7 @@ runs:
         fi
       env:
         DOCKER_ACCESS_TOKEN: ${{ inputs.docker-access-token }}
+        LIVEKIT_MODE: docker
 
     - name: Build test package
       shell: bash

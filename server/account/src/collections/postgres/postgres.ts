@@ -21,7 +21,9 @@ import {
   type AccountRole,
   type WorkspaceUuid,
   type AccountUuid,
-  type PersonUuid
+  type PersonUuid,
+  type PersonId,
+  type SocialIdType
 } from '@hcengineering/core'
 
 import { getMigrations } from './migrations'
@@ -1222,6 +1224,75 @@ export class PostgresAccountDB implements AccountDB {
     const res = await this.client`SELECT gen_random_uuid();`
 
     return res[0].gen_random_uuid as PersonUuid
+  }
+
+  async ensurePerson (
+    socialType: SocialIdType,
+    socialValue: string,
+    firstName: string,
+    lastName: string
+  ): Promise<{ uuid: PersonUuid, socialId: PersonId }> {
+    // Atomic find-or-create of (person + social_id) keyed by (socialType, socialValue).
+    // Uses INSERT ... ON CONFLICT DO NOTHING which is supported by both PostgreSQL
+    // and CockroachDB. Avoids pg_advisory_xact_lock which CockroachDB does not support.
+    // Flow:
+    //   1. Check for existing social_id (optimistic fast path, no writes).
+    //   2. If absent, insert person, then insert social_id ON CONFLICT DO NOTHING.
+    //   3. If the social_id insert hit a conflict, the orphan person we just inserted
+    //      is rolled back inside the same transaction by deleting it, and we read the
+    //      winning row. The FK from social_id.person_uuid won't block the delete
+    //      because no one outside this transaction can see our orphan person yet.
+    const personTable = this.person.getTableName()
+    const socialIdTable = this.socialId.getTableName()
+    return await this.withRetry(async (tx) => {
+      const existing = await tx.unsafe(
+        `SELECT _id, person_uuid FROM ${socialIdTable} WHERE type = $1 AND value = $2 LIMIT 1`,
+        [socialType, socialValue]
+      )
+      if (existing.length > 0) {
+        return {
+          uuid: existing[0].person_uuid as PersonUuid,
+          socialId: existing[0]._id as PersonId
+        }
+      }
+
+      const personRow = await tx.unsafe(
+        `INSERT INTO ${personTable} (first_name, last_name) VALUES ($1, $2) RETURNING uuid`,
+        [firstName, lastName]
+      )
+      const personUuid = personRow[0].uuid as PersonUuid
+
+      const socialIdRow = await tx.unsafe(
+        `INSERT INTO ${socialIdTable} (type, value, person_uuid) VALUES ($1, $2, $3)
+         ON CONFLICT (type, value) DO NOTHING
+         RETURNING _id`,
+        [socialType, socialValue, personUuid]
+      )
+
+      if (socialIdRow.length > 0) {
+        return {
+          uuid: personUuid,
+          socialId: socialIdRow[0]._id as PersonId
+        }
+      }
+
+      // Concurrent caller won the race. Roll back our orphan person and return the winner.
+      await tx.unsafe(`DELETE FROM ${personTable} WHERE uuid = $1`, [personUuid])
+
+      const winner = await tx.unsafe(
+        `SELECT _id, person_uuid FROM ${socialIdTable} WHERE type = $1 AND value = $2 LIMIT 1`,
+        [socialType, socialValue]
+      )
+      if (winner.length === 0) {
+        throw new Error(
+          `ensurePerson: social_id conflict resolved but winning row is missing for ${socialType}:${socialValue}`
+        )
+      }
+      return {
+        uuid: winner[0].person_uuid as PersonUuid,
+        socialId: winner[0]._id as PersonId
+      }
+    })
   }
 
   protected getMigrations (): [string, string][] {

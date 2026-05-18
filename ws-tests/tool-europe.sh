@@ -6,9 +6,11 @@ export MINIO_SECRET_KEY=minioadmin
 export STORAGE_CONFIG="datalake|http://localhost:8083/_datalake"
 export ACCOUNTS_URL=http://localhost:8083/_account
 export REGION_CONFIG=./region-config.yaml
-export ACCOUNT_DB_URL=postgresql://root@localhost:26258/defaultdb?sslmode=disable
+export ACCOUNT_DB_URL=postgresql://postgres:postgres@localhost:5433/postgres
+export ELASTIC_URL=http://localhost:9201
 export SERVER_SECRET=secret
-export DB_URL=postgresql://root@localhost:26258/defaultdb?sslmode=disable
+# Europe region - pure PostgreSQL
+export DB_URL=postgres://postgres:postgres@localhost:5433/postgres
 
 export REGION_INFO="|America;europe|" # Europe without name will not be available for creation of new workspaces.
 export QUEUE_CONFIG=localhost:19093

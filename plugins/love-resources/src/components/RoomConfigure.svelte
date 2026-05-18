@@ -18,7 +18,7 @@
   import { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { ActionIcon, EditBox, Icon, IconDelete, resizeObserver } from '@hcengineering/ui'
-  import { Room, RoomAccess, RoomType, isOffice } from '@hcengineering/love'
+  import { Room, RoomType, isOffice } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { tweened } from 'svelte/motion'
@@ -151,7 +151,7 @@
     shadowColor.set(shadowNormal)
   }
 
-  $: showButtons = room.access === RoomAccess.DND || room.type === RoomType.Video || removable
+  $: showButtons = room.type === RoomType.Video || removable
   $: updateStyle(top, left, room, roomRect)
 
   const updateStyle = (t: number | undefined, l: number | undefined, r: Room, rect: DOMRect): void => {
@@ -229,9 +229,6 @@
         class="flex-row-center flex-no-shrink h-full {zoomOut ? 'flex-gap-1' : 'flex-gap-2'}"
         on:mousedown|stopPropagation
       >
-        {#if room.access === RoomAccess.DND}
-          <Icon icon={love.icon.DND} size={zoomOut ? 'x-small' : 'small'} />
-        {/if}
         {#if room.type === RoomType.Video}
           <Icon icon={love.icon.CamEnabled} size={zoomOut ? 'x-small' : 'small'} />
         {/if}

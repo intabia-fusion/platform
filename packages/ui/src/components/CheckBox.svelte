@@ -101,9 +101,11 @@
         }
       }
       &.check .checkSVG::after {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' style='enable-background:new 0 0 14 14' xml:space='preserve'%3E%3Cpath d='M6 10.2 2.7 7l1-.9L6 8.4l4.5-4.6.9 1z'/%3E%3C/svg%3E%0A");
         mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' style='enable-background:new 0 0 14 14' xml:space='preserve'%3E%3Cpath d='M6 10.2 2.7 7l1-.9L6 8.4l4.5-4.6.9 1z'/%3E%3C/svg%3E%0A");
       }
       &.minus .checkSVG::after {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' style='enable-background:new 0 0 14 14' xml:space='preserve'%3E%3Cpath d='M3 6.4h8v1.2H3z'/%3E%3C/svg%3E%0A");
         mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' style='enable-background:new 0 0 14 14' xml:space='preserve'%3E%3Cpath d='M3 6.4h8v1.2H3z'/%3E%3C/svg%3E%0A");
       }
       &.small .checkSVG {
@@ -184,6 +186,7 @@
 
         &::after {
           background-color: var(--global-tertiary-TextColor);
+          -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' style='enable-background:new 0 0 16 16' xml:space='preserve'%3E%3Cpath d='M11.6 5.5c.2.2.2.6 0 .8l-4.3 4.3c-.2.2-.6.2-.8 0l-2.1-2c-.2-.2-.2-.6 0-.8.2-.2.6-.2.8 0l1.7 1.7 3.9-3.9c.2-.3.6-.3.8-.1z' style='fill-rule:evenodd;clip-rule:evenodd;fill:%23072790'/%3E%3C/svg%3E%0A");
           mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' style='enable-background:new 0 0 16 16' xml:space='preserve'%3E%3Cpath d='M11.6 5.5c.2.2.2.6 0 .8l-4.3 4.3c-.2.2-.6.2-.8 0l-2.1-2c-.2-.2-.2-.6 0-.8.2-.2.6-.2.8 0l1.7 1.7 3.9-3.9c.2-.3.6-.3.8-.1z' style='fill-rule:evenodd;clip-rule:evenodd;fill:%23072790'/%3E%3C/svg%3E%0A");
         }
       }
@@ -219,6 +222,7 @@
           content: '';
           inset: 0;
           background-color: var(--global-tertiary-TextColor);
+          -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' style='enable-background:new 0 0 16 16' xml:space='preserve'%3E%3Cpath d='M15.3 11.4c-.5-.2-1.1-.1-1.4.3-.1.1-.1.2-.2.2-.5.7-1.2 1.4-1.9 1.8-.4.3-.6 1-.3 1.4 1.6-.7 2.9-2 3.8-3.7zM.4 10.5c.6-.2.9-.7.8-1.2-.1-.4-.1-.9-.1-1.3s0-.9.1-1.3c.1-.5-.2-1-.8-1.2-.3.9-.4 1.8-.4 2.6s.1 1.6.4 2.4zm3.5 3.2c-.7-.5-1.3-1.1-1.8-1.8-.3-.4-1-.6-1.4-.3.7 1.5 2 2.8 3.5 3.6.4-.6.3-1.2-.3-1.5zm5.3 1.1c-.9.1-1.7.1-2.7 0-.5-.1-1.1.2-1.3.8.9.3 1.7.4 2.7.4.9 0 1.7-.1 2.5-.4-.2-.6-.6-.9-1.2-.8zm5.6-8.2c.1.4.1 1 .1 1.5 0 .4 0 .7-.1 1.2s.2 1.1.9 1.2c.2-.8.3-1.6.3-2.4 0-1-.2-1.8-.4-2.7-.6 0-.9.6-.8 1.2zM6.4 1.2h.2c.9-.2 1.7-.2 2.7 0 .5.1 1.1-.2 1.2-.7C9.7.2 8.9 0 8 0 7 0 6.2.1 5.4.4c.1.5.6.8 1 .8zM.9 4.5c.2.1.3.1.5.1.3 0 .6-.2.9-.4l.1-.1c.5-.6 1.1-1.3 1.7-1.7.4-.4.6-1 .3-1.4-1.5.6-2.8 1.9-3.5 3.5zm10.9-2.3.2.1c.6.4 1.3 1.1 1.7 1.7.2.3.5.4.9.4.2 0 .3-.1.5-.1-.7-1.5-2-2.8-3.6-3.5-.3.5-.2 1.1.3 1.4z'/%3E%3C/svg%3E%0A");
           mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' style='enable-background:new 0 0 16 16' xml:space='preserve'%3E%3Cpath d='M15.3 11.4c-.5-.2-1.1-.1-1.4.3-.1.1-.1.2-.2.2-.5.7-1.2 1.4-1.9 1.8-.4.3-.6 1-.3 1.4 1.6-.7 2.9-2 3.8-3.7zM.4 10.5c.6-.2.9-.7.8-1.2-.1-.4-.1-.9-.1-1.3s0-.9.1-1.3c.1-.5-.2-1-.8-1.2-.3.9-.4 1.8-.4 2.6s.1 1.6.4 2.4zm3.5 3.2c-.7-.5-1.3-1.1-1.8-1.8-.3-.4-1-.6-1.4-.3.7 1.5 2 2.8 3.5 3.6.4-.6.3-1.2-.3-1.5zm5.3 1.1c-.9.1-1.7.1-2.7 0-.5-.1-1.1.2-1.3.8.9.3 1.7.4 2.7.4.9 0 1.7-.1 2.5-.4-.2-.6-.6-.9-1.2-.8zm5.6-8.2c.1.4.1 1 .1 1.5 0 .4 0 .7-.1 1.2s.2 1.1.9 1.2c.2-.8.3-1.6.3-2.4 0-1-.2-1.8-.4-2.7-.6 0-.9.6-.8 1.2zM6.4 1.2h.2c.9-.2 1.7-.2 2.7 0 .5.1 1.1-.2 1.2-.7C9.7.2 8.9 0 8 0 7 0 6.2.1 5.4.4c.1.5.6.8 1 .8zM.9 4.5c.2.1.3.1.5.1.3 0 .6-.2.9-.4l.1-.1c.5-.6 1.1-1.3 1.7-1.7.4-.4.6-1 .3-1.4-1.5.6-2.8 1.9-3.5 3.5zm10.9-2.3.2.1c.6.4 1.3 1.1 1.7 1.7.2.3.5.4.9.4.2 0 .3-.1.5-.1-.7-1.5-2-2.8-3.6-3.5-.3.5-.2 1.1.3 1.4z'/%3E%3C/svg%3E%0A");
           z-index: 1;
         }

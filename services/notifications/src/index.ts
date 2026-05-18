@@ -27,7 +27,6 @@ import {
   registerAdapterFactory,
   registerDestroyFactory,
   registerTxAdapterFactory,
-  setAdapterSecurity,
   registerServerPlugins,
   registerStringLoaders
 } from '@hcengineering/server-pipeline'
@@ -61,7 +60,6 @@ async function main (): Promise<void> {
   registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
   registerAdapterFactory('postgresql', createPostgresAdapter, true)
   registerDestroyFactory('postgresql', createPostgreeDestroyAdapter, true)
-  setAdapterSecurity('postgresql', true)
 
   const ctx = getCtx()
   const queue = getPlatformQueue(config.ServiceId, config.QueueRegion)

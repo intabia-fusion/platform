@@ -126,8 +126,6 @@ export function createServerPipeline (
     fulltextUrl?: string
     disableTriggers?: boolean
     usePassedCtx?: boolean
-    adapterSecurity?: boolean
-
     externalStorage: StorageAdapter
 
     queue?: PlatformQueue
@@ -154,8 +152,7 @@ export function createServerPipeline (
       FindSecurityMiddleware.create,
       PluginConfigurationMiddleware.create,
       PrivateMiddleware.create,
-      (ctx: MeasureContext, context: PipelineContext, next?: Middleware) =>
-        SpaceSecurityMiddleware.create(opt.adapterSecurity ?? false, ctx, context, next),
+      SpaceSecurityMiddleware.create,
       SpacePermissionsMiddleware.create,
       GuestPermissionsMiddleware.create,
       ConfigurationMiddleware.create,
@@ -223,7 +220,6 @@ export function createBackupPipeline (
   systemTx: Tx[],
   opt: {
     usePassedCtx?: boolean
-    adapterSecurity?: boolean
 
     externalStorage: StorageAdapter
   }
@@ -283,7 +279,6 @@ export async function getServerPipeline (
     externalStorage: storageAdapter,
     usePassedCtx: true,
     disableTriggers: opt?.disableTriggers ?? false,
-    adapterSecurity: isAdapterSecurity(dbUrl),
     queue: opt?.queue,
     communicationApiFactory: opt?.communicationApiFactory
   })
@@ -294,24 +289,6 @@ export async function getServerPipeline (
 const txAdapterFactories: Record<string, DbAdapterFactory> = {}
 const adapterFactories: Record<string, DbAdapterFactory> = {}
 const destroyFactories: Record<string, (url: string) => WorkspaceDestroyAdapter> = {}
-const adapterSecurityState = new Set<string>()
-
-export function isAdapterSecurity (name: string): boolean {
-  for (const it of adapterSecurityState) {
-    if (name.startsWith(it)) {
-      return true
-    }
-  }
-  return false
-}
-export function setAdapterSecurity (name: string, state: boolean): void {
-  if (state) {
-    adapterSecurityState.add(name)
-  } else {
-    adapterSecurityState.delete(name)
-  }
-}
-
 export function registerTxAdapterFactory (name: string, factory: DbAdapterFactory, useAsDefault: boolean = true): void {
   txAdapterFactories[name] = factory
   if (useAsDefault) {

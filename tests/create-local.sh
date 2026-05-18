@@ -3,16 +3,26 @@
 ./tool-local.sh create-account user1 -f John -l Appleseed -p 1234
 ./tool-local.sh create-account user2 -f Kainin -l Dirak -p 1234
 
-./tool-local.sh create-workspace sanity-ws email:user1 -r cockroach
+./tool-local.sh create-workspace sanity-ws email:user1
+./tool-local.sh create-workspace meetings-ws email:user1
 
 # Restore workspace contents in mongo/elastic
 ./tool-local.sh backup-restore ./sanity-ws sanity-ws --upgrade
+./tool-local.sh backup-restore ./meetings-ws meetings-ws --upgrade
 
 ./tool-local.sh assign-workspace user1 sanity-ws
 ./tool-local.sh assign-workspace user2 sanity-ws
 
+./tool-local.sh assign-workspace user1 meetings-ws
+./tool-local.sh assign-workspace user2 meetings-ws
+
 ./tool-local.sh set-user-role user1 sanity-ws OWNER
 ./tool-local.sh set-user-role user2 sanity-ws OWNER
 
+./tool-local.sh set-user-role user1 meetings-ws OWNER
+
 ./tool-local.sh configure sanity-ws --enable=*
 ./tool-local.sh configure sanity-ws --list
+
+./tool-local.sh configure meetings-ws --enable=*
+./tool-local.sh configure meetings-ws --list

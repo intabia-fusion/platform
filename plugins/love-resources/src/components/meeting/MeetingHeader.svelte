@@ -62,7 +62,7 @@
   <!-- title -->
   {#if currentMeetingMinutes !== undefined}
     <DocNavLink object={currentMeetingMinutes}>
-      <span class="font-medium overflow-label">{currentMeetingMinutes.title}</span>
+      <span class="font-medium overflow-label">{currentMeetingMinutes.name}</span>
     </DocNavLink>
   {:else}
     <DocNavLink object={room}>

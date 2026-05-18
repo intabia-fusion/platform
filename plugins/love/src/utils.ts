@@ -2,7 +2,7 @@ import { Employee, Person } from '@hcengineering/contact'
 import { Data, generateId, Ref, WorkspaceUuid } from '@hcengineering/core'
 
 import love from './plugin'
-import { MeetingMinutes, Office, ParticipantInfo, Room, RoomAccess, RoomType } from './types'
+import { MeetingMinutes, Office, ParticipantInfo, Room, RoomType } from './types'
 
 /**
  * Parsed LiveKit room name components
@@ -14,24 +14,20 @@ export interface ParsedRoomName {
 
 /**
  * Parse LiveKit room name to extract workspace and meeting ID.
- * Room name format: workspaceUuid_meetingMinutesId (2 non-empty parts separated by underscore)
  *
- * @param roomName - The LiveKit room name string
- * @returns ParsedRoomName if valid, undefined otherwise
+ * Room name format: `${workspaceUuid}_${meetingMinutesId}` produced by `getRoomName`.
+ * Both components are generated identifiers that never contain `_`:
+ *   - workspace: UUID v4 (hex + `-`)
+ *   - meetingId: `Ref<MeetingMinutes>` (24 hex chars from `generateId`)
+ * So the single `_` is always the separator and there are exactly 2 parts.
  */
 export function parseRoomName (roomName: string): ParsedRoomName | undefined {
-  const parts = roomName.split('_')
-  if (parts.length < 2) return undefined
-
-  const workspace = parts[0]
-  const meetingId = parts[parts.length - 1]
-
-  // Both parts must be non-empty
-  if (workspace === '' || meetingId === '') return undefined
+  const sepIdx = roomName.indexOf('_')
+  if (sepIdx <= 0 || sepIdx === roomName.length - 1) return undefined
 
   return {
-    workspace: workspace as WorkspaceUuid,
-    meetingId: meetingId as Ref<MeetingMinutes>
+    workspace: roomName.slice(0, sepIdx) as WorkspaceUuid,
+    meetingId: roomName.slice(sepIdx + 1) as Ref<MeetingMinutes>
   }
 }
 
@@ -52,7 +48,8 @@ export function isOffice (room: Data<Room>): room is Office {
 export function createDefaultRooms (
   employees: Ref<Employee>[],
   defaultTranscription: boolean = false,
-  defaultRecording: boolean = false
+  defaultRecording: boolean = false,
+  defaultPrivate: boolean = false
 ): (Data<Room | Office> & { _id: Ref<Room> })[] {
   const res: (Data<Room | Office> & { _id: Ref<Room> })[] = []
   // create 12 offices
@@ -62,7 +59,6 @@ export function createDefaultRooms (
       _id,
       name: '',
       type: RoomType.Video,
-      access: RoomAccess.Knock,
       floor: love.ids.MainFloor,
       width: 2,
       height: 1,
@@ -72,6 +68,7 @@ export function createDefaultRooms (
       language: 'en',
       startWithTranscription: false,
       startWithRecording: false,
+      startPrivate: true,
       description: null
     }
     res.push(office)
@@ -82,7 +79,6 @@ export function createDefaultRooms (
     _id: allHands,
     name: 'All hands',
     type: RoomType.Video,
-    access: RoomAccess.Open,
     floor: love.ids.MainFloor,
     width: 9,
     height: 3,
@@ -91,6 +87,7 @@ export function createDefaultRooms (
     language: 'en',
     startWithTranscription: defaultTranscription,
     startWithRecording: defaultRecording,
+    startPrivate: defaultPrivate,
     description: null
   })
 
@@ -99,7 +96,6 @@ export function createDefaultRooms (
     _id: meetingRoom1,
     name: 'Meeting Room 1',
     type: RoomType.Video,
-    access: RoomAccess.Open,
     floor: love.ids.MainFloor,
     width: 4,
     height: 3,
@@ -108,6 +104,7 @@ export function createDefaultRooms (
     language: 'en',
     startWithTranscription: defaultTranscription,
     startWithRecording: defaultRecording,
+    startPrivate: defaultPrivate,
     description: null
   })
   const meetingRoom2 = generateId<Room>()
@@ -115,7 +112,6 @@ export function createDefaultRooms (
     _id: meetingRoom2,
     name: 'Meeting Room 2',
     type: RoomType.Video,
-    access: RoomAccess.Open,
     floor: love.ids.MainFloor,
     width: 4,
     height: 3,
@@ -124,6 +120,7 @@ export function createDefaultRooms (
     language: 'en',
     startWithTranscription: defaultTranscription,
     startWithRecording: defaultRecording,
+    startPrivate: defaultPrivate,
     description: null
   })
   const voiceRoom1 = generateId<Room>()
@@ -131,7 +128,6 @@ export function createDefaultRooms (
     _id: voiceRoom1,
     name: 'Voice Room 1',
     type: RoomType.Audio,
-    access: RoomAccess.Open,
     floor: love.ids.MainFloor,
     width: 4,
     height: 3,
@@ -140,6 +136,7 @@ export function createDefaultRooms (
     language: 'en',
     startWithTranscription: false,
     startWithRecording: false,
+    startPrivate: false,
     description: null
   })
   const voiceRoom2 = generateId<Room>()
@@ -147,7 +144,6 @@ export function createDefaultRooms (
     _id: voiceRoom2,
     name: 'Voice Room 2',
     type: RoomType.Audio,
-    access: RoomAccess.Open,
     floor: love.ids.MainFloor,
     width: 4,
     height: 3,
@@ -156,6 +152,7 @@ export function createDefaultRooms (
     language: 'en',
     startWithTranscription: false,
     startWithRecording: false,
+    startPrivate: false,
     description: null
   })
   return res

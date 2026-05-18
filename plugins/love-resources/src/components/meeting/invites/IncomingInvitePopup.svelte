@@ -15,43 +15,47 @@
   import { Person, formatName } from '@hcengineering/contact'
   import { Avatar, getPersonByPersonRefCb } from '@hcengineering/contact-resources'
   import { Label, ModernButton } from '@hcengineering/ui'
-  import { createEventDispatcher, onDestroy, onMount } from 'svelte'
+  import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../../../plugin'
-  import { responseToInviteRequest } from '../../../invites'
+  import { responseToInviteRequest, allInvites } from '../../../invites'
   import { type UserMeetingInvite } from '@hcengineering/love'
+  import presentation from '@hcengineering/presentation'
+  import { getMetadata } from '@hcengineering/platform'
 
   export let invite: UserMeetingInvite
 
   const dispatch = createEventDispatcher()
+  const mySessionId = getMetadata(presentation.metadata.SessionId) ?? undefined
 
-  let person: Person | undefined = undefined
-  let timeLeft: number = 30
-  let interval: ReturnType<typeof setInterval>
-
-  // Reactive update when invite.expiresAt changes
-  $: {
-    timeLeft = Math.max(0, Math.floor((invite.expiresAt - Date.now()) / 1000))
+  // Close the popup when the underlying invite disappears from the store
+  // (cancelled by sender, accepted/declined and removed, TTL expired, etc).
+  let seenInStore = false
+  let closed = false
+  $: storeInvite = $allInvites.find((it) => it._id === invite._id)
+  $: if (storeInvite !== undefined) seenInStore = true
+  $: if (!closed && seenInStore && storeInvite === undefined) {
+    closed = true
+    dispatch('close')
+  }
+  // Multi-tab: another tab already responded.
+  $: if (
+    !closed &&
+    storeInvite !== undefined &&
+    storeInvite.status !== 'pending' &&
+    (storeInvite.status === 'declined' ||
+      (storeInvite.acceptedSessionId !== undefined && storeInvite.acceptedSessionId !== mySessionId))
+  ) {
+    closed = true
+    dispatch('close')
   }
 
+  let person: Person | undefined = undefined
+
   onMount(async () => {
-    // Load person details (sender)
     getPersonByPersonRefCb(invite.from, (p) => {
       person = p ?? undefined
     })
-
-    // Start countdown
-    interval = setInterval(() => {
-      timeLeft = Math.max(0, Math.floor((invite.expiresAt - Date.now()) / 1000))
-      if (timeLeft <= 0) {
-        clearInterval(interval)
-        void handleReject()
-      }
-    }, 1000)
-  })
-
-  onDestroy(() => {
-    clearInterval(interval)
   })
 
   async function handleJoin (): Promise<void> {
@@ -65,7 +69,7 @@
   }
 </script>
 
-<div class="antiPopup invite-popup flex-gap-4">
+<div class="antiPopup invite-popup flex-gap-4" data-id="invite-popup">
   <div class="popup-header">
     {#if person}
       <div class="inviter-info">
@@ -75,13 +79,12 @@
     {:else}
       <Label label={love.string.JoinMeeting} />
     {/if}
-    {#if timeLeft <= 10}
-      <span class="timer urgent">{timeLeft}s</span>
-    {/if}
   </div>
 
   <div class="popup-message">
-    {#if invite.meeting}
+    {#if invite.room !== undefined}
+      <Label label={love.string.IsKnocking} params={{ name: person?.name ?? '' }} />
+    {:else if invite.meeting}
       <Label label={love.string.JoinMeeting} params={{ name: person?.name ?? '' }} />
     {:else}
       <Label label={love.string.InvitingYou} params={{ name: person?.name ?? '' }} />
@@ -89,8 +92,12 @@
   </div>
 
   <div class="popup-actions">
-    <ModernButton label={love.string.Join} kind={'primary'} size={'medium'} on:click={handleJoin} />
-    <ModernButton label={love.string.Reject} kind={'secondary'} size={'medium'} on:click={handleReject} />
+    <div data-id="invite-join">
+      <ModernButton label={love.string.Join} kind={'primary'} size={'medium'} on:click={handleJoin} />
+    </div>
+    <div data-id="invite-reject">
+      <ModernButton label={love.string.Reject} kind={'secondary'} size={'medium'} on:click={handleReject} />
+    </div>
   </div>
 </div>
 

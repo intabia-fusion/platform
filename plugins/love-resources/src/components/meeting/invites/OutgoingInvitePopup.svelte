@@ -15,10 +15,10 @@
   import { Person, formatName } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
   import { Label, ModernButton, Scroller } from '@hcengineering/ui'
-  import { createEventDispatcher, onDestroy, onMount } from 'svelte'
+  import { createEventDispatcher } from 'svelte'
 
   import love from '../../../plugin'
-  import { cancelInvites, inviteRequestSecondsToLive } from '../../../invites'
+  import { cancelInvites, allInvites } from '../../../invites'
   import { UserMeetingInvite } from '@hcengineering/love'
 
   export let person: Person
@@ -26,22 +26,17 @@
 
   const dispatch = createEventDispatcher()
 
-  let timeLeft: number = inviteRequestSecondsToLive
-  let countdownInterval: ReturnType<typeof setInterval>
-
-  onMount(() => {
-    // Start countdown
-    countdownInterval = setInterval(() => {
-      timeLeft--
-      if (timeLeft <= 0) {
-        clearInterval(countdownInterval)
-      }
-    }, 1000)
-  })
-
-  onDestroy(() => {
-    clearInterval(countdownInterval)
-  })
+  // Close the popup when the invite disappears (cancel, accept, TTL expire,
+  // sender stopped heartbeating, etc).
+  let seenInStore = false
+  let closed = false
+  $: storeInvite = $allInvites.find((it) => it._id === invite._id)
+  $: liveInvite = storeInvite ?? invite
+  $: if (storeInvite !== undefined) seenInStore = true
+  $: if (!closed && seenInStore && storeInvite === undefined) {
+    closed = true
+    dispatch('close')
+  }
 
   async function handleCancel (): Promise<void> {
     await cancelInvites(undefined, [invite])
@@ -49,11 +44,12 @@
   }
 </script>
 
-<div class="antiPopup invite-popup flex-gap-4">
+<div class="antiPopup invite-popup flex-gap-4" data-id="outgoing-invite-popup">
   <div class="popup-header">
-    <Label label={love.string.YouInvite} />
-    {#if timeLeft <= 10}
-      <span class="timer urgent">{timeLeft}s</span>
+    {#if liveInvite.room !== undefined}
+      <Label label={love.string.KnockingTo} />
+    {:else}
+      <Label label={love.string.YouInvite} />
     {/if}
   </div>
 

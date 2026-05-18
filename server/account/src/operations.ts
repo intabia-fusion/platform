@@ -2253,15 +2253,7 @@ export async function ensurePerson (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
-  const socialId = await db.socialId.findOne({ type: socialType, value: normalizedValue })
-  if (socialId != null) {
-    return { uuid: socialId.personUuid, socialId: socialId._id }
-  }
-
-  const personUuid = await db.person.insertOne({ firstName: trimmedFirst, lastName: trimmedLast })
-  const newSocialId = await db.socialId.insertOne({ type: socialType, value: normalizedValue, personUuid })
-
-  return { uuid: personUuid, socialId: newSocialId }
+  return await db.ensurePerson(socialType, normalizedValue, trimmedFirst, trimmedLast)
 }
 
 async function getMailboxOptions (

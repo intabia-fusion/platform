@@ -261,6 +261,8 @@ services:
       - USE_OTP=false
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
       - ANALYTICS_COLLECTOR_URL=http://localhost:4018
+      - LOVE_ENDPOINT=http://localhost:8083/_love
+      - LIVEKIT_WS=ws://localhost:7890
   front1:
     image: intabiafusion/front
     pull_policy: never
@@ -295,6 +297,8 @@ services:
       - USE_OTP=false
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
       - ANALYTICS_COLLECTOR_URL=http://localhost:4018
+      - LOVE_ENDPOINT=http://localhost:8083/_love
+      - LIVEKIT_WS=ws://localhost:7890
   transactor0:
     image: intabiafusion/transactor
     pull_policy: never
@@ -524,5 +528,66 @@ services:
       - USAGE_UPDATE_INTERVAL=30
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
+
+  redis-test:
+    image: redis:8.0.2-alpine3.21
+    ports:
+      - 6390:6379
+    restart: unless-stopped
+
+  love:
+    image: intabiafusion/love
+    pull_policy: never
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      account:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    environment:
+      - PORT=8087
+      - SECRET=secret
+      - ACCOUNTS_URL=http://account:3003
+      - DB_URL=${DB_PG_URL}
+      # Love expects storage kind to be 'datalake' (or 's3') so that
+      # checkRecordAvailable returns true (see services/love/src/main.ts).
+      - STORAGE_CONFIG=datalake|http://datalake:4031
+      - S3_STORAGE_CONFIG=s3|http://minio:9000?accessKey=minioadmin&secretKey=minioadmin&rootBucket=love-recordings-test
+      - LIVEKIT_HOST=ws://host.docker.internal:7890
+      - LIVEKIT_API_KEY=testkey
+      - LIVEKIT_API_SECRET=testsecret_for_sanity_tests_min32chars
+      - LIVEKIT_WEBHOOK_API_KEY=whtestkey
+      - LIVEKIT_WEBHOOK_API_SECRET=whtestsecret_for_sanity_tests_min32chars
+      - LIVEKIT_PROJECT=test-project
+      - BILLING_URL=http://billing:4043
+      - BILLING_POLL_INTERVAL=15
+      - AGENTS=transcribe-test
+      # WEBHOOK_URL intentionally omitted — LiveKit (run on host) already has
+      # a global webhook in livekit-test-config.yaml pointing back to love
+      # via nginx, so per-egress webhook override is not needed.
+      - POLLING_ENABLED=true
+      - POLLING_INTERVAL_MS=30000
+      - PENDING_JOIN_TIMEOUT_MS=60000
+      - STATS_URL=http://stats:4901
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
+    restart: unless-stopped
+
+  livekit-egress-test:
+    image: livekit/egress
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - './livekit-egress-test-config.yaml:/out/config.yaml:ro'
+    environment:
+      - EGRESS_CONFIG_FILE=/out/config.yaml
+    depends_on:
+      - redis-test
+      - minio
+    restart: unless-stopped
+
 volumes:
   elastic-plugins:

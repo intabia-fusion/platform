@@ -34,7 +34,6 @@ import {
   type WorkspaceUuid,
   hashWorkspace
 } from '@hcengineering/core'
-import { getMongoClient } from '@hcengineering/mongo' // TODO: get rid of this import later
 import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
 import { getDBClient, setDBExtraOptions } from '@hcengineering/postgres'
 import { pbkdf2Sync, randomBytes } from 'crypto'
@@ -42,7 +41,6 @@ import otpGenerator from 'otp-generator'
 
 import { Analytics } from '@hcengineering/analytics'
 import { decodeTokenVerbose, generateToken, type PermissionsGrant, TokenError } from '@hcengineering/server-token'
-import { MongoAccountDB } from './collections/mongo'
 import { PostgresAccountDB } from './collections/postgres/postgres'
 import { accountPlugin } from './plugin'
 import {
@@ -105,18 +103,7 @@ export async function getAccountDB (
   const isMongo = uri.startsWith('mongodb://')
 
   if (isMongo) {
-    const client = getMongoClient(uri)
-    const db = (await client.getClient()).db(dbNs ?? 'global-account')
-    const mongoAccount = new MongoAccountDB(db)
-
-    await mongoAccount.init()
-
-    return [
-      mongoAccount,
-      () => {
-        client.close()
-      }
-    ]
+    throw new Error('MongoDB is not supported as account database anymore')
   } else {
     setDBExtraOptions({
       connection: {

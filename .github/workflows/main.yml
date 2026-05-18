@@ -78,7 +78,8 @@ jobs:
         with:
           path: |
             common/temp
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{
+            hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 
@@ -175,7 +176,8 @@ jobs:
           restore-keys: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
 
       - name: Formatting...
-        run: node common/scripts/install-run-rush.js fast-format --branch ${{ github.base_ref || 'develop' }}
+        run: node common/scripts/install-run-rush.js fast-format --branch ${{
+          github.base_ref || 'develop' }}
       - name: Check files formatting
         run: |
           echo '================================================================'
@@ -253,7 +255,8 @@ jobs:
         with:
           path: |
             common/temp
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{
+            hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 
@@ -319,7 +322,8 @@ jobs:
         with:
           path: |
             common/temp
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{
+            hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 
@@ -361,7 +365,7 @@ jobs:
           prepare-script: ./prepare-pg.sh
           build-package: '@hcengineering/tests-sanity'
           artifact-name-suffix: pg
-          enable-profiling: 'true'
+          enable-profiling: 'false'
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
   uitest-workspaces:
@@ -385,7 +389,8 @@ jobs:
         with:
           path: |
             common/temp
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{
+            hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 
@@ -467,7 +472,8 @@ jobs:
         with:
           path: |
             common/temp
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{
+            hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 
@@ -501,7 +507,8 @@ jobs:
           DOCKER_BUILDKIT: 1
           DOCKER_BUILD_CLEANUP: true
       - name: Docker push tag
-        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/s') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref,
+          'refs/tags/s') }}
         run: |
           echo Pushing release of tag ${{ github.ref }}
           echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
@@ -509,7 +516,8 @@ jobs:
 
   dist-build:
     # if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/s') }}
-    if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/s') }}
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref,
+      'refs/tags/s') }}
     needs: build
     runs-on: macos-latest
     timeout-minutes: 60
@@ -535,7 +543,8 @@ jobs:
         with:
           path: |
             common/temp
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml')
+            }}
           restore-keys: |
             ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 

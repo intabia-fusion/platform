@@ -344,7 +344,6 @@
     { "packageName": "@hcengineering/kafka", "projectFolder": "packages/kafka", "shouldPublish": true },
     { "packageName": "@hcengineering/middleware", "projectFolder": "packages/middleware", "shouldPublish": true },
     { "packageName": "@hcengineering/minio", "projectFolder": "packages/minio", "shouldPublish": true },
-    { "packageName": "@hcengineering/mongo", "projectFolder": "packages/mongo", "shouldPublish": true },
     { "packageName": "@hcengineering/postgres", "projectFolder": "packages/postgres", "shouldPublish": true },
     { "packageName": "@hcengineering/s3", "projectFolder": "packages/s3", "shouldPublish": true },
     { "packageName": "@hcengineering/server", "projectFolder": "packages/server", "shouldPublish": true },

@@ -99,7 +99,6 @@
     "@hcengineering/model-lead": "workspace:^0.7.0",
     "@hcengineering/postgres": "workspace:^0.7.22",
     "@hcengineering/account-client": "workspace:^0.7.21",
-    "@hcengineering/mongo": "workspace:^0.7.17",
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/recruit": "workspace:^0.7.0",
     "@hcengineering/rekoni": "workspace:^0.7.0",

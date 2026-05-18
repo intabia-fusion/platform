@@ -20,14 +20,12 @@ import core, {
   ClassifierKind,
   type Client as CoreClient,
   type Doc,
-  type Domain,
   Hierarchy,
   type Obj,
   type Ref,
   SortingOrder,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import { getMongoClient, getWorkspaceMongoDB } from '@hcengineering/mongo'
 import { connect } from '@hcengineering/server-tool'
 
 interface PropertyInfo {
@@ -70,71 +68,6 @@ export async function showMixinForeignAttributes (
     if (cmd.detail) {
       for (const [mixin, objects] of result) {
         console.log(mixin, '\n', JSON.stringify(objects, undefined, 2), '\n')
-      }
-    }
-  } catch (err: any) {
-    console.trace(err)
-  } finally {
-    await connection.close()
-  }
-}
-
-export async function fixMixinForeignAttributes (
-  mongoUrl: string,
-  workspaceId: WorkspaceUuid,
-  dataId: string | undefined,
-  transactorUrl: string,
-  cmd: { mixin: string, property: string }
-): Promise<void> {
-  console.log(`Running mixin attribute check with ${JSON.stringify(cmd)}`)
-
-  const connection = (await connect(transactorUrl, workspaceId, undefined, {
-    mode: 'backup'
-  })) as unknown as CoreClient & BackupClient
-  try {
-    const result = await getMixinWithForeignProperties(connection, cmd.mixin, cmd.property)
-
-    console.log(`Found ${result.size} mixin(s)\n`)
-    for (const [mixin, objects] of result) {
-      console.log(mixin, '\n', JSON.stringify(objects, undefined, 2), '\n')
-    }
-
-    if (result.size > 0) {
-      const client = getMongoClient(mongoUrl)
-      try {
-        const _client = await client.getClient()
-        const db = getWorkspaceMongoDB(_client, dataId ?? workspaceId)
-
-        for (const [mixin, objects] of result) {
-          console.log('fixing', mixin)
-
-          let domain: Domain | undefined
-          try {
-            domain = connection.getHierarchy().getDomain(mixin)
-          } catch (err: any) {
-            console.error('failed to get domain for', mixin)
-          }
-          if (domain === undefined) continue
-
-          for (const { doc, properties } of objects) {
-            for (const property of properties) {
-              console.log('fixing', mixin, doc, property.name)
-
-              const mixinPropertyName = `${mixin}.${property.name}`
-              const propertyName = property.name
-
-              if (property.mModifiedOn > property.cModifiedOn) {
-                console.log(`- renaming: ${mixinPropertyName} -> ${propertyName}`)
-                await db.collection(domain).updateOne({ _id: doc }, { $rename: { [mixinPropertyName]: propertyName } })
-              } else {
-                console.log(`- removing: ${mixinPropertyName}`)
-                await db.collection(domain).updateOne({ _id: doc }, { $unset: { [mixinPropertyName]: '' } })
-              }
-            }
-          }
-        }
-      } finally {
-        client.close()
       }
     }
   } catch (err: any) {

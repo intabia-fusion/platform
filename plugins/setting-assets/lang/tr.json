@@ -211,6 +211,7 @@
     "OfficeDefaultSettings": "Toplantı odaları için varsayılan ayarlar",
     "DefaultStartWithTranscription": "Yeni ofis odalarında transkripsiyonu etkinleştir",
     "DefaultStartWithRecording": "Yeni ofis odalarında kaydı etkinleştir",
+    "DefaultStartPrivate": "Yeni ofis odalarını özel yap",
     "ImportDocumentPermission": "Belgeleri içe aktar",
     "ImportDocumentDescription": "Kullanıcılara çalışma alanına belge içe aktarma yeteneği verir",
     "SelectUsers": "Kullanıcıları seç",

@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 
+import calendar from '@hcengineering/calendar'
 import contact from '@hcengineering/contact'
 import core from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
@@ -68,8 +69,16 @@ export function createModel (builder: Builder): void {
     }
   })
 
+  // Trigger to sync Event updates with MeetingMinutes
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverLove.trigger.OnEventUpdate,
+    txMatch: {
+      objectClass: calendar.class.Event
+    }
+  })
+
   builder.mixin(love.class.MeetingMinutes, core.class.Class, serverCore.mixin.SearchPresenter, {
     searchIcon: love.icon.MeetingMinutes,
-    title: [['title']]
+    title: [['name']]
   })
 }

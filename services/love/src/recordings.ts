@@ -182,7 +182,7 @@ export class RecordingProcessor {
       )
 
       const dateStr = new Date().toISOString().replace('T', '_').slice(0, 19)
-      const meetingTitle = meetingDoc.title.replace(/[^a-zA-Z0-9_-]/g, '_')
+      const meetingTitle = meetingDoc.name.replace(/[^a-zA-Z0-9_-]/g, '_')
       const name = `${meetingTitle}_${dateStr}.ogg`
 
       await wsClient.createPendingRecording({

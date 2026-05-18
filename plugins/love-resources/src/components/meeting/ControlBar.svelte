@@ -24,7 +24,6 @@
   import { lkSessionConnected } from '../../liveKitClient'
   import MeetingOptionsButton from './controls/MeetingOptionsButton.svelte'
   import SendReactionButton from './controls/SendReactionButton.svelte'
-  import RoomAccessButton from './controls/RoomAccessButton.svelte'
   import LeaveRoomButton from './controls/LeaveRoomButton.svelte'
   import RecordingButton from './controls/RecordingButton.svelte'
   import TranscriptionButton from './controls/TranscriptionButton.svelte'
@@ -51,11 +50,10 @@
   }
 </script>
 
-<div class="control-bar">
+<div class="control-bar" data-id="control-bar" data-connected={$lkSessionConnected ? 'true' : 'false'}>
   <ControlBarContainer>
     <svelte:fragment slot="left">
       {#if room._id !== love.ids.Reception && $lkSessionConnected}
-        <!-- <RoomAccessButton {room} /> -->
         <InviteEmployeeButton
           kind={'secondary'}
           type={'type-button-icon'}
@@ -76,8 +74,6 @@
         <ShareScreenButton />
         <RecordingButton />
         <TranscriptionButton />
-        <!-- {:else}
-        <RoomAccessButton {room} /> -->
       {/if}
     </svelte:fragment>
     <svelte:fragment slot="right">

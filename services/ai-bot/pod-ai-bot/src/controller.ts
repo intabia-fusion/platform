@@ -38,7 +38,7 @@ import core, {
   type WorkspaceIds,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import love, { parseRoomName, Room } from '@hcengineering/love'
+import love, { parseRoomName } from '@hcengineering/love'
 import contact, { Person, Contact, SocialIdentityRef } from '@hcengineering/contact'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 import { getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
@@ -535,12 +535,12 @@ export class AIControl {
     }
 
     const meetingMinutes = await wsClient.client.findOne(love.class.MeetingMinutes, { _id: meetingMinutesId })
-    if (meetingMinutes?.attachedTo === undefined || meetingMinutes?.attachedTo === null) {
+    if (meetingMinutes?.roomId === undefined || meetingMinutes?.roomId === null) {
       this.ctx.error('MeetingMinutes not found or missing attached room for love transcript', { meetingMinutesId })
       return
     }
 
-    const roomId = meetingMinutes.attachedTo as Ref<Room>
+    const roomId = meetingMinutes.roomId
 
     this.ctx.info('Parsed roomName into workspace and roomId', { workspace, roomId })
 

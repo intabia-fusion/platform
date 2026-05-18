@@ -28,21 +28,12 @@ import {
 import { Api as CommunicationApi } from '@hcengineering/communication-server'
 import {
   createServerPipeline,
-  isAdapterSecurity,
   registerAdapterFactory,
   registerDestroyFactory,
   registerServerPlugins,
   registerStringLoaders,
-  registerTxAdapterFactory,
-  setAdapterSecurity
+  registerTxAdapterFactory
 } from '@hcengineering/server-pipeline'
-
-import {
-  createMongoAdapter,
-  createMongoDestroyAdapter,
-  createMongoTxAdapter,
-  shutdownMongo
-} from '@hcengineering/mongo'
 import {
   createPostgreeDestroyAdapter,
   createPostgresAdapter,
@@ -59,9 +50,6 @@ registerStringLoaders()
 // Register close on process exit.
 process.on('exit', () => {
   shutdownPostgres().catch((err) => {
-    console.error(err)
-  })
-  shutdownMongo().catch((err) => {
     console.error(err)
   })
 })
@@ -87,18 +75,11 @@ export function start (
       start: () => void
       stop: () => Promise<string | undefined>
     }
-
-    mongoUrl?: string
   }
 ): { shutdown: () => Promise<void>, sessionManager: SessionManager } {
-  registerTxAdapterFactory('mongodb', createMongoTxAdapter)
-  registerAdapterFactory('mongodb', createMongoAdapter)
-  registerDestroyFactory('mongodb', createMongoDestroyAdapter)
-
   registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
   registerAdapterFactory('postgresql', createPostgresAdapter, true)
   registerDestroyFactory('postgresql', createPostgreeDestroyAdapter, true)
-  setAdapterSecurity('postgresql', true)
 
   // Prepare statements are controlled via POSTGRES_OPTIONS (e.g. {"prepare": true}).
   // The old DB_PREPARE env var is removed; do not rely on it.
@@ -112,7 +93,7 @@ export function start (
     workspace: WorkspaceIds,
     broadcastSessions: CommunicationCallbacks
   ): Promise<ServerApi> => {
-    if (dbUrl.startsWith('mongodb') || !opt.communicationApiEnabled) {
+    if (!opt.communicationApiEnabled) {
       return {
         findMessagesMeta: async () => [],
         findMessagesGroups: async () => [],
@@ -142,7 +123,7 @@ export function start (
     metrics,
     dbUrl,
     model,
-    { ...opt, externalStorage, adapterSecurity: isAdapterSecurity(dbUrl), queue: opt.queue, communicationApiFactory },
+    { ...opt, externalStorage, queue: opt.queue, communicationApiFactory },
     {}
   )
 

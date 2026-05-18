@@ -42,7 +42,7 @@ describeBench('SpaceSecurityMiddleware.findAll bench', () => {
         return toFindResult<T>([])
       }
     })
-    const mw = await SpaceSecurityMiddleware.create(false, h.ctx, h.pipelineContext, next as unknown as Middleware)
+    const mw = await SpaceSecurityMiddleware.create(h.ctx, h.pipelineContext, next as unknown as Middleware)
     // Pre-init security state so findAll bench doesn't measure init.
     await (mw as any).init(h.ctx)
     return { mw, targetClass: core.class.Space as Ref<Class<Doc>>, ctx: h.ctx }
