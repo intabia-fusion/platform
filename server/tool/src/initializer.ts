@@ -150,23 +150,25 @@ export class WorkspaceInitializer {
     for (let index = 0; index < script.steps.length; index++) {
       try {
         const step = script.steps[index]
-        if (step.type === 'default') {
-          await this.processDefault(step, defaults)
-        } else if (step.type === 'create') {
-          await this.processCreate(step, vars, defaults)
-        } else if (step.type === 'update') {
-          await this.processUpdate(step, vars)
-        } else if (step.type === 'bulkUpdate') {
-          await this.processBulkUpdate(step, vars)
-        } else if (step.type === 'mixin') {
-          await this.processMixin(step, vars)
-        } else if (step.type === 'find') {
-          await this.processFind(step, vars)
-        } else if (step.type === 'upload') {
-          await this.processUpload(step, vars, logger)
-        } else if (step.type === 'import') {
-          await this.processImport(step, vars, logger)
-        }
+        await this.ctx.with(`init-step-${step.type}`, {}, async () => {
+          if (step.type === 'default') {
+            await this.processDefault(step, defaults)
+          } else if (step.type === 'create') {
+            await this.processCreate(step, vars, defaults)
+          } else if (step.type === 'update') {
+            await this.processUpdate(step, vars)
+          } else if (step.type === 'bulkUpdate') {
+            await this.processBulkUpdate(step, vars)
+          } else if (step.type === 'mixin') {
+            await this.processMixin(step, vars)
+          } else if (step.type === 'find') {
+            await this.processFind(step, vars)
+          } else if (step.type === 'upload') {
+            await this.processUpload(step, vars, logger)
+          } else if (step.type === 'import') {
+            await this.processImport(step, vars, logger)
+          }
+        })
 
         await progress(Math.round(((index + 1) * 100) / script.steps.length))
       } catch (error) {

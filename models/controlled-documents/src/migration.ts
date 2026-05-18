@@ -40,6 +40,7 @@ import {
 import {
   createDefaultSpace,
   createOrUpdate,
+  findCachedSpace,
   type MigrateOperation,
   type MigrateUpdate,
   type MigrationClient,
@@ -58,10 +59,8 @@ import documents, { DOMAIN_DOCUMENTS } from './index'
 import { DOMAIN_REQUEST } from '@hcengineering/model-request'
 import { RequestStatus } from '@hcengineering/request'
 
-async function createTemplatesSpace (tx: TxOperations): Promise<void> {
-  const existingSpace = await tx.findOne(documents.class.DocumentSpace, {
-    _id: documents.space.UnsortedTemplates
-  })
+async function createTemplatesSpace (tx: TxOperations, client: MigrationUpgradeClient): Promise<void> {
+  const existingSpace = await findCachedSpace(client, documents.space.UnsortedTemplates, documents.class.DocumentSpace)
 
   if (existingSpace === undefined) {
     await tx.createDoc(
@@ -81,10 +80,8 @@ async function createTemplatesSpace (tx: TxOperations): Promise<void> {
   }
 }
 
-async function createQualityDocumentsSpace (tx: TxOperations): Promise<void> {
-  const existingSpace = await tx.findOne(documents.class.OrgSpace, {
-    _id: documents.space.QualityDocuments
-  })
+async function createQualityDocumentsSpace (tx: TxOperations, client: MigrationUpgradeClient): Promise<void> {
+  const existingSpace = await findCachedSpace(client, documents.space.QualityDocuments, documents.class.OrgSpace)
 
   if (existingSpace === undefined) {
     await tx.createDoc(
@@ -578,8 +575,8 @@ export const documentsOperation: MigrateOperation = {
         func: async (client) => {
           const tx = new TxOperations(client, core.account.System)
           await createDefaultSpace(client, documents.space.Documents, { name: 'Documents', description: 'Documents' })
-          await createQualityDocumentsSpace(tx)
-          await createTemplatesSpace(tx)
+          await createQualityDocumentsSpace(tx, client)
+          await createTemplatesSpace(tx, client)
           await createTemplateSequence(tx)
           await createTagCategories(tx)
           await createDocumentCategories(tx)

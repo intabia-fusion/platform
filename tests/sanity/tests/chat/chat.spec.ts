@@ -16,6 +16,8 @@ import {
   getSecondPageByInvite
 } from '../utils'
 
+test.describe.configure({ mode: 'parallel' })
+
 test.describe('Channel tests', () => {
   let leftSideMenuPage: LeftSideMenuPage
   let chunterPage: ChunterPage

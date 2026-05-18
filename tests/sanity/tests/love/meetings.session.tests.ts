@@ -8,7 +8,7 @@
 
 import { expect, test, type Page } from '@playwright/test'
 import { PlatformURI } from '../utils'
-import { closeMeetingContexts } from './meeting-helpers'
+import { closeMeetingContexts, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
 const meetingsWs = 'meetings-ws'
 const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
@@ -110,6 +110,9 @@ export function registerSessionTests (): void {
 
         await page.locator('[data-id="meeting-leave"]').first().click()
         await expect(page.locator('[data-id="meeting-widget"]')).toBeHidden({ timeout: 15000 })
+
+        // Force-finish: skips LK departureTimeout (3s) and clears stale PI.
+        await waitForActiveMeetingsToFinish()
 
         // After leaving, the UI may navigate to MeetingMinutes detail page —
         // re-open Love floor explicitly before clicking the room again.

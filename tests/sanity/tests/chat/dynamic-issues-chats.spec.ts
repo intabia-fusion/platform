@@ -19,6 +19,8 @@ import { NewIssue } from '../model/tracker/types'
 import { prepareNewIssueWithOpenStep } from '../tracker/common-steps'
 import { LinkedChannelTypes } from '../model/types'
 
+test.describe.configure({ mode: 'parallel' })
+
 test.describe('Dynamic issues chats', () => {
   let leftSideMenuPage: LeftSideMenuPage
   let channelPage: ChannelPage
