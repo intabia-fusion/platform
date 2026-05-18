@@ -10,6 +10,7 @@ import { test } from '@playwright/test'
 
 import { registerAccessTests } from './meetings.access.tests'
 import { registerBidirectionalLoopTests } from './meetings.bidirectional-loop.tests'
+import { registerRefreshReconnectTests } from './meetings.refresh-reconnect.tests'
 import { registerConnectTests } from './meetings.connect.tests'
 import { registerGuestTests } from './meetings.guest.tests'
 import { registerInviteTests } from './meetings.invite.tests'
@@ -39,5 +40,6 @@ test.describe('love (meetings) — suite', () => {
   registerScenariosTests()
   registerWorkspaceOwnerTests()
   registerBidirectionalLoopTests()
+  registerRefreshReconnectTests()
   registerGuestTests()
 })

@@ -451,13 +451,19 @@ async function createInviteNotificationTxs (
   }
 
   const senderName = sender !== undefined ? formatName(sender.name, control.branding?.lastNameFirst) : 'System'
+  // Б flow (knock-to-private-room) — `source.room !== undefined`. The
+  // recipient is the meeting owner being asked to admit a stranger, so use
+  // the IsKnocking copy ("{name} is knocking..."). Scenario A keeps the
+  // InvitingYou wording ("{name} is asking you to join").
+  const isKnock = source.room !== undefined
+  const messageLabel = isKnock ? love.string.IsKnocking : love.string.InvitingYou
   const data: Data<CommonInboxNotification> = {
     docNotifyContext: contextId,
     user: account,
-    message: love.string.InvitingYou,
+    message: messageLabel,
     intlParams: { name: senderName, senderName },
     title: love.string.MeetingRequest,
-    body: love.string.InvitingYou,
+    body: messageLabel,
     header: love.string.MeetingRequest,
     headerIcon: love.icon.Invite,
     objectId: notificationObjectId,
@@ -534,6 +540,27 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
       }
 
       // === Scenario A: invite to user ===
+      // If the sender references an existing meeting that's private, silently
+      // drop the request unless the sender is one of its owners. This mirrors
+      // SpaceSecurityMiddleware: only owners can grow members of a private
+      // space, so anyone else trying to drag a new person in must use knock.
+      if (invite.meeting !== undefined) {
+        const target = (
+          await control.findAll<MeetingMinutes>(
+            control.ctx,
+            love.class.MeetingMinutes,
+            { _id: invite.meeting },
+            { limit: 1 }
+          )
+        )[0]
+        if (target?.private) {
+          const senderAccount = sender?.personUuid as AccountUuid | undefined
+          const owners = target.owners ?? []
+          const isOwner = senderAccount !== undefined && owners.includes(senderAccount)
+          if (!isOwner) continue
+        }
+      }
+
       const recipientSpace = await getPersonSpace(control, invite.to)
       if (recipientSpace === undefined) continue
       result.push(

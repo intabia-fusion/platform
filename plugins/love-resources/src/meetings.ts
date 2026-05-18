@@ -9,7 +9,7 @@ import love, {
   isOffice,
   type MeetingMinutes
 } from '@hcengineering/love'
-import presentation, { getClient } from '@hcengineering/presentation'
+import presentation, { getClient, onClient } from '@hcengineering/presentation'
 import {
   getLiveKitEndpoint,
   getRoomName,
@@ -18,17 +18,51 @@ import {
   navigateToMeetingMinutes,
   navigateToOfficeDoc
 } from './utils'
-import { get } from 'svelte/store'
+import { get, writable } from 'svelte/store'
 import { LoveServiceError } from './loveClient'
-import { infos, myInfo, rooms, myConnectingSessionId, meetings } from './stores'
+import {
+  infos,
+  myInfo,
+  rooms,
+  myConnectingSessionId,
+  meetings,
+  currentMeetingMinutes,
+  waitForOfficeLoaded
+} from './stores'
 import { getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import { getMetadata } from '@hcengineering/platform'
 import { sendInvites } from './invites'
-import { lkIsConnecting } from './liveKitClient'
+import { lkIsConnecting, lkSessionConnected } from './liveKitClient'
 
 export let currentMeetingRoom: Ref<Room> | undefined
 export let currentMeeting: Ref<MeetingMinutes> | undefined
+
+// True while the auto-reconnect routine (post page-refresh) is trying to
+// take the LiveKit seat back. UI can show a banner / spinner.
+export const reconnectingToMeeting = writable<boolean>(false)
+
+// sessionStorage anchor — survives a single page refresh so the love client
+// can resume the LiveKit session even after the server-side ParticipantInfo
+// is gone (LK departureTimeout = 3s; a reload can outrun it).
+const ACTIVE_MEETING_STORAGE_KEY = 'love.activeMeeting'
+function rememberActiveMeeting (id: Ref<MeetingMinutes>): void {
+  try {
+    sessionStorage.setItem(ACTIVE_MEETING_STORAGE_KEY, id)
+  } catch {}
+}
+function forgetActiveMeeting (): void {
+  try {
+    sessionStorage.removeItem(ACTIVE_MEETING_STORAGE_KEY)
+  } catch {}
+}
+export function recallActiveMeeting (): Ref<MeetingMinutes> | undefined {
+  try {
+    return (sessionStorage.getItem(ACTIVE_MEETING_STORAGE_KEY) as Ref<MeetingMinutes>) ?? undefined
+  } catch {
+    return undefined
+  }
+}
 
 export async function createMeeting (room: Room, meeting?: MeetingMinutes): Promise<MeetingMinutes | undefined> {
   const client = getClient()
@@ -66,21 +100,39 @@ export async function createMeeting (room: Room, meeting?: MeetingMinutes): Prom
   return meeting
 }
 
+// Set while the user explicitly leaves the meeting. Blocks the
+// reconnect watcher between `liveKitClient.disconnect()` and the
+// moment the server removes our ParticipantInfo — otherwise the
+// subscribe-fire on `currentMeetingMinutes` (still pointing at the
+// just-left meeting via stale PI) would race us back into the room.
+let leavingMeeting = false
+
 export async function leaveMeeting (): Promise<void> {
   // If we're still in the process of connecting, don't disconnect
   if (get(lkIsConnecting)) {
     return
   }
 
-  // Disconnect from LiveKit. The love service receives a `participant_left`
-  // webhook and removes our ParticipantInfo there — clients must NOT delete
-  // documents directly. When the meeting owner leaves their own office, the
-  // service also closes the LiveKit room (`leaveMeetingAsOwner` →
-  // RoomService.deleteRoom) which forces every other participant to
-  // disconnect, generating their own `participant_left` webhooks.
-  await liveKitClient.disconnect()
-  currentMeeting = undefined
-  currentMeetingRoom = undefined
+  // Drop the reconnect anchor and raise the leave-guard BEFORE touching
+  // LiveKit. The disconnect handler clears `lkSessionConnected`, which
+  // wakes the `currentMeetingMinutes.subscribe` watcher — without the
+  // guard it'd re-enter `connectToMeeting` using the still-live PI.
+  leavingMeeting = true
+  forgetActiveMeeting()
+  try {
+    // Disconnect from LiveKit. The love service receives a
+    // `participant_left` webhook and removes our ParticipantInfo there —
+    // clients must NOT delete documents directly. When the meeting owner
+    // leaves their own office, the service also closes the LiveKit room
+    // (`leaveMeetingAsOwner` → RoomService.deleteRoom) which forces every
+    // other participant to disconnect, generating their own
+    // `participant_left` webhooks.
+    await liveKitClient.disconnect()
+    currentMeeting = undefined
+    currentMeetingRoom = undefined
+  } finally {
+    leavingMeeting = false
+  }
 }
 
 export async function joinMeeting (meeting: MeetingMinutes): Promise<void> {
@@ -228,8 +280,10 @@ async function connectToMeeting (mm: MeetingMinutes, room?: Room): Promise<void>
     throw err
   }
 
-  // Connection completed successfully: clear connecting flag
+  // Connection completed successfully: clear connecting flag and remember
+  // the meeting so a page refresh can reconnect directly via /getToken.
   myConnectingSessionId.set(null)
+  rememberActiveMeeting(mm._id)
 }
 
 async function moveToMeetingRoom (mm: MeetingMinutes, room?: Room): Promise<void> {
@@ -348,3 +402,103 @@ function getRoomById (roomId: Ref<Room>): Room | undefined {
   const allRooms = get(rooms)
   return allRooms.find((p) => p._id === roomId)
 }
+
+/**
+ * Auto-reconnect to LiveKit after page refresh.
+ *
+ * Source of truth is the server-side ParticipantInfo: if a row exists for me
+ * with a non-undefined `meeting`, the LiveKit session was alive when the
+ * page reloaded. We re-issue `connectToMeeting` to take over the seat.
+ * The old PI (stale sessionId) is rewritten by moveToMeetingRoom; the dead
+ * LK participant is cleaned up by the `participant_left` webhook once
+ * LiveKit's departureTimeout fires.
+ *
+ * Guards against loops: only fires when we are not already connecting / not
+ * already connected, and only for meetings that are still Active/Pending.
+ */
+/**
+ * Auto-reconnect after page refresh. Uses two complementary sources:
+ *   1) sessionStorage anchor — meeting id remembered by `connectToMeeting`
+ *      and cleared in `leaveMeeting`. Survives a refresh in the same tab.
+ *      Other tabs have their own sessionStorage so the multi-tab guard is
+ *      automatic.
+ *   2) Server-side ParticipantInfo — if it survived (LK departureTimeout
+ *      hasn't fired yet), `currentMeetingMinutes` resolves immediately and
+ *      we use it directly.
+ *
+ * In both cases we hand off to `connectToMeeting`, which asks `/getToken` —
+ * the server will reject (or `listRooms` will be empty) for a finished
+ * meeting, at which point we drop the anchor.
+ */
+let reconnecting = false
+export async function reconnectToCurrentMeeting (): Promise<void> {
+  if (reconnecting) return
+  if (leavingMeeting) return
+  if (get(lkSessionConnected) || get(lkIsConnecting)) return
+  if (currentMeeting !== undefined) return
+  if (getCurrentAccount().role === AccountRole.ReadOnlyGuest) return
+
+  // Prefer the live PI (server-side source of truth) when it's there.
+  let mm: MeetingMinutes | undefined = get(currentMeetingMinutes)
+  if (mm === undefined) {
+    const remembered = recallActiveMeeting()
+    if (remembered === undefined) return
+    const allMeetings = get(meetings)
+    // `meetings` query may still be loading. Wait silently for the next
+    // store tick instead of dropping the anchor — losing it here means
+    // a 30s server-round-trip on second-chance reconnect via PI.
+    if (allMeetings.length === 0) return
+    mm = allMeetings.find((m) => m._id === remembered)
+    if (mm === undefined) {
+      // MeetingMinutes is finished or otherwise filtered out of the store
+      // (`status !== Finished` clause). Anchor is stale — drop it.
+      forgetActiveMeeting()
+      return
+    }
+  }
+
+  if (mm.status !== MeetingStatus.Active && mm.status !== MeetingStatus.Pending) {
+    forgetActiveMeeting()
+    return
+  }
+
+  reconnecting = true
+  reconnectingToMeeting.set(true)
+  try {
+    const room = mm.roomId !== undefined ? getRoomById(mm.roomId) : undefined
+    await connectToMeeting(mm, room)
+  } catch (err) {
+    console.warn('[reconnectToCurrentMeeting] failed', err)
+    forgetActiveMeeting()
+  } finally {
+    reconnecting = false
+    reconnectingToMeeting.set(false)
+  }
+}
+
+/**
+ * User-initiated cancel of the reconnect attempt. Drops the storage
+ * anchor; if connect is in-flight LiveKit timeout will surface as a
+ * normal failure and the watcher's catch branch will swallow it.
+ */
+export function cancelReconnect (): void {
+  forgetActiveMeeting()
+  reconnectingToMeeting.set(false)
+}
+
+onClient(() => {
+  void waitForOfficeLoaded().then(() => {
+    void reconnectToCurrentMeeting()
+    // Subscribe to both PI-derived store and meetings store: either may
+    // populate after officeLoaded resolves (LiveQuery snapshots arrive
+    // asynchronously). Loop guarded by `reconnecting`/`currentMeeting`.
+    currentMeetingMinutes.subscribe(() => {
+      void reconnectToCurrentMeeting()
+    })
+    meetings.subscribe(() => {
+      if (recallActiveMeeting() !== undefined) {
+        void reconnectToCurrentMeeting()
+      }
+    })
+  })
+})

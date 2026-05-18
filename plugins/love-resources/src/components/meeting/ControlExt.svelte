@@ -152,16 +152,14 @@
   // Get busy participants (those in private meetings we don't have access to)
   $: busyParticipants = $infos.filter((info) => $busyPersons.has(info.person) && info.meeting !== undefined)
 
-  const beforeUnloadListener = (): void => {
-    if ($myInfo !== undefined && $lkSessionConnected) {
-      void leaveMeeting()
-    }
-  }
-
-  window.addEventListener('beforeunload', beforeUnloadListener)
+  // beforeunload used to call leaveMeeting(), which dropped the
+  // `love.activeMeeting` anchor in sessionStorage and made post-refresh
+  // reconnect impossible. We now rely on:
+  //   * LiveKit SDK closing the WebSocket on tab unload,
+  //   * server `participant_left` webhook cleaning ParticipantInfo,
+  //   * `rememberActiveMeeting` letting the next page-load resume the seat.
 
   onDestroy(() => {
-    removeEventListener('beforeunload', beforeUnloadListener)
     closePopup(myInvitesCategory)
     closeWidget(love.ids.MeetingWidget)
   })
