@@ -289,7 +289,7 @@ Trigger не создаёт `MeetingMinutes` (это делает caller-client 
 | `meetings.bidirectional-loop.tests.ts` | Forward + reverse call. Office owner leaves → recipient автоматически disconnect через cascade (раздел 5.1) |
 | `meetings.guest.tests.ts` | Guest join через shared link |
 
-Запуск: `cd tests/sanity && npx playwright test -c ./tests/playwright.config.ts tests/love/meetings.all.spec.ts --reporter=list --retries=0 --workers=1`. Все 40 PASS, 1 skipped.
+Запуск: `cd tests/sanity && rushx uitest tests/love/meetings.all.spec.ts --reporter=list --retries=0 --workers=1`. Все 40 PASS, 1 skipped.
 
 ---
 
@@ -430,8 +430,7 @@ BENCH_INVITE_FLOW=1 BENCH_INVITE_ITERATIONS=200 BENCH_INVITE_PARALLEL=20 \
 
 ```bash
 cd tests/sanity
-npx playwright test -c ./tests/playwright.config.ts \
-  tests/love/meetings.all.spec.ts \
+rushx uitest tests/love/meetings.all.spec.ts \
   --reporter=list --retries=0 --workers=1
 ```
 

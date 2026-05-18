@@ -32,17 +32,30 @@ cd tests/sanity
 rushx ci
 
 # Run all tests
-rushx uitest
+rushx uitest --reporter=list --retries=0
 
 # Run only love/meeting tests
-npx playwright test -c ./tests/playwright.config.ts tests/love/
+rushx uitest tests/love/ --reporter=list --retries=0
 
-# Run specific test
-npx playwright test -c ./tests/playwright.config.ts tests/love/meetings.spec.ts
+# Run specific spec
+rushx uitest tests/love/meetings.all.spec.ts --reporter=list --retries=0
+
+# Run specific test by name (-g matches test title)
+rushx uitest tests/love/meetings.all.spec.ts -g "knocker auto-joins" --reporter=list --retries=0 --workers=1
 
 # Debug mode (headed browser)
-npx playwright test -c ./tests/playwright.config.ts tests/love/meetings.spec.ts --headed --debug
+rushx debug tests/love/meetings.all.spec.ts
 ```
+
+`rushx uitest` wraps `playwright test` with the required env (`LOCAL_URL`,
+`DEV_URL`) and the right config — always prefer it over a bare `npx
+playwright`. Pass extra playwright flags through unchanged.
+
+Always pass `--reporter=list --retries=0` for dev runs — the default html
+reporter spawns a local server that blocks the terminal (looks like hang),
+and default retries waste minutes re-running a real failure before showing
+output. `--retries=0` makes failures show up immediately so you understand
+what broke fast.
 
 ### Auth
 

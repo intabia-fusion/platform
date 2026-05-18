@@ -865,7 +865,8 @@ describe('ClisrServer and ClisrClient consistency', () => {
       session,
       // Older than HangLogTimeout — triggers warn.
       startTime: Date.now() - (server.hangLogTimeout + 1000),
-      method: 'hangOp'
+      method: 'hangOp',
+      reject: jest.fn()
     } as any
 
     ;(server as any).requests.set('#hang', rr)
@@ -1020,6 +1021,7 @@ describe('ClisrServer and ClisrClient consistency', () => {
       const fakeRequest: any = {
         method: 'x',
         sendData: jest.fn(),
+        reject: jest.fn(),
         startTime: Date.now() - 6000, // older than the 5s threshold
         session
       }
@@ -1075,7 +1077,8 @@ describe('ClisrServer and ClisrClient consistency', () => {
       // Insert a fake request into the session's requests map with a mocked sendData
       const fakeRequest: any = {
         method: 'x',
-        sendData: jest.fn()
+        sendData: jest.fn(),
+        reject: jest.fn()
       }
       ;(server as any).requests.set('#r2', fakeRequest)
       session.requests.set('#r2', fakeRequest)
