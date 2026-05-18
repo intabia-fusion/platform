@@ -438,11 +438,22 @@ export async function reconnectToCurrentMeeting (): Promise<void> {
   if (currentMeeting !== undefined) return
   if (getCurrentAccount().role === AccountRole.ReadOnlyGuest) return
 
-  // Prefer the live PI (server-side source of truth) when it's there.
+  // Anchor is the only signal that the user *wants* to be in a meeting.
+  // After an explicit `leaveMeeting()` the anchor is cleared but the
+  // server-side ParticipantInfo can linger for up to LK departureTimeout
+  // (3s) — without this check the subscribe-watcher on
+  // `currentMeetingMinutes` (still derived from the stale PI) re-enters
+  // `connectToMeeting` and the user is yanked right back in.
+  const remembered = recallActiveMeeting()
+  if (remembered === undefined) return
+
   let mm: MeetingMinutes | undefined = get(currentMeetingMinutes)
+  if (mm !== undefined && mm._id !== remembered) {
+    // PI points at a different meeting than the one we remembered —
+    // trust the anchor.
+    mm = undefined
+  }
   if (mm === undefined) {
-    const remembered = recallActiveMeeting()
-    if (remembered === undefined) return
     const allMeetings = get(meetings)
     // `meetings` query may still be loading. Wait silently for the next
     // store tick instead of dropping the anchor — losing it here means
