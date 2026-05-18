@@ -75,7 +75,16 @@ export class CommonRecruitingPage extends CalendarPage {
   }
 
   async clickAppleseedJohn (): Promise<void> {
-    await this.appleseedJohnButton().last().click()
+    // Retry: a sibling popup-header may briefly intercept pointer events
+    // (members popup right after open). Stable solution — wait for popup to
+    // settle, then click; if interception still wins, fall back to force-click.
+    const btn = this.appleseedJohnButton().last()
+    await btn.waitFor({ state: 'visible', timeout: 15000 })
+    try {
+      await btn.click({ timeout: 5000 })
+    } catch {
+      await btn.click({ force: true, timeout: 5000 })
+    }
   }
 
   async clickChenRosamund (): Promise<void> {

@@ -118,6 +118,7 @@ export class TInviteSettings extends TConfiguration implements InviteSettings {
 export class TOfficeSettings extends TConfiguration implements OfficeSettings {
   defaultStartWithTranscription!: boolean
   defaultStartWithRecording!: boolean
+  defaultStartPrivate!: boolean
 }
 
 @Model(setting.class.WorkspaceSetting, core.class.Doc, DOMAIN_SETTING)

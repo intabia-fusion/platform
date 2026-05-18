@@ -32,15 +32,22 @@ echo "Creating user accounts..."
 ./tool.sh create-account admin -f Super -l Admin -p 1234
 ./tool.sh create-account user1 -f John -l Appleseed -p 1234
 ./tool.sh create-account user2 -f Kainin -l Dirak -p 1234
+./tool.sh create-account user3 -f Muffin -l Muram -p 1234
 
 echo "Creating workspace api-tests..."
 ./tool.sh create-workspace api-tests email:user1
 
+./tool.sh create-workspace api-tests-fail email:user3
+
 echo "Creating workspace api-tests-cr..."
 ./tool-europe.sh create-workspace api-tests-cr email:user1 --region 'europe'
 
-echo "Assigning user1 to workspaces..."
+echo "Assigning users to workspaces..."
 ./tool.sh assign-workspace user1 api-tests
 ./tool.sh assign-workspace user1 api-tests-cr
+# user2 is needed by love-flow tests (caller/recipient pair) so they both
+# have PersonSpace + Employee in the same api-tests workspace.
+./tool.sh assign-workspace user2 api-tests
+./tool.sh assign-workspace user3 api-tests-fail
 
 rm -rf ./sanity/.auth

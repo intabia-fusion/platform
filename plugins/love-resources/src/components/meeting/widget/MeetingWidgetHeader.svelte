@@ -26,11 +26,10 @@
   import { onDestroy } from 'svelte'
 
   import RoomModal from '../../RoomModal.svelte'
-  import { currentRoom, roomModalActive } from '../../../stores'
+  import { currentRoom } from '../../../stores'
   import MeetingOptionsButton from '../controls/MeetingOptionsButton.svelte'
   import RecordingButton from '../controls/RecordingButton.svelte'
   import TranscriptionButton from '../controls/TranscriptionButton.svelte'
-  import RoomAccessButton from '../controls/RoomAccessButton.svelte'
 
   export let room: Room
   export let doc: MeetingMinutes | undefined = undefined
@@ -41,7 +40,7 @@
   $: breadcrumbs = [
     {
       id: 'meeting',
-      title: doc?.title ?? room.name
+      title: doc?.name ?? room.name
     }
   ]
 
@@ -58,10 +57,9 @@
   <Breadcrumbs items={breadcrumbs} currentOnly />
   <svelte:fragment slot="actions">
     {#if $currentRoom !== undefined}
-      <!-- <RoomAccessButton {room} kind="tertiary" size="small" /> -->
       <RecordingButton kind="tertiary" size="small" />
       <TranscriptionButton kind="tertiary" size="small" />
-      <MeetingOptionsButton {room} kind="tertiary" size="small" />
+      <MeetingOptionsButton {room} meetingMinutes={doc} kind="tertiary" size="small" />
       <ButtonIcon icon={IconMaximize} kind="tertiary" size="small" noPrint on:click={maximize} />
     {/if}
   </svelte:fragment>

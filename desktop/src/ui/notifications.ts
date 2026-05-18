@@ -59,10 +59,10 @@ async function hydrateNotificationAsYouCan (
   let intlParams: Record<string, any> = {}
 
   if (lastNotification._class === notification.class.CommonInboxNotification) {
-    intlTitle = (lastNotification as CommonInboxNotification).message
+    intlTitle = lastNotification.title ?? (lastNotification as CommonInboxNotification).message
     intlParams = { ...(lastNotification as CommonInboxNotification).intlParams }
   } else if (lastNotification._class === notification.class.ActivityInboxNotification) {
-    intlTitle = (lastNotification as ActivityInboxNotification).title
+    intlTitle = lastNotification.title
     intlParams = { ...(lastNotification as ActivityInboxNotification).intlParams }
   }
 

@@ -14,15 +14,24 @@
 //
 
 import { getCurrentEmployee, getCurrentEmployeeSpace, type Person } from '@hcengineering/contact'
-import { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
-import love, { type MeetingMinutes, type UserMeetingInvite } from '@hcengineering/love'
-import { createQuery, getClient, playSound } from '@hcengineering/presentation'
-import { type PopupResult } from '@hcengineering/ui'
+import { getPersonByPersonRef } from '@hcengineering/contact-resources'
+import { AccountRole, getCurrentAccount, type AccountUuid, type Ref } from '@hcengineering/core'
+import love, { MeetingStatus, type MeetingMinutes, type Room, type UserMeetingInvite } from '@hcengineering/love'
+import presentation, { createQuery, getClient, onClient, playSound } from '@hcengineering/presentation'
+import { addNotification, NotificationSeverity, type PopupResult } from '@hcengineering/ui'
+import { getMetadata, translate } from '@hcengineering/platform'
+import { getCurrentLanguage } from '@hcengineering/theme'
 import { derived, get, writable, type Writable } from 'svelte/store'
 import { createMeeting, joinOrCreateMeetingByInvite } from './meetings'
-import { currentMeetingMinutes } from './stores'
+import { currentMeetingMinutes, infos, meetings as meetingsStore } from './stores'
+import KnockResolutionToast from './components/meeting/invites/KnockResolutionToast.svelte'
 
-export const inviteRequestSecondsToLive = 30
+// Half of the server-side TransientTTL=30s. Sender bumps the document
+// every tick to keep the TTL fresh; server proxies the touch to every
+// linked invite-response. See docs/knock.md.
+const HEARTBEAT_MS = 15_000
+
+let heartbeatTimer: ReturnType<typeof setInterval> | undefined
 
 let requestPopup: PopupResult | undefined
 let responsePopup: PopupResult | undefined
@@ -30,24 +39,67 @@ let responsePopup: PopupResult | undefined
 export const allInvites: Writable<UserMeetingInvite[]> = writable([])
 
 // All invites we send to somebody.
-export const outgoingInvitesStore = derived(allInvites, (all) => {
-  const outgoing = all.filter((it) => it.kind === 'invite-request')
+export const outgoingInvitesStore = derived([allInvites, infos], ([all, allInfos]) => {
+  const me = getCurrentEmployee()
+  const outgoing = all.filter((it) => it.kind === 'invite-request' && it.from === me)
   void checkAndJoinIfRecipientJoined(outgoing)
-  return outgoing
+
+  // If the recipient is already a participant of the invited meeting (joined
+  // any way — accept, link, room click), drop our own invite-request: there
+  // is nothing left to wait for.
+  const toDrop = outgoing.filter(
+    (it) =>
+      it.status === 'pending' &&
+      it.meeting !== undefined &&
+      it.room === undefined &&
+      allInfos.some((p) => p.person === it.to && p.meeting === it.meeting)
+  )
+  if (toDrop.length > 0) {
+    const client = getClient()
+    for (const inv of toDrop) {
+      client.removeDoc(love.class.UserMeetingInvite, inv.space, inv._id).catch((): void => undefined)
+    }
+  }
+
+  return outgoing.filter((it) => it.status === 'pending')
 })
 
-// All waiting for confirmation
+// All waiting for confirmation (Scenario A only).
 export const incomingInvitesStore = derived(allInvites, (all) => {
-  const now = Date.now()
-  const incoming = all.filter((it) => it.kind === 'invite-response' && it.expiresAt > now)
+  const me = getCurrentEmployee()
+  const incoming = all.filter(
+    (it) => it.kind === 'invite-response' && it.to === me && it.room === undefined && it.status === 'pending'
+  )
 
   if (incoming.length > 0 && stopIncomingSound == null) {
     stopIncomingSound = playIncomingSound()
-  } else if (stopIncomingSound != null) {
+  } else if (incoming.length === 0 && stopIncomingSound != null) {
     void stopIncomingInviteSound()
   }
 
+  // A2: caller patches our invite-response with `meeting` after creating one
+  // in their office. Auto-join via the same liveQuery snapshot.
+  const acceptedWithMeeting = all.filter(
+    (it) =>
+      it.kind === 'invite-response' &&
+      it.to === me &&
+      it.room === undefined &&
+      it.status === 'accepted' &&
+      it.meeting !== undefined
+  )
+  if (acceptedWithMeeting.length > 0) {
+    void checkAndJoinIfRecipientAccepted(acceptedWithMeeting)
+  }
+
   return incoming
+})
+
+// Pending Б-flow invite-response addressed to me as a meeting owner.
+export const knockingInvitesStore = derived(allInvites, (all) => {
+  const me = getCurrentEmployee()
+  return all.filter(
+    (it) => it.kind === 'invite-response' && it.to === me && it.room !== undefined && it.status === 'pending'
+  )
 })
 
 // Active sound stop function
@@ -68,8 +120,8 @@ export interface InviteResponse {
 }
 
 /**
- * Send meeting invites to multiple persons
- * Shows popup for sender with cancel button
+ * Send meeting invites to multiple persons (Scenario A).
+ * Shows popup for sender with cancel button.
  */
 export async function sendInvites (persons: Array<Ref<Person>>, meeting?: Ref<MeetingMinutes>): Promise<void> {
   if (getCurrentAccount().role === AccountRole.ReadOnlyGuest) {
@@ -98,8 +150,6 @@ export async function sendInvites (persons: Array<Ref<Person>>, meeting?: Ref<Me
     return
   }
 
-  const expiresAt = Date.now() + inviteRequestSecondsToLive * 1000
-
   const client = getClient()
   for (const person of validPersons) {
     // Use per-person apply with notMatch to prevent duplicate pending invites
@@ -114,12 +164,41 @@ export async function sendInvites (persons: Array<Ref<Person>>, meeting?: Ref<Me
       kind: 'invite-request',
       from: currentPerson,
       to: person,
-      expiresAt,
       status: 'pending',
       ...(meetingId !== undefined && { meeting: meetingId })
     })
     await apply.commit()
   }
+}
+
+/**
+ * Send a knock request to the owners of a private meeting in `roomId`
+ * (Scenario Б). `to` is set to `from` because the real recipients are
+ * resolved server-side from meeting owners.
+ */
+export async function sendKnockRequest (roomId: Ref<Room>): Promise<void> {
+  if (getCurrentAccount().role === AccountRole.ReadOnlyGuest) return
+  const currentPerson = getCurrentEmployee()
+  if (currentPerson === undefined) return
+  const mySpace = getCurrentEmployeeSpace()
+  if (mySpace === undefined) return
+
+  const client = getClient()
+  const apply = client.apply('create-knock:' + currentPerson + ':' + roomId)
+  apply.notMatch(love.class.UserMeetingInvite, {
+    kind: 'invite-request',
+    from: currentPerson,
+    room: roomId,
+    status: 'pending'
+  })
+  await apply.createDoc(love.class.UserMeetingInvite, mySpace, {
+    kind: 'invite-request',
+    from: currentPerson,
+    to: currentPerson,
+    room: roomId,
+    status: 'pending'
+  })
+  await apply.commit()
 }
 
 /**
@@ -162,25 +241,124 @@ export async function cancelInvites (
 }
 
 /**
- * Subscribe to incoming meeting invites
- * Called when app starts
- * We read ALL UserMeetingInvite from our personal space, then separate by kind:
- * - invite-request: outgoing invites from us, track status changes
- * - invite-response: incoming invites to us, show accept/decline panel
+ * Subscribe to incoming meeting invites.
  */
 export function subscribeToIncomingInvites (): void {
-  const mySpace = getCurrentEmployeeSpace()
-  if (mySpace === undefined) return
+  onClient(() => {
+    const trySubscribe = (): void => {
+      const mySpace = getCurrentEmployeeSpace()
+      if (mySpace === undefined) {
+        setTimeout(trySubscribe, 100)
+        return
+      }
 
-  incomingInvitesQuery.query(love.class.UserMeetingInvite, { space: mySpace }, (invites) => {
-    allInvites.set(invites)
+      incomingInvitesQuery.query(love.class.UserMeetingInvite, { space: mySpace }, (invites) => {
+        allInvites.set(invites)
+      })
+
+      if (heartbeatTimer === undefined) {
+        heartbeatTimer = setInterval(() => {
+          void renewOutgoingInvites()
+        }, HEARTBEAT_MS)
+      }
+    }
+    trySubscribe()
+  })
+}
+
+async function renewOutgoingInvites (): Promise<void> {
+  const me = getCurrentEmployee()
+  if (me === undefined) return
+  const client = getClient()
+  const all = get(allInvites)
+  for (const invite of all) {
+    if (invite.kind !== 'invite-request' || invite.from !== me) continue
+    if (invite.status !== 'pending') continue
+    try {
+      // No-op update — only the TxUpdateDoc matters; server-side trigger
+      // proxies the TTL touch to every linked invite-response. Repeat the
+      // existing `status` value so the update is well-typed.
+      await client.update(invite, { status: invite.status })
+    } catch {
+      // Best effort — invite may have been removed concurrently.
+    }
+  }
+}
+
+/**
+ * Recipient-side waiting state for Scenario A2 ("we accepted, waiting for
+ * caller to create the meeting"). Keyed by the caller's Person ref so we
+ * can match the freshly-created MeetingMinutes (it is hosted in caller's
+ * office, with both members in `members`). The IncomingInvitePopup uses
+ * this store to switch the Join button to a "Waiting for X..." label.
+ */
+export interface AwaitingMeeting {
+  from: Ref<Person>
+  acceptedSessionId: string | undefined
+}
+
+export const awaitingMeetingStore: Writable<AwaitingMeeting[]> = writable([])
+
+function addAwaiting (entry: AwaitingMeeting): void {
+  const list = get(awaitingMeetingStore)
+  if (list.some((it) => it.from === entry.from)) return
+  awaitingMeetingStore.set([...list, entry])
+}
+
+function removeAwaiting (from: Ref<Person>): void {
+  awaitingMeetingStore.set(get(awaitingMeetingStore).filter((it) => it.from !== from))
+}
+
+/**
+ * Watcher driven by the `meetings` live-query: when a meeting in the
+ * caller's office appears with both me and the caller as members, auto-join
+ * it. This is how the recipient lands in the A2 meeting created by the
+ * caller after our `responseToInviteRequest(accept)`.
+ */
+let stopAwaitingWatch: (() => void) | undefined
+function startAwaitingWatcher (): void {
+  if (stopAwaitingWatch !== undefined) return
+  const handled = new Set<Ref<MeetingMinutes>>()
+  stopAwaitingWatch = meetingsStore.subscribe((all) => {
+    const awaiting = get(awaitingMeetingStore)
+    if (awaiting.length === 0) return
+    const me = getCurrentEmployee()
+    if (me === undefined) return
+    const mySessionId = getMetadata(presentation.metadata.SessionId) ?? undefined
+    void (async () => {
+      for (const entry of awaiting) {
+        if (entry.acceptedSessionId !== undefined && entry.acceptedSessionId !== mySessionId) continue
+        const callerPerson = await getPersonByPersonRef(entry.from)
+        const callerAccount = callerPerson?.personUuid as AccountUuid | undefined
+        const myPerson = await getPersonByPersonRef(me)
+        const myAccount = myPerson?.personUuid as AccountUuid | undefined
+        if (callerAccount === undefined || myAccount === undefined) continue
+        const meeting = all.find(
+          (m) =>
+            m.status !== MeetingStatus.Finished && m.members.includes(myAccount) && m.members.includes(callerAccount)
+        )
+        if (meeting === undefined || handled.has(meeting._id)) continue
+        handled.add(meeting._id)
+        removeAwaiting(entry.from)
+        try {
+          const currentMm = get(currentMeetingMinutes)
+          if (currentMm?._id !== meeting._id) {
+            await joinOrCreateMeetingByInvite(meeting._id)
+          }
+        } catch (err) {
+          console.warn('Failed to auto-join awaited meeting', err)
+        }
+      }
+    })()
   })
 }
 
 /**
- * Respond to an invite request (accept or decline)
- * This function is called from IncomingInvitePanel component
- * Updates invite-response, server trigger syncs to invite-request
+ * Respond to an invite request (accept or decline).
+ *  - A1 (`invite.meeting !== undefined`): join immediately and flip status.
+ *  - A2 (no meeting): flip status + register an awaiting watch. The popup
+ *    keeps a "Waiting for X..." label until the caller's office hosts a
+ *    meeting we are a member of; we then auto-join.
  */
 export async function responseToInviteRequest (invite: UserMeetingInvite, accept: boolean): Promise<void> {
   const client = getClient()
@@ -189,40 +367,29 @@ export async function responseToInviteRequest (invite: UserMeetingInvite, accept
 
   try {
     if (accept) {
-      // Check if this is an invite to an existing meeting
+      const acceptedSessionId = getMetadata(presentation.metadata.SessionId) ?? undefined
       if (invite.meeting !== undefined) {
-        // Join existing meeting
         await joinOrCreateMeetingByInvite(invite.meeting)
-        await client.update(invite, { status: 'accepted' })
+        await client.update(invite, { status: 'accepted', acceptedSessionId })
       } else {
-        // Create new meeting in MY office (the recipient's office)
-        const myOffice = await client.findOne(love.class.Office, {
-          person: me
-        })
-
-        if (myOffice !== undefined) {
-          // Create meeting in MY office and join
-          const meeting = await createMeeting(myOffice)
-
-          if (meeting !== undefined) {
-            // Update invite-response with meeting reference
-            await client.update(invite, {
-              status: 'accepted',
-              meeting: meeting._id
-            })
-          } else {
-            // If meeting creation failed, decline the invite
-            await client.update(invite, { status: 'declined' })
-          }
-        }
+        addAwaiting({ from: invite.from, acceptedSessionId })
+        startAwaitingWatcher()
+        await client.update(invite, { status: 'accepted', acceptedSessionId })
       }
     } else {
-      // Just decline the invite
       await client.update(invite, { status: 'declined' })
     }
   } catch (error) {
     console.warn('Failed to respond to invite:', error)
   }
+}
+
+/**
+ * Cancel an awaiting accept (recipient changed their mind before the caller
+ * created the meeting).
+ */
+export function cancelAwaiting (from: Ref<Person>): void {
+  removeAwaiting(from)
 }
 
 /**
@@ -255,30 +422,126 @@ export async function stopIncomingInviteSound (): Promise<void> {
  */
 export function unsubscribeFromIncomingInvites (): void {
   incomingInvitesQuery.unsubscribe()
+  if (heartbeatTimer !== undefined) {
+    clearInterval(heartbeatTimer)
+    heartbeatTimer = undefined
+  }
 }
 
+const handlingInvites = new Set<Ref<UserMeetingInvite>>()
+const handlingAccepted = new Set<Ref<UserMeetingInvite>>()
+
+/**
+ * Recipient-side auto-join after caller (A2) created the meeting and the
+ * trigger synced `meeting` onto our invite-response.
+ */
+export async function checkAndJoinIfRecipientAccepted (invites: UserMeetingInvite[]): Promise<void> {
+  const client = getClient()
+  const mySessionId = getMetadata(presentation.metadata.SessionId) ?? undefined
+  for (const invite of invites) {
+    if (invite.meeting === undefined) continue
+    if (invite.status !== 'accepted') continue
+    if (invite.acceptedSessionId !== undefined && invite.acceptedSessionId !== mySessionId) continue
+    if (handlingAccepted.has(invite._id)) continue
+    handlingAccepted.add(invite._id)
+    let joined = false
+    try {
+      const currentMeeting = get(currentMeetingMinutes)
+      if (currentMeeting?._id === invite.meeting) {
+        joined = true
+      } else {
+        joined = await joinOrCreateMeetingByInvite(invite.meeting)
+      }
+    } catch (err) {
+      console.warn('Failed to auto-join via meeting', err)
+    } finally {
+      if (joined) {
+        try {
+          await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
+        } catch {}
+      }
+      handlingAccepted.delete(invite._id)
+    }
+  }
+}
+
+/**
+ * Sender-side watcher for invite-request transitions.
+ *  - A1 (meeting set, accepted): join meeting, remove invite-request.
+ *  - A2 (no meeting, accepted): caller-client creates MeetingMinutes in MY
+ *    office, pushes the recipient as a member, connects, removes invite-request.
+ *  - Б (knock, accepted with meeting set by trigger): connect, remove invite.
+ *  - declined: show toast, remove invite-request.
+ */
 export async function checkAndJoinIfRecipientJoined (invites: UserMeetingInvite[]): Promise<void> {
   const client = getClient()
   const me = getCurrentEmployee()
   if (me === undefined) return
 
-  // Use cached outgoing invite-requests instead of querying
   for (const invite of invites) {
-    if (invite.status === 'accepted' && invite.meeting !== undefined) {
-      // Check if we're already in this meeting
-      const currentMeeting = get(currentMeetingMinutes)
-      if (currentMeeting?._id === invite.meeting) {
-        // Already joined, delete the invite request
-        await client.remove(invite)
-      } else {
-        // Try to join the meeting
-        await joinOrCreateMeetingByInvite(invite.meeting)
-        // After successful join, delete the invite
+    if (handlingInvites.has(invite._id)) continue
+    if (invite.status === 'accepted') {
+      handlingInvites.add(invite._id)
+      try {
+        if (invite.meeting === undefined && invite.room === undefined) {
+          // A2: caller-client creates the meeting in their own office. `createMeeting`
+          // already connects via `connectToMeeting`. Push the recipient as a
+          // member so their live-query on `meetingsStore` (members ⊇ [me,
+          // caller]) picks the meeting up and auto-joins.
+          const office = await client.findOne(love.class.Office, { person: me })
+          if (office !== undefined) {
+            const created = await createMeeting(office)
+            if (created !== undefined) {
+              const recipient = await getPersonByPersonRef(invite.to)
+              const recipientAccount = recipient?.personUuid as AccountUuid | undefined
+              if (recipientAccount !== undefined && !created.members.includes(recipientAccount)) {
+                await client.update(created, { $push: { members: recipientAccount } })
+              }
+            }
+          }
+        } else if (invite.meeting !== undefined) {
+          // A1 / Б: meeting ref already set on the request. Connect if not in.
+          const currentMeeting = get(currentMeetingMinutes)
+          if (currentMeeting?._id !== invite.meeting) {
+            await joinOrCreateMeetingByInvite(invite.meeting)
+          }
+        }
         await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
+      } catch (err) {
+        console.warn('Failed to auto-join via accepted invite', err)
+      } finally {
+        handlingInvites.delete(invite._id)
       }
     } else if (invite.status === 'declined') {
-      // Remove declined or expired invites
-      await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
+      handlingInvites.add(invite._id)
+      try {
+        if (invite.room !== undefined) {
+          addNotification(
+            await translate(love.string.KnockingTo, {}, getCurrentLanguage()),
+            await translate(love.string.KnockDeclined, {}, getCurrentLanguage()),
+            KnockResolutionToast,
+            undefined,
+            NotificationSeverity.Info,
+            'love'
+          )
+        } else {
+          const recipient = await getPersonByPersonRef(invite.to)
+          const name = recipient?.name ?? ''
+          addNotification(
+            await translate(love.string.CallDeclined, {}, getCurrentLanguage()),
+            await translate(love.string.CallDeclinedBody, { name }, getCurrentLanguage()),
+            KnockResolutionToast,
+            undefined,
+            NotificationSeverity.Info,
+            'love'
+          )
+        }
+        await client.removeDoc(love.class.UserMeetingInvite, invite.space, invite._id)
+      } finally {
+        handlingInvites.delete(invite._id)
+      }
     }
   }
 }
+
+export const inviteRequestSecondsToLive = 30

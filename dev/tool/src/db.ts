@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   type AccountDB,
-  type MongoAccountDB,
   type Workspace,
   addSocialIdToPerson,
   ensurePerson,
@@ -13,11 +12,7 @@ import {
 } from '@hcengineering/account'
 import { getFirstName, getLastName } from '@hcengineering/contact'
 import {
-  systemAccountUuid,
-  type BackupClient,
-  type Client,
-  type Doc,
-  MeasureMetricsContext,
+  type MeasureMetricsContext,
   SocialIdType,
   type PersonUuid,
   type SocialKey,
@@ -32,26 +27,9 @@ import {
   type WorkspaceMode,
   type Tx
 } from '@hcengineering/core'
-import { getMongoClient, getWorkspaceMongoDB } from '@hcengineering/mongo'
-import {
-  convertDoc,
-  createTables,
-  getDBClient,
-  getDocFieldsByDomains,
-  retryTxn,
-  translateDomain,
-  setDBExtraOptions
-} from '@hcengineering/postgres'
-import { type DBDoc } from '@hcengineering/postgres/types/utils'
-import { getTransactorEndpoint } from '@hcengineering/server-client'
-import { generateToken } from '@hcengineering/server-token'
-import { connect, sendTransactorEvent } from '@hcengineering/server-tool'
-import {
-  type MongoAccountDB as v6MongoAccountDB,
-  type Account as OldAccount,
-  type Workspace as OldWorkspace
-} from '@hcengineering/account-service'
-import { type MongoClient } from 'mongodb'
+import { getDBClient, setDBExtraOptions } from '@hcengineering/postgres'
+import { sendTransactorEvent } from '@hcengineering/server-tool'
+import { type Account as OldAccount, type Workspace as OldWorkspace } from '@hcengineering/account-service'
 import type postgres from 'postgres'
 import { type Row } from 'postgres'
 import { getToolToken } from './utils'
@@ -66,447 +44,6 @@ import {
   workspaceEvents
 } from '@hcengineering/server-core'
 import { createBackupPipeline, createEmptyBroadcastOps } from '@hcengineering/server-pipeline'
-
-export async function moveFromMongoToPG (
-  accountDb: AccountDB,
-  mongoUrl: string,
-  dbUrl: string | undefined,
-  workspaces: Workspace[],
-  region: string
-): Promise<void> {
-  if (dbUrl === undefined) {
-    throw new Error('dbUrl is required')
-  }
-  const client = getMongoClient(mongoUrl)
-  const mongo = await client.getClient()
-  const pg = getDBClient(dbUrl)
-  const pgClient = await pg.getClient()
-
-  for (let index = 0; index < workspaces.length; index++) {
-    const ws = workspaces[index]
-    try {
-      await moveWorkspace(accountDb, mongo, pgClient, ws, region)
-      console.log('Move workspace', index, workspaces.length)
-    } catch (err) {
-      console.log('Error when move workspace', ws.name ?? ws.url, err)
-      throw err
-    }
-  }
-  pg.close()
-  client.close()
-}
-
-async function moveWorkspace (
-  accountDb: AccountDB,
-  mongo: MongoClient,
-  pgClient: postgres.Sql,
-  ws: Workspace,
-  region: string,
-  include?: Set<string>,
-  force = false
-): Promise<void> {
-  try {
-    console.log('move workspace', ws.name ?? ws.url)
-    const wsId = ws.uuid
-    // TODO: get workspace mongoDB
-    const mongoDB = getWorkspaceMongoDB(mongo, ws.dataId ?? wsId)
-    const collections = await mongoDB.collections()
-    let tables = collections.map((c) => c.collectionName)
-    if (include !== undefined) {
-      tables = tables.filter((t) => include.has(t))
-    }
-
-    await createTables(new MeasureMetricsContext('', {}), pgClient, '', tables)
-    const token = generateToken(systemAccountUuid, wsId, { service: 'tool' })
-    const endpoint = await getTransactorEndpoint(token, 'external')
-    const connection = (await connect(endpoint, wsId, undefined, {
-      model: 'upgrade'
-    })) as unknown as Client & BackupClient
-    for (const collection of collections) {
-      const domain = translateDomain(collection.collectionName)
-      if (include !== undefined && !include.has(domain)) {
-        continue
-      }
-      const cursor = collection.find()
-      const current = await pgClient`SELECT _id FROM ${pgClient(domain)} WHERE "workspaceId" = ${ws.uuid}`
-      const currentIds = new Set(current.map((r) => r._id))
-      console.log('move domain', domain)
-      const docs: Doc[] = []
-      const fields = getDocFieldsByDomains(domain)
-      const filedsWithData = [...fields, 'data']
-      const insertFields: string[] = ['workspaceId']
-      for (const field of filedsWithData) {
-        insertFields.push(field)
-      }
-      while (true) {
-        const toRemove: string[] = []
-        while (docs.length < 5000) {
-          const doc = (await cursor.next()) as Doc | null
-          if (doc === null) break
-          if (currentIds.has(doc._id)) {
-            if (force) {
-              toRemove.push(doc._id)
-            } else {
-              continue
-            }
-          }
-          docs.push(doc)
-        }
-        while (toRemove.length > 0) {
-          const part = toRemove.splice(0, 100)
-          await retryTxn(pgClient, async (client) => {
-            await client.unsafe(
-              `DELETE FROM ${translateDomain(domain)} WHERE "workspaceId" = '${ws.uuid}' AND _id IN (${part.map((c) => `'${c}'`).join(', ')})`
-            )
-          })
-        }
-        if (docs.length === 0) break
-        while (docs.length > 0) {
-          const part = docs.splice(0, 100)
-          const values: DBDoc[] = []
-          for (let i = 0; i < part.length; i++) {
-            const doc = part[i]
-            const d = convertDoc(domain, doc, wsId)
-            values.push(d)
-          }
-          try {
-            await retryTxn(pgClient, async (client) => {
-              await client`INSERT INTO ${client(translateDomain(domain))} ${client(values, insertFields)}`
-            })
-          } catch (err) {
-            console.log('Error when insert', domain, err)
-          }
-        }
-      }
-    }
-    // TODO: FIXME
-    // await updateWorkspace(accountDb, ws, { region })
-    await connection.sendForceClose()
-    await connection.close()
-  } catch (err) {
-    console.log('Error when move workspace', ws.name ?? ws.url, err)
-    throw err
-  }
-}
-
-export async function moveWorkspaceFromMongoToPG (
-  accountDb: AccountDB,
-  mongoUrl: string,
-  dbUrl: string | undefined,
-  ws: Workspace,
-  region: string,
-  include?: Set<string>,
-  force?: boolean
-): Promise<void> {
-  if (dbUrl === undefined) {
-    throw new Error('dbUrl is required')
-  }
-  const client = getMongoClient(mongoUrl)
-  const mongo = await client.getClient()
-  const pg = getDBClient(dbUrl)
-  const pgClient = await pg.getClient()
-
-  await moveWorkspace(accountDb, mongo, pgClient, ws, region, include, force)
-  pg.close()
-  client.close()
-}
-
-export async function moveAccountDbFromMongoToPG (
-  ctx: MeasureMetricsContext,
-  mongoDb: AccountDB,
-  pgDb: AccountDB
-): Promise<void> {
-  const mdb = mongoDb as MongoAccountDB
-  const BATCH_SIZE = 5000
-  const WS_BATCH_SIZE = 2000
-
-  ctx.info('Starting migration of persons...')
-  const personsCursor = mdb.person.findCursor({})
-  try {
-    let personsCount = 0
-    let personsBatch: any[] = []
-
-    while (await personsCursor.hasNext()) {
-      const person = await personsCursor.next()
-      if (person == null) break
-
-      const exists = await pgDb.person.findOne({ uuid: person.uuid })
-      if (exists == null) {
-        if (person.firstName == null) {
-          person.firstName = 'n/a'
-        }
-
-        if (person.lastName == null) {
-          person.lastName = ''
-        }
-
-        personsBatch.push(person)
-        if (personsBatch.length >= BATCH_SIZE) {
-          await pgDb.person.insertMany(personsBatch)
-          personsCount += personsBatch.length
-          ctx.info(`Migrated ${personsCount} persons...`)
-          personsBatch = []
-        }
-      }
-    }
-    // Insert remaining batch
-    if (personsBatch.length > 0) {
-      await pgDb.person.insertMany(personsBatch)
-      personsCount += personsBatch.length
-    }
-    ctx.info(`Migrated ${personsCount} persons`)
-  } finally {
-    await personsCursor.close()
-  }
-
-  ctx.info('Starting migration of accounts...')
-  const accountsCursor = mdb.account.findCursor({})
-  try {
-    let accountsCount = 0
-    let accountsBatch: any[] = []
-    let passwordsBatch: any[] = []
-
-    while (await accountsCursor.hasNext()) {
-      const account = await accountsCursor.next()
-      if (account == null) break
-
-      const exists = await pgDb.account.findOne({ uuid: account.uuid })
-      if (exists == null) {
-        const { hash, salt } = account
-
-        delete account.hash
-        delete account.salt
-
-        accountsBatch.push(account)
-        if (hash != null && salt != null) {
-          passwordsBatch.push([account.uuid, hash, salt])
-        }
-
-        if (accountsBatch.length >= BATCH_SIZE) {
-          await pgDb.account.insertMany(accountsBatch)
-          for (const [accountUuid, hash, salt] of passwordsBatch) {
-            await pgDb.setPassword(accountUuid, hash, salt)
-          }
-
-          accountsCount += accountsBatch.length
-          ctx.info(`Migrated ${accountsCount} accounts...`)
-          accountsBatch = []
-          passwordsBatch = []
-        }
-      }
-    }
-    // Insert remaining batch
-    if (accountsBatch.length > 0) {
-      await pgDb.account.insertMany(accountsBatch)
-      accountsCount += accountsBatch.length
-    }
-    if (passwordsBatch.length > 0) {
-      for (const [accountUuid, hash, salt] of passwordsBatch) {
-        await pgDb.setPassword(accountUuid, hash, salt)
-      }
-    }
-    ctx.info(`Migrated ${accountsCount} accounts`)
-  } finally {
-    await accountsCursor.close()
-  }
-
-  ctx.info('Starting migration of social IDs...')
-  const socialIdsCursor = mdb.socialId.findCursor({})
-  try {
-    let socialIdsCount = 0
-    let socialIdsBatch: any[] = []
-    while (await socialIdsCursor.hasNext()) {
-      const socialId = await socialIdsCursor.next()
-      if (socialId == null) break
-
-      const exists = await pgDb.socialId.findOne({ key: socialId.key })
-      if (exists == null) {
-        delete (socialId as any).key
-        delete (socialId as any).id
-        delete (socialId as any)._id // Types of _id are incompatible
-
-        socialIdsBatch.push(socialId)
-
-        if (socialIdsBatch.length >= BATCH_SIZE) {
-          await pgDb.socialId.insertMany(socialIdsBatch)
-
-          socialIdsCount += socialIdsBatch.length
-          ctx.info(`Migrated ${socialIdsCount} social ids...`)
-          socialIdsBatch = []
-        }
-      }
-    }
-    // Insert remaining batch
-    if (socialIdsBatch.length > 0) {
-      await pgDb.socialId.insertMany(socialIdsBatch)
-      socialIdsCount += socialIdsBatch.length
-    }
-    ctx.info(`Migrated ${socialIdsCount} social IDs`)
-  } finally {
-    await socialIdsCursor.close()
-  }
-
-  ctx.info('Starting migration of account events...')
-  const accountEventsCursor = mdb.accountEvent.findCursor({})
-  try {
-    let eventsCount = 0
-    let eventsBatch: any[] = []
-    while (await accountEventsCursor.hasNext()) {
-      const accountEvent = await accountEventsCursor.next()
-      if (accountEvent == null) break
-
-      const exists = await pgDb.accountEvent.findOne({
-        accountUuid: accountEvent.accountUuid,
-        eventType: accountEvent.eventType,
-        time: accountEvent.time
-      })
-      if (exists == null) {
-        const account = await pgDb.account.findOne({ uuid: accountEvent.accountUuid })
-        if (account == null) continue // Not a big deal if we don't move the event for non-existing account
-
-        eventsBatch.push(accountEvent)
-
-        if (eventsBatch.length >= BATCH_SIZE) {
-          await pgDb.accountEvent.insertMany(eventsBatch)
-          eventsCount += eventsBatch.length
-          ctx.info(`Migrated ${eventsCount} account events...`)
-          eventsBatch = []
-        }
-      }
-    }
-    // Insert remaining batch
-    if (eventsBatch.length > 0) {
-      await pgDb.accountEvent.insertMany(eventsBatch)
-      eventsCount += eventsBatch.length
-    }
-    ctx.info(`Migrated ${eventsCount} account events`)
-  } finally {
-    await accountEventsCursor.close()
-  }
-
-  ctx.info('Starting migration of workspaces...')
-  const workspacesCursor = mdb.workspace.findCursor({})
-  try {
-    let workspacesCount = 0
-    let workspacesBatch: any[] = []
-    let workspacesStatusesBatch: any[] = []
-    let workspacesMembersBatch: any[] = []
-    let membersCount = 0
-    while (await workspacesCursor.hasNext()) {
-      const workspace = await workspacesCursor.next()
-      if (workspace == null) break
-
-      const exists = await pgDb.workspace.findOne({ uuid: workspace.uuid })
-      if (exists != null) continue
-
-      const status = workspace.status
-      if (status == null) continue
-      delete (workspace as any).status
-
-      if (workspace.createdBy === 'N/A') {
-        delete workspace.createdBy
-      }
-
-      if (workspace.billingAccount === 'N/A') {
-        delete workspace.billingAccount
-      }
-
-      if (workspace.createdOn == null) {
-        workspace.createdOn = Date.now()
-      }
-
-      workspacesBatch.push(workspace)
-      workspacesStatusesBatch.push(status)
-
-      const members = await mdb.getWorkspaceMembers(workspace.uuid)
-      for (const member of members) {
-        const alreadyAssigned = await pgDb.getWorkspaceRole(member.person, workspace.uuid)
-        if (alreadyAssigned != null) continue
-
-        workspacesMembersBatch.push([member.person, workspace.uuid, member.role])
-      }
-
-      if (workspacesBatch.length >= WS_BATCH_SIZE) {
-        const workspaceUuids = await pgDb.workspace.insertMany(workspacesBatch)
-        workspacesCount += workspacesBatch.length
-        workspacesBatch = []
-
-        await pgDb.workspaceStatus.insertMany(
-          workspacesStatusesBatch.map((s, i) => ({ ...s, workspaceUuid: workspaceUuids[i] }))
-        )
-        workspacesStatusesBatch = []
-
-        await pgDb.batchAssignWorkspace(workspacesMembersBatch)
-        membersCount += workspacesMembersBatch.length
-        workspacesMembersBatch = []
-
-        ctx.info(`Migrated ${workspacesCount} workspaces...`)
-      }
-    }
-
-    // Insert remaining batch
-    if (workspacesBatch.length > 0) {
-      const workspaceUuids = await pgDb.workspace.insertMany(workspacesBatch)
-      workspacesCount += workspacesBatch.length
-      await pgDb.workspaceStatus.insertMany(
-        workspacesStatusesBatch.map((s, i) => ({ ...s, workspaceUuid: workspaceUuids[i] }))
-      )
-      await pgDb.batchAssignWorkspace(workspacesMembersBatch)
-      membersCount += workspacesMembersBatch.length
-    }
-
-    ctx.info(`Migrated ${workspacesCount} workspaces with ${membersCount} member assignments`)
-  } finally {
-    await workspacesCursor.close()
-  }
-
-  ctx.info('Starting migration of invites...')
-  const invitesCursor = mdb.invite.findCursor({})
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-loss-of-precision
-    const MAX_INT_8 = 9223372036854775807
-    let invitesCount = 0
-    let invitesBatch: any[] = []
-    while (await invitesCursor.hasNext()) {
-      const invite = await invitesCursor.next()
-      if (invite == null) break
-      if (invite.migratedFrom == null) {
-        invite.migratedFrom = invite.id
-      }
-
-      delete (invite as any).id
-
-      if (invite.expiresOn > MAX_INT_8 || typeof invite.expiresOn !== 'number') {
-        invite.expiresOn = -1
-      }
-
-      if (["USER'", 'ADMIN'].includes(invite.role as any)) {
-        invite.role = AccountRole.User
-      }
-
-      const exists = await pgDb.invite.findOne({ migratedFrom: invite.migratedFrom })
-      if (exists == null) {
-        invitesBatch.push(invite)
-
-        if (invitesBatch.length >= BATCH_SIZE) {
-          await pgDb.invite.insertMany(invitesBatch)
-          invitesCount += invitesBatch.length
-          ctx.info(`Migrated ${invitesCount} invites...`)
-          invitesBatch = []
-        }
-      }
-    }
-    if (invitesBatch.length > 0) {
-      await pgDb.invite.insertMany(invitesBatch)
-      invitesCount += invitesBatch.length
-    }
-    ctx.info(`Migrated ${invitesCount} invites`)
-  } finally {
-    await invitesCursor.close()
-  }
-
-  ctx.info('Account database migration completed')
-}
 
 export async function migrateCreatedModifiedBy (
   ctx: MeasureMetricsContext,
@@ -573,7 +110,7 @@ export async function migrateCreatedModifiedBy (
           await pgClient`
             INSERT INTO temp_data.account_personid_mapping_v2
             WITH accounts as (
-              SELECT 
+              SELECT
                   tx."workspaceId" as workspace_id,
                   tx."objectId" as old_account_id,
                   COALESCE(
@@ -600,7 +137,7 @@ export async function migrateCreatedModifiedBy (
               SELECT
                 workspace_id,
                 old_account_id,
-                CASE 
+                CASE
                     WHEN latest_email LIKE 'github:%' THEN lower(latest_email)
                     WHEN latest_email LIKE 'openid:%' THEN 'oidc:' || lower(substring(latest_email from 8))
                     ELSE 'email:' || lower(latest_email)
@@ -643,7 +180,7 @@ export async function migrateCreatedModifiedBy (
       // Get list of tables to process
       const tables = await pgClient`
         SELECT table_name
-        FROM information_schema.columns 
+        FROM information_schema.columns
         WHERE table_schema = 'public'
         AND column_name IN ('createdBy', 'modifiedBy')
         GROUP BY table_name
@@ -667,7 +204,7 @@ export async function migrateCreatedModifiedBy (
         ctx.info(`  Processing table: ${tableName}`)
 
         const progress = await pgClient`
-          SELECT field 
+          SELECT field
           FROM temp_data.account_personid_mapping_v2_progress
           WHERE workspace_id = ${wsUuid} AND domain = ${tableName}
         `
@@ -678,7 +215,7 @@ export async function migrateCreatedModifiedBy (
         // Get counts for logging
         const [createdByCount] = !createdDone
           ? await pgClient`
-          SELECT COUNT(*) 
+          SELECT COUNT(*)
           FROM ${pgClient(tableName)} t
           JOIN temp_data.account_personid_mapping_v2 m ON t."workspaceId" = m.workspace_id AND t."createdBy" = m.old_account_id
           WHERE t."workspaceId" = ${wsUuid}
@@ -687,7 +224,7 @@ export async function migrateCreatedModifiedBy (
 
         const [modifiedByCount] = !modifiedDone
           ? await pgClient`
-          SELECT COUNT(*) 
+          SELECT COUNT(*)
           FROM ${pgClient(tableName)} t
           JOIN temp_data.account_personid_mapping_v2 m ON t."workspaceId" = m.workspace_id AND t."modifiedBy" = m.old_account_id
           WHERE t."workspaceId" = ${wsUuid}
@@ -862,7 +399,7 @@ async function fillAccountSocialKeyMapping (ctx: MeasureMetricsContext, pgClient
     await pgClient`
       INSERT INTO temp_data.account_socialkey_mapping
       WITH accounts AS (
-        SELECT 
+        SELECT
             tx."workspaceId",
             tx."objectId",
             COALESCE(
@@ -900,10 +437,10 @@ async function fillAccountSocialKeyMapping (ctx: MeasureMetricsContext, pgClient
             AND tx.data->>'objectClass' = 'contact:class:PersonAccount'
             AND tx."objectId" NOT IN ('core:account:System', 'core:account:ConfigUser')
       )
-      SELECT 
+      SELECT
           a."workspaceId" as workspace_id,
           a."objectId" as old_account_id,
-          CASE 
+          CASE
               WHEN a.latest_email LIKE 'github:%' THEN lower(a.latest_email)
               WHEN a.latest_email LIKE 'openid:%' THEN 'oidc:' || lower(substring(a.latest_email from 8))
               ELSE 'email:' || lower(a.latest_email)
@@ -912,7 +449,7 @@ async function fillAccountSocialKeyMapping (ctx: MeasureMetricsContext, pgClient
               c.data->>'name' as person_name
       FROM accounts as a
           LEFT JOIN public.contact c ON c."_id" = a.person_ref AND c."workspaceId" = a."workspaceId"
-      WHERE a.latest_email IS NOT NULL 
+      WHERE a.latest_email IS NOT NULL
           AND a.latest_email != ''
     `
   }
@@ -941,7 +478,7 @@ export async function migrateMergedAccounts (
       FROM temp_data.account_socialkey_mapping
       WHERE new_social_key != 'email:huly.ai.bot@hc.engineering'
       GROUP BY workspace_id, person_ref
-      HAVING count(*) > 1 
+      HAVING count(*) > 1
     `
 
     ctx.info('Processing persons with merged accounts ', { count: personsAccounts.length })
@@ -1160,158 +697,6 @@ export async function ensureGlobalPersonsForLocalAccounts (
   } finally {
     pg.close()
   }
-}
-
-export async function migrateTrustedV6Accounts (
-  ctx: MeasureMetricsContext,
-  accountDB: AccountDB,
-  mongoDb: v6MongoAccountDB,
-  dryRun: boolean,
-  skipWorkspaces: Set<string>,
-  conflictSuffix?: string
-): Promise<void> {
-  // Mapping between <ObjectId, UUID>
-  const accountsIdToUuid: Record<string, AccountUuid> = {}
-  // Mapping between <email, UUID>
-  const accountsEmailToUuid: Record<string, AccountUuid> = {}
-  // Mapping between <OldId, UUID>
-  const workspacesIdToUuid: Record<WorkspaceDataId, WorkspaceUuid> = {}
-
-  console.log('Migrating accounts database...')
-  let accountsProcessed = 0
-  const accountsCursor = mongoDb.account.findCursor({})
-  try {
-    while (await accountsCursor.hasNext()) {
-      const account = await accountsCursor.next()
-      if (account == null) {
-        break
-      }
-
-      try {
-        const accountUuid = await migrateAccount(account, accountDB, dryRun)
-        if (accountUuid == null) {
-          console.log('Account not migrated', account)
-          continue
-        }
-        accountsIdToUuid[account._id.toString()] = accountUuid
-        accountsEmailToUuid[account.email] = accountUuid
-
-        accountsProcessed++
-        if (accountsProcessed % 100 === 0) {
-          console.log('Processed accounts:', accountsProcessed)
-        }
-      } catch (err: any) {
-        console.log('Failed to migrate account', account._id, account.email, err)
-      }
-    }
-  } catch (err: any) {
-    console.log('Failed to migrate accounts', err)
-  } finally {
-    await accountsCursor.close()
-  }
-
-  console.log('Total accounts processed:', accountsProcessed)
-
-  let processedWorkspaces = 0
-  const workspacesCursor = mongoDb.workspace.findCursor({})
-  try {
-    while (await workspacesCursor.hasNext()) {
-      const workspace = await workspacesCursor.next()
-      if (workspace == null) {
-        break
-      }
-
-      if (
-        skipWorkspaces.has(workspace.workspace) ||
-        (workspace.workspaceUrl != null && skipWorkspaces.has(workspace.workspaceUrl))
-      ) {
-        console.log('Skipping workspace', workspace.workspace, workspace.workspaceUrl)
-        continue
-      }
-
-      try {
-        const [workspaceUuid] =
-          (await migrateWorkspace(
-            workspace,
-            accountDB,
-            accountsIdToUuid,
-            accountsEmailToUuid,
-            dryRun,
-            'manual-creation',
-            conflictSuffix
-          )) ?? []
-
-        if (workspaceUuid !== undefined) {
-          workspacesIdToUuid[workspace.workspace] = workspaceUuid
-        }
-        processedWorkspaces++
-        if (processedWorkspaces % 100 === 0) {
-          console.log('Processed workspaces:', processedWorkspaces)
-        }
-      } catch (err: any) {
-        console.log('Failed to migrate workspace', workspace.workspaceUrl, workspace.workspace, err)
-      }
-    }
-  } catch (err: any) {
-    console.log('Failed to migrate workspaces', err)
-  } finally {
-    await workspacesCursor.close()
-  }
-
-  console.log('Total workspaces processed:', processedWorkspaces)
-  console.log('Total workspaces created/ensured:', Object.values(workspacesIdToUuid).length)
-
-  let invitesProcessed = 0
-  const invitesCursor = mongoDb.invite.findCursor({})
-  try {
-    while (await invitesCursor.hasNext()) {
-      const invite = await invitesCursor.next()
-      if (invite == null) {
-        break
-      }
-
-      try {
-        const workspaceUuid = workspacesIdToUuid[invite.workspace.name]
-        if (workspaceUuid === undefined) {
-          console.log('No workspace with id', invite.workspace.name, 'found for invite', invite._id)
-          continue
-        }
-
-        const existing = await accountDB.invite.findOne({ migratedFrom: invite._id.toString() })
-        if (existing != null) {
-          continue
-        }
-
-        const inviteRecord = {
-          migratedFrom: invite._id.toString(),
-          workspaceUuid,
-          expiresOn: invite.exp,
-          emailPattern: invite.emailMask,
-          remainingUses: invite.limit,
-          role: invite.role ?? AccountRole.User
-        }
-
-        if (!dryRun) {
-          await accountDB.invite.insertOne(inviteRecord)
-        } else {
-          console.log('Creating invite record', inviteRecord)
-        }
-
-        invitesProcessed++
-        if (invitesProcessed % 100 === 0) {
-          console.log('Processed invites:', invitesProcessed)
-        }
-      } catch (err: any) {
-        console.log('Failed to migrate invite', invite._id, err)
-      }
-    }
-  } catch (err: any) {
-    console.log('Failed to migrate invites', err)
-  } finally {
-    await invitesCursor.close()
-  }
-
-  console.log('Total invites processed:', invitesProcessed)
 }
 
 async function migrateAccount (

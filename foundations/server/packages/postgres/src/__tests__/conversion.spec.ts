@@ -1,7 +1,11 @@
 import core, {
+  AccountRole,
+  type AccountUuid,
+  DOMAIN_SPACE,
   Hierarchy,
   MeasureMetricsContext,
   ModelDb,
+  type SessionData,
   TxFactory,
   type DocumentUpdate,
   type PersonId,
@@ -204,5 +208,108 @@ describe('projection', () => {
         Уровеньанглийского_63860d038894c91979399e6f: 'UPPER'
       }
     })
+  })
+})
+
+describe('addSecurity - SQL injection prevention', () => {
+  function createAccount (uuid: string, role: AccountRole = AccountRole.User): SessionData {
+    return {
+      account: {
+        uuid: uuid as AccountUuid,
+        role,
+        primarySocialId: `social:${uuid}` as any,
+        socialIds: [`social:${uuid}`] as any,
+        fullSocialIds: []
+      },
+      isTriggerCtx: false
+    } as unknown as SessionData
+  }
+
+  it('should parameterize account uuid in members check', () => {
+    const { adapter } = createTestContext()
+    // Mock findAllSync to avoid ClassCollaborators lookup failure
+    jest.spyOn((adapter as any).modelDb, 'findAllSync').mockReturnValue([])
+    const maliciousUuid = "'; DROP TABLE space; --"
+
+    // Create a mock ValuesVariables-like object
+    const values: any[] = []
+    let idx = 1
+    const vars = {
+      add (value: any, type: string = ''): string {
+        values.push(value)
+        return type !== '' ? `$${idx++}${type}` : `$${idx++}`
+      }
+    }
+
+    const result = adapter.addSecurity(
+      core.class.Space,
+      vars as any,
+      {},
+      false,
+      DOMAIN_SPACE,
+      createAccount(maliciousUuid)
+    )
+
+    // UUID must NOT appear directly in SQL string
+    expect(result).toBeDefined()
+    expect(result).not.toContain(maliciousUuid)
+    // Should use ARRAY[$N] parameterized form
+    expect(result).toMatch(/members @> ARRAY\[\$\d+::text\]/)
+    // The malicious value should be in the values array (parameterized)
+    expect(values).toContain(maliciousUuid)
+  })
+
+  it('should parameterize account uuid in collaborator check for guest', () => {
+    const { adapter } = createTestContext()
+    jest.spyOn((adapter as any).modelDb, 'findAllSync').mockReturnValue([])
+    const maliciousUuid = "'; DROP TABLE space; --"
+
+    const values: any[] = []
+    let idx = 1
+    const vars = {
+      add (value: any, type: string = ''): string {
+        values.push(value)
+        return type !== '' ? `$${idx++}${type}` : `$${idx++}`
+      }
+    }
+
+    const result = adapter.addSecurity(
+      core.class.Space,
+      vars as any,
+      {},
+      false,
+      DOMAIN_SPACE,
+      createAccount(maliciousUuid, AccountRole.Guest)
+    )
+
+    // Guest with DocGuest role returns undefined (early exit)
+    // Regular Guest should still parameterize
+    if (result !== undefined) {
+      expect(result).not.toContain(maliciousUuid)
+      expect(values).toContain(maliciousUuid)
+    }
+  })
+
+  it('should not contain raw uuid for normal user', () => {
+    const { adapter } = createTestContext()
+    jest.spyOn((adapter as any).modelDb, 'findAllSync').mockReturnValue([])
+    const uuid = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+
+    const values: any[] = []
+    let idx = 1
+    const vars = {
+      add (value: any, type: string = ''): string {
+        values.push(value)
+        return type !== '' ? `$${idx++}${type}` : `$${idx++}`
+      }
+    }
+
+    const result = adapter.addSecurity(core.class.Space, vars as any, {}, false, DOMAIN_SPACE, createAccount(uuid))
+
+    expect(result).toBeDefined()
+    // The actual UUID should never appear in the SQL text
+    expect(result).not.toContain(uuid)
+    // It should appear in parameterized values
+    expect(values).toContain(uuid)
   })
 })

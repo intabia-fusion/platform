@@ -61,7 +61,7 @@
   }
 </script>
 
-<div class:button-container={withBackground}>
+<div class:button-container={withBackground} data-id="invite-button">
   <ModernButton
     label={type === 'type-button-icon' ? undefined : love.string.Invite}
     icon={love.icon.Invite}

@@ -20,5 +20,5 @@ export * from './plugin'
 export * from './utils'
 export * from './types'
 export * from './region-config'
-export type { MongoAccountDB } from './collections/mongo'
+
 export default accountPlugin

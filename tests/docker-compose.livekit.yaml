@@ -1,0 +1,10 @@
+# LiveKit running in docker with host network for CI (Linux only).
+# Mac/Windows do not support network_mode: host - use prepare-pg.sh local livekit-server instead.
+services:
+  livekit-test:
+    image: livekit/livekit-server:latest
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - ./livekit-test-config.ci.yaml:/etc/livekit.yaml:ro
+    command: ["--config", "/etc/livekit.yaml"]

@@ -30,10 +30,10 @@ import core, {
   DocumentUpdate,
   SocialIdType
 } from '@hcengineering/core'
-import drive, { createFile } from '@hcengineering/drive'
 import love, {
   MeetingMinutes,
   MeetingStatus,
+  Office,
   ParticipantInfo,
   ParticipantMetadata,
   PendingRecording,
@@ -41,6 +41,7 @@ import love, {
   RecordingState,
   Room,
   TranscriptionState,
+  UserMeetingInvite,
   getFreeRoomPlace
 } from '@hcengineering/love'
 import { Asset, IntlString } from '@hcengineering/platform'
@@ -120,23 +121,26 @@ export class WorkspaceClient {
     meetingMinutes?: Ref<MeetingMinutes>
   ): Promise<void> {
     this.ctx.info('Save recording', { workspace: this.workspace, meetingMinutes })
-    const current = await this.client.findOne(drive.class.Drive, { _id: love.space.Drive })
-    if (current === undefined) {
-      await this.client.createDoc(
-        drive.class.Drive,
-        core.space.Space,
-        {
-          private: false,
-          archived: false,
-          members: [],
-          name: 'Records',
-          description: 'Office records',
-          type: drive.spaceType.DefaultDrive,
-          autoJoin: true
-        },
-        love.space.Drive
-      )
-    }
+    // NOTE: Drive file creation is disabled - shared Drive bypasses room privacy ACL.
+    // Recording is still attached to MeetingMinutes (whose Space ACL respects room privacy).
+    // TODO: revisit drive integration with per-room privacy support.
+    // const current = await this.client.findOne(drive.class.Drive, { _id: love.space.Drive })
+    // if (current === undefined) {
+    //   await this.client.createDoc(
+    //     drive.class.Drive,
+    //     core.space.Space,
+    //     {
+    //       private: false,
+    //       archived: false,
+    //       members: [],
+    //       name: 'Records',
+    //       description: 'Office records',
+    //       type: drive.spaceType.DefaultDrive,
+    //       autoJoin: true
+    //     },
+    //     love.space.Drive
+    //   )
+    // }
     const data = {
       file: uuid as Ref<Blob>,
       size: blob.size,
@@ -149,7 +153,7 @@ export class WorkspaceClient {
         originalWidth: preset.width
       }
     }
-    await createFile(this.client, love.space.Drive, drive.ids.Root, { ...data, title: name })
+    // await createFile(this.client, love.space.Drive, drive.ids.Root, { ...data, title: name })
     await this.attachToMeetingMinutes({ ...data, name }, meetingMinutes)
   }
 
@@ -167,7 +171,7 @@ export class WorkspaceClient {
 
     await this.client.addCollection(
       attachment.class.Attachment,
-      meeting.space,
+      meeting._id,
       meeting._id,
       meeting._class,
       'attachments',
@@ -197,7 +201,7 @@ export class WorkspaceClient {
 
     await this.client.addCollection<MeetingMinutes, ActivityInfoMessage>(
       activity.class.ActivityInfoMessage,
-      meeting.space,
+      meeting._id,
       meeting._id,
       meeting._class,
       'activity',
@@ -257,6 +261,53 @@ export class WorkspaceClient {
 
     // Clean up all ParticipantInfo entries for this meeting
     await this.cleanupParticipantInfosForMeeting(ref)
+    // Drop any pending knock invites that targeted this meeting — without
+    // this they linger on the sender's screen until the 30s TransientTTL
+    // expires, which surfaces as "I asked to join, nobody admitted me, the
+    // meeting ended, but my request is still up".
+    await this.cleanupInvitesForMeeting(ref, meeting.roomId)
+  }
+
+  /**
+   * Remove all pending `UserMeetingInvite` rows that referenced a finished
+   * meeting:
+   *   * Б flow — `room === meeting.roomId` matches both knocker's request
+   *     and the owner-side responses;
+   *   * A1 flow — `meeting === ref` matches sender's request and recipient's
+   *     response in someone-was-invited cases.
+   * Run as a system token so we have access to every PersonSpace.
+   */
+  private async cleanupInvitesForMeeting (meeting: Ref<MeetingMinutes>, roomId: Ref<Room> | undefined): Promise<void> {
+    try {
+      const byMeeting = await this.client.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, { meeting })
+      const byRoom: UserMeetingInvite[] =
+        roomId !== undefined
+          ? await this.client.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, { room: roomId })
+          : []
+      const seen = new Set<Ref<UserMeetingInvite>>()
+      const all = [...byMeeting, ...byRoom].filter((it) => {
+        if (seen.has(it._id)) return false
+        seen.add(it._id)
+        return true
+      })
+      for (const inv of all) {
+        await this.client.remove(inv).catch((err: any) => {
+          this.ctx.warn('[WorkspaceClient.cleanupInvitesForMeeting] Failed to remove invite', {
+            id: inv._id,
+            error: err?.message ?? String(err)
+          })
+        })
+      }
+      this.ctx.info('[WorkspaceClient.cleanupInvitesForMeeting] Dropped invites for finished meeting', {
+        meeting,
+        count: all.length
+      })
+    } catch (err: any) {
+      this.ctx.error('[WorkspaceClient.cleanupInvitesForMeeting] Failed', {
+        error: err?.message ?? String(err),
+        meeting
+      })
+    }
   }
 
   /**
@@ -380,7 +431,7 @@ export class WorkspaceClient {
         })
         return
       }
-      const attachedRoom: Ref<Room> | undefined = meetingDoc.attachedTo as Ref<Room>
+      const attachedRoom: Ref<Room> | undefined = meetingDoc.roomId
 
       const infos = await this.client.findAll(love.class.ParticipantInfo, {
         person,
@@ -488,9 +539,16 @@ export class WorkspaceClient {
     sessionId: string
   ): Promise<void> {
     try {
-      const allInfos = await this.client.findAll(love.class.ParticipantInfo, { meeting, sessionId, person })
-      const infos = allInfos.filter((it) => it.person === person)
-      for (const info of infos) {
+      // Drop every ParticipantInfo for this person in this meeting plus
+      // any row carrying the exact LK sessionId. LiveKit guarantees one
+      // live participant per (room, identity); rows that survive into a
+      // `participant_left` are by definition stale, so leaving sessionId
+      // filter narrow (origin behavior) lets prior crashed/reconnected
+      // sessions linger and confuses the client-side dedup.
+      const infos = await this.client.findAll(love.class.ParticipantInfo, { person, meeting })
+      const bySid = await this.client.findAll(love.class.ParticipantInfo, { person, sessionId })
+      const all = [...infos, ...bySid.filter((b) => !infos.some((i) => i._id === b._id))]
+      for (const info of all) {
         await this.client.remove(info)
       }
     } catch (err: any) {
@@ -562,6 +620,20 @@ export class WorkspaceClient {
   }
 
   /**
+   * Returns the Person ref of the Office's owner if `roomRef` points to an
+   * Office, otherwise `undefined`.
+   */
+  async findOfficeOwner (roomRef: Ref<Room>): Promise<Ref<Person> | undefined> {
+    try {
+      const office = await this.client.findOne(love.class.Office, { _id: roomRef as Ref<Office> })
+      return office?.person ?? undefined
+    } catch (err: any) {
+      this.ctx.error('[WorkspaceClient.findOfficeOwner] Failed', { error: err?.message ?? String(err), roomRef })
+      return undefined
+    }
+  }
+
+  /**
    * Find all ParticipantInfo entries for a given meeting.
    */
   async findParticipantInfosByMeeting (meeting: Ref<MeetingMinutes>): Promise<ParticipantInfo[]> {
@@ -614,7 +686,7 @@ export class WorkspaceClient {
 
       const docId = await this.client.addCollection(
         love.class.PendingRecording,
-        meetingDoc.space,
+        meetingDoc._id,
         meetingDoc._id,
         meetingDoc._class,
         'recordings',

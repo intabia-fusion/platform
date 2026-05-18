@@ -61,8 +61,20 @@ export class LiveKitPollingService {
   private readonly roomStates = new Map<string, RoomState>()
 
   private readonly workspacesToCheck = new Set<WorkspaceUuid>()
+  // Persistent set of workspaces we've ever seen — used by the LiveKit-outage
+  // fallback to know which workspaces to drain. `workspacesToCheck` is cleared
+  // every poll cycle so we cannot rely on it for outage handling.
+  private readonly knownWorkspaces = new Set<WorkspaceUuid>()
   private readonly lastCleanupTime = new Map<WorkspaceUuid, number>()
   private static readonly CLEANUP_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
+
+  // When `getOurRooms` keeps failing we cannot tell whether a meeting is still
+  // live in LiveKit. After this window we assume LiveKit is unreachable and
+  // forcibly Finish all Active/Pending meetings in workspaces we've polled, so
+  // clients don't stay stuck on a phantom meeting indefinitely.
+  private static readonly LIVEKIT_OUTAGE_MS = 15 * 1000
+  private livekitFailureSince: number | null = null
+  private livekitDrainedAt: number | null = null
 
   constructor (ctx: MeasureContext, roomClient: RoomServiceClient, config: PollingConfig) {
     this.ctx = ctx
@@ -72,6 +84,7 @@ export class LiveKitPollingService {
 
   addWorkspaceToCheck (workspace: WorkspaceUuid): void {
     this.workspacesToCheck.add(workspace)
+    this.knownWorkspaces.add(workspace)
   }
 
   /**
@@ -143,6 +156,36 @@ export class LiveKitPollingService {
   }
 
   /**
+   * Force-finish all Active/Pending meetings across known workspaces.
+   *
+   * Called when LiveKit has been unreachable for longer than
+   * `LIVEKIT_OUTAGE_MS`. Without LiveKit we cannot tell which meetings still
+   * have live participants, so users would otherwise see a "Connected to
+   * meeting" widget pointing at a room that no longer exists. Draining
+   * forcibly closes those meetings — when LiveKit comes back, callers
+   * simply start a new meeting via the usual flow.
+   */
+  private async drainAllActiveMeetings (): Promise<void> {
+    const targets = Array.from(this.knownWorkspaces)
+    if (targets.length === 0) return
+    this.ctx.warn('[PollingService] LiveKit outage: finishing all active meetings', {
+      workspaces: targets.length
+    })
+    for (const workspace of targets) {
+      try {
+        const wsClient = await WorkspaceClient.create(workspace, this.ctx)
+        // Empty exclusion list -> every Active/Pending meeting is finished.
+        await wsClient.checkUnfinishedMeetings([])
+      } catch (err: any) {
+        this.ctx.error('[PollingService] Failed to drain meetings during outage', {
+          workspace,
+          error: err?.message ?? String(err)
+        })
+      }
+    }
+  }
+
+  /**
    * Main polling loop - fetches all rooms and reconciles state
    */
   private async poll (): Promise<void> {
@@ -151,7 +194,41 @@ export class LiveKitPollingService {
     try {
       this.ctx.info('[PollingService] Starting poll cycle')
 
-      const ourRooms = await this.getOurRooms()
+      let ourRooms: Room[]
+      try {
+        ourRooms = await this.getOurRooms()
+        // Healthy fetch -> reset outage tracker.
+        if (this.livekitFailureSince !== null) {
+          this.ctx.info('[PollingService] LiveKit reachable again')
+          this.livekitFailureSince = null
+          this.livekitDrainedAt = null
+        }
+      } catch (err: any) {
+        const now = Date.now()
+        if (this.livekitFailureSince === null) {
+          this.livekitFailureSince = now
+        }
+        const outageMs = now - this.livekitFailureSince
+        this.ctx.error('[PollingService] LiveKit listRooms failed', {
+          error: err?.message ?? String(err),
+          outageMs
+        })
+        // Drain once per outage so the cleanup is idempotent and doesn't
+        // hammer the database every 30s while LiveKit stays down.
+        if (outageMs >= LiveKitPollingService.LIVEKIT_OUTAGE_MS && this.livekitDrainedAt === null) {
+          this.livekitDrainedAt = now
+          await this.drainAllActiveMeetings()
+        }
+        return
+      }
+
+      // Track every workspace we've seen so the outage fallback knows where
+      // to drain. processRoom() only fires for workspaces that currently
+      // have a LiveKit room, but addWorkspaceToCheck callers may add others.
+      for (const room of ourRooms) {
+        const parsed = parseRoomName(room.name ?? '')
+        if (parsed !== undefined) this.knownWorkspaces.add(parsed.workspace)
+      }
 
       // Process each room
       for (const room of ourRooms) {

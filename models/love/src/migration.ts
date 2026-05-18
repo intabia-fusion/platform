@@ -13,17 +13,32 @@
 // limitations under the License.
 //
 
-import contact from '@hcengineering/contact'
-import { TxOperations, type Ref, type Space } from '@hcengineering/core'
+import contact, { type SocialIdentity, type Employee } from '@hcengineering/contact'
+import {
+  type AttachedDoc,
+  type MarkupBlobRef,
+  TxOperations,
+  type Ref,
+  type Space,
+  type Timestamp,
+  type Domain,
+  type PersonId,
+  type AccountUuid
+} from '@hcengineering/core'
 import drive from '@hcengineering/drive'
+import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 import {
   MeetingStatus,
-  RoomAccess,
+  type RoomLanguage,
   RoomType,
+  type TranscriptionState,
   createDefaultRooms,
   isOffice,
   loveId,
-  type Floor
+  type Floor,
+  type Room,
+  type MeetingMinutes,
+  type RecordingState
 } from '@hcengineering/love'
 import {
   createDefaultSpace,
@@ -34,9 +49,40 @@ import {
   type MigrationClient,
   type MigrationUpgradeClient
 } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
-import { DOMAIN_LOVE, DOMAIN_MEETING_MINUTES } from '.'
+import core, { DOMAIN_SPACE } from '@hcengineering/model-core'
+import { DOMAIN_LOVE, DOMAIN_LOVE_PENDING, DOMAIN_MEETING_MINUTES } from '.'
 import love from './plugin'
+
+const DOMAIN_ACTIVITY = 'activity' as Domain
+const DOMAIN_ATTACHMENT = 'attachment' as Domain
+const DOMAIN_CONTACT = 'contact' as Domain
+
+// Old MeetingMinutes interface before migration to Space (extends AttachedDoc which extends Doc)
+interface OldMeetingMinutes extends AttachedDoc {
+  // Old MeetingMinutes fields (from plugins/love/src/types.ts before Space migration)
+  title: string
+  description: MarkupBlobRef | null
+  status: MeetingStatus
+  transcriptionState: TranscriptionState
+  recordingState: RecordingState
+  meetingEnd?: Timestamp
+  meetingScheduledDate?: Timestamp
+  transcription?: number
+  messages?: number
+  attachments?: number
+  recordings?: number
+  language: RoomLanguage
+  startWithRecording?: boolean
+  startWithTranscription?: boolean
+}
+
+function isMissingTableError (err: unknown): boolean {
+  if (err instanceof Error) {
+    const code = 'code' in err ? (err as Error & { code: string }).code : undefined
+    return code === '42P01' || err.message.includes('does not exist')
+  }
+  return false
+}
 
 async function createDefaultFloor (tx: TxOperations): Promise<void> {
   const current = await tx.findOne(love.class.Floor, {
@@ -85,7 +131,6 @@ async function createReception (client: MigrationUpgradeClient): Promise<void> {
     {
       name: 'Reception',
       type: RoomType.Reception,
-      access: RoomAccess.Open,
       floor: '' as Ref<Floor>,
       width: 100,
       height: 0,
@@ -94,6 +139,7 @@ async function createReception (client: MigrationUpgradeClient): Promise<void> {
       language: 'en',
       startWithTranscription: false,
       startWithRecording: false,
+      startPrivate: false,
       description: null
     },
     love.ids.Reception
@@ -157,6 +203,24 @@ export const loveOperation: MigrateOperation = {
         }
       },
       {
+        state: 'setup-defaults-start-private',
+        mode: 'upgrade',
+        func: async (client) => {
+          // Offices always start private
+          await client.update(
+            DOMAIN_LOVE,
+            { _class: love.class.Office, startPrivate: { $exists: false } },
+            { startPrivate: true }
+          )
+          // Regular rooms default to not private
+          await client.update(
+            DOMAIN_LOVE,
+            { _class: love.class.Room, startPrivate: { $exists: false } },
+            { startPrivate: false }
+          )
+        }
+      },
+      {
         state: 'move-meeting-minutes',
         mode: 'upgrade',
         func: async (client) => {
@@ -167,17 +231,31 @@ export const loveOperation: MigrateOperation = {
         state: 'default-meeting-minutes-status',
         mode: 'upgrade',
         func: async (client) => {
-          await client.update(
-            DOMAIN_MEETING_MINUTES,
-            { status: { $exists: false } },
-            { status: MeetingStatus.Finished }
-          )
+          try {
+            await client.update(
+              DOMAIN_MEETING_MINUTES,
+              { status: { $exists: false } },
+              { status: MeetingStatus.Finished }
+            )
+          } catch (err: unknown) {
+            if (isMissingTableError(err)) {
+              return // Table does not exist — skip
+            }
+            throw err
+          }
         }
       },
       {
         state: 'meeting-minutes-reindex-v1',
         func: async (client) => {
-          await client.reindex(DOMAIN_MEETING_MINUTES, [love.class.MeetingMinutes])
+          try {
+            await client.reindex(DOMAIN_MEETING_MINUTES, [love.class.MeetingMinutes])
+          } catch (err: unknown) {
+            if (isMissingTableError(err)) {
+              return // Table does not exist — skip
+            }
+            throw err
+          }
         }
       },
       {
@@ -189,6 +267,255 @@ export const loveOperation: MigrateOperation = {
             { _class: love.class.Office, type: RoomType.Audio },
             { type: RoomType.Video }
           )
+        }
+      },
+      {
+        state: 'meeting-minutes-to-space',
+        mode: 'upgrade',
+        func: async (client) => {
+          // Check if DOMAIN_MEETING_MINUTES table exists (it may not for new workspaces
+          // since MeetingMinutes is now in DOMAIN_SPACE and the old domain is not in the model)
+          try {
+            const existing = await client.find(
+              DOMAIN_MEETING_MINUTES,
+              { _class: love.class.MeetingMinutes },
+              { limit: 1 }
+            )
+            if (existing.length === 0) {
+              client.logger.log('No MeetingMinutes found in DOMAIN_MEETING_MINUTES, skipping migration', {})
+              return
+            }
+          } catch (err: unknown) {
+            if (isMissingTableError(err)) {
+              client.logger.log('DOMAIN_MEETING_MINUTES does not exist, skipping migration', {})
+              return
+            }
+            throw err
+          }
+
+          // Build mapping from PersonId (createdBy) to AccountUuid (personUuid)
+          // 1. Get all SocialIdentity documents (their _id is PersonId)
+          // 2. Get all Employees by attachedTo from SocialIdentity
+          // 3. Create mapping: SocialIdentity._id -> Employee.personUuid
+
+          const socialIdentities = await client.find<SocialIdentity>(DOMAIN_CONTACT, {
+            _class: contact.class.SocialIdentity
+          })
+          const employeeIds = socialIdentities.map((si) => si.attachedTo as Ref<Employee>)
+          const employees = await client.find<Employee>(DOMAIN_CONTACT, {
+            _class: contact.mixin.Employee,
+            _id: { $in: employeeIds }
+          })
+          const employeeById = new Map(employees.map((e) => [e._id, e]))
+
+          const personIdToAccountUuid = new Map<PersonId, AccountUuid>()
+          for (const si of socialIdentities) {
+            const employee = employeeById.get(si.attachedTo as Ref<Employee>)
+            if (employee?.personUuid != null) {
+              personIdToAccountUuid.set(si._id as PersonId, employee.personUuid)
+            }
+          }
+          client.logger.log('Built PersonId to AccountUuid mapping', { count: personIdToAccountUuid.size })
+
+          // Process MeetingMinutes in batches: read -> transform -> upload to DOMAIN_SPACE -> delete from source
+          const iterator = await client.traverse(DOMAIN_MEETING_MINUTES, {
+            _class: love.class.MeetingMinutes
+          })
+
+          try {
+            let processed = 0
+            while (true) {
+              const meetings = await iterator.next(1000)
+              if (meetings == null || meetings.length === 0) break
+
+              // Transform meetings in memory
+              const transformedMeetings = meetings.map((meeting) => {
+                const m = meeting as unknown as OldMeetingMinutes
+
+                // Convert createdBy (PersonId) to AccountUuid for owners
+                const ownerAccount = m.createdBy != null ? personIdToAccountUuid.get(m.createdBy) : undefined
+
+                // Build transformed document for new MeetingMinutes as Space
+                const transformed: MeetingMinutes = {
+                  // Core Doc fields (preserved from original)
+                  _id: m._id as unknown as Ref<MeetingMinutes>,
+                  _class: m._class,
+                  space: m._id as unknown as Ref<MeetingMinutes>,
+                  modifiedOn: m.modifiedOn,
+                  modifiedBy: m.modifiedBy,
+                  createdOn: m.createdOn,
+                  createdBy: m.createdBy,
+
+                  // Space required fields (migrated from old fields)
+                  name: m.title ?? '', // title -> name
+                  description: '', // Space requires string description (we use descriptionRef for actual content)
+                  private: false,
+                  archived: false,
+                  members: [],
+                  owners: ownerAccount != null ? [ownerAccount] : [],
+
+                  // MeetingMinutes specific fields
+                  descriptionRef: m.description, // description -> descriptionRef
+                  summary: null, // new field
+                  roomId: m.attachedToClass === love.class.Room ? (m.attachedTo as Ref<Room>) : undefined,
+                  status: m.status,
+                  transcriptionState: m.transcriptionState,
+                  recordingState: m.recordingState,
+                  meetingEnd: m.meetingEnd,
+                  meetingScheduledDate: m.meetingScheduledDate,
+                  transcription: m.transcription,
+                  messages: m.messages,
+                  attachments: m.attachments,
+                  recordings: m.recordings,
+                  language: m.language,
+                  startWithRecording: m.startWithRecording,
+                  startWithTranscription: m.startWithTranscription
+                }
+
+                return transformed
+              })
+
+              // Upload to DOMAIN_SPACE
+              await client.create(DOMAIN_SPACE, transformedMeetings)
+
+              // Delete from DOMAIN_MEETING_MINUTES
+              await client.deleteMany(DOMAIN_MEETING_MINUTES, {
+                _id: { $in: meetings.map((m) => m._id) }
+              })
+
+              processed += meetings.length
+              client.logger.log('...processed MeetingMinutes', { count: processed })
+            }
+          } finally {
+            await iterator.close()
+          }
+
+          client.logger.log('Finished migrating MeetingMinutes to DOMAIN_SPACE', {})
+
+          // Update space for all documents attached to MeetingMinutes
+          // Get all meeting IDs from DOMAIN_SPACE (they are now Spaces)
+          const allMeetings = await client.find(DOMAIN_SPACE, { _class: love.class.MeetingMinutes })
+          const meetingIds = new Set(allMeetings.map((m) => m._id))
+
+          if (meetingIds.size > 0) {
+            const meetingIdArray = Array.from(meetingIds)
+
+            // Update PendingRecording documents in DOMAIN_LOVE_PENDING
+            const pendingIterator = await client.traverse<AttachedDoc>(DOMAIN_LOVE_PENDING, {
+              attachedTo: { $in: meetingIdArray }
+            })
+            try {
+              let processed = 0
+              while (true) {
+                const docs = await pendingIterator.next(1000)
+                if (docs == null || docs.length === 0) break
+
+                const operations = docs.map((doc) => ({
+                  filter: { _id: doc._id },
+                  update: { space: doc.attachedTo as Ref<Space> }
+                }))
+                await client.bulk(DOMAIN_LOVE_PENDING, operations)
+                processed += docs.length
+                client.logger.log('...processed PendingRecording spaces', { count: processed })
+              }
+            } finally {
+              await pendingIterator.close()
+            }
+
+            // Update Activity messages
+            const activityIterator = await client.traverse<AttachedDoc>(DOMAIN_ACTIVITY, {
+              attachedTo: { $in: meetingIdArray },
+              attachedToClass: love.class.MeetingMinutes
+            })
+            try {
+              let processed = 0
+              while (true) {
+                const docs = await activityIterator.next(1000)
+                if (docs == null || docs.length === 0) break
+
+                const operations = docs.map((doc) => ({
+                  filter: { _id: doc._id },
+                  update: { space: doc.attachedTo as Ref<Space> }
+                }))
+                await client.bulk(DOMAIN_ACTIVITY, operations)
+                processed += docs.length
+                client.logger.log('...processed ActivityMessage spaces', { count: processed })
+              }
+            } finally {
+              await activityIterator.close()
+            }
+
+            // Update Activity messages: description -> descriptionRef + update space to meeting id
+            const descActivityIterator = await client.traverse<DocUpdateMessage>(DOMAIN_ACTIVITY, {
+              _class: activity.class.DocUpdateMessage,
+              objectClass: love.class.MeetingMinutes
+            })
+            try {
+              let processed = 0
+              while (true) {
+                const docs = await descActivityIterator.next(1000)
+                if (docs == null || docs.length === 0) break
+
+                const operations = docs
+                  .map((doc) => {
+                    const update: Record<string, any> = {}
+                    // Update space to point to the meeting (objectId) instead of core.space.Workspace
+                    if (doc.objectId != null && meetingIds.has(doc.objectId)) {
+                      update.space = doc.objectId
+                    }
+                    if (doc.attributeUpdates?.attrKey === 'description') {
+                      update.attributeUpdates = { ...doc.attributeUpdates, attrKey: 'descriptionRef' }
+                    }
+                    if ((doc.history ?? [])?.some((h) => h.update?.attrKey === 'description')) {
+                      update.history = doc.history.map((h: any) => {
+                        if (h.update?.attrKey === 'description') {
+                          return { ...h, update: { ...h.update, attrKey: 'descriptionRef' } }
+                        }
+                        return h
+                      })
+                    }
+                    return {
+                      filter: { _id: doc._id },
+                      update
+                    }
+                  })
+                  .filter((op: any) => Object.keys(op.update).length > 0)
+                if (operations.length > 0) {
+                  await client.bulk(DOMAIN_ACTIVITY, operations)
+                }
+                processed += docs.length
+                client.logger.log('...processed DocUpdateMessage description->descriptionRef + space', {
+                  count: processed,
+                  updated: operations.length
+                })
+              }
+            } finally {
+              await descActivityIterator.close()
+            }
+
+            // Update Attachments
+            const attachmentIterator = await client.traverse<AttachedDoc>(DOMAIN_ATTACHMENT, {
+              attachedTo: { $in: meetingIdArray },
+              attachedToClass: love.class.MeetingMinutes
+            })
+            try {
+              let processed = 0
+              while (true) {
+                const docs = await attachmentIterator.next(1000)
+                if (docs == null || docs.length === 0) break
+
+                const operations = docs.map((doc) => ({
+                  filter: { _id: doc._id },
+                  update: { space: doc.attachedTo as Ref<Space> }
+                }))
+                await client.bulk(DOMAIN_ATTACHMENT, operations)
+                processed += docs.length
+                client.logger.log('...processed Attachment spaces', { count: processed })
+              }
+            } finally {
+              await attachmentIterator.close()
+            }
+          }
         }
       }
     ])

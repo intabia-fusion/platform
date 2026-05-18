@@ -147,7 +147,7 @@ Keep existing copyright lines, add `Intabia Fusion` line if missing.
 
 ## Sanity tests (Playwright)
 
-Run from `tests/sanity/`. Stand must be up at `localhost:8083` (front) and `localhost:3003` (LOCAL_URL). Tests build their own bundle via setup project; do NOT use `rushx uitest` without permission (it opens dev UI).
+Run from `tests/sanity/`. Stand must be up at `localhost:8083` (front) and `localhost:3003` (LOCAL_URL). Tests build their own bundle via setup project. Always use `rushx uitest` when iterating on tests, but pass `--reporter=list --retries=0 --workers=1` so Playwright does not hang on the html report server or burn time on retries. Never run it without these flags.
 
 Required: load `.env` and pass `LOCAL_URL`. Iteration loop must be fast — disable retries and html report server.
 
@@ -168,3 +168,5 @@ Flags:
 - `-g "<name>"` or append `:LINE` to the spec path to run a single test.
 
 Do not run the bare `npx playwright test` — without `-c ./tests/playwright.config.ts` neither dotenv nor `storageState` load and every test fails on login with `BadRequest`.
+
+For meeting/love-specific test setup (LiveKit, `meetings-ws`, page objects, data-id list), see [`docs/sanity-meetings-tests.md`](docs/sanity-meetings-tests.md).

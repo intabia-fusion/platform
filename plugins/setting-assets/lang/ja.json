@@ -211,6 +211,7 @@
     "OfficeDefaultSettings": "会議室のデフォルト設定",
     "DefaultStartWithTranscription": "新しいオフィスルームで文字起こしを有効にする",
     "DefaultStartWithRecording": "新しいオフィスルームで録画を有効にする",
+    "DefaultStartPrivate": "新しいオフィスルームをプライベートにする",
     "ImportDocumentPermission": "ドキュメントをインポート",
     "ImportDocumentDescription": "ユーザーにワークスペースにドキュメントをインポートする機能を付与します",
     "SelectUsers": "ユーザーを選択",

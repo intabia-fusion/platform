@@ -27,5 +27,6 @@
   tooltip={{ label: isMyOffice ? love.string.EndMeeting : love.string.LeaveRoom, direction: 'top' }}
   kind={'negative'}
   {size}
+  dataId="meeting-leave"
   on:click={leave}
 />

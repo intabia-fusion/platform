@@ -11,6 +11,7 @@
   } from 'livekit-client'
   import { onDestroy, onMount } from 'svelte'
   import { subscribeToIncomingInvites, unsubscribeFromIncomingInvites } from '../invites'
+  import { reconnectToCurrentMeeting, reconnectingToMeeting, cancelReconnect } from '../meetings'
   import { lkIsConnecting, lkReconnected, lkSessionConnected } from '../liveKitClient'
   import love from '../plugin'
   import { myConnectingSessionId } from '../stores'
@@ -596,6 +597,13 @@
     // Subscribe to incoming meeting invites
     subscribeToIncomingInvites()
 
+    // Resume an in-flight LiveKit session if the page was refreshed mid-call.
+    // Side-effects in `meetings.ts` (onClient + subscribes) only register
+    // once this module is imported — WorkbenchExtension is the first guaranteed
+    // entry point on every workbench page.
+    console.log('[WorkbenchExtension] calling reconnectToCurrentMeeting')
+    void reconnectToCurrentMeeting()
+
     // Attach existing audio tracks
     attachExistingAudioTracks()
 
@@ -649,3 +657,59 @@
 </script>
 
 <div bind:this={parentElement} class="hidden"></div>
+
+{#if $reconnectingToMeeting}
+  <div class="love-reconnect-banner">
+    <span class="spinner" />
+    <span>Reconnecting to meeting…</span>
+    <button class="cancel" on:click={cancelReconnect}>Cancel</button>
+  </div>
+{/if}
+
+<style lang="scss">
+  .love-reconnect-banner {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    background: var(--global-surface-01-BackgroundColor, #2c2c2c);
+    color: var(--global-primary-TextColor, #fff);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    font-size: 0.875rem;
+
+    .spinner {
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: love-reconnect-spin 0.8s linear infinite;
+    }
+
+    .cancel {
+      background: transparent;
+      border: 1px solid currentColor;
+      color: inherit;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font: inherit;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+
+  @keyframes love-reconnect-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+</style>

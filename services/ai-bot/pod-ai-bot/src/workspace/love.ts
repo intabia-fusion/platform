@@ -33,7 +33,6 @@ import love, {
   getFreeRoomPlace,
   MeetingMinutes,
   ParticipantInfo,
-  Room,
   RoomLanguage,
   TranscriptionState
 } from '@hcengineering/love'
@@ -95,7 +94,7 @@ export class LoveController {
         return
       }
 
-      this.ctx.info('Connecting', { room: mm.title, meeting: mm._id, transcription: request.transcription })
+      this.ctx.info('Connecting', { room: mm.name, meeting: mm._id, transcription: request.transcription })
       this.connectedMeetings.add(request.meetingId)
       await this.requestTranscription(mm, request.language)
       await this.updateTranscriptionState(mm._id, TranscriptionState.Transcribing)
@@ -198,7 +197,7 @@ export class LoveController {
 
     await this.client.addCollection(
       chunter.class.ChatMessage,
-      core.space.Workspace,
+      meetingId,
       meetingId,
       love.class.MeetingMinutes,
       'transcription',
@@ -264,7 +263,7 @@ export class LoveController {
 
     await this.client.addCollection(
       chunter.class.ChatMessage,
-      core.space.Workspace,
+      meeting._id,
       meeting._id,
       meeting._class,
       'transcription',
@@ -297,7 +296,7 @@ export class LoveController {
 
     await this.client.addCollection(
       chunter.class.ChatMessage,
-      core.space.Workspace,
+      meeting._id,
       meeting._id,
       meeting._class,
       'transcription',
@@ -343,9 +342,7 @@ export class LoveController {
     }
 
     const room =
-      meeting.attachedTo !== undefined
-        ? await this.client.findOne(love.class.Room, { _id: meeting.attachedTo as Ref<Room> })
-        : undefined
+      meeting.roomId !== undefined ? await this.client.findOne(love.class.Room, { _id: meeting.roomId }) : undefined
 
     // Try to allocate unique cell atomically using TxApplyIf (apply + notMatch)
     const maxAttempts = 5

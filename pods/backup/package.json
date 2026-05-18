@@ -61,7 +61,6 @@
     "@hcengineering/backup-service": "workspace:^0.7.0",
     "@hcengineering/analytics": "workspace:^0.7.17",
     "@hcengineering/analytics-service": "workspace:^0.7.17",
-    "@hcengineering/mongo": "workspace:^0.7.17",
     "@hcengineering/postgres": "workspace:^0.7.22"
   }
 }

@@ -26,6 +26,7 @@
   export let kind: ButtonKind = 'link'
   export let size: ButtonSize = 'large'
   export let width: string | undefined = undefined
+  export let noJoin: boolean = false
 
   const myAcc = getCurrentAccount()
   const myAccUuid = myAcc.uuid
@@ -40,7 +41,7 @@
   }
 </script>
 
-{#if !joined && onChange !== undefined}
+{#if !joined && onChange !== undefined && !noJoin}
   <Button label={view.string.Join} {size} {width} kind={'primary'} on:click={join} />
 {:else}
   <AccountArrayEditor

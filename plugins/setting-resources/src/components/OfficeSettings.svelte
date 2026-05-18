@@ -21,16 +21,18 @@
   let loading = true
   let defaultStartWithTranscription = false
   let defaultStartWithRecording = false
+  let defaultStartPrivate = false
 
   const client = getClient()
   let existingOfficeSettings: OfficeSettings[] = []
   const query = createQuery()
 
-  $: query.query((setting.class as any).OfficeSettings, {}, (set) => {
+  $: query.query(setting.class.OfficeSettings, {}, (set) => {
     existingOfficeSettings = set as unknown as OfficeSettings[]
     if (existingOfficeSettings !== undefined && existingOfficeSettings.length > 0) {
       defaultStartWithTranscription = existingOfficeSettings[0].defaultStartWithTranscription ?? false
       defaultStartWithRecording = existingOfficeSettings[0].defaultStartWithRecording ?? false
+      defaultStartPrivate = existingOfficeSettings[0].defaultStartPrivate ?? false
     }
     loading = false
   })
@@ -41,13 +43,14 @@
     const newSettings = {
       defaultStartWithTranscription: enabled,
       defaultStartWithRecording,
+      defaultStartPrivate,
       enabled: true
     }
     if (existingOfficeSettings.length === 0) {
-      await client.createDoc((setting.class as any).OfficeSettings, core.space.Workspace, newSettings)
+      await client.createDoc(setting.class.OfficeSettings, core.space.Workspace, newSettings)
     } else {
       await client.updateDoc(
-        (setting.class as any).OfficeSettings,
+        setting.class.OfficeSettings,
         core.space.Workspace,
         existingOfficeSettings[0]._id,
         newSettings
@@ -61,13 +64,35 @@
     const newSettings = {
       defaultStartWithTranscription,
       defaultStartWithRecording: enabled,
+      defaultStartPrivate,
       enabled: true
     }
     if (existingOfficeSettings.length === 0) {
-      await client.createDoc((setting.class as any).OfficeSettings, core.space.Workspace, newSettings)
+      await client.createDoc(setting.class.OfficeSettings, core.space.Workspace, newSettings)
     } else {
       await client.updateDoc(
-        (setting.class as any).OfficeSettings,
+        setting.class.OfficeSettings,
+        core.space.Workspace,
+        existingOfficeSettings[0]._id,
+        newSettings
+      )
+    }
+  }
+
+  async function toggleDefaultPrivate (e: CustomEvent<boolean>): Promise<void> {
+    const enabled = e.detail
+    defaultStartPrivate = enabled
+    const newSettings = {
+      defaultStartWithTranscription,
+      defaultStartWithRecording,
+      defaultStartPrivate: enabled,
+      enabled: true
+    }
+    if (existingOfficeSettings.length === 0) {
+      await client.createDoc(setting.class.OfficeSettings, core.space.Workspace, newSettings)
+    } else {
+      await client.updateDoc(
+        setting.class.OfficeSettings,
         core.space.Workspace,
         existingOfficeSettings[0]._id,
         newSettings
@@ -107,6 +132,16 @@
                 on={defaultStartWithRecording}
                 on:change={(e) => {
                   void toggleDefaultRecording(e)
+                }}
+              />
+            </div>
+
+            <div class="flex-row-center flex-gap-4">
+              <Label label={settingsRes.string.DefaultStartPrivate} />
+              <Toggle
+                on={defaultStartPrivate}
+                on:change={(e) => {
+                  void toggleDefaultPrivate(e)
                 }}
               />
             </div>
