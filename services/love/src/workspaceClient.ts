@@ -41,6 +41,7 @@ import love, {
   RecordingState,
   Room,
   TranscriptionState,
+  UserMeetingInvite,
   getFreeRoomPlace
 } from '@hcengineering/love'
 import { Asset, IntlString } from '@hcengineering/platform'
@@ -260,6 +261,53 @@ export class WorkspaceClient {
 
     // Clean up all ParticipantInfo entries for this meeting
     await this.cleanupParticipantInfosForMeeting(ref)
+    // Drop any pending knock invites that targeted this meeting — without
+    // this they linger on the sender's screen until the 30s TransientTTL
+    // expires, which surfaces as "I asked to join, nobody admitted me, the
+    // meeting ended, but my request is still up".
+    await this.cleanupInvitesForMeeting(ref, meeting.roomId)
+  }
+
+  /**
+   * Remove all pending `UserMeetingInvite` rows that referenced a finished
+   * meeting:
+   *   * Б flow — `room === meeting.roomId` matches both knocker's request
+   *     and the owner-side responses;
+   *   * A1 flow — `meeting === ref` matches sender's request and recipient's
+   *     response in someone-was-invited cases.
+   * Run as a system token so we have access to every PersonSpace.
+   */
+  private async cleanupInvitesForMeeting (meeting: Ref<MeetingMinutes>, roomId: Ref<Room> | undefined): Promise<void> {
+    try {
+      const byMeeting = await this.client.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, { meeting })
+      const byRoom: UserMeetingInvite[] =
+        roomId !== undefined
+          ? await this.client.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, { room: roomId })
+          : []
+      const seen = new Set<Ref<UserMeetingInvite>>()
+      const all = [...byMeeting, ...byRoom].filter((it) => {
+        if (seen.has(it._id)) return false
+        seen.add(it._id)
+        return true
+      })
+      for (const inv of all) {
+        await this.client.remove(inv).catch((err: any) => {
+          this.ctx.warn('[WorkspaceClient.cleanupInvitesForMeeting] Failed to remove invite', {
+            id: inv._id,
+            error: err?.message ?? String(err)
+          })
+        })
+      }
+      this.ctx.info('[WorkspaceClient.cleanupInvitesForMeeting] Dropped invites for finished meeting', {
+        meeting,
+        count: all.length
+      })
+    } catch (err: any) {
+      this.ctx.error('[WorkspaceClient.cleanupInvitesForMeeting] Failed', {
+        error: err?.message ?? String(err),
+        meeting
+      })
+    }
   }
 
   /**

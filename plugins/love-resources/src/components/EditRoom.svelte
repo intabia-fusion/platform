@@ -114,9 +114,10 @@
   const me = getCurrentEmployee()
   // Room is locked if participants are present but meeting is not in our accessible meetings store
   $: isLockedByPrivateMeeting =
-    (roomInfos.length > 0 &&
+    roomInfos.length > 0 &&
     !roomInfos.some((p) => p.person === me) &&
-    !$meetings.some((m) => m.roomId === object._id && m.status !== MeetingStatus.Finished)) && getCurrentAccount().role !== AccountRole.Owner
+    !$meetings.some((m) => m.roomId === object._id && m.status !== MeetingStatus.Finished) &&
+    getCurrentAccount().role !== AccountRole.Owner
 
   // Track whether we already sent a knock-request for this room. Knock
   // requests are tied to the room, not a specific recipient — the server
