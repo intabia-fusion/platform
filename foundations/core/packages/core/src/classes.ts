@@ -912,7 +912,7 @@ export interface WorkspaceInfo {
   billingAccount?: PersonUuid // Should always be set for NEW workspaces
   allowReadOnlyGuest?: boolean // Should always be set for NEW workspaces
   allowGuestSignUp?: boolean // Should always be set for NEW workspaces
-  passwordAgingRule?: number // in days
+  passwordAgingRule?: number | null // in days, null disables the rule
   disabledFeaturesOverride?: string[] // Features from DISABLED_FEATURES to re-enable for this workspace
 }
 

@@ -1039,7 +1039,7 @@ export async function updatePasswordAgingRule (
   branding: Branding | null,
   token: string,
   params: {
-    days: number
+    days?: number
   }
 ): Promise<void> {
   const { days } = params
@@ -1053,7 +1053,7 @@ export async function updatePasswordAgingRule (
   if (accRole == null || getRolePower(accRole) < getRolePower(AccountRole.Maintainer)) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
-  await db.updatePasswordAgingRule(workspace, days)
+  await db.updatePasswordAgingRule(workspace, days ?? null)
 }
 
 export async function checkPasswordAging (
