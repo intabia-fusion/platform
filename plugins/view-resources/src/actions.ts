@@ -322,3 +322,13 @@ export function showMenu (ev: MouseEvent, props: any, onClose?: (result: any) =>
   if (disableActions) return
   showPopup(Menu, props, getEventPositionElement(ev), onClose)
 }
+
+export const actionGroupOrder: Record<ActionGroup, number> = {
+  create: 1,
+  edit: 2,
+  copy: 3,
+  associate: 4,
+  tools: 5,
+  other: 6,
+  remove: 7
+}

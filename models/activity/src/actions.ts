@@ -30,7 +30,7 @@ export function buildActions (builder: Builder): void {
       label: activity.string.SaveForLater,
       icon: activity.icon.Bookmark,
       input: 'focus',
-      inline: false,
+      inline: true,
       actionProps: {
         size: 'x-small'
       },

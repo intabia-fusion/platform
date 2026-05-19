@@ -17,8 +17,8 @@
   import { Asset } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { Action, Menu } from '@hcengineering/ui'
-  import { ActionGroup, Action as ViewAction, ViewContextType } from '@hcengineering/view'
-  import { getActions, invokeAction } from '../actions'
+  import { Action as ViewAction, ViewContextType } from '@hcengineering/view'
+  import { actionGroupOrder, getActions, invokeAction } from '../actions'
 
   export let object: Doc | Doc[]
   export let baseMenuClass: Ref<Class<Doc>> | undefined = undefined
@@ -31,16 +31,6 @@
   let resActions = actions
 
   let loaded = false
-
-  const order: Record<ActionGroup, number> = {
-    create: 1,
-    edit: 2,
-    copy: 3,
-    associate: 4,
-    tools: 5,
-    other: 6,
-    remove: 7
-  }
 
   void getActions(getClient(), object, baseMenuClass, mode).then((result) => {
     const filtered = result.filter((a) => {
@@ -73,8 +63,8 @@
     }))
 
     resActions = [...newActions, ...actions].sort((a, b) => {
-      const groupA = (order as any)[a.group ?? 'other']
-      const groupB = (order as any)[b.group ?? 'other']
+      const groupA = (actionGroupOrder as any)[a.group ?? 'other']
+      const groupB = (actionGroupOrder as any)[b.group ?? 'other']
 
       if (groupA !== groupB) {
         return groupA - groupB

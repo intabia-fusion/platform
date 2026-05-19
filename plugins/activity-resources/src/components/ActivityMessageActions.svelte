@@ -15,7 +15,7 @@
 <script lang="ts">
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import { Action, IconMoreV, showPopup } from '@hcengineering/ui'
-  import { getActions, Menu } from '@hcengineering/view-resources'
+  import { actionGroupOrder, getActions, Menu } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'
   import { getResource } from '@hcengineering/platform'
   import view, { Action as ViewAction } from '@hcengineering/view'
@@ -82,6 +82,19 @@
     inlineActions = (await getActions(client, message, activity.class.ActivityMessage))
       .filter((action) => action.inline)
       .filter((action) => !excludedAction.includes(action._id))
+      .sort((a, b) => {
+        const groupA = (actionGroupOrder as any)[a.context.group ?? 'other']
+        const groupB = (actionGroupOrder as any)[b.context.group ?? 'other']
+
+        if (groupA !== groupB) {
+          return groupA - groupB
+        }
+
+        const orderA = a.context.order ?? 99999
+        const orderB = b.context.order ?? 99999
+
+        return orderA - orderB
+      })
   }
 
   async function handleAction (action: ViewAction, ev?: Event): Promise<void> {
