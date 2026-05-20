@@ -174,6 +174,7 @@ export class CommonPage {
   async pressYesForPopup (page: Page): Promise<void> {
     await expect(this.popupSubmitButton()).toBeVisible()
     await this.popupSubmitButton().click()
+    await expect(this.popupSubmitButton()).not.toBeVisible({ timeout: 5000 })
   }
 
   async pressButtonBack (page: Page): Promise<void> {
