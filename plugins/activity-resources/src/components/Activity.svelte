@@ -22,13 +22,13 @@
   } from '@hcengineering/activity'
   import { Class, Doc, getCurrentAccount, Ref, SortingOrder } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Grid, Lazy, location, Section, Spinner } from '@hcengineering/ui'
-  import { onDestroy, onMount } from 'svelte'
+  import { Grid, Section, Spinner } from '@hcengineering/ui'
+  import { onMount } from 'svelte'
   import { Analytics } from '@hcengineering/analytics'
 
   import { editingMessageStore, messageInFocus } from '../activity'
   import { filterMessages, sortActivityMessages } from '../activityMessagesUtils'
-  import { canGroupMessages, getMessageFromLoc, getSpace } from '../utils'
+  import { canGroupMessages, getSpace } from '../utils'
   import ActivityMessagePresenter from './activity-message/ActivityMessagePresenter.svelte'
   import ActivityExtensionComponent from './ActivityExtension.svelte'
   import ActivityHeader from './ActivityHeader.svelte'
@@ -75,25 +75,15 @@
   let direction: ActivityDirection = $activityDirectionStore ?? initActivityDirection()
   $: direction = $activityDirectionStore ?? initActivityDirection()
 
-  const unsubscribe = messageInFocus.subscribe((id) => {
+  $: onMessageInFocus($messageInFocus)
+
+  function onMessageInFocus (id?: Ref<ActivityMessage>): void {
     if (id !== undefined) {
       selectedMessageId = id
       shouldScroll = true
       void scrollToMessage(id)
-      messageInFocus.set(undefined)
     }
-  })
-
-  const unsubscribeLocation = location.subscribe((loc) => {
-    const id = getMessageFromLoc(loc)
-
-    if (id === undefined) {
-      boundary?.scrollTo({ top: 0 })
-      selectedMessageId = undefined
-    }
-
-    messageInFocus.set(id)
-  })
+  }
 
   onMount(() => {
     if (!boundary) {
@@ -114,11 +104,6 @@
       isAutoScroll = isAutoScroll ? diff < 100 || prevScrollTimestamp === 0 : false
       prevScrollTimestamp = a.timeStamp
     })
-  })
-
-  onDestroy(() => {
-    unsubscribe()
-    unsubscribeLocation()
   })
 
   function restartAnimation (el: HTMLElement): void {
@@ -159,6 +144,9 @@
       restartAnimation(msgElement)
     }
     msgElement.scrollIntoView({ behavior: 'instant' })
+    if ($messageInFocus === id) {
+      messageInFocus.set(undefined)
+    }
   }
 
   export function onContainerResized (container: HTMLElement): void {
@@ -334,27 +322,14 @@
         <Grid column={1} rowGap={0}>
           {#each allMessages as message, index (message._id)}
             {@const canGroup = canGroupMessages(message, allMessages[index - 1])}
-            {#if selectedMessageId}
-              <ActivityMessagePresenter
-                value={message}
-                doc={object}
-                hideLink={true}
-                type={canGroup ? 'short' : 'default'}
-                isHighlighted={selectedMessageId === message._id}
-                withShowMore
-              />
-            {:else}
-              <Lazy>
-                <ActivityMessagePresenter
-                  value={message}
-                  doc={object}
-                  hideLink={true}
-                  type={canGroup ? 'short' : 'default'}
-                  isHighlighted={selectedMessageId === message._id}
-                  withShowMore
-                />
-              </Lazy>
-            {/if}
+            <ActivityMessagePresenter
+              value={message}
+              doc={object}
+              hideLink={true}
+              type={canGroup ? 'short' : 'default'}
+              isHighlighted={selectedMessageId === message._id}
+              withShowMore
+            />
           {/each}
         </Grid>
       {/if}

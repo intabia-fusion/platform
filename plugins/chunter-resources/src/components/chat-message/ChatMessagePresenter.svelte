@@ -40,6 +40,7 @@
   import MessageReadMarker from './MessageReadMarker.svelte'
   import MessageReadPopup from './MessageReadPopup.svelte'
   import ForwardedMessagePresenter from '../ForwardedMessagePresenter.svelte'
+  import { replyToMessage } from '../../utils'
 
   export let value: WithLookup<ChatMessage> | undefined
   export let doc: Doc | undefined = undefined
@@ -253,6 +254,14 @@
   } else {
     displayText = value?.message ?? EmptyMarkup
   }
+
+  async function handleDbClick (e: MouseEvent): Promise<void> {
+    if (isEditing || value == null) return
+    e.preventDefault()
+    e.stopPropagation()
+
+    await replyToMessage(value)
+  }
 </script>
 
 {#if inline && object}
@@ -295,6 +304,7 @@
     {padding}
     {onClick}
     {onReply}
+    on:dblclick={handleDbClick}
   >
     <svelte:fragment slot="header">
       <ChatMessageHeader label={chunter.string.LeftComment} />

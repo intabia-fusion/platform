@@ -196,6 +196,7 @@
       min-width: 0;
       gap: 0.5rem;
       overflow: hidden;
+      height: 100%;
     }
 
     &__attachments {
@@ -217,7 +218,7 @@
       display: flex;
       flex-direction: column;
       min-width: 0;
-      gap: 0.375rem;
+      gap: 0.25rem;
     }
 
     &__header {

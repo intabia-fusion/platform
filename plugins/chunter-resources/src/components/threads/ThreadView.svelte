@@ -54,26 +54,7 @@
   let isLoading = true
   let channelName: string | undefined = undefined
 
-  const unsubscribe = messageInFocus.subscribe((id) => {
-    if (!syncLocation) return
-    if (id !== undefined && id !== selectedMessageId) {
-      selectedMessageId = id
-    }
-
-    messageInFocus.set(undefined)
-  })
-
-  const unsubscribeLocation = locationStore.subscribe((newLocation) => {
-    if (!syncLocation) return
-    const id = getMessageFromLoc(newLocation)
-    selectedMessageId = id
-    messageInFocus.set(id)
-  })
-
-  onDestroy(() => {
-    unsubscribe()
-    unsubscribeLocation()
-  })
+  $: selectedMessageId = $messageInFocus
 
   $: if (message && message._id !== _id) {
     message = $threadMessagesStore?._id === _id ? $threadMessagesStore : undefined

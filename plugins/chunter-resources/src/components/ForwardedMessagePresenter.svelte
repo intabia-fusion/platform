@@ -23,11 +23,11 @@
     Icon,
     Label,
     Location,
-    locationStorageKeyId,
     locationToUrl,
     navigate,
     ShowMore,
-    location
+    location,
+    getCurrentLocation
   } from '@hcengineering/ui'
   import { AttachmentList } from '@hcengineering/attachment-resources'
   import { getDocIdentifier, getDocTitle, setFilters } from '@hcengineering/view-resources'
@@ -101,6 +101,9 @@
   $: fromId = forwardedFromDoc?._id ?? parent.forwardFromId
   $: fromClass = forwardedFromDoc?._class ?? parent.forwardFromClass
   $: fromClazz = fromClass ? hierarchy.findClass(fromClass) : undefined
+
+  $: isOtherDoc = parent.attachedTo !== parent.forwardFromId
+  $: attachments = getAttachments(parent, forwardedMessage)
 
   $: originalTime = forwardedMessage?.createdOn ?? parent?.forwardContent?.createdOn ?? 0
   $: time = getDay(originalTime)
@@ -177,20 +180,23 @@
     return false
   }
 
-  function createLocation (loc: Location, _id?: Ref<Doc>, _class?: Ref<Class<Doc>>, doc?: Doc): Location | undefined {
+  function createLocation (_loc: Location, _id?: Ref<Doc>, _class?: Ref<Class<Doc>>, doc?: Doc): Location | undefined {
     if (_id == null || _class == null || doc == null) return undefined
     const location: Location = {
-      path: [...loc.path]
+      path: [...getCurrentLocation().path]
     }
-    location.path[2] = chunterId
-    if (hierarchy.isDerived(_class, activity.class.ActivityMessage)) {
-      const message = doc as ActivityMessage
-      location.path[3] = encodeObjectURI(message.attachedTo, message.attachedToClass)
-      location.path[4] = message._id
-      location.path.length = 5
-    } else {
-      location.path[3] = encodeObjectURI(_id, _class)
-      location.path.length = 4
+
+    if (isOtherDoc) {
+      location.path[2] = chunterId
+      if (hierarchy.isDerived(_class, activity.class.ActivityMessage)) {
+        const message = doc as ActivityMessage
+        location.path[3] = encodeObjectURI(message.attachedTo, message.attachedToClass)
+        location.path[4] = message._id
+        location.path.length = 5
+      } else {
+        location.path[3] = encodeObjectURI(_id, _class)
+        location.path.length = 4
+      }
     }
 
     location.query = { message: parent.forwardedMessage ?? null }
@@ -225,11 +231,11 @@
 </script>
 
 {#if parent.forwardFromId != null}
-  <div class="forwarded-message">
+  <div class="forwarded-message" role="button" tabindex="0" on:click={handleClick} on:keydown={handleKeyDown}>
     <div class="forwarded-message__indicator"></div>
     <div class="forwarded-message__content">
       <div class="forwarded-message__header">
-        {#if parent.attachedTo !== parent.forwardFromId}
+        {#if isOtherDoc}
           <Label label={activity.string.ForwardedFrom} />
         {/if}
         <PersonPresenter value={person} avatarSize="card" accent />
@@ -239,69 +245,72 @@
           <MessageViewer message={forwardedMessage?.message ?? parent.forwardContent?.message ?? ''} />
         </ShowMore>
       </div>
-      <div class="forwarded-message__attachments">
-        <AttachmentList attachments={getAttachments(parent, forwardedMessage)} imageSize="medium" withActions={false} />
-      </div>
-      <div
-        class="forwarded-message__from"
-        role="button"
-        tabindex="0"
-        class:disabled={forwardedFromDoc == null}
-        on:click={handleClick}
-        on:keydown={handleKeyDown}
-      >
-        {#if isPrivate(forwardedFromDoc)}
-          <Icon icon={chunter.icon.Lock} size="small" />
-        {:else}
-          <Icon icon={fromClazz?.icon ?? chunter.icon.Hashtag} size="small" />
-        {/if}
-
-        <a class="forwarded-message__from__title" {href} on:click={handleClick}>
-          {#if forwardedFromDoc}
-            {#if forwardedFromIdentifier}
-              {forwardedFromIdentifier}
-            {:else if forwardedFromTitle}
-              {forwardedFromTitle}
-            {:else if hierarchy.isDerived(forwardedFromDoc._class, activity.class.ActivityMessage)}
-              {#await getThreadParentName(forwardedFromDoc) then name}
-                <Label label={chunter.string.ThreadIn} params={{ name }} />
-              {/await}
-            {:else}
-              <Label label={fromClazz?.label ?? chunter.string.Chat} />
-            {/if}
-          {:else if forwardedFromLoaded}
-            <Label label={chunter.string.PrivateChat} />
-          {/if}
-        </a>
-
-        <div class="forwarded-message__from__separator" />
-
-        <a class="forwarded-message__from__time" {href} on:click={handleClick}>
-          {#if isToday || isYesterday}
-            <Label label={isToday ? ui.string.Today : ui.string.Yesterday} />, {new Date(
-              originalTime
-            ).toLocaleTimeString('default', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
+      {#if attachments.length > 0}
+        <div class="forwarded-message__attachments">
+          <AttachmentList {attachments} imageSize="medium" withActions={false} />
+        </div>
+      {/if}
+      {#if isOtherDoc}
+        <div
+          class="forwarded-message__from"
+          role="button"
+          tabindex="0"
+          class:disabled={forwardedFromDoc == null}
+          on:click={handleClick}
+          on:keydown={handleKeyDown}
+        >
+          {#if isPrivate(forwardedFromDoc)}
+            <Icon icon={chunter.icon.Lock} size="small" />
           {:else}
-            {new Date(time).toLocaleDateString('default', {
-              weekday: 'short',
-              month: 'long',
-              day: 'numeric',
-              year: isCurrentYear ? undefined : 'numeric'
-            })}
+            <Icon icon={fromClazz?.icon ?? chunter.icon.Hashtag} size="small" />
           {/if}
-        </a>
 
-        {#if forwardedFromDoc}
+          <a class="forwarded-message__from__title" {href} on:click={handleClick}>
+            {#if forwardedFromDoc}
+              {#if forwardedFromIdentifier}
+                {forwardedFromIdentifier}
+              {:else if forwardedFromTitle}
+                {forwardedFromTitle}
+              {:else if hierarchy.isDerived(forwardedFromDoc._class, activity.class.ActivityMessage)}
+                {#await getThreadParentName(forwardedFromDoc) then name}
+                  <Label label={chunter.string.ThreadIn} params={{ name }} />
+                {/await}
+              {:else}
+                <Label label={fromClazz?.label ?? chunter.string.Chat} />
+              {/if}
+            {:else if forwardedFromLoaded}
+              <Label label={chunter.string.PrivateChat} />
+            {/if}
+          </a>
+
           <div class="forwarded-message__from__separator" />
 
-          <a class="forwarded-message__from__view" {href} on:click={handleClick}>
-            <Label label={chunter.string.ShowMessage} />
+          <a class="forwarded-message__from__time" {href} on:click={handleClick}>
+            {#if isToday || isYesterday}
+              <Label label={isToday ? ui.string.Today : ui.string.Yesterday} />, {new Date(
+                originalTime
+              ).toLocaleTimeString('default', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            {:else}
+              {new Date(time).toLocaleDateString('default', {
+                weekday: 'short',
+                month: 'long',
+                day: 'numeric',
+                year: isCurrentYear ? undefined : 'numeric'
+              })}
+            {/if}
           </a>
-        {/if}
-      </div>
+
+          <!--{#if forwardedFromDoc}-->
+          <!--  <div class="forwarded-message__from__separator" />-->
+          <!--  <a class="forwarded-message__from__view" {href} on:click={handleClick}>-->
+          <!--    <Label label={chunter.string.ShowMessage} />-->
+          <!--  </a>-->
+          <!--{/if}-->
+        </div>
+      {/if}
     </div>
   </div>
 {/if}
