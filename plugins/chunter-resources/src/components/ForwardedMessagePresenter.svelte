@@ -231,14 +231,38 @@
 </script>
 
 {#if parent.forwardFromId != null}
-  <div class="forwarded-message" role="button" tabindex="0" on:click={handleClick} on:keydown={handleKeyDown}>
+  <div
+    class="forwarded-message"
+    role="button"
+    tabindex="0"
+    on:click={handleClick}
+    on:keydown={handleKeyDown}
+    class:clickable={forwardedFromDoc != null}
+  >
     <div class="forwarded-message__indicator"></div>
     <div class="forwarded-message__content">
       <div class="forwarded-message__header">
         {#if isOtherDoc}
           <Label label={activity.string.ForwardedFrom} />
         {/if}
-        <PersonPresenter value={person} avatarSize="card" accent />
+        <PersonPresenter value={person} avatarSize="card" accent clickable={false} />
+        <span class="forwarded-message__time">
+          {#if isToday || isYesterday}
+            <Label label={isToday ? ui.string.Today : ui.string.Yesterday} />, {new Date(
+              originalTime
+            ).toLocaleTimeString('default', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          {:else}
+            {new Date(time).toLocaleDateString('default', {
+              weekday: 'short',
+              month: 'long',
+              day: 'numeric',
+              year: isCurrentYear ? undefined : 'numeric'
+            })}
+          {/if}
+        </span>
       </div>
       <div class="forwarded-message__text">
         <ShowMore>
@@ -282,33 +306,6 @@
               <Label label={chunter.string.PrivateChat} />
             {/if}
           </a>
-
-          <div class="forwarded-message__from__separator" />
-
-          <a class="forwarded-message__from__time" {href} on:click={handleClick}>
-            {#if isToday || isYesterday}
-              <Label label={isToday ? ui.string.Today : ui.string.Yesterday} />, {new Date(
-                originalTime
-              ).toLocaleTimeString('default', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            {:else}
-              {new Date(time).toLocaleDateString('default', {
-                weekday: 'short',
-                month: 'long',
-                day: 'numeric',
-                year: isCurrentYear ? undefined : 'numeric'
-              })}
-            {/if}
-          </a>
-
-          <!--{#if forwardedFromDoc}-->
-          <!--  <div class="forwarded-message__from__separator" />-->
-          <!--  <a class="forwarded-message__from__view" {href} on:click={handleClick}>-->
-          <!--    <Label label={chunter.string.ShowMessage} />-->
-          <!--  </a>-->
-          <!--{/if}-->
         </div>
       {/if}
     </div>
@@ -322,6 +319,10 @@
     gap: 0.5rem;
     margin-top: 0.5rem;
     max-width: 40rem;
+
+    &.clickable {
+      cursor: pointer;
+    }
 
     &__indicator {
       display: flex;
@@ -378,31 +379,14 @@
         flex-shrink: 1;
         min-width: 0;
       }
+    }
 
-      &__separator {
-        background: var(--global-surface-01-BorderColor);
-        height: 0.875rem;
-        width: 1px;
-        border-radius: var(--small-BorderRadius);
-        margin: 0 0.125rem;
-        flex-shrink: 0;
-      }
-
-      &__time {
-        color: inherit;
-        font-weight: 400;
-        font-size: 0.75rem;
-        white-space: nowrap;
-        flex-shrink: 0;
-      }
-
-      &__view {
-        color: var(--accent-color-base);
-        font-weight: 400;
-        font-size: 0.75rem;
-        white-space: nowrap;
-        flex-shrink: 0;
-      }
+    &__time {
+      font-weight: 400;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+      color: var(--global-secondary-TextColor);
     }
   }
 </style>

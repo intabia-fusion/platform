@@ -39,6 +39,7 @@
   export let overflowLabel = true
   export let inlineBlock = false
   export let shrink: boolean = false
+  export let clickable: boolean = true
 </script>
 
 {#if value}
@@ -48,7 +49,7 @@
     <DocNavLink
       object={value}
       onClick={onEdit}
-      {disabled}
+      disabled={disabled || !clickable}
       {noUnderline}
       {colorInherit}
       {accent}
