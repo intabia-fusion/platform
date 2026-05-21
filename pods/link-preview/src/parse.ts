@@ -97,7 +97,13 @@ const OEMBED_SERVICE_NAME = 'Huly Link Preview Service/1.0'
 export class LinkPreviewError extends Error {
   constructor (
     message: string,
-    public readonly code?: 'BLOCKED_URL' | 'INVALID_URL' | 'INVALID_PROTOCOL' | 'TIMEOUT' | 'FETCH_FAILED',
+    public readonly code?:
+    | 'BLOCKED_URL'
+    | 'INVALID_URL'
+    | 'INVALID_PROTOCOL'
+    | 'TIMEOUT'
+    | 'FETCH_FAILED'
+    | 'LOGIN_REDIRECT',
     public readonly cause?: unknown
   ) {
     super(message)
@@ -231,6 +237,38 @@ function isRedirectStatus (status: number): boolean {
   return status >= 300 && status < 400
 }
 
+const LOGIN_PATH_PATTERNS = [
+  /\/sign[_-]?in\b/i,
+  /\/log[_-]?in\b/i,
+  /\/auth(?:\/|$|\?)/i,
+  /\/oauth\b/i,
+  /\/sso\b/i,
+  /\/account\/login\b/i,
+  /\/users\/sign_in\b/i,
+  /\/saml\b/i
+]
+
+function isLoginUrl (urlStr: string): boolean {
+  try {
+    const u = new URL(urlStr)
+    const pathAndQuery = u.pathname + u.search
+    return LOGIN_PATH_PATTERNS.some((re) => re.test(pathAndQuery))
+  } catch {
+    return false
+  }
+}
+
+function isLoginTitle (title: string | undefined): boolean {
+  if (title === undefined) return false
+  const t = title.toLowerCase().trim()
+  return (
+    /^sign[_ -]?in\b/.test(t) ||
+    /^log[_ -]?in\b/.test(t) ||
+    /^sign[_ -]?up\b/.test(t) ||
+    (t.includes('· gitlab') && /^sign[_ -]?in/.test(t))
+  )
+}
+
 async function fetchWithValidatedRedirects (
   url: string,
   options: RequestInit,
@@ -262,6 +300,9 @@ async function fetchWithValidatedRedirects (
     }
 
     const nextUrl = new URL(location, currentUrl).href
+    if (isLoginUrl(nextUrl) && !isLoginUrl(url)) {
+      throw new LinkPreviewError('Redirected to login page', 'LOGIN_REDIRECT')
+    }
     currentUrl = nextUrl
   }
 
@@ -787,6 +828,11 @@ export async function parseLinkPreviewDetails (
   // Fall back to Open Graph / meta tag parsing
   ctx.info('using Open Graph data', { url: finalUrl })
   const preview = parseOpenGraphData($, config, parsedUrl, finalUrl)
+
+  // Skip preview if final page looks like login/auth page (private content not accessible anonymously)
+  if (!isLoginUrl(query) && (isLoginUrl(finalUrl) || isLoginTitle(preview.title))) {
+    throw new LinkPreviewError('Resolved to login page', 'LOGIN_REDIRECT')
+  }
 
   // Get image dimensions if we have an image but no dimensions
   let imageWidth: number | undefined
