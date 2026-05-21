@@ -36,7 +36,8 @@ export const PROMPTS = {
    * Prompt for summarizing messages from multiple participants
    */
   SUMMARIZE_MESSAGES: (
-    lang: string
+    lang: string,
+    description?: string
   ): string => `Generate a summary from the provided sequence of messages by creating separate bullet lists for each participant, ensuring that each bullet point includes only the key points, problems and further work plans without any chit-chat, and clearly label each participant so that their individual contributions are distinctly summarized.
   Use following structure for output:
     **@Participant Name**
@@ -48,7 +49,11 @@ export const PROMPTS = {
       - ...
   Don't introduce any other elements of the structure.
   If a bullet point implies a reference to another participant include a reference according to this format: **@Participant Name**
-  The response should be translated into ${lang} regardless of the original language. Don't translate the names of the participants and leave them exactly as they appear in the text.`,
+  The response should be translated into ${lang} regardless of the original language. Don't translate the names of the participants and leave them exactly as they appear in the text.${
+    description !== undefined && description.trim() !== ''
+      ? `\n\n  Meeting description / agenda (use as context for topic, goals, and expected outcomes; copy to summary only parts with relevant todo items):\n${description}`
+      : ''
+  }`,
 
   /**
    * System prompt for direct chat mode with tools

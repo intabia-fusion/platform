@@ -106,7 +106,8 @@ export default class OpenAIProvider implements LLMProvider {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     messages: PersonMessage[],
-    lang: string
+    lang: string,
+    description?: string
   ): Promise<string | undefined> {
     // Build person name map
     const personToName = new Map<string, string>()
@@ -133,7 +134,7 @@ export default class OpenAIProvider implements LLMProvider {
       messages: [
         {
           role: 'system',
-          content: PROMPTS.SUMMARIZE_MESSAGES(lang)
+          content: PROMPTS.SUMMARIZE_MESSAGES(lang, description)
         },
         {
           role: 'user',
