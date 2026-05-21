@@ -470,6 +470,10 @@
       void uploadWith(handler)
     }
   }))
+
+  export function focus (): void {
+    refInput.focus()
+  }
 </script>
 
 <div class="flex-col no-print" bind:this={refContainer}>

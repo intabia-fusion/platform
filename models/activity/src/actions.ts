@@ -53,7 +53,7 @@ export function buildActions (builder: Builder): void {
       label: activity.string.RemoveFromLater,
       icon: activity.icon.BookmarkFilled,
       input: 'focus',
-      inline: false,
+      inline: true,
       actionProps: {
         iconProps: {
           fill: 'var(--global-accent-TextColor)'

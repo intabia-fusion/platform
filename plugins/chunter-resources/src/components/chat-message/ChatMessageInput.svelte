@@ -289,10 +289,19 @@
     }
 
     if (event.key === 'Escape') {
-      if ($editingMessageStore === undefined) return false
-      event.stopPropagation()
-      event.preventDefault()
-      editingMessageStore.set(undefined)
+      if ($editingMessageStore !== undefined) {
+        event.stopPropagation()
+        event.preventDefault()
+        editingMessageStore.set(undefined)
+        return false
+      }
+
+      if ($replyingToMessageStore !== undefined) {
+        event.stopPropagation()
+        event.preventDefault()
+        replyingToMessageStore.set(undefined)
+        return false
+      }
     }
     return false
   }
@@ -303,6 +312,16 @@
     }
 
     currentMessage = { ...currentMessage, forwardedMessage: undefined }
+  }
+
+  let prevReplyTo: Ref<ActivityMessage>
+
+  $: {
+    const id = $replyingToMessageStore?._id
+    if (id != null && id !== prevReplyTo) {
+      prevReplyTo = id
+      inputRef.focus()
+    }
   }
 </script>
 

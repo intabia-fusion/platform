@@ -149,6 +149,10 @@
       focusManager?.setFocus(idx)
     }
   }
+
+  export function focus (): void {
+    editor?.focus()
+  }
 </script>
 
 <div class="ref-container" class:focusable class:noborder>

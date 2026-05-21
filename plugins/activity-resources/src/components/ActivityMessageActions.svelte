@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import activity, { ActivityMessage } from '@hcengineering/activity'
-  import { Action, IconMoreV, showPopup } from '@hcengineering/ui'
+  import { Action, closeTooltip, IconMoreV, showPopup } from '@hcengineering/ui'
   import { actionGroupOrder, getActions, Menu } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'
   import { getResource } from '@hcengineering/platform'
@@ -103,11 +103,13 @@
     if (onReply !== undefined && action._id === activity.action.Reply) {
       onReply(message)
       handleActionMenuClosed()
+      closeTooltip()
       return
     }
     const fn = await getResource(action.action)
 
     await fn(message, ev, { onOpen, onClose })
+    closeTooltip()
   }
 </script>
 

@@ -47,7 +47,14 @@ import {
 } from '@hcengineering/notification-resources'
 import { type Asset, getMetadata, getResource, type IntlString, translate } from '@hcengineering/platform'
 import { getClient } from '@hcengineering/presentation'
-import { type AnySvelteComponent, type IconSize, languageStore, showPopup } from '@hcengineering/ui'
+import {
+  type AnySvelteComponent,
+  closePopup,
+  closeTooltip,
+  type IconSize,
+  languageStore,
+  showPopup
+} from '@hcengineering/ui'
 import { classIcon, getDocIdentifier, getDocLabel, getDocTitle } from '@hcengineering/view-resources'
 import { get, type Unsubscriber, writable } from 'svelte/store'
 import love, { type MeetingMinutes } from '@hcengineering/love'
@@ -592,6 +599,8 @@ export async function getForwardData (message: WithLookup<ChatMessage>): Promise
 
 export async function replyToMessage (message: ChatMessage): Promise<void> {
   replyingToMessageStore.set(message)
+  closePopup()
+  closeTooltip()
 }
 
 export async function forwardMessage (message: ChatMessage): Promise<void> {
