@@ -46,11 +46,7 @@ function buildRenewedSubscription (sub: Subscription, now: number, paymentId: st
 /**
  * Build canceled subscription data after a failed recurrent charge.
  */
-function buildFailedChargeSubscription (
-  sub: Subscription,
-  errorCode: string,
-  message: string
-): SubscriptionData {
+function buildFailedChargeSubscription (sub: Subscription, errorCode: string, message: string): SubscriptionData {
   return {
     ...sub,
     status: SubscriptionStatus.Canceled,
@@ -106,7 +102,7 @@ async function renewSubscription (
       RebillId: sub.providerData?.rebillId as string
     })
 
-    if (chargeResult.Success) {
+    if (chargeResult.Success === true) {
       const updatedData = buildRenewedSubscription(sub, Date.now(), chargeResult.PaymentId)
       await storage.upsert(updatedData)
       ctx.info('Subscription renewed successfully', {

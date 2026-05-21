@@ -13,19 +13,39 @@
 // limitations under the License.
 //
 
-import { Doc } from '@hcengineering/core'
-import { IntlString } from '@hcengineering/platform'
+/** @public */
+export type LocalizedString = string | Record<string, string>
 
 /** @public */
-export interface Tier extends Doc {
-  label: IntlString
-  description: IntlString
+export interface TariffItem {
+  plan: string
+  label: LocalizedString
+  description: LocalizedString
+  users: LocalizedString
+  features: LocalizedString[]
+  additional: LocalizedString
   priceMonthly: number
+  currency: string
   storageLimitGB: number
   trafficLimitGB: number
-  meetingMinutesLimit: number // In minutes
-  tokenLimit: number // In thousands of tokens
-
+  meetingMinutesLimit: number
+  tokenLimit: number
+  projectsLimit: number
+  usersLimit: number
   index: number
   color?: string
+}
+
+/** @public */
+export interface PackageItem {
+  plan: string
+  description: LocalizedString
+  priceMonthly: string
+  currency: string
+}
+
+/** @public */
+export interface TariffConfig {
+  tariffs: Record<string, TariffItem>
+  packages: Record<string, PackageItem>
 }

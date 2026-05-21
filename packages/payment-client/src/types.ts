@@ -17,7 +17,8 @@ import type { AccountUuid, WorkspaceUuid } from '@hcengineering/core'
 
 export enum SubscriptionType {
   Tier = 'tier', // Main workspace tier (free, starter, pro, enterprise)
-  Support = 'support' // Voluntary support/donation subscription
+  Support = 'support', // Voluntary support/donation subscription
+  Package = 'package' // Additional package (storage, etc.)
 }
 
 export enum SubscriptionStatus {

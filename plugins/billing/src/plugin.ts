@@ -12,18 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type Class, type Ref } from '@hcengineering/core'
 import { type Asset, type IntlString, type Metadata, plugin, type Plugin } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui'
-import { Tier } from './types'
 
 /** @public */
 export const billingId = 'billing' as Plugin
 
 export const billingPlugin = plugin(billingId, {
-  class: {
-    Tier: '' as Ref<Class<Tier>>
-  },
   metadata: {
     BillingURL: '' as Metadata<string>
   },
@@ -55,26 +50,12 @@ export const billingPlugin = plugin(billingId, {
     OtherFiles: '' as IntlString,
     StorageByType: '' as IntlString,
     LargestFiles: '' as IntlString,
-    Tier: '' as IntlString,
-    StorageLimit: '' as IntlString,
-    TrafficLimit: '' as IntlString,
-    Start: '' as IntlString,
-    StartDescription: '' as IntlString,
-    Standard: '' as IntlString,
-    StandardDescription: '' as IntlString,
-    Business: '' as IntlString,
-    BusinessDescription: '' as IntlString,
     UpgradePlan: '' as IntlString,
     LimitReached: '' as IntlString
   },
   icon: {
     Billing: '' as Asset,
     Subscriptions: '' as Asset
-  },
-  tier: {
-    Start: '' as Ref<Tier>,
-    Standard: '' as Ref<Tier>,
-    Business: '' as Ref<Tier>
   }
 })
 

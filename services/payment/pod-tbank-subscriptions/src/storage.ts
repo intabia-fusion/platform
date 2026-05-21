@@ -34,9 +34,7 @@ export class SubscriptionStorage {
   }
 
   async getTransactionCount (workspaceUuid: WorkspaceUuid): Promise<number> {
-    return (await this.accountClient.getSubscriptions(workspaceUuid))
-      .filter((s) => s.provider === 'tbank')
-      .length
+    return (await this.accountClient.getSubscriptions(workspaceUuid)).filter((s) => s.provider === 'tbank').length
   }
 
   async getById (id: string): Promise<Subscription | null> {
@@ -72,14 +70,19 @@ export class SubscriptionStorage {
   }
 
   async getActiveTbankSubscription (workspaceUuid: WorkspaceUuid): Promise<Subscription | null> {
-    return (await this.accountClient.getSubscriptions(workspaceUuid))
-      .find((s) => s.provider === 'tbank' &&
-        (s.status === SubscriptionStatus.Active || s.status === SubscriptionStatus.Trialing)) ?? null
+    return (
+      (await this.accountClient.getSubscriptions(workspaceUuid)).find(
+        (s) =>
+          s.provider === 'tbank' && (s.status === SubscriptionStatus.Active || s.status === SubscriptionStatus.Trialing)
+      ) ?? null
+    )
   }
 
-
   async findSubscriptionByCheckoutId (checkoutId: string): Promise<SubscriptionData | null> {
-    return (await this.accountClient.getSubscriptions())
-      .find((s) => s.provider === 'tbank' && s.providerCheckoutId === checkoutId) ?? null
+    return (
+      (await this.accountClient.getSubscriptions()).find(
+        (s) => s.provider === 'tbank' && s.providerCheckoutId === checkoutId
+      ) ?? null
+    )
   }
 }

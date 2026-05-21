@@ -245,7 +245,8 @@ export enum SubscriptionStatus {
  */
 export enum SubscriptionType {
   Tier = 'tier', // Main workspace tier (free, starter, pro, enterprise)
-  Support = 'support' // Voluntary support/donation subscription
+  Support = 'support', // Voluntary support/donation subscription
+  Package = 'package' // Additional package (storage, etc.)
 }
 
 /**

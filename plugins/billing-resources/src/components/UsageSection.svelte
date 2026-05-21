@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Tier } from '@hcengineering/billing'
+  import { type TariffItem } from '@hcengineering/billing'
   import { UsageStatus } from '@hcengineering/core'
   import { Label } from '@hcengineering/ui'
   import plugin from '../plugin'
@@ -21,12 +21,12 @@
   import { calculateLimits } from '../utils'
 
   export let usage: UsageStatus | null
-  export let tier: Tier | undefined
+  export let tariff: TariffItem | undefined
 
   $: storageUsedBytes = usage?.usage?.storageBytes ?? 0
   $: meetingMinutes = usage?.usage?.meetingMinutes ?? 0
   $: tokensUsage = usage?.usage?.tokens ?? 0
-  $: limits = calculateLimits(tier)
+  $: limits = calculateLimits(tariff)
 </script>
 
 <div class="flex-col flex-gap-2">

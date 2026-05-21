@@ -15,13 +15,13 @@
 
 import { writable, derived, get } from 'svelte/store'
 import { type SubscriptionData } from '@hcengineering/account-client'
-import { type Tier } from '@hcengineering/billing'
+import { type TariffItem } from '@hcengineering/billing'
 import { type UsageStatus, type WorkspaceInfoWithStatus } from '@hcengineering/core'
 import { checkUsageAgainstLimits } from '../utils'
 
 export interface SubscriptionState {
   currentSubscription: SubscriptionData | undefined
-  currentTier: Tier | undefined
+  currentTariff: TariffItem | undefined
   workspaceInfo: WorkspaceInfoWithStatus | undefined
   usageInfo: UsageStatus | undefined
   limitExceeded: boolean
@@ -29,7 +29,7 @@ export interface SubscriptionState {
 
 const initialState: SubscriptionState = {
   currentSubscription: undefined,
-  currentTier: undefined,
+  currentTariff: undefined,
   workspaceInfo: undefined,
   usageInfo: undefined,
   limitExceeded: false
@@ -49,7 +49,7 @@ export function updateLimitExceeded (limit: boolean): void {
 
 export function setSubscriptionState (
   subscription: SubscriptionData | undefined,
-  tier: Tier | undefined,
+  tariff: TariffItem | undefined,
   workspaceInfo?: WorkspaceInfoWithStatus | undefined
 ): void {
   const usage = workspaceInfo?.usageInfo ?? get(subscriptionStore).usageInfo
@@ -57,10 +57,10 @@ export function setSubscriptionState (
   subscriptionStore.update((store) => ({
     ...store,
     currentSubscription: subscription,
-    currentTier: tier,
+    currentTariff: tariff,
     usageInfo: usage,
     workspaceInfo: workspace,
-    limitExceeded: checkUsageAgainstLimits(usage, tier)
+    limitExceeded: checkUsageAgainstLimits(usage, tariff)
   }))
 }
 
