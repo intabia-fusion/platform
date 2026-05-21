@@ -168,10 +168,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
   }
 
   // Try TBank provider if neither Polar nor Stripe are configured
-  if (
-    provider == null &&
-    config.TbankSubscriptionsUrl !== undefined
-  ) {
+  if (provider == null && config.TbankSubscriptionsUrl !== undefined) {
     try {
       provider = PaymentProviderFactory.getInstance().create(
         'tbank',

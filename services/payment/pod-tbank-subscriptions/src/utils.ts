@@ -42,7 +42,7 @@ function hashWorkspace (uuid: string): string {
   let hash = 0
   for (let i = 0; i < uuid.length; i++) {
     const char = uuid.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
+    hash = (hash << 5) - hash + char
     // Convert to 32bit integer
     hash = hash & hash
   }

@@ -100,7 +100,7 @@
           <StorageBreakdown
             byType={datalakeByType}
             totalSize={totalDatalakeSize}
-            limit={calculateLimits($subscriptionStore.currentTier).storageLimit}
+            limit={calculateLimits($subscriptionStore.currentTariff).storageLimit}
           />
         {/if}
       </Category>

@@ -292,6 +292,8 @@ services:
       - 'host.docker.internal:host-gateway'
     links:
       - stats
+    volumes:
+      - ./tariff-config.yaml:/var/cfg/tariff-config.yaml
     environment:
       - SERVER_PORT=8080
       - SERVER_SECRET=secret
@@ -318,6 +320,7 @@ services:
       - STREAM_URL=http://localhost:8087/_stream/recording
       - PAYMENT_URL=http://localhost:8087/_payment
       - BILLING_URL=http://localhost:8087/_billing
+      - TARIFF_CONFIG=/var/cfg/tariff-config.yaml
       - COMMUNICATION_API_ENABLED=false
       # - BACKUP_URL=http://localhost:8087/_backup/api/backup
       - EXCLUDED_APPLICATIONS_FOR_ANONYMOUS=["chunter", "notification"]
@@ -1046,7 +1049,7 @@ services:
       - TBANK_TERMINAL_KEY=1774599770012DEMO
       - TBANK_PASSWORD=Qnm5Wa3DTTRaIzGu
       - TBANK_URL=https://securepay.tinkoff.ru
-      - TBANK_SUBSCRIPTION_PLANS=start@tier:29900;standard@tier:59900;business@tier:99900
+      - TBANK_SUBSCRIPTION_PLANS=start@tier:29900;standard@tier:59900;business@tier:99900;100gb@package:100000;500gb@package:500000;1000gb@package:1000000
       - SCHEDULER_INTERVAL_MINUTES=${TBANK_SCHEDULER_INTERVAL_MINUTES:-60}
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped

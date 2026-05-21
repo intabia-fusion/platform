@@ -1,0 +1,122 @@
+tariffs:
+  start:
+    plan: start
+    label:
+      ru: Старт
+      en: Start
+    description:
+      ru: Для быстрого старта
+      en: For quick start
+    users:
+      ru: до 10 пользователей
+      en: up to 10 users
+    features:
+      - ru: AI функции
+        en: AI features
+      - ru: Чат и документы
+        en: Chat and documents
+      - ru: 3 проекта
+        en: 3 projects
+      - ru: 10 Гб хранилища
+        en: 10 GB storage
+    additional:
+      ru: Kanban-доски, базовые уведомления, базовый диск
+      en: Kanban boards, basic notifications, basic drive
+    priceMonthly: 299
+    currency: ₽
+    storageLimitGB: 10
+    trafficLimitGB: 10
+    meetingMinutesLimit: 0
+    tokenLimit: 0
+    projectsLimit: 3
+    usersLimit: 10
+    index: 0
+    color: Sky
+  standard:
+    plan: standard
+    label:
+      ru: Стандарт
+      en: Standard
+    description:
+      ru: Для средней команды
+      en: For a medium team
+    users:
+      ru: до 50 пользователей
+      en: up to 50 users
+    features:
+      - ru: AI функции
+        en: AI features
+      - ru: Звонки
+        en: Calls
+      - ru: Без ограничений на проекты
+        en: Unlimited projects
+      - ru: 100 Гб хранилища
+        en: 100 GB storage
+    additional:
+      ru: приватные проекты, отсутствие ограничений на сообщения
+      en: Private projects, unlimited messages
+    priceMonthly: 599
+    currency: ₽
+    storageLimitGB: 100
+    trafficLimitGB: 100
+    meetingMinutesLimit: 0
+    tokenLimit: 0
+    projectsLimit: 0
+    usersLimit: 50
+    index: 1
+    color: Orchid
+  business:
+    plan: business
+    label:
+      ru: Бизнес
+      en: Business
+    description:
+      ru: Для большой команды
+      en: For a large team
+    users:
+      ru: до 250 пользователей
+      en: up to 250 users
+    features:
+      - ru: AI функции
+        en: AI features
+      - ru: Персональный менеджер
+        en: Personal manager
+      - ru: Подходит для масштабирования бизнеса (миграция данных)
+        en: Suitable for business scaling (data migration)
+      - ru: 500 Гб хранилища
+        en: 500 GB storage
+    additional:
+      ru: API-интеграции, SSO/OpenID Connect, домен 4 уровня
+      en: API integrations, SSO/OpenID Connect, 4th level domain
+    priceMonthly: 999
+    currency: ₽
+    storageLimitGB: 500
+    trafficLimitGB: 500
+    meetingMinutesLimit: 0
+    tokenLimit: 0
+    projectsLimit: 0
+    usersLimit: 250
+    index: 2
+    color: Orange
+packages:
+  100gb:
+    plan: 100gb
+    description:
+      ru: 100 Гб
+      en: 100 GB
+    priceMonthly: "1 000"
+    currency: ₽
+  500gb:
+    plan: 500gb
+    description:
+      ru: 500 Гб
+      en: 500 GB
+    priceMonthly: "5 000"
+    currency: ₽
+  1000gb:
+    plan: 1000gb
+    description:
+      ru: 1 000 Гб
+      en: 1 000 GB
+    priceMonthly: "10 000"
+    currency: ₽

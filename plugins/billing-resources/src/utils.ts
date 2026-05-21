@@ -16,7 +16,7 @@ import { get } from 'svelte/store'
 
 import login from '@hcengineering/login'
 import { getMetadata } from '@hcengineering/platform'
-import presentation, { getClient } from '@hcengineering/presentation'
+import presentation from '@hcengineering/presentation'
 import billing from '@hcengineering/billing'
 import {
   getClient as getAccountClientRaw,
@@ -33,7 +33,7 @@ import {
   hasAccountRole
 } from '@hcengineering/core'
 import { showPopup } from '@hcengineering/ui'
-import { type Tier } from '@hcengineering/billing'
+import { type TariffItem, type TariffConfig, type LocalizedString } from '@hcengineering/billing'
 
 import { setSubscriptionState, updateLimitExceeded, subscriptionStore } from './stores/subscription'
 import SubscriptionsModal from './components/SubscriptionsModal.svelte'
@@ -67,6 +67,29 @@ export function getPaymentClient (): PaymentClient | null {
   return getPaymentClientRaw(paymentUrl, token)
 }
 
+let _tariffsByPlan: Record<string, TariffItem> | null = null
+
+async function ensureTariffsLoaded (): Promise<Record<string, TariffItem>> {
+  if (_tariffsByPlan == null) {
+    const res = await fetch('/config/tariff-config.json')
+    if (!res.ok) {
+      console.warn('Failed to load tariff config:', res.status)
+      return {}
+    }
+    const config: TariffConfig = await res.json()
+    _tariffsByPlan = {}
+    for (const t of Object.values(config.tariffs)) {
+      _tariffsByPlan[t.plan] = t
+    }
+  }
+  return _tariffsByPlan
+}
+
+async function getTariffByPlan (plan: string): Promise<TariffItem | null> {
+  const tariffs = await ensureTariffsLoaded()
+  return tariffs[plan] ?? null
+}
+
 export async function isLimitExceeded (): Promise<boolean> {
   try {
     const accountClient = getAccountClient()
@@ -84,12 +107,12 @@ export async function isLimitExceeded (): Promise<boolean> {
       return true
     }
 
-    const tier = await getTierByPlan(subscription.plan)
-    if (tier == null) {
+    const tariff = await getTariffByPlan(subscription.plan)
+    if (tariff == null) {
       return true
     }
 
-    return checkUsageAgainstLimits(usageInfo, tier)
+    return checkUsageAgainstLimits(usageInfo, tariff)
   } catch (error) {
     console.error('Error checking usage limits:', error)
     return false
@@ -108,18 +131,18 @@ export async function checkWorkspaceLimits (): Promise<void> {
     const usageInfo = workspaceInfo?.usageInfo ?? null
 
     const subscription = await getCurrentSubscription(accountClient)
-    const tier = subscription != null ? await getTierByPlan(subscription.plan) : null
+    const tariff = subscription != null ? await getTariffByPlan(subscription.plan) : null
 
     // Update subscription store
-    setSubscriptionState(subscription, tier ?? undefined, workspaceInfo)
+    setSubscriptionState(subscription, tariff ?? undefined, workspaceInfo)
 
     // Check limits
-    if (usageInfo === null || subscription == null || tier == null) {
+    if (usageInfo === null || subscription == null || tariff == null) {
       updateLimitExceeded(subscription == null)
       return
     }
 
-    const exceeded = checkUsageAgainstLimits(usageInfo, tier)
+    const exceeded = checkUsageAgainstLimits(usageInfo, tariff)
     updateLimitExceeded(exceeded)
   } catch (error) {
     console.error('Error checking workspace limits:', error)
@@ -127,29 +150,7 @@ export async function checkWorkspaceLimits (): Promise<void> {
   }
 }
 
-async function getTierByPlan (plan: string): Promise<Tier | null> {
-  try {
-    const client = getClient()
-    const tiers = client.getModel().findAllSync(billing.class.Tier, {})
-
-    return (
-      tiers.find((tier) => {
-        const tierPlan = getTierPlan(tier._id)
-        return tierPlan === plan
-      }) ?? null
-    )
-  } catch (error) {
-    console.error('Error fetching tier by plan:', error)
-    return null
-  }
-}
-
-function getTierPlan (tierId: string): string {
-  const parts = tierId.split(':')
-  return parts.length >= 3 ? parts[2].toLowerCase() : ''
-}
-
-export function calculateLimits (tier: Tier | undefined): {
+export function calculateLimits (tariff: TariffItem | undefined): {
   storageLimit: number
   trafficLimit: number
   meetingMinutesLimit: number
@@ -161,21 +162,53 @@ export function calculateLimits (tier: Tier | undefined): {
   const DEFAULT_TOKEN = 20
 
   return {
-    storageLimit: (tier?.storageLimitGB ?? DEFAULT_STORAGE_GB) * 1e9,
-    trafficLimit: (tier?.trafficLimitGB ?? DEFAULT_TRAFFIC_GB) * 1e9,
-    meetingMinutesLimit: tier?.meetingMinutesLimit ?? DEFAULT_MEETING_MINUTES,
-    tokenLimit: (tier?.tokenLimit ?? DEFAULT_TOKEN) * 1000
+    storageLimit: (tariff?.storageLimitGB ?? DEFAULT_STORAGE_GB) * 1e9,
+    trafficLimit: (tariff?.trafficLimitGB ?? DEFAULT_TRAFFIC_GB) * 1e9,
+    meetingMinutesLimit: tariff?.meetingMinutesLimit ?? DEFAULT_MEETING_MINUTES,
+    tokenLimit: (tariff?.tokenLimit ?? DEFAULT_TOKEN) * 1000
   }
 }
 
-export function checkUsageAgainstLimits (usageInfo: UsageStatus | undefined, tier: Tier | undefined): boolean {
+export function checkUsageAgainstLimits (usageInfo: UsageStatus | undefined, tariff: TariffItem | undefined): boolean {
   if (usageInfo == null) return false
   const storageUsedBytes = usageInfo.usage.storageBytes ?? 0
   const meetingMinutes = usageInfo.usage.meetingMinutes ?? 0
 
-  const { storageLimit, meetingMinutesLimit } = calculateLimits(tier)
+  const { storageLimit, meetingMinutesLimit } = calculateLimits(tariff)
 
   return storageUsedBytes > storageLimit || meetingMinutes > meetingMinutesLimit
+}
+
+export function resolveLocale (config: TariffConfig, lang: string): TariffConfig {
+  const resolve = (s: LocalizedString): string => {
+    if (typeof s === 'string') return s
+    return s[lang] ?? s.en ?? Object.values(s)[0] ?? ''
+  }
+
+  return {
+    tariffs: Object.fromEntries(
+      Object.entries(config.tariffs).map(([k, t]) => [
+        k,
+        {
+          ...t,
+          label: resolve(t.label),
+          description: resolve(t.description),
+          users: resolve(t.users),
+          additional: resolve(t.additional),
+          features: t.features.map((f) => resolve(f))
+        }
+      ])
+    ),
+    packages: Object.fromEntries(
+      Object.entries(config.packages).map(([k, p]) => [
+        k,
+        {
+          ...p,
+          description: resolve(p.description)
+        }
+      ])
+    )
+  }
 }
 
 export async function getCurrentSubscription (accountClient: AccountClient): Promise<SubscriptionData | undefined> {

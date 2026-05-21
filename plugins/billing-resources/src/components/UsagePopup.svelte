@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Tier } from '@hcengineering/billing'
+  import { type TariffItem } from '@hcengineering/billing'
   import { UsageStatus } from '@hcengineering/core'
   import UsageSection from './UsageSection.svelte'
 
   export let usage: UsageStatus
-  export let tier: Tier | undefined
+  export let tariff: TariffItem | undefined
 </script>
 
 <div class="p-2">
-  <UsageSection {usage} {tier} />
+  <UsageSection {usage} {tariff} />
 </div>

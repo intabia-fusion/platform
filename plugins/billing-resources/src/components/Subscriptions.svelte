@@ -15,12 +15,13 @@
 <script lang="ts">
   import { type SubscriptionData, SubscriptionType } from '@hcengineering/account-client'
   import { type SubscribeRequest, type CheckoutStatus } from '@hcengineering/payment-client'
-  import { Tier } from '@hcengineering/billing'
+  import { type TariffItem, type TariffConfig, type PackageItem } from '@hcengineering/billing'
   import { getMetadata, translate } from '@hcengineering/platform'
-  import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
-  import { type Ref, SortingOrder, UsageStatus } from '@hcengineering/core'
+  import presentation, { MessageBox } from '@hcengineering/presentation'
+  import { UsageStatus } from '@hcengineering/core'
   import {
     IconCheckmark,
+    IconStorage,
     Label,
     Loading,
     Scroller,
@@ -36,25 +37,26 @@
   import { onMount, onDestroy } from 'svelte'
 
   import plugin from '../plugin'
-  import { getAccountClient, getPaymentClient } from '../utils'
+  import { getAccountClient, getPaymentClient, resolveLocale } from '../utils'
 
   import UsageSection from './UsageSection.svelte'
   import BillingErrorNotification from './BillingErrorNotification.svelte'
 
-  const client = getClient()
   const paymentClient = getPaymentClient()
-
-  const tiers = client.getModel().findAllSync(plugin.class.Tier, {}, { sort: { index: SortingOrder.Ascending } })
-  const tierByPlan = tiers.reduce<Record<string, Tier>>((acc, tier) => {
-    const { plan } = getTypeAndPlan(tier._id)
-    acc[plan] = tier
-    return acc
-  }, {})
 
   export let isReadOnly: boolean = false
 
+  let tariffConfigRaw: TariffConfig | null = null
+  $: tariffConfig = (tariffConfigRaw != null) ? resolveLocale(tariffConfigRaw, $themeStore.language) : null
+  $: tariffs = tariffConfig?.tariffs ?? ({} satisfies Record<string, TariffItem>)
+  $: tariffsByPlan = Object.values(tariffs).reduce<Record<string, TariffItem>>((acc, t) => {
+    acc[t.plan] = t
+    return acc
+  }, {})
+  $: packages = tariffConfig?.packages ?? ({} satisfies Record<string, PackageItem>)
+
   let currentSubscription: SubscriptionData | undefined = undefined
-  $: currentTier = currentSubscription != null ? tierByPlan[currentSubscription.plan] : undefined
+  $: currentTariff = currentSubscription != null ? tariffsByPlan[currentSubscription.plan] : undefined
   let loading = true
   let pollingCheckoutId: string | null = null
   let isPolling = false
@@ -70,7 +72,7 @@
 
   $: isCurrentCanceled = currentSubscription?.canceledAt !== undefined && currentSubscription.canceledAt > 0
 
-  async function subscribe (tierId: Ref<Tier>): Promise<void> {
+  async function subscribe (plan: string): Promise<void> {
     if (paymentClient == null) {
       return
     }
@@ -82,11 +84,32 @@
     }
 
     try {
-      const request: SubscribeRequest = getTypeAndPlan(tierId)
+      const request: SubscribeRequest = { type: SubscriptionType.Tier, plan }
       const { checkoutUrl } = await paymentClient.createSubscription(workspace, request)
       window.location.href = checkoutUrl
     } catch (error) {
       console.error('Error while upgrading plan:', error)
+      await showErrorNotification()
+    }
+  }
+
+  async function subscribePackage (plan: string): Promise<void> {
+    if (paymentClient == null) {
+      return
+    }
+
+    const workspace = getMetadata(presentation.metadata.WorkspaceUuid)
+    if (workspace === undefined) {
+      console.warn('Workspace metadata not available')
+      return
+    }
+
+    try {
+      const request: SubscribeRequest = { type: SubscriptionType.Package, plan }
+      const { checkoutUrl } = await paymentClient.createSubscription(workspace, request)
+      window.location.href = checkoutUrl
+    } catch (error) {
+      console.error('Error subscribing to package:', error)
       await showErrorNotification()
     }
   }
@@ -101,13 +124,13 @@
     )
   }
 
-  async function showPlanChangeConfirmation (newPlan: string, newTier: Tier): Promise<void> {
-    if (currentTier === undefined) {
+  async function showPlanChangeConfirmation (newPlan: string, newTariff: TariffItem): Promise<void> {
+    if (currentTariff === undefined) {
       return
     }
 
-    const isDowngrade = newTier.priceMonthly < currentTier.priceMonthly
-    const priceDifference = Math.abs(newTier.priceMonthly - currentTier.priceMonthly)
+    const isDowngrade = newTariff.priceMonthly < currentTariff.priceMonthly
+    const priceDifference = Math.abs(newTariff.priceMonthly - currentTariff.priceMonthly)
 
     const title = isDowngrade ? plugin.string.ConfirmDowngrade : plugin.string.ConfirmUpgrade
     const descriptionKey = isDowngrade ? plugin.string.DowngradeDescription : plugin.string.UpgradeDescription
@@ -122,18 +145,17 @@
     })
   }
 
-  async function handlePlanChange (newTierId: Ref<Tier>): Promise<void> {
-    const { plan: newPlan } = getTypeAndPlan(newTierId)
-    const newTier = tierByPlan[newPlan]
+  async function handlePlanChange (tariff: TariffItem): Promise<void> {
+    const newPlan = tariff.plan
 
     if (currentSubscription?.id === undefined) {
       // No active subscription, create new one
-      await subscribe(newTierId)
+      await subscribe(newPlan)
       return
     }
 
-    if (currentTier === undefined) {
-      // No current tier selected, should not happen but guard against it
+    if (currentTariff === undefined) {
+      // No current tariff selected, should not happen but guard against it
       return
     }
 
@@ -144,11 +166,11 @@
         message: plugin.string.UncancelDescription,
         action: async () => {
           // After uncanceling, show the plan change confirmation
-          await showPlanChangeConfirmation(newPlan, newTier)
+          await showPlanChangeConfirmation(newPlan, tariff)
         }
       })
     } else {
-      await showPlanChangeConfirmation(newPlan, newTier)
+      await showPlanChangeConfirmation(newPlan, tariff)
     }
   }
 
@@ -276,7 +298,7 @@
       const subscriptions = await accountClient.getSubscriptions()
       currentSubscription = subscriptions.find((p) => p.type === 'tier')
       const plan = currentSubscription?.plan
-      currentTier = plan !== undefined ? tierByPlan[plan] : undefined
+      currentTariff = plan !== undefined ? tariffsByPlan[plan] : undefined
     } catch (err) {
       console.error('Error fetching current plan:', err)
       await showErrorNotification()
@@ -297,10 +319,6 @@
       await showErrorNotification()
       usageInfo = null
     }
-  }
-
-  function formatSize (gb: number): { limit: number, unit: string } {
-    return gb < 1000 ? { limit: gb, unit: 'GB' } : { limit: Math.floor(gb / 1000), unit: 'TB' }
   }
 
   async function pollCheckoutStatus (checkoutId: string): Promise<void> {
@@ -378,21 +396,25 @@
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
   }
 
-  function getTypeAndPlan (tierId: Ref<Tier>): { type: SubscriptionType, plan: string } {
-    const parts = tierId.split(':')
-    if (parts.length !== 3) {
-      throw new Error(`Invalid tier id: ${tierId}`)
-    }
-
-    return {
-      type: parts[1] as SubscriptionType,
-      plan: parts[2].toLowerCase()
+  async function loadTariffConfig (): Promise<void> {
+    try {
+      const res = await fetch('/config/tariff-config.json')
+      if (!res.ok) {
+        console.warn('Failed to load tariff config:', res.status)
+        return
+      }
+      tariffConfigRaw = await res.json()
+    } catch (err) {
+      console.error('Failed to load tariff config:', err)
     }
   }
 
   onMount(() => {
     void (async () => {
-      // First, load current subscriptions
+      // First, load tariff config
+      await loadTariffConfig()
+
+      // Then load current subscriptions
       await fetchSubscriptions()
 
       // Then fetch usage stats
@@ -411,7 +433,7 @@
   })
 </script>
 
-{#if tiers.length > 0}
+{#if Object.keys(tariffs).length > 0}
   <Scroller align={'center'} padding={'var(--spacing-3)'} bottomPadding={'var(--spacing-3)'}>
     <div class="hulyComponent-content gapV-8">
       <div class="flex-col flex-gap-4">
@@ -424,21 +446,21 @@
             {#if isCheckoutPolling}
               <div class="processing"><Label label={plugin.string.ProcessingPayment} /></div>
             {/if}
-          {:else if currentTier === undefined}
+          {:else if currentTariff === undefined}
             <div class="no-plan-container flex-col flex-gap-4">
               <div class="fs-title text-lg"><Label label={plugin.string.NoActivePlan} /></div>
               <div class="text-md"><Label label={plugin.string.SelectPlanToBegin} /></div>
 
               {#if usageInfo !== null}
                 <div class="usage-section">
-                  <UsageSection usage={usageInfo} tier={currentTier} />
+                  <UsageSection usage={usageInfo} tariff={currentTariff} />
                 </div>
               {/if}
             </div>
           {:else}
             <div class="current-tier-card-title">
               <div class="flex-row-center">
-                <div class="fs-title"><Label label={currentTier.label} /></div>
+                <div class="fs-title">{currentTariff.label}</div>
                 {#if currentSubscription?.status === 'active'}
                   <div class="status-badge ml-2 text-md"><Label label={plugin.string.Active} /></div>
                 {/if}
@@ -446,7 +468,8 @@
               {#if currentSubscription?.amount}
                 <div class="flex-row-center items-end">
                   <span class="fs-title text-xl">
-                    ${currentSubscription?.amount / 100}
+                    {currentSubscription?.amount / 100}
+                    {currentTariff.currency}
                   </span>
                   <span class="ml-1 lower">
                     <Label label={plugin.string.Monthly} />
@@ -457,7 +480,7 @@
 
             {#if usageInfo !== null}
               <div class="usage-section">
-                <UsageSection usage={usageInfo} tier={currentTier} />
+                <UsageSection usage={usageInfo} tariff={currentTariff} />
               </div>
             {/if}
 
@@ -500,11 +523,11 @@
           <Label label={isReadOnly ? plugin.string.RestrictedPlans : plugin.string.AllPlans} />
         </div>
         <Scroller contentDirection="horizontal" buttons={false} showOverflowArrows shrink={false} noFade={false}>
-          <div class="flex-row-top flex-gap-4 flex-no-shrink mb-3">
-            {#each tiers as tier}
+          <div class="flex-stretch flex-gap-4 flex-no-shrink mb-3">
+            {#each Object.values(tariffs) as tariff (tariff.plan)}
               {@const color =
-                tier.color !== null && tier.color !== undefined && tier.color.length > 0
-                  ? getPlatformColorByName(tier.color, $themeStore.dark)
+                tariff.color !== null && tariff.color !== undefined && tariff.color.length > 0
+                  ? getPlatformColorByName(tariff.color, $themeStore.dark)
                   : null}
               {@const bgAttr = $themeStore.dark ? 'background' : 'background-color'}
               <div
@@ -513,50 +536,41 @@
               >
                 <div class="tier-card-content">
                   <div class="fs-title text-lg">
-                    <Label label={tier.label} />
+                    {tariff.label}
                   </div>
                   <div class="flex-row-center items-end">
                     <span class="fs-title text-xl">
-                      ${tier.priceMonthly}
+                      {tariff.priceMonthly}
+                      {tariff.currency}
                     </span>
                     <span class="ml-1 lower">
                       <Label label={plugin.string.Monthly} />
                     </span>
                   </div>
                   <div class="mb-2 h-16">
-                    <Label label={tier.description} />
+                    {tariff.description}
                   </div>
 
                   <div class="tier-features">
-                    <div class="feature-item">
-                      <span class="feature-bullet"><IconCheckmark size="small" /></span>
-                      <Label label={plugin.string.UnlimitedUsers} />
-                    </div>
-                    <div class="feature-item">
-                      <span class="feature-bullet"><IconCheckmark size="small" /></span>
-                      <Label label={plugin.string.UnlimitedObjects} />
-                    </div>
-                    <div class="feature-item">
-                      <span class="feature-bullet"><IconCheckmark size="small" /></span>
-                      <Label label={plugin.string.StorageLimit} params={{ ...formatSize(tier.storageLimitGB) }} />
-                    </div>
-                    <div class="feature-item">
-                      <span class="feature-bullet"><IconCheckmark size="small" /></span>
-                      <Label label={plugin.string.TrafficLimit} params={{ ...formatSize(tier.trafficLimitGB) }} />
-                    </div>
+                    {#each tariff.features as feature}
+                      <div class="feature-item">
+                        <span class="feature-bullet"><IconCheckmark size="small" /></span>
+                        <span>{feature}</span>
+                      </div>
+                    {/each}
                   </div>
                 </div>
                 <div class="tier-card-footer">
-                  {#if !isReadOnly && (currentTier === undefined || currentTier._id !== tier._id)}
+                  {#if !isReadOnly && (currentTariff === undefined || currentTariff.plan !== tariff.plan)}
                     <Button
-                      label={currentTier === undefined ? plugin.string.Subscribe : plugin.string.ChangePlan}
+                      label={currentTariff === undefined ? plugin.string.Subscribe : plugin.string.ChangePlan}
                       size={'large'}
-                      kind={currentTier === undefined || tier.priceMonthly > currentTier.priceMonthly
+                      kind={currentTariff === undefined || tariff.priceMonthly > currentTariff.priceMonthly
                         ? 'primary'
                         : 'regular'}
                       disabled={loading || isCheckoutPolling || isUpdating}
                       on:click={() => {
-                        void handlePlanChange(tier._id)
+                        void handlePlanChange(tariff)
                       }}
                     />
                   {/if}
@@ -566,6 +580,50 @@
           </div>
         </Scroller>
       </div>
+
+      {#if Object.keys(packages).length > 0}
+        <div class="flex-col flex-gap-4">
+          <div class="section-title">
+            <Label label={plugin.string.AdditionalSpace} />
+          </div>
+          <Scroller contentDirection="horizontal" buttons={false} showOverflowArrows shrink={false} noFade={false}>
+            <div class="flex-stretch flex-gap-4 flex-no-shrink mb-3">
+              {#each Object.values(packages) as pkg (pkg.description)}
+                <div class="tier-card">
+                  <div class="tier-card-content">
+                    <div class="package-item">
+                      <IconStorage size="medium" />
+                      <span class="fs-title text-lg">{pkg.description}</span>
+                    </div>
+                    <div class="flex-row-center items-end">
+                      <span class="fs-title text-l">
+                        {pkg.priceMonthly}
+                        {pkg.currency}
+                      </span>
+                      <span class="ml-1 lower">
+                        <Label label={plugin.string.Monthly} />
+                      </span>
+                    </div>
+                    <div class="tier-card-footer">
+                      {#if !isReadOnly}
+                        <Button
+                          label={plugin.string.Connect}
+                          size={'large'}
+                          kind={'regular'}
+                          disabled={loading || isCheckoutPolling || isUpdating}
+                          on:click={() => {
+                            void subscribePackage(pkg.plan)
+                          }}
+                        />
+                      {/if}
+                    </div>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          </Scroller>
+        </div>
+      {/if}
     </div>
   </Scroller>
 {/if}
@@ -636,6 +694,12 @@
     color: var(--theme-state-positive-color);
     font-weight: 600;
     flex-shrink: 0;
+  }
+
+  .package-item {
+    display: flex;
+    gap: var(--spacing-1);
+    align-items: center;
   }
 
   .curr-tier-footer {

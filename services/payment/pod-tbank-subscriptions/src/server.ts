@@ -14,11 +14,7 @@
 //
 
 import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
-import {
-  type SubscriptionData,
-  SubscriptionStatus,
-  SubscriptionType
-} from '@hcengineering/account-client'
+import { type SubscriptionData, SubscriptionStatus, SubscriptionType } from '@hcengineering/account-client'
 import express, { type Express, type Request, type Response } from 'express'
 import cors from 'cors'
 import type TbankPayments from 'tbank-payments'
@@ -50,29 +46,47 @@ export async function createServer (
     }
   })
 
-  app.post('/api/v1/subscriptions', wrapHandler(ctx, 'createSubscription', async (req, res) => {
-    await handleCreateSubscription(ctx, config, tbank, storage, plans, req, res)
-  }))
+  app.post(
+    '/api/v1/subscriptions',
+    wrapHandler(ctx, 'createSubscription', async (req, res) => {
+      await handleCreateSubscription(ctx, config, tbank, storage, plans, req, res)
+    })
+  )
 
-  app.get('/api/v1/subscriptions/by-checkout/:checkoutId', wrapHandler(ctx, 'getByCheckout', async (req, res) => {
-    await handleGetByCheckout(storage, req, res)
-  }))
+  app.get(
+    '/api/v1/subscriptions/by-checkout/:checkoutId',
+    wrapHandler(ctx, 'getByCheckout', async (req, res) => {
+      await handleGetByCheckout(storage, req, res)
+    })
+  )
 
-  app.get('/api/v1/subscriptions/:id', wrapHandler(ctx, 'getSubscription', async (req, res) => {
-    await handleGetSubscription(storage, req, res)
-  }))
+  app.get(
+    '/api/v1/subscriptions/:id',
+    wrapHandler(ctx, 'getSubscription', async (req, res) => {
+      await handleGetSubscription(storage, req, res)
+    })
+  )
 
-  app.post('/api/v1/subscriptions/:id/cancel', wrapHandler(ctx, 'cancelSubscription', async (req, res) => {
-    await handleCancelSubscription(ctx, tbank, storage, req, res)
-  }))
+  app.post(
+    '/api/v1/subscriptions/:id/cancel',
+    wrapHandler(ctx, 'cancelSubscription', async (req, res) => {
+      await handleCancelSubscription(ctx, tbank, storage, req, res)
+    })
+  )
 
-  app.post('/api/v1/subscriptions/:id/updatePlan', wrapHandler(ctx, 'updatePlan', async (req, res) => {
-    await handleUpdatePlan(ctx, config, tbank, storage, plans, req, res)
-  }))
+  app.post(
+    '/api/v1/subscriptions/:id/updatePlan',
+    wrapHandler(ctx, 'updatePlan', async (req, res) => {
+      await handleUpdatePlan(ctx, config, tbank, storage, plans, req, res)
+    })
+  )
 
-  app.post('/api/v1/webhooks/tbank', wrapHandler(ctx, 'webhook', async (req, res) => {
-    await handleWebhook(ctx, tbank, storage, req, res)
-  }))
+  app.post(
+    '/api/v1/webhooks/tbank',
+    wrapHandler(ctx, 'webhook', async (req, res) => {
+      await handleWebhook(ctx, tbank, storage, req, res)
+    })
+  )
 
   const close = (): void => {}
   return { app, close }
@@ -84,14 +98,13 @@ function wrapHandler (
   method: (req: Request, res: Response) => Promise<void>
 ): (req: Request, res: Response) => void {
   return (req: Request, res: Response) => {
-    method(req, res)
-      .catch((err: any) => {
-        ctx.error(`Failed to ${name}`, { err })
+    method(req, res).catch((err: any) => {
+      ctx.error(`Failed to ${name}`, { err })
 
-        if (!res.headersSent) {
-          res.status(500).json({ error: err.message })
-        }
-      })
+      if (!res.headersSent) {
+        res.status(500).json({ error: err.message })
+      }
+    })
   }
 }
 
@@ -136,16 +149,27 @@ async function handleCreateSubscription (
   const orderId = buildOrderId(workspaceUuid, transactionCount)
 
   const { paymentId, paymentURL } = await initTbankPayment(
-    config, tbank, amount, orderId,
+    config,
+    tbank,
+    amount,
+    orderId,
     `Subscription: ${plan} (${type})`,
-    accountUuid, workspaceUrl
+    accountUuid,
+    workspaceUrl
   )
 
   ctx.info('TBank payment initiated', { orderId, paymentId, planKey, amount })
 
   const subscriptionData = buildSubscriptionData(
-    String(paymentId), orderId, workspaceUuid, accountUuid,
-    type, plan, amount, accountUuid, config.TbankTerminalKey
+    String(paymentId),
+    orderId,
+    workspaceUuid,
+    accountUuid,
+    type,
+    plan,
+    amount,
+    accountUuid,
+    config.TbankTerminalKey
   )
 
   await storage.upsert(subscriptionData)
@@ -153,11 +177,7 @@ async function handleCreateSubscription (
   res.json({ checkoutId: orderId, checkoutUrl: paymentURL })
 }
 
-async function handleGetByCheckout (
-  storage: SubscriptionStorage,
-  req: Request,
-  res: Response
-): Promise<void> {
+async function handleGetByCheckout (storage: SubscriptionStorage, req: Request, res: Response): Promise<void> {
   const found = await storage.findSubscriptionByCheckoutId(req.params.checkoutId)
   if (found === null || found.providerData?.pending === true) {
     res.status(404).json({ error: 'Subscription not found' })
@@ -166,11 +186,7 @@ async function handleGetByCheckout (
   res.json(found)
 }
 
-async function handleGetSubscription (
-  storage: SubscriptionStorage,
-  req: Request,
-  res: Response
-): Promise<void> {
+async function handleGetSubscription (storage: SubscriptionStorage, req: Request, res: Response): Promise<void> {
   const sub = await findSubscription(storage, req.params.id)
   if (sub === null) {
     res.status(404).json({ error: 'Subscription not found' })
@@ -244,15 +260,26 @@ async function handleUpdatePlan (
   const workspaceUrl = (req.body as { workspaceUrl?: string }).workspaceUrl ?? ''
 
   const { paymentId, paymentURL } = await initTbankPayment(
-    config, tbank, newAmount, orderId,
+    config,
+    tbank,
+    newAmount,
+    orderId,
     `Subscription update: ${newPlan} (${sub.type})`,
-    sub.accountUuid, workspaceUrl
+    sub.accountUuid,
+    workspaceUrl
   )
 
   // Pre-create a pending subscription for the new plan, will be confirmed via webhook
   const newSubscription = buildSubscriptionData(
-    String(paymentId), orderId, sub.workspaceUuid, sub.accountUuid,
-    sub.type, newPlan, newAmount, sub.accountUuid, config.TbankTerminalKey
+    String(paymentId),
+    orderId,
+    sub.workspaceUuid,
+    sub.accountUuid,
+    sub.type,
+    newPlan,
+    newAmount,
+    sub.accountUuid,
+    config.TbankTerminalKey
   )
   await storage.upsert(newSubscription)
 
