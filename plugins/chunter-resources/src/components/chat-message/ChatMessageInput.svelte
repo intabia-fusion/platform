@@ -103,6 +103,7 @@
       forwardedMessage = res[0]
     })
   } else {
+    replyMessageQuery.unsubscribe()
     forwardedMessage = undefined
   }
 
@@ -210,7 +211,9 @@
 
     // Remove draft from Local Storage
     clear()
-    replyingToMessageStore.set(undefined)
+    if (chatMessage === undefined) {
+      replyingToMessageStore.set(undefined)
+    }
     dispatch('submit', false)
     loading = false
   }
