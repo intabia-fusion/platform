@@ -604,7 +604,7 @@ export async function replyToMessage (message: ChatMessage): Promise<void> {
 }
 
 export async function forwardMessage (message: ChatMessage): Promise<void> {
-  showPopup(ForwardMessageDialog, { message }, 'centered')
+  showPopup(ForwardMessageDialog, { message }, 'top')
 }
 
 export async function getChatDocIcon (doc: Doc): Promise<{

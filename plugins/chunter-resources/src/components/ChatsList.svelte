@@ -26,6 +26,9 @@
   export let search: string = ''
   export let selectedDocs: Doc[] = []
   export let limit = 10
+  export let empty = false
+  export let loading = true
+  export let count = 0
 
   const dispatch = createEventDispatcher()
   const employeesQuery = createQuery()
@@ -42,6 +45,7 @@
 
   $: selected = selectedDocs.map((it) => it._id)
   let employees: Employee[] = []
+  let loadingEmployees = true
 
   $: employeesQuery.query(
     contact.mixin.Employee,
@@ -51,6 +55,7 @@
     },
     (res) => {
       employees = res
+      loadingEmployees = false
     },
     {
       limit
@@ -182,7 +187,9 @@
     }
   }
 
-  $: loading = loadedByClass.values().some((it) => !it)
+  $: loading = loadedByClass.values().some((it) => !it) || loadingEmployees
+  $: empty = !loading && displayDocs.length === 0
+  $: count = loading ? 0 : displayDocs.length
 </script>
 
 <FocusHandler manager={focusManager} />
@@ -251,6 +258,7 @@
     border-radius: var(--small-BorderRadius);
     justify-content: space-between;
     margin-bottom: 0.125rem;
+    height: 2.625rem;
   }
 
   .label {
@@ -272,6 +280,7 @@
     height: var(--global-min-Size);
     min-width: var(--global-min-Size);
     color: var(--global-primary-TextColor);
+    min-height: 1.5rem;
 
     &.withBackground {
       width: var(--global-extra-small-Size);

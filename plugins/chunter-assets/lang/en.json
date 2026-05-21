@@ -147,7 +147,8 @@
     "ChangeIcon": "Change icon",
     "PrivateChat": "Private chat",
     "ShowMessage": "Show message",
-    "ForwardMessage": "Forward message"
+    "ForwardMessage": "Forward message",
+    "ToWhom": "To whom"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} has sent you a message: \n\n{message}",

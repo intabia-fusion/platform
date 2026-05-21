@@ -147,7 +147,8 @@
     "ChangeIcon": "İkonu değiştir",
     "PrivateChat": "Özel sohbet",
     "ShowMessage": "Mesajı göster",
-    "ForwardMessage": "Mesajı ilet"
+    "ForwardMessage": "Mesajı ilet",
+    "ToWhom": "Kiminle"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} size bir mesaj gönderdi: \n\n{message}",

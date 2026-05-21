@@ -147,7 +147,8 @@
     "ChangeIcon": "アイコンを変更",
     "PrivateChat": "プライベートチャット",
     "ShowMessage": "メッセージを表示",
-    "ForwardMessage": "メッセージを転送"
+    "ForwardMessage": "メッセージを転送",
+    "ToWhom": "宛先"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender}からメッセージが届きました: \n\n{message}",

@@ -147,7 +147,8 @@
     "ChangeIcon": "Изменить иконку",
     "PrivateChat": "Закрытый чат",
     "ShowMessage": "Показать сообщение",
-    "ForwardMessage": "Переслать сообщение"
+    "ForwardMessage": "Переслать сообщение",
+    "ToWhom": "Кому"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} отправил(а) вам сообщение: \n\n{message}",

@@ -12,7 +12,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { EditWithIcon, IconSearch, Modal, Scroller, deviceOptionsStore } from '@hcengineering/ui'
+  import { EditWithIcon, IconSearch, Modal, deviceOptionsStore, Label } from '@hcengineering/ui'
   import activity from '@hcengineering/activity'
   import presentation, { getClient } from '@hcengineering/presentation'
   import { Doc, getCurrentAccount, Markup, WithLookup } from '@hcengineering/core'
@@ -20,9 +20,9 @@
   import { getSpace } from '@hcengineering/activity-resources'
   import { ChatMessage, createAndGetDirect } from '@hcengineering/chunter'
   import contact, { Employee } from '@hcengineering/contact'
+  import { createEventDispatcher } from 'svelte'
 
   import chunter from '../plugin'
-  import { createEventDispatcher } from 'svelte'
   import ChatsList from './ChatsList.svelte'
   import ChatMessageInputLite from './chat-message/ChatMessageInputLite.svelte'
   import ReplyToMessagePresenter from './ReplyToMessagePresenter.svelte'
@@ -78,6 +78,13 @@
   }
 
   $: canSave = selectedDocs.length > 0
+
+  let count = 0
+  let height: number = 0
+  let loading: boolean = true
+  $: height = Math.max(height, count * 2.75, 3)
+
+  let empty = false
 </script>
 
 <Modal
@@ -87,23 +94,16 @@
   okLoading={forwarding}
   okAction={handleForward}
   {canSave}
-  maxWidth="60rem"
+  maxWidth="40rem"
+  scrollableContent={false}
   onCancel={handleClose}
   on:close={handleClose}
 >
   <div class="forward-modal">
-    <EditWithIcon
-      icon={IconSearch}
-      size="large"
-      width="100%"
-      autoFocus={!$deviceOptionsStore.isMobile}
-      bind:value={search}
-      on:change={() => dispatch('search', search)}
-      on:input={() => dispatch('search', search)}
-      placeholder={presentation.string.Search}
-    />
-
     <div class="forward-modal__selected-chats">
+      <span class="forward-modal__to-whom">
+        <Label label={chunter.string.ToWhom} />:
+      </span>
       {#each selectedDocs as doc (doc._id)}
         <ChatModernTab
           {doc}
@@ -113,29 +113,51 @@
         />
       {/each}
     </div>
-
-    <div class="forward-modal__line" />
-
-    <div class="forward-modal__chats">
-      <Scroller padding="0">
-        <ChatsList
-          {search}
-          limit={7}
-          bind:selectedDocs
-          on:select={(e) => {
-            selectedDocs = e.detail ?? []
-          }}
-        />
-      </Scroller>
+    <div class="forward-modal__search">
+      <EditWithIcon
+        icon={IconSearch}
+        size="large"
+        width="100%"
+        autoFocus={!$deviceOptionsStore.isMobile}
+        bind:value={search}
+        on:change={() => dispatch('search', search)}
+        on:input={() => dispatch('search', search)}
+        placeholder={presentation.string.Search}
+      />
     </div>
 
-    <ReplyToMessagePresenter replyTo={message} labelIntl={activity.string.ForwardedMessageFrom} canClose={false} />
+    <div class="forward-modal__line mt-2" />
 
-    <ChatMessageInputLite
-      on:update={(e) => {
-        markup = e.detail
-      }}
-    />
+    <div class="forward-modal__chats" style="height: {height}rem" style:min-height="{height}rem">
+      {#if empty}
+        <div class="forward-modal__no-results">
+          <Label label={chunter.string.NoResults} />
+        </div>
+      {/if}
+      <ChatsList
+        {search}
+        limit={8}
+        bind:selectedDocs
+        bind:empty
+        bind:loading
+        bind:count
+        on:select={(e) => {
+          selectedDocs = e.detail ?? []
+        }}
+      />
+    </div>
+    <div class="forward-modal__line mb-2" />
+
+    <div class="forward-modal__message">
+      <ReplyToMessagePresenter replyTo={message} labelIntl={activity.string.ForwardedMessageFrom} canClose={false} />
+    </div>
+    <div class="forward-modal__input">
+      <ChatMessageInputLite
+        on:update={(e) => {
+          markup = e.detail
+        }}
+      />
+    </div>
   </div>
 </Modal>
 
@@ -145,20 +167,22 @@
     display: flex;
     flex-direction: column;
     max-width: 60rem;
-    height: 35rem;
+    max-height: 60rem;
+    min-height: 20rem;
+    gap: 0.5rem;
+    padding: 1rem 0;
 
     &__line {
       width: 100%;
       height: 1px;
       background: var(--global-subtle-ui-BorderColor);
-      margin-bottom: 0.5rem;
     }
 
     &__chats {
       display: flex;
       flex-direction: column;
-      flex: 1;
-      min-height: 10rem;
+      min-height: 3rem;
+      padding: 0 1.5rem;
     }
 
     &__selected-chats {
@@ -168,6 +192,36 @@
       row-gap: 0.25rem;
       min-height: 1.75rem;
       margin: 0.25rem 0;
+      align-items: center;
+      padding: 0 1.5rem;
+    }
+
+    &__to-whom {
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    &__search {
+      padding: 0 1.5rem;
+      width: 100%;
+    }
+
+    &__message {
+      padding: 0 1.5rem;
+      width: 100%;
+    }
+    &__input {
+      padding: 0 1.5rem;
+      width: 100%;
+    }
+
+    &__no-results {
+      height: 100%;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--global-secondary-TextColor);
     }
   }
 </style>

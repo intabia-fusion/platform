@@ -147,7 +147,8 @@
     "ResolveThread": "Vyřešit",
     "PrivateChat": "Soukromý chat",
     "ShowMessage": "Zobrazit zprávu",
-    "ForwardMessage": "Přeposlat zprávu"
+    "ForwardMessage": "Přeposlat zprávu",
+    "ToWhom": "Kdo"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} vám poslal zprávu: \n\n{message}",

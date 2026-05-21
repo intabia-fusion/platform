@@ -147,7 +147,8 @@
     "ResolveThread": "解决",
     "PrivateChat": "私聊",
     "ShowMessage": "显示消息",
-    "ForwardMessage": "转发消息"
+    "ForwardMessage": "转发消息",
+    "ToWhom": "发送给"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender}向您发送了一条消息: \n\n{message}",

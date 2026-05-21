@@ -111,6 +111,7 @@ export default mergeIds(chunterId, chunter, {
     ChangeIcon: '' as IntlString,
     PrivateChat: '' as IntlString,
     ShowMessage: '' as IntlString,
-    ForwardMessage: '' as IntlString
+    ForwardMessage: '' as IntlString,
+    ToWhom: '' as IntlString
   }
 })

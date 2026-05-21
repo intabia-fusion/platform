@@ -147,7 +147,8 @@
     "ResolveThread": "Risolvi",
     "PrivateChat": "Chat privato",
     "ShowMessage": "Mostra messaggio",
-    "ForwardMessage": "Inoltra messaggio"
+    "ForwardMessage": "Inoltra messaggio",
+    "ToWhom": "A chi"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} ti ha inviato un messaggio: \n\n{message}",
