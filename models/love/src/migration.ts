@@ -270,7 +270,7 @@ export const loveOperation: MigrateOperation = {
         }
       },
       {
-        state: 'meeting-minutes-to-space',
+        state: 'meeting-minutes-to-space-v2',
         mode: 'upgrade',
         func: async (client) => {
           // Check if DOMAIN_MEETING_MINUTES table exists (it may not for new workspaces
@@ -281,7 +281,9 @@ export const loveOperation: MigrateOperation = {
               { _class: love.class.MeetingMinutes },
               { limit: 1 }
             )
-            if (existing.length === 0) {
+
+            const spacemm = await client.find(DOMAIN_SPACE, { _class: love.class.MeetingMinutes }, { limit: 1 })
+            if (existing.length === 0 && spacemm.length === 0) {
               client.logger.log('No MeetingMinutes found in DOMAIN_MEETING_MINUTES, skipping migration', {})
               return
             }
