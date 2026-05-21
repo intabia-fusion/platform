@@ -87,6 +87,10 @@ services:
       - --advertise-rpc-addr redpanda:33145
       - --mode dev-container
       - --smp 1
+      # Cap memory; Seastar otherwise reserves all host RAM → OOM 137.
+      - --memory 1G
+      - --reserve-memory 0M
+      - --overprovisioned
       - --default-log-level=info
     ports:
       - 19093:19093

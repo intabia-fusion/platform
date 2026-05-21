@@ -69,6 +69,38 @@ async function drainPendingInvites (): Promise<void> {
 }
 
 /**
+ * Force-finish every Active/Pending MeetingMinutes and drop all ParticipantInfo
+ * straight from the transactor — skips the 3s LK departureTimeout + the
+ * room_finished webhook entirely. The love service's own finishMeeting() does
+ * exactly this on receiving the webhook, but in tests we don't need to
+ * exercise that path; we just want a clean slate for the next test.
+ */
+async function forceFinishAllMeetings (): Promise<void> {
+  try {
+    const sys = await getSystemRestClient()
+    const [meetings, participants] = await Promise.all([
+      sys.findAll<MeetingMinutes>(love.class.MeetingMinutes, {
+        status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
+      }),
+      sys.findAll<ParticipantInfo>(love.class.ParticipantInfo, {})
+    ])
+    await Promise.all([
+      ...meetings.map((m) =>
+        sys
+          .updateDoc(love.class.MeetingMinutes, m.space, m._id, {
+            status: MeetingStatus.Finished,
+            meetingEnd: Date.now()
+          })
+          .catch(() => undefined)
+      ),
+      ...participants.map((p) => sys.removeDoc(love.class.ParticipantInfo, p.space, p._id).catch(() => undefined))
+    ])
+  } catch {
+    // Best-effort; polling loop below covers the slow path.
+  }
+}
+
+/**
  * Poll the transactor (via REST) until no MeetingMinutes is Active or
  * Pending — i.e. the previous test's meeting has been Finished by the
  * LiveKit `room_finished` webhook (which fires after the 3s
@@ -78,8 +110,7 @@ async function drainPendingInvites (): Promise<void> {
  */
 export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise<void> {
   const client = await getMeetingsRestClient()
-  // Force-drop leftover invites instead of waiting 30s for TTL.
-  await drainPendingInvites()
+  await Promise.all([forceFinishAllMeetings(), drainPendingInvites()])
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
     const [meetings, participants, invites] = await Promise.all([
@@ -100,7 +131,7 @@ export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise
       client.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, {}, { limit: 1 })
     ])
     if (meetings.length === 0 && participants.length === 0 && invites.length === 0) return
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await new Promise((resolve) => setTimeout(resolve, 150))
   }
 }
 
@@ -125,15 +156,13 @@ export async function leaveAllMeetings (_pages: Page[]): Promise<void> {
  * tests, which causes DTLS handshake timeouts on the next connect().
  */
 export async function closeMeetingContexts (entries: Array<{ ctx: BrowserContext, pages: Page[] }>): Promise<void> {
-  for (const { pages } of entries) {
-    await leaveAllMeetings(pages)
-  }
-  for (const { pages } of entries) {
-    for (const p of pages) await p.close().catch(() => undefined)
-  }
-  for (const { ctx } of entries) {
-    await ctx.close().catch(() => undefined)
-  }
+  // Close every page in parallel; the sequential loop was adding ~200-400ms
+  // per extra context. Page.close drives the WS disconnect which the love
+  // service relies on to fire the `participant_left` webhook — but the
+  // webhook fires asynchronously anyway, so we don't need to serialise.
+  const allPages = entries.flatMap((e) => e.pages)
+  await Promise.all(allPages.map((p) => p.close().catch(() => undefined)))
+  await Promise.all(entries.map(({ ctx }) => ctx.close().catch(() => undefined)))
   // Server-side: wait for the LiveKit `room_finished` webhook to fire, the
   // meeting to be marked Finished and the resulting ParticipantInfo cleanup
   // to land. Without this the next test sees stale PIs (the owner is "still

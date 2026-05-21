@@ -126,6 +126,9 @@ test.describe('Content in the Documents tests', () => {
     await documentContentPage.buttonInsertColumn().click()
     await documentContentPage.proseTableCell(0, 1).fill('Three')
 
+    // col-handle is only rendered while the cell is being hovered.
+    await documentContentPage.proseTableCell(0, 1).hover()
+    await expect(documentContentPage.proseTableColumnHandle(1)).toBeVisible({ timeout: 10000 })
     await documentContentPage.proseTableColumnHandle(1).hover()
     await expect(async () => {
       await page.mouse.down()

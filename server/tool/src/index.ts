@@ -42,7 +42,9 @@ import {
   consoleModelLogger,
   type MigrateMode,
   type MigrateOperation,
+  type MigrationUpgradeClient,
   type ModelLogger,
+  prefetchSpaces,
   tryMigrate
 } from '@hcengineering/model'
 import {
@@ -160,7 +162,7 @@ export async function updateModel (
   ctx: MeasureContext,
   workspaceId: WorkspaceUuid,
   migrateOperations: [string, MigrateOperation][],
-  connection: TxOperations,
+  connection: MigrationUpgradeClient,
   pipeline: Pipeline,
   logger: ModelLogger = consoleModelLogger,
   progress: (value: number) => Promise<void>,
@@ -177,13 +179,15 @@ export async function updateModel (
 
   const migrateState = new Map<string, Set<string>>(sts.map((it) => [it[0], _toSet(it[1])]))
 
-  await ctx.with('create-upgrade', {}, async () => {
+  connection.spaceCache = await ctx.with('prefetch-spaces', {}, () => prefetchSpaces(connection))
+
+  await ctx.with('create-upgrade', {}, async (ctx) => {
     try {
       let i = 0
       for (const op of migrateOperations) {
         const st = platformNow()
         await ctx.with(op[0], {}, async () => {
-          await op[1].upgrade(migrateState, async () => connection as any, mode)
+          await op[1].upgrade(migrateState, async () => connection, mode)
         })
         const tdelta = platformNowDiff(st)
         if (tdelta > 0) {

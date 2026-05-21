@@ -11,6 +11,8 @@ import { TalentsPage } from '../model/recruiting/talents-page'
 import { TalentName } from '../model/recruiting/types'
 import { UserProfilePage } from '../model/profile/user-profile-page'
 
+test.describe.configure({ mode: 'parallel' })
+
 test.describe('Dynamic reqruting chats', () => {
   let leftSideMenuPage: LeftSideMenuPage
   let channelPage: ChannelPage

@@ -58,26 +58,47 @@ export function registerRefreshReconnectTests (): void {
         await startMeeting(page)
         await waitConnected(page)
 
-        // The reconnect anchor is written by `connectToMeeting` into
-        // sessionStorage. Verify it landed — otherwise refresh-reconnect
-        // can't pick the meeting back up.
         const anchorBefore = await page.evaluate(() => sessionStorage.getItem('love.activeMeeting'))
         expect(anchorBefore).not.toBeNull()
         expect(anchorBefore?.length ?? 0).toBeGreaterThan(0)
 
         await page.reload({ waitUntil: 'load' })
 
-        // After refresh the floor grid loads first. WorkbenchExtension.onMount
-        // calls reconnectToCurrentMeeting() which:
-        //   1) re-issues /getToken with the same Hulia SessionId,
-        //   2) reconnects to LiveKit,
-        //   3) restores the meeting widget.
-        // The anchor must survive into the new page (we only forget it on a
-        // user-initiated leave or a confirmed stale anchor).
         await expect(page.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 60000 })
 
         const anchorAfter = await page.evaluate(() => sessionStorage.getItem('love.activeMeeting'))
         expect(anchorAfter).toBe(anchorBefore)
+      } finally {
+        await closeMeetingContexts([{ ctx, pages: [page] }])
+      }
+    })
+
+    test('explicit leave stays left (no subscribe-watcher reconnect loop)', async ({ browser }) => {
+      // Regression: stale PI after leave used to trigger auto-reconnect.
+      test.setTimeout(90000)
+
+      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
+      const page = await ctx.newPage()
+      try {
+        await openLove(page)
+
+        const room = await clickFirstAvailableRoom(page)
+        test.skip(room === null, 'No regular room available')
+
+        await startMeeting(page)
+        await waitConnected(page)
+
+        await page.locator('[data-id="meeting-leave"]').first().click()
+        await expect(page.locator('[data-id="meeting-widget"]')).toBeHidden({ timeout: 15000 })
+
+        const anchor = await page.evaluate(() => sessionStorage.getItem('love.activeMeeting'))
+        expect(anchor).toBeNull()
+
+        // Hold > LK departureTimeout (3s) to catch stale-PI subscribe race.
+        await expect(page.locator('[data-id="meeting-widget"]')).toBeHidden({ timeout: 8000 })
+
+        const anchorAfter = await page.evaluate(() => sessionStorage.getItem('love.activeMeeting'))
+        expect(anchorAfter).toBeNull()
       } finally {
         await closeMeetingContexts([{ ctx, pages: [page] }])
       }

@@ -19,7 +19,6 @@ import {
   isArchivingMode,
   isMigrationMode,
   isRestoringMode,
-  MeasureMetricsContext,
   systemAccountUuid,
   type BrandingMap,
   type Data,
@@ -182,12 +181,14 @@ export class WorkspaceWorker {
       } else {
         void this.exec(async () => {
           const job = randomUUID().slice(-8)
-          const opContext = new MeasureMetricsContext(`ws op with job ${job}`, { job })
+          const opContext = ctx.newChild('ws-op', {}, { fullParams: { job } })
           try {
             await this.doWorkspaceOperation(opContext, workspace, opt)
           } catch (err: any) {
             Analytics.handleError(err)
             opContext.error('Error while performing workspace operation', { origErr: err })
+          } finally {
+            opContext.end()
           }
         })
         // sleep for a little bit to avoid bombarding the account service, also add jitter to avoid simultaneous requests from multiple workspace services

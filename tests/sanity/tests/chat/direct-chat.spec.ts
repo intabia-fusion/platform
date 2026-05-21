@@ -15,6 +15,8 @@ import {
   getSecondPageByInvite
 } from '../utils'
 
+test.describe.configure({ mode: 'parallel' })
+
 test.describe('Check direct messages channels', () => {
   let leftSideMenuPage: LeftSideMenuPage
   let chunterPage: ChunterPage

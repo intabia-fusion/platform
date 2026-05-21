@@ -14,6 +14,8 @@ import {
   getSecondPageByInvite
 } from '../utils'
 
+test.describe.configure({ mode: 'parallel' })
+
 test.describe('Pulse — typing indicator and document presence', () => {
   let leftSideMenuPage: LeftSideMenuPage
   let channelPage: ChannelPage

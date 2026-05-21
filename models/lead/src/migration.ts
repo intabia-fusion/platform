@@ -16,6 +16,7 @@
 import { DOMAIN_MODEL_TX, TxOperations, type Ref, type Status } from '@hcengineering/core'
 import { leadId, type Lead } from '@hcengineering/lead'
 import {
+  findCachedSpace,
   tryMigrate,
   tryUpgrade,
   type MigrateOperation,
@@ -31,10 +32,8 @@ import task, { createSequence, DOMAIN_TASK, migrateDefaultStatusesBase } from '@
 import lead from './plugin'
 import { defaultLeadStatuses } from './spaceType'
 
-async function createSpace (tx: TxOperations): Promise<void> {
-  const current = await tx.findOne(core.class.Space, {
-    _id: lead.space.DefaultFunnel
-  })
+async function createSpace (tx: TxOperations, client: MigrationUpgradeClient): Promise<void> {
+  const current = await findCachedSpace(client, lead.space.DefaultFunnel)
   if (current === undefined) {
     await tx.createDoc(
       lead.class.Funnel,
@@ -52,8 +51,8 @@ async function createSpace (tx: TxOperations): Promise<void> {
   }
 }
 
-async function createDefaults (tx: TxOperations): Promise<void> {
-  await createSpace(tx)
+async function createDefaults (tx: TxOperations, client: MigrationUpgradeClient): Promise<void> {
+  await createSpace(tx, client)
   await createSequence(tx, lead.class.Lead)
 }
 
@@ -194,7 +193,7 @@ export const leadOperation: MigrateOperation = {
         state: 'u-default-funnel',
         func: async (client) => {
           const ops = new TxOperations(client, core.account.System)
-          await createDefaults(ops)
+          await createDefaults(ops, client)
         }
       }
     ])
