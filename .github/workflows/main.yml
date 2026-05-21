@@ -15,19 +15,19 @@ on:
       - v*
       - s*
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
   pull_request:
     branches: [develop, staging, staging-new, main]
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
       run-cockroach:
-        description: 'Run CockroachDB tests (with profiling)'
+        description: "Run CockroachDB tests (with profiling)"
         required: false
-        default: 'false'
+        default: false
         type: boolean
 
 env:
@@ -54,7 +54,7 @@ env:
     workers
     ws-tests
   PublishTempFolder: publish_artifacts
-  INIT_SCRIPTS_BRANCH: 'main'
+  INIT_SCRIPTS_BRANCH: "main"
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -70,7 +70,7 @@ jobs:
           submodules: recursive
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
       - name: Cache node modules
         uses: actions/cache@v5
         env:
@@ -141,7 +141,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
 
       - name: Cache build results
         uses: actions/cache@v5
@@ -165,7 +165,7 @@ jobs:
           submodules: recursive
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
       - name: Cache build results
         uses: actions/cache@v5
         env:
@@ -198,7 +198,7 @@ jobs:
           submodules: recursive
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
       - name: Cache build results
         uses: actions/cache@v5
         env:
@@ -228,10 +228,10 @@ jobs:
       - name: Testing...
         run: node common/scripts/install-run-rush.js fast-build:test --verbose
         env:
-          DB_URL: 'postgresql://root@localhost:26258/defaultdb?sslmode=disable'
-          ELASTIC_URL: 'http://localhost:9201'
-          MONGO_URL: 'mongodb://localhost:27018'
-          POSTGRES_URL: 'postgresql://postgres:postgres@localhost:5433/postgres'
+          DB_URL: "postgresql://root@localhost:26258/defaultdb?sslmode=disable"
+          ELASTIC_URL: "http://localhost:9201"
+          MONGO_URL: "mongodb://localhost:27018"
+          POSTGRES_URL: "postgresql://postgres:postgres@localhost:5433/postgres"
 
   uitest-cockroach:
     if: inputs.run-cockroach == true
@@ -247,7 +247,7 @@ jobs:
         uses: ./.github/actions/free-disk-space
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
       - name: Cache node modules
         uses: actions/cache@v5
         env:
@@ -296,9 +296,9 @@ jobs:
         with:
           test-folder: tests
           prepare-script: ./prepare-cockroach.sh
-          build-package: '@hcengineering/tests-sanity'
+          build-package: "@hcengineering/tests-sanity"
           artifact-name-suffix: cockroach
-          enable-profiling: 'true'
+          enable-profiling: "true"
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
   uitest-pg:
@@ -314,7 +314,7 @@ jobs:
         uses: ./.github/actions/free-disk-space
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
       - name: Cache node modules
         uses: actions/cache@v5
         env:
@@ -363,9 +363,9 @@ jobs:
         with:
           test-folder: tests
           prepare-script: ./prepare-pg.sh
-          build-package: '@hcengineering/tests-sanity'
+          build-package: "@hcengineering/tests-sanity"
           artifact-name-suffix: pg
-          enable-profiling: 'false'
+          enable-profiling: "false"
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
   uitest-workspaces:
@@ -381,7 +381,7 @@ jobs:
         uses: ./.github/actions/free-disk-space
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
       - name: Cache node modules
         uses: actions/cache@v5
         env:
@@ -430,9 +430,9 @@ jobs:
         with:
           test-folder: ws-tests
           prepare-script: ./prepare.sh
-          build-package: '@hcengineering/tests-ws-sanity'
+          build-package: "@hcengineering/tests-ws-sanity"
           artifact-name-suffix: ws
-          run-api-tests: 'true'
+          run-api-tests: "true"
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
   docker-build:
@@ -461,7 +461,7 @@ jobs:
             }
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
       - uses: pnpm/action-setup@v4
         with:
           version: latest
@@ -534,7 +534,7 @@ jobs:
         uses: ./.github/actions/free-disk-space
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
 
       - name: Cache node modules
         uses: actions/cache@v5
@@ -543,7 +543,8 @@ jobs:
         with:
           path: |
             common/temp
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml')
+          key:
+            ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml')
             }}
           restore-keys: |
             ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -559,33 +560,33 @@ jobs:
           cd desktop-package
           node ../common/scripts/install-run-rushx.js bump
           cat ./package.json
-      # - name: Install the Apple certificate and provisioning profile
-      #   env:
-      #     DEV_ID_P12_BASE64: ${{ secrets.DEV_ID_P12_BASE64 }}
-      #     DEV_ID_P12_PASSWORD: ${{ secrets.DEV_ID_P12_PASSWORD }}
-      #     KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-      #   run: |
-      #     # create variables
-      #     CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-      #     KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+      - name: Install the Apple certificate and provisioning profile
+        env:
+          DEV_ID_P12_BASE64: ${{ secrets.DEV_ID_P12_BASE64 }}
+          DEV_ID_P12_PASSWORD: ${{ secrets.DEV_ID_P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
 
-      #     # import certificate from secret
-      #     echo -n "$DEV_ID_P12_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+          # import certificate from secret
+          echo -n "$DEV_ID_P12_BASE64" | base64 --decode -o $CERTIFICATE_PATH
 
-      #     # create temporary keychain
-      #     security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-      #     security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-      #     security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          # create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
 
-      #     # import certificate to keychain
-      #     security import $CERTIFICATE_PATH -P "$DEV_ID_P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-      #     security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-      #     security list-keychain -d user -s $KEYCHAIN_PATH
+          # import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$DEV_ID_P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
       - name: Build distribution's
-        # env:
-        #   APPLE_ID: ${{ secrets.APPLE_ID }}
-        #   APPLE_ID_APP_PASS: ${{ secrets.APPLE_ID_APP_PASS }}
-        #   TEAM_ID: ${{ secrets.TEAM_ID }}
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_APP_PASS: ${{ secrets.APPLE_ID_APP_PASS }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
         run: |
           cd desktop-package
           node ../common/scripts/install-run-rushx.js dist --linux --x64
