@@ -48,7 +48,8 @@
       const op = client.apply('forward-message')
       const forwardData = await getForwardData(message)
       for (const _doc of selectedDocs) {
-        const employee = hierarchy.isDerived(_doc._class, contact.mixin.Employee) ? (_doc as Employee) : undefined
+        const isEmployee = hierarchy.hasMixin(_doc, contact.mixin.Employee)
+        const employee = isEmployee ? (_doc as Employee) : undefined
         const account = employee?.personUuid
         const doc = account != null ? await createAndGetDirect(client, [account, me.uuid]) : _doc
         if (doc == null) continue
