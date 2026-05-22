@@ -21,6 +21,7 @@ export interface Config {
   Secret: string
   AccountsUrl: string
   FrontUrl: string
+  Provider: string
   UseSandbox?: boolean
 
   // Polar.sh configuration
@@ -48,6 +49,7 @@ const config: Config = (() => {
     Secret: process.env.SECRET,
     AccountsUrl: process.env.ACCOUNTS_URL,
     FrontUrl: process.env.FRONT_URL,
+    Provider: process.env.PROVIDER,
     UseSandbox: process.env.USE_SANDBOX === 'true',
     PolarAccessToken: process.env.POLAR_ACCESS_TOKEN,
     PolarWebhookSecret: process.env.POLAR_WEBHOOK_SECRET,
@@ -60,7 +62,7 @@ const config: Config = (() => {
     ReconciliationIntervalMinutes: parseNumber(process.env.RECONCILIATION_INTERVAL_MINUTES)
   }
 
-  const requiredKeys: Array<keyof Config> = ['Port', 'Secret', 'AccountsUrl', 'FrontUrl']
+  const requiredKeys: Array<keyof Config> = ['Port', 'Secret', 'AccountsUrl', 'FrontUrl', 'Provider']
   const missingEnv = requiredKeys.filter((key) => params[key] === undefined)
 
   if (missingEnv.length > 0) {

@@ -103,16 +103,10 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
   const serviceToken = generateToken(systemAccountUuid, undefined, { service: 'payment' })
   const accountClient = getAccountClient(config.AccountsUrl, serviceToken)
 
-  // Initialize payment provider if configured
   let provider: PaymentProvider | undefined
 
-  // Try Polar provider first
-  if (
-    config.PolarAccessToken !== undefined &&
-    config.PolarWebhookSecret !== undefined &&
-    config.PolarSubscriptionPlans !== undefined
-  ) {
-    try {
+  switch (config.Provider) {
+    case 'polar':
       provider = PaymentProviderFactory.getInstance().create(
         'polar',
         {
@@ -124,26 +118,8 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
         accountClient,
         config.UseSandbox
       )
-
-      if (provider !== undefined) {
-        // Register provider-specific endpoints (e.g., webhooks)
-        provider.registerWebhookEndpoints(app, ctx, config.AccountsUrl, serviceToken)
-
-        ctx.info('polar.sh payment provider initialized successfully')
-      }
-    } catch (err) {
-      ctx.error('Failed to initialize payment provider polar.sh', { err })
-    }
-  }
-
-  // Try Stripe provider if Polar is not configured
-  if (
-    provider == null &&
-    config.StripeApiKey !== undefined &&
-    config.StripeWebhookSecret !== undefined &&
-    config.StripeSubscriptionPlans !== undefined
-  ) {
-    try {
+      break
+    case 'stripe':
       provider = PaymentProviderFactory.getInstance().create(
         'stripe',
         {
@@ -155,21 +131,8 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
         accountClient,
         false
       )
-
-      if (provider !== undefined) {
-        // Register provider-specific endpoints (e.g., webhooks)
-        provider.registerWebhookEndpoints(app, ctx, config.AccountsUrl, serviceToken)
-
-        ctx.info('Stripe payment provider initialized successfully')
-      }
-    } catch (err) {
-      ctx.error('Failed to initialize payment provider Stripe', { err })
-    }
-  }
-
-  // Try TBank provider if neither Polar nor Stripe are configured
-  if (provider == null && config.TbankSubscriptionsUrl !== undefined) {
-    try {
+      break
+    case 'tbank':
       provider = PaymentProviderFactory.getInstance().create(
         'tbank',
         {
@@ -178,20 +141,18 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
         accountClient,
         false
       )
+      break
+    default:
+      throw new Error(`Unknown payment provider: ${config.Provider}. Expected one of: polar, stripe, tbank`)
+  }
 
-      if (provider !== undefined) {
-        // TBank webhooks are handled directly by pod-tbank-subscriptions
-        provider.registerWebhookEndpoints(app, ctx, config.AccountsUrl, serviceToken)
-
-        ctx.info('TBank payment provider initialized successfully')
-      }
-    } catch (err) {
-      ctx.error('Failed to initialize payment provider TBank', { err })
-    }
+  if (provider !== undefined) {
+    provider.registerWebhookEndpoints(app, ctx, config.AccountsUrl, serviceToken)
+    ctx.info(`${config.Provider} payment provider initialized successfully`)
   }
 
   if (provider == null) {
-    throw new Error('Payment provider is not configured. Please provide payment provider configuration.')
+    throw new Error(`Failed to initialize payment provider: ${config.Provider}`)
   }
 
   const stopReconciliation = startActiveSubscriptionReconciliation(
