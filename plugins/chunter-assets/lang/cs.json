@@ -143,7 +143,12 @@
     "Seen": "Přečteno",
     "ChannelsAndDMs": "Kanály a privátní zprávy",
     "CreateDirect": "Vytvořit přímou zprávu",
-    "ChangeIcon": "Změnit ikonu"
+    "ChangeIcon": "Změnit ikonu",
+    "ResolveThread": "Vyřešit",
+    "PrivateChat": "Soukromý chat",
+    "ShowMessage": "Zobrazit zprávu",
+    "ForwardMessage": "Přeposlat zprávu",
+    "ToWhom": "Kdo"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} vám poslal zprávu: \n\n{message}",

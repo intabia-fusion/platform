@@ -65,6 +65,7 @@ import DirectMessageButton from './components/DirectMessageButton.svelte'
 import EmployeePresenter from './components/ChunterEmployeePresenter.svelte'
 import InlineCommentThread from './components/inline-comment/InlineCommentThread.svelte'
 import ChannelsAndDMs from './components/chat/specials/ChannelsAndDMs.svelte'
+import ForwardMessageDialog from './components/ForwardMessageDialog.svelte'
 
 import {
   chunterSpaceLinkFragmentProvider,
@@ -92,7 +93,9 @@ import {
   startConversationAction,
   summarizeMessages,
   canSummarizeMessages,
-  DirectLabelProvider
+  DirectLabelProvider,
+  forwardMessage,
+  replyToMessage
 } from './utils'
 import DeleteMessageConfirmationPopup from './components/DeleteMessageConfirmationPopup.svelte'
 
@@ -195,7 +198,8 @@ export default async (): Promise<Resources> => ({
     DirectMessageButton,
     EmployeePresenter,
     InlineCommentThread,
-    ChannelsAndDMs
+    ChannelsAndDMs,
+    ForwardMessageDialog
   },
   activity: {
     ChannelCreatedMessage,
@@ -260,6 +264,8 @@ export default async (): Promise<Resources> => ({
     TranslateMessage: translateMessage,
     SummarizeMessages: summarizeMessages,
     ShowOriginalMessage: showOriginalMessage,
-    StartConversation: startConversationAction
+    StartConversation: startConversationAction,
+    ReplyToMessage: replyToMessage,
+    ForwardMessage: forwardMessage
   }
 })

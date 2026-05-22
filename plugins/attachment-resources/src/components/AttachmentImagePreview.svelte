@@ -30,20 +30,30 @@
     fit: 'cover' | 'contain'
   }
 
-  const minSizeRem = 4
-  const maxSizeRem = 25
+  const sizes: Record<AttachmentImageSize, { min: number, max: number }> = {
+    medium: { min: 4, max: 18 },
+    'x-large': { min: 4, max: 25 },
+    auto: { min: 4, max: 25 }
+  }
 
+  const defaultSizes: Record<AttachmentImageSize, { width: number, height: number }> = {
+    medium: { width: 200, height: 200 },
+    'x-large': { width: 300, height: 300 },
+    auto: { width: 300, height: 300 }
+  }
   let dimensions: Dimensions
 
   $: dimensions = getDimensions(value, size)
 
   function getDimensions (value: Attachment | BlobType, size: AttachmentImageSize): Dimensions {
-    const byDefault = { width: 300, height: 300, fit: 'contain' } as const
+    const _default = defaultSizes[size] ?? defaultSizes.auto
+    const byDefault = { ..._default, fit: 'contain' } as const
     if (size === 'auto' || size == null) return byDefault
 
     const { metadata } = value
     if (metadata === undefined) return byDefault
 
+    const { min: minSizeRem, max: maxSizeRem } = sizes[size] ?? sizes.auto
     return getImageDimensions(
       {
         width: metadata.thumbnail?.width ?? metadata.originalWidth,

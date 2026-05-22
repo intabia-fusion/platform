@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,15 +18,28 @@
   import { Analytics } from '@hcengineering/analytics'
   import { AttachmentRefInput } from '@hcengineering/attachment-resources'
   import chunter, { ChatMessage, ChunterEvents, ThreadMessage } from '@hcengineering/chunter'
-  import { Class, Doc, generateId, getCurrentAccount, Ref, type CommitResult, Markup } from '@hcengineering/core'
+  import {
+    Class,
+    Doc,
+    generateId,
+    getCurrentAccount,
+    Ref,
+    type CommitResult,
+    Markup,
+    WithLookup,
+    DocumentUpdate
+  } from '@hcengineering/core'
   import { createQuery, DraftController, draftsStore, getClient } from '@hcengineering/presentation'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import { getObjectId } from '@hcengineering/view-resources'
   import { ThrottledCaller } from '@hcengineering/ui'
   import { getSpace, editingMessageStore } from '@hcengineering/activity-resources'
+  import { setTyping, clearTyping } from '@hcengineering/presence-resources'
 
-  import { getChannelSpace } from '../../utils'
+  import ReplyToMessagePresenter from '../ReplyToMessagePresenter.svelte'
+  import { getChannelSpace, getForwardData } from '../../utils'
+  import { replyingToMessageStore } from '../../stores'
   import ChannelTypingInfo from '../ChannelTypingInfo.svelte'
 
   export let object: Doc
@@ -39,9 +53,7 @@
   export let withTypingInfo = false
   export let onKeyDown: ((e: KeyboardEvent) => void) | undefined = undefined
 
-  import { setTyping, clearTyping } from '@hcengineering/presence-resources'
-
-  type MessageDraft = Pick<ChatMessage, '_id' | 'message' | 'attachments'>
+  type MessageDraft = Pick<ChatMessage, '_id' | 'message' | 'attachments' | 'forwardedMessage'>
 
   const dispatch = createEventDispatcher()
 
@@ -51,20 +63,49 @@
     ? chunter.class.ThreadMessage
     : chunter.class.ChatMessage
   const createdMessageQuery = createQuery()
+  const replyMessageQuery = createQuery()
 
   const draftKey = `${object._id}_${_class}`
   const draftController = new DraftController<MessageDraft>(draftKey)
   const currentDraft = shouldSaveDraft ? $draftsStore[draftKey] : undefined
 
-  const emptyMessage: Pick<MessageDraft, 'message' | 'attachments'> = {
+  const emptyMessage: Pick<MessageDraft, 'message' | 'attachments' | 'forwardedMessage'> = {
     message: EmptyMarkup,
-    attachments: 0
+    attachments: 0,
+    forwardedMessage: undefined
   }
 
   let inputRef: AttachmentRefInput
   let currentMessage: MessageDraft = chatMessage ?? currentDraft ?? getDefault()
   let _id = currentMessage._id
   let inputContent = currentMessage.message
+
+  let forwardedMessage: WithLookup<ChatMessage> | undefined = undefined
+
+  $: forwardedMessageId = chatMessage
+    ? chatMessage.forwardedMessage
+    : (currentMessage.forwardedMessage ?? $replyingToMessageStore?._id)
+
+  $: if (
+    forwardedMessage == null &&
+    forwardedMessageId != null &&
+    forwardedMessageId === $replyingToMessageStore?._id
+  ) {
+    forwardedMessage = $replyingToMessageStore as WithLookup<ChatMessage>
+  }
+
+  $: if (forwardedMessageId !== undefined) {
+    replyMessageQuery.query(chunter.class.ChatMessage, { _id: forwardedMessageId as Ref<ChatMessage> }, (res) => {
+      if (chatMessage === undefined) {
+        replyingToMessageStore.set(res[0])
+      }
+
+      forwardedMessage = res[0]
+    })
+  } else {
+    replyMessageQuery.unsubscribe()
+    forwardedMessage = undefined
+  }
 
   $: if (currentDraft != null) {
     createdMessageQuery.query(_class, { _id, space: getSpace(object) }, (result: ChatMessage[]) => {
@@ -170,6 +211,9 @@
 
     // Remove draft from Local Storage
     clear()
+    if (chatMessage === undefined) {
+      replyingToMessageStore.set(undefined)
+    }
     dispatch('submit', false)
     loading = false
   }
@@ -191,7 +235,8 @@
           message,
           attachments,
           objectClass: parentMessage.attachedToClass,
-          objectId: parentMessage.attachedTo
+          objectId: parentMessage.attachedTo,
+          ...(forwardedMessage != null ? await getForwardData(forwardedMessage) : {})
         },
         _id as Ref<ThreadMessage>
       )
@@ -202,7 +247,11 @@
         object._id,
         object._class,
         collection,
-        { message, attachments },
+        {
+          message,
+          attachments,
+          ...(forwardedMessage != null ? await getForwardData(forwardedMessage) : {})
+        },
         _id
       )
     }
@@ -214,7 +263,22 @@
       return
     }
     const { message, attachments } = event.detail
-    await client.update(chatMessage, { message, attachments, editedOn: Date.now() })
+    const update: DocumentUpdate<ChatMessage> = { message, attachments, editedOn: Date.now() }
+
+    const op = client.apply('edit-message')
+    if (currentMessage.forwardedMessage == null && chatMessage.forwardedMessage != null) {
+      await op.update(chatMessage, {
+        $unset: {
+          forwardedMessage: true,
+          forwardFromId: true,
+          forwardFromClass: true,
+          forwardContent: true
+        }
+      })
+    }
+
+    await op.diffUpdate(chatMessage, update)
+    await op.commit()
   }
   export function submit (): void {
     inputRef.submit()
@@ -228,14 +292,49 @@
     }
 
     if (event.key === 'Escape') {
-      if ($editingMessageStore === undefined) return false
-      event.stopPropagation()
-      event.preventDefault()
-      editingMessageStore.set(undefined)
+      if ($editingMessageStore !== undefined) {
+        event.stopPropagation()
+        event.preventDefault()
+        editingMessageStore.set(undefined)
+        return false
+      }
+
+      if ($replyingToMessageStore !== undefined) {
+        event.stopPropagation()
+        event.preventDefault()
+        replyingToMessageStore.set(undefined)
+        return false
+      }
     }
     return false
   }
+
+  function handleReplyMessageDelete (): void {
+    if (chatMessage === undefined) {
+      replyingToMessageStore.set(undefined)
+    }
+
+    currentMessage = { ...currentMessage, forwardedMessage: undefined }
+  }
+
+  let prevReplyTo: Ref<ActivityMessage>
+
+  $: {
+    const id = $replyingToMessageStore?._id
+    if (id != null && id !== prevReplyTo && inputRef != null) {
+      prevReplyTo = id
+      inputRef.focus()
+    }
+  }
 </script>
+
+{#if chatMessage === undefined}
+  {#if forwardedMessage !== undefined && forwardedMessage.attachedTo === object._id}
+    <ReplyToMessagePresenter replyTo={forwardedMessage} on:delete={handleReplyMessageDelete} />
+  {/if}
+{:else if forwardedMessage !== undefined && currentMessage.forwardedMessage === forwardedMessage._id}
+  <ReplyToMessagePresenter replyTo={forwardedMessage} on:delete={handleReplyMessageDelete} />
+{/if}
 
 <AttachmentRefInput
   {focusIndex}
@@ -250,6 +349,8 @@
   {shouldSaveDraft}
   {boundary}
   {autofocus}
+  isContentChanged={chatMessage?.forwardedMessage !== forwardedMessage?._id &&
+    (!isEmptyMarkup(inputContent) || (currentMessage.attachments ?? 0) > 0 || forwardedMessage != null)}
   on:message={onMessage}
   on:update={onUpdate}
   on:focus

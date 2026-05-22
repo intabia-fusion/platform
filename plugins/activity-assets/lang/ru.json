@@ -57,6 +57,14 @@
     "AddedTag": "Добавлен тег: {title}",
     "RemovedTag": "Удален тег: {title}",
     "ValueTooLarge": "Значение слишком велико для отображения",
-    "SentAttachments": "Отправил(а) вложения"
+    "SentAttachments": "Отправил(а) вложения",
+    "ReplyTo": "Ответить {name}",
+    "ForwardedFrom": "Переслано от",
+    "ReplyToMessage": "Ответить на сообщение",
+    "ForwardMessage": "Переслать сообщение",
+    "ForwardedMessage": "Пересланное сообщение",
+    "ForwardedMessageFrom": "Пересланное сообщение от {name}",
+    "Forward": "Переслать",
+    "Reply": "Ответить"
   }
 }

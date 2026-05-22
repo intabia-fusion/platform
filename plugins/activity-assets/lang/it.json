@@ -57,6 +57,14 @@
     "AddedTag": "Tag aggiunto: {title}",
     "RemovedTag": "Tag rimosso: {title}",
     "ValueTooLarge": "Valore troppo grande per essere visualizzato",
-    "SentAttachments": "Allegati inviati"
+    "SentAttachments": "Allegati inviati",
+    "ReplyTo": "Rispondere a {name}",
+    "ForwardedFrom": "Inoltrato da",
+    "ReplyToMessage": "Rispondere al messaggio",
+    "ForwardMessage": "Inoltrare il messaggio",
+    "ForwardedMessage": "Messaggio inoltrato",
+    "ForwardedMessageFrom": "Messaggio inoltrato da {name}",
+    "Forward": "Inoltrare",
+    "Reply": "Rispondere"
   }
 }

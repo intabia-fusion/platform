@@ -17,7 +17,9 @@ import core, { type Ref, SortingOrder, type WithLookup } from '@hcengineering/co
 import { createQuery, onClient } from '@hcengineering/presentation'
 import { writable } from 'svelte/store'
 import attachment from '@hcengineering/attachment'
-import { getCurrentLocation, navigate } from '@hcengineering/ui'
+import { getCurrentLocation, location as locationStore, navigate } from '@hcengineering/ui'
+
+import { getMessageFromLoc } from './utils'
 
 export const savedMessagesStore = writable<Array<WithLookup<SavedMessage>>>([])
 export const messageInFocus = writable<Ref<ActivityMessage> | undefined>(undefined)
@@ -25,13 +27,24 @@ export const editingMessageStore = writable<Ref<ActivityMessage> | undefined>(un
 
 const savedMessagesQuery = createQuery(true)
 
-export function clearMessageInLocation (): void {
+function clearMessageInLocation (): void {
   const loc = getCurrentLocation()
   if (loc.query?.message != null) {
     delete loc.query.message
     navigate(loc, true)
   }
 }
+
+locationStore.subscribe((newLocation) => {
+  const id = getMessageFromLoc(newLocation)
+  messageInFocus.set(id)
+})
+
+messageInFocus.subscribe((id) => {
+  if (id === undefined) {
+    clearMessageInLocation()
+  }
+})
 
 onClient(() => {
   savedMessagesQuery.query(

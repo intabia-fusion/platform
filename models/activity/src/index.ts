@@ -34,7 +34,8 @@ import {
   type Reaction,
   type ReplyProvider,
   type SavedMessage,
-  type UserMentionInfo
+  type UserMentionInfo,
+  type ForwardContent
 } from '@hcengineering/activity'
 import contact, { type Person } from '@hcengineering/contact'
 import core, {
@@ -63,6 +64,7 @@ import {
   TypeBoolean,
   TypeIntlString,
   TypeMarkup,
+  TypeRecord,
   TypeRef,
   TypeString,
   TypeTimestamp,
@@ -74,7 +76,7 @@ import { TAttachedDoc, TClass, TDoc } from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
 import presentation from '@hcengineering/model-presentation'
 import view from '@hcengineering/model-view'
-import type { Asset, IntlString, Resource } from '@hcengineering/platform'
+import { type Asset, type IntlString, type Resource } from '@hcengineering/platform'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
 
 import { buildActions } from './actions'
@@ -118,6 +120,19 @@ export class TActivityMessage extends TAttachedDoc implements ActivityMessage {
 
   @Prop(Collection(activity.class.ActivityMessage), activity.string.Replies)
     replies?: number
+
+  @Prop(TypeRef(activity.class.ActivityMessage), activity.string.ForwardedMessage)
+  @Index(IndexKind.Indexed)
+    forwardedMessage?: Ref<ActivityMessage>
+
+  @Prop(TypeRecord(), core.string.Object)
+    forwardContent?: ForwardContent
+
+  @Prop(TypeRef(core.class.Doc), core.string.Object)
+    forwardFromId?: Ref<Doc>
+
+  @Prop(TypeRef(core.class.Class), core.string.Class)
+    forwardFromClass?: Ref<Class<Doc>>
 }
 
 @Model(activity.class.DocUpdateMessage, activity.class.ActivityMessage)

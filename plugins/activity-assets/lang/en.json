@@ -57,6 +57,14 @@
     "RemovedTag": "Removed tag: {title}",
     "AttributeSetTo": "{name} set to {value}",
     "ValueTooLarge": "Value too large to display",
-    "SentAttachments": "Sent attachments"
+    "SentAttachments": "Sent attachments",
+    "ReplyTo": "Reply to {name}",
+    "ForwardedFrom": "Forwarded from",
+    "ReplyToMessage": "Reply to message",
+    "ForwardMessage": "Forward message",
+    "ForwardedMessage": "Forwarded message",
+    "ForwardedMessageFrom": "Forwarded message from {name}",
+    "Forward": "Forward",
+    "Reply": "Reply"
   }
 }

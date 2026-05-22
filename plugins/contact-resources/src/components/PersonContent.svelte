@@ -53,11 +53,12 @@
   export let overflowLabel = true
   export let inlineBlock = false
   export let shrink: boolean = false
+  export let clickable: boolean = true
 
   const client = getClient()
 
   const onEditClick = (evt: MouseEvent) => {
-    if (!disabled) {
+    if (!disabled && clickable) {
       onEdit?.(evt)
     }
   }
@@ -84,6 +85,7 @@
         {name}
         {inline}
         {disabled}
+        {clickable}
         {shouldShowAvatar}
         {shouldShowName}
         {noUnderline}
@@ -109,6 +111,7 @@
       {name}
       {inline}
       {disabled}
+      {clickable}
       {shouldShowAvatar}
       {shouldShowName}
       {noUnderline}
@@ -132,7 +135,7 @@
   <span
     class="antiPresenter h-full"
     class:text-base={enlargedText}
-    class:cursor-pointer={!disabled && onEdit !== undefined}
+    class:cursor-pointer={!disabled && clickable && onEdit !== undefined}
     use:tooltip={disabled ? undefined : showTooltip}
     on:click={onEditClick}
   >

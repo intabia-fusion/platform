@@ -386,6 +386,25 @@ const docReadStateSchema: Schema = {
   }
 }
 
+const activitySchema: Schema = {
+  ...defaultSchema,
+  forwardedMessage: {
+    type: 'text',
+    notNull: false,
+    index: true
+  },
+  forwardFromId: {
+    type: 'text',
+    notNull: false,
+    index: true
+  },
+  forwardFromClass: {
+    type: 'text',
+    notNull: false,
+    index: true
+  }
+}
+
 type CustomIndexType = 'unique' | 'custom'
 
 export const customIndexes: Record<string, { [key in CustomIndexType]: string[] }[]> = {
@@ -437,7 +456,8 @@ export const domainSchemas: Record<string, Schema> = {
   [translateDomain('chunter_doc')]: chatSchema,
   kanban: defaultSchema,
   [translateDomain('attachment')]: attachmentSchema,
-  [translateDomain('notification_read_state')]: docReadStateSchema
+  [translateDomain('notification_read_state')]: docReadStateSchema,
+  [translateDomain('activity')]: activitySchema
 }
 
 export function getSchema (domain: string): Schema {

@@ -57,6 +57,14 @@
     "AddedTag": "Přidaný štítek: {title}",
     "RemovedTag": "Odebráný štítek: {title}",
     "ValueTooLarge": "Hodnota je příliš velká na zobrazení",
-    "SentAttachments": "Odeslán příloha"
+    "SentAttachments": "Odeslán příloha",
+    "ReplyTo": "Odpovědět {name}",
+    "ForwardedFrom": "Přeposláno od",
+    "ReplyToMessage": "Odpovědět na zprávu",
+    "ForwardMessage": "Přeposlat zprávu",
+    "ForwardedMessage": "Přeposlaná zpráva",
+    "ForwardedMessageFrom": "Přeposlaná zpráva od {name}",
+    "Forward": "Přeposlat",
+    "Reply": "Odpovědět"
   }
 }

@@ -19,8 +19,9 @@
 
   export let value: Person | undefined
   export let size: IconSize = 'small'
+  export let showStatus: boolean = false
 </script>
 
 {#if value}
-  <Avatar person={value} {size} name={value.name} />
+  <Avatar person={value} {size} name={value.name} {showStatus} />
 {/if}

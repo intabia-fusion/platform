@@ -17,8 +17,8 @@
   import { Asset } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { Action, Menu } from '@hcengineering/ui'
-  import { ActionGroup, Action as ViewAction, ViewContextType } from '@hcengineering/view'
-  import { getActions, invokeAction } from '../actions'
+  import { Action as ViewAction, ViewContextType } from '@hcengineering/view'
+  import { actionGroupOrder, getActions, invokeAction } from '../actions'
 
   export let object: Doc | Doc[]
   export let baseMenuClass: Ref<Class<Doc>> | undefined = undefined
@@ -31,16 +31,6 @@
   let resActions = actions
 
   let loaded = false
-
-  const order: Record<ActionGroup, number> = {
-    create: 1,
-    edit: 2,
-    copy: 3,
-    associate: 4,
-    tools: 5,
-    other: 6,
-    remove: 7
-  }
 
   void getActions(getClient(), object, baseMenuClass, mode).then((result) => {
     const filtered = result.filter((a) => {
@@ -60,6 +50,7 @@
       icon: a.icon as Asset,
       inline: a.inline,
       group: a.context.group ?? 'other',
+      order: a.context.order,
       action: async (_: any, evt: Event) => {
         if (overrides?.has(a._id)) {
           overrides.get(a._id)?.(object, evt)
@@ -71,9 +62,19 @@
       props: { ...a.actionProps, value: object }
     }))
 
-    resActions = [...newActions, ...actions].sort(
-      (a, b) => (order as any)[a.group ?? 'other'] - (order as any)[b.group ?? 'other']
-    )
+    resActions = [...newActions, ...actions].sort((a, b) => {
+      const groupA = (actionGroupOrder as any)[a.group ?? 'other']
+      const groupB = (actionGroupOrder as any)[b.group ?? 'other']
+
+      if (groupA !== groupB) {
+        return groupA - groupB
+      }
+
+      const orderA = a.order ?? 99999
+      const orderB = b.order ?? 99999
+
+      return orderA - orderB
+    })
     if (resActions.length > 0) {
       loaded = true
     }

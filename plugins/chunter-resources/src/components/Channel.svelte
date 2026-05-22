@@ -46,8 +46,6 @@
     if (id !== undefined && id !== selectedMessageId) {
       selectedMessageId = id
     }
-
-    messageInFocus.set(undefined)
   })
 
   const unsubscribeLocation = locationStore.subscribe((newLocation) => {

@@ -34,6 +34,17 @@ export async function createDirect (
   )
 }
 
+export async function createAndGetDirect (
+  client: TxOperations,
+  accounts: AccountUuid[]
+): Promise<DirectMessage | undefined> {
+  const direct = await createDirect(client, accounts)
+
+  if (direct == null) return undefined
+
+  return await client.findOne(chunter.class.DirectMessage, { _id: direct })
+}
+
 async function findExistingDirect (
   client: TxOperations,
   accounts: Set<AccountUuid>

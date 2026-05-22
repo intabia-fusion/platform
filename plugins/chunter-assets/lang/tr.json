@@ -144,7 +144,11 @@
     "Seen": "Okundu",
     "ChannelsAndDMs": "Kanallar ve DM'ler",
     "CreateDirect": "Direkte mesaj oluştur",
-    "ChangeIcon": "İkonu değiştir"
+    "ChangeIcon": "İkonu değiştir",
+    "PrivateChat": "Özel sohbet",
+    "ShowMessage": "Mesajı göster",
+    "ForwardMessage": "Mesajı ilet",
+    "ToWhom": "Kiminle"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} size bir mesaj gönderdi: \n\n{message}",

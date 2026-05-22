@@ -108,6 +108,10 @@ export default mergeIds(chunterId, chunter, {
     DeleteMessageDescription: '' as IntlString,
     ChannelsAndDMs: '' as IntlString,
     CreateDirect: '' as IntlString,
-    ChangeIcon: '' as IntlString
+    ChangeIcon: '' as IntlString,
+    PrivateChat: '' as IntlString,
+    ShowMessage: '' as IntlString,
+    ForwardMessage: '' as IntlString,
+    ToWhom: '' as IntlString
   }
 })

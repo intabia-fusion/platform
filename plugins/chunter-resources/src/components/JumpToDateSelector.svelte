@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import { getDay, Timestamp } from '@hcengineering/core'
-  import { DateRangePopup, showPopup } from '@hcengineering/ui'
+  import ui, { DateRangePopup, showPopup, themeStore } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+  import { translate } from '@hcengineering/platform'
 
   export let selectedDate: Timestamp | undefined
   export let fixed: boolean = false
@@ -27,7 +28,32 @@
 
   $: time = selectedDate ? getDay(selectedDate) : undefined
 
-  $: isCurrentYear = time ? new Date(time).getFullYear() === new Date().getFullYear() : undefined
+  async function formatDate (timestamp: Timestamp, lang: string): Promise<string> {
+    const now = new Date()
+    const date = new Date(timestamp)
+
+    const dateStart = new Date(date).setHours(0, 0, 0, 0)
+    const today = new Date(now).setHours(0, 0, 0, 0)
+
+    if (dateStart === today) {
+      return await translate(ui.string.Today, {}, lang)
+    }
+
+    const yesterdayDate = new Date(today)
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1)
+
+    const yesterday = yesterdayDate.getTime()
+
+    if (dateStart === yesterday) {
+      return await translate(ui.string.Yesterday, {}, lang)
+    } else {
+      const dayOfWeek = new Intl.DateTimeFormat(lang, { weekday: 'long' }).format(date)
+      const day = new Intl.DateTimeFormat(lang, { day: '2-digit' }).format(date)
+      const month = new Intl.DateTimeFormat(lang, { month: 'long' }).format(date)
+
+      return `${dayOfWeek} ${day} ${month}`
+    }
+  }
 </script>
 
 <div id={fixed ? '' : `${idPrefix}${time?.toString()}`} class="flex-center clear-mins dateSelector">
@@ -47,12 +73,9 @@
       }}
     >
       {#if time}
-        {new Date(time).toLocaleDateString('default', {
-          weekday: 'short',
-          month: 'long',
-          day: 'numeric',
-          year: isCurrentYear ? undefined : 'numeric'
-        })}
+        {#await formatDate(time, $themeStore.language) then date}
+          {date}
+        {/await}
       {/if}
     </div>
   {/if}

@@ -28,7 +28,8 @@ import {
   TxCUD,
   Blob,
   Markup,
-  Client
+  Client,
+  BlobType
 } from '@hcengineering/core'
 import type { Asset, IntlString, Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
@@ -56,6 +57,23 @@ export interface ActivityMessage extends AttachedDoc {
   replies?: number
   reactions?: number
   editedOn?: Timestamp
+
+  forwardedMessage?: Ref<ActivityMessage>
+  forwardContent?: ForwardContent
+  forwardFromId?: Ref<Doc>
+  forwardFromClass?: Ref<Class<Doc>>
+}
+
+export interface ForwardedAttachment extends BlobType {
+  originId: Ref<Doc>
+  createdOn: Timestamp
+}
+
+export interface ForwardContent {
+  author: PersonId
+  createdOn: Timestamp
+  message: Markup
+  attachments: ForwardedAttachment[]
 }
 
 /**
@@ -294,7 +312,9 @@ export default plugin(activityId, {
     Activity: '' as Asset,
     Emoji: '' as Asset,
     Bookmark: '' as Asset,
-    BookmarkFilled: '' as Asset
+    BookmarkFilled: '' as Asset,
+    Forward: '' as Asset,
+    ReplyTo: '' as Asset
   },
   string: {
     Activity: '' as IntlString,
@@ -342,7 +362,15 @@ export default plugin(activityId, {
     AddedTag: '' as IntlString,
     RemovedTag: '' as IntlString,
     ValueTooLarge: '' as IntlString,
-    SentAttachments: '' as IntlString
+    SentAttachments: '' as IntlString,
+    ReplyTo: '' as IntlString,
+    ForwardedFrom: '' as IntlString,
+    ReplyToMessage: '' as IntlString,
+    ForwardMessage: '' as IntlString,
+    ForwardedMessage: '' as IntlString,
+    ForwardedMessageFrom: '' as IntlString,
+    Forward: '' as IntlString,
+    Reply: '' as IntlString
   },
   component: {
     Activity: '' as AnyComponent,

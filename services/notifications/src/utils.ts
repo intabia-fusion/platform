@@ -482,6 +482,14 @@ export async function getMessageNotificationContent (
     ((message as ChatMessage).attachments ?? 0) > 0
   ) {
     intlParamsNotLocalized.message = activity.string.SentAttachments
+  } else if (
+    message.forwardedMessage != null &&
+    message.forwardContent?.message != null &&
+    !isEmptyMarkup(message.forwardContent.message)
+  ) {
+    intlParams.message = normalizeTextMessage(markupToText(message.forwardContent.message))
+  } else if (message.forwardedMessage != null && (message.forwardContent?.attachments.length ?? 0) > 0) {
+    intlParamsNotLocalized.message = activity.string.SentAttachments
   } else {
     intlParamsNotLocalized.object = hierarchy.getClass(doc._class).label
     intlParamsNotLocalized.message = activity.string.UpdatedObject

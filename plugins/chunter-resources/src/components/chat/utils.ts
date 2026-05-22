@@ -361,6 +361,13 @@ async function readDocs (id: SectionID): Promise<void> {
   }
 }
 
+export function getActivityDocClasses (): Array<Ref<Class<Doc>>> {
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+  const allClasses = hierarchy.getMixinClasses(activity.mixin.ActivityDoc)
+
+  return filterClasses(allClasses)
+}
 function filterClasses (classes: Array<Ref<Class<Doc>>>): Array<Ref<Class<Doc>>> {
   const client = getClient()
   const hierarchy = client.getHierarchy()

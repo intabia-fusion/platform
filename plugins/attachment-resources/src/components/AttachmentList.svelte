@@ -24,6 +24,7 @@
   export let savedAttachmentsIds: Ref<Attachment>[] = []
   export let imageSize: AttachmentImageSize | undefined = undefined
   export let videoPreload = false
+  export let withActions = true
 
   let attachmentPopupId = ''
 
@@ -51,6 +52,7 @@
         {imageSize}
         {videoPreload}
         {listProvider}
+        {withActions}
         on:open={(res) => (attachmentPopupId = res.detail)}
       />
     {/each}

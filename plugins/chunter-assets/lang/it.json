@@ -143,7 +143,12 @@
     "Seen": "Visto",
     "ChannelsAndDMs": "Canali e messaggi privati",
     "CreateDirect": "Crea messaggio diretto",
-    "ChangeIcon": "Cambia icona"
+    "ChangeIcon": "Cambia icona",
+    "ResolveThread": "Risolvi",
+    "PrivateChat": "Chat privato",
+    "ShowMessage": "Mostra messaggio",
+    "ForwardMessage": "Inoltra messaggio",
+    "ToWhom": "A chi"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender} ti ha inviato un messaggio: \n\n{message}",

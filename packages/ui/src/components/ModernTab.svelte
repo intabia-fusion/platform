@@ -16,7 +16,7 @@
   import { Asset, getEmbeddedLabel, IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
 
-  import { AnySvelteComponent, ButtonIcon, Icon, IconClose, Label, tooltip } from '../index'
+  import { AnySvelteComponent, ButtonIcon, Icon, IconClose, IconSize, Label, tooltip } from '../index'
 
   export let label: string | undefined = undefined
   export let labelIntl: IntlString | undefined = undefined
@@ -25,6 +25,7 @@
   export let highlighted: boolean = false
   export let icon: Asset | AnySvelteComponent | undefined = undefined
   export let iconProps: Record<string, any> | undefined = undefined
+  export let iconSize: IconSize = 'x-small'
   export let maxSize: string | undefined = undefined
   export let orientation: 'horizontal' | 'vertical' = 'horizontal'
   export let kind: 'primary' | 'secondary' = 'primary'
@@ -56,7 +57,7 @@
 
   {#if icon}
     <div class="icon {orientation}">
-      <Icon {icon} size={'x-small'} {iconProps} />
+      <Icon {icon} size={iconSize} {iconProps} />
     </div>
   {/if}
 
@@ -79,7 +80,7 @@
 
   {#if canClose && !readonly}
     <div class="close-button {orientation}">
-      <ButtonIcon icon={IconClose} kind={'tertiary'} size="min" on:click={() => dispatch('close')} />
+      <ButtonIcon icon={IconClose} kind={'tertiary'} iconSize="x-small" size="min" on:click={() => dispatch('close')} />
     </div>
   {:else if $$slots.postfix === undefined}
     <div />
