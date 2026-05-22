@@ -70,6 +70,7 @@ import { getGlobalPerson } from '../utils/account'
 import { connectPlatform } from '../utils/platform'
 import { LoveController } from './love'
 import { RestClient } from '@hcengineering/api-client'
+import { CollaboratorClient, getClient as getCollaboratorClient } from '@hcengineering/collaborator-client'
 
 interface LLMHistoryRecord {
   role: 'user' | 'assistant' | 'system'
@@ -96,6 +97,8 @@ export class WorkspaceClient {
   historyMap = new Map<PersonUuid, PersonHistoryRecord>()
   initPromise: Promise<void> | undefined
 
+  collaborator: CollaboratorClient | undefined
+
   constructor (
     readonly storage: StorageAdapter,
     readonly transactorUrl: string,
@@ -104,10 +107,15 @@ export class WorkspaceClient {
     readonly personUuid: AccountUuid,
     readonly socialIds: SocialId[],
     readonly ctx: MeasureContext,
+    readonly collaboratorEndpoint: string | undefined,
     readonly llm?: LLMProvider
   ) {
     this.client = connectPlatform(this.token, this.wsIds.uuid, this.transactorUrl)
     this.primarySocialId = pickPrimarySocialId(this.socialIds)
+    if (this.collaboratorEndpoint !== undefined && this.collaboratorEndpoint !== '') {
+      console.log('create collaborator client', this.collaboratorEndpoint)
+      this.collaborator = getCollaboratorClient(this.wsIds.uuid, this.token, this.collaboratorEndpoint)
+    }
     this.initPromise = this.initClient()
   }
 

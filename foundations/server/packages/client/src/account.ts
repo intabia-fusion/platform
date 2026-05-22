@@ -36,6 +36,34 @@ export function getAccountClient (token?: string, retryTimeoutMs?: number): Acco
 
 const externalRegions = process.env.EXTERNAL_REGIONS?.split(';') ?? []
 
+export async function getTransactorEndpointEx (
+  token: string,
+  kind: 'internal' | 'external' | 'byregion' = 'byregion',
+  timeout: number = -1
+): Promise<{ endpoint: string, collaborator?: string }> {
+  const accountClient = getAccountClient(token, 30000)
+  const st = Date.now()
+  while (true) {
+    try {
+      const workspaceInfo = await accountClient.selectWorkspace('', kind, externalRegions)
+      if (workspaceInfo === undefined) {
+        throw new Error('Workspace not found')
+      }
+      return { endpoint: workspaceInfo.endpoint, collaborator: workspaceInfo.collaboratorEndpoint }
+    } catch (err: any) {
+      if (timeout > 0 && st + timeout < Date.now()) {
+        // Timeout happened
+        throw err
+      }
+      if (connectionErrorCodes.includes(err?.cause?.code)) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 1000))
+      } else {
+        throw err
+      }
+    }
+  }
+}
+
 /**
  * Retrieves the transactor endpoint for a given token and kind.
  *
@@ -50,27 +78,7 @@ export async function getTransactorEndpoint (
   kind: 'internal' | 'external' | 'byregion' = 'byregion',
   timeout: number = -1
 ): Promise<string> {
-  const accountClient = getAccountClient(token, 30000)
-  const st = Date.now()
-  while (true) {
-    try {
-      const workspaceInfo = await accountClient.selectWorkspace('', kind, externalRegions)
-      if (workspaceInfo === undefined) {
-        throw new Error('Workspace not found')
-      }
-      return workspaceInfo.endpoint
-    } catch (err: any) {
-      if (timeout > 0 && st + timeout < Date.now()) {
-        // Timeout happened
-        throw err
-      }
-      if (connectionErrorCodes.includes(err?.cause?.code)) {
-        await new Promise<void>((resolve) => setTimeout(resolve, 1000))
-      } else {
-        throw err
-      }
-    }
-  }
+  return (await getTransactorEndpointEx(token, kind, timeout)).endpoint
 }
 
 export function withRetry<P extends any[], T> (

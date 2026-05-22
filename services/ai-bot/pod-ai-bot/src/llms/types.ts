@@ -87,7 +87,8 @@ export interface LLMProvider {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     messages: PersonMessage[],
-    lang: string
+    lang: string,
+    description?: string
   ) => Promise<string | undefined>
 
   /**
