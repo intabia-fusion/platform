@@ -20,11 +20,10 @@
   import core, { PersonId, Doc, Timestamp } from '@hcengineering/core'
   import { Icon, Label, resizeObserver, TimeSince, tooltip } from '@hcengineering/ui'
   import { Asset, getEmbeddedLabel, IntlString } from '@hcengineering/platform'
-  import activity, { ActivityMessage, ActivityMessagePreviewType } from '@hcengineering/activity'
+  import activity, { ActivityMessagePreviewType } from '@hcengineering/activity'
   import { classIcon, DocNavLink } from '@hcengineering/view-resources'
   import { markupToText } from '@hcengineering/text'
 
-  export let message: ActivityMessage | undefined = undefined
   export let text: string | undefined = undefined
   export let intlLabel: IntlString | undefined = undefined
   export let readonly = false

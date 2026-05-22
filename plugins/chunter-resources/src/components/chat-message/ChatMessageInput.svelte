@@ -321,7 +321,7 @@
 
   $: {
     const id = $replyingToMessageStore?._id
-    if (id != null && id !== prevReplyTo) {
+    if (id != null && id !== prevReplyTo && inputRef != null) {
       prevReplyTo = id
       inputRef.focus()
     }

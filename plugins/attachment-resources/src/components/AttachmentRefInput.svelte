@@ -472,6 +472,7 @@
   }))
 
   export function focus (): void {
+    if (refInput == null) return
     refInput.focus()
   }
 </script>

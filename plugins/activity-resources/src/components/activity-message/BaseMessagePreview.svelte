@@ -35,7 +35,6 @@
 <BasePreview
   bind:this={previewElement}
   bind:isCompact
-  {message}
   {text}
   {intlLabel}
   {readonly}

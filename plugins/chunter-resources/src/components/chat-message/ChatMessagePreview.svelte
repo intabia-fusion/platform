@@ -22,6 +22,7 @@
   import { createQuery } from '@hcengineering/presentation'
   import { Action, Icon, Label, tooltip } from '@hcengineering/ui'
   import { isEmptyMarkup } from '@hcengineering/text'
+  import { Markup } from '@hcengineering/core'
 
   export let value: ChatMessage
   export let readonly = false
@@ -45,9 +46,21 @@
   } else {
     attachmentsQuery.unsubscribe()
   }
+
+  function getText (message: ChatMessage): Markup {
+    if (!isEmptyMarkup(message.message)) {
+      return message.message
+    }
+
+    if (message.forwardContent?.message == null) {
+      return message.message
+    }
+
+    return message.forwardContent.message
+  }
 </script>
 
-<BaseMessagePreview text={value.message} message={value} {type} {readonly} {actions} on:click>
+<BaseMessagePreview text={getText(value)} message={value} {type} {readonly} {actions} on:click>
   {#if value.attachments && !isEmptyMarkup(value.message)}
     <div class="attachments" use:tooltip={{ component: AttachmentsTooltip, props: { attachments } }}>
       {value.attachments}
@@ -57,6 +70,11 @@
     <span class="font-normal secondaryColor">
       <Label label={attachment.string.Attachments} />:
       {attachments.map(({ name }) => name).join(', ')}
+    </span>
+  {:else if value.forwardContent?.attachments != null && value.forwardContent.attachments.length > 0 && isEmptyMarkup(value.forwardContent?.message ?? '')}
+    <span class="font-normal secondaryColor">
+      <Label label={attachment.string.Attachments} />:
+      {value.forwardContent.attachments.map(({ name }) => name).join(', ')}
     </span>
   {/if}
 </BaseMessagePreview>
