@@ -8762,6 +8762,9 @@ importers:
       '@hcengineering/preference':
         specifier: workspace:^0.7.0
         version: link:../../plugins/preference
+      '@hcengineering/retry':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/retry
       '@hcengineering/setting':
         specifier: workspace:^0.7.0
         version: link:../../plugins/setting
@@ -29391,6 +29394,9 @@ importers:
       '@hcengineering/presentation':
         specifier: workspace:^0.7.0
         version: link:../../packages/presentation
+      '@hcengineering/pulse':
+        specifier: workspace:^0.7.0
+        version: link:../pulse
       '@hcengineering/rating':
         specifier: workspace:^0.7.0
         version: link:../rating
@@ -33191,6 +33197,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/pulse':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/pulse
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -35100,6 +35109,9 @@ importers:
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
+      '@hcengineering/api-client':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/api-client
       '@hcengineering/auth-providers':
         specifier: workspace:^0.7.0
         version: link:../../pods/authProviders
@@ -35118,6 +35130,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/pulse':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/pulse
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -39886,6 +39901,9 @@ importers:
       '@hcengineering/activity':
         specifier: workspace:^0.7.0
         version: link:../../plugins/activity
+      '@hcengineering/ai-bot':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/ai-bot
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
@@ -39919,6 +39937,9 @@ importers:
       '@hcengineering/postgres':
         specifier: workspace:^0.7.22
         version: link:../../foundations/server/packages/postgres
+      '@hcengineering/pulse':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/pulse
       '@hcengineering/retry':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/retry

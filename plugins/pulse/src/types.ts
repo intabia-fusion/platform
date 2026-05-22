@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import type { Class, Doc, PersonId, Ref, Timestamp } from '@hcengineering/core'
-import type { Person } from '@hcengineering/contact'
+import type { AccountUuid, Class, Doc, PersonId, Ref, Timestamp, WorkspaceUuid } from '@hcengineering/core'
+import type { Person, PersonSpace } from '@hcengineering/contact'
 import type { IntlString } from '@hcengineering/platform'
 
 /** @public */
@@ -30,4 +30,11 @@ export interface TypingIndicator extends Doc {
   objectId: string
   socialId: PersonId
   status?: IntlString
+}
+
+/** @public */
+export interface WorkspacesNotification extends Doc<PersonSpace> {
+  space: Ref<PersonSpace>
+  account: AccountUuid
+  [workspace: WorkspaceUuid]: boolean
 }

@@ -63,7 +63,7 @@ class WsCache {
   private readonly notificationTypeSettings = new Map<Ref<NotificationTypeSetting>, NotificationTypeSetting>()
 
   private readonly persons = new Map<PersonId, Person>()
-  private readonly personSpaces = new Map<Ref<Person>, PersonSpace>()
+  private readonly personSpaces = new Map<AccountUuid, PersonSpace>()
   private readonly userStatuses = new Map<Ref<UserStatus>, UserStatus>()
 
   private readonly accountBySocialId = new Map<PersonId, AccountUuid>()
@@ -132,7 +132,7 @@ class WsCache {
 
     if (hierarchy.isDerived(doc._class, contact.class.PersonSpace)) {
       const space = doc as PersonSpace
-      this.personSpaces.set(space.person, space)
+      this.personSpaces.set(space.account, space)
     }
 
     if (hierarchy.isDerived(doc._class, core.class.UserStatus)) {
@@ -201,7 +201,7 @@ class WsCache {
       const space = spaces.find((space) => space._id === tx.objectId)
       if (space === undefined) return
       const updated = this.updateOrMixin(tx, space)
-      this.personSpaces.set(updated.person, updated)
+      this.personSpaces.set(updated.account, updated)
     }
 
     if (hierarchy.isDerived(tx.objectClass, core.class.UserStatus)) {
@@ -274,7 +274,7 @@ class WsCache {
       const spaces = Array.from(this.personSpaces.values())
       const space = spaces.find((space) => space._id === tx.objectId)
       if (space === undefined) return
-      this.personSpaces.delete(space.person)
+      this.personSpaces.delete(space.account)
       return
     }
 
@@ -440,25 +440,37 @@ class WsCache {
     return existing.concat(employees)
   }
 
-  private async getPersonSpaces (persons: Ref<Person>[]): Promise<PersonSpace[]> {
-    const result: PersonSpace[] = []
-    const toLoad: Ref<Person>[] = []
+  public async findPersonSpace (_id: Ref<PersonSpace>): Promise<PersonSpace | undefined> {
+    const spaces = Array.from(this.personSpaces.values())
+    const cached = spaces.find((it) => it._id === _id)
+    if (cached != null) return cached
 
-    for (const person of persons) {
-      const space = this.personSpaces.get(person)
+    const space = await this.client.findOne(contact.class.PersonSpace, { _id })
+    if (space != null) this.personSpaces.set(space.account, space)
+    return space
+  }
+
+  public async getPersonSpaces (accounts: AccountUuid[]): Promise<PersonSpace[]> {
+    const result: PersonSpace[] = []
+    const toLoad: AccountUuid[] = []
+
+    for (const account of accounts) {
+      const space = this.personSpaces.get(account)
       if (space !== undefined) {
         result.push(space)
       } else {
-        toLoad.push(person)
+        toLoad.push(account)
       }
     }
     if (toLoad.length === 0) return result
 
-    const loaded = await this.client.findAll(contact.class.PersonSpace, {})
+    const loaded = await this.client.findAll(contact.class.PersonSpace, {
+      account: { $in: toLoad }
+    })
 
     for (const space of loaded) {
-      this.personSpaces.set(space.person, space)
-      if (toLoad.includes(space.person)) {
+      this.personSpaces.set(space.account, space)
+      if (toLoad.includes(space.account)) {
         result.push(space)
       }
     }
@@ -505,7 +517,7 @@ class WsCache {
     const employees: EmployeeInfo[] = await this.getEmployeesInfo(collaborators)
     if (employees.length === 0) return []
 
-    const personSpaces: PersonSpace[] = await this.getPersonSpaces(employees.map((it) => it._id))
+    const personSpaces: PersonSpace[] = await this.getPersonSpaces(collaborators)
     if (personSpaces.length === 0) return []
 
     const socialIds: SocialIdentityInfo[] = await this.getSocialIds(employees.map((it) => it._id))

@@ -13,12 +13,21 @@
 // limitations under the License.
 //
 
-import type { Person } from '@hcengineering/contact'
-import { DOMAIN_TRANSIENT, type Class, type Doc, type PersonId, type Ref, type Timestamp } from '@hcengineering/core'
+import type { Person, PersonSpace } from '@hcengineering/contact'
+import {
+  DOMAIN_TRANSIENT,
+  type WorkspaceUuid,
+  type Class,
+  type Doc,
+  type PersonId,
+  type Ref,
+  type Timestamp,
+  type AccountUuid
+} from '@hcengineering/core'
 import { Model, type Builder } from '@hcengineering/model'
 import core, { TDoc } from '@hcengineering/model-core'
 import type { IntlString } from '@hcengineering/platform'
-import type { DocumentPresence, TypingIndicator } from '@hcengineering/pulse'
+import type { DocumentPresence, TypingIndicator, WorkspacesNotification } from '@hcengineering/pulse'
 import pulse from './plugin'
 
 export { pulseId } from '@hcengineering/pulse'
@@ -38,8 +47,15 @@ export class TTypingIndicator extends TDoc implements TypingIndicator {
   status?: IntlString
 }
 
+@Model(pulse.class.WorkspacesNotification, core.class.Doc, DOMAIN_TRANSIENT)
+export class TWorkspacesNotification extends TDoc implements WorkspacesNotification {
+  declare space: Ref<PersonSpace>
+  account!: AccountUuid;
+  [workspace: WorkspaceUuid]: boolean
+}
+
 export function createModel (builder: Builder): void {
-  builder.createModel(TDocumentPresence, TTypingIndicator)
+  builder.createModel(TDocumentPresence, TTypingIndicator, TWorkspacesNotification)
 
   builder.mixin(pulse.class.DocumentPresence, core.class.Class, core.mixin.TransientTTL, {
     ttl: 10
@@ -47,5 +63,9 @@ export function createModel (builder: Builder): void {
 
   builder.mixin(pulse.class.TypingIndicator, core.class.Class, core.mixin.TransientTTL, {
     ttl: 3
+  })
+
+  builder.mixin(pulse.class.WorkspacesNotification, core.class.Class, core.mixin.TransientTTL, {
+    ttl: 300
   })
 }

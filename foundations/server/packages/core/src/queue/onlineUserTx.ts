@@ -13,21 +13,10 @@
 // limitations under the License.
 //
 
-import type { Class, Ref } from '@hcengineering/core'
-import type { Plugin } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import type { DocumentPresence, TypingIndicator, WorkspacesNotification } from './types'
+import { type AccountUuid, type Tx, type WorkspaceUuid } from '@hcengineering/core'
 
-/** @public */
-export const pulseId = 'pulse' as Plugin
-
-/** @public */
-const pulsePlugin = plugin(pulseId, {
-  class: {
-    DocumentPresence: '' as Ref<Class<DocumentPresence>>,
-    TypingIndicator: '' as Ref<Class<TypingIndicator>>,
-    WorkspacesNotification: '' as Ref<Class<WorkspacesNotification>>
-  }
-})
-
-export default pulsePlugin
+export interface QueueOnlineUserTx {
+  workspaceUuid: WorkspaceUuid
+  tx: Tx
+  account: AccountUuid
+}

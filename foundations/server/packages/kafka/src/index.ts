@@ -15,14 +15,14 @@
 
 import { type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
 import {
-  QueueTopic,
   type ConsumerControl,
   type ConsumerHandle,
   type ConsumerMessage,
   type PlatformQueue,
-  type PlatformQueueProducer
+  type PlatformQueueProducer,
+  QueueTopic
 } from '@hcengineering/server-core'
-import { Kafka, Partitioners, type Consumer, type Producer, CompressionTypes, type Admin } from 'kafkajs'
+import { type Admin, CompressionTypes, type Consumer, Kafka, Partitioners, type Producer } from 'kafkajs'
 import type * as tls from 'tls'
 
 export interface QueueConfig {
@@ -189,6 +189,7 @@ class PlatformQueueImpl implements PlatformQueue {
       await admin.connect()
       const topics = new Set(await admin.listTopics())
       await this.checkCreateTopic(admin, QueueTopic.Tx, topics, tx)
+      await this.checkCreateTopic(admin, QueueTopic.OnlineUserTx, topics, tx)
       await this.checkCreateTopic(admin, QueueTopic.Fulltext, topics, 5)
       await this.checkCreateTopic(admin, QueueTopic.Workspace, topics, 1)
       await this.checkCreateTopic(admin, QueueTopic.Users, topics, 1)
@@ -225,6 +226,7 @@ class PlatformQueueImpl implements PlatformQueue {
         }
       } else {
         await this.checkDeleteTopic(admin, QueueTopic.Tx, existing)
+        await this.checkDeleteTopic(admin, QueueTopic.OnlineUserTx, existing)
         await this.checkDeleteTopic(admin, QueueTopic.Fulltext, existing)
         await this.checkDeleteTopic(admin, QueueTopic.Workspace, existing)
         await this.checkDeleteTopic(admin, QueueTopic.Users, existing)

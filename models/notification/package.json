@@ -51,6 +51,7 @@
     "@hcengineering/setting": "workspace:^0.7.0",
     "@hcengineering/ui": "workspace:^0.7.0",
     "@hcengineering/view": "workspace:^0.7.0",
-    "@hcengineering/workbench": "workspace:^0.7.0"
+    "@hcengineering/workbench": "workspace:^0.7.0",
+    "@hcengineering/retry": "workspace:^0.7.17"
   }
 }

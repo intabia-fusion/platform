@@ -93,13 +93,13 @@ import { createMentionsData, getMentionNotificationContent } from './mention'
 import { getReactionNotificationContent } from './reaction'
 
 class Workspace {
-  private readonly cache: WsCache
+  public readonly cache: WsCache
 
   private inProgress = false
-  private lastTxDate: Timestamp | undefined = undefined
+  private lastUpdate: Timestamp | undefined = Date.now()
 
   private readonly txFactory = new TxFactory(core.account.System, true)
-  private readonly client: Client
+  readonly client: Client
 
   private constructor (
     private readonly ctx: MeasureContext,
@@ -151,7 +151,7 @@ class Workspace {
     }
 
     if (res.length > 0) {
-      this.lastTxDate = tx.createdOn ?? tx.modifiedOn
+      this.lastUpdate = Date.now()
     }
 
     await this.applyTxes(res)
@@ -160,6 +160,8 @@ class Workspace {
   }
 
   private async applyTxes (txes: TxCUD<Doc>[]): Promise<void> {
+    if (txes.length === 0) return
+
     for (let i = 0; i < txes.length; i += config.ApplyTxBatchSize) {
       const batch = txes.slice(i, i + config.ApplyTxBatchSize)
       const txApply = this.txFactory.createTxApplyIf(
@@ -174,8 +176,7 @@ class Workspace {
       try {
         await this.rest.tx(txApply)
       } catch (e) {
-        console.error(e)
-        this.ctx.error('Failed to send tx batch', { tx: txApply, batchSize: batch.length })
+        this.ctx.error('Failed to send tx batch', { e, tx: txApply, batchSize: batch.length })
       }
     }
   }
@@ -805,7 +806,7 @@ class Workspace {
   }
 
   public getLastTxDate (): Timestamp | undefined {
-    return this.lastTxDate
+    return this.lastUpdate
   }
 
   static async create (

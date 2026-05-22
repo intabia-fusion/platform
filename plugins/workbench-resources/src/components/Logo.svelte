@@ -13,11 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createQuery, getFileSrcSet, getFileUrl } from '@hcengineering/presentation'
+  import { createQuery, getCurrentWorkspaceUuid, getFileSrcSet, getFileUrl } from '@hcengineering/presentation'
+  import { WorkspaceLogo } from '@hcengineering/ui'
   import setting, { WorkspaceSetting } from '@hcengineering/setting'
+
+  import { workspacesStore } from '../utils'
+  import { workspacesNotificationStore } from '../workbench'
 
   export let mini: boolean = false
   export let workspace: string
+
+  const currentWorkspaceUuid = getCurrentWorkspaceUuid()
+
   const wsSettingQuery = createQuery()
 
   let workspaceSetting: WorkspaceSetting | undefined = undefined
@@ -26,46 +33,12 @@
   })
   $: url = workspaceSetting?.icon != null ? getFileUrl(workspaceSetting.icon) : undefined
   $: srcset = workspaceSetting?.icon != null ? getFileSrcSet(workspaceSetting.icon, 128) : undefined
+
+  $: workspacesNotification = $workspacesNotificationStore
+
+  $: notify = $workspacesStore.some(
+    (it) => it.uuid !== currentWorkspaceUuid && workspacesNotification?.[it.uuid] === true
+  )
 </script>
 
-{#if workspaceSetting?.icon != null && url != null}
-  <img class="logo-medium" src={url} {srcset} alt={''} />
-{:else}
-  <div class="antiLogo red" class:mini>{workspace?.toUpperCase()?.[0] ?? ''}</div>
-{/if}
-
-<style lang="scss">
-  .antiLogo {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-shrink: 0;
-    font-weight: 500;
-    color: var(--primary-button-color);
-    border-radius: 0.25rem;
-    outline: none;
-    cursor: pointer;
-
-    &:hover {
-      opacity: 0.8;
-    }
-    &:not(.mini) {
-      width: 2rem;
-      height: 2rem;
-    }
-    &.mini {
-      width: 1.75rem;
-      height: 1.75rem;
-    }
-    &.red {
-      background-color: rgb(246, 105, 77);
-    }
-  }
-  .logo-medium {
-    outline: none;
-    cursor: pointer;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 0.25rem;
-  }
-</style>
+<WorkspaceLogo name={workspace ?? ''} {mini} logoUrl={url} logoSrcset={srcset} accent {notify} />

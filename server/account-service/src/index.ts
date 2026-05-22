@@ -31,14 +31,15 @@ import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import os from 'os'
-
 import { getPlatformQueue } from '@hcengineering/kafka'
-import { QueueTopic } from '@hcengineering/server-core'
-import { randomBytes } from 'crypto'
+import { QueueTopic, type QueueUserMessage, type QueueOnlineUserTx } from '@hcengineering/server-core'
+import { randomBytes } from 'node:crypto'
 
+import { handlePresenceBatch } from './presence'
 export * from './migration/utils'
 export * from './migration/types'
 
+const SERVICE_ID = 'account'
 const AUTH_TOKEN_COOKIE = 'account-metadata-Token'
 
 const KEEP_ALIVE_HEADERS = {
@@ -96,7 +97,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     process.exit(1)
   }
 
-  const platformQueue = getPlatformQueue('account')
+  const platformQueue = getPlatformQueue(SERVICE_ID)
 
   const notificationProducer = platformQueue.getProducer<AccountNotification>(measureCtx, QueueTopic.NotificationQueue)
   setMetadata(accountPlugin.metadata.MailQueue, notificationProducer)
@@ -151,6 +152,21 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
   const dbNs = process.env.DB_NS
   const accountsDb = getAccountDB(dbUrl, dbNs)
+
+  const onlineUserTxProducer = platformQueue.getProducer<QueueOnlineUserTx>(
+    measureCtx.newChild('online-user-tx-producer', {}, { span: false }),
+    QueueTopic.OnlineUserTx
+  )
+
+  const usersConsumer = platformQueue.createBatchConsumer<QueueUserMessage>(
+    measureCtx.newChild('users-consumer', {}, { span: false }),
+    QueueTopic.Users,
+    'presence-tracker',
+    async (ctx, msgs) => {
+      await handlePresenceBatch(ctx, msgs, accountsDb, onlineUserTxProducer)
+    },
+    { batchSize: 500, batchTimeout: 1000 }
+  )
 
   const app = new Koa()
   const router = new Router()
@@ -579,6 +595,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     onClose?.()
     void notificationProducer.close()
     void crmProducer.close()
+    void usersConsumer.close()
     void platformQueue.shutdown()
     void accountsDb.then(([, closeAccountsDb]) => {
       closeAccountsDb()

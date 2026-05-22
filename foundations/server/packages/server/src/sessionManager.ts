@@ -38,6 +38,7 @@ import core, {
   platformNowDiff,
   readOnlyGuestAccountUuid,
   SocialIdType,
+  systemAccount,
   systemAccountUuid,
   type Class,
   type Doc,
@@ -79,11 +80,13 @@ import {
   type PipelineFactory,
   type PlatformQueue,
   type PlatformQueueProducer,
+  type QueueOnlineUserTx,
   QueueTopic,
   type QueueUserMessage,
   QueueWorkspaceEvent,
   type QueueWorkspaceMessage,
   type Session,
+  SessionDataImpl,
   type SessionHealth,
   type SessionManager,
   userEvents,
@@ -131,6 +134,7 @@ export class TSessionManager implements SessionManager {
   workspaceProducer: PlatformQueueProducer<QueueWorkspaceMessage>
   usersProducer: PlatformQueueProducer<QueueUserMessage>
   workspaceConsumer: ConsumerHandle
+  onlineUserTxConsumer: ConsumerHandle
 
   ticksContext: MeasureContext
 
@@ -177,6 +181,38 @@ export class TSessionManager implements SessionManager {
           // Handle workspace messages
           this.workspaceInfoCache.delete(msg.workspace)
         }
+      }
+    )
+
+    this.onlineUserTxConsumer = this.queue.createConsumer<QueueOnlineUserTx>(
+      ctx.newChild('transactor-online-user-tx-consumer', {}, { span: false }),
+      QueueTopic.OnlineUserTx,
+      'transactor-online-user-tx',
+      async (ctx, msg) => {
+        const { workspaceUuid, tx, account } = msg.value
+        const workspace = this.workspaces.get(workspaceUuid)
+        if (workspace == null) return
+
+        const session = this.getUserSession(workspaceUuid, account)
+        if (session == null) return
+
+        await workspace.with(async (pipeline) => {
+          ctx.contextData = new SessionDataImpl(
+            systemAccount,
+            'online-user-tx',
+            true,
+            { txes: [], targets: {}, queue: [], sessions: {} },
+            workspace.wsId,
+            true,
+            undefined,
+            undefined,
+            pipeline.context.modelDb,
+            new Map(),
+            'transactor'
+          )
+          await pipeline.tx(ctx, [tx])
+          await pipeline.handleBroadcast(ctx)
+        })
       }
     )
 
@@ -505,6 +541,12 @@ export class TSessionManager implements SessionManager {
       .reduce<number>((acc) => acc + 1, 0)
   }
 
+  getUserSession (workspaceUuid: WorkspaceUuid, accountUuid: AccountUuid): Session | undefined {
+    const workspace = this.workspaces.get(workspaceUuid)
+    if (workspace == null) return undefined
+    return Array.from(workspace.sessions.values()).find((it) => it.session.getUser() === accountUuid)?.session
+  }
+
   checkHealth (): SessionHealth {
     const now = Date.now()
 
@@ -797,7 +839,8 @@ export class TSessionManager implements SessionManager {
             userEvents.login({
               user: accountUuid,
               sessions: this.countUserSessions(workspace, accountUuid),
-              socialIds: account.socialIds.map((it) => it._id)
+              socialIds: account.socialIds.map((it) => it._id),
+              timestamp: Date.now()
             })
           ])
         }
@@ -1150,7 +1193,8 @@ export class TSessionManager implements SessionManager {
           userEvents.logout({
             user: userUuid,
             sessions: this.countUserSessions(workspace, userUuid),
-            socialIds: sessionRef.session.getUserSocialIds()
+            socialIds: sessionRef.session.getUserSocialIds(),
+            timestamp: Date.now()
           })
         ])
 
@@ -1281,6 +1325,7 @@ export class TSessionManager implements SessionManager {
 
   async closeWorkspaces (ctx: MeasureContext): Promise<void> {
     clearInterval(this.checkInterval)
+
     for (const w of this.workspaces) {
       await this.doCloseAll(w[1], 1, 'shutdown')
     }

@@ -17,7 +17,7 @@
   const notificationsClient = InboxNotificationsClientImpl.getClient()
   const contextByDocStore = notificationsClient.contextByDoc
 
-  const query = createQuery(true)
+  const query = createQuery()
   let context: DocNotifyContext | undefined = undefined
 
   $: object = Array.isArray(value) ? value[0] : value

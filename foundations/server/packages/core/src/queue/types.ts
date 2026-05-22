@@ -4,6 +4,9 @@ export enum QueueTopic {
   // Topic with partitions to split workspace transactions into
   Tx = 'tx',
 
+  // Topic for transactions to be processed by the transactor pipeline for online users
+  OnlineUserTx = 'online-user-tx',
+
   // Topic to send workspace information into
   Workspace = 'workspace',
 

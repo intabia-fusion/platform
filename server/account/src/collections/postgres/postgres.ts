@@ -53,6 +53,7 @@ import type {
   Subscription,
   DBFlavor,
   WorkspacePermission,
+  AccountWorkspaceBadgeStatus,
   ShortLink
 } from '../../types'
 
@@ -543,6 +544,7 @@ export class PostgresAccountDB implements AccountDB {
   userProfile: PostgresDbCollection<UserProfile, 'personUuid'>
   subscription: PostgresDbCollection<Subscription, 'id'>
   workspacePermission: PostgresDbCollection<WorkspacePermission>
+  accountWorkspaceBadgeStatus: PostgresDbCollection<AccountWorkspaceBadgeStatus>
 
   constructor (
     readonly client: Sql,
@@ -618,6 +620,15 @@ export class PostgresAccountDB implements AccountDB {
       timestampFields: ['createdOn'],
       withRetryClient
     })
+    this.accountWorkspaceBadgeStatus = new PostgresDbCollection<AccountWorkspaceBadgeStatus>(
+      'account_workspace_badge_status',
+      client,
+      {
+        ns,
+        timestampFields: ['updatedOn'],
+        withRetryClient
+      }
+    )
   }
 
   getWsMembersTableName (): string {
@@ -1367,5 +1378,54 @@ export class PostgresAccountDB implements AccountDB {
       permission
     })
     return results.map((r) => r.accountUuid)
+  }
+
+  async getAccountWorkspaceBadgeStatuses (accountId: AccountUuid): Promise<AccountWorkspaceBadgeStatus[]> {
+    return await this.accountWorkspaceBadgeStatus.find({ accountUuid: accountId })
+  }
+
+  async setAccountWorkspaceBadgeStatus (
+    accountId: AccountUuid,
+    workspaceId: WorkspaceUuid,
+    hasUnread: boolean
+  ): Promise<void> {
+    const updatedOn = Date.now()
+    const sql = `
+      INSERT INTO ${this.accountWorkspaceBadgeStatus.getTableName()} (account_uuid, workspace_uuid, has_unread, updated_on)
+      SELECT $1::uuid, $2::uuid, $3::boolean, $4::bigint
+      WHERE EXISTS (
+        SELECT 1 FROM ${this.getWsMembersTableName()} wm 
+        WHERE wm.account_uuid = $1::uuid AND wm.workspace_uuid = $2::uuid
+      )
+      ON CONFLICT (account_uuid, workspace_uuid) DO UPDATE SET has_unread = EXCLUDED.has_unread, updated_on = EXCLUDED.updated_on
+    `
+    await this.accountWorkspaceBadgeStatus.unsafe(sql, [accountId, workspaceId, hasUnread, updatedOn])
+  }
+
+  async batchWorkspaceBadgeStatuses (
+    data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>
+  ): Promise<void> {
+    if (data.length === 0) return
+    const updatedOn = Date.now()
+
+    const values: any[] = []
+    const rows = data
+      .map((d: any, i: number) => {
+        values.push(d.accountId, d.workspaceId, d.hasUnread, updatedOn)
+        return `($${i * 4 + 1}::uuid, $${i * 4 + 2}::uuid, $${i * 4 + 3}::boolean, $${i * 4 + 4}::bigint)`
+      })
+      .join(', ')
+
+    const sql = `
+      INSERT INTO ${this.accountWorkspaceBadgeStatus.getTableName()} (account_uuid, workspace_uuid, has_unread, updated_on)
+      SELECT v.account_uuid, v.workspace_uuid, v.has_unread, v.updated_on
+      FROM (VALUES ${rows}) AS v(account_uuid, workspace_uuid, has_unread, updated_on)
+      WHERE EXISTS (
+        SELECT 1 FROM ${this.getWsMembersTableName()} wm 
+        WHERE wm.account_uuid = v.account_uuid AND wm.workspace_uuid = v.workspace_uuid
+      )
+      ON CONFLICT (account_uuid, workspace_uuid) DO UPDATE SET has_unread = EXCLUDED.has_unread, updated_on = EXCLUDED.updated_on
+    `
+    await this.accountWorkspaceBadgeStatus.unsafe(sql, values)
   }
 }
