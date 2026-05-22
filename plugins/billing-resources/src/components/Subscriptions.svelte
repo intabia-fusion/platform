@@ -47,7 +47,7 @@
   export let isReadOnly: boolean = false
 
   let tariffConfigRaw: TariffConfig | null = null
-  $: tariffConfig = (tariffConfigRaw != null) ? resolveLocale(tariffConfigRaw, $themeStore.language) : null
+  $: tariffConfig = tariffConfigRaw != null ? resolveLocale(tariffConfigRaw, $themeStore.language) : null
   $: tariffs = tariffConfig?.tariffs ?? ({} satisfies Record<string, TariffItem>)
   $: tariffsByPlan = Object.values(tariffs).reduce<Record<string, TariffItem>>((acc, t) => {
     acc[t.plan] = t

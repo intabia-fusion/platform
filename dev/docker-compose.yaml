@@ -225,6 +225,7 @@ services:
       - ACCOUNTS_URL=http://account:3000
       - FRONT_URL=http://localhost:8087
       - USE_SANDBOX=true
+      - PROVIDER=tbank
       - TBANK_SUBSCRIPTIONS_URL=http://tbank-subscriptions:4042
       # Polar configuration (uncomment if using Polar)
       # - POLAR_ACCESS_TOKEN=${POLAR_ACCESS_TOKEN}
