@@ -58,6 +58,18 @@ export class IdentityMiddleware extends BaseMiddleware implements Middleware {
     function checkTx (tx: Tx): void {
       const mxAccount = ctx.contextData.socialStringsToUsers.get(tx.modifiedBy)?.accountUuid
       if (mxAccount === undefined || mxAccount !== account.uuid) {
+        const cud = tx as any
+        ctx.warn('AccountMismatch on tx', {
+          account: account.uuid,
+          requiredAccount: mxAccount,
+          modifiedBy: tx.modifiedBy,
+          txClass: tx._class,
+          txId: tx._id,
+          objectClass: cud.objectClass,
+          objectId: cud.objectId,
+          mapSize: ctx.contextData.socialStringsToUsers.size,
+          accountSocialIds: account.socialIds
+        })
         throw new PlatformError(
           new Status(Severity.ERROR, platform.status.AccountMismatch, {
             account: account.uuid,

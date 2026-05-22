@@ -113,7 +113,7 @@ export class WorkspaceClient {
     this.client = connectPlatform(this.token, this.wsIds.uuid, this.transactorUrl)
     this.primarySocialId = pickPrimarySocialId(this.socialIds)
     if (this.collaboratorEndpoint !== undefined && this.collaboratorEndpoint !== '') {
-      console.log('create collaborator client', this.collaboratorEndpoint)
+      this.ctx.info('create collaborator client', { endpoint: this.collaboratorEndpoint })
       this.collaborator = getCollaboratorClient(this.wsIds.uuid, this.token, this.collaboratorEndpoint)
     }
     this.initPromise = this.initClient()
