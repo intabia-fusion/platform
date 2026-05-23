@@ -21,6 +21,7 @@ const path = require('path')
 const CompressionPlugin = require('compression-webpack-plugin')
 const DefinePlugin = require('webpack').DefinePlugin
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const { Configuration } = require('webpack')
 
 const mode = process.env.NODE_ENV || 'development'
@@ -315,9 +316,30 @@ const proxy = {
 /**
  * @type {Configuration}
  */
+const cacheConfig = (name) => useCache
+  ? {
+    type: 'filesystem',
+    allowCollectingMemory: true,
+    compression: 'gzip',
+    cacheLocation: path.resolve(__dirname, `.build_dev/${name}`),
+    buildDependencies: {
+      config: [__filename, path.resolve(__dirname, 'package.json')]
+    }
+  }
+  : false
+
+const snapshotConfig = {
+  managedPaths: [path.resolve(__dirname, '../../node_modules'), path.resolve(__dirname, 'node_modules')],
+  buildDependencies: { hash: true, timestamp: false },
+  module: { hash: true, timestamp: false },
+  resolve: { hash: true, timestamp: false }
+}
+
 module.exports = [
   {
     mode: dev ? 'development' : mode,
+    cache: cacheConfig('sw'),
+    snapshot: snapshotConfig,
     entry: {
       serviceWorker: '@hcengineering/notification/src/serviceWorker.ts'
     },
@@ -329,7 +351,7 @@ module.exports = [
           use: {
             loader: 'esbuild-loader',
             options: {
-              target: 'es2021',
+              target: 'es2022',
               keepNames: true,
               minify: prod,
               sourcemap: !prod
@@ -343,7 +365,8 @@ module.exports = [
       filename: '[name].js',
       chunkFilename: '[name].js',
       publicPath: '/',
-      pathinfo: false
+      pathinfo: false,
+      hashFunction: 'xxhash64'
     },
     resolve: {
       extensions: ['.ts', '.js'],
@@ -351,13 +374,9 @@ module.exports = [
     }
   },
   {
-    cache: useCache
-      ? {
-          type: 'filesystem',
-          allowCollectingMemory: true,
-          cacheLocation: path.resolve(__dirname, '.build_dev')
-        }
-      : undefined,
+    cache: cacheConfig('main'),
+    snapshot: snapshotConfig,
+    parallelism: 100,
     entry: {
       bundle: ['@hcengineering/theme/styles/global.scss',
         ...(dev ? ['./src/main-dev.ts'] : ['./src/main.ts'])
@@ -388,7 +407,8 @@ module.exports = [
       filename: '[name].[contenthash].js',
       publicPath: '/',
       pathinfo: false,
-      asyncChunks: true
+      asyncChunks: true,
+      hashFunction: 'xxhash64'
     },
     optimization: {
       minimize: prod,
@@ -450,7 +470,7 @@ module.exports = [
             priority: -5,
             enforce: true,
             reuseExistingChunk: true,
-            name (module, chunks, cacheGroupKey) {
+            name(module, chunks, cacheGroupKey) {
               // Extract language code from path (e.g., /lang/en.json -> en)
               const match = module.resource?.match(/[\\/]lang[\\/]([a-z-]+)\.json$/)
               const lang = match ? match[1] : 'unknown'
@@ -463,7 +483,7 @@ module.exports = [
             type: 'json',
             priority: 3,
             reuseExistingChunk: true,
-            name (module, chunks, cacheGroupKey) {
+            name(module, chunks, cacheGroupKey) {
               // Extract language from path: emojibase-data/en/data.json -> emoji-data-en
               const match = module.resource?.match(/emojibase-data[\\/]([a-z-]+)[\\/]/)
               const lang = match ? match[1] : 'unknown'
@@ -494,7 +514,7 @@ module.exports = [
           test: /\.ts?$/,
           loader: 'esbuild-loader',
           options: {
-            target: 'es2021',
+            target: 'es2022',
             keepNames: true,
             minify: prod,
             sourcemap: true
@@ -552,8 +572,7 @@ module.exports = [
         {
           test: /\.css$/,
           use: [
-            // prod ? MiniCssExtractPlugin.loader :
-            'style-loader',
+            prod ? MiniCssExtractPlugin.loader : 'style-loader',
             'css-loader',
             'postcss-loader'
           ]
@@ -562,8 +581,7 @@ module.exports = [
         {
           test: /\.scss$/,
           use: [
-            // prod ? MiniCssExtractPlugin.loader :
-            'style-loader',
+            prod ? MiniCssExtractPlugin.loader : 'style-loader',
             'css-loader',
             'postcss-loader',
             {
@@ -633,7 +651,7 @@ module.exports = [
     },
     mode,
     plugins: [
-      ...(doAnalyze ? [new StatoscopeWebpackPlugin()]: []),
+      ...(doAnalyze ? [new StatoscopeWebpackPlugin()] : []),
       // ...(doAnalyze
       //   ? [
       //       new BundleAnalyzerPlugin({
@@ -647,23 +665,25 @@ module.exports = [
           viewport: 'width=device-width, initial-scale=1.0'
         }
       }),
+      ...(prod
+        ? [new MiniCssExtractPlugin({
+          filename: '[name].[contenthash].css',
+          chunkFilename: '[name].[contenthash].css'
+        })]
+        : []),
       ...(doCompression
         ? [
-            new CompressionPlugin({
-              filename: '[path][base].gz',
-              algorithm: 'gzip',
-            }),
-            new CompressionPlugin({
-              filename: '[path][base].br',
-              algorithm: 'brotliCompress',
-              compressionOptions: { level: 11 }
-            })
-          ]
+          new CompressionPlugin({
+            filename: '[path][base].gz',
+            algorithm: 'gzip',
+          }),
+          new CompressionPlugin({
+            filename: '[path][base].br',
+            algorithm: 'brotliCompress',
+            compressionOptions: { level: 11 }
+          })
+        ]
         : []),
-      // ...(doCompression ? [new CompressionPlugin()] : []),
-      // new MiniCssExtractPlugin({
-      //   filename: '[name].[id][contenthash].css'
-      // }),
       new Dotenv({ path: prod ? '.env-prod' : '.env' }),
       new DefinePlugin({
         'process.env.CLIENT_TYPE': JSON.stringify(process.env.CLIENT_TYPE)
