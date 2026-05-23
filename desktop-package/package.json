@@ -4,6 +4,9 @@
   "main": "dist/main/electron.js",
   "author": "Intabia Fusion <platform@intabia.ru>",
   "template": "@hcengineering/default-package",
+  "fastBuild": {
+    "extraHashPaths": ["../desktop/dist", "../desktop/.env"]
+  },
   "scripts": {
     "_phase:package": "rushx package",
     "package": "rm -rf ./dist && cp -r ../desktop/dist . && cp ../desktop/.env ./dist && echo 'done'",

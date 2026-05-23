@@ -7,6 +7,9 @@
   "author": "Anticrm Platform Contributors",
   "template": "@hcengineering/node-package",
   "license": "EPL-2.0",
+  "fastBuild": {
+    "extraHashPaths": ["../../dev/prod/dist", "../../dev/prod/public"]
+  },
   "scripts": {
     "build": "compile",
     "build:watch": "compile",

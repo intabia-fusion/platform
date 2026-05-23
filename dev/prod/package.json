@@ -3,6 +3,9 @@
   "version": "1.0.1",
   "template": "@hcengineering/webpack-package",
   "license": "EPL-2.0",
+  "fastBuild": {
+    "extraHashFiles": ["webpack.config.js", "postcss.config.js", ".browserslistrc"]
+  },
   "scripts": {
     "_phase:package": "rushx package",
     "_phase:validate": "rm -rf ./types && compile validate",
