@@ -465,8 +465,8 @@ export class AIControl {
       }
       const collabDoc = { objectClass: meeting._class, objectId: meeting._id, objectAttr: 'summary' }
       try {
-        // Doc is live in hocuspocus when UI has it open → createContent throws "already exists".
-        // Fall back to updateMarkup; hocuspocus persists blobId on unload.
+        // Prefer updateMarkup: doc may be live in hocuspocus (UI open) and createMarkup would throw "already exists".
+        // On failure (no existing blob yet), fall back to createMarkup and persist blobRef on the meeting.
         await wsClient.collaborator.updateMarkup(collabDoc, summaryMarkup)
       } catch (err: any) {
         try {
