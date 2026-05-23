@@ -97,6 +97,15 @@ const HangLogTimeout = 5 * 60 * 1000 // 5 minutes
 // Repeat hang warn no more often than this for the same request.
 const HangLogInterval = 5 * 60 * 1000 // 5 minutes
 
+// Retry pacing for round-robin requests when sessions reject calls.
+// We start at 100ms and grow exponentially up to a 5s cap so that idle/error loops
+// (e.g. clients failing to reach an external service) don't burn CPU.
+const RetryBackoffStartMs = 100
+const RetryBackoffMaxMs = 5000
+const RetryBackoffFactor = 1.5
+// Throttle retry warn logs to avoid flooding when a request is stuck.
+const RetryLogIntervalMs = 5000
+
 // Operation status check threshold: if a server->client operation has been executing
 // longer than this, server will query the client whether it is still executing the operation.
 const OpStatusTimeout = 5 * 1000 // 5 seconds
@@ -136,6 +145,9 @@ export class ClisrServer {
   wss?: WebSocketServer
   httpServer?: http.Server
   private tickTimer?: ReturnType<typeof setInterval>
+  // Set to true by close(); long-running retry loops observe it to exit cleanly
+  // instead of spinning forever after the server is shut down.
+  private closed = false
 
   // Tunables (overridable for tests). Defaults match the production constants.
   pingTimeout = PingTimeout
@@ -144,6 +156,38 @@ export class ClisrServer {
   hangLogTimeout = HangLogTimeout
   hangLogInterval = HangLogInterval
   tickIntervalMs = 1000
+  retryBackoffStartMs = RetryBackoffStartMs
+  retryBackoffMaxMs = RetryBackoffMaxMs
+  retryBackoffFactor = RetryBackoffFactor
+
+  // Promise that resolves when close() is called. Used to make retry sleeps
+  // interruptible so shutdown does not wait for the full backoff window.
+  private closeWaiters: Array<() => void> = []
+
+  private nextBackoff (current: number): number {
+    return Math.min(Math.floor(current * this.retryBackoffFactor), this.retryBackoffMaxMs)
+  }
+
+  // Sleep for `ms` or until close() fires, whichever comes first.
+  private async sleepInterruptible (ms: number): Promise<void> {
+    if (this.closed) return
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(() => {
+        const idx = this.closeWaiters.indexOf(onClose)
+        if (idx >= 0) this.closeWaiters.splice(idx, 1)
+        resolve()
+      }, ms)
+      const onClose = (): void => {
+        clearTimeout(timer)
+        resolve()
+      }
+      this.closeWaiters.push(onClose)
+    })
+  }
+
+  private isClosedError (err: any): boolean {
+    return err?.code === 'SERVER_CLOSED'
+  }
 
   constructor (
     readonly ctx: MeasureContext,
@@ -353,7 +397,15 @@ export class ClisrServer {
   ): Promise<any> {
     let attempt = 0
     let lastNoSessionsLog = 0
+    let lastRetryLog = 0
+    let waitDelay = this.retryBackoffStartMs
+    let retryDelay = this.retryBackoffStartMs
     while (true) {
+      if (this.closed) {
+        const err = new Error('server is closed')
+        ;(err as any).code = 'SERVER_CLOSED'
+        throw err
+      }
       // Keep trying indefinitely
       let sessions = Array.from(this.sessions.values())
       if (sessionFilter !== undefined) {
@@ -361,28 +413,50 @@ export class ClisrServer {
       }
       if (sessions.length === 0) {
         const now = Date.now()
-        if (now - lastNoSessionsLog > 5000) {
+        if (now - lastNoSessionsLog > RetryLogIntervalMs) {
           lastNoSessionsLog = now
-          ctx.warn('request waiting for available client', { method, attempt })
+          ctx.warn('request waiting for available client', { method, attempt, delayMs: waitDelay })
         }
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await this.sleepInterruptible(waitDelay)
+        waitDelay = this.nextBackoff(waitDelay)
         continue
       }
+      // Reset wait-for-session backoff once sessions are available.
+      waitDelay = this.retryBackoffStartMs
 
       attempt++
       const num = this.cindex++
       const s = sessions[num % sessions.length]
       const clientInfo = s.clientHost ?? s.sessionId
       try {
-        return await ctx.with(method, {}, (ctx) =>
+        const res = await ctx.with(method, {}, (ctx) =>
           this.sendRequest(s, {
             method,
             params
           })
         )
+        return res
       } catch (err: any) {
-        ctx.warn('request retry', { method, attempt, client: clientInfo, error: err.message })
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        // Shutdown short-circuit: do not retry/log/sleep after the server is closed.
+        if (this.closed || this.isClosedError(err)) {
+          if (this.isClosedError(err)) throw err
+          const closedErr = new Error('server is closed')
+          ;(closedErr as any).code = 'SERVER_CLOSED'
+          throw closedErr
+        }
+        const now = Date.now()
+        if (now - lastRetryLog > RetryLogIntervalMs) {
+          lastRetryLog = now
+          ctx.warn('request retry', {
+            method,
+            attempt,
+            client: clientInfo,
+            error: err.message,
+            delayMs: retryDelay
+          })
+        }
+        await this.sleepInterruptible(retryDelay)
+        retryDelay = this.nextBackoff(retryDelay)
         continue
       }
     }
@@ -474,21 +548,32 @@ export class ClisrServer {
   ): Promise<T> {
     let attempt = 0
     let lastNoSessionsLog = 0
+    let lastRetryLog = 0
+    let waitDelay = this.retryBackoffStartMs
+    let retryDelay = this.retryBackoffStartMs
     while (true) {
+      if (this.closed) {
+        const err = new Error('server is closed')
+        ;(err as any).code = 'SERVER_CLOSED'
+        throw err
+      }
       let sessions = Array.from(this.sessions.values())
       if (sessionCheck !== undefined) {
         sessions = sessions.filter(sessionCheck)
       }
       if (sessions.length === 0) {
         const now = Date.now()
-        // Throttle "no clients" warning to once per 5s to avoid log spam.
-        if (now - lastNoSessionsLog > 5000) {
+        // Throttle "no clients" warning to avoid log spam.
+        if (now - lastNoSessionsLog > RetryLogIntervalMs) {
           lastNoSessionsLog = now
-          ctx.warn('binary request waiting for available client', { method, attempt })
+          ctx.warn('binary request waiting for available client', { method, attempt, delayMs: waitDelay })
         }
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await this.sleepInterruptible(waitDelay)
+        waitDelay = this.nextBackoff(waitDelay)
         continue
       }
+      // Reset wait-for-session backoff once sessions are available.
+      waitDelay = this.retryBackoffStartMs
 
       attempt++
       const num = this.cindex++
@@ -498,13 +583,26 @@ export class ClisrServer {
       try {
         return await this.sendBinaryRequest<T>(s, method, data, headers)
       } catch (err: any) {
-        ctx.warn('binary request retry', {
-          method,
-          attempt,
-          client: clientInfo,
-          error: err.message
-        })
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        // Shutdown short-circuit: do not retry/log/sleep after the server is closed.
+        if (this.closed || this.isClosedError(err)) {
+          if (this.isClosedError(err)) throw err
+          const closedErr = new Error('server is closed')
+          ;(closedErr as any).code = 'SERVER_CLOSED'
+          throw closedErr
+        }
+        const now = Date.now()
+        if (now - lastRetryLog > RetryLogIntervalMs) {
+          lastRetryLog = now
+          ctx.warn('binary request retry', {
+            method,
+            attempt,
+            client: clientInfo,
+            error: err.message,
+            delayMs: retryDelay
+          })
+        }
+        await this.sleepInterruptible(retryDelay)
+        retryDelay = this.nextBackoff(retryDelay)
         continue
       }
     }
@@ -926,10 +1024,38 @@ export class ClisrServer {
   }
 
   async close (): Promise<void> {
+    this.closed = true
+    // Wake up any retry loop sleeping on sleepInterruptible so they observe
+    // `this.closed` immediately instead of after the full backoff window.
+    const waiters = this.closeWaiters
+    this.closeWaiters = []
+    for (const w of waiters) {
+      try {
+        w()
+      } catch (_e) {}
+    }
     if (this.tickTimer !== undefined) {
       clearInterval(this.tickTimer)
       this.tickTimer = undefined
     }
+    // Reject any in-flight requests so callers (including those waiting in the
+    // round-robin retry loop with `await sendRequest(...)`) get a synchronous
+    // rejection on shutdown instead of dangling forever.
+    for (const [rid, r] of this.requests) {
+      this.requests.delete(rid)
+      const err = new Error('server is closed')
+      ;(err as any).code = 'SERVER_CLOSED'
+      r.reject(err)
+    }
+    for (const session of this.sessions.values()) {
+      session.requests.clear()
+      try {
+        session.socket.close()
+      } catch (_e) {}
+    }
+    this.sessions.clear()
+    this.bySessionId.clear()
+    this.reconnectQueue.clear()
     if (this.wss !== undefined) {
       const wss = this.wss
       await new Promise<void>((resolve, reject) => {
