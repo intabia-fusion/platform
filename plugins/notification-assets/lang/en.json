@@ -47,6 +47,8 @@
     "Unsubscribe": "Unsubscribe",
     "Push": "Push",
     "Unreads": "Unreads",
+    "HasNewNotifications": "You have new notifications",
+    "UnreadNotificationsCount": "{count, plural, =1 {# unread notification} other {# unread notifications}}",
     "EnablePush": "Enable push notifications",
     "NotificationBlockedInBrowser": "Notifications are blocked in your browser. Please enable notifications in your browser settings",
     "General": "General",

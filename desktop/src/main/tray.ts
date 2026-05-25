@@ -23,7 +23,8 @@ export class TrayController {
   private tray: Tray | undefined = undefined
   private readonly defaultIcon: NativeImage
   private readonly notificationIcon: NativeImage
-  private badgeCount: number = 0
+  private badgeCount: number | string = 0
+  private badgeTooltip?: string
 
   constructor (
     private readonly settings: Settings,
@@ -41,14 +42,18 @@ export class TrayController {
     }
   }
 
-  public updateTrayBadge (count: number): void {
+  public updateTrayBadge (count: number | string, tooltip?: string): void {
     const countChanged = this.badgeCount !== count
+    const tooltipChanged = this.badgeTooltip !== tooltip
+
     this.badgeCount = count
-    if (!countChanged) {
+    this.badgeTooltip = tooltip
+
+    if (!countChanged && !tooltipChanged) {
       return
     }
 
-    this.evaluateIcon(count)
+    this.evaluateIcon(count, tooltip)
   }
 
   public setMinimizeToTrayEnabled (enabled: boolean): void {
@@ -82,16 +87,16 @@ export class TrayController {
       },
       this.defaultIcon
     )
-    this.evaluateIcon(this.badgeCount)
+    this.evaluateIcon(this.badgeCount, this.badgeTooltip)
   }
 
-  private evaluateIcon (badgeCount: number): void {
+  private evaluateIcon (badgeCount: number | string, tooltip?: string): void {
     if (this.tray == null) {
       return
     }
 
-    const iconInfo = getBadgeIconInfo(badgeCount, BASE_TITLE)
-    if (badgeCount > 0) {
+    const iconInfo = getBadgeIconInfo(badgeCount, BASE_TITLE, tooltip)
+    if (iconInfo.fileName !== '') {
       const iconFilePath = getFileInPublicBundledFolder(iconInfo.fileName)
       const icon = nativeImage.createFromPath(iconFilePath)
       this.tray.setImage(icon)

@@ -84,7 +84,9 @@
     "JustMentions": "Solo menciones",
     "Mute": "Silenciar",
     "Appearance": "Apariencia",
-    "ShowChatBadge": "Mostrar insignia de chat"
+    "ShowChatBadge": "Mostrar insignia de chat",
+    "HasNewNotifications": "You have new notifications",
+    "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}"
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",
