@@ -178,6 +178,7 @@ export interface TxNotificationType extends NotificationType {
   field?: string
   attrTypes?: Ref<Class<Type<Doc>>>[]
   match?: DocumentQuery<Tx>
+  attachToParent?: boolean
 }
 
 export interface NotificationProvider extends Doc {
