@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { themeStore as themeOptions } from '@hcengineering/theme'
-  import { afterUpdate, beforeUpdate, createEventDispatcher, onDestroy, onMount } from 'svelte'
+  import { afterUpdate, beforeUpdate, createEventDispatcher, onDestroy, onMount, tick } from 'svelte'
   import { resizeObserver } from '../resize'
   import { closeTooltip, tooltipstore } from '../tooltips'
   import type { FadeOptions, ScrollParams, MouseTargetEvent } from '../types'
@@ -65,10 +65,9 @@
   export function scrollBy (top: number, left?: number, behavior: 'auto' | 'smooth' = 'auto') {
     if (divScroll) {
       if (top !== 0) divScroll.scrollBy({ top, left: 0, behavior })
-      if (left !== 0 || left !== undefined) divScroll.scrollBy({ top: 0, left, behavior })
+      if (left !== 0 && left !== undefined) divScroll.scrollBy({ top: 0, left, behavior })
     }
   }
-
   const dispatch = createEventDispatcher()
   const stepScroll = 52
 
@@ -297,8 +296,19 @@
   const checkFade = (): void => {
     delayCall(_checkFade)
   }
+  const refreshBars = (): void => {
+    if (!isScrollingByBar) {
+      checkBar()
+    }
+    if (!isScrollingByBar && horizontal) {
+      checkBarH()
+    }
+  }
   const _checkFade = (): void => {
+    let maskChanged = false
     if (divScroll) {
+      const prevMask = mask
+      const prevMaskH = maskH
       beforeContent = divScroll.scrollTop
       belowContent = divScroll.scrollHeight - divScroll.clientHeight - beforeContent
       if (beforeContent > 2 && belowContent > 2) mask = 'both'
@@ -318,13 +328,14 @@
         checkIntersectionFade()
       }
       renderFade()
+      maskChanged = mask !== prevMask || maskH !== prevMaskH
     }
 
-    if (!isScrollingByBar) {
-      checkBar()
-    }
-    if (!isScrollingByBar && horizontal) {
-      checkBarH()
+    // bar nodes are {#if mask}-gated; on transition wait tick for them to render
+    if (maskChanged) {
+      void tick().then(refreshBars)
+    } else {
+      refreshBars()
     }
   }
 
@@ -427,10 +438,36 @@
   }
 
   let observer: IntersectionObserver
+  // .box is clamped by parent flex; observe first slot child to catch inner growth
+  let innerObserver: ResizeObserver | undefined
+  let innerMutObserver: MutationObserver | undefined
+  let observedInner: Element | undefined
+  const attachInnerObserver = (): void => {
+    if (divBox == null) return
+    // skip bottomStart spacer (rendered before <slot />)
+    const offset = bottomStart ? 1 : 0
+    const child = divBox.children[offset] ?? undefined
+    if (child === observedInner) return
+    if (observedInner !== undefined && innerObserver !== undefined) {
+      innerObserver.unobserve(observedInner)
+    }
+    observedInner = child
+    if (child !== undefined && innerObserver !== undefined) {
+      innerObserver.observe(child)
+    }
+  }
   onMount(() => {
     if (divScroll && divBox) {
       divScroll.addEventListener('wheel', wheelEvent)
       divScroll.addEventListener('scroll', checkFade)
+      innerObserver = new ResizeObserver(() => {
+        checkFade()
+      })
+      attachInnerObserver()
+      innerMutObserver = new MutationObserver(() => {
+        attachInnerObserver()
+      })
+      innerMutObserver.observe(divBox, { childList: true })
       delayCall(() => {
         checkBar()
         if (horizontal) {
@@ -441,6 +478,8 @@
   })
   onDestroy(() => {
     if (observer) observer.disconnect()
+    if (innerObserver) innerObserver.disconnect()
+    if (innerMutObserver) innerMutObserver.disconnect()
     if (divScroll) {
       divScroll.removeEventListener('wheel', wheelEvent)
       divScroll.removeEventListener('scroll', checkFade)
