@@ -33,7 +33,7 @@ import {
   hasAccountRole
 } from '@hcengineering/core'
 import { showPopup } from '@hcengineering/ui'
-import { type TariffItem, type TariffConfig, type LocalizedString } from '@hcengineering/billing'
+import { type PlanItem, type PlanConfig, type LocalizedString } from '@hcengineering/billing'
 
 import { setSubscriptionState, updateLimitExceeded, subscriptionStore } from './stores/subscription'
 import SubscriptionsModal from './components/SubscriptionsModal.svelte'
@@ -67,27 +67,19 @@ export function getPaymentClient (): PaymentClient | null {
   return getPaymentClientRaw(paymentUrl, token)
 }
 
-let _tariffsByPlan: Record<string, TariffItem> | null = null
+let _planConfig: PlanConfig | null = null
 
-async function ensureTariffsLoaded (): Promise<Record<string, TariffItem>> {
-  if (_tariffsByPlan == null) {
-    const res = await fetch('/config/tariff-config.json')
+async function getPlanConfig (): Promise<PlanConfig> {
+  if (_planConfig == null) {
+    const paymentUrl = getMetadata(presentation.metadata.PaymentUrl) ?? ''
+    const res = await fetch(paymentUrl + '/api/v1/plan-config')
     if (!res.ok) {
-      console.warn('Failed to load tariff config:', res.status)
-      return {}
+      console.warn('Failed to load plan config:', res.status)
+      return { plans: {}, packages: {} }
     }
-    const config: TariffConfig = await res.json()
-    _tariffsByPlan = {}
-    for (const t of Object.values(config.tariffs)) {
-      _tariffsByPlan[t.plan] = t
-    }
+    _planConfig = (await res.json()) as PlanConfig
   }
-  return _tariffsByPlan
-}
-
-async function getTariffByPlan (plan: string): Promise<TariffItem | null> {
-  const tariffs = await ensureTariffsLoaded()
-  return tariffs[plan] ?? null
+  return _planConfig
 }
 
 export async function isLimitExceeded (): Promise<boolean> {
@@ -107,12 +99,13 @@ export async function isLimitExceeded (): Promise<boolean> {
       return true
     }
 
-    const tariff = await getTariffByPlan(subscription.plan)
-    if (tariff == null) {
+    const config = await getPlanConfig()
+    const plan = config.plans[subscription.plan] ?? null
+    if (plan == null) {
       return true
     }
 
-    return checkUsageAgainstLimits(usageInfo, tariff)
+    return checkUsageAgainstLimits(usageInfo, plan)
   } catch (error) {
     console.error('Error checking usage limits:', error)
     return false
@@ -131,18 +124,19 @@ export async function checkWorkspaceLimits (): Promise<void> {
     const usageInfo = workspaceInfo?.usageInfo ?? null
 
     const subscription = await getCurrentSubscription(accountClient)
-    const tariff = subscription != null ? await getTariffByPlan(subscription.plan) : null
+    const config = await getPlanConfig()
+    const plan = subscription != null ? (config.plans[subscription.plan] ?? null) : null
 
     // Update subscription store
-    setSubscriptionState(subscription, tariff ?? undefined, workspaceInfo)
+    setSubscriptionState(subscription, plan ?? undefined, workspaceInfo)
 
     // Check limits
-    if (usageInfo === null || subscription == null || tariff == null) {
+    if (usageInfo === null || subscription == null || plan == null) {
       updateLimitExceeded(subscription == null)
       return
     }
 
-    const exceeded = checkUsageAgainstLimits(usageInfo, tariff)
+    const exceeded = checkUsageAgainstLimits(usageInfo, plan)
     updateLimitExceeded(exceeded)
   } catch (error) {
     console.error('Error checking workspace limits:', error)
@@ -150,7 +144,7 @@ export async function checkWorkspaceLimits (): Promise<void> {
   }
 }
 
-export function calculateLimits (tariff: TariffItem | undefined): {
+export function calculateLimits (plan: PlanItem | undefined): {
   storageLimit: number
   trafficLimit: number
   meetingMinutesLimit: number
@@ -162,32 +156,32 @@ export function calculateLimits (tariff: TariffItem | undefined): {
   const DEFAULT_TOKEN = 20
 
   return {
-    storageLimit: (tariff?.storageLimitGB ?? DEFAULT_STORAGE_GB) * 1e9,
-    trafficLimit: (tariff?.trafficLimitGB ?? DEFAULT_TRAFFIC_GB) * 1e9,
-    meetingMinutesLimit: tariff?.meetingMinutesLimit ?? DEFAULT_MEETING_MINUTES,
-    tokenLimit: (tariff?.tokenLimit ?? DEFAULT_TOKEN) * 1000
+    storageLimit: (plan?.storageLimitGB ?? DEFAULT_STORAGE_GB) * 1e9,
+    trafficLimit: (plan?.trafficLimitGB ?? DEFAULT_TRAFFIC_GB) * 1e9,
+    meetingMinutesLimit: plan?.meetingMinutesLimit ?? DEFAULT_MEETING_MINUTES,
+    tokenLimit: (plan?.tokenLimit ?? DEFAULT_TOKEN) * 1000
   }
 }
 
-export function checkUsageAgainstLimits (usageInfo: UsageStatus | undefined, tariff: TariffItem | undefined): boolean {
+export function checkUsageAgainstLimits (usageInfo: UsageStatus | undefined, plan: PlanItem | undefined): boolean {
   if (usageInfo == null) return false
   const storageUsedBytes = usageInfo.usage.storageBytes ?? 0
   const meetingMinutes = usageInfo.usage.meetingMinutes ?? 0
 
-  const { storageLimit, meetingMinutesLimit } = calculateLimits(tariff)
+  const { storageLimit, meetingMinutesLimit } = calculateLimits(plan)
 
   return storageUsedBytes > storageLimit || meetingMinutes > meetingMinutesLimit
 }
 
-export function resolveLocale (config: TariffConfig, lang: string): TariffConfig {
+export function resolveLocale (config: PlanConfig, lang: string): PlanConfig {
   const resolve = (s: LocalizedString): string => {
     if (typeof s === 'string') return s
     return s[lang] ?? s.en ?? Object.values(s)[0] ?? ''
   }
 
   return {
-    tariffs: Object.fromEntries(
-      Object.entries(config.tariffs).map(([k, t]) => [
+    plans: Object.fromEntries(
+      Object.entries(config.plans).map(([k, t]) => [
         k,
         {
           ...t,

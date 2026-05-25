@@ -1,6 +1,5 @@
-tariffs:
+plans:
   start:
-    plan: start
     label:
       ru: Старт
       en: Start
@@ -33,7 +32,6 @@ tariffs:
     index: 0
     color: Sky
   standard:
-    plan: standard
     label:
       ru: Стандарт
       en: Standard
@@ -66,7 +64,6 @@ tariffs:
     index: 1
     color: Orchid
   business:
-    plan: business
     label:
       ru: Бизнес
       en: Business
@@ -100,21 +97,18 @@ tariffs:
     color: Orange
 packages:
   100gb:
-    plan: 100gb
     description:
       ru: 100 Гб
       en: 100 GB
     priceMonthly: "1 000"
     currency: ₽
   500gb:
-    plan: 500gb
     description:
       ru: 500 Гб
       en: 500 GB
     priceMonthly: "5 000"
     currency: ₽
   1000gb:
-    plan: 1000gb
     description:
       ru: 1 000 Гб
       en: 1 000 GB

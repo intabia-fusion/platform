@@ -246,6 +246,8 @@ services:
     depends_on:
       account:
         condition: service_started
+    volumes:
+      - ./plan-config.yaml:/var/cfg/plan-config.yaml
     environment:
       - SECRET=secret
       - PORT=4040
@@ -253,6 +255,7 @@ services:
       - FRONT_URL=http://localhost:8087
       - USE_SANDBOX=true
       - PROVIDER=tbank
+      - PLAN_CONFIG=/var/cfg/plan-config.yaml
       - TBANK_SUBSCRIPTIONS_URL=http://tbank-subscriptions:4042
       # Polar configuration (uncomment if using Polar)
       # - POLAR_ACCESS_TOKEN=${POLAR_ACCESS_TOKEN}
@@ -334,8 +337,6 @@ services:
       - 'host.docker.internal:host-gateway'
     links:
       - stats
-    volumes:
-      - ./tariff-config.yaml:/var/cfg/tariff-config.yaml
     environment:
       - SERVER_PORT=8080
       - SERVER_SECRET=secret
@@ -362,7 +363,6 @@ services:
       - STREAM_URL=http://localhost:8087/_stream/recording
       - PAYMENT_URL=http://localhost:8087/_payment
       - BILLING_URL=http://localhost:8087/_billing
-      - TARIFF_CONFIG=/var/cfg/tariff-config.yaml
       - COMMUNICATION_API_ENABLED=false
       # - BACKUP_URL=http://localhost:8087/_backup/api/backup
       - EXCLUDED_APPLICATIONS_FOR_ANONYMOUS=["chunter", "notification"]

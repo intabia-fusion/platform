@@ -1761,9 +1761,6 @@ importers:
       html-webpack-plugin:
         specifier: ^5.5.0
         version: 5.6.4(webpack@5.102.1)
-      js-yaml:
-        specifier: ^4.1.0
-        version: 4.1.0
       mini-css-extract-plugin:
         specifier: ^2.2.0
         version: 2.9.4(webpack@5.102.1)
@@ -35614,9 +35611,6 @@ importers:
       express-static-gzip:
         specifier: ^2.2.0
         version: 2.2.0
-      js-yaml:
-        specifier: ^4.1.0
-        version: 4.1.0
       morgan:
         specifier: ^1.10.0
         version: 1.10.1
@@ -35645,9 +35639,6 @@ importers:
       '@types/jest':
         specifier: ^29.5.5
         version: 29.5.14
-      '@types/js-yaml':
-        specifier: ^4.0.9
-        version: 4.0.9
       '@types/morgan':
         specifier: ~1.9.9
         version: 1.9.10
@@ -35684,6 +35675,9 @@ importers:
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
+      js-yaml:
+        specifier: ^4.1.0
+        version: 4.1.0
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -40130,6 +40124,9 @@ importers:
       express-rate-limit:
         specifier: ^7.4.0
         version: 7.5.1(express@4.21.2)
+      js-yaml:
+        specifier: ^4.1.0
+        version: 4.1.0
       morgan:
         specifier: ^1.10.0
         version: 1.10.1
@@ -40164,6 +40161,9 @@ importers:
       '@types/jest':
         specifier: ^29.5.5
         version: 29.5.14
+      '@types/js-yaml':
+        specifier: ^4.0.9
+        version: 4.0.9
       '@types/morgan':
         specifier: ~1.9.9
         version: 1.9.10

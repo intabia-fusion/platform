@@ -17,8 +17,7 @@
 export type LocalizedString = string | Record<string, string>
 
 /** @public */
-export interface TariffItem {
-  plan: string
+export interface PlanItem {
   label: LocalizedString
   description: LocalizedString
   users: LocalizedString
@@ -38,14 +37,13 @@ export interface TariffItem {
 
 /** @public */
 export interface PackageItem {
-  plan: string
   description: LocalizedString
   priceMonthly: string
   currency: string
 }
 
 /** @public */
-export interface TariffConfig {
-  tariffs: Record<string, TariffItem>
+export interface PlanConfig {
+  plans: Record<string, PlanItem>
   packages: Record<string, PackageItem>
 }

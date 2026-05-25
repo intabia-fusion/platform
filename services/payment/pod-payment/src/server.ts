@@ -30,6 +30,8 @@ import type { CheckoutResponse, PaymentProvider } from './providers'
 import { SubscribeRequest } from './providers'
 import { startActiveSubscriptionReconciliation } from './reconciliation'
 import { getAccountClient } from './utils'
+import yaml from 'js-yaml'
+import { existsSync, readFileSync } from 'fs'
 
 const KEEP_ALIVE_TIMEOUT = 5 // seconds
 
@@ -154,6 +156,31 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
   if (provider == null) {
     throw new Error(`Failed to initialize payment provider: ${config.Provider}`)
   }
+
+  // Plan config — loaded from PLAN_CONFIG env (YAML file path), falls back to empty config
+  let planConfigCache: any = null
+  app.get('/api/v1/plan-config', (req, res) => {
+    try {
+      const configPath = config.PlanConfig
+      if (configPath === undefined || configPath.length === 0) {
+        res.json({ plans: {}, packages: {} })
+        return
+      }
+      if (planConfigCache == null) {
+        if (!existsSync(configPath)) {
+          ctx.error('Plan config file not found', { path: configPath })
+          res.json({ plans: {}, packages: {} })
+          return
+        }
+        const content = readFileSync(configPath, 'utf-8')
+        planConfigCache = yaml.load(content)
+      }
+      res.json(planConfigCache)
+    } catch (err: any) {
+      ctx.error('Failed to load plan config', { err })
+      res.json({ plans: {}, packages: {} })
+    }
+  })
 
   const stopReconciliation = startActiveSubscriptionReconciliation(
     ctx,

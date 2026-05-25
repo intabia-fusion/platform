@@ -38,7 +38,6 @@
     "file-loader": "^6.2.0",
     "fork-ts-checker-webpack-plugin": "^9.0.2",
     "html-webpack-plugin": "^5.5.0",
-    "js-yaml": "^4.1.0",
     "mini-css-extract-plugin": "^2.2.0",
     "postcss": "^8.4.20",
     "postcss-load-config": "^4.0.1",
