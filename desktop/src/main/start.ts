@@ -416,9 +416,9 @@ function runTheApp (): void {
       }
 
       if (isWindows && winBadge !== undefined) {
-        winBadge.update(0)
+        winBadge.update(badge === '' ? 0 : badge)
       }
-      osIntegration?.getTray().updateTrayBadge(badge !== '' ? 1 : 0)
+      osIntegration?.getTray().updateTrayBadge(badge)
     } else {
       app.dock?.setBadge(badge > 0 ? `${badge}` : '')
       app.badgeCount = badge > 0 ? badge : 0

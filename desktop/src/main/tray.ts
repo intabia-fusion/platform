@@ -23,7 +23,7 @@ export class TrayController {
   private tray: Tray | undefined = undefined
   private readonly defaultIcon: NativeImage
   private readonly notificationIcon: NativeImage
-  private badgeCount: number = 0
+  private badgeCount: number | string = 0
 
   constructor (
     private readonly settings: Settings,
@@ -41,7 +41,7 @@ export class TrayController {
     }
   }
 
-  public updateTrayBadge (count: number): void {
+  public updateTrayBadge (count: number | string): void {
     const countChanged = this.badgeCount !== count
     this.badgeCount = count
     if (!countChanged) {
@@ -85,13 +85,13 @@ export class TrayController {
     this.evaluateIcon(this.badgeCount)
   }
 
-  private evaluateIcon (badgeCount: number): void {
+  private evaluateIcon (badgeCount: number | string): void {
     if (this.tray == null) {
       return
     }
 
     const iconInfo = getBadgeIconInfo(badgeCount, BASE_TITLE)
-    if (badgeCount > 0) {
+    if (iconInfo.fileName !== '') {
       const iconFilePath = getFileInPublicBundledFolder(iconInfo.fileName)
       const icon = nativeImage.createFromPath(iconFilePath)
       this.tray.setImage(icon)

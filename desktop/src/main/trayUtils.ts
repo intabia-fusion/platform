@@ -18,16 +18,19 @@ export interface BadgeIconInfo {
   tooltip: string
 }
 
-export function getBadgeIconInfo (badgeCount: number, baseTitle: string): BadgeIconInfo {
-  if (badgeCount <= 0) {
+export function getBadgeIconInfo (badgeCount: number | string, baseTitle: string): BadgeIconInfo {
+  if (badgeCount === 0 || badgeCount === '' || (typeof badgeCount === 'number' && badgeCount < 0)) {
     return {
       fileName: '',
       tooltip: baseTitle
     }
   }
 
+  const tooltipText =
+    typeof badgeCount === 'string' ? `${baseTitle}: unread messages` : `${baseTitle}: ${badgeCount} unread`
+
   return {
     fileName: 'TrayIconWithBadge.ico',
-    tooltip: `${baseTitle}: ${badgeCount} unread`
+    tooltip: tooltipText
   }
 }
