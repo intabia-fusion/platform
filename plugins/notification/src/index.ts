@@ -479,6 +479,8 @@ const notification = plugin(notificationId, {
     YouAddedCollaborators: '' as IntlString,
     YouRemovedCollaborators: '' as IntlString,
     Push: '' as IntlString,
+    HasNewNotifications: '' as IntlString,
+    UnreadNotificationsCount: '' as IntlString,
     General: '' as IntlString,
     InboxNotificationsDescription: '' as IntlString,
     PushNotificationsDescription: '' as IntlString,

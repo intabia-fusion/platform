@@ -47,6 +47,8 @@
     "Unsubscribe": "Отписаться",
     "Push": "Push",
     "Unreads": "Непрочитанные",
+    "HasNewNotifications": "У вас есть новые уведомления",
+    "UnreadNotificationsCount": "{count, plural, one {# непрочитанное уведомление} few {# непрочитанных уведомления} other {# непрочитанных уведомлений}}",
     "EnablePush": "Включить Push-уведомления",
     "NotificationBlockedInBrowser": "Уведомления заблокированы в вашем браузере. Пожалуйста, включите уведомления в настройках браузера",
     "General": "Основное",

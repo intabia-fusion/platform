@@ -56,8 +56,8 @@ console.log('Open passed', openArg)
 let configPromise: Promise<Config> | undefined
 
 const expose: IPCMainExposed = {
-  setBadge: (badge: number | string) => {
-    ipcRenderer.send(IpcMessage.SetBadge, badge)
+  setBadge: (badge: number | string, tooltip?: string) => {
+    ipcRenderer.send(IpcMessage.SetBadge, badge, tooltip)
   },
   setTitle: (title: string) => {
     ipcRenderer.send(IpcMessage.SetTitle, title)

@@ -84,7 +84,9 @@
     "JustMentions": "仅提及",
     "Mute": "静音",
     "Appearance": "外观",
-    "ShowChatBadge": "显示聊天徽章"
+    "ShowChatBadge": "显示聊天徽章",
+    "HasNewNotifications": "You have new notifications",
+    "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}"
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

@@ -407,7 +407,7 @@ function runTheApp (): void {
     showSelectAll: false
   })
 
-  ipcMain.on(IpcMessage.SetBadge, (_event: any, badge: number | string) => {
+  ipcMain.on(IpcMessage.SetBadge, (_event: any, badge: number | string, tooltip?: string) => {
     if (typeof badge === 'string') {
       if (app.dock != null) {
         app.dock.setBadge(badge)
@@ -416,9 +416,10 @@ function runTheApp (): void {
       }
 
       if (isWindows && winBadge !== undefined) {
-        winBadge.update(badge === '' ? 0 : badge)
+        const winBadgeText = badge === '' ? 0 : badge
+        winBadge.update(winBadgeText)
       }
-      osIntegration?.getTray().updateTrayBadge(badge)
+      osIntegration?.getTray().updateTrayBadge(badge, tooltip)
     } else {
       app.dock?.setBadge(badge > 0 ? `${badge}` : '')
       app.badgeCount = badge > 0 ? badge : 0
@@ -426,7 +427,7 @@ function runTheApp (): void {
       if (isWindows && winBadge !== undefined) {
         winBadge.update(badge)
       }
-      osIntegration?.getTray().updateTrayBadge(badge)
+      osIntegration?.getTray().updateTrayBadge(badge, tooltip)
     }
   })
 

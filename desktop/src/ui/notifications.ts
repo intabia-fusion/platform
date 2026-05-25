@@ -26,7 +26,7 @@ import notification, {
 } from '@hcengineering/notification'
 import { addEventListener, getMetadata, IntlString, translate } from '@hcengineering/platform'
 import { createNotificationsQuery, getClient, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
-import { location } from '@hcengineering/ui'
+import { location, languageStore } from '@hcengineering/ui'
 import workbench, { workbenchId } from '@hcengineering/workbench'
 import desktopPreferences, { defaultNotificationPreference } from '@hcengineering/desktop-preferences'
 import { activePreferences } from '@hcengineering/desktop-preferences-resources'
@@ -155,7 +155,7 @@ export function configureNotifications (): void {
 
     let hasOtherWorkspaceNotifications = false
 
-    function updateBadge (): void {
+    async function updateBadge (): Promise<void> {
       if (!preferences.showUnreadCounter) {
         electronAPI.setBadge(0)
         return
@@ -163,9 +163,15 @@ export function configureNotifications (): void {
 
       const total = prevUnViewdNotificationsCount + newUnreadNotifications
       if (total > 0) {
-        electronAPI.setBadge(total)
+        const unreadsCountTooltip = await translate(
+          notification.string.UnreadNotificationsCount,
+          { count: total },
+          get(languageStore)
+        )
+        electronAPI.setBadge(total, unreadsCountTooltip)
       } else if (hasOtherWorkspaceNotifications) {
-        electronAPI.setBadge('•')
+        const unreadsTooltip = await translate(notification.string.HasNewNotifications, {}, get(languageStore))
+        electronAPI.setBadge('•', unreadsTooltip)
       } else {
         electronAPI.setBadge(0)
       }
@@ -177,7 +183,7 @@ export function configureNotifications (): void {
         const workspaces = get(workspacesStore)
         hasOtherWorkspaceNotifications = workspaces.some((it) => it.uuid !== currentWorkspace && state?.[it.uuid])
       }
-      updateBadge()
+      void updateBadge()
     })
 
     const isCommunicationEnabled = getMetadata(communication.metadata.Enabled) ?? false
@@ -186,11 +192,11 @@ export function configureNotifications (): void {
       notificationsCountQuery.query({ read: false, limit: 1, strict: true, total: true }, (res) => {
         newUnreadNotifications = res.getTotal()
 
-        updateBadge()
-
-        if (preferences.bounceAppIcon) {
-          electronAPI.dockBounce()
-        }
+        void updateBadge().then(() => {
+          if (preferences.bounceAppIcon) {
+            electronAPI.dockBounce()
+          }
+        })
       })
     }
 
@@ -250,7 +256,7 @@ export function configureNotifications (): void {
 
       if (prevUnViewdNotificationsCount !== unViewedNotifications.length) {
         prevUnViewdNotificationsCount = unViewedNotifications.length
-        updateBadge()
+        await updateBadge()
 
         if (preferences.bounceAppIcon) {
           electronAPI.dockBounce()
@@ -295,7 +301,7 @@ export function configureNotifications (): void {
       const showNotificationsChanged = newPreferences.showNotifications && !preferences.showNotifications
 
       preferences = newPreferences
-      updateBadge()
+      void updateBadge()
 
       if (showNotificationsChanged) {
         startNotificationQuery()

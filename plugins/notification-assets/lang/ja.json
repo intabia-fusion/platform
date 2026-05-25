@@ -84,7 +84,9 @@
     "JustMentions": "メンションのみ",
     "Mute": "ミュート",
     "Appearance": "外観",
-    "ShowChatBadge": "チャットバッジを表示"
+    "ShowChatBadge": "チャットバッジを表示",
+    "HasNewNotifications": "You have new notifications",
+    "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}"
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",
