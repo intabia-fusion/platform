@@ -4,7 +4,7 @@
   "template": "@hcengineering/webpack-package",
   "license": "EPL-2.0",
   "fastBuild": {
-    "extraHashFiles": ["webpack.config.js", "postcss.config.js", ".browserslistrc"]
+    "extraHashFiles": ["webpack.config.js", "postcss.config.js", ".browserslistrc", ".env-prod"]
   },
   "scripts": {
     "_phase:package": "rushx package",
