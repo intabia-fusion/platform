@@ -30,7 +30,12 @@ export function getBadgeIconInfo (
     }
   }
 
-  const tooltipText = explicitTooltip !== undefined ? `${baseTitle}: ${explicitTooltip}` : baseTitle
+  const tooltipText =
+    explicitTooltip !== undefined
+      ? `${baseTitle}: ${explicitTooltip}`
+      : typeof badgeCount === 'string'
+        ? `${baseTitle}: unread messages`
+        : `${baseTitle}: ${badgeCount} unread`
 
   return {
     fileName: 'TrayIconWithBadge.ico',
