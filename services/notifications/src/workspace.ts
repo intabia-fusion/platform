@@ -268,17 +268,16 @@ class Workspace {
     if (space === undefined) return []
 
     const res: TxCUD<Doc>[] = []
-    const doc = hierarchy.isDerived(txObject._class, activity.class.ActivityMessage)
-      ? (txAttachedToDoc ?? txObject)
-      : txObject
-
-    const contexts = await this.cache.getContexts(doc._id)
     const sender = await this.cache.getSender(tx.modifiedBy)
 
     const settings = await this.cache.getSettings()
     const mentionType = matched.find((it) => it._id === notification.ids.MentionNotificationType)
 
     if (mentionType != null) {
+      const doc = hierarchy.isDerived(txObject._class, activity.class.ActivityMessage)
+        ? (txAttachedToDoc ?? txObject)
+        : txObject
+      const contexts = await this.cache.getContexts(doc._id)
       if (
         tx._class === core.class.TxCreateDoc &&
         hierarchy.isDerived(txObject._class, activity.class.ActivityMessage)
@@ -321,78 +320,86 @@ class Workspace {
 
     const notifiedUsers = getNotifiedUsers(this.hierarchy, res)
 
-    const collaborators = (await this.getCollaboratorAccounts(doc, space)).filter((it) => !notifiedUsers.includes(it))
-    if (collaborators.length === 0) return res
+    for (const matchedType of matched) {
+      const doc =
+        hierarchy.isDerived(txObject._class, activity.class.ActivityMessage) || matchedType.attachToParent === true
+          ? (txAttachedToDoc ?? txObject)
+          : txObject
+      const contexts = await this.cache.getContexts(doc._id)
+      const collaborators = (await this.getCollaboratorAccounts(doc, space)).filter((it) => !notifiedUsers.includes(it))
+      if (collaborators.length === 0) continue
 
-    const receivers = await this.cache.getReceivers(collaborators)
+      const receivers = await this.cache.getReceivers(collaborators)
 
-    for (const receiver of receivers) {
-      const context = contexts.find((it) => it.user === receiver.account)
-      const mode = context?.settings?.mode ?? 'all'
-      if (mode === 'mute') continue
-      const notifyResult = await getTxNotifyResult(client, tx, doc, receiver, settings, matched, mode)
+      for (const receiver of receivers) {
+        const context = contexts.find((it) => it.user === receiver.account)
+        const mode = context?.settings?.mode ?? 'all'
+        if (mode === 'mute') continue
+        const notifyResult = await getTxNotifyResult(client, tx, doc, receiver, settings, [matchedType], mode)
 
-      const types = notifyResult[notification.providers.InboxNotificationProvider] ?? []
-      const type = types[0] as TxNotificationType
-      if (type == null) continue
+        const types = notifyResult[notification.providers.InboxNotificationProvider] ?? []
+        const type = types[0] as TxNotificationType
+        if (type == null) continue
 
-      if (client.hierarchy.hasMixin(type, serverNotification.mixin.TypeMatch)) {
-        const mixin = client.hierarchy.as<NotificationType, TypeMatch>(type, serverNotification.mixin.TypeMatch)
-        if (mixin.create == null) continue
-        const f = await getResource(mixin.create)
-        const data = await f(getTypeMatchClient(client), tx, txAttachedToDoc, txObject, receiver)
-        if (data == null) continue
-        let content: NotificationContent
+        if (client.hierarchy.hasMixin(type, serverNotification.mixin.TypeMatch)) {
+          const mixin = client.hierarchy.as<NotificationType, TypeMatch>(type, serverNotification.mixin.TypeMatch)
+          if (mixin.create == null) continue
+          const f = await getResource(mixin.create)
+          const data = await f(getTypeMatchClient(client), tx, txAttachedToDoc, txObject, receiver)
+          if (data == null) continue
+          let content: NotificationContent
 
-        if (mixin.contentProvider != null) {
-          const f = await getResource(mixin.contentProvider)
-          content = await f(getTypeMatchClient(client), type, tx, txAttachedToDoc ?? txObject, txObject, sender)
-        } else {
-          const intlParams: Record<string, string | number> = {
-            ...data.intlParams,
-            senderName: getSenderName(sender, client.branding?.lastNameFirst)
+          if (mixin.contentProvider != null) {
+            const f = await getResource(mixin.contentProvider)
+            content = await f(getTypeMatchClient(client), type, tx, txAttachedToDoc ?? txObject, txObject, sender)
+          } else {
+            const intlParams: Record<string, string | number> = {
+              ...data.intlParams,
+              senderName: getSenderName(sender, client.branding?.lastNameFirst)
+            }
+            const intlParamsNotLocalized: Record<string, IntlString> = { ...data.intlParamsNotLocalized }
+
+            if (data.markup != null) {
+              intlParams.message = normalizeTextMessage(markupToText(data.markup))
+            } else if (data.message != null) {
+              intlParamsNotLocalized.message = data.message
+            }
+
+            if (data.header != null) {
+              intlParamsNotLocalized.title = data.header
+            }
+
+            const message = intlParams.message ?? intlParamsNotLocalized.message
+            content = {
+              title:
+                intlParams.identifier != null
+                  ? notification.string.CommonNotificationTitleWithIdentifier
+                  : notification.string.CommonNotificationTitle,
+              body:
+                message != null
+                  ? notification.string.MessageNotificationBody
+                  : notification.string.UpdateNotificationBody,
+              intlParams,
+              intlParamsNotLocalized
+            }
           }
-          const intlParamsNotLocalized: Record<string, IntlString> = { ...data.intlParamsNotLocalized }
 
-          if (data.markup != null) {
-            intlParams.message = normalizeTextMessage(markupToText(data.markup))
-          } else if (data.message != null) {
-            intlParamsNotLocalized.message = data.message
-          }
-
-          if (data.header != null) {
-            intlParamsNotLocalized.title = data.header
-          }
-
-          const message = intlParams.message ?? intlParamsNotLocalized.message
-          content = {
-            title:
-              intlParams.identifier != null
-                ? notification.string.CommonNotificationTitleWithIdentifier
-                : notification.string.CommonNotificationTitle,
-            body:
-              message != null
-                ? notification.string.MessageNotificationBody
-                : notification.string.UpdateNotificationBody,
-            intlParams,
-            intlParamsNotLocalized
-          }
+          notifiedUsers.push(receiver.account)
+          res.push(
+            ...(await this.createNotifications(
+              notification.class.CommonInboxNotification,
+              data,
+              content,
+              doc,
+              tx.modifiedOn,
+              tx.modifiedBy,
+              context,
+              receiver,
+              notifyResult,
+              false
+            ))
+          )
         }
-
-        res.push(
-          ...(await this.createNotifications(
-            notification.class.CommonInboxNotification,
-            data,
-            content,
-            doc,
-            tx.modifiedOn,
-            tx.modifiedBy,
-            context,
-            receiver,
-            notifyResult,
-            false
-          ))
-        )
       }
     }
 

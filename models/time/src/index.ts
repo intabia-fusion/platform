@@ -372,6 +372,7 @@ export function createModel (builder: Builder): void {
       objectClass: time.class.ProjectToDo,
       isMention: true,
       defaultEnabled: false,
+      attachToParent: true,
       templates: {
         text: time.emailTemplate.ToDoCreatedText,
         html: time.emailTemplate.ToDoCreatedHtml,
