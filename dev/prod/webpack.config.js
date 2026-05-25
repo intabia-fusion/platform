@@ -17,9 +17,7 @@
 const sass = require('../../common/scripts/sass-quiet.js')
 
 const Dotenv = require('dotenv-webpack')
-const fs = require('fs')
 const path = require('path')
-const yaml = require('js-yaml')
 const CompressionPlugin = require('compression-webpack-plugin')
 const DefinePlugin = require('webpack').DefinePlugin
 const HtmlWebpackPlugin = require('html-webpack-plugin')
@@ -746,19 +744,7 @@ module.exports = [
         },
         progress: false
       },
-      proxy: proxy[clientType],
-      setupMiddlewares: (middlewares, devServer) => {
-        devServer.app.get('/config/tariff-config.json', (req, res) => {
-          try {
-            const src = path.resolve(__dirname, '..', 'tariff-config.yaml')
-            res.json(yaml.load(fs.readFileSync(src, 'utf-8')))
-          } catch (err) {
-            console.error('Failed to load tariff config:', err)
-            res.json({ tariffs: {}, packages: {} })
-          }
-        })
-        return middlewares
-      }
+      proxy: proxy[clientType]
     }
   }
 ]

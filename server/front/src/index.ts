@@ -30,9 +30,8 @@ import { cwd } from 'process'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { preConditions } from './utils'
 
-import fs, { mkdtempSync, existsSync, readFileSync } from 'fs'
+import fs, { mkdtempSync } from 'fs'
 import { tmpdir } from 'os'
-import yaml from 'js-yaml'
 
 const cacheControlValue = 'public, no-cache, must-revalidate, max-age=365d'
 const cacheControlNoCache = 'public, no-store, no-cache, must-revalidate, max-age=0'
@@ -354,36 +353,6 @@ export function start (
     res.set('Connection', 'keep-alive')
     res.set('Keep-Alive', `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`)
     res.json(data)
-  })
-
-  // Tariff config — loaded from TARIFF_CONFIG env (YAML file path), falls back to empty config
-  let tariffConfigCache: any = null
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  app.get('/config/tariff-config.json', async (req, res) => {
-    try {
-      const configPath = process.env.TARIFF_CONFIG
-      if (configPath === undefined || configPath.length === 0) {
-        res.status(200).json({ tariffs: {}, packages: {} })
-        return
-      }
-      if (tariffConfigCache == null) {
-        if (!existsSync(configPath)) {
-          ctx.error('Tariff config file not found', { path: configPath })
-          res.status(200).json({ tariffs: {}, packages: {} })
-          return
-        }
-        const content = readFileSync(configPath, 'utf-8')
-        tariffConfigCache = yaml.load(content)
-      }
-      res.status(200)
-      res.set('Cache-Control', cacheControlNoCache)
-      res.set('Connection', 'keep-alive')
-      res.set('Keep-Alive', `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`)
-      res.json(tariffConfigCache)
-    } catch (err: any) {
-      ctx.error('Failed to load tariff config', { err })
-      res.status(200).json({ tariffs: {}, packages: {} })
-    }
   })
 
   app.get('/api/v1/statistics', (req, res) => {
