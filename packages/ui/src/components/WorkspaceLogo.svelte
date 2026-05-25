@@ -75,7 +75,7 @@
 
   .notification {
     position: absolute;
-    top: -0.375rem;
+    top: -0.5rem;
     right: -0.375rem;
     width: 0.5rem;
     height: 0.5rem;
