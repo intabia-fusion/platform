@@ -233,9 +233,11 @@ describe('binaryRequest retry backoff', () => {
     // After ~1.5s, the request must still be pending (no sessions, just waiting).
     await new Promise((resolve) => setTimeout(resolve, 1500))
     const elapsed = Date.now() - start
-    expect(elapsed).toBeGreaterThanOrEqual(1500)
+    // Allow timer jitter (Node setTimeout can fire a few ms early).
+    expect(elapsed).toBeGreaterThanOrEqual(1490)
 
     await server.close()
+    await reqP.catch(() => {})
   })
 })
 
