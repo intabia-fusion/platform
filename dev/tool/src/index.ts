@@ -27,11 +27,7 @@ import accountPlugin, {
   type AccountDB,
   type Workspace
 } from '@hcengineering/account'
-import {
-  getMongoAccountDB,
-  type Account as OldAccount,
-  type Workspace as OldWorkspace
-} from '@hcengineering/account-service'
+import { type Account as OldAccount, type Workspace as OldWorkspace } from '@hcengineering/account-service'
 import { getWorkspaceClient as getHulylakeClient } from '@hcengineering/hulylake-client'
 import { setMetadata } from '@hcengineering/platform'
 import {
@@ -59,8 +55,7 @@ import {
   registerDestroyFactory,
   registerServerPlugins,
   registerStringLoaders,
-  registerTxAdapterFactory,
-  setAdapterSecurity
+  registerTxAdapterFactory
 } from '@hcengineering/server-pipeline'
 import serverToken, { decodeToken, generateToken } from '@hcengineering/server-token'
 import { createWorkspace, upgradeWorkspace } from '@hcengineering/workspace-service'
@@ -70,6 +65,7 @@ import { getPlatformQueue } from '@hcengineering/kafka'
 import { buildStorageFromConfig, createStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 import { program, type Command } from 'commander'
 import { updateField } from './workspace'
+import { dumpIndexes, syncIndexes } from './indexes'
 
 import { RatingCalculator, ratingEvents, type QueueRatingMessage } from '@hcengineering/pod-rating'
 
@@ -94,13 +90,6 @@ import {
   type WorkspaceUuid
 } from '@hcengineering/core'
 import { consoleModelLogger, type MigrateOperation } from '@hcengineering/model'
-import {
-  createMongoAdapter,
-  createMongoDestroyAdapter,
-  createMongoTxAdapter,
-  getMongoClient,
-  shutdownMongo
-} from '@hcengineering/mongo'
 
 import { getModelVersion } from '@hcengineering/model-all'
 import {
@@ -120,8 +109,6 @@ import {
   filterMergedAccountsInMembers,
   migrateCreatedModifiedBy,
   migrateMergedAccounts,
-  migrateTrustedV6Accounts,
-  moveAccountDbFromMongoToPG,
   restoreFromv6All,
   restoreTrustedV6Workspace
 } from './db'
@@ -156,9 +143,6 @@ process.on('exit', () => {
   shutdownPostgres().catch((err) => {
     console.error(err)
   })
-  shutdownMongo().catch((err) => {
-    console.error(err)
-  })
 })
 
 /**
@@ -175,14 +159,9 @@ export function devTool (
 ): void {
   const toolCtx = new MeasureMetricsContext('tool', {})
 
-  registerTxAdapterFactory('mongodb', createMongoTxAdapter)
-  registerAdapterFactory('mongodb', createMongoAdapter)
-  registerDestroyFactory('mongodb', createMongoDestroyAdapter)
-
   registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
   registerAdapterFactory('postgresql', createPostgresAdapter, true)
   registerDestroyFactory('postgresql', createPostgreeDestroyAdapter, true)
-  setAdapterSecurity('postgresql', true)
 
   registerServerPlugins()
   registerStringLoaders()
@@ -228,7 +207,6 @@ export function devTool (
       console.error(err)
     }
     closeAccountsDb()
-    await shutdownMongo()
   }
 
   async function withStorage (f: (storageAdapter: StorageAdapter) => Promise<any>): Promise<void> {
@@ -2442,27 +2420,6 @@ export function devTool (
   //   }
   // )
 
-  program.command('move-account-db-to-pg').action(async () => {
-    const { dbUrl } = prepareTools()
-    const mongodbUri = getMongoDBUrl()
-
-    if (mongodbUri === dbUrl) {
-      throw new Error('MONGO_URL and DB_URL are the same')
-    }
-
-    const mongoNs = process.env.OLD_ACCOUNTS_NS
-
-    await withAccountDatabase(async (pgDb) => {
-      await withAccountDatabase(
-        async (mongoDb) => {
-          await moveAccountDbFromMongoToPG(toolCtx, mongoDb, pgDb)
-        },
-        mongodbUri,
-        mongoNs
-      )
-    }, dbUrl)
-  })
-
   program
     .command('migrate-created-modified-by')
     .option('--include-domains <includeDomains>', 'Domains to migrate(comma-separated)')
@@ -2545,6 +2502,23 @@ export function devTool (
       await filterMergedAccountsInMembers(toolCtx, dbUrl, accDb)
     }, dbUrl)
   })
+
+  program
+    .command('dump-indexes <file>')
+    .description('Dump indexes for all model domains to single YAML file (grouped by domain)')
+    .action(async (file: string) => {
+      const { dbUrl, txes } = prepareTools()
+      await dumpIndexes(toolCtx, dbUrl, txes, file)
+    })
+
+  program
+    .command('sync-indexes <file>')
+    .description('Create missing indexes from model + YAML file (dry-run by default)')
+    .option('--apply', 'actually create missing indexes (otherwise prints SQL only)', false)
+    .action(async (file: string, cmd: { apply: boolean }) => {
+      const { dbUrl, txes } = prepareTools()
+      await syncIndexes(toolCtx, dbUrl, txes, file, cmd.apply)
+    })
 
   // program
   // .command('perfomance')
@@ -2664,60 +2638,12 @@ export function devTool (
   //   })
 
   program
-    .command('migrate-github-account')
-    .option('--db <db>', 'Github DB', '%github')
-    .option('--region <region>', 'Github DB')
-    .action(async (cmd: { db: string, region?: string }) => {
-      const mongodbUri = getMongoDBUrl()
-      const client = getMongoClient(mongodbUri)
-      const _client = await client.getClient()
-
-      const { dbUrl, txes } = prepareTools()
-
-      await performGithubAccountMigrations(_client.db(cmd.db), dbUrl, txes, cmd.region ?? null)
-      await _client.close()
-      client.close()
-    })
-
-  program
     .command('queue-init-topics')
     .description('create required kafka topics')
     .option('--tx <tx>', 'Number of TX partitions', '5')
     .action(async (cmd: { tx: string }) => {
       const queue = getPlatformQueue('tool')
       await queue.createTopics(parseInt(cmd.tx ?? '1'))
-    })
-
-  program
-    .command('migrate-gmail-account')
-    .option('--db <db>', 'DB name', 'gmail-service')
-    .option('--region <region>', 'DB region')
-    .action(async (cmd: { db: string, region?: string }) => {
-      const mongodbUri = getMongoDBUrl()
-      const client = getMongoClient(mongodbUri)
-      const _client = await client.getClient()
-
-      const kvsUrl = getKvsUrl()
-      const { dbUrl, txes } = prepareTools()
-
-      await performGmailAccountMigrations(_client.db(cmd.db), dbUrl, cmd.region ?? null, kvsUrl, txes)
-      await _client.close()
-      client.close()
-    })
-
-  program
-    .command('migrate-calendar-integrations-data')
-    .option('--db <db>', 'DB name', 'calendar-service')
-    .option('--region <region>', 'DB region')
-    .action(async (cmd: { db: string, region?: string }) => {
-      const mongodbUri = getMongoDBUrl()
-      const client = getMongoClient(mongodbUri)
-      const _client = await client.getClient()
-
-      const kvsUrl = getKvsUrl()
-      await performCalendarAccountMigrations(_client.db(cmd.db), cmd.region ?? null, kvsUrl)
-      await _client.close()
-      client.close()
     })
 
   program
@@ -2739,32 +2665,6 @@ export function devTool (
       const { dbUrl } = prepareTools()
 
       await restoreGithubIntegrations(dbUrl, cmd.dryrun)
-    })
-
-  program
-    .command('migrate-trusted-v6-accounts')
-    .description('Migrate trusted v6 accounts')
-    .option('-s|--skip [skip]', 'A command separated list of workspaces to skip', '')
-    .option('-d|--dry [dry]', 'Dry run', false)
-    .action(async (cmd: { skip: string, dry: boolean }) => {
-      const { dbUrl } = prepareTools()
-      const mongodbUri = getMongoDBUrl()
-
-      if (mongodbUri === dbUrl) {
-        throw new Error('MONGO_URL and DB_URL are the same')
-      }
-
-      const mongoNs = process.env.OLD_ACCOUNTS_NS
-      const skipWorkspaces = new Set(cmd.skip.split(',').map((it) => it.trim()))
-
-      await withAccountDatabase(async (pgDb) => {
-        const [v6MongoAccountDb, closeMongoAccountDb] = await getMongoAccountDB(mongodbUri, mongoNs)
-        try {
-          await migrateTrustedV6Accounts(toolCtx, pgDb, v6MongoAccountDb, cmd.dry, skipWorkspaces)
-        } finally {
-          closeMongoAccountDb()
-        }
-      }, dbUrl)
     })
 
   program

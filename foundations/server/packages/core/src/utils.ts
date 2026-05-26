@@ -435,16 +435,36 @@ type TimerOp = [number, string, number, boolean, ParamsType | undefined]
 // Stable JSON key for labels; undefined/empty -> ''
 export function labelsKey (labels?: ParamsType): string {
   if (labels === undefined) return ''
+  // Fast path for 0/1 keys - by far the most common case in hot request paths
+  // (e.g. `{ domain }` from withCounter('find'/'tx'/'fulltext'/...)). Avoids
+  // Object.keys array alloc, sort, and parts/join string-array trips.
+  let firstKey: string | undefined
+  let onlyOne = true
+  for (const k in labels) {
+    if (!Object.prototype.hasOwnProperty.call(labels, k)) continue
+    if (firstKey === undefined) {
+      firstKey = k
+    } else {
+      onlyOne = false
+      break
+    }
+  }
+  if (firstKey === undefined) return ''
+  if (onlyOne) {
+    const v = labels[firstKey]
+    if (v === undefined) return ''
+    return firstKey + '=' + String(v)
+  }
+  // Multi-key path: original stable-sorted join.
   const keys = Object.keys(labels)
-  if (keys.length === 0) return ''
   keys.sort()
-  const parts: string[] = []
+  let res = ''
   for (const k of keys) {
     const v = labels[k]
     if (v === undefined) continue
-    parts.push(k + '=' + String(v))
+    res = res === '' ? k + '=' + String(v) : res + ',' + k + '=' + String(v)
   }
-  return parts.join(',')
+  return res
 }
 
 export interface CounterEntry {
@@ -500,19 +520,20 @@ export class OneSecondCountersImpl implements OneSecondCounters {
   }
 
   check (): void {
-    // Check for timeouts
+    // Check for timeouts. Map allows delete during iteration, no need to spread.
     const now = platformNow()
-    for (const [k, [timeout, counter, count, completed, labels]] of [...this.counterTimeouts.entries()]) {
-      // Regular 1 second timeout: if operation completed after at least 1s, decrement once
-      if (completed && timeout + 1000 < now) {
-        this.add(counter, -count, labels)
+    const reg = now - 1000
+    const hard = now - 60_000
+    for (const [k, op] of this.counterTimeouts) {
+      const timeout = op[0]
+      const completed = op[3]
+      if (completed && timeout < reg) {
+        this.add(op[1], -op[2], op[4])
         this.counterTimeouts.delete(k)
         continue
       }
-
-      // Hard timeout for stuck tasks: if not completed but exceeded hard timeout, decrement once
-      if (!completed && timeout + 60 * 1000 < now) {
-        this.add(counter, -count, labels)
+      if (!completed && timeout < hard) {
+        this.add(op[1], -op[2], op[4])
         this.counterTimeouts.delete(k)
       }
     }

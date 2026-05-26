@@ -27,7 +27,7 @@ import {
   TranslateRequest,
   TranslateResponse
 } from '@hcengineering/ai-bot'
-import core, {
+import {
   AccountUuid,
   MeasureContext,
   PersonId,
@@ -38,10 +38,10 @@ import core, {
   type WorkspaceIds,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import love, { parseRoomName, Room } from '@hcengineering/love'
+import love, { MeetingMinutes, parseRoomName } from '@hcengineering/love'
 import contact, { Person, Contact, SocialIdentityRef } from '@hcengineering/contact'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
-import { getAccountClient, getTransactorEndpoint } from '@hcengineering/server-client'
+import { getAccountClient, getTransactorEndpointEx } from '@hcengineering/server-client'
 import { generateToken } from '@hcengineering/server-token'
 import { htmlToMarkup, jsonToHTML, jsonToMarkup, markupToJSON } from '@hcengineering/text'
 import { createLLMFromConfig, type LLMProvider } from './llms'
@@ -274,7 +274,7 @@ export class AIControl {
     const wsLoginInfo = await accountClient.getLoginInfoByToken()
 
     // Since AIBOT is internal service, always use internal transactor endpoint.
-    const endpoint = await getTransactorEndpoint(token, 'internal')
+    const { endpoint, collaborator } = await getTransactorEndpointEx(token, 'internal')
 
     if (!isWorkspaceLoginInfo(wsLoginInfo)) {
       this.ctx.error('Invalid workspace login info', { workspace, wsLoginInfo })
@@ -296,6 +296,7 @@ export class AIControl {
       this.personUuid,
       this.socialIds,
       this.ctx.newChild('create-workspace', {}, { span: false }),
+      collaborator ?? wsLoginInfo.collaboratorEndpoint,
       this.llm
     )
   }
@@ -360,15 +361,22 @@ export class AIControl {
     req: SummarizeMessagesRequest
   ): Promise<SummarizeMessagesResponse | undefined> {
     if (this.llm === undefined) return
-    if (req.target === undefined || req.targetClass === undefined) return
+    if (req.target === undefined || req.targetClass === undefined) {
+      return
+    }
 
     const wsClient = await this.getWorkspaceClient(workspace)
-    if (wsClient === undefined) return
+    if (wsClient === undefined) {
+      return
+    }
 
     const client = wsClient.client
 
     const target = await client.findOne(req.targetClass, { _id: req.target })
-    if (target === undefined) return
+    if (target === undefined) {
+      this.ctx.error('target == null', { target: req.targetClass, _id: req.target })
+      return
+    }
 
     const messages = await client.findAll(
       chunter.class.ChatMessage,
@@ -422,36 +430,57 @@ export class AIControl {
       }
     }
 
-    const summary = await this.llm.summarizeMessages(this.ctx, workspace, messagesToSummarize, req.lang)
+    let description: string | undefined
+    if (target._class === love.class.MeetingMinutes) {
+      const meeting = target as MeetingMinutes
+      if (wsClient.collaborator !== undefined && meeting.descriptionRef != null) {
+        try {
+          const descMarkup = await wsClient.collaborator.getMarkup(
+            { objectClass: meeting._class, objectId: meeting._id, objectAttr: 'descriptionRef' },
+            meeting.descriptionRef
+          )
+          const descMarkdown = markupToMarkdown(markupToJSON(descMarkup))
+          if (descMarkdown.trim() !== '') {
+            description = descMarkdown
+          }
+        } catch (err: any) {
+          this.ctx.warn('Failed to load meeting description', {
+            err: err?.message,
+            meetingId: meeting._id,
+            workspace
+          })
+        }
+      }
+    }
+    const summary = await this.llm.summarizeMessages(this.ctx, workspace, messagesToSummarize, req.lang, description)
     if (summary === undefined) return
 
     const summaryMarkup = jsonToMarkup(markdownToMarkup(summary))
 
-    const lastMessage = await client.findOne(
-      chunter.class.ChatMessage,
-      {
-        attachedTo: target._id,
-        collection: { $in: ['messages', 'transcription', 'summary'] }
-      },
-      {
-        sort: { createdOn: SortingOrder.Descending },
-        limit: 1
+    if (target._class === love.class.MeetingMinutes) {
+      const meeting = target as MeetingMinutes
+      if (wsClient.collaborator === undefined) {
+        this.ctx.error('Collaborator client not available, cannot write meeting summary', { workspace })
+        return
       }
-    )
-
-    if (lastMessage?.collection === 'summary' && lastMessage.createdBy === wsClient.primarySocialId._id) {
-      await client.update(lastMessage, { message: summaryMarkup, editedOn: Date.now() })
-    } else {
-      await client.addCollection(
-        chunter.class.ChatMessage,
-        core.space.Workspace,
-        target._id,
-        target._class,
-        'summary',
-        {
-          message: summaryMarkup
+      const collabDoc = { objectClass: meeting._class, objectId: meeting._id, objectAttr: 'summary' }
+      try {
+        // Prefer updateMarkup: doc may be live in hocuspocus (UI open) and createMarkup would throw "already exists".
+        // On failure (no existing blob yet), fall back to createMarkup and persist blobRef on the meeting.
+        await wsClient.collaborator.updateMarkup(collabDoc, summaryMarkup)
+      } catch (err: any) {
+        try {
+          const blobRef = await wsClient.collaborator.createMarkup(collabDoc, summaryMarkup)
+          await client.update(meeting, { summary: blobRef })
+        } catch (createErr: any) {
+          this.ctx.error('Failed to write meeting summary', {
+            updateErr: err?.message,
+            createErr: createErr?.message,
+            meetingId: meeting._id,
+            workspace
+          })
         }
-      )
+      }
     }
 
     return {
@@ -535,12 +564,12 @@ export class AIControl {
     }
 
     const meetingMinutes = await wsClient.client.findOne(love.class.MeetingMinutes, { _id: meetingMinutesId })
-    if (meetingMinutes?.attachedTo === undefined || meetingMinutes?.attachedTo === null) {
+    if (meetingMinutes?.roomId === undefined || meetingMinutes?.roomId === null) {
       this.ctx.error('MeetingMinutes not found or missing attached room for love transcript', { meetingMinutesId })
       return
     }
 
-    const roomId = meetingMinutes.attachedTo as Ref<Room>
+    const roomId = meetingMinutes.roomId
 
     this.ctx.info('Parsed roomName into workspace and roomId', { workspace, roomId })
 

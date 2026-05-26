@@ -27,6 +27,7 @@ import {
   type PersonId,
   type PersonUuid,
   type SocialId as SocialIdBase,
+  type SocialIdType,
   type UsageStatus,
   type WorkspaceDataId,
   type WorkspaceUuid,
@@ -297,6 +298,13 @@ export interface Subscription {
 
 export type SubscriptionData = Omit<Subscription, 'createdOn' | 'updatedOn'>
 
+export interface AccountWorkspaceBadgeStatus {
+  accountUuid: AccountUuid
+  workspaceUuid: WorkspaceUuid
+  hasUnread: boolean
+  updatedOn: Timestamp
+}
+
 /* ========= S U P P L E M E N T A R Y ========= */
 
 export interface WorkspaceInfoWithStatus extends Workspace {
@@ -332,6 +340,7 @@ export interface AccountDB {
   userProfile: DbCollection<UserProfile>
   subscription: DbCollection<Subscription>
   workspacePermission: DbCollection<WorkspacePermission>
+  accountWorkspaceBadgeStatus: DbCollection<AccountWorkspaceBadgeStatus>
 
   init: () => Promise<void>
   createWorkspace: (data: WorkspaceData, status: WorkspaceStatusData) => Promise<WorkspaceUuid>
@@ -371,6 +380,21 @@ export interface AccountDB {
   deleteAccount: (accountId: AccountUuid) => Promise<void>
   listAccounts: (search?: string, skip?: number, limit?: number) => Promise<AccountAggregatedInfo[]>
   generatePersonUuid: () => Promise<PersonUuid>
+  ensurePerson: (
+    socialType: SocialIdType,
+    socialValue: string,
+    firstName: string,
+    lastName: string
+  ) => Promise<{ uuid: PersonUuid, socialId: PersonId }>
+  getAccountWorkspaceBadgeStatuses: (accountId: AccountUuid) => Promise<AccountWorkspaceBadgeStatus[]>
+  setAccountWorkspaceBadgeStatus: (
+    accountId: AccountUuid,
+    workspaceId: WorkspaceUuid,
+    hasUnread: boolean
+  ) => Promise<void>
+  batchWorkspaceBadgeStatuses: (
+    data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>
+  ) => Promise<void>
 }
 
 export interface DbCollection<T> {

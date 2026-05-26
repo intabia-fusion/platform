@@ -97,10 +97,10 @@ export class ApiEndpoint {
           })
         ).json()
       ).result
-      await new Promise((resolve) => setTimeout(resolve, 1000))
       if (wsInfo.status.mode === 'active') {
         break
       }
+      await new Promise((resolve) => setTimeout(resolve, 250))
     }
   }
 

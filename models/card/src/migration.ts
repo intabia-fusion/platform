@@ -28,6 +28,7 @@ import core, {
 } from '@hcengineering/core'
 import {
   createOrUpdate,
+  findCachedSpace,
   tryMigrate,
   tryUpgrade,
   TypeNumber,
@@ -83,7 +84,7 @@ export const cardOperation: MigrateOperation = {
         state: 'create-defaults',
         func: async (client) => {
           const tx = new TxOperations(client, core.account.System)
-          await createDefaultProject(tx)
+          await createDefaultProject(tx, client)
         }
       },
       {
@@ -505,10 +506,8 @@ async function migrateViewlets (client: Client): Promise<void> {
   }
 }
 
-async function createDefaultProject (tx: TxOperations): Promise<void> {
-  const current = await tx.findOne(card.class.CardSpace, {
-    _id: card.space.Default
-  })
+async function createDefaultProject (tx: TxOperations, client: MigrationUpgradeClient): Promise<void> {
+  const current = await findCachedSpace(client, card.space.Default, card.class.CardSpace)
 
   const currentDeleted = await tx.findOne(core.class.TxRemoveDoc, {
     objectId: card.space.Default

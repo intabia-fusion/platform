@@ -144,7 +144,11 @@
     "Seen": "閲覧済み",
     "ChannelsAndDMs": "チャンネルとDM",
     "CreateDirect": "ダイレクトメッセージを作成",
-    "ChangeIcon": "アイコンを変更"
+    "ChangeIcon": "アイコンを変更",
+    "PrivateChat": "プライベートチャット",
+    "ShowMessage": "メッセージを表示",
+    "ForwardMessage": "メッセージを転送",
+    "ToWhom": "宛先"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender}からメッセージが届きました: \n\n{message}",

@@ -25,6 +25,8 @@ export const shownTranslatedMessagesStore = writable<Set<Ref<ChatMessage>>>(new 
 
 export const threadMessagesStore = writable<ActivityMessage | undefined>(undefined)
 
+export const replyingToMessageStore = writable<ChatMessage | undefined>(undefined)
+
 languageStore.subscribe(() => {
   translatedMessagesStore.set(new Map())
   shownTranslatedMessagesStore.set(new Set())

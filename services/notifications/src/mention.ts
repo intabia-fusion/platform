@@ -41,7 +41,7 @@ export async function createMentionsData (
   cache: Cache,
   tx: TxCUD<Doc>,
   contexts: DocNotifyContext[],
-  attachedToDoc: Doc | undefined,
+  doc: Doc,
   object: Doc,
   settings: NotificationSettings,
   type: TxNotificationType
@@ -53,7 +53,6 @@ export async function createMentionsData (
   const { hierarchy } = client
   const res: MentionResult = { txes: [], data: [] }
 
-  const doc = attachedToDoc ?? object
   const message = hierarchy.isDerived(object._class, activity.class.ActivityMessage)
     ? (object as ActivityMessage)
     : undefined

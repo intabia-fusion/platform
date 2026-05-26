@@ -30,6 +30,7 @@
   } from '../stores'
   import { isFullScreen, lk } from '../utils'
   import ControlBar from './meeting/ControlBar.svelte'
+  import KnockingList from './meeting/invites/KnockingList.svelte'
   import ParticipantsListView from './meeting/ParticipantsListView.svelte'
   import ScreenSharingView from './meeting/ScreenSharingView.svelte'
 
@@ -199,6 +200,7 @@
       </div>
     {/if}
   </div>
+  <div class="room-knocking"><KnockingList /></div>
   {#if $currentRoom}
     <ControlBar room={$currentRoom} fullScreen={$isFullScreen} {onFullScreen} {canMaximize} {isModal} />
   {/if}
@@ -210,6 +212,10 @@
     font-size: 1.5rem;
     align-items: center;
   }
+  .room-knocking {
+    padding: 0 1rem;
+  }
+
   .room-container {
     display: flex;
     justify-content: center;

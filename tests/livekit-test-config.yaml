@@ -1,0 +1,34 @@
+# LiveKit configuration for sanity tests.
+# Uses test-only ports/keys so it can run alongside dev/livekit-dev-config.yaml.
+
+port: 7890
+
+# Webhook target — test stand nginx (port 8083) routes /_love/* to the
+# love container internally. LiveKit runs on host, so it goes via nginx.
+webhook:
+  urls: ['http://127.0.0.1:8083/_love/webhook']
+  api_key: whtestkey
+
+# Redis — points to redis-test container in tests/docker-compose.yaml
+# (published on host port 6390). Egress (in Docker) talks to redis-test
+# directly via the compose network.
+redis:
+  address: 127.0.0.1:6390
+  db: 0
+
+turn:
+  enabled: false
+
+rtc:
+  udp_port: 7892
+  tcp_port: 7891
+  use_external_ip: false
+  enable_loopback_candidate: false
+
+keys:
+  testkey: testsecret_for_sanity_tests_min32chars
+  whtestkey: whtestsecret_for_sanity_tests_min32chars
+
+logging:
+  json: false
+  level: debug

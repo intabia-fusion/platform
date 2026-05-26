@@ -77,9 +77,19 @@ func (m Model) renderStats() string {
 	}
 	var stats string
 	if m.mode == ModeOutgoing {
-		stats = fmt.Sprintf("view:%s | shown:%d | sel:%d | folder:%s | ignored:%d | migrated:%d | o:mode x:ign i:view m:migrate ?",
-			view, len(m.items), selectedCount,
-			displayFolder(m.selectedFolder), len(m.store.Outgoing), len(m.store.Migrated))
+		selFiles := 0
+		for _, v := range m.pickedFile {
+			if v {
+				selFiles++
+			}
+		}
+		wt := "-"
+		if m.session != nil && m.session.Branch != "" {
+			wt = m.session.Branch
+		}
+		stats = fmt.Sprintf("view:%s | files:%d | picked:%d | folder:%s | wt:%s | applied:%d | o:mode m:apply ?",
+			view, len(m.centerRows), selFiles,
+			displayFolder(m.selectedFolder), wt, countApplied(m.store))
 	} else {
 		stats = fmt.Sprintf("view:%s | shown:%d | sel:%d | ignored:%d | o:mode x:ign i:view c:cherry-pick ?",
 			view, len(m.items), selectedCount, len(m.store.Incoming))
@@ -90,7 +100,7 @@ func (m Model) renderStats() string {
 func (m Model) renderPanels() string {
 	if m.mode == ModeOutgoing {
 		tree := m.renderTreePanel(m.focus == focusTree)
-		commits := m.renderCommitsPanel(m.focus == focusCommits, m.centerWidth)
+		commits := m.renderCenterPanel(m.focus == focusCommits, m.centerWidth)
 		diff := m.renderDiffPanel(m.focus == focusDiff, m.rightWidth)
 		return lipgloss.JoinHorizontal(lipgloss.Top, tree, commits, diff)
 	}
@@ -129,6 +139,22 @@ func fmtDuration(d time.Duration) string {
 		return fmt.Sprintf("%.1fs", d.Seconds())
 	}
 	return fmt.Sprintf("%dm%02ds", int(d.Minutes()), int(d.Seconds())%60)
+}
+
+// trimFolderPrefix removes the folder prefix (with trailing /) from a file
+// path. Used to keep central panel rows compact when a folder filter is set.
+func trimFolderPrefix(file, folder string) string {
+	if folder == "" {
+		return file
+	}
+	prefix := folder
+	if !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
+	}
+	if strings.HasPrefix(file, prefix) {
+		return file[len(prefix):]
+	}
+	return file
 }
 
 func displayFolder(p string) string {
@@ -189,6 +215,95 @@ func (m Model) renderTreePanel(focused bool) string {
 	}
 
 	return framePanel(b.String(), m.leftWidth, m.height-7, focused)
+}
+
+func (m Model) renderCenterPanel(focused bool, width int) string {
+	var b strings.Builder
+	b.WriteString(headerStyle.Render(" Commits "))
+	if m.session != nil && m.session.Branch != "" {
+		b.WriteString(infoStyle.Render(" → " + m.session.Branch))
+	}
+	b.WriteString("\n")
+
+	if len(m.centerRows) == 0 {
+		b.WriteString(infoStyle.Render("No commits"))
+		return framePanel(b.String(), width, m.height-7, focused)
+	}
+	availableHeight := m.height - 10
+	if availableHeight < 4 {
+		availableHeight = 4
+	}
+	start := m.centerScroll
+	if start < 0 {
+		start = 0
+	}
+	if start > len(m.centerRows)-availableHeight {
+		start = len(m.centerRows) - availableHeight
+	}
+	if start < 0 {
+		start = 0
+	}
+	end := start + availableHeight
+	if end > len(m.centerRows) {
+		end = len(m.centerRows)
+	}
+	for i := start; i < end; i++ {
+		r := m.centerRows[i]
+		isCursor := i == m.centerCursor
+		b.WriteString(m.renderCenterRow(r, isCursor, width))
+		b.WriteString("\n")
+	}
+	return framePanel(b.String(), width, m.height-7, focused)
+}
+
+func (m Model) renderCenterRow(r centerRow, isCursor bool, width int) string {
+	inner := width - 2
+	if inner < 10 {
+		inner = 10
+	}
+	switch r.kind {
+	case rowFile:
+		checkbox := "[ ]"
+		if m.pickedFile[r.file] {
+			checkbox = "[x]"
+		}
+		style := infoStyle
+		if m.store.IsApplied("file", r.file) {
+			checkbox = "[v]"
+			style = cherryPickedStyle
+		}
+		displayPath := trimFolderPrefix(r.file, m.selectedFolder)
+		prefix := checkbox + " "
+		room := inner - len([]rune(prefix))
+		if room < 5 {
+			room = 5
+		}
+		line := padOrTrim(prefix+padOrTrim(displayPath, room), inner)
+		if isCursor {
+			return selectedItemStyle.Render(line)
+		}
+		return style.Render(line)
+	default:
+		if r.itemIdx < 0 || r.itemIdx >= len(m.items) {
+			return ""
+		}
+		it := m.items[r.itemIdx]
+		checkbox := "[ ]"
+		if it.selected {
+			checkbox = "[x]"
+		}
+		hash := it.commit.ShortHash
+		prefix := checkbox + " " + hash + " "
+		room := inner - len([]rune(prefix))
+		if room < 5 {
+			room = 5
+		}
+		line := padOrTrim(prefix+truncate(it.commit.Subject, room), inner)
+		if isCursor {
+			return selectedItemStyle.Render(line)
+		}
+		return line
+	}
 }
 
 func (m Model) renderCommitsPanel(focused bool, width int) string {
@@ -278,20 +393,33 @@ func (m Model) renderDiffPanel(focused bool, width int) string {
 	b.WriteString(headerStyle.Render(" Diff "))
 	b.WriteString("\n")
 
-	if m.cursor >= 0 && m.cursor < len(m.items) {
-		commit := m.items[m.cursor].commit
-		b.WriteString(fmt.Sprintf("%s | %s | %s\n", commit.ShortHash, commit.Author, commit.Date))
-		b.WriteString(truncate(commit.Subject, width-4))
-		b.WriteString("\n")
-		if commit.Partial && len(commit.MissingFiles) > 0 {
-			b.WriteString(partialStyle.Render(fmt.Sprintf("showing %d missing file(s) only", len(commit.MissingFiles))))
+	itemIdx := m.cursor
+	curRow := centerRow{itemIdx: -1}
+	if m.mode == ModeOutgoing {
+		curRow = m.currentCenterRow()
+		itemIdx = curRow.itemIdx
+	}
+	hasCtx := m.mode == ModeOutgoing && curRow.kind == rowFile && curRow.file != "" || itemIdx >= 0 && itemIdx < len(m.items)
+	if hasCtx {
+		if m.mode == ModeOutgoing && curRow.kind == rowFile {
+			b.WriteString(infoStyle.Render("file: " + curRow.file + " (diff vs " + m.upstream + ")"))
 			b.WriteString("\n")
+		} else if itemIdx >= 0 && itemIdx < len(m.items) {
+			commit := m.items[itemIdx].commit
+			b.WriteString(fmt.Sprintf("%s | %s | %s\n", commit.ShortHash, commit.Author, commit.Date))
+			b.WriteString(truncate(commit.Subject, width-4))
+			b.WriteString("\n")
+			if commit.Partial && len(commit.MissingFiles) > 0 {
+				b.WriteString(partialStyle.Render(fmt.Sprintf("showing %d missing file(s) only", len(commit.MissingFiles))))
+				b.WriteString("\n")
+			}
 		}
 		b.WriteString(strings.Repeat("─", width-4))
 		b.WriteString("\n")
 
-		if commit.Diff != "" {
-			diffLines := strings.Split(commit.Diff, "\n")
+		diffText := m.currentDiff
+		if diffText != "" {
+			diffLines := strings.Split(diffText, "\n")
 			availableHeight := m.height - 12
 			if availableHeight < 5 {
 				availableHeight = 5
@@ -317,13 +445,15 @@ func (m Model) renderDiffPanel(focused bool, width int) string {
 			if end < len(diffLines) {
 				b.WriteString(infoStyle.Render(fmt.Sprintf("... (%d more, PgUp/PgDn)", len(diffLines)-end)))
 			}
+		} else if m.currentDiffKey != "" {
+			b.WriteString(infoStyle.Render("(empty diff)"))
 		} else {
 			b.WriteString(infoStyle.Render("Loading diff..."))
 		}
 	} else {
 		b.WriteString(infoStyle.Render("No commit selected"))
 	}
-	return framePanel(b.String(), width, m.height-8, focused)
+	return framePanel(b.String(), width, m.height-7, focused)
 }
 
 func (m Model) styleDiffLine(line string) string {
@@ -377,11 +507,33 @@ func (m Model) helpView() string {
 }
 
 func truncate(s string, maxLen int) string {
-	if len(s) <= maxLen {
+	if maxLen <= 0 {
+		return ""
+	}
+	runes := []rune(s)
+	if len(runes) <= maxLen {
 		return s
 	}
 	if maxLen < 3 {
-		return s[:maxLen]
+		return string(runes[:maxLen])
 	}
-	return s[:maxLen-3] + "..."
+	return string(runes[:maxLen-3]) + "..."
+}
+
+// padOrTrim ensures rune-length(s) == width (truncates with ellipsis, pads with spaces).
+func padOrTrim(s string, width int) string {
+	if width <= 0 {
+		return ""
+	}
+	runes := []rune(s)
+	if len(runes) == width {
+		return s
+	}
+	if len(runes) > width {
+		if width < 3 {
+			return string(runes[:width])
+		}
+		return string(runes[:width-3]) + "..."
+	}
+	return s + strings.Repeat(" ", width-len(runes))
 }

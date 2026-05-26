@@ -48,6 +48,7 @@ import {
   Timestamp,
   toIdMap,
   withContext,
+  systemAccountUuid,
   type Account,
   type WorkspaceIds
 } from '@hcengineering/core'
@@ -58,6 +59,7 @@ import { getTools } from '../utils/tools'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
 import { getAccountClient } from '@hcengineering/server-client'
+import { generateToken } from '@hcengineering/server-token'
 import { ConsumerControl, StorageAdapter } from '@hcengineering/server-core'
 import { jsonToMarkup, markupToText } from '@hcengineering/text'
 import { markdownToMarkup } from '@hcengineering/text-markdown'
@@ -68,6 +70,7 @@ import { getGlobalPerson } from '../utils/account'
 import { connectPlatform } from '../utils/platform'
 import { LoveController } from './love'
 import { RestClient } from '@hcengineering/api-client'
+import { CollaboratorClient, getClient as getCollaboratorClient } from '@hcengineering/collaborator-client'
 
 interface LLMHistoryRecord {
   role: 'user' | 'assistant' | 'system'
@@ -94,6 +97,8 @@ export class WorkspaceClient {
   historyMap = new Map<PersonUuid, PersonHistoryRecord>()
   initPromise: Promise<void> | undefined
 
+  collaborator: CollaboratorClient | undefined
+
   constructor (
     readonly storage: StorageAdapter,
     readonly transactorUrl: string,
@@ -102,10 +107,15 @@ export class WorkspaceClient {
     readonly personUuid: AccountUuid,
     readonly socialIds: SocialId[],
     readonly ctx: MeasureContext,
+    readonly collaboratorEndpoint: string | undefined,
     readonly llm?: LLMProvider
   ) {
     this.client = connectPlatform(this.token, this.wsIds.uuid, this.transactorUrl)
     this.primarySocialId = pickPrimarySocialId(this.socialIds)
+    if (this.collaboratorEndpoint !== undefined && this.collaboratorEndpoint !== '') {
+      this.ctx.info('create collaborator client', { endpoint: this.collaboratorEndpoint })
+      this.collaborator = getCollaboratorClient(this.wsIds.uuid, this.token, this.collaboratorEndpoint)
+    }
     this.initPromise = this.initClient()
   }
 
@@ -191,11 +201,13 @@ export class WorkspaceClient {
     await this.checkEmployeeInfo(this.client)
 
     if (this.aiPerson !== undefined && config.LoveEndpoint !== '') {
+      const systemToken = generateToken(systemAccountUuid, this.wsIds.uuid, { service: 'aibot' })
+      const systemClient = connectPlatform(systemToken, this.wsIds.uuid, this.transactorUrl)
       this.love = new LoveController(
         this.wsIds.uuid,
         this.ctx.newChild('love', {}, { span: false }),
         this.token,
-        this.client,
+        systemClient,
         this.aiPerson
       )
     }

@@ -12,32 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { getMongoClient } from '@hcengineering/mongo'
-
-import { MongoAccountDB } from './collections/mongo'
-
-export { MongoAccountDB }
-
-export async function getMongoAccountDB (uri: string, dbNs?: string): Promise<[MongoAccountDB, () => void]> {
-  const isMongo = uri.startsWith('mongodb://')
-
-  if (!isMongo) {
-    throw new Error('Can only move accounts from mongodb for now')
-  }
-
-  const client = getMongoClient(uri)
-  const db = (await client.getClient()).db(dbNs ?? 'account')
-  const mongoAccount = new MongoAccountDB(db)
-
-  await mongoAccount.init()
-
-  return [
-    mongoAccount,
-    () => {
-      client.close()
-    }
-  ]
-}
 
 export function isShallowEqual (obj1: Record<string, any>, obj2: Record<string, any>): boolean {
   const keys1 = Object.keys(obj1)

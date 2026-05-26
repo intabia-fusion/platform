@@ -22,7 +22,7 @@
   import { get } from 'svelte/store'
   import { getEmbeddedLabel, getMetadata, IntlString } from '@hcengineering/platform'
   import love from '../../plugin'
-  import { liveKitClient, lk } from '../../utils'
+  import { getLiveKitEndpoint, liveKitClient, lk } from '../../utils'
   import { lkSessionConnected } from '../../liveKitClient'
   import { closePanel, CheckBox } from '@hcengineering/ui'
   import type { RemoteTrack, RemoteTrackPublication } from 'livekit-client'
@@ -56,6 +56,38 @@
   let localVideoEl: HTMLVideoElement | null = null
   let previewError: IntlString | null = null
   let previewStarting: boolean = false
+
+  // Guards double-click and pre-permission race with LiveKit signal: the
+  // LiveKit signal websocket has a 20s timeout, and a hanging browser
+  // permission dialog otherwise produces "could not establish signal
+  // connection: Abort handler called".
+  let joining: boolean = false
+
+  // Pre-warm browser media permissions so LiveKit does not race the user's
+  // permission decision against its signal websocket timeout. We immediately
+  // stop the acquired tracks; LiveKit will request its own tracks after
+  // connect. Denied permissions are fine — guest joins as a listener.
+  async function ensureMediaPermissions (withAudio: boolean, withVideo: boolean): Promise<void> {
+    if (!withAudio && !withVideo) return
+    if (navigator?.mediaDevices?.getUserMedia == null) return
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: withAudio,
+        video: withVideo
+      })
+      for (const t of stream.getTracks()) {
+        try {
+          t.stop()
+        } catch (e) {
+          /* noop */
+        }
+      }
+    } catch (err: any) {
+      // Permission denied / no device — proceed without media. LiveKit will
+      // still establish the session and the guest joins as a listener.
+      console.warn('[GuestJoinPopup] media permission unavailable, continuing without it', err)
+    }
+  }
 
   async function startLocalPreview (): Promise<void> {
     if (previewStarting || localStream != null) return
@@ -182,9 +214,16 @@
       error = 'Please enter your first and last name'
       return
     }
+    if (joining) return
     error = null
+    joining = true
 
     try {
+      // Resolve mic/cam permissions BEFORE LiveKit connect — the browser
+      // permission dialog can hang for many seconds while LiveKit's signal
+      // websocket has a 20s timeout. We must not race the two.
+      await ensureMediaPermissions(startWithAudio, startWithVideo)
+
       const endpoint = getMetadata(love.metadata.ServiceEndpoint)
       if (endpoint == null || endpoint === '') {
         throw new Error('Love service endpoint not found')
@@ -214,7 +253,6 @@
 
       const data = await resp.json()
       const roomToken = data.token as string
-      const wsUrl = data.wsUrl as string
       const personRef = data.person as string | undefined
 
       // Persist guest identity locally (associate by workspaceId or meetingId)
@@ -229,7 +267,7 @@
       }
 
       // Connect to LiveKit with video allowed based on user's choice
-      await liveKitClient.connect(wsUrl, roomToken, startWithVideo)
+      await liveKitClient.connect(getLiveKitEndpoint(), roomToken, startWithVideo)
 
       // Attach handlers and existing tracks
       lk.on(RoomEvent.TrackSubscribed, handleTrackSubscribed)
@@ -253,6 +291,8 @@
     } catch (err: any) {
       console.error('Guest join failed', err)
       error = err?.message ?? String(err)
+    } finally {
+      joining = false
     }
   }
 
@@ -342,9 +382,9 @@
   >
     <svelte:fragment slot="before-form">
       <div class="actions center">
-        <div class="form" role="dialog" aria-label={love.string.GuestJoin}>
+        <div class="form" data-id="guest-join-form" role="dialog" aria-label={love.string.GuestJoin}>
           {#if error != null || previewError != null}
-            <div class="error">
+            <div class="error" data-id="guest-join-error">
               {#if error != null}
                 {error}
               {/if}
@@ -428,13 +468,13 @@
     </svelte:fragment>
   </AuthLikeForm>
 {/if}
-<div class="guest-join">
+<div class="guest-join" data-id="guest-join">
   {#if $lkSessionConnected}
-    <div>
+    <div data-id="guest-connected">
       <div class="controls">
         <button on:click={toggleMute}>{micEnabled ? love.string.Mute : love.string.UnMute}</button>
         <button on:click={toggleCam}>{camEnabled ? love.string.StopVideo : love.string.StartVideo}</button>
-        <button class="secondary" on:click={leave}>{love.string.LeaveRoom}</button>
+        <button class="secondary" data-id="guest-leave" on:click={leave}>{love.string.LeaveRoom}</button>
       </div>
       <div class="video-grid" bind:this={videoContainer} aria-live="polite" />
     </div>

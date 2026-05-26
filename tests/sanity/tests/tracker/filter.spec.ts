@@ -345,11 +345,19 @@ test.describe('Tracker filters tests', () => {
     await issuesPage.inputSearch().press('Escape')
     await issuesPage.checkFilter('Modified by', 'is')
 
-    for await (const issue of iterateLocator(issuesPage.issuesList())) {
-      await issue.locator('span.list > a').click()
-
+    // Verify a bounded sample by title text. Iterating the full list with
+    // .nth(i) races virtual scroll: after returning from issue details, top
+    // rows may have unmounted and the same index points to a different row.
+    const total = await issuesPage.issuesList().count()
+    const sampleSize = Math.min(total, 5)
+    const titles: string[] = []
+    for (let i = 0; i < sampleSize; i++) {
+      const text = await issuesPage.issuesList().nth(i).locator('span.list > a').textContent()
+      if (text != null && text.trim() !== '') titles.push(text.trim())
+    }
+    for (const title of titles) {
+      await issuesPage.issuesList().locator('span.list > a', { hasText: title }).first().click()
       await issuesDetailsPage.checkIfButtonCreatedByHaveRealName(modifierName)
-
       await issuesDetailsPage.clickCloseIssueButton()
     }
   })

@@ -13,7 +13,7 @@ export class CommonRecruitingPage extends CalendarPage {
 
   readonly inputComment = (): Locator => this.page.locator('div.text-input div.tiptap')
   readonly buttonSendComment = (): Locator => this.page.locator('g#Send')
-  readonly textComment = (): Locator => this.page.locator('div.showMore-content p')
+  readonly textComment = (): Locator => this.page.locator('.activityMessage .text-markup-view p')
   readonly inputAddAttachment = (): Locator => this.page.locator('div.antiSection #file').first()
   readonly textAttachmentName = (): Locator => this.page.locator('div.attachment-container > a')
   readonly buttonCreateFirstReview = (): Locator => this.page.locator('span:has-text("Create review")')
@@ -75,7 +75,16 @@ export class CommonRecruitingPage extends CalendarPage {
   }
 
   async clickAppleseedJohn (): Promise<void> {
-    await this.appleseedJohnButton().last().click()
+    // Retry: a sibling popup-header may briefly intercept pointer events
+    // (members popup right after open). Stable solution — wait for popup to
+    // settle, then click; if interception still wins, fall back to force-click.
+    const btn = this.appleseedJohnButton().last()
+    await btn.waitFor({ state: 'visible', timeout: 15000 })
+    try {
+      await btn.click({ timeout: 5000 })
+    } catch {
+      await btn.click({ force: true, timeout: 5000 })
+    }
   }
 
   async clickChenRosamund (): Promise<void> {

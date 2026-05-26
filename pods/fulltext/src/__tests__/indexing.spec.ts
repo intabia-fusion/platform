@@ -28,7 +28,7 @@ import { decodeToken, generateToken } from '@hcengineering/server-token'
 import { randomUUID } from 'crypto'
 import { createDoc, test, type TestDocument } from './minmodel'
 
-import { dbConfig, dbUrl, elasticIndexName, model, prepare, preparePipeline } from './utils'
+import { dbConfig, dbUrl, elasticIndexName, kafkaBroker, model, prepare, preparePipeline } from './utils'
 
 prepare()
 jest.mock('franc-min', () => ({ franc: () => 'en' }), { virtual: true })
@@ -69,7 +69,7 @@ class TestWorkspaceManager extends WorkspaceManager {
 }
 class TestQueue {
   genId = generateId()
-  config = parseQueueConfig('localhost:19093;-testing-' + this.genId, 'fulltext-test-' + this.genId, '')
+  config = parseQueueConfig(`${kafkaBroker};-testing-` + this.genId, 'fulltext-test-' + this.genId, '')
   fulltextListener: FulltextListener | undefined
   queue = createPlatformQueue(this.config)
   mgr!: TestWorkspaceManager

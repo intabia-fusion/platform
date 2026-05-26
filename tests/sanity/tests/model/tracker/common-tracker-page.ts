@@ -13,7 +13,7 @@ export class CommonTrackerPage extends CalendarPage {
   privatebuttonFilter = (): Locator => this.page.locator('div.search-start > div:first-child button')
   inputComment = (): Locator => this.page.locator('div.text-input div.tiptap')
   buttonSendComment = (): Locator => this.page.locator('g#Send')
-  textComment = (): Locator => this.page.locator('div.showMore-content p')
+  textComment = (): Locator => this.page.locator('.activityMessage .text-markup-view p')
   textActivity = (): Locator => this.page.locator('div.header')
   buttonSpaceSelectorMoveIssuesModal = (): Locator =>
     this.page.locator('form[id="tracker:string:MoveIssues"] button[id="space.selector"]')

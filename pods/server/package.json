@@ -68,7 +68,6 @@
     "@hcengineering/kafka": "workspace:^0.7.19",
     "@hcengineering/middleware": "workspace:^0.7.22",
     "@hcengineering/minio": "workspace:^0.7.17",
-    "@hcengineering/mongo": "workspace:^0.7.17",
     "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/pod-telegram-bot": "workspace:^0.7.0",

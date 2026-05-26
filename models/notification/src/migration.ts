@@ -31,6 +31,7 @@ import core, {
   type Mixin,
   type Domain
 } from '@hcengineering/core'
+import { withRetry } from '@hcengineering/retry'
 import {
   migrateSpace,
   type MigrateUpdate,
@@ -46,7 +47,8 @@ import notification, {
   type BrowserNotification,
   type DocNotifyContext,
   type InboxNotification,
-  type ReadState
+  type ReadState,
+  type CommonInboxNotification
 } from '@hcengineering/notification'
 import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
 import {
@@ -57,11 +59,15 @@ import {
   getSocialIdFromOldAccount
 } from '@hcengineering/model-core'
 import activity from '@hcengineering/activity'
+
 import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_USER_NOTIFY, DOMAIN_READ_STATE } from './index'
+import { type IntlString } from '@hcengineering/platform'
 
 interface OldCollaborators extends Doc {
   collaborators: AccountUuid[]
 }
+
+const DOMAIN_CONTACT = 'contact' as Domain
 
 export async function removeNotifications (
   client: MigrationClient,
@@ -765,6 +771,121 @@ async function clearNotificationTx (client: MigrationClient): Promise<void> {
   }
 }
 
+async function initBadgeStatuses (client: MigrationClient): Promise<void> {
+  const iterator = await client.traverse<any>(
+    DOMAIN_CONTACT,
+    {
+      [contact.mixin.Employee]: { $exists: true },
+      personUuid: { $exists: true }
+    },
+    { projection: { _id: 1, _class: 1, space: 1, personUuid: 1 } }
+  )
+
+  const cache = new Map<AccountUuid, boolean>()
+
+  try {
+    while (true) {
+      const docs = (await iterator.next(1000)) ?? []
+      if (docs.length === 0) break
+
+      for (const doc of docs) {
+        if (doc.personUuid == null) continue
+
+        const hasUnreadNotifications = await client.find<InboxNotification>(
+          DOMAIN_NOTIFICATION,
+          {
+            user: doc.personUuid,
+            _class: {
+              $in: [
+                notification.class.ActivityInboxNotification,
+                notification.class.CommonInboxNotification,
+                notification.class.MentionInboxNotification,
+                notification.class.ReactionInboxNotification,
+                notification.class.InboxNotification
+              ]
+            },
+            isViewed: false,
+            archived: false
+          },
+          { limit: 1, projection: { _id: 1 } }
+        )
+
+        const hasUnread = hasUnreadNotifications.length > 0
+        cache.set(doc.personUuid, hasUnread)
+      }
+    }
+  } finally {
+    await iterator.close()
+  }
+
+  if (cache.size > 0) {
+    const chunkSize = 500
+    const cacheArray = Array.from(cache.entries())
+    for (let i = 0; i < cacheArray.length; i += chunkSize) {
+      const chunk = cacheArray.slice(i, i + chunkSize)
+      try {
+        await withRetry(
+          async () => {
+            await client.accountClient.setWorkspaceBadgeStatuses(
+              chunk.map((it) => ({
+                accountId: it[0],
+                workspaceId: client.wsIds.uuid,
+                hasUnread: it[1]
+              }))
+            )
+          },
+          { maxRetries: 3 },
+          'setWorkspaceBadgeStatuses'
+        )
+        console.log('Pushed batch badge updates to account service', { size: chunk.length })
+      } catch (err: any) {
+        console.error('Failed to push batch badge updates', { err, size: chunk.length })
+      }
+    }
+  }
+
+  console.log('Badge statuses cache generated', { usersCount: cache.size, ...client.wsIds })
+}
+
+async function migrateCommonNotificationProps (client: MigrationClient): Promise<void> {
+  type CommonInboxNotificationOld = CommonInboxNotification & {
+    props?: Record<string, any>
+    propsIntl?: Record<string, IntlString>
+  }
+  const iterator = await client.traverse<CommonInboxNotificationOld>(DOMAIN_NOTIFICATION, {
+    _class: notification.class.CommonInboxNotification
+  })
+
+  try {
+    while (true) {
+      const docs = (await iterator.next(500)) ?? []
+
+      if (docs.length === 0) break
+
+      const updates: {
+        filter: MigrationDocumentQuery<CommonInboxNotification>
+        update: MigrateUpdate<CommonInboxNotification>
+      }[] = []
+      for (const doc of docs) {
+        const { props, propsIntl, intlParams, intlParamsNotLocalized } = doc
+        if (props == null && propsIntl == null) continue
+
+        updates.push({
+          filter: { _id: doc._id },
+          update: {
+            intlParams: { ...intlParams, ...props },
+            intlParamsNotLocalized: { ...intlParamsNotLocalized, ...propsIntl }
+          }
+        })
+      }
+
+      await client.bulk(DOMAIN_NOTIFICATION, updates)
+    }
+  } catch (e) {
+    await iterator.close()
+  }
+}
+
 export const notificationOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, notificationId, [
@@ -997,6 +1118,16 @@ export const notificationOperation: MigrateOperation = {
         state: 'clear-notification-tx-v1',
         mode: 'upgrade',
         func: clearNotificationTx
+      },
+      {
+        state: 'init-badge-statuses-v1',
+        mode: 'upgrade',
+        func: initBadgeStatuses
+      },
+      {
+        state: 'migrame-common-notification-props-v2',
+        mode: 'upgrade',
+        func: migrateCommonNotificationProps
       }
     ])
   },

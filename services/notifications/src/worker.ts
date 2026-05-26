@@ -14,7 +14,8 @@
 //
 
 import core, {
-  type Branding,
+  AccountUuid,
+  Branding,
   Class,
   Doc,
   Hierarchy,
@@ -23,17 +24,31 @@ import core, {
   Ref,
   systemAccountUuid,
   Tx,
+  TxCreateDoc,
   TxCUD,
   TxProcessor,
+  TxRemoveDoc,
+  TxUpdateDoc,
   WorkspaceUuid
 } from '@hcengineering/core'
 import activity from '@hcengineering/activity'
 import { generateToken } from '@hcengineering/server-token'
 import { createRestClient } from '@hcengineering/api-client'
 import { StorageAdapter } from '@hcengineering/storage'
-import notification, { TxNotificationType } from '@hcengineering/notification'
+import notification, { InboxNotification, TxNotificationType } from '@hcengineering/notification'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
-import { loadBrandingMap } from '@hcengineering/server-core'
+import {
+  loadBrandingMap,
+  type PlatformQueue,
+  type PlatformQueueProducer,
+  QueueTopic,
+  type QueueUserMessage,
+  userEvents
+} from '@hcengineering/server-core'
+import { getAccountClient } from '@hcengineering/server-client'
+import { PersonSpace } from '@hcengineering/contact'
+import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
+import platform from '@hcengineering/platform'
 
 import Workspace from './workspace'
 import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils'
@@ -50,18 +65,32 @@ export class Worker {
 
   private readonly storage: StorageAdapter
 
-  private readonly interval: NodeJS.Timeout | undefined = undefined
+  private readonly clearInterval: NodeJS.Timeout | undefined = undefined
+  private readonly flushInterval: NodeJS.Timeout | undefined = undefined
+
+  private readonly pendingStatusUpdates = new Map<AccountUuid, Record<WorkspaceUuid, boolean>>()
+
+  private readonly pendingWorkspaces = new Map<WorkspaceUuid, Promise<Workspace | undefined>>()
+  private readonly userEventProducer: PlatformQueueProducer<QueueUserMessage>
+
+  private aiBotAccountUuid?: AccountUuid
 
   private readonly brandingMap = loadBrandingMap(config.BrandingPath)
 
   constructor (
-    ctx: MeasureContext,
-    private readonly modelTxes: Tx[]
+    private readonly ctx: MeasureContext,
+    private readonly modelTxes: Tx[],
+    private readonly queue: PlatformQueue
   ) {
     for (const tx of modelTxes) {
       this.sysHierarchy.tx(tx)
     }
     this.sysModel.addTxes(ctx, modelTxes, true)
+
+    this.userEventProducer = this.queue.getProducer(
+      ctx.newChild('user-event-producer', {}, { span: false }),
+      QueueTopic.Users
+    )
 
     this.storage = buildStorageFromConfig(storageConfigFrom(config.StorageConfig))
     this.txTypes = this.sysModel
@@ -73,7 +102,7 @@ export class Worker {
       ...this.txTypes.map((it) => it.objectClass)
     ].filter((it) => it !== core.class.Doc)
 
-    this.interval = setInterval(
+    this.clearInterval = setInterval(
       () => {
         const now = Date.now()
         for (const [uuid, workspace] of this.workspaces.entries()) {
@@ -85,8 +114,59 @@ export class Worker {
           this.workspaces.delete(uuid)
         }
       },
-      5 * 60 * 1000
+      5 * 60 * 1000 // 5 minutes
     )
+
+    this.flushInterval = setInterval(() => {
+      void this.flushPendingUpdates()
+    }, 1000)
+  }
+
+  private async flushPendingUpdates (): Promise<void> {
+    if (this.pendingStatusUpdates.size === 0) return
+
+    const updates = Array.from(this.pendingStatusUpdates.entries())
+    this.pendingStatusUpdates.clear()
+    const timestamp = Date.now()
+
+    for (const [user, statuses] of updates) {
+      for (const [wsUuid, hasUnread] of Object.entries(statuses)) {
+        try {
+          await this.userEventProducer.send(
+            this.ctx,
+            wsUuid as WorkspaceUuid,
+            [userEvents.notifyStatusChanged({ user, hasUnread, timestamp })],
+            user
+          )
+        } catch (e) {
+          this.ctx.error('Failed to send notifyStatusChanged to queue', { e, user, wsUuid, hasUnread })
+
+          let currentMap = this.pendingStatusUpdates.get(user)
+          if (currentMap === undefined) {
+            currentMap = {}
+            this.pendingStatusUpdates.set(user, currentMap)
+          }
+
+          if (currentMap[wsUuid as WorkspaceUuid] === undefined) {
+            currentMap[wsUuid as WorkspaceUuid] = hasUnread
+          }
+        }
+      }
+    }
+  }
+
+  public async resolveAiBotAccount (): Promise<void> {
+    if (this.aiBotAccountUuid != null) return
+    try {
+      const token = generateToken(systemAccountUuid, undefined, { service: config.ServiceId })
+      const client = getAccountClient(token)
+      const socialId = await client.findFullSocialIdBySocialKey(aiBotEmailSocialKey)
+      if (socialId != null) {
+        this.aiBotAccountUuid = socialId.personUuid as AccountUuid
+      }
+    } catch (e) {
+      this.ctx.error('Failed to resolve AI bot account', { e })
+    }
   }
 
   async tx (ctx: MeasureContext, ws: WorkspaceUuid, _tx: Tx): Promise<void> {
@@ -94,49 +174,145 @@ export class Worker {
 
     const tx = _tx as TxCUD<Doc>
 
+    if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.InboxNotification)) {
+      await this.updateUserNotifyStatus(ctx, ws, tx as TxCUD<InboxNotification>)
+    }
+
     const exists = this.workspaces.get(ws)
+    const isTrigger = isTxTrigger(this.sysHierarchy, tx, this.triggerClasses, this.txTypes)
 
-    if (exists !== undefined) {
-      await exists.tx(tx)
+    if (exists === undefined && !isTrigger) {
       return
     }
 
-    if (!isTxTrigger(this.sysHierarchy, tx, this.triggerClasses, this.txTypes)) {
-      return
-    }
-
-    const token = generateToken(systemAccountUuid, ws, { service: config.ServiceId })
-    const wsInfo = await getWorkspaceInfo(token)
-    if (wsInfo === undefined) return
-
-    const endpoint = getTransactorApiEndpoint(wsInfo)
-    if (endpoint === undefined) return
-
-    const client = createRestClient(endpoint, ws, token)
-
-    const { model, hierarchy } = await client.getModel(true)
-    const branding: Branding | undefined =
-      wsInfo.branding !== undefined && wsInfo.branding !== ''
-        ? (this.brandingMap[wsInfo.branding] ?? this.brandingMap[Object.keys(this.brandingMap)[0]])
-        : this.brandingMap[Object.keys(this.brandingMap)[0]]
-    const workspace = await Workspace.create(
-      ctx.newChild(ws, {}),
-      wsInfo,
-      hierarchy,
-      model,
-      this.modelTxes,
-      this.storage,
-      client,
-      branding,
-      this.txTypes
-    )
-
-    this.workspaces.set(ws, workspace)
+    const workspace = await this.getWorkspaceClient(ctx, ws)
+    if (workspace == null) return
 
     await workspace.tx(tx)
   }
 
-  public close (): void {
-    clearInterval(this.interval)
+  private async getTxUser (
+    ctx: MeasureContext,
+    wsUuid: WorkspaceUuid,
+    _tx: TxCUD<InboxNotification>
+  ): Promise<AccountUuid | undefined> {
+    if (_tx._class === core.class.TxCreateDoc) {
+      return TxProcessor.createDoc2Doc(_tx as TxCreateDoc<InboxNotification>).user
+    } else if (_tx._class === core.class.TxRemoveDoc) {
+      const tx = _tx as TxRemoveDoc<InboxNotification>
+      const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
+      const space = await wsClient?.cache.findPersonSpace(tx.objectSpace as Ref<PersonSpace>)
+      return space?.account
+    } else if (_tx._class === core.class.TxUpdateDoc) {
+      const tx = _tx as TxUpdateDoc<InboxNotification>
+      if (tx.operations.isViewed == null) return undefined
+      const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
+      const space = await wsClient?.cache.findPersonSpace(tx.objectSpace as Ref<PersonSpace>)
+      return space?.account
+    }
+    return undefined
+  }
+
+  private async updateUserNotifyStatus (
+    ctx: MeasureContext,
+    wsUuid: WorkspaceUuid,
+    _tx: TxCUD<InboxNotification>
+  ): Promise<void> {
+    const user = await this.getTxUser(ctx, wsUuid, _tx)
+    if (user == null || user === this.aiBotAccountUuid || user === systemAccountUuid) return
+
+    if (_tx._class === core.class.TxCreateDoc) {
+      const tx = _tx as TxCreateDoc<InboxNotification>
+      const doc = TxProcessor.createDoc2Doc(tx)
+
+      if (doc.isViewed || doc.archived) return
+
+      this.scheduleStatusUpdate(user, wsUuid, true)
+    } else {
+      if (_tx._class === core.class.TxUpdateDoc) {
+        const tx = _tx as TxUpdateDoc<InboxNotification>
+        if (tx.operations.isViewed == null) return
+      }
+
+      const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
+      if (wsClient == null) return
+
+      const unread = await wsClient.client.findOne(
+        notification.class.InboxNotification,
+        { user, isViewed: false, archived: false },
+        { limit: 1 }
+      )
+      const notify = unread != null
+
+      this.scheduleStatusUpdate(user, wsUuid, notify)
+    }
+  }
+
+  private scheduleStatusUpdate (user: AccountUuid, wsUuid: WorkspaceUuid, hasUnread: boolean): void {
+    let userMap = this.pendingStatusUpdates.get(user)
+    if (userMap === undefined) {
+      userMap = {}
+      this.pendingStatusUpdates.set(user, userMap)
+    }
+    userMap[wsUuid] = hasUnread
+  }
+
+  private async getWorkspaceClient (ctx: MeasureContext, ws: WorkspaceUuid): Promise<Workspace | undefined> {
+    const exists = this.workspaces.get(ws)
+    if (exists !== undefined) return exists
+
+    const pending = this.pendingWorkspaces.get(ws)
+    if (pending !== undefined) return await pending
+
+    const promise = (async () => {
+      try {
+        const token = generateToken(systemAccountUuid, ws, { service: config.ServiceId })
+        const wsInfo = await getWorkspaceInfo(token)
+        if (wsInfo === undefined) return undefined
+
+        const endpoint = getTransactorApiEndpoint(wsInfo)
+        if (endpoint === undefined) return undefined
+
+        const client = createRestClient(endpoint, ws, token)
+
+        const { model, hierarchy } = await client.getModel(true)
+        const branding: Branding | undefined =
+          wsInfo.branding !== undefined && wsInfo.branding !== ''
+            ? (this.brandingMap[wsInfo.branding] ?? this.brandingMap[Object.keys(this.brandingMap)[0]])
+            : this.brandingMap[Object.keys(this.brandingMap)[0]]
+        const workspace = await Workspace.create(
+          ctx.newChild(ws, {}),
+          wsInfo,
+          hierarchy,
+          model,
+          this.modelTxes,
+          this.storage,
+          client,
+          branding,
+          this.txTypes
+        )
+
+        this.workspaces.set(ws, workspace)
+        return workspace
+      } catch (e: any) {
+        if (e?.status?.code === platform.status.Forbidden) {
+          ctx.error('Workspace is forbidden, dropping workspace initialization', { e, wsUuid: ws })
+          return undefined
+        }
+        throw e
+      } finally {
+        this.pendingWorkspaces.delete(ws)
+      }
+    })()
+
+    this.pendingWorkspaces.set(ws, promise)
+    return await promise
+  }
+
+  public async close (): Promise<void> {
+    clearInterval(this.clearInterval)
+    clearInterval(this.flushInterval)
+    this.pendingStatusUpdates.clear()
+    await Promise.allSettled([this.userEventProducer.close])
   }
 }

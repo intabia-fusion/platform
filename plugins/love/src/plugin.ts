@@ -15,7 +15,6 @@ import {
   ParticipantInfo,
   PendingRecording,
   Room,
-  RoomAccess,
   RoomInfo,
   UserMeetingInvite
 } from './types'
@@ -52,9 +51,6 @@ const love = plugin(loveId, {
     MeetingRequest: '' as IntlString,
     Kind: '' as IntlString,
     RoomType: '' as IntlString,
-    Knock: '' as IntlString,
-    Open: '' as IntlString,
-    DND: '' as IntlString,
     StartTranscription: '' as IntlString,
     StopTranscription: '' as IntlString,
     Meeting: '' as IntlString,
@@ -88,10 +84,12 @@ const love = plugin(loveId, {
     Finished: '' as IntlString,
     Pending: '' as IntlString,
     StartWithRecording: '' as IntlString,
+    StartPrivate: '' as IntlString,
     RecordingState: '' as IntlString,
     RecordingNotStarted: '' as IntlString,
     RecordingRecording: '' as IntlString,
     RecordingFinished: '' as IntlString,
+    Summary: '' as IntlString,
     Recording: '' as IntlString,
     StoppingRecord: '' as IntlString,
     Kick: '' as IntlString,
@@ -102,11 +100,39 @@ const love = plugin(loveId, {
     LeaveParticipant: '' as IntlString,
     KnockAction: '' as IntlString,
     KnockingTo: '' as IntlString,
+    KnockDeclined: '' as IntlString,
+    NoHostOffice: '' as IntlString,
+    NoHostOfficeBody: '' as IntlString,
+    CallDeclined: '' as IntlString,
+    CallDeclinedBody: '' as IntlString,
+    WaitingForMeeting: '' as IntlString,
+    WaitingForMeetingFrom: '' as IntlString,
+    MeetingDeclinedOrFinished: '' as IntlString,
+    CancelKnock: '' as IntlString,
+    AdmitKnock: '' as IntlString,
+    DeclineKnock: '' as IntlString,
     ShowParticipants: '' as IntlString,
     HideParticipants: '' as IntlString,
     Scheduled: '' as IntlString,
     ScheduledIn: '' as IntlString,
-    WaitForHost: '' as IntlString
+    WaitForHost: '' as IntlString,
+    CloseRoom: '' as IntlString,
+    OpenRoom: '' as IntlString,
+    Private: '' as IntlString,
+    Busy: '' as IntlString,
+    // Viewlet-related strings
+    ShowArchived: '' as IntlString,
+    HideArchived: '' as IntlString,
+    IncludeArchived: '' as IntlString,
+    MeetingMinutesList: '' as IntlString,
+    MeetingMinutesTable_: '' as IntlString,
+    RoomsTable: '' as IntlString,
+    RoomsList: '' as IntlString,
+    RoomsFloor: '' as IntlString,
+    GroupByRoom: '' as IntlString,
+    GroupByOwner: '' as IntlString,
+    GroupByStatus: '' as IntlString,
+    GroupByDate: '' as IntlString
   },
   ids: {
     MainFloor: '' as Ref<Floor>,
@@ -152,7 +178,18 @@ const love = plugin(loveId, {
   },
   component: {
     SelectScreenSourcePopup: '' as AnyComponent,
-    GuestMeetingApp: '' as AnyComponent
+    GuestMeetingApp: '' as AnyComponent,
+    RoomMeetingsFooter: '' as AnyComponent,
+    MeetingMinutesBreadcrumb: '' as AnyComponent,
+    MeetingMinutesView: '' as AnyComponent,
+    RoomsView: '' as AnyComponent,
+    MeetingMinutesListItem: '' as AnyComponent,
+    RoomListItem: '' as AnyComponent,
+    RoomTablePresenter: '' as AnyComponent,
+    FloorMeetingMinutesList: '' as AnyComponent,
+    RoomAttributePresenter: '' as AnyComponent,
+    MeetingMinutesMessagesPresenter: '' as AnyComponent,
+    MeetingMinutesTranscriptionPresenter: '' as AnyComponent
   },
   viewlet: {
     TableMeetingMinutes: '' as Ref<Viewlet>,
@@ -160,20 +197,15 @@ const love = plugin(loveId, {
     MeetingMinutesDescriptor: '' as Ref<ViewletDescriptor>,
     FloorDescriptor: '' as Ref<ViewletDescriptor>,
     Floor: '' as Ref<Viewlet>,
-    FloorMeetingMinutes: '' as Ref<Viewlet>
+    FloorMeetingMinutes: '' as Ref<Viewlet>,
+    ListMeetingMinutes: '' as Ref<Viewlet>,
+    ListMeetingMinutesDescriptor: '' as Ref<ViewletDescriptor>,
+    FloorMeetingMinutesListViewlet: '' as Ref<Viewlet>,
+    TableRooms: '' as Ref<Viewlet>,
+    TableRoomsDescriptor: '' as Ref<ViewletDescriptor>,
+    ListRooms: '' as Ref<Viewlet>,
+    ListRoomsDescriptor: '' as Ref<ViewletDescriptor>
   }
 })
-
-export const roomAccessIcon = {
-  [RoomAccess.Open]: love.icon.Open,
-  [RoomAccess.Knock]: love.icon.Knock,
-  [RoomAccess.DND]: love.icon.DND
-}
-
-export const roomAccessLabel = {
-  [RoomAccess.Open]: love.string.Open,
-  [RoomAccess.Knock]: love.string.Knock,
-  [RoomAccess.DND]: love.string.DND
-}
 
 export default love

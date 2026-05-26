@@ -31,6 +31,7 @@ import activity, { type ActivityMessage, type ActivityReference } from '@hcengin
 import attachment from '@hcengineering/attachment'
 import { sortActivityMessages } from '@hcengineering/activity-resources'
 import notification, { type DocNotifyContext } from '@hcengineering/notification'
+import chunter from '@hcengineering/chunter'
 
 export type LoadMode = 'forward' | 'backward'
 
@@ -322,7 +323,8 @@ export class ChannelDataProvider implements IChannelDataProvider {
       _id: {
         attachments: attachment.class.Attachment,
         reactions: activity.class.Reaction
-      }
+      },
+      forwardedMessage: chunter.class.ChatMessage
     }
   }
 

@@ -131,6 +131,7 @@ export interface InviteSettings extends Configuration {
 export interface OfficeSettings extends Configuration {
   defaultStartWithTranscription: boolean
   defaultStartWithRecording: boolean
+  defaultStartPrivate: boolean
 }
 
 /**
@@ -276,6 +277,7 @@ export default plugin(settingId, {
     OfficeDefaultSettings: '' as IntlString,
     DefaultStartWithTranscription: '' as IntlString,
     DefaultStartWithRecording: '' as IntlString,
+    DefaultStartPrivate: '' as IntlString,
     MailboxErrorInvalidName: '' as IntlString,
     MailboxErrorDomainNotFound: '' as IntlString,
     MailboxErrorNameRulesViolated: '' as IntlString,

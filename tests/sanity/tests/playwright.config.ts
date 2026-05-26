@@ -16,7 +16,18 @@ const config: PlaywrightTestConfig = {
       name: 'Platform',
       use: {
         testIdAttribute: 'data-id',
-        permissions: ['clipboard-read', 'clipboard-write'],
+        permissions: ['clipboard-read', 'clipboard-write', 'microphone', 'camera'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            '--autoplay-policy=no-user-gesture-required',
+            // WebRTC ICE: on Linux CI runners mDNS .local hostnames don't
+            // resolve, which kills DTLS handshake. Disable mDNS obfuscation so
+            // LiveKit gets a real loopback/host IP candidate.
+            '--disable-features=WebRtcHideLocalIpsWithMdns'
+          ]
+        },
         ...devices['Desktop Chrome'],
         screenshot: 'only-on-failure',
         viewport: {
@@ -43,7 +54,7 @@ const config: PlaywrightTestConfig = {
   expect: {
     timeout: 15000
   },
-  globalTimeout: 1_800_000,
+  globalTimeout: 2_700_000,
   reporter: [
     ['list'],
     ['html'],

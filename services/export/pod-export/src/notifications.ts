@@ -118,7 +118,7 @@ export async function sendExportCompletionNotification (
             icon: exportPlugin.icon.Export,
             header: exportPlugin.string.ImportCompleted,
             message: exportPlugin.string.ImportToWorkspaceNotificationMessage,
-            props: {
+            intlParams: {
               senderName: sender?.name ?? 'System',
               count,
               sourceWorkspace: sourceWsIds.uuid

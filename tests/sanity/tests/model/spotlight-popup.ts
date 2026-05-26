@@ -23,6 +23,7 @@ export class SpotlightPopup extends CommonPage {
     }
     await this.statusbar.clickButtonSearch()
     await expect(this.popup()).toBeVisible()
+    await expect(this.input()).toBeVisible()
   }
 
   async close (): Promise<void> {

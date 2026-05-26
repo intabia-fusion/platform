@@ -15,6 +15,7 @@
 
 import core, { TxOperations } from '@hcengineering/core'
 import {
+  findCachedSpace,
   tryUpgrade,
   type MigrateOperation,
   type MigrationClient,
@@ -31,9 +32,7 @@ export const templatesOperation: MigrateOperation = {
         state: 'create-defaults',
         func: async (client) => {
           const tx = new TxOperations(client, core.account.System)
-          const current = await tx.findOne(core.class.Space, {
-            _id: templates.space.Templates
-          })
+          const current = await findCachedSpace(client, templates.space.Templates)
           if (current === undefined) {
             await tx.createDoc(
               templates.class.TemplateCategory,

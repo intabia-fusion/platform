@@ -31,15 +31,15 @@ import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import os from 'os'
-import { migrateFromOldAccounts } from './migration/migration'
-
 import { getPlatformQueue } from '@hcengineering/kafka'
-import { QueueTopic } from '@hcengineering/server-core'
-import { randomBytes } from 'crypto'
+import { QueueTopic, type QueueUserMessage, type QueueOnlineUserTx } from '@hcengineering/server-core'
+import { randomBytes } from 'node:crypto'
 
+import { handlePresenceBatch } from './presence'
 export * from './migration/utils'
 export * from './migration/types'
 
+const SERVICE_ID = 'account'
 const AUTH_TOKEN_COOKIE = 'account-metadata-Token'
 
 const KEEP_ALIVE_HEADERS = {
@@ -83,10 +83,8 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     }
   }
 
-  const oldAccsUrl = process.env.OLD_ACCOUNTS_URL ?? (dbUrl.startsWith('mongodb://') ? dbUrl : undefined)
-  const oldAccsNs = process.env.OLD_ACCOUNTS_NS
-
   const hasRegionConfig = process.env.REGION_CONFIG !== undefined || process.env.REGION_CONFIG_JSON !== undefined
+
   const transactorUri = process.env.TRANSACTOR_URL
   if (transactorUri === undefined && !hasRegionConfig) {
     console.log('Please provide transactor url or region config')
@@ -99,7 +97,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     process.exit(1)
   }
 
-  const platformQueue = getPlatformQueue('account')
+  const platformQueue = getPlatformQueue(SERVICE_ID)
 
   const notificationProducer = platformQueue.getProducer<AccountNotification>(measureCtx, QueueTopic.NotificationQueue)
   setMetadata(accountPlugin.metadata.MailQueue, notificationProducer)
@@ -154,12 +152,21 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
   const dbNs = process.env.DB_NS
   const accountsDb = getAccountDB(dbUrl, dbNs)
-  const migrations = accountsDb.then(async ([db]) => {
-    if (oldAccsUrl !== undefined) {
-      await migrateFromOldAccounts(oldAccsUrl, db, oldAccsNs)
-      console.log('Migrations verified/done')
-    }
-  })
+
+  const onlineUserTxProducer = platformQueue.getProducer<QueueOnlineUserTx>(
+    measureCtx.newChild('online-user-tx-producer', {}, { span: false }),
+    QueueTopic.OnlineUserTx
+  )
+
+  const usersConsumer = platformQueue.createBatchConsumer<QueueUserMessage>(
+    measureCtx.newChild('users-consumer', {}, { span: false }),
+    QueueTopic.Users,
+    'presence-tracker',
+    async (ctx, msgs) => {
+      await handlePresenceBatch(ctx, msgs, accountsDb, onlineUserTxProducer)
+    },
+    { batchSize: 500, batchTimeout: 1000 }
+  )
 
   const app = new Koa()
   const router = new Router()
@@ -451,7 +458,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     }
 
     const [db] = await accountsDb
-    await migrations
 
     const branding = getBranding(ctx)
 
@@ -535,7 +541,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
     try {
       const [db] = await accountsDb
-      await migrations
 
       const shortId = generateShortId()
       await db.shortLink.insertOne({ id: shortId, payload, workspaceId })
@@ -561,7 +566,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
     try {
       const [db] = await accountsDb
-      await migrations
 
       const link = await db.shortLink.findOne({ id: shortId })
 
@@ -591,6 +595,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     onClose?.()
     void notificationProducer.close()
     void crmProducer.close()
+    void usersConsumer.close()
     void platformQueue.shutdown()
     void accountsDb.then(([, closeAccountsDb]) => {
       closeAccountsDb()

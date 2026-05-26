@@ -19,7 +19,6 @@ import {
   isArchivingMode,
   isMigrationMode,
   isRestoringMode,
-  MeasureMetricsContext,
   systemAccountUuid,
   type BrandingMap,
   type Data,
@@ -43,12 +42,6 @@ import path from 'path'
 
 import { Analytics } from '@hcengineering/analytics'
 import {
-  createMongoAdapter,
-  createMongoDestroyAdapter,
-  createMongoTxAdapter,
-  shutdownMongo
-} from '@hcengineering/mongo'
-import {
   createPostgreeDestroyAdapter,
   createPostgresAdapter,
   createPostgresTxAdapter,
@@ -71,8 +64,7 @@ import {
   registerDestroyFactory,
   registerServerPlugins,
   registerStringLoaders,
-  registerTxAdapterFactory,
-  setAdapterSecurity
+  registerTxAdapterFactory
 } from '@hcengineering/server-pipeline'
 import { buildStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 import { createWorkspace, upgradeWorkspace } from './ws-operations'
@@ -95,9 +87,6 @@ export interface WorkspaceOptions {
 // Register close on process exit.
 process.on('exit', () => {
   shutdownPostgres().catch((err) => {
-    console.error(err)
-  })
-  shutdownMongo().catch((err) => {
     console.error(err)
   })
 })
@@ -169,14 +158,9 @@ export class WorkspaceWorker {
 
     setDBExtraOptions({ connection: { application_name: `workspace-${this.id}` } })
 
-    registerTxAdapterFactory('mongodb', createMongoTxAdapter)
-    registerAdapterFactory('mongodb', createMongoAdapter)
-    registerDestroyFactory('mongodb', createMongoDestroyAdapter)
-
     registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
     registerAdapterFactory('postgresql', createPostgresAdapter, true)
     registerDestroyFactory('postgresql', createPostgreeDestroyAdapter, true)
-    setAdapterSecurity('postgresql', true)
 
     registerServerPlugins()
     registerStringLoaders()
@@ -197,12 +181,14 @@ export class WorkspaceWorker {
       } else {
         void this.exec(async () => {
           const job = randomUUID().slice(-8)
-          const opContext = new MeasureMetricsContext(`ws op with job ${job}`, { job })
+          const opContext = ctx.newChild('ws-op', {}, { fullParams: { job } })
           try {
             await this.doWorkspaceOperation(opContext, workspace, opt)
           } catch (err: any) {
             Analytics.handleError(err)
             opContext.error('Error while performing workspace operation', { origErr: err })
+          } finally {
+            opContext.end()
           }
         })
         // sleep for a little bit to avoid bombarding the account service, also add jitter to avoid simultaneous requests from multiple workspace services

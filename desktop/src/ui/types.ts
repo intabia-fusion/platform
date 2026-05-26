@@ -175,7 +175,7 @@ export interface LaunchApplication {
 }
 
 export interface IPCMainExposed {
-  setBadge: (badge: number) => void
+  setBadge: (badge: number | string, tooltip?: string) => void
   setTitle: (title: string) => void
   config: () => Promise<Config>
   branding: () => Promise<Branding>

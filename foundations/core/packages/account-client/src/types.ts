@@ -245,3 +245,10 @@ export interface SubscriptionInfo extends Subscription {
   payerEmail?: string
   payerName?: string
 }
+
+export interface AccountWorkspaceBadgeStatus {
+  accountUuid: AccountUuid
+  workspaceUuid: WorkspaceUuid
+  hasUnread: boolean
+  updatedOn: Timestamp
+}

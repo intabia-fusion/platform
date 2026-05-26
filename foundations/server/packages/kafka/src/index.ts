@@ -15,14 +15,14 @@
 
 import { type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
 import {
-  QueueTopic,
   type ConsumerControl,
   type ConsumerHandle,
   type ConsumerMessage,
   type PlatformQueue,
-  type PlatformQueueProducer
+  type PlatformQueueProducer,
+  QueueTopic
 } from '@hcengineering/server-core'
-import { Kafka, Partitioners, type Consumer, type Producer, CompressionTypes, type Admin } from 'kafkajs'
+import { type Admin, CompressionTypes, type Consumer, Kafka, Partitioners, type Producer } from 'kafkajs'
 import type * as tls from 'tls'
 
 export interface QueueConfig {
@@ -189,6 +189,7 @@ class PlatformQueueImpl implements PlatformQueue {
       await admin.connect()
       const topics = new Set(await admin.listTopics())
       await this.checkCreateTopic(admin, QueueTopic.Tx, topics, tx)
+      await this.checkCreateTopic(admin, QueueTopic.OnlineUserTx, topics, tx)
       await this.checkCreateTopic(admin, QueueTopic.Fulltext, topics, 5)
       await this.checkCreateTopic(admin, QueueTopic.Workspace, topics, 1)
       await this.checkCreateTopic(admin, QueueTopic.Users, topics, 1)
@@ -225,6 +226,7 @@ class PlatformQueueImpl implements PlatformQueue {
         }
       } else {
         await this.checkDeleteTopic(admin, QueueTopic.Tx, existing)
+        await this.checkDeleteTopic(admin, QueueTopic.OnlineUserTx, existing)
         await this.checkDeleteTopic(admin, QueueTopic.Fulltext, existing)
         await this.checkDeleteTopic(admin, QueueTopic.Workspace, existing)
         await this.checkDeleteTopic(admin, QueueTopic.Users, existing)
@@ -394,8 +396,12 @@ class PlatformQueueConsumerImpl implements ConsumerHandle {
 
 /**
  * Batch consumer implementation.
- * Accumulates messages per partition and sends them to the provided handler
- * as an ordered array. The entire batch is retried on error.
+ * Uses kafkajs eachBatch to receive native partition batches and slices them
+ * into chunks of `batchSize`. The entire chunk is retried on error.
+ *
+ * `batchTimeout` (ms) maps to kafkajs `maxWaitTimeInMs` — how long broker
+ * waits for `minBytes` before returning whatever is available. Lower = lower
+ * latency, higher = better throughput.
  */
 class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
   connected = false
@@ -420,9 +426,13 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
       sessionTimeout?: number // Optional session timeout in milliseconds
     }
   ) {
+    const rawMaxWait = this.options?.batchTimeout
+    const sanitizedMaxWait =
+      typeof rawMaxWait === 'number' && Number.isFinite(rawMaxWait) && rawMaxWait >= 0 ? rawMaxWait : undefined
     this.cc = this.kafka.consumer({
       groupId: `${getKafkaTopicId(this.topic, this.config)}-${groupId}`,
       sessionTimeout: this.options?.sessionTimeout,
+      maxWaitTimeInMs: sanitizedMaxWait,
       allowAutoTopicCreation: true
     })
 
@@ -435,113 +445,81 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
     await this.doConnect()
     await this.doSubscribe()
 
-    // Per-partition state
-    const partitionStates = new Map<
-    number,
-    {
-      messages: Array<{ workspace: WorkspaceUuid, value: any, meta: any }>
-      timer?: ReturnType<typeof setTimeout>
-      processing?: boolean
-      waiters: Array<{ resolve: () => void, reject: (err: any) => void }>
-    }
-    >()
-
-    const batchSize = this.options?.batchSize ?? 1
-    const batchTimeout = this.options?.batchTimeout ?? 100
-
-    const flush = async (partitionNum: number, heartbeat: () => Promise<void>, pause: () => void): Promise<void> => {
-      const state = partitionStates.get(partitionNum)
-      // Be explicit about undefined checks to satisfy linters and avoid nullable boolean pitfalls
-      if (state === undefined || state.processing === true || state.messages.length === 0) return
-      state.processing = true
-      if (state.timer !== undefined) {
-        clearTimeout(state.timer)
-        state.timer = undefined
-      }
-      const batch = state.messages.splice(0, state.messages.length)
-      const batchWaiters = state.waiters.splice(0, batch.length)
-      const msgs = batch.map((m) => ({ workspace: m.workspace, value: m.value }))
-      const metas = batch.map((m) => m.meta)
-
-      const retryDelay = this.options?.retryDelay ?? 1000
-      const maxRetryDelay = this.options?.maxRetryDelay ?? 10
-      let to = 1
-      while (true) {
-        try {
-          // Pass simple metadata for batch processing (avoid passing raw array to meta field)
-          await this.ctx.with(
-            'handle-msg',
-            {},
-            (ctx) => this.onMessage(ctx, msgs, { heartbeat, pause }),
-            {},
-            { meta: { batchCount: metas.length } }
-          )
-          for (const w of batchWaiters) w.resolve()
-          state.processing = false
-          // If more messages arrived while processing, ensure they will be flushed
-          if (state.messages.length >= (this.options?.batchSize ?? 1)) {
-            void flush(partitionNum, heartbeat, pause)
-          } else if (state.messages.length > 0 && state.timer === undefined) {
-            state.timer = setTimeout(() => {
-              void flush(partitionNum, heartbeat, pause)
-            }, this.options?.batchTimeout ?? 100)
-          }
-          break
-        } catch (err: any) {
-          this.ctx.error('failed to process message batch', { err, partition: partitionNum, size: batch.length })
-          try {
-            await heartbeat()
-          } catch (hbErr) {
-            // Ignore transient heartbeat errors during batch retry attempts to reduce flakiness.
-            this.ctx.warn('heartbeat failed during batch retry, ignoring transient error', {
-              err: hbErr,
-              partition: partitionNum
-            })
-          }
-          await new Promise((resolve) => setTimeout(resolve, to * retryDelay))
-          if (to < maxRetryDelay) {
-            to++
-          }
-        }
-      }
-    }
+    // Clamp batchSize >= 1 to avoid zero/NaN producing an infinite chunk loop
+    const rawBatchSize = this.options?.batchSize
+    const batchSize =
+      typeof rawBatchSize === 'number' && Number.isFinite(rawBatchSize) && rawBatchSize >= 1
+        ? Math.floor(rawBatchSize)
+        : 1
+    const retryDelay = this.options?.retryDelay ?? 1000
+    const maxRetryDelay = this.options?.maxRetryDelay ?? 10
 
     await this.cc.run({
-      eachMessage: async ({ partition, message, pause, heartbeat }) => {
-        const msgKey = message.key?.toString() ?? ''
-        const msgData = JSON.parse(message.value?.toString() ?? '{}')
-        const meta = JSON.parse(message.headers?.meta?.toString() ?? '{}')
-        const workspace = (message.headers?.workspace?.toString() ?? msgKey) as WorkspaceUuid
-
-        const partitionNum = partition ?? 0
-        let state = partitionStates.get(partitionNum)
-        if (state === undefined) {
-          state = { messages: [], waiters: [] }
-          partitionStates.set(partitionNum, state)
-        }
-
-        state.messages.push({ workspace, value: msgData, meta })
-
-        // Schedule flush if not already scheduled
-        if (state.timer === undefined) {
-          state.timer = setTimeout(() => {
-            void flush(partitionNum, heartbeat, pause)
-          }, batchTimeout)
-        }
-
-        // Trigger flush immediately if we reached batch size
-        if (state.messages.length >= batchSize && state.processing !== true) {
-          if (state.timer !== undefined) {
-            clearTimeout(state.timer)
-            state.timer = undefined
+      eachBatchAutoResolve: false,
+      eachBatch: async ({ batch, resolveOffset, heartbeat, pause, isRunning, isStale }) => {
+        const partitionNum = batch.partition
+        // Parse all messages upfront so a parse error inside a chunk doesn't desync offsets
+        const parsed: Array<{ offset: string, workspace: WorkspaceUuid, value: any, meta: any }> = []
+        for (const message of batch.messages) {
+          const msgKey = message.key?.toString() ?? ''
+          let msgData: any
+          let meta: any
+          try {
+            msgData = JSON.parse(message.value?.toString() ?? '{}')
+            meta = JSON.parse(message.headers?.meta?.toString() ?? '{}')
+          } catch (err: any) {
+            this.ctx.error('failed to parse message, skipping', {
+              err,
+              partition: partitionNum,
+              offset: message.offset
+            })
+            resolveOffset(message.offset)
+            continue
           }
-          void flush(partitionNum, heartbeat, pause)
+          const workspace = (message.headers?.workspace?.toString() ?? msgKey) as WorkspaceUuid
+          parsed.push({ offset: message.offset, workspace, value: msgData, meta })
         }
 
-        // Wait until this message is processed as part of a batch
-        await new Promise<void>((resolve, reject) => {
-          state.waiters.push({ resolve, reject })
-        })
+        // Process in chunks of batchSize, retry whole chunk on error
+        for (let i = 0; i < parsed.length; i += batchSize) {
+          if (!isRunning() || isStale()) return
+          const chunk = parsed.slice(i, i + batchSize)
+          const msgs = chunk.map((m) => ({ workspace: m.workspace, value: m.value }))
+
+          let to = 1
+          while (true) {
+            try {
+              await this.ctx.with(
+                'handle-msg',
+                {},
+                (ctx) => this.onMessage(ctx, msgs, { heartbeat, pause }),
+                {},
+                { meta: { batchCount: chunk.length } }
+              )
+              // Mark all offsets in chunk as resolved
+              for (const m of chunk) resolveOffset(m.offset)
+              await heartbeat()
+              break
+            } catch (err: any) {
+              this.ctx.error('failed to process message batch', {
+                err,
+                partition: partitionNum,
+                size: chunk.length
+              })
+              try {
+                await heartbeat()
+              } catch (hbErr) {
+                this.ctx.warn('heartbeat failed during batch retry, ignoring transient error', {
+                  err: hbErr,
+                  partition: partitionNum
+                })
+              }
+              await new Promise((resolve) => setTimeout(resolve, to * retryDelay))
+              if (to < maxRetryDelay) to++
+              if (!isRunning() || isStale()) return
+            }
+          }
+        }
       }
     })
   }

@@ -146,7 +146,7 @@ export class GuestManager {
         now: Date.now(),
         meetingScheduledDate: meetingDoc.meetingScheduledDate,
         meetingEnd: meetingDoc.meetingEnd,
-        title: meetingDoc.title,
+        title: meetingDoc.name,
         meetingStatus,
         roomFound
       })
@@ -238,7 +238,6 @@ export class GuestManager {
 
       res.status(200).send({
         token: roomToken,
-        wsUrl: config.LiveKitHost,
         roomName,
         person: personRef
       })

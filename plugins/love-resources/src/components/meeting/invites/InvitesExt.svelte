@@ -15,10 +15,12 @@
   import { closePopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
 
-  import { outgoingInvitesStore, incomingInvitesStore, closeInvitesPopup } from '../../../invites'
+  import { outgoingInvitesStore, incomingInvitesStore, awaitingMeetingStore, closeInvitesPopup } from '../../../invites'
   import InviteButton from './InviteButton.svelte'
   import OutgoingInvitePopup from '../invites/OutgoingInvitePopup.svelte'
   import IncomingInvitePopup from '../invites/IncomingInvitePopup.svelte'
+  import AwaitingMeetingButton from './AwaitingMeetingButton.svelte'
+  import AwaitingMeetingPopup from './AwaitingMeetingPopup.svelte'
   import { getPersonsByPersonRefsCb } from '@hcengineering/contact-resources'
   import { Person } from '@hcengineering/contact'
   import { Ref } from '@hcengineering/core'
@@ -30,8 +32,11 @@
 
   $: incomingInvites = $incomingInvitesStore
 
+  $: awaiting = $awaitingMeetingStore
+
   let outgoingWithPersons = new Map<Ref<Person>, Readonly<Person>>()
   let incomingWithPersons = new Map<Ref<Person>, Readonly<Person>>()
+  let awaitingWithPersons = new Map<Ref<Person>, Readonly<Person>>()
 
   $: getPersonsByPersonRefsCb(
     outgoingInvites.map((it) => it.to),
@@ -44,6 +49,13 @@
     incomingInvites.map((it) => it.from),
     (persons) => {
       incomingWithPersons = persons
+    }
+  )
+
+  $: getPersonsByPersonRefsCb(
+    awaiting.map((it) => it.from),
+    (persons) => {
+      awaitingWithPersons = persons
     }
   )
 
@@ -82,6 +94,14 @@
     )
   }
 
+  function openAwaiting (e: MouseEvent, person: Person): void {
+    closePopup(invitesCategory)
+    showPopup(AwaitingMeetingPopup, { person }, eventToHTMLElement(e), () => {}, undefined, {
+      category: invitesCategory,
+      overlay: true
+    })
+  }
+
   onDestroy(() => {
     closePopup(invitesCategory)
   })
@@ -102,6 +122,15 @@
       {@const person = incomingWithPersons.get(invite.from)}
       {#if person !== undefined}
         <InviteButton {invite} {person} type="incoming" onClick={openIncomingInvites} />
+      {/if}
+    {/each}
+  {/if}
+
+  {#if awaiting.length > 0}
+    {#each awaiting as entry}
+      {@const person = awaitingWithPersons.get(entry.from)}
+      {#if person !== undefined}
+        <AwaitingMeetingButton {person} onClick={openAwaiting} />
       {/if}
     {/each}
   {/if}

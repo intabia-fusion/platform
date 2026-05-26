@@ -23,17 +23,10 @@ import {
   getConfig,
   registerAdapterFactory,
   registerDestroyFactory,
-  registerTxAdapterFactory,
-  setAdapterSecurity
+  registerTxAdapterFactory
 } from '@hcengineering/server-pipeline'
 import { join } from 'path'
 
-import {
-  createMongoAdapter,
-  createMongoDestroyAdapter,
-  createMongoTxAdapter,
-  shutdownMongo
-} from '@hcengineering/mongo'
 import {
   createPostgreeDestroyAdapter,
   createPostgresAdapter,
@@ -46,9 +39,6 @@ const model = JSON.parse(readFileSync(process.env.MODEL_JSON ?? 'model.json').to
 // Register close on process exit.
 process.on('exit', () => {
   shutdownPostgres().catch((err) => {
-    console.error(err)
-  })
-  shutdownMongo().catch((err) => {
     console.error(err)
   })
 })
@@ -73,14 +63,9 @@ Analytics.setTag('application', 'backup-service')
 // Prepare statements are controlled via POSTGRES_OPTIONS (e.g. {"prepare": true}).
 // The old DB_PREPARE env var is removed; do not rely on it.
 
-registerTxAdapterFactory('mongodb', createMongoTxAdapter)
-registerAdapterFactory('mongodb', createMongoAdapter)
-registerDestroyFactory('mongodb', createMongoDestroyAdapter)
-
 registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
 registerAdapterFactory('postgresql', createPostgresAdapter, true)
 registerDestroyFactory('postgresql', createPostgreeDestroyAdapter, true)
-setAdapterSecurity('postgresql', true)
 
 startBackup(
   metricsContext,

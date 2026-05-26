@@ -178,6 +178,7 @@ export interface TxNotificationType extends NotificationType {
   field?: string
   attrTypes?: Ref<Class<Type<Doc>>>[]
   match?: DocumentQuery<Tx>
+  attachToParent?: boolean
 }
 
 export interface NotificationProvider extends Doc {
@@ -270,8 +271,6 @@ export interface CommonInboxNotification extends InboxNotification {
   headerObjectId?: Ref<Doc>
   headerObjectClass?: Ref<Class<Doc>>
   message?: IntlString
-  props?: Record<string, any>
-  propsIntl?: Record<string, IntlString>
   markup?: Markup
   icon?: Asset
   iconProps?: Record<string, any>
@@ -481,6 +480,8 @@ const notification = plugin(notificationId, {
     YouAddedCollaborators: '' as IntlString,
     YouRemovedCollaborators: '' as IntlString,
     Push: '' as IntlString,
+    HasNewNotifications: '' as IntlString,
+    UnreadNotificationsCount: '' as IntlString,
     General: '' as IntlString,
     InboxNotificationsDescription: '' as IntlString,
     PushNotificationsDescription: '' as IntlString,

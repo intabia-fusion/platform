@@ -45,6 +45,7 @@ import PreviewPopupActions from './components/PreviewPopupActions.svelte'
 import DrawingPresenter from './components/DrawingPresenter.svelte'
 import LinkPreview from './components/LinkPreview.svelte'
 import LinkPreviewCard from './components/LinkPreviewCard.svelte'
+import AttachmentSimplePreview from './components/AttachmentSimplePreview.svelte'
 
 export * from './types'
 export * from './stores'
@@ -71,7 +72,8 @@ export {
   IconAttachment,
   IconUploadDuo,
   LinkPreview,
-  LinkPreviewCard
+  LinkPreviewCard,
+  AttachmentSimplePreview
 }
 
 export enum FileBrowserSortMode {

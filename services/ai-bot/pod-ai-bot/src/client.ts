@@ -85,7 +85,13 @@ export const startClient = async (): Promise<void> => {
       case 'translateHtml':
         return await llmProvider.translateHtml(ctx, request.workspace, request.html, request.lang)
       case 'summarizeMessages':
-        return await llmProvider.summarizeMessages(ctx, request.workspace, request.messages, request.lang)
+        return await llmProvider.summarizeMessages(
+          ctx,
+          request.workspace,
+          request.messages,
+          request.lang,
+          request.description
+        )
       case 'createChatCompletion':
         return await llmProvider.createChatCompletion(
           ctx,

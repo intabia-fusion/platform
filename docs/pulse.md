@@ -61,10 +61,9 @@ Symptom when missing: console shows `domain not found: pulse:class:DocumentPrese
 3. Run Playwright pulse spec without auto-opening HTML report:
    ```
    cd tests/sanity
-   PLAYWRIGHT_HTML_OPEN=never LOCAL_URL=http://localhost:3003/ DEV_URL= \
-     ./node_modules/.bin/playwright test -c ./tests/playwright.config.ts pulse.spec.ts --reporter=list
+   rushx uitest pulse.spec.ts --reporter=list --retries=0
    ```
-   `PLAYWRIGHT_HTML_OPEN=never` + `--reporter=list` stops HTML reporter from holding :9323 and opening a browser tab.
+   `--reporter=list` stops HTML reporter from holding :9323 and opening a browser tab. `--retries=0` makes a real failure surface immediately instead of re-running 3x.
 4. Spec: `tests/sanity/tests/chat/pulse.spec.ts` — two browser contexts via `getSecondPageByInvite`. Stable selectors added to source:
    - `span[data-id="channel-typing-info"]` in `ChannelTypingInfo.svelte` — typing indicator
    - `[data-id="document-presence"]` in `PresenceAvatars.svelte` — DocumentPresence avatars container

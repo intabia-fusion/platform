@@ -16,7 +16,8 @@ export function buildActions (builder: Builder): void {
       inline: true,
       context: {
         mode: 'context',
-        group: 'edit'
+        group: 'create',
+        order: 10
       }
     },
     activity.ids.AddReactionAction
@@ -38,7 +39,8 @@ export function buildActions (builder: Builder): void {
       visibilityTester: activity.function.CanSaveForLater,
       context: {
         mode: 'context',
-        group: 'edit'
+        group: 'associate',
+        order: 10
       }
     },
     activity.ids.SaveForLaterAction
@@ -62,7 +64,8 @@ export function buildActions (builder: Builder): void {
       visibilityTester: activity.function.CanRemoveFromSaved,
       context: {
         mode: 'context',
-        group: 'edit'
+        group: 'associate',
+        order: 10
       }
     },
     activity.ids.RemoveFromLaterAction
@@ -75,13 +78,14 @@ export function buildActions (builder: Builder): void {
       label: view.string.Pin,
       icon: view.icon.Pin,
       input: 'focus',
-      inline: true,
+      inline: false,
       category: activity.category.Activity,
       target: activity.class.ActivityMessage,
       visibilityTester: activity.function.CanPinMessage,
       context: {
         mode: 'context',
-        group: 'edit'
+        group: 'associate',
+        order: 20
       }
     },
     activity.ids.PinMessageAction
@@ -94,7 +98,7 @@ export function buildActions (builder: Builder): void {
       label: view.string.Unpin,
       icon: view.icon.Pin,
       input: 'focus',
-      inline: true,
+      inline: false,
       actionProps: {
         iconProps: {
           fill: 'var(--global-accent-TextColor)'
@@ -105,7 +109,8 @@ export function buildActions (builder: Builder): void {
       visibilityTester: activity.function.CanUnpinMessage,
       context: {
         mode: 'context',
-        group: 'edit'
+        group: 'associate',
+        order: 20
       }
     },
     activity.ids.UnpinMessageAction

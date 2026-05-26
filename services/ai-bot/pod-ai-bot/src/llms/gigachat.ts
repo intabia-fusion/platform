@@ -110,7 +110,8 @@ export default class GigaChatProvider implements LLMProvider {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     messages: PersonMessage[],
-    lang: string
+    lang: string,
+    description?: string
   ): Promise<string | undefined> {
     try {
       // Build person name map
@@ -137,7 +138,7 @@ export default class GigaChatProvider implements LLMProvider {
         messages: [
           {
             role: 'system',
-            content: PROMPTS.SUMMARIZE_MESSAGES(lang)
+            content: PROMPTS.SUMMARIZE_MESSAGES(lang, description)
           },
           {
             role: 'user',

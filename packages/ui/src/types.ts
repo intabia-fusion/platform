@@ -95,6 +95,7 @@ export interface Action {
   inlineComponentProps?: Record<string, any>
 
   group?: string
+  order?: number
 }
 
 export interface IPopupItem {

@@ -25,8 +25,8 @@ import notification, {
   getNotificationThreadId
 } from '@hcengineering/notification'
 import { addEventListener, getMetadata, IntlString, translate } from '@hcengineering/platform'
-import { createNotificationsQuery, getClient } from '@hcengineering/presentation'
-import { location } from '@hcengineering/ui'
+import { createNotificationsQuery, getClient, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
+import { location, languageStore } from '@hcengineering/ui'
 import workbench, { workbenchId } from '@hcengineering/workbench'
 import desktopPreferences, { defaultNotificationPreference } from '@hcengineering/desktop-preferences'
 import { activePreferences } from '@hcengineering/desktop-preferences-resources'
@@ -35,8 +35,10 @@ import { inboxId } from '@hcengineering/inbox'
 import communication from '@hcengineering/communication'
 import activity from '@hcengineering/activity'
 import chunter, { ThreadMessage } from '@hcengineering/chunter'
+import { workspacesNotificationStore, workspacesStore } from '@hcengineering/workbench-resources'
 
 import { ipcMainExposed } from './typesUtils'
+import { get } from 'svelte/store'
 
 let client: TxOperations
 
@@ -54,30 +56,28 @@ async function hydrateNotificationAsYouCan (
   }
 
   let intlTitle: IntlString | undefined
-  let titleParams
+  let intlParams: Record<string, any> = {}
 
   if (lastNotification._class === notification.class.CommonInboxNotification) {
-    intlTitle = (lastNotification as CommonInboxNotification).message
-    titleParams = (lastNotification as CommonInboxNotification).props
+    intlTitle = lastNotification.title ?? (lastNotification as CommonInboxNotification).message
+    intlParams = { ...(lastNotification as CommonInboxNotification).intlParams }
   } else if (lastNotification._class === notification.class.ActivityInboxNotification) {
-    intlTitle = (lastNotification as ActivityInboxNotification).title
-    titleParams = (lastNotification as ActivityInboxNotification).intlParams
+    intlTitle = lastNotification.title
+    intlParams = { ...(lastNotification as ActivityInboxNotification).intlParams }
   }
 
   if (intlTitle !== undefined && lastNotification.body !== undefined) {
-    const intlParams = lastNotification.intlParams ?? {}
-
     if (lastNotification.intlParamsNotLocalized !== undefined) {
       for (const param in lastNotification.intlParamsNotLocalized) {
         const value = lastNotification.intlParamsNotLocalized[param]
-        intlParams[param] = await translate(value, {})
+        intlParams[param] = await translate(value, intlParams)
       }
     }
-    const title = await translate(intlTitle, titleParams ?? {})
-    const body = await translate(lastNotification.body, lastNotification.intlParams ?? {})
+    const title = await translate(intlTitle, intlParams)
+    const body = await translate(lastNotification.body, intlParams)
 
     // Do not show notification if there is no translate
-    if (title === (intlTitle as string) || body === (lastNotification.body as string)) {
+    if (title === intlTitle || body === lastNotification.body) {
       return undefined
     }
 
@@ -153,19 +153,50 @@ export function configureNotifications (): void {
     const notificationsQuery = createNotificationsQuery(true)
     const notificationsCountQuery = createNotificationsQuery(true)
 
+    let hasOtherWorkspaceNotifications = false
+
+    async function updateBadge (): Promise<void> {
+      if (!preferences.showUnreadCounter) {
+        electronAPI.setBadge(0)
+        return
+      }
+
+      const total = prevUnViewdNotificationsCount + newUnreadNotifications
+      if (total > 0) {
+        const unreadsCountTooltip = await translate(
+          notification.string.UnreadNotificationsCount,
+          { count: total },
+          get(languageStore)
+        )
+        electronAPI.setBadge(total, unreadsCountTooltip)
+      } else if (hasOtherWorkspaceNotifications) {
+        const unreadsTooltip = await translate(notification.string.HasNewNotifications, {}, get(languageStore))
+        electronAPI.setBadge('•', unreadsTooltip)
+      } else {
+        electronAPI.setBadge(0)
+      }
+    }
+
+    workspacesNotificationStore.subscribe((state) => {
+      if (state != null) {
+        const currentWorkspace = getCurrentWorkspaceUuid()
+        const workspaces = get(workspacesStore)
+        hasOtherWorkspaceNotifications = workspaces.some((it) => it.uuid !== currentWorkspace && state?.[it.uuid])
+      }
+      void updateBadge()
+    })
+
     const isCommunicationEnabled = getMetadata(communication.metadata.Enabled) ?? false
 
     if (isCommunicationEnabled) {
       notificationsCountQuery.query({ read: false, limit: 1, strict: true, total: true }, (res) => {
         newUnreadNotifications = res.getTotal()
 
-        if (preferences.showUnreadCounter) {
-          electronAPI.setBadge(prevUnViewdNotificationsCount + newUnreadNotifications)
-        }
-
-        if (preferences.bounceAppIcon) {
-          electronAPI.dockBounce()
-        }
+        void updateBadge().then(() => {
+          if (preferences.bounceAppIcon) {
+            electronAPI.dockBounce()
+          }
+        })
       })
     }
 
@@ -224,13 +255,12 @@ export function configureNotifications (): void {
       // We need to get the most recent notifications
 
       if (prevUnViewdNotificationsCount !== unViewedNotifications.length) {
-        if (preferences.showUnreadCounter) {
-          electronAPI.setBadge(unViewedNotifications.length + newUnreadNotifications)
-        }
+        prevUnViewdNotificationsCount = unViewedNotifications.length
+        await updateBadge()
+
         if (preferences.bounceAppIcon) {
           electronAPI.dockBounce()
         }
-        prevUnViewdNotificationsCount = unViewedNotifications.length
       }
 
       const notification = getLasUnViewedNotification(unViewedNotifications, notificationHistory)
@@ -268,17 +298,14 @@ export function configureNotifications (): void {
     })
 
     activePreferences.subscribe((newPreferences) => {
-      if (preferences.showUnreadCounter && !newPreferences.showUnreadCounter) {
-        electronAPI.setBadge(0)
-      }
-      if (!preferences.showUnreadCounter && newPreferences.showUnreadCounter) {
-        electronAPI.setBadge(prevUnViewdNotificationsCount + newUnreadNotifications)
-      }
+      const showNotificationsChanged = newPreferences.showNotifications && !preferences.showNotifications
 
-      if (newPreferences.showNotifications && !preferences.showNotifications) {
+      preferences = newPreferences
+      void updateBadge()
+
+      if (showNotificationsChanged) {
         startNotificationQuery()
       }
-      preferences = newPreferences
     })
   })
 

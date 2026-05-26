@@ -86,6 +86,13 @@ export class ClientSession implements Session {
   opsPipeline: Pipeline | undefined
   isAdmin: boolean
 
+  // Cached materialised workspace shape used by every includeSessionContext call.
+  // workspace is readonly + dataId is derived once; reuse the same object reference
+  // instead of spreading on every request.
+  private readonly workspaceForSession: WorkspaceIds
+  private readonly permissionsGrantCached: PermissionsGrant | undefined
+  private readonly serviceName: string
+
   constructor (
     readonly token: Token,
     readonly workspace: WorkspaceIds,
@@ -95,6 +102,20 @@ export class ClientSession implements Session {
     readonly counter: OneSecondCounters
   ) {
     this.isAdmin = this.token.extra?.admin === 'true'
+    const dataId = workspace.dataId ?? (workspace.uuid as unknown as WorkspaceDataId)
+    this.workspaceForSession = workspace.dataId === dataId ? workspace : { ...workspace, dataId }
+    this.permissionsGrantCached = this.computePermissionsGrant()
+    this.serviceName = this.token.extra?.service ?? '🤦‍♂️user'
+  }
+
+  private computePermissionsGrant (): PermissionsGrant | undefined {
+    if (this.token.grant == null) {
+      return
+    }
+    return {
+      spaces: this.token.grant?.spaces as Ref<Space>[] | undefined,
+      grantedBy: this.token.grant?.grantedBy
+    }
   }
 
   getUser (): AccountUuid {
@@ -152,35 +173,20 @@ export class ClientSession implements Session {
     return await ctx.ctx.with('load-model', {}, (_ctx) => ctx.pipeline.loadModel(_ctx, lastModelTx, hash))
   }
 
-  private getPermissionsGrant (): PermissionsGrant | undefined {
-    if (this.token.grant == null) {
-      return
-    }
-
-    return {
-      spaces: this.token.grant?.spaces as Ref<Space>[] | undefined,
-      grantedBy: this.token.grant?.grantedBy
-    }
-  }
-
   includeSessionContext (ctx: ClientSessionCtx): void {
-    const dataId = this.workspace.dataId ?? (this.workspace.uuid as unknown as WorkspaceDataId)
     const contextData = new SessionDataImpl(
       this.account,
       this.sessionId,
       this.isAdmin,
       undefined,
-      {
-        ...this.workspace,
-        dataId
-      },
+      this.workspaceForSession,
       false,
       undefined,
       undefined,
       ctx.pipeline.context.modelDb,
       ctx.socialStringsToUsers,
-      this.token.extra?.service ?? '🤦‍♂️user',
-      this.getPermissionsGrant()
+      this.serviceName,
+      this.permissionsGrantCached
     )
     ctx.ctx.contextData = contextData
   }

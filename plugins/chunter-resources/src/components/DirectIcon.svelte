@@ -29,8 +29,8 @@
   export let size: IconSize = 'small'
   export let showStatus = false
   export let compact = false
+  export let visiblePersons = 4
 
-  const visiblePersons = 4
   const client = getClient()
 
   let persons: Person[] = []

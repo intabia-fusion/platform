@@ -303,7 +303,8 @@ export default plugin(coreId, {
     Version: '' as IntlString,
     Collaborator: '' as IntlString,
     Collaborators: '' as IntlString,
-    RoleAdmin: '' as IntlString
+    RoleAdmin: '' as IntlString,
+    Archived: '' as IntlString
   },
   descriptor: {
     SpacesType: '' as Ref<SpaceTypeDescriptor>

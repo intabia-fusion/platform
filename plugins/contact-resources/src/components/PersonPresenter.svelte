@@ -47,6 +47,7 @@
   export let overflowLabel = true
   export let inlineBlock = false
   export let shrink: boolean = false
+  export let clickable = true
 
   const client = getClient()
 
@@ -93,6 +94,7 @@
     {avatarSize}
     {defaultName}
     {disabled}
+    {clickable}
     {shouldShowAvatar}
     {shouldShowName}
     {shouldShowPlaceholder}

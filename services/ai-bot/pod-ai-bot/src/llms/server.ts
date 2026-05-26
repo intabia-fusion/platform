@@ -47,6 +47,7 @@ export interface SummarizeMessagesRequest {
   messages: PersonMessage[]
   lang: string
   workspace: WorkspaceUuid
+  description?: string
 }
 
 export interface ChatCompletionRequest {
@@ -158,7 +159,8 @@ export default class ServerLLMProvider implements LLMProvider {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     messages: PersonMessage[],
-    lang: string
+    lang: string,
+    description?: string
   ): Promise<string | undefined> {
     const startTime = Date.now()
 
@@ -167,7 +169,8 @@ export default class ServerLLMProvider implements LLMProvider {
         method: 'summarizeMessages',
         messages,
         lang,
-        workspace
+        workspace,
+        description
       }
 
       const result = await this.server.requestWithFilter(ctx, 'llm', [request], this.selectLLMClient)

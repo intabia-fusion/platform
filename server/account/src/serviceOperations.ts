@@ -931,7 +931,7 @@ export async function findFullSocialIdBySocialKey (
   params: { socialKey: string }
 ): Promise<SocialId | null> {
   const { extra } = decodeTokenVerbose(ctx, token)
-  verifyAllowedServices(['telegram-bot', 'gmail', 'tool', 'workspace', 'google-calendar'], extra)
+  verifyAllowedServices(['telegram-bot', 'gmail', 'tool', 'workspace', 'google-calendar', 'notifications'], extra)
 
   const { socialKey } = params
 
@@ -1255,6 +1255,8 @@ export type AccountServiceMethods =
   | 'upsertSubscription'
   | 'getAllSubscriptions'
   | 'adminCreateSubscription'
+  | 'getAccountWorkspaceBadgeStatuses'
+  | 'setWorkspaceBadgeStatuses'
 
 /**
  * @public
@@ -1291,6 +1293,33 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     getSubscriptionByProviderId: wrap(getSubscriptionByProviderId),
     upsertSubscription: wrap(upsertSubscription),
     getAllSubscriptions: wrap(getAllSubscriptions),
-    adminCreateSubscription: wrap(adminCreateSubscription)
+    adminCreateSubscription: wrap(adminCreateSubscription),
+    getAccountWorkspaceBadgeStatuses: wrap(getAccountWorkspaceBadgeStatuses),
+    setWorkspaceBadgeStatuses: wrap(setWorkspaceBadgeStatuses)
   }
+}
+
+export async function getAccountWorkspaceBadgeStatuses (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { account: AccountUuid }
+): Promise<any[]> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  verifyAllowedServices(['workspace', 'tool', 'aibot', 'notifications'], extra)
+  return await db.getAccountWorkspaceBadgeStatuses(params.account)
+}
+
+export async function setWorkspaceBadgeStatuses (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }> }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  // this is called by model migrations inside pod-server, and also by tools
+  verifyAllowedServices(['workspace', 'tool', 'aibot', 'notifications', 'server'], extra)
+  await db.batchWorkspaceBadgeStatuses(params.data)
 }

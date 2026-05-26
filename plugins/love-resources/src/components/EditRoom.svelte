@@ -14,21 +14,24 @@
 -->
 <script lang="ts">
   import { EditBox, ModernButton } from '@hcengineering/ui'
-  import { Room, isOffice, type ParticipantInfo } from '@hcengineering/love'
+  import { Room, isOffice, MeetingStatus, type ParticipantInfo } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
   import { getMetadata, IntlString } from '@hcengineering/platform'
   import presentation from '@hcengineering/presentation'
+  import { AccountRole, getCurrentAccount, Ref } from '@hcengineering/core'
+  import { getCurrentEmployee } from '@hcengineering/contact'
 
   import love from '../plugin'
   import { getRoomName } from '../utils'
-  import { infos, myOffice, currentRoom, meetings, myConnectingSessionId } from '../stores'
+  import { infos, myOffice, currentRoom, meetings, myConnectingSessionId, aiBotPerson } from '../stores'
   import { lkSessionConnected } from '../liveKitClient'
   import { createMeeting, joinMeeting } from '../meetings'
   import { get } from 'svelte/store'
   import RoomPreview from './RoomPreview.svelte'
-  import { Ref } from '@hcengineering/core'
+  import { cancelInvites, sendKnockRequest, outgoingInvitesStore } from '../invites'
 
   export let object: Room
+  export let readonly: boolean = false
 
   const dispatch = createEventDispatcher()
 
@@ -44,7 +47,7 @@
   })
 
   async function connect (): Promise<void> {
-    const mm = get(meetings).find((it) => it.attachedTo === object._id)
+    const mm = get(meetings).find((it) => it.roomId === object._id)
     if (mm !== undefined) {
       await joinMeeting(mm)
     } else {
@@ -107,6 +110,30 @@
   }
 
   $: roomInfos = getInfo(object._id, $infos)
+
+  const me = getCurrentEmployee()
+  // Room is locked if participants are present but meeting is not in our accessible meetings store
+  $: isLockedByPrivateMeeting =
+    roomInfos.length > 0 &&
+    !roomInfos.some((p) => p.person === me) &&
+    !$meetings.some((m) => m.roomId === object._id && m.status !== MeetingStatus.Finished) &&
+    getCurrentAccount().role !== AccountRole.Owner
+
+  // Track whether we already sent a knock-request for this room. Knock
+  // requests are tied to the room, not a specific recipient — the server
+  // fans them out to the meeting's owners.
+  $: knockTarget = roomInfos.find((p) => p.kind !== 'agent' && p.person !== $aiBotPerson)?.person
+  $: pendingKnock = $outgoingInvitesStore.find((it) => it.from === me && it.room === object._id)
+  $: hasOutgoingKnock = pendingKnock !== undefined
+
+  async function knock (): Promise<void> {
+    await sendKnockRequest(object._id)
+  }
+
+  async function cancelKnock (): Promise<void> {
+    if (pendingKnock === undefined) return
+    await cancelInvites(undefined, [pendingKnock])
+  }
 </script>
 
 <div class="flex flex-col">
@@ -116,8 +143,32 @@
         <EditBox disabled={true} placeholder={love.string.Room} bind:value={roomName} focusIndex={1} />
       </div>
 
-      {#if showConnectionButton(object, connecting, $lkSessionConnected, $infos, $myOffice, $currentRoom) && connectLabel != null}
-        <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={connecting} />
+      {#if !isLockedByPrivateMeeting && showConnectionButton(object, connecting, $lkSessionConnected, $infos, $myOffice, $currentRoom) && connectLabel != null}
+        <div data-id="meeting-connect">
+          <ModernButton label={connectLabel} size="large" kind={'primary'} on:click={connect} loading={connecting} />
+        </div>
+      {:else if isLockedByPrivateMeeting && knockTarget !== undefined && !hasOutgoingKnock}
+        <div data-id="meeting-knock">
+          <ModernButton
+            label={love.string.KnockAction}
+            size="large"
+            kind={'primary'}
+            on:click={() => {
+              void knock()
+            }}
+          />
+        </div>
+      {:else if isLockedByPrivateMeeting && hasOutgoingKnock}
+        <div data-id="meeting-knock-pending">
+          <ModernButton
+            label={love.string.CancelKnock}
+            size="large"
+            kind={'secondary'}
+            on:click={() => {
+              void cancelKnock()
+            }}
+          />
+        </div>
       {/if}
     </div>
   </div>
@@ -142,5 +193,10 @@
     max-width: 500px;
     overflow: hidden;
     padding: 2rem;
+  }
+
+  .step-tb-6 {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
   }
 </style>

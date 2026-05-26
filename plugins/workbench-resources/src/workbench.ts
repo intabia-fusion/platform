@@ -19,11 +19,12 @@ import core, {
   generateId,
   getCurrentAccount,
   reduceCalls,
-  type Ref
+  type Ref,
+  SortingOrder
 } from '@hcengineering/core'
 import notification, { notificationId } from '@hcengineering/notification'
 import { type Asset, getMetadata, getResource, type IntlString, setMetadata, translate } from '@hcengineering/platform'
-import presentation, { configurationStore, getClient } from '@hcengineering/presentation'
+import presentation, { configurationStore, createQuery, getClient, onClient } from '@hcengineering/presentation'
 import {
   type AnyComponent,
   getCurrentLocation,
@@ -39,6 +40,7 @@ import view from '@hcengineering/view'
 import { parseLinkId } from '@hcengineering/view-resources'
 import { type Application, workbenchId, type WorkbenchTab } from '@hcengineering/workbench'
 import { derived, get, writable } from 'svelte/store'
+import pulse, { type WorkspacesNotification } from '@hcengineering/pulse'
 
 import setting from '@hcengineering/setting'
 import workbench from './plugin'
@@ -325,4 +327,26 @@ async function getDefaultTabName (loc: Location): Promise<string | undefined> {
 configurationStore.subscribe((config) => {
   const arePermissionsDisabled = config.get(setting.ids.DisablePermissionsConfiguration)?.enabled ?? false
   setMetadata(core.metadata.DisablePermissions, arePermissionsDisabled)
+})
+
+export const workspacesNotificationStore = writable<WorkspacesNotification | undefined>(undefined)
+
+const workspacesNotificationQuery = createQuery(true)
+onClient(() => {
+  workspacesNotificationQuery.query(
+    pulse.class.WorkspacesNotification,
+    {
+      account: getCurrentAccount().uuid
+    },
+    (res) => {
+      const r = res[0]
+      if (r != null) {
+        workspacesNotificationStore.set(r)
+      }
+    },
+    {
+      limit: 1,
+      sort: { createdOn: SortingOrder.Descending }
+    }
+  )
 })

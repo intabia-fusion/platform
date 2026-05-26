@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Doc, type Ref } from '@hcengineering/core'
+import { type Class, type Doc, type Ref } from '@hcengineering/core'
 import { type MessageNotificationType } from '@hcengineering/notification'
 import { type Resource, mergeIds } from '@hcengineering/platform'
 import { type AnyComponent } from '@hcengineering/ui/src/types'
@@ -42,11 +42,19 @@ export default mergeIds(loveId, love, {
     ToggleMic: '' as ViewAction,
     ToggleVideo: '' as ViewAction,
     ShowRoomSettings: '' as ViewAction,
-    CopyGuestLink: '' as ViewAction
+    CopyGuestLink: '' as ViewAction,
+    ToggleRoomPrivacy: '' as ViewAction
   },
   ids: {
     Settings: '' as Ref<Doc>,
     MeetingMinutesChatNotification: '' as Ref<MessageNotificationType>
+  },
+  class: {
+    // Placeholder class to keep the legacy DOMAIN_MEETING_MINUTES table alive,
+    // so that backups created before MeetingMinutes was moved to DOMAIN_SPACE
+    // can still be restored. The 'meeting-minutes-to-space' migration then
+    // moves data from this domain into DOMAIN_SPACE.
+    LegacyMeetingMinutes: '' as Ref<Class<Doc>>
   },
   completion: {
     MeetingMinutesQuery: '' as Resource<ObjectSearchFactory>,

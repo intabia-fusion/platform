@@ -213,8 +213,8 @@
     width: 1rem;
     height: 1rem;
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.35);
-    border-top-color: rgba(255, 255, 255, 0.9);
+    border: 2px solid var(--login-dark-color);
+    border-top-color: var(--login-button-contrast-disabled-color);
     animation: spin 0.9s linear infinite;
     display: inline-block;
   }

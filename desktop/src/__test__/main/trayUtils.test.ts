@@ -64,4 +64,22 @@ describe('getBadgeIconInfo', () => {
       tooltip: `${baseTitle}: ${count} unread`
     })
   })
+
+  describe('explicit tooltip', () => {
+    it('appends explicitTooltip to baseTitle', () => {
+      const result = getBadgeIconInfo(5, baseTitle, '5 unread notifications')
+      expect(result).toEqual({
+        fileName: 'TrayIconWithBadge.ico',
+        tooltip: `${baseTitle}: 5 unread notifications`
+      })
+    })
+
+    it('works with string badgeCount', () => {
+      const result = getBadgeIconInfo('.', baseTitle, 'new notifications')
+      expect(result).toEqual({
+        fileName: 'TrayIconWithBadge.ico',
+        tooltip: `${baseTitle}: new notifications`
+      })
+    })
+  })
 })

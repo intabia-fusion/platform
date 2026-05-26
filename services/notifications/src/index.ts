@@ -27,7 +27,6 @@ import {
   registerAdapterFactory,
   registerDestroyFactory,
   registerTxAdapterFactory,
-  setAdapterSecurity,
   registerServerPlugins,
   registerStringLoaders
 } from '@hcengineering/server-pipeline'
@@ -37,17 +36,18 @@ import {
   createPostgresTxAdapter,
   shutdownPostgres
 } from '@hcengineering/postgres'
+import { withRetry } from '@hcengineering/retry'
 
 import { Worker } from './worker'
 import config from './config'
 
 void main().catch((err) => {
-  console.error(err)
+  getCtx().error('Service initialization failed', { err })
 })
 
 process.on('exit', () => {
   shutdownPostgres().catch((err) => {
-    console.error(err)
+    getCtx().error('Failed to shutdown postgres properly', { err })
   })
 })
 async function main (): Promise<void> {
@@ -61,28 +61,34 @@ async function main (): Promise<void> {
   registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
   registerAdapterFactory('postgresql', createPostgresAdapter, true)
   registerDestroyFactory('postgresql', createPostgreeDestroyAdapter, true)
-  setAdapterSecurity('postgresql', true)
 
   const ctx = getCtx()
   const queue = getPlatformQueue(config.ServiceId, config.QueueRegion)
   const model = JSON.parse(readFileSync(process.env.MODEL_JSON ?? 'model.json').toString()) as Tx[]
-  const worker = new Worker(ctx, model)
+  const worker = new Worker(ctx, model, queue)
 
-  const consumer = queue.createConsumer<Tx>(ctx, QueueTopic.Tx, queue.getClientId(), async (ctx, queueMessage) => {
+  const txConsumer = queue.createConsumer<Tx>(ctx, QueueTopic.Tx, queue.getClientId(), async (ctx, queueMessage) => {
     try {
       const ws = queueMessage.workspace
       const tx = queueMessage.value
 
       await worker.tx(ctx, ws, tx)
     } catch (e) {
-      console.error(e)
+      ctx.error('Failed to process tx message', { e })
       throw e
     }
   })
 
+  const sync = (): Promise<void> => withRetry(() => worker.resolveAiBotAccount())
+
+  // Initial delay of 5 seconds to give other services a head start.
+  setTimeout(() => {
+    void sync()
+  }, 5 * 1000)
+
   const shutdown = (): void => {
-    worker.close()
-    void consumer.close().then(() => queue.shutdown().then(() => process.exit()))
+    void worker.close()
+    void Promise.all([txConsumer.close()]).then(() => queue.shutdown().then(() => process.exit()))
   }
 
   process.once('SIGINT', shutdown)

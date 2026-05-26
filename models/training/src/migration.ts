@@ -15,6 +15,7 @@
 
 import { Class, Doc, DOMAIN_SEQUENCE, Sequence, TxOperations, type Ref, type TypedSpace } from '@hcengineering/core'
 import {
+  findCachedSpace,
   tryMigrate,
   tryUpgrade,
   type MigrateOperation,
@@ -48,7 +49,7 @@ export const trainingOperation: MigrateOperation = {
         state: 'create-defaults',
         func: async (client) => {
           const tx = new TxOperations(client, core.account.System)
-          await ensureTypedSpace(tx)
+          await ensureTypedSpace(tx, client)
           await ensureSequence(tx)
         }
       }
@@ -56,10 +57,8 @@ export const trainingOperation: MigrateOperation = {
   }
 }
 
-async function ensureTypedSpace (tx: TxOperations): Promise<Ref<TypedSpace>> {
-  const existing = await tx.findOne(core.class.TypedSpace, {
-    _id: training.space.Trainings
-  })
+async function ensureTypedSpace (tx: TxOperations, client: MigrationUpgradeClient): Promise<Ref<TypedSpace>> {
+  const existing = await findCachedSpace<TypedSpace>(client, training.space.Trainings, core.class.TypedSpace)
 
   if (existing !== undefined) {
     return existing._id

@@ -35,8 +35,7 @@ import {
   registerDestroyFactory,
   registerServerPlugins,
   registerStringLoaders,
-  registerTxAdapterFactory,
-  setAdapterSecurity
+  registerTxAdapterFactory
 } from '@hcengineering/server-pipeline'
 import serverToken, { generateToken } from '@hcengineering/server-token'
 import { randomUUID } from 'crypto'
@@ -105,6 +104,7 @@ export async function preparePipeline (
 
 export const fullTextDbURL = 'http://localhost:9201'
 export const dbUrl = 'postgresql://root@localhost:26258/defaultdb?sslmode=disable'
+export const kafkaBroker = 'localhost:19093'
 export const elasticIndexName = 'testing'
 
 export function prepare (): void {
@@ -119,7 +119,6 @@ export function prepare (): void {
   registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
   registerAdapterFactory('postgresql', createPostgresAdapter, true)
   registerDestroyFactory('postgresql', createPostgreeDestroyAdapter, true)
-  setAdapterSecurity('postgresql', true)
 
   registerServerPlugins()
   registerStringLoaders()

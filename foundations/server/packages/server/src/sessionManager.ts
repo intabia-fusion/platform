@@ -38,10 +38,17 @@ import core, {
   platformNowDiff,
   readOnlyGuestAccountUuid,
   SocialIdType,
+  systemAccount,
   systemAccountUuid,
+  type Class,
+  type Doc,
+  type Ref,
   type Tx,
+  type TxCUD,
   TxFactory,
+  TxProcessor,
   type TxWorkspaceEvent,
+  type BulkUpdateEvent,
   type Version,
   versionToString,
   withContext,
@@ -73,11 +80,13 @@ import {
   type PipelineFactory,
   type PlatformQueue,
   type PlatformQueueProducer,
+  type QueueOnlineUserTx,
   QueueTopic,
   type QueueUserMessage,
   QueueWorkspaceEvent,
   type QueueWorkspaceMessage,
   type Session,
+  SessionDataImpl,
   type SessionHealth,
   type SessionManager,
   userEvents,
@@ -125,6 +134,7 @@ export class TSessionManager implements SessionManager {
   workspaceProducer: PlatformQueueProducer<QueueWorkspaceMessage>
   usersProducer: PlatformQueueProducer<QueueUserMessage>
   workspaceConsumer: ConsumerHandle
+  onlineUserTxConsumer: ConsumerHandle
 
   ticksContext: MeasureContext
 
@@ -171,6 +181,38 @@ export class TSessionManager implements SessionManager {
           // Handle workspace messages
           this.workspaceInfoCache.delete(msg.workspace)
         }
+      }
+    )
+
+    this.onlineUserTxConsumer = this.queue.createConsumer<QueueOnlineUserTx>(
+      ctx.newChild('transactor-online-user-tx-consumer', {}, { span: false }),
+      QueueTopic.OnlineUserTx,
+      'transactor-online-user-tx',
+      async (ctx, msg) => {
+        const { workspaceUuid, tx, account } = msg.value
+        const workspace = this.workspaces.get(workspaceUuid)
+        if (workspace == null) return
+
+        const session = this.getUserSession(workspaceUuid, account)
+        if (session == null) return
+
+        await workspace.with(async (pipeline) => {
+          ctx.contextData = new SessionDataImpl(
+            systemAccount,
+            'online-user-tx',
+            true,
+            { txes: [], targets: {}, queue: [], sessions: {} },
+            workspace.wsId,
+            true,
+            undefined,
+            undefined,
+            pipeline.context.modelDb,
+            new Map(),
+            'transactor'
+          )
+          await pipeline.tx(ctx, [tx])
+          await pipeline.handleBroadcast(ctx)
+        })
       }
     )
 
@@ -292,7 +334,8 @@ export class TSessionManager implements SessionManager {
       }
     }
     for (const [wsId, workspace] of this.workspaces.entries()) {
-      for (const [k, v] of Array.from(workspace.tickHandlers.entries())) {
+      // Map allows delete during iteration in JS; no need to spread to a temp array.
+      for (const [k, v] of workspace.tickHandlers) {
         v.ticks--
         if (v.ticks === 0) {
           workspace.tickHandlers.delete(k)
@@ -496,6 +539,12 @@ export class TSessionManager implements SessionManager {
     return Array.from(workspace.sessions.values())
       .filter((it) => it.session.getUser() === accountUuid)
       .reduce<number>((acc) => acc + 1, 0)
+  }
+
+  getUserSession (workspaceUuid: WorkspaceUuid, accountUuid: AccountUuid): Session | undefined {
+    const workspace = this.workspaces.get(workspaceUuid)
+    if (workspace == null) return undefined
+    return Array.from(workspace.sessions.values()).find((it) => it.session.getUser() === accountUuid)?.session
   }
 
   checkHealth (): SessionHealth {
@@ -790,7 +839,8 @@ export class TSessionManager implements SessionManager {
             userEvents.login({
               user: accountUuid,
               sessions: this.countUserSessions(workspace, accountUuid),
-              socialIds: account.socialIds.map((it) => it._id)
+              socialIds: account.socialIds.map((it) => it._id),
+              timestamp: Date.now()
             })
           ])
         }
@@ -864,12 +914,57 @@ export class TSessionManager implements SessionManager {
       const tt = it.session.getUser()
       return (target === undefined && !(exclude ?? []).includes(tt)) || (target?.includes(tt) ?? false)
     })
+    // Compute the set of classes that this broadcast touches. We include both
+    // objectClass and attachedToClass so collaborator-driven live queries on the
+    // parent doc also get refreshed after a drop.
+    const computeClasses = (txes: Tx[]): Ref<Class<Doc>>[] => {
+      const set = new Set<Ref<Class<Doc>>>()
+      for (const t of txes) {
+        if (TxProcessor.isExtendsCUD(t._class)) {
+          const cud = t as TxCUD<Doc>
+          if (cud.objectClass != null) set.add(cud.objectClass)
+          if (cud.attachedToClass != null) set.add(cud.attachedToClass)
+        }
+      }
+      return Array.from(set)
+    }
+    let cachedClasses: Ref<Class<Doc>>[] | null = null
+    const droppedClasses = (): Ref<Class<Doc>>[] => {
+      if (cachedClasses === null) cachedClasses = computeClasses(tx)
+      return cachedClasses
+    }
+    const buildRefreshTx = (classes: Ref<Class<Doc>>[]): TxWorkspaceEvent => ({
+      _id: generateId(),
+      _class: core.class.TxWorkspaceEvent,
+      event: WorkspaceEvent.BulkUpdate,
+      modifiedBy: core.account.System,
+      modifiedOn: Date.now(),
+      objectSpace: core.space.DerivedTx,
+      space: core.space.DerivedTx,
+      createdBy: core.account.System,
+      params: { _class: classes } satisfies BulkUpdateEvent
+    })
     function send (): void {
       const promises: Promise<void>[] = []
       for (const session of sessions) {
         try {
+          const sock = session.socket
+          // Slow client - drop tx for this socket and accumulate classes for a later refresh.
+          if (sock.isOverloaded?.() === true) {
+            sock.addDroppedClasses?.(droppedClasses())
+            ctx.measure('broadcast-dropped', tx.length)
+            continue
+          }
+          // Buffer drained enough - emit a single BulkUpdate event covering all dropped classes
+          // before delivering the current broadcast so client query cache invalidates.
+          const pending = sock.takePendingRefresh?.() ?? null
+          let outTx = tx
+          if (pending !== null && pending.length > 0) {
+            outTx = [buildRefreshTx(pending), ...tx]
+            ctx.measure('broadcast-flushed-refresh', pending.length)
+          }
           promises.push(
-            sendResponse(ctx, session.session, session.socket, { result: tx }).catch((err) => {
+            sendResponse(ctx, session.session, sock, { result: outTx }).catch((err) => {
               ctx.error('failed to send', err)
             })
           )
@@ -1098,7 +1193,8 @@ export class TSessionManager implements SessionManager {
           userEvents.logout({
             user: userUuid,
             sessions: this.countUserSessions(workspace, userUuid),
-            socialIds: sessionRef.session.getUserSocialIds()
+            socialIds: sessionRef.session.getUserSocialIds(),
+            timestamp: Date.now()
           })
         ])
 
@@ -1229,6 +1325,7 @@ export class TSessionManager implements SessionManager {
 
   async closeWorkspaces (ctx: MeasureContext): Promise<void> {
     clearInterval(this.checkInterval)
+
     for (const w of this.workspaces) {
       await this.doCloseAll(w[1], 1, 'shutdown')
     }
@@ -1332,18 +1429,23 @@ export class TSessionManager implements SessionManager {
       role: AccountRole
     }
     >()
-    for (const s of [...Array.from(ws.sessions.values()).map((it) => it.session), ...extra]) {
+    const populate = (s: Session): void => {
       const sessionAccount = s.getUser()
       if (sessionAccount === systemAccountUuid) {
-        continue
+        return
       }
+      const role = s.getRawAccount().role
       const userSocialIds = s.getUserSocialIds()
-      for (const id of userSocialIds) {
-        res.set(id, {
-          accountUuid: sessionAccount,
-          role: s.getRawAccount().role
-        })
+      for (let i = 0; i < userSocialIds.length; i++) {
+        res.set(userSocialIds[i], { accountUuid: sessionAccount, role })
       }
+    }
+    // Iterate Map directly - no intermediate Array.from / map / spread alloc.
+    for (const entry of ws.sessions.values()) {
+      populate(entry.session)
+    }
+    for (let i = 0; i < extra.length; i++) {
+      populate(extra[i])
     }
     return res
   }

@@ -640,19 +640,23 @@ abstract class PostgresAdapterBase implements DbAdapter {
           return `AND (${domain}.archived = false OR ${domain}."_class" = '${core.class.SystemSpace}')`
         }
         const key = domain === DOMAIN_SPACE ? '_id' : domain === DOMAIN_TX ? '"objectSpace"' : 'space'
-        const privateCheck = domain === DOMAIN_SPACE ? ' OR sec.private = false' : ''
+        const privateCheck =
+          domain === DOMAIN_SPACE || query.space != null || query._id != null || query.attachedTo != null
+            ? ' OR sec.private = false'
+            : ''
         const archivedCheck = showArchived ? '' : ' AND sec.archived = false'
-        const q = `(sec._id = '${core.space.Space}' OR sec."_class" = '${core.class.SystemSpace}' OR sec.members @> '{"${acc.uuid}"}'${privateCheck})${archivedCheck}`
+        const accUuidVar = vars.add(acc.uuid, '::text')
+        const q = `(sec._id = '${core.space.Space}' OR sec."_class" = '${core.class.SystemSpace}' OR sec.members @> ARRAY[${accUuidVar}]${privateCheck})${archivedCheck}`
         const res = `EXISTS (SELECT 1 FROM ${translateDomain(DOMAIN_SPACE)} sec WHERE sec._id = ${domain}.${key} AND sec."workspaceId" = ${vars.add(this.workspaceId, '::uuid')} AND ${q})`
 
         const collabSec = getClassCollaborators(this.modelDb, this.hierarchy, _class)
         let collabRes = ''
         if ([AccountRole.Guest, AccountRole.ReadOnlyGuest].includes(acc.role)) {
           if (collabSec?.provideSecurity === true) {
-            collabRes += ` OR EXISTS (SELECT 1 FROM ${translateDomain(DOMAIN_COLLABORATOR)} collab_sec WHERE collab_sec."workspaceId" = ${vars.add(this.workspaceId, '::uuid')} AND collab_sec."attachedTo" = ${domain}._id AND collab_sec.collaborator = '${acc.uuid}')`
+            collabRes += ` OR EXISTS (SELECT 1 FROM ${translateDomain(DOMAIN_COLLABORATOR)} collab_sec WHERE collab_sec."workspaceId" = ${vars.add(this.workspaceId, '::uuid')} AND collab_sec."attachedTo" = ${domain}._id AND collab_sec.collaborator = ${accUuidVar})`
           }
           if (collabSec?.provideAttachedSecurity === true) {
-            collabRes += ` OR EXISTS (SELECT 1 FROM ${translateDomain(DOMAIN_COLLABORATOR)} collab_sec WHERE collab_sec."workspaceId" = ${vars.add(this.workspaceId, '::uuid')} AND collab_sec."attachedTo" = ${domain}."attachedTo" AND collab_sec.collaborator = '${acc.uuid}')`
+            collabRes += ` OR EXISTS (SELECT 1 FROM ${translateDomain(DOMAIN_COLLABORATOR)} collab_sec WHERE collab_sec."workspaceId" = ${vars.add(this.workspaceId, '::uuid')} AND collab_sec."attachedTo" = ${domain}."attachedTo" AND collab_sec.collaborator = ${accUuidVar})`
           }
         }
         return `AND (${res}${collabRes})`
@@ -1229,7 +1233,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
     if (join.isReverse) {
       return `${join.toAlias}->'${tKey}'`
     }
-    if (isDataField(domain, tKey)) {
+    if (isDataField(join.table, tKey)) {
       if (isDataArray) {
         return `${join.toAlias}."data"->'${tKey}'`
       }

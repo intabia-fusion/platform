@@ -115,8 +115,45 @@ func DefaultKeyMap() KeyMap {
 
 // commitItem wraps Commit for display
 type commitItem struct {
-	commit   Commit
-	selected bool
+	commit       Commit
+	selected     bool            // incoming mode: whole-commit checkbox
+	expanded     bool            // outgoing mode: file list expanded
+	selectedFile map[string]bool // outgoing mode: per-file selection
+}
+
+// fileSelected reports whether the file is checked in this commit item.
+func (c commitItem) fileSelected(f string) bool {
+	if c.selectedFile == nil {
+		return false
+	}
+	return c.selectedFile[f]
+}
+
+// toggleFile flips selection of a file in this commit item.
+func (c *commitItem) toggleFile(f string) {
+	if c.selectedFile == nil {
+		c.selectedFile = map[string]bool{}
+	}
+	if c.selectedFile[f] {
+		delete(c.selectedFile, f)
+	} else {
+		c.selectedFile[f] = true
+	}
+}
+
+// centerRowKind distinguishes the row kind in the central panel.
+type centerRowKind int
+
+const (
+	rowCommit centerRowKind = iota // incoming: commit row
+	rowFile                        // outgoing: single file row
+)
+
+// centerRow is one line in the central panel.
+type centerRow struct {
+	kind    centerRowKind
+	itemIdx int    // index into m.items (for commit rows)
+	file    string // filled for file rows
 }
 
 // focusArea tracks which panel captures navigation keys
@@ -174,6 +211,14 @@ type Model struct {
 	migrating         bool
 	migratingBranch   string
 	migratingCount    int
+	session           *Session
+	centerRows        []centerRow
+	centerCursor      int
+	centerScroll      int
+	currentDiff       string // diff text for currently focused row
+	currentDiffKey    string // "hash" or "hash|file" identifying loaded diff
+	outgoingPaths     []string        // outgoing: all changed file paths vs upstream
+	pickedFile        map[string]bool // outgoing: files marked for apply (Space)
 }
 
 // Init initializes the model
@@ -196,6 +241,10 @@ func initialModelWithBranch(upstreamBranch string) Model {
 	if store == nil {
 		store = NewIgnoreStore()
 	}
+	session, _ := LoadSession()
+	if session == nil {
+		session = &Session{}
+	}
 	return Model{
 		keys:          DefaultKeyMap(),
 		upstream:      upstreamBranch,
@@ -208,5 +257,7 @@ func initialModelWithBranch(upstreamBranch string) Model {
 		mode:          ModeIncoming,
 		outgoingFiles: map[string][]string{},
 		treeExpanded:  map[string]bool{},
+		session:       session,
+		pickedFile:    map[string]bool{},
 	}
 }

@@ -57,7 +57,8 @@ import type {
   UserProfile,
   WorkspaceInviteInfo,
   WorkspaceLoginInfo,
-  WorkspaceOperation
+  WorkspaceOperation,
+  AccountWorkspaceBadgeStatus
 } from './types'
 import { getClientTimezone, isNetworkError } from './utils'
 
@@ -266,6 +267,10 @@ export interface AccountClient {
 
   setCookie: () => Promise<void>
   deleteCookie: () => Promise<void>
+  getAccountWorkspaceBadgeStatuses: (account: AccountUuid) => Promise<AccountWorkspaceBadgeStatus[]>
+  setWorkspaceBadgeStatuses: (
+    data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>
+  ) => Promise<void>
 }
 
 /** @public */
@@ -1360,6 +1365,24 @@ class AccountClientImpl implements AccountClient {
       method: 'getWorkspaceUsersWithPermission',
       params
     })
+  }
+
+  async getAccountWorkspaceBadgeStatuses (account: AccountUuid): Promise<AccountWorkspaceBadgeStatus[]> {
+    const request = {
+      method: 'getAccountWorkspaceBadgeStatuses' as const,
+      params: { account }
+    }
+    return await this.rpc(request)
+  }
+
+  async setWorkspaceBadgeStatuses (
+    data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>
+  ): Promise<void> {
+    const request = {
+      method: 'setWorkspaceBadgeStatuses' as const,
+      params: { data }
+    }
+    await this.rpc(request)
   }
 }
 

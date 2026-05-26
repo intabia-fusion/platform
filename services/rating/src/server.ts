@@ -1,11 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import type { MeasureContext, Tx } from '@hcengineering/core'
-import {
-  createMongoAdapter,
-  createMongoDestroyAdapter,
-  createMongoTxAdapter,
-  shutdownMongo
-} from '@hcengineering/mongo'
 import { setMetadata } from '@hcengineering/platform'
 import {
   createPostgreeDestroyAdapter,
@@ -20,8 +14,7 @@ import {
   registerDestroyFactory,
   registerServerPlugins,
   registerStringLoaders,
-  registerTxAdapterFactory,
-  setAdapterSecurity
+  registerTxAdapterFactory
 } from '@hcengineering/server-pipeline'
 import serverToken from '@hcengineering/server-token'
 
@@ -30,9 +23,6 @@ import { WorkspaceManager } from './manager'
 // Register close on process exit.
 process.on('exit', () => {
   shutdownPostgres().catch((err) => {
-    console.error(err)
-  })
-  shutdownMongo().catch((err) => {
     console.error(err)
   })
 })
@@ -54,14 +44,9 @@ export async function startIndexer (
   setMetadata(serverToken.metadata.Service, 'rating')
   setMetadata(serverClientPlugin.metadata.Endpoint, opt.accountsUrl)
 
-  registerTxAdapterFactory('mongodb', createMongoTxAdapter)
-  registerAdapterFactory('mongodb', createMongoAdapter)
-  registerDestroyFactory('mongodb', createMongoDestroyAdapter)
-
   registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
   registerAdapterFactory('postgresql', createPostgresAdapter, true)
   registerDestroyFactory('postgresql', createPostgreeDestroyAdapter, true)
-  setAdapterSecurity('postgresql', true)
 
   registerServerPlugins()
   registerStringLoaders()

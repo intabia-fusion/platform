@@ -169,12 +169,20 @@ export function getImageDimensions (
   const originalWidth = size.width
   const originalHeight = size.height
   const fontSize = parseFloat(getComputedStyle(document.documentElement).fontSize)
-  const maxWidthPx = maxRem.maxWidth * fontSize
+  let maxWidthPx = maxRem.maxWidth * fontSize
   const minWidthPx = maxRem.minWidth * fontSize
-  const maxHeightPx = maxRem.maxHeight * fontSize
+  let maxHeightPx = maxRem.maxHeight * fontSize
   const minHeightPx = maxRem.minHeight * fontSize
 
   const ratio = originalHeight / originalWidth
+
+  // Square-ish images (logos) get a tighter cap so they don't dominate the message
+  const SQUARE_CAP_REM = 6
+  if (ratio >= 0.85 && ratio <= 1.18) {
+    const squareCapPx = SQUARE_CAP_REM * fontSize
+    maxWidthPx = Math.min(maxWidthPx, squareCapPx)
+    maxHeightPx = Math.min(maxHeightPx, squareCapPx)
+  }
 
   let width = Math.min(originalWidth, maxWidthPx)
   let height = Math.ceil(width * ratio)

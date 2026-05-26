@@ -20,8 +20,11 @@ import {
 } from '@hcengineering/account-client'
 import { Analytics } from '@hcengineering/analytics'
 import {
+  type Class,
+  type Doc,
   generateId,
   platformNow,
+  type Ref,
   systemAccountUuid,
   type MeasureContext,
   type Tx,
@@ -87,6 +90,22 @@ let profiling = false
 const rpcHandler = new RPCHandler()
 
 const backpressureSize = 100 * 1024
+
+// Slow-client protection: when the outgoing buffer crosses WS_DROP_THRESHOLD,
+// broadcasts to that client are dropped and the affected classes are accumulated.
+// Once the buffer drains below WS_RESUME_THRESHOLD the next broadcast is preceded
+// by a TxWorkspaceEvent.BulkUpdate so the client refreshes the relevant queries.
+// Set WS_SLOW_CLIENT_DROP=0 to disable the drop path entirely (legacy behaviour:
+// every broadcast is awaited via backpressure).
+const slowClientDropEnabled = (process.env.WS_SLOW_CLIENT_DROP ?? '1') !== '0'
+function parsePositiveInt (raw: string | undefined, fallback: number): number {
+  const n = parseInt(raw ?? '')
+  return Number.isFinite(n) && n > 0 ? n : fallback
+}
+const dropThreshold = parsePositiveInt(process.env.WS_DROP_THRESHOLD, 2.5 * 1024 * 1024)
+const resumeRaw = parsePositiveInt(process.env.WS_RESUME_THRESHOLD, backpressureSize)
+// Resume must be strictly below drop, otherwise the socket would never enter the resume window.
+const resumeThreshold = resumeRaw < dropThreshold ? resumeRaw : Math.max(1, Math.floor(dropThreshold / 2))
 /**
  * @public
  * @param port -
@@ -653,6 +672,7 @@ function createWebsocketClientSocket (
     model: any
   }
 ): ConnectionSocket {
+  const pendingClasses = new Set<Ref<Class<Doc>>>()
   const cs: ConnectionSocket = {
     id: generateId(),
     isClosed: false,
@@ -671,6 +691,21 @@ function createWebsocketClientSocket (
           await setImmediate()
         }
       })
+    },
+    isOverloaded: () => slowClientDropEnabled && ws.bufferedAmount > dropThreshold,
+    addDroppedClasses: (classes: Ref<Class<Doc>>[]) => {
+      if (!slowClientDropEnabled) return
+      for (const c of classes) {
+        if (c != null) pendingClasses.add(c)
+      }
+    },
+    takePendingRefresh: () => {
+      if (!slowClientDropEnabled) return null
+      if (ws.bufferedAmount > resumeThreshold) return null
+      if (pendingClasses.size === 0) return null
+      const result = Array.from(pendingClasses)
+      pendingClasses.clear()
+      return result
     },
     checkState: () => {
       if (ws.readyState === ws.CLOSED || ws.readyState === ws.CLOSING) {

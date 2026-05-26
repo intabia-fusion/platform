@@ -38,13 +38,7 @@ import notification, {
   NotificationType
 } from '@hcengineering/notification'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import {
-  NOTIFICATION_BODY_SIZE,
-  PUSH_NOTIFICATION_TITLE_SIZE,
-  Receiver,
-  TypeMatchClient,
-  TypeMatchFunc
-} from '@hcengineering/server-notification'
+import { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
 import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import { getMetadata, getResource, IntlString, translate } from '@hcengineering/platform'
 import { workbenchId } from '@hcengineering/workbench'
@@ -208,7 +202,7 @@ export async function getTranslatedNotificationContent (
   const title = await translate(data.title ?? notification.string.CommonNotificationTitle, params, language)
   const body = await translate(data.body ?? notification.string.UpdateNotificationBody, params, language)
 
-  return { ...params, title: title.slice(0, PUSH_NOTIFICATION_TITLE_SIZE), body: body.slice(0, NOTIFICATION_BODY_SIZE) }
+  return { ...params, title, body }
 }
 
 export async function getContentByTemplate (

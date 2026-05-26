@@ -45,7 +45,8 @@ function defineMessageActions (builder: Builder): void {
       inline: true,
       context: {
         mode: 'context',
-        group: 'edit'
+        group: 'edit',
+        order: 20
       }
     },
     activity.action.Reply
@@ -118,7 +119,8 @@ function defineMessageActions (builder: Builder): void {
       inline: true,
       context: {
         mode: 'context',
-        group: 'edit'
+        group: 'associate',
+        order: 30
       }
     },
     chunter.action.TranslateMessage
@@ -136,10 +138,49 @@ function defineMessageActions (builder: Builder): void {
       inline: true,
       context: {
         mode: 'context',
-        group: 'edit'
+        group: 'associate',
+        order: 30
       }
     },
     chunter.action.ShowOriginalMessage
+  )
+
+  createAction(
+    builder,
+    {
+      action: chunter.actionImpl.ReplyToMessage,
+      label: activity.string.Reply,
+      icon: activity.icon.ReplyTo,
+      input: 'focus',
+      category: chunter.category.Chunter,
+      target: chunter.class.ChatMessage,
+      inline: true,
+      context: {
+        mode: 'context',
+        group: 'edit',
+        order: 30
+      }
+    },
+    chunter.action.ReplyToMessage
+  )
+
+  createAction(
+    builder,
+    {
+      action: chunter.actionImpl.ForwardMessage,
+      label: activity.string.ForwardMessage,
+      icon: activity.icon.Forward,
+      input: 'focus',
+      category: chunter.category.Chunter,
+      target: chunter.class.ChatMessage,
+      inline: false,
+      context: {
+        mode: 'context',
+        group: 'edit',
+        order: 40
+      }
+    },
+    chunter.action.ForwardMessage
   )
 }
 

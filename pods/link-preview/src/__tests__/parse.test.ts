@@ -905,6 +905,129 @@ describe('Edge Cases', () => {
 })
 
 // ============================================================================
+// Login Redirect Detection Tests
+// ============================================================================
+
+describe('Login Redirect Detection', () => {
+  let ctx: MeasureContext
+
+  beforeEach(() => {
+    ctx = createMockContext()
+    jest.clearAllMocks()
+  })
+
+  it('should reject when redirected to GitLab sign_in page', async () => {
+    global.fetch = jest.fn().mockImplementation((url: string) => {
+      if (url === 'https://gitlab.example.com/group/project/-/merge_requests/161') {
+        return Promise.resolve(
+          new Response(null, {
+            status: 302,
+            headers: { location: 'https://gitlab.example.com/users/sign_in' }
+          })
+        )
+      }
+      return Promise.reject(new Error(`Unexpected fetch to ${url}`))
+    })
+
+    await expect(
+      parseLinkPreviewDetails(ctx, defaultConfig, 'https://gitlab.example.com/group/project/-/merge_requests/161')
+    ).rejects.toThrow(LinkPreviewError)
+  })
+
+  it('should set LOGIN_REDIRECT code when redirected to login', async () => {
+    global.fetch = jest.fn().mockImplementation((url: string) => {
+      if (url === 'https://app.example.com/private') {
+        return Promise.resolve(
+          new Response(null, {
+            status: 302,
+            headers: { location: 'https://app.example.com/login?return_to=/private' }
+          })
+        )
+      }
+      return Promise.reject(new Error(`Unexpected fetch to ${url}`))
+    })
+
+    try {
+      await parseLinkPreviewDetails(ctx, defaultConfig, 'https://app.example.com/private')
+      fail('Expected error')
+    } catch (err) {
+      expect(err).toBeInstanceOf(LinkPreviewError)
+      expect((err as LinkPreviewError).code).toBe('LOGIN_REDIRECT')
+    }
+  })
+
+  it('should reject when final page title indicates sign in', async () => {
+    const html = `
+      <html>
+        <head>
+          <title>Sign in · GitLab</title>
+          <meta property="og:title" content="Sign in · GitLab">
+          <meta property="og:description" content="GitLab Community Edition">
+        </head>
+      </html>
+    `
+    global.fetch = jest.fn().mockResolvedValue(createHtmlResponse(html))
+
+    await expect(
+      parseLinkPreviewDetails(ctx, defaultConfig, 'https://gitlab.example.com/group/project/-/merge_requests/161')
+    ).rejects.toThrow(LinkPreviewError)
+  })
+
+  it('should reject when final URL path is /oauth', async () => {
+    global.fetch = jest.fn().mockImplementation((url: string) => {
+      if (url === 'https://app.example.com/resource') {
+        return Promise.resolve(
+          new Response(null, {
+            status: 302,
+            headers: { location: 'https://auth.example.com/oauth/authorize?client_id=x' }
+          })
+        )
+      }
+      return Promise.reject(new Error(`Unexpected fetch to ${url}`))
+    })
+
+    await expect(parseLinkPreviewDetails(ctx, defaultConfig, 'https://app.example.com/resource')).rejects.toThrow(
+      LinkPreviewError
+    )
+  })
+
+  it('should allow preview when user explicitly requests a login page', async () => {
+    const html = `
+      <html>
+        <head>
+          <title>Sign in</title>
+          <meta property="og:description" content="Sign in to your account">
+        </head>
+      </html>
+    `
+    global.fetch = jest.fn().mockResolvedValue(createHtmlResponse(html))
+
+    // When the original URL is a login URL itself, do not block - user asked for it
+    const result = await parseLinkPreviewDetails(ctx, defaultConfig, 'https://app.example.com/users/sign_in')
+    expect(result.title).toBe('Sign in')
+  })
+
+  it('should not reject non-login pages with normal redirects', async () => {
+    const html = '<html><head><title>Welcome</title></head></html>'
+    global.fetch = jest.fn().mockImplementation((url: string) => {
+      if (url === 'https://example.com/old') {
+        return Promise.resolve(
+          new Response(null, {
+            status: 301,
+            headers: { location: 'https://example.com/new' }
+          })
+        )
+      }
+      if (url === 'https://example.com/new') return Promise.resolve(createHtmlResponse(html))
+      return Promise.reject(new Error(`Unexpected fetch to ${url}`))
+    })
+
+    const result = await parseLinkPreviewDetails(ctx, defaultConfig, 'https://example.com/old')
+    expect(result.title).toBe('Welcome')
+  })
+})
+
+// ============================================================================
 // Integration-style Tests
 // ============================================================================
 

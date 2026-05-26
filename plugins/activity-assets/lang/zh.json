@@ -57,6 +57,14 @@
     "AddedTag": "添加标签: {title}",
     "RemovedTag": "移除标签: {title}",
     "ValueTooLarge": "值过大，无法显示",
-    "SentAttachments": "已发送附件"
+    "SentAttachments": "已发送附件",
+    "ReplyTo": "回复 {name}",
+    "ForwardedFrom": "转发自",
+    "ReplyToMessage": "回复消息",
+    "ForwardMessage": "转发消息",
+    "ForwardedMessage": "已转发的消息",
+    "ForwardedMessageFrom": "来自 {name} 的转发消息",
+    "Forward": "转发",
+    "Reply": "回复"
   }
 }

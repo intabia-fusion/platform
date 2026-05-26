@@ -15,11 +15,11 @@
 <script lang="ts">
   import { Ref } from '@hcengineering/core'
   import { Room } from '@hcengineering/love'
-  import { Button, CheckBox } from '@hcengineering/ui'
+  import { Button, CheckBox, Label } from '@hcengineering/ui'
   import { Writable } from 'svelte/store'
   import love from '../plugin'
   import RoomSelector from './RoomSelector.svelte'
-  import { myOffice } from '../stores'
+  import { myOffice, rooms } from '../stores'
 
   export let state: Writable<Record<string, any>>
 
@@ -32,6 +32,9 @@
   }
 
   let isMeeting = false
+
+  $: selectedRoom = $rooms.find((r) => r._id === $state.room)
+  $: isPrivateRoom = selectedRoom?.startPrivate ?? false
 </script>
 
 <div class="flex-row-center gap-1-5 mt-1">
@@ -64,4 +67,9 @@
       changeRoom(ev.detail)
     }}
   />
+  {#if isPrivateRoom}
+    <div class="text-sm mt-1 ml-4 text-content-color">
+      <Label label={love.string.Private} />
+    </div>
+  {/if}
 {/if}

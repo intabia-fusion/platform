@@ -409,7 +409,9 @@ export class Hierarchy {
         }
       } else {
         if (add) {
-          list.push(_class)
+          if (!list.includes(_class)) {
+            list.push(_class)
+          }
         } else {
           const pos = list.indexOf(_class)
           if (pos !== -1) {

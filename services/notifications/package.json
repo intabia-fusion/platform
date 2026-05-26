@@ -57,6 +57,8 @@
   "dependencies": {
     "@hcengineering/account-client": "workspace:^0.7.21",
     "@hcengineering/activity": "workspace:^0.7.0",
+    "@hcengineering/ai-bot": "workspace:^0.7.0",
+    "@hcengineering/pulse": "workspace:^0.7.0",
     "@hcengineering/analytics": "workspace:^0.7.17",
     "@hcengineering/analytics-service": "workspace:^0.7.17",
     "@hcengineering/api-client": "workspace:^0.7.18",

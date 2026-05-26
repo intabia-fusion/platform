@@ -1941,9 +1941,6 @@ importers:
       '@hcengineering/model-tracker':
         specifier: workspace:^0.7.0
         version: link:../../models/tracker
-      '@hcengineering/mongo':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/server/packages/mongo
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -2184,6 +2181,9 @@ importers:
       fast-equals:
         specifier: ^5.2.2
         version: 5.3.2
+      js-yaml:
+        specifier: ^4.1.0
+        version: 4.1.0
       libphonenumber-js:
         specifier: ^1.9.46
         version: 1.12.26
@@ -8471,6 +8471,12 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
+      '@hcengineering/model-activity':
+        specifier: workspace:^0.7.0
+        version: link:../activity
+      '@hcengineering/model-attachment':
+        specifier: workspace:^0.7.0
+        version: link:../attachment
       '@hcengineering/model-calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
@@ -8756,6 +8762,9 @@ importers:
       '@hcengineering/preference':
         specifier: workspace:^0.7.0
         version: link:../../plugins/preference
+      '@hcengineering/retry':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/retry
       '@hcengineering/setting':
         specifier: workspace:^0.7.0
         version: link:../../plugins/setting
@@ -11063,6 +11072,9 @@ importers:
 
   ../../models/server-love:
     dependencies:
+      '@hcengineering/calendar':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/calendar
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -29382,6 +29394,9 @@ importers:
       '@hcengineering/presentation':
         specifier: workspace:^0.7.0
         version: link:../../packages/presentation
+      '@hcengineering/pulse':
+        specifier: workspace:^0.7.0
+        version: link:../pulse
       '@hcengineering/rating':
         specifier: workspace:^0.7.0
         version: link:../rating
@@ -29724,9 +29739,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/mongo':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/server/packages/mongo
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -30048,9 +30060,6 @@ importers:
       '@hcengineering/middleware':
         specifier: workspace:^0.7.22
         version: link:../../foundations/server/packages/middleware
-      '@hcengineering/mongo':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/server/packages/mongo
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -30535,9 +30544,6 @@ importers:
       '@hcengineering/minio':
         specifier: workspace:^0.7.17
         version: link:../../foundations/server/packages/minio
-      '@hcengineering/mongo':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/server/packages/mongo
       '@hcengineering/notification':
         specifier: workspace:^0.7.0
         version: link:../../plugins/notification
@@ -33088,6 +33094,9 @@ importers:
 
   ../../server-plugins/love-resources:
     dependencies:
+      '@hcengineering/calendar':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/calendar
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -33188,6 +33197,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/pulse':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/pulse
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -35009,9 +35021,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/mongo':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/server/packages/mongo
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -35033,9 +35042,6 @@ importers:
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
-      mongodb:
-        specifier: ^6.16.0
-        version: 6.20.0(gcp-metadata@5.3.0(encoding@0.1.13))(snappy@7.3.3)(socks@2.8.7)
       otp-generator:
         specifier: ^4.0.1
         version: 4.0.1
@@ -35103,6 +35109,9 @@ importers:
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
+      '@hcengineering/api-client':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/api-client
       '@hcengineering/auth-providers':
         specifier: workspace:^0.7.0
         version: link:../../pods/authProviders
@@ -35118,12 +35127,12 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/mongo':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/server/packages/mongo
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/pulse':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/pulse
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -35439,9 +35448,6 @@ importers:
       '@hcengineering/minio':
         specifier: workspace:^0.7.17
         version: link:../../foundations/server/packages/minio
-      '@hcengineering/mongo':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/server/packages/mongo
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -35578,9 +35584,6 @@ importers:
       '@hcengineering/minio':
         specifier: workspace:^0.7.17
         version: link:../../foundations/server/packages/minio
-      '@hcengineering/mongo':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/server/packages/mongo
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -36325,9 +36328,6 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/mongo':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/server/packages/mongo
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -36434,9 +36434,6 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
-      '@hcengineering/mongo':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/server/packages/mongo
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -36794,6 +36791,9 @@ importers:
       '@hcengineering/client-resources':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/core/packages/client-resources
+      '@hcengineering/collaborator-client':
+        specifier: workspace:^0.7.17
+        version: link:../../../foundations/core/packages/collaborator-client
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/contact
@@ -38547,9 +38547,6 @@ importers:
       '@hcengineering/minio':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/server/packages/minio
-      '@hcengineering/mongo':
-        specifier: workspace:^0.7.17
-        version: link:../../../foundations/server/packages/mongo
       '@hcengineering/notification':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/notification
@@ -39907,6 +39904,9 @@ importers:
       '@hcengineering/activity':
         specifier: workspace:^0.7.0
         version: link:../../plugins/activity
+      '@hcengineering/ai-bot':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/ai-bot
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
@@ -39940,6 +39940,9 @@ importers:
       '@hcengineering/postgres':
         specifier: workspace:^0.7.22
         version: link:../../foundations/server/packages/postgres
+      '@hcengineering/pulse':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/pulse
       '@hcengineering/retry':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/retry
@@ -40584,9 +40587,6 @@ importers:
       '@hcengineering/middleware':
         specifier: workspace:^0.7.22
         version: link:../../foundations/server/packages/middleware
-      '@hcengineering/mongo':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/server/packages/mongo
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -41007,9 +41007,6 @@ importers:
       '@hcengineering/kafka':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/server/packages/kafka
-      '@hcengineering/mongo':
-        specifier: workspace:^0.7.17
-        version: link:../../../foundations/server/packages/mongo
       '@hcengineering/notification':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/notification
@@ -41515,6 +41512,9 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
+      '@hcengineering/love':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/love
       '@hcengineering/rank':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/rank
@@ -41603,6 +41603,9 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
+      '@hcengineering/love':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/love
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform

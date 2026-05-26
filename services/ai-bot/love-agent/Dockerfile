@@ -5,6 +5,7 @@ RUN npm install -g pnpm
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+ENV PNPM_CONFIG_DANGEROUSLY_ALLOW_ALL_BUILDS=true
 
 COPY package.json package.json
 COPY pnpm-lock.yaml pnpm-lock.yaml

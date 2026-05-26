@@ -18,8 +18,7 @@
     ActivityMessagePresenter,
     canGroupMessages,
     messageInFocus,
-    editingMessageStore,
-    clearMessageInLocation
+    editingMessageStore
   } from '@hcengineering/activity-resources'
   import core, { Doc, generateId, getCurrentAccount, Ref, Space, Timestamp, Tx, TxCUD } from '@hcengineering/core'
   import { DocNotifyContext, ReadState } from '@hcengineering/notification'
@@ -399,7 +398,6 @@
   async function handleScrollToLatestMessage (): Promise<void> {
     selectedMessageId = undefined
     messageInFocus.set(undefined)
-    clearMessageInLocation()
 
     const metadata = $metadataStore
     const lastMetadata = metadata[metadata.length - 1]
@@ -710,7 +708,7 @@
     {#if loadMoreAllowed && $canLoadNextForwardStore}
       <HistoryLoading isLoading={$isLoadingMoreStore} />
     {/if}
-    {#if !fixedInput && withInput && !readonly}
+    {#if !fixedInput && withInput}
       <ChannelInput
         {object}
         {readonly}
@@ -735,7 +733,7 @@
   {/if}
 </div>
 
-{#if fixedInput && withInput && !readonly}
+{#if fixedInput && withInput}
   <ChannelInput
     {object}
     {readonly}

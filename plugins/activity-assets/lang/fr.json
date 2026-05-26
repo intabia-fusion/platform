@@ -57,6 +57,14 @@
     "AddedTag": "Tag ajouté: {title}",
     "RemovedTag": "Tag supprimé: {title}",
     "ValueTooLarge": "Valeur trop grande pour être affichée",
-    "SentAttachments": "Pfad der gesendeten Datei"
+    "SentAttachments": "Pfad der gesendeten Datei",
+    "ReplyTo": "Répondre à {name}",
+    "ForwardedFrom": "Transféré de",
+    "ReplyToMessage": "Répondre au message",
+    "ForwardMessage": "Transférer le message",
+    "ForwardedMessage": "Message transféré",
+    "ForwardedMessageFrom": "Message transféré de {name}",
+    "Forward": "Transférer",
+    "Reply": "Répondre"
   }
 }

@@ -15,63 +15,62 @@
 <script lang="ts">
   import { IdMap, Ref, toIdMap } from '@hcengineering/core'
   import { isOffice, ParticipantInfo, Room, MeetingMinutes } from '@hcengineering/love'
-  import { getMetadata } from '@hcengineering/platform'
+  import { getMetadata, translateCB } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import { closePopup, eventToHTMLElement, location, showPopup, closeTooltip } from '@hcengineering/ui'
+  import { closePopup, eventToHTMLElement, location, showPopup, closeTooltip, themeStore } from '@hcengineering/ui'
   import type { Location } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
   import workbench from '@hcengineering/workbench'
   import { closeWidget, sidebarStore } from '@hcengineering/workbench-resources'
 
   import love from '../../plugin'
-  import { currentRoom, infos, myInfo, myConnectingSessionId, rooms, meetings } from '../../stores'
-  import { createMeetingWidget, getRoomName, liveKitClient } from '../../utils'
+  import { currentRoom, infos, myInfo, myConnectingSessionId, rooms, meetings, busyPersons } from '../../stores'
+  import { createMeetingWidget, getRoomName } from '../../utils'
   import PersonActionPopup from '../PersonActionPopup.svelte'
   import RoomButton from '../RoomButton.svelte'
   import { lkIsConnecting, lkSessionConnected } from '../../liveKitClient'
   import RoomPopup from '../RoomPopup.svelte'
   import { currentMeeting, leaveMeeting } from '../../meetings'
-  import { get } from 'svelte/store'
 
   const client = getClient()
 
   interface ActiveRoom extends Room {
     participants: ParticipantInfo[]
-    meeting: MeetingMinutes
+    meeting: Ref<MeetingMinutes>
   }
 
   function getActiveMeetings (rooms: Room[], infos: ParticipantInfo[], meetings: MeetingMinutes[]): ActiveRoom[] {
     const roomMap = toIdMap(rooms)
     const map: IdMap<ActiveRoom> = new Map()
+
+    // Group participants by their meeting to find active meetings
+    const participantsByMeeting = new Map<Ref<MeetingMinutes>, ParticipantInfo[]>()
     for (const info of infos) {
-      // Skip explicit reception occupants (they are rendered separately)
-      if (info.room === love.ids.Reception) continue
+      if (info.meeting === undefined) continue
+      const existing = participantsByMeeting.get(info.meeting) ?? []
+      existing.push(info)
+      participantsByMeeting.set(info.meeting, existing)
+    }
 
-      // Determine the room this participant should be associated with:
-      // - If participant is meeting-bound, use the meeting's attached room
-      // - Otherwise, use the legacy `room` field
-      let attachedRoom = info.room
-      let meeting: MeetingMinutes | undefined
-      if (info.meeting !== undefined) {
-        meeting = meetings.find((m) => m._id === info.meeting)
-        if (meeting === undefined) continue
-        attachedRoom = meeting.attachedTo as Ref<Room> | undefined
-        if (attachedRoom === undefined || attachedRoom === love.ids.Reception) continue
-      }
+    for (const [meetingId, participants] of participantsByMeeting) {
+      if (participants.length === 0) continue
 
-      if (meeting === undefined) continue
+      // Find the meeting to get room info
+      const meeting = meetings.find((m) => m._id === meetingId)
+      if (meeting?.roomId === undefined) continue
 
-      if (attachedRoom === undefined) continue
+      // Skip reception
+      if (meeting.roomId === love.ids.Reception) continue
 
-      const roomObj = roomMap.get(attachedRoom)
+      const roomObj = roomMap.get(meeting.roomId)
       if (roomObj === undefined) continue
-      // temporary disabled check for floor
-      // if (roomObj.floor !== selectedFloor?._id) continue
+
       const _id = roomObj._id as Ref<ActiveRoom>
-      const active = map.get(_id) ?? { ...roomObj, _id, participants: [], meeting }
-      active.participants.push(info)
+      const active = map.get(_id) ?? { ...roomObj, _id, participants: [], meeting: meetingId }
+      active.participants.push(...participants)
       map.set(_id, active)
     }
+
     const arr = Array.from(map.values()).filter(
       (r) => !isOffice(r) || r.participants.length > 1 || r.person !== r.participants[0]?.person
     )
@@ -83,7 +82,7 @@
   function openRoom (room: ActiveRoom): (e: MouseEvent) => void {
     return (e: MouseEvent) => {
       closeTooltip()
-      showPopup(RoomPopup, { room, meeting: room.meeting }, eventToHTMLElement(e))
+      showPopup(RoomPopup, { room, meetingId: room.meeting }, eventToHTMLElement(e))
     }
   }
 
@@ -146,20 +145,21 @@
   let myRoomAttached: Ref<Room> | undefined = undefined
   $: myRoomAttached =
     $myInfo?.meeting !== undefined
-      ? ($meetings.find((m) => m._id === $myInfo.meeting)?.attachedTo as Ref<Room>)
+      ? ($meetings.find((m) => m._id === $myInfo.meeting)?.roomId as Ref<Room>)
       : $myInfo?.room
   $: joined = activeMeetings.filter((r) => myRoomAttached === r._id)
 
-  const beforeUnloadListener = (): void => {
-    if ($myInfo !== undefined && $lkSessionConnected) {
-      void leaveMeeting()
-    }
-  }
+  // Get busy participants (those in private meetings we don't have access to)
+  $: busyParticipants = $infos.filter((info) => $busyPersons.has(info.person) && info.meeting !== undefined)
 
-  window.addEventListener('beforeunload', beforeUnloadListener)
+  // beforeunload used to call leaveMeeting(), which dropped the
+  // `love.activeMeeting` anchor in sessionStorage and made post-refresh
+  // reconnect impossible. We now rely on:
+  //   * LiveKit SDK closing the WebSocket on tab unload,
+  //   * server `participant_left` webhook cleaning ParticipantInfo,
+  //   * `rememberActiveMeeting` letting the next page-load resume the seat.
 
   onDestroy(() => {
-    removeEventListener('beforeunload', beforeUnloadListener)
     closePopup(myInvitesCategory)
     closeWidget(love.ids.MeetingWidget)
   })
@@ -176,7 +176,11 @@
     }
   }
 
-  // beforeUnload listener moved above and cleanup merged into onDestroy
+  let busyLbl: string = ''
+
+  $: translateCB(love.string.Busy, {}, $themeStore.language, (res) => {
+    busyLbl = res
+  })
 </script>
 
 <div class="flex-row-center flex-gap-2">
@@ -193,8 +197,14 @@
       {/await}
     {/each}
   {/if}
-  {#if reception !== undefined && receptionParticipants.length > 0}
+  {#if busyParticipants.length > 0}
     {#if activeMeetings.length > 0}
+      <div class="divider" />
+    {/if}
+    <RoomButton label={busyLbl} participants={busyParticipants} />
+  {/if}
+  {#if reception !== undefined && receptionParticipants.length > 0}
+    {#if activeMeetings.length > 0 || busyParticipants.length > 0}
       <div class="divider" />
     {/if}
     {#await getRoomName(reception) then name}

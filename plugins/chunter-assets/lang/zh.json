@@ -143,7 +143,12 @@
     "Seen": "已读",
     "ChannelsAndDMs": "频道和私信",
     "CreateDirect": "创建私信",
-    "ChangeIcon": "更改图标"
+    "ChangeIcon": "更改图标",
+    "ResolveThread": "解决",
+    "PrivateChat": "私聊",
+    "ShowMessage": "显示消息",
+    "ForwardMessage": "转发消息",
+    "ToWhom": "发送给"
   },
   "emailTemplate": {
     "DMNotificationText": "{sender}向您发送了一条消息: \n\n{message}",

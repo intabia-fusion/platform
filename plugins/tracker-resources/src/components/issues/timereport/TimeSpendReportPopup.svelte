@@ -15,21 +15,12 @@
 <script lang="ts">
   import contact, { Employee, getCurrentEmployee } from '@hcengineering/contact'
   import { AttachedData, Class, DocumentUpdate, Ref, Space, getCurrentAccount } from '@hcengineering/core'
-  import { getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
+  import { type IntlString } from '@hcengineering/platform'
   import presentation, { Card, createQuery, getClient } from '@hcengineering/presentation'
   import { UserBox } from '@hcengineering/contact-resources'
   import { Issue, type Project, TimeReportDayType, TimeSpendReport, TrackerEvents } from '@hcengineering/tracker'
-  import {
-    Button,
-    DatePresenter,
-    EditBox,
-    IconChevronLeft,
-    IconChevronRight,
-    Label,
-    getFormattedDate
-  } from '@hcengineering/ui'
+  import { Button, DatePresenter, EditBox, IconChevronLeft, IconChevronRight, Label } from '@hcengineering/ui'
   import tracker from '../../../plugin'
-  import { getTimeReportDate, getTimeReportDayType } from '../../../utils'
   import TitlePresenter from '../TitlePresenter.svelte'
   import { Analytics } from '@hcengineering/analytics'
 
@@ -100,8 +91,6 @@
     dayTotalHours = 0
   }
 
-  let selectedTimeReportDay = getTimeReportDayType(data.date)
-
   // Suffix → multiplier in hours. 1 day = 8h, 1 week = 40h.
   const unitMultipliers: Array<{ suffixes: string[], hours: number }> = [
     { suffixes: ['m', 'min', 'mins', 'minute', 'minutes', 'м', 'мин', 'минута', 'минуты', 'минут'], hours: 1 / 60 },
@@ -141,51 +130,6 @@
     const base = data.date != null ? new Date(data.date) : new Date()
     base.setDate(base.getDate() + delta)
     data.date = base.valueOf()
-    selectedTimeReportDay = getTimeReportDayType(data.date)
-  }
-
-  function setToday (): void {
-    data.date = Date.now()
-    selectedTimeReportDay = getTimeReportDayType(data.date)
-  }
-
-  $: todayDate = Date.now()
-  $: previousWorkDate = getTimeReportDate(TimeReportDayType.PreviousWorkDay)
-  $: isToday = data.date != null && new Date(data.date).toDateString() === new Date(todayDate).toDateString()
-  $: previousWorkDateLabel = getFormattedDate(previousWorkDate, { weekday: 'short', day: 'numeric', month: 'short' })
-  $: todayLabel = getFormattedDate(todayDate, { weekday: 'short', day: 'numeric', month: 'short' })
-
-  let todayHours = 0
-  let prevHours = 0
-  const navReportsQuery = createQuery()
-  $: if (data.employee != null) {
-    const todayBounds = dayBounds(todayDate)
-    const prevBounds = dayBounds(previousWorkDate)
-    const start = Math.min(todayBounds.start, prevBounds.start)
-    const end = Math.max(todayBounds.end, prevBounds.end)
-    navReportsQuery.query(
-      tracker.class.TimeSpendReport,
-      {
-        employee: data.employee,
-        date: { $gte: start, $lt: end }
-      },
-      (res) => {
-        const filtered = res.filter((r) => value === undefined || r._id !== value._id)
-        todayHours = filtered
-          .filter((r) => r.date != null && r.date >= todayBounds.start && r.date < todayBounds.end)
-          .reduce((sum, r) => sum + (r.value ?? 0), 0)
-        prevHours = filtered
-          .filter((r) => r.date != null && r.date >= prevBounds.start && r.date < prevBounds.end)
-          .reduce((sum, r) => sum + (r.value ?? 0), 0)
-      }
-    )
-  } else {
-    todayHours = 0
-    prevHours = 0
-  }
-
-  function fmtHours (h: number): string {
-    return Math.round(h * 1000) / 1000 + ''
   }
 
   export function canClose (): boolean {
@@ -357,13 +301,6 @@
         readonly={!isSpaceOwner || !canEdit}
       />
       <div class="flex-row-center gap-2">
-        <DatePresenter
-          bind:value={data.date}
-          editable={canEdit}
-          kind={'regular'}
-          size={'large'}
-          on:change={({ detail }) => (selectedTimeReportDay = getTimeReportDayType(detail))}
-        />
         <div class="flex flex-row-center gap-1">
           <Button
             icon={IconChevronLeft}
@@ -374,13 +311,7 @@
               shiftDay(-1)
             }}
           />
-          <Button
-            size={'large'}
-            kind={isToday ? 'primary' : 'regular'}
-            label={getEmbeddedLabel(todayLabel + ' (' + fmtHours(todayHours) + 'h)')}
-            disabled={!canEdit || isToday}
-            on:click={setToday}
-          />
+          <DatePresenter bind:value={data.date} editable={canEdit} kind={'regular'} size={'large'} />
           <Button
             icon={IconChevronRight}
             kind={'regular'}
@@ -393,9 +324,6 @@
         </div>
       </div>
     </div>
-    <span class="flex flex-grow flex-reverse text-base content-dark-color">
-      <Label label={tracker.string.PreviousWorkDay} />: {previousWorkDateLabel}
-    </span>
   </svelte:fragment>
 </Card>
 
