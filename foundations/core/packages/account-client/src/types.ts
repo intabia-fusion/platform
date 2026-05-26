@@ -244,3 +244,11 @@ export interface AccountWorkspaceBadgeStatus {
   hasUnread: boolean
   updatedOn: Timestamp
 }
+
+/**
+ * Subscription with resolved owner email (used in admin panel)
+ */
+export interface SubscriptionInfo extends Subscription {
+  payerEmail?: string
+  payerName?: string
+}

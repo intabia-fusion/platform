@@ -53,6 +53,7 @@ import type {
   SocialId,
   Subscription,
   SubscriptionData,
+  SubscriptionInfo,
   UserProfile,
   WorkspaceInviteInfo,
   WorkspaceLoginInfo,
@@ -253,9 +254,11 @@ export interface AccountClient {
   getUserProfile: (personUuid?: PersonUuid) => Promise<PersonWithProfile | null>
 
   getSubscriptions: (workspaceUuid?: WorkspaceUuid | undefined, activeOnly?: boolean) => Promise<Subscription[]>
+  getAllSubscriptions: () => Promise<SubscriptionInfo[]>
   getSubscriptionByProviderId: (provider: string, providerSubscriptionId: string) => Promise<Subscription | null>
   getSubscriptionById: (subscriptionId: string) => Promise<Subscription | null>
   upsertSubscription: (subscription: SubscriptionData) => Promise<void>
+  adminCreateSubscription: (params: { workspaceUuid: WorkspaceUuid, plan: string, type?: string }) => Promise<void>
 
   batchAssignWorkspacePermission: (params: { accountIds: AccountUuid[], permission: string }) => Promise<void>
   batchRevokeWorkspacePermission: (params: { accountIds: AccountUuid[], permission: string }) => Promise<void>
@@ -1299,6 +1302,13 @@ class AccountClientImpl implements AccountClient {
     })
   }
 
+  async getAllSubscriptions (): Promise<SubscriptionInfo[]> {
+    return await this._rpc({
+      method: 'getAllSubscriptions',
+      params: {}
+    })
+  }
+
   async getSubscriptionByProviderId (provider: string, providerSubscriptionId: string): Promise<Subscription | null> {
     return await this._rpc({
       method: 'getSubscriptionByProviderId',
@@ -1322,6 +1332,13 @@ class AccountClientImpl implements AccountClient {
     await this._rpc({
       method: 'upsertSubscription',
       params: subscription
+    })
+  }
+
+  async adminCreateSubscription (params: { workspaceUuid: WorkspaceUuid, plan: string, type?: string }): Promise<void> {
+    await this._rpc({
+      method: 'adminCreateSubscription',
+      params
     })
   }
 

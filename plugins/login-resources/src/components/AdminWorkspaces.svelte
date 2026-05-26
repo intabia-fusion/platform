@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { RegionInfo, AccountAggregatedInfo } from '@hcengineering/account-client'
+  import { RegionInfo, AccountAggregatedInfo, type SubscriptionInfo } from '@hcengineering/account-client'
   import {
     AccountUuid,
     groupByArray,
@@ -38,7 +38,10 @@
     Scroller,
     SearchEdit,
     showPopup,
-    ticker
+    TabList,
+    ticker,
+    themeStore,
+    type TabItem
   } from '@hcengineering/ui'
   import { workbenchId } from '@hcengineering/workbench'
   import { getAccountClient, getAllWorkspaces, getRegionInfo, performWorkspaceOperation } from '../utils'
@@ -335,480 +338,786 @@
     accountSkip = 0
     await loadAccounts(ev.detail, accountSkip, accountLimit)
   }
+
+  let subscriptions: SubscriptionInfo[] = []
+  let subscriptionsLoaded = false
+  let billingSearch = ''
+
+  $: workspaceNames = Object.fromEntries(workspaces.map((w) => [w.uuid, w.name ?? w.url ?? w.uuid]))
+
+  async function loadSubscriptions (): Promise<void> {
+    try {
+      subscriptions = await accountClient.getAllSubscriptions()
+    } catch (err) {
+      console.error('Failed to load subscriptions:', err)
+    } finally {
+      subscriptionsLoaded = true
+    }
+  }
+
+  $: if (isAdmin && workspaces.length > 0 && !subscriptionsLoaded) {
+    void loadSubscriptions()
+  }
+
+  $: filteredSubscriptions =
+    billingSearch.length > 0
+      ? subscriptions.filter(
+        (s) =>
+          (workspaceNames[s.workspaceUuid] ?? '').toLowerCase().includes(billingSearch.toLowerCase()) ||
+            (planLabels[s.plan] ?? s.plan).toLowerCase().includes(billingSearch.toLowerCase()) ||
+            Boolean(s.plan.toLowerCase().includes(billingSearch.toLowerCase())) ||
+            Boolean(s.payerName?.toLowerCase().includes(billingSearch.toLowerCase())) ||
+            s.payerEmail?.toLowerCase().includes(billingSearch.toLowerCase())
+      )
+      : subscriptions
+
+  interface WorkspaceGroup {
+    workspaceUuid: string
+    workspaceName: string
+    currentPlan: string
+    currentPackage: string
+    lastChangedOn: number
+    lastChangedBy: string
+    entries: SubscriptionInfo[]
+  }
+
+  $: workspaceGroups = (() => {
+    const byWs = new Map<string, SubscriptionInfo[]>()
+    for (const s of filteredSubscriptions) {
+      const list = byWs.get(s.workspaceUuid)
+      if (list !== undefined) list.push(s)
+      else byWs.set(s.workspaceUuid, [s])
+    }
+    const groups: WorkspaceGroup[] = []
+    for (const [uuid, entries] of byWs.entries()) {
+      let currentPlan = ''
+      let currentPackage = ''
+      let lastChangedOn = 0
+      let lastChangedBy = ''
+      for (const e of entries) {
+        if (e.status === 'active') {
+          const name = planLabels[e.plan] ?? e.plan
+          if (e.type === 'tier') currentPlan = name
+          else if (e.type === 'package') currentPackage = name
+        }
+        if (e.createdOn > lastChangedOn) {
+          lastChangedOn = e.createdOn
+          lastChangedBy = e.payerName ?? e.payerEmail ?? e.accountUuid.slice(0, 8)
+        }
+      }
+      groups.push({
+        workspaceUuid: uuid,
+        workspaceName: workspaceNames[uuid] ?? uuid.slice(0, 8),
+        currentPlan,
+        currentPackage,
+        lastChangedOn,
+        lastChangedBy,
+        entries: [...entries].sort((a, b) => b.createdOn - a.createdOn)
+      })
+    }
+    groups.sort((a, b) => a.workspaceName.localeCompare(b.workspaceName))
+    return groups
+  })()
+
+  const expandedWorkspaces: Record<string, boolean> = {}
+
+  function formatDate (ts: number): string {
+    return new Date(ts).toLocaleDateString()
+  }
+
+  function formatDateTime (ts: number): string {
+    return new Date(ts).toLocaleString()
+  }
+
+  // --- Admin Create Subscription Form ---
+
+  let selectedWorkspaceUuid = ''
+  let selectedPlan = ''
+
+  let planKeys: string[] = []
+  let planLabels: Record<string, string> = {}
+  let planSections: Record<string, string> = {}
+
+  async function loadPlans (): Promise<void> {
+    try {
+      const paymentUrl = getMetadata(presentation.metadata.PaymentUrl) ?? ''
+      const res = await fetch(paymentUrl + '/api/v1/plan-config')
+      if (!res.ok) return
+      const config = await res.json()
+      const allKeys = [...Object.keys(config.plans ?? {}), ...Object.keys(config.packages ?? {})]
+      planKeys = allKeys
+      const labels: Record<string, string> = {}
+      const lang = $themeStore.language ?? 'en'
+      const sections: Record<string, string> = {}
+      for (const [k, v] of Object.entries(config.plans ?? {})) {
+        sections[k] = 'tier'
+        const item = v as any
+        labels[k] = typeof item.label === 'object' ? (item.label[lang] ?? item.label.en ?? k) : (item.label ?? k)
+      }
+      for (const [k, v] of Object.entries(config.packages ?? {})) {
+        sections[k] = 'package'
+        const item = v as any
+        const desc =
+          typeof item.description === 'object'
+            ? (item.description[lang] ?? item.description.en ?? k)
+            : (item.description ?? k)
+        labels[k] = desc
+      }
+      planLabels = labels
+      planSections = sections
+    } catch (err) {
+      console.error('Failed to load plans:', err)
+    }
+  }
+
+  $: if (isAdmin && planKeys.length === 0) {
+    void loadPlans()
+  }
+
+  $: planItems = planKeys.map((k) => ({ id: k, label: getEmbeddedLabel(`${planLabels[k] ?? k} (${k})`) }))
+
+  $: inferredType = planSections[selectedPlan] ?? 'tier'
+
+  $: existingActive =
+    selectedWorkspaceUuid.length > 0 && selectedPlan.length > 0
+      ? subscriptions.find(
+        (s) => s.workspaceUuid === selectedWorkspaceUuid && s.type === inferredType && s.status === 'active'
+      )
+      : null
+
+  async function adminCreateSub (): Promise<void> {
+    if (selectedWorkspaceUuid.length === 0 || selectedPlan.length === 0) return
+
+    const doCreate = async (): Promise<void> => {
+      try {
+        await accountClient.adminCreateSubscription({
+          workspaceUuid: selectedWorkspaceUuid as any,
+          plan: selectedPlan,
+          type: inferredType
+        })
+        selectedWorkspaceUuid = ''
+        selectedPlan = ''
+        subscriptionsLoaded = false
+      } catch (err) {
+        console.error('Failed to create subscription:', err)
+      }
+    }
+
+    if (existingActive != null) {
+      const existingLabel = planLabels[existingActive.plan] ?? existingActive.plan
+      const newLabel = planLabels[selectedPlan] ?? selectedPlan
+      showPopup(MessageBox, {
+        label: getEmbeddedLabel('Replace subscription'),
+        message: getEmbeddedLabel(`Workspace already has "${existingLabel}". Replace with "${newLabel}"?`),
+        action: doCreate
+      })
+    } else {
+      await doCreate()
+    }
+  }
+
+  $: workspaceSelectItems = workspaces.map((w) => ({
+    id: w.uuid,
+    label: getEmbeddedLabel(w.name ?? w.url ?? w.uuid)
+  }))
+
+  // --- Tabs ---
+
+  let selectedTab: string = 'workspaces'
+
+  const tabItems: TabItem[] = [
+    { id: 'workspaces', label: 'Workspaces' },
+    { id: 'accounts', label: 'Accounts' },
+    { id: 'billing', label: 'Billing' }
+  ]
+
+  function onTabSelect (ev: CustomEvent): void {
+    if (ev.detail !== undefined) {
+      selectedTab = ev.detail.id
+    }
+  }
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 {#if isAdmin}
   <Scroller>
     <div class="flex-column flex-grow p-5">
-      <div class="anticrm-panel flex-row flex-grow" style:overflow-y={'auto'}>
-        <div class="flex-between">
-          <div class="fs-title p-3">Workspaces administration panel</div>
-          <div class="flex-row-center">
-            <span class="mr-4">Enable deletion</span>
-            <CheckBox bind:checked={superAdminMode} />
-          </div>
-        </div>
-        <div class="fs-title p-3">
-          Workspaces: {workspaces.length} active: {workspaces.filter((it) => isActiveMode(it.mode)).length}
-          upgrading: {workspaces.filter((it) => isUpgradingMode(it.mode)).length}
-          <br />
-          Backupable: {backupable.length} new: {backupable.reduce((p, it) => p + (it.backupInfo == null ? 1 : 0), 0)}
-          Active: {data?.workspaces.length ?? -1}
-          <br />
-          <span class="mt-2">
-            Users: {data?.usersTotal}/{data?.connectionsTotal}
-          </span>
+      <div class="flex-row-center mb-4">
+        <TabList items={tabItems} selected={selectedTab} on:select={onTabSelect} />
+      </div>
 
-          <div class="flex-row-center">
-            {#each byVersion.entries() as [k, v]}
-              <div class="p-1">
-                {k}: {v.length}
-              </div>
-            {/each}
+      {#if selectedTab === 'workspaces'}
+        <div class="anticrm-panel flex-row flex-grow" style:overflow-y={'auto'}>
+          <div class="flex-between">
+            <div class="fs-title p-3">Workspaces administration panel</div>
+            <div class="flex-row-center">
+              <span class="mr-4">Enable deletion</span>
+              <CheckBox bind:checked={superAdminMode} />
+            </div>
           </div>
-          <div class="flex-row-center">
-            {#each byRegion.entries() as [k, v]}
-              <div class="p-1">
-                {k ?? ''}: {v.length}
-              </div>
-            {/each}
-          </div>
-        </div>
-        <div class="fs-title p-3 flex-no-shrink" data-testid="workspace-search-container">
-          <SearchEdit bind:value={search} width={'100%'} />
-        </div>
+          <div class="fs-title p-3">
+            Workspaces: {workspaces.length} active: {workspaces.filter((it) => isActiveMode(it.mode)).length}
+            upgrading: {workspaces.filter((it) => isUpgradingMode(it.mode)).length}
+            <br />
+            Backupable: {backupable.length} new: {backupable.reduce((p, it) => p + (it.backupInfo == null ? 1 : 0), 0)}
+            Active: {data?.workspaces.length ?? -1}
+            <br />
+            <span class="mt-2">
+              Users: {data?.usersTotal}/{data?.connectionsTotal}
+            </span>
 
-        <div class="p-3 flex-col">
-          <span class="fs-title mr-2">Filters: </span>
-          <div class="flex-row-center">
-            Show active workspaces:
-            <CheckBox bind:checked={showActive} />
+            <div class="flex-row-center">
+              {#each byVersion.entries() as [k, v]}
+                <div class="p-1">
+                  {k}: {v.length}
+                </div>
+              {/each}
+            </div>
+            <div class="flex-row-center">
+              {#each byRegion.entries() as [k, v]}
+                <div class="p-1">
+                  {k ?? ''}: {v.length}
+                </div>
+              {/each}
+            </div>
           </div>
-          <div class="flex-row-center">
-            <span class="mr-2">Show archived workspaces:</span>
-            <CheckBox bind:checked={showArchived} />
+          <div class="fs-title p-3 flex-no-shrink" data-testid="workspace-search-container">
+            <SearchEdit bind:value={search} width={'100%'} />
           </div>
-          <div class="flex-row-center">
-            <span class="mr-2">Show deleted workspaces:</span>
-            <CheckBox bind:checked={showDeleted} />
-          </div>
-          <div class="flex-row-center">
-            <span class="mr-2">Show other workspaces:</span>
-            <CheckBox bind:checked={showOther} />
-          </div>
-          <div class="flex-row-center">
-            <span class="mr-2">Show attempts >=0 workspaces:</span>
-            <CheckBox bind:checked={showGrAttempts} />
-          </div>
-          <div class="flex-row-center">
-            <span class="mr-2">Show selected region only:</span>
-            <CheckBox bind:checked={showSelectedRegionOnly} />
-          </div>
-          <div class="flex-row-center">
-            <span class="mr-2">Show inactive workspaces:</span>
-            <CheckBox bind:checked={showInactive} />
-          </div>
-        </div>
 
-        <div class="fs-title p-3 flex-row-center">
-          <span class="mr-2"> Sorting order: {sortingRule} </span>
-          <ButtonMenu
-            selected={sortingRule}
-            autoSelectionIfOne
-            title={sortRules[sortingRule]}
-            items={Object.entries(sortRules).map((it) => ({ id: it[0], label: getEmbeddedLabel(it[1]) }))}
-            on:selected={(it) => {
-              sortingRule = it.detail
-            }}
-          />
-        </div>
-
-        <div class="fs-title p-3 flex-row-center">
-          <span class="mr-2"> Migration region selector: </span>
-          <ButtonMenu
-            selected={selectedRegionId}
-            autoSelectionIfOne
-            title={selectedRegionName}
-            items={regionInfo.map((it) => ({
-              id: it.region === '' ? '#' : it.region,
-              label: getEmbeddedLabel(it.name.length > 0 ? it.name : it.region + ' (hidden)')
-            }))}
-            on:selected={(it) => {
-              selectedRegionId = it.detail === '#' ? '' : it.detail
-            }}
-          />
-        </div>
-
-        <div class="fs-title p-3 flex-row-center">
-          <div class="mr-2">
-            <CheckBox bind:checked={showSelectedRegionOnly} />
+          <div class="p-3 flex-col">
+            <span class="fs-title mr-2">Filters: </span>
+            <div class="flex-row-center">
+              Show active workspaces:
+              <CheckBox bind:checked={showActive} />
+            </div>
+            <div class="flex-row-center">
+              <span class="mr-2">Show archived workspaces:</span>
+              <CheckBox bind:checked={showArchived} />
+            </div>
+            <div class="flex-row-center">
+              <span class="mr-2">Show deleted workspaces:</span>
+              <CheckBox bind:checked={showDeleted} />
+            </div>
+            <div class="flex-row-center">
+              <span class="mr-2">Show other workspaces:</span>
+              <CheckBox bind:checked={showOther} />
+            </div>
+            <div class="flex-row-center">
+              <span class="mr-2">Show attempts >=0 workspaces:</span>
+              <CheckBox bind:checked={showGrAttempts} />
+            </div>
+            <div class="flex-row-center">
+              <span class="mr-2">Show selected region only:</span>
+              <CheckBox bind:checked={showSelectedRegionOnly} />
+            </div>
+            <div class="flex-row-center">
+              <span class="mr-2">Show inactive workspaces:</span>
+              <CheckBox bind:checked={showInactive} />
+            </div>
           </div>
-          <span class="mr-2"> Filtere region selector: </span>
-          <ButtonMenu
-            selected={filterRegionId}
-            autoSelectionIfOne
-            title={filteredRegionName}
-            items={regionInfo.map((it) => ({
-              id: it.region === '' ? '#' : it.region,
-              label: getEmbeddedLabel(it.name.length > 0 ? it.name : it.region + ' (hidden)')
-            }))}
-            on:selected={(it) => {
-              filterRegionId = it.detail === '#' ? '' : it.detail
-            }}
-          />
-        </div>
-        <div class="fs-title p-1">
-          <Scroller maxHeight={40} noStretch={true}>
-            <div class="mr-4">
-              {#each Object.keys(dayRanges) as k}
-                {@const v = groupped.get(k) ?? []}
-                {@const hasMore = (groupped.get(k) ?? []).length > limit}
-                {@const activeV = v
-                  .filter((it) => isActiveMode(it.mode) && it.region !== selectedRegionId)
-                  .slice(0, limit)}
-                {@const activeAll = v.filter((it) => isActiveMode(it.mode))}
-                {@const archivedV = v.filter((it) => isArchivingMode(it.mode))}
-                {@const deletedV = v.filter((it) => isDeletingMode(it.mode))}
-                {@const maintenance = v.length - activeAll.length - archivedV.length - deletedV.length}
-                {@const grByRegion = groupByArray(v, (it) => regionTitles[it.region ?? ''])}
-                {#if v.length > 0}
-                  <Expandable expandable={true} bordered={true} expanded={search.trim().length > 0}>
-                    <svelte:fragment slot="title">
-                      <span class="fs-title focused-button flex-row-center">
-                        {k} -
-                        {#if hasMore}
-                          {limit} of {v.length}
-                        {:else}
-                          {v.length}
-                        {/if}
-                        {#if maintenance > 0}
-                          - maitenance: {maintenance}
-                        {/if}
-                        {#if grByRegion.size > 1}
-                          {#each grByRegion.entries() as [k, v]}
-                            <div class="p-1">
-                              {k ?? ''}: {v.length}
-                            </div>
-                          {/each}
-                        {/if}
-                      </span>
-                    </svelte:fragment>
-                    <svelte:fragment slot="title-tools">
-                      {#if hasMore}
-                        <div class="ml-4">
-                          <Button
-                            label={getEmbeddedLabel('More items')}
-                            kind={'link'}
-                            on:click={() => {
-                              limit += 50
-                            }}
-                          />
-                        </div>
-                      {/if}
-                    </svelte:fragment>
-                    <svelte:fragment slot="tools">
-                      {#if activeAll.length > 0}
-                        <Button
-                          icon={IconStop}
-                          label={getEmbeddedLabel(`Mass Archive ${activeAll.length}`)}
-                          kind={'ghost'}
-                          on:click={() => {
-                            showPopup(MessageBox, {
-                              label: getEmbeddedLabel(`Mass Archive ${activeAll.length}`),
-                              message: getEmbeddedLabel(`Please confirm archive ${activeAll.length} workspaces`),
-                              action: async () => {
-                                void performWorkspaceOperation(
-                                  activeAll.map((it) => it.uuid),
-                                  'archive'
-                                )
-                              }
-                            })
-                          }}
-                        />
-                      {/if}
 
-                      {#if regionInfo.length > 0 && activeV.length > 0}
-                        <Button
-                          icon={IconArrowRight}
-                          kind={'positive'}
-                          label={getEmbeddedLabel(`Mass Migrate ${activeV.length} to ${selectedRegionName ?? ''}`)}
-                          on:click={() => {
-                            showPopup(MessageBox, {
-                              label: getEmbeddedLabel(`Mass Migrate ${activeV.length}`),
-                              message: getEmbeddedLabel(`Please confirm migrate ${activeV.length} workspaces`),
-                              action: async () => {
-                                await performWorkspaceOperation(
-                                  activeV.map((it) => it.uuid),
-                                  'migrate-to',
-                                  selectedRegionId
-                                )
-                              }
-                            })
-                          }}
-                        />
-                      {/if}
-                    </svelte:fragment>
-                    {#each v.slice(0, limit) as workspace}
-                      {@const wsName = workspace.name}
-                      {@const lastUsageDays = Math.round((now - (workspace.lastVisit ?? 0)) / (1000 * 3600 * 24))}
-                      {@const bIdx = backupIdx.get(workspace.uuid)}
-                      {@const stats = statsByWorkspace.get(workspace.uuid ?? '')}
-                      <!-- svelte-ignore a11y-click-events-have-key-events -->
-                      <!-- svelte-ignore a11y-no-static-element-interactions -->
-                      <tr class="flex fs-title cursor-pointer focused-button bordered" id={`${workspace.uuid}`}>
-                        <div class="label overflow-label p-1 flex flex-row-center" style:width={'15rem'}>
-                          {wsName}
-                          {#if stats}
-                            -
-                            <div class="ml-1">
-                              {stats.sessions?.length ?? 0}
+          <div class="fs-title p-3 flex-row-center">
+            <span class="mr-2"> Sorting order: {sortingRule} </span>
+            <ButtonMenu
+              selected={sortingRule}
+              autoSelectionIfOne
+              title={sortRules[sortingRule]}
+              items={Object.entries(sortRules).map((it) => ({ id: it[0], label: getEmbeddedLabel(it[1]) }))}
+              on:selected={(it) => {
+                sortingRule = it.detail
+              }}
+            />
+          </div>
 
-                              {(stats.sessions ?? []).reduceRight(
-                                (p, it) => p + (it.mins5.tx + it.mins5.find) + (it.current.tx + it.current.find),
-                                0
-                              )}
-                            </div>
+          <div class="fs-title p-3 flex-row-center">
+            <span class="mr-2"> Migration region selector: </span>
+            <ButtonMenu
+              selected={selectedRegionId}
+              autoSelectionIfOne
+              title={selectedRegionName}
+              items={regionInfo.map((it) => ({
+                id: it.region === '' ? '#' : it.region,
+                label: getEmbeddedLabel(it.name.length > 0 ? it.name : it.region + ' (hidden)')
+              }))}
+              on:selected={(it) => {
+                selectedRegionId = it.detail === '#' ? '' : it.detail
+              }}
+            />
+          </div>
+
+          <div class="fs-title p-3 flex-row-center">
+            <div class="mr-2">
+              <CheckBox bind:checked={showSelectedRegionOnly} />
+            </div>
+            <span class="mr-2"> Filtere region selector: </span>
+            <ButtonMenu
+              selected={filterRegionId}
+              autoSelectionIfOne
+              title={filteredRegionName}
+              items={regionInfo.map((it) => ({
+                id: it.region === '' ? '#' : it.region,
+                label: getEmbeddedLabel(it.name.length > 0 ? it.name : it.region + ' (hidden)')
+              }))}
+              on:selected={(it) => {
+                filterRegionId = it.detail === '#' ? '' : it.detail
+              }}
+            />
+          </div>
+          <div class="fs-title p-1">
+            <Scroller maxHeight={40} noStretch={true}>
+              <div class="mr-4">
+                {#each Object.keys(dayRanges) as k}
+                  {@const v = groupped.get(k) ?? []}
+                  {@const hasMore = (groupped.get(k) ?? []).length > limit}
+                  {@const activeV = v
+                    .filter((it) => isActiveMode(it.mode) && it.region !== selectedRegionId)
+                    .slice(0, limit)}
+                  {@const activeAll = v.filter((it) => isActiveMode(it.mode))}
+                  {@const archivedV = v.filter((it) => isArchivingMode(it.mode))}
+                  {@const deletedV = v.filter((it) => isDeletingMode(it.mode))}
+                  {@const maintenance = v.length - activeAll.length - archivedV.length - deletedV.length}
+                  {@const grByRegion = groupByArray(v, (it) => regionTitles[it.region ?? ''])}
+                  {#if v.length > 0}
+                    <Expandable expandable={true} bordered={true} expanded={search.trim().length > 0}>
+                      <svelte:fragment slot="title">
+                        <span class="fs-title focused-button flex-row-center">
+                          {k} -
+                          {#if hasMore}
+                            {limit} of {v.length}
+                          {:else}
+                            {v.length}
                           {/if}
-                          <div class="ml-1 flex flex-row-center">
+                          {#if maintenance > 0}
+                            - maitenance: {maintenance}
+                          {/if}
+                          {#if grByRegion.size > 1}
+                            {#each grByRegion.entries() as [k, v]}
+                              <div class="p-1">
+                                {k ?? ''}: {v.length}
+                              </div>
+                            {/each}
+                          {/if}
+                        </span>
+                      </svelte:fragment>
+                      <svelte:fragment slot="title-tools">
+                        {#if hasMore}
+                          <div class="ml-4">
                             <Button
-                              icon={IconOpen}
-                              size={'small'}
-                              on:click={() => select(workspace.url)}
-                              showTooltip={{ label: getEmbeddedLabel('Open Workspace URL') }}
-                            />
-                            <Button
-                              icon={IconCopy}
-                              size={'small'}
-                              on:click={() => copyTextToClipboard(workspace.uuid)}
-                              showTooltip={{ label: getEmbeddedLabel('Copy UUID') }}
+                              label={getEmbeddedLabel('More items')}
+                              kind={'link'}
+                              on:click={() => {
+                                limit += 50
+                              }}
                             />
                           </div>
-                        </div>
-                        <div class="label overflow-label p-1 flex flex-row-center" style:width={'5rem'}>
-                          {workspace.region ?? ''}
-                        </div>
-                        <div class="label overflow-label p-1 flex flex-row-center" style:width={'5rem'}>
-                          {lastUsageDays} days
-                        </div>
-                        <div class="label overflow-label p-1 flex flex-row-center" style:width={'10rem'}>
-                          {workspace.mode ?? '-'}
-                        </div>
-                        <div class="label overflow-label flex flex-row-center" style:width={'5rem'}>
-                          {workspace.processingAttempts}
-                          {#if workspace.processingAttempts > 0}
-                            <Button
-                              on:click={() => {
-                                showPopup(MessageBox, {
-                                  label: getEmbeddedLabel(`Reset attempts ${workspace.url}`),
-                                  message: getEmbeddedLabel('Please confirm'),
-                                  action: async () => {
-                                    await performWorkspaceOperation(workspace.uuid, 'reset-attempts')
-                                  }
-                                })
-                              }}
-                              icon={IconDownOutline}
-                              size={'small'}
-                              kind={'ghost'}
-                            />
-                          {/if}
-                        </div>
-                        <div class="flex flex-row-center" style:width={'5rem'}>
-                          {#if workspace.processingProgress !== 100 && workspace.processingProgress !== 0}
-                            ({workspace.processingProgress}%)
-                          {/if}
-                        </div>
-                        <div class="flex flex-row-center" style:width={'15rem'}>
-                          {#if workspace.backupInfo != null}
-                            {@const sz = Math.max(
-                              workspace.backupInfo.backupSize,
-                              workspace.backupInfo.dataSize + workspace.backupInfo.blobsSize
-                            )}
-                            {@const szGb = Math.round((sz * 100) / 1024) / 100}
-                            {#if szGb > 0}
-                              {Math.round((sz * 100) / 1024) / 100}Gb
-                            {:else}
-                              {Math.round(sz * 100) / 100}Mb
+                        {/if}
+                      </svelte:fragment>
+                      <svelte:fragment slot="tools">
+                        {#if activeAll.length > 0}
+                          <Button
+                            icon={IconStop}
+                            label={getEmbeddedLabel(`Mass Archive ${activeAll.length}`)}
+                            kind={'ghost'}
+                            on:click={() => {
+                              showPopup(MessageBox, {
+                                label: getEmbeddedLabel(`Mass Archive ${activeAll.length}`),
+                                message: getEmbeddedLabel(`Please confirm archive ${activeAll.length} workspaces`),
+                                action: async () => {
+                                  void performWorkspaceOperation(
+                                    activeAll.map((it) => it.uuid),
+                                    'archive'
+                                  )
+                                }
+                              })
+                            }}
+                          />
+                        {/if}
+
+                        {#if regionInfo.length > 0 && activeV.length > 0}
+                          <Button
+                            icon={IconArrowRight}
+                            kind={'positive'}
+                            label={getEmbeddedLabel(`Mass Migrate ${activeV.length} to ${selectedRegionName ?? ''}`)}
+                            on:click={() => {
+                              showPopup(MessageBox, {
+                                label: getEmbeddedLabel(`Mass Migrate ${activeV.length}`),
+                                message: getEmbeddedLabel(`Please confirm migrate ${activeV.length} workspaces`),
+                                action: async () => {
+                                  await performWorkspaceOperation(
+                                    activeV.map((it) => it.uuid),
+                                    'migrate-to',
+                                    selectedRegionId
+                                  )
+                                }
+                              })
+                            }}
+                          />
+                        {/if}
+                      </svelte:fragment>
+                      {#each v.slice(0, limit) as workspace}
+                        {@const wsName = workspace.name}
+                        {@const lastUsageDays = Math.round((now - (workspace.lastVisit ?? 0)) / (1000 * 3600 * 24))}
+                        {@const bIdx = backupIdx.get(workspace.uuid)}
+                        {@const stats = statsByWorkspace.get(workspace.uuid ?? '')}
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <!-- svelte-ignore a11y-no-static-element-interactions -->
+                        <tr class="flex fs-title cursor-pointer focused-button bordered" id={`${workspace.uuid}`}>
+                          <div class="label overflow-label p-1 flex flex-row-center" style:width={'15rem'}>
+                            {wsName}
+                            {#if stats}
+                              -
+                              <div class="ml-1">
+                                {stats.sessions?.length ?? 0}
+
+                                {(stats.sessions ?? []).reduceRight(
+                                  (p, it) => p + (it.mins5.tx + it.mins5.find) + (it.current.tx + it.current.find),
+                                  0
+                                )}
+                              </div>
                             {/if}
-                          {/if}
-                          {#if bIdx != null}
-                            [#{bIdx}]
-                          {/if}
-                        </div>
-                        <div class="flex flex-row-center" style:width={'15rem'}>
-                          {#if workspace.backupInfo != null}
-                            {@const hours = Math.round((now - workspace.backupInfo.lastBackup) / (1000 * 3600))}
-
-                            {#if hours > 24}
-                              {Math.round(hours / 24)} days
-                            {:else}
-                              {hours} hours
+                            <div class="ml-1 flex flex-row-center">
+                              <Button
+                                icon={IconOpen}
+                                size={'small'}
+                                on:click={() => select(workspace.url)}
+                                showTooltip={{ label: getEmbeddedLabel('Open Workspace URL') }}
+                              />
+                              <Button
+                                icon={IconCopy}
+                                size={'small'}
+                                on:click={() => copyTextToClipboard(workspace.uuid)}
+                                showTooltip={{ label: getEmbeddedLabel('Copy UUID') }}
+                              />
+                            </div>
+                          </div>
+                          <div class="label overflow-label p-1 flex flex-row-center" style:width={'5rem'}>
+                            {workspace.region ?? ''}
+                          </div>
+                          <div class="label overflow-label p-1 flex flex-row-center" style:width={'5rem'}>
+                            {lastUsageDays} days
+                          </div>
+                          <div class="label overflow-label p-1 flex flex-row-center" style:width={'10rem'}>
+                            {workspace.mode ?? '-'}
+                          </div>
+                          <div class="label overflow-label flex flex-row-center" style:width={'5rem'}>
+                            {workspace.processingAttempts}
+                            {#if workspace.processingAttempts > 0}
+                              <Button
+                                on:click={() => {
+                                  showPopup(MessageBox, {
+                                    label: getEmbeddedLabel(`Reset attempts ${workspace.url}`),
+                                    message: getEmbeddedLabel('Please confirm'),
+                                    action: async () => {
+                                      await performWorkspaceOperation(workspace.uuid, 'reset-attempts')
+                                    }
+                                  })
+                                }}
+                                icon={IconDownOutline}
+                                size={'small'}
+                                kind={'ghost'}
+                              />
                             {/if}
-                          {/if}
-                        </div>
-                        <div class="flex flex-row-center p-1">
-                          {#if workspace.mode === 'active'}
-                            <Button
-                              icon={IconStop}
-                              size={'small'}
-                              label={getEmbeddedLabel('Archive')}
-                              kind={'ghost'}
-                              on:click={() => {
-                                showPopup(MessageBox, {
-                                  label: getEmbeddedLabel(`Archive ${workspace.url}`),
-                                  message: getEmbeddedLabel('Please confirm'),
-                                  action: async () => {
-                                    await performWorkspaceOperation(workspace.uuid, 'archive')
-                                  }
-                                })
-                              }}
-                            />
-                          {/if}
+                          </div>
+                          <div class="flex flex-row-center" style:width={'5rem'}>
+                            {#if workspace.processingProgress !== 100 && workspace.processingProgress !== 0}
+                              ({workspace.processingProgress}%)
+                            {/if}
+                          </div>
+                          <div class="flex flex-row-center" style:width={'15rem'}>
+                            {#if workspace.backupInfo != null}
+                              {@const sz = Math.max(
+                                workspace.backupInfo.backupSize,
+                                workspace.backupInfo.dataSize + workspace.backupInfo.blobsSize
+                              )}
+                              {@const szGb = Math.round((sz * 100) / 1024) / 100}
+                              {#if szGb > 0}
+                                {Math.round((sz * 100) / 1024) / 100}Gb
+                              {:else}
+                                {Math.round(sz * 100) / 100}Mb
+                              {/if}
+                            {/if}
+                            {#if bIdx != null}
+                              [#{bIdx}]
+                            {/if}
+                          </div>
+                          <div class="flex flex-row-center" style:width={'15rem'}>
+                            {#if workspace.backupInfo != null}
+                              {@const hours = Math.round((now - workspace.backupInfo.lastBackup) / (1000 * 3600))}
 
-                          {#if workspace.mode === 'archived'}
-                            <Button
-                              icon={IconStart}
-                              size={'small'}
-                              kind={'ghost'}
-                              label={getEmbeddedLabel('Unarchive')}
-                              on:click={() => {
-                                showPopup(MessageBox, {
-                                  label: getEmbeddedLabel(`Unarchive ${workspace.url}`),
-                                  message: getEmbeddedLabel('Please confirm'),
-                                  action: async () => {
-                                    await performWorkspaceOperation(workspace.uuid, 'unarchive')
-                                  }
-                                })
-                              }}
-                            />
-                          {/if}
-                          {#if regionInfo.length > 0 && workspace.mode === 'active' && (workspace.region ?? '') !== selectedRegionId}
-                            <Button
-                              icon={IconArrowRight}
-                              size={'small'}
-                              kind={'positive'}
-                              label={getEmbeddedLabel('Migrate')}
-                              on:click={() => {
-                                showPopup(MessageBox, {
-                                  label: getEmbeddedLabel(`Migrate ${workspace.url}`),
-                                  message: getEmbeddedLabel('Please confirm'),
-                                  action: async () => {
-                                    await performWorkspaceOperation(workspace.uuid, 'migrate-to', selectedRegionId)
-                                  }
-                                })
-                              }}
-                            />
-                          {/if}
+                              {#if hours > 24}
+                                {Math.round(hours / 24)} days
+                              {:else}
+                                {hours} hours
+                              {/if}
+                            {/if}
+                          </div>
+                          <div class="flex flex-row-center p-1">
+                            {#if workspace.mode === 'active'}
+                              <Button
+                                icon={IconStop}
+                                size={'small'}
+                                label={getEmbeddedLabel('Archive')}
+                                kind={'ghost'}
+                                on:click={() => {
+                                  showPopup(MessageBox, {
+                                    label: getEmbeddedLabel(`Archive ${workspace.url}`),
+                                    message: getEmbeddedLabel('Please confirm'),
+                                    action: async () => {
+                                      await performWorkspaceOperation(workspace.uuid, 'archive')
+                                    }
+                                  })
+                                }}
+                              />
+                            {/if}
 
-                          {#if superAdminMode && !isDeletingMode(workspace.mode) && !isArchivingMode(workspace.mode)}
-                            <Button
-                              icon={IconStop}
-                              size={'small'}
-                              kind={'dangerous'}
-                              label={getEmbeddedLabel('Delete')}
-                              on:click={() => {
-                                showPopup(MessageBox, {
-                                  label: getEmbeddedLabel(`Delete ${workspace.url}`),
-                                  message: getEmbeddedLabel('Please confirm'),
-                                  action: async () => {
-                                    await performWorkspaceOperation(workspace.uuid, 'delete')
-                                  }
-                                })
-                              }}
-                            />
-                          {/if}
-                        </div>
-                      </tr>
+                            {#if workspace.mode === 'archived'}
+                              <Button
+                                icon={IconStart}
+                                size={'small'}
+                                kind={'ghost'}
+                                label={getEmbeddedLabel('Unarchive')}
+                                on:click={() => {
+                                  showPopup(MessageBox, {
+                                    label: getEmbeddedLabel(`Unarchive ${workspace.url}`),
+                                    message: getEmbeddedLabel('Please confirm'),
+                                    action: async () => {
+                                      await performWorkspaceOperation(workspace.uuid, 'unarchive')
+                                    }
+                                  })
+                                }}
+                              />
+                            {/if}
+                            {#if regionInfo.length > 0 && workspace.mode === 'active' && (workspace.region ?? '') !== selectedRegionId}
+                              <Button
+                                icon={IconArrowRight}
+                                size={'small'}
+                                kind={'positive'}
+                                label={getEmbeddedLabel('Migrate')}
+                                on:click={() => {
+                                  showPopup(MessageBox, {
+                                    label: getEmbeddedLabel(`Migrate ${workspace.url}`),
+                                    message: getEmbeddedLabel('Please confirm'),
+                                    action: async () => {
+                                      await performWorkspaceOperation(workspace.uuid, 'migrate-to', selectedRegionId)
+                                    }
+                                  })
+                                }}
+                              />
+                            {/if}
+
+                            {#if superAdminMode && !isDeletingMode(workspace.mode) && !isArchivingMode(workspace.mode)}
+                              <Button
+                                icon={IconStop}
+                                size={'small'}
+                                kind={'dangerous'}
+                                label={getEmbeddedLabel('Delete')}
+                                on:click={() => {
+                                  showPopup(MessageBox, {
+                                    label: getEmbeddedLabel(`Delete ${workspace.url}`),
+                                    message: getEmbeddedLabel('Please confirm'),
+                                    action: async () => {
+                                      await performWorkspaceOperation(workspace.uuid, 'delete')
+                                    }
+                                  })
+                                }}
+                              />
+                            {/if}
+                          </div>
+                        </tr>
+                      {/each}
+                    </Expandable>
+                  {/if}
+                {/each}
+              </div>
+            </Scroller>
+          </div>
+        </div>
+      {/if}
+
+      {#if selectedTab === 'accounts'}
+        <div class="flex-between">
+          <div class="fs-title p-3">Accounts administration panel</div>
+          <div class="flex-row-center">
+            <span class="mr-4">Enable deletion</span>
+            <CheckBox bind:checked={accountSuperAdminMode} />
+          </div>
+        </div>
+        <div class="fs-title p-3 flex-no-shrink">
+          <SearchEdit bind:value={accountSearch} width={'100%'} on:change={accountSearchChanged} />
+        </div>
+
+        <div class="flex-row-center p-3">
+          <Button
+            label={getEmbeddedLabel('Previous')}
+            disabled={accountSkip === 0}
+            on:click={async () => {
+              accountSkip = Math.max(0, accountSkip - accountLimit)
+              await loadAccounts(accountSearch, accountSkip, accountLimit)
+            }}
+          />
+          <span class="mx-2">Page {Math.floor(accountSkip / accountLimit) + 1}</span>
+          <Button
+            label={getEmbeddedLabel('Next')}
+            disabled={accounts.length < accountLimit}
+            on:click={async () => {
+              accountSkip += accountLimit
+              await loadAccounts(accountSearch, accountSkip, accountLimit)
+            }}
+          />
+        </div>
+
+        <div class="fs-title p-1 select-text-i">
+          <Scroller maxHeight={40} noStretch={true}>
+            <div class="mr-4">
+              {#each accounts as account}
+                <tr class="flex focused-button bordered min-h-8">
+                  <div class="p-1 flex flex-col w-60">
+                    <div class="label overflow-label flex flex-row-center">
+                      {account.firstName}
+                      {account.lastName}
+                    </div>
+                    <div>{account.uuid}</div>
+                  </div>
+
+                  <div class="p-1 flex flex-col" style:width={'24rem'}>
+                    <div class="label">Social IDs: {account.socialIds.length}</div>
+                    {#each account.socialIds as socialId}
+                      <div class="mr-2">{socialId.type}:{socialId.value}</div>
                     {/each}
-                  </Expandable>
-                {/if}
+                  </div>
+                  <div class="p-1 flex flex-col">
+                    <div class="label">Workspaces: {account.workspaces.length}</div>
+                    {#each account.workspaces as workspace}
+                      <div>{workspace.name} {workspace.url} {workspace.uuid} {workspace.dataId}</div>
+                    {/each}
+                  </div>
+                  <div class="flex flex-row-center p-1">
+                    {#if accountSuperAdminMode}
+                      <Button
+                        icon={IconStop}
+                        size={'small'}
+                        kind={'dangerous'}
+                        label={getEmbeddedLabel('Delete')}
+                        on:click={() => {
+                          showPopup(MessageBox, {
+                            label: getEmbeddedLabel(`Delete account ${account.firstName} ${account.lastName}`),
+                            message: getEmbeddedLabel('Please confirm account deletion. This action cannot be undone.'),
+                            action: async () => {
+                              await deleteAccount(account.uuid)
+                              await loadAccounts(accountSearch, accountSkip, accountLimit)
+                            }
+                          })
+                        }}
+                      />
+                    {/if}
+                  </div>
+                </tr>
               {/each}
             </div>
           </Scroller>
         </div>
-      </div>
+      {/if}
 
-      <div class="flex-between">
-        <div class="fs-title p-3">Accounts administration panel</div>
-        <div class="flex-row-center">
-          <span class="mr-4">Enable deletion</span>
-          <CheckBox bind:checked={accountSuperAdminMode} />
+      {#if selectedTab === 'billing'}
+        <div class="flex-between">
+          <div class="fs-title p-3">Billing administration panel</div>
         </div>
-      </div>
-      <div class="fs-title p-3 flex-no-shrink">
-        <SearchEdit bind:value={accountSearch} width={'100%'} on:change={accountSearchChanged} />
-      </div>
-
-      <div class="flex-row-center p-3">
-        <Button
-          label={getEmbeddedLabel('Previous')}
-          disabled={accountSkip === 0}
-          on:click={async () => {
-            accountSkip = Math.max(0, accountSkip - accountLimit)
-            await loadAccounts(accountSearch, accountSkip, accountLimit)
-          }}
-        />
-        <span class="mx-2">Page {Math.floor(accountSkip / accountLimit) + 1}</span>
-        <Button
-          label={getEmbeddedLabel('Next')}
-          disabled={accounts.length < accountLimit}
-          on:click={async () => {
-            accountSkip += accountLimit
-            await loadAccounts(accountSearch, accountSkip, accountLimit)
-          }}
-        />
-      </div>
-
-      <div class="fs-title p-1 select-text-i">
-        <Scroller maxHeight={40} noStretch={true}>
-          <div class="mr-4">
-            {#each accounts as account}
-              <tr class="flex focused-button bordered min-h-8">
-                <div class="p-1 flex flex-col w-60">
-                  <div class="label overflow-label flex flex-row-center">
-                    {account.firstName}
-                    {account.lastName}
+        <div class="fs-title p-3 flex-no-shrink">
+          <SearchEdit bind:value={billingSearch} width={'100%'} />
+        </div>
+        {#if subscriptions.length > 0}
+          <div class="fs-title p-1 select-text-i">
+            {#each workspaceGroups as group}
+              <Expandable expandable={true} bordered={true} bind:expanded={expandedWorkspaces[group.workspaceUuid]}>
+                <svelte:fragment slot="title">
+                  <div class="flex-row-center">
+                    <span class="fs-title">{group.workspaceName}</span>
+                    <span class="ml-4 fs-normal">
+                      {group.currentPlan}{group.currentPackage.length > 0 ? ` + ${group.currentPackage}` : ''}
+                    </span>
                   </div>
-                  <div>{account.uuid}</div>
-                </div>
-
-                <div class="p-1 flex flex-col" style:width={'24rem'}>
-                  <div class="label">Social IDs: {account.socialIds.length}</div>
-                  {#each account.socialIds as socialId}
-                    <div class="mr-2">{socialId.type}:{socialId.value}</div>
-                  {/each}
-                </div>
-                <div class="p-1 flex flex-col">
-                  <div class="label">Workspaces: {account.workspaces.length}</div>
-                  {#each account.workspaces as workspace}
-                    <div>{workspace.name} {workspace.url} {workspace.uuid} {workspace.dataId}</div>
-                  {/each}
-                </div>
-                <div class="flex flex-row-center p-1">
-                  {#if accountSuperAdminMode}
-                    <Button
-                      icon={IconStop}
-                      size={'small'}
-                      kind={'dangerous'}
-                      label={getEmbeddedLabel('Delete')}
-                      on:click={() => {
-                        showPopup(MessageBox, {
-                          label: getEmbeddedLabel(`Delete account ${account.firstName} ${account.lastName}`),
-                          message: getEmbeddedLabel('Please confirm account deletion. This action cannot be undone.'),
-                          action: async () => {
-                            await deleteAccount(account.uuid)
-                            await loadAccounts(accountSearch, accountSkip, accountLimit)
-                          }
-                        })
-                      }}
-                    />
-                  {/if}
-                </div>
-              </tr>
+                </svelte:fragment>
+                <svelte:fragment slot="title-tools">
+                  <span class="ml-4 fs-normal">
+                    Last changed: {formatDate(group.lastChangedOn)} by {group.lastChangedBy}
+                  </span>
+                </svelte:fragment>
+                <table class="mr-4" style="width:100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="font-weight: 600;">
+                      <td class="p-1" style="width: 8rem;">Date</td>
+                      <td class="p-1" style="width: 10rem;">Plan</td>
+                      <td class="p-1" style="width: 7rem;">Amount</td>
+                      <td class="p-1" style="width: 8rem;">Status</td>
+                      <td class="p-1" style="width: 14rem;">By</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {#each group.entries as sub}
+                      <tr class="focused-button bordered min-h-8">
+                        <td
+                          class="p-1"
+                          style="width: 8rem;"
+                          title={sub.createdOn != null ? formatDateTime(sub.createdOn) : ''}
+                        >
+                          {sub.createdOn != null ? formatDate(sub.createdOn) : ''}
+                        </td>
+                        <td class="p-1" style="width: 10rem;">{planLabels[sub.plan] ?? sub.plan}</td>
+                        <td class="p-1" style="width: 7rem;">{sub.amount != null ? `${sub.amount / 100} ₽` : ''}</td>
+                        <td class="p-1" style="width: 8rem;"
+                          >{sub.status}{sub.providerData?.pendingReplacement === true ? ' (replacing)' : ''}</td
+                        >
+                        <td class="p-1" style="width: 14rem;">
+                          {sub.payerName ?? sub.payerEmail ?? sub.accountUuid.slice(0, 8)}
+                        </td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              </Expandable>
             {/each}
           </div>
-        </Scroller>
-      </div>
+        {:else if subscriptionsLoaded}
+          <div class="fs-title p-3">No subscriptions found</div>
+        {:else}
+          <div class="fs-title p-3">Loading subscriptions...</div>
+        {/if}
+
+        <div class="flex-between">
+          <div class="fs-title p-3 mt-6">Create subscription:</div>
+        </div>
+        <div class="p-3 flex-row-center">
+          <span class="mr-2 fs-title">Workspace:</span>
+          <ButtonMenu
+            selected={selectedWorkspaceUuid}
+            autoSelectionIfOne={false}
+            title={workspaceNames[selectedWorkspaceUuid] ?? 'Select workspace'}
+            items={workspaceSelectItems}
+            on:selected={(it) => {
+              selectedWorkspaceUuid = it.detail
+            }}
+          />
+          <span class="mx-2 fs-title">Plan:</span>
+          <ButtonMenu
+            selected={selectedPlan}
+            autoSelectionIfOne={false}
+            title={selectedPlan.length > 0 ? (planLabels[selectedPlan] ?? selectedPlan) : 'Select plan'}
+            items={planItems}
+            on:selected={(it) => {
+              selectedPlan = it.detail
+            }}
+          />
+          <div class="ml-4">
+            <Button
+              label={getEmbeddedLabel('Create')}
+              kind={'primary'}
+              disabled={selectedWorkspaceUuid.length === 0 || selectedPlan.length === 0}
+              on:click={adminCreateSub}
+            />
+          </div>
+        </div>
+      {/if}
     </div>
   </Scroller>
   <Popup />
