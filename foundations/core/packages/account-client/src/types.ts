@@ -237,3 +237,11 @@ export interface Subscription {
  * Used by billing service to upsert subscription data
  */
 export type SubscriptionData = Omit<Subscription, 'createdOn' | 'updatedOn'>
+
+/**
+ * Subscription with resolved owner email (used in admin panel)
+ */
+export interface SubscriptionInfo extends Subscription {
+  payerEmail?: string
+  payerName?: string
+}

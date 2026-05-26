@@ -15,6 +15,7 @@
 import {
   type AccountRole,
   type Data,
+  generateId,
   isActiveMode,
   type MeasureContext,
   SocialIdType,
@@ -1117,6 +1118,111 @@ export async function getSubscriptionByProviderId (
   return subscription ?? null
 }
 
+/**
+ * Get all subscriptions (admin only)
+ * @public
+ */
+export async function getAllSubscriptions (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: Record<string, unknown>
+): Promise<any[]> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+
+  if (extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const subscriptions = await db.subscription.find({})
+
+  // Resolve owner emails for unique account UUIDs
+  const accountIds = [...new Set(subscriptions.map((s) => s.accountUuid))]
+  const socialIds = await db.socialId.find({ personUuid: { $in: accountIds }, type: SocialIdType.EMAIL })
+  const emailMap: Record<string, string> = {}
+  for (const si of socialIds) {
+    if (emailMap[si.personUuid] === undefined) {
+      emailMap[si.personUuid] = si.value
+    }
+  }
+
+  // Resolve payer names
+  const personMap: Record<string, string> = {}
+  for (const id of accountIds) {
+    const person = await db.person.findOne({ uuid: id })
+    if (person != null) {
+      const firstName = person.firstName ?? ''
+      const lastName = person.lastName ?? ''
+      const fullName = [firstName, lastName].filter(Boolean).join(' ')
+      if (fullName.length > 0) personMap[id] = fullName
+    }
+  }
+
+  return subscriptions.map((s) => ({
+    ...s,
+    payerEmail: emailMap[s.accountUuid] ?? undefined,
+    payerName: personMap[s.accountUuid] ?? undefined
+  }))
+}
+
+/**
+ * Admin: manually create a free subscription for a workspace
+ * @public
+ */
+export async function adminCreateSubscription (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    workspaceUuid: WorkspaceUuid
+    plan: string
+    type?: string
+  }
+): Promise<void> {
+  const tokenDecoded = decodeTokenVerbose(ctx, token)
+  const { account, extra } = tokenDecoded
+
+  if (extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const { workspaceUuid, plan, type = 'tier' } = params
+
+  // Verify workspace exists
+  const workspace = await getWorkspaceById(db, workspaceUuid)
+  if (workspace === null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
+  }
+
+  const now = Date.now()
+
+  // Cancel existing active subscription of the same type
+  const existing = await db.subscription.findOne({ workspaceUuid, type: type as any, status: 'active' as any })
+  if (existing !== null) {
+    await db.subscription.update({ id: existing.id }, { status: 'canceled' as any, canceledAt: now, updatedOn: now })
+    ctx.info('Manual subscription canceled', { id: existing.id, workspaceUuid, plan, type })
+  }
+
+  // Create new subscription
+  await db.subscription.insertOne({
+    workspaceUuid,
+    accountUuid: account,
+    provider: 'manual',
+    providerSubscriptionId: generateId(),
+    type: type as any,
+    status: 'active' as any,
+    plan,
+    amount: 0,
+    periodStart: now,
+    createdOn: now,
+    updatedOn: now,
+    id: generateId()
+  })
+  ctx.info('Manual subscription created', { workspaceUuid, plan, type })
+}
+
 export type AccountServiceMethods =
   | 'getPendingWorkspace'
   | 'updateWorkspaceInfo'
@@ -1147,6 +1253,8 @@ export type AccountServiceMethods =
   | 'findFullSocialIds'
   | 'getSubscriptionByProviderId'
   | 'upsertSubscription'
+  | 'getAllSubscriptions'
+  | 'adminCreateSubscription'
 
 /**
  * @public
@@ -1181,6 +1289,8 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     findPersonBySocialKey: wrap(findPersonBySocialKey),
     listAccounts: wrap(listAccounts),
     getSubscriptionByProviderId: wrap(getSubscriptionByProviderId),
-    upsertSubscription: wrap(upsertSubscription)
+    upsertSubscription: wrap(upsertSubscription),
+    getAllSubscriptions: wrap(getAllSubscriptions),
+    adminCreateSubscription: wrap(adminCreateSubscription)
   }
 }
