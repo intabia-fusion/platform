@@ -81,6 +81,7 @@ export function presence (node: HTMLElement, params: PresenceActionParams): any 
 }
 
 export async function updatePresence (info: PresenceInfo): Promise<void> {
+  if (info.personId == null || info.personId === '') return
   try {
     const client = getClient()
     const id = presenceDocId(info.objectId, info.personId)
@@ -107,6 +108,7 @@ export async function updatePresence (info: PresenceInfo): Promise<void> {
 }
 
 export async function deletePresence (info: PresenceInfo): Promise<void> {
+  if (info.personId == null || info.personId === '') return
   try {
     const client = getClient()
     const id = presenceDocId(info.objectId, info.personId)
