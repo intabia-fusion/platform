@@ -694,50 +694,46 @@ export const permissionsStore = derived(
     const hierarchy = client.getHierarchy()
 
     for (const s of spaces) {
+      const typedSpace = s as TypedSpace
       membersBySpace[s._id] = new Set(s.members.map((m) => personRefByAccount.get(m)).filter(notEmpty))
-      if (hierarchy.isDerived(s._class, core.class.TypedSpace)) {
-        const typedSpace = s as TypedSpace
-        if (typedSpace.restricted === true) {
-          restrictedSpaces.add(s._id)
-        }
-        const type = client.getModel().findAllSync(core.class.SpaceType, { _id: (s as TypedSpace).type })[0]
-        const mixin = type?.targetClass
+      if (typedSpace.restricted === true) {
+        restrictedSpaces.add(s._id)
+      }
+      const type = client.getModel().findAllSync(core.class.SpaceType, { _id: typedSpace.type })[0]
+      const mixin = type?.targetClass
 
-        if (mixin === undefined) {
-          permissionsBySpace[s._id] = new Set()
-          employeesByPermission[s._id] = {}
+      if (mixin === undefined) {
+        permissionsBySpace[s._id] = new Set()
+        employeesByPermission[s._id] = {}
+        continue
+      }
+
+      const asMixin = hierarchy.as(s, mixin)
+      const roles = client.getModel().findAllSync(core.class.Role, { attachedTo: type._id })
+      const myRoles = roles.filter((r) => ((asMixin as any)[r._id] ?? []).includes(getCurrentAccount().uuid))
+      permissionsBySpace[s._id] = new Set(myRoles.flatMap((r) => r.permissions))
+
+      employeesByPermission[s._id] = {}
+
+      for (const role of roles) {
+        const assignment: AccountUuid[] = (asMixin as any)[role._id] ?? []
+
+        if (assignment.length === 0) {
           continue
         }
 
-        const asMixin = hierarchy.as(s, mixin)
-        const roles = client.getModel().findAllSync(core.class.Role, { attachedTo: type._id })
-        const myRoles = roles.filter((r) => ((asMixin as any)[r._id] ?? []).includes(getCurrentAccount().uuid))
-        permissionsBySpace[s._id] = new Set(myRoles.flatMap((r) => r.permissions))
-
-        employeesByPermission[s._id] = {}
-
-        for (const role of roles) {
-          const assignment: AccountUuid[] = (asMixin as any)[role._id] ?? []
-
-          if (assignment.length === 0) {
-            continue
+        for (const permissionId of role.permissions) {
+          if (employeesByPermission[s._id][permissionId] === undefined) {
+            employeesByPermission[s._id][permissionId] = new Set()
           }
 
-          for (const permissionId of role.permissions) {
-            if (employeesByPermission[s._id][permissionId] === undefined) {
-              employeesByPermission[s._id][permissionId] = new Set()
+          assignment.forEach((acc) => {
+            const personRef = personRefByAccount.get(acc)
+            if (personRef !== undefined) {
+              employeesByPermission[s._id][permissionId].add(personRef)
             }
-
-            assignment.forEach((acc) => {
-              const personRef = personRefByAccount.get(acc)
-              if (personRef !== undefined) {
-                employeesByPermission[s._id][permissionId].add(personRef)
-              }
-            })
-          }
+          })
         }
-      } else {
-        whitelistedSpaces.add(s._id)
       }
     }
 
@@ -754,7 +750,7 @@ export const permissionsStore = derived(
 const permissionsQuery = createQuery(true)
 
 permissionsQuery.query(
-  core.class.Space,
+  core.class.TypedSpace,
   {},
   (res) => {
     spacesStore.set(res)
