@@ -30,7 +30,7 @@
   const query = createQuery()
 
   const dispatch = createEventDispatcher()
-  const inboxClient = getResource(notification.function.GetInboxNotificationsClient).then((res) => res())
+  const inboxClient = getResource(notification.function.GetNotificationsClient).then((res) => res())
 
   const ignoreKeys = ['comments', 'name', 'channels', 'description']
 

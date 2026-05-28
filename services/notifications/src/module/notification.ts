@@ -1,23 +1,52 @@
-import notification, { ContextNotification, DocNotifyContext, UnreadMessage } from '@hcengineering/notification'
-import { Class, Doc, Ref, Space, Timestamp } from '@hcengineering/core'
+//
+// Copyright © 2026 Intabia Fusion Inc.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+import {
+  ContextNotification,
+  DocNotifyContext,
+  NotificationProvider,
+  NotificationType,
+  UnreadMessage,
+  UnreadReaction,
+  NotificationIntl,
+  CommonNotification,
+  UnreadMention
+} from '@hcengineering/notification'
+import { Class, Doc, Ref, Space } from '@hcengineering/core'
 import { Receiver } from '@hcengineering/server-notification'
 
-import { Client, Result } from '../types'
+import { Client, ObjectDisplayData, NotifyProviders, Result } from '../types'
+import { getCreateContextTx, getUpdateContextTx } from '../utils'
 
 interface CreateNotificationData {
   objectId: Ref<Doc>
   objectClass: Ref<Class<Doc>>
   objectSpace: Ref<Space>
 
+  objectDisplayData: ObjectDisplayData
+
+  notifyProviders: NotifyProviders
   notification: ContextNotification
+  intl: NotificationIntl
 
   unreadMessage?: UnreadMessage
-  reaction?: any
-  mention?: any
-  common?: any
+  unreadReaction?: UnreadReaction
+  unreadMention?: UnreadMention
+  unreadCommon?: CommonNotification
 
   receiver: Receiver
-  modifiedOn: Timestamp
 }
 
 export function pushNotification (
@@ -27,102 +56,92 @@ export function pushNotification (
   data: CreateNotificationData
 ): void {
   const {
+    notification,
     unreadMessage,
-    notification: _notification,
-    reaction,
-    common,
-    mention,
+    unreadReaction,
+    unreadCommon,
+    unreadMention,
     receiver,
     objectId,
     objectClass,
-    objectSpace
+    objectSpace,
+    notifyProviders,
+    intl,
+    objectDisplayData
   } = data
   const { txFactory } = client
-  const modifiedOn = Math.max(context?.lastNotify ?? 0, data.modifiedOn)
+  const modifiedOn = Math.max(context?.lastNotify ?? 0, data.notification.createdOn)
+  const providers: Record<Ref<NotificationProvider>, Ref<NotificationType>[]> = Object.fromEntries(
+    Object.entries(notifyProviders).map(([provider, types]) => [provider, types.map((it) => it._id)])
+  ) as Record<Ref<NotificationProvider>, Ref<NotificationType>[]>
 
+  result.queueMessages.push({
+    ...intl,
+    // TODO: fill
+    title: '',
+    body: '',
+    language: receiver.language,
+    account: receiver.account,
+    providers,
+    objectId,
+    objectClass,
+    objectSpace,
+    createdOn: data.notification.createdOn
+  })
   if (context != null) {
-    const updateTx = result.updateContextTx.find((it) => it.objectId === context._id)
-    if (updateTx != null) {
-      updateTx.operations.unread = true
-      updateTx.operations.lastNotify = modifiedOn
-      updateTx.operations.archived = false
-    } else {
-      result.updateContextTx.push(
-        txFactory.createTxUpdateDoc(context._class, context.space, context._id, {
-          unread: true,
-          archived: false,
-          lastNotify: modifiedOn
-        })
-      )
-    }
+    const updateTx = getUpdateContextTx(context, result, txFactory)
+    updateTx.operations.lastNotify = Math.max(modifiedOn, updateTx.operations.lastNotify ?? 0)
 
     const updateOpTx = txFactory.createTxUpdateDoc(context._class, context.space, context._id, {
-      $push: { latestNotifications: { $each: [_notification], $position: 0, $slice: 5 } }
+      $push: { latestNotifications: { $each: [notification], $position: 0, $slice: 5 } },
+      $inc: { unreadCount: 1 }
     })
     if (unreadMessage != null) {
       updateOpTx.operations.$push = {
         ...updateOpTx.operations.$push,
         unreadMessages: unreadMessage
       }
-      updateOpTx.operations.$inc = {
-        ...updateOpTx.operations.$inc,
-        unreadMessagesCount: 1
-      }
-    } else if (reaction != null) {
+    } else if (unreadReaction != null) {
       updateOpTx.operations.$push = {
         ...updateOpTx.operations.$push,
-        unreadReactions: reaction
+        unreadReactions: unreadReaction
       }
-    } else if (mention != null) {
+    } else if (unreadMention != null) {
       updateOpTx.operations.$push = {
         ...updateOpTx.operations.$push,
-        unreadMentions: mention
+        unreadMentions: unreadMention
       }
-    } else if (common != null) {
+    } else if (unreadCommon != null) {
       updateOpTx.operations.$push = {
         ...updateOpTx.operations.$push,
-        unreadCommons: common
+        unreadCommons: unreadCommon
       }
     }
 
-    result.updateContextOpTx.push(updateOpTx)
+    result.updateOpContextTx.push(updateOpTx)
   } else {
-    const currentCreateTx = result.createContextTx.find((it) => it.attributes.user === receiver.account)
-    const createContextTx =
-      currentCreateTx ??
-      client.txFactory.createTxCreateDoc(notification.class.DocNotifyContext, receiver.space, {
-        user: receiver.account,
-        objectId,
-        objectClass,
-        objectSpace,
-        unread: true,
-        archived: false,
-        unreadMessagesCount: 0,
-        latestNotifications: [],
-        unreadReactions: [],
-        unreadMentions: [],
-        unreadCommons: [],
-        unreadMessages: [],
-        lastNotify: modifiedOn
-      })
+    const createTx = getCreateContextTx(
+      objectId,
+      objectClass,
+      objectSpace,
+      receiver,
+      result,
+      client.txFactory,
+      objectDisplayData
+    )
 
-    const attrs = createContextTx.attributes
-    attrs.unread = true
-    attrs.lastNotify = Math.max(attrs.lastNotify ?? 0, modifiedOn)
+    createTx.attributes.lastNotify = Math.max(createTx.attributes.lastNotify ?? 0, modifiedOn)
+    createTx.attributes.latestNotifications = [notification, ...createTx.attributes.latestNotifications].slice(0, 5)
+    createTx.attributes.unreadCount = (createTx.attributes.unreadCount ?? 0) + 1
     if (unreadMessage != null) {
-      const currentUnread = attrs.unreadMessages ?? []
-      attrs.unreadMessages = [...currentUnread, unreadMessage]
-      attrs.unreadMessagesCount = (attrs.unreadMessagesCount ?? 0) + 1
-    } else if (reaction != null) {
-      attrs.unreadReactions = [...(attrs.unreadReactions ?? []), reaction]
-    } else if (mention != null) {
-      attrs.unreadMentions = [...(attrs.unreadMentions ?? []), mention]
-    } else if (common != null) {
-      attrs.unreadCommons = [...(attrs.unreadCommons ?? []), common]
-    }
-
-    if (currentCreateTx == null) {
-      result.createContextTx.push(createContextTx)
+      const currentUnread = createTx.attributes.unreadMessages ?? []
+      createTx.attributes.unreadMessages = [...currentUnread, unreadMessage]
+    } else if (unreadReaction != null) {
+      createTx.attributes.unreadReactions = [...(createTx.attributes.unreadReactions ?? []), unreadReaction]
+    } else if (unreadMention != null) {
+      createTx.attributes.unreadMentions = [...(createTx.attributes.unreadMentions ?? []), unreadMention]
+    } else if (unreadCommon != null) {
+      createTx.attributes.unreadCommons = [...(createTx.attributes.unreadCommons ?? []), unreadCommon]
     }
   }
 }

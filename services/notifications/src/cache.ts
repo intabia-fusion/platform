@@ -351,6 +351,7 @@ class WsCache {
   }
 
   private updateOrMixin<T extends Doc>(tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>, doc: T): T {
+    if (tx.modifiedOn < doc.modifiedOn) return doc
     if (tx._class === core.class.TxUpdateDoc) {
       return TxProcessor.updateDoc2Doc(doc, tx as TxUpdateDoc<Doc>) as T
     }
@@ -585,7 +586,8 @@ class WsCache {
           space: space._id,
           account: it,
           socialIds: socialIdsByEmployee.get(employee._id)?.map((it) => it._id) ?? [],
-          online: statuses.find((s) => s.user === it)?.online ?? false
+          online: statuses.find((s) => s.user === it)?.online ?? false,
+          language: this.client.branding?.defaultLanguage ?? 'en'
         }
         return info
       })

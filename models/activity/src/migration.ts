@@ -52,17 +52,14 @@ import {
   getSocialIdFromOldAccount,
   getSocialKeyByOldAccount
 } from '@hcengineering/model-core'
-import notification, {
-  type DocNotifyContext,
-  DOMAIN_DOC_NOTIFY,
-  DOMAIN_NOTIFICATION
-} from '@hcengineering/notification'
+import notification, { type DocNotifyContext, DOMAIN_DOC_NOTIFY } from '@hcengineering/notification'
 
 import { activityId, DOMAIN_ACTIVITY, DOMAIN_REACTION, DOMAIN_USER_MENTION } from './index'
 import activity from './plugin'
 
 const DOMAIN_CHUNTER = 'chunter' as Domain
 const DOMAIN_CONTACT = 'contact' as Domain
+const DOMAIN_NOTIFICATION = 'notification' as Domain
 
 async function migrateReactions (client: MigrationClient): Promise<void> {
   await client.update(

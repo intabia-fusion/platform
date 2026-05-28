@@ -40,7 +40,7 @@
 
   import notification from '../../plugin'
   import NotificationGroupSetting from './NotificationGroupSetting.svelte'
-  import { providersSettings, typesSettings } from '../../utils'
+  import { providersSettings, typesSettings } from '../../stores'
 
   const client = getClient()
   const groups: NotificationGroup[] = client

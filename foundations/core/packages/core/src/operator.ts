@@ -91,7 +91,12 @@ function $pull (document: Doc, keyval: Record<string, PropertyType>): void {
         } else {
           // We need to match all fields
           for (const [kk, kv] of Object.entries(kvk)) {
-            if (val[kk] !== kv) {
+            if (typeof kv === 'object' && kv !== null && '$in' in kv) {
+              const inArr = (kv as any).$in
+              if (!Array.isArray(inArr) || !inArr.includes(val[kk])) {
+                return true
+              }
+            } else if (val[kk] !== kv) {
               return true
             }
           }

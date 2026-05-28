@@ -38,7 +38,7 @@ import serverNotification, { Receiver, TypeMatchClient, TypeMatchFunc } from '@h
 import { getMetadata } from '@hcengineering/platform'
 import { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import { getEmployeeByAcc } from '@hcengineering/server-contact'
-import { getContentByTemplate, getNotificationMessages } from '@hcengineering/server-notification-resources'
+import { getContentByTemplate } from '@hcengineering/server-notification-resources'
 
 async function FindMessages (
   doc: Doc,
@@ -198,7 +198,8 @@ async function processEmailNotifications (
   const employeesMap = new Map<AccountUuid, Employee>()
   const emailsMap = new Map<Ref<Employee>, SocialIdentity[]>()
 
-  const messages = await getNotificationMessages(control, notifications)
+  // const messages = await getNotificationMessages(control, notifications)
+  const messages = {} as any
 
   for (const n of notifications) {
     try {

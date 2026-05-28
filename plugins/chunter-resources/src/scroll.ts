@@ -16,7 +16,7 @@ import { getDay, type Timestamp } from '@hcengineering/core'
 import { get } from 'svelte/store'
 import { sortActivityMessages } from '@hcengineering/activity-resources'
 import { type ActivityMessage } from '@hcengineering/activity'
-import { type ReadState } from '@hcengineering/notification'
+import { type DocNotifyContext, type ReadState } from '@hcengineering/notification'
 
 import { getClosestDate, readChannelMessages } from './utils'
 import { type ChannelDataProvider } from './channelDataProvider'
@@ -146,6 +146,7 @@ export function readViewportMessages (
   messages: ActivityMessage[],
   scrollDiv?: HTMLElement | null,
   contentDiv?: HTMLElement | null,
+  context?: DocNotifyContext,
   readState?: ReadState | null
 ): void {
   if (scrollDiv == null || contentDiv == null) return
@@ -167,6 +168,6 @@ export function readViewportMessages (
     const messagesToRead = [...messagesToReadAccumulator]
     messagesToReadAccumulator.clear()
     if (messagesToRead.length === 0) return
-    void readChannelMessages(sortActivityMessages(messagesToRead), readState)
+    void readChannelMessages(sortActivityMessages(messagesToRead), context, readState)
   }, 500)
 }

@@ -58,15 +58,16 @@ import {
   getSocialIdFromOldAccount
 } from '@hcengineering/model-core'
 import activity from '@hcengineering/activity'
-
-import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_USER_NOTIFY, DOMAIN_READ_STATE } from './index'
 import { type IntlString } from '@hcengineering/platform'
+
+import { DOMAIN_DOC_NOTIFY, DOMAIN_USER_NOTIFY, DOMAIN_READ_STATE } from './index'
 
 interface OldCollaborators extends Doc {
   collaborators: AccountUuid[]
 }
 
 const DOMAIN_CONTACT = 'contact' as Domain
+const DOMAIN_NOTIFICATION = 'notification' as Domain
 
 export async function removeNotifications (
   client: MigrationClient,
@@ -790,17 +791,17 @@ async function initBadgeStatuses (client: MigrationClient): Promise<void> {
       for (const doc of docs) {
         if (doc.personUuid == null) continue
 
-        const hasUnreadNotifications = await client.find<InboxNotification>(
+        const hasUnreadNotifications = await client.find<any>(
           DOMAIN_NOTIFICATION,
           {
             user: doc.personUuid,
             _class: {
               $in: [
-                notification.class.ActivityInboxNotification,
-                notification.class.CommonInboxNotification,
-                notification.class.MentionInboxNotification,
-                notification.class.ReactionInboxNotification,
-                notification.class.InboxNotification
+                'notification:class:ActivityInboxNotification',
+                'notification:class:CommonInboxNotification',
+                'notification:class:MentionInboxNotification',
+                'notification:class:ReactionInboxNotification',
+                'notification:class:InboxNotification'
               ]
             },
             isViewed: false,

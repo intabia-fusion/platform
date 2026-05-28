@@ -23,7 +23,6 @@ import core, {
   includesAny,
   notEmpty,
   Ref,
-  Space,
   Tx
 } from '@hcengineering/core'
 import notification, {
@@ -40,9 +39,7 @@ import { getMetadata, getResource, IntlString, translate } from '@hcengineering/
 import { workbenchId } from '@hcengineering/workbench'
 import { encodeObjectURI } from '@hcengineering/view'
 import serverView from '@hcengineering/server-view'
-import { getDocIdentifier, getDocTitle, getDocUrl } from '@hcengineering/server-activity-resources'
-
-import { TemplateContent } from './types'
+import { getDocIdentifier, getDocTitle, getDocUrl } from '@hcengineering/server-activity'
 
 export const IsUserFieldValueTypeMatch: TypeMatchFunc = (
   _client: TypeMatchClient,
@@ -86,13 +83,6 @@ export const MeRemovedFromCollaboratorsNotificationTypeMatch: TypeMatchFunc = as
   const message = _message as DocUpdateMessage
   if (message.objectClass !== core.class.Collaborator || message.action !== 'remove') return false
   return message.objectAttributes?.collaborator === receiver.account
-}
-
-export async function getObjectSpace (control: TriggerControl, doc: Doc, cache: Map<Ref<Doc>, Doc>): Promise<Space> {
-  return control.hierarchy.isDerived(doc._class, core.class.Space)
-    ? (doc as Space)
-    : ((cache.get(doc.space) as Space) ??
-        (await control.findAll<Space>(control.ctx, core.class.Space, { _id: doc.space }, { limit: 1 }))[0])
 }
 
 export async function getClassNotificationGroup (
@@ -152,40 +142,6 @@ export function generateAttributeNotificationType (
   return res
 }
 
-export async function getNotificationMessages (
-  control: TriggerControl,
-  notifications: any[][]
-): Promise<Map<Ref<any>, ActivityMessage | undefined>> {
-  // const { hierarchy } = control
-  //
-  // const ids: Ref<ActivityMessage>[] = []
-  // const map = new Map<Ref<InboxNotification>, Ref<ActivityMessage> | undefined>()
-  //
-  // for (const n of notifications) {
-  //   if (hierarchy.isDerived(n._class, notification.class.ActivityInboxNotification)) {
-  //     const activityNotification = n as ActivityInboxNotification
-  //     ids.push(activityNotification.attachedTo)
-  //     map.set(n._id, activityNotification.attachedTo)
-  //   } else if (hierarchy.isDerived(n._class, notification.class.MentionInboxNotification)) {
-  //     const mentionNotification = n as MentionInboxNotification
-  //     if (hierarchy.isDerived(mentionNotification.mentionedInClass, activity.class.ActivityMessage)) {
-  //       ids.push(mentionNotification.mentionedIn as Ref<ActivityMessage>)
-  //       map.set(n._id, mentionNotification.mentionedIn as Ref<ActivityMessage>)
-  //     }
-  //   }
-  // }
-  //
-  // if (ids.length === 0) return new Map()
-  //
-  // const messages = await control.findAll(control.ctx, activity.class.ActivityMessage, { _id: { $in: ids } })
-  //
-  // return new Map(
-  //   map.entries().map(([notificationId, messageId]) => [notificationId, messages.find((msg) => msg._id === messageId)])
-  // )
-
-  return new Map()
-}
-
 export async function getTranslatedNotificationContent (
   data: Data<any>,
   language: string
@@ -208,7 +164,14 @@ export async function getContentByTemplate (
   _types: Ref<NotificationType>[],
   inboxNotification: any,
   message: ActivityMessage | undefined
-): Promise<TemplateContent | undefined> {
+): Promise<
+  | {
+    text: string
+    html: string
+    subject: string
+  }
+  | undefined
+  > {
   const { modelDb } = control
   const language = control.branding?.defaultLanguage ?? 'en'
   const types = _types.map((it) => modelDb.getObject(it)).filter(notEmpty)

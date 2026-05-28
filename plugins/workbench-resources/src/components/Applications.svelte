@@ -15,17 +15,14 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import core, { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
-  import { createNotificationsQuery, createQuery } from '@hcengineering/presentation'
+  import { createQuery } from '@hcengineering/presentation'
   import { Scroller, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import { NavLink } from '@hcengineering/view-resources'
   import type { Application } from '@hcengineering/workbench'
   import workbench from '@hcengineering/workbench'
-  import { chatId } from '@hcengineering/chat'
-  import { inboxId } from '@hcengineering/inbox'
   import { getMetadata, getResource } from '@hcengineering/platform'
-  import { InboxNotificationsClientImpl, appearancePreferences } from '@hcengineering/notification-resources'
-  import notification, { DocNotifyContext, NotificationAppearancePreference } from '@hcengineering/notification'
-  import { NotificationType } from '@hcengineering/communication-types'
+  import { NotificationClientImpl, appearancePreferences } from '@hcengineering/notification-resources'
+  import { NotificationAppearancePreference } from '@hcengineering/notification'
 
   import AppItem from './AppItem.svelte'
 
@@ -36,7 +33,7 @@
 
   const dispatch = createEventDispatcher()
 
-  function getClickHandler (app: Application, customProps: any) {
+  function getClickHandler (app: Application, customProps: any): any {
     return (
       customProps.onClick ??
       (() => {
@@ -60,19 +57,6 @@
       loaded = true
     }
   )
-
-  let hasNewInboxNotifications = false
-  let hasNewMessagesNotification = false
-  const notificationCountQuery = createNotificationsQuery()
-  const messageNotificationCountQuery = createNotificationsQuery()
-
-  notificationCountQuery.query({ read: false, limit: 1 }, (res) => {
-    hasNewInboxNotifications = res.getResult().length > 0
-  })
-
-  messageNotificationCountQuery.query({ read: false, type: NotificationType.Message, limit: 1 }, (res) => {
-    hasNewMessagesNotification = res.getResult().length > 0
-  })
 
   function updateExcludedApps (): void {
     const me = getCurrentAccount()
@@ -103,42 +87,29 @@
     (it) => it.position === 'bottom' && !hiddenAppsIds.includes(it._id) && !excludedApps.includes(it.alias)
   )
 
-  const inboxClient = InboxNotificationsClientImpl.getClient()
-  const inboxContextsStore = inboxClient.contexts
-  const inboxNotificationsByContextStore = inboxClient.inboxNotificationsByContext
+  const inboxClient = NotificationClientImpl.getClient()
+  const totalUnreadCountStore = inboxClient.totalUnreadCount
 
-  let hasNotificationsFn: ((data: Map<Ref<DocNotifyContext>, any[]>) => Promise<boolean>) | undefined = undefined
-  let hasInboxNotifications = false
+  let notifyStates: Record<string, boolean> = {}
 
-  void getResource(notification.function.HasInboxNotifications).then((f) => {
-    hasNotificationsFn = f as any
-  })
+  $: void updateNotifyStatuses(apps, $totalUnreadCountStore, $appearancePreferences)
 
-  $: void hasNotificationsFn?.($inboxNotificationsByContextStore).then((res) => {
-    hasInboxNotifications = res
-  })
+  async function updateNotifyStatuses (
+    apps: Application[],
+    unreadCount: number,
+    preference?: NotificationAppearancePreference
+  ): Promise<void> {
+    for (const app of apps) {
+      let res = false
+      if (app.showNotifyMarkerFn != null) {
+        const fn = await getResource(app.showNotifyMarkerFn)
+        res = await fn(unreadCount, preference)
+      }
 
-  async function showNotify (
-    app: Application,
-    contexts: DocNotifyContext[],
-    hasOldNotifications: boolean,
-    hasNewNotifications: boolean,
-    hasNewMessagesNotifications: boolean,
-    preference: NotificationAppearancePreference | undefined
-  ): Promise<boolean> {
-    const { alias } = app
-    if (alias === inboxId) {
-      return hasOldNotifications || hasNewNotifications
+      if (notifyStates[app._id] !== res) {
+        notifyStates = { ...notifyStates, [app._id]: res }
+      }
     }
-    if (alias === chatId) {
-      return hasNewMessagesNotifications
-    }
-
-    if (app.showNotifyMarkerFn != null) {
-      const fn = await getResource(app.showNotifyMarkerFn)
-      return await fn(contexts, preference)
-    }
-    return false
   }
 </script>
 
@@ -155,19 +126,17 @@
     >
       {#each topApps as app}
         {@const customProps = customAppProps.get(app.alias) ?? {}}
-        {#await showNotify(app, $inboxContextsStore, hasInboxNotifications, hasNewInboxNotifications, hasNewMessagesNotification, $appearancePreferences) then notify}
-          <NavLink app={app.alias} shrink={0} disabled={app._id === active}>
-            <AppItem
-              selected={app._id === active}
-              icon={app.icon}
-              label={app.label}
-              navigator={app._id === active && $deviceInfo.navigator.visible}
-              {notify}
-              {...customProps}
-              on:click={getClickHandler(app, customProps)}
-            />
-          </NavLink>
-        {/await}
+        <NavLink app={app.alias} shrink={0} disabled={app._id === active}>
+          <AppItem
+            selected={app._id === active}
+            icon={app.icon}
+            label={app.label}
+            navigator={app._id === active && $deviceInfo.navigator.visible}
+            notify={notifyStates[app._id] ?? false}
+            {...customProps}
+            on:click={getClickHandler(app, customProps)}
+          />
+        </NavLink>
       {/each}
       {#if topApps.length > 0}
         <div class="divider" />
@@ -180,6 +149,7 @@
             icon={app.icon}
             label={app.label}
             navigator={app._id === active && $deviceInfo.navigator.visible}
+            notify={notifyStates[app._id] ?? false}
             {...customProps}
             on:click={getClickHandler(app, customProps)}
           />
@@ -195,7 +165,7 @@
               icon={app.icon}
               label={app.label}
               navigator={app._id === active && $deviceInfo.navigator.visible}
-              notify={app.alias === chatId && hasNewInboxNotifications}
+              notify={notifyStates[app._id] ?? false}
               {...customProps}
               on:click={getClickHandler(app, customProps)}
             />

@@ -24,12 +24,10 @@ import { type Client } from './types'
 import {
   buildRemovedDoc,
   canCombineMessage,
-  getDocIdentifier,
   getDocTitle,
   getDocUpdateAction,
   getDocUpdateMessageKey,
   getDocUpdateMessageMarkup,
-  getDocUrl,
   getTxAttributesUpdates,
   isActivityDoc,
   isSpace,
@@ -154,9 +152,6 @@ async function pushDocUpdateMessages (
     action: getDocUpdateAction(client.hierarchy, tx),
     collection: 'docUpdateMessages',
     updateCollection: tx.collection,
-    attachedToTitle: await getDocTitle(client, object),
-    attachedToIdentifier: await getDocIdentifier(client, object),
-    attachedToUrl: await getDocUrl(client, object),
     history: []
   }
 
@@ -388,7 +383,6 @@ function combineMessages (
       }
 
       removeTx.push(...getRemoveTx(availableTargets, factory))
-      continue
     }
   }
 

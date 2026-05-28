@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
+import type { Class, Doc, Ref } from '@hcengineering/core'
 import {
   navigate,
   type Location,
@@ -26,12 +26,11 @@ import { inboxId } from '@hcengineering/inbox'
 import { type MessageID, type Notification } from '@hcengineering/communication-types'
 import { decodeObjectURI, encodeObjectURI } from '@hcengineering/view'
 import activity, { type ActivityMessage } from '@hcengineering/activity'
-import { type DocNotifyContext } from '@hcengineering/notification'
+import { type ContextNotification, type DocNotifyContext, type NotificationMessage } from '@hcengineering/notification'
 import { getResource } from '@hcengineering/platform'
 import chunter, { type ThreadMessage } from '@hcengineering/chunter'
 import { isActivityMessageClass, messageInFocus } from '@hcengineering/activity-resources'
 import { getClient } from '@hcengineering/presentation'
-import { isMentionNotification, isReactionNotification } from '@hcengineering/notification-resources'
 import { type NavigationItem } from './type'
 
 // Url: /inbox/{_class}&{_id}/{thread}?message={messageId}
@@ -148,18 +147,17 @@ async function navigateToInboxDoc (
 
 export async function selectInboxContext (
   context: DocNotifyContext,
-  doc?: Doc,
-  notification?: WithLookup<any>
+  _doc?: Doc,
+  notification?: ContextNotification
 ): Promise<void> {
   const client = getClient()
   const hierarchy = client.getHierarchy()
   const { objectId, objectClass } = context
   const loc = getCurrentLocation()
+  const selectedMsg = notification?.type !== 'common' ? notification?.messageId : undefined
 
-  if (isMentionNotification(notification) && isActivityMessageClass(notification.mentionedInClass)) {
-    const selectedMsg = notification.mentionedIn as Ref<ActivityMessage>
-
-    void navigateToInboxDoc(
+  if (notification?.type === 'mention' && selectedMsg != null) {
+    await navigateToInboxDoc(
       context._id,
       objectId,
       objectClass,
@@ -170,43 +168,30 @@ export async function selectInboxContext (
     return
   }
 
-  if (isReactionNotification(notification)) {
+  if (notification?.type === 'reaction') {
     const thread = hierarchy.isDerived(context.objectClass, activity.class.ActivityMessage)
       ? context.objectId
       : undefined
-    const reactedTo = await client.findOne(activity.class.ActivityMessage, { _id: notification.attachedTo })
+    const reactedTo = notification.message
     const isThread = reactedTo != null && hierarchy.isDerived(reactedTo._class, chunter.class.ThreadMessage)
-    const channelId = isThread ? (reactedTo as ThreadMessage)?.objectId : (reactedTo?.attachedTo ?? objectId)
-    const channelClass = isThread
-      ? (reactedTo as ThreadMessage)?.objectClass
-      : (reactedTo?.attachedToClass ?? objectClass)
+    const channelId = isThread ? (reactedTo as NotificationMessage<ThreadMessage>)?.objectId : objectId
+    const channelClass = isThread ? (reactedTo as NotificationMessage<ThreadMessage>)?.objectClass : objectClass
 
-    void navigateToInboxDoc(
-      context._id,
-      channelId,
-      channelClass,
-      thread as Ref<ActivityMessage>,
-      notification.attachedTo
-    )
+    void navigateToInboxDoc(context._id, channelId, channelClass, thread as Ref<ActivityMessage>, selectedMsg)
     return
   }
 
   if (hierarchy.isDerived(objectClass, activity.class.ActivityMessage)) {
-    const message = notification?.$lookup?.attachedTo
-
     if (objectClass === chunter.class.ThreadMessage) {
-      const thread =
-        doc?._id === objectId
-          ? (doc as ThreadMessage)
-          : await client.findOne(
-            chunter.class.ThreadMessage,
-            {
-              _id: objectId as Ref<ThreadMessage>
-            },
-            { projection: { _id: 1, attachedTo: 1 } }
-          )
+      const thread = await client.findOne(
+        chunter.class.ThreadMessage,
+        {
+          _id: objectId as Ref<ThreadMessage>
+        },
+        { projection: { _id: 1, attachedTo: 1 } }
+      )
 
-      void navigateToInboxDoc(
+      await navigateToInboxDoc(
         context._id,
         thread?.objectId ?? objectId,
         thread?.objectClass ?? objectClass,
@@ -215,13 +200,14 @@ export async function selectInboxContext (
       )
       return
     }
-
-    const selectedMsg = notification?.attachedTo
+    const doc =
+      (_doc as ActivityMessage) ??
+      (await client.findOne(activity.class.ActivityMessage, { _id: objectId as Ref<ActivityMessage> }))
     const thread = selectedMsg !== objectId ? objectId : loc.path[4] === objectId ? objectId : undefined
-    const channelId = (doc as ActivityMessage)?.attachedTo ?? message?.attachedTo ?? objectId
-    const channelClass = (doc as ActivityMessage)?.attachedToClass ?? message?.attachedToClass ?? objectClass
+    const channelId = doc?.attachedTo ?? objectId
+    const channelClass = doc?.attachedToClass ?? objectClass
 
-    void navigateToInboxDoc(
+    await navigateToInboxDoc(
       context._id,
       channelId,
       channelClass,
@@ -231,5 +217,5 @@ export async function selectInboxContext (
     return
   }
 
-  void navigateToInboxDoc(context._id, objectId, objectClass, undefined, notification?.attachedTo)
+  await navigateToInboxDoc(context._id, objectId, objectClass, undefined, selectedMsg)
 }

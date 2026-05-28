@@ -2,8 +2,7 @@
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import { Label } from '@hcengineering/ui'
   import core, { Doc, Ref, Space } from '@hcengineering/core'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import notification from '@hcengineering/notification'
+  import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { createQuery, getClient } from '@hcengineering/presentation'
 
   import ThreadParentMessage from './ThreadParentPresenter.svelte'
@@ -20,8 +19,7 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
   const query = createQuery()
-  const inboxClient = InboxNotificationsClientImpl.getClient()
-  const contextByDocStore = inboxClient.contextByDoc
+  const inboxClient = NotificationClientImpl.getClient()
 
   let channel: Doc | undefined = undefined
   let dataProvider: ChannelDataProvider | undefined = undefined
@@ -42,9 +40,7 @@
       return
     }
 
-    const context =
-      $contextByDocStore.get(message._id) ??
-      (await client.findOne(notification.class.DocNotifyContext, { objectId: message._id }))
+    const context = (await inboxClient.getContextByDoc(message._id)) ?? undefined
     dataProvider = new ChannelDataProvider(
       context,
       message.space,

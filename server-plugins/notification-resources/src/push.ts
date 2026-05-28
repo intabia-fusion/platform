@@ -75,7 +75,7 @@ async function createPush (
     id = await encodeFn(doc, control)
   }
 
-  const messageId = getNotificationMessageId(n, control.hierarchy)
+  const messageId = getNotificationMessageId(n)
   const threadId = getNotificationThreadId(n, control.hierarchy)
   const path =
     threadId != null

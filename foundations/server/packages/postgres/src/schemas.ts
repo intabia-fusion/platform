@@ -1,6 +1,6 @@
 import { DOMAIN_COLLABORATOR, DOMAIN_MODEL_TX, DOMAIN_RELATION, DOMAIN_SPACE, DOMAIN_TX } from '@hcengineering/core'
 
-export type DataType = 'bigint' | 'bool' | 'text' | 'text[]'
+export type DataType = 'bigint' | 'bool' | 'text' | 'text[]' | 'integer'
 
 export function getIndex (field: FieldSchema): string {
   if (field.indexType === undefined || field.indexType === 'btree') {
@@ -14,6 +14,7 @@ export interface FieldSchema {
   notNull: boolean
   index: boolean
   indexType?: 'btree' | 'gin' | 'gist' | 'brin' | 'hash'
+  check?: string
 }
 
 export type Schema = Record<string, FieldSchema>
@@ -417,6 +418,12 @@ export const customIndexes: Record<string, { [key in CustomIndexType]: string[] 
   [translateDomain('notification_read_state')]: [
     {
       unique: ['attachedTo', 'attachedToClass'],
+      custom: []
+    }
+  ],
+  [translateDomain('notification-dnc')]: [
+    {
+      unique: ['user', 'objectId', 'objectClass'],
       custom: []
     }
   ],

@@ -41,10 +41,6 @@ import type { Action } from '@hcengineering/view'
  * @public
  */
 export interface ActivityMessage extends AttachedDoc {
-  attachedToTitle?: string
-  attachedToIdentifier?: string
-  attachedToUrl?: string
-
   modifiedBy: PersonId
   modifiedOn: Timestamp
 
@@ -63,6 +59,11 @@ export interface ActivityMessage extends AttachedDoc {
   forwardFromId?: Ref<Doc>
   forwardFromClass?: Ref<Class<Doc>>
 }
+
+export type ActivityMessageLite<T extends ActivityMessage = ActivityMessage> = Omit<
+T,
+'isPinned' | 'repliedPersons' | 'lastReply' | 'reactions' | 'editedOn'
+>
 
 export interface ForwardedAttachment extends BlobType {
   originId: Ref<Doc>

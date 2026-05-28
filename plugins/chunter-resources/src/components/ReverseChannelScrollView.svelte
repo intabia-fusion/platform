@@ -22,7 +22,7 @@
   } from '@hcengineering/activity-resources'
   import core, { Doc, generateId, getCurrentAccount, Ref, Space, Timestamp, Tx, TxCUD } from '@hcengineering/core'
   import { DocNotifyContext, ReadState } from '@hcengineering/notification'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { addTxListener, getClient, removeTxListener } from '@hcengineering/presentation'
   import { ModernButton, Scroller, Loading } from '@hcengineering/ui'
   import { afterUpdate, onDestroy, onMount, tick } from 'svelte'
@@ -31,7 +31,6 @@
   import { ChannelDataProvider, MessageMetadata } from '../channelDataProvider'
   import chunter from '../plugin'
   import { getScrollToDateOffset, getSelectedDate, jumpToDate, messageInView, readViewportMessages } from '../scroll'
-  import { recheckNotifications } from '../utils'
   import BlankView from './BlankView.svelte'
   import ChannelInput from './ChannelInput.svelte'
   import ActivityMessagesSeparator from './ChannelMessagesSeparator.svelte'
@@ -60,9 +59,8 @@
   const socialStrings = account.socialIds
   const client = getClient()
   const hierarchy = client.getHierarchy()
-  const inboxClient = InboxNotificationsClientImpl.getClient()
+  const inboxClient = NotificationClientImpl.getClient()
   const contextByDocStore = inboxClient.contextByDoc
-  const notificationsByContextStore = inboxClient.inboxNotificationsByContext
   const readStateByDocStore = inboxClient.readStateByDoc
 
   // Stores
@@ -111,7 +109,8 @@
   let needUpdateTimestamp = false
 
   $: messages = $messagesStore
-  $: notifyContext = $contextByDocStore.get(doc._id)
+  $: void inboxClient.loadContextByDoc(doc._id)
+  $: notifyContext = $contextByDocStore.get(doc._id) ?? undefined
   $: isThread = hierarchy.isDerived(doc._class, activity.class.ActivityMessage)
   $: isChunterSpace = hierarchy.isDerived(doc._class, chunter.class.ChunterSpace)
   $: readonly = hierarchy.isDerived(channel._class, core.class.Space)
@@ -133,12 +132,12 @@
   })
   $: readState = $readStateByDocStore.get(doc._id) ?? undefined
 
-  const unsubscribe = inboxClient.inboxNotificationsByContext.subscribe(() => {
-    if (notifyContext !== undefined && !isFreeze()) {
-      recheckNotifications(notifyContext)
-      read()
-    }
-  })
+  // const unsubscribe = inboxClient.inboxNotificationsByContext.subscribe(() => {
+  //   if (notifyContext !== undefined && !isFreeze()) {
+  //     recheckNotifications(notifyContext)
+  //     read()
+  //   }
+  // })
 
   $: adjustScrollPosition(selectedMessageId)
   $: void initializeScroll($isLoadingStore || !isReadStateLoaded, separatorDiv, separatorIndex)
@@ -351,7 +350,7 @@
 
   function read (): void {
     if (isFreeze() || !isScrollInitialized) return
-    readViewportMessages(messages, scrollDiv, contentDiv, readState)
+    readViewportMessages(messages, scrollDiv, contentDiv, notifyContext, readState)
   }
 
   function updateScrollData (): void {
@@ -585,7 +584,7 @@
   })
 
   onDestroy(() => {
-    unsubscribe()
+    // unsubscribe()
     document.removeEventListener('visibilitychange', handleVisibilityChange)
     window.removeEventListener('focus', handleWindowFocus)
     window.removeEventListener('blur', handleWindowBlur)

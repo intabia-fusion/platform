@@ -17,7 +17,7 @@
   import { createEventDispatcher } from 'svelte'
   import notification, { ActivityNotificationViewlet, DocNotifyContext } from '@hcengineering/notification'
   import { getClient } from '@hcengineering/presentation'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import view from '@hcengineering/view'
 
   import inbox from '../plugin'
@@ -31,7 +31,7 @@
   const dispatch = createEventDispatcher()
   const client = getClient()
 
-  const navClient: NavigationClient = new NavigationClient(InboxNotificationsClientImpl.getClient())
+  const navClient: NavigationClient = new NavigationClient(NotificationClientImpl.getClient())
   const navigationItemsStore = navClient.navigationItemsStore
   const isLoadingStore = navClient.isLoadingStore
 

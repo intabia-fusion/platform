@@ -14,6 +14,7 @@
 //
 
 import {
+  AccountUuid,
   Branding,
   type Class,
   type Doc,
@@ -25,22 +26,27 @@ import {
   ModelDb,
   Ref,
   TxCreateDoc,
-  TxCUD,
   TxFactory,
+  TxRemoveDoc,
   TxUpdateDoc,
   type WithLookup,
   WorkspaceInfoWithStatus
 } from '@hcengineering/core'
 import {
   DocNotifyContext,
+  MentionNotification,
+  NotificationIntl,
   NotificationProvider,
   type NotificationProviderSetting,
   NotificationType,
-  type NotificationTypeSetting
+  type NotificationTypeSetting,
+  QueueUserNotificationMessage
 } from '@hcengineering/notification'
 import { Employee, SocialIdentity } from '@hcengineering/contact'
 import { StorageAdapter } from '@hcengineering/storage'
 import { Receiver } from '@hcengineering/server-notification'
+import { UserMentionInfo } from '@hcengineering/activity'
+import { IntlString } from '@hcengineering/platform'
 
 export interface NotificationSettings {
   providersSettings: NotificationProviderSetting[]
@@ -52,7 +58,7 @@ export interface NotificationSettings {
 export type EmployeeInfo = Pick<Employee, '_id' | 'personUuid' | 'role'>
 export type SocialIdentityInfo = Pick<SocialIdentity, '_id' | 'attachedTo'>
 
-export type NotifyResult = Record<Ref<NotificationProvider>, NotificationType[]>
+export type NotifyProviders = Record<Ref<NotificationProvider>, NotificationType[]>
 
 export interface Client {
   ctx: MeasureContext
@@ -76,18 +82,34 @@ export interface Client {
 }
 
 export interface MentionResult {
-  txes: TxCUD<Doc>[]
-  data: {
-    // data: Partial<MentionInboxNotification>
-    data: Record<string, any>
-    context: DocNotifyContext | undefined
-    receiver: Receiver
-    notifyResult: NotifyResult
-  }[]
+  notification: Omit<MentionNotification, 'id' | 'type' | 'createdOn' | 'createdBy'>
+  intl: Partial<NotificationIntl>
+  context: DocNotifyContext | undefined
+  receiver: Receiver
+  notifyProviders: NotifyProviders
 }
 
 export interface Result {
   updateContextTx: TxUpdateDoc<DocNotifyContext>[]
-  updateContextOpTx: TxUpdateDoc<DocNotifyContext>[]
+  updateOpContextTx: TxUpdateDoc<DocNotifyContext>[]
   createContextTx: TxCreateDoc<DocNotifyContext>[]
+
+  createUserMentionInfoTx: TxCreateDoc<UserMentionInfo>[]
+  updateUserMentionInfoTx: TxUpdateDoc<UserMentionInfo>[]
+  removeUserMentionInfoTx: TxRemoveDoc<UserMentionInfo>[]
+
+  queueMessages: QueueUserNotificationMessage[]
 }
+
+export interface TxCache {
+  titleByDoc: Map<Ref<Doc>, Partial<Record<AccountUuid | '', string>>>
+  urlByDoc: Map<Ref<Doc>, string>
+  labelByDoc: Map<Ref<Doc>, IntlString>
+  identifierByDoc: Map<Ref<Doc>, string>
+  iconByDoc: Map<Ref<Doc>, Partial<Record<AccountUuid | '', DocNotifyContext['objectIcon']>>>
+}
+
+export type ObjectDisplayData = Pick<
+DocNotifyContext,
+'objectTitle' | 'objectIdentifier' | 'objectIcon' | 'objectLabel'
+>

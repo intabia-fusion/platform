@@ -93,15 +93,6 @@ importers:
       '@hcengineering/card-resources':
         specifier: workspace:^0.7.0
         version: link:../plugins/card-resources
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/chat
-      '@hcengineering/chat-assets':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/chat-assets
-      '@hcengineering/chat-resources':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/chat-resources
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../plugins/chunter
@@ -117,15 +108,6 @@ importers:
       '@hcengineering/client-resources':
         specifier: workspace:^0.7.18
         version: link:../foundations/core/packages/client-resources
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/communication
-      '@hcengineering/communication-assets':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/communication-assets
-      '@hcengineering/communication-resources':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/communication-resources
       '@hcengineering/communication-types':
         specifier: workspace:^0.7.12
         version: link:../foundations/communication/packages/types
@@ -279,15 +261,6 @@ importers:
       '@hcengineering/image-cropper-resources':
         specifier: workspace:^0.7.0
         version: link:../plugins/image-cropper-resources
-      '@hcengineering/inbox':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/inbox
-      '@hcengineering/inbox-assets':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/inbox-assets
-      '@hcengineering/inbox-resources':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/inbox-resources
       '@hcengineering/inventory':
         specifier: workspace:^0.7.0
         version: link:../plugins/inventory
@@ -15250,9 +15223,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../card
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -29352,18 +29322,9 @@ importers:
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../chat
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../communication
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -29373,9 +29334,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/inbox':
-        specifier: workspace:^0.7.0
-        version: link:../inbox
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
@@ -30947,6 +30905,9 @@ importers:
 
   ../../server-plugins/activity:
     dependencies:
+      '@hcengineering/activity':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/activity
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -30959,6 +30920,9 @@ importers:
       '@hcengineering/server-notification':
         specifier: workspace:^0.7.0
         version: link:../notification
+      '@hcengineering/text-core':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/text-core
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -31425,9 +31389,6 @@ importers:
       '@hcengineering/server-activity':
         specifier: workspace:^0.7.0
         version: link:../activity
-      '@hcengineering/server-activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
       '@hcengineering/server-calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
@@ -33331,9 +33292,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
-      '@hcengineering/server-activity-resources':
+      '@hcengineering/server-activity':
         specifier: workspace:^0.7.0
-        version: link:../activity-resources
+        version: link:../activity
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -33870,9 +33831,6 @@ importers:
       '@hcengineering/server-activity':
         specifier: workspace:^0.7.0
         version: link:../activity
-      '@hcengineering/server-activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -34747,9 +34705,6 @@ importers:
       '@hcengineering/server-activity':
         specifier: workspace:^0.7.0
         version: link:../activity
-      '@hcengineering/server-activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
       '@hcengineering/server-contact':
         specifier: workspace:^0.7.0
         version: link:../contact

@@ -1,30 +1,80 @@
-import core, { AccountUuid, TxCreateDoc, TxCUD, TxRemoveDoc, TxUpdateDoc, TxProcessor } from '@hcengineering/core'
-import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
-import notification, { UnreadMessage } from '@hcengineering/notification'
+//
+// Copyright © 2026 Intabia Fusion Inc.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
-import { getCollaboratorAccounts, getMessageNotifyResult } from '../utils'
-import { Client, Result } from '../types'
+import core, {
+  AccountUuid,
+  TxCreateDoc,
+  TxCUD,
+  TxRemoveDoc,
+  TxUpdateDoc,
+  TxProcessor,
+  DocumentUpdate,
+  Doc
+} from '@hcengineering/core'
+import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
+import notification, {
+  DocNotifyContext,
+  NotificationIntl,
+  NotificationType,
+  UnreadMessage
+} from '@hcengineering/notification'
+import { normalizeTextMessage, Sender } from '@hcengineering/server-notification'
+import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
+import chunter, { ChatMessage } from '@hcengineering/chunter'
+
+import {
+  getBaseDisplayParams,
+  getCollaboratorAccounts,
+  getObjectDisplayData,
+  getNotificationsByMessage,
+  getMessageNotifyProviders,
+  getMode,
+  getNotifiedUsers,
+  hasMessageNotification,
+  hasUnreadMessage,
+  isMuted,
+  toNotificationMessage,
+  hasReactionNotificationByMessage,
+  getLastNotify,
+  hasMentionNotificationByMessage,
+  hasUnreadMentionByMessage
+} from '../utils'
+import { Client, Result, TxCache } from '../types'
 import Cache from '../cache'
 import { pushNotification } from './notification'
 
 export async function handleMessage (
   client: Client,
   cache: Cache,
+  txCache: TxCache,
   result: Result,
   tx: TxCUD<ActivityMessage>
 ): Promise<void> {
   if (tx._class === core.class.TxCreateDoc) {
-    await handleCreateMessage(client, cache, result, tx as TxCreateDoc<ActivityMessage>)
+    await handleCreateMessage(client, cache, txCache, result, tx as TxCreateDoc<ActivityMessage>)
   } else if (tx._class === core.class.TxRemoveDoc) {
     await handleRemoveMessage(client, cache, result, tx as TxRemoveDoc<ActivityMessage>)
   } else if (tx._class === core.class.TxUpdateDoc) {
-    await handleUpdateMessage(client, cache, result, tx as TxUpdateDoc<ActivityMessage>)
+    await handleUpdateMessage(client, cache, txCache, result, tx as TxUpdateDoc<ActivityMessage>)
   }
 }
 
-export async function handleCreateMessage (
+async function handleCreateMessage (
   client: Client,
   cache: Cache,
+  txCache: TxCache,
   result: Result,
   tx: TxCreateDoc<ActivityMessage>
 ): Promise<void> {
@@ -36,7 +86,8 @@ export async function handleCreateMessage (
   const space = await cache.getDocSpace(doc)
   if (space === undefined) return
 
-  const collaborators = await getCollaboratorAccounts(client, cache, doc, space)
+  const notified = getNotifiedUsers(result)
+  const collaborators = await getCollaboratorAccounts(client, cache, doc, space, notified)
 
   if (client.hierarchy.isDerived(message._class, activity.class.DocUpdateMessage)) {
     const dum = message as DocUpdateMessage
@@ -58,44 +109,48 @@ export async function handleCreateMessage (
   const sender = await cache.getSender(message.modifiedBy)
 
   const unreadMessage: UnreadMessage = {
-    _id: message._id,
+    id: message._id,
     createdOn: message.createdOn ?? message.modifiedOn
   }
 
   for (const receiver of receivers) {
     if (receiver.account === sender.account) continue
+    const mode = getMode(docSettings, receiver.account)
+    if (isMuted(mode)) continue
 
-    const settingDoc = docSettings.find((it) => it.account === receiver.account)
-    const mode = settingDoc?.mode ?? 'all'
-    if (mode === 'mute') continue
-
-    const notifyResult = await getMessageNotifyResult(client, message, doc, receiver, settings, mode)
+    const notifyResult = await getMessageNotifyProviders(client, message, doc, receiver, settings, mode)
 
     const types = notifyResult[notification.providers.InboxNotificationProvider] ?? []
     const type = types[0]
     if (type == null) continue
 
     const context = contexts.find((it) => it.user === receiver.account)
+    const content = await getMessageIntl(client, txCache, type, doc, message, sender)
 
+    const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
     pushNotification(client, result, context, {
       unreadMessage,
       receiver,
-      modifiedOn: message.createdOn ?? message.modifiedOn,
       objectId: doc._id,
       objectClass: doc._class,
       objectSpace: doc.space,
+      objectDisplayData,
       notification: {
         id: message._id,
         type: 'message',
-        message,
+        messageId: message._id,
+        intlMessage: type.notificationMessage,
+        message: toNotificationMessage(message),
         createdOn: message.createdOn ?? message.modifiedOn,
         createdBy: message.createdBy ?? message.modifiedBy
-      }
+      },
+      intl: content,
+      notifyProviders: notifyResult
     })
   }
 }
 
-export async function handleRemoveMessage (
+async function handleRemoveMessage (
   client: Client,
   cache: Cache,
   result: Result,
@@ -109,38 +164,127 @@ export async function handleRemoveMessage (
   const contexts = await cache.getContexts(tx.attachedTo)
 
   for (const context of contexts) {
-    // TODO: update last notify
-    const operations = {
-      $pull: {
-        latestNotifications: { id: tx.objectId },
-        // unreadReactions: { messageId: tx.objectId },
-        // unreadMentions: { messageId: tx.objectId },
-        unreadMessages: { _id: tx.objectId }
-      },
-      $inc: {}
+    const operations: DocumentUpdate<DocNotifyContext> = {}
+    const idsToRemove: string[] = getNotificationsByMessage(context, tx.objectId).map((it) => it.id)
+
+    if (idsToRemove.length > 0) {
+      operations.$pull = {
+        ...operations.$pull,
+        latestNotifications: { id: { $in: idsToRemove } }
+      }
+    }
+    if (hasUnreadMessage(context, tx.objectId)) {
+      operations.$pull = {
+        ...operations.$pull,
+        unreadMessages: { id: tx.objectId }
+      }
+      operations.$inc = {
+        ...operations.$inc,
+        unreadCount: -1
+      }
     }
 
-    const hasUnreadId = context.unreadMessages?.some((m) => '_id' in m && m._id === tx.objectId) ?? false
-    if (hasUnreadId) {
-      operations.$inc = { unreadMessagesCount: -1 }
+    const matchingReactionsCount = context.unreadReactions.filter((it) => it.attachedTo === tx.objectId).length
+    if (matchingReactionsCount > 0) {
+      operations.$pull = {
+        ...operations.$pull,
+        unreadReactions: { attachedTo: tx.objectId }
+      }
+      operations.$inc = {
+        ...operations.$inc,
+        unreadCount: (operations.$inc?.unreadCount ?? 0) - matchingReactionsCount
+      }
     }
 
-    result.updateContextOpTx.push(
-      client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, operations)
-    )
+    if (hasUnreadMentionByMessage(context, tx.objectId)) {
+      operations.$pull = {
+        ...operations.$pull,
+        unreadMentions: { messageId: tx.objectId }
+      }
+    }
+
+    if (Object.keys(operations).length === 0) continue
+
+    const updateOpTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, operations)
+    const updateTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, {})
+    const updatedContext = TxProcessor.updateDoc2Doc(context, updateOpTx)
+    const lastNotify = getLastNotify(updatedContext)
+
+    if (lastNotify !== context.lastNotify) {
+      updateTx.operations.lastNotify = lastNotify
+    }
+    if (Object.keys(updateTx.operations).length > 0) {
+      result.updateContextTx.push(updateTx)
+    }
+
+    result.updateOpContextTx.push(updateOpTx)
   }
 }
 
-export async function handleUpdateMessage (
+async function handleUpdateMessage (
   client: Client,
   cache: Cache,
+  txCache: TxCache,
   result: Result,
   tx: TxUpdateDoc<ActivityMessage>
 ): Promise<void> {
-  if (!client.hierarchy.isDerived(tx.objectClass, activity.class.DocUpdateMessage)) return
+  const isDUM = client.hierarchy.isDerived(tx.objectClass, activity.class.DocUpdateMessage)
+  if (isDUM) {
+    await handleUpdateDUM(client, cache, txCache, result, tx as TxUpdateDoc<DocUpdateMessage>)
+  }
 
-  const updateTx = tx as TxUpdateDoc<DocUpdateMessage>
-  const ops = updateTx.operations ?? {}
+  if (tx.operations.message == null && !isDUM) return
+
+  const _message = await cache.getDoc(tx.objectId, tx.objectClass)
+  if (_message === undefined) return
+
+  const message = TxProcessor.updateDoc2Doc(_message, tx)
+
+  const doc = await cache.getDoc(message.attachedTo, message.attachedToClass)
+  if (doc === undefined) return
+
+  const contexts = await cache.getContexts(doc._id)
+
+  for (const context of contexts) {
+    // Check if the notification exists in this context before emitting update
+    const ops: DocumentUpdate<DocNotifyContext> = {}
+
+    if (hasMessageNotification(context, tx.objectId) || hasReactionNotificationByMessage(context, tx.objectId)) {
+      ops.$update = {
+        ...ops.$update,
+        latestNotifications: {
+          $query: { messageId: tx.objectId },
+          $update: {
+            message: toNotificationMessage(message)
+          }
+        }
+      }
+    } else if (hasMentionNotificationByMessage(context, tx.objectId)) {
+      ops.$update = {
+        ...ops.$update,
+        latestNotifications: {
+          $query: { type: 'mention', messageId: tx.objectId },
+          $update: {
+            markup: message.message
+          }
+        }
+      }
+    }
+
+    if (Object.keys(ops).length > 0) {
+      result.updateOpContextTx.push(client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, ops))
+    }
+  }
+}
+
+async function handleUpdateDUM (
+  client: Client,
+  cache: Cache,
+  txCache: TxCache,
+  result: Result,
+  tx: TxUpdateDoc<DocUpdateMessage>
+): Promise<void> {
+  const ops = tx.operations ?? {}
   const historyChanged =
     ops.history !== undefined || ops.$push?.history !== undefined || ops.$pull?.history !== undefined
 
@@ -158,29 +302,137 @@ export async function handleUpdateMessage (
   const doc = await cache.getDoc(message.attachedTo, message.attachedToClass)
   if (doc === undefined) return
 
+  const space = await cache.getDocSpace(doc)
+  if (space === undefined) return
+
+  const notified = getNotifiedUsers(result)
+  const collaborators = await getCollaboratorAccounts(client, cache, doc, space, notified)
+
+  if (message.objectClass === core.class.Collaborator) {
+    const acc = message.objectAttributes?.collaborator as AccountUuid | undefined
+    if (acc != null && !collaborators.includes(acc)) collaborators.push(acc)
+  }
+
+  if (collaborators.length === 0) return
+
+  const receivers = await cache.getReceivers(collaborators)
+  if (receivers.length === 0) return
+
+  const sender = await cache.getSender(tx.modifiedBy)
+  const settings = await cache.getSettings()
+  const docSettings = await cache.getDocSettings(doc._id)
   const contexts = await cache.getContexts(doc._id)
 
-  for (const context of contexts) {
-    // Check if the notification exists in this context before emitting update
-    const exists = context.latestNotifications?.some((n) => n.id === tx.objectId)
+  const unreadMessage: UnreadMessage = {
+    id: message._id,
+    createdOn: message.createdOn ?? message.modifiedOn
+  }
 
-    if (exists) {
-      const operations = {
-        $update: {
-          latestNotifications: {
-            $query: { id: tx.objectId },
-            $update: {
-              message,
-              createdOn: message.createdOn ?? message.modifiedOn,
-              createdBy: message.createdBy ?? message.modifiedBy
-            }
+  for (const receiver of receivers) {
+    if (receiver.account === sender.account) continue
+    const mode = getMode(docSettings, receiver.account)
+    if (isMuted(mode)) continue
+
+    const notifyProviders = await getMessageNotifyProviders(client, message, doc, receiver, settings, mode)
+    const types = notifyProviders[notification.providers.InboxNotificationProvider] ?? []
+    const type = types[0]
+    if (type == null) continue
+
+    const context = contexts.find((it) => it.user === receiver.account)
+
+    if (context != null) {
+      // Check if the notification exists in this context before emitting update
+      const exists = hasMessageNotification(context, tx.objectId)
+      const hasUnreadId = hasUnreadMessage(context, tx.objectId)
+
+      if (exists || hasUnreadId) {
+        const updateOps: DocumentUpdate<DocNotifyContext> = { $pull: {} }
+        if (exists) {
+          updateOps.$pull = {
+            ...updateOps.$pull,
+            latestNotifications: { id: tx.objectId }
           }
         }
-      }
+        if (hasUnreadId) {
+          updateOps.$pull = {
+            ...updateOps.$pull,
+            unreadMessages: { id: tx.objectId }
+          }
+          updateOps.$inc = {
+            ...updateOps.$inc,
+            unreadCount: -1
+          }
+        }
 
-      result.updateContextOpTx.push(
-        client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, operations)
-      )
+        result.updateOpContextTx.push(
+          client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, updateOps)
+        )
+      }
     }
+
+    const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
+    pushNotification(client, result, context, {
+      unreadMessage,
+      receiver,
+      objectId: doc._id,
+      objectClass: doc._class,
+      objectSpace: doc.space,
+      objectDisplayData,
+      notification: {
+        id: message._id,
+        type: 'message',
+        intlMessage: type.notificationMessage,
+        messageId: message._id,
+        message: toNotificationMessage(message),
+        createdOn: message.createdOn ?? message.modifiedOn,
+        createdBy: message.createdBy ?? message.modifiedBy
+      },
+      intl: await getMessageIntl(client, txCache, type, doc, message, sender),
+      notifyProviders
+    })
+  }
+}
+
+async function getMessageIntl (
+  client: Client,
+  txCache: TxCache,
+  type: NotificationType,
+  doc: Doc,
+  message: ActivityMessage,
+  sender: Sender
+): Promise<NotificationIntl> {
+  const { hierarchy } = client
+  const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(client, txCache, type, doc, sender)
+
+  if (type.notificationMessage != null) {
+    intlParamsNotLocalized.message = type.notificationMessage
+  } else if (message.message != null && !isEmptyMarkup(message.message)) {
+    intlParams.message = normalizeTextMessage(markupToText(message.message))
+  } else if (
+    hierarchy.isDerived(message._class, chunter.class.ChatMessage) &&
+    ((message as ChatMessage).attachments ?? 0) > 0
+  ) {
+    intlParamsNotLocalized.message = activity.string.SentAttachments
+  } else if (
+    message.forwardedMessage != null &&
+    message.forwardContent?.message != null &&
+    !isEmptyMarkup(message.forwardContent.message)
+  ) {
+    intlParams.message = normalizeTextMessage(markupToText(message.forwardContent.message))
+  } else if (message.forwardedMessage != null && (message.forwardContent?.attachments.length ?? 0) > 0) {
+    intlParamsNotLocalized.message = activity.string.SentAttachments
+  } else {
+    intlParamsNotLocalized.object = hierarchy.getClass(doc._class).label
+    intlParamsNotLocalized.message = activity.string.UpdatedObject
+  }
+
+  return {
+    titleIntl:
+      intlParams.identifier != null
+        ? notification.string.CommonNotificationTitleWithIdentifier
+        : notification.string.CommonNotificationTitle,
+    bodyIntl: notification.string.MessageNotificationBody,
+    intlParams,
+    intlParamsNotLocalized
   }
 }

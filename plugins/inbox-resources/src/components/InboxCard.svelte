@@ -26,7 +26,6 @@
   import LegacyNotifications from './legacy/LegacyNotifications.svelte'
   import { NavigationItem } from '../type'
   import { NavigationClient } from '../client'
-  import { isReactionNotification } from '@hcengineering/notification-resources'
 
   export let navClient: NavigationClient
   export let navItem: NavigationItem
@@ -118,11 +117,7 @@
       }
     } else {
       for (const n of navItem.notifications) {
-        if (isReactionNotification(n)) {
-          res += reactionsHeightPx
-        } else {
-          res += messageHeightPx
-        }
+        res += messageHeightPx
       }
     }
 

@@ -55,7 +55,6 @@ async function HandleCardActivity (txes: TxCUD<Card>[], control: TriggerControl)
 }
 
 export * from './references'
-export { getDocTitle, getDocUrl, getDocIdentifier, isActivityDoc } from './utils'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({

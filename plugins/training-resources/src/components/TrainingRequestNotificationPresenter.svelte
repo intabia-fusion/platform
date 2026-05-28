@@ -26,4 +26,4 @@
   export let type: ActivityMessagePreviewType = 'full'
 </script>
 
-<BaseMessagePreview {message} {actions} {type} intlLabel={training.string.SentYouATrainingRequest} />
+<BaseMessagePreview {message} {type} intlLabel={training.string.SentYouATrainingRequest} />

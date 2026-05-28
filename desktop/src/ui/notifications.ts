@@ -13,137 +13,127 @@
 // limitations under the License.
 //
 
-import { formatName, getPersonByPersonId } from '@hcengineering/contact'
-import { Doc, Ref, SortingOrder, TxOperations, WithLookup, Hierarchy } from '@hcengineering/core'
-import notification, {
-  notificationId,
-  DocNotifyContext,
-  getNotificationMessageId,
-  getNotificationThreadId
-} from '@hcengineering/notification'
-import { addEventListener, getMetadata, IntlString, translate } from '@hcengineering/platform'
-import { createNotificationsQuery, getClient, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
+import notification from '@hcengineering/notification'
+import { addEventListener, translate } from '@hcengineering/platform'
+import { getCurrentWorkspaceUuid } from '@hcengineering/presentation'
 import { location, languageStore } from '@hcengineering/ui'
 import workbench, { workbenchId } from '@hcengineering/workbench'
-import desktopPreferences, { defaultNotificationPreference } from '@hcengineering/desktop-preferences'
-import { activePreferences } from '@hcengineering/desktop-preferences-resources'
-import { getDisplayInboxData, InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-import { inboxId } from '@hcengineering/inbox'
-import communication from '@hcengineering/communication'
+import { defaultNotificationPreference } from '@hcengineering/desktop-preferences'
 import { workspacesNotificationStore, workspacesStore } from '@hcengineering/workbench-resources'
-
-import { ipcMainExposed } from './typesUtils'
 import { get } from 'svelte/store'
 
-let client: TxOperations
+import { ipcMainExposed } from './typesUtils'
 
-async function hydrateNotificationAsYouCan (
-  lastNotification: any
-): Promise<{ title: string, body: string } | undefined> {
-  // Let's try to do our best and figure out from who we have an notification
+// let client: TxOperations
 
-  if (client === undefined) {
-    return undefined
-  }
-
-  if (lastNotification === undefined) {
-    return undefined
-  }
-
-  let intlTitle: IntlString | undefined
-  const intlParams: Record<string, any> = {}
-
-  // if (lastNotification._class === notification.class.CommonInboxNotification) {
-  //   intlTitle = lastNotification.title ?? (lastNotification as CommonInboxNotification).message
-  //   intlParams = { ...(lastNotification as CommonInboxNotification).intlParams }
-  // } else if (lastNotification._class === notification.class.ActivityInboxNotification) {
-  //   intlTitle = lastNotification.title
-  //   intlParams = { ...(lastNotification as ActivityInboxNotification).intlParams }
-  // }
-
-  if (intlTitle !== undefined && lastNotification.body !== undefined) {
-    if (lastNotification.intlParamsNotLocalized !== undefined) {
-      for (const param in lastNotification.intlParamsNotLocalized) {
-        const value = lastNotification.intlParamsNotLocalized[param]
-        intlParams[param] = await translate(value, intlParams)
-      }
-    }
-    const title = await translate(intlTitle, intlParams)
-    const body = await translate(lastNotification.body, intlParams)
-
-    // Do not show notification if there is no translate
-    if (title === intlTitle || body === lastNotification.body) {
-      return undefined
-    }
-
-    return { title, body }
-  }
-
-  const title = await translate(desktopPreferences.string.HaveGotANotification, {})
-
-  // Do not show notification if there is no translate
-  if (title === (lastNotification.title as string)) {
-    return undefined
-  }
-
-  const noPersonData = {
-    title,
-    body: ''
-  }
-
-  const person = await getPersonByPersonId(client, lastNotification.modifiedBy)
-  if (person == null) {
-    return noPersonData
-  }
-
-  return {
-    title,
-    body: formatName(person.name)
-  }
-}
-
-function getLasUnViewedNotification (notifications: any[], notificationHistory: Map<string, number>): any | undefined {
-  let lastNotification
-  let lastTime = 0
-
-  for (const n of notifications) {
-    if (notificationHistory.has(n._id as string)) {
-      continue
-    }
-
-    const createdOn = n.createdOn ?? n.modifiedOn
-
-    notificationHistory.set(n._id as string, createdOn)
-
-    if (createdOn > lastTime) {
-      lastTime = createdOn
-      lastNotification = n
-    }
-  }
-
-  return lastNotification
-}
+// async function hydrateNotificationAsYouCan (
+//   lastNotification: any
+// ): Promise<{ title: string, body: string } | undefined> {
+//   // Let's try to do our best and figure out from who we have an notification
+//
+//   if (client === undefined) {
+//     return undefined
+//   }
+//
+//   if (lastNotification === undefined) {
+//     return undefined
+//   }
+//
+//   let intlTitle: IntlString | undefined
+//   const intlParams: Record<string, any> = {}
+//
+//   // if (lastNotification._class === notification.class.CommonInboxNotification) {
+//   //   intlTitle = lastNotification.title ?? (lastNotification as CommonInboxNotification).message
+//   //   intlParams = { ...(lastNotification as CommonInboxNotification).intlParams }
+//   // } else if (lastNotification._class === notification.class.ActivityInboxNotification) {
+//   //   intlTitle = lastNotification.title
+//   //   intlParams = { ...(lastNotification as ActivityInboxNotification).intlParams }
+//   // }
+//
+//   if (intlTitle !== undefined && lastNotification.body !== undefined) {
+//     if (lastNotification.intlParamsNotLocalized !== undefined) {
+//       for (const param in lastNotification.intlParamsNotLocalized) {
+//         const value = lastNotification.intlParamsNotLocalized[param]
+//         intlParams[param] = await translate(value, intlParams)
+//       }
+//     }
+//     const title = await translate(intlTitle, intlParams)
+//     const body = await translate(lastNotification.body, intlParams)
+//
+//     // Do not show notification if there is no translate
+//     if (title === intlTitle || body === lastNotification.body) {
+//       return undefined
+//     }
+//
+//     return { title, body }
+//   }
+//
+//   const title = await translate(desktopPreferences.string.HaveGotANotification, {})
+//
+//   // Do not show notification if there is no translate
+//   if (title === (lastNotification.title as string)) {
+//     return undefined
+//   }
+//
+//   const noPersonData = {
+//     title,
+//     body: ''
+//   }
+//
+//   const person = await getPersonByPersonId(client, lastNotification.modifiedBy)
+//   if (person == null) {
+//     return noPersonData
+//   }
+//
+//   return {
+//     title,
+//     body: formatName(person.name)
+//   }
+// }
+//
+// function getLasUnViewedNotification (
+//   notifications: any[],
+//   notificationHistory: Map<string, number>
+// ): any | undefined {
+//   let lastNotification
+//   let lastTime = 0
+//
+//   for (const n of notifications) {
+//     if (notificationHistory.has(n._id as string)) {
+//       continue
+//     }
+//
+//     const createdOn = n.createdOn ?? n.modifiedOn
+//
+//     notificationHistory.set(n._id as string, createdOn)
+//
+//     if (createdOn > lastTime) {
+//       lastTime = createdOn
+//       lastNotification = n
+//     }
+//   }
+//
+//   return lastNotification
+// }
 
 /**
  * @public
  */
 export function configureNotifications (): void {
-  let preferences = defaultNotificationPreference
-  let prevUnViewdNotificationsCount = 0
+  const preferences = defaultNotificationPreference
+  const prevUnViewdNotificationsCount = 0
 
   // For now we want to track all notifications which happends after the launch
   // because we generate them on a client
-  let initTimestamp = 0
-  const notificationHistory = new Map<string, number>()
-  let newUnreadNotifications = 0
+  // let initTimestamp = 0
+  // const notificationHistory = new Map<string, number>()
+  // let newUnreadNotifications = 0
 
   addEventListener(workbench.event.NotifyConnection, async () => {
-    client = getClient()
+    // client = getClient()
     const electronAPI = ipcMainExposed()
 
-    const inboxClient = InboxNotificationsClientImpl.getClient()
-    const notificationsQuery = createNotificationsQuery(true)
-    const notificationsCountQuery = createNotificationsQuery(true)
+    // const inboxClient = InboxNotificationsClientImpl.getClient()
 
     let hasOtherWorkspaceNotifications = false
 
@@ -153,7 +143,7 @@ export function configureNotifications (): void {
         return
       }
 
-      const total = prevUnViewdNotificationsCount + newUnreadNotifications
+      const total = prevUnViewdNotificationsCount
       if (total > 0) {
         const unreadsCountTooltip = await translate(
           notification.string.UnreadNotificationsCount,
@@ -178,124 +168,82 @@ export function configureNotifications (): void {
       void updateBadge()
     })
 
-    const isCommunicationEnabled = getMetadata(communication.metadata.Enabled) ?? false
-
-    if (isCommunicationEnabled) {
-      notificationsCountQuery.query({ read: false, limit: 1, strict: true, total: true }, (res) => {
-        newUnreadNotifications = res.getTotal()
-
-        void updateBadge().then(() => {
-          if (preferences.bounceAppIcon) {
-            electronAPI.dockBounce()
-          }
-        })
-      })
-    }
-
-    function startNotificationQuery (): void {
-      if (!isCommunicationEnabled) return
-      notificationsQuery.query(
-        {
-          read: false,
-          limit: 1,
-          strict: true,
-          order: SortingOrder.Descending,
-          created: {
-            greaterOrEqual: new Date()
-          }
-        },
-        (res) => {
-          if (!preferences.showNotifications) return
-          const notification = res.getResult()[0]
-          if (notification !== undefined && !notificationHistory.has(notification.id)) {
-            notificationHistory.set(notification.id, notification.created.getTime())
-            electronAPI.sendNotification({
-              silent: !preferences.playSound,
-              application: inboxId,
-              title: notification.content.title,
-              body: `${notification.content.senderName}: ${notification.content.shortText}`,
-              cardId: notification.cardId,
-              objectId: notification.content.objectId,
-              objectClass: notification.content.objectClass
-            })
-          }
-        }
-      )
-    }
-
     if (preferences.showNotifications) {
-      startNotificationQuery()
+      // startNotificationQuery()
     }
 
-    async function handleNotifications (notificationsByContext: Map<Ref<DocNotifyContext>, any[]>): Promise<void> {
-      const inboxData = getDisplayInboxData(notificationsByContext)
+    // async function handleNotifications (
+    //   notificationsByContext: Map<Ref<DocNotifyContext>, any[]>
+    // ): Promise<void> {
+    //   // const inboxData = getDisplayInboxData(notificationsByContext)
+    //
+    //   // if (notificationHistory.size === 0) {
+    //   //   for (const [, notifications] of inboxData) {
+    //   //     for (const n of notifications) {
+    //   //       notificationHistory.set(n._id as string, n.createdOn ?? n.modifiedOn)
+    //   //     }
+    //   //   }
+    //   // }
+    //   //
+    //   // const unViewedNotifications: InboxNotification[] = Array.from(inboxData.values())
+    //   //   .flat()
+    //   //   .filter(({ isViewed }) => !isViewed)
+    //   // const notificationsAfterLaunch = notifications.filter((p) => p.txes.some((p) => p.modifiedOn > initTimestamp))
+    //   // We need to get the most recent notifications
+    //
+    //   // if (prevUnViewdNotificationsCount !== unViewedNotifications.length) {
+    //   //   prevUnViewdNotificationsCount = unViewedNotifications.length
+    //   //   await updateBadge()
+    //   //
+    //   //   if (preferences.bounceAppIcon) {
+    //   //     electronAPI.dockBounce()
+    //   //   }
+    //   // }
+    //
+    //   // const notification = getLasUnViewedNotification(unViewedNotifications, notificationHistory)
+    //
+    //   // if (preferences.showNotifications && initTimestamp > 0 && notification !== undefined) {
+    //   //   // const notification = notificationsAfterLaunch[notificationsAfterLaunch.length - 1]
+    //   //   const notificationData = await hydrateNotificationAsYouCan(notification)
+    //   //   if (notificationData !== undefined) {
+    //   //     if (notificationData.body === '') {
+    //   //       notificationData.body = await translate(desktopPreferences.string.TotalNotificationsCount, {
+    //   //         count: prevUnViewdNotificationsCount
+    //   //       })
+    //   //     }
+    //   //
+    //   //     const object = getNotificationObjectIdentity(notification, client.getHierarchy())
+    //   //     electronAPI.sendNotification({
+    //   //       silent: !preferences.playSound,
+    //   //       application: notificationId,
+    //   //       objectId: object?._id ?? notification.objectId,
+    //   //       objectClass: object?._class ?? notification.objectClass,
+    //   //       messageId: getNotificationMessageId(notification, client.getHierarchy()),
+    //   //       threadId: getNotificationThreadId(notification, client.getHierarchy()),
+    //   //       ...notificationData
+    //   //     })
+    //   //   }
+    //   // }
+    //   //
+    //   // if (initTimestamp === 0) {
+    //   //   initTimestamp = Date.now()
+    //   // }
+    // }
 
-      if (notificationHistory.size === 0) {
-        for (const [, notifications] of inboxData) {
-          for (const n of notifications) {
-            notificationHistory.set(n._id as string, n.createdOn ?? n.modifiedOn)
-          }
-        }
-      }
+    // inboxClient.inboxNotificationsByContext.subscribe((data) => {
+    //   void handleNotifications(data)
+    // })
 
-      const unViewedNotifications: any[] = Array.from(inboxData.values()).flat()
-      // .filter(({ isViewed }) => !isViewed)
-      // const notificationsAfterLaunch = notifications.filter((p) => p.txes.some((p) => p.modifiedOn > initTimestamp))
-      // We need to get the most recent notifications
-
-      if (prevUnViewdNotificationsCount !== unViewedNotifications.length) {
-        prevUnViewdNotificationsCount = unViewedNotifications.length
-        await updateBadge()
-
-        if (preferences.bounceAppIcon) {
-          electronAPI.dockBounce()
-        }
-      }
-
-      const notification = getLasUnViewedNotification(unViewedNotifications, notificationHistory)
-
-      if (preferences.showNotifications && initTimestamp > 0 && notification !== undefined) {
-        // const notification = notificationsAfterLaunch[notificationsAfterLaunch.length - 1]
-        const notificationData = await hydrateNotificationAsYouCan(notification)
-        if (notificationData !== undefined) {
-          if (notificationData.body === '') {
-            notificationData.body = await translate(desktopPreferences.string.TotalNotificationsCount, {
-              count: prevUnViewdNotificationsCount
-            })
-          }
-
-          const object = getNotificationObjectIdentity(notification, client.getHierarchy())
-          electronAPI.sendNotification({
-            silent: !preferences.playSound,
-            application: notificationId,
-            objectId: object?._id ?? notification.objectId,
-            objectClass: object?._class ?? notification.objectClass,
-            messageId: getNotificationMessageId(notification, client.getHierarchy()),
-            threadId: getNotificationThreadId(notification, client.getHierarchy()),
-            ...notificationData
-          })
-        }
-      }
-
-      if (initTimestamp === 0) {
-        initTimestamp = Date.now()
-      }
-    }
-
-    inboxClient.inboxNotificationsByContext.subscribe((data) => {
-      void handleNotifications(data)
-    })
-
-    activePreferences.subscribe((newPreferences) => {
-      const showNotificationsChanged = newPreferences.showNotifications && !preferences.showNotifications
-
-      preferences = newPreferences
-      void updateBadge()
-
-      if (showNotificationsChanged) {
-        startNotificationQuery()
-      }
-    })
+    // activePreferences.subscribe((newPreferences) => {
+    //   const showNotificationsChanged = newPreferences.showNotifications && !preferences.showNotifications
+    //
+    //   preferences = newPreferences
+    //   void updateBadge()
+    //
+    //   if (showNotificationsChanged) {
+    //     startNotificationQuery()
+    //   }
+    // })
   })
 
   addEventListener(workbench.event.NotifyTitle, async (event, title: string) => {
@@ -310,27 +258,26 @@ export function configureNotifications (): void {
   })
 }
 
-function getNotificationObjectIdentity (
-  inboxNotification: WithLookup<any>,
-  hierarchy: Hierarchy
-): Pick<Doc, '_id' | '_class'> {
-  // if (!hierarchy.isDerived(inboxNotification._class, notification.class.ActivityInboxNotification)) {
-  //   return { _id: inboxNotification.objectId, _class: inboxNotification.objectClass }
-  // }
-  //
-  // const activityNotification = inboxNotification as WithLookup<ActivityInboxNotification>
-
-  // if (
-  //   hierarchy.isDerived(activityNotification.attachedToClass, chunter.class.ThreadMessage) &&
-  //   hierarchy.isDerived(activityNotification.objectClass, activity.class.ActivityMessage)
-  // ) {
-  //   const attachedTo = activityNotification.$lookup?.attachedTo as ThreadMessage | undefined
-  //
-  //   if (attachedTo != null) {
-  //     return { _id: attachedTo.objectId, _class: attachedTo.objectClass }
-  //   }
-  // }
-  //
-  // return { _id: activityNotification.objectId, _class: activityNotification.objectClass }
-  return {} as any
-}
+// function getNotificationObjectIdentity(
+//   inboxNotification: WithLookup<InboxNotification>,
+//   hierarchy: Hierarchy
+// ): Pick<Doc, '_id' | '_class'> {
+//   if (!hierarchy.isDerived(inboxNotification._class, notification.class.ActivityInboxNotification)) {
+//     return { _id: inboxNotification.objectId, _class: inboxNotification.objectClass }
+//   }
+//
+//   const activityNotification = inboxNotification as WithLookup<ActivityInboxNotification>
+//
+//   if (
+//     hierarchy.isDerived(activityNotification.attachedToClass, chunter.class.ThreadMessage) &&
+//     hierarchy.isDerived(activityNotification.objectClass, activity.class.ActivityMessage)
+//   ) {
+//     const attachedTo = activityNotification.$lookup?.attachedTo as ThreadMessage | undefined
+//
+//     if (attachedTo != null) {
+//       return { _id: attachedTo.objectId, _class: attachedTo.objectClass }
+//     }
+//   }
+//
+//   return { _id: activityNotification.objectId, _class: activityNotification.objectClass }
+// }

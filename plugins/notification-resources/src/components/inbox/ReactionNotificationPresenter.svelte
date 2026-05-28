@@ -1,6 +1,5 @@
 <!--
-// Copyright © 2025 Hardcore Engineering Inc.
-//
+// Copyright © 2026 Intabia Fusion.
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
@@ -14,42 +13,34 @@
 -->
 <script lang="ts">
   import { ActivityMessagePreview, BasePreview } from '@hcengineering/activity-resources'
-  import { createQuery } from '@hcengineering/presentation'
-  import { ActivityMessage } from '@hcengineering/activity'
-  import { Doc } from '@hcengineering/core'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { ReactionNotification } from '@hcengineering/notification'
   import { EmojiPresenter } from '@hcengineering/emoji-resources'
 
-  export let object: Doc | undefined
-  export let value: any
+  import notification from '../../plugin'
+  import { Class, Doc, Ref } from '@hcengineering/core'
 
-  const query = createQuery()
-
-  let message: ActivityMessage | undefined = undefined
-
-  query.query(value.attachedToClass, { _id: value.attachedTo }, (res) => {
-    message = res[0] as any
-  })
-  $: socialId = value.createdBy ?? value.modifiedBy
-  $: date = new Date(value.createdOn ?? value.modifiedOn)
+  export let value: ReactionNotification
+  export let objectId: Ref<Doc>
+  export let objectClass: Ref<Class<Doc>>
 </script>
 
 <div class="reaction-notification" on:click>
   <BasePreview
-    intlLabel={getEmbeddedLabel('Reacted to your message')}
+    intlLabel={notification.string.ReactedToYourMessage}
     color="secondary"
     lower
-    account={socialId}
-    timestamp={date.getTime()}
+    account={value.createdBy}
+    timestamp={value.createdOn}
   />
 
   <div class="reaction-notification__body">
     <div class="reaction-notification__emoji">
-      <EmojiPresenter emoji={value.emoji} fitSize center />
+      <EmojiPresenter emoji={value.reaction.image ?? value.reaction.emoji} fitSize center />
     </div>
-    {#if message}
-      <ActivityMessagePreview value={message} doc={object} type="content-only" />
-    {/if}
+    <ActivityMessagePreview
+      value={{ ...value.message, attachedTo: objectId, attachedToClass: objectClass }}
+      type="content-only"
+    />
   </div>
 </div>
 

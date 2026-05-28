@@ -39,7 +39,7 @@ import {
 } from '@hcengineering/model'
 import activity, { migrateMessagesSpace, DOMAIN_ACTIVITY, DOMAIN_REACTION } from '@hcengineering/model-activity'
 import { getAllAccounts } from '@hcengineering/contact'
-import { DOMAIN_DOC_NOTIFY, DOMAIN_NOTIFICATION } from '@hcengineering/model-notification'
+import { DOMAIN_DOC_NOTIFY } from '@hcengineering/model-notification'
 import { type ActivityMessage, type DocUpdateMessage, type Reaction } from '@hcengineering/activity'
 
 import { DOMAIN_CHUNTER, DOMAIN_CHUNTER_DOC } from './index'
@@ -50,6 +50,7 @@ import { DOMAIN_ATTACHMENT } from '@hcengineering/model-attachment'
 import { type DocNotifyContext } from '@hcengineering/notification'
 
 export const DOMAIN_COMMENT = 'comment' as Domain
+export const DOMAIN_NOTIFICATION = 'notification' as Domain
 
 export async function createGeneral (client: MigrationUpgradeClient, tx: TxOperations): Promise<void> {
   const current = await tx.findOne(chunter.class.Channel, { _id: chunter.space.General })

@@ -34,7 +34,7 @@
   import { Notification } from '@hcengineering/communication-types'
   import chunter from '@hcengineering/chunter'
   import activity, { ActivityMessage } from '@hcengineering/activity'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { getResource } from '@hcengineering/platform'
   import { get } from 'svelte/store'
 
@@ -45,11 +45,6 @@
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
-
-  const inboxClient = InboxNotificationsClientImpl.getClient()
-  const notificationsByContextStore = inboxClient.inboxNotificationsByContext
-  const contextByIdStore = inboxClient.contextById
-  const contextByDocStore = inboxClient.contextByDoc
 
   let replacedPanelElement: HTMLElement
   let doc: Doc | undefined = undefined
@@ -88,35 +83,13 @@
 
     if (docInfo._id !== doc?._id) {
       doc = await client.findOne(docInfo._class, { _id: docInfo._id })
-
-      if (doc != null) {
-        const queryContext = loc.query?.context as Ref<DocNotifyContext>
-        const ctx =
-          $contextByIdStore.get(queryContext) ?? $contextByDocStore.get(thread) ?? $contextByDocStore.get(urlObjectId)
-
-        legacyContext =
-          ctx ??
-          (await client.findOne(notification.class.DocNotifyContext, {
-            objectId: doc._id,
-            user: getCurrentAccount().uuid
-          }))
-      }
     }
 
     const messageInfo = getMessageInfoFromLocation(loc)
-    const messageId = messageInfo?.id
 
     if (thread !== undefined) {
       const fn = await getResource(chunter.function.OpenThreadInSidebar)
       void fn(thread, undefined, undefined, messageInfo?.id as Ref<ActivityMessage>, { autofocus: false }, false)
-    }
-
-    if (messageId != null && messageInfo?.date == null) {
-      legacyMessage = get(inboxClient.activityInboxNotifications).find(({ attachedTo }) => attachedTo === messageId)
-        ?.$lookup?.attachedTo
-      if (legacyMessage === undefined) {
-        legacyMessage = await client.findOne(activity.class.ActivityMessage, { _id: messageId as Ref<ActivityMessage> })
-      }
     }
   }
 

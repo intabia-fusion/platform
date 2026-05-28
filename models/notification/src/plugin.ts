@@ -40,10 +40,7 @@ export default mergeIds(notificationId, notification, {
     Inbox: '' as Ref<Application>
   },
   component: {
-    NotificationSettings: '' as AnyComponent,
-    ActivityInboxNotificationPresenter: '' as AnyComponent,
-    CommonInboxNotificationPresenter: '' as AnyComponent,
-    MentionInboxNotificationPresenter: '' as AnyComponent
+    NotificationSettings: '' as AnyComponent
   },
   function: {
     CanReadNotifyContext: '' as Resource<(doc?: Doc | Doc[]) => Promise<boolean>>,
@@ -61,7 +58,7 @@ export default mergeIds(notificationId, notification, {
   actionImpl: {
     Unsubscribe: '' as ViewAction,
     ReadNotifyContext: '' as ViewAction,
-    RemoveContextNotifications: '' as ViewAction,
+    RemoveDocNotifyContext: '' as ViewAction,
     ClearAll: '' as ViewAction,
     ReadAll: '' as ViewAction,
     EditDocNotifications: '' as ViewAction

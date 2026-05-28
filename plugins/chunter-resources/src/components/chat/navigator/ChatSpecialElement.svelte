@@ -15,10 +15,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { SpecialNavModel } from '@hcengineering/workbench'
-  import { getResource } from '@hcengineering/platform'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-  import { DocNotifyContext } from '@hcengineering/notification'
-  import { Ref } from '@hcengineering/core'
   import { SavedAttachments } from '@hcengineering/attachment'
   import { SavedMessage } from '@hcengineering/activity'
   import { savedMessagesStore } from '@hcengineering/activity-resources'
@@ -32,29 +28,8 @@
 
   const dispatch = createEventDispatcher()
 
-  const notificationsClient = InboxNotificationsClientImpl.getClient()
-  const notificationsByContextStore = notificationsClient.inboxNotificationsByContext
-
-  let count: number | null = null
   let elementsCount = 0
-
-  $: void getNotificationsCount(special, $notificationsByContextStore).then((res) => {
-    count = res === 0 ? null : res
-  })
   $: elementsCount = getElementsCount(special, $savedMessagesStore, $savedAttachmentsStore)
-
-  async function getNotificationsCount (
-    special: SpecialNavModel,
-    notificationsByContext: Map<Ref<DocNotifyContext>, any[]>
-  ): Promise<number> {
-    if (!special.notificationsCountProvider) {
-      return 0
-    }
-
-    const providerFn = await getResource(special.notificationsCountProvider)
-
-    return providerFn(notificationsByContext)
-  }
 
   function getElementsCount (
     special: SpecialNavModel,
@@ -74,7 +49,6 @@
   icon={special.icon}
   intlTitle={special.label}
   withIconBackground={false}
-  {count}
   {elementsCount}
   isSelected={special.id === currentSpecial?.id}
   {type}

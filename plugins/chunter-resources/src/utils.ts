@@ -38,7 +38,7 @@ import core, {
   type Timestamp,
   type WithLookup
 } from '@hcengineering/core'
-import { type DocNotifyContext,  type ReadState } from '@hcengineering/notification'
+import { type DocNotifyContext, type ReadState } from '@hcengineering/notification'
 import { type Asset, getMetadata, getResource, type IntlString, translate } from '@hcengineering/platform'
 import { getClient } from '@hcengineering/presentation'
 import {
@@ -50,7 +50,7 @@ import {
   showPopup
 } from '@hcengineering/ui'
 import { classIcon, getDocIdentifier, getDocLabel, getDocTitle } from '@hcengineering/view-resources'
-import { get, type Unsubscriber, writable } from 'svelte/store'
+import { get, type Unsubscriber } from 'svelte/store'
 import love, { type MeetingMinutes } from '@hcengineering/love'
 import attachment, { type Attachment } from '@hcengineering/attachment'
 import { isEmptyMarkup } from '@hcengineering/text'
@@ -154,12 +154,12 @@ export async function canCopyMessageLink (doc?: ActivityMessage | ActivityMessag
   return message !== undefined
 }
 
-export async function getDmPersons (client: Client, space: Space): Promise<Person[]> {
-  if (space === undefined || !client.getHierarchy().isDerived(space._class, core.class.Space)) {
+export async function getDmPersons (client: Client, members: AccountUuid[]): Promise<Person[]> {
+  if (members.length === 0) {
     return []
   }
   const myAcc = getCurrentAccount().uuid
-  const accounts = space.members.length > 1 ? space.members.filter((m) => m !== myAcc) : [myAcc]
+  const accounts = members.length > 1 ? members.filter((m) => m !== myAcc) : [myAcc]
 
   return await client.findAll(contact.class.Person, {
     personUuid: { $in: accounts }
@@ -364,7 +364,11 @@ export function recheckNotifications (context: DocNotifyContext): void {
   // }, 500)
 }
 
-export async function readChannelMessages (messages: ActivityMessage[], readState?: ReadState | null): Promise<void> {
+export async function readChannelMessages (
+  messages: ActivityMessage[],
+  context?: DocNotifyContext,
+  readState?: ReadState | null
+): Promise<void> {
   // TODO
   // if (messages.length === 0) {
   //   return

@@ -28,33 +28,48 @@ import core, {
   Ref,
   type RefTo,
   Space,
-  type Tx,
+  Timestamp,
+  TxCreateDoc,
   TxCUD,
+  TxFactory,
+  TxUpdateDoc,
   WorkspaceInfoWithStatus
 } from '@hcengineering/core'
 import contact, { Employee } from '@hcengineering/contact'
-import activity, { DocUpdateMessage, ActivityMessage } from '@hcengineering/activity'
+import activity, { DocUpdateMessage, ActivityMessage, Reaction } from '@hcengineering/activity'
 import notification, {
   NotificationProvider,
   NotificationType,
   MessageNotificationType,
   TxNotificationType,
-  NotificationContent,
-  DocNotificationMode
+  DocNotificationMode,
+  NotificationMessage,
+  DocNotificationSetting,
+  DocNotifyContext,
+  NotificationIntl,
+  ContextNotification,
+  MentionNotification
 } from '@hcengineering/notification'
 import serverNotification, {
   getSenderName,
-  normalizeTextMessage,
   Receiver,
   Sender,
   TypeMatchClient
 } from '@hcengineering/server-notification'
 import { getResource, IntlString } from '@hcengineering/platform'
-import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
-import chunter, { ChatMessage } from '@hcengineering/chunter'
-import serverActivity, { IdentifierPresenter, TitlePresenter, UrlPresenter } from '@hcengineering/server-activity'
+import {
+  Icon,
+  PresenterControl,
+  getDocTitle as _getDocTitle,
+  getDocIdentifier as _getDocIdentifier,
+  getDocUrl as _getDocUrl,
+  getDocIcon as _getDocIcon,
+  getDocLabel as _getDocLabel,
+  getTitlePresenter,
+  getIconPresenter
+} from '@hcengineering/server-activity'
 
-import { Client, NotificationSettings, NotifyResult } from './types'
+import { Client, ObjectDisplayData, NotificationSettings, NotifyProviders, Result, TxCache } from './types'
 import config from './config'
 import Cache from './cache'
 
@@ -65,7 +80,8 @@ export async function getCollaboratorAccounts (
   client: Client,
   cache: Cache,
   doc: Doc,
-  space: Space
+  space: Space,
+  notified: AccountUuid[] = []
 ): Promise<AccountUuid[]> {
   const collaborators = await cache.getCollaborators(doc._id, doc._class)
 
@@ -83,7 +99,7 @@ export async function getCollaboratorAccounts (
     }
   }
 
-  return Array.from(accounts)
+  return Array.from(accounts).filter((it) => !notified.includes(it))
 }
 
 export async function getWorkspaceInfo (
@@ -133,14 +149,14 @@ function getAllProviders (client: Client): NotificationProvider[] {
   return providers.filter((it) => config.AllowedNotificationProviders.includes(it._id))
 }
 
-export async function getMessageNotifyResult (
+export async function getMessageNotifyProviders (
   client: Client,
   message: ActivityMessage,
   doc: Doc,
   receiver: Receiver,
   notificationSettings: NotificationSettings,
   mode: DocNotificationMode
-): Promise<NotifyResult> {
+): Promise<NotifyProviders> {
   const types = getMatchedMessageTypes(client, message, doc)
 
   return await getNotifyResult(client, message, doc, receiver, notificationSettings, types, mode)
@@ -337,9 +353,9 @@ async function getNotifyResult (
   notificationSettings: NotificationSettings,
   types: NotificationType[],
   mode: DocNotificationMode
-): Promise<NotifyResult> {
+): Promise<NotifyProviders> {
   const authorSocialId = obj.createdBy ?? obj.modifiedBy
-  const result: NotifyResult = {}
+  const result: NotifyProviders = {}
 
   const providers: NotificationProvider[] = getAllProviders(client)
   const { hierarchy } = client
@@ -376,7 +392,7 @@ async function getNotifyResult (
   return result
 }
 
-export async function getTxNotifyResult (
+export async function getTxNotifyProviders (
   client: Client,
   tx: TxCUD<Doc>,
   doc: Doc,
@@ -384,7 +400,7 @@ export async function getTxNotifyResult (
   notificationSettings: NotificationSettings,
   types: TxNotificationType[],
   mode: DocNotificationMode
-): Promise<NotifyResult> {
+): Promise<NotifyProviders> {
   return await getNotifyResult(client, tx, doc, receiver, notificationSettings, types, mode)
 }
 
@@ -452,15 +468,8 @@ function getTxOperationsKeys (tx: TxCUD<Doc>): string[] {
   return res
 }
 
-export function getNotifiedUsers (hierarchy: Hierarchy, txes: Tx[]): AccountUuid[] {
-  // return txes
-  //   .filter(
-  //     (it) =>
-  //       it._class === core.class.TxCreateDoc &&
-  //       hierarchy.isDerived((it as TxCUD<Doc>).objectClass, notification.class.InboxNotification)
-  //   )
-  //   .map((it) => TxProcessor.createDoc2Doc(it as TxCreateDoc<InboxNotification>).user)
-  return []
+export function getNotifiedUsers (result: Result): AccountUuid[] {
+  return result.queueMessages.map((it) => it.account)
 }
 
 export function getTypeMatchClient (client: Client): TypeMatchClient {
@@ -474,22 +483,190 @@ export function getTypeMatchClient (client: Client): TypeMatchClient {
   }
 }
 
-export async function getMessageNotificationContent (
+function getPresenterControl (client: Client): PresenterControl {
+  return {
+    ctx: client.ctx,
+    workspace: client.workspace,
+    hierarchy: client.hierarchy,
+    modelDb: client.model,
+    branding: client.branding ?? null,
+    findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
+  }
+}
+
+export async function getDocTitle (
   client: Client,
+  txCache: TxCache,
+  doc: Doc,
+  account?: AccountUuid
+): Promise<string | undefined> {
+  const presenter = getTitlePresenter(doc._class, client.hierarchy)
+  const personalized = account != null && presenter?.personalized === true
+
+  if (personalized) {
+    const cached = txCache.titleByDoc.get(doc._id)?.[account]
+    if (cached != null) return cached
+  } else {
+    const cached = txCache.titleByDoc.get(doc._id)?.['']
+    if (cached != null) return cached
+  }
+
+  const title = await _getDocTitle(getPresenterControl(client), doc, { account })
+  if (title != null) {
+    const key = personalized ? account : ''
+    txCache.titleByDoc.set(doc._id, {
+      ...txCache.titleByDoc.get(doc._id),
+      [key]: title
+    })
+  }
+
+  return title
+}
+
+export async function getDocIdentifier (client: Client, txCache: TxCache, doc: Doc): Promise<string | undefined> {
+  const cached = txCache.identifierByDoc.get(doc._id)
+  if (cached != null) return cached
+
+  const identifier = await _getDocIdentifier(getPresenterControl(client), doc)
+  if (identifier != null) {
+    txCache.identifierByDoc.set(doc._id, identifier)
+  }
+
+  return identifier
+}
+
+export async function getDocUrl (client: Client, txCache: TxCache, doc: Doc): Promise<string | undefined> {
+  const cached = txCache.urlByDoc.get(doc._id)
+  if (cached != null) return cached
+
+  const url = await _getDocUrl(getPresenterControl(client), doc)
+  if (url != null) {
+    txCache.urlByDoc.set(doc._id, url)
+  }
+
+  return url
+}
+
+export async function getDocLabel (client: Client, txCache: TxCache, doc: Doc): Promise<IntlString | undefined> {
+  const cached = txCache.labelByDoc.get(doc._id)
+  if (cached != null) return cached
+
+  const label = await _getDocLabel(getPresenterControl(client), doc)
+  if (label != null) {
+    txCache.labelByDoc.set(doc._id, label)
+  }
+
+  return label
+}
+
+export async function getDocIcon (
+  client: Client,
+  txCache: TxCache,
+  doc: Doc,
+  account: AccountUuid
+): Promise<Icon | undefined> {
+  const presenter = getIconPresenter(doc._class, client.hierarchy)
+  const personalized = account != null && presenter?.personalized === true
+  if (personalized) {
+    const cached = txCache.iconByDoc.get(doc._id)?.[account]
+    if (cached != null) return cached
+  } else {
+    const cached = txCache.iconByDoc.get(doc._id)?.['']
+    if (cached != null) return cached
+  }
+
+  const icon = await _getDocIcon(getPresenterControl(client), doc, { account })
+  if (icon != null) {
+    const key = personalized ? account : ''
+    txCache.iconByDoc.set(doc._id, {
+      ...txCache.iconByDoc.get(doc._id),
+      [key]: icon
+    })
+  }
+
+  return icon
+}
+
+export function emptyResult (): Result {
+  return {
+    updateContextTx: [],
+    updateOpContextTx: [],
+    createContextTx: [],
+
+    queueMessages: [],
+
+    createUserMentionInfoTx: [],
+    updateUserMentionInfoTx: [],
+    removeUserMentionInfoTx: []
+  }
+}
+
+export function getResultTxes (result: Result): TxCUD<Doc>[] {
+  return [
+    ...result.createContextTx,
+    ...result.updateContextTx,
+    ...result.updateOpContextTx,
+    ...result.createUserMentionInfoTx,
+    ...result.updateUserMentionInfoTx,
+    ...result.removeUserMentionInfoTx
+  ].sort((a, b) => a.modifiedOn - b.modifiedOn)
+}
+
+export function isEmptyResult (result: Result): boolean {
+  return (
+    result.updateContextTx.length === 0 &&
+    result.updateOpContextTx.length === 0 &&
+    result.createContextTx.length === 0 &&
+    result.queueMessages.length === 0 &&
+    result.createUserMentionInfoTx.length === 0 &&
+    result.updateUserMentionInfoTx.length === 0 &&
+    result.removeUserMentionInfoTx.length === 0
+  )
+}
+
+export function toNotificationMessage (message: ActivityMessage): NotificationMessage {
+  const {
+    attachedTo,
+    attachedToClass,
+    editedOn,
+    replies,
+    repliedPersons,
+    reactions,
+    isPinned,
+    lastReply,
+    ...notificationMessage
+  } = message
+
+  return notificationMessage
+}
+
+export function getMode (docSettings: DocNotificationSetting[], account: AccountUuid): DocNotificationMode {
+  const settingDoc = docSettings.find((it) => it.account === account)
+  return settingDoc?.mode ?? 'all'
+}
+
+export function isMuted (mode: DocNotificationMode): boolean {
+  return mode === 'mute'
+}
+
+export async function getBaseDisplayParams (
+  client: Client,
+  txCache: TxCache,
   type: NotificationType,
   doc: Doc,
-  message: ActivityMessage,
   sender: Sender
-): Promise<NotificationContent> {
-  const { hierarchy } = client
+): Promise<Pick<NotificationIntl, 'intlParams' | 'intlParamsNotLocalized'>> {
   const intlParams: Record<string, string | number> = {}
   const intlParamsNotLocalized: Record<string, IntlString> = {}
 
-  intlParams.title = message.attachedToTitle ?? (await getDocTitle(client, doc)) ?? ''
+  const title = await getDocTitle(client, txCache, doc)
+  const url = await getDocUrl(client, txCache, doc)
+  const identifier = await getDocIdentifier(client, txCache, doc)
 
-  const url = message.attachedToUrl ?? (await getDocUrl(client, doc))
-  const identifier = message.attachedToIdentifier ?? (await getDocIdentifier(client, doc))
-
+  if (title != null) {
+    intlParams.title = title
+    intlParams.doc = title
+  }
   if (url != null && url.length > 0) {
     intlParams.url = url
   }
@@ -497,115 +674,164 @@ export async function getMessageNotificationContent (
     intlParams.identifier = identifier
   }
 
-  intlParams.senderName = getSenderName(sender, client.branding?.lastNameFirst)
+  const senderName = getSenderName(sender, client.branding?.lastNameFirst)
 
   if (type.notificationMessage != null) {
     intlParamsNotLocalized.message = type.notificationMessage
-  } else if (message.message != null && !isEmptyMarkup(message.message)) {
-    intlParams.message = normalizeTextMessage(markupToText(message.message))
-  } else if (
-    hierarchy.isDerived(chunter.class.ChatMessage, message._class) &&
-    ((message as ChatMessage).attachments ?? 0) > 0
-  ) {
-    intlParamsNotLocalized.message = activity.string.SentAttachments
-  } else if (
-    message.forwardedMessage != null &&
-    message.forwardContent?.message != null &&
-    !isEmptyMarkup(message.forwardContent.message)
-  ) {
-    intlParams.message = normalizeTextMessage(markupToText(message.forwardContent.message))
-  } else if (message.forwardedMessage != null && (message.forwardContent?.attachments.length ?? 0) > 0) {
-    intlParamsNotLocalized.message = activity.string.SentAttachments
-  } else {
-    intlParamsNotLocalized.object = hierarchy.getClass(doc._class).label
-    intlParamsNotLocalized.message = activity.string.UpdatedObject
   }
 
   return {
-    title:
-      intlParams.identifier != null
-        ? notification.string.CommonNotificationTitleWithIdentifier
-        : notification.string.CommonNotificationTitle,
-    body: notification.string.MessageNotificationBody,
-    intlParams,
+    intlParams: { ...intlParams, senderName },
     intlParamsNotLocalized
   }
 }
 
-function getUrlPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): UrlPresenter | undefined {
-  return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.UrlPresenter)
+export function hasMessageNotification (context: DocNotifyContext, _id: Ref<ActivityMessage>): boolean {
+  return context.latestNotifications.some((it) => it.type === 'message' && it.messageId === _id)
 }
 
-function getIdentifierPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): IdentifierPresenter | undefined {
-  return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.IdentifierPresenter)
+export function hasReactionNotificationByMessage (context: DocNotifyContext, _id: Ref<ActivityMessage>): boolean {
+  return context.latestNotifications.some((it) => it.type === 'reaction' && it.messageId === _id)
 }
 
-function getTitlePresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): TitlePresenter | undefined {
-  return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.TitlePresenter)
+export function hasMentionNotificationByMessage (context: DocNotifyContext, _id: Ref<ActivityMessage>): boolean {
+  return context.latestNotifications.some((it) => it.type === 'mention' && it.messageId === _id)
 }
 
-export async function getDocTitle (client: Client, doc: Doc): Promise<string | undefined> {
-  if (client.hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
-    const message = doc as ActivityMessage
-    if (message.message != null && !isEmptyMarkup(message.message)) {
-      const text = markupToText(message.message).trim()
-      const normalized = text.length > 50 ? text.slice(0, 50) + '...' : text
-      if (text.length > 0) {
-        return normalized
-      }
-    }
+export function hasReactionNotification (context: DocNotifyContext, _id: Ref<Reaction>): boolean {
+  return context.latestNotifications.some((it) => it.type === 'reaction' && it.id === _id)
+}
 
-    return 'message'
+export function hasUnreadReactionByMessage (context: DocNotifyContext, _id: Ref<ActivityMessage>): boolean {
+  return context.unreadReactions.some((it) => it.attachedTo === _id)
+}
+
+export function hasUnreadReaction (context: DocNotifyContext, _id: Ref<Reaction>): boolean {
+  return context.unreadReactions.some((it) => it.id === _id)
+}
+
+export function hasUnreadMentionByMessage (context: DocNotifyContext, _id: Ref<ActivityMessage>): boolean {
+  return context.unreadMentions.some((it) => it.messageId === _id)
+}
+
+export function hasUnreadMessage (context: DocNotifyContext, _id: Ref<ActivityMessage>): boolean {
+  return context.unreadMessages.some((it) => '_id' in it && it._id === _id)
+}
+
+export function getNotificationsByMessage (context: DocNotifyContext, _id: Ref<ActivityMessage>): ContextNotification[] {
+  return context.latestNotifications.filter(
+    (it) =>
+      (it.type === 'message' && it.messageId === _id) ||
+      (it.type === 'reaction' && it.messageId === _id) ||
+      (it.type === 'mention' && it.messageId === _id)
+  )
+}
+
+export function getMentionNotification (
+  context: DocNotifyContext,
+  _id: Ref<ActivityMessage> | null
+): MentionNotification | undefined {
+  if (_id != null) {
+    return context.latestNotifications.find(
+      (it) => it.type === 'mention' && it.messageId === _id
+    ) as MentionNotification
   }
 
-  const TitlePresenter = getTitlePresenter(doc._class, client.hierarchy)
+  return context.latestNotifications.find((it) => it.type === 'mention' && it.messageId == null) as MentionNotification
+}
 
-  if (TitlePresenter !== undefined) {
-    return await (
-      await getResource(TitlePresenter.presenter)
-    )(doc, {
-      ctx: client.ctx,
-      workspace: client.workspace,
-      hierarchy: client.hierarchy,
-      modelDb: client.model,
-      branding: client.branding ?? null,
-      findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
-    })
-  }
-
-  const clazz = client.hierarchy.getClass(doc._class)
-  if (clazz.titleKey != null) {
-    return (doc as any)[clazz.titleKey] ?? undefined
+export function getEmptyTxCache (): TxCache {
+  return {
+    titleByDoc: new Map(),
+    urlByDoc: new Map(),
+    labelByDoc: new Map(),
+    identifierByDoc: new Map(),
+    iconByDoc: new Map()
   }
 }
 
-export async function getDocIdentifier (client: Client, doc: Doc): Promise<string | undefined> {
-  const IdentifierPresenter = getIdentifierPresenter(doc._class, client.hierarchy)
+export function getUpdateContextTx (
+  context: DocNotifyContext,
+  result: Result,
+  factory: TxFactory
+): TxUpdateDoc<DocNotifyContext> {
+  const current = result.updateContextTx.find((it) => it.objectId === context._id)
 
-  if (IdentifierPresenter === undefined) return
-  return await (
-    await getResource(IdentifierPresenter.presenter)
-  )(doc, {
-    ctx: client.ctx,
-    workspace: client.workspace,
-    hierarchy: client.hierarchy,
-    modelDb: client.model,
-    branding: client.branding ?? null,
-    findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
+  if (current != null) return current
+
+  const updateTx = factory.createTxUpdateDoc(context._class, context.space, context._id, {})
+
+  result.updateContextTx.push(updateTx)
+
+  return updateTx
+}
+
+export function getUpdateOpContextTx (
+  context: DocNotifyContext,
+  result: Result,
+  factory: TxFactory
+): TxUpdateDoc<DocNotifyContext> {
+  const current = result.updateOpContextTx.find((it) => it.objectId === context._id)
+
+  if (current != null) return current
+
+  const updateTx = factory.createTxUpdateDoc(context._class, context.space, context._id, {})
+
+  result.updateOpContextTx.push(updateTx)
+
+  return updateTx
+}
+
+export function getCreateContextTx (
+  objectId: Ref<Doc>,
+  objectClass: Ref<Class<Doc>>,
+  objectSpace: Ref<Space>,
+  receiver: Receiver,
+  result: Result,
+  factory: TxFactory,
+  display: ObjectDisplayData
+): TxCreateDoc<DocNotifyContext> {
+  const current = result.createContextTx.find((it) => it.attributes.user === receiver.account)
+  if (current != null) return current
+
+  const tx = factory.createTxCreateDoc(notification.class.DocNotifyContext, receiver.space, {
+    ...display,
+    user: receiver.account,
+    objectId,
+    objectClass,
+    objectSpace,
+    latestNotifications: [],
+    unreadReactions: [],
+    unreadMentions: [],
+    unreadCommons: [],
+    unreadMessages: [],
+    unreadCount: 0,
+    lastNotify: 0
   })
+
+  result.createContextTx.push(tx)
+  return tx
 }
 
-export async function getDocUrl (client: Client, doc: Doc): Promise<string | undefined> {
-  const UrlPresenter = getUrlPresenter(doc._class, client.hierarchy)
-  if (UrlPresenter === undefined) return
-  return await (
-    await getResource(UrlPresenter.presenter)
-  )(doc, {
-    ctx: client.ctx,
-    workspace: client.workspace,
-    hierarchy: client.hierarchy,
-    modelDb: client.model,
-    branding: client.branding ?? null,
-    findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
-  })
+export async function getObjectDisplayData (
+  client: Client,
+  txCache: TxCache,
+  doc: Doc,
+  account: AccountUuid
+): Promise<ObjectDisplayData> {
+  const title = (await getDocTitle(client, txCache, doc, account)) ?? ''
+  const label = await getDocLabel(client, txCache, doc)
+  const identifier = await getDocIdentifier(client, txCache, doc)
+  const icon = await getDocIcon(client, txCache, doc, account)
+
+  return {
+    objectTitle: title,
+    objectIdentifier: identifier,
+    objectIcon: icon,
+    objectLabel: label
+  }
+}
+
+export function getLastNotify (context: DocNotifyContext): Timestamp {
+  return Math.max(...context.latestNotifications.map((it) => it.createdOn), 0)
 }

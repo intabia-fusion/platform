@@ -14,18 +14,10 @@
 //
 
 import activity, { ActivityMessage } from '@hcengineering/activity'
-import chunter, {
-  Chat,
-  ChatMessage,
-  chunterId,
-  ChunterSpace,
-  DirectMessage,
-  ThreadMessage
-} from '@hcengineering/chunter'
+import chunter, { Chat, ChatMessage, ThreadMessage } from '@hcengineering/chunter'
 import contact, { formatName, type Person } from '@hcengineering/contact'
 import core, {
   Class,
-  concatLink,
   Doc,
   DocumentQuery,
   FindOptions,
@@ -46,43 +38,27 @@ import core, {
   AccountUuid
 } from '@hcengineering/core'
 import notification, { DocNotifyContext } from '@hcengineering/notification'
-import { getMetadata, translate } from '@hcengineering/platform'
 import {
   getAccountBySocialId,
   getAddCollaboratorsTxes,
   getPerson,
   getPersonSpaces
 } from '@hcengineering/server-contact'
-import serverCore, { TriggerControl } from '@hcengineering/server-core'
-import { workbenchId } from '@hcengineering/workbench'
-import { encodeObjectURI } from '@hcengineering/view'
-import { Presenter, PresenterControl } from '@hcengineering/server-activity'
+import { TriggerControl } from '@hcengineering/server-core'
 
-import { JoinChannelTypeMatch } from './utils'
+import {
+  ChannelIconPresenter,
+  ChannelTitlePresenter,
+  ChannelUrlPresenter,
+  DirectIconPresenter,
+  DirectLabelPresenter,
+  DirectTitlePresenter,
+  JoinChannelTypeMatch
+} from './utils'
 import { ChatSearchTitleProvider } from './search'
 
 const updateChatInfoDelay = 24 * 60 * 60 * 1000 // 24 hours
 // const hideChannelDelay = 7 * 24 * 60 * 60 * 1000 // 7 days
-
-const channelTitlePresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
-  const channel = doc as ChunterSpace
-
-  if (channel._class === chunter.class.DirectMessage) {
-    const direct = channel as DirectMessage
-    return direct.type === 'person'
-      ? await translate(chunter.string.Direct, {}, control.branding?.defaultLanguage)
-      : await translate(chunter.string.GroupChat, {}, control.branding?.defaultLanguage)
-  }
-
-  return `#${channel.name}`
-}
-
-const channelURLPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
-  const channel = doc as ChunterSpace
-  const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
-  const path = `${workbenchId}/${control.workspace.url}/${chunterId}/${encodeObjectURI(channel._id, channel._class)}`
-  return concatLink(front, path)
-}
 
 export async function CommentRemove (
   doc: Doc,
@@ -513,9 +489,13 @@ export default async () => ({
   },
   function: {
     CommentRemove,
-    ChannelUrlPresenter: channelURLPresenter,
-    ChannelTitlePresenter: channelTitlePresenter,
+    ChannelUrlPresenter,
+    ChannelTitlePresenter,
+    DirectTitlePresenter,
+    DirectLabelPresenter,
     JoinChannelTypeMatch,
-    ChatSearchTitleProvider
+    ChatSearchTitleProvider,
+    ChannelIconPresenter,
+    DirectIconPresenter
   }
 })

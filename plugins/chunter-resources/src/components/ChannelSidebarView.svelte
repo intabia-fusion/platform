@@ -16,7 +16,7 @@
   import { createQuery } from '@hcengineering/presentation'
   import { Class, Doc, Ref } from '@hcengineering/core'
   import { DocNotifyContext } from '@hcengineering/notification'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { Widget } from '@hcengineering/workbench'
   import { ActivityMessage } from '@hcengineering/activity'
   import { ChatWidgetTab } from '@hcengineering/chunter'
@@ -33,15 +33,16 @@
   export let height: string
   export let width: string
 
-  const notificationsClient = InboxNotificationsClientImpl.getClient()
-  const contextByDocStore = notificationsClient.contextByDoc
+  const inboxClient = NotificationClientImpl.getClient()
+  const contextByDocStore = inboxClient.contextByDoc
   const objectQuery = createQuery()
 
   let object: Doc | undefined = undefined
   let context: DocNotifyContext | undefined = undefined
   let selectedMessageId: Ref<ActivityMessage> | undefined = tab.data.selectedMessageId
 
-  $: context = object ? $contextByDocStore.get(object._id) : undefined
+  $: void inboxClient.loadContextByDoc(object?._id)
+  $: context = object ? ($contextByDocStore.get(object._id) ?? undefined) : undefined
   $: void loadObject(tab.data._id, tab.data._class)
 
   $: threadId = tab.data.thread

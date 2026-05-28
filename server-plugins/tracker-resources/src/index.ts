@@ -38,7 +38,7 @@ import tracker, {
   type Project
 } from '@hcengineering/tracker'
 import { workbenchId } from '@hcengineering/workbench'
-import { Presenter, PresenterControl } from '@hcengineering/server-activity'
+import { StringPresenterFn, PresenterControl, IconPresenterFn, Icon } from '@hcengineering/server-activity'
 
 async function updateSubIssues (
   updateTx: TxUpdateDoc<Issue>,
@@ -53,14 +53,14 @@ async function updateSubIssues (
   })
 }
 
-const issueUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
+const issueUrlPresenter: StringPresenterFn = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const issue = doc as Issue
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const path = `${workbenchId}/${control.workspace.url}/${trackerId}/${issue.identifier}`
   return concatLink(front, path)
 }
 
-const issueIdentifierPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
+const issueIdentifierPresenter: StringPresenterFn = async (doc: Doc, control: PresenterControl): Promise<string> => {
   return await getIssueId(doc as Issue, control)
 }
 
@@ -467,12 +467,24 @@ async function issueLinkIdProvider (issue: Issue): Promise<string> {
   return issue.identifier
 }
 
+const issueIconPresenter: IconPresenterFn<Issue> = async (issue: Issue): Promise<Icon> => {
+  return {
+    asset: tracker.icon.Issue,
+    props: {
+      space: issue.space,
+      kind: issue.kind,
+      status: issue.status
+    }
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
     IssueIdentifierPresenter: issueIdentifierPresenter,
     IssueUrlPresenter: issueUrlPresenter,
-    IssueLinkIdProvider: issueLinkIdProvider
+    IssueLinkIdProvider: issueLinkIdProvider,
+    IssueIconPresenter: issueIconPresenter
   },
   trigger: {
     OnIssueUpdate,

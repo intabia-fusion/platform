@@ -27,7 +27,7 @@
   import { DropdownLabelsIntl, Grid, Label, ModernToggle } from '@hcengineering/ui'
 
   import notification from '../../plugin'
-  import { providersSettings } from '../../utils'
+  import { providersSettings } from '../../stores'
 
   export let group: Ref<NotificationGroup>
   export let settings: Map<Ref<NotificationType>, NotificationTypeSetting[]>

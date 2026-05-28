@@ -16,13 +16,13 @@
 
 import { Employee, Person, PersonSpace } from '@hcengineering/contact'
 import { PersonId, Class, Doc, Mixin, Ref, TxCUD, AccountUuid, Markup } from '@hcengineering/core'
-import { NotificationContent, NotificationType } from '@hcengineering/notification'
+import { CommonNotification, NotificationIntl, NotificationType } from '@hcengineering/notification'
 import { Metadata, Plugin, Resource, plugin } from '@hcengineering/platform'
 import type { TriggerControl, TriggerFunc } from '@hcengineering/server-core'
 import { ActivityMessage } from '@hcengineering/activity'
 
 export const serverNotificationId = 'server-notification' as Plugin
-export { DOMAIN_USER_NOTIFY, DOMAIN_NOTIFICATION, DOMAIN_DOC_NOTIFY } from '@hcengineering/notification'
+export { DOMAIN_USER_NOTIFY, DOMAIN_DOC_NOTIFY } from '@hcengineering/notification'
 
 export interface Receiver {
   account: AccountUuid
@@ -31,6 +31,7 @@ export interface Receiver {
   socialIds: PersonId[]
   space: Ref<PersonSpace>
   online: boolean
+  language: string
 }
 
 export interface Sender {
@@ -52,36 +53,35 @@ export type TypeMatchFunc = (
 ) => Promise<boolean> | boolean
 
 export type TypeMatchFuncResource = Resource<TypeMatchFunc>
-// export type CreateNotificationResult = Omit<
-// Data<CommonInboxNotification>,
-// 'archived' | 'user' | 'allowedProviders' | 'docNotifyContext' | 'isViewed' | 'objectId' | 'objectClass'
-// >
-export type CreateNotificationResult = Record<string, any>
-export type CreateNotificationFunc = (
+export interface CreateNotificationResult {
+  notification: Omit<CommonNotification, 'id' | 'type' | 'createdOn' | 'createdBy'>
+  intl?: Partial<NotificationIntl>
+}
+export type CreateTxNotificationFunc = (
   client: TypeMatchClient,
   tx: TxCUD<Doc>,
   attachedToDoc: Doc | undefined,
   object: Doc,
   receiver: Receiver
 ) => Promise<CreateNotificationResult | undefined>
-export type CreateNotificationResource = Resource<CreateNotificationFunc>
+export type CreateTxNotificationResource = Resource<CreateTxNotificationFunc>
 
 export interface TypeMatch extends NotificationType {
   match?: TypeMatchFuncResource
-  create?: CreateNotificationResource
-  contentProvider?: NotificationContentProviderResource
+  create?: CreateTxNotificationResource
+  intlProvider?: NotificationIntlProviderResource
 }
 
-export type NotificationContentProviderResource = Resource<NotificationContentProvider>
+export type NotificationIntlProviderResource = Resource<NotificationIntlProvider>
 
-export type NotificationContentProvider = (
+export type NotificationIntlProvider = (
   client: TypeMatchClient,
   type: NotificationType,
   typeObject: Doc,
   doc: Doc,
   object: Doc | undefined,
   sender: Sender
-) => Promise<NotificationContent>
+) => Promise<NotificationIntl>
 
 export interface MentionRef {
   markup: Markup
@@ -116,11 +116,11 @@ export default plugin(serverNotificationId, {
     OnAttributeCreate: '' as Resource<TriggerFunc>,
     OnAttributeUpdate: '' as Resource<TriggerFunc>,
     OnDocRemove: '' as Resource<TriggerFunc>,
+    OnDocUpdate: '' as Resource<TriggerFunc>,
     OnDocCreated: '' as Resource<TriggerFunc>,
     OnDocSpaceChanged: '' as Resource<TriggerFunc>,
     OnEmployeeDeactivate: '' as Resource<TriggerFunc>,
-    PushNotificationsHandler: '' as Resource<TriggerFunc>,
-    OnCollaboratorRemoved: '' as Resource<TriggerFunc>
+    PushNotificationsHandler: '' as Resource<TriggerFunc>
   },
   function: {
     IsUserFieldValueTypeMatch: '' as TypeMatchFuncResource,

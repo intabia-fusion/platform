@@ -16,7 +16,7 @@
 import type { Metadata, Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { TriggerFunc } from '@hcengineering/server-core'
-import { Presenter } from '@hcengineering/server-activity'
+import { StringPresenterFn } from '@hcengineering/server-activity'
 
 /**
  * @public
@@ -31,7 +31,7 @@ export default plugin(serverCardId, {
     CommunicationEnabled: '' as Metadata<boolean>
   },
   function: {
-    CardUrlPresenter: '' as Resource<Presenter>
+    CardUrlPresenter: '' as Resource<StringPresenterFn>
   },
   trigger: {
     OnAttribute: '' as Resource<TriggerFunc>,

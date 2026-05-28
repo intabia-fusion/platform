@@ -40,7 +40,7 @@
     "UnpinMessage": "Открепить сообщение",
     "Pinned": "Закреплено",
     "EditMessage": "Редактировать сообщение",
-    "Edited": "отредактировано",
+    "Edited": "изменено",
     "DeleteMessage": "Удалить сообщение",
     "AndYou": "{participants, plural, =0 {Только вы} other {и вы}}",
     "ShowMoreReplies": "{count, plural, one {Показать еще # ответ} few {Показать еще # ответа} other {Показать еще # ответов}}",

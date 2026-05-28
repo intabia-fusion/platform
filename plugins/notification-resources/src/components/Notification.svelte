@@ -7,11 +7,12 @@
   import chunter, { ThreadMessage } from '@hcengineering/chunter'
   import { getResource } from '@hcengineering/platform'
   import activity, { ActivityMessage } from '@hcengineering/activity'
-  import { getClient } from '@hcengineering/presentation'
-  import { pushAvailable, subscribePush } from '../utils'
-  import plugin from '../plugin'
+  import { getClient, playSound } from '@hcengineering/presentation'
   import { onMount } from 'svelte'
   import { Person } from '@hcengineering/contact'
+
+  import { pushAvailable, subscribePush } from '../webpush'
+  import plugin from '../plugin'
 
   export let notification: PlatformNotification
   export let onRemove: () => void
@@ -65,8 +66,8 @@
   }
 
   onMount(async () => {
-    // if (!value.soundAlert) return
-    // await playSound(plugin.sound.InboxNotification)
+    if (!value.soundAlert) return
+    await playSound(plugin.sound.InboxNotification)
   })
 </script>
 

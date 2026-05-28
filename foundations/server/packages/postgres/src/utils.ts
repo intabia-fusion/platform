@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -145,6 +146,8 @@ function parseDataType (type: string): DataType {
       return 'text'
     case 'bigint':
       return 'bigint'
+    case 'integer':
+      return 'integer'
     case 'boolean':
       return 'bool'
     case 'ARRAY':
@@ -160,7 +163,9 @@ async function createTable (client: postgres.Sql, domain: string): Promise<void>
   const fields: string[] = []
   for (const key in schema) {
     const val = schema[key]
-    fields.push(`"${key}" ${val.type} ${val.notNull ? 'NOT NULL' : ''}`)
+    fields.push(
+      `"${key}" ${val.type}${val.check != null ? ` CHECK (${val.check})` : ''} ${val.notNull ? 'NOT NULL' : ''}`
+    )
   }
   const colums = fields.join(', ')
   await client.unsafe(`CREATE TABLE IF NOT EXISTS ${domain} (
@@ -177,7 +182,9 @@ async function createTable (client: postgres.Sql, domain: string): Promise<void>
           CREATE INDEX IF NOT EXISTS ${domain}_${key}__index ON ${domain} ${getIndex(val)} ("${key}")
         `)
     }
-    fields.push(`"${key}" ${val.type} ${val.notNull ? 'NOT NULL' : ''}`)
+    fields.push(
+      `"${key}" ${val.type}${val.check != null ? ` CHECK (${val.check})` : ''} ${val.notNull ? 'NOT NULL' : ''}`
+    )
   }
 
   if (indexes !== undefined) {
@@ -238,6 +245,7 @@ export function convertDoc<T extends Doc> (
         // We missing required field, and we need to add a dummy value for it.
         // Null value is not allowed
         switch (_type.type) {
+          case 'integer':
           case 'bigint':
             extractedFields[key] = 0
             break
@@ -480,7 +488,7 @@ export function parseDocWithProjection<T extends Doc> (
       } else {
         ;(rest as any)[key] = null
       }
-    } else if (schema[key] !== undefined && schema[key].type === 'bigint') {
+    } else if (schema[key] !== undefined && (schema[key].type === 'bigint' || schema[key].type === 'integer')) {
       ;(rest as any)[key] = Number.parseInt((rest as any)[key])
     } else if (schema[key] !== undefined && schema[key].type === 'text[]' && typeof (rest as any)[key] === 'string') {
       ;(rest as any)[key] = decodeArray((rest as any)[key])
@@ -524,7 +532,7 @@ export function parseDoc<T extends Doc> (doc: DBDoc, schema: Schema, keepHash: b
       } else {
         ;(rest as any)[key] = null
       }
-    } else if (schema[key] !== undefined && schema[key].type === 'bigint') {
+    } else if (schema[key] !== undefined && (schema[key].type === 'bigint' || schema[key].type === 'integer')) {
       ;(rest as any)[key] = Number.parseInt((rest as any)[key])
     } else if (schema[key] !== undefined && schema[key].type === 'text[]' && typeof (rest as any)[key] === 'string') {
       ;(rest as any)[key] = decodeArray((rest as any)[key])

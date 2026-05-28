@@ -15,7 +15,7 @@
 <script lang="ts">
   import { Doc, Ref } from '@hcengineering/core'
   import { DocNotifyContext } from '@hcengineering/notification'
-  import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
+  import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { ActivityMessage } from '@hcengineering/activity'
 
   import Channel from './Channel.svelte'
@@ -30,12 +30,13 @@
   export let readonly: boolean = false
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
 
-  const notificationsClient = InboxNotificationsClientImpl.getClient()
-  const contextByDocStore = notificationsClient.contextByDoc
+  const inboxClient = NotificationClientImpl.getClient()
+  const contextByDocStore = inboxClient.contextByDoc
 
   let context: DocNotifyContext | undefined = undefined
 
-  $: context = object ? $contextByDocStore.get(object._id) : undefined
+  $: void inboxClient.loadContextByDoc(object._id)
+  $: context = $contextByDocStore.get(object._id) ?? undefined
 
   $: renderChannel = threadId === undefined
   $: visible = height !== '0px' && width !== '0px'

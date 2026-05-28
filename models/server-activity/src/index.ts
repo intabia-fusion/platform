@@ -18,9 +18,13 @@ import serverCore from '@hcengineering/server-core'
 import core from '@hcengineering/core'
 import serverActivity, {
   type IdentifierPresenter,
-  type Presenter,
+  type StringPresenterFn,
+  type IconPresenterFn,
   type TitlePresenter,
-  type UrlPresenter
+  type UrlPresenter,
+  type IconPresenter,
+  type IntlStringPresenterFn,
+  type LabelPresenter
 } from '@hcengineering/server-activity'
 import { TClass } from '@hcengineering/model-core'
 import activity from '@hcengineering/activity'
@@ -33,21 +37,38 @@ export { serverActivityId } from '@hcengineering/server-activity'
 
 @Mixin(serverActivity.mixin.TitlePresenter, core.class.Class)
 export class TTitlePresenter extends TClass implements TitlePresenter {
-  presenter!: Resource<Presenter>
+  presenter!: Resource<StringPresenterFn>
+  triggerFields!: string[]
+  personalized?: boolean
+}
+
+@Mixin(serverActivity.mixin.LabelPresenter, core.class.Class)
+export class TLabelPresenter extends TClass implements LabelPresenter {
+  presenter!: Resource<IntlStringPresenterFn>
+  triggerFields!: string[]
 }
 
 @Mixin(serverActivity.mixin.IdentifierPresenter, core.class.Class)
 export class TIdentifierPresenter extends TClass implements IdentifierPresenter {
-  presenter!: Resource<Presenter>
+  presenter!: Resource<StringPresenterFn>
+  triggerFields!: string[]
 }
 
 @Mixin(serverActivity.mixin.UrlPresenter, core.class.Class)
 export class TUrlPresenter extends TClass implements UrlPresenter {
-  presenter!: Resource<Presenter>
+  presenter!: Resource<StringPresenterFn>
+  triggerFields!: string[]
+}
+
+@Mixin(serverActivity.mixin.IconPresenter, core.class.Class)
+export class TIconPresenter extends TClass implements IconPresenter {
+  presenter!: Resource<IconPresenterFn>
+  triggerFields!: string[]
+  personalized?: boolean
 }
 
 export function createModel (builder: Builder): void {
-  builder.createModel(TIdentifierPresenter, TUrlPresenter, TTitlePresenter)
+  builder.createModel(TIdentifierPresenter, TUrlPresenter, TTitlePresenter, TIconPresenter, TLabelPresenter)
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverActivity.trigger.HandleCardActivity,

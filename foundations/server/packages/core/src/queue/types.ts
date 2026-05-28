@@ -16,8 +16,6 @@ export enum QueueTopic {
   // A topic about user activity.
   Users = 'users',
 
-  TelegramBot = 'telegramBot',
-
   // A topic about calendar events.
   CalendarEventCUD = 'calendarEventCUD',
 
@@ -39,7 +37,9 @@ export enum QueueTopic {
 
   TimeMachine = 'timeMachine',
 
-  CrmQueue = 'crm'
+  CrmQueue = 'crm',
+
+  UserNotifications = 'user-notifications'
 }
 
 export interface ConsumerHandle {

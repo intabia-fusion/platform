@@ -31,7 +31,8 @@ export function createModel (builder: Builder): void {
   })
 
   builder.mixin(contact.class.Person, core.class.Class, serverActivity.mixin.TitlePresenter, {
-    presenter: serverContact.function.PersonTitlePresenter
+    presenter: serverContact.function.PersonTitlePresenter,
+    triggerFields: ['name']
   })
 
   builder.mixin(contact.class.Organization, core.class.Class, serverActivity.mixin.UrlPresenter, {

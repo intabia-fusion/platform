@@ -44,7 +44,9 @@ import {
   TypeString,
   TypeBoolean,
   type Builder,
-  TypeNumber
+  TypeNumber,
+  ArrOf,
+  TypeRecord
 } from '@hcengineering/model'
 import core, { TAttachedDoc, TClass, TDoc } from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
@@ -80,7 +82,10 @@ import {
   type NotificationProviderDefaults,
   type DocNotificationSetting,
   type DocNotificationMode,
-  type UnreadMessage
+  type UnreadMessage,
+  type UnreadReaction,
+  type CommonNotification,
+  type UnreadMention
 } from '@hcengineering/notification'
 import { type Asset, getEmbeddedLabel, type IntlString, type Resource } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
@@ -90,13 +95,7 @@ import notification from './plugin'
 import { defineNotifications } from './notifications'
 import { defineActions } from './actions'
 
-export {
-  DOMAIN_DOC_NOTIFY,
-  DOMAIN_NOTIFICATION,
-  DOMAIN_USER_NOTIFY,
-  DOMAIN_READ_STATE,
-  notificationId
-} from '@hcengineering/notification'
+export { DOMAIN_DOC_NOTIFY, DOMAIN_USER_NOTIFY, DOMAIN_READ_STATE, notificationId } from '@hcengineering/notification'
 export { notificationOperation } from './migration'
 export { notification as default }
 export { generateClassNotificationTypes } from './notifications'
@@ -194,6 +193,7 @@ export class TNotificationProviderSetting extends TPreference implements Notific
 @Model(notification.class.DocNotificationSetting, preference.class.Preference)
 export class TDocNotificationSetting extends TPreference implements DocNotificationSetting {
   declare attachedTo: Ref<Doc>
+  attachedToClass!: Ref<Class<Doc>>
   account!: AccountUuid
   @Prop(TypeString(), getEmbeddedLabel('mode'))
     mode?: DocNotificationMode
@@ -236,18 +236,24 @@ export class TDocNotifyContext extends TDoc implements DocNotifyContext {
     objectIdentifier?: string
 
   @Prop(TypeString(), core.string.String)
-    objectTitle?: string
+    objectTitle!: string
 
   objectIconProps?: Record<string, any>
 
   @Prop(TypeDate(), core.string.Date)
     lastNotify!: Timestamp
 
-  latestNotifications!: ContextNotification[]
+  @Prop(ArrOf(TypeRecord()), getEmbeddedLabel('latestNotifications'))
+    latestNotifications!: ContextNotification[]
 
-  unreadReactions!: ContextNotification[] // store unread reaction notifications
-  unreadMentions!: ContextNotification[] // store unread mention notifications
-  unreadCommons!: ContextNotification[] // store unread common notifications
+  @Prop(ArrOf(TypeRecord()), getEmbeddedLabel('unreadReactions'))
+    unreadReactions!: UnreadReaction[] // store unread reaction notifications
+
+  @Prop(ArrOf(TypeRecord()), getEmbeddedLabel('unreadMentions'))
+    unreadMentions!: UnreadMention[] // store unread mention notifications
+
+  @Prop(ArrOf(TypeRecord()), getEmbeddedLabel('unreadCommons'))
+    unreadCommons!: CommonNotification[] // store unread common notifications
 
   @Prop(TypeBoolean(), core.string.Boolean)
     unread!: boolean
@@ -255,9 +261,14 @@ export class TDocNotifyContext extends TDoc implements DocNotifyContext {
   @Prop(TypeNumber(), core.string.Number)
     unreadMessagesCount!: number
 
-  unreadMessages!: UnreadMessage[]
+  @Prop(TypeNumber(), core.string.Number)
+    unreadCount!: number
 
-  archived!: boolean
+  @Prop(ArrOf(TypeRecord()), getEmbeddedLabel('unreadMessages'))
+    unreadMessages!: UnreadMessage[]
+
+  @Prop(TypeBoolean(), core.string.Boolean)
+    archived!: boolean
 }
 
 @Model(notification.class.ReadState, core.class.Doc, DOMAIN_READ_STATE)
@@ -322,7 +333,8 @@ export function createModel (builder: Builder): void {
     TNotificationTypeSetting,
     TNotificationProviderDefaults,
     TReadState,
-    TNotificationAppearancePreference
+    TNotificationAppearancePreference,
+    TDocNotificationSetting
   )
 
   builder.mixin(notification.class.BrowserNotification, core.class.Class, core.mixin.TransientConfiguration, {

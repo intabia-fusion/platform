@@ -29,7 +29,7 @@
   import workbench, { Application } from '@hcengineering/workbench'
   import { getResource, translate } from '@hcengineering/platform'
 
-  import { checkPermission, pushAllowed, subscribePush } from '../utils'
+  import { checkPermission, pushAllowed, subscribePush } from '../webpush'
   import Notification from './Notification.svelte'
 
   async function check (allowed: boolean): Promise<void> {

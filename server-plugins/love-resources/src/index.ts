@@ -22,7 +22,8 @@ import core, {
   Doc,
   DocumentUpdate,
   generateId,
-  Ref, Space,
+  Ref,
+  Space,
   Tx,
   TxCreateDoc,
   TxCUD,
@@ -46,7 +47,7 @@ import view from '@hcengineering/view'
 import { workbenchId } from '@hcengineering/workbench'
 import { getAccountBySocialId } from '@hcengineering/server-contact'
 
-import { Presenter, PresenterControl } from '@hcengineering/server-activity'
+import { StringPresenterFn, PresenterControl } from '@hcengineering/server-activity'
 
 export async function OnEmployee (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
@@ -228,7 +229,7 @@ export async function OnParticipantInfo (txes: Tx[], control: TriggerControl): P
   return result
 }
 
-const meetingMinutesUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
+const meetingMinutesUrlPresenter: StringPresenterFn = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const meetingMinutes = doc as MeetingMinutes
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
 

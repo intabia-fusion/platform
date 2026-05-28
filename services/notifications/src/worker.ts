@@ -24,19 +24,14 @@ import core, {
   Ref,
   systemAccountUuid,
   Tx,
-  TxCreateDoc,
   TxCUD,
   TxProcessor,
-  TxRemoveDoc,
-  TxUpdateDoc,
   WorkspaceUuid
 } from '@hcengineering/core'
 import activity from '@hcengineering/activity'
 import { generateToken } from '@hcengineering/server-token'
 import { createRestClient } from '@hcengineering/api-client'
 import { StorageAdapter } from '@hcengineering/storage'
-import notification, { InboxNotification, TxNotificationType } from '@hcengineering/notification'
-import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
 import {
   loadBrandingMap,
   type PlatformQueue,
@@ -46,9 +41,10 @@ import {
   userEvents
 } from '@hcengineering/server-core'
 import { getAccountClient } from '@hcengineering/server-client'
-import { PersonSpace } from '@hcengineering/contact'
 import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
 import platform from '@hcengineering/platform'
+import notification, { TxNotificationType, QueueUserNotificationMessage } from '@hcengineering/notification'
+import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
 
 import Workspace from './workspace'
 import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils'
@@ -72,6 +68,7 @@ export class Worker {
 
   private readonly pendingWorkspaces = new Map<WorkspaceUuid, Promise<Workspace | undefined>>()
   private readonly userEventProducer: PlatformQueueProducer<QueueUserMessage>
+  private readonly producer: PlatformQueueProducer<QueueUserNotificationMessage>
 
   private aiBotAccountUuid?: AccountUuid
 
@@ -91,6 +88,8 @@ export class Worker {
       ctx.newChild('user-event-producer', {}, { span: false }),
       QueueTopic.Users
     )
+
+    this.producer = queue.getProducer<QueueUserNotificationMessage>(ctx, QueueTopic.UserNotifications)
 
     this.storage = buildStorageFromConfig(storageConfigFrom(config.StorageConfig))
     this.txTypes = this.sysModel
@@ -174,9 +173,10 @@ export class Worker {
 
     const tx = _tx as TxCUD<Doc>
 
-    if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.InboxNotification)) {
-      await this.updateUserNotifyStatus(ctx, ws, tx as TxCUD<InboxNotification>)
-    }
+    // TODO: FIXME
+    // if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.InboxNotification)) {
+    //   await this.updateUserNotifyStatus(ctx, ws, tx as TxCUD<InboxNotification>)
+    // }
 
     const exists = this.workspaces.get(ws)
     const isTrigger = isTxTrigger(this.sysHierarchy, tx, this.triggerClasses, this.txTypes)
@@ -191,62 +191,62 @@ export class Worker {
     await workspace.tx(tx)
   }
 
-  private async getTxUser (
-    ctx: MeasureContext,
-    wsUuid: WorkspaceUuid,
-    _tx: TxCUD<InboxNotification>
-  ): Promise<AccountUuid | undefined> {
-    if (_tx._class === core.class.TxCreateDoc) {
-      return TxProcessor.createDoc2Doc(_tx as TxCreateDoc<InboxNotification>).user
-    } else if (_tx._class === core.class.TxRemoveDoc) {
-      const tx = _tx as TxRemoveDoc<InboxNotification>
-      const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
-      const space = await wsClient?.cache.findPersonSpace(tx.objectSpace as Ref<PersonSpace>)
-      return space?.account
-    } else if (_tx._class === core.class.TxUpdateDoc) {
-      const tx = _tx as TxUpdateDoc<InboxNotification>
-      if (tx.operations.isViewed == null) return undefined
-      const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
-      const space = await wsClient?.cache.findPersonSpace(tx.objectSpace as Ref<PersonSpace>)
-      return space?.account
-    }
-    return undefined
-  }
+  // private async getTxUser (
+  //   ctx: MeasureContext,
+  //   wsUuid: WorkspaceUuid,
+  //   _tx: TxCUD<InboxNotification>
+  // ): Promise<AccountUuid | undefined> {
+  //   if (_tx._class === core.class.TxCreateDoc) {
+  //     return TxProcessor.createDoc2Doc(_tx as TxCreateDoc<InboxNotification>).user
+  //   } else if (_tx._class === core.class.TxRemoveDoc) {
+  //     const tx = _tx as TxRemoveDoc<InboxNotification>
+  //     const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
+  //     const space = await wsClient?.cache.findPersonSpace(tx.objectSpace as Ref<PersonSpace>)
+  //     return space?.account
+  //   } else if (_tx._class === core.class.TxUpdateDoc) {
+  //     const tx = _tx as TxUpdateDoc<InboxNotification>
+  //     if (tx.operations.isViewed == null) return undefined
+  //     const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
+  //     const space = await wsClient?.cache.findPersonSpace(tx.objectSpace as Ref<PersonSpace>)
+  //     return space?.account
+  //   }
+  //   return undefined
+  // }
 
-  private async updateUserNotifyStatus (
-    ctx: MeasureContext,
-    wsUuid: WorkspaceUuid,
-    _tx: TxCUD<InboxNotification>
-  ): Promise<void> {
-    const user = await this.getTxUser(ctx, wsUuid, _tx)
-    if (user == null || user === this.aiBotAccountUuid || user === systemAccountUuid) return
-
-    if (_tx._class === core.class.TxCreateDoc) {
-      const tx = _tx as TxCreateDoc<InboxNotification>
-      const doc = TxProcessor.createDoc2Doc(tx)
-
-      if (doc.isViewed || doc.archived) return
-
-      this.scheduleStatusUpdate(user, wsUuid, true)
-    } else {
-      if (_tx._class === core.class.TxUpdateDoc) {
-        const tx = _tx as TxUpdateDoc<InboxNotification>
-        if (tx.operations.isViewed == null) return
-      }
-
-      const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
-      if (wsClient == null) return
-
-      const unread = await wsClient.client.findOne(
-        notification.class.InboxNotification,
-        { user, isViewed: false, archived: false },
-        { limit: 1 }
-      )
-      const notify = unread != null
-
-      this.scheduleStatusUpdate(user, wsUuid, notify)
-    }
-  }
+  // private async updateUserNotifyStatus (
+  //   ctx: MeasureContext,
+  //   wsUuid: WorkspaceUuid,
+  //   _tx: TxCUD<InboxNotification>
+  // ): Promise<void> {
+  //   const user = await this.getTxUser(ctx, wsUuid, _tx)
+  //   if (user == null || user === this.aiBotAccountUuid || user === systemAccountUuid) return
+  //
+  //   if (_tx._class === core.class.TxCreateDoc) {
+  //     const tx = _tx as TxCreateDoc<InboxNotification>
+  //     const doc = TxProcessor.createDoc2Doc(tx)
+  //
+  //     if (doc.isViewed || doc.archived) return
+  //
+  //     this.scheduleStatusUpdate(user, wsUuid, true)
+  //   } else {
+  //     if (_tx._class === core.class.TxUpdateDoc) {
+  //       const tx = _tx as TxUpdateDoc<InboxNotification>
+  //       if (tx.operations.isViewed == null) return
+  //     }
+  //
+  //     const wsClient = await this.getWorkspaceClient(ctx, wsUuid)
+  //     if (wsClient == null) return
+  //
+  //     const unread = await wsClient.client.findOne(
+  //       notification.class.InboxNotification,
+  //       { user, isViewed: false, archived: false },
+  //       { limit: 1 }
+  //     )
+  //     const notify = unread != null
+  //
+  //     this.scheduleStatusUpdate(user, wsUuid, notify)
+  //   }
+  // }
 
   private scheduleStatusUpdate (user: AccountUuid, wsUuid: WorkspaceUuid, hasUnread: boolean): void {
     let userMap = this.pendingStatusUpdates.get(user)
@@ -289,7 +289,8 @@ export class Worker {
           this.storage,
           client,
           branding,
-          this.txTypes
+          this.txTypes,
+          this.producer
         )
 
         this.workspaces.set(ws, workspace)
@@ -313,6 +314,6 @@ export class Worker {
     clearInterval(this.clearInterval)
     clearInterval(this.flushInterval)
     this.pendingStatusUpdates.clear()
-    await Promise.allSettled([this.userEventProducer.close])
+    await Promise.allSettled([this.userEventProducer.close, this.producer.close])
   }
 }

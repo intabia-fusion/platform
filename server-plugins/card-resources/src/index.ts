@@ -68,7 +68,7 @@ import {
   getClassNotificationGroup,
   generateAttributeNotificationType
 } from '@hcengineering/server-notification-resources'
-import { Presenter, PresenterControl } from '@hcengineering/server-activity'
+import { StringPresenterFn, PresenterControl } from '@hcengineering/server-activity'
 
 async function OnAttribute (ctx: TxCreateDoc<AnyAttribute>[], control: TriggerControl): Promise<Tx[]> {
   const attr = TxProcessor.createDoc2Doc(ctx[0])
@@ -961,7 +961,7 @@ export async function OnCardTag (ctx: TxMixin<Card, Card>[], control: TriggerCon
   return res
 }
 
-const CardUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
+const CardUrlPresenter: StringPresenterFn = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const card = doc as Card
 
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
