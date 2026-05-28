@@ -3,6 +3,9 @@
   "version": "0.7.372",
   "main": "dist/main/electron.js",
   "template": "@hcengineering/webpack-package",
+  "fastBuild": {
+    "extraHashFiles": ["webpack.config.js", ".env"]
+  },
   "scripts": {
     "build": "compile",
     "build:watch": "tsc",
