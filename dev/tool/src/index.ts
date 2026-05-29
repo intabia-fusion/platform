@@ -1762,6 +1762,83 @@ export function devTool (
     })
 
   program
+    .command('stats-analytics')
+    .description(
+      'show the most problematic (slowest/most-called) operations from the stats service. <target> is either a platform base url (e.g. https://platform.intabia.ru, STATS_URL is resolved from its config.json) or a direct stats endpoint'
+    )
+    .option('-n, --limit <limit>', 'Number of entries to show', '30')
+    .option('-s, --sort <sort>', 'Sort key: time | count | avg', 'time')
+    .option('--source <source>', 'Filter source: all | client | server', 'all')
+    .option('--url <target>', 'Platform URL')
+    .action(async (opt: { limit: string, sort: string, source: string, url?: string }) => {
+      const base = (opt.url ?? process.env.PLATFORM_URL ?? '').replace('ws:/', 'http:/').replace(/\/+$/, '')
+      if (base === '') {
+        console.log('Please provide url for a platform to retrieve statistics')
+        process.exit(1)
+      }
+      let statsUrl = base
+      // Try to resolve STATS_URL from the platform config.json. If target is already
+      // a stats endpoint config.json won't exist and we fall back to the target as-is.
+      try {
+        const cfgResp = await fetch(`${base}/config.json`)
+        if (cfgResp.ok) {
+          const cfg = (await cfgResp.json()) as { STATS_URL?: string }
+          if (cfg.STATS_URL !== undefined && cfg.STATS_URL !== '') {
+            statsUrl = cfg.STATS_URL.replace(/\/+$/, '')
+            console.log(`resolved STATS_URL from config.json: ${statsUrl}`)
+          }
+        }
+      } catch {
+        // not a platform base url, use target directly
+      }
+
+      const serverSecret = process.env.SERVER_SECRET
+      if (serverSecret === undefined) {
+        console.error('please provide server secret')
+        process.exit(1)
+      }
+
+      const token = generateToken(systemAccountUuid, undefined, { admin: 'true' }, serverSecret)
+
+      const limit = Math.min(Math.max(parseInt(opt.limit), 1), 1000)
+      const url = `${statsUrl}/api/v1/analytics?limit=${limit}&sort=${opt.sort}&source=${opt.source}&token=${token}`
+      console.log(`GET ${statsUrl}/api/v1/analytics?limit=${limit}&sort=${opt.sort}&source=${opt.source}&token=<jwt>`)
+      const resp = await fetch(url)
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '')
+        console.error(`failed to fetch analytics: ${resp.status} ${resp.statusText}\n${text}`)
+        console.error(
+          '404 usually means: invalid token (SERVER_SECRET does not match the deployed stats secret) or the stats pod predates the /analytics endpoint.'
+        )
+        return
+      }
+      const body = (await resp.json()) as {
+        entries: Array<{
+          service: string
+          path: string
+          operations: number
+          total: number
+          avg: number
+          top: Array<{ value: number, time?: number, params?: Record<string, any> }>
+        }>
+        generatedAt: number
+        services: number
+      }
+      console.log(
+        `Top ${body.entries.length} operations by ${opt.sort} across ${body.services} service(s), source=${opt.source}, generated at ${new Date(body.generatedAt).toISOString()}\n`
+      )
+      console.log('  #  total(ms)    avg(ms)     ops  service / path')
+      console.log('---  ---------  ---------  ------  -------------------------------------------')
+      body.entries.forEach((e, i) => {
+        const rank = String(i + 1).padStart(3)
+        const total = e.total.toFixed(2).padStart(9)
+        const avg = e.avg.toFixed(2).padStart(9)
+        const ops = String(e.operations).padStart(6)
+        console.log(`${rank}  ${total}  ${avg}  ${ops}  ${e.service} / ${e.path}`)
+      })
+    })
+
+  program
     .command('generate-persons <workspace>')
     .description('generate a random persons into workspace')
     .option('--admin', 'Generate token with admin access', false)
