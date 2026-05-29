@@ -580,6 +580,7 @@ export async function sendOtpEmail (
 
   const to = email
 
+  ctx.info('Sending OTP email to mail queue', { to })
   await notificationProducer?.send(
     ctx,
     '' as WorkspaceUuid,
@@ -596,6 +597,7 @@ export async function sendOtpEmail (
     ],
     to
   )
+  ctx.info('OTP email queued to mail service', { to })
 }
 
 export async function isOtpValid (db: AccountDB, socialId: PersonId, code: string): Promise<boolean> {

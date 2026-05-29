@@ -140,6 +140,7 @@ function createNotificationHandler (
     if (message.value.type === 'email') {
       const emailMessage = createEmailMessage(message.value.data as EmailNotification)
 
+      ctx.info('Received email from notification queue', { to: emailMessage.to, mode: config.mode })
       switch (config.mode) {
         case 'queue':
           await handleQueueMode(ctx, client, emailMessage)
@@ -163,9 +164,11 @@ async function handleQueueMode (
   emailMessage: SendMailOptions
 ): Promise<void> {
   try {
+    ctx.info('Forwarding email to SMTP provider', { to: emailMessage.to })
     await client?.sendMessage(emailMessage, ctx)
+    ctx.info('Email forwarded to SMTP provider', { to: emailMessage.to })
   } catch (err: any) {
-    ctx.error(err.message)
+    ctx.error('Failed to forward email to SMTP provider', { to: emailMessage.to, error: err.message })
   }
 }
 
@@ -188,7 +191,9 @@ async function handleServerMode (
   }, 1000)
 
   try {
+    measureCtx.info('Forwarding email to clisr mail client', { to: emailMessage.to })
     await server.request(measureCtx, 'send', [emailMessage])
+    measureCtx.info('Email forwarded to clisr mail client', { to: emailMessage.to })
   } finally {
     clearInterval(heartbeatInterval)
   }

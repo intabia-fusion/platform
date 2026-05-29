@@ -861,7 +861,8 @@ describe('account utils', () => {
 
     describe('otp utils', () => {
       const mockCtx = {
-        error: jest.fn()
+        error: jest.fn(),
+        info: jest.fn()
       } as unknown as MeasureContext
 
       const mockBranding: Branding = {
