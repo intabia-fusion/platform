@@ -558,6 +558,25 @@ export async function OnUserMeetingInvite (txes: Tx[], control: TriggerControl):
           const owners = target.owners ?? []
           const isOwner = senderAccount !== undefined && owners.includes(senderAccount)
           if (!isOwner) continue
+          // Grow members up-front so the recipient can see the private meeting
+          // space immediately. The owner-caller is allowed to do this (mirrors
+          // SpaceSecurityMiddleware), and without it the recipient's accept
+          // races a membership write that never happens and the join times out
+          // with "MeetingMinutes not found".
+          const recipient = await control.findAll<Person>(
+            control.ctx,
+            contact.class.Person,
+            { _id: invite.to },
+            { limit: 1 }
+          )
+          const recipientAccount = recipient[0]?.personUuid as AccountUuid | undefined
+          if (recipientAccount !== undefined && !target.members.includes(recipientAccount)) {
+            result.push(
+              control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, target.space, target._id, {
+                $push: { members: recipientAccount }
+              })
+            )
+          }
         }
       }
 

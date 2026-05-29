@@ -19,6 +19,7 @@
     "ChangeFloor": "Trocar andar",
     "IsKnocking": "{name} está batendo na porta...",
     "KnockDeclined": "Sua solicitação foi recusada",
+    "OnlyOwnersCanInvite": "Apenas o proprietário da reunião pode convidar para uma reunião privada",
     "NoHostOffice": "A chamada não pode iniciar",
     "NoHostOfficeBody": "Você não tem um escritório pessoal para hospedar esta reunião.",
     "CallDeclined": "Chamada recusada",

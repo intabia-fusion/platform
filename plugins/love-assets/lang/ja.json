@@ -19,6 +19,7 @@
     "ChangeFloor": "フロアを変更",
     "IsKnocking": "{name} がノックしています...",
     "KnockDeclined": "ノックが拒否されました",
+    "OnlyOwnersCanInvite": "プライベートミーティングへの招待は会議のオーナーのみが行えます",
     "NoHostOffice": "通話を開始できません",
     "NoHostOfficeBody": "このミーティングをホストする個人オフィスがありません。",
     "CallDeclined": "通話が拒否されました",

@@ -101,6 +101,7 @@ const love = plugin(loveId, {
     KnockAction: '' as IntlString,
     KnockingTo: '' as IntlString,
     KnockDeclined: '' as IntlString,
+    OnlyOwnersCanInvite: '' as IntlString,
     NoHostOffice: '' as IntlString,
     NoHostOfficeBody: '' as IntlString,
     CallDeclined: '' as IntlString,

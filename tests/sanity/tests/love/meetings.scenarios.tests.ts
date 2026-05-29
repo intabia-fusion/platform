@@ -154,12 +154,14 @@ export function registerScenariosTests (): void {
         // meeting widget on page3.
         await expect(page3.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 10000 })
 
-        // user3 tries to invite user1 (Appleseed) — request goes through but server
-        // trigger should silently drop it (private meeting + not-owner sender).
+        // user3 tries to invite user1 (Appleseed) into the now-private meeting.
+        // user3 is a member but NOT an owner, so `sendInvites` refuses on the
+        // client (warning toast) and creates no invite-request at all.
         await inviteByLastNames(page3, ['Appleseed'])
 
-        // Sender (user3) sees their outgoing trigger (request was created locally)
-        // but the receiver (user1) must NOT get any incoming trigger.
+        // No invite-request was created: sender (user3) gets no outgoing trigger
+        // and the receiver (user1) gets no incoming trigger.
+        await expect(page3.locator('[data-id="outgoing-invite-trigger"]')).toBeHidden({ timeout: 15000 })
         await expect(page1.locator('[data-id="incoming-invite-trigger"]')).toBeHidden({ timeout: 15000 })
       } finally {
         await closeMeetingContexts([
