@@ -631,8 +631,8 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
       livekit-client:
-        specifier: ^2.18.0
-        version: 2.18.0
+        specifier: ^2.19.0
+        version: 2.19.0
       svelte:
         specifier: ^4.2.20
         version: 4.2.20
@@ -22556,13 +22556,13 @@ importers:
         version: link:../workbench-resources
       '@livekit/krisp-noise-filter':
         specifier: ^0.4.1
-        version: 0.4.1(livekit-client@2.18.0)
+        version: 0.4.1(livekit-client@2.19.0)
       '@livekit/track-processors':
         specifier: ^0.7.2
-        version: 0.7.2(livekit-client@2.18.0)
+        version: 0.7.2(livekit-client@2.19.0)
       livekit-client:
-        specifier: ^2.18.0
-        version: 2.18.0
+        specifier: ^2.19.0
+        version: 2.19.0
       svelte:
         specifier: ^4.2.20
         version: 4.2.20
@@ -42947,11 +42947,11 @@ packages:
   '@livekit/protocol@1.43.4':
     resolution: {integrity: sha512-mJDFt/p+G2OKmIGizYiACK7Jb06wd42m9Pe7Y9cAOfdYpvwCqHlw4yul5Z7iRU3VKPsYJ27WL3oeHEoiu+HuAA==}
 
-  '@livekit/protocol@1.44.0':
-    resolution: {integrity: sha512-/vfhDUGcUKO8Q43r6i+5FrDhl5oZjm/X3U4x2Iciqvgn5C8qbj+57YPcWSJ1kyIZm5Cm6AV2nAPjMm3ETD/iyg==}
-
   '@livekit/protocol@1.45.1':
     resolution: {integrity: sha512-sr6p0TwKofHO5KW6kUzjq4hH2de4Al5scQo824xFnyI1XYo0qQn6fTG+bdr+Uj4EedjYAOqjezwUju5OErVIRA==}
+
+  '@livekit/protocol@1.45.8':
+    resolution: {integrity: sha512-Q+l57E7w/xxOBFVWzdX5rkAZO7ffyF+rlDzNUYq2SU114+5aTyCq+PK4unaEVDNd4952Af7wteKr3sOgasGuaA==}
 
   '@livekit/rtc-node-darwin-arm64@0.13.24':
     resolution: {integrity: sha512-gm5xOpGu6Rj/mNU2jEijcGhQGN2GdxV2dNYQm3NCKN7ow0BmMFZvXSCAWOWf+9oTutPXHnrc7EN1mt2v+lfqhA==}
@@ -49114,8 +49114,8 @@ packages:
   linkifyjs@4.3.2:
     resolution: {integrity: sha512-NT1CJtq3hHIreOianA8aSXn6Cw0JzYOuDQbOrSPe7gqFnCpKP++MQe3ODgO3oh2GJFORkAAdqredOa60z63GbA==}
 
-  livekit-client@2.18.0:
-    resolution: {integrity: sha512-wjH4y0rw5fnkPmmaxutPhD4XcAq6goQszS8lw9PEpGXVwiRE6sI/ZH+mOT/s8AHJnEC3tjmfiMZ4MQt8BlaWew==}
+  livekit-client@2.19.0:
+    resolution: {integrity: sha512-aolY1XDAtx0nHKBNm29W9OhzBnSz1CP5kq3phvRhFfi1NbvMXs8tcACjAkZTnIKgihkp+BiJScZZ3tZv0Gz8sA==}
     peerDependencies:
       '@types/dom-mediacapture-record': ^1
 
@@ -52118,8 +52118,8 @@ packages:
       webpack-cli:
         optional: true
 
-  webrtc-adapter@9.0.3:
-    resolution: {integrity: sha512-5fALBcroIl31OeXAdd1YUntxiZl1eHlZZWzNg3U4Fn+J9/cGL3eT80YlrsWGvj2ojuz1rZr2OXkgCzIxAZ7vRQ==}
+  webrtc-adapter@9.0.5:
+    resolution: {integrity: sha512-U9vjByy/sK2OMXu5mmfuZFKTMIUQe34c0JXRO+oDrxJTsntdYT2iIFwYMOV7HhMTuktcZLGf2W1N/OcSf9ssWg==}
     engines: {node: '>=6.0.0', npm: '>=3.10.0'}
 
   websocket-driver@0.7.4:
@@ -54309,10 +54309,10 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@livekit/krisp-noise-filter@0.4.1(livekit-client@2.18.0)':
+  '@livekit/krisp-noise-filter@0.4.1(livekit-client@2.19.0)':
     dependencies:
       '@livekit/mutex': 1.1.1
-      livekit-client: 2.18.0
+      livekit-client: 2.19.0
 
   '@livekit/mutex@1.1.1': {}
 
@@ -54320,11 +54320,11 @@ snapshots:
     dependencies:
       '@bufbuild/protobuf': 1.10.1
 
-  '@livekit/protocol@1.44.0':
+  '@livekit/protocol@1.45.1':
     dependencies:
       '@bufbuild/protobuf': 1.10.1
 
-  '@livekit/protocol@1.45.1':
+  '@livekit/protocol@1.45.8':
     dependencies:
       '@bufbuild/protobuf': 1.10.1
 
@@ -54363,10 +54363,10 @@ snapshots:
       glob: 13.0.6
       typescript: 5.9.3
 
-  '@livekit/track-processors@0.7.2(livekit-client@2.18.0)':
+  '@livekit/track-processors@0.7.2(livekit-client@2.19.0)':
     dependencies:
       '@mediapipe/tasks-vision': 0.10.14
-      livekit-client: 2.18.0
+      livekit-client: 2.19.0
 
   '@livekit/typed-emitter@3.0.0': {}
 
@@ -61989,17 +61989,17 @@ snapshots:
 
   linkifyjs@4.3.2: {}
 
-  livekit-client@2.18.0:
+  livekit-client@2.19.0:
     dependencies:
       '@livekit/mutex': 1.1.1
-      '@livekit/protocol': 1.44.0
+      '@livekit/protocol': 1.45.8
       events: 3.3.0
       jose: 6.1.1
       loglevel: 1.9.2
       sdp-transform: 2.15.0
       tslib: 2.8.1
       typed-emitter: 2.1.0
-      webrtc-adapter: 9.0.3
+      webrtc-adapter: 9.0.5
 
   livekit-server-sdk@2.15.0:
     dependencies:
@@ -65598,7 +65598,7 @@ snapshots:
       - esbuild
       - uglify-js
 
-  webrtc-adapter@9.0.3:
+  webrtc-adapter@9.0.5:
     dependencies:
       sdp: 3.2.1
 
