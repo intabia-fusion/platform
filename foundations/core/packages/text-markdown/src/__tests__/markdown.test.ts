@@ -1100,6 +1100,24 @@ describe('markupToMarkdown', () => {
           }
         ]
       }
+    },
+    {
+      // Hard break uses two-space line break, not a literal backslash
+      name: 'bold then hard break',
+      markdown: '**Цель:**  \nСоздать',
+      markup: {
+        type: MarkupNodeType.doc,
+        content: [
+          {
+            type: MarkupNodeType.paragraph,
+            content: [
+              { type: MarkupNodeType.text, text: 'Цель:', marks: [{ type: MarkupMarkType.bold }] },
+              { type: MarkupNodeType.hard_break },
+              { type: MarkupNodeType.text, text: 'Создать' }
+            ]
+          }
+        ]
+      }
     }
   ]
 

@@ -258,7 +258,7 @@ export const storeNodes: Record<string, NodeProcessor> = {
     const content = nodeContent(parent)
     for (let i = index + 1; i < content.length; i++) {
       if (content[i].type !== node.type) {
-        state.write('\\\n')
+        state.write('  \n')
         return
       }
     }

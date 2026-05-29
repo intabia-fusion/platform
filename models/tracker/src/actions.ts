@@ -350,6 +350,25 @@ export function createActions (builder: Builder, issuesId: string, componentsId:
   })
 
   createAction(builder, {
+    action: view.actionImpl.CopyDocumentMarkdown,
+    actionProps: {
+      contentClass: tracker.class.Issue,
+      contentField: 'description'
+    },
+    label: view.string.CopyDocumentMarkdown,
+    icon: view.icon.Print,
+    input: 'focus',
+    category: tracker.category.Tracker,
+    target: tracker.class.Issue,
+    query: {},
+    context: {
+      mode: ['context', 'browser'],
+      application: tracker.app.Tracker,
+      group: 'tools'
+    }
+  })
+
+  createAction(builder, {
     ...actionTemplates.open,
     actionProps: {
       component: tracker.component.EditIssue
