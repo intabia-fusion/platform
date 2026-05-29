@@ -56,7 +56,7 @@ services:
     image: cockroachdb/cockroach:v24.1.2
     command: start-single-node --insecure
     ports:
-      - '26258:26257'
+      - "26258:26257"
     restart: unless-stopped
   postgres:
     image: postgres:18.1
@@ -95,7 +95,7 @@ services:
     ports:
       - 19093:19093
     healthcheck:
-      test: ['CMD', 'rpk', 'cluster', 'info']
+      test: ["CMD", "rpk", "cluster", "info"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -118,13 +118,13 @@ services:
     depends_on:
       - redpanda
   minio:
-    image: 'minio/minio'
+    image: "minio/minio"
     command: server /data --address ":9000" --console-address ":9001"
     expose:
       - 9000
       - 9001
     healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
+      test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       retries: 10
   elastic-plugins:
@@ -137,7 +137,7 @@ services:
     volumes:
       - elastic-plugins:/mnt/plugins
   elastic:
-    image: 'elasticsearch:8.19.1'
+    image: "elasticsearch:8.19.1"
     command: >
       /bin/sh -c "./bin/elasticsearch-plugin list | grep -q analysis-icu || ./bin/elasticsearch-plugin install --batch analysis-icu; exec /usr/local/bin/docker-entrypoint.sh eswrapper -Ediscovery.type=single-node -Expack.security.enabled=false -Expack.security.http.ssl.enabled=false"
     expose:
@@ -216,7 +216,6 @@ services:
     image: nginx:alpine
     depends_on:
       - front0
-      - front1
       - account
       - transactor0
       - collaborator0
@@ -239,50 +238,12 @@ services:
       - minio
       - elastic
       - collaborator0
-      - collaborator1
       - stats
       - transactor0
-      - transactor1
     volumes:
       - ./branding-test.json:/app/dist/branding-test.json
     environment:
       - SERVER_PORT=8083
-      - SERVER_SECRET=secret
-      - ACCOUNTS_URL_INTERNAL=http://account:3003
-      - ACCOUNTS_URL=http://localhost:8083/_account
-      - UPLOAD_URL=/files
-      - ELASTIC_URL=http://elastic:9200
-      - GMAIL_URL=http://localhost:8088
-      - CALENDAR_URL=http://localhost:8095
-      - REKONI_URL=http://localhost:8083/_rekoni
-      - TELEGRAM_URL=http://localhost:8086
-      - STORAGE_CONFIG=${STORAGE_CONFIG}
-      - BRANDING_URL=http://localhost:8083/branding-test.json
-      - STATS_URL=http://stats:4901
-      - STATS_API=http://localhost:8083/_stats
-      - STREAM_URL=http://localhost:8083/_stream/recording
-      - DATALAKE_URL=http://localhost:8083/_datalake
-      - USE_OTP=false
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-      - ANALYTICS_COLLECTOR_URL=http://localhost:4018
-      - LOVE_ENDPOINT=http://localhost:8083/_love
-      - LIVEKIT_WS=ws://localhost:7890
-  front1:
-    image: intabiafusion/front
-    pull_policy: never
-    links:
-      - account
-      - minio
-      - elastic
-      - collaborator0
-      - collaborator1
-      - stats
-      - transactor0
-      - transactor1
-    volumes:
-      - ./branding-test.json:/app/dist/branding-test.json
-    environment:
-      - SERVER_PORT=8084
       - SERVER_SECRET=secret
       - ACCOUNTS_URL_INTERNAL=http://account:3003
       - ACCOUNTS_URL=http://localhost:8083/_account
@@ -340,67 +301,14 @@ services:
       - RATE_LIMIT_WINDOW=1000
       - WS_SLOW_CLIENT_DROP=${WS_SLOW_CLIENT_DROP:-1}
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-  transactor1:
-    image: intabiafusion/transactor
-    pull_policy: never
-    depends_on:
-      redpanda:
-        condition: service_started
-    links:
-      - elastic
-      - minio
-      - rekoni
-      - cockroach
-      - postgres
-      - account
-      - stats
-      - redpanda
-    volumes:
-      - ./branding-test.json:/var/cfg/branding.json
-    environment:
-      - QUEUE_CONFIG=${QUEUE_CONFIG}
-      - REGION=
-      - SERVER_PORT=3335
-      - SERVER_SECRET=secret
-      - DB_URL=${DB_PG_URL}
-      - METRICS_CONSOLE=false
-      - METRICS_FILE=metrics.txt
-      - STORAGE_CONFIG=${STORAGE_CONFIG}
-      - FRONT_URL=http://localhost:8083
-      - ACCOUNTS_URL=http://account:3003
-      - LAST_NAME_FIRST=true
-      - BRANDING_PATH=/var/cfg/branding.json
-      - FULLTEXT_URL=http://fulltext:4710
-      - STATS_URL=http://stats:4901
-      - ENABLE_COMPRESSION=true
-      - RATE_LIMIT_MAX=25000
-      - RATE_LIMIT_WINDOW=1000
-      - WS_SLOW_CLIENT_DROP=${WS_SLOW_CLIENT_DROP:-1}
-      # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
   collaborator0:
     image: intabiafusion/collaborator
     pull_policy: never
     links:
       - minio
       - transactor0
-      - transactor1
     environment:
       - COLLABORATOR_PORT=3079
-      - SECRET=secret
-      - ACCOUNTS_URL=http://account:3003
-      - STORAGE_CONFIG=${STORAGE_CONFIG}
-      - FULLTEXT_URL=http://fulltext:4710
-      - STATS_URL=http://stats:4901
-      # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-    restart: unless-stopped
-  collaborator1:
-    image: intabiafusion/collaborator
-    links:
-      - minio
-      - transactor0
-      - transactor1
-    environment:
-      - COLLABORATOR_PORT=3080
       - SECRET=secret
       - ACCOUNTS_URL=http://account:3003
       - STORAGE_CONFIG=${STORAGE_CONFIG}
@@ -456,7 +364,7 @@ services:
     image: intabiafusion/analytics-collector
     pull_policy: never
     extra_hosts:
-      - 'localhost:host-gateway'
+      - "localhost:host-gateway"
     links:
       - stats
       - account
@@ -543,7 +451,7 @@ services:
     image: intabiafusion/love
     pull_policy: never
     extra_hosts:
-      - 'host.docker.internal:host-gateway'
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy
@@ -583,9 +491,9 @@ services:
   livekit-egress-test:
     image: livekit/egress
     extra_hosts:
-      - 'host.docker.internal:host-gateway'
+      - "host.docker.internal:host-gateway"
     volumes:
-      - './livekit-egress-test-config.yaml:/out/config.yaml:ro'
+      - "./livekit-egress-test-config.yaml:/out/config.yaml:ro"
     environment:
       - EGRESS_CONFIG_FILE=/out/config.yaml
     depends_on:

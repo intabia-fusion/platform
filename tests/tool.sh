@@ -3,7 +3,7 @@
 export MODEL_VERSION=$(node ../common/scripts/show_version.js)
 export STORAGE_CONFIG="minio|localhost:9002?accessKey=minioadmin&secretKey=minioadmin"
 export ACCOUNTS_URL=http://localhost:3003
-export REGION_CONFIG_JSON='{"regions":{"":{"transactors":[{"external":"ws://localhost:3334","internal":"ws://localhost:3334"},{"external":"ws://localhost:3335","internal":"ws://localhost:3335"}],"collaborators":[{"external":"ws://localhost:3079","internal":"ws://localhost:3079"},{"external":"ws://localhost:3080","internal":"ws://localhost:3080"}]}}}'
+export REGION_CONFIG_JSON='{"regions":{"":{"transactors":[{"external":"ws://localhost:3334","internal":"ws://localhost:3334"}],"collaborators":[{"external":"ws://localhost:3079","internal":"ws://localhost:3079"}]}}}'
 export ACCOUNT_DB_URL=mongodb://localhost:27018
 export MONGO_URL=mongodb://localhost:27018
 export DB_URL=mongodb://localhost:27018

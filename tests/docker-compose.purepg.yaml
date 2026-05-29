@@ -9,11 +9,6 @@ services:
       - DB_URL=${DB_PURE_PG_URL}
       - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
       - POSTGRES_OPTIONS={"connection":{"application_name":"transactor0"},"max":100}
-  transactor1:
-    environment:
-      - DB_URL=${DB_PURE_PG_URL}
-      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
-      - POSTGRES_OPTIONS={"connection":{"application_name":"transactor1"},"max":100}
   workspace:
     environment:
       - DB_URL=${DB_PURE_PG_URL}
@@ -30,17 +25,7 @@ services:
       - UPLOAD_URL=http://localhost:4031/upload/form-data/:workspace
       - DATALAKE_URL=http://localhost:4031
       - PREVIEW_URL=http://localhost:4031
-  front1:
-    environment:
-      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
-      - FILES_URL=http://localhost:4031/blob/:workspace/:blobId/:filename
-      - UPLOAD_URL=http://localhost:4031/upload/form-data/:workspace
-      - DATALAKE_URL=http://localhost:4031
-      - PREVIEW_URL=http://localhost:4031
   collaborator0:
-    environment:
-      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
-  collaborator1:
     environment:
       - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
   datalake:

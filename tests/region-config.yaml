@@ -1,6 +1,5 @@
 # Region configuration for integration tests
-# Two transactors + two collaborators to verify hash-based routing
-# Nginx load-balances two front instances on port 8083
+# Single transactor + collaborator; single front instance on port 8083
 
 regions:
   '':
@@ -8,10 +7,6 @@ regions:
     transactors:
       - external: ws://localhost:8083/_tr0
         internal: ws://transactor0:3334
-      - external: ws://localhost:8083/_tr1
-        internal: ws://transactor1:3335
     collaborators:
       - external: ws://localhost:8083/_cl0
         internal: ws://collaborator0:3079
-      - external: ws://localhost:8083/_cl1
-        internal: ws://collaborator1:3080
