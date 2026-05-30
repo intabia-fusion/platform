@@ -29,7 +29,8 @@
     getPlatformColorDef,
     resizeObserver,
     showPopup,
-    themeStore
+    themeStore,
+    tooltip
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import tags from '../plugin'
@@ -208,6 +209,19 @@
                   on:click={() => {
                     checkSelected(selected, element)
                   }}
+                  use:tooltip={element !== undefined
+                    ? {
+                        label: tags.string.TagTooltip,
+                        props: {
+                          text: `${element?.title} ${
+                            element?.description !== undefined && element?.description.length > 0
+                              ? ': ' + element?.description
+                              : ''
+                          }`
+                        },
+                        direction: 'left'
+                      }
+                    : {}}
                 >
                   <div class="tag" style:background-color={color.color} />
                   <span class="lines-limit-2 flex-grow">{element.title}</span>
