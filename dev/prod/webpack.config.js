@@ -326,7 +326,7 @@ const cacheConfig = (name) => useCache
       config: [__filename, path.resolve(__dirname, 'package.json')]
     }
   }
-  : false
+  : { type: 'memory' }
 
 const snapshotConfig = {
   managedPaths: [path.resolve(__dirname, '../../node_modules'), path.resolve(__dirname, 'node_modules')],
