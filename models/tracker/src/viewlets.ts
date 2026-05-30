@@ -148,7 +148,7 @@ export function issueConfig (
       label: tracker.string.Title,
       presenter: tracker.component.TitlePresenter,
       props: compact ? { shouldUseMargin: true, showParent: false } : {},
-      displayProps: { key: key + 'title' }
+      displayProps: { key: key + 'title', minWidth: '5rem' }
     },
     {
       key: '',
@@ -163,7 +163,7 @@ export function issueConfig (
       key: 'labels',
       presenter: tags.component.LabelsPresenter,
       displayProps: { compression: true },
-      props: { kind: 'list', full: false }
+      props: { kind: 'list', full: false, minItems: 2 }
     },
     {
       key: '',

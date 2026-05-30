@@ -26,6 +26,7 @@
   export let onClick: (() => void) | undefined = undefined
   export let disabled: boolean = false
   export let maxWidth: string | undefined = undefined
+  export let minWidth: string | undefined = undefined
 </script>
 
 {#if value}
@@ -34,6 +35,7 @@
     class:with-margin={shouldUseMargin}
     class:list={kind === 'list'}
     style:max-width={maxWidth}
+    style:min-width={minWidth}
     title={value.title}
   >
     <DocNavLink object={value} {onClick} component={tracker.component.EditIssue} shrink={1} {disabled} colorInherit>

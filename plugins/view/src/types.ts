@@ -660,6 +660,8 @@ export interface DisplayProps {
   grow?: boolean
   dividerBefore?: boolean // should show divider before
   custom?: boolean // render as custom attribute label
+  minWidth?: string
+  maxWidth?: string
 }
 
 /**
