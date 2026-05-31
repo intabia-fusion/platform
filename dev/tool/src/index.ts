@@ -66,6 +66,7 @@ import { buildStorageFromConfig, createStorageFromConfig, storageConfigFromEnv }
 import { program, type Command } from 'commander'
 import { updateField } from './workspace'
 import { dumpIndexes, syncIndexes } from './indexes'
+import { reportSlowSql } from './slowsql'
 
 import { RatingCalculator, ratingEvents, type QueueRatingMessage } from '@hcengineering/pod-rating'
 
@@ -121,7 +122,7 @@ import { type CardID } from '@hcengineering/communication-types'
 import { sendTransactorEvent } from '@hcengineering/server-tool'
 import { existsSync } from 'fs'
 import { mkdir, writeFile } from 'fs/promises'
-import { dirname } from 'path'
+import { dirname, join } from 'path'
 import { restoreMarkupRefs } from './markup'
 import { restoreGithubIntegrations } from './restoreGithub'
 import { migrateWorkspaceChat } from './communication'
@@ -1770,7 +1771,8 @@ export function devTool (
     .option('-s, --sort <sort>', 'Sort key: time | count | avg', 'time')
     .option('--source <source>', 'Filter source: all | client | server', 'all')
     .option('--url <target>', 'Platform URL')
-    .action(async (opt: { limit: string, sort: string, source: string, url?: string }) => {
+    .option('--json <file>', 'Dump full analytics JSON (with top results/params) to a file instead of printing a table')
+    .action(async (opt: { limit: string, sort: string, source: string, url?: string, json?: string }) => {
       const base = (opt.url ?? process.env.PLATFORM_URL ?? '').replace('ws:/', 'http:/').replace(/\/+$/, '')
       if (base === '') {
         console.log('Please provide url for a platform to retrieve statistics')
@@ -1824,6 +1826,11 @@ export function devTool (
         generatedAt: number
         services: number
       }
+      if (opt.json !== undefined) {
+        await writeFile(opt.json, JSON.stringify(body, null, 2))
+        console.log(`wrote ${body.entries.length} entries to ${opt.json}`)
+        return
+      }
       console.log(
         `Top ${body.entries.length} operations by ${opt.sort} across ${body.services} service(s), source=${opt.source}, generated at ${new Date(body.generatedAt).toISOString()}\n`
       )
@@ -1837,6 +1844,126 @@ export function devTool (
         console.log(`${rank}  ${total}  ${avg}  ${ops}  ${e.service} / ${e.path}`)
       })
     })
+
+  program
+    .command('stats-dump')
+    .description(
+      'Dump raw per-service statistics trees (with query params) from the stats service into a directory. <target> is a platform base url (STATS_URL resolved from config.json) or a direct stats endpoint'
+    )
+    .option('-o, --out <dir>', 'Output directory', './profiles/stats-dump')
+    .option('--filter <substr>', 'Only dump services whose name contains this substring', '')
+    .option('--url <target>', 'Platform URL')
+    .action(async (opt: { out: string, filter: string, url?: string }) => {
+      const base = (opt.url ?? process.env.PLATFORM_URL ?? '').replace('ws:/', 'http:/').replace(/\/+$/, '')
+      if (base === '') {
+        console.log('Please provide url for a platform to retrieve statistics')
+        process.exit(1)
+      }
+      let statsUrl = base
+      try {
+        const cfgResp = await fetch(`${base}/config.json`)
+        if (cfgResp.ok) {
+          const cfg = (await cfgResp.json()) as { STATS_URL?: string }
+          if (cfg.STATS_URL !== undefined && cfg.STATS_URL !== '') {
+            statsUrl = cfg.STATS_URL.replace(/\/+$/, '')
+            console.log(`resolved STATS_URL from config.json: ${statsUrl}`)
+          }
+        }
+      } catch {
+        // not a platform base url, use target directly
+      }
+
+      const serverSecret = process.env.SERVER_SECRET
+      if (serverSecret === undefined) {
+        console.error('please provide server secret')
+        process.exit(1)
+      }
+      const token = generateToken(systemAccountUuid, undefined, { admin: 'true' }, serverSecret)
+
+      const overviewResp = await fetch(`${statsUrl}/api/v1/overview?token=${token}`)
+      if (!overviewResp.ok) {
+        console.error(`failed to fetch overview: ${overviewResp.status} ${overviewResp.statusText}`)
+        return
+      }
+      const overview = (await overviewResp.json()) as { data?: Record<string, unknown> }
+      const allServices = Object.keys(overview.data ?? {})
+      const services = opt.filter === '' ? allServices : allServices.filter((s) => s.includes(opt.filter))
+      if (services.length === 0) {
+        console.error(`no services match filter "${opt.filter}" (total ${allServices.length})`)
+        return
+      }
+
+      await mkdir(opt.out, { recursive: true })
+      await writeFile(join(opt.out, 'overview.json'), JSON.stringify(overview, null, 2))
+      console.log(`dumping ${services.length}/${allServices.length} service(s) to ${opt.out}`)
+
+      let ok = 0
+      let failed = 0
+      for (const service of services) {
+        try {
+          const resp = await fetch(`${statsUrl}/api/v1/statistics?name=${encodeURIComponent(service)}&token=${token}`)
+          if (!resp.ok) {
+            console.error(`  ${service}: ${resp.status} ${resp.statusText}`)
+            failed++
+            continue
+          }
+          const json = await resp.text()
+          const file = join(opt.out, `${service.replace(/[^A-Za-z0-9._-]/g, '_')}.json`)
+          await writeFile(file, json)
+          console.log(`  ${service} -> ${file} (${json.length} bytes)`)
+          ok++
+        } catch (err: any) {
+          console.error(`  ${service}: ${err?.message ?? String(err)}`)
+          failed++
+        }
+      }
+      console.log(`done: ${ok} dumped, ${failed} failed`)
+    })
+
+  program
+    .command('stats-slow-sql')
+    .description(
+      'Find the slowest SQL queries from stats topResults, grouped by normalized shape. Source is --url (live) or --from <dir> (a stats-dump directory)'
+    )
+    .option('--url <target>', 'Platform URL (live fetch)')
+    .option('--from <dir>', 'Read already dumped per-service JSON files from a directory (stats-dump output)')
+    .option('--filter <substr>', 'Only include services whose name contains this substring', '')
+    .option('-n, --limit <limit>', 'Number of groups to show', '30')
+    .option('-s, --sort <sort>', 'Sort key: max | sum | count | avg', 'max')
+    .option('--json <file>', 'Write full grouped result (with sample SQL) to a file instead of a table')
+    .option('--indexes <file>', 'YAML index dump (from dump-indexes) to check whether queries are covered')
+    .option('--missing-only', 'With --indexes: show only query shapes missing a leading-column index', false)
+    .action(
+      async (opt: {
+        url?: string
+        from?: string
+        filter: string
+        limit: string
+        sort: string
+        json?: string
+        indexes?: string
+        missingOnly: boolean
+      }) => {
+        const sort = (['max', 'sum', 'count', 'avg'].includes(opt.sort) ? opt.sort : 'max') as
+          | 'max'
+          | 'sum'
+          | 'count'
+          | 'avg'
+        const serverSecret = process.env.SERVER_SECRET
+        await reportSlowSql({
+          url: opt.url ?? process.env.PLATFORM_URL,
+          from: opt.from,
+          filter: opt.filter,
+          limit: Math.min(Math.max(parseInt(opt.limit), 1), 1000),
+          sort,
+          json: opt.json,
+          indexes: opt.indexes,
+          missingOnly: opt.missingOnly,
+          serverSecret,
+          makeToken: () => generateToken(systemAccountUuid, undefined, { admin: 'true' }, serverSecret ?? '')
+        })
+      }
+    )
 
   program
     .command('generate-persons <workspace>')
