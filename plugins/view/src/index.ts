@@ -53,6 +53,7 @@ import {
   ObjectIdentifier,
   ObjectPanel,
   ObjectPresenter,
+  SidebarObjectPreview,
   ObjectTitle,
   ObjectTooltip,
   ObjectValidator,
@@ -114,6 +115,7 @@ const view = plugin(viewId, {
     SortFuncs: '' as Ref<Mixin<ClassSortFuncs>>,
     AllValuesFunc: '' as Ref<Mixin<AllValuesFunc>>,
     ObjectPanel: '' as Ref<Mixin<ObjectPanel>>,
+    SidebarObjectPreview: '' as Ref<Mixin<SidebarObjectPreview>>,
     LinkProvider: '' as Ref<Mixin<LinkProvider>>,
     LinkIdProvider: '' as Ref<Mixin<LinkIdProvider>>,
     SpacePresenter: '' as Ref<Mixin<SpacePresenter>>,
@@ -162,6 +164,7 @@ const view = plugin(viewId, {
     // Edit document
     Open: '' as Ref<Action>,
     OpenInNewTab: '' as Ref<Action>,
+    OpenInSidebar: '' as Ref<Action>,
     RemoveRelation: '' as Ref<Action>,
 
     CopyLink: '' as Ref<Action<Doc, any>>,
@@ -195,10 +198,12 @@ const view = plugin(viewId, {
     ReadOnlyNotification: '' as AnyComponent,
     ForbiddenNotification: '' as AnyComponent,
     DatePresenter: '' as AnyComponent,
-    DateEditor: '' as AnyComponent
+    DateEditor: '' as AnyComponent,
+    SidebarPreviewWidget: '' as AnyComponent
   },
   ids: {
-    IconWithEmoji: '' as Asset
+    IconWithEmoji: '' as Asset,
+    PreviewWidget: '' as Ref<Doc>
   },
   string: {
     CustomizeView: '' as IntlString,
@@ -222,6 +227,7 @@ const view = plugin(viewId, {
     Assigned: '' as IntlString,
     Open: '' as IntlString,
     OpenInNewTab: '' as IntlString,
+    OpenInSidebar: '' as IntlString,
     Created: '' as IntlString,
     Delete: '' as IntlString,
     Then: '' as IntlString,
@@ -447,7 +453,8 @@ const view = plugin(viewId, {
       // If defined, documents will be set into value
       valueKey?: string
     }>,
-    Delete: '' as ViewAction
+    Delete: '' as ViewAction,
+    OpenInSidebar: '' as ViewAction
   }
 })
 export default view

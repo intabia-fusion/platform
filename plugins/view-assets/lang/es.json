@@ -24,6 +24,7 @@
     "ArchiveConfirm": "¿Desea archivar {count, plural, =1 {este objeto} other {# objetos}}?",
     "Open": "Abrir",
     "OpenInNewTab": "Abrir en una nueva pestaña",
+    "OpenInSidebar": "Abrir en la barra lateral",
     "Assignees": "Asignados",
     "Labels": "Etiquetas",
     "MoveLeft": "Mover a la izquierda",

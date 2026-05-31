@@ -24,6 +24,7 @@
     "ArchiveConfirm": "Möchten Sie {count, plural, =1 {dieses Objekt} other {diese # Objekte}} archivieren?",
     "Open": "Öffnen",
     "OpenInNewTab": "In neuem Tab öffnen",
+    "OpenInSidebar": "In Seitenleiste öffnen",
     "Assignees": "Zugewiesene Personen",
     "Labels": "Bezeichnungen",
     "MoveLeft": "Nach links verschieben",

@@ -48,7 +48,7 @@ import {
   selectionLimit,
   selectionStore
 } from './selection'
-import { deleteObjects, getObjectId, getObjectLinkFragment, restrictionStore } from './utils'
+import { deleteObjects, getObjectId, getObjectLinkFragment, openDocInSidebar, restrictionStore } from './utils'
 import workbenchPlugin from '@hcengineering/workbench'
 import converter from '@hcengineering/converter'
 import { viewletContextStore } from './viewletContextStore'
@@ -364,16 +364,16 @@ function ShowActions (doc: Doc | Doc[] | undefined, evt: Event): void {
   showPopup(view.component.ActionsPopup, { viewContext: $contextStore.getLastContext() }, 'top')
 }
 
-function ShowPreview (doc: Doc | Doc[] | undefined, evt: Event): void {
-  previewDocument.update((old) => {
-    const d = Array.isArray(doc) ? doc[0] : doc
-    if (old?._id === d?._id) {
-      return undefined
-    }
-    return d
-  })
+function OpenInSidebar (doc: Doc | Doc[] | undefined, evt: Event): void {
+  const d = Array.isArray(doc) ? doc[0] : doc
+  if (d !== undefined) {
+    void openDocInSidebar(d)
+  }
   evt.preventDefault()
 }
+
+// Space key preview opens the doc in the sidebar, same as the OpenInSidebar action.
+const ShowPreview = OpenInSidebar
 
 async function Open (
   doc: Doc,
@@ -770,6 +770,7 @@ export const actionImpl = {
   ShowPreview,
   Open,
   OpenInNewTab,
+  OpenInSidebar,
   UpdateDocument,
   ShowPanel,
   ShowPopup,

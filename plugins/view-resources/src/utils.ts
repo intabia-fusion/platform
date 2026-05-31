@@ -72,6 +72,7 @@ import presentation, {
   type KeyedAttribute
 } from '@hcengineering/presentation'
 import { type CollaborationUser } from '@hcengineering/text-editor'
+import workbench, { type Widget, type WidgetTab } from '@hcengineering/workbench'
 import {
   ErrorPresenter,
   getColorNumberByText,
@@ -275,6 +276,18 @@ export async function getObjectPreview (client: Client, _class: Ref<Class<Obj>>)
   const hierarchy = client.getHierarchy()
   const presenterMixin = hierarchy.classHierarchyMixin(_class, view.mixin.PreviewPresenter)
   return presenterMixin?.presenter
+}
+
+/**
+ * Resolve the component used to preview a Doc of `_class` in the right sidebar.
+ * SidebarObjectPreview override -> ObjectPanel -> EditDoc fallback.
+ * @public
+ */
+export function getSidebarObjectComponent (hierarchy: Hierarchy, _class: Ref<Class<Doc>>): AnyComponent {
+  const sidebar = hierarchy.classHierarchyMixin(_class, view.mixin.SidebarObjectPreview)
+  if (sidebar !== undefined) return sidebar.component
+  const panel = hierarchy.classHierarchyMixin(_class, view.mixin.ObjectPanel)
+  return panel?.component ?? view.component.EditDoc
 }
 
 export function getAttrTypePresenter (hierarchy: Hierarchy, type: Type<any>): AnyComponent | undefined {
@@ -1455,6 +1468,33 @@ export async function openDoc (hierarchy: Hierarchy, object: Doc): Promise<void>
   const comp = panelComponent?.component ?? view.component.EditDoc
   const loc = await getObjectLinkFragment(hierarchy, object, {}, comp)
   navigate(loc)
+}
+
+/**
+ * Open `doc` in the right sidebar preview widget, reusing a single 'preview' tab
+ * so repeated previews / arrow navigation replace content in place.
+ * @public
+ */
+export async function openDocInSidebar (doc: Doc): Promise<void> {
+  const client = getClient()
+  const widget = client
+    .getModel()
+    .findAllSync(workbench.class.Widget, { _id: view.ids.PreviewWidget as Ref<Widget> })[0]
+  if (widget === undefined) return
+
+  const name = (await getDocTitle(client, doc._id, doc._class, doc)) ?? doc._class
+  const icon = classIcon(client, doc._class)
+
+  const tab: WidgetTab = {
+    id: 'preview',
+    objectId: doc._id,
+    objectClass: doc._class,
+    name,
+    icon
+  }
+
+  const createWidgetTab = await getResource(workbench.function.CreateWidgetTab)
+  await createWidgetTab(widget, tab, false)
 }
 
 export async function openDocFromRef<T extends Doc = Doc> (_class: Ref<Class<T>>, _id: Ref<T>): Promise<boolean> {

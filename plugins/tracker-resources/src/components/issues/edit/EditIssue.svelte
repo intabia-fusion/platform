@@ -40,7 +40,13 @@
     navigate
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import { DocNavLink, ParentsNavigator, showMenu, RelationsEditor } from '@hcengineering/view-resources'
+  import {
+    DocNavLink,
+    ParentsNavigator,
+    showMenu,
+    RelationsEditor,
+    openDocInSidebar
+  } from '@hcengineering/view-resources'
   import ProjectPresenter from '../../projects/ProjectPresenter.svelte'
   import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import { Analytics } from '@hcengineering/analytics'
@@ -58,6 +64,8 @@
   export let _class: Ref<Class<Issue>>
   export let embedded: boolean = false
   export let readonly: boolean = false
+  export let allowClose: boolean = !embedded
+  export let isSidebar: boolean = false
 
   let lastId: Ref<Issue> | undefined
 
@@ -195,7 +203,7 @@
   }
 </script>
 
-{#if !embedded}
+{#if !embedded && !isSidebar}
   <FocusHandler {manager} isEnabled={isContextEnabled} />
   <ActionContext
     context={{
@@ -209,8 +217,7 @@
     object={issue}
     isHeader={false}
     withoutInput={readonly}
-    allowClose={!embedded}
-    isAside={true}
+    {allowClose}
     isSub={false}
     {embedded}
     withoutActivity={false}
@@ -262,6 +269,20 @@
     </svelte:fragment>
 
     <svelte:fragment slot="utils">
+      {#if !embedded && issue}
+        <Button
+          icon={view.icon.DetailsFilled}
+          iconProps={{ size: 'medium' }}
+          kind={'icon'}
+          dataId={'btnOpenInSidebar'}
+          showTooltip={{ label: view.string.OpenInSidebar }}
+          on:click={() => {
+            if (issue !== undefined) {
+              void openDocInSidebar(issue)
+            }
+          }}
+        />
+      {/if}
       {#if !readonly}
         <Button
           icon={IconMoreH}
@@ -382,7 +403,7 @@
   </Panel>
 {/if}
 
-<style>
+<style lang="scss">
   .breadcrumb-separator {
     margin: 0 0.5rem;
     color: var(--theme-caption-color);

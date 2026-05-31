@@ -24,6 +24,7 @@
     "ArchiveConfirm": "{count, plural, =1 {オブジェクト} other {# 個のオブジェクト}}をアーカイブしますか？",
     "Open": "開く",
     "OpenInNewTab": "新しいタブで開く",
+    "OpenInSidebar": "サイドバーで開く",
     "Assignees": "担当者",
     "Labels": "ラベル",
     "MoveLeft": "左に移動",

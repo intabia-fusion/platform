@@ -859,6 +859,14 @@ export interface ObjectPanel extends Class<Doc> {
   component: AnyComponent
 }
 
+/**
+ * Per-class override of the component shown when a Doc is previewed in the right sidebar.
+ * @public
+ */
+export interface SidebarObjectPreview extends Class<Doc> {
+  component: AnyComponent
+}
+
 // Temp workaround for cards-based apps navigation
 export interface CustomObjectLinkProvider extends Class<Doc> {
   match: Resource<(doc: Doc) => boolean>

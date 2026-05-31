@@ -17,7 +17,7 @@
   import presentation, { NavLink, getClient, createQuery, MessageBox } from '@hcengineering/presentation'
   import { AnyComponent, getPanelURI, locationToUrl, showPopup } from '@hcengineering/ui'
   import view from '../plugin'
-  import { getObjectLinkFragment, restrictionStore } from '../utils'
+  import { getObjectLinkFragment, openDocInSidebar, restrictionStore } from '../utils'
   import { getMetadata } from '@hcengineering/platform'
 
   export let object: Doc | undefined
@@ -82,6 +82,15 @@
       canSubmit: false
     })
   }
+
+  // Option/Alt + click opens the object in the right sidebar instead of navigating
+  function onAltClick (event: MouseEvent): void {
+    if (event.altKey && object !== undefined && !_disabled) {
+      event.preventDefault()
+      event.stopPropagation()
+      void openDocInSidebar(object)
+    }
+  }
 </script>
 
 {#if broken}
@@ -91,22 +100,32 @@
     <slot />
   </span>
 {:else}
-  <NavLink
-    disabled={_disabled}
-    {onClick}
-    {noUnderline}
-    {inline}
-    {shrink}
-    {href}
-    {colorInherit}
-    {accent}
-    {noOverflow}
-    {inlineReference}
-    {transparent}
-    {inlineBlock}
-    {noSelect}
-    {title}
-  >
-    <slot />
-  </NavLink>
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
+  <span class="contents" on:click|capture={onAltClick}>
+    <NavLink
+      disabled={_disabled}
+      {onClick}
+      {noUnderline}
+      {inline}
+      {shrink}
+      {href}
+      {colorInherit}
+      {accent}
+      {noOverflow}
+      {inlineReference}
+      {transparent}
+      {inlineBlock}
+      {noSelect}
+      {title}
+    >
+      <slot />
+    </NavLink>
+  </span>
 {/if}
+
+<style lang="scss">
+  .contents {
+    display: contents;
+  }
+</style>

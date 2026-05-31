@@ -33,7 +33,7 @@
   import { createEventDispatcher, onDestroy } from 'svelte'
 
   import { DocNavLink, ParentsNavigator, getDocAttrsInfo, getDocLabel, getDocMixins, showMenu, parseLinkId } from '..'
-  import { getCollectionCounter } from '../utils'
+  import { getCollectionCounter, openDocInSidebar } from '../utils'
   import DocAttributeBar from './DocAttributeBar.svelte'
   import RelationsEditor from './RelationsEditor.svelte'
 
@@ -42,6 +42,7 @@
   export let embedded: boolean = false
   export let readonly: boolean = false
   export let selectedAside: boolean | undefined = undefined
+  export let allowClose: boolean = !embedded
 
   let realObjectClass: Ref<Class<Doc>> = _class
   let lastId: Ref<Doc> | undefined
@@ -242,7 +243,7 @@
   <Panel
     {object}
     isHeader={mainEditor?.pinned ?? false}
-    allowClose={!embedded}
+    {allowClose}
     isAside={true}
     {embedded}
     {selectedAside}
@@ -277,6 +278,18 @@
         extension={view.extensions.EditDocTitleExtension}
         props={{ size: 'medium', kind: 'ghost', _id, _class, value: object, readonly }}
       />
+      {#if !embedded && object}
+        <Button
+          icon={view.icon.DetailsFilled}
+          iconProps={{ size: 'medium' }}
+          kind={'icon'}
+          dataId={'btnOpenInSidebar'}
+          showTooltip={{ label: view.string.OpenInSidebar }}
+          on:click={() => {
+            void openDocInSidebar(object)
+          }}
+        />
+      {/if}
       {#if !readonly}
         <Button
           icon={IconMoreH}

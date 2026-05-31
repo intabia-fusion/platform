@@ -788,4 +788,18 @@ export function createActions (builder: Builder, issuesId: string, componentsId:
     },
     tracker.action.EditRelatedTargets
   )
+
+  createAction(
+    builder,
+    {
+      action: view.actionImpl.OpenInSidebar,
+      label: view.string.OpenInSidebar,
+      icon: view.icon.DetailsFilled,
+      input: 'focus',
+      category: view.category.Editor,
+      target: tracker.class.Issue,
+      context: { mode: ['context', 'browser'], group: 'create' }
+    },
+    view.action.OpenInSidebar
+  )
 }

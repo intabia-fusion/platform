@@ -67,6 +67,7 @@ import IdPresenter from './components/IdPresenter.svelte'
 import ReadOnlyNotification from './components/ReadOnlyNotification.svelte'
 import RolePresenter from './components/RolePresenter.svelte'
 import SearchSelector from './components/SearchSelector.svelte'
+import SidebarPreviewWidget from './components/SidebarPreviewWidget.svelte'
 import SpaceHeader from './components/SpaceHeader.svelte'
 import SpacePresenter from './components/SpacePresenter.svelte'
 import SpaceRefPresenter from './components/SpaceRefPresenter.svelte'
@@ -304,6 +305,7 @@ export default async (): Promise<Resources> => ({
     RolePresenter,
     ObjectPresenter,
     EditDoc,
+    SidebarPreviewWidget,
     HTMLPresenter,
     IntlStringPresenter,
     GithubPresenter,
