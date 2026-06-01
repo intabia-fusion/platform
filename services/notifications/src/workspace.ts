@@ -56,14 +56,14 @@ import {
 } from '@hcengineering/middleware'
 
 import config from './config'
-import WsCache from './cache'
+import WorkspaceCache from './cache'
 import { Client, Result, TxCache } from './types'
 import { emptyResult, getEmptyTxCache, getResultTxes, isEmptyResult } from './utils'
 import { handleMessage } from './module/message'
 import { handleTxNotification } from './module/tx'
 
 class Workspace {
-  public readonly cache: WsCache
+  public readonly cache: WorkspaceCache
 
   private inProgress = false
   private lastUpdate: Timestamp | undefined = Date.now()
@@ -84,7 +84,7 @@ class Workspace {
     private readonly producer: PlatformQueueProducer<QueueNotificationMessage>
   ) {
     this.client = this.getClient()
-    this.cache = new WsCache(this.ctx, this.client)
+    this.cache = new WorkspaceCache(this.ctx, this.client)
   }
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
