@@ -435,7 +435,7 @@ A list of closed updated issues`
 
     const md = serializeMessage(msg, 'ref://', 'http://')
 
-    expect(md).toEqual('foo\\\nbaz')
+    expect(md).toEqual('foo  \nbaz')
   })
 
   it('Check hardbreaks with spaces', () => {
@@ -448,7 +448,7 @@ A list of closed updated issues`
 
     const md = serializeMessage(msg, 'ref://', 'http://')
 
-    expect(md).toEqual('foo\\\nbaz')
+    expect(md).toEqual('foo  \nbaz')
   })
 
   it('Check softbreaks', () => {
@@ -650,7 +650,7 @@ A list of closed updated issues`
       ]
     }
     const md = serializeMessage(doc, 'ref://', 'http://')
-    expect(md).toEqual('# Hello\\\nWorld')
+    expect(md).toEqual('# Hello  \nWorld')
   })
   it('Check inline html - 1', () => {
     const t1 = '<div><a href="bar">*foo*</a></div>'
@@ -842,7 +842,7 @@ A list of closed updated issues`
     }
     const msg = serializeMessage(node, 'ref://', 'http://')
 
-    expect(msg).toEqual('* test1 \\\n  *Italic*\n* test2 **BOLD**')
+    expect(msg).toEqual('* test1   \n  *Italic*\n* test2 **BOLD**')
   })
   it('check serialize throw unsupported', () => {
     const node: MarkupNode = {
