@@ -50,7 +50,7 @@ import {
   getMentionNotification,
   hasMessageNotification,
   getAttachments
-} from '../utils'
+} from '../utils/utils'
 import { pushNotification } from './notification'
 
 export async function handleMention (

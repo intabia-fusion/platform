@@ -35,7 +35,7 @@ import {
   hasReactionNotification,
   hasUnreadReaction,
   toNotificationMessage
-} from '../utils'
+} from '../utils/utils'
 import { pushNotification } from './notification'
 
 export async function handleReaction (

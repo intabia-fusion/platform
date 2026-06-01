@@ -43,7 +43,7 @@ import {
   getTypeMatchClient,
   isMatchedTxType,
   isMuted
-} from '../utils'
+} from '../utils/utils'
 import { pushNotification } from './notification'
 import { handleMention } from './mention'
 

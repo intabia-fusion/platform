@@ -58,7 +58,7 @@ import {
 import config from './config'
 import WorkspaceCache from './cache'
 import { Client, Result, TxCache } from './types'
-import { emptyResult, getEmptyTxCache, getResultTxes, isEmptyResult } from './utils'
+import { emptyResult, getEmptyTxCache, getResultTxes, isEmptyResult } from './utils/utils'
 import { handleMessage } from './module/message'
 import { handleTxNotification } from './module/tx'
 

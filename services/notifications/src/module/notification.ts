@@ -24,7 +24,8 @@ import notificationPlugin, {
   CommonNotification,
   UnreadMention,
   PushSubscription,
-  getNotificationMessageId
+  getNotificationMessageId,
+  translateNotification
 } from '@hcengineering/notification'
 import { Class, Doc, Ref, Space } from '@hcengineering/core'
 import { Receiver } from '@hcengineering/server-notification'
@@ -34,11 +35,10 @@ import { Client, ObjectDisplayData, NotifyProviders, Result } from '../types'
 import {
   getCreateContextTx,
   getUpdateContextTx,
-  translateNotification,
   getNotificationUrl,
   getDomain,
   getNotificationLocation
-} from '../utils'
+} from '../utils/utils'
 
 interface CreateNotificationData {
   objectId: Ref<Doc>

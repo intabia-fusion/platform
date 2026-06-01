@@ -51,7 +51,7 @@ import {
   hasMentionNotificationByMessage,
   hasUnreadMentionByMessage,
   getAttachments
-} from '../utils'
+} from '../utils/utils'
 import { Client, Result, TxCache } from '../types'
 import Cache from '../cache'
 import { pushNotification } from './notification'

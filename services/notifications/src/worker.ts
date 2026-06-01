@@ -47,7 +47,7 @@ import notification, { TxNotificationType, QueueNotificationMessage } from '@hce
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
 
 import Workspace from './workspace'
-import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils'
+import { getTransactorApiEndpoint, getWorkspaceInfo, isTxTrigger, MAX_NOTIFICATION_TYPE_PRIORITY } from './utils/utils'
 import config from './config'
 
 export class Worker {

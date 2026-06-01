@@ -16,7 +16,8 @@
 import { Hierarchy, Ref } from '@hcengineering/core'
 import { ActivityMessage } from '@hcengineering/activity'
 
-import { ContextNotification, DocNotifyContext } from './types'
+import { ContextNotification, DocNotifyContext, NotificationIntl } from './types'
+import { translate } from '@hcengineering/platform'
 
 export function getUnreadMessageCount (
   _contexts?: Pick<DocNotifyContext, 'unreadMessages'> | Array<Pick<DocNotifyContext, 'unreadMessages'>>
@@ -49,4 +50,21 @@ export function getNotificationThreadId (
   //   return activityNotification.objectId as Ref<ActivityMessage>
   // }
   return undefined
+}
+
+export async function translateNotification (
+  intl: NotificationIntl,
+  language: string
+): Promise<{ title: string, body: string }> {
+  const params = { ...intl.intlParams }
+  if (intl.intlParamsNotLocalized != null) {
+    for (const [key, val] of Object.entries(intl.intlParamsNotLocalized)) {
+      params[key] = await translate(val, params, language)
+    }
+  }
+
+  const title = await translate(intl.titleIntl, params, language)
+  const body = await translate(intl.bodyIntl, params, language)
+
+  return { title, body }
 }
