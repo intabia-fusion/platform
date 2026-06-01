@@ -248,23 +248,12 @@ rushx test # For individual test execution inside a package directory
 
 ```bash
 cd ./tests
-rush build
-rush bundle
-rush docker:build
+rush update
+rush fast-build:docker
 ## creates test Docker containers and sets up test database
-./prepare.sh
+./prepare-pg.sh
 ## runs UI tests
-rushx uitest
-```
-
-To execute tests in the development environment, please follow these steps:
-
-```bash
-cd ./tests
-./create-local.sh ## use ./restore-local.sh if you only want to restore the workspace to a predefined initial state for sanity.
-cd ./sanity
-rushx dev-uitest # To execute all tests against the development environment.
-rushx dev-debug -g 'pattern' # To execute tests in debug mode with only the matching test pattern.
+rushx uitest --workers 2
 ```
 
 ## Package publishing
