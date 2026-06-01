@@ -1,5 +1,5 @@
 //
-// Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,40 +14,56 @@
 //
 
 interface Config {
-  Port: number
   Source: string
-  AuthToken?: string
   PushSubject?: string
   PushPublicKey?: string
   PushPrivateKey?: string
 
+  QueueConfig: string
+  QueueRegion: string
+
+  ServiceId: string
+
   TTL: number
+
+  AccountsUrl?: string
+  ServerSecret?: string
 }
 
 const envMap: { [key in keyof Required<Config>]: string } = {
-  Port: 'PORT',
   Source: 'SOURCE',
-  AuthToken: 'AUTH_TOKEN',
   PushPublicKey: 'PUSH_PUBLIC_KEY',
   PushPrivateKey: 'PUSH_PRIVATE_KEY',
   PushSubject: 'PUSH_SUBJECT',
-  TTL: 'TTL'
+  TTL: 'TTL',
+  QueueConfig: 'QUEUE_CONFIG',
+  QueueRegion: 'QUEUE_REGION',
+  ServiceId: 'SERVICE_ID',
+  AccountsUrl: 'ACCOUNTS_URL',
+  ServerSecret: 'SERVER_SECRET'
 }
 
-const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
+const parseNumber = (str: string | undefined): number | undefined => {
+  if (str === undefined) return undefined
+  const num = Number(str)
+  return isNaN(num) ? undefined : num
+}
 
 const config: Config = (() => {
   const params: Partial<Config> = {
-    Port: parseNumber(process.env[envMap.Port]) ?? 8091,
     Source: process.env[envMap.Source],
-    AuthToken: process.env[envMap.AuthToken],
     PushPublicKey: process.env[envMap.PushPublicKey],
     PushPrivateKey: process.env[envMap.PushPrivateKey],
     PushSubject: process.env[envMap.PushSubject],
-    TTL: parseNumber(process.env[envMap.TTL] ?? '3600') // default to 1 hour
+    TTL: parseNumber(process.env[envMap.TTL] ?? '86400') ?? 86400, // default to 24 hours (86400 seconds)
+    QueueConfig: process.env[envMap.QueueConfig],
+    QueueRegion: process.env[envMap.QueueRegion],
+    ServiceId: process.env[envMap.ServiceId] ?? 'web-push-service',
+    AccountsUrl: process.env[envMap.AccountsUrl],
+    ServerSecret: process.env[envMap.ServerSecret] ?? process.env.SECRET
   }
 
-  const required: Array<keyof Config> = ['Port', 'Source']
+  const required: Array<keyof Config> = ['Source']
 
   const missingEnv = required.filter((key) => params[key] === undefined).map((key) => envMap[key])
 

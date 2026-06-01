@@ -49,7 +49,8 @@ import {
   hasReactionNotificationByMessage,
   getLastNotify,
   hasMentionNotificationByMessage,
-  hasUnreadMentionByMessage
+  hasUnreadMentionByMessage,
+  getAttachments
 } from '../utils'
 import { Client, Result, TxCache } from '../types'
 import Cache from '../cache'
@@ -113,6 +114,8 @@ async function handleCreateMessage (
     createdOn: message.createdOn ?? message.modifiedOn
   }
 
+  const attachments = await getAttachments(message, client)
+
   for (const receiver of receivers) {
     if (receiver.account === sender.account) continue
     const mode = getMode(docSettings, receiver.account)
@@ -128,7 +131,8 @@ async function handleCreateMessage (
     const content = await getMessageIntl(client, txCache, type, doc, message, sender)
 
     const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
-    pushNotification(client, result, context, {
+    const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
+    await pushNotification(client, result, context, {
       unreadMessage,
       receiver,
       objectId: doc._id,
@@ -141,11 +145,13 @@ async function handleCreateMessage (
         messageId: message._id,
         intlMessage: type.notificationMessage,
         message: toNotificationMessage(message),
+        attachments,
         createdOn: message.createdOn ?? message.modifiedOn,
         createdBy: message.createdBy ?? message.modifiedBy
       },
       intl: content,
-      notifyProviders: notifyResult
+      notifyProviders: notifyResult,
+      pushSubscriptions
     })
   }
 }
@@ -233,7 +239,7 @@ async function handleUpdateMessage (
     await handleUpdateDUM(client, cache, txCache, result, tx as TxUpdateDoc<DocUpdateMessage>)
   }
 
-  if (tx.operations.message == null && !isDUM) return
+  if (tx.operations.message == null && (tx.operations as any).attachments === null && !isDUM) return
 
   const _message = await cache.getDoc(tx.objectId, tx.objectClass)
   if (_message === undefined) return
@@ -244,7 +250,7 @@ async function handleUpdateMessage (
   if (doc === undefined) return
 
   const contexts = await cache.getContexts(doc._id)
-
+  const attachments = await getAttachments(message, client)
   for (const context of contexts) {
     // Check if the notification exists in this context before emitting update
     const ops: DocumentUpdate<DocNotifyContext> = {}
@@ -255,7 +261,8 @@ async function handleUpdateMessage (
         latestNotifications: {
           $query: { messageId: tx.objectId },
           $update: {
-            message: toNotificationMessage(message)
+            message: toNotificationMessage(message),
+            attachments
           }
         }
       }
@@ -265,7 +272,8 @@ async function handleUpdateMessage (
         latestNotifications: {
           $query: { type: 'mention', messageId: tx.objectId },
           $update: {
-            markup: message.message
+            markup: message.message,
+            attachments
           }
         }
       }
@@ -371,7 +379,8 @@ async function handleUpdateDUM (
     }
 
     const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
-    pushNotification(client, result, context, {
+    const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
+    await pushNotification(client, result, context, {
       unreadMessage,
       receiver,
       objectId: doc._id,
@@ -388,7 +397,8 @@ async function handleUpdateDUM (
         createdBy: message.createdBy ?? message.modifiedBy
       },
       intl: await getMessageIntl(client, txCache, type, doc, message, sender),
-      notifyProviders
+      notifyProviders,
+      pushSubscriptions
     })
   }
 }

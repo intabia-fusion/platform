@@ -48,7 +48,8 @@ import {
   getTxNotifyProviders,
   isMuted,
   getMentionNotification,
-  hasMessageNotification
+  hasMessageNotification,
+  getAttachments
 } from '../utils'
 import { pushNotification } from './notification'
 
@@ -80,7 +81,8 @@ export async function handleMention (
     }
 
     const objectDisplayData = await getObjectDisplayData(client, txCache, doc, mention.receiver.account)
-    pushNotification(client, result, mention.context, {
+    const pushSubscriptions = await cache.getPushSubscriptions(mention.receiver.account)
+    await pushNotification(client, result, mention.context, {
       unreadMention: {
         id: mentionNotification.id,
         messageId: mentionNotification.messageId
@@ -92,7 +94,8 @@ export async function handleMention (
       notification: mentionNotification,
       intl: await getMentionIntl(client, txCache, type, doc, message, mention, sender),
       notifyProviders: mention.notifyProviders,
-      objectDisplayData
+      objectDisplayData,
+      pushSubscriptions
     })
   }
 }
@@ -194,24 +197,27 @@ async function createMentionsData (
       } else {
         if (message != null && context != null && hasMessageNotification(context, message._id)) continue
 
-        res.push(getMentionResult(context, receiver, message, notifyProviders, reference))
+        res.push(await getMentionResult(client, context, receiver, message, notifyProviders, reference))
       }
     }
   }
 
   return res
 }
-function getMentionResult (
+async function getMentionResult (
+  client: Client,
   context: DocNotifyContext | undefined,
   receiver: Receiver,
   message: ActivityMessage | undefined,
   notifyProviders: NotifyProviders,
   reference: MentionRef
-): MentionResult {
+): Promise<MentionResult> {
+  const attachments = message != null ? await getAttachments(message, client) : []
   return {
     notification: {
       markup: message?.message ?? reference.markup,
-      messageId: message?._id
+      messageId: message?._id,
+      attachments
     },
     intl: {
       titleIntl: activity.string.MentionedYouIn

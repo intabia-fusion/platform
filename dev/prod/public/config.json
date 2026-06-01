@@ -33,7 +33,7 @@
   "BILLING_URL": "/_billing",
   "DESKTOP_UPDATES_URL": "https://platform-stage.intabia.ru/_dist",
   "LINK_PREVIEW_URL": "/_link-preview",
-  "PUSH_PUBLIC_KEY": "pushPublicKey",
+  "PUSH_PUBLIC_KEY": "BMZ2jLsXsxXhu60jFqx3mOXqwcz7NIO8h2V537SvZQBDiki4bw8dAWX0hw7c9Z7DjMyEfI1pNraHlU2u3D7kJqs",
   "USAGE_URL": "http://localhost:8080/terms",
   "SUPPORT_URL": "https://t.me/intabia",
   "SUPPORT_EMAIL": "platform@intabia.ru",

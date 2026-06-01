@@ -34,7 +34,7 @@ import core, {
 } from '@hcengineering/core'
 import activity, { ActivityMessage } from '@hcengineering/activity'
 import { RestClient } from '@hcengineering/api-client'
-import notification, { TxNotificationType, QueueUserNotificationMessage } from '@hcengineering/notification'
+import notification, { TxNotificationType, QueueNotificationMessage } from '@hcengineering/notification'
 import { StorageAdapter } from '@hcengineering/storage'
 import { PlatformError, unknownError } from '@hcengineering/platform'
 import {
@@ -81,7 +81,7 @@ class Workspace {
     private readonly storage: StorageAdapter,
     private readonly branding: Branding | undefined,
     private readonly txTypes: TxNotificationType[],
-    private readonly producer: PlatformQueueProducer<QueueUserNotificationMessage>
+    private readonly producer: PlatformQueueProducer<QueueNotificationMessage>
   ) {
     this.client = this.getClient()
     this.cache = new WsCache(this.ctx, this.client)
@@ -197,7 +197,7 @@ class Workspace {
     rest: RestClient,
     branding: Branding | undefined,
     txTypes: TxNotificationType[],
-    producer: PlatformQueueProducer<QueueUserNotificationMessage>
+    producer: PlatformQueueProducer<QueueNotificationMessage>
   ): Promise<Workspace> {
     const dbConf = getConfig(ctx, config.DbUrl, ctx, {
       disableTriggers: true,

@@ -38,7 +38,6 @@ import serverNotification, { Receiver, TypeMatchClient, TypeMatchFunc } from '@h
 import { getMetadata } from '@hcengineering/platform'
 import { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import { getEmployeeByAcc } from '@hcengineering/server-contact'
-import { getContentByTemplate } from '@hcengineering/server-notification-resources'
 
 async function FindMessages (
   doc: Doc,
@@ -150,19 +149,19 @@ async function notifyByEmail (
   inboxNotification: any,
   message: ActivityMessage | undefined
 ): Promise<void> {
-  const content = await getContentByTemplate(control, doc, types, inboxNotification, message)
-
-  if (content !== undefined) {
-    await sendEmailNotification(
-      control.ctx,
-      producer,
-      control.workspace.uuid,
-      content.text,
-      content.html,
-      content.subject,
-      email
-    )
-  }
+  // const content = await getContentByTemplate(control, doc, types, inboxNotification, message)
+  //
+  // if (content !== undefined) {
+  //   await sendEmailNotification(
+  //     control.ctx,
+  //     producer,
+  //     control.workspace.uuid,
+  //     content.text,
+  //     content.html,
+  //     content.subject,
+  //     email
+  //   )
+  // }
 }
 
 async function getEmployeeEmails (control: TriggerControl, employeeId: Ref<Person>): Promise<SocialIdentity[]> {

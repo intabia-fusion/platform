@@ -226,8 +226,7 @@ async function OnDocUpdate (txes: TxUpdateDoc<Doc>[], control: TriggerControl): 
   return res
 }
 
-export * from './push'
-export * from './utils'
+export { getClassNotificationGroup, generateAttributeNotificationType } from './utils'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({

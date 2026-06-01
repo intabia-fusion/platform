@@ -19,6 +19,7 @@ import core, {
   type AnyAttribute,
   type ArrOf,
   type AttachedDoc,
+  BlobType,
   type Class,
   Doc,
   getTxOperations,
@@ -33,7 +34,8 @@ import core, {
   TxCUD,
   TxFactory,
   TxUpdateDoc,
-  WorkspaceInfoWithStatus
+  WorkspaceInfoWithStatus,
+  concatLink
 } from '@hcengineering/core'
 import contact, { Employee } from '@hcengineering/contact'
 import activity, { DocUpdateMessage, ActivityMessage, Reaction } from '@hcengineering/activity'
@@ -48,7 +50,9 @@ import notification, {
   DocNotifyContext,
   NotificationIntl,
   ContextNotification,
-  MentionNotification
+  MentionNotification,
+  getNotificationMessageId,
+  notificationId
 } from '@hcengineering/notification'
 import serverNotification, {
   getSenderName,
@@ -56,7 +60,7 @@ import serverNotification, {
   Sender,
   TypeMatchClient
 } from '@hcengineering/server-notification'
-import { getResource, IntlString } from '@hcengineering/platform'
+import { getMetadata, getResource, IntlString, translate } from '@hcengineering/platform'
 import {
   Icon,
   PresenterControl,
@@ -68,6 +72,9 @@ import {
   getTitlePresenter,
   getIconPresenter
 } from '@hcengineering/server-activity'
+import chunter, { ChatMessage } from '@hcengineering/chunter'
+import attachment, { Attachment } from '@hcengineering/attachment'
+import serverCore from '@hcengineering/server-core'
 
 import { Client, ObjectDisplayData, NotificationSettings, NotifyProviders, Result, TxCache } from './types'
 import config from './config'
@@ -834,4 +841,67 @@ export async function getObjectDisplayData (
 
 export function getLastNotify (context: DocNotifyContext): Timestamp {
   return Math.max(...context.latestNotifications.map((it) => it.createdOn), 0)
+}
+
+export function isChatMessage (message: ActivityMessage, hierarchy: Hierarchy): message is ChatMessage {
+  return hierarchy.isDerived(message._class, chunter.class.ChatMessage)
+}
+
+export async function getAttachments (message: ActivityMessage, client: Client): Promise<BlobType[]> {
+  const attachments: Attachment[] =
+    isChatMessage(message, client.hierarchy) && (message.attachments ?? 0) > 0
+      ? await client.findAll(attachment.class.Attachment, { attachedTo: message._id })
+      : []
+  return attachments.map((it) => ({
+    file: it.file,
+    type: it.type,
+    name: it.name,
+    size: it.size,
+    metadata: it.metadata
+  }))
+}
+
+export async function translateNotification (
+  intl: NotificationIntl,
+  language: string
+): Promise<{ title: string, body: string }> {
+  const params = { ...intl.intlParams }
+  if (intl.intlParamsNotLocalized != null) {
+    for (const [key, val] of Object.entries(intl.intlParamsNotLocalized)) {
+      params[key] = await translate(val, params, language)
+    }
+  }
+
+  const title = await translate(intl.titleIntl, params, language)
+  const body = await translate(intl.bodyIntl, params, language)
+
+  return { title, body }
+}
+
+export function getNotificationUrl (
+  client: Client,
+  notification: ContextNotification,
+  objectId: Ref<Doc>,
+  objectClass: Ref<Class<Doc>>
+): string {
+  const frontUrl = getFrontUrl(client)
+  const messageId = getNotificationMessageId(notification)
+  const objectEncoded = encodeURIComponent(`${objectId}|${objectClass}`)
+  const path = `workbench/${client.workspace.url}/${notificationId}/${objectEncoded}`
+
+  let url = concatLink(frontUrl, path)
+  if (messageId != null) {
+    url += `?message=${messageId}`
+  }
+  return url
+}
+
+function getFrontUrl (client: Client): string {
+  return client.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
+}
+
+export function getDomain (client: Client): string {
+  const frontUrl = getFrontUrl(client)
+
+  return concatLink(frontUrl, `workbench/${client.workspace.url}`)
 }

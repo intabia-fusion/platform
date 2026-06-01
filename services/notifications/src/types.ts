@@ -40,7 +40,7 @@ import {
   type NotificationProviderSetting,
   NotificationType,
   type NotificationTypeSetting,
-  QueueUserNotificationMessage
+  QueueNotificationMessage
 } from '@hcengineering/notification'
 import { Employee, SocialIdentity } from '@hcengineering/contact'
 import { StorageAdapter } from '@hcengineering/storage'
@@ -98,7 +98,7 @@ export interface Result {
   updateUserMentionInfoTx: TxUpdateDoc<UserMentionInfo>[]
   removeUserMentionInfoTx: TxRemoveDoc<UserMentionInfo>[]
 
-  queueMessages: QueueUserNotificationMessage[]
+  queueMessages: QueueNotificationMessage[]
 }
 
 export interface TxCache {

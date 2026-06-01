@@ -40,7 +40,9 @@ import notification, {
   DocNotifyContext,
   type NotificationProviderSetting,
   type NotificationTypeSetting,
-  ReadState
+  ReadState,
+  PushSubscription,
+  PushSubscriptionSetting
 } from '@hcengineering/notification'
 import contact, { Employee, Person, PersonSpace, SocialIdentityRef } from '@hcengineering/contact'
 import { Receiver, Sender } from '@hcengineering/server-notification'
@@ -72,6 +74,8 @@ class WsCache {
   private readonly employees = new Map<AccountUuid, EmployeeInfo>()
   private readonly socialIds = new Map<Ref<Employee>, SocialIdentityInfo[]>()
 
+  private readonly pushSubscriptions = new Map<AccountUuid, PushSubscription[]>()
+
   constructor (
     private readonly ctx: MeasureContext,
     private readonly client: Client
@@ -79,6 +83,10 @@ class WsCache {
 
   public tx (tx: TxCUD<Doc>): void {
     this.clearLargeCaches()
+    const { hierarchy } = this.client
+    if (this.isPushSubscriptionTx(tx)) {
+      this.pushSubscriptions.clear()
+    }
     if (tx._class === core.class.TxCreateDoc) {
       this.txCreateDoc(tx as TxCreateDoc<Doc>)
     }
@@ -390,6 +398,11 @@ class WsCache {
     }
   }
 
+  private isPushSubscriptionTx (tx: TxCUD<Doc>): boolean {
+    return this.client.hierarchy.isDerived(tx.objectClass, notification.class.PushSubscription) ||
+      this.client.hierarchy.isDerived(tx.objectClass, notification.class.PushSubscriptionSetting)
+  }
+
   public async getCollaborators (_id: Ref<Doc>, _class: Ref<Class<Doc>>): Promise<Collaborator[]> {
     if (this.collaborators.has(_id)) {
       return this.collaborators.get(_id) ?? []
@@ -557,6 +570,29 @@ class WsCache {
     return result
   }
 
+  public async getPushSubscriptions (user: AccountUuid): Promise<PushSubscription[]> {
+    const cached = this.pushSubscriptions.get(user)
+    if (cached !== undefined) return cached
+
+    const subscriptions = await this.client.findAll<PushSubscription>(notification.class.PushSubscription, { user })
+    if (subscriptions.length === 0) {
+      this.pushSubscriptions.set(user, [])
+      return []
+    }
+
+    const settings = await this.client.findAll<PushSubscriptionSetting>(notification.class.PushSubscriptionSetting, {
+      attachedTo: { $in: subscriptions.map((it) => it._id) }
+    })
+
+    const filtered = subscriptions.filter((sub) => {
+      const setting = settings.find((s) => s.attachedTo === sub._id)
+      return setting?.enabled !== false
+    })
+
+    this.pushSubscriptions.set(user, filtered)
+    return filtered
+  }
+
   public async getReceivers (collaborators: AccountUuid[]): Promise<Receiver[]> {
     if (collaborators.length === 0) return []
 
@@ -701,6 +737,9 @@ class WsCache {
     }
     if (this.socialIds.size > maxSize) {
       this.socialIds.clear()
+    }
+    if (this.pushSubscriptions.size > maxSize) {
+      this.pushSubscriptions.clear()
     }
   }
 }

@@ -43,7 +43,7 @@ import {
 import { getAccountClient } from '@hcengineering/server-client'
 import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
 import platform from '@hcengineering/platform'
-import notification, { TxNotificationType, QueueUserNotificationMessage } from '@hcengineering/notification'
+import notification, { TxNotificationType, QueueNotificationMessage } from '@hcengineering/notification'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
 
 import Workspace from './workspace'
@@ -68,7 +68,7 @@ export class Worker {
 
   private readonly pendingWorkspaces = new Map<WorkspaceUuid, Promise<Workspace | undefined>>()
   private readonly userEventProducer: PlatformQueueProducer<QueueUserMessage>
-  private readonly producer: PlatformQueueProducer<QueueUserNotificationMessage>
+  private readonly producer: PlatformQueueProducer<QueueNotificationMessage>
 
   private aiBotAccountUuid?: AccountUuid
 
@@ -89,7 +89,7 @@ export class Worker {
       QueueTopic.Users
     )
 
-    this.producer = queue.getProducer<QueueUserNotificationMessage>(ctx, QueueTopic.UserNotifications)
+    this.producer = queue.getProducer<QueueNotificationMessage>(ctx, QueueTopic.UserNotifications)
 
     this.storage = buildStorageFromConfig(storageConfigFrom(config.StorageConfig))
     this.txTypes = this.sysModel

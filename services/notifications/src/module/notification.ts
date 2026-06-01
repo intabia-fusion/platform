@@ -22,13 +22,20 @@ import {
   UnreadReaction,
   NotificationIntl,
   CommonNotification,
-  UnreadMention
+  UnreadMention,
+  PushSubscription
 } from '@hcengineering/notification'
 import { Class, Doc, Ref, Space } from '@hcengineering/core'
 import { Receiver } from '@hcengineering/server-notification'
 
 import { Client, ObjectDisplayData, NotifyProviders, Result } from '../types'
-import { getCreateContextTx, getUpdateContextTx } from '../utils'
+import {
+  getCreateContextTx,
+  getUpdateContextTx,
+  translateNotification,
+  getNotificationUrl,
+  getDomain
+} from '../utils'
 
 interface CreateNotificationData {
   objectId: Ref<Doc>
@@ -47,14 +54,15 @@ interface CreateNotificationData {
   unreadCommon?: CommonNotification
 
   receiver: Receiver
+  pushSubscriptions: PushSubscription[]
 }
 
-export function pushNotification (
+export async function pushNotification (
   client: Client,
   result: Result,
   context: DocNotifyContext | undefined,
   data: CreateNotificationData
-): void {
+): Promise<void> {
   const {
     notification,
     unreadMessage,
@@ -67,7 +75,8 @@ export function pushNotification (
     objectSpace,
     notifyProviders,
     intl,
-    objectDisplayData
+    objectDisplayData,
+    pushSubscriptions
   } = data
   const { txFactory } = client
   const modifiedOn = Math.max(context?.lastNotify ?? 0, data.notification.createdOn)
@@ -75,11 +84,18 @@ export function pushNotification (
     Object.entries(notifyProviders).map(([provider, types]) => [provider, types.map((it) => it._id)])
   ) as Record<Ref<NotificationProvider>, Ref<NotificationType>[]>
 
+  const { title, body } = await translateNotification(intl, receiver.language)
+  const domain = getDomain(client)
+  const url = getNotificationUrl(client, notification, objectId, objectClass)
+
   result.queueMessages.push({
     ...intl,
-    // TODO: fill
-    title: '',
-    body: '',
+    id: notification.id,
+    title,
+    body,
+    url,
+    domain,
+    pushSubscriptions,
     language: receiver.language,
     account: receiver.account,
     providers,

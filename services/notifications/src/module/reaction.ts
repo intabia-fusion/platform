@@ -28,6 +28,7 @@ import { Client, NotifyProviders, Result, TxCache } from '../types'
 import Cache from '../cache'
 import {
   getAllowedProviders,
+  getAttachments,
   getBaseDisplayParams,
   getLastNotify,
   getObjectDisplayData,
@@ -108,8 +109,10 @@ async function handleCreateReaction (
   const notifyProviders: NotifyProviders = Object.fromEntries(providers.map((p) => [p, [type]]))
 
   const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
+  const attachments = await getAttachments(message, client)
+  const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
 
-  pushNotification(client, result, context, {
+  await pushNotification(client, result, context, {
     unreadReaction: {
       attachedTo: message._id,
       id: reaction._id
@@ -124,14 +127,14 @@ async function handleCreateReaction (
       type: 'reaction',
       messageId: message._id,
       message: toNotificationMessage(message),
-      // TODO: update me
-      attachments: [],
+      attachments,
       reaction,
       createdOn: reaction.createdOn ?? reaction.modifiedOn,
       createdBy: reaction.createdBy ?? reaction.modifiedBy
     },
     intl: await getReactionNotificationContent(client, txCache, type, doc, message, reaction, sender),
-    notifyProviders
+    notifyProviders,
+    pushSubscriptions
   })
 }
 
