@@ -19,6 +19,7 @@
     "ChangeFloor": "更换楼层",
     "IsKnocking": "{name} 正在敲门...",
     "KnockDeclined": "您的敲门请求已被拒绝",
+    "OnlyOwnersCanInvite": "只有会议所有者才能邀请加入私密会议",
     "NoHostOffice": "无法发起通话",
     "NoHostOfficeBody": "您没有可用于举办此会议的个人办公室。",
     "CallDeclined": "通话被拒绝",

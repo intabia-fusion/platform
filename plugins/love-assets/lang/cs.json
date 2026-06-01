@@ -19,6 +19,7 @@
     "ChangeFloor": "Změnit patro",
     "IsKnocking": "{name} klepe...",
     "KnockDeclined": "Vaše žádost byla odmítnuta",
+    "OnlyOwnersCanInvite": "Do soukromé schůzky může zvát pouze vlastník schůzky",
     "NoHostOffice": "Hovor nelze zahájit",
     "NoHostOfficeBody": "Nemáte osobní kancelář, ve které by se schůzka mohla konat.",
     "CallDeclined": "Hovor odmítnut",

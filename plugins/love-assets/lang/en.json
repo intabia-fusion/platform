@@ -27,6 +27,7 @@
     "MeetingRoom": "Meeting room",
     "KnockingTo": "Knocking to ...",
     "KnockDeclined": "Your knock was declined",
+    "OnlyOwnersCanInvite": "Only the meeting owner can invite to a private meeting",
     "NoHostOffice": "Call cannot start",
     "NoHostOfficeBody": "You don't have a personal office to host this meeting in.",
     "CallDeclined": "Call declined",

@@ -19,6 +19,7 @@
     "ChangeFloor": "Kat değiştir",
     "IsKnocking": "{name} kapıyı çalıyor...",
     "KnockDeclined": "Talebiniz reddedildi",
+    "OnlyOwnersCanInvite": "Özel bir toplantıya yalnızca toplantı sahibi davet edebilir",
     "NoHostOffice": "Arama başlatılamıyor",
     "NoHostOfficeBody": "Bu toplantıyı barındıracak kişisel bir ofisiniz yok.",
     "CallDeclined": "Arama reddedildi",

@@ -19,6 +19,7 @@
     "ChangeFloor": "Etage wechseln",
     "IsKnocking": "{name} klopft...",
     "KnockDeclined": "Ihre Anfrage wurde abgelehnt",
+    "OnlyOwnersCanInvite": "Nur der Besitzer des Meetings kann zu einem privaten Meeting einladen",
     "NoHostOffice": "Anruf kann nicht gestartet werden",
     "NoHostOfficeBody": "Sie haben kein persönliches Büro, in dem dieses Meeting stattfinden kann.",
     "CallDeclined": "Anruf abgelehnt",

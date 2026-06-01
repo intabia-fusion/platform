@@ -656,8 +656,18 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         return collabTargets.length === 0 ? undefined : { target: collabTargets }
       }
 
+      // Workspace owners can see every private space (see getAllAllowedSpaces),
+      // but are not in space.members, so they would miss the broadcast and not
+      // get live updates for private spaces until refresh. Add them explicitly.
+      const ownerTargets: AccountUuid[] = []
+      for (const val of ctx.contextData.socialStringsToUsers.values()) {
+        if (val.role === AccountRole.Owner) {
+          ownerTargets.push(val.accountUuid)
+        }
+      }
+
       const spaceTargets = space.members.size === 0 ? [] : this.getTargets(Array.from(space.members))
-      const target = [...collabTargets, ...spaceTargets]
+      const target = [...new Set([...collabTargets, ...spaceTargets, ...ownerTargets])]
 
       return target.length === 0 ? undefined : { target }
     }
@@ -675,9 +685,13 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
       result.push(...this.systemSpaces)
     }
 
+    // Workspace owner sees every space regardless of membership/privacy,
+    // mirroring filterLookup's availableForOwner branch.
+    const isWorkspaceOwner = account.role === AccountRole.Owner
+
     for (const space of this.spacesMap.values()) {
       if (!showArchived && space.archived) continue
-      if (space.members.has(account.uuid) || (includePublic && !space.private)) {
+      if (isWorkspaceOwner || space.members.has(account.uuid) || (includePublic && !space.private)) {
         result.push(space._id)
       }
     }

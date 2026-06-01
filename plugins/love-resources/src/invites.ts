@@ -151,6 +151,32 @@ export async function sendInvites (persons: Array<Ref<Person>>, meeting?: Ref<Me
   }
 
   const client = getClient()
+
+  // Inviting into an existing private meeting requires ownership: only owners
+  // may grow a private space's members (mirrors SpaceSecurityMiddleware and the
+  // server-side OnUserMeetingInvite check). A non-owner must use knock instead,
+  // so refuse here rather than create an invite-request the server silently
+  // drops.
+  if (meetingId !== undefined) {
+    const meetingDoc =
+      meeting !== undefined
+        ? await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
+        : get(currentMeetingMinutes)
+    if (meetingDoc?.private === true) {
+      const myAccount = getCurrentAccount().uuid
+      if (!(meetingDoc.owners ?? []).includes(myAccount)) {
+        addNotification(
+          await translate(love.string.Meeting, {}, getCurrentLanguage()),
+          await translate(love.string.OnlyOwnersCanInvite, {}, getCurrentLanguage()),
+          KnockResolutionToast,
+          undefined,
+          NotificationSeverity.Warning,
+          'love'
+        )
+        return
+      }
+    }
+  }
   for (const person of validPersons) {
     // Use per-person apply with notMatch to prevent duplicate pending invites
     const apply = client.apply('create-invite:' + currentPerson + ':' + person)

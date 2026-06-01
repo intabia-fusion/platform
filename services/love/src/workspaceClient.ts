@@ -339,10 +339,12 @@ export class WorkspaceClient {
 
   async checkUnfinishedMeetings (meetingMinutes: Ref<MeetingMinutes>[]): Promise<void> {
     try {
-      // Find all active or pending meetings in this workspace
+      // Only finish meetings that were actually live (Active/Pending). A
+      // Scheduled meeting has no LiveKit room until someone starts it, so it
+      // would otherwise be force-finished on the first poll before anyone joins.
       const meetings = await this.client.findAll(love.class.MeetingMinutes, {
         _id: { $nin: meetingMinutes },
-        status: { $ne: MeetingStatus.Finished }
+        status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
       })
 
       for (const meeting of meetings) {
