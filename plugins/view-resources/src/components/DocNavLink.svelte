@@ -85,9 +85,7 @@
 
   // Option/Alt + click opens the object in the right sidebar instead of navigating
   function onAltClick (event: MouseEvent): void {
-    if (event.altKey && object !== undefined && !_disabled) {
-      event.preventDefault()
-      event.stopPropagation()
+    if (object !== undefined && !_disabled) {
       void openDocInSidebar(object)
     }
   }
@@ -100,32 +98,23 @@
     <slot />
   </span>
 {:else}
-  <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <!-- svelte-ignore a11y-no-static-element-interactions -->
-  <span class="contents" on:click|capture={onAltClick}>
-    <NavLink
-      disabled={_disabled}
-      {onClick}
-      {noUnderline}
-      {inline}
-      {shrink}
-      {href}
-      {colorInherit}
-      {accent}
-      {noOverflow}
-      {inlineReference}
-      {transparent}
-      {inlineBlock}
-      {noSelect}
-      {title}
-    >
-      <slot />
-    </NavLink>
-  </span>
+  <NavLink
+    disabled={_disabled}
+    {onClick}
+    {onAltClick}
+    {noUnderline}
+    {inline}
+    {shrink}
+    {href}
+    {colorInherit}
+    {accent}
+    {noOverflow}
+    {inlineReference}
+    {transparent}
+    {inlineBlock}
+    {noSelect}
+    {title}
+  >
+    <slot />
+  </NavLink>
 {/if}
-
-<style lang="scss">
-  .contents {
-    display: contents;
-  }
-</style>

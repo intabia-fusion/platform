@@ -21,6 +21,7 @@
   export let title: string | undefined = undefined
   export let disabled = false
   export let onClick: ((event: MouseEvent) => void) | undefined = undefined
+  export let onAltClick: ((event: MouseEvent) => void) | undefined = undefined
   export let noUnderline = disabled
   export let inline = false
   export let colorInherit: boolean = false
@@ -35,6 +36,13 @@
 
   function clickHandler (e: MouseEvent): void {
     if (disabled) return
+
+    if (onAltClick !== undefined && e.altKey) {
+      e.preventDefault()
+      e.stopPropagation()
+      onAltClick(e)
+      return
+    }
 
     if (onClick !== undefined) {
       e.preventDefault()
