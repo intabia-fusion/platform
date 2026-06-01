@@ -26,6 +26,7 @@
     "ChangePlan": "Plan değiştir",
     "Subscribe": "Abone ol",
     "Connect": "Bağlan",
+    "Disconnect": "Bağlantıyı kes",
     "AdditionalSpace": "Ek alan",
     "Monthly": "Aylık",
     "Active": "Aktif",
@@ -34,6 +35,7 @@
     "SubscriptionEnds": "{date} tarihine kadar",
     "SubscriptionRenews": "Sonraki yenileme: {date}",
     "SubscriptionValidUntil": "{date} tarihine kadar geçerli",
+    "AdditionalPackage": "Ek paket:",
     "ProcessingPayment": "Ödeme işleniyor...",
     "Downgrade": "Düşür",
     "CancelSubscription": "Aboneliği İptal Et",
@@ -47,6 +49,9 @@
     "ConfirmUncancel": "Aboneliği yeniden etkinleştir?",
     "UncancelDescription": "Aboneliğiniz yeniden etkinleştirilecek ve geçerli faturalandırma döneminin sonundan itibaren devam edecektir.",
     "PriceDifference": "Fiyat farkı: {amount}",
+    "ConfirmConnectPackage": "Paket bağlansın mı?",
+    "ReplacePackageDescription": "Zaten {package} paketiniz var. Değiştirilsin mi?",
+    "ConfirmCancelPackage": "Paket iptal edilsin mi?",
     "DialogCancel": "İptal",
     "DialogConfirm": "Onayla",
     "StorageUsage": "Depolama",
@@ -61,6 +66,7 @@
     "LimitReached": "Çalışma alanı limiti aşıldı, bazı işlevler devre dışı bırakılabilir. Tam erişimi geri yüklemek için yükseltin.",
     "RestrictedPlans": "Abonelik planını yalnızca çalışma alanı sahibi veya faturalama yöneticisi değiştirebilir.",
     "SubscriptionOperationFailed": "Abonelik işlemi başarısız oldu",
-    "SubscriptionErrorMessage": "Bir şeyler yanlış gitti. Lütfen tekrar deneyin veya destek ile iletişime geçin."
+    "SubscriptionErrorMessage": "Bir şeyler yanlış gitti. Lütfen tekrar deneyin veya destek ile iletişime geçin.",
+    "UpgradeToAccessPackages": "Ek paketlere erişmek için Standard veya Business'a yükseltin"
   }
 }

@@ -26,12 +26,14 @@
     "ChangePlan": "プラン変更",
     "Subscribe": "購読",
     "Connect": "接続する",
+    "Disconnect": "切断する",
     "AdditionalSpace": "追加スペース",
     "Monthly": "月額",
     "Active": "アクティブ",
     "SubscriptionEnds": "{date}まで",
     "SubscriptionRenews": "次回更新: {date}",
     "SubscriptionValidUntil": "{date}まで有効",
+    "AdditionalPackage": "追加パッケージ:",
     "ProcessingPayment": "お支払い処理中...",
     "Downgrade": "ダウングレード",
     "CancelSubscription": "サブスクリプションをキャンセル",
@@ -45,6 +47,9 @@
     "ConfirmUncancel": "サブスクリプションを再度有効化しますか?",
     "UncancelDescription": "サブスクリプションが再度有効化され、現在の請求期間の終了から継続します。",
     "PriceDifference": "価格差: {amount}",
+    "ConfirmConnectPackage": "パッケージを接続しますか?",
+    "ReplacePackageDescription": "すでに {package} が接続されています。置き換えますか?",
+    "ConfirmCancelPackage": "パッケージをキャンセルしますか?",
     "DialogCancel": "キャンセル",
     "DialogConfirm": "確認",
     "NoActivePlan": "アクティブなプランなし",
@@ -61,6 +66,7 @@
     "LimitReached": "ワークスペースの制限に達しました。一部の機能が無効になる場合があります。アップグレードして完全アクセスを復元してください。",
     "RestrictedPlans": "ワークスペースの所有者または請求管理者のみがサブスクリプションプランを変更できます。",
     "SubscriptionOperationFailed": "サブスクリプション操作に失敗しました",
-    "SubscriptionErrorMessage": "問題が発生しました。もう一度お試しいただくか、サポートにお問い合わせください。"
+    "SubscriptionErrorMessage": "問題が発生しました。もう一度お試しいただくか、サポートにお問い合わせください。",
+    "UpgradeToAccessPackages": "追加パッケージを利用するには、StandardまたはBusinessにアップグレードしてください"
   }
 }

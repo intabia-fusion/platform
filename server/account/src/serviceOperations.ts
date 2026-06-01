@@ -1206,11 +1206,12 @@ export async function adminCreateSubscription (
   }
 
   // Create new subscription
+  const subId = generateId()
   await db.subscription.insertOne({
     workspaceUuid,
     accountUuid: account,
     provider: 'manual',
-    providerSubscriptionId: generateId(),
+    providerSubscriptionId: subId,
     type: type as any,
     status: 'active' as any,
     plan,
@@ -1218,7 +1219,7 @@ export async function adminCreateSubscription (
     periodStart: now,
     createdOn: now,
     updatedOn: now,
-    id: generateId()
+    id: subId
   })
   ctx.info('Manual subscription created', { workspaceUuid, plan, type })
 }

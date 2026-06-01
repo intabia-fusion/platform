@@ -26,6 +26,7 @@
     "ChangePlan": "Cambia piano",
     "Subscribe": "Sottoscrivi",
     "Connect": "Connetti",
+    "Disconnect": "Disconnetti",
     "AdditionalSpace": "Spazio aggiuntivo",
     "Monthly": "Mensile",
     "Active": "Attivo",
@@ -34,6 +35,7 @@
     "SubscriptionEnds": "Fino al {date}",
     "SubscriptionRenews": "Prossimo rinnovo: {date}",
     "SubscriptionValidUntil": "Valido fino al {date}",
+    "AdditionalPackage": "Pacchetto aggiuntivo:",
     "ProcessingPayment": "Elaborazione pagamento...",
     "Downgrade": "Downgrade",
     "CancelSubscription": "Annulla abbonamento",
@@ -47,6 +49,9 @@
     "ConfirmUncancel": "Riattivare l'abbonamento?",
     "UncancelDescription": "Il tuo abbonamento verrà riattivato e continuerà dalla fine del periodo di fatturazione attuale.",
     "PriceDifference": "Differenza di prezzo: {amount}",
+    "ConfirmConnectPackage": "Connettere pacchetto?",
+    "ReplacePackageDescription": "Hai già {package}. Sostituirlo?",
+    "ConfirmCancelPackage": "Annullare pacchetto?",
     "DialogCancel": "Annulla",
     "DialogConfirm": "Conferma",
     "StorageUsage": "Archiviazione",
@@ -61,6 +66,7 @@
     "LimitReached": "Limite workspace raggiunto, alcune funzionalità potrebbero essere disabilitate. Aggiorna per ripristinare l'accesso completo.",
     "RestrictedPlans": "Solo il proprietario del workspace o il responsabile della fatturazione può modificare il piano di abbonamento.",
     "SubscriptionOperationFailed": "Operazione di abbonamento non riuscita",
-    "SubscriptionErrorMessage": "Qualcosa è andato storto. Riprova o contatta l'assistenza."
+    "SubscriptionErrorMessage": "Qualcosa è andato storto. Riprova o contatta l'assistenza.",
+    "UpgradeToAccessPackages": "Passa a Standard o Business per accedere ai pacchetti aggiuntivi"
   }
 }

@@ -26,12 +26,14 @@
     "ChangePlan": "更改计划",
     "Subscribe": "订阅",
     "Connect": "连接",
+    "Disconnect": "断开连接",
     "AdditionalSpace": "额外空间",
     "Monthly": "每月",
     "Active": "活跃",
     "SubscriptionEnds": "截止至{date}",
     "SubscriptionRenews": "下次续期: {date}",
     "SubscriptionValidUntil": "有效期至{date}",
+    "AdditionalPackage": "附加套餐:",
     "ProcessingPayment": "正在处理付款...",
     "Downgrade": "降级",
     "CancelSubscription": "取消订阅",
@@ -45,6 +47,9 @@
     "ConfirmUncancel": "重新激活订阅?",
     "UncancelDescription": "您的订阅将被重新激活，并从当前计费周期结束时继续。",
     "PriceDifference": "价格差异: {amount}",
+    "ConfirmConnectPackage": "连接套餐?",
+    "ReplacePackageDescription": "您已连接了 {package}。替换?",
+    "ConfirmCancelPackage": "取消套餐?",
     "DialogCancel": "取消",
     "DialogConfirm": "确认",
     "NoActivePlan": "无活跃计划",
@@ -61,6 +66,7 @@
     "LimitReached": "已达到工作空间限制，某些功能可能被禁用。请升级以恢复完全访问权限。",
     "RestrictedPlans": "只有工作空间所有者或计费管理员才能更改订阅计划。",
     "SubscriptionOperationFailed": "订阅操作失败",
-    "SubscriptionErrorMessage": "出了点问题。请重试或联系支持。"
+    "SubscriptionErrorMessage": "出了点问题。请重试或联系支持。",
+    "UpgradeToAccessPackages": "升级到 Standard 或 Business 以访问附加包"
   }
 }

@@ -279,6 +279,7 @@ export class PolarProvider implements PaymentProvider {
     ctx: MeasureContext,
     subscriptionId: string,
     newPlan: string,
+    type: SubscriptionType,
     workspaceUrl: string,
     accountUuid: string
   ): Promise<SubscriptionData | CheckoutResponse | null> {
@@ -288,8 +289,8 @@ export class PolarProvider implements PaymentProvider {
     // Check if subscription is free by checking if it has a price with amountType === 'free'
     const isFreeSubscription = currentSub.prices?.[0]?.amountType === 'free'
 
-    // Get the Polar product ID for the new plan (subscriptions updates are tier type)
-    const planKey = getPlanKey(SubscriptionType.Tier, newPlan)
+    // Get the Polar product ID for the new plan
+    const planKey = getPlanKey(type, newPlan)
     const productIds = this.subscriptionPlans[planKey]
     if (productIds === undefined || productIds.length === 0) {
       throw new Error(`No products configured for plan: ${planKey}`)
@@ -313,7 +314,7 @@ export class PolarProvider implements PaymentProvider {
         customerName: currentSub.customer?.name ?? undefined,
         metadata: {
           workspaceUuid: (currentSub.metadata?.workspaceUuid as string) ?? '',
-          subscriptionType: SubscriptionType.Tier,
+          subscriptionType: type,
           subscriptionPlan: newPlan,
           accountUuid
         }

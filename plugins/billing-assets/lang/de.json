@@ -26,6 +26,7 @@
     "ChangePlan": "Plan ändern",
     "Subscribe": "Abonnieren",
     "Connect": "Verbinden",
+    "Disconnect": "Trennen",
     "AdditionalSpace": "Zusätzlicher Speicher",
     "Monthly": "Monatlich",
     "Active": "Aktiv",
@@ -34,6 +35,7 @@
     "SubscriptionEnds": "Bis {date}",
     "SubscriptionRenews": "Nächste Erneuerung: {date}",
     "SubscriptionValidUntil": "Gültig bis {date}",
+    "AdditionalPackage": "Zusätzliches Paket:",
     "ProcessingPayment": "Zahlung wird verarbeitet...",
     "Downgrade": "Herabstufen",
     "CancelSubscription": "Abonnement kündigen",
@@ -47,6 +49,9 @@
     "ConfirmUncancel": "Abonnement reaktivieren?",
     "UncancelDescription": "Ihr Abonnement wird reaktiviert und läuft ab dem Ende des aktuellen Abrechnungszeitraums weiter.",
     "PriceDifference": "Preisdifferenz: {amount}",
+    "ConfirmConnectPackage": "Paket verbinden?",
+    "ReplacePackageDescription": "Sie haben bereits {package}. Ersetzen?",
+    "ConfirmCancelPackage": "Paket kündigen?",
     "DialogCancel": "Abbrechen",
     "DialogConfirm": "Bestätigen",
     "StorageUsage": "Speicher",
@@ -61,6 +66,7 @@
     "LimitReached": "Arbeitsbereich-Limit erreicht, einige Funktionen könnten deaktiviert sein. Upgraden Sie für vollen Zugriff.",
     "RestrictedPlans": "Nur der Arbeitsbereichsbesitzer oder Abrechnungsmanager kann den Abonnementplan ändern.",
     "SubscriptionOperationFailed": "Abonnementvorgang fehlgeschlagen",
-    "SubscriptionErrorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support."
+    "SubscriptionErrorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
+    "UpgradeToAccessPackages": "Upgraden Sie auf Standard oder Business, um zusätzliche Pakete zu erhalten"
   }
 }

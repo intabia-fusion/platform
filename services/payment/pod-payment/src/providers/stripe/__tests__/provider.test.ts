@@ -259,7 +259,14 @@ describe('StripeProvider', () => {
       url: 'https://stripe.test/checkout/new'
     })
 
-    const result = await provider.updateSubscriptionPlan(ctx, subscriptionId, newPlan, workspaceUrl, accountUuid)
+    const result = await provider.updateSubscriptionPlan(
+      ctx,
+      subscriptionId,
+      newPlan,
+      SubscriptionType.Tier,
+      workspaceUrl,
+      accountUuid
+    )
 
     expect(result).toEqual({
       checkoutId: 'cs_test_new',

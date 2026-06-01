@@ -158,29 +158,32 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
   }
 
   // Plan config — loaded from PLAN_CONFIG env (YAML file path), falls back to empty config
-  let planConfigCache: any = null
-  app.get('/api/v1/plan-config', (req, res) => {
+  const planConfig: any = (() => {
     try {
       const configPath = config.PlanConfig
-      if (configPath === undefined || configPath.length === 0) {
-        res.json({ plans: {}, packages: {} })
-        return
+      if (configPath === undefined || configPath.length === 0) return { plans: {}, packages: {} }
+      if (!existsSync(configPath)) {
+        ctx.error('Plan config file not found', { path: configPath })
+        return { plans: {}, packages: {} }
       }
-      if (planConfigCache == null) {
-        if (!existsSync(configPath)) {
-          ctx.error('Plan config file not found', { path: configPath })
-          res.json({ plans: {}, packages: {} })
-          return
-        }
-        const content = readFileSync(configPath, 'utf-8')
-        planConfigCache = yaml.load(content)
-      }
-      res.json(planConfigCache)
+      const content = readFileSync(configPath, 'utf-8')
+      return yaml.load(content)
     } catch (err: any) {
       ctx.error('Failed to load plan config', { err })
-      res.json({ plans: {}, packages: {} })
+      return { plans: {}, packages: {} }
     }
+  })()
+
+  app.get('/api/v1/plan-config', (req, res) => {
+    res.json(planConfig)
   })
+
+  function isPackageEligible (pkgKey: string, currentTierPlan: string | undefined): boolean {
+    if (currentTierPlan === undefined) return false
+    const pkg = planConfig?.packages?.[pkgKey]
+    if (pkg === undefined) return false
+    return Array.isArray(pkg.eligiblePlans) && pkg.eligiblePlans.includes(currentTierPlan)
+  }
 
   const stopReconciliation = startActiveSubscriptionReconciliation(
     ctx,
@@ -239,6 +242,15 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
+          if (request.type === 'package') {
+            const subscriptions = await accountClient.getSubscriptions(workspaceUuid)
+            const activeTierPlan = subscriptions.find((s) => s.type === 'tier' && s.status === 'active')?.plan
+            if (!isPackageEligible(request.plan, activeTierPlan)) {
+              res.status(400).json({ error: 'Package not available on current plan' })
+              return
+            }
+          }
+
           let createSubResponse: CheckoutResponse
 
           try {
@@ -293,24 +305,37 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
-          let canceledSubscription: SubscriptionData | null
+          let canceledSubscription: SubscriptionData
 
-          try {
-            // Cancel via provider using the provider's subscription ID
-            canceledSubscription = await provider.cancelSubscription(ctx, subscription.providerSubscriptionId)
-          } catch (err) {
-            ctx.error('Failed to cancel subscription at provider', { err })
-            res.status(500).json({ error: 'Failed to cancel subscription at provider' })
-            return
+          if (subscription.provider !== config.Provider) {
+            // Cancel locally for provider-mismatched subscriptions
+            const now = Date.now()
+            canceledSubscription = {
+              ...subscription,
+              status: 'canceled' as any,
+              canceledAt: now
+            } as any
+            await accountClient.upsertSubscription(canceledSubscription)
+            ctx.info('Subscription canceled locally (provider mismatch)', {
+              id: subscription.id,
+              provider: subscription.provider
+            })
+          } else {
+            try {
+              // Cancel via provider using the provider's subscription ID
+              const result = await provider.cancelSubscription(ctx, subscription.providerSubscriptionId)
+              if (result === null) {
+                res.status(404).json({ error: 'Failed to cancel subscription at provider' })
+                return
+              }
+              canceledSubscription = result
+              await accountClient.upsertSubscription(canceledSubscription)
+            } catch (err) {
+              ctx.error('Failed to cancel subscription at provider', { err })
+              res.status(500).json({ error: 'Failed to cancel subscription at provider' })
+              return
+            }
           }
-
-          if (canceledSubscription === null) {
-            res.status(404).json({ error: 'Failed to cancel subscription at provider' })
-            return
-          }
-
-          // Upsert the updated subscription into our database
-          await accountClient.upsertSubscription(canceledSubscription)
 
           res.status(200).json(canceledSubscription)
         },
@@ -350,24 +375,36 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
-          let uncanceledSubscription: SubscriptionData | null
+          let uncanceledSubscription: SubscriptionData
 
-          try {
-            // Uncancel via provider using the provider's subscription ID
-            uncanceledSubscription = await provider.uncancelSubscription(ctx, subscription.providerSubscriptionId)
-          } catch (err) {
-            ctx.error('Failed to uncancel subscription at provider', { err })
-            res.status(500).json({ error: 'Failed to uncancel subscription at provider' })
-            return
+          if (subscription.provider !== config.Provider) {
+            // Uncancel locally for provider-mismatched subscriptions
+            uncanceledSubscription = {
+              ...subscription,
+              canceledAt: undefined,
+              status: 'active' as any
+            }
+            await accountClient.upsertSubscription(uncanceledSubscription as any)
+            ctx.info('Subscription uncanceled locally (provider mismatch)', {
+              id: subscription.id,
+              provider: subscription.provider
+            })
+          } else {
+            try {
+              // Uncancel via provider using the provider's subscription ID
+              const result = await provider.uncancelSubscription(ctx, subscription.providerSubscriptionId)
+              if (result === null) {
+                res.status(404).json({ error: 'Failed to uncancel subscription at provider' })
+                return
+              }
+              uncanceledSubscription = result
+              await accountClient.upsertSubscription(uncanceledSubscription)
+            } catch (err) {
+              ctx.error('Failed to uncancel subscription at provider', { err })
+              res.status(500).json({ error: 'Failed to uncancel subscription at provider' })
+              return
+            }
           }
-
-          if (uncanceledSubscription === null) {
-            res.status(404).json({ error: 'Failed to uncancel subscription at provider' })
-            return
-          }
-
-          // Upsert the updated subscription into our database
-          await accountClient.upsertSubscription(uncanceledSubscription)
 
           res.status(200).json(uncanceledSubscription)
         },
@@ -429,6 +466,47 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
+          if (subscription.type === 'package') {
+            const subscriptions = await accountClient.getSubscriptions(subscription.workspaceUuid)
+            const activeTierPlan = subscriptions.find((s) => s.type === 'tier' && s.status === 'active')?.plan
+            if (!isPackageEligible(plan, activeTierPlan)) {
+              res.status(400).json({ error: 'Package not available on current plan' })
+              return
+            }
+          }
+
+          // If the subscription was created by a different provider (e.g. manual/admin),
+          // create a new subscription at the current provider instead of updating
+          if (subscription.provider !== config.Provider) {
+            ctx.info('Subscription provider mismatch, canceling old and creating new', {
+              existingProvider: subscription.provider,
+              currentProvider: config.Provider,
+              workspaceUuid: subscription.workspaceUuid,
+              plan
+            })
+            // Cancel old subscription locally before creating a new one at the current provider
+            await accountClient.upsertSubscription({
+              ...subscription,
+              status: 'canceled' as any,
+              canceledAt: Date.now()
+            } as any)
+            try {
+              const request: SubscribeRequest = { type: subscription.type, plan }
+              const checkoutResponse = await provider.createSubscription(
+                ctx,
+                request,
+                subscription.workspaceUuid,
+                loginInfo.workspaceUrl,
+                accountUuid
+              )
+              res.status(200).json(checkoutResponse)
+            } catch (err) {
+              ctx.error('Failed to create subscription at provider', { err })
+              res.status(500).json({ error: 'Failed to create subscription at provider' })
+            }
+            return
+          }
+
           let updateResult: SubscriptionData | CheckoutResponse | null
 
           try {
@@ -437,6 +515,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
               ctx,
               subscription.providerSubscriptionId,
               plan,
+              subscription.type,
               loginInfo.workspaceUrl,
               accountUuid
             )
