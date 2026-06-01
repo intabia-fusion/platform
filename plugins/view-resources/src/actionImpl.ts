@@ -44,7 +44,6 @@ import {
   type SelectDirection,
   type SelectionStore,
   focusStore,
-  previewDocument,
   selectionLimit,
   selectionStore
 } from './selection'
@@ -302,11 +301,6 @@ export function select (
   if ($focusStore.provider?.select !== undefined) {
     $focusStore.provider?.select(offset, of, direction, noScroll)
     evt?.preventDefault()
-    previewDocument.update((old) => {
-      if (old !== undefined) {
-        return $focusStore.focus
-      }
-    })
   }
 }
 
@@ -330,7 +324,6 @@ function SelectItemNone (doc: Doc | undefined, evt: Event): void {
   const provider = $selectionStore.provider ?? $focusStore.provider
   if (provider !== undefined) {
     provider.selection.set([])
-    previewDocument.set(undefined)
     evt.preventDefault()
   }
 }
@@ -339,7 +332,6 @@ function SelectItemAll (doc: Doc | undefined, evt: Event): void {
   if (provider !== undefined) {
     const docs = provider.docs() ?? []
     provider.selection.set(docs.slice(0, selectionLimit))
-    previewDocument.set(undefined)
     evt.preventDefault()
   }
 }

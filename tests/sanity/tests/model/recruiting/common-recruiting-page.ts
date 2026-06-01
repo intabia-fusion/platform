@@ -18,7 +18,11 @@ export class CommonRecruitingPage extends CalendarPage {
   readonly textAttachmentName = (): Locator => this.page.locator('div.attachment-container > a')
   readonly buttonCreateFirstReview = (): Locator => this.page.locator('span:has-text("Create review")')
   readonly buttonMoreActions = (): Locator =>
-    this.page.locator('.popupPanel > .hulyHeader-container > .hulyHeader-buttonsGroup.actions > button').first()
+    this.page
+      .locator(
+        '.popupPanel > .hulyHeader-container > .hulyHeader-buttonsGroup.actions > button[data-id="btnMoreActions"]'
+      )
+      .first()
 
   readonly buttonDelete = (): Locator => this.page.locator('button[class*="menuItem"] span', { hasText: 'Delete' })
   readonly buttonAddSocialLinks = (): Locator =>

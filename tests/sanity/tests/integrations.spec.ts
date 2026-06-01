@@ -148,35 +148,44 @@ test.describe('integrations in accounts tests', () => {
     })
     expect(checkSecret3).toEqual(secret3)
 
+    // Filter shared-DB results down to this run's own socialIds — restore-pg.sh
+    // leaves integrations from prior runs in the same workspace.
+    const ownSocialIds = new Set<string>([personId1, personId2, personId3])
+    const own = <T extends { socialId: string }>(list: T[]): T[] => list.filter((it) => ownSocialIds.has(it.socialId))
+
     // Test listing with various filters
-    const allIntegrations = await accountClient.listIntegrations({})
+    const allIntegrations = own(await accountClient.listIntegrations({}))
     expect(allIntegrations).toHaveLength(3)
     expect(allIntegrations).toEqual(expect.arrayContaining([integration1, integration2, integration3]))
 
-    const workspaceIntegrations = await accountClient.listIntegrations({ workspaceUuid })
+    const workspaceIntegrations = own(await accountClient.listIntegrations({ workspaceUuid }))
     expect(workspaceIntegrations).toHaveLength(2)
     expect(workspaceIntegrations).toEqual(expect.arrayContaining([integration2, integration3]))
 
-    const githubIntegrations = await accountClient.listIntegrations({ kind: 'github' as IntegrationKind })
+    const githubIntegrations = own(await accountClient.listIntegrations({ kind: 'github' as IntegrationKind }))
     expect(githubIntegrations).toHaveLength(1)
     expect(githubIntegrations[0]).toEqual(integration1)
 
-    const telegramIntegrations = await accountClient.listIntegrations({ kind: 'telegram-bot' as IntegrationKind })
+    const telegramIntegrations = own(await accountClient.listIntegrations({ kind: 'telegram-bot' as IntegrationKind }))
     expect(telegramIntegrations).toHaveLength(1)
     expect(telegramIntegrations[0]).toEqual(integration2)
 
     // Test listing secrets with filters
-    const allSecrets = await accountClient.listIntegrationsSecrets({})
+    const allSecrets = own(await accountClient.listIntegrationsSecrets({}))
     expect(allSecrets).toHaveLength(3)
     expect(allSecrets).toEqual(expect.arrayContaining([secret1, secret2, secret3]))
 
-    const workspaceSecrets = await accountClient.listIntegrationsSecrets({
-      workspaceUuid
-    })
+    const workspaceSecrets = own(
+      await accountClient.listIntegrationsSecrets({
+        workspaceUuid
+      })
+    )
     expect(workspaceSecrets).toHaveLength(2)
     expect(workspaceSecrets).toEqual(expect.arrayContaining([secret2, secret3]))
 
-    const telegramSecrets = await accountClient.listIntegrationsSecrets({ kind: 'telegram-bot' as IntegrationKind })
+    const telegramSecrets = own(
+      await accountClient.listIntegrationsSecrets({ kind: 'telegram-bot' as IntegrationKind })
+    )
     expect(telegramSecrets).toHaveLength(2)
     expect(telegramSecrets).toEqual(expect.arrayContaining([secret2, secret3]))
 
@@ -225,11 +234,11 @@ test.describe('integrations in accounts tests', () => {
     })
 
     // Verify deletions
-    const remainingIntegrations = await accountClient.listIntegrations({})
+    const remainingIntegrations = own(await accountClient.listIntegrations({}))
     expect(remainingIntegrations).toHaveLength(2)
     expect(remainingIntegrations).toEqual(expect.arrayContaining([updatedIntegration2, integration3]))
 
-    const remainingSecrets = await accountClient.listIntegrationsSecrets({})
+    const remainingSecrets = own(await accountClient.listIntegrationsSecrets({}))
     expect(remainingSecrets).toHaveLength(1)
     expect(remainingSecrets).toEqual(expect.arrayContaining([secret3]))
 
