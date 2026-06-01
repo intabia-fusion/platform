@@ -96,6 +96,7 @@ import {
   type WorkspaceStatistics
 } from '@hcengineering/server-core'
 import { generateToken, type Token } from '@hcengineering/server-token'
+import os from 'os'
 import { ClientSession } from './client'
 import { sendResponse } from './utils'
 import { Workspace } from './workspace'
@@ -118,6 +119,7 @@ export interface Timeouts {
 }
 
 export class TSessionManager implements SessionManager {
+  readonly transactorId: string
   private readonly statusPromises = new Map<string, Promise<void>>()
   readonly workspaces = new Map<WorkspaceUuid, Workspace>()
   checkInterval: any
@@ -160,6 +162,7 @@ export class TSessionManager implements SessionManager {
     readonly queue: PlatformQueue,
     readonly pipelineFactory: PipelineFactory
   ) {
+    this.transactorId = process.env.TRANSACTOR_ID ?? os.hostname()
     if (this.doHandleTick) {
       this.checkInterval = setInterval(() => {
         this.handleTick()
@@ -171,7 +174,7 @@ export class TSessionManager implements SessionManager {
     this.workspaceConsumer = this.queue.createConsumer<QueueWorkspaceMessage>(
       ctx.newChild('ws-queue-consume', {}, { span: false }),
       QueueTopic.Workspace,
-      generateId(),
+      this.transactorId,
       async (ctx, msg) => {
         const m = msg.value
         if (
@@ -188,7 +191,7 @@ export class TSessionManager implements SessionManager {
     this.onlineUserTxConsumer = this.queue.createConsumer<QueueOnlineUserTx>(
       ctx.newChild('transactor-online-user-tx-consumer', {}, { span: false }),
       QueueTopic.OnlineUserTx,
-      generateId(),
+      this.transactorId,
       async (ctx, msg) => {
         const { workspaceUuid, tx, account } = msg.value
         const workspace = this.workspaces.get(workspaceUuid)

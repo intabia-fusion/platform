@@ -28,6 +28,7 @@ import core, {
 } from '@hcengineering/core'
 import type { Token } from '@hcengineering/server-token'
 import { QueueTopic } from '@hcengineering/server-core'
+import os from 'os'
 
 // Import the module under test after mocks are set up
 // eslint-disable-next-line import/first
@@ -182,6 +183,38 @@ describe('TSessionManager', () => {
       expect(sessionManager.sessions.size).toBe(0)
       expect(sessionManager.workspaces.size).toBe(0)
       expect(sessionManager.timeouts).toEqual(defaultTimeouts)
+    })
+
+    it('should set transactorId from  env variable or hostname', () => {
+      // 1. from TRANSACTOR_ID env var
+      process.env.TRANSACTOR_ID = 'env-id-123'
+      const sm2 = new TSessionManager(
+        mockContext,
+        defaultTimeouts,
+        {},
+        undefined,
+        'http://localhost:3000',
+        true,
+        false,
+        mockQueue,
+        mockPipelineFactory
+      )
+      expect(sm2.transactorId).toBe('env-id-123')
+
+      // 2. fallback to hostname
+      delete process.env.TRANSACTOR_ID
+      const sm3 = new TSessionManager(
+        mockContext,
+        defaultTimeouts,
+        {},
+        undefined,
+        'http://localhost:3000',
+        true,
+        false,
+        mockQueue,
+        mockPipelineFactory
+      )
+      expect(sm3.transactorId).toBe(os.hostname())
     })
 
     it('should setup queue producers and consumers', () => {
