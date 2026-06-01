@@ -24,7 +24,6 @@ import { type Application, type LocationData } from '@hcengineering/workbench'
 export default mergeIds(notificationId, notification, {
   string: {
     PlatformNotification: '' as IntlString,
-    BrowserNotification: '' as IntlString,
     EmailNotification: '' as IntlString,
     Archive: '' as IntlString,
     MarkAsUnread: '' as IntlString,

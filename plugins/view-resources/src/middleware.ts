@@ -136,7 +136,7 @@ export class AggregationMiddleware extends BasePresentationMiddleware implements
     // }
 
     const h = this.client.getHierarchy()
-    const skipAccountAggregation = [notification.class.BrowserNotification, notification.class.DocNotifyContext]
+    const skipAccountAggregation = [notification.class.AppNotification, notification.class.DocNotifyContext]
 
     for (const skipClass of skipAccountAggregation) {
       if (_class === skipClass) {

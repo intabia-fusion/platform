@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import {
+import notificationPlugin, {
   ContextNotification,
   DocNotifyContext,
   NotificationProvider,
@@ -23,10 +23,12 @@ import {
   NotificationIntl,
   CommonNotification,
   UnreadMention,
-  PushSubscription
+  PushSubscription,
+  getNotificationMessageId
 } from '@hcengineering/notification'
 import { Class, Doc, Ref, Space } from '@hcengineering/core'
 import { Receiver } from '@hcengineering/server-notification'
+import { ActivityMessage } from '@hcengineering/activity'
 
 import { Client, ObjectDisplayData, NotifyProviders, Result } from '../types'
 import {
@@ -34,7 +36,8 @@ import {
   getUpdateContextTx,
   translateNotification,
   getNotificationUrl,
-  getDomain
+  getDomain,
+  getNotificationLocation
 } from '../utils'
 
 interface CreateNotificationData {
@@ -159,5 +162,44 @@ export async function pushNotification (
     } else if (unreadCommon != null) {
       createTx.attributes.unreadCommons = [...(createTx.attributes.unreadCommons ?? []), unreadCommon]
     }
+  }
+
+  createAppPushNotification(client, result, data)
+}
+
+function createAppPushNotification (
+  client: Client,
+  result: Result,
+  data: CreateNotificationData
+): void {
+  const { txFactory } = client
+  const { notification, notifyProviders, objectId, objectClass, receiver, intl } = data
+  const shouldPush = (notifyProviders[notificationPlugin.providers.PushNotificationProvider]?.length ?? 0) > 0
+
+  if (shouldPush) {
+    const messageId: Ref<ActivityMessage> | undefined = getNotificationMessageId(notification)
+    const { path, query } = getNotificationLocation(client, notification, objectId, objectClass)
+
+    const soundAlert = (notifyProviders[notificationPlugin.providers.SoundNotificationProvider]?.length ?? 0) > 0
+
+    const appNotificationTx = txFactory.createTxCreateDoc(notificationPlugin.class.AppNotification, receiver.space, {
+      account: receiver.account,
+      title: intl.titleIntl,
+      body: intl.bodyIntl,
+      intlParams: intl.intlParams,
+      intlParamsNotLocalized: intl.intlParamsNotLocalized,
+      sender: notification.createdBy,
+      tag: notification.id,
+      objectId,
+      objectClass,
+      messageId,
+      onClickLocation: {
+        path,
+        query
+      },
+      soundAlert
+    })
+
+    result.createAppNotificationTx.push(appNotificationTx)
   }
 }

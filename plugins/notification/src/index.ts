@@ -22,7 +22,7 @@ import { Action } from '@hcengineering/view'
 
 import {
   ActivityNotificationViewlet,
-  BrowserNotification,
+  AppNotification,
   DocNotificationSetting,
   DocNotifyContext,
   MessageNotificationType,
@@ -65,7 +65,7 @@ const notification = plugin(notificationId, {
     MessageNotificationType: '' as Ref<Class<MessageNotificationType>>,
     TxNotificationType: '' as Ref<Class<TxNotificationType>>,
 
-    BrowserNotification: '' as Ref<Class<BrowserNotification>>,
+    AppNotification: '' as Ref<Class<AppNotification>>,
     PushSubscription: '' as Ref<Class<PushSubscription>>,
     PushSubscriptionSetting: '' as Ref<Class<PushSubscriptionSetting>>,
     NotificationGroup: '' as Ref<Class<NotificationGroup>>,

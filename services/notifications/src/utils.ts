@@ -21,6 +21,7 @@ import core, {
   type AttachedDoc,
   BlobType,
   type Class,
+  concatLink,
   Doc,
   getTxOperations,
   type Hierarchy,
@@ -34,25 +35,24 @@ import core, {
   TxCUD,
   TxFactory,
   TxUpdateDoc,
-  WorkspaceInfoWithStatus,
-  concatLink
+  WorkspaceInfoWithStatus
 } from '@hcengineering/core'
 import contact, { Employee } from '@hcengineering/contact'
-import activity, { DocUpdateMessage, ActivityMessage, Reaction } from '@hcengineering/activity'
+import activity, { ActivityMessage, DocUpdateMessage, Reaction } from '@hcengineering/activity'
 import notification, {
-  NotificationProvider,
-  NotificationType,
-  MessageNotificationType,
-  TxNotificationType,
+  ContextNotification,
   DocNotificationMode,
-  NotificationMessage,
   DocNotificationSetting,
   DocNotifyContext,
-  NotificationIntl,
-  ContextNotification,
-  MentionNotification,
   getNotificationMessageId,
-  notificationId
+  MentionNotification,
+  MessageNotificationType,
+  notificationId,
+  NotificationIntl,
+  NotificationMessage,
+  NotificationProvider,
+  NotificationType,
+  TxNotificationType
 } from '@hcengineering/notification'
 import serverNotification, {
   getSenderName,
@@ -62,21 +62,21 @@ import serverNotification, {
 } from '@hcengineering/server-notification'
 import { getMetadata, getResource, IntlString, translate } from '@hcengineering/platform'
 import {
-  Icon,
-  PresenterControl,
-  getDocTitle as _getDocTitle,
-  getDocIdentifier as _getDocIdentifier,
-  getDocUrl as _getDocUrl,
   getDocIcon as _getDocIcon,
+  getDocIdentifier as _getDocIdentifier,
   getDocLabel as _getDocLabel,
+  getDocTitle as _getDocTitle,
+  getDocUrl as _getDocUrl,
+  getIconPresenter,
   getTitlePresenter,
-  getIconPresenter
+  Icon,
+  PresenterControl
 } from '@hcengineering/server-activity'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 import attachment, { Attachment } from '@hcengineering/attachment'
 import serverCore from '@hcengineering/server-core'
 
-import { Client, ObjectDisplayData, NotificationSettings, NotifyProviders, Result, TxCache } from './types'
+import { Client, NotificationSettings, NotifyProviders, ObjectDisplayData, Result, TxCache } from './types'
 import config from './config'
 import Cache from './cache'
 
@@ -599,6 +599,7 @@ export function emptyResult (): Result {
     updateContextTx: [],
     updateOpContextTx: [],
     createContextTx: [],
+    createAppNotificationTx: [],
 
     queueMessages: [],
 
@@ -615,7 +616,8 @@ export function getResultTxes (result: Result): TxCUD<Doc>[] {
     ...result.updateOpContextTx,
     ...result.createUserMentionInfoTx,
     ...result.updateUserMentionInfoTx,
-    ...result.removeUserMentionInfoTx
+    ...result.removeUserMentionInfoTx,
+    ...result.createAppNotificationTx
   ].sort((a, b) => a.modifiedOn - b.modifiedOn)
 }
 
@@ -624,6 +626,7 @@ export function isEmptyResult (result: Result): boolean {
     result.updateContextTx.length === 0 &&
     result.updateOpContextTx.length === 0 &&
     result.createContextTx.length === 0 &&
+    result.createAppNotificationTx.length === 0 &&
     result.queueMessages.length === 0 &&
     result.createUserMentionInfoTx.length === 0 &&
     result.updateUserMentionInfoTx.length === 0 &&
@@ -885,15 +888,26 @@ export function getNotificationUrl (
   objectClass: Ref<Class<Doc>>
 ): string {
   const frontUrl = getFrontUrl(client)
-  const messageId = getNotificationMessageId(notification)
-  const objectEncoded = encodeURIComponent(`${objectId}|${objectClass}`)
-  const path = `workbench/${client.workspace.url}/${notificationId}/${objectEncoded}`
+  const { path, query } = getNotificationLocation(client, notification, objectId, objectClass)
 
-  let url = concatLink(frontUrl, path)
-  if (messageId != null) {
-    url += `?message=${messageId}`
+  let url = concatLink(frontUrl, path.join('/'))
+  if (query != null) {
+    url += `?${new URLSearchParams(query).toString()}`
   }
   return url
+}
+
+export function getNotificationLocation(
+  client: Client,
+  notification: ContextNotification,
+  objectId: Ref<Doc>,
+  objectClass: Ref<Class<Doc>>
+): { path: string[]; query?: Record<string, string> } {
+  const objectEncoded = encodeURIComponent(`${objectId}|${objectClass}`)
+  const messageId = getNotificationMessageId(notification)
+  const path = ['workbench', client.workspace.url, notificationId, objectEncoded]
+  const query = messageId != null ? { message: messageId } : undefined
+  return { path, query }
 }
 
 function getFrontUrl (client: Client): string {

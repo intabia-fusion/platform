@@ -171,10 +171,10 @@ function addWorkerListener (): void {
   })
 }
 
-async function cleanTag (_id: Ref<Doc>): Promise<void> {
+async function cleanTag (tag: string): Promise<void> {
   const client = getClient()
-  const notifications = await client.findAll(notification.class.BrowserNotification, {
-    tag: _id
+  const notifications = await client.findAll(notification.class.AppNotification, {
+    tag
   })
   for (const notification of notifications) {
     await client.remove(notification)

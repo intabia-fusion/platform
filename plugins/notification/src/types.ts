@@ -36,17 +36,16 @@ import { Preference } from '@hcengineering/preference'
 import { PersonSpace } from '@hcengineering/contact'
 import { Readable } from 'svelte/store'
 
-export interface BrowserNotification extends Doc {
-  user: AccountUuid
+export interface AppNotification extends Doc {
+  account: AccountUuid
   title: IntlString
   body: IntlString
   intlParams: Record<string, any>
   intlParamsNotLocalized?: Record<string, IntlString>
   onClickLocation?: Location
   sender: PersonId
-  tag: Ref<Doc>
+  tag: string
   messageId?: Ref<ActivityMessage>
-  messageClass?: Ref<Class<ActivityMessage>>
   objectId: Ref<Doc>
   objectClass: Ref<Class<Doc>>
   soundAlert: boolean

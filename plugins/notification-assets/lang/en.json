@@ -8,7 +8,6 @@
     "PlatformNotification": "in platform",
     "Track": "Track",
     "DontTrack": "Don't track",
-    "BrowserNotification": "in browser",
     "Remove": "Delete notification",
     "RemoveAll": "Delete all notifications",
     "MarkAllAsRead": "Mark all notifications as read",

@@ -45,7 +45,6 @@ import {
 import notification, {
   notificationId,
   type PushSubscription,
-  type BrowserNotification,
   type DocNotifyContext,
   type ReadState
 } from '@hcengineering/notification'
@@ -216,8 +215,8 @@ export async function migrateNotificationsSpace (client: MigrationClient): Promi
     )
   }
 
-  await client.deleteMany(DOMAIN_NOTIFICATION, { _class: notification.class.BrowserNotification })
-  await client.deleteMany(DOMAIN_USER_NOTIFY, { _class: notification.class.BrowserNotification })
+  await client.deleteMany(DOMAIN_NOTIFICATION, { _class: 'notification:class:BrowserNotification' as any })
+  await client.deleteMany(DOMAIN_USER_NOTIFY, { _class: 'notification:class:BrowserNotification' as any })
 }
 
 export async function migrateDuplicateContexts (client: MigrationClient): Promise<void> {
@@ -447,7 +446,7 @@ async function migrateAccounts (client: MigrationClient): Promise<void> {
   const groupByUser = await client.groupBy<any, Doc>(DOMAIN_NOTIFICATION, 'user', {
     _class: {
       $in: [
-        notification.class.BrowserNotification,
+        'notification:class:BrowserNotification' as any,
         'notification:class:InboxNotification' as any,
         'notification:class:ActivityInboxNotification' as any,
         'notification:class:CommonInboxNotification' as any
@@ -465,7 +464,7 @@ async function migrateAccounts (client: MigrationClient): Promise<void> {
         user: oldAccId,
         _class: {
           $in: [
-            notification.class.BrowserNotification,
+            'notification:class:BrowserNotification' as any,
             'notification:class:InboxNotification' as any,
             'notification:class:ActivityInboxNotification' as any,
             'notification:class:CommonInboxNotification' as any
@@ -479,7 +478,7 @@ async function migrateAccounts (client: MigrationClient): Promise<void> {
   }
 
   const groupBySenderId = await client.groupBy<any, Doc>(DOMAIN_NOTIFICATION, 'senderId', {
-    _class: notification.class.BrowserNotification
+    _class: 'notification:class:BrowserNotification' as any
   })
 
   for (const oldAccId of groupBySenderId.keys()) {
@@ -496,7 +495,7 @@ async function migrateAccounts (client: MigrationClient): Promise<void> {
     operations.push({
       filter: {
         senderId: oldAccId,
-        _class: notification.class.BrowserNotification
+        _class: 'notification:class:BrowserNotification' as any
       },
       update: {
         senderId: socialId
@@ -1010,7 +1009,7 @@ export const notificationOperation: MigrateOperation = {
         func: async (client) => {
           await client.move(
             DOMAIN_NOTIFICATION,
-            { _class: { $in: [notification.class.BrowserNotification, notification.class.PushSubscription] } },
+            { _class: { $in: ['notification:class:BrowserNotification' as any, notification.class.PushSubscription] } },
             DOMAIN_USER_NOTIFY
           )
         }
@@ -1124,12 +1123,12 @@ export const notificationOperation: MigrateOperation = {
         state: 'remove-browser-notification-v2',
         mode: 'upgrade',
         func: async (client) => {
-          await client.deleteMany<BrowserNotification>(DOMAIN_USER_NOTIFY, {
-            _class: notification.class.BrowserNotification
+          await client.deleteMany<any>(DOMAIN_USER_NOTIFY, {
+            _class: 'notification:class:BrowserNotification' as any
           })
 
           await client.deleteMany(DOMAIN_TX, {
-            objectClass: notification.class.BrowserNotification
+            objectClass: 'notification:class:BrowserNotification' as any
           })
         }
       },

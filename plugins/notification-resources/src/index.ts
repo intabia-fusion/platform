@@ -46,7 +46,7 @@ export * from './client'
 export * from './stores'
 export * from './actions'
 
-export { default as BrowserNotificatator } from './components/BrowserNotificatator.svelte'
+export { default as AppNotificator } from './components/AppNotificator.svelte'
 export { default as NotifyMarker } from './components/NotifyMarker.svelte'
 export { default as MutePopup } from './components/MutePopup.svelte'
 

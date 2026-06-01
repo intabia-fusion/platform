@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Avatar, getPersonByPersonIdCb } from '@hcengineering/contact-resources'
   import { Class, Doc, Ref } from '@hcengineering/core'
-  import { BrowserNotification } from '@hcengineering/notification'
+  import { AppNotification } from '@hcengineering/notification'
   import { Button, navigate, Notification as PlatformNotification, NotificationToast } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import chunter, { ThreadMessage } from '@hcengineering/chunter'
@@ -20,7 +20,7 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
-  $: value = notification.params?.value as BrowserNotification
+  $: value = notification.params?.value as AppNotification
 
   let sender: Person | undefined
   $: if (value.sender !== undefined) {

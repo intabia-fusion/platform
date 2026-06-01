@@ -8,7 +8,6 @@
     "PlatformNotification": "プラットフォーム内",
     "Track": "追跡",
     "DontTrack": "追跡しない",
-    "BrowserNotification": "ブラウザ内",
     "Remove": "通知を削除",
     "RemoveAll": "すべての通知を削除",
     "MarkAllAsRead": "すべての通知を既読にする",

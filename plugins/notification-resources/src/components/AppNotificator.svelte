@@ -14,14 +14,15 @@
 -->
 <script lang="ts">
   import { AccountRole, Class, Doc, getCurrentAccount, Ref } from '@hcengineering/core'
-  import notification, { BrowserNotification } from '@hcengineering/notification'
+  import notification, { AppNotification } from '@hcengineering/notification'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import {
     addNotification,
     getCurrentResolvedLocation,
     Location,
     NotificationSeverity,
-    languageStore
+    languageStore,
+    deviceInfo
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { parseLinkId } from '@hcengineering/view-resources'
@@ -33,6 +34,10 @@
   import Notification from './Notification.svelte'
 
   async function check (allowed: boolean): Promise<void> {
+    if ($deviceInfo.isMobile) {
+      query.unsubscribe()
+      return
+    }
     if (allowed) {
       query.unsubscribe()
       return
@@ -48,7 +53,7 @@
       return
     }
     query.query(
-      notification.class.BrowserNotification,
+      notification.class.AppNotification,
       {
         user: getCurrentAccount().uuid
       },
@@ -84,7 +89,8 @@
     }
   }
 
-  async function notify (value: BrowserNotification): Promise<void> {
+  async function notify (value: AppNotification): Promise<void> {
+    if ($deviceInfo.isMobile) return
     const _id: Ref<Doc> | undefined = value.objectId
     void removeNotification(value)
 
@@ -109,7 +115,7 @@
     addNotification(title, body, Notification, { value }, NotificationSeverity.Info, `notification-${value.objectId}`)
   }
 
-  async function removeNotification (value: BrowserNotification): Promise<void> {
+  async function removeNotification (value: AppNotification): Promise<void> {
     if (account.role !== AccountRole.ReadOnlyGuest) {
       await client.remove(value)
     }

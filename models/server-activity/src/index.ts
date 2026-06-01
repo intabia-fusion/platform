@@ -91,7 +91,7 @@ export function createModel (builder: Builder): void {
         $nin: [
           notification.class.ReadState,
           notification.class.DocNotifyContext,
-          notification.class.BrowserNotification
+          notification.class.AppNotification
         ]
       }
     },
