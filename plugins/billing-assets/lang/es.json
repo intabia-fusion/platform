@@ -26,12 +26,14 @@
     "ChangePlan": "Cambiar plan",
     "Subscribe": "Suscribirse",
     "Connect": "Conectar",
+    "Disconnect": "Desconectar",
     "AdditionalSpace": "Espacio adicional",
     "Monthly": "Mensual",
     "Active": "Activo",
     "SubscriptionEnds": "Hasta {date}",
     "SubscriptionRenews": "Próxima renovación: {date}",
     "SubscriptionValidUntil": "Válido hasta {date}",
+    "AdditionalPackage": "Paquete adicional:",
     "ProcessingPayment": "Procesando pago...",
     "Downgrade": "Reducir",
     "CancelSubscription": "Cancelar suscripción",
@@ -45,6 +47,9 @@
     "ConfirmUncancel": "¿Reactivar suscripción?",
     "UncancelDescription": "Su suscripción se reactivará y continuará desde el final del período de facturación actual.",
     "PriceDifference": "Diferencia de precio: {amount}",
+    "ConfirmConnectPackage": "¿Conectar paquete?",
+    "ReplacePackageDescription": "Ya tienes {package}. ¿Reemplazarlo?",
+    "ConfirmCancelPackage": "¿Cancelar paquete?",
     "DialogCancel": "Cancelar",
     "DialogConfirm": "Confirmar",
     "NoActivePlan": "Sin plan activo",
@@ -61,6 +66,7 @@
     "LimitReached": "Límite del espacio de trabajo alcanzado, algunas funciones pueden estar deshabilitadas. Actualiza para restaurar acceso completo.",
     "RestrictedPlans": "Solo el propietario del espacio de trabajo o el administrador de facturación pueden cambiar el plan de suscripción.",
     "SubscriptionOperationFailed": "Error en la operación de suscripción",
-    "SubscriptionErrorMessage": "Algo ha ido mal. Inténtelo de nuevo o contacte con soporte."
+    "SubscriptionErrorMessage": "Algo ha ido mal. Inténtelo de nuevo o contacte con soporte.",
+    "UpgradeToAccessPackages": "Actualice a Standard o Business para acceder a paquetes adicionales"
   }
 }

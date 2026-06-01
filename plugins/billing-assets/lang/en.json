@@ -26,6 +26,7 @@
     "ChangePlan": "Change plan",
     "Subscribe": "Subscribe",
     "Connect": "Connect",
+    "Disconnect": "Disconnect",
     "AdditionalSpace": "Additional space",
     "Monthly": "Monthly",
     "Active": "Active",
@@ -34,6 +35,7 @@
     "SubscriptionEnds": "Until {date}",
     "SubscriptionRenews": "Next renewal: {date}",
     "SubscriptionValidUntil": "Valid until {date}",
+    "AdditionalPackage": "Additional package:",
     "ProcessingPayment": "Processing payment...",
     "Downgrade": "Downgrade",
     "CancelSubscription": "Cancel Subscription",
@@ -47,6 +49,9 @@
     "ConfirmUncancel": "Reactivate subscription?",
     "UncancelDescription": "Your subscription will be reactivated and continue from the end of the current billing period.",
     "PriceDifference": "Price difference: {amount}",
+    "ConfirmConnectPackage": "Connect package?",
+    "ReplacePackageDescription": "You already have {package}. Replace it?",
+    "ConfirmCancelPackage": "Cancel package?",
     "DialogCancel": "Cancel",
     "DialogConfirm": "Confirm",
     "StorageUsage": "Storage",
@@ -61,6 +66,7 @@
     "LimitReached": "Workspace limit reached, some functionality may be disabled. Upgrade to restore full access.",
     "RestrictedPlans": "Only the workspace owner or billing manager can change the subscription plan",
     "SubscriptionOperationFailed": "Subscription operation failed",
-    "SubscriptionErrorMessage": "Something went wrong. Please try again or contact support."
+    "SubscriptionErrorMessage": "Something went wrong. Please try again or contact support.",
+    "UpgradeToAccessPackages": "Upgrade to Standard or Business to access additional packages"
   }
 }

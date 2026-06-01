@@ -15,7 +15,7 @@
 
 import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import type { Express } from 'express'
-import type { AccountClient, SubscriptionData } from '@hcengineering/account-client'
+import type { AccountClient, SubscriptionType, SubscriptionData } from '@hcengineering/account-client'
 import type { PaymentProvider, SubscribeRequest, CheckoutResponse } from '../index'
 
 /**
@@ -156,6 +156,7 @@ export class TbankProvider implements PaymentProvider {
     ctx: MeasureContext,
     subscriptionId: string,
     newPlan: string,
+    _type: SubscriptionType,
     workspaceUrl: string,
     accountUuid: string
   ): Promise<SubscriptionData | CheckoutResponse | null> {

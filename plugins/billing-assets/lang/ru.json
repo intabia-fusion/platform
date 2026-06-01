@@ -27,6 +27,7 @@
     "Subscribe": "Подписаться",
     "AdditionalSpace": "Дополнительное место на диске",
     "Connect": "Подключить",
+    "Disconnect": "Отключить",
     "Monthly": "В месяц",
     "Active": "Активен",
     "NoActivePlan": "Нет активного плана",
@@ -34,6 +35,7 @@
     "SubscriptionEnds": "До {date}",
     "SubscriptionRenews": "Следующее обновление: {date}",
     "SubscriptionValidUntil": "Действительно до {date}",
+    "AdditionalPackage": "Дополнительный пакет:",
     "ProcessingPayment": "Обработка платежа...",
     "Downgrade": "Понизить",
     "CancelSubscription": "Отменить подписку",
@@ -47,6 +49,9 @@
     "ConfirmUncancel": "Переактивировать подписку?",
     "UncancelDescription": "Ваша подписка будет переактивирована и продолжится с конца текущего периода выставления счета.",
     "PriceDifference": "Разница в цене: {amount}",
+    "ConfirmConnectPackage": "Подключить пакет?",
+    "ReplacePackageDescription": "У вас уже подключен пакет {package}. Заменить?",
+    "ConfirmCancelPackage": "Отключить пакет?",
     "DialogCancel": "Отменить",
     "DialogConfirm": "Подтвердить",
     "StorageUsage": "Хранилище",
@@ -61,6 +66,7 @@
     "LimitReached": "Достигнут лимит рабочего пространства, некоторые функции могут быть отключены. Обновите план для восстановления полного доступа.",
     "RestrictedPlans": "Только владелец рабочего пространства или администратор биллинга может изменить план подписки.",
     "SubscriptionOperationFailed": "Ошибка операции с подпиской",
-    "SubscriptionErrorMessage": "Что-то пошло не так. Попробуйте ещё раз или обратитесь в поддержку."
+    "SubscriptionErrorMessage": "Что-то пошло не так. Попробуйте ещё раз или обратитесь в поддержку.",
+    "UpgradeToAccessPackages": "Обновите тариф до Стандарт или Бизнес, чтобы подключить дополнительный пакет"
   }
 }

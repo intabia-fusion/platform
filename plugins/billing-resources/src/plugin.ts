@@ -26,6 +26,7 @@ export default mergeIds(billingId, billing, {
     Subscribe: '' as IntlString,
     AdditionalSpace: '' as IntlString,
     Connect: '' as IntlString,
+    Disconnect: '' as IntlString,
     Monthly: '' as IntlString,
     Active: '' as IntlString,
     NoActivePlan: '' as IntlString,
@@ -33,6 +34,7 @@ export default mergeIds(billingId, billing, {
     SubscriptionEnds: '' as IntlString,
     SubscriptionRenews: '' as IntlString,
     SubscriptionValidUntil: '' as IntlString,
+    AdditionalPackage: '' as IntlString,
     ProcessingPayment: '' as IntlString,
     Downgrade: '' as IntlString,
     CancelSubscription: '' as IntlString,
@@ -46,6 +48,9 @@ export default mergeIds(billingId, billing, {
     ConfirmUncancel: '' as IntlString,
     UncancelDescription: '' as IntlString,
     PriceDifference: '' as IntlString,
+    ConfirmConnectPackage: '' as IntlString,
+    ReplacePackageDescription: '' as IntlString,
+    ConfirmCancelPackage: '' as IntlString,
     DialogCancel: '' as IntlString,
     DialogConfirm: '' as IntlString,
     StorageUsage: '' as IntlString,
@@ -55,6 +60,7 @@ export default mergeIds(billingId, billing, {
     RestrictedPlans: '' as IntlString,
     SubscriptionOperationFailed: '' as IntlString,
     SubscriptionErrorMessage: '' as IntlString,
-    LargestSpaces: '' as IntlString
+    LargestSpaces: '' as IntlString,
+    UpgradeToAccessPackages: '' as IntlString
   }
 })

@@ -294,6 +294,7 @@ export class StripeProvider implements PaymentProvider {
     ctx: MeasureContext,
     subscriptionId: string,
     newPlan: string,
+    type: SubscriptionType,
     workspaceUrl: string,
     accountUuid: string
   ): Promise<SubscriptionData | CheckoutResponse | null> {
@@ -304,8 +305,8 @@ export class StripeProvider implements PaymentProvider {
     const price = currentSub.items.data[0]?.price
     const isFreeSubscription = price?.unit_amount === 0 || price === undefined
 
-    // Get the Stripe price ID for the new plan (subscriptions updates are tier type)
-    const planKey = getPlanKey(SubscriptionType.Tier, newPlan)
+    // Get the Stripe price ID for the new plan
+    const planKey = getPlanKey(type, newPlan)
     const priceId = this.subscriptionPlans[planKey]
     if (priceId === undefined) {
       throw new Error(`No price configured for plan: ${planKey}`)
@@ -327,7 +328,7 @@ export class StripeProvider implements PaymentProvider {
         subscriptionId: currentSub.id,
         metadata: {
           workspaceUuid: metadata.workspaceUuid,
-          subscriptionType: SubscriptionType.Tier,
+          subscriptionType: type,
           subscriptionPlan: newPlan,
           accountUuid
         }

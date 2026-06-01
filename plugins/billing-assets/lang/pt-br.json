@@ -26,6 +26,7 @@
     "ChangePlan": "Alterar plano",
     "Subscribe": "Assinar",
     "Connect": "Conectar",
+    "Disconnect": "Desconectar",
     "AdditionalSpace": "Espaço adicional",
     "Monthly": "Mensal",
     "Active": "Ativo",
@@ -34,6 +35,7 @@
     "SubscriptionEnds": "Até {date}",
     "SubscriptionRenews": "Próxima renovação: {date}",
     "SubscriptionValidUntil": "Válido até {date}",
+    "AdditionalPackage": "Pacote adicional:",
     "ProcessingPayment": "Processando pagamento...",
     "Downgrade": "Fazer downgrade",
     "CancelSubscription": "Cancelar assinatura",
@@ -47,6 +49,9 @@
     "ConfirmUncancel": "Reativar assinatura?",
     "UncancelDescription": "Sua assinatura será reativada e continuará a partir do final do período de faturamento atual.",
     "PriceDifference": "Diferença de preço: {amount}",
+    "ConfirmConnectPackage": "Conectar pacote?",
+    "ReplacePackageDescription": "Você já tem {package}. Substituir?",
+    "ConfirmCancelPackage": "Cancelar pacote?",
     "DialogCancel": "Cancelar",
     "DialogConfirm": "Confirmar",
     "StorageUsage": "Armazenamento",
@@ -61,6 +66,7 @@
     "LimitReached": "Limite do espaços de trabalho atingido, algumas funcionalidades podem estar desabilitadas. Atualize para restaurar acesso completo.",
     "RestrictedPlans": "Apenas o proprietário do espaço de trabalho ou o administrador de faturamento podem alterar o plano de assinatura.",
     "SubscriptionOperationFailed": "Falha na operação de assinatura",
-    "SubscriptionErrorMessage": "Algo deu errado. Tente novamente ou entre em contato com o suporte."
+    "SubscriptionErrorMessage": "Algo deu errado. Tente novamente ou entre em contato com o suporte.",
+    "UpgradeToAccessPackages": "Atualize para Standard ou Business para acessar pacotes adicionais"
   }
 }

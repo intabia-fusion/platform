@@ -102,6 +102,7 @@ export interface PaymentProvider {
     ctx: MeasureContext,
     subscriptionId: string,
     newPlan: string,
+    type: SubscriptionType,
     workspaceUrl: string,
     accountUuid: string
   ) => Promise<SubscriptionData | CheckoutResponse | null>

@@ -52,7 +52,12 @@
   $: packages = planConfig?.packages ?? ({} satisfies Record<string, PackageItem>)
 
   let currentSubscription: SubscriptionData | undefined = undefined
+  let currentPackageSubscription: SubscriptionData | undefined = undefined
   $: currentPlan = currentSubscription != null ? plans[currentSubscription.plan] : undefined
+  $: currentPackage = currentPackageSubscription != null ? packages[currentPackageSubscription.plan] : undefined
+  $: arePackagesAvailable =
+    currentPlan != null &&
+    Object.values(packages).some((pkg) => pkg.eligiblePlans?.includes(currentSubscription?.plan ?? '') ?? false)
   let loading = true
   let pollingCheckoutId: string | null = null
   let isPolling = false
@@ -86,6 +91,61 @@
     } catch (error) {
       console.error('Error while upgrading plan:', error)
       await showErrorNotification()
+    }
+  }
+
+  async function handleChangePackage (pkgKey: string): Promise<void> {
+    if (paymentClient == null) {
+      return
+    }
+
+    const workspace = getMetadata(presentation.metadata.WorkspaceUuid)
+    if (workspace === undefined) {
+      console.warn('Workspace metadata not available')
+      return
+    }
+
+    // Canceling package
+    const cancelSub = currentPackageSubscription
+    if (cancelSub !== undefined && pkgKey === cancelSub.plan) {
+      showPopup(MessageBox, {
+        label: plugin.string.ConfirmCancelPackage,
+        message: '',
+        dangerous: true,
+        action: async () => {
+          try {
+            await paymentClient.cancelSubscription(cancelSub.id)
+            currentPackageSubscription = undefined
+          } catch (error) {
+            console.error('Error canceling package:', error)
+            await showErrorNotification()
+          }
+        }
+      })
+      // Connecting package when another package exists
+    } else if (currentPackageSubscription !== undefined) {
+      const replaceSub = currentPackageSubscription
+      showPopup(MessageBox, {
+        label: plugin.string.ConfirmConnectPackage,
+        message: plugin.string.ReplacePackageDescription,
+        params: { package: currentPackage?.description },
+        action: async () => {
+          try {
+            const result = await paymentClient.updateSubscriptionPlan(replaceSub.id, pkgKey)
+            if ('checkoutUrl' in result) {
+              window.location.href = result.checkoutUrl
+            } else {
+              currentPackageSubscription = result
+            }
+          } catch (error) {
+            console.error('Error replacing package:', error)
+            await showErrorNotification()
+          }
+        }
+      })
+      // Connecting package, no package connected yet
+    } else {
+      void subscribePackage(pkgKey)
     }
   }
 
@@ -292,6 +352,8 @@
       const subscriptions = await accountClient.getSubscriptions()
       currentSubscription = subscriptions.find((p) => p.type === 'tier')
       currentPlan = currentSubscription != null ? plans[currentSubscription.plan] : undefined
+      currentPackageSubscription = subscriptions.find((p) => p.type === 'package')
+      currentPackage = currentPackageSubscription != null ? packages[currentPackageSubscription.plan] : undefined
     } catch (err) {
       console.error('Error fetching current plan:', err)
       await showErrorNotification()
@@ -366,8 +428,9 @@
     const paymentStatus = loc.query?.payment as string | undefined
 
     if (checkoutId !== undefined && paymentStatus === 'success') {
-      // Check if we already have a tier subscription that matches this checkout
-      const isMatchingSubscription = currentSubscription?.providerCheckoutId === checkoutId
+      // Check if any subscription (tier or package) already matches this checkout
+      const allSubs = [currentSubscription, currentPackageSubscription].filter(Boolean)
+      const isMatchingSubscription = allSubs.some((s) => s?.providerCheckoutId === checkoutId)
 
       if (!isMatchingSubscription) {
         // No matching subscription found, start polling
@@ -471,6 +534,26 @@
                 </div>
               {/if}
             </div>
+
+            {#if currentPackage !== undefined}
+              <Label label={plugin.string.AdditionalPackage} />
+              <div class="current-tier-card-title" style="margin-top: -10px;">
+                <div class="flex-row-center">
+                  <div class="fs-title">{currentPackage?.description}</div>
+                </div>
+                {#if currentPackageSubscription?.amount}
+                  <div class="flex-row-center items-end">
+                    <span class="fs-title text-xl">
+                      {currentPackageSubscription?.amount / 100}
+                      {currentPackage.currency}
+                    </span>
+                    <span class="ml-1 lower">
+                      <Label label={plugin.string.Monthly} />
+                    </span>
+                  </div>
+                {/if}
+              </div>
+            {/if}
 
             {#if usageInfo !== null}
               <div class="usage-section">
@@ -580,42 +663,51 @@
           <div class="section-title">
             <Label label={plugin.string.AdditionalSpace} />
           </div>
-          <Scroller contentDirection="horizontal" buttons={false} showOverflowArrows shrink={false} noFade={false}>
-            <div class="flex-stretch flex-gap-4 flex-no-shrink mb-3">
-              {#each Object.entries(packages) as [pkgKey, pkgItem] (pkgItem.description)}
-                <div class="tier-card">
-                  <div class="tier-card-content">
-                    <div class="package-item">
-                      <IconStorage size="medium" />
-                      <span class="fs-title text-lg">{pkgItem.description}</span>
-                    </div>
-                    <div class="flex-row-center items-end">
-                      <span class="fs-title text-l">
-                        {pkgItem.priceMonthly}
-                        {pkgItem.currency}
-                      </span>
-                      <span class="ml-1 lower">
-                        <Label label={plugin.string.Monthly} />
-                      </span>
-                    </div>
-                    <div class="tier-card-footer">
-                      {#if !isReadOnly}
-                        <Button
-                          label={plugin.string.Connect}
-                          size={'large'}
-                          kind={'regular'}
-                          disabled={loading || isCheckoutPolling || isUpdating}
-                          on:click={() => {
-                            void subscribePackage(pkgKey)
-                          }}
-                        />
-                      {/if}
+          {#if arePackagesAvailable || currentPackage !== undefined}
+            <Scroller contentDirection="horizontal" buttons={false} showOverflowArrows shrink={false} noFade={false}>
+              <div class="flex-stretch flex-gap-4 flex-no-shrink mb-3">
+                {#each Object.entries(packages) as [pkgKey, pkgItem] (pkgItem.description)}
+                  <div class="tier-card">
+                    <div class="tier-card-content">
+                      <div class="package-item">
+                        <IconStorage size="medium" />
+                        <span class="fs-title text-lg">{pkgItem.description}</span>
+                      </div>
+                      <div class="flex-row-center items-end">
+                        <span class="fs-title text-l">
+                          {pkgItem.priceMonthly}
+                          {pkgItem.currency}
+                        </span>
+                        <span class="ml-1 lower">
+                          <Label label={plugin.string.Monthly} />
+                        </span>
+                      </div>
+                      <div class="tier-card-footer">
+                        {#if !isReadOnly}
+                          {@const isConnected = currentPackage === pkgItem}
+                          {@const isEligible =
+                            pkgItem.eligiblePlans?.includes(currentSubscription?.plan ?? '') ?? false}
+                          <Button
+                            label={isConnected ? plugin.string.Disconnect : plugin.string.Connect}
+                            size={'large'}
+                            kind={isConnected ? 'regular' : 'secondary'}
+                            disabled={loading || isCheckoutPolling || isUpdating || (!isConnected && !isEligible)}
+                            on:click={() => {
+                              void handleChangePackage(pkgKey)
+                            }}
+                          />
+                        {/if}
+                      </div>
                     </div>
                   </div>
-                </div>
-              {/each}
+                {/each}
+              </div>
+            </Scroller>
+          {:else}
+            <div class="no-plan-container flex-col flex-gap-4">
+              <div class="fs-title text-md"><Label label={plugin.string.UpgradeToAccessPackages} /></div>
             </div>
-          </Scroller>
+          {/if}
         </div>
       {/if}
     </div>

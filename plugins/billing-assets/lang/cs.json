@@ -26,6 +26,7 @@
     "Upgrade": "Upgradovat",
     "Subscribe": "Přihlásit se",
     "Connect": "Připojit",
+    "Disconnect": "Odpojit",
     "AdditionalSpace": "Dodatečné úložiště",
     "Monthly": "Měsíčně",
     "Acitve": "Aktivní",
@@ -34,6 +35,7 @@
     "SubscriptionEnds": "Do {date}",
     "SubscriptionRenews": "Obnovení: {date}",
     "SubscriptionValidUntil": "Platné do {date}",
+    "AdditionalPackage": "Další balíček:",
     "ProcessingPayment": "Zpracování platby...",
     "Downgrade": "Snížit",
     "CancelSubscription": "Zrušit předplatné",
@@ -47,6 +49,9 @@
     "ConfirmUncancel": "Reaktivovat předplatné?",
     "UncancelDescription": "Vaše předplatné bude reaktivováno a bude pokračovat od konce aktuálního období fakturace.",
     "PriceDifference": "Rozdíl v ceně: {amount}",
+    "ConfirmConnectPackage": "Připojit balíček?",
+    "ReplacePackageDescription": "Již máte {package}. Nahradit?",
+    "ConfirmCancelPackage": "Zrušit balíček?",
     "DialogCancel": "Zrušit",
     "DialogConfirm": "Potvrdit",
     "StorageUsage": "Úložiště",
@@ -61,6 +66,7 @@
     "LimitReached": "Dosažen limit pracovního prostoru, některé funkce mohou být zakázány. Upgradujte pro obnovení plného přístupu.",
     "RestrictedPlans": "Pouze vlastník pracovního prostoru nebo správce fakturace může změnit plán předplatného.",
     "SubscriptionOperationFailed": "Operace s předplatným se nezdařila",
-    "SubscriptionErrorMessage": "Něco se pokazilo. Zkuste to znovu nebo kontaktujte podporu."
+    "SubscriptionErrorMessage": "Něco se pokazilo. Zkuste to znovu nebo kontaktujte podporu.",
+    "UpgradeToAccessPackages": "Upgradujte na Standard nebo Business a získejte přístup k dalším balíčkům"
   }
 }

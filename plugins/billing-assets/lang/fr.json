@@ -26,6 +26,7 @@
     "ChangePlan": "Changer de plan",
     "Subscribe": "S'abonner",
     "Connect": "Connecter",
+    "Disconnect": "Déconnecter",
     "AdditionalSpace": "Espace supplémentaire",
     "Monthly": "Mensuel",
     "Active": "Actif",
@@ -34,6 +35,7 @@
     "SubscriptionEnds": "Jusqu'au {date}",
     "SubscriptionRenews": "Prochain renouvellement: {date}",
     "SubscriptionValidUntil": "Valide jusqu'au {date}",
+    "AdditionalPackage": "Forfait supplémentaire:",
     "ProcessingPayment": "Traitement du paiement...",
     "Downgrade": "Rétrograder",
     "CancelSubscription": "Annuler l'abonnement",
@@ -47,6 +49,9 @@
     "ConfirmUncancel": "Réactiver l'abonnement?",
     "UncancelDescription": "Votre abonnement sera réactivé et se poursuivra à partir de la fin de la période de facturation actuelle.",
     "PriceDifference": "Différence de prix: {amount}",
+    "ConfirmConnectPackage": "Connecter le forfait?",
+    "ReplacePackageDescription": "Vous avez déjà {package}. Remplacer?",
+    "ConfirmCancelPackage": "Annuler le forfait?",
     "DialogCancel": "Annuler",
     "DialogConfirm": "Confirmer",
     "StorageUsage": "Stockage",
@@ -61,6 +66,7 @@
     "LimitReached": "Limite de l'espace de travail atteinte, certaines fonctionnalités peuvent être désactivées. Mettez à niveau pour restaurer l'accès complet.",
     "RestrictedPlans": "Seul le propriétaire de l'espace de travail ou le gestionnaire de facturation peut modifier le plan d'abonnement.",
     "SubscriptionOperationFailed": "Échec de l'opération d'abonnement",
-    "SubscriptionErrorMessage": "Une erreur s'est produite. Veuillez réessayer ou contacter le support."
+    "SubscriptionErrorMessage": "Une erreur s'est produite. Veuillez réessayer ou contacter le support.",
+    "UpgradeToAccessPackages": "Passez à Standard ou Business pour accéder aux packages supplémentaires"
   }
 }

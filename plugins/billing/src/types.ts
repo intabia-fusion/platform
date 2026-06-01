@@ -40,6 +40,7 @@ export interface PackageItem {
   description: LocalizedString
   priceMonthly: string
   currency: string
+  eligiblePlans: string[]
 }
 
 /** @public */
