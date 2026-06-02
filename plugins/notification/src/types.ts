@@ -296,7 +296,7 @@ export interface UnreadReaction {
   attachedTo: Ref<ActivityMessage>
 }
 
-export interface QueueNotificationMessage  {
+export interface QueueNotificationMessage {
   id: string
   title: string
   body: string

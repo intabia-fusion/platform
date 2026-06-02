@@ -101,21 +101,15 @@ export async function getDocTitle (
 }
 
 export async function getDocIdentifier (client: Client, txCache: TxCache, doc: Doc): Promise<string | undefined> {
-  return await withCache(txCache.identifierByDoc, doc._id, () =>
-    _getDocIdentifier(getPresenterControl(client), doc)
-  )
+  return await withCache(txCache.identifierByDoc, doc._id, () => _getDocIdentifier(getPresenterControl(client), doc))
 }
 
 export async function getDocUrl (client: Client, txCache: TxCache, doc: Doc): Promise<string | undefined> {
-  return await withCache(txCache.urlByDoc, doc._id, () =>
-    _getDocUrl(getPresenterControl(client), doc)
-  )
+  return await withCache(txCache.urlByDoc, doc._id, () => _getDocUrl(getPresenterControl(client), doc))
 }
 
 export async function getDocLabel (client: Client, txCache: TxCache, doc: Doc): Promise<IntlString | undefined> {
-  return await withCache(txCache.labelByDoc, doc._id, () =>
-    _getDocLabel(getPresenterControl(client), doc)
-  )
+  return await withCache(txCache.labelByDoc, doc._id, () => _getDocLabel(getPresenterControl(client), doc))
 }
 
 export async function getDocIcon (

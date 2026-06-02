@@ -70,7 +70,8 @@ export const main = async (): Promise<void> => {
   setMetadata(serverToken.metadata.Service, config.serviceId)
 
   // Initialize components based on mode
-  const { client, platformQueue, server, serverClient, notificationConsumer, userNotificationsConsumer } = await initializeComponents(measureCtx)
+  const { client, platformQueue, server, serverClient, notificationConsumer, userNotificationsConsumer } =
+    await initializeComponents(measureCtx)
 
   measureCtx.info('Mail service has been started')
 
@@ -78,7 +79,15 @@ export const main = async (): Promise<void> => {
   await server?.start(measureCtx, config.port)
 
   // Setup graceful shutdown
-  setupShutdownHandlers(measureCtx, notificationConsumer, userNotificationsConsumer, platformQueue, client, serverClient, server)
+  setupShutdownHandlers(
+    measureCtx,
+    notificationConsumer,
+    userNotificationsConsumer,
+    platformQueue,
+    client,
+    serverClient,
+    server
+  )
 }
 
 /**

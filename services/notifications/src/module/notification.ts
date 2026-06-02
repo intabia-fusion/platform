@@ -171,11 +171,7 @@ export async function pushNotification (
   createAppPushNotification(client, result, data)
 }
 
-function createAppPushNotification (
-  client: Client,
-  result: Result,
-  data: CreateNotificationData
-): void {
+function createAppPushNotification (client: Client, result: Result, data: CreateNotificationData): void {
   const { txFactory } = client
   const { notification, notifyProviders, objectId, objectClass, receiver, intl } = data
   const shouldPush = (notifyProviders[notificationPlugin.providers.PushNotificationProvider]?.length ?? 0) > 0

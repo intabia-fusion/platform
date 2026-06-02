@@ -28,7 +28,7 @@
   } from '@hcengineering/core'
   import login, { loginId } from '@hcengineering/login'
   import notification, { notificationId } from '@hcengineering/notification'
-  import { BrowserNotificatator, NotificationClientImpl } from '@hcengineering/notification-resources'
+  import { AppNotificator, NotificationClientImpl } from '@hcengineering/notification-resources'
   import { broadcastEvent, getMetadata, getResource, IntlString, translate } from '@hcengineering/platform'
   import {
     ActionContext,
@@ -1057,7 +1057,7 @@
   <div class="hidden max-w-0 max-h-0">
     <ComponentExtensions extension={workbench.extensions.WorkbenchExtensions} />
   </div>
-  <BrowserNotificatator />
+  <AppNotificator />
 {/if}
 
 <style lang="scss">

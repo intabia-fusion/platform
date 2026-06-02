@@ -25,7 +25,13 @@ jest.mock('web-push', () => {
     headers: Record<string, string>
     body: string | null | undefined
     endpoint: string
-    constructor(message: string, statusCode: number, headers: Record<string, string>, body: string | null | undefined, endpoint: string) {
+    constructor (
+      message: string,
+      statusCode: number,
+      headers: Record<string, string>,
+      body: string | null | undefined,
+      endpoint: string
+    ) {
       super(message)
       this.name = 'WebPushError'
       this.statusCode = statusCode
@@ -89,7 +95,13 @@ describe('sendPushToSubscription', () => {
         new WebPushError('Subscription expired', 410, {}, '{"code": "expired"}', 'https://example.com/endpoint1')
       )
       .mockRejectedValueOnce(
-        new WebPushError('Unregistered subscription', 404, {}, '{"message": "Unregistered"}', 'https://example.com/endpoint2')
+        new WebPushError(
+          'Unregistered subscription',
+          404,
+          {},
+          '{"message": "Unregistered"}',
+          'https://example.com/endpoint2'
+        )
       )
 
     const failedIds = await sendPushToSubscription(mockSubscriptions, mockData)
@@ -110,7 +122,6 @@ describe('sendPushToSubscription', () => {
   it('should handle undefined body in WebPushError gracefully without throwing a TypeError', async () => {
     const errorWithNullBody = new WebPushError('Bad request', 400, {}, 'bad-body', 'https://example.com/endpoint1')
     ;(errorWithNullBody as { body: string | undefined }).body = undefined
-
     ;(webpush.sendNotification as jest.Mock).mockRejectedValue(errorWithNullBody)
 
     const failedIds = await sendPushToSubscription(mockSubscriptions, mockData)
@@ -119,9 +130,7 @@ describe('sendPushToSubscription', () => {
   })
 
   it('should handle non-WebPush errors gracefully and return empty list', async () => {
-    ;(webpush.sendNotification as jest.Mock).mockRejectedValue(
-      new Error('Network connection timeout')
-    )
+    ;(webpush.sendNotification as jest.Mock).mockRejectedValue(new Error('Network connection timeout'))
 
     const failedIds = await sendPushToSubscription(mockSubscriptions, mockData)
 

@@ -13,9 +13,53 @@
 // limitations under the License.
 //
 
-export { MAX_NOTIFICATION_TYPE_PRIORITY, getMessageNotifyProviders, getAllowedProviders, isTxTrigger, getTxNotifyProviders, isMatchedTxType } from './providers'
-export { hasMessageNotification, hasReactionNotificationByMessage, hasMentionNotificationByMessage, hasReactionNotification, hasUnreadReactionByMessage, hasUnreadReaction, hasUnreadMentionByMessage, hasUnreadMessage, getNotificationsByMessage, getMentionNotification, getLastNotify, getMode, isMuted, getUpdateContextTx, getUpdateOpContextTx, getCreateContextTx } from './context'
-export { getDocTitle, getDocIdentifier, getDocUrl, getDocLabel, getDocIcon, getObjectDisplayData, getBaseDisplayParams } from './display'
+export {
+  MAX_NOTIFICATION_TYPE_PRIORITY,
+  getMessageNotifyProviders,
+  getAllowedProviders,
+  isTxTrigger,
+  getTxNotifyProviders,
+  isMatchedTxType
+} from './providers'
+export {
+  hasMessageNotification,
+  hasReactionNotificationByMessage,
+  hasMentionNotificationByMessage,
+  hasReactionNotification,
+  hasUnreadReactionByMessage,
+  hasUnreadReaction,
+  hasUnreadMentionByMessage,
+  hasUnreadMessage,
+  getNotificationsByMessage,
+  getMentionNotification,
+  getLastNotify,
+  getMode,
+  isMuted,
+  getUpdateContextTx,
+  getUpdateOpContextTx,
+  getCreateContextTx
+} from './context'
+export {
+  getDocTitle,
+  getDocIdentifier,
+  getDocUrl,
+  getDocLabel,
+  getDocIcon,
+  getObjectDisplayData,
+  getBaseDisplayParams
+} from './display'
 export { emptyResult, getResultTxes, isEmptyResult, getNotifiedUsers, getEmptyTxCache } from './result'
-export { getWorkspaceInfo, getTransactorApiEndpoint, getNotificationUrl, getNotificationLocation, getDomain } from './workspace'
-export { getCollaboratorAccounts, getTypeMatchClient, toNotificationMessage, isChatMessage, getAttachments } from './misc'
+export {
+  getWorkspaceInfo,
+  getTransactorApiEndpoint,
+  getNotificationUrl,
+  getNotificationLocation,
+  getDomain
+} from './workspace'
+export {
+  getCollaboratorAccounts,
+  getTypeMatchClient,
+  toNotificationMessage,
+  isChatMessage,
+  getAttachments
+} from './misc'

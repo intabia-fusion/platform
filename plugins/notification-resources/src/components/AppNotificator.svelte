@@ -22,7 +22,7 @@
     Location,
     NotificationSeverity,
     languageStore,
-    deviceInfo
+    deviceOptionsStore
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { parseLinkId } from '@hcengineering/view-resources'
@@ -34,7 +34,7 @@
   import Notification from './Notification.svelte'
 
   async function check (allowed: boolean): Promise<void> {
-    if ($deviceInfo.isMobile) {
+    if ($deviceOptionsStore.isMobile) {
       query.unsubscribe()
       return
     }
@@ -90,7 +90,7 @@
   }
 
   async function notify (value: AppNotification): Promise<void> {
-    if ($deviceInfo.isMobile) return
+    if ($deviceOptionsStore.isMobile) return
     const _id: Ref<Doc> | undefined = value.objectId
     void removeNotification(value)
 

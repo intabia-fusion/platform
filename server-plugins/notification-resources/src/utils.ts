@@ -23,11 +23,7 @@ import core, {
   Ref,
   Tx
 } from '@hcengineering/core'
-import notification, {
-  MessageNotificationType,
-  NotificationGroup,
-  NotificationType
-} from '@hcengineering/notification'
+import notification, { MessageNotificationType, NotificationGroup, NotificationType } from '@hcengineering/notification'
 import { TriggerControl } from '@hcengineering/server-core'
 import { Receiver, TypeMatchClient, TypeMatchFunc } from '@hcengineering/server-notification'
 import activity, { DocUpdateMessage } from '@hcengineering/activity'
@@ -132,4 +128,3 @@ export function generateAttributeNotificationType (
   res.push(control.txFactory.createTxCreateDoc(notification.class.MessageNotificationType, core.space.Model, data, id))
   return res
 }
-

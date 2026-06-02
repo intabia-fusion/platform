@@ -39,9 +39,7 @@ export async function getCollaboratorAccounts (
 ): Promise<AccountUuid[]> {
   const collaborators = await cache.getCollaborators(doc._id, doc._class)
 
-  const filtered = space.private
-    ? collaborators.filter((it) => space.members.includes(it.collaborator))
-    : collaborators
+  const filtered = space.private ? collaborators.filter((it) => space.members.includes(it.collaborator)) : collaborators
 
   const accounts = new Set(filtered.map((it) => it.collaborator))
 

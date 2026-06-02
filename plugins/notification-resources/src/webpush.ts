@@ -18,7 +18,7 @@ import { getClient } from '@hcengineering/presentation'
 import { getMetadata } from '@hcengineering/platform'
 import notification from '@hcengineering/notification'
 import { getCurrentLocation, navigate, parseLocation } from '@hcengineering/ui'
-import core, { type Doc, getCurrentAccount, type Ref } from '@hcengineering/core'
+import core, { getCurrentAccount } from '@hcengineering/core'
 
 export const pushAllowed = writable<boolean>(false)
 

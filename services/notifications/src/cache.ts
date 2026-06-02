@@ -960,8 +960,10 @@ class WorkspaceCache {
   }
 
   private isPushSubscriptionTx (tx: TxCUD<Doc>): boolean {
-    return this.client.hierarchy.isDerived(tx.objectClass, notification.class.PushSubscription) ||
+    return (
+      this.client.hierarchy.isDerived(tx.objectClass, notification.class.PushSubscription) ||
       this.client.hierarchy.isDerived(tx.objectClass, notification.class.PushSubscriptionSetting)
+    )
   }
 }
 

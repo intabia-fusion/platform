@@ -82,43 +82,54 @@ export const main = async (): Promise<void> => {
   const ctx = getCtx()
   const queue = getPlatformQueue(config.ServiceId, config.QueueRegion)
 
-  const consumer = queue.createConsumer<QueueNotificationMessage>(ctx, QueueTopic.UserNotifications, queue.getClientId(), async (ctx, queueMessage) => {
-    try {
-      const value = queueMessage.value
-      const shouldPush = (value.providers[notification.providers.PushNotificationProvider]?.length ?? 0) > 0
-      if (shouldPush) {
-        const failedSubscriptionIds = await sendPushToSubscription(value.pushSubscriptions, {
-          tag: value.id,
-          title: value.title,
-          body: value.body,
-          domain: value.domain,
-          url: value.url
-        })
+  const consumer = queue.createConsumer<QueueNotificationMessage>(
+    ctx,
+    QueueTopic.UserNotifications,
+    queue.getClientId(),
+    async (ctx, queueMessage) => {
+      try {
+        const value = queueMessage.value
+        const shouldPush = (value.providers[notification.providers.PushNotificationProvider]?.length ?? 0) > 0
+        if (shouldPush) {
+          const failedSubscriptionIds = await sendPushToSubscription(value.pushSubscriptions, {
+            tag: value.id,
+            title: value.title,
+            body: value.body,
+            domain: value.domain,
+            url: value.url
+          })
 
-        if (failedSubscriptionIds.length > 0 && config.AccountsUrl !== undefined && config.ServerSecret !== undefined) {
-          try {
-            const token = generateToken(systemAccountUuid, queueMessage.workspace, { service: config.ServiceId })
-            const endpoint = await getTransactorEndpoint(token)
-            const restClient = createRestClient(endpoint, queueMessage.workspace, token)
+          if (
+            failedSubscriptionIds.length > 0 &&
+            config.AccountsUrl !== undefined &&
+            config.ServerSecret !== undefined
+          ) {
+            try {
+              const token = generateToken(systemAccountUuid, queueMessage.workspace, { service: config.ServiceId })
+              const endpoint = await getTransactorEndpoint(token)
+              const restClient = createRestClient(endpoint, queueMessage.workspace, token)
 
-            for (const subId of failedSubscriptionIds) {
-              try {
-                await restClient.removeDoc(notification.class.PushSubscription, core.space.Workspace, subId)
-                ctx.info(`Successfully removed invalid push subscription ${subId} from workspace ${queueMessage.workspace}`)
-              } catch (removeErr: any) {
-                ctx.error(`Failed to remove expired subscription ${subId}:`, { removeErr })
+              for (const subId of failedSubscriptionIds) {
+                try {
+                  await restClient.removeDoc(notification.class.PushSubscription, core.space.Workspace, subId)
+                  ctx.info(
+                    `Successfully removed invalid push subscription ${subId} from workspace ${queueMessage.workspace}`
+                  )
+                } catch (removeErr: any) {
+                  ctx.error(`Failed to remove expired subscription ${subId}:`, { removeErr })
+                }
               }
+            } catch (clientErr: any) {
+              ctx.error('Failed to initialize RestClient or fetch transactor endpoint for cleanup:', { clientErr })
             }
-          } catch (clientErr: any) {
-            ctx.error('Failed to initialize RestClient or fetch transactor endpoint for cleanup:', { clientErr })
           }
         }
+      } catch (e) {
+        ctx.error('Failed to process notification', { e })
+        throw e
       }
-    } catch (e) {
-      ctx.error('Failed to process notification', { e })
-      throw e
     }
-  })
+  )
 
   const shutdown = async (): Promise<void> => {
     try {
@@ -130,8 +141,12 @@ export const main = async (): Promise<void> => {
     }
   }
 
-  process.on('SIGINT', () => { void shutdown() })
-  process.on('SIGTERM', () => { void shutdown() })
+  process.on('SIGINT', () => {
+    void shutdown()
+  })
+  process.on('SIGTERM', () => {
+    void shutdown()
+  })
   process.on('uncaughtException', (e) => {
     console.error('Uncaught Exception:', e)
     process.exit(1)
