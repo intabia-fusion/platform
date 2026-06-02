@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -52,6 +53,7 @@ import {
   type ServerFindOptions,
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
+import contact from '@hcengineering/contact'
 import { isOwner, isSystem } from './utils'
 
 interface SpaceInfo {
@@ -594,8 +596,14 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
       const cud = tx as TxCUD<Doc>
       if (cud.objectClass === undefined) return undefined
 
+      const isSpaceTx = this.context.hierarchy.isDerived(cud.objectClass, core.class.Space)
+      const isPersonSpaceTx = this.context.hierarchy.isDerived(cud.objectClass, contact.class.PersonSpace)
+      const isPrivateSpaceTx = isSpaceTx ? this.spacesMap.get(cud.objectId as Ref<Space>)?.private === true : false
+
+      const bypassMainSpaces = isPersonSpaceTx || isPrivateSpaceTx
+
       // For system and main spaces broadcast to all users except guests that are not collaborators for objects with collab security enabled
-      if (this.systemSpaces.has(tx.objectSpace) || this.mainSpaces.has(tx.objectSpace)) {
+      if (!bypassMainSpaces && (this.systemSpaces.has(tx.objectSpace) || this.mainSpaces.has(tx.objectSpace))) {
         const collabSec = getClassCollaborators(this.context.modelDb, this.context.hierarchy, cud.objectClass)
         if (collabSec?.provideSecurity === true) {
           const guests = new Set<AccountUuid>()
@@ -615,7 +623,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         return undefined
       }
 
-      const space = this.spacesMap.get(tx.objectSpace)
+      const space = isSpaceTx ? this.spacesMap.get(cud.objectId as Ref<Space>) : this.spacesMap.get(tx.objectSpace)
       if (space === undefined) return undefined
 
       const getCollabTargets = async (_id: Ref<Doc>): Promise<AccountUuid[]> => {
@@ -656,6 +664,14 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         return collabTargets.length === 0 ? undefined : { target: collabTargets }
       }
 
+      const spaceTargets = space.members.size === 0 ? [] : this.getTargets(Array.from(space.members))
+
+      if (this.context.hierarchy.isDerived(space._class, contact.class.PersonSpace)) {
+        // Personal space: broadcast ONLY to members. Do NOT add workspace owners.
+        const target = [...new Set(spaceTargets)]
+        return target.length === 0 ? undefined : { target }
+      }
+
       // Workspace owners can see every private space (see getAllAllowedSpaces),
       // but are not in space.members, so they would miss the broadcast and not
       // get live updates for private spaces until refresh. Add them explicitly.
@@ -666,7 +682,6 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         }
       }
 
-      const spaceTargets = space.members.size === 0 ? [] : this.getTargets(Array.from(space.members))
       const target = [...new Set([...collabTargets, ...spaceTargets, ...ownerTargets])]
 
       return target.length === 0 ? undefined : { target }
