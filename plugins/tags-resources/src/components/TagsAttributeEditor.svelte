@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { AnyAttribute, Class, Doc, Ref } from '@hcengineering/core'
+  import { AnyAttribute, Class, Doc, IdMap, Ref, toIdMap } from '@hcengineering/core'
   import { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import tags, { TagReference, TagsEvents } from '@hcengineering/tags'
+  import tags, { TagReference, TagsEvents, TagElement } from '@hcengineering/tags'
   import { Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
   import { getObjectId } from '@hcengineering/view-resources'
   import { Analytics } from '@hcengineering/analytics'
@@ -18,12 +18,18 @@
   export let targetClass: Ref<Class<Doc>> = object._class
 
   let items: TagReference[] = []
+  let elements: IdMap<TagElement> = new Map()
   const query = createQuery()
+  const tagElements = createQuery()
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
   $: query.query(tags.class.TagReference, { attachedTo: object._id }, (result) => {
     items = result
+  })
+
+  $: tagElements.query(tags.class.TagElement, { _id: { $in: items.map((it) => it.tag) } }, (result) => {
+    elements = toIdMap(result)
   })
   async function tagsHandler (evt: MouseEvent): Promise<void> {
     if (readonly) return
@@ -49,6 +55,7 @@
         <TagReferencePresenter
           {attr}
           {value}
+          element={elements.get(value.tag)}
           isEditable={!readonly}
           kind={'list'}
           on:remove={(res) => removeTag(res.detail)}

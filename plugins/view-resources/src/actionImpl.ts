@@ -44,11 +44,10 @@ import {
   type SelectDirection,
   type SelectionStore,
   focusStore,
-  previewDocument,
   selectionLimit,
   selectionStore
 } from './selection'
-import { deleteObjects, getObjectId, getObjectLinkFragment, restrictionStore } from './utils'
+import { deleteObjects, getObjectId, getObjectLinkFragment, openDocInSidebar, restrictionStore } from './utils'
 import workbenchPlugin from '@hcengineering/workbench'
 import converter from '@hcengineering/converter'
 import { viewletContextStore } from './viewletContextStore'
@@ -302,11 +301,6 @@ export function select (
   if ($focusStore.provider?.select !== undefined) {
     $focusStore.provider?.select(offset, of, direction, noScroll)
     evt?.preventDefault()
-    previewDocument.update((old) => {
-      if (old !== undefined) {
-        return $focusStore.focus
-      }
-    })
   }
 }
 
@@ -330,7 +324,6 @@ function SelectItemNone (doc: Doc | undefined, evt: Event): void {
   const provider = $selectionStore.provider ?? $focusStore.provider
   if (provider !== undefined) {
     provider.selection.set([])
-    previewDocument.set(undefined)
     evt.preventDefault()
   }
 }
@@ -339,7 +332,6 @@ function SelectItemAll (doc: Doc | undefined, evt: Event): void {
   if (provider !== undefined) {
     const docs = provider.docs() ?? []
     provider.selection.set(docs.slice(0, selectionLimit))
-    previewDocument.set(undefined)
     evt.preventDefault()
   }
 }
@@ -364,16 +356,16 @@ function ShowActions (doc: Doc | Doc[] | undefined, evt: Event): void {
   showPopup(view.component.ActionsPopup, { viewContext: $contextStore.getLastContext() }, 'top')
 }
 
-function ShowPreview (doc: Doc | Doc[] | undefined, evt: Event): void {
-  previewDocument.update((old) => {
-    const d = Array.isArray(doc) ? doc[0] : doc
-    if (old?._id === d?._id) {
-      return undefined
-    }
-    return d
-  })
+function OpenInSidebar (doc: Doc | Doc[] | undefined, evt: Event): void {
+  const d = Array.isArray(doc) ? doc[0] : doc
+  if (d !== undefined) {
+    void openDocInSidebar(d)
+  }
   evt.preventDefault()
 }
+
+// Space key preview opens the doc in the sidebar, same as the OpenInSidebar action.
+const ShowPreview = OpenInSidebar
 
 async function Open (
   doc: Doc,
@@ -770,6 +762,7 @@ export const actionImpl = {
   ShowPreview,
   Open,
   OpenInNewTab,
+  OpenInSidebar,
   UpdateDocument,
   ShowPanel,
   ShowPopup,

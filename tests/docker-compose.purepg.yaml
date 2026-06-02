@@ -8,10 +8,12 @@ services:
     environment:
       - DB_URL=${DB_PURE_PG_URL}
       - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
+      - POSTGRES_OPTIONS={"connection":{"application_name":"transactor0"},"max":100}
   transactor1:
     environment:
       - DB_URL=${DB_PURE_PG_URL}
       - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
+      - POSTGRES_OPTIONS={"connection":{"application_name":"transactor1"},"max":100}
   workspace:
     environment:
       - DB_URL=${DB_PURE_PG_URL}
@@ -45,7 +47,7 @@ services:
     image: intabiafusion/datalake
     pull_policy: never
     extra_hosts:
-      - 'localhost:host-gateway'
+      - "localhost:host-gateway"
     depends_on:
       minio:
         condition: service_healthy

@@ -24,6 +24,7 @@
     "ArchiveConfirm": "Chcete archivovat {count, plural, =1 {tento objekt} other {# objektů}}?",
     "Open": "Otevřít",
     "OpenInNewTab": "Otevřít na nové kartě",
+    "OpenInSidebar": "Otevřít v postranním panelu",
     "Assignees": "Přiřazení",
     "Labels": "Štítky",
     "MoveLeft": "Přesunout vlevo",

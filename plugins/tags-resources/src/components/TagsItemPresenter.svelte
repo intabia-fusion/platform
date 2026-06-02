@@ -13,21 +13,31 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TagReference } from '@hcengineering/tags'
+  import tags, { TagReference, TagElement } from '@hcengineering/tags'
   import TagReferencePresenter from './TagReferencePresenter.svelte'
   import TagItem from './TagItem.svelte'
+  import { createQuery } from '@hcengineering/presentation'
+  import { IdMap, toIdMap } from '@hcengineering/core'
 
   export let value: TagReference[] | TagReference
   export let kind: 'tag' | 'list' | 'link' = 'tag'
 
   $: values = Array.isArray(value) ? value : [value]
+
+  const query = createQuery()
+
+  let elements: IdMap<TagElement> = new Map()
+
+  $: query.query(tags.class.TagElement, { _id: { $in: values.map((it) => it.tag) } }, (result) => {
+    elements = toIdMap(result)
+  })
 </script>
 
 {#if kind === 'list' || kind === 'link'}
   <div class="flex-center flex-wrap">
     {#each values as v}
       <div class="m-0-5">
-        <TagReferencePresenter attr={undefined} value={v} {kind} />
+        <TagReferencePresenter attr={undefined} value={v} {kind} element={elements.get(v.tag)} />
       </div>
     {/each}
   </div>

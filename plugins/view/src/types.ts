@@ -660,6 +660,8 @@ export interface DisplayProps {
   grow?: boolean
   dividerBefore?: boolean // should show divider before
   custom?: boolean // render as custom attribute label
+  minWidth?: string
+  maxWidth?: string
 }
 
 /**
@@ -854,6 +856,14 @@ export interface LinkIdProvider extends Class<Doc> {
  * @public
  */
 export interface ObjectPanel extends Class<Doc> {
+  component: AnyComponent
+}
+
+/**
+ * Per-class override of the component shown when a Doc is previewed in the right sidebar.
+ * @public
+ */
+export interface SidebarObjectPreview extends Class<Doc> {
   component: AnyComponent
 }
 

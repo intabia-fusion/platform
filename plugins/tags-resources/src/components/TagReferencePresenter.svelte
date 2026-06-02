@@ -14,12 +14,23 @@
 -->
 <script lang="ts">
   import { AnyAttribute } from '@hcengineering/core'
-  import type { TagReference } from '@hcengineering/tags'
-  import { Chip, getPlatformColorDef, Icon, IconClose, resizeObserver, themeStore } from '@hcengineering/ui'
+  import type { TagReference, TagElement } from '@hcengineering/tags'
+  import tags from '../plugin'
+  import {
+    Chip,
+    getPlatformColorDef,
+    Icon,
+    IconClose,
+    LabelAndProps,
+    resizeObserver,
+    themeStore,
+    tooltip
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import TagItem from './TagItem.svelte'
 
   export let value: TagReference
+  export let element: TagElement | undefined = undefined
   export let isEditable: boolean = false
   export let kind: 'list' | 'link' | 'skills' | 'todo' = 'skills'
   export let realWidth: number | undefined = undefined
@@ -29,19 +40,34 @@
   const dispatch = createEventDispatcher()
 
   $: color = getPlatformColorDef(value.color ?? 0, $themeStore.dark)
+
+  let tooltipValue: LabelAndProps
+  $: tooltipValue =
+    element !== undefined
+      ? {
+          label: tags.string.TagTooltip,
+          props: {
+            text: `${element?.title} ${
+              element?.description !== undefined && element?.description.length > 0 ? ': ' + element?.description : ''
+            }`
+          },
+          direction: 'left'
+        }
+      : {}
 </script>
 
 {#if value}
   {#if inline}
-    <TagItem tag={value} schema={attr?.schema ?? '0'} inline />
+    <TagItem tag={value} schema={attr?.schema ?? '0'} {element} inline />
   {:else if kind === 'skills'}
-    <TagItem tag={value} schema={attr?.schema ?? '0'} />
+    <TagItem tag={value} schema={attr?.schema ?? '0'} {element} />
   {:else if kind === 'link'}
     <button
       class="link-container"
       use:resizeObserver={(element) => {
         realWidth = element.clientWidth
       }}
+      use:tooltip={tooltipValue}
     >
       <div class="color" style:background-color={color.color} />
       <span class="label overflow-label ml-1 text-sm leading-4 caption-color max-w-40">{value.title}</span>
@@ -53,9 +79,10 @@
       use:resizeObserver={(element) => {
         realWidth = element.clientWidth
       }}
+      use:tooltip={tooltipValue}
     >
       <div class="color" style:background-color={color.color} />
-      <span class="label overflow-label ml-1-5 max-w-20">
+      <span class="label overflow-label ml-1-5">
         {value.title}
       </span>
       {#if isEditable}
@@ -69,6 +96,7 @@
       label={value.title}
       size="min"
       isRemovable={isEditable}
+      tooltip={tooltipValue}
       backgroundColor={color.color}
       on:remove={() => dispatch('remove', value)}
     />

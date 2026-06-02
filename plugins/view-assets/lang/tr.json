@@ -24,6 +24,7 @@
     "ArchiveConfirm": "{count, plural, =1 {bu nesneyi} other {bu # nesneyi}} arşivlemek istiyor musunuz?",
     "Open": "Aç",
     "OpenInNewTab": "Yeni sekmede aç",
+    "OpenInSidebar": "Kenar çubuğunda aç",
     "Assignees": "Atananlar",
     "Labels": "Etiketler",
     "MoveLeft": "Sola taşı",

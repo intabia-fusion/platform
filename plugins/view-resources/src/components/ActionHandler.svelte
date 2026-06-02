@@ -14,15 +14,13 @@
 -->
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
-  import core, { Doc, Hierarchy, Ref, Space, TxRemoveDoc, type Tx } from '@hcengineering/core'
+  import core, { Doc, Ref, Space, TxRemoveDoc, type Tx } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
-  import { addTxListener, contextStore, getClient, reduceCalls } from '@hcengineering/presentation'
-  import { AnyComponent, Component } from '@hcengineering/ui'
+  import { addTxListener, contextStore, getClient } from '@hcengineering/presentation'
   import { Action, ViewContextType } from '@hcengineering/view'
-  import { fly } from 'svelte/transition'
   import { getContextActionsSync, getSelection } from '../actions'
-  import { ListSelectionProvider, SelectionStore, focusStore, previewDocument, selectionStore } from '../selection'
-  import { getObjectPreview, restrictionStore } from '../utils'
+  import { ListSelectionProvider, SelectionStore, focusStore, selectionStore } from '../selection'
+  import { restrictionStore } from '../utils'
 
   export let currentSpace: Ref<Space> | undefined
 
@@ -255,20 +253,6 @@
       }
     }, 300)
   }
-
-  let presenter: AnyComponent | undefined
-  const updatePreviewPresenter = reduceCalls(async function (doc?: Doc): Promise<void> {
-    const r = doc !== undefined ? await getObjectPreview(client, Hierarchy.mixinOrClass(doc)) : undefined
-    presenter = r
-  })
-
-  $: void updatePreviewPresenter($previewDocument)
 </script>
 
 <svelte:window on:keydown={handleKeys} />
-
-{#if $previewDocument !== undefined && presenter}
-  <div class="antiPanel float" transition:fly|local>
-    <Component is={presenter} props={{ object: $previewDocument }} />
-  </div>
-{/if}

@@ -1,5 +1,4 @@
 import { type Doc, type Ref } from '@hcengineering/core'
-import { panelstore } from '@hcengineering/ui'
 import { onDestroy } from 'svelte'
 import { type Unsubscriber, type Writable, writable } from 'svelte/store'
 
@@ -78,15 +77,6 @@ export const selectionStore = writable<SelectionStore>({ docs: [] })
 /**
  * @public
  */
-export const previewDocument = writable<Doc | undefined>()
-
-panelstore.subscribe((val) => {
-  previewDocument.set(undefined)
-})
-
-/**
- * @public
- */
 export function updateFocus (selection?: FocusSelection): void {
   if (!window.document.hasFocus()) {
     window.focus()
@@ -98,11 +88,6 @@ export function updateFocus (selection?: FocusSelection): void {
     cur.focus = selection?.focus
     cur.provider = selection?.provider
     ;(cur as any).now = now
-    previewDocument.update((old) => {
-      if (old !== undefined) {
-        return selection?.focus
-      }
-    })
 
     return cur
   })

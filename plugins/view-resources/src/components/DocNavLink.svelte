@@ -17,7 +17,7 @@
   import presentation, { NavLink, getClient, createQuery, MessageBox } from '@hcengineering/presentation'
   import { AnyComponent, getPanelURI, locationToUrl, showPopup } from '@hcengineering/ui'
   import view from '../plugin'
-  import { getObjectLinkFragment, restrictionStore } from '../utils'
+  import { getObjectLinkFragment, openDocInSidebar, restrictionStore } from '../utils'
   import { getMetadata } from '@hcengineering/platform'
 
   export let object: Doc | undefined
@@ -82,6 +82,13 @@
       canSubmit: false
     })
   }
+
+  // Option/Alt + click opens the object in the right sidebar instead of navigating
+  function onAltClick (event: MouseEvent): void {
+    if (object !== undefined && !_disabled) {
+      void openDocInSidebar(object)
+    }
+  }
 </script>
 
 {#if broken}
@@ -94,6 +101,7 @@
   <NavLink
     disabled={_disabled}
     {onClick}
+    {onAltClick}
     {noUnderline}
     {inline}
     {shrink}

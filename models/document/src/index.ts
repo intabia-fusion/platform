@@ -316,6 +316,25 @@ function defineDocument (builder: Builder): void {
   })
 
   createAction(builder, {
+    action: view.actionImpl.CopyDocumentMarkdown,
+    actionProps: {
+      contentClass: document.class.Document,
+      contentField: 'content'
+    },
+    label: view.string.CopyDocumentMarkdown,
+    icon: view.icon.Print,
+    input: 'focus',
+    category: document.category.Document,
+    target: document.class.Document,
+    query: {},
+    context: {
+      mode: ['context', 'browser'],
+      application: document.app.Documents,
+      group: 'tools'
+    }
+  })
+
+  createAction(builder, {
     ...actionTemplates.move,
     action: view.actionImpl.ShowPopup,
     actionProps: {

@@ -20,6 +20,7 @@
   export let action: (evt: MouseEvent) => Promise<void> | void = async () => {}
   export let compression: boolean = false
   export let ignoreFirst: boolean = false
+  export let minItems: number = 4
 
   const dispatch = createEventDispatcher()
 
@@ -57,7 +58,7 @@
     full = count > allWidth
     dispatch('change', { full, ckeckFilled })
     if (elements.length > 0) {
-      if (items.length > 4) dispatch('resize', elements[0]?.clientWidth)
+      if (items.length > minItems) dispatch('resize', elements[0]?.clientWidth)
       else {
         allWidth = 0
         for (let i = 0; i < items.length; i++) {
@@ -72,7 +73,7 @@
 </script>
 
 {#if kind === 'list' || kind === 'link'}
-  {#if items.length > 4}
+  {#if items.length > minItems}
     <div
       bind:this={elements[0]}
       class="label-box no-shrink"

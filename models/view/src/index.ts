@@ -86,6 +86,7 @@ import {
   type ObjectIdentifier,
   type ObjectPanel,
   type ObjectPanelFooter,
+  type SidebarObjectPreview,
   type ObjectPresenter,
   type ObjectTitle,
   type ObjectLabel,
@@ -425,6 +426,11 @@ export class TObjectPanel extends TClass implements ObjectPanel {
   component!: AnyComponent
 }
 
+@Mixin(view.mixin.SidebarObjectPreview, core.class.Class)
+export class TSidebarObjectPreview extends TClass implements SidebarObjectPreview {
+  component!: AnyComponent
+}
+
 @Model(view.class.AttrPresenter, core.class.Doc, DOMAIN_MODEL)
 export class TAttrPresenter extends TDoc implements AttrPresenter {
   category!: AttributeCategory
@@ -497,6 +503,7 @@ export function createModel (builder: Builder): void {
   builder.createModel(
     TLinkProvider,
     TObjectPanel,
+    TSidebarObjectPreview,
     TFilterMode,
     TClassFilters,
     TAttributeFilter,
