@@ -42,8 +42,8 @@
     "ConfirmUpgrade": "Aggiornare l'abbonamento?",
     "ConfirmDowngrade": "Eseguire il downgrade dell'abbonamento?",
     "ConfirmCancel": "Annullare l'abbonamento?",
-    "UpgradeDescription": "Ti verrà addebitato fino a ${amount} immediatamente. L'importo esatto dipende dal tuo periodo di fatturazione attuale.",
-    "DowngradeDescription": "Riceverai un credito fino a ${amount} per il tempo di abbonamento rimanente. Il downgrade ha effetto immediato.",
+    "UpgradeDescription": "Ti verrà addebitato fino a {amount} {currency} immediatamente. L'importo esatto dipende dal tuo periodo di fatturazione attuale.",
+    "DowngradeDescription": "Riceverai un credito fino a {amount} {currency} per il tempo di abbonamento rimanente. Il downgrade ha effetto immediato.",
     "CancelDescription": "Il tuo abbonamento rimane attivo fino alla fine del periodo di fatturazione.",
     "UncancelSubscription": "Riattiva abbonamento",
     "ConfirmUncancel": "Riattivare l'abbonamento?",
@@ -67,6 +67,8 @@
     "RestrictedPlans": "Solo il proprietario del workspace o il responsabile della fatturazione può modificare il piano di abbonamento.",
     "SubscriptionOperationFailed": "Operazione di abbonamento non riuscita",
     "SubscriptionErrorMessage": "Qualcosa è andato storto. Riprova o contatta l'assistenza.",
-    "UpgradeToAccessPackages": "Passa a Standard o Business per accedere ai pacchetti aggiuntivi"
+    "UpgradeToAccessPackages": "Passa a Standard o Business per accedere ai pacchetti aggiuntivi",
+    "MembersUsage": "Membri",
+    "ProjectsUsage": "Progetti"
   }
 }

@@ -1061,6 +1061,7 @@ export async function upsertSubscription (
     canceledAt: params.canceledAt,
     willCancelAt: params.willCancelAt,
     providerData: params.providerData,
+    ...(params.limits !== undefined && { limits: params.limits }),
     updatedOn: Date.now()
   }
   if (existing !== null) {
@@ -1179,6 +1180,7 @@ export async function adminCreateSubscription (
     workspaceUuid: WorkspaceUuid
     plan: string
     type?: string
+    limits?: Subscription['limits']
   }
 ): Promise<void> {
   const tokenDecoded = decodeTokenVerbose(ctx, token)
@@ -1188,7 +1190,7 @@ export async function adminCreateSubscription (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  const { workspaceUuid, plan, type = 'tier' } = params
+  const { workspaceUuid, plan, type = 'tier', limits } = params
 
   // Verify workspace exists
   const workspace = await getWorkspaceById(db, workspaceUuid)
@@ -1215,6 +1217,7 @@ export async function adminCreateSubscription (
     type: type as any,
     status: 'active' as any,
     plan,
+    limits,
     amount: 0,
     periodStart: now,
     createdOn: now,

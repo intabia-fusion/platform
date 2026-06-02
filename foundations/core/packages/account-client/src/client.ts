@@ -257,7 +257,12 @@ export interface AccountClient {
   getSubscriptionByProviderId: (provider: string, providerSubscriptionId: string) => Promise<Subscription | null>
   getSubscriptionById: (subscriptionId: string) => Promise<Subscription | null>
   upsertSubscription: (subscription: SubscriptionData) => Promise<void>
-  adminCreateSubscription: (params: { workspaceUuid: WorkspaceUuid, plan: string, type?: string }) => Promise<void>
+  adminCreateSubscription: (params: {
+    workspaceUuid: WorkspaceUuid
+    plan: string
+    type?: string
+    limits?: Subscription['limits']
+  }) => Promise<void>
 
   batchAssignWorkspacePermission: (params: { accountIds: AccountUuid[], permission: string }) => Promise<void>
   batchRevokeWorkspacePermission: (params: { accountIds: AccountUuid[], permission: string }) => Promise<void>
@@ -1325,7 +1330,12 @@ class AccountClientImpl implements AccountClient {
     })
   }
 
-  async adminCreateSubscription (params: { workspaceUuid: WorkspaceUuid, plan: string, type?: string }): Promise<void> {
+  async adminCreateSubscription (params: {
+    workspaceUuid: WorkspaceUuid
+    plan: string
+    type?: string
+    limits?: Subscription['limits']
+  }): Promise<void> {
     await this._rpc({
       method: 'adminCreateSubscription',
       params

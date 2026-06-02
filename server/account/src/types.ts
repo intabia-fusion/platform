@@ -271,6 +271,17 @@ export interface Subscription {
   status: SubscriptionStatus // Current status
   plan: string // Plan/product identifier (e.g. 'free', 'pro', 'storage-100gb', 'supporter')
 
+  // Snapshot of plan limits at time of subscription creation
+  // Used instead of plan config to ensure limits are stable over time
+  limits?: {
+    storageLimitGB: number
+    trafficLimitGB: number
+    meetingMinutesLimit: number
+    tokenLimit: number
+    usersLimit: number
+    projectsLimit: number
+  }
+
   // Amount paid (in cents, e.g. 9999 = $99.99)
   // Used primarily for pay-what-you-want/donation subscriptions to track actual payment
   amount?: number

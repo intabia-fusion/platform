@@ -84,7 +84,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV24Migration(ns, flavor),
     getV25Migration(ns, flavor),
     getV26Migration(ns, flavor),
-    getV27Migration(ns, flavor)
+    getV27Migration(ns, flavor),
+    getV28Migration(ns, flavor)
   ]
 }
 
@@ -848,6 +849,17 @@ function getV27Migration (ns: string, flavor: DBFlavor): [string, string] {
         CONSTRAINT account_workspace_badge_status_membership_fk FOREIGN KEY (workspace_uuid, account_uuid) 
             REFERENCES ${ns}.workspace_members(workspace_uuid, account_uuid) ON DELETE CASCADE
     );
+    `
+  ]
+}
+
+function getV28Migration (ns: string, flavor: DBFlavor): [string, string] {
+  return [
+    'account_db_v28_subscription_limits',
+    `
+    /* Add limits column to subscription table for plan-limit snapshots */
+    ALTER TABLE ${ns}.subscription
+    ADD COLUMN IF NOT EXISTS limits JSONB;
     `
   ]
 }

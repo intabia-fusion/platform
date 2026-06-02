@@ -37232,6 +37232,9 @@ importers:
       '@hcengineering/server-token':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/core/packages/token
+      '@hcengineering/tracker':
+        specifier: workspace:^0.7.0
+        version: link:../../../plugins/tracker
       cors:
         specifier: ^2.8.5
         version: 2.8.5

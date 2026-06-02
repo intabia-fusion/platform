@@ -194,7 +194,7 @@
     showPopup(MessageBox, {
       label: title,
       message: descriptionKey,
-      params: { amount: priceDifference.toFixed(2) },
+      params: { amount: priceDifference, currency: newPlanItem.currency },
       action: async () => {
         await executeUpdate(newPlan)
       }
@@ -510,7 +510,13 @@
 
               {#if usageInfo !== null}
                 <div class="usage-section">
-                  <UsageSection usage={usageInfo} plan={currentPlan} />
+                  <UsageSection
+                    usage={usageInfo}
+                    plan={currentPlan}
+                    pkg={currentPackage}
+                    tierSub={currentSubscription}
+                    pkgSub={currentPackageSubscription}
+                  />
                 </div>
               {/if}
             </div>
@@ -557,7 +563,13 @@
 
             {#if usageInfo !== null}
               <div class="usage-section">
-                <UsageSection usage={usageInfo} plan={currentPlan} />
+                <UsageSection
+                  usage={usageInfo}
+                  plan={currentPlan}
+                  pkg={currentPackage}
+                  tierSub={currentSubscription}
+                  pkgSub={currentPackageSubscription}
+                />
               </div>
             {/if}
 
@@ -624,8 +636,13 @@
                       <Label label={plugin.string.Monthly} />
                     </span>
                   </div>
-                  <div class="mb-2 h-16">
-                    {planItem.description}
+                  <div class="h-16">
+                    <div class="mb-4">
+                      {planItem.description}
+                    </div>
+                    <div>
+                      {planItem.users}
+                    </div>
                   </div>
 
                   <div class="tier-features">

@@ -105,6 +105,7 @@ packages:
     eligiblePlans:
       - standard
       - business
+    storageLimitGB: 100
   500gb:
     description:
       ru: 500 Гб
@@ -114,6 +115,7 @@ packages:
     eligiblePlans:
       - standard
       - business
+    storageLimitGB: 500
   1000gb:
     description:
       ru: 1 000 Гб
@@ -123,3 +125,4 @@ packages:
     eligiblePlans:
       - standard
       - business
+    storageLimitGB: 1000
