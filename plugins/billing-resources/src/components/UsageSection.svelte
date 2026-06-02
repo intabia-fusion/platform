@@ -13,20 +13,26 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type PlanItem } from '@hcengineering/billing'
+  import { type PlanItem, type PackageItem } from '@hcengineering/billing'
   import { UsageStatus } from '@hcengineering/core'
   import { Label } from '@hcengineering/ui'
+  import type { SubscriptionData } from '@hcengineering/account-client'
   import plugin from '../plugin'
   import UsageProgress from './UsageProgress.svelte'
   import { calculateLimits } from '../utils'
 
   export let usage: UsageStatus | null
   export let plan: PlanItem | undefined
+  export let pkg: PackageItem | undefined = undefined
+  export let tierSub: SubscriptionData | undefined = undefined
+  export let pkgSub: SubscriptionData | undefined = undefined
 
   $: storageUsedBytes = usage?.usage?.storageBytes ?? 0
   $: meetingMinutes = usage?.usage?.meetingMinutes ?? 0
   $: tokensUsage = usage?.usage?.tokens ?? 0
-  $: limits = calculateLimits(plan)
+  $: membersCount = usage?.usage?.membersCount ?? 0
+  $: projectsCount = usage?.usage?.projectsCount ?? 0
+  $: limits = calculateLimits(plan, pkg, tierSub, pkgSub)
 </script>
 
 <div class="flex-col flex-gap-2">
@@ -44,4 +50,13 @@
   />
 
   <UsageProgress label={plugin.string.TotalTokens} value={tokensUsage} limit={limits.tokenLimit} kind={'items'} />
+
+  <UsageProgress label={plugin.string.MembersUsage} value={membersCount} limit={limits.usersLimit} kind={'items'} />
+
+  <UsageProgress
+    label={plugin.string.ProjectsUsage}
+    value={projectsCount}
+    limit={limits.projectsLimit}
+    kind={'items'}
+  />
 </div>

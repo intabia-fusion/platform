@@ -15,13 +15,15 @@
 
 import { writable, derived, get } from 'svelte/store'
 import { type SubscriptionData } from '@hcengineering/account-client'
-import { type PlanItem } from '@hcengineering/billing'
+import { type PlanItem, type PackageItem } from '@hcengineering/billing'
 import { type UsageStatus, type WorkspaceInfoWithStatus } from '@hcengineering/core'
 import { checkUsageAgainstLimits } from '../utils'
 
 export interface SubscriptionState {
   currentSubscription: SubscriptionData | undefined
   currentPlan: PlanItem | undefined
+  currentPackageSubscription: SubscriptionData | undefined
+  currentPackage: PackageItem | undefined
   workspaceInfo: WorkspaceInfoWithStatus | undefined
   usageInfo: UsageStatus | undefined
   limitExceeded: boolean
@@ -30,6 +32,8 @@ export interface SubscriptionState {
 const initialState: SubscriptionState = {
   currentSubscription: undefined,
   currentPlan: undefined,
+  currentPackageSubscription: undefined,
+  currentPackage: undefined,
   workspaceInfo: undefined,
   usageInfo: undefined,
   limitExceeded: false
@@ -50,7 +54,9 @@ export function updateLimitExceeded (limit: boolean): void {
 export function setSubscriptionState (
   subscription: SubscriptionData | undefined,
   plan: PlanItem | undefined,
-  workspaceInfo?: WorkspaceInfoWithStatus | undefined
+  workspaceInfo?: WorkspaceInfoWithStatus | undefined,
+  packageSubscription?: SubscriptionData | undefined,
+  pkg?: PackageItem | undefined
 ): void {
   const usage = workspaceInfo?.usageInfo ?? get(subscriptionStore).usageInfo
   const workspace = workspaceInfo ?? get(subscriptionStore).workspaceInfo
@@ -58,6 +64,8 @@ export function setSubscriptionState (
     ...store,
     currentSubscription: subscription,
     currentPlan: plan,
+    currentPackageSubscription: packageSubscription,
+    currentPackage: pkg,
     usageInfo: usage,
     workspaceInfo: workspace,
     limitExceeded: checkUsageAgainstLimits(usage, plan)

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { RegionInfo, AccountAggregatedInfo, type SubscriptionInfo } from '@hcengineering/account-client'
+  import { RegionInfo, AccountAggregatedInfo, type SubscriptionInfo, Subscription } from '@hcengineering/account-client'
   import {
     AccountUuid,
     groupByArray,
@@ -490,10 +490,33 @@
 
     const doCreate = async (): Promise<void> => {
       try {
+        let limits: Subscription['limits'] | undefined
+        try {
+          const paymentUrl = getMetadata(presentation.metadata.PaymentUrl) ?? ''
+          const res = await fetch(paymentUrl + '/api/v1/plan-config')
+          if (res.ok) {
+            const config = await res.json()
+            const source = inferredType === 'package' ? config.packages : config.plans
+            const item = source?.[selectedPlan]
+            if (item != null) {
+              limits = {
+                storageLimitGB: item.storageLimitGB ?? 0,
+                trafficLimitGB: item.trafficLimitGB ?? 0,
+                meetingMinutesLimit: item.meetingMinutesLimit ?? 0,
+                tokenLimit: item.tokenLimit ?? 0,
+                usersLimit: item.usersLimit ?? 0,
+                projectsLimit: item.projectsLimit ?? 0
+              }
+            }
+          }
+        } catch {
+          // plan config unavailable, proceed without limits (fallback to config on read)
+        }
         await accountClient.adminCreateSubscription({
           workspaceUuid: selectedWorkspaceUuid as any,
           plan: selectedPlan,
-          type: inferredType
+          type: inferredType,
+          limits
         })
         selectedWorkspaceUuid = ''
         selectedPlan = ''

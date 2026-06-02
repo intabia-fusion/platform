@@ -23,7 +23,7 @@
 
   export let kind: 'bytes' | 'items' | 'minutes' = 'bytes'
 
-  $: color = value >= limit ? PaletteColorIndexes.Firework : undefined
+  $: color = limit > 0 && value >= limit ? PaletteColorIndexes.Firework : undefined
 
   function formatMinutes (minutes: number): string {
     const h = Math.floor(minutes / 60)
@@ -45,8 +45,12 @@
     <span class="flex-row-center flex-gap-1">
       {formatValue(value)}
       <Label label={plugin.string.Of} />
-      {formatValue(limit)}
+      {#if limit === 0}
+        <span>&infin;</span>
+      {:else}
+        <span>{formatValue(limit)}</span>
+      {/if}
     </span>
   </div>
-  <Progress {color} {value} max={limit} fallback={100} />
+  <Progress {color} {value} max={limit} fallback={0} />
 </div>

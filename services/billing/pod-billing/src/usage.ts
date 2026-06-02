@@ -21,10 +21,13 @@ import {
   RateLimiter,
   isArchivingMode,
   isDeletingMode,
-  systemAccountUuid
+  systemAccountUuid,
+  AccountRole
 } from '@hcengineering/core'
 import { type StorageConfig } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
+import { createClient, getTransactorEndpoint } from '@hcengineering/server-client'
+import tracker from '@hcengineering/tracker'
 
 import { collectDatalakeStats } from './billing'
 import { type Config } from './config'
@@ -148,6 +151,46 @@ export class UsageWorker {
     const recordingSeconds = liveKitUsage.egress.reduce((acc, egress) => acc + egress.minutes, 0) * 60
     const storageBytes = storageUsage.size
 
+    const membersCount = await ctx.with(
+      'get workspace members',
+      {},
+      async () => {
+        try {
+          const members = await account.getWorkspaceMembers()
+          return members.filter(
+            (m) =>
+              m.role !== AccountRole.Guest && m.role !== AccountRole.DocGuest && m.role !== AccountRole.ReadOnlyGuest
+          ).length
+        } catch (err: any) {
+          ctx.error('failed to get workspace members', { workspace, err })
+          return 0
+        }
+      },
+      { workspace }
+    )
+
+    const projectsCount = await ctx.with(
+      'get workspace projects',
+      {},
+      async () => {
+        try {
+          const token = generateToken(systemAccountUuid, workspace, { service: 'billing' })
+          const endpoint = await getTransactorEndpoint(token)
+          const client = await createClient(endpoint, token)
+          try {
+            const projects = await client.findAll(tracker.class.Project, { archived: false })
+            return projects.length
+          } finally {
+            await client.close()
+          }
+        } catch (err: any) {
+          ctx.error('failed to get workspace projects', { workspace, err })
+          return 0
+        }
+      },
+      { workspace }
+    )
+
     const usage: UsageStatus = {
       usage: {
         meetingMinutes,
@@ -157,7 +200,9 @@ export class UsageWorker {
           (await this.db.getAiTranscriptStats(ctx, workspace, periodStart, periodEnd))?.totalDurationSeconds ?? 0,
         tokens: ((await this.db.getAiTokensStats(ctx, workspace, periodStart, periodEnd)) ?? [])
           .map((it) => it.totalTokens)
-          .reduce((a, b) => a + b, 0)
+          .reduce((a, b) => a + b, 0),
+        membersCount,
+        projectsCount
       },
       startTime: periodStart.getTime(),
       updateTime: periodEnd.getTime()

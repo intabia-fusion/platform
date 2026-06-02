@@ -33,7 +33,7 @@ import {
   hasAccountRole
 } from '@hcengineering/core'
 import { showPopup } from '@hcengineering/ui'
-import { type PlanItem, type PlanConfig, type LocalizedString } from '@hcengineering/billing'
+import { type PlanItem, type PackageItem, type PlanConfig, type LocalizedString } from '@hcengineering/billing'
 
 import { setSubscriptionState, updateLimitExceeded, subscriptionStore } from './stores/subscription'
 import SubscriptionsModal from './components/SubscriptionsModal.svelte'
@@ -123,12 +123,15 @@ export async function checkWorkspaceLimits (): Promise<void> {
     const workspaceInfo = await accountClient.getWorkspaceInfo(false)
     const usageInfo = workspaceInfo?.usageInfo ?? null
 
-    const subscription = await getCurrentSubscription(accountClient)
+    const subscriptions = await accountClient.getSubscriptions()
+    const subscription = subscriptions.find((p) => p.type === 'tier')
+    const packageSubscription = subscriptions.find((p) => p.type === 'package' && p.status === 'active')
     const config = await getPlanConfig()
     const plan = subscription != null ? (config.plans[subscription.plan] ?? null) : null
+    const pkg = packageSubscription != null ? (config.packages[packageSubscription.plan] ?? null) : null
 
     // Update subscription store
-    setSubscriptionState(subscription, plan ?? undefined, workspaceInfo)
+    setSubscriptionState(subscription, plan ?? undefined, workspaceInfo, packageSubscription, pkg ?? undefined)
 
     // Check limits
     if (usageInfo === null || subscription == null || plan == null) {
@@ -144,22 +147,36 @@ export async function checkWorkspaceLimits (): Promise<void> {
   }
 }
 
-export function calculateLimits (plan: PlanItem | undefined): {
-  storageLimit: number
-  trafficLimit: number
-  meetingMinutesLimit: number
-  tokenLimit: number
-} {
+export function calculateLimits (
+  plan?: PlanItem,
+  pkg?: PackageItem,
+  tierSub?: SubscriptionData,
+  pkgSub?: SubscriptionData
+): {
+    storageLimit: number
+    trafficLimit: number
+    meetingMinutesLimit: number
+    tokenLimit: number
+    usersLimit: number
+    projectsLimit: number
+  } {
   const DEFAULT_STORAGE_GB = 10
   const DEFAULT_TRAFFIC_GB = 10
   const DEFAULT_MEETING_MINUTES = 600
   const DEFAULT_TOKEN = 20
+  const DEFAULT_USERS = 5
+  const DEFAULT_PROJECTS = 3
+
+  const baseStorage = tierSub?.limits?.storageLimitGB ?? plan?.storageLimitGB ?? DEFAULT_STORAGE_GB
+  const pkgStorage = pkgSub?.limits?.storageLimitGB ?? pkg?.storageLimitGB ?? 0
 
   return {
-    storageLimit: (plan?.storageLimitGB ?? DEFAULT_STORAGE_GB) * 1e9,
-    trafficLimit: (plan?.trafficLimitGB ?? DEFAULT_TRAFFIC_GB) * 1e9,
-    meetingMinutesLimit: plan?.meetingMinutesLimit ?? DEFAULT_MEETING_MINUTES,
-    tokenLimit: (plan?.tokenLimit ?? DEFAULT_TOKEN) * 1000
+    storageLimit: baseStorage * 1e9 + pkgStorage * 1e9,
+    trafficLimit: (tierSub?.limits?.trafficLimitGB ?? plan?.trafficLimitGB ?? DEFAULT_TRAFFIC_GB) * 1e9,
+    meetingMinutesLimit: tierSub?.limits?.meetingMinutesLimit ?? plan?.meetingMinutesLimit ?? DEFAULT_MEETING_MINUTES,
+    tokenLimit: (tierSub?.limits?.tokenLimit ?? plan?.tokenLimit ?? DEFAULT_TOKEN) * 1000,
+    usersLimit: tierSub?.limits?.usersLimit ?? plan?.usersLimit ?? DEFAULT_USERS,
+    projectsLimit: tierSub?.limits?.projectsLimit ?? plan?.projectsLimit ?? DEFAULT_PROJECTS
   }
 }
 
@@ -167,10 +184,15 @@ export function checkUsageAgainstLimits (usageInfo: UsageStatus | undefined, pla
   if (usageInfo == null) return false
   const storageUsedBytes = usageInfo.usage.storageBytes ?? 0
   const meetingMinutes = usageInfo.usage.meetingMinutes ?? 0
+  const membersCount = usageInfo.usage.membersCount ?? 0
+  const projectsCount = usageInfo.usage.projectsCount ?? 0
 
-  const { storageLimit, meetingMinutesLimit } = calculateLimits(plan)
+  const { storageLimit, meetingMinutesLimit, usersLimit, projectsLimit } = calculateLimits(plan)
 
-  return storageUsedBytes > storageLimit || meetingMinutes > meetingMinutesLimit
+  const usersExceeded = usersLimit > 0 && membersCount > usersLimit
+  const projectsExceeded = projectsLimit > 0 && projectsCount > projectsLimit
+
+  return storageUsedBytes > storageLimit || meetingMinutes > meetingMinutesLimit || usersExceeded || projectsExceeded
 }
 
 export function resolveLocale (config: PlanConfig, lang: string): PlanConfig {

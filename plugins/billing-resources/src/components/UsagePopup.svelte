@@ -13,14 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type PlanItem } from '@hcengineering/billing'
+  import { type PlanItem, type PackageItem } from '@hcengineering/billing'
   import { UsageStatus } from '@hcengineering/core'
+  import type { SubscriptionData } from '@hcengineering/account-client'
   import UsageSection from './UsageSection.svelte'
 
   export let usage: UsageStatus
   export let plan: PlanItem | undefined
+  export let pkg: PackageItem | undefined = undefined
+  export let tierSub: SubscriptionData | undefined = undefined
+  export let pkgSub: SubscriptionData | undefined = undefined
 </script>
 
 <div class="p-2">
-  <UsageSection {usage} {plan} />
+  <UsageSection {usage} {plan} {pkg} {tierSub} {pkgSub} />
 </div>

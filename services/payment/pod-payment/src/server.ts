@@ -178,6 +178,21 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
     res.json(planConfig)
   })
 
+  function attachLimits (data: SubscriptionData): SubscriptionData {
+    const source = data.type === 'package' ? planConfig.packages : planConfig.plans
+    const item = source?.[data.plan]
+    if (item == null) return data
+    const limits = {
+      storageLimitGB: item.storageLimitGB ?? 0,
+      trafficLimitGB: item.trafficLimitGB ?? 0,
+      meetingMinutesLimit: item.meetingMinutesLimit ?? 0,
+      tokenLimit: item.tokenLimit ?? 0,
+      usersLimit: item.usersLimit ?? 0,
+      projectsLimit: item.projectsLimit ?? 0
+    }
+    return { ...data, limits }
+  }
+
   function isPackageEligible (pkgKey: string, currentTierPlan: string | undefined): boolean {
     if (currentTierPlan === undefined) return false
     const pkg = planConfig?.packages?.[pkgKey]
@@ -626,7 +641,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
                   (existingSubscription?.providerData?.modifiedAt ?? 0) < subscriptionData.providerData.modifiedAt)
 
               if (shouldUpsert) {
-                await accountClient.upsertSubscription(subscriptionData)
+                await accountClient.upsertSubscription(attachLimits(subscriptionData))
                 ctx.info('Subscription upserted from checkout poll', {
                   checkoutId,
                   subscriptionId: subscriptionData.id,

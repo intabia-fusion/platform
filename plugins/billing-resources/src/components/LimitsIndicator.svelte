@@ -28,6 +28,9 @@
   $: state = $subscriptionStore
   $: usageInfo = state.usageInfo
   $: currentPlan = state.currentPlan
+  $: currentSubscription = state.currentSubscription
+  $: currentPackage = state.currentPackage
+  $: currentPackageSubscription = state.currentPackageSubscription
   $: workspace = $location.path[1]
 
   const connectionListener = async (): Promise<void> => {
@@ -40,7 +43,7 @@
   // Calculate usage percentages from store data
   $: storageUsed = usageInfo?.usage?.storageBytes ?? 0
   $: meetingMinutesUsed = usageInfo?.usage?.meetingMinutes ?? 0
-  $: limits = calculateLimits(currentPlan)
+  $: limits = calculateLimits(currentPlan, currentPackage, currentSubscription, currentPackageSubscription)
 
   $: storagePercent = limits.storageLimit > 0 ? Math.min(storageUsed / limits.storageLimit, 1) : 0
   $: meetingPercent = limits.meetingMinutesLimit > 0 ? Math.min(meetingMinutesUsed / limits.meetingMinutesLimit, 1) : 0
@@ -78,7 +81,13 @@
   class="limits-container"
   use:tooltip={{
     component: UsagePopup,
-    props: { usage: usageInfo, plan: currentPlan },
+    props: {
+      usage: usageInfo,
+      plan: currentPlan,
+      tierSub: currentSubscription,
+      pkg: currentPackage,
+      pkgSub: currentPackageSubscription
+    },
     direction: 'bottom'
   }}
   on:click={handleClick}

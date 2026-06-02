@@ -42,8 +42,8 @@
     "ConfirmUpgrade": "Upgradovat předplatné?",
     "ConfirmDowngrade": "Snížit předplatné?",
     "ConfirmCancel": "Zrušit předplatné?",
-    "UpgradeDescription": "Bude vám účtováno až ${amount} okamžitě. Přesná částka závisí na vašem aktuálním fakturačním období.",
-    "DowngradeDescription": "Obdržíte kredit až ${amount} za zbývající čas předplatného. Snížení vstoupí v platnost okamžitě.",
+    "UpgradeDescription": "Bude vám účtováno až {amount} {currency} okamžitě. Přesná částka závisí na vašem aktuálním fakturačním období.",
+    "DowngradeDescription": "Obdržíte kredit až {amount} {currency} za zbývající čas předplatného. Snížení vstoupí v platnost okamžitě.",
     "CancelDescription": "Vaše předplatné zůstane aktivní do konce období fakturace.",
     "UncancelSubscription": "Reaktivovat předplatné",
     "ConfirmUncancel": "Reaktivovat předplatné?",
@@ -67,6 +67,8 @@
     "RestrictedPlans": "Pouze vlastník pracovního prostoru nebo správce fakturace může změnit plán předplatného.",
     "SubscriptionOperationFailed": "Operace s předplatným se nezdařila",
     "SubscriptionErrorMessage": "Něco se pokazilo. Zkuste to znovu nebo kontaktujte podporu.",
-    "UpgradeToAccessPackages": "Upgradujte na Standard nebo Business a získejte přístup k dalším balíčkům"
+    "UpgradeToAccessPackages": "Upgradujte na Standard nebo Business a získejte přístup k dalším balíčkům",
+    "MembersUsage": "Členové",
+    "ProjectsUsage": "Projekty"
   }
 }

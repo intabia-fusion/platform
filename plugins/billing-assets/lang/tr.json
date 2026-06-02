@@ -42,8 +42,8 @@
     "ConfirmUpgrade": "Aboneliği yükselt?",
     "ConfirmDowngrade": "Aboneliği düşür?",
     "ConfirmCancel": "Aboneliği iptal et?",
-    "UpgradeDescription": "Size hemen ${amount} kadar tahsil edilecektir. Tam tutar, mevcut faturalandırma döneminizie bağlıdır.",
-    "DowngradeDescription": "Kalan abonelik süresi için ${amount} kadar kredi alacaksınız. Düşürme hemen etkili olur.",
+    "UpgradeDescription": "Size hemen {amount} {currency} kadar tahsil edilecektir. Tam tutar, mevcut faturalandırma döneminizie bağlıdır.",
+    "DowngradeDescription": "Kalan abonelik süresi için {amount} {currency} kadar kredi alacaksınız. Düşürme hemen etkili olur.",
     "CancelDescription": "Aboneliğiniz faturalandırma döneminin sonuna kadar etkin kalacaktır.",
     "UncancelSubscription": "Aboneliği Yeniden Etkinleştir",
     "ConfirmUncancel": "Aboneliği yeniden etkinleştir?",
@@ -67,6 +67,8 @@
     "RestrictedPlans": "Abonelik planını yalnızca çalışma alanı sahibi veya faturalama yöneticisi değiştirebilir.",
     "SubscriptionOperationFailed": "Abonelik işlemi başarısız oldu",
     "SubscriptionErrorMessage": "Bir şeyler yanlış gitti. Lütfen tekrar deneyin veya destek ile iletişime geçin.",
-    "UpgradeToAccessPackages": "Ek paketlere erişmek için Standard veya Business'a yükseltin"
+    "UpgradeToAccessPackages": "Ek paketlere erişmek için Standard veya Business'a yükseltin",
+    "MembersUsage": "Üyeler",
+    "ProjectsUsage": "Projeler"
   }
 }

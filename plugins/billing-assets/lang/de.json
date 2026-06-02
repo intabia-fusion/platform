@@ -42,8 +42,8 @@
     "ConfirmUpgrade": "Abonnement aktualisieren?",
     "ConfirmDowngrade": "Abonnement herabstufen?",
     "ConfirmCancel": "Abonnement kündigen?",
-    "UpgradeDescription": "Ihnen wird sofort bis zu ${amount} berechnet. Der genaue Betrag hängt von Ihrem aktuellen Abrechnungszeitraum ab.",
-    "DowngradeDescription": "Sie erhalten eine Gutschrift von bis zu ${amount} für die verbleibende Abonnementlaufzeit. Die Herabstufung wird sofort wirksam.",
+    "UpgradeDescription": "Ihnen wird sofort bis zu {amount} {currency} berechnet. Der genaue Betrag hängt von Ihrem aktuellen Abrechnungszeitraum ab.",
+    "DowngradeDescription": "Sie erhalten eine Gutschrift von bis zu {amount} {currency} für die verbleibende Abonnementlaufzeit. Die Herabstufung wird sofort wirksam.",
     "CancelDescription": "Ihr Abonnement bleibt bis zum Ende des Abonnementzeitraums aktiv.",
     "UncancelSubscription": "Abonnement reaktivieren",
     "ConfirmUncancel": "Abonnement reaktivieren?",
@@ -67,6 +67,8 @@
     "RestrictedPlans": "Nur der Arbeitsbereichsbesitzer oder Abrechnungsmanager kann den Abonnementplan ändern.",
     "SubscriptionOperationFailed": "Abonnementvorgang fehlgeschlagen",
     "SubscriptionErrorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
-    "UpgradeToAccessPackages": "Upgraden Sie auf Standard oder Business, um zusätzliche Pakete zu erhalten"
+    "UpgradeToAccessPackages": "Upgraden Sie auf Standard oder Business, um zusätzliche Pakete zu erhalten",
+    "MembersUsage": "Mitglieder",
+    "ProjectsUsage": "Projekte"
   }
 }

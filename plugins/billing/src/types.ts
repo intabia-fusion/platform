@@ -41,6 +41,7 @@ export interface PackageItem {
   priceMonthly: string
   currency: string
   eligiblePlans: string[]
+  storageLimitGB: number
 }
 
 /** @public */

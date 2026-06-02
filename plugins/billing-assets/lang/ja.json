@@ -40,8 +40,8 @@
     "ConfirmUpgrade": "サブスクリプションをアップグレードしますか?",
     "ConfirmDowngrade": "サブスクリプションをダウングレードしますか?",
     "ConfirmCancel": "サブスクリプションをキャンセルしますか?",
-    "UpgradeDescription": "最大 ${amount} が即座に請求されます。正確な金額は、現在の請求期間によって異なります。",
-    "DowngradeDescription": "残りのサブスクリプション時間分の最大 ${amount} のクレジットを受け取ります。ダウングレードは即座に有効になります。",
+    "UpgradeDescription": "最大 {amount} {currency} が即座に請求されます。正確な金額は、現在の請求期間によって異なります。",
+    "DowngradeDescription": "残りのサブスクリプション時間分の最大 {amount} {currency} のクレジットを受け取ります。ダウングレードは即座に有効になります。",
     "CancelDescription": "サブスクリプションは請求期間の終了まで有効なままです。",
     "UncancelSubscription": "サブスクリプションを再度有効化",
     "ConfirmUncancel": "サブスクリプションを再度有効化しますか?",
@@ -67,6 +67,8 @@
     "RestrictedPlans": "ワークスペースの所有者または請求管理者のみがサブスクリプションプランを変更できます。",
     "SubscriptionOperationFailed": "サブスクリプション操作に失敗しました",
     "SubscriptionErrorMessage": "問題が発生しました。もう一度お試しいただくか、サポートにお問い合わせください。",
-    "UpgradeToAccessPackages": "追加パッケージを利用するには、StandardまたはBusinessにアップグレードしてください"
+    "UpgradeToAccessPackages": "追加パッケージを利用するには、StandardまたはBusinessにアップグレードしてください",
+    "MembersUsage": "メンバー",
+    "ProjectsUsage": "プロジェクト"
   }
 }
