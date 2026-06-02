@@ -390,7 +390,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     this.removeSpace(tx.objectId)
   }
 
-  private async handleTx (ctx: MeasureContext, tx: TxCUD<Space>): Promise<void> {
+  private async handleTx (ctx: MeasureContext<SessionData>, tx: TxCUD<Space>): Promise<void> {
     await this.init(ctx)
     if (tx._class === core.class.TxCreateDoc) {
       this.handleCreate(tx)
@@ -598,8 +598,10 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
 
       const isSpaceTx = this.context.hierarchy.isDerived(cud.objectClass, core.class.Space)
       const isPersonSpaceTx = this.context.hierarchy.isDerived(cud.objectClass, contact.class.PersonSpace)
-      const isPrivateSpaceTx = isSpaceTx ? this.spacesMap.get(cud.objectId as Ref<Space>)?.private === true : false
 
+      const space = this.getTxSpaceInfo(ctx, cud)
+
+      const isPrivateSpaceTx = isSpaceTx ? space?.private === true : false
       const bypassMainSpaces = isPersonSpaceTx || isPrivateSpaceTx
 
       // For system and main spaces broadcast to all users except guests that are not collaborators for objects with collab security enabled
@@ -623,7 +625,6 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         return undefined
       }
 
-      const space = isSpaceTx ? this.spacesMap.get(cud.objectId as Ref<Space>) : this.spacesMap.get(tx.objectSpace)
       if (space === undefined) return undefined
 
       const getCollabTargets = async (_id: Ref<Doc>): Promise<AccountUuid[]> => {
@@ -658,13 +659,17 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         }
       }
 
-      // Public spaces are visible to everyone - do not restrict broadcast targets,
-      // otherwise non-member users won't get tx for new docs in public spaces until refresh.
-      if (!space.private) {
-        return collabTargets.length === 0 ? undefined : { target: collabTargets }
-      }
-
       const spaceTargets = space.members.size === 0 ? [] : this.getTargets(Array.from(space.members))
+
+      // Public spaces are visible to everyone at the space list level,
+      // but their objects are only visible/broadcasted to members.
+      if (!space.private) {
+        if (isSpaceTx) {
+          return collabTargets.length === 0 ? undefined : { target: collabTargets }
+        }
+        const target = [...new Set([...collabTargets, ...spaceTargets])]
+        return target.length === 0 ? undefined : { target }
+      }
 
       if (this.context.hierarchy.isDerived(space._class, contact.class.PersonSpace)) {
         // Personal space: broadcast ONLY to members. Do NOT add workspace owners.
@@ -674,11 +679,14 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
 
       // Workspace owners can see every private space (see getAllAllowedSpaces),
       // but are not in space.members, so they would miss the broadcast and not
-      // get live updates for private spaces until refresh. Add them explicitly.
+      // get live updates for private spaces until refresh. Add them explicitly
+      // only for space-level transactions.
       const ownerTargets: AccountUuid[] = []
-      for (const val of ctx.contextData.socialStringsToUsers.values()) {
-        if (val.role === AccountRole.Owner) {
-          ownerTargets.push(val.accountUuid)
+      if (isSpaceTx) {
+        for (const val of ctx.contextData.socialStringsToUsers.values()) {
+          if (val.role === AccountRole.Owner) {
+            ownerTargets.push(val.accountUuid)
+          }
         }
       }
 
@@ -688,6 +696,25 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     }
 
     await this.next?.handleBroadcast(ctx)
+  }
+
+  private getTxSpaceInfo (ctx: MeasureContext<SessionData>, tx: TxCUD<Doc>): SpaceInfo | undefined {
+    const isSpaceTx = this.context.hierarchy.isDerived(tx.objectClass, core.class.Space)
+    const spaceId = isSpaceTx ? (tx.objectId as Ref<Space>) : tx.objectSpace
+    const spaceInfo = this.spacesMap.get(spaceId)
+    if (spaceInfo != null) return spaceInfo
+    const removedSpace = ctx.contextData.removedMap?.get(spaceId) as Space | undefined
+    if (removedSpace != null) {
+      return {
+        _id: removedSpace._id,
+        _class: removedSpace._class,
+        members: new Set(removedSpace.members ?? []),
+        owners: new Set(removedSpace.owners ?? []),
+        private: removedSpace.private,
+        archived: removedSpace.archived,
+        autoJoin: removedSpace.autoJoin === true
+      }
+    }
   }
 
   private getAllAllowedSpaces (account: Account, showArchived: boolean, forSearch: boolean = false): Ref<Space>[] {

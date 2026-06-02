@@ -24,6 +24,7 @@ import core, {
   getClassCollaborators,
   Ref,
   SortingOrder,
+  Space,
   Tx,
   TxCreateDoc,
   TxCUD,
@@ -278,8 +279,10 @@ async function OnDocCreated (txes: TxCreateDoc<Doc>[], control: TriggerControl):
   const result: Tx[] = []
   for (const tx of txes) {
     if (!isActivityDoc(tx.objectClass, control.hierarchy)) continue
+    const isSpace = control.hierarchy.isDerived(tx.objectClass, core.class.Space)
+    const space = isSpace ? (tx.objectId as Ref<Space>) : tx.objectSpace
     result.push(
-      control.txFactory.createTxCreateDoc(notification.class.ReadState, tx.objectSpace, {
+      control.txFactory.createTxCreateDoc(notification.class.ReadState, space, {
         attachedTo: tx.objectId,
         attachedToClass: tx.objectClass,
         collection: 'readStates'
