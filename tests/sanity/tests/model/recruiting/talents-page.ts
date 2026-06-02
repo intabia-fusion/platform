@@ -270,7 +270,27 @@ export class TalentsPage extends CommonRecruitingPage {
 
   async selectSkill (skillName: string): Promise<void> {
     await this.selectSkillButton(skillName).click()
-    await this.page.keyboard.press('Escape')
+    await this.closeSkillsPopup()
+  }
+
+  private async closeSkillsPopup (): Promise<void> {
+    const popupSearch = this.page.locator('div.popup input.search')
+    for (let i = 0; i < 5; i++) {
+      if ((await this.page.locator('.popup .menu-group').count()) === 0) {
+        return
+      }
+      if ((await popupSearch.count()) > 0) {
+        await popupSearch.press('Escape')
+      } else {
+        await this.page.keyboard.press('Escape')
+      }
+      try {
+        await this.page.waitForSelector('.popup .menu-group', { state: 'detached', timeout: 2000 })
+        return
+      } catch {
+        // popup still open, retry Escape
+      }
+    }
   }
 
   async createCandidate (): Promise<void> {
@@ -303,9 +323,7 @@ export class TalentsPage extends CommonRecruitingPage {
     for (const skill of skills) {
       await this.page.click(`text=${skill}`)
     }
-    await this.page.keyboard.press('Escape')
-    // Wait for the skills (TagsPopup) overlay to detach so it can't intercept the Create click
-    await this.page.waitForSelector('.popup .menu-group', { state: 'detached' })
+    await this.closeSkillsPopup()
     await this.createCandidateButton().click()
     await this.page.waitForSelector('form.antiCard', { state: 'detached' })
     await this.page.click(`tr > :has-text("${lastName} ${firstName}")`)
