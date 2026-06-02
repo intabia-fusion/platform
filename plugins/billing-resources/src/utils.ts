@@ -94,18 +94,21 @@ export async function isLimitExceeded (): Promise<boolean> {
       return false
     }
 
-    const subscription = await getCurrentSubscription(accountClient)
+    const subscriptions = await accountClient.getSubscriptions()
+    const subscription = subscriptions.find((p) => p.type === 'tier')
+    const packageSubscription = subscriptions.find((p) => p.type === 'package' && p.status === 'active')
     if (subscription == null) {
       return true
     }
 
     const config = await getPlanConfig()
     const plan = config.plans[subscription.plan] ?? null
+    const pkg = packageSubscription != null ? (config.packages[packageSubscription.plan] ?? null) : null
     if (plan == null) {
       return true
     }
 
-    return checkUsageAgainstLimits(usageInfo, plan)
+    return checkUsageAgainstLimits(usageInfo, plan, pkg ?? undefined, subscription, packageSubscription)
   } catch (error) {
     console.error('Error checking usage limits:', error)
     return false
@@ -139,7 +142,13 @@ export async function checkWorkspaceLimits (): Promise<void> {
       return
     }
 
-    const exceeded = checkUsageAgainstLimits(usageInfo, plan)
+    const exceeded = checkUsageAgainstLimits(
+      usageInfo,
+      plan,
+      pkg ?? undefined,
+      subscription,
+      packageSubscription ?? undefined
+    )
     updateLimitExceeded(exceeded)
   } catch (error) {
     console.error('Error checking workspace limits:', error)
@@ -180,14 +189,20 @@ export function calculateLimits (
   }
 }
 
-export function checkUsageAgainstLimits (usageInfo: UsageStatus | undefined, plan: PlanItem | undefined): boolean {
+export function checkUsageAgainstLimits (
+  usageInfo: UsageStatus | undefined,
+  plan: PlanItem | undefined,
+  pkg?: PackageItem,
+  tierSub?: SubscriptionData,
+  pkgSub?: SubscriptionData
+): boolean {
   if (usageInfo == null) return false
   const storageUsedBytes = usageInfo.usage.storageBytes ?? 0
   const meetingMinutes = usageInfo.usage.meetingMinutes ?? 0
   const membersCount = usageInfo.usage.membersCount ?? 0
   const projectsCount = usageInfo.usage.projectsCount ?? 0
 
-  const { storageLimit, meetingMinutesLimit, usersLimit, projectsLimit } = calculateLimits(plan)
+  const { storageLimit, meetingMinutesLimit, usersLimit, projectsLimit } = calculateLimits(plan, pkg, tierSub, pkgSub)
 
   const usersExceeded = usersLimit > 0 && membersCount > usersLimit
   const projectsExceeded = projectsLimit > 0 && projectsCount > projectsLimit
