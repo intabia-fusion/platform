@@ -130,7 +130,7 @@ export class DocumentContentPage extends DocumentCommonPage {
     this.buttonCurrentRights = page.locator(
       'div.hulyHeader-buttonsGroup.extra button[type="button"] > span[slot="content"]'
     )
-    this.buttonAddMessageToText = page.locator('div.text-editor-toolbar > button:last-child')
+    this.buttonAddMessageToText = page.locator('div.text-editor-toolbar button[data-id="btnMessage"]')
     this.buttonComments = page.locator('button[id$="comment"]')
     this.textDocumentTitle = page.locator('div.panel div.title')
     this.buttonCompleteReview = page.locator('div.hulyHeader-buttonsGroup.extra button[type="button"] > span', {
@@ -204,7 +204,7 @@ export class DocumentContentPage extends DocumentCommonPage {
     this.contacts = page.locator('[id="app-contact\\:string\\:Contacts"]')
     this.createTeamspace = page.getByRole('button', { name: 'Create teamspace' })
     this.employee = page.getByRole('button', { name: 'Employee' })
-    this.employeeDropdown = page.locator('div:nth-child(4) > button').first()
+    this.employeeDropdown = page.locator('button[data-id="btnMoreActions"]')
     this.kickEmployee = page.getByRole('button', { name: 'Kick employee' })
     this.confirmKickEmployee = page.getByRole('button', { name: 'Ok' })
     this.openTeam = page.getByText('Team', { exact: true })
@@ -250,8 +250,13 @@ export class DocumentContentPage extends DocumentCommonPage {
     await this.confirmKickEmployee.click()
   }
 
+  async toggleHideInactive (): Promise<void> {
+    await this.page.locator('[data-id="btn-viewOptions"]').click()
+    await this.page.locator('.antiCard-menu__item', { hasText: 'Hide inactive' }).click()
+    await this.page.keyboard.press('Escape')
+  }
+
   async checkIfEmployeeIsKicked (employee: string): Promise<void> {
-    await this.page.getByRole('link', { name: 'Employee' }).getByRole('button').first().click()
     await expect(this.page.getByText(employee + ' Inactive')).toBeVisible()
   }
 
@@ -451,6 +456,9 @@ export class DocumentContentPage extends DocumentCommonPage {
   }
 
   async clickAddFolderButton (): Promise<void> {
+    // The button lives in a nav group header toolbar that is hidden (display:none)
+    // until the header is hovered. Hover the header to reveal it, then click.
+    await this.page.locator('.hulyNavGroup-header', { has: this.addSpaceButton }).hover()
     await this.addSpaceButton.click()
   }
 
@@ -689,8 +697,8 @@ export class DocumentContentPage extends DocumentCommonPage {
 
   async checkIfHistoryVersionExists (description: string): Promise<void> {
     await this.page.waitForTimeout(200)
-    await expect(this.page.getByText(description)).toBeVisible()
-    await expect(this.page.getByText('v1.0', { exact: true })).toBeVisible()
+    await expect(this.page.getByText(description).first()).toBeVisible()
+    await expect(this.page.getByText('v1.0', { exact: true }).first()).toBeVisible()
   }
 
   async checkDocumentStatus (status: DocumentStatus): Promise<void> {
@@ -769,7 +777,12 @@ export class DocumentContentPage extends DocumentCommonPage {
     await this.page.evaluate(() => {
       window.dispatchEvent(new Event('resize'))
     })
-    await this.buttonAddMessageToText.click()
+    await this.buttonAddMessageToText.waitFor({ state: 'visible' })
+    // The toolbar comment button reacts to mousedown and the popup repositions on
+    // it, so a normal click can land its mouseup off-target. Dispatch the click
+    // directly to invoke the handler reliably.
+    await this.buttonAddMessageToText.dispatchEvent('click')
+    await this.page.locator('div.popup div.tiptap').waitFor({ state: 'visible' })
     await this.addMessage(message)
 
     if (closePopup) {
@@ -820,6 +833,13 @@ export class DocumentContentPage extends DocumentCommonPage {
   async closeNewMessagePopup (): Promise<void> {
     await this.textPageHeader.press('Escape', { delay: 300 })
     await this.textPageHeader.click({ force: true, delay: 300, position: { x: 1, y: 1 } })
+    // Wait for any comment popup overlay to disappear before proceeding so it
+    // does not intercept later clicks.
+    await this.page
+      .locator('div.modal-overlay')
+      .last()
+      .waitFor({ state: 'hidden', timeout: 10000 })
+      .catch(() => {})
   }
 
   async completeReview (): Promise<void> {

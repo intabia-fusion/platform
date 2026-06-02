@@ -87,9 +87,11 @@ fi
 ./tool-pg.sh create-account user1 -f John -l Appleseed -p 1234
 ./tool-pg.sh create-account user2 -f Kainin -l Dirak -p 1234
 ./tool-pg.sh create-account user3 -f Muffin -l Muram -p 1234
+./tool-pg.sh create-account user4 -f Armin -l Karmin -p 1234
+
 ./tool-pg.sh create-account admin -f Super -l User -p 1234
 
-# Create workspace record in accounts
+# Create workspace records in accounts
 ./tool-pg.sh create-workspace sanity-ws email:user1
 ./tool-pg.sh create-workspace meetings-ws email:user1
 

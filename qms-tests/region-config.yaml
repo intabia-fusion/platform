@@ -1,0 +1,12 @@
+# Region configuration for integration tests
+# Single transactor + collaborator; single front instance on port 8083
+
+regions:
+  '':
+    name: America
+    transactors:
+      - external: ws://localhost:8083/_tr0
+        internal: ws://transactor0:3334
+    collaborators:
+      - external: ws://localhost:8083/_cl0
+        internal: ws://collaborator0:3079

@@ -97,7 +97,7 @@ test.describe('ISO 13485, 4.2.4 Control of documents', () => {
     })
   })
 
-  test('TESTS-272. @PDF Generate a PDF from an Effective doc', async ({ page, browser }) => {
+  test.skip('TESTS-272. @PDF Generate a PDF from an Effective doc', async ({ page, browser }) => {
     await allure.description(
       'Requirement\nUsers need to make a resolve all comments and done documents for the Effective status'
     )

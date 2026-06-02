@@ -288,9 +288,10 @@ test.describe('QMS. Documents tests', () => {
     })
 
     await test.step('4. Add comments and Complete Review', async () => {
-      await documentContentPage.addMessageToTheText(newContentFirst, messageToContent)
-
+      // Open the Comments aside tab BEFORE adding the comment so submitting it
+      // navigates the aside instead of opening a modal popup that blocks clicks.
       await documentContentPage.buttonComments.click()
+      await documentContentPage.addMessageToTheText(newContentFirst, messageToContent)
 
       const documentCommentsPage = new DocumentCommentsPage(page)
       await documentCommentsPage.checkCommentExist(messageToContent)
@@ -471,9 +472,10 @@ test.describe('QMS. Documents tests', () => {
     })
 
     await test.step('4. Add comments and Complete Review', async () => {
-      await documentContentPage.addMessageToTheText(newContentFirst, messageToContent)
-
+      // Open the Comments aside tab BEFORE adding the comment so submitting it
+      // navigates the aside instead of opening a modal popup that blocks clicks.
       await documentContentPage.buttonComments.click()
+      await documentContentPage.addMessageToTheText(newContentFirst, messageToContent)
 
       const documentCommentsPage = new DocumentCommentsPage(page)
       await documentCommentsPage.checkCommentExist(messageToContent)
@@ -662,6 +664,9 @@ test.describe('QMS. Documents tests', () => {
     })
 
     await test.step('3. Add comment and check popup', async () => {
+      // General Info panel is open by default; close it so the toolbar is fully visible
+      await documentContentPage.buttonDocument.click()
+      await expect(page.locator('div.popupPanel-body__aside')).not.toBeVisible({ timeout: 5000 })
       await documentContentPage.addMessageToTheText(newContentFirst, messageToText, false)
 
       const documentCommentsPage = new DocumentCommentsPage(page)
@@ -870,9 +875,10 @@ test.describe('QMS. Documents tests', () => {
     })
 
     await test.step('4. As author add a comment', async () => {
-      await documentContentPage.addMessageToTheText(newContentFirst, messageToContent)
-
+      // Open the Comments aside tab BEFORE adding the comment so submitting it
+      // navigates the aside instead of opening a modal popup that blocks clicks.
       await documentContentPage.buttonComments.click()
+      await documentContentPage.addMessageToTheText(newContentFirst, messageToContent)
 
       const documentCommentsPage = new DocumentCommentsPage(page)
       await documentCommentsPage.checkCommentExist(messageToContent)
@@ -887,9 +893,10 @@ test.describe('QMS. Documents tests', () => {
       await documentsPageSecond.openDocument(completeDocument.title)
 
       const documentContentPageSecond = new DocumentContentPage(userSecondPage)
-      await documentContentPageSecond.addMessageToTheText(newContentSecond, messageToContentSecond)
-
+      // Open the Comments aside tab BEFORE adding the comment so submitting it
+      // navigates the aside instead of opening a modal popup that blocks clicks.
       await documentContentPageSecond.buttonComments.click()
+      await documentContentPageSecond.addMessageToTheText(newContentSecond, messageToContentSecond)
 
       const documentCommentsPageSecond = new DocumentCommentsPage(userSecondPage)
       await documentCommentsPageSecond.checkCommentExist(messageToContentSecond)

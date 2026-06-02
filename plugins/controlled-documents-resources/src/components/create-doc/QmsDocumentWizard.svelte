@@ -126,7 +126,7 @@
     reviewInterval: DEFAULT_PERIODIC_REVIEW_INTERVAL
   }
 
-  let canProceed: false // Note: determined by individual steps
+  let canProceed = false // Note: determined by individual steps
   const isLoading = false
 
   function getStepComponent (step: DocumentWizardStep): AnySvelteComponent {
