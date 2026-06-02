@@ -304,6 +304,8 @@ export class TalentsPage extends CommonRecruitingPage {
       await this.page.click(`text=${skill}`)
     }
     await this.page.keyboard.press('Escape')
+    // Wait for the skills (TagsPopup) overlay to detach so it can't intercept the Create click
+    await this.page.waitForSelector('.popup .menu-group', { state: 'detached' })
     await this.createCandidateButton().click()
     await this.page.waitForSelector('form.antiCard', { state: 'detached' })
     await this.page.click(`tr > :has-text("${lastName} ${firstName}")`)

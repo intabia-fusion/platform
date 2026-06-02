@@ -16,7 +16,16 @@
   import { AnyAttribute } from '@hcengineering/core'
   import type { TagReference, TagElement } from '@hcengineering/tags'
   import tags from '../plugin'
-  import { Chip, getPlatformColorDef, Icon, IconClose, resizeObserver, themeStore, tooltip } from '@hcengineering/ui'
+  import {
+    Chip,
+    getPlatformColorDef,
+    Icon,
+    IconClose,
+    LabelAndProps,
+    resizeObserver,
+    themeStore,
+    tooltip
+  } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import TagItem from './TagItem.svelte'
 
@@ -32,7 +41,7 @@
 
   $: color = getPlatformColorDef(value.color ?? 0, $themeStore.dark)
 
-  let tooltipValue: any
+  let tooltipValue: LabelAndProps
   $: tooltipValue =
     element !== undefined
       ? {
