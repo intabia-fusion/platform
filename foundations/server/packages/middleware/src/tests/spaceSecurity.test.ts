@@ -31,7 +31,9 @@ import core, {
   toFindResult,
   TxFactory,
   WorkspaceEvent,
-  type BroadcastTargetResult
+  type BroadcastTargetResult,
+  type ClassCollaborators,
+  type Collaborator
 } from '@hcengineering/core'
 import type { Middleware, PipelineContext, TxMiddlewareResult } from '@hcengineering/server-core'
 import { SpaceSecurityMiddleware } from '../spaceSecurity'
@@ -662,9 +664,8 @@ describe('SpaceSecurityMiddleware', () => {
       }
     })
 
-    it('should broadcast to ALL users for public spaces (no target restriction)', async () => {
-      // Public space with members [user1] - broadcast must NOT restrict to members,
-      // otherwise non-members miss tx for new docs in public spaces until refresh.
+    it('should restrict public space broadcast to members only for objects', async () => {
+      // Public space with members [user1] - object broadcast must restrict to members
       const mw = await createMiddleware([createSpace('space1', ['user1'], { private: false })])
       const account = createAccount('user1')
       ctx.contextData = createSessionData(account)
@@ -676,7 +677,7 @@ describe('SpaceSecurityMiddleware', () => {
         return _class === from
       })
       jest.spyOn(modelDb, 'findAllSync').mockReturnValue(toFindResult([]))
-      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue([testSpaceClass, core.class.Doc as any])
+      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue([testSpaceClass, core.class.Doc])
       ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult([]))
 
       await mw.handleBroadcast(ctx)
@@ -688,8 +689,37 @@ describe('SpaceSecurityMiddleware', () => {
         {}
       )
       const result = await ctx.contextData.broadcast.targets.spaceSec(docTx)
-      // For public spaces with no collaborator constraints we want every user to get the tx,
-      // so the resolver must return undefined (no target list = broadcast to all).
+      expect(result).toBeDefined()
+      const target = (result as BroadcastTargetResult)?.target
+      expect(target).toBeDefined()
+      expect(target).toContain('user1' as AccountUuid)
+      expect(target).not.toContain('user2' as AccountUuid)
+    })
+
+    it('should broadcast space-level updates to ALL users for public spaces', async () => {
+      // Space-level updates for public spaces must broadcast to all, so users can see and join them
+      const mw = await createMiddleware([createSpace('space1', ['user1'], { private: false })])
+      const account = createAccount('user1')
+      ctx.contextData = createSessionData(account)
+      ctx.contextData.broadcast.txes = []
+
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (from === core.class.Space) {
+          return _class === testSpaceClass
+        }
+        if (from === core.class.Collaborator) return false
+        return _class === from
+      })
+      jest.spyOn(modelDb, 'findAllSync').mockReturnValue(toFindResult([]))
+      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue([testSpaceClass, core.class.Doc])
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult([]))
+
+      await mw.handleBroadcast(ctx)
+
+      const spaceTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        name: 'Updated Public Space'
+      })
+      const result = await ctx.contextData.broadcast.targets.spaceSec(spaceTx)
       expect(result).toBeUndefined()
     })
 
@@ -725,19 +755,19 @@ describe('SpaceSecurityMiddleware', () => {
       expect(target).not.toContain('user3' as AccountUuid)
     })
 
-    it('should include workspace Owner in private space broadcast targets', async () => {
-      // Owner is not in space.members but can see every private space, so the
-      // broadcast must reach them — otherwise they miss live updates for
-      // private spaces until a manual refresh.
+    it('should NOT include workspace Owner in private space broadcast targets for objects if they are not a member', async () => {
+      // Owner is not in space.members but can see every private space, however they
+      // should not receive live updates for non-space objects within private spaces
+      // unless they are members.
       const mw = await createMiddleware([createSpace('space1', ['user1', 'user2'], { private: true })])
       const account = createAccount('user1')
       const socialStringsToUsers = new Map<string, { accountUuid: AccountUuid, role: AccountRole }>()
-      socialStringsToUsers.set('social:user1' as any, { accountUuid: 'user1' as AccountUuid, role: AccountRole.User })
-      socialStringsToUsers.set('social:owner1' as any, {
+      socialStringsToUsers.set('social:user1', { accountUuid: 'user1' as AccountUuid, role: AccountRole.User })
+      socialStringsToUsers.set('social:owner1', {
         accountUuid: 'owner1' as AccountUuid,
         role: AccountRole.Owner
       })
-      ctx.contextData = createSessionData(account, { socialStringsToUsers } as any)
+      ctx.contextData = createSessionData(account, { socialStringsToUsers } as unknown as Partial<SessionData>)
       ctx.contextData.broadcast.txes = []
 
       jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
@@ -746,7 +776,7 @@ describe('SpaceSecurityMiddleware', () => {
         return _class === from
       })
       jest.spyOn(modelDb, 'findAllSync').mockReturnValue(toFindResult([]))
-      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue([testSpaceClass, core.class.Doc as any])
+      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue([testSpaceClass, core.class.Doc])
       ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult([]))
 
       await mw.handleBroadcast(ctx)
@@ -760,7 +790,7 @@ describe('SpaceSecurityMiddleware', () => {
       const result = await ctx.contextData.broadcast.targets.spaceSec(docTx)
       const target = (result as BroadcastTargetResult)?.target
       expect(target).toBeDefined()
-      expect(target).toContain('owner1' as AccountUuid)
+      expect(target).not.toContain('owner1' as AccountUuid)
       expect(target).toContain('user1' as AccountUuid)
     })
 
@@ -860,11 +890,24 @@ describe('SpaceSecurityMiddleware', () => {
       expect(updateTarget).toContain('user1' as AccountUuid)
       expect(updateTarget).toContain('owner1' as AccountUuid)
       expect(updateTarget).not.toContain('user2' as AccountUuid)
+
+      // Test deletion transaction of the private space itself
+      const removeTx = txFactory.createTxRemoveDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>)
+      const deletedSpace = createSpace('space1', ['user1'], { private: true, owners: ['user1'] })
+      ctx.contextData.removedMap.set('space1' as Ref<Space>, deletedSpace)
+      await mw.tx(ctx, [removeTx])
+
+      const removeResult = await ctx.contextData.broadcast.targets.spaceSec(removeTx)
+      const removeTarget = (removeResult as BroadcastTargetResult)?.target
+      expect(removeTarget).toBeDefined()
+      expect(removeTarget).toContain('user1' as AccountUuid)
+      expect(removeTarget).toContain('owner1' as AccountUuid)
+      expect(removeTarget).not.toContain('user2' as AccountUuid)
     })
 
     it('should broadcast personal space creation and updates only to members', async () => {
       const mw = await createMiddleware([
-        createSpace('space1', ['user1'], { private: true, _class: contact.class.PersonSpace })
+        createSpace('space1', ['user1'], { private: true, _class: contact.class.PersonSpace, owners: ['user1'] })
       ])
       const account = createAccount('user1')
       const socialStringsToUsers = new Map<string, { accountUuid: AccountUuid, role: AccountRole }>()
@@ -927,6 +970,23 @@ describe('SpaceSecurityMiddleware', () => {
       expect(updateTarget).toContain('user1' as AccountUuid)
       expect(updateTarget).not.toContain('owner1' as AccountUuid)
       expect(updateTarget).not.toContain('user2' as AccountUuid)
+
+      // Test deletion transaction of the personal space itself
+      const removeTx = txFactory.createTxRemoveDoc(contact.class.PersonSpace, core.space.Space, 'space1' as Ref<Space>)
+      const deletedSpace = createSpace('space1', ['user1'], {
+        private: true,
+        _class: contact.class.PersonSpace,
+        owners: ['user1']
+      })
+      ctx.contextData.removedMap.set('space1' as Ref<Space>, deletedSpace)
+      await mw.tx(ctx, [removeTx])
+
+      const removeResult = await ctx.contextData.broadcast.targets.spaceSec(removeTx)
+      const removeTarget = (removeResult as BroadcastTargetResult)?.target
+      expect(removeTarget).toBeDefined()
+      expect(removeTarget).toContain('user1' as AccountUuid)
+      expect(removeTarget).not.toContain('owner1' as AccountUuid)
+      expect(removeTarget).not.toContain('user2' as AccountUuid)
     })
 
     it('should return undefined for unknown spaces', async () => {
@@ -953,6 +1013,466 @@ describe('SpaceSecurityMiddleware', () => {
       )
       const result = await ctx.contextData.broadcast.targets.spaceSec(someTx)
       expect(result).toBeUndefined()
+    })
+
+    it('should broadcast public space deletion to ALL users', async () => {
+      const mw = await createMiddleware([createSpace('space1', ['user1'], { private: false })])
+      const account = createAccount('user1')
+      ctx.contextData = createSessionData(account)
+      ctx.contextData.broadcast.txes = []
+
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (from === core.class.Space) {
+          return _class === testSpaceClass
+        }
+        if (from === core.class.Collaborator) return false
+        return _class === from
+      })
+      jest.spyOn(modelDb, 'findAllSync').mockReturnValue(toFindResult([]))
+      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue([testSpaceClass, core.class.Doc])
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult([]))
+
+      await mw.handleBroadcast(ctx)
+
+      const removeTx = txFactory.createTxRemoveDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>)
+      const deletedSpace = createSpace('space1', ['user1'], { private: false })
+      ctx.contextData.removedMap.set('space1' as Ref<Space>, deletedSpace)
+      await mw.tx(ctx, [removeTx])
+
+      const result = await ctx.contextData.broadcast.targets.spaceSec(removeTx)
+      expect(result).toBeUndefined()
+    })
+
+    it('should exclude guests who are not collaborators for system space updates with collab security', async () => {
+      const mw = await createMiddleware([createSpace('sys1', [], { _class: core.class.SystemSpace })])
+      const account = createAccount('user1')
+      const socialStringsToUsers = new Map<string, { accountUuid: AccountUuid, role: AccountRole }>()
+      socialStringsToUsers.set('social:user1', { accountUuid: 'user1' as AccountUuid, role: AccountRole.User })
+      socialStringsToUsers.set('social:guest1', { accountUuid: 'guest1' as AccountUuid, role: AccountRole.Guest })
+      socialStringsToUsers.set('social:guest2', { accountUuid: 'guest2' as AccountUuid, role: AccountRole.Guest })
+      ctx.contextData = createSessionData(account, { socialStringsToUsers } as unknown as Partial<SessionData>)
+      ctx.contextData.broadcast.txes = []
+
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (from === core.class.Space) return false
+        if (from === core.class.Collaborator) return _class === core.class.Collaborator
+        return _class === from
+      })
+
+      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue(['test:class:SomeDoc' as any, core.class.Doc])
+
+      const ClassCollaboratorsClass = core.class.ClassCollaborators
+      const collabSecObj: ClassCollaborators<Doc> = {
+        _id: 'collabSec1' as Ref<ClassCollaborators<Doc>>,
+        _class: core.class.ClassCollaborators,
+        space: core.space.Space,
+        modifiedOn: Date.now(),
+        modifiedBy: core.account.System,
+        attachedTo: 'test:class:SomeDoc' as Ref<Class<Doc>>,
+        provideSecurity: true,
+        fields: []
+      }
+      jest.spyOn(modelDb, 'findAllSync').mockImplementation((_class: any, query: any): any => {
+        if (_class === ClassCollaboratorsClass) {
+          return toFindResult([collabSecObj])
+        }
+        return toFindResult([])
+      })
+
+      const guest1Collab: Collaborator = {
+        _id: 'collab1' as Ref<Collaborator>,
+        _class: core.class.Collaborator,
+        space: core.space.Space,
+        modifiedOn: Date.now(),
+        modifiedBy: core.account.System,
+        collaborator: 'guest1' as AccountUuid,
+        attachedToClass: 'test:class:SomeDoc' as Ref<Class<Doc>>,
+        attachedTo: 'doc1' as Ref<Doc>,
+        collection: 'collaborators'
+      }
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async (_ctx, _class) => {
+        if (_class === core.class.Collaborator) {
+          return toFindResult([guest1Collab])
+        }
+        return toFindResult([])
+      })
+
+      await mw.handleBroadcast(ctx)
+
+      const docTx = txFactory.createTxUpdateDoc(
+        'test:class:SomeDoc' as Ref<Class<Doc>>,
+        'sys1' as Ref<Space>,
+        'doc1' as Ref<Doc>,
+        {}
+      )
+
+      const result = await ctx.contextData.broadcast.targets.spaceSec(docTx)
+      expect(result).toEqual({ exclude: ['guest2' as AccountUuid] })
+    })
+
+    it('should include guest collaborators in targets for private space object updates with collab security', async () => {
+      const mw = await createMiddleware([createSpace('space1', ['user1'], { private: true })])
+      const account = createAccount('user1')
+      const socialStringsToUsers = new Map<string, { accountUuid: AccountUuid, role: AccountRole }>()
+      socialStringsToUsers.set('social:user1', { accountUuid: 'user1' as AccountUuid, role: AccountRole.User })
+      socialStringsToUsers.set('social:guest1', { accountUuid: 'guest1' as AccountUuid, role: AccountRole.Guest })
+      socialStringsToUsers.set('social:guest2', { accountUuid: 'guest2' as AccountUuid, role: AccountRole.Guest })
+      ctx.contextData = createSessionData(account, { socialStringsToUsers } as unknown as Partial<SessionData>)
+      ctx.contextData.broadcast.txes = []
+
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (from === core.class.Space) return false
+        if (from === core.class.Collaborator) return _class === core.class.Collaborator
+        return _class === from
+      })
+
+      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue(['test:class:SomeDoc' as any, core.class.Doc])
+
+      const ClassCollaboratorsClass = core.class.ClassCollaborators
+      const collabSecObj: ClassCollaborators<Doc> = {
+        _id: 'collabSec1' as Ref<ClassCollaborators<Doc>>,
+        _class: core.class.ClassCollaborators,
+        space: core.space.Space,
+        modifiedOn: Date.now(),
+        modifiedBy: core.account.System,
+        attachedTo: 'test:class:SomeDoc' as Ref<Class<Doc>>,
+        provideSecurity: true,
+        fields: []
+      }
+      jest.spyOn(modelDb, 'findAllSync').mockImplementation((_class: any, query: any): any => {
+        if (_class === ClassCollaboratorsClass) {
+          return toFindResult([collabSecObj])
+        }
+        return toFindResult([])
+      })
+
+      const guest1Collab: Collaborator = {
+        _id: 'collab1' as Ref<Collaborator>,
+        _class: core.class.Collaborator,
+        space: core.space.Space,
+        modifiedOn: Date.now(),
+        modifiedBy: core.account.System,
+        collaborator: 'guest1' as AccountUuid,
+        attachedToClass: 'test:class:SomeDoc' as Ref<Class<Doc>>,
+        attachedTo: 'doc1' as Ref<Doc>,
+        collection: 'collaborators'
+      }
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async (_ctx, _class) => {
+        if (_class === core.class.Collaborator) {
+          return toFindResult([guest1Collab])
+        }
+        return toFindResult([])
+      })
+
+      await mw.handleBroadcast(ctx)
+
+      const docTx = txFactory.createTxUpdateDoc(
+        'test:class:SomeDoc' as Ref<Class<Doc>>,
+        'space1' as Ref<Space>,
+        'doc1' as Ref<Doc>,
+        {}
+      )
+
+      const result = await ctx.contextData.broadcast.targets.spaceSec(docTx)
+      expect(result).toBeDefined()
+      const target = (result as BroadcastTargetResult)?.target
+      expect(target).toBeDefined()
+      expect(target).toContain('user1' as AccountUuid)
+      expect(target).toContain('guest1' as AccountUuid)
+      expect(target).not.toContain('guest2' as AccountUuid)
+    })
+
+    it('should include guest collaborators in targets for private space object updates attached to another object with collab security', async () => {
+      const mw = await createMiddleware([createSpace('space1', ['user1'], { private: true })])
+      const account = createAccount('user1')
+      const socialStringsToUsers = new Map<string, { accountUuid: AccountUuid, role: AccountRole }>()
+      socialStringsToUsers.set('social:user1', { accountUuid: 'user1' as AccountUuid, role: AccountRole.User })
+      socialStringsToUsers.set('social:guest1', { accountUuid: 'guest1' as AccountUuid, role: AccountRole.Guest })
+      socialStringsToUsers.set('social:guest2', { accountUuid: 'guest2' as AccountUuid, role: AccountRole.Guest })
+      ctx.contextData = createSessionData(account, { socialStringsToUsers } as unknown as Partial<SessionData>)
+      ctx.contextData.broadcast.txes = []
+
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (from === core.class.Space) return false
+        if (from === core.class.Collaborator) return _class === core.class.Collaborator
+        return _class === from
+      })
+
+      jest.spyOn(hierarchy, 'getAncestors').mockImplementation((_class: any) => {
+        if (_class === 'test:class:ChildDoc') {
+          return ['test:class:ChildDoc' as any, core.class.Doc]
+        }
+        if (_class === 'test:class:ParentDoc') {
+          return ['test:class:ParentDoc' as any, core.class.Doc]
+        }
+        return [_class, core.class.Doc]
+      })
+
+      const ClassCollaboratorsClass = core.class.ClassCollaborators
+      const collabSecObj: ClassCollaborators<Doc> = {
+        _id: 'collabSec1' as Ref<ClassCollaborators<Doc>>,
+        _class: core.class.ClassCollaborators,
+        space: core.space.Space,
+        modifiedOn: Date.now(),
+        modifiedBy: core.account.System,
+        attachedTo: 'test:class:ParentDoc' as Ref<Class<Doc>>,
+        provideSecurity: true,
+        fields: []
+      }
+      jest.spyOn(modelDb, 'findAllSync').mockImplementation((_class: unknown, query: unknown): any => {
+        if (_class === ClassCollaboratorsClass) {
+          const q = query as { attachedTo?: { $in?: string[] } } | undefined
+          if (q?.attachedTo?.$in?.includes('test:class:ParentDoc') === true) {
+            return toFindResult([collabSecObj])
+          }
+        }
+        return toFindResult([])
+      })
+
+      const guest1Collab: Collaborator = {
+        _id: 'collab1' as Ref<Collaborator>,
+        _class: core.class.Collaborator,
+        space: core.space.Space,
+        modifiedOn: Date.now(),
+        modifiedBy: core.account.System,
+        collaborator: 'guest1' as AccountUuid,
+        attachedToClass: 'test:class:ParentDoc' as Ref<Class<Doc>>,
+        attachedTo: 'parent1' as Ref<Doc>,
+        collection: 'collaborators'
+      }
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async (_ctx, _class) => {
+        if (_class === core.class.Collaborator) {
+          return toFindResult([guest1Collab])
+        }
+        return toFindResult([])
+      })
+
+      await mw.handleBroadcast(ctx)
+
+      const docTx = txFactory.createTxUpdateDoc(
+        'test:class:ChildDoc' as Ref<Class<Doc>>,
+        'space1' as Ref<Space>,
+        'doc1' as Ref<Doc>,
+        {}
+      )
+      ;(docTx as any).attachedTo = 'parent1'
+      ;(docTx as any).attachedToClass = 'test:class:ParentDoc'
+
+      const result = await ctx.contextData.broadcast.targets.spaceSec(docTx)
+      expect(result).toBeDefined()
+      const target = (result as BroadcastTargetResult)?.target
+      expect(target).toBeDefined()
+      expect(target).toContain('user1' as AccountUuid)
+      expect(target).toContain('guest1' as AccountUuid)
+      expect(target).not.toContain('guest2' as AccountUuid)
+    })
+
+    it('should use removedMap to resolve space security targets for a document transaction in a deleted space', async () => {
+      const mw = await createMiddleware([])
+      const account = createAccount('user1')
+      ctx.contextData = createSessionData(account)
+      ctx.contextData.broadcast.txes = []
+
+      // Mock hierarchy to return false for Space/Collaborator checks (since it's a doc Tx)
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (from === core.class.Space) return false
+        if (from === core.class.Collaborator) return false
+        return _class === from
+      })
+      jest.spyOn(modelDb, 'findAllSync').mockReturnValue(toFindResult([]))
+      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue([testSpaceClass, core.class.Doc])
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult([]))
+
+      await mw.handleBroadcast(ctx)
+
+      const docTx = txFactory.createTxUpdateDoc(
+        'test:class:SomeDoc' as Ref<Class<Doc>>,
+        'space1' as Ref<Space>,
+        generateId(),
+        {}
+      )
+
+      // space1 is deleted, so it's not in spacesMap, but is in removedMap
+      const deletedSpace = createSpace('space1', ['user1', 'user2'], { private: true })
+      ctx.contextData.removedMap.set('space1' as Ref<Space>, deletedSpace)
+
+      const result = await ctx.contextData.broadcast.targets.spaceSec(docTx)
+      expect(result).toBeDefined()
+      const target = (result as BroadcastTargetResult)?.target
+      expect(target).toBeDefined()
+      expect(target).toContain('user1' as AccountUuid)
+      expect(target).toContain('user2' as AccountUuid)
+    })
+
+    it('should return undefined for space transactions of unknown spaces', async () => {
+      const mw = await createMiddleware([])
+      const account = createAccount('user1')
+      ctx.contextData = createSessionData(account)
+      ctx.contextData.broadcast.txes = []
+
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (from === core.class.Space) {
+          return _class === testSpaceClass
+        }
+        if (from === core.class.Collaborator) return false
+        return _class === from
+      })
+      jest.spyOn(modelDb, 'findAllSync').mockReturnValue(toFindResult([]))
+      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue([testSpaceClass, core.class.Doc])
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult([]))
+
+      await mw.handleBroadcast(ctx)
+
+      const spaceTx = txFactory.createTxUpdateDoc(
+        testSpaceClass,
+        'non-main-space' as Ref<Space>,
+        'unknown-space' as Ref<Space>,
+        {}
+      )
+
+      const result = await ctx.contextData.broadcast.targets.spaceSec(spaceTx)
+      expect(result).toBeUndefined()
+    })
+  })
+
+  describe('handeCollaborator', () => {
+    it('should broadcast SecurityChange when a collaborator is created for a class with provideSecurity', async () => {
+      const mw = await createMiddleware([])
+
+      const account = createAccount('user1')
+      const socialStringsToUsers = new Map<string, { accountUuid: AccountUuid, role: AccountRole }>()
+      socialStringsToUsers.set('social:guest1', { accountUuid: 'guest1' as AccountUuid, role: AccountRole.Guest })
+      ctx.contextData = createSessionData(account, { socialStringsToUsers } as unknown as Partial<SessionData>)
+
+      // Mock ClassCollaborators finding
+      const ClassCollaboratorsClass = core.class.ClassCollaborators
+      const collabSecObj: ClassCollaborators<Doc> = {
+        _id: 'collabSec1' as Ref<ClassCollaborators<Doc>>,
+        _class: core.class.ClassCollaborators,
+        space: core.space.Space,
+        modifiedOn: Date.now(),
+        modifiedBy: core.account.System,
+        attachedTo: 'test:class:SomeDoc' as Ref<Class<Doc>>,
+        provideSecurity: true,
+        fields: []
+      }
+      jest.spyOn(modelDb, 'findAllSync').mockImplementation((_class: unknown): any => {
+        if (_class === ClassCollaboratorsClass) {
+          return toFindResult([collabSecObj])
+        }
+        return toFindResult([])
+      })
+
+      // Mock hierarchy.isDerived so core.class.Collaborator checks pass
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (_class === core.class.Collaborator && from === core.class.Collaborator) return true
+        return false
+      })
+
+      const createTx = txFactory.createTxCreateDoc(
+        core.class.Collaborator,
+        core.space.Space,
+        {
+          collaborator: 'guest1' as AccountUuid,
+          attachedToClass: 'test:class:SomeDoc' as Ref<Class<Doc>>,
+          attachedTo: 'doc1' as Ref<Doc>,
+          collection: 'collaborators'
+        },
+        'collab1' as Ref<Collaborator>
+      )
+
+      await mw.tx(ctx, [createTx])
+
+      // Should have broadcast target for the collaborator change
+      const securityTxes = ctx.contextData.broadcast.txes.filter(
+        (tx: any) => tx._class === core.class.TxWorkspaceEvent && tx.event === WorkspaceEvent.SecurityChange
+      )
+      expect(securityTxes.length).toBe(1)
+
+      const targetResolver = ctx.contextData.broadcast.targets['security' + securityTxes[0]._id]
+      expect(targetResolver).toBeDefined()
+      if (targetResolver !== undefined) {
+        const resolverResult = await targetResolver(securityTxes[0])
+        expect(resolverResult).toBeDefined()
+        const targetResult = resolverResult as BroadcastTargetResult
+        expect(targetResult.target).toContain('guest1' as AccountUuid)
+      }
+    })
+
+    it('should broadcast SecurityChange when a collaborator is removed for a class with provideSecurity', async () => {
+      const mw = await createMiddleware([])
+
+      const account = createAccount('user1')
+      const socialStringsToUsers = new Map<string, { accountUuid: AccountUuid, role: AccountRole }>()
+      socialStringsToUsers.set('social:guest1', { accountUuid: 'guest1' as AccountUuid, role: AccountRole.Guest })
+      ctx.contextData = createSessionData(account, { socialStringsToUsers } as unknown as Partial<SessionData>)
+
+      // Mock ClassCollaborators finding
+      const ClassCollaboratorsClass = core.class.ClassCollaborators
+      const collabSecObj: ClassCollaborators<Doc> = {
+        _id: 'collabSec1' as Ref<ClassCollaborators<Doc>>,
+        _class: core.class.ClassCollaborators,
+        space: core.space.Space,
+        modifiedOn: Date.now(),
+        modifiedBy: core.account.System,
+        attachedTo: 'test:class:SomeDoc' as Ref<Class<Doc>>,
+        provideSecurity: true,
+        fields: []
+      }
+      jest.spyOn(modelDb, 'findAllSync').mockImplementation((_class: unknown): any => {
+        if (_class === ClassCollaboratorsClass) {
+          return toFindResult([collabSecObj])
+        }
+        return toFindResult([])
+      })
+
+      // Mock hierarchy.isDerived so core.class.Collaborator checks pass
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (_class === core.class.Collaborator && from === core.class.Collaborator) return true
+        return false
+      })
+
+      const guest1Collab: Collaborator = {
+        _id: 'collab1' as Ref<Collaborator>,
+        _class: core.class.Collaborator,
+        space: core.space.Space,
+        modifiedOn: Date.now(),
+        modifiedBy: core.account.System,
+        collaborator: 'guest1' as AccountUuid,
+        attachedToClass: 'test:class:SomeDoc' as Ref<Class<Doc>>,
+        attachedTo: 'doc1' as Ref<Doc>,
+        collection: 'collaborators'
+      }
+
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async (_ctx, _class) => {
+        if (_class === core.class.Collaborator) {
+          return toFindResult([guest1Collab])
+        }
+        return toFindResult([])
+      })
+
+      const removeTx = txFactory.createTxRemoveDoc(
+        core.class.Collaborator,
+        core.space.Space,
+        'collab1' as Ref<Collaborator>
+      )
+
+      await mw.tx(ctx, [removeTx])
+
+      // Should have broadcast target for the collaborator change
+      const securityTxes = ctx.contextData.broadcast.txes.filter(
+        (tx: any) => tx._class === core.class.TxWorkspaceEvent && tx.event === WorkspaceEvent.SecurityChange
+      )
+      expect(securityTxes.length).toBe(1)
+
+      const targetResolver = ctx.contextData.broadcast.targets['security' + securityTxes[0]._id]
+      expect(targetResolver).toBeDefined()
+      if (targetResolver !== undefined) {
+        const resolverResult = await targetResolver(securityTxes[0])
+        expect(resolverResult).toBeDefined()
+        const targetResult = resolverResult as BroadcastTargetResult
+        expect(targetResult.target).toContain('guest1' as AccountUuid)
+      }
     })
   })
 

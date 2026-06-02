@@ -14,9 +14,10 @@
 -->
 
 <script lang="ts">
-  import { type Doc, reduceCalls } from '@hcengineering/core'
+  import core, { type Doc, reduceCalls, Ref, Space } from '@hcengineering/core'
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { onMount } from 'svelte'
+  import { getClient } from '@hcengineering/presentation'
 
   import { updatePresence, deletePresence } from '../presence'
 
@@ -26,13 +27,15 @@
   export let presenceUpdateSeconds: number = 5
 
   const personId = getCurrentEmployee()
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
 
   const doUpdatePresence = reduceCalls(async (): Promise<void> => {
     const presence = {
       personId,
       objectId: presenceId ?? object._id,
       objectClass: object._class,
-      space: object.space
+      space: hierarchy.isDerived(object._class, core.class.Space) ? (object._id as Ref<Space>) : object.space
     }
     await updatePresence(presence)
   })

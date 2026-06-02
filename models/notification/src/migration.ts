@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -886,6 +887,57 @@ async function migrateCommonNotificationProps (client: MigrationClient): Promise
   }
 }
 
+async function migrateReadStatesSpace (client: MigrationClient): Promise<void> {
+  const hierarchy = client.hierarchy
+  const spaceClasses = new Set<Ref<Class<Doc>>>([core.class.Space])
+
+  try {
+    const descendants = hierarchy.getDescendants(core.class.Space)
+    for (const desc of descendants) {
+      spaceClasses.add(desc)
+    }
+  } catch (err) {
+    // If not found in hierarchy metadata, ignore
+  }
+
+  const iterator = await client.traverse<ReadState>(DOMAIN_READ_STATE, {
+    _class: notification.class.ReadState,
+    attachedToClass: { $in: Array.from(spaceClasses) }
+  })
+
+  try {
+    let processed = 0
+    while (true) {
+      const docs = (await iterator.next(500)) ?? []
+      if (docs.length === 0) break
+
+      const updates: {
+        filter: MigrationDocumentQuery<ReadState>
+        update: MigrateUpdate<ReadState>
+      }[] = []
+
+      for (const doc of docs) {
+        if (doc.space !== doc.attachedTo) {
+          updates.push({
+            filter: { _id: doc._id },
+            update: {
+              space: doc.attachedTo as Ref<Space>
+            }
+          })
+        }
+      }
+
+      if (updates.length > 0) {
+        await client.bulk(DOMAIN_READ_STATE, updates)
+      }
+      processed += docs.length
+      client.logger.log('...processed read states space migration', { count: processed })
+    }
+  } finally {
+    await iterator.close()
+  }
+}
+
 export const notificationOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, notificationId, [
@@ -1128,6 +1180,11 @@ export const notificationOperation: MigrateOperation = {
         state: 'migrame-common-notification-props-v2',
         mode: 'upgrade',
         func: migrateCommonNotificationProps
+      },
+      {
+        state: 'migrate-read-states-space-v1',
+        mode: 'upgrade',
+        func: migrateReadStatesSpace
       }
     ])
   },

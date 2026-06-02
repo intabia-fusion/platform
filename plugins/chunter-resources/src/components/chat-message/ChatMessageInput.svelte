@@ -18,7 +18,7 @@
   import { Analytics } from '@hcengineering/analytics'
   import { AttachmentRefInput } from '@hcengineering/attachment-resources'
   import chunter, { ChatMessage, ChunterEvents, ThreadMessage } from '@hcengineering/chunter'
-  import {
+  import core, {
     Class,
     Doc,
     generateId,
@@ -27,7 +27,8 @@
     type CommitResult,
     Markup,
     WithLookup,
-    DocumentUpdate
+    DocumentUpdate,
+    Space
   } from '@hcengineering/core'
   import { createQuery, DraftController, draftsStore, getClient } from '@hcengineering/presentation'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
@@ -142,6 +143,8 @@
   const acc = getCurrentAccount()
   const throttle = new ThrottledCaller(500)
 
+  $: space = hierarchy.isDerived(object._class, core.class.Space) ? (object._id as Ref<Space>) : object.space
+
   async function deleteTypingInfo (): Promise<void> {
     if (!withTypingInfo) return
     void clearTyping(acc.primarySocialId, object._id)
@@ -151,7 +154,7 @@
     if (!withTypingInfo) return
 
     throttle.call(() => {
-      void setTyping(acc.primarySocialId, object._id, object.space)
+      void setTyping(acc.primarySocialId, object._id, space)
     })
   }
 
