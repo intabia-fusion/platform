@@ -68,7 +68,7 @@ export function setSubscriptionState (
     currentPackage: pkg,
     usageInfo: usage,
     workspaceInfo: workspace,
-    limitExceeded: checkUsageAgainstLimits(usage, plan)
+    limitExceeded: checkUsageAgainstLimits(usage, plan, pkg, subscription, packageSubscription)
   }))
 }
 
