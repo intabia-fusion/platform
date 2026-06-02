@@ -112,7 +112,7 @@ async function handleCreateReaction (
   const attachments = await getAttachments(message, client)
   const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
 
-  await pushNotification(client, result, context, {
+  await pushNotification(client, txCache, result, context, {
     unreadReaction: {
       attachedTo: message._id,
       id: reaction._id

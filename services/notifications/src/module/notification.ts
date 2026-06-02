@@ -25,13 +25,16 @@ import notificationPlugin, {
   UnreadMention,
   PushSubscription,
   getNotificationMessageId,
-  translateNotification
+  translateNotification,
+  NotificationTemplate,
+  QueueNotificationMessage
 } from '@hcengineering/notification'
 import { Class, Doc, Ref, Space } from '@hcengineering/core'
 import { Receiver } from '@hcengineering/server-notification'
 import { ActivityMessage } from '@hcengineering/activity'
+import { translate, IntlString } from '@hcengineering/platform'
 
-import { Client, ObjectDisplayData, NotifyProviders, Result } from '../types'
+import { Client, ObjectDisplayData, NotifyProviders, Result, TxCache } from '../types'
 import {
   getCreateContextTx,
   getUpdateContextTx,
@@ -62,6 +65,7 @@ interface CreateNotificationData {
 
 export async function pushNotification (
   client: Client,
+  txCache: TxCache,
   result: Result,
   context: DocNotifyContext | undefined,
   data: CreateNotificationData
@@ -92,7 +96,6 @@ export async function pushNotification (
   const url = getNotificationUrl(client, notification, objectId, objectClass)
 
   result.queueMessages.push({
-    ...intl,
     id: notification.id,
     title,
     body,
@@ -105,7 +108,8 @@ export async function pushNotification (
     objectId,
     objectClass,
     objectSpace,
-    createdOn: data.notification.createdOn
+    createdOn: data.notification.createdOn,
+    template: await getTemplate(client, txCache, notification, notifyProviders, intl, receiver, url)
   })
   if (context != null) {
     const updateTx = getUpdateContextTx(context, result, txFactory)
@@ -202,4 +206,109 @@ function createAppPushNotification (
 
     result.createAppNotificationTx.push(appNotificationTx)
   }
+}
+
+async function getTemplate (
+  client: Client,
+  txCache: TxCache,
+  notification: ContextNotification,
+  providers: NotifyProviders,
+  intl: NotificationIntl,
+  receiver: Receiver,
+  inboxUrl: string
+): Promise<QueueNotificationMessage['template']> {
+  const types = (providers[notificationPlugin.providers.InboxNotificationProvider] ?? []).filter(
+    (it) => it.templates != null
+  )
+
+  if (types.length === 0) return undefined
+  const type = types[0]
+
+  const cacheKey = `${type._id}:${receiver.language}`
+  const templateCached = txCache.templates.get(cacheKey)
+
+  if (templateCached != null) {
+    return templateCached
+  }
+
+  try {
+    const content = await translateTemplate(client, type, intl, receiver, inboxUrl)
+    if (content != null) {
+      const subject = content.subject
+      const text = content.text
+      const html = content.html
+
+      const template = { subject, text, html }
+      txCache.templates.set(cacheKey, template)
+      return template
+    }
+  } catch (e) {
+    client.ctx.error('Failed to generate template', { e, notificationId: notification.id })
+  }
+}
+
+async function translateTemplate (
+  client: Client,
+  type: NotificationType,
+  intl: NotificationIntl,
+  receiver: Receiver,
+  inboxUrl: string
+): Promise<QueueNotificationMessage['template']> {
+  const templates: NotificationTemplate = type?.templates ?? {
+    text: notificationPlugin.emailTemplate.GeneratedNotificationText,
+    html: notificationPlugin.emailTemplate.GeneratedNotificationHtml,
+    subject: notificationPlugin.emailTemplate.GeneratedNotificationSubject
+  }
+
+  const language = receiver.language
+
+  const params: Record<string, any> = { ...intl.intlParams }
+
+  if (intl.intlParamsNotLocalized != null) {
+    for (const [k, v] of Object.entries(intl.intlParamsNotLocalized)) {
+      if (v != null) {
+        params[k] = await translate(v, params, language)
+      }
+    }
+  }
+
+  params.sender = intl.intlParams.senderName
+
+  const title = intl.intlParams?.title ?? intl.intlParams.doc ?? ''
+  const url = intl.intlParams.url
+  const identifier = intl.intlParams?.identifie
+
+  const textTitle = identifier != null ? `${identifier}: ${title}` : title
+  const htmlTitle = url !== '' ? `<a href='${url}'>${textTitle}</a>` : textTitle
+
+  const app = client.branding?.title ?? 'Platform'
+  const inboxLinkText = await translate(notificationPlugin.string.ViewIn, { app }, language)
+
+  params.link = `<a href='${inboxUrl}'>${inboxLinkText}</a>`
+
+  const text = await fillTemplate(templates.text, textTitle, params, language)
+  const html = await fillTemplate(templates.html, htmlTitle, params, language)
+  const subject = await fillTemplate(templates.subject, textTitle, params, language)
+
+  return {
+    text,
+    html,
+    subject
+  }
+}
+
+async function fillTemplate (
+  template: IntlString,
+  doc: string,
+  params: Record<string, string>,
+  lang: string
+): Promise<string> {
+  return await translate(
+    template,
+    {
+      ...params,
+      doc
+    },
+    lang
+  )
 }

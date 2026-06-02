@@ -132,7 +132,7 @@ async function handleCreateMessage (
 
     const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
     const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
-    await pushNotification(client, result, context, {
+    await pushNotification(client, txCache, result, context, {
       unreadMessage,
       receiver,
       objectId: doc._id,
@@ -380,7 +380,7 @@ async function handleUpdateDUM (
 
     const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
     const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
-    await pushNotification(client, result, context, {
+    await pushNotification(client, txCache, result, context, {
       unreadMessage,
       receiver,
       objectId: doc._id,

@@ -109,6 +109,7 @@ export interface TxCache {
   labelByDoc: Map<Ref<Doc>, IntlString>
   identifierByDoc: Map<Ref<Doc>, string>
   iconByDoc: Map<Ref<Doc>, Partial<Record<AccountUuid | '', DocNotifyContext['objectIcon']>>>
+  templates: Map<string, QueueNotificationMessage['template']>
 }
 
 export type ObjectDisplayData = Pick<

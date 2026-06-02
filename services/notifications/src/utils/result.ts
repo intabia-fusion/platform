@@ -67,6 +67,7 @@ export function getEmptyTxCache (): TxCache {
     urlByDoc: new Map(),
     labelByDoc: new Map(),
     identifierByDoc: new Map(),
-    iconByDoc: new Map()
+    iconByDoc: new Map(),
+    templates: new Map()
   }
 }

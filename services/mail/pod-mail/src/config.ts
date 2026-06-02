@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -31,6 +32,10 @@ export interface Config {
   // client mode operations.
   serverUrl?: string
   apiKey?: string
+
+  accountsUrl: string
+  secret: string
+  serviceId: string
 }
 
 export interface SesConfig {
@@ -160,7 +165,7 @@ const buildSmtpConfig = (): SmtpConfig => {
 }
 
 const config: Config = (() => {
-  let mode: Config['mode'] = 'queue'
+  let mode: Config['mode']
 
   switch ((process.env[envMap.Mode] ?? 'queue').toLowerCase()) {
     case 'server':
@@ -194,7 +199,10 @@ const config: Config = (() => {
     source: process.env[envMap.Source],
     replyTo: process.env[envMap.ReplyTo],
     sesConfig: isSesConfig ? buildSesConfig() : undefined,
-    smtpConfig: isSmtpConfig ? buildSmtpConfig() : undefined
+    smtpConfig: isSmtpConfig ? buildSmtpConfig() : undefined,
+    accountsUrl: process.env.ACCOUNTS_URL ?? 'http://localhost:3000',
+    secret: process.env.SECRET ?? 'secret',
+    serviceId: process.env.SERVICE_ID ?? 'mail-service'
   }
 
   if ((mode === 'server' || mode === 'client') && params.apiKey === undefined) {

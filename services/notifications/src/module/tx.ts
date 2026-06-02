@@ -137,7 +137,7 @@ export async function handleTxNotification (
 
         const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
         const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
-        await pushNotification(client, result, context, {
+        await pushNotification(client, txCache, result, context, {
           unreadCommon: commonNotification,
           receiver,
           objectId: doc._id,

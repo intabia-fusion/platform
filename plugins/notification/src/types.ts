@@ -296,7 +296,7 @@ export interface UnreadReaction {
   attachedTo: Ref<ActivityMessage>
 }
 
-export interface QueueNotificationMessage extends NotificationIntl {
+export interface QueueNotificationMessage  {
   id: string
   title: string
   body: string
@@ -310,6 +310,8 @@ export interface QueueNotificationMessage extends NotificationIntl {
 
   domain: string
   url: string
+
+  template?: { subject: string, text: string, html: string }
 
   pushSubscriptions: PushSubscription[]
   providers: Record<Ref<NotificationProvider>, Ref<NotificationType>[]>

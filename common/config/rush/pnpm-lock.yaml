@@ -39536,15 +39536,27 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../../foundations/core/packages/core
+      '@hcengineering/gmail':
+        specifier: workspace:^0.7.0
+        version: link:../../../plugins/gmail
       '@hcengineering/kafka':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/server/packages/kafka
+      '@hcengineering/notification':
+        specifier: workspace:^0.7.0
+        version: link:../../../plugins/notification
+      '@hcengineering/platform':
+        specifier: workspace:^0.7.19
+        version: link:../../../foundations/core/packages/platform
       '@hcengineering/server-client':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/server/packages/client
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/server/packages/core
+      '@hcengineering/server-token':
+        specifier: workspace:^0.7.17
+        version: link:../../../foundations/core/packages/token
       '@intabiafusion/clisr':
         specifier: workspace:^0.7.0
         version: link:../../../packages/clisr
