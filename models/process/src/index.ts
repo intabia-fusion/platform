@@ -34,8 +34,8 @@ import {
   TypeAny,
   TypeBoolean,
   TypeIntlString,
-  TypeRecord,
   TypeRank,
+  TypeRecord,
   TypeRef,
   TypeString,
   UX
@@ -65,6 +65,7 @@ import {
   type ProcessCustomEvent,
   type ProcessFunction,
   type ProcessToDo,
+  type SlotModel,
   type State,
   type Step,
   type Transition,
@@ -106,6 +107,12 @@ export class TProcess extends TDoc implements Process {
 
   @Prop(TypeBoolean(), process.string.AutomationOnly)
     automationOnly: boolean | undefined
+
+  @Prop(TypeRecord(), process.string.RequiredSlots)
+    requiredSlots?: Record<string, SlotModel>
+
+  @Prop(TypeRecord(), process.string.Bindings)
+    bindings?: Record<string, string>
 
   context!: Record<ContextId, ProcessContext>
 }
