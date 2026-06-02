@@ -35,6 +35,7 @@ import core, {
 } from '@hcengineering/core'
 import type { Middleware, PipelineContext, TxMiddlewareResult } from '@hcengineering/server-core'
 import { SpaceSecurityMiddleware } from '../spaceSecurity'
+import contact from '@hcengineering/contact'
 
 // Test space class refs
 const testSpaceClass = core.class.Space
@@ -149,6 +150,10 @@ describe('SpaceSecurityMiddleware', () => {
 
     txFactory = new TxFactory(core.account.System)
     ctx = new MeasureMetricsContext('test', {}) as MeasureContext<SessionData>
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 
   async function createMiddleware (spaces: Space[] = []): Promise<SpaceSecurityMiddleware> {
@@ -757,6 +762,171 @@ describe('SpaceSecurityMiddleware', () => {
       expect(target).toBeDefined()
       expect(target).toContain('owner1' as AccountUuid)
       expect(target).toContain('user1' as AccountUuid)
+    })
+
+    it('should NOT include workspace Owner in personal space broadcast targets if they are not a member', async () => {
+      const mw = await createMiddleware([
+        createSpace('space1', ['user1'], { private: true, _class: contact.class.PersonSpace })
+      ])
+      const account = createAccount('user1')
+      const socialStringsToUsers = new Map<string, { accountUuid: AccountUuid, role: AccountRole }>()
+      socialStringsToUsers.set('social:user1', { accountUuid: 'user1' as AccountUuid, role: AccountRole.User })
+      socialStringsToUsers.set('social:owner1', {
+        accountUuid: 'owner1' as AccountUuid,
+        role: AccountRole.Owner
+      })
+      ctx.contextData = createSessionData(account, { socialStringsToUsers } as unknown as Partial<SessionData>)
+      ctx.contextData.broadcast.txes = []
+
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (from === contact.class.PersonSpace) {
+          return _class === contact.class.PersonSpace
+        }
+        return _class === from
+      })
+      jest.spyOn(modelDb, 'findAllSync').mockReturnValue(toFindResult([]))
+      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue([contact.class.PersonSpace, testSpaceClass, core.class.Doc])
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult([]))
+
+      await mw.handleBroadcast(ctx)
+
+      const docTx = txFactory.createTxUpdateDoc(
+        'test:class:SomeDoc' as Ref<Class<Doc>>,
+        'space1' as Ref<Space>,
+        generateId(),
+        {}
+      )
+      const result = await ctx.contextData.broadcast.targets.spaceSec(docTx)
+      const target = (result as BroadcastTargetResult)?.target
+      expect(target).toBeDefined()
+      expect(target).toContain('user1' as AccountUuid)
+      expect(target).not.toContain('owner1' as AccountUuid)
+    })
+
+    it('should broadcast private space creation and updates only to members and owners', async () => {
+      const mw = await createMiddleware([createSpace('space1', ['user1'], { private: true, owners: ['user1'] })])
+      const account = createAccount('user1')
+      const socialStringsToUsers = new Map<string, { accountUuid: AccountUuid, role: AccountRole }>()
+      socialStringsToUsers.set('social:user1', { accountUuid: 'user1' as AccountUuid, role: AccountRole.User })
+      socialStringsToUsers.set('social:owner1', {
+        accountUuid: 'owner1' as AccountUuid,
+        role: AccountRole.Owner
+      })
+      socialStringsToUsers.set('social:user2', { accountUuid: 'user2' as AccountUuid, role: AccountRole.User })
+      ctx.contextData = createSessionData(account, { socialStringsToUsers } as unknown as Partial<SessionData>)
+      ctx.contextData.broadcast.txes = []
+
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (from === core.class.Space) {
+          return _class === testSpaceClass
+        }
+        if (from === core.class.Collaborator) return false
+        return _class === from
+      })
+      jest.spyOn(modelDb, 'findAllSync').mockReturnValue(toFindResult([]))
+      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue([testSpaceClass, core.class.Doc])
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult([]))
+
+      await mw.handleBroadcast(ctx)
+
+      // Test creation transaction of the private space itself
+      const createTx = txFactory.createTxCreateDoc(
+        testSpaceClass,
+        core.space.Space,
+        {
+          name: 'Private Space',
+          description: '',
+          archived: false,
+          private: true,
+          members: ['user1' as AccountUuid],
+          owners: ['user1' as AccountUuid]
+        },
+        'space1' as Ref<Space>
+      )
+      const createResult = await ctx.contextData.broadcast.targets.spaceSec(createTx)
+      const createTarget = (createResult as BroadcastTargetResult)?.target
+      expect(createTarget).toBeDefined()
+      expect(createTarget).toContain('user1' as AccountUuid)
+      expect(createTarget).toContain('owner1' as AccountUuid)
+      expect(createTarget).not.toContain('user2' as AccountUuid)
+
+      // Test update transaction of the private space itself
+      const updateTx = txFactory.createTxUpdateDoc(testSpaceClass, core.space.Space, 'space1' as Ref<Space>, {
+        name: 'Updated Private Space'
+      })
+      const updateResult = await ctx.contextData.broadcast.targets.spaceSec(updateTx)
+      const updateTarget = (updateResult as BroadcastTargetResult)?.target
+      expect(updateTarget).toBeDefined()
+      expect(updateTarget).toContain('user1' as AccountUuid)
+      expect(updateTarget).toContain('owner1' as AccountUuid)
+      expect(updateTarget).not.toContain('user2' as AccountUuid)
+    })
+
+    it('should broadcast personal space creation and updates only to members', async () => {
+      const mw = await createMiddleware([
+        createSpace('space1', ['user1'], { private: true, _class: contact.class.PersonSpace })
+      ])
+      const account = createAccount('user1')
+      const socialStringsToUsers = new Map<string, { accountUuid: AccountUuid, role: AccountRole }>()
+      socialStringsToUsers.set('social:user1', { accountUuid: 'user1' as AccountUuid, role: AccountRole.User })
+      socialStringsToUsers.set('social:owner1', {
+        accountUuid: 'owner1' as AccountUuid,
+        role: AccountRole.Owner
+      })
+      socialStringsToUsers.set('social:user2', { accountUuid: 'user2' as AccountUuid, role: AccountRole.User })
+      ctx.contextData = createSessionData(account, { socialStringsToUsers } as unknown as Partial<SessionData>)
+      ctx.contextData.broadcast.txes = []
+
+      jest.spyOn(hierarchy, 'isDerived').mockImplementation((_class, from) => {
+        if (from === core.class.Space) {
+          return _class === testSpaceClass || _class === contact.class.PersonSpace
+        }
+        if (from === core.class.Collaborator) return false
+        if (from === contact.class.PersonSpace) {
+          return _class === contact.class.PersonSpace
+        }
+        return _class === from
+      })
+      jest.spyOn(modelDb, 'findAllSync').mockReturnValue(toFindResult([]))
+      jest.spyOn(hierarchy, 'getAncestors').mockReturnValue([contact.class.PersonSpace, testSpaceClass, core.class.Doc])
+      ;(nextMiddleware.findAll as jest.Mock).mockImplementation(async () => toFindResult([]))
+
+      await mw.handleBroadcast(ctx)
+
+      // Test creation transaction of the personal space itself
+      const createTx = txFactory.createTxCreateDoc(
+        contact.class.PersonSpace,
+        core.space.Space,
+        {
+          name: 'Personal Space',
+          description: '',
+          archived: false,
+          private: true,
+          members: ['user1' as AccountUuid],
+          owners: ['user1' as AccountUuid]
+        },
+        'space1' as Ref<Space>
+      )
+      const createResult = await ctx.contextData.broadcast.targets.spaceSec(createTx)
+      const createTarget = (createResult as BroadcastTargetResult)?.target
+      expect(createTarget).toBeDefined()
+      expect(createTarget).toContain('user1' as AccountUuid)
+      expect(createTarget).not.toContain('owner1' as AccountUuid)
+      expect(createTarget).not.toContain('user2' as AccountUuid)
+
+      // Test update transaction of the personal space itself
+      const updateTx = txFactory.createTxUpdateDoc(
+        contact.class.PersonSpace,
+        core.space.Space,
+        'space1' as Ref<Space>,
+        { name: 'Updated Personal Space' }
+      )
+      const updateResult = await ctx.contextData.broadcast.targets.spaceSec(updateTx)
+      const updateTarget = (updateResult as BroadcastTargetResult)?.target
+      expect(updateTarget).toBeDefined()
+      expect(updateTarget).toContain('user1' as AccountUuid)
+      expect(updateTarget).not.toContain('owner1' as AccountUuid)
+      expect(updateTarget).not.toContain('user2' as AccountUuid)
     })
 
     it('should return undefined for unknown spaces', async () => {
