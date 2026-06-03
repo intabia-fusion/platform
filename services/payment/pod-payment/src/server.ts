@@ -491,20 +491,15 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
           }
 
           // If the subscription was created by a different provider (e.g. manual/admin),
-          // create a new subscription at the current provider instead of updating
+          // create a new subscription at the current provider — don't cancel the old one,
+          // it stays active until the new payment is confirmed via webhook.
           if (subscription.provider !== config.Provider) {
-            ctx.info('Subscription provider mismatch, canceling old and creating new', {
+            ctx.info('Subscription provider mismatch, creating new subscription', {
               existingProvider: subscription.provider,
               currentProvider: config.Provider,
               workspaceUuid: subscription.workspaceUuid,
               plan
             })
-            // Cancel old subscription locally before creating a new one at the current provider
-            await accountClient.upsertSubscription({
-              ...subscription,
-              status: 'canceled' as any,
-              canceledAt: Date.now()
-            } as any)
             try {
               const request: SubscribeRequest = { type: subscription.type, plan }
               const checkoutResponse = await provider.createSubscription(

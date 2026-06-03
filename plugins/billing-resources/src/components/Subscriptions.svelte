@@ -424,7 +424,7 @@
 
   function checkForCheckoutParam (): void {
     const loc = getLocation()
-    const checkoutId = loc.query?.checkout_id as string | undefined
+    const checkoutId = (loc.query?.checkout_id ?? loc.query?.order_id) as string | undefined
     const paymentStatus = loc.query?.payment as string | undefined
 
     if (checkoutId !== undefined && paymentStatus === 'success') {

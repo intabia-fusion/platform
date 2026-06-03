@@ -84,7 +84,7 @@ export async function createServer (
   app.post(
     '/api/v1/webhooks/tbank',
     wrapHandler(ctx, 'webhook', async (req, res) => {
-      await handleWebhook(ctx, tbank, storage, req, res)
+      await handleWebhook(ctx, config, tbank, storage, req, res)
     })
   )
 
@@ -295,6 +295,7 @@ async function handleUpdatePlan (
 
 async function handleWebhook (
   ctx: MeasureContext,
+  config: Config,
   tbank: TbankPayments,
   storage: SubscriptionStorage,
   req: Request,
@@ -318,11 +319,13 @@ async function handleWebhook (
     return
   }
 
-  const token = notification.Token as string | undefined
-  if (token === undefined || !verifyWebhookToken(tbank, notification, token, rawBody.toString('utf8'))) {
-    ctx.error('Invalid TBank webhook token')
-    res.status(200).send('OK')
-    return
+  if (!(config.TbankSkipWebhookVerification ?? false)) {
+    const token = notification.Token as string | undefined
+    if (token === undefined || !verifyWebhookToken(tbank, notification, token, rawBody.toString('utf8'))) {
+      ctx.error('Invalid TBank webhook token')
+      res.status(200).send('OK')
+      return
+    }
   }
 
   const typedNotification = notification as unknown as TbankWebhookNotification
@@ -358,16 +361,22 @@ async function handleWebhook (
       rebillId: typedNotification.RebillId
     })
 
-    // If this is a plan change, cancel the old subscription now that the new one is confirmed
+    // If this is a plan change, cancel the old subscription now that the new one is confirmed.
+    // First check for a tbank sub with pendingReplacement flag (normal tbank updateSubscriptionPlan flow).
+    // Otherwise, cancel any active subscription of the same type in the workspace
+    // (handles provider-mismatch path where a new sub was created via createSubscription).
     const allSubs = await storage.getAll(subscriptionData.workspaceUuid)
-    const oldPendingReplacement = allSubs.find(
-      (s) => s.provider === 'tbank' && s.providerData?.pendingReplacement === true
+    const oldSub = allSubs.find(
+      (s) =>
+        (s.provider === 'tbank' && s.providerData?.pendingReplacement === true) ||
+        (s.type === subscriptionData.type && s.status === 'active' && s.id !== subscriptionData.id)
     )
-    if (oldPendingReplacement !== undefined && oldPendingReplacement !== null) {
-      await cancelSubscription(ctx, tbank, storage, oldPendingReplacement, 'PLAN_CHANGE')
+    if (oldSub !== undefined && oldSub !== null) {
+      await cancelSubscription(ctx, tbank, storage, oldSub, 'PLAN_CHANGE')
       ctx.info('Old subscription canceled after plan change confirmation', {
-        oldSubId: oldPendingReplacement.id,
-        newSubId: subscriptionData.id
+        oldSubId: oldSub.id,
+        newSubId: subscriptionData.id,
+        provider: oldSub.provider
       })
     }
   } else if (
