@@ -28,6 +28,9 @@ export interface Config {
   TbankUrl: string
   TbankSubscriptionPlans: string // plan@type:amountInCents;...
 
+  // Dev
+  TbankSkipWebhookVerification?: boolean // Skip webhook token verification (for local dev with curl)
+
   // Scheduler
   SchedulerIntervalMinutes: number // How often to check for expiring subscriptions
 }
@@ -45,6 +48,7 @@ const config: Config = (() => {
     TbankPassword: process.env.TBANK_PASSWORD,
     TbankUrl: process.env.TBANK_URL,
     TbankSubscriptionPlans: process.env.TBANK_SUBSCRIPTION_PLANS,
+    TbankSkipWebhookVerification: process.env.TBANK_SKIP_WEBHOOK_VERIFICATION === 'true',
     SchedulerIntervalMinutes: parseNumber(process.env.SCHEDULER_INTERVAL_MINUTES, 60)
   }
 
