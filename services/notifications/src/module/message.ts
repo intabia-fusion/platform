@@ -21,16 +21,18 @@ import core, {
   TxUpdateDoc,
   TxProcessor,
   DocumentUpdate,
-  Doc
+  Doc,
+  Ref
 } from '@hcengineering/core'
 import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import notification, {
   DocNotifyContext,
   NotificationIntl,
   NotificationType,
-  UnreadMessage
+  UnreadMessage,
+  isUnreadMessageId
 } from '@hcengineering/notification'
-import { normalizeTextMessage, Sender } from '@hcengineering/server-notification'
+import { normalizeTextMessage, Sender, Receiver } from '@hcengineering/server-notification'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 
@@ -43,18 +45,19 @@ import {
   getMode,
   getNotifiedUsers,
   hasMessageNotification,
-  hasUnreadMessage,
   isMuted,
   toNotificationMessage,
   hasReactionNotificationByMessage,
   getLastNotify,
   hasMentionNotificationByMessage,
   hasUnreadMentionByMessage,
-  getAttachments
+  getAttachments,
+  getUpdateOpContextTx,
+  getCreateContextTx
 } from '../utils/utils'
-import { Client, Result, TxCache } from '../types'
+import { Client, Result, TxCache, NotifyProviders } from '../types'
 import Cache from '../cache'
-import { pushNotification } from './notification'
+import { pushNotification as _pushNotification } from './notification'
 
 export async function handleMessage (
   client: Client,
@@ -119,40 +122,32 @@ async function handleCreateMessage (
   for (const receiver of receivers) {
     if (receiver.account === sender.account) continue
     const mode = getMode(docSettings, receiver.account)
-    if (isMuted(mode)) continue
-
-    const notifyResult = await getMessageNotifyProviders(client, message, doc, receiver, settings, mode)
-
-    const types = notifyResult[notification.providers.InboxNotificationProvider] ?? []
-    const type = types[0]
-    if (type == null) continue
 
     const context = contexts.find((it) => it.user === receiver.account)
-    const content = await getMessageIntl(client, txCache, type, doc, message, sender)
+    const notifyResult = !isMuted(mode)
+      ? await getMessageNotifyProviders(client, message, doc, receiver, settings, mode)
+      : {}
+    const type = (notifyResult[notification.providers.InboxNotificationProvider] ?? [])[0]
 
-    const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
-    const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
-    await pushNotification(client, txCache, result, context, {
-      unreadMessage,
-      receiver,
-      objectId: doc._id,
-      objectClass: doc._class,
-      objectSpace: doc.space,
-      objectDisplayData,
-      notification: {
-        id: message._id,
-        type: 'message',
-        messageId: message._id,
-        intlMessage: type.notificationMessage,
-        message: toNotificationMessage(message),
-        attachments,
-        createdOn: message.createdOn ?? message.modifiedOn,
-        createdBy: message.createdBy ?? message.modifiedBy
-      },
-      intl: content,
-      notifyProviders: notifyResult,
-      pushSubscriptions
-    })
+    if (type != null) {
+      await pushNotification(
+        client,
+        cache,
+        receiver,
+        doc,
+        message,
+        sender,
+        unreadMessage,
+        context,
+        result,
+        txCache,
+        type,
+        notifyResult,
+        attachments
+      )
+    } else {
+      await addUnreadMessage(client, receiver, doc, unreadMessage, context, result, txCache)
+    }
   }
 }
 
@@ -179,18 +174,21 @@ async function handleRemoveMessage (
         latestNotifications: { id: { $in: idsToRemove } }
       }
     }
-    if (hasUnreadMessage(context, tx.objectId)) {
+    const unread = context.unreadMessages?.find((it) => isUnreadMessageId(it) && it.id === tx.objectId)
+    if (unread != null) {
       operations.$pull = {
         ...operations.$pull,
         unreadMessages: { id: tx.objectId }
       }
-      operations.$inc = {
-        ...operations.$inc,
-        unreadCount: -1
+      if (isUnreadMessageId(unread) && unread.notified === true) {
+        operations.$inc = {
+          ...operations.$inc,
+          unreadCount: -1
+        }
       }
     }
 
-    const matchingReactionsCount = context.unreadReactions.filter((it) => it.attachedTo === tx.objectId).length
+    const matchingReactionsCount = context.unreadReactions?.filter((it) => it.attachedTo === tx.objectId).length ?? 0
     if (matchingReactionsCount > 0) {
       operations.$pull = {
         ...operations.$pull,
@@ -339,67 +337,37 @@ async function handleUpdateDUM (
   for (const receiver of receivers) {
     if (receiver.account === sender.account) continue
     const mode = getMode(docSettings, receiver.account)
-    if (isMuted(mode)) continue
-
-    const notifyProviders = await getMessageNotifyProviders(client, message, doc, receiver, settings, mode)
-    const types = notifyProviders[notification.providers.InboxNotificationProvider] ?? []
-    const type = types[0]
-    if (type == null) continue
 
     const context = contexts.find((it) => it.user === receiver.account)
 
     if (context != null) {
-      // Check if the notification exists in this context before emitting update
-      const exists = hasMessageNotification(context, tx.objectId)
-      const hasUnreadId = hasUnreadMessage(context, tx.objectId)
-
-      if (exists || hasUnreadId) {
-        const updateOps: DocumentUpdate<DocNotifyContext> = { $pull: {} }
-        if (exists) {
-          updateOps.$pull = {
-            ...updateOps.$pull,
-            latestNotifications: { id: tx.objectId }
-          }
-        }
-        if (hasUnreadId) {
-          updateOps.$pull = {
-            ...updateOps.$pull,
-            unreadMessages: { id: tx.objectId }
-          }
-          updateOps.$inc = {
-            ...updateOps.$inc,
-            unreadCount: -1
-          }
-        }
-
-        result.updateOpContextTx.push(
-          client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, updateOps)
-        )
-      }
+      pullDUMFromContext(client, context, tx.objectId, result)
     }
 
-    const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
-    const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
-    await pushNotification(client, txCache, result, context, {
-      unreadMessage,
-      receiver,
-      objectId: doc._id,
-      objectClass: doc._class,
-      objectSpace: doc.space,
-      objectDisplayData,
-      notification: {
-        id: message._id,
-        type: 'message',
-        intlMessage: type.notificationMessage,
-        messageId: message._id,
-        message: toNotificationMessage(message),
-        createdOn: message.createdOn ?? message.modifiedOn,
-        createdBy: message.createdBy ?? message.modifiedBy
-      },
-      intl: await getMessageIntl(client, txCache, type, doc, message, sender),
-      notifyProviders,
-      pushSubscriptions
-    })
+    const notifyResult = !isMuted(mode)
+      ? await getMessageNotifyProviders(client, message, doc, receiver, settings, mode)
+      : {}
+    const type = (notifyResult[notification.providers.InboxNotificationProvider] ?? [])[0]
+
+    if (type != null) {
+      await pushNotification(
+        client,
+        cache,
+        receiver,
+        doc,
+        message,
+        sender,
+        unreadMessage,
+        context,
+        result,
+        txCache,
+        type,
+        notifyResult,
+        []
+      )
+    } else {
+      await addUnreadMessage(client, receiver, doc, unreadMessage, context, result, txCache)
+    }
   }
 }
 
@@ -444,5 +412,117 @@ async function getMessageIntl (
     bodyIntl: notification.string.MessageNotificationBody,
     intlParams,
     intlParamsNotLocalized
+  }
+}
+
+export async function addUnreadMessage (
+  client: Client,
+  receiver: Receiver,
+  doc: Doc,
+  unreadMessage: UnreadMessage,
+  context: DocNotifyContext | undefined,
+  result: Result,
+  txCache: TxCache
+): Promise<void> {
+  if (context != null) {
+    const updateOpTx = getUpdateOpContextTx(context, result, client.txFactory)
+    updateOpTx.operations.$push = {
+      ...updateOpTx.operations.$push,
+      unreadMessages: unreadMessage
+    }
+  } else {
+    const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
+    const createTx = getCreateContextTx(
+      doc._id,
+      doc._class,
+      doc.space,
+      receiver,
+      result,
+      client.txFactory,
+      objectDisplayData
+    )
+    createTx.attributes.unreadMessages.push(unreadMessage)
+  }
+}
+
+async function pushNotification (
+  client: Client,
+  cache: Cache,
+  receiver: Receiver,
+  doc: Doc,
+  message: ActivityMessage,
+  sender: Sender,
+  unreadMessage: UnreadMessage,
+  context: DocNotifyContext | undefined,
+  result: Result,
+  txCache: TxCache,
+  type: NotificationType,
+  notifyResult: NotifyProviders,
+  attachments: any[]
+): Promise<void> {
+  const content = await getMessageIntl(client, txCache, type, doc, message, sender)
+  const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
+  const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
+  await _pushNotification(client, txCache, result, context, {
+    unreadMessage: {
+      ...unreadMessage,
+      notified: true
+    },
+    receiver,
+    objectId: doc._id,
+    objectClass: doc._class,
+    objectSpace: doc.space,
+    objectDisplayData,
+    notification: {
+      id: message._id,
+      type: 'message',
+      messageId: message._id,
+      intlMessage: type.notificationMessage,
+      message: toNotificationMessage(message),
+      attachments,
+      createdOn: message.createdOn ?? message.modifiedOn,
+      createdBy: message.createdBy ?? message.modifiedBy
+    },
+    intl: content,
+    notifyProviders: notifyResult,
+    pushSubscriptions
+  })
+}
+
+function pullDUMFromContext (
+  client: Client,
+  context: DocNotifyContext,
+  objectId: Ref<ActivityMessage>,
+  result: Result
+): void {
+  const exists = hasMessageNotification(context, objectId)
+  const unread = context.unreadMessages.find(
+    (it) => isUnreadMessageId(it) && it.id === objectId
+  )
+
+  if (exists || unread != null) {
+    const updateOps: DocumentUpdate<DocNotifyContext> = { $pull: {} }
+    if (exists) {
+      updateOps.$pull = {
+        ...updateOps.$pull,
+        latestNotifications: { id: objectId }
+      }
+    }
+    if (unread != null) {
+      updateOps.$pull = {
+        ...updateOps.$pull,
+        unreadMessages: { id: objectId }
+      }
+      if (isUnreadMessageId(unread) && unread.notified === true) {
+        updateOps.$inc = {
+          ...updateOps.$inc,
+          unreadCount: -1
+        }
+      }
+    }
+
+    result.updateOpContextTx.push(
+      client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, updateOps)
+    )
   }
 }

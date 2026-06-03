@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -73,7 +74,6 @@ export class NotificationClientImpl implements NotificationClient {
       notification.class.DocNotifyContext,
       {
         user: account.uuid,
-        archived: false,
         unreadCount: { $gt: 0 }
       },
       (res) => {
@@ -97,12 +97,18 @@ export class NotificationClientImpl implements NotificationClient {
     const current = get(this.readStateByDoc).get(attachedTo)
     if (current !== undefined) return current ?? undefined
 
-    this.readStateByDoc.update((map) => map.set(attachedTo, null))
+    this.readStateByDoc.update((map) => {
+      map.set(attachedTo, null)
+      return map
+    })
 
     const client = getClient()
     const state = await client.findOne(notification.class.ReadState, { attachedTo })
 
-    this.readStateByDoc.update((map) => map.set(attachedTo, state ?? null))
+    this.readStateByDoc.update((map) => {
+      map.set(attachedTo, state ?? null)
+      return map
+    })
 
     return state
   }
@@ -119,7 +125,10 @@ export class NotificationClientImpl implements NotificationClient {
     const current = get(this.docSettingByDoc).get(attachedTo)
     if (current !== undefined) return current ?? undefined
 
-    this.docSettingByDoc.update((map) => map.set(attachedTo, null))
+    this.docSettingByDoc.update((map) => {
+      map.set(attachedTo, null)
+      return map
+    })
 
     const client = getClient()
     const state = await client.findOne(notification.class.DocNotificationSetting, {
@@ -127,7 +136,10 @@ export class NotificationClientImpl implements NotificationClient {
       account: getCurrentAccount().uuid
     })
 
-    this.docSettingByDoc.update((map) => map.set(attachedTo, state ?? null))
+    this.docSettingByDoc.update((map) => {
+      map.set(attachedTo, state ?? null)
+      return map
+    })
 
     return state
   }
@@ -277,21 +289,20 @@ export class NotificationClientImpl implements NotificationClient {
     const docNotifyContext = await this.getContextByDoc(_id)
 
     if (docNotifyContext == null) return
-    if (
-      docNotifyContext.unreadCommons.length === 0 &&
-      !docNotifyContext.unreadMentions.some((it) => it.messageId == null)
-    ) {
+
+    const commonIds = docNotifyContext.unreadCommons.map((n) => n.id)
+    const mentionIdsWithoutMessage = docNotifyContext.unreadMentions
+      .filter((it) => it.messageId == null)
+      .map((n) => n.id)
+
+    if (commonIds.length === 0 && mentionIdsWithoutMessage.length === 0) {
       return
     }
 
     await client.update(docNotifyContext, {
       $pull: {
-        unreadCommons: { id: { $in: docNotifyContext.unreadCommons.map((n) => n.id) } },
-        unreadMentions: {
-          id: {
-            $in: docNotifyContext.unreadMentions.filter((it) => it.messageId == null).map((n) => n.id)
-          }
-        }
+        unreadCommons: { id: { $in: commonIds } },
+        unreadMentions: { id: { $in: mentionIdsWithoutMessage } }
       }
     })
   }
@@ -342,8 +353,7 @@ export class NotificationClientImpl implements NotificationClient {
       const contexts = await ops.findAll(
         notification.class.DocNotifyContext,
         {
-          user: getCurrentAccount().uuid,
-          archived: false
+          user: getCurrentAccount().uuid
         },
         { projection: { _id: 1, _class: 1, space: 1 } }
       )
@@ -388,127 +398,147 @@ addTxListener((txes: Tx[]) => {
   const notificationClient = NotificationClientImpl.getClient()
 
   for (const tx of txes) {
-    if (tx._class === core.class.TxCreateDoc) {
-      const createTx = tx as TxCreateDoc<Doc>
-      if (createTx.objectClass === notification.class.ReadState) {
-        const state = TxProcessor.createDoc2Doc(createTx as TxCreateDoc<ReadState>)
-        const current = get(notificationClient.readStateByDoc).has(state.attachedTo)
-        if (current == null) {
-          notificationClient.readStateByDoc.update((readStateByDoc) => {
-            return readStateByDoc.set(state.attachedTo, state)
-          })
+    switch (tx._class) {
+      case core.class.TxCreateDoc: {
+        const createTx = tx as TxCreateDoc<Doc>
+        if (createTx.objectClass === notification.class.ReadState) {
+          const state = TxProcessor.createDoc2Doc(createTx as TxCreateDoc<ReadState>)
+          const current = get(notificationClient.readStateByDoc).get(state.attachedTo)
+          if (current == null) {
+            notificationClient.readStateByDoc.update((readStateByDoc) => {
+              return readStateByDoc.set(state.attachedTo, state)
+            })
+          }
+        } else if (createTx.objectClass === notification.class.DocNotificationSetting) {
+          const setting = TxProcessor.createDoc2Doc(createTx as TxCreateDoc<DocNotificationSetting>)
+          const current = get(notificationClient.docSettingByDoc).get(setting.attachedTo)
+          if (current == null) {
+            notificationClient.docSettingByDoc.update((docSettingsByDoc) => {
+              return docSettingsByDoc.set(setting.attachedTo, setting)
+            })
+          }
+        } else if (createTx.objectClass === notification.class.DocNotifyContext) {
+          console.log('create context', createTx, getCurrentAccount().uuid)
+          const context = TxProcessor.createDoc2Doc(createTx as TxCreateDoc<DocNotifyContext>)
+          const current = get(notificationClient.contextByDoc).get(context.objectId)
+          if (current == null) {
+            notificationClient.contextById.update((state) => {
+              return state.set(context._id, context)
+            })
+            notificationClient.contextByDoc.update((state) => {
+              return state.set(context.objectId, context)
+            })
+          }
         }
+        break
       }
 
-      if (createTx.objectClass === notification.class.DocNotificationSetting) {
-        const setting = TxProcessor.createDoc2Doc(createTx as TxCreateDoc<DocNotificationSetting>)
-        const current = get(notificationClient.docSettingByDoc).has(setting.attachedTo)
-        if (current == null) {
-          notificationClient.docSettingByDoc.update((docSettingsByDoc) => {
-            return docSettingsByDoc.set(setting.attachedTo, setting)
-          })
+      case core.class.TxUpdateDoc: {
+        const updateTx = tx as TxUpdateDoc<Doc>
+        if (updateTx.objectClass === notification.class.ReadState) {
+          let attachedTo = updateTx.attachedTo
+          if (attachedTo == null) {
+            const state = Array.from(get(notificationClient.readStateByDoc).values())
+              .filter(notEmpty)
+              .find((it) => it._id === (updateTx.objectId as Ref<ReadState>))
+            if (state != null) {
+              attachedTo = state.attachedTo
+            }
+          }
+          if (attachedTo != null) {
+            const finalAttachedTo = attachedTo
+            notificationClient.readStateByDoc.update((stateByDoc) => {
+              const current = stateByDoc.get(finalAttachedTo)
+              if (current == null) return stateByDoc
+
+              return stateByDoc.set(
+                finalAttachedTo,
+                TxProcessor.updateDoc2Doc(current, updateTx as TxUpdateDoc<ReadState>)
+              )
+            })
+          }
+        } else if (updateTx.objectClass === notification.class.DocNotificationSetting) {
+          let attachedTo = updateTx.attachedTo
+          if (attachedTo == null) {
+            const setting = Array.from(get(notificationClient.docSettingByDoc).values())
+              .filter(notEmpty)
+              .find((it) => it._id === (updateTx.objectId as Ref<DocNotificationSetting>))
+            if (setting != null) {
+              attachedTo = setting.attachedTo
+            }
+          }
+          if (attachedTo != null) {
+            const finalAttachedTo = attachedTo
+            notificationClient.docSettingByDoc.update((stateByDoc) => {
+              const current = stateByDoc.get(finalAttachedTo)
+              if (current == null) return stateByDoc
+
+              return stateByDoc.set(
+                finalAttachedTo,
+                TxProcessor.updateDoc2Doc(current, updateTx as TxUpdateDoc<DocNotificationSetting>)
+              )
+            })
+          }
+        } else if (updateTx.objectClass === notification.class.DocNotifyContext) {
+          const contextId = updateTx.objectId as Ref<DocNotifyContext>
+          const context = get(notificationClient.contextById).get(contextId)
+          if (context != null) {
+            const updated = TxProcessor.updateDoc2Doc(context, updateTx as TxUpdateDoc<DocNotifyContext>)
+
+            notificationClient.contextById.update((state) => {
+              return state.set(context._id, updated)
+            })
+            notificationClient.contextByDoc.update((state) => {
+              return state.set(context.objectId, updated)
+            })
+          }
         }
+        break
       }
 
-      if (createTx.objectClass === notification.class.DocNotifyContext) {
-        const context = TxProcessor.createDoc2Doc(createTx as TxCreateDoc<DocNotifyContext>)
-        const current = get(notificationClient.contextById).has(context._id)
-        if (current == null) {
-          notificationClient.contextById.update((state) => {
-            return state.set(context._id, context)
-          })
-          notificationClient.contextByDoc.update((state) => {
-            return state.set(context.objectId, context)
-          })
-        }
-      }
-    }
-
-    if (tx._class === core.class.TxUpdateDoc) {
-      const updateTx = tx as TxUpdateDoc<Doc>
-      if (updateTx.objectClass === notification.class.ReadState) {
-        if (updateTx.attachedTo == null) continue
-        const attachedTo = updateTx.attachedTo
-        notificationClient.readStateByDoc.update((stateByDoc) => {
-          const current = stateByDoc.get(attachedTo)
-          if (current == null) return stateByDoc
-
-          return stateByDoc.set(attachedTo, TxProcessor.updateDoc2Doc(current, updateTx as TxUpdateDoc<ReadState>))
-        })
-      }
-
-      if (updateTx.objectClass === notification.class.DocNotificationSetting) {
-        if (updateTx.attachedTo == null) continue
-        const attachedTo = updateTx.attachedTo
-        notificationClient.docSettingByDoc.update((stateByDoc) => {
-          const current = stateByDoc.get(attachedTo)
-          if (current == null) return stateByDoc
-
-          return stateByDoc.set(
-            attachedTo,
-            TxProcessor.updateDoc2Doc(current, updateTx as TxUpdateDoc<DocNotificationSetting>)
+      case core.class.TxRemoveDoc: {
+        const removeTx = tx as TxRemoveDoc<Doc>
+        if (removeTx.objectClass === notification.class.ReadState) {
+          const stateById = new Map(
+            Array.from(get(notificationClient.readStateByDoc).values())
+              .filter(notEmpty)
+              .map((it) => [it._id, it])
           )
-        })
-      }
-
-      if (updateTx.objectClass === notification.class.DocNotifyContext) {
-        const contextId = updateTx.objectId as Ref<DocNotifyContext>
-        const context = get(notificationClient.contextById).get(contextId)
-        if (context == null) continue
-        notificationClient.contextById.update((state) => {
-          return state.set(context._id, TxProcessor.updateDoc2Doc(context, updateTx as TxUpdateDoc<DocNotifyContext>))
-        })
-        notificationClient.contextByDoc.update((state) => {
-          return state.set(
-            context.objectId,
-            TxProcessor.updateDoc2Doc(context, updateTx as TxUpdateDoc<DocNotifyContext>)
+          const state = stateById.get(removeTx.objectId as Ref<ReadState>)
+          if (state != null) {
+            notificationClient.readStateByDoc.update((stateByDoc) => {
+              stateByDoc.delete(state.attachedTo)
+              return stateByDoc
+            })
+          }
+        } else if (removeTx.objectClass === notification.class.DocNotificationSetting) {
+          const settingById = new Map(
+            Array.from(get(notificationClient.docSettingByDoc).values())
+              .filter(notEmpty)
+              .map((it) => [it._id, it])
           )
-        })
-      }
-    }
-
-    if (tx._class === core.class.TxRemoveDoc) {
-      const removeTx = tx as TxRemoveDoc<Doc>
-      if (removeTx.objectClass === notification.class.ReadState) {
-        const stateById = new Map(
-          Array.from(get(notificationClient.readStateByDoc).values())
-            .filter(notEmpty)
-            .map((it) => [it._id, it])
-        )
-        const state = stateById.get(removeTx.objectId as Ref<ReadState>)
-        if (state == null) continue
-        notificationClient.readStateByDoc.update((stateByDoc) => {
-          stateByDoc.delete(state.attachedTo)
-          return stateByDoc
-        })
-      }
-
-      if (removeTx.objectClass === notification.class.DocNotificationSetting) {
-        const settingById = new Map(
-          Array.from(get(notificationClient.docSettingByDoc).values())
-            .filter(notEmpty)
-            .map((it) => [it._id, it])
-        )
-        const state = settingById.get(removeTx.objectId as Ref<DocNotificationSetting>)
-        if (state == null) continue
-        notificationClient.docSettingByDoc.update((settingByDoc) => {
-          settingByDoc.delete(state.attachedTo)
-          return settingByDoc
-        })
-      }
-
-      if (removeTx.objectClass === notification.class.DocNotifyContext) {
-        const contextId = removeTx.objectId as Ref<DocNotifyContext>
-        const context = get(notificationClient.contextById).get(contextId)
-        if (context == null) continue
-        notificationClient.contextById.update((state) => {
-          state.delete(context._id)
-          return state
-        })
-        notificationClient.contextByDoc.update((state) => {
-          state.delete(context.objectId)
-          return state
-        })
+          const state = settingById.get(removeTx.objectId as Ref<DocNotificationSetting>)
+          if (state != null) {
+            notificationClient.docSettingByDoc.update((settingByDoc) => {
+              settingByDoc.delete(state.attachedTo)
+              return settingByDoc
+            })
+          }
+        } else if (removeTx.objectClass === notification.class.DocNotifyContext) {
+          const contextId = removeTx.objectId as Ref<DocNotifyContext>
+          const context = get(notificationClient.contextById).get(contextId)
+          if (context != null) {
+            notificationClient.contextById.update((state) => {
+              state.delete(context._id)
+              return state
+            })
+            notificationClient.contextByDoc.update((state) => {
+              state.delete(context.objectId)
+              return state
+            })
+          }
+        }
+        break
       }
     }
   }

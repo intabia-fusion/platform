@@ -64,6 +64,7 @@ async function main (): Promise<void> {
 
   const ctx = getCtx()
   const queue = getPlatformQueue(config.ServiceId, config.QueueRegion)
+
   const model = JSON.parse(readFileSync(process.env.MODEL_JSON ?? 'model.json').toString()) as Tx[]
   const worker = new Worker(ctx, model, queue)
 

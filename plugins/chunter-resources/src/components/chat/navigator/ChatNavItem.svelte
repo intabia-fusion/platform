@@ -48,7 +48,7 @@
   const settingByDocStore = notificationClient.docSettingByDoc
 
   let setting: DocNotificationSetting | undefined = undefined
-  let count: number | null = null
+  let count: number = 0
   let actions: Action[] = []
 
   $: void notificationClient.loadDocSetting(item.object._id)
@@ -204,10 +204,10 @@
   {isSelected}
   iconProps={{ ...item.iconProps, value: item.object }}
   {count}
+  countColor={(context?.unreadCount ?? 0) === 0 ? 'gray' : 'red'}
   title={item.title}
   subTitle={item.subTitle}
   identifier={item.identifier}
-  secondaryNotifyMarker={count > 0 && context?.unreadCount === 0}
   {actions}
   {type}
   muted={setting?.mode === 'mute'}

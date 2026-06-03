@@ -77,17 +77,17 @@
       {
         user: account.uuid,
         objectClass: _class,
-        archived: false,
         unreadMessages: { $size: { $gt: 0 } }
       },
       (res) => {
         count = getUnreadMessageCount(res)
       },
-      { projection: { unreadMessages: 1 } }
+      { projection: { unreadMessages: 1, unreadCount: 1 } }
     )
   } else if (!isOpen) {
     count = getUnreadMessageCount(objects.map(({ doc }) => $contextByDocStore.get(doc._id)).filter(notEmpty))
   } else {
+    count = 0
     query.unsubscribe()
   }
 

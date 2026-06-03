@@ -30,7 +30,8 @@ import notification, {
   DocNotificationMode,
   DocNotificationSetting,
   DocNotifyContext,
-  MentionNotification
+  MentionNotification,
+  isUnreadMessageId
 } from '@hcengineering/notification'
 import { Receiver } from '@hcengineering/server-notification'
 
@@ -69,7 +70,7 @@ export function hasUnreadMentionByMessage (context: DocNotifyContext, messageId:
 }
 
 export function hasUnreadMessage (context: DocNotifyContext, messageId: Ref<ActivityMessage>): boolean {
-  return context.unreadMessages.some((it) => '_id' in it && it._id === messageId)
+  return context.unreadMessages.some((it) => isUnreadMessageId(it) && it.id === messageId)
 }
 
 // ---- Notification queries ----
@@ -77,8 +78,8 @@ export function hasUnreadMessage (context: DocNotifyContext, messageId: Ref<Acti
 export function getNotificationsByMessage (
   context: DocNotifyContext,
   messageId: Ref<ActivityMessage>
-): ContextNotification[] {
-  return context.latestNotifications.filter((it) => 'messageId' in it && it.messageId === messageId)
+ ): ContextNotification[] {
+  return context.latestNotifications.filter((it) => it.type !== 'common' && it.messageId === messageId)
 }
 
 export function getMentionNotification (

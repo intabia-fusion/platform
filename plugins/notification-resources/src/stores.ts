@@ -68,8 +68,7 @@ export function updateInboxContexts (query: DocumentQuery<DocNotifyContext>, lim
     {
       ...query,
       latestNotifications: { $size: { $gt: 0 } },
-      user: account.uuid,
-      archived: false
+      user: account.uuid
     },
     (res) => {
       if (res.length <= limit) {

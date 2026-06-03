@@ -13,20 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Doc, getCurrentAccount, Ref } from '@hcengineering/core'
-  import notification, { DocNotifyContext } from '@hcengineering/notification'
+  import { Doc, Ref } from '@hcengineering/core'
   import activity, { ActivityMessage, WithReferences } from '@hcengineering/activity'
   import { getClient, isSpace } from '@hcengineering/presentation'
   import { getMessageFromLoc, messageInFocus } from '@hcengineering/activity-resources'
   import { location as locationStore } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
+  import { NotificationClientImpl } from '@hcengineering/notification-resources'
 
   import chunter from '../plugin'
   import { ChannelDataProvider } from '../channelDataProvider'
   import ReverseChannelScrollView from './ReverseChannelScrollView.svelte'
 
   export let object: Doc
-  export let context: DocNotifyContext | undefined = undefined
   export let syncLocation = true
   export let autofocus = true
   export let freeze = false
@@ -70,17 +69,12 @@
 
   async function updateDataProvider (attachedTo: Ref<Doc>, selectedMessageId?: Ref<ActivityMessage>): Promise<void> {
     if (dataProvider === undefined) {
-      const ctx =
-        context ??
-        (await client.findOne(notification.class.DocNotifyContext, {
-          objectId: object._id,
-          user: getCurrentAccount().uuid
-        }))
       const hasRefs = ((object as WithReferences<Doc>).references ?? 0) > 0
       refsLoaded = hasRefs
       const space = isSpace(object) ? object._id : object.space
+      const read = await NotificationClientImpl.getClient().getReadState(object._id)
       dataProvider = new ChannelDataProvider(
-        ctx,
+        read,
         space,
         attachedTo,
         activity.class.ActivityMessage,

@@ -24,7 +24,6 @@
     panelSeparators,
     Separator
   } from '@hcengineering/ui'
-  import { DocNotifyContext } from '@hcengineering/notification'
   import { ActivityMessage } from '@hcengineering/activity'
   import { getClient } from '@hcengineering/presentation'
   import { Channel, ObjectChatPanel } from '@hcengineering/chunter'
@@ -40,7 +39,6 @@
   import { isThreadMessage } from '../utils'
 
   export let object: Doc
-  export let context: DocNotifyContext | undefined
   export let autofocus = true
   export let embedded: boolean = false
   export let readonly: boolean = false
@@ -142,7 +140,7 @@
             </div>
           </div>
         {:else}
-          <ChannelComponent readonly={_readonly} {context} {object} {autofocus} />
+          <ChannelComponent readonly={_readonly}  {object} {autofocus} />
         {/if}
       {/key}
     </div>

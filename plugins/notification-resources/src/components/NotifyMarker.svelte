@@ -45,7 +45,7 @@
     }
 
     &.gray {
-      background-color: var(--global-disabled-TextColor);
+      background-color: var(--input-focus-PlaceholderColor);
     }
 
     &.xx-small {

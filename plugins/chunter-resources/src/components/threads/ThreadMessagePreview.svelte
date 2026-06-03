@@ -15,11 +15,11 @@
 
 <script lang="ts">
   import { ThreadMessage } from '@hcengineering/chunter'
-  import { ActivityMessagePreviewType } from '@hcengineering/activity'
+  import { ActivityMessagePreviewType, ActivityMessageLite } from '@hcengineering/activity'
 
   import ChatMessagePreview from '../chat-message/ChatMessagePreview.svelte'
 
-  export let value: ThreadMessage
+  export let value: ActivityMessageLite<ThreadMessage>
   export let readonly = false
   export let type: ActivityMessagePreviewType = 'full'
 </script>

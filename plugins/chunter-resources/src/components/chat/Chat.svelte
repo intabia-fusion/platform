@@ -27,7 +27,6 @@
     deviceOptionsStore as deviceInfo
   } from '@hcengineering/ui'
   import { NavigatorModel, SpecialNavModel } from '@hcengineering/workbench'
-  import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { onMount, onDestroy } from 'svelte'
   import { Chat, chunterId } from '@hcengineering/chunter'
   import view, { decodeObjectURI } from '@hcengineering/view'
@@ -42,8 +41,6 @@
   import { openChannel, openThreadInSidebar } from '../../navigation'
   import chunter from '../../plugin'
 
-  const inboxClient = NotificationClientImpl.getClient()
-  const contextByDocStore = inboxClient.contextByDoc
   const objectQuery = createQuery()
   const client = getClient()
 
@@ -189,8 +186,6 @@
   })
   $: $deviceInfo.replacedPanel = replacedPanel
   onDestroy(() => ($deviceInfo.replacedPanel = undefined))
-
-  $: void inboxClient.loadContextByDoc(object?._id)
 </script>
 
 <div class="hulyPanels-container">
@@ -234,8 +229,7 @@
         }}
       />
     {:else if object}
-      {@const context = $contextByDocStore.get(object._id) ?? undefined}
-      <ChannelView {object} {context} />
+      <ChannelView {object} />
     {/if}
   </div>
 </div>

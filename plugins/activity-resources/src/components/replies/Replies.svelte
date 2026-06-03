@@ -37,7 +37,7 @@
   $: lastReply = object.lastReply ?? new Date().getTime()
 
   let inboxClient: NotificationClient
-  let contextByDocStore: Readable<Map<Ref<Doc>, DocNotifyContext | null>>
+  let contextByDocStore: Readable<Map<Ref<Doc>, DocNotifyContext | null>> | undefined
 
   onMount(async () => {
     const getClientFn = await getResource(notification.function.GetNotificationsClient)
@@ -48,7 +48,7 @@
     void inboxClient.loadContextByDoc(object._id)
   })
 
-  $: hasNew = hasNewReplies($contextByDocStore.get(object._id) ?? undefined)
+  $: hasNew = hasNewReplies($contextByDocStore?.get(object._id) ?? undefined)
 
   function hasNewReplies (context?: DocNotifyContext): boolean {
     if (context == null) return false

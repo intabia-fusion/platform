@@ -19,15 +19,20 @@
   import { getClient } from '@hcengineering/presentation'
   import { Icon, Label } from '@hcengineering/ui'
   import { ObjectPresenter } from '@hcengineering/view-resources'
+  import { MessageNotification } from '@hcengineering/notification'
 
   import request from '../plugin'
+  import { Class, Doc, Ref } from '@hcengineering/core'
 
-  export let message: DocUpdateMessage
+  export let objectId: Ref<Doc>
+  export let objectClass: Ref<Class<Doc>>
+  export let value: MessageNotification<DocUpdateMessage>
   export let type: ActivityMessagePreviewType = 'full'
 
   const me = getCurrentEmployee()
   const client = getClient()
 
+  $:message = value.message
   $: isRemovedMe = message.attributeUpdates?.removed.includes(me) ?? false
   $: isAddedMe = message.attributeUpdates?.added.includes(me) ?? false
 </script>

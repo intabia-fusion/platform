@@ -34,7 +34,6 @@
 
   function matchViewlet (viewlet: ActivityNotificationViewlet, message: NotificationMessage): boolean {
     const hierarchy = client.getHierarchy()
-    // TODO: FIXME
     const matched = matchQuery([message], viewlet.messageMatch, message._class, hierarchy, true)[0]
     if (matched !== undefined) return true
 
@@ -74,7 +73,7 @@
 </script>
 
 {#if viewlet}
-  <Component is={viewlet.presenter} props={{ notification: value }} showLoading={false} on:click />
+  <Component is={viewlet.presenter} props={{ value, objectId, objectClass, objectSpace }} showLoading={false} on:click />
 {:else if value.intlMessage}
   <BasePreview intlLabel={value.intlMessage} account={value.createdBy} timestamp={value.createdOn} on:click />
 {:else}

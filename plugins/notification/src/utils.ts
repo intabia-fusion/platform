@@ -16,7 +16,14 @@
 import { Hierarchy, Ref } from '@hcengineering/core'
 import { ActivityMessage } from '@hcengineering/activity'
 
-import { ContextNotification, DocNotifyContext, NotificationIntl } from './types'
+import {
+  ContextNotification,
+  DocNotifyContext,
+  NotificationIntl,
+  UnreadMessage,
+  UnreadMessageChunk,
+  UnreadMessageId
+} from './types'
 import { translate } from '@hcengineering/platform'
 
 export function getUnreadMessageCount (
@@ -25,7 +32,15 @@ export function getUnreadMessageCount (
   if (_contexts == null) return 0
   const contexts = Array.isArray(_contexts) ? _contexts : [_contexts]
 
-  return contexts.flatMap((it) => it.unreadMessages).reduce((acc, it) => acc + ('count' in it ? it.count : 1), 0)
+  return contexts.flatMap((it) => it.unreadMessages).reduce((acc, it) => acc + (isUnreadMessageChunk(it) ? it.count : 1), 0)
+}
+
+export function isUnreadMessageId (unread: UnreadMessage): unread is UnreadMessageId {
+  return unread != null && 'id' in unread && 'createdOn' in unread
+}
+
+export function isUnreadMessageChunk (unread: UnreadMessage): unread is UnreadMessageChunk {
+  return unread != null && 'from' in unread && 'to' in unread && 'count' in unread
 }
 
 export function getNotificationMessageId (inboxNotification: ContextNotification): Ref<ActivityMessage> | undefined {

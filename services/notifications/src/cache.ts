@@ -194,6 +194,8 @@ class WorkspaceCache {
   private readonly socialIdToEmployeeMap = new Map<Ref<SocialIdentity>, Ref<Employee>>()
   private readonly employeeToAccountMap = new Map<Ref<Employee>, AccountUuid>()
 
+  private readonly serviceTxes = new Set<Ref<TxCUD<Doc>>>()
+
   constructor (
     private readonly ctx: MeasureContext,
     private readonly client: Client
@@ -206,7 +208,12 @@ class WorkspaceCache {
   /**
    * Processes a transaction CUD event and updates the cache indexes in real time.
    */
-  public tx (tx: TxCUD<Doc>): void {
+  public tx (tx: TxCUD<Doc>, service: boolean = false): void {
+    if (this.serviceTxes.has(tx._id)) {
+      this.serviceTxes.delete(tx._id)
+      return
+    }
+
     if (this.isPushSubscriptionTx(tx)) {
       this.pushSubscriptionsByAccountCache.clear()
     }
@@ -220,6 +227,10 @@ class WorkspaceCache {
 
     if (tx._class === core.class.TxRemoveDoc) {
       this.txRemoveDoc(tx as TxRemoveDoc<Doc>)
+    }
+
+    if (service) {
+      this.serviceTxes.add(tx._id)
     }
   }
 
@@ -772,6 +783,11 @@ class WorkspaceCache {
     const docId = this.contextToDocMap.get(tx.objectId as Ref<DocNotifyContext>)
     if (docId !== undefined) {
       const current = this.contextsByDocCache.get(docId) ?? []
+      const context = current.find((it) => it._id === tx.objectId)
+      if (context !== undefined && tx.modifiedOn < context.modifiedOn) {
+        this.invalidateContexts(docId)
+        return
+      }
       const updated = current.map((it) => (it._id === tx.objectId ? this.updateOrMixin(tx, it) : it))
       this.contextsByDocCache.set(docId, updated)
     }
@@ -896,8 +912,17 @@ class WorkspaceCache {
   // General Private Helpers
   // ==========================================
 
+  private invalidateContexts (docId: Ref<Doc>): void {
+    const contexts = this.contextsByDocCache.get(docId)
+    if (contexts !== undefined) {
+      for (const context of contexts) {
+        this.contextToDocMap.delete(context._id)
+      }
+      this.contextsByDocCache.delete(docId)
+    }
+  }
+
   private updateOrMixin<T extends Doc>(tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>, doc: T): T {
-    if (tx.modifiedOn < doc.modifiedOn) return doc
     if (tx._class === core.class.TxUpdateDoc) {
       return TxProcessor.updateDoc2Doc(doc, tx as TxUpdateDoc<Doc>) as T
     }

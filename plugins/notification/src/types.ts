@@ -276,12 +276,14 @@ export interface CommonNotification {
 export interface UnreadMessageId {
   id: Ref<ActivityMessage>
   createdOn: Timestamp
+  notified?: boolean
 }
 
 export interface UnreadMessageChunk {
   from: Timestamp
   to: Timestamp
   count: number
+  notifiedCount?: number
 }
 
 export type UnreadMessage = UnreadMessageId | UnreadMessageChunk

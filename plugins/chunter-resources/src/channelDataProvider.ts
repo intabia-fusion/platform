@@ -30,7 +30,7 @@ import { derived, get, type Readable, writable } from 'svelte/store'
 import activity, { type ActivityMessage, type ActivityReference } from '@hcengineering/activity'
 import attachment from '@hcengineering/attachment'
 import { sortActivityMessages } from '@hcengineering/activity-resources'
-import { type DocNotifyContext } from '@hcengineering/notification'
+import { type ReadPosition, type ReadState } from '@hcengineering/notification'
 import chunter from '@hcengineering/chunter'
 
 export type LoadMode = 'forward' | 'backward'
@@ -121,7 +121,7 @@ export class ChannelDataProvider implements IChannelDataProvider {
   })
 
   constructor (
-    private context: DocNotifyContext | undefined,
+    private readState: ReadState | undefined,
     readonly space: Ref<Space>,
     chatId: Ref<Doc>,
     _class: Ref<Class<ActivityMessage>>,
@@ -225,9 +225,9 @@ export class ChannelDataProvider implements IChannelDataProvider {
     )
   }
 
-  async updateNewTimestamp (context?: DocNotifyContext): Promise<void> {
-    if (context === undefined) return
-    this.context = context
+  async updateNewTimestamp (readState?: ReadState): Promise<void> {
+    if (readState === undefined) return
+    this.readState = readState
     const firstNewMsgIndex = await this.getFirstNewMsgIndex()
     const metadata = get(this.metadataStore)
     this.newTimestampStore.set(firstNewMsgIndex !== undefined ? metadata[firstNewMsgIndex]?.createdOn : undefined)
@@ -540,42 +540,14 @@ export class ChannelDataProvider implements IChannelDataProvider {
   private async getFirstNewMsgIndex (): Promise<number | undefined> {
     const metadata = get(this.metadataStore)
 
-    if (metadata.length === 0) {
-      return undefined
-    }
+    if (metadata.length === 0) return undefined
+    if (this.readState === undefined) return -1
 
-    if (this.context === undefined) {
-      return -1
-    }
+    const me = getCurrentAccount()
+    const readPosition: ReadPosition | undefined = this.readState[me.uuid]
+    const lastView = readPosition?.timestamp ?? 0
 
-    // const lastViewedTimestamp = this.context.lastView
-    // const client = getClient()
-    const lastViewedTimestamp = Date.now()
-    const firstNotification: any | undefined = undefined
-    // const firstNotification = await client.findOne(
-    //   notification.class.InboxNotification,
-    //   {
-    //     _class: {
-    //       $in: [notification.class.MentionInboxNotification, notification.class.ActivityInboxNotification]
-    //     },
-    //     space: this.context.space,
-    //     docNotifyContext: this.context._id,
-    //     isViewed: false
-    //   },
-    //   { sort: { createdOn: SortingOrder.Ascending } }
-    // )
-
-    if (lastViewedTimestamp === undefined && firstNotification === undefined) {
-      return -1
-    }
-
-    let newTimestamp = 0
-
-    if (lastViewedTimestamp !== undefined && firstNotification !== undefined) {
-      newTimestamp = Math.min(lastViewedTimestamp ?? 0, firstNotification?.createdOn ?? 0)
-    } else {
-      newTimestamp = lastViewedTimestamp ?? firstNotification?.createdOn ?? 0
-    }
+    if (lastView === 0) return -1
 
     return metadata.findIndex((message) => {
       if (message.createdBy !== undefined && getCurrentAccount().socialIds.includes(message.createdBy)) {
@@ -584,7 +556,7 @@ export class ChannelDataProvider implements IChannelDataProvider {
 
       const createdOn = message.createdOn ?? 0
 
-      return newTimestamp < createdOn
+      return lastView < createdOn
     })
   }
 

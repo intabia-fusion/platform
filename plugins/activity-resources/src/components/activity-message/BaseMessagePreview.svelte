@@ -15,7 +15,7 @@
 
 <script lang="ts">
   import { IntlString } from '@hcengineering/platform'
-  import { ActivityMessage, ActivityMessagePreviewType } from '@hcengineering/activity'
+  import { ActivityMessageLite, ActivityMessagePreviewType } from '@hcengineering/activity'
 
   import BasePreview from '../BasePreview.svelte'
 
@@ -23,7 +23,7 @@
   export let intlLabel: IntlString | undefined = undefined
   export let readonly = false
   export let type: ActivityMessagePreviewType = 'full'
-  export let message: ActivityMessage
+  export let message: ActivityMessageLite
 
   let isCompact = false
 </script>
