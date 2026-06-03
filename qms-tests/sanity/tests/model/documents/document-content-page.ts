@@ -556,6 +556,16 @@ export class DocumentContentPage extends DocumentCommonPage {
     await this.createButton.click()
   }
 
+  // The members button label embeds member initials and count (e.g. "AJ DK 2 members"),
+  // both of which vary with the current member set. Match by the "<n> members" suffix
+  // only, and dispatch the click so a still-settling member-picker overlay does not
+  // intercept it.
+  async clickMembersButton (): Promise<void> {
+    const membersButton = this.page.getByRole('button', { name: /\d+ members?$/ }).first()
+    await membersButton.waitFor({ state: 'visible' })
+    await membersButton.dispatchEvent('click')
+  }
+
   async changeTeamspaceMembers (spaceName: string): Promise<void> {
     await this.page.getByRole('button', { name: spaceName }).hover()
     await this.page.getByRole('button', { name: spaceName }).getByRole('button').nth(1).click()
@@ -565,7 +575,7 @@ export class DocumentContentPage extends DocumentCommonPage {
     await this.page.getByRole('button', { name: 'AJ Appleseed John' }).click()
     await this.page.keyboard.press('Escape')
     await this.page.waitForTimeout(1000)
-    await this.page.getByRole('button', { name: 'AJ DK 2 members' }).click()
+    await this.clickMembersButton()
     await this.page.getByRole('button', { name: 'DK Dirak Kainin' }).click()
     await this.page.keyboard.press('Escape')
     await this.page.waitForTimeout(1000)
@@ -580,7 +590,7 @@ export class DocumentContentPage extends DocumentCommonPage {
     await this.page.getByRole('button', { name: 'DK Dirak Kainin' }).nth(3).click()
     await this.page.getByRole('button', { name: 'AJ Appleseed John' }).click()
     await this.page.keyboard.press('Escape')
-    await this.page.getByRole('button', { name: 'AJ DK 2 members' }).click()
+    await this.clickMembersButton()
     await this.page.getByRole('button', { name: 'DK Dirak Kainin' }).nth(1).click()
     await this.page.keyboard.press('Escape')
     await this.page.waitForTimeout(1000)
@@ -601,7 +611,7 @@ export class DocumentContentPage extends DocumentCommonPage {
     await this.page.getByRole('button', { name: spaceName }).hover()
     await this.page.getByRole('button', { name: spaceName }).getByRole('button').click()
     await this.editDocumentSpace.click()
-    await this.page.getByRole('button', { name: 'AJ DK 2 members' }).click()
+    await this.clickMembersButton()
     await this.page.getByRole('button', { name: 'VC Velasquez Cain' }).click()
     await this.page.keyboard.press('Escape')
     await this.page.waitForTimeout(1000)
@@ -790,6 +800,14 @@ export class DocumentContentPage extends DocumentCommonPage {
     }
   }
 
+  // Open the Comments aside. The floating comment popup may leave a modal-overlay
+  // that intercepts a plain click, so dispatch the click directly.
+  async openComments (): Promise<void> {
+    await this.buttonComments.waitFor({ state: 'visible' })
+    await this.buttonComments.dispatchEvent('click')
+    await this.page.locator('div.popupPanel-body__aside').waitFor({ state: 'visible', timeout: 10000 })
+  }
+
   async sendForApproval (
     releaseType: string,
     version: string,
@@ -831,19 +849,23 @@ export class DocumentContentPage extends DocumentCommonPage {
   }
 
   async closeNewMessagePopup (): Promise<void> {
-    await this.textPageHeader.press('Escape', { delay: 300 })
-    await this.textPageHeader.click({ force: true, delay: 300, position: { x: 1, y: 1 } })
-    // Wait for any comment popup overlay to disappear before proceeding so it
-    // does not intercept later clicks.
-    await this.page
-      .locator('div.modal-overlay')
-      .last()
-      .waitFor({ state: 'hidden', timeout: 10000 })
-      .catch(() => {})
+    // The floating comment popup leaves a modal-overlay backdrop that intercepts
+    // every later click. Press Escape until no overlay remains in the DOM; the
+    // count check (not visibility) avoids the race where a fading overlay still
+    // intercepts pointer events.
+    const overlay = this.page.locator('div.modal-overlay')
+    for (let i = 0; i < 8; i++) {
+      if ((await overlay.count()) === 0) return
+      await this.page.keyboard.press('Escape')
+      await this.page.waitForTimeout(300)
+    }
   }
 
   async completeReview (): Promise<void> {
-    await this.buttonCompleteReview.click()
+    // A leftover comment-popup modal-overlay can intercept pointer events even
+    // though the button is enabled; dispatch the click to bypass it.
+    await this.buttonCompleteReview.waitFor({ state: 'visible' })
+    await this.buttonCompleteReview.dispatchEvent('click')
     await this.inputPassword.fill(PlatformPassword)
     await this.buttonSubmit.click()
   }

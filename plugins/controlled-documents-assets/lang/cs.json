@@ -66,6 +66,8 @@
     "ComparisonMode": "Porovnání",
     "Compare": "Porovnat:",
     "Against": "Proti:",
+    "RemovedAttachments": "Odebrané přílohy",
+    "Restore": "Obnovit",
     "ComparisonModeNotSupported": "Porovnávací režim není podporován.",
     "CreateDraft": "Vytvořit koncept",
     "SendForApproval": "Odeslat ke schválení",

@@ -285,3 +285,19 @@ export interface DocumentTraining extends Document {
   maxAttempts: TrainingRequest['maxAttempts']
   dueDays: number | null
 }
+
+/**
+ * @public
+ *
+ * Mixin on attachments of a controlled document.
+ * Marks the document version (major.minor) in which the attachment was removed.
+ * Attachments are copied across versions; removal is a soft mark, not a physical delete.
+ */
+export type DocumentAttachmentState = 'new' | 'referenced'
+
+export interface DocumentAttachment extends Attachment {
+  // 'new' - added in the current version, can be removed instantly
+  // 'referenced' - copied from a previous version/template, removal is a soft mark
+  state?: DocumentAttachmentState
+  deletedIn?: { major: number, minor: number }
+}

@@ -84,17 +84,17 @@ export const UNAUTHORIZED = new Status(Severity.ERROR, platform.status.Unauthori
  * @param message -
  * @returns
  */
-export function unknownStatus (message: string): Status<any> {
-  return new Status(Severity.ERROR, platform.status.UnknownError, { message })
+export function unknownStatus (message: string, extra?: Record<string, any>): Status<any> {
+  return new Status(Severity.ERROR, platform.status.UnknownError, { message, ...(extra ?? {}) })
 }
 
 /**
  * Creates unknown error status
  * @public
  */
-export function unknownError (err: unknown): Status {
+export function unknownError (err: unknown, extra?: Record<string, any>): Status {
   if (err instanceof PlatformError) return err.status
-  if (err instanceof Error) return unknownStatus(err.message)
-  if (typeof err === 'string') return unknownStatus(err)
+  if (err instanceof Error) return unknownStatus(err.message, extra)
+  if (typeof err === 'string') return unknownStatus(err, extra)
   return ERROR
 }

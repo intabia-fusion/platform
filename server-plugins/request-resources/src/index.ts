@@ -154,10 +154,13 @@ export const sendRequestCreateNotification: CreateNotificationFunc = async (
 
   const req = object as Request
   const clazz = client.hierarchy.getClass(req._class)
+  const titleKey = client.hierarchy.getClass(attachedToDoc._class).titleKey
+  const title = (titleKey != null ? (attachedToDoc as any)[titleKey] : undefined) ?? ''
 
   return {
     icon: clazz.icon,
     message: request.string.NewRequestNotification,
+    intlParams: { title },
     intlParamsNotLocalized: { name: clazz.label }
   }
 }
@@ -190,10 +193,13 @@ export const removeRequestCreateNotification: CreateNotificationFunc = async (
 
   const req = object as Request
   const clazz = client.hierarchy.getClass(req._class)
+  const titleKey = client.hierarchy.getClass(attachedToDoc._class).titleKey
+  const title = (titleKey != null ? (attachedToDoc as any)[titleKey] : undefined) ?? ''
 
   return {
     icon: clazz.icon,
     message: request.string.CancelRequestNotification,
+    intlParams: { title },
     intlParamsNotLocalized: { name: clazz.label }
   }
 }

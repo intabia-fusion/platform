@@ -201,7 +201,7 @@ export async function translate<P extends Record<string, any>> (
     try {
       return compiled.format(params)
     } catch (err) {
-      const status = unknownError(err)
+      const status = unknownError(err, { ...params, msg: message, language })
       await setStatus(status, skipError)
       return message
     }
@@ -223,7 +223,7 @@ export async function translate<P extends Record<string, any>> (
     try {
       return compiledNew.format(params)
     } catch (err) {
-      const status = unknownError(err)
+      const status = unknownError(err, { ...params, msg: message, language })
       await setStatus(status, skipError)
       return message
     }

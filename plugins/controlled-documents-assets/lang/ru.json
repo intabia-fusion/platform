@@ -67,6 +67,8 @@
     "ComparisonMode": "Сравнение",
     "Compare": "Сравнить:",
     "Against": "с:",
+    "RemovedAttachments": "Удалённые вложения",
+    "Restore": "Восстановить",
     "ComparisonModeNotSupported": "Сравнение не поддерживается.",
     "CreateDraft": "Создать рабочую копию",
     "SendForApproval": "Попросить утверждения",

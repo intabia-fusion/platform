@@ -1,5 +1,6 @@
 import { test as setup, Page } from '@playwright/test'
 import path from 'path'
+import { existsSync } from 'fs'
 
 import {
   PlatformUser,
@@ -29,7 +30,10 @@ async function authenticate (page: Page, user: string, password: string): Promis
   })
 }
 
+// Reuse a saved storageState if present. prepare-qms.sh removes .auth on stand
+// recreation, so a missing file means a fresh login is required.
 setup('qms auth user1', async ({ page }) => {
+  if (existsSync(authFile)) return
   await authenticate(page, PlatformUser, '1234')
   await setTestOptions(page)
 
@@ -37,6 +41,7 @@ setup('qms auth user1', async ({ page }) => {
 })
 
 setup('qms auth user2', async ({ page }) => {
+  if (existsSync(authFileSecond)) return
   await authenticate(page, PlatformUserSecond, '1234')
   await setTestOptions(page)
 
@@ -44,6 +49,7 @@ setup('qms auth user2', async ({ page }) => {
 })
 
 setup('qms auth user3', async ({ page }) => {
+  if (existsSync(authFileThird)) return
   await authenticate(page, PlatformUserThird, '1234')
   await setTestOptions(page)
 
@@ -51,6 +57,7 @@ setup('qms auth user3', async ({ page }) => {
 })
 
 setup('qms auth qara', async ({ page }) => {
+  if (existsSync(authFileQARA)) return
   await authenticate(page, PlatformUserQara, '1234')
   await setTestOptions(page)
 

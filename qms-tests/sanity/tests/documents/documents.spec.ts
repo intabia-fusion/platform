@@ -288,10 +288,10 @@ test.describe('QMS. Documents tests', () => {
     })
 
     await test.step('4. Add comments and Complete Review', async () => {
-      // Open the Comments aside tab BEFORE adding the comment so submitting it
-      // navigates the aside instead of opening a modal popup that blocks clicks.
-      await documentContentPage.buttonComments.click()
+      // Add the comment with the aside closed: submitting opens a floating comment
+      // popup that creates the comment. Then open the Comments aside to verify it.
       await documentContentPage.addMessageToTheText(newContentFirst, messageToContent)
+      await documentContentPage.openComments()
 
       const documentCommentsPage = new DocumentCommentsPage(page)
       await documentCommentsPage.checkCommentExist(messageToContent)
@@ -472,10 +472,10 @@ test.describe('QMS. Documents tests', () => {
     })
 
     await test.step('4. Add comments and Complete Review', async () => {
-      // Open the Comments aside tab BEFORE adding the comment so submitting it
-      // navigates the aside instead of opening a modal popup that blocks clicks.
-      await documentContentPage.buttonComments.click()
+      // Add the comment with the aside closed: submitting opens a floating comment
+      // popup that creates the comment. Then open the Comments aside to verify it.
       await documentContentPage.addMessageToTheText(newContentFirst, messageToContent)
+      await documentContentPage.openComments()
 
       const documentCommentsPage = new DocumentCommentsPage(page)
       await documentCommentsPage.checkCommentExist(messageToContent)
@@ -875,10 +875,10 @@ test.describe('QMS. Documents tests', () => {
     })
 
     await test.step('4. As author add a comment', async () => {
-      // Open the Comments aside tab BEFORE adding the comment so submitting it
-      // navigates the aside instead of opening a modal popup that blocks clicks.
-      await documentContentPage.buttonComments.click()
+      // Add the comment with the aside closed: submitting opens a floating comment
+      // popup that creates the comment. Then open the Comments aside to verify it.
       await documentContentPage.addMessageToTheText(newContentFirst, messageToContent)
+      await documentContentPage.openComments()
 
       const documentCommentsPage = new DocumentCommentsPage(page)
       await documentCommentsPage.checkCommentExist(messageToContent)
@@ -893,10 +893,10 @@ test.describe('QMS. Documents tests', () => {
       await documentsPageSecond.openDocument(completeDocument.title)
 
       const documentContentPageSecond = new DocumentContentPage(userSecondPage)
-      // Open the Comments aside tab BEFORE adding the comment so submitting it
-      // navigates the aside instead of opening a modal popup that blocks clicks.
-      await documentContentPageSecond.buttonComments.click()
+      // Add the comment with the aside closed: submitting opens a floating comment
+      // popup that creates the comment. Then open the Comments aside to verify it.
       await documentContentPageSecond.addMessageToTheText(newContentSecond, messageToContentSecond)
+      await documentContentPageSecond.openComments()
 
       const documentCommentsPageSecond = new DocumentCommentsPage(userSecondPage)
       await documentCommentsPageSecond.checkCommentExist(messageToContentSecond)

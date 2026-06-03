@@ -95,7 +95,7 @@
   }
 
   async function clickHandler (e: MouseEvent): Promise<void> {
-    if (value === undefined || !canPreview) return
+    if (value === undefined || (!canPreview && !canShowImage)) return
 
     e.preventDefault()
     e.stopPropagation()
@@ -103,11 +103,18 @@
       window.open((e.target as HTMLAnchorElement).href, '_blank')
       return
     }
-    if (value.type.startsWith('image/') || value.type.startsWith('video/') || value.type.startsWith('audio/')) {
+    // Renderable inline types open in sidebar; everything else (incl. thumbnail-only
+    // files like pptx) opens in the preview popup which shows the thumbnail.
+    if (
+      canPreview &&
+      !value.type.startsWith('image/') &&
+      !value.type.startsWith('video/') &&
+      !value.type.startsWith('audio/')
+    ) {
+      await openAttachmentInSidebar(value)
+    } else {
       const popup = showAttachmentPreviewPopup(value)
       dispatch('open', popup.id)
-    } else {
-      await openAttachmentInSidebar(value)
     }
   }
 

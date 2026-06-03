@@ -633,8 +633,10 @@ class Workspace {
     ) as Record<Ref<NotificationProvider>, Ref<NotificationType>[]>
 
     const attrs: Data<InboxNotification> = {
-      ...content,
       ...data,
+      ...content,
+      intlParams: { ...data.intlParams, ...content.intlParams },
+      intlParamsNotLocalized: { ...data.intlParamsNotLocalized, ...content.intlParamsNotLocalized },
       objectId: doc._id,
       objectClass: doc._class,
       user: receiver.account,
