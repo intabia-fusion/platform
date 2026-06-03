@@ -53,6 +53,7 @@ env:
     tools
     workers
     ws-tests
+    qms-tests
   PublishTempFolder: publish_artifacts
   INIT_SCRIPTS_BRANCH: "main"
 
