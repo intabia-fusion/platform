@@ -43,7 +43,8 @@ export const uploaderPlugin = plugin(uploaderId, {
     UploadFiles: '' as IntlString,
     UploadFolders: '' as IntlString,
     Cancel: '' as IntlString,
-    Retry: '' as IntlString
+    Retry: '' as IntlString,
+    StorageLimitReached: '' as IntlString
   },
   function: {
     ShowFilesUploadPopup: '' as Resource<UploadFilesPopupFn>,

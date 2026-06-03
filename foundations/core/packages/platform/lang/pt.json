@@ -5,6 +5,7 @@
     "InvalidId": "Id inválido: {id}",
     "BadRequest": "Pedido inválido",
     "Forbidden": "Proibido",
+    "PlanLimitExceeded": "Limite do plano excedido",
     "Conflict": "Conflito",
     "ExpiredLink": "Este link de convite expirou",
     "Unauthorized": "Não autorizado",

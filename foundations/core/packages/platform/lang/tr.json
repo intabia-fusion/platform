@@ -5,6 +5,7 @@
     "InvalidId": "Geçersiz Id: {id}",
     "BadRequest": "Hatalı istek",
     "Forbidden": "Yasak",
+    "PlanLimitExceeded": "Plan sınırı aşıldı",
     "Conflict": "Çakışma",
     "ExpiredLink": "Bu davet bağlantısının süresi dolmuş",
     "Unauthorized": "Yetkisiz",

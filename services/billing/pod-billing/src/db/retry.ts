@@ -26,7 +26,10 @@ import {
   LiveKitSessionData,
   LiveKitUsageData,
   ParticipantDailyUsage,
-  ParticipantMinutesUsage
+  ParticipantMinutesUsage,
+  type LimitCategory,
+  type UsageMetric,
+  type WorkspaceLimitState
 } from '../types'
 
 interface RetryOptions {
@@ -140,5 +143,31 @@ export class RetryDB implements BillingDB {
     end?: Date
   ): Promise<AiTokensUsage[]> {
     return await retry(() => this.db.getAiTokensStats(ctx, workspace, start, end), this.options)
+  }
+
+  async accumulateUsageDelta (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    metric: UsageMetric,
+    amount: number,
+    ref: string
+  ): Promise<boolean> {
+    return await retry(() => this.db.accumulateUsageDelta(ctx, workspace, metric, amount, ref), this.options)
+  }
+
+  async getLimitState (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    category: LimitCategory
+  ): Promise<WorkspaceLimitState | undefined> {
+    return await retry(() => this.db.getLimitState(ctx, workspace, category), this.options)
+  }
+
+  async upsertLimitState (ctx: MeasureContext, state: WorkspaceLimitState): Promise<void> {
+    await retry(() => this.db.upsertLimitState(ctx, state), this.options)
+  }
+
+  async getAllExhaustedStates (ctx: MeasureContext): Promise<WorkspaceLimitState[]> {
+    return await retry(() => this.db.getAllExhaustedStates(ctx), this.options)
   }
 }

@@ -261,6 +261,7 @@ export interface AccountClient {
     workspaceUuid: WorkspaceUuid
     plan: string
     type?: string
+    status?: string
     limits?: Subscription['limits']
   }) => Promise<void>
 
@@ -1334,6 +1335,7 @@ class AccountClientImpl implements AccountClient {
     workspaceUuid: WorkspaceUuid
     plan: string
     type?: string
+    status?: string
     limits?: Subscription['limits']
   }): Promise<void> {
     await this._rpc({

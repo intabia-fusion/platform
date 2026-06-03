@@ -35,7 +35,7 @@
   $: limits = calculateLimits(plan, pkg, tierSub, pkgSub)
 </script>
 
-<div class="flex-col flex-gap-2">
+<div class="flex-col flex-gap-2" data-id="billingUsageSection">
   <div class="fs-bold">
     <Label label={plugin.string.Usage} />
   </div>

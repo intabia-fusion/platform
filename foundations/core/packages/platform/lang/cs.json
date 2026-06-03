@@ -5,6 +5,7 @@
     "InvalidId": "Neplatné ID: {id}",
     "BadRequest": "Špatný požadavek",
     "Forbidden": "Zakázáno",
+    "PlanLimitExceeded": "Limit plánu překročen",
     "Conflict": "Konflikt",
     "ExpiredLink": "Tento odkaz na pozvánku vypršel",
     "Unauthorized": "Neoprávněný přístup",

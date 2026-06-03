@@ -14,13 +14,25 @@
 // limitations under the License.
 //
 
-import { type BrandingMap, type MeasureContext, type Tx, type WorkspaceIds } from '@hcengineering/core'
+import {
+  type BrandingMap,
+  type MeasureContext,
+  type Tx,
+  type WorkspaceIds,
+  type WorkspaceUuid
+} from '@hcengineering/core'
 import { buildStorageFromConfig } from '@hcengineering/server-storage'
 
 import { startSessionManager } from '@hcengineering/server'
 import {
   type CommunicationCallbacks,
+  LimitCategory,
+  LimitStatus,
+  type PlanLimits,
   type PlatformQueue,
+  QueueTopic,
+  QueueWorkspaceEvent,
+  type QueueWorkspaceLimitsMessage,
   type SessionManager,
   type StorageConfiguration
 } from '@hcengineering/server-core'
@@ -40,7 +52,9 @@ import {
   createPostgresTxAdapter,
   shutdownPostgres
 } from '@hcengineering/postgres'
+import { LIMITS_PROVIDER_VAR, PAYMENT_EXHAUSTED_MAP_KEY, PLAN_LIMITS_MAP_KEY } from '@hcengineering/middleware'
 import { readFileSync } from 'node:fs'
+import { AccountLimitsProvider } from './limitsProvider'
 import { startHttpServer } from './server_http'
 import type { ServerApi } from '@hcengineering/communication-sdk-types'
 const model = JSON.parse(readFileSync(process.env.MODEL_JSON ?? 'model.json').toString()) as Tx[]
@@ -119,11 +133,54 @@ export function start (
       broadcastSessions
     )
   }
+  // Shared across all per-workspace pipelines in this process; updated live by the consumer below.
+  const paymentExhaustedMap = new Map<WorkspaceUuid, boolean>()
+  const planLimitsMap = new Map<WorkspaceUuid, PlanLimits>()
+  const limitsProvider = new AccountLimitsProvider(opt.accountsUrl)
+
+  const limitsConsumer =
+    opt.queue != null
+      ? opt.queue.createBatchConsumer<QueueWorkspaceLimitsMessage>(
+        metrics.newChild('payment-limits-consumer', {}, { span: false }),
+        QueueTopic.Workspace,
+        opt.queue.getClientId(), // per-instance group: every instance keeps its own map, must get all events
+        async (ctx, msgs) => {
+          for (const m of msgs) {
+            const v = m.value
+            if (v.type !== QueueWorkspaceEvent.LimitsChanged) continue
+            if (v.category === LimitCategory.Payment) {
+              paymentExhaustedMap.set(m.workspace, v.status === LimitStatus.Exhausted)
+              ctx.info('payment limit status updated', { workspace: m.workspace, status: v.status })
+            } else if (v.category === LimitCategory.Plan) {
+              // Plan/limits changed: refresh the snapshot so middlewares pick it up without restart.
+              try {
+                planLimitsMap.set(m.workspace, await limitsProvider.getPlanLimits(m.workspace))
+                ctx.info('plan limits refreshed', { workspace: m.workspace })
+              } catch (err: any) {
+                ctx.error('failed to refresh plan limits', { workspace: m.workspace, err })
+              }
+            }
+          }
+        },
+        { batchSize: 100, batchTimeout: 500 }
+      )
+      : undefined
+
   const pipelineFactory = createServerPipeline(
     metrics,
     dbUrl,
     model,
-    { ...opt, externalStorage, queue: opt.queue, communicationApiFactory },
+    {
+      ...opt,
+      externalStorage,
+      queue: opt.queue,
+      communicationApiFactory,
+      pipelineContextVars: {
+        [LIMITS_PROVIDER_VAR]: limitsProvider,
+        [PAYMENT_EXHAUSTED_MAP_KEY]: paymentExhaustedMap,
+        [PLAN_LIMITS_MAP_KEY]: planLimitsMap
+      }
+    },
     {}
   )
 
@@ -138,6 +195,7 @@ export function start (
   const shutdown = startHttpServer(metrics, sessionManager, opt.port, opt.accountsUrl, externalStorage)
   return {
     shutdown: async () => {
+      await limitsConsumer?.close()
       await externalStorage.close()
       await sessionManager.closeWorkspaces(metrics)
       await shutdown()

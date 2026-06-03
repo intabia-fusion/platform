@@ -177,7 +177,8 @@ export default plugin(platformId, {
     SocialIdAlreadyExists: '' as StatusCode,
     ReadOnlyAccount: '' as StatusCode,
     RegularAccount: '' as StatusCode,
-    SystemAccount: '' as StatusCode
+    SystemAccount: '' as StatusCode,
+    PlanLimitExceeded: '' as StatusCode<{ category?: string }>
   },
   metadata: {
     locale: '' as Metadata<string>,

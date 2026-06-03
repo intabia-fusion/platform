@@ -74,6 +74,16 @@
 
   $: isCurrentCanceled = currentSubscription?.canceledAt !== undefined && currentSubscription.canceledAt > 0
 
+  // Instant provider (mock) already activated the subscription server-side: refetch instead of
+  // redirecting to a checkout page. Real providers return instant=false -> redirect as before.
+  async function applyCheckout (result: { checkoutUrl: string, instant?: boolean }): Promise<void> {
+    if (result.instant === true) {
+      await fetchSubscriptions()
+    } else {
+      window.location.href = result.checkoutUrl
+    }
+  }
+
   async function subscribe (plan: string): Promise<void> {
     if (paymentClient == null) {
       return
@@ -87,8 +97,7 @@
 
     try {
       const request: SubscribeRequest = { type: SubscriptionType.Tier, plan }
-      const { checkoutUrl } = await paymentClient.createSubscription(workspace, request)
-      window.location.href = checkoutUrl
+      await applyCheckout(await paymentClient.createSubscription(workspace, request))
     } catch (error) {
       console.error('Error while upgrading plan:', error)
       await showErrorNotification()
@@ -134,7 +143,7 @@
           try {
             const result = await paymentClient.updateSubscriptionPlan(replaceSub.id, pkgKey)
             if ('checkoutUrl' in result) {
-              window.location.href = result.checkoutUrl
+              await applyCheckout(result)
             } else {
               currentPackageSubscription = result
             }
@@ -163,8 +172,7 @@
 
     try {
       const request: SubscribeRequest = { type: SubscriptionType.Package, plan }
-      const { checkoutUrl } = await paymentClient.createSubscription(workspace, request)
-      window.location.href = checkoutUrl
+      await applyCheckout(await paymentClient.createSubscription(workspace, request))
     } catch (error) {
       console.error('Error subscribing to package:', error)
       await showErrorNotification()
@@ -248,10 +256,9 @@
       // Now update the plan
       const updateResult = await paymentClient.updateSubscriptionPlan(currentSubscription.id, newPlan)
 
-      // Check if it's a CheckoutResponse (free-to-paid upgrade requires checkout)
+      // CheckoutResponse: instant provider already activated (refetch), real one needs a checkout.
       if ('checkoutUrl' in updateResult) {
-        // Redirect to checkout URL for free-to-paid upgrade
-        window.location.href = (updateResult as any).checkoutUrl
+        await applyCheckout(updateResult)
         return
       }
 
@@ -704,6 +711,7 @@
               {@const bgAttr = $themeStore.dark ? 'background' : 'background-color'}
               <div
                 class="tier-card"
+                data-id={`planCard-${planKey}`}
                 style={color !== null && color !== undefined ? `${bgAttr}: ${color.background};` : ''}
               >
                 <div class="tier-card-content">
@@ -741,6 +749,7 @@
                   {#if !isReadOnly && (currentPlan === undefined || currentPlan !== planItem)}
                     <Button
                       label={currentPlan === undefined ? plugin.string.Subscribe : plugin.string.ChangePlan}
+                      dataId={`planSubscribe-${planKey}`}
                       size={'large'}
                       kind={currentPlan === undefined || planItem.priceMonthly > currentPlan.priceMonthly
                         ? 'primary'

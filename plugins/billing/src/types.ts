@@ -30,6 +30,9 @@ export interface PlanItem {
   meetingMinutesLimit: number
   tokenLimit: number
   projectsLimit: number
+  // Reserved space limits — schema supports them, not enforced yet (0/undefined = unlimited).
+  drivesLimit?: number
+  teamspacesLimit?: number
   usersLimit: number
   index: number
   color?: string

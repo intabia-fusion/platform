@@ -48,6 +48,7 @@
     "SocialLinks": "Liens sociaux",
     "ViewActivity": "Voir l'activité",
     "PersonAlreadyExists": "Le contact existe déjà...",
+    "SeatLimitReached": "Limite de sièges atteinte ({limit}). Mettez à niveau le forfait pour ajouter plus de membres.",
     "Status": "Statut",
     "SetStatus": "Définir le statut",
     "ClearStatus": "Effacer le statut",

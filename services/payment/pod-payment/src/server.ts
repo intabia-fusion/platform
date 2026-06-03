@@ -21,7 +21,7 @@ import morgan from 'morgan'
 import onHeaders from 'on-headers'
 import rateLimit from 'express-rate-limit'
 import { generateToken } from '@hcengineering/server-token'
-import { SubscriptionData, type WorkspaceLoginInfo } from '@hcengineering/account-client'
+import { SubscriptionData, type SubscriptionType, type WorkspaceLoginInfo } from '@hcengineering/account-client'
 
 import { Config } from './config'
 import { withAdmin, withLoginInfo, withOwner, withToken, type RequestWithAuth } from './middleware'
@@ -108,6 +108,9 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
   let provider: PaymentProvider | undefined
 
   switch (config.Provider) {
+    case 'mock':
+      // created after planConfig loads — see below
+      break
     case 'polar':
       provider = PaymentProviderFactory.getInstance().create(
         'polar',
@@ -145,16 +148,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
       )
       break
     default:
-      throw new Error(`Unknown payment provider: ${config.Provider}. Expected one of: polar, stripe, tbank`)
-  }
-
-  if (provider !== undefined) {
-    provider.registerWebhookEndpoints(app, ctx, config.AccountsUrl, serviceToken)
-    ctx.info(`${config.Provider} payment provider initialized successfully`)
-  }
-
-  if (provider == null) {
-    throw new Error(`Failed to initialize payment provider: ${config.Provider}`)
+      throw new Error(`Unknown payment provider: ${config.Provider}. Expected one of: mock, polar, stripe, tbank`)
   }
 
   // Plan config — loaded from PLAN_CONFIG env (YAML file path), falls back to empty config
@@ -178,19 +172,40 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
     res.json(planConfig)
   })
 
-  function attachLimits (data: SubscriptionData): SubscriptionData {
-    const source = data.type === 'package' ? planConfig.packages : planConfig.plans
-    const item = source?.[data.plan]
-    if (item == null) return data
-    const limits = {
+  function resolveLimits (type: SubscriptionType, plan: string): SubscriptionData['limits'] {
+    const source = type === 'package' ? planConfig.packages : planConfig.plans
+    const item = source?.[plan]
+    if (item == null) return undefined
+    return {
       storageLimitGB: item.storageLimitGB ?? 0,
       trafficLimitGB: item.trafficLimitGB ?? 0,
       meetingMinutesLimit: item.meetingMinutesLimit ?? 0,
       tokenLimit: item.tokenLimit ?? 0,
       usersLimit: item.usersLimit ?? 0,
-      projectsLimit: item.projectsLimit ?? 0
+      projectsLimit: item.projectsLimit ?? 0,
+      // Reserved (not enforced yet) — baked from config so adding enforcement later needs no re-checkout.
+      drivesLimit: item.drivesLimit ?? 0,
+      teamspacesLimit: item.teamspacesLimit ?? 0
     }
+  }
+
+  function attachLimits (data: SubscriptionData): SubscriptionData {
+    const limits = resolveLimits(data.type, data.plan)
+    if (limits === undefined) return data
     return { ...data, limits }
+  }
+
+  if (config.Provider === 'mock') {
+    provider = PaymentProviderFactory.getInstance().create('mock', { frontUrl: config.FrontUrl }, accountClient)
+  }
+
+  if (provider !== undefined) {
+    provider.registerWebhookEndpoints(app, ctx, config.AccountsUrl, serviceToken)
+    ctx.info(`${config.Provider} payment provider initialized successfully`)
+  }
+
+  if (provider == null) {
+    throw new Error(`Failed to initialize payment provider: ${config.Provider}`)
   }
 
   function isPackageEligible (pkgKey: string, currentTierPlan: string | undefined): boolean {
@@ -280,6 +295,15 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             ctx.error('Failed to create subscription at provider', { err })
             res.status(500).json({ error: 'Failed to create subscription at provider' })
             return
+          }
+
+          // Instant providers (mock) already activated the subscription — persist it now so the
+          // client can just refetch instead of redirecting to a checkout page and polling.
+          if (createSubResponse.instant === true) {
+            const sub = await provider.getSubscriptionByCheckout(ctx, createSubResponse.checkoutId)
+            if (sub !== null) {
+              await accountClient.upsertSubscription(attachLimits(sub))
+            }
           }
 
           res.status(200).json(createSubResponse)
@@ -509,6 +533,13 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
                 loginInfo.workspaceUrl,
                 accountUuid
               )
+              // Instant provider: persist the new subscription now (see createSubscription handler).
+              if (checkoutResponse.instant === true) {
+                const sub = await provider.getSubscriptionByCheckout(ctx, checkoutResponse.checkoutId)
+                if (sub !== null) {
+                  await accountClient.upsertSubscription(attachLimits(sub))
+                }
+              }
               res.status(200).json(checkoutResponse)
             } catch (err) {
               ctx.error('Failed to create subscription at provider', { err })
@@ -547,11 +578,12 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
-          // It's a SubscriptionData - update was direct
-          // Upsert the updated subscription into our database
-          await accountClient.upsertSubscription(updateResult)
+          // It's a SubscriptionData - update was direct. Attach the new plan's limits
+          // (providers may return without fresh limits) so enforcement and UI are correct.
+          const withLimits = attachLimits(updateResult)
+          await accountClient.upsertSubscription(withLimits)
 
-          res.status(200).json(updateResult)
+          res.status(200).json(withLimits)
         },
         req,
         res,

@@ -40,6 +40,7 @@
     "Canceled": "Annullato",
     "CreateProject": "Crea progetto",
     "NewProject": "Nuovo progetto",
+    "ProjectLimitReached": "Limite progetti raggiunto ({limit}). Aggiorna il piano per aggiungerne altri.",
     "ProjectTitle": "Titolo del progetto",
     "ProjectTitlePlaceholder": "Nuovo progetto",
     "UsedInIssueIDs": "Utilizzato negli ID delle issue",

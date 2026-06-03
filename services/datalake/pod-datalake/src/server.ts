@@ -62,6 +62,7 @@ import {
 import { Datalake, Location } from './datalake'
 import { DatalakeImpl } from './datalake/datalake'
 import { Config } from './config'
+import { LimitsState } from './limits'
 import { createBucket, createClient, S3Bucket } from './s3'
 import { TemporaryDir } from './tempdir'
 
@@ -75,7 +76,8 @@ type AsyncRequestHandler = (
   req: RequestWithAuth,
   res: Response,
   datalake: Datalake,
-  tempDir: TemporaryDir
+  tempDir: TemporaryDir,
+  limitsState?: LimitsState
 ) => Promise<void>
 
 const handleRequest = async (
@@ -86,7 +88,8 @@ const handleRequest = async (
   fn: AsyncRequestHandler,
   req: RequestWithAuth,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
+  limitsState?: LimitsState
 ): Promise<void> => {
   try {
     const source = req.token?.extra?.service ?? '🤦‍♂️user'
@@ -105,7 +108,7 @@ const handleRequest = async (
           }
         }
       })
-      return fn(ctx, req, res, datalake, tempDir)
+      return fn(ctx, req, res, datalake, tempDir, limitsState)
     })
   } catch (err: unknown) {
     next(err)
@@ -130,6 +133,7 @@ export async function createServer (
   const db = await createDb(ctx, config.DbUrl)
   const datalake = new DatalakeImpl(db, buckets, producer, { cacheControl, cache: config.Cache })
   const tempDir = new TemporaryDir(ctx, 'datalake-', config.CleanupInterval)
+  const limitsState = new LimitsState(ctx, queue)
 
   const app = express()
   app.use(cors())
@@ -146,10 +150,10 @@ export async function createServer (
   }
 
   const wrapRequest =
-    (ctx: MeasureContext, name: string, fn: AsyncRequestHandler) =>
+    (ctx: MeasureContext, name: string, fn: AsyncRequestHandler, limitsState?: LimitsState) =>
       (req: RequestWithAuth, res: Response, next: NextFunction) => {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        handleRequest(ctx, name, datalake, tempDir, fn, req, res, next)
+        handleRequest(ctx, name, datalake, tempDir, fn, req, res, next, limitsState)
       }
 
   app.use(morgan('short', { stream: new LogStream() }))
@@ -241,7 +245,7 @@ export async function createServer (
     '/upload/form-data/:workspace',
     withAuthorization,
     withWorkspace,
-    wrapRequest(ctx, 'uploadFormData', handleUploadFormData)
+    wrapRequest(ctx, 'uploadFormData', handleUploadFormData, limitsState)
   )
 
   // S3 upload
@@ -260,7 +264,7 @@ export async function createServer (
     '/upload/multipart/:workspace/:name',
     withAuthorization,
     withBlob,
-    wrapRequest(ctx, 'multipartUploadStart', handleMultipartUploadStart)
+    wrapRequest(ctx, 'multipartUploadStart', handleMultipartUploadStart, limitsState)
   )
 
   app.put(
@@ -274,7 +278,7 @@ export async function createServer (
     '/upload/multipart/:workspace/:name/complete',
     withAuthorization,
     withBlob,
-    wrapRequest(ctx, 'multipartUploadComplete', handleMultipartUploadComplete)
+    wrapRequest(ctx, 'multipartUploadComplete', handleMultipartUploadComplete, limitsState)
   )
 
   app.post(
@@ -353,6 +357,7 @@ export async function createServer (
   return {
     app,
     close: () => {
+      void limitsState.close()
       void tempDir.close()
     }
   }

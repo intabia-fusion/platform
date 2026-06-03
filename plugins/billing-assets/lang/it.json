@@ -75,6 +75,9 @@
     "PaymentFailedDescription": "Riproveremo automaticamente. Puoi anche riprovare manualmente.",
     "RetryPayment": "Riprova pagamento",
     "RetriesExhausted": "Tutti i tentativi di pagamento sono falliti",
-    "RetriesExhaustedDescription": "Contatta l'assistenza per risolvere i problemi di pagamento."
+    "RetriesExhaustedDescription": "Contatta l'assistenza per risolvere i problemi di pagamento.",
+    "PaymentOverdueReadonly": "Payment is overdue. The workspace is in read-only mode.",
+    "SeatLimitReadonly": "Seat limit reached. Your account is in read-only mode.",
+    "PayOrUpgrade": "Pay / Upgrade plan"
   }
 }

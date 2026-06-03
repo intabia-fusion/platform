@@ -281,6 +281,9 @@ export interface Subscription {
     tokenLimit: number
     usersLimit: number
     projectsLimit: number
+    // Reserved space limits — kept in the baked snapshot for forward compatibility, not enforced yet.
+    drivesLimit?: number
+    teamspacesLimit?: number
   }
 
   // Amount paid (in cents, e.g. 9999 = $99.99)

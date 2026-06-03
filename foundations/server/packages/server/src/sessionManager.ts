@@ -180,6 +180,23 @@ export class TSessionManager implements SessionManager {
         ) {
           // Handle workspace messages
           this.workspaceInfoCache.delete(msg.workspace)
+        } else if (m.type === QueueWorkspaceEvent.LimitsChanged) {
+          // Notify connected clients so they re-read usage/limits without waiting for the poll.
+          // Skip when no session is active for this workspace — broadcast would log "cannot find sessions".
+          if (this.workspaces.has(msg.workspace)) {
+            const tx: TxWorkspaceEvent = {
+              _id: generateId(),
+              _class: core.class.TxWorkspaceEvent,
+              event: WorkspaceEvent.LimitsChanged,
+              modifiedBy: core.account.System,
+              modifiedOn: Date.now(),
+              objectSpace: core.space.DerivedTx,
+              space: core.space.DerivedTx,
+              createdBy: core.account.System,
+              params: null
+            }
+            this.broadcast(ctx, null, msg.workspace, [tx], undefined)
+          }
         }
       }
     )

@@ -15,6 +15,7 @@
 
 import { type AccountClient } from '@hcengineering/account-client'
 import type { PaymentProvider } from './providers'
+import { MockProvider } from './providers/mock/provider'
 import { PolarProvider } from './providers/polar/provider'
 import { StripeProvider } from './providers/stripe/provider'
 import { TbankProvider } from './providers/tbank/provider'
@@ -47,6 +48,8 @@ export class PaymentProviderFactory {
     useSandbox = false
   ): PaymentProvider | undefined {
     switch (type) {
+      case 'mock':
+        return this.createMockProvider(config, accountClient)
       case 'polar':
         return this.createPolarProvider(config, accountClient, useSandbox)
       case 'stripe':
@@ -56,6 +59,13 @@ export class PaymentProviderFactory {
       default:
         return undefined
     }
+  }
+
+  private createMockProvider (config: Record<string, any>, accountClient: AccountClient): PaymentProvider {
+    if (config.frontUrl === undefined) {
+      throw new Error('Mock provider requires frontUrl in config')
+    }
+    return new MockProvider(accountClient, config.frontUrl)
   }
 
   private createPolarProvider (

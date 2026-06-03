@@ -2786,16 +2786,10 @@ export async function getSubscriptions (
     }
     targetWorkspace = tokenWorkspace
 
-    // Verify user has OWNER or MAINTAINER role
+    // Any workspace member may read its subscriptions (to see their plan/usage/limits).
+    // Mutating methods (upsert/cancel/adminCreate) keep their own stricter guards.
     const role = await db.getWorkspaceRole(account, targetWorkspace)
     if (role === null) {
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-    }
-
-    const rolePower = getRolePower(role)
-    const maintainerPower = getRolePower(AccountRole.Maintainer)
-
-    if (rolePower < maintainerPower) {
       throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
     }
   }

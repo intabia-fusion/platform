@@ -152,6 +152,8 @@
     "ReadOnlySignUp": "创建工作区",
     "PermissionWarningTitle": "✨ 提升您的访问权限！",
     "PermissionWarningMessage": "您当前角色的权限有限。要解锁此功能和其他高级功能，请让您的工作区管理员升级您的访问权限！",
+    "PlanLimitWarningTitle": "已达到计划限制",
+    "PlanLimitWarningMessage": "您的工作区已达到此资源的计划限制。升级您的计划以创建更多内容。",
     "Icon": "图标",
     "Color": "颜色",
     "AutomationOnly": "仅限自动化",

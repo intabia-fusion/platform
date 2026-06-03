@@ -14,10 +14,12 @@
 -->
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte'
-  import { checkWorkspaceLimits, upgradePlan, calculateLimits } from '../utils'
+  import { checkWorkspaceLimits, upgradePlan, calculateLimits, checkIsLimited } from '../utils'
   import { subscriptionStore, resetSubscriptionStore } from '../stores/subscription'
   import { location, PaletteColorIndexes, Progress, tooltip } from '@hcengineering/ui'
   import { addEventListener, removeEventListener } from '@hcengineering/platform'
+  import core, { type Tx, type TxWorkspaceEvent, WorkspaceEvent } from '@hcengineering/core'
+  import { addTxListener, removeTxListener } from '@hcengineering/presentation'
   import workbench from '@hcengineering/workbench'
   import UsagePopup from './UsagePopup.svelte'
 
@@ -37,6 +39,22 @@
     resetSubscriptionStore()
     if (workspace !== undefined) {
       void checkWorkspaceLimits()
+      void checkIsLimited()
+    }
+  }
+
+  // Server broadcasts this when usage/limit state flips; re-read so the UI is immediate.
+  const txListener = (...txes: Tx[]): void => {
+    if (workspace === undefined) return
+    for (const tx of txes) {
+      if (
+        tx._class === core.class.TxWorkspaceEvent &&
+        (tx as TxWorkspaceEvent).event === WorkspaceEvent.LimitsChanged
+      ) {
+        void checkWorkspaceLimits()
+        void checkIsLimited()
+        return
+      }
     }
   }
 
@@ -53,13 +71,16 @@
 
   onMount(() => {
     addEventListener(workbench.event.NotifyConnection, connectionListener)
+    addTxListener(txListener)
 
     // Initial check if workspace exists
     if (workspace != null) {
       void checkWorkspaceLimits()
+      void checkIsLimited()
 
       pollInterval = setInterval(() => {
         void checkWorkspaceLimits()
+        void checkIsLimited()
       }, POLL_INTERVAL_MS)
     }
   })
@@ -69,6 +90,7 @@
       clearInterval(pollInterval)
     }
     removeEventListener(workbench.event.NotifyConnection, connectionListener)
+    removeTxListener(txListener)
   })
 
   function handleClick (): void {
@@ -79,6 +101,7 @@
 <button
   type="button"
   class="limits-container"
+  data-id="billingLimitsIndicator"
   use:tooltip={{
     component: UsagePopup,
     props: {

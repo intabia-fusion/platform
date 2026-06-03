@@ -32,7 +32,12 @@ import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import os from 'os'
 import { getPlatformQueue } from '@hcengineering/kafka'
-import { QueueTopic, type QueueUserMessage, type QueueOnlineUserTx } from '@hcengineering/server-core'
+import {
+  QueueTopic,
+  type QueueUserMessage,
+  type QueueOnlineUserTx,
+  type QueueWorkspaceLimitsMessage
+} from '@hcengineering/server-core'
 import { randomBytes } from 'node:crypto'
 
 import { handlePresenceBatch } from './presence'
@@ -104,6 +109,10 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
   const crmProducer = platformQueue.getProducer<CrmNotification>(measureCtx, QueueTopic.CrmQueue)
   setMetadata(accountPlugin.metadata.CrmQueue, crmProducer)
+
+  // Limits/payment events for transactor/datalake/aibot consumers (subscription status changes)
+  const workspaceProducer = platformQueue.getProducer<QueueWorkspaceLimitsMessage>(measureCtx, QueueTopic.Workspace)
+  setMetadata(accountPlugin.metadata.WorkspaceQueue, workspaceProducer)
 
   addStringsLoader(accountId, async (lang: string) => {
     switch (lang) {

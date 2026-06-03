@@ -47,6 +47,9 @@ export interface SubscribeRequest {
 export interface CheckoutResponse {
   checkoutId: string
   checkoutUrl: string
+  // Provider activated the subscription synchronously (e.g. the mock provider): no external
+  // checkout page, the client should refetch instead of redirecting and polling.
+  instant?: boolean
 }
 
 /**

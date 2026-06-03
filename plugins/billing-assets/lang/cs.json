@@ -75,6 +75,9 @@
     "PaymentFailedDescription": "Automaticky to zkusíme znovu. Můžete to zkusit také ručně.",
     "RetryPayment": "Zkusit platbu znovu",
     "RetriesExhausted": "Všechny pokusy o platbu selhaly",
-    "RetriesExhaustedDescription": "Kontaktujte podporu pro vyřešení problémů s platbou."
+    "RetriesExhaustedDescription": "Kontaktujte podporu pro vyřešení problémů s platbou.",
+    "PaymentOverdueReadonly": "Payment is overdue. The workspace is in read-only mode.",
+    "SeatLimitReadonly": "Seat limit reached. Your account is in read-only mode.",
+    "PayOrUpgrade": "Pay / Upgrade plan"
   }
 }

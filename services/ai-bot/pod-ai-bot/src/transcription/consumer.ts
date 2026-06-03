@@ -398,7 +398,7 @@ export class TranscriptionConsumer {
 
       // Report transcribed audio duration to billing
       if (task.durationSec > 0) {
-        await pushTranscriptDuration(ctx, workspace, task.durationSec)
+        await pushTranscriptDuration(ctx, workspace, task.durationSec, task.blobId)
       }
 
       // Cleanup storage

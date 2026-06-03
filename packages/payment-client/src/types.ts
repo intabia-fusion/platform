@@ -49,6 +49,7 @@ export interface SubscribeRequest {
 export interface CheckoutResponse {
   checkoutId: string // Checkout session ID
   checkoutUrl: string // URL to redirect user to for payment
+  instant?: boolean // Subscription already active (no checkout page) — refetch instead of redirect
 }
 
 /**

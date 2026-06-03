@@ -50,4 +50,38 @@ echo "Assigning users to workspaces..."
 ./tool.sh assign-workspace user2 api-tests
 ./tool.sh assign-workspace user3 api-tests-fail
 
+echo "Setting max plan (all limits unlimited)..."
+./tool.sh set-workspace-plan api-tests business
+./tool.sh set-workspace-plan api-tests-fail business
+./tool-europe.sh set-workspace-plan api-tests-cr business
+
+echo "Creating workspace api-tests-unpaid (no plan: subscription driven by the unpaid test)..."
+./tool.sh create-workspace api-tests-unpaid email:user1
+./tool.sh assign-workspace user1 api-tests-unpaid
+./tool.sh set-user-role user1 api-tests-unpaid OWNER
+./tool.sh assign-workspace user2 api-tests-unpaid
+
+echo "Creating workspace api-tests-limits with restricted plan..."
+./tool.sh create-workspace api-tests-limits email:user1
+./tool.sh assign-workspace user1 api-tests-limits
+# Restricted: 1 project, 1 drive, 1 teamspace; users/volume unlimited.
+# Plan MUST be set before first client connects: limits snapshot loads at pipeline boot.
+./tool.sh set-workspace-plan api-tests-limits start --projects 1 --drives 1 --teamspaces 1
+
+echo "Creating workspace api-tests-seats (unlimited at boot; the test tightens usersLimit at runtime)..."
+./tool.sh create-workspace api-tests-seats email:user1
+./tool.sh assign-workspace user1 api-tests-seats
+./tool.sh set-user-role user1 api-tests-seats OWNER
+# user2 + user3 are plain Users. The plan is unlimited at boot so every member can onboard
+# (create its own Employee); the test then sets usersLimit=2 to push the last member read-only.
+./tool.sh assign-workspace user2 api-tests-seats
+./tool.sh assign-workspace user3 api-tests-seats
+./tool.sh set-workspace-plan api-tests-seats business
+
+echo "Creating workspace api-tests-volume (unlimited at boot; the volume test tightens storage at runtime)..."
+./tool.sh create-workspace api-tests-volume email:user1
+./tool.sh assign-workspace user1 api-tests-volume
+./tool.sh set-user-role user1 api-tests-volume OWNER
+./tool.sh set-workspace-plan api-tests-volume business
+
 rm -rf ./sanity/.auth

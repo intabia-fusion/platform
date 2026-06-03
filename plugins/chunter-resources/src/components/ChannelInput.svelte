@@ -20,6 +20,7 @@
   import { AnySvelteComponent, Icon, Label, languageStore } from '@hcengineering/ui'
   import { Asset, getResource, IntlString } from '@hcengineering/platform'
   import view from '@hcengineering/view'
+  import { paymentExhausted, isLimited } from '@hcengineering/billing-resources'
 
   import { getChannelName, getObjectIcon } from '../utils'
   import chunter from '../plugin'
@@ -27,6 +28,11 @@
 
   export let object: Doc
   export let readonly = false
+
+  $: isDirect = object?._class === chunter.class.DirectMessage
+  // read-only from billing: only for non-Direct channels
+  $: billingReadOnly = !isDirect && ($paymentExhausted || $isLimited)
+  $: effectiveReadonly = readonly || billingReadOnly
   export let boundary: HTMLElement | undefined | null = undefined
   export let collection: string | undefined
   export let isThread = false
@@ -86,7 +92,7 @@
   }
 </script>
 
-{#if !readonly}
+{#if !effectiveReadonly}
   <div class="ref-input flex-col">
     <ActivityExtensionComponent
       kind="input"

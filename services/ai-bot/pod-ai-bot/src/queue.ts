@@ -23,8 +23,10 @@ import {
   ConsumerMessage,
   getDeadletterTopic,
   initStatisticsContext,
+  type PlatformQueueProducer,
   QueueTopic,
   QueueWorkspaceEvent,
+  type QueueWorkspaceLimitsMessage,
   QueueWorkspaceMessage
 } from '@hcengineering/server-core'
 import serverToken, { generateToken } from '@hcengineering/server-token'
@@ -37,7 +39,9 @@ import { getPlatformQueue } from '@hcengineering/kafka'
 import { join } from 'path'
 import { updateDeepgramBilling } from './billing'
 import config from './config'
+import { type BillingUsageMessage, setUsageProducer } from './billing'
 import { AIControl } from './controller'
+import { LimitsState } from './limits'
 import { registerLoaders } from './loaders'
 import { createServer } from './server/server'
 import { TranscriptionQueueTask } from './transcription'
@@ -93,6 +97,15 @@ export const startQueue = async (): Promise<void> => {
   // Create AIControl first
   const aiControl = new AIControl(personUuid, socialIds, ctx)
 
+  // Limits: fail-open until first LimitsChanged event; producer for usage deltas
+  const limitsState = new LimitsState()
+  aiControl.setLimitsState(limitsState)
+  const billingUsageProducer: PlatformQueueProducer<BillingUsageMessage> = queue.getProducer<BillingUsageMessage>(
+    ctx,
+    QueueTopic.BillingUsage
+  )
+  setUsageProducer(billingUsageProducer)
+
   // Create Express app first
   const app = express()
   app.use(cors())
@@ -131,6 +144,7 @@ export const startQueue = async (): Promise<void> => {
   // Create a workspace consumer
   // Create queue consumer's
   //
+  // Single-instance only: shared 'ai-bot' group, so it also gets every LimitsChanged. See foundation-tasks/aibot-scaling.md.
   const workspaceConsumer = queue.createConsumer<QueueWorkspaceMessage>(
     ctx,
     QueueTopic.Workspace,
@@ -139,6 +153,8 @@ export const startQueue = async (): Promise<void> => {
       try {
         if (message.value.type === QueueWorkspaceEvent.Up) {
           await aiControl.connect(message.workspace)
+        } else if (message.value.type === QueueWorkspaceEvent.LimitsChanged) {
+          limitsState.applyEvent(message.value as QueueWorkspaceLimitsMessage, message.workspace)
         }
       } catch (err: any) {
         ctx.error('failed to handle operation', { error: err.message })
@@ -269,6 +285,7 @@ export const startQueue = async (): Promise<void> => {
     void transcriptionConsumer?.close()
     void transcriptionProducer?.close()
     void transcriptionDeadLetterProducer?.close()
+    void billingUsageProducer?.close()
     void loveConsumer?.close()
     if (billingIntervalId !== undefined) {
       clearInterval(billingIntervalId)

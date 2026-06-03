@@ -617,6 +617,7 @@ const pluginState = plugin(trackerId, {
     RelatedIssues: '' as IntlString,
     Issue: '' as IntlString,
     NewProject: '' as IntlString,
+    ProjectLimitReached: '' as IntlString,
     UnsetParentIssue: '' as IntlString,
     ForbidCreateProjectPermission: '' as IntlString,
     ForbidCreateProjectPermissionDescription: '' as IntlString,

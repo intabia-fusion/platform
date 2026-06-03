@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 import {
-  type AccountRole,
+  AccountRole,
   type Data,
   generateId,
   isActiveMode,
@@ -34,7 +34,15 @@ import {
 import platform, { getMetadata, PlatformError, Severity, Status, unknownError } from '@hcengineering/platform'
 import { decodeTokenVerbose } from '@hcengineering/server-token'
 
+import {
+  LimitCategory,
+  LimitStatus,
+  workspaceEvents,
+  type QueueWorkspaceLimitsMessage
+} from '@hcengineering/server-core'
+
 import { accountPlugin } from './plugin'
+import { SubscriptionStatus, SubscriptionType } from './types'
 import type {
   AccountAggregatedInfo,
   AccountDB,
@@ -1021,6 +1029,27 @@ export async function findPersonBySocialKey (
  * Creates new subscription or updates existing one based on providerId
  * @public
  */
+const BAD_SUBSCRIPTION_STATUSES = new Set<string>(['past_due', 'canceled', 'expired'])
+
+/** Fire-and-forget edge events to QueueTopic.Workspace; producer set by account-service via metadata. */
+async function publishLimitsEvents (
+  ctx: MeasureContext,
+  workspaceUuid: WorkspaceUuid,
+  events: QueueWorkspaceLimitsMessage[]
+): Promise<void> {
+  if (events.length === 0) return
+  const producer = getMetadata(accountPlugin.metadata.WorkspaceQueue)
+  if (producer === undefined) {
+    ctx.warn('WorkspaceQueue producer is not configured, limits events skipped', { workspaceUuid })
+    return
+  }
+  try {
+    await producer.send(ctx, workspaceUuid, events)
+  } catch (err: any) {
+    ctx.error('Failed to publish limits events', { workspaceUuid, err })
+  }
+}
+
 export async function upsertSubscription (
   ctx: MeasureContext,
   db: AccountDB,
@@ -1064,6 +1093,31 @@ export async function upsertSubscription (
     ...(params.limits !== undefined && { limits: params.limits }),
     updatedOn: Date.now()
   }
+  // Invariant: at most one active tier subscription per workspace. Activating a tier
+  // subscription cancels every other active tier (different provider/id included).
+  if (params.type === SubscriptionType.Tier && params.status === SubscriptionStatus.Active) {
+    const others = await db.subscription.find({
+      workspaceUuid,
+      type: SubscriptionType.Tier,
+      status: SubscriptionStatus.Active
+    })
+    const now = Date.now()
+    for (const sub of others) {
+      if (sub.provider === provider && sub.providerSubscriptionId === providerSubscriptionId) continue
+      const oldProviderData: Record<string, any> = (sub.providerData as Record<string, any>) ?? {}
+      await db.subscription.update(
+        { id: sub.id },
+        {
+          status: SubscriptionStatus.Canceled,
+          canceledAt: now,
+          updatedOn: now,
+          providerData: { ...oldProviderData, pending: false, status: 'REPLACED', modifiedAt: now }
+        }
+      )
+      ctx.info('Superseded active tier subscription canceled', { id: sub.id, workspaceUuid, plan: sub.plan })
+    }
+  }
+
   if (existing !== null) {
     // Update existing subscription
     await db.subscription.update({ id: existing.id }, updateData)
@@ -1088,6 +1142,24 @@ export async function upsertSubscription (
       type: params.type,
       plan: params.plan
     })
+  }
+
+  // Payment/plan state is defined by the tier subscription; notify consumers edge-triggered.
+  if (params.type === SubscriptionType.Tier) {
+    const events: QueueWorkspaceLimitsMessage[] = []
+    const wasBad = existing !== null && BAD_SUBSCRIPTION_STATUSES.has(existing.status)
+    const isBad = BAD_SUBSCRIPTION_STATUSES.has(params.status)
+    if (wasBad !== isBad) {
+      events.push(workspaceEvents.limitsChanged(LimitCategory.Payment, isBad ? LimitStatus.Exhausted : LimitStatus.Ok))
+    }
+    const planChanged =
+      existing === null ||
+      existing.plan !== params.plan ||
+      JSON.stringify(existing.limits ?? null) !== JSON.stringify(params.limits ?? null)
+    if (planChanged) {
+      events.push(workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok))
+    }
+    await publishLimitsEvents(ctx, workspaceUuid, events)
   }
 }
 
@@ -1179,7 +1251,8 @@ export async function adminCreateSubscription (
   params: {
     workspaceUuid: WorkspaceUuid
     plan: string
-    type?: string
+    type?: SubscriptionType
+    status?: SubscriptionStatus
     limits?: Subscription['limits']
   }
 ): Promise<void> {
@@ -1190,7 +1263,7 @@ export async function adminCreateSubscription (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  const { workspaceUuid, plan, type = 'tier', limits } = params
+  const { workspaceUuid, plan, type = SubscriptionType.Tier, status = SubscriptionStatus.Active, limits } = params
 
   // Verify workspace exists
   const workspace = await getWorkspaceById(db, workspaceUuid)
@@ -1200,14 +1273,14 @@ export async function adminCreateSubscription (
 
   const now = Date.now()
 
-  // Cancel existing active subscription of the same type
-  const existing = await db.subscription.findOne({ workspaceUuid, type: type as any, status: 'active' as any })
-  if (existing !== null) {
+  // Cancel ALL existing active subscriptions of the same type (invariant: one active per type).
+  const existingActive = await db.subscription.find({ workspaceUuid, type, status: SubscriptionStatus.Active })
+  for (const existing of existingActive) {
     const oldProviderData: Record<string, any> = (existing.providerData as Record<string, any>) ?? {}
     await db.subscription.update(
       { id: existing.id },
       {
-        status: 'canceled' as any,
+        status: SubscriptionStatus.Canceled,
         canceledAt: now,
         updatedOn: now,
         providerData: {
@@ -1221,15 +1294,27 @@ export async function adminCreateSubscription (
     ctx.info('Manual subscription canceled', { id: existing.id, workspaceUuid, plan, type })
   }
 
+  // Subscription FK requires an existing account; tool/system tokens are absent
+  // from the account table, so fall back to the workspace owner.
+  let accountUuid = account
+  if ((await db.account.findOne({ uuid: account })) === null) {
+    const members = await db.getWorkspaceMembers(workspaceUuid)
+    const owner = members.find((m) => m.role === AccountRole.Owner) ?? members[0]
+    if (owner === undefined) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
+    }
+    accountUuid = owner.person
+  }
+
   // Create new subscription
   const subId = generateId()
   await db.subscription.insertOne({
     workspaceUuid,
-    accountUuid: account,
+    accountUuid,
     provider: 'manual',
     providerSubscriptionId: subId,
-    type: type as any,
-    status: 'active' as any,
+    type,
+    status,
     plan,
     limits,
     amount: 0,
@@ -1238,7 +1323,16 @@ export async function adminCreateSubscription (
     updatedOn: now,
     id: subId
   })
-  ctx.info('Manual subscription created', { workspaceUuid, plan, type })
+  ctx.info('Manual subscription created', { workspaceUuid, plan, type, status })
+
+  if (type === SubscriptionType.Tier) {
+    // Edge-trigger consumers: bad status -> payment read-only, good status -> lift. Always refresh plan.
+    const isBad = BAD_SUBSCRIPTION_STATUSES.has(status)
+    await publishLimitsEvents(ctx, workspaceUuid, [
+      workspaceEvents.limitsChanged(LimitCategory.Payment, isBad ? LimitStatus.Exhausted : LimitStatus.Ok),
+      workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)
+    ])
+  }
 }
 
 export type AccountServiceMethods =

@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,8 +17,10 @@ import { get } from 'svelte/store'
 
 import login from '@hcengineering/login'
 import { getMetadata } from '@hcengineering/platform'
-import presentation from '@hcengineering/presentation'
+import presentation, { getClient } from '@hcengineering/presentation'
 import billing from '@hcengineering/billing'
+import contact from '@hcengineering/contact'
+import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
 import {
   getClient as getAccountClientRaw,
   type AccountClient,
@@ -36,7 +39,7 @@ import {
 import { showPopup } from '@hcengineering/ui'
 import { type PlanItem, type PackageItem, type PlanConfig, type LocalizedString } from '@hcengineering/billing'
 
-import { setSubscriptionState, updateLimitExceeded, subscriptionStore } from './stores/subscription'
+import { setSubscriptionState, updateLimitExceeded, subscriptionStore, setIsLimited } from './stores/subscription'
 import SubscriptionsModal from './components/SubscriptionsModal.svelte'
 
 export function getAccountClient (): AccountClient | null {
@@ -229,7 +232,8 @@ export function checkUsageAgainstLimits (
 }
 
 export function resolveLocale (config: PlanConfig, lang: string): PlanConfig {
-  const resolve = (s: LocalizedString): string => {
+  const resolve = (s: LocalizedString | undefined): string => {
+    if (s == null) return ''
     if (typeof s === 'string') return s
     return s[lang] ?? s.en ?? Object.values(s)[0] ?? ''
   }
@@ -269,6 +273,73 @@ export async function getWorkspaceInfo (): Promise<WorkspaceInfoWithStatus | und
   const accountClient = getAccountClient()
   if (accountClient == null) return undefined
   return await accountClient.getWorkspaceInfo(false)
+}
+
+const GUEST_ROLES = [AccountRole.ReadOnlyGuest, AccountRole.DocGuest, AccountRole.Guest]
+
+function rolePriority (role: AccountRole | undefined): number {
+  if (role === AccountRole.Owner) return 0
+  if (role === AccountRole.Maintainer) return 1
+  return 2
+}
+
+export async function checkIsLimited (): Promise<void> {
+  try {
+    const accountClient = getAccountClient()
+    const currentAccount = getCurrentAccount()
+    if (accountClient == null || currentAccount == null) {
+      setIsLimited(false)
+      return
+    }
+    if (currentAccount.role === AccountRole.Admin || GUEST_ROLES.includes(currentAccount.role)) {
+      setIsLimited(false)
+      return
+    }
+
+    const { currentSubscription, currentPlan, currentPackage, currentPackageSubscription, usageInfo } =
+      get(subscriptionStore)
+    const { usersLimit } = calculateLimits(currentPlan, currentPackage, currentSubscription, currentPackageSubscription)
+    const membersCount = usageInfo?.usage.membersCount ?? 0
+    if (usersLimit === 0 || membersCount <= usersLimit) {
+      setIsLimited(false)
+      return
+    }
+
+    // Mirrors server SeatLimitsMiddleware: seats by role priority (Owner, Maintainer, then Users)
+    // and employee createdOn; Admin/aibot never occupy a seat.
+    const members = await accountClient.getWorkspaceMembers()
+    const roleByPerson = new Map(members.map((m) => [m.person as string, m.role]))
+    const client = getClient()
+    const employees = await client.findAll(contact.mixin.Employee, { active: true })
+    const aiIdentity = await client.findOne(contact.class.SocialIdentity, { key: aiBotEmailSocialKey })
+
+    const sorted = [...employees].sort((a, b) => {
+      const pa = rolePriority(a.personUuid == null ? undefined : roleByPerson.get(a.personUuid))
+      const pb = rolePriority(b.personUuid == null ? undefined : roleByPerson.get(b.personUuid))
+      if (pa !== pb) return pa - pb
+      return (a.createdOn ?? 0) - (b.createdOn ?? 0)
+    })
+
+    let seats = 0
+    let seated = false
+    for (const emp of sorted) {
+      if (seats >= usersLimit) break
+      const uuid = emp.personUuid
+      if (uuid == null) continue
+      if (aiIdentity !== undefined && emp._id === aiIdentity.attachedTo) continue
+      const role = roleByPerson.get(uuid)
+      if (role === undefined || role === AccountRole.Admin || GUEST_ROLES.includes(role)) continue
+      seats++
+      if (uuid === currentAccount.uuid) {
+        seated = true
+        break
+      }
+    }
+    setIsLimited(!seated)
+  } catch (err) {
+    console.error('checkIsLimited failed:', err)
+    setIsLimited(false)
+  }
 }
 
 export async function upgradePlan (): Promise<void> {
