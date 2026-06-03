@@ -26,9 +26,23 @@
   let changeControl: ChangeControl
   const ccQuery = createQuery()
 
+  // Local editable copies of the free-text fields. A live ccQuery update must not
+  // overwrite what the user is typing (the editor binds one-way to changeControl,
+  // so an update mid-edit would reset the field and a later blur would persist the
+  // stale value). Sync from changeControl only for fields not currently focused.
+  let description = ''
+  let reason = ''
+  let impact = ''
+  let focusedField: keyof ChangeControl | undefined
+
   $: if ($controlledDocument != null) {
     ccQuery.query(documents.class.ChangeControl, { _id: $controlledDocument.changeControl }, (res) => {
       ;[changeControl] = res
+      if (changeControl != null) {
+        if (focusedField !== 'description') description = changeControl.description ?? ''
+        if (focusedField !== 'reason') reason = changeControl.reason ?? ''
+        if (focusedField !== 'impact') impact = changeControl.impact ?? ''
+      }
     })
   } else {
     ccQuery.unsubscribe()
@@ -40,18 +54,11 @@
     docSpaces = res.map((s) => s._id)
   })
 
-  async function handleFieldUpdated (field: keyof ChangeControl, ev: UIEvent): Promise<void> {
-    if (ev == null) {
-      return
+  async function handleFieldBlur (field: 'description' | 'reason' | 'impact', value: string): Promise<void> {
+    if (focusedField === field) {
+      focusedField = undefined
     }
-
-    const target = ev.target as HTMLInputElement
-
-    if (target == null) {
-      return
-    }
-
-    await updateCCField(field, target.value)
+    await updateCCField(field, value)
   }
 
   async function updateCCField<T extends keyof ChangeControl> (field: T, value: ChangeControl[T]): Promise<void> {
@@ -77,11 +84,14 @@
         </div>
         {#if $isEditable}
           <PlainTextEditor
-            value={changeControl.description}
+            bind:value={description}
             placeholder={documentsRes.string.DescribeChanges}
             disabled={!$isEditable}
-            on:blur={(ev) => {
-              void handleFieldUpdated('description', ev)
+            on:focus={() => {
+              focusedField = 'description'
+            }}
+            on:blur={() => {
+              void handleFieldBlur('description', description)
             }}
           />
         {:else}
@@ -95,11 +105,14 @@
         </div>
         {#if $isEditable}
           <PlainTextEditor
-            value={changeControl.reason}
+            bind:value={reason}
             placeholder={documentsRes.string.DescribeReason}
             disabled={!$isEditable}
-            on:blur={(ev) => {
-              void handleFieldUpdated('reason', ev)
+            on:focus={() => {
+              focusedField = 'reason'
+            }}
+            on:blur={() => {
+              void handleFieldBlur('reason', reason)
             }}
           />
         {:else}
@@ -113,11 +126,14 @@
         </div>
         {#if $isEditable}
           <PlainTextEditor
-            value={changeControl.impact}
+            bind:value={impact}
             placeholder={documentsRes.string.DescribeImpact}
             disabled={!$isEditable}
-            on:blur={(ev) => {
-              void handleFieldUpdated('impact', ev)
+            on:focus={() => {
+              focusedField = 'impact'
+            }}
+            on:blur={() => {
+              void handleFieldBlur('impact', impact)
             }}
           />
         {:else}

@@ -514,6 +514,8 @@ test.describe('QMS. Documents tests', () => {
   })
 
   test('TESTS-140. Comparing several document versions', async ({ page }) => {
+    // Long flow: multiple draft versions + diff compare rendering. Needs more than the default 60s.
+    test.slow()
     await allure.description('Requirement\nUsers need to compare several document versions')
     await allure.tms('TESTS-140', 'https://front.hc.engineering/workbench/platform/tracker/TESTS-140')
     const makeReviewDocument: NewDocument = {

@@ -33,6 +33,8 @@ test.describe('ISO 13485, 4.2.4 Control of documents, ensure that the current re
   })
 
   test('TESTS-325. Create a Several documents with Minor & Major versions', async ({ page, browser }) => {
+    // Long flow: several minor/major versions + approvals across two users. Needs more than the default 60s.
+    test.slow()
     await allure.description(
       'Requirement\nUsers need to make a resolve all comments and done documents for the Effective status'
     )

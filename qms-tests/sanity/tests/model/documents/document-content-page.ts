@@ -894,11 +894,16 @@ export class DocumentContentPage extends DocumentCommonPage {
   }
 
   async checkComparingTextAdded (text: string): Promise<void> {
-    await expect(this.page.locator('span.text-editor-highlighted-node-add', { hasText: text }).first()).toBeVisible()
+    // Diff highlights render after the compare view fully loads, which can lag.
+    await expect(this.page.locator('span.text-editor-highlighted-node-add', { hasText: text }).first()).toBeVisible({
+      timeout: 30000
+    })
   }
 
   async checkComparingTextDeleted (text: string): Promise<void> {
-    await expect(this.page.locator('span.text-editor-highlighted-node-delete', { hasText: text }).first()).toBeVisible()
+    await expect(this.page.locator('span.text-editor-highlighted-node-delete', { hasText: text }).first()).toBeVisible({
+      timeout: 30000
+    })
   }
 
   async checkIfUserCanSelectSpace (space: string, spaceExists: boolean): Promise<void> {

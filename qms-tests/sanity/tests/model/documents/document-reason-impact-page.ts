@@ -38,8 +38,14 @@ export class DocumentReasonAndImpactPage extends DocumentCommonPage {
     await this.textAreaDescription.clear()
     await this.textAreaDescription.fill(description)
 
-    await this.textAreaReason.clear()
+    await this.textAreaReason.click()
+    await this.textAreaReason.press('Meta+A')
+    await this.textAreaReason.press('Backspace')
     await this.textAreaReason.fill(reason)
+    // Commit the reason before moving on and confirm it stuck; the editor can
+    // otherwise re-apply the default "New document creation" on a late re-render.
+    await this.textAreaReason.blur()
+    await expect(this.textAreaReason).toHaveValue(reason)
 
     await this.textAreaImpactAnalysis.focus()
     await this.textAreaImpactAnalysis.press('Meta+A')

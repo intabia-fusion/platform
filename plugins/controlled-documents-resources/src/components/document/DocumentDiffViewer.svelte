@@ -116,7 +116,10 @@
     comparedAttachments = res.filter(isVisible)
   })
 
-  interface AttachmentDiff { att: Attachment, status: 'added' | 'removed' | 'unchanged' }
+  interface AttachmentDiff {
+    att: Attachment
+    status: 'added' | 'removed' | 'unchanged'
+  }
 
   $: attachmentDiff = ((): AttachmentDiff[] => {
     const comparedByName = new Map(comparedAttachments.map((a) => [a.name, a]))

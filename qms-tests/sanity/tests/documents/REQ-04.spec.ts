@@ -29,6 +29,8 @@ test.describe('ISO 13485, 4.2.4 Control of documents', () => {
     page,
     browser
   }) => {
+    // Long flow: two-user review + approval over a large document. Needs more than the default 60s.
+    test.slow()
     await allure.description(
       'Requirement\nUsers need to make a resolve all comments and done documents for the Effective status'
     )

@@ -71,6 +71,7 @@
   on:change
   on:keydown
   on:keypress
+  on:focus
   on:blur
 />
 
