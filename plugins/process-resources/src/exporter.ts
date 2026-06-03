@@ -552,14 +552,17 @@ function resolveActionContext (
  * its `__SLOT_name__` reference for use as `memberOf`.
  */
 function resolveParentSlot (
-  targetTag: Ref<MasterTag>,
+  targetTag: Ref<MasterTag> | undefined,
   masterTag: Ref<MasterTag>,
   memberOfRef: string | undefined,
   getOrAddSlot: (id: string, model: DetailedSlotModel) => string,
   m: ModelDb
 ): string | undefined {
-  if (targetTag === undefined || targetTag === '' || normalizeId(targetTag) === normalizeId(masterTag)) {
+  if (targetTag === undefined || targetTag === '') {
     return memberOfRef
+  }
+  if (normalizeId(targetTag) === normalizeId(masterTag)) {
+    return undefined
   }
   const targetDoc = m.findObject(targetTag) as Class<any> | undefined
   const parentSlotId = getOrAddSlot(
@@ -807,7 +810,8 @@ function scanParamKey (
     if (isSystemId(parentClassId) && !isContextualValue(val, activeTag, masterTag, h, m)) {
       return
     }
-    getOrAddSlot(key, attributeToSlot(keyAttr, memberOfRef))
+    const attrMemberOf = resolveParentSlot(keyAttr.attributeOf, masterTag, memberOfRef, getOrAddSlot, m)
+    getOrAddSlot(key, attributeToSlot(keyAttr, attrMemberOf))
   } else if (key.length >= 24) {
     getOrAddSlot(key, unknownToSlot(key, memberOfRef))
   }
@@ -872,7 +876,9 @@ function classifyAndRegisterSlot (
     const assocMemberOf = resolveParentSlot(targetClass, masterTag, memberOfRef, getOrAddSlot, m)
     getOrAddSlot(id, associationToSlot(assoc, direction, assocMemberOf))
   } else if (classId === normalizeId(core.class.Attribute)) {
-    getOrAddSlot(id, attributeToSlot(obj as Attribute<any>, memberOfRef))
+    const attr = obj as Attribute<any>
+    const attrMemberOf = resolveParentSlot(attr.attributeOf, masterTag, memberOfRef, getOrAddSlot, m)
+    getOrAddSlot(id, attributeToSlot(attr, attrMemberOf))
   } else if (classId === normalizeId(core.class.Class) || h.isDerived(obj._class, core.class.Class)) {
     getOrAddSlot(id, classToSlot(obj as any as Class<any>, memberOfRef))
   } else {
