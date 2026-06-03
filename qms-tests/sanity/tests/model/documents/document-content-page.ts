@@ -187,7 +187,7 @@ export class DocumentContentPage extends DocumentCommonPage {
     this.filterCategory = page.locator('span').filter({ hasText: /^Category$/ })
     this.qualityButtonDots = page.getByRole('button', { name: 'Quality documents' }).getByRole('button')
     this.editDocumentSpace = page.getByRole('button', { name: 'Edit documents space' })
-    this.qualityButtonMembers = page.getByRole('button', { name: 'AJ DK AQ 3 members' }).first()
+    this.qualityButtonMembers = page.getByRole('button', { name: /\d+ members?$/ }).first()
     this.userMemberCainVelasquez = page.getByRole('button', { name: 'VC Velasquez Cain' })
     this.qualityDocument = page.getByRole('button', { name: 'Quality documents' })
     this.saveButton = page.getByRole('button', { name: 'Save', exact: true })
