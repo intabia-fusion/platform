@@ -299,5 +299,6 @@ export interface DocumentAttachment extends Attachment {
   // 'new' - added in the current version, can be removed instantly
   // 'referenced' - copied from a previous version/template, removal is a soft mark
   state?: DocumentAttachmentState
-  deletedIn?: { major: number, minor: number }
+  // null clears a prior soft-delete mark (restore); all reads use `deletedIn != null`.
+  deletedIn?: { major: number, minor: number } | null
 }
