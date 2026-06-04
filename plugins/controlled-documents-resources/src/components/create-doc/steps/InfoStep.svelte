@@ -14,6 +14,7 @@
 -->
 
 <script lang="ts">
+  import { tick } from 'svelte'
   import { DropdownLabels, EditBox, Label, RadioGroup } from '@hcengineering/ui'
   import core, { type AttachedData, type Data } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
@@ -80,6 +81,11 @@
   const docCodesQuery = createQuery()
   let docCodes: Record<string, string> = {}
   let loadingCodes = true
+  let codeManuallyEdited = false
+  let repickingCode = false
+  // Bumped after setInitialCode mutates docObject in place, to force canProceed/
+  // codeNotUnique to recompute (in-place mutation alone does not trigger Svelte).
+  let codeBump = 0
   docCodesQuery.query(
     documents.class.Document,
     {},
@@ -111,14 +117,18 @@
   $: if (ccRecord !== undefined && $infoStep.selectedReason === 'custom') {
     ccRecord.reason = customReason
   }
+  // For the 'newDoc' reason the text comes from an async translation; don't let a not-yet-loaded
+  // translation block proceeding - the reason is implicitly valid for that option.
+  $: hasReason = $infoStep.selectedReason === 'newDoc' ? true : !!ccRecord?.reason
   $: isCategoryFilled = isTemplate ? docObject.category !== undefined : true
   $: isCodeFilled = isTemplate ? docObject.prefix !== '' && docObject.prefix !== undefined : true
   $: prefixNotUnique = docObject.docPrefix != null && templateDocPrefixes[docObject.docPrefix] !== undefined
-  $: codeNotUnique = docObject.code != null && docObject.code !== '' && !isCodeUnique(docObject.code)
+  $: codeNotUnique = codeBump >= 0 && docObject.code != null && docObject.code !== '' && !isCodeUnique(docObject.code)
   $: canProceed =
+    codeBump >= 0 &&
     !!docObject.code &&
     !!docObject.title &&
-    !!ccRecord?.reason &&
+    hasReason &&
     isCodeFilled &&
     isCategoryFilled &&
     !prefixNotUnique &&
@@ -126,6 +136,14 @@
     (!isTemplate || !!docObject.docPrefix)
   $: if (docObject !== undefined && docObject.code === '' && !loadingCodes) {
     void setInitialCode()
+  }
+  // Re-pick the next free code when the previewed auto-code collides with a doc created meanwhile,
+  // unless the user typed the code manually.
+  $: if (docObject !== undefined && !loadingCodes && !codeManuallyEdited && codeNotUnique && !repickingCode) {
+    repickingCode = true
+    void setInitialCode().finally(() => {
+      repickingCode = false
+    })
   }
 
   async function setInitialCode (): Promise<void> {
@@ -140,7 +158,7 @@
 
       newCodeObj = { prefix: docObject.prefix, seqNumber: seqObj.sequence + 1 }
     } else {
-      newCodeObj = docObject
+      newCodeObj = { prefix: docObject.prefix, seqNumber: docObject.seqNumber }
     }
 
     if (newCodeObj != null) {
@@ -153,7 +171,13 @@
         newCode = getDocumentId(newCodeObj)
       }
 
+      // Mutate in place so the shared docObject reference (passed without bind:)
+      // stays the same and the wizard sees the change. Defer to a fresh microtask
+      // and bump a counter so canProceed (declared earlier) recomputes.
+      await tick()
+      docObject.seqNumber = newCodeObj.seqNumber
       docObject.code = newCode
+      codeBump++
     }
   }
 
@@ -208,6 +232,9 @@
         bind:value={docObject.code}
         id="doc-code"
         kind="large-style"
+        on:input={() => {
+          codeManuallyEdited = true
+        }}
       />
       {#if codeNotUnique}
         <div class="error">

@@ -14,7 +14,12 @@ export class SelectWorkspacePage extends CommonPage {
   buttonCreateWorkspace = (): Locator => this.page.locator('button > span', { hasText: 'Create workspace' })
   buttonWorkspaceName = (): Locator => this.page.locator('input')
   buttonCreateNewWorkspace = (): Locator => this.page.locator('div.form-row button')
-  workspaceButtonByName = (workspace: string): Locator => this.buttonWorkspace().filter({ hasText: workspace }).first()
+  // Exact match to avoid 'sanity-ws' also matching 'sanity-ws-qms'
+  workspaceButtonByName = (workspace: string): Locator =>
+    this.buttonWorkspace()
+      .filter({ has: this.page.getByText(workspace, { exact: true }) })
+      .first()
+
   createAnotherWorkspace = (): Locator => this.page.getByRole('link', { name: 'Create workspace' })
   workspaceLogo = (): Locator => this.page.getByText('N', { exact: true })
   workspaceList = (workspaceName: string): Locator => this.page.getByRole('button', { name: workspaceName })

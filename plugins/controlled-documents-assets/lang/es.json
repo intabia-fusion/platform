@@ -67,6 +67,8 @@
     "ComparisonMode": "Comparando",
     "Compare": "Comparar:",
     "Against": "Contra:",
+    "RemovedAttachments": "Adjuntos eliminados",
+    "Restore": "Restaurar",
     "ComparisonModeNotSupported": "El modo de comparación no está soportado.",
     "CreateDraft": "Crear Borrador",
     "SendForApproval": "Enviar para aprobación",

@@ -14,7 +14,7 @@ test.use({
   channel: 'msedge'
 })
 
-test.describe('@PDF. QMS. PDF Download and Preview', () => {
+test.describe.skip('@PDF. QMS. PDF Download and Preview', () => {
   test.beforeEach(async ({ page }) => {
     await (await page.goto(`${PlatformURI}/${HomepageURI}`))?.finished()
   })

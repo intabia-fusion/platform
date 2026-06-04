@@ -53,6 +53,7 @@ env:
     tools
     workers
     ws-tests
+    qms-tests
   PublishTempFolder: publish_artifacts
   INIT_SCRIPTS_BRANCH: "main"
 
@@ -365,6 +366,75 @@ jobs:
           prepare-script: ./prepare-pg.sh
           build-package: "@hcengineering/tests-sanity"
           artifact-name-suffix: pg
+          enable-profiling: "false"
+          docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+  uitest-qms:
+    # Run on branches/PRs but skip on main and release tags (v*/s*).
+    if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/main' && github.base_ref != 'main'"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          filter: tree:0
+          submodules: recursive
+      - name: Free space
+        uses: ./.github/actions/free-disk-space
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+      - name: Cache node modules
+        uses: actions/cache@v5
+        env:
+          cache-name: cache-node-platform
+        with:
+          path: |
+            common/temp
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{
+            hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: Checking for mis-matching dependencies...
+        run: node common/scripts/install-run-rush.js check
+
+      - name: Checking for mis-matching transitive dependencies...
+        run: node common/scripts/check-versions.js
+
+      - name: Installing...
+        run: node common/scripts/install-run-rush.js install
+
+      - name: Free space
+        uses: ./.github/actions/free-disk-space
+      - name: Docker Build (with rate limit retry)
+        run: |
+          set -o pipefail
+          if node common/scripts/install-run-rush.js fast-build:docker 2>&1 | tee /tmp/docker-build.log; then
+            echo "Docker build succeeded"
+          else
+            if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
+              echo "Rate limit hit, logging in to Docker Hub and retrying..."
+              echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
+              node common/scripts/install-run-rush.js fast-build:docker
+            else
+              echo "Docker build failed (not a rate limit issue)"
+              cat /tmp/docker-build.log
+              exit 1
+            fi
+          fi
+        env:
+          DOCKER_CLI_HINTS: false
+          DOCKER_BUILDKIT: 1
+      # QMS tests (isolated qms-tests project)
+      - name: Run UI tests (QMS)
+        uses: ./.github/actions/ui-test
+        with:
+          test-folder: qms-tests
+          prepare-script: ./prepare-qms.sh
+          build-package: "@hcengineering/qms-tests-sanity"
+          artifact-name-suffix: qms
           enable-profiling: "false"
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 

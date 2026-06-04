@@ -288,9 +288,10 @@ test.describe('QMS. Documents tests', () => {
     })
 
     await test.step('4. Add comments and Complete Review', async () => {
+      // Add the comment with the aside closed: submitting opens a floating comment
+      // popup that creates the comment. Then open the Comments aside to verify it.
       await documentContentPage.addMessageToTheText(newContentFirst, messageToContent)
-
-      await documentContentPage.buttonComments.click()
+      await documentContentPage.openComments()
 
       const documentCommentsPage = new DocumentCommentsPage(page)
       await documentCommentsPage.checkCommentExist(messageToContent)
@@ -471,9 +472,10 @@ test.describe('QMS. Documents tests', () => {
     })
 
     await test.step('4. Add comments and Complete Review', async () => {
+      // Add the comment with the aside closed: submitting opens a floating comment
+      // popup that creates the comment. Then open the Comments aside to verify it.
       await documentContentPage.addMessageToTheText(newContentFirst, messageToContent)
-
-      await documentContentPage.buttonComments.click()
+      await documentContentPage.openComments()
 
       const documentCommentsPage = new DocumentCommentsPage(page)
       await documentCommentsPage.checkCommentExist(messageToContent)
@@ -512,6 +514,8 @@ test.describe('QMS. Documents tests', () => {
   })
 
   test('TESTS-140. Comparing several document versions', async ({ page }) => {
+    // Long flow: multiple draft versions + diff compare rendering. Needs more than the default 60s.
+    test.slow()
     await allure.description('Requirement\nUsers need to compare several document versions')
     await allure.tms('TESTS-140', 'https://front.hc.engineering/workbench/platform/tracker/TESTS-140')
     const makeReviewDocument: NewDocument = {
@@ -662,6 +666,9 @@ test.describe('QMS. Documents tests', () => {
     })
 
     await test.step('3. Add comment and check popup', async () => {
+      // General Info panel is open by default; close it so the toolbar is fully visible
+      await documentContentPage.buttonDocument.click()
+      await expect(page.locator('div.popupPanel-body__aside')).not.toBeVisible({ timeout: 5000 })
       await documentContentPage.addMessageToTheText(newContentFirst, messageToText, false)
 
       const documentCommentsPage = new DocumentCommentsPage(page)
@@ -870,9 +877,10 @@ test.describe('QMS. Documents tests', () => {
     })
 
     await test.step('4. As author add a comment', async () => {
+      // Add the comment with the aside closed: submitting opens a floating comment
+      // popup that creates the comment. Then open the Comments aside to verify it.
       await documentContentPage.addMessageToTheText(newContentFirst, messageToContent)
-
-      await documentContentPage.buttonComments.click()
+      await documentContentPage.openComments()
 
       const documentCommentsPage = new DocumentCommentsPage(page)
       await documentCommentsPage.checkCommentExist(messageToContent)
@@ -887,9 +895,10 @@ test.describe('QMS. Documents tests', () => {
       await documentsPageSecond.openDocument(completeDocument.title)
 
       const documentContentPageSecond = new DocumentContentPage(userSecondPage)
+      // Add the comment with the aside closed: submitting opens a floating comment
+      // popup that creates the comment. Then open the Comments aside to verify it.
       await documentContentPageSecond.addMessageToTheText(newContentSecond, messageToContentSecond)
-
-      await documentContentPageSecond.buttonComments.click()
+      await documentContentPageSecond.openComments()
 
       const documentCommentsPageSecond = new DocumentCommentsPage(userSecondPage)
       await documentCommentsPageSecond.checkCommentExist(messageToContentSecond)

@@ -58,33 +58,6 @@ services:
     volumes:
       - dbpg:/var/lib/postgresql
     restart: unless-stopped
-  pgbouncer:
-    image: edoburu/pgbouncer:latest
-    depends_on:
-      - postgres
-    volumes:
-      - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
-      - ./pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
-      - pgbouncer_logs:/var/log/pgbouncer
-    environment:
-      - PGBOUNCER_LISTEN_PORT=6432
-      - PGBOUNCER_BACKENDS=postgres=postgres:5432/postgres
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_NAME=postgres
-    healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'pg_isready -h 127.0.0.1 -p 6432 || ps aux | grep -q pgbouncer',
-        ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-
   redpanda:
     image: redpandadata/redpanda:v25.2.11
     command:
@@ -305,20 +278,6 @@ services:
       # ports:
       #   - 9233:9233
       # Add to environment: NODE_OPTIONS=--inspect=0.0.0.0:9233
-    restart: unless-stopped
-  collaborator1:
-    image: intabiafusion/collaborator
-    links:
-      - minio
-      - transactor
-      - stats
-    environment:
-      - COLLABORATOR_PORT=3077
-      - SECRET=secret
-      - ACCOUNTS_URL=http://account:3000
-      - STORAGE_CONFIG=${STORAGE_CONFIG}
-      - STATS_URL=http://stats:4900
-      # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   front:
     image: intabiafusion/front
@@ -1111,5 +1070,4 @@ volumes:
   elastic-plugins:
   redpanda:
   telemetry:
-  pgbouncer_logs:
   mailpit:

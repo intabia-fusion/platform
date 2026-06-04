@@ -8,10 +8,6 @@ services:
     environment:
       - DB_URL=${DB_PG_URL}
       - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
-  transactor1:
-    environment:
-      - DB_URL=${DB_PG_URL}
-      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
   workspace:
     environment:
       - DB_URL=${DB_PG_URL}
@@ -28,9 +24,6 @@ services:
       - UPLOAD_URL=http://localhost:4031/upload/form-data/:workspace
       - DATALAKE_URL=http://localhost:4031
       - PREVIEW_URL=http://localhost:4031
-  front1:
-    environment:
-      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
   datalake:
     image: intabiafusion/datalake
     pull_policy: never
@@ -50,9 +43,6 @@ services:
       - DATALAKE_URL=http://localhost:4031
       - PREVIEW_URL=http://localhost:4031
   collaborator0:
-    environment:
-      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
-  collaborator1:
     environment:
       - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
   notifications:

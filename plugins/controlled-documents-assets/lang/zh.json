@@ -67,6 +67,8 @@
     "ComparisonMode": "比较",
     "Compare": "比较：",
     "Against": "对比：",
+    "RemovedAttachments": "已移除的附件",
+    "Restore": "恢复",
     "ComparisonModeNotSupported": "不支持比较模式。",
     "CreateDraft": "创建草稿",
     "SendForApproval": "发送批准",
