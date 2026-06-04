@@ -66,6 +66,7 @@
   let isUpdating = false
   let isCanceling = false
   let isUncanceling = false
+  let isRetrying = false
   const MAX_POLL_ATTEMPTS = 120
   const POLL_INTERVAL = 2000
 
@@ -261,6 +262,22 @@
       await showErrorNotification()
     } finally {
       isUpdating = false
+    }
+  }
+
+  async function retryPayment (): Promise<void> {
+    if (paymentClient == null) return
+    if (currentSubscription?.id === undefined) return
+
+    try {
+      isRetrying = true
+      const result = await paymentClient.retryPayment(currentSubscription.id)
+      currentSubscription = result
+    } catch (error) {
+      console.error('Error retrying payment:', error)
+      await showErrorNotification()
+    } finally {
+      isRetrying = false
     }
   }
 
@@ -560,6 +577,28 @@
                 {/if}
               </div>
             {/if}
+            {#if currentSubscription?.status === 'past_due' && currentSubscription.providerData?.pending !== true}
+              <div class="past-due-warning flex-col flex-gap-2">
+                <div class="flex-row-center flex-gap-2">
+                  <span class="fs-title">
+                    <Label label={plugin.string.PaymentFailed} />
+                  </span>
+                </div>
+                <div class="text-md">
+                  <Label label={plugin.string.PaymentFailedDescription} />
+                </div>
+                <div class="flex-row-center flex-gap-2">
+                  <Button
+                    label={plugin.string.RetryPayment}
+                    kind="primary"
+                    disabled={isRetrying}
+                    on:click={() => {
+                      void retryPayment()
+                    }}
+                  />
+                </div>
+              </div>
+            {/if}
 
             {#if usageInfo !== null}
               <div class="usage-section">
@@ -828,5 +867,9 @@
   .usage-section {
     padding-top: var(--spacing-2);
     /* border-top: 1px solid var(--theme-divider-color); */
+  }
+
+  .past-due-warning {
+    padding: var(--spacing-2);
   }
 </style>

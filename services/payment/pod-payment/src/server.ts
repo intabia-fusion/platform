@@ -561,6 +561,68 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
   )
 
   /**
+   * POST /api/v1/subscriptions/:subscriptionId/retry
+   * Retry a failed payment for a subscription in past_due status.
+   * Only supported by TBank (Stripe/Polar handle retries via built-in dunning).
+   */
+  app.post(
+    '/api/v1/subscriptions/:subscriptionId/retry',
+    withToken,
+    withOwner,
+    (req: RequestWithAuth, res: Response) => {
+      if (provider === undefined) {
+        res.status(503).json({ error: 'Payment provider is not configured' })
+        return
+      }
+
+      void handleRequest(
+        ctx,
+        'retry-payment',
+        async (ctx) => {
+          const subscriptionId = req.params.subscriptionId
+
+          const subscription = await accountClient.getSubscriptionById(subscriptionId)
+          if (subscription === undefined || subscription === null) {
+            res.status(404).json({ error: 'Subscription not found' })
+            return
+          }
+
+          if (subscription.status !== 'past_due') {
+            res.status(400).json({ error: 'Subscription is not in past_due status' })
+            return
+          }
+
+          if (subscription.provider !== config.Provider) {
+            // Provider mismatch — retry locally is not supported
+            ctx.info('Retry not supported for provider-mismatched subscription', {
+              id: subscription.id,
+              provider: subscription.provider
+            })
+            res.status(400).json({ error: 'Retry not supported for this subscription' })
+            return
+          }
+
+          try {
+            const result = await provider.retryPayment(ctx, subscription.providerSubscriptionId)
+            if (result === null) {
+              res.status(404).json({ error: 'Failed to retry payment' })
+              return
+            }
+            await accountClient.upsertSubscription(result)
+            res.json(result)
+          } catch (err) {
+            ctx.error('Failed to retry payment', { err })
+            res.status(402).json({ error: 'Payment retry failed' })
+          }
+        },
+        req,
+        res,
+        () => {}
+      )
+    }
+  )
+
+  /**
    * GET /api/v1/subscriptions/:subscriptionId
    * Get subscription details
    * Authorization: Only admin can view billing details directly from provider

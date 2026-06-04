@@ -143,6 +143,22 @@ export class PaymentClient {
     const response = await fetchSafe(url, { headers: { ...this.headers } })
     return (await response.json()) as CheckoutStatus
   }
+
+  /**
+   * Retry a failed payment for a subscription in past_due status.
+   * Attempts to charge the saved payment method again.
+   * @param subscriptionId - Subscription ID to retry payment for
+   * @returns Updated subscription data
+   */
+  async retryPayment (subscriptionId: string): Promise<SubscriptionData> {
+    const path = `/api/v1/subscriptions/${subscriptionId}/retry`
+    const url = new URL(concatLink(this.endpoint, path))
+    const response = await fetchSafe(url, {
+      method: 'POST',
+      headers: { ...this.headers }
+    })
+    return (await response.json()) as SubscriptionData
+  }
 }
 
 /**

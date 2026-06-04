@@ -1203,7 +1203,21 @@ export async function adminCreateSubscription (
   // Cancel existing active subscription of the same type
   const existing = await db.subscription.findOne({ workspaceUuid, type: type as any, status: 'active' as any })
   if (existing !== null) {
-    await db.subscription.update({ id: existing.id }, { status: 'canceled' as any, canceledAt: now, updatedOn: now })
+    const oldProviderData: Record<string, any> = (existing.providerData as Record<string, any>) ?? {}
+    await db.subscription.update(
+      { id: existing.id },
+      {
+        status: 'canceled' as any,
+        canceledAt: now,
+        updatedOn: now,
+        providerData: {
+          ...oldProviderData,
+          pending: false,
+          status: 'ADMIN_REPLACED',
+          modifiedAt: now
+        }
+      }
+    )
     ctx.info('Manual subscription canceled', { id: existing.id, workspaceUuid, plan, type })
   }
 

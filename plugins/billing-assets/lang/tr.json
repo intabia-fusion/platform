@@ -69,6 +69,11 @@
     "SubscriptionErrorMessage": "Bir şeyler yanlış gitti. Lütfen tekrar deneyin veya destek ile iletişime geçin.",
     "UpgradeToAccessPackages": "Ek paketlere erişmek için Standard veya Business'a yükseltin",
     "MembersUsage": "Üyeler",
-    "ProjectsUsage": "Projeler"
+    "ProjectsUsage": "Projeler",
+    "PaymentFailed": "Ödeme başarısız",
+    "PaymentFailedDescription": "Otomatik olarak tekrar deneyeceğiz. Ayrıca manuel olarak da deneyebilirsiniz.",
+    "RetryPayment": "Ödemeyi tekrar dene",
+    "RetriesExhausted": "Tüm ödeme denemeleri başarısız oldu",
+    "RetriesExhaustedDescription": "Ödeme sorunlarını çözmek için lütfen destek ile iletişime geçin."
   }
 }

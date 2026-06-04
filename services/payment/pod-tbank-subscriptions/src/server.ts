@@ -82,6 +82,13 @@ export async function createServer (
   )
 
   app.post(
+    '/api/v1/subscriptions/:id/retry',
+    wrapHandler(ctx, 'retryPayment', async (req, res) => {
+      await handleRetryPayment(ctx, tbank, storage, req, res)
+    })
+  )
+
+  app.post(
     '/api/v1/webhooks/tbank',
     wrapHandler(ctx, 'webhook', async (req, res) => {
       await handleWebhook(ctx, config, tbank, storage, req, res)
@@ -137,6 +144,34 @@ async function handleCreateSubscription (
   const { type, plan, workspaceUuid, workspaceUrl, accountUuid } = req.body as CreateSubscriptionRequest
 
   ctx.info('Creating TBank subscription', { type, plan, workspaceUuid, accountUuid })
+
+  // Cancel any previously abandoned pending subscriptions for this workspace+type.
+  // Abandoned = status PastDue with pending: true (user started checkout but never paid).
+  // These would otherwise accumulate as orphans if the user abandons the payment page.
+  // Re-fetch each sub before canceling to avoid race with a concurrent webhook.
+  const existingPending = await storage.getAll(workspaceUuid)
+  for (const sub of existingPending) {
+    if (sub.status !== SubscriptionStatus.PastDue || sub.providerData?.pending !== true || sub.type !== type) continue
+
+    const freshSub = await storage.getById(sub.id)
+    if (freshSub === null) continue
+    if (freshSub.status !== SubscriptionStatus.PastDue || freshSub.providerData?.pending !== true) continue
+
+    // Mark as expired — the TBank-side payment will time out on its own.
+    // Don't remove card (there's no card for pending-first-payment subs).
+    const now = Date.now()
+    await storage.upsert({
+      ...freshSub,
+      status: SubscriptionStatus.Canceled,
+      providerData: {
+        ...freshSub.providerData,
+        modifiedAt: now,
+        status: 'ABANDONED',
+        pending: false
+      }
+    })
+    ctx.info('Canceled abandoned pending subscription', { subId: sub.id, type, plan: sub.plan })
+  }
 
   const planKey = getPlanKey(type, plan)
   const amount = plans[planKey]
@@ -293,6 +328,84 @@ async function handleUpdatePlan (
   res.json({ checkoutId: orderId, checkoutUrl: paymentURL })
 }
 
+async function handleRetryPayment (
+  ctx: MeasureContext,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage,
+  req: Request,
+  res: Response
+): Promise<void> {
+  const sub = await findSubscription(storage, req.params.id)
+  if (sub === null) {
+    res.status(404).json({ error: 'Subscription not found' })
+    return
+  }
+
+  if (sub.status !== SubscriptionStatus.PastDue) {
+    res.status(400).json({ error: 'Subscription is not in past_due status' })
+    return
+  }
+
+  const rebillId = sub.providerData?.rebillId as string | undefined
+  if (rebillId === undefined) {
+    res.status(400).json({ error: 'No recurring payment method available' })
+    return
+  }
+
+  ctx.info('Manual retry payment', { subId: sub.id, plan: sub.plan })
+
+  try {
+    const chargeResult = await tbank.chargeRecurrent({
+      PaymentId: sub.providerSubscriptionId,
+      RebillId: rebillId
+    })
+
+    if (chargeResult.Success === true) {
+      const now = Date.now()
+      const renewedData: SubscriptionData = {
+        ...sub,
+        status: SubscriptionStatus.Active,
+        periodStart: now,
+        periodEnd: now + 30 * 24 * 60 * 60 * 1000,
+        providerData: {
+          ...sub.providerData,
+          modifiedAt: now,
+          status: 'ACTIVE',
+          retryAttempt: 0,
+          retryAfter: 0,
+          lastChargeAt: now,
+          lastChargePaymentId: chargeResult.PaymentId
+        }
+      }
+      await storage.upsert(renewedData)
+      ctx.info('Manual retry payment succeeded', { subId: sub.id })
+      res.json(renewedData)
+    } else {
+      const now = Date.now()
+      const prevAttempt = (sub.providerData?.retryAttempt as number) ?? 0
+      const failedData: SubscriptionData = {
+        ...sub,
+        status: SubscriptionStatus.PastDue,
+        providerData: {
+          ...sub.providerData,
+          modifiedAt: now,
+          status: 'CHARGE_FAILED',
+          retryAttempt: prevAttempt + 1,
+          retryAfter: now + 60 * 60 * 1000,
+          lastChargeError: chargeResult.Message,
+          lastChargeErrorCode: chargeResult.ErrorCode
+        }
+      }
+      await storage.upsert(failedData)
+      ctx.warn('Manual retry payment failed', { subId: sub.id, errorCode: chargeResult.ErrorCode })
+      res.status(402).json({ error: chargeResult.Message ?? 'Payment failed' })
+    }
+  } catch (err: any) {
+    ctx.error('Manual retry payment error', { subId: sub.id, err })
+    res.status(500).json({ error: err.message ?? 'Internal error' })
+  }
+}
+
 async function handleWebhook (
   ctx: MeasureContext,
   config: Config,
@@ -385,7 +498,26 @@ async function handleWebhook (
     typedNotification.Status === 'REFUNDED'
   ) {
     if (sub !== null) {
-      await cancelSubscription(ctx, tbank, storage, sub, typedNotification.Status)
+      // Mark as PastDue instead of canceling — keeps card and rebillId for retry
+      const now = Date.now()
+      const pastDueData: SubscriptionData = {
+        ...sub,
+        status: SubscriptionStatus.PastDue,
+        providerData: {
+          ...sub.providerData,
+          modifiedAt: now,
+          status: typedNotification.Status,
+          pending: false,
+          retryAttempt: 0,
+          retryAfter: now + 60 * 60 * 1000
+        }
+      }
+      await storage.upsert(pastDueData)
+      ctx.info('TBank payment failed, subscription marked PastDue', {
+        subId: sub.id,
+        paymentId: typedNotification.PaymentId,
+        status: typedNotification.Status
+      })
     }
   }
 

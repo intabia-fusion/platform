@@ -108,6 +108,13 @@ export interface PaymentProvider {
   ) => Promise<SubscriptionData | CheckoutResponse | null>
 
   /**
+   * Retry a failed payment for a subscription in past_due status.
+   * Attempts to charge the saved payment method again.
+   * Returns the updated subscription data or null if not supported.
+   */
+  retryPayment: (ctx: MeasureContext, providerSubscriptionId: string) => Promise<SubscriptionData | null>
+
+  /**
    * Reconcile active subscriptions between provider and our database
    * This is provider-specific logic and should be delegated to the provider.
    * All data fetching, transformation, and database updates are handled internally.

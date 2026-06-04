@@ -254,6 +254,12 @@ export class PolarProvider implements PaymentProvider {
     }
   }
 
+  async retryPayment (ctx: MeasureContext, _providerSubscriptionId: string): Promise<SubscriptionData | null> {
+    ctx.info('Polar payment retry — delegating to Polar dunning', {})
+    // Polar handles retries via its built-in dunning process.
+    return null
+  }
+
   async cancelSubscription (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData> {
     const polarSubscription = await this.polar.cancelSubscription(ctx, providerSubscriptionId)
     const subscriptionData = transformPolarSubscriptionToData(polarSubscription)
