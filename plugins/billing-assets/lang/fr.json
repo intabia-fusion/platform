@@ -69,6 +69,11 @@
     "SubscriptionErrorMessage": "Une erreur s'est produite. Veuillez réessayer ou contacter le support.",
     "UpgradeToAccessPackages": "Passez à Standard ou Business pour accéder aux packages supplémentaires",
     "MembersUsage": "Membres",
-    "ProjectsUsage": "Projets"
+    "ProjectsUsage": "Projets",
+    "PaymentFailed": "Paiement échoué",
+    "PaymentFailedDescription": "Nous réessayerons automatiquement. Vous pouvez également réessayer manuellement.",
+    "RetryPayment": "Réessayer le paiement",
+    "RetriesExhausted": "Toutes les tentatives de paiement ont échoué",
+    "RetriesExhaustedDescription": "Veuillez contacter le support pour résoudre les problèmes de paiement."
   }
 }

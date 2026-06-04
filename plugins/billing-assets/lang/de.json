@@ -69,6 +69,11 @@
     "SubscriptionErrorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
     "UpgradeToAccessPackages": "Upgraden Sie auf Standard oder Business, um zusätzliche Pakete zu erhalten",
     "MembersUsage": "Mitglieder",
-    "ProjectsUsage": "Projekte"
+    "ProjectsUsage": "Projekte",
+    "PaymentFailed": "Zahlung fehlgeschlagen",
+    "PaymentFailedDescription": "Wir wiederholen den Vorgang automatisch. Sie können es auch manuell versuchen.",
+    "RetryPayment": "Zahlung wiederholen",
+    "RetriesExhausted": "Alle Zahlungsversuche fehlgeschlagen",
+    "RetriesExhaustedDescription": "Bitte kontaktieren Sie den Support, um das Zahlungsproblem zu lösen."
   }
 }

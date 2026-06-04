@@ -376,6 +376,7 @@
     workspaceName: string
     currentPlan: string
     currentPackage: string
+    hasPastDue: boolean
     lastChangedOn: number
     lastChangedBy: string
     entries: SubscriptionInfo[]
@@ -392,13 +393,15 @@
     for (const [uuid, entries] of byWs.entries()) {
       let currentPlan = ''
       let currentPackage = ''
+      let hasPastDue = false
       let lastChangedOn = 0
       let lastChangedBy = ''
       for (const e of entries) {
-        if (e.status === 'active') {
+        if (e.status === 'active' || e.status === 'past_due') {
           const name = planLabels[e.plan] ?? e.plan
           if (e.type === 'tier') currentPlan = name
           else if (e.type === 'package') currentPackage = name
+          if (e.status === 'past_due' && e.providerData?.pending !== true) hasPastDue = true
         }
         if (e.createdOn > lastChangedOn) {
           lastChangedOn = e.createdOn
@@ -410,6 +413,7 @@
         workspaceName: workspaceNames[uuid] ?? uuid.slice(0, 8),
         currentPlan,
         currentPackage,
+        hasPastDue,
         lastChangedOn,
         lastChangedBy,
         entries: [...entries].sort((a, b) => b.createdOn - a.createdOn)
@@ -1059,6 +1063,9 @@
                     <span class="ml-4 fs-normal">
                       {group.currentPlan}{group.currentPackage.length > 0 ? ` + ${group.currentPackage}` : ''}
                     </span>
+                    {#if group.hasPastDue}
+                      <span class="ml-4 fs-normal" style="color: var(--theme-label-orange-color);">⚠ Past due</span>
+                    {/if}
                   </div>
                 </svelte:fragment>
                 <svelte:fragment slot="title-tools">
@@ -1089,7 +1096,12 @@
                         <td class="p-1" style="width: 10rem;">{planLabels[sub.plan] ?? sub.plan}</td>
                         <td class="p-1" style="width: 7rem;">{sub.amount != null ? `${sub.amount / 100} ₽` : ''}</td>
                         <td class="p-1" style="width: 8rem;"
-                          >{sub.status}{sub.providerData?.pendingReplacement === true ? ' (replacing)' : ''}</td
+                          ><span
+                            style={sub.status === 'past_due' && sub.providerData?.pending !== true
+                              ? 'color: var(--theme-label-orange-color); font-weight: 600;'
+                              : ''}
+                            >{sub.status}{sub.providerData?.pendingReplacement === true ? ' (replacing)' : ''}</span
+                          ></td
                         >
                         <td class="p-1" style="width: 14rem;">
                           {sub.payerName ?? sub.payerEmail ?? sub.accountUuid.slice(0, 8)}

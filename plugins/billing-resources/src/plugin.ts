@@ -63,6 +63,11 @@ export default mergeIds(billingId, billing, {
     LargestSpaces: '' as IntlString,
     UpgradeToAccessPackages: '' as IntlString,
     MembersUsage: '' as IntlString,
-    ProjectsUsage: '' as IntlString
+    ProjectsUsage: '' as IntlString,
+    PaymentFailed: '' as IntlString,
+    PaymentFailedDescription: '' as IntlString,
+    RetryPayment: '' as IntlString,
+    RetriesExhausted: '' as IntlString,
+    RetriesExhaustedDescription: '' as IntlString
   }
 })

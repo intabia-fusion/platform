@@ -69,6 +69,11 @@
     "SubscriptionErrorMessage": "問題が発生しました。もう一度お試しいただくか、サポートにお問い合わせください。",
     "UpgradeToAccessPackages": "追加パッケージを利用するには、StandardまたはBusinessにアップグレードしてください",
     "MembersUsage": "メンバー",
-    "ProjectsUsage": "プロジェクト"
+    "ProjectsUsage": "プロジェクト",
+    "PaymentFailed": "支払い失敗",
+    "PaymentFailedDescription": "自動的に再試行します。手動で再試行することもできます。",
+    "RetryPayment": "支払いを再試行",
+    "RetriesExhausted": "すべての支払い試行が失敗しました",
+    "RetriesExhaustedDescription": "サポートに連絡して支払い問題を解決してください。"
   }
 }

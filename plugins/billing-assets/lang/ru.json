@@ -69,6 +69,11 @@
     "SubscriptionErrorMessage": "Что-то пошло не так. Попробуйте ещё раз или обратитесь в поддержку.",
     "UpgradeToAccessPackages": "Обновите тариф до Стандарт или Бизнес, чтобы подключить дополнительный пакет",
     "MembersUsage": "Участники",
-    "ProjectsUsage": "Проекты"
+    "ProjectsUsage": "Проекты",
+    "PaymentFailed": "Платёж не прошёл",
+    "PaymentFailedDescription": "Мы автоматически повторим попытку. Вы также можете попробовать снова вручную.",
+    "RetryPayment": "Повторить оплату",
+    "RetriesExhausted": "Все попытки оплаты исчерпаны",
+    "RetriesExhaustedDescription": "Пожалуйста, свяжитесь с поддержкой для решения проблемы."
   }
 }

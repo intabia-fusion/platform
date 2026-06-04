@@ -69,6 +69,11 @@
     "SubscriptionErrorMessage": "Qualcosa è andato storto. Riprova o contatta l'assistenza.",
     "UpgradeToAccessPackages": "Passa a Standard o Business per accedere ai pacchetti aggiuntivi",
     "MembersUsage": "Membri",
-    "ProjectsUsage": "Progetti"
+    "ProjectsUsage": "Progetti",
+    "PaymentFailed": "Pagamento fallito",
+    "PaymentFailedDescription": "Riproveremo automaticamente. Puoi anche riprovare manualmente.",
+    "RetryPayment": "Riprova pagamento",
+    "RetriesExhausted": "Tutti i tentativi di pagamento sono falliti",
+    "RetriesExhaustedDescription": "Contatta l'assistenza per risolvere i problemi di pagamento."
   }
 }

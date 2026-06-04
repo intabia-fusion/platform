@@ -269,6 +269,13 @@ export class StripeProvider implements PaymentProvider {
     }
   }
 
+  async retryPayment (ctx: MeasureContext, _providerSubscriptionId: string): Promise<SubscriptionData | null> {
+    ctx.info('Stripe payment retry — delegating to Stripe dunning', {})
+    // Stripe handles retries via its built-in dunning process.
+    // No manual retry needed — Stripe will automatically retry.
+    return null
+  }
+
   async cancelSubscription (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData> {
     const stripeSubscription = await this.stripe.cancelSubscription(ctx, providerSubscriptionId)
     const subscriptionData = transformStripeSubscriptionToData(ctx, stripeSubscription)

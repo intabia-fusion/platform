@@ -181,6 +181,26 @@ export class TbankProvider implements PaymentProvider {
     return await response.json()
   }
 
+  async retryPayment (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData | null> {
+    ctx.info('Retrying TBank payment', { providerSubscriptionId })
+
+    const response = await fetch(`${this.tbankUrl}/api/v1/subscriptions/${providerSubscriptionId}/retry`, {
+      method: 'POST'
+    })
+
+    if (response.status === 404) {
+      return null
+    }
+
+    if (!response.ok) {
+      const errorBody = await response.text()
+      ctx.error('TBank payment retry failed', { status: response.status, errorBody })
+      throw new Error(`TBank payment retry failed: ${response.status} ${errorBody}`)
+    }
+
+    return await response.json()
+  }
+
   async reconcileActiveSubscriptions (ctx: MeasureContext, accountsUrl: string, serviceToken: string): Promise<void> {
     // Reconciliation is handled by pod-tbank-subscriptions scheduler
     ctx.info('TBank subscription reconciliation skipped (handled by tbank-subscriptions scheduler)')

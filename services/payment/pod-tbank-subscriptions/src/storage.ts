@@ -55,10 +55,23 @@ export class SubscriptionStorage {
 
     const needingRenewal = allSubscriptions.filter((sub) => {
       if (sub.provider !== 'tbank') return false
-      if (sub.status !== SubscriptionStatus.Active && sub.status !== SubscriptionStatus.PastDue) return false
-      if (sub.periodEnd === undefined || sub.periodEnd > now) return false
       if (sub.providerData?.rebillId === undefined) return false
-      return true
+
+      if (sub.status === SubscriptionStatus.Active) {
+        // Normal renewal: period ended
+        return sub.periodEnd !== undefined && sub.periodEnd <= now
+      }
+
+      if (sub.status === SubscriptionStatus.PastDue) {
+        // Failed payment retry: check retry counters
+        const retryAttempt = (sub.providerData?.retryAttempt as number) ?? 0
+        if (retryAttempt >= 3) return false
+        const retryAfter = (sub.providerData?.retryAfter as number) ?? 0
+        if (retryAfter > now) return false
+        return true
+      }
+
+      return false
     })
 
     ctx.info('Subscriptions needing renewal', {

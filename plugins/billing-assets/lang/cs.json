@@ -69,6 +69,11 @@
     "SubscriptionErrorMessage": "Něco se pokazilo. Zkuste to znovu nebo kontaktujte podporu.",
     "UpgradeToAccessPackages": "Upgradujte na Standard nebo Business a získejte přístup k dalším balíčkům",
     "MembersUsage": "Členové",
-    "ProjectsUsage": "Projekty"
+    "ProjectsUsage": "Projekty",
+    "PaymentFailed": "Platba se nezdařila",
+    "PaymentFailedDescription": "Automaticky to zkusíme znovu. Můžete to zkusit také ručně.",
+    "RetryPayment": "Zkusit platbu znovu",
+    "RetriesExhausted": "Všechny pokusy o platbu selhaly",
+    "RetriesExhaustedDescription": "Kontaktujte podporu pro vyřešení problémů s platbou."
   }
 }

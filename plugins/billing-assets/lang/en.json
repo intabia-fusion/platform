@@ -69,6 +69,11 @@
     "SubscriptionErrorMessage": "Something went wrong. Please try again or contact support.",
     "UpgradeToAccessPackages": "Upgrade to Standard or Business to access additional packages",
     "MembersUsage": "Members",
-    "ProjectsUsage": "Projects"
+    "ProjectsUsage": "Projects",
+    "PaymentFailed": "Payment failed",
+    "PaymentFailedDescription": "We will retry automatically. You can also try again manually.",
+    "RetryPayment": "Retry payment",
+    "RetriesExhausted": "All payment attempts failed",
+    "RetriesExhaustedDescription": "Please contact support to resolve payment issues."
   }
 }

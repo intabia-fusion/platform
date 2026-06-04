@@ -69,6 +69,11 @@
     "SubscriptionErrorMessage": "Algo deu errado. Tente novamente ou entre em contato com o suporte.",
     "UpgradeToAccessPackages": "Atualize para Standard ou Business para aceder a pacotes adicionais",
     "MembersUsage": "Membros",
-    "ProjectsUsage": "Projetos"
+    "ProjectsUsage": "Projetos",
+    "PaymentFailed": "Pagamento falhou",
+    "PaymentFailedDescription": "Tentaremos novamente automaticamente. Também pode tentar manualmente.",
+    "RetryPayment": "Repetir pagamento",
+    "RetriesExhausted": "Todas as tentativas de pagamento falharam",
+    "RetriesExhaustedDescription": "Contacte o suporte para resolver problemas de pagamento."
   }
 }

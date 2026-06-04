@@ -69,6 +69,11 @@
     "SubscriptionErrorMessage": "出了点问题。请重试或联系支持。",
     "UpgradeToAccessPackages": "升级到 Standard 或 Business 以访问附加包",
     "MembersUsage": "成员",
-    "ProjectsUsage": "项目"
+    "ProjectsUsage": "项目",
+    "PaymentFailed": "支付失败",
+    "PaymentFailedDescription": "我们将自动重试。您也可以手动重试。",
+    "RetryPayment": "重试支付",
+    "RetriesExhausted": "所有支付尝试均失败",
+    "RetriesExhaustedDescription": "请联系支持以解决支付问题。"
   }
 }
