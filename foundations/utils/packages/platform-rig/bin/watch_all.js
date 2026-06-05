@@ -258,14 +258,13 @@ function buildReverseDependencyMap(graph, packageNames) {
 /**
  * Run validation directly using worker pool (no TaskQueue dependency)
  */
-async function runValidation(pool, graph, packageNames, packageHashes, force = false) {
+async function runValidation(pool, graph, packageNames, packageHashes, force = false, packageTypesHashes = new Map()) {
   const validateStart = performance.now()
   let successCount = 0
   let cacheHits = 0
   let errorCount = 0
   let completedCount = 0
 
-  const packageTypesHashes = new Map()
   const pending = new Set(packageNames)
   const completed = new Set()
 
@@ -438,6 +437,10 @@ async function main() {
   // Track validation state across rebuilds
   const validatedPackages = new Set()
 
+  // Persistent types-hash map shared between initial validation and rebuild
+  // checks. Must match what markPhaseCompleted wrote, or cache always misses.
+  const packageTypesHashes = new Map()
+
 
   // Initial full build
   console.log(`\n${bold('=== Initial build ===')}`)
@@ -467,7 +470,7 @@ async function main() {
   let initialValidateResult = null
   if (validationPool && packagesToValidate.length > 0) {
     console.log(`\n${bold('=== Initial validation (' + packagesToValidate.length + ' packages) ===')}`)
-    initialValidateResult = await runValidation(validationPool, graph, packagesToValidate, packageHashes, options.force)
+    initialValidateResult = await runValidation(validationPool, graph, packagesToValidate, packageHashes, options.force, packageTypesHashes)
 
     // Track successfully validated packages
     if (initialValidateResult.errorCount === 0) {
@@ -571,9 +574,10 @@ async function main() {
 
           for (const pkg of orderedPackages) {
             if (packagesToValidate.includes(pkg)) {
-              // Check if this package or any of its dependencies changed
-              // Calculate hash with updated packageHashes that include rebuilt packages
-              const hashWithDeps = calculatePackageHashWithDeps(pkg, graph, packageHashes)
+              // Check if this package or any of its dependencies changed.
+              // Must include types-hashes — markPhaseCompleted stored that
+              // composite hash; omitting it guarantees a cache miss.
+              const hashWithDeps = calculatePackageHashWithDeps(pkg, graph, packageHashes, new Set(), packageTypesHashes)
 
               // We need to validate if:
               // 1. Package was not yet validated in this session
@@ -594,7 +598,7 @@ async function main() {
             const validateList = [...pkgsToValidate].map(p => p.replace(/@hcengineering\//g, '')).join(', ')
             console.log(`Validating ${info(pkgsToValidate.size + ' package(s)')}: ${info(validateList)}`)
 
-            const validateResult = await runValidation(validationPool, graph, [...pkgsToValidate], packageHashes, options.force)
+            const validateResult = await runValidation(validationPool, graph, [...pkgsToValidate], packageHashes, options.force, packageTypesHashes)
 
             // Track successfully validated packages
             if (validateResult.errorCount === 0) {

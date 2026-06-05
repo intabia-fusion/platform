@@ -19,9 +19,6 @@ const { runLintPhase } = require('./phases/lint')
 const { runTestPhase } = require('./phases/test')
 const { runSvelteCheckPhase } = require('./phases/svelte-check')
 
-/**
- * Parse command line arguments
- */
 function parseArgs(args) {
   let parallel = getDefaultWorkerCount()
   let verbose = false
@@ -199,12 +196,8 @@ Examples:
 `)
 }
 
-/**
- * Calculate package hash including all dependencies (transitive)
- * This ensures that when a dependency changes, dependent packages are rebuilt
- */
+// Transitive hash: dependency change invalidates dependents.
 function calculatePackageHashWithDeps(packageName, graph, packageHashes, processed = new Set(), depTypesHashes = null) {
-  // Prevent circular dependencies
   if (processed.has(packageName)) {
     return ''
   }
@@ -219,14 +212,12 @@ function calculatePackageHashWithDeps(packageName, graph, packageHashes, process
   const baseHash = packageHashes.get(packageName) || ''
   const parts = [baseHash]
 
-  // Add hashes of all dependencies (recurses src+package.json+tsconfig)
   for (const depName of node.dependencies) {
     const depHash = calculatePackageHashWithDeps(depName, graph, packageHashes, processed, depTypesHashes)
     if (depHash) {
       parts.push(`${depName}:${depHash}`)
     }
-    // Also fold in dep's emitted types/ hash so changes in dep API (without
-    // src changes — e.g. tsc bump produces different .d.ts) invalidate dependents.
+    // Fold in dep's emitted .d.ts hash: API change without src change still invalidates dependents.
     if (depTypesHashes) {
       const t = depTypesHashes.get(depName)
       if (t) {
@@ -235,17 +226,12 @@ function calculatePackageHashWithDeps(packageName, graph, packageHashes, process
     }
   }
 
-  // Sort to ensure consistent hash
   parts.sort()
 
-  // Combine into final hash
   const crypto = require('crypto')
   return crypto.createHash('md5').update(parts.join('\n')).digest('hex')
 }
 
-/**
- * Run validation phase with worker pool
- */
 async function runValidationPhase(packages, graph, validationWorkers, force, packageHashes) {
   if (packages.length === 0) return { successCount: 0, total: 0, cacheHits: 0, errors: [], time: 0 }
 
@@ -414,9 +400,6 @@ async function runValidationPhase(packages, graph, validationWorkers, force, pac
   return results
 }
 
-/**
- * Run build pipeline (bundle -> package -> docker-build)
- */
 async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToDockerBuild, graph, buildWorkers, force, packageHashes) {
   const taskQueue = new BuildTaskQueue(graph, { concurrency: buildWorkers })
 
@@ -495,7 +478,6 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
               const cacheInfo = result.cacheHits > 0 ? ' (cached)' : ''
               console.log(`    ${success('B')} ${dim(completedCount.bundle)}/${packagesToBundle.length} ${packageName} ${success('bundled')}${cacheInfo} ${dim(time + 'ms')}`)
             } else {
-              // Handle errors
               results.bundle.errors.push(...result.errors)
               const time = Math.round(performance.now() - pkgStart)
               console.error(`    ${error('B')} ${dim(completedCount.bundle)}/${packagesToBundle.length} ${packageName} ${error('FAILED')} ${dim(time + 'ms')}`)
@@ -520,7 +502,6 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
               const cacheInfo = result.cacheHits > 0 ? ' (cached)' : ''
               console.log(`    ${success('P')} ${dim(completedCount.package)}/${packagesToPackage.length} ${packageName} ${success('packaged')}${cacheInfo} ${dim(time + 'ms')}`)
             } else {
-              // Handle errors
               results.package.errors.push(...result.errors)
               const time = Math.round(performance.now() - pkgStart)
               console.error(`    ${error('P')} ${dim(completedCount.package)}/${packagesToPackage.length} ${packageName} ${error('FAILED')} ${dim(time + 'ms')}`)
@@ -545,7 +526,6 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
               const cacheInfo = result.cacheHits > 0 ? ' (cached)' : ''
               console.log(`    ${success('D')} ${dim(completedCount.dockerBuild)}/${packagesToDockerBuild.length} ${packageName} ${success('docker built')}${cacheInfo} ${dim(Math.round(time / 1000) + 's')}`)
             } else {
-              // Handle errors
               results.dockerBuild.errors.push(...result.errors)
               const time = Math.round(performance.now() - pkgStart)
               console.error(`    ${error('D')} ${dim(completedCount.dockerBuild)}/${packagesToDockerBuild.length} ${packageName} ${error('FAILED')} ${dim(Math.round(time / 1000) + 's')}`)
@@ -614,10 +594,7 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
   return results
 }
 
-/**
- * Print consolidated error summary at end of log.
- * Reprints all errors so AI and humans can find them without scrolling.
- */
+// Reprint all errors at end of log so they're findable without scrolling.
 function printErrorSummary(allErrors) {
   if (allErrors.length === 0) return
   console.error(`\n${'='.repeat(60)}`)
@@ -635,9 +612,6 @@ function printErrorSummary(allErrors) {
   console.error(`${'='.repeat(60)}`)
 }
 
-/**
- * Main compilation function
- */
 async function compileAll(rootDir, options = {}) {
   const {
     parallel = 4,
@@ -812,8 +786,7 @@ async function compileAll(rootDir, options = {}) {
   const transpileResults = await runTranspilePhase(graph, packagesToTranspile, validationWorkers, { force: forcePrerequisites, packageHashes })
   console.log(`Transpiled: ${transpileResults.successCount}/${transpileResults.total} packages in ${Math.round(transpileResults.time)}ms`)
 
-  // Update package hashes for changed packages after transpile
-  // This ensures validation uses correct hashes for packages that were rebuilt
+  // Refresh hashes of rebuilt packages so validate sees correct hashes.
   if (transpileResults.changedPackages && transpileResults.changedPackages.size > 0) {
     for (const pkg of transpileResults.changedPackages) {
       const node = graph.get(pkg)
