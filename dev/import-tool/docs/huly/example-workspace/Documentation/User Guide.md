@@ -12,5 +12,5 @@ Our platform architecture and key components.
 
 ## Development Workflow
 - Code reviews via GitHub integration
-- CI/CD status in Huly Activity Feed
-- Team sync-ups in Huly Virtual Office 
+- CI/CD status in Platform Activity Feed
+- Team sync-ups in Platform Virtual Office 

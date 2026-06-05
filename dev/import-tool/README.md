@@ -1,11 +1,11 @@
-# Huly Import Tool
+# Platform Import Tool
 
-Tool for importing data into Huly workspace.
+Tool for importing data into Platform workspace.
 
 ## Recommended Import Method
 
 ### Unified Format Import
-The recommended way to import data into Huly is using our [Unified Import Format](./docs/huly/README.md). This format provides a straightforward way to migrate data from any system by converting it into an intermediate, human-readable structure.
+The recommended way to import data into Platform is using our [Unified Import Format](./docs/huly/README.md). This format provides a straightforward way to migrate data from any system by converting it into an intermediate, human-readable structure.
 
 See the [complete guide](./docs/huly/README.md) and [example workspace](./docs/huly/example-workspace) to get started.
 
