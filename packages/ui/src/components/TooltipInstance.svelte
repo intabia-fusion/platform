@@ -426,7 +426,6 @@
       style:right={options.right}
       style:width={options.width}
       style:height={options.height}
-      style:max-width={options.maxWidth}
       style:transform={options.transform}
       style:visibility={options.visibility}
       style:z-index={($modals.findIndex((t) => t.type === 'tooltip') ?? 1) + 10000}
@@ -633,7 +632,7 @@
   .tooltip {
     position: fixed;
     padding: 0.5rem;
-    text-align: center;
+    text-align: left;
     font-size: 0.75rem;
     color: var(--theme-tooltip-color);
     background-color: var(--theme-tooltip-bg);
@@ -643,6 +642,15 @@
     user-select: none;
     display: flex;
     align-items: center;
+    max-width: 500px;
+
+    &:not(:has(.key, .keys)) span.label.l1 {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 5;
+      line-clamp: 5;
+      overflow: hidden;
+    }
 
     &::before {
       background-color: var(--theme-popup-color);

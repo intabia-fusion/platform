@@ -88,7 +88,7 @@
     <TextArea
       placeholder={chunter.string.TopicOptional}
       width="100%"
-      height="6.5rem"
+      height="2.5rem"
       margin="var(--spacing-1) var(--spacing-2)"
       noFocusBorder
       bind:value={topic}

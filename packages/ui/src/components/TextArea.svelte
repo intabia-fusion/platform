@@ -47,6 +47,7 @@
     bind:value
     bind:this={input}
     {disabled}
+    wrap="off"
     placeholder={phTranslate}
     on:keydown
     on:change
@@ -74,6 +75,7 @@
 
     textarea {
       width: auto;
+      flex-grow: 1;
       min-height: 4.5rem;
       margin: -4px;
       padding: 2px;
@@ -85,8 +87,20 @@
       border: 2px solid transparent;
       border-radius: 0.125rem;
       outline: none;
-      overflow-y: scroll;
+      overflow: auto;
+      white-space: nowrap;
       resize: none;
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-bar-color) transparent;
+
+      &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background-color: var(--scrollbar-bar-color);
+        border-radius: 4px;
+      }
 
       &:focus {
         border-color: var(--primary-button-default);
