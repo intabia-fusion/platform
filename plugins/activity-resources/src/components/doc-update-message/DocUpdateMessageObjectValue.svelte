@@ -77,6 +77,7 @@
   async function loadObject (_id: Ref<Doc>, _class: Ref<Class<Doc>>, doc?: Doc): Promise<void> {
     if (doc != null) {
       object = doc
+      isRemoved = false
       return
     }
 
