@@ -824,7 +824,7 @@
                 props={{
                   value: issue.labels,
                   object: issue,
-                  ckeckFilled: fullFilled[issueId],
+                  checkFilled: fullFilled[issueId],
                   kind: 'link',
                   compression: true
                 }}
