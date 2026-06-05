@@ -148,7 +148,7 @@ export function issueConfig (
       label: tracker.string.Title,
       presenter: tracker.component.TitlePresenter,
       props: compact ? { shouldUseMargin: true, showParent: false } : {},
-      displayProps: { key: key + 'title', minWidth: '5rem' }
+      displayProps: { key: key + 'title' }
     },
     {
       key: '',
@@ -181,7 +181,8 @@ export function issueConfig (
             props: {
               kind: 'list',
               size: 'small',
-              shouldShowPlaceholder: false
+              shouldShowPlaceholder: false,
+              maxLabelWidth: '3rem'
             },
             displayProps: {
               key: key + 'milestone',
@@ -200,7 +201,8 @@ export function issueConfig (
             props: {
               kind: 'list',
               size: 'small',
-              shouldShowPlaceholder: false
+              shouldShowPlaceholder: false,
+              maxLabelWidth: '3rem'
             },
             displayProps: {
               key: key + 'component',

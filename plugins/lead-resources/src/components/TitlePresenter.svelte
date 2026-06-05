@@ -36,7 +36,7 @@
 <style lang="scss">
   .name {
     flex-shrink: 1;
-    min-width: 1rem;
+    min-width: 1.5rem !important;
 
     &.list {
       color: var(--theme-caption-color);

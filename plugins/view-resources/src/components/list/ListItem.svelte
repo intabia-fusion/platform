@@ -84,7 +84,7 @@
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
   bind:this={elem}
-  class="listGrid antiList__row row flex-gap-2 flex-grow"
+  class="listGrid antiList__row row flex-gap-1 flex-grow"
   class:compactMode
   class:checking={checked}
   class:mListGridSelected={selected}
@@ -199,7 +199,7 @@
       >
         <IconCircles size={'small'} />
       </div>
-      <div class="scroll-box gap-2">
+      <div class="scroll-box gap-1">
         {#if mobile}
           {#each model.filter((p) => p.displayProps?.suffix === true) as attrModel}
             <ListPresenter

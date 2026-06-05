@@ -36,6 +36,7 @@
   export let justify: 'left' | 'center' = 'left'
   export let width: string | undefined = '100%'
   export let maxWidth: string | undefined = undefined
+  export let maxLabelWidth: string | undefined = undefined
   // export let onlyIcon: boolean = false
   export let isAction: boolean = false
   export let groupBy: string | undefined = undefined
@@ -116,6 +117,7 @@
         {size}
         {shape}
         {justify}
+        {maxLabelWidth}
         isEditable={isEditable && !rulesQuery?.disableEdit}
         isAllowUnset={!rulesQuery?.disableUnset}
         {popupPlaceholder}

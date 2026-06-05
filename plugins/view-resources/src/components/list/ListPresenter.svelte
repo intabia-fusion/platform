@@ -76,11 +76,19 @@
     if (attribute.displayProps?.maxWidth != null) {
       widthParams.maxWidth = attribute.displayProps.maxWidth
     }
+
     const clearAttributeProps = attribute.props
     if (attribute.attribute?.type._class === core.class.EnumOf) {
       return { ...clearAttributeProps, type: attribute.attribute.type, ...props, ...readonlyParams }
     }
-    return { object, ...clearAttributeProps, space: object.space, ...props, ...readonlyParams, ...widthParams }
+    return {
+      object,
+      ...clearAttributeProps,
+      space: object.space,
+      ...props,
+      ...readonlyParams,
+      ...widthParams
+    }
   }
   const translateSize = (e: CustomEvent): void => {
     if (e.detail === undefined) return
