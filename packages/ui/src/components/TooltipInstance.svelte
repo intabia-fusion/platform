@@ -36,6 +36,8 @@
 
   export let fullScreen: boolean = false
 
+  const MAX_TOOLTIP_WIDTH = 500
+
   let tooltipHTML: HTMLElement
   let nubHTML: HTMLElement
   let dir: TooltipAlignment
@@ -174,13 +176,13 @@
           } else dir = $tooltip.direction
 
           if (dir === 'right') {
-            const maxWidth = Math.min(docWidth / 2, docWidth - rectAnchor.right)
+            const maxWidth = Math.min(docWidth / 2, docWidth - rectAnchor.right, MAX_TOOLTIP_WIDTH)
             options.top = rectAnchor.y + rectAnchor.height / 2 + 'px'
             options.left = `calc(${rectAnchor.right}px + .75rem)`
             options.maxWidth = `calc(${maxWidth}px - 1.5rem)`
             options.transform = 'translateY(-50%)'
           } else if (dir === 'left') {
-            const maxWidth = Math.min(docWidth / 2, rectAnchor.x)
+            const maxWidth = Math.min(docWidth / 2, rectAnchor.x, MAX_TOOLTIP_WIDTH)
             options.top = rectAnchor.y + rectAnchor.height / 2 + 'px'
             options.right = `calc(${docWidth - rectAnchor.x}px + .75rem)`
             options.maxWidth = `calc(${maxWidth}px - 1.5rem)`
@@ -197,7 +199,7 @@
 
             options.top = `calc(${rectAnchor.bottom}px + .5rem)`
             options.left = left + 'px'
-            options.maxWidth = `calc(${maxWidth * 2}px - 1.5rem)`
+            options.maxWidth = `calc(${Math.min(maxWidth * 2, MAX_TOOLTIP_WIDTH)}px - 1.5rem)`
             options.transform = 'translateX(-50%)'
           } else if (dir === 'top') {
             const left = rectAnchor.x + rectAnchor.width / 2
@@ -205,7 +207,7 @@
 
             options.bottom = `calc(${docHeight - rectAnchor.y}px + .75rem)`
             options.left = rectAnchor.x + rectAnchor.width / 2 + 'px'
-            options.maxWidth = `calc(${maxWidth * 2}px - 1.5rem)`
+            options.maxWidth = `calc(${Math.min(maxWidth * 2, MAX_TOOLTIP_WIDTH)}px - 1.5rem)`
             options.transform = 'translateX(-50%)'
           }
         }
@@ -426,6 +428,7 @@
       style:right={options.right}
       style:width={options.width}
       style:height={options.height}
+      style:max-width={options.maxWidth}
       style:transform={options.transform}
       style:visibility={options.visibility}
       style:z-index={($modals.findIndex((t) => t.type === 'tooltip') ?? 1) + 10000}
