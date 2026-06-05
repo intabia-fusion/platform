@@ -30,7 +30,7 @@ export class CommonPage {
     this.page.locator('form[id="view:string:DeleteObject"] button.primary')
 
   tagsStringAddTagForm = (field: string): Locator =>
-    this.page.locator(`div.popup form[id="tags:string:AddTag"] input[placeholder$="${field}"]`)
+    this.page.locator(`div.popup form[id="tags:string:AddTag"] :is(input, textarea)[placeholder$="${field}"]`)
 
   tagsStringAddTagButtonSubmit = (): Locator =>
     this.page.locator('div.popup form[id="tags:string:AddTag"] button[type="submit"]')
