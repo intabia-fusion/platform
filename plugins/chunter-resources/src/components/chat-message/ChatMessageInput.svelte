@@ -83,9 +83,7 @@
 
   let forwardedMessage: WithLookup<ChatMessage> | undefined = undefined
 
-  $: forwardedMessageId = chatMessage
-    ? chatMessage.forwardedMessage
-    : (currentMessage.forwardedMessage ?? $replyingToMessageStore?._id)
+  $: forwardedMessageId = chatMessage ? chatMessage.forwardedMessage : currentMessage.forwardedMessage
 
   $: if (
     forwardedMessage == null &&
@@ -306,6 +304,7 @@
         event.stopPropagation()
         event.preventDefault()
         replyingToMessageStore.set(undefined)
+        currentMessage = { ...currentMessage, forwardedMessage: undefined }
         return false
       }
     }
@@ -321,6 +320,13 @@
   }
 
   let prevReplyTo: Ref<ActivityMessage>
+
+  $: if (
+    $replyingToMessageStore?.attachedTo === object._id &&
+    currentMessage.forwardedMessage !== $replyingToMessageStore._id
+  ) {
+    currentMessage.forwardedMessage = $replyingToMessageStore._id
+  }
 
   $: {
     const id = $replyingToMessageStore?._id
