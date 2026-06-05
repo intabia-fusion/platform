@@ -193,14 +193,15 @@ export const removeRequestCreateNotification: CreateTxNotificationFunc = async (
 
   const req = object as Request
   const clazz = client.hierarchy.getClass(req._class)
-  const titleKey = client.hierarchy.getClass(attachedToDoc._class).titleKey
-  const title = (titleKey != null ? (attachedToDoc as any)[titleKey] : undefined) ?? ''
 
   return {
-    icon: clazz.icon,
-    message: request.string.CancelRequestNotification,
-    intlParams: { title },
-    intlParamsNotLocalized: { name: clazz.label }
+    notification: {
+      icon: clazz.icon,
+      messageIntl: request.string.CancelRequestNotification
+    },
+    intl: {
+      intlParamsNotLocalized: { name: clazz.label }
+    }
   }
 }
 

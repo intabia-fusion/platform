@@ -264,6 +264,9 @@ export interface CommonNotification {
   }
 
   messageIntl?: IntlString
+  intlParams?: Record<string, string>
+  intlParamsNotLocalized?: Record<string, IntlString>
+
   markup?: Markup
 
   icon?: Asset

@@ -51,6 +51,11 @@ export class NotificationClientImpl implements NotificationClient {
 
   readonly docSettingByDoc = writable<Map<Ref<Doc>, DocNotificationSetting | null>>(new Map())
 
+  private readonly readStatePromises = new Map<Ref<Doc>, Promise<ReadState | undefined>>()
+  private readonly docSettingPromises = new Map<Ref<Doc>, Promise<DocNotificationSetting | undefined>>()
+  private readonly contextByIdPromises = new Map<Ref<DocNotifyContext>, Promise<DocNotifyContext | undefined>>()
+  private readonly contextByDocPromises = new Map<Ref<Doc>, Promise<DocNotifyContext | undefined>>()
+
   readonly unreadQuery = createQuery(true)
 
   static createClient (): NotificationClientImpl {
@@ -95,22 +100,36 @@ export class NotificationClientImpl implements NotificationClient {
 
   private async ensureReadState (attachedTo: Ref<Doc>): Promise<ReadState | undefined> {
     const current = get(this.readStateByDoc).get(attachedTo)
-    if (current !== undefined) return current ?? undefined
+    if (current !== undefined && current !== null) {
+      return current
+    }
+    const promise = this.readStatePromises.get(attachedTo)
+    if (promise !== undefined) {
+      return await promise
+    }
 
+    const loadPromise = (async () => {
+      try {
+        const client = getClient()
+        const state = await client.findOne(notification.class.ReadState, { attachedTo })
+
+        this.readStateByDoc.update((map) => {
+          map.set(attachedTo, state ?? null)
+          return map
+        })
+        return state
+      } finally {
+        this.readStatePromises.delete(attachedTo)
+      }
+    })()
+
+    this.readStatePromises.set(attachedTo, loadPromise)
     this.readStateByDoc.update((map) => {
       map.set(attachedTo, null)
       return map
     })
 
-    const client = getClient()
-    const state = await client.findOne(notification.class.ReadState, { attachedTo })
-
-    this.readStateByDoc.update((map) => {
-      map.set(attachedTo, state ?? null)
-      return map
-    })
-
-    return state
+    return await loadPromise
   }
 
   async loadDocSetting (attachedTo: Ref<Doc>): Promise<void> {
@@ -123,25 +142,39 @@ export class NotificationClientImpl implements NotificationClient {
 
   private async ensureDocSetting (attachedTo: Ref<Doc>): Promise<DocNotificationSetting | undefined> {
     const current = get(this.docSettingByDoc).get(attachedTo)
-    if (current !== undefined) return current ?? undefined
+    if (current !== undefined && current !== null) {
+      return current
+    }
+    const promise = this.docSettingPromises.get(attachedTo)
+    if (promise !== undefined) {
+      return await promise
+    }
 
+    const loadPromise = (async () => {
+      try {
+        const client = getClient()
+        const state = await client.findOne(notification.class.DocNotificationSetting, {
+          attachedTo,
+          account: getCurrentAccount().uuid
+        })
+
+        this.docSettingByDoc.update((map) => {
+          map.set(attachedTo, state ?? null)
+          return map
+        })
+        return state
+      } finally {
+        this.docSettingPromises.delete(attachedTo)
+      }
+    })()
+
+    this.docSettingPromises.set(attachedTo, loadPromise)
     this.docSettingByDoc.update((map) => {
       map.set(attachedTo, null)
       return map
     })
 
-    const client = getClient()
-    const state = await client.findOne(notification.class.DocNotificationSetting, {
-      attachedTo,
-      account: getCurrentAccount().uuid
-    })
-
-    this.docSettingByDoc.update((map) => {
-      map.set(attachedTo, state ?? null)
-      return map
-    })
-
-    return state
+    return await loadPromise
   }
 
   public async loadContextById (_id: Ref<DocNotifyContext>): Promise<void> {
@@ -162,48 +195,82 @@ export class NotificationClientImpl implements NotificationClient {
 
   private async ensureContextsById (ids: Array<Ref<DocNotifyContext>>): Promise<DocNotifyContext[]> {
     const contextById = get(this.contextById)
-
     const toLoad: Array<Ref<DocNotifyContext>> = []
-    const resultMap = new Map<Ref<DocNotifyContext>, DocNotifyContext | null>()
+    const promisesToWait: Array<Promise<DocNotifyContext | undefined>> = []
+    const results: DocNotifyContext[] = []
 
     for (const id of ids) {
       const current = contextById.get(id)
-
-      if (current !== undefined) {
-        resultMap.set(id, current)
+      if (current !== undefined && current !== null) {
+        results.push(current)
       } else {
-        toLoad.push(id)
+        const promise = this.contextByIdPromises.get(id)
+        if (promise !== undefined) {
+          promisesToWait.push(promise)
+        } else {
+          toLoad.push(id)
+        }
       }
     }
 
     if (toLoad.length > 0) {
-      this.contextById.update((state) => {
-        for (const _id of toLoad) {
-          state.set(_id, null)
+      const loadPromise = (async () => {
+        try {
+          const client = getClient()
+          const contexts = await client.findAll(notification.class.DocNotifyContext, { _id: { $in: toLoad } })
+
+          const contextsMap = new Map<Ref<DocNotifyContext>, DocNotifyContext>()
+          for (const ctx of contexts) {
+            contextsMap.set(ctx._id, ctx)
+          }
+
+          this.contextById.update((state) => {
+            for (const id of toLoad) {
+              const ctx = contextsMap.get(id)
+              state.set(id, ctx ?? null)
+            }
+            return state
+          })
+
+          this.contextByDoc.update((state) => {
+            for (const ctx of contexts) {
+              state.set(ctx.objectId, ctx)
+            }
+            return state
+          })
+
+          return contextsMap
+        } finally {
+          for (const id of toLoad) {
+            this.contextByIdPromises.delete(id)
+          }
         }
-        return state
-      })
+      })()
 
-      const client = getClient()
-      const contexts = await client.findAll(notification.class.DocNotifyContext, { _id: { $in: toLoad } })
+      for (const id of toLoad) {
+        const idPromise = loadPromise.then((map) => map.get(id))
+        this.contextByIdPromises.set(id, idPromise)
+        promisesToWait.push(idPromise)
+      }
 
       this.contextById.update((state) => {
-        for (const ctx of contexts) {
-          state.set(ctx._id, ctx)
-          resultMap.set(ctx._id, ctx)
-        }
-        return state
-      })
-
-      this.contextByDoc.update((state) => {
-        for (const ctx of contexts) {
-          state.set(ctx.objectId, ctx)
+        for (const id of toLoad) {
+          state.set(id, null)
         }
         return state
       })
     }
 
-    return ids.map((id) => resultMap.get(id)).filter(notEmpty)
+    if (promisesToWait.length > 0) {
+      const waited = await Promise.all(promisesToWait)
+      for (const ctx of waited) {
+        if (ctx !== undefined) {
+          results.push(ctx)
+        }
+      }
+    }
+
+    return results
   }
 
   public async loadContextByDoc (doc?: Ref<Doc>): Promise<void> {
@@ -226,48 +293,82 @@ export class NotificationClientImpl implements NotificationClient {
 
   private async ensureContextsByDoc (docs: Array<Ref<Doc>>): Promise<DocNotifyContext[]> {
     const contextByDoc = get(this.contextByDoc)
-
     const toLoad: Array<Ref<Doc>> = []
-    const resultMap = new Map<Ref<Doc>, DocNotifyContext | null>()
+    const promisesToWait: Array<Promise<DocNotifyContext | undefined>> = []
+    const results: DocNotifyContext[] = []
 
     for (const doc of docs) {
       const current = contextByDoc.get(doc)
-
-      if (current !== undefined) {
-        resultMap.set(doc, current)
+      if (current !== undefined && current !== null) {
+        results.push(current)
       } else {
-        toLoad.push(doc)
+        const promise = this.contextByDocPromises.get(doc)
+        if (promise !== undefined) {
+          promisesToWait.push(promise)
+        } else {
+          toLoad.push(doc)
+        }
       }
     }
 
     if (toLoad.length > 0) {
-      this.contextByDoc.update((state) => {
-        for (const _id of toLoad) {
-          state.set(_id, null)
+      const loadPromise = (async () => {
+        try {
+          const client = getClient()
+          const contexts = await client.findAll(notification.class.DocNotifyContext, { objectId: { $in: toLoad } })
+
+          const contextsMap = new Map<Ref<Doc>, DocNotifyContext>()
+          for (const ctx of contexts) {
+            contextsMap.set(ctx.objectId, ctx)
+          }
+
+          this.contextById.update((state) => {
+            for (const ctx of contexts) {
+              state.set(ctx._id, ctx)
+            }
+            return state
+          })
+
+          this.contextByDoc.update((state) => {
+            for (const doc of toLoad) {
+              const ctx = contextsMap.get(doc)
+              state.set(doc, ctx ?? null)
+            }
+            return state
+          })
+
+          return contextsMap
+        } finally {
+          for (const doc of toLoad) {
+            this.contextByDocPromises.delete(doc)
+          }
         }
-        return state
-      })
+      })()
 
-      const client = getClient()
-      const contexts = await client.findAll(notification.class.DocNotifyContext, { objectId: { $in: toLoad } })
-
-      this.contextById.update((state) => {
-        for (const ctx of contexts) {
-          state.set(ctx._id, ctx)
-        }
-        return state
-      })
+      for (const doc of toLoad) {
+        const docPromise = loadPromise.then((map) => map.get(doc))
+        this.contextByDocPromises.set(doc, docPromise)
+        promisesToWait.push(docPromise)
+      }
 
       this.contextByDoc.update((state) => {
-        for (const ctx of contexts) {
-          state.set(ctx.objectId, ctx)
-          resultMap.set(ctx.objectId, ctx)
+        for (const doc of toLoad) {
+          state.set(doc, null)
         }
         return state
       })
     }
 
-    return docs.map((doc) => resultMap.get(doc)).filter(notEmpty)
+    if (promisesToWait.length > 0) {
+      const waited = await Promise.all(promisesToWait)
+      for (const ctx of waited) {
+        if (ctx !== undefined) {
+          results.push(ctx)
+        }
+      }
+    }
+
+    return results
   }
 
   async readDoc (_id: Ref<Doc>): Promise<void> {
@@ -418,7 +519,6 @@ addTxListener((txes: Tx[]) => {
             })
           }
         } else if (createTx.objectClass === notification.class.DocNotifyContext) {
-          console.log('create context', createTx, getCurrentAccount().uuid)
           const context = TxProcessor.createDoc2Doc(createTx as TxCreateDoc<DocNotifyContext>)
           const current = get(notificationClient.contextByDoc).get(context.objectId)
           if (current == null) {

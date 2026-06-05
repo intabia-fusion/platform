@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,15 +15,15 @@
 -->
 <script lang="ts">
   import { Doc, Ref } from '@hcengineering/core'
-  import activity, { ActivityMessage, WithReferences } from '@hcengineering/activity'
-  import { getClient, isSpace } from '@hcengineering/presentation'
+  import { ActivityMessage } from '@hcengineering/activity'
+  import { getClient } from '@hcengineering/presentation'
   import { getMessageFromLoc, messageInFocus } from '@hcengineering/activity-resources'
   import { location as locationStore } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
 
   import chunter from '../plugin'
-  import { ChannelDataProvider } from '../channelDataProvider'
+  import { ChatViewport } from '../chatViewport'
   import ReverseChannelScrollView from './ReverseChannelScrollView.svelte'
 
   export let object: Doc
@@ -38,7 +39,7 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
-  let dataProvider: ChannelDataProvider | undefined
+  let chatViewport: ChatViewport | undefined
 
   const unsubscribe = messageInFocus.subscribe((id) => {
     if (!syncLocation) return
@@ -57,51 +58,35 @@
   onDestroy(() => {
     unsubscribe()
     unsubscribeLocation()
-    dataProvider?.destroy()
-    dataProvider = undefined
+    chatViewport?.destroy()
+    chatViewport = undefined
   })
-
-  let refsLoaded = false
 
   $: isDocChannel = !hierarchy.isDerived(object._class, chunter.class.ChunterSpace)
 
-  $: void updateDataProvider(object._id, selectedMessageId)
+  $: void updateViewport(object._id, selectedMessageId)
 
-  async function updateDataProvider (attachedTo: Ref<Doc>, selectedMessageId?: Ref<ActivityMessage>): Promise<void> {
-    if (dataProvider === undefined) {
-      const hasRefs = ((object as WithReferences<Doc>).references ?? 0) > 0
-      refsLoaded = hasRefs
-      const space = isSpace(object) ? object._id : object.space
-      const read = await NotificationClientImpl.getClient().getReadState(object._id)
-      dataProvider = new ChannelDataProvider(
+  async function updateViewport (attachedTo: Ref<Doc>, selectedMessageId?: Ref<ActivityMessage>): Promise<void> {
+    if (chatViewport === undefined) {
+      const read = await NotificationClientImpl.getClient().getReadState(attachedTo)
+      chatViewport = new ChatViewport(
         read,
-        space,
         attachedTo,
-        activity.class.ActivityMessage,
-        selectedMessageId,
-        false,
-        hasRefs,
-        collection
+        selectedMessageId
       )
     }
   }
-
-  $: if (dataProvider && !refsLoaded && ((object as WithReferences<Doc>).references ?? 0) > 0) {
-    dataProvider.loadRefs()
-    refsLoaded = true
-  }
 </script>
 
-{#if dataProvider}
+{#if chatViewport}
   <ReverseChannelScrollView
     channel={object}
     bind:selectedMessageId
     {object}
     collection={collection ?? (isDocChannel ? 'comments' : 'messages')}
-    provider={dataProvider}
+    viewport={chatViewport}
     {freeze}
     {autofocus}
-    loadMoreAllowed
     {withInput}
     {readonly}
     {onReply}

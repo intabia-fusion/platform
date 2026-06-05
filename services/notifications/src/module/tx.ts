@@ -128,11 +128,13 @@ export async function handleTxNotification (
         const intl: NotificationIntl = await getIntl(client, txCache, data, mixin, type, tx, doc, txObject, sender)
 
         const commonNotification: CommonNotification = {
+          ...data.notification,
+          intlParams: intl.intlParams,
+          intlParamsNotLocalized: intl.intlParamsNotLocalized,
           id: tx._id,
           type: 'common',
           createdOn: tx.createdOn ?? tx.modifiedOn,
-          createdBy: tx.createdBy ?? tx.modifiedBy,
-          ...data.notification
+          createdBy: tx.createdBy ?? tx.modifiedBy
         }
 
         const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)

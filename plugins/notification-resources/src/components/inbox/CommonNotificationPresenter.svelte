@@ -14,7 +14,7 @@
 <script lang="ts">
   import { BasePreview } from '@hcengineering/activity-resources'
   import { Markup } from '@hcengineering/core'
-  import { IntlString, translateCB } from '@hcengineering/platform'
+  import { translate } from '@hcengineering/platform'
   import { themeStore } from '@hcengineering/ui'
   import { CommonNotification } from '@hcengineering/notification'
 
@@ -22,15 +22,17 @@
 
   let markup: Markup = ''
 
-  $: void updateContent(value.messageIntl, value.markup)
+  $: void updateContent(value, $themeStore.language)
 
-  async function updateContent (_messageIntl?: IntlString, _markup?: Markup): Promise<void> {
-    if (_markup !== undefined) {
-      markup = _markup
-    } else if (_messageIntl !== undefined) {
-      translateCB(_messageIntl, {}, $themeStore.language, (res) => {
-        markup = res
-      })
+  async function updateContent (commonNotification: CommonNotification, lang: string): Promise<void> {
+    if (commonNotification.markup !== undefined) {
+      markup = commonNotification.markup
+    } else if (commonNotification.messageIntl !== undefined) {
+      const params: Record<string, any> = { ...commonNotification.intlParams }
+      for (const [key, value] of Object.entries(commonNotification.intlParamsNotLocalized ?? {})) {
+        params[key] = await translate(value, params, lang)
+      }
+      markup = await translate(commonNotification.messageIntl, params, lang)
     }
   }
 </script>

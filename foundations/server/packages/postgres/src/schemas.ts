@@ -434,6 +434,14 @@ export const customIndexes: Record<string, { [key in CustomIndexType]: string[] 
         'CREATE UNIQUE INDEX IF NOT EXISTS space_unique_workspaceId_referenceId__index ON space ("workspaceId", "referenceId") WHERE "referenceId" IS NOT NULL;'
       ]
     }
+  ],
+  [translateDomain('activity')]: [
+    {
+      unique: [],
+      custom: [
+        'CREATE INDEX IF NOT EXISTS activity_attachedTo_createdOn__index ON activity ("workspaceId", "attachedTo", "createdOn" DESC);'
+      ]
+    }
   ]
 }
 

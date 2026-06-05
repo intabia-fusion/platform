@@ -1,3 +1,17 @@
+<!--
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+-->
 <script lang="ts">
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import { Label } from '@hcengineering/ui'
@@ -7,8 +21,7 @@
 
   import ThreadParentMessage from './ThreadParentPresenter.svelte'
   import ReverseChannelScrollView from '../ReverseChannelScrollView.svelte'
-  import { ChannelDataProvider } from '../../channelDataProvider'
-  import chunter from '../../plugin'
+  import { ChatViewport } from '../../chatViewport'
 
   export let selectedMessageId: Ref<ActivityMessage> | undefined = undefined
   export let message: ActivityMessage
@@ -22,7 +35,7 @@
   const inboxClient = NotificationClientImpl.getClient()
 
   let channel: Doc | undefined = undefined
-  let dataProvider: ChannelDataProvider | undefined = undefined
+  let chatViewport: ChatViewport | undefined = undefined
 
   $: query.query(
     message.attachedToClass,
@@ -33,37 +46,33 @@
     { limit: 1 }
   )
 
-  $: void updateProvider(message)
+  $: void updateViewport(message._id)
 
-  async function updateProvider (message: ActivityMessage): Promise<void> {
-    if (dataProvider !== undefined) {
-      return
-    }
+  async function updateViewport (messageId: Ref<ActivityMessage>): Promise<void> {
+    if (chatViewport !== undefined) return
 
-    const context = (await inboxClient.getContextByDoc(message._id)) ?? undefined
-    dataProvider = new ChannelDataProvider(
-      context,
-      message.space,
-      message._id,
-      chunter.class.ThreadMessage,
+    const readState = (await inboxClient.getReadState(messageId)) ?? undefined
+    chatViewport = new ChatViewport(
+      readState,
+      messageId,
       selectedMessageId,
-      true
+      100
     )
   }
 
-  $: messagesStore = dataProvider?.messagesStore
+  $: messagesStore = chatViewport?.messages
   $: readonly = hierarchy.isDerived(message.attachedToClass, core.class.Space)
     ? ((readonly || (channel as Space)?.archived) ?? false)
     : readonly
 </script>
 
 <div class="hulyComponent-content hulyComponent-content__container noShrink">
-  {#if dataProvider !== undefined && channel !== undefined}
+  {#if chatViewport !== undefined && channel !== undefined}
     <ReverseChannelScrollView
       bind:selectedMessageId
       object={message}
       {channel}
-      provider={dataProvider}
+      viewport={chatViewport}
       {autofocus}
       fullHeight={false}
       fixedInput={false}
