@@ -26,6 +26,7 @@
     getPlatformColorDef,
     IconFolder,
     showPopup,
+    TextArea,
     themeStore
   } from '@hcengineering/ui'
   import { ColorsPopup } from '@hcengineering/view-resources'
@@ -118,7 +119,7 @@
       </div>
 
       <div class="fs-title mt-4 flex-grow">
-        <EditBox bind:value={description} placeholder={tags.string.TagDescriptionPlaceholder} />
+        <TextArea placeholder={tags.string.TagDescriptionPlaceholder} bind:value={description} height={'10rem'} />
       </div>
       {#if categories.length > 1}
         <div class="text-sm mt-4">
