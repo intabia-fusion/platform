@@ -19,6 +19,7 @@
   import {
     DropdownLabels,
     EditBox,
+    TextArea,
     eventToHTMLElement,
     getPlatformColorDef,
     showPopup,
@@ -131,7 +132,7 @@
       </div>
 
       <div class="fs-title mt-4 flex-grow">
-        <EditBox placeholder={tags.string.TagDescriptionPlaceholder} bind:value={data.description} />
+        <TextArea placeholder={tags.string.TagDescriptionPlaceholder} bind:value={data.description} height={'10rem'} />
       </div>
 
       {#if categoryItems.length > 1}

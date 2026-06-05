@@ -154,7 +154,12 @@
       sortingKey: '@tagCount',
       sortingFunction: countSorting
     },
-    'description',
+    {
+      key: 'description',
+      props: {
+        maxTextWidth: '20rem'
+      }
+    },
     'modifiedOn'
   ]}
   options={opt}

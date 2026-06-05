@@ -14,7 +14,7 @@
   export let value: number
   export let object: WithLookup<Doc>
   export let full: boolean
-  export let ckeckFilled: boolean = false
+  export let checkFilled: boolean = false
   export let kind: 'short' | 'full' | 'list' | 'link' | 'todo' | 'todo-compact' = 'short'
   export let isEditable: boolean = false
   export let action: (evt: MouseEvent) => Promise<void> | void = async () => {}
@@ -56,7 +56,7 @@
     let count: number = 0
     widths.forEach((i) => (count += i))
     full = count > allWidth
-    dispatch('change', { full, ckeckFilled })
+    dispatch('change', { full, checkFilled })
     if (elements.length > 0) {
       if (items.length > minItems) dispatch('resize', elements[0]?.clientWidth)
       else {

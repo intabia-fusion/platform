@@ -35,6 +35,7 @@
   export let shape: ButtonShape = undefined
   export let justify: 'left' | 'center' = 'center'
   export let width: string | undefined = 'min-content'
+  export let maxLabelWidth: string | undefined = undefined
   // export let onlyIcon: boolean = false
   export let enlargedText: boolean = false
   export let short: boolean = false
@@ -148,14 +149,18 @@
     {width}
     {justify}
     {showTooltip}
+    icon={tracker.icon.Component}
     disabled={!isEditable}
     notSelected={!value}
     {short}
     on:click={handleComponentEditorOpened}
   >
     <svelte:fragment slot="content">
-      <span class="label {enlargedText ? 'text-base' : 'text-md'} overflow-label pointer-events-none">
-        <svelte:component this={ComponentPresenter} value={selectedComponent} />
+      <span
+        class="label {enlargedText ? 'text-base' : 'text-md'} overflow-label pointer-events-none"
+        style:max-width={maxLabelWidth}
+      >
+        <svelte:component this={ComponentPresenter} value={selectedComponent} shouldShowAvatar={false} />
       </span>
     </svelte:fragment>
   </Button>

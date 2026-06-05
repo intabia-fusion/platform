@@ -42,6 +42,7 @@
   export let justify: 'left' | 'center' = 'left'
   export let width: string | undefined = '100%'
   export let maxWidth: string | undefined = undefined
+  export let maxLabelWidth: string | undefined = '5rem'
   export let onlyIcon: boolean = false
   export let isAction: boolean = false
 
@@ -105,7 +106,7 @@
         {popupPlaceholder}
         {onlyIcon}
         {enlargedText}
-        maxLabelWidth={'5rem'}
+        {maxLabelWidth}
         space={_space}
         short={compression}
         showTooltip={{ label: value.milestone ? tracker.string.MoveToMilestone : tracker.string.AddToMilestone }}

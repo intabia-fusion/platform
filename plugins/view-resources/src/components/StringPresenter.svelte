@@ -20,6 +20,7 @@
   export let value: string | string[] | null | undefined
   export let accent: boolean = false
   export let oneLine: boolean = false
+  export let maxTextWidth: string | undefined = undefined
 
   $: tooltipParams = getTooltip(value)
 
@@ -37,7 +38,12 @@
   }
 </script>
 
-<span class={oneLine ? 'string-oneline' : 'lines-limit-2'} class:fs-bold={accent} use:tooltip={tooltipParams}>
+<span
+  class={oneLine ? 'string-oneline' : 'lines-limit-2'}
+  class:fs-bold={accent}
+  use:tooltip={tooltipParams}
+  style:max-width={maxTextWidth}
+>
   {#if Array.isArray(value)}
     {#each value as str, i}
       <span class:ml-1={i !== 0}><LinkWrapper text={str} /></span>
