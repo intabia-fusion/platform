@@ -356,7 +356,7 @@
                 ids: pausedElements.map((el) => el.id),
                 ctxState
               })
-              reattachAllAudioTracks()
+              void reattachAllAudioTracks()
             }
           }, 100)
         })
@@ -399,10 +399,15 @@
    * Re-attach all remote audio tracks. Called after LiveKit reconnect
    * to ensure audio elements reference the new MediaStreams.
    */
-  function reattachAllAudioTracks (): void {
+  async function reattachAllAudioTracks (): Promise<void> {
     if (parentElement == null) return
 
     console.log('[WorkbenchExtension] Reattaching audio tracks after reconnect')
+
+    // Resume the AudioContext first — re-attaching elements is useless if the
+    // context is suspended or was recreated at a different sampleRate. Await so
+    // the detach/attach below runs against a running context.
+    await ensureAudioUnlocked(true)
 
     // Cleanup analysers and detach tracks before removing elements
     for (const participant of lk.remoteParticipants.values()) {
@@ -435,7 +440,7 @@
 
     console.log('[WorkbenchExtension] Reattached audio tracks', { count })
 
-    void ensureAudioUnlocked()
+    await ensureAudioUnlocked()
   }
 
   /**
@@ -446,6 +451,7 @@
    */
   const AUDIO_CHECK_INTERVAL_MS = 5000
   let lastRecoveryTime = 0
+  let lastSampleRate = 0
   const RECOVERY_COOLDOWN_MS = 10000
   let healthCheckCount = 0
   // Log full diagnostics every N checks (every ~30s) to avoid flooding console
@@ -465,6 +471,22 @@
       let needsRecovery = false
       const now = Date.now()
       const problems: string[] = []
+
+      // AudioContext-level check: a suspended context or a context recreated at a
+      // different sampleRate (Safari does this on mic mute/unmute) silently kills
+      // remote playback even though tracks and elements look healthy.
+      const ctxState = getAudioContextState()
+      if (ctxState.state !== 'running' && ctxState.state !== 'not_available') {
+        problems.push(`AudioContext state=${ctxState.state}`)
+        needsRecovery = true
+      }
+      if (ctxState.sampleRate != null) {
+        if (lastSampleRate !== 0 && lastSampleRate !== ctxState.sampleRate) {
+          problems.push(`AudioContext sampleRate changed ${lastSampleRate} -> ${ctxState.sampleRate}`)
+          needsRecovery = true
+        }
+        lastSampleRate = ctxState.sampleRate
+      }
 
       for (const participant of lk.remoteParticipants.values()) {
         for (const publication of participant.trackPublications.values()) {
@@ -547,7 +569,7 @@
           diagnostics: collectAudioDiagnostics()
         })
         audioUnlocked = false
-        reattachAllAudioTracks()
+        void reattachAllAudioTracks()
       }
     }, AUDIO_CHECK_INTERVAL_MS)
   }
@@ -618,7 +640,7 @@
       // Skip initial subscription call (value is 0)
       if (get(lkReconnected) > 0) {
         audioUnlocked = false
-        reattachAllAudioTracks()
+        void reattachAllAudioTracks()
       }
     })
   })
