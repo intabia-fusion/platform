@@ -1,6 +1,6 @@
-# Huly Platform API Client
+# Platform API Client
 
-A TypeScript client library for interacting with the Huly Platform API.
+A TypeScript client library for interacting with the Platform Platform API.
 
 ## Installation
 
@@ -12,7 +12,7 @@ npm install @hcengineering/api-client
 
 ## WebSocket Client vs REST Client
 
-The api client package provides two main client variants: a WebSocket client and a REST client. The WebSocket client holds persistent connection to the Huly Platform API. The REST client uses standard HTTP requests to perform operations.
+The api client package provides two main client variants: a WebSocket client and a REST client. The WebSocket client holds persistent connection to the Platform Platform API. The REST client uses standard HTTP requests to perform operations.
 
 ### WebSocket Client
 

@@ -337,7 +337,7 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   console.log('loading configuration', config)
   console.log('loaded branding', myBranding)
 
-  const title = myBranding.title ?? 'Huly Desktop'
+  const title = myBranding.title ?? 'Platform Desktop'
   ipcMain.setTitle(title)
 
   configureAnalyticsProviders(config)

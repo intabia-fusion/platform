@@ -24,7 +24,7 @@ async function main (): Promise<void> {
   const cfg = parseArgs(process.argv.slice(2))
 
   console.log('========================================')
-  console.log('  Huly Platform Benchmark Suite')
+  console.log('  Platform Benchmark Suite')
   console.log('========================================')
   console.log(`  url:       ${cfg.url}`)
   console.log(`  workspace: ${cfg.workspace}`)
