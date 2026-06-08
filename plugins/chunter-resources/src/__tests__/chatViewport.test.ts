@@ -28,7 +28,9 @@ jest.mock('svelte/store', () => {
         subscribe: (fn: (val: any) => void): (() => void) => {
           subscribers.add(fn)
           fn(value)
-          return () => { subscribers.delete(fn) }
+          return () => {
+            subscribers.delete(fn)
+          }
         },
         set: (newValue: any) => {
           value = newValue
@@ -48,9 +50,11 @@ jest.mock('svelte/store', () => {
       const isArray = Array.isArray(stores)
       const storeList = isArray ? stores : [stores]
       const getValues = (): any => {
-        const values = storeList.map(s => {
+        const values = storeList.map((s) => {
           let val: any
-          const unsub = s.subscribe((v: any) => { val = v })
+          const unsub = s.subscribe((v: any) => {
+            val = v
+          })
           unsub()
           return val
         })
@@ -63,17 +67,19 @@ jest.mock('svelte/store', () => {
             const currentValues = getValues()
             fnCallback(fn(currentValues))
           }
-          const unsubs = storeList.map(s => s.subscribe(run))
+          const unsubs = storeList.map((s) => s.subscribe(run))
           run()
           return () => {
-            unsubs.forEach(unsub => unsub())
+            unsubs.forEach((unsub) => unsub())
           }
         }
       }
     },
     get: (store: any): any => {
       let value: any
-      const unsub = store.subscribe((v: any) => { value = v })
+      const unsub = store.subscribe((v: any) => {
+        value = v
+      })
       unsub()
       return value
     }
@@ -217,12 +223,8 @@ describe('ChatViewport', () => {
       }))
       mockClient.findAll
         .mockResolvedValueOnce(tailRes)
-        .mockResolvedValueOnce([
-          { _id: 'older-1', createdOn: 400 }
-        ])
-        .mockResolvedValueOnce([
-          { _id: 'fw-1', createdOn: 600 }
-        ])
+        .mockResolvedValueOnce([{ _id: 'older-1', createdOn: 400 }])
+        .mockResolvedValueOnce([{ _id: 'fw-1', createdOn: 600 }])
 
       const readState = {
         'me-uuid': { timestamp: 300 }
@@ -509,9 +511,7 @@ describe('ChatViewport', () => {
       const viewport = new ChatViewport(undefined, chatId, undefined)
       viewport.destroy()
 
-      queryResolve([
-        { _id: 'msg-1', createdOn: 1000 }
-      ])
+      queryResolve([{ _id: 'msg-1', createdOn: 1000 }])
       await flushTasks()
 
       expect(get(viewport.messages)).toEqual([])
@@ -531,7 +531,6 @@ describe('ChatViewport', () => {
       const loadPromise = viewport.loadMore('backward', 1000)
 
       expect(get(viewport.isLoadingMore)).toBe(true)
-
       ;(viewport as any).resetViewport()
       viewport.isLoadingMore.set(true)
 
@@ -627,10 +626,7 @@ describe('ChatViewport', () => {
     })
 
     it('6.1.3 should jumpToDate do nothing if no message is found in both directions', async () => {
-      mockClient.findAll
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
+      mockClient.findAll.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([])
 
       const viewport = new ChatViewport(undefined, chatId, undefined)
       await flushTasks()
@@ -917,10 +913,7 @@ describe('ChatViewport', () => {
         expect.any(Object)
       )
 
-      expect(get(viewport.messages)).toEqual([
-        boundaryMsg,
-        { _id: 'newer-msg', createdOn: 1100 }
-      ])
+      expect(get(viewport.messages)).toEqual([boundaryMsg, { _id: 'newer-msg', createdOn: 1100 }])
     })
 
     it('7.6 should handle stale version on slow syncUnreadMarker or jumpToDate', async () => {

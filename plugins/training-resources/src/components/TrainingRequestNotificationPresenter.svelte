@@ -28,8 +28,12 @@
   export let type: ActivityMessagePreviewType = 'full'
 </script>
 
-<BaseMessagePreview message={{
-  attachedTo: objectId,
-  attachedToClass: objectClass,
-  ...value.message
-}} {type} intlLabel={training.string.SentYouATrainingRequest} />
+<BaseMessagePreview
+  message={{
+    attachedTo: objectId,
+    attachedToClass: objectClass,
+    ...value.message
+  }}
+  {type}
+  intlLabel={training.string.SentYouATrainingRequest}
+/>

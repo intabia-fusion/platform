@@ -53,14 +53,17 @@
 </script>
 
 <div class="date-separator" class:sticky>
-  <div class="date-separator__date border-radius-4 clear-mins" on:click={() => {
-    showPopup(DateRangePopup, {}, div, (v) => {
-      if (v != null) {
-        v.setHours(0, 0, 0, 0)
-        dispatch('jumpToDate', { date: v.getTime() })
-      }
-    })
-  }}>
+  <div
+    class="date-separator__date border-radius-4 clear-mins"
+    on:click={() => {
+      showPopup(DateRangePopup, {}, div, (v) => {
+        if (v != null) {
+          v.setHours(0, 0, 0, 0)
+          dispatch('jumpToDate', { date: v.getTime() })
+        }
+      })
+    }}
+  >
     {#await formatDate(timestamp, $themeStore.language) then date}
       {date}
     {/await}

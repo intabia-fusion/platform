@@ -26,8 +26,12 @@
   export let type: ActivityMessagePreviewType = 'full'
 </script>
 
-<ThreadMessagePreview value={{
-  attachedTo: objectId,
-  attachedToClass: objectClass,
-  ...value.message
-}} {type} on:click />
+<ThreadMessagePreview
+  value={{
+    attachedTo: objectId,
+    attachedToClass: objectClass,
+    ...value.message
+  }}
+  {type}
+  on:click
+/>

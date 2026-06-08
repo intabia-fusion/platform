@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -20,24 +21,24 @@
     messageInFocus,
     editingMessageStore
   } from '@hcengineering/activity-resources'
-  import core, { Doc, generateId, getCurrentAccount, Ref, Space, Timestamp, Tx, TxCUD } from '@hcengineering/core'
-  import { DocNotifyContext, ReadState } from '@hcengineering/notification'
+  import core, { Doc, getCurrentAccount, Ref, Space, Tx, TxCUD, getDay, Timestamp, notEmpty } from '@hcengineering/core'
+  import { ReadState } from '@hcengineering/notification'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { addTxListener, getClient, removeTxListener } from '@hcengineering/presentation'
   import { ModernButton, Scroller, Loading } from '@hcengineering/ui'
   import { afterUpdate, onDestroy, onMount, tick } from 'svelte'
   import { ChatMessage } from '@hcengineering/chunter'
 
-  import { ChannelDataProvider, MessageMetadata } from '../channelDataProvider'
+  import { ChatViewport } from '../chatViewport'
   import chunter from '../plugin'
-  import { getScrollToDateOffset, getSelectedDate, jumpToDate, messageInView, readViewportMessages } from '../scroll'
+  import { messageInView } from '../scroll'
   import BlankView from './BlankView.svelte'
   import ChannelInput from './ChannelInput.svelte'
   import ActivityMessagesSeparator from './ChannelMessagesSeparator.svelte'
-  import JumpToDateSelector from './JumpToDateSelector.svelte'
   import HistoryLoading from './LoadingHistory.svelte'
+  import JumpToDateSelector from './JumpToDateSelector.svelte'
 
-  export let provider: ChannelDataProvider
+  export let viewport: ChatViewport
   export let object: Doc
   export let channel: Doc
   export let selectedMessageId: Ref<ActivityMessage> | undefined = undefined
@@ -45,7 +46,6 @@
   export let collection: string = 'messages'
   export let fullHeight = true
   export let freeze = false
-  export let loadMoreAllowed = true
   export let autofocus = true
   export let withInput: boolean = true
   export let readonly: boolean = false
@@ -64,17 +64,14 @@
   const readStateByDocStore = inboxClient.readStateByDoc
 
   // Stores
-  const metadataStore = provider.metadataStore
-  const messagesStore = provider.messagesStore
-  const isLoadingStore = provider.isLoadingStore
-  const isTailLoadedStore = provider.isTailLoaded
-  const newTimestampStore = provider.newTimestampStore
-  const datesStore = provider.datesStore
-  const canLoadNextForwardStore = provider.canLoadNextForwardStore
-  const isLoadingMoreStore = provider.isLoadingMoreStore
+  const messagesStore = viewport.messages
+  const isLoadingStore = viewport.isLoading
+  const isTailLoadedStore = viewport.isTailLoaded
+  const newTimestampStore = viewport.newTimestamp
+  const canLoadNextForward = viewport.canLoadNextForward
+  const isLoadingMoreStore = viewport.isLoadingMore
 
   const doc = object
-  const uuid = generateId()
 
   let messages: ActivityMessage[] = []
   let messagesCount = 0
@@ -87,10 +84,6 @@
   let scrollDiv: HTMLDivElement | undefined | null = undefined
   let contentDiv: HTMLDivElement | undefined | null = undefined
   let separatorDiv: HTMLDivElement | undefined | null = undefined
-
-  // Dates
-  let selectedDate: Timestamp | undefined = undefined
-  let dateToJump: Timestamp | undefined = undefined
 
   // Scrolling
   let isScrollInitialized = false
@@ -108,7 +101,31 @@
   let lastMsgBeforeFreeze: Ref<ActivityMessage> | undefined = undefined
   let needUpdateTimestamp = false
 
+  interface MessageGroup {
+    day: Timestamp
+    messages: ActivityMessage[]
+  }
+
+  let messageGroups: MessageGroup[] = []
+
   $: messages = $messagesStore
+
+  $: {
+    const groups: MessageGroup[] = []
+    const groupsMap = new Map<Timestamp, MessageGroup>()
+
+    for (const message of messages) {
+      const day = getDay(message.createdOn ?? message.modifiedOn ?? 0)
+      let group = groupsMap.get(day)
+      if (group === undefined) {
+        group = { day, messages: [] }
+        groupsMap.set(day, group)
+        groups.push(group)
+      }
+      group.messages.push(message)
+    }
+    messageGroups = groups
+  }
   $: void inboxClient.loadContextByDoc(doc._id)
   $: notifyContext = $contextByDocStore.get(doc._id) ?? undefined
   $: isThread = hierarchy.isDerived(doc._class, activity.class.ActivityMessage)
@@ -131,7 +148,7 @@
     isReadStateLoaded = true
   })
   $: readState = $readStateByDocStore.get(doc._id) ?? undefined
-
+  $: console.log('!!! readState', readState, getCurrentAccount().uuid)
   // const unsubscribe = inboxClient.inboxNotificationsByContext.subscribe(() => {
   //   if (notifyContext !== undefined && !isFreeze()) {
   //     recheckNotifications(notifyContext)
@@ -147,14 +164,26 @@
     if ($isLoadingStore || !isReadStateLoaded || !isScrollInitialized) {
       return
     }
-    const msgData = $metadataStore.find(({ _id }) => _id === selectedMessageId)
-    if (msgData !== undefined) {
-      const isReload = provider.jumpToMessage(msgData)
-      if (isReload) {
+    if (selectedMessageId !== undefined) {
+      void viewport.jumpToMessageId(selectedMessageId).then((isReload) => {
+        if (isReload) {
+          reinitializeScroll()
+        } else {
+          scrollToMessage()
+        }
+      })
+    }
+  }
+
+  function handleJumpToDate (e: CustomEvent<{ date: Timestamp }>): void {
+    const date = e.detail.date
+    if (date !== undefined) {
+      void viewport.jumpToDate(date).then((targetId) => {
+        if (targetId !== undefined) {
+          selectedMessageId = targetId
+        }
         reinitializeScroll()
-      } else {
-        scrollToMessage()
-      }
+      })
     }
   }
 
@@ -191,7 +220,6 @@
   function scrollToBottom (): void {
     if (scroller != null && scrollDiv != null && !isFreeze()) {
       scrollDiv.scroll({ top: 0, behavior: 'instant' })
-      updateSelectedDate()
     }
   }
 
@@ -239,7 +267,7 @@
   function scrollToStartOfNew (): void {
     if (scrollDiv == null || lastMsgBeforeFreeze === undefined) return
     if (needUpdateTimestamp || $newTimestampStore === undefined) {
-      void provider.updateNewTimestamp(notifyContext)
+      void viewport.syncUnreadMarker(readState)
       needUpdateTimestamp = false
     }
     const lastIndex = messages.findIndex(({ _id }) => _id === lastMsgBeforeFreeze)
@@ -301,6 +329,7 @@
       scrollToMessage()
       isScrollInitialized = true
     } else if (separatorIndex === -1) {
+      await wait()
       isScrollInitialized = true
       shouldScrollToNew = true
       isScrollAtBottom = true
@@ -312,9 +341,8 @@
 
     if (isScrollInitialized) {
       await wait()
-      updateSelectedDate()
       updateScrollData()
-      updateDownButtonVisibility($metadataStore, messages, scrollDiv)
+      updateDownButtonVisibility(messages, scrollDiv)
       loadMore()
     }
   }
@@ -324,33 +352,9 @@
     void initializeScroll($isLoadingStore, separatorDiv, separatorIndex)
   }
 
-  function handleJumpToDate (e: CustomEvent<{ date?: Timestamp }>): void {
-    const result = jumpToDate(e, provider, uuid, scrollDiv)
-
-    dateToJump = result.dateToJump
-
-    if (result.scrollOffset !== undefined && result.scrollOffset !== 0 && scroller != null) {
-      scroller?.scroll(result.scrollOffset)
-    }
-  }
-
-  function scrollToDate (date: Timestamp): void {
-    const offset = getScrollToDateOffset(date, uuid)
-
-    if (offset !== undefined && offset !== 0 && scroller != null) {
-      scroller?.scroll(offset)
-      dateToJump = undefined
-    }
-  }
-
-  function updateSelectedDate (): void {
-    if (isThread) return
-    selectedDate = getSelectedDate(provider, uuid, scrollDiv, contentDiv)
-  }
-
   function read (): void {
-    if (isFreeze() || !isScrollInitialized) return
-    readViewportMessages(messages, scrollDiv, contentDiv, notifyContext, readState)
+    // if (isFreeze() || !isScrollInitialized) return
+    // readViewportMessages(object._id, messages, scrollDiv, contentDiv, notifyContext, readState)
   }
 
   function updateScrollData (): void {
@@ -360,25 +364,10 @@
     isScrollAtBottom = Math.abs(scrollTop) < 50
   }
 
-  function canGroupChatMessages (message: ActivityMessage, prevMessage?: ActivityMessage): boolean {
-    let prevMetadata: MessageMetadata | undefined = undefined
+  $: updateDownButtonVisibility(messages, scrollDiv)
 
-    if (prevMessage === undefined) {
-      const metadata = $metadataStore
-      prevMetadata = metadata.find((_, index) => metadata[index + 1]?._id === message._id)
-    }
-
-    return canGroupMessages(message, prevMessage ?? prevMetadata)
-  }
-
-  $: updateDownButtonVisibility($metadataStore, messages, scrollDiv)
-
-  function updateDownButtonVisibility (
-    metadata: MessageMetadata[],
-    messages: ActivityMessage[],
-    scrollDiv?: HTMLDivElement | null
-  ): void {
-    if (metadata.length === 0 || messages.length === 0) {
+  function updateDownButtonVisibility (messages: ActivityMessage[], scrollDiv?: HTMLDivElement | null): void {
+    if (messages.length === 0) {
       isLatestMessageButtonVisible = false
       return
     }
@@ -398,13 +387,10 @@
     selectedMessageId = undefined
     messageInFocus.set(undefined)
 
-    const metadata = $metadataStore
-    const lastMetadata = metadata[metadata.length - 1]
-    const lastMessage = messages[messages.length - 1]
-
-    if (lastMetadata._id !== lastMessage._id) {
+    if (!$isTailLoadedStore) {
       separatorIndex = -1
-      provider.jumpToEnd(true)
+      // Jump directly to the latest tail, ignoring any unread message anchors
+      viewport.jumpToEnd(true)
       reinitializeScroll()
     } else {
       scrollToBottom()
@@ -414,23 +400,23 @@
   }
 
   // let forceRead = false
-  $: void forceReadContext(isScrollAtBottom, notifyContext)
-
-  async function forceReadContext (isScrollAtBottom: boolean, context?: DocNotifyContext): Promise<void> {
-    // if (context === undefined || !isScrollAtBottom || forceRead || isFreeze()) return
-    // const { lastUpdate = 0, lastView = 0 } = context
-    //
-    // if (lastView >= lastUpdate) return
-    //
-    // const notifications = $notificationsByContextStore.get(context._id) ?? []
-    // const unViewed = notifications.filter(({ isViewed }) => !isViewed)
-    //
-    // if (unViewed.length === 0) {
-    //   forceRead = true
-    //   await inboxClient.readDoc(object._id)
-    //   forceRead = false
-    // }
-  }
+  // $: void forceReadContext(isScrollAtBottom, notifyContext)
+  //
+  // async function forceReadContext (isScrollAtBottom: boolean, context?: DocNotifyContext): Promise<void> {
+  //   if (context === undefined || !isScrollAtBottom || forceRead || isFreeze()) return
+  //   const { lastUpdate = 0, lastView = 0 } = context
+  //
+  //   if (lastView >= lastUpdate) return
+  //
+  //   const notifications = $notificationsByContextStore.get(context._id) ?? []
+  //   const unViewed = notifications.filter(({ isViewed }) => !isViewed)
+  //
+  //   if (unViewed.length === 0) {
+  //     forceRead = true
+  //     await inboxClient.readDoc(object._id)
+  //     forceRead = false
+  //   }
+  // }
 
   function shouldLoadMoreUp (): boolean {
     if (scrollDiv == null) return false
@@ -446,13 +432,13 @@
   }
 
   function loadMore (): void {
-    if (!loadMoreAllowed || $isLoadingMoreStore || scrollDiv == null || !isScrollInitialized) {
+    if ($isLoadingMoreStore || scrollDiv == null || !isScrollInitialized) {
       return
     }
 
     const minMsgHeightPx = minMsgHeightRem * parseFloat(getComputedStyle(document.documentElement).fontSize)
     const maxMsgPerScreen = Math.ceil(scrollDiv.clientHeight / minMsgHeightPx)
-    const limit = Math.max(maxMsgPerScreen, provider.limit)
+    const limit = Math.max(maxMsgPerScreen, viewport.limit)
     const isLoadMoreUp = shouldLoadMoreUp()
     const isLoadMoreDown = shouldLoadMoreDown()
 
@@ -460,11 +446,11 @@
       backwardRequested = false
     }
 
-    if (isLoadMoreUp && !backwardRequested) {
+    if (isLoadMoreUp && !backwardRequested && viewport.canLoadMore('backward', messages[0]?.createdOn)) {
       shouldScrollToNew = false
       restoreScrollTop = scrollDiv?.scrollTop ?? 0
       restoreScrollHeight = 0
-      void provider.addNextChunk('backward', messages[0]?.createdOn, limit)
+      void viewport.loadMore('backward', messages[0]?.createdOn, limit)
       backwardRequested = true
     } else if (isLoadMoreUp && backwardRequested) {
       restoreScrollTop = scrollDiv?.scrollTop ?? 0
@@ -473,7 +459,7 @@
       restoreScrollHeight = scrollDiv?.scrollHeight ?? 0
       shouldScrollToNew = false
       isScrollAtBottom = false
-      void provider.addNextChunk('forward', messages[messages.length - 1]?.createdOn, limit)
+      void viewport.loadMore('forward', messages[messages.length - 1]?.createdOn, limit)
     }
   }
 
@@ -491,7 +477,6 @@
     backwardRequested = false
     restoreScrollHeight = 0
     restoreScrollTop = 0
-    dateToJump = 0
   }
 
   function scrollToNewMessages (): void {
@@ -520,9 +505,6 @@
 
     if (restoreScrollTop !== 0 || restoreScrollHeight !== 0) {
       void restoreScroll()
-    } else if (dateToJump !== undefined) {
-      await wait()
-      scrollToDate(dateToJump)
     } else if (shouldScrollToNew && prevCount > 0 && newCount > prevCount) {
       await wait()
       scrollToNewMessages()
@@ -532,22 +514,93 @@
     }
   }
 
-  let readTimeout: number | undefined
-  function handleScrollThrottled (): void {
-    if (readTimeout !== undefined) return
-    readTimeout = window.setTimeout(() => {
-      readTimeout = undefined
-      updateSelectedDate()
-      read()
-    }, 100)
+  let observer: IntersectionObserver | undefined
+  const observedMessages = new Set<string>()
+  let readTimeoutId: number | undefined
+
+  function handleMessageIntersect (msgId: string): void {
+    if (freeze || document.hidden || !isScrollInitialized) {
+      return
+    }
+    observedMessages.add(msgId)
+
+    if (readTimeoutId !== undefined) {
+      window.clearTimeout(readTimeoutId)
+    }
+
+    readTimeoutId = window.setTimeout(() => {
+      readTimeoutId = undefined
+      if (observedMessages.size === 0) return
+
+      const messagesList = Array.from(observedMessages)
+        .map((id) => messages.find((m) => m._id === id))
+        .filter(notEmpty)
+
+      observedMessages.clear()
+      if (messagesList.length === 0) return
+
+      const sorted = messagesList.sort((a, b) => (a.createdOn ?? 0) - (b.createdOn ?? 0))
+      console.log('sorted', sorted)
+      // await readMessages(sorted, notifyContext, readState)
+    }, 500)
+  }
+
+  function observeMessage (
+    node: HTMLElement,
+    message: ActivityMessage
+  ): { update: (newMessage: ActivityMessage) => void, destroy: () => void } {
+    const initObserver = (): void => {
+      if (observer !== undefined) return
+      if (scrollDiv == null) return
+
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            const msgId = entry.target.getAttribute('data-msg-id')
+            if (entry.isIntersecting) {
+              if (msgId != null) {
+                handleMessageIntersect(msgId)
+              }
+            }
+          }
+        },
+        {
+          root: scrollDiv,
+          threshold: 0.1
+        }
+      )
+    }
+
+    initObserver()
+
+    if (observer !== undefined) {
+      node.setAttribute('data-msg-id', message._id)
+      observer.observe(node)
+    } else {
+      window.setTimeout(() => {
+        initObserver()
+        if (observer !== undefined) {
+          node.setAttribute('data-msg-id', message._id)
+          observer.observe(node)
+        }
+      }, 50)
+    }
+
+    return {
+      update (newMessage: ActivityMessage) {
+        node.setAttribute('data-msg-id', newMessage._id)
+      },
+      destroy () {
+        observer?.unobserve(node)
+      }
+    }
   }
 
   async function handleScroll (): Promise<void> {
     updateScrollData()
-    updateDownButtonVisibility($metadataStore, messages, scrollDiv)
+    updateDownButtonVisibility(messages, scrollDiv)
     updateShouldScrollToNew()
     loadMore()
-    handleScrollThrottled()
   }
 
   function handleResize (): void {
@@ -585,13 +638,20 @@
 
   onDestroy(() => {
     // unsubscribe()
+    if (observer !== undefined) {
+      observer.disconnect()
+      observer = undefined
+    }
+    if (readTimeoutId !== undefined) {
+      window.clearTimeout(readTimeoutId)
+    }
     document.removeEventListener('visibilitychange', handleVisibilityChange)
     window.removeEventListener('focus', handleWindowFocus)
     window.removeEventListener('blur', handleWindowBlur)
     removeTxListener(newMessageTxListener)
   })
 
-  $: showBlankView = !($isLoadingStore || !isReadStateLoaded) && messages.length === 0 && !isThread
+  $: showBlankView = !($isLoadingStore || !isReadStateLoaded) && messages.length === 0
 
   export function editLastMessage (): void {
     if ($isLoadingStore || !isReadStateLoaded || !isScrollInitialized || !$isTailLoadedStore || scrollDiv == null) {
@@ -633,11 +693,6 @@
 </script>
 
 <div class="flex-col relative" class:h-full={fullHeight}>
-  {#if !isThread && messages.length > 0 && selectedDate}
-    <div class="selectedDate">
-      <JumpToDateSelector {selectedDate} fixed on:jumpToDate={handleJumpToDate} idPrefix={`${uuid}-`} />
-    </div>
-  {/if}
   {#if loadingOverlay}
     <div class="overlay">
       <Loading />
@@ -663,48 +718,44 @@
       />
     {/if}
 
-    {#if loadMoreAllowed && !isThread}
-      <HistoryLoading isLoading={$isLoadingMoreStore} />
-    {/if}
+    <HistoryLoading isLoading={$isLoadingMoreStore} />
 
     <slot name="header" />
 
-    {#each messages as message, index (message._id)}
-      {@const isSelected = message._id === selectedMessageId}
-      {@const canGroup = canGroupChatMessages(message, messages[index - 1])}
-      {#if separatorIndex === index}
-        <ActivityMessagesSeparator bind:element={separatorDiv} label={activity.string.New} />
-      {/if}
+    {#each messageGroups as group (group.day)}
+      <div class="day-group">
+        <JumpToDateSelector timestamp={group.day} on:jumpToDate={handleJumpToDate} />
+        {#each group.messages as message, index (message._id)}
+          {@const isSelected = message._id === selectedMessageId}
+          {@const canGroup = index > 0 && canGroupMessages(message, group.messages[index - 1])}
+          {#if separatorIndex !== -1 && messages[separatorIndex]?._id === message._id}
+            <ActivityMessagesSeparator bind:element={separatorDiv} label={activity.string.New} />
+          {/if}
 
-      {#if !isThread && message.createdOn && $datesStore.includes(message.createdOn)}
-        <JumpToDateSelector
-          idPrefix={`${uuid}-`}
-          visible={selectedDate !== message.createdOn}
-          selectedDate={message.createdOn}
-          on:jumpToDate={handleJumpToDate}
-        />
-      {/if}
-
-      <ActivityMessagePresenter
-        {doc}
-        value={message}
-        skipLabel={isThread || isChunterSpace}
-        hideLink
-        hoverStyles="filledHover"
-        attachmentImageSize="x-large"
-        type={canGroup ? 'short' : 'default'}
-        isHighlighted={isSelected}
-        shouldScroll={false}
-        {readonly}
-        {onReply}
-      />
+          <div use:observeMessage={message} class="activityMessage" id={message._id}>
+            <ActivityMessagePresenter
+              {doc}
+              value={message}
+              skipLabel={isThread || isChunterSpace}
+              hideLink
+              hoverStyles="filledHover"
+              attachmentImageSize="x-large"
+              type={canGroup ? 'short' : 'default'}
+              isHighlighted={isSelected}
+              shouldScroll={false}
+              {readonly}
+              {onReply}
+            />
+          </div>
+        {/each}
+      </div>
     {/each}
 
     {#if messages.length > 0}
       <div class="h-4" />
     {/if}
 
-    {#if loadMoreAllowed && $canLoadNextForwardStore}
+    {#if $canLoadNextForward}
       <HistoryLoading isLoading={$isLoadingMoreStore} />
     {/if}
     {#if !fixedInput && withInput}
@@ -719,7 +770,7 @@
       />
     {/if}
   </Scroller>
-  {#if !isThread && isLatestMessageButtonVisible}
+  {#if isLatestMessageButtonVisible}
     <div class="down-button absolute">
       <ModernButton
         label={chunter.string.LatestMessages}
@@ -749,6 +800,12 @@
 {/if}
 
 <style lang="scss">
+  .day-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
   .overlay {
     width: 100%;
     height: 100%;

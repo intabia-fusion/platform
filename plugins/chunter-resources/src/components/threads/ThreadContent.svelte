@@ -52,12 +52,7 @@
     if (chatViewport !== undefined) return
 
     const readState = (await inboxClient.getReadState(messageId)) ?? undefined
-    chatViewport = new ChatViewport(
-      readState,
-      messageId,
-      selectedMessageId,
-      100
-    )
+    chatViewport = new ChatViewport(readState, messageId, selectedMessageId, 100)
   }
 
   $: messagesStore = chatViewport?.messages

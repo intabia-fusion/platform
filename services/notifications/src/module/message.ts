@@ -496,9 +496,7 @@ function pullDUMFromContext (
   result: Result
 ): void {
   const exists = hasMessageNotification(context, objectId)
-  const unread = context.unreadMessages.find(
-    (it) => isUnreadMessageId(it) && it.id === objectId
-  )
+  const unread = context.unreadMessages.find((it) => isUnreadMessageId(it) && it.id === objectId)
 
   if (exists || unread != null) {
     const updateOps: DocumentUpdate<DocNotifyContext> = { $pull: {} }

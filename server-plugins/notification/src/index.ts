@@ -54,7 +54,10 @@ export type TypeMatchFunc = (
 
 export type TypeMatchFuncResource = Resource<TypeMatchFunc>
 export interface CreateNotificationResult {
-  notification: Omit<CommonNotification, 'id' | 'type' | 'createdOn' | 'createdBy' | 'intlParamsNotLocalized' | 'intlParams'>
+  notification: Omit<
+  CommonNotification,
+  'id' | 'type' | 'createdOn' | 'createdBy' | 'intlParamsNotLocalized' | 'intlParams'
+  >
   intl?: Partial<NotificationIntl>
 }
 export type CreateTxNotificationFunc = (

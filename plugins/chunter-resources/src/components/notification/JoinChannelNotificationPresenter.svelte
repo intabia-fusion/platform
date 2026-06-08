@@ -26,8 +26,13 @@
   export let type: ActivityMessagePreviewType = 'full'
 </script>
 
-<BaseMessagePreview intlLabel={chunter.string.YouJoinedChannel} {type} message={{
-  attachedTo: objectId,
-  attachedToClass: objectClass,
-  ...value.message
-}} on:click />
+<BaseMessagePreview
+  intlLabel={chunter.string.YouJoinedChannel}
+  {type}
+  message={{
+    attachedTo: objectId,
+    attachedToClass: objectClass,
+    ...value.message
+  }}
+  on:click
+/>

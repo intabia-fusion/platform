@@ -294,6 +294,7 @@ export type UnreadMessage = UnreadMessageId | UnreadMessageChunk
 export interface UnreadMention {
   id: string
   messageId?: Ref<ActivityMessage>
+  messageCreatedOn?: Timestamp
 }
 
 export interface UnreadReaction {

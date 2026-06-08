@@ -460,7 +460,7 @@ export class ChatViewport implements IChatViewport {
       async (res) => {
         if (version !== this.viewportVersion) return
         const filtered = skipIds !== undefined ? res.filter(({ _id }) => !skipIds.includes(_id)) : res
-         this.liveTail.set(filtered.reverse())
+        this.liveTail.set(filtered.reverse())
         this.isTailLoaded.set(true)
       },
       {

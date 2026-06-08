@@ -34,7 +34,7 @@ import core, {
 } from '@hcengineering/core'
 import activity, { ActivityMessage } from '@hcengineering/activity'
 import { RestClient } from '@hcengineering/api-client'
-import notification, { TxNotificationType, QueueNotificationMessage } from '@hcengineering/notification'
+import notification, { TxNotificationType, QueueNotificationMessage, ReadState } from '@hcengineering/notification'
 import { StorageAdapter } from '@hcengineering/storage'
 import { PlatformError, unknownError } from '@hcengineering/platform'
 import {
@@ -61,6 +61,7 @@ import { Client, Result, TxCache } from './types'
 import { emptyResult, getEmptyTxCache, getResultTxes, isEmptyResult } from './utils/utils'
 import { handleMessage } from './module/message'
 import { handleTxNotification } from './module/tx'
+import { handleReadState } from './module/read'
 
 class Workspace {
   public readonly cache: WorkspaceCache
@@ -113,6 +114,10 @@ class Workspace {
 
     if (this.hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) {
       await handleMessage(this.client, this.cache, txCache, result, tx as TxCUD<ActivityMessage>)
+    }
+
+    if (this.hierarchy.isDerived(tx.objectClass, notification.class.ReadState)) {
+      await handleReadState(this.client, this.cache, result, tx as TxCUD<ReadState>)
     }
 
     if (!isEmptyResult(result)) {

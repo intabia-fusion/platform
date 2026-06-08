@@ -1,66 +1,130 @@
-// async processReadState (_tx: TxCUD<ReadState>): Promise<TxCUD<Doc>[]> {
-//   if (_tx._class !== core.class.TxUpdateDoc) return []
 //
-//   const tx = _tx as TxUpdateDoc<ReadState>
-//   if (tx.attachedTo == null) return []
+// Copyright © 2026 Intabia Fusion.
 //
-//   const res: TxCUD<Doc>[] = []
-//   const contexts = await this.cache.getContexts(tx.attachedTo)
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
-//   for (const [key, value] of Object.entries(tx.operations)) {
-//     const ctx = contexts.filter((it) => it.user === key)
-//     if (ctx.length === 0) continue
-//     const ts = (value as ReadPosition)?.timestamp ?? 0
-//     if (ts === 0) continue
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //
-//     for (const context of ctx) {
-//       const current = context.lastView ?? 0
-//       if (current === ts) continue
-//       context.lastView = ts
-//       res.push(
-//         this.txFactory.createTxUpdateDoc(context._class, context.space, context._id, {
-//           lastView: ts
-//         })
-//       )
-//     }
-//   }
+// See the License for the specific language governing permissions and
+// limitations under the License.
 //
-//   return res
-// }
 
-// import activity, { ActivityMessage } from '@hcengineering/activity/lib'
-// import type { TriggerControl } from '@hcengineering/server-core/lib'
-// import { SortingOrder, Tx } from '@hcengineering/core'
-// import notification from '@hcengineering/notification/lib'
-//
-// async function OnActivityMessageRemove(message: ActivityMessage, control: TriggerControl): Promise<Tx[]> {
-//   if (control.removedMap.has(message.attachedTo)) return []
-//
-//   const readState = (
-//     await control.findAll(control.ctx, notification.class.ReadState, {
-//       objectId: message.attachedTo,
-//       lastMessageId: message._id
-//     })
-//   )[0]
-//   if (readState == null) return []
-//
-//   const res: Tx[] = []
-//
-//   const lastMessage = (
-//     await control.findAll(
-//       control.ctx,
-//       activity.class.ActivityMessage,
-//       { attachedTo: message.attachedTo },
-//       { sort: { createdOn: SortingOrder.Descending }, limit: 1 }
-//     )
-//   )[0]
-//   if (lastMessage === undefined) return res
-//
-//   res.push(
-//     control.txFactory.createTxUpdateDoc(readState._class, readState.space, readState._id, {
-//       lastUpdate: lastMessage.createdOn ?? lastMessage.modifiedOn
-//     })
-//   )
-//
-//   return res
-// }
+import core, { AccountUuid, DocumentUpdate, notEmpty, Timestamp, TxCUD, TxUpdateDoc } from '@hcengineering/core'
+import {
+  DocNotifyContext,
+  ReadState,
+  ReadPosition,
+  isUnreadMessageId,
+  UnreadMessageId,
+  isUnreadMessageChunk,
+  UnreadMessageChunk
+} from '@hcengineering/notification'
+
+import { Client, Result } from '../types'
+import Cache from '../cache'
+
+const skipKeys = [
+  '_id',
+  '_class',
+  'space',
+  'createdOn',
+  'modifiedOn',
+  'createdBy',
+  'modifiedBy',
+  'latestMessageId',
+  'latestMessageTimestamp',
+  'attachedTo',
+  'attachedToClass',
+  'collection'
+]
+
+export async function handleReadState (
+  client: Client,
+  cache: Cache,
+  result: Result,
+  tx: TxCUD<ReadState>
+): Promise<void> {
+  if (tx._class !== core.class.TxUpdateDoc) return
+
+  const updateTx = tx as TxUpdateDoc<ReadState>
+  const updateKeys = Object.keys(updateTx.operations).filter((key) => !skipKeys.includes(key))
+
+  if (updateKeys.length === 0) return
+
+  const readState = await cache.getReadState(updateTx.objectId)
+  if (readState == null) return
+
+  const contexts = await cache.getContexts(readState.attachedTo)
+
+  for (const [key, value] of Object.entries(updateTx.operations)) {
+    if (skipKeys.includes(key)) continue
+
+    const account = key as AccountUuid
+    const position = value as ReadPosition | null | undefined
+
+    const ts = position?.timestamp ?? 0
+    if (ts === 0) continue
+
+    const context = contexts.find((it) => it.user === account)
+    if (context == null) continue
+    await readContext(client, result, context, ts)
+  }
+}
+
+async function readContext (client: Client, result: Result, context: DocNotifyContext, ts: Timestamp): Promise<void> {
+  const unreadMessagesToRead: UnreadMessageId[] = []
+  const unreadChunksToRead: UnreadMessageChunk[] = []
+
+  for (const unread of context.unreadMessages ?? []) {
+    if (isUnreadMessageId(unread)) {
+      if (unread.createdOn <= ts) {
+        unreadMessagesToRead.push(unread)
+      }
+    } else if (isUnreadMessageChunk(unread)) {
+      if (unread.to <= ts) {
+        unreadChunksToRead.push(unread)
+      }
+    }
+  }
+
+  const unreadMentionsToRead = (context.unreadMentions ?? []).filter(
+    (mention) => mention.messageId != null && (mention.messageCreatedOn ?? 0) <= ts
+  )
+
+  if (unreadMessagesToRead.length > 0 || unreadMentionsToRead.length > 0) {
+    const decrease = unreadMessagesToRead.filter((it) => it.notified).length
+    const updateOps: DocumentUpdate<DocNotifyContext> = {
+      $pull: {
+        ...(unreadMessagesToRead.length > 0
+          ? { unreadMessages: { id: { $in: unreadMessagesToRead.map((it) => it.id) } } }
+          : {}),
+        ...(unreadMentionsToRead.length > 0
+          ? { unreadMentions: { messageId: { $in: unreadMentionsToRead.map((it) => it.messageId).filter(notEmpty) } } }
+          : {})
+      },
+      ...(decrease > 0 ? { $inc: { unreadCount: -decrease } } : {})
+    }
+
+    result.updateContextTx.push(
+      client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, updateOps)
+    )
+  }
+
+  if (unreadChunksToRead.length > 0) {
+    const decrease = unreadChunksToRead.reduce((acc, it) => acc + (it.notifiedCount ?? 0), 0)
+
+    const updateOps: DocumentUpdate<DocNotifyContext> = {
+      $pull: {
+        unreadMessages: { to: { $in: unreadChunksToRead.map((it) => it.to) } }
+      },
+      ...(decrease > 0 ? { $inc: { unreadCount: -decrease } } : {})
+    }
+    result.updateContextTx.push(
+      client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, updateOps)
+    )
+  }
+}

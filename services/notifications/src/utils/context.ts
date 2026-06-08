@@ -78,7 +78,7 @@ export function hasUnreadMessage (context: DocNotifyContext, messageId: Ref<Acti
 export function getNotificationsByMessage (
   context: DocNotifyContext,
   messageId: Ref<ActivityMessage>
- ): ContextNotification[] {
+): ContextNotification[] {
   return context.latestNotifications.filter((it) => it.type !== 'common' && it.messageId === messageId)
 }
 

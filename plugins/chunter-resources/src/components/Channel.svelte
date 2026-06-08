@@ -69,11 +69,7 @@
   async function updateViewport (attachedTo: Ref<Doc>, selectedMessageId?: Ref<ActivityMessage>): Promise<void> {
     if (chatViewport === undefined) {
       const read = await NotificationClientImpl.getClient().getReadState(attachedTo)
-      chatViewport = new ChatViewport(
-        read,
-        attachedTo,
-        selectedMessageId
-      )
+      chatViewport = new ChatViewport(read, attachedTo, selectedMessageId)
     }
   }
 </script>

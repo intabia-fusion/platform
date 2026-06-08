@@ -32,7 +32,9 @@ export function getUnreadMessageCount (
   if (_contexts == null) return 0
   const contexts = Array.isArray(_contexts) ? _contexts : [_contexts]
 
-  return contexts.flatMap((it) => it.unreadMessages).reduce((acc, it) => acc + (isUnreadMessageChunk(it) ? it.count : 1), 0)
+  return contexts
+    .flatMap((it) => it.unreadMessages)
+    .reduce((acc, it) => acc + (isUnreadMessageChunk(it) ? it.count : 1), 0)
 }
 
 export function isUnreadMessageId (unread: UnreadMessage): unread is UnreadMessageId {

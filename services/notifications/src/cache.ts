@@ -377,6 +377,24 @@ class WorkspaceCache {
   }
 
   /**
+   * Fetches read state document by its own ID.
+   */
+  public async getReadState (readStateId: Ref<ReadState>): Promise<ReadState | undefined> {
+    const attachedTo = this.readStateToDocMap.get(readStateId)
+    if (attachedTo !== undefined) {
+      const cached = this.readStatesByDocCache.get(attachedTo)
+      if (cached !== undefined) return cached
+    }
+
+    const readState = await this.client.findOne<ReadState>(notification.class.ReadState, { _id: readStateId })
+    if (readState !== undefined) {
+      this.readStatesByDocCache.set(readState.attachedTo, readState)
+      this.readStateToDocMap.set(readState._id, readState.attachedTo)
+    }
+    return readState
+  }
+
+  /**
    * Searches for a PersonSpace document by its reference ID.
    */
   public async findPersonSpace (_id: Ref<PersonSpace>): Promise<PersonSpace | undefined> {
