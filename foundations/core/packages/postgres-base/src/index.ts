@@ -32,11 +32,8 @@ export interface DBClient {
 
 export function createDBClient (client: postgres.Sql, release: () => void = () => {}): DBClient {
   return {
-    execute: async (query, parameters) => {
-      console.log(query)
-      console.log(doFetchTypes ? parameters : convertArrayParams(parameters))
-      return await client.unsafe(query, doFetchTypes ? parameters : convertArrayParams(parameters), getPrepare())
-    },
+    execute: (query, parameters) =>
+      client.unsafe(query, doFetchTypes ? parameters : convertArrayParams(parameters), getPrepare()),
     release,
     reserve: async () => {
       const reserved = await client.reserve()
