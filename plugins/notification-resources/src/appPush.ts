@@ -15,7 +15,7 @@
 
 import notification, { type AppPushNotification } from '@hcengineering/notification'
 import { AccountRole, getCurrentAccount } from '@hcengineering/core'
-import { createQuery, getClient } from '@hcengineering/presentation'
+import { createQuery, getClient, onClient } from '@hcengineering/presentation'
 import { deviceOptionsStore, desktopPlatform } from '@hcengineering/ui'
 import { get, writable } from 'svelte/store'
 
@@ -31,7 +31,14 @@ webPushAllowed.subscribe((allowed) => {
   void check(allowed)
 })
 
+onClient(() => {
+  void check(get(webPushAllowed))
+})
+
 async function check (webPushAllowed: boolean): Promise<void> {
+  const me = getCurrentAccount()
+  if (me == null) return
+
   if (get(deviceOptionsStore).isMobile) {
     query.unsubscribe()
     return
@@ -56,7 +63,7 @@ async function check (webPushAllowed: boolean): Promise<void> {
   query.query(
     notification.class.AppPushNotification,
     {
-      user: getCurrentAccount().uuid
+      user: me.uuid
     },
     (res) => {
       const newItems = res.filter((item) => !shownIds.has(item._id))
