@@ -33,7 +33,7 @@ import {
   WorkspaceInfoWithStatus
 } from '@hcengineering/core'
 import {
-  AppNotification,
+  AppPushNotification,
   DocNotifyContext,
   MentionNotification,
   NotificationIntl,
@@ -94,7 +94,7 @@ export interface Result {
   updateContextTx: TxUpdateDoc<DocNotifyContext>[]
   updateOpContextTx: TxUpdateDoc<DocNotifyContext>[]
   createContextTx: TxCreateDoc<DocNotifyContext>[]
-  createAppNotificationTx: TxCreateDoc<AppNotification>[]
+  createAppPushNotificationTx: TxCreateDoc<AppPushNotification>[]
 
   createUserMentionInfoTx: TxCreateDoc<UserMentionInfo>[]
   updateUserMentionInfoTx: TxUpdateDoc<UserMentionInfo>[]

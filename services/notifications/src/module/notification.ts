@@ -29,7 +29,7 @@ import notificationPlugin, {
   NotificationTemplate,
   QueueNotificationMessage
 } from '@hcengineering/notification'
-import { Class, Doc, Ref, Space } from '@hcengineering/core'
+import { Class, Doc, generateId, Ref, Space } from '@hcengineering/core'
 import { Receiver } from '@hcengineering/server-notification'
 import { ActivityMessage } from '@hcengineering/activity'
 import { translate, IntlString } from '@hcengineering/platform'
@@ -93,7 +93,8 @@ export async function pushNotification (
 
   const { title, body } = await translateNotification(intl, receiver.language)
   const domain = getDomain(client)
-  const url = getNotificationUrl(client, notification, objectId, objectClass)
+  const contextId = context?._id ?? generateId<DocNotifyContext>()
+  const url = getNotificationUrl(client, contextId, notification, objectId, objectClass)
 
   result.queueMessages.push({
     id: notification.id,
@@ -144,6 +145,7 @@ export async function pushNotification (
     result.updateOpContextTx.push(updateOpTx)
   } else {
     const createTx = getCreateContextTx(
+      contextId,
       objectId,
       objectClass,
       objectSpace,
@@ -168,39 +170,45 @@ export async function pushNotification (
     }
   }
 
-  createAppPushNotification(client, result, data)
+  createAppPushNotification(client, result, data, contextId)
 }
 
-function createAppPushNotification (client: Client, result: Result, data: CreateNotificationData): void {
+function createAppPushNotification (
+  client: Client,
+  result: Result,
+  data: CreateNotificationData,
+  contextId: Ref<DocNotifyContext>
+): void {
   const { txFactory } = client
   const { notification, notifyProviders, objectId, objectClass, receiver, intl } = data
   const shouldPush = (notifyProviders[notificationPlugin.providers.PushNotificationProvider]?.length ?? 0) > 0
 
   if (shouldPush) {
     const messageId: Ref<ActivityMessage> | undefined = getNotificationMessageId(notification)
-    const { path, query } = getNotificationLocation(client, notification, objectId, objectClass)
+    const { path, query } = getNotificationLocation(client, contextId, notification, objectId, objectClass)
 
     const soundAlert = (notifyProviders[notificationPlugin.providers.SoundNotificationProvider]?.length ?? 0) > 0
 
-    const appNotificationTx = txFactory.createTxCreateDoc(notificationPlugin.class.AppNotification, receiver.space, {
-      account: receiver.account,
-      title: intl.titleIntl,
-      body: intl.bodyIntl,
-      intlParams: intl.intlParams,
-      intlParamsNotLocalized: intl.intlParamsNotLocalized,
-      sender: notification.createdBy,
-      tag: notification.id,
-      objectId,
-      objectClass,
-      messageId,
-      onClickLocation: {
-        path,
-        query
-      },
-      soundAlert
-    })
+    const appNotificationTx = txFactory.createTxCreateDoc(
+      notificationPlugin.class.AppPushNotification,
+      receiver.space,
+      {
+        ...intl,
+        account: receiver.account,
+        sender: notification.createdBy,
+        tag: notification.id,
+        objectId,
+        objectClass,
+        messageId,
+        onClickLocation: {
+          path,
+          query
+        },
+        soundAlert
+      }
+    )
 
-    result.createAppNotificationTx.push(appNotificationTx)
+    result.createAppPushNotificationTx.push(appNotificationTx)
   }
 }
 

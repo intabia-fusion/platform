@@ -22,7 +22,8 @@ import core, {
   TxProcessor,
   DocumentUpdate,
   Doc,
-  Ref
+  Ref,
+  generateId
 } from '@hcengineering/core'
 import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import notification, {
@@ -433,6 +434,7 @@ export async function addUnreadMessage (
   } else {
     const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
     const createTx = getCreateContextTx(
+      generateId(),
       doc._id,
       doc._class,
       doc.space,

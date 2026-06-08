@@ -22,7 +22,7 @@ export function emptyResult (): Result {
     updateContextTx: [],
     updateOpContextTx: [],
     createContextTx: [],
-    createAppNotificationTx: [],
+    createAppPushNotificationTx: [],
 
     queueMessages: [],
 
@@ -40,7 +40,7 @@ export function getResultTxes (result: Result): TxCUD<Doc>[] {
     ...result.createUserMentionInfoTx,
     ...result.updateUserMentionInfoTx,
     ...result.removeUserMentionInfoTx,
-    ...result.createAppNotificationTx
+    ...result.createAppPushNotificationTx
   ].sort((a, b) => a.modifiedOn - b.modifiedOn)
 }
 
@@ -49,7 +49,7 @@ export function isEmptyResult (result: Result): boolean {
     result.updateContextTx.length === 0 &&
     result.updateOpContextTx.length === 0 &&
     result.createContextTx.length === 0 &&
-    result.createAppNotificationTx.length === 0 &&
+    result.createAppPushNotificationTx.length === 0 &&
     result.queueMessages.length === 0 &&
     result.createUserMentionInfoTx.length === 0 &&
     result.updateUserMentionInfoTx.length === 0 &&

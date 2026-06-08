@@ -36,13 +36,9 @@ import { Preference } from '@hcengineering/preference'
 import { PersonSpace } from '@hcengineering/contact'
 import { Readable } from 'svelte/store'
 
-export interface AppNotification extends Doc {
+export interface AppPushNotification extends Doc, NotificationIntl {
   account: AccountUuid
-  title: IntlString
-  body: IntlString
-  intlParams: Record<string, any>
-  intlParamsNotLocalized?: Record<string, IntlString>
-  onClickLocation?: Location
+  onClickLocation: Location
   sender: PersonId
   tag: string
   messageId?: Ref<ActivityMessage>

@@ -173,7 +173,7 @@ function addWorkerListener (): void {
 
 async function cleanTag (tag: string): Promise<void> {
   const client = getClient()
-  const notifications = await client.findAll(notification.class.AppNotification, {
+  const notifications = await client.findAll(notification.class.AppPushNotification, {
     tag
   })
   for (const notification of notifications) {

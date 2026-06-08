@@ -104,7 +104,7 @@ class Workspace {
     this.cache.tx(tx)
 
     if (this.hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) return
-    if (this.hierarchy.isDerived(tx.objectClass, notification.class.AppNotification)) return
+    if (this.hierarchy.isDerived(tx.objectClass, notification.class.AppPushNotification)) return
     if (this.hierarchy.isDerived(tx.objectClass, activity.class.ActivityReference)) return
 
     const result: Result = emptyResult()

@@ -16,9 +16,8 @@
 import { DownloadItem } from '@hcengineering/desktop-downloads'
 import { ScreenSource } from '@hcengineering/love'
 import { Plugin } from '@hcengineering/platform'
-import { Ref, Class, Doc } from '@hcengineering/core'
 import { IpcRendererEvent } from 'electron'
-import { ActivityMessage } from '@hcengineering/activity'
+import { Location } from '@hcengineering/ui'
 
 export interface Config {
   ACCOUNTS_URL: string
@@ -130,11 +129,7 @@ export interface NotificationParams {
   body: string
   silent: boolean
   application: Plugin
-  cardId?: string
-  objectId?: Ref<Doc>
-  objectClass?: Ref<Class<Doc>>
-  messageId?: Ref<ActivityMessage>
-  threadId?: Ref<ActivityMessage>
+  onClickLocation: Location
 }
 
 export const MenuBarActions = [

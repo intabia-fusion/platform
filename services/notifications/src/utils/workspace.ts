@@ -15,7 +15,12 @@
 
 import { getAccountClient } from '@hcengineering/server-client'
 import { type Class, concatLink, Doc, Ref, WorkspaceInfoWithStatus } from '@hcengineering/core'
-import { ContextNotification, getNotificationMessageId, notificationId } from '@hcengineering/notification'
+import {
+  ContextNotification,
+  DocNotifyContext,
+  getNotificationMessageId,
+  notificationId
+} from '@hcengineering/notification'
 import { getMetadata } from '@hcengineering/platform'
 import serverCore from '@hcengineering/server-core'
 
@@ -67,12 +72,13 @@ export function getTransactorApiEndpoint (ws: { endpoint: string }): string {
 
 export function getNotificationUrl (
   client: Client,
+  contextId: Ref<DocNotifyContext>,
   notification: ContextNotification,
   objectId: Ref<Doc>,
   objectClass: Ref<Class<Doc>>
 ): string {
   const frontUrl = getFrontUrl(client)
-  const { path, query } = getNotificationLocation(client, notification, objectId, objectClass)
+  const { path, query } = getNotificationLocation(client, contextId, notification, objectId, objectClass)
 
   let url = concatLink(frontUrl, path.join('/'))
   if (query != null) {
@@ -83,14 +89,16 @@ export function getNotificationUrl (
 
 export function getNotificationLocation (
   client: Client,
+  contextId: Ref<DocNotifyContext>,
   notification: ContextNotification,
   objectId: Ref<Doc>,
   objectClass: Ref<Class<Doc>>
-): { path: string[], query?: Record<string, string> } {
+): { path: string[], query: Record<string, string> } {
   const objectEncoded = encodeURIComponent(`${objectId}|${objectClass}`)
   const messageId = getNotificationMessageId(notification)
   const path = ['workbench', client.workspace.url, notificationId, objectEncoded]
-  const query = messageId != null ? { message: messageId } : undefined
+  const query: Record<string, string> =
+    messageId != null ? { message: messageId, context: contextId } : { context: contextId }
   return { path, query }
 }
 

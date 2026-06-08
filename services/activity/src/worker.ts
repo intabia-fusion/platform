@@ -83,7 +83,7 @@ export class Worker {
     const tx = _tx as TxCUD<Doc>
 
     if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) return
-    if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.AppNotification)) return
+    if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.AppPushNotification)) return
     if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.PushSubscription)) return
     if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.ReadState)) return
 

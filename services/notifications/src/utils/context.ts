@@ -144,10 +144,11 @@ export function getUpdateOpContextTx (
 }
 
 /**
- * Returns (or creates) a create tx for a new context in the result set.
+ * Creates a create tx for a new context in the result set.
  * Deduplicates by receiver account.
  */
 export function getCreateContextTx (
+  _id: Ref<DocNotifyContext>,
   objectId: Ref<Doc>,
   objectClass: Ref<Class<Doc>>,
   objectSpace: Ref<Space>,
@@ -156,23 +157,25 @@ export function getCreateContextTx (
   factory: TxFactory,
   display: ObjectDisplayData
 ): TxCreateDoc<DocNotifyContext> {
-  const existing = result.createContextTx.find((it) => it.attributes.user === receiver.account)
-  if (existing != null) return existing
-
-  const tx = factory.createTxCreateDoc(notification.class.DocNotifyContext, receiver.space, {
-    ...display,
-    user: receiver.account,
-    objectId,
-    objectClass,
-    objectSpace,
-    latestNotifications: [],
-    unreadReactions: [],
-    unreadMentions: [],
-    unreadCommons: [],
-    unreadMessages: [],
-    unreadCount: 0,
-    lastNotify: 0
-  })
+  const tx = factory.createTxCreateDoc(
+    notification.class.DocNotifyContext,
+    receiver.space,
+    {
+      ...display,
+      user: receiver.account,
+      objectId,
+      objectClass,
+      objectSpace,
+      latestNotifications: [],
+      unreadReactions: [],
+      unreadMentions: [],
+      unreadCommons: [],
+      unreadMessages: [],
+      unreadCount: 0,
+      lastNotify: 0
+    },
+    _id
+  )
 
   result.createContextTx.push(tx)
   return tx

@@ -45,6 +45,7 @@ export * from './utils'
 export * from './client'
 export * from './stores'
 export * from './actions'
+export * from './appPush'
 
 export { default as AppNotificator } from './components/AppNotificator.svelte'
 export { default as NotifyMarker } from './components/NotifyMarker.svelte'

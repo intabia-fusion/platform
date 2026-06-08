@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Avatar, getPersonByPersonIdCb } from '@hcengineering/contact-resources'
   import { Class, Doc, Ref } from '@hcengineering/core'
-  import { AppNotification } from '@hcengineering/notification'
+  import { AppPushNotification } from '@hcengineering/notification'
   import { Button, navigate, Notification as PlatformNotification, NotificationToast } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import chunter, { ThreadMessage } from '@hcengineering/chunter'
@@ -20,7 +20,7 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
-  $: value = notification.params?.value as AppNotification
+  $: value = notification.params?.value as AppPushNotification
 
   let sender: Person | undefined
   $: if (value.sender !== undefined) {
@@ -32,7 +32,6 @@
   }
 
   async function openChannelInSidebar (): Promise<void> {
-    if (!value.onClickLocation) return
     const { onClickLocation } = value
     let _id: Ref<Doc> | undefined = value.objectId
     let _class: Ref<Class<Doc>> | undefined = value.objectClass

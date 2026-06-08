@@ -65,7 +65,7 @@ import {
   type ContextNotification,
   type NotificationAppearancePreference,
   type DocNotifyContext,
-  type AppNotification,
+  type AppPushNotification,
   type PushSubscription,
   type PushSubscriptionKeys,
   type NotificationType,
@@ -100,15 +100,15 @@ export { notificationOperation } from './migration'
 export { notification as default }
 export { generateClassNotificationTypes } from './notifications'
 
-@Model(notification.class.AppNotification, core.class.Doc, DOMAIN_TRANSIENT)
-export class TAppNotification extends TDoc implements AppNotification {
+@Model(notification.class.AppPushNotification, core.class.Doc, DOMAIN_TRANSIENT)
+export class TAppPushNotification extends TDoc implements AppPushNotification {
   tag!: string
-  title!: IntlString
-  body!: IntlString
-  intlParams!: Record<string, any>
+  titleIntl!: IntlString
+  bodyIntl!: IntlString
+  intlParams!: { senderName: string, title?: string } & Record<string, string>
   intlParamsNotLocalized?: Record<string, IntlString>
   sender!: PersonId
-  onClickLocation?: Location | undefined
+  onClickLocation!: Location
   account!: AccountUuid
   messageId?: Ref<ActivityMessage>
   objectId!: Ref<Doc>
@@ -313,7 +313,7 @@ export class TNotificationAppearancePreference extends TPreference implements No
 
 export function createModel (builder: Builder): void {
   builder.createModel(
-    TAppNotification,
+    TAppPushNotification,
     TNotificationType,
     TMessageNotificationType,
     TTxNotificationType,
@@ -336,7 +336,7 @@ export function createModel (builder: Builder): void {
     TDocNotificationSetting
   )
 
-  builder.mixin(notification.class.AppNotification, core.class.Class, core.mixin.TransientConfiguration, {
+  builder.mixin(notification.class.AppPushNotification, core.class.Class, core.mixin.TransientConfiguration, {
     broadcastOnly: true
   })
 
@@ -375,7 +375,7 @@ export function createModel (builder: Builder): void {
     presenter: notification.component.DocNotifyContextPresenter
   })
 
-  builder.mixin(notification.class.AppNotification, core.class.Class, core.mixin.TxAccessLevel, {
+  builder.mixin(notification.class.AppPushNotification, core.class.Class, core.mixin.TxAccessLevel, {
     removeAccessLevel: AccountRole.Guest
   })
 
@@ -461,8 +461,8 @@ export function createModel (builder: Builder): void {
     }
   )
 
-  builder.mixin<Class<AppNotification>, IndexingConfiguration<AppNotification>>(
-    notification.class.AppNotification,
+  builder.mixin<Class<AppPushNotification>, IndexingConfiguration<AppPushNotification>>(
+    notification.class.AppPushNotification,
     core.class.Class,
     core.mixin.IndexConfiguration,
     {
@@ -471,8 +471,8 @@ export function createModel (builder: Builder): void {
     }
   )
 
-  builder.mixin<Class<AppNotification>, IndexingConfiguration<AppNotification>>(
-    notification.class.AppNotification,
+  builder.mixin<Class<AppPushNotification>, IndexingConfiguration<AppPushNotification>>(
+    notification.class.AppPushNotification,
     core.class.Class,
     core.mixin.IndexConfiguration,
     {

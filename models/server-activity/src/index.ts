@@ -88,7 +88,11 @@ export function createModel (builder: Builder): void {
     txMatch: {
       objectClass: { $ne: activity.class.ActivityReference },
       attachedToClass: {
-        $nin: [notification.class.ReadState, notification.class.DocNotifyContext, notification.class.AppNotification]
+        $nin: [
+          notification.class.ReadState,
+          notification.class.DocNotifyContext,
+          notification.class.AppPushNotification
+        ]
       }
     },
     isAsync: true
