@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,7 +16,7 @@
 //
 
 import { _getOperator, isOperator } from '../operator'
-import type { Doc } from '../classes'
+import type { Class, Doc, Ref } from '../classes'
 
 describe('operator', () => {
   describe('isOperator', () => {
@@ -197,6 +198,73 @@ describe('operator', () => {
       expect((doc as any).arr).toEqual([
         { name: 'a', value: 1 },
         { name: 'b', value: 2 }
+      ])
+    })
+
+    it('should pull objects using nested $in query', () => {
+      const doc = {
+        _id: '1' as Ref<Doc>,
+        _class: 'test' as Ref<Class<Doc>>,
+        arr: [
+          { name: 'a', value: 1 },
+          { name: 'b', value: 2 },
+          { name: 'c', value: 3 }
+        ]
+      } as any as Doc
+      const operator = _getOperator('$pull')
+      operator(doc, { arr: { name: { $in: ['a', 'c'] } } })
+      expect((doc as any).arr).toEqual([{ name: 'b', value: 2 }])
+    })
+
+    it('should not pull when nested $in query does not match', () => {
+      const doc = {
+        _id: '1' as Ref<Doc>,
+        _class: 'test' as Ref<Class<Doc>>,
+        arr: [
+          { name: 'a', value: 1 },
+          { name: 'b', value: 2 }
+        ]
+      } as any as Doc
+      const operator = _getOperator('$pull')
+      operator(doc, { arr: { name: { $in: ['x', 'y'] } } })
+      expect((doc as any).arr).toEqual([
+        { name: 'a', value: 1 },
+        { name: 'b', value: 2 }
+      ])
+    })
+
+    it('should handle nested $in query when $in value is not an array', () => {
+      const doc = {
+        _id: '1' as Ref<Doc>,
+        _class: 'test' as Ref<Class<Doc>>,
+        arr: [
+          { name: 'a', value: 1 },
+          { name: 'b', value: 2 }
+        ]
+      } as any as Doc
+      const operator = _getOperator('$pull')
+      operator(doc, { arr: { name: { $in: 'not-an-array' } } })
+      expect((doc as any).arr).toEqual([
+        { name: 'a', value: 1 },
+        { name: 'b', value: 2 }
+      ])
+    })
+
+    it('should pull objects using nested $in combined with other field matches', () => {
+      const doc = {
+        _id: '1' as Ref<Doc>,
+        _class: 'test' as Ref<Class<Doc>>,
+        arr: [
+          { name: 'a', value: 1 },
+          { name: 'a', value: 2 },
+          { name: 'b', value: 1 }
+        ]
+      } as any as Doc
+      const operator = _getOperator('$pull')
+      operator(doc, { arr: { name: { $in: ['a', 'c'] }, value: 1 } })
+      expect((doc as any).arr).toEqual([
+        { name: 'a', value: 2 },
+        { name: 'b', value: 1 }
       ])
     })
   })
