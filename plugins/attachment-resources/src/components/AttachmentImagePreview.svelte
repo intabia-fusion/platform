@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,6 +17,7 @@
   import type { Attachment } from '@hcengineering/attachment'
   import type { BlobType, WithLookup } from '@hcengineering/core'
   import { Image } from '@hcengineering/presentation'
+  import { Blurhash } from '@hcengineering/ui'
 
   import BrokenImage from './icons/BrokenImage.svelte'
   import { AttachmentImageSize } from '../types'
@@ -86,24 +88,27 @@
 
 <div class="container" class:loading style="width:{toStyle(dimensions.width)}; height:{toStyle(dimensions.height)}">
   {#if error}
+    {#if value.metadata?.thumbnail?.blurhash !== undefined}
+      <Blurhash blurhash={value.metadata.thumbnail.blurhash} />
+    {/if}
     <div class="image-overlay">
       <BrokenImage size={'large'} />
     </div>
+  {:else}
+    <Image
+      blob={value.file}
+      loading="lazy"
+      alt={value.name}
+      fit={dimensions.fit}
+      width={dimensions.width}
+      height={dimensions.height}
+      blurhash={value.metadata?.thumbnail?.blurhash}
+      showLoading={loading}
+      on:load={handleLoad}
+      on:error={handleError}
+      on:loadstart={handleLoadStart}
+    />
   {/if}
-
-  <Image
-    blob={value.file}
-    loading="lazy"
-    alt={value.name}
-    fit={dimensions.fit}
-    width={dimensions.width}
-    height={dimensions.height}
-    blurhash={value.metadata?.thumbnail?.blurhash}
-    showLoading={loading}
-    on:load={handleLoad}
-    on:error={handleError}
-    on:loadstart={handleLoadStart}
-  />
 </div>
 
 <style lang="scss">
