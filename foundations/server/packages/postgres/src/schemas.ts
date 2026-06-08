@@ -257,6 +257,22 @@ const dncSchema: Schema = {
     notNull: true,
     index: false
   },
+  objectSpace: {
+    type: 'text',
+    notNull: true,
+    index: false
+  },
+  lastNotify: {
+    type: 'bigint',
+    notNull: true,
+    index: true
+  },
+  unreadCount: {
+    type: 'integer',
+    notNull: true,
+    index: true,
+    check: 'unreadCount >= 0'
+  },
   user: {
     type: 'text',
     notNull: true,
