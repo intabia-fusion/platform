@@ -23,7 +23,6 @@
   import InboxCardIcon from './InboxCardIcon.svelte'
   import InboxCardTitle from './InboxCardTitle.svelte'
   import ModernNotifications from './ModernNotifications.svelte'
-  import LegacyNotifications from './legacy/LegacyNotifications.svelte'
   import { NavigationItem } from '../type'
   import { NavigationClient } from '../client'
 
@@ -161,7 +160,7 @@
         {#if navItem.type === 'modern'}
           <ModernNotifications doc={asCard(doc)} context={navItem.context} on:click={onNotification} />
         {:else}
-          <LegacyNotifications {doc} notifications={navItem.notifications} {viewlets} on:click={onNotification} />
+<!--          <LegacyNotifications {doc} notifications={navItem.notifications} {viewlets} on:click={onNotification} />-->
         {/if}
       </div>
     </div>
