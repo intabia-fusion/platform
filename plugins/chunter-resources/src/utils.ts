@@ -55,6 +55,7 @@ import love, { type MeetingMinutes } from '@hcengineering/love'
 import attachment, { type Attachment } from '@hcengineering/attachment'
 import { isEmptyMarkup } from '@hcengineering/text'
 import view from '@hcengineering/view'
+import notification from '@hcengineering/notification'
 
 import ChannelIcon from './components/ChannelIcon.svelte'
 import DirectIcon from './components/DirectIcon.svelte'
@@ -252,16 +253,19 @@ export async function getChannelName (
   return (await getDocTitle(client, _id, _class, object)) ?? (await getDocLabel(client, _id, _class, object, lang))
 }
 
-export function getUnreadThreadsCount (): number {
-  // const notificationClient = InboxNotificationsClientImpl.getClient()
-  // const threadIds = get(notificationClient.activityInboxNotifications)
-  //   .filter(({ attachedToClass, isViewed }) => attachedToClass === chunter.class.ThreadMessage && !isViewed)
-  //   .map(({ $lookup }) => $lookup?.attachedTo?.attachedTo)
-  //   .filter((_id) => _id !== undefined)
-  //
-  // return new Set(threadIds).size
+export async function getUnreadThreadsCount (): Promise<number> {
+  const client = getClient()
+  const contexts = await client.findAll(
+    notification.class.DocNotifyContext,
+    {
+      objectClass: chunter.class.ChatMessage,
+      unreadCount: { $gt: 0 },
+      unreadMessages: { $size: { $gt: 0 } }
+    },
+    { limit: 1, total: true }
+  )
 
-  return 0
+  return contexts.total ?? 0
 }
 
 export function getClosestDate (selectedDate: Timestamp, dates: Timestamp[]): Timestamp | undefined {

@@ -62,9 +62,8 @@ export const chatSpecials: SpecialNavModel[] = [
     label: chunter.string.Threads,
     icon: chunter.icon.Thread,
     component: chunter.component.Threads,
-    position: 'top'
-    // TODO: FIX ME
-    // notificationsCountProvider: chunter.function.GetUnreadThreadsCount
+    position: 'top',
+    notificationsCountProvider: chunter.function.GetUnreadThreadsCount
   },
   {
     id: 'saved',

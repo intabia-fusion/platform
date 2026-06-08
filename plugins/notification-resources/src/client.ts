@@ -56,7 +56,7 @@ export class NotificationClientImpl implements NotificationClient {
   private readonly contextByIdPromises = new Map<Ref<DocNotifyContext>, Promise<DocNotifyContext | undefined>>()
   private readonly contextByDocPromises = new Map<Ref<Doc>, Promise<DocNotifyContext | undefined>>()
 
-  readonly unreadQuery = createQuery(true)
+  private readonly unreadQuery = createQuery(true)
 
   static createClient (): NotificationClientImpl {
     NotificationClientImpl._instance = new NotificationClientImpl()

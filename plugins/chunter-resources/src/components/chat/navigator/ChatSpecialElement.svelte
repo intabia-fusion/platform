@@ -15,10 +15,12 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { SpecialNavModel } from '@hcengineering/workbench'
+  import { getResource } from '@hcengineering/platform'
   import { SavedAttachments } from '@hcengineering/attachment'
   import { SavedMessage } from '@hcengineering/activity'
   import { savedMessagesStore } from '@hcengineering/activity-resources'
   import { savedAttachmentsStore } from '@hcengineering/attachment-resources'
+  import { NotificationClientImpl } from '@hcengineering/notification-resources'
 
   import NavItem from './NavItem.svelte'
 
@@ -28,8 +30,27 @@
 
   const dispatch = createEventDispatcher()
 
+  const notificationsClient = NotificationClientImpl.getClient()
+  const totalUnreadCountStore = notificationsClient.totalUnreadCount
+
+  let count: number = 0
   let elementsCount = 0
+
+  $: void getNotificationsCount(special, $totalUnreadCountStore).then((res) => {
+    count = res
+  })
   $: elementsCount = getElementsCount(special, $savedMessagesStore, $savedAttachmentsStore)
+
+  async function getNotificationsCount (
+    special: SpecialNavModel,
+    totalUnreadCount: number
+  ): Promise<number> {
+    if (special.notificationsCountProvider == null) return 0
+
+    const providerFn = await getResource(special.notificationsCountProvider)
+
+    return providerFn(totalUnreadCount)
+  }
 
   function getElementsCount (
     special: SpecialNavModel,
@@ -49,6 +70,7 @@
   icon={special.icon}
   intlTitle={special.label}
   withIconBackground={false}
+  {count}
   {elementsCount}
   isSelected={special.id === currentSpecial?.id}
   {type}
