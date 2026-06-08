@@ -37,11 +37,15 @@
   $: isAddedMe = message.attributeUpdates?.added.includes(me) ?? false
 </script>
 
-<BaseMessagePreview message={{
-  attachedTo: objectId,
-  attachedToClass: objectClass,
-  ...message
-}} {type} on:click>
+<BaseMessagePreview
+  message={{
+    attachedTo: objectId,
+    attachedToClass: objectClass,
+    ...message
+  }}
+  {type}
+  on:click
+>
   <slot name="content">
     <div class="content overflow-label ml-1" class:preview={true}>
       <span class="mr-1">
