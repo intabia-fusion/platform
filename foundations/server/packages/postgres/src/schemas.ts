@@ -271,7 +271,7 @@ const dncSchema: Schema = {
     type: 'integer',
     notNull: true,
     index: true,
-    check: 'unreadCount >= 0'
+    check: '"unreadCount" >= 0'
   },
   user: {
     type: 'text',
