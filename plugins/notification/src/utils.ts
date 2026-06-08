@@ -37,12 +37,14 @@ export function getUnreadMessageCount (
     .reduce((acc, it) => acc + (isUnreadMessageChunk(it) ? it.count : 1), 0)
 }
 
-export function isUnreadMessageId (unread: UnreadMessage): unread is UnreadMessageId {
-  return unread != null && 'id' in unread && 'createdOn' in unread
+export function isUnreadMessageId (unread: UnreadMessage | undefined): unread is UnreadMessageId {
+  if (unread == null) return false
+  return 'id' in unread && 'createdOn' in unread
 }
 
-export function isUnreadMessageChunk (unread: UnreadMessage): unread is UnreadMessageChunk {
-  return unread != null && 'from' in unread && 'to' in unread && 'count' in unread
+export function isUnreadMessageChunk (unread: UnreadMessage | undefined): unread is UnreadMessageChunk {
+  if (unread == null) return false
+  return 'from' in unread && 'to' in unread && 'count' in unread
 }
 
 export function getNotificationMessageId (inboxNotification: ContextNotification): Ref<ActivityMessage> | undefined {

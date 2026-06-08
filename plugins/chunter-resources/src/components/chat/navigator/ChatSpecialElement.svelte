@@ -41,10 +41,7 @@
   })
   $: elementsCount = getElementsCount(special, $savedMessagesStore, $savedAttachmentsStore)
 
-  async function getNotificationsCount (
-    special: SpecialNavModel,
-    totalUnreadCount: number
-  ): Promise<number> {
+  async function getNotificationsCount (special: SpecialNavModel, totalUnreadCount: number): Promise<number> {
     if (special.notificationsCountProvider == null) return 0
 
     const providerFn = await getResource(special.notificationsCountProvider)
