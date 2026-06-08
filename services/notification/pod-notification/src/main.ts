@@ -69,15 +69,9 @@ export const main = async (): Promise<void> => {
     }
   }
 
-  if (config.AccountsUrl !== undefined && config.ServerSecret !== undefined) {
-    try {
-      setMetadata(serverClient.metadata.Endpoint, config.AccountsUrl)
-      setMetadata(serverToken.metadata.Secret, config.ServerSecret)
-      setMetadata(serverToken.metadata.Service, config.ServiceId)
-    } catch (err: any) {
-      console.error('Failed to set platform metadata:', err)
-    }
-  }
+  setMetadata(serverClient.metadata.Endpoint, config.AccountsUrl)
+  setMetadata(serverToken.metadata.Secret, config.Secret)
+  setMetadata(serverToken.metadata.Service, config.ServiceId)
 
   const ctx = getCtx()
   const queue = getPlatformQueue(config.ServiceId, config.QueueRegion)
@@ -99,11 +93,7 @@ export const main = async (): Promise<void> => {
             url: value.url
           })
 
-          if (
-            failedSubscriptionIds.length > 0 &&
-            config.AccountsUrl !== undefined &&
-            config.ServerSecret !== undefined
-          ) {
+          if (failedSubscriptionIds.length > 0) {
             try {
               const token = generateToken(systemAccountUuid, queueMessage.workspace, { service: config.ServiceId })
               const endpoint = await getTransactorEndpoint(token)

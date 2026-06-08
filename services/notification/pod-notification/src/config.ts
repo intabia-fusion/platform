@@ -26,8 +26,8 @@ interface Config {
 
   TTL: number
 
-  AccountsUrl?: string
-  ServerSecret?: string
+  AccountsUrl: string
+  Secret: string
 }
 
 const envMap: { [key in keyof Required<Config>]: string } = {
@@ -40,7 +40,7 @@ const envMap: { [key in keyof Required<Config>]: string } = {
   QueueRegion: 'QUEUE_REGION',
   ServiceId: 'SERVICE_ID',
   AccountsUrl: 'ACCOUNTS_URL',
-  ServerSecret: 'SERVER_SECRET'
+  Secret: 'SECRET'
 }
 
 const parseNumber = (str: string | undefined): number | undefined => {
@@ -60,7 +60,7 @@ const config: Config = (() => {
     QueueRegion: process.env[envMap.QueueRegion],
     ServiceId: process.env[envMap.ServiceId] ?? 'web-push-service',
     AccountsUrl: process.env[envMap.AccountsUrl],
-    ServerSecret: process.env[envMap.ServerSecret] ?? process.env.SECRET
+    Secret: process.env[envMap.Secret]
   }
 
   const required: Array<keyof Config> = ['Source']

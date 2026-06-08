@@ -85,7 +85,8 @@
     "AddMeInCollaborators": "Меня добавили в участники",
     "RemoveMeFromCollaborators": "Меня удалили из участников",
     "ShowChatBadge": "Показывать индикатор уведомлений чата",
-    "Appearance": "Внешний вид"
+    "Appearance": "Внешний вид",
+    "ReactedToYourMessage": "отреагировал(а) на ваше сообщение"
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} добавил(а) вас как соавтора в {doc}.",

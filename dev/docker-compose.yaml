@@ -1052,13 +1052,21 @@ services:
       - BRANDING_PATH=/var/cfg/branding.json
   notification:
     image: intabiafusion/notification
+    depends_on:
+      redpanda:
+        condition: service_started
+      account:
+        condition: service_started
     environment:
-      - PORT=3335
       - SOURCE=mail@example.com
       - ACCESS_KEY=none
       - SECRET_KEY=none
       - PUSH_PUBLIC_KEY=${PUSH_PUBLIC_KEY}
       - PUSH_PRIVATE_KEY=${PUSH_PRIVATE_KEY}
+      - SECRET=secret
+      - ACCOUNTS_URL=http://account:3000
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
     restart: unless-stopped
   # landing:
   #   image: intabiafusion/platform-landing:0.7

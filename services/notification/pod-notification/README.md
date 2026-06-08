@@ -86,3 +86,9 @@ npm run test
 
 ### TypeError on bad error bodies
 - The service uses safe error parsing to prevent type crashes if `web-push` throws an error with a `null` or `undefined` body. Check that you are using version `0.7.0` or higher which contains this fix.
+
+### Links
+- [Web Push Protocol](https://tools.ietf.org/html/rfc8030)
+- [VAPID Specification](https://tools.ietf.org/html/rfc8292)
+- [Push API MDN Documentation](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)
+- [Service Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
