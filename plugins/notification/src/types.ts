@@ -347,9 +347,8 @@ export interface ReadPosition {
   timestamp: Timestamp
 }
 
-// TODO: FIX VIEWLETS
 export interface ActivityNotificationViewlet extends Doc {
-  messageMatch: DocumentQuery<Doc>
+  messageMatch: DocumentQuery<ActivityMessageLite>
   presenter: AnyComponent
 }
 

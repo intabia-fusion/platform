@@ -160,7 +160,7 @@
         {#if navItem.type === 'modern'}
           <ModernNotifications doc={asCard(doc)} context={navItem.context} on:click={onNotification} />
         {:else}
-<!--          <LegacyNotifications {doc} notifications={navItem.notifications} {viewlets} on:click={onNotification} />-->
+          <!--          <LegacyNotifications {doc} notifications={navItem.notifications} {viewlets} on:click={onNotification} />-->
         {/if}
       </div>
     </div>

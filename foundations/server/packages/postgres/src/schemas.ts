@@ -400,6 +400,16 @@ const docReadStateSchema: Schema = {
     type: 'text',
     notNull: true,
     index: true
+  },
+  latestMessageId: {
+    type: 'text',
+    notNull: false,
+    index: true
+  },
+  latestMessageTimestamp: {
+    type: 'bigint',
+    notNull: false,
+    index: true
   }
 }
 

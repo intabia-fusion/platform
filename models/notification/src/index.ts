@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { type ActivityMessage } from '@hcengineering/activity'
+import { type ActivityMessage, type ActivityMessageLite } from '@hcengineering/activity'
 import { type PersonSpace } from '@hcengineering/contact'
 import {
   AccountRole,
@@ -279,7 +279,7 @@ export class TReadState extends TAttachedDoc implements ReadState {
 
 @Model(notification.class.ActivityNotificationViewlet, core.class.Doc, DOMAIN_MODEL)
 export class TActivityNotificationViewlet extends TDoc implements ActivityNotificationViewlet {
-  messageMatch!: DocumentQuery<Doc>
+  messageMatch!: DocumentQuery<ActivityMessageLite>
 
   presenter!: AnyComponent
 }
