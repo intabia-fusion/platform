@@ -1,0 +1,572 @@
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+import { AccountUuid, Doc, Ref, Space, Class } from '@hcengineering/core'
+import notificationPlugin, { DocNotifyContext } from '@hcengineering/notification'
+
+import { Result, TxCache } from '../../types'
+import { pushNotification } from '../notification'
+import { emptyResult, getEmptyTxCache } from '../../utils/result'
+
+const mockTranslateNotification = jest.fn()
+const mockGetNotificationMessageId = jest.fn()
+
+let actualNotification: any
+const getActualNotification = (): any => {
+  if (actualNotification == null) {
+    actualNotification = jest.requireActual('@hcengineering/notification')
+  }
+  return actualNotification
+}
+
+jest.mock('@hcengineering/notification', () => {
+  return new Proxy(
+    {},
+    {
+      get: (target, prop) => {
+        if (prop === 'translateNotification') {
+          return mockTranslateNotification
+        }
+        if (prop === 'getNotificationMessageId') {
+          return mockGetNotificationMessageId
+        }
+        if (prop === '__esModule') {
+          return true
+        }
+        return getActualNotification()[prop as keyof typeof import('@hcengineering/notification')]
+      }
+    }
+  ) as unknown as typeof import('@hcengineering/notification')
+})
+
+const mockTranslate = jest.fn()
+
+let actualPlatform: any
+const getActualPlatform = (): any => {
+  if (actualPlatform == null) {
+    actualPlatform = jest.requireActual('@hcengineering/platform')
+  }
+  return actualPlatform
+}
+
+jest.mock('@hcengineering/platform', () => {
+  return new Proxy(
+    {},
+    {
+      get: (target, prop) => {
+        if (prop === 'translate') {
+          return mockTranslate
+        }
+        if (prop === '__esModule') {
+          return true
+        }
+        return getActualPlatform()[prop as keyof typeof import('@hcengineering/platform')]
+      }
+    }
+  ) as unknown as typeof import('@hcengineering/platform')
+})
+
+const mockGenerateId = jest.fn()
+
+let actualCore: any
+const getActualCore = (): any => {
+  if (actualCore == null) {
+    actualCore = jest.requireActual('@hcengineering/core')
+  }
+  return actualCore
+}
+
+jest.mock('@hcengineering/core', () => {
+  return new Proxy(
+    {},
+    {
+      get: (target, prop) => {
+        if (prop === 'generateId') {
+          return mockGenerateId
+        }
+        if (prop === '__esModule') {
+          return true
+        }
+        return getActualCore()[prop as keyof typeof import('@hcengineering/core')]
+      }
+    }
+  ) as unknown as typeof import('@hcengineering/core')
+})
+
+const mockGetCreateContextTx = jest.fn()
+const mockGetUpdateContextTx = jest.fn()
+const mockGetNotificationUrl = jest.fn()
+const mockGetDomain = jest.fn()
+const mockGetNotificationLocation = jest.fn()
+
+jest.mock('../../utils/utils', () => {
+  return {
+    getCreateContextTx: (...args: any[]) => mockGetCreateContextTx(...args),
+    getUpdateContextTx: (...args: any[]) => mockGetUpdateContextTx(...args),
+    getNotificationUrl: (...args: any[]) => mockGetNotificationUrl(...args),
+    getDomain: (...args: any[]) => mockGetDomain(...args),
+    getNotificationLocation: (...args: any[]) => mockGetNotificationLocation(...args)
+  }
+})
+
+describe('pushNotification', () => {
+  let mockClient: any
+  let txCache: TxCache
+  let result: Result
+  let mockData: any
+
+  beforeEach(() => {
+    mockClient = {
+      ctx: {
+        error: jest.fn(),
+        warn: jest.fn()
+      },
+      txFactory: {
+        createTxUpdateDoc: jest.fn().mockImplementation((cls, space, id, payload) => ({
+          _class: 'TxUpdateDoc',
+          objectId: id,
+          space,
+          operations: payload
+        })),
+        createTxCreateDoc: jest.fn().mockImplementation((cls, space, payload) => ({
+          _class: 'TxCreateDoc',
+          space,
+          attributes: payload
+        }))
+      },
+      branding: {
+        title: 'Platform Brand'
+      }
+    }
+
+    txCache = getEmptyTxCache()
+    result = emptyResult()
+
+    mockData = {
+      objectId: 'doc-1' as Ref<Doc>,
+      objectClass: 'DocClass' as Ref<Class<Doc>>,
+      objectSpace: 'space-1' as Ref<Space>,
+      objectDisplayData: {
+        objectTitle: 'Doc Title',
+        objectIcon: 'doc-icon',
+        objectLabel: 'doc-label',
+        objectIdentifier: 'doc-id'
+      },
+      notifyProviders: {},
+      notification: {
+        id: 'notify-1',
+        createdOn: 100,
+        createdBy: 'user-2'
+      },
+      intl: {
+        intlParams: {
+          senderName: 'Sender',
+          title: 'Doc Title',
+          url: 'doc-url'
+        }
+      },
+      receiver: {
+        language: 'en',
+        account: 'user-1' as AccountUuid,
+        space: 'user-space' as Ref<Space>
+      },
+      pushSubscriptions: []
+    }
+
+    mockTranslateNotification.mockReset()
+    mockGetNotificationMessageId.mockReset()
+    mockTranslate.mockReset()
+    mockGenerateId.mockReset()
+    mockGetCreateContextTx.mockReset()
+    mockGetUpdateContextTx.mockReset()
+    mockGetNotificationUrl.mockReset()
+    mockGetDomain.mockReset()
+    mockGetNotificationLocation.mockReset()
+
+    // Default mock behaviors
+    mockTranslateNotification.mockResolvedValue({ title: 'Translated Title', body: 'Translated Body' })
+    mockGetNotificationMessageId.mockReturnValue('msg-id-1')
+    mockTranslate.mockImplementation((template) => Promise.resolve(`translated:${template}`))
+    mockGenerateId.mockReturnValue('generated-ctx-id')
+    mockGetNotificationUrl.mockReturnValue('http://localhost/notify/url')
+    mockGetDomain.mockReturnValue('localhost')
+    mockGetNotificationLocation.mockReturnValue({ path: '/notify', query: 'q=1' })
+    mockGetCreateContextTx.mockImplementation(() => ({
+      attributes: {
+        latestNotifications: []
+      }
+    }))
+    mockGetUpdateContextTx.mockImplementation(() => ({
+      operations: {}
+    }))
+  })
+
+  it('translates notification and pushes it to result.queueMessages', async () => {
+    mockData.notifyProviders = {
+      'test-provider': [{ _id: 'type-1' }]
+    }
+
+    await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+    expect(mockTranslateNotification).toHaveBeenCalledWith(mockData.intl, 'en')
+    expect(mockGetDomain).toHaveBeenCalledWith(mockClient)
+    expect(mockGetNotificationUrl).toHaveBeenCalledWith(
+      mockClient,
+      'generated-ctx-id',
+      mockData.notification,
+      'doc-1',
+      'DocClass'
+    )
+
+    expect(result.queueMessages).toHaveLength(1)
+    expect(result.queueMessages[0]).toEqual({
+      id: 'notify-1',
+      title: 'Translated Title',
+      body: 'Translated Body',
+      url: 'http://localhost/notify/url',
+      domain: 'localhost',
+      pushSubscriptions: [],
+      language: 'en',
+      account: 'user-1',
+      providers: {
+        'test-provider': ['type-1']
+      },
+      objectId: 'doc-1',
+      objectClass: 'DocClass',
+      objectSpace: 'space-1',
+      createdOn: 100,
+      template: undefined
+    })
+  })
+
+  describe('context creation path (context is undefined)', () => {
+    let mockCreateTx: any
+
+    beforeEach(() => {
+      mockCreateTx = {
+        attributes: {
+          latestNotifications: []
+        }
+      }
+      mockGetCreateContextTx.mockReturnValue(mockCreateTx)
+    })
+
+    it('handles context creation when context is undefined', async () => {
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(mockGetCreateContextTx).toHaveBeenCalledWith(
+        'generated-ctx-id',
+        'doc-1',
+        'DocClass',
+        'space-1',
+        mockData.receiver,
+        result,
+        mockClient.txFactory,
+        mockData.objectDisplayData
+      )
+
+      expect(mockCreateTx.attributes).toEqual({
+        latestNotifications: [mockData.notification],
+        lastNotify: 100,
+        unreadCount: 1
+      })
+    })
+
+    it('appends unreadMessage to context attributes during creation', async () => {
+      mockData.unreadMessage = { id: 'msg-1', createdOn: 1, notified: true }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(mockCreateTx.attributes).toEqual(
+        expect.objectContaining({
+          unreadMessages: [{ id: 'msg-1', createdOn: 1, notified: true }]
+        })
+      )
+    })
+
+    it('appends unreadReaction to context attributes during creation', async () => {
+      mockData.unreadReaction = { id: 'react-1', attachedTo: 'attachedTo-1' }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(mockCreateTx.attributes).toEqual(
+        expect.objectContaining({
+          unreadReactions: [{ id: 'react-1', attachedTo: 'attachedTo-1' }]
+        })
+      )
+    })
+
+    it('appends unreadMention to context attributes during creation', async () => {
+      mockData.unreadMention = { messageId: 'msg-1' }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(mockCreateTx.attributes).toEqual(
+        expect.objectContaining({
+          unreadMentions: [{ messageId: 'msg-1' }]
+        })
+      )
+    })
+
+    it('appends unreadCommon to context attributes during creation', async () => {
+      mockData.unreadCommon = { id: 'common-1' }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(mockCreateTx.attributes).toEqual(
+        expect.objectContaining({
+          unreadCommons: [{ id: 'common-1' }]
+        })
+      )
+    })
+  })
+
+  describe('context update path (context exists)', () => {
+    let context: DocNotifyContext
+    let mockUpdateTx: any
+
+    beforeEach(() => {
+      context = {
+        _id: 'existing-ctx-id',
+        _class: 'DocNotifyContextClass',
+        space: 'existing-space',
+        lastNotify: 50
+      } as unknown as DocNotifyContext
+
+      mockUpdateTx = {
+        operations: {
+          lastNotify: 50
+        }
+      }
+      mockGetUpdateContextTx.mockReturnValue(mockUpdateTx)
+    })
+
+    it('handles context update when context exists', async () => {
+      await pushNotification(mockClient, txCache, result, context, mockData)
+
+      expect(mockGetUpdateContextTx).toHaveBeenCalledWith(context, result, mockClient.txFactory)
+      expect(mockUpdateTx.operations.lastNotify).toBe(100)
+
+      expect(mockClient.txFactory.createTxUpdateDoc).toHaveBeenCalledWith(
+        'DocNotifyContextClass',
+        'existing-space',
+        'existing-ctx-id',
+        {
+          $push: { latestNotifications: { $each: [mockData.notification], $position: 0, $slice: 5 } },
+          $inc: { unreadCount: 1 }
+        }
+      )
+      expect(result.updateOpContextTx).toHaveLength(1)
+    })
+
+    it('appends unreadMessage to context operations during update', async () => {
+      mockData.unreadMessage = { id: 'msg-1' }
+
+      await pushNotification(mockClient, txCache, result, context, mockData)
+
+      const updateOpTx = result.updateOpContextTx[0]
+      expect(updateOpTx.operations.$push).toEqual(
+        expect.objectContaining({
+          unreadMessages: { id: 'msg-1' }
+        })
+      )
+    })
+
+    it('appends unreadReaction to context operations during update', async () => {
+      mockData.unreadReaction = { id: 'react-1' }
+
+      await pushNotification(mockClient, txCache, result, context, mockData)
+
+      const updateOpTx = result.updateOpContextTx[0]
+      expect(updateOpTx.operations.$push).toEqual(
+        expect.objectContaining({
+          unreadReactions: { id: 'react-1' }
+        })
+      )
+    })
+
+    it('appends unreadMention to context operations during update', async () => {
+      mockData.unreadMention = { messageId: 'msg-1' }
+
+      await pushNotification(mockClient, txCache, result, context, mockData)
+
+      const updateOpTx = result.updateOpContextTx[0]
+      expect(updateOpTx.operations.$push).toEqual(
+        expect.objectContaining({
+          unreadMentions: { messageId: 'msg-1' }
+        })
+      )
+    })
+
+    it('appends unreadCommon to context operations during update', async () => {
+      mockData.unreadCommon = { id: 'common-1' }
+
+      await pushNotification(mockClient, txCache, result, context, mockData)
+
+      const updateOpTx = result.updateOpContextTx[0]
+      expect(updateOpTx.operations.$push).toEqual(
+        expect.objectContaining({
+          unreadCommons: { id: 'common-1' }
+        })
+      )
+    })
+  })
+
+  describe('createAppPushNotification', () => {
+    it('creates AppPushNotification tx if PushNotificationProvider is enabled', async () => {
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.PushNotificationProvider]: [{ _id: 'push-type-1' }]
+      }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(mockGetNotificationLocation).toHaveBeenCalledWith(
+        mockClient,
+        'generated-ctx-id',
+        mockData.notification,
+        'doc-1',
+        'DocClass'
+      )
+      expect(mockClient.txFactory.createTxCreateDoc).toHaveBeenCalledWith(
+        notificationPlugin.class.AppPushNotification,
+        'user-space',
+        expect.objectContaining({
+          account: 'user-1',
+          sender: 'user-2',
+          tag: 'notify-1',
+          objectId: 'doc-1',
+          objectClass: 'DocClass',
+          messageId: 'msg-id-1',
+          onClickLocation: {
+            path: '/notify',
+            query: 'q=1'
+          },
+          soundAlert: false
+        })
+      )
+      expect(result.createAppPushNotificationTx).toHaveLength(1)
+    })
+
+    it('sets soundAlert to true if SoundNotificationProvider is also enabled', async () => {
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.PushNotificationProvider]: [{ _id: 'push-type-1' }],
+        [notificationPlugin.providers.SoundNotificationProvider]: [{ _id: 'sound-type-1' }]
+      }
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.createAppPushNotificationTx[0]).toEqual(
+        expect.objectContaining({
+          attributes: expect.objectContaining({
+            soundAlert: true
+          })
+        })
+      )
+    })
+
+    it('does not create AppPushNotification tx if PushNotificationProvider is disabled/absent', async () => {
+      mockData.notifyProviders = {}
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.createAppPushNotificationTx).toHaveLength(0)
+    })
+  })
+
+  describe('getTemplate & translateTemplate', () => {
+    it('generates, translates, and caches the template if InboxNotificationProvider type has templates', async () => {
+      const templates = {
+        text: 'text-template-key',
+        html: 'html-template-key',
+        subject: 'subject-template-key'
+      }
+
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [
+          {
+            _id: 'inbox-type-1',
+            templates
+          } as any
+        ]
+      }
+
+      mockData.intl.intlParamsNotLocalized = {
+        sender: 'SenderNotLocalized'
+      }
+
+      mockTranslate.mockImplementation((str) => {
+        if (str === 'text-template-key') return Promise.resolve('translated text body')
+        if (str === 'html-template-key') return Promise.resolve('translated html body')
+        if (str === 'subject-template-key') return Promise.resolve('translated subject')
+        return Promise.resolve(`translated:${str}`)
+      })
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(result.queueMessages[0].template).toEqual({
+        text: 'translated text body',
+        html: 'translated html body',
+        subject: 'translated subject'
+      })
+
+      // The template should be cached in txCache
+      const cacheKey = 'inbox-type-1:en'
+      expect(txCache.templates.has(cacheKey)).toBe(true)
+      expect(txCache.templates.get(cacheKey)).toEqual({
+        text: 'translated text body',
+        html: 'translated html body',
+        subject: 'translated subject'
+      })
+
+      // Calling again should hit cache and not translate
+      mockTranslate.mockClear()
+      const result2 = emptyResult()
+      await pushNotification(mockClient, txCache, result2, undefined, mockData)
+      expect(mockTranslate).not.toHaveBeenCalled()
+      expect(result2.queueMessages[0].template).toEqual({
+        text: 'translated text body',
+        html: 'translated html body',
+        subject: 'translated subject'
+      })
+    })
+
+    it('handles translate errors in getTemplate and falls back/logs error', async () => {
+      const templates = {
+        text: 'text-template-key',
+        html: 'html-template-key',
+        subject: 'subject-template-key'
+      }
+
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [
+          {
+            _id: 'inbox-type-1',
+            templates
+          } as any
+        ]
+      }
+
+      mockTranslate.mockRejectedValue(new Error('translation error'))
+
+      await pushNotification(mockClient, txCache, result, undefined, mockData)
+
+      expect(mockClient.ctx.error).toHaveBeenCalledWith(
+        'Failed to generate template',
+        expect.objectContaining({ notificationId: 'notify-1' })
+      )
+      expect(result.queueMessages[0].template).toBeUndefined()
+    })
+  })
+})
