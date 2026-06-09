@@ -16,7 +16,7 @@
 import { get } from 'svelte/store'
 import activity from '@hcengineering/activity'
 import attachment from '@hcengineering/attachment'
-import { type Ref } from '@hcengineering/core'
+import { type Ref, type Doc } from '@hcengineering/core'
 import { addTxListener } from '@hcengineering/presentation'
 
 import { ChatViewport } from '../chatViewport'
@@ -192,6 +192,10 @@ describe('ChatViewport', () => {
         callback(liveMessages)
       }
     })
+  })
+
+  afterEach(() => {
+    ChatViewport.clearCache()
   })
 
   describe('Suite 1: Initial viewport', () => {
@@ -1514,6 +1518,113 @@ describe('ChatViewport', () => {
 
       msgs = get(viewport.messages)
       expect(msgs[0].message).toBe('Refetched after attachment conflict')
+    })
+  })
+
+  describe('Suite 9: Viewport Caching & LRU Eviction', () => {
+    beforeEach(() => {
+      mockClient.findAll.mockResolvedValue([])
+      mockClient.findOne.mockResolvedValue(undefined)
+    })
+
+    it('9.1 should reuse cached viewport and separate chat/thread caches', () => {
+      const vp1 = ChatViewport.getOrCreate(undefined, 'chat-1' as Ref<Doc>, undefined, 50, false)
+      const vp2 = ChatViewport.getOrCreate(undefined, 'chat-1' as Ref<Doc>, undefined, 50, false)
+      expect(vp1).toBe(vp2)
+
+      const vpThread = ChatViewport.getOrCreate(undefined, 'chat-1' as Ref<Doc>, undefined, 50, true)
+      expect(vpThread).not.toBe(vp1)
+    })
+
+    it('9.2 should evict least recently used chat viewports when limit (10) is exceeded', () => {
+      const viewports: ChatViewport[] = []
+
+      // Create 10 viewports and release them to make them evictable
+      for (let i = 1; i <= 10; i++) {
+        const vp = ChatViewport.getOrCreate(undefined, `chat-${i}` as Ref<Doc>, undefined, 50, false)
+        vp.release()
+        viewports.push(vp)
+      }
+
+      // Access chat-1 to make it recently used, then release
+      const vp1 = ChatViewport.getOrCreate(undefined, 'chat-1' as Ref<Doc>, undefined, 50, false)
+      vp1.release()
+
+      // Create chat-11 to trigger eviction (evicting chat-2 because chat-1 was accessed recently), then release
+      const vp11 = ChatViewport.getOrCreate(undefined, 'chat-11' as Ref<Doc>, undefined, 50, false)
+      vp11.release()
+
+      // chat-1 should still be cached, then release
+      const vp1Again = ChatViewport.getOrCreate(undefined, 'chat-1' as Ref<Doc>, undefined, 50, false)
+      vp1Again.release()
+      expect(vp1Again).toBe(viewports[0])
+
+      // chat-2 should have been evicted (recreated new)
+      const vp2Again = ChatViewport.getOrCreate(undefined, 'chat-2' as Ref<Doc>, undefined, 50, false)
+      vp2Again.release()
+      expect(vp2Again).not.toBe(viewports[1])
+    })
+
+    it('9.3 should evict viewports that have not been accessed for more than TTL (15 minutes)', () => {
+      let mockTime = 1000
+      const originalDateNow = Date.now
+      Date.now = () => mockTime
+
+      try {
+        // Create a viewport and release it to make it evictable
+        const vp = ChatViewport.getOrCreate(undefined, 'chat-ttl' as Ref<Doc>, undefined, 50, false)
+        vp.release()
+
+        // Fast forward time by 10 minutes (not expired yet)
+        mockTime += 10 * 60 * 1000
+
+        // Accessing again should retrieve the same viewport, then release
+        const vpSame = ChatViewport.getOrCreate(undefined, 'chat-ttl' as Ref<Doc>, undefined, 50, false)
+        vpSame.release()
+        expect(vpSame).toBe(vp)
+
+        // Fast forward by 16 minutes (now expired)
+        mockTime += 16 * 60 * 1000
+
+        // Should be evicted, so getOrCreate returns a new instance
+        const vpNew = ChatViewport.getOrCreate(undefined, 'chat-ttl' as Ref<Doc>, undefined, 50, false)
+        vpNew.release()
+        expect(vpNew).not.toBe(vp)
+      } finally {
+        Date.now = originalDateNow
+      }
+    })
+
+    it('9.4 should not evict active (acquired) viewports even if TTL or limit is exceeded', () => {
+      let mockTime = 1000
+      const originalDateNow = Date.now
+      Date.now = () => mockTime
+
+      try {
+        // Create a viewport (gets refCount = 1 from getOrCreate)
+        const vp = ChatViewport.getOrCreate(undefined, 'chat-active' as Ref<Doc>, undefined, 50, false)
+
+        // Fast forward by 16 minutes (TTL exceeded)
+        mockTime += 16 * 60 * 1000
+
+        // It should NOT be evicted because it is active (refCount = 1), then release the second getOrCreate call's ref count
+        const vpSame = ChatViewport.getOrCreate(undefined, 'chat-active' as Ref<Doc>, undefined, 50, false)
+        vpSame.release()
+        expect(vpSame).toBe(vp)
+
+        // Release it (since it was acquired once by getOrCreate)
+        vp.release()
+
+        // Fast forward by 16 minutes again
+        mockTime += 16 * 60 * 1000
+
+        // Now it should be evicted
+        const vpNew = ChatViewport.getOrCreate(undefined, 'chat-active' as Ref<Doc>, undefined, 50, false)
+        vpNew.release()
+        expect(vpNew).not.toBe(vp)
+      } finally {
+        Date.now = originalDateNow
+      }
     })
   })
 })

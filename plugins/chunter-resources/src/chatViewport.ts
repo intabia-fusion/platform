@@ -73,6 +73,138 @@ class StaleVersionError extends Error {
  *    by omitting the space filter, removing the need for manual reference loading.
  */
 export class ChatViewport implements IChatViewport {
+  private static readonly chatCache = new Map<
+  string,
+  { viewport: ChatViewport, lastAccessed: number, lastAccessedTime: number }
+  >()
+
+  private static readonly threadCache = new Map<
+  string,
+  { viewport: ChatViewport, lastAccessed: number, lastAccessedTime: number }
+  >()
+
+  private static readonly MAX_CACHE_SIZE = 10
+  private static accessCounter = 0
+  private static readonly TTL_MS = 15 * 60 * 1000 // 15 minutes
+  private static cleanupIntervalId: ReturnType<typeof setInterval> | undefined = undefined
+
+  private static startCleanupInterval (): void {
+    if (ChatViewport.cleanupIntervalId !== undefined) return
+
+    ChatViewport.cleanupIntervalId = setInterval(
+      () => {
+        ChatViewport.evictExpired(ChatViewport.chatCache)
+        ChatViewport.evictExpired(ChatViewport.threadCache)
+      },
+      5 * 60 * 1000 // Check every 5 minutes
+    )
+
+    const timer = ChatViewport.cleanupIntervalId
+    if (timer !== undefined && typeof timer === 'object' && timer !== null) {
+      const unreffable = timer as { unref?: () => void }
+      if (typeof unreffable.unref === 'function') {
+        unreffable.unref()
+      }
+    }
+  }
+
+  private static evictExpired (
+    cache: Map<string, { viewport: ChatViewport, lastAccessed: number, lastAccessedTime: number }>
+  ): void {
+    const now = Date.now()
+    for (const [key, entry] of cache.entries()) {
+      if (entry.viewport.isEvictable() && now - entry.lastAccessedTime > ChatViewport.TTL_MS) {
+        entry.viewport.destroyInternal()
+        cache.delete(key)
+      }
+    }
+  }
+
+  public static getOrCreate (
+    readState: ReadState | undefined,
+    chatId: Ref<Doc>,
+    selectedMessageId: Ref<ActivityMessage> | undefined,
+    limit = 50,
+    isThread = false
+  ): ChatViewport {
+    ChatViewport.startCleanupInterval()
+
+    // Clean up expired entries in both caches
+    ChatViewport.evictExpired(ChatViewport.chatCache)
+    ChatViewport.evictExpired(ChatViewport.threadCache)
+
+    const cache = isThread ? ChatViewport.threadCache : ChatViewport.chatCache
+    const key = chatId
+    let entry = cache.get(key)
+
+    if (entry === undefined) {
+      const viewport = new ChatViewport(readState, chatId, selectedMessageId, limit)
+      entry = { viewport, lastAccessed: ++ChatViewport.accessCounter, lastAccessedTime: Date.now() }
+      cache.set(key, entry)
+      ChatViewport.cleanCache(cache)
+    } else {
+      entry.lastAccessed = ++ChatViewport.accessCounter
+      entry.lastAccessedTime = Date.now()
+      if (selectedMessageId !== undefined) {
+        void entry.viewport.jumpToMessageId(selectedMessageId)
+      }
+    }
+
+    // Automatically acquire the viewport reference
+    entry.viewport.acquire()
+
+    return entry.viewport
+  }
+
+  private static cleanCache (
+    cache: Map<string, { viewport: ChatViewport, lastAccessed: number, lastAccessedTime: number }>
+  ): void {
+    // Only evict viewports that are not currently active in the UI
+    const evictable = Array.from(cache.entries()).filter(([_, entry]) => entry.viewport.isEvictable())
+
+    if (evictable.length <= ChatViewport.MAX_CACHE_SIZE) return
+
+    const sorted = evictable.sort((a, b) => a[1].lastAccessed - b[1].lastAccessed)
+    const toRemoveCount = evictable.length - ChatViewport.MAX_CACHE_SIZE
+    for (let i = 0; i < toRemoveCount; i++) {
+      const [key, entry] = sorted[i]
+      entry.viewport.destroyInternal()
+      cache.delete(key)
+    }
+  }
+
+  public static clearCache (): void {
+    if (ChatViewport.cleanupIntervalId !== undefined) {
+      clearInterval(ChatViewport.cleanupIntervalId)
+      ChatViewport.cleanupIntervalId = undefined
+    }
+
+    for (const entry of ChatViewport.chatCache.values()) {
+      entry.viewport.destroyInternal()
+    }
+    ChatViewport.chatCache.clear()
+
+    for (const entry of ChatViewport.threadCache.values()) {
+      entry.viewport.destroyInternal()
+    }
+    ChatViewport.threadCache.clear()
+  }
+
+  // Active UI subscriber reference tracking
+  private activeRefCount = 0
+
+  public acquire (): void {
+    this.activeRefCount++
+  }
+
+  public release (): void {
+    this.activeRefCount = Math.max(0, this.activeRefCount - 1)
+  }
+
+  public isEvictable (): boolean {
+    return this.activeRefCount <= 0
+  }
+
   // Private State & Queries (Must be declared first as derived stores depend on them)
   private readonly loadedHistory = writable<Array<WithLookup<ActivityMessage>>>([])
   private readonly liveTail = writable<Array<WithLookup<ActivityMessage>>>([])
@@ -328,6 +460,10 @@ export class ChatViewport implements IChatViewport {
    * Unsubscribes active queries and resets internal stores.
    */
   public destroy (): void {
+    this.destroyInternal()
+  }
+
+  private destroyInternal (): void {
     this.resetViewport()
     this.tailQuery.unsubscribe()
     this.historyUnsubscribe()

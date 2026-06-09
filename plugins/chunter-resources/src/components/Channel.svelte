@@ -19,7 +19,7 @@
   import { getClient } from '@hcengineering/presentation'
   import { getMessageFromLoc, messageInFocus } from '@hcengineering/activity-resources'
   import { location as locationStore } from '@hcengineering/ui'
-  import { onDestroy } from 'svelte'
+  import { onDestroy, onMount } from 'svelte'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
 
   import chunter from '../plugin'
@@ -58,10 +58,13 @@
   onDestroy(() => {
     unsubscribe()
     unsubscribeLocation()
-    chatViewport?.destroy()
+    chatViewport?.release()
     chatViewport = undefined
   })
 
+  onMount(() => {
+    void updateViewport(object._id, selectedMessageId)
+  })
   $: isDocChannel = !hierarchy.isDerived(object._class, chunter.class.ChunterSpace)
 
   $: void updateViewport(object._id, selectedMessageId)
@@ -69,7 +72,7 @@
   async function updateViewport (attachedTo: Ref<Doc>, selectedMessageId?: Ref<ActivityMessage>): Promise<void> {
     if (chatViewport === undefined) {
       const read = await NotificationClientImpl.getClient().getReadState(attachedTo)
-      chatViewport = new ChatViewport(read, attachedTo, selectedMessageId)
+      chatViewport = ChatViewport.getOrCreate(read, attachedTo, selectedMessageId, 50, false)
     }
   }
 </script>
