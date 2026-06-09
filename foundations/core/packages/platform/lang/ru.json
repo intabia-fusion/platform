@@ -17,6 +17,7 @@
     "WorkspaceNotFound": "Рабочее пространство не найдено",
     "InvalidPassword": "Неверный пароль",
     "AccountAlreadyExists": "Аккаунт уже существует",
+    "PhoneAlreadyExists": "Телефон уже существует",
     "WorkspaceRateLimit": "Сервер перегружен, пожалуйста, подождите",
     "AccountAlreadyConfirmed": "Аккаунт уже подтвержден",
     "WorkspaceAlreadyExists": "Рабочее пространство уже существует",

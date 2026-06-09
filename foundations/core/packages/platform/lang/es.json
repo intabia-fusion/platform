@@ -17,6 +17,7 @@
     "WorkspaceNotFound": "Espacio de trabajo no encontrado",
     "InvalidPassword": "Contraseña inválida",
     "AccountAlreadyExists": "La cuenta ya existe",
+    "PhoneAlreadyExists": "El teléfono ya existe",
     "WorkspaceRateLimit": "El servidor está ocupado. Espere un momento e inténtelo de nuevo",
     "AccountAlreadyConfirmed": "La cuenta ya está confirmada",
     "WorkspaceAlreadyExists": "El espacio de trabajo ya existe",

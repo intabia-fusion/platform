@@ -134,7 +134,7 @@ export interface AccountClient {
   updateLastVisit: (workspaces: WorkspaceUuid[]) => Promise<void>
   getRegionInfo: () => Promise<RegionInfo[]>
   createWorkspace: (name: string, region?: string) => Promise<WorkspaceLoginInfo>
-  signUpOtp: (email: string, first: string, last: string) => Promise<OtpInfo>
+  signUpOtp: (email: string, first: string, last: string, phone?: string) => Promise<OtpInfo>
   /**
    * Deprecated. Only to be used for dev setups without mail service.
    */
@@ -672,10 +672,10 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
-  async signUpOtp (email: string, firstName: string, lastName: string): Promise<OtpInfo> {
+  async signUpOtp (email: string, firstName: string, lastName: string, phone?: string): Promise<OtpInfo> {
     const request = {
       method: 'signUpOtp' as const,
-      params: { email, firstName, lastName }
+      params: { email, firstName, lastName, phone }
     }
 
     return await this.rpc(request)

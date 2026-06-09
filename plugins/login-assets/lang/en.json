@@ -24,6 +24,7 @@
     "Join": "Join",
     "Email": "Email",
     "Password": "Password",
+    "PhoneNumber": "Phone number",
     "Workspace": "Workspace name",
     "DoNotHaveAnAccount": "Do not have an account?",
     "PasswordRepeat": "Repeat password",

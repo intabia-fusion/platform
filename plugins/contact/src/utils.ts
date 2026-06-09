@@ -35,7 +35,8 @@ import {
   toIdMap,
   TxApplyResult,
   TxFactory,
-  DocumentUpdate
+  DocumentUpdate,
+  SocialIdType
 } from '@hcengineering/core'
 import platform, { getMetadata, PlatformError } from '@hcengineering/platform'
 import { ColorDefinition } from '@hcengineering/ui'
@@ -43,6 +44,7 @@ import contact, {
   AvatarProvider,
   AvatarType,
   Channel,
+  ChannelProvider,
   Contact,
   Employee,
   Person,
@@ -590,6 +592,36 @@ export async function ensureEmployeeForPerson (
             'ensureEmployee'
           )
           await client.tx(applyTx)
+
+          if (socialId.type === SocialIdType.PHONE) {
+            const existingChannel = await client.findOne(contact.class.Channel, {
+              attachedTo: personRef,
+              provider: socialId.type as Ref<ChannelProvider>,
+              value: socialId.value
+            })
+
+            if (existingChannel == null) {
+              const createChannelTx = txFactory.createTxCollectionCUD(
+                contact.class.Person,
+                personRef,
+                contact.space.Contacts,
+                'channels',
+                txFactory.createTxCreateDoc(
+                  contact.class.Channel,
+                  contact.space.Contacts,
+                  {
+                    attachedTo: personRef,
+                    attachedToClass: contact.class.Person,
+                    collection: 'channels',
+                    provider: contact.channelProvider.Phone,
+                    value: socialId.value
+                  }
+                )
+              )
+
+              await client.tx(createChannelTx)
+            }
+          }
         })
       } else {
         // If not confirmed locally can be attached to a different person (persons merge scenario)
@@ -637,6 +669,11 @@ export async function ensureEmployeeForPerson (
         }
       }
     }
+
+    ctx.info('ensureEmployeeForPerson: SocialIdentity sync done', {
+      personUuid: person.uuid,
+      types: socialIds.map(sid => sid.type)
+    })
 
     // NOTE: it is important to create Employee after Person and SocialIdentities are ensured so all the triggers applied
     // on Employee creation will be able to properly map things

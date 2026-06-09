@@ -16,6 +16,7 @@
     "AccountNotConfirmed": "Hesap doğrulanmadı",
     "WorkspaceNotFound": "Çalışma alanı bulunamadı",
     "AccountAlreadyExists": "Hesap zaten mevcut",
+    "PhoneAlreadyExists": "Telefon zaten mevcut",
     "WorkspaceRateLimit": "Sunucu meşgul, Lütfen biraz bekleyin ve tekrar deneyin",
     "AccountAlreadyConfirmed": "Hesap zaten doğrulandı",
     "WorkspaceAlreadyExists": "Çalışma alanı zaten mevcut",

@@ -24,6 +24,7 @@
     "JoinWorkspace": "Participar de {workspaceName}",
     "Email": "E-mail",
     "Password": "Senha",
+    "PhoneNumber": "Número de telefone",
     "Workspace": "Nome do espaço de trabalho",
     "DoNotHaveAnAccount": "Não tem uma conta?",
     "PasswordRepeat": "Repetir senha",

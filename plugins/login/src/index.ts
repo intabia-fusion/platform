@@ -104,6 +104,7 @@ export default plugin(loginId, {
     Downloads: '' as IntlString,
     BackLabel: '' as IntlString,
     Email: '' as IntlString,
+    PhoneNumber: '' as IntlString,
     Password: '' as IntlString,
     PasswordRepeat: '' as IntlString,
     UsageConditions: '' as IntlString,

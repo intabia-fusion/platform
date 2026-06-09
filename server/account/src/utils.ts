@@ -18,6 +18,7 @@ import {
   type Branding,
   concatLink,
   generateId,
+  hashWorkspace,
   isActiveMode,
   type MeasureContext,
   type Person,
@@ -31,8 +32,7 @@ import {
   type WorkspaceDataId,
   type WorkspaceInfoWithStatus as WorkspaceInfoWithStatusCore,
   type WorkspaceMode,
-  type WorkspaceUuid,
-  hashWorkspace
+  type WorkspaceUuid
 } from '@hcengineering/core'
 import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
 import { getDBClient, setDBExtraOptions } from '@hcengineering/postgres'
@@ -44,12 +44,12 @@ import { decodeTokenVerbose, generateToken, type PermissionsGrant, TokenError } 
 import { PostgresAccountDB } from './collections/postgres/postgres'
 import { accountPlugin } from './plugin'
 import {
-  type RegionConfig,
+  getRegionsFromConfig,
   loadRegionConfig,
+  type RegionConfig,
   resolveEndpoints,
   resolveUrl,
-  toEndpointInfo,
-  getRegionsFromConfig
+  toEndpointInfo
 } from './region-config'
 import {
   type Account,
@@ -57,6 +57,7 @@ import {
   type AccountEvent,
   AccountEventType,
   type AccountMethodHandler,
+  type DBFlavor,
   type Integration,
   type LoginInfo,
   type LoginInfoRequestData,
@@ -70,8 +71,7 @@ import {
   type WorkspaceInvite,
   type WorkspaceJoinInfo,
   type WorkspaceLoginInfo,
-  type WorkspaceStatus,
-  type DBFlavor
+  type WorkspaceStatus
 } from './types'
 import { isAdminEmail } from './admin'
 import { type Sql } from 'postgres'
@@ -1389,6 +1389,10 @@ export async function getSocialIdByKey (db: AccountDB, socialKey: string): Promi
 
 export async function getEmailSocialId (db: AccountDB, email: string): Promise<SocialId | null> {
   return await db.socialId.findOne({ type: SocialIdType.EMAIL, value: email })
+}
+
+export async function getPhoneSocialId (db: AccountDB, phone: string): Promise<SocialId | null> {
+  return await db.socialId.findOne({ type: SocialIdType.PHONE, value: phone })
 }
 
 export function getFrontUrl (branding: Branding | null): string {
