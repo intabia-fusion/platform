@@ -63,14 +63,18 @@ jest.mock('@hcengineering/ui', () => ({
 jest.mock('@hcengineering/notification', () => ({
   default: { string: {} },
   notificationId: 'notificationId',
+  truncate: (str: string) => {
+    return str
+  },
   translateNotification: async (push: any) => ({ title: `Title: ${push.titleIntl}`, body: `Body: ${push.bodyIntl}` })
 }))
 jest.mock('@hcengineering/desktop-preferences', () => ({ defaultNotificationPreference: { showNotifications: true } }))
 jest.mock('@hcengineering/presentation', () => ({ getCurrentWorkspaceUuid: () => 'workspace-1' }))
 
 // Now import configureNotifications and mocked functions
-import { configureNotifications } from '../../ui/notifications'
 import { removeAppPush } from '@hcengineering/notification-resources'
+
+import { configureNotifications } from '../../ui/notifications'
 
 describe('configureNotifications', () => {
   beforeEach(() => {
