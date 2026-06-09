@@ -13,7 +13,7 @@ bot:
   password: "password"  # Password for the bot account (default: password)
   avatar:
     path: "./avatar.png"  # Path to avatar image (default: ./assets/avatar.png)
-    name: "huly_ai_bot_avatar"  # Avatar name (default: huly_ai_bot_avatar)
+    name: "ai_bot_avatar_v1"  # Avatar name (default: ai_bot_avatar)
     contentType: ".png"  # Avatar content type (default: image/png)
 
 # Port Configuration

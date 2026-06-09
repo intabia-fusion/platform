@@ -214,7 +214,7 @@ const config: Config = (() => {
     LastName: yamlConfig?.bot?.lastName ?? process.env.LAST_NAME,
     Password: yamlConfig?.bot?.password ?? process.env.PASSWORD ?? 'password',
     AvatarPath: yamlConfig?.bot?.avatar?.path ?? process.env.AVATAR_PATH ?? './assets/avatar.png',
-    AvatarName: yamlConfig?.bot?.avatar?.name ?? process.env.AVATAR_NAME ?? 'huly_ai_bot_avatar',
+    AvatarName: yamlConfig?.bot?.avatar?.name ?? process.env.AVATAR_NAME ?? 'ai_bot_avatar_v1',
     AvatarContentType: yamlConfig?.bot?.avatar?.contentType ?? process.env.AVATAR_CONTENT_TYPE ?? 'image/png',
 
     // Port configuration

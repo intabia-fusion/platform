@@ -218,13 +218,9 @@ export class WorkspaceClient {
     this.ctx.info('Upload avatar file', { workspace: this.wsIds })
 
     try {
-      const stat = fs.statSync(config.AvatarPath)
-      const lastModified = stat.mtime.getTime()
-
       const uploadInfo = await this.storage.stat(this.ctx, this.wsIds, config.AvatarName)
 
-      const isAlreadyUploaded = uploadInfo !== undefined && uploadInfo.modifiedOn !== lastModified
-      if (!isAlreadyUploaded) {
+      if (uploadInfo === undefined) {
         const data = fs.readFileSync(config.AvatarPath)
 
         await this.storage.put(this.ctx, this.wsIds, config.AvatarName, data, config.AvatarContentType, data.length)
