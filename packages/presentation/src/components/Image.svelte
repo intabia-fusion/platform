@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,7 +15,7 @@
 -->
 <script lang="ts">
   import type { Blob, Ref } from '@hcengineering/core'
-  import { Blurhash, Image, Loading } from '@hcengineering/ui'
+  import { Blurhash, Image, Loading, lazyObserver, isLazyEnabled } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getBlobRef } from '../preview'
 
@@ -30,11 +31,14 @@
 
   const dispatch = createEventDispatcher()
 
+  let visible = !isLazyEnabled() || loading === 'eager'
   let blobSrc: { src: string, srcset: string } | undefined
 
-  $: void getBlobRef(blob, alt, width, height).then((val) => {
-    blobSrc = val
-  })
+  $: if (visible) {
+    void getBlobRef(blob, alt, width, height).then((val) => {
+      blobSrc = val
+    })
+  }
 
   let loaded = false
 
@@ -49,31 +53,43 @@
   }
 </script>
 
-<div class="container relative w-full h-full">
-  {#if !loaded}
-    {#if blurhash !== undefined}
-      <div class="overlay">
-        <Blurhash {blurhash} {width} {height} />
-      </div>
-    {:else if showLoading}
-      <div class="overlay">
-        <Loading />
-      </div>
+<div
+  class="container relative w-full h-full"
+  use:lazyObserver={(val, unsubscribe) => {
+    if (val) {
+      visible = true
+      unsubscribe?.()
+    }
+  }}
+>
+  {#if visible}
+    {#if !loaded}
+      {#if blurhash !== undefined}
+        <div class="overlay">
+          <!-- Do not pass width/height. Decoding blurhash at full display size on the main thread is extremely slow. -->
+          <!-- The default 32x32 canvas size is lightweight and stretched using CSS anyway. -->
+          <Blurhash {blurhash} />
+        </div>
+      {:else if showLoading}
+        <div class="overlay">
+          <Loading />
+        </div>
+      {/if}
     {/if}
-  {/if}
 
-  <Image
-    src={blobSrc?.src}
-    srcset={blobSrc?.srcset}
-    {alt}
-    width={responsive ? '100%' : width}
-    height={responsive ? '100%' : height}
-    {loading}
-    {fit}
-    on:error
-    on:load={handleLoad}
-    on:loadstart={handleLoadStart}
-  />
+    <Image
+      src={blobSrc?.src}
+      srcset={blobSrc?.srcset}
+      {alt}
+      width={responsive ? '100%' : width}
+      height={responsive ? '100%' : height}
+      {loading}
+      {fit}
+      on:error
+      on:load={handleLoad}
+      on:loadstart={handleLoadStart}
+    />
+  {/if}
 </div>
 
 <style lang="scss">

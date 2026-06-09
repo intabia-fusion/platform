@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -25,10 +26,11 @@
 
   const dispatch = createEventDispatcher()
 
-  let retry: number = 0
+  const MAX_RETRIES = 3
+  let retry: number = MAX_RETRIES
 
   function handleLoad (): void {
-    retry = 0
+    retry = MAX_RETRIES
     dispatch('load')
   }
 
@@ -37,12 +39,12 @@
   }
 
   $: if (src !== undefined) {
-    retry = 0
+    retry = MAX_RETRIES
     handleLoadStart()
   }
 
   function handleError (event: any): void {
-    if (retry > 3) {
+    if (retry > MAX_RETRIES) {
       event.target.src = undefined
     } else if (retry > 0) {
       event.target.src = `${src}#${Date.now()}`
