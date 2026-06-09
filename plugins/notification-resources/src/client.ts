@@ -217,7 +217,10 @@ export class NotificationClientImpl implements NotificationClient {
       const loadPromise = (async () => {
         try {
           const client = getClient()
-          const contexts = await client.findAll(notification.class.DocNotifyContext, { _id: { $in: toLoad } })
+          const contexts = await client.findAll(notification.class.DocNotifyContext, {
+            _id: { $in: toLoad },
+            user: getCurrentAccount().uuid
+          })
 
           const contextsMap = new Map<Ref<DocNotifyContext>, DocNotifyContext>()
           for (const ctx of contexts) {
@@ -315,7 +318,10 @@ export class NotificationClientImpl implements NotificationClient {
       const loadPromise = (async () => {
         try {
           const client = getClient()
-          const contexts = await client.findAll(notification.class.DocNotifyContext, { objectId: { $in: toLoad } })
+          const contexts = await client.findAll(notification.class.DocNotifyContext, {
+            objectId: { $in: toLoad },
+            user: getCurrentAccount().uuid
+          })
 
           const contextsMap = new Map<Ref<Doc>, DocNotifyContext>()
           for (const ctx of contexts) {

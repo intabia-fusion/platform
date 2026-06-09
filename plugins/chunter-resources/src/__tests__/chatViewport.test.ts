@@ -15,7 +15,10 @@
 
 import { get } from 'svelte/store'
 import activity from '@hcengineering/activity'
+import attachment from '@hcengineering/attachment'
 import { type Ref } from '@hcengineering/core'
+import { addTxListener } from '@hcengineering/presentation'
+
 import { ChatViewport } from '../chatViewport'
 
 // Mock svelte/store before any other imports
@@ -94,17 +97,63 @@ const mockAccount = {
 // Mock @hcengineering/core statically to avoid loading actual core package in Jest
 jest.mock('@hcengineering/core', () => {
   return {
+    __esModule: true,
     SortingOrder: {
       Ascending: 1,
       Descending: -1
     },
-    getCurrentAccount: () => mockAccount
+    getCurrentAccount: () => mockAccount,
+    default: {
+      class: {
+        TxCreateDoc: 'TxCreateDoc',
+        TxUpdateDoc: 'TxUpdateDoc',
+        TxRemoveDoc: 'TxRemoveDoc',
+        TxMixin: 'TxMixin'
+      }
+    },
+    TxProcessor: {
+      isExtendsCUD: (cls: any) => {
+        return cls === 'TxCreateDoc' || cls === 'TxUpdateDoc' || cls === 'TxRemoveDoc' || cls === 'TxMixin'
+      },
+      createDoc2Doc: (tx: any) => ({
+        ...tx.attributes,
+        _id: tx.objectId,
+        _class: tx.objectClass,
+        attachedTo: tx.attachedTo,
+        attachedToClass: tx.attachedToClass,
+        modifiedOn: tx.modifiedOn,
+        createdOn: tx.createdOn ?? tx.modifiedOn
+      }),
+      updateDoc2Doc: (doc: any, tx: any) => {
+        Object.assign(doc, tx.operations)
+        return doc
+      },
+      updateMixin4Doc: (doc: any, tx: any) => {
+        doc[tx.mixin] = { ...doc[tx.mixin], ...tx.attributes }
+        return doc
+      }
+    }
   }
 })
 
+const mockHierarchy = {
+  isDerived: (sub: any, parent: any) => {
+    if (sub === parent) return true
+    if (sub === 'ChatMessage' && parent === activity.class.ActivityMessage) return true
+    if (sub === 'Reaction' && parent === activity.class.Reaction) return true
+    if (sub === 'Attachment' && parent === attachment.class.Attachment) return true
+    if (typeof sub === 'string' && typeof parent === 'string') {
+      if (sub === parent) return true
+      if (sub === 'ChatMessage' && parent === 'ActivityMessage') return true
+    }
+    return false
+  }
+}
+
 const mockClient = {
   findAll: jest.fn(),
-  findOne: jest.fn()
+  findOne: jest.fn(),
+  getHierarchy: () => mockHierarchy
 }
 
 const mockQuery = {
@@ -114,7 +163,9 @@ const mockQuery = {
 
 jest.mock('@hcengineering/presentation', () => ({
   getClient: () => mockClient,
-  createQuery: () => mockQuery
+  createQuery: () => mockQuery,
+  addTxListener: jest.fn(),
+  removeTxListener: jest.fn()
 }))
 
 describe('ChatViewport', () => {
@@ -1004,6 +1055,465 @@ describe('ChatViewport', () => {
       // Since targetAnchor.createdOn is undefined, it should fallback to applying latest tail.
       expect(get(viewport.messages).length).toBe(10)
       expect(get(viewport.hasMoreBackward)).toBe(false)
+    })
+  })
+
+  describe('Suite 8: Transaction Reactivity', () => {
+    let listener: (txes: any[]) => void
+    let viewport: ChatViewport
+    let mockMsg: any
+
+    beforeEach(async () => {
+      mockMsg = {
+        _id: 'msg-1',
+        _class: 'ChatMessage',
+        createdOn: 1000,
+        modifiedOn: 1000,
+        message: 'Hello'
+      }
+      mockClient.findAll.mockResolvedValue([mockMsg])
+      ;(addTxListener as jest.Mock).mockClear()
+
+      viewport = new ChatViewport(undefined, chatId, undefined)
+      await flushTasks()
+
+      expect(addTxListener).toHaveBeenCalled()
+      listener = (addTxListener as jest.Mock).mock.calls[0][0]
+      mockClient.findOne.mockClear()
+    })
+
+    it('8.1 should update message content on TxUpdateDoc without fetching from DB', async () => {
+      const tx = {
+        _class: 'TxUpdateDoc',
+        objectId: 'msg-1',
+        objectClass: 'ChatMessage',
+        modifiedOn: 1050,
+        operations: {
+          message: 'Hello World'
+        }
+      }
+
+      listener([tx])
+      await flushTasks()
+
+      const msgs = get(viewport.messages)
+      expect(msgs.length).toBe(1)
+      expect(msgs[0].message).toBe('Hello World')
+      expect(mockClient.findOne).not.toHaveBeenCalled()
+    })
+
+    it('8.2 should update message content on TxMixin without fetching from DB', async () => {
+      const tx = {
+        _class: 'TxMixin',
+        objectId: 'msg-1',
+        objectClass: 'ChatMessage',
+        mixin: 'someMixin',
+        modifiedOn: 1050,
+        attributes: {
+          field: 'value'
+        }
+      }
+
+      listener([tx])
+      await flushTasks()
+
+      const msgs = get(viewport.messages)
+      expect((msgs[0] as any).someMixin?.field).toBe('value')
+      expect(mockClient.findOne).not.toHaveBeenCalled()
+    })
+
+    it('8.3 should delete message locally on TxRemoveDoc', async () => {
+      const removeTx = {
+        _class: 'TxRemoveDoc',
+        objectId: 'msg-1',
+        objectClass: 'ChatMessage',
+        modifiedOn: 1050
+      }
+
+      listener([removeTx])
+      await flushTasks()
+
+      const msgs = get(viewport.messages)
+      expect(msgs.length).toBe(0)
+    })
+
+    it('8.4 should add, update, and remove reactions locally in $lookup.reactions', async () => {
+      // Create reaction
+      const createTx = {
+        _class: 'TxCreateDoc',
+        objectId: 'react-1',
+        objectClass: 'Reaction',
+        attachedTo: 'msg-1',
+        attachedToClass: 'ChatMessage',
+        modifiedOn: 1050,
+        attributes: {
+          emoji: '👍'
+        }
+      }
+
+      listener([createTx])
+      await flushTasks()
+
+      let msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.reactions).toEqual([
+        {
+          _id: 'react-1',
+          _class: 'Reaction',
+          emoji: '👍',
+          attachedTo: 'msg-1',
+          attachedToClass: 'ChatMessage',
+          modifiedOn: 1050,
+          createdOn: 1050
+        }
+      ])
+
+      // Update reaction
+      const updateTx = {
+        _class: 'TxUpdateDoc',
+        objectId: 'react-1',
+        objectClass: 'Reaction',
+        attachedTo: 'msg-1',
+        attachedToClass: 'ChatMessage',
+        modifiedOn: 1060,
+        operations: {
+          emoji: '❤️'
+        }
+      }
+
+      listener([updateTx])
+      await flushTasks()
+
+      msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.reactions[0].emoji).toBe('❤️')
+
+      // Remove reaction
+      const removeTx = {
+        _class: 'TxRemoveDoc',
+        objectId: 'react-1',
+        objectClass: 'Reaction',
+        attachedTo: 'msg-1',
+        attachedToClass: 'ChatMessage',
+        modifiedOn: 1070
+      }
+
+      listener([removeTx])
+      await flushTasks()
+
+      msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.reactions).toEqual([])
+      expect(mockClient.findOne).not.toHaveBeenCalled()
+    })
+
+    it('8.5 should add and remove attachments locally in $lookup.attachments', async () => {
+      // Create attachment
+      const createTx = {
+        _class: 'TxCreateDoc',
+        objectId: 'attach-1',
+        objectClass: 'Attachment',
+        attachedTo: 'msg-1',
+        attachedToClass: 'ChatMessage',
+        modifiedOn: 1050,
+        attributes: {
+          name: 'file.txt'
+        }
+      }
+
+      listener([createTx])
+      await flushTasks()
+
+      let msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.attachments).toEqual([
+        {
+          _id: 'attach-1',
+          _class: 'Attachment',
+          name: 'file.txt',
+          attachedTo: 'msg-1',
+          attachedToClass: 'ChatMessage',
+          modifiedOn: 1050,
+          createdOn: 1050
+        }
+      ])
+
+      // Remove attachment
+      const removeTx = {
+        _class: 'TxRemoveDoc',
+        objectId: 'attach-1',
+        objectClass: 'Attachment',
+        attachedTo: 'msg-1',
+        attachedToClass: 'ChatMessage',
+        modifiedOn: 1060
+      }
+
+      listener([removeTx])
+      await flushTasks()
+
+      msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.attachments).toEqual([])
+      expect(mockClient.findOne).not.toHaveBeenCalled()
+    })
+
+    it('8.6 should refetch from database when transaction modifiedOn is older than message modifiedOn (conflict)', async () => {
+      const tx = {
+        _class: 'TxUpdateDoc',
+        objectId: 'msg-1',
+        objectClass: 'ChatMessage',
+        modifiedOn: 950, // older than mockMsg.modifiedOn (1000)
+        operations: {
+          message: 'Stale update'
+        }
+      }
+
+      const updatedMsg = {
+        ...mockMsg,
+        modifiedOn: 1100,
+        message: 'Fresh message from DB'
+      }
+      mockClient.findOne.mockResolvedValueOnce(updatedMsg)
+
+      listener([tx])
+      await flushTasks()
+
+      expect(mockClient.findOne).toHaveBeenCalledWith(
+        activity.class.ActivityMessage,
+        { _id: 'msg-1' },
+        expect.any(Object)
+      )
+
+      const msgs = get(viewport.messages)
+      expect(msgs[0].message).toBe('Fresh message from DB')
+    })
+
+    it('8.7 should successfully find parent message by searching lookup list when attachedTo is missing/undefined in transaction', async () => {
+      // 1. First add a reaction so it exists in lookup
+      const createTx = {
+        _class: 'TxCreateDoc',
+        objectId: 'react-2',
+        objectClass: 'Reaction',
+        attachedTo: 'msg-1',
+        attachedToClass: 'ChatMessage',
+        modifiedOn: 1050,
+        attributes: {
+          emoji: '🎉'
+        }
+      }
+
+      listener([createTx])
+      await flushTasks()
+
+      let msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.reactions.length).toBe(1)
+
+      // 2. Now send a TxRemoveDoc without attachedTo field
+      const removeTx = {
+        _class: 'TxRemoveDoc',
+        objectId: 'react-2',
+        objectClass: 'Reaction',
+        modifiedOn: 1060
+      }
+
+      listener([removeTx])
+      await flushTasks()
+
+      msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.reactions).toEqual([])
+      expect(mockClient.findOne).not.toHaveBeenCalled()
+    })
+
+    it('8.8 should refetch from database when transaction modifiedOn is older than reaction modifiedOn (conflict)', async () => {
+      // 1. First add a reaction with modifiedOn 1050
+      const createTx = {
+        _class: 'TxCreateDoc',
+        objectId: 'react-3',
+        objectClass: 'Reaction',
+        attachedTo: 'msg-1',
+        attachedToClass: 'ChatMessage',
+        modifiedOn: 1050,
+        attributes: {
+          emoji: '🎉'
+        }
+      }
+
+      listener([createTx])
+      await flushTasks()
+
+      let msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.reactions.length).toBe(1)
+      expect((msgs[0] as any).$lookup?.reactions[0].modifiedOn).toBe(1050)
+
+      // 2. Mock resolved message from DB when refetch occurs
+      const updatedMsg = {
+        ...mockMsg,
+        message: 'Refetched after reaction conflict'
+      }
+      mockClient.findOne.mockResolvedValueOnce(updatedMsg)
+
+      // 3. Send update transaction for reaction with modifiedOn 950 (older than 1050)
+      const staleUpdateTx = {
+        _class: 'TxUpdateDoc',
+        objectId: 'react-3',
+        objectClass: 'Reaction',
+        attachedTo: 'msg-1',
+        attachedToClass: 'ChatMessage',
+        modifiedOn: 950,
+        operations: {
+          emoji: '😢'
+        }
+      }
+
+      listener([staleUpdateTx])
+      await flushTasks()
+
+      expect(mockClient.findOne).toHaveBeenCalledWith(
+        activity.class.ActivityMessage,
+        { _id: 'msg-1' },
+        expect.any(Object)
+      )
+
+      msgs = get(viewport.messages)
+      expect(msgs[0].message).toBe('Refetched after reaction conflict')
+    })
+
+    it('8.9 should immediately ignore transactions for message IDs that are not loaded in the viewport', async () => {
+      const tx = {
+        _class: 'TxUpdateDoc',
+        objectId: 'msg-not-loaded',
+        objectClass: 'ChatMessage',
+        modifiedOn: 1050,
+        operations: {
+          message: 'Hello Stale'
+        }
+      }
+
+      listener([tx])
+      await flushTasks()
+
+      const msgs = get(viewport.messages)
+      expect(msgs.length).toBe(1)
+      expect(msgs[0].message).toBe('Hello') // unchanged
+      expect(mockClient.findOne).not.toHaveBeenCalled()
+    })
+
+    it('8.10 should immediately ignore attachment/reaction transactions when parent message is not loaded in the viewport', async () => {
+      const tx = {
+        _class: 'TxCreateDoc',
+        objectId: 'react-unloaded',
+        objectClass: 'Reaction',
+        attachedTo: 'msg-not-loaded',
+        attachedToClass: 'ChatMessage',
+        modifiedOn: 1050,
+        attributes: {
+          emoji: '😢'
+        }
+      }
+
+      listener([tx])
+      await flushTasks()
+
+      const msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.reactions ?? []).toEqual([])
+      expect(mockClient.findOne).not.toHaveBeenCalled()
+    })
+
+    it('8.11 should ignore non-CUD transactions or unrelated document class transactions', async () => {
+      const nonCudTx = {
+        _class: 'TxSomeCustomTransaction',
+        objectId: 'msg-1',
+        objectClass: 'ChatMessage',
+        modifiedOn: 1050
+      }
+
+      const unrelatedClassTx = {
+        _class: 'TxUpdateDoc',
+        objectId: 'msg-1',
+        objectClass: 'UnrelatedClass',
+        modifiedOn: 1050,
+        operations: {
+          someField: 'val'
+        }
+      }
+
+      listener([nonCudTx, unrelatedClassTx])
+      await flushTasks()
+
+      const msgs = get(viewport.messages)
+      expect(msgs[0].message).toBe('Hello') // unchanged
+      expect(mockClient.findOne).not.toHaveBeenCalled()
+    })
+
+    it('8.12 should ignore updates/removals of attachments/reactions that do not exist in lookup list', async () => {
+      // Send TxUpdateDoc for a reaction that does not exist in lookup of loaded message 'msg-1'
+      const updateReactionTx = {
+        _class: 'TxUpdateDoc',
+        objectId: 'react-nonexistent',
+        objectClass: 'Reaction',
+        attachedTo: 'msg-1',
+        attachedToClass: 'ChatMessage',
+        modifiedOn: 1050,
+        operations: {
+          emoji: '❤️'
+        }
+      }
+
+      listener([updateReactionTx])
+      await flushTasks()
+
+      const msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.reactions ?? []).toEqual([])
+      expect(mockClient.findOne).not.toHaveBeenCalled()
+    })
+
+    it('8.13 should refetch from database when transaction modifiedOn is older than attachment modifiedOn (conflict)', async () => {
+      // 1. First add an attachment with modifiedOn 1050
+      const createTx = {
+        _class: 'TxCreateDoc',
+        objectId: 'attach-stale-test',
+        objectClass: 'Attachment',
+        attachedTo: 'msg-1',
+        attachedToClass: 'ChatMessage',
+        modifiedOn: 1050,
+        attributes: {
+          name: 'file1.png'
+        }
+      }
+
+      listener([createTx])
+      await flushTasks()
+
+      let msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.attachments.length).toBe(1)
+      expect((msgs[0] as any).$lookup?.attachments[0].modifiedOn).toBe(1050)
+
+      // 2. Mock resolved message from DB when refetch occurs
+      const updatedMsg = {
+        ...mockMsg,
+        message: 'Refetched after attachment conflict'
+      }
+      mockClient.findOne.mockResolvedValueOnce(updatedMsg)
+
+      // 3. Send update transaction for attachment with modifiedOn 950 (older than 1050)
+      const staleUpdateTx = {
+        _class: 'TxUpdateDoc',
+        objectId: 'attach-stale-test',
+        objectClass: 'Attachment',
+        attachedTo: 'msg-1',
+        attachedToClass: 'ChatMessage',
+        modifiedOn: 950,
+        operations: {
+          name: 'file2.png'
+        }
+      }
+
+      listener([staleUpdateTx])
+      await flushTasks()
+
+      expect(mockClient.findOne).toHaveBeenCalledWith(
+        activity.class.ActivityMessage,
+        { _id: 'msg-1' },
+        expect.any(Object)
+      )
+
+      msgs = get(viewport.messages)
+      expect(msgs[0].message).toBe('Refetched after attachment conflict')
     })
   })
 })
