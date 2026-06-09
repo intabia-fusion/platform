@@ -34,7 +34,13 @@ import core, {
 } from '@hcengineering/core'
 import activity, { ActivityMessage } from '@hcengineering/activity'
 import { RestClient } from '@hcengineering/api-client'
-import notification, { TxNotificationType, QueueNotificationMessage, ReadState } from '@hcengineering/notification'
+import notification, {
+  TxNotificationType,
+  QueueNotificationMessage,
+  ReadState,
+  ReadNotificationAction,
+  CreateNotificationAction
+} from '@hcengineering/notification'
 import { StorageAdapter } from '@hcengineering/storage'
 import { PlatformError, unknownError } from '@hcengineering/platform'
 import {
@@ -62,6 +68,7 @@ import { emptyResult, getEmptyTxCache, getResultTxes, isEmptyResult } from './ut
 import { handleMessage } from './module/message'
 import { handleTxNotification } from './module/tx'
 import { handleReadState } from './module/read'
+import { handleReadNotificationAction, handleCreateNotificationAction } from './module/action'
 
 class Workspace {
   public readonly cache: WorkspaceCache
@@ -110,14 +117,24 @@ class Workspace {
     const result: Result = emptyResult()
     const txCache: TxCache = getEmptyTxCache()
 
+    if (this.hierarchy.isDerived(tx.objectClass, notification.class.ReadNotificationAction)) {
+      await handleReadNotificationAction(this.client, this.cache, result, tx as TxCUD<ReadNotificationAction>)
+    } else if (this.hierarchy.isDerived(tx.objectClass, notification.class.CreateNotificationAction)) {
+      await handleCreateNotificationAction(
+        this.client,
+        this.cache,
+        txCache,
+        result,
+        tx as TxCUD<CreateNotificationAction>
+      )
+    } else if (this.hierarchy.isDerived(tx.objectClass, notification.class.ReadState)) {
+      await handleReadState(this.client, this.cache, result, tx as TxCUD<ReadState>)
+    }
+
     await handleTxNotification(this.client, this.cache, txCache, result, tx, this.txTypes)
 
     if (this.hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) {
       await handleMessage(this.client, this.cache, txCache, result, tx as TxCUD<ActivityMessage>)
-    }
-
-    if (this.hierarchy.isDerived(tx.objectClass, notification.class.ReadState)) {
-      await handleReadState(this.client, this.cache, result, tx as TxCUD<ReadState>)
     }
 
     if (!isEmptyResult(result)) {

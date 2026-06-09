@@ -83,8 +83,9 @@ describe('context utils', () => {
           { attachedTo: 'msg-1' as Ref<ActivityMessage>, id: 'react-1' as Ref<Reaction> },
           { attachedTo: 'msg-2' as Ref<ActivityMessage>, id: 'react-2' as Ref<Reaction> }
         ],
-        unreadMentions: [{ messageId: 'msg-3' as Ref<ActivityMessage> }],
+        unreadMentions: [],
         unreadMessages: [
+          { id: 'msg-3' as Ref<ActivityMessage>, createdOn: 50, mentioned: true, notified: true },
           { id: 'msg-4' as Ref<ActivityMessage>, createdOn: 100 },
           { id: 'msg-5' as Ref<ActivityMessage>, createdOn: 200 }
         ]

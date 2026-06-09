@@ -33,7 +33,7 @@ import notification, {
   UnreadMessage,
   isUnreadMessageId
 } from '@hcengineering/notification'
-import { normalizeTextMessage, Sender, Receiver } from '@hcengineering/server-notification'
+import { truncateMessage, Sender, Receiver } from '@hcengineering/server-notification'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 
@@ -51,7 +51,6 @@ import {
   hasReactionNotificationByMessage,
   getLastNotify,
   hasMentionNotificationByMessage,
-  hasUnreadMentionByMessage,
   getAttachments,
   getUpdateOpContextTx,
   getCreateContextTx
@@ -198,13 +197,6 @@ async function handleRemoveMessage (
       operations.$inc = {
         ...operations.$inc,
         unreadCount: (operations.$inc?.unreadCount ?? 0) - matchingReactionsCount
-      }
-    }
-
-    if (hasUnreadMentionByMessage(context, tx.objectId)) {
-      operations.$pull = {
-        ...operations.$pull,
-        unreadMentions: { messageId: tx.objectId }
       }
     }
 
@@ -386,7 +378,7 @@ async function getMessageIntl (
   if (type.notificationMessage != null) {
     intlParamsNotLocalized.message = type.notificationMessage
   } else if (message.message != null && !isEmptyMarkup(message.message)) {
-    intlParams.message = normalizeTextMessage(markupToText(message.message))
+    intlParams.message = truncateMessage(markupToText(message.message))
   } else if (
     hierarchy.isDerived(message._class, chunter.class.ChatMessage) &&
     ((message as ChatMessage).attachments ?? 0) > 0
@@ -397,7 +389,7 @@ async function getMessageIntl (
     message.forwardContent?.message != null &&
     !isEmptyMarkup(message.forwardContent.message)
   ) {
-    intlParams.message = normalizeTextMessage(markupToText(message.forwardContent.message))
+    intlParams.message = truncateMessage(markupToText(message.forwardContent.message))
   } else if (message.forwardedMessage != null && (message.forwardContent?.attachments.length ?? 0) > 0) {
     intlParamsNotLocalized.message = activity.string.SentAttachments
   } else {

@@ -321,6 +321,13 @@ class WorkspaceCache {
     return contexts
   }
 
+  public async getContext (_id: Ref<Doc>, account: AccountUuid): Promise<DocNotifyContext | undefined> {
+    const loaded = (this.contextsByDocCache.get(_id) ?? []).find((it) => it.user === account)
+    if (loaded != null) return loaded
+
+    return await this.client.findOne(notification.class.DocNotifyContext, { objectId: _id, user: account })
+  }
+
   /**
    * Returns document settings.
    */

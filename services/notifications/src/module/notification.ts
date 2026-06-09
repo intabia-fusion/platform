@@ -29,10 +29,12 @@ import notificationPlugin, {
   NotificationTemplate,
   QueueNotificationMessage
 } from '@hcengineering/notification'
-import { Class, Doc, generateId, Ref, Space } from '@hcengineering/core'
+import { Class, Doc, generateId, Ref, Space, Markup } from '@hcengineering/core'
 import { Receiver } from '@hcengineering/server-notification'
 import { ActivityMessage } from '@hcengineering/activity'
 import { translate, IntlString } from '@hcengineering/platform'
+import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
+import { markupToHtml } from '@hcengineering/text-html'
 
 import { Client, ObjectDisplayData, NotifyProviders, Result, TxCache } from '../types'
 import {
@@ -236,7 +238,7 @@ async function getTemplate (
   }
 
   try {
-    const content = await translateTemplate(client, type, intl, receiver, inboxUrl)
+    const content = await translateTemplate(client, type, intl, receiver, inboxUrl, notification)
     if (content != null) {
       const subject = content.subject
       const text = content.text
@@ -251,12 +253,20 @@ async function getTemplate (
   }
 }
 
+function getNotificationMarkup (notification: ContextNotification): Markup | undefined {
+  if (notification.type === 'message' || notification.type === 'reaction') {
+    return notification.message?.message
+  }
+  return notification.markup
+}
+
 async function translateTemplate (
   client: Client,
   type: NotificationType,
   intl: NotificationIntl,
   receiver: Receiver,
-  inboxUrl: string
+  inboxUrl: string,
+  notification: ContextNotification
 ): Promise<QueueNotificationMessage['template']> {
   const templates: NotificationTemplate = type?.templates ?? {
     text: notificationPlugin.emailTemplate.GeneratedNotificationText,
@@ -290,9 +300,32 @@ async function translateTemplate (
 
   params.link = `<a href='${inboxUrl}'>${inboxLinkText}</a>`
 
-  const text = await fillTemplate(templates.text, textTitle, params, language)
-  const html = await fillTemplate(templates.html, htmlTitle, params, language)
-  const subject = await fillTemplate(templates.subject, textTitle, params, language)
+  let bodyText: string
+  let bodyHtml: string
+
+  const markup = getNotificationMarkup(notification)
+  if (markup != null && markup !== '' && !isEmptyMarkup(markup)) {
+    const textMessage = markupToText(markup)
+    let htmlMessage = textMessage
+    try {
+      htmlMessage = markupToHtml(JSON.parse(markup))
+    } catch (e) {
+      // Fallback to plain text if markup JSON parsing fails
+    }
+
+    params.message = textMessage
+    bodyText = await translate(intl.bodyIntl, params, language)
+
+    params.message = htmlMessage
+    bodyHtml = await translate(intl.bodyIntl, params, language)
+  } else {
+    bodyText = await translate(intl.bodyIntl, params, language)
+    bodyHtml = bodyText
+  }
+
+  const text = await fillTemplate(templates.text, textTitle, { ...params, body: bodyText }, language)
+  const html = await fillTemplate(templates.html, htmlTitle, { ...params, body: bodyHtml }, language)
+  const subject = await fillTemplate(templates.subject, textTitle, { ...params, body: bodyText }, language)
 
   return {
     text,

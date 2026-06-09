@@ -66,7 +66,7 @@ export function hasUnreadReaction (context: DocNotifyContext, reactionId: Ref<Re
 }
 
 export function hasUnreadMentionByMessage (context: DocNotifyContext, messageId: Ref<ActivityMessage>): boolean {
-  return context.unreadMentions.some((it) => it.messageId === messageId)
+  return context.unreadMessages.some((it) => isUnreadMessageId(it) && it.id === messageId && it.mentioned === true)
 }
 
 export function hasUnreadMessage (context: DocNotifyContext, messageId: Ref<ActivityMessage>): boolean {

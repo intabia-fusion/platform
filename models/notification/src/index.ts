@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,7 +15,7 @@
 // limitations under the License.
 //
 
-import { type ActivityMessage, type ActivityMessageLite } from '@hcengineering/activity'
+import activity, { type ActivityMessage, type ActivityMessageLite, type Reaction } from '@hcengineering/activity'
 import { type PersonSpace } from '@hcengineering/contact'
 import {
   AccountRole,
@@ -85,7 +86,11 @@ import {
   type UnreadMessage,
   type UnreadReaction,
   type CommonNotification,
-  type UnreadMention
+  type UnreadMention,
+  type ReadNotificationAction,
+  type CreateNotificationAction,
+  type CommonNotificationLite,
+  type NotificationIntl
 } from '@hcengineering/notification'
 import { type Asset, getEmbeddedLabel, type IntlString, type Resource } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
@@ -237,7 +242,8 @@ export class TDocNotifyContext extends TDoc implements DocNotifyContext {
   @Prop(TypeString(), core.string.String)
     objectTitle!: string
 
-  objectIconProps?: Record<string, any>
+  @Prop(TypeRecord(), getEmbeddedLabel('icon'))
+    objectIconProps?: Record<string, any>
 
   @Prop(TypeDate(), core.string.Date)
     lastNotify!: Timestamp
@@ -275,6 +281,54 @@ export class TReadState extends TAttachedDoc implements ReadState {
   latestMessageId?: Ref<ActivityMessage>
   latestMessageTimestamp?: Timestamp;
   [key: AccountUuid]: ReadPosition
+}
+
+@Model(notification.class.ReadNotificationAction, core.class.Doc, DOMAIN_TRANSIENT)
+export class TReadNotificationAction extends TDoc implements ReadNotificationAction {
+  declare space: Ref<PersonSpace>
+
+  @Prop(TypeRef(core.class.Doc), core.string.Object)
+    attachedTo!: Ref<Doc>
+
+  @Prop(TypeRef(core.class.Class), core.string.Class)
+    attachedToClass!: Ref<Class<Doc>>
+
+  @Prop(TypeAccountUuid(), core.string.Account)
+    account!: AccountUuid
+
+  @Prop(ArrOf(TypeRef(activity.class.Reaction)), getEmbeddedLabel('reactionIds'))
+    reactionIds?: Ref<Reaction>[]
+
+  @Prop(ArrOf(TypeRef(activity.class.ActivityMessage)), getEmbeddedLabel('messageIds'))
+    messageIds?: Ref<ActivityMessage>[]
+
+  @Prop(ArrOf(TypeString()), getEmbeddedLabel('commonIds'))
+    commonIds?: string[]
+
+  @Prop(ArrOf(TypeString()), getEmbeddedLabel('mentionIds'))
+    mentionIds?: string[]
+}
+
+@Model(notification.class.CreateNotificationAction, core.class.Doc, DOMAIN_TRANSIENT)
+export class TCreateNotificationAction extends TDoc implements CreateNotificationAction {
+  declare space: Ref<PersonSpace>
+
+  @Prop(TypeRef(core.class.Doc), core.string.Object)
+    attachedTo!: Ref<Doc>
+
+  @Prop(TypeRef(core.class.Class), core.string.Class)
+    attachedToClass!: Ref<Class<Doc>>
+
+  @Prop(TypeAccountUuid(), core.string.Account)
+    account!: AccountUuid
+
+  @Prop(TypeRef(notification.class.NotificationType), notification.string.Notification)
+    type?: Ref<NotificationType>
+
+  @Prop(TypeRecord(), notification.string.Notification)
+    notification!: CommonNotificationLite
+
+  intl?: Partial<NotificationIntl>
 }
 
 @Model(notification.class.ActivityNotificationViewlet, core.class.Doc, DOMAIN_MODEL)
@@ -333,7 +387,9 @@ export function createModel (builder: Builder): void {
     TNotificationProviderDefaults,
     TReadState,
     TNotificationAppearancePreference,
-    TDocNotificationSetting
+    TDocNotificationSetting,
+    TReadNotificationAction,
+    TCreateNotificationAction
   )
 
   builder.mixin(notification.class.AppPushNotification, core.class.Class, core.mixin.TransientConfiguration, {
@@ -395,6 +451,20 @@ export function createModel (builder: Builder): void {
     createAccessLevel: AccountRole.Guest,
     updateAccessLevel: AccountRole.Guest,
     removeAccessLevel: AccountRole.Guest
+  })
+
+  builder.mixin(notification.class.ReadNotificationAction, core.class.Class, core.mixin.TransientConfiguration, {
+    broadcastOnly: true
+  })
+  builder.mixin(notification.class.CreateNotificationAction, core.class.Class, core.mixin.TransientConfiguration, {
+    broadcastOnly: true
+  })
+
+  builder.mixin(notification.class.ReadNotificationAction, core.class.Class, core.mixin.TxAccessLevel, {
+    createAccessLevel: AccountRole.Guest
+  })
+  builder.mixin(notification.class.CreateNotificationAction, core.class.Class, core.mixin.TxAccessLevel, {
+    createAccessLevel: AccountRole.Admin
   })
 
   builder.createDoc(core.class.DomainIndexConfiguration, core.space.Model, {

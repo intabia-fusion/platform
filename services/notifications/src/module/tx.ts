@@ -23,7 +23,7 @@ import notification, {
 } from '@hcengineering/notification'
 import serverNotification, {
   CreateNotificationResult,
-  normalizeTextMessage,
+  truncateMessage,
   Sender,
   TypeMatch
 } from '@hcengineering/server-notification'
@@ -119,39 +119,38 @@ export async function handleTxNotification (
       const type = types[0] as TxNotificationType
       if (type == null) continue
 
-      if (client.hierarchy.hasMixin(type, serverNotification.mixin.TypeMatch)) {
-        const mixin = client.hierarchy.as<NotificationType, TypeMatch>(type, serverNotification.mixin.TypeMatch)
-        if (mixin.create == null) continue
-        const createFn = await getResource(mixin.create)
-        const data = await createFn(getTypeMatchClient(client), tx, txAttachedToDoc, txObject, receiver)
-        if (data == null) continue
-        const intl: NotificationIntl = await getIntl(client, txCache, data, mixin, type, tx, doc, txObject, sender)
+      if (!client.hierarchy.hasMixin(type, serverNotification.mixin.TypeMatch)) continue
+      const mixin = client.hierarchy.as<NotificationType, TypeMatch>(type, serverNotification.mixin.TypeMatch)
+      if (mixin.create == null) continue
+      const createFn = await getResource(mixin.create)
+      const data = await createFn(getTypeMatchClient(client), tx, txAttachedToDoc, txObject, receiver)
+      if (data == null) continue
+      const intl: NotificationIntl = await getIntl(client, txCache, data, mixin, type, tx, doc, txObject, sender)
 
-        const commonNotification: CommonNotification = {
-          ...data.notification,
-          intlParams: intl.intlParams,
-          intlParamsNotLocalized: intl.intlParamsNotLocalized,
-          id: tx._id,
-          type: 'common',
-          createdOn: tx.createdOn ?? tx.modifiedOn,
-          createdBy: tx.createdBy ?? tx.modifiedBy
-        }
-
-        const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
-        const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
-        await pushNotification(client, txCache, result, context, {
-          unreadCommon: commonNotification,
-          receiver,
-          objectId: doc._id,
-          objectClass: doc._class,
-          objectSpace: doc.space,
-          notification: commonNotification,
-          intl,
-          notifyProviders,
-          objectDisplayData,
-          pushSubscriptions
-        })
+      const commonNotification: CommonNotification = {
+        ...data.notification,
+        intlParams: intl.intlParams,
+        intlParamsNotLocalized: intl.intlParamsNotLocalized,
+        id: tx._id,
+        type: 'common',
+        createdOn: tx.createdOn ?? tx.modifiedOn,
+        createdBy: tx.createdBy ?? tx.modifiedBy
       }
+
+      const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
+      const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
+      await pushNotification(client, txCache, result, context, {
+        unreadCommon: commonNotification,
+        receiver,
+        objectId: doc._id,
+        objectClass: doc._class,
+        objectSpace: doc.space,
+        notification: commonNotification,
+        intl,
+        notifyProviders,
+        objectDisplayData,
+        pushSubscriptions
+      })
     }
   }
 }
@@ -180,7 +179,7 @@ async function getIntl (
     }
 
     if (data.notification.markup != null) {
-      intlParams.message = normalizeTextMessage(markupToText(data.notification.markup))
+      intlParams.message = truncateMessage(markupToText(data.notification.markup))
     } else if (data.notification.messageIntl != null) {
       intlParamsNotLocalized.message = data.notification.messageIntl
     }

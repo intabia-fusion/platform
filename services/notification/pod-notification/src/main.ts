@@ -16,7 +16,14 @@
 
 import { notEmpty } from '@hcengineering/core'
 import core, { systemAccountUuid, type Ref } from '@hcengineering/core'
-import notification, { PushSubscription, type PushData, QueueNotificationMessage } from '@hcengineering/notification'
+import notification, {
+  PushSubscription,
+  type PushData,
+  QueueNotificationMessage,
+  PUSH_NOTIFICATION_TITLE_SIZE,
+  PUSH_NOTIFICATION_BODY_SIZE,
+  truncate
+} from '@hcengineering/notification'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { QueueTopic } from '@hcengineering/server-core'
 import { setMetadata } from '@hcengineering/platform'
@@ -87,8 +94,8 @@ export const main = async (): Promise<void> => {
         if (shouldPush) {
           const failedSubscriptionIds = await sendPushToSubscription(value.pushSubscriptions, {
             tag: value.id,
-            title: value.title,
-            body: value.body,
+            title: truncate(value.title, PUSH_NOTIFICATION_TITLE_SIZE),
+            body: truncate(value.body, PUSH_NOTIFICATION_BODY_SIZE),
             domain: value.domain,
             url: value.url
           })

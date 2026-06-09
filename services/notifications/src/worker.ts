@@ -98,6 +98,9 @@ export class Worker {
     this.triggerClasses = [
       notification.class.ReadState,
       activity.class.ActivityMessage,
+      activity.class.Reaction,
+      notification.class.ReadNotificationAction,
+      notification.class.CreateNotificationAction,
       ...this.txTypes.map((it) => it.objectClass)
     ].filter((it) => it !== core.class.Doc)
 

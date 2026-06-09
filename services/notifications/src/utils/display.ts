@@ -151,7 +151,7 @@ export async function getObjectDisplayData (
 export async function getBaseDisplayParams (
   client: Client,
   txCache: TxCache,
-  type: NotificationType,
+  type: NotificationType | undefined,
   doc: Doc,
   sender: Sender
 ): Promise<Pick<NotificationIntl, 'intlParams' | 'intlParamsNotLocalized'>> {
@@ -175,7 +175,7 @@ export async function getBaseDisplayParams (
 
   const senderName = getSenderName(sender, client.branding?.lastNameFirst)
 
-  if (type.notificationMessage != null) {
+  if (type?.notificationMessage != null) {
     intlParamsNotLocalized.message = type.notificationMessage
   }
 

@@ -276,6 +276,7 @@ export interface UnreadMessageId {
   id: Ref<ActivityMessage>
   createdOn: Timestamp
   notified?: boolean
+  mentioned?: boolean
 }
 
 export interface UnreadMessageChunk {
@@ -289,8 +290,6 @@ export type UnreadMessage = UnreadMessageId | UnreadMessageChunk
 
 export interface UnreadMention {
   id: string
-  messageId?: Ref<ActivityMessage>
-  messageCreatedOn?: Timestamp
 }
 
 export interface UnreadReaction {
@@ -393,4 +392,30 @@ export interface NotificationClient {
   loadContextByDoc: (doc?: Ref<Doc>) => Promise<void>
   getContextsByDoc: (docs: Ref<Doc>[]) => Promise<DocNotifyContext[]>
   getContextByDoc: (doc?: Ref<Doc>) => Promise<DocNotifyContext | undefined>
+}
+
+export type CommonNotificationLite = Omit<
+CommonNotification,
+'id' | 'type' | 'createdOn' | 'createdBy' | 'intlParamsNotLocalized' | 'intlParams'
+>
+
+export interface ReadNotificationAction extends Doc<PersonSpace> {
+  attachedTo: Ref<Doc>
+  attachedToClass: Ref<Class<Doc>>
+  account: AccountUuid
+
+  reactionIds?: Ref<Reaction>[]
+  messageIds?: Ref<ActivityMessage>[]
+  commonIds?: string[]
+  mentionIds?: string[]
+}
+
+export interface CreateNotificationAction extends Doc<PersonSpace> {
+  attachedTo: Ref<Doc>
+  attachedToClass: Ref<Class<Doc>>
+  account: AccountUuid
+
+  type?: Ref<NotificationType>
+  notification: CommonNotificationLite
+  intl?: Partial<NotificationIntl>
 }

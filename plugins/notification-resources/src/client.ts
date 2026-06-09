@@ -398,19 +398,16 @@ export class NotificationClientImpl implements NotificationClient {
     if (docNotifyContext == null) return
 
     const commonIds = docNotifyContext.unreadCommons.map((n) => n.id)
-    const mentionIdsWithoutMessage = docNotifyContext.unreadMentions
-      .filter((it) => it.messageId == null)
-      .map((n) => n.id)
+    const mentionIds = docNotifyContext.unreadMentions.map((n) => n.id)
 
-    if (commonIds.length === 0 && mentionIdsWithoutMessage.length === 0) {
-      return
-    }
+    if (commonIds.length === 0 && mentionIds.length === 0) return
 
-    await client.update(docNotifyContext, {
-      $pull: {
-        unreadCommons: { id: { $in: commonIds } },
-        unreadMentions: { id: { $in: mentionIdsWithoutMessage } }
-      }
+    await client.createDoc(notification.class.ReadNotificationAction, docNotifyContext.space, {
+      attachedTo: docNotifyContext.objectId,
+      attachedToClass: docNotifyContext.objectClass,
+      account: me.uuid,
+      commonIds,
+      mentionIds
     })
   }
 
@@ -481,18 +478,25 @@ export class NotificationClientImpl implements NotificationClient {
         notification.class.DocNotifyContext,
         {
           user: getCurrentAccount().uuid,
-          unread: true
+          unreadCount: { $gt: 0 }
         },
-        { projection: { _id: 1, _class: 1, space: 1 } }
+        { projection: { _id: 1, _class: 1, space: 1, unreadReactions: 1, unreadCommons: 1, unreadMentions: 1 } }
       )
       for (const context of contexts) {
-        await ops.updateDoc(context._class, context.space, context._id, {
-          unreadCommons: [],
-          unreadMentions: [],
-          unreadReactions: [],
-          unreadMessages: [],
-          unreadCount: 0
-        })
+        const reactionIds = context.unreadReactions?.map((n) => n.id) ?? []
+        const commonIds = context.unreadCommons?.map((n) => n.id) ?? []
+        const mentionIds = context.unreadMentions?.map((n) => n.id) ?? []
+
+        if (reactionIds.length > 0 || commonIds.length > 0 || mentionIds.length > 0) {
+          await ops.createDoc(notification.class.ReadNotificationAction, context.space, {
+            attachedTo: context.objectId,
+            attachedToClass: context.objectClass,
+            account: getCurrentAccount().uuid,
+            reactionIds,
+            commonIds,
+            mentionIds
+          })
+        }
         await this.forceReadDocState(ops, context.objectId)
       }
     } finally {

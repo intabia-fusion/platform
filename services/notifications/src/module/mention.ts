@@ -25,7 +25,6 @@ import core, {
   Ref,
   Space,
   TxCUD,
-  TxRemoveDoc,
   Blob
 } from '@hcengineering/core'
 import activity, { ActivityMessage, UserMentionInfo } from '@hcengineering/activity'
@@ -33,9 +32,12 @@ import notification, {
   DocNotifyContext,
   MentionNotification,
   NotificationIntl,
-  TxNotificationType
+  TxNotificationType,
+  isUnreadMessageId,
+  UnreadMessage,
+  UnreadMention
 } from '@hcengineering/notification'
-import { MentionRef, normalizeTextMessage, Receiver, Sender } from '@hcengineering/server-notification'
+import { MentionRef, truncateMessage, Receiver, Sender } from '@hcengineering/server-notification'
 import { areEqualJson, extractReferences, jsonToMarkup, markupToJSON, markupToText } from '@hcengineering/text-core'
 import contact, { Employee, Person } from '@hcengineering/contact'
 
@@ -82,11 +84,24 @@ export async function handleMention (
 
     const objectDisplayData = await getObjectDisplayData(client, txCache, doc, mention.receiver.account)
     const pushSubscriptions = await cache.getPushSubscriptions(mention.receiver.account)
+    const messageId = mentionNotification.messageId
+    let unreadMsg: UnreadMessage | undefined
+    let unreadMnt: UnreadMention | undefined
+    if (messageId != null) {
+      unreadMsg = {
+        id: messageId,
+        createdOn: mentionNotification.createdOn,
+        notified: true,
+        mentioned: true
+      }
+    } else {
+      unreadMnt = {
+        id: mentionNotification.id
+      }
+    }
     await pushNotification(client, txCache, result, mention.context, {
-      unreadMention: {
-        id: mentionNotification.id,
-        messageId: mentionNotification.messageId
-      },
+      unreadMessage: unreadMsg,
+      unreadMention: unreadMnt,
       receiver: mention.receiver,
       objectId: doc._id,
       objectClass: doc._class,
@@ -109,13 +124,10 @@ async function createMentionsData (
   object: Doc,
   type: TxNotificationType
 ): Promise<MentionResult[]> {
+  if (tx._class === core.class.TxRemoveDoc) return []
+
   const contexts = await cache.getContexts(doc._id)
   const settings = await cache.getSettings()
-
-  if (tx._class === core.class.TxRemoveDoc) {
-    await removeMentionNotifications(client, tx as TxRemoveDoc<Doc>, result, contexts)
-    return []
-  }
 
   const { hierarchy } = client
 
@@ -358,16 +370,24 @@ async function removeMentions (
     const hasNotification = context.latestNotifications.some(
       (it) => it.type === 'mention' && it.messageId === messageId
     )
-    const hasUnreadMention = context.unreadMentions.some((it) => it.messageId === messageId)
 
     if (hasNotification) {
       op.$pull = { latestNotifications: { type: 'mention', messageId } }
     }
 
-    if (hasUnreadMention) {
-      op.$pull = {
-        ...op.$pull,
-        unreadMentions: { messageId }
+    if (messageId != null) {
+      const unreadMsg = context.unreadMessages?.find(
+        (it) => isUnreadMessageId(it) && it.id === messageId && it.mentioned === true
+      )
+      if (unreadMsg != null && isUnreadMessageId(unreadMsg)) {
+        op.$update = {
+          unreadMessages: {
+            $query: { id: messageId },
+            $update: {
+              mentioned: false
+            }
+          }
+        }
       }
     }
 
@@ -405,46 +425,6 @@ function createOrUpdateMention (
   }
 }
 
-async function removeMentionNotifications (
-  client: Client,
-  tx: TxRemoveDoc<Doc>,
-  result: Result,
-  contexts: DocNotifyContext[]
-): Promise<void> {
-  const { hierarchy } = client
-  const attributes = hierarchy.getAllAttributes(tx.objectClass)
-
-  let hasMarkdown = false
-
-  for (const attr of attributes.values()) {
-    if ([core.class.TypeMarkup, core.class.TypeCollaborativeDoc].includes(attr.type._class)) {
-      hasMarkdown = true
-      break
-    }
-  }
-
-  if (!hasMarkdown) return
-
-  for (const context of contexts) {
-    const op: DocumentUpdate<DocNotifyContext> = {}
-
-    if (context.latestNotifications.some((it) => it.type === 'mention' && it.messageId === tx.objectId)) {
-      op.$pull = { latestNotifications: { type: 'mention', messageId: tx.objectId as Ref<ActivityMessage> } }
-    }
-
-    if (context.unreadMentions.some((it) => it.messageId === tx.objectId)) {
-      op.$pull = {
-        ...op.$pull,
-        unreadMentions: { messageId: tx.objectId as Ref<ActivityMessage> }
-      }
-    }
-
-    if (Object.keys(op).length > 0) {
-      result.updateOpContextTx.push(client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, op))
-    }
-  }
-}
-
 async function getMentionIntl (
   client: Client,
   txCache: TxCache,
@@ -456,7 +436,7 @@ async function getMentionIntl (
 ): Promise<NotificationIntl> {
   const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(client, txCache, type, doc, sender)
 
-  intlParams.message = normalizeTextMessage(markupToText(message?.message ?? mention.notification.markup ?? ''))
+  intlParams.message = truncateMessage(markupToText(message?.message ?? mention.notification.markup ?? ''))
 
   return {
     titleIntl:

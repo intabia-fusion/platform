@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { AccountUuid, DocumentUpdate, notEmpty, Timestamp, TxCUD, TxUpdateDoc } from '@hcengineering/core'
+import core, { AccountUuid, DocumentUpdate, Timestamp, TxCUD, TxUpdateDoc } from '@hcengineering/core'
 import {
   DocNotifyContext,
   ReadState,
@@ -91,20 +91,11 @@ async function readContext (client: Client, result: Result, context: DocNotifyCo
     }
   }
 
-  const unreadMentionsToRead = (context.unreadMentions ?? []).filter(
-    (mention) => mention.messageId != null && (mention.messageCreatedOn ?? 0) <= ts
-  )
-
-  if (unreadMessagesToRead.length > 0 || unreadMentionsToRead.length > 0) {
+  if (unreadMessagesToRead.length > 0) {
     const decrease = unreadMessagesToRead.filter((it) => it.notified).length
     const updateOps: DocumentUpdate<DocNotifyContext> = {
       $pull: {
-        ...(unreadMessagesToRead.length > 0
-          ? { unreadMessages: { id: { $in: unreadMessagesToRead.map((it) => it.id) } } }
-          : {}),
-        ...(unreadMentionsToRead.length > 0
-          ? { unreadMentions: { messageId: { $in: unreadMentionsToRead.map((it) => it.messageId).filter(notEmpty) } } }
-          : {})
+        unreadMessages: { id: { $in: unreadMessagesToRead.map((it) => it.id) } }
       },
       ...(decrease > 0 ? { $inc: { unreadCount: -decrease } } : {})
     }

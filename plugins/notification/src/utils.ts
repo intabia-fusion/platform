@@ -71,6 +71,14 @@ export function getNotificationThreadId (
   return undefined
 }
 
+export const PUSH_NOTIFICATION_TITLE_SIZE = 80
+export const PUSH_NOTIFICATION_BODY_SIZE = 150
+
+export function truncate (text: string, limit: number): string {
+  const trimmed = text.trim()
+  return trimmed.length > limit ? trimmed.slice(0, limit) + '...' : trimmed
+}
+
 export async function translateNotification (
   intl: NotificationIntl,
   language: string

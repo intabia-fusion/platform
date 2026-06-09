@@ -31,7 +31,7 @@
 
   import { ChatViewport } from '../chatViewport'
   import chunter from '../plugin'
-  import { messageInView } from '../scroll'
+  import { messageInView, recheckNotifications, chatReadMessagesStore, readMessages } from '../scroll'
   import BlankView from './BlankView.svelte'
   import ChannelInput from './ChannelInput.svelte'
   import ActivityMessagesSeparator from './ChannelMessagesSeparator.svelte'
@@ -148,13 +148,10 @@
     isReadStateLoaded = true
   })
   $: readState = $readStateByDocStore.get(doc._id) ?? undefined
-  $: console.log('!!! readState', readState, getCurrentAccount().uuid)
-  // const unsubscribe = inboxClient.inboxNotificationsByContext.subscribe(() => {
-  //   if (notifyContext !== undefined && !isFreeze()) {
-  //     recheckNotifications(notifyContext)
-  //     read()
-  //   }
-  // })
+
+  $: if (notifyContext !== undefined && !isFreeze()) {
+    recheckNotifications(notifyContext)
+  }
 
   $: adjustScrollPosition(selectedMessageId)
   $: void initializeScroll($isLoadingStore || !isReadStateLoaded, separatorDiv, separatorIndex)
@@ -205,6 +202,7 @@
       isPageHidden = true
       needUpdateTimestamp = true
       lastMsgBeforeFreeze = shouldScrollToNew ? messages[messages.length - 1]?._id : undefined
+      flushReadQueue()
     } else {
       if (isPageHidden) {
         isPageHidden = false
@@ -518,6 +516,25 @@
   const observedMessages = new Set<string>()
   let readTimeoutId: number | undefined
 
+  function flushReadQueue (): void {
+    if (readTimeoutId !== undefined) {
+      window.clearTimeout(readTimeoutId)
+      readTimeoutId = undefined
+    }
+
+    if (observedMessages.size === 0) return
+
+    const messagesList = Array.from(observedMessages)
+      .map((id) => messages.find((m) => m._id === id))
+      .filter(notEmpty)
+
+    observedMessages.clear()
+    if (messagesList.length === 0) return
+
+    const sorted = messagesList.sort((a, b) => (a.createdOn ?? 0) - (b.createdOn ?? 0))
+    void readMessages(sorted, notifyContext, readState)
+  }
+
   function handleMessageIntersect (msgId: string): void {
     if (freeze || document.hidden || !isScrollInitialized) {
       return
@@ -529,19 +546,7 @@
     }
 
     readTimeoutId = window.setTimeout(() => {
-      readTimeoutId = undefined
-      if (observedMessages.size === 0) return
-
-      const messagesList = Array.from(observedMessages)
-        .map((id) => messages.find((m) => m._id === id))
-        .filter(notEmpty)
-
-      observedMessages.clear()
-      if (messagesList.length === 0) return
-
-      const sorted = messagesList.sort((a, b) => (a.createdOn ?? 0) - (b.createdOn ?? 0))
-      console.log('sorted', sorted)
-      // await readMessages(sorted, notifyContext, readState)
+      flushReadQueue()
     }, 500)
   }
 
@@ -629,7 +634,7 @@
   })
 
   onMount(() => {
-    // chatReadMessagesStore.update(() => new Set())
+    chatReadMessagesStore.update(() => new Set())
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('focus', handleWindowFocus)
     window.addEventListener('blur', handleWindowBlur)
@@ -637,13 +642,11 @@
   })
 
   onDestroy(() => {
-    // unsubscribe()
+    flushReadQueue()
+    chatReadMessagesStore.update(() => new Set())
     if (observer !== undefined) {
       observer.disconnect()
       observer = undefined
-    }
-    if (readTimeoutId !== undefined) {
-      window.clearTimeout(readTimeoutId)
     }
     document.removeEventListener('visibilitychange', handleVisibilityChange)
     window.removeEventListener('focus', handleWindowFocus)

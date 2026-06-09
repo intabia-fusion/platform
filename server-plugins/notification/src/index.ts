@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022, 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,7 +17,7 @@
 
 import { Employee, Person, PersonSpace } from '@hcengineering/contact'
 import { PersonId, Class, Doc, Mixin, Ref, TxCUD, AccountUuid, Markup } from '@hcengineering/core'
-import { CommonNotification, NotificationIntl, NotificationType } from '@hcengineering/notification'
+import { CreateNotificationAction, NotificationIntl, NotificationType } from '@hcengineering/notification'
 import { Metadata, Plugin, Resource, plugin } from '@hcengineering/platform'
 import type { TriggerControl, TriggerFunc } from '@hcengineering/server-core'
 import { ActivityMessage } from '@hcengineering/activity'
@@ -53,13 +54,7 @@ export type TypeMatchFunc = (
 ) => Promise<boolean> | boolean
 
 export type TypeMatchFuncResource = Resource<TypeMatchFunc>
-export interface CreateNotificationResult {
-  notification: Omit<
-  CommonNotification,
-  'id' | 'type' | 'createdOn' | 'createdBy' | 'intlParamsNotLocalized' | 'intlParams'
-  >
-  intl?: Partial<NotificationIntl>
-}
+export type CreateNotificationResult = Pick<CreateNotificationAction, 'notification' | 'intl'>
 export type CreateTxNotificationFunc = (
   client: TypeMatchClient,
   tx: TxCUD<Doc>,
@@ -95,9 +90,6 @@ export interface MentionRef {
   mentionId: Ref<Person>
   mentionClass: Ref<Class<Person>>
 }
-
-export const NOTIFICATION_BODY_SIZE = 150
-export const PUSH_NOTIFICATION_TITLE_SIZE = 80
 
 export * from './utils'
 export * from './middleware'

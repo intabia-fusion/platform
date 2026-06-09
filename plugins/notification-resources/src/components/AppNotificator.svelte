@@ -15,7 +15,13 @@
 -->
 <script lang="ts">
   import { Class, Doc, Ref } from '@hcengineering/core'
-  import { AppPushNotification, translateNotification } from '@hcengineering/notification'
+  import {
+    AppPushNotification,
+    translateNotification,
+    PUSH_NOTIFICATION_TITLE_SIZE,
+    PUSH_NOTIFICATION_BODY_SIZE,
+    truncate
+  } from '@hcengineering/notification'
   import { getClient } from '@hcengineering/presentation'
   import {
     addNotification,
@@ -82,6 +88,13 @@
 
     const { title, body } = await translateNotification(value, $languageStore)
 
-    addNotification(title, body, Notification, { value }, NotificationSeverity.Info, `notification-${value.objectId}`)
+    addNotification(
+      truncate(title, PUSH_NOTIFICATION_TITLE_SIZE),
+      truncate(body, PUSH_NOTIFICATION_BODY_SIZE),
+      Notification,
+      { value },
+      NotificationSeverity.Info,
+      `notification-${value.objectId}`
+    )
   }
 </script>

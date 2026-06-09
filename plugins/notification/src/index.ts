@@ -42,7 +42,9 @@ import {
   PushSubscriptionSetting,
   ReadState,
   TxNotificationType,
-  PushSubscription
+  PushSubscription,
+  ReadNotificationAction,
+  CreateNotificationAction
 } from './types'
 
 export * from './types'
@@ -81,7 +83,9 @@ const notification = plugin(notificationId, {
 
     ReadState: '' as Ref<Class<ReadState>>,
     NotificationAppearancePreference: '' as Ref<Class<NotificationAppearancePreference>>,
-    DocNotificationSetting: '' as Ref<Class<DocNotificationSetting>>
+    DocNotificationSetting: '' as Ref<Class<DocNotificationSetting>>,
+    ReadNotificationAction: '' as Ref<Class<ReadNotificationAction>>,
+    CreateNotificationAction: '' as Ref<Class<CreateNotificationAction>>
   },
   ids: {
     NotificationSettings: '' as Ref<Doc>,

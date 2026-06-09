@@ -15,7 +15,7 @@
 
 import core, { Doc, DocumentUpdate, Ref, TxCreateDoc, TxCUD, TxProcessor, TxRemoveDoc } from '@hcengineering/core'
 import activity, { ActivityMessage, Reaction } from '@hcengineering/activity'
-import { normalizeTextMessage, Sender } from '@hcengineering/server-notification'
+import { truncateMessage, Sender } from '@hcengineering/server-notification'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import notification, {
   DocNotifyContext,
@@ -209,7 +209,7 @@ async function getReactionNotificationContent (
   const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(client, txCache, type, doc, sender)
 
   if (message.message != null && !isEmptyMarkup(message.message)) {
-    intlParams.title = normalizeTextMessage(markupToText(message.message))
+    intlParams.title = truncateMessage(markupToText(message.message), 100)
   } else {
     intlParamsNotLocalized.title = activity.string.Message
   }

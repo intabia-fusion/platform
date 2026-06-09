@@ -477,8 +477,7 @@ describe('message module', () => {
         $pull: {
           latestNotifications: { id: { $in: ['msg-1'] } },
           unreadMessages: { id: 'msg-1' },
-          unreadReactions: { attachedTo: 'msg-1' },
-          unreadMentions: { messageId: 'msg-1' }
+          unreadReactions: { attachedTo: 'msg-1' }
         },
         $inc: {
           unreadCount: -2 // -1 for unreadMessage notified, -1 for reaction

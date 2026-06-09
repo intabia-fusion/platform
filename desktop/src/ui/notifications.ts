@@ -14,7 +14,14 @@
 // limitations under the License.
 //
 
-import notification, { AppPushNotification, notificationId, translateNotification } from '@hcengineering/notification'
+import notification, {
+  AppPushNotification,
+  notificationId,
+  translateNotification,
+  PUSH_NOTIFICATION_TITLE_SIZE,
+  PUSH_NOTIFICATION_BODY_SIZE,
+  truncate
+} from '@hcengineering/notification'
 import { addEventListener, translate } from '@hcengineering/platform'
 import { getCurrentWorkspaceUuid } from '@hcengineering/presentation'
 import { location, languageStore } from '@hcengineering/ui'
@@ -66,8 +73,8 @@ export function configureNotifications (): void {
         electronAPI.sendNotification({
           silent: !preferences.playSound && appPush.soundAlert,
           application: notificationId,
-          title,
-          body,
+          title: truncate(title, PUSH_NOTIFICATION_TITLE_SIZE),
+          body: truncate(body, PUSH_NOTIFICATION_BODY_SIZE),
           onClickLocation: appPush.onClickLocation
         })
       }

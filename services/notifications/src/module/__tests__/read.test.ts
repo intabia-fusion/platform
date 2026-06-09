@@ -162,15 +162,12 @@ describe('handleReadState', () => {
       space: 'space-1' as Ref<Space>,
       user: 'user-1' as AccountUuid,
       unreadMessages: [
-        { id: 'msg-1', createdOn: 100, notified: true },
+        { id: 'msg-1', createdOn: 100, notified: true, mentioned: true },
         { id: 'msg-2', createdOn: 150, notified: false },
         { id: 'msg-3', createdOn: 200, notified: true }
       ],
-      unreadMentions: [
-        { messageId: 'msg-1', messageCreatedOn: 100 },
-        { messageId: 'msg-4', messageCreatedOn: 200 }
-      ],
-      unreadCount: 5
+      unreadMentions: [],
+      unreadCount: 2
     } as unknown as DocNotifyContext
 
     mockCache.getReadState.mockResolvedValue(readState)
@@ -184,8 +181,7 @@ describe('handleReadState', () => {
       objectId: 'ctx-1',
       operations: {
         $pull: {
-          unreadMessages: { id: { $in: ['msg-1', 'msg-2'] } },
-          unreadMentions: { messageId: { $in: ['msg-1'] } }
+          unreadMessages: { id: { $in: ['msg-1', 'msg-2'] } }
         },
         $inc: { unreadCount: -1 }
       }

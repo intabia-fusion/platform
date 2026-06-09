@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { AccountUuid, AnyAttribute, Doc, Ref, TxCUD, TxRemoveDoc } from '@hcengineering/core'
+import core, { AccountUuid, AnyAttribute, Doc, Ref, TxCUD } from '@hcengineering/core'
 import activity, { UserMentionInfo } from '@hcengineering/activity'
 import notification, { DocNotifyContext } from '@hcengineering/notification'
 import { Receiver } from '@hcengineering/server-notification'
@@ -452,7 +452,7 @@ describe('mention module', () => {
               _class: 'DocNotifyContext',
               space: 'space-1',
               latestNotifications: [{ type: 'mention', messageId: 'msg-1' }],
-              unreadMentions: [{ messageId: 'msg-1' }]
+              unreadMessages: [{ id: 'msg-1', createdOn: 100, notified: true, mentioned: true }]
             }
           ]
         }
@@ -485,8 +485,15 @@ describe('mention module', () => {
       expect(result.updateOpContextTx).toHaveLength(1)
       expect(result.updateOpContextTx[0].operations).toEqual({
         $pull: {
-          latestNotifications: { type: 'mention', messageId: 'msg-1' },
-          unreadMentions: { messageId: 'msg-1' }
+          latestNotifications: { type: 'mention', messageId: 'msg-1' }
+        },
+        $update: {
+          unreadMessages: {
+            $query: { id: 'msg-1' },
+            $update: {
+              mentioned: false
+            }
+          }
         }
       })
     })
@@ -855,74 +862,6 @@ describe('mention module', () => {
       await handleMention(mockClient, mockCache, txCache, result, tx, doc, txObject, 'test-type' as any)
 
       expect(mockPushNotification).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('removeMentionNotifications', () => {
-    it('returns early if transaction object class has no markup/collaborative attributes', async () => {
-      const tx = {
-        _class: core.class.TxRemoveDoc,
-        objectId: 'msg-1',
-        objectClass: 'MsgClass'
-      } as unknown as TxRemoveDoc<Doc>
-
-      const doc = { _id: 'doc-1', _class: 'DocClass', space: 'space-1' } as any as Doc
-      const txObject = { _id: 'msg-1', _class: 'MsgClass' } as any as Doc
-
-      mockClient.hierarchy.getAllAttributes.mockReturnValue(new Map())
-
-      const context = {
-        _id: 'ctx-1',
-        _class: 'DocNotifyContext',
-        space: 'space-1',
-        latestNotifications: [],
-        unreadMentions: []
-      } as unknown as DocNotifyContext
-      mockCache.getContexts.mockResolvedValue([context])
-      mockCache.getSender.mockResolvedValue({ account: 'user-2' as AccountUuid })
-
-      await handleMention(mockClient, mockCache, txCache, result, tx, doc, txObject, 'test-type' as any)
-
-      expect(result.updateOpContextTx).toHaveLength(0)
-    })
-
-    it('performs pull update on contexts with active mention matching removed message', async () => {
-      const tx = {
-        _class: core.class.TxRemoveDoc,
-        objectId: 'msg-1',
-        objectClass: 'MsgClass'
-      } as unknown as TxRemoveDoc<Doc>
-
-      const doc = { _id: 'doc-1', _class: 'DocClass', space: 'space-1' } as any as Doc
-      const txObject = { _id: 'msg-1', _class: 'MsgClass' } as any as Doc
-
-      const mockAttr = {
-        name: 'message',
-        type: { _class: core.class.TypeMarkup }
-      } as unknown as AnyAttribute
-      const attrs = new Map()
-      attrs.set('message', mockAttr)
-      mockClient.hierarchy.getAllAttributes.mockReturnValue(attrs)
-
-      const context = {
-        _id: 'ctx-1',
-        _class: 'DocNotifyContext',
-        space: 'space-1',
-        latestNotifications: [{ type: 'mention', messageId: 'msg-1' }],
-        unreadMentions: [{ messageId: 'msg-1' }]
-      } as unknown as DocNotifyContext
-      mockCache.getContexts.mockResolvedValue([context])
-      mockCache.getSender.mockResolvedValue({ account: 'user-2' as AccountUuid })
-
-      await handleMention(mockClient, mockCache, txCache, result, tx, doc, txObject, 'test-type' as any)
-
-      expect(result.updateOpContextTx).toHaveLength(1)
-      expect(result.updateOpContextTx[0].operations).toEqual({
-        $pull: {
-          latestNotifications: { type: 'mention', messageId: 'msg-1' },
-          unreadMentions: { messageId: 'msg-1' }
-        }
-      })
     })
   })
 })
