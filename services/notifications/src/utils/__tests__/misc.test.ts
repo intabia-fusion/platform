@@ -213,9 +213,10 @@ describe('misc utils', () => {
         _id: 'msg-1',
         _class: 'MsgClass',
         text: 'hello',
+        attachedTo: 'doc-123',
+        attachedToClass: 'DocClass',
         otherStableField: 'stable-value'
       })
-      expect(notificationMsg).not.toHaveProperty('attachedTo')
       expect(notificationMsg).not.toHaveProperty('editedOn')
       expect(notificationMsg).not.toHaveProperty('reactions')
     })

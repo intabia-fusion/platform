@@ -76,7 +76,7 @@ import { CommunicationMiddleware, type CommunicationApiFactory } from './communi
 import { RatingMiddleware } from '@hcengineering/server-rating'
 import { ChunterMiddleware } from '@hcengineering/server-chunter'
 import { NotificationMiddleware } from '@hcengineering/server-notification'
-import { ActivityMiddleware } from '@hcengineering/server-activity-resources'
+import { ActivityMiddleware } from '@hcengineering/server-activity'
 
 /**
  * @public

@@ -43,7 +43,11 @@ import {
 import { getAccountClient } from '@hcengineering/server-client'
 import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
 import platform from '@hcengineering/platform'
-import notification, { TxNotificationType, QueueNotificationMessage } from '@hcengineering/notification'
+import notification, {
+  TxNotificationType,
+  QueueNotificationMessage,
+  DocNotifyContext
+} from '@hcengineering/notification'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
 
 import Workspace from './workspace'
@@ -176,10 +180,9 @@ export class Worker {
 
     const tx = _tx as TxCUD<Doc>
 
-    // TODO: FIXME
-    // if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.InboxNotification)) {
-    //   await this.updateUserNotifyStatus(ctx, ws, tx as TxCUD<InboxNotification>)
-    // }
+    if (this.sysHierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)) {
+      await this.updateUserNotifyStatus(ctx, ws, tx as TxCUD<DocNotifyContext>)
+    }
 
     const exists = this.workspaces.get(ws)
     const isTrigger = isTxTrigger(this.sysHierarchy, tx, this.triggerClasses, this.txTypes)
