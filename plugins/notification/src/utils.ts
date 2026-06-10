@@ -13,8 +13,9 @@
  limitations under the License.
  */
 
-import { Hierarchy, Ref } from '@hcengineering/core'
+import { Ref } from '@hcengineering/core'
 import { ActivityMessage } from '@hcengineering/activity'
+import { translate } from '@hcengineering/platform'
 
 import {
   ContextNotification,
@@ -24,7 +25,6 @@ import {
   UnreadMessageChunk,
   UnreadMessageId
 } from './types'
-import { translate } from '@hcengineering/platform'
 
 export function getUnreadMessageCount (
   _contexts?: Pick<DocNotifyContext, 'unreadMessages'> | Array<Pick<DocNotifyContext, 'unreadMessages'>>
@@ -50,25 +50,6 @@ export function isUnreadMessageChunk (unread: UnreadMessage | undefined): unread
 export function getNotificationMessageId (inboxNotification: ContextNotification): Ref<ActivityMessage> | undefined {
   if (inboxNotification.type === 'common') return undefined
   return inboxNotification.messageId
-}
-
-export function getNotificationThreadId (
-  inboxNotification: ContextNotification,
-  hierarchy: Hierarchy
-): Ref<ActivityMessage> | undefined {
-  // TODO: FIXME
-
-  // if (!hierarchy.isDerived(inboxNotification._class, notification.class.ActivityInboxNotification)) return undefined
-  //
-  // const activityNotification = inboxNotification as ActivityInboxNotification
-  //
-  // if (
-  //   hierarchy.isDerived(activityNotification.attachedToClass, activity.class.ActivityMessage) &&
-  //   hierarchy.isDerived(activityNotification.objectClass, activity.class.ActivityMessage)
-  // ) {
-  //   return activityNotification.objectId as Ref<ActivityMessage>
-  // }
-  return undefined
 }
 
 export const PUSH_NOTIFICATION_TITLE_SIZE = 80
