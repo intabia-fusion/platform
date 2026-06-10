@@ -43,12 +43,17 @@ export class ActivityMiddleware extends BaseMiddleware implements Middleware {
           const doc = removedMap.get(removeTx.objectId)
           if (doc !== undefined) {
             removeTx.removedDoc = doc
-            if (doc.createdOn !== undefined) {
-              if (removeTx.meta === undefined) {
-                removeTx.meta = {}
-              }
-              removeTx.meta.createdOn = doc.createdOn
+          }
+        }
+
+        if (hierarchy.isDerived(removeTx.objectClass, activity.class.ActivityMessage)) {
+          const doc = removedMap.get(removeTx.objectId)
+          const createdOn = doc?.createdOn ?? doc?.modifiedOn ?? 0
+          if (createdOn !== 0) {
+            if (removeTx.meta === undefined) {
+              removeTx.meta = {}
             }
+            removeTx.meta.createdOn = createdOn
           }
         }
       }

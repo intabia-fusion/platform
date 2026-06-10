@@ -173,7 +173,9 @@ export async function pushNotification (
 
     createTx.attributes.lastNotify = Math.max(createTx.attributes.lastNotify ?? 0, modifiedOn)
     createTx.attributes.latestNotifications = [notification, ...createTx.attributes.latestNotifications].slice(0, 5)
-    createTx.attributes.unreadCount = isUnread ? (createTx.attributes.unreadCount ?? 0) + 1 : (createTx.attributes.unreadCount ?? 0)
+    createTx.attributes.unreadCount = isUnread
+      ? (createTx.attributes.unreadCount ?? 0) + 1
+      : (createTx.attributes.unreadCount ?? 0)
     if (isUnread) {
       if (unreadMessage != null) {
         const currentUnread = createTx.attributes.unreadMessages ?? []

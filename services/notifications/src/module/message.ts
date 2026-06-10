@@ -513,38 +513,33 @@ async function pushNotification (
   const content = await getMessageIntl(client, txCache, type, doc, message, sender)
   const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
   const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
-  await _pushNotification(
-    client,
-    txCache,
-    result,
-    context,
-    {
-      unreadMessage: unreadMessage == null
+  await _pushNotification(client, txCache, result, context, {
+    unreadMessage:
+      unreadMessage == null
         ? undefined
         : {
             ...unreadMessage,
             notified: true
           },
-      receiver,
-      objectId: doc._id,
-      objectClass: doc._class,
-      objectSpace: doc.space,
-      objectDisplayData,
-      notification: {
-        id: message._id,
-        type: 'message',
-        messageId: message._id,
-        intlMessage: type.notificationMessage,
-        message: toNotificationMessage(message),
-        attachments,
-        createdOn: message.createdOn ?? message.modifiedOn,
-        createdBy: message.createdBy ?? message.modifiedBy
-      },
-      intl: content,
-      notifyProviders: notifyResult,
-      pushSubscriptions
-    }
-  )
+    receiver,
+    objectId: doc._id,
+    objectClass: doc._class,
+    objectSpace: doc.space,
+    objectDisplayData,
+    notification: {
+      id: message._id,
+      type: 'message',
+      messageId: message._id,
+      intlMessage: type.notificationMessage,
+      message: toNotificationMessage(message),
+      attachments,
+      createdOn: message.createdOn ?? message.modifiedOn,
+      createdBy: message.createdBy ?? message.modifiedBy
+    },
+    intl: content,
+    notifyProviders: notifyResult,
+    pushSubscriptions
+  })
 }
 
 function pullDUMFromContext (
