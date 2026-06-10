@@ -115,16 +115,22 @@ async function handleCreateMessage (
   const contexts = await cache.getContexts(doc._id)
   const docSettings = await cache.getDocSettings(doc._id)
   const sender = await cache.getSender(message.modifiedBy)
+  const readState = await cache.getDocReadState(doc._id)
 
   const unreadMessage: UnreadMessage = {
     id: message._id,
     createdOn: message.createdOn ?? message.modifiedOn
   }
+  const messageTimestamp = message.createdOn ?? message.modifiedOn
 
   const attachments = await getAttachments(message, client)
 
   for (const receiver of receivers) {
     if (receiver.account === sender.account) continue
+
+    const readPosition = readState?.[receiver.account]
+    const alreadyRead = readPosition != null && readPosition.timestamp >= messageTimestamp
+
     const mode = getMode(docSettings, receiver.account)
 
     const context = contexts.find((it) => it.user === receiver.account)
@@ -141,7 +147,7 @@ async function handleCreateMessage (
         doc,
         message,
         sender,
-        unreadMessage,
+        alreadyRead ? undefined : unreadMessage,
         context,
         result,
         txCache,
@@ -149,7 +155,7 @@ async function handleCreateMessage (
         notifyResult,
         attachments
       )
-    } else {
+    } else if (!alreadyRead) {
       await addUnreadMessage(client, receiver, doc, unreadMessage, context, result, txCache)
     }
   }
@@ -360,14 +366,20 @@ async function handleUpdateDUM (
   const settings = await cache.getSettings()
   const docSettings = await cache.getDocSettings(doc._id)
   const contexts = await cache.getContexts(doc._id)
+  const readState = await cache.getDocReadState(doc._id)
 
   const unreadMessage: UnreadMessage = {
     id: message._id,
     createdOn: message.createdOn ?? message.modifiedOn
   }
+  const messageTimestamp = message.createdOn ?? message.modifiedOn
 
   for (const receiver of receivers) {
     if (receiver.account === sender.account) continue
+
+    const readPosition = readState?.[receiver.account]
+    const alreadyRead = readPosition != null && readPosition.timestamp >= messageTimestamp
+
     const mode = getMode(docSettings, receiver.account)
 
     const context = contexts.find((it) => it.user === receiver.account)
@@ -389,7 +401,7 @@ async function handleUpdateDUM (
         doc,
         message,
         sender,
-        unreadMessage,
+        alreadyRead ? undefined : unreadMessage,
         context,
         result,
         txCache,
@@ -397,7 +409,7 @@ async function handleUpdateDUM (
         notifyResult,
         []
       )
-    } else {
+    } else if (!alreadyRead) {
       await addUnreadMessage(client, receiver, doc, unreadMessage, context, result, txCache)
     }
   }
@@ -490,7 +502,7 @@ async function pushNotification (
   doc: Doc,
   message: ActivityMessage,
   sender: Sender,
-  unreadMessage: UnreadMessage,
+  unreadMessage: UnreadMessage | undefined,
   context: DocNotifyContext | undefined,
   result: Result,
   txCache: TxCache,
@@ -501,30 +513,38 @@ async function pushNotification (
   const content = await getMessageIntl(client, txCache, type, doc, message, sender)
   const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
   const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
-  await _pushNotification(client, txCache, result, context, {
-    unreadMessage: {
-      ...unreadMessage,
-      notified: true
-    },
-    receiver,
-    objectId: doc._id,
-    objectClass: doc._class,
-    objectSpace: doc.space,
-    objectDisplayData,
-    notification: {
-      id: message._id,
-      type: 'message',
-      messageId: message._id,
-      intlMessage: type.notificationMessage,
-      message: toNotificationMessage(message),
-      attachments,
-      createdOn: message.createdOn ?? message.modifiedOn,
-      createdBy: message.createdBy ?? message.modifiedBy
-    },
-    intl: content,
-    notifyProviders: notifyResult,
-    pushSubscriptions
-  })
+  await _pushNotification(
+    client,
+    txCache,
+    result,
+    context,
+    {
+      unreadMessage: unreadMessage == null
+        ? undefined
+        : {
+            ...unreadMessage,
+            notified: true
+          },
+      receiver,
+      objectId: doc._id,
+      objectClass: doc._class,
+      objectSpace: doc.space,
+      objectDisplayData,
+      notification: {
+        id: message._id,
+        type: 'message',
+        messageId: message._id,
+        intlMessage: type.notificationMessage,
+        message: toNotificationMessage(message),
+        attachments,
+        createdOn: message.createdOn ?? message.modifiedOn,
+        createdBy: message.createdBy ?? message.modifiedBy
+      },
+      intl: content,
+      notifyProviders: notifyResult,
+      pushSubscriptions
+    }
+  )
 }
 
 function pullDUMFromContext (

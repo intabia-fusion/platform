@@ -265,6 +265,7 @@ describe('pushNotification', () => {
     })
 
     it('handles context creation when context is undefined', async () => {
+      mockData.unreadMessage = { id: 'msg-1', createdOn: 100, notified: true }
       await pushNotification(mockClient, txCache, result, undefined, mockData)
 
       expect(mockGetCreateContextTx).toHaveBeenCalledWith(
@@ -281,7 +282,8 @@ describe('pushNotification', () => {
       expect(mockCreateTx.attributes).toEqual({
         latestNotifications: [mockData.notification],
         lastNotify: 100,
-        unreadCount: 1
+        unreadCount: 1,
+        unreadMessages: [mockData.unreadMessage]
       })
     })
 
@@ -365,11 +367,28 @@ describe('pushNotification', () => {
         'existing-space',
         'existing-ctx-id',
         {
-          $push: { latestNotifications: { $each: [mockData.notification], $position: 0, $slice: 5 } },
-          $inc: { unreadCount: 1 }
+          $push: { latestNotifications: { $each: [mockData.notification], $position: 0, $slice: 5 } }
         }
       )
       expect(result.updateOpContextTx).toHaveLength(1)
+    })
+
+    it('handles context update and increments unreadCount when unreadMessage is present', async () => {
+      mockData.unreadMessage = { id: 'msg-1' }
+      await pushNotification(mockClient, txCache, result, context, mockData)
+
+      expect(mockClient.txFactory.createTxUpdateDoc).toHaveBeenCalledWith(
+        'DocNotifyContextClass',
+        'existing-space',
+        'existing-ctx-id',
+        {
+          $push: {
+            latestNotifications: { $each: [mockData.notification], $position: 0, $slice: 5 },
+            unreadMessages: { id: 'msg-1' }
+          },
+          $inc: { unreadCount: 1 }
+        }
+      )
     })
 
     it('appends unreadMessage to context operations during update', async () => {
@@ -586,6 +605,37 @@ describe('pushNotification', () => {
         expect.objectContaining({ notificationId: 'notify-1' })
       )
       expect(result.queueMessages[0].template).toBeUndefined()
+    })
+  })
+
+  describe('alreadyRead checks (no unread payload)', () => {
+    it('does not increment unreadCount but creates queue messages and updates latestNotifications', async () => {
+      mockData.notifyProviders = {
+        [notificationPlugin.providers.InboxNotificationProvider]: [{ _id: 'type-1' }]
+      }
+
+      const context: DocNotifyContext = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContextClass',
+        space: 'space-1',
+        user: 'user-1',
+        unreadMessages: [],
+        unreadCount: 0,
+        lastNotify: 50,
+        latestNotifications: []
+      } as any
+
+      await pushNotification(mockClient, txCache, result, context, mockData)
+
+      // It should still push the notification to latestNotifications
+      expect(result.updateOpContextTx).toHaveLength(1)
+      const op = result.updateOpContextTx[0].operations as any
+      expect(op.$push.latestNotifications).toBeDefined()
+      expect(op.$inc).toBeUndefined() // No unreadCount increment!
+      expect(op.unreadMessages).toBeUndefined() // No unread messages updated!
+
+      // It should queue push/email messages
+      expect(result.queueMessages).toHaveLength(1)
     })
   })
 })

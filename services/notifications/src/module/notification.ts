@@ -29,7 +29,7 @@ import notificationPlugin, {
   NotificationTemplate,
   QueueNotificationMessage
 } from '@hcengineering/notification'
-import { Class, Doc, generateId, Ref, Space, Markup } from '@hcengineering/core'
+import { Class, Doc, generateId, Ref, Space, Markup, DocumentUpdate } from '@hcengineering/core'
 import { Receiver } from '@hcengineering/server-notification'
 import { ActivityMessage } from '@hcengineering/activity'
 import { translate, IntlString } from '@hcengineering/platform'
@@ -88,6 +88,9 @@ export async function pushNotification (
     objectDisplayData,
     pushSubscriptions
   } = data
+
+  const isUnread = unreadMessage != null || unreadReaction != null || unreadMention != null || unreadCommon != null
+
   const { txFactory } = client
   const modifiedOn = Math.max(context?.lastNotify ?? 0, data.notification.createdOn)
   const providers: Record<Ref<NotificationProvider>, Ref<NotificationType>[]> = Object.fromEntries(
@@ -119,34 +122,39 @@ export async function pushNotification (
     const updateTx = getUpdateContextTx(context, result, txFactory)
     updateTx.operations.lastNotify = Math.max(modifiedOn, updateTx.operations.lastNotify ?? 0)
 
-    const updateOpTx = txFactory.createTxUpdateDoc(context._class, context.space, context._id, {
-      $push: { latestNotifications: { $each: [notification], $position: 0, $slice: 5 } },
-      $inc: { unreadCount: 1 }
-    })
-    if (unreadMessage != null) {
-      const { collapsed, didCollapse } = appendAndCollapseUnreadMessages(context.unreadMessages ?? [], unreadMessage)
-      if (didCollapse) {
-        updateOpTx.operations.unreadMessages = collapsed
-      } else {
+    const updateOp: DocumentUpdate<DocNotifyContext> = {
+      $push: { latestNotifications: { $each: [notification], $position: 0, $slice: 5 } }
+    }
+
+    const updateOpTx = txFactory.createTxUpdateDoc(context._class, context.space, context._id, updateOp)
+    if (isUnread) {
+      updateOp.$inc = { unreadCount: 1 }
+
+      if (unreadMessage != null) {
+        const { collapsed, didCollapse } = appendAndCollapseUnreadMessages(context.unreadMessages ?? [], unreadMessage)
+        if (didCollapse) {
+          updateOpTx.operations.unreadMessages = collapsed
+        } else {
+          updateOpTx.operations.$push = {
+            ...updateOpTx.operations.$push,
+            unreadMessages: unreadMessage
+          }
+        }
+      } else if (unreadReaction != null) {
         updateOpTx.operations.$push = {
           ...updateOpTx.operations.$push,
-          unreadMessages: unreadMessage
+          unreadReactions: unreadReaction
         }
-      }
-    } else if (unreadReaction != null) {
-      updateOpTx.operations.$push = {
-        ...updateOpTx.operations.$push,
-        unreadReactions: unreadReaction
-      }
-    } else if (unreadMention != null) {
-      updateOpTx.operations.$push = {
-        ...updateOpTx.operations.$push,
-        unreadMentions: unreadMention
-      }
-    } else if (unreadCommon != null) {
-      updateOpTx.operations.$push = {
-        ...updateOpTx.operations.$push,
-        unreadCommons: unreadCommon
+      } else if (unreadMention != null) {
+        updateOpTx.operations.$push = {
+          ...updateOpTx.operations.$push,
+          unreadMentions: unreadMention
+        }
+      } else if (unreadCommon != null) {
+        updateOpTx.operations.$push = {
+          ...updateOpTx.operations.$push,
+          unreadCommons: unreadCommon
+        }
       }
     }
 
@@ -165,16 +173,18 @@ export async function pushNotification (
 
     createTx.attributes.lastNotify = Math.max(createTx.attributes.lastNotify ?? 0, modifiedOn)
     createTx.attributes.latestNotifications = [notification, ...createTx.attributes.latestNotifications].slice(0, 5)
-    createTx.attributes.unreadCount = (createTx.attributes.unreadCount ?? 0) + 1
-    if (unreadMessage != null) {
-      const currentUnread = createTx.attributes.unreadMessages ?? []
-      createTx.attributes.unreadMessages = [...currentUnread, unreadMessage]
-    } else if (unreadReaction != null) {
-      createTx.attributes.unreadReactions = [...(createTx.attributes.unreadReactions ?? []), unreadReaction]
-    } else if (unreadMention != null) {
-      createTx.attributes.unreadMentions = [...(createTx.attributes.unreadMentions ?? []), unreadMention]
-    } else if (unreadCommon != null) {
-      createTx.attributes.unreadCommons = [...(createTx.attributes.unreadCommons ?? []), unreadCommon]
+    createTx.attributes.unreadCount = isUnread ? (createTx.attributes.unreadCount ?? 0) + 1 : (createTx.attributes.unreadCount ?? 0)
+    if (isUnread) {
+      if (unreadMessage != null) {
+        const currentUnread = createTx.attributes.unreadMessages ?? []
+        createTx.attributes.unreadMessages = [...currentUnread, unreadMessage]
+      } else if (unreadReaction != null) {
+        createTx.attributes.unreadReactions = [...(createTx.attributes.unreadReactions ?? []), unreadReaction]
+      } else if (unreadMention != null) {
+        createTx.attributes.unreadMentions = [...(createTx.attributes.unreadMentions ?? []), unreadMention]
+      } else if (unreadCommon != null) {
+        createTx.attributes.unreadCommons = [...(createTx.attributes.unreadCommons ?? []), unreadCommon]
+      }
     }
   }
 

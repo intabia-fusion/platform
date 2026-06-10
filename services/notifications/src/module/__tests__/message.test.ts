@@ -170,7 +170,8 @@ describe('message module', () => {
       getContexts: jest.fn(),
       getDocSettings: jest.fn(),
       getSender: jest.fn(),
-      getPushSubscriptions: jest.fn()
+      getPushSubscriptions: jest.fn(),
+      getDocReadState: jest.fn()
     }
 
     txCache = createEmptyTxCache()
@@ -194,8 +195,10 @@ describe('message module', () => {
     mockGetAttachments.mockReset()
     mockGetUpdateOpContextTx.mockReset()
     mockGetCreateContextTx.mockReset()
+    mockCache.getDocReadState.mockReset()
 
     // Default mock setups
+    mockCache.getDocReadState.mockResolvedValue(undefined)
     ;(global as any).mockGenerateId.mockReturnValue('gen-id')
     mockGetBaseDisplayParams.mockResolvedValue({ intlParams: { doc: 'doc' }, intlParamsNotLocalized: {} })
     mockGetCollaboratorAccounts.mockResolvedValue([])
@@ -430,6 +433,43 @@ describe('message module', () => {
 
         expect(mockPushNotification).not.toHaveBeenCalled()
         expect(mockGetCreateContextTx).toHaveBeenCalled()
+      })
+
+      it('skips processing if receiver has already read up to or past message timestamp', async () => {
+        mockCache.getDocReadState.mockResolvedValue({
+          [receiver.account]: { timestamp: 150 }
+        })
+
+        await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+        expect(mockPushNotification).not.toHaveBeenCalled()
+        expect(mockGetCreateContextTx).not.toHaveBeenCalled()
+      })
+
+      it('calls pushNotification even if receiver has already read up to or past message timestamp when provider exists', async () => {
+        mockGetMessageNotifyProviders.mockResolvedValue({
+          [notification.providers.InboxNotificationProvider]: [{ _id: 'inbox-type-1' }]
+        })
+        mockCache.getDocReadState.mockResolvedValue({
+          [receiver.account]: { timestamp: 150 }
+        })
+        mockCache.getPushSubscriptions.mockResolvedValue([])
+
+        await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+        expect(mockPushNotification).toHaveBeenCalledWith(
+          mockClient,
+          txCache,
+          result,
+          undefined,
+          expect.objectContaining({
+            unreadMessage: undefined,
+            receiver,
+            objectId: 'doc-1',
+            objectClass: 'DocClass',
+            notifyProviders: expect.any(Object)
+          })
+        )
       })
     })
   })
