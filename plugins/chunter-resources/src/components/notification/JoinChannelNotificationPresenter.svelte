@@ -16,23 +16,11 @@
   import { ActivityMessagePreviewType, DocUpdateMessage } from '@hcengineering/activity'
   import { BaseMessagePreview } from '@hcengineering/activity-resources'
   import { MessageNotification } from '@hcengineering/notification'
-  import { Class, Doc, Ref } from '@hcengineering/core'
 
   import chunter from '../../plugin'
 
-  export let objectId: Ref<Doc>
-  export let objectClass: Ref<Class<Doc>>
   export let value: MessageNotification<DocUpdateMessage>
   export let type: ActivityMessagePreviewType = 'full'
 </script>
 
-<BaseMessagePreview
-  intlLabel={chunter.string.YouJoinedChannel}
-  {type}
-  message={{
-    attachedTo: objectId,
-    attachedToClass: objectClass,
-    ...value.message
-  }}
-  on:click
-/>
+<BaseMessagePreview intlLabel={chunter.string.YouJoinedChannel} {type} message={value.message} on:click />

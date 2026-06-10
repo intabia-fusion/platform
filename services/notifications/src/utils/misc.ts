@@ -77,17 +77,7 @@ export function getTypeMatchClient (client: Client): TypeMatchClient {
  * producing a stable NotificationMessage snapshot.
  */
 export function toNotificationMessage (message: ActivityMessage): NotificationMessage {
-  const {
-    attachedTo,
-    attachedToClass,
-    editedOn,
-    replies,
-    repliedPersons,
-    reactions,
-    isPinned,
-    lastReply,
-    ...notificationMessage
-  } = message
+  const { editedOn, replies, repliedPersons, reactions, isPinned, lastReply, ...notificationMessage } = message
 
   return notificationMessage
 }

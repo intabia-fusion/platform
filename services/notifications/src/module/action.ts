@@ -172,7 +172,12 @@ export async function handleCreateNotificationAction (
 
   const providers: Ref<NotificationProvider>[] =
     type != null ? getAllowedProviders(client, settings, receiver.socialIds, type) : []
-  if (type != null && (providers.length === 0 || !providers.includes(notification.providers.InboxNotificationProvider))) { return }
+  if (
+    type != null &&
+    (providers.length === 0 || !providers.includes(notification.providers.InboxNotificationProvider))
+  ) {
+    return
+  }
 
   const context = await cache.getContext(doc._id, action.account)
 

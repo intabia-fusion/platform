@@ -203,10 +203,7 @@ export interface DocNotifyContext extends Doc<PersonSpace> {
 }
 
 export type ContextNotification = MessageNotification | ReactionNotification | MentionNotification | CommonNotification
-export type NotificationMessage<T extends ActivityMessage = ActivityMessage> = Omit<
-ActivityMessageLite<T>,
-'attachedTo' | 'attachedToClass'
->
+export type NotificationMessage<T extends ActivityMessage = ActivityMessage> = ActivityMessageLite<T>
 
 export interface MessageNotification<T extends ActivityMessage = ActivityMessage> {
   type: 'message'

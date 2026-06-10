@@ -82,14 +82,5 @@
 {:else if value.intlMessage}
   <BasePreview intlLabel={value.intlMessage} account={value.createdBy} timestamp={value.createdOn} on:click />
 {:else}
-  <ActivityMessagePreview
-    space={objectSpace}
-    attachments={value.attachments}
-    value={{
-      attachedTo: objectId,
-      attachedToClass: objectClass,
-      ...value.message
-    }}
-    on:click
-  />
+  <ActivityMessagePreview space={objectSpace} attachments={value.attachments} value={value.message} on:click />
 {/if}

@@ -13,25 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { ActivityMessage, ActivityMessagePreviewType } from '@hcengineering/activity'
-  import { Class, Ref } from '@hcengineering/core'
+  import { ActivityMessagePreviewType } from '@hcengineering/activity'
   import { MessageNotification } from '@hcengineering/notification'
   import { ThreadMessage } from '@hcengineering/chunter'
 
   import ThreadMessagePreview from '../threads/ThreadMessagePreview.svelte'
 
-  export let objectId: Ref<ActivityMessage>
-  export let objectClass: Ref<Class<ActivityMessage>>
   export let value: MessageNotification<ThreadMessage>
   export let type: ActivityMessagePreviewType = 'full'
 </script>
 
-<ThreadMessagePreview
-  value={{
-    attachedTo: objectId,
-    attachedToClass: objectClass,
-    ...value.message
-  }}
-  {type}
-  on:click
-/>
+<ThreadMessagePreview value={value.message} {type} on:click />

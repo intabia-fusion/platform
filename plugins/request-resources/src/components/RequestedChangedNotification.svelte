@@ -20,12 +20,9 @@
   import { Icon, Label } from '@hcengineering/ui'
   import { ObjectPresenter } from '@hcengineering/view-resources'
   import { MessageNotification } from '@hcengineering/notification'
-  import { Class, Doc, Ref } from '@hcengineering/core'
 
   import request from '../plugin'
 
-  export let objectId: Ref<Doc>
-  export let objectClass: Ref<Class<Doc>>
   export let value: MessageNotification<DocUpdateMessage>
   export let type: ActivityMessagePreviewType = 'full'
 
@@ -37,15 +34,7 @@
   $: isAddedMe = message.attributeUpdates?.added.includes(me) ?? false
 </script>
 
-<BaseMessagePreview
-  message={{
-    attachedTo: objectId,
-    attachedToClass: objectClass,
-    ...message
-  }}
-  {type}
-  on:click
->
+<BaseMessagePreview {message} {type} on:click>
   <slot name="content">
     <div class="content overflow-label ml-1" class:preview={true}>
       <span class="mr-1">

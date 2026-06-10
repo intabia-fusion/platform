@@ -19,21 +19,10 @@
   import { ActivityMessagePreviewType, DocUpdateMessage } from '@hcengineering/activity'
   import { BaseMessagePreview } from '@hcengineering/activity-resources'
   import training from '@hcengineering/training'
-  import { Class, Doc, Ref } from '@hcengineering/core'
   import { MessageNotification } from '@hcengineering/notification'
 
-  export let objectId: Ref<Doc>
-  export let objectClass: Ref<Class<Doc>>
   export let value: MessageNotification<DocUpdateMessage>
   export let type: ActivityMessagePreviewType = 'full'
 </script>
 
-<BaseMessagePreview
-  message={{
-    attachedTo: objectId,
-    attachedToClass: objectClass,
-    ...value.message
-  }}
-  {type}
-  intlLabel={training.string.SentYouATrainingRequest}
-/>
+<BaseMessagePreview message={value.message} {type} intlLabel={training.string.SentYouATrainingRequest} />
