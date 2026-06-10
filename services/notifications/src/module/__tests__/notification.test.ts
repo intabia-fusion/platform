@@ -14,7 +14,8 @@
 //
 
 import { AccountUuid, Doc, Ref, Space, Class } from '@hcengineering/core'
-import notificationPlugin, { DocNotifyContext } from '@hcengineering/notification'
+import notificationPlugin, { DocNotifyContext, UnreadMessage } from '@hcengineering/notification'
+import { ActivityMessage } from '@hcengineering/activity'
 
 import { Result, TxCache } from '../../types'
 import { pushNotification } from '../notification'
@@ -421,6 +422,24 @@ describe('pushNotification', () => {
           unreadCommons: { id: 'common-1' }
         })
       )
+    })
+
+    it('collapses unreadMessages when update causes the count to exceed 100', async () => {
+      const unreadMessages: UnreadMessage[] = Array.from({ length: 100 }, (_, i) => ({
+        id: `msg-${i}` as Ref<ActivityMessage>,
+        createdOn: 1000 + i,
+        notified: true
+      }))
+      context.unreadMessages = unreadMessages
+
+      mockData.unreadMessage = { id: 'msg-100' as Ref<ActivityMessage>, createdOn: 1100, notified: true }
+
+      await pushNotification(mockClient, txCache, result, context, mockData)
+
+      const updateOpTx = result.updateOpContextTx[0]
+      expect(updateOpTx.operations.unreadMessages).toBeDefined()
+      expect(updateOpTx.operations.$push?.unreadMessages).toBeUndefined()
+      expect(updateOpTx.operations.unreadMessages).toHaveLength(29)
     })
   })
 

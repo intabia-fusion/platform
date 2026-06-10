@@ -44,6 +44,7 @@ import {
   getDomain,
   getNotificationLocation
 } from '../utils/utils'
+import { appendAndCollapseUnreadMessages } from '../utils/collapse'
 
 interface CreateNotificationData {
   objectId: Ref<Doc>
@@ -123,9 +124,14 @@ export async function pushNotification (
       $inc: { unreadCount: 1 }
     })
     if (unreadMessage != null) {
-      updateOpTx.operations.$push = {
-        ...updateOpTx.operations.$push,
-        unreadMessages: unreadMessage
+      const { collapsed, didCollapse } = appendAndCollapseUnreadMessages(context.unreadMessages ?? [], unreadMessage)
+      if (didCollapse) {
+        updateOpTx.operations.unreadMessages = collapsed
+      } else {
+        updateOpTx.operations.$push = {
+          ...updateOpTx.operations.$push,
+          unreadMessages: unreadMessage
+        }
       }
     } else if (unreadReaction != null) {
       updateOpTx.operations.$push = {

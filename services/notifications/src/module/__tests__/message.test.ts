@@ -487,6 +487,68 @@ describe('message module', () => {
       expect(result.updateContextTx).toHaveLength(1)
       expect(result.updateContextTx[0].operations.lastNotify).toBe(40)
     })
+
+    it('decrements unread count and count of chunk if deleted message is inside a chunk', async () => {
+      const tx = {
+        _class: core.class.TxRemoveDoc,
+        objectId: 'msg-5',
+        attachedTo: 'doc-1',
+        meta: {
+          createdOn: 1005
+        }
+      } as unknown as TxRemoveDoc<ActivityMessage>
+
+      const context = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContext',
+        space: 'space-1',
+        unreadMessages: [{ from: 1000, to: 1009, count: 10, notifiedCount: 10 }],
+        unreadCount: 10
+      } as unknown as DocNotifyContext
+
+      mockCache.getContexts.mockResolvedValue([context])
+      mockGetNotificationsByMessage.mockReturnValue([])
+
+      await handleMessage(mockClient, mockCache, txCache, result, tx)
+
+      expect(result.updateOpContextTx).toHaveLength(1)
+      expect(result.updateOpContextTx[0].operations.unreadMessages).toEqual([
+        { from: 1000, to: 1009, count: 9, notifiedCount: 9 }
+      ])
+      expect(result.updateOpContextTx[0].operations.$inc).toEqual({
+        unreadCount: -1
+      })
+    })
+
+    it('removes chunk entirely if deleted message was the last one in a chunk of count 1', async () => {
+      const tx = {
+        _class: core.class.TxRemoveDoc,
+        objectId: 'msg-5',
+        attachedTo: 'doc-1',
+        meta: {
+          createdOn: 1005
+        }
+      } as unknown as TxRemoveDoc<ActivityMessage>
+
+      const context = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContext',
+        space: 'space-1',
+        unreadMessages: [{ from: 1005, to: 1005, count: 1, notifiedCount: 1 }],
+        unreadCount: 1
+      } as unknown as DocNotifyContext
+
+      mockCache.getContexts.mockResolvedValue([context])
+      mockGetNotificationsByMessage.mockReturnValue([])
+
+      await handleMessage(mockClient, mockCache, txCache, result, tx)
+
+      expect(result.updateOpContextTx).toHaveLength(1)
+      expect(result.updateOpContextTx[0].operations.unreadMessages).toEqual([])
+      expect(result.updateOpContextTx[0].operations.$inc).toEqual({
+        unreadCount: -1
+      })
+    })
   })
 
   describe('handleUpdateMessage', () => {
@@ -716,6 +778,31 @@ describe('message module', () => {
       expect(mockGetObjectDisplayData).toHaveBeenCalledWith(mockClient, txCache, doc, 'user-1')
       expect(mockGetCreateContextTx).toHaveBeenCalled()
       expect(result.createContextTx[0].attributes.unreadMessages).toEqual([unreadMessage])
+    })
+
+    it('collapses unreadMessages when adding causes the count to exceed 100', async () => {
+      const unreadMessages: UnreadMessageId[] = Array.from({ length: 100 }, (_, i) => ({
+        id: `msg-${i}` as Ref<ActivityMessage>,
+        createdOn: 1000 + i,
+        notified: true
+      }))
+      const context = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContextClass',
+        space: 'space-1',
+        unreadMessages
+      } as unknown as DocNotifyContext
+
+      const doc = { _id: 'doc-1' }
+      const receiver = { account: 'user-1' }
+      const newMsg: UnreadMessageId = { id: 'msg-100' as Ref<ActivityMessage>, createdOn: 1100, notified: true }
+
+      await addUnreadMessage(mockClient, receiver as Receiver, doc as Doc, newMsg, context, result, txCache)
+
+      expect(mockGetUpdateOpContextTx).toHaveBeenCalledWith(context, result, mockClient.txFactory)
+      expect(result.updateOpContextTx[0].operations.unreadMessages).toBeDefined()
+      expect(result.updateOpContextTx[0].operations.$push).toBeUndefined()
+      expect(result.updateOpContextTx[0].operations.unreadMessages).toHaveLength(29)
     })
   })
 })

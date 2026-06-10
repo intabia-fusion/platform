@@ -23,7 +23,8 @@ import core, {
   DocumentUpdate,
   Doc,
   Ref,
-  generateId
+  generateId,
+  Timestamp
 } from '@hcengineering/core'
 import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import notification, {
@@ -31,7 +32,9 @@ import notification, {
   NotificationIntl,
   NotificationType,
   UnreadMessage,
-  isUnreadMessageId
+  UnreadMessageChunk,
+  isUnreadMessageId,
+  isUnreadMessageChunk
 } from '@hcengineering/notification'
 import { truncateMessage, Sender, Receiver } from '@hcengineering/server-notification'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
@@ -58,6 +61,7 @@ import {
 import { Client, Result, TxCache, NotifyProviders } from '../types'
 import Cache from '../cache'
 import { pushNotification as _pushNotification } from './notification'
+import { appendAndCollapseUnreadMessages } from '../utils/collapse'
 
 export async function handleMessage (
   client: Client,
@@ -183,7 +187,42 @@ async function handleRemoveMessage (
       if (isUnreadMessageId(unread) && unread.notified === true) {
         operations.$inc = {
           ...operations.$inc,
-          unreadCount: -1
+          unreadCount: (operations.$inc?.unreadCount ?? 0) - 1
+        }
+      }
+    } else {
+      const createdOn = tx.meta?.createdOn as Timestamp | undefined
+      if (createdOn !== undefined) {
+        const chunkIndex = context.unreadMessages.findIndex(
+          (it) => isUnreadMessageChunk(it) && it.from <= createdOn && createdOn <= it.to
+        )
+        if (chunkIndex !== -1) {
+          const chunk = { ...context.unreadMessages[chunkIndex] } as any as UnreadMessageChunk
+          let decrease = 0
+          if (chunk.count > 1) {
+            chunk.count -= 1
+            if (chunk.notifiedCount !== undefined && chunk.notifiedCount > 0) {
+              chunk.notifiedCount -= 1
+              decrease = 1
+              if (chunk.notifiedCount === 0) {
+                delete chunk.notifiedCount
+              }
+            }
+            context.unreadMessages[chunkIndex] = chunk
+          } else {
+            if (chunk.notifiedCount === 1) {
+              decrease = 1
+            }
+            context.unreadMessages.splice(chunkIndex, 1)
+          }
+
+          operations.unreadMessages = context.unreadMessages
+          if (decrease > 0) {
+            operations.$inc = {
+              ...operations.$inc,
+              unreadCount: (operations.$inc?.unreadCount ?? 0) - decrease
+            }
+          }
         }
       }
     }
@@ -418,10 +457,15 @@ export async function addUnreadMessage (
   txCache: TxCache
 ): Promise<void> {
   if (context != null) {
+    const { collapsed, didCollapse } = appendAndCollapseUnreadMessages(context.unreadMessages ?? [], unreadMessage)
     const updateOpTx = getUpdateOpContextTx(context, result, client.txFactory)
-    updateOpTx.operations.$push = {
-      ...updateOpTx.operations.$push,
-      unreadMessages: unreadMessage
+    if (didCollapse) {
+      updateOpTx.operations.unreadMessages = collapsed
+    } else {
+      updateOpTx.operations.$push = {
+        ...updateOpTx.operations.$push,
+        unreadMessages: unreadMessage
+      }
     }
   } else {
     const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
@@ -435,7 +479,7 @@ export async function addUnreadMessage (
       client.txFactory,
       objectDisplayData
     )
-    createTx.attributes.unreadMessages.push(unreadMessage)
+    createTx.attributes.unreadMessages = [unreadMessage]
   }
 }
 
