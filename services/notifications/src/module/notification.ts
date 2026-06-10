@@ -292,8 +292,8 @@ async function translateTemplate (
   const url = intl.intlParams.url
   const identifier = intl.intlParams?.identifie
 
-  const textTitle = identifier != null ? `${identifier}: ${title}` : title
-  const htmlTitle = url !== '' ? `<a href='${url}'>${textTitle}</a>` : textTitle
+  const textTitle = identifier != null ? `${identifier}: ${title}` : title.toString()
+  const htmlTitle = url !== '' ? `<a href='${url}'>${textTitle}</a>` : textTitle.toString()
 
   const app = client.branding?.title ?? 'Platform'
   const inboxLinkText = await translate(notificationPlugin.string.ViewIn, { app }, language)
@@ -337,7 +337,7 @@ async function translateTemplate (
 async function fillTemplate (
   template: IntlString,
   doc: string,
-  params: Record<string, string>,
+  params: Record<string, string | number>,
   lang: string
 ): Promise<string> {
   return await translate(

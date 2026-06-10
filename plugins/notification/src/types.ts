@@ -250,14 +250,14 @@ export interface CommonNotification {
   id: string
 
   header?: {
-    objectId: Ref<Doc>
-    objectClass: Ref<Class<Doc>>
+    objectId?: Ref<Doc>
+    objectClass?: Ref<Class<Doc>>
     titleIntl: IntlString
-    icon: Asset
+    icon?: Asset
   }
 
   messageIntl?: IntlString
-  intlParams?: Record<string, string>
+  intlParams?: Record<string, string | number>
   intlParamsNotLocalized?: Record<string, IntlString>
 
   markup?: Markup
@@ -319,7 +319,7 @@ export interface QueueNotificationMessage {
 export interface NotificationIntl {
   titleIntl: IntlString
   bodyIntl: IntlString
-  intlParams: { senderName?: string, title?: string } & Record<string, string>
+  intlParams: { senderName?: string, title?: string } & Record<string, string | number>
   intlParamsNotLocalized?: Record<string, IntlString>
 }
 

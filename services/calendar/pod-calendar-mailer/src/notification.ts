@@ -45,7 +45,7 @@ export async function createNotification (
 
   const { client, accountClient } = await getClient(workspaceUuid)
 
-  const accountUuid = await accountClient.findPersonBySocialId(forEvent.user, true) as AccountUuid | undefined
+  const accountUuid = (await accountClient.findPersonBySocialId(forEvent.user, true)) as AccountUuid | undefined
   if (accountUuid === undefined) {
     throw new Error(`Global person not found for social-id ${forEvent.user}`)
   }
