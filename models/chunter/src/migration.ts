@@ -39,7 +39,7 @@ import {
 } from '@hcengineering/model'
 import activity, { migrateMessagesSpace, DOMAIN_ACTIVITY, DOMAIN_REACTION } from '@hcengineering/model-activity'
 import { getAllAccounts } from '@hcengineering/contact'
-import { DOMAIN_DOC_NOTIFY } from '@hcengineering/model-notification'
+import { DOMAIN_DOC_NOTIFY, DOMAIN_READ_STATE } from '@hcengineering/model-notification'
 import { type ActivityMessage, type DocUpdateMessage, type Reaction } from '@hcengineering/activity'
 
 import { DOMAIN_CHUNTER, DOMAIN_CHUNTER_DOC } from './index'
@@ -47,7 +47,7 @@ import chunter from './plugin'
 import { createHash } from 'crypto'
 import { type Attachment } from '@hcengineering/attachment'
 import { DOMAIN_ATTACHMENT } from '@hcengineering/model-attachment'
-import { type DocNotifyContext } from '@hcengineering/notification'
+import { type DocNotifyContext, isUnreadMessageChunk, type ReadState } from '@hcengineering/notification'
 
 export const DOMAIN_COMMENT = 'comment' as Domain
 export const DOMAIN_NOTIFICATION = 'notification' as Domain
@@ -134,6 +134,7 @@ export async function createRandom (client: MigrationUpgradeClient, tx: TxOperat
 }
 
 async function convertCommentsToChatMessages (client: MigrationClient): Promise<void> {
+  if (!client.hierarchy.domains().includes(DOMAIN_COMMENT)) return
   await client.update(
     DOMAIN_COMMENT,
     { _class: 'chunter:class:Comment' as Ref<Class<Doc>> },
@@ -143,7 +144,9 @@ async function convertCommentsToChatMessages (client: MigrationClient): Promise<
 }
 
 async function removeBacklinks (client: MigrationClient): Promise<void> {
-  await client.deleteMany(DOMAIN_COMMENT, { _class: 'chunter:class:Backlink' as Ref<Class<Doc>> })
+  if (client.hierarchy.domains().includes(DOMAIN_COMMENT)) {
+    await client.deleteMany(DOMAIN_COMMENT, { _class: 'chunter:class:Backlink' as Ref<Class<Doc>> })
+  }
   await client.deleteMany(DOMAIN_ACTIVITY, {
     _class: activity.class.DocUpdateMessage,
     objectClass: 'chunter:class:Backlink' as Ref<Class<Doc>>
@@ -341,6 +344,79 @@ async function removeUnavailableChats (client: MigrationClient): Promise<void> {
   }
 }
 
+// TODO: !!! Should be called after DocNotifyContext migration !!!
+async function hideInactiveChats (client: MigrationClient): Promise<void> {
+  const iterator = await client.traverse<Chat>(DOMAIN_CHUNTER_DOC, {
+    _class: chunter.class.Chat,
+    attachedToClass: { $ne: chunter.class.Channel },
+    hidden: false,
+    pinned: false
+  })
+
+  const twoWeeks = 14 * 24 * 60 * 60 * 1000
+  const date = Date.now()
+
+  try {
+    while (true) {
+      const chats = (await iterator.next(200)) ?? []
+      if (chats.length === 0) break
+
+      const attachedToIds = chats.map((c) => c.attachedTo)
+
+      const [contexts, readStates] = await Promise.all([
+        client.find<DocNotifyContext>(DOMAIN_DOC_NOTIFY, {
+          objectId: { $in: attachedToIds },
+          user: { $in: chats.map((c) => c.account) }
+        }),
+        client.find<ReadState>(DOMAIN_READ_STATE, {
+          attachedTo: { $in: attachedToIds }
+        })
+      ])
+
+      const contextMap = new Map<string, DocNotifyContext>()
+      for (const ctx of contexts) {
+        contextMap.set(`${ctx.objectId}_${ctx.user}`, ctx)
+      }
+
+      const readStateMap = new Map<string, ReadState>()
+      for (const state of readStates) {
+        readStateMap.set(state.attachedTo, state)
+      }
+
+      const chatsToHide: Ref<Chat>[] = []
+
+      for (const chat of chats) {
+        const readState = readStateMap.get(chat.attachedTo)
+        const lastMessageTime = readState?.latestMessageTimestamp ?? 0
+        const hasRecentMessage = date - lastMessageTime <= twoWeeks
+
+        if (hasRecentMessage) continue
+
+        const context = contextMap.get(`${chat.attachedTo}_${chat.account}`)
+        const hasNotifiedMessage =
+          (context?.unreadMessages?.some((msg) => {
+            if (isUnreadMessageChunk(msg)) {
+              return (msg.notifiedCount ?? 0) > 0
+            }
+            return msg.notified === true
+          }) ??
+            false) ||
+          (context?.unreadReactions?.length ?? 0) > 0
+
+        if (hasNotifiedMessage) continue
+
+        chatsToHide.push(chat._id)
+      }
+
+      if (chatsToHide.length > 0) {
+        await client.update<Chat>(DOMAIN_CHUNTER_DOC, { _id: { $in: chatsToHide } }, { hidden: true })
+      }
+    }
+  } finally {
+    await iterator.close()
+  }
+}
+
 export const chunterOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, chunterId, [
@@ -430,6 +506,11 @@ export const chunterOperation: MigrateOperation = {
         state: 'remove-unavailable-chats-v1',
         mode: 'upgrade',
         func: removeUnavailableChats
+      },
+      {
+        state: 'hide-inactive-chats-v1',
+        mode: 'upgrade',
+        func: hideInactiveChats
       }
     ])
   },

@@ -1,5 +1,6 @@
 //
 // Copyright © 2022, 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -37,7 +38,7 @@ import core, {
   getClassCollaborators,
   AccountUuid
 } from '@hcengineering/core'
-import notification, { DocNotifyContext } from '@hcengineering/notification'
+import notification, { DocNotifyContext, isUnreadMessageChunk, ReadState } from '@hcengineering/notification'
 import {
   getAccountBySocialId,
   getAddCollaboratorsTxes,
@@ -56,9 +57,6 @@ import {
   JoinChannelTypeMatch
 } from './utils'
 import { ChatSearchTitleProvider } from './search'
-
-const updateChatInfoDelay = 24 * 60 * 60 * 1000 // 24 hours
-// const hideChannelDelay = 7 * 24 * 60 * 60 * 1000 // 7 days
 
 export async function CommentRemove (
   doc: Doc,
@@ -229,115 +227,73 @@ async function ChunterTrigger (txes: TxCUD<Doc>[], control: TriggerControl): Pro
   return res
 }
 
-async function getDirectsToHide (
-  control: TriggerControl,
-  directs: Chat[],
-  contexts: DocNotifyContext[],
-  date: Timestamp
-): Promise<Chat[]> {
-  const minVisibleDirects = 10
-
-  if (directs.length <= minVisibleDirects) return []
-  const hideCount = directs.length - minVisibleDirects
-
-  const toHide: { direct: Chat, lastUpdate: Timestamp }[] = []
-
-  // for (const direct of directs) {
-  //   const context = contexts.find((it) => it.objectId === direct.attachedTo)
-  //   if (context != null) {
-  //     const { lastUpdate = 0, lastView = 0 } = context
-  //     if (lastView === 0) continue
-  //     if (lastUpdate > lastView) continue
-  //     if (date - lastUpdate > hideChannelDelay) {
-  //       toHide.push({ lastUpdate, direct })
-  //     }
-  //   } else {
-  //     const lastMessage = (
-  //       await control.findAll(
-  //         control.ctx,
-  //         activity.class.ActivityMessage,
-  //         { attachedTo: direct.attachedTo },
-  //         { limit: 1, sort: { createdOn: SortingOrder.Descending } }
-  //       )
-  //     )[0]
-  //     const lastUpdate = lastMessage.modifiedOn ?? direct.modifiedOn
-  //     if (date - lastUpdate > hideChannelDelay) {
-  //       toHide.push({ lastUpdate, direct })
-  //     }
-  //   }
-  // }
-
-  toHide.sort((a, b) => (a.lastUpdate ?? 0) - (b.lastUpdate ?? 0))
-
-  return toHide.slice(0, hideCount).map((it) => it.direct)
-}
-
-async function getActivityToHide (
-  control: TriggerControl,
-  chats: Chat[],
-  contexts: DocNotifyContext[],
-  date: Timestamp
-): Promise<Chat[]> {
-  if (chats.length === 0) return []
-  const toHide: Chat[] = []
-
-  // for (const chat of chats) {
-  //   const context = contexts.find((it) => it.objectId === chat.attachedTo)
-  //   if (context != null) {
-  //     const { lastUpdate = 0, lastView = 0 } = context
-  //     if (lastView === 0) continue
-  //     if (lastUpdate > lastView) continue
-  //     if (date - lastUpdate > hideChannelDelay) {
-  //       toHide.push(chat)
-  //     }
-  //   } else {
-  //     const lastMessage = (
-  //       await control.findAll(
-  //         control.ctx,
-  //         activity.class.ActivityMessage,
-  //         { attachedTo: chat.attachedTo },
-  //         { limit: 1, sort: { createdOn: SortingOrder.Descending } }
-  //       )
-  //     )[0]
-  //     const lastUpdate = lastMessage.modifiedOn ?? chat.modifiedOn
-  //     if (date - lastUpdate > hideChannelDelay) {
-  //       toHide.push(chat)
-  //     }
-  //   }
-  // }
-
-  return toHide
-}
-
 export async function syncChat (control: TriggerControl, status: UserStatus, date: Timestamp): Promise<Tx[]> {
+  const updateChatInfoDelay = 24 * 60 * 60 * 1000 // 24 hours
+  const hideDelay = 14 * 24 * 60 * 60 * 1000 // 2 weeks
+
   const syncInfo = (await control.findAll(control.ctx, chunter.class.ChatSyncInfo, { user: status.user })).shift()
   const shouldSync = syncInfo === undefined || date - syncInfo.timestamp > updateChatInfoDelay
 
   if (!shouldSync) return []
 
-  const chats = await control.findAll(control.ctx, chunter.class.Chat, {
-    user: status.user,
-    hidden: false,
-    isPinned: false
-  })
+  const chats: Chat[] = (
+    await control.findAll<Chat>(control.ctx, chunter.class.Chat, {
+      user: status.user,
+      hidden: false,
+      isPinned: false
+    })
+  ).filter((chat) => !hierarchy.isDerived(chat.attachedToClass, chunter.class.Channel))
 
   const { hierarchy } = control
   const res: Tx[] = []
-  const directChats = chats.filter(({ attachedToClass }) =>
-    hierarchy.isDerived(attachedToClass, chunter.class.DirectMessage)
-  )
-  const activityChats = chats.filter(
-    ({ attachedToClass }) => !hierarchy.isDerived(attachedToClass, chunter.class.ChunterSpace)
-  )
 
-  if (directChats.length > 10 || activityChats.length > 0) {
-    const contexts = await control.findAll(control.ctx, notification.class.DocNotifyContext, {
-      user: status.user
-    })
-    const directsToHide = await getDirectsToHide(control, directChats, contexts, date)
-    const activityToHide = await getActivityToHide(control, activityChats, contexts, date)
-    const toHide = directsToHide.concat(activityToHide)
-    for (const chat of toHide) {
+  const batchSize = 200
+
+  for (let i = 0; i < chats.length; i += batchSize) {
+    const batch = chats.slice(i, i + batchSize)
+    const attachedToIds = batch.map((c) => c.attachedTo)
+
+    const [contexts, readStates] = await Promise.all([
+      control.findAll(control.ctx, notification.class.DocNotifyContext, {
+        user: status.user,
+        objectId: { $in: attachedToIds },
+        unreadCount: { $gt: 0 }
+      }),
+      control.findAll(control.ctx, notification.class.ReadState, {
+        attachedTo: { $in: attachedToIds }
+      })
+    ])
+
+    const contextMap = new Map<Ref<Doc>, DocNotifyContext>()
+    for (const ctx of contexts) {
+      contextMap.set(ctx.objectId, ctx)
+    }
+
+    const readStateMap = new Map<Ref<Doc>, ReadState>()
+    for (const state of readStates) {
+      readStateMap.set(state.attachedTo, state)
+    }
+
+    for (const chat of batch) {
+      const readState = readStateMap.get(chat.attachedTo)
+      const lastMessageTime = readState?.latestMessageTimestamp ?? 0
+      const hasRecentMessage = date - lastMessageTime <= hideDelay
+
+      if (hasRecentMessage) continue
+
+      const context = contextMap.get(chat.attachedTo)
+      const hasNotifiedUnread =
+        (context?.unreadMessages?.some((msg) => {
+          if (isUnreadMessageChunk(msg)) {
+            return (msg.notifiedCount ?? 0) > 0
+          }
+          return msg.notified === true
+        }) ??
+          false) ||
+        (context?.unreadReactions?.length ?? 0) > 0
+
+      if (hasNotifiedUnread) continue
+
       const updateTx = control.txFactory.createTxUpdateDoc(chat._class, chat.space, chat._id, {
         hidden: true
       })
@@ -346,6 +302,9 @@ export async function syncChat (control: TriggerControl, status: UserStatus, dat
       )
     }
   }
+
+  control.ctx.info(`Hidden ${res.length} chats for ${status.user}`)
+
   if (syncInfo === undefined) {
     const personSpace = (await control.findAll(control.ctx, contact.class.PersonSpace, { account: status.user }))[0]
     if (personSpace !== undefined) {
