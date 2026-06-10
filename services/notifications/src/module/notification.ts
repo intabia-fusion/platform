@@ -37,6 +37,7 @@ import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import { markupToHtml } from '@hcengineering/text-html'
 
 import { Client, ObjectDisplayData, NotifyProviders, Result, TxCache } from '../types'
+import config from '../config'
 import {
   getCreateContextTx,
   getUpdateContextTx,
@@ -123,7 +124,7 @@ export async function pushNotification (
     updateTx.operations.lastNotify = Math.max(modifiedOn, updateTx.operations.lastNotify ?? 0)
 
     const updateOp: DocumentUpdate<DocNotifyContext> = {
-      $push: { latestNotifications: { $each: [notification], $position: 0, $slice: 5 } }
+      $push: { latestNotifications: { $each: [notification], $position: 0, $slice: config.LatestNotificationsSliceSize } }
     }
 
     const updateOpTx = txFactory.createTxUpdateDoc(context._class, context.space, context._id, updateOp)
@@ -172,7 +173,7 @@ export async function pushNotification (
     )
 
     createTx.attributes.lastNotify = Math.max(createTx.attributes.lastNotify ?? 0, modifiedOn)
-    createTx.attributes.latestNotifications = [notification, ...createTx.attributes.latestNotifications].slice(0, 5)
+    createTx.attributes.latestNotifications = [notification, ...createTx.attributes.latestNotifications].slice(0, config.LatestNotificationsSliceSize)
     createTx.attributes.unreadCount = isUnread
       ? (createTx.attributes.unreadCount ?? 0) + 1
       : (createTx.attributes.unreadCount ?? 0)

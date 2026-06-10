@@ -22,6 +22,14 @@ import Cache from '../../cache'
 import { handleReadNotificationAction } from '../action'
 import { emptyResult } from '../../utils/result'
 
+jest.mock('../../config', () => ({
+  __esModule: true,
+  default: {
+    LatestNotificationsSliceSize: 5
+  },
+  LatestNotificationsSliceSize: 5
+}))
+
 jest.mock('../../utils/utils', () => {
   return {
     getAllowedProviders: jest.fn(),

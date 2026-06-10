@@ -21,6 +21,14 @@ import { Result, TxCache } from '../../types'
 import { pushNotification } from '../notification'
 import { emptyResult, getEmptyTxCache } from '../../utils/result'
 
+jest.mock('../../config', () => ({
+  __esModule: true,
+  default: {
+    LatestNotificationsSliceSize: 5
+  },
+  LatestNotificationsSliceSize: 5
+}))
+
 const mockTranslateNotification = jest.fn()
 const mockGetNotificationMessageId = jest.fn()
 
