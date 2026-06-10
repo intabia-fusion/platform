@@ -86,7 +86,9 @@
     "ShowChatBadge": "Mostrar insignia de chat",
     "HasNewNotifications": "You have new notifications",
     "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}",
-    "ReactedToYourMessage": "reacionou ao seu mensagem"
+    "ReactedToYourMessage": "reacionou ao seu mensagem",
+    "Clearing": "Limpando...",
+    "Reading": "Lendo..."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

@@ -189,7 +189,9 @@ const notification = plugin(notificationId, {
     EditNotifications: '' as IntlString,
     AddMeInCollaborators: '' as IntlString,
     RemoveMeFromCollaborators: '' as IntlString,
-    ShowChatBadge: '' as IntlString
+    ShowChatBadge: '' as IntlString,
+    Clearing: '' as IntlString,
+    Reading: '' as IntlString
   },
   emailTemplate: {
     MeAddedInCollaboratorsNotificationText: '' as IntlString,

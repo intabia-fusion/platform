@@ -86,7 +86,9 @@
     "Mute": "Mute",
     "Appearance": "Appearance",
     "ShowChatBadge": "Show chat app badge",
-    "ReactedToYourMessage": "Reacted to your message"
+    "ReactedToYourMessage": "Reacted to your message",
+    "Clearing": "Clearing...",
+    "Reading": "Reading..."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",

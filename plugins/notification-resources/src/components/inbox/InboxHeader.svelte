@@ -15,12 +15,13 @@
   import activity from '@hcengineering/activity'
   import { Class, Doc, getCurrentAccount, Ref } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Label, TabItem, TabList } from '@hcengineering/ui'
+  import { Label, Loading, TabItem, TabList } from '@hcengineering/ui'
 
   import notification from '../../plugin'
   import { InboxFilter } from '../../types'
   import InboxMenuButton from './InboxMenuButton.svelte'
   import SettingsButton from './SettingsButton.svelte'
+  import { NotificationClientImpl } from '../../client'
 
   const INBOX_FILTER_KEY = 'inbox-filter'
 
@@ -29,6 +30,9 @@
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
+  const notificationClient = NotificationClientImpl.getClient()
+  const clearingAllStore = notificationClient.clearingAllInbox
+  const readingAllStore = notificationClient.readingAllInbox
   const account = getCurrentAccount()
   const classesQuery = createQuery()
 
@@ -114,6 +118,19 @@
 <div class="hulyNavPanel-header withButton small">
   <span class="overflow-label"><Label label={notification.string.Inbox} /></span>
   <div class="flex-row-center flex-gap-2">
+    {#if $clearingAllStore}
+      <Loading size="small">
+        <span class="loading-label uppercase">
+          <Label label={notification.string.Clearing} />
+        </span>
+      </Loading>
+    {:else if $readingAllStore}
+      <Loading size="small">
+        <span class="loading-label uppercase">
+          <Label label={notification.string.Reading} />
+        </span>
+      </Loading>
+    {/if}
     <SettingsButton {items} />
     <InboxMenuButton />
   </div>
@@ -129,5 +146,12 @@
     align-items: center;
     padding: var(--spacing-0_5) var(--spacing-1_5);
     border-bottom: 1px solid var(--theme-navpanel-border);
+  }
+
+  .loading-label {
+    color: var(--global-secondary-TextColor);
+    font-weight: 500;
+    font-size: 0.625rem;
+    margin-left: 0.25rem;
   }
 </style>

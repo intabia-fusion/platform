@@ -359,6 +359,9 @@ export type NotificationsClientFactory = () => NotificationClient
 export interface NotificationClient {
   totalUnreadCount: Readable<number>
 
+  clearingAllInbox: Readable<boolean>
+  readingAllInbox: Readable<boolean>
+
   contextByDoc: Readable<Map<Ref<Doc>, DocNotifyContext | null>>
   contextById: Readable<Map<Ref<DocNotifyContext>, DocNotifyContext | null>>
 

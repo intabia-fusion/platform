@@ -56,6 +56,9 @@ export class NotificationClientImpl implements NotificationClient {
   private readonly contextByIdPromises = new Map<Ref<DocNotifyContext>, Promise<DocNotifyContext | undefined>>()
   private readonly contextByDocPromises = new Map<Ref<Doc>, Promise<DocNotifyContext | undefined>>()
 
+  public readonly clearingAllInbox = writable(false)
+  public readonly readingAllInbox = writable(false)
+
   private readonly unreadQuery = createQuery(true)
 
   static createClient (): NotificationClientImpl {
@@ -453,7 +456,10 @@ export class NotificationClientImpl implements NotificationClient {
   async clearAll (): Promise<void> {
     const ops = getClient().apply(undefined, 'clearNotifications', true)
 
+    if (get(this.clearingAllInbox)) return
+
     try {
+      this.clearingAllInbox.set(true)
       const contexts = await ops.findAll(
         notification.class.DocNotifyContext,
         {
@@ -465,15 +471,19 @@ export class NotificationClientImpl implements NotificationClient {
         await ops.removeDoc(context._class, context.space, context._id)
         await this.forceReadDocState(ops, context.objectId)
       }
-    } finally {
       await ops.commit()
+    } finally {
+      this.clearingAllInbox.set(false)
     }
   }
 
   async readAll (): Promise<void> {
     const ops = getClient().apply(undefined, 'readAll', true)
 
+    if (get(this.readingAllInbox) || get(this.clearingAllInbox)) return
+
     try {
+      this.readingAllInbox.set(true)
       const contexts = await ops.findAll(
         notification.class.DocNotifyContext,
         {
@@ -499,8 +509,9 @@ export class NotificationClientImpl implements NotificationClient {
         }
         await this.forceReadDocState(ops, context.objectId)
       }
-    } finally {
       await ops.commit()
+    } finally {
+      this.readingAllInbox.set(false)
     }
   }
 }

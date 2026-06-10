@@ -77,7 +77,7 @@
   $: updateInboxContexts(
     {
       ...(selectedTabId === 'all' ? {} : { objectClass: selectedTabId as Ref<Class<Doc>> }),
-      ...(filter === 'unread' ? { unread: true } : {})
+      ...(filter === 'unread' ? { unreadCount: { $gt: 0 } } : {})
     },
     limit
   )

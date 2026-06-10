@@ -86,7 +86,9 @@
     "ShowChatBadge": "Uygulama chat bildirimlerindeki göstergeyi göster",
     "HasNewNotifications": "You have new notifications",
     "UnreadNotificationsCount": "{count, plural, =1 {# unread} other {# unread}}",
-    "ReactedToYourMessage": "mesajınıza tepki verdi"
+    "ReactedToYourMessage": "mesajınıza tepki verdi",
+    "Clearing": "Temizleniyor...",
+    "Reading": "Okunuyor..."
   },
   "emailTemplate": {
     "MeAddedInCollaboratorsNotificationText": "{sender} added you as a collaborator to {doc}.",
