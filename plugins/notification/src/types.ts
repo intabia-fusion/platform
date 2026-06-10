@@ -319,7 +319,7 @@ export interface QueueNotificationMessage {
 export interface NotificationIntl {
   titleIntl: IntlString
   bodyIntl: IntlString
-  intlParams: { senderName: string, title?: string } & Record<string, string>
+  intlParams: { senderName?: string, title?: string } & Record<string, string>
   intlParamsNotLocalized?: Record<string, IntlString>
 }
 
