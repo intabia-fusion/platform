@@ -55,7 +55,7 @@
   import view from '@hcengineering/view'
   import { Editor, FocusPosition, mergeAttributes } from '@tiptap/core'
   import { isChangeOrigin } from '@tiptap/extension-collaboration'
-  import { createEventDispatcher, getContext, onDestroy, onMount } from 'svelte'
+  import { createEventDispatcher, getContext, onDestroy, onMount, tick } from 'svelte'
   import { Doc as YDoc } from 'yjs'
 
   import textEditor, {
@@ -147,6 +147,69 @@
   let editor: Editor
   let element: HTMLElement
   let editorPopupContainer: HTMLElement
+  let refContainer: HTMLElement
+
+  // When the user scrolled past this editor and collab content expands after sync, keep their scroll
+  // position: compensate the editor's height growth and undo the browser's focus jump to the top.
+  let prevLoading = true
+  let expandRaf = 0
+  let expandDeadline = 0
+  let expandPrevHeight = 0
+  let expandTargetTop = 0
+
+  function stopExpandWatch (): void {
+    if (expandRaf !== 0) {
+      cancelAnimationFrame(expandRaf)
+      expandRaf = 0
+    }
+  }
+
+  function watchScrollOnExpand (): void {
+    if (refContainer == null) {
+      return
+    }
+    const scroll = refContainer.closest<HTMLElement>('.scroll')
+    if (scroll == null) {
+      return
+    }
+    stopExpandWatch()
+    // decide ONCE: recomputing per-frame breaks after a jump to top (editor then looks in view)
+    const editorBottom =
+      refContainer.getBoundingClientRect().bottom - scroll.getBoundingClientRect().top + scroll.scrollTop
+    if (scroll.scrollTop < editorBottom) {
+      return
+    }
+    expandPrevHeight = refContainer.offsetHeight
+    expandTargetTop = scroll.scrollTop
+    expandDeadline = performance.now() + 2000
+
+    // run the whole window: the browser focus jump to the top can arrive after height settles,
+    // so an early "stable frames" exit would miss it
+    const step = (): void => {
+      if (refContainer == null) {
+        expandRaf = 0
+        return
+      }
+      const h = refContainer.offsetHeight
+      const grow = h - expandPrevHeight
+      expandPrevHeight = h
+      if (grow !== 0) {
+        expandTargetTop += grow
+      }
+      if (Math.abs(scroll.scrollTop - expandTargetTop) > 1) {
+        scroll.scrollTop = expandTargetTop
+      }
+      expandRaf = performance.now() < expandDeadline ? requestAnimationFrame(step) : 0
+    }
+    expandRaf = requestAnimationFrame(step)
+  }
+
+  $: if (!loading && prevLoading) {
+    prevLoading = false
+    void tick().then(watchScrollOnExpand)
+  }
+
+  onDestroy(stopExpandWatch)
 
   $: dispatch('editor', editor)
 
@@ -213,7 +276,8 @@
 
   $: if (editor !== undefined && needFocus) {
     if (!focused) {
-      editor.commands.focus(posFocus)
+      // scrollIntoView would yank the scroll to the caret (top of doc) on async focus after sync
+      editor.commands.focus(posFocus, { scrollIntoView: false })
       posFocus = undefined
     }
     needFocus = false
@@ -502,6 +566,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
+  bind:this={refContainer}
   style:overflow
   class="ref-container clear-mins"
   class:h-full={full}
