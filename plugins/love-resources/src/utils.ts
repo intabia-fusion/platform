@@ -547,10 +547,8 @@ export async function showRoomSettings (room?: Room): Promise<void> {
 export async function copyGuestLink (mm: MeetingMinutes): Promise<void> {
   if (mm === undefined) return
 
-  const link = await getMeetingGuestLink(mm)
-  if (link !== '') {
-    await copyTextToClipboard(link)
-  }
+  // Pass a Promise so ClipboardItem is created synchronously within the user gesture (Safari)
+  await copyTextToClipboard(getMeetingGuestLink(mm))
 }
 
 export async function toggleRoomPrivacy (mm: MeetingMinutes): Promise<void> {
