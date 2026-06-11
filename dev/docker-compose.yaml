@@ -1095,6 +1095,13 @@ services:
       - SCHEDULER_INTERVAL_MINUTES=${TBANK_SCHEDULER_INTERVAL_MINUTES:-60}
       # Set to true to skip webhook token verification (for local dev with curl)
       - TBANK_SKIP_WEBHOOK_VERIFICATION=true
+      # Email notifications for failed payments (via pod-mail -> mailpit on local)
+      - MAIL_URL=http://mail_server:8097
+      - MAIL_API_KEY=naephea1Rai7eeth1noh
+      - MAIL_FROM=platform@intabia.ru
+      # pod-payment URL — resolve localized plan labels for emails
+      - PAYMENT_URL=http://payment:4040
+      - GRACE_PERIOD_DAYS=${TBANK_GRACE_PERIOD_DAYS:-7}
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   notifications:

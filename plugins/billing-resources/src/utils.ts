@@ -21,7 +21,8 @@ import billing from '@hcengineering/billing'
 import {
   getClient as getAccountClientRaw,
   type AccountClient,
-  type SubscriptionData
+  type SubscriptionData,
+  SubscriptionStatus
 } from '@hcengineering/account-client'
 import { getClient as getBillingClientRaw, type BillingClient } from '@hcengineering/billing-client'
 import { getClient as getPaymentClientRaw, type PaymentClient } from '@hcengineering/payment-client'
@@ -82,6 +83,23 @@ async function getPlanConfig (): Promise<PlanConfig> {
   return _planConfig
 }
 
+// Statuses under which a subscription still grants its plan (full limits): active/trialing,
+// plus past_due (grace period — full access) and readonly (write is restricted separately, not
+// via limits). Excludes canceled/expired and pending first-payment drafts.
+const PLAN_GRANTING_STATUSES: SubscriptionStatus[] = [
+  SubscriptionStatus.Active,
+  SubscriptionStatus.Trialing,
+  SubscriptionStatus.PastDue,
+  SubscriptionStatus.ReadOnly
+]
+
+function grantsPlan (sub: SubscriptionData | undefined): boolean {
+  if (sub == null) return false
+  // A past_due first-payment draft (pending:true) has not been paid yet — it does not grant a plan.
+  if (sub.status === SubscriptionStatus.PastDue && sub.providerData?.pending === true) return false
+  return PLAN_GRANTING_STATUSES.includes(sub.status as SubscriptionStatus)
+}
+
 export async function isLimitExceeded (): Promise<boolean> {
   try {
     const accountClient = getAccountClient()
@@ -94,9 +112,9 @@ export async function isLimitExceeded (): Promise<boolean> {
       return false
     }
 
-    const subscriptions = await accountClient.getSubscriptions()
-    const subscription = subscriptions.find((p) => p.type === 'tier')
-    const packageSubscription = subscriptions.find((p) => p.type === 'package' && p.status === 'active')
+    const subscriptions = await accountClient.getSubscriptions(undefined, false)
+    const subscription = subscriptions.find((p) => p.type === 'tier' && grantsPlan(p))
+    const packageSubscription = subscriptions.find((p) => p.type === 'package' && grantsPlan(p))
     if (subscription == null) {
       return true
     }
@@ -126,9 +144,9 @@ export async function checkWorkspaceLimits (): Promise<void> {
     const workspaceInfo = await accountClient.getWorkspaceInfo(false)
     const usageInfo = workspaceInfo?.usageInfo ?? null
 
-    const subscriptions = await accountClient.getSubscriptions()
-    const subscription = subscriptions.find((p) => p.type === 'tier')
-    const packageSubscription = subscriptions.find((p) => p.type === 'package' && p.status === 'active')
+    const subscriptions = await accountClient.getSubscriptions(undefined, false)
+    const subscription = subscriptions.find((p) => p.type === 'tier' && grantsPlan(p))
+    const packageSubscription = subscriptions.find((p) => p.type === 'package' && grantsPlan(p))
     const config = await getPlanConfig()
     const plan = subscription != null ? (config.plans[subscription.plan] ?? null) : null
     const pkg = packageSubscription != null ? (config.packages[packageSubscription.plan] ?? null) : null

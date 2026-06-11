@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type AccountClient, type Subscription, getClient } from '@hcengineering/account-client'
+import { type AccountClient, type Subscription, SubscriptionStatus, getClient } from '@hcengineering/account-client'
 import {
   type MeasureContext,
   type UsageStatus,
@@ -116,8 +116,21 @@ export class UsageWorker {
   async updateWorkspaceUsageStatistics (ctx: MeasureContext, now: number, workspace: WorkspaceUuid): Promise<void> {
     const account = getAccountClient(this.config.AccountsUrl, workspace)
 
-    const subscriptions = await account.getSubscriptions(workspace)
-    const subscription = subscriptions.find((p) => p.status === 'active' && p.type === 'tier')
+    // Include non-active subscriptions: a past_due/readonly tier still defines the billing period
+    // for usage accounting (grace period keeps the plan in effect).
+    const subscriptions = await account.getSubscriptions(workspace, false)
+    const grantingStatuses = [
+      SubscriptionStatus.Active,
+      SubscriptionStatus.Trialing,
+      SubscriptionStatus.PastDue,
+      SubscriptionStatus.ReadOnly
+    ]
+    const subscription = subscriptions.find(
+      (p) =>
+        p.type === 'tier' &&
+        grantingStatuses.includes(p.status) &&
+        !(p.status === SubscriptionStatus.PastDue && p.providerData?.pending === true)
+    )
 
     const periodStart = getPeriodStartDate(subscription)
     const periodEnd = new Date(now)

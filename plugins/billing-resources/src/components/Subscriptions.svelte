@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type SubscriptionData, SubscriptionType } from '@hcengineering/account-client'
+  import { type SubscriptionData, SubscriptionStatus, SubscriptionType } from '@hcengineering/account-client'
   import { type SubscribeRequest, type CheckoutStatus } from '@hcengineering/payment-client'
   import { type PlanItem, type PlanConfig, type PackageItem } from '@hcengineering/billing'
   import { getMetadata, translate } from '@hcengineering/platform'
@@ -359,6 +359,46 @@
     }
   }
 
+  // Statuses that represent a current subscription worth displaying.
+  // Active/Trialing first (a fresh paid sub wins), then PastDue/ReadOnly/Paused (needs user
+  // attention), ignoring terminal Canceled/Expired records left in history.
+  const DISPLAY_STATUS_PRIORITY: SubscriptionStatus[] = [
+    SubscriptionStatus.Active,
+    SubscriptionStatus.Trialing,
+    SubscriptionStatus.PastDue,
+    SubscriptionStatus.ReadOnly,
+    SubscriptionStatus.Paused
+  ]
+
+  function pickDisplaySubscription (
+    subscriptions: SubscriptionData[],
+    type: SubscriptionType
+  ): SubscriptionData | undefined {
+    // Exclude pending subscriptions (status PastDue + providerData.pending === true): these are
+    // not-yet-confirmed first payments (in-flight or abandoned checkout), never a real failed
+    // renewal. While one exists the previous active subscription is still in effect and should
+    // win; the "payment processing" UI is driven separately via checkForCheckoutParam().
+    const candidates = subscriptions.filter(
+      (s) =>
+        s.type === type &&
+        DISPLAY_STATUS_PRIORITY.includes(s.status as SubscriptionStatus) &&
+        s.providerData?.pending !== true
+    )
+    if (candidates.length === 0) return undefined
+    return candidates.reduce((best, s) => {
+      const byStatus =
+        DISPLAY_STATUS_PRIORITY.indexOf(s.status as SubscriptionStatus) -
+        DISPLAY_STATUS_PRIORITY.indexOf(best.status as SubscriptionStatus)
+      if (byStatus !== 0) return byStatus < 0 ? s : best
+      // Same status priority (e.g. several stale past_due records) -> prefer the most recently
+      // modified one, which is the user's current subscription. Every tbank write path sets
+      // providerData.modifiedAt; a record without it (0) sorts last.
+      const sMod = (s.providerData?.modifiedAt as number) ?? 0
+      const bMod = (best.providerData?.modifiedAt as number) ?? 0
+      return sMod > bMod ? s : best
+    })
+  }
+
   async function fetchSubscriptions (): Promise<void> {
     loading = true
 
@@ -366,10 +406,11 @@
       const accountClient = getAccountClient()
       if (accountClient == null) return
 
-      const subscriptions = await accountClient.getSubscriptions()
-      currentSubscription = subscriptions.find((p) => p.type === 'tier')
+      // Include non-active subscriptions (e.g. past_due) so the payment-failed banner can be shown.
+      const subscriptions = await accountClient.getSubscriptions(undefined, false)
+      currentSubscription = pickDisplaySubscription(subscriptions, SubscriptionType.Tier)
       currentPlan = currentSubscription != null ? plans[currentSubscription.plan] : undefined
-      currentPackageSubscription = subscriptions.find((p) => p.type === 'package')
+      currentPackageSubscription = pickDisplaySubscription(subscriptions, SubscriptionType.Package)
       currentPackage = currentPackageSubscription != null ? packages[currentPackageSubscription.plan] : undefined
     } catch (err) {
       console.error('Error fetching current plan:', err)
@@ -542,7 +583,10 @@
               <div class="flex-row-center">
                 <div class="fs-title">{currentPlan.label}</div>
                 {#if currentSubscription?.status === 'active'}
-                  <div class="status-badge ml-2 text-md"><Label label={plugin.string.Active} /></div>
+                  <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.Active} /></div>
+                {/if}
+                {#if currentSubscription?.status === 'readonly'}
+                  <div class="status-badge-disabled ml-2 text-md"><Label label={plugin.string.Disabled} /></div>
                 {/if}
               </div>
               {#if currentSubscription?.amount}
@@ -792,9 +836,16 @@
     align-items: center;
   }
 
-  .status-badge {
+  .status-badge-active {
     color: var(--theme-state-positive-color);
     background-color: var(--theme-state-positive-background-color);
+    border-radius: var(--small-BorderRadius);
+    padding: 0.125rem 0.5rem;
+  }
+
+  .status-badge-disabled {
+    color: var(--theme-state-negative-color);
+    background-color: var(--theme-state-negative-background-color);
     border-radius: var(--small-BorderRadius);
     padding: 0.125rem 0.5rem;
   }

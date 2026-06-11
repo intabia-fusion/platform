@@ -30,6 +30,7 @@
     "AdditionalSpace": "追加スペース",
     "Monthly": "月額",
     "Active": "アクティブ",
+    "Disabled": "無効",
     "SubscriptionEnds": "{date}まで",
     "SubscriptionRenews": "次回更新: {date}",
     "SubscriptionValidUntil": "{date}まで有効",

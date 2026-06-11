@@ -70,7 +70,7 @@ export const main = async (): Promise<void> => {
   })
 
   // Start subscription renewal scheduler
-  const scheduler = startScheduler(metricsContext, tbank, storage, config.SchedulerIntervalMinutes)
+  const scheduler = startScheduler(metricsContext, tbank, storage, config, config.SchedulerIntervalMinutes)
 
   const shutdown = (): void => {
     scheduler.close()

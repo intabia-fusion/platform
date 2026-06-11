@@ -14,6 +14,7 @@
 //
 
 import { type WorkspaceUuid } from '@hcengineering/core'
+import { type Subscription, type SubscriptionData, SubscriptionStatus } from '@hcengineering/account-client'
 import type TbankPayments from 'tbank-payments'
 
 export function verifyWebhookToken (
@@ -54,6 +55,24 @@ export function buildOrderId (workspaceUuid: WorkspaceUuid, transactionCount: nu
   const ts = Date.now().toString(36)
   const rnd = Math.random().toString(36).substring(2, 6)
   return `${ws}-${transactionCount}-${ts}-${rnd}`
+}
+
+/**
+ * PastDue carries two distinct meanings, disambiguated by providerData.pending.
+ * These predicates centralize that invariant so callers don't re-check `pending` ad hoc.
+ *
+ * isPendingFirstPayment: PastDue + pending:true — a first-payment draft (checkout started,
+ *   not yet confirmed; created by buildSubscriptionData before payment). No rebillId, no real
+ *   period. Cleaned up as abandoned after 24h.
+ * isFailedRenewal: PastDue + pending:false — a real recurrent charge failure on a previously
+ *   active subscription. Has rebillId; enters the grace period (access still granted).
+ */
+export function isPendingFirstPayment (sub: Subscription | SubscriptionData): boolean {
+  return sub.status === SubscriptionStatus.PastDue && sub.providerData?.pending === true
+}
+
+export function isFailedRenewal (sub: Subscription | SubscriptionData): boolean {
+  return sub.status === SubscriptionStatus.PastDue && sub.providerData?.pending !== true
 }
 
 export function parsePlans (plansStr: string): Record<string, number> {

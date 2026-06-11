@@ -30,6 +30,7 @@
     "AdditionalSpace": "Espacio adicional",
     "Monthly": "Mensual",
     "Active": "Activo",
+    "Disabled": "Desactivado",
     "SubscriptionEnds": "Hasta {date}",
     "SubscriptionRenews": "Próxima renovación: {date}",
     "SubscriptionValidUntil": "Válido hasta {date}",

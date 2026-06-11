@@ -30,6 +30,7 @@
     "AdditionalSpace": "额外空间",
     "Monthly": "每月",
     "Active": "活跃",
+    "Disabled": "已禁用",
     "SubscriptionEnds": "截止至{date}",
     "SubscriptionRenews": "下次续期: {date}",
     "SubscriptionValidUntil": "有效期至{date}",

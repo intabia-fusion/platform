@@ -33,6 +33,15 @@ export interface Config {
 
   // Scheduler
   SchedulerIntervalMinutes: number // How often to check for expiring subscriptions
+  GracePeriodDays: number // Days after periodEnd a failed subscription stays in past_due before going readonly
+
+  // Email notifications (optional — payment-failed emails are skipped when MailUrl is unset)
+  MailUrl?: string // pod-mail base URL, e.g. http://mail:8097
+  MailApiKey?: string // pod-mail API key (Bearer), optional if pod-mail has none
+  MailFrom?: string // From address for outgoing notifications
+
+  // pod-payment base URL — used to resolve localized plan labels for emails (optional; falls back to plan id)
+  PaymentUrl?: string
 }
 
 const parseNumber = (str: string | undefined, defaultVal: number): number =>
@@ -49,7 +58,12 @@ const config: Config = (() => {
     TbankUrl: process.env.TBANK_URL,
     TbankSubscriptionPlans: process.env.TBANK_SUBSCRIPTION_PLANS,
     TbankSkipWebhookVerification: process.env.TBANK_SKIP_WEBHOOK_VERIFICATION === 'true',
-    SchedulerIntervalMinutes: parseNumber(process.env.SCHEDULER_INTERVAL_MINUTES, 60)
+    SchedulerIntervalMinutes: parseNumber(process.env.SCHEDULER_INTERVAL_MINUTES, 60),
+    GracePeriodDays: parseNumber(process.env.GRACE_PERIOD_DAYS, 7),
+    MailUrl: process.env.MAIL_URL,
+    MailApiKey: process.env.MAIL_API_KEY,
+    MailFrom: process.env.MAIL_FROM,
+    PaymentUrl: process.env.PAYMENT_URL
   }
 
   const requiredKeys: Array<keyof Config> = [
