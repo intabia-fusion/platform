@@ -21,7 +21,8 @@ import type TbankPayments from 'tbank-payments'
 
 import type { Config } from './config'
 import { SubscriptionStorage } from './storage'
-import { verifyWebhookToken, getPlanKey, buildOrderId, parsePlans } from './utils'
+import { verifyWebhookToken, getPlanKey, buildOrderId, parsePlans, isPendingFirstPayment } from './utils'
+import { notifyPaymentFailed } from './notifications'
 import type { TbankWebhookNotification, CreateSubscriptionRequest, UpdatePlanRequest } from './types'
 
 export async function createServer (
@@ -149,13 +150,13 @@ async function handleCreateSubscription (
   // Abandoned = status PastDue with pending: true (user started checkout but never paid).
   // These would otherwise accumulate as orphans if the user abandons the payment page.
   // Re-fetch each sub before canceling to avoid race with a concurrent webhook.
-  const existingPending = await storage.getAll(workspaceUuid)
+  const existingPending = await storage.getAll(workspaceUuid, false)
   for (const sub of existingPending) {
-    if (sub.status !== SubscriptionStatus.PastDue || sub.providerData?.pending !== true || sub.type !== type) continue
+    if (!isPendingFirstPayment(sub) || sub.type !== type) continue
 
     const freshSub = await storage.getById(sub.id)
     if (freshSub === null) continue
-    if (freshSub.status !== SubscriptionStatus.PastDue || freshSub.providerData?.pending !== true) continue
+    if (!isPendingFirstPayment(freshSub)) continue
 
     // Mark as expired — the TBank-side payment will time out on its own.
     // Don't remove card (there's no card for pending-first-payment subs).
@@ -214,7 +215,7 @@ async function handleCreateSubscription (
 
 async function handleGetByCheckout (storage: SubscriptionStorage, req: Request, res: Response): Promise<void> {
   const found = await storage.findSubscriptionByCheckoutId(req.params.checkoutId)
-  if (found === null || found.providerData?.pending === true) {
+  if (found === null || isPendingFirstPayment(found)) {
     res.status(404).json({ error: 'Subscription not found' })
     return
   }
@@ -341,8 +342,10 @@ async function handleRetryPayment (
     return
   }
 
-  if (sub.status !== SubscriptionStatus.PastDue) {
-    res.status(400).json({ error: 'Subscription is not in past_due status' })
+  // Allow manual retry both during grace (PastDue) and after it expired (ReadOnly):
+  // the card may have recovered and the user wants to restore access immediately.
+  if (sub.status !== SubscriptionStatus.PastDue && sub.status !== SubscriptionStatus.ReadOnly) {
+    res.status(400).json({ error: 'Subscription is not in a retryable status' })
     return
   }
 
@@ -498,6 +501,10 @@ async function handleWebhook (
     typedNotification.Status === 'REFUNDED'
   ) {
     if (sub !== null) {
+      // Notify only when an active subscription fails (real renewal/charge failure).
+      // Excludes: repeated webhooks on an already-past_due sub, the pending first-payment draft
+      // (past_due + pending:true), and late REVERSED/REFUNDED on canceled/expired subscriptions.
+      const wasActive = sub.status === SubscriptionStatus.Active
       // Mark as PastDue instead of canceling — keeps card and rebillId for retry
       const now = Date.now()
       const pastDueData: SubscriptionData = {
@@ -518,6 +525,10 @@ async function handleWebhook (
         paymentId: typedNotification.PaymentId,
         status: typedNotification.Status
       })
+
+      if (wasActive) {
+        await notifyPaymentFailed(ctx, storage, config, pastDueData, 'failed')
+      }
     }
   }
 
@@ -592,7 +603,12 @@ function buildSubscriptionDataFromWebhook (
       orderId: notification.OrderId,
       terminalKey: notification.TerminalKey,
       status: notification.Status,
-      pending: false
+      pending: false,
+      // Successful payment clears retry state, so a later failure starts a fresh grace cycle
+      // (matches buildRenewedSubscription / manual retry success). Without this a sub recovered
+      // from ReadOnly would keep retryAttempt>=MAX and skip straight back to ReadOnly on next fail.
+      retryAttempt: 0,
+      retryAfter: 0
     }
   }
 }

@@ -30,6 +30,7 @@
     "AdditionalSpace": "Ek alan",
     "Monthly": "Aylık",
     "Active": "Aktif",
+    "Disabled": "Devre dışı",
     "NoActivePlan": "Etkin plan yok",
     "SelectPlanToBegin": "Başlamak için aşağıdan bir plan seçin",
     "SubscriptionEnds": "{date} tarihine kadar",

@@ -234,7 +234,8 @@ export type PersonWithProfile = Person & Omit<UserProfile, 'personUuid'>
 export enum SubscriptionStatus {
   Active = 'active', // Subscription is active and in good standing
   Trialing = 'trialing', // In trial period
-  PastDue = 'past_due', // Payment failed but still providing service
+  PastDue = 'past_due', // Payment failed but still providing service (grace period — full access)
+  ReadOnly = 'readonly', // Grace period expired — read-only access, payment still due
   Canceled = 'canceled', // Subscription has been canceled
   Paused = 'paused', // Subscription is paused
   Expired = 'expired' // Subscription or trial has expired

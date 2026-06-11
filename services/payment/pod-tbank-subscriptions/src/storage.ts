@@ -19,7 +19,9 @@ import {
   type SubscriptionData,
   SubscriptionStatus
 } from '@hcengineering/account-client'
-import { type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
+import { type AccountUuid, type MeasureContext, type WorkspaceUuid, SocialIdType } from '@hcengineering/core'
+
+import { isFailedRenewal } from './utils'
 
 /**
  * Storage adapter for Tbank subscriptions.
@@ -50,7 +52,7 @@ export class SubscriptionStorage {
   }
 
   async getSubscriptionsNeedingRenewal (ctx: MeasureContext): Promise<Subscription[]> {
-    const allSubscriptions = await this.accountClient.getSubscriptions()
+    const allSubscriptions = await this.accountClient.getSubscriptions(undefined, false)
     const now = Date.now()
 
     const needingRenewal = allSubscriptions.filter((sub) => {
@@ -62,8 +64,8 @@ export class SubscriptionStorage {
         return sub.periodEnd !== undefined && sub.periodEnd <= now
       }
 
-      if (sub.status === SubscriptionStatus.PastDue) {
-        // Failed payment retry: check retry counters
+      if (isFailedRenewal(sub)) {
+        // Failed recurrent charge: retry while attempts remain and the back-off has elapsed.
         const retryAttempt = (sub.providerData?.retryAttempt as number) ?? 0
         if (retryAttempt >= 3) return false
         const retryAfter = (sub.providerData?.retryAfter as number) ?? 0
@@ -97,5 +99,25 @@ export class SubscriptionStorage {
         (s) => s.provider === 'tbank' && s.providerCheckoutId === checkoutId
       ) ?? null
     )
+  }
+
+  /**
+   * Resolve the contact info (email + UI locale) of a subscription owner via the central
+   * account server. `email` is the first email-type social id (or null when none). `locale`
+   * is the account's preferred language (or null when unset) — callers fall back to a default.
+   */
+  async getAccountContact (accountUuid: AccountUuid): Promise<{ email: string | null, locale: string | null }> {
+    const personInfo = await this.accountClient.getPersonInfo(accountUuid)
+    const emailSocialId = personInfo.socialIds.find((s) => s.type === SocialIdType.EMAIL && s.isDeleted !== true)
+
+    let locale: string | null = null
+    try {
+      const accountInfo = await this.accountClient.getAccountInfo(accountUuid)
+      locale = accountInfo.locale ?? null
+    } catch {
+      // Locale is optional — fall back to the caller's default if it cannot be resolved.
+    }
+
+    return { email: emailSocialId?.value ?? null, locale }
   }
 }

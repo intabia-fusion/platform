@@ -377,6 +377,7 @@
     currentPlan: string
     currentPackage: string
     hasPastDue: boolean
+    hasReadOnly: boolean
     lastChangedOn: number
     lastChangedBy: string
     entries: SubscriptionInfo[]
@@ -394,14 +395,16 @@
       let currentPlan = ''
       let currentPackage = ''
       let hasPastDue = false
+      let hasReadOnly = false
       let lastChangedOn = 0
       let lastChangedBy = ''
       for (const e of entries) {
-        if (e.status === 'active' || e.status === 'past_due') {
+        if (e.status === 'active' || e.status === 'past_due' || e.status === 'readonly') {
           const name = planLabels[e.plan] ?? e.plan
           if (e.type === 'tier') currentPlan = name
           else if (e.type === 'package') currentPackage = name
           if (e.status === 'past_due' && e.providerData?.pending !== true) hasPastDue = true
+          if (e.status === 'readonly') hasReadOnly = true
         }
         if (e.createdOn > lastChangedOn) {
           lastChangedOn = e.createdOn
@@ -414,6 +417,7 @@
         currentPlan,
         currentPackage,
         hasPastDue,
+        hasReadOnly,
         lastChangedOn,
         lastChangedBy,
         entries: [...entries].sort((a, b) => b.createdOn - a.createdOn)
@@ -1066,6 +1070,9 @@
                     {#if group.hasPastDue}
                       <span class="ml-4 fs-normal" style="color: var(--theme-label-orange-color);">⚠ Past due</span>
                     {/if}
+                    {#if group.hasReadOnly}
+                      <span class="ml-4 fs-normal" style="color: var(--theme-state-negative-color);">⚠ Read-only</span>
+                    {/if}
                   </div>
                 </svelte:fragment>
                 <svelte:fragment slot="title-tools">
@@ -1097,9 +1104,11 @@
                         <td class="p-1" style="width: 7rem;">{sub.amount != null ? `${sub.amount / 100} ₽` : ''}</td>
                         <td class="p-1" style="width: 8rem;"
                           ><span
-                            style={sub.status === 'past_due' && sub.providerData?.pending !== true
-                              ? 'color: var(--theme-label-orange-color); font-weight: 600;'
-                              : ''}
+                            style={sub.status === 'readonly'
+                              ? 'color: var(--theme-state-negative-color); font-weight: 600;'
+                              : sub.status === 'past_due' && sub.providerData?.pending !== true
+                                ? 'color: var(--theme-label-orange-color); font-weight: 600;'
+                                : ''}
                             >{sub.status}{sub.providerData?.pendingReplacement === true ? ' (replacing)' : ''}</span
                           ></td
                         >

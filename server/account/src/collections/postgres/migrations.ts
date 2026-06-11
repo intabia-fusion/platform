@@ -85,7 +85,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV25Migration(ns, flavor),
     getV26Migration(ns, flavor),
     getV27Migration(ns, flavor),
-    getV28Migration(ns, flavor)
+    getV28Migration(ns, flavor),
+    getV29Migration(ns, flavor)
   ]
 }
 
@@ -862,4 +863,26 @@ function getV28Migration (ns: string, flavor: DBFlavor): [string, string] {
     ADD COLUMN IF NOT EXISTS limits JSONB;
     `
   ]
+}
+
+function getV29Migration (ns: string, flavor: DBFlavor): [string, string] {
+  // Add 'readonly' value to subscription_status enum (grace period expired -> read-only access).
+  const addValueSql =
+    flavor === 'postgres'
+      ? `
+    DO $$     BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_enum
+            WHERE enumlabel = 'readonly'
+            AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'subscription_status' AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = '${ns}'))
+        ) THEN
+            ALTER TYPE ${ns}.subscription_status ADD VALUE 'readonly';
+        END IF;
+    END $$;
+    `
+      : `
+    ALTER TYPE ${ns}.subscription_status ADD VALUE IF NOT EXISTS 'readonly';
+    `
+
+  return ['account_db_v29_subscription_status_readonly', addValueSql]
 }

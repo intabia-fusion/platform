@@ -30,6 +30,7 @@
     "AdditionalSpace": "Espaço adicional",
     "Monthly": "Mensal",
     "Active": "Ativo",
+    "Disabled": "Desativado",
     "NoActivePlan": "Nenhum plano ativo",
     "SelectPlanToBegin": "Selecione um plano abaixo para começar",
     "SubscriptionEnds": "Até {date}",

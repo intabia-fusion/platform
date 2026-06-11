@@ -30,6 +30,7 @@
     "Disconnect": "Отключить",
     "Monthly": "В месяц",
     "Active": "Активен",
+    "Disabled": "Не активен",
     "NoActivePlan": "Нет активного плана",
     "SelectPlanToBegin": "Выберите план ниже, чтобы начать",
     "SubscriptionEnds": "До {date}",
