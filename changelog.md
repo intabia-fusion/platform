@@ -6,6 +6,202 @@ Changelog.
 
 * ⚙️ CHORE: Small follow-ups since v0.7.318 — update summary and adjust git-diff output for changelog generation; filter out 'Merge remote-tracking' merge commits and strip 'Signed-off-by:' footers from commit entries.
 
+## [0.7.386] - 2026-06-10
+
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-835 (#227) · FUSIO-769 - Изменена аватарка для ia бота (#224)
+* 🐛 BUG FIXES: · Fix slow rendering (#226)
+
+## [0.7.385] - 2026-06-05
+
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-813 (#223)
+* 🐛 BUG FIXES: · Fix titles · Fix reply draft (#221) · Fix watch (#222) · Fix labels · FUSIO-220: One more attempt to fix safari sound (#210)
+
+## [0.7.384] - 2026-06-04
+
+* 🐛 BUG FIXES: · Enable QMS tests + few fixes (#219)
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-487 - Изменена локализация для роли MAINTAINER (#220)
+
+## [0.7.383] - 2026-06-02
+
+* 🐛 BUG FIXES: · Fix space security (#217) · Fix space security (#216) · Fix cross workspace notifications (#215) · Fix dev build · Use Separate CSS and fix build cache (#204)
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-777 (#213) · Tool to find slow sql queries (#214) · FUSIO-721/722 (#212) · FUSIO-776: Download stats from server (#211) · FUSIO-446/FUSIO-756 (#208)
+* 🚀 FEATURES: · FUSIO-768: Enable logging for OTP tokens/mail (#209)
+
+## [0.7.382] - 2026-05-25
+
+* 🐛 BUG FIXES: · Try to fix windows badge (#206) · Fix todo notification context (#207) · FUSIO-384: Fix scroller (#203) · Fix workspaces notification marker position
+
+## [0.7.381] - 2026-05-24
+
+* 🚀 FEATURES: · Add extra logging (#202) · Add dbclick action and adjust scroll · Add reply and forward actions · Add crocc-workspace notification marker
+* ⚙️ MISCELLANEOUS TASKS: · Connection backoff for clisr (#198) · Improve testing statistics (#197) · Remove unused code · Remove getSessions · Remove logo from account
+* 🐛 BUG FIXES: · FUSIO-699: Fix meeting summary (#201) · fix notifications view · FUSIO-698: Fix link preview login/bigimg (#199) · Fix tests · Fix test · Add intl strings and fix format
+
+## [0.7.380] - 2026-05-21
+
+* 🚀 FEATURES: · Enable signing in macos build
+
+## [0.7.379] - 2026-05-21
+
+* 🚀 FEATURES: · Enable macos signing
+
+## [0.7.378] - 2026-05-18
+
+* ⚙️ MISCELLANEOUS TASKS: · Secured meeting minutes (#75) · Filter duplicates in descendants (#195)
+* 🐛 BUG FIXES: · Fix desktop push (#196)
+
+## [0.7.377] - 2026-05-13
+
+* 🚀 FEATURES: · feat: Middleware performance fixes (#192) · feat: Fulltext bulk optimization (#193)
+* 🐛 BUG FIXES: · Fix common notification pushes (#194)
+
+## [0.7.376] - 2026-05-12
+
+* 🐛 BUG FIXES: · Fix docker build
+
+## [0.7.375] - 2026-05-11
+
+* 🐛 BUG FIXES: · Fix mention target doc
+
+## [0.7.374] - 2026-05-11
+
+* 🐛 BUG FIXES: · Huly fixes apr24 (#159) · fusio-370: filter archived chats & fix filter by lookup extracted fields (#189) · Fix desktop push translation (#188) · FUSIO-344 Fix for Time Reporting dialog (#185) · Fix for local dev video playback and recording · Fix emoji icon compare (#180)
+* ⚙️ MISCELLANEOUS TASKS: · Extract sync indexes (#186) · FUSIO-455: Drop and refresh on flood (#184) · FUSIO-196 Fixing OTP form header alignment (#183) · Switch dev/tests to nginx (#181) · FUSIO-390: topNstats (#179)
+
+## [0.7.373] - 2026-05-01
+
+* 🐛 BUG FIXES: · FUSIO-378: Fix drag in kanban (#172) · Fix fast format do validate (#178) · FUSIO-389: Fix for viewlet jumps (#177) · FUSIO-388: Fix backup (#175) · Fix chat search (#174) · Fix issue type reset (#169)
+* ⚙️ MISCELLANEOUS TASKS: · Allow to change channel icon (#176)
+
+## [0.7.372] - 2026-04-29
+
+* 🐛 BUG FIXES: · FUSIO-352: Fix header colors (#171)
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-220: Disable krisp (#170)
+
+## [0.7.371] - 2026-04-28
+
+* 🐛 BUG FIXES: · Fix notification translate (#168) · Fix lookup corruption (#167) · Fix search input width (#165) · Fix gray dot (#164) · Fix inbox selection on delete · FUSIO-183 Fixes for Billing statistics (#161)
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-351: Towards good kanban (#166) · Revert "FUSIO-348 Fixing Issue type reset when creating new issue (#162)" · FUSIO-348 Fixing Issue type reset when creating new issue (#162) · FUSIO-344: Improve time reprting (#158) · Remove old import endpoint
+
+## [0.7.370] - 2026-04-25
+
+* 🐛 BUG FIXES: · FUSIO-343: Fix kanban show more layout
+
+## [0.7.369] - 2026-04-24
+
+* ⚡ PERFORMANCE: · FUSIO-337: Optimize load performance (#155)
+* 🚀 FEATURES: · Add search by chunter navigator (#154)
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-234 Making meeting link short (#151)
+
+## [0.7.368] - 2026-04-24
+
+* 🐛 BUG FIXES: · Fusio-309: fix display unavailable directs (#156) · Fix multiple notifications for same message (#152) · Fix GH tools to catch partially applied CP · Huly fixes (#114) · Fix build watch · FUSIO-303: Fix in memory storage (#144)
+* ⚙️ MISCELLANEOUS TASKS: · Do not store notification txes (#153) · FUSIO-325: Improve stream service (#150) · FUSIO-324: Optimize workflow for audio split (#149) · Update agents to specify only project info · FUSIO-237 Fixing navigation to meeting on desktop (#146) · FUSIO-322: Parent based swimline (#148)
+* 🚀 FEATURES: · add statistic variable in request (#147) · FUSIO-285: Swimline support (#135)
+
+## [0.7.367] - 2026-04-21
+
+* 🐛 BUG FIXES: · FUSIO-303: Fix in memory storage (#144) · Fix CRM with empty comment
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-302 Fixing copyright on desktop (#143) Signed-off-by: Andrey Sobolev <haiodo@gmail.com>
+
+## [0.7.366] - 2026-04-20
+
+* 🐛 BUG FIXES: · FUSIO-303: Fix TTL (#140) · Revert "Fix bump issues" · Revert "PNPM publish fixes" · Revert "Fix pnpm install" · Revert "Fix npm publish" · Revert "Fix PNPM build"
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-301 Fixing consent links on desktop (#141) · API Package (#137) · Revert "Move to @intabiafusion and switch to 1.0.0 schema" · Revert "Update scripts" · Update scripts · Move to @intabiafusion and switch to 1.0.0 schema
+* 🚀 FEATURES: · FUSIO-297: Add backoff for connect attempts (#136) · Revert "Add retry backoff" · Add retry backoff
+
+## [0.7.365] - 2026-04-17
+
+* 🐛 BUG FIXES: · Fix support email navigation
+
+## [0.7.364] - 2026-04-17
+
+* 🐛 BUG FIXES: · Fix open legal in separate tab · Fix naming · Fix undefined error in chunter browser (#132) · yandex metrix fix (#131)
+
+## [0.7.363] - 2026-04-17
+
+* 🐛 BUG FIXES: · Fixes for uptrace monitoring (#127)
+
+## [0.7.362] - 2026-04-16
+
+* 🐛 BUG FIXES: · Fix build
+
+## [0.7.361] - 2026-04-16
+
+* ⚙️ MISCELLANEOUS TASKS: · Speedup fast docker builds (#128)
+* 🐛 BUG FIXES: · Fix avg test limits
+
+## [0.7.360] - 2026-04-15
+
+* ⚙️ MISCELLANEOUS TASKS: · CRM integration (#125) · FUSIO-142 Fixing License agreement name (#126)
+* 🐛 BUG FIXES: · Fixes for gh picker
+
+## [0.7.359] - 2026-04-15
+
+* 🐛 BUG FIXES: · Try to fix mentions order (#123) · FUSIO-210: Fix how reports view are working (#122) · Fix filter in directs list (#124) · FUSIO-237 Fix open meeting link (#120) · Fix activity service · Fix Mailpit dev port
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-274 Fixing link color in consents (#117) · FUSIO-198 (#118) · FUSIO-142 Consent documents (#119)
+
+## [0.7.358] - 2026-04-14
+
+* ⚙️ MISCELLANEOUS TASKS: · Try to switch to fast-build and test (#115) · Rework Pulse (#113) · update agents · Update Claude file · Update agents md · FUSIO-225 Fixing avatar color in mention popup (#112)
+* 🐛 BUG FIXES: · Fix agent.md and remove orphans in tests · Fix unformatted files · Fix ui-test package · Fast format fixes
+* 🚀 FEATURES: · Add linting and formatting · Add claude ignore script
+
+## [0.7.357] - 2026-04-09
+
+* 🐛 BUG FIXES: · Fix node actions · Fix fulltext search in filters (#108) · Fix missing service · Fix build watch + colors · Fix space
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-183 Billing tests (#109) · Extra api tests (#103) · FND-134 Push subscription errors for Edge (#104) · Region config (#65) · FUSIO-204: Aggregate activity on server (#90)
+
+## [0.7.356] - 2026-04-03
+
+* 🐛 BUG FIXES: · Fix incorrect space for checking availability of mention (#101) · Attempt to fix safari audio lose (#100) · Fix fast build validate phase change check · Fix watch validate · Fix otp signup (#99) · Fix push notifications links (#97)
+* ⚙️ MISCELLANEOUS TASKS: · fusio-163: Extract channels from search (#98)
+
+## [0.7.355] - 2026-04-01
+
+* ⚙️ MISCELLANEOUS TASKS: · Hide notification groups (#94) · Show header for messages after thread (#96) · Remove avatar loading from push notifications (#92) · Update translation (#93) · Disable test · FUSIO-211: Improve meeting creation in case of race (#77)
+* 🐛 BUG FIXES: · Fix fast build and cache · FND-160 Fix creating webpush subscription after deleting (#91) · Fix bundle errors display · Fix deps calculation · Fix dependency hashing check · Fix love-agent latest version require non slim image
+* 🚀 FEATURES: · Add a helper tool to perform cherry picks
+
+## [0.7.354] - 2026-03-27
+
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-212 Blocking Subscribe button for web pushes on desktop (#79) · FUSIO-130 Fixing deleting issue and milestone with ownership check (#78) · An improved compile (#20)
+* 🚀 FEATURES: · FUSIO-199 Adding support for expired invite link (#73) · Adjust support (#76)
+* 🐛 BUG FIXES: · Fix double mention notification
+
+## [0.7.353] - 2026-03-24
+
+* ⚙️ MISCELLANEOUS TASKS: · Use fuultext search in users popup (#72) · Use fulltexts search in filter of attribute supports (#71)
+* 🐛 BUG FIXES: · Fix slow chat (#70) · Fix account branding for desktop requests (#68) · FUSIO-186 Moving Landing redirect - fix for Safari (#67) · FUSIO-183: Fix Max participants + avg · FUSIO-183: Fix billing time display · Fix delete message popup (#64)
+* 🚀 FEATURES: · Add recently used and show categories by default (#66)
+
+## [0.7.352] - 2026-03-18
+
+* 🚀 FEATURES: · FUSIO-126 Drawing board: adding Ctrl + z support (#61)
+* ⚙️ MISCELLANEOUS TASKS: · Fnd 130 (#60) · Rework join workspace (#59)
+* 🐛 BUG FIXES: · Fix stt possible memory leak (#58)
+
+## [0.7.351] - 2026-03-17
+
+* 🐛 BUG FIXES: · Fusio-157: Fix message links (#57) · fix: convert ws event data to array buffer (#10635) · Fix notifications locales (#54) · Fix pulse default config
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-145 Fixing path for redirect to landing page (#53) · FND-55 Fixing browser name for Edge (#56) · FND-121 Showing additional properties by default (#55)
+
+## [0.7.350] - 2026-03-14
+
+* 🐛 BUG FIXES: · FND-106 Fix losing focus in editor on ubuntu (#52) · Try fix sidebar (#51) · Fix test · Fix ui · fix
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-145 Landing page redirect (#49) · Allow to disable chat badge (#50) · Fnd-50: transalte email (#48)
+* 🚀 FEATURES: · Fusio-106: add message read receipts
+
+## [0.7.349] - 2026-03-11
+
+* 🐛 BUG FIXES: · Fix aibot recursion (#46) · Revert "FND-106: Fix losing focus when switching language on ubuntu" · Fix archived spaces query (#41) · Fix svelte error in sub-issues (#10618) · Fix logging for transformStripeSubscriptionToData (#10609) · Fix subscription status mapping (#10611)
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-150 Bug: undefined error on WebPush menu click in settings (#44) · Allow to disable collaborators notifications · FND-58 Removing column Role in Guest table (#42) · Set id when change class (#10617) · Handle checkout errors (#10605) · My cards (#10604)
+
+## [0.7.348] - 2026-03-11
+
+* ⚙️ MISCELLANEOUS TASKS: · We should show stopping for video recordings (#39) · fusio-106: allow to mute chat (#38)
+* 🐛 BUG FIXES: · Fix find all groupping
+
 ## [0.7.347] - 2026-03-09
 
 * 🐛 BUG FIXES: · Fix transcript logs not an error · Fix for love engress handling
