@@ -28,12 +28,12 @@ export const TableMetadataPasteExtension = Extension.create({
 
 /**
  * Extract metadata from HTML comments in markdown or HTML text
- * Looks for pattern: <!-- huly-table-metadata:{json} -->
+ * Looks for pattern: <!-- platform-table-metadata:{json} -->
  * Returns both the metadata and the text with comment removed
  */
 function extractMetadataFromHtmlComments (text: string): { metadata: TableMetadata | null, cleanedText: string } {
-  // Look for HTML comment with pattern: <!-- huly-table-metadata:{json} -->
-  const commentRegex = /<!--\s*huly-table-metadata:(.+?)\s*-->/s
+  // Look for HTML comment with pattern: <!-- platform-table-metadata:{json} -->
+  const commentRegex = /<!--\s*platform-table-metadata:(.+?)\s*-->/s
   const match = text.match(commentRegex)
   if (match?.[1] !== undefined) {
     try {
@@ -79,7 +79,7 @@ function TableMetadataPastePlugin (): Plugin {
         let metadata: TableMetadata | null = null
 
         // 1. Try custom MIME type (fastest, most reliable for internal paste)
-        const metadataType = 'application/x-huly-table-metadata'
+        const metadataType = 'application/x-platform-table-metadata'
         if (clipboardData.types.includes(metadataType)) {
           try {
             const metadataJsonStr = clipboardData.getData(metadataType)

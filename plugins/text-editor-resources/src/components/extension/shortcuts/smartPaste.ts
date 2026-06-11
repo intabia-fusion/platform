@@ -58,7 +58,8 @@ export function PasteTextAsMarkdownPlugin (): Plugin {
 
         // Table copies include metadata comment; treat as markdown even when clipboard has rich types.
         const hasTableMetadata =
-          pastedText.includes('<!-- huly-table-metadata:') || pastedMarkdown.includes('<!-- huly-table-metadata:')
+          pastedText.includes('<!-- platform-table-metadata:') ||
+          pastedMarkdown.includes('<!-- platform-table-metadata:')
 
         const isPlainPaste = clipboardData.types.length === 1 && clipboardData.types[0] === 'text/plain'
 
