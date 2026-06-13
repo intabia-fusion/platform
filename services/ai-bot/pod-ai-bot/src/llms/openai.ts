@@ -34,9 +34,9 @@ import type {
   ChatCompletionWithToolsResult,
   RequestSummaryResult
 } from './types'
+import { totalTokens, usageFromApi } from './types'
 import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
 import { PROMPTS } from './prompts'
-import { CompletionUsage } from 'openai/resources/completions'
 
 export default class OpenAIProvider implements LLMProvider {
   private readonly client: OpenAI
@@ -56,13 +56,6 @@ export default class OpenAIProvider implements LLMProvider {
         return getEncoding('cl100k_base')
       }
     })()
-  }
-
-  toTokens (usage?: CompletionUsage): number {
-    if (usage === undefined) {
-      return 0
-    }
-    return usage.total_tokens ?? (usage.prompt_tokens ?? 0) + (usage.completion_tokens ?? 0)
   }
 
   async translateHtml (
@@ -87,13 +80,13 @@ export default class OpenAIProvider implements LLMProvider {
 
     const responseText = response.choices?.[0]?.message?.content ?? undefined
 
-    const usage = this.toTokens(response.usage)
-    if (usage !== 0) {
+    const tokens = totalTokens(usageFromApi(response.usage))
+    if (tokens !== 0) {
       void pushTokensData(ctx, [
         {
           workspace,
           reason: 'manual-translate',
-          tokens: usage,
+          tokens,
           date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
         }
       ])
@@ -143,13 +136,13 @@ export default class OpenAIProvider implements LLMProvider {
       ]
     })
 
-    const usage = this.toTokens(response.usage)
-    if (usage !== 0) {
+    const tokens = totalTokens(usageFromApi(response.usage))
+    if (tokens !== 0) {
       void pushTokensData(ctx, [
         {
           workspace,
           reason: 'summarize',
-          tokens: usage,
+          tokens,
           date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
         }
       ])
@@ -208,13 +201,14 @@ export default class OpenAIProvider implements LLMProvider {
       const text = response.choices?.[0]?.message?.content ?? undefined
       const created = response.created
 
-      const usage = this.toTokens(response.usage)
-      if (usage !== 0) {
+      const usage = usageFromApi(response.usage)
+      const tokens = totalTokens(usage)
+      if (tokens !== 0) {
         void pushTokensData(ctx, [
           {
             workspace,
             reason,
-            tokens: usage,
+            tokens,
             date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
           }
         ])
@@ -276,20 +270,20 @@ export default class OpenAIProvider implements LLMProvider {
       )
 
       let str = await res.finalContent()
-      const usage = await res.totalUsage()
+      const usage = usageFromApi(await res.totalUsage())
 
       const pos = (str ?? '').indexOf('</think>')
       if (pos > 0) {
         str = (str ?? '').substring(pos + 8)
       }
 
-      const tu = this.toTokens(usage)
-      if (tu !== 0) {
+      const tokens = totalTokens(usage)
+      if (tokens !== 0) {
         void pushTokensData(ctx, [
           {
             workspace,
             reason,
-            tokens: tu,
+            tokens,
             date: date.toISOString()
           }
         ])
@@ -297,7 +291,7 @@ export default class OpenAIProvider implements LLMProvider {
 
       return {
         completion: str ?? undefined,
-        usage: usage?.completion_tokens
+        usage
       }
     } catch (e) {
       console.error(e)
@@ -330,7 +324,8 @@ export default class OpenAIProvider implements LLMProvider {
       return { tokens: 0 }
     }
 
-    const tokens = response?.usage ?? countTokens([{ content: summary, role: 'assistant' }], this.encoding)
+    const usageTokens = totalTokens(response?.usage)
+    const tokens = usageTokens > 0 ? usageTokens : countTokens([{ content: summary, role: 'assistant' }], this.encoding)
 
     if (tokens !== 0) {
       void pushTokensData(ctx, [

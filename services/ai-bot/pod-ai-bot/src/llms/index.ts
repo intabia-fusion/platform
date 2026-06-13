@@ -30,8 +30,10 @@ export type {
   ChatCompletionWithToolsResult,
   RequestSummaryResult,
   ContextMode,
-  LLMFactory
+  LLMFactory,
+  TokenUsage
 } from './types'
+export { totalTokens } from './types'
 
 // Re-export server provider request types
 export type {

@@ -28,25 +28,54 @@ export interface ChatMessage {
 }
 
 /**
+ * Token usage for a single LLM call.
+ * Source of truth is the provider `usage` from the API response; `approx` flags
+ * results where the provider gave no usage and we fell back to local counting.
+ */
+export interface TokenUsage {
+  promptTokens: number
+  completionTokens: number
+  approx?: boolean
+}
+
+/** Total billable tokens for a usage record. */
+export function totalTokens (usage?: TokenUsage): number {
+  if (usage === undefined) return 0
+  return usage.promptTokens + usage.completionTokens
+}
+
+/** Raw `usage` shape returned by OpenAI/GigaChat APIs. */
+export interface ApiUsage {
+  prompt_tokens?: number
+  completion_tokens?: number
+}
+
+/** Normalize a provider API `usage` object to `TokenUsage` (source of truth). */
+export function usageFromApi (usage?: ApiUsage): TokenUsage | undefined {
+  if (usage === undefined) return undefined
+  return { promptTokens: usage.prompt_tokens ?? 0, completionTokens: usage.completion_tokens ?? 0 }
+}
+
+/**
  * Result of a simple chat completion call.
  * - `text` contains the assistant output (if any)
- * - `usage` is an optional token usage estimate (provider-normalized)
+ * - `usage` is the provider-reported token usage (prompt/completion split)
  * - `created` optionally carries provider returned timestamp (unix seconds)
  */
 export interface ChatCompletionResult {
   text?: string
-  usage?: number
+  usage?: TokenUsage
   created?: number
 }
 
 /**
  * Result of a tools-enabled chat completion run.
  * - `completion` is the final assistant output after any tool-thinking sections
- * - `usage` is an optional token usage estimate
+ * - `usage` is the provider-reported token usage (prompt/completion split)
  */
 export interface ChatCompletionWithToolsResult {
   completion?: string
-  usage?: number
+  usage?: TokenUsage
 }
 
 /**

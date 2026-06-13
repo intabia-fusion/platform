@@ -55,6 +55,7 @@ import {
 import love, { type MeetingMinutes } from '@hcengineering/love'
 import fs from 'fs'
 import type { LLMProvider, ChatMessage as LLMChatMessage } from '../llms'
+import { totalTokens } from '../llms'
 import { getTools } from '../utils/tools'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
@@ -568,8 +569,9 @@ export class WorkspaceClient {
     if (response == null) {
       return
     }
+    const usageTokens = totalTokens(chatCompletion?.usage)
     const responseTokens =
-      chatCompletion?.usage ?? this.llm?.countTokens([{ role: 'assistant', content: response }]) ?? 0
+      usageTokens > 0 ? usageTokens : this.llm?.countTokens([{ role: 'assistant', content: response }]) ?? 0
 
     await this.pushHistory(personUuid, response, 'assistant', responseTokens, personUuid, objectId, objectClass)
 

@@ -224,7 +224,7 @@ describe('LLM Server Provider', () => {
     it('should handle chat completion response', async () => {
       const response: ChatCompletionResult = {
         text: 'The weather is sunny today.',
-        usage: 50,
+        usage: { promptTokens: 20, completionTokens: 30 },
         created: Math.floor(Date.now() / 1000)
       }
 
@@ -238,7 +238,7 @@ describe('LLM Server Provider', () => {
       )) as ChatCompletionResult
 
       expect(result.text).toBe('The weather is sunny today.')
-      expect(result.usage).toBe(50)
+      expect(result.usage).toEqual({ promptTokens: 20, completionTokens: 30 })
     })
 
     it('should handle optional parameters', () => {
@@ -289,7 +289,7 @@ describe('LLM Server Provider', () => {
     it('should handle chat completion with tools response', async () => {
       const response: ChatCompletionWithToolsResult = {
         completion: 'I have created a task for you.',
-        usage: 100
+        usage: { promptTokens: 60, completionTokens: 40 }
       }
 
       mockServer.requestWithFilter.mockResolvedValue(response)
@@ -302,7 +302,7 @@ describe('LLM Server Provider', () => {
       )) as ChatCompletionWithToolsResult
 
       expect(result.completion).toBe('I have created a task for you.')
-      expect(result.usage).toBe(100)
+      expect(result.usage).toEqual({ promptTokens: 60, completionTokens: 40 })
     })
 
     it('should support both context modes', () => {

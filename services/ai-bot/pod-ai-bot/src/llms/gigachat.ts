@@ -33,9 +33,9 @@ import type {
   ChatCompletionWithToolsResult,
   RequestSummaryResult
 } from './types'
+import { totalTokens, usageFromApi } from './types'
 import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
 import { PROMPTS } from './prompts'
-import { Usage } from 'gigachat/interfaces'
 
 export default class GigaChatProvider implements LLMProvider {
   private readonly client: GigaChat
@@ -60,10 +60,6 @@ export default class GigaChatProvider implements LLMProvider {
     }
   }
 
-  toTokens (usage: Usage): number {
-    return usage.total_tokens ?? (usage.prompt_tokens ?? 0) + (usage.completion_tokens ?? 0)
-  }
-
   async translateHtml (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
@@ -86,14 +82,14 @@ export default class GigaChatProvider implements LLMProvider {
       })
 
       const responseText = response.choices?.[0]?.message?.content ?? undefined
-      const usage = this.toTokens(response.usage)
+      const tokens = totalTokens(usageFromApi(response.usage))
 
-      if (usage !== 0) {
+      if (tokens !== 0) {
         void pushTokensData(ctx, [
           {
             workspace,
             reason: 'manual-translate',
-            tokens: usage,
+            tokens,
             date: new Date().toISOString()
           }
         ])
@@ -148,13 +144,13 @@ export default class GigaChatProvider implements LLMProvider {
         model: config.GigaChatModel ?? 'GigaChat'
       })
 
-      const usage = this.toTokens(response.usage)
-      if (usage !== 0) {
+      const tokens = totalTokens(usageFromApi(response.usage))
+      if (tokens !== 0) {
         void pushTokensData(ctx, [
           {
             workspace,
             reason: 'summarize',
-            tokens: usage,
+            tokens,
             date: new Date().toISOString()
           }
         ])
@@ -207,15 +203,16 @@ export default class GigaChatProvider implements LLMProvider {
       })
 
       const text = response.choices?.[0]?.message?.content ?? undefined
-      const usage = this.toTokens(response.usage)
+      const usage = usageFromApi(response.usage)
       const created = Math.floor(Date.now() / 1000) // Unix timestamp
 
-      if (usage !== 0) {
+      const tokens = totalTokens(usage)
+      if (tokens !== 0) {
         void pushTokensData(ctx, [
           {
             workspace,
             reason: 'complete',
-            tokens: usage,
+            tokens,
             date: new Date().toISOString()
           }
         ])
@@ -269,14 +266,15 @@ export default class GigaChatProvider implements LLMProvider {
       })
 
       const str = response.choices?.[0]?.message?.content ?? undefined
-      const usage = this.toTokens(response.usage)
+      const usage = usageFromApi(response.usage)
 
-      if (usage !== 0) {
+      const tokens = totalTokens(usage)
+      if (tokens !== 0) {
         void pushTokensData(ctx, [
           {
             workspace,
             reason,
-            tokens: usage,
+            tokens,
             date: new Date().toISOString()
           }
         ])
@@ -319,7 +317,8 @@ export default class GigaChatProvider implements LLMProvider {
       }
 
       // Use the encoding to count tokens
-      const tokens = response?.usage ?? this.countTokens([{ content: summary, role: 'assistant' as const }])
+      const usageTokens = totalTokens(response?.usage)
+      const tokens = usageTokens > 0 ? usageTokens : this.countTokens([{ content: summary, role: 'assistant' as const }])
 
       if (tokens !== 0) {
         void pushTokensData(ctx, [

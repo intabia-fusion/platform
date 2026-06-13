@@ -5,20 +5,23 @@
 ## P0 - первая очередь
 
 ### T1. Usage из API провайдеров
-- [ ] `OpenAIProvider`: брать `usage.prompt_tokens/completion_tokens` из ответа везде
-      (включая `runTools` цикл - суммировать по итерациям).
-- [ ] `GigaChatProvider`: читать `usage` из ответа API.
-- [ ] clisr протокол: обязательное поле `usage` в `chat.response` от клиента;
-      `ServerLLMProvider` пробрасывает его наверх.
-- [ ] Approx (tiktoken / chars/4) - только fallback, помечать `approx: true`.
-- [ ] `ChatCompletionResult`: заменить `usage: number` на
-      `{ promptTokens, completionTokens, approx }`.
-- [ ] `billing.ts pushTokensData`: добавить `modelId`, `promptTokens`,
-      `completionTokens`, `approx` (+ согласовать с billing-сервисом).
-- [ ] Пре-флайт токенайзер по провайдеру: GigaChat - `/tokens/count` или калибровка;
-      убрать `chars/4` из усечения контекста.
-- Файлы: `src/llms/{types,openai,gigachat,server}.ts`, `src/billing.ts`,
-  `src/workspace/workspaceClient.ts`.
+- [x] `ChatCompletionResult`/`WithToolsResult`: `usage: number` -> `TokenUsage
+      { promptTokens, completionTokens, approx? }` + хелпер `totalTokens()`
+      (`src/llms/types.ts`).
+- [x] `OpenAIProvider`: `toUsage()` из `usage.prompt_tokens/completion_tokens`
+      везде (incl. `runTools` `totalUsage()`).
+- [x] `GigaChatProvider`: `toUsage()` из `response.usage`.
+- [x] `workspaceClient`: потребление через `totalTokens()`, fallback countTokens.
+- [x] Тесты `llm-server-provider.spec.ts` обновлены (42 passing).
+- [ ] clisr протокол: обязательное поле `usage` в `chat.response` от клиента
+      (делается в T2 вместе с tool loop); сейчас clisr usage идёт как у openai/gigachat
+      (клиент использует те же провайдеры).
+- [ ] Approx-маркировка `approx: true` для clisr-ответов без usage (с T2).
+- [ ] `billing.ts pushTokensData`: modelId/split-поля - ОТЛОЖЕНО (контракт billing
+      не трогаем; сейчас шлём сумму как раньше). Отдельной задачей.
+- [ ] Пре-флайт токенайзер GigaChat (`/tokens/count`) - отдельно, низкий приоритет.
+- Файлы: `src/llms/{types,openai,gigachat,index}.ts`,
+  `src/workspace/workspaceClient.ts`, `src/__tests__/llm-server-provider.spec.ts`.
 
 ### T2. Tool calls через clisr
 - [ ] Протокол: многоходовой цикл `chat.request {toolDefs}` -> `{tool_calls}` ->
