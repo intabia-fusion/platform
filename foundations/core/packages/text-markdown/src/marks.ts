@@ -24,13 +24,19 @@ export function isInSet (mark: MarkupMark, marks: MarkupMark[]): boolean {
   return marks.find((m) => markEq(mark, m)) !== undefined
 }
 
+// `code` mark excludes all other inline marks (mirrors tiptap schema `excludes: '_'`),
+// otherwise combinations like bold+code produce an invalid mark set on the editor side.
+function excludes (a: MarkupMarkType, b: MarkupMarkType): boolean {
+  return (a === MarkupMarkType.code || b === MarkupMarkType.code) && a !== b
+}
+
 export function addToSet (mark: MarkupMark, marks: MarkupMark[]): MarkupMark[] {
   const m = marks.find((m) => markEq(mark, m))
   if (m !== undefined) {
     // We already have mark
     return marks
   }
-  return [...marks, mark]
+  return [...marks.filter((m) => !excludes(mark.type, m.type)), mark]
 }
 
 export function removeFromSet (markType: MarkupMarkType, marks: MarkupMark[]): MarkupMark[] {
