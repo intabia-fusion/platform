@@ -27,10 +27,18 @@ import type {
   ChatCompletionResult,
   ChatCompletionWithToolsResult,
   RequestSummaryResult,
-  ContextMode
+  ContextMode,
+  TokenUsage,
+  ToolDefinition,
+  ToolCall,
+  ToolResult
 } from './types'
 import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
+import { runToolCalls } from './toolLoop'
 import { ClisrServer } from '@intabiafusion/clisr'
+
+/** Max model<->tool round-trips before giving up, mirrors OpenAI runTools default. */
+const MAX_TOOL_ITERATIONS = 8
 
 /**
  * Request types for server provider methods
@@ -72,12 +80,23 @@ export interface ChatCompletionWithToolsRequest {
   skipCache?: boolean
   reason?: string
   workspace: WorkspaceUuid
-  // Note: tools are not serializable, so we pass tool definitions instead
-  toolDefinitions?: Array<{
-    name: string
-    description: string
-    parameters: Record<string, unknown>
-  }>
+  // Note: tools are not serializable, so we pass tool definitions instead.
+  toolDefinitions?: ToolDefinition[]
+  // Prior tool-call round: model-issued calls and the results we computed on the pod.
+  // The client replays these into the conversation before continuing.
+  priorToolResults?: ToolResult[]
+}
+
+/**
+ * Reply from the clisr client to a tools request.
+ * Either the model produced a final `content`, or it issued `toolCalls`
+ * that the pod must execute and resubmit (multi-turn tool loop).
+ * Shape matches `ChatToolStepResult` returned by the client handler.
+ */
+export interface ChatCompletionWithToolsReply {
+  content?: string
+  toolCalls?: ToolCall[]
+  usage?: TokenUsage
 }
 
 export interface RequestSummaryRequest {
@@ -262,31 +281,64 @@ export default class ServerLLMProvider implements LLMProvider {
     const startTime = Date.now()
 
     try {
-      // Extract tool definitions (tools themselves are not serializable)
-      const toolDefinitions = tools.map((tool) => ({
+      // Extract tool definitions (tools themselves are not serializable).
+      const toolDefinitions: ToolDefinition[] = tools.map((tool) => ({
         name: tool.function.name ?? '',
         description: tool.function.description ?? '',
-        parameters: tool.function.parameters as Record<string, unknown>
+        parameters: (tool.function.parameters ?? {}) as Record<string, unknown>
       }))
 
-      const request: ChatCompletionWithToolsRequest = {
-        method: 'createChatCompletionWithTools',
-        message,
-        contextMode,
-        assistantMemory,
-        userMemory,
-        sharedContext,
-        user,
-        history,
-        skipCache,
-        reason,
-        workspace,
-        toolDefinitions
+      // Map tool name -> bound executor. The closures already carry WorkspaceClient
+      // context (built in getTools), so the pod runs them locally.
+      const executors = new Map<string, (args: any) => Promise<any> | any>()
+      for (const tool of tools) {
+        const name = tool.function.name
+        if (name !== undefined && name !== '') {
+          executors.set(name, tool.function.function as (args: any) => Promise<any> | any)
+        }
       }
 
-      const result = (await this.server.requestWithFilter(ctx, 'llm', [request], this.selectLLMClient)) as
-        | ChatCompletionWithToolsResult
-        | undefined
+      const execute = async (call: ToolCall): Promise<string> => {
+        const fn = executors.get(call.name)
+        if (fn === undefined) {
+          return `Error: unknown tool '${call.name}'`
+        }
+        let args: any = {}
+        try {
+          args = call.arguments === '' ? {} : JSON.parse(call.arguments)
+        } catch {
+          return `Error: invalid arguments for tool '${call.name}'`
+        }
+        try {
+          const res = await fn(args)
+          return typeof res === 'string' ? res : JSON.stringify(res)
+        } catch (err: any) {
+          return `Error executing tool '${call.name}': ${err?.message ?? String(err)}`
+        }
+      }
+
+      const ask = async (priorToolResults: ToolResult[]): Promise<ChatCompletionWithToolsReply | undefined> => {
+        const request: ChatCompletionWithToolsRequest = {
+          method: 'createChatCompletionWithTools',
+          message,
+          contextMode,
+          assistantMemory,
+          userMemory,
+          sharedContext,
+          user,
+          history,
+          skipCache,
+          reason,
+          workspace,
+          toolDefinitions,
+          priorToolResults: priorToolResults.length > 0 ? priorToolResults : undefined
+        }
+        return (await this.server.requestWithFilter(ctx, 'llm', [request], this.selectLLMClient)) as
+          | ChatCompletionWithToolsReply
+          | undefined
+      }
+
+      const result = await runToolCalls(ask, execute, MAX_TOOL_ITERATIONS)
 
       const elapsed = Date.now() - startTime
       this.ctx.info('Server LLM createChatCompletionWithTools completed', {
@@ -299,7 +351,8 @@ export default class ServerLLMProvider implements LLMProvider {
         elapsedMs: elapsed
       })
 
-      return result
+      if (result === undefined) return undefined
+      return { completion: result.completion, usage: result.usage }
     } catch (err: any) {
       const elapsed = Date.now() - startTime
       this.ctx.error('Server LLM createChatCompletionWithTools failed', {

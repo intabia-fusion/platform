@@ -15,6 +15,7 @@ import { Stream } from 'stream'
 import { v4 as uuid } from 'uuid'
 import config from '../config'
 import { WorkspaceClient } from '../workspace/workspaceClient'
+import type { ToolDefinition } from '../llms/types'
 
 async function stream2buffer (stream: Stream): Promise<Buffer> {
   return await new Promise<Buffer>((resolve, reject) => {
@@ -553,6 +554,21 @@ export function getTools (
         }
       }
       result.push(res)
+    }
+  }
+  return result
+}
+
+/** Tool schemas available for a context, without bound execution closures (clisr client-side). */
+export function getToolDefinitions (contextMode: 'direct' | 'thread'): ToolDefinition[] {
+  const result: ToolDefinition[] = []
+  for (const tool of tools) {
+    if (tool[2] === contextMode || tool[2] === 'any') {
+      result.push({
+        name: tool[0].function.name ?? '',
+        description: tool[0].function.description ?? '',
+        parameters: (tool[0].function.parameters ?? {}) as Record<string, unknown>
+      })
     }
   }
   return result

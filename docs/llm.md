@@ -373,6 +373,8 @@ PM `Mark.addToSet`). Утилиту вынести в `@hcengineering/text-markd
 |---|---|---|
 | Gateway (REST, love, транскрипция, диспетчер ai-queue) | N реплик, consumer group на входном топике | stateless (все в БД/blob) |
 | Обработчик модели (`llm-<modelId>`) | реплик >= партиций; активных = партиций | stateless, метрики - в статус-документе |
+| aibot-router (clisr-сервер для LLM+STT обработчиков) | 1-2 реплики (тонкий прокси) | stateless; маршрут по capability + round-robin |
+| clisr-обработчики (LLM-модели, транскрибаторы) | по числу подключённых clisr-клиентов | вне ai-bot (наше/он-прем оборудование) |
 
 Обязательные шаги:
 1. Убрать write-back кеш `historyMap` как источник истины (история -> AIConversation,
@@ -387,25 +389,57 @@ PM `Mark.addToSet`). Утилиту вынести в `@hcengineering/text-markd
 - Отдельный Deployment per провайдер: изоляция ресурсов, независимый scaling. Позже,
   если clisr/локальные модели начнут конкурировать за CPU с gateway.
 
-## 4. Локальные модели через clisr параллельно с остальными
+## 4. Локальные модели и транскрибаторы через clisr (aibot-router)
 
-Сейчас clisr - глобальный режим (`LLM_PROVIDER=server`). Целевое поведение:
-clisr - один из провайдеров в реестре, живет параллельно с openai/gigachat.
+Сейчас clisr - глобальный режим (`LLM_PROVIDER=server` / `STT_PROVIDER=server`).
+Целевое: clisr - провайдер в реестре, живёт параллельно с openai/gigachat/deepgram.
 
-clisr требует сервер - выделяем его в роль **clisr router**:
+clisr требует сервер - выделяем его в отдельную роль **aibot-router**:
 
 ```
-ai-bot поды (провайдер 'clisr')          обработчики запросов (clisr-клиенты)
+ai-bot поды                          clisr-обработчики (clisr-клиенты)
+(provider 'clisr':                   - LLM: локальные модели, hosted Intabia, он-прем
+ LLM и STT)                          - STT: транскрибаторы (whisper и др.)
         \                                /
-         --->  clisr router (один)  <---
+         --->  aibot-router (clisr)  <---
                формат/протокол clisr
 ```
 
-- Router - один экземпляр (или per-зона), держит clisr-протокол; к нему подключаются
-  N обработчиков запросов (clisr-клиенты: локальные модели, hosted Intabia, он-прем).
-- Обработчики при handshake регистрируют обслуживаемые модели (capabilities);
-  router маршрутизирует по фильтру + round-robin (`requestWithFilter` уже есть).
-- ai-bot поды - клиенты router-а: `AIModelConfig{provider:'clisr', endpoint:<filter>}`.
-- Hosted-модель Intabia = обработчики на нашем оборудовании, уровень `low`
-  (самая дешевая/медленная), фиксированное имя.
-- Локальная/он-прем модель клиента = такой же обработчик с другим именем.
+- Router (`Mode=router`) - выделенный экземпляр (или per-зона), держит clisr-сервер
+  (`ClisrServer`); к нему по clisr подключаются ВСЕ обработчики: и LLM, и STT.
+- Обработчик при handshake объявляет capability через `client.request(...)`:
+  `llm: true` (`session.options.llm`) и/или `transcription: true`
+  (`session.options.transcription`) - один клиент может объявить обе.
+- Router маршрутизирует фильтром по capability + round-robin
+  (`requestWithFilter`, `selectLLMClient` / `s.options.transcription === true` уже есть
+  в `llms/server.ts` и `transcription/providers/server.ts`).
+- ai-bot-поды - клиенты router-а: LLM-запросы `AIModelConfig{provider:'clisr',
+  endpoint:<filter>}`, STT-запросы `STT_PROVIDER=server` -> тот же router.
+- Hosted-модель Intabia = LLM-обработчики на нашем оборудовании, уровень `low`
+  (самая дешёвая/медленная), фиксированное имя.
+- Локальная/он-прем модель или транскрибатор клиента = такой же обработчик
+  с другим именем/capability.
+- Масштабирование обработчиков - числом подключённых clisr-клиентов (round-robin
+  раздаёт нагрузку); router тонкий, его можно держать в 1-2 репликах.
+
+### Несколько роутеров (вариант A: по типу capability)
+
+Router конфигурируется типом обслуживаемых capability - `ROUTER_KIND = all | llm | asr`:
+
+- `all` - один router на всё (LLM + STT обработчики). Простой старт.
+- раздельно - `llm`-router и `asr`-router как отдельные деплои (изоляция нагрузки:
+  ASR-трафик аудио не мешает LLM, независимый scaling).
+
+Адресация со стороны ai-bot-пода:
+
+- LLM-запросы: `AIModelConfig{provider:'clisr', endpoint:<router-url>}` - под идёт
+  на router нужной модели.
+- STT-запросы: `STT_PROVIDER=server` + `STT_ROUTER_URL` -> ASR-router (или тот же
+  `all`-router, если эндпоинт совпадает).
+
+Обработчик при handshake объявляет capability; router принимает только подходящие
+(`llm`-router отвергает `transcription:true` и наоборот; `all` - принимает обе).
+
+Дальнейшее (по скорости, отложено): per-зона/тенант роутеры, отказоустойчивость
+пары реплик (sticky или fan-out), discovery списка роутеров. Пока - один эндпоинт
+на тип.

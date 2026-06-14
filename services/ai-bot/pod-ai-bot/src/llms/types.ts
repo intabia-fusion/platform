@@ -78,6 +78,39 @@ export interface ChatCompletionWithToolsResult {
   usage?: TokenUsage
 }
 
+/** Serializable tool definition (OpenAI function schema) passed to a provider step. */
+export interface ToolDefinition {
+  name: string
+  description: string
+  parameters: Record<string, unknown>
+}
+
+/** A tool call requested by the model (executed by the caller, not the provider). */
+export interface ToolCall {
+  id: string
+  name: string
+  arguments: string
+}
+
+/** Result of executing a tool call, fed back into the next model step. */
+export interface ToolResult {
+  id: string
+  name: string
+  content: string
+  // Original call arguments, replayed so the model sees a consistent assistant turn.
+  arguments?: string
+}
+
+/**
+ * One step of a tool-using conversation: the model either returns final `content`
+ * or requests `toolCalls`. The caller executes calls and resubmits results.
+ */
+export interface ChatToolStepResult {
+  content?: string
+  toolCalls?: ToolCall[]
+  usage?: TokenUsage
+}
+
 /**
  * Result for summary request - summary and effective token count.
  */
@@ -155,6 +188,32 @@ export interface LLMProvider {
     skipCache?: boolean,
     reason?: string
   ) => Promise<ChatCompletionWithToolsResult | undefined>
+
+  /**
+   * Run a single tool-using model step from raw, serializable tool definitions.
+   *
+   * Unlike `createChatCompletionWithTools`, this does NOT execute tools: it returns
+   * the model's `toolCalls` (if any) so the caller can run them and resubmit
+   * `priorToolResults`. Used by the clisr client, where tool execution happens on
+   * the pod (which holds WorkspaceClient context), not on the model runner.
+   *
+   * Optional: providers without function-calling may omit it.
+   */
+  chatToolStep?: (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    message: ChatMessage,
+    contextMode: ContextMode,
+    assistantMemory: string,
+    userMemory: string,
+    sharedContext: string,
+    user: string,
+    toolDefinitions: ToolDefinition[],
+    priorToolResults: ToolResult[],
+    history?: ChatMessage[],
+    skipCache?: boolean,
+    reason?: string
+  ) => Promise<ChatToolStepResult | undefined>
 
   /**
    * Request a compact, factual summary of conversation history.

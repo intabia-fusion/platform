@@ -32,7 +32,11 @@ import type {
   ChatMessage,
   ChatCompletionResult,
   ChatCompletionWithToolsResult,
-  RequestSummaryResult
+  RequestSummaryResult,
+  ContextMode,
+  ToolDefinition,
+  ToolResult,
+  ChatToolStepResult
 } from './types'
 import { totalTokens, usageFromApi } from './types'
 import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
@@ -293,6 +297,91 @@ export default class OpenAIProvider implements LLMProvider {
         completion: str ?? undefined,
         usage
       }
+    } catch (e) {
+      console.error(e)
+    }
+
+    return undefined
+  }
+
+  async chatToolStep (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    message: ChatMessage,
+    contextMode: ContextMode,
+    assistantMemory: string,
+    userMemory: string,
+    sharedContext: string,
+    user: string,
+    toolDefinitions: ToolDefinition[],
+    priorToolResults: ToolResult[],
+    history: ChatMessage[] = [],
+    skipCache = true,
+    reason = 'chat'
+  ): Promise<ChatToolStepResult | undefined> {
+    const opt: OpenAI.RequestOptions = {}
+    if (skipCache) {
+      opt.headers = { 'cf-skip-cache': 'true' }
+    }
+
+    try {
+      const isDirectMode = contextMode === 'direct'
+      const systemMessages = history.filter((it) => it.role === 'system')
+      const systemPrompt = isDirectMode
+        ? PROMPTS.DIRECT_CHAT_WITH_TOOLS({ assistantMemory, userMemory, sharedContext })
+        : PROMPTS.THREAD_CHAT_WITH_TOOLS({ sharedContext }) + '\n\n' + systemMessages.map((it) => it.content).join('\n')
+
+      const messages: any[] = [
+        { role: 'system', content: systemPrompt },
+        ...history.filter((it) => it.role !== 'system'),
+        message
+      ]
+      // Replay prior tool results so the model continues where it left off.
+      // Reconstruct the assistant tool_call turn + its result for a consistent transcript.
+      for (const tr of priorToolResults) {
+        messages.push({
+          role: 'assistant',
+          content: null,
+          tool_calls: [{ id: tr.id, type: 'function', function: { name: tr.name, arguments: tr.arguments ?? '{}' } }]
+        })
+        messages.push({ role: 'tool', tool_call_id: tr.id, content: tr.content })
+      }
+
+      const tools =
+        toolDefinitions.length > 0
+          ? toolDefinitions.map((t) => ({
+            type: 'function' as const,
+            function: { name: t.name, description: t.description, parameters: t.parameters }
+          }))
+          : undefined
+
+      const response = await this.client.chat.completions.create(
+        { messages, model: config.OpenAIModel, user, tools, stream: false },
+        opt
+      )
+
+      const choice = response.choices?.[0]?.message
+      const usage = usageFromApi(response.usage)
+      const tokens = totalTokens(usage)
+      if (tokens !== 0) {
+        void pushTokensData(ctx, [
+          { workspace, reason, tokens, date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString() }
+        ])
+      }
+
+      const rawCalls = choice?.tool_calls ?? []
+      if (rawCalls.length > 0) {
+        return {
+          toolCalls: rawCalls.map((c: any) => ({
+            id: c.id,
+            name: c.function?.name ?? '',
+            arguments: c.function?.arguments ?? ''
+          })),
+          usage
+        }
+      }
+
+      return { content: choice?.content ?? undefined, usage }
     } catch (e) {
       console.error(e)
     }

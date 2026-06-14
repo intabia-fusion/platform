@@ -102,8 +102,27 @@ export const startClient = async (): Promise<void> => {
           request.skipCache,
           request.reason
         )
-      case 'createChatCompletionWithTools':
-        // Tools are not fully serializable, pass empty tools array
+      case 'createChatCompletionWithTools': {
+        // Multi-turn tool loop: run one model step from serializable tool defs and
+        // return tool_calls (executed on the pod), or a final completion.
+        // Falls back to a tool-less completion for providers without chatToolStep.
+        if (llmProvider.chatToolStep !== undefined) {
+          return await llmProvider.chatToolStep(
+            ctx,
+            request.workspace,
+            request.message,
+            request.contextMode,
+            request.assistantMemory,
+            request.userMemory,
+            request.sharedContext,
+            request.user,
+            request.toolDefinitions ?? [],
+            request.priorToolResults ?? [],
+            request.history,
+            request.skipCache,
+            request.reason
+          )
+        }
         return await llmProvider.createChatCompletionWithTools(
           [] as any,
           request.message,
@@ -118,6 +137,7 @@ export const startClient = async (): Promise<void> => {
           request.skipCache,
           request.reason
         )
+      }
       case 'requestSummary':
         return await llmProvider.requestSummary(ctx, request.workspace, request.personMemory, request.history)
       case 'countTokens':

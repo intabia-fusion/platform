@@ -24,12 +24,20 @@
   `src/workspace/workspaceClient.ts`, `src/__tests__/llm-server-provider.spec.ts`.
 
 ### T2. Tool calls через clisr
-- [ ] Протокол: многоходовой цикл `chat.request {toolDefs}` -> `{tool_calls}` ->
-      `chat.toolResults` -> `{content, usage}` (max N итераций).
-- [ ] Инструменты выполняет под (реестр `src/utils/tools.ts`), clisr-клиент - только модель.
-- [ ] `ServerLLMProvider.createChatCompletionWithTools`: реализовать цикл.
-- [ ] `src/client.ts` (client mode): обработка toolDefs/toolResults, возврат usage.
-- [ ] Тесты: расширить `llm-server-provider.spec.ts`, `queue-client-modes.spec.ts`.
+- [x] Протокол: `ChatCompletionWithToolsRequest{toolDefinitions, priorToolResults}`
+      -> `ChatCompletionWithToolsReply{completion|toolCalls, usage}` (server.ts).
+- [x] Типы `ToolDefinition/ToolCall/ToolResult/ChatToolStepResult` в `llms/types.ts`.
+- [x] Чистый orchestrator `llms/toolLoop.ts` (`runToolCalls`): инъекция ask/execute,
+      max 8 итераций, суммирование usage. Полное покрытие `tool-loop.spec.ts`.
+- [x] `ServerLLMProvider.createChatCompletionWithTools`: цикл через `runToolCalls`,
+      инструменты выполняет под (замыкания из `getTools` несут WorkspaceClient).
+- [x] `getToolDefinitions` в `utils/tools.ts` (client-side схемы).
+- [x] `OpenAIProvider.chatToolStep`: один шаг с tool_calls без выполнения, replay
+      priorToolResults как `role:'tool'`.
+- [x] `client.ts`: ветка createChatCompletionWithTools -> `chatToolStep` (fallback
+      на старый путь для провайдеров без него).
+- [ ] GigaChat `chatToolStep` - нет function calling в текущем API, отдельно.
+- [ ] e2e через реальный clisr - в стенде (юнит покрыт).
 
 ### T3. Память пользователя -> Preference
 - [ ] `models/ai-bot`: `AIPersonalData extends Preference`
@@ -54,6 +62,15 @@
       все конверсии "ответ модели -> Markup".
 - [ ] Применить в smartPaste редактора (`cleanUnknownContent`).
 - [ ] Детали: `foundation-tasks/markdown-paste-marks-exclusion.md`.
+
+### T15. Системные промпты в prompts.yaml
+- [ ] Вынести все промпты из `src/llms/prompts.ts` в `prompts.yaml` (в проекте пода).
+- [ ] Загрузчик: под читает yaml, fallback на встроенные дефолты; путь
+      `PROMPTS_PATH` / inline через CONFIG_YAML.
+- [ ] Шаблоны с подстановкой (lang, assistant/user memory, sharedContext, history) -
+      сохранить текущие плейсхолдеры.
+- [ ] Возможность переопределить каждый промпт (admin/конфиг).
+- [ ] Тест: загрузка yaml + подстановка переменных.
 
 ## P1 - вторая очередь
 
@@ -107,12 +124,20 @@
       (`plugins/presence-resources/src/typing.ts`): создать при processing,
       снять по done/failed; передавать прогноз (расширить status/поле ETA).
 
-### T9. clisr router + параллельно с остальными провайдерами
-- [ ] Выделить clisr router: один экземпляр с clisr-протоколом; обработчики
-      запросов (clisr-клиенты) подключаются к нему, регистрируют модели в handshake.
-- [ ] ai-bot поды - клиенты router-а; `provider:'clisr'` в реестре, маршрутизация
-      filter + round-robin (`requestWithFilter`).
-- [ ] Hosted Intabia = обработчики под фиксированным именем, уровень low.
+### T9. aibot-router + параллельно с остальными провайдерами
+- [ ] Выделить aibot-router (`Mode=router`): clisr-сервер с типом
+      `ROUTER_KIND = all|llm|asr` (один router на всё, либо отдельные llm/asr);
+      обработчики подключаются, объявляют capability в handshake (`llm`/`transcription`),
+      router принимает только подходящие.
+- [ ] Адресация пода: LLM - `AIModelConfig.endpoint`, STT - `STT_ROUTER_URL`
+      (или общий `all`-router).
+- [ ] ai-bot поды - клиенты router-а; LLM: `provider:'clisr'` в реестре, STT:
+      `STT_PROVIDER=server` -> тот же router; маршрутизация filter по capability
+      + round-robin (`requestWithFilter`, уже есть `selectLLMClient` /
+      `s.options.transcription`).
+- [ ] Транскрибаторы подключаются к router как clisr-клиенты с
+      `transcription: true` (вынести из текущего client mode в router-топологию).
+- [ ] Hosted Intabia = LLM-обработчики под фиксированным именем, уровень low.
 
 ### T10. Масштабирование gateway
 - [ ] Вынести остатки in-memory state; N реплик gateway (consumer group).
