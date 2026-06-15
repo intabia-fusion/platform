@@ -606,17 +606,13 @@ export async function ensureEmployeeForPerson (
                 personRef,
                 contact.space.Contacts,
                 'channels',
-                txFactory.createTxCreateDoc(
-                  contact.class.Channel,
-                  contact.space.Contacts,
-                  {
-                    attachedTo: personRef,
-                    attachedToClass: contact.class.Person,
-                    collection: 'channels',
-                    provider: contact.channelProvider.Phone,
-                    value: socialId.value
-                  }
-                )
+                txFactory.createTxCreateDoc(contact.class.Channel, contact.space.Contacts, {
+                  attachedTo: personRef,
+                  attachedToClass: contact.class.Person,
+                  collection: 'channels',
+                  provider: contact.channelProvider.Phone,
+                  value: socialId.value
+                })
               )
 
               await client.tx(createChannelTx)

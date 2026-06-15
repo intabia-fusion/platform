@@ -158,7 +158,12 @@ export async function signUp (
   }
 }
 
-export async function signUpOtp (email: string, first: string, last: string, phone?: string): Promise<[Status, OtpInfo | null]> {
+export async function signUpOtp (
+  email: string,
+  first: string,
+  last: string,
+  phone?: string
+): Promise<[Status, OtpInfo | null]> {
   try {
     const otpInfo = await getAccountClient(null).signUpOtp(email, first, last, phone)
 
