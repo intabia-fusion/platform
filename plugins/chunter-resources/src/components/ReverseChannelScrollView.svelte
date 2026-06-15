@@ -735,7 +735,7 @@
             <ActivityMessagesSeparator bind:element={separatorDiv} label={activity.string.New} />
           {/if}
 
-          <div use:observeMessage={message} class="activityMessage" id={message._id}>
+          <div use:observeMessage={message} class="activityMessageWrapper" id={message._id}>
             <ActivityMessagePresenter
               {doc}
               value={message}
