@@ -179,7 +179,7 @@ async function getAssistantMemory (
 ): Promise<string> {
   if (user === undefined) return 'No user context available'
 
-  const history = await workspaceClient.getHistoryForUser(user)
+  const history = await workspaceClient.getMemoryForUser(user)
   if (history.assistantMemory === '') {
     return 'No assistant memory stored yet.'
   }
@@ -193,7 +193,7 @@ async function getUserMemory (
 ): Promise<string> {
   if (user === undefined) return 'No user context available'
 
-  const history = await workspaceClient.getHistoryForUser(user)
+  const history = await workspaceClient.getMemoryForUser(user)
   if (history.userMemory === '') {
     return 'No user memory stored yet.'
   }
@@ -237,30 +237,11 @@ async function getSharedContext (
 ): Promise<string> {
   if (user === undefined) return 'No user context available'
 
-  const history = await workspaceClient.getHistoryForUser(user)
+  const history = await workspaceClient.getMemoryForUser(user)
   if (history.sharedContext === '') {
     return 'No shared context stored yet.'
   }
   return `Current shared context:\n${history.sharedContext}`
-}
-
-async function clearHistory (
-  workspaceClient: WorkspaceClient,
-  user: AccountUuid | undefined,
-  args: Record<string, any>
-): Promise<string> {
-  if (user === undefined) return 'No user context available'
-  await workspaceClient.clearHistory(user)
-  return 'Conversation history has been cleared. Starting fresh conversation.'
-}
-
-async function getHistorySummary (
-  workspaceClient: WorkspaceClient,
-  user: AccountUuid | undefined,
-  args: Record<string, any>
-): Promise<string> {
-  if (user === undefined) return 'No user context available'
-  return await workspaceClient.getHistorySummary(user)
 }
 
 type ChangeFields<T, R> = Omit<T, keyof R> & R
@@ -502,40 +483,6 @@ registerTool(
   },
   getSharedContext,
   'any'
-)
-
-registerTool(
-  {
-    type: 'function',
-    function: {
-      name: 'clear_history',
-      parameters: {
-        type: 'object',
-        properties: {}
-      },
-      description:
-        'Clear conversation history. Use when user asks to clear/forget the conversation history or start fresh. This removes all previous messages but keeps assistant and user memory.'
-    }
-  },
-  clearHistory,
-  'direct'
-)
-
-registerTool(
-  {
-    type: 'function',
-    function: {
-      name: 'get_history_summary',
-      parameters: {
-        type: 'object',
-        properties: {}
-      },
-      description:
-        'Get a summary of the conversation history. Use this instead of relying on full message history when you need context about previous discussions but want to save tokens. Returns a concise summary of past conversations.'
-    }
-  },
-  getHistorySummary,
-  'direct'
 )
 
 export function getTools (

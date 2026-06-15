@@ -35,7 +35,6 @@ import core, {
   AccountRole,
   AccountUuid,
   Blob,
-  Class,
   Doc,
   MeasureContext,
   PersonId,
@@ -56,9 +55,9 @@ import core, {
 import love, { type MeetingMinutes } from '@hcengineering/love'
 import fs from 'fs'
 import type { LLMProvider, ChatMessage as LLMChatMessage } from '../llms'
-import { totalTokens } from '../llms'
 import { getTools } from '../utils/tools'
-import { resolveMemory } from './memory'
+import { resolveMemory, type AIMemory } from './memory'
+import { buildThreadContext, type ContextMessage } from './threadContext'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
 import { getAccountClient } from '@hcengineering/server-client'
@@ -68,7 +67,6 @@ import { jsonToMarkup, markupToText } from '@hcengineering/text'
 import { markdownToMarkup } from '@hcengineering/text-markdown'
 import tracker, { Issue } from '@hcengineering/tracker'
 import config from '../config'
-import { HistoryRecord } from '../types'
 import { getGlobalPerson } from '../utils/account'
 import { connectPlatform } from '../utils/platform'
 import { LoveController } from './love'
@@ -78,13 +76,6 @@ import { CollaboratorClient, getClient as getCollaboratorClient } from '@hcengin
 interface LLMHistoryRecord {
   role: 'user' | 'assistant' | 'system'
   content: string
-}
-
-interface PersonHistoryRecord {
-  assistantMemory: string // Info about assistant: name, behavior style, how to address user
-  userMemory: string // Info about user: preferences, context, personal info
-  sharedContext: string // Shared context: language, timezone, non-personal preferences
-  history: HistoryRecord[]
 }
 
 export class WorkspaceClient {
@@ -97,7 +88,7 @@ export class WorkspaceClient {
   personUuidBySocialId = new Map<PersonId, PersonUuid>()
 
   love: LoveController | undefined
-  historyMap = new Map<PersonUuid, PersonHistoryRecord>()
+  memoryMap = new Map<PersonUuid, AIMemory>()
   userSocialIdByPersonUuid = new Map<PersonUuid, PersonId>()
   initPromise: Promise<void> | undefined
 
@@ -273,27 +264,6 @@ export class WorkspaceClient {
     }
   }
 
-  private toLlmHistory (history: PersonHistoryRecord, promptTokens: number): Array<LLMHistoryRecord> {
-    const result: Array<{ role: 'user' | 'assistant' | 'system', content: string }> = []
-    let totalTokens = promptTokens
-    const maxRecentMessages = 20 // Keep last 20 messages in full detail
-
-    // Only use recent messages for context
-    const recentMessages = history.history.slice(-maxRecentMessages)
-
-    for (let i = recentMessages.length - 1; i >= 0; i--) {
-      const record = recentMessages[i]
-      const tokens = record.tokens
-
-      if (totalTokens + tokens > config.MaxContentTokens) break
-
-      result.unshift({ content: record.message, role: record.role as 'user' | 'assistant' | 'system' })
-      totalTokens += tokens
-    }
-
-    return result
-  }
-
   // Resolve the user's primary social id (PersonId) so the bot can write the
   // user's memory Preference on their behalf (createdBy = user, not the bot).
   private async getUserSocialId (personUuid: PersonUuid): Promise<PersonId | undefined> {
@@ -342,36 +312,30 @@ export class WorkspaceClient {
     )
   }
 
-  private async getHistory (personUuid: PersonUuid): Promise<PersonHistoryRecord> {
-    if (this.historyMap.has(personUuid)) {
-      return (
-        this.historyMap.get(personUuid) ?? {
-          assistantMemory: '',
-          userMemory: '',
-          sharedContext: '',
-          history: []
-        }
-      )
-    }
+  // Read the user's AI memory (assistant/user/shared). Source of truth is the
+  // Preference; legacy blob memory is migrated on first read. History is no longer
+  // kept here — conversation context comes from chunter threads.
+  private async getMemory (personUuid: PersonUuid): Promise<AIMemory> {
+    const cached = this.memoryMap.get(personUuid)
+    if (cached !== undefined) return cached
 
-    // Memory now lives in a per-user Preference. Read it first.
     const pref = await this.readMemoryPreference(personUuid)
 
-    // History (chat records) still lives in blob storage. Read it separately.
-    let history: HistoryRecord[] = []
-    let blobMemory: { assistantMemory: string, userMemory: string, sharedContext: string } | undefined
-    try {
-      const blob: PersonHistoryRecord = JSON.parse(
-        Buffer.concat(await this.storage.read(this.ctx, this.wsIds, 'ai-bot-phr-' + personUuid)).toString()
-      )
-      history = blob.history ?? []
-      blobMemory = {
-        assistantMemory: blob.assistantMemory ?? '',
-        userMemory: blob.userMemory ?? '',
-        sharedContext: blob.sharedContext ?? ''
+    // One-time migration: pull memory out of the legacy blob if a Preference is absent.
+    let blobMemory: AIMemory | undefined
+    if (pref === undefined) {
+      try {
+        const blob = JSON.parse(
+          Buffer.concat(await this.storage.read(this.ctx, this.wsIds, 'ai-bot-phr-' + personUuid)).toString()
+        )
+        blobMemory = {
+          assistantMemory: blob.assistantMemory ?? '',
+          userMemory: blob.userMemory ?? '',
+          sharedContext: blob.sharedContext ?? ''
+        }
+      } catch (err: any) {
+        // No blob: fine.
       }
-    } catch (err: any) {
-      // No blob: fine.
     }
 
     const personData =
@@ -381,113 +345,35 @@ export class WorkspaceClient {
 
     const { memory, migrate } = resolveMemory(pref, blobMemory, personData?.name)
     if (migrate) {
-      // Move legacy blob memory into a Preference once.
       await this.writeMemoryPreference(personUuid, memory)
     }
 
-    const v: PersonHistoryRecord = { ...memory, history }
-    this.historyMap.set(personUuid, v)
-    return v
+    this.memoryMap.set(personUuid, memory)
+    return memory
+  }
+
+  private async patchMemory (user: PersonUuid | undefined, patch: Partial<AIMemory>): Promise<void> {
+    if (user === undefined) return
+    const current = await this.getMemory(user)
+    const next: AIMemory = { ...current, ...patch }
+    this.memoryMap.set(user, next)
+    await this.writeMemoryPreference(user, next)
   }
 
   async updateAssistantMemory (user: PersonUuid | undefined, args: Record<string, any>): Promise<void> {
-    if (user === undefined) return
-
-    const currentHistory = await this.getHistory(user)
-    currentHistory.assistantMemory = args.memory ?? currentHistory.assistantMemory
-
-    await this.saveHistory(user, currentHistory)
+    await this.patchMemory(user, { assistantMemory: args.memory })
   }
 
   async updateUserMemory (user: PersonUuid | undefined, args: Record<string, any>): Promise<void> {
-    if (user === undefined) return
-
-    const currentHistory = await this.getHistory(user)
-    currentHistory.userMemory = args.memory ?? currentHistory.userMemory
-
-    await this.saveHistory(user, currentHistory)
+    await this.patchMemory(user, { userMemory: args.memory })
   }
 
   async updateSharedContext (user: PersonUuid | undefined, args: Record<string, any>): Promise<void> {
-    if (user === undefined) return
-
-    const currentHistory = await this.getHistory(user)
-    currentHistory.sharedContext = args.context ?? currentHistory.sharedContext
-
-    await this.saveHistory(user, currentHistory)
+    await this.patchMemory(user, { sharedContext: args.context })
   }
 
-  async getHistoryForUser (user: PersonUuid): Promise<PersonHistoryRecord> {
-    return await this.getHistory(user)
-  }
-
-  async clearHistory (user: PersonUuid | undefined): Promise<void> {
-    if (user === undefined) return
-
-    const currentHistory = await this.getHistory(user)
-    currentHistory.history = []
-
-    await this.saveHistory(user, currentHistory)
-  }
-
-  async getHistorySummary (user: PersonUuid | undefined): Promise<string> {
-    if (user === undefined) return 'No user context available'
-    if (this.llm === undefined) return 'Summary service not available'
-
-    const currentHistory = await this.getHistory(user)
-
-    if (currentHistory.history.length === 0) {
-      return 'No conversation history available yet.'
-    }
-
-    const { summary } = await this.llm.requestSummary(
-      this.ctx,
-      this.wsIds.uuid,
-      currentHistory.assistantMemory + '\n' + currentHistory.userMemory,
-      currentHistory.history
-    )
-
-    return summary ?? 'Failed to generate summary'
-  }
-
-  async saveHistory (personUuid: PersonUuid, record: PersonHistoryRecord): Promise<void> {
-    // Memory -> per-user Preference (owned by the user). History -> blob storage.
-    await this.writeMemoryPreference(personUuid, {
-      assistantMemory: record.assistantMemory,
-      userMemory: record.userMemory,
-      sharedContext: record.sharedContext
-    })
-    await this.storage.put(
-      this.ctx,
-      this.wsIds,
-      'ai-bot-phr-' + personUuid,
-      JSON.stringify({ history: record.history }),
-      'application/json'
-    )
-  }
-
-  private async pushHistory (
-    personUuid: PersonUuid,
-    message: string,
-    role: 'user' | 'assistant',
-    tokens: number,
-    user: PersonUuid,
-    objectId: Ref<Doc>,
-    objectClass: Ref<Class<Doc>>
-  ): Promise<void> {
-    const currentHistory = (await this.getHistory(personUuid)) ?? []
-    const newRecord: HistoryRecord = {
-      workspace: this.wsIds.uuid,
-      message,
-      objectId,
-      objectClass,
-      role,
-      user,
-      tokens,
-      timestamp: Date.now()
-    }
-    currentHistory.history.push({ ...newRecord })
-    this.historyMap.set(personUuid, currentHistory)
+  async getMemoryForUser (user: PersonUuid): Promise<AIMemory> {
+    return await this.getMemory(user)
   }
 
   private async getAttachments (client: RestClient, objectId: Ref<Doc>): Promise<Attachment[]> {
@@ -524,12 +410,11 @@ export class WorkspaceClient {
 
     const space = (event as any).objectIdIsSpace != null ? (objectId as Ref<Space>) : event.objectSpace
 
-    const rawHistory = await this.getHistory(personUuid)
-    const history = this.toLlmHistory(rawHistory, promptTokens)
+    // Memory (assistant/user/shared) lives in a Preference; conversation context
+    // now comes from the chunter thread, not from a blob history.
+    const memory = await this.getMemory(personUuid)
 
-    await this.pushHistory(personUuid, promptText, 'user', promptTokens, personUuid, objectId, objectClass)
-
-    const useHistory = history.filter((it) => it.role !== 'system')
+    const useHistory: LLMHistoryRecord[] = []
 
     const systemPrompts: LLMHistoryRecord[] = []
 
@@ -599,6 +484,7 @@ export class WorkspaceClient {
         })) ?? []
       const empAsMap = toIdMap(employeesInChannel.filter((it) => it.personUuid !== undefined))
 
+      const contextMessages: ContextMessage[] = []
       for (const msg of lastMessages) {
         let emp: Person | undefined
         const sid = socialIds.get(msg.modifiedBy as any)
@@ -606,11 +492,16 @@ export class WorkspaceClient {
           emp = empAsMap.get(sid.attachedTo)
         }
         const msgRole: 'assistant' | 'user' = this.aiPerson?.personUuid === emp?.personUuid ? 'assistant' : 'user'
-        useHistory.push({
+        const content = markupToText(msg.message)
+        contextMessages.push({
           role: msgRole,
-          content: markupToText(msg.message)
+          content,
+          tokens: this.llm?.countTokens([{ role: msgRole, content }]) ?? 0
         })
       }
+
+      // Truncate the thread context to fit the model window (oldest dropped first).
+      useHistory.push(...buildThreadContext(contextMessages, promptTokens, config.MaxContentTokens))
     }
 
     const tools = getTools(this, contextMode, personUuid as AccountUuid)
@@ -618,9 +509,9 @@ export class WorkspaceClient {
       tools,
       prompt,
       contextMode,
-      rawHistory.assistantMemory,
-      rawHistory.userMemory,
-      rawHistory.sharedContext,
+      memory.assistantMemory,
+      memory.userMemory,
+      memory.sharedContext,
       personUuid as AccountUuid,
       this.ctx,
       this.wsIds.uuid,
@@ -631,12 +522,7 @@ export class WorkspaceClient {
     if (response == null) {
       return
     }
-    const usageTokens = totalTokens(chatCompletion?.usage)
-    const responseTokens =
-      usageTokens > 0 ? usageTokens : (this.llm?.countTokens([{ role: 'assistant', content: response }]) ?? 0)
-
-    await this.pushHistory(personUuid, response, 'assistant', responseTokens, personUuid, objectId, objectClass)
-
+    // The reply is persisted as a chunter message below; no separate history blob.
     const parseResponse = jsonToMarkup(markdownToMarkup(response, { refUrl: '', imageUrl: '' }))
 
     if (messageClass === chunter.class.ChatMessage) {

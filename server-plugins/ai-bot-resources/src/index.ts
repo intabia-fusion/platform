@@ -151,6 +151,24 @@ function getMessageData (doc: Doc, message: ChatMessage): AIEventRequest {
   }
 }
 
+// A top-level message in the Direct channel with the bot starts a new conversation.
+// Address the user's own message so the bot replies in a thread under it, turning
+// each top-level message into a separate conversation (T7).
+function getDirectThreadData (direct: DirectMessage, message: ChatMessage): AIEventRequest {
+  return {
+    createdOn: message.createdOn ?? message.modifiedOn,
+    objectId: message._id, // the user's ChatMessage = parent of the thread
+    objectClass: chunter.class.ChatMessage,
+    objectSpace: direct._id,
+    collection: 'replies',
+    messageClass: chunter.class.ThreadMessage,
+    messageId: message._id,
+    message: message.message,
+    user: message.createdBy ?? message.modifiedBy,
+    objectIdIsSpace: false
+  }
+}
+
 function getThreadMessageData (message: ThreadMessage): AIEventRequest {
   return {
     createdOn: message.createdOn ?? message.modifiedOn,
@@ -209,9 +227,11 @@ async function onBotDirectMessageSend (
     }
     let messageEvent: AIEventRequest
     if (control.hierarchy.isDerived(message._class, chunter.class.ThreadMessage)) {
+      // Reply within the user's thread = continue the conversation.
       messageEvent = getThreadMessageData(message as ThreadMessage)
     } else {
-      messageEvent = getMessageData(direct, message)
+      // Top-level message in the Direct = new conversation; bot replies in a thread.
+      messageEvent = getDirectThreadData(direct, message)
     }
     messageEvent.objectIdIsSpace = control.hierarchy.isDerived(messageEvent.objectClass, core.class.Space)
     await producer.send(control.ctx, control.workspace.uuid, [messageEvent])

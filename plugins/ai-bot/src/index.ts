@@ -13,8 +13,16 @@
 // limitations under the License.
 //
 
-import { type AccountUuid, buildSocialIdString, type Class, type Ref, SocialIdType } from '@hcengineering/core'
-import type { IntlString, Metadata, Plugin } from '@hcengineering/platform'
+import {
+  type AccountUuid,
+  buildSocialIdString,
+  type Class,
+  type Doc,
+  type Markup,
+  type Ref,
+  SocialIdType
+} from '@hcengineering/core'
+import type { IntlString, Metadata, Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { Preference } from '@hcengineering/preference'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
@@ -40,6 +48,19 @@ export interface AIPersonalData extends Preference {
   sharedContext: string // language, timezone, group-chat preferences
 }
 
+/** Optional link back to the object that started an AI conversation. */
+export interface ConversationOrigin {
+  objectId: Ref<Doc>
+  objectClass: Ref<Class<Doc>>
+  label: string
+}
+
+/** Signature of the reusable "start a conversation with the bot" function resource. */
+export type StartAIConversationFn = (
+  message: Markup,
+  origin?: ConversationOrigin
+) => Promise<{ direct: Ref<Doc>, messageId: Ref<Doc> } | undefined>
+
 const aiBot = plugin(aiBotId, {
   metadata: {
     EndpointURL: '' as Metadata<string>
@@ -49,6 +70,9 @@ const aiBot = plugin(aiBotId, {
   },
   component: {
     AIPersonalDataSettings: '' as AnyComponent
+  },
+  function: {
+    StartAIConversation: '' as Resource<StartAIConversationFn>
   },
   string: {
     AISettings: '' as IntlString,

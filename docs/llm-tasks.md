@@ -108,20 +108,32 @@
 - [ ] REST `/events` -> публикация во входной топик.
 - [ ] Ретраи/“dead letter” по образцу transcription consumer.
 
-### T7. AIConversation (контексты разговоров)
-- [ ] `AIConversation` (DOMAIN_AI, space = PersonSpace пользователя): title,
-      summary, origin, active, totalTokens; активный контекст по (createdBy,
-      origin), команда "начать заново".
-- [ ] `AIConversationMessage extends AttachedDoc` - отдельные записи, формат
-      совместим с chunter ChatMessage (оценить наследование) - переиспользование
-      chat-механик и интеграция в чат.
-- [ ] Fulltext индексация сообщений + title/summary - поиск по разговорам.
-- [ ] Ролловер по лимиту токенов: summary (дешевым уровнем) + перенос хвоста
-      в новую conversation.
-- [ ] Замена `history` массива: хвост активной conversation -> LLM
-      (усечение по maxContextTokens как `toLlmHistory`).
-- [ ] Миграция истории из блоба в conversation (вместе с T3).
-- [ ] UI: список разговоров + read-only просмотр (в секции из T4).
+### T7. Разговоры ЮляИИ как треды в Direct (ПЕРЕОСМЫСЛЕНО)
+Решение: разговоры = chunter-треды в Direct-канале юзер<->бот, НЕ отдельная
+сущность AIConversation. План: `~/.claude/plans/vast-chasing-lark.md`.
+- [ ] Триггер `server-plugins/ai-bot-resources`: top-level direct -> адресовать
+      сам userMessage (objectId=message._id, ChatMessage, collection='replies',
+      messageClass=ThreadMessage) -> бот отвечает тредом под сообщением.
+- [ ] Контекст LLM из сообщений треда (родитель + ThreadMessage по порядку);
+      убрать блоб-историю `ai-bot-phr-*`. Память остаётся в Preference (T3).
+- [ ] `threadContext.ts` - чистая сборка/усечение контекста по MaxContentTokens
+      (перенос `toLlmHistory`), unit-тест.
+- [ ] Убрать clear_history / get_history_summary tools из direct.
+- [ ] Переиспользуемый `startAIConversation` (client resource + server helper)
+      над `createAndGetDirect` (`plugins/chunter/src/utils.ts:37`) +
+      `openThreadInSidebar`; принимает текст + origin (objectId/class/label,
+      reference-mention для возврата). Разговоры стартуются из разных мест.
+- Fulltext/панель тредов/счётчик replies - бесплатно из chunter.
+
+### T16. Structured-output tools (markdown -> markdown + diff + apply)
+Поверх T7. Ассистент структурной правки полей.
+- [ ] Tool(ы): принять markdown (напр. условие задачи), вернуть исправленный
+      markdown (structured output провайдера).
+- [ ] UI: показать diff (исходный <-> предложенный), кнопка применить.
+- [ ] Apply: результат -> поле создаваемого/существующего объекта
+      (задача/документ), переиспользуемый паттерн по типу поля.
+- [ ] Интеграция со startAIConversation: правка обсуждается тредом, diff/apply
+      в UI разговора.
 
 ## P2 - третья очередь
 
