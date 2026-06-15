@@ -26,7 +26,7 @@ import config from './config'
 import { registerLoaders } from './loaders'
 import { createTranscriptionProvider, TranscriptionConfig, TranscriptionOptions } from './transcription'
 import { ClisrClient, createCallbackClient } from '@intabiafusion/clisr'
-import { createLLMFromConfig, type LLMRequest } from './llms'
+import { createDefaultProvider, type LLMRequest } from './llms'
 
 export const startClient = async (): Promise<void> => {
   setMetadata(serverToken.metadata.Secret, config.ServerSecret)
@@ -72,8 +72,8 @@ export const startClient = async (): Promise<void> => {
   let transcriptionEnabled = false
   let llmEnabled = false
 
-  // Create LLM provider for client mode
-  const llmProvider = createLLMFromConfig(ctx)
+  // Create LLM provider for client mode (serves the configured default level)
+  const llmProvider = createDefaultProvider(ctx)
 
   // Build LLM request handler
   async function handleLLMRequest (ctx: MeasureContext, args: any[]): Promise<any> {

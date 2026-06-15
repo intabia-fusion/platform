@@ -21,6 +21,7 @@
 import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import type { PersonMessage } from '@hcengineering/ai-bot'
 import type { HistoryRecord } from '../types'
+import type { AILevel, AIProviderConfig } from '../config'
 import type {
   LLMProvider,
   ChatMessage,
@@ -65,6 +66,7 @@ export interface ChatCompletionRequest {
   history?: ChatMessage[]
   skipCache?: boolean
   reason?: string
+  level?: AILevel
   workspace: WorkspaceUuid
 }
 
@@ -79,6 +81,7 @@ export interface ChatCompletionWithToolsRequest {
   history?: ChatMessage[]
   skipCache?: boolean
   reason?: string
+  level?: AILevel
   workspace: WorkspaceUuid
   // Note: tools are not serializable, so we pass tool definitions instead.
   toolDefinitions?: ToolDefinition[]
@@ -222,7 +225,8 @@ export default class ServerLLMProvider implements LLMProvider {
     user?: string,
     history: ChatMessage[] = [],
     skipCache = true,
-    reason = 'chat'
+    reason = 'chat',
+    level?: AILevel
   ): Promise<ChatCompletionResult | undefined> {
     const startTime = Date.now()
 
@@ -234,6 +238,7 @@ export default class ServerLLMProvider implements LLMProvider {
         history,
         skipCache,
         reason,
+        level,
         workspace
       }
 
@@ -276,7 +281,8 @@ export default class ServerLLMProvider implements LLMProvider {
     workspace: WorkspaceUuid,
     history: ChatMessage[] = [],
     skipCache = true,
-    reason = 'chat'
+    reason = 'chat',
+    level?: AILevel
   ): Promise<ChatCompletionWithToolsResult | undefined> {
     const startTime = Date.now()
 
@@ -329,6 +335,7 @@ export default class ServerLLMProvider implements LLMProvider {
           history,
           skipCache,
           reason,
+          level,
           workspace,
           toolDefinitions,
           priorToolResults: priorToolResults.length > 0 ? priorToolResults : undefined
@@ -423,8 +430,14 @@ export default class ServerLLMProvider implements LLMProvider {
 }
 
 /**
- * Factory function to create a server LLM provider
+ * Factory function to create a server (clisr) LLM provider.
+ * The model config is accepted for registry uniformity; routing to a specific
+ * model/endpoint is handled client-side (see T9 router addressing).
  */
-export function createServerLLMProvider (ctx: MeasureContext, server: ClisrServer): ServerLLMProvider {
+export function createServerLLMProvider (
+  ctx: MeasureContext,
+  server: ClisrServer,
+  _provider?: AIProviderConfig
+): ServerLLMProvider {
   return new ServerLLMProvider(ctx, server)
 }

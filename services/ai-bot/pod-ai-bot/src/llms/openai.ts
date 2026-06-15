@@ -24,9 +24,9 @@ import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import type { PersonMessage } from '@hcengineering/ai-bot'
 import contact from '@hcengineering/contact'
 import type { HistoryRecord } from '../types'
-import config from '../config'
+import config, { type AILevel, type AIProviderConfig } from '../config'
 import { countTokens } from '@hcengineering/openai'
-import { pushTokensData } from '../billing'
+import { pushTokensData, tokensRecord } from '../billing'
 import type {
   LLMProvider,
   ChatMessage,
@@ -45,21 +45,44 @@ import { PROMPTS } from './prompts'
 export default class OpenAIProvider implements LLMProvider {
   private readonly client: OpenAI
   private readonly encoding: Tiktoken
+  private readonly provider: AIProviderConfig
+  private readonly defaultLevel: AILevel
 
-  constructor (readonly ctx: MeasureContext) {
+  constructor (
+    readonly ctx: MeasureContext,
+    provider: AIProviderConfig
+  ) {
+    this.provider = provider
+    // strongest served level is the default for service ops (translate/summary)
+    const served = (['low', 'middle', 'high', 'max'] as AILevel[]).filter((l) => provider.levels[l] !== undefined)
+    this.defaultLevel = served[served.length - 1] ?? 'low'
+
     this.client = new OpenAI({
-      apiKey: config.OpenAIKey,
-      baseURL: config.OpenAIBaseUrl === '' ? undefined : config.OpenAIBaseUrl
+      apiKey: (provider.endpointConfig?.apiKey as string) ?? config.OpenAIKey,
+      baseURL: provider.endpoint ?? (config.OpenAIBaseUrl === '' ? undefined : config.OpenAIBaseUrl)
     })
 
-    // Try to obtain encoding for configured model; fallback to universal encoding.
+    // Try to obtain encoding for the default model; fallback to universal encoding.
     this.encoding = (() => {
       try {
-        return encodingForModel(config.OpenAIModel as any)
+        return encodingForModel(this.modelFor(this.defaultLevel) as any)
       } catch {
         return getEncoding('cl100k_base')
       }
     })()
+  }
+
+  /** Resolve the concrete model name for a level, falling back to the default level. */
+  private modelFor (level?: AILevel): string {
+    const lvl = level ?? this.defaultLevel
+    return this.provider.levels[lvl]?.model ?? this.provider.levels[this.defaultLevel]?.model ?? config.OpenAIModel
+  }
+
+  /** Billing multiplier + model id for a level (used to bill tokens). */
+  private billingFor (level?: AILevel): { multiplier: number, modelId: string } {
+    const lvl = level ?? this.defaultLevel
+    const m = this.provider.levels[lvl] ?? this.provider.levels[this.defaultLevel]
+    return { multiplier: m?.tokenMultiplier ?? 1, modelId: m?.model ?? this.modelFor(level) }
   }
 
   async translateHtml (
@@ -69,7 +92,7 @@ export default class OpenAIProvider implements LLMProvider {
     lang: string
   ): Promise<string | undefined> {
     const response = await this.client.chat.completions.create({
-      model: config.OpenAISummaryModel,
+      model: this.modelFor(),
       messages: [
         {
           role: 'system',
@@ -84,15 +107,20 @@ export default class OpenAIProvider implements LLMProvider {
 
     const responseText = response.choices?.[0]?.message?.content ?? undefined
 
-    const tokens = totalTokens(usageFromApi(response.usage))
-    if (tokens !== 0) {
+    const usage = usageFromApi(response.usage)
+    const total = totalTokens(usage)
+    if (total !== 0 && usage !== undefined) {
+      const { multiplier, modelId } = this.billingFor()
       void pushTokensData(ctx, [
-        {
+        tokensRecord(
           workspace,
-          reason: 'manual-translate',
-          tokens,
-          date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
-        }
+          usage.promptTokens,
+          usage.completionTokens,
+          multiplier,
+          'manual-translate',
+          modelId,
+          new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
+        )
       ])
     }
 
@@ -127,7 +155,7 @@ export default class OpenAIProvider implements LLMProvider {
     const text = messages.map((p) => `---\n\n@${p.personName}\n${p.text}`).join('\n\n')
 
     const response = await this.client.chat.completions.create({
-      model: config.OpenAIModel,
+      model: this.modelFor(),
       messages: [
         {
           role: 'system',
@@ -140,15 +168,20 @@ export default class OpenAIProvider implements LLMProvider {
       ]
     })
 
-    const tokens = totalTokens(usageFromApi(response.usage))
-    if (tokens !== 0) {
+    const usage = usageFromApi(response.usage)
+    const total = totalTokens(usage)
+    if (total !== 0 && usage !== undefined) {
+      const { multiplier, modelId } = this.billingFor()
       void pushTokensData(ctx, [
-        {
+        tokensRecord(
           workspace,
-          reason: 'summarize',
-          tokens,
-          date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
-        }
+          usage.promptTokens,
+          usage.completionTokens,
+          multiplier,
+          'summarize',
+          modelId,
+          new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
+        )
       ])
     }
 
@@ -174,7 +207,8 @@ export default class OpenAIProvider implements LLMProvider {
     user?: string,
     history: ChatMessage[] = [],
     skipCache = true,
-    reason = 'chat'
+    reason = 'chat',
+    level?: AILevel
   ): Promise<ChatCompletionResult | undefined> {
     const opt: OpenAI.RequestOptions = {}
     if (skipCache) {
@@ -195,7 +229,7 @@ export default class OpenAIProvider implements LLMProvider {
             ...history.filter((it) => it.role !== 'system'),
             message as any
           ],
-          model: config.OpenAIModel,
+          model: this.modelFor(level),
           user,
           stream: false
         },
@@ -206,15 +240,19 @@ export default class OpenAIProvider implements LLMProvider {
       const created = response.created
 
       const usage = usageFromApi(response.usage)
-      const tokens = totalTokens(usage)
-      if (tokens !== 0) {
+      const total = totalTokens(usage)
+      if (total !== 0 && usage !== undefined) {
+        const { multiplier, modelId } = this.billingFor(level)
         void pushTokensData(ctx, [
-          {
+          tokensRecord(
             workspace,
+            usage.promptTokens,
+            usage.completionTokens,
+            multiplier,
             reason,
-            tokens,
-            date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
-          }
+            modelId,
+            new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
+          )
         ])
       }
 
@@ -238,7 +276,8 @@ export default class OpenAIProvider implements LLMProvider {
     workspace: WorkspaceUuid,
     history: ChatMessage[] = [],
     skipCache = true,
-    reason = 'chat'
+    reason = 'chat',
+    level?: AILevel
   ): Promise<ChatCompletionWithToolsResult | undefined> {
     const opt: OpenAI.RequestOptions = {}
     const date = new Date()
@@ -266,7 +305,7 @@ export default class OpenAIProvider implements LLMProvider {
             ...(history as any[]),
             message as any
           ],
-          model: config.OpenAIModel,
+          model: this.modelFor(level),
           user,
           tools
         },
@@ -281,15 +320,19 @@ export default class OpenAIProvider implements LLMProvider {
         str = (str ?? '').substring(pos + 8)
       }
 
-      const tokens = totalTokens(usage)
-      if (tokens !== 0) {
+      const total = totalTokens(usage)
+      if (total !== 0 && usage !== undefined) {
+        const { multiplier, modelId } = this.billingFor(level)
         void pushTokensData(ctx, [
-          {
+          tokensRecord(
             workspace,
+            usage.promptTokens,
+            usage.completionTokens,
+            multiplier,
             reason,
-            tokens,
-            date: date.toISOString()
-          }
+            modelId,
+            date.toISOString()
+          )
         ])
       }
 
@@ -317,7 +360,8 @@ export default class OpenAIProvider implements LLMProvider {
     priorToolResults: ToolResult[],
     history: ChatMessage[] = [],
     skipCache = true,
-    reason = 'chat'
+    reason = 'chat',
+    level?: AILevel
   ): Promise<ChatToolStepResult | undefined> {
     const opt: OpenAI.RequestOptions = {}
     if (skipCache) {
@@ -356,16 +400,25 @@ export default class OpenAIProvider implements LLMProvider {
           : undefined
 
       const response = await this.client.chat.completions.create(
-        { messages, model: config.OpenAIModel, user, tools, stream: false },
+        { messages, model: this.modelFor(level), user, tools, stream: false },
         opt
       )
 
       const choice = response.choices?.[0]?.message
       const usage = usageFromApi(response.usage)
-      const tokens = totalTokens(usage)
-      if (tokens !== 0) {
+      const total = totalTokens(usage)
+      if (total !== 0 && usage !== undefined) {
+        const { multiplier, modelId } = this.billingFor(level)
         void pushTokensData(ctx, [
-          { workspace, reason, tokens, date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString() }
+          tokensRecord(
+            workspace,
+            usage.promptTokens,
+            usage.completionTokens,
+            multiplier,
+            reason,
+            modelId,
+            new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
+          )
         ])
       }
 
@@ -417,14 +470,16 @@ export default class OpenAIProvider implements LLMProvider {
     const tokens = usageTokens > 0 ? usageTokens : countTokens([{ content: summary, role: 'assistant' }], this.encoding)
 
     if (tokens !== 0) {
-      void pushTokensData(ctx, [
-        {
-          workspace,
-          reason: 'manual-translate',
-          tokens,
-          date: new Date((response?.created ?? Date.now() / 1000) * 1000).toISOString()
-        }
-      ])
+      const date = new Date((response?.created ?? Date.now() / 1000) * 1000).toISOString()
+      const ru = response?.usage
+      if (ru !== undefined) {
+        const { multiplier, modelId } = this.billingFor()
+        void pushTokensData(ctx, [
+          tokensRecord(workspace, ru.promptTokens, ru.completionTokens, multiplier, 'summarize', modelId, date)
+        ])
+      } else {
+        void pushTokensData(ctx, [{ workspace, reason: 'summarize', tokens, date }])
+      }
     }
 
     return { summary, tokens }
@@ -441,11 +496,13 @@ export default class OpenAIProvider implements LLMProvider {
 }
 
 /**
- * Helper factory to create OpenAI provider when OpenAI is configured.
+ * Helper factory to create an OpenAI provider for a registry provider config.
+ * Returns undefined when neither the provider nor the global config supplies an API key.
  */
-export function createOpenAIProvider (ctx: MeasureContext): LLMProvider | undefined {
-  if (config.OpenAIKey !== '') {
-    return new OpenAIProvider(ctx)
+export function createOpenAIProvider (ctx: MeasureContext, provider: AIProviderConfig): LLMProvider | undefined {
+  const apiKey = (provider.endpointConfig?.apiKey as string) ?? config.OpenAIKey
+  if (apiKey !== '') {
+    return new OpenAIProvider(ctx, provider)
   }
   return undefined
 }

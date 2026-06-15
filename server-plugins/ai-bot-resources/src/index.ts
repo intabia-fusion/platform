@@ -13,9 +13,18 @@
 // limitations under the License.
 //
 
-import core, { AccountUuid, Doc, PersonId, Ref, SortingOrder, Tx, TxCreateDoc, TxProcessor } from '@hcengineering/core'
+import core, {
+  AccountUuid,
+  Doc,
+  PersonId,
+  Ref,
+  SortingOrder,
+  Tx,
+  TxCreateDoc,
+  TxProcessor
+} from '@hcengineering/core'
 import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@hcengineering/server-core'
-import { aiBotEmailSocialKey, AIEventRequest } from '@hcengineering/ai-bot'
+import aiBot, { aiBotEmailSocialKey, AIEventRequest } from '@hcengineering/ai-bot'
 import chunter, { ChatMessage, DirectMessage, ThreadMessage } from '@hcengineering/chunter'
 import contact, { Employee, SocialIdentity } from '@hcengineering/contact'
 
@@ -209,6 +218,25 @@ function isDirectAvailable (direct: DirectMessage, control: TriggerControl, wsID
   return members.length === 2
 }
 
+/**
+ * Set the effective AI level on the event from the active AILevelSetting
+ * (space-specific -> workspace-wide). The model catalog lives in the pod (served
+ * via its API), so the trigger only forwards the chosen level; the pod validates
+ * it against its registry (unknown levels fall back there).
+ */
+async function applyLevel (control: TriggerControl, event: AIEventRequest): Promise<void> {
+  try {
+    const spaceSetting = (
+      await control.findAll(control.ctx, aiBot.class.AILevelSetting, { attachedTo: event.objectSpace })
+    )[0]
+    const wsSetting =
+      spaceSetting ?? (await control.findAll(control.ctx, aiBot.class.AILevelSetting, {})).find((s) => s.attachedTo == null)
+    event.level = spaceSetting?.level ?? wsSetting?.level
+  } catch (err: any) {
+    control.ctx.warn('failed to apply AI level', { error: err?.message })
+  }
+}
+
 async function onBotDirectMessageSend (
   control: TriggerControl,
   message: ChatMessage,
@@ -234,6 +262,7 @@ async function onBotDirectMessageSend (
       messageEvent = getDirectThreadData(direct, message)
     }
     messageEvent.objectIdIsSpace = control.hierarchy.isDerived(messageEvent.objectClass, core.class.Space)
+    await applyLevel(control, messageEvent)
     await producer.send(control.ctx, control.workspace.uuid, [messageEvent])
   } else if (kind === 'mentioned') {
     let messageEvent: AIEventRequest
@@ -243,6 +272,7 @@ async function onBotDirectMessageSend (
       messageEvent = getMessageData(message, message)
     }
     messageEvent.objectIdIsSpace = control.hierarchy.isDerived(messageEvent.objectClass, core.class.Space)
+    await applyLevel(control, messageEvent)
     await producer.send(control.ctx, control.workspace.uuid, [messageEvent])
   }
 }

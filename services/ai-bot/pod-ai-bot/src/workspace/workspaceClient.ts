@@ -15,6 +15,7 @@
 import aiBot, {
   AIEventRequest,
   type AIPersonalData,
+  type AIRequest,
   aiBotEmailSocialKey,
   ConnectMeetingRequest,
   DisconnectMeetingRequest,
@@ -55,8 +56,11 @@ import core, {
 import love, { type MeetingMinutes } from '@hcengineering/love'
 import fs from 'fs'
 import type { LLMProvider, ChatMessage as LLMChatMessage } from '../llms'
+import type { AILevel } from '../config'
 import { getTools } from '../utils/tools'
 import { resolveMemory, type AIMemory } from './memory'
+import { donePatch, failedPatch, queuedRequest } from './aiRequest'
+import { resolveModel } from '../llms/modelRegistry'
 import { buildThreadContext, type ContextMessage } from './threadContext'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
@@ -312,6 +316,45 @@ export class WorkspaceClient {
     )
   }
 
+  /** The user's PersonSpace (where their AIRequest status docs live). */
+  private async getUserPersonSpace (personUuid: PersonUuid): Promise<Ref<Space> | undefined> {
+    const space = await this.client?.findOne(contact.class.PersonSpace, { account: personUuid as AccountUuid })
+    return space?._id
+  }
+
+  /**
+   * Create an AIRequest status doc (processing) in the user's PersonSpace, on the
+   * user's behalf. Returns its id so the caller can mark it done/failed. Best-effort:
+   * returns undefined if the space can't be resolved (status tracking is non-critical).
+   */
+  async createAIRequest (
+    personUuid: PersonUuid,
+    seed: { level: AILevel, modelId: string, kind: string }
+  ): Promise<Ref<AIRequest> | undefined> {
+    const space = await this.getUserPersonSpace(personUuid)
+    if (space === undefined) return undefined
+    const modifiedBy = await this.getUserSocialId(personUuid)
+    return await this.client.createDoc<AIRequest>(
+      aiBot.class.AIRequest,
+      space,
+      { ...queuedRequest(seed.level, seed.modelId, seed.kind), status: 'processing' },
+      undefined,
+      undefined,
+      modifiedBy
+    )
+  }
+
+  /** Apply a status patch (done/failed) to an AIRequest, on the user's behalf. */
+  async updateAIRequest (
+    personUuid: PersonUuid,
+    id: Ref<AIRequest>,
+    space: Ref<Space>,
+    patch: Partial<AIRequest>
+  ): Promise<void> {
+    const modifiedBy = await this.getUserSocialId(personUuid)
+    await this.client.updateDoc(aiBot.class.AIRequest, space, id, patch, false, undefined, modifiedBy)
+  }
+
   // Read the user's AI memory (assistant/user/shared). Source of truth is the
   // Preference; legacy blob memory is migrated on first read. History is no longer
   // kept here — conversation context comes from chunter threads.
@@ -380,8 +423,15 @@ export class WorkspaceClient {
     return await client.findAll(attachment.class.Attachment, { attachedTo: objectId })
   }
 
-  async processMessageEvent (event: AIEventRequest, control?: ConsumerControl): Promise<void> {
-    if (this.llm === undefined) {
+  async processMessageEvent (
+    event: AIEventRequest,
+    control?: ConsumerControl,
+    provider?: LLMProvider,
+    level?: AILevel
+  ): Promise<void> {
+    // Per-provider pipeline passes the resolved provider+level; fall back to the default.
+    const llm = provider ?? this.llm
+    if (llm === undefined) {
       throw new Error('LLM provider is not configured')
     }
 
@@ -406,7 +456,7 @@ export class WorkspaceClient {
       }
     }
     const prompt: LLMChatMessage = { content: promptText, role: 'user' as const }
-    const promptTokens = this.llm?.countTokens([prompt]) ?? 0
+    const promptTokens = llm.countTokens([prompt]) ?? 0
 
     const space = (event as any).objectIdIsSpace != null ? (objectId as Ref<Space>) : event.objectSpace
 
@@ -496,7 +546,7 @@ export class WorkspaceClient {
         contextMessages.push({
           role: msgRole,
           content,
-          tokens: this.llm?.countTokens([{ role: msgRole, content }]) ?? 0
+          tokens: llm.countTokens([{ role: msgRole, content }]) ?? 0
         })
       }
 
@@ -504,23 +554,56 @@ export class WorkspaceClient {
       useHistory.push(...buildThreadContext(contextMessages, promptTokens, config.MaxContentTokens))
     }
 
+    // Resolve model + billing multiplier for the request status doc.
+    const effectiveLevel = level ?? config.DefaultLevel
+    const resolved = resolveModel(effectiveLevel, config.AIProviders)
+    const aiRequestSpace = await this.getUserPersonSpace(personUuid)
+    const aiRequestId = await this.createAIRequest(personUuid, {
+      level: resolved.level,
+      modelId: resolved.model.model,
+      kind: 'chat'
+    })
+
     const tools = getTools(this, contextMode, personUuid as AccountUuid)
-    const chatCompletion = await this.llm?.createChatCompletionWithTools(
-      tools,
-      prompt,
-      contextMode,
-      memory.assistantMemory,
-      memory.userMemory,
-      memory.sharedContext,
-      personUuid as AccountUuid,
-      this.ctx,
-      this.wsIds.uuid,
-      [...systemPrompts, ...useHistory]
-    )
+    let chatCompletion
+    try {
+      chatCompletion = await llm.createChatCompletionWithTools(
+        tools,
+        prompt,
+        contextMode,
+        memory.assistantMemory,
+        memory.userMemory,
+        memory.sharedContext,
+        personUuid as AccountUuid,
+        this.ctx,
+        this.wsIds.uuid,
+        [...systemPrompts, ...useHistory],
+        true,
+        'chat',
+        level
+      )
+    } catch (err: any) {
+      if (aiRequestId !== undefined && aiRequestSpace !== undefined) {
+        await this.updateAIRequest(personUuid, aiRequestId, aiRequestSpace, failedPatch(err?.message ?? 'error'))
+      }
+      throw err
+    }
     const response = chatCompletion?.completion
 
     if (response == null) {
+      if (aiRequestId !== undefined && aiRequestSpace !== undefined) {
+        await this.updateAIRequest(personUuid, aiRequestId, aiRequestSpace, failedPatch('empty response'))
+      }
       return
+    }
+
+    if (aiRequestId !== undefined && aiRequestSpace !== undefined) {
+      await this.updateAIRequest(
+        personUuid,
+        aiRequestId,
+        aiRequestSpace,
+        donePatch(chatCompletion?.usage, resolved.model.tokenMultiplier)
+      )
     }
     // The reply is persisted as a chunter message below; no separate history blob.
     const parseResponse = jsonToMarkup(markdownToMarkup(response, { refUrl: '', imageUrl: '' }))

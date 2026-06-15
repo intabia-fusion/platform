@@ -13,15 +13,24 @@
 // limitations under the License.
 //
 
-import { AccountRole, type AccountUuid } from '@hcengineering/core'
-import { type AIPersonalData } from '@hcengineering/ai-bot'
-import { type Builder, Model, Prop, TypeString } from '@hcengineering/model'
-import core from '@hcengineering/model-core'
+import { AccountRole, type AccountUuid, type Domain, type Ref, type Space, type Timestamp } from '@hcengineering/core'
+import {
+  type AILevel,
+  type AILevelSetting,
+  type AIPersonalData,
+  type AIRequest,
+  type AIRequestStatus
+} from '@hcengineering/ai-bot'
+import { type Builder, Model, Prop, TypeNumber, TypeRef, TypeString, TypeTimestamp } from '@hcengineering/model'
+import core, { TDoc } from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
 import setting from '@hcengineering/setting'
 import view from '@hcengineering/model-view'
 
 import aiBot from './plugin'
+
+/** Domain for AI request status documents. */
+export const DOMAIN_AI = 'ai' as Domain
 
 export { aiBotId } from '@hcengineering/ai-bot'
 export { aiBotOperation } from './migration'
@@ -41,8 +50,47 @@ export class TAIPersonalData extends TPreference implements AIPersonalData {
     sharedContext!: string
 }
 
+@Model(aiBot.class.AIRequest, core.class.Doc, DOMAIN_AI)
+export class TAIRequest extends TDoc implements AIRequest {
+  @Prop(TypeString(), core.string.String)
+    status!: AIRequestStatus
+
+  @Prop(TypeString(), core.string.String)
+    level!: AILevel
+
+  @Prop(TypeString(), core.string.String)
+    modelId!: string
+
+  @Prop(TypeString(), core.string.String)
+    kind!: string
+
+  @Prop(TypeNumber(), core.string.Number)
+    promptTokens!: number
+
+  @Prop(TypeNumber(), core.string.Number)
+    completionTokens!: number
+
+  @Prop(TypeNumber(), core.string.Number)
+    billedTokens!: number
+
+  @Prop(TypeTimestamp(), core.string.Timestamp)
+    estimatedFinishAt?: Timestamp
+
+  @Prop(TypeString(), core.string.String)
+    error?: string
+}
+
+@Model(aiBot.class.AILevelSetting, core.class.Doc, DOMAIN_AI)
+export class TAILevelSetting extends TDoc implements AILevelSetting {
+  @Prop(TypeRef(core.class.Space), core.string.Space)
+    attachedTo?: Ref<Space>
+
+  @Prop(TypeString(), core.string.String)
+    level!: AILevel
+}
+
 export function createModel (builder: Builder): void {
-  builder.createModel(TAIPersonalData)
+  builder.createModel(TAIPersonalData, TAIRequest, TAILevelSetting)
 
   builder.createDoc(setting.class.SettingsCategory, core.space.Model, {
     name: 'ai-personal-data',

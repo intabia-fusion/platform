@@ -30,6 +30,9 @@ import { MeasureContext, systemAccountUuid } from '@hcengineering/core'
 
 import { ApiError } from './error'
 import { AIControl } from '../controller'
+import config from '../config'
+import { availableLevels } from '../llms/modelRegistry'
+import type { AILevelInfo } from '@hcengineering/ai-bot'
 
 type AsyncRequestHandler = (req: Request, res: Response, token: Token, next: NextFunction) => Promise<void>
 
@@ -225,6 +228,23 @@ export function createServer (controller: AIControl, ctx: MeasureContext, app?: 
 
       res.status(200)
       res.json(resp)
+    })
+  )
+
+  // The catalog of AI levels the pod offers (same for everyone). The UI uses this
+  // to render the level picker; the chosen level is stored in AILevelSetting.
+  app.get(
+    '/levels',
+    wrapRequest(async (req, res, token) => {
+      const levels: AILevelInfo[] = availableLevels(config.AIProviders).map((l) => ({
+        level: l.level,
+        order: l.order,
+        label: l.label,
+        description: l.description,
+        tokenMultiplier: l.tokenMultiplier
+      }))
+      res.status(200)
+      res.json(levels)
     })
   )
 

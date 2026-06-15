@@ -18,6 +18,14 @@ import { MeetingMinutes, RoomLanguage } from '@hcengineering/love'
 import { Contact, Person } from '@hcengineering/contact'
 import { ChatMessage } from '@hcengineering/chunter'
 
+/**
+ * ЮляИИ quality level id. Data-driven (free-form string, e.g. 'low', 'pro',
+ * 'fast'), not a fixed enum. Level definitions live as AIModelInfo docs in the
+ * workspace (projected from the pod registry); the UI lists them and renders
+ * label/description. New levels need no code change.
+ */
+export type AILevel = string
+
 export interface AIEventRequest {
   message: string
   messageClass: Ref<Class<ChatMessage>>
@@ -29,6 +37,9 @@ export interface AIEventRequest {
   user: PersonId
   collection: string
   createdOn: Timestamp
+  // Effective AI level, already clamped to the space ceiling by the server trigger.
+  // The pod routes by this directly (no level resolution on the pod side).
+  level?: AILevel
 }
 
 export interface TranslateRequest {
@@ -80,4 +91,17 @@ export interface PostTranscriptRequest {
 export interface IdentityResponse {
   identity: Ref<Person>
   name: string
+}
+
+/**
+ * A level the ai-bot offers, served by its API (GET levels). The catalog is the
+ * same for everyone, so it lives in the pod, not in per-workspace docs. The UI
+ * lists these for the level picker; the user's choice is stored in AILevelSetting.
+ */
+export interface AILevelInfo {
+  level: AILevel
+  order: number // sort key (lower = weaker/cheaper)
+  label: string
+  description?: string
+  tokenMultiplier: number
 }

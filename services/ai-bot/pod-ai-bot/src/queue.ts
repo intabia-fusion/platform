@@ -30,14 +30,15 @@ import {
 import serverToken, { generateToken } from '@hcengineering/server-token'
 
 import { getClient as getAccountClient } from '@hcengineering/account-client'
-import { AIEventRequest } from '@hcengineering/ai-bot'
+import { type AIEventRequest } from '@hcengineering/ai-bot'
 import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { newMetrics, type SocialId, type WorkspaceUuid } from '@hcengineering/core'
+import { newMetrics, RateLimiter, type SocialId, type WorkspaceUuid } from '@hcengineering/core'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { join } from 'path'
 import { updateDeepgramBilling } from './billing'
 import config from './config'
 import { AIControl } from './controller'
+import { type AIPipelineMessage, dispatch, providerTopic, providerTopics } from './pipeline'
 import { registerLoaders } from './loaders'
 import { createServer } from './server/server'
 import { TranscriptionQueueTask } from './transcription'
@@ -146,21 +147,81 @@ export const startQueue = async (): Promise<void> => {
     }
   )
 
+  // ---- LLM pipeline: AIQueue (dispatcher) -> per-provider topics `llm-<id>` ----
+  // Create one topic per provider so partition count == number of independent
+  // workers (e.g. GigaChat = 1 partition -> exactly one active pod, no DB locks).
+  const providerIds = aiControl.getProviderIds()
+  const topics = providerTopics(config.AIProviders)
+  for (const topic of topics) {
+    await queue.createTopic(topic, 1)
+  }
+
+  // Per-provider producers, keyed by topic.
+  const providerProducers = new Map<string, ReturnType<typeof queue.getProducer<AIPipelineMessage>>>()
+  for (const topic of topics) {
+    providerProducers.set(topic, queue.getProducer<AIPipelineMessage>(ctx, topic))
+  }
+
+  // Dispatcher: the event already carries its effective level (clamped to the
+  // space ceiling by the server trigger). Route it to the provider topic.
   const aiEventConsumer = queue.createConsumer<AIEventRequest>(
     ctx,
     QueueTopic.AIQueue,
     'ai-bot',
     async (ctx, message, control) => {
       try {
-        await aiControl.processEvent(message.workspace, [message.value], control)
+        const event = message.value
+        const target = dispatch(event.level ?? config.DefaultLevel, config.AIProviders)
+        const producer = providerProducers.get(target.topic)
+        if (producer === undefined) {
+          ctx.error('No producer for resolved provider topic', { topic: target.topic })
+          return
+        }
+        await producer.send(ctx, message.workspace, [{ event, level: target.level }])
       } catch (err: any) {
-        ctx.error('failed to handle ai event', { error: err.message })
-        setTimeout(() => {
-          console.error('Retrying after error...')
-        }, 1000)
+        ctx.error('failed to dispatch ai event', { error: err.message })
       }
     }
   )
+
+  // One batch consumer per provider, with a shared RateLimiter for concurrency.
+  const providerConsumers: ConsumerHandle[] = []
+  for (const cfg of config.AIProviders) {
+    if (!providerIds.includes(cfg.id)) continue // provider failed to configure, skip its topic
+    const topic = providerTopic(cfg.id)
+    const limiter = new RateLimiter(Math.max(1, cfg.concurrency))
+    const handleOne = async (message: ConsumerMessage<AIPipelineMessage>, control?: ConsumerControl): Promise<void> => {
+      const { event, level } = message.value
+      await aiControl.processEvent(message.workspace, [event], control, cfg.id, level)
+    }
+    providerConsumers.push(
+      queue.createBatchConsumer<AIPipelineMessage>(
+        ctx,
+        topic,
+        'ai-bot',
+        async (ctx, messages, control) => {
+          const hb = setInterval(() => {
+            void control?.heartbeat()
+          }, 1000)
+          try {
+            await Promise.all(
+              messages.map((m) =>
+                limiter.add(async () => {
+                  await handleOne(m, control)
+                })
+              )
+            )
+            await limiter.waitProcessing()
+          } catch (err: any) {
+            ctx.error('failed to handle ai event', { error: err.message, provider: cfg.id })
+          } finally {
+            clearInterval(hb)
+          }
+        },
+        { batchSize: Math.max(1, cfg.batch) }
+      )
+    )
+  }
 
   const loveConsumer = queue.createConsumer<QueueMeetingMessage>(
     ctx,
@@ -266,6 +327,8 @@ export const startQueue = async (): Promise<void> => {
   const onClose = (): void => {
     void workspaceConsumer?.close()
     void aiEventConsumer?.close()
+    for (const c of providerConsumers) void c.close()
+    for (const p of providerProducers.values()) void p.close()
     void transcriptionConsumer?.close()
     void transcriptionProducer?.close()
     void transcriptionDeadLetterProducer?.close()

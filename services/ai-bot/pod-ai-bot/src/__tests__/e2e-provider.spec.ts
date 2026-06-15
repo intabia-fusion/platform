@@ -63,7 +63,13 @@ d('e2e: OpenAIProvider against a real model', () => {
 
     const mod = await import('../llms/openai')
     const OpenAIProvider = mod.default
-    provider = new OpenAIProvider(ctx)
+    provider = new OpenAIProvider(ctx, {
+      id: 'openai',
+      provider: 'openai',
+      concurrency: 1,
+      batch: 1,
+      levels: { low: { model: MODEL, tokenMultiplier: 1, order: 0, label: 'Standard' } }
+    })
   })
 
   it('countTokens estimates a positive token count', () => {

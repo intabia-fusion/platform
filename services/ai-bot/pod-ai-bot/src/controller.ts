@@ -44,12 +44,12 @@ import chunter, { ChatMessage } from '@hcengineering/chunter'
 import { getAccountClient, getTransactorEndpointEx } from '@hcengineering/server-client'
 import { generateToken } from '@hcengineering/server-token'
 import { htmlToMarkup, jsonToHTML, jsonToMarkup, markupToJSON } from '@hcengineering/text'
-import { createLLMFromConfig, type LLMProvider } from './llms'
+import { createDefaultProvider, createProvidersFromRegistry, type LLMProvider } from './llms'
 import { ClisrServer } from '@intabiafusion/clisr'
 
 import { ConsumerControl, PlatformQueueProducer, StorageAdapter } from '@hcengineering/server-core'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
-import config from './config'
+import config, { type AILevel } from './config'
 import { TranscriptionTask } from './types'
 import { v4 as uuid } from 'uuid'
 import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
@@ -99,7 +99,8 @@ export class AIControl {
   readonly chunkStorageAdapter: StorageAdapter
   private transcriptionProducer: PlatformQueueProducer<TranscriptionTask> | undefined
 
-  private llm?: LLMProvider
+  private llm?: LLMProvider // default provider, used by service ops (translate/summarize)
+  private providers = new Map<string, LLMProvider>() // per-provider, keyed by provider id (= topic suffix)
 
   constructor (
     readonly personUuid: AccountUuid,
@@ -114,7 +115,18 @@ export class AIControl {
    * Initialize LLM provider. Can be called after construction to pass ClisrServer for server provider.
    */
   initLLM (clisrServer?: ClisrServer): void {
-    this.llm = createLLMFromConfig(this.ctx, clisrServer)
+    this.providers = createProvidersFromRegistry(this.ctx, clisrServer)
+    this.llm = createDefaultProvider(this.ctx, clisrServer)
+  }
+
+  /** All provider ids in the registry (= per-provider topic suffixes). */
+  getProviderIds (): string[] {
+    return [...this.providers.keys()]
+  }
+
+  /** Resolve a provider by id (the dispatcher routes by id via the topic). */
+  getProvider (id: string): LLMProvider | undefined {
+    return this.providers.get(id)
   }
 
   setTranscriptionProducer (producer: PlatformQueueProducer<TranscriptionTask>): void {
@@ -489,8 +501,16 @@ export class AIControl {
     }
   }
 
-  async processEvent (workspace: WorkspaceUuid, events: AIEventRequest[], control?: ConsumerControl): Promise<void> {
-    if (this.llm === undefined) {
+  async processEvent (
+    workspace: WorkspaceUuid,
+    events: AIEventRequest[],
+    control?: ConsumerControl,
+    providerId?: string,
+    level?: AILevel
+  ): Promise<void> {
+    // Resolve the per-provider instance (pipeline path) or fall back to the default.
+    const provider = providerId !== undefined ? this.providers.get(providerId) : undefined
+    if (provider === undefined && this.llm === undefined) {
       throw new Error('LLM provider not configured')
     }
 
@@ -502,8 +522,8 @@ export class AIControl {
         await control?.heartbeat()
         const wsClient = await this.getWorkspaceClient(workspace)
         if (wsClient === undefined) continue
-        this.ctx.info('processing event', event)
-        await wsClient.processMessageEvent(event, control)
+        this.ctx.info('processing event', { ...event, providerId, level })
+        await wsClient.processMessageEvent(event, control, provider, level)
       }
     } finally {
       clearInterval(i1)

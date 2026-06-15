@@ -20,12 +20,15 @@ import {
   type Doc,
   type Markup,
   type Ref,
+  type Space,
+  type Timestamp,
   SocialIdType
 } from '@hcengineering/core'
 import type { IntlString, Metadata, Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { Preference } from '@hcengineering/preference'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
+import type { AILevel } from './rest'
 
 export * from './rest'
 
@@ -48,6 +51,36 @@ export interface AIPersonalData extends Preference {
   sharedContext: string // language, timezone, group-chat preferences
 }
 
+/** Lifecycle of a queued AI request, surfaced to the user for status/ETA. */
+export type AIRequestStatus = 'queued' | 'processing' | 'done' | 'failed'
+
+/**
+ * Status document for one AI request. Lives in the user's PersonSpace so both the
+ * user and the system can see it. The pod creates it on enqueue and updates it as
+ * the request moves through the pipeline; the UI shows progress and ETA from it.
+ */
+export interface AIRequest extends Doc {
+  status: AIRequestStatus
+  level: AILevel
+  modelId: string
+  kind: string // 'chat' | 'text-op' | ... (request category)
+  promptTokens: number
+  completionTokens: number
+  billedTokens: number // (prompt+completion) * model.tokenMultiplier
+  estimatedFinishAt?: Timestamp
+  error?: string
+}
+
+/**
+ * The AI level ceiling for a space (or the workspace when attachedTo is unset).
+ * A request carries its own requested level; the server trigger clamps it to this
+ * ceiling. NOT a Space mixin. `level` references an AIModelInfo.level.
+ */
+export interface AILevelSetting extends Doc {
+  attachedTo?: Ref<Space> // undefined = workspace-wide ceiling
+  level: AILevel
+}
+
 /** Optional link back to the object that started an AI conversation. */
 export interface ConversationOrigin {
   objectId: Ref<Doc>
@@ -66,7 +99,9 @@ const aiBot = plugin(aiBotId, {
     EndpointURL: '' as Metadata<string>
   },
   class: {
-    AIPersonalData: '' as Ref<Class<AIPersonalData>>
+    AIPersonalData: '' as Ref<Class<AIPersonalData>>,
+    AIRequest: '' as Ref<Class<AIRequest>>,
+    AILevelSetting: '' as Ref<Class<AILevelSetting>>
   },
   component: {
     AIPersonalDataSettings: '' as AnyComponent

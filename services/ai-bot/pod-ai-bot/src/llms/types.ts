@@ -16,6 +16,7 @@
 import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import type { PersonMessage } from '@hcengineering/ai-bot'
 import type { HistoryRecord } from '../types'
+import type { AILevel } from '../config'
 import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
 
 /**
@@ -166,7 +167,8 @@ export interface LLMProvider {
     user?: string,
     history?: ChatMessage[],
     skipCache?: boolean,
-    reason?: string
+    reason?: string,
+    level?: AILevel
   ) => Promise<ChatCompletionResult | undefined>
 
   /**
@@ -186,7 +188,8 @@ export interface LLMProvider {
     workspace: WorkspaceUuid,
     history?: ChatMessage[],
     skipCache?: boolean,
-    reason?: string
+    reason?: string,
+    level?: AILevel
   ) => Promise<ChatCompletionWithToolsResult | undefined>
 
   /**
@@ -212,7 +215,8 @@ export interface LLMProvider {
     priorToolResults: ToolResult[],
     history?: ChatMessage[],
     skipCache?: boolean,
-    reason?: string
+    reason?: string,
+    level?: AILevel
   ) => Promise<ChatToolStepResult | undefined>
 
   /**

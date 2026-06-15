@@ -19,6 +19,45 @@ import yaml from 'js-yaml'
 
 import { SttProviderType } from './transcription/types'
 
+/**
+ * ЮляИИ quality level id. Data-driven, NOT an enum: a free-form string defined in
+ * the registry (e.g. 'low', 'pro', 'fast'). UI lists levels from the registry,
+ * sorts by `order`, and shows `label`/`description`. New levels = new registry
+ * entries, no code changes.
+ */
+export type AILevel = string
+
+/** Per-level model binding inside a provider (model + billing + UI metadata). */
+export interface AILevelModel {
+  model: string // provider-specific model name for this level
+  tokenMultiplier: number // billedTokens = (prompt+completion) * tokenMultiplier
+  order: number // sort key for UI + fallback ladder (lower = weaker/cheaper)
+  label: string // UI label shown to the user
+  description?: string // UI hint under the label
+  capabilities?: {
+    tools?: boolean
+    streaming?: boolean
+    maxContextTokens?: number
+  }
+  tokenizer?: 'tiktoken' | 'gigachat' | 'approx'
+}
+
+/**
+ * One provider instance: a single client/auth and one queue topic `llm-<id>`,
+ * shared across all the levels it serves. The provider picks the concrete model
+ * per request from `levels[requestedLevel]`. E.g. GigaChat = one client, one
+ * topic, one concurrency pool, serving low/middle/high/max via Lite/base/Pro/Max.
+ */
+export interface AIProviderConfig {
+  id: string // unique id, used as the per-provider topic suffix `llm-<id>`
+  provider: 'openai' | 'gigachat' | 'clisr'
+  concurrency: number // shared RateLimiter rate for the whole provider
+  batch: number // shared batch consumer size for this provider's topic
+  levels: Partial<Record<AILevel, AILevelModel>> // which levels this provider serves
+  endpoint?: string // shared endpoint override (clisr router url / openai baseUrl)
+  endpointConfig?: Record<string, unknown> // shared auth (apiKey, scope, credentials)
+}
+
 interface Config {
   AccountsURL: string
   ServerSecret: string
@@ -51,6 +90,12 @@ interface Config {
   // LLM selection (e.g. 'openai' | 'gigachat' | 'server' or leave empty for auto)
   LLMProvider: string // Could be 'server' to pass LLM requests to connected clients.
   LLMProcessingBatch: number // Batch size for LLM request processing (1 = no batching)
+
+  // Provider registry: every provider the pod can route to. Each provider serves
+  // one or more levels and owns one topic `llm-<id>`. Built from yaml
+  // `llm.providers`, or synthesized from the legacy single-provider settings.
+  AIProviders: AIProviderConfig[]
+  DefaultLevel: AILevel
 
   // ******************
   // Openai
@@ -114,6 +159,8 @@ interface YamlConfig {
   llm: {
     provider?: string
     batch?: number
+    defaultLevel?: AILevel
+    providers?: AIProviderConfig[]
     openai?: {
       apiKey?: string
       model?: string
@@ -171,6 +218,63 @@ interface YamlConfig {
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
+
+/**
+ * Build the provider registry. Prefers an explicit `llm.providers` list;
+ * otherwise synthesizes a single provider (serving the default level) from the
+ * legacy single-provider settings so existing deployments keep working.
+ */
+const buildProviderRegistry = (yamlConfig: YamlConfig | null): AIProviderConfig[] => {
+  const explicit = yamlConfig?.llm?.providers
+  if (explicit !== undefined && explicit.length > 0) return explicit
+
+  const provider = (yamlConfig?.llm?.provider ?? process.env.LLM_PROVIDER ?? 'openai').trim().toLowerCase()
+  const batch = yamlConfig?.llm?.batch ?? parseInt(process.env.LLM_BATCH ?? '1')
+  const level = yamlConfig?.llm?.defaultLevel ?? process.env.AI_DEFAULT_LEVEL ?? 'low'
+
+  if (provider === 'gigachat') {
+    const model = yamlConfig?.llm?.gigachat?.model ?? process.env.GIGACHAT_MODEL ?? 'GigaChat'
+    return [
+      {
+        id: 'gigachat',
+        provider: 'gigachat',
+        concurrency: 1,
+        batch,
+        levels: {
+          [level]: {
+            model,
+            tokenMultiplier: 1,
+            order: 0,
+            label: 'GigaChat',
+            tokenizer: 'gigachat',
+            capabilities: { tools: false }
+          }
+        }
+      }
+    ]
+  }
+
+  const isClisr = provider === 'server' || provider === 'clisr'
+  const model = yamlConfig?.llm?.openai?.model ?? process.env.OPENAI_MODEL ?? 'gpt-4o-mini'
+  return [
+    {
+      id: isClisr ? 'clisr' : 'openai',
+      provider: isClisr ? 'clisr' : 'openai',
+      concurrency: isClisr ? 4 : 8,
+      batch,
+      levels: {
+        [level]: {
+          model,
+          tokenMultiplier: isClisr ? 0.1 : 1,
+          order: 0,
+          label: isClisr ? 'Local' : 'Standard',
+          tokenizer: 'tiktoken',
+          capabilities: { tools: true, maxContextTokens: 128 * 1024 }
+        }
+      }
+    }
+  ]
+}
 
 const config: Config = (() => {
   // Try to load configuration from YAML file first
@@ -244,6 +348,9 @@ const config: Config = (() => {
       process.env.GIGACHAT_BASE_URL ??
       'https://gigachat.devices.sberbank.ru/api/v1/',
     GigaChatTimeout: yamlConfig?.llm?.gigachat?.timeout ?? process.env.GIGACHAT_TIMEOUT ?? '600',
+
+    AIProviders: buildProviderRegistry(yamlConfig),
+    DefaultLevel: yamlConfig?.llm?.defaultLevel ?? process.env.AI_DEFAULT_LEVEL ?? 'low',
 
     // Limits
     MaxContentTokens: yamlConfig?.limits?.maxContentTokens ?? parseNumber(process.env.MAX_CONTENT_TOKENS) ?? 128 * 100,

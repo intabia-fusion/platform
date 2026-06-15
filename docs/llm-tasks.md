@@ -85,28 +85,60 @@
 ## P1 - вторая очередь
 
 ### T5. Уровни ЮляИИ + реестр моделей (конфиг)
-- [ ] `AIModelConfig` в YAML/env конфиге пода: provider, model, level
-      (low/middle/high/max), tokenMultiplier, concurrency, batch, capabilities,
-      tokenizer, endpointConfig.
-- [ ] Маппинг GigaChat Lite/Pro/Max -> уровни + множители; clisr (локальное
-      оборудование) -> low, минимальный множитель.
-- [ ] `AILevelSetting` - документ в `models/ai-bot` (НЕ mixin на Space):
-      `attachedTo?: Ref<Space>`; резолв: space -> workspace -> подписка.
-- [ ] `billedTokens = (prompt+completion) * tokenMultiplier` -> биллинг.
-- [ ] Реестр проектировать с двумя источниками: глобальный конфиг + (будущее)
-      workspace-overrides для BYOK.
+ПЕРЕОСМЫСЛЕНО: реестр = `AIProviderConfig` (1 провайдер = N уровней, 1 клиент,
+1 топик, общий concurrency/batch), НЕ `AIModelConfig` (1 модель = 1 уровень).
+GigaChat/clisr держат один клиент и выбирают модель per-request от уровня.
+- [x] `AIProviderConfig` в YAML/env конфиге (`config.ts`): id, provider
+      (openai/gigachat/clisr), concurrency, batch, `levels: Partial<Record<AILevel,
+      {model, tokenMultiplier, capabilities?, tokenizer?}>>`, endpoint?,
+      endpointConfig?. `buildProviderRegistry` (legacy single-provider fallback).
+- [x] `modelRegistry.ts`: чистые `resolveModel(level)->{provider,level,model}`
+      (fallback вниз/вверх по уровням), `billedTokens(usage,mult)`, `gigachatTier`
+      (Lite/base/Pro/Max -> level+множитель). Тесты `model-registry.spec.ts` (11).
+- [x] Провайдеры openai/gigachat/server принимают `AIProviderConfig`, `modelFor
+      (level)`, `level?` в chat-методах. server forwards `level` в clisr-payload
+      (клиент выбирает модель по уровню). Интерфейс `LLMProvider` + `level?` опц.
+- [x] `AILevelSetting` - документ в `models/ai-bot` (`TAILevelSetting`,
+      `attachedTo?: Ref<Space>`). Резолв подключён к диспетчеру: `LevelResolver`
+      (space-setting -> ws-default -> `DefaultLevel`), кэш per workspace,
+      инвалидация через server-trigger -> AIQueue. Тесты `level-resolver.spec.ts`.
+- [x] `billedTokens` -> биллинг: `tokensRecord(...)` применяет множитель +
+      modelId в reason; провайдеры openai/gigachat шлют billed. Тесты
+      `billing-tokens.spec.ts`.
+- [x] Уровни data-driven (НЕ enum): `AILevel = string`, реестр несёт
+      order/label/description; `availableLevels(registry)` для UI-пикера (sort by
+      order). Новый уровень = запись в конфиге.
+- [x] Реестр с двумя источниками заложен: глобальный конфиг сейчас; BYOK
+      workspace-overrides - отдельный провайдер/топик `llm-byok` (T13).
 
-### T6. Pipeline: AIRequest + per-model топики
-- [ ] `AIRequest` документ (status, level, modelId, payload, токены,
-      estimatedFinishAt) - DOMAIN_AI, space = `contact.class.PersonSpace`
-      пользователя (видит пользователь и система).
-- [ ] Диспетчер: входной топик ai-queue -> резолв уровня/модели/квоты ->
-      топик `llm-<modelId>`.
-- [ ] Обработчик модели: `createBatchConsumer(batchSize=batch)` +
-      `RateLimiter(concurrency)`; число партиций топика = число независимых
-      обработчиков (GigaChat = 1 партиция -> ровно один активный под, без локов БД).
-- [ ] REST `/events` -> публикация во входной топик.
-- [ ] Ретраи/“dead letter” по образцу transcription consumer.
+### T6. Pipeline: AIRequest + per-provider топики
+- [x] `AIRequest`/`AILevelSetting` документы + `DOMAIN_AI` (`plugins/ai-bot`
+      типы, `models/ai-bot` классы `TAIRequest`/`TAILevelSetting`). AIRequest:
+      status/level/modelId/kind/promptTokens/completionTokens/billedTokens/
+      estimatedFinishAt. (СОЗДАНЫ; AIRequest пока не пишется - см. T6c.)
+- [x] Диспетчер: `pipeline.ts` чистый `dispatch(level)->topic` + проводка в
+      `queue.ts`: AIQueue consumer -> резолв уровня (`DefaultLevel`) -> producer
+      в топик `llm-<providerId>`. Тесты `pipeline.spec.ts` (6).
+- [x] Обработчик: per-provider `createBatchConsumer(batchSize=batch)` +
+      `RateLimiter(concurrency)` + heartbeat. `createTopic('llm-<id>', 1)` на
+      старте (1 партиция = 1 активный обработчик, без локов БД).
+- [x] REST `/events` -> AIQueue (не менялось; диспетчер теперь разводит дальше).
+- [x] Уровни ПЕРЕОСМЫСЛЕНЫ дважды и УПРОЩЕНЫ (T6d):
+      - Каталог уровней/моделей ОДИНАКОВ для всех -> НЕ в БД. Отдаёт aibot API
+        `GET /levels` -> `AILevelInfo[]` (из `availableLevels` реестра). UI дёргает
+        для пикера. AIModelInfo-документ + sync УДАЛЕНЫ.
+      - В БД только `AILevelSetting` = выбранный активный уровень (space -> ws).
+      - Server-trigger `applyLevel`: `event.level = AILevelSetting.level` напрямую
+        (без чтения каталога/clamp по order). Pod валидирует через `resolveModel`
+        (fallback для неизвестного уровня уже есть).
+      - Pod-side LevelResolver/кэш/инвалидация УДАЛЕНЫ; dispatcher читает
+        `event.level`. Квоты подписок (ограничение доступных уровней) - T11.
+- [x] `billedTokens` в биллинг (T6c-1) + AIRequest статус-документ:
+      processing -> done(токены/billed/modelId)/failed в PersonSpace юзера от его
+      имени. Тесты `ai-request.spec.ts`. estimatedFinishAt (ETA) - T8 (EMA).
+      queued-фаза опущена (задержка постановки мала; статус начинается с
+      processing).
+- [ ] Ретраи/"dead letter" по образцу transcription consumer - отдельно.
 
 ### T7. Разговоры ЮляИИ как треды в Direct (ПЕРЕОСМЫСЛЕНО)
 Решение: разговоры = chunter-треды в Direct-канале юзер<->бот, НЕ отдельная

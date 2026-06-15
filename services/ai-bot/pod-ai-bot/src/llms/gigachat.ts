@@ -24,8 +24,8 @@ import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import type { PersonMessage } from '@hcengineering/ai-bot'
 import contact from '@hcengineering/contact'
 import type { HistoryRecord } from '../types'
-import config from '../config'
-import { pushTokensData } from '../billing'
+import config, { type AILevel, type AIProviderConfig } from '../config'
+import { pushTokensData, tokensRecord } from '../billing'
 import type {
   LLMProvider,
   ChatMessage,
@@ -40,24 +40,43 @@ import { PROMPTS } from './prompts'
 export default class GigaChatProvider implements LLMProvider {
   private readonly client: GigaChat
   private readonly encoding: Tiktoken // js-tiktoken doesn't have a direct encoding for GigaChat models
+  private readonly provider: AIProviderConfig
+  private readonly defaultLevel: AILevel
 
-  constructor (readonly ctx: MeasureContext) {
-    // Initialize GigaChat client with configuration
+  constructor (
+    readonly ctx: MeasureContext,
+    provider: AIProviderConfig
+  ) {
+    this.provider = provider
+    const served = (['low', 'middle', 'high', 'max'] as AILevel[]).filter((l) => provider.levels[l] !== undefined)
+    this.defaultLevel = served[served.length - 1] ?? 'low'
+
     this.client = new GigaChat({
-      credentials: config.GigaChatCredentials ?? '',
-      scope: config.GigaChatScope ?? 'GIGACHAT_API_PERS',
-      model: config.GigaChatModel ?? 'GigaChat',
-      baseUrl: config.GigaChatBaseUrl ?? 'https://gigachat.devices.sberbank.ru/api/v1/',
+      credentials: (provider.endpointConfig?.credentials as string) ?? config.GigaChatCredentials ?? '',
+      scope: (provider.endpointConfig?.scope as string) ?? config.GigaChatScope ?? 'GIGACHAT_API_PERS',
+      model: this.modelFor(this.defaultLevel),
+      baseUrl: provider.endpoint ?? config.GigaChatBaseUrl ?? 'https://gigachat.devices.sberbank.ru/api/v1/',
       timeout: config.GigaChatTimeout != null ? parseInt(config.GigaChatTimeout) : 600
     })
 
-    // For token counting, we'll use a reasonable fallback since GigaChat models aren't in js-tiktoken
-    // We'll use the cl100k_base encoding as a reasonable approximation
     try {
       this.encoding = encodingForModel('gpt-4')
     } catch {
       this.encoding = getEncoding('cl100k_base')
     }
+  }
+
+  /** Resolve the concrete model name for a level, falling back to the default level. */
+  private modelFor (level?: AILevel): string {
+    const lvl = level ?? this.defaultLevel
+    return this.provider.levels[lvl]?.model ?? this.provider.levels[this.defaultLevel]?.model ?? config.GigaChatModel
+  }
+
+  /** Billing multiplier + model id for a level (used to bill tokens). */
+  private billingFor (level?: AILevel): { multiplier: number, modelId: string } {
+    const lvl = level ?? this.defaultLevel
+    const m = this.provider.levels[lvl] ?? this.provider.levels[this.defaultLevel]
+    return { multiplier: m?.tokenMultiplier ?? 1, modelId: m?.model ?? this.modelFor(level) }
   }
 
   async translateHtml (
@@ -78,20 +97,24 @@ export default class GigaChatProvider implements LLMProvider {
             content: html
           }
         ],
-        model: config.GigaChatModel ?? 'GigaChat'
+        model: this.modelFor()
       })
 
       const responseText = response.choices?.[0]?.message?.content ?? undefined
-      const tokens = totalTokens(usageFromApi(response.usage))
-
-      if (tokens !== 0) {
+      const usage = usageFromApi(response.usage)
+      const total = totalTokens(usage)
+      if (total !== 0 && usage !== undefined) {
+        const { multiplier, modelId } = this.billingFor()
         void pushTokensData(ctx, [
-          {
+          tokensRecord(
             workspace,
-            reason: 'manual-translate',
-            tokens,
-            date: new Date().toISOString()
-          }
+            usage.promptTokens,
+            usage.completionTokens,
+            multiplier,
+            'manual-translate',
+            modelId,
+            new Date().toISOString()
+          )
         ])
       }
 
@@ -141,18 +164,23 @@ export default class GigaChatProvider implements LLMProvider {
             content: text
           }
         ],
-        model: config.GigaChatModel ?? 'GigaChat'
+        model: this.modelFor()
       })
 
-      const tokens = totalTokens(usageFromApi(response.usage))
-      if (tokens !== 0) {
+      const usage = usageFromApi(response.usage)
+      const total = totalTokens(usage)
+      if (total !== 0 && usage !== undefined) {
+        const { multiplier, modelId } = this.billingFor()
         void pushTokensData(ctx, [
-          {
+          tokensRecord(
             workspace,
-            reason: 'summarize',
-            tokens,
-            date: new Date().toISOString()
-          }
+            usage.promptTokens,
+            usage.completionTokens,
+            multiplier,
+            'summarize',
+            modelId,
+            new Date().toISOString()
+          )
         ])
       }
 
@@ -182,7 +210,8 @@ export default class GigaChatProvider implements LLMProvider {
     user?: string,
     history: ChatMessage[] = [],
     skipCache = true,
-    reason = 'chat'
+    reason = 'chat',
+    level?: AILevel
   ): Promise<ChatCompletionResult | undefined> {
     try {
       const systemContent = history
@@ -198,7 +227,7 @@ export default class GigaChatProvider implements LLMProvider {
           ...history.filter((it) => it.role !== 'system'),
           message as any
         ],
-        model: config.GigaChatModel ?? 'GigaChat',
+        model: this.modelFor(level),
         user
       })
 
@@ -206,15 +235,19 @@ export default class GigaChatProvider implements LLMProvider {
       const usage = usageFromApi(response.usage)
       const created = Math.floor(Date.now() / 1000) // Unix timestamp
 
-      const tokens = totalTokens(usage)
-      if (tokens !== 0) {
+      const total = totalTokens(usage)
+      if (total !== 0 && usage !== undefined) {
+        const { multiplier, modelId } = this.billingFor(level)
         void pushTokensData(ctx, [
-          {
+          tokensRecord(
             workspace,
-            reason: 'complete',
-            tokens,
-            date: new Date().toISOString()
-          }
+            usage.promptTokens,
+            usage.completionTokens,
+            multiplier,
+            reason,
+            modelId,
+            new Date().toISOString()
+          )
         ])
       }
 
@@ -238,7 +271,8 @@ export default class GigaChatProvider implements LLMProvider {
     workspace: WorkspaceUuid,
     history: ChatMessage[] = [],
     skipCache = true,
-    reason = 'chat'
+    reason = 'chat',
+    level?: AILevel
   ): Promise<ChatCompletionWithToolsResult | undefined> {
     try {
       const isDirectMode = contextMode === 'direct'
@@ -261,22 +295,26 @@ export default class GigaChatProvider implements LLMProvider {
           ...(history.filter((it) => it.role !== 'system') as any[]),
           message as any
         ],
-        model: config.GigaChatModel ?? 'GigaChat',
+        model: this.modelFor(level),
         user
       })
 
       const str = response.choices?.[0]?.message?.content ?? undefined
       const usage = usageFromApi(response.usage)
 
-      const tokens = totalTokens(usage)
-      if (tokens !== 0) {
+      const total = totalTokens(usage)
+      if (total !== 0 && usage !== undefined) {
+        const { multiplier, modelId } = this.billingFor(level)
         void pushTokensData(ctx, [
-          {
+          tokensRecord(
             workspace,
+            usage.promptTokens,
+            usage.completionTokens,
+            multiplier,
             reason,
-            tokens,
-            date: new Date().toISOString()
-          }
+            modelId,
+            new Date().toISOString()
+          )
         ])
       }
 
@@ -322,14 +360,23 @@ export default class GigaChatProvider implements LLMProvider {
         usageTokens > 0 ? usageTokens : this.countTokens([{ content: summary, role: 'assistant' as const }])
 
       if (tokens !== 0) {
-        void pushTokensData(ctx, [
-          {
-            workspace,
-            reason: 'summarize',
-            tokens,
-            date: new Date().toISOString()
-          }
-        ])
+        const ru = response?.usage
+        if (ru !== undefined) {
+          const { multiplier, modelId } = this.billingFor()
+          void pushTokensData(ctx, [
+            tokensRecord(
+              workspace,
+              ru.promptTokens,
+              ru.completionTokens,
+              multiplier,
+              'summarize',
+              modelId,
+              new Date().toISOString()
+            )
+          ])
+        } else {
+          void pushTokensData(ctx, [{ workspace, reason: 'summarize', tokens, date: new Date().toISOString() }])
+        }
       }
 
       return { summary, tokens }
@@ -358,9 +405,10 @@ export default class GigaChatProvider implements LLMProvider {
 /**
  * Helper factory to create GigaChat provider when GigaChat is configured.
  */
-export function createGigaChatProvider (ctx: MeasureContext): LLMProvider | undefined {
-  if (config.GigaChatCredentials !== '') {
-    return new GigaChatProvider(ctx)
+export function createGigaChatProvider (ctx: MeasureContext, provider: AIProviderConfig): LLMProvider | undefined {
+  const credentials = (provider.endpointConfig?.credentials as string) ?? config.GigaChatCredentials
+  if (credentials !== '') {
+    return new GigaChatProvider(ctx, provider)
   }
   return undefined
 }

@@ -237,6 +237,29 @@ export async function pushTranscriptDuration (
   }
 }
 
+/**
+ * Build a billing record applying the model's billing multiplier.
+ * billedTokens = (prompt+completion) * tokenMultiplier (rounded up). The model id
+ * is appended to `reason` so usage can be attributed per model in billing.
+ */
+export function tokensRecord (
+  workspace: WorkspaceUuid,
+  promptTokens: number,
+  completionTokens: number,
+  multiplier: number,
+  reason: string,
+  modelId?: string,
+  date: string = new Date().toISOString()
+): AiTokensData {
+  const billed = Math.ceil((promptTokens + completionTokens) * multiplier)
+  return {
+    workspace,
+    reason: modelId !== undefined ? `${reason}:${modelId}` : reason,
+    tokens: billed,
+    date
+  }
+}
+
 export async function pushTokensData (ctx: MeasureContext, data: AiTokensData[]): Promise<void> {
   if (config.BillingUrl === '') return
   try {
