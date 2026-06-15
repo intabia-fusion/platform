@@ -133,9 +133,7 @@ d('e2e: local OpenAI-compatible tool calls', () => {
       }
     }
 
-    const messages: any[] = [
-      { role: 'user', content: 'Use the get_weather tool to tell me the temperature in Paris.' }
-    ]
+    const messages: any[] = [{ role: 'user', content: 'Use the get_weather tool to tell me the temperature in Paris.' }]
 
     // Round 1: expect a tool call.
     const first = await step(messages, [weatherTool])

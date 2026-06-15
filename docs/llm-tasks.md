@@ -64,13 +64,17 @@
 - [ ] Детали: `foundation-tasks/markdown-paste-marks-exclusion.md`.
 
 ### T15. Системные промпты в prompts.yaml
-- [ ] Вынести все промпты из `src/llms/prompts.ts` в `prompts.yaml` (в проекте пода).
-- [ ] Загрузчик: под читает yaml, fallback на встроенные дефолты; путь
-      `PROMPTS_PATH` / inline через CONFIG_YAML.
-- [ ] Шаблоны с подстановкой (lang, assistant/user memory, sharedContext, history) -
-      сохранить текущие плейсхолдеры.
-- [ ] Возможность переопределить каждый промпт (admin/конфиг).
-- [ ] Тест: загрузка yaml + подстановка переменных.
+- [x] Все промпты вынесены в `services/ai-bot/pod-ai-bot/prompts.yaml`.
+- [x] `promptStore.ts`: загрузка yaml + рендер шаблонов
+      (`{{var}}`, условные `{{#var}}...{{/var}}`). БЕЗ fallback на дефолты -
+      отсутствие файла/ключа/пустой yaml -> throw (fail fast).
+- [x] Путь: `PROMPTS_PATH` env -> `cwd/prompts.yaml` (docker) -> package root (dev).
+- [x] `prompts.ts`: `PROMPTS.*` рендерят из yaml (lazy cache), сигнатуры не менялись -
+      провайдеры не тронуты. `reloadPrompts()` для hot-reload/тестов.
+- [x] Dockerfile: `COPY prompts.yaml ./`.
+- [x] Тесты `prompt-store.spec.ts` (13): рендер, условные блоки, throw на
+      missing/empty/incomplete, override, реальный prompts.yaml.
+- [x] e2e-provider проверяет рендер всех промптов на живой модели.
 
 ## P1 - вторая очередь
 

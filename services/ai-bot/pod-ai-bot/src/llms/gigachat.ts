@@ -318,7 +318,8 @@ export default class GigaChatProvider implements LLMProvider {
 
       // Use the encoding to count tokens
       const usageTokens = totalTokens(response?.usage)
-      const tokens = usageTokens > 0 ? usageTokens : this.countTokens([{ content: summary, role: 'assistant' as const }])
+      const tokens =
+        usageTokens > 0 ? usageTokens : this.countTokens([{ content: summary, role: 'assistant' as const }])
 
       if (tokens !== 0) {
         void pushTokensData(ctx, [

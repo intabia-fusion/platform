@@ -571,7 +571,7 @@ export class WorkspaceClient {
     }
     const usageTokens = totalTokens(chatCompletion?.usage)
     const responseTokens =
-      usageTokens > 0 ? usageTokens : this.llm?.countTokens([{ role: 'assistant', content: response }]) ?? 0
+      usageTokens > 0 ? usageTokens : (this.llm?.countTokens([{ role: 'assistant', content: response }]) ?? 0)
 
     await this.pushHistory(personUuid, response, 'assistant', responseTokens, personUuid, objectId, objectClass)
 
