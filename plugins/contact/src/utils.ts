@@ -670,11 +670,6 @@ export async function ensureEmployeeForPerson (
       }
     }
 
-    ctx.info('ensureEmployeeForPerson: SocialIdentity sync done', {
-      personUuid: person.uuid,
-      types: socialIds.map(sid => sid.type)
-    })
-
     // NOTE: it is important to create Employee after Person and SocialIdentities are ensured so all the triggers applied
     // on Employee creation will be able to properly map things
     if (createEmployee) {
