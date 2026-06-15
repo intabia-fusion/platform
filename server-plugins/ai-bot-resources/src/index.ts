@@ -13,16 +13,7 @@
 // limitations under the License.
 //
 
-import core, {
-  AccountUuid,
-  Doc,
-  PersonId,
-  Ref,
-  SortingOrder,
-  Tx,
-  TxCreateDoc,
-  TxProcessor
-} from '@hcengineering/core'
+import core, { AccountUuid, Doc, PersonId, Ref, SortingOrder, Tx, TxCreateDoc, TxProcessor } from '@hcengineering/core'
 import { PlatformQueueProducer, QueueTopic, TriggerControl } from '@hcengineering/server-core'
 import aiBot, { aiBotEmailSocialKey, AIEventRequest } from '@hcengineering/ai-bot'
 import chunter, { ChatMessage, DirectMessage, ThreadMessage } from '@hcengineering/chunter'
@@ -230,7 +221,8 @@ async function applyLevel (control: TriggerControl, event: AIEventRequest): Prom
       await control.findAll(control.ctx, aiBot.class.AILevelSetting, { attachedTo: event.objectSpace })
     )[0]
     const wsSetting =
-      spaceSetting ?? (await control.findAll(control.ctx, aiBot.class.AILevelSetting, {})).find((s) => s.attachedTo == null)
+      spaceSetting ??
+      (await control.findAll(control.ctx, aiBot.class.AILevelSetting, {})).find((s) => s.attachedTo == null)
     event.level = spaceSetting?.level ?? wsSetting?.level
   } catch (err: any) {
     control.ctx.warn('failed to apply AI level', { error: err?.message })

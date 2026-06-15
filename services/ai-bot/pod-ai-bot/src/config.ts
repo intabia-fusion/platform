@@ -69,7 +69,17 @@ interface Config {
   AvatarContentType: string
   Password: string
 
-  Mode: 'queue' | 'client' // In queue mode we start server and listen for queue events and pass to providers or clients.
+  // Pod role. One binary, several roles selected by MODE:
+  // - 'all'           : everything (event-router + llm-router + stt-worker), legacy alias 'queue'
+  // - 'event-router'  : read ai-queue, resolve model, route to llm-<id> topics
+  // - 'llm-router'    : read llm-<id> for LLMProviderIds, run providers (+ClisrServer for clisr)
+  // - 'stt-worker'    : consume TranscriptionQueue, transcribe (+ClisrServer for transcribers)
+  // - 'client'        : legacy clisr worker (connects to a server/router)
+  // STT ingest (HTTP audio + placeholder + producer) + meeting lifecycle run in
+  // EVERY role by default (stateless, cheap) so love can post audio to any pod.
+  Mode: 'all' | 'queue' | 'client' | 'event-router' | 'llm-router' | 'stt-worker'
+  // For 'llm-router': which provider ids this pod serves (empty = all in the registry).
+  LLMProviderIds: string[]
   // In client mode we connect to accounts server and wait for requests.
   ServerUrl: string
   ApiToken: string // Api token for clients to handle server in LLMProvider and STT provider 'server' mode.
@@ -310,6 +320,10 @@ const config: Config = (() => {
     ServiceID: yamlConfig?.accounts?.serviceId ?? process.env.SERVICE_ID ?? 'ai-bot-service',
 
     Mode: (process.env.MODE ?? 'queue') as Config['Mode'],
+    LLMProviderIds: (process.env.LLM_PROVIDER_IDS ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s !== ''),
     ServerUrl: process.env.SERVER_URL ?? '',
     ApiToken: process.env.API_TOKEN ?? '',
 
@@ -390,10 +404,12 @@ const config: Config = (() => {
     DebugDir: yamlConfig?.debug?.dir ?? process.env.DEBUG_DIR ?? ''
   }
 
+  // 'client' is a thin clisr worker (only needs the server endpoint); every other
+  // role talks to accounts/queues and needs the full config.
   const keys =
-    params.Mode === 'queue'
-      ? (Object.keys(params) as Array<keyof Config>)
-      : (['ServerUrl', 'ApiToken'] as Array<keyof Config>)
+    params.Mode === 'client'
+      ? (['ServerUrl', 'ApiToken'] as Array<keyof Config>)
+      : (Object.keys(params) as Array<keyof Config>)
   const missingEnv = keys.filter((key) => params[key] === undefined)
 
   if (missingEnv.length > 0) {

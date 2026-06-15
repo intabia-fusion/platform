@@ -178,20 +178,25 @@ GigaChat/clisr держат один клиент и выбирают модел
       (`plugins/presence-resources/src/typing.ts`): создать при processing,
       снять по done/failed; передавать прогноз (расширить status/поле ETA).
 
-### T9. aibot-router + параллельно с остальными провайдерами
-- [ ] Выделить aibot-router (`Mode=router`): clisr-сервер с типом
-      `ROUTER_KIND = all|llm|asr` (один router на всё, либо отдельные llm/asr);
-      обработчики подключаются, объявляют capability в handshake (`llm`/`transcription`),
-      router принимает только подходящие.
-- [ ] Адресация пода: LLM - `AIModelConfig.endpoint`, STT - `STT_ROUTER_URL`
-      (или общий `all`-router).
-- [ ] ai-bot поды - клиенты router-а; LLM: `provider:'clisr'` в реестре, STT:
-      `STT_PROVIDER=server` -> тот же router; маршрутизация filter по capability
-      + round-robin (`requestWithFilter`, уже есть `selectLLMClient` /
-      `s.options.transcription`).
-- [ ] Транскрибаторы подключаются к router как clisr-клиенты с
-      `transcription: true` (вынести из текущего client mode в router-топологию).
-- [ ] Hosted Intabia = LLM-обработчики под фиксированным именем, уровень low.
+### T9. Роли пода (один бинарь, MODE)
+ПЕРЕОСМЫСЛЕНО: вместо `ROUTER_KIND` - роли через `MODE`. Очередь = развязка,
+неважно кто где. Один под, несколько ролей:
+- [x] `MODE=event-router`: читает ai-queue, резолвит модель (по `event.level`),
+      перекладывает в `llm-<id>`. Чистый Kafka->Kafka. (`startEventRouterMode`)
+- [x] `MODE=llm-router`: читает `llm-<id>` для `LLM_PROVIDER_IDS` (csv, пусто=все),
+      поднимает провайдеры из реестра, batch+RateLimiter per provider. Для clisr -
+      ClisrServer (handshake `llm`), обработчики подключаются. (`startLlmRouterMode`)
+- [x] STT РАЗДЕЛЕН (T9-4): `stt-ingest` (HTTP audio + placeholder + producer +
+      love-lifecycle) работает у ВСЕХ ролей по умолчанию (stateless, love шлёт на
+      любой под; фикс бага потерянных тасков). `stt-worker` = consumer
+      TranscriptionQueue + ClisrServer (handshake `transcription`, транскрибаторы
+      подключаются) - масштаб consumer-group. (`startSttIngest`/`startSttWorker`)
+- [x] `MODE=all` (=`queue` legacy) = все роли. `MODE=client` = clisr-обработчик.
+      `bootstrap()` общий, `finalize()` shutdown. ingest вездесущий.
+- [x] Маршрутизация по capability + round-robin уже в clisr `requestWithFilter`
+      (`selectLLMClient` / `s.options.transcription`) - переиспользуется.
+- [ ] Транскрибаторы как отдельный clisr-клиент (сейчас через `MODE=client`) -
+      оформить отдельным деплоем. Hosted Intabia LLM-обработчики - отдельно.
 
 ### T10. Масштабирование gateway
 - [ ] Вынести остатки in-memory state; N реплик gateway (consumer group).
