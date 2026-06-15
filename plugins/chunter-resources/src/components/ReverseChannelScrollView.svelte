@@ -654,7 +654,7 @@
     removeTxListener(newMessageTxListener)
   })
 
-  $: showBlankView = !($isLoadingStore || !isReadStateLoaded) && messages.length === 0
+  $: showBlankView = !($isLoadingStore || !isReadStateLoaded) && messages.length === 0 && !isThread
 
   export function editLastMessage (): void {
     if ($isLoadingStore || !isReadStateLoaded || !isScrollInitialized || !$isTailLoadedStore || scrollDiv == null) {
@@ -721,13 +721,17 @@
       />
     {/if}
 
-    <HistoryLoading isLoading={$isLoadingMoreStore} />
+    {#if !isThread}
+      <HistoryLoading isLoading={$isLoadingMoreStore} />
+    {/if}
 
     <slot name="header" />
 
     {#each messageGroups as group (group.day)}
       <div class="day-group">
-        <JumpToDateSelector timestamp={group.day} on:jumpToDate={handleJumpToDate} />
+        {#if !isThread}
+          <JumpToDateSelector timestamp={group.day} on:jumpToDate={handleJumpToDate} />
+        {/if}
         {#each group.messages as message, index (message._id)}
           {@const isSelected = message._id === selectedMessageId}
           {@const canGroup = index > 0 && canGroupMessages(message, group.messages[index - 1])}

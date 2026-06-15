@@ -143,7 +143,10 @@ export class NotificationMiddleware extends BaseMiddleware {
           attachedToClass,
           collection: 'readStates'
         })
-        await this.context.derived?.tx(ctx, [ttx])
+        const systemCtx = Object.create(ctx)
+        systemCtx.contextData = Object.create(ctx.contextData)
+        systemCtx.contextData.isTriggerCtx = true
+        await this.context.derived?.tx(systemCtx, [ttx])
       }
     } else if (tx._class === core.class.TxUpdateDoc && tx.objectClass === notification.class.ReadState) {
       if (this.isSystemAccess(ctx)) return true
