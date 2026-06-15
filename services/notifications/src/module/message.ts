@@ -34,7 +34,8 @@ import notification, {
   UnreadMessage,
   UnreadMessageChunk,
   isUnreadMessageId,
-  isUnreadMessageChunk
+  isUnreadMessageChunk,
+  ContextNotification
 } from '@hcengineering/notification'
 import { truncateMessage, Sender, Receiver } from '@hcengineering/server-notification'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
@@ -55,13 +56,13 @@ import {
   getLastNotify,
   hasMentionNotificationByMessage,
   getAttachments,
-  getUpdateOpContextTx,
   getCreateContextTx
 } from '../utils/utils'
 import { Client, Result, TxCache, NotifyProviders } from '../types'
 import Cache from '../cache'
 import { pushNotification as _pushNotification } from './notification'
 import { appendAndCollapseUnreadMessages } from '../utils/collapse'
+import config from '../config'
 
 export async function handleMessage (
   client: Client,
@@ -175,16 +176,15 @@ async function handleRemoveMessage (
   const contexts = await cache.getContexts(tx.attachedTo)
 
   for (const context of contexts) {
-    const operations: DocumentUpdate<DocNotifyContext> = {}
+    let operations: DocumentUpdate<DocNotifyContext> = {}
     const idsToRemove: string[] = getNotificationsByMessage(context, tx.objectId).map((it) => it.id)
 
     if (idsToRemove.length > 0) {
-      operations.$pull = {
-        ...operations.$pull,
-        latestNotifications: { id: { $in: idsToRemove } }
+      operations = {
+        ...(await restoreLatestNotifications(client, context, idsToRemove))
       }
     }
-    const unread = context.unreadMessages?.find((it) => isUnreadMessageId(it) && it.id === tx.objectId)
+    const unread = context.unreadMessages?.find((it) => isUnreadMessageId(it) && String(it.id) === String(tx.objectId))
     if (unread != null) {
       operations.$pull = {
         ...operations.$pull,
@@ -199,11 +199,12 @@ async function handleRemoveMessage (
     } else {
       const createdOn = tx.meta?.createdOn as Timestamp | undefined
       if (createdOn !== undefined) {
-        const chunkIndex = context.unreadMessages.findIndex(
+        const unreadMessages = context.unreadMessages ?? []
+        const chunkIndex = unreadMessages.findIndex(
           (it) => isUnreadMessageChunk(it) && it.from <= createdOn && createdOn <= it.to
         )
         if (chunkIndex !== -1) {
-          const chunk = { ...context.unreadMessages[chunkIndex] } as any as UnreadMessageChunk
+          const chunk = { ...unreadMessages[chunkIndex] } as any as UnreadMessageChunk
           let decrease = 0
           if (chunk.count > 1) {
             chunk.count -= 1
@@ -214,15 +215,15 @@ async function handleRemoveMessage (
                 delete chunk.notifiedCount
               }
             }
-            context.unreadMessages[chunkIndex] = chunk
+            unreadMessages[chunkIndex] = chunk as any
           } else {
             if (chunk.notifiedCount === 1) {
               decrease = 1
             }
-            context.unreadMessages.splice(chunkIndex, 1)
+            unreadMessages.splice(chunkIndex, 1)
           }
 
-          operations.unreadMessages = context.unreadMessages
+          operations.unreadMessages = unreadMessages
           if (decrease > 0) {
             operations.$inc = {
               ...operations.$inc,
@@ -247,19 +248,14 @@ async function handleRemoveMessage (
 
     if (Object.keys(operations).length === 0) continue
 
-    const updateOpTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, operations)
-    const updateTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, {})
-    const updatedContext = TxProcessor.updateDoc2Doc(context, updateOpTx)
+    const updateTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, operations)
+    const updatedContext = TxProcessor.updateDoc2Doc(context, updateTx)
     const lastNotify = getLastNotify(updatedContext)
 
     if (lastNotify !== context.lastNotify) {
       updateTx.operations.lastNotify = lastNotify
     }
-    if (Object.keys(updateTx.operations).length > 0) {
-      result.updateContextTx.push(updateTx)
-    }
-
-    result.updateOpContextTx.push(updateOpTx)
+    result.updateContextTx.push(updateTx)
   }
 }
 
@@ -316,7 +312,7 @@ async function handleUpdateMessage (
     }
 
     if (Object.keys(ops).length > 0) {
-      result.updateOpContextTx.push(client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, ops))
+      result.updateContextTx.push(client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, ops))
     }
   }
 }
@@ -470,15 +466,16 @@ export async function addUnreadMessage (
 ): Promise<void> {
   if (context != null) {
     const { collapsed, didCollapse } = appendAndCollapseUnreadMessages(context.unreadMessages ?? [], unreadMessage)
-    const updateOpTx = getUpdateOpContextTx(context, result, client.txFactory)
+    const operations: DocumentUpdate<DocNotifyContext> = {}
     if (didCollapse) {
-      updateOpTx.operations.unreadMessages = collapsed
+      operations.unreadMessages = collapsed
     } else {
-      updateOpTx.operations.$push = {
-        ...updateOpTx.operations.$push,
+      operations.$push = {
         unreadMessages: unreadMessage
       }
     }
+    const updateTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, operations)
+    result.updateContextTx.push(updateTx)
   } else {
     const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
     const createTx = getCreateContextTx(
@@ -492,6 +489,11 @@ export async function addUnreadMessage (
       objectDisplayData
     )
     createTx.attributes.unreadMessages = [unreadMessage]
+    createTx.attributes.unreadCount = isUnreadMessageChunk(unreadMessage)
+      ? (unreadMessage.notifiedCount ?? 0)
+      : unreadMessage.notified === true
+        ? 1
+        : 0
   }
 }
 
@@ -549,7 +551,9 @@ function pullDUMFromContext (
   result: Result
 ): void {
   const exists = hasMessageNotification(context, objectId)
-  const unread = context.unreadMessages.find((it) => isUnreadMessageId(it) && it.id === objectId)
+  const unread = (context.unreadMessages ?? []).find(
+    (it) => isUnreadMessageId(it) && String(it.id) === String(objectId)
+  )
 
   if (exists || unread != null) {
     const updateOps: DocumentUpdate<DocNotifyContext> = { $pull: {} }
@@ -572,8 +576,78 @@ function pullDUMFromContext (
       }
     }
 
-    result.updateOpContextTx.push(
+    result.updateContextTx.push(
       client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, updateOps)
     )
   }
+}
+
+async function restoreLatestNotifications (
+  client: Client,
+  context: DocNotifyContext,
+  idsToRemove: string[]
+): Promise<DocumentUpdate<DocNotifyContext>> {
+  const remaining = (context.latestNotifications ?? []).filter((n) => !idsToRemove.includes(n.id))
+  const targetSize = config.LatestNotificationsSliceSize
+  const needed = targetSize - remaining.length
+
+  const operations: DocumentUpdate<DocNotifyContext> = {}
+
+  if (needed <= 0) {
+    if (idsToRemove.length > 0) {
+      operations.$pull = {
+        latestNotifications: { id: { $in: idsToRemove } }
+      }
+    }
+    return operations
+  }
+
+  const candidates = (context.unreadMessages ?? []).filter(isUnreadMessageId).filter((it) => {
+    return (
+      it.notified === true &&
+      !idsToRemove.includes(it.id) &&
+      !remaining.some((n) => n.type === 'message' && n.id === it.id)
+    )
+  })
+
+  if (candidates.length === 0) {
+    if (idsToRemove.length > 0) {
+      operations.$pull = {
+        latestNotifications: { id: { $in: idsToRemove } }
+      }
+    }
+    return operations
+  }
+
+  candidates.sort((a, b) => b.createdOn - a.createdOn)
+
+  const restoreCandidates = candidates.slice(0, needed)
+  const restoredNotifications: ContextNotification[] = []
+
+  for (const candidate of restoreCandidates) {
+    const message = await client.findOne(activity.class.ActivityMessage, { _id: candidate.id })
+    if (message != null) {
+      const attachments = await getAttachments(message, client)
+      restoredNotifications.push({
+        id: message._id,
+        type: 'message',
+        messageId: message._id,
+        message: toNotificationMessage(message),
+        attachments,
+        createdOn: message.createdOn ?? message.modifiedOn,
+        createdBy: message.createdBy ?? message.modifiedBy
+      })
+    }
+  }
+
+  if (restoredNotifications.length > 0) {
+    const combined = [...remaining, ...restoredNotifications].sort((a, b) => b.createdOn - a.createdOn)
+    operations.latestNotifications = combined.slice(0, targetSize)
+  } else if (idsToRemove.length > 0) {
+    operations.$pull = {
+      latestNotifications: { id: { $in: idsToRemove } }
+    }
+  }
+
+  return operations
 }

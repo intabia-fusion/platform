@@ -374,8 +374,8 @@ describe('handleReaction', () => {
 
       await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
 
-      expect(result.updateOpContextTx).toHaveLength(1)
-      expect(result.updateOpContextTx[0]).toEqual({
+      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx[0]).toEqual({
         _class: core.class.TxUpdateDoc,
         objectId: 'ctx-1',
         space: 'space-1',
@@ -384,7 +384,8 @@ describe('handleReaction', () => {
             unreadReactions: { id: 'react-1' },
             latestNotifications: { id: 'react-1' }
           },
-          $inc: { unreadCount: -1 }
+          $inc: { unreadCount: -1 },
+          lastNotify: 0
         }
       })
     })

@@ -25,7 +25,6 @@ describe('result utils', () => {
       const res = emptyResult()
       expect(res).toEqual({
         updateContextTx: [],
-        updateOpContextTx: [],
         createContextTx: [],
         createAppPushNotificationTx: [],
         queueMessages: [],
@@ -53,7 +52,6 @@ describe('result utils', () => {
           mockTx('c2', 10) as unknown as TxCreateDoc<DocNotifyContext>
         ],
         updateContextTx: [mockTx('u1', 5) as unknown as TxUpdateDoc<DocNotifyContext>],
-        updateOpContextTx: [mockTx('op1', 15) as unknown as TxUpdateDoc<DocNotifyContext>],
         createUserMentionInfoTx: [mockTx('cum1', 25) as unknown as TxCreateDoc<UserMentionInfo>],
         updateUserMentionInfoTx: [mockTx('uum1', 2) as unknown as TxUpdateDoc<UserMentionInfo>],
         removeUserMentionInfoTx: [mockTx('rum1', 30) as unknown as TxRemoveDoc<UserMentionInfo>],
@@ -61,7 +59,7 @@ describe('result utils', () => {
       }
 
       const txes = getResultTxes(result)
-      const expectedOrder = ['apn1', 'uum1', 'u1', 'c2', 'op1', 'c1', 'cum1', 'rum1']
+      const expectedOrder = ['apn1', 'uum1', 'u1', 'c2', 'c1', 'cum1', 'rum1']
       expect(txes.map((t) => t._id)).toEqual(expectedOrder)
     })
 

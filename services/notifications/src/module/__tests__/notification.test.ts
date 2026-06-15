@@ -115,7 +115,6 @@ jest.mock('@hcengineering/core', () => {
 })
 
 const mockGetCreateContextTx = jest.fn()
-const mockGetUpdateContextTx = jest.fn()
 const mockGetNotificationUrl = jest.fn()
 const mockGetDomain = jest.fn()
 const mockGetNotificationLocation = jest.fn()
@@ -123,7 +122,6 @@ const mockGetNotificationLocation = jest.fn()
 jest.mock('../../utils/utils', () => {
   return {
     getCreateContextTx: (...args: any[]) => mockGetCreateContextTx(...args),
-    getUpdateContextTx: (...args: any[]) => mockGetUpdateContextTx(...args),
     getNotificationUrl: (...args: any[]) => mockGetNotificationUrl(...args),
     getDomain: (...args: any[]) => mockGetDomain(...args),
     getNotificationLocation: (...args: any[]) => mockGetNotificationLocation(...args)
@@ -199,7 +197,6 @@ describe('pushNotification', () => {
     mockTranslate.mockReset()
     mockGenerateId.mockReset()
     mockGetCreateContextTx.mockReset()
-    mockGetUpdateContextTx.mockReset()
     mockGetNotificationUrl.mockReset()
     mockGetDomain.mockReset()
     mockGetNotificationLocation.mockReset()
@@ -216,9 +213,6 @@ describe('pushNotification', () => {
       attributes: {
         latestNotifications: []
       }
-    }))
-    mockGetUpdateContextTx.mockImplementation(() => ({
-      operations: {}
     }))
   })
 
@@ -346,7 +340,6 @@ describe('pushNotification', () => {
 
   describe('context update path (context exists)', () => {
     let context: DocNotifyContext
-    let mockUpdateTx: any
 
     beforeEach(() => {
       context = {
@@ -355,30 +348,21 @@ describe('pushNotification', () => {
         space: 'existing-space',
         lastNotify: 50
       } as unknown as DocNotifyContext
-
-      mockUpdateTx = {
-        operations: {
-          lastNotify: 50
-        }
-      }
-      mockGetUpdateContextTx.mockReturnValue(mockUpdateTx)
     })
 
     it('handles context update when context exists', async () => {
       await pushNotification(mockClient, txCache, result, context, mockData)
-
-      expect(mockGetUpdateContextTx).toHaveBeenCalledWith(context, result, mockClient.txFactory)
-      expect(mockUpdateTx.operations.lastNotify).toBe(100)
 
       expect(mockClient.txFactory.createTxUpdateDoc).toHaveBeenCalledWith(
         'DocNotifyContextClass',
         'existing-space',
         'existing-ctx-id',
         {
+          lastNotify: 100,
           $push: { latestNotifications: { $each: [mockData.notification], $position: 0, $slice: 5 } }
         }
       )
-      expect(result.updateOpContextTx).toHaveLength(1)
+      expect(result.updateContextTx).toHaveLength(1)
     })
 
     it('handles context update and increments unreadCount when unreadMessage is present', async () => {
@@ -390,6 +374,7 @@ describe('pushNotification', () => {
         'existing-space',
         'existing-ctx-id',
         {
+          lastNotify: 100,
           $push: {
             latestNotifications: { $each: [mockData.notification], $position: 0, $slice: 5 },
             unreadMessages: { id: 'msg-1' }
@@ -404,7 +389,7 @@ describe('pushNotification', () => {
 
       await pushNotification(mockClient, txCache, result, context, mockData)
 
-      const updateOpTx = result.updateOpContextTx[0]
+      const updateOpTx = result.updateContextTx[0]
       expect(updateOpTx.operations.$push).toEqual(
         expect.objectContaining({
           unreadMessages: { id: 'msg-1' }
@@ -417,7 +402,7 @@ describe('pushNotification', () => {
 
       await pushNotification(mockClient, txCache, result, context, mockData)
 
-      const updateOpTx = result.updateOpContextTx[0]
+      const updateOpTx = result.updateContextTx[0]
       expect(updateOpTx.operations.$push).toEqual(
         expect.objectContaining({
           unreadReactions: { id: 'react-1' }
@@ -430,7 +415,7 @@ describe('pushNotification', () => {
 
       await pushNotification(mockClient, txCache, result, context, mockData)
 
-      const updateOpTx = result.updateOpContextTx[0]
+      const updateOpTx = result.updateContextTx[0]
       expect(updateOpTx.operations.$push).toEqual(
         expect.objectContaining({
           unreadMentions: { messageId: 'msg-1' }
@@ -443,7 +428,7 @@ describe('pushNotification', () => {
 
       await pushNotification(mockClient, txCache, result, context, mockData)
 
-      const updateOpTx = result.updateOpContextTx[0]
+      const updateOpTx = result.updateContextTx[0]
       expect(updateOpTx.operations.$push).toEqual(
         expect.objectContaining({
           unreadCommons: { id: 'common-1' }
@@ -463,7 +448,7 @@ describe('pushNotification', () => {
 
       await pushNotification(mockClient, txCache, result, context, mockData)
 
-      const updateOpTx = result.updateOpContextTx[0]
+      const updateOpTx = result.updateContextTx[0]
       expect(updateOpTx.operations.unreadMessages).toBeDefined()
       expect(updateOpTx.operations.$push?.unreadMessages).toBeUndefined()
       expect(updateOpTx.operations.unreadMessages).toHaveLength(29)
@@ -636,8 +621,8 @@ describe('pushNotification', () => {
       await pushNotification(mockClient, txCache, result, context, mockData)
 
       // It should still push the notification to latestNotifications
-      expect(result.updateOpContextTx).toHaveLength(1)
-      const op = result.updateOpContextTx[0].operations as any
+      expect(result.updateContextTx).toHaveLength(1)
+      const op = result.updateContextTx[0].operations as any
       expect(op.$push.latestNotifications).toBeDefined()
       expect(op.$inc).toBeUndefined() // No unreadCount increment!
       expect(op.unreadMessages).toBeUndefined() // No unread messages updated!

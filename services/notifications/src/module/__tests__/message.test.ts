@@ -31,10 +31,17 @@ import { Employee, PersonSpace } from '@hcengineering/contact'
 import { Result, TxCache } from '../../types'
 import { handleMessage, addUnreadMessage } from '../message'
 
+jest.mock('../../config', () => ({
+  __esModule: true,
+  default: {
+    LatestNotificationsSliceSize: 5
+  },
+  LatestNotificationsSliceSize: 5
+}))
+
 function createEmptyResult (): Result {
   return {
     updateContextTx: [],
-    updateOpContextTx: [],
     createContextTx: [],
     createAppPushNotificationTx: [],
     queueMessages: [],
@@ -102,7 +109,6 @@ const mockGetLastNotify = jest.fn()
 const mockHasMentionNotificationByMessage = jest.fn()
 const mockHasUnreadMentionByMessage = jest.fn()
 const mockGetAttachments = jest.fn()
-const mockGetUpdateOpContextTx = jest.fn()
 const mockGetCreateContextTx = jest.fn()
 
 jest.mock('../../utils/utils', () => {
@@ -122,7 +128,6 @@ jest.mock('../../utils/utils', () => {
     hasMentionNotificationByMessage: (...args: any[]) => mockHasMentionNotificationByMessage(...args),
     hasUnreadMentionByMessage: (...args: any[]) => mockHasUnreadMentionByMessage(...args),
     getAttachments: (...args: any[]) => mockGetAttachments(...args),
-    getUpdateOpContextTx: (...args: any[]) => mockGetUpdateOpContextTx(...args),
     getCreateContextTx: (...args: any[]) => mockGetCreateContextTx(...args)
   }
 })
@@ -159,7 +164,8 @@ describe('message module', () => {
       hierarchy: {
         isDerived: jest.fn().mockReturnValue(false),
         getClass: jest.fn().mockReturnValue({ label: 'DocLabel' })
-      }
+      },
+      findOne: jest.fn()
     }
 
     mockCache = {
@@ -193,7 +199,6 @@ describe('message module', () => {
     mockHasMentionNotificationByMessage.mockReset()
     mockHasUnreadMentionByMessage.mockReset()
     mockGetAttachments.mockReset()
-    mockGetUpdateOpContextTx.mockReset()
     mockGetCreateContextTx.mockReset()
     mockCache.getDocReadState.mockReset()
 
@@ -215,11 +220,6 @@ describe('message module', () => {
     mockHasMentionNotificationByMessage.mockReturnValue(false)
     mockHasUnreadMentionByMessage.mockReturnValue(false)
     mockGetAttachments.mockResolvedValue([])
-    mockGetUpdateOpContextTx.mockImplementation((context, res, factory) => {
-      const tx = factory.createTxUpdateDoc(context._class, context.space, context._id, {})
-      res.updateOpContextTx.push(tx)
-      return tx
-    })
     mockGetCreateContextTx.mockImplementation((id, objId, objCls, objSpace, receiver, res, factory, display) => {
       const tx = factory.createTxCreateDoc('DocNotifyContext', receiver.space, {
         unreadMessages: []
@@ -512,8 +512,8 @@ describe('message module', () => {
 
       await handleMessage(mockClient, mockCache, txCache, result, tx)
 
-      expect(result.updateOpContextTx).toHaveLength(1)
-      expect(result.updateOpContextTx[0].operations).toEqual({
+      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx[0].operations).toEqual({
         $pull: {
           latestNotifications: { id: { $in: ['msg-1'] } },
           unreadMessages: { id: 'msg-1' },
@@ -521,11 +521,9 @@ describe('message module', () => {
         },
         $inc: {
           unreadCount: -2 // -1 for unreadMessage notified, -1 for reaction
-        }
+        },
+        lastNotify: 40
       })
-
-      expect(result.updateContextTx).toHaveLength(1)
-      expect(result.updateContextTx[0].operations.lastNotify).toBe(40)
     })
 
     it('decrements unread count and count of chunk if deleted message is inside a chunk', async () => {
@@ -551,11 +549,11 @@ describe('message module', () => {
 
       await handleMessage(mockClient, mockCache, txCache, result, tx)
 
-      expect(result.updateOpContextTx).toHaveLength(1)
-      expect(result.updateOpContextTx[0].operations.unreadMessages).toEqual([
+      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx[0].operations.unreadMessages).toEqual([
         { from: 1000, to: 1009, count: 9, notifiedCount: 9 }
       ])
-      expect(result.updateOpContextTx[0].operations.$inc).toEqual({
+      expect(result.updateContextTx[0].operations.$inc).toEqual({
         unreadCount: -1
       })
     })
@@ -583,11 +581,74 @@ describe('message module', () => {
 
       await handleMessage(mockClient, mockCache, txCache, result, tx)
 
-      expect(result.updateOpContextTx).toHaveLength(1)
-      expect(result.updateOpContextTx[0].operations.unreadMessages).toEqual([])
-      expect(result.updateOpContextTx[0].operations.$inc).toEqual({
+      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx[0].operations.unreadMessages).toEqual([])
+      expect(result.updateContextTx[0].operations.$inc).toEqual({
         unreadCount: -1
       })
+    })
+
+    it('restores next latest notifications if needed', async () => {
+      const tx = {
+        _class: core.class.TxRemoveDoc,
+        objectId: 'msg-1',
+        attachedTo: 'doc-1'
+      } as unknown as TxRemoveDoc<ActivityMessage>
+
+      const context = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContext',
+        space: 'space-1',
+        latestNotifications: [
+          { id: 'msg-1', createdOn: 100, type: 'message' },
+          { id: 'msg-2', createdOn: 150, type: 'message' },
+          { id: 'msg-3', createdOn: 160, type: 'message' },
+          { id: 'msg-4', createdOn: 170, type: 'message' }
+        ],
+        unreadMessages: [
+          { id: 'msg-1', createdOn: 100, notified: true },
+          { id: 'msg-2', createdOn: 150, notified: true },
+          { id: 'msg-5', createdOn: 200, notified: true },
+          { id: 'msg-6', createdOn: 300, notified: true }
+        ],
+        unreadReactions: [],
+        unreadMentions: []
+      } as unknown as DocNotifyContext
+
+      mockCache.getContexts.mockResolvedValue([context])
+      mockGetNotificationsByMessage.mockReturnValue([{ id: 'msg-1', type: 'message' }])
+
+      const msg5Doc = {
+        _id: 'msg-5',
+        createdBy: 'user-1',
+        createdOn: 200,
+        message: 'Hello 5'
+      }
+      const msg6Doc = {
+        _id: 'msg-6',
+        createdBy: 'user-2',
+        createdOn: 300,
+        message: 'Hello 6'
+      }
+
+      mockClient.findOne.mockImplementation(async (clazz: any, query: any) => {
+        if (query._id === 'msg-5') return msg5Doc
+        if (query._id === 'msg-6') return msg6Doc
+        return null
+      })
+
+      await handleMessage(mockClient, mockCache, txCache, result, tx)
+
+      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx[0].operations.latestNotifications).toBeDefined()
+      expect(result.updateContextTx[0].operations.latestNotifications).toHaveLength(5)
+      expect(result.updateContextTx[0].operations.latestNotifications?.map((it: any) => it.id)).toEqual([
+        'msg-6',
+        'msg-5',
+        'msg-4',
+        'msg-3',
+        'msg-2'
+      ])
     })
   })
 
@@ -637,8 +698,8 @@ describe('message module', () => {
 
       await handleMessage(mockClient, mockCache, txCache, result, mockTx)
 
-      expect(result.updateOpContextTx).toHaveLength(1)
-      expect(result.updateOpContextTx[0].operations).toEqual({
+      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx[0].operations).toEqual({
         $update: {
           latestNotifications: {
             $query: { messageId: 'msg-1' },
@@ -672,8 +733,8 @@ describe('message module', () => {
 
       await handleMessage(mockClient, mockCache, txCache, result, mockTx)
 
-      expect(result.updateOpContextTx).toHaveLength(1)
-      expect(result.updateOpContextTx[0].operations).toEqual({
+      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx[0].operations).toEqual({
         $update: {
           latestNotifications: {
             $query: { type: 'mention', messageId: 'msg-1' },
@@ -774,8 +835,8 @@ describe('message module', () => {
       await handleMessage(mockClient, mockCache, txCache, result, mockTx)
 
       // Should pull DUM from context
-      expect(result.updateOpContextTx).toHaveLength(1)
-      expect(result.updateOpContextTx[0].operations).toEqual({
+      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx[0].operations).toEqual({
         $pull: {
           latestNotifications: { id: 'msg-1' },
           unreadMessages: { id: 'msg-1' }
@@ -802,8 +863,7 @@ describe('message module', () => {
 
       await addUnreadMessage(mockClient, receiver as Receiver, doc as Doc, unreadMessage, context, result, txCache)
 
-      expect(mockGetUpdateOpContextTx).toHaveBeenCalledWith(context, result, mockClient.txFactory)
-      expect(result.updateOpContextTx[0].operations.$push).toEqual({
+      expect(result.updateContextTx[0].operations.$push).toEqual({
         unreadMessages: unreadMessage
       })
     })
@@ -839,10 +899,9 @@ describe('message module', () => {
 
       await addUnreadMessage(mockClient, receiver as Receiver, doc as Doc, newMsg, context, result, txCache)
 
-      expect(mockGetUpdateOpContextTx).toHaveBeenCalledWith(context, result, mockClient.txFactory)
-      expect(result.updateOpContextTx[0].operations.unreadMessages).toBeDefined()
-      expect(result.updateOpContextTx[0].operations.$push).toBeUndefined()
-      expect(result.updateOpContextTx[0].operations.unreadMessages).toHaveLength(29)
+      expect(result.updateContextTx[0].operations.unreadMessages).toBeDefined()
+      expect(result.updateContextTx[0].operations.$push).toBeUndefined()
+      expect(result.updateContextTx[0].operations.unreadMessages).toHaveLength(29)
     })
   })
 })

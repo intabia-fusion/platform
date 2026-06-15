@@ -392,7 +392,7 @@ async function removeMentions (
     }
 
     if (Object.keys(op).length > 0) {
-      result.updateOpContextTx.push(client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, op))
+      result.updateContextTx.push(client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, op))
     }
   }
 }

@@ -181,18 +181,14 @@ async function handleRemoveReaction (
     }
 
     if (Object.keys(ops).length > 0) {
-      const updateOpTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, ops)
-      const updateTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, {})
-      const updatedContext = TxProcessor.updateDoc2Doc(context, updateOpTx)
+      const updateTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, ops)
+      const updatedContext = TxProcessor.updateDoc2Doc(context, updateTx)
       const lastNotify = getLastNotify(updatedContext)
 
       if (lastNotify !== context.lastNotify) {
         updateTx.operations.lastNotify = lastNotify
       }
-      if (Object.keys(updateTx.operations).length > 0) {
-        result.updateContextTx.push(updateTx)
-      }
-      result.updateOpContextTx.push(updateOpTx)
+      result.updateContextTx.push(updateTx)
     }
   }
 }

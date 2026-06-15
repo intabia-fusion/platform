@@ -35,8 +35,6 @@ export {
   getLastNotify,
   getMode,
   isMuted,
-  getUpdateContextTx,
-  getUpdateOpContextTx,
   getCreateContextTx
 } from './context'
 export {

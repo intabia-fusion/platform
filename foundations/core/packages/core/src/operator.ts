@@ -221,6 +221,13 @@ export function isOperator (o: Record<string, any>): boolean {
   return keys.length > 0 && keys.every((key) => key.startsWith('$'))
 }
 
+export function hasOperator (o?: Record<string, any> | null): boolean {
+  if (o == null || typeof o !== 'object') {
+    return false
+  }
+  return Object.keys(o).some((key) => key.startsWith('$'))
+}
+
 /**
  * @internal
  * @param name -

@@ -163,7 +163,7 @@ class Workspace {
       try {
         await this.rest.tx(txApply)
         for (const tx of batch) {
-          this.cache.tx(tx)
+          this.cache.tx(tx, true)
         }
       } catch (e) {
         this.ctx.error('Failed to send tx batch', { e, tx: txApply, batchSize: batch.length })

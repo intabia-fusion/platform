@@ -25,7 +25,6 @@ import { handleMention } from '../mention'
 function createEmptyResult (): Result {
   return {
     updateContextTx: [],
-    updateOpContextTx: [],
     createContextTx: [],
     createAppPushNotificationTx: [],
     queueMessages: [],
@@ -482,8 +481,8 @@ describe('mention module', () => {
 
       // Verify removal operations
       expect(result.removeUserMentionInfoTx).toHaveLength(1)
-      expect(result.updateOpContextTx).toHaveLength(1)
-      expect(result.updateOpContextTx[0].operations).toEqual({
+      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx[0].operations).toEqual({
         $pull: {
           latestNotifications: { type: 'mention', messageId: 'msg-1' }
         },

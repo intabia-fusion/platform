@@ -27,14 +27,12 @@ import {
   getLastNotify,
   getMode,
   isMuted,
-  getUpdateContextTx,
-  getUpdateOpContextTx,
   getCreateContextTx
 } from '../context'
 import { emptyResult } from '../result'
 import { DocNotifyContext, DocNotificationSetting } from '@hcengineering/notification'
 import { ActivityMessage, Reaction } from '@hcengineering/activity'
-import { Ref, AccountUuid, TxFactory, Doc, Class, Space, TxUpdateDoc } from '@hcengineering/core'
+import { Ref, AccountUuid, TxFactory, Doc, Class, Space } from '@hcengineering/core'
 import { ObjectDisplayData } from '../../types'
 import { Receiver } from '@hcengineering/server-notification'
 
@@ -179,18 +177,12 @@ describe('context utils', () => {
   })
 
   describe('context transaction builders', () => {
-    let mockContext: DocNotifyContext
     let mockFactory: {
       createTxUpdateDoc: jest.Mock
       createTxCreateDoc: jest.Mock
     }
 
     beforeEach(() => {
-      mockContext = {
-        _id: 'context-1',
-        _class: 'ContextClass',
-        space: 'space-1'
-      } as unknown as DocNotifyContext
       mockFactory = {
         createTxUpdateDoc: jest.fn().mockImplementation((cls, spc, id, payload) => ({
           _id: 'tx-update-1',
@@ -207,48 +199,6 @@ describe('context utils', () => {
           objectId: id
         }))
       }
-    })
-
-    describe('getUpdateContextTx', () => {
-      it('creates and registers a new transaction if it does not exist', () => {
-        const result = emptyResult()
-        const tx = getUpdateContextTx(mockContext, result, mockFactory as unknown as TxFactory)
-
-        expect(mockFactory.createTxUpdateDoc).toHaveBeenCalledWith('ContextClass', 'space-1', 'context-1', {})
-        expect(result.updateContextTx).toEqual([tx])
-      })
-
-      it('returns existing transaction if already present', () => {
-        const result = emptyResult()
-        const existingTx = { objectId: 'context-1', flag: 'existing' } as unknown as TxUpdateDoc<DocNotifyContext>
-        result.updateContextTx.push(existingTx)
-
-        const tx = getUpdateContextTx(mockContext, result, mockFactory as unknown as TxFactory)
-
-        expect(mockFactory.createTxUpdateDoc).not.toHaveBeenCalled()
-        expect(tx).toBe(existingTx)
-      })
-    })
-
-    describe('getUpdateOpContextTx', () => {
-      it('creates and registers a new transaction if it does not exist', () => {
-        const result = emptyResult()
-        const tx = getUpdateOpContextTx(mockContext, result, mockFactory as unknown as TxFactory)
-
-        expect(mockFactory.createTxUpdateDoc).toHaveBeenCalledWith('ContextClass', 'space-1', 'context-1', {})
-        expect(result.updateOpContextTx).toEqual([tx])
-      })
-
-      it('returns existing transaction if already present', () => {
-        const result = emptyResult()
-        const existingTx = { objectId: 'context-1', flag: 'existing' } as unknown as TxUpdateDoc<DocNotifyContext>
-        result.updateOpContextTx.push(existingTx)
-
-        const tx = getUpdateOpContextTx(mockContext, result, mockFactory as unknown as TxFactory)
-
-        expect(mockFactory.createTxUpdateDoc).not.toHaveBeenCalled()
-        expect(tx).toBe(existingTx)
-      })
     })
 
     describe('getCreateContextTx', () => {

@@ -13,17 +13,7 @@
 // limitations under the License.
 //
 
-import {
-  AccountUuid,
-  type Class,
-  Doc,
-  Ref,
-  Space,
-  Timestamp,
-  TxCreateDoc,
-  TxFactory,
-  TxUpdateDoc
-} from '@hcengineering/core'
+import { AccountUuid, type Class, Doc, Ref, Space, Timestamp, TxCreateDoc, TxFactory } from '@hcengineering/core'
 import { ActivityMessage, Reaction } from '@hcengineering/activity'
 import notification, {
   ContextNotification,
@@ -40,19 +30,19 @@ import { ObjectDisplayData, Result } from '../types'
 // ---- Notification presence checks ----
 
 export function hasMessageNotification (context: DocNotifyContext, messageId: Ref<ActivityMessage>): boolean {
-  return context.latestNotifications.some((it) => it.type === 'message' && it.messageId === messageId)
+  return (context.latestNotifications ?? []).some((it) => it.type === 'message' && it.messageId === messageId)
 }
 
 export function hasReactionNotificationByMessage (context: DocNotifyContext, messageId: Ref<ActivityMessage>): boolean {
-  return context.latestNotifications.some((it) => it.type === 'reaction' && it.messageId === messageId)
+  return (context.latestNotifications ?? []).some((it) => it.type === 'reaction' && it.messageId === messageId)
 }
 
 export function hasMentionNotificationByMessage (context: DocNotifyContext, messageId: Ref<ActivityMessage>): boolean {
-  return context.latestNotifications.some((it) => it.type === 'mention' && it.messageId === messageId)
+  return (context.latestNotifications ?? []).some((it) => it.type === 'mention' && it.messageId === messageId)
 }
 
 export function hasReactionNotification (context: DocNotifyContext, reactionId: Ref<Reaction>): boolean {
-  return context.latestNotifications.some((it) => it.type === 'reaction' && it.id === reactionId)
+  return (context.latestNotifications ?? []).some((it) => it.type === 'reaction' && it.id === reactionId)
 }
 
 // ---- Unread state checks ----
@@ -70,7 +60,7 @@ export function hasUnreadMentionByMessage (context: DocNotifyContext, messageId:
 }
 
 export function hasUnreadMessage (context: DocNotifyContext, messageId: Ref<ActivityMessage>): boolean {
-  return context.unreadMessages.some((it) => isUnreadMessageId(it) && it.id === messageId)
+  return context.unreadMessages.some((it) => isUnreadMessageId(it) && String(it.id) === messageId)
 }
 
 // ---- Notification queries ----
@@ -79,14 +69,14 @@ export function getNotificationsByMessage (
   context: DocNotifyContext,
   messageId: Ref<ActivityMessage>
 ): ContextNotification[] {
-  return context.latestNotifications.filter((it) => it.type !== 'common' && it.messageId === messageId)
+  return (context.latestNotifications ?? []).filter((it) => it.type !== 'common' && it.messageId === messageId)
 }
 
 export function getMentionNotification (
   context: DocNotifyContext,
   messageId: Ref<ActivityMessage> | null
 ): MentionNotification | undefined {
-  return context.latestNotifications.find(
+  return (context.latestNotifications ?? []).find(
     (it) => it.type === 'mention' && (messageId != null ? it.messageId === messageId : it.messageId == null)
   ) as MentionNotification | undefined
 }
@@ -94,7 +84,7 @@ export function getMentionNotification (
 // ---- Context state helpers ----
 
 export function getLastNotify (context: DocNotifyContext): Timestamp {
-  return Math.max(...context.latestNotifications.map((it) => it.createdOn), 0)
+  return Math.max(...(context.latestNotifications ?? []).map((it) => it.createdOn), 0)
 }
 
 export function getMode (docSettings: DocNotificationSetting[], account: AccountUuid): DocNotificationMode {
@@ -106,42 +96,6 @@ export function isMuted (mode: DocNotificationMode): boolean {
 }
 
 // ---- Context transaction builders ----
-
-/**
- * Returns (or creates) a plain update tx for a context in the result set.
- * Used for scalar field updates (e.g. lastNotify).
- */
-export function getUpdateContextTx (
-  context: DocNotifyContext,
-  result: Result,
-  factory: TxFactory
-): TxUpdateDoc<DocNotifyContext> {
-  const existing = result.updateContextTx.find((it) => it.objectId === context._id)
-  if (existing != null) return existing
-
-  const tx = factory.createTxUpdateDoc(context._class, context.space, context._id, {})
-  result.updateContextTx.push(tx)
-
-  return tx
-}
-
-/**
- * Returns (or creates) an operator update tx for a context in the result set.
- * Used for $push/$pull/$inc operations (e.g. latestNotifications, unreadCount).
- */
-export function getUpdateOpContextTx (
-  context: DocNotifyContext,
-  result: Result,
-  factory: TxFactory
-): TxUpdateDoc<DocNotifyContext> {
-  const existing = result.updateOpContextTx.find((it) => it.objectId === context._id)
-  if (existing != null) return existing
-
-  const tx = factory.createTxUpdateDoc(context._class, context.space, context._id, {})
-  result.updateOpContextTx.push(tx)
-
-  return tx
-}
 
 /**
  * Creates a create tx for a new context in the result set.

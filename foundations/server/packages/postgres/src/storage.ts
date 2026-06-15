@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -37,7 +38,7 @@ import core, {
   getClassCollaborators,
   groupByArray,
   type Hierarchy,
-  isOperator,
+  hasOperator,
   type Iterator,
   type Lookup,
   type MeasureContext,
@@ -112,6 +113,7 @@ import {
   simpleEscape,
   toWithLookup
 } from './utils'
+
 async function * createCursorGenerator (
   client: postgres.Sql,
   sql: string,
@@ -365,7 +367,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
     if ((operations as any).$set !== undefined) {
       ;(operations as any) = { ...(operations as any).$set }
     }
-    const isOps = isOperator(operations)
+    const isOps = hasOperator(operations)
     if ((operations as any)['%hash%'] == null) {
       ;(operations as any)['%hash%'] = this.curHash()
     }
@@ -1835,7 +1837,7 @@ export class PostgresAdapter extends PostgresAdapterBase {
           break
         case core.class.TxUpdateDoc: {
           const updateTx = tx as TxUpdateDoc<Doc>
-          if (isOperator(updateTx.operations)) {
+          if (hasOperator(updateTx.operations)) {
             ops.updates.push(updateTx)
           } else {
             const current = updateGroup.get(updateTx.objectId)
@@ -1962,7 +1964,7 @@ export class PostgresAdapter extends PostgresAdapterBase {
     txes: TxUpdateDoc<Doc>[],
     schemaFields: SchemaAndFields
   ): Promise<TxResult[]> {
-    const byOperator = groupByArray(txes, (it) => isOperator(it.operations))
+    const byOperator = groupByArray(txes, (it) => hasOperator(it.operations))
 
     const withOperator = byOperator.get(true)
     const withoutOperator = byOperator.get(false)

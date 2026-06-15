@@ -20,7 +20,6 @@ import { Result, TxCache } from '../types'
 export function emptyResult (): Result {
   return {
     updateContextTx: [],
-    updateOpContextTx: [],
     createContextTx: [],
     createAppPushNotificationTx: [],
 
@@ -36,7 +35,6 @@ export function getResultTxes (result: Result): TxCUD<Doc>[] {
   return [
     ...result.createContextTx,
     ...result.updateContextTx,
-    ...result.updateOpContextTx,
     ...result.createUserMentionInfoTx,
     ...result.updateUserMentionInfoTx,
     ...result.removeUserMentionInfoTx,
@@ -47,7 +45,6 @@ export function getResultTxes (result: Result): TxCUD<Doc>[] {
 export function isEmptyResult (result: Result): boolean {
   return (
     result.updateContextTx.length === 0 &&
-    result.updateOpContextTx.length === 0 &&
     result.createContextTx.length === 0 &&
     result.createAppPushNotificationTx.length === 0 &&
     result.queueMessages.length === 0 &&

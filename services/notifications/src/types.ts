@@ -92,7 +92,6 @@ export interface MentionResult {
 
 export interface Result {
   updateContextTx: TxUpdateDoc<DocNotifyContext>[]
-  updateOpContextTx: TxUpdateDoc<DocNotifyContext>[]
   createContextTx: TxCreateDoc<DocNotifyContext>[]
   createAppPushNotificationTx: TxCreateDoc<AppPushNotification>[]
 

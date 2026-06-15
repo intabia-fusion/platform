@@ -29,7 +29,7 @@ import notificationPlugin, {
   NotificationTemplate,
   QueueNotificationMessage
 } from '@hcengineering/notification'
-import { Class, Doc, generateId, Ref, Space, Markup, DocumentUpdate } from '@hcengineering/core'
+import { Class, Doc, generateId, Ref, Space, Markup } from '@hcengineering/core'
 import { Receiver } from '@hcengineering/server-notification'
 import { ActivityMessage } from '@hcengineering/activity'
 import { translate, IntlString } from '@hcengineering/platform'
@@ -38,13 +38,7 @@ import { markupToHtml } from '@hcengineering/text-html'
 
 import { Client, ObjectDisplayData, NotifyProviders, Result, TxCache } from '../types'
 import config from '../config'
-import {
-  getCreateContextTx,
-  getUpdateContextTx,
-  getNotificationUrl,
-  getDomain,
-  getNotificationLocation
-} from '../utils/utils'
+import { getCreateContextTx, getNotificationUrl, getDomain, getNotificationLocation } from '../utils/utils'
 import { appendAndCollapseUnreadMessages } from '../utils/collapse'
 
 interface CreateNotificationData {
@@ -120,46 +114,44 @@ export async function pushNotification (
     template: await getTemplate(client, txCache, notification, notifyProviders, intl, receiver, url)
   })
   if (context != null) {
-    const updateTx = getUpdateContextTx(context, result, txFactory)
+    const updateTx = txFactory.createTxUpdateDoc(context._class, context.space, context._id, {})
+
     updateTx.operations.lastNotify = Math.max(modifiedOn, updateTx.operations.lastNotify ?? 0)
-
-    const updateOp: DocumentUpdate<DocNotifyContext> = {
-      $push: { latestNotifications: { $each: [notification], $position: 0, $slice: config.LatestNotificationsSliceSize } }
+    updateTx.operations.$push = {
+      latestNotifications: { $each: [notification], $position: 0, $slice: config.LatestNotificationsSliceSize }
     }
-
-    const updateOpTx = txFactory.createTxUpdateDoc(context._class, context.space, context._id, updateOp)
     if (isUnread) {
-      updateOp.$inc = { unreadCount: 1 }
+      updateTx.operations.$inc = { unreadCount: 1 }
 
       if (unreadMessage != null) {
         const { collapsed, didCollapse } = appendAndCollapseUnreadMessages(context.unreadMessages ?? [], unreadMessage)
         if (didCollapse) {
-          updateOpTx.operations.unreadMessages = collapsed
+          updateTx.operations.unreadMessages = collapsed
         } else {
-          updateOpTx.operations.$push = {
-            ...updateOpTx.operations.$push,
+          updateTx.operations.$push = {
+            ...updateTx.operations.$push,
             unreadMessages: unreadMessage
           }
         }
       } else if (unreadReaction != null) {
-        updateOpTx.operations.$push = {
-          ...updateOpTx.operations.$push,
+        updateTx.operations.$push = {
+          ...updateTx.operations.$push,
           unreadReactions: unreadReaction
         }
       } else if (unreadMention != null) {
-        updateOpTx.operations.$push = {
-          ...updateOpTx.operations.$push,
+        updateTx.operations.$push = {
+          ...updateTx.operations.$push,
           unreadMentions: unreadMention
         }
       } else if (unreadCommon != null) {
-        updateOpTx.operations.$push = {
-          ...updateOpTx.operations.$push,
+        updateTx.operations.$push = {
+          ...updateTx.operations.$push,
           unreadCommons: unreadCommon
         }
       }
     }
 
-    result.updateOpContextTx.push(updateOpTx)
+    result.updateContextTx.push(updateTx)
   } else {
     const createTx = getCreateContextTx(
       contextId,
@@ -173,7 +165,10 @@ export async function pushNotification (
     )
 
     createTx.attributes.lastNotify = Math.max(createTx.attributes.lastNotify ?? 0, modifiedOn)
-    createTx.attributes.latestNotifications = [notification, ...createTx.attributes.latestNotifications].slice(0, config.LatestNotificationsSliceSize)
+    createTx.attributes.latestNotifications = [notification, ...createTx.attributes.latestNotifications].slice(
+      0,
+      config.LatestNotificationsSliceSize
+    )
     createTx.attributes.unreadCount = isUnread
       ? (createTx.attributes.unreadCount ?? 0) + 1
       : (createTx.attributes.unreadCount ?? 0)
