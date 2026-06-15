@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import {
+import aiBot, {
   AIEventRequest,
+  type AIPersonalData,
   aiBotEmailSocialKey,
   ConnectMeetingRequest,
   DisconnectMeetingRequest,
@@ -30,7 +31,7 @@ import contact, {
   Person,
   SocialIdentity
 } from '@hcengineering/contact'
-import {
+import core, {
   AccountRole,
   AccountUuid,
   Blob,
@@ -57,6 +58,7 @@ import fs from 'fs'
 import type { LLMProvider, ChatMessage as LLMChatMessage } from '../llms'
 import { totalTokens } from '../llms'
 import { getTools } from '../utils/tools'
+import { resolveMemory } from './memory'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
 import { getAccountClient } from '@hcengineering/server-client'
@@ -96,6 +98,7 @@ export class WorkspaceClient {
 
   love: LoveController | undefined
   historyMap = new Map<PersonUuid, PersonHistoryRecord>()
+  userSocialIdByPersonUuid = new Map<PersonUuid, PersonId>()
   initPromise: Promise<void> | undefined
 
   collaborator: CollaboratorClient | undefined
@@ -291,6 +294,54 @@ export class WorkspaceClient {
     return result
   }
 
+  // Resolve the user's primary social id (PersonId) so the bot can write the
+  // user's memory Preference on their behalf (createdBy = user, not the bot).
+  private async getUserSocialId (personUuid: PersonUuid): Promise<PersonId | undefined> {
+    const cached = this.userSocialIdByPersonUuid.get(personUuid)
+    if (cached !== undefined) return cached
+    const ids = await this.client?.findAll<SocialIdentity>(contact.class.SocialIdentity, {
+      attachedTo: personUuid as unknown as Ref<Person>
+    })
+    if (ids === undefined || ids.length === 0) return undefined
+    const primary = pickPrimarySocialId(ids)._id
+    this.userSocialIdByPersonUuid.set(personUuid, primary)
+    return primary
+  }
+
+  // Read the user's AI memory from the Preference document (created on their behalf).
+  private async readMemoryPreference (personUuid: PersonUuid): Promise<AIPersonalData | undefined> {
+    return await this.client?.findOne<AIPersonalData>(aiBot.class.AIPersonalData, {
+      attachedTo: personUuid as AccountUuid
+    })
+  }
+
+  // Persist memory to the Preference, on the user's behalf. Creates on first write.
+  private async writeMemoryPreference (
+    personUuid: PersonUuid,
+    memory: { assistantMemory: string, userMemory: string, sharedContext: string }
+  ): Promise<void> {
+    const modifiedBy = await this.getUserSocialId(personUuid)
+    const existing = await this.readMemoryPreference(personUuid)
+    if (existing !== undefined) {
+      await this.client.update(
+        existing,
+        { assistantMemory: memory.assistantMemory, userMemory: memory.userMemory, sharedContext: memory.sharedContext },
+        false,
+        undefined,
+        modifiedBy
+      )
+      return
+    }
+    await this.client.createDoc<AIPersonalData>(
+      aiBot.class.AIPersonalData,
+      core.space.Workspace,
+      { attachedTo: personUuid as AccountUuid, ...memory },
+      undefined,
+      undefined,
+      modifiedBy
+    )
+  }
+
   private async getHistory (personUuid: PersonUuid): Promise<PersonHistoryRecord> {
     if (this.historyMap.has(personUuid)) {
       return (
@@ -303,33 +354,38 @@ export class WorkspaceClient {
       )
     }
 
-    // Try to read a person summary and history.
+    // Memory now lives in a per-user Preference. Read it first.
+    const pref = await this.readMemoryPreference(personUuid)
+
+    // History (chat records) still lives in blob storage. Read it separately.
+    let history: HistoryRecord[] = []
+    let blobMemory: { assistantMemory: string, userMemory: string, sharedContext: string } | undefined
     try {
-      const personHistory: PersonHistoryRecord = JSON.parse(
+      const blob: PersonHistoryRecord = JSON.parse(
         Buffer.concat(await this.storage.read(this.ctx, this.wsIds, 'ai-bot-phr-' + personUuid)).toString()
       )
-
-      // Migration: add sharedContext if missing
-      if (personHistory.sharedContext === undefined) {
-        personHistory.sharedContext = ''
+      history = blob.history ?? []
+      blobMemory = {
+        assistantMemory: blob.assistantMemory ?? '',
+        userMemory: blob.userMemory ?? '',
+        sharedContext: blob.sharedContext ?? ''
       }
-
-      this.historyMap.set(personUuid, personHistory)
-      return personHistory
     } catch (err: any) {
-      // Ignore, no history available
+      // No blob: fine.
     }
 
-    // We need to load person info
+    const personData =
+      pref === undefined && blobMemory === undefined
+        ? await this.client?.findOne(contact.mixin.Employee, { personUuid: personUuid as AccountUuid })
+        : undefined
 
-    const personData = await this.client?.findOne(contact.mixin.Employee, { personUuid: personUuid as AccountUuid })
-
-    const v = {
-      assistantMemory: '',
-      userMemory: personData !== undefined ? `User name: ${personData.name}` : '',
-      sharedContext: '',
-      history: []
+    const { memory, migrate } = resolveMemory(pref, blobMemory, personData?.name)
+    if (migrate) {
+      // Move legacy blob memory into a Preference once.
+      await this.writeMemoryPreference(personUuid, memory)
     }
+
+    const v: PersonHistoryRecord = { ...memory, history }
     this.historyMap.set(personUuid, v)
     return v
   }
@@ -394,12 +450,18 @@ export class WorkspaceClient {
     return summary ?? 'Failed to generate summary'
   }
 
-  async saveHistory (personUuid: PersonUuid, history: PersonHistoryRecord): Promise<void> {
+  async saveHistory (personUuid: PersonUuid, record: PersonHistoryRecord): Promise<void> {
+    // Memory -> per-user Preference (owned by the user). History -> blob storage.
+    await this.writeMemoryPreference(personUuid, {
+      assistantMemory: record.assistantMemory,
+      userMemory: record.userMemory,
+      sharedContext: record.sharedContext
+    })
     await this.storage.put(
       this.ctx,
       this.wsIds,
       'ai-bot-phr-' + personUuid,
-      JSON.stringify(history),
+      JSON.stringify({ history: record.history }),
       'application/json'
     )
   }

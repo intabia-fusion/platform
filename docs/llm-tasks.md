@@ -40,13 +40,19 @@
 - [ ] e2e через реальный clisr - в стенде (юнит покрыт).
 
 ### T3. Память пользователя -> Preference
-- [ ] `models/ai-bot`: `AIPersonalData extends Preference`
-      (assistantMemory/userMemory/sharedContext), `attachedTo: AccountUuid`.
-- [ ] ai-bot: чтение/запись через `TxOperations` от имени пользователя
-      (паттерн pod-github `platform.ts:536`).
-- [ ] Инструменты `update/get/clear_*_memory` переключить на Preference.
-- [ ] Миграция из блоба `ai-bot-phr-*` (lazy: при первом обращении).
-- [ ] Убрать write-back `historyMap` для памяти.
+- [x] `AIPersonalData extends Preference` в `plugins/ai-bot` (interface + class ref)
+      + модель `TAIPersonalData` в `models/ai-bot` (domain preference,
+      `attachedTo: AccountUuid`).
+- [x] ai-bot пишет память Preference от имени юзера: `RestClient.createDoc/update`
+      с `modifiedBy = primary socialId` юзера (resolveUserSocialId). createdBy=user
+      -> PrivateMiddleware пускает -> юзер видит в настройках.
+- [x] `getHistory`/`saveHistory`: память <-> Preference, история <-> blob
+      (расщеплены). Инструменты памяти идут через них -> на Preference.
+- [x] Lazy-миграция: блоб `ai-bot-phr-*` -> Preference при первом чтении, если
+      Preference ещё нет (чистая `resolveMemory`, покрыта `memory.spec.ts`).
+- [x] history по-прежнему в блобе (переедет в AIConversation в T7).
+- Файлы: `plugins/ai-bot/src/index.ts`, `models/ai-bot/src/index.ts`,
+  `workspace/{workspaceClient,memory}.ts`.
 
 ### T4. Секция Settings "ЮляИИ"
 - [ ] `models/ai-assistant`: `setting.class.SettingsCategory`, group `settings-account`.

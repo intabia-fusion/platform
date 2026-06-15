@@ -13,7 +13,11 @@
 // limitations under the License.
 //
 
-import { type Builder } from '@hcengineering/model'
+import { type AccountUuid } from '@hcengineering/core'
+import { type AIPersonalData } from '@hcengineering/ai-bot'
+import { type Builder, Model, Prop, TypeString } from '@hcengineering/model'
+import core from '@hcengineering/model-core'
+import preference, { TPreference } from '@hcengineering/model-preference'
 
 import aiBot from './plugin'
 
@@ -21,4 +25,20 @@ export { aiBotId } from '@hcengineering/ai-bot'
 export { aiBotOperation } from './migration'
 export default aiBot
 
-export function createModel (builder: Builder): void {}
+@Model(aiBot.class.AIPersonalData, preference.class.Preference)
+export class TAIPersonalData extends TPreference implements AIPersonalData {
+  declare attachedTo: AccountUuid
+
+  @Prop(TypeString(), core.string.String)
+    assistantMemory!: string
+
+  @Prop(TypeString(), core.string.String)
+    userMemory!: string
+
+  @Prop(TypeString(), core.string.String)
+    sharedContext!: string
+}
+
+export function createModel (builder: Builder): void {
+  builder.createModel(TAIPersonalData)
+}
