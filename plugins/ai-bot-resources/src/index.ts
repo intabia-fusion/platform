@@ -14,8 +14,13 @@
 //
 
 import { type Resources } from '@hcengineering/platform'
+import AIPersonalDataSettings from './components/AIPersonalDataSettings.svelte'
 
 export * from './requests'
 export * from './utils'
 
-export default async (): Promise<Resources> => ({})
+export default async (): Promise<Resources> => ({
+  component: {
+    AIPersonalDataSettings
+  }
+})

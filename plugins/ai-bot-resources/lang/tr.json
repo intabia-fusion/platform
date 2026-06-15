@@ -1,0 +1,12 @@
+{
+  "string": {
+    "AISettings": "Yulia AI",
+    "AssistantMemory": "Asistan belleği",
+    "UserMemory": "Sizin hakkınızda",
+    "SharedContext": "Paylaşılan tercihler",
+    "AssistantMemoryHint": "Asistanın kendisi hakkında hatırladıkları: adı, davranış tarzı ve size nasıl hitap edeceği.",
+    "UserMemoryHint": "Asistanın sizin hakkınızda hatırladıkları: tercihleriniz, bağlamınız ve kişisel bilgileriniz.",
+    "SharedContextHint": "Sohbetler arasında paylaşılan tercihler: dil, saat dilimi ve grup sohbetlerinde size nasıl hitap edileceği.",
+    "ClearAll": "Tümünü temizle"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "string": {
+    "AISettings": "Yulia IA",
+    "AssistantMemory": "Mémoire de l'assistant",
+    "UserMemory": "À propos de vous",
+    "SharedContext": "Préférences partagées",
+    "AssistantMemoryHint": "Ce que l'assistant retient sur lui-même : son nom, son style de comportement et la façon de s'adresser à vous.",
+    "UserMemoryHint": "Ce que l'assistant retient sur vous : vos préférences, votre contexte et vos informations personnelles.",
+    "SharedContextHint": "Préférences partagées entre les discussions : langue, fuseau horaire et façon de vous adresser dans les discussions de groupe.",
+    "ClearAll": "Tout effacer"
+  }
+}

@@ -5820,9 +5820,15 @@ importers:
       '@hcengineering/model-preference':
         specifier: workspace:^0.7.0
         version: link:../preference
+      '@hcengineering/model-view':
+        specifier: workspace:^0.7.0
+        version: link:../view
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/setting':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/setting
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
@@ -15605,6 +15611,9 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
+      '@hcengineering/ui':
+        specifier: workspace:^0.7.0
+        version: link:../../packages/ui
       '@hcengineering/view':
         specifier: workspace:^0.7.0
         version: link:../view
@@ -15684,6 +15693,9 @@ importers:
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
+      '@hcengineering/view':
+        specifier: workspace:^0.7.0
+        version: link:../view
       svelte:
         specifier: ^4.2.20
         version: 4.2.20

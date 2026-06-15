@@ -1,0 +1,12 @@
+{
+  "string": {
+    "AISettings": "Yulia AI",
+    "AssistantMemory": "Paměť asistenta",
+    "UserMemory": "O vás",
+    "SharedContext": "Sdílené předvolby",
+    "AssistantMemoryHint": "Co si asistent pamatuje o sobě: své jméno, styl chování a jak vás má oslovovat.",
+    "UserMemoryHint": "Co si asistent pamatuje o vás: vaše předvolby, kontext a osobní informace.",
+    "SharedContextHint": "Předvolby sdílené napříč chaty: jazyk, časové pásmo a způsob oslovení ve skupinových chatech.",
+    "ClearAll": "Vymazat vše"
+  }
+}

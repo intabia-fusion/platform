@@ -1,0 +1,12 @@
+{
+  "string": {
+    "AISettings": "Yulia AI",
+    "AssistantMemory": "Assistant memory",
+    "UserMemory": "About you",
+    "SharedContext": "Shared preferences",
+    "AssistantMemoryHint": "What the assistant remembers about itself: its name, behavior style, and how it should address you.",
+    "UserMemoryHint": "What the assistant remembers about you: your preferences, context, and personal info.",
+    "SharedContextHint": "Preferences shared across chats: language, timezone, and how to address you in group chats.",
+    "ClearAll": "Clear all"
+  }
+}

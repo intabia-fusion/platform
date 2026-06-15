@@ -13,11 +13,13 @@
 // limitations under the License.
 //
 
-import { type AccountUuid } from '@hcengineering/core'
+import { AccountRole, type AccountUuid } from '@hcengineering/core'
 import { type AIPersonalData } from '@hcengineering/ai-bot'
 import { type Builder, Model, Prop, TypeString } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
+import setting from '@hcengineering/setting'
+import view from '@hcengineering/model-view'
 
 import aiBot from './plugin'
 
@@ -41,4 +43,14 @@ export class TAIPersonalData extends TPreference implements AIPersonalData {
 
 export function createModel (builder: Builder): void {
   builder.createModel(TAIPersonalData)
+
+  builder.createDoc(setting.class.SettingsCategory, core.space.Model, {
+    name: 'ai-personal-data',
+    label: aiBot.string.AISettings,
+    icon: view.icon.AiStar,
+    component: aiBot.component.AIPersonalDataSettings,
+    group: 'settings-account',
+    role: AccountRole.Guest,
+    order: 1700
+  })
 }

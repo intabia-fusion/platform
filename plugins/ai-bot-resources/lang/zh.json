@@ -1,0 +1,12 @@
+{
+  "string": {
+    "AISettings": "Yulia AI",
+    "AssistantMemory": "助手记忆",
+    "UserMemory": "关于你",
+    "SharedContext": "共享偏好",
+    "AssistantMemoryHint": "助手记住的关于自身的信息：名称、行为风格以及如何称呼你。",
+    "UserMemoryHint": "助手记住的关于你的信息：你的偏好、背景和个人信息。",
+    "SharedContextHint": "跨聊天共享的偏好：语言、时区以及在群聊中如何称呼你。",
+    "ClearAll": "全部清除"
+  }
+}

@@ -14,9 +14,10 @@
 //
 
 import { type AccountUuid, buildSocialIdString, type Class, type Ref, SocialIdType } from '@hcengineering/core'
-import type { Metadata, Plugin } from '@hcengineering/platform'
+import type { IntlString, Metadata, Plugin } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { Preference } from '@hcengineering/preference'
+import type { AnyComponent } from '@hcengineering/ui/src/types'
 
 export * from './rest'
 
@@ -45,6 +46,19 @@ const aiBot = plugin(aiBotId, {
   },
   class: {
     AIPersonalData: '' as Ref<Class<AIPersonalData>>
+  },
+  component: {
+    AIPersonalDataSettings: '' as AnyComponent
+  },
+  string: {
+    AISettings: '' as IntlString,
+    AssistantMemory: '' as IntlString,
+    UserMemory: '' as IntlString,
+    SharedContext: '' as IntlString,
+    AssistantMemoryHint: '' as IntlString,
+    UserMemoryHint: '' as IntlString,
+    SharedContextHint: '' as IntlString,
+    ClearAll: '' as IntlString
   }
 })
 
