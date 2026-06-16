@@ -16,7 +16,7 @@
   import activity, { ActivityMessage } from '@hcengineering/activity'
   import chunter from '@hcengineering/chunter'
   import { Class, Doc, Ref } from '@hcengineering/core'
-  import { DocNotifyContext, notificationId } from '@hcengineering/notification'
+  import { ContextNotification, DocNotifyContext, notificationId } from '@hcengineering/notification'
   import { ActionContext, getClient } from '@hcengineering/presentation'
   import {
     AnyComponent,
@@ -153,7 +153,9 @@
 
   $: void updateSelectedPanel(selectedContext, urlObjectClass)
 
-  async function selectContext (event?: CustomEvent): Promise<void> {
+  async function selectContext (
+    event?: CustomEvent<{ context?: DocNotifyContext, notification?: ContextNotification }>
+  ): Promise<void> {
     closePanel()
     selectedContext = event?.detail?.context
     selectedContextId = selectedContext?._id
@@ -163,7 +165,7 @@
       return
     }
 
-    const selectedNotification: any | undefined = event?.detail?.notification
+    const selectedNotification: ContextNotification | undefined = event?.detail?.notification
 
     void selectInboxContext(linkProviders, selectedContext, selectedNotification)
   }

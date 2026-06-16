@@ -35,7 +35,7 @@
   }}
 >
   <DocNotifyContextCardHeader {value} {isClearing} on:clear />
-  <DocNotifyContextCardContent {value} {viewlets} />
+  <DocNotifyContextCardContent {value} {viewlets} on:click />
 </div>
 
 <style lang="scss">

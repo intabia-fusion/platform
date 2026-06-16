@@ -145,6 +145,7 @@ export class ChatViewport implements IChatViewport {
     } else {
       entry.lastAccessed = ++ChatViewport.accessCounter
       entry.lastAccessedTime = Date.now()
+      void entry.viewport.syncUnreadMarker(readState)
       if (selectedMessageId !== undefined) {
         void entry.viewport.jumpToMessageId(selectedMessageId)
       }
@@ -435,7 +436,7 @@ export class ChatViewport implements IChatViewport {
         return
       }
 
-      const res = await client.findAll(
+      const res = await client.findOne(
         activity.class.ActivityMessage,
         {
           attachedTo: this.chatId,
@@ -449,7 +450,7 @@ export class ChatViewport implements IChatViewport {
         }
       )
 
-      this.newTimestamp.set(res[0]?.createdOn)
+      this.newTimestamp.set(res?.createdOn)
     } catch (err) {
       if (err instanceof StaleVersionError) return
       console.error('Failed to sync unread marker:', err)

@@ -22,7 +22,7 @@
     editingMessageStore
   } from '@hcengineering/activity-resources'
   import core, { Doc, getCurrentAccount, Ref, Space, Tx, TxCUD, getDay, Timestamp, notEmpty } from '@hcengineering/core'
-  import { ReadState } from '@hcengineering/notification'
+  import { DocNotifyContext, ReadState } from '@hcengineering/notification'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { addTxListener, getClient, removeTxListener } from '@hcengineering/presentation'
   import { ModernButton, Scroller, Loading } from '@hcengineering/ui'
@@ -31,7 +31,13 @@
 
   import { ChatViewport } from '../chatViewport'
   import chunter from '../plugin'
-  import { messageInView, recheckNotifications, chatReadMessagesStore, readMessages } from '../scroll'
+  import {
+    messageInView,
+    recheckNotifications,
+    chatReadMessagesStore,
+    readMessages,
+    readViewportMessages
+  } from '../scroll'
   import BlankView from './BlankView.svelte'
   import ChannelInput from './ChannelInput.svelte'
   import ActivityMessagesSeparator from './ChannelMessagesSeparator.svelte'
@@ -84,11 +90,30 @@
   let scrollDiv: HTMLDivElement | undefined | null = undefined
   let contentDiv: HTMLDivElement | undefined | null = undefined
   let separatorDiv: HTMLDivElement | undefined | null = undefined
+  let contentResizeObserver: ResizeObserver | undefined
 
   // Scrolling
   let isScrollInitialized = false
   let shouldScrollToNew = false
   let isScrollAtBottom = false
+
+  function setupContentObserver (node: HTMLDivElement | undefined | null): void {
+    if (contentResizeObserver !== undefined) {
+      contentResizeObserver.disconnect()
+      contentResizeObserver = undefined
+    }
+
+    if (node != null) {
+      contentResizeObserver = new ResizeObserver(() => {
+        if (shouldScrollToNew && isScrollInitialized) {
+          scrollToBottom()
+        }
+      })
+      contentResizeObserver.observe(node)
+    }
+  }
+
+  $: setupContentObserver(contentDiv)
 
   let isLatestMessageButtonVisible = false
 
@@ -149,7 +174,7 @@
   })
   $: readState = $readStateByDocStore.get(doc._id) ?? undefined
 
-  $: if (notifyContext !== undefined && !isFreeze()) {
+  $: if (notifyContext !== undefined && !isFreeze() && isScrollInitialized) {
     recheckNotifications(notifyContext)
   }
 
@@ -351,8 +376,8 @@
   }
 
   function read (): void {
-    // if (isFreeze() || !isScrollInitialized) return
-    // readViewportMessages(object._id, messages, scrollDiv, contentDiv, notifyContext, readState)
+    if (isFreeze() || !isScrollInitialized) return
+    readViewportMessages(object._id, messages, scrollDiv, contentDiv, notifyContext, readState)
   }
 
   function updateScrollData (): void {
@@ -397,24 +422,24 @@
     await inboxClient.readDoc(doc._id)
   }
 
-  // let forceRead = false
-  // $: void forceReadContext(isScrollAtBottom, notifyContext)
-  //
-  // async function forceReadContext (isScrollAtBottom: boolean, context?: DocNotifyContext): Promise<void> {
-  //   if (context === undefined || !isScrollAtBottom || forceRead || isFreeze()) return
-  //   const { lastUpdate = 0, lastView = 0 } = context
-  //
-  //   if (lastView >= lastUpdate) return
-  //
-  //   const notifications = $notificationsByContextStore.get(context._id) ?? []
-  //   const unViewed = notifications.filter(({ isViewed }) => !isViewed)
-  //
-  //   if (unViewed.length === 0) {
-  //     forceRead = true
-  //     await inboxClient.readDoc(object._id)
-  //     forceRead = false
-  //   }
-  // }
+  let forceRead = false
+  $: void forceReadContext(isScrollAtBottom, readState, notifyContext)
+
+  async function forceReadContext (
+    isScrollAtBottom: boolean,
+    readState?: ReadState,
+    context?: DocNotifyContext
+  ): Promise<void> {
+    if (readState === undefined || !isScrollAtBottom || forceRead || isFreeze()) return
+    const lastView = readState[getCurrentAccount().uuid]?.timestamp ?? 0
+    const lastUpdate = readState.latestMessageTimestamp ?? 0
+
+    if (lastView < lastUpdate || (context?.unreadCount ?? 0) > 0) {
+      forceRead = true
+      await inboxClient.readDoc(object._id)
+      forceRead = false
+    }
+  }
 
   function shouldLoadMoreUp (): boolean {
     if (scrollDiv == null) return false
@@ -647,6 +672,10 @@
     if (observer !== undefined) {
       observer.disconnect()
       observer = undefined
+    }
+    if (contentResizeObserver !== undefined) {
+      contentResizeObserver.disconnect()
+      contentResizeObserver = undefined
     }
     document.removeEventListener('visibilitychange', handleVisibilityChange)
     window.removeEventListener('focus', handleWindowFocus)

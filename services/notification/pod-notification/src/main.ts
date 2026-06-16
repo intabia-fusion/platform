@@ -35,7 +35,7 @@ import webpush, { WebPushError } from 'web-push'
 import config from './config'
 import { getCtx } from './utils'
 
-const errorMessages = ['expired', 'Unregistered', 'No such subscription']
+const errorMessages = ['expired', 'Unregistered', 'No such subscription', 'VapidPkHashMismatch']
 
 export async function sendPushToSubscription (
   subscriptions: PushSubscription[],

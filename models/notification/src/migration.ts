@@ -734,21 +734,34 @@ async function initReadStates (client: MigrationClient): Promise<void> {
         if (docs.length === 0) break
         processed += docs.length
         client.logger.log('...processed', { count: processed })
-        await client.create<ReadState>(
+
+        const existingStates = await client.find<ReadState>(
           DOMAIN_READ_STATE,
-          docs.map((doc) => ({
-            _id: generateId(),
-            _class: notification.class.ReadState,
-            space: doc.space,
-            attachedTo: doc._id,
-            attachedToClass: doc._class,
-            collection: 'readStates',
-            modifiedOn: Date.now(),
-            createdOn: Date.now(),
-            createdBy: core.account.System,
-            modifiedBy: core.account.System
-          }))
+          {
+            attachedTo: { $in: docs.map((doc) => doc._id) }
+          },
+          { projection: { attachedTo: 1 } }
         )
+        const existingIds = new Set(existingStates.map((s) => s.attachedTo))
+        const newDocs = docs.filter((doc) => !existingIds.has(doc._id))
+
+        if (newDocs.length > 0) {
+          await client.create<ReadState>(
+            DOMAIN_READ_STATE,
+            newDocs.map((doc) => ({
+              _id: generateId(),
+              _class: notification.class.ReadState,
+              space: client.hierarchy.isDerived(doc._class, core.class.Space) ? (doc._id as Ref<Space>) : doc.space,
+              attachedTo: doc._id,
+              attachedToClass: doc._class,
+              collection: 'readStates',
+              modifiedOn: Date.now(),
+              createdOn: Date.now(),
+              createdBy: core.account.System,
+              modifiedBy: core.account.System
+            }))
+          )
+        }
       }
     } finally {
       await iterator.close()
@@ -1160,7 +1173,7 @@ export const notificationOperation: MigrateOperation = {
         func: createChats
       },
       {
-        state: 'init-read-states-v100',
+        state: 'init-read-states-v2',
         mode: 'upgrade',
         func: initReadStates
       },

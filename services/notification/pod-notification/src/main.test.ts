@@ -109,6 +109,22 @@ describe('sendPushToSubscription', () => {
     expect(failedIds).toEqual(['sub-1', 'sub-2'])
   })
 
+  it('should return subscription IDs for VAPID key mismatch errors', async () => {
+    ;(webpush.sendNotification as jest.Mock).mockRejectedValueOnce(
+      new WebPushError(
+        'VAPID key mismatch',
+        400,
+        {},
+        '{"reason":"VapidPkHashMismatch"}',
+        'https://example.com/endpoint1'
+      )
+    )
+
+    const failedIds = await sendPushToSubscription([mockSubscriptions[0]], mockData)
+
+    expect(failedIds).toEqual(['sub-1'])
+  })
+
   it('should return no subscription IDs for other non-cleanup WebPush errors', async () => {
     ;(webpush.sendNotification as jest.Mock).mockRejectedValue(
       new WebPushError('Quota exceeded', 429, {}, '{"code": "quotaExceeded"}', 'https://example.com/endpoint1')

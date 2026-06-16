@@ -1626,5 +1626,41 @@ describe('ChatViewport', () => {
         Date.now = originalDateNow
       }
     })
+
+    it('9.5 should update unread marker for cached viewport when reopened with new readState', async () => {
+      mockClient.findAll.mockResolvedValueOnce([])
+      const chatId = 'chat-1' as Ref<Doc>
+      const readState1 = {
+        'me-uuid': { timestamp: 500 }
+      }
+
+      const vp1 = ChatViewport.getOrCreate(readState1 as any, chatId, undefined, 50, false)
+      await flushTasks()
+
+      // Set newTimestamp manually
+      vp1.newTimestamp.set(600)
+
+      // Reopen with new readState (e.g. read up to 700)
+      const readState2 = {
+        'me-uuid': { timestamp: 700 }
+      }
+      mockClient.findAll.mockResolvedValueOnce([{ _id: 'msg-unread', createdOn: 800 }])
+
+      const vp2 = ChatViewport.getOrCreate(readState2 as any, chatId, undefined, 50, false)
+      expect(vp2).toBe(vp1)
+      await flushTasks()
+
+      // It should query and update the unread marker based on new readState
+      expect(get(vp1.newTimestamp)).toBe(800)
+      expect(mockClient.findAll).toHaveBeenLastCalledWith(
+        activity.class.ActivityMessage,
+        {
+          attachedTo: chatId,
+          createdOn: { $gt: 700 },
+          createdBy: { $nin: ['me-social-id'] }
+        },
+        expect.objectContaining({ limit: 1, sort: { createdOn: 1 } })
+      )
+    })
   })
 })
