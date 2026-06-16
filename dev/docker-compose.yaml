@@ -936,6 +936,7 @@ services:
       - SMTP_ALLOW_SELF_SIGNED=true
       - ACCOUNTS_URL=http://account:3000
       - SECRET=secret
+      - APP_NAME=Platform
   mail_client:
     image: intabiafusion/mail
     depends_on:

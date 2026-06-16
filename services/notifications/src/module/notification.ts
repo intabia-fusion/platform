@@ -304,7 +304,7 @@ async function translateTemplate (
 
   const title = intl.intlParams?.title ?? intl.intlParams.doc ?? ''
   const url = intl.intlParams.url
-  const identifier = intl.intlParams?.identifie
+  const identifier = intl.intlParams?.identifier
 
   const textTitle = identifier != null ? `${identifier}: ${title}` : title.toString()
   const htmlTitle = url !== '' ? `<a href='${url}'>${textTitle}</a>` : textTitle.toString()

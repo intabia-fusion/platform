@@ -160,7 +160,7 @@ export async function getDmPersons (client: Client, members: AccountUuid[]): Pro
     return []
   }
   const myAcc = getCurrentAccount().uuid
-  const accounts = members.length > 1 ? members.filter((m) => m !== myAcc) : [myAcc]
+  const accounts = members.length > 1 ? members.filter((m) => m !== myAcc) : members
 
   return await client.findAll(contact.class.Person, {
     personUuid: { $in: accounts }

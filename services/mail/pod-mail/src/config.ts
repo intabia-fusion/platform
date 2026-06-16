@@ -36,6 +36,7 @@ export interface Config {
   accountsUrl: string
   secret: string
   serviceId: string
+  appName: string
 }
 
 export interface SesConfig {
@@ -202,7 +203,8 @@ const config: Config = (() => {
     smtpConfig: isSmtpConfig ? buildSmtpConfig() : undefined,
     accountsUrl: process.env.ACCOUNTS_URL ?? 'http://localhost:3000',
     secret: process.env.SECRET ?? 'secret',
-    serviceId: process.env.SERVICE_ID ?? 'mail-service'
+    serviceId: process.env.SERVICE_ID ?? 'mail-service',
+    appName: process.env.APP_NAME ?? 'Platform'
   }
 
   if ((mode === 'server' || mode === 'client') && params.apiKey === undefined) {

@@ -148,7 +148,6 @@ class Workspace {
   private async applyResult (result: Result): Promise<void> {
     const txes = getResultTxes(result)
     console.log('Applying txes', txes.length)
-    console.log(txes)
     for (let i = 0; i < txes.length; i += config.ApplyTxBatchSize) {
       const batch = txes.slice(i, i + config.ApplyTxBatchSize)
       const txApply = this.txFactory.createTxApplyIf(
