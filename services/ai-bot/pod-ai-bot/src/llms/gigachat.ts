@@ -25,6 +25,7 @@ import type { PersonMessage } from '@hcengineering/ai-bot'
 import contact from '@hcengineering/contact'
 import type { HistoryRecord } from '../types'
 import config, { type AILevel, type AIProviderConfig } from '../config'
+import { providerLevels } from './modelRegistry'
 import { pushTokensData, tokensRecord } from '../billing'
 import type {
   LLMProvider,
@@ -48,7 +49,8 @@ export default class GigaChatProvider implements LLMProvider {
     provider: AIProviderConfig
   ) {
     this.provider = provider
-    const served = (['low', 'middle', 'high', 'max'] as AILevel[]).filter((l) => provider.levels[l] !== undefined)
+    // strongest served level by `order` (works for custom level ids, not a hardcoded list)
+    const served = providerLevels(provider)
     this.defaultLevel = served[served.length - 1] ?? 'low'
 
     this.client = new GigaChat({

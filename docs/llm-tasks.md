@@ -55,19 +55,19 @@
   `workspace/{workspaceClient,memory}.ts`.
 
 ### T4. Секция Settings "ЮляИИ"
-- [ ] `models/ai-assistant`: `setting.class.SettingsCategory`, group `settings-account`.
-- [ ] Компонент в `plugins/ai-assistant-resources`: просмотр/редактирование/очистка
-      assistantMemory / userMemory / sharedContext (liveQuery на AIPersonalData).
-- [ ] Паттерн: TranslationSettings (`models/contact/src/index.ts:1413`).
+- [x] `models/ai-bot`: `setting.class.SettingsCategory` (group `settings-account`,
+      icon `view.icon.AiStar`, order 1700) -> `aiBot.component.AIPersonalDataSettings`.
+- [x] Компонент `plugins/ai-bot-resources/src/components/AIPersonalDataSettings.svelte`:
+      liveQuery на `AIPersonalData`, 3 TextArea (assistantMemory/userMemory/
+      sharedContext) + очистка. Локали в `plugins/ai-bot-resources/lang/*`.
 
 ### T14. Санитизация markdown -> Markup
-- [ ] Общая schema-aware утилита в `@hcengineering/text-markdown`: чистка
-      неизвестных узлов/marks + mark-exclusion через PM `Mark.addToSet`
-      (баг: `RangeError: Invalid collection of marks ... bold,code`).
-- [ ] Применить в ai-bot (`workspaceClient.ts:576`, `utils/tools.ts:94`) -
-      все конверсии "ответ модели -> Markup".
-- [ ] Применить в smartPaste редактора (`cleanUnknownContent`).
-- [ ] Детали: `foundation-tasks/markdown-paste-marks-exclusion.md`.
+- [x] Корень бага исправлен: `text-markdown/src/marks.ts` `excludes()` - `code`
+      mark исключает остальные inline-marks (mirrors tiptap `excludes: '_'`), не
+      даёт `RangeError: Invalid collection of marks ... bold,code`. Коммит "Fix
+      Markdown".
+- [ ] (Опц.) Вынести общую schema-aware утилиту + применить в smartPaste редактора
+      (`cleanUnknownContent`) - низкий приоритет, ядро бага закрыто.
 
 ### T15. Системные промпты в prompts.yaml
 - [x] Все промпты вынесены в `services/ai-bot/pod-ai-bot/prompts.yaml`.
@@ -99,15 +99,17 @@ GigaChat/clisr держат один клиент и выбирают модел
       (level)`, `level?` в chat-методах. server forwards `level` в clisr-payload
       (клиент выбирает модель по уровню). Интерфейс `LLMProvider` + `level?` опц.
 - [x] `AILevelSetting` - документ в `models/ai-bot` (`TAILevelSetting`,
-      `attachedTo?: Ref<Space>`). Резолв подключён к диспетчеру: `LevelResolver`
-      (space-setting -> ws-default -> `DefaultLevel`), кэш per workspace,
-      инвалидация через server-trigger -> AIQueue. Тесты `level-resolver.spec.ts`.
+      `attachedTo?: Ref<Space>`) = ВЫБРАННЫЙ уровень (потолок) пространства/ws.
+      ФИНАЛ (T6d): уровень = свойство запроса, пространство = потолок. Резолв на
+      server-trigger (кладёт `AILevelSetting.level` в `event.level`), pod читает
+      готовое. Pod-side `LevelResolver`/кэш/Tx-инвалидация - ОТБРОШЕНЫ (см. ниже).
 - [x] `billedTokens` -> биллинг: `tokensRecord(...)` применяет множитель +
       modelId в reason; провайдеры openai/gigachat шлют billed. Тесты
       `billing-tokens.spec.ts`.
 - [x] Уровни data-driven (НЕ enum): `AILevel = string`, реестр несёт
-      order/label/description; `availableLevels(registry)` для UI-пикера (sort by
-      order). Новый уровень = запись в конфиге.
+      order/label/description; `availableLevels(registry)` -> aibot API
+      `GET /levels` (`AILevelInfo[]`) для UI-пикера. Каталог одинаков для всех,
+      живёт в поде (НЕ в БД). Новый уровень = запись в конфиге.
 - [x] Реестр с двумя источниками заложен: глобальный конфиг сейчас; BYOK
       workspace-overrides - отдельный провайдер/топик `llm-byok` (T13).
 
@@ -140,21 +142,20 @@ GigaChat/clisr держат один клиент и выбирают модел
       processing).
 - [ ] Ретраи/"dead letter" по образцу transcription consumer - отдельно.
 
-### T7. Разговоры ЮляИИ как треды в Direct (ПЕРЕОСМЫСЛЕНО)
+### T7. Разговоры ЮляИИ как треды в Direct (ПЕРЕОСМЫСЛЕНО, СДЕЛАНО)
 Решение: разговоры = chunter-треды в Direct-канале юзер<->бот, НЕ отдельная
-сущность AIConversation. План: `~/.claude/plans/vast-chasing-lark.md`.
-- [ ] Триггер `server-plugins/ai-bot-resources`: top-level direct -> адресовать
-      сам userMessage (objectId=message._id, ChatMessage, collection='replies',
-      messageClass=ThreadMessage) -> бот отвечает тредом под сообщением.
-- [ ] Контекст LLM из сообщений треда (родитель + ThreadMessage по порядку);
-      убрать блоб-историю `ai-bot-phr-*`. Память остаётся в Preference (T3).
-- [ ] `threadContext.ts` - чистая сборка/усечение контекста по MaxContentTokens
-      (перенос `toLlmHistory`), unit-тест.
-- [ ] Убрать clear_history / get_history_summary tools из direct.
-- [ ] Переиспользуемый `startAIConversation` (client resource + server helper)
-      над `createAndGetDirect` (`plugins/chunter/src/utils.ts:37`) +
-      `openThreadInSidebar`; принимает текст + origin (objectId/class/label,
-      reference-mention для возврата). Разговоры стартуются из разных мест.
+сущность AIConversation.
+- [x] Триггер `server-plugins/ai-bot-resources` `getDirectThreadData`: top-level
+      direct -> адресует userMessage (objectId=message._id, ChatMessage,
+      collection='replies', messageClass=ThreadMessage) -> бот отвечает тредом.
+- [x] Контекст LLM из сообщений треда (`processMessageEvent` contextMode='thread');
+      блоб-история `ai-bot-phr-*` убрана. Память остаётся в Preference (T3).
+- [x] `threadContext.ts` - чистая `buildThreadContext` (усечение по
+      MaxContentTokens, порядок, роли). Тесты `thread-context.spec.ts`.
+- [x] clear_history / get_history_summary tools убраны из direct.
+- [x] `startAIConversation` (client resource `plugins/ai-bot-resources/conversation.ts`)
+      над `createAndGetDirect`; принимает текст + origin (reference-mention).
+      Server-helper - follow-up по необходимости.
 - Fulltext/панель тредов/счётчик replies - бесплатно из chunter.
 
 ### T16. Structured-output tools (markdown -> markdown + diff + apply)
@@ -169,14 +170,13 @@ GigaChat/clisr держат один клиент и выбирают модел
 
 ## P2 - третья очередь
 
-### T8. Прогноз времени ответа + индикация
+### T8. Прогноз времени ответа + индикация (ОТЛОЖЕНО - сложно по нагрузке)
+ETA через EMA-метрики дорого/ненадёжно под нагрузкой. `estimatedFinishAt` в
+AIRequest зарезервировано, но не заполняется. Откладываем до явной потребности.
 - [ ] `AIRequest.kind='text-op'` с приоритетом выше chat.
-- [ ] EMA-метрики обработчика (avgLatency на 1k токенов, avgQueueWait) ->
-      статус-документ модели.
+- [ ] EMA-метрики обработчика (avgLatency на 1k токенов, avgQueueWait).
 - [ ] `estimatedFinishAt` при постановке + уточнение при processing; UI - liveQuery.
-- [ ] "ЮляИИ печатает" в чате через pulse `TypingIndicator`
-      (`plugins/presence-resources/src/typing.ts`): создать при processing,
-      снять по done/failed; передавать прогноз (расширить status/поле ETA).
+- [ ] "ЮляИИ печатает" через pulse `TypingIndicator` (без точного ETA - дешевле).
 
 ### T9. Роли пода (один бинарь, MODE)
 ПЕРЕОСМЫСЛЕНО: вместо `ROUTER_KIND` - роли через `MODE`. Очередь = развязка,
@@ -223,3 +223,39 @@ GigaChat/clisr держат один клиент и выбирают модел
       пул обработчиков; ключи строго одного workspace на запрос.
 - [ ] UI настройки в workspace settings (role Owner) - паттерн IntegrationType
       как у ai-assistant.
+
+## Отброшенные решения (история)
+
+Решения, рассмотренные и отвергнутые по ходу - чтобы не возвращаться:
+- **`AIModelConfig` (1 модель = 1 уровень)** -> заменён на `AIProviderConfig`
+  (1 провайдер = N уровней, 1 клиент). GigaChat/clisr держат один auth и выбирают
+  модель per-request от уровня.
+- **`AILevel` как enum (low/middle/high/max)** -> `AILevel = string` (data-driven,
+  уровни в реестре с order/label, UI читает из API).
+- **`AIModelInfo`-документ в БД (проекция реестра, sync при connect)** -> УДАЛЁН.
+  Каталог одинаков для всех -> отдаёт aibot API `GET /levels`, не дублируется в БД.
+- **Pod-side `LevelResolver` + кэш + Tx/AIQueue-инвалидация уровня** -> УДАЛЕНЫ.
+  Уровень резолвится на server-trigger (кладёт `AILevelSetting.level` в событие),
+  pod читает готовый `event.level`. Файлы `levelResolver.ts`/`clampLevel`/
+  `level-resolver.spec.ts` удалены.
+- **`ROUTER_KIND=all|llm|asr`** -> заменён на роли через `MODE` (event-router/
+  llm-router/stt-worker/all/client). Очередь = развязка.
+- **queued-фаза AIRequest** -> опущена (статус начинается с `processing`; задержка
+  постановки мала, отдельный _id через топик усложнял бы).
+- **AILevel из `Subscription.plan`** -> отвергнуто (план и уровень - разные
+  сущности). Ограничение уровней подпиской - отдельно (T11).
+- **ETA через EMA-метрики** -> отложено (дорого/ненадёжно под нагрузкой, T8).
+
+## Реальный остаток (что не сделано)
+
+- **T11 Подписки**: ограничение доступных уровней + квота токенов
+  (`Subscription.limits`), проверка/даунгрейд при постановке. Зависит от billing.
+- **T13 BYOK per workspace**: отдельный провайдер/уровень/топик `llm-byok`, ключи
+  через account-интеграции, UI в workspace settings.
+- **T16 Structured-output tools**: markdown->markdown + diff + apply (поверх T7).
+- **T8 (отложено)**: прогноз ETA + typing-индикатор.
+- **T10 (отдельно)**: helm-деплой ролей, вынос остатков in-memory state.
+- **T12 Streaming**: после T6, для text-op.
+- Мелочи: dead-letter/ретраи для llm-pipeline (по образцу transcription);
+  GigaChat `chatToolStep` (нет function calling в API); транскрибаторы отдельным
+  деплоем; server-helper для `startAIConversation`.

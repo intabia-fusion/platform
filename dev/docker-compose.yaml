@@ -495,7 +495,9 @@ services:
       - SERVER_SECRET=secret
       - SERVICE_ID=ai-bot-service
       - API_TOKEN=api-secret
-      - MODE=queue
+      # All-in-one role: event-router + llm-router + stt-worker (+ stt-ingest).
+      # Split into MODE=event-router / llm-router / stt-worker for prod topology.
+      - MODE=all
 
       # Bot Identity Configuration
       - FIRST_NAME=Julia

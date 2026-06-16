@@ -25,6 +25,7 @@ import type { PersonMessage } from '@hcengineering/ai-bot'
 import contact from '@hcengineering/contact'
 import type { HistoryRecord } from '../types'
 import config, { type AILevel, type AIProviderConfig } from '../config'
+import { providerLevels } from './modelRegistry'
 import { countTokens } from '@hcengineering/openai'
 import { pushTokensData, tokensRecord } from '../billing'
 import type {
@@ -53,8 +54,9 @@ export default class OpenAIProvider implements LLMProvider {
     provider: AIProviderConfig
   ) {
     this.provider = provider
-    // strongest served level is the default for service ops (translate/summary)
-    const served = (['low', 'middle', 'high', 'max'] as AILevel[]).filter((l) => provider.levels[l] !== undefined)
+    // strongest served level is the default for service ops (translate/summary),
+    // resolved by `order` so custom level ids work (not a hardcoded list)
+    const served = providerLevels(provider)
     this.defaultLevel = served[served.length - 1] ?? 'low'
 
     this.client = new OpenAI({
