@@ -16,6 +16,19 @@ MODEL=qwen2.5:1.5b-instruct-q8_0 ./run.sh   # другая модель
 Скрипт поднимает контейнер, ждёт готовности, тянет модель. Эндпоинт:
 `http://127.0.0.1:11434/v1` (без ключа; тесты передают любой, напр. `ollama`).
 
+### Baked-образ (offline, для CI/тестов)
+
+Модель запечена в образ `intabiafusion/ollama-base` - старт без скачивания.
+
+```bash
+# Собрать образ (один раз; модель тянется на build):
+cd dev/base-image && ./build.sh        # или только ollama-таргет
+# Поднять (без volume, без pull):
+cd dev/ollama && docker compose -f docker-compose.baked.yaml up -d
+```
+
+Модель образа: `OLLAMA_MODEL` build-arg (по умолчанию `qwen2.5:0.5b-instruct-q8_0`).
+
 ## Прогон e2e против ollama
 
 ```bash

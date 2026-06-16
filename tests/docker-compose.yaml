@@ -489,6 +489,69 @@ services:
       - QUEUE_REGION=
     restart: unless-stopped
 
+  ollama:
+    # Tiny LLM (qwen2.5:0.5b) baked into the image - offline, no model download.
+    # Build once: cd dev/base-image && ./build.sh (ollama target).
+    image: intabiafusion/ollama-base:latest
+    pull_policy: never
+    restart: unless-stopped
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_KEEP_ALIVE=5m
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_MAX_LOADED_MODELS=1
+    healthcheck:
+      test: ['CMD', 'ollama', 'list']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  aibot:
+    image: intabiafusion/ai-bot
+    pull_policy: never
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      account:
+        condition: service_started
+      minio:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    environment:
+      - ACCOUNTS_URL=http://account:3003
+      - SERVER_SECRET=secret
+      - SERVICE_ID=ai-bot-service
+      - API_TOKEN=api-secret
+      # All-in-one role for sanity (event-router + llm-router + stt-worker).
+      - MODE=all
+      - FIRST_NAME=Julia
+      - LAST_NAME=AI
+      - PASSWORD=password
+      - AVATAR_PATH=./avatar.png
+      - AVATAR_CONTENT_TYPE=.png
+      - PORT=4010
+      # OpenAI-compatible LLM served by the baked ollama container.
+      - LLM_PROVIDER=openai
+      - OPENAI_API_KEY=ollama
+      - OPENAI_BASE_URL=http://ollama:11434/v1/
+      - OPENAI_MODEL=qwen2.5:0.5b-instruct-q8_0
+      - OPENAI_SUMMARY_MODEL=qwen2.5:0.5b-instruct-q8_0
+      - OPENAI_TRANSLATE_MODEL=qwen2.5:0.5b-instruct-q8_0
+      # STT served in-process via clisr (no external STT needed for sanity).
+      - STT_PROVIDER=server
+      - VAD_RMS_THRESHOLD=0.02
+      - VAD_SPEECH_RATIO_THRESHOLD=0.1
+      - LOVE_ENDPOINT=http://love:8087
+      - BILLING_URL=http://billing:4043
+      - MAX_CONTENT_TOKENS=12800
+      - MAX_HISTORY_RECORDS=500
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - CHUNK_STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin&rootBucket=ai-bot-chunks-test
+      - STATS_URL=http://stats:4901
+    restart: unless-stopped
+
   sign:
     image: intabiafusion/sign
     pull_policy: never

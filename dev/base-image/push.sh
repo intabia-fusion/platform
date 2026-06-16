@@ -9,3 +9,4 @@ docker push intabiafusion/rekoni-base:${VERSION}
 docker push intabiafusion/print-base:${VERSION}
 docker push intabiafusion/front-base:${VERSION}
 docker push intabiafusion/preview-base:${VERSION}
+docker push intabiafusion/ollama-base:${VERSION}
