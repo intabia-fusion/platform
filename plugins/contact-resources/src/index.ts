@@ -427,7 +427,9 @@ export default async (): Promise<Resources> => ({
           color: getPersonColor(person, name)
         }
       }
-      const blobRef = await getBlobRef(person.avatar, undefined, width)
+
+      const effectiveWidth = width ?? 128
+      const blobRef = await getBlobRef(person.avatar, undefined, effectiveWidth)
       return {
         url: blobRef.src,
         srcSet: blobRef.srcset,
