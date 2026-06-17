@@ -23,6 +23,10 @@ import { emptyResult } from '../../utils/result'
 
 describe('handleReadState', () => {
   let mockClient: {
+    ctx: {
+      warn: jest.Mock
+      error: jest.Mock
+    }
     txFactory: {
       createTxUpdateDoc: jest.Mock
     }
