@@ -281,10 +281,19 @@ export class Worker {
       try {
         const token = generateToken(systemAccountUuid, ws, { service: config.ServiceId })
         const wsInfo = await getWorkspaceInfo(token)
-        if (wsInfo === undefined) return undefined
+        if (wsInfo === undefined) {
+          ctx.warn('Workspace info not found, dropping workspace client initialization', { wsUuid: ws })
+          return undefined
+        }
 
         const endpoint = getTransactorApiEndpoint(wsInfo)
-        if (endpoint === undefined) return undefined
+        if (endpoint === undefined) {
+          ctx.warn('Transactor API endpoint not found in workspace info, dropping workspace client initialization', {
+            wsUuid: ws,
+            wsInfo
+          })
+          return undefined
+        }
 
         const client = createRestClient(endpoint, ws, token)
 
@@ -313,6 +322,7 @@ export class Worker {
           ctx.error('Workspace is forbidden, dropping workspace initialization', { e, wsUuid: ws })
           return undefined
         }
+        ctx.error('Failed to initialize workspace client', { e, wsUuid: ws })
         throw e
       } finally {
         this.pendingWorkspaces.delete(ws)

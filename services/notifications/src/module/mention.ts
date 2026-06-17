@@ -163,7 +163,10 @@ async function createMentionsData (
   if (references.length === 0) return []
 
   const space = await cache.getDocSpace(message ?? doc)
-  if (space == null) return []
+  if (space == null) {
+    client.ctx.warn('Space not found for mentions', { docId: doc._id, docClass: doc._class })
+    return []
+  }
 
   const notified = new Set<AccountUuid>()
   const res: MentionResult[] = []

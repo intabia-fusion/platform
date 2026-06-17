@@ -35,6 +35,10 @@ describe('handleReadState', () => {
 
   beforeEach(() => {
     mockClient = {
+      ctx: {
+        warn: jest.fn(),
+        error: jest.fn()
+      },
       txFactory: {
         createTxUpdateDoc: jest.fn().mockImplementation((cls: string, space: string, id: string, payload: unknown) => ({
           _class: core.class.TxUpdateDoc,
@@ -92,6 +96,9 @@ describe('handleReadState', () => {
     await handleReadState(mockClient as unknown as Client, mockCache as unknown as Cache, result, tx)
 
     expect(mockCache.getReadState).toHaveBeenCalledWith('rs-1')
+    expect(mockClient.ctx.warn).toHaveBeenCalledWith('ReadState not found for read state update', {
+      readStateId: 'rs-1'
+    })
     expect(mockCache.getContexts).not.toHaveBeenCalled()
   })
 

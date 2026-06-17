@@ -90,10 +90,24 @@ async function handleCreateMessage (
   const message = TxProcessor.createDoc2Doc(tx)
 
   const doc = await cache.getDoc(message.attachedTo, message.attachedToClass)
-  if (doc === undefined) return
+  if (doc === undefined) {
+    client.ctx.warn('Document not found for message creation', {
+      messageId: message._id,
+      docId: message.attachedTo,
+      docClass: message.attachedToClass
+    })
+    return
+  }
 
   const space = await cache.getDocSpace(doc)
-  if (space === undefined) return
+  if (space === undefined) {
+    client.ctx.warn('Space not found for message creation', {
+      messageId: message._id,
+      docId: doc._id,
+      docClass: doc._class
+    })
+    return
+  }
 
   const notified = getNotifiedUsers(result)
   const collaborators = await getCollaboratorAccounts(client, cache, doc, space, notified)
@@ -110,7 +124,13 @@ async function handleCreateMessage (
   if (collaborators.length === 0) return
 
   const receivers = await cache.getReceivers(collaborators)
-  if (receivers.length === 0) return
+  if (receivers.length === 0) {
+    client.ctx.warn('No receivers resolved for message creation collaborators', {
+      messageId: message._id,
+      collaborators
+    })
+    return
+  }
 
   const settings = await cache.getSettings()
   const contexts = await cache.getContexts(doc._id)
@@ -274,12 +294,22 @@ async function handleUpdateMessage (
   if (tx.operations.message == null && (tx.operations as any).attachments === null && !isDUM) return
 
   const _message = await cache.getDoc(tx.objectId, tx.objectClass)
-  if (_message === undefined) return
+  if (_message === undefined) {
+    client.ctx.warn('Message not found for update', { messageId: tx.objectId, messageClass: tx.objectClass })
+    return
+  }
 
   const message = TxProcessor.updateDoc2Doc(_message, tx)
 
   const doc = await cache.getDoc(message.attachedTo, message.attachedToClass)
-  if (doc === undefined) return
+  if (doc === undefined) {
+    client.ctx.warn('Document not found for message update', {
+      messageId: message._id,
+      docId: message.attachedTo,
+      docClass: message.attachedToClass
+    })
+    return
+  }
 
   const contexts = await cache.getContexts(doc._id)
   const attachments = await getAttachments(message, client)

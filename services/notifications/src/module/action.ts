@@ -49,7 +49,13 @@ export async function handleReadNotificationAction (
   const action = TxProcessor.createDoc2Doc(tx)
 
   const context = await cache.getContext(action.attachedTo, action.account)
-  if (context == null) return
+  if (context == null) {
+    client.ctx.warn('Context not found for read notification action', {
+      attachedTo: action.attachedTo,
+      account: action.account
+    })
+    return
+  }
 
   const { reactionIds = [], messageIds = [], commonIds = [], mentionIds = [] } = action
 
@@ -160,11 +166,20 @@ export async function handleCreateNotificationAction (
   const action = TxProcessor.createDoc2Doc(tx)
 
   const doc = await cache.getDoc(action.attachedTo, action.attachedToClass)
-  if (doc === undefined) return
+  if (doc === undefined) {
+    client.ctx.warn('Document not found for create notification action', {
+      docId: action.attachedTo,
+      docClass: action.attachedToClass
+    })
+    return
+  }
 
   const receivers = await cache.getReceivers([action.account])
   const receiver = receivers[0]
-  if (receiver === undefined) return
+  if (receiver === undefined) {
+    client.ctx.warn('Receiver not found for create notification action', { receiverAccount: action.account })
+    return
+  }
 
   const settings = await cache.getSettings()
   const type =

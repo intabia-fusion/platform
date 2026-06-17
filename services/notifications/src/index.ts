@@ -1,5 +1,6 @@
 //
 // Copyright © 2026 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -69,13 +70,12 @@ async function main (): Promise<void> {
   const worker = new Worker(ctx, model, queue)
 
   const txConsumer = queue.createConsumer<Tx>(ctx, QueueTopic.Tx, queue.getClientId(), async (ctx, queueMessage) => {
+    const ws = queueMessage.workspace
+    const tx = queueMessage.value
     try {
-      const ws = queueMessage.workspace
-      const tx = queueMessage.value
-
       await worker.tx(ctx, ws, tx)
     } catch (e) {
-      ctx.error('Failed to process tx message', { e })
+      ctx.error('Failed to process tx message', { e, wsUuid: ws, tx })
       throw e
     }
   })

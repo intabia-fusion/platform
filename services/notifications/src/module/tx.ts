@@ -73,7 +73,14 @@ export async function handleTxNotification (
     tx._class === core.class.TxCreateDoc
       ? TxProcessor.createDoc2Doc(tx as TxCreateDoc<Doc>)
       : await cache.getDoc(tx.objectId, tx.objectClass)
-  if (txObject === undefined) return
+  if (txObject === undefined) {
+    client.ctx.warn('txObject not found for tx notification', {
+      txId: tx._id,
+      objectId: tx.objectId,
+      objectClass: tx.objectClass
+    })
+    return
+  }
 
   const sender = await cache.getSender(tx.modifiedBy)
   const settings = await cache.getSettings()
@@ -96,7 +103,10 @@ export async function handleTxNotification (
         : txObject
 
     const space = await cache.getDocSpace(doc)
-    if (space == null) continue
+    if (space == null) {
+      client.ctx.warn('Space not found for tx notification doc', { txId: tx._id, docId: doc._id, docClass: doc._class })
+      continue
+    }
 
     const notified = getNotifiedUsers(result)
     const collaborators = await getCollaboratorAccounts(client, cache, doc, space, notified)

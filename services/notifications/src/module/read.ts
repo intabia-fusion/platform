@@ -56,7 +56,10 @@ export async function handleReadState (
   if (updateKeys.length === 0) return
 
   const readState = await cache.getReadState(updateTx.objectId)
-  if (readState == null) return
+  if (readState == null) {
+    client.ctx.warn('ReadState not found for read state update', { readStateId: updateTx.objectId })
+    return
+  }
 
   const contexts = await cache.getContexts(readState.attachedTo)
 
