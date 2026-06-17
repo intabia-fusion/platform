@@ -92,7 +92,7 @@
         size="small"
       />
     {/if}
-    <span class="overflow-label">
+    <span class="overflow-label ml-0-5">
       {channelTitle}
     </span>
   </span>
