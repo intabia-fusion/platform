@@ -59,7 +59,9 @@ describe('display utils', () => {
     mockClient = {
       ctx: 'ctx-val',
       workspace: 'ws-val',
-      hierarchy: 'hierarchy-val',
+      hierarchy: {
+        isDerived: jest.fn().mockReturnValue(false)
+      },
       model: 'model-val',
       branding: { lastNameFirst: true },
       findAll: jest.fn()
@@ -167,13 +169,63 @@ describe('display utils', () => {
       ;(_getDocLabel as jest.Mock).mockResolvedValue('Label')
       ;(_getDocIcon as jest.Mock).mockResolvedValue('Icon')
 
-      const result = await getObjectDisplayData(mockClient, txCache, doc, 'user-1' as AccountUuid)
+      const result = await getObjectDisplayData(mockClient, {} as any, txCache, doc, 'user-1' as AccountUuid)
 
       expect(result).toEqual({
         objectTitle: 'Title',
         objectIdentifier: 'ID',
         objectLabel: 'Label',
         objectIcon: 'Icon'
+      })
+    })
+
+    it('resolves and aggregates parent display properties if parent details exist on doc', async () => {
+      const doc = {
+        _id: 'msg-1',
+        _class: 'MessageClass',
+        attachedTo: 'parent-1',
+        attachedToClass: 'ParentClass'
+      } as unknown as Doc
+      const parentDoc = { _id: 'parent-1', _class: 'ParentClass' } as unknown as Doc
+
+      const mockCache = {
+        getDoc: jest.fn().mockResolvedValue(parentDoc)
+      } as any
+
+      ;(mockClient.hierarchy.isDerived as jest.Mock).mockReturnValue(true)
+      ;(getTitlePresenter as jest.Mock).mockReturnValue({ personalized: false })
+      ;(getIconPresenter as jest.Mock).mockReturnValue({ personalized: false })
+      ;(_getDocTitle as jest.Mock).mockImplementation(async (_, d) =>
+        d?._id === 'msg-1' ? 'Msg Title' : 'Parent Title'
+      )
+      ;(_getDocIdentifier as jest.Mock).mockImplementation(async (_, d) =>
+        d?._id === 'msg-1' ? 'Msg ID' : 'Parent ID'
+      )
+      ;(_getDocLabel as jest.Mock).mockImplementation(async (_, d) =>
+        d?._id === 'msg-1' ? 'Msg Label' : 'Parent Label'
+      )
+      ;(_getDocIcon as jest.Mock).mockImplementation(async (_, d) => (d?._id === 'msg-1' ? 'Msg Icon' : 'Parent Icon'))
+
+      const result = await getObjectDisplayData(mockClient, mockCache, txCache, doc, 'user-1' as AccountUuid)
+
+      expect(mockCache.getDoc).toHaveBeenCalledWith('parent-1', 'ParentClass')
+      expect(result).toEqual({
+        objectTitle: 'Msg Title',
+        objectIdentifier: 'Msg ID',
+        objectLabel: 'Msg Label',
+        objectIcon: 'Msg Icon',
+        object: {
+          _id: 'msg-1',
+          _class: 'MessageClass',
+          attachedTo: 'parent-1',
+          attachedToClass: 'ParentClass'
+        },
+        parentObjectId: 'parent-1',
+        parentObjectClass: 'ParentClass',
+        parentObjectTitle: 'Parent Title',
+        parentObjectIdentifier: 'Parent ID',
+        parentObjectLabel: 'Parent Label',
+        parentObjectIcon: 'Parent Icon'
       })
     })
   })

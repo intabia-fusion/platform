@@ -113,6 +113,7 @@
     gap: 0.75rem;
     margin-left: var(--spacing-0_5);
     padding-top: var(--spacing-1_5);
+    height: 3.625rem;
 
     .actions {
       position: absolute;

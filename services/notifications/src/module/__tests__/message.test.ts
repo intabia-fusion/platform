@@ -698,7 +698,7 @@ describe('message module', () => {
 
       await handleMessage(mockClient, mockCache, txCache, result, mockTx)
 
-      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx).toHaveLength(2)
       expect(result.updateContextTx[0].operations).toEqual({
         $update: {
           latestNotifications: {
@@ -709,6 +709,9 @@ describe('message module', () => {
             }
           }
         }
+      })
+      expect(result.updateContextTx[1].operations).toEqual({
+        object: { text: 'NotifMsg' }
       })
     })
 
@@ -733,7 +736,7 @@ describe('message module', () => {
 
       await handleMessage(mockClient, mockCache, txCache, result, mockTx)
 
-      expect(result.updateContextTx).toHaveLength(1)
+      expect(result.updateContextTx).toHaveLength(2)
       expect(result.updateContextTx[0].operations).toEqual({
         $update: {
           latestNotifications: {
@@ -744,6 +747,9 @@ describe('message module', () => {
             }
           }
         }
+      })
+      expect(result.updateContextTx[1].operations).toEqual({
+        object: { text: 'NotifMsg' }
       })
     })
   })
@@ -861,7 +867,16 @@ describe('message module', () => {
       const receiver = { account: 'user-1' }
       const unreadMessage: UnreadMessageId = { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 1, notified: false }
 
-      await addUnreadMessage(mockClient, receiver as Receiver, doc as Doc, unreadMessage, context, result, txCache)
+      await addUnreadMessage(
+        mockClient,
+        receiver as Receiver,
+        doc as Doc,
+        unreadMessage,
+        context,
+        result,
+        txCache,
+        mockCache
+      )
 
       expect(result.updateContextTx[0].operations.$push).toEqual({
         unreadMessages: unreadMessage
@@ -873,9 +888,18 @@ describe('message module', () => {
       const receiver = { account: 'user-1', space: 'user-space' }
       const unreadMessage: UnreadMessageId = { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 1, notified: false }
 
-      await addUnreadMessage(mockClient, receiver as Receiver, doc as Doc, unreadMessage, undefined, result, txCache)
+      await addUnreadMessage(
+        mockClient,
+        receiver as Receiver,
+        doc as Doc,
+        unreadMessage,
+        undefined,
+        result,
+        txCache,
+        mockCache
+      )
 
-      expect(mockGetObjectDisplayData).toHaveBeenCalledWith(mockClient, txCache, doc, 'user-1')
+      expect(mockGetObjectDisplayData).toHaveBeenCalledWith(mockClient, mockCache, txCache, doc, 'user-1')
       expect(mockGetCreateContextTx).toHaveBeenCalled()
       expect(result.createContextTx[0].attributes.unreadMessages).toEqual([unreadMessage])
     })
@@ -897,7 +921,7 @@ describe('message module', () => {
       const receiver = { account: 'user-1' }
       const newMsg: UnreadMessageId = { id: 'msg-100' as Ref<ActivityMessage>, createdOn: 1100, notified: true }
 
-      await addUnreadMessage(mockClient, receiver as Receiver, doc as Doc, newMsg, context, result, txCache)
+      await addUnreadMessage(mockClient, receiver as Receiver, doc as Doc, newMsg, context, result, txCache, mockCache)
 
       expect(result.updateContextTx[0].operations.unreadMessages).toBeDefined()
       expect(result.updateContextTx[0].operations.$push).toBeUndefined()

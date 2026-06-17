@@ -387,7 +387,7 @@ export class NotificationClientImpl implements NotificationClient {
     const client = getClient()
     const op = client.apply(undefined, 'readDoc', true)
     await this.readNotificationsWithoutMessage(_id, op)
-    await this.forceReadDocState(op, _id)
+    await this.forceReadDocState(_id, op)
     await op.commit()
   }
 
@@ -435,14 +435,14 @@ export class NotificationClientImpl implements NotificationClient {
       })
     }
 
-    await this.forceReadDocState(client, doc._id)
+    await this.forceReadDocState(doc._id)
   }
 
-  private async forceReadDocState (client: TxOperations, attachedTo: Ref<Doc>): Promise<boolean> {
+  public async forceReadDocState (attachedTo: Ref<Doc>, op?: TxOperations): Promise<boolean> {
     const me = getCurrentAccount()
     const state = await this.getReadState(attachedTo)
     if (state != null) {
-      await client.update(state, {
+      await (op ?? getClient()).update(state, {
         [me.uuid]: {
           messageId: generateId<ActivityMessage>(),
           timestamp: Date.now()
@@ -469,7 +469,7 @@ export class NotificationClientImpl implements NotificationClient {
       )
       for (const context of contexts) {
         await ops.removeDoc(context._class, context.space, context._id)
-        await this.forceReadDocState(ops, context.objectId)
+        await this.forceReadDocState(context.objectId, ops)
       }
       await ops.commit()
     } finally {
@@ -507,7 +507,7 @@ export class NotificationClientImpl implements NotificationClient {
             mentionIds
           })
         }
-        await this.forceReadDocState(ops, context.objectId)
+        await this.forceReadDocState(context.objectId, ops)
       }
       await ops.commit()
     } finally {

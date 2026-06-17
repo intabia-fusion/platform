@@ -15,7 +15,9 @@
   import activity from '@hcengineering/activity'
   import { Class, Doc, getCurrentAccount, Ref } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Label, Loading, TabItem, TabList } from '@hcengineering/ui'
+  import { Label, languageStore, Loading, TabItem, TabList } from '@hcengineering/ui'
+  import chunter from '@hcengineering/chunter'
+  import { translate } from '@hcengineering/platform'
 
   import notification from '../../plugin'
   import { InboxFilter } from '../../types'
@@ -43,10 +45,10 @@
     labelIntl: notification.string.All
   }
 
-  const messagesTab: TabItem = {
+  const messagesTab = {
     id: activity.class.ActivityMessage,
-    labelIntl: activity.string.Messages
-  }
+    labelIntl: chunter.string.Threads
+  } as const
 
   let tabItems: TabItem[] = []
 
@@ -65,9 +67,9 @@
     }
   )
 
-  $: void updateTabItems(classes)
+  $: void updateTabItems(classes, $languageStore)
 
-  async function updateTabItems (classes: Set<Ref<Class<Doc>>>): Promise<void> {
+  async function updateTabItems (classes: Set<Ref<Class<Doc>>>, lang: string): Promise<void> {
     const _classes = Array.from(classes)
     const tabs: TabItem[] = []
 
@@ -83,12 +85,15 @@
       const intlLabel = clazz.pluralLabel ?? clazz.label ?? _class
       tabs.push({
         id: _class,
-        labelIntl: intlLabel
+        label: await translate(intlLabel, {}, lang)
       })
     }
 
     if (pushMessagesTab) {
-      tabs.push(messagesTab)
+      tabs.push({
+        id: messagesTab.id,
+        label: await translate(messagesTab.labelIntl, {}, lang)
+      })
     }
 
     tabItems = [allTab].concat(tabs.sort((a, b) => (a.label ?? '').localeCompare(b.label ?? '')))

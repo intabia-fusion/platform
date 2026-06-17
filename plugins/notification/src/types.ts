@@ -28,7 +28,8 @@ import {
   Timestamp,
   Markup,
   Space,
-  AttachedDoc
+  AttachedDoc,
+  type TxOperations
 } from '@hcengineering/core'
 import { AnyComponent, Location } from '@hcengineering/ui'
 import { ActivityMessage, ActivityMessageLite, Reaction } from '@hcengineering/activity'
@@ -177,12 +178,12 @@ export interface NotificationContextPresenter extends Class<Doc> {
   labelPresenter?: AnyComponent
 }
 
-export interface DocNotifyContext extends Doc<PersonSpace> {
+export interface DocNotifyContext<T extends Doc = Doc> extends Doc<PersonSpace> {
   user: AccountUuid
 
   // Context
-  objectId: Ref<Doc>
-  objectClass: Ref<Class<Doc>>
+  objectId: Ref<T>
+  objectClass: Ref<Class<T>>
   objectSpace: Ref<Space>
 
   // Data to display object in inbox without requests
@@ -190,6 +191,16 @@ export interface DocNotifyContext extends Doc<PersonSpace> {
   objectIdentifier?: string
   objectLabel?: IntlString
   objectIcon?: { asset?: Asset, emoji?: number | number[], props?: Record<string, any> }
+  // Used for threads only to show message
+  object?: Partial<T>
+
+  // Parent Context (e.g. for threads/attached to a main object)
+  parentObjectId?: Ref<Doc>
+  parentObjectClass?: Ref<Class<Doc>>
+  parentObjectTitle?: string
+  parentObjectIdentifier?: string
+  parentObjectLabel?: IntlString
+  parentObjectIcon?: { asset?: Asset, emoji?: number | number[], props?: Record<string, any> }
 
   lastNotify: Timestamp
   latestNotifications: ContextNotification[] // store n latest notifications to show in inbox
@@ -374,6 +385,7 @@ export interface NotificationClient {
 
   readDoc: (_id: Ref<Doc>) => Promise<void>
   forceReadDoc: (doc: Doc) => Promise<void>
+  forceReadDocState: (attachedTo: Ref<Doc>, op?: TxOperations) => Promise<boolean>
 
   readNotificationsWithoutMessage: (_id: Ref<Doc>) => Promise<void>
 

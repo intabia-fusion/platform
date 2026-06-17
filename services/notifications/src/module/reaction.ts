@@ -108,7 +108,7 @@ async function handleCreateReaction (
   const sender = await cache.getSender(reaction.modifiedBy)
   const notifyProviders: NotifyProviders = Object.fromEntries(providers.map((p) => [p, [type]]))
 
-  const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
+  const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, receiver.account)
   const attachments = await getAttachments(message, client)
   const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
 

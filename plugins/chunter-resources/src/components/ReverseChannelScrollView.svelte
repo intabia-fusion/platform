@@ -22,7 +22,7 @@
     editingMessageStore
   } from '@hcengineering/activity-resources'
   import core, { Doc, getCurrentAccount, Ref, Space, Tx, TxCUD, getDay, Timestamp, notEmpty } from '@hcengineering/core'
-  import { DocNotifyContext, ReadState } from '@hcengineering/notification'
+  import { ReadState } from '@hcengineering/notification'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { addTxListener, getClient, removeTxListener } from '@hcengineering/presentation'
   import { ModernButton, Scroller, Loading } from '@hcengineering/ui'
@@ -423,20 +423,16 @@
   }
 
   let forceRead = false
-  $: void forceReadContext(isScrollAtBottom, readState, notifyContext)
+  $: void forceReadState(isScrollAtBottom, readState)
 
-  async function forceReadContext (
-    isScrollAtBottom: boolean,
-    readState?: ReadState,
-    context?: DocNotifyContext
-  ): Promise<void> {
+  async function forceReadState (isScrollAtBottom: boolean, readState?: ReadState): Promise<void> {
     if (readState === undefined || !isScrollAtBottom || forceRead || isFreeze()) return
     const lastView = readState[getCurrentAccount().uuid]?.timestamp ?? 0
     const lastUpdate = readState.latestMessageTimestamp ?? 0
 
-    if (lastView < lastUpdate || (context?.unreadCount ?? 0) > 0) {
+    if (lastView < lastUpdate) {
       forceRead = true
-      await inboxClient.readDoc(object._id)
+      await inboxClient.forceReadDocState(object._id)
       forceRead = false
     }
   }
@@ -851,14 +847,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-
-  .selectedDate {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: transparent;
   }
 
   .down-button {

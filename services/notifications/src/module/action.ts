@@ -181,7 +181,7 @@ export async function handleCreateNotificationAction (
 
   const context = await cache.getContext(doc._id, action.account)
 
-  const objectDisplayData = await getObjectDisplayData(client, getEmptyTxCache(), doc, action.account)
+  const objectDisplayData = await getObjectDisplayData(client, cache, getEmptyTxCache(), doc, action.account)
   const pushSubscriptions = await cache.getPushSubscriptions(action.account)
   const sender = await cache.getSender(action.createdBy ?? action.modifiedBy)
 

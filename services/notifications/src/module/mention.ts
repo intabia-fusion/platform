@@ -82,7 +82,7 @@ export async function handleMention (
       ...mention.notification
     }
 
-    const objectDisplayData = await getObjectDisplayData(client, txCache, doc, mention.receiver.account)
+    const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, mention.receiver.account)
     const pushSubscriptions = await cache.getPushSubscriptions(mention.receiver.account)
     const messageId = mentionNotification.messageId
     let unreadMsg: UnreadMessage | undefined

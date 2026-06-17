@@ -262,6 +262,16 @@ const dncSchema: Schema = {
     notNull: true,
     index: false
   },
+  parentObjectId: {
+    type: 'text',
+    notNull: false,
+    index: true
+  },
+  parentObjectClass: {
+    type: 'text',
+    notNull: false,
+    index: false
+  },
   lastNotify: {
     type: 'bigint',
     notNull: true,

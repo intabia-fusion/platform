@@ -65,7 +65,7 @@ export async function getDocTitle (
     const message = doc as ActivityMessage
     if (message.message != null && !isEmptyMarkup(message.message)) {
       const text = markupToText(message.message).trim()
-      const normalized = text.length > 50 ? text.slice(0, 50) + '...' : text
+      const normalized = text.length > 100 ? text.slice(0, 100).trim() + '...' : text
       if (text.length > 0) {
         return normalized
       }

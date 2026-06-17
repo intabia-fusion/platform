@@ -13,11 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import notification, { DocNotifyContext } from '@hcengineering/notification'
+  import { DocNotifyContext } from '@hcengineering/notification'
   import { Icon, Component, IconSize } from '@hcengineering/ui'
   import { getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { classIcon } from '@hcengineering/view-resources'
   import view from '@hcengineering/view'
+  import chunter from '@hcengineering/chunter'
 
   import NotifyMarker from './NotifyMarker.svelte'
 
@@ -40,10 +41,7 @@
   {:else if value.objectIcon?.emoji}
     <IconWithEmoji icon={value.objectIcon.emoji} {size} />
   {:else}
-    <Icon
-      icon={value.objectIcon?.asset ?? classIcon(client, value.objectClass) ?? notification.icon.Notifications}
-      {size}
-    />
+    <Icon icon={value.objectIcon?.asset ?? classIcon(client, value.objectClass) ?? chunter.icon.Thread} {size} />
   {/if}
 
   <div class="notifyMarker">

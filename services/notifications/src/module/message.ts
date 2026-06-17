@@ -157,7 +157,7 @@ async function handleCreateMessage (
         attachments
       )
     } else if (!alreadyRead) {
-      await addUnreadMessage(client, receiver, doc, unreadMessage, context, result, txCache)
+      await addUnreadMessage(client, receiver, doc, unreadMessage, context, result, txCache, cache)
     }
   }
 }
@@ -315,6 +315,16 @@ async function handleUpdateMessage (
       result.updateContextTx.push(client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, ops))
     }
   }
+
+  const threadContexts = await cache.getContexts(message._id)
+
+  for (const context of threadContexts) {
+    result.updateContextTx.push(
+      client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, {
+        object: toNotificationMessage(message)
+      })
+    )
+  }
 }
 
 async function handleUpdateDUM (
@@ -406,7 +416,7 @@ async function handleUpdateDUM (
         []
       )
     } else if (!alreadyRead) {
-      await addUnreadMessage(client, receiver, doc, unreadMessage, context, result, txCache)
+      await addUnreadMessage(client, receiver, doc, unreadMessage, context, result, txCache, cache)
     }
   }
 }
@@ -462,7 +472,8 @@ export async function addUnreadMessage (
   unreadMessage: UnreadMessage,
   context: DocNotifyContext | undefined,
   result: Result,
-  txCache: TxCache
+  txCache: TxCache,
+  cache: Cache
 ): Promise<void> {
   if (context != null) {
     const { collapsed, didCollapse } = appendAndCollapseUnreadMessages(context.unreadMessages ?? [], unreadMessage)
@@ -477,7 +488,7 @@ export async function addUnreadMessage (
     const updateTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, operations)
     result.updateContextTx.push(updateTx)
   } else {
-    const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
+    const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, receiver.account)
     const createTx = getCreateContextTx(
       generateId(),
       doc._id,
@@ -513,7 +524,7 @@ async function pushNotification (
   attachments: any[]
 ): Promise<void> {
   const content = await getMessageIntl(client, txCache, type, doc, message, sender)
-  const objectDisplayData = await getObjectDisplayData(client, txCache, doc, receiver.account)
+  const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, receiver.account)
   const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
   await _pushNotification(client, txCache, result, context, {
     unreadMessage:

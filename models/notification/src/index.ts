@@ -47,7 +47,8 @@ import {
   type Builder,
   TypeNumber,
   ArrOf,
-  TypeRecord
+  TypeRecord,
+  TypeIntlString
 } from '@hcengineering/model'
 import core, { TAttachedDoc, TClass, TDoc } from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
@@ -144,7 +145,6 @@ export class TNotificationType extends TDoc implements NotificationType {
   hidden!: boolean
   templates?: NotificationTemplate
   objectClass!: Ref<Class<Doc>>
-  onlyOwn?: boolean
 }
 
 @Model(notification.class.MessageNotificationType, notification.class.NotificationType)
@@ -244,6 +244,28 @@ export class TDocNotifyContext extends TDoc implements DocNotifyContext {
 
   @Prop(TypeRecord(), getEmbeddedLabel('icon'))
     objectIconProps?: Record<string, any>
+
+  @Prop(TypeRecord(), core.string.Object)
+    object?: Partial<Doc>
+
+  @Prop(TypeRef(core.class.Doc), core.string.Object)
+  @Index(IndexKind.Indexed)
+    parentObjectId?: Ref<Doc>
+
+  @Prop(TypeRef(core.class.Class), core.string.Class)
+    parentObjectClass?: Ref<Class<Doc>>
+
+  @Prop(TypeString(), core.string.String)
+    parentObjectTitle?: string
+
+  @Prop(TypeString(), core.string.String)
+    parentObjectIdentifier?: string
+
+  @Prop(TypeIntlString(), core.string.String)
+    parentObjectLabel?: IntlString
+
+  @Prop(TypeRecord(), getEmbeddedLabel('icon'))
+    parentObjectIcon?: Record<string, any>
 
   @Prop(TypeDate(), core.string.Date)
     lastNotify!: Timestamp

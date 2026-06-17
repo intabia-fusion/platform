@@ -198,28 +198,44 @@ async function OnDocUpdate (txes: TxUpdateDoc<Doc>[], control: TriggerControl): 
     if (doc == null) continue
 
     const contexts = await control.findAll(control.ctx, notification.class.DocNotifyContext, { objectId: tx.objectId })
-    if (contexts.length === 0) continue
+    const contextsByParent = await control.findAll(control.ctx, notification.class.DocNotifyContext, {
+      parentObjectId: tx.objectId
+    })
+    if (contexts.length === 0 && contextsByParent.length === 0) continue
 
-    const ops: DocumentUpdate<DocNotifyContext> = {}
+    const objectOps: DocumentUpdate<DocNotifyContext> = {}
+    const parentOps: DocumentUpdate<DocNotifyContext> = {}
 
     if (updateTitle) {
-      ops.objectTitle = await getDocTitle(control, doc)
+      const title = await getDocTitle(control, doc)
+      objectOps.objectTitle = title
+      parentOps.parentObjectTitle = title
     }
 
     if (updateIdentifier) {
-      ops.objectIdentifier = await getDocIdentifier(control, doc)
+      const identifier = await getDocIdentifier(control, doc)
+      objectOps.objectIdentifier = identifier
+      parentOps.parentObjectIdentifier = identifier
     }
 
     if (updateIcon) {
-      ops.objectIcon = await getDocIcon(control, doc)
+      const icon = await getDocIcon(control, doc)
+      objectOps.objectIcon = icon
+      parentOps.parentObjectIcon = icon
     }
 
     if (updateLabel) {
-      ops.objectLabel = await getDocLabel(control, doc)
+      const label = await getDocLabel(control, doc)
+      objectOps.objectLabel = label
+      parentOps.parentObjectLabel = label
     }
 
     for (const context of contexts) {
-      res.push(control.txFactory.createTxUpdateDoc(context._class, context.space, context._id, ops))
+      res.push(control.txFactory.createTxUpdateDoc(context._class, context.space, context._id, objectOps))
+    }
+
+    for (const context of contextsByParent) {
+      res.push(control.txFactory.createTxUpdateDoc(context._class, context.space, context._id, parentOps))
     }
   }
 

@@ -28,8 +28,11 @@ import {
   Icon,
   PresenterControl
 } from '@hcengineering/server-activity'
+import activity, { ActivityMessage } from '@hcengineering/activity'
 
 import { Client, ObjectDisplayData, TxCache } from '../types'
+import Cache from '../cache'
+import { toNotificationMessage } from './misc'
 
 // ---- Cache helpers ----
 
@@ -131,6 +134,7 @@ export async function getDocIcon (
 
 export async function getObjectDisplayData (
   client: Client,
+  cache: Cache,
   txCache: TxCache,
   doc: Doc,
   account: AccountUuid
@@ -140,12 +144,30 @@ export async function getObjectDisplayData (
   const identifier = await getDocIdentifier(client, txCache, doc)
   const icon = await getDocIcon(client, txCache, doc, account)
 
-  return {
+  const displayData: ObjectDisplayData = {
     objectTitle: title,
     objectIdentifier: identifier,
     objectIcon: icon,
     objectLabel: label
   }
+
+  if (client.hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
+    const message = doc as ActivityMessage
+    const parentId = message.attachedTo
+    const parentClass = message.attachedToClass
+    const parentDoc = await cache.getDoc(parentId, parentClass)
+    if (parentDoc != null) {
+      displayData.parentObjectId = parentId
+      displayData.parentObjectClass = parentClass
+      displayData.parentObjectTitle = (await getDocTitle(client, txCache, parentDoc, account)) ?? ''
+      displayData.parentObjectLabel = await getDocLabel(client, txCache, parentDoc)
+      displayData.parentObjectIdentifier = await getDocIdentifier(client, txCache, parentDoc)
+      displayData.parentObjectIcon = await getDocIcon(client, txCache, parentDoc, account)
+    }
+    displayData.object = toNotificationMessage(message)
+  }
+
+  return displayData
 }
 
 export async function getBaseDisplayParams (

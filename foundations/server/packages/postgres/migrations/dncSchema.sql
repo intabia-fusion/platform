@@ -25,6 +25,8 @@ ALTER TABLE notification_dnc
 ALTER COLUMN "user" SET NOT NULL;
 
 ALTER TABLE notification_dnc
+ADD COLUMN IF NOT EXISTS "parentObjectId" text,
+ADD COLUMN IF NOT EXISTS "parentObjectClass" text,
 ADD COLUMN IF NOT EXISTS "objectSpace" text,
 ADD COLUMN IF NOT EXISTS "lastNotify" bigint,
 ADD COLUMN IF NOT EXISTS "unreadCount" integer;
@@ -54,9 +56,13 @@ ADD CHECK ("unreadCount" >= 0);
 CREATE UNIQUE INDEX IF NOT EXISTS notification_dnc_unique_workspaceId_user_objectId_objectClass__index
     ON notification_dnc ("workspaceId", "user", "objectId", "objectClass");
 
--- Index to search notification contexts by document ID
+-- Index to search notification contexts by object ID
 CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_objectId__index
     ON notification_dnc ("workspaceId", "objectId");
+
+-- Index to search notification contexts by parent ID
+CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_parentObjectId__index
+    ON notification_dnc ("workspaceId", "parentObjectId");
 
 -- Index to sort user's inbox by last notification time
 CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_lastNotify_desc__index

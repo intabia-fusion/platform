@@ -113,5 +113,15 @@ export interface TxCache {
 
 export type ObjectDisplayData = Pick<
 DocNotifyContext,
-'objectTitle' | 'objectIdentifier' | 'objectIcon' | 'objectLabel'
+| 'objectTitle'
+| 'objectIdentifier'
+| 'objectIcon'
+| 'objectLabel'
+| 'object'
+| 'parentObjectId'
+| 'parentObjectClass'
+| 'parentObjectTitle'
+| 'parentObjectIdentifier'
+| 'parentObjectLabel'
+| 'parentObjectIcon'
 >

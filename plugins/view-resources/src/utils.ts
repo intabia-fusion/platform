@@ -1757,8 +1757,9 @@ export function getDocMixins (
   )
 }
 
-export function classIcon (client: Client, _class: Ref<Class<Obj>>): Asset | undefined {
-  return client.getHierarchy().getClass(_class).icon
+export function classIcon (client: Client, _class: Ref<Class<Obj>> | undefined): Asset | undefined {
+  if (_class == null) return undefined
+  return client.getHierarchy().findClass(_class)?.icon
 }
 
 export const restrictionStore = writable<Restrictions>({
