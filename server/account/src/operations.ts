@@ -368,9 +368,7 @@ export async function signUpOtp (
       throw new PlatformError(new Status(Severity.ERROR, platform.status.PhoneAlreadyExists, {}))
     }
 
-    // TODO Есть нужна верификация телефона, то нужно удалить параметр verifiedOn и реализовать метод для проверки
-    // телефона. Без verifiedOn телефон не попадет в таблицу channel и не будет отображаться у клиента
-    const newPhoneSocialId = { type: SocialIdType.PHONE, value: normalizedPhone, personUuid, verifiedOn: Date.now() }
+    const newPhoneSocialId = { type: SocialIdType.PHONE, value: normalizedPhone, personUuid }
     await db.socialId.insertOne(newPhoneSocialId)
   }
 
@@ -630,8 +628,7 @@ export async function createWorkspace (
   if (emailSocialId != null) {
     const phoneSocialId = await db.socialId.findOne({
       type: SocialIdType.PHONE,
-      personUuid: socialId.personUuid,
-      verifiedOn: { $gt: 0 }
+      personUuid: socialId.personUuid
     })
 
     await sendCrmNotificationIfNotInvited(
@@ -2122,6 +2119,24 @@ export async function getSocialIds (
   return includeDeleted ? socialIds : socialIds.filter((si) => si.isDeleted !== true)
 }
 
+export async function getUnverifiedPhoneSocialIds (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string
+): Promise<SocialId[]> {
+  const { account: accountUuid, sub } = decodeTokenVerbose(ctx, token)
+  const account = sub ?? accountUuid
+
+  const result = await db.socialId.find({
+    personUuid: account,
+    type: SocialIdType.PHONE,
+    verifiedOn: undefined
+  })
+
+  return result
+}
+
 export async function isReadOnlyGuest (
   ctx: MeasureContext,
   db: AccountDB,
@@ -3063,6 +3078,7 @@ export type AccountMethods =
   | 'getLoginInfoByToken'
   | 'getLoginWithWorkspaceInfo'
   | 'getSocialIds'
+  | 'getUnverifiedPhoneSocialIds'
   | 'getPerson'
   | 'getWorkspaceMembers'
   | 'updateWorkspaceRole'
@@ -3169,6 +3185,7 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
     getLoginInfoByToken: wrap(getLoginInfoByToken),
     getLoginWithWorkspaceInfo: wrap(getLoginWithWorkspaceInfo),
     getSocialIds: wrap(getSocialIds),
+    getUnverifiedPhoneSocialIds: wrap(getUnverifiedPhoneSocialIds),
     getPerson: wrap(getPerson),
     findPersonBySocialId: wrap(findPersonBySocialId),
     findSocialIdBySocialKey: wrap(findSocialIdBySocialKey),

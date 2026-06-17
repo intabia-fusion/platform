@@ -481,19 +481,22 @@ export async function connect (title: string): Promise<Client | undefined> {
   // TODO: should we take the function from some resource like fetchWorkspace/selectWorkspace
   // to remove account client dependency?
   const accountsUrl = getMetadata(login.metadata.AccountsUrl)
-  const socialIds: SocialId[] = await getAccountClient(accountsUrl, token).getSocialIds(true)
+  const accountClient = getAccountClient(accountsUrl, token)
+  const socialIds: SocialId[] = await accountClient.getSocialIds(true)
+  const unverifiedPhoneSocialIds: SocialId[] = await accountClient.getUnverifiedPhoneSocialIds()
+  const allSocialIds = [...socialIds, ...unverifiedPhoneSocialIds]
 
   const me: Account = {
     uuid: account,
     role: workspaceLoginInfo.role,
     primarySocialId: pickPrimarySocialId(socialIds)._id,
-    socialIds: socialIds.map((si) => si._id),
-    fullSocialIds: socialIds
+    socialIds: allSocialIds.map((si) => si._id),
+    fullSocialIds: allSocialIds
   }
 
   // Ensure employee and social identifiers
   if (workspaceLoginInfo.role !== AccountRole.Admin) {
-    const employee = await ensureEmployee(ctx, me, newClient, socialIds, getGlobalPerson)
+    const employee = await ensureEmployee(ctx, me, newClient, allSocialIds, getGlobalPerson)
 
     if (employee == null) {
       console.log('Failed to ensure employee')

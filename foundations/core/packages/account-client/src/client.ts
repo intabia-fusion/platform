@@ -145,6 +145,7 @@ export interface AccountClient {
   getPerson: () => Promise<Person>
   getPersonInfo: (account: PersonUuid) => Promise<PersonInfo>
   getSocialIds: (includeDeleted?: boolean) => Promise<SocialId[]>
+  getUnverifiedPhoneSocialIds: () => Promise<SocialId[]>
   getWorkspaceMembers: () => Promise<WorkspaceMemberInfo[]>
   updateWorkspaceRole: (account: string, role: AccountRole) => Promise<void>
   isAllowReadOnlyGuests: () => Promise<{ allowed: boolean }>
@@ -739,6 +740,15 @@ class AccountClientImpl implements AccountClient {
     const request = {
       method: 'getSocialIds' as const,
       params: { includeDeleted }
+    }
+
+    return await this.rpc(request)
+  }
+
+  async getUnverifiedPhoneSocialIds (): Promise<SocialId[]> {
+    const request = {
+      method: 'getUnverifiedPhoneSocialIds' as const,
+      params: {}
     }
 
     return await this.rpc(request)
