@@ -25,7 +25,7 @@
   import { ReadState } from '@hcengineering/notification'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { addTxListener, getClient, removeTxListener } from '@hcengineering/presentation'
-  import { ModernButton, Scroller, Loading } from '@hcengineering/ui'
+  import { ModernButton, Scroller, Loading, isAppFocusedStore } from '@hcengineering/ui'
   import { afterUpdate, onDestroy, onMount, tick } from 'svelte'
   import { ChatMessage } from '@hcengineering/chunter'
 
@@ -209,25 +209,14 @@
     }
   }
 
-  function handleWindowFocus (): void {
-    checkWindowVisibility(false)
-  }
-
-  function handleWindowBlur (): void {
-    checkWindowVisibility(true)
-  }
-
-  function handleVisibilityChange (): void {
-    checkWindowVisibility(document.hidden)
-  }
-
-  function checkWindowVisibility (hidden: boolean): void {
-    if (document.hidden || !document.hasFocus() || hidden) {
-      if (isPageHidden) return
-      isPageHidden = true
-      needUpdateTimestamp = true
-      lastMsgBeforeFreeze = shouldScrollToNew ? messages[messages.length - 1]?._id : undefined
-      flushReadQueue()
+  $: {
+    if (!$isAppFocusedStore) {
+      if (!isPageHidden) {
+        isPageHidden = true
+        needUpdateTimestamp = true
+        lastMsgBeforeFreeze = shouldScrollToNew ? messages[messages.length - 1]?._id : undefined
+        flushReadQueue()
+      }
     } else {
       if (isPageHidden) {
         isPageHidden = false
@@ -557,7 +546,7 @@
   }
 
   function handleMessageIntersect (msgId: string): void {
-    if (freeze || document.hidden || !isScrollInitialized) {
+    if (isFreeze() || !isScrollInitialized) {
       return
     }
     observedMessages.add(msgId)
@@ -656,9 +645,6 @@
 
   onMount(() => {
     chatReadMessagesStore.update(() => new Set())
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('focus', handleWindowFocus)
-    window.addEventListener('blur', handleWindowBlur)
     addTxListener(newMessageTxListener)
   })
 
@@ -673,9 +659,6 @@
       contentResizeObserver.disconnect()
       contentResizeObserver = undefined
     }
-    document.removeEventListener('visibilitychange', handleVisibilityChange)
-    window.removeEventListener('focus', handleWindowFocus)
-    window.removeEventListener('blur', handleWindowBlur)
     removeTxListener(newMessageTxListener)
   })
 
