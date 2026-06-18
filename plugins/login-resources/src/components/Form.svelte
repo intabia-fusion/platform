@@ -119,6 +119,42 @@
     object[field] = (object[field] as string).trim()
   }
 
+  /**
+   * Функция для форматирования телефона к виду +7-XXX-XXX-XX-XX
+   */
+  function formatPhone (value: string): string {
+    if (value == null || value === '' || value === '+7' || value === '+7-') {
+      return ''
+    }
+
+    const digits = value.replace(/\D/g, '')
+
+    if (digits.length === 0) {
+      return ''
+    }
+
+    const clean = digits.replace(/^[87]/, '')
+    let formatted = '+7'
+
+    if (clean.length > 0) {
+      formatted += `-${clean.slice(0, 3)}`
+    }
+
+    if (clean.length > 3) {
+      formatted += `-${clean.slice(3, 6)}`
+    }
+
+    if (clean.length > 6) {
+      formatted += `-${clean.slice(6, 8)}`
+    }
+
+    if (clean.length > 8) {
+      formatted += `-${clean.slice(8, 10)}`
+    }
+
+    return formatted
+  }
+
   let loginState: 'login' | 'signup' | 'none' = 'none'
   $: loginState = caption === login.string.LogIn ? 'login' : caption === login.string.SignUp ? 'signup' : 'none'
 </script>
@@ -170,7 +206,13 @@
           password={field.password}
           disabled={inAction || field.disabled}
           bind:value={object[field.name]}
-          on:input={() => validate($themeStore.language)}
+          on:input={() => {
+            if (field.name === 'phone') {
+              object[field.name] = formatPhone(object[field.name] ?? '')
+            }
+
+            void validate($themeStore.language)
+          }}
           on:blur={() => {
             trim(field.name)
           }}

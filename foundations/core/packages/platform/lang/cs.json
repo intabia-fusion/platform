@@ -17,6 +17,7 @@
     "WorkspaceNotFound": "Pracovní prostor nenalezen",
     "InvalidPassword": "Neplatné heslo",
     "AccountAlreadyExists": "Účet již existuje",
+    "PhoneAlreadyExists": "Telefon již existuje",
     "WorkspaceRateLimit": "Server je zaneprázdněný. Prosím, chvíli počkejte a zkuste to znovu",
     "AccountAlreadyConfirmed": "Účet již byl potvrzen",
     "WorkspaceAlreadyExists": "Pracovní prostor již existuje",

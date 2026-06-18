@@ -17,6 +17,7 @@
     "WorkspaceNotFound": "Arbeitsbereich nicht gefunden",
     "InvalidPassword": "Ungültiges Passwort",
     "AccountAlreadyExists": "Konto existiert bereits",
+    "PhoneAlreadyExists": "Das Telefon existiert bereits",
     "WorkspaceRateLimit": "Server ist ausgelastet, bitte warten Sie einen Moment und versuchen Sie es erneut",
     "AccountAlreadyConfirmed": "Konto wurde bereits bestätigt",
     "WorkspaceAlreadyExists": "Arbeitsbereich existiert bereits",

@@ -56,10 +56,10 @@ async function main (): Promise<void> {
     QueueTopic.CrmQueue,
     queue.getClientId(),
     async (ctx, queueMessage) => {
-      const { firstName, lastName, email, cookies } = queueMessage.value
+      const { firstName, lastName, email, cookies, phone } = queueMessage.value
       const amocrm = new AmoCrmClient(ctx)
       const cookieValues = parseCookies(cookies)
-      await amocrm.createLead(cookieValues, config.AmoCrmTrialStatus, firstName, lastName, email)
+      await amocrm.createLead(cookieValues, config.AmoCrmTrialStatus, firstName, lastName, email, phone)
     }
   )
 

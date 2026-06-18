@@ -20,6 +20,7 @@ import {
   type Branding,
   buildSocialIdString,
   concatLink,
+  type IntegrationKind,
   isActiveMode,
   isDeletingMode,
   isWorkspaceCreating,
@@ -28,12 +29,11 @@ import {
   type Person,
   type PersonId,
   type PersonUuid,
+  readOnlyGuestAccountUuid,
   SocialIdType,
   systemAccountUuid,
-  readOnlyGuestAccountUuid,
   type WorkspaceMemberInfo,
-  type WorkspaceUuid,
-  type IntegrationKind
+  type WorkspaceUuid
 } from '@hcengineering/core'
 import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
 import { decodeToken, decodeTokenVerbose, generateToken, type PermissionsGrant } from '@hcengineering/server-token'
@@ -42,88 +42,89 @@ import { isAdminEmail } from './admin'
 import { accountPlugin, type CrmNotification } from './plugin'
 import { type AccountServiceMethods, getServiceMethods } from './serviceOperations'
 import {
-  AccountEventType,
-  type MailboxSecret,
+  type Account,
   type AccountDB,
+  AccountEventType,
   type AccountMethodHandler,
   type LoginInfo,
+  type LoginInfoRequest,
+  type LoginInfoRequestData,
   type LoginInfoWithWorkspaces,
   type Mailbox,
   type MailboxOptions,
+  type MailboxSecret,
   type Meta,
   type OtpInfo,
+  type PersonWithProfile,
+  type Query,
   type RegionInfo,
   type SocialId,
+  type Subscription,
+  SubscriptionStatus,
   type UserProfile,
   type WorkspaceInfoWithStatus,
   type WorkspaceInviteInfo,
-  type WorkspaceLoginInfo,
-  type LoginInfoRequest,
-  type LoginInfoRequestData,
-  type Account,
-  type PersonWithProfile,
-  type Subscription,
-  SubscriptionStatus,
-  type Query
+  type WorkspaceLoginInfo
 } from './types'
 import {
   addSocialIdBase,
+  assignableRoles,
   checkInvite,
+  checkPasswordAging,
   cleanEmail,
   confirmEmail,
   confirmHulyIds,
   createAccount,
   createWorkspaceRecord,
   doJoinByInvite,
+  doMergePersons,
+  doReleaseSocialId,
   EndpointKind,
   generatePassword,
   getAccount,
+  getCollaboratorEndpoint,
   getEmailSocialId,
   getEndpoint,
   getEndpointInfo,
   getFrontUrl,
   getInviteEmail,
   getPersonName,
+  getPhoneSocialId,
   getRegions,
   getRolePower,
-  getCollaboratorEndpoint,
+  getWorkspaceByDataId,
   getWorkspaceById,
   getWorkspaceCollaboratorEndpoint,
   getWorkspaceEndpoint,
   getWorkspaceInfoWithStatusById,
   getWorkspaceInvite,
+  getWorkspaceJoinInfo,
   getWorkspaceRole,
   getWorkspaceRoles,
+  getWorkspacesInfoWithStatusByIds,
   GUEST_ACCOUNT,
+  isAccountPasswordLocked,
+  isAllowReadOnlyGuests,
   isEmail,
   isOtpValid,
   normalizeValue,
-  doReleaseSocialId,
+  recordFailedLoginAttempt,
+  resetFailedLoginAttempts,
   selectWorkspace,
   sendEmail,
   sendOtp,
   setPassword,
   setTimezone,
   signUpByEmail,
+  signUpByGrant,
+  updateAllowGuestSignUp,
+  updateAllowReadOnlyGuests,
+  updatePasswordAgingRule,
   updateWorkspaceRole,
   verifyAllowedRole,
   verifyAllowedServices,
   verifyPassword,
-  wrap,
-  updateAllowReadOnlyGuests,
-  updateAllowGuestSignUp,
-  getWorkspaceByDataId,
-  assignableRoles,
-  getWorkspacesInfoWithStatusByIds,
-  doMergePersons,
-  getWorkspaceJoinInfo,
-  signUpByGrant,
-  isAccountPasswordLocked,
-  recordFailedLoginAttempt,
-  resetFailedLoginAttempts,
-  isAllowReadOnlyGuests,
-  updatePasswordAgingRule,
-  checkPasswordAging
+  wrap
 } from './utils'
 
 // Note: it is IMPORTANT to always destructure params passed here to avoid sending extra params
@@ -325,9 +326,10 @@ export async function signUpOtp (
     email: string
     firstName: string
     lastName?: string
+    phone?: string
   }
 ): Promise<OtpInfo> {
-  const { email, firstName, lastName } = params
+  const { email, firstName, lastName, phone } = params
 
   if (email == null || firstName == null || email === '' || firstName === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -357,6 +359,19 @@ export async function signUpOtp (
     emailSocialId = { ...newSocialId, _id: emailSocialIdId, key: buildSocialIdString(newSocialId) }
   }
 
+  if (phone !== undefined && phone.length > 0) {
+    const normalizedPhone = phone.trim()
+    const existingPhoneSocialId = await getPhoneSocialId(db, normalizedPhone)
+
+    if (existingPhoneSocialId !== null) {
+      ctx.warn('Provided phone already exists', { phone: normalizedPhone })
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.PhoneAlreadyExists, {}))
+    }
+
+    const newPhoneSocialId = { type: SocialIdType.PHONE, value: normalizedPhone, personUuid }
+    await db.socialId.insertOne(newPhoneSocialId)
+  }
+
   return await sendOtp(ctx, db, branding, emailSocialId)
 }
 
@@ -369,6 +384,7 @@ async function sendCrmNotificationIfNotInvited (
   db: AccountDB,
   email: string,
   personUuid: PersonUuid,
+  phone: string | null,
   meta?: Meta
 ): Promise<void> {
   const crmQueue = getMetadata(accountPlugin.metadata.CrmQueue)
@@ -383,6 +399,7 @@ async function sendCrmNotificationIfNotInvited (
     firstName: person.firstName,
     lastName: person.lastName,
     email,
+    phone,
     cookies: meta?.cookies
   }
 
@@ -607,8 +624,21 @@ export async function createWorkspace (
     personUuid: socialId.personUuid,
     verifiedOn: { $gt: 0 }
   })
+
   if (emailSocialId != null) {
-    await sendCrmNotificationIfNotInvited(ctx, db, emailSocialId.value, socialId.personUuid, meta)
+    const phoneSocialId = await db.socialId.findOne({
+      type: SocialIdType.PHONE,
+      personUuid: socialId.personUuid
+    })
+
+    await sendCrmNotificationIfNotInvited(
+      ctx,
+      db,
+      emailSocialId.value,
+      socialId.personUuid,
+      phoneSocialId?.value ?? null,
+      meta
+    )
   }
 
   return {
@@ -2089,6 +2119,24 @@ export async function getSocialIds (
   return includeDeleted ? socialIds : socialIds.filter((si) => si.isDeleted !== true)
 }
 
+export async function getUnverifiedPhoneSocialIds (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string
+): Promise<SocialId[]> {
+  const { account: accountUuid, sub } = decodeTokenVerbose(ctx, token)
+  const account = sub ?? accountUuid
+
+  const result = await db.socialId.find({
+    personUuid: account,
+    type: SocialIdType.PHONE,
+    verifiedOn: undefined
+  })
+
+  return result
+}
+
 export async function isReadOnlyGuest (
   ctx: MeasureContext,
   db: AccountDB,
@@ -3030,6 +3078,7 @@ export type AccountMethods =
   | 'getLoginInfoByToken'
   | 'getLoginWithWorkspaceInfo'
   | 'getSocialIds'
+  | 'getUnverifiedPhoneSocialIds'
   | 'getPerson'
   | 'getWorkspaceMembers'
   | 'updateWorkspaceRole'
@@ -3136,6 +3185,7 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
     getLoginInfoByToken: wrap(getLoginInfoByToken),
     getLoginWithWorkspaceInfo: wrap(getLoginWithWorkspaceInfo),
     getSocialIds: wrap(getSocialIds),
+    getUnverifiedPhoneSocialIds: wrap(getUnverifiedPhoneSocialIds),
     getPerson: wrap(getPerson),
     findPersonBySocialId: wrap(findPersonBySocialId),
     findSocialIdBySocialKey: wrap(findSocialIdBySocialKey),

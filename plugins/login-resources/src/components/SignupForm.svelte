@@ -49,7 +49,8 @@
     fields = [
       { id: 'given-name', name: 'first', i18n: login.string.FirstName },
       { id: 'family-name', name: 'last', i18n: login.string.LastName },
-      { id: 'email', name: 'username', i18n: login.string.Email }
+      { id: 'email', name: 'username', i18n: login.string.Email },
+      { id: 'phone-number', name: 'phone', i18n: login.string.PhoneNumber, optional: true }
     ]
 
     if (withPassword) {
@@ -75,7 +76,8 @@
     last: '',
     username: '',
     password: '',
-    password2: ''
+    password2: '',
+    phone: ''
   }
 
   let status: Status<any> = OK
@@ -96,7 +98,7 @@
       if (useOTP) {
         status = new Status(Severity.INFO, login.status.ConnectingToServer, {})
 
-        const [otpStatus, result] = await signUpOtp(object.username, object.first, object.last)
+        const [otpStatus, result] = await signUpOtp(object.username, object.first, object.last, object.phone)
         status = otpStatus
 
         if (result?.sent === true && otpStatus === OK) {

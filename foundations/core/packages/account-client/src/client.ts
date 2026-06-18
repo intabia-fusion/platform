@@ -134,7 +134,7 @@ export interface AccountClient {
   updateLastVisit: (workspaces: WorkspaceUuid[]) => Promise<void>
   getRegionInfo: () => Promise<RegionInfo[]>
   createWorkspace: (name: string, region?: string) => Promise<WorkspaceLoginInfo>
-  signUpOtp: (email: string, first: string, last: string) => Promise<OtpInfo>
+  signUpOtp: (email: string, first: string, last: string, phone?: string) => Promise<OtpInfo>
   /**
    * Deprecated. Only to be used for dev setups without mail service.
    */
@@ -145,6 +145,7 @@ export interface AccountClient {
   getPerson: () => Promise<Person>
   getPersonInfo: (account: PersonUuid) => Promise<PersonInfo>
   getSocialIds: (includeDeleted?: boolean) => Promise<SocialId[]>
+  getUnverifiedPhoneSocialIds: () => Promise<SocialId[]>
   getWorkspaceMembers: () => Promise<WorkspaceMemberInfo[]>
   updateWorkspaceRole: (account: string, role: AccountRole) => Promise<void>
   isAllowReadOnlyGuests: () => Promise<{ allowed: boolean }>
@@ -672,10 +673,10 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
-  async signUpOtp (email: string, firstName: string, lastName: string): Promise<OtpInfo> {
+  async signUpOtp (email: string, firstName: string, lastName: string, phone?: string): Promise<OtpInfo> {
     const request = {
       method: 'signUpOtp' as const,
-      params: { email, firstName, lastName }
+      params: { email, firstName, lastName, phone }
     }
 
     return await this.rpc(request)
@@ -739,6 +740,15 @@ class AccountClientImpl implements AccountClient {
     const request = {
       method: 'getSocialIds' as const,
       params: { includeDeleted }
+    }
+
+    return await this.rpc(request)
+  }
+
+  async getUnverifiedPhoneSocialIds (): Promise<SocialId[]> {
+    const request = {
+      method: 'getUnverifiedPhoneSocialIds' as const,
+      params: {}
     }
 
     return await this.rpc(request)

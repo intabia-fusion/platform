@@ -168,6 +168,7 @@ export default plugin(platformId, {
     InvalidPassword: '' as StatusCode<{ account: string }>,
     PasswordLoginLocked: '' as StatusCode,
     AccountAlreadyExists: '' as StatusCode,
+    PhoneAlreadyExists: '' as StatusCode,
     WorkspaceAlreadyExists: '' as StatusCode<{ workspace: string }>,
     WorkspaceRateLimit: '' as StatusCode<{ workspace: string }>,
     WorkspaceLimitReached: '' as StatusCode<{ workspace: string }>,

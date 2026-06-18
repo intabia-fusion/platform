@@ -17,6 +17,7 @@
     "WorkspaceNotFound": "工作区未找到",
     "InvalidPassword": "无效的密码",
     "AccountAlreadyExists": "账户已存在",
+    "PhoneAlreadyExists": "這款手機已經存在了。",
     "WorkspaceRateLimit": "服务器繁忙，请稍后再试",
     "AccountAlreadyConfirmed": "账户已确认",
     "WorkspaceAlreadyExists": "工作区已存在",
