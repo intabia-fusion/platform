@@ -43,7 +43,6 @@ import {
   TypeDate,
   TypeRef,
   TypeString,
-  TypeBoolean,
   type Builder,
   TypeNumber,
   ArrOf,
@@ -242,8 +241,11 @@ export class TDocNotifyContext extends TDoc implements DocNotifyContext {
   @Prop(TypeString(), core.string.String)
     objectTitle!: string
 
+  @Prop(TypeIntlString(), core.string.String)
+    objectLabel?: IntlString
+
   @Prop(TypeRecord(), getEmbeddedLabel('icon'))
-    objectIconProps?: Record<string, any>
+    objectIcon?: Record<string, any>
 
   @Prop(TypeRecord(), core.string.Object)
     object?: Partial<Doc>
@@ -282,20 +284,11 @@ export class TDocNotifyContext extends TDoc implements DocNotifyContext {
   @Prop(ArrOf(TypeRecord()), getEmbeddedLabel('unreadCommons'))
     unreadCommons!: CommonNotification[] // store unread common notifications
 
-  @Prop(TypeBoolean(), core.string.Boolean)
-    unread!: boolean
-
-  @Prop(TypeNumber(), core.string.Number)
-    unreadMessagesCount!: number
-
   @Prop(TypeNumber(), core.string.Number)
     unreadCount!: number
 
   @Prop(ArrOf(TypeRecord()), getEmbeddedLabel('unreadMessages'))
     unreadMessages!: UnreadMessage[]
-
-  @Prop(TypeBoolean(), core.string.Boolean)
-    archived!: boolean
 }
 
 @Model(notification.class.ReadState, core.class.Doc, DOMAIN_READ_STATE)

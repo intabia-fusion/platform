@@ -28,7 +28,7 @@
   import { AccountUuid, Class, Doc, Markup, Ref, Space, WithLookup } from '@hcengineering/core'
   import { getClient, MessageViewer, pendingCreatedDocs } from '@hcengineering/presentation'
   import { EmptyMarkup } from '@hcengineering/text'
-  import { Action, Button, IconEdit, languageStore } from '@hcengineering/ui'
+  import { Action, Button, IconEdit, languageStore, deviceOptionsStore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { getDocLinkTitle } from '@hcengineering/view-resources'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
@@ -256,7 +256,7 @@
   }
 
   async function handleDbClick (e: MouseEvent): Promise<void> {
-    if (isEditing || value == null) return
+    if (isEditing || value == null || $deviceOptionsStore.isMobile) return
     e.preventDefault()
     e.stopPropagation()
 

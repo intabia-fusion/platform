@@ -60,6 +60,9 @@ import activity from '@hcengineering/activity'
 import { type IntlString } from '@hcengineering/platform'
 
 import { DOMAIN_DOC_NOTIFY, DOMAIN_USER_NOTIFY, DOMAIN_READ_STATE } from './index'
+import { updateReadStatesFromDocNotifyContexts, initReadStatesLatestMessages } from './migrations/readState'
+import { removeArchivedNotifications, removeEmptyContexts, removeArchivedContexts } from './migrations/clear'
+import { migrateNotificationsToEmbedded } from './migrations/migrateNotificationsToEmbedded'
 
 interface OldCollaborators extends Doc {
   collaborators: AccountUuid[]
@@ -1196,6 +1199,36 @@ export const notificationOperation: MigrateOperation = {
         state: 'migrate-read-states-space-v1',
         mode: 'upgrade',
         func: migrateReadStatesSpace
+      },
+      {
+        state: 'init-read-states-latest-messages-v1',
+        mode: 'upgrade',
+        func: initReadStatesLatestMessages
+      },
+      {
+        state: 'update-read-states-from-contexts-v1',
+        mode: 'upgrade',
+        func: updateReadStatesFromDocNotifyContexts
+      },
+      {
+        state: 'remove-archived-contexts-v1',
+        mode: 'upgrade',
+        func: removeArchivedContexts
+      },
+      {
+        state: 'remove-archived-notifications-v1',
+        mode: 'upgrade',
+        func: removeArchivedNotifications
+      },
+      {
+        state: 'remove-empty-contexts-v1',
+        mode: 'upgrade',
+        func: removeEmptyContexts
+      },
+      {
+        state: 'migrate-notifications-to-embedded-v1',
+        mode: 'upgrade',
+        func: migrateNotificationsToEmbedded
       }
     ])
   },
