@@ -508,7 +508,10 @@ function mapToCommonNotification (inboxNotification: CommonInboxNotification): C
     id: inboxNotification._id,
     header,
     messageIntl,
-    intlParams: inboxNotification.intlParams,
+    intlParams: {
+      ...inboxNotification.intlParams,
+      ...inboxNotification.props
+    },
     intlParamsNotLocalized: inboxNotification.intlParamsNotLocalized,
     markup,
     icon,

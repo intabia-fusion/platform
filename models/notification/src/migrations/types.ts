@@ -66,6 +66,7 @@ export interface CommonInboxNotification extends InboxNotification {
   markup?: Markup
   icon?: Asset
   iconProps?: Record<string, any>
+  props?: Record<string, any>
 }
 
 export interface ReactionInboxNotification extends CommonInboxNotification {
