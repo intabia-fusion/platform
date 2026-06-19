@@ -784,7 +784,7 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
             if (latestNotifications.length === 5) break
             const t = await mapToContextNotification(client, n, reactionMap, cache, attachmentsByMessage)
             if (t == null) continue
-            latestNotifications.unshift(t)
+            latestNotifications.push(t)
           }
 
           const unreadCount =
