@@ -168,9 +168,6 @@ function migrationV5 (flavor: SupportedFlavor): [string, string] {
       CONSTRAINT pk_usage_delta_dedup PRIMARY KEY (workspace, metric, ref)
     );
 
-    CREATE INDEX IF NOT EXISTS idx_usage_delta_dedup_ws
-      ON billing.usage_delta_dedup (workspace, metric);
-
     CREATE TABLE IF NOT EXISTS billing.workspace_limit_state (
       workspace UUID NOT NULL,
       category ${types.string255} NOT NULL,

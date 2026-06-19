@@ -78,7 +78,6 @@ function makeLimits (space: { projects?: number, drives?: number, teamspaces?: n
 function makeProvider (limits: PlanLimits): LimitsProvider {
   return {
     getPlanLimits: async () => limits,
-    getPaymentExhausted: async () => false,
     getWorkspaceMembers: async () => [],
     getSystemAccounts: async () => new Set()
   }
@@ -177,7 +176,6 @@ describe('PlanLimitsMiddleware', () => {
         getPlanLimits: async () => {
           throw new Error('boom')
         },
-        getPaymentExhausted: async () => false,
         getWorkspaceMembers: async () => [],
         getSystemAccounts: async () => new Set()
       }

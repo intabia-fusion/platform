@@ -44,8 +44,6 @@ export interface SpaceCountsProvider {
 /** Abstraction for fetching limits/payment status without depending on account-client. Concrete impl injected by the host (pods/server). */
 export interface LimitsProvider {
   getPlanLimits: (workspace: WorkspaceUuid) => Promise<PlanLimits>
-  /** true when workspace is unpaid (read-only mode). */
-  getPaymentExhausted: (workspace: WorkspaceUuid) => Promise<boolean>
   /** Workspace members with roles — used by seat enforcement to count privileged seats. */
   getWorkspaceMembers: (workspace: WorkspaceUuid) => Promise<WorkspaceMemberInfo[]>
   /**
@@ -55,7 +53,7 @@ export interface LimitsProvider {
    */
   getSystemAccounts: (workspace: WorkspaceUuid) => Promise<Set<AccountUuid>>
   /**
-   * Doc classes a read-only (seatless or payment-exhausted) member may still create/update —
+   * Doc classes a read-only (seatless) member may still create/update —
    * direct messages and chat. The host names them so the middleware needs no chunter dependency.
    */
   getReadOnlyAllowedClasses?: () => Set<Ref<Class<Doc>>>

@@ -217,15 +217,20 @@ describe('StripeProvider', () => {
       }
     }))
 
-    await provider.reconcileActiveSubscriptions(ctx, 'https://accounts.test', 'token')
+    const publish = jest.fn().mockResolvedValue(undefined)
+    await provider.reconcileActiveSubscriptions(ctx, 'https://accounts.test', 'token', publish)
 
-    expect(accountClient.upsertSubscription).toHaveBeenCalledWith({
-      id: 'sub_1',
-      status: 'active',
-      providerData: {
-        modifiedAt: 2
-      }
-    })
+    expect(publish).toHaveBeenCalledWith(
+      ctx,
+      {
+        id: 'sub_1',
+        status: 'active',
+        providerData: {
+          modifiedAt: 2
+        }
+      },
+      'reconcile'
+    )
   })
 
   test('updateSubscriptionPlan creates checkout for free subscription with accountUuid in metadata', async () => {
@@ -298,7 +303,8 @@ describe('StripeProvider', () => {
     const accountsUrl = 'https://accounts.test'
     const serviceToken = 'service-token'
 
-    provider.registerWebhookEndpoints(app, ctx, accountsUrl, serviceToken)
+    const publish = jest.fn().mockResolvedValue(undefined)
+    provider.registerWebhookEndpoints(app, ctx, accountsUrl, serviceToken, publish)
 
     expect(appPost).toHaveBeenCalledWith('/api/v1/webhooks/stripe', expect.any(Function))
 
@@ -313,6 +319,15 @@ describe('StripeProvider', () => {
 
     handler(req, res)
 
-    expect(handleStripeWebhookSpy).toHaveBeenCalledWith(ctx, accountsUrl, serviceToken, webhookSecret, apiKey, req, res)
+    expect(handleStripeWebhookSpy).toHaveBeenCalledWith(
+      ctx,
+      accountsUrl,
+      serviceToken,
+      webhookSecret,
+      apiKey,
+      req,
+      res,
+      publish
+    )
   })
 })

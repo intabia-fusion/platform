@@ -23,7 +23,7 @@ import {
   type Subscription,
   type SubscriptionData
 } from '@hcengineering/account-client'
-import type { PaymentProvider, SubscribeRequest, CheckoutResponse } from '../index'
+import type { PaymentProvider, SubscribeRequest, CheckoutResponse, SubscriptionPublisher } from '../index'
 import { StripeClient } from './client'
 import { handleStripeWebhook } from './webhook'
 import { transformStripeSubscriptionToData } from './utils'
@@ -196,7 +196,12 @@ export class StripeProvider implements PaymentProvider {
     }
   }
 
-  async reconcileActiveSubscriptions (ctx: MeasureContext, accountsUrl: string, serviceToken: string): Promise<void> {
+  async reconcileActiveSubscriptions (
+    ctx: MeasureContext,
+    accountsUrl: string,
+    serviceToken: string,
+    publish: SubscriptionPublisher
+  ): Promise<void> {
     try {
       ctx.info('Starting Stripe active subscription reconciliation')
 
@@ -220,9 +225,9 @@ export class StripeProvider implements PaymentProvider {
 
           const ourSub = ourSubsByProviderId.get(stripeSub.id)
 
-          // Only upsert if subscription doesn't exist locally or if key fields have changed
+          // Only publish if subscription doesn't exist locally or if key fields have changed
           if (ourSub === undefined || hasSubscriptionChanged(ourSub, subscriptionData)) {
-            await this.accountClient.upsertSubscription(subscriptionData)
+            await publish(ctx, subscriptionData, 'reconcile')
             upsertCount++
           }
         } catch (err) {
@@ -243,9 +248,9 @@ export class StripeProvider implements PaymentProvider {
             const currentState = await this.stripe.getSubscription(ctx, stripeSubId)
             const subscriptionData = transformStripeSubscriptionToData(ctx, currentState)
 
-            // Update our database with current state (may have changed to canceled/ended)
+            // Publish current state (may have changed to canceled/ended)
             if (subscriptionData !== null) {
-              await this.accountClient.upsertSubscription(subscriptionData)
+              await publish(ctx, subscriptionData, 'reconcile')
               staleCount++
             }
           } catch (err) {
@@ -355,12 +360,18 @@ export class StripeProvider implements PaymentProvider {
     return subscriptionData
   }
 
-  registerWebhookEndpoints (app: Express, ctx: MeasureContext, accountsUrl: string, serviceToken: string): void {
+  registerWebhookEndpoints (
+    app: Express,
+    ctx: MeasureContext,
+    accountsUrl: string,
+    serviceToken: string,
+    publish: SubscriptionPublisher
+  ): void {
     ctx.info('Registering Stripe webhook endpoints')
 
     // Register Stripe-specific webhook endpoint (body parsing handled by server middleware)
     app.post('/api/v1/webhooks/stripe', (req: Request, res: Response) => {
-      void handleStripeWebhook(ctx, accountsUrl, serviceToken, this.webhookSecret, this.stripeApiKey, req, res)
+      void handleStripeWebhook(ctx, accountsUrl, serviceToken, this.webhookSecret, this.stripeApiKey, req, res, publish)
     })
   }
 }

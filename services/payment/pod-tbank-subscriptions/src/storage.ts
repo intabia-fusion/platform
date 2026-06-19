@@ -23,16 +23,14 @@ import { type AccountUuid, type MeasureContext, type WorkspaceUuid, SocialIdType
 
 import { isFailedRenewal } from './utils'
 
-/**
- * Storage adapter for Tbank subscriptions.
- * Uses AccountClient to persist subscriptions in the central database.
- * This is the same approach used by Stripe/Polar providers.
- */
 export class SubscriptionStorage {
-  constructor (private readonly accountClient: AccountClient) {}
+  constructor (
+    private readonly accountClient: AccountClient,
+    private readonly publish: (data: SubscriptionData) => Promise<void>
+  ) {}
 
   async upsert (subscription: SubscriptionData): Promise<void> {
-    await this.accountClient.upsertSubscription(subscription)
+    await this.publish(subscription)
   }
 
   async getTransactionCount (workspaceUuid: WorkspaceUuid): Promise<number> {

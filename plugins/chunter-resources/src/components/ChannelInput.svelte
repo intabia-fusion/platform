@@ -20,7 +20,7 @@
   import { AnySvelteComponent, Icon, Label, languageStore } from '@hcengineering/ui'
   import { Asset, getResource, IntlString } from '@hcengineering/platform'
   import view from '@hcengineering/view'
-  import { paymentExhausted, isLimited } from '@hcengineering/billing-resources'
+  import { isLimited } from '@hcengineering/billing-resources'
 
   import { getChannelName, getObjectIcon } from '../utils'
   import chunter from '../plugin'
@@ -31,7 +31,7 @@
 
   $: isDirect = object?._class === chunter.class.DirectMessage
   // read-only from billing: only for non-Direct channels
-  $: billingReadOnly = !isDirect && ($paymentExhausted || $isLimited)
+  $: billingReadOnly = !isDirect && $isLimited
   $: effectiveReadonly = readonly || billingReadOnly
   export let boundary: HTMLElement | undefined | null = undefined
   export let collection: string | undefined

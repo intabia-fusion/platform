@@ -142,42 +142,25 @@ describe('plan-unpaid', () => {
     return undefined
   }
 
-  /** Poll until fn starts throwing (returns true) or deadline passes (returns false). */
-  async function pollRejected (fn: () => Promise<unknown>, timeoutMs = 15000): Promise<boolean> {
-    const deadline = Date.now() + timeoutMs
-    while (Date.now() < deadline) {
-      try {
-        await fn()
-        await new Promise((resolve) => setTimeout(resolve, 500))
-      } catch {
-        return true
-      }
-    }
-    return false
-  }
-
-  it('past_due makes the workspace read-only for members, payment restores access', async () => {
-    // Paid subscription: member writes work.
+  it('past_due runs on the free fallback: members within free seats stay writable', async () => {
+    // The account server always configures a free fallback (default 5 seats), so an unpaid workspace
+    // is NOT put into hard read-only — it runs on free limits. With only owner + one member (2 < 5),
+    // both stay writable. (Hard read-only only applies to members OVER the free seat budget — seat-limits.)
     await setSubscriptionStatus(SubscriptionStatus.Active)
     const beforeUnpaid = await pollOk(async () => await createDrive(memberOps, `unpaid-before-${generateUuid()}`))
     expect(beforeUnpaid).toBeDefined()
 
-    // Payment failed: member becomes read-only (write rejected once the event propagates).
+    // Payment failed: free fallback applies, the member (within 5 free seats) keeps writing.
     await setSubscriptionStatus(SubscriptionStatus.PastDue)
-    const memberBlocked = await pollRejected(
-      async () => await createDrive(memberOps, `unpaid-blocked-${generateUuid()}`)
-    )
-    expect(memberBlocked).toBe(true)
+    await new Promise((resolve) => setTimeout(resolve, 3000))
+    const onFree = await pollOk(async () => await createDrive(memberOps, `unpaid-free-${generateUuid()}`))
+    expect(onFree).toBeDefined()
 
-    // Owner bypass: can still write to go and pay.
+    // Owner keeps writing too.
     const ownerDrive = await createDrive(ownerOps, `unpaid-owner-${generateUuid()}`)
     expect(ownerDrive).toBeDefined()
 
-    // Reads keep working for the read-only member.
-    const spaces = await memberOps.findAll(core.class.Space, {})
-    expect(spaces.length).toBeGreaterThan(0)
-
-    // Payment restored: member writes come back.
+    // Payment restored: still writable.
     await setSubscriptionStatus(SubscriptionStatus.Active)
     const restored = await pollOk(async () => await createDrive(memberOps, `unpaid-restored-${generateUuid()}`))
     expect(restored).toBeDefined()

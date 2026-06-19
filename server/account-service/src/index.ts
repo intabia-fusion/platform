@@ -15,6 +15,7 @@ import account, {
   accountPlugin,
   type AccountNotification,
   type CrmNotification,
+  parseFreePlanLimits,
   initRegionConfig
 } from '@hcengineering/account'
 import accountEn from '@hcengineering/account/lang/en.json'
@@ -148,6 +149,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   setMetadata(account.metadata.OtpRetryDelaySec, parseInt(process.env.OTP_RETRY_DELAY ?? '60'))
 
   setMetadata(account.metadata.AllowReadonlyGuests, process.env.ALLOW_READONLY_GUESTS === 'true')
+  setMetadata(account.metadata.FreePlanLimits, parseFreePlanLimits(process.env.FREE_PLAN_LIMITS))
 
   setMetadata(account.metadata.FrontURL, frontURL)
   setMetadata(account.metadata.WsLivenessDays, wsLivenessDays)

@@ -21,14 +21,13 @@ import core, {
   toFindResult,
   type MeasureContext,
   type SessionData,
-  type WorkspaceMemberInfo,
-  type WorkspaceUuid
+  type WorkspaceMemberInfo
 } from '@hcengineering/core'
 import { PlatformError } from '@hcengineering/platform'
 import contact from '@hcengineering/contact'
 import type { LimitsProvider, Middleware, PipelineContext, TxMiddlewareResult } from '@hcengineering/server-core'
 import { SeatLimitsMiddleware } from '../seatLimits'
-import { LIMITS_PROVIDER_VAR, PAYMENT_EXHAUSTED_MAP_KEY, PLAN_LIMITS_VAR } from '../planLimits'
+import { LIMITS_PROVIDER_VAR, PLAN_LIMITS_VAR } from '../planLimits'
 
 interface MockEmployee {
   personUuid: string
@@ -49,7 +48,6 @@ function makeProvider (members: WorkspaceMemberInfo[], systemAccounts = new Set<
       tokenLimit: 0,
       transcriptLimit: 0
     }),
-    getPaymentExhausted: async () => false,
     getWorkspaceMembers: async () => members,
     getSystemAccounts: async () => systemAccounts,
     getReadOnlyAllowedClasses: () => new Set([ALLOWED_CLASS])
@@ -322,13 +320,51 @@ describe('SeatLimitsMiddleware', () => {
   })
 
   it('read-only enforcement does not mutate the account role', async () => {
-    const mw = await createMw(1, [member('owner1', AccountRole.Owner)], []) // 0 seats for users
+    // usersLimit=1 filled by owner1's active employee -> user1 is seatless (all seats taken).
+    const members = [member('owner1', AccountRole.Owner), member('user1', AccountRole.User)]
+    const employees: MockEmployee[] = [{ personUuid: 'owner1', active: true, createdOn: 1000 }]
+    const mw = await createMw(1, members, employees)
     const ctx = makeSessionCtx('user1', AccountRole.User)
     await expectReadOnly(mw, ctx)
     // Role must stay User — no ReadOnlyGuest spoof.
     expect(ctx.contextData.account.role).toBe(AccountRole.User)
   })
+
+  it('a member writes while seats are still free (boot window, no active employee yet)', async () => {
+    // usersLimit=5 but no active employee resolved yet -> a free seat is available, member writes.
+    // Regression: free auto-provisioning set usersLimit>0 on fresh workspaces; the creator's first
+    // writes happen before their Employee is active (seated:0), and must NOT be blocked.
+    const mw = await createMw(5, [member('user1', AccountRole.User)], [])
+    await expectSeated(mw, makeSessionCtx('user1', AccountRole.User))
+  })
+
+  it('a new member writes while only some of the seats are taken', async () => {
+    // 5 seats, 2 active employees -> 3 free; a third member (not yet onboarded) still writes.
+    const members = [
+      member('owner1', AccountRole.Owner),
+      member('user1', AccountRole.User),
+      member('user2', AccountRole.User)
+    ]
+    const employees: MockEmployee[] = [
+      { personUuid: 'owner1', active: true, createdOn: 1000 },
+      { personUuid: 'user1', active: true, createdOn: 2000 }
+    ]
+    const mw = await createMw(5, members, employees)
+    await expectSeated(mw, makeSessionCtx('user2', AccountRole.User))
+  })
+
+  it('the workspace creator can onboard (Employee tx) while seats are free', async () => {
+    // Fresh free workspace: no active employee yet, owner creates their own Employee mixin.
+    const mw = await createMw(5, [member('owner1', AccountRole.Owner)], [])
+    const ctx = makeSessionCtx('owner1', AccountRole.Owner)
+    await expect(mw.tx(ctx, [createEmployeeActivationTx()])).resolves.toBeDefined()
+  })
 })
+
+// create-mixin Employee with active:true (the onboarding path).
+function createEmployeeActivationTx (): any {
+  return { _class: core.class.TxMixin, mixin: contact.mixin.Employee, attributes: { active: true } }
+}
 
 // Hard-block creating a new active employee past usersLimit. Counted by active Employee
 // (minus system/AI). Existing over-limit employees after a downgrade are kept.
@@ -411,80 +447,5 @@ describe('SeatLimitsMiddleware - employee creation enforcement', () => {
     const ctx = makeSessionCtx('owner1', AccountRole.Owner)
     const someTx = { _class: core.class.TxCreateDoc, objectClass: contact.class.Person } as any
     await expect(mw.tx(ctx, [someTx])).resolves.not.toThrow()
-  })
-})
-
-describe('SeatLimitsMiddleware - payment exhausted', () => {
-  function makeProviderPayment (exhausted: boolean): LimitsProvider {
-    return {
-      getPlanLimits: async () => ({
-        spaceLimits: new Map(),
-        usersLimit: 0,
-        storageLimitGB: 0,
-        tokenLimit: 0,
-        transcriptLimit: 0
-      }),
-      getPaymentExhausted: async () => exhausted,
-      getWorkspaceMembers: async () => [],
-      getSystemAccounts: async () => new Set(),
-      getReadOnlyAllowedClasses: () => new Set([ALLOWED_CLASS])
-    }
-  }
-
-  async function createPaymentMw (usersLimit: number, map: Map<WorkspaceUuid, boolean>): Promise<SeatLimitsMiddleware> {
-    const hierarchy = reflexiveHierarchy()
-    const context = {
-      workspace: { uuid: 'ws-test' as any, url: 'test', dataId: 'test' as any },
-      hierarchy,
-      modelDb: new ModelDb(hierarchy),
-      branding: null as any,
-      adapterManager: {} as any,
-      storageAdapter: {} as any,
-      contextVars: {
-        [PLAN_LIMITS_VAR]: { spaceLimits: new Map(), usersLimit, storageLimitGB: 0, tokenLimit: 0, transcriptLimit: 0 },
-        [LIMITS_PROVIDER_VAR]: makeProviderPayment(map.get('ws-test' as WorkspaceUuid) ?? false),
-        [PAYMENT_EXHAUSTED_MAP_KEY]: map
-      },
-      lastTx: '',
-      lastHash: ''
-    } as any
-    return await SeatLimitsMiddleware.create(new MeasureMetricsContext('test', {}), context, makeNext([]))
-  }
-
-  it('non-Owner is read-only when payment exhausted', async () => {
-    const map = new Map<WorkspaceUuid, boolean>([['ws-test' as WorkspaceUuid, true]])
-    const mw = await createPaymentMw(5, map)
-    await expectReadOnly(mw, makeSessionCtx('user1', AccountRole.User))
-  })
-
-  it('Maintainer also read-only when payment exhausted', async () => {
-    const map = new Map<WorkspaceUuid, boolean>([['ws-test' as WorkspaceUuid, true]])
-    const mw = await createPaymentMw(5, map)
-    await expectReadOnly(mw, makeSessionCtx('maint1', AccountRole.Maintainer))
-  })
-
-  it('read-only member can still write direct/presence when payment exhausted', async () => {
-    const map = new Map<WorkspaceUuid, boolean>([['ws-test' as WorkspaceUuid, true]])
-    const mw = await createPaymentMw(5, map)
-    const ctx = makeSessionCtx('user1', AccountRole.User)
-    await expect(mw.tx(ctx, [allowedTx()])).resolves.toBeDefined()
-  })
-
-  it('Owner bypasses payment exhausted', async () => {
-    const map = new Map<WorkspaceUuid, boolean>([['ws-test' as WorkspaceUuid, true]])
-    const mw = await createPaymentMw(5, map)
-    await expectSeated(mw, makeSessionCtx('owner1', AccountRole.Owner))
-  })
-
-  it('payment override fires even when usersLimit=0', async () => {
-    const map = new Map<WorkspaceUuid, boolean>([['ws-test' as WorkspaceUuid, true]])
-    const mw = await createPaymentMw(0, map)
-    await expectReadOnly(mw, makeSessionCtx('user1', AccountRole.User))
-  })
-
-  it('not exhausted: user passes through (usersLimit=0)', async () => {
-    const map = new Map<WorkspaceUuid, boolean>([['ws-test' as WorkspaceUuid, false]])
-    const mw = await createPaymentMw(0, map)
-    await expectSeated(mw, makeSessionCtx('user1', AccountRole.User))
   })
 })

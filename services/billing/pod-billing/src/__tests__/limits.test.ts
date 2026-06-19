@@ -25,7 +25,17 @@ jest.mock('@hcengineering/account-client', () => ({
     getSubscriptions: getSubscriptionsMock,
     getWorkspaceInfo: getWorkspaceInfoMock,
     updateUsageInfo: updateUsageInfoMock
-  }))
+  })),
+  SubscriptionType: { Tier: 'tier', Support: 'support', Package: 'package' },
+  SubscriptionStatus: {
+    Active: 'active',
+    Trialing: 'trialing',
+    PastDue: 'past_due',
+    ReadOnly: 'readonly',
+    Canceled: 'canceled',
+    Paused: 'paused',
+    Expired: 'expired'
+  }
 }))
 jest.mock('@hcengineering/server-token', () => ({
   generateToken: jest.fn(() => 'tok')
@@ -62,6 +72,11 @@ function makeDb (tokensUsed = 0): BillingDB {
 
 function tierLimits (limits: Record<string, number>): void {
   getSubscriptionsMock.mockResolvedValue([{ type: 'tier', status: 'active', limits }])
+}
+
+// Unpaid tier (bad status, no active limits) carrying a free fallback — billing must enforce free.
+function unpaidWithFree (freeLimits: Record<string, number>): void {
+  getSubscriptionsMock.mockResolvedValue([{ type: 'tier', status: 'past_due', freeLimits }])
 }
 
 beforeEach(() => {
@@ -132,6 +147,27 @@ describe('LimitsEngine', () => {
     const db = makeDb()
     const { engine, producer } = makeEngine(db)
     await engine.processUsageDelta(ctx, msg('r-unlim', 999999))
+    expect(producer.send).not.toHaveBeenCalled()
+  })
+
+  it('unpaid tier enforces the free fallback limit', async () => {
+    // No active paid tier, but a free fallback caps tokens at 1000 -> crossing it still flips exhausted.
+    unpaidWithFree({ tokenLimit: 1000 })
+    const db = makeDb()
+    const { engine, producer } = makeEngine(db)
+    await engine.processUsageDelta(ctx, msg('r1', 1001))
+    expect(producer.send).toHaveBeenCalledWith(
+      ctx,
+      WS,
+      expect.arrayContaining([expect.objectContaining({ category: 'tokens', status: 'exhausted' })])
+    )
+  })
+
+  it('unpaid tier without a free fallback is unlimited', async () => {
+    getSubscriptionsMock.mockResolvedValue([{ type: 'tier', status: 'past_due' }])
+    const db = makeDb()
+    const { engine, producer } = makeEngine(db)
+    await engine.processUsageDelta(ctx, msg('r1', 999999))
     expect(producer.send).not.toHaveBeenCalled()
   })
 })

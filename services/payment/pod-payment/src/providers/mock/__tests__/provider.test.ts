@@ -38,13 +38,13 @@ describe('MockProvider', () => {
     provider = new MockProvider(accountClient, frontUrl)
   })
 
-  test('createSubscription returns checkoutUrl back to billing page with checkout_id, does NOT upsert', async () => {
+  test('createSubscription activates instantly (instant=true), does NOT upsert', async () => {
     const res = await provider.createSubscription(ctx, request, workspaceUuid, workspaceUrl, accountUuid)
 
     expect(res.checkoutId).toBeTruthy()
-    expect(res.checkoutUrl).toBe(
-      `${frontUrl}/workbench/${workspaceUrl}/setting/setting/billing/subscriptions?payment=success&checkout_id=${res.checkoutId}`
-    )
+    // instant=true: the subscription is already active; the client refetches instead of redirecting.
+    expect(res.instant).toBe(true)
+    expect(res.checkoutUrl).toBe(`${frontUrl}/workbench/${workspaceUrl}/setting/setting/billing/subscriptions`)
     // Server attaches limits + upserts on poll, not the provider.
     expect(accountClient.upsertSubscription).not.toHaveBeenCalled()
   })

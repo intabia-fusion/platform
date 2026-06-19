@@ -23,7 +23,7 @@ import {
   SocialIdType,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import platform, { PlatformError, Status, Severity } from '@hcengineering/platform'
+import platform, { PlatformError, Status, Severity, getMetadata } from '@hcengineering/platform'
 import { decodeTokenVerbose } from '@hcengineering/server-token'
 
 import {
@@ -1718,15 +1718,17 @@ describe('adminCreateSubscription', () => {
     expect(mockDb.subscription.insertOne).not.toHaveBeenCalled()
   })
 
-  test('cancels ALL active tier subscriptions before inserting (not just one)', async () => {
+  test('cancels ALL non-canceled tier subscriptions before inserting (active + past_due, not canceled)', async () => {
     mockDb.subscription.find.mockResolvedValue([
-      { id: 'a', provider: 'mock', providerData: {} },
-      { id: 'b', provider: 'stripe', providerData: {} }
+      { id: 'a', provider: 'mock', providerData: {}, status: SubscriptionStatus.Active },
+      { id: 'b', provider: 'stripe', providerData: {}, status: SubscriptionStatus.PastDue },
+      { id: 'c', provider: 'old', providerData: {}, status: SubscriptionStatus.Canceled }
     ])
 
     await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, { workspaceUuid, plan: 'team' })
 
-    expect(mockDb.subscription.find).toHaveBeenCalledWith({ workspaceUuid, type: 'tier', status: 'active' })
+    expect(mockDb.subscription.find).toHaveBeenCalledWith({ workspaceUuid, type: 'tier' })
+    // 'c' is already canceled -> skipped; 'a' and 'b' get canceled.
     expect(mockDb.subscription.update).toHaveBeenCalledTimes(2)
     expect(mockDb.subscription.update).toHaveBeenCalledWith(
       { id: 'a' },
@@ -1763,5 +1765,17 @@ describe('adminCreateSubscription', () => {
     await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, { workspaceUuid, plan: 'team' })
 
     expect(mockDb.subscription.insertOne).toHaveBeenCalledWith(expect.objectContaining({ accountUuid: 'owner-1' }))
+  })
+
+  test('does not persist freeLimits; unpaid with free env is not payment-exhausted', async () => {
+    // Free fallback comes from FREE_PLAN_LIMITS env (account fills it on read), never persisted.
+    ;(getMetadata as jest.Mock).mockReturnValue({ usersLimit: 5, storageLimitGB: 10 })
+    await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      workspaceUuid,
+      plan: 'team',
+      status: SubscriptionStatus.PastDue
+    })
+    const inserted = mockDb.subscription.insertOne.mock.calls[0][0]
+    expect(inserted.freeLimits).toBeUndefined()
   })
 })

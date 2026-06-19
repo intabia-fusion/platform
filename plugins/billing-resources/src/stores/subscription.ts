@@ -28,7 +28,7 @@ export interface SubscriptionState {
   workspaceInfo: WorkspaceInfoWithStatus | undefined
   usageInfo: UsageStatus | undefined
   limitExceeded: boolean
-  paymentExhausted: boolean // whole workspace unpaid -> read-only
+  onFreePlan: boolean // unpaid but a free tier applies -> runs on free limits, not read-only
   isLimited: boolean // this user is seatless -> read-only
 }
 
@@ -40,7 +40,7 @@ const initialState: SubscriptionState = {
   workspaceInfo: undefined,
   usageInfo: undefined,
   limitExceeded: false,
-  paymentExhausted: false,
+  onFreePlan: false,
   isLimited: false
 }
 
@@ -48,7 +48,7 @@ const initialState: SubscriptionState = {
 export const subscriptionStore = writable<SubscriptionState>(initialState)
 
 export const limitExceeded = derived(subscriptionStore, ($store) => $store.limitExceeded)
-export const paymentExhausted = derived(subscriptionStore, ($store) => $store.paymentExhausted)
+export const onFreePlan = derived(subscriptionStore, ($store) => $store.onFreePlan)
 export const isLimited = derived(subscriptionStore, ($store) => $store.isLimited)
 
 /** Resolved numeric limits (0 = unlimited) for the active plan/package, reactive on subscription changes. */
@@ -68,14 +68,22 @@ export function setSubscriptionState (
   plan: PlanItem | undefined,
   workspaceInfo?: WorkspaceInfoWithStatus | undefined,
   packageSubscription?: SubscriptionData | undefined,
-  pkg?: PackageItem | undefined
+  pkg?: PackageItem | undefined,
+  // The current (latest) tier subscription regardless of status — used to decide payment/free state.
+  // A granting `subscription` may be undefined when the tier is canceled, but the banner still needs it.
+  statusTier?: SubscriptionData | undefined
 ): void {
   const usage = workspaceInfo?.usageInfo ?? get(subscriptionStore).usageInfo
   const workspace = workspaceInfo ?? get(subscriptionStore).workspaceInfo
-  const exhausted =
-    subscription?.status === SubscriptionStatus.PastDue ||
-    subscription?.status === SubscriptionStatus.Canceled ||
-    subscription?.status === SubscriptionStatus.Expired
+  const tierForStatus = statusTier ?? subscription
+  const badStatus =
+    tierForStatus?.status === SubscriptionStatus.PastDue ||
+    tierForStatus?.status === SubscriptionStatus.Canceled ||
+    tierForStatus?.status === SubscriptionStatus.Expired
+  // A free fallback (baked into the subscription) keeps the workspace usable on free limits when
+  // unpaid — show the "free plan" hint, not the hard read-only banner.
+  const hasFree = tierForStatus?.freeLimits != null
+  const onFreePlan = badStatus && hasFree
 
   subscriptionStore.update((store) => ({
     ...store,
@@ -86,7 +94,7 @@ export function setSubscriptionState (
     usageInfo: usage,
     workspaceInfo: workspace,
     limitExceeded: checkUsageAgainstLimits(usage, plan, pkg, subscription, packageSubscription),
-    paymentExhausted: exhausted
+    onFreePlan
   }))
 }
 

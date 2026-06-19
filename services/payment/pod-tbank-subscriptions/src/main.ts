@@ -16,10 +16,12 @@
 import { Analytics } from '@hcengineering/analytics'
 import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
 import { newMetrics, systemAccountUuid } from '@hcengineering/core'
+import { getPlatformQueue } from '@hcengineering/kafka'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
 import serverToken, { generateToken } from '@hcengineering/server-token'
-import { getClient } from '@hcengineering/account-client'
+import { getClient, type SubscriptionData } from '@hcengineering/account-client'
+import { QueueTopic, type QueueSubscriptionMessage, subscriptionEvents } from '@hcengineering/server-core'
 import { join } from 'path'
 import TbankPayments from 'tbank-payments'
 
@@ -58,10 +60,16 @@ export const main = async (): Promise<void> => {
     apiUrl: config.TbankUrl
   })
 
-  // Initialize storage (uses AccountClient to talk to central account server)
   const serviceToken = generateToken(systemAccountUuid, undefined, { service: 'payment' })
   const accountClient = getClient(config.AccountsUrl, serviceToken)
-  const storage = new SubscriptionStorage(accountClient)
+
+  const queue = getPlatformQueue('tbank-subscriptions')
+  const producer = queue.getProducer<QueueSubscriptionMessage>(metricsContext, QueueTopic.Subscription)
+  const publish = async (data: SubscriptionData): Promise<void> => {
+    await producer.send(metricsContext, data.workspaceUuid, [subscriptionEvents.upserted(data, 'tbank', 'webhook')])
+  }
+
+  const storage = new SubscriptionStorage(accountClient, publish)
 
   const { app, close } = await createServer(metricsContext, config, tbank, storage)
 
@@ -69,12 +77,13 @@ export const main = async (): Promise<void> => {
     console.log(`TBank subscriptions service listening on port ${config.Port}`)
   })
 
-  // Start subscription renewal scheduler
   const scheduler = startScheduler(metricsContext, tbank, storage, config, config.SchedulerIntervalMinutes)
 
   const shutdown = (): void => {
     scheduler.close()
     close()
+    void producer.close()
+    void queue.shutdown()
     server.close(() => process.exit())
   }
 

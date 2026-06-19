@@ -15,14 +15,15 @@
 <script lang="ts">
   import { Icon, Label, tooltip } from '@hcengineering/ui'
   import billing from '@hcengineering/billing'
-  import { paymentExhausted, isLimited } from '../stores/subscription'
+  import { onFreePlan, isLimited } from '../stores/subscription'
   import { upgradePlan } from '../utils'
 
-  $: show = $paymentExhausted || $isLimited
-  $: message = $paymentExhausted ? billing.string.PaymentOverdueReadonly : billing.string.SeatLimitReadonly
+  // Read-only banner (error) when over free-seat limit; free-plan chip (info) when unpaid but on free fallback.
+  $: readOnly = $isLimited
+  $: message = billing.string.SeatLimitReadonly
 </script>
 
-{#if show}
+{#if readOnly}
   <button
     type="button"
     class="read-only-indicator"
@@ -34,6 +35,19 @@
   >
     <Icon icon={billing.icon.Billing} size={'small'} />
     <span><Label label={billing.string.PayOrUpgrade} /></span>
+  </button>
+{:else if $onFreePlan}
+  <button
+    type="button"
+    class="free-plan-indicator"
+    data-id="billingFreePlanBanner"
+    use:tooltip={{ label: billing.string.FreePlanHint, direction: 'bottom' }}
+    on:click={() => {
+      upgradePlan().catch(console.error)
+    }}
+  >
+    <Icon icon={billing.icon.Billing} size={'small'} />
+    <span><Label label={billing.string.FreePlan} /></span>
   </button>
 {/if}
 
@@ -55,6 +69,25 @@
 
     &:hover {
       filter: brightness(1.1);
+    }
+  }
+  .free-plan-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--small-BorderRadius);
+    border: 1px solid var(--theme-divider-color);
+    background: var(--theme-button-default);
+    color: var(--theme-content-color);
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    outline: none;
+
+    &:hover {
+      background: var(--theme-button-hovered);
     }
   }
 </style>

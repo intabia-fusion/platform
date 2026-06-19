@@ -1023,14 +1023,6 @@ export async function findPersonBySocialKey (
   return socialId.personUuid
 }
 
-/**
- * Upsert (create or update) subscription for a workspace
- * Only accessible by payment service
- * Creates new subscription or updates existing one based on providerId
- * @public
- */
-const BAD_SUBSCRIPTION_STATUSES = new Set<string>(['past_due', 'canceled', 'expired'])
-
 /** Fire-and-forget edge events to QueueTopic.Workspace; producer set by account-service via metadata. */
 async function publishLimitsEvents (
   ctx: MeasureContext,
@@ -1146,20 +1138,18 @@ export async function upsertSubscription (
 
   // Payment/plan state is defined by the tier subscription; notify consumers edge-triggered.
   if (params.type === SubscriptionType.Tier) {
-    const events: QueueWorkspaceLimitsMessage[] = []
-    const wasBad = existing !== null && BAD_SUBSCRIPTION_STATUSES.has(existing.status)
-    const isBad = BAD_SUBSCRIPTION_STATUSES.has(params.status)
-    if (wasBad !== isBad) {
-      events.push(workspaceEvents.limitsChanged(LimitCategory.Payment, isBad ? LimitStatus.Exhausted : LimitStatus.Ok))
-    }
+    // Refresh the snapshot so consumers re-read free-vs-paid limits without restart. Status matters:
+    // active<->unpaid flips the effective limits (paid vs free fallback) even with the same plan.
+    const wasActive = existing?.status === SubscriptionStatus.Active
+    const isActive = params.status === SubscriptionStatus.Active
     const planChanged =
       existing === null ||
       existing.plan !== params.plan ||
+      wasActive !== isActive ||
       JSON.stringify(existing.limits ?? null) !== JSON.stringify(params.limits ?? null)
     if (planChanged) {
-      events.push(workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok))
+      await publishLimitsEvents(ctx, workspaceUuid, [workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)])
     }
-    await publishLimitsEvents(ctx, workspaceUuid, events)
   }
 }
 
@@ -1273,8 +1263,11 @@ export async function adminCreateSubscription (
 
   const now = Date.now()
 
-  // Cancel ALL existing active subscriptions of the same type (invariant: one active per type).
-  const existingActive = await db.subscription.find({ workspaceUuid, type, status: SubscriptionStatus.Active })
+  // Cancel ALL non-canceled subscriptions of the same type (invariant: one live sub per type).
+  // Includes unpaid (past_due/expired) ones so repeated admin (re)creation does not pile up duplicates.
+  const existingActive = (await db.subscription.find({ workspaceUuid, type })).filter(
+    (s) => s.status !== SubscriptionStatus.Canceled
+  )
   for (const existing of existingActive) {
     const oldProviderData: Record<string, any> = (existing.providerData as Record<string, any>) ?? {}
     await db.subscription.update(
@@ -1326,12 +1319,8 @@ export async function adminCreateSubscription (
   ctx.info('Manual subscription created', { workspaceUuid, plan, type, status })
 
   if (type === SubscriptionType.Tier) {
-    // Edge-trigger consumers: bad status -> payment read-only, good status -> lift. Always refresh plan.
-    const isBad = BAD_SUBSCRIPTION_STATUSES.has(status)
-    await publishLimitsEvents(ctx, workspaceUuid, [
-      workspaceEvents.limitsChanged(LimitCategory.Payment, isBad ? LimitStatus.Exhausted : LimitStatus.Ok),
-      workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)
-    ])
+    // Refresh plan snapshot so consumers re-read free-vs-paid limits without restart.
+    await publishLimitsEvents(ctx, workspaceUuid, [workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)])
   }
 }
 

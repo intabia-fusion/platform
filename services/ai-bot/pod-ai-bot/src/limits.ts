@@ -19,7 +19,6 @@ import { LimitCategory, LimitStatus, type QueueWorkspaceLimitsMessage } from '@h
 export class LimitsState {
   private readonly tokensExhausted = new Set<WorkspaceUuid>()
   private readonly transcriptExhausted = new Set<WorkspaceUuid>()
-  private readonly paymentExhausted = new Set<WorkspaceUuid>()
 
   applyEvent (msg: QueueWorkspaceLimitsMessage, workspace: WorkspaceUuid): void {
     const set = this.getSet(msg.category)
@@ -31,20 +30,19 @@ export class LimitsState {
     }
   }
 
-  /** True when LLM usage is blocked (tokens or payment exhausted). */
+  /** True when LLM usage is blocked (tokens exhausted). */
   isTokensBlocked (workspace: WorkspaceUuid): boolean {
-    return this.tokensExhausted.has(workspace) || this.paymentExhausted.has(workspace)
+    return this.tokensExhausted.has(workspace)
   }
 
-  /** True when transcription should be skipped (transcript or payment exhausted). */
+  /** True when transcription should be skipped (transcript exhausted). */
   isTranscriptBlocked (workspace: WorkspaceUuid): boolean {
-    return this.transcriptExhausted.has(workspace) || this.paymentExhausted.has(workspace)
+    return this.transcriptExhausted.has(workspace)
   }
 
   private getSet (category: string): Set<WorkspaceUuid> | undefined {
     if (category === LimitCategory.Tokens) return this.tokensExhausted
     if (category === LimitCategory.Transcript) return this.transcriptExhausted
-    if (category === LimitCategory.Payment) return this.paymentExhausted
     return undefined
   }
 }

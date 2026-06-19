@@ -41,7 +41,11 @@ export enum QueueTopic {
 
   CrmQueue = 'crm',
 
-  BillingUsage = 'billing-usage'
+  BillingUsage = 'billing-usage',
+
+  // Subscription lifecycle events from payment providers (stripe/polar/tbank). Providers verify and
+  // publish here; pod-payment is the single consumer that bakes limits and writes to the account DB.
+  Subscription = 'subscription'
 }
 
 export interface ConsumerHandle {

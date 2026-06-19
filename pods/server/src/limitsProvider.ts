@@ -12,7 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type AccountClient, getClient as getAccountClient } from '@hcengineering/account-client'
+import {
+  type AccountClient,
+  getClient as getAccountClient,
+  type Subscription,
+  SubscriptionStatus,
+  SubscriptionType
+} from '@hcengineering/account-client'
 import core, {
   type AccountUuid,
   buildSocialIdString,
@@ -66,36 +72,49 @@ export class AccountLimitsProvider implements LimitsProvider {
     return getAccountClient(this.accountsUrl, token)
   }
 
-  async getPlanLimits (workspace: WorkspaceUuid): Promise<PlanLimits> {
-    try {
-      const subs = await this.accountClient(workspace).getSubscriptions(workspace, true)
-      const tier = subs.find((s) => s.type === 'tier' && s.status === 'active')
-      const l = tier?.limits
-      if (l === undefined) return ZERO_LIMITS
-      const spaceLimits = new Map<Ref<Class<Space>>, number>()
-      for (const { spaceClass, field } of SPACE_LIMIT_MAP) {
-        spaceLimits.set(spaceClass, l[field] ?? 0)
-      }
-      return {
-        spaceLimits,
-        usersLimit: l.usersLimit ?? 0,
-        storageLimitGB: l.storageLimitGB ?? 0,
-        tokenLimit: l.tokenLimit ?? 0,
-        transcriptLimit: l.meetingMinutesLimit ?? 0
-      }
-    } catch {
-      return ZERO_LIMITS
+  private toPlanLimits (l: {
+    storageLimitGB?: number
+    usersLimit?: number
+    tokenLimit?: number
+    meetingMinutesLimit?: number
+    projectsLimit?: number
+  }): PlanLimits {
+    const spaceLimits = new Map<Ref<Class<Space>>, number>()
+    for (const { spaceClass, field } of SPACE_LIMIT_MAP) {
+      spaceLimits.set(spaceClass, (l as any)[field] ?? 0)
+    }
+    return {
+      spaceLimits,
+      usersLimit: l.usersLimit ?? 0,
+      storageLimitGB: l.storageLimitGB ?? 0,
+      tokenLimit: l.tokenLimit ?? 0,
+      transcriptLimit: l.meetingMinutesLimit ?? 0
     }
   }
 
-  async getPaymentExhausted (workspace: WorkspaceUuid): Promise<boolean> {
+  /** Free fallback limits baked into the tier subscription by payment (if a free plan exists). */
+  private freeLimitsOf (tier: Subscription | undefined): PlanLimits | undefined {
+    const free = tier?.freeLimits
+    return free != null ? this.toPlanLimits(free) : undefined
+  }
+
+  /** Most recent tier subscription (by createdOn) — the current plan, ignoring superseded ones. */
+  private latestTier (subs: Subscription[]): Subscription | undefined {
+    return subs
+      .filter((s) => s.type === SubscriptionType.Tier)
+      .sort((a, b) => (b.createdOn ?? 0) - (a.createdOn ?? 0))[0]
+  }
+
+  async getPlanLimits (workspace: WorkspaceUuid): Promise<PlanLimits> {
     try {
-      const subs = await this.accountClient(workspace).getSubscriptions(workspace, true)
-      const tier = subs.find((s) => s.type === 'tier')
-      if (tier === undefined) return false
-      return tier.status === 'past_due' || tier.status === 'canceled' || tier.status === 'expired'
+      // activeOnly=false: an unpaid (past_due/canceled) tier still carries the free fallback we need.
+      const subs = await this.accountClient(workspace).getSubscriptions(workspace, false)
+      const active = subs.find((s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Active)
+      if (active?.limits !== undefined) return this.toPlanLimits(active.limits)
+      // No active paid tier (unpaid): fall back to the current tier's free limits, else unlimited.
+      return this.freeLimitsOf(this.latestTier(subs)) ?? ZERO_LIMITS
     } catch {
-      return false
+      return ZERO_LIMITS
     }
   }
 

@@ -39,7 +39,7 @@ import {
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
-import { LIMITS_PROVIDER_VAR, PAYMENT_EXHAUSTED_MAP_KEY, PLAN_LIMITS_MAP_KEY, PLAN_LIMITS_VAR } from './planLimits'
+import { LIMITS_PROVIDER_VAR, PLAN_LIMITS_MAP_KEY, PLAN_LIMITS_VAR } from './planLimits'
 import { aiBotAccountEmail } from './identity'
 
 const GUEST_ROLES = new Set<AccountRole>([AccountRole.Guest, AccountRole.DocGuest, AccountRole.ReadOnlyGuest])
@@ -67,11 +67,11 @@ function isSystemAccount (
 }
 
 /**
- * Seat enforcement: members beyond usersLimit (and everyone but the Owner when payment is
- * exhausted) become read-only — write tx are rejected here, except the direct/chat-message
- * classes the provider whitelists. The account role is NOT mutated; the user keeps their role
- * so onboarding/identity flows that read role stay consistent. Seats are assigned to active
- * employees by role priority (Owner, Maintainer, then Users), createdOn order within a role.
+ * Seat enforcement: members beyond usersLimit become read-only — write tx are rejected here,
+ * except the direct/chat-message classes the provider whitelists. The account role is NOT
+ * mutated; the user keeps their role so onboarding/identity flows that read role stay consistent.
+ * Seats are assigned to active employees by role priority (Owner, Maintainer, then Users),
+ * createdOn order within a role.
  */
 export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
   private usersLimit = 0
@@ -82,8 +82,6 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
   private seatSetDirty = false
   /** Seats init is lazy: PLAN_LIMITS_VAR is published by PlanLimitsMiddleware, which boots after us. */
   private seatsInited = false
-  /** Shared map (host-owned) of payment-exhausted workspaces; updated live by host consumer. */
-  private paymentExhaustedMap: Map<WorkspaceUuid, boolean> | undefined
 
   private constructor (context: PipelineContext, next?: Middleware) {
     super(context, next)
@@ -103,15 +101,7 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
     return this.context.contextVars[LIMITS_PROVIDER_VAR] as LimitsProvider | undefined
   }
 
-  private async init (ctx: MeasureContext): Promise<void> {
-    // Payment exhausted enforcement runs regardless of usersLimit; init it first.
-    this.paymentExhaustedMap = this.context.contextVars[PAYMENT_EXHAUSTED_MAP_KEY] as
-      | Map<WorkspaceUuid, boolean>
-      | undefined
-    if (this.paymentExhaustedMap !== undefined && !this.paymentExhaustedMap.has(this.context.workspace.uuid)) {
-      await this.initPaymentStatus(ctx) // cold-start: resolve subscription status synchronously
-    }
-  }
+  private async init (_ctx: MeasureContext): Promise<void> {}
 
   /** Live limits: shared host map (refreshed on plan changes) over the boot snapshot. */
   private planLimits (): PlanLimits | undefined {
@@ -121,14 +111,13 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
     )
   }
 
-  /** Lazy: PLAN_LIMITS_VAR is published by PlanLimitsMiddleware, which boots after this middleware. */
   private async initSeats (ctx: MeasureContext): Promise<void> {
     const limits = this.planLimits()
     if (limits === undefined) return // PlanLimits not booted yet, retry on next tx
     this.seatsInited = true
 
     this.usersLimit = limits.usersLimit
-    if (this.usersLimit === 0) return // seat enforcement disabled (payment still enforced in tx)
+    if (this.usersLimit === 0) return // seat enforcement disabled
 
     if (this.provider === undefined) {
       ctx.warn('SeatLimitsMiddleware: LimitsProvider not set, seat enforcement disabled')
@@ -146,28 +135,6 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
       ctx.error('SeatLimitsMiddleware: failed to init seats, enforcement disabled', { err })
       this.usersLimit = 0 // fail-open
     }
-  }
-
-  /** Cold-start: ask the provider whether this workspace is unpaid and seed the shared map. */
-  private async initPaymentStatus (ctx: MeasureContext): Promise<void> {
-    const provider = this.provider
-    if (provider === undefined || this.paymentExhaustedMap === undefined) return
-    try {
-      const exhausted = await provider.getPaymentExhausted(this.context.workspace.uuid)
-      this.paymentExhaustedMap.set(this.context.workspace.uuid, exhausted)
-      if (exhausted) {
-        ctx.warn('SeatLimitsMiddleware: workspace payment exhausted at boot', {
-          workspace: this.context.workspace.uuid
-        })
-      }
-    } catch (err: any) {
-      // fail-open: leave entry absent -> treated as not-exhausted
-      ctx.error('SeatLimitsMiddleware: failed to init payment status', { err })
-    }
-  }
-
-  private isPaymentExhausted (): boolean {
-    return this.paymentExhaustedMap?.get(this.context.workspace.uuid) === true
   }
 
   /** Resolve system/AI account uuids once (excluded from seat counting). */
@@ -319,15 +286,6 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
       return await this.provideTx(ctx, txes)
     }
 
-    // Payment exhausted: whole workspace read-only for everyone except Owner (so they can pay)
-    // and system identities. Runs even when usersLimit === 0 (seat enforcement disabled).
-    if (this.isPaymentExhausted()) {
-      if (account.role !== AccountRole.Owner) {
-        return await this.enforceReadOnly(ctx, txes)
-      }
-      return await this.provideTx(ctx, txes)
-    }
-
     if (!this.seatsInited) {
       await this.initSeats(ctx)
     } else {
@@ -371,7 +329,16 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
       return await this.provideTx(ctx, txes)
     }
 
-    // Seatless member: read-only except whitelisted message classes. Role left untouched.
+    // Seats not yet full: a free seat is available, so this member takes it (covers the boot window
+    // where a fresh workspace has no active Employee yet — onboarding writes must not be blocked).
+    // Count real active employees rather than seatSet.size, which may be empty if the set has not
+    // been (re)built yet under load — otherwise enforcement would wrongly disable on a full workspace.
+    const activeEmployees = await this.countActiveEmployees(ctx)
+    if (activeEmployees < this.usersLimit) {
+      return await this.provideTx(ctx, txes)
+    }
+
+    // Seatless member (all seats taken): read-only except whitelisted message classes. Role untouched.
     return await this.enforceReadOnly(ctx, txes)
   }
 }

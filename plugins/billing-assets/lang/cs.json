@@ -78,6 +78,8 @@
     "RetriesExhaustedDescription": "Kontaktujte podporu pro vyřešení problémů s platbou.",
     "PaymentOverdueReadonly": "Payment is overdue. The workspace is in read-only mode.",
     "SeatLimitReadonly": "Seat limit reached. Your account is in read-only mode.",
-    "PayOrUpgrade": "Pay / Upgrade plan"
+    "PayOrUpgrade": "Pay / Upgrade plan",
+    "FreePlan": "Bezplatný plán",
+    "FreePlanHint": "Platba je po splatnosti — pracovní prostor běží na bezplatném plánu. Zaplaťte pro obnovení svého plánu."
   }
 }

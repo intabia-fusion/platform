@@ -78,6 +78,8 @@
     "RetriesExhaustedDescription": "Please contact support to resolve payment issues.",
     "PaymentOverdueReadonly": "Payment is overdue. The workspace is in read-only mode.",
     "SeatLimitReadonly": "Seat limit reached. Your account is in read-only mode.",
-    "PayOrUpgrade": "Pay / Upgrade plan"
+    "PayOrUpgrade": "Pay / Upgrade plan",
+    "FreePlan": "Free plan",
+    "FreePlanHint": "Payment is overdue — the workspace runs on the free plan. Pay to restore your plan."
   }
 }

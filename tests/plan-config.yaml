@@ -1,6 +1,38 @@
 # Plan config for the test stand. Small limits so UI limit tests can exercise
 # enforcement without uploading gigabytes. The mock payment provider serves these.
 plans:
+  # Free fallback tier. Applied when a workspace has no active paid tier (unpaid / no subscription).
+  # free:true marks it; storagePerUserGB makes disk = usersLimit * perUser (5 * 2 = 10 GB).
+  # Real free limits (5/3/100000/2GB per user) so auto-provisioning does not constrain other tests.
+  free:
+    label:
+      ru: Бесплатный
+      en: Free
+    description:
+      ru: Бесплатный тариф
+      en: Free tier
+    users:
+      ru: до 5 пользователей
+      en: up to 5 users
+    features:
+      - ru: 5 пользователей
+        en: 5 users
+      - ru: 3 проекта
+        en: 3 projects
+    additional:
+      ru: Лимиты бесплатного тарифа
+      en: Free tier limits
+    priceMonthly: 0
+    currency: ₽
+    free: true
+    storagePerUserGB: 2
+    trafficLimitGB: 0
+    meetingMinutesLimit: 0
+    tokenLimit: 100000
+    projectsLimit: 3
+    usersLimit: 5
+    index: -1
+    color: Grayish
   start:
     label:
       ru: Старт

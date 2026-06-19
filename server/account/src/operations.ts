@@ -40,6 +40,7 @@ import { decodeToken, decodeTokenVerbose, generateToken, type PermissionsGrant }
 
 import { isAdminEmail } from './admin'
 import { accountPlugin, type CrmNotification } from './plugin'
+import { getFreePlanLimits } from './freeLimits'
 import { type AccountServiceMethods, getServiceMethods } from './serviceOperations'
 import {
   AccountEventType,
@@ -64,6 +65,7 @@ import {
   type PersonWithProfile,
   type Subscription,
   SubscriptionStatus,
+  SubscriptionType,
   type Query
 } from './types'
 import {
@@ -2802,7 +2804,14 @@ export async function getSubscriptions (
   }
 
   const subscriptions = await db.subscription.find(query)
+  for (const sub of subscriptions) fillFreeLimits(sub)
   return subscriptions
+}
+
+// Free fallback is provider-agnostic and not persisted: fill it on read so every consumer sees it.
+function fillFreeLimits (sub: Subscription): void {
+  if (sub.type !== SubscriptionType.Tier) return
+  sub.freeLimits = getFreePlanLimits()
 }
 
 /**
@@ -2835,6 +2844,7 @@ export async function getSubscriptionById (
 
   if (isService) {
     // Services can query any subscription by internal ID
+    fillFreeLimits(subscription)
     return subscription
   }
 
@@ -2861,6 +2871,7 @@ export async function getSubscriptionById (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
+  fillFreeLimits(subscription)
   return subscription
 }
 

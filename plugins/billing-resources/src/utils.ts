@@ -25,7 +25,8 @@ import {
   getClient as getAccountClientRaw,
   type AccountClient,
   type SubscriptionData,
-  SubscriptionStatus
+  SubscriptionStatus,
+  SubscriptionType
 } from '@hcengineering/account-client'
 import { getClient as getBillingClientRaw, type BillingClient } from '@hcengineering/billing-client'
 import { getClient as getPaymentClientRaw, type PaymentClient } from '@hcengineering/payment-client'
@@ -116,8 +117,8 @@ export async function isLimitExceeded (): Promise<boolean> {
     }
 
     const subscriptions = await accountClient.getSubscriptions(undefined, false)
-    const subscription = subscriptions.find((p) => p.type === 'tier' && grantsPlan(p))
-    const packageSubscription = subscriptions.find((p) => p.type === 'package' && grantsPlan(p))
+    const subscription = subscriptions.find((p) => p.type === SubscriptionType.Tier && grantsPlan(p))
+    const packageSubscription = subscriptions.find((p) => p.type === SubscriptionType.Package && grantsPlan(p))
     if (subscription == null) {
       return true
     }
@@ -148,14 +149,25 @@ export async function checkWorkspaceLimits (): Promise<void> {
     const usageInfo = workspaceInfo?.usageInfo ?? null
 
     const subscriptions = await accountClient.getSubscriptions(undefined, false)
-    const subscription = subscriptions.find((p) => p.type === 'tier' && grantsPlan(p))
-    const packageSubscription = subscriptions.find((p) => p.type === 'package' && grantsPlan(p))
+    const subscription = subscriptions.find((p) => p.type === SubscriptionType.Tier && grantsPlan(p))
+    const packageSubscription = subscriptions.find((p) => p.type === SubscriptionType.Package && grantsPlan(p))
+    // Latest tier regardless of status — drives the payment/free banner even when canceled (non-granting).
+    const statusTier = subscriptions
+      .filter((p) => p.type === SubscriptionType.Tier)
+      .sort((a, b) => (b.createdOn ?? 0) - (a.createdOn ?? 0))[0]
     const config = await getPlanConfig()
     const plan = subscription != null ? (config.plans[subscription.plan] ?? null) : null
     const pkg = packageSubscription != null ? (config.packages[packageSubscription.plan] ?? null) : null
 
     // Update subscription store
-    setSubscriptionState(subscription, plan ?? undefined, workspaceInfo, packageSubscription, pkg ?? undefined)
+    setSubscriptionState(
+      subscription,
+      plan ?? undefined,
+      workspaceInfo,
+      packageSubscription,
+      pkg ?? undefined,
+      statusTier
+    )
 
     // Check limits
     if (usageInfo === null || subscription == null || plan == null) {
@@ -266,7 +278,7 @@ export function resolveLocale (config: PlanConfig, lang: string): PlanConfig {
 
 export async function getCurrentSubscription (accountClient: AccountClient): Promise<SubscriptionData | undefined> {
   const subscriptions = await accountClient.getSubscriptions()
-  return subscriptions.find((p) => p.type === 'tier')
+  return subscriptions.find((p) => p.type === SubscriptionType.Tier)
 }
 
 export async function getWorkspaceInfo (): Promise<WorkspaceInfoWithStatus | undefined> {

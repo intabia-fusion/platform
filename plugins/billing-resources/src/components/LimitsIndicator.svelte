@@ -35,11 +35,17 @@
   $: currentPackageSubscription = state.currentPackageSubscription
   $: workspace = $location.path[1]
 
+  // checkIsLimited reads the subscription store, so it must run AFTER checkWorkspaceLimits has
+  // refreshed it — otherwise it sees the stale plan and misses a seat downgrade.
+  const refreshLimits = async (): Promise<void> => {
+    await checkWorkspaceLimits()
+    await checkIsLimited()
+  }
+
   const connectionListener = async (): Promise<void> => {
     resetSubscriptionStore()
     if (workspace !== undefined) {
-      void checkWorkspaceLimits()
-      void checkIsLimited()
+      void refreshLimits()
     }
   }
 
@@ -51,8 +57,7 @@
         tx._class === core.class.TxWorkspaceEvent &&
         (tx as TxWorkspaceEvent).event === WorkspaceEvent.LimitsChanged
       ) {
-        void checkWorkspaceLimits()
-        void checkIsLimited()
+        void refreshLimits()
         return
       }
     }
@@ -75,12 +80,10 @@
 
     // Initial check if workspace exists
     if (workspace != null) {
-      void checkWorkspaceLimits()
-      void checkIsLimited()
+      void refreshLimits()
 
       pollInterval = setInterval(() => {
-        void checkWorkspaceLimits()
-        void checkIsLimited()
+        void refreshLimits()
       }, POLL_INTERVAL_MS)
     }
   })

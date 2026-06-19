@@ -225,6 +225,19 @@ export interface Subscription {
     teamspacesLimit?: number
   }
 
+  // Free fallback limits (from the plan flagged free in config). Applied when the paid tier is unpaid:
+  // the workspace runs on these instead of full read-only. Same shape as limits.
+  freeLimits?: {
+    storageLimitGB: number
+    trafficLimitGB: number
+    meetingMinutesLimit: number
+    tokenLimit: number
+    usersLimit: number
+    projectsLimit: number
+    drivesLimit?: number
+    teamspacesLimit?: number
+  }
+
   // Amount paid (in cents, e.g. 9999 = $99.99)
   // Used primarily for pay-what-you-want/donation subscriptions to track actual payment
   amount?: number

@@ -16,7 +16,7 @@
 import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import type { Express } from 'express'
 import type { AccountClient, SubscriptionType, SubscriptionData } from '@hcengineering/account-client'
-import type { PaymentProvider, SubscribeRequest, CheckoutResponse } from '../index'
+import type { PaymentProvider, SubscribeRequest, CheckoutResponse, SubscriptionPublisher } from '../index'
 
 /**
  * TBank payment provider implementation.
@@ -201,14 +201,25 @@ export class TbankProvider implements PaymentProvider {
     return await response.json()
   }
 
-  async reconcileActiveSubscriptions (ctx: MeasureContext, accountsUrl: string, serviceToken: string): Promise<void> {
-    // Reconciliation is handled by pod-tbank-subscriptions scheduler
+  async reconcileActiveSubscriptions (
+    ctx: MeasureContext,
+    _accountsUrl: string,
+    _serviceToken: string,
+    _publish: SubscriptionPublisher
+  ): Promise<void> {
+    // Reconciliation + event publishing are handled by the pod-tbank-subscriptions scheduler, which
+    // publishes to the Subscription queue itself.
     ctx.info('TBank subscription reconciliation skipped (handled by tbank-subscriptions scheduler)')
   }
 
-  registerWebhookEndpoints (app: Express, ctx: MeasureContext, accountsUrl: string, serviceToken: string): void {
-    // TBank webhooks are received directly by pod-tbank-subscriptions service
-    // This provider does not register any webhook endpoints
+  registerWebhookEndpoints (
+    app: Express,
+    ctx: MeasureContext,
+    _accountsUrl: string,
+    _serviceToken: string,
+    _publish: SubscriptionPublisher
+  ): void {
+    // TBank webhooks are received directly by pod-tbank-subscriptions, which publishes to the queue.
     ctx.info('TBank provider: webhook endpoints handled by pod-tbank-subscriptions')
   }
 }

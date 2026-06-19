@@ -52,9 +52,10 @@ export const billingPlugin = plugin(billingId, {
     LargestFiles: '' as IntlString,
     UpgradePlan: '' as IntlString,
     LimitReached: '' as IntlString,
-    PaymentOverdueReadonly: '' as IntlString,
     SeatLimitReadonly: '' as IntlString,
-    PayOrUpgrade: '' as IntlString
+    PayOrUpgrade: '' as IntlString,
+    FreePlan: '' as IntlString,
+    FreePlanHint: '' as IntlString
   },
   icon: {
     Billing: '' as Asset,

@@ -17,7 +17,7 @@ import { generateId, type MeasureContext, type WorkspaceUuid } from '@hcengineer
 import type { Express } from 'express'
 import type { AccountClient, SubscriptionData, SubscriptionType } from '@hcengineering/account-client'
 import { SubscriptionStatus } from '@hcengineering/account-client'
-import type { CheckoutResponse, PaymentProvider, SubscribeRequest } from '../index'
+import type { CheckoutResponse, PaymentProvider, SubscribeRequest, SubscriptionPublisher } from '../index'
 
 /**
  * Mock payment provider for test stands.
@@ -121,11 +121,22 @@ export class MockProvider implements PaymentProvider {
     return { ...sub, status: SubscriptionStatus.Active }
   }
 
-  async reconcileActiveSubscriptions (_ctx: MeasureContext, _accountsUrl: string, _serviceToken: string): Promise<void> {
+  async reconcileActiveSubscriptions (
+    _ctx: MeasureContext,
+    _accountsUrl: string,
+    _serviceToken: string,
+    _publish: SubscriptionPublisher
+  ): Promise<void> {
     // no-op: mock subscriptions are already consistent
   }
 
-  registerWebhookEndpoints (_app: Express, _ctx: MeasureContext, _accountsUrl: string, _serviceToken: string): void {
+  registerWebhookEndpoints (
+    _app: Express,
+    _ctx: MeasureContext,
+    _accountsUrl: string,
+    _serviceToken: string,
+    _publish: SubscriptionPublisher
+  ): void {
     // no-op: mock needs no webhooks
   }
 }

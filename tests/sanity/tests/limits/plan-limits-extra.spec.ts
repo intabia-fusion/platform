@@ -48,37 +48,39 @@ test.describe('disk limit (honest upload)', () => {
   })
 })
 
-// ── B. payment read-only -> paid ─────────────────────────────────────────────
-test.describe('payment read-only -> paid', () => {
+// ── B. unpaid runs on free fallback (chip, not hard read-only) ───────────────
+// Free fallback is always configured, so an unpaid workspace shows the free-plan chip and stays
+// usable on free limits — it is NOT put into full read-only. (Seat over-limit read-only is block F.)
+test.describe('unpaid free fallback', () => {
   test.use({ storageState: PlatformSetting })
 
-  test('past-due workspace shows read-only banner; banner disappears after payment', async ({ page }) => {
-    await (await page.goto(`${PlatformURI}/workbench/limits-unpaid-ws`))?.finished()
+  test('past-due workspace shows the free-plan chip, not read-only; chip clears after payment', async ({ page }) => {
+    await setWorkspacePlan('limits-unpaid-ws', 'start', { status: 'past_due' })
 
-    // Banner must be visible on past_due workspace.
-    await expect(page.locator('[data-id="billingReadOnlyBanner"]')).toBeVisible({ timeout: 15000 })
-
-    // Simulate payment: set subscription back to active.
-    await setWorkspacePlan('limits-unpaid-ws', 'start', { status: 'active' })
-
-    // Poll with page reloads until the banner disappears (transactor consumes Kafka event async).
     await expect(async () => {
       await (await page.goto(`${PlatformURI}/workbench/limits-unpaid-ws`))?.finished()
+      await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeVisible({ timeout: 5000 })
       await expect(page.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 5000 })
+    }).toPass({ intervals: [2000, 3000, 5000], timeout: 30000 })
+
+    // Simulate payment: set subscription back to active -> chip disappears.
+    await setWorkspacePlan('limits-unpaid-ws', 'start', { status: 'active' })
+    await expect(async () => {
+      await (await page.goto(`${PlatformURI}/workbench/limits-unpaid-ws`))?.finished()
+      await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeHidden({ timeout: 5000 })
     }).toPass({ intervals: [2000, 3000, 5000], timeout: 30000 })
   })
 
-  test('admin-canceled subscription puts the workspace into read-only', async ({ page }) => {
-    // Start from an active subscription (the previous test left it active).
+  test('admin-canceled subscription also runs on the free fallback (chip, not read-only)', async ({ page }) => {
     await setWorkspacePlan('limits-unpaid-ws', 'start', { status: 'active' })
     await (await page.goto(`${PlatformURI}/workbench/limits-unpaid-ws`))?.finished()
-    await expect(page.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 15000 })
+    await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeHidden({ timeout: 15000 })
 
-    // Cancel via the admin path -> canceled status -> read-only banner appears.
     await setWorkspacePlan('limits-unpaid-ws', 'start', { status: 'canceled' })
     await expect(async () => {
       await (await page.goto(`${PlatformURI}/workbench/limits-unpaid-ws`))?.finished()
-      await expect(page.locator('[data-id="billingReadOnlyBanner"]')).toBeVisible({ timeout: 5000 })
+      await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeVisible({ timeout: 5000 })
+      await expect(page.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 5000 })
     }).toPass({ intervals: [2000, 3000, 5000], timeout: 30000 })
 
     // Restore active so the workspace is clean for re-runs.

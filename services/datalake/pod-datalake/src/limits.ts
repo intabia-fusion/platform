@@ -35,10 +35,9 @@ interface StorageDeltaMessage {
   ref: string
 }
 
-/** Tracks disk/payment exhausted workspaces (consumed from Workspace topic) and emits storage deltas. */
+/** Tracks disk-exhausted workspaces (consumed from Workspace topic) and emits storage deltas. */
 export class LimitsState {
   private readonly diskExhausted = new Set<WorkspaceUuid>()
-  private readonly paymentExhausted = new Set<WorkspaceUuid>()
 
   private readonly usageProducer: PlatformQueueProducer<StorageDeltaMessage>
   private readonly consumer: ConsumerHandle
@@ -55,13 +54,12 @@ export class LimitsState {
           const value = m.value
           if (value.type !== QueueWorkspaceEvent.LimitsChanged) continue
           const { category, status } = value as QueueWorkspaceLimitsMessage
-          if (category !== LimitCategory.Disk && category !== LimitCategory.Payment) continue
+          if (category !== LimitCategory.Disk) continue
 
-          const set = category === LimitCategory.Disk ? this.diskExhausted : this.paymentExhausted
           if (status === LimitStatus.Exhausted) {
-            set.add(m.workspace)
+            this.diskExhausted.add(m.workspace)
           } else {
-            set.delete(m.workspace)
+            this.diskExhausted.delete(m.workspace)
           }
         }
       },
@@ -69,9 +67,9 @@ export class LimitsState {
     )
   }
 
-  /** True when user uploads should be blocked for this workspace (disk or payment exhausted). */
+  /** True when user uploads should be blocked for this workspace (disk exhausted). */
   isExhausted (workspace: WorkspaceUuid): boolean {
-    return this.diskExhausted.has(workspace) || this.paymentExhausted.has(workspace)
+    return this.diskExhausted.has(workspace)
   }
 
   /** Fire-and-forget storage delta to billing-usage. Call only for user uploads. ref=sha256 for idempotency. */

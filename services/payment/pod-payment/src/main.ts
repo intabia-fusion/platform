@@ -16,9 +16,19 @@
 import { Analytics } from '@hcengineering/analytics'
 import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
 import { newMetrics } from '@hcengineering/core'
+import { getPlatformQueue } from '@hcengineering/kafka'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
-import { initStatisticsContext } from '@hcengineering/server-core'
+import {
+  initStatisticsContext,
+  QueueTopic,
+  QueueWorkspaceEvent,
+  type QueueWorkspaceMessage,
+  type QueueSubscriptionMessage,
+  subscriptionEvents
+} from '@hcengineering/server-core'
+import { type SubscriptionData } from '@hcengineering/account-client'
+import type { SubscriptionPublisher } from './providers'
 import serverToken from '@hcengineering/server-token'
 import { join } from 'path'
 import config from './config'
@@ -50,10 +60,70 @@ export const main = async (): Promise<void> => {
       )
   })
 
-  const { app, close } = await createServer(metricsContext, config)
+  // The queue is REQUIRED: provider events are durable through it and pod-payment is the single writer.
+  const queue = getPlatformQueue('payment')
+  const producer = queue.getProducer<QueueSubscriptionMessage>(metricsContext, QueueTopic.Subscription)
+  const publish: SubscriptionPublisher = async (ctx, data, trigger, canceled) => {
+    const msg =
+      canceled === true
+        ? subscriptionEvents.canceled(data, data.provider, trigger)
+        : subscriptionEvents.upserted(data, data.provider, trigger)
+    await producer.send(ctx, data.workspaceUuid, [msg])
+  }
+
+  const { app, ensureFreeSubscription, persistSubscription, close } = await createServer(
+    metricsContext,
+    config,
+    publish
+  )
   const server = listen(app, config.Port)
 
+  let queueClose: (() => Promise<void>) | undefined
+  {
+    // 1) Workspace creation -> provision the free fallback subscription.
+    const wsConsumer = queue.createBatchConsumer<QueueWorkspaceMessage>(
+      metricsContext,
+      QueueTopic.Workspace,
+      'payment-free-tier',
+      async (ctx, msgs) => {
+        for (const msg of msgs) {
+          if (msg.value.type !== QueueWorkspaceEvent.Created) continue
+          await ensureFreeSubscription(msg.workspace)
+        }
+      },
+      { batchSize: 20, batchTimeout: 500 }
+    )
+    // 2) Provider subscription events (stripe/polar/tbank webhook+reconcile+scheduler). This is the
+    // SINGLE writer to the account DB for async provider events: bake limits + upsert via persistSubscription.
+    // Idempotent (account dedups by provider+id), so redeliveries/replays are safe.
+    const subConsumer = queue.createBatchConsumer<QueueSubscriptionMessage>(
+      metricsContext,
+      QueueTopic.Subscription,
+      'payment-subscription-writer',
+      async (ctx, msgs) => {
+        for (const msg of msgs) {
+          try {
+            await persistSubscription(msg.value.subscription as SubscriptionData)
+          } catch (err: any) {
+            ctx.error('failed to persist subscription event', {
+              provider: msg.value.provider,
+              trigger: msg.value.trigger,
+              err
+            })
+            throw err // let the consumer retry rather than silently drop the event
+          }
+        }
+      },
+      { batchSize: 20, batchTimeout: 500 }
+    )
+    queueClose = async () => {
+      await wsConsumer.close()
+      await subConsumer.close()
+    }
+  }
+
   const shutdown = (): void => {
+    void queueClose?.()
     close()
     server.close(() => process.exit())
   }

@@ -19,7 +19,13 @@ import {
   systemAccountUuid,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import { type AccountClient, getClient, type Subscription } from '@hcengineering/account-client'
+import {
+  type AccountClient,
+  getClient,
+  type Subscription,
+  SubscriptionStatus,
+  SubscriptionType
+} from '@hcengineering/account-client'
 import {
   LimitCategory as SCLimitCategory,
   LimitStatus,
@@ -58,9 +64,8 @@ export class LimitsEngine {
     if (amount === 0) return
 
     const category = metricToCategory(metric)
-    const subs = await this.accountClient(workspace).getSubscriptions(workspace, true)
-    const tier = subs.find((s) => s.type === 'tier' && s.status === 'active')
-    const limitValue = getLimitValue(tier, metric)
+    const subs = await this.accountClient(workspace).getSubscriptions(workspace, false)
+    const limitValue = getLimitValue(resolveTierLimits(subs), metric)
 
     const prev = await this.db.getLimitState(ctx, workspace, category)
     const used = (prev?.used ?? 0) + amount
@@ -116,27 +121,7 @@ export class LimitsEngine {
           ctx.error('startup scan failed', { workspace: ws.uuid, metric, err })
         }
       }
-      try {
-        await this.syncPaymentStatus(ctx, ws.uuid)
-      } catch (err: any) {
-        ctx.error('startup payment sync failed', { workspace: ws.uuid, err })
-      }
     }
-  }
-
-  /**
-   * Recovery for payment events missed while billing/account were down: account-service publishes
-   * payment status edge-triggered on subscription writes; this re-publishes the current state.
-   * Consumers are idempotent (map.set), so a repeated status is harmless.
-   */
-  private async syncPaymentStatus (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<void> {
-    const subs = await this.accountClient(workspace).getSubscriptions(workspace, true)
-    const tier = subs.find((s) => s.type === 'tier')
-    if (tier === undefined) return // no subscription: consumers stay fail-open
-    const bad = tier.status === 'past_due' || tier.status === 'canceled' || tier.status === 'expired'
-    await this.producer.send(ctx, workspace, [
-      workspaceEvents.limitsChanged(SCLimitCategory.Payment, bad ? LimitStatus.Exhausted : LimitStatus.Ok)
-    ])
   }
 
   /** Plan changed: re-evaluate all volume metrics so an upgrade lifts exhausted without a restart. */
@@ -153,10 +138,10 @@ export class LimitsEngine {
   /** Recompute used vs limit for one metric and publish on exhausted-flag flip. */
   private async recompute (ctx: MeasureContext, workspace: WorkspaceUuid, metric: UsageMetric): Promise<void> {
     const category = metricToCategory(metric)
-    const subs = await this.accountClient(workspace).getSubscriptions(workspace, true)
-    const tier = subs.find((s) => s.type === 'tier' && s.status === 'active')
+    const subs = await this.accountClient(workspace).getSubscriptions(workspace, false)
+    const tier = subs.find((s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Active)
     const used = await this.computeUsed(ctx, workspace, metric, tier)
-    const limitValue = getLimitValue(tier, metric)
+    const limitValue = getLimitValue(resolveTierLimits(subs), metric)
 
     const nowExhausted = limitValue > 0 && used >= limitValue
     const prev = await this.db.getLimitState(ctx, workspace, category)
@@ -210,8 +195,24 @@ function usageField (metric: UsageMetric): string {
   return metric === 'storage' ? 'storageBytes' : metric
 }
 
-function getLimitValue (tier: Subscription | undefined, metric: UsageMetric): number {
-  const limits = tier?.limits
+type TierLimits = NonNullable<Subscription['limits']>
+
+/**
+ * Effective tier limits: active paid tier's own limits, else the free fallback baked into a tier
+ * subscription (unpaid workspace runs on free), else undefined (unlimited).
+ */
+/** Most recent tier subscription (by createdOn) — the current plan, ignoring superseded ones. */
+function latestTier (subs: Subscription[]): Subscription | undefined {
+  return subs.filter((s) => s.type === SubscriptionType.Tier).sort((a, b) => (b.createdOn ?? 0) - (a.createdOn ?? 0))[0]
+}
+
+function resolveTierLimits (subs: Subscription[]): TierLimits | undefined {
+  const active = subs.find((s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Active)
+  if (active?.limits != null) return active.limits
+  return latestTier(subs)?.freeLimits ?? undefined
+}
+
+function getLimitValue (limits: TierLimits | undefined, metric: UsageMetric): number {
   if (limits == null) return 0 // no subscription = unlimited
 
   if (metric === 'tokens') return limits.tokenLimit ?? 0

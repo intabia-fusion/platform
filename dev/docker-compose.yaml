@@ -210,6 +210,9 @@ services:
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
       - STATS_URL=http://stats:4900
       - WORKSPACE_LIMIT_PER_USER=10000
+      # Free fallback limits (must match the free:true plan in plan-config.yaml). Applied to every
+      # tier subscription on read and decides free-vs-readonly on unpaid status. storagePerUserGB scales disk.
+      - FREE_PLAN_LIMITS={"usersLimit":5,"storagePerUserGB":2,"projectsLimit":3,"tokenLimit":100000,"trafficLimitGB":0,"meetingMinutesLimit":0}
       - DB_URL=${DB_URL_PG}
       - REGION_CONFIG=/var/cfg/region-config.yaml
       - MAIL_URL=
@@ -256,6 +259,8 @@ services:
       - USE_SANDBOX=true
       - PROVIDER=tbank
       - PLAN_CONFIG=/var/cfg/plan-config.yaml
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
       - TBANK_SUBSCRIPTIONS_URL=http://tbank-subscriptions:4042
       # Polar configuration (uncomment if using Polar)
       # - POLAR_ACCESS_TOKEN=${POLAR_ACCESS_TOKEN}
@@ -1086,6 +1091,10 @@ services:
     environment:
       - SECRET=secret
       - PORT=4042
+      # Required: tbank-subscriptions publishes subscription events to the Subscription queue
+      # (pod-payment is the single consumer that bakes limits and writes to account).
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
       - ACCOUNTS_URL=http://account:3000
       - FRONT_URL=http://localhost:8087
       - TBANK_TERMINAL_KEY=1774599770012DEMO

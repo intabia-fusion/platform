@@ -485,7 +485,7 @@ async function handleWebhook (
     const oldSub = allSubs.find(
       (s) =>
         (s.provider === 'tbank' && s.providerData?.pendingReplacement === true) ||
-        (s.type === subscriptionData.type && s.status === 'active' && s.id !== subscriptionData.id)
+        (s.type === subscriptionData.type && s.status === SubscriptionStatus.Active && s.id !== subscriptionData.id)
     )
     if (oldSub !== undefined && oldSub !== null) {
       await cancelSubscription(ctx, tbank, storage, oldSub, 'PLAN_CHANGE')

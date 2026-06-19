@@ -16,12 +16,8 @@ export { type PlanLimits, type LimitsProvider, type SpaceCountsProvider } from '
 
 /** contextVars key: PlanLimits snapshot for current workspace. */
 export const PLAN_LIMITS_VAR = 'planLimits'
-/** contextVars key: boolean payment-exhausted flag for current workspace. */
-export const PAYMENT_EXHAUSTED_VAR = 'paymentExhausted'
 /** contextVars key: injected LimitsProvider instance. */
 export const LIMITS_PROVIDER_VAR = 'limitsProvider'
-/** contextVars key: shared Map<WorkspaceUuid, boolean> of payment-exhausted workspaces (updated live by host consumer). */
-export const PAYMENT_EXHAUSTED_MAP_KEY = 'paymentExhaustedMap'
 /** contextVars key: shared Map<WorkspaceUuid, PlanLimits> refreshed live by host consumer on plan changes. */
 export const PLAN_LIMITS_MAP_KEY = 'planLimitsMap'
 /** contextVars key: SpaceCountsProvider registered by SpaceSecurityMiddleware, pulled by PlanLimitsMiddleware. */

@@ -257,6 +257,18 @@ export enum SubscriptionType {
  * Multiple subscriptions can be active per workspace (tier + addons + support)
  * Historical subscriptions are preserved with status: canceled/expired
  */
+// Plan limits snapshot. Reserved space limits kept for forward compatibility, not enforced yet.
+export interface TierLimits {
+  storageLimitGB: number
+  trafficLimitGB: number
+  meetingMinutesLimit: number
+  tokenLimit: number
+  usersLimit: number
+  projectsLimit: number
+  drivesLimit?: number
+  teamspacesLimit?: number
+}
+
 export interface Subscription {
   id: string // Our internal unique subscription ID (UUID)
   workspaceUuid: WorkspaceUuid
@@ -274,17 +286,11 @@ export interface Subscription {
 
   // Snapshot of plan limits at time of subscription creation
   // Used instead of plan config to ensure limits are stable over time
-  limits?: {
-    storageLimitGB: number
-    trafficLimitGB: number
-    meetingMinutesLimit: number
-    tokenLimit: number
-    usersLimit: number
-    projectsLimit: number
-    // Reserved space limits — kept in the baked snapshot for forward compatibility, not enforced yet.
-    drivesLimit?: number
-    teamspacesLimit?: number
-  }
+  limits?: TierLimits
+
+  // Free fallback limits applied when the paid tier is unpaid: the workspace runs on these
+  // instead of full read-only. Not persisted — account fills it from FREE_PLAN_LIMITS env on read.
+  freeLimits?: TierLimits
 
   // Amount paid (in cents, e.g. 9999 = $99.99)
   // Used primarily for pay-what-you-want/donation subscriptions to track actual payment
