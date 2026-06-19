@@ -40,12 +40,13 @@
     isLinkPreviewEnabled,
     uploadFile,
     LinkPreviewAttachmentMetadata,
-    generateFileId
+    generateFileId,
+    MessageBox
   } from '@hcengineering/presentation'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import textEditor, { type RefAction } from '@hcengineering/text-editor'
   import { AttachIcon, ReferenceInput } from '@hcengineering/text-editor-resources'
-  import { Loading, type AnySvelteComponent } from '@hcengineering/ui'
+  import { Loading, type AnySvelteComponent, showPopup } from '@hcengineering/ui'
   import {
     type FileUploadCallbackParams,
     type UploadHandlerDefinition,
@@ -54,6 +55,7 @@
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
   import attachment from '../plugin'
   import AttachmentPresenter from './AttachmentPresenter.svelte'
+  import view from '@hcengineering/view'
 
   export let objectId: Ref<Doc>
   export let space: Ref<Space>
@@ -274,6 +276,21 @@
     }
     await limiter.waitProcessing()
     progress = false
+  }
+
+  async function removeAttachmentWithConfirmation (attachment: Attachment): Promise<void> {
+    showPopup(
+      MessageBox,
+      {
+        label: view.string.DeleteObject,
+        message: view.string.DeleteObjectConfirm,
+        params: { count: 1 },
+        action: async () => {
+          await removeAttachment(attachment)
+        }
+      },
+      'top'
+    )
   }
 
   async function removeAttachment (attachment: Attachment): Promise<void> {
@@ -554,7 +571,7 @@
                   showPreview
                   removable
                   on:remove={(result) => {
-                    if (result !== undefined) void removeAttachment(attachment)
+                    if (result !== undefined) void removeAttachmentWithConfirmation(attachment)
                   }}
                 />
               </div>
