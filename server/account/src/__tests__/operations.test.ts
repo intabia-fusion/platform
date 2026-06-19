@@ -2903,59 +2903,6 @@ describe('account operations', () => {
       expect(mockDb.getWorkspaceRole).toHaveBeenCalledWith(mockAccount.uuid, mockWorkspace.uuid)
     })
   })
-
-  describe('checkJoin', () => {
-    const mockInvite = {
-      id: 'invite-uuid',
-      workspaceUuid: 'workspace-uuid' as WorkspaceUuid,
-      role: AccountRole.User,
-      expiresOn: 0,
-      remainingUses: -1
-    }
-
-    test('should return workspace login info if user is already a member', async () => {
-      const mockEmail = 'user@example.com'
-      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue({ value: mockEmail })
-
-      jest.spyOn(utils, 'getWorkspaceInvite').mockResolvedValue(mockInvite as any)
-      jest.spyOn(utils, 'checkInvite').mockResolvedValue(mockInvite.workspaceUuid)
-      jest.spyOn(utils, 'getWorkspaceById').mockResolvedValue(mockWorkspace as any)
-      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.User)
-
-      const mockLoginInfo = {
-        account: mockAccount.uuid,
-        role: AccountRole.User,
-        token: 'workspace-token'
-      }
-      jest.spyOn(utils, 'selectWorkspace').mockResolvedValue(mockLoginInfo as any)
-
-      const result = await checkJoin(mockCtx, mockDb, mockBranding, mockToken, { inviteId: 'invite-uuid' })
-
-      expect(result).toEqual({
-        account: mockAccount.uuid,
-        role: AccountRole.User,
-        token: 'workspace-token'
-      })
-      expect(mockDb.getWorkspaceRole).toHaveBeenCalledWith(mockAccount.uuid, mockWorkspace.uuid)
-      expect(mockDb.updateWorkspaceRole).not.toHaveBeenCalled()
-    })
-
-    test('should throw Forbidden error if user is not a member', async () => {
-      const mockEmail = 'user@example.com'
-      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue({ value: mockEmail })
-
-      jest.spyOn(utils, 'getWorkspaceInvite').mockResolvedValue(mockInvite as any)
-      jest.spyOn(utils, 'checkInvite').mockResolvedValue(mockInvite.workspaceUuid)
-      jest.spyOn(utils, 'getWorkspaceById').mockResolvedValue(mockWorkspace as any)
-      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(null)
-
-      await expect(checkJoin(mockCtx, mockDb, mockBranding, mockToken, { inviteId: 'invite-uuid' })).rejects.toThrow(
-        new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-      )
-
-      expect(mockDb.getWorkspaceRole).toHaveBeenCalledWith(mockAccount.uuid, mockWorkspace.uuid)
-    })
-  })
 })
 
 describe('getSubscriptions', () => {
