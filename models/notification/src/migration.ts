@@ -46,7 +46,8 @@ import notification, {
   notificationId,
   type PushSubscription,
   type DocNotifyContext,
-  type ReadState
+  type ReadState,
+  isUnreadMessageChunk
 } from '@hcengineering/notification'
 import { DOMAIN_PREFERENCE } from '@hcengineering/preference'
 import {
@@ -70,6 +71,7 @@ interface OldCollaborators extends Doc {
 
 const DOMAIN_CONTACT = 'contact' as Domain
 const DOMAIN_NOTIFICATION = 'notification' as Domain
+const DOMAIN_CHUNTER_DOC = 'chunter_doc' as Domain
 
 export async function removeNotifications (
   client: MigrationClient,
@@ -952,6 +954,78 @@ async function migrateReadStatesSpace (client: MigrationClient): Promise<void> {
   }
 }
 
+async function hideInactiveChats (client: MigrationClient): Promise<void> {
+  const iterator = await client.traverse<Chat>(DOMAIN_CHUNTER_DOC, {
+    _class: chunter.class.Chat,
+    attachedToClass: { $ne: chunter.class.Channel },
+    hidden: false,
+    pinned: false
+  })
+
+  const twoWeeks = 14 * 24 * 60 * 60 * 1000
+  const date = Date.now()
+
+  try {
+    while (true) {
+      const chats = (await iterator.next(200)) ?? []
+      if (chats.length === 0) break
+
+      const attachedToIds = chats.map((c) => c.attachedTo)
+
+      const [contexts, readStates] = await Promise.all([
+        client.find<DocNotifyContext>(DOMAIN_DOC_NOTIFY, {
+          objectId: { $in: attachedToIds },
+          user: { $in: chats.map((c) => c.account) }
+        }),
+        client.find<ReadState>(DOMAIN_READ_STATE, {
+          attachedTo: { $in: attachedToIds }
+        })
+      ])
+
+      const contextMap = new Map<string, DocNotifyContext>()
+      for (const ctx of contexts) {
+        contextMap.set(`${ctx.objectId}_${ctx.user}`, ctx)
+      }
+
+      const readStateMap = new Map<string, ReadState>()
+      for (const state of readStates) {
+        readStateMap.set(state.attachedTo, state)
+      }
+
+      const chatsToHide: Ref<Chat>[] = []
+
+      for (const chat of chats) {
+        const readState = readStateMap.get(chat.attachedTo)
+        const lastMessageTime = readState?.latestMessageTimestamp ?? 0
+        const hasRecentMessage = date - lastMessageTime <= twoWeeks
+
+        if (hasRecentMessage) continue
+
+        const context = contextMap.get(`${chat.attachedTo}_${chat.account}`)
+        const hasNotifiedMessage =
+          (context?.unreadMessages?.some((msg) => {
+            if (isUnreadMessageChunk(msg)) {
+              return (msg.notifiedCount ?? 0) > 0
+            }
+            return msg.notified === true
+          }) ??
+            false) ||
+          (context?.unreadReactions?.length ?? 0) > 0
+
+        if (hasNotifiedMessage) continue
+
+        chatsToHide.push(chat._id)
+      }
+
+      if (chatsToHide.length > 0) {
+        await client.update<Chat>(DOMAIN_CHUNTER_DOC, { _id: { $in: chatsToHide } }, { hidden: true })
+      }
+    }
+  } finally {
+    await iterator.close()
+  }
+}
+
 export const notificationOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, notificationId, [
@@ -1229,6 +1303,11 @@ export const notificationOperation: MigrateOperation = {
         state: 'migrate-notifications-to-embedded-v6',
         mode: 'upgrade',
         func: migrateNotificationsToEmbedded
+      },
+      {
+        state: 'hide-inactive-chats-v1',
+        mode: 'upgrade',
+        func: hideInactiveChats
       }
     ])
   },

@@ -1,6 +1,5 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
-// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -43,25 +42,12 @@ export function createPostgreeDestroyAdapter (url: string): WorkspaceDestroyAdap
         }
         const connection = await client.getClient()
 
-        const tables = new Set(
-          (
-            await connection.unsafe(`
-              SELECT table_name 
-              FROM information_schema.tables 
-              WHERE table_schema = 'public'
-            `)
-          ).map((it: any) => it.table_name)
-        )
-
         await ctx.with(
           'delete-workspace',
           {},
           async (ctx) => {
             // We need to clear information about workspace from all collections in schema
             for (const [domain] of Object.entries(domainSchemas)) {
-              if (!tables.has(domain)) {
-                continue
-              }
               await ctx.with(
                 'delete-workspace-domain',
                 {},
