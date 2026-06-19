@@ -26,6 +26,7 @@ import {
   type Class,
   type Doc,
   type DocumentQuery,
+  type Domain,
   type IndexingConfiguration,
   type PersonId,
   type Ref,
@@ -380,8 +381,30 @@ export class TNotificationAppearancePreference extends TPreference implements No
   showChatBadge!: boolean
 }
 
+const DOMAIN_NOTIFICATION = 'notification' as Domain
+
+@Model('notification:class:InboxNotification' as any, core.class.Doc, DOMAIN_NOTIFICATION)
+export class TInboxNotification extends TDoc {}
+
+@Model('notification:class:ActivityInboxNotification' as any, 'notification:class:InboxNotification' as any)
+export class TActivityInboxNotification extends TInboxNotification {}
+
+@Model('notification:class:ReactionInboxNotification' as any, 'notification:class:InboxNotification' as any)
+export class TReactionInboxNotification extends TInboxNotification {}
+
+@Model('notification:class:MentionInboxNotification' as any, 'notification:class:InboxNotification' as any)
+export class TMentionInboxNotification extends TInboxNotification {}
+
+@Model('notification:class:CommonInboxNotification' as any, 'notification:class:InboxNotification' as any)
+export class TCommonInboxNotification extends TInboxNotification {}
+
 export function createModel (builder: Builder): void {
   builder.createModel(
+    TInboxNotification,
+    TActivityInboxNotification,
+    TReactionInboxNotification,
+    TMentionInboxNotification,
+    TCommonInboxNotification,
     TAppPushNotification,
     TNotificationType,
     TMessageNotificationType,

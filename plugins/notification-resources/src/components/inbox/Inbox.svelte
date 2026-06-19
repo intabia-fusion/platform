@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -76,7 +77,9 @@
 
   $: updateInboxContexts(
     {
-      ...(selectedTabId === 'all' ? {} : { objectClass: selectedTabId as Ref<Class<Doc>> }),
+      ...(selectedTabId === 'all'
+        ? {}
+        : { objectClass: { $in: Array.from(new Set(hierarchy.getDescendants(selectedTabId as Ref<Class<Doc>>))) } }),
       ...(filter === 'unread' ? { unreadCount: { $gt: 0 } } : {})
     },
     limit
@@ -84,6 +87,18 @@
   $: contexts = $inboxContextsStore
 
   $: initializeLocation(contexts)
+
+  let prevTabId = selectedTabId
+  let prevFilter: InboxFilter | undefined = filter
+
+  $: if (selectedTabId !== prevTabId || filter !== prevFilter) {
+    prevTabId = selectedTabId
+    prevFilter = filter
+    limit = 20
+    if (divScroll != null) {
+      divScroll.scrollTop = 0
+    }
+  }
 
   function initializeLocation (contexts: DocNotifyContext[]): void {
     if (selectedContext !== undefined || contexts.length === 0 || isLocationInitialized) {

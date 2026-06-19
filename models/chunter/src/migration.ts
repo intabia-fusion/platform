@@ -344,7 +344,6 @@ async function removeUnavailableChats (client: MigrationClient): Promise<void> {
   }
 }
 
-// TODO: !!! Should be called after DocNotifyContext migration !!!
 async function hideInactiveChats (client: MigrationClient): Promise<void> {
   const iterator = await client.traverse<Chat>(DOMAIN_CHUNTER_DOC, {
     _class: chunter.class.Chat,

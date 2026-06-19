@@ -103,7 +103,7 @@ export function getDocIconFallback (
     }
   }
 
-  return undefined
+  return { props: { _id: doc._id } }
 }
 
 async function getPersonByAccountUuid (
@@ -128,6 +128,9 @@ async function getDoc<T extends Doc = Doc> (
   _class: Ref<Class<Doc>>,
   cache: Map<Ref<Doc>, Doc>
 ): Promise<T | undefined> {
+  if (_id == null) {
+    return undefined
+  }
   const current = cache.get(_id)
   if (current != null) {
     return current as T
@@ -451,9 +454,12 @@ async function mapToContextNotification (
     }
   } else if (_class === 'notification:class:MentionInboxNotification') {
     const mentionNotif = inboxNotification as MentionInboxNotification
-    const message = client.hierarchy.isDerived(mentionNotif.mentionedInClass, activity.class.ActivityMessage)
-      ? await getDoc<ActivityMessage>(client, mentionNotif.mentionedIn, mentionNotif.mentionedInClass, cache)
-      : undefined
+    const message =
+      mentionNotif.mentionedIn != null &&
+      mentionNotif.mentionedInClass != null &&
+      client.hierarchy.isDerived(mentionNotif.mentionedInClass, activity.class.ActivityMessage)
+        ? await getDoc<ActivityMessage>(client, mentionNotif.mentionedIn, mentionNotif.mentionedInClass, cache)
+        : undefined
     const markup = message?.message ?? mentionNotif.markup ?? ''
 
     const attachments = message != null ? (attachmentsByMessage.get(message._id) ?? []) : []
@@ -525,14 +531,14 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
   try {
     while (true) {
       const contextsBatch = (await iterator.next(500)) ?? []
+
       if (contextsBatch.length === 0) break
 
       const chunkSize = 100
       for (let i = 0; i < contextsBatch.length; i += chunkSize) {
         const chunk = contextsBatch.slice(i, i + chunkSize)
-        const chunkIds = chunk.map((c) => c._id)
+        const chunkIds = chunk.map((c) => c._id).filter((id) => id != null)
         const toRemove = new Set<Ref<DocNotifyContextOld>>()
-
         const chunkNotifications = await client.find<InboxNotification>(DOMAIN_NOTIFICATION, {
           docNotifyContext: { $in: chunkIds }
         })
@@ -540,13 +546,17 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
         const reactionIds = new Set<Ref<Reaction>>()
         for (const n of chunkNotifications) {
           if (n._class === 'notification:class:ReactionInboxNotification') {
-            reactionIds.add((n as ReactionInboxNotification).ref)
+            const ref = (n as ReactionInboxNotification).ref
+            if (ref != null) {
+              reactionIds.add(ref)
+            }
           }
         }
 
+        const cleanReactionIds = Array.from(reactionIds).filter((id) => id != null)
         const reactions =
-          reactionIds.size > 0
-            ? await client.find<Reaction>(DOMAIN_REACTION, { _id: { $in: Array.from(reactionIds) } })
+          cleanReactionIds.length > 0
+            ? await client.find<Reaction>(DOMAIN_REACTION, { _id: { $in: cleanReactionIds } })
             : []
 
         const reactionMap = toIdMap(reactions)
@@ -556,20 +566,24 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
           const objectId = context.objectId
           const objectClass = context.objectClass
 
-          const domain = client.hierarchy.findDomain(objectClass)
-          if (domain !== undefined) {
-            let list = objectIdsByDomain.get(domain)
-            if (list === undefined) {
-              list = []
-              objectIdsByDomain.set(domain, list)
+          if (objectId != null && objectClass != null) {
+            const domain = client.hierarchy.findDomain(objectClass)
+            if (domain !== undefined) {
+              let list = objectIdsByDomain.get(domain)
+              if (list === undefined) {
+                list = []
+                objectIdsByDomain.set(domain, list)
+              }
+              list.push(objectId)
             }
-            list.push(objectId)
           }
         }
 
         const objectsMap = new Map<Ref<Doc>, Doc>()
         for (const [domain, ids] of objectIdsByDomain.entries()) {
-          const docs = await client.find<Doc>(domain, { _id: { $in: ids } })
+          const cleanIds = ids.filter((id) => id != null)
+          if (cleanIds.length === 0) continue
+          const docs = await client.find<Doc>(domain, { _id: { $in: cleanIds } })
           for (const doc of docs) {
             objectsMap.set(doc._id, doc)
           }
@@ -581,21 +595,25 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
             const message = doc as ActivityMessage
             const parentId = message.attachedTo
             const parentClass = message.attachedToClass
-            const parentDomain = client.hierarchy.findDomain(parentClass)
-            if (parentDomain !== undefined) {
-              let list = parentIdsByDomain.get(parentDomain)
-              if (list === undefined) {
-                list = []
-                parentIdsByDomain.set(parentDomain, list)
+            if (parentId != null && parentClass != null) {
+              const parentDomain = client.hierarchy.findDomain(parentClass)
+              if (parentDomain !== undefined) {
+                let list = parentIdsByDomain.get(parentDomain)
+                if (list === undefined) {
+                  list = []
+                  parentIdsByDomain.set(parentDomain, list)
+                }
+                list.push(parentId)
               }
-              list.push(parentId)
             }
           }
         }
 
         const parentObjectMap = new Map<Ref<Doc>, Doc>()
         for (const [domain, ids] of parentIdsByDomain.entries()) {
-          const docs = await client.find<Doc>(domain, { _id: { $in: ids } })
+          const cleanIds = ids.filter((id) => id != null)
+          if (cleanIds.length === 0) continue
+          const docs = await client.find<Doc>(domain, { _id: { $in: cleanIds } })
           for (const doc of docs) {
             parentObjectMap.set(doc._id, doc)
           }
@@ -608,21 +626,31 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
         const activityIds = new Set<Ref<ActivityMessage>>()
         for (const n of chunkNotifications) {
           if (n._class === 'notification:class:ActivityInboxNotification') {
-            activityIds.add((n as ActivityInboxNotification).attachedTo)
+            const attachedTo = (n as ActivityInboxNotification).attachedTo
+            if (attachedTo != null) {
+              activityIds.add(attachedTo)
+            }
           } else if (n._class === 'notification:class:ReactionInboxNotification') {
-            activityIds.add((n as ReactionInboxNotification).attachedTo)
+            const attachedTo = (n as ReactionInboxNotification).attachedTo
+            if (attachedTo != null) {
+              activityIds.add(attachedTo)
+            }
           } else if (n._class === 'notification:class:MentionInboxNotification') {
             const mentionNotif = n as MentionInboxNotification
-            if (client.hierarchy.isDerived(mentionNotif.mentionedInClass, activity.class.ActivityMessage)) {
+            if (
+              mentionNotif.mentionedIn != null &&
+              client.hierarchy.isDerived(mentionNotif.mentionedInClass, activity.class.ActivityMessage)
+            ) {
               activityIds.add(mentionNotif.mentionedIn as Ref<ActivityMessage>)
             }
           }
         }
 
+        const cleanActivityIds = Array.from(activityIds).filter((id) => id != null)
         const loadAttachments = new Set<Ref<ActivityMessage>>()
-        if (activityIds.size > 0) {
+        if (cleanActivityIds.length > 0) {
           const activityMessages = await client.find<ActivityMessage>(DOMAIN_ACTIVITY, {
-            _id: { $in: Array.from(activityIds) }
+            _id: { $in: cleanActivityIds }
           })
           for (const msg of activityMessages) {
             cache.set(msg._id, msg)
@@ -635,9 +663,10 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
 
         const attachmentsByMessage = new Map<Ref<ActivityMessage>, BlobType[]>()
 
-        if (loadAttachments.size > 0) {
+        const cleanLoadAttachments = Array.from(loadAttachments).filter((id) => id != null)
+        if (cleanLoadAttachments.length > 0) {
           const attachments = await client.find<Attachment>(DOMAIN_ATTACHMENT, {
-            attachedTo: { $in: Array.from(loadAttachments) }
+            attachedTo: { $in: cleanLoadAttachments }
           })
           for (const att of attachments) {
             let list = attachmentsByMessage.get(att.attachedTo as Ref<ActivityMessage>)
@@ -727,7 +756,10 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
                 })
               } else if (notifClass === 'notification:class:MentionInboxNotification') {
                 const mentionNotif = inboxNotification as MentionInboxNotification
-                if (client.hierarchy.isDerived(mentionNotif.mentionedInClass, activity.class.ActivityMessage)) {
+                if (
+                  mentionNotif.mentionedInClass != null &&
+                  client.hierarchy.isDerived(mentionNotif.mentionedInClass, activity.class.ActivityMessage)
+                ) {
                   unreadMessages.push({
                     id: mentionNotif.mentionedIn as Ref<ActivityMessage>,
                     createdOn: getTimestamp(mentionNotif),
@@ -790,19 +822,23 @@ export async function migrateNotificationsToEmbedded (client: MigrationClient): 
         }
 
         if (toRemove.size > 0) {
-          const toRemoveArray = Array.from(toRemove)
-          await client.deleteMany(DOMAIN_DOC_NOTIFY, {
-            _id: { $in: toRemoveArray }
-          })
-          await client.deleteMany(DOMAIN_NOTIFICATION, {
-            docNotifyContext: { $in: toRemoveArray }
-          })
+          const toRemoveArray = Array.from(toRemove).filter((id) => id != null)
+          if (toRemoveArray.length > 0) {
+            await client.deleteMany(DOMAIN_DOC_NOTIFY, {
+              _id: { $in: toRemoveArray }
+            })
+            await client.deleteMany(DOMAIN_NOTIFICATION, {
+              docNotifyContext: { $in: toRemoveArray }
+            })
+          }
         }
 
         // Delete the migrated notifications for this chunk of contexts
-        await client.deleteMany(DOMAIN_NOTIFICATION, {
-          docNotifyContext: { $in: chunkIds }
-        })
+        if (chunkIds.length > 0) {
+          await client.deleteMany(DOMAIN_NOTIFICATION, {
+            docNotifyContext: { $in: chunkIds }
+          })
+        }
 
         processed += chunk.length
         client.logger.log('...processed embedded notification chunk by contexts', { count: processed })

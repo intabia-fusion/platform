@@ -1201,32 +1201,32 @@ export const notificationOperation: MigrateOperation = {
         func: migrateReadStatesSpace
       },
       {
-        state: 'init-read-states-latest-messages-v1',
+        state: 'init-read-states-latest-messages-v6',
         mode: 'upgrade',
         func: initReadStatesLatestMessages
       },
       {
-        state: 'update-read-states-from-contexts-v1',
+        state: 'update-read-states-from-contexts-v6',
         mode: 'upgrade',
         func: updateReadStatesFromDocNotifyContexts
       },
       {
-        state: 'remove-archived-contexts-v1',
+        state: 'remove-archived-contexts-v6',
         mode: 'upgrade',
         func: removeArchivedContexts
       },
       {
-        state: 'remove-archived-notifications-v1',
+        state: 'remove-archived-notifications-v6',
         mode: 'upgrade',
         func: removeArchivedNotifications
       },
       {
-        state: 'remove-empty-contexts-v1',
+        state: 'remove-empty-contexts-v6',
         mode: 'upgrade',
         func: removeEmptyContexts
       },
       {
-        state: 'migrate-notifications-to-embedded-v1',
+        state: 'migrate-notifications-to-embedded-v6',
         mode: 'upgrade',
         func: migrateNotificationsToEmbedded
       }

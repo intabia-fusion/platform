@@ -44,6 +44,11 @@ export function createModel (builder: Builder): void {
     isAsync: false
   })
 
+  builder.mixin(contact.class.Contact, core.class.Class, serverActivity.mixin.IconPresenter, {
+    presenter: serverContact.function.ContactIconPresenter,
+    triggerFields: []
+  })
+
   builder.mixin(contact.class.Contact, core.class.Class, serverCore.mixin.SearchPresenter, {
     iconConfig: {
       component: contact.component.AvatarRef,

@@ -57,9 +57,9 @@ import { makeRank } from '@hcengineering/rank'
 import { getAccountBySocialId, getCurrentPerson } from '@hcengineering/server-contact'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import { workbenchId } from '@hcengineering/workbench'
+import { StringPresenterFn, PresenterControl, IconPresenterFn, Icon } from '@hcengineering/server-activity'
 
 import { ManageCollaboratorsTrigger } from './collaborators'
-import { StringPresenterFn, PresenterControl } from '@hcengineering/server-activity'
 
 export async function OnSpaceTypeMembers (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
@@ -478,6 +478,10 @@ export async function getContactFirstName (
   }
 }
 
+export const contactIconPresenter: IconPresenterFn<Contact> = async (doc: Contact): Promise<Icon> => {
+  return { props: { _id: doc._id } }
+}
+
 export * from './collaborators/index'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -496,6 +500,7 @@ export default async () => ({
     PersonTitlePresenter: personTitlePresenter,
     OrganizationUrlPresenter: organizationUrlPresenter,
     ContactNameProvider: contactNameProvider,
+    ContactIconPresenter: contactIconPresenter,
     GetCurrentEmployeeName: getCurrentEmployeeName,
     GetCurrentEmployeeEmail: getCurrentEmployeeEmail,
     GetContactName: getContactName,
