@@ -29,6 +29,7 @@ export interface Config {
   QueueRegion: string
   Secret: string
   ServiceId: string
+  LeadNotificationEmail: string
 }
 
 const config: Config = (() => {
@@ -45,6 +46,7 @@ const config: Config = (() => {
   const queueRegion = process.env.QUEUE_REGION ?? ''
   const serviceId = process.env.SERVICE_ID ?? 'crm'
   const secret = process.env.SECRET ?? 'secret'
+  const notificationEmail = process.env.SUPPORT_EMAIL ?? 'platform@intabia.ru'
 
   const params: Config = {
     AccountsUrl: '',
@@ -58,7 +60,8 @@ const config: Config = (() => {
     QueueConfig: queueConfig,
     QueueRegion: queueRegion,
     Secret: secret,
-    ServiceId: serviceId
+    ServiceId: serviceId,
+    LeadNotificationEmail: notificationEmail
   }
 
   // These variables must be set, as without them, the requests go to the default pipline and there is no error
