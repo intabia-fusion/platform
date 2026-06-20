@@ -13,6 +13,10 @@
 // limitations under the License.
 //
 
+import { type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
+import { getMetadata } from '@hcengineering/platform'
+import { crmPlugin, type EmailNotification } from './plugin'
+
 /**
  * Parses a Cookie header string into a key-value record.
  * Handles URL decoding and skips malformed entries.
@@ -33,4 +37,45 @@ export function parseCookies (cookieString: string | undefined): Record<string, 
     }
   })
   return cookies
+}
+
+export async function getLeadNotificationEmail (
+  name: string,
+  phone: string,
+  comment: string,
+  recipientEmail: string
+): Promise<EmailNotification> {
+  const subject = `Новая заявка: ${name} (${phone})`
+
+  const text = `Получена новая заявка:
+  
+Имя: ${name}
+Телефон: ${phone}
+Комментарий: ${comment}
+`
+  const html = `
+    <div style="font-family: sans-serif; white-space: pre-line;">
+      ${escapeHtml(text)}
+    </div>
+  `
+
+  return {
+    type: 'email',
+    data: {
+      to: recipientEmail,
+      subject,
+      text,
+      html
+    }
+  }
+}
+
+export async function sendEmail (info: EmailNotification, ctx: MeasureContext): Promise<void> {
+  const mailQueue = getMetadata(crmPlugin.metadata.MailQueue)
+
+  await mailQueue?.send(ctx, '' as WorkspaceUuid, [info], info.data.to)
+}
+
+function escapeHtml (str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }

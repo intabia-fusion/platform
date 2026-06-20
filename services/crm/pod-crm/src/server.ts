@@ -21,7 +21,7 @@ import { type Server } from 'http'
 
 import { AmoCrmClient } from './amocrm/client'
 import { Config } from './config'
-import { parseCookies } from './utils'
+import { getLeadNotificationEmail, parseCookies, sendEmail } from './utils'
 
 const KEEP_ALIVE_TIMEOUT = 5 // seconds
 
@@ -39,6 +39,17 @@ async function handleLeadRequest (ctx: MeasureContext, config: Config, req: Requ
     if (name === '' || phone === '') {
       res.status(400).json({ error: 'name and phone are required' })
       return
+    }
+
+    try {
+      const email = await getLeadNotificationEmail(name, phone, comment ?? '', config.LeadNotificationEmail)
+      await sendEmail(email, ctx)
+      ctx.info('Lead notification email sent', { to: config.LeadNotificationEmail })
+    } catch (emailError: unknown) {
+      ctx.error('Failed to send lead notification email', {
+        error: emailError instanceof Error ? emailError.message : String(emailError),
+        to: config.LeadNotificationEmail
+      })
     }
 
     const cookies = parseCookies(req.headers.cookie)
