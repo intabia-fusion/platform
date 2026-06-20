@@ -15,7 +15,9 @@
 
 import { MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
 import {
+  AiTokensBreakdown,
   AiTokensData,
+  AiTokensGroupBy,
   AiTokensUsage,
   AiTranscriptData,
   AiTranscriptDailyUsage,
@@ -26,7 +28,10 @@ import {
   LiveKitSessionData,
   LiveKitUsageData,
   ParticipantDailyUsage,
-  ParticipantMinutesUsage
+  ParticipantMinutesUsage,
+  ProviderPool,
+  ProviderPoolConfig,
+  ProviderTokenTotal
 } from '../types'
 
 export class LoggedDB implements BillingDB {
@@ -127,5 +132,57 @@ export class LoggedDB implements BillingDB {
     end?: Date
   ): Promise<AiTokensUsage[]> {
     return await ctx.with('db.getAiTokensStats', {}, () => this.db.getAiTokensStats(ctx, workspace, start, end))
+  }
+
+  async getAiTokensBreakdown (
+    ctx: MeasureContext,
+    groupBy: AiTokensGroupBy,
+    providerId?: string,
+    start?: Date,
+    end?: Date
+  ): Promise<AiTokensBreakdown[]> {
+    return await ctx.with('db.getAiTokensBreakdown', {}, () =>
+      this.db.getAiTokensBreakdown(ctx, groupBy, providerId, start, end)
+    )
+  }
+
+  async getAiTokensByWorkspace (ctx: MeasureContext, start?: Date, end?: Date): Promise<AiTokensBreakdown[]> {
+    return await ctx.with('db.getAiTokensByWorkspace', {}, () => this.db.getAiTokensByWorkspace(ctx, start, end))
+  }
+
+  async getWorkspaceTokensInWindow (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    windowHours: number
+  ): Promise<number> {
+    return await ctx.with('db.getWorkspaceTokensInWindow', {}, () =>
+      this.db.getWorkspaceTokensInWindow(ctx, workspace, windowHours)
+    )
+  }
+
+  async getProviderTokenTotals (ctx: MeasureContext, start?: Date, end?: Date): Promise<ProviderTokenTotal[]> {
+    return await ctx.with('db.getProviderTokenTotals', {}, () => this.db.getProviderTokenTotals(ctx, start, end))
+  }
+
+  async listProviderPools (ctx: MeasureContext): Promise<ProviderPool[]> {
+    return await ctx.with('db.listProviderPools', {}, () => this.db.listProviderPools(ctx))
+  }
+
+  async getProviderPool (ctx: MeasureContext, providerId: string): Promise<ProviderPool | undefined> {
+    return await ctx.with('db.getProviderPool', {}, () => this.db.getProviderPool(ctx, providerId))
+  }
+
+  async upsertProviderPool (ctx: MeasureContext, config: ProviderPoolConfig): Promise<void> {
+    await ctx.with('db.upsertProviderPool', {}, () => this.db.upsertProviderPool(ctx, config))
+  }
+
+  async updateProviderPoolState (
+    ctx: MeasureContext,
+    providerId: string,
+    usedTokens: number
+  ): Promise<{ pool: ProviderPool, crossed80: boolean, crossed100: boolean }> {
+    return await ctx.with('db.updateProviderPoolState', {}, () =>
+      this.db.updateProviderPoolState(ctx, providerId, usedTokens)
+    )
   }
 }

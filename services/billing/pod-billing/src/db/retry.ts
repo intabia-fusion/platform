@@ -15,7 +15,9 @@
 
 import { MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
 import {
+  AiTokensBreakdown,
   AiTokensData,
+  AiTokensGroupBy,
   AiTokensUsage,
   AiTranscriptData,
   AiTranscriptDailyUsage,
@@ -26,7 +28,10 @@ import {
   LiveKitSessionData,
   LiveKitUsageData,
   ParticipantDailyUsage,
-  ParticipantMinutesUsage
+  ParticipantMinutesUsage,
+  ProviderPool,
+  ProviderPoolConfig,
+  ProviderTokenTotal
 } from '../types'
 
 interface RetryOptions {
@@ -140,5 +145,51 @@ export class RetryDB implements BillingDB {
     end?: Date
   ): Promise<AiTokensUsage[]> {
     return await retry(() => this.db.getAiTokensStats(ctx, workspace, start, end), this.options)
+  }
+
+  async getAiTokensBreakdown (
+    ctx: MeasureContext,
+    groupBy: AiTokensGroupBy,
+    providerId?: string,
+    start?: Date,
+    end?: Date
+  ): Promise<AiTokensBreakdown[]> {
+    return await retry(() => this.db.getAiTokensBreakdown(ctx, groupBy, providerId, start, end), this.options)
+  }
+
+  async getAiTokensByWorkspace (ctx: MeasureContext, start?: Date, end?: Date): Promise<AiTokensBreakdown[]> {
+    return await retry(() => this.db.getAiTokensByWorkspace(ctx, start, end), this.options)
+  }
+
+  async getWorkspaceTokensInWindow (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    windowHours: number
+  ): Promise<number> {
+    return await retry(() => this.db.getWorkspaceTokensInWindow(ctx, workspace, windowHours), this.options)
+  }
+
+  async getProviderTokenTotals (ctx: MeasureContext, start?: Date, end?: Date): Promise<ProviderTokenTotal[]> {
+    return await retry(() => this.db.getProviderTokenTotals(ctx, start, end), this.options)
+  }
+
+  async listProviderPools (ctx: MeasureContext): Promise<ProviderPool[]> {
+    return await retry(() => this.db.listProviderPools(ctx), this.options)
+  }
+
+  async getProviderPool (ctx: MeasureContext, providerId: string): Promise<ProviderPool | undefined> {
+    return await retry(() => this.db.getProviderPool(ctx, providerId), this.options)
+  }
+
+  async upsertProviderPool (ctx: MeasureContext, config: ProviderPoolConfig): Promise<void> {
+    await retry(() => this.db.upsertProviderPool(ctx, config), this.options)
+  }
+
+  async updateProviderPoolState (
+    ctx: MeasureContext,
+    providerId: string,
+    usedTokens: number
+  ): Promise<{ pool: ProviderPool, crossed80: boolean, crossed100: boolean }> {
+    return await retry(() => this.db.updateProviderPoolState(ctx, providerId, usedTokens), this.options)
   }
 }

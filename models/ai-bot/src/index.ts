@@ -16,7 +16,7 @@
 import { AccountRole, type AccountUuid, type Domain, type Ref, type Space, type Timestamp } from '@hcengineering/core'
 import {
   type AILevel,
-  type AILevelSetting,
+  type AISpaceSettings,
   type AIPersonalData,
   type AIRequest,
   type AIRequestStatus
@@ -80,17 +80,20 @@ export class TAIRequest extends TDoc implements AIRequest {
     error?: string
 }
 
-@Model(aiBot.class.AILevelSetting, core.class.Doc, DOMAIN_AI)
-export class TAILevelSetting extends TDoc implements AILevelSetting {
+@Model(aiBot.class.AISpaceSettings, core.class.Doc, DOMAIN_AI)
+export class TAISpaceSettings extends TDoc implements AISpaceSettings {
   @Prop(TypeRef(core.class.Space), core.string.Space)
     attachedTo?: Ref<Space>
 
   @Prop(TypeString(), core.string.String)
     level!: AILevel
+
+  @Prop(TypeString(), core.string.String)
+    language?: string
 }
 
 export function createModel (builder: Builder): void {
-  builder.createModel(TAIPersonalData, TAIRequest, TAILevelSetting)
+  builder.createModel(TAIPersonalData, TAIRequest, TAISpaceSettings)
 
   builder.createDoc(setting.class.SettingsCategory, core.space.Model, {
     name: 'ai-personal-data',

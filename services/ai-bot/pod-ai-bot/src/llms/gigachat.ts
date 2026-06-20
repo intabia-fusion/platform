@@ -75,10 +75,15 @@ export default class GigaChatProvider implements LLMProvider {
   }
 
   /** Billing multiplier + model id for a level (used to bill tokens). */
-  private billingFor (level?: AILevel): { multiplier: number, modelId: string } {
+  private billingFor (level?: AILevel): { multiplier: number, modelId: string, providerId: string, level: string } {
     const lvl = level ?? this.defaultLevel
     const m = this.provider.levels[lvl] ?? this.provider.levels[this.defaultLevel]
-    return { multiplier: m?.tokenMultiplier ?? 1, modelId: m?.model ?? this.modelFor(level) }
+    return {
+      multiplier: m?.tokenMultiplier ?? 1,
+      modelId: m?.model ?? this.modelFor(level),
+      providerId: this.provider.id,
+      level: lvl
+    }
   }
 
   async translateHtml (
@@ -106,7 +111,7 @@ export default class GigaChatProvider implements LLMProvider {
       const usage = usageFromApi(response.usage)
       const total = totalTokens(usage)
       if (total !== 0 && usage !== undefined) {
-        const { multiplier, modelId } = this.billingFor()
+        const { multiplier, modelId, providerId, level } = this.billingFor()
         void pushTokensData(ctx, [
           tokensRecord(
             workspace,
@@ -115,7 +120,9 @@ export default class GigaChatProvider implements LLMProvider {
             multiplier,
             'manual-translate',
             modelId,
-            new Date().toISOString()
+            new Date().toISOString(),
+            providerId,
+            level
           )
         ])
       }
@@ -172,7 +179,7 @@ export default class GigaChatProvider implements LLMProvider {
       const usage = usageFromApi(response.usage)
       const total = totalTokens(usage)
       if (total !== 0 && usage !== undefined) {
-        const { multiplier, modelId } = this.billingFor()
+        const { multiplier, modelId, providerId, level } = this.billingFor()
         void pushTokensData(ctx, [
           tokensRecord(
             workspace,
@@ -181,7 +188,9 @@ export default class GigaChatProvider implements LLMProvider {
             multiplier,
             'summarize',
             modelId,
-            new Date().toISOString()
+            new Date().toISOString(),
+            providerId,
+            level
           )
         ])
       }
@@ -239,7 +248,7 @@ export default class GigaChatProvider implements LLMProvider {
 
       const total = totalTokens(usage)
       if (total !== 0 && usage !== undefined) {
-        const { multiplier, modelId } = this.billingFor(level)
+        const { multiplier, modelId, providerId, level: billLevel } = this.billingFor(level)
         void pushTokensData(ctx, [
           tokensRecord(
             workspace,
@@ -248,7 +257,9 @@ export default class GigaChatProvider implements LLMProvider {
             multiplier,
             reason,
             modelId,
-            new Date().toISOString()
+            new Date().toISOString(),
+            providerId,
+            billLevel
           )
         ])
       }
@@ -306,7 +317,7 @@ export default class GigaChatProvider implements LLMProvider {
 
       const total = totalTokens(usage)
       if (total !== 0 && usage !== undefined) {
-        const { multiplier, modelId } = this.billingFor(level)
+        const { multiplier, modelId, providerId, level: billLevel } = this.billingFor(level)
         void pushTokensData(ctx, [
           tokensRecord(
             workspace,
@@ -315,7 +326,9 @@ export default class GigaChatProvider implements LLMProvider {
             multiplier,
             reason,
             modelId,
-            new Date().toISOString()
+            new Date().toISOString(),
+            providerId,
+            billLevel
           )
         ])
       }
@@ -364,7 +377,7 @@ export default class GigaChatProvider implements LLMProvider {
       if (tokens !== 0) {
         const ru = response?.usage
         if (ru !== undefined) {
-          const { multiplier, modelId } = this.billingFor()
+          const { multiplier, modelId, providerId, level } = this.billingFor()
           void pushTokensData(ctx, [
             tokensRecord(
               workspace,
@@ -373,7 +386,9 @@ export default class GigaChatProvider implements LLMProvider {
               multiplier,
               'summarize',
               modelId,
-              new Date().toISOString()
+              new Date().toISOString(),
+              providerId,
+              level
             )
           ])
         } else {

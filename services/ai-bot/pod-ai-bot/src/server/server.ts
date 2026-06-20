@@ -232,7 +232,7 @@ export function createServer (controller: AIControl, ctx: MeasureContext, app?: 
   )
 
   // The catalog of AI levels the pod offers (same for everyone). The UI uses this
-  // to render the level picker; the chosen level is stored in AILevelSetting.
+  // to render the level picker; the chosen level is stored in AISpaceSettings.
   app.get(
     '/levels',
     wrapRequest(async (req, res, token) => {

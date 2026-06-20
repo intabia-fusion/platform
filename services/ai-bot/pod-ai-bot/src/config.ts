@@ -34,6 +34,9 @@ export interface AILevelModel {
   order: number // sort key for UI + fallback ladder (lower = weaker/cheaper)
   label: string // UI label shown to the user
   description?: string // UI hint under the label
+  // Per-workspace rolling-window token limits for this level (0/undefined = unlimited).
+  window5hLimit?: number // max billed tokens per workspace in the last 5 hours
+  weekLimit?: number // max billed tokens per workspace in the last 7 days
   capabilities?: {
     tools?: boolean
     streaming?: boolean

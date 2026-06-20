@@ -1,7 +1,9 @@
 import { concatLink, WorkspaceUuid } from '@hcengineering/core'
 import { BillingError, NetworkError } from './error'
 import {
+  AiTokensBreakdown,
   AiTokensData,
+  AiTokensGroupBy,
   AiTranscriptData,
   BillingStats,
   DatalakeStats,
@@ -11,7 +13,10 @@ import {
   LiveKitParticipantSessionData,
   LiveKitSessionData,
   LiveKitSessionsStats,
-  LiveKitStats
+  LiveKitStats,
+  ProviderPool,
+  ProviderPoolConfig,
+  WorkspaceTokenWindows
 } from './types'
 
 /** @public */
@@ -116,6 +121,41 @@ export class BillingClient {
     const body = JSON.stringify(data)
 
     await fetchSafe(url, { method: 'POST', headers: { ...this.headers }, body })
+  }
+
+  async listProviderPools (): Promise<ProviderPool[]> {
+    const url = new URL(concatLink(this.endpoint, '/api/v1/admin/pools'))
+    const response = await fetchSafe(url, { headers: { ...this.headers } })
+    return (await response.json()) as ProviderPool[]
+  }
+
+  async upsertProviderPool (config: ProviderPoolConfig): Promise<void> {
+    const url = new URL(concatLink(this.endpoint, '/api/v1/admin/pools'))
+    const body = JSON.stringify(config)
+    await fetchSafe(url, { method: 'POST', headers: { ...this.headers }, body })
+  }
+
+  async getTokenUsage (groupBy: AiTokensGroupBy, providerId?: string): Promise<AiTokensBreakdown[]> {
+    const url = new URL(concatLink(this.endpoint, '/api/v1/admin/token-usage'))
+    url.searchParams.set('groupBy', groupBy)
+    if (providerId !== undefined && providerId !== '') {
+      url.searchParams.set('providerId', providerId)
+    }
+    const response = await fetchSafe(url, { headers: { ...this.headers } })
+    return (await response.json()) as AiTokensBreakdown[]
+  }
+
+  async getWorkspaceTokens (): Promise<AiTokensBreakdown[]> {
+    const url = new URL(concatLink(this.endpoint, '/api/v1/admin/workspace-tokens'))
+    const response = await fetchSafe(url, { headers: { ...this.headers } })
+    return (await response.json()) as AiTokensBreakdown[]
+  }
+
+  async getWorkspaceTokenWindows (workspace: WorkspaceUuid): Promise<WorkspaceTokenWindows> {
+    const path = `/api/v1/${workspace}/ai/tokens/windows`
+    const url = new URL(concatLink(this.endpoint, path))
+    const response = await fetchSafe(url, { headers: { ...this.headers } })
+    return (await response.json()) as WorkspaceTokenWindows
   }
 
   async getLargestSpaces (workspace: WorkspaceUuid): Promise<LargestSpaceInfo[]> {

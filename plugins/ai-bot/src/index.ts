@@ -72,13 +72,16 @@ export interface AIRequest extends Doc {
 }
 
 /**
- * The AI level ceiling for a space (or the workspace when attachedTo is unset).
- * A request carries its own requested level; the server trigger clamps it to this
- * ceiling. NOT a Space mixin. `level` references an AIModelInfo.level.
+ * Per-space (or workspace-wide when attachedTo is unset) AI settings.
+ * - `level`: the AI level ceiling; a request carries its own requested level and the
+ *   server trigger clamps it to this ceiling. NOT a Space mixin.
+ * - `language`: language for the bot's non-personal replies (summary, translate,
+ *   limit notices). Falls back to the pod's AI_DEFAULT_LANGUAGE env when unset.
  */
-export interface AILevelSetting extends Doc {
-  attachedTo?: Ref<Space> // undefined = workspace-wide ceiling
+export interface AISpaceSettings extends Doc {
+  attachedTo?: Ref<Space> // undefined = workspace-wide settings
   level: AILevel
+  language?: string
 }
 
 /** Optional link back to the object that started an AI conversation. */
@@ -101,7 +104,7 @@ const aiBot = plugin(aiBotId, {
   class: {
     AIPersonalData: '' as Ref<Class<AIPersonalData>>,
     AIRequest: '' as Ref<Class<AIRequest>>,
-    AILevelSetting: '' as Ref<Class<AILevelSetting>>
+    AISpaceSettings: '' as Ref<Class<AISpaceSettings>>
   },
   component: {
     AIPersonalDataSettings: '' as AnyComponent

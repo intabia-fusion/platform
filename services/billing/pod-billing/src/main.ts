@@ -18,12 +18,14 @@ import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } fr
 import { newMetrics } from '@hcengineering/core'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
-import { initStatisticsContext, StorageConfig } from '@hcengineering/server-core'
+import { initStatisticsContext, QueueTopic, StorageConfig } from '@hcengineering/server-core'
 import serverToken from '@hcengineering/server-token'
+import { getPlatformQueue } from '@hcengineering/kafka'
 import { join } from 'path'
 
 import config from './config'
 import { createDb } from './db/postgres'
+import { createPoolNotifier } from './notify'
 import { createServer, listen } from './server'
 import { UsageWorker } from './usage'
 import { storageConfigFromEnv } from '@hcengineering/server-storage'
@@ -57,7 +59,12 @@ export const main = async (): Promise<void> => {
   const db = await createDb(metricsContext, config.DbUrl)
   const storageConfigs: StorageConfig[] = storageConfigFromEnv().storages.filter((p) => p.kind === 'datalake')
 
-  const worker = new UsageWorker(db, storageConfigs, config)
+  // Mail producer for provider-pool threshold alerts (80%/100%).
+  const queue = getPlatformQueue('billing', config.QueueRegion)
+  const mailProducer = queue.getProducer<{ type: 'email', data: any }>(metricsContext, QueueTopic.NotificationQueue)
+  const notifier = createPoolNotifier(mailProducer, config.AdminEmails)
+
+  const worker = new UsageWorker(db, storageConfigs, config, notifier)
   await worker.schedule(metricsContext)
 
   const { app, close } = await createServer(metricsContext, db, storageConfigs, config)

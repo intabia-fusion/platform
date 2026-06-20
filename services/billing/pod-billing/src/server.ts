@@ -28,7 +28,12 @@ import {
   handleGetAiTranscriptLastData,
   handlePushAiTokensData,
   handlePushParticipantSessions,
-  handleGetLargestSpaces
+  handleGetLargestSpaces,
+  handleListProviderPools,
+  handleUpsertProviderPool,
+  handleGetTokenUsage,
+  handleGetWorkspaceTokens,
+  handleGetWorkspaceTokenWindows
 } from './billing'
 import { Config } from './config'
 import { withAdmin, withOwner, withToken } from './middleware'
@@ -147,6 +152,12 @@ export async function createServer (
   )
   app.get('/api/v1/:workspace/stats', withToken, withOwner, wrapRequest(ctx, 'getStats', handleGetStats))
   app.get(
+    '/api/v1/:workspace/ai/tokens/windows',
+    withToken,
+    withOwner,
+    wrapRequest(ctx, 'getWorkspaceTokenWindows', handleGetWorkspaceTokenWindows)
+  )
+  app.get(
     '/api/v1/:workspace/spaces/largest',
     withToken,
     withOwner,
@@ -175,6 +186,22 @@ export async function createServer (
   )
 
   app.post('/api/v1/ai/tokens', withToken, withAdmin, wrapRequest(ctx, 'pushAiTokensData', handlePushAiTokensData))
+
+  // Admin AI billing panel: provider pools + token breakdown across all workspaces.
+  app.get('/api/v1/admin/pools', withToken, withAdmin, wrapRequest(ctx, 'listProviderPools', handleListProviderPools))
+  app.post(
+    '/api/v1/admin/pools',
+    withToken,
+    withAdmin,
+    wrapRequest(ctx, 'upsertProviderPool', handleUpsertProviderPool)
+  )
+  app.get('/api/v1/admin/token-usage', withToken, withAdmin, wrapRequest(ctx, 'getTokenUsage', handleGetTokenUsage))
+  app.get(
+    '/api/v1/admin/workspace-tokens',
+    withToken,
+    withAdmin,
+    wrapRequest(ctx, 'getWorkspaceTokens', handleGetWorkspaceTokens)
+  )
 
   app.use((_req, res) => {
     res.status(404).json({ message: 'Not Found' })

@@ -81,10 +81,15 @@ export default class OpenAIProvider implements LLMProvider {
   }
 
   /** Billing multiplier + model id for a level (used to bill tokens). */
-  private billingFor (level?: AILevel): { multiplier: number, modelId: string } {
+  private billingFor (level?: AILevel): { multiplier: number, modelId: string, providerId: string, level: string } {
     const lvl = level ?? this.defaultLevel
     const m = this.provider.levels[lvl] ?? this.provider.levels[this.defaultLevel]
-    return { multiplier: m?.tokenMultiplier ?? 1, modelId: m?.model ?? this.modelFor(level) }
+    return {
+      multiplier: m?.tokenMultiplier ?? 1,
+      modelId: m?.model ?? this.modelFor(level),
+      providerId: this.provider.id,
+      level: lvl
+    }
   }
 
   async translateHtml (
@@ -112,7 +117,7 @@ export default class OpenAIProvider implements LLMProvider {
     const usage = usageFromApi(response.usage)
     const total = totalTokens(usage)
     if (total !== 0 && usage !== undefined) {
-      const { multiplier, modelId } = this.billingFor()
+      const { multiplier, modelId, providerId, level } = this.billingFor()
       void pushTokensData(ctx, [
         tokensRecord(
           workspace,
@@ -121,7 +126,9 @@ export default class OpenAIProvider implements LLMProvider {
           multiplier,
           'manual-translate',
           modelId,
-          new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
+          new Date((response.created ?? Date.now() / 1000) * 1000).toISOString(),
+          providerId,
+          level
         )
       ])
     }
@@ -173,7 +180,7 @@ export default class OpenAIProvider implements LLMProvider {
     const usage = usageFromApi(response.usage)
     const total = totalTokens(usage)
     if (total !== 0 && usage !== undefined) {
-      const { multiplier, modelId } = this.billingFor()
+      const { multiplier, modelId, providerId, level } = this.billingFor()
       void pushTokensData(ctx, [
         tokensRecord(
           workspace,
@@ -182,7 +189,9 @@ export default class OpenAIProvider implements LLMProvider {
           multiplier,
           'summarize',
           modelId,
-          new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
+          new Date((response.created ?? Date.now() / 1000) * 1000).toISOString(),
+          providerId,
+          level
         )
       ])
     }
@@ -244,7 +253,7 @@ export default class OpenAIProvider implements LLMProvider {
       const usage = usageFromApi(response.usage)
       const total = totalTokens(usage)
       if (total !== 0 && usage !== undefined) {
-        const { multiplier, modelId } = this.billingFor(level)
+        const { multiplier, modelId, providerId, level: billLevel } = this.billingFor(level)
         void pushTokensData(ctx, [
           tokensRecord(
             workspace,
@@ -253,7 +262,9 @@ export default class OpenAIProvider implements LLMProvider {
             multiplier,
             reason,
             modelId,
-            new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
+            new Date((response.created ?? Date.now() / 1000) * 1000).toISOString(),
+            providerId,
+            billLevel
           )
         ])
       }
@@ -324,7 +335,7 @@ export default class OpenAIProvider implements LLMProvider {
 
       const total = totalTokens(usage)
       if (total !== 0 && usage !== undefined) {
-        const { multiplier, modelId } = this.billingFor(level)
+        const { multiplier, modelId, providerId, level: billLevel } = this.billingFor(level)
         void pushTokensData(ctx, [
           tokensRecord(
             workspace,
@@ -333,7 +344,9 @@ export default class OpenAIProvider implements LLMProvider {
             multiplier,
             reason,
             modelId,
-            date.toISOString()
+            date.toISOString(),
+            providerId,
+            billLevel
           )
         ])
       }
@@ -410,7 +423,7 @@ export default class OpenAIProvider implements LLMProvider {
       const usage = usageFromApi(response.usage)
       const total = totalTokens(usage)
       if (total !== 0 && usage !== undefined) {
-        const { multiplier, modelId } = this.billingFor(level)
+        const { multiplier, modelId, providerId, level: billLevel } = this.billingFor(level)
         void pushTokensData(ctx, [
           tokensRecord(
             workspace,
@@ -419,7 +432,9 @@ export default class OpenAIProvider implements LLMProvider {
             multiplier,
             reason,
             modelId,
-            new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
+            new Date((response.created ?? Date.now() / 1000) * 1000).toISOString(),
+            providerId,
+            billLevel
           )
         ])
       }
@@ -475,9 +490,19 @@ export default class OpenAIProvider implements LLMProvider {
       const date = new Date((response?.created ?? Date.now() / 1000) * 1000).toISOString()
       const ru = response?.usage
       if (ru !== undefined) {
-        const { multiplier, modelId } = this.billingFor()
+        const { multiplier, modelId, providerId, level } = this.billingFor()
         void pushTokensData(ctx, [
-          tokensRecord(workspace, ru.promptTokens, ru.completionTokens, multiplier, 'summarize', modelId, date)
+          tokensRecord(
+            workspace,
+            ru.promptTokens,
+            ru.completionTokens,
+            multiplier,
+            'summarize',
+            modelId,
+            date,
+            providerId,
+            level
+          )
         ])
       } else {
         void pushTokensData(ctx, [{ workspace, reason: 'summarize', tokens, date }])

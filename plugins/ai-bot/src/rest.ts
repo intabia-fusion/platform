@@ -40,6 +40,9 @@ export interface AIEventRequest {
   // Effective AI level, already clamped to the space ceiling by the server trigger.
   // The pod routes by this directly (no level resolution on the pod side).
   level?: AILevel
+  // Space language for the bot's non-personal replies (set by the server trigger
+  // from AISpaceSettings); the pod falls back to AI_DEFAULT_LANGUAGE when unset.
+  language?: string
 }
 
 export interface TranslateRequest {
@@ -96,7 +99,7 @@ export interface IdentityResponse {
 /**
  * A level the ai-bot offers, served by its API (GET levels). The catalog is the
  * same for everyone, so it lives in the pod, not in per-workspace docs. The UI
- * lists these for the level picker; the user's choice is stored in AILevelSetting.
+ * lists these for the level picker; the choice is stored in AISpaceSettings.
  */
 export interface AILevelInfo {
   level: AILevel

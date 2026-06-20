@@ -30,7 +30,7 @@
   direct-ветка -> `onBotDirectMessageSend` -> producer `AIQueue`.
 - **Поток**: триггер строит `AIEventRequest` (адресует сам ChatMessage юзера,
   `messageClass=ThreadMessage`) -> `applyLevel` подставляет уровень из
-  `AILevelSetting` -> `queue.ts` consumer -> `controller.processEvent` ->
+  `AISpaceSettings` -> `queue.ts` consumer -> `controller.processEvent` ->
   `workspaceClient.processMessageEvent`. Контекст LLM = открывающее сообщение +
   сообщения треда (чистая сборка в `workspace/threadContext.ts`).
 - **Тесты**: `__tests__/queue-client-modes.spec.ts` (роутинг событий),
@@ -87,9 +87,9 @@
 ## 7. Выбор уровня ЮляИИ (AILevel)
 
 - **Делает**: уровень = свойство запроса; пространство задаёт потолок
-  (`AILevelSetting`). Каталог уровней клиент берёт из API.
+  (`AISpaceSettings`). Каталог уровней клиент берёт из API.
 - **Вход**: `server/server.ts` `GET /levels` -> `availableLevels(AIProviders)`
-  (отсортированы по order, дедуп). Модель `AILevelSetting` (`models/ai-bot`).
+  (отсортированы по order, дедуп). Модель `AISpaceSettings` (`models/ai-bot`).
   Триггер `applyLevel` подставляет уровень в событие.
 - **Статус**: API + модель + триггер готовы. Полноценного UI-селектора пока нет
   (задел для клиента).

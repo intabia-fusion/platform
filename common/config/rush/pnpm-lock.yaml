@@ -37290,6 +37290,9 @@ importers:
       '@hcengineering/datalake':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/server/packages/datalake
+      '@hcengineering/kafka':
+        specifier: workspace:^0.7.19
+        version: link:../../../foundations/server/packages/kafka
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/core/packages/platform

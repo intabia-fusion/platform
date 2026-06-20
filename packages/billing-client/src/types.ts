@@ -85,6 +85,9 @@ export interface AiTranscriptStats {
 export interface AiTokensStats {
   reason: string
   totalTokens: number
+  providerId?: string
+  model?: string
+  level?: string
 }
 
 export interface AiStats {
@@ -106,9 +109,57 @@ export interface AiTokensData {
   reason: string
   tokens: number
   date: string
+  // AI usage dimensions for per-provider/model/level reporting and provider pools.
+  providerId?: string
+  model?: string
+  level?: string
 }
 
 export interface LargestSpaceInfo {
   spaceId: string
   size: number
+}
+
+export type ProviderPoolKind = 'purchased' | 'local'
+export type ProviderPoolPeriod = 'monthly' | 'daily' | 'none'
+
+export interface ProviderPool {
+  providerId: string
+  kind: ProviderPoolKind
+  purchasedTokens: number
+  period: ProviderPoolPeriod
+  periodStart: string
+  usedTokens: number
+  exhausted: boolean
+  notified80: boolean
+  notified100: boolean
+}
+
+export interface ProviderPoolConfig {
+  providerId: string
+  kind: ProviderPoolKind
+  purchasedTokens: number
+  period: ProviderPoolPeriod
+  periodStart?: string
+}
+
+export interface TokenWindowUsage {
+  used: number
+  windowHours: number
+}
+
+export interface WorkspaceTokenWindows {
+  workspace: WorkspaceUuid
+  window5h: TokenWindowUsage
+  week: TokenWindowUsage
+}
+
+export type AiTokensGroupBy = 'model' | 'level' | 'provider' | 'workspace'
+
+export interface AiTokensBreakdown {
+  providerId?: string
+  model?: string
+  level?: string
+  workspace?: WorkspaceUuid
+  totalTokens: number
 }

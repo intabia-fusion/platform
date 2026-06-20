@@ -58,7 +58,10 @@ export function getMigrations (flavor: DBFlavor): [string, string][] {
     throw new Error(`Unsupported database flavor: ${flavor}`)
   }
 
-  return [migrationV1(flavor), migrationV2(flavor), migrationV3(flavor), migrationV4(flavor)]
+  // NOTE: migrationV5 (`add_usage_dedup_and_limit_state_05`) lives in the foundation3
+  // licensing branch. To avoid a merge collision we number the AI-token-dimensions
+  // migration as V6; migrations apply by name order so 06 runs after that 05.
+  return [migrationV1(flavor), migrationV2(flavor), migrationV3(flavor), migrationV4(flavor), migrationV6(flavor)]
 }
 
 function migrationV1 (flavor: SupportedFlavor): [string, string] {
@@ -153,4 +156,52 @@ function migrationV4 (flavor: SupportedFlavor): [string, string] {
       ON billing.livekit_participant_session (joined_at);
   `
   return ['add_participant_sessions_04', sql]
+}
+
+function migrationV6 (flavor: SupportedFlavor): [string, string] {
+  const types = dbTypes[flavor]
+
+  // ai_tokens_usage gains AI usage dimensions (provider/model/level) and switches from
+  // a daily bucket (`day DATE`) to an hourly bucket (`hour TIMESTAMP`, truncated to the
+  // hour) so per-workspace rolling windows (5h / week) can be computed accurately.
+  // Old daily rows are folded to midnight of their day. The PK widens to include the new
+  // dimensions; the legacy `day` column is dropped after backfilling `hour`.
+  // Also adds provider_pool: purchased token pools per provider (global, not per-workspace).
+  const sql = `
+    ALTER TABLE billing.ai_tokens_usage
+      ADD COLUMN IF NOT EXISTS provider_id ${types.string255} NOT NULL DEFAULT '';
+    ALTER TABLE billing.ai_tokens_usage
+      ADD COLUMN IF NOT EXISTS model ${types.string255} NOT NULL DEFAULT '';
+    ALTER TABLE billing.ai_tokens_usage
+      ADD COLUMN IF NOT EXISTS level ${types.string255} NOT NULL DEFAULT '';
+    ALTER TABLE billing.ai_tokens_usage
+      ADD COLUMN IF NOT EXISTS hour TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00';
+
+    UPDATE billing.ai_tokens_usage SET hour = day::timestamp WHERE hour = '1970-01-01 00:00:00';
+
+    ALTER TABLE billing.ai_tokens_usage DROP CONSTRAINT IF EXISTS ai_tokens_usage_pkey;
+    ALTER TABLE billing.ai_tokens_usage
+      ADD CONSTRAINT ai_tokens_usage_pkey PRIMARY KEY (workspace, hour, reason, provider_id, model, level);
+
+    ALTER TABLE billing.ai_tokens_usage DROP COLUMN IF EXISTS day;
+
+    CREATE INDEX IF NOT EXISTS idx_ai_tokens_usage_hour ON billing.ai_tokens_usage (hour);
+    CREATE INDEX IF NOT EXISTS idx_ai_tokens_usage_provider ON billing.ai_tokens_usage (provider_id);
+    CREATE INDEX IF NOT EXISTS idx_ai_tokens_usage_model ON billing.ai_tokens_usage (model);
+    CREATE INDEX IF NOT EXISTS idx_ai_tokens_usage_level ON billing.ai_tokens_usage (level);
+
+    CREATE TABLE IF NOT EXISTS billing.provider_pool (
+      provider_id ${types.string255} NOT NULL,
+      kind ${types.string255} NOT NULL DEFAULT 'purchased',
+      purchased_tokens ${types.int8} NOT NULL DEFAULT 0,
+      period ${types.string255} NOT NULL DEFAULT 'monthly',
+      period_start TIMESTAMP NOT NULL DEFAULT now(),
+      used_tokens ${types.int8} NOT NULL DEFAULT 0,
+      exhausted BOOLEAN NOT NULL DEFAULT false,
+      notified80 BOOLEAN NOT NULL DEFAULT false,
+      notified100 BOOLEAN NOT NULL DEFAULT false,
+      PRIMARY KEY (provider_id)
+    );
+  `
+  return ['add_ai_token_dimensions_and_pools_06', sql]
 }

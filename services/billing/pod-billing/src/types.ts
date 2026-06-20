@@ -79,6 +79,61 @@ export interface AiTranscriptUsage {
 export interface AiTokensUsage {
   reason: string
   totalTokens: number
+  providerId?: string
+  model?: string
+  level?: string
+}
+
+export type AiTokensGroupBy = 'model' | 'level' | 'provider' | 'workspace'
+
+export interface AiTokensBreakdown {
+  providerId?: string
+  model?: string
+  level?: string
+  workspace?: WorkspaceUuid
+  totalTokens: number
+}
+
+export interface ProviderTokenTotal {
+  providerId: string
+  totalTokens: number
+}
+
+// Token usage for a single rolling window (used vs limit). limit 0 = unlimited.
+export interface TokenWindowUsage {
+  used: number
+  windowHours: number
+}
+
+// Both rolling windows aibot enforces per-workspace.
+export interface WorkspaceTokenWindows {
+  workspace: WorkspaceUuid
+  window5h: TokenWindowUsage
+  week: TokenWindowUsage
+}
+
+export type ProviderPoolKind = 'purchased' | 'local'
+export type ProviderPoolPeriod = 'monthly' | 'daily' | 'none'
+
+export interface ProviderPool {
+  providerId: string
+  kind: ProviderPoolKind
+  purchasedTokens: number
+  period: ProviderPoolPeriod
+  periodStart: string
+  usedTokens: number
+  exhausted: boolean
+  notified80: boolean
+  notified100: boolean
+}
+
+// Admin-set fields when configuring a purchased pool (used left to recompute).
+export interface ProviderPoolConfig {
+  providerId: string
+  kind: ProviderPoolKind
+  purchasedTokens: number
+  period: ProviderPoolPeriod
+  periodStart?: string
 }
 
 export interface AiUsageData {
@@ -105,6 +160,9 @@ export interface AiTokensData {
   reason: string
   tokens: number
   date: string
+  providerId?: string
+  model?: string
+  level?: string
 }
 
 export interface BillingDB {
@@ -150,4 +208,31 @@ export interface BillingDB {
     start?: Date,
     end?: Date
   ) => Promise<AiTokensUsage[]>
+  // Admin-wide token breakdown across all workspaces, grouped by a dimension.
+  getAiTokensBreakdown: (
+    ctx: MeasureContext,
+    groupBy: AiTokensGroupBy,
+    providerId?: string,
+    start?: Date,
+    end?: Date
+  ) => Promise<AiTokensBreakdown[]>
+  // Per-workspace token totals across all workspaces (for the admin workspaces list).
+  getAiTokensByWorkspace: (ctx: MeasureContext, start?: Date, end?: Date) => Promise<AiTokensBreakdown[]>
+  // Tokens used by a workspace within the last `windowHours` (rolling, from the hourly bucket).
+  getWorkspaceTokensInWindow: (ctx: MeasureContext, workspace: WorkspaceUuid, windowHours: number) => Promise<number>
+  // Total tokens spent per provider in a period (for provider-pool used).
+  getProviderTokenTotals: (ctx: MeasureContext, start?: Date, end?: Date) => Promise<ProviderTokenTotal[]>
+
+  // Provider token pools (purchased upstream, shared across all workspaces).
+  listProviderPools: (ctx: MeasureContext) => Promise<ProviderPool[]>
+  getProviderPool: (ctx: MeasureContext, providerId: string) => Promise<ProviderPool | undefined>
+  // Admin upsert of pool config; resets notify flags + used when period restarts.
+  upsertProviderPool: (ctx: MeasureContext, config: ProviderPoolConfig) => Promise<void>
+  // Recompute used/exhausted/notify-flags from getProviderTokenTotals; returns the
+  // updated pool plus whether a threshold (80/100) was newly crossed this pass.
+  updateProviderPoolState: (
+    ctx: MeasureContext,
+    providerId: string,
+    usedTokens: number
+  ) => Promise<{ pool: ProviderPool, crossed80: boolean, crossed100: boolean }>
 }

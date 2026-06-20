@@ -28,7 +28,10 @@ import { generateToken } from '@hcengineering/server-token'
 
 import { collectDatalakeStats } from './billing'
 import { type Config } from './config'
-import { type BillingDB } from './types'
+import { type BillingDB, type ProviderPool } from './types'
+
+// Called when a provider pool newly crosses an 80% or 100% usage threshold.
+export type PoolThresholdHandler = (ctx: MeasureContext, pool: ProviderPool, percent: 80 | 100) => Promise<void>
 
 export class UsageWorker {
   private canceled: boolean = false
@@ -37,7 +40,8 @@ export class UsageWorker {
   constructor (
     private readonly db: BillingDB,
     private readonly storageConfigs: StorageConfig[],
-    private readonly config: Config
+    private readonly config: Config,
+    private readonly onPoolThreshold?: PoolThresholdHandler
   ) {}
 
   async close (): Promise<void> {
@@ -59,8 +63,40 @@ export class UsageWorker {
         ctx.error('failed to recheck workspaces', { error: err })
       }
 
+      try {
+        await this.recomputeProviderPools(ctx)
+      } catch (err: any) {
+        ctx.error('failed to recompute provider pools', { error: err })
+      }
+
       if (!this.canceled) {
         await new Promise((resolve) => setTimeout(resolve, this.config.UsageUpdateInterval * 1000))
+      }
+    }
+  }
+
+  // Recompute used/exhausted for each purchased provider pool from the token usage
+  // table over the pool's own period; fire onPoolThreshold when 80%/100% is crossed.
+  async recomputeProviderPools (ctx: MeasureContext): Promise<void> {
+    const pools = await this.db.listProviderPools(ctx)
+    if (pools.length === 0) return
+
+    const now = new Date()
+    for (const pool of pools) {
+      if (this.canceled) return
+      if (pool.kind === 'local' || pool.purchasedTokens <= 0) continue
+
+      const totals = await this.db.getProviderTokenTotals(ctx, new Date(pool.periodStart), now)
+      const used = totals.find((t) => t.providerId === pool.providerId)?.totalTokens ?? 0
+
+      const { pool: updated, crossed80, crossed100 } = await this.db.updateProviderPoolState(ctx, pool.providerId, used)
+
+      if ((crossed80 || crossed100) && this.onPoolThreshold !== undefined) {
+        try {
+          await this.onPoolThreshold(ctx, updated, crossed100 ? 100 : 80)
+        } catch (err: any) {
+          ctx.error('pool threshold notify failed', { provider: pool.providerId, err })
+        }
       }
     }
   }

@@ -20,6 +20,9 @@ export interface Config {
   DbUrl: string
   StorageConfig: string
   UsageUpdateInterval: number // seconds
+  // Recipients of provider-pool threshold alerts (80%/100%); empty disables email.
+  AdminEmails: string[]
+  QueueRegion: string
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
@@ -31,10 +34,24 @@ const config: Config = (() => {
     AccountsUrl: process.env.ACCOUNTS_URL,
     DbUrl: process.env.DB_URL,
     StorageConfig: process.env.STORAGE_CONFIG,
-    UsageUpdateInterval: parseNumber(process.env.USAGE_UPDATE_INTERVAL) ?? 60 * 60
+    UsageUpdateInterval: parseNumber(process.env.USAGE_UPDATE_INTERVAL) ?? 60 * 60,
+    AdminEmails: (process.env.PLATFORM_ADMIN_EMAILS ?? '')
+      .split(',')
+      .map((e) => e.trim())
+      .filter((e) => e !== ''),
+    QueueRegion: process.env.QUEUE_REGION ?? ''
   }
 
-  const missingEnv = (Object.keys(params) as Array<keyof Config>).filter((key) => params[key] === undefined)
+  // AdminEmails/QueueRegion are optional (default applied above) — exclude from the check.
+  const required: Array<keyof Config> = [
+    'Port',
+    'Secret',
+    'AccountsUrl',
+    'DbUrl',
+    'StorageConfig',
+    'UsageUpdateInterval'
+  ]
+  const missingEnv = required.filter((key) => params[key] === undefined)
 
   if (missingEnv.length > 0) {
     throw Error(`Missing config for attributes: ${missingEnv.join(', ')}`)

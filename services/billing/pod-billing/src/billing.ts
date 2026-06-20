@@ -23,7 +23,9 @@ import {
   LiveKitParticipantSessionData,
   AiUsageData,
   AiTranscriptData,
-  AiTokensData
+  AiTokensData,
+  AiTokensGroupBy,
+  ProviderPoolConfig
 } from './types'
 import { generateToken } from '@hcengineering/server-token'
 import { StorageConfig } from '@hcengineering/server-core'
@@ -274,6 +276,77 @@ export async function collectDatalakeStats (
   }))
 
   return result
+}
+
+export async function handleListProviderPools (
+  ctx: MeasureContext,
+  db: BillingDB,
+  storageConfigs: StorageConfig[],
+  req: Request,
+  res: Response
+): Promise<void> {
+  res.json(await db.listProviderPools(ctx))
+}
+
+export async function handleUpsertProviderPool (
+  ctx: MeasureContext,
+  db: BillingDB,
+  storageConfigs: StorageConfig[],
+  req: Request,
+  res: Response
+): Promise<void> {
+  const config = (await req.body) as ProviderPoolConfig
+  if (config?.providerId == null || config.providerId === '') {
+    res.status(400).json({ message: 'providerId required' })
+    return
+  }
+  await db.upsertProviderPool(ctx, config)
+  res.status(204).send()
+}
+
+export async function handleGetTokenUsage (
+  ctx: MeasureContext,
+  db: BillingDB,
+  storageConfigs: StorageConfig[],
+  req: Request,
+  res: Response
+): Promise<void> {
+  const groupBy = (req.query.groupBy as AiTokensGroupBy) ?? 'model'
+  const providerId = typeof req.query.providerId === 'string' ? req.query.providerId : undefined
+  const { fromDate, toDate } = parseDateParameters(req)
+  res.json(await db.getAiTokensBreakdown(ctx, groupBy, providerId, fromDate, toDate))
+}
+
+export async function handleGetWorkspaceTokens (
+  ctx: MeasureContext,
+  db: BillingDB,
+  storageConfigs: StorageConfig[],
+  req: Request,
+  res: Response
+): Promise<void> {
+  const { fromDate, toDate } = parseDateParameters(req)
+  res.json(await db.getAiTokensByWorkspace(ctx, fromDate, toDate))
+}
+
+// Used tokens for a workspace in the 5h and weekly rolling windows. Limits are NOT
+// returned here — aibot resolves the limit from the AI level registry and compares.
+export async function handleGetWorkspaceTokenWindows (
+  ctx: MeasureContext,
+  db: BillingDB,
+  storageConfigs: StorageConfig[],
+  req: Request,
+  res: Response
+): Promise<void> {
+  const workspace = getWorkspaceUuid(req)
+  const [used5h, usedWeek] = await Promise.all([
+    db.getWorkspaceTokensInWindow(ctx, workspace, 5),
+    db.getWorkspaceTokensInWindow(ctx, workspace, 24 * 7)
+  ])
+  res.json({
+    workspace,
+    window5h: { used: used5h, windowHours: 5 },
+    week: { used: usedWeek, windowHours: 24 * 7 }
+  })
 }
 
 function getWorkspaceUuid (req: Request): WorkspaceUuid {

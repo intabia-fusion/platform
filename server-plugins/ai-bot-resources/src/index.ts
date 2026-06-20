@@ -210,22 +210,23 @@ function isDirectAvailable (direct: DirectMessage, control: TriggerControl, wsID
 }
 
 /**
- * Set the effective AI level on the event from the active AILevelSetting
- * (space-specific -> workspace-wide). The model catalog lives in the pod (served
- * via its API), so the trigger only forwards the chosen level; the pod validates
- * it against its registry (unknown levels fall back there).
+ * Set the effective AI level + language on the event from the active AISpaceSettings
+ * (space-specific -> workspace-wide). The model catalog lives in the pod (served via
+ * its API), so the trigger only forwards the chosen level/language; the pod validates
+ * the level against its registry and falls back to AI_DEFAULT_LANGUAGE for language.
  */
-async function applyLevel (control: TriggerControl, event: AIEventRequest): Promise<void> {
+async function applySpaceSettings (control: TriggerControl, event: AIEventRequest): Promise<void> {
   try {
     const spaceSetting = (
-      await control.findAll(control.ctx, aiBot.class.AILevelSetting, { attachedTo: event.objectSpace })
+      await control.findAll(control.ctx, aiBot.class.AISpaceSettings, { attachedTo: event.objectSpace })
     )[0]
     const wsSetting =
       spaceSetting ??
-      (await control.findAll(control.ctx, aiBot.class.AILevelSetting, {})).find((s) => s.attachedTo == null)
+      (await control.findAll(control.ctx, aiBot.class.AISpaceSettings, {})).find((s) => s.attachedTo == null)
     event.level = spaceSetting?.level ?? wsSetting?.level
+    event.language = spaceSetting?.language ?? wsSetting?.language
   } catch (err: any) {
-    control.ctx.warn('failed to apply AI level', { error: err?.message })
+    control.ctx.warn('failed to apply AI space settings', { error: err?.message })
   }
 }
 
@@ -254,7 +255,7 @@ async function onBotDirectMessageSend (
       messageEvent = getDirectThreadData(direct, message)
     }
     messageEvent.objectIdIsSpace = control.hierarchy.isDerived(messageEvent.objectClass, core.class.Space)
-    await applyLevel(control, messageEvent)
+    await applySpaceSettings(control, messageEvent)
     await producer.send(control.ctx, control.workspace.uuid, [messageEvent])
   } else if (kind === 'mentioned') {
     let messageEvent: AIEventRequest
@@ -264,7 +265,7 @@ async function onBotDirectMessageSend (
       messageEvent = getMessageData(message, message)
     }
     messageEvent.objectIdIsSpace = control.hierarchy.isDerived(messageEvent.objectClass, core.class.Space)
-    await applyLevel(control, messageEvent)
+    await applySpaceSettings(control, messageEvent)
     await producer.send(control.ctx, control.workspace.uuid, [messageEvent])
   }
 }

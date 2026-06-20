@@ -249,14 +249,38 @@ export function tokensRecord (
   multiplier: number,
   reason: string,
   modelId?: string,
-  date: string = new Date().toISOString()
+  date: string = new Date().toISOString(),
+  providerId?: string,
+  level?: string
 ): AiTokensData {
   const billed = Math.ceil((promptTokens + completionTokens) * multiplier)
   return {
     workspace,
     reason: modelId !== undefined ? `${reason}:${modelId}` : reason,
     tokens: billed,
-    date
+    date,
+    providerId,
+    model: modelId,
+    level
+  }
+}
+
+// Fetch per-workspace rolling-window token usage (5h + week) from billing. Returns
+// zero usage when billing is unset or unreachable (fail-open, do not block on outage).
+export async function getWorkspaceWindows (
+  ctx: MeasureContext,
+  workspace: WorkspaceUuid
+): Promise<{ window5h: { used: number }, week: { used: number } }> {
+  const zero = { window5h: { used: 0 }, week: { used: 0 } }
+  if (config.BillingUrl === '') return zero
+  try {
+    const token = generateToken(systemAccountUuid, workspace, { service: 'ai-bot', admin: 'true' })
+    const billingClient = getBillingClient(config.BillingUrl, token)
+    const w = await billingClient.getWorkspaceTokenWindows(workspace)
+    return { window5h: { used: w.window5h.used }, week: { used: w.week.used } }
+  } catch (e) {
+    ctx.error('Failed to fetch token windows', { workspace, e })
+    return zero
   }
 }
 

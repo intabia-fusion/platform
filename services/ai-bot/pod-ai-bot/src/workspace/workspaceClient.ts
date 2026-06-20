@@ -22,7 +22,7 @@ import aiBot, {
   IdentityResponse
 } from '@hcengineering/ai-bot'
 import attachment, { Attachment } from '@hcengineering/attachment'
-import chunter, { ChatMessage, ThreadMessage } from '@hcengineering/chunter'
+import chunter, { ChatMessage, ThreadMessage, DirectMessage } from '@hcengineering/chunter'
 import contact, {
   AvatarType,
   combineName,
@@ -36,6 +36,7 @@ import core, {
   AccountRole,
   AccountUuid,
   Blob,
+  Class,
   Doc,
   MeasureContext,
   PersonId,
@@ -61,6 +62,8 @@ import { getTools } from '../utils/tools'
 import { resolveMemory, type AIMemory } from './memory'
 import { donePatch, failedPatch, queuedRequest } from './aiRequest'
 import { resolveModel } from '../llms/modelRegistry'
+import { getWorkspaceWindows } from '../billing'
+import { checkWindowLimit } from './windowLimit'
 import { buildThreadContext, type ContextMessage } from './threadContext'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
@@ -557,6 +560,22 @@ export class WorkspaceClient {
     // Resolve model + billing multiplier for the request status doc.
     const effectiveLevel = level ?? config.DefaultLevel
     const resolved = resolveModel(effectiveLevel, config.AIProviders)
+
+    // Per-workspace rolling-window token limit (soft): instead of calling the LLM,
+    // notify the user in their Direct chat with Юля when the 5h/weekly limit is hit.
+    const windows = await getWorkspaceWindows(this.ctx, this.wsIds.uuid)
+    const verdict = checkWindowLimit(resolved.model, windows)
+    if (verdict.blocked) {
+      await this.notifyLimit(personUuid, verdict.window === '5h' ? '5 часов' : 'неделя', {
+        messageClass,
+        space,
+        objectId,
+        objectClass,
+        collection: event.collection
+      })
+      return
+    }
+
     const aiRequestSpace = await this.getUserPersonSpace(personUuid)
     const aiRequestId = await this.createAIRequest(personUuid, {
       level: resolved.level,
@@ -607,15 +626,80 @@ export class WorkspaceClient {
     }
     // The reply is persisted as a chunter message below; no separate history blob.
     const parseResponse = jsonToMarkup(markdownToMarkup(response, { refUrl: '', imageUrl: '' }))
+    await this.writeReply(messageClass, space, objectId, objectClass, event.collection, parseResponse)
+  }
 
+  // Find the user's existing Direct chat with Юля (does not create one).
+  private async findUserDirect (personUuid: PersonUuid): Promise<DirectMessage | undefined> {
+    const aiAccount = this.aiPerson?.personUuid as AccountUuid | undefined
+    if (aiAccount === undefined) return undefined
+
+    const wanted = new Set<AccountUuid>([personUuid as AccountUuid, aiAccount])
+    const directs = await this.client.findAll<DirectMessage>(chunter.class.DirectMessage, {})
+    return directs.find((dm) => {
+      const members = new Set(dm.members)
+      return members.size === wanted.size && [...wanted].every((a) => members.has(a))
+    })
+  }
+
+  // Post a token-limit notice in the user's Direct chat with Юля (falls back to the
+  // request's origin thread if no Direct exists yet). `lang` is the user's language.
+  private async notifyLimit (
+    personUuid: PersonUuid,
+    windowLabel: string,
+    fallback: {
+      messageClass: Ref<Class<Doc>>
+      space: Ref<Space>
+      objectId: Ref<Doc>
+      objectClass: Ref<Class<Doc>>
+      collection: string
+    }
+  ): Promise<void> {
+    const markup = jsonToMarkup(
+      markdownToMarkup(`Лимит токенов ИИ исчерпан (окно ${windowLabel}). Попробуйте позже.`, {
+        refUrl: '',
+        imageUrl: ''
+      })
+    )
+    const direct = await this.findUserDirect(personUuid)
+    if (direct !== undefined) {
+      await this.client.addCollection<Doc, ChatMessage>(
+        chunter.class.ChatMessage,
+        direct._id,
+        direct._id,
+        direct._class,
+        'messages',
+        { message: markup }
+      )
+      return
+    }
+    await this.writeReply(
+      fallback.messageClass,
+      fallback.space,
+      fallback.objectId,
+      fallback.objectClass,
+      fallback.collection,
+      markup
+    )
+  }
+
+  // Write a bot reply as a ChatMessage or a ThreadMessage under the parent message.
+  private async writeReply (
+    messageClass: Ref<Class<Doc>>,
+    space: Ref<Space>,
+    objectId: Ref<Doc>,
+    objectClass: Ref<Class<Doc>>,
+    collection: string,
+    markup: string
+  ): Promise<void> {
     if (messageClass === chunter.class.ChatMessage) {
       await this.client.addCollection<Doc, ChatMessage>(
         chunter.class.ChatMessage,
         space,
         objectId,
         objectClass,
-        event.collection,
-        { message: parseResponse }
+        collection,
+        { message: markup }
       )
     } else if (messageClass === chunter.class.ThreadMessage) {
       const parent = await this.client.findOne<ChatMessage>(chunter.class.ChatMessage, {
@@ -628,8 +712,8 @@ export class WorkspaceClient {
           space,
           objectId,
           objectClass,
-          event.collection,
-          { message: parseResponse, objectId: parent.attachedTo, objectClass: parent.attachedToClass }
+          collection,
+          { message: markup, objectId: parent.attachedTo, objectClass: parent.attachedToClass }
         )
       }
     }
