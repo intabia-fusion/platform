@@ -82,6 +82,9 @@ export interface AISpaceSettings extends Doc {
   attachedTo?: Ref<Space> // undefined = workspace-wide settings
   level: AILevel
   language?: string
+  // Use a cheaper fallback model after the weekly token limit is hit (instead of
+  // refusing). The 5h window stays a hard limit regardless.
+  fallbackToSimpler?: boolean
 }
 
 /** Optional link back to the object that started an AI conversation. */

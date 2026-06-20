@@ -730,6 +730,24 @@ class PostgresDB implements BillingDB {
     return Number(result[0]?.total_tokens ?? 0)
   }
 
+  // Per-hour token totals within the rolling window (ascending hour), used to compute
+  // when usage will drop below the limit as the oldest hours age out (reset ETA).
+  async getWindowHourlyBuckets (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    windowHours: number
+  ): Promise<Array<{ hour: string, tokens: number }>> {
+    const since = new Date(Date.now() - windowHours * 60 * 60 * 1000)
+    const sql = `
+    SELECT hour, SUM(total_tokens) AS tokens
+    FROM billing.ai_tokens_usage
+    WHERE workspace = $1::uuid AND hour >= $2::timestamp
+    GROUP BY hour
+    ORDER BY hour ASC`
+    const result = await this.execute(sql, [workspace, since])
+    return result.map((row: any) => ({ hour: new Date(row.hour).toISOString(), tokens: Number(row.tokens ?? 0) }))
+  }
+
   async getProviderTokenTotals (ctx: MeasureContext, start?: Date, end?: Date): Promise<ProviderTokenTotal[]> {
     const params: any[] = []
     const where = "WHERE provider_id <> ''" + this.hourRange(params, 1, start, end)
@@ -794,6 +812,21 @@ class PostgresDB implements BillingDB {
       notified80 = false,
       notified100 = false`
     await this.execute(sql, [config.providerId, config.kind, config.purchasedTokens, config.period, periodStart])
+  }
+
+  async addPurchasedTokens (ctx: MeasureContext, providerId: string, delta: number): Promise<void> {
+    const stringType = this.flavor === 'cockroach' ? 'string' : 'text'
+    const int8Type = this.flavor === 'cockroach' ? 'int8' : 'bigint'
+    // Top-up: increment the purchased budget and clear exhausted/notify flags so the
+    // pool reopens and 80%/100% can fire again against the new total.
+    const sql = `
+    UPDATE billing.provider_pool SET
+      purchased_tokens = purchased_tokens + $2::${int8Type},
+      exhausted = false,
+      notified80 = false,
+      notified100 = false
+    WHERE provider_id = $1::${stringType}`
+    await this.execute(sql, [providerId, delta])
   }
 
   async updateProviderPoolState (

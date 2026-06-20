@@ -33,7 +33,9 @@ import {
   handleUpsertProviderPool,
   handleGetTokenUsage,
   handleGetWorkspaceTokens,
-  handleGetWorkspaceTokenWindows
+  handleGetWorkspaceTokenWindows,
+  handleAddProviderPoolTokens,
+  handleGetPricing
 } from './billing'
 import { Config } from './config'
 import { withAdmin, withOwner, withToken } from './middleware'
@@ -195,6 +197,13 @@ export async function createServer (
     withAdmin,
     wrapRequest(ctx, 'upsertProviderPool', handleUpsertProviderPool)
   )
+  app.post(
+    '/api/v1/admin/pools/add',
+    withToken,
+    withAdmin,
+    wrapRequest(ctx, 'addProviderPoolTokens', handleAddProviderPoolTokens)
+  )
+  app.get('/api/v1/admin/pricing', withToken, withAdmin, wrapRequest(ctx, 'getPricing', handleGetPricing))
   app.get('/api/v1/admin/token-usage', withToken, withAdmin, wrapRequest(ctx, 'getTokenUsage', handleGetTokenUsage))
   app.get(
     '/api/v1/admin/workspace-tokens',

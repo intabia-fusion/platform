@@ -30,7 +30,8 @@ export const billingPlugin = plugin(billingId, {
   component: {
     Settings: '' as AnyComponent,
     WorkbenchExtension: '' as AnyComponent,
-    UsageExtension: '' as AnyComponent
+    UsageExtension: '' as AnyComponent,
+    AdminBilling: '' as AnyComponent
   },
   string: {
     Billing: '' as IntlString,
@@ -67,7 +68,24 @@ export const billingPlugin = plugin(billingId, {
     Legendary: '' as IntlString,
     LegendaryDescription: '' as IntlString,
     UpgradePlan: '' as IntlString,
-    LimitReached: '' as IntlString
+    LimitReached: '' as IntlString,
+    AITokens: '' as IntlString,
+    ProviderPools: '' as IntlString,
+    NoProviderPools: '' as IntlString,
+    ByModel: '' as IntlString,
+    ByLevel: '' as IntlString,
+    AddTokens: '' as IntlString,
+    TokenWindow5h: '' as IntlString,
+    TokenWindowWeek: '' as IntlString,
+    ByWorkspace: '' as IntlString,
+    Calculator: '' as IntlString,
+    BudgetPerUser: '' as IntlString,
+    WindowsPerDay: '' as IntlString,
+    PricePer1000: '' as IntlString,
+    MonthlyBudgetTokens: '' as IntlString,
+    SuggestedWindow5h: '' as IntlString,
+    SuggestedWindowWeek: '' as IntlString,
+    CurrentWindows: '' as IntlString
   },
   icon: {
     Billing: '' as Asset,

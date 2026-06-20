@@ -225,6 +225,7 @@ async function applySpaceSettings (control: TriggerControl, event: AIEventReques
       (await control.findAll(control.ctx, aiBot.class.AISpaceSettings, {})).find((s) => s.attachedTo == null)
     event.level = spaceSetting?.level ?? wsSetting?.level
     event.language = spaceSetting?.language ?? wsSetting?.language
+    event.fallbackToSimpler = spaceSetting?.fallbackToSimpler ?? wsSetting?.fallbackToSimpler
   } catch (err: any) {
     control.ctx.warn('failed to apply AI space settings', { error: err?.message })
   }

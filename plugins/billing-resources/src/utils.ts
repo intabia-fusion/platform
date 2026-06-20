@@ -160,11 +160,16 @@ export function calculateLimits (tier: Tier | undefined): {
   const DEFAULT_MEETING_MINUTES = 600
   const DEFAULT_TOKEN = 20
 
+  // AI token package multiplier (xN). Placeholder: defaults to 1 until a package is
+  // purchasable; then it scales the overall AI token limit (and the rolling windows,
+  // applied on the billing side).
+  const tokenPackage = tier?.tokenPackageMultiplier ?? 1
+
   return {
     storageLimit: (tier?.storageLimitGB ?? DEFAULT_STORAGE_GB) * 1e9,
     trafficLimit: (tier?.trafficLimitGB ?? DEFAULT_TRAFFIC_GB) * 1e9,
     meetingMinutesLimit: tier?.meetingMinutesLimit ?? DEFAULT_MEETING_MINUTES,
-    tokenLimit: (tier?.tokenLimit ?? DEFAULT_TOKEN) * 1000
+    tokenLimit: (tier?.tokenLimit ?? DEFAULT_TOKEN) * 1000 * tokenPackage
   }
 }
 

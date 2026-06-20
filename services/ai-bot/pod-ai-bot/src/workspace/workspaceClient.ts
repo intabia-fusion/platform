@@ -63,7 +63,7 @@ import { resolveMemory, type AIMemory } from './memory'
 import { donePatch, failedPatch, queuedRequest } from './aiRequest'
 import { resolveModel } from '../llms/modelRegistry'
 import { getWorkspaceWindows } from '../billing'
-import { checkWindowLimit } from './windowLimit'
+import { decideLevel } from './windowLimit'
 import { buildThreadContext, type ContextMessage } from './threadContext'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
@@ -558,17 +558,15 @@ export class WorkspaceClient {
       useHistory.push(...buildThreadContext(contextMessages, promptTokens, config.MaxContentTokens))
     }
 
-    // Resolve model + billing multiplier for the request status doc.
-    const effectiveLevel = level ?? config.DefaultLevel
-    const resolved = resolveModel(effectiveLevel, config.AIProviders)
-
-    // Per-workspace rolling-window token limit (soft): instead of calling the LLM,
-    // notify the user in their Direct chat with Юля when the 5h/weekly limit is hit.
+    // Rolling-window limits (from billing). 5h is a hard block for everyone; the
+    // weekly limit may be exceeded only by a fallback-eligible (cheap/local) level,
+    // and only when the space opted into "use simpler models" (fallbackToSimpler).
+    const requestedLevel = level ?? config.DefaultLevel
     const windows = await getWorkspaceWindows(this.ctx, this.wsIds.uuid)
-    const verdict = checkWindowLimit(resolved.model, windows)
-    if (verdict.blocked) {
+    const decision = decideLevel(requestedLevel, config.AIProviders, windows, event.fallbackToSimpler === true)
+    if (decision.action === 'block') {
       const lang = event.language ?? config.DefaultLanguage
-      await this.notifyLimit(personUuid, verdict.window ?? '5h', lang, {
+      await this.notifyLimit(personUuid, decision.blockedWindow ?? '5h', lang, {
         messageClass,
         space,
         objectId,
@@ -577,6 +575,10 @@ export class WorkspaceClient {
       })
       return
     }
+
+    // Effective level may have been downgraded to a fallback-eligible model.
+    const effectiveLevel = decision.level ?? requestedLevel
+    const resolved = resolveModel(effectiveLevel, config.AIProviders)
 
     const aiRequestSpace = await this.getUserPersonSpace(personUuid)
     const aiRequestId = await this.createAIRequest(personUuid, {

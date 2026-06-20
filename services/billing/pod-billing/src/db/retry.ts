@@ -169,6 +169,14 @@ export class RetryDB implements BillingDB {
     return await retry(() => this.db.getWorkspaceTokensInWindow(ctx, workspace, windowHours), this.options)
   }
 
+  async getWindowHourlyBuckets (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    windowHours: number
+  ): Promise<Array<{ hour: string, tokens: number }>> {
+    return await retry(() => this.db.getWindowHourlyBuckets(ctx, workspace, windowHours), this.options)
+  }
+
   async getProviderTokenTotals (ctx: MeasureContext, start?: Date, end?: Date): Promise<ProviderTokenTotal[]> {
     return await retry(() => this.db.getProviderTokenTotals(ctx, start, end), this.options)
   }
@@ -183,6 +191,10 @@ export class RetryDB implements BillingDB {
 
   async upsertProviderPool (ctx: MeasureContext, config: ProviderPoolConfig): Promise<void> {
     await retry(() => this.db.upsertProviderPool(ctx, config), this.options)
+  }
+
+  async addPurchasedTokens (ctx: MeasureContext, providerId: string, delta: number): Promise<void> {
+    await retry(() => this.db.addPurchasedTokens(ctx, providerId, delta), this.options)
   }
 
   async updateProviderPoolState (

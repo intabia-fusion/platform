@@ -43,6 +43,9 @@ export interface AIEventRequest {
   // Space language for the bot's non-personal replies (set by the server trigger
   // from AISpaceSettings); the pod falls back to AI_DEFAULT_LANGUAGE when unset.
   language?: string
+  // When true, after the weekly token limit is exceeded the bot uses a cheaper
+  // fallback-eligible model instead of refusing (set by the trigger from AISpaceSettings).
+  fallbackToSimpler?: boolean
 }
 
 export interface TranslateRequest {

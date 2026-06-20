@@ -17,11 +17,13 @@ import type { Resources } from '@hcengineering/platform'
 import Settings from './components/Settings.svelte'
 import WorkbenchExtension from './components/WorkbenchExtension.svelte'
 import UsageExtension from './components/UsageExtension.svelte'
+import AdminBilling from './components/AdminBilling.svelte'
 
 export default async (): Promise<Resources> => ({
   component: {
     Settings,
     UsageExtension,
-    WorkbenchExtension
+    WorkbenchExtension,
+    AdminBilling
   }
 })

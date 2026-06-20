@@ -2,43 +2,65 @@
 // Copyright © 2026 Intabia Fusion
 //
 
-import { checkWindowLimit } from '../workspace/windowLimit'
-import { type AILevelModel } from '../config'
+import { decideLevel, type WindowUsage } from '../workspace/windowLimit'
+import { type AIProviderConfig } from '../config'
 
-function model (over: Partial<AILevelModel> = {}): AILevelModel {
-  return { model: 'm', tokenMultiplier: 1, order: 0, label: 'L', ...over }
-}
+// Two providers: a purchased one (levels low/high) and a local clisr fallback.
+const registry: AIProviderConfig[] = [
+  {
+    id: 'openai',
+    provider: 'openai',
+    concurrency: 1,
+    batch: 1,
+    levels: {
+      low: { model: 'gpt-low', tokenMultiplier: 1, order: 1, label: 'Low' },
+      high: { model: 'gpt-high', tokenMultiplier: 2, order: 3, label: 'High' }
+    }
+  },
+  {
+    id: 'clisr',
+    provider: 'clisr',
+    concurrency: 1,
+    batch: 1,
+    levels: {
+      fast: { model: 'local-fast', tokenMultiplier: 0.1, order: 0, label: 'Fast', fallbackEligible: true }
+    }
+  }
+]
 
-const usage = (w5: number, wk: number): { window5h: { used: number }, week: { used: number } } => ({
-  window5h: { used: w5 },
-  week: { used: wk }
+const usage = (w5: [number, number], wk: [number, number]): WindowUsage => ({
+  window5h: { used: w5[0], limit: w5[1] },
+  week: { used: wk[0], limit: wk[1] }
 })
 
-describe('checkWindowLimit', () => {
-  it('no limits = never blocked', () => {
-    expect(checkWindowLimit(model(), usage(1e9, 1e9)).blocked).toBe(false)
+describe('decideLevel', () => {
+  it('proceeds with requested level when under both windows', () => {
+    const d = decideLevel('high', registry, usage([10, 100], [10, 1000]), false)
+    expect(d).toEqual({ action: 'proceed', level: 'high' })
   })
 
-  it('blocks on 5h window at limit', () => {
-    const v = checkWindowLimit(model({ window5hLimit: 100 }), usage(100, 0))
-    expect(v).toMatchObject({ blocked: true, window: '5h', used: 100, limit: 100 })
+  it('5h over limit -> hard block (no fallback)', () => {
+    const d = decideLevel('fast', registry, usage([100, 100], [0, 1000]), true)
+    expect(d).toMatchObject({ action: 'block', blockedWindow: '5h' })
   })
 
-  it('blocks on week window over limit', () => {
-    const v = checkWindowLimit(model({ weekLimit: 1000 }), usage(0, 1500))
-    expect(v).toMatchObject({ blocked: true, window: 'week', limit: 1000 })
+  it('weekly over + requested not eligible + fallback off -> block', () => {
+    const d = decideLevel('high', registry, usage([0, 100], [1000, 1000]), false)
+    expect(d).toMatchObject({ action: 'block', blockedWindow: 'week' })
   })
 
-  it('under both limits passes', () => {
-    expect(checkWindowLimit(model({ window5hLimit: 100, weekLimit: 1000 }), usage(50, 500)).blocked).toBe(false)
+  it('weekly over + fallback on -> downgrade to eligible level', () => {
+    const d = decideLevel('high', registry, usage([0, 100], [1000, 1000]), true)
+    expect(d).toEqual({ action: 'proceed', level: 'fast' })
   })
 
-  it('5h checked before week', () => {
-    const v = checkWindowLimit(model({ window5hLimit: 100, weekLimit: 1000 }), usage(100, 1500))
-    expect(v.window).toBe('5h')
+  it('weekly over + requested already eligible -> proceed as-is', () => {
+    const d = decideLevel('fast', registry, usage([0, 100], [1000, 1000]), false)
+    expect(d).toEqual({ action: 'proceed', level: 'fast' })
   })
 
-  it('zero limit = unlimited', () => {
-    expect(checkWindowLimit(model({ window5hLimit: 0 }), usage(9999, 0)).blocked).toBe(false)
+  it('no limits (0) -> always proceed', () => {
+    const d = decideLevel('high', registry, usage([1e9, 0], [1e9, 0]), false)
+    expect(d).toEqual({ action: 'proceed', level: 'high' })
   })
 })

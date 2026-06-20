@@ -34,6 +34,7 @@ export class TTier extends TDoc implements Tier {
   trafficLimitGB!: number
   meetingMinutesLimit!: number
   tokenLimit!: number
+  tokenPackageMultiplier?: number
 
   priceMonthly!: number
   index!: number

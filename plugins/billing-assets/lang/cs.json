@@ -72,6 +72,23 @@
     "LimitReached": "Dosažen limit pracovního prostoru, některé funkce mohou být zakázány. Upgradujte pro obnovení plného přístupu.",
     "RestrictedPlans": "Pouze vlastník pracovního prostoru nebo správce fakturace může změnit plán předplatného.",
     "SubscriptionOperationFailed": "Operace s předplatným se nezdařila",
-    "SubscriptionErrorMessage": "Něco se pokazilo. Zkuste to znovu nebo kontaktujte podporu."
+    "SubscriptionErrorMessage": "Něco se pokazilo. Zkuste to znovu nebo kontaktujte podporu.",
+    "AITokens": "AI tokeny",
+    "ProviderPools": "Tokenové fondy poskytovatelů",
+    "NoProviderPools": "Nejsou nakonfigurovány žádné zakoupené fondy poskytovatelů",
+    "ByModel": "Podle modelu",
+    "ByLevel": "Podle úrovně",
+    "AddTokens": "Přidat tokeny",
+    "TokenWindow5h": "AI tokeny (5 h)",
+    "TokenWindowWeek": "AI tokeny (týden)",
+    "ByWorkspace": "Podle prostorů",
+    "Calculator": "Kalkulačka tarifů",
+    "BudgetPerUser": "Rozpočet na uživatele, ₽/měs",
+    "WindowsPerDay": "Aktivních oken za den",
+    "PricePer1000": "Cena za 1000 tokenů, ₽",
+    "MonthlyBudgetTokens": "Měsíční rozpočet tokenů",
+    "SuggestedWindow5h": "Doporučený 5h limit",
+    "SuggestedWindowWeek": "Doporučený týdenní limit",
+    "CurrentWindows": "Aktuální limity (5 h / týden)"
   }
 }

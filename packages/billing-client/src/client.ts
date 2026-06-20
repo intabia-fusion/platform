@@ -4,6 +4,7 @@ import {
   AiTokensBreakdown,
   AiTokensData,
   AiTokensGroupBy,
+  BillingPricing,
   AiTranscriptData,
   BillingStats,
   DatalakeStats,
@@ -135,6 +136,12 @@ export class BillingClient {
     await fetchSafe(url, { method: 'POST', headers: { ...this.headers }, body })
   }
 
+  async addProviderPoolTokens (providerId: string, delta: number): Promise<void> {
+    const url = new URL(concatLink(this.endpoint, '/api/v1/admin/pools/add'))
+    const body = JSON.stringify({ providerId, delta })
+    await fetchSafe(url, { method: 'POST', headers: { ...this.headers }, body })
+  }
+
   async getTokenUsage (groupBy: AiTokensGroupBy, providerId?: string): Promise<AiTokensBreakdown[]> {
     const url = new URL(concatLink(this.endpoint, '/api/v1/admin/token-usage'))
     url.searchParams.set('groupBy', groupBy)
@@ -149,6 +156,12 @@ export class BillingClient {
     const url = new URL(concatLink(this.endpoint, '/api/v1/admin/workspace-tokens'))
     const response = await fetchSafe(url, { headers: { ...this.headers } })
     return (await response.json()) as AiTokensBreakdown[]
+  }
+
+  async getPricing (): Promise<BillingPricing> {
+    const url = new URL(concatLink(this.endpoint, '/api/v1/admin/pricing'))
+    const response = await fetchSafe(url, { headers: { ...this.headers } })
+    return (await response.json()) as BillingPricing
   }
 
   async getWorkspaceTokenWindows (workspace: WorkspaceUuid): Promise<WorkspaceTokenWindows> {

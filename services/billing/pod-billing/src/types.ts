@@ -100,9 +100,13 @@ export interface ProviderTokenTotal {
 }
 
 // Token usage for a single rolling window (used vs limit). limit 0 = unlimited.
+// resetAt: ISO time when used will drop to/below limit as oldest hours age out
+// (null when not over the limit).
 export interface TokenWindowUsage {
   used: number
+  limit: number
   windowHours: number
+  resetAt: string | null
 }
 
 // Both rolling windows aibot enforces per-workspace.
@@ -220,6 +224,12 @@ export interface BillingDB {
   getAiTokensByWorkspace: (ctx: MeasureContext, start?: Date, end?: Date) => Promise<AiTokensBreakdown[]>
   // Tokens used by a workspace within the last `windowHours` (rolling, from the hourly bucket).
   getWorkspaceTokensInWindow: (ctx: MeasureContext, workspace: WorkspaceUuid, windowHours: number) => Promise<number>
+  // Per-hour token totals within the rolling window (ascending), for reset-ETA computation.
+  getWindowHourlyBuckets: (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    windowHours: number
+  ) => Promise<Array<{ hour: string, tokens: number }>>
   // Total tokens spent per provider in a period (for provider-pool used).
   getProviderTokenTotals: (ctx: MeasureContext, start?: Date, end?: Date) => Promise<ProviderTokenTotal[]>
 
@@ -228,6 +238,8 @@ export interface BillingDB {
   getProviderPool: (ctx: MeasureContext, providerId: string) => Promise<ProviderPool | undefined>
   // Admin upsert of pool config; resets notify flags + used when period restarts.
   upsertProviderPool: (ctx: MeasureContext, config: ProviderPoolConfig) => Promise<void>
+  // Top-up: add `delta` purchased tokens to a pool and reopen it (clear exhausted/notify).
+  addPurchasedTokens: (ctx: MeasureContext, providerId: string, delta: number) => Promise<void>
   // Recompute used/exhausted/notify-flags from getProviderTokenTotals; returns the
   // updated pool plus whether a threshold (80/100) was newly crossed this pass.
   updateProviderPoolState: (

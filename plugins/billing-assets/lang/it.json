@@ -72,6 +72,23 @@
     "LimitReached": "Limite workspace raggiunto, alcune funzionalità potrebbero essere disabilitate. Aggiorna per ripristinare l'accesso completo.",
     "RestrictedPlans": "Solo il proprietario del workspace o il responsabile della fatturazione può modificare il piano di abbonamento.",
     "SubscriptionOperationFailed": "Operazione di abbonamento non riuscita",
-    "SubscriptionErrorMessage": "Qualcosa è andato storto. Riprova o contatta l'assistenza."
+    "SubscriptionErrorMessage": "Qualcosa è andato storto. Riprova o contatta l'assistenza.",
+    "AITokens": "Token IA",
+    "ProviderPools": "Pool di token del fornitore",
+    "NoProviderPools": "Nessun pool del fornitore acquistato configurato",
+    "ByModel": "Per modello",
+    "ByLevel": "Per livello",
+    "AddTokens": "Aggiungi token",
+    "TokenWindow5h": "Token IA (5 h)",
+    "TokenWindowWeek": "Token IA (settimana)",
+    "ByWorkspace": "Per spazi",
+    "Calculator": "Calcolatore tariffe",
+    "BudgetPerUser": "Budget per utente, ₽/mese",
+    "WindowsPerDay": "Finestre attive al giorno",
+    "PricePer1000": "Prezzo per 1000 token, ₽",
+    "MonthlyBudgetTokens": "Budget mensile di token",
+    "SuggestedWindow5h": "Limite 5 h consigliato",
+    "SuggestedWindowWeek": "Limite settimanale consigliato",
+    "CurrentWindows": "Limiti attuali (5 h / settimana)"
   }
 }

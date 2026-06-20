@@ -23,6 +23,7 @@ import {
 import { withRetry } from '@hcengineering/retry'
 
 import config from './config'
+import { type WindowUsage } from './workspace/windowLimit'
 
 interface DeepgramRequest {
   request_id: string
@@ -270,14 +271,17 @@ export function tokensRecord (
 export async function getWorkspaceWindows (
   ctx: MeasureContext,
   workspace: WorkspaceUuid
-): Promise<{ window5h: { used: number }, week: { used: number } }> {
-  const zero = { window5h: { used: 0 }, week: { used: 0 } }
+): Promise<WindowUsage> {
+  const zero = { window5h: { used: 0, limit: 0 }, week: { used: 0, limit: 0 } }
   if (config.BillingUrl === '') return zero
   try {
     const token = generateToken(systemAccountUuid, workspace, { service: 'ai-bot', admin: 'true' })
     const billingClient = getBillingClient(config.BillingUrl, token)
     const w = await billingClient.getWorkspaceTokenWindows(workspace)
-    return { window5h: { used: w.window5h.used }, week: { used: w.week.used } }
+    return {
+      window5h: { used: w.window5h.used, limit: w.window5h.limit },
+      week: { used: w.week.used, limit: w.week.limit }
+    }
   } catch (e) {
     ctx.error('Failed to fetch token windows', { workspace, e })
     return zero

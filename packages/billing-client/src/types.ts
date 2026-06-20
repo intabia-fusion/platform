@@ -145,13 +145,22 @@ export interface ProviderPoolConfig {
 
 export interface TokenWindowUsage {
   used: number
+  limit: number
   windowHours: number
+  resetAt: string | null
 }
 
 export interface WorkspaceTokenWindows {
   workspace: WorkspaceUuid
   window5h: TokenWindowUsage
   week: TokenWindowUsage
+}
+
+export interface BillingPricing {
+  pricePer1000: Record<string, number>
+  window5hLimitPerUser: number
+  windowWeekLimitPerUser: number
+  tokenPackageMultiplier: number
 }
 
 export type AiTokensGroupBy = 'model' | 'level' | 'provider' | 'workspace'

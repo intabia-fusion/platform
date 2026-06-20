@@ -72,6 +72,23 @@
     "LimitReached": "Arbeitsbereich-Limit erreicht, einige Funktionen könnten deaktiviert sein. Upgraden Sie für vollen Zugriff.",
     "RestrictedPlans": "Nur der Arbeitsbereichsbesitzer oder Abrechnungsmanager kann den Abonnementplan ändern.",
     "SubscriptionOperationFailed": "Abonnementvorgang fehlgeschlagen",
-    "SubscriptionErrorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support."
+    "SubscriptionErrorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
+    "AITokens": "KI-Tokens",
+    "ProviderPools": "Anbieter-Token-Pools",
+    "NoProviderPools": "Keine erworbenen Anbieter-Pools konfiguriert",
+    "ByModel": "Nach Modell",
+    "ByLevel": "Nach Stufe",
+    "AddTokens": "Tokens hinzufügen",
+    "TokenWindow5h": "KI-Tokens (5 Std.)",
+    "TokenWindowWeek": "KI-Tokens (Woche)",
+    "ByWorkspace": "Nach Bereichen",
+    "Calculator": "Tarifrechner",
+    "BudgetPerUser": "Budget pro Benutzer, ₽/Mon.",
+    "WindowsPerDay": "Aktive Fenster pro Tag",
+    "PricePer1000": "Preis pro 1000 Tokens, ₽",
+    "MonthlyBudgetTokens": "Monatliches Token-Budget",
+    "SuggestedWindow5h": "Empfohlenes 5-Std.-Limit",
+    "SuggestedWindowWeek": "Empfohlenes Wochenlimit",
+    "CurrentWindows": "Aktuelle Limits (5 Std. / Woche)"
   }
 }

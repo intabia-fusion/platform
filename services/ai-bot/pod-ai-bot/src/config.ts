@@ -34,9 +34,10 @@ export interface AILevelModel {
   order: number // sort key for UI + fallback ladder (lower = weaker/cheaper)
   label: string // UI label shown to the user
   description?: string // UI hint under the label
-  // Per-workspace rolling-window token limits for this level (0/undefined = unlimited).
-  window5hLimit?: number // max billed tokens per workspace in the last 5 hours
-  weekLimit?: number // max billed tokens per workspace in the last 7 days
+  // May serve requests after the workspace's WEEKLY token limit is exceeded (a cheap/
+  // local fallback model). The 5h window is always hard-blocked regardless. Window
+  // limits themselves are global (billing config), not per-level.
+  fallbackEligible?: boolean
   capabilities?: {
     tools?: boolean
     streaming?: boolean

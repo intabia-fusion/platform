@@ -13,12 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { onMount } from 'svelte'
   import { Tier } from '@hcengineering/billing'
   import { UsageStatus } from '@hcengineering/core'
   import { Label } from '@hcengineering/ui'
+  import { getCurrentWorkspaceUuid } from '@hcengineering/presentation'
+  import type { WorkspaceTokenWindows } from '@hcengineering/billing-client'
   import plugin from '../plugin'
   import UsageProgress from './UsageProgress.svelte'
-  import { calculateLimits } from '../utils'
+  import { calculateLimits, getBillingClient } from '../utils'
 
   export let usage: UsageStatus | null
   export let tier: Tier | undefined
@@ -27,6 +30,19 @@
   $: meetingMinutes = usage?.usage?.meetingMinutes ?? 0
   $: tokensUsage = usage?.usage?.tokens ?? 0
   $: limits = calculateLimits(tier)
+
+  // Rolling AI-token windows (5h + week). Limits come from billing (fixed config);
+  // only shown when a limit is configured (> 0).
+  let windows: WorkspaceTokenWindows | undefined
+  onMount(async () => {
+    const client = getBillingClient()
+    if (client === null) return
+    try {
+      windows = await client.getWorkspaceTokenWindows(getCurrentWorkspaceUuid())
+    } catch {
+      windows = undefined
+    }
+  })
 </script>
 
 <div class="flex-col flex-gap-2">
@@ -44,4 +60,21 @@
   />
 
   <UsageProgress label={plugin.string.TotalTokens} value={tokensUsage} limit={limits.tokenLimit} kind={'items'} />
+
+  {#if windows !== undefined && windows.window5h.limit > 0}
+    <UsageProgress
+      label={plugin.string.TokenWindow5h}
+      value={windows.window5h.used}
+      limit={windows.window5h.limit}
+      kind={'items'}
+    />
+  {/if}
+  {#if windows !== undefined && windows.week.limit > 0}
+    <UsageProgress
+      label={plugin.string.TokenWindowWeek}
+      value={windows.week.used}
+      limit={windows.week.limit}
+      kind={'items'}
+    />
+  {/if}
 </div>

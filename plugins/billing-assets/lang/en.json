@@ -72,6 +72,23 @@
     "LimitReached": "Workspace limit reached, some functionality may be disabled. Upgrade to restore full access.",
     "RestrictedPlans": "Only the workspace owner or billing manager can change the subscription plan",
     "SubscriptionOperationFailed": "Subscription operation failed",
-    "SubscriptionErrorMessage": "Something went wrong. Please try again or contact support."
+    "SubscriptionErrorMessage": "Something went wrong. Please try again or contact support.",
+    "AITokens": "AI tokens",
+    "ProviderPools": "Provider token pools",
+    "NoProviderPools": "No purchased provider pools configured",
+    "ByModel": "By model",
+    "ByLevel": "By level",
+    "AddTokens": "Add tokens",
+    "TokenWindow5h": "AI tokens (5h)",
+    "TokenWindowWeek": "AI tokens (week)",
+    "ByWorkspace": "By workspace",
+    "Calculator": "Tariff calculator",
+    "BudgetPerUser": "Budget per user, ₽/mo",
+    "WindowsPerDay": "Active windows per day",
+    "PricePer1000": "Price per 1000 tokens, ₽",
+    "MonthlyBudgetTokens": "Monthly token budget",
+    "SuggestedWindow5h": "Suggested 5h limit",
+    "SuggestedWindowWeek": "Suggested weekly limit",
+    "CurrentWindows": "Current limits (5h / week)"
   }
 }

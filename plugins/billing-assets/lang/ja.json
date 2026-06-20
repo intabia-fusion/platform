@@ -72,6 +72,23 @@
     "LimitReached": "ワークスペースの制限に達しました。一部の機能が無効になる場合があります。アップグレードして完全アクセスを復元してください。",
     "RestrictedPlans": "ワークスペースの所有者または請求管理者のみがサブスクリプションプランを変更できます。",
     "SubscriptionOperationFailed": "サブスクリプション操作に失敗しました",
-    "SubscriptionErrorMessage": "問題が発生しました。もう一度お試しいただくか、サポートにお問い合わせください。"
+    "SubscriptionErrorMessage": "問題が発生しました。もう一度お試しいただくか、サポートにお問い合わせください。",
+    "AITokens": "AIトークン",
+    "ProviderPools": "プロバイダートークンプール",
+    "NoProviderPools": "購入済みのプロバイダープールが設定されていません",
+    "ByModel": "モデル別",
+    "ByLevel": "レベル別",
+    "AddTokens": "トークンを追加",
+    "TokenWindow5h": "AIトークン (5時間)",
+    "TokenWindowWeek": "AIトークン (週)",
+    "ByWorkspace": "スペース別",
+    "Calculator": "料金計算ツール",
+    "BudgetPerUser": "ユーザーあたりの予算、₽/月",
+    "WindowsPerDay": "1日あたりのアクティブウィンドウ数",
+    "PricePer1000": "1000トークンあたりの料金、₽",
+    "MonthlyBudgetTokens": "月間トークン予算",
+    "SuggestedWindow5h": "推奨5時間制限",
+    "SuggestedWindowWeek": "推奨週間制限",
+    "CurrentWindows": "現在の制限 (5時間 / 週)"
   }
 }

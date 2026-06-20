@@ -21,7 +21,7 @@ import {
   type AIRequest,
   type AIRequestStatus
 } from '@hcengineering/ai-bot'
-import { type Builder, Model, Prop, TypeNumber, TypeRef, TypeString, TypeTimestamp } from '@hcengineering/model'
+import { type Builder, Model, Prop, TypeBoolean, TypeNumber, TypeRef, TypeString, TypeTimestamp } from '@hcengineering/model'
 import core, { TDoc } from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
 import setting from '@hcengineering/setting'
@@ -90,6 +90,9 @@ export class TAISpaceSettings extends TDoc implements AISpaceSettings {
 
   @Prop(TypeString(), core.string.String)
     language?: string
+
+  @Prop(TypeBoolean(), core.string.Boolean)
+    fallbackToSimpler?: boolean
 }
 
 export function createModel (builder: Builder): void {

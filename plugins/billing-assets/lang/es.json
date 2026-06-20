@@ -72,6 +72,23 @@
     "LimitReached": "Límite del espacio de trabajo alcanzado, algunas funciones pueden estar deshabilitadas. Actualiza para restaurar acceso completo.",
     "RestrictedPlans": "Solo el propietario del espacio de trabajo o el administrador de facturación pueden cambiar el plan de suscripción.",
     "SubscriptionOperationFailed": "Error en la operación de suscripción",
-    "SubscriptionErrorMessage": "Algo ha ido mal. Inténtelo de nuevo o contacte con soporte."
+    "SubscriptionErrorMessage": "Algo ha ido mal. Inténtelo de nuevo o contacte con soporte.",
+    "AITokens": "Tokens de IA",
+    "ProviderPools": "Grupos de tokens del proveedor",
+    "NoProviderPools": "No hay grupos de proveedor adquiridos configurados",
+    "ByModel": "Por modelo",
+    "ByLevel": "Por nivel",
+    "AddTokens": "Añadir tokens",
+    "TokenWindow5h": "Tokens de IA (5 h)",
+    "TokenWindowWeek": "Tokens de IA (semana)",
+    "ByWorkspace": "Por espacios",
+    "Calculator": "Calculadora de tarifas",
+    "BudgetPerUser": "Presupuesto por usuario, ₽/mes",
+    "WindowsPerDay": "Ventanas activas por día",
+    "PricePer1000": "Precio por 1000 tokens, ₽",
+    "MonthlyBudgetTokens": "Presupuesto mensual de tokens",
+    "SuggestedWindow5h": "Límite de 5 h sugerido",
+    "SuggestedWindowWeek": "Límite semanal sugerido",
+    "CurrentWindows": "Límites actuales (5 h / semana)"
   }
 }

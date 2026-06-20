@@ -160,6 +160,16 @@ export class LoggedDB implements BillingDB {
     )
   }
 
+  async getWindowHourlyBuckets (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    windowHours: number
+  ): Promise<Array<{ hour: string, tokens: number }>> {
+    return await ctx.with('db.getWindowHourlyBuckets', {}, () =>
+      this.db.getWindowHourlyBuckets(ctx, workspace, windowHours)
+    )
+  }
+
   async getProviderTokenTotals (ctx: MeasureContext, start?: Date, end?: Date): Promise<ProviderTokenTotal[]> {
     return await ctx.with('db.getProviderTokenTotals', {}, () => this.db.getProviderTokenTotals(ctx, start, end))
   }
@@ -174,6 +184,10 @@ export class LoggedDB implements BillingDB {
 
   async upsertProviderPool (ctx: MeasureContext, config: ProviderPoolConfig): Promise<void> {
     await ctx.with('db.upsertProviderPool', {}, () => this.db.upsertProviderPool(ctx, config))
+  }
+
+  async addPurchasedTokens (ctx: MeasureContext, providerId: string, delta: number): Promise<void> {
+    await ctx.with('db.addPurchasedTokens', {}, () => this.db.addPurchasedTokens(ctx, providerId, delta))
   }
 
   async updateProviderPoolState (

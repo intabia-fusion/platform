@@ -26,6 +26,12 @@ export interface Tier extends Doc {
   meetingMinutesLimit: number // In minutes
   tokenLimit: number // In thousands of tokens
 
+  // AI token package multiplier (xN). A purchasable package scales the effective AI
+  // token limits — both the rolling windows (5h/week) and the overall monthly limit.
+  // Default 1 = no effect. Enforcement of the scaled limit is applied where windows
+  // are computed (billing); wire the actual purchase flow when billing supports it.
+  tokenPackageMultiplier?: number
+
   index: number
   color?: string
 }

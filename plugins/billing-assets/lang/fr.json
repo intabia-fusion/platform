@@ -72,6 +72,23 @@
     "LimitReached": "Limite de l'espace de travail atteinte, certaines fonctionnalités peuvent être désactivées. Mettez à niveau pour restaurer l'accès complet.",
     "RestrictedPlans": "Seul le propriétaire de l'espace de travail ou le gestionnaire de facturation peut modifier le plan d'abonnement.",
     "SubscriptionOperationFailed": "Échec de l'opération d'abonnement",
-    "SubscriptionErrorMessage": "Une erreur s'est produite. Veuillez réessayer ou contacter le support."
+    "SubscriptionErrorMessage": "Une erreur s'est produite. Veuillez réessayer ou contacter le support.",
+    "AITokens": "Jetons IA",
+    "ProviderPools": "Pools de jetons du fournisseur",
+    "NoProviderPools": "Aucun pool de fournisseur acheté configuré",
+    "ByModel": "Par modèle",
+    "ByLevel": "Par niveau",
+    "AddTokens": "Ajouter des jetons",
+    "TokenWindow5h": "Jetons IA (5 h)",
+    "TokenWindowWeek": "Jetons IA (semaine)",
+    "ByWorkspace": "Par espaces",
+    "Calculator": "Calculateur de tarifs",
+    "BudgetPerUser": "Budget par utilisateur, ₽/mois",
+    "WindowsPerDay": "Fenêtres actives par jour",
+    "PricePer1000": "Prix pour 1000 jetons, ₽",
+    "MonthlyBudgetTokens": "Budget mensuel de jetons",
+    "SuggestedWindow5h": "Limite 5 h suggérée",
+    "SuggestedWindowWeek": "Limite hebdomadaire suggérée",
+    "CurrentWindows": "Limites actuelles (5 h / semaine)"
   }
 }

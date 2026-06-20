@@ -72,6 +72,23 @@
     "LimitReached": "Çalışma alanı limiti aşıldı, bazı işlevler devre dışı bırakılabilir. Tam erişimi geri yüklemek için yükseltin.",
     "RestrictedPlans": "Abonelik planını yalnızca çalışma alanı sahibi veya faturalama yöneticisi değiştirebilir.",
     "SubscriptionOperationFailed": "Abonelik işlemi başarısız oldu",
-    "SubscriptionErrorMessage": "Bir şeyler yanlış gitti. Lütfen tekrar deneyin veya destek ile iletişime geçin."
+    "SubscriptionErrorMessage": "Bir şeyler yanlış gitti. Lütfen tekrar deneyin veya destek ile iletişime geçin.",
+    "AITokens": "AI belirteçleri",
+    "ProviderPools": "Sağlayıcı belirteç havuzları",
+    "NoProviderPools": "Satın alınmış sağlayıcı havuzu yapılandırılmamış",
+    "ByModel": "Modele göre",
+    "ByLevel": "Seviyeye göre",
+    "AddTokens": "Belirteç ekle",
+    "TokenWindow5h": "AI belirteçleri (5 sa.)",
+    "TokenWindowWeek": "AI belirteçleri (hafta)",
+    "ByWorkspace": "Alanlara göre",
+    "Calculator": "Tarife hesaplayıcı",
+    "BudgetPerUser": "Kullanıcı başına bütçe, ₽/ay",
+    "WindowsPerDay": "Günlük aktif pencere",
+    "PricePer1000": "1000 belirteç başına fiyat, ₽",
+    "MonthlyBudgetTokens": "Aylık belirteç bütçesi",
+    "SuggestedWindow5h": "Önerilen 5 sa. limiti",
+    "SuggestedWindowWeek": "Önerilen haftalık limit",
+    "CurrentWindows": "Mevcut limitler (5 sa. / hafta)"
   }
 }

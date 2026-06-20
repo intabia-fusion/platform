@@ -23,6 +23,19 @@ export interface Config {
   // Recipients of provider-pool threshold alerts (80%/100%); empty disables email.
   AdminEmails: string[]
   QueueRegion: string
+  // Per-PAID-USER rolling-window token limits (0 = unlimited). The effective window
+  // limit scales with the number of paid seats: limit = perUser * paidSeats. Used to
+  // render usage as a percentage; enforcement lives in aibot.
+  Window5hLimit: number
+  WindowWeekLimit: number
+  // AI token package multiplier (xN) — a purchasable package scales the effective AI
+  // token limits (windows + overall). Default 1 = no effect. Placeholder until the
+  // purchase flow lands: today it comes from env; later read the workspace's package
+  // from its Subscription (Tier.tokenPackageMultiplier baked into Subscription.limits).
+  TokenPackageMultiplier: number
+  // Upstream cost per 1000 tokens by key, for the admin cost calculator. Keyed by
+  // provider_id or model (whatever ai-bot records). Env: PROVIDER_PRICES=key:rub,...
+  ProviderPrices: Record<string, number>
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
@@ -39,7 +52,21 @@ const config: Config = (() => {
       .split(',')
       .map((e) => e.trim())
       .filter((e) => e !== ''),
-    QueueRegion: process.env.QUEUE_REGION ?? ''
+    QueueRegion: process.env.QUEUE_REGION ?? '',
+    Window5hLimit: parseNumber(process.env.WINDOW_5H_LIMIT) ?? 0,
+    WindowWeekLimit: parseNumber(process.env.WINDOW_WEEK_LIMIT) ?? 0,
+    TokenPackageMultiplier: parseNumber(process.env.TOKEN_PACKAGE_MULTIPLIER) ?? 1,
+    ProviderPrices: Object.fromEntries(
+      (process.env.PROVIDER_PRICES ?? '')
+        .split(',')
+        .map((p) => p.trim())
+        .filter((p) => p !== '')
+        .map((p) => {
+          const [k, v] = p.split(':')
+          return [k.trim(), Number(v)]
+        })
+        .filter(([, v]) => !isNaN(v as number))
+    )
   }
 
   // AdminEmails/QueueRegion are optional (default applied above) — exclude from the check.

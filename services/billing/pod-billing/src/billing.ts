@@ -28,10 +28,13 @@ import {
   ProviderPoolConfig
 } from './types'
 import { generateToken } from '@hcengineering/server-token'
+import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { StorageConfig } from '@hcengineering/server-core'
 import { createDatalakeClient, DatalakeConfig, WorkspaceStats, WorkspaceStatsByType } from '@hcengineering/datalake'
 import { validate as uuidValidate } from 'uuid'
 import { getClient } from './client'
+import billingConfig from './config'
+import { computeWindowResetAt } from './window'
 
 export async function handleListLiveKitSessions (
   ctx: MeasureContext,
@@ -278,6 +281,22 @@ export async function collectDatalakeStats (
   return result
 }
 
+// Pricing + current window limits for the admin cost calculator.
+export async function handleGetPricing (
+  ctx: MeasureContext,
+  db: BillingDB,
+  storageConfigs: StorageConfig[],
+  req: Request,
+  res: Response
+): Promise<void> {
+  res.json({
+    pricePer1000: billingConfig.ProviderPrices,
+    window5hLimitPerUser: billingConfig.Window5hLimit,
+    windowWeekLimitPerUser: billingConfig.WindowWeekLimit,
+    tokenPackageMultiplier: billingConfig.TokenPackageMultiplier
+  })
+}
+
 export async function handleListProviderPools (
   ctx: MeasureContext,
   db: BillingDB,
@@ -301,6 +320,22 @@ export async function handleUpsertProviderPool (
     return
   }
   await db.upsertProviderPool(ctx, config)
+  res.status(204).send()
+}
+
+export async function handleAddProviderPoolTokens (
+  ctx: MeasureContext,
+  db: BillingDB,
+  storageConfigs: StorageConfig[],
+  req: Request,
+  res: Response
+): Promise<void> {
+  const body = (await req.body) as { providerId?: string, delta?: number }
+  if (body?.providerId == null || body.providerId === '' || typeof body.delta !== 'number') {
+    res.status(400).json({ message: 'providerId and numeric delta required' })
+    return
+  }
+  await db.addPurchasedTokens(ctx, body.providerId, body.delta)
   res.status(204).send()
 }
 
@@ -338,15 +373,51 @@ export async function handleGetWorkspaceTokenWindows (
   res: Response
 ): Promise<void> {
   const workspace = getWorkspaceUuid(req)
-  const [used5h, usedWeek] = await Promise.all([
-    db.getWorkspaceTokensInWindow(ctx, workspace, 5),
-    db.getWorkspaceTokensInWindow(ctx, workspace, 24 * 7)
+  const seats = await getPaidSeats(ctx, workspace)
+  const limit5h = scaleTokenLimit(billingConfig.Window5hLimit) * seats
+  const limitWeek = scaleTokenLimit(billingConfig.WindowWeekLimit) * seats
+  const [buckets5h, bucketsWeek] = await Promise.all([
+    db.getWindowHourlyBuckets(ctx, workspace, 5),
+    db.getWindowHourlyBuckets(ctx, workspace, 24 * 7)
   ])
+  const used5h = buckets5h.reduce((s, b) => s + b.tokens, 0)
+  const usedWeek = bucketsWeek.reduce((s, b) => s + b.tokens, 0)
   res.json({
     workspace,
-    window5h: { used: used5h, windowHours: 5 },
-    week: { used: usedWeek, windowHours: 24 * 7 }
+    window5h: { used: used5h, limit: limit5h, windowHours: 5, resetAt: computeWindowResetAt(buckets5h, limit5h, 5) },
+    week: {
+      used: usedWeek,
+      limit: limitWeek,
+      windowHours: 24 * 7,
+      resetAt: computeWindowResetAt(bucketsWeek, limitWeek, 24 * 7)
+    }
   })
+}
+
+// Apply the AI token package multiplier (xN) to a base limit. 0 stays 0 (unlimited).
+// TODO: when the purchase flow lands, read the multiplier from the workspace's
+// Subscription (Tier.tokenPackageMultiplier baked into Subscription.limits) instead
+// of the pod-wide env default.
+function scaleTokenLimit (base: number): number {
+  if (base <= 0) return 0
+  return Math.round(base * billingConfig.TokenPackageMultiplier)
+}
+
+// Number of PAID seats in a workspace — window limits scale linearly with it
+// (more paid users -> bigger daily/weekly AI limits).
+// TODO: read the actual paid-seat count from the workspace Subscription once that
+// data lands (foundation3 keeps usersLimit in Subscription.limits). For now we
+// approximate with the member count; fail-open to 1 so limits never collapse.
+async function getPaidSeats (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<number> {
+  try {
+    const token = generateToken(systemAccountUuid, workspace, { service: 'billing', admin: 'true' })
+    const account = getAccountClient(billingConfig.AccountsUrl, token)
+    const members = await account.getWorkspaceMembers()
+    return Math.max(1, members.length)
+  } catch (err: any) {
+    ctx.warn('failed to resolve paid seats, defaulting to 1', { workspace, error: err?.message })
+    return 1
+  }
 }
 
 function getWorkspaceUuid (req: Request): WorkspaceUuid {

@@ -70,6 +70,23 @@
     "Of": "de",
     "UpgradePlan": "Atualizar Plano",
     "LimitReached": "Limite do espaços de trabalho atingido, algumas funcionalidades podem estar desabilitadas. Atualize para restaurar acesso completo.",
-    "RestrictedPlans": "Apenas o proprietário do espaço de trabalho ou o administrador de faturamento podem alterar o plano de assinatura."
+    "RestrictedPlans": "Apenas o proprietário do espaço de trabalho ou o administrador de faturamento podem alterar o plano de assinatura.",
+    "AITokens": "Tokens de IA",
+    "ProviderPools": "Pools de tokens do provedor",
+    "NoProviderPools": "Nenhum pool de provedor adquirido configurado",
+    "ByModel": "Por modelo",
+    "ByLevel": "Por nível",
+    "AddTokens": "Adicionar tokens",
+    "TokenWindow5h": "Tokens de IA (5 h)",
+    "TokenWindowWeek": "Tokens de IA (semana)",
+    "ByWorkspace": "Por espaços",
+    "Calculator": "Calculadora de tarifas",
+    "BudgetPerUser": "Orçamento por usuário, ₽/mês",
+    "WindowsPerDay": "Janelas ativas por dia",
+    "PricePer1000": "Preço por 1000 tokens, ₽",
+    "MonthlyBudgetTokens": "Orçamento mensal de tokens",
+    "SuggestedWindow5h": "Limite de 5 h sugerido",
+    "SuggestedWindowWeek": "Limite semanal sugerido",
+    "CurrentWindows": "Limites atuais (5 h / semana)"
   }
 }
