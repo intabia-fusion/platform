@@ -21,6 +21,7 @@
   import { Asset, getResource, IntlString } from '@hcengineering/platform'
   import view from '@hcengineering/view'
   import { isLimited } from '@hcengineering/billing-resources'
+  import billing from '@hcengineering/billing'
 
   import { getChannelName, getObjectIcon } from '../utils'
   import chunter from '../plugin'
@@ -102,7 +103,9 @@
   </div>
 {:else}
   <div class="message">
-    {#if isThread}
+    {#if billingReadOnly}
+      <Label label={billing.string.SeatLimitReadonly} />
+    {:else if isThread}
       <Label label={chunter.string.ViewingThreadFromArchivedChannel} />
     {:else}
       <Label label={chunter.string.ViewingArchivedChannel} />

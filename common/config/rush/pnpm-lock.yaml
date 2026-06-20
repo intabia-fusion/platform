@@ -17358,6 +17358,9 @@ importers:
       '@hcengineering/attachment-resources':
         specifier: workspace:^0.7.0
         version: link:../attachment-resources
+      '@hcengineering/billing':
+        specifier: workspace:^0.7.0
+        version: link:../billing
       '@hcengineering/billing-resources':
         specifier: workspace:^0.7.0
         version: link:../billing-resources

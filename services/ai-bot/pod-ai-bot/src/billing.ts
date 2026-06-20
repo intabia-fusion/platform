@@ -235,7 +235,7 @@ export async function pushTranscriptDuration (
   try {
     await usageProducer.send(ctx, workspace, [
       // ref must be deterministic for retry idempotency (billing dedups by it)
-      { workspace, metric: 'transcript', amount: durationSec, ref: `transcript-${workspace}-${ref ?? Date.now()}` }
+      { workspace, metric: 'transcript', amount: durationSec, ref: `transcript-${workspace}-${ref ?? uuid()}` }
     ])
   } catch (e) {
     ctx.error('Failed to push transcript duration to billing-usage', { workspace, durationSec, e })
