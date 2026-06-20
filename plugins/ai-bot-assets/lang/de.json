@@ -1,0 +1,14 @@
+{
+  "string": {
+    "AISettings": "KI-Einstellungen",
+    "AssistantMemory": "Assistenten-Gedächtnis",
+    "UserMemory": "Benutzer-Gedächtnis",
+    "SharedContext": "Gemeinsamer Kontext",
+    "AssistantMemoryHint": "Was sich der Assistent über Sie merkt",
+    "UserMemoryHint": "Notizen, die Sie für den Assistenten aufbewahren",
+    "SharedContextHint": "Sprache, Zeitzone und Einstellungen für Gruppenchats",
+    "ClearAll": "Alles löschen",
+    "TokenLimitReached5h": "Das KI-Token-Limit der letzten 5 Stunden wurde erreicht. Bitte versuchen Sie es später erneut.",
+    "TokenLimitReachedWeek": "Das wöchentliche KI-Token-Limit wurde erreicht. Bitte versuchen Sie es später erneut."
+  }
+}

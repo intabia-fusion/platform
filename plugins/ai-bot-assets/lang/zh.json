@@ -1,0 +1,14 @@
+{
+  "string": {
+    "AISettings": "AI 设置",
+    "AssistantMemory": "助手记忆",
+    "UserMemory": "用户记忆",
+    "SharedContext": "共享上下文",
+    "AssistantMemoryHint": "助手记住的关于您的信息",
+    "UserMemoryHint": "您为助手保存的备注",
+    "SharedContextHint": "语言、时区和群聊偏好设置",
+    "ClearAll": "全部清除",
+    "TokenLimitReached5h": "已达到过去 5 小时的 AI 令牌上限。请稍后再试。",
+    "TokenLimitReachedWeek": "已达到每周 AI 令牌上限。请稍后再试。"
+  }
+}

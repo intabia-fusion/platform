@@ -67,6 +67,7 @@ import { checkWindowLimit } from './windowLimit'
 import { buildThreadContext, type ContextMessage } from './threadContext'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
+import { translate } from '@hcengineering/platform'
 import { getAccountClient } from '@hcengineering/server-client'
 import { generateToken } from '@hcengineering/server-token'
 import { ConsumerControl, StorageAdapter } from '@hcengineering/server-core'
@@ -566,7 +567,8 @@ export class WorkspaceClient {
     const windows = await getWorkspaceWindows(this.ctx, this.wsIds.uuid)
     const verdict = checkWindowLimit(resolved.model, windows)
     if (verdict.blocked) {
-      await this.notifyLimit(personUuid, verdict.window === '5h' ? '5 часов' : 'неделя', {
+      const lang = event.language ?? config.DefaultLanguage
+      await this.notifyLimit(personUuid, verdict.window ?? '5h', lang, {
         messageClass,
         space,
         objectId,
@@ -643,10 +645,12 @@ export class WorkspaceClient {
   }
 
   // Post a token-limit notice in the user's Direct chat with Юля (falls back to the
-  // request's origin thread if no Direct exists yet). `lang` is the user's language.
+  // request's origin thread if no Direct exists yet). Text is rendered in the space
+  // language (`lang`), falling back to the pod's DefaultLanguage.
   private async notifyLimit (
     personUuid: PersonUuid,
-    windowLabel: string,
+    window: '5h' | 'week',
+    lang: string,
     fallback: {
       messageClass: Ref<Class<Doc>>
       space: Ref<Space>
@@ -655,12 +659,9 @@ export class WorkspaceClient {
       collection: string
     }
   ): Promise<void> {
-    const markup = jsonToMarkup(
-      markdownToMarkup(`Лимит токенов ИИ исчерпан (окно ${windowLabel}). Попробуйте позже.`, {
-        refUrl: '',
-        imageUrl: ''
-      })
-    )
+    const intl = window === '5h' ? aiBot.string.TokenLimitReached5h : aiBot.string.TokenLimitReachedWeek
+    const text = await translate(intl, {}, lang)
+    const markup = jsonToMarkup(markdownToMarkup(text, { refUrl: '', imageUrl: '' }))
     const direct = await this.findUserDirect(personUuid)
     if (direct !== undefined) {
       await this.client.addCollection<Doc, ChatMessage>(

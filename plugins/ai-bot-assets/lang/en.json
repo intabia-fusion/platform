@@ -1,0 +1,14 @@
+{
+  "string": {
+    "AISettings": "AI settings",
+    "AssistantMemory": "Assistant memory",
+    "UserMemory": "User memory",
+    "SharedContext": "Shared context",
+    "AssistantMemoryHint": "What the assistant remembers about you",
+    "UserMemoryHint": "Notes you keep for the assistant",
+    "SharedContextHint": "Language, timezone and group-chat preferences",
+    "ClearAll": "Clear all",
+    "TokenLimitReached5h": "AI token limit reached for the last 5 hours. Please try again later.",
+    "TokenLimitReachedWeek": "Weekly AI token limit reached. Please try again later."
+  }
+}

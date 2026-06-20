@@ -1,0 +1,14 @@
+{
+  "string": {
+    "AISettings": "Nastavení AI",
+    "AssistantMemory": "Paměť asistenta",
+    "UserMemory": "Paměť uživatele",
+    "SharedContext": "Sdílený kontext",
+    "AssistantMemoryHint": "Co si asistent o vás pamatuje",
+    "UserMemoryHint": "Poznámky, které si pro asistenta uchováváte",
+    "SharedContextHint": "Jazyk, časové pásmo a předvolby skupinových chatů",
+    "ClearAll": "Vymazat vše",
+    "TokenLimitReached5h": "Byl dosažen limit tokenů AI za posledních 5 hodin. Zkuste to prosím později.",
+    "TokenLimitReachedWeek": "Byl dosažen týdenní limit tokenů AI. Zkuste to prosím později."
+  }
+}

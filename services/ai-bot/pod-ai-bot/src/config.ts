@@ -109,6 +109,8 @@ interface Config {
   // `llm.providers`, or synthesized from the legacy single-provider settings.
   AIProviders: AIProviderConfig[]
   DefaultLevel: AILevel
+  // Fallback language for the bot's non-personal replies when a space has none set.
+  DefaultLanguage: string
 
   // ******************
   // Openai
@@ -368,6 +370,7 @@ const config: Config = (() => {
 
     AIProviders: buildProviderRegistry(yamlConfig),
     DefaultLevel: yamlConfig?.llm?.defaultLevel ?? process.env.AI_DEFAULT_LEVEL ?? 'low',
+    DefaultLanguage: process.env.AI_DEFAULT_LANGUAGE ?? 'ru',
 
     // Limits
     MaxContentTokens: yamlConfig?.limits?.maxContentTokens ?? parseNumber(process.env.MAX_CONTENT_TOKENS) ?? 128 * 100,

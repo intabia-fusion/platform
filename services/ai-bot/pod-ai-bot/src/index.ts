@@ -17,8 +17,10 @@ import { config } from 'dotenv'
 import { startQueue, startEventRouterMode, startLlmRouterMode, startSttWorkerMode } from './queue'
 import aibotConfig from './config'
 import { startClient } from './client'
+import { registerStringLoaders } from './internationalization'
 
 config()
+registerStringLoaders()
 
 switch (aibotConfig.Mode) {
   case 'event-router':

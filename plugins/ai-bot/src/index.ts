@@ -120,7 +120,10 @@ const aiBot = plugin(aiBotId, {
     AssistantMemoryHint: '' as IntlString,
     UserMemoryHint: '' as IntlString,
     SharedContextHint: '' as IntlString,
-    ClearAll: '' as IntlString
+    ClearAll: '' as IntlString,
+    // Non-personal bot replies (rendered server-side in the space language).
+    TokenLimitReached5h: '' as IntlString,
+    TokenLimitReachedWeek: '' as IntlString
   }
 })
 

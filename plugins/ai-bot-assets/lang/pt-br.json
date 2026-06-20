@@ -1,0 +1,14 @@
+{
+  "string": {
+    "AISettings": "Configurações de IA",
+    "AssistantMemory": "Memória do assistente",
+    "UserMemory": "Memória do usuário",
+    "SharedContext": "Contexto compartilhado",
+    "AssistantMemoryHint": "O que o assistente lembra sobre você",
+    "UserMemoryHint": "Notas que você guarda para o assistente",
+    "SharedContextHint": "Idioma, fuso horário e preferências de bate-papos em grupo",
+    "ClearAll": "Limpar tudo",
+    "TokenLimitReached5h": "O limite de tokens de IA das últimas 5 horas foi atingido. Tente novamente mais tarde.",
+    "TokenLimitReachedWeek": "O limite semanal de tokens de IA foi atingido. Tente novamente mais tarde."
+  }
+}

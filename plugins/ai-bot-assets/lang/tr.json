@@ -1,0 +1,14 @@
+{
+  "string": {
+    "AISettings": "Yapay zeka ayarları",
+    "AssistantMemory": "Asistan belleği",
+    "UserMemory": "Kullanıcı belleği",
+    "SharedContext": "Paylaşılan bağlam",
+    "AssistantMemoryHint": "Asistanın sizinle ilgili hatırladıkları",
+    "UserMemoryHint": "Asistan için sakladığınız notlar",
+    "SharedContextHint": "Dil, saat dilimi ve grup sohbeti tercihleri",
+    "ClearAll": "Tümünü temizle",
+    "TokenLimitReached5h": "Son 5 saatlik yapay zeka jeton sınırına ulaşıldı. Lütfen daha sonra tekrar deneyin.",
+    "TokenLimitReachedWeek": "Haftalık yapay zeka jeton sınırına ulaşıldı. Lütfen daha sonra tekrar deneyin."
+  }
+}

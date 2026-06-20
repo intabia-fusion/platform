@@ -15,7 +15,7 @@
 
 import { Readable } from 'stream'
 import { isWorkspaceLoginInfo } from '@hcengineering/account-client'
-import {
+import aiBot, {
   AIEventRequest,
   ConnectMeetingRequest,
   DisconnectMeetingRequest,
@@ -32,6 +32,7 @@ import {
   MeasureContext,
   PersonId,
   Ref,
+  type Space,
   SocialId,
   SortingOrder,
   toIdMap,
@@ -355,16 +356,35 @@ export class AIControl {
     return this.workspaces.get(workspace)
   }
 
+  // Language for the bot's non-personal output: AISpaceSettings for the space ->
+  // workspace-wide default -> the pod's DefaultLanguage. The client's req.lang is
+  // intentionally ignored (the space owns the language of non-personal replies).
+  async resolveLanguage (workspace: WorkspaceUuid, space?: Ref<Space>): Promise<string> {
+    try {
+      const wsClient = await this.getWorkspaceClient(workspace)
+      const client = wsClient?.client
+      if (client === undefined) return config.DefaultLanguage
+
+      const settings = await client.findAll(aiBot.class.AISpaceSettings, {})
+      const forSpace = space !== undefined ? settings.find((s) => s.attachedTo === space) : undefined
+      const wsDefault = settings.find((s) => s.attachedTo == null)
+      return forSpace?.language ?? wsDefault?.language ?? config.DefaultLanguage
+    } catch {
+      return config.DefaultLanguage
+    }
+  }
+
   async translate (workspace: WorkspaceUuid, req: TranslateRequest): Promise<TranslateResponse | undefined> {
     if (this.llm === undefined) {
       return undefined
     }
+    const lang = await this.resolveLanguage(workspace)
     const html = jsonToHTML(markupToJSON(req.text))
-    const result = await this.llm.translateHtml(this.ctx, workspace, html, req.lang)
+    const result = await this.llm.translateHtml(this.ctx, workspace, html, lang)
     const text = result !== undefined ? htmlToMarkup(result) : req.text
     return {
       text,
-      lang: req.lang
+      lang
     }
   }
 
@@ -464,7 +484,8 @@ export class AIControl {
         }
       }
     }
-    const summary = await this.llm.summarizeMessages(this.ctx, workspace, messagesToSummarize, req.lang, description)
+    const lang = await this.resolveLanguage(workspace, target.space)
+    const summary = await this.llm.summarizeMessages(this.ctx, workspace, messagesToSummarize, lang, description)
     if (summary === undefined) return
 
     const summaryMarkup = jsonToMarkup(markdownToMarkup(summary))
@@ -497,7 +518,7 @@ export class AIControl {
 
     return {
       text: summaryMarkup,
-      lang: req.lang
+      lang
     }
   }
 

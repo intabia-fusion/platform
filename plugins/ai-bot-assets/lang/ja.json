@@ -1,0 +1,14 @@
+{
+  "string": {
+    "AISettings": "AI設定",
+    "AssistantMemory": "アシスタントのメモリ",
+    "UserMemory": "ユーザーのメモリ",
+    "SharedContext": "共有コンテキスト",
+    "AssistantMemoryHint": "アシスタントがあなたについて記憶している内容",
+    "UserMemoryHint": "アシスタント用に保存しているメモ",
+    "SharedContextHint": "言語、タイムゾーン、グループチャットの設定",
+    "ClearAll": "すべて消去",
+    "TokenLimitReached5h": "過去5時間のAIトークン上限に達しました。しばらくしてから再度お試しください。",
+    "TokenLimitReachedWeek": "週間のAIトークン上限に達しました。しばらくしてから再度お試しください。"
+  }
+}
