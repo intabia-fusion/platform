@@ -319,6 +319,24 @@ export interface Subscription {
 
 export type SubscriptionData = Omit<Subscription, 'createdOn' | 'updatedOn'>
 
+export type PaymentIntentStatus = 'pending' | 'charged' | 'failed'
+
+// One charge attempt per (subscription, periodEnd). The unique (subscriptionId, periodEnd) makes
+// claiming a charge atomic across pods/replicas/rolling-updates, so a concurrent or restarted
+// renewal cannot double-charge: a second claim for the same period hits the existing row instead.
+export interface PaymentIntent {
+  id: string
+  subscriptionId: string
+  periodEnd: Timestamp // the subscription period this charge renews (dedup key)
+  provider: string
+  status: PaymentIntentStatus
+  paymentId?: string // provider charge id, set once the charge is issued
+  amount?: number
+  heartbeatAt?: Timestamp // lease: refreshed ~1s while a live pod awaits the charge response
+  createdOn: Timestamp
+  updatedOn: Timestamp
+}
+
 export interface AccountWorkspaceBadgeStatus {
   accountUuid: AccountUuid
   workspaceUuid: WorkspaceUuid
@@ -360,6 +378,7 @@ export interface AccountDB {
   integrationSecret: DbCollection<IntegrationSecret>
   userProfile: DbCollection<UserProfile>
   subscription: DbCollection<Subscription>
+  paymentIntent: DbCollection<PaymentIntent>
   workspacePermission: DbCollection<WorkspacePermission>
   accountWorkspaceBadgeStatus: DbCollection<AccountWorkspaceBadgeStatus>
 
@@ -416,6 +435,19 @@ export interface AccountDB {
   batchWorkspaceBadgeStatuses: (
     data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>
   ) => Promise<void>
+  // Atomically claim a charge for (subscriptionId, periodEnd). Returns the existing or newly created
+  // intent plus whether THIS caller created it. Only the creator may issue the charge — concurrent
+  // callers (other pods/replicas/rolling-update) get claimed=false and must not charge.
+  claimChargeIntent: (
+    subscriptionId: string,
+    periodEnd: Timestamp,
+    provider: string,
+    amount?: number
+  ) => Promise<{ claimed: boolean, intent: PaymentIntent }>
+  // Refresh the lease while a charge is in flight (the claimer is still alive).
+  heartbeatChargeIntent: (intentId: string) => Promise<void>
+  // Take over an orphaned pending intent whose lease expired. Atomic — only one pod wins.
+  reclaimStaleChargeIntent: (intentId: string, leaseMs: number) => Promise<boolean>
 }
 
 export interface DbCollection<T> {

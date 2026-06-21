@@ -55,6 +55,7 @@ import type {
   SocialId,
   Subscription,
   SubscriptionData,
+  PaymentIntent,
   Workspace,
   WorkspaceEvent,
   WorkspaceInfoWithStatus,
@@ -1230,6 +1231,99 @@ export async function getSubscriptionsByProvider (
 }
 
 /**
+ * Atomically claim the charge for (subscriptionId, periodEnd). Returns whether THIS caller created
+ * the intent. Only the creator should issue the charge; concurrent pods/replicas get claimed=false.
+ * This is the cross-pod dedup that survives replicas and rolling updates (DB unique constraint).
+ * @public
+ */
+export async function claimChargeIntent (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    subscriptionId: string
+    periodEnd: number
+    provider: string
+    amount?: number
+  }
+): Promise<{ claimed: boolean, intent: PaymentIntent }> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const { subscriptionId, periodEnd, provider, amount } = params
+  return await db.claimChargeIntent(subscriptionId, periodEnd, provider, amount)
+}
+
+/**
+ * Mark a previously claimed charge intent as charged (with the provider payment id) or failed.
+ * @public
+ */
+export async function markChargeIntent (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    intentId: string
+    status: 'charged' | 'failed'
+    paymentId?: string
+  }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const { intentId, status, paymentId } = params
+  await db.paymentIntent.update(
+    { id: intentId },
+    { status, ...(paymentId !== undefined && { paymentId }), updatedOn: Date.now() }
+  )
+}
+
+/**
+ * Refresh a charge intent's lease while the charge is in flight (the claiming pod is alive).
+ * @public
+ */
+export async function heartbeatChargeIntent (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { intentId: string }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  await db.heartbeatChargeIntent(params.intentId)
+}
+
+/**
+ * Atomically take over an orphaned pending intent whose lease expired (claiming pod died mid-charge).
+ * Returns true if THIS caller won the takeover. Only one pod wins.
+ * @public
+ */
+export async function reclaimStaleChargeIntent (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { intentId: string, leaseMs: number }
+): Promise<boolean> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return await db.reclaimStaleChargeIntent(params.intentId, params.leaseMs)
+}
+
+/**
  * Get all subscriptions (admin only)
  * @public
  */
@@ -1402,6 +1496,10 @@ export type AccountServiceMethods =
   | 'findFullSocialIds'
   | 'getSubscriptionByProviderId'
   | 'getSubscriptionsByProvider'
+  | 'claimChargeIntent'
+  | 'markChargeIntent'
+  | 'heartbeatChargeIntent'
+  | 'reclaimStaleChargeIntent'
   | 'upsertSubscription'
   | 'getAllSubscriptions'
   | 'adminCreateSubscription'
@@ -1442,6 +1540,10 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     listAccounts: wrap(listAccounts),
     getSubscriptionByProviderId: wrap(getSubscriptionByProviderId),
     getSubscriptionsByProvider: wrap(getSubscriptionsByProvider),
+    claimChargeIntent: wrap(claimChargeIntent),
+    markChargeIntent: wrap(markChargeIntent),
+    heartbeatChargeIntent: wrap(heartbeatChargeIntent),
+    reclaimStaleChargeIntent: wrap(reclaimStaleChargeIntent),
     upsertSubscription: wrap(upsertSubscription),
     getAllSubscriptions: wrap(getAllSubscriptions),
     adminCreateSubscription: wrap(adminCreateSubscription),

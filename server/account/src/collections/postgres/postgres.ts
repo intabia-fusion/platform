@@ -51,6 +51,7 @@ import type {
   AccountAggregatedInfo,
   UserProfile,
   Subscription,
+  PaymentIntent,
   DBFlavor,
   WorkspacePermission,
   AccountWorkspaceBadgeStatus,
@@ -543,6 +544,7 @@ export class PostgresAccountDB implements AccountDB {
   integrationSecret: PostgresDbCollection<IntegrationSecret>
   userProfile: PostgresDbCollection<UserProfile, 'personUuid'>
   subscription: PostgresDbCollection<Subscription, 'id'>
+  paymentIntent: PostgresDbCollection<PaymentIntent, 'id'>
   workspacePermission: PostgresDbCollection<WorkspacePermission>
   accountWorkspaceBadgeStatus: PostgresDbCollection<AccountWorkspaceBadgeStatus>
 
@@ -613,6 +615,12 @@ export class PostgresAccountDB implements AccountDB {
       ns,
       idKey: 'id',
       timestampFields: ['periodStart', 'periodEnd', 'trialEnd', 'canceledAt', 'willCancelAt', 'createdOn', 'updatedOn'],
+      withRetryClient
+    })
+    this.paymentIntent = new PostgresDbCollection<PaymentIntent, 'id'>('payment_intent', client, {
+      ns,
+      idKey: 'id',
+      timestampFields: ['periodEnd', 'heartbeatAt', 'createdOn', 'updatedOn'],
       withRetryClient
     })
     this.workspacePermission = new PostgresDbCollection<WorkspacePermission>('workspace_permissions', client, {
@@ -1427,5 +1435,57 @@ export class PostgresAccountDB implements AccountDB {
       ON CONFLICT (account_uuid, workspace_uuid) DO UPDATE SET has_unread = EXCLUDED.has_unread, updated_on = EXCLUDED.updated_on
     `
     await this.accountWorkspaceBadgeStatus.unsafe(sql, values)
+  }
+
+  async claimChargeIntent (
+    subscriptionId: string,
+    periodEnd: number,
+    provider: string,
+    amount?: number
+  ): Promise<{ claimed: boolean, intent: PaymentIntent }> {
+    const table = this.paymentIntent.getTableName()
+    // Atomic claim: insert, or do nothing if (subscription_id, period_end) already exists.
+    // Works identically on CockroachDB and PostgreSQL (ON CONFLICT ... DO NOTHING RETURNING).
+    const inserted = await this.paymentIntent.unsafe(
+      `INSERT INTO ${table} (subscription_id, period_end, provider, status, amount, heartbeat_at)
+       VALUES ($1, $2, $3, 'pending', $4, current_epoch_ms())
+       ON CONFLICT (subscription_id, period_end) DO NOTHING
+       RETURNING *`,
+      [subscriptionId, periodEnd, provider, amount ?? null]
+    )
+    if (inserted.length > 0) {
+      return { claimed: true, intent: convertKeysToCamelCase(inserted[0]) as PaymentIntent }
+    }
+    // Conflict: another caller already claimed this period — return the existing intent.
+    const existing = await this.paymentIntent.unsafe(
+      `SELECT * FROM ${table} WHERE subscription_id = $1 AND period_end = $2`,
+      [subscriptionId, periodEnd]
+    )
+    return { claimed: false, intent: convertKeysToCamelCase(existing[0]) as PaymentIntent }
+  }
+
+  // Lease heartbeat: refresh while the charge is in flight so other pods see the claimer is alive.
+  // Uses DB clock (current_epoch_ms) so lease comparisons never depend on per-pod wall clocks.
+  async heartbeatChargeIntent (intentId: string): Promise<void> {
+    const table = this.paymentIntent.getTableName()
+    await this.paymentIntent.unsafe(
+      `UPDATE ${table} SET heartbeat_at = current_epoch_ms(), updated_on = current_epoch_ms()
+       WHERE id = $1 AND status = 'pending'`,
+      [intentId]
+    )
+  }
+
+  // Take over an orphaned pending intent: only succeeds if it is still pending AND its lease expired
+  // (heartbeat older than leaseMs, by DB clock). Atomic — only one pod wins the takeover.
+  async reclaimStaleChargeIntent (intentId: string, leaseMs: number): Promise<boolean> {
+    const table = this.paymentIntent.getTableName()
+    const res = await this.paymentIntent.unsafe(
+      `UPDATE ${table} SET heartbeat_at = current_epoch_ms(), updated_on = current_epoch_ms()
+       WHERE id = $1 AND status = 'pending'
+         AND (heartbeat_at IS NULL OR heartbeat_at < current_epoch_ms() - $2)
+       RETURNING id`,
+      [intentId, leaseMs]
+    )
+    return res.length > 0
   }
 }

@@ -53,6 +53,7 @@ import type {
   SocialId,
   Subscription,
   SubscriptionData,
+  PaymentIntent,
   SubscriptionInfo,
   UserProfile,
   WorkspaceInviteInfo,
@@ -256,6 +257,15 @@ export interface AccountClient {
   getAllSubscriptions: () => Promise<SubscriptionInfo[]>
   getSubscriptionByProviderId: (provider: string, providerSubscriptionId: string) => Promise<Subscription | null>
   getSubscriptionsByProvider: (provider: string, statuses?: string[]) => Promise<Subscription[]>
+  claimChargeIntent: (
+    subscriptionId: string,
+    periodEnd: number,
+    provider: string,
+    amount?: number
+  ) => Promise<{ claimed: boolean, intent: PaymentIntent }>
+  markChargeIntent: (intentId: string, status: 'charged' | 'failed', paymentId?: string) => Promise<void>
+  heartbeatChargeIntent: (intentId: string) => Promise<void>
+  reclaimStaleChargeIntent: (intentId: string, leaseMs: number) => Promise<boolean>
   getSubscriptionById: (subscriptionId: string) => Promise<Subscription | null>
   upsertSubscription: (subscription: SubscriptionData) => Promise<void>
   adminCreateSubscription: (params: {
@@ -1323,6 +1333,48 @@ class AccountClientImpl implements AccountClient {
         provider,
         statuses
       }
+    })
+  }
+
+  async claimChargeIntent (
+    subscriptionId: string,
+    periodEnd: number,
+    provider: string,
+    amount?: number
+  ): Promise<{ claimed: boolean, intent: PaymentIntent }> {
+    return await this._rpc({
+      method: 'claimChargeIntent',
+      params: {
+        subscriptionId,
+        periodEnd,
+        provider,
+        amount
+      }
+    })
+  }
+
+  async markChargeIntent (intentId: string, status: 'charged' | 'failed', paymentId?: string): Promise<void> {
+    await this._rpc({
+      method: 'markChargeIntent',
+      params: {
+        intentId,
+        status,
+        paymentId
+      }
+    })
+  }
+
+  async heartbeatChargeIntent (intentId: string): Promise<void> {
+    await this._rpc({
+      method: 'heartbeatChargeIntent',
+      params: { intentId }
+    })
+  }
+
+  async reclaimStaleChargeIntent (intentId: string, leaseMs: number): Promise<boolean> {
+    return await this._rpc({
+      method: 'reclaimStaleChargeIntent',
+      params: { intentId, leaseMs }
     })
   }
 

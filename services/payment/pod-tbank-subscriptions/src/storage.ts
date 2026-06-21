@@ -49,6 +49,29 @@ export class SubscriptionStorage {
     return await this.accountClient.getSubscriptions(workspaceUuid, activeOnly)
   }
 
+  // Atomic cross-pod charge claim — only the caller that gets claimed=true may charge this period.
+  async claimCharge (
+    subscriptionId: string,
+    periodEnd: number,
+    amount?: number
+  ): Promise<{ claimed: boolean, status: string, intentId: string, heartbeatAt?: number }> {
+    const { claimed, intent } = await this.accountClient.claimChargeIntent(subscriptionId, periodEnd, 'tbank', amount)
+    return { claimed, status: intent.status, intentId: intent.id, heartbeatAt: intent.heartbeatAt }
+  }
+
+  async markCharge (intentId: string, status: 'charged' | 'failed', paymentId?: string): Promise<void> {
+    await this.accountClient.markChargeIntent(intentId, status, paymentId)
+  }
+
+  async heartbeatCharge (intentId: string): Promise<void> {
+    await this.accountClient.heartbeatChargeIntent(intentId)
+  }
+
+  // True if THIS pod won the takeover of an orphaned (lease-expired) pending intent.
+  async reclaimStaleCharge (intentId: string, leaseMs: number): Promise<boolean> {
+    return await this.accountClient.reclaimStaleChargeIntent(intentId, leaseMs)
+  }
+
   /**
    * Tbank renewal candidates: server pre-filters by provider + status {active, past_due}, so cleanup,
    * grace and renewal all start from the same small set. The caller refines per its own predicate.

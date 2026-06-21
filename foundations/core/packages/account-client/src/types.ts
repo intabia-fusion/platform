@@ -266,6 +266,25 @@ export interface Subscription {
  */
 export type SubscriptionData = Omit<Subscription, 'createdOn' | 'updatedOn'>
 
+export type PaymentIntentStatus = 'pending' | 'charged' | 'failed'
+
+/**
+ * One charge attempt per (subscriptionId, periodEnd). The unique (subscriptionId, periodEnd)
+ * constraint makes claiming a charge atomic across pods/replicas/rolling-updates.
+ */
+export interface PaymentIntent {
+  id: string
+  subscriptionId: string
+  periodEnd: number
+  provider: string
+  status: PaymentIntentStatus
+  paymentId?: string
+  amount?: number
+  heartbeatAt?: number
+  createdOn: number
+  updatedOn: number
+}
+
 /**
  * Subscription with resolved owner email (used in admin panel)
  */
