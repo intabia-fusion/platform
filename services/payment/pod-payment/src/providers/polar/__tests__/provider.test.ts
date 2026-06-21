@@ -25,6 +25,7 @@ describe('PolarProvider', () => {
   beforeEach(() => {
     accountClient = {
       getSubscriptions: jest.fn(),
+      getSubscriptionsByProvider: jest.fn(),
       upsertSubscription: jest.fn()
     } as any
 

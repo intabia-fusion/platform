@@ -30,6 +30,7 @@ describe('StripeProvider', () => {
   beforeEach(() => {
     accountClient = {
       getSubscriptions: jest.fn(),
+      getSubscriptionsByProvider: jest.fn(),
       upsertSubscription: jest.fn()
     } as any
 
@@ -208,7 +209,7 @@ describe('StripeProvider', () => {
     } as any
 
     stripeClient.getActiveSubscriptions.mockResolvedValue([stripeSubActive])
-    accountClient.getSubscriptions.mockResolvedValue([ourSub])
+    accountClient.getSubscriptionsByProvider.mockResolvedValue([ourSub])
     ;(transformStripeSubscriptionToData as jest.Mock).mockImplementation((_ctx: any, sub: Stripe.Subscription) => ({
       id: sub.id,
       status: sub.status,

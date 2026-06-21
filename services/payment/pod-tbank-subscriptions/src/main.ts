@@ -60,6 +60,7 @@ export const main = async (): Promise<void> => {
     apiUrl: config.TbankUrl
   })
 
+  // Static service token signed with SECRET — rotating SECRET requires restarting this pod.
   const serviceToken = generateToken(systemAccountUuid, undefined, { service: 'payment' })
   const accountClient = getClient(config.AccountsUrl, serviceToken)
 
@@ -80,11 +81,13 @@ export const main = async (): Promise<void> => {
   const scheduler = startScheduler(metricsContext, tbank, storage, config, config.SchedulerIntervalMinutes)
 
   const shutdown = (): void => {
-    scheduler.close()
-    close()
-    void producer.close()
-    void queue.shutdown()
-    server.close(() => process.exit())
+    // Drain an in-flight renewal first, then close the producer so its upsert is published.
+    void scheduler.close().finally(() => {
+      close()
+      void producer.close()
+      void queue.shutdown()
+      server.close(() => process.exit())
+    })
   }
 
   process.on('SIGINT', shutdown)

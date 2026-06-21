@@ -1066,6 +1066,26 @@ export async function upsertSubscription (
 
   // Check if subscription exists by provider + providerSubscriptionId (unique external ID)
   const existing = await db.subscription.findOne({ provider, providerSubscriptionId })
+
+  // Stale-write guard: concurrent writers (sync poll vs async webhook consumer) may carry an older
+  // provider snapshot. Skip when the incoming modifiedAt is not newer than what we already stored.
+  const existingModifiedAt = existing?.providerData?.modifiedAt
+  const incomingModifiedAt = params.providerData?.modifiedAt
+  if (
+    existing !== null &&
+    typeof existingModifiedAt === 'number' &&
+    typeof incomingModifiedAt === 'number' &&
+    incomingModifiedAt < existingModifiedAt
+  ) {
+    ctx.info('Subscription upsert skipped (stale snapshot)', {
+      id: existing.id,
+      workspaceUuid,
+      existingModifiedAt,
+      incomingModifiedAt
+    })
+    return
+  }
+
   const updateData = {
     workspaceUuid: params.workspaceUuid,
     accountUuid: params.accountUuid,
@@ -1179,6 +1199,34 @@ export async function getSubscriptionByProviderId (
   })
 
   return subscription ?? null
+}
+
+/**
+ * A provider's subscriptions filtered server-side by status (defaults to {active, past_due} — the
+ * renewal candidates). Lets schedulers/reconcilers skip loading the whole table or other providers.
+ * @public
+ */
+export async function getSubscriptionsByProvider (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    provider: string
+    statuses?: SubscriptionStatus[]
+  }
+): Promise<Subscription[]> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const { provider, statuses } = params
+  return await db.subscription.find({
+    provider,
+    status: { $in: statuses ?? [SubscriptionStatus.Active, SubscriptionStatus.PastDue] }
+  })
 }
 
 /**
@@ -1353,6 +1401,7 @@ export type AccountServiceMethods =
   | 'listAccounts'
   | 'findFullSocialIds'
   | 'getSubscriptionByProviderId'
+  | 'getSubscriptionsByProvider'
   | 'upsertSubscription'
   | 'getAllSubscriptions'
   | 'adminCreateSubscription'
@@ -1392,6 +1441,7 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     findPersonBySocialKey: wrap(findPersonBySocialKey),
     listAccounts: wrap(listAccounts),
     getSubscriptionByProviderId: wrap(getSubscriptionByProviderId),
+    getSubscriptionsByProvider: wrap(getSubscriptionsByProvider),
     upsertSubscription: wrap(upsertSubscription),
     getAllSubscriptions: wrap(getAllSubscriptions),
     adminCreateSubscription: wrap(adminCreateSubscription),

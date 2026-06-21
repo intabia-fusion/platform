@@ -20,6 +20,7 @@ import type Stripe from 'stripe'
 import {
   AccountClient,
   SubscriptionType,
+  SubscriptionStatus,
   type Subscription,
   type SubscriptionData
 } from '@hcengineering/account-client'
@@ -206,7 +207,9 @@ export class StripeProvider implements PaymentProvider {
       ctx.info('Starting Stripe active subscription reconciliation')
 
       const stripeActiveSubscriptions = await this.stripe.getActiveSubscriptions(ctx)
-      const ourActiveSubscriptions = await this.accountClient.getSubscriptions()
+      const ourActiveSubscriptions = await this.accountClient.getSubscriptionsByProvider('stripe', [
+        SubscriptionStatus.Active
+      ])
 
       const ourSubsByProviderId = new Map(
         ourActiveSubscriptions.map((sub: Subscription) => [sub.providerSubscriptionId, sub])

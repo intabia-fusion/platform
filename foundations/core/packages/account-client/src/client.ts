@@ -255,6 +255,7 @@ export interface AccountClient {
   getSubscriptions: (workspaceUuid?: WorkspaceUuid | undefined, activeOnly?: boolean) => Promise<Subscription[]>
   getAllSubscriptions: () => Promise<SubscriptionInfo[]>
   getSubscriptionByProviderId: (provider: string, providerSubscriptionId: string) => Promise<Subscription | null>
+  getSubscriptionsByProvider: (provider: string, statuses?: string[]) => Promise<Subscription[]>
   getSubscriptionById: (subscriptionId: string) => Promise<Subscription | null>
   upsertSubscription: (subscription: SubscriptionData) => Promise<void>
   adminCreateSubscription: (params: {
@@ -1311,6 +1312,16 @@ class AccountClientImpl implements AccountClient {
       params: {
         provider,
         providerSubscriptionId
+      }
+    })
+  }
+
+  async getSubscriptionsByProvider (provider: string, statuses?: string[]): Promise<Subscription[]> {
+    return await this._rpc({
+      method: 'getSubscriptionsByProvider',
+      params: {
+        provider,
+        statuses
       }
     })
   }

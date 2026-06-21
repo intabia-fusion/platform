@@ -776,7 +776,6 @@ export async function createServer (
       'checkout-subscription-status',
       async (ctx) => {
         const checkoutId = req.params.checkoutId
-        const accountClient = getAccountClient(config.AccountsUrl, serviceToken)
 
         // Try to get subscription from provider by checkout ID
         const subscriptionData = await provider.getSubscriptionByCheckout(ctx, checkoutId)

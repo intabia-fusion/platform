@@ -19,7 +19,7 @@ import {
   type SubscriptionData,
   SubscriptionStatus
 } from '@hcengineering/account-client'
-import { type AccountUuid, type MeasureContext, type WorkspaceUuid, SocialIdType } from '@hcengineering/core'
+import { type AccountUuid, type WorkspaceUuid, SocialIdType } from '@hcengineering/core'
 
 import { isFailedRenewal } from './utils'
 
@@ -49,37 +49,27 @@ export class SubscriptionStorage {
     return await this.accountClient.getSubscriptions(workspaceUuid, activeOnly)
   }
 
-  async getSubscriptionsNeedingRenewal (ctx: MeasureContext): Promise<Subscription[]> {
-    const allSubscriptions = await this.accountClient.getSubscriptions(undefined, false)
-    const now = Date.now()
+  /**
+   * Tbank renewal candidates: server pre-filters by provider + status {active, past_due}, so cleanup,
+   * grace and renewal all start from the same small set. The caller refines per its own predicate.
+   */
+  async getCandidates (): Promise<Subscription[]> {
+    return await this.accountClient.getSubscriptionsByProvider('tbank')
+  }
 
-    const needingRenewal = allSubscriptions.filter((sub) => {
-      if (sub.provider !== 'tbank') return false
-      if (sub.providerData?.rebillId === undefined) return false
-
-      if (sub.status === SubscriptionStatus.Active) {
-        // Normal renewal: period ended
-        return sub.periodEnd !== undefined && sub.periodEnd <= now
-      }
-
-      if (isFailedRenewal(sub)) {
-        // Failed recurrent charge: retry while attempts remain and the back-off has elapsed.
-        const retryAttempt = (sub.providerData?.retryAttempt as number) ?? 0
-        if (retryAttempt >= 3) return false
-        const retryAfter = (sub.providerData?.retryAfter as number) ?? 0
-        if (retryAfter > now) return false
-        return true
-      }
-
-      return false
-    })
-
-    ctx.info('Subscriptions needing renewal', {
-      total: allSubscriptions.length,
-      needingRenewal: needingRenewal.length
-    })
-
-    return needingRenewal
+  static needsRenewal (sub: Subscription, now: number): boolean {
+    if (sub.providerData?.rebillId === undefined) return false
+    if (sub.status === SubscriptionStatus.Active) {
+      return sub.periodEnd !== undefined && sub.periodEnd <= now
+    }
+    if (isFailedRenewal(sub)) {
+      const retryAttempt = (sub.providerData?.retryAttempt as number) ?? 0
+      if (retryAttempt >= 3) return false
+      const retryAfter = (sub.providerData?.retryAfter as number) ?? 0
+      if (retryAfter > now) return false
+      return true
+    }
+    return false
   }
 
   async getActiveTbankSubscription (workspaceUuid: WorkspaceUuid): Promise<Subscription | null> {

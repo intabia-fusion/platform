@@ -73,16 +73,19 @@ export function getPaymentClient (): PaymentClient | null {
 }
 
 let _planConfig: PlanConfig | null = null
+let _planConfigAt = 0
+const PLAN_CONFIG_TTL_MS = 5 * 60 * 1000 // refetch prices at most every 5 min
 
 async function getPlanConfig (): Promise<PlanConfig> {
-  if (_planConfig == null) {
+  if (_planConfig == null || Date.now() - _planConfigAt > PLAN_CONFIG_TTL_MS) {
     const paymentUrl = getMetadata(presentation.metadata.PaymentUrl) ?? ''
     const res = await fetch(paymentUrl + '/api/v1/plan-config')
     if (!res.ok) {
       console.warn('Failed to load plan config:', res.status)
-      return { plans: {}, packages: {} }
+      return _planConfig ?? { plans: {}, packages: {} }
     }
     _planConfig = (await res.json()) as PlanConfig
+    _planConfigAt = Date.now()
   }
   return _planConfig
 }

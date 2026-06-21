@@ -446,10 +446,7 @@ async function handleWebhook (
 
   const typedNotification = notification as unknown as TbankWebhookNotification
 
-  let sub = await storage.getByProviderId(typedNotification.PaymentId)
-  if (sub === null) {
-    sub = await storage.getByProviderId(typedNotification.OrderId)
-  }
+  const sub = await storage.getByProviderId(typedNotification.PaymentId)
 
   ctx.info('Received TBank webhook', {
     paymentId: typedNotification.PaymentId,

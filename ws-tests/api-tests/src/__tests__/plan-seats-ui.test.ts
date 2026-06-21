@@ -22,13 +22,12 @@ import {
   type ServerConfig,
   type WorkspaceToken
 } from '@hcengineering/api-client'
-import core, {
+import {
   AccountRole,
   MeasureMetricsContext,
   pickPrimarySocialId,
   systemAccountUuid,
-  type SocialId,
-  type TxOperations
+  type SocialId
 } from '@hcengineering/core'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import contact, { type Employee, ensureEmployee } from '@hcengineering/contact'
@@ -101,7 +100,9 @@ describe('plan-seats-ui', () => {
   }
 
   // Replica of plugins/billing-resources checkIsLimited for the given member.
-  async function uiIsLimited (ws: WorkspaceToken): Promise<{ limited: boolean, usersLimit: number, membersCount: number }> {
+  async function uiIsLimited (
+    ws: WorkspaceToken
+  ): Promise<{ limited: boolean, usersLimit: number, membersCount: number }> {
     const accountClient = getAccountClient(config.ACCOUNTS_URL, ws.token)
     const wsInfo = await accountClient.getWorkspaceInfo(false)
     const membersCount = wsInfo?.usageInfo?.usage.membersCount ?? 0

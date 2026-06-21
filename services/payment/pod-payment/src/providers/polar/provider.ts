@@ -19,6 +19,7 @@ import type { Express, Request, Response } from 'express'
 import {
   AccountClient,
   SubscriptionType,
+  SubscriptionStatus,
   type Subscription,
   type SubscriptionData
 } from '@hcengineering/account-client'
@@ -191,7 +192,9 @@ export class PolarProvider implements PaymentProvider {
       ctx.info('Starting Polar active subscription reconciliation')
 
       const polarActiveSubscriptions = await this.polar.getActiveSubscriptions(ctx)
-      const ourActiveSubscriptions = await this.accountClient.getSubscriptions()
+      const ourActiveSubscriptions = await this.accountClient.getSubscriptionsByProvider('polar', [
+        SubscriptionStatus.Active
+      ])
 
       const ourSubsByProviderId = new Map(
         ourActiveSubscriptions.map((sub: Subscription) => [sub.providerSubscriptionId, sub])

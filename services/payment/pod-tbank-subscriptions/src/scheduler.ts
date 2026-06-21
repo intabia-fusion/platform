@@ -17,16 +17,18 @@ import { type MeasureContext } from '@hcengineering/core'
 import { type SubscriptionData, type Subscription, SubscriptionStatus } from '@hcengineering/account-client'
 import type TbankPayments from 'tbank-payments'
 import type { Config } from './config'
-import type { SubscriptionStorage } from './storage'
+import { SubscriptionStorage } from './storage'
 import { notifyPaymentFailed } from './notifications'
 import { isPendingFirstPayment, isFailedRenewal } from './utils'
 
 export interface SchedulerHandle {
-  close: () => void
+  close: () => Promise<void>
 }
 
+// Cap how long shutdown waits for an in-flight renewal charge to persist before forcing exit.
+const RENEWAL_DRAIN_TIMEOUT_MS = 15000
 const RENEWAL_PERIOD_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
-// Max automatic retries before a past_due subscription is left alone (see storage.getSubscriptionsNeedingRenewal).
+// Max automatic retries before a past_due subscription is left alone (see SubscriptionStorage.needsRenewal).
 const MAX_RETRY_ATTEMPTS = 3
 // Back-off between failed charge retries (once per day).
 const RETRY_INTERVAL_MS = 24 * 60 * 60 * 1000 // 1 day
@@ -185,14 +187,11 @@ async function notifyRenewalFailure (
  */
 async function cleanupAbandonedSubscriptions (ctx: MeasureContext, storage: SubscriptionStorage): Promise<void> {
   try {
-    // activeOnly=false — abandoned drafts are past_due (pending:true), excluded by default.
-    const allSubs = await storage.getAll(undefined, false)
     const now = Date.now()
     const staleThreshold = 24 * 60 * 60 * 1000 // 24 hours
     let cleaned = 0
 
-    for (const sub of allSubs) {
-      if (sub.provider !== 'tbank') continue
+    for (const sub of await storage.getCandidates()) {
       if (!isPendingFirstPayment(sub)) continue
 
       const age = now - (sub.periodStart ?? now)
@@ -234,14 +233,11 @@ const DAY_MS = 24 * 60 * 60 * 1000
  */
 async function enforceGracePeriod (ctx: MeasureContext, storage: SubscriptionStorage, config: Config): Promise<void> {
   try {
-    // activeOnly=false — past_due subs (the ones eligible for grace) are excluded by default.
-    const allSubs = await storage.getAll(undefined, false)
     const now = Date.now()
     const graceMs = config.GracePeriodDays * DAY_MS
     let moved = 0
 
-    for (const sub of allSubs) {
-      if (sub.provider !== 'tbank') continue
+    for (const sub of await storage.getCandidates()) {
       if (!isFailedRenewal(sub)) continue
       const retryAttempt = (sub.providerData?.retryAttempt as number) ?? 0
       if (retryAttempt < MAX_RETRY_ATTEMPTS) continue
@@ -290,16 +286,27 @@ export function startScheduler (
   config: Config,
   intervalMinutes: number
 ): SchedulerHandle {
+  // Tracks the in-flight renewal cycle so shutdown can wait for a charge to finish persisting.
+  // A charge debits the customer at TBank; losing the subsequent upsert would orphan the payment.
+  let activeRenewal: Promise<void> | null = null
+
   const runRenewalCycle = async (): Promise<void> => {
     try {
-      const needingRenewal = await storage.getSubscriptionsNeedingRenewal(ctx)
-
-      for (const sub of needingRenewal) {
-        await renewSubscription(ctx, tbank, storage, config, sub)
+      const now = Date.now()
+      for (const sub of await storage.getCandidates()) {
+        if (SubscriptionStorage.needsRenewal(sub, now)) {
+          await renewSubscription(ctx, tbank, storage, config, sub)
+        }
       }
     } catch (err) {
       ctx.error('Subscription renewal scheduler error', { err })
     }
+  }
+
+  const trackRenewal = (): void => {
+    activeRenewal = runRenewalCycle().finally(() => {
+      activeRenewal = null
+    })
   }
 
   const cleanupCycle = async (): Promise<void> => {
@@ -314,12 +321,10 @@ export function startScheduler (
   ctx.info('Starting subscription renewal scheduler', { intervalMinutes, gracePeriodDays: config.GracePeriodDays })
 
   // Run immediately on start, then periodically
-  void runRenewalCycle()
+  trackRenewal()
   void cleanupCycle()
   void graceCycle()
-  const timer = setInterval(() => {
-    void runRenewalCycle()
-  }, schedulerIntervalMs)
+  const timer = setInterval(trackRenewal, schedulerIntervalMs)
   // Cleanup runs less frequently — once per cycle is fine; abandoned subs are rare
   const cleanupTimer = setInterval(() => {
     void cleanupCycle()
@@ -330,10 +335,20 @@ export function startScheduler (
   }, schedulerIntervalMs)
 
   return {
-    close: () => {
+    close: async () => {
       clearInterval(timer)
       clearInterval(cleanupTimer)
       clearInterval(graceTimer)
+      // Only the renewal cycle is drained: it issues a charge (real money), so a lost upsert orphans
+      // the payment. Cleanup/grace upserts are not drained — they re-fetch and re-check, so a missed
+      // one is simply redone on the next tick (idempotent, no money lost).
+      if (activeRenewal !== null) {
+        ctx.info('Waiting for in-flight renewal before shutdown')
+        await Promise.race([
+          activeRenewal,
+          new Promise<void>((resolve) => setTimeout(resolve, RENEWAL_DRAIN_TIMEOUT_MS))
+        ])
+      }
     }
   }
 }
