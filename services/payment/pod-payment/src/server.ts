@@ -29,7 +29,7 @@ import {
 } from '@hcengineering/account-client'
 
 import { Config } from './config'
-import { withAdmin, withLoginInfo, withOwner, withToken, type RequestWithAuth } from './middleware'
+import { ownsSubscription, withAdmin, withLoginInfo, withOwner, withToken, type RequestWithAuth } from './middleware'
 import { PaymentProviderFactory } from './factory'
 import type { CheckoutResponse, PaymentProvider, SubscriptionPublisher } from './providers'
 import { SubscribeRequest } from './providers'
@@ -415,6 +415,11 @@ export async function createServer (
             return
           }
 
+          if (!ownsSubscription(req, subscription)) {
+            res.status(403).json({ error: 'Subscription does not belong to this workspace' })
+            return
+          }
+
           let canceledSubscription: SubscriptionData
 
           if (subscription.provider !== config.Provider) {
@@ -482,6 +487,11 @@ export async function createServer (
 
           if (subscription === undefined || subscription === null) {
             res.status(404).json({ error: 'Subscription not found' })
+            return
+          }
+
+          if (!ownsSubscription(req, subscription)) {
+            res.status(403).json({ error: 'Subscription does not belong to this workspace' })
             return
           }
 
@@ -567,6 +577,11 @@ export async function createServer (
 
           if (subscription === undefined || subscription === null) {
             res.status(404).json({ error: 'Subscription not found' })
+            return
+          }
+
+          if (!ownsSubscription(req, subscription)) {
+            res.status(403).json({ error: 'Subscription does not belong to this workspace' })
             return
           }
 
@@ -688,6 +703,11 @@ export async function createServer (
           const subscription = await accountClient.getSubscriptionById(subscriptionId)
           if (subscription === undefined || subscription === null) {
             res.status(404).json({ error: 'Subscription not found' })
+            return
+          }
+
+          if (!ownsSubscription(req, subscription)) {
+            res.status(403).json({ error: 'Subscription does not belong to this workspace' })
             return
           }
 

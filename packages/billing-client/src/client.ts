@@ -136,7 +136,8 @@ async function fetchSafe (url: string | URL, init?: RequestInit): Promise<Respon
 
   if (!response.ok) {
     const text = await response.text()
-    throw new BillingError(text)
+    console.error(`Billing request failed: ${response.status}`, text)
+    throw new BillingError(`Billing request failed with status ${response.status}`)
   }
 
   return response

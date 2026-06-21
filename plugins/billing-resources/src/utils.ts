@@ -76,6 +76,17 @@ let _planConfig: PlanConfig | null = null
 let _planConfigAt = 0
 const PLAN_CONFIG_TTL_MS = 5 * 60 * 1000 // refetch prices at most every 5 min
 
+export function isPlanConfig (v: unknown): v is PlanConfig {
+  return (
+    typeof v === 'object' &&
+    v !== null &&
+    typeof (v as PlanConfig).plans === 'object' &&
+    (v as PlanConfig).plans !== null &&
+    typeof (v as PlanConfig).packages === 'object' &&
+    (v as PlanConfig).packages !== null
+  )
+}
+
 async function getPlanConfig (): Promise<PlanConfig> {
   if (_planConfig == null || Date.now() - _planConfigAt > PLAN_CONFIG_TTL_MS) {
     const paymentUrl = getMetadata(presentation.metadata.PaymentUrl) ?? ''
@@ -84,7 +95,12 @@ async function getPlanConfig (): Promise<PlanConfig> {
       console.warn('Failed to load plan config:', res.status)
       return _planConfig ?? { plans: {}, packages: {} }
     }
-    _planConfig = (await res.json()) as PlanConfig
+    const parsed: unknown = await res.json()
+    if (!isPlanConfig(parsed)) {
+      console.warn('Plan config response has unexpected shape, ignoring')
+      return _planConfig ?? { plans: {}, packages: {} }
+    }
+    _planConfig = parsed
     _planConfigAt = Date.now()
   }
   return _planConfig

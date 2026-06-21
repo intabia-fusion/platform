@@ -21,6 +21,7 @@ export interface Config {
   Secret: string
   AccountsUrl: string
   FrontUrl: string
+  CorsOrigin?: string // allowed CORS origin(s), comma-separated; unset -> open cors() (dev/test)
 
   // TBank configuration
   TbankTerminalKey: string
@@ -53,6 +54,7 @@ const config: Config = (() => {
     Secret: process.env.SECRET,
     AccountsUrl: process.env.ACCOUNTS_URL,
     FrontUrl: process.env.FRONT_URL,
+    CorsOrigin: process.env.CORS_ORIGIN,
     TbankTerminalKey: process.env.TBANK_TERMINAL_KEY,
     TbankPassword: process.env.TBANK_PASSWORD,
     TbankUrl: process.env.TBANK_URL,

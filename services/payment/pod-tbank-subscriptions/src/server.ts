@@ -35,7 +35,10 @@ export async function createServer (
 
   const app = express()
 
-  app.use(cors())
+  // Restrict CORS to CORS_ORIGIN (comma-separated) when configured; otherwise open cors() (dev/test).
+  app.use(
+    config.CorsOrigin !== undefined ? cors({ origin: config.CorsOrigin.split(',').map((o) => o.trim()) }) : cors()
+  )
 
   // Use raw body for webhook routes (TBank signature verification needs raw body)
   // Use JSON parsing for all other routes
