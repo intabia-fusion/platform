@@ -268,10 +268,7 @@ export function tokensRecord (
 
 // Fetch per-workspace rolling-window token usage (5h + week) from billing. Returns
 // zero usage when billing is unset or unreachable (fail-open, do not block on outage).
-export async function getWorkspaceWindows (
-  ctx: MeasureContext,
-  workspace: WorkspaceUuid
-): Promise<WindowUsage> {
+export async function getWorkspaceWindows (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<WindowUsage> {
   const zero = { window5h: { used: 0, limit: 0 }, week: { used: 0, limit: 0 } }
   if (config.BillingUrl === '') return zero
   try {

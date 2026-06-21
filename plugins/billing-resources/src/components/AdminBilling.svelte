@@ -54,6 +54,13 @@
   $: calcWindow5h = Math.floor(calcBudgetTokens / Math.max(1, calcWindowsPerDay * 30))
   $: calcWindowWeek = Math.floor(calcBudgetTokens / 4)
 
+  // Forecast: extrapolate current-month spend to month end by elapsed fraction.
+  const now = new Date()
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const elapsedFrac = Math.min(1, now.getDate() / daysInMonth)
+  $: forecastCost = elapsedFrac > 0 ? totalCost / elapsedFrac : totalCost
+  $: forecastVsBudget = calcRubPerUser > 0 ? Math.round((forecastCost / calcRubPerUser) * 100) : 0
+
   async function reloadPools (): Promise<void> {
     const client = getBillingClient()
     if (client !== null) pools = await client.listProviderPools()
@@ -135,7 +142,12 @@
             {/if}
             {#if pool.kind !== 'local'}
               <div class="flex-row-center flex-gap-2 mt-1">
-                <EditBox kind="default" format="number" bind:value={topup[pool.providerId]} placeholder={plugin.string.AddTokens} />
+                <EditBox
+                  kind="default"
+                  format="number"
+                  bind:value={topup[pool.providerId]}
+                  placeholder={plugin.string.AddTokens}
+                />
                 <Button label={plugin.string.AddTokens} kind="regular" on:click={() => addTokens(pool.providerId)} />
               </div>
             {/if}
@@ -217,9 +229,33 @@
           {#if pricing !== undefined}
             <div class="flex-between content-dark-color">
               <Label label={plugin.string.CurrentWindows} />
-              <span>{pricing.window5hLimitPerUser.toLocaleString('en-US')} / {pricing.windowWeekLimitPerUser.toLocaleString('en-US')}</span>
+              <span
+                >{pricing.window5hLimitPerUser.toLocaleString('en-US')} / {pricing.windowWeekLimitPerUser.toLocaleString(
+                  'en-US'
+                )}</span
+              >
             </div>
           {/if}
+        </div>
+      </section>
+
+      <section class="flex-col flex-gap-3">
+        <div class="fs-title"><Label label={plugin.string.Forecast} /></div>
+        <div class="flex-col flex-gap-1 text-md">
+          <div class="flex-between">
+            <Label label={plugin.string.ForecastMonthly} />
+            <span>{fmtRub(forecastCost)}</span>
+          </div>
+          <div class="flex-between content-dark-color">
+            <span>{forecastVsBudget}% <Label label={plugin.string.ForecastVsBudget} /></span>
+            <span>{fmtRub(calcRubPerUser)}</span>
+          </div>
+          <Progress
+            value={Math.min(100, forecastVsBudget)}
+            max={100}
+            color={barColor(forecastVsBudget)}
+            fallback={100}
+          />
         </div>
       </section>
     </div>

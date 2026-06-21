@@ -10,10 +10,7 @@ export function tokenCost (tokens: number, pricePer1000: number): number {
 // Suggested rolling-window limits from a monthly per-user budget. The 5h limit
 // assumes `windowsPerDay` active windows; the weekly limit is a quarter of the month.
 // budgetTokens = monthly token budget per paid user.
-export function suggestWindowLimits (
-  budgetTokens: number,
-  windowsPerDay: number
-): { window5h: number, week: number } {
+export function suggestWindowLimits (budgetTokens: number, windowsPerDay: number): { window5h: number, week: number } {
   const windowsPerMonth = Math.max(1, windowsPerDay) * 30
   return {
     window5h: Math.floor(budgetTokens / windowsPerMonth),

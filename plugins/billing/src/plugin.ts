@@ -85,7 +85,11 @@ export const billingPlugin = plugin(billingId, {
     MonthlyBudgetTokens: '' as IntlString,
     SuggestedWindow5h: '' as IntlString,
     SuggestedWindowWeek: '' as IntlString,
-    CurrentWindows: '' as IntlString
+    CurrentWindows: '' as IntlString,
+    AvailableIn: '' as IntlString,
+    Forecast: '' as IntlString,
+    ForecastMonthly: '' as IntlString,
+    ForecastVsBudget: '' as IntlString
   },
   icon: {
     Billing: '' as Asset,

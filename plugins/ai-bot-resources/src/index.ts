@@ -15,6 +15,7 @@
 
 import { type Resources } from '@hcengineering/platform'
 import AIPersonalDataSettings from './components/AIPersonalDataSettings.svelte'
+import AISpaceSettingsEditor from './components/AISpaceSettingsEditor.svelte'
 import { startAIConversation } from './conversation'
 
 export * from './requests'
@@ -23,7 +24,8 @@ export * from './conversation'
 
 export default async (): Promise<Resources> => ({
   component: {
-    AIPersonalDataSettings
+    AIPersonalDataSettings,
+    AISpaceSettingsEditor
   },
   function: {
     StartAIConversation: startAIConversation

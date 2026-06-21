@@ -89,6 +89,10 @@
     "MonthlyBudgetTokens": "Měsíční rozpočet tokenů",
     "SuggestedWindow5h": "Doporučený 5h limit",
     "SuggestedWindowWeek": "Doporučený týdenní limit",
-    "CurrentWindows": "Aktuální limity (5 h / týden)"
+    "CurrentWindows": "Aktuální limity (5 h / týden)",
+    "AvailableIn": "Available in ~{time}",
+    "Forecast": "Monthly forecast",
+    "ForecastMonthly": "Projected monthly spend",
+    "ForecastVsBudget": "of budget"
   }
 }

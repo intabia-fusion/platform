@@ -15,11 +15,7 @@ export interface HourBucket {
 // A bucket recorded at hour H leaves the window at H + windowHours. We drop the
 // oldest buckets one by one; the moment the remaining sum is <= limit is when the
 // just-dropped bucket ages out.
-export function computeWindowResetAt (
-  buckets: HourBucket[],
-  limit: number,
-  windowHours: number
-): string | null {
+export function computeWindowResetAt (buckets: HourBucket[], limit: number, windowHours: number): string | null {
   if (limit <= 0) return null
   let remaining = buckets.reduce((s, b) => s + b.tokens, 0)
   if (remaining <= limit) return null

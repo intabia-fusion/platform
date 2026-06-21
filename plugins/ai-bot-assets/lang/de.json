@@ -9,6 +9,13 @@
     "SharedContextHint": "Sprache, Zeitzone und Einstellungen für Gruppenchats",
     "ClearAll": "Alles löschen",
     "TokenLimitReached5h": "Das KI-Token-Limit der letzten 5 Stunden wurde erreicht. Bitte versuchen Sie es später erneut.",
-    "TokenLimitReachedWeek": "Das wöchentliche KI-Token-Limit wurde erreicht. Bitte versuchen Sie es später erneut."
+    "TokenLimitReachedWeek": "Das wöchentliche KI-Token-Limit wurde erreicht. Bitte versuchen Sie es später erneut.",
+    "AISpaceSettings": "KI-Workspace-Einstellungen",
+    "AILevel": "KI-Niveau",
+    "AILevelHint": "Qualitätsniveau-Obergrenze für diesen Workspace",
+    "Language": "Sprache",
+    "LanguageHint": "Standardsprache für Bot-Antworten (z.B. de, en). Leer = Pod-Standard.",
+    "FallbackToSimpler": "Auf einfacheres Modell zurückgreifen",
+    "FallbackToSimplerHint": "Günstigeres Modell nach wöchentlichem Token-Limit verwenden statt abzulehnen"
   }
 }

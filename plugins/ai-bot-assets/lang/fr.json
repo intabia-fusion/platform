@@ -9,6 +9,13 @@
     "SharedContextHint": "Langue, fuseau horaire et préférences des discussions de groupe",
     "ClearAll": "Tout effacer",
     "TokenLimitReached5h": "La limite de jetons IA des 5 dernières heures a été atteinte. Veuillez réessayer plus tard.",
-    "TokenLimitReachedWeek": "La limite hebdomadaire de jetons IA a été atteinte. Veuillez réessayer plus tard."
+    "TokenLimitReachedWeek": "La limite hebdomadaire de jetons IA a été atteinte. Veuillez réessayer plus tard.",
+    "AISpaceSettings": "Paramètres IA de l'espace de travail",
+    "AILevel": "Niveau IA",
+    "AILevelHint": "Plafond du niveau de qualité pour cet espace de travail",
+    "Language": "Langue",
+    "LanguageHint": "Langue par défaut des réponses du bot (ex. fr, en). Vide = défaut du pod.",
+    "FallbackToSimpler": "Basculer vers un modèle plus simple",
+    "FallbackToSimplerHint": "Utiliser un modèle moins coûteux après la limite hebdomadaire plutôt que de refuser"
   }
 }

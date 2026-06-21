@@ -12,13 +12,19 @@ describe('computeWindowResetAt', () => {
   })
 
   it('under limit -> null', () => {
-    const b: HourBucket[] = [{ hour: H(0), tokens: 40 }, { hour: H(1), tokens: 30 }]
+    const b: HourBucket[] = [
+      { hour: H(0), tokens: 40 },
+      { hour: H(1), tokens: 30 }
+    ]
     expect(computeWindowResetAt(b, 100, 5)).toBeNull()
   })
 
   it('exceeded: resets when oldest bucket ages out', () => {
     // limit 100, used 150. Dropping the 00:00 bucket (60) leaves 90 <= 100.
-    const b: HourBucket[] = [{ hour: H(0), tokens: 60 }, { hour: H(2), tokens: 90 }]
+    const b: HourBucket[] = [
+      { hour: H(0), tokens: 60 },
+      { hour: H(2), tokens: 90 }
+    ]
     // 00:00 + 5h = 05:00
     expect(computeWindowResetAt(b, 100, 5)).toBe(H(5))
   })

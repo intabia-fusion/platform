@@ -89,6 +89,10 @@
     "MonthlyBudgetTokens": "Budget mensile di token",
     "SuggestedWindow5h": "Limite 5 h consigliato",
     "SuggestedWindowWeek": "Limite settimanale consigliato",
-    "CurrentWindows": "Limiti attuali (5 h / settimana)"
+    "CurrentWindows": "Limiti attuali (5 h / settimana)",
+    "AvailableIn": "Available in ~{time}",
+    "Forecast": "Monthly forecast",
+    "ForecastMonthly": "Projected monthly spend",
+    "ForecastVsBudget": "of budget"
   }
 }

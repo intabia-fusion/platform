@@ -89,6 +89,10 @@
     "MonthlyBudgetTokens": "月間トークン予算",
     "SuggestedWindow5h": "推奨5時間制限",
     "SuggestedWindowWeek": "推奨週間制限",
-    "CurrentWindows": "現在の制限 (5時間 / 週)"
+    "CurrentWindows": "現在の制限 (5時間 / 週)",
+    "AvailableIn": "Available in ~{time}",
+    "Forecast": "Monthly forecast",
+    "ForecastMonthly": "Projected monthly spend",
+    "ForecastVsBudget": "of budget"
   }
 }

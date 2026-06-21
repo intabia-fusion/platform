@@ -9,6 +9,13 @@
     "SharedContextHint": "语言、时区和群聊偏好设置",
     "ClearAll": "全部清除",
     "TokenLimitReached5h": "已达到过去 5 小时的 AI 令牌上限。请稍后再试。",
-    "TokenLimitReachedWeek": "已达到每周 AI 令牌上限。请稍后再试。"
+    "TokenLimitReachedWeek": "已达到每周 AI 令牌上限。请稍后再试。",
+    "AISpaceSettings": "AI 工作区设置",
+    "AILevel": "AI 级别",
+    "AILevelHint": "此工作区的质量级别上限",
+    "Language": "语言",
+    "LanguageHint": "机器人回复的默认语言（如 zh、en）。留空 = pod 默认。",
+    "FallbackToSimpler": "回退到更简单的模型",
+    "FallbackToSimplerHint": "达到每周令牌上限后使用更便宜的模型，而非拒绝"
   }
 }

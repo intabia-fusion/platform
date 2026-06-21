@@ -9,6 +9,13 @@
     "SharedContextHint": "Dil, saat dilimi ve grup sohbeti tercihleri",
     "ClearAll": "Tümünü temizle",
     "TokenLimitReached5h": "Son 5 saatlik yapay zeka jeton sınırına ulaşıldı. Lütfen daha sonra tekrar deneyin.",
-    "TokenLimitReachedWeek": "Haftalık yapay zeka jeton sınırına ulaşıldı. Lütfen daha sonra tekrar deneyin."
+    "TokenLimitReachedWeek": "Haftalık yapay zeka jeton sınırına ulaşıldı. Lütfen daha sonra tekrar deneyin.",
+    "AISpaceSettings": "AI çalışma alanı ayarları",
+    "AILevel": "AI düzeyi",
+    "AILevelHint": "Bu çalışma alanı için kalite düzeyi tavanı",
+    "Language": "Dil",
+    "LanguageHint": "Bot yanıtları için varsayılan dil (ör. tr, en). Boş = pod varsayılanı.",
+    "FallbackToSimpler": "Daha basit modele geri dön",
+    "FallbackToSimplerHint": "Haftalık token sınırından sonra reddetmek yerine daha ucuz model kullan"
   }
 }

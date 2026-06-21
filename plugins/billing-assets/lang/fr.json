@@ -89,6 +89,10 @@
     "MonthlyBudgetTokens": "Budget mensuel de jetons",
     "SuggestedWindow5h": "Limite 5 h suggérée",
     "SuggestedWindowWeek": "Limite hebdomadaire suggérée",
-    "CurrentWindows": "Limites actuelles (5 h / semaine)"
+    "CurrentWindows": "Limites actuelles (5 h / semaine)",
+    "AvailableIn": "Available in ~{time}",
+    "Forecast": "Monthly forecast",
+    "ForecastMonthly": "Projected monthly spend",
+    "ForecastVsBudget": "of budget"
   }
 }

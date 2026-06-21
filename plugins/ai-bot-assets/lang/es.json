@@ -9,6 +9,13 @@
     "SharedContextHint": "Idioma, zona horaria y preferencias de chats grupales",
     "ClearAll": "Borrar todo",
     "TokenLimitReached5h": "Se ha alcanzado el límite de tokens de IA de las últimas 5 horas. Inténtalo de nuevo más tarde.",
-    "TokenLimitReachedWeek": "Se ha alcanzado el límite semanal de tokens de IA. Inténtalo de nuevo más tarde."
+    "TokenLimitReachedWeek": "Se ha alcanzado el límite semanal de tokens de IA. Inténtalo de nuevo más tarde.",
+    "AISpaceSettings": "Configuración de IA del espacio de trabajo",
+    "AILevel": "Nivel de IA",
+    "AILevelHint": "Techo del nivel de calidad para este espacio de trabajo",
+    "Language": "Idioma",
+    "LanguageHint": "Idioma predeterminado para las respuestas del bot (p. ej. es, en). Vacío = predeterminado del pod.",
+    "FallbackToSimpler": "Recurrir a modelo más simple",
+    "FallbackToSimplerHint": "Usar un modelo más económico tras el límite semanal en lugar de rechazar"
   }
 }

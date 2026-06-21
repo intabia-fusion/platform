@@ -16,7 +16,7 @@
   import { onMount } from 'svelte'
   import { Tier } from '@hcengineering/billing'
   import { UsageStatus } from '@hcengineering/core'
-  import { Label } from '@hcengineering/ui'
+  import { Label, ticker } from '@hcengineering/ui'
   import { getCurrentWorkspaceUuid } from '@hcengineering/presentation'
   import type { WorkspaceTokenWindows } from '@hcengineering/billing-client'
   import plugin from '../plugin'
@@ -43,6 +43,27 @@
       windows = undefined
     }
   })
+
+  // Human "Xh Ym" until an ISO reset time; '' when in the past/null.
+  function humanizeUntil (iso: string | null, now: number): string {
+    if (iso === null) return ''
+    const ms = new Date(iso).getTime() - now
+    if (ms <= 0) return ''
+    const mins = Math.ceil(ms / 60000)
+    const h = Math.floor(mins / 60)
+    const m = mins % 60
+    return h > 0 ? `${h}h ${m}m` : `${m}m`
+  }
+
+  // Show reset ETA only when at/over limit and a resetAt is known.
+  $: reset5h =
+    windows !== undefined && windows.window5h.used >= windows.window5h.limit && windows.window5h.limit > 0
+      ? humanizeUntil(windows.window5h.resetAt, $ticker)
+      : ''
+  $: resetWeek =
+    windows !== undefined && windows.week.used >= windows.week.limit && windows.week.limit > 0
+      ? humanizeUntil(windows.week.resetAt, $ticker)
+      : ''
 </script>
 
 <div class="flex-col flex-gap-2">
@@ -68,6 +89,11 @@
       limit={windows.window5h.limit}
       kind={'items'}
     />
+    {#if reset5h !== ''}
+      <span class="text-sm content-dark-color"
+        ><Label label={plugin.string.AvailableIn} params={{ time: reset5h }} /></span
+      >
+    {/if}
   {/if}
   {#if windows !== undefined && windows.week.limit > 0}
     <UsageProgress
@@ -76,5 +102,10 @@
       limit={windows.week.limit}
       kind={'items'}
     />
+    {#if resetWeek !== ''}
+      <span class="text-sm content-dark-color"
+        ><Label label={plugin.string.AvailableIn} params={{ time: resetWeek }} /></span
+      >
+    {/if}
   {/if}
 </div>

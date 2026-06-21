@@ -9,6 +9,13 @@
     "SharedContextHint": "言語、タイムゾーン、グループチャットの設定",
     "ClearAll": "すべて消去",
     "TokenLimitReached5h": "過去5時間のAIトークン上限に達しました。しばらくしてから再度お試しください。",
-    "TokenLimitReachedWeek": "週間のAIトークン上限に達しました。しばらくしてから再度お試しください。"
+    "TokenLimitReachedWeek": "週間のAIトークン上限に達しました。しばらくしてから再度お試しください。",
+    "AISpaceSettings": "AIワークスペース設定",
+    "AILevel": "AIレベル",
+    "AILevelHint": "このワークスペースの品質レベルの上限",
+    "Language": "言語",
+    "LanguageHint": "ボット返答のデフォルト言語（例：ja、en）。空白はポッドのデフォルト。",
+    "FallbackToSimpler": "シンプルなモデルへのフォールバック",
+    "FallbackToSimplerHint": "週次トークン上限後に安価なモデルを使用（拒否する代わりに）"
   }
 }

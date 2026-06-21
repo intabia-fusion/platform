@@ -9,6 +9,13 @@
     "SharedContextHint": "Language, timezone and group-chat preferences",
     "ClearAll": "Clear all",
     "TokenLimitReached5h": "AI token limit reached for the last 5 hours. Please try again later.",
-    "TokenLimitReachedWeek": "Weekly AI token limit reached. Please try again later."
+    "TokenLimitReachedWeek": "Weekly AI token limit reached. Please try again later.",
+    "AISpaceSettings": "AI workspace settings",
+    "AILevel": "AI level",
+    "AILevelHint": "Quality level ceiling for this workspace",
+    "Language": "Language",
+    "LanguageHint": "Default language for bot replies (e.g. en, ru). Empty = pod default.",
+    "FallbackToSimpler": "Fallback to simpler model",
+    "FallbackToSimplerHint": "Use a cheaper model after weekly token limit instead of refusing"
   }
 }

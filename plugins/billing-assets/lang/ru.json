@@ -89,6 +89,10 @@
     "MonthlyBudgetTokens": "Месячный бюджет токенов",
     "SuggestedWindow5h": "Рекомендуемый 5ч-лимит",
     "SuggestedWindowWeek": "Рекомендуемый недельный",
-    "CurrentWindows": "Текущие лимиты (5ч / неделя)"
+    "CurrentWindows": "Текущие лимиты (5ч / неделя)",
+    "AvailableIn": "Доступно через ~{time}",
+    "Forecast": "Прогноз на месяц",
+    "ForecastMonthly": "Прогноз расхода/мес",
+    "ForecastVsBudget": "от бюджета"
   }
 }

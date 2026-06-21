@@ -21,7 +21,16 @@ import {
   type AIRequest,
   type AIRequestStatus
 } from '@hcengineering/ai-bot'
-import { type Builder, Model, Prop, TypeBoolean, TypeNumber, TypeRef, TypeString, TypeTimestamp } from '@hcengineering/model'
+import {
+  type Builder,
+  Model,
+  Prop,
+  TypeBoolean,
+  TypeNumber,
+  TypeRef,
+  TypeString,
+  TypeTimestamp
+} from '@hcengineering/model'
 import core, { TDoc } from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
 import setting from '@hcengineering/setting'
@@ -106,5 +115,15 @@ export function createModel (builder: Builder): void {
     group: 'settings-account',
     role: AccountRole.Guest,
     order: 1700
+  })
+
+  builder.createDoc(setting.class.SettingsCategory, core.space.Model, {
+    name: 'ai-space-settings',
+    label: aiBot.string.AISpaceSettings,
+    icon: view.icon.AiStar,
+    component: aiBot.component.AISpaceSettingsEditor,
+    group: 'settings-editor',
+    role: AccountRole.Maintainer,
+    order: 1710
   })
 }

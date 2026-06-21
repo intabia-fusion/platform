@@ -110,7 +110,8 @@ const aiBot = plugin(aiBotId, {
     AISpaceSettings: '' as Ref<Class<AISpaceSettings>>
   },
   component: {
-    AIPersonalDataSettings: '' as AnyComponent
+    AIPersonalDataSettings: '' as AnyComponent,
+    AISpaceSettingsEditor: '' as AnyComponent
   },
   function: {
     StartAIConversation: '' as Resource<StartAIConversationFn>
@@ -126,7 +127,15 @@ const aiBot = plugin(aiBotId, {
     ClearAll: '' as IntlString,
     // Non-personal bot replies (rendered server-side in the space language).
     TokenLimitReached5h: '' as IntlString,
-    TokenLimitReachedWeek: '' as IntlString
+    TokenLimitReachedWeek: '' as IntlString,
+    // Workspace AI settings
+    AISpaceSettings: '' as IntlString,
+    AILevel: '' as IntlString,
+    AILevelHint: '' as IntlString,
+    Language: '' as IntlString,
+    LanguageHint: '' as IntlString,
+    FallbackToSimpler: '' as IntlString,
+    FallbackToSimplerHint: '' as IntlString
   }
 })
 

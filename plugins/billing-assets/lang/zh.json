@@ -89,6 +89,10 @@
     "MonthlyBudgetTokens": "每月令牌预算",
     "SuggestedWindow5h": "建议 5 小时限额",
     "SuggestedWindowWeek": "建议每周限额",
-    "CurrentWindows": "当前限额（5 小时 / 周）"
+    "CurrentWindows": "当前限额（5 小时 / 周）",
+    "AvailableIn": "Available in ~{time}",
+    "Forecast": "Monthly forecast",
+    "ForecastMonthly": "Projected monthly spend",
+    "ForecastVsBudget": "of budget"
   }
 }

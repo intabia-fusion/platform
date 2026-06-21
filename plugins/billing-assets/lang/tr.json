@@ -89,6 +89,10 @@
     "MonthlyBudgetTokens": "Aylık belirteç bütçesi",
     "SuggestedWindow5h": "Önerilen 5 sa. limiti",
     "SuggestedWindowWeek": "Önerilen haftalık limit",
-    "CurrentWindows": "Mevcut limitler (5 sa. / hafta)"
+    "CurrentWindows": "Mevcut limitler (5 sa. / hafta)",
+    "AvailableIn": "Available in ~{time}",
+    "Forecast": "Monthly forecast",
+    "ForecastMonthly": "Projected monthly spend",
+    "ForecastVsBudget": "of budget"
   }
 }
