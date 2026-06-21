@@ -739,7 +739,8 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         owners: new Set(removedSpace.owners ?? []),
         private: removedSpace.private,
         archived: removedSpace.archived,
-        autoJoin: removedSpace.autoJoin === true
+        autoJoin: removedSpace.autoJoin === true,
+        systemCreated: removedSpace.createdBy === core.account.System
       }
     }
   }

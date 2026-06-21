@@ -66,10 +66,6 @@ import {
   type WorkspaceInfoWithStatus,
   type WorkspaceInviteInfo,
   type WorkspaceLoginInfo,
-  type LoginInfoRequest,
-  type LoginInfoRequestData,
-  type Account,
-  type PersonWithProfile,
   SubscriptionType
 } from './types'
 import {
