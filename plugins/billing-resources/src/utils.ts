@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,13 +17,16 @@ import { get } from 'svelte/store'
 
 import login from '@hcengineering/login'
 import { getMetadata } from '@hcengineering/platform'
-import presentation from '@hcengineering/presentation'
+import presentation, { getClient } from '@hcengineering/presentation'
 import billing from '@hcengineering/billing'
+import contact from '@hcengineering/contact'
+import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
 import {
   getClient as getAccountClientRaw,
   type AccountClient,
   type SubscriptionData,
-  SubscriptionStatus
+  SubscriptionStatus,
+  SubscriptionType
 } from '@hcengineering/account-client'
 import { getClient as getBillingClientRaw, type BillingClient } from '@hcengineering/billing-client'
 import { getClient as getPaymentClientRaw, type PaymentClient } from '@hcengineering/payment-client'
@@ -36,7 +40,7 @@ import {
 import { showPopup } from '@hcengineering/ui'
 import { type PlanItem, type PackageItem, type PlanConfig, type LocalizedString } from '@hcengineering/billing'
 
-import { setSubscriptionState, updateLimitExceeded, subscriptionStore } from './stores/subscription'
+import { setSubscriptionState, updateLimitExceeded, subscriptionStore, setIsLimited } from './stores/subscription'
 import SubscriptionsModal from './components/SubscriptionsModal.svelte'
 
 export function getAccountClient (): AccountClient | null {
@@ -69,16 +73,35 @@ export function getPaymentClient (): PaymentClient | null {
 }
 
 let _planConfig: PlanConfig | null = null
+let _planConfigAt = 0
+const PLAN_CONFIG_TTL_MS = 5 * 60 * 1000 // refetch prices at most every 5 min
+
+export function isPlanConfig (v: unknown): v is PlanConfig {
+  return (
+    typeof v === 'object' &&
+    v !== null &&
+    typeof (v as PlanConfig).plans === 'object' &&
+    (v as PlanConfig).plans !== null &&
+    typeof (v as PlanConfig).packages === 'object' &&
+    (v as PlanConfig).packages !== null
+  )
+}
 
 async function getPlanConfig (): Promise<PlanConfig> {
-  if (_planConfig == null) {
+  if (_planConfig == null || Date.now() - _planConfigAt > PLAN_CONFIG_TTL_MS) {
     const paymentUrl = getMetadata(presentation.metadata.PaymentUrl) ?? ''
     const res = await fetch(paymentUrl + '/api/v1/plan-config')
     if (!res.ok) {
       console.warn('Failed to load plan config:', res.status)
-      return { plans: {}, packages: {} }
+      return _planConfig ?? { plans: {}, packages: {} }
     }
-    _planConfig = (await res.json()) as PlanConfig
+    const parsed: unknown = await res.json()
+    if (!isPlanConfig(parsed)) {
+      console.warn('Plan config response has unexpected shape, ignoring')
+      return _planConfig ?? { plans: {}, packages: {} }
+    }
+    _planConfig = parsed
+    _planConfigAt = Date.now()
   }
   return _planConfig
 }
@@ -113,8 +136,8 @@ export async function isLimitExceeded (): Promise<boolean> {
     }
 
     const subscriptions = await accountClient.getSubscriptions(undefined, false)
-    const subscription = subscriptions.find((p) => p.type === 'tier' && grantsPlan(p))
-    const packageSubscription = subscriptions.find((p) => p.type === 'package' && grantsPlan(p))
+    const subscription = subscriptions.find((p) => p.type === SubscriptionType.Tier && grantsPlan(p))
+    const packageSubscription = subscriptions.find((p) => p.type === SubscriptionType.Package && grantsPlan(p))
     if (subscription == null) {
       return true
     }
@@ -145,14 +168,25 @@ export async function checkWorkspaceLimits (): Promise<void> {
     const usageInfo = workspaceInfo?.usageInfo ?? null
 
     const subscriptions = await accountClient.getSubscriptions(undefined, false)
-    const subscription = subscriptions.find((p) => p.type === 'tier' && grantsPlan(p))
-    const packageSubscription = subscriptions.find((p) => p.type === 'package' && grantsPlan(p))
+    const subscription = subscriptions.find((p) => p.type === SubscriptionType.Tier && grantsPlan(p))
+    const packageSubscription = subscriptions.find((p) => p.type === SubscriptionType.Package && grantsPlan(p))
+    // Latest tier regardless of status — drives the payment/free banner even when canceled (non-granting).
+    const statusTier = subscriptions
+      .filter((p) => p.type === SubscriptionType.Tier)
+      .sort((a, b) => (b.createdOn ?? 0) - (a.createdOn ?? 0))[0]
     const config = await getPlanConfig()
     const plan = subscription != null ? (config.plans[subscription.plan] ?? null) : null
     const pkg = packageSubscription != null ? (config.packages[packageSubscription.plan] ?? null) : null
 
     // Update subscription store
-    setSubscriptionState(subscription, plan ?? undefined, workspaceInfo, packageSubscription, pkg ?? undefined)
+    setSubscriptionState(
+      subscription,
+      plan ?? undefined,
+      workspaceInfo,
+      packageSubscription,
+      pkg ?? undefined,
+      statusTier
+    )
 
     // Check limits
     if (usageInfo === null || subscription == null || plan == null) {
@@ -229,7 +263,8 @@ export function checkUsageAgainstLimits (
 }
 
 export function resolveLocale (config: PlanConfig, lang: string): PlanConfig {
-  const resolve = (s: LocalizedString): string => {
+  const resolve = (s: LocalizedString | undefined): string => {
+    if (s == null) return ''
     if (typeof s === 'string') return s
     return s[lang] ?? s.en ?? Object.values(s)[0] ?? ''
   }
@@ -262,13 +297,80 @@ export function resolveLocale (config: PlanConfig, lang: string): PlanConfig {
 
 export async function getCurrentSubscription (accountClient: AccountClient): Promise<SubscriptionData | undefined> {
   const subscriptions = await accountClient.getSubscriptions()
-  return subscriptions.find((p) => p.type === 'tier')
+  return subscriptions.find((p) => p.type === SubscriptionType.Tier)
 }
 
 export async function getWorkspaceInfo (): Promise<WorkspaceInfoWithStatus | undefined> {
   const accountClient = getAccountClient()
   if (accountClient == null) return undefined
   return await accountClient.getWorkspaceInfo(false)
+}
+
+const GUEST_ROLES = [AccountRole.ReadOnlyGuest, AccountRole.DocGuest, AccountRole.Guest]
+
+function rolePriority (role: AccountRole | undefined): number {
+  if (role === AccountRole.Owner) return 0
+  if (role === AccountRole.Maintainer) return 1
+  return 2
+}
+
+export async function checkIsLimited (): Promise<void> {
+  try {
+    const accountClient = getAccountClient()
+    const currentAccount = getCurrentAccount()
+    if (accountClient == null || currentAccount == null) {
+      setIsLimited(false)
+      return
+    }
+    if (currentAccount.role === AccountRole.Admin || GUEST_ROLES.includes(currentAccount.role)) {
+      setIsLimited(false)
+      return
+    }
+
+    const { currentSubscription, currentPlan, currentPackage, currentPackageSubscription, usageInfo } =
+      get(subscriptionStore)
+    const { usersLimit } = calculateLimits(currentPlan, currentPackage, currentSubscription, currentPackageSubscription)
+    const membersCount = usageInfo?.usage.membersCount ?? 0
+    if (usersLimit === 0 || membersCount <= usersLimit) {
+      setIsLimited(false)
+      return
+    }
+
+    // Mirrors server SeatLimitsMiddleware: seats by role priority (Owner, Maintainer, then Users)
+    // and employee createdOn; Admin/aibot never occupy a seat.
+    const members = await accountClient.getWorkspaceMembers()
+    const roleByPerson = new Map(members.map((m) => [m.person as string, m.role]))
+    const client = getClient()
+    const employees = await client.findAll(contact.mixin.Employee, { active: true })
+    const aiIdentity = await client.findOne(contact.class.SocialIdentity, { key: aiBotEmailSocialKey })
+
+    const sorted = [...employees].sort((a, b) => {
+      const pa = rolePriority(a.personUuid == null ? undefined : roleByPerson.get(a.personUuid))
+      const pb = rolePriority(b.personUuid == null ? undefined : roleByPerson.get(b.personUuid))
+      if (pa !== pb) return pa - pb
+      return (a.createdOn ?? 0) - (b.createdOn ?? 0)
+    })
+
+    let seats = 0
+    let seated = false
+    for (const emp of sorted) {
+      if (seats >= usersLimit) break
+      const uuid = emp.personUuid
+      if (uuid == null) continue
+      if (aiIdentity !== undefined && emp._id === aiIdentity.attachedTo) continue
+      const role = roleByPerson.get(uuid)
+      if (role === undefined || role === AccountRole.Admin || GUEST_ROLES.includes(role)) continue
+      seats++
+      if (uuid === currentAccount.uuid) {
+        seated = true
+        break
+      }
+    }
+    setIsLimited(!seated)
+  } catch (err) {
+    console.error('checkIsLimited failed:', err)
+    setIsLimited(false)
+  }
 }
 
 export async function upgradePlan (): Promise<void> {

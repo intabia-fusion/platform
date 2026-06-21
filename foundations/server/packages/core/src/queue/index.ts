@@ -1,5 +1,6 @@
 export * from './types'
 export * from './workspace'
+export * from './subscription'
 export * from './dummyQueue'
 export * from './users'
 export * from './onlineUserTx'

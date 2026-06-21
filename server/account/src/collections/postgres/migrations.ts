@@ -86,7 +86,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV26Migration(ns, flavor),
     getV27Migration(ns, flavor),
     getV28Migration(ns, flavor),
-    getV29Migration(ns, flavor)
+    getV29Migration(ns, flavor),
+    getV30Migration(ns, flavor)
   ]
 }
 
@@ -885,4 +886,37 @@ function getV29Migration (ns: string, flavor: DBFlavor): [string, string] {
     `
 
   return ['account_db_v29_subscription_status_readonly', addValueSql]
+}
+
+function getV30Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v30_payment_intent_table',
+    `
+    /* ======= P A Y M E N T   I N T E N T ======= */
+    /* One charge attempt per (subscription, period_end). The unique constraint makes claiming a */
+    /* charge atomic across pods/replicas/rolling-updates: a second claim for the same period hits */
+    /* the existing row (INSERT ... ON CONFLICT DO NOTHING) instead of issuing another charge. */
+
+    CREATE TABLE IF NOT EXISTS ${ns}.payment_intent (
+        id ${types.string} NOT NULL DEFAULT gen_random_uuid()::TEXT,
+        subscription_id ${types.string} NOT NULL,
+        period_end BIGINT NOT NULL, -- the subscription period this charge renews (dedup key)
+        provider ${types.string} NOT NULL,
+        status ${types.string} NOT NULL DEFAULT 'pending', -- pending | charged | failed
+        payment_id ${types.string}, -- provider charge id, set once the charge is issued
+        amount ${types.int8},
+        heartbeat_at BIGINT, -- lease: refreshed ~1s while a live pod awaits the charge response
+
+        created_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
+        updated_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
+
+        CONSTRAINT payment_intent_pk PRIMARY KEY (id),
+        CONSTRAINT payment_intent_sub_period_unique UNIQUE (subscription_id, period_end),
+        CONSTRAINT payment_intent_subscription_fk FOREIGN KEY (subscription_id) REFERENCES ${ns}.subscription(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS payment_intent_subscription_idx ON ${ns}.payment_intent (subscription_id);
+    `
+  ]
 }

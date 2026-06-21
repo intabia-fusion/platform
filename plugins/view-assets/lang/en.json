@@ -152,6 +152,8 @@
     "ReadOnlySignUp": "Create workspace",
     "PermissionWarningTitle": "✨ Level up your access!",
     "PermissionWarningMessage": "Your current role has limited permissions. To unlock this and other advanced features, ask your workspace admin to upgrade your access level!",
+    "PlanLimitWarningTitle": "Plan limit reached",
+    "PlanLimitWarningMessage": "Your workspace has reached a plan limit for this resource. Upgrade your plan to create more.",
     "Icon": "Icon",
     "Color": "Color",
     "AutomationOnly": "Automation only",

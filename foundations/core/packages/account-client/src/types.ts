@@ -220,6 +220,22 @@ export interface Subscription {
     tokenLimit: number
     usersLimit: number
     projectsLimit: number
+    // Reserved space limits — kept in the baked snapshot for forward compatibility, not enforced yet.
+    drivesLimit?: number
+    teamspacesLimit?: number
+  }
+
+  // Free fallback limits (from the plan flagged free in config). Applied when the paid tier is unpaid:
+  // the workspace runs on these instead of full read-only. Same shape as limits.
+  freeLimits?: {
+    storageLimitGB: number
+    trafficLimitGB: number
+    meetingMinutesLimit: number
+    tokenLimit: number
+    usersLimit: number
+    projectsLimit: number
+    drivesLimit?: number
+    teamspacesLimit?: number
   }
 
   // Amount paid (in cents, e.g. 9999 = $99.99)
@@ -249,6 +265,25 @@ export interface Subscription {
  * Used by billing service to upsert subscription data
  */
 export type SubscriptionData = Omit<Subscription, 'createdOn' | 'updatedOn'>
+
+export type PaymentIntentStatus = 'pending' | 'charged' | 'failed'
+
+/**
+ * One charge attempt per (subscriptionId, periodEnd). The unique (subscriptionId, periodEnd)
+ * constraint makes claiming a charge atomic across pods/replicas/rolling-updates.
+ */
+export interface PaymentIntent {
+  id: string
+  subscriptionId: string
+  periodEnd: number
+  provider: string
+  status: PaymentIntentStatus
+  paymentId?: string
+  amount?: number
+  heartbeatAt?: number
+  createdOn: number
+  updatedOn: number
+}
 
 /**
  * Subscription with resolved owner email (used in admin panel)

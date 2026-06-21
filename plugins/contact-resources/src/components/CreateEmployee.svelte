@@ -33,8 +33,9 @@
   } from '@hcengineering/core'
   import login from '@hcengineering/login'
   import { getResource } from '@hcengineering/platform'
-  import { Card, getClient } from '@hcengineering/presentation'
+  import { Card, createQuery, getClient } from '@hcengineering/presentation'
   import { createFocusManager, EditBox, FocusHandler, IconInfo, Label } from '@hcengineering/ui'
+  import { planLimits, checkWorkspaceLimits } from '@hcengineering/billing-resources'
   import { createEventDispatcher } from 'svelte'
   import { ChannelsDropdown } from '..'
   import contact from '../plugin'
@@ -159,6 +160,16 @@
 
   $: exists = $employeeBySocialKeyStore.get(emailSocialString) !== undefined
 
+  // Plan seat limit: 0 = unlimited. Count active employees and block creation past the limit.
+  let activeEmployeesCount = 0
+  const employeesQuery = createQuery()
+  employeesQuery.query(contact.mixin.Employee, { active: true }, (res) => {
+    activeEmployeesCount = res.length
+  })
+  void checkWorkspaceLimits()
+  $: usersLimit = $planLimits.usersLimit
+  $: seatLimitReached = usersLimit > 0 && activeEmployeesCount >= usersLimit
+
   const manager = createFocusManager()
 
   function changeEmail (): void {
@@ -180,7 +191,12 @@
 <Card
   label={contact.string.CreateEmployee}
   okAction={createEmployee}
-  canSave={firstName.trim().length > 0 && lastName.trim().length > 0 && email.trim().length > 0 && !exists && canSave}
+  canSave={firstName.trim().length > 0 &&
+    lastName.trim().length > 0 &&
+    email.trim().length > 0 &&
+    !exists &&
+    !seatLimitReached &&
+    canSave}
   on:close={() => {
     dispatch('close')
   }}
@@ -192,6 +208,13 @@
         <IconInfo size={'small'} />
         <span class="text-sm overflow-label ml-2">
           <Label label={contact.string.PersonAlreadyExists} />
+        </span>
+      </div>
+    {:else if seatLimitReached}
+      <div class="flex-row-center error-color" data-id="seatLimitError">
+        <IconInfo size={'small'} />
+        <span class="text-sm overflow-label ml-2">
+          <Label label={contact.string.SeatLimitReached} params={{ limit: usersLimit }} />
         </span>
       </div>
     {/if}

@@ -150,4 +150,45 @@ export interface BillingDB {
     start?: Date,
     end?: Date
   ) => Promise<AiTokensUsage[]>
+
+  // usage-delta accumulation (idempotent by ref); returns true if delta was new
+  accumulateUsageDelta: (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    metric: UsageMetric,
+    amount: number,
+    ref: string
+  ) => Promise<boolean>
+
+  // per-workspace per-category limit state
+  getLimitState: (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    category: LimitCategory
+  ) => Promise<WorkspaceLimitState | undefined>
+  upsertLimitState: (ctx: MeasureContext, state: WorkspaceLimitState) => Promise<void>
+  getAllExhaustedStates: (ctx: MeasureContext) => Promise<WorkspaceLimitState[]>
+}
+
+// --- billing-usage queue ---
+
+export type UsageMetric = 'tokens' | 'transcript' | 'storage'
+export type LimitCategory = 'disk' | 'tokens' | 'transcript'
+
+/** Message shape for the 'billing-usage' topic. */
+export interface BillingUsageMessage {
+  workspace: WorkspaceUuid
+  metric: UsageMetric
+  amount: number
+  /** Idempotency key — duplicate ref for same workspace+metric is ignored. */
+  ref: string
+}
+
+/** Per-workspace per-category limit state stored in billing DB. */
+export interface WorkspaceLimitState {
+  workspace: WorkspaceUuid
+  category: LimitCategory
+  used: number
+  limitValue: number // 0 = unlimited
+  exhausted: boolean
 }

@@ -48,6 +48,7 @@
     "SocialLinks": "Links sociais",
     "ViewActivity": "Ver atividade",
     "PersonAlreadyExists": "Contato já existe...",
+    "SeatLimitReached": "Limite de assentos atingido ({limit}). Atualize o plano para adicionar mais membros.",
     "Status": "Estado",
     "SetStatus": "Definir estado",
     "ClearStatus": "Limpar estado",

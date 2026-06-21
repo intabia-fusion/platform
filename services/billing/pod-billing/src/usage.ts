@@ -40,7 +40,10 @@ export class UsageWorker {
   constructor (
     private readonly db: BillingDB,
     private readonly storageConfigs: StorageConfig[],
-    private readonly config: Config
+    private readonly config: Config,
+    // Re-evaluate limit_state from absolute usage after the displayed usageInfo is refreshed;
+    // corrects the over-counting drift accumulated by the per-event delta path. Set by main.
+    private readonly reconcileLimits?: (ctx: MeasureContext, workspace: WorkspaceUuid) => Promise<void>
   ) {}
 
   async close (): Promise<void> {
@@ -103,6 +106,7 @@ export class UsageWorker {
             {},
             async (ctx) => {
               await this.updateWorkspaceUsageStatistics(ctx, now, workspace.uuid)
+              await this.reconcileLimits?.(ctx, workspace.uuid)
             },
             { workspace: workspace.uuid }
           )

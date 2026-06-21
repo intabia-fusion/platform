@@ -2689,7 +2689,7 @@ describe('getSubscriptions', () => {
     expect(mockDb.subscription.find).toHaveBeenCalled()
   })
 
-  test('should reject user without sufficient role', async () => {
+  test('should allow regular member (User role) to view subscriptions', async () => {
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
       account: accountUuid,
       workspace: workspaceUuid,
@@ -2697,8 +2697,10 @@ describe('getSubscriptions', () => {
     })
 
     mockDb.getWorkspaceRole.mockResolvedValue(AccountRole.User)
+    mockDb.subscription.find.mockResolvedValue([])
 
-    await expect(getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})).rejects.toThrow(PlatformError)
+    await getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})
+    expect(mockDb.subscription.find).toHaveBeenCalled()
   })
 
   test('should reject user without workspace membership', async () => {

@@ -147,6 +147,8 @@
     "ReadOnlySignUp": "Çalışma alanı oluştur",
     "PermissionWarningTitle": "✨ Erişiminizi yükseltin!",
     "PermissionWarningMessage": "Mevcut rolünüzün sınırlı izinleri var. Bu ve diğer gelişmiş özelliklerin kilidini açmak için çalışma alanı yöneticinizden erişim seviyenizi yükseltmesini isteyin!",
+    "PlanLimitWarningTitle": "Plan sınırına ulaşıldı",
+    "PlanLimitWarningMessage": "Çalışma alanınız bu kaynak için plan sınırına ulaştı. Daha fazla oluşturmak için planınızı yükseltin.",
     "Icon": "İkon",
     "Color": "Renk",
     "AutomationOnly": "Sadece otomasyon",

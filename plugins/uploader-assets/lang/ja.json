@@ -2,6 +2,7 @@
   "string": {
     "Cancel": "キャンセル",
     "Retry": "再試行",
+    "StorageLimitReached": "ストレージの上限に達しました。空き容量を確保するかプランをアップグレードしてください。",
     "UploadFiles": "ファイルをアップロード",
     "UploadFolders": "フォルダをアップロード",
     "UploadingTo": "次のフォルダに {files, plural, =1 {# ファイル} other {# ファイル}} をアップロード中："

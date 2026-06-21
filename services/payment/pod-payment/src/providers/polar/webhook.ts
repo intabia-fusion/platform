@@ -17,8 +17,8 @@ import type { Request, Response } from 'express'
 import { validateEvent, WebhookVerificationError } from '@polar-sh/sdk/webhooks'
 import { type MeasureContext } from '@hcengineering/core'
 
-import { getAccountClient } from '../../utils'
 import { transformPolarSubscriptionToData } from './utils'
+import type { SubscriptionPublisher } from '../index'
 
 /**
  * Handle Polar.sh webhook events
@@ -28,11 +28,12 @@ import { transformPolarSubscriptionToData } from './utils'
  */
 export async function handlePolarWebhook (
   ctx: MeasureContext,
-  accountsUrl: string,
-  serviceToken: string,
+  _accountsUrl: string,
+  _serviceToken: string,
   webhookSecret: string,
   req: Request,
-  res: Response
+  res: Response,
+  publish: SubscriptionPublisher
 ): Promise<void> {
   try {
     // Body is a Buffer from express.raw() middleware
@@ -55,7 +56,7 @@ export async function handlePolarWebhook (
       case 'subscription.canceled':
       case 'subscription.uncanceled':
       case 'subscription.revoked':
-        void handleSubscriptionUpdated(ctx, accountsUrl, serviceToken, event).catch((err) => {
+        void handleSubscriptionUpdated(ctx, publish, event).catch((err) => {
           ctx.error('Failed to process Polar webhook event', { event, err })
         })
         break
@@ -83,8 +84,7 @@ export async function handlePolarWebhook (
  */
 async function handleSubscriptionUpdated (
   ctx: MeasureContext,
-  accountsUrl: string,
-  serviceToken: string,
+  publish: SubscriptionPublisher,
   event: any
 ): Promise<void> {
   const subscription = event.data ?? event
@@ -103,8 +103,7 @@ async function handleSubscriptionUpdated (
     return
   }
 
-  const accountClient = getAccountClient(accountsUrl, serviceToken)
-  await accountClient.upsertSubscription(subscriptionData)
+  await publish(ctx, subscriptionData, 'webhook')
 
-  ctx.info('Subscription upserted', { subscriptionId: subscription.id, status: subscriptionData.status })
+  ctx.info('Subscription published', { subscriptionId: subscription.id, status: subscriptionData.status })
 }

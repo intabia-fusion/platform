@@ -17,16 +17,21 @@ import { type MeasureContext } from '@hcengineering/core'
 import { type SubscriptionData, type Subscription, SubscriptionStatus } from '@hcengineering/account-client'
 import type TbankPayments from 'tbank-payments'
 import type { Config } from './config'
-import type { SubscriptionStorage } from './storage'
+import { SubscriptionStorage } from './storage'
 import { notifyPaymentFailed } from './notifications'
 import { isPendingFirstPayment, isFailedRenewal } from './utils'
 
 export interface SchedulerHandle {
-  close: () => void
+  close: () => Promise<void>
 }
 
+// Cap how long shutdown waits for an in-flight renewal charge to persist before forcing exit.
+const RENEWAL_DRAIN_TIMEOUT_MS = 15000
+// Charge lease: refresh every second; a lease older than the timeout means the claiming pod died.
+const HEARTBEAT_INTERVAL_MS = 1000
+const LEASE_TIMEOUT_MS = 10000
 const RENEWAL_PERIOD_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
-// Max automatic retries before a past_due subscription is left alone (see storage.getSubscriptionsNeedingRenewal).
+// Max automatic retries before a past_due subscription is left alone (see SubscriptionStorage.needsRenewal).
 const MAX_RETRY_ATTEMPTS = 3
 // Back-off between failed charge retries (once per day).
 const RETRY_INTERVAL_MS = 24 * 60 * 60 * 1000 // 1 day
@@ -117,6 +122,53 @@ async function renewSubscription (
   // Previous status, to notify only on the active -> past_due transition (not on repeated retries).
   const wasActive = sub.status === SubscriptionStatus.Active
 
+  // Atomic cross-pod claim keyed by the period being renewed. Guarantees a single charge per period
+  // across replicas/rolling-updates: only the claimer (or a prior failed attempt) proceeds.
+  if (sub.periodEnd === undefined) {
+    ctx.error('Cannot renew subscription without periodEnd', { subId: sub.id })
+    return
+  }
+  const claim = await storage.claimCharge(sub.id, sub.periodEnd, sub.amount)
+
+  if (!claim.claimed) {
+    if (claim.status === 'charged') {
+      // Already paid for this period by another pod/tick.
+      return
+    }
+    if (claim.status === 'pending') {
+      // Someone holds (or held) the lease. If it is still fresh, that pod is alive and charging — skip.
+      const leaseFresh = claim.heartbeatAt !== undefined && Date.now() - claim.heartbeatAt < LEASE_TIMEOUT_MS
+      if (leaseFresh) {
+        ctx.info('Skipping renewal, charge in progress on another pod', { subId: sub.id })
+        return
+      }
+      // Lease expired: the claiming pod died mid-charge. The charge MAY have gone through and we can no
+      // longer learn its outcome (TBank /v2/Charge gives no key we can reconcile by — see follow-up).
+      // Fail safe toward "paid": take over atomically and treat as charged. A free period is far less
+      // harmful than a double charge. Only the pod that wins the takeover proceeds.
+      const wonTakeover = await storage.reclaimStaleCharge(claim.intentId, LEASE_TIMEOUT_MS)
+      if (!wonTakeover) {
+        return
+      }
+      ctx.warn('Orphaned charge intent assumed paid (claiming pod died mid-charge)', {
+        subId: sub.id,
+        intentId: claim.intentId
+      })
+      await storage.markCharge(claim.intentId, 'charged')
+      await storage.upsert(
+        buildRenewedSubscription(sub, Date.now(), (sub.providerData?.lastChargePaymentId as string) ?? '')
+      )
+      return
+    }
+    // status === 'failed' falls through to a fresh charge attempt (retry).
+  }
+  const intentId = claim.intentId
+
+  // Keep the lease warm while the charge is in flight so other pods see this pod is alive.
+  const heartbeat = setInterval(() => {
+    void storage.heartbeatCharge(intentId)
+  }, HEARTBEAT_INTERVAL_MS)
+
   try {
     const chargeResult = await tbank.chargeRecurrent({
       PaymentId: sub.providerSubscriptionId,
@@ -124,6 +176,7 @@ async function renewSubscription (
     })
 
     if (chargeResult.Success === true) {
+      await storage.markCharge(intentId, 'charged', chargeResult.PaymentId)
       const updatedData = buildRenewedSubscription(sub, Date.now(), chargeResult.PaymentId)
       await storage.upsert(updatedData)
       ctx.info('Subscription renewed successfully', {
@@ -131,6 +184,7 @@ async function renewSubscription (
         newPeriodEnd: updatedData.periodEnd
       })
     } else {
+      await storage.markCharge(intentId, 'failed')
       ctx.warn('Subscription renewal charge failed', {
         subId: sub.id,
         errorCode: chargeResult.ErrorCode,
@@ -146,15 +200,19 @@ async function renewSubscription (
       await notifyRenewalFailure(ctx, storage, config, updatedData, wasActive)
     }
   } catch (err: any) {
-    ctx.error('Error renewing subscription', { subId: sub.id, err })
-
+    // Charge outcome UNKNOWN (network/timeout). Stop refreshing the lease and leave the intent pending:
+    // its heartbeat goes stale, so another tick/pod resolves it via the lease-expiry takeover above
+    // (fail safe toward paid). Do NOT mark failed here — that would permit a re-charge.
+    ctx.error('Renewal charge outcome unknown, intent left pending for lease-expiry takeover', {
+      subId: sub.id,
+      intentId,
+      err
+    })
     const updatedData = buildChargeErrorSubscription(sub, err.message)
     await storage.upsert(updatedData)
-    ctx.info('Subscription charge error, marked PastDue', {
-      subId: sub.id,
-      attempt: updatedData.providerData?.retryAttempt
-    })
     await notifyRenewalFailure(ctx, storage, config, updatedData, wasActive)
+  } finally {
+    clearInterval(heartbeat)
   }
 }
 
@@ -185,14 +243,11 @@ async function notifyRenewalFailure (
  */
 async function cleanupAbandonedSubscriptions (ctx: MeasureContext, storage: SubscriptionStorage): Promise<void> {
   try {
-    // activeOnly=false — abandoned drafts are past_due (pending:true), excluded by default.
-    const allSubs = await storage.getAll(undefined, false)
     const now = Date.now()
     const staleThreshold = 24 * 60 * 60 * 1000 // 24 hours
     let cleaned = 0
 
-    for (const sub of allSubs) {
-      if (sub.provider !== 'tbank') continue
+    for (const sub of await storage.getCandidates()) {
       if (!isPendingFirstPayment(sub)) continue
 
       const age = now - (sub.periodStart ?? now)
@@ -234,14 +289,11 @@ const DAY_MS = 24 * 60 * 60 * 1000
  */
 async function enforceGracePeriod (ctx: MeasureContext, storage: SubscriptionStorage, config: Config): Promise<void> {
   try {
-    // activeOnly=false — past_due subs (the ones eligible for grace) are excluded by default.
-    const allSubs = await storage.getAll(undefined, false)
     const now = Date.now()
     const graceMs = config.GracePeriodDays * DAY_MS
     let moved = 0
 
-    for (const sub of allSubs) {
-      if (sub.provider !== 'tbank') continue
+    for (const sub of await storage.getCandidates()) {
       if (!isFailedRenewal(sub)) continue
       const retryAttempt = (sub.providerData?.retryAttempt as number) ?? 0
       if (retryAttempt < MAX_RETRY_ATTEMPTS) continue
@@ -290,16 +342,33 @@ export function startScheduler (
   config: Config,
   intervalMinutes: number
 ): SchedulerHandle {
+  // Tracks the in-flight renewal cycle so shutdown can wait for a charge to finish persisting.
+  // A charge debits the customer at TBank; losing the subsequent upsert would orphan the payment.
+  let activeRenewal: Promise<void> | null = null
+
   const runRenewalCycle = async (): Promise<void> => {
     try {
-      const needingRenewal = await storage.getSubscriptionsNeedingRenewal(ctx)
-
-      for (const sub of needingRenewal) {
-        await renewSubscription(ctx, tbank, storage, config, sub)
+      const now = Date.now()
+      for (const sub of await storage.getCandidates()) {
+        if (SubscriptionStorage.needsRenewal(sub, now)) {
+          await renewSubscription(ctx, tbank, storage, config, sub)
+        }
       }
     } catch (err) {
       ctx.error('Subscription renewal scheduler error', { err })
     }
+  }
+
+  const trackRenewal = (): void => {
+    // In-pod overlap guard: skip if the previous cycle is still running (a slow cycle + short interval
+    // would otherwise stack). This is a cheap local guard only; cross-pod safety is the ledger claim.
+    if (activeRenewal !== null) {
+      ctx.info('Renewal cycle still running, skipping this tick')
+      return
+    }
+    activeRenewal = runRenewalCycle().finally(() => {
+      activeRenewal = null
+    })
   }
 
   const cleanupCycle = async (): Promise<void> => {
@@ -314,12 +383,10 @@ export function startScheduler (
   ctx.info('Starting subscription renewal scheduler', { intervalMinutes, gracePeriodDays: config.GracePeriodDays })
 
   // Run immediately on start, then periodically
-  void runRenewalCycle()
+  trackRenewal()
   void cleanupCycle()
   void graceCycle()
-  const timer = setInterval(() => {
-    void runRenewalCycle()
-  }, schedulerIntervalMs)
+  const timer = setInterval(trackRenewal, schedulerIntervalMs)
   // Cleanup runs less frequently — once per cycle is fine; abandoned subs are rare
   const cleanupTimer = setInterval(() => {
     void cleanupCycle()
@@ -330,10 +397,20 @@ export function startScheduler (
   }, schedulerIntervalMs)
 
   return {
-    close: () => {
+    close: async () => {
       clearInterval(timer)
       clearInterval(cleanupTimer)
       clearInterval(graceTimer)
+      // Only the renewal cycle is drained: it issues a charge (real money), so a lost upsert orphans
+      // the payment. Cleanup/grace upserts are not drained — they re-fetch and re-check, so a missed
+      // one is simply redone on the next tick (idempotent, no money lost).
+      if (activeRenewal !== null) {
+        ctx.info('Waiting for in-flight renewal before shutdown')
+        await Promise.race([
+          activeRenewal,
+          new Promise<void>((resolve) => setTimeout(resolve, RENEWAL_DRAIN_TIMEOUT_MS))
+        ])
+      }
     }
   }
 }

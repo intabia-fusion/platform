@@ -179,6 +179,8 @@ services:
       - SERVER_SECRET=secret
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
       - WORKSPACE_LIMIT_PER_USER=100
+      # Free fallback limits (match the free:true plan in plan-config.yaml). storagePerUserGB scales disk.
+      - FREE_PLAN_LIMITS={"usersLimit":5,"storagePerUserGB":2,"projectsLimit":3,"tokenLimit":100000,"trafficLimitGB":0,"meetingMinutesLimit":0}
       - DB_URL=${DB_PG_URL}
       - REGION_CONFIG=/var/cfg/region-config.yaml
       - STORAGE_CONFIG=${STORAGE_CONFIG}
@@ -226,6 +228,7 @@ services:
       - stream
       - fulltext
       - billing
+      - payment
     ports:
       - 8083:8083
     volumes:
@@ -262,6 +265,8 @@ services:
       - STATS_API=http://localhost:8083/_stats
       - STREAM_URL=http://localhost:8083/_stream/recording
       - DATALAKE_URL=http://localhost:8083/_datalake
+      - BILLING_URL=http://localhost:8083/_billing
+      - PAYMENT_URL=http://localhost:8083/_payment
       - USE_OTP=false
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
       - ANALYTICS_COLLECTOR_URL=http://localhost:4018
@@ -298,6 +303,8 @@ services:
       - STATS_API=http://localhost:8083/_stats
       - STREAM_URL=http://localhost:8083/_stream/recording
       - DATALAKE_URL=http://localhost:8083/_datalake
+      - BILLING_URL=http://localhost:8083/_billing
+      - PAYMENT_URL=http://localhost:8083/_payment
       - USE_OTP=false
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
       - ANALYTICS_COLLECTOR_URL=http://localhost:4018
@@ -504,6 +511,8 @@ services:
         condition: service_started
       account:
         condition: service_started
+      redpanda:
+        condition: service_started
     environment:
       - PORT=4031
       - SECRET=secret
@@ -521,16 +530,43 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redpanda:
+        condition: service_started
       account:
+        condition: service_started
+      datalake:
         condition: service_started
     environment:
       - PORT=4043
       - SECRET=secret
       - ACCOUNTS_URL=http://account:3003
       - DB_URL=${DB_PG_URL}
-      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      # Storage usage is read from datalake stats; billing needs a datalake-kind config,
+      # not the global minio one (collectDatalakeStats filters by kind === 'datalake').
+      - STORAGE_CONFIG=datalake|http://datalake:4031
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
       - USAGE_UPDATE_INTERVAL=30
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+    restart: unless-stopped
+
+  payment:
+    image: intabiafusion/payment
+    pull_policy: never
+    depends_on:
+      postgres:
+        condition: service_healthy
+      account:
+        condition: service_started
+    environment:
+      - PORT=4044
+      - SECRET=secret
+      - ACCOUNTS_URL=http://account:3003
+      - FRONT_URL=http://localhost:8083
+      - PROVIDER=mock
+      - PLAN_CONFIG=/var/cfg/plan-config.yaml
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+    volumes:
+      - ./plan-config.yaml:/var/cfg/plan-config.yaml:ro
     restart: unless-stopped
 
   redis-test:

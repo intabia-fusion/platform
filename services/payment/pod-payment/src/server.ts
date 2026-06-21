@@ -16,17 +16,22 @@
 import cors from 'cors'
 import express, { type Express, NextFunction, type Request, type Response } from 'express'
 import { type Server } from 'http'
-import { MeasureContext, systemAccountUuid } from '@hcengineering/core'
+import { AccountRole, generateId, MeasureContext, systemAccountUuid, type WorkspaceUuid } from '@hcengineering/core'
 import morgan from 'morgan'
 import onHeaders from 'on-headers'
 import rateLimit from 'express-rate-limit'
 import { generateToken } from '@hcengineering/server-token'
-import { SubscriptionData, type WorkspaceLoginInfo } from '@hcengineering/account-client'
+import {
+  SubscriptionData,
+  SubscriptionStatus,
+  SubscriptionType,
+  type WorkspaceLoginInfo
+} from '@hcengineering/account-client'
 
 import { Config } from './config'
-import { withAdmin, withLoginInfo, withOwner, withToken, type RequestWithAuth } from './middleware'
+import { ownsSubscription, withAdmin, withLoginInfo, withOwner, withToken, type RequestWithAuth } from './middleware'
 import { PaymentProviderFactory } from './factory'
-import type { CheckoutResponse, PaymentProvider } from './providers'
+import type { CheckoutResponse, PaymentProvider, SubscriptionPublisher } from './providers'
 import { SubscribeRequest } from './providers'
 import { startActiveSubscriptionReconciliation } from './reconciliation'
 import { getAccountClient } from './utils'
@@ -76,7 +81,17 @@ const handleRequest = async (
   }
 }
 
-export async function createServer (ctx: MeasureContext, config: Config): Promise<{ app: Express, close: () => void }> {
+export async function createServer (
+  ctx: MeasureContext,
+  config: Config,
+  // Publishes provider subscription events to the queue (durable, provider-agnostic). Required.
+  publish: SubscriptionPublisher
+): Promise<{
+    app: Express
+    ensureFreeSubscription: (workspace: WorkspaceUuid) => Promise<void>
+    persistSubscription: (data: SubscriptionData) => Promise<void>
+    close: () => void
+  }> {
   const app = express()
   app.set('trust proxy', true)
   app.use(cors())
@@ -108,6 +123,9 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
   let provider: PaymentProvider | undefined
 
   switch (config.Provider) {
+    case 'mock':
+      // created after planConfig loads — see below
+      break
     case 'polar':
       provider = PaymentProviderFactory.getInstance().create(
         'polar',
@@ -145,16 +163,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
       )
       break
     default:
-      throw new Error(`Unknown payment provider: ${config.Provider}. Expected one of: polar, stripe, tbank`)
-  }
-
-  if (provider !== undefined) {
-    provider.registerWebhookEndpoints(app, ctx, config.AccountsUrl, serviceToken)
-    ctx.info(`${config.Provider} payment provider initialized successfully`)
-  }
-
-  if (provider == null) {
-    throw new Error(`Failed to initialize payment provider: ${config.Provider}`)
+      throw new Error(`Unknown payment provider: ${config.Provider}. Expected one of: mock, polar, stripe, tbank`)
   }
 
   // Plan config — loaded from PLAN_CONFIG env (YAML file path), falls back to empty config
@@ -178,19 +187,93 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
     res.json(planConfig)
   })
 
-  function attachLimits (data: SubscriptionData): SubscriptionData {
-    const source = data.type === 'package' ? planConfig.packages : planConfig.plans
-    const item = source?.[data.plan]
-    if (item == null) return data
-    const limits = {
-      storageLimitGB: item.storageLimitGB ?? 0,
+  function resolveLimits (type: SubscriptionType, plan: string): SubscriptionData['limits'] {
+    const source = type === SubscriptionType.Package ? planConfig.packages : planConfig.plans
+    const item = source?.[plan]
+    if (item == null) return undefined
+    const usersLimit = item.usersLimit ?? 0
+    // storagePerUserGB (e.g. free tier) -> disk scales with the seat budget; else fixed storageLimitGB.
+    const storageLimitGB =
+      item.storagePerUserGB != null ? usersLimit * item.storagePerUserGB : (item.storageLimitGB ?? 0)
+    return {
+      storageLimitGB,
       trafficLimitGB: item.trafficLimitGB ?? 0,
       meetingMinutesLimit: item.meetingMinutesLimit ?? 0,
       tokenLimit: item.tokenLimit ?? 0,
-      usersLimit: item.usersLimit ?? 0,
-      projectsLimit: item.projectsLimit ?? 0
+      usersLimit,
+      projectsLimit: item.projectsLimit ?? 0,
+      // Reserved (not enforced yet) — baked from config so adding enforcement later needs no re-checkout.
+      drivesLimit: item.drivesLimit ?? 0,
+      teamspacesLimit: item.teamspacesLimit ?? 0
     }
+  }
+
+  // Free fallback plan (flagged free:true in config) — its name, used to auto-provision a free tier.
+  // Free fallback LIMITS are no longer baked here: the account server fills them from FREE_PLAN_LIMITS.
+  const freePlanName: string | undefined = Object.entries(planConfig.plans ?? {}).find(
+    ([, p]: [string, any]) => p?.free === true
+  )?.[0]
+
+  function attachLimits (data: SubscriptionData): SubscriptionData {
+    const limits = resolveLimits(data.type, data.plan)
+    if (limits === undefined) return data
     return { ...data, limits }
+  }
+
+  // The single chokepoint that writes a subscription to the account DB. Bakes paid limits, then upserts.
+  // Both sync (HTTP user actions) and async (provider events via the Subscription queue) funnel through
+  // here so limits are always baked consistently regardless of provider. Idempotent (account dedups by
+  // provider + providerSubscriptionId), so queue replays are safe.
+  async function persistSubscription (data: SubscriptionData): Promise<void> {
+    await accountClient.upsertSubscription(attachLimits(data))
+  }
+
+  // Provider events go through the queue (durable: a webhook is ack'd to the provider even if the
+  // account DB is momentarily down; the consumer persists later).
+  const publishSubscription: SubscriptionPublisher = publish
+
+  // On workspace creation: if no tier subscription exists and a free plan is configured, create one
+  // so the workspace is bounded by free limits from the start. Idempotent (skips if a tier exists).
+  async function ensureFreeSubscription (workspace: WorkspaceUuid): Promise<void> {
+    if (freePlanName === undefined) return
+    try {
+      const existing = await accountClient.getSubscriptions(workspace, false)
+      if (existing.some((s) => s.type === SubscriptionType.Tier)) return // already has a tier
+      // getWorkspaceMembers resolves the workspace from the token, so use a workspace-scoped client.
+      const wsToken = generateToken(systemAccountUuid, workspace, { service: 'payment' })
+      const members = await getAccountClient(config.AccountsUrl, wsToken).getWorkspaceMembers()
+      const owner = members.find((m) => m.role === AccountRole.Owner) ?? members[0]
+      if (owner === undefined) return
+      const subId = generateId()
+      await accountClient.upsertSubscription(
+        attachLimits({
+          id: subId,
+          workspaceUuid: workspace,
+          accountUuid: owner.person,
+          provider: 'free',
+          providerSubscriptionId: `free-${workspace}`,
+          type: SubscriptionType.Tier,
+          status: SubscriptionStatus.Active,
+          plan: freePlanName
+        } as unknown as SubscriptionData)
+      )
+      ctx.info('free subscription created for workspace', { workspace, plan: freePlanName })
+    } catch (err: any) {
+      ctx.error('failed to ensure free subscription', { workspace, err })
+    }
+  }
+
+  if (config.Provider === 'mock') {
+    provider = PaymentProviderFactory.getInstance().create('mock', { frontUrl: config.FrontUrl }, accountClient)
+  }
+
+  if (provider !== undefined) {
+    provider.registerWebhookEndpoints(app, ctx, config.AccountsUrl, serviceToken, publishSubscription)
+    ctx.info(`${config.Provider} payment provider initialized successfully`)
+  }
+
+  if (provider == null) {
+    throw new Error(`Failed to initialize payment provider: ${config.Provider}`)
   }
 
   function isPackageEligible (pkgKey: string, currentTierPlan: string | undefined): boolean {
@@ -205,7 +288,8 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
     config.AccountsUrl,
     serviceToken,
     provider,
-    config.ReconciliationIntervalMinutes ?? 60
+    config.ReconciliationIntervalMinutes ?? 60,
+    publishSubscription
   )
 
   // ============ Generic Payment Service Endpoints ============
@@ -257,9 +341,11 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
-          if (request.type === 'package') {
+          if (request.type === SubscriptionType.Package) {
             const subscriptions = await accountClient.getSubscriptions(workspaceUuid)
-            const activeTierPlan = subscriptions.find((s) => s.type === 'tier' && s.status === 'active')?.plan
+            const activeTierPlan = subscriptions.find(
+              (s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Active
+            )?.plan
             if (!isPackageEligible(request.plan, activeTierPlan)) {
               res.status(400).json({ error: 'Package not available on current plan' })
               return
@@ -280,6 +366,15 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             ctx.error('Failed to create subscription at provider', { err })
             res.status(500).json({ error: 'Failed to create subscription at provider' })
             return
+          }
+
+          // Instant providers (mock) already activated the subscription — persist it now so the
+          // client can just refetch instead of redirecting to a checkout page and polling.
+          if (createSubResponse.instant === true) {
+            const sub = await provider.getSubscriptionByCheckout(ctx, createSubResponse.checkoutId)
+            if (sub !== null) {
+              await persistSubscription(sub)
+            }
           }
 
           res.status(200).json(createSubResponse)
@@ -320,6 +415,11 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
+          if (!ownsSubscription(req, subscription)) {
+            res.status(403).json({ error: 'Subscription does not belong to this workspace' })
+            return
+          }
+
           let canceledSubscription: SubscriptionData
 
           if (subscription.provider !== config.Provider) {
@@ -327,10 +427,10 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             const now = Date.now()
             canceledSubscription = {
               ...subscription,
-              status: 'canceled' as any,
+              status: SubscriptionStatus.Canceled,
               canceledAt: now
             } as any
-            await accountClient.upsertSubscription(canceledSubscription)
+            await persistSubscription(canceledSubscription)
             ctx.info('Subscription canceled locally (provider mismatch)', {
               id: subscription.id,
               provider: subscription.provider
@@ -344,7 +444,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
                 return
               }
               canceledSubscription = result
-              await accountClient.upsertSubscription(canceledSubscription)
+              await persistSubscription(canceledSubscription)
             } catch (err) {
               ctx.error('Failed to cancel subscription at provider', { err })
               res.status(500).json({ error: 'Failed to cancel subscription at provider' })
@@ -390,6 +490,11 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
+          if (!ownsSubscription(req, subscription)) {
+            res.status(403).json({ error: 'Subscription does not belong to this workspace' })
+            return
+          }
+
           let uncanceledSubscription: SubscriptionData
 
           if (subscription.provider !== config.Provider) {
@@ -399,7 +504,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
               canceledAt: undefined,
               status: 'active' as any
             }
-            await accountClient.upsertSubscription(uncanceledSubscription as any)
+            await persistSubscription(uncanceledSubscription as any)
             ctx.info('Subscription uncanceled locally (provider mismatch)', {
               id: subscription.id,
               provider: subscription.provider
@@ -413,7 +518,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
                 return
               }
               uncanceledSubscription = result
-              await accountClient.upsertSubscription(uncanceledSubscription)
+              await persistSubscription(uncanceledSubscription)
             } catch (err) {
               ctx.error('Failed to uncancel subscription at provider', { err })
               res.status(500).json({ error: 'Failed to uncancel subscription at provider' })
@@ -475,15 +580,22 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
+          if (!ownsSubscription(req, subscription)) {
+            res.status(403).json({ error: 'Subscription does not belong to this workspace' })
+            return
+          }
+
           const accountUuid = subscription.accountUuid ?? req.token?.account
           if (accountUuid == null) {
             res.status(400).json({ error: 'Missing account, cannot update plan' })
             return
           }
 
-          if (subscription.type === 'package') {
+          if (subscription.type === SubscriptionType.Package) {
             const subscriptions = await accountClient.getSubscriptions(subscription.workspaceUuid)
-            const activeTierPlan = subscriptions.find((s) => s.type === 'tier' && s.status === 'active')?.plan
+            const activeTierPlan = subscriptions.find(
+              (s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Active
+            )?.plan
             if (!isPackageEligible(plan, activeTierPlan)) {
               res.status(400).json({ error: 'Package not available on current plan' })
               return
@@ -509,6 +621,13 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
                 loginInfo.workspaceUrl,
                 accountUuid
               )
+              // Instant provider: persist the new subscription now (see createSubscription handler).
+              if (checkoutResponse.instant === true) {
+                const sub = await provider.getSubscriptionByCheckout(ctx, checkoutResponse.checkoutId)
+                if (sub !== null) {
+                  await persistSubscription(sub)
+                }
+              }
               res.status(200).json(checkoutResponse)
             } catch (err) {
               ctx.error('Failed to create subscription at provider', { err })
@@ -547,11 +666,11 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
-          // It's a SubscriptionData - update was direct
-          // Upsert the updated subscription into our database
-          await accountClient.upsertSubscription(updateResult)
+          // It's a SubscriptionData - update was direct. Attach the new plan's limits
+          // (providers may return without fresh limits) so enforcement and UI are correct.
+          await persistSubscription(updateResult)
 
-          res.status(200).json(updateResult)
+          res.status(200).json(attachLimits(updateResult))
         },
         req,
         res,
@@ -587,7 +706,12 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
-          if (subscription.status !== 'past_due') {
+          if (!ownsSubscription(req, subscription)) {
+            res.status(403).json({ error: 'Subscription does not belong to this workspace' })
+            return
+          }
+
+          if (subscription.status !== SubscriptionStatus.PastDue) {
             res.status(400).json({ error: 'Subscription is not in past_due status' })
             return
           }
@@ -608,7 +732,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
               res.status(404).json({ error: 'Failed to retry payment' })
               return
             }
-            await accountClient.upsertSubscription(result)
+            await persistSubscription(result)
             res.json(result)
           } catch (err) {
             ctx.error('Failed to retry payment', { err })
@@ -672,7 +796,6 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
       'checkout-subscription-status',
       async (ctx) => {
         const checkoutId = req.params.checkoutId
-        const accountClient = getAccountClient(config.AccountsUrl, serviceToken)
 
         // Try to get subscription from provider by checkout ID
         const subscriptionData = await provider.getSubscriptionByCheckout(ctx, checkoutId)
@@ -698,7 +821,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
                   (existingSubscription?.providerData?.modifiedAt ?? 0) < subscriptionData.providerData.modifiedAt)
 
               if (shouldUpsert) {
-                await accountClient.upsertSubscription(attachLimits(subscriptionData))
+                await persistSubscription(subscriptionData)
                 ctx.info('Subscription upserted from checkout poll', {
                   checkoutId,
                   subscriptionId: subscriptionData.id,
@@ -739,6 +862,8 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
 
   return {
     app,
+    ensureFreeSubscription,
+    persistSubscription,
     close: () => {
       stopReconciliation()
     }

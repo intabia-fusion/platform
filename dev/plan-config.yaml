@@ -1,4 +1,39 @@
 plans:
+  # Free fallback tier. Applied when a workspace has no active paid tier (unpaid / no subscription).
+  # Disk = usersLimit * storagePerUserGB (5 * 2 = 10 GB).
+  free:
+    label:
+      ru: Бесплатный
+      en: Free
+    description:
+      ru: Бесплатный тариф
+      en: Free tier
+    users:
+      ru: до 5 пользователей
+      en: up to 5 users
+    features:
+      - ru: 5 пользователей
+        en: 5 users
+      - ru: 3 проекта
+        en: 3 projects
+      - ru: 2 Гб на пользователя
+        en: 2 GB per user
+      - ru: 100000 токенов ИИ
+        en: 100000 AI tokens
+    additional:
+      ru: Базовый бесплатный доступ
+      en: Basic free access
+    priceMonthly: 0
+    currency: ₽
+    free: true
+    storagePerUserGB: 2
+    trafficLimitGB: 0
+    meetingMinutesLimit: 0
+    tokenLimit: 100000
+    projectsLimit: 3
+    usersLimit: 5
+    index: -1
+    color: Grayish
   start:
     label:
       ru: Старт

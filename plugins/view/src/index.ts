@@ -262,6 +262,8 @@ const view = plugin(viewId, {
     ReadOnlyJoinWorkspace: '' as IntlString,
     PermissionWarningTitle: '' as IntlString,
     PermissionWarningMessage: '' as IntlString,
+    PlanLimitWarningTitle: '' as IntlString,
+    PlanLimitWarningMessage: '' as IntlString,
     Icon: '' as IntlString,
     Select: '' as IntlString,
     Color: '' as IntlString,

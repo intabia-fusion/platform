@@ -16293,6 +16293,9 @@ importers:
       '@hcengineering/account-client':
         specifier: workspace:^0.7.21
         version: link:../../foundations/core/packages/account-client
+      '@hcengineering/ai-bot':
+        specifier: workspace:^0.7.0
+        version: link:../ai-bot
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../attachment
@@ -17355,6 +17358,12 @@ importers:
       '@hcengineering/attachment-resources':
         specifier: workspace:^0.7.0
         version: link:../attachment-resources
+      '@hcengineering/billing':
+        specifier: workspace:^0.7.0
+        version: link:../billing
+      '@hcengineering/billing-resources':
+        specifier: workspace:^0.7.0
+        version: link:../billing-resources
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../chunter
@@ -17904,6 +17913,9 @@ importers:
       '@hcengineering/attachment-resources':
         specifier: workspace:^0.7.0
         version: link:../attachment-resources
+      '@hcengineering/billing-resources':
+        specifier: workspace:^0.7.0
+        version: link:../billing-resources
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -28353,6 +28365,9 @@ importers:
       '@hcengineering/attachment-resources':
         specifier: workspace:^0.7.0
         version: link:../attachment-resources
+      '@hcengineering/billing-resources':
+        specifier: workspace:^0.7.0
+        version: link:../billing-resources
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
@@ -30523,6 +30538,9 @@ importers:
       '@hcengineering/analytics-service':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics-service
+      '@hcengineering/chunter':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/chunter
       '@hcengineering/communication-sdk-types':
         specifier: workspace:^0.7.12
         version: link:../../foundations/communication/packages/sdk-types
@@ -30535,6 +30553,12 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
+      '@hcengineering/document':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/document
+      '@hcengineering/drive':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/drive
       '@hcengineering/kafka':
         specifier: workspace:^0.7.19
         version: link:../../foundations/server/packages/kafka
@@ -30562,6 +30586,12 @@ importers:
       '@hcengineering/postgres':
         specifier: workspace:^0.7.22
         version: link:../../foundations/server/packages/postgres
+      '@hcengineering/preference':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/preference
+      '@hcengineering/pulse':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/pulse
       '@hcengineering/rpc':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/rpc
@@ -30595,6 +30625,9 @@ importers:
       '@hcengineering/server-token':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/token
+      '@hcengineering/tracker':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/tracker
       body-parser:
         specifier: ^1.20.3
         version: 1.20.3
@@ -37217,6 +37250,9 @@ importers:
       '@hcengineering/datalake':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/server/packages/datalake
+      '@hcengineering/kafka':
+        specifier: workspace:^0.7.19
+        version: link:../../../foundations/server/packages/kafka
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/core/packages/platform
@@ -40103,6 +40139,9 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../../foundations/core/packages/core
+      '@hcengineering/kafka':
+        specifier: workspace:^0.7.19
+        version: link:../../../foundations/server/packages/kafka
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/core/packages/platform
@@ -40245,6 +40284,9 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../../foundations/core/packages/core
+      '@hcengineering/kafka':
+        specifier: workspace:^0.7.19
+        version: link:../../../foundations/server/packages/kafka
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/core/packages/platform
@@ -41606,6 +41648,12 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
+      '@hcengineering/document':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/document
+      '@hcengineering/drive':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/drive
       '@hcengineering/love':
         specifier: workspace:^0.7.0
         version: link:../../plugins/love

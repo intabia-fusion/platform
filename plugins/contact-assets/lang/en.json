@@ -48,6 +48,7 @@
     "SocialLinks": "Social links",
     "ViewActivity": "View activity",
     "PersonAlreadyExists": "Contact already exists...",
+    "SeatLimitReached": "Seat limit reached ({limit}). Upgrade the plan to add more members.",
     "Status": "Status",
     "SetStatus": "Set status",
     "ClearStatus": "Clear status",

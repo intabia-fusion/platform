@@ -5,6 +5,7 @@
     "InvalidId": "Ungültige ID: {id}",
     "BadRequest": "Fehlerhafte Anfrage",
     "Forbidden": "Zugriff verweigert",
+    "PlanLimitExceeded": "Plan-Limit überschritten",
     "Conflict": "Konflikt",
     "ExpiredLink": "Dieser Einladungslink ist abgelaufen",
     "Unauthorized": "Nicht autorisiert",

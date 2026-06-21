@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 import {
-  type AccountRole,
+  AccountRole,
   type Data,
   generateId,
   isActiveMode,
@@ -34,7 +34,15 @@ import {
 import platform, { getMetadata, PlatformError, Severity, Status, unknownError } from '@hcengineering/platform'
 import { decodeTokenVerbose } from '@hcengineering/server-token'
 
+import {
+  LimitCategory,
+  LimitStatus,
+  workspaceEvents,
+  type QueueWorkspaceLimitsMessage
+} from '@hcengineering/server-core'
+
 import { accountPlugin } from './plugin'
+import { SubscriptionStatus, SubscriptionType } from './types'
 import type {
   AccountAggregatedInfo,
   AccountDB,
@@ -47,6 +55,7 @@ import type {
   SocialId,
   Subscription,
   SubscriptionData,
+  PaymentIntent,
   Workspace,
   WorkspaceEvent,
   WorkspaceInfoWithStatus,
@@ -1015,12 +1024,25 @@ export async function findPersonBySocialKey (
   return socialId.personUuid
 }
 
-/**
- * Upsert (create or update) subscription for a workspace
- * Only accessible by payment service
- * Creates new subscription or updates existing one based on providerId
- * @public
- */
+/** Fire-and-forget edge events to QueueTopic.Workspace; producer set by account-service via metadata. */
+async function publishLimitsEvents (
+  ctx: MeasureContext,
+  workspaceUuid: WorkspaceUuid,
+  events: QueueWorkspaceLimitsMessage[]
+): Promise<void> {
+  if (events.length === 0) return
+  const producer = getMetadata(accountPlugin.metadata.WorkspaceQueue)
+  if (producer === undefined) {
+    ctx.warn('WorkspaceQueue producer is not configured, limits events skipped', { workspaceUuid })
+    return
+  }
+  try {
+    await producer.send(ctx, workspaceUuid, events)
+  } catch (err: any) {
+    ctx.error('Failed to publish limits events', { workspaceUuid, err })
+  }
+}
+
 export async function upsertSubscription (
   ctx: MeasureContext,
   db: AccountDB,
@@ -1045,6 +1067,26 @@ export async function upsertSubscription (
 
   // Check if subscription exists by provider + providerSubscriptionId (unique external ID)
   const existing = await db.subscription.findOne({ provider, providerSubscriptionId })
+
+  // Stale-write guard: concurrent writers (sync poll vs async webhook consumer) may carry an older
+  // provider snapshot. Skip when the incoming modifiedAt is not newer than what we already stored.
+  const existingModifiedAt = existing?.providerData?.modifiedAt
+  const incomingModifiedAt = params.providerData?.modifiedAt
+  if (
+    existing !== null &&
+    typeof existingModifiedAt === 'number' &&
+    typeof incomingModifiedAt === 'number' &&
+    incomingModifiedAt < existingModifiedAt
+  ) {
+    ctx.info('Subscription upsert skipped (stale snapshot)', {
+      id: existing.id,
+      workspaceUuid,
+      existingModifiedAt,
+      incomingModifiedAt
+    })
+    return
+  }
+
   const updateData = {
     workspaceUuid: params.workspaceUuid,
     accountUuid: params.accountUuid,
@@ -1064,6 +1106,31 @@ export async function upsertSubscription (
     ...(params.limits !== undefined && { limits: params.limits }),
     updatedOn: Date.now()
   }
+  // Invariant: at most one active tier subscription per workspace. Activating a tier
+  // subscription cancels every other active tier (different provider/id included).
+  if (params.type === SubscriptionType.Tier && params.status === SubscriptionStatus.Active) {
+    const others = await db.subscription.find({
+      workspaceUuid,
+      type: SubscriptionType.Tier,
+      status: SubscriptionStatus.Active
+    })
+    const now = Date.now()
+    for (const sub of others) {
+      if (sub.provider === provider && sub.providerSubscriptionId === providerSubscriptionId) continue
+      const oldProviderData: Record<string, any> = (sub.providerData as Record<string, any>) ?? {}
+      await db.subscription.update(
+        { id: sub.id },
+        {
+          status: SubscriptionStatus.Canceled,
+          canceledAt: now,
+          updatedOn: now,
+          providerData: { ...oldProviderData, pending: false, status: 'REPLACED', modifiedAt: now }
+        }
+      )
+      ctx.info('Superseded active tier subscription canceled', { id: sub.id, workspaceUuid, plan: sub.plan })
+    }
+  }
+
   if (existing !== null) {
     // Update existing subscription
     await db.subscription.update({ id: existing.id }, updateData)
@@ -1088,6 +1155,22 @@ export async function upsertSubscription (
       type: params.type,
       plan: params.plan
     })
+  }
+
+  // Payment/plan state is defined by the tier subscription; notify consumers edge-triggered.
+  if (params.type === SubscriptionType.Tier) {
+    // Refresh the snapshot so consumers re-read free-vs-paid limits without restart. Status matters:
+    // active<->unpaid flips the effective limits (paid vs free fallback) even with the same plan.
+    const wasActive = existing?.status === SubscriptionStatus.Active
+    const isActive = params.status === SubscriptionStatus.Active
+    const planChanged =
+      existing === null ||
+      existing.plan !== params.plan ||
+      wasActive !== isActive ||
+      JSON.stringify(existing.limits ?? null) !== JSON.stringify(params.limits ?? null)
+    if (planChanged) {
+      await publishLimitsEvents(ctx, workspaceUuid, [workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)])
+    }
   }
 }
 
@@ -1117,6 +1200,127 @@ export async function getSubscriptionByProviderId (
   })
 
   return subscription ?? null
+}
+
+/**
+ * A provider's subscriptions filtered server-side by status (defaults to {active, past_due} — the
+ * renewal candidates). Lets schedulers/reconcilers skip loading the whole table or other providers.
+ * @public
+ */
+export async function getSubscriptionsByProvider (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    provider: string
+    statuses?: SubscriptionStatus[]
+  }
+): Promise<Subscription[]> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const { provider, statuses } = params
+  return await db.subscription.find({
+    provider,
+    status: { $in: statuses ?? [SubscriptionStatus.Active, SubscriptionStatus.PastDue] }
+  })
+}
+
+/**
+ * Atomically claim the charge for (subscriptionId, periodEnd). Returns whether THIS caller created
+ * the intent. Only the creator should issue the charge; concurrent pods/replicas get claimed=false.
+ * This is the cross-pod dedup that survives replicas and rolling updates (DB unique constraint).
+ * @public
+ */
+export async function claimChargeIntent (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    subscriptionId: string
+    periodEnd: number
+    provider: string
+    amount?: number
+  }
+): Promise<{ claimed: boolean, intent: PaymentIntent }> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const { subscriptionId, periodEnd, provider, amount } = params
+  return await db.claimChargeIntent(subscriptionId, periodEnd, provider, amount)
+}
+
+/**
+ * Mark a previously claimed charge intent as charged (with the provider payment id) or failed.
+ * @public
+ */
+export async function markChargeIntent (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    intentId: string
+    status: 'charged' | 'failed'
+    paymentId?: string
+  }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const { intentId, status, paymentId } = params
+  await db.paymentIntent.update(
+    { id: intentId },
+    { status, ...(paymentId !== undefined && { paymentId }), updatedOn: Date.now() }
+  )
+}
+
+/**
+ * Refresh a charge intent's lease while the charge is in flight (the claiming pod is alive).
+ * @public
+ */
+export async function heartbeatChargeIntent (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { intentId: string }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  await db.heartbeatChargeIntent(params.intentId)
+}
+
+/**
+ * Atomically take over an orphaned pending intent whose lease expired (claiming pod died mid-charge).
+ * Returns true if THIS caller won the takeover. Only one pod wins.
+ * @public
+ */
+export async function reclaimStaleChargeIntent (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { intentId: string, leaseMs: number }
+): Promise<boolean> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return await db.reclaimStaleChargeIntent(params.intentId, params.leaseMs)
 }
 
 /**
@@ -1179,7 +1383,8 @@ export async function adminCreateSubscription (
   params: {
     workspaceUuid: WorkspaceUuid
     plan: string
-    type?: string
+    type?: SubscriptionType
+    status?: SubscriptionStatus
     limits?: Subscription['limits']
   }
 ): Promise<void> {
@@ -1190,7 +1395,7 @@ export async function adminCreateSubscription (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  const { workspaceUuid, plan, type = 'tier', limits } = params
+  const { workspaceUuid, plan, type = SubscriptionType.Tier, status = SubscriptionStatus.Active, limits } = params
 
   // Verify workspace exists
   const workspace = await getWorkspaceById(db, workspaceUuid)
@@ -1200,14 +1405,17 @@ export async function adminCreateSubscription (
 
   const now = Date.now()
 
-  // Cancel existing active subscription of the same type
-  const existing = await db.subscription.findOne({ workspaceUuid, type: type as any, status: 'active' as any })
-  if (existing !== null) {
+  // Cancel ALL non-canceled subscriptions of the same type (invariant: one live sub per type).
+  // Includes unpaid (past_due/expired) ones so repeated admin (re)creation does not pile up duplicates.
+  const existingActive = (await db.subscription.find({ workspaceUuid, type })).filter(
+    (s) => s.status !== SubscriptionStatus.Canceled
+  )
+  for (const existing of existingActive) {
     const oldProviderData: Record<string, any> = (existing.providerData as Record<string, any>) ?? {}
     await db.subscription.update(
       { id: existing.id },
       {
-        status: 'canceled' as any,
+        status: SubscriptionStatus.Canceled,
         canceledAt: now,
         updatedOn: now,
         providerData: {
@@ -1221,15 +1429,27 @@ export async function adminCreateSubscription (
     ctx.info('Manual subscription canceled', { id: existing.id, workspaceUuid, plan, type })
   }
 
+  // Subscription FK requires an existing account; tool/system tokens are absent
+  // from the account table, so fall back to the workspace owner.
+  let accountUuid = account
+  if ((await db.account.findOne({ uuid: account })) === null) {
+    const members = await db.getWorkspaceMembers(workspaceUuid)
+    const owner = members.find((m) => m.role === AccountRole.Owner) ?? members[0]
+    if (owner === undefined) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
+    }
+    accountUuid = owner.person
+  }
+
   // Create new subscription
   const subId = generateId()
   await db.subscription.insertOne({
     workspaceUuid,
-    accountUuid: account,
+    accountUuid,
     provider: 'manual',
     providerSubscriptionId: subId,
-    type: type as any,
-    status: 'active' as any,
+    type,
+    status,
     plan,
     limits,
     amount: 0,
@@ -1238,7 +1458,12 @@ export async function adminCreateSubscription (
     updatedOn: now,
     id: subId
   })
-  ctx.info('Manual subscription created', { workspaceUuid, plan, type })
+  ctx.info('Manual subscription created', { workspaceUuid, plan, type, status })
+
+  if (type === SubscriptionType.Tier) {
+    // Refresh plan snapshot so consumers re-read free-vs-paid limits without restart.
+    await publishLimitsEvents(ctx, workspaceUuid, [workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)])
+  }
 }
 
 export type AccountServiceMethods =
@@ -1270,6 +1495,11 @@ export type AccountServiceMethods =
   | 'listAccounts'
   | 'findFullSocialIds'
   | 'getSubscriptionByProviderId'
+  | 'getSubscriptionsByProvider'
+  | 'claimChargeIntent'
+  | 'markChargeIntent'
+  | 'heartbeatChargeIntent'
+  | 'reclaimStaleChargeIntent'
   | 'upsertSubscription'
   | 'getAllSubscriptions'
   | 'adminCreateSubscription'
@@ -1309,6 +1539,11 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     findPersonBySocialKey: wrap(findPersonBySocialKey),
     listAccounts: wrap(listAccounts),
     getSubscriptionByProviderId: wrap(getSubscriptionByProviderId),
+    getSubscriptionsByProvider: wrap(getSubscriptionsByProvider),
+    claimChargeIntent: wrap(claimChargeIntent),
+    markChargeIntent: wrap(markChargeIntent),
+    heartbeatChargeIntent: wrap(heartbeatChargeIntent),
+    reclaimStaleChargeIntent: wrap(reclaimStaleChargeIntent),
     upsertSubscription: wrap(upsertSubscription),
     getAllSubscriptions: wrap(getAllSubscriptions),
     adminCreateSubscription: wrap(adminCreateSubscription),

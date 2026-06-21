@@ -48,6 +48,7 @@
     "SocialLinks": "ソーシャルリンク",
     "ViewActivity": "アクティビティを表示",
     "PersonAlreadyExists": "連絡先はすでに存在します...",
+    "SeatLimitReached": "席数の上限に達しました ({limit})。メンバーを追加するにはプランをアップグレードしてください。",
     "Status": "ステータス",
     "SetStatus": "ステータスを設定",
     "ClearStatus": "ステータスをクリア",

@@ -35,7 +35,10 @@ export async function createServer (
 
   const app = express()
 
-  app.use(cors())
+  // Restrict CORS to CORS_ORIGIN (comma-separated) when configured; otherwise open cors() (dev/test).
+  app.use(
+    config.CorsOrigin !== undefined ? cors({ origin: config.CorsOrigin.split(',').map((o) => o.trim()) }) : cors()
+  )
 
   // Use raw body for webhook routes (TBank signature verification needs raw body)
   // Use JSON parsing for all other routes
@@ -446,10 +449,7 @@ async function handleWebhook (
 
   const typedNotification = notification as unknown as TbankWebhookNotification
 
-  let sub = await storage.getByProviderId(typedNotification.PaymentId)
-  if (sub === null) {
-    sub = await storage.getByProviderId(typedNotification.OrderId)
-  }
+  const sub = await storage.getByProviderId(typedNotification.PaymentId)
 
   ctx.info('Received TBank webhook', {
     paymentId: typedNotification.PaymentId,
@@ -485,7 +485,7 @@ async function handleWebhook (
     const oldSub = allSubs.find(
       (s) =>
         (s.provider === 'tbank' && s.providerData?.pendingReplacement === true) ||
-        (s.type === subscriptionData.type && s.status === 'active' && s.id !== subscriptionData.id)
+        (s.type === subscriptionData.type && s.status === SubscriptionStatus.Active && s.id !== subscriptionData.id)
     )
     if (oldSub !== undefined && oldSub !== null) {
       await cancelSubscription(ctx, tbank, storage, oldSub, 'PLAN_CHANGE')

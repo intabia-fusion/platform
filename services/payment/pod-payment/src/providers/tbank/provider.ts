@@ -16,7 +16,13 @@
 import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import type { Express } from 'express'
 import type { AccountClient, SubscriptionType, SubscriptionData } from '@hcengineering/account-client'
-import type { PaymentProvider, SubscribeRequest, CheckoutResponse } from '../index'
+import type { PaymentProvider, SubscribeRequest, CheckoutResponse, SubscriptionPublisher } from '../index'
+
+const TBANK_FETCH_TIMEOUT = 30000 // 30 seconds should be enough
+
+async function fetchTbank (url: string, init?: RequestInit): Promise<Response> {
+  return await fetch(url, { ...init, signal: AbortSignal.timeout(TBANK_FETCH_TIMEOUT) })
+}
 
 /**
  * TBank payment provider implementation.
@@ -51,7 +57,7 @@ export class TbankProvider implements PaymentProvider {
     })
 
     try {
-      const response = await fetch(url, {
+      const response = await fetchTbank(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -84,7 +90,7 @@ export class TbankProvider implements PaymentProvider {
   async getSubscription (ctx: MeasureContext, subscriptionId: string): Promise<SubscriptionData | null> {
     ctx.info('Getting TBank subscription', { subscriptionId })
 
-    const response = await fetch(`${this.tbankUrl}/api/v1/subscriptions/${subscriptionId}`)
+    const response = await fetchTbank(`${this.tbankUrl}/api/v1/subscriptions/${subscriptionId}`)
 
     if (response.status === 404) {
       return null
@@ -102,7 +108,7 @@ export class TbankProvider implements PaymentProvider {
   async getSubscriptionByCheckout (ctx: MeasureContext, checkoutId: string): Promise<SubscriptionData | null> {
     ctx.info('Getting TBank subscription by checkout', { checkoutId })
 
-    const response = await fetch(`${this.tbankUrl}/api/v1/subscriptions/by-checkout/${checkoutId}`)
+    const response = await fetchTbank(`${this.tbankUrl}/api/v1/subscriptions/by-checkout/${checkoutId}`)
 
     if (response.status === 404) {
       return null
@@ -120,7 +126,7 @@ export class TbankProvider implements PaymentProvider {
   async cancelSubscription (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData> {
     ctx.info('Canceling TBank subscription', { providerSubscriptionId })
 
-    const response = await fetch(`${this.tbankUrl}/api/v1/subscriptions/${providerSubscriptionId}/cancel`, {
+    const response = await fetchTbank(`${this.tbankUrl}/api/v1/subscriptions/${providerSubscriptionId}/cancel`, {
       method: 'POST'
     })
 
@@ -137,7 +143,7 @@ export class TbankProvider implements PaymentProvider {
     ctx.info('Uncanceling TBank subscription', { providerSubscriptionId })
 
     // TBank doesn't support uncancel directly - check if subscription can be re-activated
-    const response = await fetch(`${this.tbankUrl}/api/v1/subscriptions/${providerSubscriptionId}/updatePlan`, {
+    const response = await fetchTbank(`${this.tbankUrl}/api/v1/subscriptions/${providerSubscriptionId}/updatePlan`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ plan: 'start' })
@@ -162,7 +168,7 @@ export class TbankProvider implements PaymentProvider {
   ): Promise<SubscriptionData | CheckoutResponse | null> {
     ctx.info('Updating TBank subscription plan', { subscriptionId, newPlan })
 
-    const response = await fetch(`${this.tbankUrl}/api/v1/subscriptions/${subscriptionId}/updatePlan`, {
+    const response = await fetchTbank(`${this.tbankUrl}/api/v1/subscriptions/${subscriptionId}/updatePlan`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -184,7 +190,7 @@ export class TbankProvider implements PaymentProvider {
   async retryPayment (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData | null> {
     ctx.info('Retrying TBank payment', { providerSubscriptionId })
 
-    const response = await fetch(`${this.tbankUrl}/api/v1/subscriptions/${providerSubscriptionId}/retry`, {
+    const response = await fetchTbank(`${this.tbankUrl}/api/v1/subscriptions/${providerSubscriptionId}/retry`, {
       method: 'POST'
     })
 
@@ -201,14 +207,25 @@ export class TbankProvider implements PaymentProvider {
     return await response.json()
   }
 
-  async reconcileActiveSubscriptions (ctx: MeasureContext, accountsUrl: string, serviceToken: string): Promise<void> {
-    // Reconciliation is handled by pod-tbank-subscriptions scheduler
+  async reconcileActiveSubscriptions (
+    ctx: MeasureContext,
+    _accountsUrl: string,
+    _serviceToken: string,
+    _publish: SubscriptionPublisher
+  ): Promise<void> {
+    // Reconciliation + event publishing are handled by the pod-tbank-subscriptions scheduler, which
+    // publishes to the Subscription queue itself.
     ctx.info('TBank subscription reconciliation skipped (handled by tbank-subscriptions scheduler)')
   }
 
-  registerWebhookEndpoints (app: Express, ctx: MeasureContext, accountsUrl: string, serviceToken: string): void {
-    // TBank webhooks are received directly by pod-tbank-subscriptions service
-    // This provider does not register any webhook endpoints
+  registerWebhookEndpoints (
+    app: Express,
+    ctx: MeasureContext,
+    _accountsUrl: string,
+    _serviceToken: string,
+    _publish: SubscriptionPublisher
+  ): void {
+    // TBank webhooks are received directly by pod-tbank-subscriptions, which publishes to the queue.
     ctx.info('TBank provider: webhook endpoints handled by pod-tbank-subscriptions')
   }
 }

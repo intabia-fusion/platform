@@ -40,6 +40,7 @@
     "Canceled": "Annulé",
     "CreateProject": "Créer un projet",
     "NewProject": "Nouveau projet",
+    "ProjectLimitReached": "Limite de projets atteinte ({limit}). Mettez à niveau le forfait pour en ajouter d'autres.",
     "ProjectTitle": "Titre du projet",
     "ProjectTitlePlaceholder": "Nouveau projet",
     "UsedInIssueIDs": "Utilisé dans les ID d'une issue",
