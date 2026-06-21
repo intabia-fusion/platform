@@ -53,6 +53,7 @@ import type {
   SocialId,
   Subscription,
   SubscriptionData,
+  PaymentIntent,
   SubscriptionInfo,
   UserProfile,
   WorkspaceInviteInfo,
@@ -256,12 +257,23 @@ export interface AccountClient {
   getSubscriptions: (workspaceUuid?: WorkspaceUuid | undefined, activeOnly?: boolean) => Promise<Subscription[]>
   getAllSubscriptions: () => Promise<SubscriptionInfo[]>
   getSubscriptionByProviderId: (provider: string, providerSubscriptionId: string) => Promise<Subscription | null>
+  getSubscriptionsByProvider: (provider: string, statuses?: string[]) => Promise<Subscription[]>
+  claimChargeIntent: (
+    subscriptionId: string,
+    periodEnd: number,
+    provider: string,
+    amount?: number
+  ) => Promise<{ claimed: boolean, intent: PaymentIntent }>
+  markChargeIntent: (intentId: string, status: 'charged' | 'failed', paymentId?: string) => Promise<void>
+  heartbeatChargeIntent: (intentId: string) => Promise<void>
+  reclaimStaleChargeIntent: (intentId: string, leaseMs: number) => Promise<boolean>
   getSubscriptionById: (subscriptionId: string) => Promise<Subscription | null>
   upsertSubscription: (subscription: SubscriptionData) => Promise<void>
   adminCreateSubscription: (params: {
     workspaceUuid: WorkspaceUuid
     plan: string
     type?: string
+    status?: string
     limits?: Subscription['limits']
   }) => Promise<void>
 
@@ -1324,6 +1336,58 @@ class AccountClientImpl implements AccountClient {
     })
   }
 
+  async getSubscriptionsByProvider (provider: string, statuses?: string[]): Promise<Subscription[]> {
+    return await this._rpc({
+      method: 'getSubscriptionsByProvider',
+      params: {
+        provider,
+        statuses
+      }
+    })
+  }
+
+  async claimChargeIntent (
+    subscriptionId: string,
+    periodEnd: number,
+    provider: string,
+    amount?: number
+  ): Promise<{ claimed: boolean, intent: PaymentIntent }> {
+    return await this._rpc({
+      method: 'claimChargeIntent',
+      params: {
+        subscriptionId,
+        periodEnd,
+        provider,
+        amount
+      }
+    })
+  }
+
+  async markChargeIntent (intentId: string, status: 'charged' | 'failed', paymentId?: string): Promise<void> {
+    await this._rpc({
+      method: 'markChargeIntent',
+      params: {
+        intentId,
+        status,
+        paymentId
+      }
+    })
+  }
+
+  async heartbeatChargeIntent (intentId: string): Promise<void> {
+    await this._rpc({
+      method: 'heartbeatChargeIntent',
+      params: { intentId }
+    })
+  }
+
+  async reclaimStaleChargeIntent (intentId: string, leaseMs: number): Promise<boolean> {
+    return await this._rpc({
+      method: 'reclaimStaleChargeIntent',
+      params: { intentId, leaseMs }
+    })
+  }
+
   async getSubscriptionById (subscriptionId: string): Promise<Subscription | null> {
     return await this._rpc({
       method: 'getSubscriptionById',
@@ -1344,6 +1408,7 @@ class AccountClientImpl implements AccountClient {
     workspaceUuid: WorkspaceUuid
     plan: string
     type?: string
+    status?: string
     limits?: Subscription['limits']
   }): Promise<void> {
     await this._rpc({

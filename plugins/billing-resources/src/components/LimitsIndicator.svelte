@@ -14,10 +14,12 @@
 -->
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte'
-  import { checkWorkspaceLimits, upgradePlan, calculateLimits } from '../utils'
+  import { checkWorkspaceLimits, upgradePlan, calculateLimits, checkIsLimited } from '../utils'
   import { subscriptionStore, resetSubscriptionStore } from '../stores/subscription'
   import { location, PaletteColorIndexes, Progress, tooltip } from '@hcengineering/ui'
   import { addEventListener, removeEventListener } from '@hcengineering/platform'
+  import core, { type Tx, type TxWorkspaceEvent, WorkspaceEvent } from '@hcengineering/core'
+  import { addTxListener, removeTxListener } from '@hcengineering/presentation'
   import workbench from '@hcengineering/workbench'
   import UsagePopup from './UsagePopup.svelte'
 
@@ -33,10 +35,31 @@
   $: currentPackageSubscription = state.currentPackageSubscription
   $: workspace = $location.path[1]
 
+  // checkIsLimited reads the subscription store, so it must run AFTER checkWorkspaceLimits has
+  // refreshed it — otherwise it sees the stale plan and misses a seat downgrade.
+  const refreshLimits = async (): Promise<void> => {
+    await checkWorkspaceLimits()
+    await checkIsLimited()
+  }
+
   const connectionListener = async (): Promise<void> => {
     resetSubscriptionStore()
     if (workspace !== undefined) {
-      void checkWorkspaceLimits()
+      void refreshLimits()
+    }
+  }
+
+  // Server broadcasts this when usage/limit state flips; re-read so the UI is immediate.
+  const txListener = (...txes: Tx[]): void => {
+    if (workspace === undefined) return
+    for (const tx of txes) {
+      if (
+        tx._class === core.class.TxWorkspaceEvent &&
+        (tx as TxWorkspaceEvent).event === WorkspaceEvent.LimitsChanged
+      ) {
+        void refreshLimits()
+        return
+      }
     }
   }
 
@@ -53,13 +76,14 @@
 
   onMount(() => {
     addEventListener(workbench.event.NotifyConnection, connectionListener)
+    addTxListener(txListener)
 
     // Initial check if workspace exists
     if (workspace != null) {
-      void checkWorkspaceLimits()
+      void refreshLimits()
 
       pollInterval = setInterval(() => {
-        void checkWorkspaceLimits()
+        void refreshLimits()
       }, POLL_INTERVAL_MS)
     }
   })
@@ -69,6 +93,7 @@
       clearInterval(pollInterval)
     }
     removeEventListener(workbench.event.NotifyConnection, connectionListener)
+    removeTxListener(txListener)
   })
 
   function handleClick (): void {
@@ -79,6 +104,7 @@
 <button
   type="button"
   class="limits-container"
+  data-id="billingLimitsIndicator"
   use:tooltip={{
     component: UsagePopup,
     props: {

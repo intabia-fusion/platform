@@ -15,7 +15,20 @@
 
 import type { Express } from 'express'
 import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
+import type { QueueSubscriptionTrigger } from '@hcengineering/server-core'
 import { type SubscriptionType, type SubscriptionData } from '@hcengineering/account-client'
+
+/**
+ * Publishes a provider subscription event to the Subscription queue. Providers verify + transform,
+ * then call this instead of writing to the account DB directly — pod-payment's consumer is the single
+ * writer (bakes limits + upserts). `canceled` marks a cancellation event; both end up persisted.
+ */
+export type SubscriptionPublisher = (
+  ctx: MeasureContext,
+  data: SubscriptionData,
+  trigger: QueueSubscriptionTrigger,
+  canceled?: boolean
+) => Promise<void>
 
 /**
  * Payment subscription plan configuration
@@ -47,6 +60,9 @@ export interface SubscribeRequest {
 export interface CheckoutResponse {
   checkoutId: string
   checkoutUrl: string
+  // Provider activated the subscription synchronously (e.g. the mock provider): no external
+  // checkout page, the client should refetch instead of redirecting and polling.
+  instant?: boolean
 }
 
 /**
@@ -115,17 +131,27 @@ export interface PaymentProvider {
   retryPayment: (ctx: MeasureContext, providerSubscriptionId: string) => Promise<SubscriptionData | null>
 
   /**
-   * Reconcile active subscriptions between provider and our database
-   * This is provider-specific logic and should be delegated to the provider.
-   * All data fetching, transformation, and database updates are handled internally.
+   * Reconcile active subscriptions between provider and our database. Reads current state, and
+   * publishes changed subscriptions via `publish` (does NOT write to the account DB directly).
    */
-  reconcileActiveSubscriptions: (ctx: MeasureContext, accountsUrl: string, serviceToken: string) => Promise<void>
+  reconcileActiveSubscriptions: (
+    ctx: MeasureContext,
+    accountsUrl: string,
+    serviceToken: string,
+    publish: SubscriptionPublisher
+  ) => Promise<void>
 
   /**
-   * Register provider-specific webhook endpoints
-   * Called during server initialization
+   * Register provider-specific webhook endpoints. Handlers verify + transform, then publish via
+   * `publish` (the single account writer is pod-payment's queue consumer).
    */
-  registerWebhookEndpoints: (app: Express, ctx: MeasureContext, accountsUrl: string, serviceToken: string) => void
+  registerWebhookEndpoints: (
+    app: Express,
+    ctx: MeasureContext,
+    accountsUrl: string,
+    serviceToken: string,
+    publish: SubscriptionPublisher
+  ) => void
 }
 
 /**

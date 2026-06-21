@@ -1,0 +1,234 @@
+# Plan config for the test stand. Small limits so UI limit tests can exercise
+# enforcement without uploading gigabytes. The mock payment provider serves these.
+plans:
+  # Free fallback tier. Applied when a workspace has no active paid tier (unpaid / no subscription).
+  # free:true marks it; storagePerUserGB makes disk = usersLimit * perUser (5 * 2 = 10 GB).
+  # Real free limits (5/3/100000/2GB per user) so auto-provisioning does not constrain other tests.
+  free:
+    label:
+      ru: Бесплатный
+      en: Free
+    description:
+      ru: Бесплатный тариф
+      en: Free tier
+    users:
+      ru: до 5 пользователей
+      en: up to 5 users
+    features:
+      - ru: 5 пользователей
+        en: 5 users
+      - ru: 3 проекта
+        en: 3 projects
+    additional:
+      ru: Лимиты бесплатного тарифа
+      en: Free tier limits
+    priceMonthly: 0
+    currency: ₽
+    free: true
+    storagePerUserGB: 2
+    trafficLimitGB: 0
+    meetingMinutesLimit: 0
+    tokenLimit: 100000
+    projectsLimit: 3
+    usersLimit: 5
+    index: -1
+    color: Grayish
+  start:
+    label:
+      ru: Старт
+      en: Start
+    description:
+      ru: Малые лимиты для тестов
+      en: Small limits for tests
+    users:
+      ru: 1 пользователь
+      en: 1 user
+    features:
+      - ru: 1 проект
+        en: 1 project
+      - ru: 50 Мб хранилища
+        en: 50 MB storage
+    additional:
+      ru: Тестовый план с минимальными лимитами
+      en: Test plan with minimal limits
+    priceMonthly: 100
+    currency: ₽
+    storageLimitGB: 0.05
+    trafficLimitGB: 1
+    meetingMinutesLimit: 0
+    tokenLimit: 0
+    projectsLimit: 1
+    usersLimit: 1
+    index: 0
+    color: Sky
+  team:
+    label:
+      ru: Команда
+      en: Team
+    description:
+      ru: 5 проектов, до 10 пользователей
+      en: 5 projects, up to 10 users
+    users:
+      ru: до 10 пользователей
+      en: up to 10 users
+    features:
+      - ru: 5 проектов
+        en: 5 projects
+      - ru: до 10 пользователей
+        en: up to 10 users
+      - ru: 5 Гб хранилища
+        en: 5 GB storage
+    additional:
+      ru: Реальные лимиты для проверки поведения
+      en: Real limits for behavior checks
+    priceMonthly: 200
+    currency: ₽
+    storageLimitGB: 5
+    trafficLimitGB: 5
+    meetingMinutesLimit: 0
+    tokenLimit: 0
+    projectsLimit: 5
+    usersLimit: 10
+    index: 1
+    color: Sunshine
+  standard:
+    label:
+      ru: Стандарт
+      en: Standard
+    description:
+      ru: Расширенные лимиты
+      en: Wider limits
+    users:
+      ru: до 10 пользователей
+      en: up to 10 users
+    features:
+      - ru: 10 проектов
+        en: 10 projects
+      - ru: 10 Гб хранилища
+        en: 10 GB storage
+    additional:
+      ru: Для средней команды
+      en: For a medium team
+    priceMonthly: 300
+    currency: ₽
+    storageLimitGB: 10
+    trafficLimitGB: 10
+    meetingMinutesLimit: 0
+    tokenLimit: 0
+    projectsLimit: 10
+    usersLimit: 10
+    index: 2
+    color: Crocodile
+  # Storage-focused plans. Other limits are wide so disk is the ONLY constraint —
+  # lets UI tests verify honest upload hitting the storage cap, and growing the cap
+  # by switching storage-mini -> storage-medium (read-only lifted after upgrade).
+  storage-mini:
+    label:
+      ru: Диск Мини
+      en: Storage Mini
+    description:
+      ru: 10 Мб диска, прочее без ограничений
+      en: 10 MB disk, everything else wide
+    users:
+      ru: до 10 пользователей
+      en: up to 10 users
+    features:
+      - ru: 10 Мб хранилища
+        en: 10 MB storage
+      - ru: 50 проектов
+        en: 50 projects
+    additional:
+      ru: Изолированная проверка лимита диска
+      en: Isolated disk-limit check
+    priceMonthly: 100
+    currency: ₽
+    storageLimitGB: 0.01
+    trafficLimitGB: 1
+    meetingMinutesLimit: 0
+    tokenLimit: 0
+    projectsLimit: 50
+    usersLimit: 10
+    index: 4
+    color: Turquoise
+  storage-medium:
+    label:
+      ru: Диск Медиум
+      en: Storage Medium
+    description:
+      ru: 100 Мб диска, прочее без ограничений
+      en: 100 MB disk, everything else wide
+    users:
+      ru: до 10 пользователей
+      en: up to 10 users
+    features:
+      - ru: 100 Мб хранилища
+        en: 100 MB storage
+      - ru: 50 проектов
+        en: 50 projects
+    additional:
+      ru: Больший лимит диска для проверки апгрейда
+      en: Larger disk limit for upgrade checks
+    priceMonthly: 200
+    currency: ₽
+    storageLimitGB: 0.1
+    trafficLimitGB: 5
+    meetingMinutesLimit: 0
+    tokenLimit: 0
+    projectsLimit: 50
+    usersLimit: 10
+    index: 5
+    color: Ocean
+  business:
+    label:
+      ru: Бизнес
+      en: Business
+    description:
+      ru: Без ограничений
+      en: Unlimited
+    users:
+      ru: без ограничений
+      en: unlimited
+    features:
+      - ru: Без ограничений
+        en: Unlimited
+    additional:
+      ru: Все лимиты сняты
+      en: All limits removed
+    priceMonthly: 900
+    currency: ₽
+    storageLimitGB: 0
+    trafficLimitGB: 0
+    meetingMinutesLimit: 0
+    tokenLimit: 0
+    projectsLimit: 0
+    usersLimit: 0
+    index: 3
+    color: Lavender
+# Storage add-on packages (small caps so disk tests stay fast). Eligible on the wider plans.
+packages:
+  pkg-10mb:
+    description:
+      ru: 10 Мб
+      en: 10 MB
+    priceMonthly: "100"
+    currency: ₽
+    eligiblePlans:
+      - start
+      - team
+      - standard
+      - storage-mini
+      - storage-medium
+    storageLimitGB: 0.01
+  pkg-100mb:
+    description:
+      ru: 100 Мб
+      en: 100 MB
+    priceMonthly: "500"
+    currency: ₽
+    eligiblePlans:
+      - start
+      - team
+      - standard
+      - storage-mini
+      - storage-medium
+    storageLimitGB: 0.1

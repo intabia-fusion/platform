@@ -1,5 +1,6 @@
 import { type IntlString, type Metadata, plugin, type Plugin } from '@hcengineering/platform'
-import { type PlatformQueueProducer } from '@hcengineering/server-core'
+import { type PlatformQueueProducer, type QueueWorkspaceLimitsMessage } from '@hcengineering/server-core'
+import { type TierLimits } from './types'
 
 /**
  * @public
@@ -37,8 +38,12 @@ export const accountPlugin = plugin(accountId, {
     OtpRetryDelaySec: '' as Metadata<number>,
     WsLivenessDays: '' as Metadata<number>,
     AllowReadonlyGuests: '' as Metadata<boolean>,
+    // Free fallback limits (defaults, FREE_PLAN_LIMITS env overrides). Always present — applied to every
+    // tier subscription on read; an unpaid workspace runs on these instead of full read-only. Not persisted.
+    FreePlanLimits: '' as Metadata<TierLimits>,
     MailQueue: '' as Metadata<PlatformQueueProducer<AccountNotification>>,
-    CrmQueue: '' as Metadata<PlatformQueueProducer<CrmNotification>>
+    CrmQueue: '' as Metadata<PlatformQueueProducer<CrmNotification>>,
+    WorkspaceQueue: '' as Metadata<PlatformQueueProducer<QueueWorkspaceLimitsMessage>>
   },
   string: {
     ConfirmationText: '' as IntlString,

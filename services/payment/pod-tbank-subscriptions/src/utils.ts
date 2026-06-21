@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 
+import { randomBytes } from 'crypto'
 import { type WorkspaceUuid } from '@hcengineering/core'
 import { type Subscription, type SubscriptionData, SubscriptionStatus } from '@hcengineering/account-client'
 import type TbankPayments from 'tbank-payments'
@@ -53,7 +54,8 @@ function hashWorkspace (uuid: string): string {
 export function buildOrderId (workspaceUuid: WorkspaceUuid, transactionCount: number): string {
   const ws = hashWorkspace(workspaceUuid)
   const ts = Date.now().toString(36)
-  const rnd = Math.random().toString(36).substring(2, 6)
+  // transactionCount is already monotonic per workspace; crypto random removes any residual collision risk.
+  const rnd = randomBytes(4).toString('hex')
   return `${ws}-${transactionCount}-${ts}-${rnd}`
 }
 

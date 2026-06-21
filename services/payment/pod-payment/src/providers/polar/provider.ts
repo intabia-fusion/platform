@@ -19,10 +19,11 @@ import type { Express, Request, Response } from 'express'
 import {
   AccountClient,
   SubscriptionType,
+  SubscriptionStatus,
   type Subscription,
   type SubscriptionData
 } from '@hcengineering/account-client'
-import type { PaymentProvider, SubscribeRequest, CheckoutResponse } from '../index'
+import type { PaymentProvider, SubscribeRequest, CheckoutResponse, SubscriptionPublisher } from '../index'
 import { PolarClient } from './client'
 import { handlePolarWebhook } from './webhook'
 import { transformPolarSubscriptionToData } from './utils'
@@ -181,12 +182,19 @@ export class PolarProvider implements PaymentProvider {
     }
   }
 
-  async reconcileActiveSubscriptions (ctx: MeasureContext): Promise<void> {
+  async reconcileActiveSubscriptions (
+    ctx: MeasureContext,
+    _accountsUrl: string,
+    _serviceToken: string,
+    publish: SubscriptionPublisher
+  ): Promise<void> {
     try {
       ctx.info('Starting Polar active subscription reconciliation')
 
       const polarActiveSubscriptions = await this.polar.getActiveSubscriptions(ctx)
-      const ourActiveSubscriptions = await this.accountClient.getSubscriptions()
+      const ourActiveSubscriptions = await this.accountClient.getSubscriptionsByProvider('polar', [
+        SubscriptionStatus.Active
+      ])
 
       const ourSubsByProviderId = new Map(
         ourActiveSubscriptions.map((sub: Subscription) => [sub.providerSubscriptionId, sub])
@@ -205,9 +213,9 @@ export class PolarProvider implements PaymentProvider {
 
           const ourSub = ourSubsByProviderId.get(polarSub.id)
 
-          // Only upsert if subscription doesn't exist locally or if key fields have changed
+          // Only publish if subscription doesn't exist locally or if key fields have changed
           if (ourSub === undefined || hasSubscriptionChanged(ourSub, subscriptionData)) {
-            await this.accountClient.upsertSubscription(subscriptionData)
+            await publish(ctx, subscriptionData, 'reconcile')
             upsertCount++
           }
         } catch (err) {
@@ -228,9 +236,9 @@ export class PolarProvider implements PaymentProvider {
             const currentState = await this.polar.getSubscription(ctx, polarSubId)
             const subscriptionData = transformPolarSubscriptionToData(currentState)
 
-            // Update our database with current state (may have changed to canceled/ended)
+            // Publish current state (may have changed to canceled/ended)
             if (subscriptionData !== null) {
-              await this.accountClient.upsertSubscription(subscriptionData)
+              await publish(ctx, subscriptionData, 'reconcile')
               staleCount++
             }
           } catch (err) {
@@ -340,12 +348,18 @@ export class PolarProvider implements PaymentProvider {
     return subscriptionData
   }
 
-  registerWebhookEndpoints (app: Express, ctx: MeasureContext, accountsUrl: string, serviceToken: string): void {
+  registerWebhookEndpoints (
+    app: Express,
+    ctx: MeasureContext,
+    accountsUrl: string,
+    serviceToken: string,
+    publish: SubscriptionPublisher
+  ): void {
     ctx.info('Registering Polar webhook endpoints')
 
     // Register Polar-specific webhook endpoint (body parsing handled by server middleware)
     app.post('/api/v1/webhooks/polar', (req: Request, res: Response) => {
-      void handlePolarWebhook(ctx, accountsUrl, serviceToken, this.webhookSecret, req, res)
+      void handlePolarWebhook(ctx, accountsUrl, serviceToken, this.webhookSecret, req, res, publish)
     })
   }
 }

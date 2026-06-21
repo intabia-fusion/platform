@@ -40,6 +40,7 @@
     "Canceled": "キャンセル",
     "CreateProject": "プロジェクトを作成",
     "NewProject": "新しいプロジェクト",
+    "ProjectLimitReached": "プロジェクトの上限に達しました ({limit})。さらに追加するにはプランをアップグレードしてください。",
     "ProjectTitle": "プロジェクトタイトル",
     "ProjectTitlePlaceholder": "新しいプロジェクト",
     "UsedInIssueIDs": "イシューIDで使用",

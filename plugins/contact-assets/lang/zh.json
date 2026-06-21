@@ -48,6 +48,7 @@
     "SocialLinks": "社交链接",
     "ViewActivity": "查看活动",
     "PersonAlreadyExists": "联系人已存在...",
+    "SeatLimitReached": "已达到席位上限 ({limit})。升级套餐以添加更多成员。",
     "Status": "状态",
     "SetStatus": "设置状态",
     "ClearStatus": "清除状态",

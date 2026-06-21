@@ -13,7 +13,8 @@ export enum QueueWorkspaceEvent {
   Restoring = 'restoring',
   FullReindex = 'full-fulltext-reindex',
   Reindex = 'fulltext-reindex',
-  ClearIndex = 'clear-fulltext-index'
+  ClearIndex = 'clear-fulltext-index',
+  LimitsChanged = 'limits-changed'
 }
 
 export interface QueueWorkspaceMessage {
@@ -25,6 +26,27 @@ export interface QueueWorkspaceReindexMessage extends QueueWorkspaceMessage {
 
   domain: Domain
   classes: Ref<Class<Doc>>[]
+}
+
+/** Which limit a LimitsChanged event is about. 'plan' = plan/limits snapshot changed
+ * (upgrade/downgrade): consumers re-read plan limits. */
+export enum LimitCategory {
+  Disk = 'disk',
+  Tokens = 'tokens',
+  Transcript = 'transcript',
+  Plan = 'plan'
+}
+
+export enum LimitStatus {
+  Exhausted = 'exhausted',
+  Ok = 'ok'
+}
+
+export interface QueueWorkspaceLimitsMessage extends QueueWorkspaceMessage {
+  type: QueueWorkspaceEvent.LimitsChanged
+
+  category: LimitCategory
+  status: LimitStatus
 }
 
 export const workspaceEvents = {
@@ -40,6 +62,11 @@ export const workspaceEvents = {
   restored: (): QueueWorkspaceMessage => ({ type: QueueWorkspaceEvent.Restored }),
   fullReindex: (): QueueWorkspaceMessage => ({ type: QueueWorkspaceEvent.FullReindex }),
   clearIndex: (): QueueWorkspaceMessage => ({ type: QueueWorkspaceEvent.ClearIndex }),
+  limitsChanged: (category: LimitCategory, status: LimitStatus): QueueWorkspaceLimitsMessage => ({
+    type: QueueWorkspaceEvent.LimitsChanged,
+    category,
+    status
+  }),
   reindex: (domain: Domain, classes: Ref<Class<Doc>>[]): QueueWorkspaceReindexMessage => ({
     type: QueueWorkspaceEvent.Reindex,
     domain,

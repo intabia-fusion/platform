@@ -94,6 +94,11 @@ fi
 # Create workspace records in accounts
 ./tool-pg.sh create-workspace sanity-ws email:user1
 ./tool-pg.sh create-workspace meetings-ws email:user1
+./tool-pg.sh create-workspace limits-ws email:user1
+./tool-pg.sh create-workspace limits-disk-ws email:user1
+./tool-pg.sh create-workspace limits-unpaid-ws email:user1
+./tool-pg.sh create-workspace limits-switch-ws email:user1
+./tool-pg.sh create-workspace limits-seat-ws email:user1
 
 ./restore-pg.sh
 rm -rf ./sanity/.auth

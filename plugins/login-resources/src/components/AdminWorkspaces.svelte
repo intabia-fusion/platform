@@ -33,6 +33,7 @@
     IconOpen,
     IconStart,
     IconStop,
+    Label,
     locationToUrl,
     Popup,
     Scroller,
@@ -495,6 +496,8 @@
 
   async function adminCreateSub (): Promise<void> {
     if (selectedWorkspaceUuid.length === 0 || selectedPlan.length === 0) return
+    if (isCreating) return
+    isCreating = true
 
     const doCreate = async (): Promise<void> => {
       try {
@@ -531,17 +534,26 @@
         subscriptionsLoaded = false
       } catch (err) {
         console.error('Failed to create subscription:', err)
+      } finally {
+        isCreating = false
       }
     }
 
     if (existingActive != null) {
       const existingLabel = planLabels[existingActive.plan] ?? existingActive.plan
       const newLabel = planLabels[selectedPlan] ?? selectedPlan
-      showPopup(MessageBox, {
-        label: getEmbeddedLabel('Replace subscription'),
-        message: getEmbeddedLabel(`Workspace already has "${existingLabel}". Replace with "${newLabel}"?`),
-        action: doCreate
-      })
+      showPopup(
+        MessageBox,
+        {
+          label: getEmbeddedLabel('Replace subscription'),
+          message: getEmbeddedLabel(`Workspace already has "${existingLabel}". Replace with "${newLabel}"?`),
+          action: doCreate
+        },
+        undefined,
+        (confirmed) => {
+          if (!confirmed) isCreating = false
+        }
+      )
     } else {
       await doCreate()
     }
@@ -556,10 +568,12 @@
 
   let selectedTab: string = 'workspaces'
 
+  let isCreating = false
+
   const tabItems: TabItem[] = [
-    { id: 'workspaces', label: 'Workspaces' },
-    { id: 'accounts', label: 'Accounts' },
-    { id: 'billing', label: 'Billing' }
+    { id: 'workspaces', labelIntl: getEmbeddedLabel('Workspaces') },
+    { id: 'accounts', labelIntl: getEmbeddedLabel('Accounts') },
+    { id: 'billing', labelIntl: getEmbeddedLabel('Billing') }
   ]
 
   function onTabSelect (ev: CustomEvent): void {
@@ -1052,7 +1066,7 @@
 
       {#if selectedTab === 'billing'}
         <div class="flex-between">
-          <div class="fs-title p-3">Billing administration panel</div>
+          <div class="fs-title p-3"><Label label={getEmbeddedLabel('Billing administration panel')} /></div>
         </div>
         <div class="fs-title p-3 flex-no-shrink">
           <SearchEdit bind:value={billingSearch} width={'100%'} />
@@ -1123,9 +1137,9 @@
             {/each}
           </div>
         {:else if subscriptionsLoaded}
-          <div class="fs-title p-3">No subscriptions found</div>
+          <div class="fs-title p-3"><Label label={getEmbeddedLabel('No subscriptions found')} /></div>
         {:else}
-          <div class="fs-title p-3">Loading subscriptions...</div>
+          <div class="fs-title p-3"><Label label={getEmbeddedLabel('Loading subscriptions...')} /></div>
         {/if}
 
         <div class="flex-between">
@@ -1156,7 +1170,7 @@
             <Button
               label={getEmbeddedLabel('Create')}
               kind={'primary'}
-              disabled={selectedWorkspaceUuid.length === 0 || selectedPlan.length === 0}
+              disabled={selectedWorkspaceUuid.length === 0 || selectedPlan.length === 0 || isCreating}
               on:click={adminCreateSub}
             />
           </div>

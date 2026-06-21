@@ -148,6 +148,8 @@
     "ReadOnlySignUp": "Créer un espace",
     "PermissionWarningTitle": "✨ Améliorez votre accès !",
     "PermissionWarningMessage": "Votre rôle actuel a des autorisations limitées. Pour débloquer cette fonctionnalité et d'autres fonctionnalités avancées, demandez à l'administrateur de votre espace de travail de mettre à jour votre niveau d'accès !",
+    "PlanLimitWarningTitle": "Limite du plan atteinte",
+    "PlanLimitWarningMessage": "Votre espace de travail a atteint la limite du plan pour cette ressource. Mettez à niveau votre plan pour en créer davantage.",
     "Icon": "Icône",
     "Color": "Couleur",
     "AutomationOnly": "Automatisation uniquement",

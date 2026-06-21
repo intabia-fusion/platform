@@ -51,9 +51,11 @@ import {
   type Middleware,
   type PipelineContext,
   type ServerFindOptions,
+  type SpaceCountsProvider,
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
 import contact from '@hcengineering/contact'
+import { SPACE_COUNTS_PROVIDER_KEY } from './planLimits'
 import { isOwner, isSystem } from './utils'
 
 interface SpaceInfo {
@@ -64,6 +66,7 @@ interface SpaceInfo {
   private: boolean
   archived: boolean
   autoJoin: boolean
+  systemCreated: boolean
 }
 
 /**
@@ -97,7 +100,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
   }
 
   private addSpace (
-    space: Pick<Space, '_id' | 'members' | 'owners' | 'private' | '_class' | 'archived' | 'autoJoin'>
+    space: Pick<Space, '_id' | 'members' | 'owners' | 'private' | '_class' | 'archived' | 'autoJoin' | 'createdBy'>
   ): void {
     this.spacesMap.set(space._id, {
       _id: space._id,
@@ -106,7 +109,8 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
       owners: new Set(space.owners ?? []),
       private: space.private,
       archived: space.archived ?? false,
-      autoJoin: space.autoJoin === true
+      autoJoin: space.autoJoin === true,
+      systemCreated: space.createdBy === core.account.System
     })
   }
 
@@ -131,7 +135,8 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
                   _id: 1,
                   members: 1,
                   owners: 1,
-                  autoJoin: 1
+                  autoJoin: 1,
+                  createdBy: 1
                 }
               }
             )) ?? []
@@ -150,6 +155,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     if (this.wasInit instanceof Promise) {
       await this.wasInit
       this.wasInit = true
+      this.registerSpaceCountsProvider()
     }
   }
 
@@ -399,6 +405,27 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     } else if (tx._class === core.class.TxRemoveDoc) {
       this.handleRemove(tx)
     }
+    // No push needed: PlanLimitsMiddleware pulls live counts via the registered provider.
+  }
+
+  // Register self as the SpaceCountsProvider so PlanLimitsMiddleware can pull live counts.
+  // Done once after init; the count itself is computed on demand in getSpaceCounts().
+  private registerSpaceCountsProvider (): void {
+    const provider: SpaceCountsProvider = { getSpaceCounts: () => this.getSpaceCounts() }
+    this.context.contextVars[SPACE_COUNTS_PROVIDER_KEY] = provider
+  }
+
+  // Non-archived space counts grouped by concrete _class. Generic — no business categories here;
+  // PlanLimitsMiddleware maps its configured categories onto this map via isDerived. System-created
+  // spaces DO count (e.g. the Default project). Only projects are currently limited, so no per-class
+  // exclusion is needed and this stays dependency-free. Computed on each pull -> always current.
+  getSpaceCounts (): Map<Ref<Class<Space>>, number> {
+    const counts = new Map<Ref<Class<Space>>, number>()
+    for (const info of this.spacesMap.values()) {
+      if (info.archived) continue
+      counts.set(info._class, (counts.get(info._class) ?? 0) + 1)
+    }
+    return counts
   }
 
   getTargets (accounts: AccountUuid[]): AccountUuid[] {

@@ -25,10 +25,10 @@ export interface Issue {
 export interface NewProject {
   title: string
   identifier: string
-  description: string
-  private: boolean
-  defaultAssigneeForIssues: string
-  defaultIssueStatus: string
+  description?: string
+  private?: boolean
+  defaultAssigneeForIssues?: string
+  defaultIssueStatus?: string
   iconNumber?: number
   type?: string
 }

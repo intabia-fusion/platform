@@ -38,6 +38,8 @@ import {
   ModifiedMiddleware,
   IdentifierMiddleware,
   NormalizeTxMiddleware,
+  PlanLimitsMiddleware,
+  SeatLimitsMiddleware,
   PluginConfigurationMiddleware,
   PrivateMiddleware,
   QueryJoinMiddleware,
@@ -152,8 +154,12 @@ export function createServerPipeline (
       FindSecurityMiddleware.create,
       PluginConfigurationMiddleware.create,
       PrivateMiddleware.create,
+      // PlanLimits runs BEFORE SpaceSecurity: spaceCounts must reflect pre-tx state and a
+      // rejected tx must not leak the new space into the spacesMap counters.
+      PlanLimitsMiddleware.create,
       SpaceSecurityMiddleware.create,
       SpacePermissionsMiddleware.create,
+      SeatLimitsMiddleware.create,
       GuestPermissionsMiddleware.create,
       ConfigurationMiddleware.create,
       ContextNameMiddleware.create,
@@ -204,7 +210,9 @@ export function createServerPipeline (
       hierarchy,
       queue: opt.queue,
       storageAdapter: opt.externalStorage,
-      contextVars: opt.pipelineContextVars ?? {}
+      // Per-pipeline copy: middlewares publish workspace-scoped state here (planLimits,
+      // spaceCounts). Shared entries (LimitsProvider, payment-exhausted Map) stay references.
+      contextVars: { ...(opt.pipelineContextVars ?? {}) }
     }
     return createPipeline(ctx, middlewares, context)
   }

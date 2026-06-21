@@ -209,6 +209,27 @@ services:
       - PORT=4901
       - SERVER_SECRET=secret
     restart: unless-stopped
+  billing:
+    image: intabiafusion/billing
+    pull_policy: never
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_started
+      account:
+        condition: service_started
+      datalake:
+        condition: service_started
+    environment:
+      - PORT=4041
+      - SECRET=secret
+      - ACCOUNTS_URL=http://account:3003
+      - DB_URL=${DB_PG_URL}
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - USAGE_UPDATE_INTERVAL=30
+    restart: unless-stopped
   workspace:
     image: intabiafusion/workspace
     pull_policy: never

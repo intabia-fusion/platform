@@ -15,6 +15,7 @@ import account, {
   accountPlugin,
   type AccountNotification,
   type CrmNotification,
+  parseFreePlanLimits,
   initRegionConfig
 } from '@hcengineering/account'
 import accountEn from '@hcengineering/account/lang/en.json'
@@ -32,7 +33,12 @@ import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import os from 'os'
 import { getPlatformQueue } from '@hcengineering/kafka'
-import { QueueTopic, type QueueUserMessage, type QueueOnlineUserTx } from '@hcengineering/server-core'
+import {
+  QueueTopic,
+  type QueueUserMessage,
+  type QueueOnlineUserTx,
+  type QueueWorkspaceLimitsMessage
+} from '@hcengineering/server-core'
 import { randomBytes } from 'node:crypto'
 
 import { handlePresenceBatch } from './presence'
@@ -105,6 +111,10 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   const crmProducer = platformQueue.getProducer<CrmNotification>(measureCtx, QueueTopic.CrmQueue)
   setMetadata(accountPlugin.metadata.CrmQueue, crmProducer)
 
+  // Limits/payment events for transactor/datalake/aibot consumers (subscription status changes)
+  const workspaceProducer = platformQueue.getProducer<QueueWorkspaceLimitsMessage>(measureCtx, QueueTopic.Workspace)
+  setMetadata(accountPlugin.metadata.WorkspaceQueue, workspaceProducer)
+
   addStringsLoader(accountId, async (lang: string) => {
     switch (lang) {
       case 'en':
@@ -139,6 +149,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   setMetadata(account.metadata.OtpRetryDelaySec, parseInt(process.env.OTP_RETRY_DELAY ?? '60'))
 
   setMetadata(account.metadata.AllowReadonlyGuests, process.env.ALLOW_READONLY_GUESTS === 'true')
+  setMetadata(account.metadata.FreePlanLimits, parseFreePlanLimits(process.env.FREE_PLAN_LIMITS))
 
   setMetadata(account.metadata.FrontURL, frontURL)
   setMetadata(account.metadata.WsLivenessDays, wsLivenessDays)

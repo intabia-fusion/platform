@@ -50,14 +50,18 @@ export async function translateHtml (
   const responseText = response.choices[0].message.content ?? undefined
 
   if (response.usage != null) {
-    void pushTokensData(ctx, [
-      {
-        workspace,
-        reason: 'manual-translate',
-        tokens: response.usage.total_tokens,
-        date: new Date(response.created * 1000).toISOString()
-      }
-    ])
+    void pushTokensData(
+      ctx,
+      [
+        {
+          workspace,
+          reason: 'manual-translate',
+          tokens: response.usage.total_tokens,
+          date: new Date(response.created * 1000).toISOString()
+        }
+      ],
+      response.id
+    )
   }
 
   return responseText
@@ -118,14 +122,18 @@ export async function summarizeMessages (
   })
 
   if (response.usage != null) {
-    void pushTokensData(ctx, [
-      {
-        workspace,
-        reason: 'summarize',
-        tokens: response.usage.total_tokens,
-        date: new Date(response.created * 1000).toISOString()
-      }
-    ])
+    void pushTokensData(
+      ctx,
+      [
+        {
+          workspace,
+          reason: 'summarize',
+          tokens: response.usage.total_tokens,
+          date: new Date(response.created * 1000).toISOString()
+        }
+      ],
+      response.id
+    )
   }
 
   let responseText = response.choices[0].message.content ?? undefined
@@ -168,14 +176,18 @@ export async function createChatCompletion (
     )
 
     if (response.usage != null) {
-      void pushTokensData(ctx, [
-        {
-          workspace,
-          reason,
-          tokens: response.usage.total_tokens,
-          date: new Date(response.created * 1000).toISOString()
-        }
-      ])
+      void pushTokensData(
+        ctx,
+        [
+          {
+            workspace,
+            reason,
+            tokens: response.usage.total_tokens,
+            date: new Date(response.created * 1000).toISOString()
+          }
+        ],
+        response.id
+      )
     }
 
     return response

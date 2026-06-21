@@ -89,14 +89,18 @@ export default class OpenAIProvider implements LLMProvider {
 
     const usage = this.toTokens(response.usage)
     if (usage !== 0) {
-      void pushTokensData(ctx, [
-        {
-          workspace,
-          reason: 'manual-translate',
-          tokens: usage,
-          date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
-        }
-      ])
+      void pushTokensData(
+        ctx,
+        [
+          {
+            workspace,
+            reason: 'manual-translate',
+            tokens: usage,
+            date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
+          }
+        ],
+        response.id
+      )
     }
 
     return responseText
@@ -145,14 +149,18 @@ export default class OpenAIProvider implements LLMProvider {
 
     const usage = this.toTokens(response.usage)
     if (usage !== 0) {
-      void pushTokensData(ctx, [
-        {
-          workspace,
-          reason: 'summarize',
-          tokens: usage,
-          date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
-        }
-      ])
+      void pushTokensData(
+        ctx,
+        [
+          {
+            workspace,
+            reason: 'summarize',
+            tokens: usage,
+            date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
+          }
+        ],
+        response.id
+      )
     }
 
     let responseText = response.choices?.[0]?.message?.content ?? undefined
@@ -210,14 +218,18 @@ export default class OpenAIProvider implements LLMProvider {
 
       const usage = this.toTokens(response.usage)
       if (usage !== 0) {
-        void pushTokensData(ctx, [
-          {
-            workspace,
-            reason,
-            tokens: usage,
-            date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
-          }
-        ])
+        void pushTokensData(
+          ctx,
+          [
+            {
+              workspace,
+              reason,
+              tokens: usage,
+              date: new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
+            }
+          ],
+          response.id
+        )
       }
 
       return { text, usage, created }

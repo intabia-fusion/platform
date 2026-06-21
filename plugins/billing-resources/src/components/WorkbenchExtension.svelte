@@ -15,36 +15,28 @@
 <script lang="ts">
   import { onMount } from 'svelte'
 
-  import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import { getCurrentAccount } from '@hcengineering/core'
   import { getMetadata } from '@hcengineering/platform'
   import { pushRootBarComponent } from '@hcengineering/ui'
   import presentation from '@hcengineering/presentation'
 
   import billing from '../plugin'
-  import { getWorkspaceInfo } from '../utils'
+  import { checkWorkspaceLimits, checkIsLimited } from '../utils'
 
+  // Usage indicator and read-only banner are shown to every role; only the plan-change popup
+  // gates on role. Resolve the subscription store here so the banner reacts immediately.
   onMount(async () => {
     try {
       const paymentUrl = getMetadata(presentation.metadata.PaymentUrl)
       if (paymentUrl == null || paymentUrl === '') {
         return
       }
-      const currentAccount = getCurrentAccount()
-      if (currentAccount == null) {
+      if (getCurrentAccount() == null) {
         return
       }
-      const workspaceInfo = await getWorkspaceInfo()
-      if (workspaceInfo == null) {
-        return
-      }
-      const showExtension: boolean =
-        workspaceInfo.billingAccount === currentAccount.uuid ||
-        hasAccountRole(currentAccount, AccountRole.Owner) ||
-        hasAccountRole(currentAccount, AccountRole.Maintainer)
-
-      if (showExtension) {
-        pushRootBarComponent('right', billing.component.UsageExtension, 10)
-      }
+      await checkWorkspaceLimits()
+      await checkIsLimited()
+      pushRootBarComponent('right', billing.component.UsageExtension, 10)
     } catch (e) {
       console.error('Failed to load WorkbenchExtension:', e)
     }

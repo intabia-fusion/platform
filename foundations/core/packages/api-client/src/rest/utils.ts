@@ -1,6 +1,10 @@
 import { uncompress } from 'snappyjs'
 
-export async function withRetry<T> (fn: () => Promise<T>, ignoreAttemptCheck?: (err: any) => boolean): Promise<T> {
+export async function withRetry<T> (
+  fn: () => Promise<T>,
+  ignoreAttemptCheck?: (err: any) => boolean,
+  shouldAbort?: (err: any) => boolean
+): Promise<T> {
   const maxRetries = 3
   let lastError: any
 
@@ -8,6 +12,11 @@ export async function withRetry<T> (fn: () => Promise<T>, ignoreAttemptCheck?: (
     try {
       return await fn()
     } catch (err: any) {
+      // Deterministic rejections (e.g. plan/seat limit) must not be retried — retrying spams
+      // the server and never succeeds.
+      if (shouldAbort !== undefined && shouldAbort(err)) {
+        throw err
+      }
       if (ignoreAttemptCheck !== undefined && ignoreAttemptCheck(err)) {
         // Do not decrement attempt
         attempt--

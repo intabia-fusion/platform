@@ -19,20 +19,18 @@ import {
   type SubscriptionData,
   SubscriptionStatus
 } from '@hcengineering/account-client'
-import { type AccountUuid, type MeasureContext, type WorkspaceUuid, SocialIdType } from '@hcengineering/core'
+import { type AccountUuid, type WorkspaceUuid, SocialIdType } from '@hcengineering/core'
 
 import { isFailedRenewal } from './utils'
 
-/**
- * Storage adapter for Tbank subscriptions.
- * Uses AccountClient to persist subscriptions in the central database.
- * This is the same approach used by Stripe/Polar providers.
- */
 export class SubscriptionStorage {
-  constructor (private readonly accountClient: AccountClient) {}
+  constructor (
+    private readonly accountClient: AccountClient,
+    private readonly publish: (data: SubscriptionData) => Promise<void>
+  ) {}
 
   async upsert (subscription: SubscriptionData): Promise<void> {
-    await this.accountClient.upsertSubscription(subscription)
+    await this.publish(subscription)
   }
 
   async getTransactionCount (workspaceUuid: WorkspaceUuid): Promise<number> {
@@ -51,37 +49,50 @@ export class SubscriptionStorage {
     return await this.accountClient.getSubscriptions(workspaceUuid, activeOnly)
   }
 
-  async getSubscriptionsNeedingRenewal (ctx: MeasureContext): Promise<Subscription[]> {
-    const allSubscriptions = await this.accountClient.getSubscriptions(undefined, false)
-    const now = Date.now()
+  // Atomic cross-pod charge claim — only the caller that gets claimed=true may charge this period.
+  async claimCharge (
+    subscriptionId: string,
+    periodEnd: number,
+    amount?: number
+  ): Promise<{ claimed: boolean, status: string, intentId: string, heartbeatAt?: number }> {
+    const { claimed, intent } = await this.accountClient.claimChargeIntent(subscriptionId, periodEnd, 'tbank', amount)
+    return { claimed, status: intent.status, intentId: intent.id, heartbeatAt: intent.heartbeatAt }
+  }
 
-    const needingRenewal = allSubscriptions.filter((sub) => {
-      if (sub.provider !== 'tbank') return false
-      if (sub.providerData?.rebillId === undefined) return false
+  async markCharge (intentId: string, status: 'charged' | 'failed', paymentId?: string): Promise<void> {
+    await this.accountClient.markChargeIntent(intentId, status, paymentId)
+  }
 
-      if (sub.status === SubscriptionStatus.Active) {
-        // Normal renewal: period ended
-        return sub.periodEnd !== undefined && sub.periodEnd <= now
-      }
+  async heartbeatCharge (intentId: string): Promise<void> {
+    await this.accountClient.heartbeatChargeIntent(intentId)
+  }
 
-      if (isFailedRenewal(sub)) {
-        // Failed recurrent charge: retry while attempts remain and the back-off has elapsed.
-        const retryAttempt = (sub.providerData?.retryAttempt as number) ?? 0
-        if (retryAttempt >= 3) return false
-        const retryAfter = (sub.providerData?.retryAfter as number) ?? 0
-        if (retryAfter > now) return false
-        return true
-      }
+  // True if THIS pod won the takeover of an orphaned (lease-expired) pending intent.
+  async reclaimStaleCharge (intentId: string, leaseMs: number): Promise<boolean> {
+    return await this.accountClient.reclaimStaleChargeIntent(intentId, leaseMs)
+  }
 
-      return false
-    })
+  /**
+   * Tbank renewal candidates: server pre-filters by provider + status {active, past_due}, so cleanup,
+   * grace and renewal all start from the same small set. The caller refines per its own predicate.
+   */
+  async getCandidates (): Promise<Subscription[]> {
+    return await this.accountClient.getSubscriptionsByProvider('tbank')
+  }
 
-    ctx.info('Subscriptions needing renewal', {
-      total: allSubscriptions.length,
-      needingRenewal: needingRenewal.length
-    })
-
-    return needingRenewal
+  static needsRenewal (sub: Subscription, now: number): boolean {
+    if (sub.providerData?.rebillId === undefined) return false
+    if (sub.status === SubscriptionStatus.Active) {
+      return sub.periodEnd !== undefined && sub.periodEnd <= now
+    }
+    if (isFailedRenewal(sub)) {
+      const retryAttempt = (sub.providerData?.retryAttempt as number) ?? 0
+      if (retryAttempt >= 3) return false
+      const retryAfter = (sub.providerData?.retryAfter as number) ?? 0
+      if (retryAfter > now) return false
+      return true
+    }
+    return false
   }
 
   async getActiveTbankSubscription (workspaceUuid: WorkspaceUuid): Promise<Subscription | null> {

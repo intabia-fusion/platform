@@ -78,6 +78,29 @@ function isRLE (err: any): boolean {
   return err.message === rateLimitError
 }
 
+// Deterministic policy rejection (HTTP 403): retrying never succeeds and only spams the server.
+function isPolicyReject (err: any): boolean {
+  return err instanceof PlatformError && (err as any).policyReject === true
+}
+
+// Parse the server error body and throw the real Status when present, so callers see the
+// concrete reason (e.g. PlanLimitExceeded) instead of a generic "Forbidden". Marks 403s as
+// non-retryable.
+async function throwResponseError (response: Response): Promise<never> {
+  let status: Status | undefined
+  try {
+    const body = await response.json()
+    status = body?.error
+  } catch {
+    // body not JSON; fall back to status text
+  }
+  const err = new PlatformError(status ?? unknownError(response.statusText))
+  if (response.status === 403) {
+    ;(err as any).policyReject = true
+  }
+  throw err
+}
+
 export class RestClientImpl implements RestClient {
   endpoint: string
 
@@ -293,20 +316,24 @@ export class RestClientImpl implements RestClient {
   async tx (tx: Tx): Promise<TxResult> {
     const requestUrl = concatLink(this.endpoint, `/api/v1/tx/${this.workspace}`)
     await this.checkRate()
-    const result = await withRetry<TxResult & { error?: Status }>(async () => {
-      const response = await fetch(requestUrl, {
-        method: 'POST',
-        headers: this.jsonHeaders(),
-        keepalive: true,
-        body: JSON.stringify(tx)
-      })
-      if (!response.ok) {
-        await this.checkRateLimits(response)
-        throw new PlatformError(unknownError(response.statusText))
-      }
-      this.updateRateLimit(response)
-      return await extractJson<TxResult>(response)
-    }, isRLE)
+    const result = await withRetry<TxResult & { error?: Status }>(
+      async () => {
+        const response = await fetch(requestUrl, {
+          method: 'POST',
+          headers: this.jsonHeaders(),
+          keepalive: true,
+          body: JSON.stringify(tx)
+        })
+        if (!response.ok) {
+          await this.checkRateLimits(response)
+          await throwResponseError(response)
+        }
+        this.updateRateLimit(response)
+        return await extractJson<TxResult>(response)
+      },
+      isRLE,
+      isPolicyReject
+    )
     if (result.error !== undefined) {
       throw new PlatformError(result.error)
     }

@@ -74,11 +74,11 @@ export class PaymentClient {
    * @param subscriptionId - Subscription ID
    * @returns Subscription details from payment provider
    */
-  async getSubscription (subscriptionId: string): Promise<any> {
+  async getSubscription (subscriptionId: string): Promise<SubscriptionData> {
     const path = `/api/v1/subscriptions/${subscriptionId}`
     const url = new URL(concatLink(this.endpoint, path))
     const response = await fetchSafe(url, { headers: { ...this.headers } })
-    return await response.json()
+    return (await response.json()) as SubscriptionData
   }
 
   /**
@@ -173,7 +173,7 @@ async function fetchSafe (url: string | URL, init?: RequestInit): Promise<Respon
   let response
   try {
     response = await fetch(url, init)
-  } catch (err: any) {
+  } catch (err: unknown) {
     throw new NetworkError(`Network error: ${String(err)}`)
   }
 

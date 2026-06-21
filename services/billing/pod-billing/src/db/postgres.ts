@@ -27,7 +27,10 @@ import {
   LiveKitSessionsUsageData,
   LiveKitUsageData,
   ParticipantDailyUsage,
-  ParticipantMinutesUsage
+  ParticipantMinutesUsage,
+  type LimitCategory,
+  type UsageMetric,
+  type WorkspaceLimitState
 } from '../types'
 import postgres, { type Row, Sql } from 'postgres'
 import { MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
@@ -662,6 +665,84 @@ class PostgresDB implements BillingDB {
     return result.map((row: any) => ({
       reason: row.reason,
       totalTokens: Number(row.total_tokens ?? 0)
+    }))
+  }
+
+  async accumulateUsageDelta (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    metric: UsageMetric,
+    amount: number,
+    ref: string
+  ): Promise<boolean> {
+    // RETURNING ref yields a row only when the insert actually happened (new ref); empty on duplicate.
+    const query = `
+      INSERT INTO billing.usage_delta_dedup (workspace, metric, ref, amount)
+      VALUES ($1::uuid, $2, $3, $4)
+      ON CONFLICT (workspace, metric, ref) DO NOTHING
+      RETURNING ref
+    `
+    const rows = await this.execute<any[]>(query, [workspace, metric, ref, amount])
+    return rows.length > 0
+  }
+
+  async getLimitState (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    category: LimitCategory
+  ): Promise<WorkspaceLimitState | undefined> {
+    const query = `
+      SELECT workspace, category, used, limit_value, exhausted
+      FROM billing.workspace_limit_state
+      WHERE workspace = $1::uuid AND category = $2
+    `
+    const rows = await this.execute<any[]>(query, [workspace, category])
+    const row = rows[0]
+    if (row == null) return undefined
+    return {
+      workspace: row.workspace as WorkspaceUuid,
+      category: row.category as LimitCategory,
+      used: Number(row.used) ?? 0,
+      limitValue: Number(row.limit_value) ?? 0,
+      exhausted: row.exhausted === true || row.exhausted === 'true' || row.exhausted === 't'
+    }
+  }
+
+  async upsertLimitState (ctx: MeasureContext, state: WorkspaceLimitState): Promise<void> {
+    const query =
+      this.flavor === 'cockroach'
+        ? `
+          UPSERT INTO billing.workspace_limit_state
+            (workspace, category, used, limit_value, exhausted, updated_at)
+          VALUES ($1::uuid, $2, $3, $4, $5, now())
+        `
+        : `
+          INSERT INTO billing.workspace_limit_state
+            (workspace, category, used, limit_value, exhausted, updated_at)
+          VALUES ($1::uuid, $2, $3, $4, $5, now())
+          ON CONFLICT (workspace, category)
+          DO UPDATE SET
+            used = EXCLUDED.used,
+            limit_value = EXCLUDED.limit_value,
+            exhausted = EXCLUDED.exhausted,
+            updated_at = now()
+        `
+    await this.execute(query, [state.workspace, state.category, state.used, state.limitValue, state.exhausted])
+  }
+
+  async getAllExhaustedStates (ctx: MeasureContext): Promise<WorkspaceLimitState[]> {
+    const query = `
+      SELECT workspace, category, used, limit_value, exhausted
+      FROM billing.workspace_limit_state
+      WHERE exhausted = TRUE
+    `
+    const rows = await this.execute<any[]>(query, [])
+    return rows.map((row: any) => ({
+      workspace: row.workspace as WorkspaceUuid,
+      category: row.category as LimitCategory,
+      used: Number(row.used) ?? 0,
+      limitValue: Number(row.limit_value) ?? 0,
+      exhausted: true
     }))
   }
 }

@@ -24,6 +24,16 @@ export interface RequestWithAuth extends Request {
   loginInfo?: LoginInfo | WorkspaceLoginInfo | LoginInfoRequest
 }
 
+// IDOR guard for :subscriptionId routes: the subscription must belong to the caller's workspace.
+// withOwner only proves the caller owns SOME workspace (token.workspace) — without this check a
+// workspace owner could manage another workspace's subscription by guessing its id. System/admin bypass.
+export function ownsSubscription (req: RequestWithAuth, subscription: { workspaceUuid: string }): boolean {
+  const token = req.token
+  if (token === undefined) return false
+  if (token.account === systemAccountUuid || token.extra?.admin === 'true') return true
+  return token.workspace === subscription.workspaceUuid
+}
+
 export const withToken = (req: RequestWithAuth, res: Response, next: NextFunction): void => {
   const token = extractToken(req.headers)
   if (token === undefined || token == null) {

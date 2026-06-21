@@ -17,8 +17,8 @@ import type { Request, Response } from 'express'
 import Stripe from 'stripe'
 import { type MeasureContext } from '@hcengineering/core'
 
-import { getAccountClient } from '../../utils'
 import { createSubscriptionEventFromInvoiceEvent, transformStripeSubscriptionToData } from './utils'
+import type { SubscriptionPublisher } from '../index'
 
 /**
  * Handle Stripe webhook events
@@ -28,12 +28,13 @@ import { createSubscriptionEventFromInvoiceEvent, transformStripeSubscriptionToD
  */
 export async function handleStripeWebhook (
   ctx: MeasureContext,
-  accountsUrl: string,
-  serviceToken: string,
+  _accountsUrl: string,
+  _serviceToken: string,
   webhookSecret: string,
   stripeApiKey: string,
   req: Request,
-  res: Response
+  res: Response,
+  publish: SubscriptionPublisher
 ): Promise<void> {
   try {
     // Body is a Buffer from express.raw() middleware
@@ -70,7 +71,7 @@ export async function handleStripeWebhook (
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
-        void handleSubscriptionUpdated(ctx, accountsUrl, serviceToken, event).catch((err) => {
+        void handleSubscriptionUpdated(ctx, publish, event).catch((err) => {
           ctx.error('Failed to process Stripe webhook event', { event, err })
         })
         break
@@ -82,7 +83,7 @@ export async function handleStripeWebhook (
             const subscriptionEvent = await createSubscriptionEventFromInvoiceEvent(ctx, stripe, event)
             if (subscriptionEvent == null) return
 
-            await handleSubscriptionUpdated(ctx, accountsUrl, serviceToken, subscriptionEvent)
+            await handleSubscriptionUpdated(ctx, publish, subscriptionEvent)
           } catch (err) {
             ctx.error('Failed to process Stripe invoice event', { event, err })
           }
@@ -106,8 +107,7 @@ export async function handleStripeWebhook (
  */
 async function handleSubscriptionUpdated (
   ctx: MeasureContext,
-  accountsUrl: string,
-  serviceToken: string,
+  publish: SubscriptionPublisher,
   event: Stripe.Event
 ): Promise<void> {
   const subscription = event.data.object as Stripe.Subscription
@@ -126,8 +126,7 @@ async function handleSubscriptionUpdated (
     return
   }
 
-  const accountClient = getAccountClient(accountsUrl, serviceToken)
-  await accountClient.upsertSubscription(subscriptionData)
+  await publish(ctx, subscriptionData, 'webhook')
 
-  ctx.info('Subscription upserted', { subscriptionId: subscription.id, status: subscriptionData.status })
+  ctx.info('Subscription published', { subscriptionId: subscription.id, status: subscriptionData.status })
 }
