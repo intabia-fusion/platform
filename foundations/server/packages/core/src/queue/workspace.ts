@@ -34,6 +34,7 @@ export enum LimitCategory {
   Disk = 'disk',
   Tokens = 'tokens',
   Transcript = 'transcript',
+  Payment = 'payment',
   Plan = 'plan'
 }
 

@@ -30,6 +30,7 @@ function makeQueue (): {
   const producer = { send: jest.fn().mockResolvedValue(undefined), close: jest.fn().mockResolvedValue(undefined) }
   const queue: any = {
     getProducer: jest.fn().mockReturnValue(producer),
+    getClientId: jest.fn().mockReturnValue('test-client'),
     createBatchConsumer: jest.fn().mockImplementation((_c: any, _t: any, _g: any, h: any) => {
       handler = h
       return { close: jest.fn().mockResolvedValue(undefined) }

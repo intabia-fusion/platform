@@ -21,12 +21,18 @@ export class LimitsState {
   private readonly transcriptExhausted = new Set<WorkspaceUuid>()
 
   applyEvent (msg: QueueWorkspaceLimitsMessage, workspace: WorkspaceUuid): void {
-    const set = this.getSet(msg.category)
-    if (set === undefined) return
-    if (msg.status === LimitStatus.Exhausted) {
-      set.add(workspace)
-    } else {
-      set.delete(workspace)
+    // payment exhaustion (readonly) blocks all AI usage
+    const sets =
+      msg.category === LimitCategory.Payment
+        ? [this.tokensExhausted, this.transcriptExhausted]
+        : [this.getSet(msg.category)]
+    for (const set of sets) {
+      if (set === undefined) continue
+      if (msg.status === LimitStatus.Exhausted) {
+        set.add(workspace)
+      } else {
+        set.delete(workspace)
+      }
     }
   }
 

@@ -50,7 +50,7 @@
   }
 
   // Server broadcasts this when usage/limit state flips; re-read so the UI is immediate.
-  const txListener = (...txes: Tx[]): void => {
+  const txListener = (txes: Tx[]): void => {
     if (workspace === undefined) return
     for (const tx of txes) {
       if (
