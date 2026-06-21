@@ -16,7 +16,7 @@
   import { type SubscriptionData, SubscriptionStatus, SubscriptionType } from '@hcengineering/account-client'
   import { type SubscribeRequest, type CheckoutStatus } from '@hcengineering/payment-client'
   import { type PlanItem, type PlanConfig, type PackageItem } from '@hcengineering/billing'
-  import { getMetadata, translate } from '@hcengineering/platform'
+  import { getMetadata, translate, getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { MessageBox } from '@hcengineering/presentation'
   import { UsageStatus } from '@hcengineering/core'
   import {
@@ -62,13 +62,17 @@
   let pollingCheckoutId: string | null = null
   let isPolling = false
   let pollAttempts = 0
-  let pollTimer: any
+  let pollTimer: ReturnType<typeof setTimeout> | undefined
   let isUpdating = false
   let isCanceling = false
   let isUncanceling = false
   let isRetrying = false
   const MAX_POLL_ATTEMPTS = 120
   const POLL_INTERVAL = 2000
+  let destroyed = false
+  let pollErrorCount = 0
+  let pollErrorShown = false
+  let configError = false
 
   let usageInfo: UsageStatus | null = null
 
@@ -245,6 +249,8 @@
       return
     }
 
+    // Snapshot for rollback: the optimistic uncancel below must not stick if the plan update fails.
+    const snapshot = { ...currentSubscription }
     try {
       isUpdating = true
 
@@ -266,6 +272,7 @@
       currentSubscription = updateResult
     } catch (error) {
       console.error('Error updating subscription:', error)
+      currentSubscription = snapshot
       await showErrorNotification()
     } finally {
       isUpdating = false
@@ -355,11 +362,13 @@
       return
     }
 
+    const snapshot = { ...currentSubscription }
     try {
       isUncanceling = true
       currentSubscription = await paymentClient.uncancelSubscription(currentSubscription.id)
     } catch (error) {
       console.error('Error uncanceling subscription:', error)
+      currentSubscription = snapshot
       await showErrorNotification()
     } finally {
       isUncanceling = false
@@ -442,7 +451,7 @@
   }
 
   async function pollCheckoutStatus (checkoutId: string): Promise<void> {
-    if (paymentClient == null) {
+    if (destroyed || paymentClient == null) {
       return
     }
     if (isPolling || pollAttempts >= MAX_POLL_ATTEMPTS) {
@@ -455,12 +464,14 @@
     try {
       const status: CheckoutStatus = await paymentClient.getCheckoutStatus(checkoutId)
 
+      if (destroyed) return
+
       if (status.status === 'completed') {
-        // Subscription is ready, refresh subscriptions and clean up URL
         console.info('Checkout completed, subscription ready:', status.subscriptionId)
+        pollErrorCount = 0
+        pollErrorShown = false
         await fetchSubscriptions()
 
-        // Clean up the checkout_id from URL using navigate
         const loc = getLocation()
         const cleanedLoc = { ...loc, query: {} }
         navigate(cleanedLoc)
@@ -468,19 +479,24 @@
         pollingCheckoutId = null
         pollAttempts = 0
       } else {
-        // Still pending, poll again after delay
+        // Still pending, schedule next poll
+        const delay = Math.min(POLL_INTERVAL * Math.pow(1.5, pollErrorCount), 30000)
         pollTimer = setTimeout(() => {
           void pollCheckoutStatus(checkoutId)
-        }, POLL_INTERVAL)
+        }, delay)
       }
     } catch (err) {
       console.error('Error polling checkout status:', err)
-      await showErrorNotification()
-      // Retry on error (up to max attempts)
-      if (pollAttempts < MAX_POLL_ATTEMPTS) {
+      pollErrorCount++
+      if (!pollErrorShown) {
+        pollErrorShown = true
+        await showErrorNotification()
+      }
+      if (!destroyed && pollAttempts < MAX_POLL_ATTEMPTS) {
+        const delay = Math.min(POLL_INTERVAL * Math.pow(1.5, pollErrorCount), 30000)
         pollTimer = setTimeout(() => {
           void pollCheckoutStatus(checkoutId)
-        }, POLL_INTERVAL)
+        }, delay)
       }
     } finally {
       isPolling = false
@@ -501,6 +517,8 @@
         // No matching subscription found, start polling
         pollingCheckoutId = checkoutId
         pollAttempts = 0
+        pollErrorCount = 0
+        pollErrorShown = false
         void pollCheckoutStatus(checkoutId)
       } else {
         // Subscription already exists and matches this checkout, just clean up the URL
@@ -512,9 +530,17 @@
 
   $: isCheckoutPolling = pollingCheckoutId !== null
 
-  function formatEndDate (endDate: number): string {
+  function formatEndDate (endDate: number, lang: string): string {
     const date = new Date(endDate)
-    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+    return date.toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })
+  }
+
+  function formatAmount (cents: number, currency: string, lang: string): string {
+    try {
+      return new Intl.NumberFormat(lang, { style: 'currency', currency }).format(cents / 100)
+    } catch {
+      return `${cents / 100} ${currency}`
+    }
   }
 
   async function loadPlanConfig (): Promise<void> {
@@ -523,11 +549,14 @@
       const res = await fetch(paymentUrl + '/api/v1/plan-config')
       if (!res.ok) {
         console.warn('Failed to load plan config:', res.status)
+        configError = true
         return
       }
       planConfigRaw = await res.json()
+      configError = false
     } catch (err) {
       console.error('Failed to load plan config:', err)
+      configError = true
     }
   }
 
@@ -548,13 +577,25 @@
   })
 
   onDestroy(() => {
-    // Clean up any pending polling timer when component is destroyed
-    if (pollTimer !== undefined) {
-      clearTimeout(pollTimer)
-    }
+    destroyed = true
+    clearTimeout(pollTimer)
   })
 </script>
 
+{#if Object.keys(plans).length > 0 || configError}
+  {#if configError && Object.keys(plans).length === 0}
+    <div class="flex-col flex-gap-4" style="padding: var(--spacing-3);">
+      <div>{getEmbeddedLabel('Failed to load plans')}</div>
+      <Button
+        label={getEmbeddedLabel('Retry')}
+        kind="primary"
+        on:click={() => {
+          void loadPlanConfig()
+        }}
+      />
+    </div>
+  {/if}
+{/if}
 {#if Object.keys(plans).length > 0}
   <Scroller align={'center'} padding={'var(--spacing-3)'} bottomPadding={'var(--spacing-3)'}>
     <div class="hulyComponent-content gapV-8">
@@ -596,11 +637,10 @@
                   <div class="status-badge-disabled ml-2 text-md"><Label label={plugin.string.Disabled} /></div>
                 {/if}
               </div>
-              {#if currentSubscription?.amount}
+              {#if currentSubscription?.amount != null}
                 <div class="flex-row-center items-end">
                   <span class="fs-title text-xl">
-                    {currentSubscription?.amount / 100}
-                    {currentPlan.currency}
+                    {formatAmount(currentSubscription.amount, currentPlan.currency ?? '', $themeStore.language)}
                   </span>
                   <span class="ml-1 lower">
                     <Label label={plugin.string.Monthly} />
@@ -615,11 +655,14 @@
                 <div class="flex-row-center">
                   <div class="fs-title">{currentPackage?.description}</div>
                 </div>
-                {#if currentPackageSubscription?.amount}
+                {#if currentPackageSubscription?.amount != null}
                   <div class="flex-row-center items-end">
                     <span class="fs-title text-xl">
-                      {currentPackageSubscription?.amount / 100}
-                      {currentPackage.currency}
+                      {formatAmount(
+                        currentPackageSubscription.amount,
+                        currentPackage.currency ?? '',
+                        $themeStore.language
+                      )}
                     </span>
                     <span class="ml-1 lower">
                       <Label label={plugin.string.Monthly} />
@@ -665,7 +708,7 @@
 
             <div class="curr-tier-footer">
               {#if currentSubscription?.periodEnd}
-                {@const date = formatEndDate(currentSubscription.periodEnd)}
+                {@const date = formatEndDate(currentSubscription.periodEnd, $themeStore.language)}
                 {#if isCurrentCanceled}
                   <div><Label label={plugin.string.SubscriptionValidUntil} params={{ date }} /></div>
                 {:else}
@@ -677,7 +720,7 @@
                 <Button
                   label={plugin.string.CancelSubscription}
                   kind="ghost"
-                  disabled={loading || isCheckoutPolling || isCanceling}
+                  disabled={loading || isCheckoutPolling || isCanceling || isUpdating || isRetrying}
                   on:click={() => {
                     void handleCancel()
                   }}
@@ -686,7 +729,7 @@
                 <Button
                   label={plugin.string.UncancelSubscription}
                   kind="primary"
-                  disabled={loading || isCheckoutPolling || isUncanceling}
+                  disabled={loading || isCheckoutPolling || isUncanceling || isUpdating || isRetrying}
                   on:click={() => {
                     void handleUncancel()
                   }}
@@ -754,7 +797,12 @@
                       kind={currentPlan === undefined || planItem.priceMonthly > currentPlan.priceMonthly
                         ? 'primary'
                         : 'regular'}
-                      disabled={loading || isCheckoutPolling || isUpdating}
+                      disabled={loading ||
+                        isCheckoutPolling ||
+                        isUpdating ||
+                        isCanceling ||
+                        isUncanceling ||
+                        isRetrying}
                       on:click={() => {
                         void handlePlanChange(planKey, planItem)
                       }}

@@ -1,6 +1,7 @@
 import { getClient as getClientRaw, type AccountClient } from '@hcengineering/account-client'
-import { type WorkspaceUuid } from '@hcengineering/core'
+import { AccountRole, type WorkspaceUuid } from '@hcengineering/core'
 import { LocalUrl, PlatformAdmin } from '../utils'
+import { getServiceAccountClient } from './AccountClient'
 
 let adminClient: AccountClient | undefined
 
@@ -29,6 +30,35 @@ export interface PlanLimitsInput {
   users?: number
   tokens?: number
   meetingMinutes?: number
+}
+
+/** Assign an existing account to a workspace with the given role (requires a service token). */
+export async function assignMember (email: string, workspaceUuid: WorkspaceUuid, role: AccountRole): Promise<void> {
+  const client = await getServiceAccountClient('tool')
+  await client.assignWorkspace(email, workspaceUuid, role)
+}
+
+/** Set a workspace plan by uuid (used for freshly created, per-test workspaces). */
+export async function setWorkspacePlanByUuid (
+  workspaceUuid: WorkspaceUuid,
+  plan: string,
+  input: PlanLimitsInput = {}
+): Promise<void> {
+  const client = await getAdmin()
+  await client.adminCreateSubscription({
+    workspaceUuid,
+    plan,
+    type: 'tier',
+    status: input.status ?? 'active',
+    limits: {
+      usersLimit: input.users ?? 0,
+      storageLimitGB: input.storageGB ?? 0,
+      trafficLimitGB: 0,
+      projectsLimit: input.projects ?? 0,
+      tokenLimit: input.tokens ?? 0,
+      meetingMinutesLimit: input.meetingMinutes ?? 0
+    }
+  })
 }
 
 /** Drive the same admin path the AdminUI uses to (re)create a manual tier subscription. */

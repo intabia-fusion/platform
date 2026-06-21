@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { PlatformSetting, PlatformURI, getSecondPage } from '../utils'
-import { setWorkspacePlan } from '../API/Billing'
+import { AccountRole } from '@hcengineering/core'
+import { PlatformSetting, PlatformURI, PlatformUserSecond, generateId, getSecondPage } from '../utils'
+import { assignMember, setWorkspacePlan, setWorkspacePlanByUuid } from '../API/Billing'
+import { ApiEndpoint } from '../API/Api'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 import { NewProjectPage } from '../model/tracker/new-project-page'
 import { generateProjectId } from '../tracker/tracker.utils'
@@ -181,39 +183,58 @@ test.describe('subscribe and switch plan via UI', () => {
 })
 
 // ── F. seat downgrade puts the over-limit member into read-only ──────────────
-// limits-seat-ws starts with usersLimit=2 (user1 OWNER + user2 USER, both onboarded).
-// Downgrading to usersLimit=1 leaves the owner (priority seat) active and pushes user2
-// over the limit -> read-only banner for user2, none for the owner.
+// A FRESH workspace per run (no shared state): user1 OWNER + user2 USER, plan usersLimit=2 so both
+// finish onboarding while two seats are free. Downgrading to usersLimit=1 keeps the owner (priority
+// seat) and pushes user2 over the limit -> read-only banner for user2, none for the owner.
+// Per-test workspace avoids the self-corruption a shared seat-ws had: once a member's first-login
+// onboarding is rejected by the seat limit, its Employee mixin is never created and every later run
+// inherits the broken state.
 test.describe('seat downgrade read-only', () => {
-  test('downgrading to 1 seat keeps the owner active and makes the second member read-only', async ({ browser }) => {
-    // Ensure both members finished onboarding while two seats were available.
-    await setWorkspacePlan('limits-seat-ws', 'start', { users: 2 })
+  test('downgrading to 1 seat keeps the owner active and makes the second member read-only', async ({
+    browser,
+    request
+  }) => {
+    // Fresh workspace owned by user1, with user2 assigned as a USER and a 2-seat plan.
+    const api = new ApiEndpoint(request)
+    const wsName = `seat-${generateId(8)}`
+    const wsInfo = await api.createWorkspaceWithLogin(wsName, 'user1', '1234')
+    const wsUrl = wsInfo.workspaceUrl
+    await assignMember(PlatformUserSecond, wsInfo.workspace, AccountRole.User)
+    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { users: 2 })
 
     const ownerContext = await browser.newContext({ storageState: PlatformSetting })
     const ownerPage = await ownerContext.newPage()
     using member = await getSecondPage(browser)
     const memberPage = member.page
 
-    // Both load the workspace -> Employee mixins become active, no banner while 2 seats exist.
-    await (await ownerPage.goto(`${PlatformURI}/workbench/limits-seat-ws`))?.finished()
-    await (await memberPage.goto(`${PlatformURI}/workbench/limits-seat-ws`))?.finished()
-    await expect(memberPage.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 15000 })
+    // Owner loads first and takes seat #1. The limits indicator only mounts once the Employee mixin
+    // is active, so it is a positive proof of onboarding (an absent read-only banner is not — the
+    // whole billing extension is hidden until the mixin exists).
+    await (await ownerPage.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
+    await expect(ownerPage.locator('[data-id="billingLimitsIndicator"]')).toBeVisible({ timeout: 20000 })
+
+    // Member onboarding races the async plan publish (LimitsChanged -> shared plan map). If the seat
+    // limit is still stale at 1 when the member first connects, its mixin activation is rejected and
+    // never retried in that session. Reload until the indicator mounts -> mixin created on 2 seats.
+    await expect(async () => {
+      await (await memberPage.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
+      await expect(memberPage.locator('[data-id="billingLimitsIndicator"]')).toBeVisible({ timeout: 5000 })
+      await expect(memberPage.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 5000 })
+    }).toPass({ intervals: [2000, 3000, 5000], timeout: 40000 })
 
     // Downgrade to a single seat.
-    await setWorkspacePlan('limits-seat-ws', 'start', { users: 1 })
+    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { users: 1 })
 
     // The second member (lower priority than the owner) loses the seat -> read-only banner.
     await expect(async () => {
-      await (await memberPage.goto(`${PlatformURI}/workbench/limits-seat-ws`))?.finished()
+      await (await memberPage.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
       await expect(memberPage.locator('[data-id="billingReadOnlyBanner"]')).toBeVisible({ timeout: 5000 })
     }).toPass({ intervals: [2000, 3000, 5000], timeout: 40000 })
 
     // The owner keeps the seat -> no banner.
-    await (await ownerPage.goto(`${PlatformURI}/workbench/limits-seat-ws`))?.finished()
+    await (await ownerPage.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
     await expect(ownerPage.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 10000 })
 
-    // Restore two seats for re-runs.
-    await setWorkspacePlan('limits-seat-ws', 'start', { users: 2 })
     await ownerContext.close()
   })
 })

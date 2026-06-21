@@ -130,8 +130,8 @@ async function fetchSafe (url: string | URL, init?: RequestInit): Promise<Respon
   let response
   try {
     response = await fetch(url, init)
-  } catch (err: any) {
-    throw new NetworkError(`Network error ${err}`)
+  } catch (err: unknown) {
+    throw new NetworkError(`Network error: ${String(err)}`)
   }
 
   if (!response.ok) {
