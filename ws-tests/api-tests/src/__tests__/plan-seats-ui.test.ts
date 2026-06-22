@@ -39,7 +39,7 @@ import { generateToken } from '@hcengineering/server-token'
 // replicates that exact computation against real server data to find why the UI banner is missing.
 describe('plan-seats-ui', () => {
   const testCtx = new MeasureMetricsContext('test', {})
-  const wsName = 'api-tests-seats'
+  const wsName = 'api-tests-seats-ui'
   let config: ServerConfig
   let owner: WorkspaceToken
   let seated: WorkspaceToken

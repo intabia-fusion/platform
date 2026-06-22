@@ -78,6 +78,14 @@ echo "Creating workspace api-tests-seats (unlimited at boot; the test tightens u
 ./tool.sh assign-workspace user3 api-tests-seats
 ./tool.sh set-workspace-plan api-tests-seats business
 
+echo "Creating workspace api-tests-seats-ui (separate ws so plan-seats-ui never races plan-seats on usersLimit)..."
+./tool.sh create-workspace api-tests-seats-ui email:user1
+./tool.sh assign-workspace user1 api-tests-seats-ui
+./tool.sh set-user-role user1 api-tests-seats-ui OWNER
+./tool.sh assign-workspace user2 api-tests-seats-ui
+./tool.sh assign-workspace user3 api-tests-seats-ui
+./tool.sh set-workspace-plan api-tests-seats-ui business
+
 echo "Creating workspace api-tests-volume (unlimited at boot; the volume test tightens storage at runtime)..."
 ./tool.sh create-workspace api-tests-volume email:user1
 ./tool.sh assign-workspace user1 api-tests-volume
