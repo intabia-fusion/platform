@@ -17,6 +17,7 @@
   import { Card, Tag } from '@hcengineering/card'
   import core, { Class, Doc, Ref, toRank } from '@hcengineering/core'
   import { getClient, KeyedAttribute, updateAttribute } from '@hcengineering/presentation'
+  import { isEmptyMarkup } from '@hcengineering/text'
   import { Label } from '@hcengineering/ui'
   import { MarkupEditor } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
@@ -63,9 +64,14 @@
 </script>
 
 {#each keys as key}
+  {@const val = getValue(doc, key.key)}
+  {@const isRequiredAndEmpty = (key.attr.required ?? false) && isEmptyMarkup(val)}
   <div class="w-full mt-2">
-    <span>
+    <span class:required-empty-label={isRequiredAndEmpty}>
       <Label label={key.attr.label} />
+      {#if key.attr.required}
+        <span class="required-asterisk">*</span>
+      {/if}
     </span>
     <MarkupEditor
       value={getValue(doc, key.key)}
@@ -76,3 +82,13 @@
     />
   </div>
 {/each}
+
+<style lang="scss">
+  .required-empty-label {
+    color: var(--theme-error-color, #eb5757) !important;
+  }
+  .required-asterisk {
+    color: var(--theme-error-color, #eb5757);
+    margin-left: 2px;
+  }
+</style>
