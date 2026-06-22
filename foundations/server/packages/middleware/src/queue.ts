@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,7 +14,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext, type SessionData, type Tx } from '@hcengineering/core'
+import core, { type MeasureContext, type SessionData, type Tx, type TxRemoveDoc, type Doc } from '@hcengineering/core'
 import {
   BaseMiddleware,
   type Middleware,
@@ -56,9 +57,17 @@ export class QueueMiddleware extends BaseMiddleware {
       this.txProducer.send(
         ctx,
         this.context.workspace.uuid,
-        ctx.contextData.broadcast.txes
-          .concat(ctx.contextData.broadcast.queue)
-          .map((tx) => ({ ...tx, meta: { ...(tx.meta ?? {}), ...meta } }))
+        ctx.contextData.broadcast.txes.concat(ctx.contextData.broadcast.queue).map((tx) => {
+          const mappedTx = { ...tx, meta: { ...(tx.meta ?? {}), ...meta } }
+          if (mappedTx._class === core.class.TxRemoveDoc) {
+            const removeTx = mappedTx as TxRemoveDoc<Doc>
+            const doc = ctx.contextData.removedMap?.get(removeTx.objectId)
+            if (doc !== undefined) {
+              removeTx.removedDoc = doc
+            }
+          }
+          return mappedTx
+        })
       )
     ])
   }

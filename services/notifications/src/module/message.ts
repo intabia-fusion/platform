@@ -23,8 +23,7 @@ import core, {
   DocumentUpdate,
   Doc,
   Ref,
-  generateId,
-  Timestamp
+  generateId
 } from '@hcengineering/core'
 import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import notification, {
@@ -189,7 +188,11 @@ async function handleRemoveMessage (
   tx: TxRemoveDoc<ActivityMessage>
 ): Promise<void> {
   if (tx.attachedTo == null) {
-    client.ctx.error('Cannot remove message notification for null attachedTo')
+    client.ctx.error('Cannot remove message notification for null attachedTo', tx)
+    return
+  }
+  if (tx.removedDoc == null) {
+    client.ctx.error('Cannot process TxRemoveDoc for ActivityMessage, removedDoc is undefined', tx)
     return
   }
 
@@ -217,7 +220,7 @@ async function handleRemoveMessage (
         }
       }
     } else {
-      const createdOn = tx.meta?.createdOn as Timestamp | undefined
+      const createdOn = tx.removedDoc?.createdOn
       if (createdOn !== undefined) {
         const unreadMessages = context.unreadMessages ?? []
         const chunkIndex = unreadMessages.findIndex(
