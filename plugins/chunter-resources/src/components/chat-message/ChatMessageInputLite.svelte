@@ -21,6 +21,7 @@
   export let boundary: HTMLElement | undefined = undefined
   export let loading = false
   export let autofocus = false
+  export let disableSubmit = false
 
   const dispatch = createEventDispatcher()
 
@@ -42,7 +43,9 @@
   disableAttachments
   {boundary}
   {autofocus}
+  {disableSubmit}
   on:update={onUpdate}
+  on:message
   on:focus
   on:blur
   bind:loading
