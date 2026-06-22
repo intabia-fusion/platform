@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { AccountRole } from '@hcengineering/core'
 import { PlatformSetting, PlatformURI, PlatformUserSecond, generateId, getSecondPage } from '../utils'
-import { assignMember, setWorkspacePlan, setWorkspacePlanByUuid } from '../API/Billing'
+import { assignMember, setWorkspacePlanByUuid } from '../API/Billing'
 import { ApiEndpoint } from '../API/Api'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 import { NewProjectPage } from '../model/tracker/new-project-page'
@@ -11,8 +11,13 @@ import { generateProjectId } from '../tracker/tracker.utils'
 test.describe('disk limit (honest upload)', () => {
   test.use({ storageState: PlatformSetting })
 
-  test('uploading beyond the storage limit is rejected', async ({ page }) => {
-    await (await page.goto(`${PlatformURI}/workbench/limits-disk-ws/tracker`))?.finished()
+  test('uploading beyond the storage limit is rejected', async ({ page, request }) => {
+    const api = new ApiEndpoint(request)
+    const wsInfo = await api.createWorkspaceWithLogin(`disk-${generateId(8)}`, 'user1', '1234')
+    const wsUrl = wsInfo.workspaceUrl
+    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { storageGB: 0.001 })
+
+    await (await page.goto(`${PlatformURI}/workbench/${wsUrl}/tracker`))?.finished()
 
     const trackerNav = new TrackerNavigationMenuPage(page)
     await trackerNav.openIssuesForProject('Default')
@@ -56,37 +61,47 @@ test.describe('disk limit (honest upload)', () => {
 test.describe('unpaid free fallback', () => {
   test.use({ storageState: PlatformSetting })
 
-  test('past-due workspace shows the free-plan chip, not read-only; chip clears after payment', async ({ page }) => {
-    await setWorkspacePlan('limits-unpaid-ws', 'start', { status: 'past_due' })
+  test('past-due workspace shows the free-plan chip, not read-only; chip clears after payment', async ({
+    page,
+    request
+  }) => {
+    const api = new ApiEndpoint(request)
+    const wsInfo = await api.createWorkspaceWithLogin(`unpaid-${generateId(8)}`, 'user1', '1234')
+    const wsUrl = wsInfo.workspaceUrl
+    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { status: 'past_due' })
 
     await expect(async () => {
-      await (await page.goto(`${PlatformURI}/workbench/limits-unpaid-ws`))?.finished()
+      await (await page.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
       await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeVisible({ timeout: 5000 })
       await expect(page.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 5000 })
     }).toPass({ intervals: [2000, 3000, 5000], timeout: 30000 })
 
     // Simulate payment: set subscription back to active -> chip disappears.
-    await setWorkspacePlan('limits-unpaid-ws', 'start', { status: 'active' })
+    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { status: 'active' })
     await expect(async () => {
-      await (await page.goto(`${PlatformURI}/workbench/limits-unpaid-ws`))?.finished()
+      await (await page.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
       await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeHidden({ timeout: 5000 })
     }).toPass({ intervals: [2000, 3000, 5000], timeout: 30000 })
   })
 
-  test('admin-canceled subscription also runs on the free fallback (chip, not read-only)', async ({ page }) => {
-    await setWorkspacePlan('limits-unpaid-ws', 'start', { status: 'active' })
-    await (await page.goto(`${PlatformURI}/workbench/limits-unpaid-ws`))?.finished()
+  test('admin-canceled subscription also runs on the free fallback (chip, not read-only)', async ({
+    page,
+    request
+  }) => {
+    const api = new ApiEndpoint(request)
+    const wsInfo = await api.createWorkspaceWithLogin(`unpaid-${generateId(8)}`, 'user1', '1234')
+    const wsUrl = wsInfo.workspaceUrl
+    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { status: 'active' })
+
+    await (await page.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
     await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeHidden({ timeout: 15000 })
 
-    await setWorkspacePlan('limits-unpaid-ws', 'start', { status: 'canceled' })
+    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { status: 'canceled' })
     await expect(async () => {
-      await (await page.goto(`${PlatformURI}/workbench/limits-unpaid-ws`))?.finished()
+      await (await page.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
       await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeVisible({ timeout: 5000 })
       await expect(page.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 5000 })
     }).toPass({ intervals: [2000, 3000, 5000], timeout: 30000 })
-
-    // Restore active so the workspace is clean for re-runs.
-    await setWorkspacePlan('limits-unpaid-ws', 'start', { status: 'active' })
   })
 })
 
@@ -94,8 +109,15 @@ test.describe('unpaid free fallback', () => {
 test.describe('plan upgrade lifts counted block', () => {
   test.use({ storageState: PlatformSetting })
 
-  test('upgrading projects limit lifts the dialog block', async ({ page }) => {
-    await (await page.goto(`${PlatformURI}/workbench/limits-ws/tracker`))?.finished()
+  test('upgrading projects limit lifts the dialog block', async ({ page, request }) => {
+    // Fresh per-test workspace: this test mutates the project limit, so it must not share a static
+    // ws with plan-limits.spec (which expects projectsLimit=1) — that would race on the limit value.
+    const api = new ApiEndpoint(request)
+    const wsInfo = await api.createWorkspaceWithLogin(`limits-upg-${generateId(8)}`, 'user1', '1234')
+    const wsUrl = wsInfo.workspaceUrl
+    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { projects: 1 })
+
+    await (await page.goto(`${PlatformURI}/workbench/${wsUrl}/tracker`))?.finished()
 
     const trackerNav = new TrackerNavigationMenuPage(page)
     const newProjectPage = new NewProjectPage(page)
@@ -109,11 +131,11 @@ test.describe('plan upgrade lifts counted block', () => {
     await page.keyboard.press('Escape')
 
     // Upgrade the plan to allow 10 projects.
-    await setWorkspacePlan('limits-ws', 'start', { projects: 10 })
+    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { projects: 10 })
 
     // Poll (reload) until the store picks up the new limit and a project can be created.
     await expect(async () => {
-      await (await page.goto(`${PlatformURI}/workbench/limits-ws/tracker`))?.finished()
+      await (await page.goto(`${PlatformURI}/workbench/${wsUrl}/tracker`))?.finished()
       const title = `after-upgrade-${generateProjectId()}`
       await trackerNav.pressCreateProjectButton()
       await newProjectPage.createNewProject({ title, identifier: generateProjectId() })
@@ -126,8 +148,13 @@ test.describe('plan upgrade lifts counted block', () => {
 test.describe('limits indicator', () => {
   test.use({ storageState: PlatformSetting })
 
-  test('owner sees limits indicator and usage popup', async ({ page }) => {
-    await (await page.goto(`${PlatformURI}/workbench/limits-ws/tracker`))?.finished()
+  test('owner sees limits indicator and usage popup', async ({ page, request }) => {
+    const api = new ApiEndpoint(request)
+    const wsInfo = await api.createWorkspaceWithLogin(`ind-${generateId(8)}`, 'user1', '1234')
+    const wsUrl = wsInfo.workspaceUrl
+    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { projects: 1 })
+
+    await (await page.goto(`${PlatformURI}/workbench/${wsUrl}/tracker`))?.finished()
 
     const indicator = page.locator('[data-id="billingLimitsIndicator"]')
     await expect(indicator).toBeVisible({ timeout: 15000 })
@@ -168,11 +195,13 @@ test.describe('subscribe and switch plan via UI', () => {
     await expect(page.locator(`[data-id="planSubscribe-${planKey}"]`)).toHaveCount(0, { timeout: 15000 })
   }
 
-  test('switch from storage-mini to storage-medium and back activates instantly', async ({ page }) => {
-    // Known baseline: storage-mini active (admin path).
-    await setWorkspacePlan('limits-switch-ws', 'storage-mini', { status: 'active' })
+  test('switch from storage-mini to storage-medium and back activates instantly', async ({ page, request }) => {
+    const api = new ApiEndpoint(request)
+    const wsInfo = await api.createWorkspaceWithLogin(`switch-${generateId(8)}`, 'user1', '1234')
+    const wsUrl = wsInfo.workspaceUrl
+    await setWorkspacePlanByUuid(wsInfo.workspace, 'storage-mini', { status: 'active' })
 
-    await openBilling(page, 'limits-switch-ws')
+    await openBilling(page, wsUrl)
     await expect(page.locator('[data-id="planSubscribe-storage-mini"]')).toHaveCount(0, { timeout: 10000 })
 
     await switchToPlan(page, 'storage-medium')
