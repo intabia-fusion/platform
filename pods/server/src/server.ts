@@ -16,6 +16,7 @@
 
 import {
   type BrandingMap,
+  generateId,
   type MeasureContext,
   type Tx,
   type WorkspaceIds,
@@ -141,23 +142,23 @@ export function start (
       ? opt.queue.createBatchConsumer<QueueWorkspaceLimitsMessage>(
         metrics.newChild('payment-limits-consumer', {}, { span: false }),
         QueueTopic.Workspace,
-        opt.queue.getClientId(), // per-instance group: every instance keeps its own map, must get all events
-        async (ctx, msgs) => {
-          for (const m of msgs) {
-            const v = m.value
-            if (v.type !== QueueWorkspaceEvent.LimitsChanged) continue
-            if (v.category === LimitCategory.Plan) {
-              // Plan/limits changed: refresh the snapshot so middlewares pick it up without restart.
-              try {
-                planLimitsMap.set(m.workspace, await limitsProvider.getPlanLimits(m.workspace))
-                ctx.info('plan limits refreshed', { workspace: m.workspace })
-              } catch (err: any) {
-                ctx.error('failed to refresh plan limits', { workspace: m.workspace, err })
+          `transactor-limits-${generateId()}`, // unique per-process group: every replica keeps its own map, must get all events
+          async (ctx, msgs) => {
+            for (const m of msgs) {
+              const v = m.value
+              if (v.type !== QueueWorkspaceEvent.LimitsChanged) continue
+              if (v.category === LimitCategory.Plan) {
+                // Plan/limits changed: refresh the snapshot so middlewares pick it up without restart.
+                try {
+                  planLimitsMap.set(m.workspace, await limitsProvider.getPlanLimits(m.workspace))
+                  ctx.info('plan limits refreshed', { workspace: m.workspace })
+                } catch (err: any) {
+                  ctx.error('failed to refresh plan limits', { workspace: m.workspace, err })
+                }
               }
             }
-          }
-        },
-        { batchSize: 100, batchTimeout: 500 }
+          },
+          { batchSize: 100, batchTimeout: 500 }
       )
       : undefined
 

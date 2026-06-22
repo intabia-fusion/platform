@@ -140,9 +140,9 @@ export class AIControl {
     }
     const { workspace, meetingId } = parsed
 
-    // Transcript/payment limit: skip transcription without error, log to console
+    // Transcript/payment limit: skip transcription without error
     if (this.limitsState?.isTranscriptBlocked(workspace) === true) {
-      console.log(`[aibot] Transcript limit exhausted for workspace ${workspace}, skipping transcription`)
+      this.ctx.info('transcript limit exhausted, skipping transcription', { workspace })
       return
     }
 

@@ -119,6 +119,7 @@ export const main = async (): Promise<void> => {
     queueClose = async () => {
       await wsConsumer.close()
       await subConsumer.close()
+      await producer.close()
     }
   }
 

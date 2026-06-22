@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
+import { generateId, type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
 import {
   type ConsumerControl,
   type ConsumerHandle,
@@ -49,7 +49,7 @@ export class LimitsState {
     this.consumer = queue.createBatchConsumer<QueueWorkspaceMessage>(
       ctx,
       QueueTopic.Workspace,
-      queue.getClientId(), // per-instance group: every instance keeps its own sets, must get all events
+      `datalake-limits-${generateId()}`, // unique per-process group: every k8s replica must receive all LimitsChanged events
       async (_ctx: MeasureContext, messages, _control: ConsumerControl) => {
         for (const m of messages) {
           const value = m.value

@@ -81,7 +81,9 @@ export const main = async (): Promise<void> => {
         try {
           await engine.processUsageDelta(ctx, msg.value)
         } catch (err: any) {
+          // rethrow to trigger consumer retry: usage deltas drive limit enforcement, must not be silently dropped
           ctx.error('failed to process usage delta', { workspace: msg.value?.workspace, err })
+          throw err
         }
       }
     },
