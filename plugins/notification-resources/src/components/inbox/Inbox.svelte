@@ -106,7 +106,6 @@
     isContextsLoaded = true
   })
 
-
   async function syncLocation (newLocation: Location): Promise<void> {
     const token = ++syncLocationToken
     const loc = await resolveLocation(newLocation)
