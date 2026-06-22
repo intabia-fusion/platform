@@ -253,7 +253,8 @@ describe('message module', () => {
       const tx = {
         _class: core.class.TxRemoveDoc,
         objectId: 'msg-1',
-        attachedTo: 'doc-1'
+        attachedTo: 'doc-1',
+        removedDoc: {}
       } as unknown as TxRemoveDoc<ActivityMessage>
 
       mockCache.getContexts.mockResolvedValue([])
@@ -484,7 +485,7 @@ describe('message module', () => {
 
       await handleMessage(mockClient, mockCache, txCache, result, tx)
 
-      expect(mockClient.ctx.error).toHaveBeenCalledWith('Cannot remove message notification for null attachedTo')
+      expect(mockClient.ctx.error).toHaveBeenCalledWith('Cannot remove message notification for null attachedTo', tx)
       expect(mockCache.getContexts).not.toHaveBeenCalled()
     })
 
@@ -492,7 +493,8 @@ describe('message module', () => {
       const tx = {
         _class: core.class.TxRemoveDoc,
         objectId: 'msg-1',
-        attachedTo: 'doc-1'
+        attachedTo: 'doc-1',
+        removedDoc: {}
       } as unknown as TxRemoveDoc<ActivityMessage>
 
       const context = {
@@ -531,7 +533,7 @@ describe('message module', () => {
         _class: core.class.TxRemoveDoc,
         objectId: 'msg-5',
         attachedTo: 'doc-1',
-        meta: {
+        removedDoc: {
           createdOn: 1005
         }
       } as unknown as TxRemoveDoc<ActivityMessage>
@@ -563,7 +565,7 @@ describe('message module', () => {
         _class: core.class.TxRemoveDoc,
         objectId: 'msg-5',
         attachedTo: 'doc-1',
-        meta: {
+        removedDoc: {
           createdOn: 1005
         }
       } as unknown as TxRemoveDoc<ActivityMessage>
@@ -592,7 +594,8 @@ describe('message module', () => {
       const tx = {
         _class: core.class.TxRemoveDoc,
         objectId: 'msg-1',
-        attachedTo: 'doc-1'
+        attachedTo: 'doc-1',
+        removedDoc: {}
       } as unknown as TxRemoveDoc<ActivityMessage>
 
       const context = {
