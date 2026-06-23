@@ -36,7 +36,7 @@
     const disabledFeatures = getMetadata(presentation.metadata.DisabledFeatures)
 
     const filtered = result.filter((a) => {
-      if (a.feature !== undefined && ((disabledFeatures?.has(a.feature)) === true)) {
+      if (a.feature !== undefined && disabledFeatures?.has(a.feature) === true) {
         return false
       }
 
