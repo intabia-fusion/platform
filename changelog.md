@@ -2,9 +2,20 @@
 
 Changelog.
 
-## [unreleased]
+## [0.7.389] - 2026-06-23
 
-* ⚙️ CHORE: Small follow-ups since v0.7.318 — update summary and adjust git-diff output for changelog generation; filter out 'Merge remote-tracking' merge commits and strip 'Signed-off-by:' footers from commit entries.
+* 🐛 BUG FIXES: · FUSIO-820: Fix thread focus race (#239) · FUSIO-823: Fix text erasing for forwarded message (#238) · Fix attachment opening for reply/forward (#237)
+
+## [0.7.388] - 2026-06-21
+
+* 🚀 FEATURES: · FUSIO-929 - Send email on landing request creation (#234)
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-411 - Confirm file deletion from task (#233)
+
+## [0.7.387] - 2026-06-18
+
+* 🚀 FEATURES: · FUSIO-815 - Add phone number on registration (#231)
+* 🐛 BUG FIXES: · FUSIO-861: Attempt to fix scroll (#230) · FUSIO-821: Fix copy markdown and other copy actions (#229)
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-166 - Adjust avatar size on call and office editing
 
 ## [0.7.386] - 2026-06-10
 
