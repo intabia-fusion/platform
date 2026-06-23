@@ -560,7 +560,11 @@ export function getPlatformQueue (serviceId: string, region?: string): PlatformQ
   if (queueConfig === undefined) {
     throw new Error('Please provide queue config')
   }
-  const config = parseQueueConfig(queueConfig, serviceId, region ?? process.env.REGION ?? '')
+  const config = parseQueueConfig(
+    queueConfig,
+    serviceId,
+    region ?? process.env.QUEUE_REGION ?? process.env.REGION ?? ''
+  )
   return createPlatformQueue(config)
 }
 
