@@ -538,7 +538,14 @@ export async function configurePlatform() {
   setMetadata(presentation.metadata.UseOTP, config.USE_OTP !== 'false')
   setMetadata(presentation.metadata.SignupUrl, config.SIGNUP_URL ?? 'https://platform.intabia.ru/signup')
 
-  const disabledFeatures = (config.DISABLED_FEATURES ??'').split(',').map(it => it.trim()).filter(it => it.length > 0)
+  // TODO Модуль relation отключен в рамках задачи FUSIO-427
+  const disabledFeatures = [
+    'relation',
+    ...(config.DISABLED_FEATURES ?? '')
+      .split(',')
+      .map((it) => it.trim())
+      .filter((it) => it.length > 0)
+  ]
   setMetadata(presentation.metadata.DisabledFeatures, new Set(disabledFeatures))
 
   setMetadata(recorder.metadata.StreamUrl, config.STREAM_URL)

@@ -363,10 +363,14 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(presentation.metadata.StatsUrl, config.STATS_URL)
   setMetadata(presentation.metadata.HulylakeUrl, config.HULYLAKE_URL ?? '')
 
-  const disabledFeatures = (config.DISABLED_FEATURES ?? '')
-    .split(',')
-    .map((it) => it.trim())
-    .filter((it) => it.length > 0)
+  // TODO Модуль relation отключен в рамках задачи FUSIO-427
+  const disabledFeatures = [
+    'relation',
+    ...(config.DISABLED_FEATURES ?? '')
+      .split(',')
+      .map((it) => it.trim())
+      .filter((it) => it.length > 0)
+  ]
   setMetadata(presentation.metadata.DisabledFeatures, new Set(disabledFeatures))
 
   setMetadata(textEditor.metadata.Collaborator, config.COLLABORATOR ?? '')

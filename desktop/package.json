@@ -1,6 +1,6 @@
 {
   "name": "@hcengineering/desktop",
-  "version": "0.7.386",
+  "version": "0.7.387",
   "main": "dist/main/electron.js",
   "template": "@hcengineering/webpack-package",
   "fastBuild": {
