@@ -51,6 +51,54 @@ function listen (rootMargin: string, element: Element, callback: (isIntersecting
   }
 }
 
+const persistentObservers = new Map<string, IntersectionObserver>()
+const persistentEntryMap = new WeakMap<Element, { callback: (isIntersecting: boolean) => void }>()
+
+function makePersistentObserver (rootMargin: string): IntersectionObserver {
+  const entriesPending = new Map<Element, { isIntersecting: boolean }>()
+  const notifyObservers = (): void => {
+    for (const [target, entry] of entriesPending.entries()) {
+      const entryData = persistentEntryMap.get(target)
+      if (entryData == null) {
+        continue
+      }
+      entryData.callback(entry.isIntersecting)
+    }
+    entriesPending.clear()
+  }
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        entriesPending.set(entry.target, { isIntersecting: entry.isIntersecting })
+      }
+      delayedCaller.call(() => {
+        notifyObservers()
+      })
+    },
+    { rootMargin }
+  )
+  return observer
+}
+
+function listenPersistent (
+  rootMargin: string,
+  element: Element,
+  callback: (isIntersecting: boolean) => void
+): () => void {
+  let observer = persistentObservers.get(rootMargin)
+  if (observer == null) {
+    observer = makePersistentObserver(rootMargin)
+    persistentObservers.set(rootMargin, observer)
+  }
+
+  persistentEntryMap.set(element, { callback })
+  observer.observe(element)
+  return () => {
+    observer?.unobserve(element)
+    persistentEntryMap.delete(element)
+  }
+}
+
 /**
  * @public
  */
@@ -88,6 +136,33 @@ export function lazyObserver (node: Element, onVisible: (value: boolean, unsubsc
 
   return {
     destroy,
+    update
+  }
+}
+
+/**
+ * @public
+ */
+export function persistentLazyObserver (node: Element, onVisible: (value: boolean) => void): any {
+  const lazyEnabled = isLazyEnabled()
+  if (!lazyEnabled) {
+    onVisible(true)
+    return {}
+  }
+
+  let destroy = (): void => {}
+  const update = (): void => {
+    destroy()
+    destroy = listenPersistent('20%', node, (isIntersecting) => {
+      onVisible(isIntersecting)
+    })
+  }
+  update()
+
+  return {
+    destroy () {
+      destroy()
+    },
     update
   }
 }
