@@ -15,7 +15,7 @@
 -->
 <script lang="ts">
   import type { Blob, Ref } from '@hcengineering/core'
-  import { Blurhash, Image, Loading, lazyObserver, isLazyEnabled } from '@hcengineering/ui'
+  import { Blurhash, Image, Loading, lazyObserver, persistentLazyObserver, isLazyEnabled } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { getBlobRef } from '../preview'
 
@@ -28,6 +28,7 @@
   export let loading: 'lazy' | 'eager' = 'eager'
   export let blurhash: string | undefined = undefined
   export let showLoading: boolean = false
+  export let persistent: boolean = true
 
   const dispatch = createEventDispatcher()
 
@@ -38,6 +39,10 @@
     void getBlobRef(blob, alt, width, height).then((val) => {
       blobSrc = val
     })
+  }
+
+  $: if (!visible) {
+    loaded = false
   }
 
   let loaded = false
@@ -51,17 +56,44 @@
     loaded = false
     dispatch('loadstart')
   }
+
+  function lazyObserverAction (node: Element, persistent: boolean): any {
+    let activeObserver = persistent
+      ? persistentLazyObserver(node, (val) => {
+        visible = val
+      })
+      : lazyObserver(node, (val, unsubscribe) => {
+        if (val) {
+          visible = true
+          unsubscribe?.()
+        }
+      })
+
+    return {
+      destroy () {
+        activeObserver?.destroy?.()
+      },
+      update (newPersistent: boolean) {
+        if (newPersistent !== persistent) {
+          activeObserver?.destroy?.()
+          persistent = newPersistent
+          activeObserver = persistent
+            ? persistentLazyObserver(node, (val) => {
+              visible = val
+            })
+            : lazyObserver(node, (val, unsubscribe) => {
+              if (val) {
+                visible = true
+                unsubscribe?.()
+              }
+            })
+        }
+      }
+    }
+  }
 </script>
 
-<div
-  class="container relative w-full h-full"
-  use:lazyObserver={(val, unsubscribe) => {
-    if (val) {
-      visible = true
-      unsubscribe?.()
-    }
-  }}
->
+<div class="container relative w-full h-full" use:lazyObserverAction={persistent}>
   {#if visible}
     {#if !loaded}
       {#if blurhash !== undefined}
