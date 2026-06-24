@@ -92,6 +92,7 @@ import SetDueDateActionPopup from './components/SetDueDateActionPopup.svelte'
 import SetParentIssueActionPopup from './components/SetParentIssueActionPopup.svelte'
 import SettingsRelatedTargets from './components/SettingsRelatedTargets.svelte'
 import CreateIssueTemplate from './components/templates/CreateIssueTemplate.svelte'
+import RemoveRelationButton from './components/issues/edit/RemoveRelationButton.svelte'
 import {
   getIssueIdByIdentifier,
   getIssueTitle,
@@ -499,7 +500,8 @@ export default async (): Promise<Resources> => ({
     IssueStatusPresenter,
     LabelsView,
     ParentIssuePresenter,
-    TimeSpendReportList
+    TimeSpendReportList,
+    RemoveRelationButton
   },
   completion: {
     IssueQuery: async (client: Client, query: string, filter?: { in?: RelatedDocument[], nin?: RelatedDocument[] }) =>

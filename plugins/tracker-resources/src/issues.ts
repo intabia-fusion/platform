@@ -1,5 +1,5 @@
 import { type Doc, type DocumentUpdate, type Ref, type RelatedDocument, type TxOperations } from '@hcengineering/core'
-import { getMetadata } from '@hcengineering/platform'
+import { getMetadata, getResource } from '@hcengineering/platform'
 import presentation, { getClient } from '@hcengineering/presentation'
 import { trackerId, type Component, type Issue, type Milestone } from '@hcengineering/tracker'
 import { getCurrentResolvedLocation, getPanelURI, type Location, type ResolvedLocation } from '@hcengineering/ui'
@@ -7,6 +7,7 @@ import { accessDeniedStore } from '@hcengineering/view-resources'
 import { workbenchId } from '@hcengineering/workbench'
 import { writable } from 'svelte/store'
 import tracker from './plugin'
+import activity from '@hcengineering/activity'
 
 export const activeComponent = writable<Ref<Component> | undefined>(undefined)
 export const activeMilestone = writable<Ref<Milestone> | undefined>(undefined)
@@ -133,4 +134,64 @@ export async function getIssueIdByIdentifier (identifier: string): Promise<Ref<I
   const issue = await client.findOne(tracker.class.Issue, { identifier })
 
   return issue?._id
+}
+
+// TODO При удалении связи в комментарии не выводится номер отвязанной задачи, возможно нужна доработка activity-resources
+// Заведена задача на доработку FUSIO-953
+export async function removeIssueRelation (
+  client: TxOperations,
+  parentIssue: Issue,
+  relatedIssue: RelatedDocument,
+  type: 'blockedBy' | 'relations' | 'isBlocking'
+): Promise<void> {
+  const prop = type === 'isBlocking' ? 'blockedBy' : type
+
+  const refreshedIssue = await client.findOne(parentIssue._class, { _id: parentIssue._id })
+  const safeIssue = refreshedIssue ?? parentIssue
+
+  const toArray = (val: any): RelatedDocument[] => {
+    if (Array.isArray(val)) return val
+    if (val == null) return []
+    if (typeof val === 'object' && typeof val._id === 'string') {
+      return [val as RelatedDocument]
+    }
+    return []
+  }
+
+  const currentDocs: RelatedDocument[] = type === 'isBlocking'
+    ? await client.findAll(safeIssue._class, { 'blockedBy._id': safeIssue._id })
+    : type === 'blockedBy'
+      ? toArray(safeIssue.blockedBy)
+      : toArray(safeIssue.relations)
+
+  if (type !== 'isBlocking') {
+    await updateIssueRelation(client, parentIssue, relatedIssue, prop, '$pull')
+  }
+
+  if (type !== 'blockedBy') {
+    const issueDoc = await client.findOne(relatedIssue._class, { _id: relatedIssue._id })
+    if (issueDoc != null) {
+      await updateIssueRelation(
+        client,
+        issueDoc as Issue,
+        {
+          _id: parentIssue._id,
+          _class: parentIssue._class
+        },
+        prop,
+        '$pull'
+      )
+    }
+  }
+
+  const update = await getResource(activity.backreference.Update)
+
+  const activityLabel =
+    type === 'blockedBy'
+      ? tracker.string.AddedAsBlocking
+      : type === 'relations'
+        ? tracker.string.AddedReference
+        : tracker.string.AddedAsBlocked
+
+  await update(safeIssue, prop, currentDocs, activityLabel)
 }
