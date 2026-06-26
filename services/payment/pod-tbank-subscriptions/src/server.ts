@@ -145,7 +145,7 @@ async function handleCreateSubscription (
   req: Request,
   res: Response
 ): Promise<void> {
-  const { type, plan, workspaceUuid, workspaceUrl, accountUuid } = req.body as CreateSubscriptionRequest
+  const { type, plan, workspaceUuid, workspaceUrl, accountUuid, quantity } = req.body as CreateSubscriptionRequest
 
   ctx.info('Creating TBank subscription', { type, plan, workspaceUuid, accountUuid })
 
@@ -178,11 +178,14 @@ async function handleCreateSubscription (
   }
 
   const planKey = getPlanKey(type, plan)
-  const amount = plans[planKey]
-  if (amount === undefined) {
+  const perSeatAmount = plans[planKey]
+  if (perSeatAmount === undefined) {
     res.status(400).json({ error: `Unknown plan: ${planKey}` })
     return
   }
+  // Per-seat plans charge price-per-seat * seats
+  const seats = quantity ?? 1
+  const amount = perSeatAmount * seats
 
   const transactionCount = await storage.getTransactionCount(workspaceUuid)
   const orderId = buildOrderId(workspaceUuid, transactionCount)
@@ -197,7 +200,7 @@ async function handleCreateSubscription (
     workspaceUrl
   )
 
-  ctx.info('TBank payment initiated', { orderId, paymentId, planKey, amount })
+  ctx.info('TBank payment initiated', { orderId, paymentId, planKey, amount, seats })
 
   const subscriptionData = buildSubscriptionData(
     String(paymentId),
@@ -208,7 +211,9 @@ async function handleCreateSubscription (
     plan,
     amount,
     accountUuid,
-    config.TbankTerminalKey
+    config.TbankTerminalKey,
+    undefined,
+    quantity
   )
 
   await storage.upsert(subscriptionData)
@@ -260,7 +265,7 @@ async function handleUpdatePlan (
   req: Request,
   res: Response
 ): Promise<void> {
-  const { plan: newPlan } = req.body as UpdatePlanRequest
+  const { plan: newPlan, quantity } = req.body as UpdatePlanRequest
   const sub = await findSubscription(storage, req.params.id)
   if (sub === null) {
     res.status(404).json({ error: 'Subscription not found' })
@@ -274,11 +279,14 @@ async function handleUpdatePlan (
   }
 
   const planKey = getPlanKey(sub.type, newPlan)
-  const newAmount = plans[planKey]
-  if (newAmount === undefined) {
+  const perSeatAmount = plans[planKey]
+  if (perSeatAmount === undefined) {
     res.status(400).json({ error: `Unknown plan: ${planKey}` })
     return
   }
+  // Per-seat plans charge price-per-seat * seats
+  const seats = quantity ?? 1
+  const newAmount = perSeatAmount * seats
 
   // Mark the old subscription as pending replacement.
   // Do NOT cancel it yet — if the user never pays for the new plan,
@@ -318,7 +326,9 @@ async function handleUpdatePlan (
     newPlan,
     newAmount,
     sub.accountUuid,
-    config.TbankTerminalKey
+    config.TbankTerminalKey,
+    undefined,
+    quantity
   )
   await storage.upsert(newSubscription)
 
@@ -545,7 +555,8 @@ function buildSubscriptionData (
   amount: number,
   customerKey: string,
   terminalKey: string,
-  existingSub?: SubscriptionData
+  existingSub?: SubscriptionData,
+  quantity?: number
 ): SubscriptionData {
   const now = Date.now()
   return {
@@ -568,7 +579,9 @@ function buildSubscriptionData (
       orderId,
       customerKey,
       terminalKey,
-      pending: true
+      pending: true,
+      // Seats purchased for a per-seat plan. undefined for flat plans.
+      quantity
     }
   }
 }

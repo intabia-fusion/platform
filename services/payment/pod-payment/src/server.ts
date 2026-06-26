@@ -16,7 +16,14 @@
 import cors from 'cors'
 import express, { type Express, NextFunction, type Request, type Response } from 'express'
 import { type Server } from 'http'
-import { AccountRole, generateId, MeasureContext, systemAccountUuid, type WorkspaceUuid } from '@hcengineering/core'
+import {
+  AccountRole,
+  generateId,
+  MeasureContext,
+  systemAccountUuid,
+  type WorkspaceUuid,
+  type AccountUuid
+} from '@hcengineering/core'
 import morgan from 'morgan'
 import onHeaders from 'on-headers'
 import rateLimit from 'express-rate-limit'
@@ -187,11 +194,12 @@ export async function createServer (
     res.json(planConfig)
   })
 
-  function resolveLimits (type: SubscriptionType, plan: string): SubscriptionData['limits'] {
+  function resolveLimits (type: SubscriptionType, plan: string, quantity?: number): SubscriptionData['limits'] {
     const source = type === SubscriptionType.Package ? planConfig.packages : planConfig.plans
     const item = source?.[plan]
     if (item == null) return undefined
-    const usersLimit = item.usersLimit ?? 0
+    const isPerSeat = item.priceMonthlyPerUser != null
+    const usersLimit = isPerSeat && quantity != null ? quantity : (item.usersLimit ?? 0)
     // storagePerUserGB (e.g. free tier) -> disk scales with the seat budget; else fixed storageLimitGB.
     const storageLimitGB =
       item.storagePerUserGB != null ? usersLimit * item.storagePerUserGB : (item.storageLimitGB ?? 0)
@@ -215,7 +223,8 @@ export async function createServer (
   )?.[0]
 
   function attachLimits (data: SubscriptionData): SubscriptionData {
-    const limits = resolveLimits(data.type, data.plan)
+    const quantity = data.providerData?.quantity as number | undefined
+    const limits = resolveLimits(data.type, data.plan, quantity)
     if (limits === undefined) return data
     return { ...data, limits }
   }
@@ -235,32 +244,69 @@ export async function createServer (
   // On workspace creation: if no tier subscription exists and a free plan is configured, create one
   // so the workspace is bounded by free limits from the start. Idempotent (skips if a tier exists).
   async function ensureFreeSubscription (workspace: WorkspaceUuid): Promise<void> {
-    if (freePlanName === undefined) return
     try {
       const existing = await accountClient.getSubscriptions(workspace, false)
       if (existing.some((s) => s.type === SubscriptionType.Tier)) return // already has a tier
-      // getWorkspaceMembers resolves the workspace from the token, so use a workspace-scoped client.
-      const wsToken = generateToken(systemAccountUuid, workspace, { service: 'payment' })
-      const members = await getAccountClient(config.AccountsUrl, wsToken).getWorkspaceMembers()
-      const owner = members.find((m) => m.role === AccountRole.Owner) ?? members[0]
-      if (owner === undefined) return
-      const subId = generateId()
-      await accountClient.upsertSubscription(
-        attachLimits({
-          id: subId,
-          workspaceUuid: workspace,
-          accountUuid: owner.person,
-          provider: 'free',
-          providerSubscriptionId: `free-${workspace}`,
-          type: SubscriptionType.Tier,
-          status: SubscriptionStatus.Active,
-          plan: freePlanName
-        } as unknown as SubscriptionData)
-      )
-      ctx.info('free subscription created for workspace', { workspace, plan: freePlanName })
+      await createFreeSubscription(workspace)
     } catch (err: any) {
       ctx.error('failed to ensure free subscription', { workspace, err })
     }
+  }
+
+  async function createFreeSubscription (
+    workspace: WorkspaceUuid,
+    accountUuid?: AccountUuid
+  ): Promise<SubscriptionData | undefined> {
+    if (freePlanName === undefined) return
+    // getWorkspaceMembers resolves the workspace from the token, so use a workspace-scoped client.
+    const wsToken = generateToken(systemAccountUuid, workspace, { service: 'payment' })
+    const members = await getAccountClient(config.AccountsUrl, wsToken).getWorkspaceMembers()
+    const owner = members.find((m) => m.role === AccountRole.Owner) ?? members[0]
+    if (owner === undefined) return
+    const subId = generateId()
+    const data = attachLimits({
+      id: subId,
+      workspaceUuid: workspace,
+      accountUuid: accountUuid ?? owner.person,
+      provider: 'free',
+      providerSubscriptionId: `free-${subId}`,
+      periodStart: Date.now(),
+      periodEnd: undefined,
+      type: SubscriptionType.Tier,
+      status: SubscriptionStatus.Active,
+      plan: freePlanName
+    } as unknown as SubscriptionData)
+    await accountClient.upsertSubscription(data)
+    ctx.info('free subscription created for workspace', { workspace, plan: freePlanName })
+    return data
+  }
+
+  async function billableMembersCount (workspace: WorkspaceUuid): Promise<number> {
+    const wsToken = generateToken(systemAccountUuid, workspace, { service: 'payment' })
+    const members = await getAccountClient(config.AccountsUrl, wsToken).getWorkspaceMembers()
+    return members.filter(
+      (m) => m.role !== AccountRole.Guest && m.role !== AccountRole.DocGuest && m.role !== AccountRole.ReadOnlyGuest
+    ).length
+  }
+
+  // For per-seat plans, validate the requested seat count
+  async function resolveSeatQuantity (
+    plan: string,
+    requested: number | undefined,
+    workspace: WorkspaceUuid
+  ): Promise<{ quantity?: number, error?: string }> {
+    const isPerSeat = planConfig.plans?.[plan]?.priceMonthlyPerUser != null
+    if (!isPerSeat) return { quantity: undefined }
+    const floor = await billableMembersCount(workspace)
+    const min = Math.max(floor, 1)
+    const q = requested ?? min
+    if (!Number.isFinite(q) || !Number.isInteger(q) || q < 1) {
+      return { error: 'Invalid quantity' }
+    }
+    if (q < min) {
+      return { error: `Quantity ${q} is below the current member count ${min}` }
+    }
+    return { quantity: q }
   }
 
   if (config.Provider === 'mock') {
@@ -341,6 +387,23 @@ export async function createServer (
             return
           }
 
+          // Activating Free subscription
+          if (request.type === SubscriptionType.Tier && planConfig.plans?.[request.plan]?.free === true) {
+            try {
+              const freeSub = await createFreeSubscription(workspaceUuid, accountUuid)
+              if (freeSub === undefined) {
+                res.status(500).json({ error: 'Free plan is not configured' })
+                return
+              }
+              res.status(200).json({ instant: true, checkoutUrl: '' })
+              return
+            } catch (err) {
+              ctx.error('Failed to create free subscription', { err })
+              res.status(500).json({ error: 'Failed to create free subscription' })
+              return
+            }
+          }
+
           if (request.type === SubscriptionType.Package) {
             const subscriptions = await accountClient.getSubscriptions(workspaceUuid)
             const activeTierPlan = subscriptions.find(
@@ -350,6 +413,16 @@ export async function createServer (
               res.status(400).json({ error: 'Package not available on current plan' })
               return
             }
+          }
+
+          // Per-seat plans: validate the requested seat count
+          if (request.type === SubscriptionType.Tier) {
+            const seats = await resolveSeatQuantity(request.plan, request.quantity, workspaceUuid)
+            if (seats.error !== undefined) {
+              res.status(400).json({ error: seats.error })
+              return
+            }
+            request.quantity = seats.quantity
           }
 
           let createSubResponse: CheckoutResponse
@@ -559,7 +632,7 @@ export async function createServer (
         'update-plan',
         async (ctx) => {
           const subscriptionId = req.params.subscriptionId
-          const { plan } = req.body
+          const { plan, quantity: requestedQuantity } = req.body
           const loginInfo = req.loginInfo as WorkspaceLoginInfo
 
           if (plan === undefined || typeof plan !== 'string') {
@@ -602,6 +675,35 @@ export async function createServer (
             }
           }
 
+          const targetIsFree = planConfig.plans?.[plan]?.free === true
+          if (targetIsFree) {
+            try {
+              if (subscription.provider === config.Provider) {
+                // Same provider: stop the recurrent charge / remove the card at the provider
+                await provider.cancelSubscription(ctx, subscription.providerSubscriptionId)
+              }
+              // Mismatched provider: upsertSubscription inside createFreeSubscription will cancel all existing subs
+              const freeSub = await createFreeSubscription(subscription.workspaceUuid, accountUuid)
+              if (freeSub === undefined) {
+                res.status(500).json({ error: 'Free plan is not configured' })
+                return
+              }
+              res.status(200).json(freeSub)
+            } catch (err) {
+              ctx.error('Failed to create free subscription', { err })
+              res.status(500).json({ error: 'Failed to create free subscription' })
+            }
+            return
+          }
+
+          // Per-seat plans: validate the requested seat count
+          const seats = await resolveSeatQuantity(plan, requestedQuantity, subscription.workspaceUuid)
+          if (seats.error !== undefined) {
+            res.status(400).json({ error: seats.error })
+            return
+          }
+          const quantity = seats.quantity
+
           // If the subscription was created by a different provider (e.g. manual/admin),
           // create a new subscription at the current provider — don't cancel the old one,
           // it stays active until the new payment is confirmed via webhook.
@@ -613,7 +715,7 @@ export async function createServer (
               plan
             })
             try {
-              const request: SubscribeRequest = { type: subscription.type, plan }
+              const request: SubscribeRequest = { type: subscription.type, plan, quantity }
               const checkoutResponse = await provider.createSubscription(
                 ctx,
                 request,
@@ -646,7 +748,8 @@ export async function createServer (
               plan,
               subscription.type,
               loginInfo.workspaceUrl,
-              accountUuid
+              accountUuid,
+              quantity
             )
           } catch (err) {
             ctx.error('Failed to update subscription at provider', { err })

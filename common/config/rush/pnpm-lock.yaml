@@ -16329,6 +16329,9 @@ importers:
       '@hcengineering/presentation':
         specifier: workspace:^0.7.0
         version: link:../../packages/presentation
+      '@hcengineering/support':
+        specifier: workspace:^0.7.0
+        version: link:../support
       '@hcengineering/theme':
         specifier: workspace:^0.7.0
         version: link:../../packages/theme

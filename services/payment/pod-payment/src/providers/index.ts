@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -52,6 +53,7 @@ export interface SubscribeRequest {
   plan: string
   customerEmail?: string
   customerName?: string
+  quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
 }
 
 /**
@@ -120,7 +122,8 @@ export interface PaymentProvider {
     newPlan: string,
     type: SubscriptionType,
     workspaceUrl: string,
-    accountUuid: string
+    accountUuid: string,
+    quantity?: number
   ) => Promise<SubscriptionData | CheckoutResponse | null>
 
   /**

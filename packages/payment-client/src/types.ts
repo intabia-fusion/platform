@@ -40,6 +40,7 @@ export interface SubscribeRequest {
   plan: string // Plan identifier
   customerEmail?: string // Optional customer email
   customerName?: string // Optional customer name
+  quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
 }
 
 /**

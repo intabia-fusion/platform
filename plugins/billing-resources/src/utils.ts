@@ -277,8 +277,7 @@ export function resolveLocale (config: PlanConfig, lang: string): PlanConfig {
           ...t,
           label: resolve(t.label),
           description: resolve(t.description),
-          users: resolve(t.users),
-          additional: resolve(t.additional),
+          limits: t.limits.map((f) => resolve(f)),
           features: t.features.map((f) => resolve(f))
         }
       ])

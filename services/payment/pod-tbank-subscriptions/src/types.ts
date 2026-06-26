@@ -22,10 +22,12 @@ export interface CreateSubscriptionRequest {
   workspaceUrl: string
   accountUuid: string
   customerEmail?: string
+  quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
 }
 
 export interface UpdatePlanRequest {
   plan: string
+  quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
 }
 
 /**

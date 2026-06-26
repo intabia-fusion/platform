@@ -1,30 +1,45 @@
 plans:
   # Free fallback tier. Applied when a workspace has no active paid tier (unpaid / no subscription).
   # Disk = usersLimit * storagePerUserGB (5 * 2 = 10 GB).
-  free:
+  start:
     label:
-      ru: Бесплатный
-      en: Free
+      ru: Старт
+      en: Start
     description:
-      ru: Бесплатный тариф
-      en: Free tier
-    users:
-      ru: до 5 пользователей
-      en: up to 5 users
+      ru: Соло-предприниматели и команды до 5 человек
+      en: Solo entrepreneurs and teams of up to 5 people
+    limits:
+      - ru: до 5 пользователей
+        en: up to 5 users
+      - ru: до 50 гостей (внешних пользователей)
+        en: up to 50 guests (external users)
+      - ru: 2 Гб хранилище / на пользователя
+        en: 2GB storage / per user
+      - ru: 100 000 токенов AI-ассистента
+        en: 100,000 AI assistant tokens
+      - ru: до 3 проектов в трекере
+        en: up to 3 projects in the tracker
+      - ru: общая горячая линия
+        en: general hotline
     features:
-      - ru: 5 пользователей
-        en: 5 users
-      - ru: 3 проекта
-        en: 3 projects
-      - ru: 2 Гб на пользователя
-        en: 2 GB per user
-      - ru: 100000 токенов ИИ
-        en: 100000 AI tokens
-    additional:
-      ru: Базовый бесплатный доступ
-      en: Basic free access
-    priceMonthly: 0
-    currency: ₽
+      - ru: Доски и Kanban
+        en: Boards and Kanban
+      - ru: Документы и базы знаний
+        en: Documents and knowledge bases
+      - ru: Чат, треды и сквозные уведомления
+        en: Chat, threads, and push notifications
+      - ru: Календарь и планировщик созвонов
+        en: Call calendar and scheduler
+      - ru: Видеоконференции с записью
+        en: Video conferences with recording
+      - ru: AI-транскрибация и протоколы
+        en: AI transcription and protocols
+      - ru: Синхронный перевод в реальном времени
+        en: Real-time simultaneous translation
+      - ru: Использование API платформы
+        en: Using the platform API
+    priceMonthly: Бесплатно
+    currency:
     free: true
     storagePerUserGB: 2
     trafficLimitGB: 0
@@ -32,102 +47,118 @@ plans:
     tokenLimit: 100000
     projectsLimit: 3
     usersLimit: 5
-    index: -1
-    color: Grayish
-  start:
-    label:
-      ru: Старт
-      en: Start
-    description:
-      ru: Для быстрого старта
-      en: For quick start
-    users:
-      ru: до 10 пользователей
-      en: up to 10 users
-    features:
-      - ru: AI функции
-        en: AI features
-      - ru: Чат и документы
-        en: Chat and documents
-      - ru: 3 проекта
-        en: 3 projects
-      - ru: 10 Гб хранилища
-        en: 10 GB storage
-    additional:
-      ru: Kanban-доски, базовые уведомления, базовый диск
-      en: Kanban boards, basic notifications, basic drive
-    priceMonthly: 299
-    currency: ₽
-    storageLimitGB: 10
-    trafficLimitGB: 10
-    meetingMinutesLimit: 0
-    tokenLimit: 0
-    projectsLimit: 3
-    usersLimit: 10
+    guestsLimit: 50
     index: 0
     color: Sky
-  standard:
-    label:
-      ru: Стандарт
-      en: Standard
-    description:
-      ru: Для средней команды
-      en: For a medium team
-    users:
-      ru: до 50 пользователей
-      en: up to 50 users
-    features:
-      - ru: AI функции
-        en: AI features
-      - ru: Звонки
-        en: Calls
-      - ru: Без ограничений на проекты
-        en: Unlimited projects
-      - ru: 100 Гб хранилища
-        en: 100 GB storage
-    additional:
-      ru: приватные проекты, отсутствие ограничений на сообщения
-      en: Private projects, unlimited messages
-    priceMonthly: 599
-    currency: ₽
-    storageLimitGB: 100
-    trafficLimitGB: 100
-    meetingMinutesLimit: 0
-    tokenLimit: 0
-    projectsLimit: 0
-    usersLimit: 50
-    index: 1
-    color: Orchid
   business:
     label:
       ru: Бизнес
       en: Business
     description:
-      ru: Для большой команды
-      en: For a large team
-    users:
-      ru: до 250 пользователей
-      en: up to 250 users
+      ru: Стартапы и ИТ-команды, которым нужны AI и масштабирование (saas)
+      en: Startups and IT teams looking for AI and scaling (SaaS)
+    limits:
+      - ru: неограниченное количество пользователей
+        en: unlimited users
+      - ru: неограниченное количество гостей (внешних пользователей)
+        en: unlimited guests (external users)
+      - ru: 5 Гб хранилища / на пользователя
+        en: 5GB storage / per user
+      - ru: неограниченное количество токенов AI-ассистента
+        en: unlimited AI assistant tokens
+      - ru: неограниченное количество проектов в трекере
+        en: unlimited projects in the tracker
+      - ru: общая горячая линия
+        en: general hotline
     features:
-      - ru: AI функции
-        en: AI features
-      - ru: Персональный менеджер
-        en: Personal manager
-      - ru: Подходит для масштабирования бизнеса (миграция данных)
-        en: Suitable for business scaling (data migration)
-      - ru: 500 Гб хранилища
-        en: 500 GB storage
-    additional:
-      ru: API-интеграции, SSO/OpenID Connect, домен 4 уровня
-      en: API integrations, SSO/OpenID Connect, 4th level domain
-    priceMonthly: 999
+      - ru: Доски и Kanban
+        en: Boards and Kanban
+      - ru: Документы и базы знаний
+        en: Documents and knowledge bases
+      - ru: Чат, треды и сквозные уведомления
+        en: Chat, threads, and push notifications
+      - ru: Календарь и планировщик созвонов
+        en: Call calendar and scheduler
+      - ru: Видеоконференции с записью
+        en: Video conferences with recording
+      - ru: AI-транскрибация и протоколы
+        en: AI transcription and protocols
+      - ru: Синхронный перевод в реальном времени
+        en: Real-time simultaneous translation
+      - ru: Использование API платформы
+        en: Using the platform API
+      - ru: API-интеграции с внешними сервисами
+        en: API integration with external services
+      - ru: Корпоративный домен
+        en: Corporate domain
+    priceMonthlyPerUser: 499
     currency: ₽
-    storageLimitGB: 500
-    trafficLimitGB: 500
+    storagePerUserGB: 5
+    trafficLimitGB: 0
     meetingMinutesLimit: 0
     tokenLimit: 0
     projectsLimit: 0
-    usersLimit: 250
+    usersLimit: 0
+    index: 1
+    color: Orchid
+  corporation:
+    label:
+      ru: Корпорация
+      en: Corporation
+    description:
+      ru: Крупный бизнес, банки, госсектор, где важна работа во внутреннем контуре
+      en: Large businesses, banks, and the public sector, where internal operations are important
+    limits:
+      - ru: неограниченное количество пользователей
+        en: unlimited users
+      - ru: неограниченное количество гостей (внешних пользователей)
+        en: unlimited guests (external users)
+      - ru: без ограничений на хранилище
+        en: unlimited storage
+      - ru: неограниченное количество токенов AI-ассистента
+        en: unlimited AI assistant tokens
+      - ru: неограниченное количество проектов в трекере
+        en: unlimited projects in the tracker
+      - ru: персональный менеджер, 24/7
+        en: personal manager, 24/7
+    features:
+      - ru: Доски и Kanban
+        en: Boards and Kanban
+      - ru: Документы и базы знаний
+        en: Documents and knowledge bases
+      - ru: Чат, треды и сквозные уведомления
+        en: Chat, threads, and push notifications
+      - ru: Календарь и планировщик созвонов
+        en: Call calendar and scheduler
+      - ru: Видеоконференции с записью
+        en: Video conferences with recording
+      - ru: AI-транскрибация и протоколы
+        en: AI transcription and protocols
+      - ru: Синхронный перевод в реальном времени
+        en: Real-time simultaneous translation
+      - ru: Использование API платформы
+        en: Using the platform API
+      - ru: API-интеграции с внешними сервисами
+        en: API integration with external services
+      - ru: Корпоративный домен
+        en: Corporate domain
+      - ru: SSO / OpenID Connect (Active Directory)
+        en: SSO / OpenID Connect (Active Directory)
+      - ru: On-premise в контуре компании
+        en: On-premise within the company's framework
+      - ru: Кастомизация под процессы заказчика с 1С, АМО, СБИС
+        en: Customization for customer processes with 1C, AMO, SBIS
+      - ru: Миграция данных и обучение команды
+        en: Data migration and team training
+    priceMonthly:  По запросу
+    currency:
+    contactSales: true
+    storageLimitGB: 0
+    trafficLimitGB: 0
+    meetingMinutesLimit: 0
+    tokenLimit: 0
+    projectsLimit: 0
+    usersLimit: 0
     index: 2
     color: Orange
 packages:

@@ -20,11 +20,13 @@ export type LocalizedString = string | Record<string, string>
 export interface PlanItem {
   label: LocalizedString
   description: LocalizedString
-  users: LocalizedString
+  limits: LocalizedString[]
   features: LocalizedString[]
-  additional: LocalizedString
-  priceMonthly: number
-  currency: string
+  priceMonthly?: string
+  priceMonthlyPerUser?: string
+  currency?: string
+  free?: boolean
+  contactSales?: boolean
   storageLimitGB: number
   trafficLimitGB: number
   meetingMinutesLimit: number

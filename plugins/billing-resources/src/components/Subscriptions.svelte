@@ -17,7 +17,7 @@
   import { type SubscribeRequest, type CheckoutStatus } from '@hcengineering/payment-client'
   import { type PlanItem, type PlanConfig, type PackageItem } from '@hcengineering/billing'
   import { getMetadata, translate, getEmbeddedLabel } from '@hcengineering/platform'
-  import presentation, { MessageBox } from '@hcengineering/presentation'
+  import presentation, { MessageBox, getClient } from '@hcengineering/presentation'
   import { UsageStatus } from '@hcengineering/core'
   import {
     IconCheckmark,
@@ -35,6 +35,8 @@
     NotificationSeverity
   } from '@hcengineering/ui'
   import { onMount, onDestroy } from 'svelte'
+  import support from '@hcengineering/support'
+  import contact, { getCurrentEmployee, formatName } from '@hcengineering/contact'
 
   import plugin from '../plugin'
   import { getAccountClient, getPaymentClient, resolveLocale } from '../utils'
@@ -53,7 +55,8 @@
 
   let currentSubscription: SubscriptionData | undefined = undefined
   let currentPackageSubscription: SubscriptionData | undefined = undefined
-  $: currentPlan = currentSubscription != null ? plans[currentSubscription.plan] : undefined
+  $: currentPlan =
+    currentSubscription != null ? (plans[currentSubscription.plan] ?? currentSubscription.plan) : undefined
   $: currentPackage = currentPackageSubscription != null ? packages[currentPackageSubscription.plan] : undefined
   $: arePackagesAvailable =
     currentPlan != null &&
@@ -88,7 +91,7 @@
     }
   }
 
-  async function subscribe (plan: string): Promise<void> {
+  async function subscribe (plan: string, quantity?: number): Promise<void> {
     if (paymentClient == null) {
       return
     }
@@ -100,7 +103,7 @@
     }
 
     try {
-      const request: SubscribeRequest = { type: SubscriptionType.Tier, plan }
+      const request: SubscribeRequest = { type: SubscriptionType.Tier, plan, quantity }
       await applyCheckout(await paymentClient.createSubscription(workspace, request))
     } catch (error) {
       console.error('Error while upgrading plan:', error)
@@ -193,31 +196,78 @@
     )
   }
 
+  $: membersCount = usageInfo?.usage.membersCount ?? 0
+  // Per-seat plans: how many seats the user wants to buy
+  // minSeats = number of existing users
+  $: minSeats = Math.max(membersCount, 1)
+  // Number of seats that user put for each per-seat plan
+  let seatsByPlan: Record<string, number> = {}
+
+  // Effective seats
+  function seatsFor (planKey: string): number {
+    return Math.max(seatsByPlan[planKey] ?? minSeats, minSeats)
+  }
+
+  // Store raw input
+  function setSeats (planKey: string, value: number): void {
+    seatsByPlan = { ...seatsByPlan, [planKey]: Number.isFinite(value) ? Math.floor(value) : minSeats }
+  }
+
+  // On blur, snap the visible input value up to the floor.
+  function clampSeats (planKey: string): void {
+    seatsByPlan = { ...seatsByPlan, [planKey]: seatsFor(planKey) }
+  }
+
+  // Price used for upgrade/downgrade comparison
+  function planMonthlyValue (item: PlanItem | undefined, planKey?: string): number {
+    if (item == null) return 0
+    if (item.free === true) return 0
+    if (item.priceMonthlyPerUser != null) {
+      const seats = planKey !== undefined ? seatsFor(planKey) : minSeats
+      return Number(item.priceMonthlyPerUser) * seats
+    }
+    const n = Number(item.priceMonthly)
+    return Number.isFinite(n) ? n : 0
+  }
+
   async function showPlanChangeConfirmation (newPlan: string, newPlanItem: PlanItem): Promise<void> {
     if (currentPlan === undefined) {
       return
     }
 
-    const isDowngrade = newPlanItem.priceMonthly < currentPlan.priceMonthly
-    const priceDifference = Math.abs(newPlanItem.priceMonthly - currentPlan.priceMonthly)
+    const quantity = newPlanItem.priceMonthlyPerUser != null ? seatsFor(newPlan) : undefined
+    const newPriceMonthly = planMonthlyValue(newPlanItem, newPlan)
+    const currentPriceMonthly = planMonthlyValue(currentPlan, currentSubscription?.plan)
+    const isDowngrade = newPriceMonthly < currentPriceMonthly
+    const isFreeDowngrade = newPlanItem.free === true
+    const priceDifference = Math.abs(newPriceMonthly - currentPriceMonthly)
 
-    const title = isDowngrade ? plugin.string.ConfirmDowngrade : plugin.string.ConfirmUpgrade
-    const descriptionKey = isDowngrade ? plugin.string.DowngradeDescription : plugin.string.UpgradeDescription
+    const title = isFreeDowngrade
+      ? plugin.string.ConfirmDowngradeToFree
+      : isDowngrade
+        ? plugin.string.ConfirmDowngrade
+        : plugin.string.ConfirmUpgrade
+    const descriptionKey = isFreeDowngrade
+      ? plugin.string.DowngradeToFreeDescription
+      : isDowngrade
+        ? plugin.string.DowngradeDescription
+        : plugin.string.UpgradeDescription
 
     showPopup(MessageBox, {
       label: title,
       message: descriptionKey,
       params: { amount: priceDifference, currency: newPlanItem.currency },
       action: async () => {
-        await executeUpdate(newPlan)
+        await executeUpdate(newPlan, quantity)
       }
     })
   }
 
   async function handlePlanChange (newPlan: string, planItem: PlanItem): Promise<void> {
+    const quantity = planItem.priceMonthlyPerUser != null ? seatsFor(newPlan) : undefined
     if (currentSubscription?.id === undefined) {
       // No active subscription, create new one
-      await subscribe(newPlan)
+      await subscribe(newPlan, quantity)
       return
     }
 
@@ -241,7 +291,7 @@
     }
   }
 
-  async function executeUpdate (newPlan: string): Promise<void> {
+  async function executeUpdate (newPlan: string, quantity?: number): Promise<void> {
     if (paymentClient == null) {
       return
     }
@@ -260,7 +310,7 @@
       }
 
       // Now update the plan
-      const updateResult = await paymentClient.updateSubscriptionPlan(currentSubscription.id, newPlan)
+      const updateResult = await paymentClient.updateSubscriptionPlan(currentSubscription.id, newPlan, quantity)
 
       // CheckoutResponse: instant provider already activated (refetch), real one needs a checkout.
       if ('checkoutUrl' in updateResult) {
@@ -277,6 +327,27 @@
     } finally {
       isUpdating = false
     }
+  }
+
+  async function openSalesMail (planKey: string): Promise<void> {
+    const email = getMetadata(support.metadata.SupportEmail)
+    if (email === undefined || email === '') return
+    const workspace = `"${getMetadata(presentation.metadata.WorkspaceName) ?? ''}"`
+    const employee = await getClient().findOne(contact.class.Person, { _id: getCurrentEmployee() })
+    const user = employee !== undefined ? formatName(employee.name) : ''
+    const date = new Date().toLocaleDateString($themeStore.language ?? 'en')
+    const subject = await translate(
+      plugin.string.ContactSalesSubject,
+      { workspace, user, date, plan: planKey },
+      $themeStore.language
+    )
+    const link = document.createElement('a')
+    link.href = `mailto:${email}?subject=${encodeURIComponent(subject)}`
+    link.rel = 'noopener noreferrer'
+    link.style.display = 'none'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   async function retryPayment (): Promise<void> {
@@ -425,7 +496,8 @@
       // Include non-active subscriptions (e.g. past_due) so the payment-failed banner can be shown.
       const subscriptions = await accountClient.getSubscriptions(undefined, false)
       currentSubscription = pickDisplaySubscription(subscriptions, SubscriptionType.Tier)
-      currentPlan = currentSubscription != null ? plans[currentSubscription.plan] : undefined
+      currentPlan =
+        currentSubscription != null ? (plans[currentSubscription.plan] ?? currentSubscription.plan) : undefined
       currentPackageSubscription = pickDisplaySubscription(subscriptions, SubscriptionType.Package)
       currentPackage = currentPackageSubscription != null ? packages[currentPackageSubscription.plan] : undefined
     } catch (err) {
@@ -629,7 +701,7 @@
           {:else}
             <div class="current-tier-card-title">
               <div class="flex-row-center">
-                <div class="fs-title">{currentPlan.label}</div>
+                <div class="fs-title">{currentPlan.label ?? currentPlan}</div>
                 {#if currentSubscription?.status === 'active'}
                   <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.Active} /></div>
                 {/if}
@@ -716,7 +788,7 @@
                 {/if}
               {/if}
 
-              {#if !isCurrentCanceled}
+              {#if !isCurrentCanceled && currentPlan.free !== true}
                 <Button
                   label={plugin.string.CancelSubscription}
                   kind="ghost"
@@ -725,7 +797,7 @@
                     void handleCancel()
                   }}
                 />
-              {:else}
+              {:else if isCurrentCanceled}
                 <Button
                   label={plugin.string.UncancelSubscription}
                   kind="primary"
@@ -752,6 +824,8 @@
                   ? getPlatformColorByName(planItem.color, $themeStore.dark)
                   : null}
               {@const bgAttr = $themeStore.dark ? 'background' : 'background-color'}
+              {@const rawSeats = seatsByPlan[planKey] ?? minSeats}
+              {@const seats = Math.max(rawSeats, minSeats)}
               <div
                 class="tier-card"
                 data-id={`planCard-${planKey}`}
@@ -761,22 +835,28 @@
                   <div class="fs-title text-lg">
                     {planItem.label}
                   </div>
-                  <div class="flex-row-center items-end">
+                  <div class="flex-col h-10">
                     <span class="fs-title text-xl">
-                      {planItem.priceMonthly}
-                      {planItem.currency}
+                      {planItem.priceMonthly ?? planItem.priceMonthlyPerUser}
+                      {planItem.currency ?? ''}
                     </span>
-                    <span class="ml-1 lower">
-                      <Label label={plugin.string.Monthly} />
-                    </span>
+                    {#if planItem.currency != null}
+                      <span class="lower">
+                        <Label
+                          label={planItem.priceMonthly != null ? plugin.string.Monthly : plugin.string.MonthlyPerUser}
+                        />
+                      </span>
+                    {/if}
                   </div>
-                  <div class="h-16">
-                    <div class="mb-4">
-                      {planItem.description}
-                    </div>
-                    <div>
-                      {planItem.users}
-                    </div>
+                  <div class="mb-4 h-10">
+                    {planItem.description}
+                  </div>
+                  <div>
+                    {#each planItem.limits as limit}
+                      <div class="ml-2 mb-2 font-medium">
+                        - {limit}
+                      </div>
+                    {/each}
                   </div>
 
                   <div class="tier-features">
@@ -788,15 +868,50 @@
                     {/each}
                   </div>
                 </div>
+                {#if planItem.priceMonthlyPerUser != null && planItem.contactSales !== true && !isReadOnly && (currentPlan === undefined || currentPlan !== planItem)}
+                  <div class="seats-section flex-col flex-gap-2">
+                    <Label label={plugin.string.UsersCount} />:
+                    <input
+                      class="seats-input"
+                      type="number"
+                      min={minSeats}
+                      step="1"
+                      data-id={`planSeats-${planKey}`}
+                      value={rawSeats}
+                      id={`planSeats-${planKey}`}
+                      on:input={(e) => {
+                        setSeats(planKey, Number(e.currentTarget.value))
+                      }}
+                      on:blur={() => {
+                        clampSeats(planKey)
+                      }}
+                    />
+                    <div class="flex-row-center items-end flex-gap-1">
+                      <Label label={plugin.string.Total} />:
+                      <span class="fs-title">
+                        {Number(planItem.priceMonthlyPerUser) * seats}
+                        {planItem.currency ?? ''}
+                      </span>
+                    </div>
+                  </div>
+                {/if}
                 <div class="tier-card-footer">
-                  {#if !isReadOnly && (currentPlan === undefined || currentPlan !== planItem)}
+                  {#if planItem.contactSales === true}
+                    <Button
+                      label={plugin.string.ContactSales}
+                      dataId={`planContactSales-${planKey}`}
+                      size={'large'}
+                      kind={'regular'}
+                      on:click={() => {
+                        void openSalesMail(planKey)
+                      }}
+                    />
+                  {:else if !isReadOnly && (currentPlan === undefined || currentPlan !== planItem)}
                     <Button
                       label={currentPlan === undefined ? plugin.string.Subscribe : plugin.string.ChangePlan}
                       dataId={`planSubscribe-${planKey}`}
                       size={'large'}
-                      kind={currentPlan === undefined || planItem.priceMonthly > currentPlan.priceMonthly
-                        ? 'primary'
-                        : 'regular'}
+                      kind={currentPlan === undefined || planItem.index > currentPlan.index ? 'primary' : 'regular'}
                       disabled={loading ||
                         isCheckoutPolling ||
                         isUpdating ||
@@ -912,8 +1027,7 @@
     flex-direction: column;
     justify-content: space-between;
     flex-shrink: 0;
-    width: 15rem;
-    // max-height: 22rem;
+    width: 17rem;
     border: 1px solid var(--theme-divider-color);
     border-radius: var(--medium-BorderRadius);
     padding: var(--spacing-2);
@@ -966,6 +1080,24 @@
     flex-direction: row-reverse;
     margin-top: var(--spacing-3);
     height: 2.25rem;
+  }
+
+  .seats-section {
+    margin-top: var(--spacing-3);
+  }
+
+  .seats-input {
+    width: 70%;
+    padding: 0.375rem 0.5rem;
+    color: var(--theme-content-color);
+    background-color: var(--theme-button-default);
+    border: 1px solid var(--theme-divider-color);
+    border-radius: var(--small-BorderRadius);
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary-edit-border-color);
+    }
   }
 
   .processing {

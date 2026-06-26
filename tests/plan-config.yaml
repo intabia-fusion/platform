@@ -19,9 +19,6 @@ plans:
         en: 5 users
       - ru: 3 проекта
         en: 3 projects
-    additional:
-      ru: Лимиты бесплатного тарифа
-      en: Free tier limits
     priceMonthly: 0
     currency: ₽
     free: true
@@ -48,9 +45,6 @@ plans:
         en: 1 project
       - ru: 50 Мб хранилища
         en: 50 MB storage
-    additional:
-      ru: Тестовый план с минимальными лимитами
-      en: Test plan with minimal limits
     priceMonthly: 100
     currency: ₽
     storageLimitGB: 0.05
@@ -78,9 +72,6 @@ plans:
         en: up to 10 users
       - ru: 5 Гб хранилища
         en: 5 GB storage
-    additional:
-      ru: Реальные лимиты для проверки поведения
-      en: Real limits for behavior checks
     priceMonthly: 200
     currency: ₽
     storageLimitGB: 5
@@ -106,9 +97,6 @@ plans:
         en: 10 projects
       - ru: 10 Гб хранилища
         en: 10 GB storage
-    additional:
-      ru: Для средней команды
-      en: For a medium team
     priceMonthly: 300
     currency: ₽
     storageLimitGB: 10
@@ -137,9 +125,6 @@ plans:
         en: 10 MB storage
       - ru: 50 проектов
         en: 50 projects
-    additional:
-      ru: Изолированная проверка лимита диска
-      en: Isolated disk-limit check
     priceMonthly: 100
     currency: ₽
     storageLimitGB: 0.01
@@ -165,9 +150,6 @@ plans:
         en: 100 MB storage
       - ru: 50 проектов
         en: 50 projects
-    additional:
-      ru: Больший лимит диска для проверки апгрейда
-      en: Larger disk limit for upgrade checks
     priceMonthly: 200
     currency: ₽
     storageLimitGB: 0.1
@@ -191,9 +173,6 @@ plans:
     features:
       - ru: Без ограничений
         en: Unlimited
-    additional:
-      ru: Все лимиты сняты
-      en: All limits removed
     priceMonthly: 900
     currency: ₽
     storageLimitGB: 0

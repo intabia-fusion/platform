@@ -66,7 +66,8 @@ export class TbankProvider implements PaymentProvider {
           workspaceUuid,
           workspaceUrl,
           accountUuid,
-          customerEmail: request.customerEmail
+          customerEmail: request.customerEmail,
+          quantity: request.quantity
         })
       })
 
@@ -164,9 +165,10 @@ export class TbankProvider implements PaymentProvider {
     newPlan: string,
     _type: SubscriptionType,
     workspaceUrl: string,
-    accountUuid: string
+    accountUuid: string,
+    quantity?: number
   ): Promise<SubscriptionData | CheckoutResponse | null> {
-    ctx.info('Updating TBank subscription plan', { subscriptionId, newPlan })
+    ctx.info('Updating TBank subscription plan', { subscriptionId, newPlan, quantity })
 
     const response = await fetchTbank(`${this.tbankUrl}/api/v1/subscriptions/${subscriptionId}/updatePlan`, {
       method: 'POST',
@@ -174,7 +176,8 @@ export class TbankProvider implements PaymentProvider {
       body: JSON.stringify({
         plan: newPlan,
         workspaceUrl,
-        accountUuid
+        accountUuid,
+        quantity
       })
     })
 

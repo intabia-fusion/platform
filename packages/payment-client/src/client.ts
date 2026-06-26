@@ -117,12 +117,17 @@ export class PaymentClient {
    * For paid-to-paid updates, returns SubscriptionData (direct update)
    * @param subscriptionId - Subscription ID to update
    * @param plan - New plan name
+   * @param quantity - Number of seats for per-seat plans (total charge = price-per-seat * quantity)
    * @returns CheckoutResponse for free-to-paid upgrades or updated SubscriptionData for direct updates
    */
-  async updateSubscriptionPlan (subscriptionId: string, plan: string): Promise<SubscriptionData | CheckoutResponse> {
+  async updateSubscriptionPlan (
+    subscriptionId: string,
+    plan: string,
+    quantity?: number
+  ): Promise<SubscriptionData | CheckoutResponse> {
     const path = `/api/v1/subscriptions/${subscriptionId}/updatePlan`
     const url = new URL(concatLink(this.endpoint, path))
-    const body = JSON.stringify({ plan })
+    const body = JSON.stringify({ plan, quantity })
     const response = await fetchSafe(url, {
       method: 'POST',
       headers: { ...this.headers },
