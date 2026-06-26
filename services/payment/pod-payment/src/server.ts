@@ -310,7 +310,11 @@ export async function createServer (
   }
 
   if (config.Provider === 'mock') {
-    provider = PaymentProviderFactory.getInstance().create('mock', { frontUrl: config.FrontUrl }, accountClient)
+    provider = PaymentProviderFactory.getInstance().create(
+      'mock',
+      { frontUrl: config.FrontUrl, plans: planConfig.plans },
+      accountClient
+    )
   }
 
   if (provider !== undefined) {

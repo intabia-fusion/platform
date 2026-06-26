@@ -65,7 +65,7 @@ export class PaymentProviderFactory {
     if (config.frontUrl === undefined) {
       throw new Error('Mock provider requires frontUrl in config')
     }
-    return new MockProvider(accountClient, config.frontUrl)
+    return new MockProvider(accountClient, config.frontUrl, config.plans)
   }
 
   private createPolarProvider (

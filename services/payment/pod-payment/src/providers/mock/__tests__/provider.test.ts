@@ -27,6 +27,10 @@ describe('MockProvider', () => {
   const workspaceUuid = 'ws-uuid' as WorkspaceUuid
   const workspaceUrl = 'myws'
   const accountUuid = 'acc-uuid'
+  const plans = {
+    team: { priceMonthly: 599 },
+    business: { priceMonthlyPerUser: 499 }
+  }
 
   beforeEach(() => {
     accountClient = {
@@ -35,7 +39,7 @@ describe('MockProvider', () => {
       upsertSubscription: jest.fn()
     } as any
     ctx = { info: jest.fn(), error: jest.fn() } as any
-    provider = new MockProvider(accountClient, frontUrl)
+    provider = new MockProvider(accountClient, frontUrl, plans)
   })
 
   test('createSubscription activates instantly (instant=true), does NOT upsert', async () => {
@@ -101,6 +105,48 @@ describe('MockProvider', () => {
       accountUuid
     )
     expect(res).toBeNull()
+  })
+
+  test('createSubscription computes flat amount, no quantity in providerData', async () => {
+    const res = await provider.createSubscription(ctx, request, workspaceUuid, workspaceUrl, accountUuid)
+    const sub = await provider.getSubscriptionByCheckout(ctx, res.checkoutId)
+
+    expect(sub?.amount).toBe(599)
+    expect(sub?.providerData).toBeUndefined()
+  })
+
+  test('createSubscription for per-seat plan charges price-per-seat * quantity and stores quantity', async () => {
+    const perSeatRequest = { type: SubscriptionType.Tier, plan: 'business', quantity: 7 } as any
+    const res = await provider.createSubscription(ctx, perSeatRequest, workspaceUuid, workspaceUrl, accountUuid)
+    const sub = await provider.getSubscriptionByCheckout(ctx, res.checkoutId)
+
+    expect(sub?.amount).toBe(499 * 7)
+    expect(sub?.providerData?.quantity).toBe(7)
+  })
+
+  test('updateSubscriptionPlan to per-seat plan recomputes amount and stores quantity', async () => {
+    accountClient.getSubscriptionByProviderId.mockResolvedValue({
+      id: 'db-1',
+      provider: 'mock',
+      providerSubscriptionId: 'mock-1',
+      plan: 'team',
+      amount: 599,
+      status: SubscriptionStatus.Active
+    } as any)
+
+    const res: any = await provider.updateSubscriptionPlan(
+      ctx,
+      'mock-1',
+      'business',
+      SubscriptionType.Tier,
+      workspaceUrl,
+      accountUuid,
+      4
+    )
+
+    expect(res.plan).toBe('business')
+    expect(res.amount).toBe(499 * 4)
+    expect(res.providerData?.quantity).toBe(4)
   })
 
   test('cancelSubscription flips status to Canceled', async () => {

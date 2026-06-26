@@ -55,8 +55,9 @@
 
   let currentSubscription: SubscriptionData | undefined = undefined
   let currentPackageSubscription: SubscriptionData | undefined = undefined
-  $: currentPlan =
-    currentSubscription != null ? (plans[currentSubscription.plan] ?? currentSubscription.plan) : undefined
+  $: currentPlan = currentSubscription != null ? plans[currentSubscription.plan] : undefined
+  // Plan key may be absent from the config (e.g. legacy plan) - fall back to the raw key for display.
+  $: currentPlanName = currentSubscription != null ? (currentPlan?.label ?? currentSubscription.plan) : undefined
   $: currentPackage = currentPackageSubscription != null ? packages[currentPackageSubscription.plan] : undefined
   $: arePackagesAvailable =
     currentPlan != null &&
@@ -496,10 +497,7 @@
       // Include non-active subscriptions (e.g. past_due) so the payment-failed banner can be shown.
       const subscriptions = await accountClient.getSubscriptions(undefined, false)
       currentSubscription = pickDisplaySubscription(subscriptions, SubscriptionType.Tier)
-      currentPlan =
-        currentSubscription != null ? (plans[currentSubscription.plan] ?? currentSubscription.plan) : undefined
       currentPackageSubscription = pickDisplaySubscription(subscriptions, SubscriptionType.Package)
-      currentPackage = currentPackageSubscription != null ? packages[currentPackageSubscription.plan] : undefined
     } catch (err) {
       console.error('Error fetching current plan:', err)
       await showErrorNotification()
@@ -701,7 +699,7 @@
           {:else}
             <div class="current-tier-card-title">
               <div class="flex-row-center">
-                <div class="fs-title">{currentPlan.label ?? currentPlan}</div>
+                <div class="fs-title">{currentPlanName}</div>
                 {#if currentSubscription?.status === 'active'}
                   <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.Active} /></div>
                 {/if}
@@ -852,7 +850,7 @@
                     {planItem.description}
                   </div>
                   <div>
-                    {#each planItem.limits as limit}
+                    {#each planItem.limits ?? [] as limit}
                       <div class="ml-2 mb-2 font-medium">
                         - {limit}
                       </div>
@@ -860,7 +858,7 @@
                   </div>
 
                   <div class="tier-features">
-                    {#each planItem.features as feature}
+                    {#each planItem.features ?? [] as feature}
                       <div class="feature-item">
                         <span class="feature-bullet"><IconCheckmark size="small" /></span>
                         <span>{feature}</span>

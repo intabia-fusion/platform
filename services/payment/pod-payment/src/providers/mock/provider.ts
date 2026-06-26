@@ -19,6 +19,11 @@ import type { AccountClient, SubscriptionData, SubscriptionType } from '@hcengin
 import { SubscriptionStatus } from '@hcengineering/account-client'
 import type { CheckoutResponse, PaymentProvider, SubscribeRequest, SubscriptionPublisher } from '../index'
 
+interface MockPlanPrice {
+  priceMonthly?: string | number
+  priceMonthlyPerUser?: string | number
+}
+
 /**
  * Mock payment provider for test stands.
  * Instantly activates subscriptions with no external API keys.
@@ -29,12 +34,26 @@ export class MockProvider implements PaymentProvider {
 
   private readonly accountClient: AccountClient
   private readonly frontUrl: string
+  // planKey -> prices, used to compute amount (per-seat = priceMonthlyPerUser * quantity)
+  private readonly plans: Record<string, MockPlanPrice>
   // checkoutId -> created subscription (for getSubscriptionByCheckout polling)
   private readonly checkoutMap = new Map<string, SubscriptionData>()
 
-  constructor (accountClient: AccountClient, frontUrl: string) {
+  constructor (accountClient: AccountClient, frontUrl: string, plans: Record<string, MockPlanPrice> = {}) {
     this.accountClient = accountClient
     this.frontUrl = frontUrl
+    this.plans = plans
+  }
+
+  // Per-seat plans charge price-per-seat * seats; flat plans charge priceMonthly.
+  private computeAmount (plan: string, quantity?: number): number {
+    const item = this.plans[plan]
+    if (item == null) return 0
+    if (item.priceMonthlyPerUser != null) {
+      return Number(item.priceMonthlyPerUser) * (quantity ?? 1)
+    }
+    const flat = Number(item.priceMonthly)
+    return Number.isFinite(flat) ? flat : 0
   }
 
   async createSubscription (
@@ -46,6 +65,7 @@ export class MockProvider implements PaymentProvider {
   ): Promise<CheckoutResponse> {
     const checkoutId = generateId()
     const providerSubscriptionId = generateId()
+    const quantity = request.quantity
 
     const sub: SubscriptionData = {
       id: generateId(),
@@ -58,7 +78,9 @@ export class MockProvider implements PaymentProvider {
       status: SubscriptionStatus.Active,
       plan: request.plan,
       limits: undefined,
-      amount: 0,
+      amount: this.computeAmount(request.plan, quantity),
+      // quantity drives attachLimits (usersLimit) on the server side; undefined for flat plans.
+      providerData: quantity != null ? { quantity } : undefined,
       periodStart: Date.now()
     }
 
@@ -105,13 +127,21 @@ export class MockProvider implements PaymentProvider {
     newPlan: string,
     _type: SubscriptionType,
     _workspaceUrl: string,
-    _accountUuid: string
+    _accountUuid: string,
+    quantity?: number
   ): Promise<SubscriptionData | CheckoutResponse | null> {
     // Server passes the provider's subscription id, not our db id.
     const sub = await this.accountClient.getSubscriptionByProviderId('mock', providerSubscriptionId)
     if (sub === null) return null
     // Server attaches the new plan's limits and upserts the returned value.
-    return { ...sub, plan: newPlan, status: SubscriptionStatus.Active, limits: undefined }
+    return {
+      ...sub,
+      plan: newPlan,
+      status: SubscriptionStatus.Active,
+      limits: undefined,
+      amount: this.computeAmount(newPlan, quantity),
+      providerData: quantity != null ? { ...sub.providerData, quantity } : sub.providerData
+    }
   }
 
   async retryPayment (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData | null> {
