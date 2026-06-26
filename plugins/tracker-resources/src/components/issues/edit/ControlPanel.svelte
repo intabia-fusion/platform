@@ -20,12 +20,7 @@
   import tags from '@hcengineering/tags'
   import type { Issue } from '@hcengineering/tracker'
   import { Component, Label } from '@hcengineering/ui'
-  import {
-    getDocMixins,
-    getFiltredKeys,
-    isCollectionAttr,
-    ObjectBox
-  } from '@hcengineering/view-resources'
+  import { getDocMixins, getFiltredKeys, isCollectionAttr, ObjectBox } from '@hcengineering/view-resources'
 
   import tracker from '../../../plugin'
   import ComponentEditor from '../../components/ComponentEditor.svelte'

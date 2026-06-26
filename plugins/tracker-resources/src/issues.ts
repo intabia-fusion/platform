@@ -158,11 +158,12 @@ export async function removeIssueRelation (
     return []
   }
 
-  const currentDocs: RelatedDocument[] = type === 'isBlocking'
-    ? await client.findAll(safeIssue._class, { 'blockedBy._id': safeIssue._id })
-    : type === 'blockedBy'
-      ? toArray(safeIssue.blockedBy)
-      : toArray(safeIssue.relations)
+  const currentDocs: RelatedDocument[] =
+    type === 'isBlocking'
+      ? await client.findAll(safeIssue._class, { 'blockedBy._id': safeIssue._id })
+      : type === 'blockedBy'
+        ? toArray(safeIssue.blockedBy)
+        : toArray(safeIssue.relations)
 
   if (type !== 'isBlocking') {
     await updateIssueRelation(client, parentIssue, relatedIssue, prop, '$pull')

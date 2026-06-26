@@ -14,7 +14,7 @@
     if (docs == null) return []
 
     if (Array.isArray(docs)) {
-      return docs.map(r => r._id as Ref<Issue>)
+      return docs.map((r) => r._id as Ref<Issue>)
     }
 
     return [docs._id as Ref<Issue>]
@@ -25,9 +25,10 @@
 
   $: blockedByQuery = { _id: { $in: blockedByIssueIds } }
   $: relatedQuery = { _id: { $in: relatedIssueIds } }
-  $: blocksQuery = issue._id !== undefined && issue._class !== undefined
-    ? { blockedBy: { _id: issue._id, _class: issue._class } }
-    : { _id: { $in: [] } }
+  $: blocksQuery =
+    issue._id !== undefined && issue._class !== undefined
+      ? { blockedBy: { _id: issue._id, _class: issue._class } }
+      : { _id: { $in: [] } }
 
   let blockedByIssuesCount = 0
   let relatedToIssuesCount = 0
@@ -88,10 +89,7 @@
       }}
     >
       <svelte:fragment slot="chevron">
-        <Label
-          label={tracker.string.BlockedByIssuesList}
-          params={{ blockedByIssues: blockedByIssuesCount }}
-        />
+        <Label label={tracker.string.BlockedByIssuesList} params={{ blockedByIssues: blockedByIssuesCount }} />
       </svelte:fragment>
     </QueryIssuesList>
   </div>
@@ -111,10 +109,7 @@
       }}
     >
       <svelte:fragment slot="chevron">
-        <Label
-          label={tracker.string.RelatedToIssuesList}
-          params={{ relatedToIssue: relatedToIssuesCount }}
-        />
+        <Label label={tracker.string.RelatedToIssuesList} params={{ relatedToIssue: relatedToIssuesCount }} />
       </svelte:fragment>
     </QueryIssuesList>
   </div>
@@ -134,10 +129,7 @@
       }}
     >
       <svelte:fragment slot="chevron">
-        <Label
-          label={tracker.string.BlocksIssuesList}
-          params={{ blocksIssues: blocksIssuesCount }}
-        />
+        <Label label={tracker.string.BlocksIssuesList} params={{ blocksIssues: blocksIssuesCount }} />
       </svelte:fragment>
     </QueryIssuesList>
   </div>

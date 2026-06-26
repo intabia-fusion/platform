@@ -15,25 +15,21 @@
   }
 </script>
 
-<button
-  class="btn-remove-relation"
-  on:click|stopPropagation={handleClick}
-  title="Удалить связь"
->
+<button class="btn-remove-relation" on:click|stopPropagation={handleClick} title="Удалить связь">
   <Icon icon={IconClose} size="x-small" />
 </button>
 
 <style>
-    .btn-remove-relation {
-        flex-shrink: 0;
-        margin-left: 0.125rem;
-        padding: 0 0.25rem 0 0.125rem;
-        height: 1.75rem;
-        color: var(--theme-content-color);
-        border-left: 1px solid transparent;
-    }
-    .btn-remove-relation:hover {
-        color: var(--theme-caption-color);
-        border-left-color: var(--theme-divider-color);
-    }
+  .btn-remove-relation {
+    flex-shrink: 0;
+    margin-left: 0.125rem;
+    padding: 0 0.25rem 0 0.125rem;
+    height: 1.75rem;
+    color: var(--theme-content-color);
+    border-left: 1px solid transparent;
+  }
+  .btn-remove-relation:hover {
+    color: var(--theme-caption-color);
+    border-left-color: var(--theme-divider-color);
+  }
 </style>
