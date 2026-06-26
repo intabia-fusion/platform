@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   import { Class, Doc, Ref } from '@hcengineering/core'
-  import { Asset, getMetadata } from '@hcengineering/platform'
-  import presentation, { getClient } from '@hcengineering/presentation'
+  import { Asset } from '@hcengineering/platform'
+  import { getClient, isDisabled } from '@hcengineering/presentation'
   import { Action, Menu } from '@hcengineering/ui'
   import { Action as ViewAction, ViewContextType } from '@hcengineering/view'
   import { actionGroupOrder, getActions, invokeAction } from '../actions'
@@ -33,10 +33,8 @@
   let loaded = false
 
   void getActions(getClient(), object, baseMenuClass, mode).then((result) => {
-    const disabledFeatures = getMetadata(presentation.metadata.DisabledFeatures)
-
     const filtered = result.filter((a) => {
-      if (a.feature !== undefined && disabledFeatures?.has(a.feature) === true) {
+      if (isDisabled(a.feature)) {
         return false
       }
 
