@@ -63,6 +63,11 @@ async function openMeetingMinutes (page: Page, roomName: string): Promise<void> 
 
 export function registerSessionTests (): void {
   test.describe('meeting minutes - session lifecycle', () => {
+    // Wait for previous meetings to be sure finished.
+    test.beforeEach(async () => {
+      await waitForActiveMeetingsToFinish()
+    })
+
     test('activity feed shows "Joined meeting" entry after a participant connects', async ({ browser }) => {
       test.setTimeout(60000)
 
