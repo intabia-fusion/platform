@@ -78,7 +78,7 @@ import core, {
 import login from '@hcengineering/login'
 import notification, { type DocNotifyContext, type InboxNotification } from '@hcengineering/notification'
 import { getMetadata, getResource, type IntlString, translate } from '@hcengineering/platform'
-import presentation, { addTxListener, createQuery, getClient, onClient } from '@hcengineering/presentation'
+import presentation, { addTxListener, createQuery, getClient, isDisabled, onClient } from '@hcengineering/presentation'
 import { type TemplateDataProvider } from '@hcengineering/templates'
 import {
   getCurrentResolvedLocation,
@@ -396,8 +396,14 @@ const providerQuery = createQuery(true)
 const employeesQuery = createQuery(true)
 
 onClient(() => {
+  const shouldHideBannedChannels = isDisabled('hide-ru-banned-channels')
+
   providerQuery.query(contact.class.ChannelProvider, {}, (res) => {
-    channelProviders.set(res)
+    const filtered = shouldHideBannedChannels
+      ? res.filter((provider) => !BANNED_CHANNEL_PROVIDERS.includes(provider._id as Ref<ChannelProvider>))
+      : res
+
+    channelProviders.set(filtered)
   })
 
   employeesQuery.query(
@@ -851,3 +857,11 @@ export function getPersonByPersonRefStore (
 ): Readable<Map<Ref<Person>, Readonly<Person>>> {
   return contactCacheStoreManager.getPersonByPersonRefStore(personRefs)
 }
+
+export const BANNED_CHANNEL_PROVIDERS: Array<Ref<ChannelProvider>> = [
+  contact.channelProvider.LinkedIn,
+  contact.channelProvider.Twitter,
+  contact.channelProvider.Facebook,
+  contact.channelProvider.Viber,
+  contact.channelProvider.Whatsapp
+]

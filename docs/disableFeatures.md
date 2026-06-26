@@ -26,3 +26,4 @@ Please set a DISABLED_FEATURES environment variable for front service container,
 - testManagement - Will disable test management
 - process - Will disable process module
 - cards - Will disable cards
+- hide-ru-banned-channels - Will hide channels banned in Russia
