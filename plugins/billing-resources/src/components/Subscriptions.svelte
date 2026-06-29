@@ -55,9 +55,9 @@
 
   let currentSubscription: SubscriptionData | undefined = undefined
   let currentPackageSubscription: SubscriptionData | undefined = undefined
-  $: currentPlan = currentSubscription != null ? plans[currentSubscription.plan] : undefined
   // Plan key may be absent from the config (e.g. legacy plan) - fall back to the raw key for display.
-  $: currentPlanName = currentSubscription != null ? (currentPlan?.label ?? currentSubscription.plan) : undefined
+  $: currentPlan =
+    currentSubscription != null ? (plans[currentSubscription.plan] ?? currentSubscription.plan) : undefined
   $: currentPackage = currentPackageSubscription != null ? packages[currentPackageSubscription.plan] : undefined
   $: arePackagesAvailable =
     currentPlan != null &&
@@ -699,7 +699,7 @@
           {:else}
             <div class="current-tier-card-title">
               <div class="flex-row-center">
-                <div class="fs-title">{currentPlanName}</div>
+                <div class="fs-title">{currentPlan.label ?? currentPlan}</div>
                 {#if currentSubscription?.status === 'active'}
                   <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.Active} /></div>
                 {/if}
