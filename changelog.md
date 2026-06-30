@@ -2,6 +2,15 @@
 
 Changelog.
 
+## [0.8.0] - 2026-06-26
+
+* ⚙️ MISCELLANEOUS TASKS: · Update project name in README.md · Bump model to 0.8.0
+
+## [0.7.390] - 2026-06-24
+
+* 🚀 FEATURES: · FUSIO-868: Unload offscreen images to optimize scroll performance (#240)
+* 🐛 BUG FIXES: · Fix queue region (#242)
+
 ## [0.7.389] - 2026-06-23
 
 * 🐛 BUG FIXES: · FUSIO-820: Fix thread focus race (#239) · FUSIO-823: Fix text erasing for forwarded message (#238) · Fix attachment opening for reply/forward (#237)
