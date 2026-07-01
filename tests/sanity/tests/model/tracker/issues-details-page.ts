@@ -39,7 +39,7 @@ export class IssuesDetailsPage extends CommonTrackerPage {
   readonly textRelated = (): Locator =>
     this.page
       .locator('text=Related to Issues')
-      .locator('xpath=../following-sibling::div//span[contains(text(), "TSK-")]')
+      .locator('xpath=ancestor::div[contains(@class, "mt-6")][1]//span[contains(text(), "TSK-")]')
       .first()
 
   readonly buttonCollaborators = (): Locator =>
@@ -52,19 +52,31 @@ export class IssuesDetailsPage extends CommonTrackerPage {
   readonly textBlockedBy = (): Locator =>
     this.page
       .locator('text=Blocked by Issues')
-      .locator('xpath=../following-sibling::div//span[contains(text(), "TSK-")]')
+      .locator('xpath=ancestor::div[contains(@class, "mt-6")][1]//span[contains(text(), "TSK-")]')
       .first()
 
   readonly textBlocks = (): Locator =>
     this.page
       .locator('text=Blocking Issues')
-      .locator('xpath=../following-sibling::div//span[contains(text(), "TSK-")]')
+      .locator('xpath=ancestor::div[contains(@class, "mt-6")][1]//span[contains(text(), "TSK-")]')
       .first()
 
   readonly buttonRemoveBlockedBy = (): Locator =>
     this.page
       .locator('text=Blocked by Issues')
-      .locator('xpath=../following-sibling::div//button[.//svg[contains(@class, "close")]]')
+      .locator('xpath=ancestor::div[contains(@class, "mt-6")][1]//button[contains(@class, "btn-remove-relation")]')
+      .first()
+
+  readonly buttonRemoveRelated = (): Locator =>
+    this.page
+      .locator('text=Related to Issues')
+      .locator('xpath=ancestor::div[contains(@class, "mt-6")][1]//button[contains(@class, "btn-remove-relation")]')
+      .first()
+
+  readonly buttonRemoveBlocking = (): Locator =>
+    this.page
+      .locator('text=Blocking Issues')
+      .locator('xpath=ancestor::div[contains(@class, "mt-6")][1]//button[contains(@class, "btn-remove-relation")]')
       .first()
 
   readonly details = (): Locator =>
@@ -96,6 +108,14 @@ export class IssuesDetailsPage extends CommonTrackerPage {
 
   async clickRemoveBlockedBy (): Promise<void> {
     await this.buttonRemoveBlockedBy().click()
+  }
+
+  async clickRemoveRelated (): Promise<void> {
+    await this.buttonRemoveRelated().click()
+  }
+
+  async clickRemoveBlocking (): Promise<void> {
+    await this.buttonRemoveBlocking().click()
   }
 
   async editIssue (data: Issue): Promise<void> {
@@ -239,6 +259,14 @@ export class IssuesDetailsPage extends CommonTrackerPage {
 
   async checkIfTextBlockedByIsVisible (): Promise<void> {
     await expect(this.textBlockedBy()).toBeVisible({ visible: false })
+  }
+
+  async checkIfTextRelatedIsVisible (): Promise<void> {
+    await expect(this.textRelated()).toBeVisible({ visible: false })
+  }
+
+  async checkIfTextBlocksIsVisible (): Promise<void> {
+    await expect(this.textBlocks()).toBeVisible({ visible: false })
   }
 
   async checkIfButtonCreatedByHaveRealName (modifierName: string): Promise<void> {

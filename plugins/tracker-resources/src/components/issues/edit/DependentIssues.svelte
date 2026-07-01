@@ -25,54 +25,48 @@
 
   $: blockedByQuery = { _id: { $in: blockedByIssueIds } }
   $: relatedQuery = { _id: { $in: relatedIssueIds } }
-  $: blocksQuery =
-    issue._id !== undefined && issue._class !== undefined
-      ? { blockedBy: { _id: issue._id, _class: issue._class } }
-      : { _id: { $in: [] } }
 
   let blockedByIssuesCount = 0
   let relatedToIssuesCount = 0
   let blocksIssuesCount = 0
 
-  // TODO при добавлении заблокированной задачи, список не обновляется автоматически, только после перезагрузки страницы
-  // Заведена задача на доработку FUSIO-952
-  const blocksExistsQuery = createQuery()
-  let isAnyBlocksIssueExists = false
+  let blocksIssueIds: Ref<Issue>[] = []
+  $: blocksQuery = { _id: { $in: blocksIssueIds } }
+  $: isAnyBlocksIssueExists = blocksIssueIds.length > 0
 
-  $: {
-    blocksExistsQuery.query(
-      tracker.class.Issue,
-      blocksQuery,
-      (result) => {
-        isAnyBlocksIssueExists = result !== null && result !== undefined && result.length > 0
-      },
-      { limit: 1 }
-    )
+  const blocksIdsQuery = createQuery()
+  $: if (issue._id !== undefined) {
+    blocksIdsQuery.query(tracker.class.Issue, { blockedBy: { _id: issue._id, _class: issue._class } }, (result) => {
+      blocksIssueIds = result.map((r) => r._id)
+    })
   }
 
   onDestroy(() => {
-    blocksExistsQuery.unsubscribe()
+    blocksIdsQuery.unsubscribe()
   })
 
   function createRemoveButtonConfig (
     type: 'blockedBy' | 'relations' | 'isBlocking'
   ): Record<Ref<Class<Doc>>, Viewlet['config']> {
-    const config: Record<Ref<Class<Doc>>, Viewlet['config']> = {}
-
-    config[tracker.class.Issue as Ref<Class<Doc>>] = [
-      {
-        key: 'actions',
-        label: tracker.string.RemoveRelation,
-        presenter: tracker.component.RemoveRelationButton,
-        props: {
-          parentIssue: issue,
-          type
+    return {
+      [tracker.class.Issue as Ref<Class<Doc>>]: [
+        {
+          key: 'actions',
+          label: tracker.string.RemoveRelation,
+          presenter: tracker.component.RemoveRelationButton,
+          props: {
+            parentIssue: issue,
+            type
+          }
         }
-      }
-    ]
-
-    return config
+      ]
+    }
   }
+
+  // Stable refs: rebuild only when issue changes, not every render
+  $: blockedByConfig = createRemoveButtonConfig('blockedBy')
+  $: relatedConfig = createRemoveButtonConfig('relations')
+  $: blocksConfig = createRemoveButtonConfig('isBlocking')
 </script>
 
 {#if blockedByIssueIds.length > 0}
@@ -83,7 +77,7 @@
       createParams={{}}
       hasSubIssues={true}
       showCreateButton={false}
-      additionalConfig={createRemoveButtonConfig('blockedBy')}
+      additionalConfig={blockedByConfig}
       on:docs={(evt) => {
         blockedByIssuesCount = evt.detail.length
       }}
@@ -103,7 +97,7 @@
       createParams={{}}
       hasSubIssues={true}
       showCreateButton={false}
-      additionalConfig={createRemoveButtonConfig('relations')}
+      additionalConfig={relatedConfig}
       on:docs={(evt) => {
         relatedToIssuesCount = evt.detail.length
       }}
@@ -123,7 +117,7 @@
       createParams={{}}
       hasSubIssues={true}
       showCreateButton={false}
-      additionalConfig={createRemoveButtonConfig('isBlocking')}
+      additionalConfig={blocksConfig}
       on:docs={(evt) => {
         blocksIssuesCount = evt.detail.length
       }}

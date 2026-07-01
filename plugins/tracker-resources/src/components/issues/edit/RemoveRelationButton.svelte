@@ -1,9 +1,10 @@
 <script lang="ts">
   import { Issue } from '@hcengineering/tracker'
-  import { Icon, IconClose } from '@hcengineering/ui'
+  import { Icon, IconClose, tooltip } from '@hcengineering/ui'
   import { RelatedDocument } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { removeIssueRelation } from '../../../issues'
+  import tracker from '../../../plugin'
 
   export let object: RelatedDocument
   export let parentIssue: Issue
@@ -15,7 +16,11 @@
   }
 </script>
 
-<button class="btn-remove-relation" on:click|stopPropagation={handleClick} title="Удалить связь">
+<button
+  class="btn-remove-relation"
+  on:click|stopPropagation={handleClick}
+  use:tooltip={{ label: tracker.string.RemoveRelation }}
+>
   <Icon icon={IconClose} size="x-small" />
 </button>
 
