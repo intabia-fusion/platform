@@ -332,7 +332,8 @@ export function createModel (builder: Builder): void {
       component: setting.component.RelationSetting,
       group: 'settings-editor',
       role: AccountRole.Maintainer,
-      order: 4501
+      order: 4501,
+      feature: 'relation'
     },
     setting.ids.Relations
   )

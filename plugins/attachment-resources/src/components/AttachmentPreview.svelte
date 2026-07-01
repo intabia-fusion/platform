@@ -56,7 +56,9 @@
   <div
     class="content flex-center buttonContainer cursor-pointer"
     class:hovered
-    on:click={() => {
+    on:click={(e) => {
+      e.preventDefault()
+      e.stopPropagation()
       if (listProvider !== undefined && isAttachment(value)) listProvider.updateFocus(value)
       const popupInfo = showAttachmentPreviewPopup(value)
       dispatch('open', popupInfo.id)

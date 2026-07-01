@@ -56,6 +56,8 @@
     void syncLocation(loc)
   })
 
+  let syncLocationToken = 0
+
   let urlObjectId: Ref<Doc> | undefined = undefined
   let urlObjectClass: Ref<Class<Doc>> | undefined = undefined
 
@@ -112,7 +114,9 @@
   }
 
   async function syncLocation (newLocation: Location): Promise<void> {
+    const token = ++syncLocationToken
     const loc = await resolveLocation(newLocation)
+    if (token !== syncLocationToken) return
     if (loc?.loc.path[2] !== notificationId) {
       return
     }
@@ -127,6 +131,11 @@
 
     const [id, _class] = decodeObjectURI(loc?.loc.path[3] ?? '')
     const _id = await parseLinkId(linkProviders, id, _class)
+
+    if (token !== syncLocationToken) return
+    urlObjectId = _id
+    urlObjectClass = _class
+
     const thread = loc?.loc.path[4] as Ref<ActivityMessage>
     const queryContext = loc.loc.query?.context as Ref<DocNotifyContext>
 
@@ -155,11 +164,14 @@
 
     if (thread !== undefined) {
       const fn = await getResource(chunter.function.OpenThreadInSidebar)
+      if (token !== syncLocationToken) return
       void fn(thread, undefined, undefined, selectedMessageId, { autofocus: false }, false)
     }
 
     if (selectedMessageId !== undefined) {
-      selectedMessage = await client.findOne(activity.class.ActivityMessage, { _id: selectedMessageId })
+      const msg = await client.findOne(activity.class.ActivityMessage, { _id: selectedMessageId })
+      if (token !== syncLocationToken) return
+      selectedMessage = msg
     }
   }
 
