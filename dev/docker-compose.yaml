@@ -1059,7 +1059,7 @@ services:
       - TBANK_TERMINAL_KEY=1774599770012DEMO
       - TBANK_PASSWORD=Qnm5Wa3DTTRaIzGu
       - TBANK_URL=https://securepay.tinkoff.ru
-      - TBANK_SUBSCRIPTION_PLANS=business@tier:49900;100gb@package:100000;500gb@package:500000;1000gb@package:1000000
+      - TBANK_SUBSCRIPTION_PLANS=business@tier:49900:15;100gb@package:100000;500gb@package:500000;1000gb@package:1000000
       - SCHEDULER_INTERVAL_MINUTES=${TBANK_SCHEDULER_INTERVAL_MINUTES:-60}
       # Set to true to skip webhook token verification (for local dev with curl)
       - TBANK_SKIP_WEBHOOK_VERIFICATION=true

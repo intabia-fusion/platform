@@ -31,6 +31,8 @@ export enum SubscriptionStatus {
   Expired = 'expired' // Subscription or trial has expired
 }
 
+export type BillingPeriod = 'monthly' | 'yearly'
+
 /**
  * Subscription request parameters
  * Used when creating a new subscription
@@ -41,6 +43,7 @@ export interface SubscribeRequest {
   customerEmail?: string // Optional customer email
   customerName?: string // Optional customer name
   quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
+  period?: BillingPeriod // Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
 }
 
 /**

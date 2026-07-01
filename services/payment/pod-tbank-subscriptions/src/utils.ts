@@ -17,6 +17,35 @@ import { randomBytes } from 'crypto'
 import { type WorkspaceUuid } from '@hcengineering/core'
 import { type Subscription, type SubscriptionData, SubscriptionStatus } from '@hcengineering/account-client'
 import type TbankPayments from 'tbank-payments'
+import { type BillingPeriod } from './types'
+
+/**
+ * Add whole months to a UTC timestamp. Periods land on the same day each month/year.
+ * Also: Jan-31 renews on Feb-28/29, Mar-31, ...
+ * UTC throughout so the renewal moment is independent of the running pod's timezone.
+ *
+ * Notice: the anchor day is the UTC day. For payments near midnight UTC the UTC day differs
+ * from the merchant's local day (e.g. Mar-1 00:30 MSK is Feb-28 21:30 UTC -> anchor 28, not 1).
+ * Only for the ~21:00-24:00 UTC window.
+ * If billing must follow a merchant timezone, compute anchorDay in that zone instead (add timezone to config).
+ */
+export function addMonths (fromMs: number, months: number): number {
+  const d = new Date(fromMs)
+  const anchorDay = d.getUTCDate()
+  // Move to the 1st day so the month shift can't overflow (e.g. Jan-31 + 1 -> Mar-03).
+  d.setUTCDate(1)
+  d.setUTCMonth(d.getUTCMonth() + months)
+  const daysInTargetMonth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate()
+  d.setUTCDate(Math.min(anchorDay, daysInTargetMonth))
+  return d.getTime()
+}
+
+/**
+ * Next period end for a billing period: +1 calendar month (monthly) or +12 months / 1 year (yearly).
+ */
+export function nextPeriodEnd (fromMs: number, period?: BillingPeriod): number {
+  return addMonths(fromMs, period === 'yearly' ? 12 : 1)
+}
 
 export function verifyWebhookToken (
   tbank: TbankPayments,
@@ -77,13 +106,35 @@ export function isFailedRenewal (sub: Subscription | SubscriptionData): boolean 
   return sub.status === SubscriptionStatus.PastDue && sub.providerData?.pending !== true
 }
 
-export function parsePlans (plansStr: string): Record<string, number> {
-  const plans: Record<string, number> = {}
+export interface PlanPricing {
+  amount: number
+  // Yearly discount in percent
+  yearlyDiscount: number
+}
+
+export function parsePlans (plansStr: string): Record<string, PlanPricing> {
+  const plans: Record<string, PlanPricing> = {}
   for (const plan of plansStr.split(';')) {
-    const [key, amountStr] = plan.split(':')
+    const [key, amountStr, discountStr] = plan.split(':')
     const amount = parseInt(amountStr, 10)
     if (isNaN(amount)) throw new Error(`Invalid plan amount: ${plan}`)
-    plans[key] = amount
+    let yearlyDiscount = 0
+    if (discountStr !== undefined && discountStr !== '') {
+      yearlyDiscount = parseInt(discountStr, 10)
+      if (isNaN(yearlyDiscount) || yearlyDiscount < 0 || yearlyDiscount > 100) {
+        throw new Error(`Invalid plan discount: ${plan}`)
+      }
+    }
+    plans[key] = { amount, yearlyDiscount }
   }
   return plans
+}
+
+/**
+ * Resolve the per-seat charge for a billing period
+ */
+export function resolvePerSeatAmount (pricing: PlanPricing, yearly: boolean): number {
+  if (!yearly) return pricing.amount
+  const monthly = Math.round((pricing.amount * (1 - pricing.yearlyDiscount / 100)) / 100) * 100
+  return monthly * 12
 }

@@ -15,6 +15,8 @@
 
 import type { WorkspaceUuid } from '@hcengineering/core'
 
+export type BillingPeriod = 'monthly' | 'yearly'
+
 export interface CreateSubscriptionRequest {
   type: string
   plan: string
@@ -23,11 +25,13 @@ export interface CreateSubscriptionRequest {
   accountUuid: string
   customerEmail?: string
   quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
+  period?: BillingPeriod // Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
 }
 
 export interface UpdatePlanRequest {
   plan: string
   quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
+  period?: BillingPeriod // Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
 }
 
 /**

@@ -19,7 +19,8 @@ import type TbankPayments from 'tbank-payments'
 import type { Config } from './config'
 import { SubscriptionStorage } from './storage'
 import { notifyPaymentFailed } from './notifications'
-import { isPendingFirstPayment, isFailedRenewal } from './utils'
+import { isPendingFirstPayment, isFailedRenewal, nextPeriodEnd } from './utils'
+import { type BillingPeriod } from './types'
 
 export interface SchedulerHandle {
   close: () => Promise<void>
@@ -30,7 +31,6 @@ const RENEWAL_DRAIN_TIMEOUT_MS = 15000
 // Charge lease: refresh every second; a lease older than the timeout means the claiming pod died.
 const HEARTBEAT_INTERVAL_MS = 1000
 const LEASE_TIMEOUT_MS = 10000
-const RENEWAL_PERIOD_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 // Max automatic retries before a past_due subscription is left alone (see SubscriptionStorage.needsRenewal).
 const MAX_RETRY_ATTEMPTS = 3
 // Back-off between failed charge retries (once per day).
@@ -44,7 +44,7 @@ function buildRenewedSubscription (sub: Subscription, now: number, paymentId: st
     ...sub,
     status: SubscriptionStatus.Active,
     periodStart: now,
-    periodEnd: now + RENEWAL_PERIOD_MS,
+    periodEnd: nextPeriodEnd(now, sub.providerData?.period as BillingPeriod | undefined),
     providerData: {
       ...sub.providerData,
       modifiedAt: now,
@@ -331,7 +331,7 @@ async function enforceGracePeriod (ctx: MeasureContext, storage: SubscriptionSto
 /**
  * Start the subscription renewal scheduler.
  * Periodically checks for subscriptions that need renewal and attempts to charge them.
- * - On success: extends periodEnd by 30 days, resets retry counters
+ * - On success: extends periodEnd by one calendar month/year (the subscription's period), resets retry counters
  * - On failure: marks as PastDue, retries up to 3 times with 1-hour intervals
  * - After 3 failed retries: subscription stays PastDue, no further retries
  */

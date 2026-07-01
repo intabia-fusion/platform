@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -636,7 +637,7 @@ export async function createServer (
         'update-plan',
         async (ctx) => {
           const subscriptionId = req.params.subscriptionId
-          const { plan, quantity: requestedQuantity } = req.body
+          const { plan, quantity: requestedQuantity, period } = req.body
           const loginInfo = req.loginInfo as WorkspaceLoginInfo
 
           if (plan === undefined || typeof plan !== 'string') {
@@ -719,7 +720,7 @@ export async function createServer (
               plan
             })
             try {
-              const request: SubscribeRequest = { type: subscription.type, plan, quantity }
+              const request: SubscribeRequest = { type: subscription.type, plan, quantity, period }
               const checkoutResponse = await provider.createSubscription(
                 ctx,
                 request,
@@ -753,7 +754,8 @@ export async function createServer (
               subscription.type,
               loginInfo.workspaceUrl,
               accountUuid,
-              quantity
+              quantity,
+              period
             )
           } catch (err) {
             ctx.error('Failed to update subscription at provider', { err })

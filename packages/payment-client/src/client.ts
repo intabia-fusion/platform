@@ -14,7 +14,7 @@
 //
 
 import { concatLink, type WorkspaceUuid } from '@hcengineering/core'
-import { CheckoutResponse, SubscribeRequest, CheckoutStatus, SubscriptionData } from './types'
+import { CheckoutResponse, SubscribeRequest, CheckoutStatus, SubscriptionData, type BillingPeriod } from './types'
 import { PaymentError, NetworkError } from './error'
 
 /**
@@ -118,16 +118,18 @@ export class PaymentClient {
    * @param subscriptionId - Subscription ID to update
    * @param plan - New plan name
    * @param quantity - Number of seats for per-seat plans (total charge = price-per-seat * quantity)
+   * @param period - Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
    * @returns CheckoutResponse for free-to-paid upgrades or updated SubscriptionData for direct updates
    */
   async updateSubscriptionPlan (
     subscriptionId: string,
     plan: string,
-    quantity?: number
+    quantity?: number,
+    period?: BillingPeriod
   ): Promise<SubscriptionData | CheckoutResponse> {
     const path = `/api/v1/subscriptions/${subscriptionId}/updatePlan`
     const url = new URL(concatLink(this.endpoint, path))
-    const body = JSON.stringify({ plan, quantity })
+    const body = JSON.stringify({ plan, quantity, period })
     const response = await fetchSafe(url, {
       method: 'POST',
       headers: { ...this.headers },

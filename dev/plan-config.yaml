@@ -92,6 +92,7 @@ plans:
       - ru: Корпоративный домен
         en: Corporate domain
     priceMonthlyPerUser: 499
+    yearlyDiscount: 15
     currency: ₽
     storagePerUserGB: 5
     trafficLimitGB: 0

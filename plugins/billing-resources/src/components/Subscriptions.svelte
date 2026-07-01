@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { type SubscriptionData, SubscriptionStatus, SubscriptionType } from '@hcengineering/account-client'
-  import { type SubscribeRequest, type CheckoutStatus } from '@hcengineering/payment-client'
+  import { type SubscribeRequest, type CheckoutStatus, type BillingPeriod } from '@hcengineering/payment-client'
   import { type PlanItem, type PlanConfig, type PackageItem } from '@hcengineering/billing'
   import { getMetadata, translate, getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { MessageBox, getClient } from '@hcengineering/presentation'
@@ -32,7 +32,8 @@
     navigate,
     showPopup,
     addNotification,
-    NotificationSeverity
+    NotificationSeverity,
+    Switcher
   } from '@hcengineering/ui'
   import { onMount, onDestroy } from 'svelte'
   import support from '@hcengineering/support'
@@ -52,6 +53,7 @@
   $: planConfig = planConfigRaw != null ? resolveLocale(planConfigRaw, $themeStore.language) : null
   $: plans = planConfig?.plans ?? ({} satisfies Record<string, PlanItem>)
   $: packages = planConfig?.packages ?? ({} satisfies Record<string, PackageItem>)
+  $: yearlyDiscount = Math.max(0, ...Object.values(plans).map((p) => p.yearlyDiscount ?? 0))
 
   let currentSubscription: SubscriptionData | undefined = undefined
   let currentPackageSubscription: SubscriptionData | undefined = undefined
@@ -82,6 +84,8 @@
 
   $: isCurrentCanceled = currentSubscription?.canceledAt !== undefined && currentSubscription.canceledAt > 0
 
+  let paymentPeriod: BillingPeriod = 'monthly'
+
   // Instant provider (mock) already activated the subscription server-side: refetch instead of
   // redirecting to a checkout page. Real providers return instant=false -> redirect as before.
   async function applyCheckout (result: { checkoutUrl: string, instant?: boolean }): Promise<void> {
@@ -104,7 +108,7 @@
     }
 
     try {
-      const request: SubscribeRequest = { type: SubscriptionType.Tier, plan, quantity }
+      const request: SubscribeRequest = { type: SubscriptionType.Tier, plan, quantity, period: paymentPeriod }
       await applyCheckout(await paymentClient.createSubscription(workspace, request))
     } catch (error) {
       console.error('Error while upgrading plan:', error)
@@ -219,29 +223,49 @@
     seatsByPlan = { ...seatsByPlan, [planKey]: seatsFor(planKey) }
   }
 
-  // Price used for upgrade/downgrade comparison
-  function planMonthlyValue (item: PlanItem | undefined, planKey?: string): number {
-    if (item == null) return 0
-    if (item.free === true) return 0
-    if (item.priceMonthlyPerUser != null) {
-      const seats = planKey !== undefined ? seatsFor(planKey) : minSeats
-      return Number(item.priceMonthlyPerUser) * seats
+  // Monthly price per seat without discount. NaN for flat/free plans
+  function monthlyPerUserBase (item: PlanItem | undefined): number {
+    return item?.priceMonthlyPerUser != null ? Number(item.priceMonthlyPerUser) : NaN
+  }
+
+  // Yearly discount factor for a plan (e.g. 15% -> 0.85). 1 when no discount.
+  function discountFactor (item: PlanItem | undefined): number {
+    const p = item?.yearlyDiscount ?? 0
+    return 1 - p / 100
+  }
+
+  // Effective monthly price (per seat if applicable)
+  function monthly (base: number, item: PlanItem | undefined, period: BillingPeriod): number {
+    if (period !== 'yearly') return base
+    return Math.round(base * discountFactor(item))
+  }
+
+  // Full amount charged for a plan in the given period (monthly/yearly with discount)
+  function planChargeValue (item: PlanItem | undefined, planKey: string, period: BillingPeriod): number {
+    if (item == null || item.free === true) return 0
+    const perUser = monthlyPerUserBase(item)
+    if (Number.isFinite(perUser)) {
+      const seats = seatsFor(planKey)
+      return period === 'yearly' ? monthly(perUser, item, period) * 12 * seats : perUser * seats
     }
     const n = Number(item.priceMonthly)
-    return Number.isFinite(n) ? n : 0
+    if (!Number.isFinite(n)) return 0
+    return period === 'yearly' ? monthly(n, item, period) : n
   }
 
   async function showPlanChangeConfirmation (newPlan: string, newPlanItem: PlanItem): Promise<void> {
     if (currentPlan === undefined) {
       return
     }
-
     const quantity = newPlanItem.priceMonthlyPerUser != null ? seatsFor(newPlan) : undefined
-    const newPriceMonthly = planMonthlyValue(newPlanItem, newPlan)
-    const currentPriceMonthly = planMonthlyValue(currentPlan, currentSubscription?.plan)
-    const isDowngrade = newPriceMonthly < currentPriceMonthly
+
+    // full charge for the new plan (monthly or yearly)
+    const newPrice = newPlanItem.free === true ? 0 : planChargeValue(newPlanItem, newPlan, paymentPeriod)
+    // the real last charge stored on the active subscription
+    const currentPrice = (currentSubscription?.amount ?? 0) / 100
+    const isDowngrade = newPrice < currentPrice
     const isFreeDowngrade = newPlanItem.free === true
-    const priceDifference = Math.abs(newPriceMonthly - currentPriceMonthly)
+    const priceDifference = Math.abs(newPrice - currentPrice)
 
     const title = isFreeDowngrade
       ? plugin.string.ConfirmDowngradeToFree
@@ -311,7 +335,12 @@
       }
 
       // Now update the plan
-      const updateResult = await paymentClient.updateSubscriptionPlan(currentSubscription.id, newPlan, quantity)
+      const updateResult = await paymentClient.updateSubscriptionPlan(
+        currentSubscription.id,
+        newPlan,
+        quantity,
+        paymentPeriod
+      )
 
       // CheckoutResponse: instant provider already activated (refetch), real one needs a checkout.
       if ('checkoutUrl' in updateResult) {
@@ -613,6 +642,19 @@
     }
   }
 
+  $: items = [
+    {
+      id: 'monthly',
+      labelIntl: plugin.string.PaymentMonth
+    },
+    {
+      id: 'yearly',
+      labelIntl: plugin.string.PaymentYear,
+      // Discount hint is a language-neutral "−N%", built here rather than via i18n.
+      badge: yearlyDiscount > 0 ? getEmbeddedLabel(`−${yearlyDiscount}%`) : undefined
+    }
+  ]
+
   async function loadPlanConfig (): Promise<void> {
     try {
       const paymentUrl = getMetadata(presentation.metadata.PaymentUrl) ?? ''
@@ -713,7 +755,12 @@
                     {formatAmount(currentSubscription.amount, currentPlan.currency ?? '', $themeStore.language)}
                   </span>
                   <span class="ml-1 lower">
-                    <Label label={plugin.string.Monthly} />
+                    <!-- amount is the real charge: yearly total for a yearly plan, monthly otherwise. -->
+                    <Label
+                      label={currentSubscription.providerData?.period === 'yearly'
+                        ? plugin.string.Yearly
+                        : plugin.string.Monthly}
+                    />
                   </span>
                 </div>
               {/if}
@@ -814,6 +861,19 @@
         <div class="section-title">
           <Label label={isReadOnly ? plugin.string.RestrictedPlans : plugin.string.AllPlans} />
         </div>
+        {#if items.length > 0}
+          <div class="flex flex-gap-4">
+            <Switcher
+              name={'monthlyYearlyActions'}
+              {items}
+              selected={'monthly'}
+              kind={'subtle'}
+              on:select={(e) => {
+                if (e !== undefined && e.detail.id !== undefined) paymentPeriod = e.detail.id
+              }}
+            />
+          </div>
+        {/if}
         <Scroller contentDirection="horizontal" buttons={false} showOverflowArrows shrink={false} noFade={false}>
           <div class="flex-stretch flex-gap-4 flex-no-shrink mb-3">
             {#each Object.entries(plans) as [planKey, planItem] (planKey)}
@@ -824,6 +884,13 @@
               {@const bgAttr = $themeStore.dark ? 'background' : 'background-color'}
               {@const rawSeats = seatsByPlan[planKey] ?? minSeats}
               {@const seats = Math.max(rawSeats, minSeats)}
+              {@const perUserBaseVal = monthlyPerUserBase(planItem)}
+              {@const hasPerUser = Number.isFinite(perUserBaseVal)}
+              {@const monthlyPerUserVal = hasPerUser ? monthly(perUserBaseVal, planItem, paymentPeriod) : 0}
+              {@const monthlyVal = Number.isFinite(Number(planItem.priceMonthly))
+                ? monthly(Number(planItem.priceMonthly), planItem, paymentPeriod)
+                : planItem.priceMonthly}
+              {@const total = paymentPeriod === 'yearly' ? monthlyPerUserVal * 12 * seats : monthlyPerUserVal * seats}
               <div
                 class="tier-card"
                 data-id={`planCard-${planKey}`}
@@ -835,7 +902,7 @@
                   </div>
                   <div class="flex-col h-10">
                     <span class="fs-title text-xl">
-                      {planItem.priceMonthly ?? planItem.priceMonthlyPerUser}
+                      {hasPerUser ? monthlyPerUserVal : (monthlyVal ?? '')}
                       {planItem.currency ?? ''}
                     </span>
                     {#if planItem.currency != null}
@@ -887,7 +954,7 @@
                     <div class="flex-row-center items-end flex-gap-1">
                       <Label label={plugin.string.Total} />:
                       <span class="fs-title">
-                        {Number(planItem.priceMonthlyPerUser) * seats}
+                        {total}
                         {planItem.currency ?? ''}
                       </span>
                     </div>

@@ -44,6 +44,8 @@ export interface SubscriptionPlan {
   currency: string // e.g. 'usd'
 }
 
+export type BillingPeriod = 'monthly' | 'yearly'
+
 /**
  * Subscription request from client
  * Used for subscribing to a plan
@@ -54,6 +56,7 @@ export interface SubscribeRequest {
   customerEmail?: string
   customerName?: string
   quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
+  period?: BillingPeriod // Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
 }
 
 /**
@@ -123,7 +126,8 @@ export interface PaymentProvider {
     type: SubscriptionType,
     workspaceUrl: string,
     accountUuid: string,
-    quantity?: number
+    quantity?: number,
+    period?: BillingPeriod
   ) => Promise<SubscriptionData | CheckoutResponse | null>
 
   /**

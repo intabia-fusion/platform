@@ -21,9 +21,18 @@ import type TbankPayments from 'tbank-payments'
 
 import type { Config } from './config'
 import { SubscriptionStorage } from './storage'
-import { verifyWebhookToken, getPlanKey, buildOrderId, parsePlans, isPendingFirstPayment } from './utils'
+import {
+  verifyWebhookToken,
+  getPlanKey,
+  buildOrderId,
+  parsePlans,
+  resolvePerSeatAmount,
+  isPendingFirstPayment,
+  nextPeriodEnd,
+  type PlanPricing
+} from './utils'
 import { notifyPaymentFailed } from './notifications'
-import type { TbankWebhookNotification, CreateSubscriptionRequest, UpdatePlanRequest } from './types'
+import type { TbankWebhookNotification, CreateSubscriptionRequest, UpdatePlanRequest, BillingPeriod } from './types'
 
 export async function createServer (
   ctx: MeasureContext,
@@ -141,11 +150,12 @@ async function handleCreateSubscription (
   config: Config,
   tbank: TbankPayments,
   storage: SubscriptionStorage,
-  plans: Record<string, number>,
+  plans: Record<string, PlanPricing>,
   req: Request,
   res: Response
 ): Promise<void> {
-  const { type, plan, workspaceUuid, workspaceUrl, accountUuid, quantity } = req.body as CreateSubscriptionRequest
+  const { type, plan, workspaceUuid, workspaceUrl, accountUuid, quantity, period } =
+    req.body as CreateSubscriptionRequest
 
   ctx.info('Creating TBank subscription', { type, plan, workspaceUuid, accountUuid })
 
@@ -178,13 +188,14 @@ async function handleCreateSubscription (
   }
 
   const planKey = getPlanKey(type, plan)
-  const perSeatAmount = plans[planKey]
-  if (perSeatAmount === undefined) {
+  const pricing = plans[planKey]
+  if (pricing === undefined) {
     res.status(400).json({ error: `Unknown plan: ${planKey}` })
     return
   }
-  // Per-seat plans charge price-per-seat * seats
+  // Per-seat plans charge price-per-seat * seats; yearly period applies the plan's yearly discount.
   const seats = quantity ?? 1
+  const perSeatAmount = resolvePerSeatAmount(pricing, period === 'yearly')
   const amount = perSeatAmount * seats
 
   const transactionCount = await storage.getTransactionCount(workspaceUuid)
@@ -200,7 +211,7 @@ async function handleCreateSubscription (
     workspaceUrl
   )
 
-  ctx.info('TBank payment initiated', { orderId, paymentId, planKey, amount, seats })
+  ctx.info('TBank payment initiated', { orderId, paymentId, planKey, amount, seats, period })
 
   const subscriptionData = buildSubscriptionData(
     String(paymentId),
@@ -213,7 +224,8 @@ async function handleCreateSubscription (
     accountUuid,
     config.TbankTerminalKey,
     undefined,
-    quantity
+    quantity,
+    period
   )
 
   await storage.upsert(subscriptionData)
@@ -261,11 +273,11 @@ async function handleUpdatePlan (
   config: Config,
   tbank: TbankPayments,
   storage: SubscriptionStorage,
-  plans: Record<string, number>,
+  plans: Record<string, PlanPricing>,
   req: Request,
   res: Response
 ): Promise<void> {
-  const { plan: newPlan, quantity } = req.body as UpdatePlanRequest
+  const { plan: newPlan, quantity, period } = req.body as UpdatePlanRequest
   const sub = await findSubscription(storage, req.params.id)
   if (sub === null) {
     res.status(404).json({ error: 'Subscription not found' })
@@ -279,13 +291,14 @@ async function handleUpdatePlan (
   }
 
   const planKey = getPlanKey(sub.type, newPlan)
-  const perSeatAmount = plans[planKey]
-  if (perSeatAmount === undefined) {
+  const pricing = plans[planKey]
+  if (pricing === undefined) {
     res.status(400).json({ error: `Unknown plan: ${planKey}` })
     return
   }
-  // Per-seat plans charge price-per-seat * seats
+  // Per-seat plans charge price-per-seat * seats; yearly period applies the plan's yearly discount.
   const seats = quantity ?? 1
+  const perSeatAmount = resolvePerSeatAmount(pricing, period === 'yearly')
   const newAmount = perSeatAmount * seats
 
   // Mark the old subscription as pending replacement.
@@ -328,7 +341,8 @@ async function handleUpdatePlan (
     sub.accountUuid,
     config.TbankTerminalKey,
     undefined,
-    quantity
+    quantity,
+    period
   )
   await storage.upsert(newSubscription)
 
@@ -382,7 +396,7 @@ async function handleRetryPayment (
         ...sub,
         status: SubscriptionStatus.Active,
         periodStart: now,
-        periodEnd: now + 30 * 24 * 60 * 60 * 1000,
+        periodEnd: nextPeriodEnd(now, sub.providerData?.period as BillingPeriod | undefined),
         providerData: {
           ...sub.providerData,
           modifiedAt: now,
@@ -556,7 +570,8 @@ function buildSubscriptionData (
   customerKey: string,
   terminalKey: string,
   existingSub?: SubscriptionData,
-  quantity?: number
+  quantity?: number,
+  period?: BillingPeriod
 ): SubscriptionData {
   const now = Date.now()
   return {
@@ -571,7 +586,7 @@ function buildSubscriptionData (
     plan,
     amount,
     periodStart: existingSub?.periodStart ?? now,
-    periodEnd: now + 30 * 24 * 60 * 60 * 1000,
+    periodEnd: nextPeriodEnd(now, period),
     providerData: {
       modifiedAt: now,
       status: 'PENDING',
@@ -581,7 +596,9 @@ function buildSubscriptionData (
       terminalKey,
       pending: true,
       // Seats purchased for a per-seat plan. undefined for flat plans.
-      quantity
+      quantity,
+      // Billing period ('monthly' | 'yearly'). undefined defaults to monthly.
+      period
     }
   }
 }
@@ -604,7 +621,7 @@ function buildSubscriptionDataFromWebhook (
     plan: existingSub.plan,
     amount: notification.Amount,
     periodStart: existingSub.periodStart ?? now,
-    periodEnd: now + 30 * 24 * 60 * 60 * 1000,
+    periodEnd: nextPeriodEnd(now, existingSub.providerData?.period as BillingPeriod | undefined),
     providerData: {
       ...existingSub.providerData,
       modifiedAt: now,

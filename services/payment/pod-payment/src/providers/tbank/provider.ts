@@ -16,7 +16,13 @@
 import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import type { Express } from 'express'
 import type { AccountClient, SubscriptionType, SubscriptionData } from '@hcengineering/account-client'
-import type { PaymentProvider, SubscribeRequest, CheckoutResponse, SubscriptionPublisher } from '../index'
+import type {
+  PaymentProvider,
+  SubscribeRequest,
+  CheckoutResponse,
+  SubscriptionPublisher,
+  BillingPeriod
+} from '../index'
 
 const TBANK_FETCH_TIMEOUT = 30000 // 30 seconds should be enough
 
@@ -67,7 +73,8 @@ export class TbankProvider implements PaymentProvider {
           workspaceUrl,
           accountUuid,
           customerEmail: request.customerEmail,
-          quantity: request.quantity
+          quantity: request.quantity,
+          period: request.period
         })
       })
 
@@ -166,9 +173,10 @@ export class TbankProvider implements PaymentProvider {
     _type: SubscriptionType,
     workspaceUrl: string,
     accountUuid: string,
-    quantity?: number
+    quantity?: number,
+    period?: BillingPeriod
   ): Promise<SubscriptionData | CheckoutResponse | null> {
-    ctx.info('Updating TBank subscription plan', { subscriptionId, newPlan, quantity })
+    ctx.info('Updating TBank subscription plan', { subscriptionId, newPlan, quantity, period })
 
     const response = await fetchTbank(`${this.tbankUrl}/api/v1/subscriptions/${subscriptionId}/updatePlan`, {
       method: 'POST',
@@ -177,7 +185,8 @@ export class TbankProvider implements PaymentProvider {
         plan: newPlan,
         workspaceUrl,
         accountUuid,
-        quantity
+        quantity,
+        period
       })
     })
 
