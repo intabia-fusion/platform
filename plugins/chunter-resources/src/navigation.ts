@@ -373,14 +373,20 @@ export async function openThreadInSidebar (
   const appComponent = loc.path[2]
   let allowedPath: string
   if (appComponent === chunterId || appComponent === notificationId) {
-    const providers = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
-    const targetDocLinkId = await getObjectLinkId(providers, message.attachedTo, message.attachedToClass, object)
-    const targetDocUri = encodeObjectURI(targetDocLinkId, message.attachedToClass)
-    const pathCopy = [...loc.path]
-    pathCopy[3] = targetDocUri
-    pathCopy[4] = message._id
-    pathCopy.length = 5
-    allowedPath = pathCopy.join('/')
+    const special = loc.path[3]
+    const chunterSpecials = ['threads', 'saved', 'browser']
+    if (appComponent === chunterId && chunterSpecials.includes(special)) {
+      allowedPath = loc.path.slice(0, 4).join('/')
+    } else {
+      const providers = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
+      const targetDocLinkId = await getObjectLinkId(providers, message.attachedTo, message.attachedToClass, object)
+      const targetDocUri = encodeObjectURI(targetDocLinkId, message.attachedToClass)
+      const pathCopy = [...loc.path]
+      pathCopy[3] = targetDocUri
+      pathCopy[4] = message._id
+      pathCopy.length = 5
+      allowedPath = pathCopy.join('/')
+    }
   } else {
     if (loc.path[2] === chunterId || loc.path[2] === notificationId) {
       loc.path[4] = message._id
