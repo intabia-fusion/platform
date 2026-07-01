@@ -155,6 +155,7 @@
     <div class="forward-modal__input">
       <ChatMessageInputLite
         disableSubmit={!canSave}
+        clearOnSubmit={false}
         on:update={(e) => {
           markup = e.detail
         }}

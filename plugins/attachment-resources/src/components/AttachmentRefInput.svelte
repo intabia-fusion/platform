@@ -79,6 +79,7 @@
   }
   export let placeholder: IntlString | undefined = undefined
   export let disableSubmit = false
+  export let clearOnSubmit = true
   export let extraActions: RefAction[] = []
   export let boundary: HTMLElement | undefined = undefined
   export let skipAttachmentsPreload = false
@@ -523,6 +524,7 @@
       {showSend}
       {showActions}
       {disableSubmit}
+      {clearOnSubmit}
       autofocus={autofocus ? 'end' : false}
       loading={loading || progress || loadingLinks}
       {boundary}
