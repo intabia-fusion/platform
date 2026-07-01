@@ -63,6 +63,7 @@
   export let kitOptions: Partial<EditorKitOptions> = {}
   export let onKeyDown: ((view: EditorView, event: KeyboardEvent) => boolean) | undefined = undefined
   export let disableSubmit = false
+  export let clearOnSubmit = true
 
   const dispatch = createEventDispatcher()
   const buttonSize = 'medium'
@@ -172,8 +173,10 @@
       on:content={(ev) => {
         if (canSubmit) {
           dispatch('message', ev.detail)
-          content = EmptyMarkup
-          editor?.clear?.()
+          if (clearOnSubmit) {
+            content = EmptyMarkup
+            editor?.clear?.()
+          }
         }
       }}
       on:blur={() => {
