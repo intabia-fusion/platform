@@ -919,6 +919,8 @@ services:
         condition: service_started
       datalake:
         condition: service_started
+      redpanda:
+        condition: service_started
     environment:
       - PORT=4041
       - SECRET=secret
@@ -926,6 +928,7 @@ services:
       - DB_URL=${DB_URL_PG}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - USAGE_UPDATE_INTERVAL=30
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
     # Debug: uncomment to enable remote debugging
     # ports:
     #   - 9238:9238
