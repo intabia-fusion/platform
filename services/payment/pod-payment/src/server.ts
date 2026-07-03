@@ -132,6 +132,11 @@ export async function createServer (
 
   switch (config.Provider) {
     case 'mock':
+      // Mock activates any plan without payment — require an explicit opt-in so it cannot
+      // reach production through a misconfigured PROVIDER env.
+      if (config.AllowMockProvider !== true) {
+        throw new Error('PROVIDER=mock requires ALLOW_MOCK_PROVIDER=true (mock activates plans without payment)')
+      }
       // created after planConfig loads — see below
       break
     case 'polar':
@@ -395,6 +400,15 @@ export async function createServer (
           // Activating Free subscription
           if (request.type === SubscriptionType.Tier && planConfig.plans?.[request.plan]?.free === true) {
             try {
+              // Stop the recurrent charge at the provider before switching to free (same as /updatePlan):
+              // otherwise the local DB shows free while the provider keeps billing.
+              const subscriptions = await accountClient.getSubscriptions(workspaceUuid)
+              const activeTier = subscriptions.find(
+                (s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Active
+              )
+              if (activeTier !== undefined && activeTier.provider === config.Provider) {
+                await provider.cancelSubscription(ctx, activeTier.providerSubscriptionId)
+              }
               const freeSub = await createFreeSubscription(workspaceUuid, accountUuid)
               if (freeSub === undefined) {
                 res.status(500).json({ error: 'Free plan is not configured' })

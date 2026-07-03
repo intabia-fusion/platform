@@ -161,14 +161,15 @@
   $: exists = $employeeBySocialKeyStore.get(emailSocialString) !== undefined
 
   // Plan seat limit: 0 = unlimited. Count active employees and block creation past the limit.
-  let activeEmployeesCount = 0
+  // undefined until the query resolves — with a limit set, creation is blocked until the count is known.
+  let activeEmployeesCount: number | undefined = undefined
   const employeesQuery = createQuery()
   employeesQuery.query(contact.mixin.Employee, { active: true }, (res) => {
     activeEmployeesCount = res.length
   })
   void checkWorkspaceLimits()
   $: usersLimit = $planLimits.usersLimit
-  $: seatLimitReached = usersLimit > 0 && activeEmployeesCount >= usersLimit
+  $: seatLimitReached = usersLimit > 0 && (activeEmployeesCount === undefined || activeEmployeesCount >= usersLimit)
 
   const manager = createFocusManager()
 

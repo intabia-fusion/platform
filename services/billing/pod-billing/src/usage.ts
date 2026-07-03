@@ -65,6 +65,13 @@ export class UsageWorker {
         ctx.error('failed to recheck workspaces', { error: err })
       }
 
+      try {
+        // Retention: dedup refs only guard against queue redelivery, no need to keep them forever.
+        await this.db.cleanupUsageDeltaDedup(ctx, 30)
+      } catch (err: any) {
+        ctx.error('failed to cleanup usage delta dedup', { error: err })
+      }
+
       if (!this.canceled) {
         await new Promise((resolve) => setTimeout(resolve, this.config.UsageUpdateInterval * 1000))
       }

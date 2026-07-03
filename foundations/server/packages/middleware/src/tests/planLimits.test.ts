@@ -420,6 +420,94 @@ describe('PlanLimitsMiddleware', () => {
     })
   })
 
+  describe('pendingCreates race guard', () => {
+    const isDerived = (a: any, b: any): boolean => {
+      if (b === core.class.Space) return true
+      if (b === projectClass) return a === projectClass
+      if (b === driveClass) return a === driveClass
+      return a === b
+    }
+
+    function createProjectTx (): any {
+      return txFactory.createTxCreateDoc(projectClass, core.space.Space, {
+        name: 'p',
+        description: '',
+        private: false,
+        members: [],
+        archived: false,
+        owners: []
+      } as any)
+    }
+
+    function createDriveTx (): any {
+      return txFactory.createTxCreateDoc(driveClass, core.space.Space, {
+        name: 'd',
+        description: '',
+        private: false,
+        members: [],
+        archived: false,
+        owners: []
+      } as any)
+    }
+
+    // counts=4, limit=5: exactly one free slot in every test below.
+    const vars = (): Record<string, any> => ({
+      [LIMITS_PROVIDER_VAR]: makeProvider(makeLimits({ projects: 5, drives: 3 })),
+      [SPACE_COUNTS_PROVIDER_KEY]: countsProvider(4, 3, 0)
+    })
+
+    async function createMwWithNext (next: Middleware): Promise<PlanLimitsMiddleware> {
+      const ctx = new MeasureMetricsContext('test', {})
+      const context = makeContext(vars(), isDerived as any)
+      return await PlanLimitsMiddleware.create(ctx, context, next)
+    }
+
+    it('blocks a parallel create while the first is still in flight', async () => {
+      let release: () => void = () => {}
+      const next = makeNext()
+      ;(next.tx as jest.Mock).mockImplementation(
+        async () =>
+          await new Promise((resolve) => {
+            release = () => {
+              resolve({})
+            }
+          })
+      )
+      const mw = await createMwWithNext(next)
+
+      // First create takes the last slot and hangs in provideTx — reservation must be visible.
+      const first = mw.tx(makeSessionCtx(), [createProjectTx()])
+      await expect(mw.tx(makeSessionCtx(), [createProjectTx()])).rejects.toThrow(PlatformError)
+
+      release()
+      await expect(first).resolves.not.toThrow()
+    })
+
+    it('releases the reservation after a successful tx', async () => {
+      const mw = await createMwWithNext(makeNext())
+      await mw.tx(makeSessionCtx(), [createProjectTx()])
+      // Counts stub is static (still 4): a leaked reservation would reject this.
+      await expect(mw.tx(makeSessionCtx(), [createProjectTx()])).resolves.not.toThrow()
+    })
+
+    it('releases the reservation when provideTx fails', async () => {
+      const next = makeNext()
+      ;(next.tx as jest.Mock).mockRejectedValueOnce(new Error('boom')).mockResolvedValue({})
+      const mw = await createMwWithNext(next)
+
+      await expect(mw.tx(makeSessionCtx(), [createProjectTx()])).rejects.toThrow('boom')
+      await expect(mw.tx(makeSessionCtx(), [createProjectTx()])).resolves.not.toThrow()
+    })
+
+    it('rolls back reservations of a partially checked batch', async () => {
+      const mw = await createMwWithNext(makeNext())
+      // Project passes and reserves, drive is over limit and throws — batch rejected.
+      await expect(mw.tx(makeSessionCtx(), [createProjectTx(), createDriveTx()])).rejects.toThrow(PlatformError)
+      // The project reservation must be rolled back, or the free slot is lost.
+      await expect(mw.tx(makeSessionCtx(), [createProjectTx()])).resolves.not.toThrow()
+    })
+  })
+
   describe('non-Space tx', () => {
     it('does not throw for non-Space class', async () => {
       const isDerived = (a: any, b: any): boolean => {

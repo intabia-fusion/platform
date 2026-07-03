@@ -80,6 +80,8 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
   private systemAccounts: Set<AccountUuid> | undefined
   /** Set when an Employee tx is seen; triggers a rebuild on the next tx. */
   private seatSetDirty = false
+  /** Cached countActiveEmployees result — the seatless-member path runs on every tx. */
+  private activeCount: { count: number, ts: number } | undefined
   /** Seats init is lazy: PLAN_LIMITS_VAR is published by PlanLimitsMiddleware, which boots after us. */
   private seatsInited = false
 
@@ -240,7 +242,15 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
       if (uuid != null && !this.seatEligible(uuid, memberRole.get(uuid), systemAccounts)) continue
       count++
     }
+    this.activeCount = { count, ts: Date.now() }
     return count
+  }
+
+  /** Cached count (30s TTL, invalidated on Employee tx) — avoids a remote+DB round trip per tx. */
+  private async countActiveEmployeesCached (ctx: MeasureContext): Promise<number> {
+    const cached = this.activeCount
+    if (cached !== undefined && Date.now() - cached.ts < 30_000) return cached.count
+    return await this.countActiveEmployees(ctx)
   }
 
   /** Classes a read-only member may still write (direct/chat messages). Empty if provider omits it. */
@@ -316,9 +326,10 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
     if (this.seatSetDirty) {
       await this.rebuildSeatSet(ctx)
     }
-    // Employee active change invalidates the seat-set for the next tx.
+    // Employee active change invalidates the seat-set and the active count for the next tx.
     if (!this.seatSetDirty && txes.some((tx) => this.isEmployeeTx(tx))) {
       this.seatSetDirty = true
+      this.activeCount = undefined
     }
 
     if (GUEST_ROLES.has(account.role)) {
@@ -333,7 +344,7 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
     // where a fresh workspace has no active Employee yet — onboarding writes must not be blocked).
     // Count real active employees rather than seatSet.size, which may be empty if the set has not
     // been (re)built yet under load — otherwise enforcement would wrongly disable on a full workspace.
-    const activeEmployees = await this.countActiveEmployees(ctx)
+    const activeEmployees = await this.countActiveEmployeesCached(ctx)
     if (activeEmployees < this.usersLimit) {
       return await this.provideTx(ctx, txes)
     }

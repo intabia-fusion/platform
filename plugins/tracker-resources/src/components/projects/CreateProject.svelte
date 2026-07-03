@@ -277,7 +277,8 @@
 
   let membersChanged: boolean = false
 
-  let activeProjectsCount = 0
+  // undefined until the query resolves — with a limit set, creation is blocked until the count is known.
+  let activeProjectsCount: number | undefined = undefined
   $: projectsQuery.query(tracker.class.Project, { _id: { $nin: project ? [project._id] : [] } }, (res) => {
     projectsIdentifiers = new Set(res.map(({ identifier }) => identifier))
     activeProjectsCount = res.filter((p) => !p.archived).length
@@ -286,7 +287,8 @@
   // Plan limit: 0 = unlimited. Block only new projects (editing an existing one is always allowed).
   void checkWorkspaceLimits()
   $: projectsLimit = $planLimits.projectsLimit
-  $: projectLimitReached = isNew && projectsLimit > 0 && activeProjectsCount >= projectsLimit
+  $: projectLimitReached =
+    isNew && projectsLimit > 0 && (activeProjectsCount === undefined || activeProjectsCount >= projectsLimit)
 
   function handleTypeChange (evt: CustomEvent<Ref<ProjectType>>): void {
     typeId = evt.detail

@@ -159,6 +159,7 @@ export interface BillingDB {
     amount: number,
     ref: string
   ) => Promise<boolean>
+  cleanupUsageDeltaDedup: (ctx: MeasureContext, retentionDays: number) => Promise<void>
 
   // per-workspace per-category limit state
   getLimitState: (

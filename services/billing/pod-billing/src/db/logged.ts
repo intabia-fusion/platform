@@ -144,6 +144,10 @@ export class LoggedDB implements BillingDB {
     )
   }
 
+  async cleanupUsageDeltaDedup (ctx: MeasureContext, retentionDays: number): Promise<void> {
+    await ctx.with('db.cleanupUsageDeltaDedup', {}, () => this.db.cleanupUsageDeltaDedup(ctx, retentionDays))
+  }
+
   async getLimitState (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
