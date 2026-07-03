@@ -71,45 +71,49 @@ var (
 
 // KeyMap defines keybindings
 type KeyMap struct {
-	Up          key.Binding
-	Down        key.Binding
-	Toggle      key.Binding
-	ToggleAll   key.Binding
-	CherryPick  key.Binding
-	Refresh     key.Binding
-	PageUp      key.Binding
-	PageDown    key.Binding
-	Tab         key.Binding
-	Quit        key.Binding
-	Help        key.Binding
-	Ignore      key.Binding
-	ShowIgnored key.Binding
-	Mode        key.Binding
-	Migrate     key.Binding
-	Left        key.Binding
-	Right       key.Binding
+	Up           key.Binding
+	Down         key.Binding
+	Toggle       key.Binding
+	ToggleAll    key.Binding
+	CherryPick   key.Binding
+	Refresh      key.Binding
+	PageUp       key.Binding
+	PageDown     key.Binding
+	Tab          key.Binding
+	Quit         key.Binding
+	Help         key.Binding
+	Ignore       key.Binding
+	ShowIgnored  key.Binding
+	Mode         key.Binding
+	Migrate      key.Binding
+	Left         key.Binding
+	Right        key.Binding
+	MarkApplied  key.Binding
+	ResetApplied key.Binding
 }
 
 // DefaultKeyMap returns default keybindings
 func DefaultKeyMap() KeyMap {
 	return KeyMap{
-		Up:          key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "up")),
-		Down:        key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "down")),
-		Toggle:      key.NewBinding(key.WithKeys(" ", "enter"), key.WithHelp("space/enter", "toggle")),
-		ToggleAll:   key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "toggle all")),
-		CherryPick:  key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "cherry-pick")),
-		Refresh:     key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh")),
-		PageUp:      key.NewBinding(key.WithKeys("pgup", "K"), key.WithHelp("pgup/K", "page up")),
-		PageDown:    key.NewBinding(key.WithKeys("pgdown", "J"), key.WithHelp("pgdown/J", "page down")),
-		Quit:        key.NewBinding(key.WithKeys("q", "esc", "ctrl+c"), key.WithHelp("q/esc", "quit")),
-		Help:        key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
-		Tab:         key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "switch focus")),
-		Ignore:      key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "ignore commit")),
-		ShowIgnored: key.NewBinding(key.WithKeys("i"), key.WithHelp("i", "toggle ignored view")),
-		Mode:        key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "toggle incoming/outgoing")),
-		Migrate:     key.NewBinding(key.WithKeys("m"), key.WithHelp("m", "migrate selected to new branch")),
-		Left:        key.NewBinding(key.WithKeys("left", "h"), key.WithHelp("←/h", "focus tree")),
-		Right:       key.NewBinding(key.WithKeys("right", "l"), key.WithHelp("→/l", "focus commits")),
+		Up:           key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "up")),
+		Down:         key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "down")),
+		Toggle:       key.NewBinding(key.WithKeys(" ", "enter"), key.WithHelp("space/enter", "toggle")),
+		ToggleAll:    key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "toggle all")),
+		CherryPick:   key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "cherry-pick")),
+		Refresh:      key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh")),
+		PageUp:       key.NewBinding(key.WithKeys("pgup", "K"), key.WithHelp("pgup/K", "page up")),
+		PageDown:     key.NewBinding(key.WithKeys("pgdown", "J"), key.WithHelp("pgdown/J", "page down")),
+		Quit:         key.NewBinding(key.WithKeys("q", "esc", "ctrl+c"), key.WithHelp("q/esc", "quit")),
+		Help:         key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
+		Tab:          key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "switch focus")),
+		Ignore:       key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "ignore commit")),
+		ShowIgnored:  key.NewBinding(key.WithKeys("i"), key.WithHelp("i", "toggle ignored view")),
+		Mode:         key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "toggle incoming/outgoing")),
+		Migrate:      key.NewBinding(key.WithKeys("m"), key.WithHelp("m", "migrate selected to new branch")),
+		Left:         key.NewBinding(key.WithKeys("left", "h"), key.WithHelp("←/h", "focus tree")),
+		Right:        key.NewBinding(key.WithKeys("right", "l"), key.WithHelp("→/l", "focus commits")),
+		MarkApplied:  key.NewBinding(key.WithKeys("A"), key.WithHelp("A", "mark applied (cache, incoming)")),
+		ResetApplied: key.NewBinding(key.WithKeys("R"), key.WithHelp("R", "reset applied cache")),
 	}
 }
 
@@ -201,6 +205,7 @@ type Model struct {
 	focus             focusArea
 	mode              AppMode
 	store             *IgnoreStore
+	applied           *AppliedCache
 	showIgnored       bool
 	pendingCursorHash string
 	promptActive      bool
@@ -215,8 +220,8 @@ type Model struct {
 	centerRows        []centerRow
 	centerCursor      int
 	centerScroll      int
-	currentDiff       string // diff text for currently focused row
-	currentDiffKey    string // "hash" or "hash|file" identifying loaded diff
+	currentDiff       string          // diff text for currently focused row
+	currentDiffKey    string          // "hash" or "hash|file" identifying loaded diff
 	outgoingPaths     []string        // outgoing: all changed file paths vs upstream
 	pickedFile        map[string]bool // outgoing: files marked for apply (Space)
 }
@@ -224,7 +229,7 @@ type Model struct {
 // Init initializes the model
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
-		loadCommitsFor(m.mode, m.upstream),
+		loadCommitsFor(m.mode, m.upstream, m.applied),
 		tea.EnterAltScreen,
 	)
 }
@@ -245,6 +250,10 @@ func initialModelWithBranch(upstreamBranch string) Model {
 	if session == nil {
 		session = &Session{}
 	}
+	applied, _ := LoadAppliedCache()
+	if applied == nil {
+		applied = &AppliedCache{Applied: map[string]bool{}}
+	}
 	return Model{
 		keys:          DefaultKeyMap(),
 		upstream:      upstreamBranch,
@@ -254,6 +263,7 @@ func initialModelWithBranch(upstreamBranch string) Model {
 		items:         []commitItem{},
 		focus:         focusCommits,
 		store:         store,
+		applied:       applied,
 		mode:          ModeIncoming,
 		outgoingFiles: map[string][]string{},
 		treeExpanded:  map[string]bool{},
