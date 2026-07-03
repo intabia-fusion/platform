@@ -40,6 +40,9 @@ export interface Config {
   TbankSubscriptionsUrl?: string
 
   ReconciliationIntervalMinutes?: number
+
+  // Explicit opt-in for the mock provider (activates plans without payment) — never set in production
+  AllowMockProvider?: boolean
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
@@ -61,7 +64,8 @@ const config: Config = (() => {
     StripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     StripeSubscriptionPlans: process.env.STRIPE_SUBSCRIPTION_PLANS,
     TbankSubscriptionsUrl: process.env.TBANK_SUBSCRIPTIONS_URL,
-    ReconciliationIntervalMinutes: parseNumber(process.env.RECONCILIATION_INTERVAL_MINUTES)
+    ReconciliationIntervalMinutes: parseNumber(process.env.RECONCILIATION_INTERVAL_MINUTES),
+    AllowMockProvider: process.env.ALLOW_MOCK_PROVIDER === 'true'
   }
 
   const requiredKeys: Array<keyof Config> = ['Port', 'Secret', 'AccountsUrl', 'FrontUrl', 'Provider', 'PlanConfig']

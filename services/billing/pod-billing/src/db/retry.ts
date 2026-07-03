@@ -155,6 +155,10 @@ export class RetryDB implements BillingDB {
     return await retry(() => this.db.accumulateUsageDelta(ctx, workspace, metric, amount, ref), this.options)
   }
 
+  async cleanupUsageDeltaDedup (ctx: MeasureContext, retentionDays: number): Promise<void> {
+    await retry(() => this.db.cleanupUsageDeltaDedup(ctx, retentionDays), this.options)
+  }
+
   async getLimitState (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,

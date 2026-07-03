@@ -866,7 +866,7 @@
             <Switcher
               name={'monthlyYearlyActions'}
               {items}
-              selected={'monthly'}
+              selected={paymentPeriod}
               kind={'subtle'}
               on:select={(e) => {
                 if (e !== undefined && e.detail.id !== undefined) paymentPeriod = e.detail.id

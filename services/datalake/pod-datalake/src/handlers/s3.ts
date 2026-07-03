@@ -18,6 +18,9 @@ import { MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
 import { type Request, type Response } from 'express'
 
 import { type Datalake } from '../datalake'
+import { type LimitsState } from '../limits'
+import { type RequestWithAuth } from '../middleware'
+import { type TemporaryDir } from '../tempdir'
 
 export async function handleS3CreateBlobParams (
   ctx: MeasureContext,
@@ -34,7 +37,9 @@ export async function handleS3CreateBlob (
   ctx: MeasureContext,
   req: Request,
   res: Response,
-  datalake: Datalake
+  datalake: Datalake,
+  _tempDir?: TemporaryDir,
+  limitsState?: LimitsState
 ): Promise<void> {
   const { name } = req.params
   const workspace = req.params.workspace as WorkspaceUuid
@@ -44,8 +49,19 @@ export async function handleS3CreateBlob (
     return
   }
 
+  // Block user uploads when workspace disk or payment limit is exhausted (service tokens bypass).
+  const isServiceToken = (req as RequestWithAuth).token?.extra?.service !== undefined
+  if (!isServiceToken && limitsState?.isExhausted(workspace) === true) {
+    res.status(413).json({ message: 'Resource limit exceeded' })
+    return
+  }
+
   try {
-    await datalake.create(ctx, workspace, name, filename)
+    const head = await datalake.create(ctx, workspace, name, filename)
+    if (head != null && !isServiceToken) {
+      // etag is content-derived — stable ref for retry dedup in billing
+      limitsState?.sendStorageDelta(ctx, workspace, head.size, head.etag)
+    }
     res.status(200).send()
   } catch (err: any) {
     Analytics.handleError(err)

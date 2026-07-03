@@ -58,7 +58,14 @@ export function getMigrations (flavor: DBFlavor): [string, string][] {
     throw new Error(`Unsupported database flavor: ${flavor}`)
   }
 
-  return [migrationV1(flavor), migrationV2(flavor), migrationV3(flavor), migrationV4(flavor), migrationV5(flavor)]
+  return [
+    migrationV1(flavor),
+    migrationV2(flavor),
+    migrationV3(flavor),
+    migrationV4(flavor),
+    migrationV5(flavor),
+    migrationV6(flavor)
+  ]
 }
 
 function migrationV1 (flavor: SupportedFlavor): [string, string] {
@@ -179,4 +186,12 @@ function migrationV5 (flavor: SupportedFlavor): [string, string] {
     );
   `
   return ['add_usage_dedup_and_limit_state_05', sql]
+}
+
+function migrationV6 (flavor: SupportedFlavor): [string, string] {
+  // Supports the periodic retention cleanup of usage_delta_dedup (see UsageWorker).
+  const sql = `
+    CREATE INDEX IF NOT EXISTS idx_usage_delta_dedup_created_at ON billing.usage_delta_dedup (created_at);
+  `
+  return ['add_usage_dedup_created_at_index_06', sql]
 }

@@ -686,6 +686,15 @@ class PostgresDB implements BillingDB {
     return rows.length > 0
   }
 
+  async cleanupUsageDeltaDedup (ctx: MeasureContext, retentionDays: number): Promise<void> {
+    // Dedup refs only need to outlive the queue redelivery window; prune the rest.
+    const query = `
+      DELETE FROM billing.usage_delta_dedup
+      WHERE created_at < now() - ($1 * INTERVAL '1 day')
+    `
+    await this.execute(query, [retentionDays])
+  }
+
   async getLimitState (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,

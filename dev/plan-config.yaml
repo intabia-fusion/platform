@@ -170,7 +170,7 @@ packages:
     priceMonthly: "1 000"
     currency: ₽
     eligiblePlans:
-      - standard
+      - start
       - business
     storageLimitGB: 100
   500gb:
@@ -180,7 +180,7 @@ packages:
     priceMonthly: "5 000"
     currency: ₽
     eligiblePlans:
-      - standard
+      - start
       - business
     storageLimitGB: 500
   1000gb:
@@ -190,6 +190,6 @@ packages:
     priceMonthly: "10 000"
     currency: ₽
     eligiblePlans:
-      - standard
+      - start
       - business
     storageLimitGB: 1000

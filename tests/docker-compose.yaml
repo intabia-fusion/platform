@@ -470,6 +470,7 @@ services:
       - ACCOUNTS_URL=http://account:3003
       - FRONT_URL=http://localhost:8083
       - PROVIDER=mock
+      - ALLOW_MOCK_PROVIDER=true
       - PLAN_CONFIG=/var/cfg/plan-config.yaml
       - QUEUE_CONFIG=${QUEUE_CONFIG}
     volumes:

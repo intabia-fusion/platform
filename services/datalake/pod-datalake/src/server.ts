@@ -257,7 +257,12 @@ export async function createServer (
     wrapRequest(ctx, 's3UploadParams', handleS3CreateBlobParams)
   )
 
-  app.post('/upload/s3/:workspace/:name', withAuthorization, withBlob, wrapRequest(ctx, 's3Upload', handleS3CreateBlob))
+  app.post(
+    '/upload/s3/:workspace/:name',
+    withAuthorization,
+    withBlob,
+    wrapRequest(ctx, 's3Upload', handleS3CreateBlob, limitsState)
+  )
 
   // Multipart upload
   app.post(

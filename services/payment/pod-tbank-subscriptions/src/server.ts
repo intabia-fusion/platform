@@ -20,6 +20,7 @@ import cors from 'cors'
 import type TbankPayments from 'tbank-payments'
 
 import type { Config } from './config'
+import { withServiceToken } from './middleware'
 import { SubscriptionStorage } from './storage'
 import {
   verifyWebhookToken,
@@ -61,6 +62,7 @@ export async function createServer (
 
   app.post(
     '/api/v1/subscriptions',
+    withServiceToken,
     wrapHandler(ctx, 'createSubscription', async (req, res) => {
       await handleCreateSubscription(ctx, config, tbank, storage, plans, req, res)
     })
@@ -68,6 +70,7 @@ export async function createServer (
 
   app.get(
     '/api/v1/subscriptions/by-checkout/:checkoutId',
+    withServiceToken,
     wrapHandler(ctx, 'getByCheckout', async (req, res) => {
       await handleGetByCheckout(storage, req, res)
     })
@@ -75,6 +78,7 @@ export async function createServer (
 
   app.get(
     '/api/v1/subscriptions/:id',
+    withServiceToken,
     wrapHandler(ctx, 'getSubscription', async (req, res) => {
       await handleGetSubscription(storage, req, res)
     })
@@ -82,6 +86,7 @@ export async function createServer (
 
   app.post(
     '/api/v1/subscriptions/:id/cancel',
+    withServiceToken,
     wrapHandler(ctx, 'cancelSubscription', async (req, res) => {
       await handleCancelSubscription(ctx, tbank, storage, req, res)
     })
@@ -89,6 +94,7 @@ export async function createServer (
 
   app.post(
     '/api/v1/subscriptions/:id/updatePlan',
+    withServiceToken,
     wrapHandler(ctx, 'updatePlan', async (req, res) => {
       await handleUpdatePlan(ctx, config, tbank, storage, plans, req, res)
     })
@@ -96,6 +102,7 @@ export async function createServer (
 
   app.post(
     '/api/v1/subscriptions/:id/retry',
+    withServiceToken,
     wrapHandler(ctx, 'retryPayment', async (req, res) => {
       await handleRetryPayment(ctx, tbank, storage, req, res)
     })
@@ -284,8 +291,9 @@ async function handleUpdatePlan (
     return
   }
 
-  // If sub.plan is already the requested plan, nothing to do
-  if (sub.plan === newPlan) {
+  // Same plan is a no-op for a live subscription; for a canceled one it is the uncancel path —
+  // re-initiate payment for the same plan (the card was removed on cancel, a new checkout is needed).
+  if (sub.plan === newPlan && sub.status !== SubscriptionStatus.Canceled) {
     res.status(400).json({ error: 'Already on this plan' })
     return
   }

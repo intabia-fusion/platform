@@ -54,6 +54,9 @@ const ZERO_LIMITS: PlanLimits = {
  * Middleware to limit users/projects/etc.
  */
 export class PlanLimitsMiddleware extends BaseMiddleware implements Middleware {
+  /** In-flight space creations reserved before the tx lands in SpaceSecurity's counts (check-then-act race guard). */
+  private readonly pendingCreates = new Map<Ref<Class<Doc>>, number>()
+
   private constructor (context: PipelineContext, next?: Middleware) {
     super(context, next)
   }
@@ -119,21 +122,30 @@ export class PlanLimitsMiddleware extends BaseMiddleware implements Middleware {
   }
 
   async tx (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
-    // System account creates platform spaces (meeting records drive etc.) — not subject to plan limits.
-    if (ctx.contextData?.account?.uuid !== systemAccountUuid) {
-      for (const tx of txes) {
-        this.checkTx(ctx, tx)
+    const reserved: Ref<Class<Doc>>[] = []
+    try {
+      // System account creates platform spaces (meeting records drive etc.) — not subject to plan limits.
+      if (ctx.contextData?.account?.uuid !== systemAccountUuid) {
+        for (const tx of txes) {
+          this.checkTx(ctx, tx, reserved)
+        }
+      }
+      return await this.provideTx(ctx, txes)
+    } finally {
+      for (const c of reserved) {
+        const left = (this.pendingCreates.get(c) ?? 1) - 1
+        if (left <= 0) this.pendingCreates.delete(c)
+        else this.pendingCreates.set(c, left)
       }
     }
-    return await this.provideTx(ctx, txes)
   }
 
-  private checkTx (ctx: MeasureContext<SessionData>, tx: Tx): void {
+  private checkTx (ctx: MeasureContext<SessionData>, tx: Tx, reserved: Array<Ref<Class<Doc>>>): void {
     // UI creates spaces via apply('...').createDoc — unwrap so inner CUDs are enforced
     // (ApplyTxMiddleware sits below this one and would otherwise hide them).
     if (this.context.hierarchy.isDerived(tx._class, core.class.TxApplyIf)) {
       for (const inner of (tx as TxApplyIf).txes) {
-        this.checkTx(ctx, inner)
+        this.checkTx(ctx, inner, reserved)
       }
       return
     }
@@ -171,6 +183,10 @@ export class PlanLimitsMiddleware extends BaseMiddleware implements Middleware {
     if (!isCreate && !isUnarchive) return
 
     this.enforce(ctx, cudTx.objectClass, counts, limits)
+    // Reserve the slot until provideTx completes: a parallel create must see it before
+    // SpaceSecurity's counts update, or both pass the check and the limit is exceeded.
+    this.pendingCreates.set(cudTx.objectClass, (this.pendingCreates.get(cudTx.objectClass) ?? 0) + 1)
+    reserved.push(cudTx.objectClass)
   }
 
   /** Find the configured space-class whose limit covers objectClass, and enforce it. */
@@ -188,6 +204,10 @@ export class PlanLimitsMiddleware extends BaseMiddleware implements Middleware {
       // Sum non-archived counts across every concrete class derived from this limit's space class.
       let current = 0
       for (const [classRef, count] of counts) {
+        if (h.isDerived(classRef, limitClass)) current += count
+      }
+      // Plus in-flight creations not yet visible in counts.
+      for (const [classRef, count] of this.pendingCreates) {
         if (h.isDerived(classRef, limitClass)) current += count
       }
       if (current >= limitValue) {
