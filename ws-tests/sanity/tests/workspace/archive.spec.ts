@@ -59,6 +59,7 @@ test.describe('Workspace Archive tests', () => {
 
     using adminSecondPage = await getSecondPage(browser)
     const page2 = adminSecondPage.page
+    const adminPage = new AdminPage(page2)
 
     await test.step('Archive workspace', async () => {
       // login as admin
@@ -73,31 +74,28 @@ test.describe('Workspace Archive tests', () => {
         return url.pathname.startsWith('/login/selectWorkspace') || url.pathname.startsWith('/workbench/')
       })
 
-      const adminPage = new AdminPage(page2)
       await adminPage.gotoAdmin()
+      await adminPage.openWorkspacesTab()
+      await adminPage.searchWorkspace(workspaceInfo.workspace)
 
-      await page2.getByText('Hour -').click()
-      await page2.locator('div:nth-child(3) > .checkbox-container > .checkSVG').click()
-      await page2.locator('div:nth-child(4) > .checkbox-container > .checkSVG').click()
-
-      await page2.getByRole('button', { name: 'America', exact: true }).first().click()
-      await page2.getByRole('button', { name: 'europe' }).first().click()
-      await page2.locator('[data-testid="workspace-search-container"] input').click()
-      await page2.locator('[data-testid="workspace-search-container"] input').fill(workspaceInfo.workspace)
       await page2.locator(`[id="${workspaceInfo.workspace}"]`).getByRole('button', { name: 'Archive' }).click()
-
-      await page2.getByRole('button', { name: 'Ok' }).click()
-      await page2.locator(`[id="${workspaceInfo.workspace}"]`).getByText('archived').waitFor()
+      // Archive is OTP-gated; enter the dev code.
+      await adminPage.confirmOtp()
+      // Archived workspaces are hidden by default; enable the filter to see the row.
+      await adminPage.toggleFilter('Show archived workspaces')
+      // Archiving is async; poll Refresh until the mode flips to archived.
+      await adminPage.waitWorkspaceMode(workspaceInfo.workspace, 'archived')
     })
     await test.step('Check workspace is archived', async () => {
       await page.reload() // Will redirect to select workspace page
-      await page.getByText('archived').waitFor()
+      await page.getByText('archived').first().waitFor()
     })
     await test.step('Restore workspace', async () => {
       await page2.locator(`[id="${workspaceInfo.workspace}"]`).getByRole('button', { name: 'Unarchive' }).click()
 
       await page2.getByRole('button', { name: 'Ok' }).click()
-      await page2.locator(`[id="${workspaceInfo.workspace}"]`).getByText('active').waitFor()
+      // Unarchive is async; poll Refresh until the mode flips back to active.
+      await adminPage.waitWorkspaceMode(workspaceInfo.workspace, 'active')
     })
     await test.step('Check workspace is active again', async () => {
       await page.reload()

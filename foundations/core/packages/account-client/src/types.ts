@@ -10,6 +10,7 @@ import {
   type WorkspaceMode,
   Person,
   WorkspaceInfo,
+  type WorkspaceInfoWithStatus,
   AccountInfo,
   IntegrationKind
 } from '@hcengineering/core'
@@ -303,4 +304,83 @@ export interface PaymentIntent {
 export interface SubscriptionInfo extends Subscription {
   payerEmail?: string
   payerName?: string
+}
+
+export type WorkspacesSortKey = 'name' | 'backupDate' | 'backupSize' | 'lastVisit' | 'createdOn'
+
+export interface WorkspacesPagedQuery {
+  search?: string
+  modes?: WorkspaceMode[]
+  region?: string
+  attemptsGte?: number
+  billingPlan?: string
+  billingExpired?: boolean
+  sort?: WorkspacesSortKey
+  order?: 'asc' | 'desc'
+  skip?: number
+  limit?: number
+}
+
+/** Workspace row with the current tier subscription snapshot */
+export type WorkspaceInfoWithBilling = WorkspaceInfoWithStatus & {
+  billingPlan?: string
+  billingStatus?: string
+  billingPeriodEnd?: number
+}
+
+export interface WorkspacesPagedResult {
+  workspaces: WorkspaceInfoWithBilling[]
+  total: number
+}
+
+export interface BillingPlanSummary {
+  plan: string
+  workspaces: number
+  seats: number
+}
+
+export interface WorkspacesSummary {
+  total: number
+  byMode: Record<string, number>
+  byRegion: Record<string, number>
+  byVersion: Record<string, number>
+  billing: BillingPlanSummary[]
+}
+
+export interface RegistrationStatsPoint {
+  day: string
+  count: number
+}
+
+export interface RegistrationStats {
+  workspaces: RegistrationStatsPoint[]
+  accounts: RegistrationStatsPoint[]
+}
+
+export interface WorkspaceActivityPoint {
+  week: string
+  count: number
+}
+
+export interface WorkspaceMemberDetails {
+  account: AccountUuid
+  role: string
+  firstName?: string
+  lastName?: string
+  email?: string
+  lastActivity?: number
+  txTotal: number
+}
+
+export interface AccountWorkspaceActivity {
+  workspace: WorkspaceUuid
+  name?: string
+  url?: string
+  count: number
+  lastTx: number
+}
+
+export interface AccountActivityStats {
+  workspaces: AccountWorkspaceActivity[]
+  weekly: WorkspaceActivityPoint[]
 }

@@ -53,13 +53,18 @@ export function getAccountClient (): AccountClient | null {
   return getAccountClientRaw(accountsUrl, token)
 }
 
+// Clients build absolute URLs internally - resolve relative config values against the origin
+function absoluteUrl (url: string): string {
+  return url.startsWith('/') ? window.location.origin + url : url
+}
+
 export function getBillingClient (): BillingClient | null {
   const billingUrl = getMetadata(billing.metadata.BillingURL) ?? ''
   const token = getMetadata(presentation.metadata.Token) ?? ''
   if (billingUrl === '' || token === '') {
     return null
   }
-  return getBillingClientRaw(billingUrl, token)
+  return getBillingClientRaw(absoluteUrl(billingUrl), token)
 }
 
 export function getPaymentClient (): PaymentClient | null {
@@ -69,7 +74,7 @@ export function getPaymentClient (): PaymentClient | null {
     return null
   }
 
-  return getPaymentClientRaw(paymentUrl, token)
+  return getPaymentClientRaw(absoluteUrl(paymentUrl), token)
 }
 
 let _planConfig: PlanConfig | null = null

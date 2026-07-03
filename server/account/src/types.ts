@@ -352,6 +352,86 @@ export interface AccountWorkspaceBadgeStatus {
 export interface WorkspaceInfoWithStatus extends Workspace {
   status: WorkspaceStatus
 }
+
+export type WorkspacesSortKey = 'name' | 'backupDate' | 'backupSize' | 'lastVisit' | 'createdOn'
+
+export interface WorkspacesPagedQuery {
+  search?: string
+  modes?: WorkspaceMode[]
+  region?: string
+  attemptsGte?: number
+  billingPlan?: string // current tier plan
+  billingExpired?: boolean // has tier subscription, none of them active/trialing
+  sort?: WorkspacesSortKey
+  order?: 'asc' | 'desc'
+  skip?: number
+  limit?: number
+}
+
+/** Workspace row with the current tier subscription snapshot (mirrors account-client type) */
+export type WorkspaceInfoWithBilling = WorkspaceInfoWithStatus & {
+  billingPlan?: string
+  billingStatus?: string
+  billingPeriodEnd?: Timestamp
+}
+
+export interface WorkspacesPagedResult {
+  workspaces: WorkspaceInfoWithBilling[]
+  total: number
+}
+
+export interface BillingPlanSummary {
+  plan: string
+  workspaces: number
+  seats: number // SUM(limits.usersLimit) across active/trialing tier subscriptions
+}
+
+export interface WorkspacesSummary {
+  total: number
+  byMode: Record<string, number>
+  byRegion: Record<string, number>
+  byVersion: Record<string, number> // active workspaces only
+  billing: BillingPlanSummary[]
+}
+
+export interface RegistrationStatsPoint {
+  day: string // YYYY-MM-DD
+  count: number
+}
+
+export interface RegistrationStats {
+  workspaces: RegistrationStatsPoint[]
+  accounts: RegistrationStatsPoint[]
+}
+
+export interface WorkspaceActivityPoint {
+  week: string // YYYY-MM-DD (week start)
+  count: number
+}
+
+export interface WorkspaceMemberDetails {
+  account: AccountUuid
+  role: string
+  firstName?: string
+  lastName?: string
+  email?: string
+  lastActivity?: Timestamp // MAX(tx.modifiedOn) in this workspace
+  txTotal: number
+}
+
+export interface AccountWorkspaceActivity {
+  workspace: WorkspaceUuid
+  name?: string
+  url?: string
+  count: number
+  lastTx: Timestamp
+}
+
+export interface AccountActivityStats {
+  workspaces: AccountWorkspaceActivity[]
+  weekly: WorkspaceActivityPoint[]
+}
+
 export type WorkspaceData = Omit<Workspace, 'uuid' | 'status' | 'members'>
 
 export interface WorkspaceWithEndpoint extends Workspace {
@@ -422,6 +502,15 @@ export interface AccountDB {
   resetPassword: (accountId: AccountUuid) => Promise<void>
   deleteAccount: (accountId: AccountUuid) => Promise<void>
   listAccounts: (search?: string, skip?: number, limit?: number) => Promise<AccountAggregatedInfo[]>
+  listWorkspacesPaged: (query: WorkspacesPagedQuery) => Promise<WorkspacesPagedResult>
+  getWorkspacesSummary: () => Promise<WorkspacesSummary>
+  getRegistrationStats: (from: Timestamp, to: Timestamp) => Promise<RegistrationStats>
+  getWorkspaceActivityStats: (workspace: WorkspaceUuid, from: Timestamp) => Promise<WorkspaceActivityPoint[]>
+  getWorkspaceMembersInfo: (workspace: WorkspaceUuid) => Promise<WorkspaceMemberDetails[]>
+  getAccountActivityStats: (account: AccountUuid, from: Timestamp) => Promise<AccountActivityStats>
+  // Atomically consume an OTP: deletes the (socialId, code) row if it exists and is unexpired,
+  // returns true only if THIS call deleted it. Prevents one code confirming two concurrent ops.
+  consumeOtp: (socialId: PersonId, code: string) => Promise<boolean>
   generatePersonUuid: () => Promise<PersonUuid>
   ensurePerson: (
     socialType: SocialIdType,

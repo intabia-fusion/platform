@@ -219,7 +219,7 @@ const devProxyTest = {
     logLevel: 'debug'
   },
   '/_payment': {
-    target: 'http://localhost:8087',
+    target: 'http://localhost:8083',
     changeOrigin: true,
     logLevel: 'debug'
   },

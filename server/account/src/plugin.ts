@@ -1,5 +1,9 @@
 import { type IntlString, type Metadata, plugin, type Plugin } from '@hcengineering/platform'
-import { type PlatformQueueProducer, type QueueWorkspaceLimitsMessage } from '@hcengineering/server-core'
+import {
+  type PlatformQueueProducer,
+  type QueueWorkspaceLimitsMessage,
+  type QueueWorkspaceMessage
+} from '@hcengineering/server-core'
 import { type TierLimits } from './types'
 
 /**
@@ -36,6 +40,8 @@ export const accountPlugin = plugin(accountId, {
     Transactors: '' as Metadata<string>,
     OtpTimeToLiveSec: '' as Metadata<number>,
     OtpRetryDelaySec: '' as Metadata<number>,
+    // Dev/testing only: fixed admin-operation OTP code (ADMIN_OTP_DEV_CODE). Never set in prod.
+    AdminOtpDevCode: '' as Metadata<string>,
     WsLivenessDays: '' as Metadata<number>,
     AllowReadonlyGuests: '' as Metadata<boolean>,
     // Free fallback limits (defaults, FREE_PLAN_LIMITS env overrides). Always present — applied to every
@@ -43,7 +49,8 @@ export const accountPlugin = plugin(accountId, {
     FreePlanLimits: '' as Metadata<TierLimits>,
     MailQueue: '' as Metadata<PlatformQueueProducer<AccountNotification>>,
     CrmQueue: '' as Metadata<PlatformQueueProducer<CrmNotification>>,
-    WorkspaceQueue: '' as Metadata<PlatformQueueProducer<QueueWorkspaceLimitsMessage>>
+    WorkspaceQueue: '' as Metadata<PlatformQueueProducer<QueueWorkspaceLimitsMessage>>,
+    FulltextQueue: '' as Metadata<PlatformQueueProducer<QueueWorkspaceMessage>>
   },
   string: {
     ConfirmationText: '' as IntlString,
@@ -60,6 +67,9 @@ export const accountPlugin = plugin(accountId, {
     ResendInviteSubject: '' as IntlString,
     OtpText: '' as IntlString,
     OtpHTML: '' as IntlString,
-    OtpSubject: '' as IntlString
+    OtpSubject: '' as IntlString,
+    AdminOtpText: '' as IntlString,
+    AdminOtpHTML: '' as IntlString,
+    AdminOtpSubject: '' as IntlString
   }
 })

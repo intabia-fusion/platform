@@ -2592,6 +2592,21 @@
       "shouldPublish": false
     },
     {
+      "packageName": "@hcengineering/admin",
+      "projectFolder": "plugins/admin",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/admin-assets",
+      "projectFolder": "plugins/admin-assets",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/admin-resources",
+      "projectFolder": "plugins/admin-resources",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@hcengineering/billing",
       "projectFolder": "plugins/billing",
       "shouldPublish": false

@@ -201,6 +201,8 @@ services:
       - ACCOUNTS_URL=http://localhost:8083/_account
       - BRANDING_PATH=/var/cfg/branding.json
       # - DISABLE_SIGNUP=true
+      # Dev/testing only: fixed admin-operation OTP code (email delivery is off in tests). NEVER set in prod.
+      - ADMIN_OTP_DEV_CODE=000000
     restart: unless-stopped
   stats:
     image: intabiafusion/stats

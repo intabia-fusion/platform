@@ -123,6 +123,7 @@ import {
   updateAllowReadOnlyGuests,
   updatePasswordAgingRule,
   updateWorkspaceRole,
+  verifyAdminOtp,
   verifyAllowedRole,
   verifyAllowedServices,
   verifyPassword,
@@ -2606,9 +2607,9 @@ export async function deleteAccount (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: { uuid?: AccountUuid }
+  params: { uuid?: AccountUuid, otpCode?: string }
 ): Promise<void> {
-  const { extra } = decodeTokenVerbose(ctx, token)
+  const { account, extra } = decodeTokenVerbose(ctx, token)
 
   const isAdmin = extra?.admin === 'true'
 
@@ -2620,6 +2621,24 @@ export async function deleteAccount (
 
   if (uuid == null || uuid === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+
+  // Irreversible identity purge — require an emailed OTP confirmation.
+  await verifyAdminOtp(ctx, db, token, params.otpCode ?? '')
+
+  if (uuid === account) {
+    // Admin must not delete their own account (would also break the OTP-email lookup).
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  // Refuse if the target is the sole owner of any workspace — that would orphan it.
+  const workspaces = await db.getAccountWorkspaces(uuid)
+  for (const ws of workspaces) {
+    const members = await db.getWorkspaceMembers(ws.uuid)
+    const owners = members.filter((m) => m.role === AccountRole.Owner)
+    if (owners.length === 1 && owners[0].person === uuid) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    }
   }
 
   await db.deleteAccount(uuid)
@@ -2823,11 +2842,10 @@ export async function getSubscriptions (
 
   let targetWorkspace: WorkspaceUuid | null
 
-  // Check if this is a service token
-  const isService = extra?.service !== undefined
+  // Service and admin tokens can query any workspace/all workspaces
+  const isService = extra?.service !== undefined || extra?.admin === 'true'
 
   if (isService) {
-    // Services can query any workspace/all workspaces
     targetWorkspace = workspaceUuid ?? null
   } else {
     // Regular users: use workspace from token (ignores workspaceUuid param)

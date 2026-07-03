@@ -56,7 +56,14 @@ import type {
   DBFlavor,
   WorkspacePermission,
   AccountWorkspaceBadgeStatus,
-  ShortLink
+  ShortLink,
+  WorkspacesPagedQuery,
+  WorkspacesPagedResult,
+  WorkspacesSummary,
+  RegistrationStats,
+  WorkspaceActivityPoint,
+  WorkspaceMemberDetails,
+  AccountActivityStats
 } from '../../types'
 
 function toSnakeCase (str: string): string {
@@ -1238,6 +1245,293 @@ export class PostgresAccountDB implements AccountDB {
         return converted as AccountAggregatedInfo
       })
     })
+  }
+
+  private workspaceStatusJson (alias: string): string {
+    return `json_build_object(
+            'mode', ${alias}.mode,
+            'processing_progress', ${alias}.processing_progress,
+            'version_major', ${alias}.version_major,
+            'version_minor', ${alias}.version_minor,
+            'version_patch', ${alias}.version_patch,
+            'last_processing_time', ${alias}.last_processing_time,
+            'last_visit', ${alias}.last_visit,
+            'is_disabled', ${alias}.is_disabled,
+            'processing_attempts', ${alias}.processing_attempts,
+            'processing_message', ${alias}.processing_message,
+            'backup_info', ${alias}.backup_info,
+            'usage_info', ${alias}.usage_info
+          )`
+  }
+
+  async listWorkspacesPaged (query: WorkspacesPagedQuery): Promise<WorkspacesPagedResult> {
+    const where: string[] = []
+    const values: any[] = []
+    let idx = 1
+
+    if (query.search !== undefined && query.search !== '') {
+      where.push(`(w.name ILIKE $${idx} OR w.url ILIKE $${idx} OR w.uuid::text ILIKE $${idx})`)
+      values.push(`%${query.search}%`)
+      idx++
+    }
+    if (query.modes !== undefined && query.modes.length > 0) {
+      where.push(`s.mode = ANY($${idx}::text[])`)
+      values.push(query.modes)
+      idx++
+    }
+    if (query.region !== undefined) {
+      where.push(`COALESCE(w.region, '') = $${idx}`)
+      values.push(query.region)
+      idx++
+    }
+    if (query.attemptsGte !== undefined) {
+      where.push(`COALESCE(s.processing_attempts, 0) >= $${idx}`)
+      values.push(query.attemptsGte)
+      idx++
+    }
+    if (query.billingPlan !== undefined && query.billingPlan !== '') {
+      where.push(`bs.plan = $${idx}`)
+      values.push(query.billingPlan)
+      idx++
+    }
+    if (query.billingExpired === true) {
+      where.push("bs.plan IS NOT NULL AND bs.status NOT IN ('active', 'trialing')")
+    }
+
+    // backup_info jsonb keys are snake_case (convertKeysToSnakeCase on write)
+    const backupSize = `GREATEST(
+      COALESCE((s.backup_info->>'backup_size')::numeric, 0),
+      COALESCE((s.backup_info->>'data_size')::numeric, 0) + COALESCE((s.backup_info->>'blobs_size')::numeric, 0)
+    )`
+    const sortColumns: Record<string, string> = {
+      name: 'w.name',
+      createdOn: 'w.created_on',
+      lastVisit: 's.last_visit',
+      backupDate: "COALESCE((s.backup_info->>'last_backup')::bigint, 0)",
+      backupSize
+    }
+    const sortCol = sortColumns[query.sort ?? 'lastVisit'] ?? sortColumns.lastVisit
+    const order = query.order === 'asc' ? 'ASC' : 'DESC'
+    // Interpolated into SQL: force finite numbers, non-numeric RPC input falls back to defaults
+    const limit = Number.isFinite(query.limit) ? Math.min(Math.max(Math.round(query.limit as number), 1), 1000) : 50
+    const skip = Number.isFinite(query.skip) ? Math.max(Math.round(query.skip as number), 0) : 0
+
+    const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
+    // Current tier subscription (billing): the active/trialing one, else the latest
+    const billingJoin = `LEFT JOIN LATERAL (
+          SELECT sub.plan, sub.status, sub.period_end
+          FROM ${this.subscription.getTableName()} sub
+          WHERE sub.workspace_uuid = w.uuid AND sub.type = 'tier'
+          ORDER BY CASE WHEN sub.status IN ('active', 'trialing') THEN 0 ELSE 1 END, sub.created_on DESC
+          LIMIT 1
+        ) bs ON TRUE`
+    const sql = `SELECT
+          w.uuid, w.name, w.url, w.branding, w.location, w.region,
+          w.created_by, w.created_on, w.billing_account,
+          bs.plan AS billing_plan, bs.status AS billing_status, bs.period_end AS billing_period_end,
+          ${this.workspaceStatusJson('s')} status,
+          COUNT(*) OVER() AS total
+        FROM ${this.workspace.getTableName()} w
+        INNER JOIN ${this.workspaceStatus.getTableName()} s ON s.workspace_uuid = w.uuid
+        ${billingJoin}
+        ${whereSql}
+        ORDER BY ${sortCol} ${order} NULLS LAST, w.uuid
+        LIMIT ${limit} OFFSET ${skip}`
+
+    return await this.withRetry(async (rTx) => {
+      const res: any = await rTx.unsafe(sql, values)
+      let total = res.length > 0 ? Number(res[0].total) : 0
+      if (res.length === 0 && skip > 0) {
+        const cnt: any = await rTx.unsafe(
+          `SELECT COUNT(*) AS total FROM ${this.workspace.getTableName()} w
+           INNER JOIN ${this.workspaceStatus.getTableName()} s ON s.workspace_uuid = w.uuid
+           ${billingJoin} ${whereSql}`,
+          values
+        )
+        total = Number(cnt[0].total)
+      }
+      for (const row of res) {
+        delete row.total
+        row.created_on = convertTimestamp(row.created_on)
+        row.billing_period_end = row.billing_period_end != null ? convertTimestamp(row.billing_period_end) : undefined
+        row.status.last_processing_time = convertTimestamp(row.status.last_processing_time)
+        row.status.last_visit = convertTimestamp(row.status.last_visit)
+      }
+      return { workspaces: convertKeysToCamelCase(res), total }
+    })
+  }
+
+  async getWorkspacesSummary (): Promise<WorkspacesSummary> {
+    return await this.withRetry(async (rTx) => {
+      const byMode: any = await rTx.unsafe(
+        `SELECT COALESCE(s.mode, 'unknown') AS key, COUNT(*) AS count
+         FROM ${this.workspaceStatus.getTableName()} s GROUP BY 1`,
+        []
+      )
+      const byRegion: any = await rTx.unsafe(
+        `SELECT COALESCE(w.region, '') AS key, COUNT(*) AS count
+         FROM ${this.workspace.getTableName()} w
+         INNER JOIN ${this.workspaceStatus.getTableName()} s ON s.workspace_uuid = w.uuid
+         WHERE s.mode = 'active' GROUP BY 1`,
+        []
+      )
+      const byVersion: any = await rTx.unsafe(
+        `SELECT concat(s.version_major, '.', s.version_minor, '.', s.version_patch) AS key, COUNT(*) AS count
+         FROM ${this.workspaceStatus.getTableName()} s WHERE s.mode = 'active' GROUP BY 1`,
+        []
+      )
+      const billing: any = await rTx.unsafe(
+        `SELECT plan, COUNT(*) AS workspaces, COALESCE(SUM((limits->>'users_limit')::int), 0) AS seats
+         FROM ${this.subscription.getTableName()}
+         WHERE type = 'tier' AND status IN ('active', 'trialing')
+         GROUP BY plan ORDER BY seats DESC`,
+        []
+      )
+      const toRecord = (rows: any[]): Record<string, number> =>
+        Object.fromEntries(rows.map((r) => [r.key, Number(r.count)]))
+      const modes = toRecord(byMode)
+      return {
+        total: Object.values(modes).reduce((a, b) => a + b, 0),
+        byMode: modes,
+        byRegion: toRecord(byRegion),
+        byVersion: toRecord(byVersion),
+        billing: billing.map((r: any) => ({ plan: r.plan, workspaces: Number(r.workspaces), seats: Number(r.seats) }))
+      }
+    })
+  }
+
+  async getRegistrationStats (from: number, to: number): Promise<RegistrationStats> {
+    return await this.withRetry(async (rTx) => {
+      const workspaces: any = await rTx.unsafe(
+        `SELECT to_char(to_timestamp(created_on / 1000)::date, 'YYYY-MM-DD') AS day, COUNT(*) AS count
+         FROM ${this.workspace.getTableName()}
+         WHERE created_on >= $1 AND created_on <= $2 GROUP BY 1 ORDER BY 1`,
+        [from, to]
+      )
+      const accounts: any = await rTx.unsafe(
+        `SELECT to_char(to_timestamp("time" / 1000)::date, 'YYYY-MM-DD') AS day, COUNT(*) AS count
+         FROM ${this.accountEvent.getTableName()}
+         WHERE event_type = 'account_created' AND "time" >= $1 AND "time" <= $2 GROUP BY 1 ORDER BY 1`,
+        [from, to]
+      )
+      const toPoints = (rows: any[]): Array<{ day: string, count: number }> =>
+        rows.map((r) => ({ day: r.day, count: Number(r.count) }))
+      return { workspaces: toPoints(workspaces), accounts: toPoints(accounts) }
+    })
+  }
+
+  async consumeOtp (socialId: PersonId, code: string): Promise<boolean> {
+    // Atomic: delete the row only if it exists and is unexpired; RETURNING tells us if we won.
+    return await this.withRetry(async (rTx) => {
+      const res: any = await rTx.unsafe(
+        `DELETE FROM ${this.otp.getTableName()}
+         WHERE social_id = $1 AND code = $2 AND expires_on > $3
+         RETURNING code`,
+        [socialId, code, Date.now()]
+      )
+      return res.length > 0
+    })
+  }
+
+  async getWorkspaceActivityStats (workspace: WorkspaceUuid, from: number): Promise<WorkspaceActivityPoint[]> {
+    // Workspace tx table lives in the same PG instance in the current deployment (public.tx).
+    // In a multi-instance setup this table is not reachable from the account DB - return empty.
+    try {
+      return await this.withRetry(async (rTx) => {
+        const res: any = await rTx.unsafe(
+          `SELECT to_char(date_trunc('week', to_timestamp("modifiedOn" / 1000))::date, 'YYYY-MM-DD') AS week,
+                  COUNT(*) AS count
+           FROM public.tx
+           WHERE "workspaceId" = $1 AND "modifiedOn" >= $2
+           GROUP BY 1 ORDER BY 1`,
+          [workspace, from]
+        )
+        return res.map((r: any) => ({ week: r.week, count: Number(r.count) }))
+      })
+    } catch (err: any) {
+      return []
+    }
+  }
+
+  async getWorkspaceMembersInfo (workspace: WorkspaceUuid): Promise<WorkspaceMemberDetails[]> {
+    const baseSql = `SELECT
+          m.account_uuid AS account, m.role, p.first_name, p.last_name,
+          (SELECT s.value FROM ${this.socialId.getTableName()} s
+           WHERE s.person_uuid = m.account_uuid AND s.type = 'email' AND s.is_deleted = FALSE LIMIT 1) AS email
+        FROM ${this.getWsMembersTableName()} m
+        INNER JOIN ${this.ns}.person p ON p.uuid = m.account_uuid
+        WHERE m.workspace_uuid = $1`
+
+    const members: any = await this.withRetry(async (rTx) => await rTx.unsafe(baseSql, [workspace]))
+    // Activity comes from public.tx (same PG instance in the current deployment) - best effort.
+    // Separate transaction: a failure here must not abort the members query.
+    const activity = new Map<string, { last: number, total: number }>()
+    try {
+      const act: any = await this.withRetry(
+        async (rTx) =>
+          await rTx.unsafe(
+            `SELECT s.person_uuid, MAX(t."modifiedOn") AS last_activity, COUNT(*) AS tx_total
+             FROM public.tx t
+             INNER JOIN ${this.socialId.getTableName()} s ON s._id::text = t."modifiedBy"
+             WHERE t."workspaceId" = $1
+             GROUP BY s.person_uuid`,
+            [workspace]
+          )
+      )
+      for (const row of act) {
+        activity.set(row.person_uuid, { last: Number(row.last_activity), total: Number(row.tx_total) })
+      }
+    } catch (err: any) {
+      // tx table not reachable - members without activity
+    }
+    const res: WorkspaceMemberDetails[] = members.map((m: any) => ({
+      account: m.account,
+      role: m.role,
+      firstName: m.first_name ?? undefined,
+      lastName: m.last_name ?? undefined,
+      email: m.email ?? undefined,
+      lastActivity: activity.get(m.account)?.last,
+      txTotal: activity.get(m.account)?.total ?? 0
+    }))
+    res.sort((a, b) => (b.lastActivity ?? 0) - (a.lastActivity ?? 0))
+    return res
+  }
+
+  async getAccountActivityStats (account: AccountUuid, from: number): Promise<AccountActivityStats> {
+    try {
+      return await this.withRetry(async (rTx) => {
+        const byWs: any = await rTx.unsafe(
+          `SELECT t."workspaceId" AS workspace, w.name, w.url, COUNT(*) AS count, MAX(t."modifiedOn") AS last_tx
+           FROM public.tx t
+           INNER JOIN ${this.socialId.getTableName()} s ON s._id::text = t."modifiedBy" AND s.person_uuid = $1
+           LEFT JOIN ${this.workspace.getTableName()} w ON w.uuid = t."workspaceId"
+           GROUP BY 1, w.name, w.url
+           ORDER BY count DESC`,
+          [account]
+        )
+        const weekly: any = await rTx.unsafe(
+          `SELECT to_char(date_trunc('week', to_timestamp(t."modifiedOn" / 1000))::date, 'YYYY-MM-DD') AS week,
+                  COUNT(*) AS count
+           FROM public.tx t
+           INNER JOIN ${this.socialId.getTableName()} s ON s._id::text = t."modifiedBy" AND s.person_uuid = $1
+           WHERE t."modifiedOn" >= $2
+           GROUP BY 1 ORDER BY 1`,
+          [account, from]
+        )
+        return {
+          workspaces: byWs.map((r: any) => ({
+            workspace: r.workspace,
+            name: r.name ?? undefined,
+            url: r.url ?? undefined,
+            count: Number(r.count),
+            lastTx: Number(r.last_tx)
+          })),
+          weekly: weekly.map((r: any) => ({ week: r.week, count: Number(r.count) }))
+        }
+      })
+    } catch (err: any) {
+      return { workspaces: [], weekly: [] }
+    }
   }
 
   async generatePersonUuid (): Promise<PersonUuid> {

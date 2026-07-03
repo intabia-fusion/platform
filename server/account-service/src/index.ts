@@ -37,7 +37,8 @@ import {
   QueueTopic,
   type QueueUserMessage,
   type QueueOnlineUserTx,
-  type QueueWorkspaceLimitsMessage
+  type QueueWorkspaceLimitsMessage,
+  type QueueWorkspaceMessage
 } from '@hcengineering/server-core'
 import { randomBytes } from 'node:crypto'
 
@@ -115,6 +116,10 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   const workspaceProducer = platformQueue.getProducer<QueueWorkspaceLimitsMessage>(measureCtx, QueueTopic.Workspace)
   setMetadata(accountPlugin.metadata.WorkspaceQueue, workspaceProducer)
 
+  // Admin-triggered fulltext reindex requests
+  const fulltextProducer = platformQueue.getProducer<QueueWorkspaceMessage>(measureCtx, QueueTopic.Fulltext)
+  setMetadata(accountPlugin.metadata.FulltextQueue, fulltextProducer)
+
   addStringsLoader(accountId, async (lang: string) => {
     switch (lang) {
       case 'en':
@@ -147,6 +152,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   setMetadata(account.metadata.ProductName, productName)
   setMetadata(account.metadata.OtpTimeToLiveSec, parseInt(process.env.OTP_TIME_TO_LIVE ?? '60'))
   setMetadata(account.metadata.OtpRetryDelaySec, parseInt(process.env.OTP_RETRY_DELAY ?? '60'))
+  setMetadata(account.metadata.AdminOtpDevCode, process.env.ADMIN_OTP_DEV_CODE)
 
   setMetadata(account.metadata.AllowReadonlyGuests, process.env.ALLOW_READONLY_GUESTS === 'true')
   setMetadata(account.metadata.FreePlanLimits, parseFreePlanLimits(process.env.FREE_PLAN_LIMITS))
