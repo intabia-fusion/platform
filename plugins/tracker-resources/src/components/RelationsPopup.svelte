@@ -74,7 +74,11 @@
     closePopup('popup')
     showPopup(
       ObjectSearchPopup,
-      { ignore: [value, ...relations[type]], label: placeholder },
+      {
+        ignore: [value, ...relations[type]],
+        label: placeholder,
+        allowCategory: [tracker.completion.IssueCategory]
+      },
       'top',
       async (issue: ObjectSearchResult | undefined) => {
         if (!issue) return

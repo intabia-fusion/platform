@@ -171,4 +171,80 @@ test.describe('Relations', () => {
       await issuesDetailsPage.checkIfTextBlockedByIsVisible()
     })
   })
+
+  test('Remove related relation by editing issue details', async ({ page }) => {
+    const firstIssue: NewIssue = {
+      title: `First. Remove related-${generateId()}`,
+      description: 'First. Remove related'
+    }
+    const secondIssue: NewIssue = {
+      title: `Second. Remove related-${generateId()}`,
+      description: 'Second. Remove related'
+    }
+    const secondIssueId = await prepareNewIssueStep(page, secondIssue)
+    await prepareNewIssueStep(page, firstIssue)
+    await issuesPage.openIssueByName(firstIssue.title)
+
+    await test.step('Add related and remove it', async () => {
+      await issuesDetailsPage.waitDetailsOpened(firstIssue.title)
+      await issuesDetailsPage.moreActionOnIssueWithSecondLevel('Relations', 'Reference another issue...')
+      await issuesDetailsPage.fillSearchForIssueModal(secondIssue.title)
+
+      await issuesDetailsPage.waitDetailsOpened(firstIssue.title)
+      await issuesDetailsPage.checkIssue({
+        ...firstIssue,
+        relatedIssue: secondIssueId
+      })
+
+      await issuesDetailsPage.clickRemoveRelated()
+      await issuesDetailsPage.checkIfTextRelatedIsVisible()
+    })
+
+    await test.step('Related is removed from the second issue too', async () => {
+      await trackerNavigationMenuPage.openIssuesForProject('Default')
+      await issuesPage.searchIssueByName(secondIssue.title)
+      await issuesPage.openIssueByName(secondIssue.title)
+      await issuesDetailsPage.waitDetailsOpened(secondIssue.title)
+      await issuesDetailsPage.checkIfTextRelatedIsVisible()
+    })
+  })
+
+  test('Remove blocking relation by editing issue details', async ({ page }) => {
+    const firstIssue: NewIssue = {
+      title: `First. Remove blocking-${generateId()}`,
+      description: 'First. Remove blocking'
+    }
+    const secondIssue: NewIssue = {
+      title: `Second. Remove blocking-${generateId()}`,
+      description: 'Second. Remove blocking'
+    }
+    const secondIssueId = await prepareNewIssueStep(page, secondIssue)
+    await prepareNewIssueStep(page, firstIssue)
+    await issuesPage.openIssueByName(firstIssue.title)
+
+    await test.step('Mark as blocking and remove it', async () => {
+      await issuesDetailsPage.waitDetailsOpened(firstIssue.title)
+      await issuesDetailsPage.moreActionOnIssueWithSecondLevel('Relations', 'Mark as blocking...')
+      await issuesDetailsPage.fillSearchForIssueModal(secondIssue.title)
+
+      // reverse blockedBy list needs a reload to appear (client-side re-match limitation)
+      await page.reload()
+      await issuesDetailsPage.waitDetailsOpened(firstIssue.title)
+      await issuesDetailsPage.checkIssue({
+        ...firstIssue,
+        blocks: secondIssueId
+      })
+
+      await issuesDetailsPage.clickRemoveBlocking()
+      await issuesDetailsPage.checkIfTextBlocksIsVisible()
+    })
+
+    await test.step('Blocked by is removed from the second issue too', async () => {
+      await trackerNavigationMenuPage.openIssuesForProject('Default')
+      await issuesPage.searchIssueByName(secondIssue.title)
+      await issuesPage.openIssueByName(secondIssue.title)
+      await issuesDetailsPage.waitDetailsOpened(secondIssue.title)
+      await issuesDetailsPage.checkIfTextBlockedByIsVisible()
+    })
+  })
 })

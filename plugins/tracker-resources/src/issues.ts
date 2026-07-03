@@ -134,3 +134,27 @@ export async function getIssueIdByIdentifier (identifier: string): Promise<Ref<I
 
   return issue?._id
 }
+
+// TODO При удалении связи в комментарии не выводится номер отвязанной задачи, возможно нужна доработка activity-resources
+// Заведена задача на доработку FUSIO-953
+export async function removeIssueRelation (
+  client: TxOperations,
+  parentIssue: Issue,
+  relatedIssue: RelatedDocument,
+  type: 'blockedBy' | 'relations' | 'isBlocking'
+): Promise<void> {
+  const prop = type === 'isBlocking' ? 'blockedBy' : type
+
+  // blockedBy: only parent.blockedBy changes. isBlocking: only target.blockedBy. relations: both sides.
+  // Server activity trigger logs each $pull as DocUpdateMessage, so activity lands in every issue we update.
+  if (type !== 'isBlocking') {
+    await updateIssueRelation(client, parentIssue, relatedIssue, prop, '$pull')
+  }
+
+  if (type !== 'blockedBy') {
+    const relatedDoc = (await client.findOne(relatedIssue._class, { _id: relatedIssue._id })) as Issue | undefined
+    if (relatedDoc != null) {
+      await updateIssueRelation(client, relatedDoc, { _id: parentIssue._id, _class: parentIssue._class }, prop, '$pull')
+    }
+  }
+}

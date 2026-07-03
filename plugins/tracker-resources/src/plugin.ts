@@ -143,6 +143,10 @@ export default mergeIds(trackerId, tracker, {
     AssignTo: '' as IntlString,
     AssignedTo: '' as IntlString,
     SubIssues: '' as IntlString,
+    ParentIssuesList: '' as IntlString,
+    BlockedByIssuesList: '' as IntlString,
+    RelatedToIssuesList: '' as IntlString,
+    BlocksIssuesList: '' as IntlString,
     SubIssuesList: '' as IntlString,
     SetParent: '' as IntlString,
     ChangeParent: '' as IntlString,
@@ -390,7 +394,8 @@ export default mergeIds(trackerId, tracker, {
     IconWithEmoji: '' as Asset,
     IssueStatusIcon: '' as AnyComponent,
     MilestoneStatusIcon: '' as AnyComponent,
-    ParentIssuePresenter: '' as AnyComponent
+    ParentIssuePresenter: '' as AnyComponent,
+    RemoveRelationButton: '' as AnyComponent
   },
   extensions: {
     KanbanSwimLaneActions: '' as ComponentExtensionId
