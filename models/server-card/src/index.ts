@@ -44,6 +44,16 @@ export function createModel (builder: Builder): void {
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverCard.trigger.OnViewletUpdate,
+    isAsync: true,
+    txMatch: {
+      _class: core.class.TxUpdateDoc,
+      objectClass: view.class.Viewlet,
+      'operations.config': { $exists: true }
+    }
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverCard.trigger.OnTagRemove,
     txMatch: {
       _class: core.class.TxRemoveDoc,
