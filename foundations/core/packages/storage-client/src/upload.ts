@@ -14,6 +14,7 @@
 //
 
 import { concatLink } from '@hcengineering/core'
+import { withRetry, DelayStrategyFactory, type IsRetryable } from '@hcengineering/retry'
 import { FileStorageUploadOptions } from './types'
 
 /** @public */
@@ -117,7 +118,15 @@ export async function uploadMultipart (upload: MultipartUpload, options?: FileSt
   let uploadId: string | undefined
 
   try {
-    const { uploadId } = await multipartUploadCreate(url, { ...headers, 'Content-Type': body.type }, signal)
+    throwIfAborted(signal)
+    // Retry each stage on transient errors. Create yields a fresh uploadId per attempt;
+    // part/complete reuse the current uploadId and are idempotent by partNumber.
+    uploadId = (
+      await retryStage(
+        signal,
+        async () => await multipartUploadCreate(url, { ...headers, 'Content-Type': body.type }, signal)
+      )
+    ).uploadId
 
     const parts: Array<{ partNumber: number, etag: string }> = []
     const totalParts = Math.ceil(body.size / CHUNK_SIZE)
@@ -145,7 +154,11 @@ export async function uploadMultipart (upload: MultipartUpload, options?: FileSt
             : undefined
       }
 
-      const { etag } = await multipartUploadPart(url, headers, uploadId, partNumber, chunk, partOptions)
+      const currentUploadId = uploadId
+      const { etag } = await retryStage(
+        signal,
+        async () => await multipartUploadPart(url, headers, currentUploadId, partNumber, chunk, partOptions)
+      )
       parts.push({ partNumber, etag })
 
       uploaded += chunk.size
@@ -153,7 +166,10 @@ export async function uploadMultipart (upload: MultipartUpload, options?: FileSt
 
     throwIfAborted(signal)
 
-    await multipartUploadComplete(url, headers, uploadId, parts, signal)
+    const currentUploadId = uploadId
+    await retryStage(signal, async () => {
+      await multipartUploadComplete(url, headers, currentUploadId, parts, signal)
+    })
   } catch (err) {
     if (uploadId !== undefined) {
       await multipartUploadAbort(url, headers, uploadId)
@@ -169,6 +185,30 @@ function throwIfAborted (signal?: AbortSignal): void {
   }
 }
 
+// Retry a multipart stage. Does not retry on abort or non-retriable client errors (4xx except 408/429).
+export async function retryStage<T> (signal: AbortSignal | undefined, op: () => Promise<T>): Promise<T> {
+  const isRetryable: IsRetryable = (err) => {
+    if (signal?.aborted === true) return false
+    const message = err instanceof Error ? err.message : String(err)
+    const m = /status (\d{3})/.exec(message)
+    if (m != null) {
+      const status = parseInt(m[1], 10)
+      if (status >= 400 && status < 500 && status !== 408 && status !== 429) return false
+    }
+    return true
+  }
+  return await withRetry(op, {
+    maxRetries: 5,
+    isRetryable,
+    delayStrategy: DelayStrategyFactory.exponentialBackoff({
+      initialDelayMs: 200,
+      maxDelayMs: 5000,
+      backoffFactor: 2,
+      jitter: 0.2
+    })
+  })
+}
+
 async function multipartUploadCreate (
   baseUrl: string,
   headers: Record<string, string>,
@@ -181,7 +221,7 @@ async function multipartUploadCreate (
   })
 
   if (!response.ok) {
-    throw new Error('Failed to initialize multipart upload')
+    throw new Error(`Failed to initialize multipart upload (status ${response.status})`)
   }
 
   const { uuid, uploadId } = await response.json()
@@ -209,7 +249,7 @@ async function multipartUploadComplete (
   })
 
   if (!response.ok) {
-    throw new Error('Failed to complete multipart upload')
+    throw new Error(`Failed to complete multipart upload (status ${response.status})`)
   }
 }
 

@@ -16,3 +16,4 @@
 export * from './retry'
 export * from './decorator'
 export * from './retryable'
+export * from './delay'

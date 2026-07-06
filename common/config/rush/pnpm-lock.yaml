@@ -3933,6 +3933,9 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../core
+      '@hcengineering/retry':
+        specifier: workspace:^0.7.17
+        version: link:../retry
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -4693,6 +4696,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../core/packages/platform
+      '@hcengineering/retry':
+        specifier: workspace:^0.7.17
+        version: link:../../../core/packages/retry
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../core
