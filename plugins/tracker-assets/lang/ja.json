@@ -87,6 +87,10 @@
     "OpenParent": "親イシューを開く",
     "SubIssues": "子イシュー",
     "SubIssuesList": "子イシュー ({subIssues})",
+    "ParentIssuesList": "親タスク ({parentIssues})",
+    "BlockedByIssuesList": "ブロックされているタスク ({blockedByIssues})",
+    "RelatedToIssuesList": "関連タスク ({relatedToIssue})",
+    "BlocksIssuesList": "ブロック中のタスク ({blocksIssues})",
     "OpenSubIssues": "子イシューを開く",
     "AddSubIssues": "子イシューを追加",
     "BlockedBy": "ブロックされている",
@@ -285,7 +289,13 @@
     "AdditionalProperties": "追加プロパティ",
     "CollapseAll": "Collapse all",
     "ExpandAll": "Expand all",
-    "CompactMode": "コンパクト"
+    "CompactMode": "コンパクト",
+    "SubIssueAdded": "子イシュー {identifier}{value} を追加しました",
+    "SubIssueRemoved": "子イシュー {identifier}{value} を削除しました",
+    "AddedBlocker": "ブロックしているイシュー {identifier}{value} を追加しました",
+    "RemovedBlocker": "ブロックしているイシュー {identifier}{value} を削除しました",
+    "AddedRelation": "関連するイシュー {identifier}{value} を追加しました",
+    "RemovedRelation": "関連するイシュー {identifier}{value} を削除しました"
   },
   "status": {},
   "emailTemplate": {

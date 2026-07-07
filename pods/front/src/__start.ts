@@ -1,5 +1,6 @@
 //
 // Copyright © 2023, 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 
 import { Analytics } from '@hcengineering/analytics'
@@ -42,6 +43,7 @@ startFront(metricsContext, {
   DESKTOP_UPDATES_CHANNEL: process.env.DESKTOP_UPDATES_CHANNEL,
   DESKTOP_UPDATES_CHANNELS: process.env.DESKTOP_UPDATES_CHANNELS,
   ANALYTICS_COLLECTOR_URL: process.env.ANALYTICS_COLLECTOR_URL,
+  YANDEX_METRIKA_ID: process.env.YANDEX_METRIKA_ID,
   LINK_PREVIEW_URL: process.env.LINK_PREVIEW_URL,
   AI_URL: process.env.AI_URL,
   TELEGRAM_BOT_URL: process.env.TELEGRAM_BOT_URL,

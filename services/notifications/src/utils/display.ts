@@ -92,14 +92,15 @@ export async function getDocTitle (
   client: Client,
   txCache: TxCache,
   doc: Doc,
-  account?: AccountUuid
+  account?: AccountUuid,
+  lang?: string
 ): Promise<string | undefined> {
   const presenter = getTitlePresenter(doc._class, client.hierarchy)
   const personalized = account != null && presenter?.personalized === true
   const key = personalized ? account : ''
 
   return await withPersonalizedCache(txCache.titleByDoc, doc._id, key, () =>
-    _getDocTitle(getPresenterControl(client), doc, { account })
+    _getDocTitle(getPresenterControl(client), doc, { account, lang })
   )
 }
 
@@ -175,12 +176,13 @@ export async function getBaseDisplayParams (
   txCache: TxCache,
   type: NotificationType | undefined,
   doc: Doc,
-  sender: Sender
+  sender: Sender,
+  receiverLang: string
 ): Promise<Pick<NotificationIntl, 'intlParams' | 'intlParamsNotLocalized'>> {
   const intlParams: Record<string, string | number> = {}
   const intlParamsNotLocalized: Record<string, IntlString> = {}
 
-  const title = await getDocTitle(client, txCache, doc)
+  const title = await getDocTitle(client, txCache, doc, undefined, receiverLang)
   const url = await getDocUrl(client, txCache, doc)
   const identifier = await getDocIdentifier(client, txCache, doc)
 

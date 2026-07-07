@@ -67,7 +67,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.pendingCursorHash = m.items[m.cursor].commit.Hash
 			}
 			m.loading = true
-			return m, loadCommitsFor(m.mode, m.upstream)
+			return m, loadCommitsFor(m.mode, m.upstream, m.applied)
 		}
 		m.message = errorStyle.Render(fmt.Sprintf("✗ Failed: %v", msg.err))
 		return m, nil
@@ -127,7 +127,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			"✓ Migrated %d commits to %s (worktree: %s). Push: cd %s && git push -u upstream %s",
 			len(msg.hashes), msg.branch, msg.worktree, msg.worktree, msg.branch))
 		m.loading = true
-		return m, loadCommitsFor(m.mode, m.upstream)
+		return m, loadCommitsFor(m.mode, m.upstream, m.applied)
 	}
 
 	return m, nil
@@ -148,7 +148,7 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.cursor >= 0 && m.cursor < len(m.items) {
 			m.pendingCursorHash = m.items[m.cursor].commit.Hash
 		}
-		return m, loadCommitsFor(m.mode, m.upstream)
+		return m, loadCommitsFor(m.mode, m.upstream, m.applied)
 
 	case key.Matches(msg, m.keys.Mode):
 		if m.mode == ModeIncoming {
@@ -165,16 +165,22 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.loading = true
 		m.message = ""
 		m.handleResize()
-		return m, loadCommitsFor(m.mode, m.upstream)
+		return m, loadCommitsFor(m.mode, m.upstream, m.applied)
 
 	case key.Matches(msg, m.keys.Ignore):
 		return m.handleIgnore()
+
+	case key.Matches(msg, m.keys.MarkApplied):
+		return m.handleMarkApplied()
+
+	case key.Matches(msg, m.keys.ResetApplied):
+		return m.handleResetApplied()
 
 	case key.Matches(msg, m.keys.ShowIgnored):
 		m.showIgnored = !m.showIgnored
 		m.loading = true
 		m.message = ""
-		return m, loadCommitsFor(m.mode, m.upstream)
+		return m, loadCommitsFor(m.mode, m.upstream, m.applied)
 
 	case key.Matches(msg, m.keys.Tab):
 		m.cycleFocus()
@@ -324,6 +330,9 @@ func (m Model) onCommits(msg commitsMsg) (tea.Model, tea.Cmd) {
 	m.loading = false
 	m.progressDone = 0
 	m.progressTotal = 0
+	if m.applied != nil {
+		_ = m.applied.Save()
+	}
 	m.commits = msg.commits
 	m.items = make([]commitItem, len(m.commits))
 	for i, c := range m.commits {
@@ -493,6 +502,46 @@ func (m Model) handleIgnore() (tea.Model, tea.Cmd) {
 		return m, m.loadDiffCmd(m.items[m.cursor].commit.Hash)
 	}
 	return m, nil
+}
+
+// handleMarkApplied caches the current incoming commit as applied and hides it.
+func (m Model) handleMarkApplied() (tea.Model, tea.Cmd) {
+	if m.mode != ModeIncoming || m.showIgnored {
+		return m, nil
+	}
+	if m.cursor < 0 || m.cursor >= len(m.items) {
+		return m, nil
+	}
+	hash := m.items[m.cursor].commit.Hash
+	m.applied.Mark(hash)
+	if err := m.applied.Save(); err != nil {
+		m.message = errorStyle.Render(fmt.Sprintf("save applied failed: %v", err))
+		return m, nil
+	}
+	m.items = append(m.items[:m.cursor], m.items[m.cursor+1:]...)
+	if m.cursor >= len(m.items) && m.cursor > 0 {
+		m.cursor--
+	}
+	m.scrollOffset = 0
+	m.message = successStyle.Render(fmt.Sprintf("✓ Marked applied %s (cached)", hash[:7]))
+	if m.cursor < len(m.items) {
+		return m, m.loadDiffCmd(m.items[m.cursor].commit.Hash)
+	}
+	return m, nil
+}
+
+// handleResetApplied clears the per-repo applied cache and reloads.
+func (m Model) handleResetApplied() (tea.Model, tea.Cmd) {
+	if err := m.applied.Clear(); err != nil {
+		m.message = errorStyle.Render(fmt.Sprintf("reset applied failed: %v", err))
+		return m, nil
+	}
+	m.loading = true
+	m.message = successStyle.Render("✓ Applied cache reset")
+	if m.cursor >= 0 && m.cursor < len(m.items) {
+		m.pendingCursorHash = m.items[m.cursor].commit.Hash
+	}
+	return m, loadCommitsFor(m.mode, m.upstream, m.applied)
 }
 
 func (m Model) handleUp() (tea.Model, tea.Cmd) {

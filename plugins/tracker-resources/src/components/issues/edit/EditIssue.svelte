@@ -59,6 +59,8 @@
   import CopyToClipboard from './CopyToClipboard.svelte'
   import SubIssueSelector from './SubIssueSelector.svelte'
   import SubIssues from './SubIssues.svelte'
+  import ParentIssues from './ParentIssues.svelte'
+  import DependentIssues from './DependentIssues.svelte'
 
   export let _id: Ref<Issue> | string
   export let _class: Ref<Class<Issue>>
@@ -374,6 +376,8 @@
     <div class="mt-6">
       {#key issue._id}
         <SubIssues focusIndex={50} {issue} shouldSaveDraft />
+        <ParentIssues {issue} />
+        <DependentIssues {issue} />
       {/key}
     </div>
 

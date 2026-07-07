@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -38,6 +39,21 @@ export function createModel (builder: Builder): void {
   builder.mixin(tracker.class.Issue, core.class.Class, serverActivity.mixin.IconPresenter, {
     presenter: serverTracker.function.IssueIconPresenter,
     triggerFields: ['space', 'status', 'kind']
+  })
+
+  builder.createDoc(serverActivity.class.AttributePresenter, core.space.Model, {
+    attribute: 'status',
+    presenter: serverTracker.function.IssueStatusPresenter
+  })
+
+  builder.createDoc(serverActivity.class.AttributePresenter, core.space.Model, {
+    attribute: 'priority',
+    presenter: serverTracker.function.IssuePriorityPresenter
+  })
+
+  builder.mixin(tracker.class.TimeSpendReport, core.class.Class, serverActivity.mixin.TitlePresenter, {
+    presenter: serverTracker.function.TimeSpendReportTitlePresenter,
+    triggerFields: ['value']
   })
 
   builder.mixin(tracker.class.Issue, core.class.Class, serverView.mixin.ServerLinkIdProvider, {

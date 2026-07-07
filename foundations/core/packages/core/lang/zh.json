@@ -73,6 +73,8 @@
     "Version": "版本",
     "Collaborator": "协作者",
     "Collaborators": "协作者",
-    "RoleAdmin": "角色：管理员"
+    "RoleAdmin": "角色：管理员",
+    "AddedCollaborator": "添加了协作者 {value}",
+    "RemovedCollaborator": "移除了协作者 {value}"
   }
 }

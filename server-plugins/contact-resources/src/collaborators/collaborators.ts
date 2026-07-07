@@ -29,6 +29,8 @@ import core, {
 } from '@hcengineering/core'
 import { type TriggerControl } from '@hcengineering/server-core'
 import { getAddCollaboratorsTxes } from '@hcengineering/server-contact'
+import contact, { formatName } from '@hcengineering/contact'
+import { type PresenterControl, StringPresenterFn } from '@hcengineering/server-activity'
 
 import {
   getCollaboratorsCached,
@@ -236,4 +238,17 @@ export async function ManageCollaboratorsTrigger (txes: TxCUD<Doc>[], control: T
   }
 
   return res
+}
+
+export const CollaboratorTitlePresenter: StringPresenterFn<Collaborator> = async (
+  doc: Collaborator,
+  control: PresenterControl
+): Promise<string> => {
+  const person = (
+    await control.findAll(control.ctx, contact.class.Person, {
+      personUuid: doc.collaborator
+    })
+  )[0]
+  if (person == null) return ''
+  return formatName(person.name)
 }

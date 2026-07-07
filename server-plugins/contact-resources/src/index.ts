@@ -59,7 +59,7 @@ import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import { workbenchId } from '@hcengineering/workbench'
 import { StringPresenterFn, PresenterControl, IconPresenterFn, Icon } from '@hcengineering/server-activity'
 
-import { ManageCollaboratorsTrigger } from './collaborators'
+import { ManageCollaboratorsTrigger, CollaboratorTitlePresenter } from './collaborators'
 
 export async function OnSpaceTypeMembers (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
@@ -498,6 +498,7 @@ export default async () => ({
   function: {
     PersonUrlPresenter: personUrlPresenter,
     PersonTitlePresenter: personTitlePresenter,
+    CollaboratorTitlePresenter,
     OrganizationUrlPresenter: organizationUrlPresenter,
     ContactNameProvider: contactNameProvider,
     ContactIconPresenter: contactIconPresenter,

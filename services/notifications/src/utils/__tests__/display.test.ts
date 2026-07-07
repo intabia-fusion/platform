@@ -242,7 +242,7 @@ describe('display utils', () => {
       const type = { notificationMessage: 'Hello World' } as unknown as NotificationType
       const sender = { name: 'John' } as unknown as Sender
 
-      const result = await getBaseDisplayParams(mockClient, txCache, type, doc, sender)
+      const result = await getBaseDisplayParams(mockClient, txCache, type, doc, sender, 'en')
 
       expect(getSenderName).toHaveBeenCalledWith(sender, true) // client.branding.lastNameFirst is true
       expect(result).toEqual({
@@ -270,7 +270,7 @@ describe('display utils', () => {
       const type = {} as unknown as NotificationType
       const sender = {} as unknown as Sender
 
-      const result = await getBaseDisplayParams(mockClient, txCache, type, doc, sender)
+      const result = await getBaseDisplayParams(mockClient, txCache, type, doc, sender, 'en')
 
       expect(result).toEqual({
         intlParams: {

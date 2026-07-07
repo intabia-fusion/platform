@@ -62,6 +62,7 @@ import Cache from '../cache'
 import { pushNotification as _pushNotification } from './notification'
 import { appendAndCollapseUnreadMessages } from '../utils/collapse'
 import config from '../config'
+import { translate } from '@hcengineering/platform'
 
 export async function handleMessage (
   client: Client,
@@ -460,13 +461,37 @@ async function getMessageIntl (
   type: NotificationType,
   doc: Doc,
   message: ActivityMessage,
-  sender: Sender
+  sender: Sender,
+  receiverLang: string
 ): Promise<NotificationIntl> {
   const { hierarchy } = client
-  const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(client, txCache, type, doc, sender)
+  const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(
+    client,
+    txCache,
+    type,
+    doc,
+    sender,
+    receiverLang
+  )
 
   if (type.notificationMessage != null) {
     intlParamsNotLocalized.message = type.notificationMessage
+  } else if (
+    hierarchy.isDerived(message._class, activity.class.DocUpdateMessage) &&
+    (message as DocUpdateMessage).messageIntl != null
+  ) {
+    const dum = message as DocUpdateMessage
+    if (dum.messageIntl != null) {
+      const params = { ...dum.intlParams }
+      for (const [key, value] of Object.entries(dum.intlParamsNotLocalized ?? {})) {
+        if (typeof value === 'string' && value.includes(':')) {
+          params[key] = await translate(value, params, receiverLang)
+        } else {
+          params[key] = value
+        }
+      }
+      intlParams.message = await translate(dum.messageIntl, params, receiverLang)
+    }
   } else if (message.message != null && !isEmptyMarkup(message.message)) {
     intlParams.message = truncateMessage(markupToText(message.message))
   } else if (
@@ -556,7 +581,7 @@ async function pushNotification (
   notifyResult: NotifyProviders,
   attachments: any[]
 ): Promise<void> {
-  const content = await getMessageIntl(client, txCache, type, doc, message, sender)
+  const content = await getMessageIntl(client, txCache, type, doc, message, sender, receiver.language)
   const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, receiver.account)
   const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
   await _pushNotification(client, txCache, result, context, {

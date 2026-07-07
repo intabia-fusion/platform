@@ -186,14 +186,16 @@ func checkFileApplied(hash, file string) fileState {
 	if strings.Contains(patch, "Binary files") || strings.Contains(patch, "GIT binary patch") {
 		return fileSkip
 	}
-	// Try forward apply: if it still applies cleanly, file is NOT yet applied.
-	if runApplyCheck(patch, false) {
-		return fileMissing
-	}
-	// Try reverse apply: if the patch reverses cleanly, the end-state is
-	// already in HEAD — treat as applied.
+	// Reverse first: if the patch reverses cleanly, the end-state is already in
+	// HEAD -> applied. Must precede the forward check because pure insertions
+	// often forward-apply cleanly too (the anchor context still exists), which
+	// would falsely report missing.
 	if runApplyCheck(patch, true) {
 		return fileApplied
+	}
+	// Forward applies cleanly and reverse did not -> not yet applied.
+	if runApplyCheck(patch, false) {
+		return fileMissing
 	}
 	// Fallback: inspect added/removed lines vs HEAD content of file.
 	headContent, err := GitExec("show", "HEAD:"+file)

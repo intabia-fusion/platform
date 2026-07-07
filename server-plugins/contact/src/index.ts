@@ -45,6 +45,7 @@ export default plugin(serverContactId, {
     PersonTitlePresenter: '' as Resource<StringPresenterFn>,
     OrganizationUrlPresenter: '' as Resource<StringPresenterFn>,
     ContactIconPresenter: '' as Resource<IconPresenterFn>,
+    CollaboratorTitlePresenter: '' as Resource<StringPresenterFn>,
 
     ContactNameProvider: '' as Resource<SearchPresenterProvider>,
     GetCurrentEmployeeName: '' as Resource<TemplateFieldServerFunc>,

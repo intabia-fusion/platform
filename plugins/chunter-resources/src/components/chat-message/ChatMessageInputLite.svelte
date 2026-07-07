@@ -22,6 +22,7 @@
   export let loading = false
   export let autofocus = false
   export let disableSubmit = false
+  export let clearOnSubmit = true
 
   const dispatch = createEventDispatcher()
 
@@ -44,6 +45,7 @@
   {boundary}
   {autofocus}
   {disableSubmit}
+  {clearOnSubmit}
   on:update={onUpdate}
   on:message
   on:focus

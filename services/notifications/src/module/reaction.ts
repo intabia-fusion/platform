@@ -132,7 +132,16 @@ async function handleCreateReaction (
       createdOn: reaction.createdOn ?? reaction.modifiedOn,
       createdBy: reaction.createdBy ?? reaction.modifiedBy
     },
-    intl: await getReactionNotificationContent(client, txCache, type, doc, message, reaction, sender),
+    intl: await getReactionNotificationContent(
+      client,
+      txCache,
+      type,
+      doc,
+      message,
+      reaction,
+      sender,
+      receiver.language
+    ),
     notifyProviders,
     pushSubscriptions
   })
@@ -200,9 +209,17 @@ async function getReactionNotificationContent (
   doc: Doc,
   message: ActivityMessage,
   reaction: Reaction,
-  sender: Sender
+  sender: Sender,
+  receiverLang: string
 ): Promise<NotificationIntl> {
-  const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(client, txCache, type, doc, sender)
+  const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(
+    client,
+    txCache,
+    type,
+    doc,
+    sender,
+    receiverLang
+  )
 
   if (message.message != null && !isEmptyMarkup(message.message)) {
     intlParams.title = truncateMessage(markupToText(message.message), 100)

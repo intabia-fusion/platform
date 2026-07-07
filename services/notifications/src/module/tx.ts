@@ -135,7 +135,18 @@ export async function handleTxNotification (
       const createFn = await getResource(mixin.create)
       const data = await createFn(getTypeMatchClient(client), tx, txAttachedToDoc, txObject, receiver)
       if (data == null) continue
-      const intl: NotificationIntl = await getIntl(client, txCache, data, mixin, type, tx, doc, txObject, sender)
+      const intl: NotificationIntl = await getIntl(
+        client,
+        txCache,
+        data,
+        mixin,
+        type,
+        tx,
+        doc,
+        txObject,
+        sender,
+        receiver.language
+      )
 
       const commonNotification: CommonNotification = {
         ...data.notification,
@@ -174,13 +185,21 @@ async function getIntl (
   tx: TxCUD<Doc>,
   doc: Doc,
   txObject: Doc,
-  sender: Sender
+  sender: Sender,
+  receiverLang: string
 ): Promise<NotificationIntl> {
   if (mixin.intlProvider != null) {
     const f = await getResource(mixin.intlProvider)
     return await f(getTypeMatchClient(client), type, tx, doc, txObject, sender)
   } else {
-    const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(client, txCache, type, doc, sender)
+    const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(
+      client,
+      txCache,
+      type,
+      doc,
+      sender,
+      receiverLang
+    )
     for (const [k, v] of Object.entries(data.intl?.intlParams ?? {})) {
       intlParams[k] = v
     }

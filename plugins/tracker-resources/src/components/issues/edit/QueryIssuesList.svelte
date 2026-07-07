@@ -17,7 +17,7 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Issue } from '@hcengineering/tracker'
   import { Button, Chevron, ExpandCollapse, IconAdd, closeTooltip, resizeObserver, showPopup } from '@hcengineering/ui'
-  import view, { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import view, { ViewOptions, Viewlet, ViewletPreference, BuildModelKey } from '@hcengineering/view'
   import { ViewletsSettingButton, restrictionStore } from '@hcengineering/view-resources'
   import { afterUpdate } from 'svelte'
   import tracker from '../../../plugin'
@@ -32,6 +32,8 @@
   export let viewletId = tracker.viewlet.SubIssues
   export let createLabel = tracker.string.AddIssue
   export let hasSubIssues = false
+  export let showCreateButton: boolean = true
+  export let additionalConfig: Record<Ref<Class<Doc>>, Viewlet['config']> = {}
 
   let isCollapsed = false
   let listWidth: number
@@ -85,7 +87,11 @@
       }
     )
 
-  function updateConfiguration (configurationRaw: Viewlet[], preference: ViewletPreference[]): void {
+  function updateConfiguration (
+    configurationRaw: Viewlet[],
+    preference: ViewletPreference[],
+    additionalConfig: Record<Ref<Class<Doc>>, Viewlet['config']> = {}
+  ): void {
     const newConfigurations: Record<Ref<Class<Doc>>, Viewlet['config']> = {}
 
     for (const v of configurationRaw) {
@@ -102,10 +108,17 @@
       }
     }
 
+    for (const [className, additionalColumns] of Object.entries(additionalConfig)) {
+      const classRef = className as Ref<Class<Doc>>
+      const existingColumns = newConfigurations[classRef] ?? []
+
+      newConfigurations[classRef] = [...existingColumns, ...additionalColumns]
+    }
+
     configurations = newConfigurations
   }
 
-  $: updateConfiguration(configurationRaw, preference)
+  $: updateConfiguration(configurationRaw, preference, additionalConfig)
 </script>
 
 <div class="flex-between mb-1">
@@ -140,7 +153,7 @@
     {#if hasSubIssues}
       <slot name="buttons" />
     {/if}
-    {#if !$restrictionStore.readonly}
+    {#if !$restrictionStore.readonly && showCreateButton}
       <Button
         id="add-sub-issue"
         icon={IconAdd}
@@ -168,7 +181,7 @@
         }}
       >
         <SubIssueList
-          createItemDialog={!$restrictionStore.readonly ? CreateIssue : undefined}
+          createItemDialog={!$restrictionStore.readonly && showCreateButton ? CreateIssue : undefined}
           createItemLabel={tracker.string.AddIssueTooltip}
           createItemDialogProps={{ space: object.space, ...createParams, shouldSaveDraft }}
           focusIndex={focusIndex === -1 ? -1 : focusIndex + 1}

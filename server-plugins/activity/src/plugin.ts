@@ -15,9 +15,16 @@
 
 import { Plugin, Resource, plugin } from '@hcengineering/platform'
 import type { TriggerFunc } from '@hcengineering/server-core'
-import { Mixin, Ref } from '@hcengineering/core'
+import { Class, Mixin, Ref } from '@hcengineering/core'
 
-import { IconPresenter, IdentifierPresenter, LabelPresenter, TitlePresenter, UrlPresenter } from './types'
+import {
+  AttributePresenter,
+  IconPresenter,
+  IdentifierPresenter,
+  LabelPresenter,
+  TitlePresenter,
+  UrlPresenter
+} from './types'
 
 export const serverActivityId = 'server-activity' as Plugin
 
@@ -26,6 +33,9 @@ export const serverActivityPlugin = plugin(serverActivityId, {
     OnDocRemoved: '' as Resource<TriggerFunc>,
     ReferenceTrigger: '' as Resource<TriggerFunc>,
     HandleCardActivity: '' as Resource<TriggerFunc>
+  },
+  class: {
+    AttributePresenter: '' as Ref<Class<AttributePresenter>>
   },
   mixin: {
     TitlePresenter: '' as Ref<Mixin<TitlePresenter>>,

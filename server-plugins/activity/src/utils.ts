@@ -14,8 +14,8 @@
  */
 
 import { Class, Doc, Hierarchy, Ref } from '@hcengineering/core'
-import activity, { type ActivityMessage } from '@hcengineering/activity'
-import { getResource, IntlString } from '@hcengineering/platform'
+import activity, { type ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
+import { getResource, IntlString, translate } from '@hcengineering/platform'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 
 import { serverActivityPlugin as serverActivity } from './plugin'
@@ -61,11 +61,34 @@ export async function getDocTitle (
   doc: Doc,
   options?: PresenterOptions
 ): Promise<string | undefined> {
-  if (control.hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
+  const MAX_MESSAGE_LENGTH = 100
+
+  if (
+    control.hierarchy.isDerived(doc._class, activity.class.DocUpdateMessage) &&
+    (doc as DocUpdateMessage).messageIntl != null
+  ) {
+    const dum = doc as DocUpdateMessage
+    if (dum.messageIntl != null) {
+      const params = { ...dum.intlParams }
+
+      for (const [key, value] of Object.entries(dum.intlParamsNotLocalized ?? {})) {
+        if (typeof value === 'string' && value.includes(':')) {
+          params[key] = await translate(value, params, options?.lang ?? control.branding?.defaultLanguage)
+        } else {
+          params[key] = value
+        }
+      }
+      const text = await translate(dum.messageIntl, params, options?.lang ?? control.branding?.defaultLanguage)
+      const normalized = text.length > MAX_MESSAGE_LENGTH ? text.slice(0, MAX_MESSAGE_LENGTH) + '...' : text
+      if (text.length > 0) {
+        return normalized
+      }
+    }
+  } else if (control.hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
     const message = doc as ActivityMessage
     if (message.message != null && !isEmptyMarkup(message.message)) {
       const text = markupToText(message.message).trim()
-      const normalized = text.length > 100 ? text.slice(0, 100).trim() + '...' : text
+      const normalized = text.length > MAX_MESSAGE_LENGTH ? text.slice(0, MAX_MESSAGE_LENGTH).trim() + '...' : text
       if (text.length > 0) {
         return normalized
       }

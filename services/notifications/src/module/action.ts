@@ -200,7 +200,16 @@ export async function handleCreateNotificationAction (
   const pushSubscriptions = await cache.getPushSubscriptions(action.account)
   const sender = await cache.getSender(action.createdBy ?? action.modifiedBy)
 
-  const intl: NotificationIntl = await getIntl(client, txCache, action.notification, action.intl, type, doc, sender)
+  const intl: NotificationIntl = await getIntl(
+    client,
+    txCache,
+    action.notification,
+    action.intl,
+    type,
+    doc,
+    sender,
+    receiver.language
+  )
   const commonNotification: CommonNotification = {
     ...action.notification,
     intlParams: intl.intlParams,
@@ -233,9 +242,17 @@ async function getIntl (
   intl: Partial<NotificationIntl> | undefined,
   type: NotificationType | undefined,
   doc: Doc,
-  sender: Sender
+  sender: Sender,
+  receiverLang: string
 ): Promise<NotificationIntl> {
-  const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(client, txCache, type, doc, sender)
+  const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(
+    client,
+    txCache,
+    type,
+    doc,
+    sender,
+    receiverLang
+  )
   for (const [k, v] of Object.entries(intl?.intlParams ?? {})) {
     intlParams[k] = v
   }

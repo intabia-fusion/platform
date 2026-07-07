@@ -107,7 +107,7 @@ export async function handleMention (
       objectClass: doc._class,
       objectSpace: doc.space,
       notification: mentionNotification,
-      intl: await getMentionIntl(client, txCache, type, doc, message, mention, sender),
+      intl: await getMentionIntl(client, txCache, type, doc, message, mention, sender, mention.receiver.language),
       notifyProviders: mention.notifyProviders,
       objectDisplayData,
       pushSubscriptions
@@ -435,9 +435,17 @@ async function getMentionIntl (
   doc: Doc,
   message: ActivityMessage | undefined,
   mention: MentionResult,
-  sender: Sender
+  sender: Sender,
+  receiverLang: string
 ): Promise<NotificationIntl> {
-  const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(client, txCache, type, doc, sender)
+  const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(
+    client,
+    txCache,
+    type,
+    doc,
+    sender,
+    receiverLang
+  )
 
   intlParams.message = truncateMessage(markupToText(message?.message ?? mention.notification.markup ?? ''))
 
