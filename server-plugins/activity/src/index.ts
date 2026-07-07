@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,9 +16,9 @@
 
 import { Plugin, Resource, plugin } from '@hcengineering/platform'
 import type { TriggerFunc } from '@hcengineering/server-core'
-import { Mixin, Ref } from '@hcengineering/core'
+import { Class, Mixin, Ref } from '@hcengineering/core'
 
-import { IdentifierPresenter, TitlePresenter, UrlPresenter } from './types'
+import { IdentifierPresenter, TitlePresenter, UrlPresenter, AttributePresenter } from './types'
 
 export * from './types'
 
@@ -34,6 +35,9 @@ export default plugin(serverActivityId, {
     OnDocRemoved: '' as Resource<TriggerFunc>,
     ReferenceTrigger: '' as Resource<TriggerFunc>,
     HandleCardActivity: '' as Resource<TriggerFunc>
+  },
+  class: {
+    AttributePresenter: '' as Ref<Class<AttributePresenter>>
   },
   mixin: {
     TitlePresenter: '' as Ref<Mixin<TitlePresenter>>,

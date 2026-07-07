@@ -73,6 +73,8 @@
     "Version": "Verze",
     "Collaborator": "Spolupracovník",
     "Collaborators": "Spolupracovníci",
-    "RoleAdmin": "Role: Administrátor"
+    "RoleAdmin": "Role: Administrátor",
+    "AddedCollaborator": "přidal(a) spolupracovníka {value}",
+    "RemovedCollaborator": "odstranil(a) spolupracovníka {value}"
   }
 }

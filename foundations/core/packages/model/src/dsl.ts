@@ -179,6 +179,15 @@ export function ReadOnly () {
 /**
  * @public
  */
+export function Activity (options: { set?: IntlString, unset?: IntlString }) {
+  return function (target: any, propertyKey: string): void {
+    setAttr(target, propertyKey, 'activity', { set: options.set, unset: options.unset })
+  }
+}
+
+/**
+ * @public
+ */
 export function Index (kind: IndexKind, options?: IndexOptions) {
   return function (target: any, propertyKey: string): void {
     setIndex(target, propertyKey, kind)

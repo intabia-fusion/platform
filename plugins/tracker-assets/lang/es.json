@@ -289,7 +289,13 @@
     "AdditionalProperties": "Propiedades adicionales",
     "CollapseAll": "Collapse all",
     "ExpandAll": "Expand all",
-    "CompactMode": "Compacto"
+    "CompactMode": "Compacto",
+    "SubIssueAdded": "Subtarea añadida {identifier}{value}",
+    "SubIssueRemoved": "Subtarea eliminada {identifier}{value}",
+    "AddedBlocker": "Problema bloqueador añadido {identifier}{value}",
+    "RemovedBlocker": "Problema bloqueador eliminado {identifier}{value}",
+    "AddedRelation": "Problema relacionado añadido {identifier}{value}",
+    "RemovedRelation": "Problema relacionado eliminado {identifier}{value}"
   },
   "status": {},
   "emailTemplate": {

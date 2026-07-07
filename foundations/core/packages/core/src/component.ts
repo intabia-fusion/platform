@@ -304,7 +304,9 @@ export default plugin(coreId, {
     Collaborator: '' as IntlString,
     Collaborators: '' as IntlString,
     RoleAdmin: '' as IntlString,
-    Archived: '' as IntlString
+    Archived: '' as IntlString,
+    AddedCollaborator: '' as IntlString,
+    RemovedCollaborator: '' as IntlString
   },
   descriptor: {
     SpacesType: '' as Ref<SpaceTypeDescriptor>

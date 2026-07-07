@@ -73,6 +73,8 @@
     "Version": "Версия",
     "Collaborator": "Участник",
     "Collaborators": "Участники",
-    "RoleAdmin": "Роль: Админ"
+    "RoleAdmin": "Роль: Админ",
+    "AddedCollaborator": "Добавлен участник {value}",
+    "RemovedCollaborator": "Удален участник {value}"
   }
 }

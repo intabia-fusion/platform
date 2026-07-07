@@ -289,7 +289,13 @@
     "AdditionalProperties": "Zusätzliche Eigenschaften",
     "CollapseAll": "Collapse all",
     "ExpandAll": "Expand all",
-    "CompactMode": "Kompakt"
+    "CompactMode": "Kompakt",
+    "SubIssueAdded": "Unteraufgabe {identifier}{value} hinzugefügt",
+    "SubIssueRemoved": "Unteraufgabe {identifier}{value} entfernt",
+    "AddedBlocker": "Blockierende Aufgabe {identifier}{value} hinzugefügt",
+    "RemovedBlocker": "Blockierende Aufgabe {identifier}{value} entfernt",
+    "AddedRelation": "Verwandte Aufgabe {identifier}{value} hinzugefügt",
+    "RemovedRelation": "Verwandte Aufgabe {identifier}{value} entfernt"
   },
   "status": {},
   "emailTemplate": {

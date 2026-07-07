@@ -289,7 +289,13 @@
     "AdditionalProperties": "Ek özellikler",
     "CollapseAll": "Collapse all",
     "ExpandAll": "Expand all",
-    "CompactMode": "Kompakt"
+    "CompactMode": "Kompakt",
+    "SubIssueAdded": "Alt sorun eklendi {identifier}{value}",
+    "SubIssueRemoved": "Alt sorun kaldırıldı {identifier}{value}",
+    "AddedBlocker": "Engelleyen sorun eklendi {identifier}{value}",
+    "RemovedBlocker": "Engelleyen sorun kaldırıldı {identifier}{value}",
+    "AddedRelation": "İlgili sorun eklendi {identifier}{value}",
+    "RemovedRelation": "İlgili sorun kaldırıldı {identifier}{value}"
   },
   "status": {},
   "emailTemplate": {

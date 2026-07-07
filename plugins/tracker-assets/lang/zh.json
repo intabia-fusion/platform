@@ -289,7 +289,13 @@
     "AdditionalProperties": "附加属性",
     "CollapseAll": "Collapse all",
     "ExpandAll": "Expand all",
-    "CompactMode": "紧凑"
+    "CompactMode": "紧凑",
+    "SubIssueAdded": "已添加子问题 {identifier}{value}",
+    "SubIssueRemoved": "已移除子问题 {identifier}{value}",
+    "AddedBlocker": "已添加阻塞的问题 {identifier}{value}",
+    "RemovedBlocker": "已移除阻塞的问题 {identifier}{value}",
+    "AddedRelation": "已添加相关问题 {identifier}{value}",
+    "RemovedRelation": "已移除相关问题 {identifier}{value}"
   },
   "status": {},
   "emailTemplate": {

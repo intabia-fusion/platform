@@ -2,6 +2,7 @@ import core, {
   type Data,
   type Doc,
   groupByArray,
+  type Hierarchy,
   matchQuery,
   type MeasureContext,
   type PersonId,
@@ -10,8 +11,7 @@ import core, {
   type TxFactory,
   TxProcessor,
   type TxRemoveDoc,
-  type TxUpdateDoc,
-  type Hierarchy
+  type TxUpdateDoc
 } from '@hcengineering/core'
 import activity, {
   type ActivityMessageControl,
@@ -22,13 +22,12 @@ import activity, {
 import type Cache from './cache'
 import { type Client } from './types'
 import {
-  buildRemovedDoc,
   canCombineMessage,
   getDocIdentifier,
   getDocTitle,
   getDocUpdateAction,
+  getDocUpdateMessageIntl,
   getDocUpdateMessageKey,
-  getDocUpdateMessageMarkup,
   getDocUrl,
   getTxAttributesUpdates,
   isActivityDoc,
@@ -138,25 +137,25 @@ async function pushDocUpdateMessages (
   client: Client,
   cache: Cache,
   res: TxCUD<DocUpdateMessage>[],
-  object: Doc,
+  doc: Doc,
   tx: TxCUD<Doc>,
   modifiedBy?: PersonId,
   controlRules?: ActivityMessageControl[]
 ): Promise<TxCUD<DocUpdateMessage>[]> {
-  if (!isActivityDoc(object._class, client.hierarchy)) return res
+  if (!isActivityDoc(doc._class, client.hierarchy)) return res
 
   const raw: Data<DocUpdateMessage> = {
     txId: tx._id,
-    attachedTo: object._id,
-    attachedToClass: object._class,
+    attachedTo: doc._id,
+    attachedToClass: doc._class,
     objectId: tx.objectId,
     objectClass: tx.objectClass,
     action: getDocUpdateAction(client.hierarchy, tx),
     collection: 'docUpdateMessages',
     updateCollection: tx.collection,
-    attachedToTitle: await getDocTitle(client, object),
-    attachedToIdentifier: await getDocIdentifier(client, object),
-    attachedToUrl: await getDocUrl(client, object),
+    attachedToTitle: await getDocTitle(client, doc),
+    attachedToIdentifier: await getDocIdentifier(client, doc),
+    attachedToUrl: await getDocUrl(client, doc),
     history: []
   }
 
@@ -165,8 +164,7 @@ async function pushDocUpdateMessages (
     raw.objectTitle = await getDocTitle(client, collectionDoc)
     raw.objectAttributes = raw.objectTitle != null ? undefined : (tx as TxCreateDoc<Doc>).attributes
   } else if (tx.collection != null && tx._class === core.class.TxRemoveDoc) {
-    const collectionDoc =
-      (tx as TxRemoveDoc<Doc>).removedDoc ?? (await buildRemovedDoc(client, tx.objectId, tx.objectClass))
+    const collectionDoc = (tx as TxRemoveDoc<Doc>).removedDoc
 
     if (collectionDoc != null) {
       raw.objectTitle = await getDocTitle(client, collectionDoc)
@@ -174,14 +172,14 @@ async function pushDocUpdateMessages (
     }
   }
 
-  const attributesUpdates = await getTxAttributesUpdates(ctx, client, cache, tx, object, controlRules)
+  const attributesUpdates = await getTxAttributesUpdates(ctx, client, cache, tx, doc, controlRules)
   const createTxes: TxCreateDoc<DocUpdateMessage>[] = []
   for (const attributeUpdates of attributesUpdates) {
     createTxes.push(
       await getDocUpdateMessageTx(
         client,
         tx,
-        object,
+        doc,
         {
           ...raw,
           attributeUpdates
@@ -192,11 +190,11 @@ async function pushDocUpdateMessages (
   }
 
   if (attributesUpdates.length === 0 && raw.action !== 'update') {
-    const ttx = await getDocUpdateMessageTx(client, tx, object, raw, modifiedBy)
+    const ttx = await getDocUpdateMessageTx(client, tx, doc, raw, modifiedBy)
     createTxes.push(ttx)
   }
 
-  const combined = combineMessages(createTxes, cache.getRecentMessages(object._id), client.txFactory, client.hierarchy)
+  const combined = combineMessages(createTxes, cache.getRecentMessages(doc._id), client.txFactory, client.hierarchy)
 
   for (const ttx of combined.create) {
     res.push(ttx)
@@ -400,7 +398,7 @@ function combineMessages (
 }
 
 const getRemoveTx = (items: DocUpdateMessage[], factory: TxFactory): TxRemoveDoc<DocUpdateMessage>[] => {
-  const removes = items.map((it) => {
+  return items.map((it) => {
     const innerTx = factory.createTxRemoveDoc(it._class, it.space, it._id)
     return factory.createTxCollectionCUD(
       it.attachedToClass,
@@ -410,7 +408,6 @@ const getRemoveTx = (items: DocUpdateMessage[], factory: TxFactory): TxRemoveDoc
       innerTx
     ) as TxRemoveDoc<DocUpdateMessage>
   })
-  return removes
 }
 
 const getUpdateTx = (
@@ -452,12 +449,12 @@ const mapToHistory = (it: DocUpdateMessage): DocUpdateMessageHistory => ({
 async function getDocUpdateMessageTx (
   client: Client,
   originTx: TxCUD<Doc>,
-  object: Doc,
+  doc: Doc,
   rawMessage: Data<DocUpdateMessage>,
   modifiedBy?: PersonId
 ): Promise<TxCreateDoc<DocUpdateMessage>> {
   const { hierarchy } = client
-  const space = isSpace(object, hierarchy) ? object._id : object.space
+  const space = isSpace(doc, hierarchy) ? doc._id : doc.space
   const innerTx = client.txFactory.createTxCreateDoc(
     activity.class.DocUpdateMessage,
     space,
@@ -467,8 +464,16 @@ async function getDocUpdateMessageTx (
     modifiedBy ?? originTx.modifiedBy
   )
 
-  const dum = TxProcessor.createDoc2Doc(innerTx)
-  innerTx.attributes.message = await getDocUpdateMessageMarkup(dum, client)
+  const { messageIntl, intlParams, intlParamsNotLocalized } = await getDocUpdateMessageIntl(
+    client,
+    originTx,
+    doc,
+    TxProcessor.createDoc2Doc(innerTx)
+  )
+
+  innerTx.attributes.messageIntl = messageIntl
+  innerTx.attributes.intlParams = intlParams
+  innerTx.attributes.intlParamsNotLocalized = intlParamsNotLocalized
 
   return client.txFactory.createTxCollectionCUD(
     rawMessage.attachedToClass,

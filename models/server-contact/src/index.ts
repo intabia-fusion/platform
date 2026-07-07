@@ -34,6 +34,10 @@ export function createModel (builder: Builder): void {
     presenter: serverContact.function.PersonTitlePresenter
   })
 
+  builder.mixin(core.class.Collaborator, core.class.Class, serverActivity.mixin.TitlePresenter, {
+    presenter: serverContact.function.CollaboratorTitlePresenter
+  })
+
   builder.mixin(contact.class.Organization, core.class.Class, serverActivity.mixin.UrlPresenter, {
     presenter: serverContact.function.OrganizationUrlPresenter
   })
