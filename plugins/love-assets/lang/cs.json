@@ -157,6 +157,8 @@
     "GroupByRoom": "Podle místnosti",
     "GroupByOwner": "Podle vlastníka",
     "GroupByStatus": "Podle stavu",
-    "GroupByDate": "Podle data"
+    "GroupByDate": "Podle data",
+    "SpeakingWhileMuted": "You are muted - others can't hear you",
+    "SpeakingWhileMutedAlert": "Alert me when I speak while muted"
   }
 }

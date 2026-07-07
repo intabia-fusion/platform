@@ -450,6 +450,11 @@ export function createModel (builder: Builder): void {
     component: love.component.SharingStateIndicator
   })
 
+  builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
+    extension: media.extension.StateIndicator,
+    component: love.component.SpeakingWhileMutedIndicator
+  })
+
   builder.createDoc(
     setting.class.SettingsCategory,
     core.space.Model,

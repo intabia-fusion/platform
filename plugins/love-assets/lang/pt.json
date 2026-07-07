@@ -157,6 +157,8 @@
     "GroupByRoom": "Por sala",
     "GroupByOwner": "Por proprietário",
     "GroupByStatus": "Por estado",
-    "GroupByDate": "Por data"
+    "GroupByDate": "Por data",
+    "SpeakingWhileMuted": "You are muted - others can't hear you",
+    "SpeakingWhileMutedAlert": "Alert me when I speak while muted"
   }
 }

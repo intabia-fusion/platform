@@ -41,6 +41,7 @@ export default mergeIds(loveId, love, {
     RoomLanguageEditor: '' as AnyComponent,
     MediaPopupItemExt: '' as AnyComponent,
     SharingStateIndicator: '' as AnyComponent,
+    SpeakingWhileMutedIndicator: '' as AnyComponent,
     MeetingScheduleData: '' as AnyComponent,
     EditMeetingScheduleData: '' as AnyComponent,
     InviteEmployeeButton: '' as AnyComponent,
@@ -129,6 +130,8 @@ export default mergeIds(loveId, love, {
     From: '' as IntlString,
     To: '' as IntlString,
     ExpiresAt: '' as IntlString,
-    Organizators: '' as IntlString
+    Organizators: '' as IntlString,
+    SpeakingWhileMuted: '' as IntlString,
+    SpeakingWhileMutedAlert: '' as IntlString
   }
 })

@@ -157,6 +157,8 @@
     "GroupByRoom": "Odaya göre",
     "GroupByOwner": "Sahibine göre",
     "GroupByStatus": "Duruma göre",
-    "GroupByDate": "Tarihe göre"
+    "GroupByDate": "Tarihe göre",
+    "SpeakingWhileMuted": "You are muted - others can't hear you",
+    "SpeakingWhileMutedAlert": "Alert me when I speak while muted"
   }
 }

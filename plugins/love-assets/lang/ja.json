@@ -157,6 +157,8 @@
     "GroupByRoom": "ルーム別",
     "GroupByOwner": "オーナー別",
     "GroupByStatus": "ステータス別",
-    "GroupByDate": "日付別"
+    "GroupByDate": "日付別",
+    "SpeakingWhileMuted": "You are muted - others can't hear you",
+    "SpeakingWhileMutedAlert": "Alert me when I speak while muted"
   }
 }
