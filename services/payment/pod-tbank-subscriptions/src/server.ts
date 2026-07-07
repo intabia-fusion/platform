@@ -30,10 +30,18 @@ import {
   resolvePerSeatAmount,
   isPendingFirstPayment,
   nextPeriodEnd,
+  formatTbankDueDate,
+  orderFingerprint,
   type PlanPricing
 } from './utils'
 import { notifyPaymentFailed } from './notifications'
 import type { TbankWebhookNotification, CreateSubscriptionRequest, UpdatePlanRequest, BillingPeriod } from './types'
+
+// Link lifetime = how long the bank keeps the link payable (RedirectDueDate). Lease = heartbeat window
+// for the holder pod. Takeover cancels the old link first.
+const CHECKOUT_LINK_LIFETIME_MS = 5 * 60 * 1000
+const CHECKOUT_LEASE_TIMEOUT_MS = 15 * 60 * 1000
+const CHECKOUT_HEARTBEAT_MS = 1000
 
 export async function createServer (
   ctx: MeasureContext,
@@ -152,6 +160,48 @@ async function findSubscription (
   return await storage.getByProviderId(idOrProviderId)
 }
 
+/**
+ * Cancel a pending checkout's bank link (first, so a concurrent pay is rejected) and free its claim.
+ * Shared by forced switch and orphan takeover. true = bank confirmed CANCELED; false = already paid /
+ * call failed -> caller must NOT open a new checkout (would double-charge).
+ */
+// Terminal tbank states where the money never moved: the link is already dead, so there is
+// nothing to charge and the claim is safe to free. tbank rejects Cancel on these with an error.
+const TBANK_DEAD_LINK_STATES = ['DEADLINE_EXPIRED', 'CANCELED', 'REJECTED']
+
+async function cancelPendingCheckout (
+  ctx: MeasureContext,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage,
+  paymentId: string
+): Promise<boolean> {
+  let dead = false
+  try {
+    const cancelResult = await tbank.cancelPayment({ PaymentId: paymentId })
+    dead = cancelResult.Status === 'CANCELED' || TBANK_DEAD_LINK_STATES.includes(cancelResult.Status)
+    if (!dead) {
+      ctx.info('Pending checkout not cancelable', { paymentId, status: cancelResult.Status })
+      return false
+    }
+  } catch (err: any) {
+    // tbank refuses to cancel an already-dead payment (e.g. DEADLINE_EXPIRED) — treat as freed.
+    const details: string = err?.details ?? err?.message ?? ''
+    if (!TBANK_DEAD_LINK_STATES.some((s) => details.includes(s))) throw err
+    ctx.info('Pending checkout already dead at tbank, releasing', { paymentId, details })
+  }
+  // Abandon the old draft (if still a pending first-payment) and release the claim.
+  const oldDraft = await storage.getByProviderId(paymentId)
+  if (oldDraft !== null && isPendingFirstPayment(oldDraft)) {
+    await storage.upsert({
+      ...oldDraft,
+      status: SubscriptionStatus.Canceled,
+      providerData: { ...oldDraft.providerData, modifiedAt: Date.now(), status: 'ABANDONED', pending: false }
+    })
+  }
+  await storage.releaseCheckout(paymentId)
+  return true
+}
+
 async function handleCreateSubscription (
   ctx: MeasureContext,
   config: Config,
@@ -161,38 +211,10 @@ async function handleCreateSubscription (
   req: Request,
   res: Response
 ): Promise<void> {
-  const { type, plan, workspaceUuid, workspaceUrl, accountUuid, quantity, period } =
+  const { type, plan, workspaceUuid, workspaceUrl, accountUuid, quantity, period, force } =
     req.body as CreateSubscriptionRequest
 
   ctx.info('Creating TBank subscription', { type, plan, workspaceUuid, accountUuid })
-
-  // Cancel any previously abandoned pending subscriptions for this workspace+type.
-  // Abandoned = status PastDue with pending: true (user started checkout but never paid).
-  // These would otherwise accumulate as orphans if the user abandons the payment page.
-  // Re-fetch each sub before canceling to avoid race with a concurrent webhook.
-  const existingPending = await storage.getAll(workspaceUuid, false)
-  for (const sub of existingPending) {
-    if (!isPendingFirstPayment(sub) || sub.type !== type) continue
-
-    const freshSub = await storage.getById(sub.id)
-    if (freshSub === null) continue
-    if (!isPendingFirstPayment(freshSub)) continue
-
-    // Mark as expired — the TBank-side payment will time out on its own.
-    // Don't remove card (there's no card for pending-first-payment subs).
-    const now = Date.now()
-    await storage.upsert({
-      ...freshSub,
-      status: SubscriptionStatus.Canceled,
-      providerData: {
-        ...freshSub.providerData,
-        modifiedAt: now,
-        status: 'ABANDONED',
-        pending: false
-      }
-    })
-    ctx.info('Canceled abandoned pending subscription', { subId: sub.id, type, plan: sub.plan })
-  }
 
   const planKey = getPlanKey(type, plan)
   const pricing = plans[planKey]
@@ -204,40 +226,177 @@ async function handleCreateSubscription (
   const seats = quantity ?? 1
   const perSeatAmount = resolvePerSeatAmount(pricing, period === 'yearly')
   const amount = perSeatAmount * seats
+  // Exact order behind this request — a loser reuses the pending URL only on an exact match.
+  const fingerprint = orderFingerprint(plan, seats, period)
 
-  const transactionCount = await storage.getTransactionCount(workspaceUuid)
-  const orderId = buildOrderId(workspaceUuid, transactionCount)
+  // Claim winner opens the payment: heartbeat the lease, then save URL + payment_id (reuse / release).
+  const openCheckout = async (intentId: string): Promise<void> => {
+    const heartbeat = setInterval(() => {
+      void storage.heartbeatCharge(intentId)
+    }, CHECKOUT_HEARTBEAT_MS)
+    try {
+      const transactionCount = await storage.getTransactionCount(workspaceUuid)
+      const orderId = buildOrderId(workspaceUuid, transactionCount)
 
-  const { paymentId, paymentURL } = await initTbankPayment(
-    config,
-    tbank,
-    amount,
-    orderId,
-    `Subscription: ${plan} (${type})`,
-    accountUuid,
-    workspaceUrl
-  )
+      const { paymentId, paymentURL } = await initTbankPayment(
+        config,
+        tbank,
+        amount,
+        orderId,
+        `Subscription: ${plan} (${type})`,
+        accountUuid,
+        workspaceUrl
+      )
 
-  ctx.info('TBank payment initiated', { orderId, paymentId, planKey, amount, seats, period })
+      ctx.info('TBank payment initiated', { orderId, paymentId, planKey, amount, seats, period })
 
-  const subscriptionData = buildSubscriptionData(
-    String(paymentId),
-    orderId,
-    workspaceUuid,
-    accountUuid,
-    type,
-    plan,
-    amount,
-    accountUuid,
-    config.TbankTerminalKey,
-    undefined,
-    quantity,
-    period
-  )
+      // Link the claim to the issued charge and save the URL for reuse before exposing the draft.
+      await storage.setCheckoutPayment(intentId, String(paymentId), paymentURL)
 
-  await storage.upsert(subscriptionData)
+      const subscriptionData = buildSubscriptionData(
+        String(paymentId),
+        orderId,
+        workspaceUuid,
+        accountUuid,
+        type,
+        plan,
+        amount,
+        accountUuid,
+        config.TbankTerminalKey,
+        undefined,
+        quantity,
+        period,
+        paymentURL
+      )
 
-  res.json({ checkoutId: orderId, checkoutUrl: paymentURL })
+      await storage.upsert(subscriptionData)
+
+      res.json({ checkoutId: orderId, checkoutUrl: paymentURL })
+    } finally {
+      clearInterval(heartbeat)
+    }
+  }
+
+  // Atomic guard vs parallel purchases for one (workspace, type): only the winner opens a payment.
+  const claim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
+
+  if (claim.claimed) {
+    await openCheckout(claim.intentId)
+    return
+  }
+
+  // Lost the claim. Stale lease -> holder pod died mid-checkout, take over.
+  const leaseFresh = claim.heartbeatAt !== undefined && Date.now() - claim.heartbeatAt < CHECKOUT_LEASE_TIMEOUT_MS
+  if (!leaseFresh) {
+    const wonTakeover = await storage.reclaimStaleCharge(claim.intentId, CHECKOUT_LEASE_TIMEOUT_MS)
+    if (wonTakeover) {
+      ctx.info('Took over orphaned checkout claim', { workspaceUuid, type })
+      if (claim.paymentId !== undefined && claim.paymentId !== '') {
+        // Cancel-first frees the key; re-claim with THIS request's order. Already paid -> keep it.
+        const canceled = await cancelPendingCheckout(ctx, tbank, storage, claim.paymentId)
+        if (!canceled) {
+          res.status(409).json({ reason: 'already_paid', error: 'The pending payment has already been processed' })
+          return
+        }
+        const reclaim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
+        if (reclaim.claimed) {
+          await openCheckout(reclaim.intentId)
+          return
+        }
+        if (reclaim.paymentUrl !== undefined && reclaim.paymentUrl !== '') {
+          res.json({ checkoutUrl: reclaim.paymentUrl })
+          return
+        }
+        res.status(409).json({ reason: 'in_flight', error: 'Payment is being created, please retry shortly' })
+        return
+      }
+      // Blind window: holder never issued a payment (no paymentId) -> nothing to cancel, reuse the row
+      // in place. order_fingerprint stays the dead holder's — narrow edge.
+      await openCheckout(claim.intentId)
+      return
+    }
+  }
+
+  // A different order is being paid for this type. Never hand back the winner's link for the wrong plan.
+  if (claim.orderFingerprint !== undefined && claim.orderFingerprint !== fingerprint) {
+    // Without force: tell the client, which shows a modal offering to wait or switch.
+    if (force !== true) {
+      ctx.info('Different checkout already active for this type', {
+        workspaceUuid,
+        type,
+        requested: fingerprint,
+        active: claim.orderFingerprint
+      })
+      res.status(409).json({ reason: 'other_checkout_active', error: 'A payment for a different plan is in progress' })
+      return
+    }
+
+    // Forced switch: cancel the old pending payment, then claim the new order.
+    if (claim.paymentId === undefined || claim.paymentId === '') {
+      // Old checkout claimed but hasn't issued a payment yet — nothing to cancel; retry shortly.
+      res.status(409).json({ reason: 'in_flight', error: 'Payment is being created, please retry shortly' })
+      return
+    }
+
+    const canceled = await cancelPendingCheckout(ctx, tbank, storage, claim.paymentId)
+    if (!canceled) {
+      // Old payment already went through (CONFIRMED/REFUNDED) — don't switch (would double-charge).
+      res.status(409).json({ reason: 'already_paid', error: 'The pending payment has already been processed' })
+      return
+    }
+
+    // Claim the new order on the now-free key and open its checkout. If someone raced in between,
+    // reuse their URL or retry.
+    const reclaim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
+    if (reclaim.claimed) {
+      ctx.info('Switched checkout to a new plan', { workspaceUuid, type, plan })
+      await openCheckout(reclaim.intentId)
+      return
+    }
+    if (reclaim.paymentUrl !== undefined && reclaim.paymentUrl !== '') {
+      res.json({ checkoutUrl: reclaim.paymentUrl })
+      return
+    }
+    res.status(409).json({ reason: 'in_flight', error: 'Payment is being created, please retry shortly' })
+    return
+  }
+
+  // Same order (repeat / second tab): reuse the winner's saved URL — unless the link has expired.
+  if (claim.paymentUrl !== undefined && claim.paymentUrl !== '') {
+    // The tbank link dies at createdOn + lifetime (RedirectDueDate). Past that it 404s, and the
+    // DEADLINE_EXPIRED webhook that would free the claim may not have arrived yet — so replace it here.
+    const linkExpired = Date.now() - claim.createdOn >= CHECKOUT_LINK_LIFETIME_MS
+    if (!linkExpired) {
+      ctx.info('Reusing pending TBank checkout', { workspaceUuid, type, plan })
+      res.json({ checkoutUrl: claim.paymentUrl })
+      return
+    }
+
+    ctx.info('Pending checkout link expired, issuing a fresh one', { workspaceUuid, type, plan })
+    if (claim.paymentId !== undefined && claim.paymentId !== '') {
+      const freed = await cancelPendingCheckout(ctx, tbank, storage, claim.paymentId)
+      if (!freed) {
+        // Cancel reported the payment already went through — the plan is paid, don't re-issue.
+        res.status(409).json({ reason: 'already_paid', error: 'The pending payment has already been processed' })
+        return
+      }
+    }
+    const reclaim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
+    if (reclaim.claimed) {
+      await openCheckout(reclaim.intentId)
+      return
+    }
+    if (reclaim.paymentUrl !== undefined && reclaim.paymentUrl !== '') {
+      res.json({ checkoutUrl: reclaim.paymentUrl })
+      return
+    }
+    res.status(409).json({ reason: 'in_flight', error: 'Payment is being created, please retry shortly' })
+    return
+  }
+
+  // Winner claimed but has not written the URL yet — very short window while initPayment is in flight.
+  // The client retries silently.
+  res.status(409).json({ reason: 'in_flight', error: 'Payment is being created, please retry shortly' })
 }
 
 async function handleGetByCheckout (storage: SubscriptionStorage, req: Request, res: Response): Promise<void> {
@@ -501,6 +660,23 @@ async function handleWebhook (
       return
     }
 
+    // Idempotency guard: TBank delivers webhooks at-least-once
+    const appliedPaymentId =
+      (sub.providerData?.lastChargePaymentId as string | undefined) ?? // is set by recurrent charges (scheduler/retry)
+      (sub.providerData?.paymentId as string | undefined) // is set by the initial checkout
+    if (
+      sub.status === SubscriptionStatus.Active &&
+      sub.providerData?.pending !== true &&
+      appliedPaymentId === typedNotification.PaymentId
+    ) {
+      ctx.info('Duplicate TBank webhook ignored', {
+        paymentId: typedNotification.PaymentId,
+        status: typedNotification.Status
+      })
+      res.status(200).send('OK')
+      return
+    }
+
     const subscriptionData = buildSubscriptionDataFromWebhook(typedNotification, sub)
     await storage.upsert(subscriptionData)
     ctx.info('TBank subscription activated via webhook', {
@@ -526,6 +702,12 @@ async function handleWebhook (
         newSubId: subscriptionData.id,
         provider: oldSub.provider
       })
+    }
+
+    // Release the claim on CONFIRMED (money settled), freeing the key for a future purchase.
+    // AUTHORIZED is intermediate (and absent for PayType 'O'). Idempotent for duplicate webhooks.
+    if (typedNotification.Status === 'CONFIRMED') {
+      await storage.releaseCheckout(typedNotification.PaymentId)
     }
   } else if (
     typedNotification.Status === 'REJECTED' ||
@@ -562,6 +744,26 @@ async function handleWebhook (
         await notifyPaymentFailed(ctx, storage, config, pastDueData, 'failed')
       }
     }
+
+    // Release the claim on terminal failure so a retry needn't wait for the lease. Idempotent.
+    await storage.releaseCheckout(typedNotification.PaymentId)
+  } else if (typedNotification.Status === 'DEADLINE_EXPIRED' || typedNotification.Status === 'CANCELED') {
+    // Link expired/canceled before payment: abandon the pending draft + release now (only a
+    // still-pending first-payment draft, never an active sub).
+    if (sub !== null && isPendingFirstPayment(sub)) {
+      const now = Date.now()
+      await storage.upsert({
+        ...sub,
+        status: SubscriptionStatus.Canceled,
+        providerData: { ...sub.providerData, modifiedAt: now, status: 'ABANDONED', pending: false }
+      })
+      ctx.info('TBank checkout link expired/canceled, pending draft abandoned', {
+        subId: sub.id,
+        paymentId: typedNotification.PaymentId,
+        status: typedNotification.Status
+      })
+    }
+    await storage.releaseCheckout(typedNotification.PaymentId)
   }
 
   res.status(200).send('OK')
@@ -579,7 +781,8 @@ function buildSubscriptionData (
   terminalKey: string,
   existingSub?: SubscriptionData,
   quantity?: number,
-  period?: BillingPeriod
+  period?: BillingPeriod,
+  paymentUrl?: string
 ): SubscriptionData {
   const now = Date.now()
   return {
@@ -606,7 +809,10 @@ function buildSubscriptionData (
       // Seats purchased for a per-seat plan. undefined for flat plans.
       quantity,
       // Billing period ('monthly' | 'yearly'). undefined defaults to monthly.
-      period
+      period,
+      // Checkout URL of the pending TBank payment
+      paymentUrl,
+      linkExpiresAt: paymentUrl !== undefined ? now + CHECKOUT_LINK_LIFETIME_MS : undefined
     }
   }
 }
@@ -673,7 +879,9 @@ async function initTbankPayment (
   accountUuid: string,
   workspaceUrl: string
 ): Promise<{ paymentId: number, paymentURL: string }> {
-  const initResult = await tbank.initPayment({
+  // RedirectDueDate bounds the link lifetime (TBank default 24h). Lib accepts it (Joi) but omits it
+  // from TS types -> extend the param type locally.
+  const initParams: Parameters<typeof tbank.initPayment>[0] & { RedirectDueDate: string } = {
     Amount: amount,
     OrderId: orderId,
     Description: description,
@@ -681,10 +889,12 @@ async function initTbankPayment (
     Recurrent: 'Y',
     PayType: 'O',
     Language: 'ru',
+    RedirectDueDate: formatTbankDueDate(Date.now() + CHECKOUT_LINK_LIFETIME_MS),
     NotificationURL: `${config.FrontUrl}/_tbank_subscriptions/api/v1/webhooks/tbank`,
     SuccessURL: `${config.FrontUrl}/workbench/${workspaceUrl}/setting/setting/billing/subscriptions?payment=success&order_id=${orderId}`,
     FailURL: `${config.FrontUrl}/workbench/${workspaceUrl}/setting/setting/billing/subscriptions?payment=canceled`
-  })
+  }
+  const initResult = await tbank.initPayment(initParams)
 
   return {
     paymentId: initResult.PaymentId,

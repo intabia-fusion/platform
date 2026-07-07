@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,9 +14,16 @@
 // limitations under the License.
 //
 
-/** Error for payment service errors */
+/**
+ * Payment service error. Carries HTTP `status` + parsed `reason` (e.g. 'other_checkout_active' |
+ * 'in_flight' | 'already_paid') so callers can branch the UI instead of a generic error toast.
+ */
 export class PaymentError extends Error {
-  constructor (message: string) {
+  constructor (
+    message: string,
+    readonly status?: number,
+    readonly reason?: string
+  ) {
     super(message)
     this.name = 'PaymentError'
   }

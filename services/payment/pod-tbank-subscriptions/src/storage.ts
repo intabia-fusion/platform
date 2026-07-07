@@ -49,14 +49,63 @@ export class SubscriptionStorage {
     return await this.accountClient.getSubscriptions(workspaceUuid, activeOnly)
   }
 
-  // Atomic cross-pod charge claim — only the caller that gets claimed=true may charge this period.
-  async claimCharge (
+  // Atomic cross-pod renewal claim: claimed=true wins the right to charge this period.
+  // Key invariant: ':' separates fields, no component may contain it (sub is hex, period a number).
+  async claimRenewal (
     subscriptionId: string,
     periodEnd: number,
     amount?: number
   ): Promise<{ claimed: boolean, status: string, intentId: string, heartbeatAt?: number }> {
-    const { claimed, intent } = await this.accountClient.claimChargeIntent(subscriptionId, periodEnd, 'tbank', amount)
+    const { claimed, intent } = await this.accountClient.claimIntent(`renew:${subscriptionId}:${periodEnd}`, 'tbank', {
+      subscriptionId,
+      amount
+    })
     return { claimed, status: intent.status, intentId: intent.id, heartbeatAt: intent.heartbeatAt }
+  }
+
+  // Atomic checkout claim: one pending checkout per (workspace, type). Only the winner issues a payment;
+  // orderFingerprint (plan:seats:period) lets a loser reuse the URL only on an exact order match (else 409).
+  async claimCheckout (
+    workspaceUuid: WorkspaceUuid,
+    type: string,
+    orderFingerprint: string
+  ): Promise<{
+      claimed: boolean
+      status: string
+      intentId: string
+      heartbeatAt?: number
+      paymentUrl?: string
+      orderFingerprint?: string
+      paymentId?: string
+      createdOn: number
+    }> {
+    const { claimed, intent } = await this.accountClient.claimIntent(`checkout:${workspaceUuid}:${type}`, 'tbank', {
+      workspaceUuid,
+      orderFingerprint
+    })
+    return {
+      claimed,
+      status: intent.status,
+      intentId: intent.id,
+      heartbeatAt: intent.heartbeatAt,
+      paymentUrl: intent.paymentUrl,
+      orderFingerprint: intent.orderFingerprint,
+      // paymentId of the losing caller's active checkout — needed to cancel it on a forced switch.
+      paymentId: intent.paymentId,
+      // createdOn ≈ when the tbank link was issued — used to detect an expired (dead) link on reuse.
+      createdOn: intent.createdOn
+    }
+  }
+
+  // Link a won checkout intent to its issued charge and save the URL for reuse by repeat callers.
+  async setCheckoutPayment (intentId: string, paymentId: string, paymentUrl: string): Promise<void> {
+    await this.accountClient.setIntentPayment(intentId, paymentId, paymentUrl)
+  }
+
+  // Release a checkout claim when its charge reaches a terminal webhook status, freeing the
+  // (workspace, type) key for a later purchase. Idempotent — a duplicate webhook deletes nothing.
+  async releaseCheckout (paymentId: string): Promise<void> {
+    await this.accountClient.deleteCheckoutIntentByPaymentId(paymentId, 'tbank')
   }
 
   async markCharge (intentId: string, status: 'charged' | 'failed', paymentId?: string): Promise<void> {

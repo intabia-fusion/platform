@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -44,6 +45,7 @@ export interface SubscribeRequest {
   customerName?: string // Optional customer name
   quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
   period?: BillingPeriod // Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
+  force?: boolean // Switch tariff: cancel a different pending checkout for this type, then open the new one.
 }
 
 /**

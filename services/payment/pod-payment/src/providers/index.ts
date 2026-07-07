@@ -20,6 +20,21 @@ import type { QueueSubscriptionTrigger } from '@hcengineering/server-core'
 import { type SubscriptionType, type SubscriptionData } from '@hcengineering/account-client'
 
 /**
+ * A non-ok HTTP response from a downstream provider. Carries status + parsed `reason` so the facade
+ * relays them instead of flattening to 500 (e.g. 409 'other_checkout_active' must reach the UI modal).
+ */
+export class ProviderHttpError extends Error {
+  constructor (
+    readonly status: number,
+    readonly reason?: string,
+    readonly body?: string
+  ) {
+    super(`Provider responded ${status}${reason !== undefined ? ` (${reason})` : ''}`)
+    this.name = 'ProviderHttpError'
+  }
+}
+
+/**
  * Publishes a provider subscription event to the Subscription queue. Providers verify + transform,
  * then call this instead of writing to the account DB directly — pod-payment's consumer is the single
  * writer (bakes limits + upserts). `canceled` marks a cancellation event; both end up persisted.
@@ -57,6 +72,7 @@ export interface SubscribeRequest {
   customerName?: string
   quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
   period?: BillingPeriod // Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
+  force?: boolean // Switch tariff: cancel a different pending checkout for this type, then open the new one.
 }
 
 /**

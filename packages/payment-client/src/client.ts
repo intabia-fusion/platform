@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -125,11 +126,12 @@ export class PaymentClient {
     subscriptionId: string,
     plan: string,
     quantity?: number,
-    period?: BillingPeriod
+    period?: BillingPeriod,
+    force?: boolean
   ): Promise<SubscriptionData | CheckoutResponse> {
     const path = `/api/v1/subscriptions/${subscriptionId}/updatePlan`
     const url = new URL(concatLink(this.endpoint, path))
-    const body = JSON.stringify({ plan, quantity, period })
+    const body = JSON.stringify({ plan, quantity, period, force })
     const response = await fetchSafe(url, {
       method: 'POST',
       headers: { ...this.headers },
@@ -186,12 +188,16 @@ async function fetchSafe (url: string | URL, init?: RequestInit): Promise<Respon
 
   if (!response.ok) {
     const text = await response.text()
+    let parsed: { error?: string, reason?: string } | undefined
     try {
-      const error = JSON.parse(text)
-      throw new PaymentError(error.error ?? text)
+      parsed = JSON.parse(text)
     } catch {
-      throw new PaymentError(`Payment service error: ${response.status} ${text}`)
+      /* body isn't JSON */
     }
+    if (parsed !== undefined) {
+      throw new PaymentError(parsed.error ?? text, response.status, parsed.reason)
+    }
+    throw new PaymentError(`Payment service error: ${response.status} ${text}`, response.status)
   }
 
   return response
