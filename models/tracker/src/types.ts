@@ -38,6 +38,7 @@ import {
   Index,
   Mixin,
   Model,
+  Activity,
   Prop,
   ReadOnly,
   TypeCollaborativeDoc,
@@ -177,14 +178,17 @@ export function TypeEstimation (): Type<number> {
 @UX(tracker.string.Issue, tracker.icon.Issue, 'TSK', 'title', undefined, tracker.string.Issues, 'title')
 export class TIssue extends TTask implements Issue {
   @Prop(TypeRef(tracker.class.Issue), tracker.string.Parent)
+  @Activity({ set: tracker.string.ParentChangedTo, unset: tracker.string.ParentUnset })
   declare attachedTo: Ref<Issue>
 
   @Prop(TypeString(), tracker.string.Title)
   @Index(IndexKind.FullText)
+  @Activity({ set: tracker.string.TitleChangedTo })
     title!: string
 
   @Prop(TypeCollaborativeDoc(), tracker.string.Description)
   @Index(IndexKind.FullText)
+  @Activity({ set: tracker.string.DescriptionChangedTo })
     description!: MarkupBlobRef | null
 
   @Prop(TypeRef(tracker.class.IssueStatus), tracker.string.Status, {
@@ -192,12 +196,14 @@ export class TIssue extends TTask implements Issue {
     iconComponent: tracker.component.IssueStatusIcon
   })
   @Index(IndexKind.Indexed)
+  @Activity({ set: tracker.string.StatusChangedTo })
   declare status: Ref<IssueStatus>
 
   @Prop(TypeIssuePriority(), tracker.string.Priority, {
     iconComponent: tracker.component.PriorityIconPresenter
   })
   @Index(IndexKind.Indexed)
+  @Activity({ set: tracker.string.PriorityChangedTo })
     priority!: IssuePriority
 
   @Prop(TypeNumber(), tracker.string.Number)
@@ -207,25 +213,31 @@ export class TIssue extends TTask implements Issue {
 
   @Prop(TypeRef(contact.class.Person), tracker.string.Assignee)
   @Index(IndexKind.Indexed)
+  @Activity({ set: tracker.string.AssigneeChangedTo, unset: tracker.string.AssigneeUnset })
   declare assignee: Ref<Person> | null
 
   @Prop(TypeRef(tracker.class.Component), tracker.string.Component, { icon: tracker.icon.Component })
   @Index(IndexKind.Indexed)
+  @Activity({ set: tracker.string.ComponentChangedTo, unset: tracker.string.ComponentUnset })
     component!: Ref<Component> | null
 
   @Prop(Collection(tracker.class.Issue), tracker.string.SubIssues)
+  @Activity({ set: tracker.string.SubIssueAdded, unset: tracker.string.SubIssueRemoved })
     subIssues!: number
 
   @Prop(ArrOf(TypeRef(core.class.TypeRelatedDocument)), tracker.string.BlockedBy)
+  @Activity({ set: tracker.string.AddedBlocker, unset: tracker.string.RemovedBlocker })
     blockedBy!: RelatedDocument[]
 
   @Prop(ArrOf(TypeRef(core.class.TypeRelatedDocument)), tracker.string.RelatedTo)
   @Index(IndexKind.Indexed)
+  @Activity({ set: tracker.string.AddedRelation, unset: tracker.string.RemovedRelation })
     relations!: RelatedDocument[]
 
   parents!: IssueParentInfo[]
 
-  @Prop(Collection(tags.class.TagReference), tracker.string.Labels)
+  @Prop(Collection(tags.class.TagReference, tracker.string.Label), tracker.string.Labels)
+  @Activity({ set: tracker.string.AddedLabel, unset: tracker.string.RemovedLabel })
   declare labels: number
 
   @Prop(TypeRef(tracker.class.Project), tracker.string.Project, { icon: tracker.icon.Issues })
@@ -238,11 +250,13 @@ export class TIssue extends TTask implements Issue {
 
   @Prop(TypeRef(tracker.class.Milestone), tracker.string.Milestone, { icon: tracker.icon.Milestone })
   @Index(IndexKind.Indexed)
+  @Activity({ set: tracker.string.MilestoneChangedTo, unset: tracker.string.MilestoneUnset })
     milestone!: Ref<Milestone> | null
 
   @Prop(TypeEstimation(), tracker.string.Estimation, {
     icon: tracker.icon.Estimation
   })
+  @Activity({ set: tracker.string.EstimationChangedTo, unset: tracker.string.EstimationUnset })
     estimation!: number
 
   @Prop(TypeReportedTime(), tracker.string.ReportedTime)
@@ -253,6 +267,7 @@ export class TIssue extends TTask implements Issue {
     remainingTime!: number
 
   @Prop(Collection(tracker.class.TimeSpendReport), tracker.string.TimeSpendReports)
+  @Activity({ set: tracker.string.TimeSpentAdded, unset: tracker.string.TimeSpentRemoved })
     reports!: number
 
   declare childInfo: IssueChildInfo[]

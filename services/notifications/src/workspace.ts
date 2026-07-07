@@ -561,7 +561,15 @@ class Workspace {
       if (type == null) continue
 
       const content =
-        contentByType.get(type._id) ?? (await getMessageNotificationContent(client, type, doc, message, sender))
+        contentByType.get(type._id) ??
+        (await getMessageNotificationContent(
+          client,
+          type,
+          doc,
+          message,
+          sender,
+          client.branding?.defaultLanguage ?? 'en'
+        ))
       contentByType.set(type._id, content)
 
       res.push(
@@ -739,7 +747,14 @@ class Workspace {
             attachedTo: message._id,
             attachedToClass: message._class
           },
-          await getMessageNotificationContent(client, type, doc, message, sender),
+          await getMessageNotificationContent(
+            client,
+            type,
+            doc,
+            message,
+            sender,
+            client.branding?.defaultLanguage ?? 'en'
+          ),
           doc,
           tx.modifiedOn,
           tx.modifiedBy,

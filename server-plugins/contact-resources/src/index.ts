@@ -57,9 +57,9 @@ import { makeRank } from '@hcengineering/rank'
 import { getAccountBySocialId, getCurrentPerson } from '@hcengineering/server-contact'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import { workbenchId } from '@hcengineering/workbench'
-
-import { ManageCollaboratorsTrigger } from './collaborators'
 import { Presenter, PresenterControl } from '@hcengineering/server-activity'
+
+import { ManageCollaboratorsTrigger, CollaboratorTitlePresenter } from './collaborators'
 
 export async function OnSpaceTypeMembers (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
@@ -494,6 +494,7 @@ export default async () => ({
   function: {
     PersonUrlPresenter: personUrlPresenter,
     PersonTitlePresenter: personTitlePresenter,
+    CollaboratorTitlePresenter,
     OrganizationUrlPresenter: organizationUrlPresenter,
     ContactNameProvider: contactNameProvider,
     GetCurrentEmployeeName: getCurrentEmployeeName,

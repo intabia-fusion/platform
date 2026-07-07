@@ -24,17 +24,13 @@ import core, {
   combineAttributes,
   type Doc,
   type Hierarchy,
-  type Markup,
   type MeasureContext,
-  type Mixin,
   type Ref,
   type RefTo,
-  SortingOrder,
   type Space,
-  type TxCreateDoc,
   type TxCUD,
   type TxMixin,
-  TxProcessor,
+  type TxRemoveDoc,
   type TxUpdateDoc,
   type Type,
   type WorkspaceInfoWithStatus
@@ -47,7 +43,7 @@ import activity, {
   type DocUpdateMessage,
   type DocUpdateMessageHistory
 } from '@hcengineering/activity'
-import { getResource, translate } from '@hcengineering/platform'
+import { getResource, type IntlString, translate } from '@hcengineering/platform'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import serverActivity, {
   type IdentifierPresenter,
@@ -288,47 +284,6 @@ export function getDocUpdateAction (hierarchy: Hierarchy, tx: TxCUD<Doc>): DocUp
   return 'update'
 }
 
-interface AttributeDiff {
-  added: DocAttributeUpdates['added']
-  removed: DocAttributeUpdates['removed']
-}
-
-export async function getAttributeDiff (
-  client: Client,
-  doc: Doc,
-  prevDoc: Doc | undefined,
-  attrKey: string,
-  mixin?: Ref<Mixin<Doc>>
-): Promise<AttributeDiff> {
-  const { hierarchy } = client
-
-  let actualDoc: Doc | undefined = doc
-  let actualPrevDoc: Doc | undefined = prevDoc
-
-  if (mixin != null) {
-    actualDoc = hierarchy.as(doc, mixin)
-    actualPrevDoc = prevDoc === undefined ? undefined : hierarchy.as(prevDoc, mixin)
-  }
-
-  const value = (actualDoc as any)[attrKey] ?? []
-  const prevValue = (actualPrevDoc as any)?.[attrKey] ?? []
-
-  if (!Array.isArray(value) || !Array.isArray(prevValue)) {
-    return {
-      added: [],
-      removed: []
-    }
-  }
-
-  const added = value.filter((item) => !prevValue.includes(item)) as DocAttributeUpdates['added']
-  const removed = prevValue.filter((item) => !value.includes(item)) as DocAttributeUpdates['removed']
-
-  return {
-    added,
-    removed
-  }
-}
-
 export async function getTxAttributesUpdates (
   ctx: MeasureContext,
   client: Client,
@@ -394,19 +349,6 @@ export async function getTxAttributesUpdates (
       // collaborative documents activity is handled by collaborator
       continue
     }
-
-    // if (hierarchy.isDerived(attrClass, core.class.TypeMarkup)) {
-    //   if (docDiff === undefined) {
-    //     docDiff = await getDocDiff(client, updateObject._class, updateObject._id, tx._id, mixin, objectCache)
-    //   }
-    // }
-
-    // if (Array.isArray(attrValue) && docDiff?.doc !== undefined) {
-    //   const diff = await getAttributeDiff(client, docDiff.doc, docDiff.prevDoc, key, mixin)
-    //   added.push(...diff.added)
-    //   removed.push(...diff.removed)
-    //   attrValue = []
-    // }
 
     if (valueSizeExceedsLimit(attrValue)) {
       attrValue = activity.string.ValueTooLarge
@@ -500,105 +442,274 @@ export function getCollectionAttribute (
   return undefined
 }
 
-export async function getDocUpdateMessageMarkup (message: DocUpdateMessage, client: Client): Promise<Markup> {
+type DocUpdateMessageIntl = Pick<DocUpdateMessage, 'messageIntl' | 'intlParams' | 'intlParamsNotLocalized'>
+
+function getAttributeMetadata (
+  attributeUpdates: DocAttributeUpdates,
+  objectClass: Ref<Class<Doc>>,
+  hierarchy: Hierarchy
+): Attribute<Doc> | undefined {
+  const { attrKey, attrClass, isMixin } = attributeUpdates
+  let attrObjectClass = objectClass
+
+  try {
+    if (isMixin) {
+      const keyedAttribute = Array.from(hierarchy.getAllAttributes(attrClass).entries())
+        .filter(([, value]) => value.hidden !== true)
+        .map(([key, attr]) => ({ key, attr }))
+        .find(({ key }) => key === attrKey)
+      if (keyedAttribute === undefined) {
+        return undefined
+      }
+      attrObjectClass = keyedAttribute.attr.attributeOf
+    }
+
+    return hierarchy.getAttribute(attrObjectClass, attrKey)
+  } catch (e) {
+    return undefined
+  }
+}
+
+function formatIdentifier (id?: string): string {
+  return id !== undefined && id !== '' ? `${id}: ` : ''
+}
+
+async function resolveAttributeValue (
+  client: Client,
+  doc: Doc,
+  attrClass: Ref<Class<Doc>>,
+  attrKey: string,
+  value: any
+): Promise<{ intlString?: IntlString, value: any, identifier?: string } | undefined> {
+  if (value === null || value === undefined) return undefined
+
+  const hierarchy = client.hierarchy
+
+  try {
+    const attrPresenter = await client.findOne(serverActivity.class.AttributePresenter, { attribute: attrKey })
+    if (attrPresenter !== undefined) {
+      const presenterFn = await getResource(attrPresenter.presenter)
+      return await presenterFn(doc, value, {
+        ctx: client.ctx,
+        workspace: client.workspace,
+        hierarchy: client.hierarchy,
+        modelDb: client.model,
+        branding: client.branding ?? null,
+        findAll: (_ctx, _class, query, ops) => client.findAll(_class, query, ops)
+      })
+    }
+  } catch (e) {
+    console.error('Failed to run AttributePresenter for', attrKey, e)
+  }
+
+  let targetClass: Ref<Class<Doc>> | undefined
+  let targetId: Ref<Doc> | undefined
+
+  if (typeof value === 'string') {
+    targetId = value as Ref<Doc>
+    if (hierarchy.isDerived(attrClass, core.class.Doc)) {
+      targetClass = attrClass
+    } else if (hierarchy.isDerived(attrClass, core.class.RefTo)) {
+      targetClass = (hierarchy.findClass(attrClass) as any)?.to ?? core.class.Doc
+    }
+  } else if (
+    value !== null &&
+    typeof value === 'object' &&
+    typeof value._id === 'string' &&
+    typeof value._class === 'string'
+  ) {
+    targetId = value._id
+    targetClass = value._class
+  }
+
+  if (targetClass !== undefined && targetId !== undefined) {
+    try {
+      const attrDoc = await client.findOne(targetClass, { _id: targetId })
+      if (attrDoc !== undefined) {
+        const title = await getDocTitle(client, attrDoc)
+        const identifier = await getDocIdentifier(client, attrDoc)
+        return { value: title, identifier }
+      }
+    } catch (e) {
+      // ignore and fallback
+    }
+  }
+
+  return { value }
+}
+
+export async function getDocUpdateMessageIntl (
+  client: Client,
+  tx: TxCUD<Doc>,
+  doc: Doc,
+  message: DocUpdateMessage
+): Promise<DocUpdateMessageIntl> {
   const { hierarchy } = client
   const { attachedTo, attachedToClass, objectClass, objectId, action, updateCollection, attributeUpdates } = message
   const isOwn = attachedTo === objectId
 
+  const object = isOwn
+    ? undefined
+    : tx._class === core.class.TxRemoveDoc
+      ? (tx as TxRemoveDoc<Doc>).removedDoc
+      : await client.findOne(objectClass, { _id: objectId })
+
   const collectionAttribute = getCollectionAttribute(hierarchy, attachedToClass, updateCollection)
   const clazz = hierarchy.getClass(objectClass)
-  const objectName = (collectionAttribute?.type as Collection<AttachedDoc>)?.itemLabel ?? clazz.label
+  const itemLabelKey = (collectionAttribute?.type as Collection<AttachedDoc>)?.itemLabel ?? clazz.label
+  let objectName = itemLabelKey
+  let itemTitle = ''
+  if (object !== undefined) {
+    const title = await getDocTitle(client, object)
+    if (title !== undefined && title.length > 0) {
+      itemTitle = title
+      const localizedLabel = await translate(objectName, {}, client.branding?.defaultLanguage)
+      objectName = `${localizedLabel} ${title}`.trim() as IntlString
+    }
+  }
   const collectionName = collectionAttribute?.label
 
-  const name =
-    isOwn || collectionName === undefined
-      ? await translate(objectName, {}, client.branding?.defaultLanguage)
-      : await translate(collectionName, {}, client.branding?.defaultLanguage)
+  const isCollectionUpdate = !isOwn && collectionName !== undefined
+
+  if (isCollectionUpdate) {
+    if (action === 'create') {
+      if (collectionAttribute?.activity?.set !== undefined) {
+        const identifier = object !== undefined ? await getDocIdentifier(client, object) : undefined
+        return {
+          messageIntl: collectionAttribute.activity.set,
+          intlParams: { value: itemTitle, identifier: formatIdentifier(identifier) },
+          intlParamsNotLocalized: { item: itemLabelKey }
+        }
+      }
+      return {
+        messageIntl: activity.string.AddedToCollection,
+        intlParamsNotLocalized: { object: objectName, collection: collectionName }
+      }
+    }
+    if (action === 'remove') {
+      if (collectionAttribute?.activity?.unset !== undefined) {
+        const identifier = object !== undefined ? await getDocIdentifier(client, object) : undefined
+        return {
+          messageIntl: collectionAttribute.activity.unset,
+          intlParams: { value: itemTitle, identifier: formatIdentifier(identifier) },
+          intlParamsNotLocalized: { item: itemLabelKey }
+        }
+      }
+      return {
+        messageIntl: activity.string.RemovedFromCollection,
+        intlParamsNotLocalized: { object: objectName, collection: collectionName }
+      }
+    }
+  }
+
+  const name = isOwn || collectionName === undefined ? objectName : collectionName
 
   if (action === 'create') {
-    return await translate(activity.string.NewObject, { object: name }, client.branding?.defaultLanguage)
+    return {
+      messageIntl: activity.string.NewObject,
+      intlParamsNotLocalized: { object: name }
+    }
   }
 
   if (action === 'remove') {
-    return await translate(activity.string.RemovedObject, { object: name }, client.branding?.defaultLanguage)
+    return {
+      messageIntl: activity.string.RemovedObject,
+      intlParamsNotLocalized: { object: name }
+    }
   }
 
   if (action === 'update' && attributeUpdates !== undefined) {
-    const text = await getAttributesUpdatesText(
-      attributeUpdates,
-      objectClass,
-      hierarchy,
-      client.branding?.defaultLanguage ?? 'en'
-    )
+    const attribute = getAttributeMetadata(attributeUpdates, objectClass, hierarchy)
+    const attrLabel = attribute != null ? (attribute.shortLabel ?? attribute.label) : undefined
+    if (attrLabel !== undefined) {
+      const activitySet = attribute?.activity?.set
+      const activityUnset = attribute?.activity?.unset
 
-    if (text !== undefined) {
-      return text
+      if (attributeUpdates.added.length > 0) {
+        const resolvedValue = await resolveAttributeValue(
+          client,
+          doc,
+          attributeUpdates.attrClass,
+          attributeUpdates.attrKey,
+          attributeUpdates.added[0]
+        )
+        const isObject = resolvedValue !== undefined && typeof resolvedValue.value === 'object'
+        return {
+          messageIntl: activitySet ?? activity.string.AddedToCollection,
+          intlParamsNotLocalized:
+            resolvedValue?.intlString != null
+              ? { collection: attrLabel, object: resolvedValue?.intlString }
+              : { collection: attrLabel },
+          intlParams: {
+            object: isObject ? '' : resolvedValue?.value,
+            value: isObject ? '' : resolvedValue?.value,
+            identifier: isObject ? '' : formatIdentifier(resolvedValue?.identifier)
+          }
+        }
+      }
+      if (attributeUpdates.removed.length > 0) {
+        const resolvedValue = await resolveAttributeValue(
+          client,
+          doc,
+          attributeUpdates.attrClass,
+          attributeUpdates.attrKey,
+          attributeUpdates.removed[0]
+        )
+        const isObject = resolvedValue !== undefined && typeof resolvedValue.value === 'object'
+        return {
+          messageIntl: activityUnset ?? activity.string.RemovedFromCollection,
+          intlParamsNotLocalized:
+            resolvedValue?.intlString != null
+              ? { collection: attrLabel, object: resolvedValue?.intlString }
+              : { collection: attrLabel },
+          intlParams: {
+            object: isObject ? '' : resolvedValue?.value,
+            value: isObject ? '' : resolvedValue?.value,
+            identifier: isObject ? '' : formatIdentifier(resolvedValue?.identifier)
+          }
+        }
+      }
+
+      if (attributeUpdates.set.length > 0) {
+        const values = attributeUpdates.set
+        const isUnset =
+          values.length > 0 &&
+          !values.some((value) => value !== null && value !== '' && value !== 'tracker:ids:NoParent')
+
+        if (isUnset) {
+          return {
+            messageIntl: activityUnset ?? activity.string.UnsetObject,
+            intlParamsNotLocalized: { object: attrLabel }
+          }
+        } else {
+          const resolvedValue = await resolveAttributeValue(
+            client,
+            doc,
+            attributeUpdates.attrClass,
+            attributeUpdates.attrKey,
+            values[0]
+          )
+
+          return {
+            messageIntl: activitySet ?? activity.string.AttributeSetTo,
+            intlParamsNotLocalized:
+              resolvedValue?.intlString != null
+                ? { name: attrLabel, value: resolvedValue.intlString }
+                : { name: attrLabel },
+            intlParams: {
+              value: resolvedValue?.value,
+              identifier: formatIdentifier(resolvedValue?.identifier)
+            }
+          }
+        }
+      }
     }
   }
 
-  return await translate(activity.string.UpdatedObject, { object: name }, client.branding?.defaultLanguage)
-}
-
-async function getAttributesUpdatesText (
-  attributeUpdates: DocAttributeUpdates,
-  objectClass: Ref<Class<Doc>>,
-  hierarchy: Hierarchy,
-  language: string
-): Promise<string | undefined> {
-  const attrName = await getAttrName(attributeUpdates, objectClass, hierarchy, language)
-
-  if (attrName === undefined) {
-    return undefined
+  return {
+    messageIntl: activity.string.UpdatedObject,
+    intlParamsNotLocalized: { object: name }
   }
-
-  if (attributeUpdates.added.length > 0) {
-    return await translate(activity.string.NewObject, { object: attrName }, language)
-  }
-  if (attributeUpdates.removed.length > 0) {
-    return await translate(activity.string.RemovedObject, { object: attrName }, language)
-  }
-
-  if (attributeUpdates.set.length > 0) {
-    const values = attributeUpdates.set
-    const isUnset = values.length > 0 && !values.some((value) => value !== null && value !== '')
-
-    if (isUnset) {
-      return await translate(activity.string.UnsetObject, { object: attrName }, language)
-    } else {
-      return await translate(activity.string.ChangedObject, { object: attrName }, language)
-    }
-  }
-
-  return undefined
-}
-
-export async function buildRemovedDoc (
-  client: Client,
-  _id: Ref<Doc>,
-  _class: Ref<Class<Doc>>
-): Promise<Doc | undefined> {
-  const txes = await client.findAll<TxCUD<Doc>>(
-    core.class.TxCUD,
-    {
-      objectId: _id
-    },
-    { sort: { modifiedOn: SortingOrder.Ascending } }
-  )
-
-  const createTx = txes.find((tx) => tx._class === core.class.TxCreateDoc)
-  if (createTx === undefined) return
-
-  let doc = TxProcessor.createDoc2Doc(createTx as TxCreateDoc<Doc>)
-
-  for (const tx of txes) {
-    if (tx._class === core.class.TxUpdateDoc) {
-      doc = TxProcessor.updateDoc2Doc(doc, tx as TxUpdateDoc<Doc>)
-    } else if (tx._class === core.class.TxMixin) {
-      const mixinTx = tx as TxMixin<Doc, Doc>
-      doc = TxProcessor.updateMixin4Doc(doc, mixinTx)
-    }
-  }
-  return doc
 }
 
 function getAttributeUpdatesKey (message: DocUpdateMessage): string {

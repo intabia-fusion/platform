@@ -58,7 +58,7 @@ export class TTagElement extends TDoc implements TagElement {
 }
 
 @Model(tags.class.TagReference, core.class.AttachedDoc, DOMAIN_TAGS)
-@UX(tags.string.TagReferenceLabel)
+@UX(tags.string.TagReferenceLabel, undefined, undefined, undefined, undefined, undefined, 'title')
 export class TTagReference extends TAttachedDoc implements TagReference {
   @Prop(TypeString(), tags.string.TitleLabel)
   @Index(IndexKind.FullText)

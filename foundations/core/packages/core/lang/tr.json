@@ -73,6 +73,8 @@
     "Version": "Sürüm",
     "Collaborator": "İşbirlikçi",
     "Collaborators": "İşbirlikçiler",
-    "RoleAdmin": "Rol: Yönetici"
+    "RoleAdmin": "Rol: Yönetici",
+    "AddedCollaborator": "İşbirlikçi {value} eklendi",
+    "RemovedCollaborator": "İşbirlikçi {value} kaldırıldı"
   }
 }

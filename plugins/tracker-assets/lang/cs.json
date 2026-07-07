@@ -289,7 +289,13 @@
     "AdditionalProperties": "Další vlastnosti",
     "CollapseAll": "Collapse all",
     "ExpandAll": "Expand all",
-    "CompactMode": "Kompaktní"
+    "CompactMode": "Kompaktní",
+    "SubIssueAdded": "Přidán podúkol {identifier}{value}",
+    "SubIssueRemoved": "Odebrán podúkol {identifier}{value}",
+    "AddedBlocker": "Přidán blokující úkol {identifier}{value}",
+    "RemovedBlocker": "Odebrán blokující úkol {identifier}{value}",
+    "AddedRelation": "Přidán související úkol {identifier}{value}",
+    "RemovedRelation": "Odebrán související úkol {identifier}{value}"
   },
   "status": {},
   "emailTemplate": {

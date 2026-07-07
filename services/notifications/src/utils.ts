@@ -33,15 +33,15 @@ import core, {
   TxProcessor,
   WorkspaceInfoWithStatus
 } from '@hcengineering/core'
-import activity, { DocUpdateMessage, ActivityMessage } from '@hcengineering/activity'
+import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import notification, {
+  DocNotificationMode,
+  InboxNotification,
+  MessageNotificationType,
+  NotificationContent,
   NotificationProvider,
   NotificationType,
-  MessageNotificationType,
-  TxNotificationType,
-  InboxNotification,
-  NotificationContent,
-  DocNotificationMode
+  TxNotificationType
 } from '@hcengineering/notification'
 import serverNotification, {
   getSenderName,
@@ -50,7 +50,7 @@ import serverNotification, {
   Sender,
   TypeMatchClient
 } from '@hcengineering/server-notification'
-import { getResource, IntlString } from '@hcengineering/platform'
+import { getResource, IntlString, translate } from '@hcengineering/platform'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 import serverActivity, { IdentifierPresenter, TitlePresenter, UrlPresenter } from '@hcengineering/server-activity'
@@ -453,13 +453,14 @@ export async function getMessageNotificationContent (
   type: NotificationType,
   doc: Doc,
   message: ActivityMessage,
-  sender: Sender
+  sender: Sender,
+  receiverLanguage: string
 ): Promise<NotificationContent> {
   const { hierarchy } = client
   const intlParams: Record<string, string | number> = {}
   const intlParamsNotLocalized: Record<string, IntlString> = {}
 
-  intlParams.title = message.attachedToTitle ?? (await getDocTitle(client, doc)) ?? ''
+  intlParams.title = message.attachedToTitle ?? (await getDocTitle(client, doc, receiverLanguage)) ?? ''
 
   const url = message.attachedToUrl ?? (await getDocUrl(client, doc))
   const identifier = message.attachedToIdentifier ?? (await getDocIdentifier(client, doc))
@@ -475,6 +476,22 @@ export async function getMessageNotificationContent (
 
   if (type.notificationMessage != null) {
     intlParamsNotLocalized.message = type.notificationMessage
+  } else if (
+    hierarchy.isDerived(message._class, activity.class.DocUpdateMessage) &&
+    (message as DocUpdateMessage).messageIntl != null
+  ) {
+    const dum = message as DocUpdateMessage
+    if (dum.messageIntl != null) {
+      const params = { ...dum.intlParams }
+      for (const [key, value] of Object.entries(dum.intlParamsNotLocalized ?? {})) {
+        if (typeof value === 'string' && value.includes(':')) {
+          params[key] = await translate(value, params, receiverLanguage)
+        } else {
+          params[key] = value
+        }
+      }
+      intlParams.message = await translate(dum.messageIntl, params, receiverLanguage)
+    }
   } else if (message.message != null && !isEmptyMarkup(message.message)) {
     intlParams.message = normalizeTextMessage(markupToText(message.message))
   } else if (
@@ -518,12 +535,36 @@ function getTitlePresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): Titl
   return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.TitlePresenter)
 }
 
-export async function getDocTitle (client: Client, doc: Doc): Promise<string | undefined> {
+export async function getDocTitle (client: Client, doc: Doc, lang?: string): Promise<string | undefined> {
   if (client.hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
+    const MAX_MESSAGE_LENGTH = 100
+    if (
+      client.hierarchy.isDerived(doc._class, activity.class.DocUpdateMessage) &&
+      (doc as DocUpdateMessage).messageIntl != null
+    ) {
+      const dum = doc as DocUpdateMessage
+      if (dum.messageIntl != null) {
+        const params = { ...dum.intlParams }
+
+        for (const [key, value] of Object.entries(dum.intlParamsNotLocalized ?? {})) {
+          if (typeof value === 'string' && value.includes(':')) {
+            params[key] = await translate(value, params, lang ?? client.branding?.defaultLanguage)
+          } else {
+            params[key] = value
+          }
+        }
+        const text = await translate(dum.messageIntl, params, lang ?? client.branding?.defaultLanguage)
+        const normalized = text.length > MAX_MESSAGE_LENGTH ? text.slice(0, MAX_MESSAGE_LENGTH) + '...' : text
+        if (text.length > 0) {
+          return normalized
+        }
+      }
+    }
+
     const message = doc as ActivityMessage
     if (message.message != null && !isEmptyMarkup(message.message)) {
       const text = markupToText(message.message).trim()
-      const normalized = text.length > 50 ? text.slice(0, 50) + '...' : text
+      const normalized = text.length > MAX_MESSAGE_LENGTH ? text.slice(0, MAX_MESSAGE_LENGTH) + '...' : text
       if (text.length > 0) {
         return normalized
       }

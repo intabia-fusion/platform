@@ -43,6 +43,7 @@ export default plugin(serverContactId, {
   function: {
     PersonUrlPresenter: '' as Resource<Presenter>,
     PersonTitlePresenter: '' as Resource<Presenter>,
+    CollaboratorTitlePresenter: '' as Resource<Presenter>,
     OrganizationUrlPresenter: '' as Resource<Presenter>,
 
     ContactNameProvider: '' as Resource<SearchPresenterProvider>,

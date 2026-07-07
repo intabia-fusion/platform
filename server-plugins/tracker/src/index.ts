@@ -18,7 +18,7 @@ import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import { TriggerFunc } from '@hcengineering/server-core'
 import { NotificationContentProvider } from '@hcengineering/server-notification'
-import { type Presenter } from '@hcengineering/server-activity'
+import { type Presenter, type AttributePresenterFn } from '@hcengineering/server-activity'
 
 /**
  * @public
@@ -33,7 +33,10 @@ export default plugin(serverTrackerId, {
     IssueIdentifierPresenter: '' as Resource<Presenter>,
     IssueUrlPresenter: '' as Resource<Presenter>,
     IssueNotificationContentProvider: '' as Resource<NotificationContentProvider>,
-    IssueLinkIdProvider: '' as Resource<(doc: Doc) => Promise<string>>
+    IssueLinkIdProvider: '' as Resource<(doc: Doc) => Promise<string>>,
+    IssueStatusPresenter: '' as Resource<AttributePresenterFn>,
+    IssuePriorityPresenter: '' as Resource<AttributePresenterFn>,
+    TimeSpendReportTitlePresenter: '' as Resource<Presenter>
   },
   trigger: {
     OnIssueUpdate: '' as Resource<TriggerFunc>,
