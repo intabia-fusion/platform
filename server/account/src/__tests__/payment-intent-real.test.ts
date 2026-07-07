@@ -17,13 +17,20 @@ import { generateId, generateUuid, systemAccountUuid, type AccountUuid, type Wor
 import { getDBClient, shutdownPostgres, type PostgresClientReference } from '@hcengineering/postgres'
 import { generateToken } from '@hcengineering/server-token'
 import { PostgresAccountDB } from '../collections/postgres/postgres'
-import { SubscriptionStatus, SubscriptionType } from '../types'
+import { SubscriptionStatus, SubscriptionType, type DBFlavor } from '../types'
 import { createAccount } from '../utils'
 
 jest.setTimeout(90000)
 
+// Claim keys mirror the pod-tbank helpers: renew keys are dedup'd per subscription period,
+// checkout keys per (workspace, plan type).
+const renewKey = (subscriptionId: string, periodEnd: number): string => `renew:${subscriptionId}:${periodEnd}`
+const checkoutKey = (workspaceUuid: string, type: string): string => `checkout:${workspaceUuid}:${type}`
+
 describe('payment-intent-real', () => {
   const cockroachDB: string = process.env.DB_URL ?? 'postgresql://root@localhost:26258/defaultdb?sslmode=disable'
+  // Flavor drives the migration SQL (cockroach vs postgres).
+  const dbFlavor: DBFlavor = (process.env.DB_FLAVOR as DBFlavor | undefined) ?? 'cockroach'
 
   let crDbUri = cockroachDB
   let adminClientCRRef: PostgresClientReference
@@ -53,13 +60,18 @@ describe('payment-intent-real', () => {
     const adminClient = await adminClientCRRef.getClient()
     const existing = await adminClient`SELECT datname FROM pg_database WHERE datname LIKE 'pidb%'`
     for (const row of existing) {
-      await adminClient`DROP DATABASE IF EXISTS ${adminClient(row.datname)} CASCADE`
+      // CASCADE is cockroach-only; postgres has no CASCADE for DROP DATABASE.
+      if (dbFlavor === 'cockroach') {
+        await adminClient`DROP DATABASE IF EXISTS ${adminClient(row.datname)} CASCADE`
+      } else {
+        await adminClient`DROP DATABASE IF EXISTS ${adminClient(row.datname)}`
+      }
     }
     await adminClient`CREATE DATABASE ${adminClient(dbUuid)}`
 
     crClient = getDBClient(crDbUri)
     const pgClient = await crClient.getClient()
-    crAccount = new PostgresAccountDB(pgClient, dbUuid)
+    crAccount = new PostgresAccountDB(pgClient, dbUuid, dbFlavor)
 
     let error = false
     do {
@@ -86,7 +98,11 @@ describe('payment-intent-real', () => {
     try {
       crClient.close()
       const adminClient = await adminClientCRRef.getClient()
-      await adminClient`DROP DATABASE IF EXISTS ${adminClient(dbUuid)} CASCADE`
+      if (dbFlavor === 'cockroach') {
+        await adminClient`DROP DATABASE IF EXISTS ${adminClient(dbUuid)} CASCADE`
+      } else {
+        await adminClient`DROP DATABASE IF EXISTS ${adminClient(dbUuid)}`
+      }
     } catch (err) {
       console.error('Cleanup error:', err)
     }
@@ -111,43 +127,46 @@ describe('payment-intent-real', () => {
   }
 
   describe('A: atomic dedup via ON CONFLICT DO NOTHING', () => {
-    it('same period -> second claim returns claimed=false with same intent', async () => {
+    it('same claim key -> second claim returns claimed=false with same intent', async () => {
       const subId = await createSubscription()
       const periodEnd = Date.now() + 30 * 24 * 3600 * 1000
+      const key = renewKey(subId, periodEnd)
 
-      const r1 = await crAccount.claimChargeIntent(subId, periodEnd, 'tbank', 29900)
+      const r1 = await crAccount.claimIntent(key, 'tbank', { subscriptionId: subId, amount: 29900 })
       expect(r1.claimed).toBe(true)
       expect(r1.intent.status).toBe('pending')
+      expect(r1.intent.claimKey).toBe(key)
       expect(r1.intent.subscriptionId).toBe(subId)
 
-      const r2 = await crAccount.claimChargeIntent(subId, periodEnd, 'tbank', 29900)
+      const r2 = await crAccount.claimIntent(key, 'tbank', { subscriptionId: subId, amount: 29900 })
       expect(r2.claimed).toBe(false)
       expect(r2.intent.id).toBe(r1.intent.id)
       expect(r2.intent.status).toBe('pending')
     })
 
-    it('different periodEnd -> new claim succeeds', async () => {
+    it('different period -> new claim succeeds', async () => {
       const subId = await createSubscription()
       const P1 = Date.now() + 30 * 24 * 3600 * 1000
       const P2 = P1 + 30 * 24 * 3600 * 1000
 
-      const r1 = await crAccount.claimChargeIntent(subId, P1, 'tbank', 29900)
+      const r1 = await crAccount.claimIntent(renewKey(subId, P1), 'tbank', { subscriptionId: subId, amount: 29900 })
       expect(r1.claimed).toBe(true)
 
-      const r3 = await crAccount.claimChargeIntent(subId, P2, 'tbank', 29900)
+      const r3 = await crAccount.claimIntent(renewKey(subId, P2), 'tbank', { subscriptionId: subId, amount: 29900 })
       expect(r3.claimed).toBe(true)
       expect(r3.intent.id).not.toBe(r1.intent.id)
     })
   })
 
   describe('B: concurrent claim - exactly one pod wins', () => {
-    it('two parallel claims for same period: exactly one claimed=true', async () => {
+    it('two parallel claims for same key: exactly one claimed=true', async () => {
       const subId = await createSubscription()
       const periodEnd = Date.now() + 30 * 24 * 3600 * 1000
+      const key = renewKey(subId, periodEnd)
 
       const results = await Promise.all([
-        crAccount.claimChargeIntent(subId, periodEnd, 'tbank', 29900),
-        crAccount.claimChargeIntent(subId, periodEnd, 'tbank', 29900)
+        crAccount.claimIntent(key, 'tbank', { subscriptionId: subId, amount: 29900 }),
+        crAccount.claimIntent(key, 'tbank', { subscriptionId: subId, amount: 29900 })
       ])
 
       const winners = results.filter((r) => r.claimed)
@@ -164,8 +183,9 @@ describe('payment-intent-real', () => {
     it('after intent charged, repeat claim returns claimed=false with status=charged', async () => {
       const subId = await createSubscription()
       const periodEnd = Date.now() + 30 * 24 * 3600 * 1000
+      const key = renewKey(subId, periodEnd)
 
-      const r1 = await crAccount.claimChargeIntent(subId, periodEnd, 'tbank', 29900)
+      const r1 = await crAccount.claimIntent(key, 'tbank', { subscriptionId: subId, amount: 29900 })
       expect(r1.claimed).toBe(true)
       const intentId = r1.intent.id
 
@@ -179,8 +199,8 @@ describe('payment-intent-real', () => {
       expect(stored?.status).toBe('charged')
       expect(stored?.paymentId).toBe('pay123')
 
-      // Repeat claim for same period: another pod sees already charged -> skip
-      const r2 = await crAccount.claimChargeIntent(subId, periodEnd, 'tbank', 29900)
+      // Repeat claim for same key: another pod sees already charged -> skip
+      const r2 = await crAccount.claimIntent(key, 'tbank', { subscriptionId: subId, amount: 29900 })
       expect(r2.claimed).toBe(false)
       expect(r2.intent.id).toBe(intentId)
       expect(r2.intent.status).toBe('charged')
@@ -192,7 +212,10 @@ describe('payment-intent-real', () => {
       const subId = await createSubscription()
       const periodEnd = Date.now() + 30 * 24 * 3600 * 1000
 
-      const r1 = await crAccount.claimChargeIntent(subId, periodEnd, 'tbank', 29900)
+      const r1 = await crAccount.claimIntent(renewKey(subId, periodEnd), 'tbank', {
+        subscriptionId: subId,
+        amount: 29900
+      })
       expect(r1.claimed).toBe(true)
       const intentId = r1.intent.id
 
@@ -217,7 +240,10 @@ describe('payment-intent-real', () => {
       const subId = await createSubscription()
       const periodEnd = Date.now() + 30 * 24 * 3600 * 1000
 
-      const r1 = await crAccount.claimChargeIntent(subId, periodEnd, 'tbank', 29900)
+      const r1 = await crAccount.claimIntent(renewKey(subId, periodEnd), 'tbank', {
+        subscriptionId: subId,
+        amount: 29900
+      })
       expect(r1.claimed).toBe(true)
       const intentId = r1.intent.id
 
@@ -235,7 +261,10 @@ describe('payment-intent-real', () => {
       const subId = await createSubscription()
       const periodEnd = Date.now() + 30 * 24 * 3600 * 1000
 
-      const r1 = await crAccount.claimChargeIntent(subId, periodEnd, 'tbank', 29900)
+      const r1 = await crAccount.claimIntent(renewKey(subId, periodEnd), 'tbank', {
+        subscriptionId: subId,
+        amount: 29900
+      })
       expect(r1.claimed).toBe(true)
       const intentId = r1.intent.id
 
@@ -253,7 +282,10 @@ describe('payment-intent-real', () => {
       const subId = await createSubscription()
       const periodEnd = Date.now() + 30 * 24 * 3600 * 1000
 
-      const r1 = await crAccount.claimChargeIntent(subId, periodEnd, 'tbank', 29900)
+      const r1 = await crAccount.claimIntent(renewKey(subId, periodEnd), 'tbank', {
+        subscriptionId: subId,
+        amount: 29900
+      })
       expect(r1.claimed).toBe(true)
       const intentId = r1.intent.id
 
@@ -276,7 +308,10 @@ describe('payment-intent-real', () => {
       const subId = await createSubscription()
       const periodEnd = Date.now() + 30 * 24 * 3600 * 1000
 
-      const r1 = await crAccount.claimChargeIntent(subId, periodEnd, 'tbank', 29900)
+      const r1 = await crAccount.claimIntent(renewKey(subId, periodEnd), 'tbank', {
+        subscriptionId: subId,
+        amount: 29900
+      })
       expect(r1.claimed).toBe(true)
       const intentId = r1.intent.id
 
@@ -291,6 +326,111 @@ describe('payment-intent-real', () => {
 
       const intent = await crAccount.paymentIntent.findOne({ id: intentId })
       expect(intent?.status).toBe('charged')
+    })
+  })
+
+  describe('I: checkout claim - one pending checkout per (workspace, type)', () => {
+    it('type discriminates: tier and package can be claimed in parallel on one workspace', async () => {
+      const tier = await crAccount.claimIntent(checkoutKey(wsUuid, 'tier'), 'tbank', { workspaceUuid: wsUuid })
+      const pkg = await crAccount.claimIntent(checkoutKey(wsUuid, 'package'), 'tbank', { workspaceUuid: wsUuid })
+
+      expect(tier.claimed).toBe(true)
+      expect(pkg.claimed).toBe(true)
+      expect(tier.intent.id).not.toBe(pkg.intent.id)
+      expect(tier.intent.workspaceUuid).toBe(wsUuid)
+      expect(tier.intent.subscriptionId).toBeFalsy()
+    })
+
+    it('two parallel checkouts (two tabs / two users) on same (ws,type): exactly one wins', async () => {
+      const key = checkoutKey(wsUuid, 'tier')
+
+      const results = await Promise.all([
+        crAccount.claimIntent(key, 'tbank', { workspaceUuid: wsUuid }),
+        crAccount.claimIntent(key, 'tbank', { workspaceUuid: wsUuid })
+      ])
+
+      expect(results.filter((r) => r.claimed)).toHaveLength(1)
+      expect(results.filter((r) => !r.claimed)).toHaveLength(1)
+      expect(results[0].intent.id).toBe(results[1].intent.id)
+    })
+  })
+
+  describe('J: setIntentPayment - loser reuses the winner URL', () => {
+    it('winner saves payment url; a second claim reads it back for reuse', async () => {
+      const key = checkoutKey(wsUuid, 'tier')
+
+      const winner = await crAccount.claimIntent(key, 'tbank', { workspaceUuid: wsUuid })
+      expect(winner.claimed).toBe(true)
+      // Before setIntentPayment: no URL yet (the claim..setIntentPayment window -> caller returns 409).
+      expect(winner.intent.paymentUrl).toBeFalsy()
+
+      await crAccount.setIntentPayment(winner.intent.id, 'pay-777', 'https://securepay.tbank/checkout/777')
+
+      const loser = await crAccount.claimIntent(key, 'tbank', { workspaceUuid: wsUuid })
+      expect(loser.claimed).toBe(false)
+      expect(loser.intent.id).toBe(winner.intent.id)
+      expect(loser.intent.paymentId).toBe('pay-777')
+      expect(loser.intent.paymentUrl).toBe('https://securepay.tbank/checkout/777')
+    })
+  })
+
+  describe('K: deleteCheckoutIntentByPaymentId - terminal webhook releases the claim', () => {
+    it('after release, the (ws,type) key can be claimed again; delete is idempotent', async () => {
+      const key = checkoutKey(wsUuid, 'tier')
+
+      const first = await crAccount.claimIntent(key, 'tbank', { workspaceUuid: wsUuid })
+      await crAccount.setIntentPayment(first.intent.id, 'pay-abc', 'https://securepay.tbank/checkout/abc')
+
+      // Webhook terminal status -> release.
+      await crAccount.deleteCheckoutIntentByPaymentId('pay-abc', 'tbank')
+      expect(await crAccount.paymentIntent.findOne({ id: first.intent.id })).toBeNull()
+
+      // Same key is free again -> a fresh purchase wins a new claim.
+      const second = await crAccount.claimIntent(key, 'tbank', { workspaceUuid: wsUuid })
+      expect(second.claimed).toBe(true)
+      expect(second.intent.id).not.toBe(first.intent.id)
+
+      // Duplicate webhook -> nothing to delete (idempotent no-op), the fresh claim survives.
+      await crAccount.deleteCheckoutIntentByPaymentId('pay-abc', 'tbank')
+      expect(await crAccount.paymentIntent.findOne({ id: second.intent.id })).not.toBeNull()
+    })
+
+    it('never deletes a renew intent (claim_key renew:%)', async () => {
+      const subId = await createSubscription()
+      const periodEnd = Date.now() + 30 * 24 * 3600 * 1000
+
+      const renew = await crAccount.claimIntent(renewKey(subId, periodEnd), 'tbank', {
+        subscriptionId: subId,
+        amount: 29900
+      })
+      await crAccount.setIntentPayment(renew.intent.id, 'pay-renew', undefined)
+
+      // Even matching payment_id must not delete a renew intent (ledger row).
+      await crAccount.deleteCheckoutIntentByPaymentId('pay-renew', 'tbank')
+      expect(await crAccount.paymentIntent.findOne({ id: renew.intent.id })).not.toBeNull()
+    })
+  })
+
+  describe('L: orderFingerprint - loser reads the winner order to decide reuse vs 409', () => {
+    it('winner stores fingerprint; a losing claim reads it back for the order-match check', async () => {
+      const key = checkoutKey(wsUuid, 'tier')
+
+      const winner = await crAccount.claimIntent(key, 'tbank', {
+        workspaceUuid: wsUuid,
+        orderFingerprint: 'pro:1:monthly'
+      })
+      expect(winner.claimed).toBe(true)
+      expect(winner.intent.orderFingerprint).toBe('pro:1:monthly')
+
+      // A caller for a DIFFERENT plan loses the claim and reads back the active order — the server
+      // compares it to its own request: mismatch -> 409 other_checkout_active (no wrong-plan reuse).
+      const loser = await crAccount.claimIntent(key, 'tbank', {
+        workspaceUuid: wsUuid,
+        orderFingerprint: 'business:1:monthly'
+      })
+      expect(loser.claimed).toBe(false)
+      expect(loser.intent.id).toBe(winner.intent.id)
+      expect(loser.intent.orderFingerprint).toBe('pro:1:monthly') // still the winner's order, not the loser's
     })
   })
 })

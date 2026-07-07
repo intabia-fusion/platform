@@ -17,12 +17,13 @@ import { type MeasureContext, type WorkspaceUuid, systemAccountUuid } from '@hce
 import { generateToken } from '@hcengineering/server-token'
 import type { Express } from 'express'
 import type { AccountClient, SubscriptionType, SubscriptionData } from '@hcengineering/account-client'
-import type {
-  PaymentProvider,
-  SubscribeRequest,
-  CheckoutResponse,
-  SubscriptionPublisher,
-  BillingPeriod
+import {
+  ProviderHttpError,
+  type PaymentProvider,
+  type SubscribeRequest,
+  type CheckoutResponse,
+  type SubscriptionPublisher,
+  type BillingPeriod
 } from '../index'
 
 const TBANK_FETCH_TIMEOUT = 30000 // 30 seconds should be enough
@@ -81,14 +82,22 @@ export class TbankProvider implements PaymentProvider {
           accountUuid,
           customerEmail: request.customerEmail,
           quantity: request.quantity,
-          period: request.period
+          period: request.period,
+          force: request.force
         })
       })
 
       if (!response.ok) {
         const errorBody = await response.text()
         ctx.error('TBank subscription creation failed', { status: response.status, errorBody })
-        throw new Error(`TBank subscription creation failed: ${response.status} ${errorBody}`)
+        // Preserve status + reason so the facade can relay them (e.g. 409 other_checkout_active).
+        let reason: string | undefined
+        try {
+          reason = JSON.parse(errorBody).reason
+        } catch {
+          /* body isn't JSON — leave reason undefined */
+        }
+        throw new ProviderHttpError(response.status, reason, errorBody)
       }
 
       const data = await response.json()

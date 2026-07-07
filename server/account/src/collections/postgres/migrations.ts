@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -894,29 +895,33 @@ function getV30Migration (ns: string, flavor: DBFlavor): [string, string] {
     'account_db_v30_payment_intent_table',
     `
     /* ======= P A Y M E N T   I N T E N T ======= */
-    /* One charge attempt per (subscription, period_end). The unique constraint makes claiming a */
-    /* charge atomic across pods/replicas/rolling-updates: a second claim for the same period hits */
-    /* the existing row (INSERT ... ON CONFLICT DO NOTHING) instead of issuing another charge. */
+    /* Atomic claim keyed by claim_key (INSERT ... ON CONFLICT DO NOTHING) across pods/replicas:
+         renew:<sub>:<periodEnd>  — one charge per subscription period
+         checkout:<ws>:<type>     — one pending checkout per (workspace, plan type)
+       order_fingerprint ('plan:seats:period') is the exact order behind a checkout claim; a loser
+       reuses the URL only on a match, else 409. No FK — a checkout claim has no subscription yet. */
 
     CREATE TABLE IF NOT EXISTS ${ns}.payment_intent (
         id ${types.string} NOT NULL DEFAULT gen_random_uuid()::TEXT,
-        subscription_id ${types.string} NOT NULL,
-        period_end BIGINT NOT NULL, -- the subscription period this charge renews (dedup key)
+        claim_key ${types.string} NOT NULL,
         provider ${types.string} NOT NULL,
         status ${types.string} NOT NULL DEFAULT 'pending', -- pending | charged | failed
         payment_id ${types.string}, -- provider charge id, set once the charge is issued
+        payment_url ${types.string}, -- checkout URL, reused by repeat callers of the same order
         amount ${types.int8},
         heartbeat_at BIGINT, -- lease: refreshed ~1s while a live pod awaits the charge response
+        subscription_id ${types.string}, -- set for renew claims; null for checkout claims
+        workspace_uuid ${types.string}, -- set for checkout claims
+        order_fingerprint ${types.string},
 
         created_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
         updated_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
 
-        CONSTRAINT payment_intent_pk PRIMARY KEY (id),
-        CONSTRAINT payment_intent_sub_period_unique UNIQUE (subscription_id, period_end),
-        CONSTRAINT payment_intent_subscription_fk FOREIGN KEY (subscription_id) REFERENCES ${ns}.subscription(id)
+        CONSTRAINT payment_intent_pk PRIMARY KEY (id)
     );
 
-    CREATE INDEX IF NOT EXISTS payment_intent_subscription_idx ON ${ns}.payment_intent (subscription_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS payment_intent_claim_key_unique ON ${ns}.payment_intent (claim_key);
+    CREATE INDEX IF NOT EXISTS payment_intent_payment_id_idx ON ${ns}.payment_intent (payment_id);
     `
   ]
 }

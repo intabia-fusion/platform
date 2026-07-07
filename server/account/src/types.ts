@@ -321,18 +321,21 @@ export type SubscriptionData = Omit<Subscription, 'createdOn' | 'updatedOn'>
 
 export type PaymentIntentStatus = 'pending' | 'charged' | 'failed'
 
-// One charge attempt per (subscription, periodEnd). The unique (subscriptionId, periodEnd) makes
-// claiming a charge atomic across pods/replicas/rolling-updates, so a concurrent or restarted
-// renewal cannot double-charge: a second claim for the same period hits the existing row instead.
+// One claim per claimKey. The unique claimKey makes claiming atomic across pods, so concurrent
+// renewals/checkouts can't double-charge — a second claim hits the existing row instead.
 export interface PaymentIntent {
   id: string
-  subscriptionId: string
-  periodEnd: Timestamp // the subscription period this charge renews (dedup key)
+  claimKey: string // dedup key: 'renew:<sub>:<period>' | 'checkout:<ws>:<type>'
   provider: string
   status: PaymentIntentStatus
-  paymentId?: string // provider charge id, set once the charge is issued
+  paymentId?: string // provider charge id, set once the charge is issued; webhook links back here
+  paymentUrl?: string // checkout: saved payment URL, reused on repeated checkout
   amount?: number
   heartbeatAt?: Timestamp // lease: refreshed ~1s while a live pod awaits the charge response
+  // context columns (nullable; which one is set depends on the claim kind):
+  subscriptionId?: string // renew: set; checkout: undefined
+  workspaceUuid?: WorkspaceUuid // checkout: set; renew: undefined
+  orderFingerprint?: string // checkout: 'plan:seats:period', reuse URL only on an exact order match
   createdOn: Timestamp
   updatedOn: Timestamp
 }
@@ -435,19 +438,21 @@ export interface AccountDB {
   batchWorkspaceBadgeStatuses: (
     data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>
   ) => Promise<void>
-  // Atomically claim a charge for (subscriptionId, periodEnd). Returns the existing or newly created
-  // intent plus whether THIS caller created it. Only the creator may issue the charge — concurrent
-  // callers (other pods/replicas/rolling-update) get claimed=false and must not charge.
-  claimChargeIntent: (
-    subscriptionId: string,
-    periodEnd: Timestamp,
+  // Atomically claim by claimKey. Returns the intent + whether THIS caller created it (claimed).
+  // Only the creator may charge; concurrent callers get claimed=false and must not charge.
+  claimIntent: (
+    claimKey: string,
     provider: string,
-    amount?: number
+    ctx?: { subscriptionId?: string, workspaceUuid?: WorkspaceUuid, amount?: number, orderFingerprint?: string }
   ) => Promise<{ claimed: boolean, intent: PaymentIntent }>
   // Refresh the lease while a charge is in flight (the claimer is still alive).
   heartbeatChargeIntent: (intentId: string) => Promise<void>
   // Take over an orphaned pending intent whose lease expired. Atomic — only one pod wins.
   reclaimStaleChargeIntent: (intentId: string, leaseMs: number) => Promise<boolean>
+  // Link a checkout intent to the issued charge (payment_id) and save its URL for reuse.
+  setIntentPayment: (intentId: string, paymentId: string, paymentUrl?: string) => Promise<void>
+  // Release a checkout claim once the webhook reaches a terminal status
+  deleteCheckoutIntentByPaymentId: (paymentId: string, provider: string) => Promise<void>
 }
 
 export interface DbCollection<T> {

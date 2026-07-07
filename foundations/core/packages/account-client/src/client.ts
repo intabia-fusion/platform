@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -258,15 +259,16 @@ export interface AccountClient {
   getAllSubscriptions: () => Promise<SubscriptionInfo[]>
   getSubscriptionByProviderId: (provider: string, providerSubscriptionId: string) => Promise<Subscription | null>
   getSubscriptionsByProvider: (provider: string, statuses?: string[]) => Promise<Subscription[]>
-  claimChargeIntent: (
-    subscriptionId: string,
-    periodEnd: number,
+  claimIntent: (
+    claimKey: string,
     provider: string,
-    amount?: number
+    ctx?: { subscriptionId?: string, workspaceUuid?: WorkspaceUuid, amount?: number, orderFingerprint?: string }
   ) => Promise<{ claimed: boolean, intent: PaymentIntent }>
   markChargeIntent: (intentId: string, status: 'charged' | 'failed', paymentId?: string) => Promise<void>
   heartbeatChargeIntent: (intentId: string) => Promise<void>
   reclaimStaleChargeIntent: (intentId: string, leaseMs: number) => Promise<boolean>
+  setIntentPayment: (intentId: string, paymentId: string, paymentUrl?: string) => Promise<void>
+  deleteCheckoutIntentByPaymentId: (paymentId: string, provider: string) => Promise<void>
   getSubscriptionById: (subscriptionId: string) => Promise<Subscription | null>
   upsertSubscription: (subscription: SubscriptionData) => Promise<void>
   adminCreateSubscription: (params: {
@@ -1346,19 +1348,20 @@ class AccountClientImpl implements AccountClient {
     })
   }
 
-  async claimChargeIntent (
-    subscriptionId: string,
-    periodEnd: number,
+  async claimIntent (
+    claimKey: string,
     provider: string,
-    amount?: number
+    ctx?: { subscriptionId?: string, workspaceUuid?: WorkspaceUuid, amount?: number, orderFingerprint?: string }
   ): Promise<{ claimed: boolean, intent: PaymentIntent }> {
     return await this._rpc({
-      method: 'claimChargeIntent',
+      method: 'claimIntent',
       params: {
-        subscriptionId,
-        periodEnd,
+        claimKey,
         provider,
-        amount
+        subscriptionId: ctx?.subscriptionId,
+        workspaceUuid: ctx?.workspaceUuid,
+        amount: ctx?.amount,
+        orderFingerprint: ctx?.orderFingerprint
       }
     })
   }
@@ -1385,6 +1388,20 @@ class AccountClientImpl implements AccountClient {
     return await this._rpc({
       method: 'reclaimStaleChargeIntent',
       params: { intentId, leaseMs }
+    })
+  }
+
+  async setIntentPayment (intentId: string, paymentId: string, paymentUrl?: string): Promise<void> {
+    await this._rpc({
+      method: 'setIntentPayment',
+      params: { intentId, paymentId, paymentUrl }
+    })
+  }
+
+  async deleteCheckoutIntentByPaymentId (paymentId: string, provider: string): Promise<void> {
+    await this._rpc({
+      method: 'deleteCheckoutIntentByPaymentId',
+      params: { paymentId, provider }
     })
   }
 

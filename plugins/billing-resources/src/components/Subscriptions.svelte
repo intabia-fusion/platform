@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,11 +15,16 @@
 -->
 <script lang="ts">
   import { type SubscriptionData, SubscriptionStatus, SubscriptionType } from '@hcengineering/account-client'
-  import { type SubscribeRequest, type CheckoutStatus, type BillingPeriod } from '@hcengineering/payment-client'
+  import {
+    type SubscribeRequest,
+    type CheckoutStatus,
+    type BillingPeriod,
+    PaymentError
+  } from '@hcengineering/payment-client'
   import { type PlanItem, type PlanConfig, type PackageItem } from '@hcengineering/billing'
   import { getMetadata, translate, getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { MessageBox, getClient } from '@hcengineering/presentation'
-  import { UsageStatus } from '@hcengineering/core'
+  import { UsageStatus, type WorkspaceUuid, getCurrentAccount } from '@hcengineering/core'
   import {
     IconCheckmark,
     IconStorage,
@@ -57,6 +63,23 @@
 
   let currentSubscription: SubscriptionData | undefined = undefined
   let currentPackageSubscription: SubscriptionData | undefined = undefined
+  let allSubscriptions: SubscriptionData[] = []
+
+  // Disable pay buttons if another user is paying now
+  const OTHER_CHECKOUT_FALLBACK_TTL_MS = 15 * 60 * 1000
+  function otherCheckoutActive (type: SubscriptionType): boolean {
+    const myUuid = getCurrentAccount().uuid
+    const now = Date.now()
+    return allSubscriptions.some((s) => {
+      if (s.type !== type || s.providerData?.pending !== true || s.accountUuid === myUuid) return false
+      const expiresAt = s.providerData?.linkExpiresAt as number | undefined
+      if (expiresAt !== undefined) return now < expiresAt
+      return now - ((s.providerData?.modifiedAt as number) ?? 0) < OTHER_CHECKOUT_FALLBACK_TTL_MS
+    })
+  }
+  $: otherTierCheckoutActive = otherCheckoutActive(SubscriptionType.Tier) && allSubscriptions.length >= 0
+  $: otherPackageCheckoutActive = otherCheckoutActive(SubscriptionType.Package) && allSubscriptions.length >= 0
+
   // Plan key may be absent from the config (e.g. legacy plan) - fall back to the raw key for display.
   $: currentPlan =
     currentSubscription != null ? (plans[currentSubscription.plan] ?? currentSubscription.plan) : undefined
@@ -96,6 +119,53 @@
     }
   }
 
+  // A concurrent payment request already exists, waiting for PaymentUrl from tbank
+  const CHECKOUT_INFLIGHT_RETRIES = 3
+  const CHECKOUT_INFLIGHT_DELAY = 1000
+
+  // Handle conflict reasons on update plan
+  async function handleCheckoutError (error: unknown, forceRetry: () => Promise<void>): Promise<boolean> {
+    if (!(error instanceof PaymentError)) return false
+    if (error.reason === 'other_checkout_active') {
+      showPopup(MessageBox, {
+        label: plugin.string.OtherCheckoutActiveTitle,
+        message: plugin.string.OtherCheckoutActiveMessage,
+        okLabel: plugin.string.CancelAndSwitch,
+        action: forceRetry
+      })
+      return true
+    }
+    if (error.reason === 'already_paid') {
+      addNotification(
+        await translate(plugin.string.CheckoutAlreadyPaidTitle, {}, $themeStore.language),
+        await translate(plugin.string.CheckoutAlreadyPaidMessage, {}, $themeStore.language),
+        BillingErrorNotification,
+        undefined,
+        NotificationSeverity.Info
+      )
+      return true
+    }
+    return false
+  }
+
+  // Create a checkout, handling claim-conflict reasons
+  async function createCheckout (workspace: WorkspaceUuid, request: SubscribeRequest, attempt = 0): Promise<void> {
+    if (paymentClient == null) return
+    try {
+      await applyCheckout(await paymentClient.createSubscription(workspace, request))
+    } catch (error) {
+      if (error instanceof PaymentError && error.reason === 'in_flight' && attempt < CHECKOUT_INFLIGHT_RETRIES) {
+        await new Promise((resolve) => setTimeout(resolve, CHECKOUT_INFLIGHT_DELAY))
+        await createCheckout(workspace, request, attempt + 1)
+        return
+      }
+      const handled = await handleCheckoutError(error, async () => {
+        await createCheckout(workspace, { ...request, force: true })
+      })
+      if (!handled) throw error
+    }
+  }
+
   async function subscribe (plan: string, quantity?: number): Promise<void> {
     if (paymentClient == null) {
       return
@@ -109,7 +179,7 @@
 
     try {
       const request: SubscribeRequest = { type: SubscriptionType.Tier, plan, quantity, period: paymentPeriod }
-      await applyCheckout(await paymentClient.createSubscription(workspace, request))
+      await createCheckout(workspace, request)
     } catch (error) {
       console.error('Error while upgrading plan:', error)
       await showErrorNotification()
@@ -184,7 +254,7 @@
 
     try {
       const request: SubscribeRequest = { type: SubscriptionType.Package, plan }
-      await applyCheckout(await paymentClient.createSubscription(workspace, request))
+      await createCheckout(workspace, request)
     } catch (error) {
       console.error('Error subscribing to package:', error)
       await showErrorNotification()
@@ -316,7 +386,7 @@
     }
   }
 
-  async function executeUpdate (newPlan: string, quantity?: number): Promise<void> {
+  async function executeUpdate (newPlan: string, quantity?: number, force?: boolean): Promise<void> {
     if (paymentClient == null) {
       return
     }
@@ -339,7 +409,8 @@
         currentSubscription.id,
         newPlan,
         quantity,
-        paymentPeriod
+        paymentPeriod,
+        force
       )
 
       // CheckoutResponse: instant provider already activated (refetch), real one needs a checkout.
@@ -351,9 +422,14 @@
       // It's a SubscriptionData - direct update successful
       currentSubscription = updateResult
     } catch (error) {
-      console.error('Error updating subscription:', error)
       currentSubscription = snapshot
-      await showErrorNotification()
+      const handled = await handleCheckoutError(error, async () => {
+        await executeUpdate(newPlan, quantity, true)
+      })
+      if (!handled) {
+        console.error('Error updating subscription:', error)
+        await showErrorNotification()
+      }
     } finally {
       isUpdating = false
     }
@@ -525,6 +601,7 @@
 
       // Include non-active subscriptions (e.g. past_due) so the payment-failed banner can be shown.
       const subscriptions = await accountClient.getSubscriptions(undefined, false)
+      allSubscriptions = subscriptions
       currentSubscription = pickDisplaySubscription(subscriptions, SubscriptionType.Tier)
       currentPackageSubscription = pickDisplaySubscription(subscriptions, SubscriptionType.Package)
     } catch (err) {
@@ -982,7 +1059,11 @@
                         isUpdating ||
                         isCanceling ||
                         isUncanceling ||
-                        isRetrying}
+                        isRetrying ||
+                        otherTierCheckoutActive}
+                      showTooltip={otherTierCheckoutActive
+                        ? { label: plugin.string.OtherCheckoutActiveTooltip }
+                        : undefined}
                       on:click={() => {
                         void handlePlanChange(planKey, planItem)
                       }}
@@ -1028,7 +1109,14 @@
                             label={isConnected ? plugin.string.Disconnect : plugin.string.Connect}
                             size={'large'}
                             kind={isConnected ? 'regular' : 'secondary'}
-                            disabled={loading || isCheckoutPolling || isUpdating || (!isConnected && !isEligible)}
+                            disabled={loading ||
+                              isCheckoutPolling ||
+                              isUpdating ||
+                              (!isConnected && !isEligible) ||
+                              (!isConnected && otherPackageCheckoutActive)}
+                            showTooltip={!isConnected && otherPackageCheckoutActive
+                              ? { label: plugin.string.OtherCheckoutActiveTooltip }
+                              : undefined}
                             on:click={() => {
                               void handleChangePackage(pkgKey)
                             }}

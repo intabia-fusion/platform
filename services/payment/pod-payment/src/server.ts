@@ -40,7 +40,7 @@ import { Config } from './config'
 import { ownsSubscription, withAdmin, withLoginInfo, withOwner, withToken, type RequestWithAuth } from './middleware'
 import { PaymentProviderFactory } from './factory'
 import type { CheckoutResponse, PaymentProvider, SubscriptionPublisher } from './providers'
-import { SubscribeRequest } from './providers'
+import { ProviderHttpError, SubscribeRequest } from './providers'
 import { startActiveSubscriptionReconciliation } from './reconciliation'
 import { getAccountClient } from './utils'
 import yaml from 'js-yaml'
@@ -456,6 +456,11 @@ export async function createServer (
             )
           } catch (err) {
             ctx.error('Failed to create subscription at provider', { err })
+            // Relay provider status + reason (e.g. 409 other_checkout_active); else generic 500.
+            if (err instanceof ProviderHttpError) {
+              res.status(err.status).json({ reason: err.reason, error: 'Failed to create subscription at provider' })
+              return
+            }
             res.status(500).json({ error: 'Failed to create subscription at provider' })
             return
           }
@@ -651,7 +656,7 @@ export async function createServer (
         'update-plan',
         async (ctx) => {
           const subscriptionId = req.params.subscriptionId
-          const { plan, quantity: requestedQuantity, period } = req.body
+          const { plan, quantity: requestedQuantity, period, force } = req.body
           const loginInfo = req.loginInfo as WorkspaceLoginInfo
 
           if (plan === undefined || typeof plan !== 'string') {
@@ -734,7 +739,7 @@ export async function createServer (
               plan
             })
             try {
-              const request: SubscribeRequest = { type: subscription.type, plan, quantity, period }
+              const request: SubscribeRequest = { type: subscription.type, plan, quantity, period, force }
               const checkoutResponse = await provider.createSubscription(
                 ctx,
                 request,
@@ -752,6 +757,11 @@ export async function createServer (
               res.status(200).json(checkoutResponse)
             } catch (err) {
               ctx.error('Failed to create subscription at provider', { err })
+              // Relay provider status + reason (e.g. 409 other_checkout_active); else generic 500.
+              if (err instanceof ProviderHttpError) {
+                res.status(err.status).json({ reason: err.reason, error: 'Failed to create subscription at provider' })
+                return
+              }
               res.status(500).json({ error: 'Failed to create subscription at provider' })
             }
             return
@@ -773,6 +783,11 @@ export async function createServer (
             )
           } catch (err) {
             ctx.error('Failed to update subscription at provider', { err })
+            // Relay provider status + reason (e.g. 409 other_checkout_active); else generic 500.
+            if (err instanceof ProviderHttpError) {
+              res.status(err.status).json({ reason: err.reason, error: 'Failed to update subscription at provider' })
+              return
+            }
             res.status(500).json({ error: 'Failed to update subscription at provider' })
             return
           }

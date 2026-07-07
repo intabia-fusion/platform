@@ -26,6 +26,7 @@ export interface CreateSubscriptionRequest {
   customerEmail?: string
   quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
   period?: BillingPeriod // Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
+  force?: boolean // Switch tariff: cancel a different pending checkout for this type, then open the new one.
 }
 
 export interface UpdatePlanRequest {
@@ -43,7 +44,7 @@ export interface TbankWebhookNotification {
   TerminalKey: string
   OrderId: string
   Success: boolean
-  Status: 'AUTHORIZED' | 'CONFIRMED' | 'REJECTED' | 'REVERSED' | 'REFUNDED'
+  Status: 'AUTHORIZED' | 'CONFIRMED' | 'REJECTED' | 'REVERSED' | 'REFUNDED' | 'DEADLINE_EXPIRED' | 'CANCELED'
   PaymentId: string
   ErrorCode: string
   Amount: number

@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -620,7 +621,7 @@ export class PostgresAccountDB implements AccountDB {
     this.paymentIntent = new PostgresDbCollection<PaymentIntent, 'id'>('payment_intent', client, {
       ns,
       idKey: 'id',
-      timestampFields: ['periodEnd', 'heartbeatAt', 'createdOn', 'updatedOn'],
+      timestampFields: ['heartbeatAt', 'createdOn', 'updatedOn'],
       withRetryClient
     })
     this.workspacePermission = new PostgresDbCollection<WorkspacePermission>('workspace_permissions', client, {
@@ -1437,31 +1438,54 @@ export class PostgresAccountDB implements AccountDB {
     await this.accountWorkspaceBadgeStatus.unsafe(sql, values)
   }
 
-  async claimChargeIntent (
-    subscriptionId: string,
-    periodEnd: number,
+  async claimIntent (
+    claimKey: string,
     provider: string,
-    amount?: number
+    ctx?: { subscriptionId?: string, workspaceUuid?: string, amount?: number, orderFingerprint?: string }
   ): Promise<{ claimed: boolean, intent: PaymentIntent }> {
     const table = this.paymentIntent.getTableName()
-    // Atomic claim: insert, or do nothing if (subscription_id, period_end) already exists.
+    // Atomic claim: insert, or do nothing if claim_key already exists.
     // Works identically on CockroachDB and PostgreSQL (ON CONFLICT ... DO NOTHING RETURNING).
     const inserted = await this.paymentIntent.unsafe(
-      `INSERT INTO ${table} (subscription_id, period_end, provider, status, amount, heartbeat_at)
-       VALUES ($1, $2, $3, 'pending', $4, current_epoch_ms())
-       ON CONFLICT (subscription_id, period_end) DO NOTHING
+      `INSERT INTO ${table} (claim_key, provider, status, amount, heartbeat_at, subscription_id, workspace_uuid, order_fingerprint)
+       VALUES ($1, $2, 'pending', $3, current_epoch_ms(), $4, $5, $6)
+       ON CONFLICT (claim_key) DO NOTHING
        RETURNING *`,
-      [subscriptionId, periodEnd, provider, amount ?? null]
+      [
+        claimKey,
+        provider,
+        ctx?.amount ?? null,
+        ctx?.subscriptionId ?? null,
+        ctx?.workspaceUuid ?? null,
+        ctx?.orderFingerprint ?? null
+      ]
     )
     if (inserted.length > 0) {
       return { claimed: true, intent: convertKeysToCamelCase(inserted[0]) as PaymentIntent }
     }
-    // Conflict: another caller already claimed this period — return the existing intent.
-    const existing = await this.paymentIntent.unsafe(
-      `SELECT * FROM ${table} WHERE subscription_id = $1 AND period_end = $2`,
-      [subscriptionId, periodEnd]
-    )
+    // Conflict: another caller already claimed this key — return the existing intent.
+    const existing = await this.paymentIntent.unsafe(`SELECT * FROM ${table} WHERE claim_key = $1`, [claimKey])
     return { claimed: false, intent: convertKeysToCamelCase(existing[0]) as PaymentIntent }
+  }
+
+  // Link a checkout intent to its charge (payment_id) + save URL for reuse; webhook releases by payment_id.
+  async setIntentPayment (intentId: string, paymentId: string, paymentUrl?: string): Promise<void> {
+    const table = this.paymentIntent.getTableName()
+    await this.paymentIntent.unsafe(
+      `UPDATE ${table} SET payment_id = $2, payment_url = $3, updated_on = current_epoch_ms()
+       WHERE id = $1`,
+      [intentId, paymentId, paymentUrl ?? null]
+    )
+  }
+
+  // Release a checkout claim (scoped to 'checkout:%' so a renew ledger row is never deleted). Idempotent.
+  async deleteCheckoutIntentByPaymentId (paymentId: string, provider: string): Promise<void> {
+    const table = this.paymentIntent.getTableName()
+    await this.paymentIntent.unsafe(
+      `DELETE FROM ${table}
+       WHERE payment_id = $1 AND provider = $2 AND claim_key LIKE 'checkout:%'`,
+      [paymentId, provider]
+    )
   }
 
   // Lease heartbeat: refresh while the charge is in flight so other pods see the claimer is alive.

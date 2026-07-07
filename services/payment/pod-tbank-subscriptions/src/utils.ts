@@ -47,6 +47,14 @@ export function nextPeriodEnd (fromMs: number, period?: BillingPeriod): number {
   return addMonths(fromMs, period === 'yearly' ? 12 : 1)
 }
 
+/**
+ * Format a timestamp as a TBank RedirectDueDate: ISO 8601 with an explicit offset
+ * (yyyy-MM-ddTHH:mm:ss+00:00). We emit UTC, so the offset is always +00:00.
+ */
+export function formatTbankDueDate (ms: number): string {
+  return new Date(ms).toISOString().replace(/\.\d{3}Z$/, '+00:00')
+}
+
 export function verifyWebhookToken (
   tbank: TbankPayments,
   notification: Record<string, any>,
@@ -63,6 +71,14 @@ export function verifyWebhookToken (
 
 export function getPlanKey (type: string, plan: string): string {
   return `${plan}@${type}`
+}
+
+/**
+ * Fingerprint of the exact order (plan:seats:period): same fingerprint = same payable link (reuse),
+ * different = another plan (no reuse). Normalized so undefined seats/period equal the defaults.
+ */
+export function orderFingerprint (plan: string, seats: number, period?: BillingPeriod): string {
+  return `${plan}:${seats}:${period ?? 'monthly'}`
 }
 
 /**

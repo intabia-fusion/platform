@@ -128,7 +128,7 @@ async function renewSubscription (
     ctx.error('Cannot renew subscription without periodEnd', { subId: sub.id })
     return
   }
-  const claim = await storage.claimCharge(sub.id, sub.periodEnd, sub.amount)
+  const claim = await storage.claimRenewal(sub.id, sub.periodEnd, sub.amount)
 
   if (!claim.claimed) {
     if (claim.status === 'charged') {

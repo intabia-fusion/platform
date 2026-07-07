@@ -1,5 +1,6 @@
 //
 // Copyright © 2022-2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -1231,21 +1232,22 @@ export async function getSubscriptionsByProvider (
 }
 
 /**
- * Atomically claim the charge for (subscriptionId, periodEnd). Returns whether THIS caller created
- * the intent. Only the creator should issue the charge; concurrent pods/replicas get claimed=false.
- * This is the cross-pod dedup that survives replicas and rolling updates (DB unique constraint).
+ * Atomically claim by claimKey (DB unique constraint). Returns whether THIS caller created the
+ * intent; only the creator may charge. Cross-pod dedup surviving replicas and rolling updates.
  * @public
  */
-export async function claimChargeIntent (
+export async function claimIntent (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
   token: string,
   params: {
-    subscriptionId: string
-    periodEnd: number
+    claimKey: string
     provider: string
+    subscriptionId?: string
+    workspaceUuid?: WorkspaceUuid
     amount?: number
+    orderFingerprint?: string
   }
 ): Promise<{ claimed: boolean, intent: PaymentIntent }> {
   const { extra } = decodeTokenVerbose(ctx, token)
@@ -1254,8 +1256,44 @@ export async function claimChargeIntent (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  const { subscriptionId, periodEnd, provider, amount } = params
-  return await db.claimChargeIntent(subscriptionId, periodEnd, provider, amount)
+  const { claimKey, provider, subscriptionId, workspaceUuid, amount, orderFingerprint } = params
+  return await db.claimIntent(claimKey, provider, { subscriptionId, workspaceUuid, amount, orderFingerprint })
+}
+
+/**
+ * Link a checkout intent to its issued charge (payment id) and save the payment URL for reuse.
+ * @public
+ */
+export async function setIntentPayment (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { intentId: string, paymentId: string, paymentUrl?: string }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  await db.setIntentPayment(params.intentId, params.paymentId, params.paymentUrl)
+}
+
+/**
+ * Release a checkout claim once its charge reaches a terminal webhook status. Idempotent.
+ * @public
+ */
+export async function deleteCheckoutIntentByPaymentId (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { paymentId: string, provider: string }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  await db.deleteCheckoutIntentByPaymentId(params.paymentId, params.provider)
 }
 
 /**
@@ -1496,10 +1534,12 @@ export type AccountServiceMethods =
   | 'findFullSocialIds'
   | 'getSubscriptionByProviderId'
   | 'getSubscriptionsByProvider'
-  | 'claimChargeIntent'
+  | 'claimIntent'
   | 'markChargeIntent'
   | 'heartbeatChargeIntent'
   | 'reclaimStaleChargeIntent'
+  | 'setIntentPayment'
+  | 'deleteCheckoutIntentByPaymentId'
   | 'upsertSubscription'
   | 'getAccountWorkspaceBadgeStatuses'
   | 'setWorkspaceBadgeStatuses'
@@ -1540,10 +1580,12 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     listAccounts: wrap(listAccounts),
     getSubscriptionByProviderId: wrap(getSubscriptionByProviderId),
     getSubscriptionsByProvider: wrap(getSubscriptionsByProvider),
-    claimChargeIntent: wrap(claimChargeIntent),
+    claimIntent: wrap(claimIntent),
     markChargeIntent: wrap(markChargeIntent),
     heartbeatChargeIntent: wrap(heartbeatChargeIntent),
     reclaimStaleChargeIntent: wrap(reclaimStaleChargeIntent),
+    setIntentPayment: wrap(setIntentPayment),
+    deleteCheckoutIntentByPaymentId: wrap(deleteCheckoutIntentByPaymentId),
     upsertSubscription: wrap(upsertSubscription),
     getAccountWorkspaceBadgeStatuses: wrap(getAccountWorkspaceBadgeStatuses),
     setWorkspaceBadgeStatuses: wrap(setWorkspaceBadgeStatuses),

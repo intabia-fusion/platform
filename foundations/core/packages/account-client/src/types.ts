@@ -276,18 +276,23 @@ export interface AccountWorkspaceBadgeStatus {
 export type PaymentIntentStatus = 'pending' | 'charged' | 'failed'
 
 /**
- * One charge attempt per (subscriptionId, periodEnd). The unique (subscriptionId, periodEnd)
- * constraint makes claiming a charge atomic across pods/replicas/rolling-updates.
+ * One claim per claimKey. The unique claimKey makes claiming atomic across pods/replicas/
+ * rolling-updates. claimKey is 'renew:<subscriptionId>:<periodEnd>' (one charge per subscription
+ * period) or 'checkout:<workspaceUuid>:<type>' (one pending checkout per workspace + plan type).
  */
 export interface PaymentIntent {
   id: string
-  subscriptionId: string
-  periodEnd: number
+  claimKey: string
   provider: string
   status: PaymentIntentStatus
   paymentId?: string
+  paymentUrl?: string
   amount?: number
   heartbeatAt?: number
+  // context columns (nullable; which one is set depends on the claim kind):
+  subscriptionId?: string
+  workspaceUuid?: WorkspaceUuid
+  orderFingerprint?: string // checkout: 'plan:seats:period', reuse URL only on an exact order match
   createdOn: number
   updatedOn: number
 }
