@@ -29,8 +29,7 @@ const checkoutKey = (workspaceUuid: string, type: string): string => `checkout:$
 
 describe('payment-intent-real', () => {
   const cockroachDB: string = process.env.DB_URL ?? 'postgresql://root@localhost:26258/defaultdb?sslmode=disable'
-  // Flavor drives the migration SQL (cockroach vs postgres). Postgres builds FKs synchronously, so it
-  // avoids the cockroach async-schema-change flakiness on the v30 FK / v31 drop.
+  // Flavor drives the migration SQL (cockroach vs postgres).
   const dbFlavor: DBFlavor = (process.env.DB_FLAVOR as DBFlavor | undefined) ?? 'cockroach'
 
   let crDbUri = cockroachDB

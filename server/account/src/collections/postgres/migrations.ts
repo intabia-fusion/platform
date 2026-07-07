@@ -88,8 +88,7 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV27Migration(ns, flavor),
     getV28Migration(ns, flavor),
     getV29Migration(ns, flavor),
-    getV30Migration(ns, flavor),
-    getV31Migration(ns, flavor)
+    getV30Migration(ns, flavor)
   ]
 }
 
@@ -896,89 +895,32 @@ function getV30Migration (ns: string, flavor: DBFlavor): [string, string] {
     'account_db_v30_payment_intent_table',
     `
     /* ======= P A Y M E N T   I N T E N T ======= */
-    /* One charge attempt per (subscription, period_end). The unique constraint makes claiming a */
-    /* charge atomic across pods/replicas/rolling-updates: a second claim for the same period hits */
-    /* the existing row (INSERT ... ON CONFLICT DO NOTHING) instead of issuing another charge. */
+    /* Atomic claim keyed by claim_key (INSERT ... ON CONFLICT DO NOTHING) across pods/replicas:
+         renew:<sub>:<periodEnd>  — one charge per subscription period
+         checkout:<ws>:<type>     — one pending checkout per (workspace, plan type)
+       order_fingerprint ('plan:seats:period') is the exact order behind a checkout claim; a loser
+       reuses the URL only on a match, else 409. No FK — a checkout claim has no subscription yet. */
 
     CREATE TABLE IF NOT EXISTS ${ns}.payment_intent (
         id ${types.string} NOT NULL DEFAULT gen_random_uuid()::TEXT,
-        subscription_id ${types.string} NOT NULL,
-        period_end BIGINT NOT NULL, -- the subscription period this charge renews (dedup key)
+        claim_key ${types.string} NOT NULL,
         provider ${types.string} NOT NULL,
         status ${types.string} NOT NULL DEFAULT 'pending', -- pending | charged | failed
         payment_id ${types.string}, -- provider charge id, set once the charge is issued
+        payment_url ${types.string}, -- checkout URL, reused by repeat callers of the same order
         amount ${types.int8},
         heartbeat_at BIGINT, -- lease: refreshed ~1s while a live pod awaits the charge response
+        subscription_id ${types.string}, -- set for renew claims; null for checkout claims
+        workspace_uuid ${types.string}, -- set for checkout claims
+        order_fingerprint ${types.string},
 
         created_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
         updated_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
 
-        CONSTRAINT payment_intent_pk PRIMARY KEY (id),
-        CONSTRAINT payment_intent_sub_period_unique UNIQUE (subscription_id, period_end),
-        CONSTRAINT payment_intent_subscription_fk FOREIGN KEY (subscription_id) REFERENCES ${ns}.subscription(id)
-    );
-
-    CREATE INDEX IF NOT EXISTS payment_intent_subscription_idx ON ${ns}.payment_intent (subscription_id);
-    `
-  ]
-}
-
-function getV31Migration (ns: string, flavor: DBFlavor): [string, string] {
-  const types = dbTypes[flavor]
-  // crdb issue 42840 - in CockroachDB we need to drop index first
-  const dropSubPeriodUnique =
-    flavor === 'cockroach'
-      ? `DROP INDEX IF EXISTS ${ns}.payment_intent_sub_period_unique CASCADE;`
-      : `ALTER TABLE ${ns}.payment_intent DROP CONSTRAINT IF EXISTS payment_intent_sub_period_unique;`
-  return [
-    'account_db_v31_payment_intent_claim_key',
-    `
-    /* v31: unify the atomic-claim key. (subscription_id, period_end) -> claim_key string:
-         renew:<sub>:<periodEnd>  — one charge per subscription period
-         checkout:<ws>:<type>     — one pending checkout per (workspace, plan type)
-       ALTER + backfill in place, NOT drop: a renew row is a per-period ledger; dropping it would
-       let the next scheduler tick re-charge a paid period. FK removed (checkout has no subscription
-       yet). CREATE handles a fresh DB, ALTERs an existing v30 table; both idempotent. */
-    CREATE TABLE IF NOT EXISTS ${ns}.payment_intent (
-        id ${types.string} NOT NULL DEFAULT gen_random_uuid()::TEXT,
-        provider ${types.string} NOT NULL,
-        status ${types.string} NOT NULL DEFAULT 'pending',
-        payment_id ${types.string},
-        amount ${types.int8},
-        heartbeat_at BIGINT,
-        subscription_id ${types.string},
-        created_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
-        updated_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
         CONSTRAINT payment_intent_pk PRIMARY KEY (id)
     );
 
-    /* Drop the old key + FK; a checkout claim has no subscription, so neither can hold anymore. */
-    ALTER TABLE ${ns}.payment_intent DROP CONSTRAINT IF EXISTS payment_intent_subscription_fk;
-    ${dropSubPeriodUnique}
-    DROP INDEX IF EXISTS ${ns}.payment_intent_subscription_idx;
-
-    /* New columns (nullable). order_fingerprint ('plan:seats:period') = the exact order behind a
-       checkout claim; a loser reuses the URL only on a match (claim key stays coarse), else 409. */
-    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS claim_key ${types.string};
-    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS payment_url ${types.string};
-    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS workspace_uuid ${types.string};
-    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS order_fingerprint ${types.string};
-
-    /* Backfill claim_key from the old columns. claim_key IS NULL guard makes a re-run a no-op.
-       period_end kept (not dropped) so this UPDATE stays re-runnable on retry. */
-    UPDATE ${ns}.payment_intent
-       SET claim_key = 'renew:' || subscription_id || ':' || period_end
-     WHERE claim_key IS NULL AND subscription_id IS NOT NULL AND period_end IS NOT NULL;
-
-    /* subscription_id / period_end are now nullable context (checkout rows have neither). */
-    ALTER TABLE ${ns}.payment_intent ALTER COLUMN subscription_id DROP NOT NULL;
-    ALTER TABLE ${ns}.payment_intent ALTER COLUMN period_end DROP NOT NULL;
-
-    /* UNIQUE INDEX (not ADD CONSTRAINT) so IF NOT EXISTS works on both flavors -> re-run safe. */
-    ALTER TABLE ${ns}.payment_intent ALTER COLUMN claim_key SET NOT NULL;
     CREATE UNIQUE INDEX IF NOT EXISTS payment_intent_claim_key_unique ON ${ns}.payment_intent (claim_key);
-
-    /* webhook releases a checkout claim by payment_id on confirm/reject: */
     CREATE INDEX IF NOT EXISTS payment_intent_payment_id_idx ON ${ns}.payment_intent (payment_id);
     `
   ]
