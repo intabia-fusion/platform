@@ -15,32 +15,19 @@
 
 import { EXPECTED_SCHEMA_VERSION, getDBClient } from '@hcengineering/postgres'
 import { withRetry, DelayStrategyFactory } from '@hcengineering/retry'
-import * as fs from 'fs'
 
 import config from './config'
-import { resolveMigrationsDir, setupCtx } from './utils'
+import { getActiveMigrationFiles, getCleanMigrationName, resolveMigrationsDir, setupCtx } from './utils'
 import {
   applyMigration,
   ensureSystemSchema,
   getAppliedMigrations,
+  getDbFlavor,
   isDatabaseEmpty,
   isUpToDate,
   markAllAsApplied,
   updateSchemaVersion
 } from './db'
-
-const legacyMigrations = [
-  '0001_allSchema.sql',
-  '0002_attachment.sql',
-  '0003_calendarSchema.sql',
-  '0004_dncSchema.sql',
-  '0005_eventSchema.sql',
-  '0006_notificationSchema.sql',
-  '0007_spaceSchema.sql',
-  '0008_timeSchema.sql',
-  '0009_txSchema.sql',
-  '0010_uncSchema.sql'
-]
 
 async function main (): Promise<void> {
   const ctx = setupCtx()
@@ -59,13 +46,13 @@ async function main (): Promise<void> {
           return
         }
 
-        const migrationsDir = resolveMigrationsDir()
-        const files = fs
-          .readdirSync(migrationsDir)
-          .filter((f) => f.endsWith('.sql'))
-          .sort()
+        const dbFlavor = await getDbFlavor(sql)
+        ctx.info(`Database flavor detected: ${dbFlavor}`)
 
-        ctx.info(`Found ${files.length} migration files in ${migrationsDir}`)
+        const migrationsDir = resolveMigrationsDir()
+        const files = getActiveMigrationFiles(migrationsDir, dbFlavor)
+
+        ctx.info(`Found ${files.length} active migration files in ${migrationsDir}`)
 
         const isEmpty = await isDatabaseEmpty(sql)
         const appliedSet = await getAppliedMigrations(sql)
@@ -77,17 +64,10 @@ async function main (): Promise<void> {
           return
         }
 
-        if (appliedSet.size === 0) {
-          ctx.info('Existing database without migration history detected. Baselining legacy migrations.')
-
-          await markAllAsApplied(sql, legacyMigrations)
-          legacyMigrations.forEach((f) => appliedSet.add(f))
-        }
-
         ctx.info(`Applied migrations count: ${appliedSet.size}, Total available: ${files.length}`)
 
         for (const file of files) {
-          const cleanName = file.replace(/^\d+_/, '')
+          const cleanName = getCleanMigrationName(file)
           if (appliedSet.has(file) || appliedSet.has(cleanName)) {
             ctx.info(`Migration ${file} is already applied.`)
             continue
