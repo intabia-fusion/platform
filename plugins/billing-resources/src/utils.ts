@@ -257,14 +257,12 @@ export function checkUsageAgainstLimits (
   const storageUsedBytes = usageInfo.usage.storageBytes ?? 0
   const meetingMinutes = usageInfo.usage.meetingMinutes ?? 0
   const membersCount = usageInfo.usage.membersCount ?? 0
-  const projectsCount = usageInfo.usage.projectsCount ?? 0
 
-  const { storageLimit, meetingMinutesLimit, usersLimit, projectsLimit } = calculateLimits(plan, pkg, tierSub, pkgSub)
+  const { storageLimit, meetingMinutesLimit, usersLimit } = calculateLimits(plan, pkg, tierSub, pkgSub)
 
   const usersExceeded = usersLimit > 0 && membersCount > usersLimit
-  const projectsExceeded = projectsLimit > 0 && projectsCount > projectsLimit
 
-  return storageUsedBytes > storageLimit || meetingMinutes > meetingMinutesLimit || usersExceeded || projectsExceeded
+  return storageUsedBytes > storageLimit || meetingMinutes > meetingMinutesLimit || usersExceeded
 }
 
 export function resolveLocale (config: PlanConfig, lang: string): PlanConfig {

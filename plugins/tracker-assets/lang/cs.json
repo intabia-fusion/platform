@@ -40,7 +40,6 @@
     "Canceled": "Zrušeno",
     "CreateProject": "Vytvořit projekt",
     "NewProject": "Nový projekt",
-    "ProjectLimitReached": "Dosažen limit projektů ({limit}). Upgradujte plán pro přidání dalších.",
     "ProjectTitle": "Název projektu",
     "ProjectTitlePlaceholder": "Nový projekt",
     "UsedInIssueIDs": "Použito v ID úkolů",

@@ -26,8 +26,7 @@ export class NewProjectPage extends CommonTrackerPage {
   defaultIssueStatusButton = (): Locator =>
     this.page.locator('div[class*="header"]', { hasText: 'Default issue status' }).locator('xpath=..').locator('button')
 
-  /** Fill the create-project dialog fields without submitting. */
-  async fillProjectFields (data: NewProject): Promise<void> {
+  async createNewProject (data: NewProject): Promise<void> {
     await expect(this.popupHeader()).toBeVisible()
 
     if (data.type != null) {
@@ -47,7 +46,7 @@ export class NewProjectPage extends CommonTrackerPage {
     if (data.iconNumber != null) {
       await this.buttonChooseIcon().click()
     }
-    if (data.private === true) {
+    if (data.private) {
       await this.buttonMakePrivate().click()
     }
     if (data.defaultAssigneeForIssues != null) {
@@ -58,10 +57,7 @@ export class NewProjectPage extends CommonTrackerPage {
       await this.defaultIssueStatusButton().click()
       await this.selectFromDropdown(this.page, data.defaultIssueStatus)
     }
-  }
 
-  async createNewProject (data: NewProject): Promise<void> {
-    await this.fillProjectFields(data)
     await this.buttonCreateProject().click()
   }
 }

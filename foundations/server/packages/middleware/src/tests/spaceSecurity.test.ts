@@ -39,9 +39,6 @@ import type { Middleware, PipelineContext, TxMiddlewareResult } from '@hcenginee
 import { SpaceSecurityMiddleware } from '../spaceSecurity'
 import contact from '@hcengineering/contact'
 
-// Fake concrete space class — kept as a string so the test needs no plugin dependency.
-const projectClass = 'tracker:class:Project' as Ref<Class<Space>>
-
 // Test space class refs
 const testSpaceClass = core.class.Space
 
@@ -83,7 +80,6 @@ function createSpace (
     _class?: Ref<Class<Space>>
     owners?: string[]
     autoJoin?: boolean
-    systemCreated?: boolean
   } = {}
 ): Space {
   return {
@@ -97,7 +93,7 @@ function createSpace (
     members: members as AccountUuid[],
     owners: (opts.owners as AccountUuid[]) ?? [],
     autoJoin: opts.autoJoin,
-    createdBy: opts.systemCreated === true ? core.account.System : ('user1' as any),
+    createdBy: core.account.System,
     modifiedOn: Date.now(),
     modifiedBy: core.account.System
   } satisfies Space
@@ -2203,70 +2199,6 @@ describe('SpaceSecurityMiddleware', () => {
       // whatever the adapter returned. If this assertion ever changes, audit
       // every DbAdapter to confirm it applies space security.
       expect(result).toHaveLength(2)
-    })
-  })
-
-  // SpaceCountsProvider feeds PlanLimitsMiddleware. Only projects are currently limited; every
-  // non-archived space counts by its concrete _class, system-created included (e.g. Default project).
-  describe('space counts provider', () => {
-    function spaceCounts (): Map<Ref<Class<Space>>, number> {
-      // SpaceSecurity registers a SpaceCountsProvider; pull live counts through it.
-      const provider = (pipelineContext.contextVars as any).spaceCountsProvider
-      return provider?.getSpaceCounts() ?? new Map()
-    }
-
-    beforeEach(() => {
-      // tx handling categorizes spaces via isDerived; teach it about our fake projectClass.
-      ;(hierarchy.isDerived as jest.Mock).mockImplementation((_class: any, from: any) => {
-        if (_class === projectClass && from === core.class.Space) return true
-        if (_class === core.class.Space && from === core.class.Space) return true
-        if (_class === testSpaceClass && from === core.class.Space) return true
-        if (_class === core.class.SystemSpace && from === core.class.Space) return true
-        return _class === from
-      })
-    })
-
-    it('should count systemCreated spaces (Default project counts)', async () => {
-      await createMiddleware([
-        createSpace('default', ['user1'], { _class: projectClass, systemCreated: true }),
-        createSpace('proj2', ['user1'], { _class: projectClass, systemCreated: false })
-      ])
-      expect(spaceCounts().get(projectClass)).toBe(2)
-    })
-
-    it('should not count archived spaces', async () => {
-      await createMiddleware([
-        createSpace('proj1', ['user1'], { _class: projectClass }),
-        createSpace('proj2', ['user1'], { _class: projectClass, archived: true })
-      ])
-      expect(spaceCounts().get(projectClass)).toBe(1)
-    })
-
-    it('should update counts on create/remove tx', async () => {
-      const mw = await createMiddleware([createSpace('proj1', ['user1'], { _class: projectClass, owners: ['user1'] })])
-      const account = createAccount('user1')
-      ctx.contextData = createSessionData(account)
-      expect(spaceCounts().get(projectClass)).toBe(1)
-
-      const createTx = txFactory.createTxCreateDoc(
-        projectClass,
-        core.space.Space,
-        {
-          name: 'New',
-          description: '',
-          private: false,
-          archived: false,
-          members: ['user1' as AccountUuid],
-          owners: ['user1' as AccountUuid]
-        },
-        'proj2' as Ref<Space>
-      )
-      await mw.tx(ctx, [createTx])
-      expect(spaceCounts().get(projectClass)).toBe(2)
-
-      const removeTx = txFactory.createTxRemoveDoc(projectClass, core.space.Space, 'proj2' as Ref<Space>)
-      await mw.tx(ctx, [removeTx])
-      expect(spaceCounts().get(projectClass)).toBe(1)
     })
   })
 })

@@ -40,7 +40,6 @@
     "Canceled": "Cancelado",
     "CreateProject": "Crear proyecto",
     "NewProject": "Nuevo proyecto",
-    "ProjectLimitReached": "Límite de proyectos alcanzado ({limit}). Actualice el plan para agregar más.",
     "ProjectTitle": "Título del proyecto",
     "ProjectTitlePlaceholder": "Nuevo proyecto",
     "UsedInIssueIDs": "Utilizado en IDs de tareas",

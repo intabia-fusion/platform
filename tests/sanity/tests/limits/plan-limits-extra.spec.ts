@@ -4,8 +4,6 @@ import { PlatformSetting, PlatformURI, PlatformUserSecond, generateId, getSecond
 import { assignMember, setWorkspacePlanByUuid } from '../API/Billing'
 import { ApiEndpoint } from '../API/Api'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
-import { NewProjectPage } from '../model/tracker/new-project-page'
-import { generateProjectId } from '../tracker/tracker.utils'
 
 // ── A. disk limit (honest upload) ───────────────────────────────────────────
 test.describe('disk limit (honest upload)', () => {
@@ -102,45 +100,6 @@ test.describe('unpaid free fallback', () => {
       await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeVisible({ timeout: 5000 })
       await expect(page.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 5000 })
     }).toPass({ intervals: [2000, 3000, 5000], timeout: 30000 })
-  })
-})
-
-// ── C. plan upgrade lifts counted block ──────────────────────────────────────
-test.describe('plan upgrade lifts counted block', () => {
-  test.use({ storageState: PlatformSetting })
-
-  test('upgrading projects limit lifts the dialog block', async ({ page, request }) => {
-    // Fresh per-test workspace: this test mutates the project limit, so it must not share a static
-    // ws with plan-limits.spec (which expects projectsLimit=1) — that would race on the limit value.
-    const api = new ApiEndpoint(request)
-    const wsInfo = await api.createWorkspaceWithLogin(`limits-upg-${generateId(8)}`, 'user1', '1234')
-    const wsUrl = wsInfo.workspaceUrl
-    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { projects: 1 })
-
-    await (await page.goto(`${PlatformURI}/workbench/${wsUrl}/tracker`))?.finished()
-
-    const trackerNav = new TrackerNavigationMenuPage(page)
-    const newProjectPage = new NewProjectPage(page)
-    const submit = page.locator('form[id="tracker:string:NewProject"] button[type="submit"]')
-
-    // At projectsLimit=1 (Default fills it) the create dialog blocks submit.
-    await trackerNav.pressCreateProjectButton()
-    await newProjectPage.fillProjectFields({ title: `upg-${generateProjectId()}`, identifier: generateProjectId() })
-    await expect(page.locator('[data-id="projectLimitError"]')).toBeVisible({ timeout: 10000 })
-    await expect(submit).toBeDisabled()
-    await page.keyboard.press('Escape')
-
-    // Upgrade the plan to allow 10 projects.
-    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { projects: 10 })
-
-    // Poll (reload) until the store picks up the new limit and a project can be created.
-    await expect(async () => {
-      await (await page.goto(`${PlatformURI}/workbench/${wsUrl}/tracker`))?.finished()
-      const title = `after-upgrade-${generateProjectId()}`
-      await trackerNav.pressCreateProjectButton()
-      await newProjectPage.createNewProject({ title, identifier: generateProjectId() })
-      await expect(page.getByRole('button', { name: title, exact: true }).first()).toBeVisible({ timeout: 5000 })
-    }).toPass({ intervals: [3000, 5000, 5000], timeout: 60000 })
   })
 })
 

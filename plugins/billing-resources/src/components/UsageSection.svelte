@@ -31,7 +31,6 @@
   $: meetingMinutes = usage?.usage?.meetingMinutes ?? 0
   $: tokensUsage = usage?.usage?.tokens ?? 0
   $: membersCount = usage?.usage?.membersCount ?? 0
-  $: projectsCount = usage?.usage?.projectsCount ?? 0
   $: limits = calculateLimits(plan, pkg, tierSub, pkgSub)
 </script>
 
@@ -52,11 +51,4 @@
   <UsageProgress label={plugin.string.TotalTokens} value={tokensUsage} limit={limits.tokenLimit} kind={'items'} />
 
   <UsageProgress label={plugin.string.MembersUsage} value={membersCount} limit={limits.usersLimit} kind={'items'} />
-
-  <UsageProgress
-    label={plugin.string.ProjectsUsage}
-    value={projectsCount}
-    limit={limits.projectsLimit}
-    kind={'items'}
-  />
 </div>

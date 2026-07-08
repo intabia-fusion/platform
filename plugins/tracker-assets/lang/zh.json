@@ -40,7 +40,6 @@
     "Canceled": "已取消",
     "CreateProject": "创建项目",
     "NewProject": "新项目",
-    "ProjectLimitReached": "已达到项目上限 ({limit})。升级套餐以添加更多。",
     "ProjectTitle": "项目标题",
     "ProjectTitlePlaceholder": "新项目",
     "UsedInIssueIDs": "引用问题ID",

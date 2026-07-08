@@ -17,28 +17,16 @@ import {
   type Class,
   type Doc,
   type Ref,
-  type Space,
   type WorkspaceMemberInfo,
   type WorkspaceUuid
 } from '@hcengineering/core'
 
 /** Snapshot of plan limits. 0 = unlimited. */
 export interface PlanLimits {
-  /** Per-space-class limits (extensible — add a class -> limit pair to bound a new space type). */
-  spaceLimits: Map<Ref<Class<Space>>, number>
   usersLimit: number
   storageLimitGB: number
   tokenLimit: number
   transcriptLimit: number
-}
-
-/**
- * Live source of active space counts grouped by concrete _class. Registered by
- * SpaceSecurityMiddleware (which owns the spacesMap) and pulled by PlanLimitsMiddleware at enforce
- * time — an explicit contract instead of an implicit shared `spaceCounts` value.
- */
-export interface SpaceCountsProvider {
-  getSpaceCounts: () => Map<Ref<Class<Space>>, number>
 }
 
 /** Abstraction for fetching limits/payment status without depending on account-client. Concrete impl injected by the host (pods/server). */

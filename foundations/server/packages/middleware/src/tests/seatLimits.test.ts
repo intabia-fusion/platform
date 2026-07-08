@@ -42,7 +42,6 @@ const ALLOWED_CLASS = core.class.UserStatus
 function makeProvider (members: WorkspaceMemberInfo[], systemAccounts = new Set<AccountUuid>()): LimitsProvider {
   return {
     getPlanLimits: async () => ({
-      spaceLimits: new Map(),
       usersLimit: 0,
       storageLimitGB: 0,
       tokenLimit: 0,
@@ -94,7 +93,7 @@ function makeContext (
     adapterManager: {} as any,
     storageAdapter: {} as any,
     contextVars: {
-      [PLAN_LIMITS_VAR]: { spaceLimits: new Map(), usersLimit, storageLimitGB: 0, tokenLimit: 0, transcriptLimit: 0 },
+      [PLAN_LIMITS_VAR]: { usersLimit, storageLimitGB: 0, tokenLimit: 0, transcriptLimit: 0 },
       [LIMITS_PROVIDER_VAR]: makeProvider(members, systemAccounts)
     },
     lastTx: '',

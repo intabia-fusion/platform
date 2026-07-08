@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-export { type PlanLimits, type LimitsProvider, type SpaceCountsProvider } from '@hcengineering/server-core'
+export { type PlanLimits, type LimitsProvider } from '@hcengineering/server-core'
 
 /** contextVars key: PlanLimits snapshot for current workspace. */
 export const PLAN_LIMITS_VAR = 'planLimits'
@@ -20,5 +20,3 @@ export const PLAN_LIMITS_VAR = 'planLimits'
 export const LIMITS_PROVIDER_VAR = 'limitsProvider'
 /** contextVars key: shared Map<WorkspaceUuid, PlanLimits> refreshed live by host consumer on plan changes. */
 export const PLAN_LIMITS_MAP_KEY = 'planLimitsMap'
-/** contextVars key: SpaceCountsProvider registered by SpaceSecurityMiddleware, pulled by PlanLimitsMiddleware. */
-export const SPACE_COUNTS_PROVIDER_KEY = 'spaceCountsProvider'

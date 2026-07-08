@@ -25,7 +25,6 @@ import core, {
   type Class,
   type Doc,
   type Ref,
-  type Space,
   SocialIdType,
   systemAccountUuid,
   type WorkspaceMemberInfo,
@@ -33,20 +32,12 @@ import core, {
 } from '@hcengineering/core'
 import { type LimitsProvider, type PlanLimits } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
-import tracker from '@hcengineering/tracker'
 import chunter from '@hcengineering/chunter'
 import pulse from '@hcengineering/pulse'
 import preference from '@hcengineering/preference'
 import { aiBotAccountEmail } from '@hcengineering/middleware'
 
-// Subscription.limits field -> Space class it bounds. Only projects are currently limited.
-const SPACE_LIMIT_MAP: Array<{
-  spaceClass: Ref<Class<Space>>
-  field: 'projectsLimit'
-}> = [{ spaceClass: tracker.class.Project, field: 'projectsLimit' }]
-
 const ZERO_LIMITS: PlanLimits = {
-  spaceLimits: new Map(),
   usersLimit: 0,
   storageLimitGB: 0,
   tokenLimit: 0,
@@ -77,14 +68,8 @@ export class AccountLimitsProvider implements LimitsProvider {
     usersLimit?: number
     tokenLimit?: number
     meetingMinutesLimit?: number
-    projectsLimit?: number
   }): PlanLimits {
-    const spaceLimits = new Map<Ref<Class<Space>>, number>()
-    for (const { spaceClass, field } of SPACE_LIMIT_MAP) {
-      spaceLimits.set(spaceClass, (l as any)[field] ?? 0)
-    }
     return {
-      spaceLimits,
       usersLimit: l.usersLimit ?? 0,
       storageLimitGB: l.storageLimitGB ?? 0,
       tokenLimit: l.tokenLimit ?? 0,

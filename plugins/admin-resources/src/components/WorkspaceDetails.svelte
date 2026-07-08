@@ -316,7 +316,6 @@
         <div class="fs-title mb-1"><Label label={adminRes.string.Usage} /></div>
         <div><Label label={adminRes.string.Disk} />: {fmtBytes(usage.storageBytes ?? 0)}</div>
         <div><Label label={adminRes.string.Members} />: {usage.membersCount ?? 0}</div>
-        <div><Label label={adminRes.string.Projects} />: {usage.projectsCount ?? 0}</div>
         <div><Label label={adminRes.string.AITokens} />: {usage.tokens ?? 0}</div>
         <div><Label label={adminRes.string.MeetingMinutes} />: {usage.meetingMinutes ?? 0}</div>
         <div class="content-dark-color">

@@ -38,7 +38,7 @@ import {
   ModifiedMiddleware,
   IdentifierMiddleware,
   NormalizeTxMiddleware,
-  PlanLimitsMiddleware,
+  PlanLimitsBootMiddleware,
   SeatLimitsMiddleware,
   PluginConfigurationMiddleware,
   PrivateMiddleware,
@@ -154,9 +154,8 @@ export function createServerPipeline (
       FindSecurityMiddleware.create,
       PluginConfigurationMiddleware.create,
       PrivateMiddleware.create,
-      // PlanLimits runs BEFORE SpaceSecurity: spaceCounts must reflect pre-tx state and a
-      // rejected tx must not leak the new space into the spacesMap counters.
-      PlanLimitsMiddleware.create,
+      // Boots the PlanLimits snapshot into contextVars for downstream seat enforcement.
+      PlanLimitsBootMiddleware.create,
       SpaceSecurityMiddleware.create,
       SpacePermissionsMiddleware.create,
       SeatLimitsMiddleware.create,

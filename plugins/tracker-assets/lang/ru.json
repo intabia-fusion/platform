@@ -40,7 +40,6 @@
     "Canceled": "Отменено",
     "CreateProject": "Новый проект",
     "NewProject": "Новый проект",
-    "ProjectLimitReached": "Достигнут лимит проектов ({limit}). Обновите план, чтобы добавить больше.",
     "ProjectTitle": "Название проекта",
     "ProjectTitlePlaceholder": "Новый проект",
     "UsedInIssueIDs": "Используется в идентификаторах задач",
