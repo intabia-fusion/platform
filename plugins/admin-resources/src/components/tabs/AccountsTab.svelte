@@ -146,7 +146,9 @@
                   size={'small'}
                   kind={'dangerous'}
                   label={adminRes.string.Delete}
-                  on:click={() => { deleteAccount(account.uuid) }}
+                  on:click={() => {
+                    deleteAccount(account.uuid)
+                  }}
                 />
               {/if}
             </div>
