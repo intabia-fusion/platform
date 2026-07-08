@@ -123,27 +123,71 @@ export function isFailedRenewal (sub: Subscription | SubscriptionData): boolean 
 }
 
 export interface PlanPricing {
+  // Charge amount in the currency's minor units. Tier: per-seat monthly price; package: flat monthly price.
   amount: number
   // Yearly discount in percent
   yearlyDiscount: number
 }
 
-export function parsePlans (plansStr: string): Record<string, PlanPricing> {
+// Minimal subset of pod-payment's plan-config we need to derive charge amounts. Prices are numeric
+// major units (tier: per-user; package: flat). Free / contact-sales plans have no price and are skipped.
+interface PlanConfigLike {
+  plans?: Record<string, { priceMonthlyPerUser?: number, yearlyDiscount?: number }>
+  packages?: Record<string, { priceMonthly?: number }>
+}
+
+// TBank Amount is expressed in the currency's minor units; prices in plan-config are whole major units.
+const TBANK_CURRENCY_MULTIPLIER = 100
+
+// Major currency units -> minor units, rounded down so the charge never exceeds the advertised price.
+function toMinorUnits (majorUnits: number): number {
+  return Math.floor(majorUnits * TBANK_CURRENCY_MULTIPLIER)
+}
+
+// Clamp a percent discount to [0, 100] so an out-of-range or non-finite config value can't invert or inflate the charge.
+function clampDiscount (value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0
+}
+
+// Build the pricing table keyed by `plan@type` from the shared plan-config. Priced tier/package
+// entries only; free / contact-sales plans (no numeric price) are skipped.
+export function buildPricingFromPlanConfig (planConfig: PlanConfigLike): Record<string, PlanPricing> {
   const plans: Record<string, PlanPricing> = {}
-  for (const plan of plansStr.split(';')) {
-    const [key, amountStr, discountStr] = plan.split(':')
-    const amount = parseInt(amountStr, 10)
-    if (isNaN(amount)) throw new Error(`Invalid plan amount: ${plan}`)
-    let yearlyDiscount = 0
-    if (discountStr !== undefined && discountStr !== '') {
-      yearlyDiscount = parseInt(discountStr, 10)
-      if (isNaN(yearlyDiscount) || yearlyDiscount < 0 || yearlyDiscount > 100) {
-        throw new Error(`Invalid plan discount: ${plan}`)
-      }
+  for (const [plan, item] of Object.entries(planConfig.plans ?? {})) {
+    if (typeof item.priceMonthlyPerUser !== 'number' || item.priceMonthlyPerUser <= 0) continue
+    plans[getPlanKey('tier', plan)] = {
+      amount: toMinorUnits(item.priceMonthlyPerUser),
+      yearlyDiscount: clampDiscount(item.yearlyDiscount)
     }
-    plans[key] = { amount, yearlyDiscount }
+  }
+  for (const [pkg, item] of Object.entries(planConfig.packages ?? {})) {
+    if (typeof item.priceMonthly !== 'number' || item.priceMonthly <= 0) continue
+    plans[getPlanKey('package', pkg)] = { amount: toMinorUnits(item.priceMonthly), yearlyDiscount: 0 }
   }
   return plans
+}
+
+// Fetch the shared plan-config from pod-payment and derive the pricing table.
+// Retries a few times so tbank can start alongside pod-payment before its HTTP is ready.
+export async function loadPricing (
+  paymentUrl: string,
+  attempts = 10,
+  delayMs = 3000
+): Promise<Record<string, PlanPricing>> {
+  const url = `${paymentUrl.replace(/\/$/, '')}/api/v1/plan-config`
+  let lastErr: unknown
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`Failed to load plan-config from ${url}: ${res.status}`)
+      return buildPricingFromPlanConfig((await res.json()) as PlanConfigLike)
+    } catch (err) {
+      lastErr = err
+      console.warn(`plan-config load attempt ${i + 1}/${attempts} failed`, err)
+      if (i < attempts - 1) await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+  }
+  throw lastErr
 }
 
 /**
@@ -151,6 +195,7 @@ export function parsePlans (plansStr: string): Record<string, PlanPricing> {
  */
 export function resolvePerSeatAmount (pricing: PlanPricing, yearly: boolean): number {
   if (!yearly) return pricing.amount
-  const monthly = Math.round((pricing.amount * (1 - pricing.yearlyDiscount / 100)) / 100) * 100
+  // Round the discounted monthly price down to whole major units so the yearly total never exceeds list price.
+  const monthly = Math.floor((pricing.amount * (1 - pricing.yearlyDiscount / 100)) / 100) * 100
   return monthly * 12
 }

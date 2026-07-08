@@ -23,8 +23,11 @@ export interface PlanItem {
   description: LocalizedString
   limits: LocalizedString[]
   features: LocalizedString[]
-  priceMonthly?: string
-  priceMonthlyPerUser?: string
+  // Monthly price in whole rubles; absent for free / contact-sales plans.
+  priceMonthly?: number
+  priceMonthlyPerUser?: number
+  // Optional display override shown instead of a numeric price (e.g. "Бесплатно", "По запросу").
+  priceMonthlyText?: LocalizedString
   // Yearly discount in percent
   yearlyDiscount?: number
   currency?: string
@@ -46,7 +49,8 @@ export interface PlanItem {
 /** @public */
 export interface PackageItem {
   description: LocalizedString
-  priceMonthly: string
+  // Monthly price in whole rubles.
+  priceMonthly: number
   currency: string
   eligiblePlans: string[]
   storageLimitGB: number

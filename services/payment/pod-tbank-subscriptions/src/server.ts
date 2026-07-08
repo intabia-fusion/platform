@@ -26,7 +26,7 @@ import {
   verifyWebhookToken,
   getPlanKey,
   buildOrderId,
-  parsePlans,
+  loadPricing,
   resolvePerSeatAmount,
   isPendingFirstPayment,
   nextPeriodEnd,
@@ -49,7 +49,7 @@ export async function createServer (
   tbank: TbankPayments,
   storage: SubscriptionStorage
 ): Promise<{ app: Express, close: () => void }> {
-  const plans = parsePlans(config.TbankSubscriptionPlans)
+  const plans = await loadPricing(config.PaymentUrl)
 
   const app = express()
 

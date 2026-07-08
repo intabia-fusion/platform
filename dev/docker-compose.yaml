@@ -1052,6 +1052,8 @@ services:
     depends_on:
       account:
         condition: service_started
+      payment:
+        condition: service_started
     environment:
       - SECRET=secret
       - PORT=4042
@@ -1065,7 +1067,6 @@ services:
       - TBANK_TERMINAL_KEY=${TBANK_TERMINAL_KEY:-test}
       - TBANK_PASSWORD=${TBANK_PASSWORD:-test}
       - TBANK_URL=https://securepay.tinkoff.ru
-      - TBANK_SUBSCRIPTION_PLANS=business@tier:49900:15;100gb@package:100000;500gb@package:500000;1000gb@package:1000000
       - SCHEDULER_INTERVAL_MINUTES=${TBANK_SCHEDULER_INTERVAL_MINUTES:-60}
       # Set to true to skip webhook token verification (for local dev with curl)
       - TBANK_SKIP_WEBHOOK_VERIFICATION=true
@@ -1073,7 +1074,7 @@ services:
       - MAIL_URL=http://mail_server:8097
       - MAIL_API_KEY=naephea1Rai7eeth1noh
       - MAIL_FROM=platform@intabia.ru
-      # pod-payment URL — resolve localized plan labels for emails
+      # pod-payment URL — source of the shared plan-config (charge amounts) and localized plan labels for emails
       - PAYMENT_URL=http://payment:4040
       - GRACE_PERIOD_DAYS=${TBANK_GRACE_PERIOD_DAYS:-7}
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318

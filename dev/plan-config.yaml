@@ -38,7 +38,9 @@ plans:
         en: Real-time simultaneous translation
       - ru: Использование API платформы
         en: Using the platform API
-    priceMonthly: Бесплатно
+    priceMonthlyText:
+      ru: Бесплатно
+      en: Free
     currency:
     free: true
     storagePerUserGB: 2
@@ -151,7 +153,9 @@ plans:
         en: Customization for customer processes with 1C, AMO, SBIS
       - ru: Миграция данных и обучение команды
         en: Data migration and team training
-    priceMonthly:  По запросу
+    priceMonthlyText:
+      ru: По запросу
+      en: On request
     currency:
     contactSales: true
     storageLimitGB: 0
@@ -167,7 +171,7 @@ packages:
     description:
       ru: 100 Гб
       en: 100 GB
-    priceMonthly: "1 000"
+    priceMonthly: 1000
     currency: ₽
     eligiblePlans:
       - start
@@ -177,7 +181,7 @@ packages:
     description:
       ru: 500 Гб
       en: 500 GB
-    priceMonthly: "5 000"
+    priceMonthly: 5000
     currency: ₽
     eligiblePlans:
       - start
@@ -187,7 +191,7 @@ packages:
     description:
       ru: 1 000 Гб
       en: 1 000 GB
-    priceMonthly: "10 000"
+    priceMonthly: 10000
     currency: ₽
     eligiblePlans:
       - start

@@ -103,7 +103,7 @@ curl -X POST http://localhost:8087/_tbank-subscriptions/api/v1/webhooks/tbank \
 | `TBANK_TERMINAL_KEY` | — | TBank terminal key |
 | `TBANK_PASSWORD` | — | TBank terminal password |
 | `TBANK_URL` | — | TBank API URL |
-| `TBANK_SUBSCRIPTION_PLANS` | — | Plans in format `plan@type:amountInCents;...` |
+| `PAYMENT_URL` | — | pod-payment base URL; source of the shared plan-config (charge amounts) served at `/api/v1/plan-config` |
 | `SCHEDULER_INTERVAL_MINUTES` | `60` | How often to check for renewals |
 
 ## Key Files

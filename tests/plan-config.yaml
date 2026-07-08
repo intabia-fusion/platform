@@ -210,7 +210,7 @@ packages:
     description:
       ru: 10 Мб
       en: 10 MB
-    priceMonthly: "100"
+    priceMonthly: 100
     currency: ₽
     eligiblePlans:
       - start
@@ -223,7 +223,7 @@ packages:
     description:
       ru: 100 Мб
       en: 100 MB
-    priceMonthly: "500"
+    priceMonthly: 500
     currency: ₽
     eligiblePlans:
       - start

@@ -21,8 +21,8 @@
     isDeletingMode,
     reduceCalls,
     systemAccountUuid,
-    type WorkspaceMode
-    , WorkspaceUserOperation
+    type WorkspaceMode,
+    WorkspaceUserOperation
   } from '@hcengineering/core'
   import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import presentation, {

@@ -80,7 +80,7 @@ curl -X POST http://localhost:8087/_tbank-subscriptions/api/v1/webhooks/tbank \
 | `TBANK_TERMINAL_KEY` | — | Ключ терминала Т-Банка |
 | `TBANK_PASSWORD` | — | Пароль терминала Т-Банка |
 | `TBANK_URL` | — | URL API Т-Банка |
-| `TBANK_SUBSCRIPTION_PLANS` | — | Тарифы в формате `plan@type:суммаВКопейках;...` |
+| `PAYMENT_URL` | — | Базовый URL pod-payment; источник общего plan-config (суммы списаний) на `/api/v1/plan-config` |
 | `SCHEDULER_INTERVAL_MINUTES` | `60` | Интервал проверки продлений |
 
 ## Ключевые файлы

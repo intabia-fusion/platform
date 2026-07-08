@@ -27,7 +27,6 @@ export interface Config {
   TbankTerminalKey: string
   TbankPassword: string
   TbankUrl: string
-  TbankSubscriptionPlans: string // plan@type:amountInCents;...
 
   // Dev
   TbankSkipWebhookVerification?: boolean // Skip webhook token verification (for local dev with curl)
@@ -41,8 +40,8 @@ export interface Config {
   MailApiKey?: string // pod-mail API key (Bearer), optional if pod-mail has none
   MailFrom?: string // From address for outgoing notifications
 
-  // pod-payment base URL — used to resolve localized plan labels for emails (optional; falls back to plan id)
-  PaymentUrl?: string
+  // pod-payment base URL — source of the shared plan-config (charge amounts) and localized plan labels for emails
+  PaymentUrl: string
 }
 
 const parseNumber = (str: string | undefined, defaultVal: number): number =>
@@ -58,7 +57,6 @@ const config: Config = (() => {
     TbankTerminalKey: process.env.TBANK_TERMINAL_KEY,
     TbankPassword: process.env.TBANK_PASSWORD,
     TbankUrl: process.env.TBANK_URL,
-    TbankSubscriptionPlans: process.env.TBANK_SUBSCRIPTION_PLANS,
     TbankSkipWebhookVerification: process.env.TBANK_SKIP_WEBHOOK_VERIFICATION === 'true',
     SchedulerIntervalMinutes: parseNumber(process.env.SCHEDULER_INTERVAL_MINUTES, 60),
     GracePeriodDays: parseNumber(process.env.GRACE_PERIOD_DAYS, 7),
@@ -76,7 +74,7 @@ const config: Config = (() => {
     'TbankTerminalKey',
     'TbankPassword',
     'TbankUrl',
-    'TbankSubscriptionPlans'
+    'PaymentUrl'
   ]
 
   const missingEnv = requiredKeys.filter((key) => params[key] === undefined)

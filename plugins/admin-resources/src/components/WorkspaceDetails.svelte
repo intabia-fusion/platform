@@ -144,7 +144,7 @@
   }
 
   function isPerSeatPlan (plan: string): boolean {
-    const item = (plans?.config?.plans?.[plan] ?? plans?.config?.packages?.[plan])
+    const item = plans?.config?.plans?.[plan] ?? plans?.config?.packages?.[plan]
     return item?.priceMonthlyPerUser != null
   }
 
@@ -243,7 +243,7 @@
   $: planItem =
     plans == null || selectedPlan === ''
       ? undefined
-      : ((inferredType === 'package' ? plans.config.packages : plans.config.plans)?.[selectedPlan])
+      : (inferredType === 'package' ? plans.config.packages : plans.config.plans)?.[selectedPlan]
   $: perSeat = planItem?.priceMonthlyPerUser != null
   // EditBox can leave the bound value undefined while the field is cleared
   $: if (perSeat && (seats == null || seats < 1)) seats = 1
@@ -465,7 +465,8 @@
                   memberSearch = `${a.firstName ?? ''} ${a.lastName ?? ''}`.trim() || memberEmail(a)
                 }}
               >
-                {a.firstName ?? ''} {a.lastName ?? ''} <span class="content-dark-color">{memberEmail(a)}</span>
+                {a.firstName ?? ''}
+                {a.lastName ?? ''} <span class="content-dark-color">{memberEmail(a)}</span>
               </div>
             {/each}
           </div>
@@ -541,13 +542,17 @@
                         size={'small'}
                         kind={'ghost'}
                         label={adminRes.string.Edit}
-                        on:click={() => { editSubscription(s) }}
+                        on:click={() => {
+                          editSubscription(s)
+                        }}
                       />
                       <Button
                         size={'small'}
                         kind={'dangerous'}
                         label={adminRes.string.CancelSubscription}
-                        on:click={() => { cancelSubscription(s) }}
+                        on:click={() => {
+                          cancelSubscription(s)
+                        }}
                       />
                     </div>
                   {/if}

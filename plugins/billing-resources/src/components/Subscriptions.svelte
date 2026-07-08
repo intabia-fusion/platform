@@ -964,9 +964,11 @@
               {@const perUserBaseVal = monthlyPerUserBase(planItem)}
               {@const hasPerUser = Number.isFinite(perUserBaseVal)}
               {@const monthlyPerUserVal = hasPerUser ? monthly(perUserBaseVal, planItem, paymentPeriod) : 0}
-              {@const monthlyVal = Number.isFinite(Number(planItem.priceMonthly))
-                ? monthly(Number(planItem.priceMonthly), planItem, paymentPeriod)
-                : planItem.priceMonthly}
+              {@const priceLocale = $themeStore.language ?? 'ru'}
+              {@const monthlyVal =
+                planItem.priceMonthly != null
+                  ? monthly(planItem.priceMonthly, planItem, paymentPeriod).toLocaleString(priceLocale)
+                  : undefined}
               {@const total = paymentPeriod === 'yearly' ? monthlyPerUserVal * 12 * seats : monthlyPerUserVal * seats}
               <div
                 class="tier-card"
@@ -979,8 +981,12 @@
                   </div>
                   <div class="flex-col h-10">
                     <span class="fs-title text-xl">
-                      {hasPerUser ? monthlyPerUserVal : (monthlyVal ?? '')}
-                      {planItem.currency ?? ''}
+                      {#if planItem.priceMonthlyText != null}
+                        {planItem.priceMonthlyText}
+                      {:else}
+                        {hasPerUser ? monthlyPerUserVal.toLocaleString(priceLocale) : (monthlyVal ?? '')}
+                        {planItem.currency ?? ''}
+                      {/if}
                     </span>
                     {#if planItem.currency != null}
                       <span class="lower">
@@ -1031,7 +1037,7 @@
                     <div class="flex-row-center items-end flex-gap-1">
                       <Label label={plugin.string.Total} />:
                       <span class="fs-title">
-                        {total}
+                        {total.toLocaleString(priceLocale)}
                         {planItem.currency ?? ''}
                       </span>
                     </div>
@@ -1085,6 +1091,7 @@
             <Scroller contentDirection="horizontal" buttons={false} showOverflowArrows shrink={false} noFade={false}>
               <div class="flex-stretch flex-gap-4 flex-no-shrink mb-3">
                 {#each Object.entries(packages) as [pkgKey, pkgItem] (pkgItem.description)}
+                  {@const priceLocale = $themeStore.language ?? 'ru'}
                   <div class="tier-card">
                     <div class="tier-card-content">
                       <div class="package-item">
@@ -1093,7 +1100,7 @@
                       </div>
                       <div class="flex-row-center items-end">
                         <span class="fs-title text-l">
-                          {pkgItem.priceMonthly}
+                          {pkgItem.priceMonthly.toLocaleString(priceLocale)}
                           {pkgItem.currency}
                         </span>
                         <span class="ml-1 lower">

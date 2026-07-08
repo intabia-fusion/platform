@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { parsePlans, resolvePerSeatAmount, addMonths, nextPeriodEnd } from '../utils'
+import { buildPricingFromPlanConfig, resolvePerSeatAmount, addMonths, nextPeriodEnd } from '../utils'
 
 // UTC timestamp for a given calendar date (00:00 UTC).
 const utc = (y: number, m: number, d: number): number => Date.UTC(y, m - 1, d)
@@ -84,18 +84,46 @@ describe('nextPeriodEnd', () => {
   })
 })
 
-describe('parsePlans', () => {
-  test('parses amount and optional discount', () => {
-    const plans = parsePlans('business@tier:49900:15;100gb@package:100000')
+describe('buildPricingFromPlanConfig', () => {
+  test('derives minor-unit pricing from major-unit plan-config', () => {
+    const plans = buildPricingFromPlanConfig({
+      plans: {
+        business: { priceMonthlyPerUser: 499, yearlyDiscount: 15 },
+        // Free / contact-sales plans have no price and are skipped.
+        start: { priceMonthlyPerUser: undefined },
+        corporation: {}
+      },
+      packages: {
+        '100gb': { priceMonthly: 1000 }
+      }
+    })
     expect(plans['business@tier']).toEqual({ amount: 49900, yearlyDiscount: 15 })
     expect(plans['100gb@package']).toEqual({ amount: 100000, yearlyDiscount: 0 })
+    expect(plans['start@tier']).toBeUndefined()
+    expect(plans['corporation@tier']).toBeUndefined()
   })
 
-  test('throws on invalid amount', () => {
-    expect(() => parsePlans('bad@tier:notanumber')).toThrow('Invalid plan amount')
+  test('handles empty config', () => {
+    expect(buildPricingFromPlanConfig({})).toEqual({})
   })
 
-  test('throws on out-of-range discount', () => {
-    expect(() => parsePlans('bad@tier:49900:150')).toThrow('Invalid plan discount')
+  test('rounds price down and clamps out-of-range / non-finite discount', () => {
+    const plans = buildPricingFromPlanConfig({
+      plans: {
+        // 499.9 -> floor to 49990 minor units; discount 150 -> clamped to 100.
+        a: { priceMonthlyPerUser: 499.9, yearlyDiscount: 150 },
+        // Negative discount clamped to 0; NaN discount -> 0.
+        b: { priceMonthlyPerUser: 100, yearlyDiscount: -20 },
+        c: { priceMonthlyPerUser: 100, yearlyDiscount: NaN }
+      },
+      packages: {
+        // 10.5 -> floor to 1050.
+        p: { priceMonthly: 10.5 }
+      }
+    })
+    expect(plans['a@tier']).toEqual({ amount: 49990, yearlyDiscount: 100 })
+    expect(plans['b@tier']).toEqual({ amount: 10000, yearlyDiscount: 0 })
+    expect(plans['c@tier']).toEqual({ amount: 10000, yearlyDiscount: 0 })
+    expect(plans['p@package']).toEqual({ amount: 1050, yearlyDiscount: 0 })
   })
 })
