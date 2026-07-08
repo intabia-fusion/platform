@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -94,6 +95,7 @@ import {
   translateDomain
 } from './schemas'
 import { type ValueType } from './types'
+import { waitForSchemaVersion } from './version'
 import {
   convertArrayParams,
   convertDoc,
@@ -1815,6 +1817,7 @@ export class PostgresAdapter extends PostgresAdapterBase {
     }
     const url = this.refClient.url()
     await initRateLimit.exec(async () => {
+      await waitForSchemaVersion(ctx, this.client)
       await createTables(ctx, this.client.raw(), url, resultDomains)
     })
     this._helper.domains = new Set(resultDomains as Domain[])
@@ -2162,6 +2165,7 @@ class PostgresTxAdapter extends PostgresAdapterBase implements TxAdapter {
     const resultDomains = domains ?? [DOMAIN_TX, DOMAIN_MODEL_TX]
     await initRateLimit.exec(async () => {
       const url = this.refClient.url()
+      await waitForSchemaVersion(ctx, this.client)
       await createTables(ctx, this.client.raw(), url, resultDomains)
     })
     this._helper.domains = new Set(resultDomains as Domain[])
