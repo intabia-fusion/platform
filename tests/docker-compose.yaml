@@ -431,6 +431,17 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
+  preview:
+    image: intabiafusion/preview
+    depends_on:
+      datalake:
+        condition: service_started
+    environment:
+      - SECRET=secret
+      # Preview reads blobs through datalake for on-the-fly image resizing (proxied via nginx /_preview).
+      - STORAGE_CONFIG=datalake|http://datalake:4031
+      - CACHE_PATH=/data/cache
+    restart: unless-stopped
   billing:
     image: intabiafusion/billing
     pull_policy: never
