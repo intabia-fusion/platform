@@ -2737,6 +2737,11 @@
       "shouldPublish": false
     },
     {
+      "packageName": "@hcengineering/pod-db-migrator",
+      "projectFolder": "services/db-migrator",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@hcengineering/pod-notifications",
       "projectFolder": "services/notifications",
       "shouldPublish": false

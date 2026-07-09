@@ -14,19 +14,20 @@
 //
 
 import { concatLink } from '@hcengineering/core'
+import { withRetry, DelayStrategyFactory, type IsRetryable } from '@hcengineering/retry'
 import { FileStorageUploadOptions } from './types'
 
 /** Upload rejected because the workspace storage/plan limit is reached (HTTP 413). @public */
 export class StorageLimitError extends Error {
   readonly isStorageLimit = true
-  constructor (message: string) {
+  constructor(message: string) {
     super(message)
     this.name = 'StorageLimitError'
   }
 }
 
 /** Extract the server's JSON `message`, falling back to a generic limit text. */
-function serverMessage (body: string): string {
+function serverMessage(body: string): string {
   try {
     const m = JSON.parse(body)?.message
     if (typeof m === 'string' && m.length > 0) return m
@@ -51,7 +52,7 @@ export interface XHRUploadResult {
 }
 
 /** @public */
-export async function uploadXhr (upload: XHRUpload, options?: FileStorageUploadOptions): Promise<XHRUploadResult> {
+export async function uploadXhr(upload: XHRUpload, options?: FileStorageUploadOptions): Promise<XHRUploadResult> {
   const signal = options?.signal
   const onProgress = options?.onProgress
 
@@ -131,7 +132,7 @@ export interface MultipartUpload {
 }
 
 /** @public */
-export async function uploadMultipart (upload: MultipartUpload, options?: FileStorageUploadOptions): Promise<void> {
+export async function uploadMultipart(upload: MultipartUpload, options?: FileStorageUploadOptions): Promise<void> {
   const CHUNK_SIZE = 5 * 1024 * 1024 // 5MB chunks
   const { url, headers, body } = upload
   const signal = options?.signal
@@ -140,7 +141,15 @@ export async function uploadMultipart (upload: MultipartUpload, options?: FileSt
   let uploadId: string | undefined
 
   try {
-    const { uploadId } = await multipartUploadCreate(url, { ...headers, 'Content-Type': body.type }, signal)
+    throwIfAborted(signal)
+    // Retry each stage on transient errors. Create yields a fresh uploadId per attempt;
+    // part/complete reuse the current uploadId and are idempotent by partNumber.
+    uploadId = (
+      await retryStage(
+        signal,
+        async () => await multipartUploadCreate(url, { ...headers, 'Content-Type': body.type }, signal)
+      )
+    ).uploadId
 
     const parts: Array<{ partNumber: number, etag: string }> = []
     const totalParts = Math.ceil(body.size / CHUNK_SIZE)
@@ -158,17 +167,21 @@ export async function uploadMultipart (upload: MultipartUpload, options?: FileSt
         onProgress:
           onProgress !== undefined
             ? (progress) => {
-                const loaded = uploaded + progress.loaded
-                onProgress({
-                  loaded,
-                  total: body.size,
-                  percentage: Math.round((loaded * 100) / body.size)
-                })
-              }
+              const loaded = uploaded + progress.loaded
+              onProgress({
+                loaded,
+                total: body.size,
+                percentage: Math.round((loaded * 100) / body.size)
+              })
+            }
             : undefined
       }
 
-      const { etag } = await multipartUploadPart(url, headers, uploadId, partNumber, chunk, partOptions)
+      const currentUploadId = uploadId
+      const { etag } = await retryStage(
+        signal,
+        async () => await multipartUploadPart(url, headers, currentUploadId, partNumber, chunk, partOptions)
+      )
       parts.push({ partNumber, etag })
 
       uploaded += chunk.size
@@ -176,7 +189,10 @@ export async function uploadMultipart (upload: MultipartUpload, options?: FileSt
 
     throwIfAborted(signal)
 
-    await multipartUploadComplete(url, headers, uploadId, parts, signal)
+    const currentUploadId = uploadId
+    await retryStage(signal, async () => {
+      await multipartUploadComplete(url, headers, currentUploadId, parts, signal)
+    })
   } catch (err) {
     if (uploadId !== undefined) {
       await multipartUploadAbort(url, headers, uploadId)
@@ -186,13 +202,37 @@ export async function uploadMultipart (upload: MultipartUpload, options?: FileSt
   }
 }
 
-function throwIfAborted (signal?: AbortSignal): void {
+function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted === true) {
     throw new Error('Upload aborted')
   }
 }
 
-async function multipartUploadCreate (
+// Retry a multipart stage. Does not retry on abort or non-retriable client errors (4xx except 408/429).
+export async function retryStage<T>(signal: AbortSignal | undefined, op: () => Promise<T>): Promise<T> {
+  const isRetryable: IsRetryable = (err) => {
+    if (signal?.aborted === true) return false
+    const message = err instanceof Error ? err.message : String(err)
+    const m = /status (\d{3})/.exec(message)
+    if (m != null) {
+      const status = parseInt(m[1], 10)
+      if (status >= 400 && status < 500 && status !== 408 && status !== 429) return false
+    }
+    return true
+  }
+  return await withRetry(op, {
+    maxRetries: 5,
+    isRetryable,
+    delayStrategy: DelayStrategyFactory.exponentialBackoff({
+      initialDelayMs: 200,
+      maxDelayMs: 5000,
+      backoffFactor: 2,
+      jitter: 0.2
+    })
+  })
+}
+
+async function multipartUploadCreate(
   baseUrl: string,
   headers: Record<string, string>,
   signal?: AbortSignal
@@ -214,7 +254,7 @@ async function multipartUploadCreate (
   return { uuid, uploadId }
 }
 
-async function multipartUploadComplete (
+async function multipartUploadComplete(
   baseUrl: string,
   headers: Record<string, string>,
   uploadId: string,
@@ -242,7 +282,7 @@ async function multipartUploadComplete (
   }
 }
 
-async function multipartUploadPart (
+async function multipartUploadPart(
   baseUrl: string,
   headers: Record<string, string>,
   uploadId: string,
@@ -272,7 +312,7 @@ async function multipartUploadPart (
   }
 }
 
-async function multipartUploadAbort (baseUrl: string, headers: Record<string, string>, uploadId: string): Promise<void> {
+async function multipartUploadAbort(baseUrl: string, headers: Record<string, string>, uploadId: string): Promise<void> {
   const url = new URL(concatLink(baseUrl, '/abort'))
   url.searchParams.set('uploadId', uploadId)
 

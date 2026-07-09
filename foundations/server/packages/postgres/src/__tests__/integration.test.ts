@@ -1,3 +1,4 @@
+/* eslint-disable import/first */
 //
 // Copyright © 2024 Hardcore Engineering Inc.
 //
@@ -18,6 +19,11 @@
  * These tests require a running CockroachDB instance (via docker-compose)
  * Run: cd tests && ./prepare-tests.sh
  */
+
+jest.mock('../version', () => ({
+  waitForSchemaVersion: jest.fn().mockResolvedValue(undefined),
+  EXPECTED_SCHEMA_VERSION: 10
+}))
 
 import core, {
   type Client,

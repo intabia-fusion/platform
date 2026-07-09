@@ -1,5 +1,4 @@
 //
-// Copyright © 2025 Hardcore Engineering Inc.
 // Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -14,7 +13,10 @@
 // limitations under the License.
 //
 
-export * from './retry'
-export * from './decorator'
-export * from './retryable'
-export * from './delay'
+module.exports = {
+  extends: ['./node_modules/@hcengineering/platform-rig/profiles/node/eslint.config.json'],
+  parserOptions: {
+    tsconfigRootDir: __dirname,
+    project: './tsconfig.json'
+  }
+}

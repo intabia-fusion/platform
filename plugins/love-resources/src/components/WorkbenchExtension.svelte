@@ -254,11 +254,9 @@
     element.autoplay = true
     parentElement.appendChild(element)
 
-    console.log('[WorkbenchExtension] Audio element attached', {
-      trackSid: publication.trackSid,
-      participant: participant?.identity ?? 'unknown',
-      parentChildrenCount: parentElement?.children?.length ?? 0
-    })
+    console.log(
+      `[WorkbenchExtension] Audio element attached track=${publication.trackSid} participant=${participant?.identity ?? 'unknown'} children=${parentElement?.children?.length ?? 0}`
+    )
 
     safePlay(element, publication.trackSid)
   }
@@ -365,6 +363,23 @@
   }
 
   /**
+   * LiveKit signals playback got blocked by the browser (Safari autoplay policy,
+   * suspended AudioContext). Canonical recovery point — force unlock and retry.
+   */
+  function handleAudioPlaybackStatusChanged (): void {
+    const canPlayback = lk.canPlaybackAudio
+    console.log(
+      `[WorkbenchExtension] AudioPlaybackStatusChanged canPlayback=${canPlayback} ctx=${getAudioContextState().state}`
+    )
+    if (!canPlayback) {
+      audioUnlocked = false
+      void ensureAudioUnlocked(true).then(() => {
+        retryPausedAudioElements()
+      })
+    }
+  }
+
+  /**
    * Safari-specific: detach and re-attach a single audio track
    * to force Safari to re-establish audio routing.
    */
@@ -387,10 +402,9 @@
     element.autoplay = true
     parentElement.appendChild(element)
 
-    console.log('[WorkbenchExtension.safariReattachTrack] Re-attached', {
-      trackSid: publication.trackSid,
-      participant: participant.name
-    })
+    console.log(
+      `[WorkbenchExtension.safariReattachTrack] Re-attached track=${publication.trackSid} participant=${participant.name ?? participant.identity}`
+    )
 
     safePlay(element, publication.trackSid)
   }
@@ -490,6 +504,15 @@
 
       for (const participant of lk.remoteParticipants.values()) {
         for (const publication of participant.trackPublications.values()) {
+          // Audio publication without an active subscription = participant is permanently
+          // inaudible; force re-subscribe (autoSubscribe should have handled it)
+          if (publication.kind === Track.Kind.Audio && !publication.isSubscribed) {
+            problems.push(
+              `${participant.identity}/${publication.trackSid}: audio not subscribed, forcing setSubscribed(true)`
+            )
+            publication.setSubscribed(true)
+            continue
+          }
           if (publication.track?.kind !== Track.Kind.Audio || !publication.isSubscribed) continue
           if (publication.isMuted) continue
 
@@ -548,26 +571,23 @@
       if (healthCheckCount % DIAGNOSTICS_LOG_INTERVAL === 0) {
         const diag = collectAudioDiagnostics()
         if (diag.length > 0) {
-          console.log('[WorkbenchExtension.healthCheck] Audio diagnostics', {
-            checkNumber: healthCheckCount,
-            audioContext: getAudioContextState(),
-            tracks: diag
-          })
+          // Inline JSON so copied Safari console text contains the data (objects paste as "Object")
+          console.log(
+            `[WorkbenchExtension.healthCheck] Audio diagnostics #${healthCheckCount} ctx=${JSON.stringify(getAudioContextState())} tracks=${JSON.stringify(diag)}`
+          )
         }
       }
 
       if (problems.length > 0) {
-        console.warn('[WorkbenchExtension.healthCheck] Audio problems detected', { problems })
+        console.warn(`[WorkbenchExtension.healthCheck] Audio problems detected: ${problems.join('; ')}`)
       }
 
       if (needsRecovery && now - lastRecoveryTime > RECOVERY_COOLDOWN_MS) {
         lastRecoveryTime = now
         silentTrackCounts.clear()
-        console.log('[WorkbenchExtension.healthCheck] Triggering audio recovery', {
-          problems,
-          audioContext: getAudioContextState(),
-          diagnostics: collectAudioDiagnostics()
-        })
+        console.log(
+          `[WorkbenchExtension.healthCheck] Triggering audio recovery problems=[${problems.join('; ')}] ctx=${JSON.stringify(getAudioContextState())} diagnostics=${JSON.stringify(collectAudioDiagnostics())}`
+        )
         audioUnlocked = false
         void reattachAllAudioTracks()
       }
@@ -615,6 +635,7 @@
     lk.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
     lk.on(RoomEvent.TrackMuted, handleTrackMuted)
     lk.on(RoomEvent.TrackUnmuted, handleTrackUnmuted)
+    lk.on(RoomEvent.AudioPlaybackStatusChanged, handleAudioPlaybackStatusChanged)
 
     // Subscribe to incoming meeting invites
     subscribeToIncomingInvites()
@@ -629,8 +650,12 @@
     // Attach existing audio tracks
     attachExistingAudioTracks()
 
-    // Unlock audio context
-    void ensureAudioUnlocked()
+    // Only unlock audio when already in a meeting. Calling startAudio() at page
+    // load creates a LiveKit AudioContext that steals the iOS audio session and
+    // interrupts CarPlay / background music even though no call is active.
+    if (get(lkSessionConnected)) {
+      void ensureAudioUnlocked()
+    }
 
     // Start Safari audio health check
     startSafariAudioHealthCheck()
@@ -655,6 +680,7 @@
     lk.off(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
     lk.off(RoomEvent.TrackMuted, handleTrackMuted)
     lk.off(RoomEvent.TrackUnmuted, handleTrackUnmuted)
+    lk.off(RoomEvent.AudioPlaybackStatusChanged, handleAudioPlaybackStatusChanged)
     unsubReconnect?.()
     stopSafariAudioHealthCheck()
     // Cleanup all audio analysers

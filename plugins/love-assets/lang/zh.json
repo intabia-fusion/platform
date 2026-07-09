@@ -157,6 +157,8 @@
     "GroupByRoom": "按房间",
     "GroupByOwner": "按负责人",
     "GroupByStatus": "按状态",
-    "GroupByDate": "按日期"
+    "GroupByDate": "按日期",
+    "SpeakingWhileMuted": "您已静音 - 其他人听不到您",
+    "SpeakingWhileMutedAlert": "静音时说话提醒我"
   }
 }

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { uploadXhr, uploadMultipart, XHRUpload, MultipartUpload } from '../upload'
+import { uploadXhr, uploadMultipart, retryStage, XHRUpload, MultipartUpload } from '../upload'
 
 // Mock XMLHttpRequest
 class MockXMLHttpRequest {
@@ -489,14 +489,14 @@ describe('uploadMultipart', () => {
     // Wait for async initialization and XHR to be created
     await new Promise(setImmediate)
 
-    // Simulate upload failure
+    // Simulate a non-retriable client error (400) so the failure surfaces without retrying.
     if (xhrInstances[0] !== undefined) {
-      xhrInstances[0].status = 500
-      xhrInstances[0].statusText = 'Internal Server Error'
+      xhrInstances[0].status = 400
+      xhrInstances[0].statusText = 'Bad Request'
       xhrInstances[0].onload?.()
     }
 
-    await expect(uploadPromise).rejects.toThrow('Upload failed with status 500')
+    await expect(uploadPromise).rejects.toThrow('Upload failed with status 400')
   })
 
   it('should handle completion failure', async () => {
@@ -509,7 +509,7 @@ describe('uploadMultipart', () => {
       body: file
     }
 
-    // Mock successful init, failed completion, and abort
+    // Mock successful init, non-retriable failed completion (400), and abort
     mockFetch
       .mockResolvedValueOnce({
         ok: true,
@@ -517,7 +517,7 @@ describe('uploadMultipart', () => {
       })
       .mockResolvedValueOnce({
         ok: false,
-        status: 500
+        status: 400
       })
       .mockResolvedValueOnce({
         ok: true // abort call
@@ -700,5 +700,31 @@ describe('uploadMultipart', () => {
     // Should have progress from start through at least first chunk
     expect(minProgress).toBeGreaterThan(0)
     expect(maxProgress).toBeGreaterThanOrEqual(2.5 * 1024 * 1024)
+  })
+})
+
+describe('retryStage', () => {
+  // Only the predicate (413 / abort => fail fast) is storage-client specific; the retry loop
+  // itself is covered by @hcengineering/retry tests.
+  it('returns result on first success', async () => {
+    const op = jest.fn().mockResolvedValue('ok')
+    expect(await retryStage(undefined, op)).toBe('ok')
+    expect(op).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not retry storage limit (413)', async () => {
+    const op = jest.fn().mockRejectedValue(new Error('Upload failed with status 413: Payload Too Large'))
+    await expect(retryStage(undefined, op)).rejects.toThrow('status 413')
+    expect(op).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not retry once the signal is aborted', async () => {
+    const controller = new AbortController()
+    const op = jest.fn().mockImplementation(async () => {
+      controller.abort()
+      throw new Error('UnknownError')
+    })
+    await expect(retryStage(controller.signal, op)).rejects.toThrow()
+    expect(op).toHaveBeenCalledTimes(1)
   })
 })

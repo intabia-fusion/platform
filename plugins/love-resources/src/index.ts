@@ -35,6 +35,7 @@ import MeetingMinutesRecordingStatePresenter from './components/MeetingMinutesRe
 import RoomLanguageEditor from './components/RoomLanguageEditor.svelte'
 import MediaPopupItemExt from './components/MediaPopupItemExt.svelte'
 import SharingStateIndicator from './components/SharingStateIndicator.svelte'
+import SpeakingWhileMutedIndicator from './components/meeting/SpeakingWhileMutedIndicator.svelte'
 import MeetingScheduleData from './components/MeetingScheduleData.svelte'
 import EditMeetingScheduleData from './components/EditMeetingScheduleData.svelte'
 import InviteEmployeeButton from './components/meeting/invites/InviteEmployeeButton.svelte'
@@ -127,6 +128,7 @@ export default async (): Promise<Resources> => ({
     RoomLanguageEditor,
     MediaPopupItemExt,
     SharingStateIndicator,
+    SpeakingWhileMutedIndicator,
     MeetingScheduleData,
     EditMeetingScheduleData,
     InviteEmployeeButton,

@@ -51,3 +51,6 @@ services:
   activity:
     environment:
       - DB_URL=${DB_PG_URL}
+  db-migrator:
+    environment:
+      - DB_URL=${DB_PG_URL}

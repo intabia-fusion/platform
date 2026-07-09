@@ -1199,6 +1199,8 @@ export function devTool (
     .option('--upgrade', 'Upgrade workspace', false)
     .option('--noqueue', 'NoQueue', false)
     .option('--accounts', 'Restore accounts (person/socialId) from backup', false)
+    .option('--verify-blobs', 'Download each uploaded blob back and compare content, re-upload on mismatch', false)
+    .option('--verify-only', 'Do not upload. Download blobs and compare content, report missing/mismatch', false)
     .option(
       '--history-file <historyFile>',
       'Store blob send info into file. Will skip already send documents.',
@@ -1221,6 +1223,8 @@ export function devTool (
           upgrade: boolean
           noqueue: boolean
           accounts: boolean
+          verifyBlobs: boolean
+          verifyOnly: boolean
         }
       ) => {
         await withAccountDatabase(async (db) => {
@@ -1242,7 +1246,10 @@ export function devTool (
           const queue = !cmd.noqueue ? getPlatformQueue('tool', ws.region) : undefined
           const wsProducer = queue?.getProducer<QueueWorkspaceMessage>(toolCtx, QueueTopic.Workspace)
 
-          await wsProducer?.send(toolCtx, ws.uuid, [workspaceEvents.restoring()])
+          // verifyOnly is read-only: no maintenance, no restoring/restored events.
+          if (!cmd.verifyOnly) {
+            await wsProducer?.send(toolCtx, ws.uuid, [workspaceEvents.restoring()])
+          }
 
           const workspaceStorage: StorageAdapter = buildStorageFromConfig(storageConfig)
 
@@ -1265,7 +1272,9 @@ export function devTool (
               toolCtx.error('failed to restore, pipeline is undefined', { workspaceId })
               return
             }
-            await sendTransactorEvent(workspace, 'force-maintenance')
+            if (!cmd.verifyOnly) {
+              await sendTransactorEvent(workspace, 'force-maintenance')
+            }
 
             await restore(toolCtx, pipeline, wsIds, storage, cmd.accounts ? db : undefined, {
               date: parseInt(date ?? '-1'),
@@ -1274,17 +1283,23 @@ export function devTool (
               recheck: cmd.recheck,
               include: cmd.include === '*' ? undefined : new Set(cmd.include.split(';')),
               skip: new Set(cmd.skip.split(';')),
-              historyFile: cmd.historyFile
+              historyFile: cmd.historyFile,
+              verifyBlobs: cmd.verifyBlobs,
+              verifyOnly: cmd.verifyOnly
             })
 
-            if (cmd.upgrade) {
-              await doUpgrade(toolCtx, workspace, true, true)
+            if (cmd.verifyOnly) {
+              console.log('blob verification complete')
             } else {
-              await sendTransactorEvent(workspace, 'force-close')
-            }
+              if (cmd.upgrade) {
+                await doUpgrade(toolCtx, workspace, true, true)
+              } else {
+                await sendTransactorEvent(workspace, 'force-close')
+              }
 
-            console.log('workspace restored')
-            await wsProducer?.send(toolCtx, ws.uuid, [workspaceEvents.restored()])
+              console.log('workspace restored')
+              await wsProducer?.send(toolCtx, ws.uuid, [workspaceEvents.restored()])
+            }
           } catch (err) {
             toolCtx.error('failed to restore', { err })
           }

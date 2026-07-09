@@ -26,6 +26,12 @@ if [ "x$DO_CLEAN" == 'xtrue' ]; then
     docker system prune -a -f
 fi
 
+echo "Running migrations for Postgres..."
+DB_URL="postgresql://postgres:postgres@localhost:5433/postgres" node ../services/db-migrator/lib/index.js
+
+echo "Running migrations for CockroachDB..."
+DB_URL="postgresql://root@localhost:26258/defaultdb?sslmode=disable" node ../services/db-migrator/lib/index.js
+
 ./wait-elastic.sh 9201
 
 echo "Creating user accounts..."

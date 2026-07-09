@@ -65,7 +65,6 @@ export function recallActiveMeeting (): Ref<MeetingMinutes> | undefined {
 }
 
 export async function createMeeting (room: Room, meeting?: MeetingMinutes): Promise<MeetingMinutes | undefined> {
-  const client = getClient()
   const me = getCurrentEmployee()
   const currentPerson = await getPersonByPersonRef(me)
 
@@ -74,14 +73,7 @@ export async function createMeeting (room: Room, meeting?: MeetingMinutes): Prom
     return
   }
 
-  // TODO: We need server atomic operation to create a meeting minutes with pending, or create one
-  meeting =
-    meeting ??
-    (await client.findOne(love.class.MeetingMinutes, {
-      roomId: room._id,
-      status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
-    }))
-
+  // Explicit meeting (e.g. invite flow) -> join it directly.
   if (meeting !== undefined) {
     await joinMeeting(meeting)
     return meeting
@@ -94,10 +86,16 @@ export async function createMeeting (room: Room, meeting?: MeetingMinutes): Prom
     return
   }
 
-  // Create MeetingMinutes document before connecting to LiveKit (atomic apply -> Pending)
-  meeting = await createMeetingDocument(room)
-  await connectToMeeting(meeting, room)
-  return meeting
+  // Atomic server-side get-or-create: the apply()/notMatch check runs against
+  // fresh server data, so a stale local cache that still shows a just-finished
+  // meeting as Active can't make us re-join a dead one.
+  const { meeting: mm, created } = await createMeetingDocument(room)
+  if (created) {
+    await connectToMeeting(mm, room)
+  } else {
+    await joinMeeting(mm)
+  }
+  return mm
 }
 
 // Set while the user explicitly leaves the meeting. Blocks the
@@ -319,19 +317,10 @@ async function moveToMeetingRoom (mm: MeetingMinutes, room?: Room): Promise<void
   // position/room if ParticipantInfo already exists.
 }
 
-async function createMeetingDocument (room: Room): Promise<MeetingMinutes> {
+async function createMeetingDocument (room: Room): Promise<{ meeting: MeetingMinutes, created: boolean }> {
   const client = getClient()
 
   while (true) {
-    // First, check if there is an Active or Pending meeting already
-    const meeting = await client.findOne(love.class.MeetingMinutes, {
-      roomId: room._id,
-      status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
-    })
-    if (meeting !== undefined) {
-      return meeting
-    }
-
     const me = getCurrentEmployee()
     const currentPerson = await getPersonByPersonRef(me)
     const myAccount = currentPerson?.personUuid
@@ -368,10 +357,20 @@ async function createMeetingDocument (room: Room): Promise<MeetingMinutes> {
       newMeetingId
     )
     try {
-      await ops.commit()
-      const meeting = await client.findOne(love.class.MeetingMinutes, { _id: newMeetingId })
-      if (meeting !== undefined) {
-        return meeting
+      const { result } = await ops.commit()
+      if (result) {
+        const meeting = await client.findOne(love.class.MeetingMinutes, { _id: newMeetingId })
+        if (meeting !== undefined) {
+          return { meeting, created: true }
+        }
+      } else {
+        // notMatch failed on fresh server data — a live meeting already exists
+        // for this room. Reuse it instead of creating a duplicate.
+        const existing = await client.findOne(love.class.MeetingMinutes, {
+          roomId: room._id,
+          status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
+        })
+        if (existing !== undefined) return { meeting: existing, created: false }
       }
     } catch (err: any) {
       // Concurrent creation happened — pick the existing one (if available)
@@ -379,7 +378,7 @@ async function createMeetingDocument (room: Room): Promise<MeetingMinutes> {
         roomId: room._id,
         status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
       })
-      if (existing !== undefined) return existing
+      if (existing !== undefined) return { meeting: existing, created: false }
       throw err
     }
     // Retry with a delay

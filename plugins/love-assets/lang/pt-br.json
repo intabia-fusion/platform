@@ -157,6 +157,8 @@
     "GroupByRoom": "Por sala",
     "GroupByOwner": "Por responsável",
     "GroupByStatus": "Por status",
-    "GroupByDate": "Por data"
+    "GroupByDate": "Por data",
+    "SpeakingWhileMuted": "Seu microfone está mudo - os outros não te ouvem",
+    "SpeakingWhileMutedAlert": "Avisar quando eu falar com o microfone mudo"
   }
 }
