@@ -11,10 +11,14 @@ else
     exit ${docker_exit}
 fi
 
+# Database URLs on host side with defaults
+DB_PG_URL_HOST="${DB_PG_URL_HOST:-postgresql://root@localhost:26258/defaultdb?sslmode=disable}"
+DB_PURE_PG_URL_HOST="${DB_PURE_PG_URL_HOST:-postgresql://postgres:postgres@localhost:5433/postgres}"
+
 echo "Running migrations for Postgres..."
-docker compose -f docker-compose.yaml -p sanity run --rm -e DB_URL=postgres://postgres:postgres@postgres:5433/postgres db-migrator
+DB_URL="$DB_PURE_PG_URL_HOST" node ../services/db-migrator/lib/index.js
 
 echo "Running migrations for CockroachDB..."
-docker compose -f docker-compose.yaml -p sanity run --rm -e DB_URL=postgresql://root@cockroach:26257/defaultdb?sslmode=disable db-migrator
+DB_URL="$DB_PG_URL_HOST" node ../services/db-migrator/lib/index.js
 
 ./wait-elastic.sh 9201
