@@ -60,7 +60,7 @@ export class PaymentClient {
    */
   async createSubscription (workspace: WorkspaceUuid, request: SubscribeRequest): Promise<CheckoutResponse> {
     const path = `/api/v1/subscriptions/${workspace}/subscribe`
-    const url = new URL(concatLink(this.endpoint, path))
+    const url = concatLink(this.endpoint, path)
     const body = JSON.stringify(request)
     const response = await fetchSafe(url, {
       method: 'POST',
@@ -77,7 +77,7 @@ export class PaymentClient {
    */
   async getSubscription (subscriptionId: string): Promise<SubscriptionData> {
     const path = `/api/v1/subscriptions/${subscriptionId}`
-    const url = new URL(concatLink(this.endpoint, path))
+    const url = concatLink(this.endpoint, path)
     const response = await fetchSafe(url, { headers: { ...this.headers } })
     return (await response.json()) as SubscriptionData
   }
@@ -89,7 +89,7 @@ export class PaymentClient {
    */
   async cancelSubscription (subscriptionId: string): Promise<SubscriptionData> {
     const path = `/api/v1/subscriptions/${subscriptionId}/cancel`
-    const url = new URL(concatLink(this.endpoint, path))
+    const url = concatLink(this.endpoint, path)
     const response = await fetchSafe(url, {
       method: 'POST',
       headers: { ...this.headers }
@@ -104,7 +104,7 @@ export class PaymentClient {
    */
   async uncancelSubscription (subscriptionId: string): Promise<SubscriptionData> {
     const path = `/api/v1/subscriptions/${subscriptionId}/uncancel`
-    const url = new URL(concatLink(this.endpoint, path))
+    const url = concatLink(this.endpoint, path)
     const response = await fetchSafe(url, {
       method: 'POST',
       headers: { ...this.headers }
@@ -130,7 +130,7 @@ export class PaymentClient {
     force?: boolean
   ): Promise<SubscriptionData | CheckoutResponse> {
     const path = `/api/v1/subscriptions/${subscriptionId}/updatePlan`
-    const url = new URL(concatLink(this.endpoint, path))
+    const url = concatLink(this.endpoint, path)
     const body = JSON.stringify({ plan, quantity, period, force })
     const response = await fetchSafe(url, {
       method: 'POST',
@@ -148,7 +148,7 @@ export class PaymentClient {
    */
   async getCheckoutStatus (checkoutId: string): Promise<CheckoutStatus> {
     const path = `/api/v1/checkouts/${checkoutId}/status`
-    const url = new URL(concatLink(this.endpoint, path))
+    const url = concatLink(this.endpoint, path)
     const response = await fetchSafe(url, { headers: { ...this.headers } })
     return (await response.json()) as CheckoutStatus
   }
@@ -161,7 +161,7 @@ export class PaymentClient {
    */
   async retryPayment (subscriptionId: string): Promise<SubscriptionData> {
     const path = `/api/v1/subscriptions/${subscriptionId}/retry`
-    const url = new URL(concatLink(this.endpoint, path))
+    const url = concatLink(this.endpoint, path)
     const response = await fetchSafe(url, {
       method: 'POST',
       headers: { ...this.headers }

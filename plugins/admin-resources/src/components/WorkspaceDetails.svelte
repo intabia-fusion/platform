@@ -292,7 +292,8 @@
         MessageBox,
         {
           label: adminRes.string.ReplaceSubscription,
-          message: getEmbeddedLabel(`Workspace already has "${existingLabel}". Replace with "${newLabel}"?`),
+          message: adminRes.string.ReplaceSubscriptionConfirm,
+          params: { current: existingLabel, next: newLabel },
           action: doCreate
         },
         undefined,

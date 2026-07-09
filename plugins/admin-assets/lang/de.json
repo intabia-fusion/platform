@@ -107,6 +107,16 @@
     "Save": "Speichern",
     "EditSubscription": "Abonnement bearbeiten",
     "CancelSubscription": "Abonnement kündigen",
-    "SearchAccounts": "Konten suchen"
+    "SearchAccounts": "Konten suchen",
+    "SortActiveUsers": "Aktive Benutzer",
+    "SortName": "Name",
+    "SortBackupDate": "Backup-Datum",
+    "SortBackupSize": "Backup-Größe",
+    "SortLastVisit": "Letzter Besuch",
+    "MassArchive": "Massenarchivierung ({count})",
+    "MassMigrate": "Massenmigration ({count}) nach {region}",
+    "ResetAttempts": "Versuche zurücksetzen {url}",
+    "UnarchiveWorkspace": "Archivierung aufheben {url}",
+    "ReplaceSubscriptionConfirm": "Arbeitsbereich hat bereits „{current}“. Durch „{next}“ ersetzen?"
   }
 }

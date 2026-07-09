@@ -107,6 +107,16 @@
     "Save": "Сохранить",
     "EditSubscription": "Изменить подписку",
     "CancelSubscription": "Отменить подписку",
-    "SearchAccounts": "Поиск аккаунтов"
+    "SearchAccounts": "Поиск аккаунтов",
+    "SortActiveUsers": "Активные пользователи",
+    "SortName": "Имя",
+    "SortBackupDate": "Дата бэкапа",
+    "SortBackupSize": "Размер бэкапа",
+    "SortLastVisit": "Последний визит",
+    "MassArchive": "Архивировать выбранные ({count})",
+    "MassMigrate": "Мигрировать выбранные ({count}) в {region}",
+    "ResetAttempts": "Сбросить попытки {url}",
+    "UnarchiveWorkspace": "Разархивировать {url}",
+    "ReplaceSubscriptionConfirm": "У пространства уже есть «{current}». Заменить на «{next}»?"
   }
 }

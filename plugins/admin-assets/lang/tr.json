@@ -107,6 +107,16 @@
     "Save": "Kaydet",
     "EditSubscription": "Aboneliği düzenle",
     "CancelSubscription": "Aboneliği iptal et",
-    "SearchAccounts": "Hesap ara"
+    "SearchAccounts": "Hesap ara",
+    "SortActiveUsers": "Aktif kullanıcılar",
+    "SortName": "Ad",
+    "SortBackupDate": "Yedek tarihi",
+    "SortBackupSize": "Yedek boyutu",
+    "SortLastVisit": "Son ziyaret",
+    "MassArchive": "Toplu arşivle ({count})",
+    "MassMigrate": "{count} öğeyi {region} bölgesine toplu taşı",
+    "ResetAttempts": "Denemeleri sıfırla {url}",
+    "UnarchiveWorkspace": "Arşivden çıkar {url}",
+    "ReplaceSubscriptionConfirm": "Çalışma alanında zaten \"{current}\" var. \"{next}\" ile değiştirilsin mi?"
   }
 }

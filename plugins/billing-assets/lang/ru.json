@@ -40,7 +40,7 @@
     "NoActivePlan": "Нет активного плана",
     "SelectPlanToBegin": "Выберите план ниже, чтобы начать",
     "SubscriptionEnds": "До {date}",
-    "SubscriptionRenews": "Следующее обновление: {date}",
+    "SubscriptionRenews": "Продление: {date}",
     "SubscriptionValidUntil": "Действительно до {date}",
     "AdditionalPackage": "Дополнительный пакет:",
     "ProcessingPayment": "Обработка платежа...",

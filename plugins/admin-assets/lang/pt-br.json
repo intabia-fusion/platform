@@ -107,6 +107,16 @@
     "Save": "Salvar",
     "EditSubscription": "Editar assinatura",
     "CancelSubscription": "Cancelar assinatura",
-    "SearchAccounts": "Buscar contas"
+    "SearchAccounts": "Buscar contas",
+    "SortActiveUsers": "Usuários ativos",
+    "SortName": "Nome",
+    "SortBackupDate": "Data do backup",
+    "SortBackupSize": "Tamanho do backup",
+    "SortLastVisit": "Última visita",
+    "MassArchive": "Arquivar em massa ({count})",
+    "MassMigrate": "Migrar em massa ({count}) para {region}",
+    "ResetAttempts": "Redefinir tentativas {url}",
+    "UnarchiveWorkspace": "Desarquivar {url}",
+    "ReplaceSubscriptionConfirm": "O espaço de trabalho já tem \"{current}\". Substituir por \"{next}\"?"
   }
 }
