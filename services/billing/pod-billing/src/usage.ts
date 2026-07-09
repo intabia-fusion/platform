@@ -43,7 +43,7 @@ export class UsageWorker {
   private canceled: boolean = false
   private promise: Promise<void> = Promise.resolve()
   // aibot account uuid, resolved once — it never occupies a seat, so it is excluded from membersCount.
-  private aiBotAccount: AccountUuid | null | undefined
+  private aiBotAccount: AccountUuid | undefined
 
   constructor (
     private readonly db: BillingDB,
@@ -133,14 +133,15 @@ export class UsageWorker {
   }
 
   private async resolveAiBotAccount (account: AccountClient): Promise<AccountUuid | null> {
-    if (this.aiBotAccount !== undefined) return this.aiBotAccount
+    if (this.aiBotAccount != null) return this.aiBotAccount
     try {
       const uuid = await account.findPersonBySocialKey(aiBotSocialKey, true)
-      this.aiBotAccount = (uuid ?? null) as AccountUuid | null
+      // Cache only a successful resolve; a null (not found / transient) is retried next tick.
+      if (uuid != null) this.aiBotAccount = uuid as AccountUuid
+      return (uuid ?? null) as AccountUuid | null
     } catch {
-      return null // do not cache on transient failure — retry next tick
+      return null
     }
-    return this.aiBotAccount
   }
 
   async updateWorkspaceUsageStatistics (ctx: MeasureContext, now: number, workspace: WorkspaceUuid): Promise<void> {
@@ -201,11 +202,6 @@ export class UsageWorker {
         try {
           const aiBotAccount = await this.resolveAiBotAccount(account)
           const members = await account.getWorkspaceMembers()
-          ctx.info('members debug', {
-            workspace,
-            aiBotAccount,
-            members: members.map((m) => ({ person: m.person, role: m.role }))
-          })
           return members.filter(
             (m) =>
               m.person !== aiBotAccount &&

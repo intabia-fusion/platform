@@ -47,7 +47,7 @@ import SubscriptionsModal from './components/SubscriptionsModal.svelte'
 // Scope subscription reads to the active workspace: admin/service tokens return ALL workspaces'
 // subscriptions when the uuid is omitted, so an admin would otherwise see other workspaces' plans.
 function currentWorkspace (): WorkspaceUuid | undefined {
-  return getMetadata(presentation.metadata.WorkspaceUuid) as WorkspaceUuid | undefined
+  return getMetadata(presentation.metadata.WorkspaceUuid)
 }
 
 export function getAccountClient (): AccountClient | null {

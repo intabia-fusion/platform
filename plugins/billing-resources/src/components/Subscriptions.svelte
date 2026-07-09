@@ -602,7 +602,7 @@
 
       // Scope to the current workspace: admin/service tokens return ALL workspaces' subscriptions
       // when the uuid is omitted, so an admin would otherwise see other workspaces' plans here.
-      const workspace = getMetadata(presentation.metadata.WorkspaceUuid) as WorkspaceUuid | undefined
+      const workspace = getMetadata(presentation.metadata.WorkspaceUuid)
       // Include non-active subscriptions (e.g. past_due) so the payment-failed banner can be shown.
       const subscriptions = await accountClient.getSubscriptions(workspace, false)
       allSubscriptions = subscriptions

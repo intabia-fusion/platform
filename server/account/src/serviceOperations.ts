@@ -1403,7 +1403,7 @@ export async function findPersonBySocialKey (
 
   const { extra } = decodeTokenVerbose(ctx, token)
 
-  verifyAllowedServices(['tool', 'workspace', 'aibot', ...integrationServices], extra)
+  verifyAllowedServices(['tool', 'workspace', 'aibot', 'billing', ...integrationServices], extra)
 
   const socialId = await db.socialId.findOne({ key: socialString })
 
