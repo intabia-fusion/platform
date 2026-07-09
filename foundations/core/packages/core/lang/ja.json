@@ -73,6 +73,8 @@
     "Version": "バージョン",
     "Collaborator": "共同編集者",
     "Collaborators": "共同編集者一覧",
-    "RoleAdmin": "ロール: 管理者"
+    "RoleAdmin": "ロール: 管理者",
+    "AddedCollaborator": "共同編集者 {value} を追加しました",
+    "RemovedCollaborator": "共同編集者 {value} を削除しました"
   }
 }

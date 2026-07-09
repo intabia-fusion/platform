@@ -15,18 +15,12 @@
 <script lang="ts">
   import { EmployeeBox, getPersonRefByPersonIdCb } from '@hcengineering/contact-resources'
   import core, { Class, Doc, Mixin, Ref } from '@hcengineering/core'
-  import { AttributeBarEditor, createQuery, getClient, KeyedAttribute } from '@hcengineering/presentation'
+  import { AttributeBarEditor, getClient, KeyedAttribute } from '@hcengineering/presentation'
   import { Person } from '@hcengineering/contact'
   import tags from '@hcengineering/tags'
   import type { Issue } from '@hcengineering/tracker'
   import { Component, Label } from '@hcengineering/ui'
-  import {
-    getDocMixins,
-    getFiltredKeys,
-    isCollectionAttr,
-    ObjectBox,
-    restrictionStore
-  } from '@hcengineering/view-resources'
+  import { getDocMixins, getFiltredKeys, isCollectionAttr, ObjectBox } from '@hcengineering/view-resources'
 
   import tracker from '../../../plugin'
   import ComponentEditor from '../../components/ComponentEditor.svelte'
@@ -34,20 +28,11 @@
   import AssigneeEditor from '../AssigneeEditor.svelte'
   import DueDateEditor from '../DueDateEditor.svelte'
   import PriorityEditor from '../PriorityEditor.svelte'
-  import RelationEditor from '../RelationEditor.svelte'
   import StatusEditor from '../StatusEditor.svelte'
 
   export let issue: Issue
   export let showAllMixins: boolean = false
   export let readonly = false
-
-  const query = createQuery()
-  let showIsBlocking = false
-  let blockedBy: Doc[]
-  $: query.query(tracker.class.Issue, { blockedBy: { _id: issue._id, _class: issue._class } }, (result) => {
-    blockedBy = result
-    showIsBlocking = result.length > 0
-  })
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -129,31 +114,6 @@
   </span>
 
   <StatusEditor value={issue} size={'medium'} iconSize={'small'} shouldShowLabel isEditable={!readonly} />
-
-  {#if issue.blockedBy?.length}
-    <span class="labelTop">
-      <Label label={tracker.string.BlockedBy} />
-    </span>
-    <RelationEditor value={issue} type="blockedBy" {readonly} disabled={$restrictionStore.disableNavigation} />
-  {/if}
-  {#if showIsBlocking}
-    <span class="labelTop">
-      <Label label={tracker.string.Blocks} />
-    </span>
-    <RelationEditor
-      value={issue}
-      type="isBlocking"
-      {blockedBy}
-      {readonly}
-      disabled={$restrictionStore.disableNavigation}
-    />
-  {/if}
-  {#if issue.relations?.length}
-    <span class="labelTop">
-      <Label label={tracker.string.Related} />
-    </span>
-    <RelationEditor value={issue} type="relations" {readonly} disabled={$restrictionStore.disableNavigation} />
-  {/if}
 
   <span class="labelOnPanel">
     <Label label={tracker.string.Priority} />

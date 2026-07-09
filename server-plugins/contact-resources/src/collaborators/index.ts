@@ -12,4 +12,4 @@
 // limitations under the License.
 
 export { getCollaborators, getCollaboratorsByTx, getCollaboratorsFromDocFields } from './utils'
-export { ManageCollaboratorsTrigger } from './collaborators'
+export { ManageCollaboratorsTrigger, CollaboratorTitlePresenter } from './collaborators'

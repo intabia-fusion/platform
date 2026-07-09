@@ -338,6 +338,10 @@ export function defineCollaborators<T extends Doc> (
     attributeOf: _class,
     type: Collection(core.class.Collaborator),
     label: core.string.Collaborators,
+    activity: {
+      set: core.string.AddedCollaborator,
+      unset: core.string.RemovedCollaborator
+    },
     rank: ''
   })
 }

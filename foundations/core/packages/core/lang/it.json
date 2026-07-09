@@ -73,6 +73,8 @@
     "Version": "Versione",
     "Collaborator": "Collaboratore",
     "Collaborators": "Collaboratori",
-    "RoleAdmin": "Ruolo: Amministratore"
+    "RoleAdmin": "Ruolo: Amministratore",
+    "AddedCollaborator": "collaboratore {value} aggiunto",
+    "RemovedCollaborator": "collaboratore {value} rimosso"
   }
 }

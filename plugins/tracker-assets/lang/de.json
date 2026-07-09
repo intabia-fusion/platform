@@ -87,6 +87,10 @@
     "OpenParent": "Übergeordnete Aufgabe öffnen",
     "SubIssues": "Unteraufgaben",
     "SubIssuesList": "Unteraufgaben ({subIssues})",
+    "ParentIssuesList": "Übergeordnete Aufgaben ({parentIssues})",
+    "BlockedByIssuesList": "Blockiert durch Aufgaben ({blockedByIssues})",
+    "RelatedToIssuesList": "Verbunden mit Aufgaben ({relatedToIssue})",
+    "BlocksIssuesList": "Blockierende Aufgaben für ({blocksIssues})",
     "OpenSubIssues": "Unteraufgaben öffnen",
     "AddSubIssues": "Unteraufgabe hinzufügen",
     "BlockedBy": "Blockiert durch",
@@ -285,7 +289,13 @@
     "AdditionalProperties": "Zusätzliche Eigenschaften",
     "CollapseAll": "Collapse all",
     "ExpandAll": "Expand all",
-    "CompactMode": "Kompakt"
+    "CompactMode": "Kompakt",
+    "SubIssueAdded": "Unteraufgabe {identifier}{value} hinzugefügt",
+    "SubIssueRemoved": "Unteraufgabe {identifier}{value} entfernt",
+    "AddedBlocker": "Blockierende Aufgabe {identifier}{value} hinzugefügt",
+    "RemovedBlocker": "Blockierende Aufgabe {identifier}{value} entfernt",
+    "AddedRelation": "Verwandte Aufgabe {identifier}{value} hinzugefügt",
+    "RemovedRelation": "Verwandte Aufgabe {identifier}{value} entfernt"
   },
   "status": {},
   "emailTemplate": {

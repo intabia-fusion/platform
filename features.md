@@ -1,162 +1,94 @@
-# Functional changes in this fork (commit-based summary)
 
-This file summarizes the key *functional* differences between this fork (`foundation`) and upstream (`hcengineering/platform`), derived from commits that are present locally but not in `upstream/develop`.  
-Per your request, changes that are purely infrastructure or development tooling (Docker/base images, CI/workflows, build scripts, packaging, developer helpers) are explicitly excluded from this summary.
+# Features
 
-How this summary was produced
-- Compare commits in range: `upstream/develop..develop`.
-- Exclude commits that only change infra/dev paths (e.g. `dev/`, `.github/`, `dev/base-image/`, scripts, Dockerfiles, CI config).
-- Group remaining commits by functional categories and surface representative commits and files.
-- For a machine-readable helper and to reproduce: see `scripts/summarize-commits.py` and the full per-file patch index `diff/diff-log.md`.
+Changes in this fork relative to `upstream/develop` (hcengineering/platform).
 
-Snapshot (example numbers)
-- Commits in range (total): ~180
-- Commits excluded as infra/dev-only: ~47
-- Functional commits summarized below (remaining commits)
+## Chat
 
----
+We fixed a lot of issues with chat + notifications, and did great work on inbox improvements (some still in progress).
 
-## AI / AIBot
-What changed
-- Refactored AIBot to support additional LLM providers (GigaChat), added provider implementation and configuration.
-- Switched parts of AIBot to REST-style integrations and improved logging and workspace handling.
-Representative commits
-- `204ac8d` Refactoring AIBot to support GigaChat
-- `7c407ab` AIBot using REST APIs
-- `49fbda1` Add more logging to AIBot / love-agent
-Representative file (provider code)
-```foundation/services/ai-bot/pod-ai-bot/src/llms/gigachat.ts#L36-48
-this.client = new GigaChat({
-  credentials: config.GigaChatCredentials ?? '',
-  scope: config.GigaChatScope ?? 'GIGACHAT_API_PERS',
-  model: config.GigaChatModel ?? 'GigaChat',
-  baseUrl: config.GigaChatBaseUrl ?? 'https://gigachat.devices.sberbank.ru/api/v1/',
-  timeout: config.GigaChatTimeout != null ? parseInt(config.GigaChatTimeout) : 600
-})
-```
+**Reply / Forward**
+- **Reply to message** - reply action on any message, with quoted preview in composer and a reply presenter.
+- **Forward a message** - forward action pushes a message to another channel or direct chat (`ForwardMessageDialog`, forwarded-message presenter). Note: targets channels/DMs only - forwarding into an arbitrary document/card is not implemented.
+- Hardening: reply draft preserved on reopen, attachment opening from reply/forward, forwarded text no longer erased, sender header shown after a reply, input not cleared while a message is still sending.
 
-Why it matters
-- Broader LLM provider support and more resilient AIBot pipelines; improvements in logging help debugging and production observability.
+**Read receipts (who sees my message)**
+- Single/double check marks per message + "who has read this" popup (`MessageReadMarker`, `MessageReadPopup`; client + server middleware + migrations).
+- Mark-as-read directly from Inbox.
 
----
+**Chat UX**
+- Change a channel's icon/emoji; search inside chat navigator; separate Channels & DMs browser tab.
+- Filter archived chats, hide inaccessible directs, deduplicate direct-message channels.
+- Double-click a message opens its thread with scroll/focus synced to URL; unread-indicator fixes (gray/red dots).
+- Performance: chat load slowness fix; server-side activity aggregation for faster history/scroll.
 
-## Recording / Transcription / Datalake
-What changed
-- Improved handling of recordings and storage of transcription chunks.
-- Datalake fixes and S3/stream buffer adjustments to make uploads and custom locations more robust.
-Representative commits
-- `8fdecbd` Office recordings and transcriptions
-- `1a46076` Use separate storage for transcription chunks
-- `e28e71c` Fix datalake for custom locations
-Representative files
-- `foundations/server/packages/server-storage/src/starter.ts`
-- `services/datalake/pod-datalake/src/datalake/*`
+**Notification controls**
+- Mute chat notifications; disable chat unread badge; disable "collaborators" notifications separately.
+- Dedicated web-push preferences page; hide empty notification groups; card notification sub-groups.
+- Push deep-links open correct thread/message; per-recipient localized email notifications; cross-workspace unread marker on desktop app icon; Windows taskbar unread badge fix.
 
-Why it matters
-- More reliable recording ingestion and transcription storage; better support for custom datalake/S3 setups and large uploads.
+**Inbox - in progress**
+- Selection preserved after deleting an item; grouped list-view rework; notifications removed (not archived) storage model rework.
 
----
+## Office
 
-## UI / Chat / Presentation
-What changed
-- Significant UI/UX improvements for chat, replies, and activity messages.
-- Added confirmation dialog on message deletion and cleaned up search/navigation in message components.
-Representative commits
-- `97bd5eb` Add chat presenters updates
-- `bc310ec` Add confirmation dialog on message delete
-- `cdc90c82` Remove extra search
-Representative files
-- `plugins/activity-resources/src/components/*`
-- `packages/presentation/src/components/MessageBox.svelte`
+- **Per-meeting notes security** - `MeetingMinutes` is now a full Space with private/owners/members. Hosts can lock a meeting; only owners change privacy, owners, or member list. Private meetings show a "Busy" badge to non-members and hide meeting details.
+- **Guests join via external link** - shared external link lets guests join a meeting with no account (works in incognito); short shareable meeting links; scheduled-meeting join tied to calendar events with a guest waiting state.
+- **Reworked invite / knock flow** - live "Knocking" / "You are inviting" indicators, accept/decline/cancel popups, multi-owner knock fanout (any owner admits), knock-to-join for personal offices, workspace-owner self-join into private meetings.
+- Robust lifecycle: invite/knock UI auto-expires via TTL + heartbeat (~30s failsafe) on abrupt tab close; meeting auto-closes when only guests remain or last participant leaves; office-owner leaving cascade-disconnects all.
+- **Re-worked transcription (local audio to text)** - pluggable STT provider: run against a self-hosted OpenAI-compatible Whisper server instead of only cloud STT (Deepgram/OpenAI). VAD (silence filtering), word-level timestamps, per-room transcription settings, reworked audio player with transcript/timestamp sync (`packages/audio-dsp` noise reduction + FFT).
+- **Re-worked LiveKit integration** - support for self-hosted LiveKit installations (configurable URL / API key / secret, not locked to LiveKit Cloud); LiveKit client updated.
+- Office/floor UI rework (room display, avatar sizing, office editing); AI meeting summary improvements; 1:1 meetings default to Video type.
+- Note: Krisp noise-cancellation was disabled in this fork.
 
-Why it matters
-- Better user experience for messaging workflows and reply interactions.
+## Tracker
 
----
+- **Show parent + related issues as a list** (in progress) - parent and dependent/related issues now rendered as a list; adds a parent-issue presenter for list/kanban views.
+- **Time reports** - reworked time-report list, estimation stats/progress presenters, time-spend report UI; 15/30-minute increments for logged time.
+- **Improved time tracking** - improved time-reporting dialog/flow; reworked estimation popup, progress circle, sub-issue estimation list.
+- **Kanban fixes + swim-lanes** - swim-lanes in Kanban, parent-based swimlane grouping, drag/drop between columns/lanes, "show more" layout, custom attributes on cards, milestone selector fix.
+- Fixes: issue type reset on create, sub-issue defaults/labels, viewlet jump, header colors.
 
-## Billing & Usage
-What changed
-- UI and backend fixes for billing visibility and usage calculations, including token limit display and workspace filtering.
-Representative commits
-- `a90f785` Add token limit display
-- `9ce63ae` Check only visited workspaces in billing
-Representative files
-- `plugins/billing-resources/*`
-- `services/billing/pod-billing/src/usage.ts`
+## Documents / QMS
 
-Why it matters
-- Improved accuracy and visibility in billing/usage for end users and admins.
+- **Copy Document as Markdown** - context-menu / toolbar action to copy a document as markdown (FUSIO-777).
+- Controlled documents: file attachments copied when creating a document from a template and when drafting a new version (prior attachments carried over, except those marked deleted); attachment state tracking (referenced / deleted-in-version) + file preview in the document attachment list.
 
----
+## Contact
 
-## Audio / DSP
-What changed
-- New audio DSP package and tests (FFT, noise reduction, WAV utilities).
-- Stabilized audio player behavior in UI.
-Representative commits
-- `c42c6ff` Audio DSP (package addition)
-- `135adab` Disable dev mode for audio player
-Representative artifact
-```foundation/diff/packages/audio-dsp/src_fft.ts.diff#L1-8
-diff --git a/packages/audio-dsp/src/fft.ts b/packages/audio-dsp/src/fft.ts
-new file mode 100644
-@@ -0,0 +1,437 @@
-+/** FFT implementation and utilities **/
-```
+- Fulltext search in contact / attribute filters (search instead of exact match).
+- Improved social-identity presenter in contact UI.
+- Filter forbidden (blocked / hidden) communication channels in contact UI (FUSIO-927).
 
-Why it matters
-- Foundational audio processing building blocks for features like transcription, voice processing, and audio analytics.
+## Settings
 
----
+- Disable any plugin / feature via `DISABLED_FEATURES` - hides its settings categories (contact / love / billing / relations etc.).
+- Simplified invite form (removed role selector / link management); Guest Access block shown only when readonly guests are allowed at account level.
+- Removed Classes tab, hidden Spaces section, logo removed from account settings.
 
-## Core / Server
-What changed
-- Multiple fixes and improvements across server components: session manager, middleware, queue/kafka handling and storage adapters.
-Representative commits
-- `7c407ab` Aibot using REST APIs (also touches server/middleware and session manager)
-- `1f38503` Set requestStreamBufferSize to 32K for S3 stream upload
-- `da4b59e` Batch processing / queue improvements
+## Billing
 
-Why it matters
-- Improved stability and correctness in core server operations and background processing.
+- Stripe integration: checkout, webhooks, subscription status mapping.
+- Billing statistics dashboard; "My cards" payment management UI.
+- Token / usage limit display for AI; billing disabled when no billing URL configured.
 
----
+## AI Bot
 
-## Tests & Quality
-What changed
-- Substantial test fixes and quality improvements (sanity tests, ws-tests, svelte-check, test documentation).
-Representative commits
-- `e051d0d` Test fixes
-- `69c7a29` Fix svelte-check and tests
-- `ad874af` Add tests README
+- AIBot rework: runs as a REST server, Kafka-backed, with storage-backed memory (personal + shared); responds to mentions.
+- Gigachat model support; strip think-blocks from responses; recursion fix, logging; new bot avatar.
 
-Why it matters
-- Reduces flaky behavior and makes the repository safer to change and upgrade.
+## Login / Onboarding
 
----
+- OTP-based signup / login flow; phone-number field at registration.
+- Consent documents + consent checkboxes on signup; Terms of Use / Copyright footer.
+- Expired-invite-link handling; login page theme rework (accent colors, light/dark).
 
-## Removals & Cleanup
-What changed
-- Removal of legacy/unused integrations to simplify the platform surface:
-  - Bitrix/Board integrations and related assets removed (cleanup commit).
-Representative commit
-- `bcd21243` Remove bitrix and board
+## Platform
 
-Why it matters
-- Less maintenance burden, fewer external integration points to manage for users who do not require Bitrix/Board.
-
----
-
-## Other notable items
-- `clisr` tooling and tests were added/improved (improves developer tooling for runtime/test automation).
-- Small usability and bug fixes across many plugins (login UX, token display, left-panel sizing, encoding fixes).
-
----
-
-## Verify / Reproduce
-- Fetch upstream and run the summarizer:
-  - `git fetch upstream`
-  - `python3 scripts/summarize-commits.py --format md`  (helper that filters infra-only commits and groups results)
-- Or inspect commits directly:
-  - `git log --no-merges --pretty=format:"%h %ad %s" --date=short upstream/develop..develop`
-  - For per-commit files: `git show --name-only <sha>`
+- Web push: subscribe controls + device list; expanded Help & Support; new-message indicator in the app panel; cross-workspace unread marker in workspace selector.
+- Light/dark theme + accent color customization; new accent color; spellcheck toggle in editors; custom attributes in list views.
+- Text editor: undo (Ctrl+Z) in the drawing board; improved mentions ordering.
+- Calendar: default calendar renamed HULY -> Default.
+- Backup/restore: account domain (person / socialId) restore; skip-queue option; fix backup of wrong social ids.
+- region config for data residency; published API package; desktop macOS signing + Windows build fixes.
+- Removed modules: Bitrix integration and Board (Kanban board plugin) dropped from the fork.

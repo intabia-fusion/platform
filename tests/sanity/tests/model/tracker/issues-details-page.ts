@@ -37,7 +37,10 @@ export class IssuesDetailsPage extends CommonTrackerPage {
   readonly textParentTitle = (): Locator => this.page.locator('span.issue-title')
   readonly buttonAddSubIssue = (): Locator => this.page.locator('#add-sub-issue')
   readonly textRelated = (): Locator =>
-    this.page.locator('//span[text()="Related"]/following-sibling::div[1]/div//span')
+    this.page
+      .locator('text=Related to Issues')
+      .locator('xpath=ancestor::div[contains(@class, "mt-6")][1]//span[contains(text(), "TSK-")]')
+      .first()
 
   readonly buttonCollaborators = (): Locator =>
     this.page.locator('//span[text()="Collaborators"]/following-sibling::div[1]/button')
@@ -47,13 +50,34 @@ export class IssuesDetailsPage extends CommonTrackerPage {
 
   readonly inputSearchOnSearchForIssueModal = (): Locator => this.page.locator('div.popup input[type="text"]')
   readonly textBlockedBy = (): Locator =>
-    this.page.locator('//span[text()="Blocked by"]/following-sibling::div[1]/div/div/button/span')
+    this.page
+      .locator('text=Blocked by Issues')
+      .locator('xpath=ancestor::div[contains(@class, "mt-6")][1]//span[contains(text(), "TSK-")]')
+      .first()
 
   readonly textBlocks = (): Locator =>
-    this.page.locator('//span[text()="Blocks"]/following-sibling::div[1]/div/div/button/span')
+    this.page
+      .locator('text=Blocking Issues')
+      .locator('xpath=ancestor::div[contains(@class, "mt-6")][1]//span[contains(text(), "TSK-")]')
+      .first()
 
   readonly buttonRemoveBlockedBy = (): Locator =>
-    this.page.locator('//span[text()="Blocked by"]/following-sibling::div[1]/div/button')
+    this.page
+      .locator('text=Blocked by Issues')
+      .locator('xpath=ancestor::div[contains(@class, "mt-6")][1]//button[contains(@class, "btn-remove-relation")]')
+      .first()
+
+  readonly buttonRemoveRelated = (): Locator =>
+    this.page
+      .locator('text=Related to Issues')
+      .locator('xpath=ancestor::div[contains(@class, "mt-6")][1]//button[contains(@class, "btn-remove-relation")]')
+      .first()
+
+  readonly buttonRemoveBlocking = (): Locator =>
+    this.page
+      .locator('text=Blocking Issues')
+      .locator('xpath=ancestor::div[contains(@class, "mt-6")][1]//button[contains(@class, "btn-remove-relation")]')
+      .first()
 
   readonly details = (): Locator =>
     this.page.locator('//span[text()="Blocked by"]/following-sibling::div[1]/div/button')
@@ -84,6 +108,14 @@ export class IssuesDetailsPage extends CommonTrackerPage {
 
   async clickRemoveBlockedBy (): Promise<void> {
     await this.buttonRemoveBlockedBy().click()
+  }
+
+  async clickRemoveRelated (): Promise<void> {
+    await this.buttonRemoveRelated().click()
+  }
+
+  async clickRemoveBlocking (): Promise<void> {
+    await this.buttonRemoveBlocking().click()
   }
 
   async editIssue (data: Issue): Promise<void> {
@@ -227,6 +259,14 @@ export class IssuesDetailsPage extends CommonTrackerPage {
 
   async checkIfTextBlockedByIsVisible (): Promise<void> {
     await expect(this.textBlockedBy()).toBeVisible({ visible: false })
+  }
+
+  async checkIfTextRelatedIsVisible (): Promise<void> {
+    await expect(this.textRelated()).toBeVisible({ visible: false })
+  }
+
+  async checkIfTextBlocksIsVisible (): Promise<void> {
+    await expect(this.textBlocks()).toBeVisible({ visible: false })
   }
 
   async checkIfButtonCreatedByHaveRealName (modifierName: string): Promise<void> {

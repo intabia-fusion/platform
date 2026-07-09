@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,6 +16,7 @@
 
 import { type AnalyticProvider, Analytics } from '@hcengineering/analytics'
 import { AnalyticsCollectorProvider } from './analyticsCollector'
+import { YandexMetrikaProvider } from './yandexMetrika'
 import { type AnalyticsConfig } from './types'
 
 export * from './analyticsCollector'
@@ -22,7 +24,7 @@ export * from './utils'
 export * from './types'
 
 export function configureAnalyticsProviders (config: AnalyticsConfig): void {
-  const providers: AnalyticProvider[] = [new AnalyticsCollectorProvider()]
+  const providers: AnalyticProvider[] = [new AnalyticsCollectorProvider(), new YandexMetrikaProvider()]
 
   for (const provider of providers) {
     Analytics.init(provider, config)

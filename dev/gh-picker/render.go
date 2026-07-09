@@ -91,8 +91,12 @@ func (m Model) renderStats() string {
 			view, len(m.centerRows), selFiles,
 			displayFolder(m.selectedFolder), wt, countApplied(m.store))
 	} else {
-		stats = fmt.Sprintf("view:%s | shown:%d | sel:%d | ignored:%d | o:mode x:ign i:view c:cherry-pick ?",
-			view, len(m.items), selectedCount, len(m.store.Incoming))
+		cached := 0
+		if m.applied != nil {
+			cached = len(m.applied.Applied)
+		}
+		stats = fmt.Sprintf("view:%s | shown:%d | sel:%d | ignored:%d | cached:%d | o:mode x:ign A:applied i:view c:cherry ?",
+			view, len(m.items), selectedCount, len(m.store.Incoming), cached)
 	}
 	return infoStyle.Render(stats)
 }
@@ -500,6 +504,8 @@ func (m Model) helpView() string {
 	b.WriteString("  o           - Toggle incoming/outgoing mode\n")
 	b.WriteString("  r           - Refresh\n")
 	b.WriteString("  x           - Ignore commit (or unignore in ignored view)\n")
+	b.WriteString("  A           - Mark applied + cache in ~/.gh-picker (incoming)\n")
+	b.WriteString("  R           - Reset applied cache for this repo\n")
 	b.WriteString("  i           - Toggle view between active and ignored\n")
 	b.WriteString("  ?           - Toggle help\n")
 	b.WriteString("  q/esc       - Quit\n")

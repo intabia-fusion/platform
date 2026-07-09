@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -157,6 +158,15 @@ export class TDocUpdateMessage extends TActivityMessage implements DocUpdateMess
   attributeUpdates?: DocAttributeUpdates
 
   history!: DocUpdateMessageHistory[]
+
+  @Prop(TypeIntlString(), activity.string.Message)
+    messageIntl?: IntlString
+
+  @Prop(TypeRecord(), activity.string.Attributes)
+    intlParams?: Record<string, string | number>
+
+  @Prop(TypeRecord(), activity.string.Update)
+    intlParamsNotLocalized?: Record<string, IntlString>
 }
 
 @Model(activity.class.ActivityReference, activity.class.ActivityMessage)

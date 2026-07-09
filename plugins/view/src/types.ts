@@ -593,6 +593,8 @@ export interface Action<T extends Doc = Doc, P = Record<string, any>> extends Do
   allowedForEditableContent?: 'always' | 'noSelection'
 
   analyticsEvent?: string
+
+  feature?: string
 }
 
 /**

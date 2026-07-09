@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -61,6 +62,8 @@
   export let docClass: Ref<Class<Doc>> | undefined = undefined
   export let kitOptions: Partial<EditorKitOptions> = {}
   export let onKeyDown: ((view: EditorView, event: KeyboardEvent) => boolean) | undefined = undefined
+  export let disableSubmit = false
+  export let clearOnSubmit = true
 
   const dispatch = createEventDispatcher()
   const buttonSize = 'medium'
@@ -74,7 +77,7 @@
   $: shrinkButtons = checkAdaptiveMatching(devSize, 'sm')
 
   $: isEmptyContent = isEmpty || isEmptyMarkup(content)
-  $: canSubmit = (haveAttachment || !isEmptyContent || isContentChanged) && !loading
+  $: canSubmit = (haveAttachment || !isEmptyContent || isContentChanged) && !loading && !disableSubmit
 
   function setContent (content: Markup): void {
     editor?.setContent(content)
@@ -170,8 +173,10 @@
       on:content={(ev) => {
         if (canSubmit) {
           dispatch('message', ev.detail)
-          content = EmptyMarkup
-          editor?.clear?.()
+          if (clearOnSubmit) {
+            content = EmptyMarkup
+            editor?.clear?.()
+          }
         }
       }}
       on:blur={() => {

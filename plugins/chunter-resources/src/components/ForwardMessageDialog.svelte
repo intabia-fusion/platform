@@ -41,6 +41,7 @@
   let forwarding = false
 
   async function handleForward (): Promise<void> {
+    if (forwarding) return
     try {
       forwarding = true
       const client = getClient()
@@ -77,7 +78,7 @@
     dispatch('close')
   }
 
-  $: canSave = selectedDocs.length > 0
+  $: canSave = selectedDocs.length > 0 && !forwarding
 
   let count = 0
   let height: number = 0
@@ -153,9 +154,12 @@
     </div>
     <div class="forward-modal__input">
       <ChatMessageInputLite
+        disableSubmit={!canSave}
+        clearOnSubmit={false}
         on:update={(e) => {
           markup = e.detail
         }}
+        on:message={handleForward}
       />
     </div>
   </div>

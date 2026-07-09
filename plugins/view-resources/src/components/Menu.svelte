@@ -15,7 +15,7 @@
 <script lang="ts">
   import { Class, Doc, Ref } from '@hcengineering/core'
   import { Asset } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
+  import { getClient, isDisabled } from '@hcengineering/presentation'
   import { Action, Menu } from '@hcengineering/ui'
   import { Action as ViewAction, ViewContextType } from '@hcengineering/view'
   import { actionGroupOrder, getActions, invokeAction } from '../actions'
@@ -34,17 +34,25 @@
 
   void getActions(getClient(), object, baseMenuClass, mode).then((result) => {
     const filtered = result.filter((a) => {
+      if (isDisabled(a.feature)) {
+        return false
+      }
+
       if (excludedActions.includes(a._id)) {
         return false
       }
+
       if (includedActions.length > 0 && !includedActions.includes(a._id)) {
         return false
       }
+
       if (a.override && a.override.filter((o) => excludedActions.includes(o)).length > 0) {
         return false
       }
+
       return true
     })
+
     const newActions: Action[] = filtered.map((a) => ({
       label: a.label,
       icon: a.icon as Asset,

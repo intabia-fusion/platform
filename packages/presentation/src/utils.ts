@@ -84,6 +84,8 @@ let pipeline: PresentationPipeline
 export type TxListener = (tx: Tx[]) => void
 const txListeners: TxListener[] = []
 
+const alwaysDisabled: string[] = ['relation']
+
 /**
  * @public
  */
@@ -347,7 +349,7 @@ export function isDisabled (feature?: string): boolean {
   if (feature === undefined) {
     return false
   }
-  return getMetadata(plugin.metadata.DisabledFeatures)?.has(feature) ?? false
+  return alwaysDisabled.includes(feature) || (getMetadata(plugin.metadata.DisabledFeatures)?.has(feature) ?? false)
 }
 
 export type OnClientListener = (client: Client, account: Account) => void | Promise<void>

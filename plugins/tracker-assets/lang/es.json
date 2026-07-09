@@ -87,6 +87,10 @@
     "OpenParent": "Abrir tarea principal",
     "SubIssues": "Subtareas",
     "SubIssuesList": "Subtareas ({subIssues})",
+    "ParentIssuesList": "Tareas padre ({parentIssues})",
+    "BlockedByIssuesList": "Bloqueado por tareas ({blockedByIssues})",
+    "RelatedToIssuesList": "Relacionado con tareas ({relatedToIssue})",
+    "BlocksIssuesList": "Tareas bloqueantes para ({blocksIssues})",
     "OpenSubIssues": "Abrir subtareas",
     "AddSubIssues": "Añadir subtarea",
     "BlockedBy": "Bloqueado por",
@@ -285,7 +289,13 @@
     "AdditionalProperties": "Propiedades adicionales",
     "CollapseAll": "Collapse all",
     "ExpandAll": "Expand all",
-    "CompactMode": "Compacto"
+    "CompactMode": "Compacto",
+    "SubIssueAdded": "Subtarea añadida {identifier}{value}",
+    "SubIssueRemoved": "Subtarea eliminada {identifier}{value}",
+    "AddedBlocker": "Problema bloqueador añadido {identifier}{value}",
+    "RemovedBlocker": "Problema bloqueador eliminado {identifier}{value}",
+    "AddedRelation": "Problema relacionado añadido {identifier}{value}",
+    "RemovedRelation": "Problema relacionado eliminado {identifier}{value}"
   },
   "status": {},
   "emailTemplate": {

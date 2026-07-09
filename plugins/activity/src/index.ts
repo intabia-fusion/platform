@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -137,6 +138,10 @@ export interface DocUpdateMessage extends ActivityMessage {
   attributeUpdates?: DocAttributeUpdates
 
   history: DocUpdateMessageHistory[]
+
+  messageIntl?: IntlString
+  intlParams?: Record<string, string | number>
+  intlParamsNotLocalized?: Record<string, IntlString>
 }
 
 export interface ActivityReference extends ActivityMessage {
@@ -359,6 +364,8 @@ export default plugin(activityId, {
     NewObjectType: '' as IntlString,
     RemovedObjectType: '' as IntlString,
     AttributeSetTo: '' as IntlString,
+    AddedToCollection: '' as IntlString,
+    RemovedFromCollection: '' as IntlString,
     AddedTag: '' as IntlString,
     RemovedTag: '' as IntlString,
     ValueTooLarge: '' as IntlString,

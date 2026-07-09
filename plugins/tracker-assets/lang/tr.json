@@ -87,6 +87,10 @@
     "OpenParent": "Üst sorunu aç",
     "SubIssues": "Alt sorunlar",
     "SubIssuesList": "Alt sorunlar ({subIssues})",
+    "ParentIssuesList": "Üst Görevler ({parentIssues})",
+    "BlockedByIssuesList": "Görevler tarafından engellendi ({blockedByIssues})",
+    "RelatedToIssuesList": "Görevlerle ilişkili ({relatedToIssue})",
+    "BlocksIssuesList": "Engelleyen görevler ({blocksIssues})",
     "OpenSubIssues": "Alt sorunları aç",
     "AddSubIssues": "Alt sorun ekle",
     "BlockedBy": "Engelleyen",
@@ -285,7 +289,13 @@
     "AdditionalProperties": "Ek özellikler",
     "CollapseAll": "Collapse all",
     "ExpandAll": "Expand all",
-    "CompactMode": "Kompakt"
+    "CompactMode": "Kompakt",
+    "SubIssueAdded": "Alt sorun eklendi {identifier}{value}",
+    "SubIssueRemoved": "Alt sorun kaldırıldı {identifier}{value}",
+    "AddedBlocker": "Engelleyen sorun eklendi {identifier}{value}",
+    "RemovedBlocker": "Engelleyen sorun kaldırıldı {identifier}{value}",
+    "AddedRelation": "İlgili sorun eklendi {identifier}{value}",
+    "RemovedRelation": "İlgili sorun kaldırıldı {identifier}{value}"
   },
   "status": {},
   "emailTemplate": {

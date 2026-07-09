@@ -1,4 +1,4 @@
-# Foundation is an evolution of hcengineering Platform - extended and improved, with a focus on stability and enhancements in Tracker and other components.
+# Platform is an evolution of hcengineering/platform - extended and improved, with a focus on stability and enhancements in Tracker and other components.
 
 ![GitHub License](https://img.shields.io/github/license/intabia-fusion/foundation?style=for-the-badge)
 

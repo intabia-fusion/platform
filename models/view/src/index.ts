@@ -925,6 +925,7 @@ export function createModel (builder: Builder): void {
     icon: view.icon.CopyLink,
     category: view.category.Editor,
     target: core.class.Doc,
+    feature: 'relation',
     context: {
       mode: ['context', 'browser'],
       group: 'associate'

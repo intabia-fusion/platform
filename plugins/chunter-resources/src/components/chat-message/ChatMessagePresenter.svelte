@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -28,7 +29,7 @@
   import { AccountUuid, Class, Doc, Markup, Ref, Space, WithLookup } from '@hcengineering/core'
   import { getClient, MessageViewer, pendingCreatedDocs } from '@hcengineering/presentation'
   import { EmptyMarkup } from '@hcengineering/text'
-  import { Action, Button, IconEdit, languageStore } from '@hcengineering/ui'
+  import { Action, Button, IconEdit, languageStore, deviceOptionsStore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { getDocLinkTitle } from '@hcengineering/view-resources'
   import { InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
@@ -256,7 +257,18 @@
   }
 
   async function handleDbClick (e: MouseEvent): Promise<void> {
+    if ($deviceOptionsStore.isMobile) return
     if (isEditing || value == null) return
+
+    const target = e.target as HTMLElement | null
+    if (
+      target?.closest(
+        '.replies-container, .replies, .hulyReactions-container, .reactions, .actions, .gallery, .attachment-preview, .forwarded-message, .read-marker, .avatar, .socialIcon, .saveMarker, .header, button, input, textarea, img, [role="button"]'
+      )
+    ) {
+      return
+    }
+
     e.preventDefault()
     e.stopPropagation()
 

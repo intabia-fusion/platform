@@ -233,6 +233,7 @@ export interface Attribute<T extends PropertyType> extends Doc, UXObject {
   defaultValue?: any
   automationOnly?: boolean
   rank?: Rank
+  activity?: { set?: IntlString, unset?: IntlString }
 
   // Extra customization properties
   [key: string]: any

@@ -78,8 +78,6 @@ import { CommunicationMiddleware, type CommunicationApiFactory } from './communi
 import { RatingMiddleware } from '@hcengineering/server-rating'
 import { ChunterMiddleware } from '@hcengineering/server-chunter'
 import { NotificationMiddleware } from '@hcengineering/server-notification'
-import { ActivityMiddleware } from '@hcengineering/server-activity-resources'
-
 /**
  * @public
  */
@@ -174,7 +172,6 @@ export function createServerPipeline (
       TransientMiddleware.create,
       ChunterMiddleware.create,
       NotificationMiddleware.create,
-      ActivityMiddleware.create,
       TxMiddleware.create, // Store tx into transaction domain
       ...(opt.disableTriggers === true ? [] : [TriggersMiddleware.create]),
       ...(opt.fulltextUrl !== undefined

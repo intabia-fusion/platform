@@ -91,14 +91,14 @@ func waitForProgress() tea.Cmd {
 }
 
 // loadCommitsFor fetches commits for the current mode
-func loadCommitsFor(mode AppMode, upstream string) tea.Cmd {
+func loadCommitsFor(mode AppMode, upstream string, applied *AppliedCache) tea.Cmd {
 	if mode == ModeOutgoing {
 		return loadOutgoing(upstream)
 	}
-	return loadIncoming(upstream)
+	return loadIncoming(upstream, applied)
 }
 
-func loadIncoming(upstream string) tea.Cmd {
+func loadIncoming(upstream string, applied *AppliedCache) tea.Cmd {
 	loadProgressCh = make(chan tea.Msg, 8)
 	go func() {
 		defer close(loadProgressCh)
@@ -112,7 +112,15 @@ func loadIncoming(upstream string) tea.Cmd {
 		loadProgressCh <- progressMsg{done: 0, total: total, started: started}
 		lastTick := time.Now()
 		for i := range commits {
-			CheckCherryPickedOne(&commits[i])
+			// Skip expensive re-check for commits already proven applied.
+			if applied != nil && applied.Has(commits[i].Hash) {
+				commits[i].CherryPicked = true
+			} else {
+				CheckCherryPickedOne(&commits[i])
+				if applied != nil && commits[i].CherryPicked && !commits[i].Partial {
+					applied.Mark(commits[i].Hash)
+				}
+			}
 			if time.Since(lastTick) > 50*time.Millisecond || (i+1)%10 == 0 || i == total-1 {
 				loadProgressCh <- progressMsg{done: i + 1, total: total, started: started}
 				lastTick = time.Now()
