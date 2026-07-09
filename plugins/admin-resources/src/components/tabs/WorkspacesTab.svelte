@@ -24,7 +24,7 @@
     type WorkspaceMode,
     WorkspaceUserOperation
   } from '@hcengineering/core'
-  import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
+  import { getEmbeddedLabel, getMetadata, type IntlString, translate } from '@hcengineering/platform'
   import presentation, {
     copyTextToClipboard,
     MessageBox,
@@ -97,13 +97,19 @@
 
   let sortingRule = SortingRule.LastVisit
 
-  const sortRules = {
-    [SortingRule.Activity]: 'Active users',
-    [SortingRule.Name]: 'Name',
-    [SortingRule.BackupDate]: 'Backup date',
-    [SortingRule.BackupSize]: 'Backup size',
-    [SortingRule.LastVisit]: 'Last visit'
+  const sortRules: Record<SortingRule, IntlString> = {
+    [SortingRule.Activity]: adminRes.string.SortActiveUsers,
+    [SortingRule.Name]: adminRes.string.SortName,
+    [SortingRule.BackupDate]: adminRes.string.SortBackupDate,
+    [SortingRule.BackupSize]: adminRes.string.SortBackupSize,
+    [SortingRule.LastVisit]: adminRes.string.SortLastVisit
   }
+
+  // ButtonMenu.title takes a plain string, so translate the selected sort label
+  let sortTitle = ''
+  $: void translate(sortRules[sortingRule], {}, $themeStore.language).then((t) => {
+    sortTitle = t
+  })
 
   // Activity sorts the current page by live stats; the rest are server-side
   const serverSort: Record<SortingRule, WorkspacesSortKey | undefined> = {
@@ -488,8 +494,8 @@
     <ButtonMenu
       selected={sortingRule}
       autoSelectionIfOne
-      title={sortRules[sortingRule]}
-      items={Object.entries(sortRules).map((it) => ({ id: it[0], label: getEmbeddedLabel(it[1]) }))}
+      title={sortTitle}
+      items={Object.entries(sortRules).map((it) => ({ id: it[0], label: it[1] }))}
       on:selected={(it) => {
         sortingRule = it.detail
       }}
@@ -591,7 +597,8 @@
                 {#if activeAll.length > 0}
                   <Button
                     icon={IconStop}
-                    label={getEmbeddedLabel(`Mass Archive ${activeAll.length}`)}
+                    label={adminRes.string.MassArchive}
+                    labelParams={{ count: activeAll.length }}
                     kind={'ghost'}
                     on:click={() => {
                       void otpGuardedOp(
@@ -608,7 +615,8 @@
                   <Button
                     icon={IconArrowRight}
                     kind={'positive'}
-                    label={getEmbeddedLabel(`Mass Migrate ${activeV.length} to ${selectedRegionName ?? ''}`)}
+                    label={adminRes.string.MassMigrate}
+                    labelParams={{ count: activeV.length, region: selectedRegionName ?? '' }}
                     on:click={() => {
                       void otpGuardedOp(
                         activeV.map((it) => it.uuid),
@@ -690,7 +698,8 @@
                       <Button
                         on:click={() => {
                           showPopup(MessageBox, {
-                            label: getEmbeddedLabel(`Reset attempts ${workspace.url}`),
+                            label: adminRes.string.ResetAttempts,
+                            labelProps: { url: workspace.url },
                             message: adminRes.string.PleaseConfirm,
                             action: async () => {
                               await performWorkspaceOperation(workspace.uuid, 'reset-attempts')
@@ -759,7 +768,8 @@
                         label={adminRes.string.Unarchive}
                         on:click={() => {
                           showPopup(MessageBox, {
-                            label: getEmbeddedLabel(`Unarchive ${workspace.url}`),
+                            label: adminRes.string.UnarchiveWorkspace,
+                            labelProps: { url: workspace.url },
                             message: adminRes.string.PleaseConfirm,
                             action: async () => {
                               await performWorkspaceOperation(workspace.uuid, 'unarchive')

@@ -123,6 +123,16 @@ export default mergeIds(adminId, admin, {
     EditSubscription: '' as IntlString,
     CancelSubscription: '' as IntlString,
     SearchAccounts: '' as IntlString,
-    PleaseConfirm: '' as IntlString
+    PleaseConfirm: '' as IntlString,
+    SortActiveUsers: '' as IntlString,
+    SortName: '' as IntlString,
+    SortBackupDate: '' as IntlString,
+    SortBackupSize: '' as IntlString,
+    SortLastVisit: '' as IntlString,
+    MassArchive: '' as IntlString,
+    MassMigrate: '' as IntlString,
+    ResetAttempts: '' as IntlString,
+    UnarchiveWorkspace: '' as IntlString,
+    ReplaceSubscriptionConfirm: '' as IntlString
   }
 })

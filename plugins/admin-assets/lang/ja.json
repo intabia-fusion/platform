@@ -107,6 +107,16 @@
     "Save": "保存",
     "EditSubscription": "サブスクリプションを編集",
     "CancelSubscription": "サブスクリプションを解約",
-    "SearchAccounts": "アカウントを検索"
+    "SearchAccounts": "アカウントを検索",
+    "SortActiveUsers": "アクティブユーザー",
+    "SortName": "名前",
+    "SortBackupDate": "バックアップ日",
+    "SortBackupSize": "バックアップサイズ",
+    "SortLastVisit": "最終アクセス",
+    "MassArchive": "一括アーカイブ ({count})",
+    "MassMigrate": "{count} 件を {region} へ一括移行",
+    "ResetAttempts": "試行回数をリセット {url}",
+    "UnarchiveWorkspace": "アーカイブ解除 {url}",
+    "ReplaceSubscriptionConfirm": "ワークスペースには既に「{current}」があります。「{next}」に置き換えますか？"
   }
 }

@@ -107,6 +107,16 @@
     "Save": "Uložit",
     "EditSubscription": "Upravit předplatné",
     "CancelSubscription": "Zrušit předplatné",
-    "SearchAccounts": "Hledat účty"
+    "SearchAccounts": "Hledat účty",
+    "SortActiveUsers": "Aktivní uživatelé",
+    "SortName": "Název",
+    "SortBackupDate": "Datum zálohy",
+    "SortBackupSize": "Velikost zálohy",
+    "SortLastVisit": "Poslední návštěva",
+    "MassArchive": "Hromadně archivovat ({count})",
+    "MassMigrate": "Hromadně migrovat ({count}) do {region}",
+    "ResetAttempts": "Resetovat pokusy {url}",
+    "UnarchiveWorkspace": "Zrušit archivaci {url}",
+    "ReplaceSubscriptionConfirm": "Pracovní prostor již má „{current}“. Nahradit za „{next}“?"
   }
 }

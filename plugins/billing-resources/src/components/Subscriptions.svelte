@@ -102,6 +102,7 @@
   let pollErrorCount = 0
   let pollErrorShown = false
   let configError = false
+  const DEFAULT_LOCALE = 'ru'
 
   let usageInfo: UsageStatus | null = null
 
@@ -441,11 +442,11 @@
     const workspace = `"${getMetadata(presentation.metadata.WorkspaceName) ?? ''}"`
     const employee = await getClient().findOne(contact.class.Person, { _id: getCurrentEmployee() })
     const user = employee !== undefined ? formatName(employee.name) : ''
-    const date = new Date().toLocaleDateString($themeStore.language ?? 'en')
+    const date = new Date().toLocaleDateString($themeStore.language ?? DEFAULT_LOCALE)
     const subject = await translate(
       plugin.string.ContactSalesSubject,
       { workspace, user, date, plan: planKey },
-      $themeStore.language
+      $themeStore.language ?? DEFAULT_LOCALE
     )
     const link = document.createElement('a')
     link.href = `mailto:${email}?subject=${encodeURIComponent(subject)}`
@@ -829,7 +830,11 @@
               {#if currentSubscription?.amount != null}
                 <div class="flex-row-center items-end">
                   <span class="fs-title text-xl">
-                    {formatAmount(currentSubscription.amount, currentPlan.currency ?? '', $themeStore.language)}
+                    {formatAmount(
+                      currentSubscription.amount,
+                      currentPlan.currency ?? '',
+                      $themeStore.language ?? DEFAULT_LOCALE
+                    )}
                   </span>
                   <span class="ml-1 lower">
                     <!-- amount is the real charge: yearly total for a yearly plan, monthly otherwise. -->
@@ -855,7 +860,7 @@
                       {formatAmount(
                         currentPackageSubscription.amount,
                         currentPackage.currency ?? '',
-                        $themeStore.language
+                        $themeStore.language ?? DEFAULT_LOCALE
                       )}
                     </span>
                     <span class="ml-1 lower">
@@ -879,7 +884,7 @@
                   <Button
                     label={plugin.string.RetryPayment}
                     kind="primary"
-                    disabled={isRetrying}
+                    disabled={isRetrying || isUpdating || isCanceling || isUncanceling || isCheckoutPolling}
                     on:click={() => {
                       void retryPayment()
                     }}
@@ -902,7 +907,7 @@
 
             <div class="curr-tier-footer">
               {#if currentSubscription?.periodEnd}
-                {@const date = formatEndDate(currentSubscription.periodEnd, $themeStore.language)}
+                {@const date = formatEndDate(currentSubscription.periodEnd, $themeStore.language ?? DEFAULT_LOCALE)}
                 {#if isCurrentCanceled}
                   <div><Label label={plugin.string.SubscriptionValidUntil} params={{ date }} /></div>
                 {:else}
@@ -964,7 +969,7 @@
               {@const perUserBaseVal = monthlyPerUserBase(planItem)}
               {@const hasPerUser = Number.isFinite(perUserBaseVal)}
               {@const monthlyPerUserVal = hasPerUser ? monthly(perUserBaseVal, planItem, paymentPeriod) : 0}
-              {@const priceLocale = $themeStore.language ?? 'ru'}
+              {@const priceLocale = $themeStore.language ?? DEFAULT_LOCALE}
               {@const monthlyVal =
                 planItem.priceMonthly != null
                   ? monthly(planItem.priceMonthly, planItem, paymentPeriod).toLocaleString(priceLocale)
@@ -1091,7 +1096,7 @@
             <Scroller contentDirection="horizontal" buttons={false} showOverflowArrows shrink={false} noFade={false}>
               <div class="flex-stretch flex-gap-4 flex-no-shrink mb-3">
                 {#each Object.entries(packages) as [pkgKey, pkgItem] (pkgItem.description)}
-                  {@const priceLocale = $themeStore.language ?? 'ru'}
+                  {@const priceLocale = $themeStore.language ?? DEFAULT_LOCALE}
                   <div class="tier-card">
                     <div class="tier-card-content">
                       <div class="package-item">

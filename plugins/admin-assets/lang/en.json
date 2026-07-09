@@ -107,6 +107,16 @@
     "Save": "Save",
     "EditSubscription": "Edit subscription",
     "CancelSubscription": "Cancel subscription",
-    "SearchAccounts": "Search accounts"
+    "SearchAccounts": "Search accounts",
+    "SortActiveUsers": "Active users",
+    "SortName": "Name",
+    "SortBackupDate": "Backup date",
+    "SortBackupSize": "Backup size",
+    "SortLastVisit": "Last visit",
+    "MassArchive": "Mass Archive {count}",
+    "MassMigrate": "Mass Migrate {count} to {region}",
+    "ResetAttempts": "Reset attempts {url}",
+    "UnarchiveWorkspace": "Unarchive {url}",
+    "ReplaceSubscriptionConfirm": "Workspace already has \"{current}\". Replace with \"{next}\"?"
   }
 }

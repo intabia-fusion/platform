@@ -107,6 +107,16 @@
     "Save": "保存",
     "EditSubscription": "编辑订阅",
     "CancelSubscription": "取消订阅",
-    "SearchAccounts": "搜索账户"
+    "SearchAccounts": "搜索账户",
+    "SortActiveUsers": "活跃用户",
+    "SortName": "名称",
+    "SortBackupDate": "备份日期",
+    "SortBackupSize": "备份大小",
+    "SortLastVisit": "最后访问",
+    "MassArchive": "批量归档 ({count})",
+    "MassMigrate": "批量迁移 {count} 个至 {region}",
+    "ResetAttempts": "重置尝试次数 {url}",
+    "UnarchiveWorkspace": "取消归档 {url}",
+    "ReplaceSubscriptionConfirm": "工作区已有“{current}”。替换为“{next}”？"
   }
 }
