@@ -329,6 +329,7 @@
               type={canGroup ? 'short' : 'default'}
               isHighlighted={selectedMessageId === message._id}
               withShowMore
+              timeFormat="full"
             />
           {/each}
         </Grid>
