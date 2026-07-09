@@ -158,7 +158,7 @@
     "GroupByOwner": "Podle vlastníka",
     "GroupByStatus": "Podle stavu",
     "GroupByDate": "Podle data",
-    "SpeakingWhileMuted": "You are muted - others can't hear you",
-    "SpeakingWhileMutedAlert": "Alert me when I speak while muted"
+    "SpeakingWhileMuted": "Máte vypnutý mikrofon - ostatní vás neslyší",
+    "SpeakingWhileMutedAlert": "Upozornit, když mluvím s vypnutým mikrofonem"
   }
 }

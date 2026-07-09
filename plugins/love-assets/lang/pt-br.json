@@ -158,7 +158,7 @@
     "GroupByOwner": "Por responsável",
     "GroupByStatus": "Por status",
     "GroupByDate": "Por data",
-    "SpeakingWhileMuted": "You are muted - others can't hear you",
-    "SpeakingWhileMutedAlert": "Alert me when I speak while muted"
+    "SpeakingWhileMuted": "Seu microfone está mudo - os outros não te ouvem",
+    "SpeakingWhileMutedAlert": "Avisar quando eu falar com o microfone mudo"
   }
 }
