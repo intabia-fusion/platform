@@ -17,8 +17,8 @@ plans:
         en: 2GB storage / per user
       - ru: 100 000 токенов AI-ассистента
         en: 100,000 AI assistant tokens
-      - ru: до 3 проектов в трекере
-        en: up to 3 projects in the tracker
+      - ru: неограниченное количество проектов в трекере
+        en: unlimited projects in the tracker
       - ru: общая горячая линия
         en: general hotline
     features:
@@ -47,7 +47,6 @@ plans:
     trafficLimitGB: 0
     meetingMinutesLimit: 0
     tokenLimit: 100000
-    projectsLimit: 3
     usersLimit: 5
     guestsLimit: 50
     index: 0
@@ -100,7 +99,6 @@ plans:
     trafficLimitGB: 0
     meetingMinutesLimit: 0
     tokenLimit: 0
-    projectsLimit: 0
     usersLimit: 0
     index: 1
     color: Orchid
@@ -162,7 +160,6 @@ plans:
     trafficLimitGB: 0
     meetingMinutesLimit: 0
     tokenLimit: 0
-    projectsLimit: 0
     usersLimit: 0
     index: 2
     color: Orange

@@ -17,8 +17,8 @@ plans:
     features:
       - ru: 5 пользователей
         en: 5 users
-      - ru: 3 проекта
-        en: 3 projects
+      - ru: неограниченное количество проектов
+        en: unlimited projects
     additional:
       ru: Лимиты бесплатного тарифа
       en: Free tier limits
@@ -29,7 +29,6 @@ plans:
     trafficLimitGB: 0
     meetingMinutesLimit: 0
     tokenLimit: 100000
-    projectsLimit: 3
     usersLimit: 5
     index: -1
     color: Grayish
@@ -44,8 +43,8 @@ plans:
       ru: 1 пользователь
       en: 1 user
     features:
-      - ru: 1 проект
-        en: 1 project
+      - ru: неограниченное количество проектов
+        en: unlimited projects
       - ru: 50 Мб хранилища
         en: 50 MB storage
     additional:
@@ -57,7 +56,6 @@ plans:
     trafficLimitGB: 1
     meetingMinutesLimit: 0
     tokenLimit: 0
-    projectsLimit: 1
     usersLimit: 1
     index: 0
     color: Sky
@@ -66,14 +64,14 @@ plans:
       ru: Команда
       en: Team
     description:
-      ru: 5 проектов, до 10 пользователей
-      en: 5 projects, up to 10 users
+      ru: до 10 пользователей
+      en: up to 10 users
     users:
       ru: до 10 пользователей
       en: up to 10 users
     features:
-      - ru: 5 проектов
-        en: 5 projects
+      - ru: неограниченное количество проектов
+        en: unlimited projects
       - ru: до 10 пользователей
         en: up to 10 users
       - ru: 5 Гб хранилища
@@ -87,7 +85,6 @@ plans:
     trafficLimitGB: 5
     meetingMinutesLimit: 0
     tokenLimit: 0
-    projectsLimit: 5
     usersLimit: 10
     index: 1
     color: Sunshine
@@ -102,8 +99,8 @@ plans:
       ru: до 10 пользователей
       en: up to 10 users
     features:
-      - ru: 10 проектов
-        en: 10 projects
+      - ru: неограниченное количество проектов
+        en: unlimited projects
       - ru: 10 Гб хранилища
         en: 10 GB storage
     additional:
@@ -115,7 +112,6 @@ plans:
     trafficLimitGB: 10
     meetingMinutesLimit: 0
     tokenLimit: 0
-    projectsLimit: 10
     usersLimit: 10
     index: 2
     color: Crocodile
@@ -135,8 +131,8 @@ plans:
     features:
       - ru: 10 Мб хранилища
         en: 10 MB storage
-      - ru: 50 проектов
-        en: 50 projects
+      - ru: неограниченное количество проектов
+        en: unlimited projects
     additional:
       ru: Изолированная проверка лимита диска
       en: Isolated disk-limit check
@@ -146,7 +142,6 @@ plans:
     trafficLimitGB: 1
     meetingMinutesLimit: 0
     tokenLimit: 0
-    projectsLimit: 50
     usersLimit: 10
     index: 4
     color: Turquoise
@@ -163,8 +158,8 @@ plans:
     features:
       - ru: 100 Мб хранилища
         en: 100 MB storage
-      - ru: 50 проектов
-        en: 50 projects
+      - ru: неограниченное количество проектов
+        en: unlimited projects
     additional:
       ru: Больший лимит диска для проверки апгрейда
       en: Larger disk limit for upgrade checks
@@ -174,7 +169,6 @@ plans:
     trafficLimitGB: 5
     meetingMinutesLimit: 0
     tokenLimit: 0
-    projectsLimit: 50
     usersLimit: 10
     index: 5
     color: Ocean
@@ -200,7 +194,6 @@ plans:
     trafficLimitGB: 0
     meetingMinutesLimit: 0
     tokenLimit: 0
-    projectsLimit: 0
     usersLimit: 0
     index: 3
     color: Lavender
