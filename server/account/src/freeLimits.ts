@@ -22,7 +22,6 @@ import { type TierLimits } from './types'
 const DEFAULT_FREE_PLAN = {
   usersLimit: 5,
   storagePerUserGB: 2,
-  projectsLimit: 3,
   tokenLimit: 100000,
   trafficLimitGB: 0,
   meetingMinutesLimit: 0
@@ -45,10 +44,7 @@ export function parseFreePlanLimits (raw: string | undefined): TierLimits {
     trafficLimitGB: item.trafficLimitGB ?? 0,
     meetingMinutesLimit: item.meetingMinutesLimit ?? 0,
     tokenLimit: item.tokenLimit ?? 0,
-    usersLimit,
-    projectsLimit: item.projectsLimit ?? 0,
-    drivesLimit: item.drivesLimit ?? 0,
-    teamspacesLimit: item.teamspacesLimit ?? 0
+    usersLimit
   }
 }
 

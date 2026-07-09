@@ -264,9 +264,6 @@ export interface TierLimits {
   meetingMinutesLimit: number
   tokenLimit: number
   usersLimit: number
-  projectsLimit: number
-  drivesLimit?: number
-  teamspacesLimit?: number
 }
 
 export interface Subscription {

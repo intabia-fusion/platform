@@ -64,9 +64,9 @@ echo "Creating workspace api-tests-unpaid (no plan: subscription driven by the u
 echo "Creating workspace api-tests-limits with restricted plan..."
 ./tool.sh create-workspace api-tests-limits email:user1
 ./tool.sh assign-workspace user1 api-tests-limits
-# Restricted: 1 project, 1 drive, 1 teamspace; users/volume unlimited.
+# Restricted plan; users/volume unlimited.
 # Plan MUST be set before first client connects: limits snapshot loads at pipeline boot.
-./tool.sh set-workspace-plan api-tests-limits start --projects 1 --drives 1 --teamspaces 1
+./tool.sh set-workspace-plan api-tests-limits start
 
 echo "Creating workspace api-tests-seats (unlimited at boot; the test tightens usersLimit at runtime)..."
 ./tool.sh create-workspace api-tests-seats email:user1

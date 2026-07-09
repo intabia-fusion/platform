@@ -384,8 +384,7 @@ export async function adminUpdateSubscription (
       trafficLimitGB: 0,
       meetingMinutesLimit: 0,
       tokenLimit: 0,
-      usersLimit: 0,
-      projectsLimit: 0
+      usersLimit: 0
     }
     const baseLimits = existing.limits ?? emptyLimits
     const perUserStorage =

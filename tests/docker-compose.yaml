@@ -180,7 +180,7 @@ services:
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
       - WORKSPACE_LIMIT_PER_USER=100
       # Free fallback limits (match the free:true plan in plan-config.yaml). storagePerUserGB scales disk.
-      - FREE_PLAN_LIMITS={"usersLimit":5,"storagePerUserGB":2,"projectsLimit":3,"tokenLimit":100000,"trafficLimitGB":0,"meetingMinutesLimit":0}
+      - FREE_PLAN_LIMITS={"usersLimit":5,"storagePerUserGB":2,"tokenLimit":100000,"trafficLimitGB":0,"meetingMinutesLimit":0}
       - DB_URL=${DB_PG_URL}
       - REGION_CONFIG=/var/cfg/region-config.yaml
       - STORAGE_CONFIG=${STORAGE_CONFIG}

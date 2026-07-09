@@ -220,10 +220,6 @@ export interface Subscription {
     meetingMinutesLimit: number
     tokenLimit: number
     usersLimit: number
-    projectsLimit: number
-    // Reserved space limits — kept in the baked snapshot for forward compatibility, not enforced yet.
-    drivesLimit?: number
-    teamspacesLimit?: number
   }
 
   // Free fallback limits (from the plan flagged free in config). Applied when the paid tier is unpaid:
@@ -234,9 +230,6 @@ export interface Subscription {
     meetingMinutesLimit: number
     tokenLimit: number
     usersLimit: number
-    projectsLimit: number
-    drivesLimit?: number
-    teamspacesLimit?: number
   }
 
   // Amount paid (in cents, e.g. 9999 = $99.99)

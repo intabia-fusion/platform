@@ -214,11 +214,7 @@ export async function createServer (
       trafficLimitGB: item.trafficLimitGB ?? 0,
       meetingMinutesLimit: item.meetingMinutesLimit ?? 0,
       tokenLimit: item.tokenLimit ?? 0,
-      usersLimit,
-      projectsLimit: item.projectsLimit ?? 0,
-      // Reserved (not enforced yet) — baked from config so adding enforcement later needs no re-checkout.
-      drivesLimit: item.drivesLimit ?? 0,
-      teamspacesLimit: item.teamspacesLimit ?? 0
+      usersLimit
     }
   }
 

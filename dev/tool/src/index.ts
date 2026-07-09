@@ -445,9 +445,6 @@ export function devTool (
     .option('--users <n>', 'usersLimit', '0')
     .option('--storage <gb>', 'storageLimitGB', '0')
     .option('--traffic <gb>', 'trafficLimitGB', '0')
-    .option('--projects <n>', 'projectsLimit', '0')
-    .option('--drives <n>', 'drivesLimit (reserved, not enforced yet)', '0')
-    .option('--teamspaces <n>', 'teamspacesLimit (reserved, not enforced yet)', '0')
     .option('--tokens <n>', 'tokenLimit', '0')
     .option('--meeting-minutes <n>', 'meetingMinutesLimit', '0')
     .action(
@@ -460,9 +457,6 @@ export function devTool (
           users: string
           storage: string
           traffic: string
-          projects: string
-          drives: string
-          teamspaces: string
           tokens: string
           meetingMinutes: string
         }
@@ -476,9 +470,6 @@ export function devTool (
             usersLimit: parseInt(cmd.users),
             storageLimitGB: parseFloat(cmd.storage), // fractional GB allowed (e.g. 0.05 = 50MB)
             trafficLimitGB: parseFloat(cmd.traffic),
-            projectsLimit: parseInt(cmd.projects),
-            drivesLimit: parseInt(cmd.drives),
-            teamspacesLimit: parseInt(cmd.teamspaces),
             tokenLimit: parseInt(cmd.tokens),
             meetingMinutesLimit: parseInt(cmd.meetingMinutes)
           }

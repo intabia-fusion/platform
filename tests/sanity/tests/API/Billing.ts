@@ -26,7 +26,6 @@ export async function resolveWorkspaceUuid (urlName: string): Promise<WorkspaceU
 export interface PlanLimitsInput {
   status?: string // active|past_due|canceled|expired
   storageGB?: number // fractional allowed (0.05 = 50MB)
-  projects?: number
   users?: number
   tokens?: number
   meetingMinutes?: number
@@ -54,7 +53,6 @@ export async function setWorkspacePlanByUuid (
       usersLimit: input.users ?? 0,
       storageLimitGB: input.storageGB ?? 0,
       trafficLimitGB: 0,
-      projectsLimit: input.projects ?? 0,
       tokenLimit: input.tokens ?? 0,
       meetingMinutesLimit: input.meetingMinutes ?? 0
     }
@@ -74,7 +72,6 @@ export async function setWorkspacePlan (urlName: string, plan: string, input: Pl
       usersLimit: input.users ?? 0,
       storageLimitGB: input.storageGB ?? 0,
       trafficLimitGB: 0,
-      projectsLimit: input.projects ?? 0,
       tokenLimit: input.tokens ?? 0,
       meetingMinutesLimit: input.meetingMinutes ?? 0
     }

@@ -266,8 +266,7 @@
             trafficLimitGB: item.trafficLimitGB ?? 0,
             meetingMinutesLimit: item.meetingMinutesLimit ?? 0,
             tokenLimit: item.tokenLimit ?? 0,
-            usersLimit,
-            projectsLimit: item.projectsLimit ?? 0
+            usersLimit
           }
         }
         await accountClient.adminCreateSubscription({

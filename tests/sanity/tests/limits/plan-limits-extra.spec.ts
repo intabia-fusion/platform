@@ -111,7 +111,7 @@ test.describe('limits indicator', () => {
     const api = new ApiEndpoint(request)
     const wsInfo = await api.createWorkspaceWithLogin(`ind-${generateId(8)}`, 'user1', '1234')
     const wsUrl = wsInfo.workspaceUrl
-    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { projects: 1 })
+    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', {})
 
     await (await page.goto(`${PlatformURI}/workbench/${wsUrl}/tracker`))?.finished()
 

@@ -224,14 +224,12 @@ export function calculateLimits (
     meetingMinutesLimit: number
     tokenLimit: number
     usersLimit: number
-    projectsLimit: number
   } {
   const DEFAULT_STORAGE_GB = 10
   const DEFAULT_TRAFFIC_GB = 10
   const DEFAULT_MEETING_MINUTES = 600
   const DEFAULT_TOKEN = 20
   const DEFAULT_USERS = 5
-  const DEFAULT_PROJECTS = 3
 
   const baseStorage = tierSub?.limits?.storageLimitGB ?? plan?.storageLimitGB ?? DEFAULT_STORAGE_GB
   const pkgStorage = pkgSub?.limits?.storageLimitGB ?? pkg?.storageLimitGB ?? 0
@@ -241,8 +239,7 @@ export function calculateLimits (
     trafficLimit: (tierSub?.limits?.trafficLimitGB ?? plan?.trafficLimitGB ?? DEFAULT_TRAFFIC_GB) * 1e9,
     meetingMinutesLimit: tierSub?.limits?.meetingMinutesLimit ?? plan?.meetingMinutesLimit ?? DEFAULT_MEETING_MINUTES,
     tokenLimit: (tierSub?.limits?.tokenLimit ?? plan?.tokenLimit ?? DEFAULT_TOKEN) * 1000,
-    usersLimit: tierSub?.limits?.usersLimit ?? plan?.usersLimit ?? DEFAULT_USERS,
-    projectsLimit: tierSub?.limits?.projectsLimit ?? plan?.projectsLimit ?? DEFAULT_PROJECTS
+    usersLimit: tierSub?.limits?.usersLimit ?? plan?.usersLimit ?? DEFAULT_USERS
   }
 }
 

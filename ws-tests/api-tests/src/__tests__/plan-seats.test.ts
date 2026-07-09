@@ -78,7 +78,6 @@ describe('plan-seats', () => {
         usersLimit,
         storageLimitGB: 0,
         trafficLimitGB: 0,
-        projectsLimit: 0,
         tokenLimit: 0,
         meetingMinutesLimit: 0
       }

@@ -48,7 +48,6 @@ describe('plan-volume', () => {
         usersLimit: 0,
         storageLimitGB,
         trafficLimitGB: 0,
-        projectsLimit: 0,
         tokenLimit: 0,
         meetingMinutesLimit: 0
       }
