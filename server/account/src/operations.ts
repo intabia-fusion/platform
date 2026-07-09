@@ -2846,7 +2846,10 @@ export async function getSubscriptions (
   const isService = extra?.service !== undefined || extra?.admin === 'true'
 
   if (isService) {
-    targetWorkspace = workspaceUuid ?? null
+    // Honor an explicit workspaceUuid; otherwise scope to the token's own workspace so an admin
+    // browsing their workspace sees only its plan. Only a workspace-less backend service token
+    // (no explicit uuid, no bound workspace) falls through to "all workspaces".
+    targetWorkspace = workspaceUuid ?? tokenWorkspace ?? null
   } else {
     // Regular users: use workspace from token (ignores workspaceUuid param)
     if (tokenWorkspace === undefined) {

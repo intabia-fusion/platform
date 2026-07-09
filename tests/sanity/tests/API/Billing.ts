@@ -37,6 +37,24 @@ export async function assignMember (email: string, workspaceUuid: WorkspaceUuid,
   await client.assignWorkspace(email, workspaceUuid, role)
 }
 
+interface SubscriptionLimits {
+  usersLimit: number
+  storageLimitGB: number
+  trafficLimitGB: number
+  tokenLimit: number
+  meetingMinutesLimit: number
+}
+
+function buildLimits (input: PlanLimitsInput = {}): SubscriptionLimits {
+  return {
+    usersLimit: input.users ?? 0,
+    storageLimitGB: input.storageGB ?? 0,
+    trafficLimitGB: 0,
+    tokenLimit: input.tokens ?? 0,
+    meetingMinutesLimit: input.meetingMinutes ?? 0
+  }
+}
+
 /** Set a workspace plan by uuid (used for freshly created, per-test workspaces). */
 export async function setWorkspacePlanByUuid (
   workspaceUuid: WorkspaceUuid,
@@ -49,13 +67,19 @@ export async function setWorkspacePlanByUuid (
     plan,
     type: 'tier',
     status: input.status ?? 'active',
-    limits: {
-      usersLimit: input.users ?? 0,
-      storageLimitGB: input.storageGB ?? 0,
-      trafficLimitGB: 0,
-      tokenLimit: input.tokens ?? 0,
-      meetingMinutesLimit: input.meetingMinutes ?? 0
-    }
+    limits: buildLimits(input)
+  })
+}
+
+/** Attach a disk add-on package (type=package) that adds storageGB on top of the tier limit. */
+export async function addStoragePackage (workspaceUuid: WorkspaceUuid, plan: string, storageGB: number): Promise<void> {
+  const client = await getAdmin()
+  await client.adminCreateSubscription({
+    workspaceUuid,
+    plan,
+    type: 'package',
+    status: 'active',
+    limits: buildLimits({ storageGB })
   })
 }
 
@@ -68,12 +92,6 @@ export async function setWorkspacePlan (urlName: string, plan: string, input: Pl
     plan,
     type: 'tier',
     status: input.status ?? 'active',
-    limits: {
-      usersLimit: input.users ?? 0,
-      storageLimitGB: input.storageGB ?? 0,
-      trafficLimitGB: 0,
-      tokenLimit: input.tokens ?? 0,
-      meetingMinutesLimit: input.meetingMinutes ?? 0
-    }
+    limits: buildLimits(input)
   })
 }

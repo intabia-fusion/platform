@@ -25,8 +25,9 @@ import {
   getClient as getAccountClientRaw,
   type AccountClient,
   type SubscriptionData,
-  SubscriptionStatus,
-  SubscriptionType
+  SubscriptionType,
+  grantsPlan,
+  GUEST_ROLES
 } from '@hcengineering/account-client'
 import { getClient as getBillingClientRaw, type BillingClient } from '@hcengineering/billing-client'
 import { getClient as getPaymentClientRaw, type PaymentClient } from '@hcengineering/payment-client'
@@ -116,23 +117,6 @@ async function getPlanConfig (): Promise<PlanConfig> {
     _planConfigAt = Date.now()
   }
   return _planConfig
-}
-
-// Statuses under which a subscription still grants its plan (full limits): active/trialing,
-// plus past_due (grace period — full access) and readonly (write is restricted separately, not
-// via limits). Excludes canceled/expired and pending first-payment drafts.
-const PLAN_GRANTING_STATUSES: SubscriptionStatus[] = [
-  SubscriptionStatus.Active,
-  SubscriptionStatus.Trialing,
-  SubscriptionStatus.PastDue,
-  SubscriptionStatus.ReadOnly
-]
-
-function grantsPlan (sub: SubscriptionData | undefined): boolean {
-  if (sub == null) return false
-  // A past_due first-payment draft (pending:true) has not been paid yet — it does not grant a plan.
-  if (sub.status === SubscriptionStatus.PastDue && sub.providerData?.pending === true) return false
-  return PLAN_GRANTING_STATUSES.includes(sub.status as SubscriptionStatus)
 }
 
 export async function isLimitExceeded (): Promise<boolean> {
@@ -312,8 +296,6 @@ export async function getWorkspaceInfo (): Promise<WorkspaceInfoWithStatus | und
   if (accountClient == null) return undefined
   return await accountClient.getWorkspaceInfo(false)
 }
-
-const GUEST_ROLES = [AccountRole.ReadOnlyGuest, AccountRole.DocGuest, AccountRole.Guest]
 
 function rolePriority (role: AccountRole | undefined): number {
   if (role === AccountRole.Owner) return 0

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { getClient, type SubscriptionType, type AccountClient } from '@hcengineering/account-client'
+import { getClient, makePlanKey, type SubscriptionType, type AccountClient } from '@hcengineering/account-client'
 
 /**
  * Get account client for service operations
@@ -23,5 +23,5 @@ export function getAccountClient (accountsUrl: string, serviceToken: string): Ac
 }
 
 export function getPlanKey (type: SubscriptionType, plan: string): string {
-  return `${plan}@${type}`
+  return makePlanKey(plan, type)
 }

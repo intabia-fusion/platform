@@ -13,7 +13,14 @@
 // limitations under the License.
 //
 
-import { type AccountClient, type Subscription, SubscriptionStatus, getClient } from '@hcengineering/account-client'
+import {
+  type AccountClient,
+  type Subscription,
+  SubscriptionType,
+  getClient,
+  grantsPlan,
+  isBillableMember
+} from '@hcengineering/account-client'
 import {
   type AccountUuid,
   type MeasureContext,
@@ -24,8 +31,7 @@ import {
   buildSocialIdString,
   isArchivingMode,
   isDeletingMode,
-  systemAccountUuid,
-  AccountRole
+  systemAccountUuid
 } from '@hcengineering/core'
 import { aiBotAccountEmail } from '@hcengineering/middleware'
 import { type StorageConfig } from '@hcengineering/server-core'
@@ -115,33 +121,50 @@ export class UsageWorker {
       }
 
       await limiter.add(async () => {
-        try {
-          await ctx.with(
-            'update workspace usage statistics',
-            {},
-            async (ctx) => {
-              await this.updateWorkspaceUsageStatistics(ctx, now, workspace.uuid)
-              await this.reconcileLimits?.(ctx, workspace.uuid)
-            },
-            { workspace: workspace.uuid }
-          )
-        } catch (err: any) {
-          ctx.error('failed to update usage statistics for workspace', { workspace: workspace.uuid, err })
-        }
+        await this.refreshWorkspace(ctx, now, workspace.uuid)
       })
     }
   }
 
-  private async resolveAiBotAccount (account: AccountClient): Promise<AccountUuid | null> {
+  // Refresh usage + limit state for the given workspaces now (deduped, rate-limited). Picks up
+  // brand-new workspaces on plan assignment, which the periodic loop skips until they are visited.
+  async recomputeWorkspacesNow (ctx: MeasureContext, workspaces: WorkspaceUuid[]): Promise<void> {
+    const now = Date.now()
+    const limiter = new RateLimiter(10)
+    for (const workspace of new Set(workspaces)) {
+      await limiter.add(async () => {
+        await this.refreshWorkspace(ctx, now, workspace)
+      })
+    }
+    await limiter.waitProcessing()
+  }
+
+  /** Refresh one workspace's usage statistics then reconcile its limit state (error-isolated). */
+  private async refreshWorkspace (ctx: MeasureContext, now: number, workspace: WorkspaceUuid): Promise<void> {
+    try {
+      await ctx.with(
+        'update workspace usage statistics',
+        {},
+        async (ctx) => {
+          await this.updateWorkspaceUsageStatistics(ctx, now, workspace)
+          await this.reconcileLimits?.(ctx, workspace)
+        },
+        { workspace }
+      )
+    } catch (err: any) {
+      ctx.error('failed to update usage statistics for workspace', { workspace, err })
+    }
+  }
+
+  private async resolveAiBotAccount (account: AccountClient): Promise<AccountUuid | undefined> {
+    // Cache only a successful resolve; a miss (not found / transient error) is retried next tick.
     if (this.aiBotAccount != null) return this.aiBotAccount
     try {
-      const uuid = await account.findPersonBySocialKey(aiBotSocialKey, true)
-      // Cache only a successful resolve; a null (not found / transient) is retried next tick.
-      if (uuid != null) this.aiBotAccount = uuid as AccountUuid
-      return (uuid ?? null) as AccountUuid | null
+      this.aiBotAccount = (await account.findPersonBySocialKey(aiBotSocialKey, true)) as AccountUuid | undefined
     } catch {
-      return null
+      /* retried next tick */
     }
+    return this.aiBotAccount
   }
 
   async updateWorkspaceUsageStatistics (ctx: MeasureContext, now: number, workspace: WorkspaceUuid): Promise<void> {
@@ -150,18 +173,7 @@ export class UsageWorker {
     // Include non-active subscriptions: a past_due/readonly tier still defines the billing period
     // for usage accounting (grace period keeps the plan in effect).
     const subscriptions = await account.getSubscriptions(workspace, false)
-    const grantingStatuses = [
-      SubscriptionStatus.Active,
-      SubscriptionStatus.Trialing,
-      SubscriptionStatus.PastDue,
-      SubscriptionStatus.ReadOnly
-    ]
-    const subscription = subscriptions.find(
-      (p) =>
-        p.type === 'tier' &&
-        grantingStatuses.includes(p.status) &&
-        !(p.status === SubscriptionStatus.PastDue && p.providerData?.pending === true)
-    )
+    const subscription = subscriptions.find((p) => p.type === SubscriptionType.Tier && grantsPlan(p))
 
     const periodStart = getPeriodStartDate(subscription)
     const periodEnd = new Date(now)
@@ -202,13 +214,7 @@ export class UsageWorker {
         try {
           const aiBotAccount = await this.resolveAiBotAccount(account)
           const members = await account.getWorkspaceMembers()
-          return members.filter(
-            (m) =>
-              m.person !== aiBotAccount &&
-              m.role !== AccountRole.Guest &&
-              m.role !== AccountRole.DocGuest &&
-              m.role !== AccountRole.ReadOnlyGuest
-          ).length
+          return members.filter((m) => m.person !== aiBotAccount && isBillableMember(m.role)).length
         } catch (err: any) {
           ctx.error('failed to get workspace members', { workspace, err })
           return 0

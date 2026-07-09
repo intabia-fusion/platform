@@ -49,6 +49,16 @@ export function getAccountClient (
   return getAccountClientRaw(accountsUrl, token !== null ? token : undefined, undefined, frontUrl)
 }
 
+// Run an account-client call, reporting failures and returning a fallback so the UI degrades gracefully.
+async function safe<T> (fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn()
+  } catch (err: any) {
+    Analytics.handleError(err)
+    return fallback
+  }
+}
+
 /** Returns null on failure so the UI can show an error instead of a fake empty list */
 export async function listWorkspacesPaged (query: WorkspacesPagedQuery): Promise<WorkspacesPagedResult | null> {
   if (getMetadata(presentation.metadata.Token) == null) {
@@ -64,30 +74,15 @@ export async function listWorkspacesPaged (query: WorkspacesPagedQuery): Promise
 }
 
 export async function getWorkspacesSummary (): Promise<WorkspacesSummary | null> {
-  try {
-    return await getAccountClient().getWorkspacesSummary()
-  } catch (err: any) {
-    Analytics.handleError(err)
-    return null
-  }
+  return await safe(async () => await getAccountClient().getWorkspacesSummary(), null)
 }
 
 export async function getRegistrationStats (from: number, to: number): Promise<RegistrationStats | null> {
-  try {
-    return await getAccountClient().getRegistrationStats(from, to)
-  } catch (err: any) {
-    Analytics.handleError(err)
-    return null
-  }
+  return await safe(async () => await getAccountClient().getRegistrationStats(from, to), null)
 }
 
 export async function getWorkspaceActivityStats (workspace: string, from: number): Promise<WorkspaceActivityPoint[]> {
-  try {
-    return await getAccountClient().getWorkspaceActivityStats(workspace as any, from)
-  } catch (err: any) {
-    Analytics.handleError(err)
-    return []
-  }
+  return await safe(async () => await getAccountClient().getWorkspaceActivityStats(workspace as any, from), [])
 }
 
 export interface PlanOptions {
@@ -128,12 +123,7 @@ export async function loadPlanOptions (lang: string): Promise<PlanOptions | null
 }
 
 export async function getRegionInfo (): Promise<RegionInfo[] | null> {
-  try {
-    return await getAccountClient().getRegionInfo()
-  } catch (err: any) {
-    Analytics.handleError(err)
-    return null
-  }
+  return await safe(async () => await getAccountClient().getRegionInfo(), null)
 }
 
 export async function performWorkspaceOperation (

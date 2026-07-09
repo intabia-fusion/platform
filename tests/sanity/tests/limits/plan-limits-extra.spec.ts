@@ -1,9 +1,39 @@
 import { expect, test } from '@playwright/test'
 import { AccountRole } from '@hcengineering/core'
 import { PlatformSetting, PlatformURI, PlatformUserSecond, generateId, getSecondPage } from '../utils'
-import { assignMember, setWorkspacePlanByUuid } from '../API/Billing'
+import { addStoragePackage, assignMember, setWorkspacePlanByUuid } from '../API/Billing'
 import { ApiEndpoint } from '../API/Api'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
+import type { Page } from '@playwright/test'
+
+// Attach `count` unique 0.5 MB files into the New Issue form, watching for the datalake 413
+// (the "storage limit exceeded" response). Returns whether a 413 fired. `stopOnReject` breaks
+// the loop as soon as a 413 is seen (block A); leave false to upload the full count (block A2).
+async function uploadChunksWatching413 (page: Page, count: number, stopOnReject: boolean): Promise<boolean> {
+  let rejected = false
+  page.on('response', (r) => {
+    if (r.status() === 413 && r.url().includes('/upload/')) {
+      rejected = true
+    }
+  })
+
+  const CHUNK = 512 * 1024 // 0.5 MB
+  const fileInput = page.locator('form[id="tracker:string:NewIssue"] input[type="file"]#file')
+  // The button toggles to "Resume draft" once a draft exists, so open via id (either variant).
+  const openForm = page.locator('#tracker-string-NewIssue, #tracker-string-ResumeDraft')
+
+  for (let i = 0; i < count; i++) {
+    if (stopOnReject && rejected) break
+    // Unique content per file — billing dedups storage deltas by sha256, so identical zero-filled
+    // buffers would all collapse to one chunk and never cross the limit via the delta path.
+    const buffer = Buffer.alloc(CHUNK, i + 1)
+    await openForm.first().click()
+    await fileInput.setInputFiles({ name: `big-${i}.bin`, mimeType: 'application/octet-stream', buffer })
+    await page.waitForTimeout(2000) // let the upload resolve + billing record used storage
+    await page.keyboard.press('Escape')
+  }
+  return rejected
+}
 
 // ── A. disk limit (honest upload) ───────────────────────────────────────────
 test.describe('disk limit (honest upload)', () => {
@@ -20,36 +50,36 @@ test.describe('disk limit (honest upload)', () => {
     const trackerNav = new TrackerNavigationMenuPage(page)
     await trackerNav.openIssuesForProject('Default')
 
-    // The chip in the New Issue form appears as soon as the file is selected (before the upload
-    // resolves), so it does not signal rejection. Watch for the datalake 413 instead — that is the
-    // honest "storage limit exceeded" response the user's StorageLimitReached toast is built on.
-    let rejected = false
-    page.on('response', (r) => {
-      if (r.status() === 413 && r.url().includes('/upload/')) {
-        rejected = true
-      }
-    })
-
-    // Attach 0.5 MB chunks into the New Issue form. After crossing the (1 MB) limit the server
-    // rejects the upload. Billing recompute is async (~1 s), so keep uploading until 413.
-    const CHUNK = 512 * 1024 // 0.5 MB
-    const fileInput = page.locator('form[id="tracker:string:NewIssue"] input[type="file"]#file')
-    // The button toggles to "Resume draft" once a draft exists, so open via id (either variant).
-    const openForm = page.locator('#tracker-string-NewIssue, #tracker-string-ResumeDraft')
-
-    for (let i = 0; i < 12; i++) {
-      if (rejected) break // set asynchronously by the response listener above
-      const fileName = `big-${i}.bin`
-      // Unique content per file — billing dedups storage deltas by sha256, so identical zero-filled
-      // buffers would all collapse to one chunk and never cross the limit via the delta path.
-      const buffer = Buffer.alloc(CHUNK, i + 1)
-      await openForm.first().click()
-      await fileInput.setInputFiles({ name: fileName, mimeType: 'application/octet-stream', buffer })
-      await page.waitForTimeout(2000) // let the upload resolve + billing record used storage
-      await page.keyboard.press('Escape')
-    }
-
+    // Upload 0.5 MB chunks past the 1 MB tier limit; the server rejects with a 413 once crossed.
+    const rejected = await uploadChunksWatching413(page, 12, true)
     expect(rejected).toBe(true)
+  })
+})
+
+// ── A2. disk package raises the enforced storage limit ───────────────────────
+// A purchased disk package (type=package) adds its storageGB on top of the tier base. Server-side
+// enforcement (billing getEffectiveLimit) must sum tier+package, so an upload that would exceed the
+// tier alone is accepted once the package covers it. Mirrors block A but expects NO 413.
+test.describe('disk package raises storage limit', () => {
+  test.use({ storageState: PlatformSetting })
+
+  test('upload above the tier limit is accepted when a disk package covers it', async ({ page, request }) => {
+    const api = new ApiEndpoint(request)
+    const wsInfo = await api.createWorkspaceWithLogin(`pkg-${generateId(8)}`, 'user1', '1234')
+    const wsUrl = wsInfo.workspaceUrl
+    // Tiny tier (1 MB) + a package adding 20 MB -> effective limit ~21 MB. Uploading ~5 MB crosses
+    // the tier alone but stays under tier+package, so it must NOT be rejected.
+    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { storageGB: 0.001 })
+    await addStoragePackage(wsInfo.workspace, '100gb', 0.02)
+
+    await (await page.goto(`${PlatformURI}/workbench/${wsUrl}/tracker`))?.finished()
+
+    const trackerNav = new TrackerNavigationMenuPage(page)
+    await trackerNav.openIssuesForProject('Default')
+
+    // ~5 MB total (10 x 0.5 MB) — above the 1 MB tier, below the 21 MB tier+package limit -> no 413.
+    const rejected = await uploadChunksWatching413(page, 10, false)
+    expect(rejected).toBe(false)
   })
 })
 

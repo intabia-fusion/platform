@@ -2732,6 +2732,34 @@ describe('getSubscriptions', () => {
     expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
   })
 
+  test('service/admin token without explicit uuid scopes to its own workspace, not all', async () => {
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: accountUuid,
+      workspace: workspaceUuid,
+      extra: { admin: 'true' }
+    })
+
+    mockDb.subscription.find.mockResolvedValue([])
+
+    await getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})
+
+    expect(mockDb.subscription.find).toHaveBeenCalledWith({ workspaceUuid, status: 'active' })
+  })
+
+  test('workspace-less service token with no explicit uuid queries all workspaces', async () => {
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: accountUuid,
+      workspace: undefined,
+      extra: { service: 'tbank' }
+    })
+
+    mockDb.subscription.find.mockResolvedValue([])
+
+    await getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})
+
+    expect(mockDb.subscription.find).toHaveBeenCalledWith({ status: 'active' })
+  })
+
   test('should reject non-service users without workspace in token', async () => {
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
       account: accountUuid,

@@ -99,18 +99,16 @@ export const main = async (): Promise<void> => {
     QueueTopic.Workspace,
     'billing-plan',
     async (ctx, msgs) => {
-      for (const msg of msgs) {
-        const value = msg.value
-        if (value.type !== QueueWorkspaceEvent.LimitsChanged) continue
-        if ((value as QueueWorkspaceLimitsMessage).category !== LimitCategory.Plan) continue
-        // Recompute raw usage first (new workspaces have no usageInfo yet — the periodic loop
-        // skips them until visited), then re-evaluate limit state from the fresh counters.
-        try {
-          await worker.updateWorkspaceUsageStatistics(ctx, Date.now(), msg.workspace)
-        } catch (err: any) {
-          ctx.error('failed to recompute usage on plan change', { workspace: msg.workspace, err })
-        }
-        await engine.recomputeWorkspace(ctx, msg.workspace)
+      // A plan change may target a brand-new workspace the periodic loop skips until it is visited.
+      const workspaces = msgs
+        .filter(
+          (m) =>
+            m.value.type === QueueWorkspaceEvent.LimitsChanged &&
+            (m.value as QueueWorkspaceLimitsMessage).category === LimitCategory.Plan
+        )
+        .map((m) => m.workspace)
+      if (workspaces.length > 0) {
+        await worker.recomputeWorkspacesNow(ctx, workspaces)
       }
     },
     { batchSize: 50, batchTimeout: 500 }

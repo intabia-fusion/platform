@@ -32,6 +32,8 @@ import {
   nextPeriodEnd,
   formatTbankDueDate,
   orderFingerprint,
+  buildRenewedSubscription,
+  buildFailedChargeSubscription,
   type PlanPricing
 } from './utils'
 import { notifyPaymentFailed } from './notifications'
@@ -42,6 +44,16 @@ import type { TbankWebhookNotification, CreateSubscriptionRequest, UpdatePlanReq
 const CHECKOUT_LINK_LIFETIME_MS = 5 * 60 * 1000
 const CHECKOUT_LEASE_TIMEOUT_MS = 15 * 60 * 1000
 const CHECKOUT_HEARTBEAT_MS = 1000
+// Back-off before a manually-retried charge can be retried again. Deliberately shorter than the
+// scheduler's RETRY_INTERVAL_MS (24h) — a manual retry is user-initiated, so a tighter window is fine.
+const MANUAL_RETRY_INTERVAL_MS = 60 * 60 * 1000
+
+// Shared 409 payloads for the checkout-reclaim tail (see respondAfterReclaim).
+const IN_FLIGHT_RESPONSE = { reason: 'in_flight', error: 'Payment is being created, please retry shortly' } as const
+const ALREADY_PAID_RESPONSE = {
+  reason: 'already_paid',
+  error: 'The pending payment has already been processed'
+} as const
 
 export async function createServer (
   ctx: MeasureContext,
@@ -295,19 +307,13 @@ async function handleCreateSubscription (
         // Cancel-first frees the key; re-claim with THIS request's order. Already paid -> keep it.
         const canceled = await cancelPendingCheckout(ctx, tbank, storage, claim.paymentId)
         if (!canceled) {
-          res.status(409).json({ reason: 'already_paid', error: 'The pending payment has already been processed' })
+          res.status(409).json(ALREADY_PAID_RESPONSE)
           return
         }
         const reclaim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
-        if (reclaim.claimed) {
+        await respondAfterReclaim(res, reclaim, async () => {
           await openCheckout(reclaim.intentId)
-          return
-        }
-        if (reclaim.paymentUrl !== undefined && reclaim.paymentUrl !== '') {
-          res.json({ checkoutUrl: reclaim.paymentUrl })
-          return
-        }
-        res.status(409).json({ reason: 'in_flight', error: 'Payment is being created, please retry shortly' })
+        })
         return
       }
       // Blind window: holder never issued a payment (no paymentId) -> nothing to cancel, reuse the row
@@ -334,14 +340,14 @@ async function handleCreateSubscription (
     // Forced switch: cancel the old pending payment, then claim the new order.
     if (claim.paymentId === undefined || claim.paymentId === '') {
       // Old checkout claimed but hasn't issued a payment yet — nothing to cancel; retry shortly.
-      res.status(409).json({ reason: 'in_flight', error: 'Payment is being created, please retry shortly' })
+      res.status(409).json(IN_FLIGHT_RESPONSE)
       return
     }
 
     const canceled = await cancelPendingCheckout(ctx, tbank, storage, claim.paymentId)
     if (!canceled) {
       // Old payment already went through (CONFIRMED/REFUNDED) — don't switch (would double-charge).
-      res.status(409).json({ reason: 'already_paid', error: 'The pending payment has already been processed' })
+      res.status(409).json(ALREADY_PAID_RESPONSE)
       return
     }
 
@@ -350,14 +356,10 @@ async function handleCreateSubscription (
     const reclaim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
     if (reclaim.claimed) {
       ctx.info('Switched checkout to a new plan', { workspaceUuid, type, plan })
+    }
+    await respondAfterReclaim(res, reclaim, async () => {
       await openCheckout(reclaim.intentId)
-      return
-    }
-    if (reclaim.paymentUrl !== undefined && reclaim.paymentUrl !== '') {
-      res.json({ checkoutUrl: reclaim.paymentUrl })
-      return
-    }
-    res.status(409).json({ reason: 'in_flight', error: 'Payment is being created, please retry shortly' })
+    })
     return
   }
 
@@ -377,43 +379,69 @@ async function handleCreateSubscription (
       const freed = await cancelPendingCheckout(ctx, tbank, storage, claim.paymentId)
       if (!freed) {
         // Cancel reported the payment already went through — the plan is paid, don't re-issue.
-        res.status(409).json({ reason: 'already_paid', error: 'The pending payment has already been processed' })
+        res.status(409).json(ALREADY_PAID_RESPONSE)
         return
       }
     }
     const reclaim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
-    if (reclaim.claimed) {
+    await respondAfterReclaim(res, reclaim, async () => {
       await openCheckout(reclaim.intentId)
-      return
-    }
-    if (reclaim.paymentUrl !== undefined && reclaim.paymentUrl !== '') {
-      res.json({ checkoutUrl: reclaim.paymentUrl })
-      return
-    }
-    res.status(409).json({ reason: 'in_flight', error: 'Payment is being created, please retry shortly' })
+    })
     return
   }
 
   // Winner claimed but has not written the URL yet — very short window while initPayment is in flight.
   // The client retries silently.
-  res.status(409).json({ reason: 'in_flight', error: 'Payment is being created, please retry shortly' })
+  res.status(409).json(IN_FLIGHT_RESPONSE)
+}
+
+/**
+ * Shared tail of the checkout-reclaim ladder: after a reclaim attempt, either open the new checkout,
+ * reuse a racing winner's URL, or report in_flight. Identical across all 4 reclaim call sites in
+ * handleCreateSubscription; the surrounding conditions that lead here (takeover / forced switch /
+ * link expiry) genuinely differ and are NOT merged.
+ */
+async function respondAfterReclaim (
+  res: Response,
+  reclaim: { claimed: boolean, paymentUrl?: string, intentId: string },
+  openCheckout: () => Promise<void>
+): Promise<void> {
+  if (reclaim.claimed) {
+    await openCheckout()
+    return
+  }
+  if (reclaim.paymentUrl !== undefined && reclaim.paymentUrl !== '') {
+    res.json({ checkoutUrl: reclaim.paymentUrl })
+    return
+  }
+  res.status(409).json(IN_FLIGHT_RESPONSE)
+}
+
+/**
+ * Resolve a subscription via `lookup`, writing the standard 404 response and returning null on miss.
+ * Callers do `const sub = await loadSubscriptionOr404(...); if (sub === null) return`.
+ */
+async function loadSubscriptionOr404<T> (lookup: () => Promise<T | null>, res: Response): Promise<T | null> {
+  const found = await lookup()
+  if (found === null) {
+    res.status(404).json({ error: 'Subscription not found' })
+    return null
+  }
+  return found
 }
 
 async function handleGetByCheckout (storage: SubscriptionStorage, req: Request, res: Response): Promise<void> {
-  const found = await storage.findSubscriptionByCheckoutId(req.params.checkoutId)
-  if (found === null || isPendingFirstPayment(found)) {
-    res.status(404).json({ error: 'Subscription not found' })
-    return
-  }
+  const found = await loadSubscriptionOr404(async () => {
+    const sub = await storage.findSubscriptionByCheckoutId(req.params.checkoutId)
+    return sub !== null && isPendingFirstPayment(sub) ? null : sub
+  }, res)
+  if (found === null) return
   res.json(found)
 }
 
 async function handleGetSubscription (storage: SubscriptionStorage, req: Request, res: Response): Promise<void> {
-  const sub = await findSubscription(storage, req.params.id)
-  if (sub === null) {
-    res.status(404).json({ error: 'Subscription not found' })
-    return
-  }
+  const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
+  if (sub === null) return
   res.json(sub)
 }
 
@@ -424,11 +452,8 @@ async function handleCancelSubscription (
   req: Request,
   res: Response
 ): Promise<void> {
-  const sub = await findSubscription(storage, req.params.id)
-  if (sub === null) {
-    res.status(404).json({ error: 'Subscription not found' })
-    return
-  }
+  const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
+  if (sub === null) return
 
   const canceledData = await cancelSubscription(ctx, tbank, storage, sub)
   res.json(canceledData)
@@ -444,11 +469,8 @@ async function handleUpdatePlan (
   res: Response
 ): Promise<void> {
   const { plan: newPlan, quantity, period } = req.body as UpdatePlanRequest
-  const sub = await findSubscription(storage, req.params.id)
-  if (sub === null) {
-    res.status(404).json({ error: 'Subscription not found' })
-    return
-  }
+  const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
+  if (sub === null) return
 
   // Same plan is a no-op for a live subscription; for a canceled one it is the uncancel path —
   // re-initiate payment for the same plan (the card was removed on cancel, a new checkout is needed).
@@ -530,11 +552,8 @@ async function handleRetryPayment (
   req: Request,
   res: Response
 ): Promise<void> {
-  const sub = await findSubscription(storage, req.params.id)
-  if (sub === null) {
-    res.status(404).json({ error: 'Subscription not found' })
-    return
-  }
+  const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
+  if (sub === null) return
 
   // Allow manual retry both during grace (PastDue) and after it expired (ReadOnly):
   // the card may have recovered and the user wants to restore access immediately.
@@ -558,41 +577,17 @@ async function handleRetryPayment (
     })
 
     if (chargeResult.Success === true) {
-      const now = Date.now()
-      const renewedData: SubscriptionData = {
-        ...sub,
-        status: SubscriptionStatus.Active,
-        periodStart: now,
-        periodEnd: nextPeriodEnd(now, sub.providerData?.period as BillingPeriod | undefined),
-        providerData: {
-          ...sub.providerData,
-          modifiedAt: now,
-          status: 'ACTIVE',
-          retryAttempt: 0,
-          retryAfter: 0,
-          lastChargeAt: now,
-          lastChargePaymentId: chargeResult.PaymentId
-        }
-      }
+      const renewedData = buildRenewedSubscription(sub, Date.now(), chargeResult.PaymentId)
       await storage.upsert(renewedData)
       ctx.info('Manual retry payment succeeded', { subId: sub.id })
       res.json(renewedData)
     } else {
-      const now = Date.now()
-      const prevAttempt = (sub.providerData?.retryAttempt as number) ?? 0
-      const failedData: SubscriptionData = {
-        ...sub,
-        status: SubscriptionStatus.PastDue,
-        providerData: {
-          ...sub.providerData,
-          modifiedAt: now,
-          status: 'CHARGE_FAILED',
-          retryAttempt: prevAttempt + 1,
-          retryAfter: now + 60 * 60 * 1000,
-          lastChargeError: chargeResult.Message,
-          lastChargeErrorCode: chargeResult.ErrorCode
-        }
-      }
+      const failedData = buildFailedChargeSubscription(
+        sub,
+        chargeResult.ErrorCode,
+        chargeResult.Message,
+        MANUAL_RETRY_INTERVAL_MS
+      )
       await storage.upsert(failedData)
       ctx.warn('Manual retry payment failed', { subId: sub.id, errorCode: chargeResult.ErrorCode })
       res.status(402).json({ error: chargeResult.Message ?? 'Payment failed' })

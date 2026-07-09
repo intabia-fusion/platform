@@ -19,8 +19,13 @@ import type TbankPayments from 'tbank-payments'
 import type { Config } from './config'
 import { SubscriptionStorage } from './storage'
 import { notifyPaymentFailed } from './notifications'
-import { isPendingFirstPayment, isFailedRenewal, nextPeriodEnd } from './utils'
-import { type BillingPeriod } from './types'
+import {
+  isPendingFirstPayment,
+  isFailedRenewal,
+  buildRenewedSubscription,
+  buildFailedChargeSubscription,
+  buildChargeErrorSubscription
+} from './utils'
 
 export interface SchedulerHandle {
   close: () => Promise<void>
@@ -35,70 +40,6 @@ const LEASE_TIMEOUT_MS = 10000
 const MAX_RETRY_ATTEMPTS = 3
 // Back-off between failed charge retries (once per day).
 const RETRY_INTERVAL_MS = 24 * 60 * 60 * 1000 // 1 day
-
-/**
- * Build updated subscription data after a successful recurrent charge.
- */
-function buildRenewedSubscription (sub: Subscription, now: number, paymentId: string): SubscriptionData {
-  return {
-    ...sub,
-    status: SubscriptionStatus.Active,
-    periodStart: now,
-    periodEnd: nextPeriodEnd(now, sub.providerData?.period as BillingPeriod | undefined),
-    providerData: {
-      ...sub.providerData,
-      modifiedAt: now,
-      status: 'ACTIVE',
-      retryAttempt: 0,
-      retryAfter: 0,
-      lastChargeAt: now,
-      lastChargePaymentId: paymentId
-    }
-  }
-}
-
-/**
- * Build past-due subscription data after a failed recurrent charge.
- * Keeps the card and rebillId for retry.
- */
-function buildFailedChargeSubscription (sub: Subscription, errorCode: string, message: string): SubscriptionData {
-  const now = Date.now()
-  const prevAttempt = (sub.providerData?.retryAttempt as number) ?? 0
-  return {
-    ...sub,
-    status: SubscriptionStatus.PastDue,
-    providerData: {
-      ...sub.providerData,
-      modifiedAt: now,
-      status: 'CHARGE_FAILED',
-      retryAttempt: prevAttempt + 1,
-      retryAfter: now + RETRY_INTERVAL_MS,
-      lastChargeError: message,
-      lastChargeErrorCode: errorCode
-    }
-  }
-}
-
-/**
- * Build past-due subscription data after an unexpected error during charge.
- * Keeps the card and rebillId for retry.
- */
-function buildChargeErrorSubscription (sub: Subscription, errorMessage: string): SubscriptionData {
-  const now = Date.now()
-  const prevAttempt = (sub.providerData?.retryAttempt as number) ?? 0
-  return {
-    ...sub,
-    status: SubscriptionStatus.PastDue,
-    providerData: {
-      ...sub.providerData,
-      modifiedAt: now,
-      status: 'CHARGE_ERROR',
-      retryAttempt: prevAttempt + 1,
-      retryAfter: now + RETRY_INTERVAL_MS,
-      lastChargeError: errorMessage
-    }
-  }
-}
 
 /**
  * Attempt to charge a single subscription for renewal.
@@ -191,7 +132,12 @@ async function renewSubscription (
         message: chargeResult.Message
       })
 
-      const updatedData = buildFailedChargeSubscription(sub, chargeResult.ErrorCode, chargeResult.Message)
+      const updatedData = buildFailedChargeSubscription(
+        sub,
+        chargeResult.ErrorCode,
+        chargeResult.Message,
+        RETRY_INTERVAL_MS
+      )
       await storage.upsert(updatedData)
       ctx.info('Subscription payment failed, marked PastDue', {
         subId: sub.id,
@@ -208,7 +154,7 @@ async function renewSubscription (
       intentId,
       err
     })
-    const updatedData = buildChargeErrorSubscription(sub, err.message)
+    const updatedData = buildChargeErrorSubscription(sub, err.message, RETRY_INTERVAL_MS)
     await storage.upsert(updatedData)
     await notifyRenewalFailure(ctx, storage, config, updatedData, wasActive)
   } finally {

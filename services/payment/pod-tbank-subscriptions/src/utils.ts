@@ -15,7 +15,12 @@
 
 import { randomBytes } from 'crypto'
 import { type WorkspaceUuid } from '@hcengineering/core'
-import { type Subscription, type SubscriptionData, SubscriptionStatus } from '@hcengineering/account-client'
+import {
+  type Subscription,
+  type SubscriptionData,
+  SubscriptionStatus,
+  makePlanKey
+} from '@hcengineering/account-client'
 import type TbankPayments from 'tbank-payments'
 import { type BillingPeriod } from './types'
 
@@ -70,7 +75,7 @@ export function verifyWebhookToken (
 }
 
 export function getPlanKey (type: string, plan: string): string {
-  return `${plan}@${type}`
+  return makePlanKey(plan, type)
 }
 
 /**
@@ -131,9 +136,10 @@ export interface PlanPricing {
 
 // Minimal subset of pod-payment's plan-config we need to derive charge amounts. Prices are numeric
 // major units (tier: per-user; package: flat). Free / contact-sales plans have no price and are skipped.
-interface PlanConfigLike {
-  plans?: Record<string, { priceMonthlyPerUser?: number, yearlyDiscount?: number }>
-  packages?: Record<string, { priceMonthly?: number }>
+// Also carries an optional localized `label` per plan/package, used by notifications.
+export interface PlanConfigLike {
+  plans?: Record<string, { priceMonthlyPerUser?: number, yearlyDiscount?: number, label?: Record<string, string> }>
+  packages?: Record<string, { priceMonthly?: number, label?: Record<string, string> }>
 }
 
 // TBank Amount is expressed in the currency's minor units; prices in plan-config are whole major units.
@@ -167,20 +173,24 @@ export function buildPricingFromPlanConfig (planConfig: PlanConfigLike): Record<
   return plans
 }
 
-// Fetch the shared plan-config from pod-payment and derive the pricing table.
-// Retries a few times so tbank can start alongside pod-payment before its HTTP is ready.
-export async function loadPricing (
-  paymentUrl: string,
-  attempts = 10,
-  delayMs = 3000
-): Promise<Record<string, PlanPricing>> {
-  const url = `${paymentUrl.replace(/\/$/, '')}/api/v1/plan-config`
+export interface FetchPlanConfigOptions {
+  attempts?: number
+  delayMs?: number
+  timeoutMs?: number
+}
+
+// Fetch pod-payment's shared /api/v1/plan-config, shaping the URL the same way for every caller.
+// Retries a few times by default so tbank can start alongside pod-payment before its HTTP is ready;
+// callers that want a single best-effort attempt (e.g. notifications) can pass attempts: 1.
+export async function fetchPlanConfig (paymentUrl: string, opts: FetchPlanConfigOptions = {}): Promise<PlanConfigLike> {
+  const { attempts = 10, delayMs = 3000, timeoutMs } = opts
+  const url = `${paymentUrl.replace(/\/+$/, '')}/api/v1/plan-config`
   let lastErr: unknown
   for (let i = 0; i < attempts; i++) {
     try {
-      const res = await fetch(url)
+      const res = await fetch(url, timeoutMs !== undefined ? { signal: AbortSignal.timeout(timeoutMs) } : undefined)
       if (!res.ok) throw new Error(`Failed to load plan-config from ${url}: ${res.status}`)
-      return buildPricingFromPlanConfig((await res.json()) as PlanConfigLike)
+      return (await res.json()) as PlanConfigLike
     } catch (err) {
       lastErr = err
       console.warn(`plan-config load attempt ${i + 1}/${attempts} failed`, err)
@@ -188,6 +198,16 @@ export async function loadPricing (
     }
   }
   throw lastErr
+}
+
+// Fetch the shared plan-config from pod-payment and derive the pricing table.
+export async function loadPricing (
+  paymentUrl: string,
+  attempts = 10,
+  delayMs = 3000
+): Promise<Record<string, PlanPricing>> {
+  const planConfig = await fetchPlanConfig(paymentUrl, { attempts, delayMs })
+  return buildPricingFromPlanConfig(planConfig)
 }
 
 /**
@@ -198,4 +218,72 @@ export function resolvePerSeatAmount (pricing: PlanPricing, yearly: boolean): nu
   // Round the discounted monthly price down to whole major units so the yearly total never exceeds list price.
   const monthly = Math.floor((pricing.amount * (1 - pricing.yearlyDiscount / 100)) / 100) * 100
   return monthly * 12
+}
+
+/**
+ * Build updated subscription data after a successful recurrent charge (scheduler renewal or manual retry).
+ */
+export function buildRenewedSubscription (sub: SubscriptionData, now: number, paymentId: string): SubscriptionData {
+  return {
+    ...sub,
+    status: SubscriptionStatus.Active,
+    periodStart: now,
+    periodEnd: nextPeriodEnd(now, sub.providerData?.period as BillingPeriod | undefined),
+    providerData: {
+      ...sub.providerData,
+      modifiedAt: now,
+      status: 'ACTIVE',
+      retryAttempt: 0,
+      retryAfter: 0,
+      lastChargeAt: now,
+      lastChargePaymentId: paymentId
+    }
+  }
+}
+
+// Past-due data after a failed recurrent charge. retryIntervalMs is the caller's back-off
+// (scheduler and manual retry use different intervals).
+export function buildFailedChargeSubscription (
+  sub: SubscriptionData,
+  errorCode: string,
+  message: string,
+  retryIntervalMs: number
+): SubscriptionData {
+  const now = Date.now()
+  const prevAttempt = (sub.providerData?.retryAttempt as number) ?? 0
+  return {
+    ...sub,
+    status: SubscriptionStatus.PastDue,
+    providerData: {
+      ...sub.providerData,
+      modifiedAt: now,
+      status: 'CHARGE_FAILED',
+      retryAttempt: prevAttempt + 1,
+      retryAfter: now + retryIntervalMs,
+      lastChargeError: message,
+      lastChargeErrorCode: errorCode
+    }
+  }
+}
+
+// Past-due data after an unexpected error during charge (keeps card + rebillId for retry).
+export function buildChargeErrorSubscription (
+  sub: SubscriptionData,
+  errorMessage: string,
+  retryIntervalMs: number
+): SubscriptionData {
+  const now = Date.now()
+  const prevAttempt = (sub.providerData?.retryAttempt as number) ?? 0
+  return {
+    ...sub,
+    status: SubscriptionStatus.PastDue,
+    providerData: {
+      ...sub.providerData,
+      modifiedAt: now,
+      status: 'CHARGE_ERROR',
+      retryAttempt: prevAttempt + 1,
+      retryAfter: now + retryIntervalMs,
+      lastChargeError: errorMessage
+    }
+  }
 }

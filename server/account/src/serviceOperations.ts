@@ -1785,16 +1785,12 @@ export async function getAllSubscriptions (
     }
   }
 
-  // Resolve payer names
+  // Resolve payer names in one batch query (avoids an N+1 person lookup per subscription).
+  const persons = await db.person.find({ uuid: { $in: accountIds } })
   const personMap: Record<string, string> = {}
-  for (const id of accountIds) {
-    const person = await db.person.findOne({ uuid: id })
-    if (person != null) {
-      const firstName = person.firstName ?? ''
-      const lastName = person.lastName ?? ''
-      const fullName = [firstName, lastName].filter(Boolean).join(' ')
-      if (fullName.length > 0) personMap[id] = fullName
-    }
+  for (const person of persons) {
+    const fullName = [person.firstName ?? '', person.lastName ?? ''].filter(Boolean).join(' ')
+    if (fullName.length > 0) personMap[person.uuid] = fullName
   }
 
   return subscriptions.map((s) => ({

@@ -18,6 +18,7 @@ import type { SubscriptionData } from '@hcengineering/account-client'
 
 import type { Config } from './config'
 import type { SubscriptionStorage } from './storage'
+import { fetchPlanConfig, type PlanConfigLike } from './utils'
 
 const MAIL_TIMEOUT_MS = 10_000
 
@@ -117,7 +118,7 @@ function resolveLang (locale: string | null): Lang {
 }
 
 const PLAN_CONFIG_TTL_MS = 10 * 60 * 1000 // plan config is static; refresh every 10 min
-let planConfigCache: { data: any, fetchedAt: number } | null = null
+let planConfigCache: { data: PlanConfigLike, fetchedAt: number } | null = null
 
 /**
  * Resolve a localized plan/package label from pod-payment's /api/v1/plan-config.
@@ -130,11 +131,9 @@ async function getPlanLabel (config: Config, plan: string, type: string, lang: L
   try {
     const now = Date.now()
     if (planConfigCache === null || now - planConfigCache.fetchedAt > PLAN_CONFIG_TTL_MS) {
-      const res = await fetch(`${config.PaymentUrl.replace(/\/+$/, '')}/api/v1/plan-config`, {
-        signal: AbortSignal.timeout(MAIL_TIMEOUT_MS)
-      })
-      if (!res.ok) return plan
-      planConfigCache = { data: await res.json(), fetchedAt: now }
+      // Single best-effort attempt (no retry loop) — a slow/unreachable pod-payment must not block the email.
+      const data = await fetchPlanConfig(config.PaymentUrl, { attempts: 1, timeoutMs: MAIL_TIMEOUT_MS })
+      planConfigCache = { data, fetchedAt: now }
     }
 
     // Same source selection as pod-payment (server.ts): packages for package subs, plans otherwise.

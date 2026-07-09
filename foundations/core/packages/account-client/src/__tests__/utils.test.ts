@@ -13,7 +13,9 @@
 // limitations under the License.
 //
 
-import { isNetworkError } from '../utils'
+import { AccountRole } from '@hcengineering/core'
+import { isNetworkError, grantsPlan, isBillableMember, makePlanKey } from '../utils'
+import { SubscriptionStatus, SubscriptionType } from '../types'
 
 describe('isNetworkError', () => {
   describe('Node.js-style connection errors', () => {
@@ -300,5 +302,51 @@ describe('isNetworkError', () => {
       }
       expect(isNetworkError(error)).toBe(false)
     })
+  })
+})
+
+describe('grantsPlan', () => {
+  const sub = (status: SubscriptionStatus, pending?: boolean): any => ({
+    status,
+    providerData: pending != null ? { pending } : undefined
+  })
+
+  it('grants for active/trialing/past_due/readonly', () => {
+    expect(grantsPlan(sub(SubscriptionStatus.Active))).toBe(true)
+    expect(grantsPlan(sub(SubscriptionStatus.Trialing))).toBe(true)
+    expect(grantsPlan(sub(SubscriptionStatus.PastDue))).toBe(true)
+    expect(grantsPlan(sub(SubscriptionStatus.ReadOnly))).toBe(true)
+  })
+
+  it('does not grant for canceled/expired or undefined', () => {
+    expect(grantsPlan(sub(SubscriptionStatus.Canceled))).toBe(false)
+    expect(grantsPlan(sub(SubscriptionStatus.Expired))).toBe(false)
+    expect(grantsPlan(undefined)).toBe(false)
+  })
+
+  it('does not grant for a pending past_due first-payment draft', () => {
+    expect(grantsPlan(sub(SubscriptionStatus.PastDue, true))).toBe(false)
+    expect(grantsPlan(sub(SubscriptionStatus.PastDue, false))).toBe(true)
+  })
+})
+
+describe('isBillableMember', () => {
+  it('excludes guest roles', () => {
+    expect(isBillableMember(AccountRole.Guest)).toBe(false)
+    expect(isBillableMember(AccountRole.DocGuest)).toBe(false)
+    expect(isBillableMember(AccountRole.ReadOnlyGuest)).toBe(false)
+  })
+
+  it('includes real members', () => {
+    expect(isBillableMember(AccountRole.User)).toBe(true)
+    expect(isBillableMember(AccountRole.Maintainer)).toBe(true)
+    expect(isBillableMember(AccountRole.Owner)).toBe(true)
+  })
+})
+
+describe('makePlanKey', () => {
+  it('joins plan and type', () => {
+    expect(makePlanKey('business', SubscriptionType.Tier)).toBe('business@tier')
+    expect(makePlanKey('100gb', SubscriptionType.Package)).toBe('100gb@package')
   })
 })

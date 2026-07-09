@@ -65,7 +65,7 @@ export class LimitsEngine {
 
     const category = metricToCategory(metric)
     const subs = await this.accountClient(workspace).getSubscriptions(workspace, false)
-    const limitValue = getLimitValue(resolveTierLimits(subs), metric)
+    const limitValue = getEffectiveLimit(subs, metric)
 
     const prev = await this.db.getLimitState(ctx, workspace, category)
     const used = (prev?.used ?? 0) + amount
@@ -141,7 +141,7 @@ export class LimitsEngine {
     const subs = await this.accountClient(workspace).getSubscriptions(workspace, false)
     const tier = subs.find((s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Active)
     const used = await this.computeUsed(ctx, workspace, metric, tier)
-    const limitValue = getLimitValue(resolveTierLimits(subs), metric)
+    const limitValue = getEffectiveLimit(subs, metric)
 
     const nowExhausted = limitValue > 0 && used >= limitValue
     const prev = await this.db.getLimitState(ctx, workspace, category)
@@ -218,6 +218,16 @@ function getLimitValue (limits: TierLimits | undefined, metric: UsageMetric): nu
   if (metric === 'tokens') return limits.tokenLimit ?? 0
   if (metric === 'transcript') return (limits.meetingMinutesLimit ?? 0) * 60 // minutes -> seconds
   return (limits.storageLimitGB ?? 0) * 1e9 // GB -> bytes
+}
+
+// Effective limit = tier base + active add-on package (one per ws). Package adds only for its own
+// metric (disk package: storageLimitGB>0, tokenLimit 0). Tier 0 = unlimited, package never tightens.
+function getEffectiveLimit (subs: Subscription[], metric: UsageMetric): number {
+  const base = getLimitValue(resolveTierLimits(subs), metric)
+  if (base === 0) return 0 // unlimited tier -> package cannot restrict it
+
+  const pkg = subs.find((s) => s.type === SubscriptionType.Package && s.status === SubscriptionStatus.Active)
+  return base + getLimitValue(pkg?.limits, metric)
 }
 
 function getPeriodStartDate (periodStart: number | undefined): Date {

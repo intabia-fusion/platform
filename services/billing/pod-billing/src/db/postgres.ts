@@ -701,20 +701,13 @@ class PostgresDB implements BillingDB {
     category: LimitCategory
   ): Promise<WorkspaceLimitState | undefined> {
     const query = `
-      SELECT workspace, category, used, limit_value, exhausted
+      SELECT ${LIMIT_STATE_COLUMNS}
       FROM billing.workspace_limit_state
       WHERE workspace = $1::uuid AND category = $2
     `
     const rows = await this.execute<any[]>(query, [workspace, category])
     const row = rows[0]
-    if (row == null) return undefined
-    return {
-      workspace: row.workspace as WorkspaceUuid,
-      category: row.category as LimitCategory,
-      used: Number(row.used) ?? 0,
-      limitValue: Number(row.limit_value) ?? 0,
-      exhausted: row.exhausted === true || row.exhausted === 'true' || row.exhausted === 't'
-    }
+    return row == null ? undefined : rowToLimitState(row)
   }
 
   async upsertLimitState (ctx: MeasureContext, state: WorkspaceLimitState): Promise<void> {
@@ -741,18 +734,25 @@ class PostgresDB implements BillingDB {
 
   async getAllExhaustedStates (ctx: MeasureContext): Promise<WorkspaceLimitState[]> {
     const query = `
-      SELECT workspace, category, used, limit_value, exhausted
+      SELECT ${LIMIT_STATE_COLUMNS}
       FROM billing.workspace_limit_state
       WHERE exhausted = TRUE
     `
     const rows = await this.execute<any[]>(query, [])
-    return rows.map((row: any) => ({
-      workspace: row.workspace as WorkspaceUuid,
-      category: row.category as LimitCategory,
-      used: Number(row.used) ?? 0,
-      limitValue: Number(row.limit_value) ?? 0,
-      exhausted: true
-    }))
+    return rows.map(rowToLimitState)
+  }
+}
+
+const LIMIT_STATE_COLUMNS = 'workspace, category, used, limit_value, exhausted'
+
+function rowToLimitState (row: any): WorkspaceLimitState {
+  return {
+    workspace: row.workspace as WorkspaceUuid,
+    category: row.category as LimitCategory,
+    used: Number(row.used) ?? 0,
+    limitValue: Number(row.limit_value) ?? 0,
+    // postgres bool may arrive as boolean or 't'/'true' string depending on driver
+    exhausted: row.exhausted === true || row.exhausted === 'true' || row.exhausted === 't'
   }
 }
 

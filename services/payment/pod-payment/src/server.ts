@@ -33,6 +33,7 @@ import {
   SubscriptionData,
   SubscriptionStatus,
   SubscriptionType,
+  isBillableMember,
   type WorkspaceLoginInfo
 } from '@hcengineering/account-client'
 
@@ -56,6 +57,24 @@ const subscriptionRateLimiter = rateLimit({
 })
 
 type AsyncRequestHandler = (ctx: MeasureContext, req: Request, res: Response) => Promise<void>
+
+function relayProviderError (res: Response, err: unknown, fallbackMsg: string): void {
+  if (err instanceof ProviderHttpError) {
+    res.status(err.status).json({ reason: err.reason, error: fallbackMsg })
+    return
+  }
+  res.status(500).json({ error: fallbackMsg })
+}
+
+// 503 guard for endpoints that require a configured payment provider. Returns true if the
+// response was written (caller must return immediately).
+function requireProvider (provider: PaymentProvider | undefined, res: Response): boolean {
+  if (provider === undefined) {
+    res.status(503).json({ error: 'Payment provider is not configured' })
+    return true
+  }
+  return false
+}
 
 const handleRequest = async (
   ctx: MeasureContext,
@@ -286,9 +305,7 @@ export async function createServer (
   async function billableMembersCount (workspace: WorkspaceUuid): Promise<number> {
     const wsToken = generateToken(systemAccountUuid, workspace, { service: 'payment' })
     const members = await getAccountClient(config.AccountsUrl, wsToken).getWorkspaceMembers()
-    return members.filter(
-      (m) => m.role !== AccountRole.Guest && m.role !== AccountRole.DocGuest && m.role !== AccountRole.ReadOnlyGuest
-    ).length
+    return members.filter((m) => isBillableMember(m.role)).length
   }
 
   // For per-seat plans, validate the requested seat count
@@ -309,6 +326,59 @@ export async function createServer (
       return { error: `Quantity ${q} is below the current member count ${min}` }
     }
     return { quantity: q }
+  }
+
+  // Common preamble for :subscriptionId endpoints: look up by internal id, 404 if missing,
+  // 403 if it doesn't belong to the caller's workspace. Writes the response and returns
+  // undefined on failure.
+  async function loadOwnedSubscription (req: RequestWithAuth, res: Response): Promise<SubscriptionData | undefined> {
+    const subscriptionId = req.params.subscriptionId
+    const subscription = await accountClient.getSubscriptionById(subscriptionId)
+    if (subscription === undefined || subscription === null) {
+      res.status(404).json({ error: 'Subscription not found' })
+      return undefined
+    }
+    if (!ownsSubscription(req, subscription)) {
+      res.status(403).json({ error: 'Subscription does not belong to this workspace' })
+      return undefined
+    }
+    return subscription
+  }
+
+  // Shared cancel/uncancel logic: provider-mismatched subscriptions are mutated locally,
+  // same-provider ones go through the provider call. `res` is written on all failure paths.
+  async function runProviderOrLocal (
+    ctx: MeasureContext,
+    res: Response,
+    subscription: SubscriptionData,
+    opts: {
+      localPatch: Partial<SubscriptionData>
+      localLogMessage: string
+      providerCall: (ctx: MeasureContext, providerSubId: string) => Promise<SubscriptionData | null>
+      providerNotFoundMsg: string
+      providerErrorMsg: string
+    }
+  ): Promise<SubscriptionData | undefined> {
+    if (subscription.provider !== config.Provider) {
+      const updated: SubscriptionData = { ...subscription, ...opts.localPatch }
+      await persistSubscription(updated)
+      ctx.info(opts.localLogMessage, { id: subscription.id, provider: subscription.provider })
+      return updated
+    }
+
+    try {
+      const result = await opts.providerCall(ctx, subscription.providerSubscriptionId)
+      if (result === null) {
+        res.status(404).json({ error: opts.providerNotFoundMsg })
+        return undefined
+      }
+      await persistSubscription(result)
+      return result
+    } catch (err) {
+      ctx.error(opts.providerErrorMsg, { err })
+      res.status(500).json({ error: opts.providerErrorMsg })
+      return undefined
+    }
   }
 
   if (config.Provider === 'mock') {
@@ -452,12 +522,7 @@ export async function createServer (
             )
           } catch (err) {
             ctx.error('Failed to create subscription at provider', { err })
-            // Relay provider status + reason (e.g. 409 other_checkout_active); else generic 500.
-            if (err instanceof ProviderHttpError) {
-              res.status(err.status).json({ reason: err.reason, error: 'Failed to create subscription at provider' })
-              return
-            }
-            res.status(500).json({ error: 'Failed to create subscription at provider' })
+            relayProviderError(res, err, 'Failed to create subscription at provider')
             return
           }
 
@@ -489,61 +554,25 @@ export async function createServer (
     withToken,
     withOwner,
     (req: RequestWithAuth, res: Response) => {
-      if (provider === undefined) {
-        res.status(503).json({ error: 'Payment provider is not configured' })
-        return
-      }
+      if (requireProvider(provider, res)) return
+      const activeProvider = provider
 
       void handleRequest(
         ctx,
         'cancel-subscription',
         async (ctx) => {
-          const subscriptionId = req.params.subscriptionId
+          const subscription = await loadOwnedSubscription(req, res)
+          if (subscription === undefined) return
 
-          // Get subscription from our database using internal ID
-          const subscription = await accountClient.getSubscriptionById(subscriptionId)
-
-          if (subscription === undefined || subscription === null) {
-            res.status(404).json({ error: 'Subscription not found' })
-            return
-          }
-
-          if (!ownsSubscription(req, subscription)) {
-            res.status(403).json({ error: 'Subscription does not belong to this workspace' })
-            return
-          }
-
-          let canceledSubscription: SubscriptionData
-
-          if (subscription.provider !== config.Provider) {
-            // Cancel locally for provider-mismatched subscriptions
-            const now = Date.now()
-            canceledSubscription = {
-              ...subscription,
-              status: SubscriptionStatus.Canceled,
-              canceledAt: now
-            } as any
-            await persistSubscription(canceledSubscription)
-            ctx.info('Subscription canceled locally (provider mismatch)', {
-              id: subscription.id,
-              provider: subscription.provider
-            })
-          } else {
-            try {
-              // Cancel via provider using the provider's subscription ID
-              const result = await provider.cancelSubscription(ctx, subscription.providerSubscriptionId)
-              if (result === null) {
-                res.status(404).json({ error: 'Failed to cancel subscription at provider' })
-                return
-              }
-              canceledSubscription = result
-              await persistSubscription(canceledSubscription)
-            } catch (err) {
-              ctx.error('Failed to cancel subscription at provider', { err })
-              res.status(500).json({ error: 'Failed to cancel subscription at provider' })
-              return
-            }
-          }
+          const now = Date.now()
+          const canceledSubscription = await runProviderOrLocal(ctx, res, subscription, {
+            localPatch: { status: SubscriptionStatus.Canceled, canceledAt: now },
+            localLogMessage: 'Subscription canceled locally (provider mismatch)',
+            providerCall: async (ctx, providerSubId) => await activeProvider.cancelSubscription(ctx, providerSubId),
+            providerNotFoundMsg: 'Failed to cancel subscription at provider',
+            providerErrorMsg: 'Failed to cancel subscription at provider'
+          })
+          if (canceledSubscription === undefined) return
 
           res.status(200).json(canceledSubscription)
         },
@@ -564,60 +593,24 @@ export async function createServer (
     withToken,
     withOwner,
     (req: RequestWithAuth, res: Response) => {
-      if (provider === undefined) {
-        res.status(503).json({ error: 'Payment provider is not configured' })
-        return
-      }
+      if (requireProvider(provider, res)) return
+      const activeProvider = provider
 
       void handleRequest(
         ctx,
         'uncancel-subscription',
         async (ctx) => {
-          const subscriptionId = req.params.subscriptionId
+          const subscription = await loadOwnedSubscription(req, res)
+          if (subscription === undefined) return
 
-          // Get subscription from our database using internal ID
-          const subscription = await accountClient.getSubscriptionById(subscriptionId)
-
-          if (subscription === undefined || subscription === null) {
-            res.status(404).json({ error: 'Subscription not found' })
-            return
-          }
-
-          if (!ownsSubscription(req, subscription)) {
-            res.status(403).json({ error: 'Subscription does not belong to this workspace' })
-            return
-          }
-
-          let uncanceledSubscription: SubscriptionData
-
-          if (subscription.provider !== config.Provider) {
-            // Uncancel locally for provider-mismatched subscriptions
-            uncanceledSubscription = {
-              ...subscription,
-              canceledAt: undefined,
-              status: 'active' as any
-            }
-            await persistSubscription(uncanceledSubscription as any)
-            ctx.info('Subscription uncanceled locally (provider mismatch)', {
-              id: subscription.id,
-              provider: subscription.provider
-            })
-          } else {
-            try {
-              // Uncancel via provider using the provider's subscription ID
-              const result = await provider.uncancelSubscription(ctx, subscription.providerSubscriptionId)
-              if (result === null) {
-                res.status(404).json({ error: 'Failed to uncancel subscription at provider' })
-                return
-              }
-              uncanceledSubscription = result
-              await persistSubscription(uncanceledSubscription)
-            } catch (err) {
-              ctx.error('Failed to uncancel subscription at provider', { err })
-              res.status(500).json({ error: 'Failed to uncancel subscription at provider' })
-              return
-            }
-          }
+          const uncanceledSubscription = await runProviderOrLocal(ctx, res, subscription, {
+            localPatch: { canceledAt: undefined, status: 'active' as SubscriptionStatus },
+            localLogMessage: 'Subscription uncanceled locally (provider mismatch)',
+            providerCall: async (ctx, providerSubId) => await activeProvider.uncancelSubscription(ctx, providerSubId),
+            providerNotFoundMsg: 'Failed to uncancel subscription at provider',
+            providerErrorMsg: 'Failed to uncancel subscription at provider'
+          })
+          if (uncanceledSubscription === undefined) return
 
           res.status(200).json(uncanceledSubscription)
         },
@@ -642,16 +635,13 @@ export async function createServer (
     withLoginInfo,
     withOwner,
     (req: RequestWithAuth, res: Response) => {
-      if (provider === undefined) {
-        res.status(503).json({ error: 'Payment provider is not configured' })
-        return
-      }
+      if (requireProvider(provider, res)) return
+      const activeProvider = provider
 
       void handleRequest(
         ctx,
         'update-plan',
         async (ctx) => {
-          const subscriptionId = req.params.subscriptionId
           const { plan, quantity: requestedQuantity, period, force } = req.body
           const loginInfo = req.loginInfo as WorkspaceLoginInfo
 
@@ -665,18 +655,8 @@ export async function createServer (
             return
           }
 
-          // Get subscription from our database using internal ID
-          const subscription = await accountClient.getSubscriptionById(subscriptionId)
-
-          if (subscription === undefined || subscription === null) {
-            res.status(404).json({ error: 'Subscription not found' })
-            return
-          }
-
-          if (!ownsSubscription(req, subscription)) {
-            res.status(403).json({ error: 'Subscription does not belong to this workspace' })
-            return
-          }
+          const subscription = await loadOwnedSubscription(req, res)
+          if (subscription === undefined) return
 
           const accountUuid = subscription.accountUuid ?? req.token?.account
           if (accountUuid == null) {
@@ -736,7 +716,7 @@ export async function createServer (
             })
             try {
               const request: SubscribeRequest = { type: subscription.type, plan, quantity, period, force }
-              const checkoutResponse = await provider.createSubscription(
+              const checkoutResponse = await activeProvider.createSubscription(
                 ctx,
                 request,
                 subscription.workspaceUuid,
@@ -745,7 +725,7 @@ export async function createServer (
               )
               // Instant provider: persist the new subscription now (see createSubscription handler).
               if (checkoutResponse.instant === true) {
-                const sub = await provider.getSubscriptionByCheckout(ctx, checkoutResponse.checkoutId)
+                const sub = await activeProvider.getSubscriptionByCheckout(ctx, checkoutResponse.checkoutId)
                 if (sub !== null) {
                   await persistSubscription(sub)
                 }
@@ -753,12 +733,7 @@ export async function createServer (
               res.status(200).json(checkoutResponse)
             } catch (err) {
               ctx.error('Failed to create subscription at provider', { err })
-              // Relay provider status + reason (e.g. 409 other_checkout_active); else generic 500.
-              if (err instanceof ProviderHttpError) {
-                res.status(err.status).json({ reason: err.reason, error: 'Failed to create subscription at provider' })
-                return
-              }
-              res.status(500).json({ error: 'Failed to create subscription at provider' })
+              relayProviderError(res, err, 'Failed to create subscription at provider')
             }
             return
           }
@@ -767,7 +742,7 @@ export async function createServer (
 
           try {
             // Update via provider using the provider's subscription ID
-            updateResult = await provider.updateSubscriptionPlan(
+            updateResult = await activeProvider.updateSubscriptionPlan(
               ctx,
               subscription.providerSubscriptionId,
               plan,
@@ -779,12 +754,7 @@ export async function createServer (
             )
           } catch (err) {
             ctx.error('Failed to update subscription at provider', { err })
-            // Relay provider status + reason (e.g. 409 other_checkout_active); else generic 500.
-            if (err instanceof ProviderHttpError) {
-              res.status(err.status).json({ reason: err.reason, error: 'Failed to update subscription at provider' })
-              return
-            }
-            res.status(500).json({ error: 'Failed to update subscription at provider' })
+            relayProviderError(res, err, 'Failed to update subscription at provider')
             return
           }
 
@@ -823,27 +793,15 @@ export async function createServer (
     withToken,
     withOwner,
     (req: RequestWithAuth, res: Response) => {
-      if (provider === undefined) {
-        res.status(503).json({ error: 'Payment provider is not configured' })
-        return
-      }
+      if (requireProvider(provider, res)) return
+      const activeProvider = provider
 
       void handleRequest(
         ctx,
         'retry-payment',
         async (ctx) => {
-          const subscriptionId = req.params.subscriptionId
-
-          const subscription = await accountClient.getSubscriptionById(subscriptionId)
-          if (subscription === undefined || subscription === null) {
-            res.status(404).json({ error: 'Subscription not found' })
-            return
-          }
-
-          if (!ownsSubscription(req, subscription)) {
-            res.status(403).json({ error: 'Subscription does not belong to this workspace' })
-            return
-          }
+          const subscription = await loadOwnedSubscription(req, res)
+          if (subscription === undefined) return
 
           if (subscription.status !== SubscriptionStatus.PastDue) {
             res.status(400).json({ error: 'Subscription is not in past_due status' })
@@ -861,7 +819,7 @@ export async function createServer (
           }
 
           try {
-            const result = await provider.retryPayment(ctx, subscription.providerSubscriptionId)
+            const result = await activeProvider.retryPayment(ctx, subscription.providerSubscriptionId)
             if (result === null) {
               res.status(404).json({ error: 'Failed to retry payment' })
               return
