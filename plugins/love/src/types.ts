@@ -151,6 +151,8 @@ export interface DevicesPreference extends Preference {
   noiseCancellation: boolean
   blurRadius: number
   camEnabled: boolean
+  // Alert when the user talks while muted. Undefined = enabled (opt-out).
+  speakingWhileMutedAlert?: boolean
 }
 
 export enum MeetingStatus {

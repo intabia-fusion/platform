@@ -208,7 +208,16 @@ export class DatalakeImpl implements Datalake {
       }
 
       await bucket.put(ctx, filename, dataToUpload, putOptions)
-      const head = await bucket.head(ctx, filename)
+
+      // put() throws on real failure; a null head here is usually read-after-write lag, so retry.
+      let head = await bucket.head(ctx, filename)
+      for (let attempt = 0; head === null && attempt < 5; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)))
+        head = await bucket.head(ctx, filename)
+        if (head !== null) {
+          ctx.warn('uploaded blob head succeeded after retry', { workspace, name, attempt: attempt + 1 })
+        }
+      }
 
       if (head === null) {
         ctx.error('failed to upload blob: uploaded blob not found', { workspace, name })
@@ -264,7 +273,15 @@ export class DatalakeImpl implements Datalake {
   ): Promise<BlobHead | null> {
     const { location, bucket } = await this.selectStorage(ctx, workspace)
 
-    const head = await bucket.head(ctx, filename)
+    // Retry head to tolerate read-after-write lag right after multipart complete.
+    let head = await bucket.head(ctx, filename)
+    for (let attempt = 0; head === null && attempt < 5; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)))
+      head = await bucket.head(ctx, filename)
+      if (head !== null) {
+        ctx.warn('created blob head succeeded after retry', { workspace, name, attempt: attempt + 1 })
+      }
+    }
     if (head == null) {
       ctx.error('failed to create blob from non existing file', { workspace, name, filename })
       return null

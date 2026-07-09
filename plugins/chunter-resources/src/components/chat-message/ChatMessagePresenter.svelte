@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -256,7 +257,18 @@
   }
 
   async function handleDbClick (e: MouseEvent): Promise<void> {
-    if (isEditing || value == null || $deviceOptionsStore.isMobile) return
+    if ($deviceOptionsStore.isMobile) return
+    if (isEditing || value == null) return
+
+    const target = e.target as HTMLElement | null
+    if (
+      target?.closest(
+        '.replies-container, .replies, .hulyReactions-container, .reactions, .actions, .gallery, .attachment-preview, .forwarded-message, .read-marker, .avatar, .socialIcon, .saveMarker, .header, button, input, textarea, img, [role="button"]'
+      )
+    ) {
+      return
+    }
+
     e.preventDefault()
     e.stopPropagation()
 

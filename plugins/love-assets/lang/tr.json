@@ -157,6 +157,8 @@
     "GroupByRoom": "Odaya göre",
     "GroupByOwner": "Sahibine göre",
     "GroupByStatus": "Duruma göre",
-    "GroupByDate": "Tarihe göre"
+    "GroupByDate": "Tarihe göre",
+    "SpeakingWhileMuted": "Mikrofonunuz kapalı - diğerleri sizi duymuyor",
+    "SpeakingWhileMutedAlert": "Mikrofon kapalıyken konuştuğumda uyar"
   }
 }

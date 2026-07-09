@@ -1,3 +1,17 @@
+<!--
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+-->
 <script lang="ts">
   import { Avatar, getPersonByPersonIdCb } from '@hcengineering/contact-resources'
   import { Class, Doc, Ref } from '@hcengineering/core'
@@ -7,7 +21,7 @@
   import chunter, { ThreadMessage } from '@hcengineering/chunter'
   import { getResource } from '@hcengineering/platform'
   import activity, { ActivityMessage } from '@hcengineering/activity'
-  import { getClient, playSound } from '@hcengineering/presentation'
+  import { getClient, playThrottledSound } from '@hcengineering/presentation'
   import { onMount } from 'svelte'
   import { Person } from '@hcengineering/contact'
 
@@ -64,9 +78,9 @@
     await fn(_id, _class, undefined, thread, true, selectedMessageId)
   }
 
-  onMount(async () => {
+  onMount(() => {
     if (!value.soundAlert) return
-    await playSound(plugin.sound.InboxNotification)
+    playThrottledSound(plugin.sound.InboxNotification)
   })
 </script>
 

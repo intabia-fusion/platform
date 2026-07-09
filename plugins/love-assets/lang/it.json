@@ -157,6 +157,8 @@
     "GroupByRoom": "Per stanza",
     "GroupByOwner": "Per proprietario",
     "GroupByStatus": "Per stato",
-    "GroupByDate": "Per data"
+    "GroupByDate": "Per data",
+    "SpeakingWhileMuted": "Il microfono è disattivato - gli altri non ti sentono",
+    "SpeakingWhileMutedAlert": "Avvisami quando parlo con il microfono disattivato"
   }
 }

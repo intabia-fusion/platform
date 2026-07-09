@@ -209,6 +209,9 @@ export async function waitForOfficeLoaded (): Promise<void> {
 
 export const lockedRoom = writable<string>('')
 
+// True when the local user talks while their microphone is muted.
+export const speakingWhileMuted = writable<boolean>(false)
+
 // Store to track if RoomModal is active - when true, video should be hidden in ParticipantsListView
 export const roomModalActive = writable<boolean>(false)
 
