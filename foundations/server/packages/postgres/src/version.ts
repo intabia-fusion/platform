@@ -40,16 +40,18 @@ export async function waitForSchemaVersion (ctx: MeasureContext, client: DBClien
           FROM system._version 
           LIMIT 1
         `)
-        const currentVersion = res[0]?.version
+        const versionRaw = res[0]?.version
+        const currentVersion = typeof versionRaw === 'string' ? parseInt(versionRaw, 10) : versionRaw
         if (
           currentVersion !== undefined &&
           typeof currentVersion === 'number' &&
+          !isNaN(currentVersion) &&
           currentVersion >= EXPECTED_SCHEMA_VERSION
         ) {
           break
         }
         ctx.info('Waiting for database schema migrations to be applied', {
-          currentVersion,
+          currentVersion: res[0]?.version,
           expectedVersion: EXPECTED_SCHEMA_VERSION
         })
       } else {

@@ -11,4 +11,10 @@ else
     exit ${docker_exit}
 fi
 
+echo "Running migrations for Postgres..."
+docker compose -f docker-compose.yaml -p sanity run --rm -e DB_URL=postgres://postgres:postgres@postgres:5433/postgres db-migrator
+
+echo "Running migrations for CockroachDB..."
+docker compose -f docker-compose.yaml -p sanity run --rm -e DB_URL=postgresql://root@cockroach:26257/defaultdb?sslmode=disable db-migrator
+
 ./wait-elastic.sh 9201
