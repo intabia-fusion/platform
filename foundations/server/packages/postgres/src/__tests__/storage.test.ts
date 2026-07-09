@@ -1,3 +1,4 @@
+/* eslint-disable import/first */
 //
 // Copyright © 2024 Hardcore Engineering Inc.
 //
@@ -12,6 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+
+jest.mock('../version', () => ({
+  waitForSchemaVersion: jest.fn().mockResolvedValue(undefined),
+  EXPECTED_SCHEMA_VERSION: 10
+}))
+
 import core, {
   type Client,
   createClient,

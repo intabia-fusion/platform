@@ -73,6 +73,17 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
     restart: unless-stopped
+
+  db-migrator:
+    image: intabiafusion/db-migrator
+    pull_policy: never
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DB_URL=postgres://postgres:postgres@postgres:5433/postgres
+    restart: "no"
+
   redpanda:
     image: docker.redpanda.com/redpandadata/redpanda:v24.3.6
     command:

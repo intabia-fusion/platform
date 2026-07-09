@@ -34,5 +34,6 @@
 --to @hcengineering/pod-worker \
 --to @hcengineering/pod-notification \
 --to @hcengineering/pod-notifications \
---to @hcengineering/pod-activity
+--to @hcengineering/pod-activity \
+--to @hcengineering/pod-db-migrator
 # --to @hcengineering/pod-hulylake

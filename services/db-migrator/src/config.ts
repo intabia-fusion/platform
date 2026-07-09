@@ -1,5 +1,4 @@
 //
-// Copyright © 2025 Hardcore Engineering Inc.
 // Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -13,8 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+import { config as dotenvConfig } from 'dotenv'
 
-export * from './retry'
-export * from './decorator'
-export * from './retryable'
-export * from './delay'
+dotenvConfig()
+
+export interface Config {
+  ServiceId: string
+  DbUrl: string
+}
+
+const config: Config = (() => {
+  const params: Partial<Config> = {
+    ServiceId: process.env.SERVICE_ID ?? 'db-migrator',
+    DbUrl: process.env.DB_URL
+  }
+
+  const missingEnv = (Object.keys(params) as Array<keyof Config>).filter((key) => params[key] === undefined)
+
+  if (missingEnv.length > 0) {
+    throw Error(`Missing env variables: ${missingEnv.join(', ')}`)
+  }
+
+  return params as Config
+})()
+
+export default config
