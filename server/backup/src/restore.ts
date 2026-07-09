@@ -23,6 +23,7 @@ import core, {
   Domain,
   DOMAIN_BLOB,
   MeasureContext,
+  type PersonUuid,
   RateLimiter,
   Ref,
   toIdMap,
@@ -47,6 +48,41 @@ const dataUploadSize = 2 * 1024 * 1024
 
 const defaultLevel = 9
 
+type BlobVerifyResult = 'ok' | 'missing' | 'mismatch'
+
+// Download a blob back and compare its content byte-for-byte with the source.
+async function verifyBlobContent (
+  ctx: MeasureContext,
+  blobClient: BlobClient,
+  name: string,
+  expected: Buffer
+): Promise<BlobVerifyResult> {
+  const stat = await blobClient.storageAdapter.stat(ctx, blobClient.workspace, name)
+  if (stat === undefined) {
+    return 'missing'
+  }
+  // Size guard: writeTo reads only expected.length, so a longer remote blob would compare equal otherwise.
+  if (stat.size !== expected.length) {
+    return 'mismatch'
+  }
+  const chunks: Buffer[] = []
+  try {
+    await blobClient.writeTo(ctx, name, expected.length, {
+      write: (buffer, cb) => {
+        chunks.push(buffer)
+        cb()
+      },
+      end: (cb) => {
+        cb()
+      }
+    })
+  } catch (err: any) {
+    ctx.warn('failed to download blob for verification', { name, err })
+    return 'mismatch'
+  }
+  return Buffer.concat(chunks).equals(expected) ? 'ok' : 'mismatch'
+}
+
 /**
  * @public
  * Restore state of DB to specified point.
@@ -69,6 +105,9 @@ export async function restore (
     progress?: (progress: number) => Promise<void>
     cleanIndexState?: boolean
     historyFile?: string
+    verifyBlobs?: boolean
+    // Do not upload anything. For blobs: download from storage and compare content, report missing/mismatch.
+    verifyOnly?: boolean
   }
 ): Promise<boolean> {
   const infoFile = 'backup.json.gz'
@@ -109,6 +148,12 @@ export async function restore (
 
   const blobClient = new BlobClient(pipeline.context.storageAdapter ?? createDummyStorageAdapter(), wsIds)
   console.log('connected')
+
+  // verifyOnly report counters (full counts in verifyStats; ids capped to bound memory)
+  const verifyIdCap = 1000
+  const verifyStats = { ok: 0, missing: 0, mismatch: 0 }
+  const verifyMissing: string[] = []
+  const verifyMismatch: string[] = []
 
   // We need to find empty domains and clean them.
   const allDomains = pipeline.context.hierarchy.domains()
@@ -215,7 +260,7 @@ export async function restore (
 
     // Let's find difference
     const docsToAdd = new Map(
-      opt.recheck === true // If recheck we check all documents.
+      opt.recheck === true || opt.verifyOnly === true // recheck/verifyOnly process all documents.
         ? Array.from(changeset.entries())
         : Array.from(changeset.entries()).filter(
           ([it]) =>
@@ -283,10 +328,12 @@ export async function restore (
             return true
           })
         }
-        try {
-          await ops.upload(ctx, c, docsToSend)
-        } catch (err: any) {
-          ctx.error('error during upload', { err, docs: JSON.stringify(docs) })
+        if (opt.verifyOnly !== true) {
+          try {
+            await ops.upload(ctx, c, docsToSend)
+          } catch (err: any) {
+            ctx.error('error during upload', { err, docs: JSON.stringify(docs) })
+          }
         }
 
         docs.length = 0
@@ -317,9 +364,31 @@ export async function restore (
               }
             }
 
-            if (needSend) {
+            if (opt.verifyOnly === true) {
+              // No upload. Download existing blob and compare content.
+              const res = await verifyBlobContent(ctx, blobClient, blob._id, data)
+              verifyStats[res]++
+              if (res === 'missing') {
+                if (verifyMissing.length < verifyIdCap) verifyMissing.push(blob._id)
+                ctx.warn('blob missing', { _id: blob._id, size: blob.size, workspace: wsIds.uuid })
+              } else if (res === 'mismatch') {
+                if (verifyMismatch.length < verifyIdCap) verifyMismatch.push(blob._id)
+                ctx.warn('blob content mismatch', { _id: blob._id, size: blob.size, workspace: wsIds.uuid })
+              }
+            } else if (needSend) {
               try {
                 await blobClient.upload(ctx, blob._id, blob.size, blob.contentType, data)
+                if (opt.verifyBlobs === true) {
+                  let res = await verifyBlobContent(ctx, blobClient, blob._id, data)
+                  if (res !== 'ok') {
+                    ctx.warn('blob content mismatch, re-uploading', { _id: blob._id, res, workspace: wsIds.uuid })
+                    await blobClient.upload(ctx, blob._id, blob.size, blob.contentType, data)
+                    res = await verifyBlobContent(ctx, blobClient, blob._id, data)
+                    if (res !== 'ok') {
+                      ctx.error('blob content mismatch after re-upload', { _id: blob._id, res, workspace: wsIds.uuid })
+                    }
+                  }
+                }
                 if (opt.historyFile !== undefined) {
                   historyFile[blob._id] = blob.etag
                   if (totalSend % 1000 === 0) {
@@ -621,6 +690,20 @@ export async function restore (
     Analytics.handleError(err)
     return false
   }
+  if (opt.verifyOnly === true) {
+    ctx.info('blob verification report', {
+      workspace: workspaceId,
+      ok: verifyStats.ok,
+      missing: verifyStats.missing,
+      mismatch: verifyStats.mismatch
+    })
+    if (verifyMissing.length > 0) {
+      ctx.warn('missing blobs', { count: verifyMissing.length, ids: verifyMissing.slice(0, 100) })
+    }
+    if (verifyMismatch.length > 0) {
+      ctx.warn('mismatch blobs', { count: verifyMismatch.length, ids: verifyMismatch.slice(0, 100) })
+    }
+  }
   return true
 }
 
@@ -703,6 +786,21 @@ async function restoreSocialIds (ctx: MeasureContext, accountDb: AccountDB, soci
         return data
       })
     if (socialIdsToInsert.length > 0) {
+      // Orphan socialId (person removed in source) gets a stub person to satisfy social_id_person_fk.
+      const refPersonUuids = Array.from(
+        new Set(socialIdsToInsert.map((s) => s.personUuid).filter((u): u is PersonUuid => u != null))
+      )
+      if (refPersonUuids.length > 0) {
+        const existingPersons = await accountDb.person.find({ uuid: { $in: refPersonUuids } })
+        const existingPersonUuids = new Set(existingPersons.map((p) => p.uuid))
+        const stubPersons = refPersonUuids
+          .filter((u) => !existingPersonUuids.has(u))
+          .map((uuid) => ({ uuid, firstName: '', lastName: '' }) as unknown as GlobalPerson)
+        if (stubPersons.length > 0) {
+          await accountDb.person.insertMany(stubPersons)
+          ctx.warn('inserted stub persons for orphan socialIds', { count: stubPersons.length })
+        }
+      }
       await accountDb.socialId.insertMany(socialIdsToInsert)
       ctx.info('inserted socialIds', { count: socialIdsToInsert.length })
     }

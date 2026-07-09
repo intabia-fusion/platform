@@ -146,7 +146,8 @@ export async function backup (
 
   const tmpRoot = mkdtempSync('huly')
 
-  const forcedFullCheck = '4'
+  // Bumped to 5: force full recheck so account.person is re-collected after the BigInt-filter fix.
+  const forcedFullCheck = '5'
   const forcedCompact = '1'
 
   try {
@@ -1030,15 +1031,18 @@ export async function backup (
       // 1. We need to include global records based on persons/socialIdentities info which are missing in digest
       // 2. We need to check updates for all records present in digest
       const batchSize = 1000
+      // BigInt filter fits only socialId keys (numeric _id); person keys are UUIDs.
       const toLoad = new Set(
-        [...digest.keys(), ...affectedObjects].filter((it) => {
-          try {
-            BigInt(it)
-            return true
-          } catch (err: any) {
-            return false
-          }
-        })
+        isPersonDomain
+          ? [...digest.keys(), ...affectedObjects]
+          : [...digest.keys(), ...affectedObjects].filter((it) => {
+              try {
+                BigInt(it)
+                return true
+              } catch (err: any) {
+                return false
+              }
+            })
       ) as Set<PersonUuid>
       if (toLoad.size === 0) {
         ctx.info('No records updates')

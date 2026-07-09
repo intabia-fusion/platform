@@ -14,6 +14,7 @@
 //
 
 import { type MeasureContext, type WorkspaceUuid, concatLink } from '@hcengineering/core'
+import { withRetry, DelayStrategyFactory } from '@hcengineering/retry'
 import { Readable } from 'stream'
 
 import { DatalakeError, NetworkError, NotFoundError } from './error'
@@ -320,21 +321,24 @@ export class DatalakeClient {
   ): Promise<ObjectMetadata> {
     const chunkSize = 10 * 1024 * 1024
 
-    const multipart = await this.multipartUploadStart(ctx, workspace, objectName, params)
+    // Retry each stage on transient errors. Start yields a fresh uploadId per attempt;
+    // part/complete reuse it and are idempotent by partNumber.
+    const multipart = await retryStage(() => this.multipartUploadStart(ctx, workspace, objectName, params))
 
     try {
       const parts: MultipartUploadPart[] = []
 
       let partNumber = 1
       for await (const chunk of getChunks(stream, chunkSize)) {
-        const part = await this.multipartUploadPart(ctx, workspace, objectName, multipart, partNumber, chunk)
+        const n = partNumber
+        const part = await retryStage(() => this.multipartUploadPart(ctx, workspace, objectName, multipart, n, chunk))
         parts.push(part)
         partNumber++
       }
 
-      return await this.multipartUploadComplete(ctx, workspace, objectName, multipart, parts)
+      return await retryStage(() => this.multipartUploadComplete(ctx, workspace, objectName, multipart, parts))
     } catch (err: any) {
-      await this.multipartUploadAbort(ctx, workspace, objectName, multipart)
+      await this.multipartUploadAbort(ctx, workspace, objectName, multipart).catch(() => {})
       throw err
     }
   }
@@ -508,6 +512,21 @@ async function toBuffer (data: Buffer | string | Readable): Promise<Buffer> {
   } else {
     throw new TypeError('Unsupported data type')
   }
+}
+
+// Retry one multipart stage with backoff, so a transient error does not abort the whole upload.
+async function retryStage<T> (op: () => Promise<T>): Promise<T> {
+  return await withRetry(op, {
+    maxRetries: 5,
+    // 404 is permanent for these endpoints; retrying only adds delay.
+    isRetryable: (err) => !(err instanceof NotFoundError) && (err as any)?.name !== 'NotFoundError',
+    delayStrategy: DelayStrategyFactory.exponentialBackoff({
+      initialDelayMs: 200,
+      maxDelayMs: 5000,
+      backoffFactor: 2,
+      jitter: 0.2
+    })
+  })
 }
 
 async function * getChunks (data: Buffer | string | Readable, chunkSize: number): AsyncGenerator<Buffer> {
