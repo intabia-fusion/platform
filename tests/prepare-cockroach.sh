@@ -16,6 +16,9 @@ if [ "x$DO_CLEAN" == 'xtrue' ]; then
     docker system prune -a -f
 fi
 
+echo "Running migrations for CockroachDB..."
+DB_URL="postgresql://root@localhost:26258/defaultdb?sslmode=disable" node ../services/db-migrator/lib/index.js
+
 ./wait-elastic.sh 9201
 
 # Create user record in accounts
