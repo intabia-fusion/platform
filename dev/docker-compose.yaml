@@ -237,6 +237,9 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
       - TBANK_SUBSCRIPTIONS_URL=http://tbank-subscriptions:4042
+      # Mock provider (uncomment + comment out the tbank block above to activate plans without real payment)
+      # - PROVIDER=mock
+      # - ALLOW_MOCK_PROVIDER=true
       # Polar configuration (uncomment if using Polar)
       # - POLAR_ACCESS_TOKEN=${POLAR_ACCESS_TOKEN}
       # - POLAR_WEBHOOK_SECRET=${POLAR_WEBHOOK_SECRET}

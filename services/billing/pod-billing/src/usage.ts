@@ -15,15 +15,19 @@
 
 import { type AccountClient, type Subscription, SubscriptionStatus, getClient } from '@hcengineering/account-client'
 import {
+  type AccountUuid,
   type MeasureContext,
   type UsageStatus,
   type WorkspaceUuid,
   RateLimiter,
+  SocialIdType,
+  buildSocialIdString,
   isArchivingMode,
   isDeletingMode,
   systemAccountUuid,
   AccountRole
 } from '@hcengineering/core'
+import { aiBotAccountEmail } from '@hcengineering/middleware'
 import { type StorageConfig } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
 import { createClient, getTransactorEndpoint } from '@hcengineering/server-client'
@@ -33,9 +37,13 @@ import { collectDatalakeStats } from './billing'
 import { type Config } from './config'
 import { type BillingDB } from './types'
 
+const aiBotSocialKey = buildSocialIdString({ type: SocialIdType.EMAIL, value: aiBotAccountEmail })
+
 export class UsageWorker {
   private canceled: boolean = false
   private promise: Promise<void> = Promise.resolve()
+  // aibot account uuid, resolved once — it never occupies a seat, so it is excluded from membersCount.
+  private aiBotAccount: AccountUuid | null | undefined
 
   constructor (
     private readonly db: BillingDB,
@@ -124,6 +132,17 @@ export class UsageWorker {
     }
   }
 
+  private async resolveAiBotAccount (account: AccountClient): Promise<AccountUuid | null> {
+    if (this.aiBotAccount !== undefined) return this.aiBotAccount
+    try {
+      const uuid = await account.findPersonBySocialKey(aiBotSocialKey, true)
+      this.aiBotAccount = (uuid ?? null) as AccountUuid | null
+    } catch {
+      return null // do not cache on transient failure — retry next tick
+    }
+    return this.aiBotAccount
+  }
+
   async updateWorkspaceUsageStatistics (ctx: MeasureContext, now: number, workspace: WorkspaceUuid): Promise<void> {
     const account = getAccountClient(this.config.AccountsUrl, workspace)
 
@@ -180,10 +199,19 @@ export class UsageWorker {
       {},
       async () => {
         try {
+          const aiBotAccount = await this.resolveAiBotAccount(account)
           const members = await account.getWorkspaceMembers()
+          ctx.info('members debug', {
+            workspace,
+            aiBotAccount,
+            members: members.map((m) => ({ person: m.person, role: m.role }))
+          })
           return members.filter(
             (m) =>
-              m.role !== AccountRole.Guest && m.role !== AccountRole.DocGuest && m.role !== AccountRole.ReadOnlyGuest
+              m.person !== aiBotAccount &&
+              m.role !== AccountRole.Guest &&
+              m.role !== AccountRole.DocGuest &&
+              m.role !== AccountRole.ReadOnlyGuest
           ).length
         } catch (err: any) {
           ctx.error('failed to get workspace members', { workspace, err })

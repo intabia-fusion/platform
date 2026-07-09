@@ -71,6 +71,9 @@ export const main = async (): Promise<void> => {
   const queue = getPlatformQueue('billing')
   const workspaceProducer = queue.getProducer<QueueWorkspaceLimitsMessage>(metricsContext, QueueTopic.Workspace)
   const engine = new LimitsEngine(db, config.AccountsUrl, storageConfigs, workspaceProducer)
+  const worker = new UsageWorker(db, storageConfigs, config, async (ctx, workspace) => {
+    await engine.recomputeWorkspace(ctx, workspace)
+  })
 
   const usageConsumer = queue.createBatchConsumer<BillingUsageMessage>(
     metricsContext,
@@ -100,6 +103,13 @@ export const main = async (): Promise<void> => {
         const value = msg.value
         if (value.type !== QueueWorkspaceEvent.LimitsChanged) continue
         if ((value as QueueWorkspaceLimitsMessage).category !== LimitCategory.Plan) continue
+        // Recompute raw usage first (new workspaces have no usageInfo yet — the periodic loop
+        // skips them until visited), then re-evaluate limit state from the fresh counters.
+        try {
+          await worker.updateWorkspaceUsageStatistics(ctx, Date.now(), msg.workspace)
+        } catch (err: any) {
+          ctx.error('failed to recompute usage on plan change', { workspace: msg.workspace, err })
+        }
         await engine.recomputeWorkspace(ctx, msg.workspace)
       }
     },
@@ -111,9 +121,6 @@ export const main = async (): Promise<void> => {
     metricsContext.error('startup limits scan failed', { err })
   })
 
-  const worker = new UsageWorker(db, storageConfigs, config, async (ctx, workspace) => {
-    await engine.recomputeWorkspace(ctx, workspace)
-  })
   await worker.schedule(metricsContext)
 
   const { app, close } = await createServer(metricsContext, db, storageConfigs, config)

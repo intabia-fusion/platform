@@ -33,6 +33,7 @@ import { getClient as getPaymentClientRaw, type PaymentClient } from '@hcenginee
 import {
   type UsageStatus,
   type WorkspaceInfoWithStatus,
+  type WorkspaceUuid,
   AccountRole,
   getCurrentAccount,
   hasAccountRole
@@ -42,6 +43,12 @@ import { type PlanItem, type PackageItem, type PlanConfig, type LocalizedString 
 
 import { setSubscriptionState, updateLimitExceeded, subscriptionStore, setIsLimited } from './stores/subscription'
 import SubscriptionsModal from './components/SubscriptionsModal.svelte'
+
+// Scope subscription reads to the active workspace: admin/service tokens return ALL workspaces'
+// subscriptions when the uuid is omitted, so an admin would otherwise see other workspaces' plans.
+function currentWorkspace (): WorkspaceUuid | undefined {
+  return getMetadata(presentation.metadata.WorkspaceUuid) as WorkspaceUuid | undefined
+}
 
 export function getAccountClient (): AccountClient | null {
   const accountsUrl = getMetadata(login.metadata.AccountsUrl) ?? ''
@@ -140,7 +147,7 @@ export async function isLimitExceeded (): Promise<boolean> {
       return false
     }
 
-    const subscriptions = await accountClient.getSubscriptions(undefined, false)
+    const subscriptions = await accountClient.getSubscriptions(currentWorkspace(), false)
     const subscription = subscriptions.find((p) => p.type === SubscriptionType.Tier && grantsPlan(p))
     const packageSubscription = subscriptions.find((p) => p.type === SubscriptionType.Package && grantsPlan(p))
     if (subscription == null) {
@@ -172,7 +179,7 @@ export async function checkWorkspaceLimits (): Promise<void> {
     const workspaceInfo = await accountClient.getWorkspaceInfo(false)
     const usageInfo = workspaceInfo?.usageInfo ?? null
 
-    const subscriptions = await accountClient.getSubscriptions(undefined, false)
+    const subscriptions = await accountClient.getSubscriptions(currentWorkspace(), false)
     const subscription = subscriptions.find((p) => p.type === SubscriptionType.Tier && grantsPlan(p))
     const packageSubscription = subscriptions.find((p) => p.type === SubscriptionType.Package && grantsPlan(p))
     // Latest tier regardless of status — drives the payment/free banner even when canceled (non-granting).
@@ -296,7 +303,7 @@ export function resolveLocale (config: PlanConfig, lang: string): PlanConfig {
 }
 
 export async function getCurrentSubscription (accountClient: AccountClient): Promise<SubscriptionData | undefined> {
-  const subscriptions = await accountClient.getSubscriptions()
+  const subscriptions = await accountClient.getSubscriptions(currentWorkspace())
   return subscriptions.find((p) => p.type === SubscriptionType.Tier)
 }
 
