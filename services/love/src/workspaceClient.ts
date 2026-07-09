@@ -230,6 +230,14 @@ export class WorkspaceClient {
       return
     }
 
+    // Never resurrect a finished meeting. A stale client that reconnected with
+    // an old meetingId would otherwise flip Finished -> Active and leave the
+    // meeting stuck "live" in the UI. A fresh meeting must get a new _id.
+    if (meeting.status === MeetingStatus.Finished) {
+      this.ctx.warn('Refusing to re-activate finished meeting', { meeting: meeting._id })
+      return
+    }
+
     await this.client.update(meeting, { status: MeetingStatus.Active })
     this.ctx.info('Activated meeting', { meeting: meeting._id })
   }

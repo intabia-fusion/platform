@@ -28,8 +28,6 @@ import { createServer, listen } from './server'
 import { parseCookies } from './utils'
 import { crmPlugin, EmailNotification } from './plugin'
 
-export const SERVICE_ID = 'crm'
-
 async function main (): Promise<void> {
   configureAnalytics(config.ServiceId, process.env.VERSION ?? '0.7.0')
   const ctx = initStatisticsContext(config.ServiceId, {
@@ -48,15 +46,13 @@ async function main (): Promise<void> {
 
   Analytics.setTag('application', config.ServiceId)
 
-  const platformQueue = getPlatformQueue(SERVICE_ID)
-  const notificationProducer = platformQueue.getProducer<EmailNotification>(ctx, QueueTopic.NotificationQueue)
+  const queue = getPlatformQueue(config.ServiceId, config.QueueRegion)
+  const notificationProducer = queue.getProducer<EmailNotification>(ctx, QueueTopic.NotificationQueue)
 
   setMetadata(crmPlugin.metadata.MailQueue, notificationProducer)
   setMetadata(serverToken.metadata.Secret, config.Secret)
   setMetadata(serverToken.metadata.Service, config.ServiceId)
   setMetadata(serverClient.metadata.Endpoint, config.AccountsUrl)
-
-  const queue = getPlatformQueue(config.ServiceId, config.QueueRegion)
 
   const consumer = queue.createConsumer<Record<string, any>>(
     ctx,

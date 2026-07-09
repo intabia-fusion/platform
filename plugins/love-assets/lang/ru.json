@@ -157,6 +157,8 @@
     "GroupByRoom": "По комнате",
     "GroupByOwner": "По владельцу",
     "GroupByStatus": "По статусу",
-    "GroupByDate": "По дате"
+    "GroupByDate": "По дате",
+    "SpeakingWhileMuted": "Микрофон выключен - вас не слышат",
+    "SpeakingWhileMutedAlert": "Предупреждать, когда говорю при выключенном микрофоне"
   }
 }

@@ -157,6 +157,8 @@
     "GroupByRoom": "Par salle",
     "GroupByOwner": "Par propriétaire",
     "GroupByStatus": "Par statut",
-    "GroupByDate": "Par date"
+    "GroupByDate": "Par date",
+    "SpeakingWhileMuted": "Votre micro est coupé - les autres ne vous entendent pas",
+    "SpeakingWhileMutedAlert": "M'alerter quand je parle avec le micro coupé"
   }
 }
