@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type Asset, getMetadata} from '@hcengineering/platform'
+import { type Asset, getMetadata } from '@hcengineering/platform'
 
 // Raw undecoded audio, survives AudioContext recreation (AudioBuffer does not).
 const sounds = new Map<Asset, ArrayBuffer>()
@@ -24,21 +24,21 @@ const sounds = new Map<Asset, ArrayBuffer>()
 let context: AudioContext | undefined
 let activePlaybacks = 0
 
-function getContext(): AudioContext {
+function getContext (): AudioContext {
   if (context === undefined || context.state === 'closed') {
     context = new AudioContext()
   }
   return context
 }
 
-function releaseContext(): void {
+function releaseContext (): void {
   if (activePlaybacks > 0 || context === undefined) return
   const ctx = context
   context = undefined
   void ctx.close().catch(() => {})
 }
 
-async function loadSound(key: string): Promise<ArrayBuffer | undefined> {
+async function loadSound (key: string): Promise<ArrayBuffer | undefined> {
   const asset = key as Asset
   const cached = sounds.get(asset)
   if (cached !== undefined) return cached
@@ -54,11 +54,11 @@ async function loadSound(key: string): Promise<ArrayBuffer | undefined> {
   }
 }
 
-export async function prepareSound(key: string): Promise<void> {
+export async function prepareSound (key: string): Promise<void> {
   await loadSound(key)
 }
 
-export async function playSound(soundKey: string, loop = false): Promise<(() => void) | null> {
+export async function playSound (soundKey: string, loop = false): Promise<(() => void) | null> {
   const raw = await loadSound(soundKey)
   if (raw === undefined) {
     console.error('Cannot prepare audio buffer', soundKey)
@@ -118,7 +118,7 @@ interface ThrottleState {
 }
 const throttleStates = new Map<string, ThrottleState>()
 
-export function playThrottledSound(soundKey: string): void {
+export function playThrottledSound (soundKey: string): void {
   const now = Date.now()
   let st = throttleStates.get(soundKey)
   if (st === undefined) {
