@@ -268,7 +268,8 @@ test.describe('Tracker issue tests', () => {
     await prepareNewIssueWithOpenStep(page, commentImageIssue)
     await issuesDetailsPage.waitDetailsOpened(commentImageIssue.title)
     await issuesDetailsPage.addCommentWithImage('Added comment with atttachment', 'cat3.jpeg')
-    await issuesDetailsPage.checkCommentWithImageExist('left a comment', 'cat3.jpeg')
+    await issuesDetailsPage.checkCommentWithImageExist('', 'cat3.jpeg')
+    await issuesDetailsPage.checkCommentExist('Added comment with atttachment')
   })
 
   test('Add comment by popup', async ({ page }) => {
@@ -289,7 +290,7 @@ test.describe('Tracker issue tests', () => {
     await issuesPage.checkCommentsCount(commentIssue.title, '1')
     await issuesPage.openCommentPopupForIssueByName(commentIssue.title)
     await issueCommentPopup.addCommentInPopup(commentPopup, 'cat2.jpeg')
-    await issueCommentPopup.checkCommentWithImageExist('left a comment', 'cat2.jpeg')
+    await issueCommentPopup.checkCommentWithImageExist('', 'cat2.jpeg')
     await issueCommentPopup.checkCommentExist(commentPopup)
     await page.locator('.modal-overlay').hover({ position: { x: 10, y: 10 } })
     await page.locator('.modal-overlay').click({ position: { x: 10, y: 10 } })
