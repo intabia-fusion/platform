@@ -245,6 +245,7 @@ export interface Subscription {
 
   // Cancellation tracking (optional)
   canceledAt?: Timestamp
+  willCancelAt?: Timestamp // Scheduled cancellation date (cancel at period end)
 
   // Provider-specific data stored as JSONB (optional)
   providerData?: Record<string, any>

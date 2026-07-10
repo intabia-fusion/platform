@@ -166,24 +166,11 @@ export class TbankProvider implements PaymentProvider {
   async uncancelSubscription (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData> {
     ctx.info('Uncanceling TBank subscription', { providerSubscriptionId })
 
-    // TBank doesn't support uncancel directly — re-initiate payment for the subscription's own plan.
-    const sub = await this.getSubscription(ctx, providerSubscriptionId)
-    if (sub === null) {
-      throw new Error(`TBank subscription not found: ${providerSubscriptionId}`)
-    }
-
-    const response = await this.fetchTbank(
-      `${this.tbankUrl}/api/v1/subscriptions/${providerSubscriptionId}/updatePlan`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          plan: sub.plan,
-          quantity: sub.providerData?.quantity,
-          period: sub.providerData?.period
-        })
-      }
-    )
+    // The sub is still Active with a scheduled cancellation, so uncancel just
+    // clears the schedule (no new payment — the card was kept). See pod-tbank-subscriptions /uncancel.
+    const response = await this.fetchTbank(`${this.tbankUrl}/api/v1/subscriptions/${providerSubscriptionId}/uncancel`, {
+      method: 'POST'
+    })
 
     if (!response.ok) {
       const errorBody = await response.text()

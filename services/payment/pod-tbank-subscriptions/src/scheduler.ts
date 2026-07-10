@@ -26,6 +26,7 @@ import {
   buildFailedChargeSubscription,
   buildChargeErrorSubscription
 } from './utils'
+import { removeSubscriptionCard } from './server'
 
 export interface SchedulerHandle {
   close: () => Promise<void>
@@ -275,6 +276,54 @@ async function enforceGracePeriod (ctx: MeasureContext, storage: SubscriptionSto
 }
 
 /**
+ * Finalize scheduled cancellations.
+ * Once `now >= willCancelAt` the subscription is terminated: status
+ * Canceled and the saved card removed at TBank.
+ */
+async function enforceScheduledCancel (
+  ctx: MeasureContext,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage
+): Promise<void> {
+  try {
+    const now = Date.now()
+    let canceled = 0
+
+    for (const sub of await storage.getCandidates()) {
+      if (sub.status !== SubscriptionStatus.Active) continue
+      if (sub.providerData?.pending === true) continue
+      if (sub.willCancelAt == null || sub.willCancelAt > now) continue
+
+      // Re-fetch to avoid racing an uncancel (which clears willCancelAt) or a concurrent tick.
+      const freshSub = await storage.getById(sub.id)
+      if (freshSub === null) continue
+      if (freshSub.status !== SubscriptionStatus.Active) continue
+      if (freshSub.providerData?.pending === true) continue
+      if (freshSub.willCancelAt == null || freshSub.willCancelAt > now) continue
+
+      await removeSubscriptionCard(ctx, tbank, freshSub)
+      await storage.upsert({
+        ...freshSub,
+        status: SubscriptionStatus.Canceled,
+        providerData: {
+          ...freshSub.providerData,
+          modifiedAt: now,
+          status: 'CANCELED'
+        }
+      })
+      ctx.info('Scheduled cancellation finalized', { subId: freshSub.id, plan: freshSub.plan })
+      canceled++
+    }
+
+    if (canceled > 0) {
+      ctx.info('Scheduled cancellations enforced', { canceled })
+    }
+  } catch (err) {
+    ctx.error('Enforce scheduled cancel error', { err })
+  }
+}
+
+/**
  * Start the subscription renewal scheduler.
  * Periodically checks for subscriptions that need renewal and attempts to charge them.
  * - On success: extends periodEnd by one calendar month/year (the subscription's period), resets retry counters
@@ -325,6 +374,10 @@ export function startScheduler (
     await enforceGracePeriod(ctx, storage, config)
   }
 
+  const scheduledCancelCycle = async (): Promise<void> => {
+    await enforceScheduledCancel(ctx, tbank, storage)
+  }
+
   const schedulerIntervalMs = intervalMinutes * 60 * 1000
   ctx.info('Starting subscription renewal scheduler', { intervalMinutes, gracePeriodDays: config.GracePeriodDays })
 
@@ -332,6 +385,7 @@ export function startScheduler (
   trackRenewal()
   void cleanupCycle()
   void graceCycle()
+  void scheduledCancelCycle()
   const timer = setInterval(trackRenewal, schedulerIntervalMs)
   // Cleanup runs less frequently — once per cycle is fine; abandoned subs are rare
   const cleanupTimer = setInterval(() => {
@@ -341,12 +395,17 @@ export function startScheduler (
   const graceTimer = setInterval(() => {
     void graceCycle()
   }, schedulerIntervalMs)
+  // Scheduled-cancel finalization runs on its own timer (separate responsibility).
+  const scheduledCancelTimer = setInterval(() => {
+    void scheduledCancelCycle()
+  }, schedulerIntervalMs)
 
   return {
     close: async () => {
       clearInterval(timer)
       clearInterval(cleanupTimer)
       clearInterval(graceTimer)
+      clearInterval(scheduledCancelTimer)
       // Only the renewal cycle is drained: it issues a charge (real money), so a lost upsert orphans
       // the payment. Cleanup/grace upserts are not drained — they re-fetch and re-check, so a missed
       // one is simply redone on the next tick (idempotent, no money lost).

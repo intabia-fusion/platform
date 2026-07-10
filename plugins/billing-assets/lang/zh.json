@@ -37,6 +37,7 @@
     "Total": "合计",
     "Active": "活跃",
     "Disabled": "已禁用",
+    "CancelScheduled": "取消中",
     "SubscriptionEnds": "截止至{date}",
     "SubscriptionRenews": "下次续期: {date}",
     "SubscriptionValidUntil": "有效期至{date}",

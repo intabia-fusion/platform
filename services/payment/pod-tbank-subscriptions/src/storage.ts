@@ -131,8 +131,13 @@ export class SubscriptionStorage {
 
   static needsRenewal (sub: Subscription, now: number): boolean {
     if (sub.providerData?.rebillId === undefined) return false
+    // Scheduled cancel: the sub is still Active until willCancelAt.
+    // Then the scheduler flips it to Canceled (enforceScheduledCancel).
+    if (sub.willCancelAt != null && sub.periodEnd != null && sub.periodEnd >= sub.willCancelAt) {
+      return false
+    }
     if (sub.status === SubscriptionStatus.Active) {
-      return sub.periodEnd !== undefined && sub.periodEnd <= now
+      return sub.periodEnd != null && sub.periodEnd <= now
     }
     if (isFailedRenewal(sub)) {
       const retryAttempt = (sub.providerData?.retryAttempt as number) ?? 0
