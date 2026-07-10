@@ -20,14 +20,14 @@ import { FileStorageUploadOptions } from './types'
 /** Upload rejected because the workspace storage/plan limit is reached (HTTP 413). @public */
 export class StorageLimitError extends Error {
   readonly isStorageLimit = true
-  constructor(message: string) {
+  constructor (message: string) {
     super(message)
     this.name = 'StorageLimitError'
   }
 }
 
 /** Extract the server's JSON `message`, falling back to a generic limit text. */
-function serverMessage(body: string): string {
+function serverMessage (body: string): string {
   try {
     const m = JSON.parse(body)?.message
     if (typeof m === 'string' && m.length > 0) return m
@@ -52,7 +52,7 @@ export interface XHRUploadResult {
 }
 
 /** @public */
-export async function uploadXhr(upload: XHRUpload, options?: FileStorageUploadOptions): Promise<XHRUploadResult> {
+export async function uploadXhr (upload: XHRUpload, options?: FileStorageUploadOptions): Promise<XHRUploadResult> {
   const signal = options?.signal
   const onProgress = options?.onProgress
 
@@ -132,7 +132,7 @@ export interface MultipartUpload {
 }
 
 /** @public */
-export async function uploadMultipart(upload: MultipartUpload, options?: FileStorageUploadOptions): Promise<void> {
+export async function uploadMultipart (upload: MultipartUpload, options?: FileStorageUploadOptions): Promise<void> {
   const CHUNK_SIZE = 5 * 1024 * 1024 // 5MB chunks
   const { url, headers, body } = upload
   const signal = options?.signal
@@ -167,13 +167,13 @@ export async function uploadMultipart(upload: MultipartUpload, options?: FileSto
         onProgress:
           onProgress !== undefined
             ? (progress) => {
-              const loaded = uploaded + progress.loaded
-              onProgress({
-                loaded,
-                total: body.size,
-                percentage: Math.round((loaded * 100) / body.size)
-              })
-            }
+                const loaded = uploaded + progress.loaded
+                onProgress({
+                  loaded,
+                  total: body.size,
+                  percentage: Math.round((loaded * 100) / body.size)
+                })
+              }
             : undefined
       }
 
@@ -202,14 +202,14 @@ export async function uploadMultipart(upload: MultipartUpload, options?: FileSto
   }
 }
 
-function throwIfAborted(signal?: AbortSignal): void {
+function throwIfAborted (signal?: AbortSignal): void {
   if (signal?.aborted === true) {
     throw new Error('Upload aborted')
   }
 }
 
 // Retry a multipart stage. Does not retry on abort or non-retriable client errors (4xx except 408/429).
-export async function retryStage<T>(signal: AbortSignal | undefined, op: () => Promise<T>): Promise<T> {
+export async function retryStage<T> (signal: AbortSignal | undefined, op: () => Promise<T>): Promise<T> {
   const isRetryable: IsRetryable = (err) => {
     if (signal?.aborted === true) return false
     const message = err instanceof Error ? err.message : String(err)
@@ -232,7 +232,7 @@ export async function retryStage<T>(signal: AbortSignal | undefined, op: () => P
   })
 }
 
-async function multipartUploadCreate(
+async function multipartUploadCreate (
   baseUrl: string,
   headers: Record<string, string>,
   signal?: AbortSignal
@@ -247,14 +247,15 @@ async function multipartUploadCreate(
     if (response.status === 413) {
       throw new StorageLimitError(serverMessage(await response.text().catch(() => '')))
     }
-    throw new Error('Failed to initialize multipart upload')
+    // Keep "(status NNN)" — retryStage.isRetryable parses it to skip retrying client 4xx.
+    throw new Error(`Failed to initialize multipart upload (status ${response.status})`)
   }
 
   const { uuid, uploadId } = await response.json()
   return { uuid, uploadId }
 }
 
-async function multipartUploadComplete(
+async function multipartUploadComplete (
   baseUrl: string,
   headers: Record<string, string>,
   uploadId: string,
@@ -278,11 +279,11 @@ async function multipartUploadComplete(
     if (response.status === 413) {
       throw new StorageLimitError(serverMessage(await response.text().catch(() => '')))
     }
-    throw new Error('Failed to complete multipart upload')
+    throw new Error(`Failed to complete multipart upload (status ${response.status})`)
   }
 }
 
-async function multipartUploadPart(
+async function multipartUploadPart (
   baseUrl: string,
   headers: Record<string, string>,
   uploadId: string,
@@ -312,7 +313,7 @@ async function multipartUploadPart(
   }
 }
 
-async function multipartUploadAbort(baseUrl: string, headers: Record<string, string>, uploadId: string): Promise<void> {
+async function multipartUploadAbort (baseUrl: string, headers: Record<string, string>, uploadId: string): Promise<void> {
   const url = new URL(concatLink(baseUrl, '/abort'))
   url.searchParams.set('uploadId', uploadId)
 
