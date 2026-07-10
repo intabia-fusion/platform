@@ -823,7 +823,11 @@
             <div class="current-tier-card-title">
               <div class="flex-row-center">
                 <div class="fs-title">{currentPlan.label ?? currentPlan}</div>
-                {#if currentSubscription?.status === 'active'}
+                {#if isCurrentCanceled}
+                  <div class="status-badge-warning ml-2 text-md">
+                    <Label label={plugin.string.CancelScheduled} />
+                  </div>
+                {:else if currentSubscription?.status === 'active'}
                   <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.Active} /></div>
                 {/if}
                 {#if currentSubscription?.status === 'readonly'}
@@ -1186,6 +1190,13 @@
   .status-badge-disabled {
     color: var(--theme-state-negative-color);
     background-color: var(--theme-state-negative-background-color);
+    border-radius: var(--small-BorderRadius);
+    padding: 0.125rem 0.5rem;
+  }
+
+  .status-badge-warning {
+    color: var(--theme-warning-color);
+    background-color: color-mix(in srgb, var(--theme-warning-color) 12%, transparent);
     border-radius: var(--small-BorderRadius);
     padding: 0.125rem 0.5rem;
   }

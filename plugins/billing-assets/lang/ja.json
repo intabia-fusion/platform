@@ -37,6 +37,7 @@
     "Total": "合計",
     "Active": "アクティブ",
     "Disabled": "無効",
+    "CancelScheduled": "キャンセル予定",
     "SubscriptionEnds": "{date}まで",
     "SubscriptionRenews": "次回更新: {date}",
     "SubscriptionValidUntil": "{date}まで有効",

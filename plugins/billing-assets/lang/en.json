@@ -37,6 +37,7 @@
     "Total": "Total",
     "Active": "Active",
     "Disabled": "Disabled",
+    "CancelScheduled": "Canceling",
     "NoActivePlan": "No active plan",
     "SelectPlanToBegin": "Select a plan below to get started",
     "SubscriptionEnds": "Until {date}",

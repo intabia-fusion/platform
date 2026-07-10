@@ -37,6 +37,7 @@
     "Total": "Celkem",
     "Active": "Aktivní",
     "Disabled": "Deaktivováno",
+    "CancelScheduled": "Ruší se",
     "NoActivePlan": "Žádný aktivní plán",
     "SelectPlanToBegin": "Chcete-li začít, vyberte plán níže",
     "SubscriptionEnds": "Do {date}",

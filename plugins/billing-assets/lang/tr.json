@@ -37,6 +37,7 @@
     "Total": "Toplam",
     "Active": "Aktif",
     "Disabled": "Devre dışı",
+    "CancelScheduled": "İptal ediliyor",
     "NoActivePlan": "Etkin plan yok",
     "SelectPlanToBegin": "Başlamak için aşağıdan bir plan seçin",
     "SubscriptionEnds": "{date} tarihine kadar",

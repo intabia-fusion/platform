@@ -37,6 +37,7 @@
     "Total": "Total",
     "Active": "Activo",
     "Disabled": "Desactivado",
+    "CancelScheduled": "Cancelando",
     "SubscriptionEnds": "Hasta {date}",
     "SubscriptionRenews": "Próxima renovación: {date}",
     "SubscriptionValidUntil": "Válido hasta {date}",

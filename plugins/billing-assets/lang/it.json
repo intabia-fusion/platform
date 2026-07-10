@@ -37,6 +37,7 @@
     "Total": "Totale",
     "Active": "Attivo",
     "Disabled": "Disattivato",
+    "CancelScheduled": "In cancellazione",
     "NoActivePlan": "Nessun piano attivo",
     "SelectPlanToBegin": "Seleziona un piano di seguito per iniziare",
     "SubscriptionEnds": "Fino al {date}",

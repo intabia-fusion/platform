@@ -113,6 +113,14 @@ export async function createServer (
   )
 
   app.post(
+    '/api/v1/subscriptions/:id/uncancel',
+    withServiceToken,
+    wrapHandler(ctx, 'uncancelSubscription', async (req, res) => {
+      await handleUncancelSubscription(storage, req, res)
+    })
+  )
+
+  app.post(
     '/api/v1/subscriptions/:id/updatePlan',
     withServiceToken,
     wrapHandler(ctx, 'updatePlan', async (req, res) => {
@@ -455,8 +463,40 @@ async function handleCancelSubscription (
   const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
   if (sub === null) return
 
+  if (sub.status !== SubscriptionStatus.Active && sub.status !== SubscriptionStatus.Trialing) {
+    res.status(400).json({ error: 'Subscription is not in a cancelable status' })
+    return
+  }
+
   const canceledData = await cancelSubscription(ctx, tbank, storage, sub)
   res.json(canceledData)
+}
+
+// Clear the scheduled cancellation
+async function handleUncancelSubscription (storage: SubscriptionStorage, req: Request, res: Response): Promise<void> {
+  const sub = await findSubscription(storage, req.params.id)
+  if (sub === null) {
+    res.status(404).json({ error: 'Subscription not found' })
+    return
+  }
+
+  // Only a scheduled cancel can be reversed
+  if (sub.status === SubscriptionStatus.Canceled) {
+    res.status(400).json({ error: 'Subscription already canceled, a new checkout is required' })
+    return
+  }
+
+  const providerData: Record<string, any> = { ...sub.providerData, modifiedAt: Date.now(), status: 'ACTIVE' }
+  delete providerData.canceledAt
+  delete providerData.willCancelAt
+  const uncanceledData: SubscriptionData = {
+    ...sub,
+    canceledAt: undefined,
+    willCancelAt: undefined,
+    providerData
+  }
+  await storage.upsert(uncanceledData)
+  res.json(uncanceledData)
 }
 
 async function handleUpdatePlan (
@@ -472,8 +512,8 @@ async function handleUpdatePlan (
   const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
   if (sub === null) return
 
-  // Same plan is a no-op for a live subscription; for a canceled one it is the uncancel path —
-  // re-initiate payment for the same plan (the card was removed on cancel, a new checkout is needed).
+  // Same plan is a no-op for a live subscription.
+  // But terminally Canceled can be processed further.
   if (sub.plan === newPlan && sub.status !== SubscriptionStatus.Canceled) {
     res.status(400).json({ error: 'Already on this plan' })
     return
@@ -852,15 +892,38 @@ function buildSubscriptionDataFromWebhook (
   }
 }
 
+// The subscription stays Active until periodEnd (the user keeps access and
+// can uncancel for free), only renewal is suppressed (see storage.needsRenewal + scheduler
+// enforceScheduledCancel, which flips it to Canceled and removes the card at willCancelAt).
+// status arg is used only for the plan-change path.
 function buildCanceledSubscriptionData (sub: SubscriptionData, status?: string): SubscriptionData {
+  const now = Date.now()
+
+  // Plan change (immediate replacement) cancels the subscription right away.
+  if (status === 'PLAN_CHANGE') {
+    return {
+      ...sub,
+      status: SubscriptionStatus.Canceled,
+      canceledAt: now,
+      providerData: {
+        ...sub.providerData,
+        modifiedAt: now,
+        status
+      }
+    }
+  }
+
   return {
     ...sub,
-    status: SubscriptionStatus.Canceled,
+    // Stays Active; willCancelAt marks the scheduled end of access and blocks renewal.
+    status: SubscriptionStatus.Active,
+    canceledAt: now,
+    willCancelAt: sub.periodEnd,
     providerData: {
       ...sub.providerData,
-      modifiedAt: Date.now(),
-      status: status ?? 'CANCELED',
-      canceledAt: Date.now()
+      modifiedAt: now,
+      status: status ?? 'SCHEDULED_CANCEL',
+      willCancelAt: sub.periodEnd
     }
   }
 }
@@ -897,6 +960,9 @@ async function initTbankPayment (
   }
 }
 
+// User-initiated cancel is scheduled (cancel-at-period-end): the card is kept for a possible
+// uncancel and removed later at willCancelAt (scheduler). Only an immediate cancel (PLAN_CHANGE,
+// where the sub is replaced now) removes the card here.
 async function cancelSubscription (
   ctx: MeasureContext,
   tbank: TbankPayments,
@@ -904,21 +970,31 @@ async function cancelSubscription (
   sub: SubscriptionData,
   status?: string
 ): Promise<SubscriptionData> {
-  const cardId = sub.providerData?.cardId as string | undefined
-  const customerKey = sub.providerData?.customerKey as string | undefined
-
-  if (cardId !== undefined && customerKey !== undefined) {
-    try {
-      await tbank.removeCard({ CustomerKey: customerKey, CardId: cardId })
-      ctx.info('TBank card removed for canceled subscription', { subId: sub.id, cardId })
-    } catch (err) {
-      ctx.warn('Failed to remove TBank card during cancel', { subId: sub.id, err })
-    }
+  if (status === 'PLAN_CHANGE') {
+    await removeSubscriptionCard(ctx, tbank, sub)
   }
 
   const canceledData = buildCanceledSubscriptionData(sub, status)
   await storage.upsert(canceledData)
 
-  ctx.info('Subscription canceled', { subId: sub.id })
+  ctx.info('Subscription canceled', { subId: sub.id, status: canceledData.providerData?.status })
   return canceledData
+}
+
+// Remove the saved card at TBank. Best-effort — a failure is logged, not fatal.
+export async function removeSubscriptionCard (
+  ctx: MeasureContext,
+  tbank: TbankPayments,
+  sub: SubscriptionData
+): Promise<void> {
+  const cardId = sub.providerData?.cardId as string | undefined
+  const customerKey = sub.providerData?.customerKey as string | undefined
+  if (cardId === undefined || customerKey === undefined) return
+
+  try {
+    await tbank.removeCard({ CustomerKey: customerKey, CardId: cardId })
+    ctx.info('TBank card removed for canceled subscription', { subId: sub.id, cardId })
+  } catch (err) {
+    ctx.warn('Failed to remove TBank card during cancel', { subId: sub.id, err })
+  }
 }
