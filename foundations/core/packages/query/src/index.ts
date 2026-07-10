@@ -783,7 +783,14 @@ export class LiveQuery implements WithTx, Client {
         const searchRefresh = await this.checkSearch(q, tx.objectId)
         if (searchRefresh) return
       } else {
-        if (updatedDoc.modifiedOn < tx.modifiedOn || tx.meta?.forceApply === true) {
+        // $inc is commutative, so an equal-timestamp $inc-only tx (derived counter
+        // txes share the parent tx timestamp) is applied locally instead of
+        // re-fetching the doc from the server.
+        const incOnlyAtSameTime =
+          updatedDoc.modifiedOn === tx.modifiedOn &&
+          tx.operations.$inc != null &&
+          Object.keys(tx.operations).every((k) => k === '$inc')
+        if (updatedDoc.modifiedOn < tx.modifiedOn || incOnlyAtSameTime || tx.meta?.forceApply === true) {
           await this.__updateDoc(q, updatedDoc, tx)
           const updateRefresh = this.checkUpdatedDocMatch(q, q.result, updatedDoc)
           if (updateRefresh) {
@@ -981,6 +988,16 @@ export class LiveQuery implements WithTx, Client {
     const { $inc, ...ops } = tx.operations
 
     const emptyOps = Object.keys(ops).length === 0
+    if (emptyOps && $inc != null) {
+      // $inc-only tx (e.g. collection counters): the doc was not in the result, and a
+      // counter change cannot start matching unless the query/sort references that field.
+      const incTouchesQuery = Object.keys($inc).some(
+        (k) => (q.query as any)[k] !== undefined || (q.options?.sort as any)?.[k] !== undefined
+      )
+      if (!incTouchesQuery) {
+        return false
+      }
+    }
     let matched = emptyOps || Object.keys(q.query).length === 0
     if (!emptyOps) {
       const virtualTx = {

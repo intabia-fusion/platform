@@ -109,6 +109,16 @@
     "ThisYear": "Cette année",
     "EmojiStyle": "Style d'émoji",
     "EmojiSystem": "Par défaut du système",
-    "EmojiNoto": "Noto Color"
+    "EmojiNoto": "Noto Color",
+    "Connection": "Connexion",
+    "Connected": "Connecté",
+    "Reconnecting": "Reconnexion...",
+    "RateLimit": "Limite de requêtes",
+    "RateLimitValue": "{remaining} sur {limit} restant, réinit. dans {seconds}s",
+    "Sent": "Envoyé",
+    "Received": "Reçu",
+    "TrafficValue": "{count} msg, {kb} Ko",
+    "Latency": "Latence",
+    "LatencyValue": "{ms} ms"
   }
 }
