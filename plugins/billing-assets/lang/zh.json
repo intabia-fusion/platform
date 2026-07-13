@@ -62,6 +62,7 @@
     "ConfirmConnectPackage": "连接套餐?",
     "ReplacePackageDescription": "您已连接了 {package}。替换?",
     "ConfirmCancelPackage": "取消套餐?",
+    "ConfirmCancelPackageDescription": "您的套餐订阅将在已付费周期结束前保持有效。",
     "DialogCancel": "取消",
     "DialogConfirm": "确认",
     "NoActivePlan": "无活跃计划",

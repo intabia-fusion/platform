@@ -64,6 +64,7 @@
     "ConfirmConnectPackage": "Connecter le forfait?",
     "ReplacePackageDescription": "Vous avez déjà {package}. Remplacer?",
     "ConfirmCancelPackage": "Annuler le forfait?",
+    "ConfirmCancelPackageDescription": "Votre abonnement au forfait restera actif jusqu'à la fin de la période payée.",
     "DialogCancel": "Annuler",
     "DialogConfirm": "Confirmer",
     "StorageUsage": "Stockage",

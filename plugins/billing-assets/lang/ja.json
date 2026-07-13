@@ -62,6 +62,7 @@
     "ConfirmConnectPackage": "パッケージを接続しますか?",
     "ReplacePackageDescription": "すでに {package} が接続されています。置き換えますか?",
     "ConfirmCancelPackage": "パッケージをキャンセルしますか?",
+    "ConfirmCancelPackageDescription": "パッケージのサブスクリプションは、支払い済み期間の終了まで有効です。",
     "DialogCancel": "キャンセル",
     "DialogConfirm": "確認",
     "NoActivePlan": "アクティブなプランなし",

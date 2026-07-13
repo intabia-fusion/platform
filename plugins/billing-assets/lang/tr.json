@@ -64,6 +64,7 @@
     "ConfirmConnectPackage": "Paket bağlansın mı?",
     "ReplacePackageDescription": "Zaten {package} paketiniz var. Değiştirilsin mi?",
     "ConfirmCancelPackage": "Paket iptal edilsin mi?",
+    "ConfirmCancelPackageDescription": "Paket aboneliğiniz ödenen dönemin sonuna kadar aktif kalacaktır.",
     "DialogCancel": "İptal",
     "DialogConfirm": "Onayla",
     "StorageUsage": "Depolama",

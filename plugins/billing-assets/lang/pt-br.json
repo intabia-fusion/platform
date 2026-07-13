@@ -64,6 +64,7 @@
     "ConfirmConnectPackage": "Conectar pacote?",
     "ReplacePackageDescription": "Você já tem {package}. Substituir?",
     "ConfirmCancelPackage": "Cancelar pacote?",
+    "ConfirmCancelPackageDescription": "Sua assinatura do pacote permanecerá ativa até o fim do período pago.",
     "DialogCancel": "Cancelar",
     "DialogConfirm": "Confirmar",
     "StorageUsage": "Armazenamento",

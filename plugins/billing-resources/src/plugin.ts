@@ -63,6 +63,7 @@ export default mergeIds(billingId, billing, {
     ConfirmConnectPackage: '' as IntlString,
     ReplacePackageDescription: '' as IntlString,
     ConfirmCancelPackage: '' as IntlString,
+    ConfirmCancelPackageDescription: '' as IntlString,
     DialogCancel: '' as IntlString,
     DialogConfirm: '' as IntlString,
     StorageUsage: '' as IntlString,

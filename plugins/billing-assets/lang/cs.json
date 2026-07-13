@@ -64,6 +64,7 @@
     "ConfirmConnectPackage": "Připojit balíček?",
     "ReplacePackageDescription": "Již máte {package}. Nahradit?",
     "ConfirmCancelPackage": "Zrušit balíček?",
+    "ConfirmCancelPackageDescription": "Vaše předplatné balíčku zůstane aktivní do konce zaplaceného období.",
     "DialogCancel": "Zrušit",
     "DialogConfirm": "Potvrdit",
     "StorageUsage": "Úložiště",
