@@ -28,6 +28,7 @@ import {
   subscriptionEvents
 } from '@hcengineering/server-core'
 import { type SubscriptionData } from '@hcengineering/account-client'
+import { isFinalizedUserCancel } from './utils'
 import type { SubscriptionPublisher } from './providers'
 import serverToken from '@hcengineering/server-token'
 import { join } from 'path'
@@ -71,7 +72,7 @@ export const main = async (): Promise<void> => {
     await producer.send(ctx, data.workspaceUuid, [msg])
   }
 
-  const { app, ensureFreeSubscription, persistSubscription, close } = await createServer(
+  const { app, ensureFreeSubscription, createFreeIfNoActiveTier, persistSubscription, close } = await createServer(
     metricsContext,
     config,
     publish
@@ -103,7 +104,12 @@ export const main = async (): Promise<void> => {
       async (ctx, msgs) => {
         for (const msg of msgs) {
           try {
-            await persistSubscription(msg.value.subscription as SubscriptionData)
+            const sub = msg.value.subscription as SubscriptionData
+            await persistSubscription(sub)
+            // After a user initiated canceling finalized, we create free subscription.
+            if (isFinalizedUserCancel(sub)) {
+              await createFreeIfNoActiveTier(sub.workspaceUuid)
+            }
           } catch (err: any) {
             ctx.error('failed to persist subscription event', {
               provider: msg.value.provider,

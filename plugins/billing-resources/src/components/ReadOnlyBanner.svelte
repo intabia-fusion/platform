@@ -15,12 +15,16 @@
 <script lang="ts">
   import { Icon, Label, tooltip } from '@hcengineering/ui'
   import billing from '@hcengineering/billing'
-  import { onFreePlan, isLimited } from '../stores/subscription'
+  import { onFreePlan, freePlanOverdue, isLimited } from '../stores/subscription'
   import { upgradePlan } from '../utils'
 
-  // Read-only banner (error) when over free-seat limit; free-plan chip (info) when unpaid but on free fallback.
+  // Read-only banner (error) when over free-seat limit; free-plan chip (info) when on free limits.
   $: readOnly = $isLimited
   $: message = billing.string.SeatLimitReadonly
+  // For Readonly/Expired tooltip explains the free plan as "overdue"
+  $: freePlanTooltip = $freePlanOverdue
+    ? { label: billing.string.FreePlanHint, direction: 'bottom' as const }
+    : undefined
 </script>
 
 {#if readOnly}
@@ -41,7 +45,7 @@
     type="button"
     class="free-plan-indicator"
     data-id="billingFreePlanBanner"
-    use:tooltip={{ label: billing.string.FreePlanHint, direction: 'bottom' }}
+    use:tooltip={freePlanTooltip}
     on:click={() => {
       upgradePlan().catch(console.error)
     }}
