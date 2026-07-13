@@ -83,13 +83,17 @@ test.describe('disk package raises storage limit', () => {
   })
 })
 
-// ── B. unpaid runs on free fallback (chip, not hard read-only) ───────────────
-// Free fallback is always configured, so an unpaid workspace shows the free-plan chip and stays
-// usable on free limits — it is NOT put into full read-only. (Seat over-limit read-only is block F.)
-test.describe('unpaid free fallback', () => {
+// ── B. unpaid stays usable, no hard read-only ────────────────────────────────
+// past_due is inside the grace window: the tier still grants the paid plan (full access), so the
+// workspace shows NO free-plan chip and NO read-only. A tier canceled directly in the DB does not
+// grant a plan, but limits fail open (never a hard read-only from billing state alone). Neither of
+// these is the free-plan chip: that appears only for readonly/expired-with-free, or for a real
+// Active-free subscription auto-provisioned by pod-payment on a user cancel (queue-driven, not
+// reachable through adminCreateSubscription). Seat over-limit read-only is block F.
+test.describe('unpaid stays usable', () => {
   test.use({ storageState: PlatformSetting })
 
-  test('past-due workspace shows the free-plan chip, not read-only; chip clears after payment', async ({
+  test('past-due workspace stays on full paid access (grace): no free chip, no read-only', async ({
     page,
     request
   }) => {
@@ -98,21 +102,16 @@ test.describe('unpaid free fallback', () => {
     const wsUrl = wsInfo.workspaceUrl
     await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { status: 'past_due' })
 
+    // The limits indicator proves billing mounted; grace keeps it on paid access -> no chip/banner.
     await expect(async () => {
       await (await page.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
-      await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeVisible({ timeout: 5000 })
-      await expect(page.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 5000 })
-    }).toPass({ intervals: [2000, 3000, 5000], timeout: 30000 })
-
-    // Simulate payment: set subscription back to active -> chip disappears.
-    await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { status: 'active' })
-    await expect(async () => {
-      await (await page.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
+      await expect(page.locator('[data-id="billingLimitsIndicator"]')).toBeVisible({ timeout: 5000 })
       await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeHidden({ timeout: 5000 })
+      await expect(page.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 5000 })
     }).toPass({ intervals: [2000, 3000, 5000], timeout: 30000 })
   })
 
-  test('admin-canceled subscription also runs on the free fallback (chip, not read-only)', async ({
+  test('a directly-canceled tier is not a hard read-only (no billing read-only banner)', async ({
     page,
     request
   }) => {
@@ -122,12 +121,13 @@ test.describe('unpaid free fallback', () => {
     await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { status: 'active' })
 
     await (await page.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
-    await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeHidden({ timeout: 15000 })
+    await expect(page.locator('[data-id="billingLimitsIndicator"]')).toBeVisible({ timeout: 15000 })
 
+    // Canceled directly in the DB is NOT the user-cancel queue event, so no Active-free is provisioned
+    // and canceled alone shows no free chip. Limits fail open -> no billing read-only banner either.
     await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { status: 'canceled' })
     await expect(async () => {
       await (await page.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
-      await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeVisible({ timeout: 5000 })
       await expect(page.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 5000 })
     }).toPass({ intervals: [2000, 3000, 5000], timeout: 30000 })
   })
