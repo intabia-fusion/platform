@@ -64,6 +64,7 @@
     "ConfirmConnectPackage": "Подключить пакет?",
     "ReplacePackageDescription": "У вас уже подключен пакет {package}. Заменить?",
     "ConfirmCancelPackage": "Отключить пакет?",
+    "ConfirmCancelPackageDescription": "Ваша подписка на пакет останется активной до конца оплаченного периода.",
     "DialogCancel": "Отменить",
     "DialogConfirm": "Подтвердить",
     "StorageUsage": "Хранилище",

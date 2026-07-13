@@ -62,6 +62,7 @@
     "ConfirmConnectPackage": "¿Conectar paquete?",
     "ReplacePackageDescription": "Ya tienes {package}. ¿Reemplazarlo?",
     "ConfirmCancelPackage": "¿Cancelar paquete?",
+    "ConfirmCancelPackageDescription": "Tu suscripción al paquete permanecerá activa hasta el final del período pagado.",
     "DialogCancel": "Cancelar",
     "DialogConfirm": "Confirmar",
     "NoActivePlan": "Sin plan activo",

@@ -107,6 +107,8 @@
   let usageInfo: UsageStatus | null = null
 
   $: isCurrentCanceled = currentSubscription?.canceledAt !== undefined && currentSubscription.canceledAt > 0
+  $: isPackageCanceled =
+    currentPackageSubscription?.canceledAt !== undefined && currentPackageSubscription.canceledAt > 0
 
   let paymentPeriod: BillingPeriod = 'monthly'
 
@@ -198,25 +200,8 @@
       return
     }
 
-    // Canceling package
-    const cancelSub = currentPackageSubscription
-    if (cancelSub !== undefined && pkgKey === cancelSub.plan) {
-      showPopup(MessageBox, {
-        label: plugin.string.ConfirmCancelPackage,
-        message: '',
-        dangerous: true,
-        action: async () => {
-          try {
-            await paymentClient.cancelSubscription(cancelSub.id)
-            currentPackageSubscription = undefined
-          } catch (error) {
-            console.error('Error canceling package:', error)
-            await showErrorNotification()
-          }
-        }
-      })
-      // Connecting package when another package exists
-    } else if (currentPackageSubscription !== undefined) {
+    // Replacing package when another package exists.
+    if (currentPackageSubscription !== undefined) {
       const replaceSub = currentPackageSubscription
       showPopup(MessageBox, {
         label: plugin.string.ConfirmConnectPackage,
@@ -553,6 +538,48 @@
     }
   }
 
+  // Schedule a package cancel — mirror of handleCancel for the tier.
+  async function handlePackageCancel (): Promise<void> {
+    if (paymentClient == null || currentPackageSubscription?.id === undefined || isPackageCanceled) {
+      return
+    }
+    const cancelSub = currentPackageSubscription
+    showPopup(MessageBox, {
+      label: plugin.string.ConfirmCancelPackage,
+      message: plugin.string.ConfirmCancelPackageDescription,
+      dangerous: true,
+      action: async () => {
+        try {
+          // Scheduled cancel: the package stays Active until periodEnd.
+          currentPackageSubscription = await paymentClient.cancelSubscription(cancelSub.id)
+        } catch (error) {
+          console.error('Error canceling package:', error)
+          await showErrorNotification()
+        }
+      }
+    })
+  }
+
+  // Reverse a scheduled package cancel — mirror of handleUncancel for the tier.
+  async function handlePackageUncancel (): Promise<void> {
+    if (paymentClient == null || currentPackageSubscription?.id === undefined || !isPackageCanceled) {
+      return
+    }
+    const uncancelSub = currentPackageSubscription
+    showPopup(MessageBox, {
+      label: plugin.string.ConfirmUncancel,
+      message: plugin.string.UncancelDescription,
+      action: async () => {
+        try {
+          currentPackageSubscription = await paymentClient.uncancelSubscription(uncancelSub.id)
+        } catch (error) {
+          console.error('Error uncanceling package:', error)
+          await showErrorNotification()
+        }
+      }
+    })
+  }
+
   // Statuses that represent a current subscription worth displaying.
   // Active/Trialing first (a fresh paid sub wins), then PastDue/ReadOnly/Paused (needs user
   // attention), ignoring terminal Canceled/Expired records left in history.
@@ -854,12 +881,49 @@
                 </div>
               {/if}
             </div>
+            <div class="curr-tier-footer">
+              {#if currentSubscription?.periodEnd}
+                {@const date = formatEndDate(currentSubscription.periodEnd, $themeStore.language ?? DEFAULT_LOCALE)}
+                {#if isCurrentCanceled}
+                  <div><Label label={plugin.string.SubscriptionValidUntil} params={{ date }} /></div>
+                {:else}
+                  <div><Label label={plugin.string.SubscriptionRenews} params={{ date }} /></div>
+                {/if}
+              {/if}
+
+              {#if !isCurrentCanceled && currentPlan.free !== true}
+                <Button
+                  label={plugin.string.CancelSubscription}
+                  kind="ghost"
+                  disabled={loading || isCheckoutPolling || isCanceling || isUpdating || isRetrying}
+                  on:click={() => {
+                    void handleCancel()
+                  }}
+                />
+              {:else if isCurrentCanceled}
+                <Button
+                  label={plugin.string.UncancelSubscription}
+                  kind="primary"
+                  disabled={loading || isCheckoutPolling || isUncanceling || isUpdating || isRetrying}
+                  on:click={() => {
+                    void handleUncancel()
+                  }}
+                />
+              {/if}
+            </div>
 
             {#if currentPackage !== undefined}
               <Label label={plugin.string.AdditionalPackage} />
               <div class="current-tier-card-title" style="margin-top: -10px;">
                 <div class="flex-row-center">
                   <div class="fs-title">{currentPackage?.description}</div>
+                  {#if isPackageCanceled}
+                    <div class="status-badge-warning ml-2 text-md">
+                      <Label label={plugin.string.CancelScheduled} />
+                    </div>
+                  {:else if currentPackageSubscription?.status === 'active'}
+                    <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.Active} /></div>
+                  {/if}
                 </div>
                 {#if currentPackageSubscription?.amount != null}
                   <div class="flex-row-center items-end">
@@ -874,6 +938,41 @@
                       <Label label={plugin.string.Monthly} />
                     </span>
                   </div>
+                {/if}
+              </div>
+              <div class="curr-tier-footer">
+                {#if currentPackageSubscription?.periodEnd}
+                  {@const pkgDate = formatEndDate(
+                    currentPackageSubscription.periodEnd,
+                    $themeStore.language ?? DEFAULT_LOCALE
+                  )}
+                  {#if isPackageCanceled}
+                    <div><Label label={plugin.string.SubscriptionValidUntil} params={{ date: pkgDate }} /></div>
+                  {:else}
+                    <div><Label label={plugin.string.SubscriptionRenews} params={{ date: pkgDate }} /></div>
+                  {/if}
+                {/if}
+
+                {#if !isReadOnly}
+                  {#if !isPackageCanceled}
+                    <Button
+                      label={plugin.string.Disconnect}
+                      kind="ghost"
+                      disabled={loading || isCheckoutPolling || isUpdating}
+                      on:click={() => {
+                        void handlePackageCancel()
+                      }}
+                    />
+                  {:else}
+                    <Button
+                      label={plugin.string.UncancelSubscription}
+                      kind="primary"
+                      disabled={loading || isCheckoutPolling || isUpdating}
+                      on:click={() => {
+                        void handlePackageUncancel()
+                      }}
+                    />
+                  {/if}
                 {/if}
               </div>
             {/if}
@@ -911,37 +1010,6 @@
                 />
               </div>
             {/if}
-
-            <div class="curr-tier-footer">
-              {#if currentSubscription?.periodEnd}
-                {@const date = formatEndDate(currentSubscription.periodEnd, $themeStore.language ?? DEFAULT_LOCALE)}
-                {#if isCurrentCanceled}
-                  <div><Label label={plugin.string.SubscriptionValidUntil} params={{ date }} /></div>
-                {:else}
-                  <div><Label label={plugin.string.SubscriptionRenews} params={{ date }} /></div>
-                {/if}
-              {/if}
-
-              {#if !isCurrentCanceled && currentPlan.free !== true}
-                <Button
-                  label={plugin.string.CancelSubscription}
-                  kind="ghost"
-                  disabled={loading || isCheckoutPolling || isCanceling || isUpdating || isRetrying}
-                  on:click={() => {
-                    void handleCancel()
-                  }}
-                />
-              {:else if isCurrentCanceled}
-                <Button
-                  label={plugin.string.UncancelSubscription}
-                  kind="primary"
-                  disabled={loading || isCheckoutPolling || isUncanceling || isUpdating || isRetrying}
-                  on:click={() => {
-                    void handleUncancel()
-                  }}
-                />
-              {/if}
-            </div>
           {/if}
         </div>
       </div>
@@ -1120,20 +1188,19 @@
                         </span>
                       </div>
                       <div class="tier-card-footer">
-                        {#if !isReadOnly}
-                          {@const isConnected = currentPackage === pkgItem}
+                        {#if !isReadOnly && currentPackage !== pkgItem}
                           {@const isEligible =
                             pkgItem.eligiblePlans?.includes(currentSubscription?.plan ?? '') ?? false}
                           <Button
-                            label={isConnected ? plugin.string.Disconnect : plugin.string.Connect}
+                            label={plugin.string.Connect}
                             size={'large'}
-                            kind={isConnected ? 'regular' : 'secondary'}
+                            kind={'secondary'}
                             disabled={loading ||
                               isCheckoutPolling ||
                               isUpdating ||
-                              (!isConnected && !isEligible) ||
-                              (!isConnected && otherPackageCheckoutActive)}
-                            showTooltip={!isConnected && otherPackageCheckoutActive
+                              !isEligible ||
+                              otherPackageCheckoutActive}
+                            showTooltip={otherPackageCheckoutActive
                               ? { label: plugin.string.OtherCheckoutActiveTooltip }
                               : undefined}
                             on:click={() => {
@@ -1250,8 +1317,8 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding-top: var(--spacing-2);
-    border-top: 1px solid var(--theme-divider-color);
+    padding-bottom: var(--spacing-2);
+    border-bottom: 1px solid var(--theme-divider-color);
   }
 
   .tier-card-footer {
