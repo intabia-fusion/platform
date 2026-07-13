@@ -43,7 +43,7 @@ import { PaymentProviderFactory } from './factory'
 import type { CheckoutResponse, PaymentProvider, SubscriptionPublisher } from './providers'
 import { ProviderHttpError, SubscribeRequest } from './providers'
 import { startActiveSubscriptionReconciliation } from './reconciliation'
-import { getAccountClient } from './utils'
+import { getAccountClient, hasGrantingTier } from './utils'
 import yaml from 'js-yaml'
 import { existsSync, readFileSync } from 'fs'
 
@@ -116,6 +116,7 @@ export async function createServer (
 ): Promise<{
     app: Express
     ensureFreeSubscription: (workspace: WorkspaceUuid) => Promise<void>
+    createFreeIfNoActiveTier: (workspace: WorkspaceUuid) => Promise<void>
     persistSubscription: (data: SubscriptionData) => Promise<void>
     close: () => void
   }> {
@@ -271,6 +272,18 @@ export async function createServer (
       await createFreeSubscription(workspace)
     } catch (err: any) {
       ctx.error('failed to ensure free subscription', { workspace, err })
+    }
+  }
+
+  // Create a free subscription after finalized user-initiated cancelation of a paid subscription
+  async function createFreeIfNoActiveTier (workspace: WorkspaceUuid): Promise<void> {
+    if (freePlanName === undefined) return
+    try {
+      const existing = await accountClient.getSubscriptions(workspace, false)
+      if (hasGrantingTier(existing)) return
+      await createFreeSubscription(workspace)
+    } catch (err: any) {
+      ctx.error('failed to create free subscription after cancel', { workspace, err })
     }
   }
 
@@ -955,6 +968,7 @@ export async function createServer (
   return {
     app,
     ensureFreeSubscription,
+    createFreeIfNoActiveTier,
     persistSubscription,
     close: () => {
       stopReconciliation()
