@@ -1195,7 +1195,11 @@
                             label={plugin.string.Connect}
                             size={'large'}
                             kind={'secondary'}
-                            disabled={loading || isCheckoutPolling || isUpdating || !isEligible || otherPackageCheckoutActive}
+                            disabled={loading ||
+                              isCheckoutPolling ||
+                              isUpdating ||
+                              !isEligible ||
+                              otherPackageCheckoutActive}
                             showTooltip={otherPackageCheckoutActive
                               ? { label: plugin.string.OtherCheckoutActiveTooltip }
                               : undefined}
