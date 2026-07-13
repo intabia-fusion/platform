@@ -109,6 +109,16 @@
     "ThisYear": "今年",
     "EmojiStyle": "絵文字スタイル",
     "EmojiSystem": "システムデフォルト",
-    "EmojiNoto": "Noto Color"
+    "EmojiNoto": "Noto Color",
+    "Connection": "接続",
+    "Connected": "接続済み",
+    "Reconnecting": "再接続中...",
+    "RateLimit": "レート制限",
+    "RateLimitValue": "{limit}中{remaining}残り、{seconds}秒でリセット",
+    "Sent": "送信",
+    "Received": "受信",
+    "TrafficValue": "{count}件, {kb} KB",
+    "Latency": "遅延",
+    "LatencyValue": "{ms} ms"
   }
 }
