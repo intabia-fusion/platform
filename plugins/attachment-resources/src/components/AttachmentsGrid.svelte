@@ -40,9 +40,9 @@
   $: listProvider.update(attachments.filter((p) => p.type.startsWith('image/')))
 </script>
 
-<div class="attachment-grid-container">
+<div class="attachment-list-container">
   <Scroller noStretch shrink>
-    <div class="attachment-grid">
+    <div class="attachment-list">
       {#each attachments as attachment (attachment._id)}
         {#if useAttachmentPreview}
           <AttachmentPreview
@@ -75,23 +75,35 @@
 </div>
 
 <style lang="scss">
-  .attachment-grid-container {
+  .attachment-list-container {
     display: flex;
     flex-direction: column;
     margin-top: 0.5rem;
     padding: 0.5rem;
     min-width: 0;
-    max-height: 21.625rem;
+    max-height: none;
     color: var(--theme-caption-color);
     background-color: var(--theme-button-default);
     border: 1px solid var(--theme-button-border);
     border-radius: 0.25rem;
+    overflow: hidden;
+  }
 
-    .attachment-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, 17.25rem);
-      grid-auto-rows: minmax(3rem, auto);
-      gap: 0.5rem;
+  .attachment-list {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    > * {
+      flex-shrink: 0;
     }
   }
 </style>
