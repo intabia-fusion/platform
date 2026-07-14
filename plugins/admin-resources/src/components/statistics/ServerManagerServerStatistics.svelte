@@ -7,11 +7,12 @@
   import { adminFetch } from '../../utils'
   import MetricsStats from './MetricsStats.svelte'
   import TopProblems from './TopProblems.svelte'
+  import SlowSqlStats from './SlowSqlStats.svelte'
   import { fetchStatsJson } from './statsFetch'
 
   const endpoint = getMetadata(presentation.metadata.StatsUrl)
 
-  async function fetchStats (time: number): Promise<void> {
+  async function fetchStats (_time: number): Promise<void> {
     try {
       data = await fetchStatsJson<OverviewStatistics>(endpoint + '/api/v1/overview')
       admin = data?.admin ?? false
@@ -22,7 +23,7 @@
   let data: OverviewStatistics | undefined
 
   let admin = false
-  $: void fetchStats($ticker)
+  $: fetchStats($ticker).catch(() => {})
 
   let wiping = false
   async function wipeStatistics (): Promise<void> {
@@ -80,6 +81,12 @@
           <div class="ml-2">Top Problems</div>
         </svelte:fragment>
         <TopProblems />
+      </Expandable>
+      <Expandable bordered expandable showChevron>
+        <svelte:fragment slot="title">
+          <div class="ml-2">Slow SQL</div>
+        </svelte:fragment>
+        <SlowSqlStats services={Object.keys(data.data)} />
       </Expandable>
     {/if}
     {#each Object.entries(data.data).sort((a, b) => a[1].serviceName.localeCompare(b[1].serviceName)) as kv}

@@ -159,6 +159,9 @@ services:
     expose:
       - 9000
       - 9001
+    ports:
+      - 9000:9000
+      - 9001:9001
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
@@ -414,6 +417,8 @@ services:
   stats:
     image: "${STATS_IMAGE:-${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/stats:${DOCKER_TAG:-latest}}"
     pull_policy: ${DOCKER_PULL_POLICY:-never}
+    ports:
+      - 4901:4901
     environment:
       - PORT=4901
       - SERVER_SECRET=secret

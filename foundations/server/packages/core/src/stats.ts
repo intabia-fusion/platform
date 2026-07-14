@@ -1,5 +1,12 @@
 import type { MeasureContext, Metrics } from '@hcengineering/core'
-import { concatLink, MeasureMetricsContext, metricsClean, newMetrics, systemAccountUuid } from '@hcengineering/core'
+import {
+  concatLink,
+  MeasureMetricsContext,
+  metricsClean,
+  newMetrics,
+  systemAccountUuid,
+  wipeMetrics
+} from '@hcengineering/core'
 import { RPCHandler } from '@hcengineering/rpc'
 import { generateToken } from '@hcengineering/server-token'
 import os from 'os'
@@ -190,33 +197,18 @@ export function initStatisticsContext (
     // Counters are zeroed in place and the structure is kept: long-lived child contexts (the
     // collector's `client` node, for one) hold references into the tree, and dropping a node
     // leaves them writing into an orphan forever.
-    const zeroTree = (m: Metrics): void => {
-      m.operations = 0
-      m.value = 0
-      m.topResult = undefined
-      for (const bucket of Object.values(m.params)) {
-        for (const data of Object.values(bucket)) {
-          data.operations = 0
-          data.value = 0
-          data.topResult = undefined
-        }
-      }
-      for (const child of Object.values(m.measurements)) {
-        zeroTree(child)
-      }
-    }
-
     const resetMetrics = (): void => {
       if (metricsContext.metrics === undefined) return
-      zeroTree(metricsContext.metrics)
+      wipeMetrics(metricsContext.metrics)
       lastOperations = -1
     }
 
     const applyRate = (body: any): void => {
+      // Stats may instruct a one-shot wipe (pull-based reset).
+      if (body?.wipe === true || (typeof body?.reset === 'number' && seenReset >= 0 && body.reset > seenReset)) {
+        resetMetrics()
+      }
       if (typeof body?.reset === 'number') {
-        if (seenReset >= 0 && body.reset > seenReset) {
-          resetMetrics()
-        }
         seenReset = body.reset
       }
       minSeconds = clampSeconds(body?.minInterval, minSeconds)

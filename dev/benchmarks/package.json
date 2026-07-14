@@ -5,10 +5,12 @@
   "license": "EPL-2.0",
   "scripts": {
     "bench": "ts-node -T --project tsconfig.json src/run.ts",
-    "setup": "ts-node -T --project tsconfig.json src/run.ts --scenario setup",
     "format": "echo 'not yet'",
     "rest-throughput": "ts-node -T --project tsconfig.json src/run.ts --scenario rest-throughput",
-    "multi-workspace": "ts-node -T --project tsconfig.json src/run.ts --scenario multi-workspace"
+    "multi-workspace": "ts-node -T --project tsconfig.json src/run.ts --scenario multi-workspace",
+    "read-perf": "ts-node -T --project tsconfig.json src/run.ts --scenario read-perf",
+    "connect-storm": "ts-node -T --project tsconfig.json src/run.ts --scenario connect-storm",
+    "recover-storm": "ts-node -T --project tsconfig.json src/run.ts --scenario recover-storm"
   },
   "dependencies": {
     "@hcengineering/api-client": "workspace:^0.7.18",
@@ -18,7 +20,9 @@
     "@hcengineering/contact": "workspace:^0.7.0",
     "@hcengineering/tracker": "workspace:^0.7.0",
     "@hcengineering/rank": "workspace:^0.7.17",
-    "snappyjs": "catalog:"
+    "snappyjs": "catalog:",
+    "@hcengineering/rpc": "workspace:^0.7.17",
+    "ws": "catalog:"
   },
   "devDependencies": {
     "@hcengineering/platform-rig": "workspace:^0.7.19",
@@ -33,6 +37,7 @@
     "eslint-plugin-n": "catalog:",
     "eslint-plugin-promise": "catalog:",
     "eslint-plugin-svelte": "catalog:",
-    "@stylistic/eslint-plugin": "catalog:"
+    "@stylistic/eslint-plugin": "catalog:",
+    "@types/ws": "catalog:"
   }
 }

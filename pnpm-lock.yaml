@@ -837,6 +837,9 @@ importers:
       '@hcengineering/love':
         specifier: workspace:^0.7.0
         version: link:../../plugins/love
+      '@hcengineering/notification':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/notification
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -2012,6 +2015,9 @@ importers:
       '@hcengineering/rank':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/rank
+      '@hcengineering/rpc':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/rpc
       '@hcengineering/server-token':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/token
@@ -2021,6 +2027,9 @@ importers:
       snappyjs:
         specifier: 'catalog:'
         version: 0.7.0
+      ws:
+        specifier: 'catalog:'
+        version: 8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -2031,6 +2040,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.13.3
+      '@types/ws':
+        specifier: 'catalog:'
+        version: 8.18.1
       '@typescript-eslint/eslint-plugin':
         specifier: 'catalog:'
         version: 8.70.0(@typescript-eslint/parser@8.70.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3))(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
@@ -3343,6 +3355,9 @@ importers:
       '@hcengineering/kvs-client':
         specifier: workspace:^0.7.0
         version: link:../../packages/kvs-client
+      '@hcengineering/love':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/love
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
@@ -3580,6 +3595,9 @@ importers:
       '@hcengineering/text-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/text-core
+      '@hcengineering/text-markdown':
+        specifier: workspace:^0.7.20
+        version: link:../../foundations/core/packages/text-markdown
       '@hcengineering/text-ydoc':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/text-ydoc
@@ -44290,6 +44308,9 @@ importers:
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../../plugins/calendar
+      '@hcengineering/chunter':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/chunter
       '@hcengineering/client-resources':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client-resources
