@@ -304,7 +304,7 @@ services:
       - PRINT_URL=http://localhost:8087/_print
       - SIGN_URL=http://localhost:8087/_sign
       #      - ANALYTICS_COLLECTOR_URL=http://localhost:4017
-      - DESKTOP_UPDATES_URL=localhost
+      - DESKTOP_UPDATES_URL=http://localhost
       - DESKTOP_UPDATES_CHANNEL=dev
       - DESKTOP_UPDATES_CHANNELS=dev;tracex:dev-tracex
       - BRANDING_URL=http://localhost:8087/branding.json
