@@ -16,7 +16,7 @@
 import type { MeasureContext } from '@hcengineering/core'
 import type { DBClient } from '@hcengineering/postgres-base'
 
-export const EXPECTED_SCHEMA_VERSION = 10
+export const EXPECTED_SCHEMA_VERSION = 11
 export const CHECK_VERSION_INTERVAL = 5000
 
 export async function waitForSchemaVersion (ctx: MeasureContext, client: DBClient): Promise<void> {
@@ -36,9 +36,8 @@ export async function waitForSchemaVersion (ctx: MeasureContext, client: DBClien
 
       if (exists) {
         const res = await client.execute(`
-          SELECT version 
-          FROM system._version 
-          LIMIT 1
+          SELECT MAX(version) as version 
+          FROM system._version
         `)
         const versionRaw = res[0]?.version
         const currentVersion = typeof versionRaw === 'string' ? parseInt(versionRaw, 10) : versionRaw
