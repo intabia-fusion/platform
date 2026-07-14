@@ -95,6 +95,7 @@
   let isUpdating = false
   let isCanceling = false
   let isUncanceling = false
+  let isPackageBusy = false
   let isRetrying = false
   const MAX_POLL_ATTEMPTS = 120
   const POLL_INTERVAL = 2000
@@ -540,7 +541,7 @@
 
   // Schedule a package cancel — mirror of handleCancel for the tier.
   async function handlePackageCancel (): Promise<void> {
-    if (paymentClient == null || currentPackageSubscription?.id === undefined || isPackageCanceled) {
+    if (paymentClient == null || currentPackageSubscription?.id === undefined || isPackageCanceled || isPackageBusy) {
       return
     }
     const cancelSub = currentPackageSubscription
@@ -549,12 +550,18 @@
       message: plugin.string.ConfirmCancelPackageDescription,
       dangerous: true,
       action: async () => {
+        if (paymentClient == null) {
+          return
+        }
         try {
+          isPackageBusy = true
           // Scheduled cancel: the package stays Active until periodEnd.
           currentPackageSubscription = await paymentClient.cancelSubscription(cancelSub.id)
         } catch (error) {
           console.error('Error canceling package:', error)
           await showErrorNotification()
+        } finally {
+          isPackageBusy = false
         }
       }
     })
@@ -562,7 +569,7 @@
 
   // Reverse a scheduled package cancel — mirror of handleUncancel for the tier.
   async function handlePackageUncancel (): Promise<void> {
-    if (paymentClient == null || currentPackageSubscription?.id === undefined || !isPackageCanceled) {
+    if (paymentClient == null || currentPackageSubscription?.id === undefined || !isPackageCanceled || isPackageBusy) {
       return
     }
     const uncancelSub = currentPackageSubscription
@@ -570,11 +577,17 @@
       label: plugin.string.ConfirmUncancel,
       message: plugin.string.UncancelDescription,
       action: async () => {
+        if (paymentClient == null) {
+          return
+        }
         try {
+          isPackageBusy = true
           currentPackageSubscription = await paymentClient.uncancelSubscription(uncancelSub.id)
         } catch (error) {
           console.error('Error uncanceling package:', error)
           await showErrorNotification()
+        } finally {
+          isPackageBusy = false
         }
       }
     })
@@ -958,7 +971,7 @@
                     <Button
                       label={plugin.string.Disconnect}
                       kind="ghost"
-                      disabled={loading || isCheckoutPolling || isUpdating}
+                      disabled={loading || isCheckoutPolling || isUpdating || isPackageBusy}
                       on:click={() => {
                         void handlePackageCancel()
                       }}
@@ -967,7 +980,7 @@
                     <Button
                       label={plugin.string.UncancelSubscription}
                       kind="primary"
-                      disabled={loading || isCheckoutPolling || isUpdating}
+                      disabled={loading || isCheckoutPolling || isUpdating || isPackageBusy}
                       on:click={() => {
                         void handlePackageUncancel()
                       }}

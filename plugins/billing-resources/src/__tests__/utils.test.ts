@@ -13,7 +13,11 @@
 // limitations under the License.
 //
 
-import { isPlanConfig } from '../utils'
+import type { PlanItem, PackageItem } from '@hcengineering/billing'
+import type { SubscriptionData } from '@hcengineering/account-client'
+import type { UsageStatus } from '@hcengineering/core'
+
+import { isPlanConfig, calculateLimits, checkUsageAgainstLimits } from '../utils'
 
 jest.mock('svelte/store', () => ({
   get: jest.fn(),
@@ -86,5 +90,87 @@ describe('isPlanConfig', () => {
 
   it('returns false for array', () => {
     expect(isPlanConfig([])).toBe(false)
+  })
+})
+
+const GB = 1e9
+
+const plan = (over: Partial<PlanItem> = {}): PlanItem =>
+  ({
+    storageLimitGB: 100,
+    trafficLimitGB: 50,
+    meetingMinutesLimit: 1000,
+    tokenLimit: 30,
+    usersLimit: 10,
+    ...over
+  }) as unknown as PlanItem
+
+const pkg = (over: Partial<PackageItem> = {}): PackageItem =>
+  ({ storageLimitGB: 200, ...over }) as unknown as PackageItem
+
+const usage = (u: Record<string, number>): UsageStatus =>
+  ({ usage: u, startTime: 0, updateTime: 0 }) satisfies UsageStatus
+
+describe('calculateLimits — storage packages (mutually exclusive)', () => {
+  it('no package: storage = base plan only', () => {
+    const r = calculateLimits(plan({ storageLimitGB: 100 }))
+    expect(r.storageLimit).toBe(100 * GB)
+  })
+
+  it('one package: storage = base + package', () => {
+    const r = calculateLimits(plan({ storageLimitGB: 100 }), pkg({ storageLimitGB: 200 }))
+    expect(r.storageLimit).toBe((100 + 200) * GB)
+  })
+
+  it('package with zero storage adds nothing', () => {
+    const r = calculateLimits(plan({ storageLimitGB: 100 }), pkg({ storageLimitGB: 0 }))
+    expect(r.storageLimit).toBe(100 * GB)
+  })
+
+  it('subscription limit snapshot overrides config plan', () => {
+    const tierSub = { limits: { storageLimitGB: 300 } } as unknown as SubscriptionData
+    const r = calculateLimits(plan({ storageLimitGB: 100 }), undefined, tierSub)
+    expect(r.storageLimit).toBe(300 * GB)
+  })
+
+  it('package subscription snapshot overrides config package', () => {
+    const pkgSub = { limits: { storageLimitGB: 500 } } as unknown as SubscriptionData
+    const r = calculateLimits(plan({ storageLimitGB: 100 }), pkg({ storageLimitGB: 200 }), undefined, pkgSub)
+    expect(r.storageLimit).toBe((100 + 500) * GB)
+  })
+
+  it('falls back to defaults when nothing provided', () => {
+    const r = calculateLimits()
+    expect(r.storageLimit).toBe(10 * GB) // DEFAULT_STORAGE_GB, no package
+  })
+})
+
+describe('checkUsageAgainstLimits — storage packages', () => {
+  it('returns false when usageInfo is undefined', () => {
+    expect(checkUsageAgainstLimits(undefined, plan())).toBe(false)
+  })
+
+  it('no package: exceeded when usage over base plan', () => {
+    const u = usage({ storageBytes: 150 * GB })
+    expect(checkUsageAgainstLimits(u, plan({ storageLimitGB: 100 }))).toBe(true)
+  })
+
+  it('one package: same usage now within base + package', () => {
+    const u = usage({ storageBytes: 150 * GB })
+    expect(checkUsageAgainstLimits(u, plan({ storageLimitGB: 100 }), pkg({ storageLimitGB: 200 }))).toBe(false)
+  })
+
+  it('one package: exceeded when usage over base + package', () => {
+    const u = usage({ storageBytes: 350 * GB })
+    expect(checkUsageAgainstLimits(u, plan({ storageLimitGB: 100 }), pkg({ storageLimitGB: 200 }))).toBe(true)
+  })
+
+  it('usage exactly at limit is not exceeded (strict >)', () => {
+    const u = usage({ storageBytes: 300 * GB })
+    expect(checkUsageAgainstLimits(u, plan({ storageLimitGB: 100 }), pkg({ storageLimitGB: 200 }))).toBe(false)
+  })
+
+  it('missing storageBytes counts as zero usage', () => {
+    expect(checkUsageAgainstLimits(usage({}), plan({ storageLimitGB: 100 }))).toBe(false)
   })
 })
