@@ -194,8 +194,14 @@ export async function syncIndexes (
         }
       }
     }
-    const safeIndexRe =
-      /^CREATE\s+(UNIQUE\s+)?INDEX\s+(IF\s+NOT\s+EXISTS\s+)?([A-Za-z0-9_]+)\s+ON\s+(?:public\.)?([A-Za-z0-9_]+)\s*(?:USING\s+[A-Za-z0-9_]+\s*)?\([^();]*\)(?:\s+WHERE\s+[^;]+)?\s*;?\s*$/i
+    // Column list allows two levels of nested parens (expression/JSON-path indexes) plus an
+    // optional INCLUDE clause. The `[^;]` body (no statement separator) is the injection guard.
+    const lvl2 = '\\((?:[^()]|\\([^()]*\\))*\\)'
+    const cols = `\\((?:[^();]|${lvl2})*\\)`
+    const safeIndexRe = new RegExp(
+      `^CREATE\\s+(UNIQUE\\s+)?INDEX\\s+(IF\\s+NOT\\s+EXISTS\\s+)?([A-Za-z0-9_]+)\\s+ON\\s+(?:public\\.)?([A-Za-z0-9_]+)\\s*(?:USING\\s+[A-Za-z0-9_]+\\s*)?${cols}(?:\\s+INCLUDE\\s*${cols})?(?:\\s+WHERE\\s+[^;]+)?\\s*;?\\s*$`,
+      'i'
+    )
     for (const [domain, list] of fromFiles) {
       if (!physical.has(domain)) continue
       for (const r of list) {
@@ -257,6 +263,108 @@ export async function syncIndexes (
       }
     }
     ctx.info('sync complete', { created, failed })
+  } finally {
+    dbRef.close()
+  }
+}
+
+// Drop secondary indexes on domain tables (primary keys kept, UNIQUE kept when keepUnique).
+// Used by the SQL-load benchmark to measure query cost without index coverage.
+export async function dropIndexes (
+  ctx: MeasureContext,
+  dbUrl: string,
+  txes: Tx[],
+  keepUnique: boolean,
+  apply: boolean
+): Promise<void> {
+  const dbRef = getDBClient(dbUrl, undefined, 'tool')
+  try {
+    const client = await dbRef.getClient()
+    const tables = await filterPhysicalTables(client, await collectDomains(txes))
+    if (tables.length === 0) {
+      ctx.warn('no physical domain tables found')
+      return
+    }
+    // indisprimary/indisunique come from pg_index; pkey is never dropped.
+    const rows = await client<Array<{ table: string, name: string, isUnique: boolean }>>`
+      SELECT t.relname::text AS table, i.relname::text AS name, ix.indisunique AS "isUnique"
+      FROM pg_index ix
+      JOIN pg_class i ON i.oid = ix.indexrelid
+      JOIN pg_class t ON t.oid = ix.indrelid
+      JOIN pg_namespace n ON n.oid = t.relnamespace
+      WHERE n.nspname = 'public' AND t.relname = ANY(${tables as unknown as string[]})
+        AND ix.indisprimary = false
+      ORDER BY t.relname, i.relname
+    `
+    const toDrop = rows.filter((r) => !(keepUnique && r.isUnique))
+    ctx.info('indexes to drop', { count: toDrop.length, keepUnique })
+    for (const r of toDrop) {
+      console.log(`DROP INDEX IF EXISTS "${r.name}"; -- ${r.table}${r.isUnique ? ' (unique)' : ''}`)
+    }
+    if (!apply) {
+      ctx.info('dry run, no changes')
+      return
+    }
+    let dropped = 0
+    let failed = 0
+    for (const r of toDrop) {
+      try {
+        await client.unsafe(`DROP INDEX IF EXISTS "${r.name}"`)
+        dropped++
+      } catch (err: any) {
+        failed++
+        ctx.error('failed to drop index', { name: r.name, err: err?.message ?? String(err) })
+      }
+    }
+    ctx.info('drop complete', { dropped, failed })
+  } finally {
+    dbRef.close()
+  }
+}
+
+// Recreate indexes verbatim from a dump-indexes YAML (raw `definition` SQL).
+// Restores migration-created composite indexes that sync-indexes (model-only) misses.
+export async function applyIndexes (ctx: MeasureContext, dbUrl: string, inFile: string, apply: boolean): Promise<void> {
+  if (!existsSync(inFile)) {
+    throw new Error(`file not found: ${inFile}`)
+  }
+  const parsed = yaml.load(readFileSync(inFile, 'utf8')) as IndexesFile | undefined
+  if (parsed?.domains == null) {
+    throw new Error(`invalid YAML in ${inFile}`)
+  }
+  const dbRef = getDBClient(dbUrl, undefined, 'tool')
+  try {
+    const client = await dbRef.getClient()
+    const items: Array<{ name: string, sql: string }> = []
+    for (const list of Object.values(parsed.domains)) {
+      for (const idx of list) {
+        // Idempotent: skip pkey (already present), inject IF NOT EXISTS for plain CREATE INDEX.
+        if (idx.name.endsWith('_pkey')) continue
+        const sql = idx.definition.replace(
+          /^CREATE (UNIQUE )?INDEX (?!IF NOT EXISTS)/i,
+          'CREATE $1INDEX IF NOT EXISTS '
+        )
+        items.push({ name: idx.name, sql })
+      }
+    }
+    ctx.info('indexes to apply', { count: items.length })
+    if (!apply) {
+      for (const it of items) console.log(it.sql.endsWith(';') ? it.sql : it.sql + ';')
+      ctx.info('dry run, no changes')
+      return
+    }
+    let created = 0
+    let failed = 0
+    for (const it of items) {
+      try {
+        await client.unsafe(it.sql)
+        created++
+      } catch (err: any) {
+        failed++
+        ctx.error('failed to apply index', { name: it.name, err: err?.message ?? String(err) })
+      }
+    }
+    ctx.info('apply complete', { created, failed })
   } finally {
     dbRef.close()
   }

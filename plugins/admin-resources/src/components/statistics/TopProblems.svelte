@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getMetadata } from '@hcengineering/platform'
+  import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import presentation from '@hcengineering/presentation'
-  import { DropdownLabels, Expandable, ticker } from '@hcengineering/ui'
+  import { Button, DropdownLabels, Expandable, ticker } from '@hcengineering/ui'
   import { FixedColumn } from '@hcengineering/view-resources'
-  import { fetchStatsJson } from './statsFetch'
+  import { downloadCsv, fetchStatsJson } from './statsFetch'
 
   interface AnalyticsEntry {
     service: string
@@ -89,6 +89,14 @@
   $: if (`${$ticker}|${sort}|${source}|${limit}` !== '') {
     fetchTop().catch(() => {})
   }
+
+  function exportCsv (): void {
+    downloadCsv(
+      `top-problems-${source}-${sort}.csv`,
+      ['service', 'path', 'operations', 'avg', 'total'],
+      entries.map((e) => [e.service, e.path, e.operations, e.avg, e.total])
+    )
+  }
 </script>
 
 <div class="flex-row-center p-1" style:gap="0.75rem" style:flex-wrap="wrap">
@@ -98,6 +106,7 @@
   <DropdownLabels bind:selected={source} items={sourceItems} />
   <span>Limit:</span>
   <DropdownLabels bind:selected={limit} items={limitItems} />
+  <Button label={getEmbeddedLabel('Download CSV')} kind="regular" size="small" on:click={exportCsv} />
   {#if generatedAt > 0}
     <span class="greyed">services={services} updated={new Date(generatedAt).toLocaleTimeString()}</span>
   {/if}

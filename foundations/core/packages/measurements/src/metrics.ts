@@ -4,6 +4,77 @@ import { platformNow, type MetricsData } from '.'
 import { type FullParamsType, type Metrics, type ParamsType } from './types'
 
 /**
+ * Default cap of distinct keys kept per top-N registry.
+ * @public
+ */
+export const TOP_N_DEFAULT = 30
+
+/**
+ * Record a keyed observation into a named top-N registry on the given (root) metrics.
+ * Keeps detailed entries for the heaviest keys; evicted keys still contribute to
+ * the registry totals so aggregates stay exact under a hard cap.
+ * @public
+ */
+export function recordTopInto (
+  metrics: Metrics,
+  registry: string,
+  key: string,
+  value: number,
+  sample?: string,
+  cap: number = TOP_N_DEFAULT
+): void {
+  if (metrics.top === undefined) {
+    metrics.top = {}
+  }
+  let reg = metrics.top[registry]
+  if (reg === undefined) {
+    reg = { entries: {}, totalCount: 0, totalSum: 0, evictedCount: 0, evictedSum: 0 }
+    metrics.top[registry] = reg
+  }
+  reg.totalCount++
+  reg.totalSum += value
+
+  let e = reg.entries[key]
+  if (e === undefined) {
+    const keys = Object.keys(reg.entries)
+    if (keys.length >= cap) {
+      // Find the lightest tracked entry (smallest max).
+      let minKey = keys[0]
+      let minMax = reg.entries[minKey].max
+      for (let i = 1; i < keys.length; i++) {
+        const m = reg.entries[keys[i]].max
+        if (m < minMax) {
+          minMax = m
+          minKey = keys[i]
+        }
+      }
+      // Newcomer not heavier than the lightest - just count it as evicted.
+      if (value <= minMax) {
+        reg.evictedCount++
+        reg.evictedSum += value
+        return
+      }
+      const ev = reg.entries[minKey]
+      reg.evictedCount += ev.count
+      reg.evictedSum += ev.sum
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete reg.entries[minKey]
+    }
+    e = { count: 0, sum: 0, max: 0, le10: 0, le100: 0, le500: 0, sample }
+    reg.entries[key] = e
+  }
+  e.count++
+  e.sum += value
+  if (value > e.max) {
+    e.max = value
+    if (sample !== undefined) e.sample = sample
+  }
+  if (value <= 10) e.le10++
+  else if (value <= 100) e.le100++
+  else if (value <= 500) e.le500++
+}
+
+/**
  * @public
  */
 export const globals: Metrics = newMetrics()
@@ -37,7 +108,7 @@ function getUpdatedTopResult (
     params
   }
 
-  if (result.length > 6) {
+  if (result.length >= 3) {
     if (result[0].value < newValue.value) {
       result[0] = newValue
       return result
@@ -46,9 +117,8 @@ function getUpdatedTopResult (
       result[result.length - 1] = newValue
       return result
     }
-
-    // Shift the middle
-    return [result[0], newValue, ...result.slice(1, 3), result[5]]
+    // Replace the middle slot.
+    return [result[0], newValue, result[2]]
   } else {
     result.push(newValue)
     return result
@@ -149,6 +219,10 @@ export function updateMeasure (
   } else {
     metrics.value += value ?? ed - st
     metrics.operations++
+    const dt = value ?? ed - st
+    if (dt <= 10) metrics.le10 = (metrics.le10 ?? 0) + 1
+    else if (dt <= 100) metrics.le100 = (metrics.le100 ?? 0) + 1
+    else if (dt <= 500) metrics.le500 = (metrics.le500 ?? 0) + 1
   }
 
   metrics.topResult = getUpdatedTopResult(metrics.topResult, ed - st, fParams)
@@ -215,6 +289,34 @@ function metricsCleanMeasurements (m: Record<string, Metrics>): Record<string, M
 }
 
 /**
+ * Reset accumulated metrics in-place: zeroes operations/values, drops opLog,
+ * topResult and top-N registries through the whole tree. The root `top`
+ * registry lives only on the passed node.
+ * @public
+ */
+export function wipeMetrics (root: Metrics): void {
+  root.opLog = undefined
+  root.top = undefined
+  const stack: (Metrics | MetricsData)[] = [root]
+  while (stack.length > 0) {
+    const m = stack.pop()
+    if (m === undefined) break
+    m.operations = 0
+    m.value = 0
+    m.topResult = undefined
+    m.le10 = undefined
+    m.le100 = undefined
+    m.le500 = undefined
+    if ('measurements' in m) {
+      for (const v of Object.values(m.measurements)) stack.push(v)
+      for (const v of Object.values(m.params)) {
+        for (const vv of Object.values(v)) stack.push(vv)
+      }
+    }
+  }
+}
+
+/**
  * @public
  */
 export function metricsAggregate (m: Metrics, limit: number = -1, roundMath: boolean = false): Metrics {
@@ -252,9 +354,13 @@ export function metricsAggregate (m: Metrics, limit: number = -1, roundMath: boo
     measurements: ms,
     params: m.params,
     value: sumVal,
+    le10: m.le10,
+    le100: m.le100,
+    le500: m.le500,
     topResult: m.topResult,
     namedParams: m.namedParams,
-    opLog: m.opLog
+    opLog: m.opLog,
+    top: m.top
   }
 }
 

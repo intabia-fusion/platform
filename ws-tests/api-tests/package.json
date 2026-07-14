@@ -61,6 +61,7 @@
     "@hcengineering/love": "workspace:^0.7.0",
     "@hcengineering/rank": "workspace:^0.7.17",
     "@hcengineering/workflow": "workspace:^0.7.0",
-    "@hcengineering/view": "workspace:^0.7.0"
+    "@hcengineering/view": "workspace:^0.7.0",
+    "@hcengineering/notification": "workspace:^0.7.0"
   }
 }

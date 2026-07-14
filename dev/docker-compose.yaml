@@ -1020,6 +1020,7 @@ services:
       - DB_URL=${DB_URL_PG}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - APPLY_TX_BATCH_SIZE=100
+      - STATS_URL=http://stats:4900
       - BRANDING_PATH=/var/cfg/branding.json
     restart: unless-stopped
   # crm:

@@ -8,6 +8,7 @@ export ACCOUNTS_URL=http://localhost:8083/_account
 export REGION_CONFIG=./region-config.yaml
 export ACCOUNT_DB_URL=postgresql://postgres:postgres@localhost:5433/postgres
 export ELASTIC_URL=http://localhost:9201
+export PLATFORM_URL=http://localhost:8083
 export SERVER_SECRET=secret
 # America region - CockroachDB
 export DB_URL=postgresql://root@localhost:26258/defaultdb?sslmode=disable

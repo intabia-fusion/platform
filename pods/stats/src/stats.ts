@@ -109,6 +109,10 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
     }
   }, serviceTimeout)
 
+  // Service ids with a pending one-shot wipe request. The service receives the
+  // flag in the reply to its next stats PUT, wipes locally, and we clear it.
+  const pendingWipe = new Set<string>()
+
   const app = new Koa()
   const router = new Router()
 
@@ -272,8 +276,10 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
           })
         }
       }
-      req.res.writeHead(200)
-      req.res.end()
+      // Tell the service to wipe its local metrics if a one-shot wipe is pending.
+      const wipe = pendingWipe.delete(serviceName)
+      req.res.setHeader('Content-Type', 'application/json')
+      req.body = { wipe }
     } catch (err: any) {
       console.error(err, req.host, req.headers, req.ip)
       req.res.writeHead(404, {})
@@ -407,7 +413,15 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
 
       switch (operation) {
         case 'wipe-statistics': {
-          statistics.clear()
+          // Optional ?name=<serviceId> targets one service; otherwise all known.
+          const target = (req.query.name as string) ?? ''
+          if (target !== '') {
+            pendingWipe.add(target)
+            statistics.delete(target)
+          } else {
+            for (const k of statistics.keys()) pendingWipe.add(k)
+            statistics.clear()
+          }
           req.res.writeHead(200)
           req.res.end()
           return

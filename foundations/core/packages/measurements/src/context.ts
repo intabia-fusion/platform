@@ -1,7 +1,7 @@
 // Basic performance metrics suite.
 
 import { platformNow, platformNowDiff } from '.'
-import { childMetricsSingle, newMetrics, updateMeasure } from './metrics'
+import { childMetricsSingle, newMetrics, recordTopInto, updateMeasure } from './metrics'
 import {
   type FullParamsType,
   type MeasureContext,
@@ -62,6 +62,9 @@ export class MeasureMetricsContext implements MeasureContext {
   metrics: Metrics
   id?: string
 
+  // Cached root context - avoids walking the parent chain on every measure/record call.
+  readonly root: MeasureMetricsContext
+
   st = platformNow()
   contextData: object = {}
   private done (value?: number, override?: boolean): void {
@@ -81,6 +84,7 @@ export class MeasureMetricsContext implements MeasureContext {
     this.params = params
     this.fullParams = fullParams
     this.metrics = metrics
+    this.root = (parent as MeasureMetricsContext)?.root ?? this
     // Fast path: skip Object.entries alloc when no params. ctx.with('name', {}, ...)
     // is by far the most common call site. namedParams is always pre-allocated.
     for (const k in params) {
@@ -110,11 +114,7 @@ export class MeasureMetricsContext implements MeasureContext {
     )
     c.contextData = this.contextData
     c.done(value, ov)
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    let root: MeasureContext = this
-    while (root.parent != null) root = root.parent
-    const sink = (root as MeasureMetricsContext).externalMetricSink
-    sink?.(name, value, labels)
+    this.root.externalMetricSink?.(name, value, labels)
   }
 
   recordDuration (name: string, ms: number, labels?: ParamsType): void {
@@ -129,15 +129,14 @@ export class MeasureMetricsContext implements MeasureContext {
     )
     c.contextData = this.contextData
     c.done(ms)
-    // Propagate to external sink (root-level registration). Traverse to root.
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    let root: MeasureContext = this
-    while (root.parent != null) root = root.parent
-    const sink = (root as MeasureMetricsContext).externalMetricSink
-    sink?.(name, ms, labels)
+    this.root.externalMetricSink?.(name, ms, labels)
   }
 
   externalMetricSink?: (name: string, value: number, labels?: ParamsType) => void
+
+  recordTop (registry: string, key: string, value: number, sample?: string): void {
+    recordTopInto(this.root.metrics, registry, key, value, sample)
+  }
 
   newChild (
     name: string,
@@ -257,6 +256,8 @@ export class NoMetricsContext implements MeasureContext {
   measure (name: string, value: number, labelsOrOverride?: ParamsType | boolean, override?: boolean): void {}
 
   recordDuration (name: string, ms: number, labels?: ParamsType): void {}
+
+  recordTop (registry: string, key: string, value: number, sample?: string): void {}
 
   newChild (
     name: string,

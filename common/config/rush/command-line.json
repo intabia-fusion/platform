@@ -576,7 +576,7 @@
       "summary": "Fast compile, validate and test packages",
       "description": "Compiles and validates all packages, then runs tests for packages with '_phase:test'",
       "safeForSimultaneousRushProcesses": false,
-      "shellCommand": "node ./foundations/utils/packages/platform-rig/bin/compile_all.js . --parallel --test"
+      "shellCommand": "./common/scripts/fast-test.sh"
     },
     {
       "commandKind": "global",

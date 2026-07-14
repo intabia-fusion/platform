@@ -8,8 +8,35 @@ const {
   readdirSync,
   lstatSync,
   writeFileSync,
-  copyFileSync
+  copyFileSync,
+  rmSync
 } = require('fs')
+
+/**
+ * Remove a generated output dir so a rebuild can't leave orphaned files behind
+ * (renamed/deleted sources otherwise keep stale .js in lib, which esbuild - being
+ * non-incremental and overwrite-only - never cleans). Kept narrow: only the given
+ * generated dir under cwd.
+ */
+function cleanOutDir(cwd, outDir = 'lib') {
+  const abs = join(cwd, outDir)
+  try {
+    rmSync(abs, { recursive: true, force: true })
+  } catch { /* ignore */ }
+}
+
+/**
+ * A direct `rushx compile`/`build` rewrites lib but doesn't touch the fast-build
+ * cache (only compile_all.js's phases do). Drop the package's cache so the next
+ * `fast-build:docker` re-runs transpile/bundle/docker for it instead of trusting a
+ * now-stale hash. compile_all's own transpile uses performESBuild directly (not
+ * this CLI), so this never fires inside a fast-build run.
+ */
+function resetFastBuildCache(cwd) {
+  try {
+    require('./libs/cache').invalidateCache(cwd)
+  } catch { /* cache lib optional */ }
+}
 
 const esbuild = require('esbuild')
 const { copy } = require('esbuild-plugin-copy')
@@ -390,10 +417,17 @@ if (require.main === module) {
       const after = {}
       collectFileStats('lib', before)
 
+      // Clean lib first so removed/renamed sources don't leave orphaned output.
+      // Only on the main src pass - a separate `transpile tests` pass also emits
+      // into lib and must not wipe the src output.
+      if (srcDir === 'src') {
+        cleanOutDir(process.cwd(), 'lib')
+      }
       performESBuild(filesToTranspile, { srcDir })
         .then(() => {
           console.log('Transpile time:', Math.round((performance.now() - st) * 100) / 100, 'ms')
           collectFileStats('lib', after)
+          if (srcDir === 'src') resetFastBuildCache(process.cwd())
         })
         .catch((err) => {
           console.error('Transpile failed:', err)
@@ -421,9 +455,12 @@ if (require.main === module) {
       const st = performance.now()
       const filesToTranspile = collectFiles(join(process.cwd(), 'src'))
 
+      // Clean lib first so removed/renamed sources don't leave orphaned output.
+      cleanOutDir(process.cwd(), 'lib')
       Promise.all([performESBuild(filesToTranspile, { srcDir: 'src' }), validateTSC()])
         .then(() => {
           console.log('Full build time:', Math.round((performance.now() - st) * 100) / 100, 'ms')
+          resetFastBuildCache(process.cwd())
         })
         .catch((err) => {
           console.error('Build failed:', err)

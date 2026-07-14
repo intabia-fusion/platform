@@ -49,6 +49,7 @@ services:
       - ACCOUNTS_URL=http://account:3003
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - SECRET=secret
+      - STATS_URL=http://stats:4901
       - BRANDING_PATH=/var/cfg/branding.json
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
@@ -128,6 +129,9 @@ services:
     expose:
       - 9000
       - 9001
+    ports:
+      - 9000:9000
+      - 9001:9001
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
@@ -366,6 +370,8 @@ services:
   stats:
     image: 'intabiafusion/stats:${DOCKER_TAG:-latest}'
     pull_policy: never
+    ports:
+      - 4901:4901
     environment:
       - PORT=4901
       - SERVER_SECRET=secret
@@ -409,6 +415,7 @@ services:
       - FRONT_URL=http://localhost:8083
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
+      - STATS_URL=http://stats:4901
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
       - BRANDING_PATH=/var/cfg/branding.json
     restart: unless-stopped

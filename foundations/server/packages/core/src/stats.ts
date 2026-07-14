@@ -1,5 +1,12 @@
 import type { MeasureContext, Metrics } from '@hcengineering/core'
-import { concatLink, MeasureMetricsContext, metricsClean, newMetrics, systemAccountUuid } from '@hcengineering/core'
+import {
+  concatLink,
+  MeasureMetricsContext,
+  metricsClean,
+  newMetrics,
+  systemAccountUuid,
+  wipeMetrics
+} from '@hcengineering/core'
 import { RPCHandler } from '@hcengineering/rpc'
 import { generateToken } from '@hcengineering/server-token'
 import os from 'os'
@@ -151,6 +158,18 @@ export function initStatisticsContext (
                 },
                 body: statData
               })
+                .then(async (resp) => {
+                  // Stats may instruct a one-shot wipe (pull-based reset).
+                  try {
+                    const reply = (await resp.json()) as { wipe?: boolean }
+                    if (reply?.wipe === true && metricsContext instanceof MeasureMetricsContext) {
+                      wipeMetrics(metricsContext.metrics)
+                      metricsContext.info('statistics wiped on stats request')
+                    }
+                  } catch {
+                    // empty/non-JSON reply - nothing to do
+                  }
+                })
                 .finally(() => {
                   prev = undefined
                 })

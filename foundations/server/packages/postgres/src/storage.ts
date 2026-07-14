@@ -43,6 +43,7 @@ import core, {
   type Lookup,
   type MeasureContext,
   type ModelDb,
+  platformNow,
   type ObjQueryType,
   type Projection,
   RateLimiter,
@@ -214,10 +215,45 @@ class ValuesVariables {
 }
 
 const DB_QUERY_DURATION = 'db.query.duration'
+// Separate top-N registries: reads and writes, so heavy SELECTs do not evict
+// write shapes and vice versa.
+const SLOW_SQL_FIND = 'slowSqlFind'
+const SLOW_SQL_TX = 'slowSqlTx'
+
+// Slow-SQL top-N collection is on by default; set RECORD_SLOW_SQL=false to
+// disable it entirely (no normalize + no recordTop) to shave per-query overhead.
+const RECORD_SLOW_SQL = process.env.RECORD_SLOW_SQL !== 'false'
+
+// Cache raw SQL -> normalized key so the regex normalization runs once per
+// distinct statement, not on every execute. Bounded; batch statements vary the
+// raw text, so cap and drop the whole cache when it grows too large.
+const sqlKeyCache = new Map<string, string>()
+const SQL_KEY_CACHE_MAX = 2000
+
+function normalizeSqlKey (sql: string): string {
+  let key = sqlKeyCache.get(sql)
+  if (key !== undefined) return key
+  key = sql
+    .replace(/\s+/g, ' ')
+    .replace(/(\([^()]*\))(\s*,\s*\([^()]*\))+/g, '$1')
+    .replace(/\$\d+/g, '$?')
+    .trim()
+  if (sqlKeyCache.size >= SQL_KEY_CACHE_MAX) sqlKeyCache.clear()
+  sqlKeyCache.set(sql, key)
+  return key
+}
 
 abstract class PostgresAdapterBase implements DbAdapter {
   protected readonly _helper: DBCollectionHelper
   protected readonly tableFields = new Map<string, string[]>()
+
+  // Group SQL into a top-N registry keyed by the parametrized statement
+  // (placeholders $N, no literals). Batch VALUES groups collapse to one.
+  protected recordSql (ctx: MeasureContext, registry: string, sql: string, ms: number): void {
+    if (!RECORD_SLOW_SQL) return
+    const key = normalizeSqlKey(sql)
+    ctx.recordTop(registry, key, ms, key)
+  }
 
   constructor (
     protected readonly client: DBClient,
@@ -514,7 +550,9 @@ abstract class PostgresAdapterBase implements DbAdapter {
               }
               const totalReq = `SELECT COUNT(${domain}._id) as count FROM ${domain}`
               const totalSql = [totalReq, ...totalChunks].join(' ')
+              const ts = platformNow()
               const totalResult = await connection.execute(totalSql, pvars.getValues())
+              this.recordSql(ctx, SLOW_SQL_FIND, totalSql, platformNow() - ts)
               const parsed = Number.parseInt(totalResult[0].count)
               total = Number.isNaN(parsed) ? 0 : parsed
             }
@@ -524,11 +562,14 @@ abstract class PostgresAdapterBase implements DbAdapter {
 
             let result: DBResult = Object.assign([], { count: 0 })
             if (options?.memoryLimit === undefined) {
+              const fs = platformNow()
               result = await connection.execute(finalSql, vars.getValues())
+              this.recordSql(ctx, SLOW_SQL_FIND, finalSql, platformNow() - fs)
             } else {
               let currentSize = 0
               // For unlimited requests, use cursor and check for sizes
               const params = vars.getValues()
+              const cs = platformNow()
               const cursor = connection
                 .raw()
                 .unsafe(finalSql, doFetchTypes ? params : convertArrayParams(params))
@@ -548,6 +589,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
                   // Properly update count.
                   result.count += part.length
                 }
+                this.recordSql(ctx, SLOW_SQL_FIND, finalSql, platformNow() - cs)
               } catch (err) {
                 const sqlFull = vars.injectVars(fquery)
                 ctx.error('Error in findAll', { err, sql: fquery, sqlFull, query })
@@ -1685,13 +1727,13 @@ abstract class PostgresAdapterBase implements DbAdapter {
         }
 
         return await this.mgr.retry('', this.mgrId, async (client) => {
-          const res = await client.execute(
-            `SELECT *
+          const sqlStat = `SELECT *
           FROM ${translateDomain(domain)}
           WHERE "workspaceId" = $1::uuid
-                    AND _id = ANY($2::text[])`,
-            [this.workspaceId, docs]
-          )
+                    AND _id = ANY($2::text[])`
+          const stStat = platformNow()
+          const res = await client.execute(sqlStat, [this.workspaceId, docs])
+          this.recordSql(ctx, SLOW_SQL_FIND, sqlStat, platformNow() - stStat)
           return res.map((p) => parseDocWithProjection(p, domain))
         })
       },
@@ -1739,7 +1781,9 @@ abstract class PostgresAdapterBase implements DbAdapter {
             const query = `INSERT INTO ${tdomain} ("workspaceId", ${insertStr}) VALUES ${vals} ${
               handleConflicts ? `ON CONFLICT ("workspaceId", _id) DO UPDATE SET ${onConflictStr}` : ''
             };`
+            const stStat = platformNow()
             await this.mgr.retry(ctx.id, this.mgrId, async (client) => await client.execute(query, values.getValues()))
+            this.recordSql(ctx, SLOW_SQL_TX, query, platformNow() - stStat)
           }
         } catch (err: any) {
           ctx.error('failed to upload', { err })
@@ -1763,7 +1807,13 @@ abstract class PostgresAdapterBase implements DbAdapter {
         { domain },
         () => {
           const params = [this.workspaceId, part]
-          return this.mgr.retry(ctx.id, this.mgrId, (client) => client.execute(query, params))
+          const stStat = platformNow()
+          return this.mgr
+            .retry(ctx.id, this.mgrId, (client) => client.execute(query, params))
+            .then((r) => {
+              this.recordSql(ctx, SLOW_SQL_TX, query, platformNow() - stStat)
+              return r
+            })
         },
         undefined,
         { metric: DB_QUERY_DURATION }
@@ -1792,7 +1842,9 @@ abstract class PostgresAdapterBase implements DbAdapter {
           ]
           const finalSql = sqlChunks.join(' ')
           return await this.mgr.retry(ctx.id, this.mgrId, async (connection) => {
+            const stStat = platformNow()
             const result = await connection.execute(finalSql, vars.getValues())
+            this.recordSql(ctx, SLOW_SQL_FIND, finalSql, platformNow() - stStat)
             return new Map(
               result.map((r) => [
                 r[`_${field.toLowerCase()}`],
@@ -1916,12 +1968,12 @@ export class PostgresAdapter extends PostgresAdapterBase {
             updates.push(`"${key}" = ${params.add(val, `::${schemaFields.schema[key].type}`)}`)
           }
           updates.push(`data = ${params.add(converted.data, '::json')}`)
-          await client.execute(
-            `UPDATE ${translateDomain(domain)}
+          const sqlStat = `UPDATE ${translateDomain(domain)}
           SET ${updates.join(', ')}
-          WHERE "workspaceId" = ${wsId} AND _id = ${oId}`,
-            params.getValues()
-          )
+          WHERE "workspaceId" = ${wsId} AND _id = ${oId}`
+          const stStat = platformNow()
+          await client.execute(sqlStat, params.getValues())
+          this.recordSql(ctx, SLOW_SQL_TX, sqlStat, platformNow() - stStat)
         })
       },
       undefined,
@@ -2027,13 +2079,13 @@ export class PostgresAdapter extends PostgresAdapterBase {
               if (Object.keys(remainingData).length > 0) {
                 updates.push(`data = ${params.add(converted.data, '::json')}`)
               }
-              await client.execute(
-                `UPDATE ${tdomain}
+              const sqlStat = `UPDATE ${tdomain}
               SET ${updates.join(', ')}
               WHERE "workspaceId" = ${wsId}
-                AND _id = ${oId}`,
-                params.getValues()
-              )
+                AND _id = ${oId}`
+              const stStat = platformNow()
+              await client.execute(sqlStat, params.getValues())
+              this.recordSql(ctx, SLOW_SQL_TX, sqlStat, platformNow() - stStat)
             })
             if (tx.retrieve === true && doc !== undefined) {
               return { object: doc }
@@ -2126,11 +2178,13 @@ export class PostgresAdapter extends PostgresAdapterBase {
             FROM (values ${indexes.join(',')}) AS update_data(__id, ${part[0].fields.map((it) => `"_${it}"`).join(',')})
             WHERE "workspaceId" = $1::uuid AND "_id" = update_data.__id`
 
+              const stStat = platformNow()
               await this.mgr.retry(ctx.id, this.mgrId, (client) =>
                 _ctx.with('bulk-update', { domain }, () => client.execute(op, data), undefined, {
                   metric: DB_QUERY_DURATION
                 })
               )
+              this.recordSql(_ctx, SLOW_SQL_TX, op, platformNow() - stStat)
             }
           }
           const toRetrieve = operations.filter((it) => it.retrieve)
@@ -2164,12 +2218,12 @@ export class PostgresAdapter extends PostgresAdapterBase {
       'find-doc',
       { domain },
       async () => {
-        const res = await client.execute(
-          `SELECT * FROM "${translateDomain(domain)}" WHERE "workspaceId" = $1::uuid AND _id = $2::text ${
-            forUpdate ? ' FOR UPDATE' : ''
-          }`,
-          [this.workspaceId, _id]
-        )
+        const sqlStat = `SELECT * FROM "${translateDomain(domain)}" WHERE "workspaceId" = $1::uuid AND _id = $2::text ${
+          forUpdate ? ' FOR UPDATE' : ''
+        }`
+        const stStat = platformNow()
+        const res = await client.execute(sqlStat, [this.workspaceId, _id])
+        this.recordSql(ctx, SLOW_SQL_FIND, sqlStat, platformNow() - stStat)
         const dbDoc = res[0]
         return dbDoc !== undefined ? parseDoc(dbDoc, getSchema(domain)) : undefined
       },

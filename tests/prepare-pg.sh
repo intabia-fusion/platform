@@ -16,9 +16,20 @@ else
     COMPOSE_FILES="-f docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml"
 fi
 
+# `restore_bench` / RESTORE_BENCH=1 / BENCH_DUMP=<path>: restore a full snapshot (accounts,
+# workspaces, data, blobs) from BENCH_BACKUPS instead of seeding from scratch. Storage comes up
+# first so the dump lands in a virgin DB, before db-migrator and account create objects there.
+if [[ " $* " == *" restore_bench "* ]] || [ "${RESTORE_BENCH:-}" = "1" ] || [ -n "${BENCH_DUMP:-}" ]; then
+    RESTORE_FIRST=1
+    UP_SERVICES="postgres pgbouncer minio elastic"
+else
+    RESTORE_FIRST=0
+    UP_SERVICES=""
+fi
+
 docker compose ${COMPOSE_FILES} -p sanity kill
 docker compose ${COMPOSE_FILES} -p sanity down --volumes --remove-orphans
-docker compose ${COMPOSE_FILES} -p sanity up -d --force-recreate --renew-anon-volumes --remove-orphans
+docker compose ${COMPOSE_FILES} -p sanity up -d --force-recreate --renew-anon-volumes --remove-orphans ${UP_SERVICES}
 
 docker_exit=$?
 if [ ${docker_exit} -eq 0 ]; then
@@ -83,6 +94,35 @@ fi
 
 ./wait-elastic.sh 9201
 
+if [ "$RESTORE_FIRST" = "1" ]; then
+    BENCH_BACKUPS="${BENCH_BACKUPS:-$HOME/Develop/private/bench-backups}"
+    echo "restore_bench ENABLED: ${BENCH_DUMP:-newest in $BENCH_BACKUPS}"
+    ../dev/stand-snapshot.sh restore "${BENCH_DUMP:-$BENCH_BACKUPS}"
+    BENCH_DUMP=restored
+    # No --force-recreate here: it renews the anonymous volumes and drops what we just restored.
+    docker compose ${COMPOSE_FILES} -p sanity up -d --remove-orphans
+    echo "Waiting for account service..."
+    for i in $(seq 1 90); do
+        CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+            -d '{}' http://localhost:8083/_account || true)
+        case "$CODE" in 000|502|503|504) sleep 2 ;; *) echo "account is up ($CODE)"; break ;; esac
+    done
+fi
+if [ -n "${BENCH_DUMP:-}" ]; then
+    # Seed fresh sanity-ws/meetings-ws ON TOP of the restored bench data so functional
+    # tests keep their standard workspaces. The snapshot's bench workspaces were renamed
+    # away from sanity-ws/meetings-ws, so those names are free; the dump already holds the
+    # user accounts, so create-account is a harmless no-op (|| true).
+    ./tool-pg.sh create-account user1 -f John -l Appleseed -p 1234 || true
+    ./tool-pg.sh create-account user2 -f Kainin -l Dirak -p 1234 || true
+    ./tool-pg.sh create-account user3 -f Muffin -l Muram -p 1234 || true
+    ./tool-pg.sh create-account user4 -f Armin -l Karmin -p 1234 || true
+    ./tool-pg.sh create-account admin -f Super -l User -p 1234 || true
+    ./tool-pg.sh create-workspace sanity-ws email:user1 || true
+    ./tool-pg.sh create-workspace meetings-ws email:user1 || true
+    ./restore-pg.sh || true
+    rm -rf ./sanity/.auth
+else
 # Create user record in accounts
 ./tool-pg.sh create-account user1 -f John -l Appleseed -p 1234
 ./tool-pg.sh create-account user2 -f Kainin -l Dirak -p 1234
@@ -97,6 +137,18 @@ fi
 
 ./restore-pg.sh
 rm -rf ./sanity/.auth
+fi
+
+
+# Apply the deployment index set (composite/expression indexes from the deployment repo)
+# so the stand matches production; migration + sync-indexes alone miss them. Best-effort.
+INDEXES_YAML="${INDEXES_YAML:-../../deployment/deployments/indexes.yaml}"
+if [ -f "$INDEXES_YAML" ]; then
+    echo "Applying deployment indexes from $INDEXES_YAML..."
+    ./tool-pg.sh apply-indexes "$INDEXES_YAML" --apply || true
+else
+    echo "WARN: $INDEXES_YAML not found, skipping deployment index apply"
+fi
 
 # Start LiveKit server in background. Writes pid/log to ./.livekit/.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

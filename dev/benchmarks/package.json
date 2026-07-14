@@ -5,10 +5,12 @@
   "license": "EPL-2.0",
   "scripts": {
     "bench": "ts-node -T --project tsconfig.json src/run.ts",
-    "setup": "ts-node -T --project tsconfig.json src/run.ts --scenario setup",
     "format": "echo 'not yet'",
     "rest-throughput": "ts-node -T --project tsconfig.json src/run.ts --scenario rest-throughput",
-    "multi-workspace": "ts-node -T --project tsconfig.json src/run.ts --scenario multi-workspace"
+    "multi-workspace": "ts-node -T --project tsconfig.json src/run.ts --scenario multi-workspace",
+    "read-perf": "ts-node -T --project tsconfig.json src/run.ts --scenario read-perf",
+    "connect-storm": "ts-node -T --project tsconfig.json src/run.ts --scenario connect-storm",
+    "recover-storm": "ts-node -T --project tsconfig.json src/run.ts --scenario recover-storm"
   },
   "dependencies": {
     "@hcengineering/analytics": "workspace:^0.7.17",
@@ -22,12 +24,14 @@
     "@hcengineering/task": "workspace:^0.7.0",
     "@hcengineering/rank": "workspace:^0.7.17",
     "@hcengineering/rpc": "workspace:^0.7.17",
-    "snappyjs": "^0.7.0"
+    "snappyjs": "^0.7.0",
+    "ws": "^8.18.2"
   },
   "devDependencies": {
     "@hcengineering/platform-rig": "workspace:^0.7.19",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
-    "@types/node": "^22.18.1"
+    "@types/node": "^22.18.1",
+    "@types/ws": "^8.5.12"
   }
 }

@@ -232,6 +232,9 @@ jobs:
           ELASTIC_URL: "http://localhost:9201"
           MONGO_URL: "mongodb://localhost:27018"
           POSTGRES_URL: "postgresql://postgres:postgres@localhost:5433/postgres"
+          MINIO_ENDPOINT: "localhost:9000"
+          MINIO_ACCESS_KEY: "minioadmin"
+          MINIO_SECRET_KEY: "minioadmin"
 
   uitest-cockroach:
     if: inputs.run-cockroach == true
