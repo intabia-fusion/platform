@@ -47,7 +47,7 @@
     "DueDatePopupOverdueTitle": "Scadeva il {value}",
     "DueDatePopupDescription": "{value, plural, =0 {Oggi} =1 {Domani} other {# giorni rimanenti}}",
     "DueDatePopupOverdueDescription": "{value, plural, =1 {1 giorno di ritardo} other {# giorni di ritardo}}",
-    "English": "Inglese",
+    "English": "English",
     "Russian": "Русский",
     "Portuguese": "Português",
     "PortugueseBrazil": "Português (Brasil)",
