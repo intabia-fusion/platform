@@ -11,4 +11,14 @@ else
     exit ${docker_exit}
 fi
 
+# Database URLs on host side with defaults
+DB_PG_URL_HOST="${DB_PG_URL_HOST:-postgresql://root@localhost:26258/defaultdb?sslmode=disable}"
+DB_PURE_PG_URL_HOST="${DB_PURE_PG_URL_HOST:-postgresql://postgres:postgres@localhost:5433/postgres}"
+
+echo "Running migrations for Postgres..."
+DB_URL="$DB_PURE_PG_URL_HOST" node ../services/db-migrator/lib/index.js
+
+echo "Running migrations for CockroachDB..."
+DB_URL="$DB_PG_URL_HOST" node ../services/db-migrator/lib/index.js
+
 ./wait-elastic.sh 9201

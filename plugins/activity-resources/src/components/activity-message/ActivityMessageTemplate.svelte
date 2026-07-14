@@ -53,7 +53,6 @@
   export let pending = false
   export let stale = false
   export let hoverStyles: 'filledHover' | 'none' = 'filledHover'
-  export let showDatePreposition = false
   export let type: ActivityMessageViewType = 'default'
   export let inlineActions: MessageInlineAction[] = []
   export let excludedActions: Ref<ViewAction>[] = []
@@ -62,6 +61,7 @@
   export let onClick: (() => void) | undefined = undefined
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
   export let embeddedActions: boolean = false
+  export let timeFormat: 'time' | 'full' = 'time'
 
   export let socialIcon: Asset | undefined = undefined
 
@@ -194,7 +194,7 @@
         <div class="embeddedMarker" />
       {:else if isShort}
         <span class="text-sm lower time">
-          <MessageTimestamp date={message.createdOn ?? message.modifiedOn} shortTime />
+          <MessageTimestamp date={message.createdOn ?? message.modifiedOn} format="short-time" />
           <slot name="afterTime" />
         </span>
       {:else}
@@ -238,17 +238,11 @@
               <slot name="header" />
             {/if}
 
-            {#if !skipLabel && showDatePreposition}
-              <span class="text-normal lower">
-                <Label label={activity.string.At} />
-              </span>
-            {/if}
-
-            <span class="text-normal lower">
-              <MessageTimestamp date={message.createdOn ?? message.modifiedOn} shortTime />
+            <span class="text-sm lower timestamp">
+              <MessageTimestamp date={message.createdOn ?? message.modifiedOn} format={timeFormat} />
             </span>
             {#if message.editedOn}
-              <span class="text-normal lower">(<Label label={notification.string.Edited} />)</span>
+              <span class="text-sm lower">(<Label label={notification.string.Edited} />)</span>
             {/if}
 
             {#if withActions && inlineActions.length > 0 && !readonly}
@@ -404,6 +398,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    align-items: center;
 
     span {
       margin-left: 0.25rem;
@@ -472,5 +467,10 @@
   .username {
     font-weight: 500;
     margin-right: 0.25rem;
+  }
+
+  .timestamp {
+    display: flex;
+    align-items: center;
   }
 </style>

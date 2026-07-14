@@ -328,6 +328,10 @@ export function wrapPipeline (
       if (doBroadcast) {
         await pipeline.handleBroadcast(ctx)
       }
+      // One SessionData for the whole run: without draining, broadcast.txes grows
+      // unbounded and per-tx scanners (permissions) turn O(n^2).
+      contextData.broadcast.txes.length = 0
+      contextData.broadcast.queue.length = 0
       return result
     },
     notify: (...tx) => {}

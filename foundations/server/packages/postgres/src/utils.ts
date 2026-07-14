@@ -80,7 +80,7 @@ export async function createTables (
             client.unsafe(`
     SELECT table_name 
     FROM information_schema.tables
-    WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
+    WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'system')
     AND table_name NOT LIKE 'pg_%'
     AND table_name NOT LIKE 'cluster_%'
     AND table_name NOT LIKE 'kv_%'

@@ -847,6 +847,17 @@ services:
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
       - HYLYLAKE_URL=http://love:8096
     restart: unless-stopped
+
+  db-migrator:
+    image: intabiafusion/db-migrator
+    pull_policy: never
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DB_URL=${DB_URL_PG}
+    restart: "no"
+
   love-agent:
     image: intabiafusion/love-agent
     extra_hosts:

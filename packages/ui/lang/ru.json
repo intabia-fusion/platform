@@ -109,6 +109,16 @@
     "ThisYear": "Этот год",
     "EmojiStyle": "Стиль эмодзи",
     "EmojiSystem": "Системный по умолчанию",
-    "EmojiNoto": "Noto Color"
+    "EmojiNoto": "Noto Color",
+    "Connection": "Соединение",
+    "Connected": "Подключено",
+    "Reconnecting": "Переподключение...",
+    "RateLimit": "Лимит запросов",
+    "RateLimitValue": "осталось {remaining} из {limit}, сброс через {seconds}с",
+    "Sent": "Отправлено",
+    "Received": "Получено",
+    "TrafficValue": "{count} сообщ., {kb} КБ",
+    "Latency": "Задержка",
+    "LatencyValue": "{ms} мс"
   }
 }

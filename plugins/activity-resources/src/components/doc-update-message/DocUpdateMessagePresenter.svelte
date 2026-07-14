@@ -54,6 +54,7 @@
   export let type: ActivityMessageViewType = 'default'
   export let readonly = false
   export let space: Ref<Space> | undefined = undefined
+  export let timeFormat: 'time' | 'full' = 'time'
   export let onClick: (() => void) | undefined = undefined
 
   const client = getClient()
@@ -185,7 +186,7 @@
     {hoverStyles}
     {readonly}
     type={viewlet?.label || getIsTextType(attributeModel) ? 'default' : type}
-    showDatePreposition={hideLink}
+    {timeFormat}
     {onClick}
   >
     <svelte:fragment slot="header">

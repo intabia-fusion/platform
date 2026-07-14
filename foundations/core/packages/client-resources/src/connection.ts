@@ -56,8 +56,18 @@ import core, {
   TxResult,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import platform, { getMetadata, PlatformError, Severity, Status } from '@hcengineering/platform'
-import { HelloRequest, HelloResponse, type RateLimitInfo, ReqId, type Response, RPCHandler } from '@hcengineering/rpc'
+import platform, { broadcastEvent, getMetadata, PlatformError, Severity, Status } from '@hcengineering/platform'
+import {
+  ConnectionStatsEvent,
+  ConnectionStatusEvent,
+  HelloRequest,
+  HelloResponse,
+  type RateLimitInfo,
+  RateLimitUpdatedEvent,
+  ReqId,
+  type Response,
+  RPCHandler
+} from '@hcengineering/rpc'
 import { uncompress } from 'snappyjs'
 
 const SECOND = 1000
@@ -273,6 +283,13 @@ class Connection implements ClientConnection {
       }
 
       if (!this.closed) {
+        void broadcastEvent(ConnectionStatsEvent, {
+          sent: this.sentCount,
+          received: this.receivedCount,
+          sentBytes: this.sentBytes,
+          receivedBytes: this.receivedBytes,
+          latency: this.latency
+        })
         const sinceLastPong = platformNow() - this.pingResponse
         if (sinceLastPong > pingTimeout * 2 && this.requests.size > 0) {
           console.log('[conn] ping tick - no pong but pending requests', {
@@ -379,6 +396,14 @@ class Connection implements ClientConnection {
   currentRateLimit: RateLimitInfo | undefined
   slowDownTimer = 0
 
+  // Traffic counters surfaced to the UI (see ConnectionStatsEvent).
+  sentCount = 0
+  receivedCount = 0
+  sentBytes = 0
+  receivedBytes = 0
+  latency = 0 // ping/pong round-trip, ms
+  private lastPingSent = 0
+
   handleMsg (
     socketId: number,
     resp: Response<any>,
@@ -387,6 +412,8 @@ class Connection implements ClientConnection {
     if (this.closed) {
       return
     }
+    this.receivedCount++
+    this.receivedBytes += sizes.compressedSize
 
     if (resp.rateLimit !== undefined && resp.rateLimit.remaining < 50) {
       this.currentRateLimit = resp.rateLimit
@@ -398,6 +425,11 @@ class Connection implements ClientConnection {
       } else if (this.slowDownTimer > 0) {
         this.slowDownTimer--
       }
+      void broadcastEvent(RateLimitUpdatedEvent, this.currentRateLimit)
+    } else if (resp.rateLimit !== undefined && this.currentRateLimit !== undefined) {
+      // Server reports healthy budget again - clear the indicator.
+      this.currentRateLimit = undefined
+      void broadcastEvent(RateLimitUpdatedEvent, undefined)
     }
 
     if (resp.error !== undefined) {
@@ -500,6 +532,7 @@ class Connection implements ClientConnection {
           }
         }
 
+        void broadcastEvent(ConnectionStatusEvent, true)
         void this.onConnect?.(
           helloResp.reconnect === true ? ClientConnectEvent.Reconnected : ClientConnectEvent.Connected,
           helloResp.lastTx,
@@ -629,6 +662,10 @@ class Connection implements ClientConnection {
       }
       if (text === pongConst) {
         this.pingResponse = platformNow()
+        // Ignore stale pings (visibility probe / resend can overwrite lastPingSent).
+        if (this.lastPingSent > 0 && this.pingResponse - this.lastPingSent < pingTimeout) {
+          this.latency = Math.round(this.pingResponse - this.lastPingSent)
+        }
         return true
       }
     }
@@ -681,6 +718,10 @@ class Connection implements ClientConnection {
       }
       if (event.data === pongConst) {
         this.pingResponse = platformNow()
+        // Ignore stale pings (visibility probe / resend can overwrite lastPingSent).
+        if (this.lastPingSent > 0 && this.pingResponse - this.lastPingSent < pingTimeout) {
+          this.latency = Math.round(this.pingResponse - this.lastPingSent)
+        }
         return
       }
       if (event.data === pingConst) {
@@ -761,6 +802,7 @@ class Connection implements ClientConnection {
         pendingCount: this.requests.size,
         workspace: this.workspace
       })
+      if (!this.closed) void broadcastEvent(ConnectionStatusEvent, false)
       this.scheduleOpen(this.ctx, true)
     }
     wsocket.onopen = () => {
@@ -855,8 +897,11 @@ class Connection implements ClientConnection {
               )
 
               this.websocket?.send(dta)
+              this.sentCount++
+              this.sentBytes += typeof dta === 'string' ? dta.length : dta.byteLength
             } else {
               this.websocket?.send(pingConst)
+              this.lastPingSent = platformNow()
             }
           }
         }

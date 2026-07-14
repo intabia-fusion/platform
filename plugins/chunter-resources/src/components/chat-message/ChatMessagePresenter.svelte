@@ -35,7 +35,6 @@
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
 
   import { shownTranslatedMessagesStore, translatedMessagesStore, translatingMessagesStore } from '../../stores'
-  import ChatMessageHeader from './ChatMessageHeader.svelte'
   import ChatMessageInput from './ChatMessageInput.svelte'
   import DoubleCheck from '../icons/DoubleCheck.svelte'
   import MessageReadMarker from './MessageReadMarker.svelte'
@@ -60,10 +59,10 @@
   export let hoverStyles: 'filledHover' = 'filledHover'
   export let attachmentImageSize: AttachmentImageSize = 'x-large'
   export let videoPreload = false
-  export let hideLink = false
   export let readonly = false
   export let type: ActivityMessageViewType = 'default'
   export let padding: string | null = null
+  export let timeFormat: 'time' | 'full' = 'time'
   export let onClick: (() => void) | undefined = undefined
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
 
@@ -310,17 +309,14 @@
       ? [chunter.action.TranslateMessage]
       : [chunter.action.ShowOriginalMessage]}
     socialIcon={socialProvider?.icon}
-    showDatePreposition={hideLink}
     {inlineActions}
     {type}
     {padding}
+    {timeFormat}
     {onClick}
     {onReply}
     on:dblclick={handleDbClick}
   >
-    <svelte:fragment slot="header">
-      <ChatMessageHeader label={chunter.string.LeftComment} />
-    </svelte:fragment>
     <svelte:fragment slot="afterTime">
       {#if !pending && isOwn && readState}
         <div class="read-marker" class:center={type !== 'short'}>
@@ -371,6 +367,7 @@
     max-height: 1.25rem;
 
     &.center {
+      margin-bottom: 0.125rem;
       align-items: center;
     }
   }

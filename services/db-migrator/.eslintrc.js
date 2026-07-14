@@ -1,5 +1,5 @@
-<!--
-// Copyright © 2023 Hardcore Engineering Inc.
+//
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -11,21 +11,12 @@
 //
 // See the License for the specific language governing permissions and
 // limitations under the License.
--->
-<script lang="ts">
-  import { Label } from '@hcengineering/ui'
-  import { IntlString } from '@hcengineering/platform'
-  export let label: IntlString | undefined
-</script>
+//
 
-{#if label}
-  <span class="text-sm lower"> <Label {label} /></span>
-{/if}
-
-<style lang="scss">
-  span {
-    margin-left: 0.25rem;
-    font-weight: 400;
-    line-height: 1.25rem;
+module.exports = {
+  extends: ['./node_modules/@hcengineering/platform-rig/profiles/node/eslint.config.json'],
+  parserOptions: {
+    tsconfigRootDir: __dirname,
+    project: './tsconfig.json'
   }
-</style>
+}

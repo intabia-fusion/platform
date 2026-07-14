@@ -35,6 +35,7 @@
   export let hoverStyles: 'filledHover' = 'filledHover'
   export let hideLink = false
   export let readonly: boolean = false
+  export let timeFormat: 'time' | 'full' = 'time'
   export let onClick: (() => void) | undefined = undefined
 
   let person: Person | undefined
@@ -64,6 +65,7 @@
   {hoverStyles}
   viewlet={undefined}
   {readonly}
+  {timeFormat}
   {onClick}
 >
   <svelte:fragment slot="icon">

@@ -108,6 +108,16 @@
     "ThisYear": "Tento rok",
     "EmojiStyle": "Styl emoji",
     "EmojiSystem": "Výchozí systémové",
-    "EmojiNoto": "Noto Color"
+    "EmojiNoto": "Noto Color",
+    "Connection": "Připojení",
+    "Connected": "Připojeno",
+    "Reconnecting": "Opětovné připojení...",
+    "RateLimit": "Limit požadavků",
+    "RateLimitValue": "zbývá {remaining} z {limit}, obnova za {seconds}s",
+    "Sent": "Odesláno",
+    "Received": "Přijato",
+    "TrafficValue": "{count} zpráv, {kb} KB",
+    "Latency": "Latence",
+    "LatencyValue": "{ms} ms"
   }
 }
