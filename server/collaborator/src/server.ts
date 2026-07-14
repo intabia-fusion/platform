@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -98,7 +99,11 @@ export async function start (ctx: MeasureContext, config: Config, storageAdapter
       }),
       new StorageExtension({
         ctx: extensionsCtx.newChild('storage', {}, { span: false }),
-        adapter: new PlatformStorageAdapter(storageAdapter, { retryCount, retryInterval }),
+        adapter: new PlatformStorageAdapter(storageAdapter, {
+          retryCount,
+          retryInterval,
+          activityAggregationDelay: config.ActivityAggregationDelay
+        }),
         transformer
       })
     ]
