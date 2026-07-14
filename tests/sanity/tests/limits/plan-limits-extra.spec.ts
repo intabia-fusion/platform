@@ -111,10 +111,7 @@ test.describe('unpaid stays usable', () => {
     }).toPass({ intervals: [2000, 3000, 5000], timeout: 30000 })
   })
 
-  test('a directly-canceled tier is not a hard read-only (no billing read-only banner)', async ({
-    page,
-    request
-  }) => {
+  test('a directly-canceled tier is not a hard read-only (no billing read-only banner)', async ({ page, request }) => {
     const api = new ApiEndpoint(request)
     const wsInfo = await api.createWorkspaceWithLogin(`unpaid-${generateId(8)}`, 'user1', '1234')
     const wsUrl = wsInfo.workspaceUrl
