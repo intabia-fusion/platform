@@ -1403,7 +1403,9 @@ export async function findPersonBySocialKey (
 
   const { extra } = decodeTokenVerbose(ctx, token)
 
-  verifyAllowedServices(['tool', 'workspace', 'aibot', 'billing', ...integrationServices], extra)
+  // 'transactor': SeatLimitsMiddleware resolves system/AI account uuids (aibot) via this call to
+  // exclude them from seat counting; without it the resolve throws and the AI bot wrongly takes a seat.
+  verifyAllowedServices(['tool', 'workspace', 'aibot', 'billing', 'transactor', ...integrationServices], extra)
 
   const socialId = await db.socialId.findOne({ key: socialString })
 

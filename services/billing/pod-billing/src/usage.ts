@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -19,16 +20,18 @@ import {
   SubscriptionType,
   getClient,
   grantsPlan,
-  isBillableMember
+  GUEST_ROLES
 } from '@hcengineering/account-client'
 import {
   type AccountUuid,
   type MeasureContext,
   type UsageStatus,
   type WorkspaceUuid,
+  AccountRole,
   RateLimiter,
   SocialIdType,
   buildSocialIdString,
+  configUserAccountUuid,
   isArchivingMode,
   isDeletingMode,
   systemAccountUuid
@@ -37,6 +40,7 @@ import { aiBotAccountEmail } from '@hcengineering/middleware'
 import { type StorageConfig } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
 import { createClient, getTransactorEndpoint } from '@hcengineering/server-client'
+import contact, { type Employee } from '@hcengineering/contact'
 import tracker from '@hcengineering/tracker'
 
 import { collectDatalakeStats } from './billing'
@@ -167,6 +171,29 @@ export class UsageWorker {
     return this.aiBotAccount
   }
 
+  /**
+   * A seat is consumed by any active employee except system/AI/Admin and guests.
+   * Guests are excluded two ways because either source may be authoritative in a given workspace:
+   *   - Employee.role === 'GUEST' (informational field on the mixin, set on guest onboarding), and
+   *   - the account role in ws_members (Admin / GUEST_ROLES).
+   * An employee whose account is not in ws_members (personUuid unresolved or pending invite) still
+   * takes a slot, matching SeatLimitsMiddleware, unless flagged GUEST on the Employee itself.
+   */
+  private seatEligible (
+    employee: Employee,
+    memberRole: Map<AccountUuid, AccountRole>,
+    aiBotAccount: AccountUuid | undefined
+  ): boolean {
+    if (employee.role === 'GUEST') return false
+    const uuid = employee.personUuid
+    if (uuid == null) return true
+    if (uuid === systemAccountUuid || uuid === configUserAccountUuid || uuid === aiBotAccount) return false
+    const role = memberRole.get(uuid)
+    if (role === AccountRole.Admin) return false
+    if (role !== undefined && GUEST_ROLES.includes(role)) return false
+    return true
+  }
+
   async updateWorkspaceUsageStatistics (ctx: MeasureContext, now: number, workspace: WorkspaceUuid): Promise<void> {
     const account = getAccountClient(this.config.AccountsUrl, workspace)
 
@@ -207,24 +234,29 @@ export class UsageWorker {
     const recordingSeconds = liveKitUsage.egress.reduce((acc, egress) => acc + egress.minutes, 0) * 60
     const storageBytes = storageUsage.size
 
-    const membersCount = await ctx.with(
+    // Member roles come from account (ws_members); the seat-occupying set comes from active
+    // Employee mixins in the transactor. Count the same way SeatLimitsMiddleware does so the
+    // Usage bar matches the enforced seat count (see foundations/.../middleware/seatLimits.ts).
+    const aiBotAccount = await this.resolveAiBotAccount(account)
+    const memberRole = await ctx.with(
       'get workspace members',
       {},
       async () => {
         try {
-          const aiBotAccount = await this.resolveAiBotAccount(account)
           const members = await account.getWorkspaceMembers()
-          return members.filter((m) => m.person !== aiBotAccount && isBillableMember(m.role)).length
+          const map = new Map<AccountUuid, AccountRole>()
+          for (const m of members) map.set(m.person, m.role)
+          return map
         } catch (err: any) {
           ctx.error('failed to get workspace members', { workspace, err })
-          return 0
+          return new Map<AccountUuid, AccountRole>()
         }
       },
       { workspace }
     )
 
-    const projectsCount = await ctx.with(
-      'get workspace projects',
+    const { membersCount, projectsCount } = await ctx.with(
+      'get workspace employees and projects',
       {},
       async () => {
         try {
@@ -232,14 +264,18 @@ export class UsageWorker {
           const endpoint = await getTransactorEndpoint(token)
           const client = await createClient(endpoint, token)
           try {
-            const projects = await client.findAll(tracker.class.Project, { archived: false })
-            return projects.length
+            const [employees, projects] = await Promise.all([
+              client.findAll(contact.mixin.Employee, { active: true }),
+              client.findAll(tracker.class.Project, { archived: false })
+            ])
+            const members = employees.filter((emp) => this.seatEligible(emp, memberRole, aiBotAccount)).length
+            return { membersCount: members, projectsCount: projects.length }
           } finally {
             await client.close()
           }
         } catch (err: any) {
-          ctx.error('failed to get workspace projects', { workspace, err })
-          return 0
+          ctx.error('failed to get workspace employees and projects', { workspace, err })
+          return { membersCount: 0, projectsCount: 0 }
         }
       },
       { workspace }
