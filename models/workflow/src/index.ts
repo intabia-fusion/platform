@@ -13,12 +13,13 @@
 // limitations under the License.
 //
 
-import { workflowId } from '@hcengineering/workflow'
+import workflow from './plugin'
 import { type Builder } from '@hcengineering/model'
 
 export function createModel (builder: Builder): void {
   // placeholder
 }
 
+export * from './types'
 export { workflowId } from '@hcengineering/workflow'
-export default workflowId
+export default workflow

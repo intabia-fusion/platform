@@ -13,14 +13,26 @@
 // limitations under the License.
 //
 
-import type { Plugin, Resource } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import type { TriggerFunc } from '@hcengineering/server-core'
+import type { Doc, Ref, Status } from '@hcengineering/core'
+import type { Project, TaskType } from '@hcengineering/task'
 
-export const serverWorkflowId = 'server-workflow' as Plugin
+export interface Workflow extends Doc {
+  name: string
+}
 
-export default plugin(serverWorkflowId, {
-  trigger: {
-    ValidateTransition: '' as Resource<TriggerFunc>
-  }
-})
+export interface WorkflowTransition extends Doc {
+  workflow: Ref<Workflow>
+  name: string
+  from: Ref<Status> | null
+  to: Ref<Status>
+}
+
+export interface WorkflowMapping {
+  taskType: Ref<TaskType>
+  workflow: Ref<Workflow>
+}
+
+export interface ProjectWorkflow extends Project {
+  defaultWorkflow?: Ref<Workflow>
+  workflows?: WorkflowMapping[]
+}

@@ -13,6 +13,11 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@hcengineering/platform'
+import { ValidateTransition } from './ValidateTransition'
 
-export default async (): Promise<Resources> => ({})
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export default async () => ({
+  trigger: {
+    ValidateTransition
+  }
+})

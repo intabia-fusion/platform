@@ -1,3 +1,11 @@
 {
-  "Workflow": "Workflow"
+  "Workflow": "Workflow",
+  "WorkflowScheme": "Workflow Scheme",
+  "WorkflowTransition": "Workflow Transition",
+  "WorkflowMapping": "Workflow Mapping",
+  "Name": "Name",
+  "From": "From",
+  "To": "To",
+  "TaskType": "Task Type",
+  "WorkflowSchemeField": "Workflow Scheme"
 }

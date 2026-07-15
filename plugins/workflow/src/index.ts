@@ -13,9 +13,6 @@
 // limitations under the License.
 //
 
-import type { Plugin } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-
-export const workflowId = 'workflow' as Plugin
-
-export default plugin(workflowId, {})
+export * from './plugin'
+export { default } from './plugin'
+export * from './types'

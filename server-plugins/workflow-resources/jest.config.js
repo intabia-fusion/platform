@@ -13,14 +13,10 @@
 // limitations under the License.
 //
 
-import type { Plugin, Resource } from '@hcengineering/platform'
-import { plugin } from '@hcengineering/platform'
-import type { TriggerFunc } from '@hcengineering/server-core'
-
-export const serverWorkflowId = 'server-workflow' as Plugin
-
-export default plugin(serverWorkflowId, {
-  trigger: {
-    ValidateTransition: '' as Resource<TriggerFunc>
-  }
-})
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
+  roots: ["./src"],
+  coverageReporters: ["text-summary", "html"]
+}

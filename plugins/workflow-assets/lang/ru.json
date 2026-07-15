@@ -1,3 +1,11 @@
 {
-  "Workflow": "Воркфлоу"
+  "Workflow": "Воркфлоу",
+  "WorkflowScheme": "Схема воркфлоу",
+  "WorkflowTransition": "Переход воркфлоу",
+  "WorkflowMapping": "Сопоставление воркфлоу",
+  "Name": "Название",
+  "From": "Откуда",
+  "To": "Куда",
+  "TaskType": "Тип задачи",
+  "WorkflowSchemeField": "Схема воркфлоу"
 }

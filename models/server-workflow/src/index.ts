@@ -13,10 +13,20 @@
 // limitations under the License.
 //
 
+import core from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
+import task from '@hcengineering/task'
+import serverCore from '@hcengineering/server-core'
+import serverWorkflow from '@hcengineering/server-workflow'
 
 export { serverWorkflowId } from '@hcengineering/server-workflow'
 
 export function createModel (builder: Builder): void {
-  // placeholder
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverWorkflow.trigger.ValidateTransition,
+    isAsync: false,
+    txMatch: {
+      objectClass: task.class.Task
+    }
+  })
 }
