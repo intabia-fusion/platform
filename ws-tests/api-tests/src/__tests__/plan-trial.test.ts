@@ -14,7 +14,7 @@
 */
 
 import { loadServerConfig, type ServerConfig } from '@hcengineering/api-client'
-import { generateUuid, systemAccountUuid, type WorkspaceUuid } from '@hcengineering/core'
+import { generateUuid, systemAccountUuid, type AccountUuid, type WorkspaceUuid } from '@hcengineering/core'
 import {
   getClient as getAccountClient,
   grantsPlan,
@@ -32,6 +32,7 @@ describe('plan-trial', () => {
   const wsName = 'api-tests-unpaid'
   let config: ServerConfig
   let workspaceUuid: WorkspaceUuid
+  let accountUuid: AccountUuid // subscription FK requires an existing account
   let account: AccountClient // payment-service scoped: allowed to upsert subscriptions
 
   beforeAll(async () => {
@@ -43,6 +44,10 @@ describe('plan-trial', () => {
     workspaceUuid = ws.uuid
     const paymentToken = generateToken(systemAccountUuid, workspaceUuid, { service: 'payment' }, 'secret')
     account = getAccountClient(config.ACCOUNTS_URL, paymentToken)
+    const members = await account.getWorkspaceMembers()
+    const owner = members.find((m) => m.role === 'OWNER') ?? members[0]
+    if (owner === undefined) throw new Error(`No members in workspace: ${wsName}`)
+    accountUuid = owner.person
   }, 30000)
 
   async function clearSubscriptions (): Promise<void> {
@@ -74,6 +79,7 @@ describe('plan-trial', () => {
     await account.upsertSubscription({
       id,
       workspaceUuid,
+      accountUuid,
       provider: 'trial',
       providerSubscriptionId,
       type: SubscriptionType.Tier,
@@ -97,6 +103,7 @@ describe('plan-trial', () => {
     await account.upsertSubscription({
       id,
       workspaceUuid,
+      accountUuid,
       provider: 'trial',
       providerSubscriptionId,
       type: SubscriptionType.Tier,
@@ -118,6 +125,7 @@ describe('plan-trial', () => {
     await account.upsertSubscription({
       id: trial.id,
       workspaceUuid,
+      accountUuid,
       provider: 'trial',
       providerSubscriptionId: trial.providerSubscriptionId,
       type: SubscriptionType.Tier,
@@ -131,6 +139,7 @@ describe('plan-trial', () => {
     await account.upsertSubscription({
       id: paid.id,
       workspaceUuid,
+      accountUuid,
       provider: 'tbank',
       providerSubscriptionId: paid.providerSubscriptionId,
       type: SubscriptionType.Tier,
