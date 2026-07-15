@@ -163,6 +163,13 @@ plans:
     usersLimit: 0
     index: 2
     color: Orange
+# Trial for new workspaces. When set, a new workspace starts on this plan with Trialing status
+# for `days`, capped at `usersLimit` seats. On expiry it falls back to the free plan.
+# Remove this block to keep the old behavior (new workspace -> free plan immediately).
+trial:
+  plan: business
+  days: 14
+  usersLimit: 10
 packages:
   100gb:
     description:

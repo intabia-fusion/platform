@@ -160,6 +160,7 @@ services:
         condition: service_completed_successfully
     ports:
       - 9201:9200
+    restart: unless-stopped
     environment:
       - ELASTICSEARCH_PORT_NUMBER=9200
       - BITNAMI_DEBUG=true

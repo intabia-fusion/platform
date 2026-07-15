@@ -108,6 +108,8 @@
   let usageInfo: UsageStatus | null = null
 
   $: isCurrentCanceled = currentSubscription?.canceledAt !== undefined && currentSubscription.canceledAt > 0
+  // A trial has no paid subscription to cancel — hide the cancel action (buy the plan instead).
+  $: isCurrentTrial = currentSubscription?.status === SubscriptionStatus.Trialing
   $: isPackageCanceled =
     currentPackageSubscription?.canceledAt !== undefined && currentPackageSubscription.canceledAt > 0
 
@@ -867,6 +869,8 @@
                   <div class="status-badge-warning ml-2 text-md">
                     <Label label={plugin.string.CancelScheduled} />
                   </div>
+                {:else if isCurrentTrial}
+                  <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.TrialPeriod} /></div>
                 {:else if currentSubscription?.status === 'active'}
                   <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.Active} /></div>
                 {/if}
@@ -904,7 +908,7 @@
                 {/if}
               {/if}
 
-              {#if !isCurrentCanceled && currentPlan.free !== true}
+              {#if !isCurrentCanceled && !isCurrentTrial && currentPlan.free !== true}
                 <Button
                   label={plugin.string.CancelSubscription}
                   kind="ghost"

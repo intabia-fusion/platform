@@ -15,7 +15,7 @@
 <script lang="ts">
   import { Icon, Label, tooltip } from '@hcengineering/ui'
   import billing from '@hcengineering/billing'
-  import { onFreePlan, freePlanOverdue, isLimited } from '../stores/subscription'
+  import { onFreePlan, freePlanOverdue, isLimited, onTrial, trialDaysLeft } from '../stores/subscription'
   import { upgradePlan } from '../utils'
 
   // Read-only banner (error) when over free-seat limit; free-plan chip (info) when on free limits.
@@ -25,6 +25,11 @@
   $: freePlanTooltip = $freePlanOverdue
     ? { label: billing.string.FreePlanHint, direction: 'bottom' as const }
     : undefined
+  $: trialTooltip = {
+    label: billing.string.TrialPlanHint,
+    props: { days: $trialDaysLeft },
+    direction: 'bottom' as const
+  }
 </script>
 
 {#if readOnly}
@@ -39,6 +44,19 @@
   >
     <Icon icon={billing.icon.Billing} size={'small'} />
     <span><Label label={billing.string.PayOrUpgrade} /></span>
+  </button>
+{:else if $onTrial}
+  <button
+    type="button"
+    class="trial-plan-indicator"
+    data-id="billingTrialBanner"
+    use:tooltip={trialTooltip}
+    on:click={() => {
+      upgradePlan().catch(console.error)
+    }}
+  >
+    <Icon icon={billing.icon.Billing} size={'small'} />
+    <span><Label label={billing.string.TrialPlan} /> · {$trialDaysLeft}</span>
   </button>
 {:else if $onFreePlan}
   <button
@@ -92,6 +110,25 @@
 
     &:hover {
       background: var(--theme-button-hovered);
+    }
+  }
+  .trial-plan-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--small-BorderRadius);
+    border: 1px solid var(--primary-button-default);
+    background: var(--primary-button-default);
+    color: var(--primary-button-color);
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    outline: none;
+
+    &:hover {
+      filter: brightness(1.1);
     }
   }
 </style>

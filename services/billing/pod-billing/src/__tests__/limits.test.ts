@@ -26,6 +26,14 @@ jest.mock('@hcengineering/account-client', () => ({
     getWorkspaceInfo: getWorkspaceInfoMock,
     updateUsageInfo: updateUsageInfoMock
   })),
+  // Mirror the real grantsPlan: active/trialing/past_due/readonly grant, minus a pending past_due
+  // draft and an expired trial.
+  grantsPlan: (sub: any): boolean => {
+    if (sub == null) return false
+    if (sub.status === 'past_due' && sub.providerData?.pending === true) return false
+    if (sub.status === 'trialing' && sub.trialEnd != null && sub.trialEnd < Date.now()) return false
+    return ['active', 'trialing', 'past_due', 'readonly'].includes(sub.status)
+  },
   SubscriptionType: { Tier: 'tier', Support: 'support', Package: 'package' },
   SubscriptionStatus: {
     Active: 'active',

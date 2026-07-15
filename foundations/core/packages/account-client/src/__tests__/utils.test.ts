@@ -328,6 +328,12 @@ describe('grantsPlan', () => {
     expect(grantsPlan(sub(SubscriptionStatus.PastDue, true))).toBe(false)
     expect(grantsPlan(sub(SubscriptionStatus.PastDue, false))).toBe(true)
   })
+
+  it('grants for a live trial, not for an expired one', () => {
+    const day = 24 * 3600 * 1000
+    expect(grantsPlan({ status: SubscriptionStatus.Trialing, trialEnd: Date.now() + day } as any)).toBe(true)
+    expect(grantsPlan({ status: SubscriptionStatus.Trialing, trialEnd: Date.now() - day } as any)).toBe(false)
+  })
 })
 
 describe('isBillableMember', () => {

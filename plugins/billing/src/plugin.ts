@@ -55,7 +55,9 @@ export const billingPlugin = plugin(billingId, {
     SeatLimitReadonly: '' as IntlString,
     PayOrUpgrade: '' as IntlString,
     FreePlan: '' as IntlString,
-    FreePlanHint: '' as IntlString
+    FreePlanHint: '' as IntlString,
+    TrialPlan: '' as IntlString,
+    TrialPlanHint: '' as IntlString
   },
   icon: {
     Billing: '' as Asset,

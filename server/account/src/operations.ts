@@ -2866,10 +2866,11 @@ export async function getSubscriptions (
   }
 
   // Fetch subscriptions for workspace (tier + addons + support)
-  // By default return only active subscriptions, unless activeOnly=false
+  // By default return only plan-granting subscriptions, unless activeOnly=false.
+  // Trialing grants the plan too, so a trial workspace shows its current plan/limits.
   const query: Query<Subscription> = targetWorkspace != null ? { workspaceUuid: targetWorkspace } : {}
   if (activeOnly) {
-    query.status = SubscriptionStatus.Active
+    query.status = { $in: [SubscriptionStatus.Active, SubscriptionStatus.Trialing] }
   }
 
   const subscriptions = await db.subscription.find(query)

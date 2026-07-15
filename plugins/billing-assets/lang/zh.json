@@ -38,6 +38,7 @@
     "Active": "活跃",
     "Disabled": "已禁用",
     "CancelScheduled": "取消中",
+    "TrialPeriod": "Trial period",
     "SubscriptionEnds": "截止至{date}",
     "SubscriptionRenews": "下次续期: {date}",
     "SubscriptionValidUntil": "有效期至{date}",
@@ -98,6 +99,8 @@
     "SeatLimitReadonly": "Seat limit reached. Your account is in read-only mode.",
     "PayOrUpgrade": "Pay / Upgrade plan",
     "FreePlan": "免费套餐",
-    "FreePlanHint": "付款已逾期 — 工作区正在使用免费套餐运行。付款以恢复您的套餐。"
+    "FreePlanHint": "付款已逾期 — 工作区正在使用免费套餐运行。付款以恢复您的套餐。",
+    "TrialPlan": "Trial",
+    "TrialPlanHint": "Business trial — {days} days left. Buy the plan to keep your features after it ends."
   }
 }

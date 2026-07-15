@@ -37,6 +37,7 @@ export default mergeIds(billingId, billing, {
     Active: '' as IntlString,
     Disabled: '' as IntlString,
     CancelScheduled: '' as IntlString,
+    TrialPeriod: '' as IntlString,
     NoActivePlan: '' as IntlString,
     SelectPlanToBegin: '' as IntlString,
     SubscriptionEnds: '' as IntlString,

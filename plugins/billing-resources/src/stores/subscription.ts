@@ -31,6 +31,8 @@ export interface SubscriptionState {
   onFreePlan: boolean // on free limits (own free plan, or paid tier no longer granting)
   freePlanOverdue: boolean // on free BECAUSE payment lapsed (readonly/expired) -> show "overdue" hint
   isLimited: boolean // this user is seatless -> read-only
+  onTrial: boolean // on a running trial (Trialing tier, trialEnd in the future)
+  trialDaysLeft: number // whole days remaining on the trial (0 if not on trial)
 }
 
 const initialState: SubscriptionState = {
@@ -43,7 +45,9 @@ const initialState: SubscriptionState = {
   limitExceeded: false,
   onFreePlan: false,
   freePlanOverdue: false,
-  isLimited: false
+  isLimited: false,
+  onTrial: false,
+  trialDaysLeft: 0
 }
 
 // Main subscription store
@@ -53,6 +57,8 @@ export const limitExceeded = derived(subscriptionStore, ($store) => $store.limit
 export const onFreePlan = derived(subscriptionStore, ($store) => $store.onFreePlan)
 export const freePlanOverdue = derived(subscriptionStore, ($store) => $store.freePlanOverdue)
 export const isLimited = derived(subscriptionStore, ($store) => $store.isLimited)
+export const onTrial = derived(subscriptionStore, ($store) => $store.onTrial)
+export const trialDaysLeft = derived(subscriptionStore, ($store) => $store.trialDaysLeft)
 
 /** Resolved numeric limits (0 = unlimited) for the active plan/package, reactive on subscription changes. */
 export const planLimits = derived(subscriptionStore, ($s) =>
@@ -81,9 +87,18 @@ export function setSubscriptionState (
   // Free limits are activated:
   //  - when free plan is active (free plan chosen/provisioned after a cancel)
   //  - status = readonly/expired and a free fallback exists
+  const now = Date.now()
+  // Trial: Trialing tier with a trialEnd. Live while in the future; expired trials fall back to free
+  // below (treated like an overdue paid tier), never shown as a live trial.
+  const trialEnd = tierForStatus?.status === SubscriptionStatus.Trialing ? tierForStatus.trialEnd : undefined
+  const onTrial = trialEnd != null && trialEnd > now
+  const trialExpired = trialEnd != null && trialEnd <= now
+  const trialDaysLeft = onTrial ? Math.max(0, Math.ceil((trialEnd - now) / (24 * 3600 * 1000))) : 0
   const activeOnFree = tierForStatus?.status === SubscriptionStatus.Active && plan?.free === true
   const overdueOnFree =
-    tierForStatus?.status === SubscriptionStatus.ReadOnly || tierForStatus?.status === SubscriptionStatus.Expired
+    tierForStatus?.status === SubscriptionStatus.ReadOnly ||
+    tierForStatus?.status === SubscriptionStatus.Expired ||
+    trialExpired
   const hasFree = tierForStatus?.freeLimits != null
   const onFreePlan = activeOnFree || (overdueOnFree && hasFree)
   // tooltip explains overdue as the reason for the free plan
@@ -99,7 +114,9 @@ export function setSubscriptionState (
     workspaceInfo: workspace,
     limitExceeded: checkUsageAgainstLimits(usage, plan, pkg, subscription, packageSubscription),
     onFreePlan,
-    freePlanOverdue
+    freePlanOverdue,
+    onTrial,
+    trialDaysLeft
   }))
 }
 
