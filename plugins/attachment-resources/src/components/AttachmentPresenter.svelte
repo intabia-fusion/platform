@@ -48,7 +48,7 @@
     permissionsStore = await getResource(contact.store.Permissions)
   })
 
-  const maxLength: number = 30
+  const maxLength: number = 25
 
   const trimFilename = (fname: string): string =>
     fname.length > maxLength ? fname.substr(0, (maxLength - 1) / 2) + '...' + fname.substr(-(maxLength - 1) / 2) : fname
@@ -267,9 +267,10 @@
   }
   .attachment-container {
     flex-shrink: 0;
-    width: auto;
+    width: 22.25rem;
     height: 3rem;
-    min-width: 17.25rem;
+    min-width: 22.25rem;
+    max-width: 22.25rem;
     border-radius: 0.25rem;
 
     .icon {
