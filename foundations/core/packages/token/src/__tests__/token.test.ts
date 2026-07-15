@@ -15,7 +15,7 @@
 
 import { setMetadata } from '@hcengineering/platform'
 import type { PersonUuid, WorkspaceUuid } from '@hcengineering/core'
-import { decodeToken, generateToken } from '../token'
+import { decodeToken, extractCookieToken, generateToken } from '../token'
 import plugin from '../plugin'
 
 export function decodeTokenPayload (token: string): any {
@@ -112,5 +112,60 @@ describe('generateToken', () => {
       account: '123e4567-e89b-12d3-a456-426614174000',
       workspace: '123e4567-e89b-12d3-a456-426614174001'
     })
+  })
+})
+
+describe('extractCookieToken', () => {
+  const JWT = 'eyJhbGciOiJIUzI1NiJ9.eyJhIjoxfQ.abc' // a JWT-looking value
+  const SIG = 'ZMmaHvXbxEvo6L_C3dah-q2xbVE' // koa signature value (not a JWT)
+
+  it('returns undefined for no header', () => {
+    expect(extractCookieToken(undefined)).toBeUndefined()
+    expect(extractCookieToken('')).toBeUndefined()
+  })
+
+  it('returns undefined when no token cookie present', () => {
+    expect(extractCookieToken('foo=1; bar=2')).toBeUndefined()
+    expect(extractCookieToken('foo=1; bar=2', 'account-metadata-Token')).toBeUndefined()
+  })
+
+  // The core regression: koa also sets `<name>.sig`; if it is listed first, .includes()/substring
+  // matching would return the signature instead of the JWT -> invalid token.
+  it('skips the .sig signature cookie even when it is listed first', () => {
+    const header = `account-metadata-Token.sig=${SIG}; account-metadata-Token=${JWT}`
+    expect(extractCookieToken(header)).toBe(JWT) // substring mode (print/export/sign)
+    expect(extractCookieToken(header, 'account-metadata-Token')).toBe(JWT) // exact mode (account)
+  })
+
+  it('finds the token when it is listed first too', () => {
+    const header = `account-metadata-Token=${JWT}; account-metadata-Token.sig=${SIG}`
+    expect(extractCookieToken(header)).toBe(JWT)
+    expect(extractCookieToken(header, 'account-metadata-Token')).toBe(JWT)
+  })
+
+  it('exact-name mode ignores other cookies that merely contain "token"', () => {
+    const header = `csrf-token=nope; account-metadata-Token=${JWT}`
+    expect(extractCookieToken(header, 'account-metadata-Token')).toBe(JWT)
+  })
+
+  it('substring mode matches any cookie name containing "token", case-insensitive', () => {
+    expect(extractCookieToken(`Some-TOKEN=${JWT}`)).toBe(JWT)
+  })
+
+  it('is case-insensitive on the exact name', () => {
+    expect(extractCookieToken(`account-metadata-token=${JWT}`, 'account-metadata-Token')).toBe(JWT)
+  })
+
+  it('tolerates surrounding whitespace between cookies', () => {
+    expect(extractCookieToken(`  foo=1 ;  account-metadata-Token=${JWT}  `, 'account-metadata-Token')).toBe(JWT)
+  })
+
+  it('preserves "=" inside the value (base64 padding)', () => {
+    const padded = 'aGVsbG8='
+    expect(extractCookieToken(`account-metadata-Token=${padded}`, 'account-metadata-Token')).toBe(padded)
+  })
+
+  it('returns undefined for an empty token value', () => {
+    expect(extractCookieToken('account-metadata-Token=', 'account-metadata-Token')).toBeUndefined()
   })
 })

@@ -24,7 +24,12 @@ import { Analytics } from '@hcengineering/analytics'
 import { registerProviders } from '@hcengineering/auth-providers'
 import { metricsAggregate, type Branding, type BrandingMap, type MeasureContext } from '@hcengineering/core'
 import platform, { Severity, Status, addStringsLoader, setMetadata, unknownStatus } from '@hcengineering/platform'
-import serverToken, { decodeToken, decodeTokenVerbose, generateToken } from '@hcengineering/server-token'
+import serverToken, {
+  decodeToken,
+  decodeTokenVerbose,
+  extractCookieToken,
+  generateToken
+} from '@hcengineering/server-token'
 import cors from '@koa/cors'
 import type Cookies from 'cookies'
 import { type IncomingHttpHeaders } from 'http'
@@ -221,16 +226,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     )
   })
 
-  const extractCookieToken = (headers: IncomingHttpHeaders): string | undefined => {
-    if (headers.cookie != null) {
-      const cookies = headers.cookie.split(';')
-      const tokenCookie = cookies.find((cookie) => cookie.includes(AUTH_TOKEN_COOKIE))
-      return tokenCookie?.split('=')[1]
-    }
-
-    return undefined
-  }
-
   const extractAuthorizationToken = (headers: IncomingHttpHeaders): string | undefined => {
     try {
       return headers.authorization?.slice(7) ?? undefined
@@ -240,7 +235,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   }
 
   const extractToken = (headers: IncomingHttpHeaders): string | undefined => {
-    return extractAuthorizationToken(headers) ?? extractCookieToken(headers)
+    return extractAuthorizationToken(headers) ?? extractCookieToken(headers.cookie, AUTH_TOKEN_COOKIE)
   }
 
   function generateShortId (length = 12): string {

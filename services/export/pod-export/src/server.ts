@@ -63,7 +63,7 @@ import {
 } from '@hcengineering/server-core'
 import { getConfig } from '@hcengineering/server-pipeline'
 import { buildStorageFromConfig } from '@hcengineering/server-storage'
-import { Token, decodeToken, generateToken } from '@hcengineering/server-token'
+import { Token, decodeToken, extractCookieToken, generateToken } from '@hcengineering/server-token'
 import archiver from 'archiver'
 import { sendExportCompletionNotification } from './notifications'
 import cors from 'cors'
@@ -79,25 +79,6 @@ import envConfig from './config'
 import { ApiError } from './error'
 import { ExportFormat, WorkspaceExporter } from './exporter'
 import { CrossWorkspaceExporter, type ExportOptions, type ExportResult } from './workspace'
-
-const extractCookieToken = (cookie?: string): string | null => {
-  if (cookie === undefined || cookie === null) {
-    return null
-  }
-
-  const cookies = cookie.split(';')
-  const tokenCookie = cookies.find((cookie) => cookie.toLocaleLowerCase().includes('token'))
-  if (tokenCookie === undefined) {
-    return null
-  }
-
-  const encodedToken = tokenCookie.split('=')[1]
-  if (encodedToken === undefined) {
-    return null
-  }
-
-  return encodedToken
-}
 
 const extractAuthorizationToken = (authorization?: string): string | null => {
   if (authorization === undefined || authorization === null) {
@@ -197,7 +178,7 @@ const retrieveToken = (headers: IncomingHttpHeaders, queryParams: any): string =
       extractQueryToken(queryParams) ??
       extractCookieToken(headers.cookie)
 
-    if (token === null) {
+    if (token == null) {
       throw new ApiError(401)
     }
 
