@@ -72,7 +72,7 @@ export const main = async (): Promise<void> => {
     await producer.send(ctx, data.workspaceUuid, [msg])
   }
 
-  const { app, ensureFreeSubscription, createFreeIfNoActiveTier, persistSubscription, close } = await createServer(
+  const { app, ensureInitialSubscription, createFreeIfNoActiveTier, persistSubscription, close } = await createServer(
     metricsContext,
     config,
     publish
@@ -81,7 +81,7 @@ export const main = async (): Promise<void> => {
 
   let queueClose: (() => Promise<void>) | undefined
   {
-    // 1) Workspace creation -> provision the free fallback subscription.
+    // 1) Workspace creation -> provision the initial tier (trial when configured, else free).
     const wsConsumer = queue.createBatchConsumer<QueueWorkspaceMessage>(
       metricsContext,
       QueueTopic.Workspace,
@@ -89,7 +89,7 @@ export const main = async (): Promise<void> => {
       async (ctx, msgs) => {
         for (const msg of msgs) {
           if (msg.value.type !== QueueWorkspaceEvent.Created) continue
-          await ensureFreeSubscription(msg.workspace)
+          await ensureInitialSubscription(msg.workspace)
         }
       },
       { batchSize: 20, batchTimeout: 500 }

@@ -31,10 +31,12 @@ export const PLAN_GRANTING_STATUSES: SubscriptionStatus[] = [
   SubscriptionStatus.ReadOnly
 ]
 
-export function grantsPlan (sub: Pick<Subscription, 'status' | 'providerData'> | undefined): boolean {
+export function grantsPlan (sub: Pick<Subscription, 'status' | 'providerData' | 'trialEnd'> | undefined): boolean {
   if (sub == null) return false
   // A past_due first-payment draft (pending) is unpaid — it does not grant a plan.
   if (sub.status === SubscriptionStatus.PastDue && (sub.providerData as any)?.pending === true) return false
+  // An expired trial (trialEnd passed) no longer grants its plan -> falls back to free.
+  if (sub.status === SubscriptionStatus.Trialing && sub.trialEnd != null && sub.trialEnd < Date.now()) return false
   return PLAN_GRANTING_STATUSES.includes(sub.status)
 }
 

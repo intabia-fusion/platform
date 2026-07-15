@@ -55,12 +55,47 @@ function buildLimits (input: PlanLimitsInput = {}): SubscriptionLimits {
   }
 }
 
+/**
+ * Wait until the workspace has a tier subscription (the payment pod auto-provisions one — free or
+ * trial — asynchronously on workspace creation). Set the plan only after it lands, so the explicit
+ * plan wins deterministically instead of racing the async auto-provision.
+ */
+export async function waitForTier (workspaceUuid: WorkspaceUuid, timeoutMs = 15000): Promise<void> {
+  const client = await getAdmin()
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const subs = await client.getSubscriptions(workspaceUuid, false)
+    if (subs.some((s) => s.type === 'tier')) return
+    await new Promise((resolve) => setTimeout(resolve, 300))
+  }
+}
+
+/** Read the current tier subscription (active or trialing) for assertions. */
+export async function getTierSubscription (workspaceUuid: WorkspaceUuid): Promise<
+| {
+  plan: string
+  status: string
+  usersLimit: number | undefined
+  trialEnd: number | undefined
+}
+| undefined
+> {
+  const client = await getAdmin()
+  const subs = await client.getSubscriptions(workspaceUuid, false)
+  const tier = subs.find((s) => s.type === 'tier' && (s.status === 'active' || s.status === 'trialing'))
+  if (tier == null) return undefined
+  return { plan: tier.plan, status: tier.status, usersLimit: tier.limits?.usersLimit, trialEnd: tier.trialEnd }
+}
+
 /** Set a workspace plan by uuid (used for freshly created, per-test workspaces). */
 export async function setWorkspacePlanByUuid (
   workspaceUuid: WorkspaceUuid,
   plan: string,
   input: PlanLimitsInput = {}
 ): Promise<void> {
+  // Let the async auto-provisioned tier land first, then supersede it (adminCreateSubscription
+  // cancels every prior tier), so a late trial/free never coexists with the explicit plan.
+  await waitForTier(workspaceUuid)
   const client = await getAdmin()
   await client.adminCreateSubscription({
     workspaceUuid,

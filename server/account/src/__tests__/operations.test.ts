@@ -2642,7 +2642,10 @@ describe('getSubscriptions', () => {
     const result = await getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})
 
     expect(result).toEqual(mockSubscriptions)
-    expect(mockDb.subscription.find).toHaveBeenCalledWith({ workspaceUuid, status: 'active' })
+    expect(mockDb.subscription.find).toHaveBeenCalledWith({
+      workspaceUuid,
+      status: { $in: ['active', 'trialing'] }
+    })
     expect(mockDb.getWorkspaceRole).toHaveBeenCalledWith(accountUuid, workspaceUuid)
   })
 
@@ -2728,7 +2731,10 @@ describe('getSubscriptions', () => {
 
     await getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', { workspaceUuid: serviceWorkspaceUuid })
 
-    expect(mockDb.subscription.find).toHaveBeenCalledWith({ workspaceUuid: serviceWorkspaceUuid, status: 'active' })
+    expect(mockDb.subscription.find).toHaveBeenCalledWith({
+      workspaceUuid: serviceWorkspaceUuid,
+      status: { $in: ['active', 'trialing'] }
+    })
     expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
   })
 
@@ -2743,7 +2749,10 @@ describe('getSubscriptions', () => {
 
     await getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})
 
-    expect(mockDb.subscription.find).toHaveBeenCalledWith({ workspaceUuid, status: 'active' })
+    expect(mockDb.subscription.find).toHaveBeenCalledWith({
+      workspaceUuid,
+      status: { $in: ['active', 'trialing'] }
+    })
   })
 
   test('workspace-less service token with no explicit uuid queries all workspaces', async () => {
@@ -2757,7 +2766,7 @@ describe('getSubscriptions', () => {
 
     await getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})
 
-    expect(mockDb.subscription.find).toHaveBeenCalledWith({ status: 'active' })
+    expect(mockDb.subscription.find).toHaveBeenCalledWith({ status: { $in: ['active', 'trialing'] } })
   })
 
   test('should reject non-service users without workspace in token', async () => {

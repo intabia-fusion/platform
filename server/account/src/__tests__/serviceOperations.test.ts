@@ -1642,7 +1642,7 @@ describe('upsertSubscription', () => {
       expect(mockDb.subscription.find).toHaveBeenCalledWith({
         workspaceUuid,
         type: 'tier',
-        status: 'active'
+        status: { $in: ['active', 'trialing'] }
       })
       expect(mockDb.subscription.update).toHaveBeenCalledWith(
         { id: 'old-business' },

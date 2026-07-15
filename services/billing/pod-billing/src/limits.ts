@@ -22,6 +22,7 @@ import {
 import {
   type AccountClient,
   getClient,
+  grantsPlan,
   type Subscription,
   SubscriptionStatus,
   SubscriptionType
@@ -139,7 +140,7 @@ export class LimitsEngine {
   private async recompute (ctx: MeasureContext, workspace: WorkspaceUuid, metric: UsageMetric): Promise<void> {
     const category = metricToCategory(metric)
     const subs = await this.accountClient(workspace).getSubscriptions(workspace, false)
-    const tier = subs.find((s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Active)
+    const tier = latestGrantingTier(subs)
     const used = await this.computeUsed(ctx, workspace, metric, tier)
     const limitValue = getEffectiveLimit(subs, metric)
 
@@ -206,10 +207,17 @@ function latestTier (subs: Subscription[]): Subscription | undefined {
   return subs.filter((s) => s.type === SubscriptionType.Tier).sort((a, b) => (b.createdOn ?? 0) - (a.createdOn ?? 0))[0]
 }
 
+/** Latest plan-granting tier (paid or live trial) by createdOn — deterministic on a trial+paid overlap. */
+function latestGrantingTier (subs: Subscription[]): Subscription | undefined {
+  return subs
+    .filter((s) => s.type === SubscriptionType.Tier && grantsPlan(s))
+    .sort((a, b) => (b.createdOn ?? 0) - (a.createdOn ?? 0))[0]
+}
+
+// One place resolving the effective plan: the latest granting tier uses its own limits; otherwise
+// (no tier, expired trial, unpaid) fall back to the free limits baked into the latest tier.
 function resolveTierLimits (subs: Subscription[]): TierLimits | undefined {
-  const active = subs.find((s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Active)
-  if (active?.limits != null) return active.limits
-  return latestTier(subs)?.freeLimits ?? undefined
+  return latestGrantingTier(subs)?.limits ?? latestTier(subs)?.freeLimits ?? undefined
 }
 
 function getLimitValue (limits: TierLimits | undefined, metric: UsageMetric): number {

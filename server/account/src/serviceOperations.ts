@@ -1505,12 +1505,13 @@ export async function upsertSubscription (
     updatedOn: Date.now()
   }
   // Invariant: at most one active tier subscription per workspace. Activating a tier
-  // subscription cancels every other active tier (different provider/id included).
+  // subscription cancels every other active/trialing tier (different provider/id included).
+  // Trialing included so an early paid purchase supersedes the trial.
   if (params.type === SubscriptionType.Tier && params.status === SubscriptionStatus.Active) {
     const others = await db.subscription.find({
       workspaceUuid,
       type: SubscriptionType.Tier,
-      status: SubscriptionStatus.Active
+      status: { $in: [SubscriptionStatus.Active, SubscriptionStatus.Trialing] }
     })
     const now = Date.now()
     for (const sub of others) {

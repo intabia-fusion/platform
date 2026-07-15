@@ -115,7 +115,7 @@ export async function createServer (
   publish: SubscriptionPublisher
 ): Promise<{
     app: Express
-    ensureFreeSubscription: (workspace: WorkspaceUuid) => Promise<void>
+    ensureInitialSubscription: (workspace: WorkspaceUuid) => Promise<void>
     createFreeIfNoActiveTier: (workspace: WorkspaceUuid) => Promise<void>
     persistSubscription: (data: SubscriptionData) => Promise<void>
     close: () => void
@@ -244,6 +244,18 @@ export async function createServer (
     ([, p]: [string, any]) => p?.free === true
   )?.[0]
 
+  // Optional trial for new workspaces (plan-config.yaml `trial:`). When absent/malformed, new
+  // workspaces get free. Validate numbers so a bad yaml can't yield NaN trialEnd (a dead trial).
+  const trialConfig: { plan: string, days: number, usersLimit: number } | undefined = (() => {
+    const t = planConfig.trial
+    if (t?.plan == null || planConfig.plans?.[t.plan] == null) return undefined
+    if (!Number.isFinite(t.days) || t.days <= 0 || !Number.isFinite(t.usersLimit) || t.usersLimit < 0) {
+      ctx.error('invalid trial config, ignoring', { trial: t })
+      return undefined
+    }
+    return { plan: t.plan, days: t.days, usersLimit: t.usersLimit }
+  })()
+
   function attachLimits (data: SubscriptionData): SubscriptionData {
     const quantity = data.providerData?.quantity as number | undefined
     const limits = resolveLimits(data.type, data.plan, quantity)
@@ -265,14 +277,54 @@ export async function createServer (
 
   // On workspace creation: if no tier subscription exists and a free plan is configured, create one
   // so the workspace is bounded by free limits from the start. Idempotent (skips if a tier exists).
-  async function ensureFreeSubscription (workspace: WorkspaceUuid): Promise<void> {
+  // Provision the initial tier for a new workspace: a trial when configured, else the free plan.
+  async function ensureInitialSubscription (workspace: WorkspaceUuid): Promise<void> {
     try {
       const existing = await accountClient.getSubscriptions(workspace, false)
       if (existing.some((s) => s.type === SubscriptionType.Tier)) return // already has a tier
-      await createFreeSubscription(workspace)
+      if (trialConfig !== undefined) {
+        await createTrialSubscription(workspace)
+      } else {
+        await createFreeSubscription(workspace)
+      }
     } catch (err: any) {
-      ctx.error('failed to ensure free subscription', { workspace, err })
+      ctx.error('failed to ensure initial subscription', { workspace, err })
     }
+  }
+
+  // Create a Trialing subscription on the configured trial plan for a new workspace.
+  async function createTrialSubscription (
+    workspace: WorkspaceUuid,
+    accountUuid?: AccountUuid
+  ): Promise<SubscriptionData | undefined> {
+    if (trialConfig === undefined) return
+    const wsToken = generateToken(systemAccountUuid, workspace, { service: 'payment' })
+    const members = await getAccountClient(config.AccountsUrl, wsToken).getWorkspaceMembers()
+    const owner = members.find((m) => m.role === AccountRole.Owner) ?? members[0]
+    if (owner === undefined) return
+    const subId = generateId()
+    // Plan limits (storage/tokens/etc), then force usersLimit to the trial cap so the seat count is
+    // independent of the plan's per-seat/flat shape. resolveLimits fully-populates or returns undefined.
+    const planLimits = resolveLimits(SubscriptionType.Tier, trialConfig.plan, trialConfig.usersLimit)
+    const limits = { ...planLimits, usersLimit: trialConfig.usersLimit }
+    const data: SubscriptionData = {
+      id: subId,
+      workspaceUuid: workspace,
+      accountUuid: accountUuid ?? owner.person,
+      provider: 'trial',
+      providerSubscriptionId: `trial-${subId}`,
+      periodStart: Date.now(),
+      periodEnd: undefined,
+      trialEnd: Date.now() + trialConfig.days * 24 * 60 * 60 * 1000,
+      type: SubscriptionType.Tier,
+      status: SubscriptionStatus.Trialing,
+      plan: trialConfig.plan,
+      limits,
+      providerData: { quantity: trialConfig.usersLimit }
+    } as unknown as SubscriptionData
+    await accountClient.upsertSubscription(data)
+    ctx.info('trial subscription created for workspace', { workspace, plan: trialConfig.plan, trialEnd: data.trialEnd })
+    return data
   }
 
   // Create a free subscription after finalized user-initiated cancelation of a paid subscription
@@ -967,7 +1019,7 @@ export async function createServer (
 
   return {
     app,
-    ensureFreeSubscription,
+    ensureInitialSubscription,
     createFreeIfNoActiveTier,
     persistSubscription,
     close: () => {
