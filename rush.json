@@ -852,6 +852,21 @@
       "shouldPublish": false
     },
     {
+      "packageName": "@hcengineering/workflow",
+      "projectFolder": "plugins/workflow",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/workflow-resources",
+      "projectFolder": "plugins/workflow-resources",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/workflow-assets",
+      "projectFolder": "plugins/workflow-assets",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@hcengineering/model-workbench",
       "projectFolder": "models/workbench",
       "shouldPublish": false
@@ -859,6 +874,11 @@
     {
       "packageName": "@hcengineering/model-task",
       "projectFolder": "models/task",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/model-workflow",
+      "projectFolder": "models/workflow",
       "shouldPublish": false
     },
     {
@@ -1434,6 +1454,21 @@
     {
       "packageName": "@hcengineering/server-task-resources",
       "projectFolder": "server-plugins/task-resources",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/server-workflow",
+      "projectFolder": "server-plugins/workflow",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/server-workflow-resources",
+      "projectFolder": "server-plugins/workflow-resources",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/model-server-workflow",
+      "projectFolder": "models/server-workflow",
       "shouldPublish": false
     },
     {
