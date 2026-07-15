@@ -79,8 +79,11 @@ import chatEn from '@hcengineering/chat-assets/lang/en.json'
 import cardEn from '@hcengineering/card-assets/lang/en.json'
 import mailEn from '@hcengineering/mail-assets/lang/en.json'
 import communicationEn from '@hcengineering/communication-assets/lang/en.json'
+import workflowEn from '@hcengineering/workflow-assets/lang/en.json'
 
 import coreRu from '@hcengineering/core/lang/ru.json'
+import workflowRu from '@hcengineering/workflow-assets/lang/ru.json'
+import { workflowId } from '@hcengineering/workflow'
 import loginRu from '@hcengineering/login-assets/lang/ru.json'
 import platformRu from '@hcengineering/platform/lang/ru.json'
 import activityRu from '@hcengineering/activity-assets/lang/ru.json'
@@ -175,4 +178,5 @@ export function registerStringLoaders (): void {
   addStringsLoader(cardId, createLoader(cardEn, cardRu))
   addStringsLoader(mailId, createLoader(mailEn, mailRu))
   addStringsLoader(communicationId, createLoader(communicationEn, communicationRu))
+  addStringsLoader(workflowId, createLoader(workflowEn, workflowRu))
 }

@@ -13,8 +13,12 @@
 // limitations under the License.
 //
 
-import { mergeIds } from '@hcengineering/platform'
-import workflow, { workflowId } from '@hcengineering/workflow'
-import {} from '@hcengineering/ui'
+const sveltePreprocess = require('svelte-preprocess')
 
-export default mergeIds(workflowId, workflow, {})
+module.exports = {
+  preprocess: sveltePreprocess({
+    scss: {
+      silenceDeprecations: ['legacy-js-api']
+    }
+  })
+}

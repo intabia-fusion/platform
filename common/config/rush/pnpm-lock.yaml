@@ -13725,9 +13725,15 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/setting':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/setting
       '@hcengineering/task':
         specifier: workspace:^0.7.0
         version: link:../../plugins/task
+      '@hcengineering/ui':
+        specifier: workspace:^0.7.0
+        version: link:../../packages/ui
       '@hcengineering/workflow':
         specifier: workspace:^0.7.0
         version: link:../../plugins/workflow
@@ -29934,6 +29940,9 @@ importers:
       '@hcengineering/task':
         specifier: workspace:^0.7.0
         version: link:../task
+      '@hcengineering/ui':
+        specifier: workspace:^0.7.0
+        version: link:../../packages/ui
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -30041,6 +30050,9 @@ importers:
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
+      '@hcengineering/workflow':
+        specifier: workspace:^0.7.0
+        version: link:../workflow
       svelte:
         specifier: ^4.2.20
         version: 4.2.20
@@ -37073,6 +37085,12 @@ importers:
       '@hcengineering/workbench-assets':
         specifier: workspace:^0.7.0
         version: link:../../plugins/workbench-assets
+      '@hcengineering/workflow':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/workflow
+      '@hcengineering/workflow-assets':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/workflow-assets
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19

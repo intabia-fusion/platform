@@ -1,4 +1,3 @@
-//
 // Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -15,6 +14,7 @@
 
 import { Class, Mixin, Ref } from '@hcengineering/core'
 import { IntlString, plugin, Plugin } from '@hcengineering/platform'
+import { AnyComponent } from '@hcengineering/ui'
 import { ProjectWorkflow, Workflow, WorkflowTransition } from './types'
 
 export const workflowId = 'workflow' as Plugin
@@ -26,6 +26,9 @@ export default plugin(workflowId, {
   },
   mixin: {
     ProjectWorkflow: '' as Ref<Mixin<ProjectWorkflow>>
+  },
+  component: {
+    WorkflowsSettings: '' as AnyComponent
   },
   string: {
     Workflow: '' as IntlString,

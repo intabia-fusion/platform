@@ -13,6 +13,13 @@
 // limitations under the License.
 //
 
-import { type Resources } from '@hcengineering/platform'
+import '@hcengineering/platform-rig/profiles/ui/svelte'
 
-export default async (): Promise<Resources> => ({})
+import type { Resources } from '@hcengineering/platform'
+import WorkflowsSettings from './components/WorkflowsSettings.svelte'
+
+export default async (): Promise<Resources> => ({
+  component: {
+    WorkflowsSettings
+  }
+})
