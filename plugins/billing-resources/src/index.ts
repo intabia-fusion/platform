@@ -20,7 +20,7 @@ import WorkbenchExtension from './components/WorkbenchExtension.svelte'
 import UsageExtension from './components/UsageExtension.svelte'
 import ReadOnlyBanner from './components/ReadOnlyBanner.svelte'
 
-export { isLimited, setIsLimited, planLimits } from './stores/subscription'
+export { isLimited, setIsLimited, planLimits, seatCount, seatLimitReached } from './stores/subscription'
 export { checkWorkspaceLimits } from './utils'
 export { ReadOnlyBanner }
 

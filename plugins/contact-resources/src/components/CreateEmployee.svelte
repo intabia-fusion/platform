@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -33,9 +34,9 @@
   } from '@hcengineering/core'
   import login from '@hcengineering/login'
   import { getResource } from '@hcengineering/platform'
-  import { Card, createQuery, getClient } from '@hcengineering/presentation'
+  import { Card, getClient } from '@hcengineering/presentation'
   import { createFocusManager, EditBox, FocusHandler, IconInfo, Label } from '@hcengineering/ui'
-  import { planLimits, checkWorkspaceLimits } from '@hcengineering/billing-resources'
+  import { planLimits, checkWorkspaceLimits, seatCount, seatLimitReached } from '@hcengineering/billing-resources'
   import { createEventDispatcher } from 'svelte'
   import { ChannelsDropdown } from '..'
   import contact from '../plugin'
@@ -73,6 +74,13 @@
   async function createEmployee (): Promise<void> {
     try {
       saving = true
+      // Guard against a seatless create: the server rejects the Employee-mixin tx but the Person doc
+      // is a separate, non-blocked tx that would already be committed — leaving an orphan Person.
+      // Bail before writing anything so no partial state is created.
+      const limit = $planLimits.usersLimit
+      if (limit > 0 && ($seatCount === undefined || $seatCount >= limit)) {
+        return
+      }
       changeEmail()
       const mail = email.trim()
       const socialString = buildSocialIdString({
@@ -160,16 +168,9 @@
 
   $: exists = $employeeBySocialKeyStore.get(emailSocialString) !== undefined
 
-  // Plan seat limit: 0 = unlimited. Count active employees and block creation past the limit.
-  // undefined until the query resolves — with a limit set, creation is blocked until the count is known.
-  let activeEmployeesCount: number | undefined = undefined
-  const employeesQuery = createQuery()
-  employeesQuery.query(contact.mixin.Employee, { active: true }, (res) => {
-    activeEmployeesCount = res.length
-  })
+  // Plan seat limit, from the billing store's server-computed seat count — counting Employee mixins
+  // here would include the AI bot and block the last seat. Trails the pod-billing refresh (~25s).
   void checkWorkspaceLimits()
-  $: usersLimit = $planLimits.usersLimit
-  $: seatLimitReached = usersLimit > 0 && (activeEmployeesCount === undefined || activeEmployeesCount >= usersLimit)
 
   const manager = createFocusManager()
 
@@ -196,7 +197,7 @@
     lastName.trim().length > 0 &&
     email.trim().length > 0 &&
     !exists &&
-    !seatLimitReached &&
+    !$seatLimitReached &&
     canSave}
   on:close={() => {
     dispatch('close')
@@ -211,11 +212,11 @@
           <Label label={contact.string.PersonAlreadyExists} />
         </span>
       </div>
-    {:else if seatLimitReached}
+    {:else if $seatLimitReached && !saving}
       <div class="flex-row-center error-color" data-id="seatLimitError">
         <IconInfo size={'small'} />
         <span class="text-sm overflow-label ml-2">
-          <Label label={contact.string.SeatLimitReached} params={{ limit: usersLimit }} />
+          <Label label={contact.string.SeatLimitReached} params={{ limit: $planLimits.usersLimit }} />
         </span>
       </div>
     {/if}

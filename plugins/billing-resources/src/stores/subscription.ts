@@ -59,6 +59,24 @@ export const planLimits = derived(subscriptionStore, ($s) =>
   calculateLimits($s.currentPlan, $s.currentPackage, $s.currentSubscription, $s.currentPackageSubscription)
 )
 
+/**
+ * Server-computed count of seat-occupying members (active employees minus AI/system/Admin/guest),
+ * from pod-billing usage.ts. Single source of truth for "seats used": counting active Employee
+ * mixins client-side would include the AI bot and disagree with what the server enforces.
+ * undefined until usageInfo is loaded; refreshed on the pod-billing interval (~25s).
+ */
+export const seatCount = derived(subscriptionStore, ($s) => $s.usageInfo?.usage.membersCount)
+
+/**
+ * True when the plan's user limit is reached (0 = unlimited). undefined seats block until known.
+ * Trails seatCount, so up to one pod-billing interval passes before a just-added/removed employee
+ * flips this — the server rejects an over-limit create regardless.
+ */
+export const seatLimitReached = derived([seatCount, planLimits], ([$seats, $limits]) => {
+  const limit = $limits.usersLimit
+  return limit > 0 && ($seats === undefined || $seats >= limit)
+})
+
 export function updateLimitExceeded (limit: boolean): void {
   subscriptionStore.update((store) => ({
     ...store,
