@@ -36,9 +36,8 @@ export async function waitForSchemaVersion (ctx: MeasureContext, client: DBClien
 
       if (exists) {
         const res = await client.execute(`
-          SELECT version 
-          FROM system._version 
-          LIMIT 1
+          SELECT MAX(version) as version 
+          FROM system._version
         `)
         const versionRaw = res[0]?.version
         const currentVersion = typeof versionRaw === 'string' ? parseInt(versionRaw, 10) : versionRaw

@@ -1,5 +1,6 @@
 //
 // Copyright © 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -33,10 +34,13 @@ const activityMarkupLimit = 100 * 1024 // 100kb
 export interface PlatformStorageAdapterOptions {
   retryCount?: number
   retryInterval?: number
+  activityAggregationDelay?: number
 }
 export class PlatformStorageAdapter implements CollabStorageAdapter {
   private readonly retryCount: number
   private readonly retryInterval: number
+  private readonly activityAggregationDelay: number
+  private readonly lastDUMs = new Map<string, { _id: Ref<DocUpdateMessage>, createdOn: number }>()
 
   constructor (
     private readonly storage: StorageAdapter,
@@ -44,6 +48,7 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
   ) {
     this.retryCount = options.retryCount ?? 5
     this.retryInterval = options.retryInterval ?? 50
+    this.activityAggregationDelay = options.activityAggregationDelay ?? 5 * 60 * 1000
   }
 
   async loadDocument (ctx: MeasureContext, documentName: string, context: Context): Promise<YDoc | undefined> {
@@ -270,29 +275,54 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
           ? (current._id as Ref<Space>)
           : current.space
         await sendEvent(client, objectAttr, prevValue, currValue, current)
-        const data: AttachedData<DocUpdateMessage> = {
-          objectId,
-          objectClass,
-          action: 'update',
-          attributeUpdates: {
-            attrKey: objectAttr,
-            attrClass: core.class.TypeMarkup,
-            prevValue,
-            set: [currValue],
-            added: [],
-            removed: [],
-            isMixin: hierarchy.isMixin(objectClass)
-          },
-          history: []
+
+        const cacheKey = `${objectId}:${objectAttr}:${client.txFactory.account}`
+        const cached = this.lastDUMs.get(cacheKey)
+        const now = Date.now()
+
+        if (cached !== undefined && now - cached.createdOn < this.activityAggregationDelay) {
+          await client.updateCollection(
+            activity.class.DocUpdateMessage,
+            space,
+            cached._id,
+            current._id,
+            current._class,
+            'docUpdateMessages',
+            {
+              createdOn: now,
+              'attributeUpdates.set': [currValue]
+            } as any
+          )
+          cached.createdOn = now
+        } else {
+          const data: AttachedData<DocUpdateMessage> = {
+            objectId,
+            objectClass,
+            action: 'update',
+            attributeUpdates: {
+              attrKey: objectAttr,
+              attrClass: core.class.TypeMarkup,
+              prevValue,
+              set: [currValue],
+              added: [],
+              removed: [],
+              isMixin: hierarchy.isMixin(objectClass)
+            },
+            history: []
+          }
+          const newDUMId = await client.addCollection(
+            activity.class.DocUpdateMessage,
+            space,
+            current._id,
+            current._class,
+            'docUpdateMessages',
+            data
+          )
+          this.lastDUMs.set(cacheKey, {
+            _id: newDUMId,
+            createdOn: now
+          })
         }
-        return await client.addCollection(
-          activity.class.DocUpdateMessage,
-          space,
-          current._id,
-          current._class,
-          'docUpdateMessages',
-          data
-        )
       },
       {
         workspace: context.wsIds.uuid,

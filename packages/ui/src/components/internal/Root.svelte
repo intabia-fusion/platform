@@ -19,6 +19,7 @@
   import Label from '../Label.svelte'
   import StatusComponent from '../Status.svelte'
   import Clock from './Clock.svelte'
+  import ConnectionStatus from './ConnectionStatus.svelte'
   import RootBarExtension from './RootBarExtension.svelte'
   import Settings from './Settings.svelte'
   import { isAppFocusedStore } from '../../stores'
@@ -278,6 +279,7 @@
         </div>
         <div class="flex-row-reverse flex-gap-0-5" style:-webkit-app-region={'no-drag'}>
           <Settings />
+          <ConnectionStatus />
           <Clock />
           <div class="flex-row-center flex-gap-0-5">
             {#if !secondRow}

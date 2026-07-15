@@ -41,6 +41,7 @@
   export let hideLink = false
   export let compact = false
   export let readonly = false
+  export let timeFormat: 'time' | 'full' = 'time'
   export let type: ActivityMessageViewType = 'default'
   export let onClick: (() => void) | undefined = undefined
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
@@ -120,7 +121,7 @@
     {hoverStyles}
     {skipLabel}
     {readonly}
-    showDatePreposition={hideLink}
+    {timeFormat}
     embeddedActions={true}
     {type}
     {onClick}

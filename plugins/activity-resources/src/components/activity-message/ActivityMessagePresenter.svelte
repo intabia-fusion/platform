@@ -41,6 +41,7 @@
   export let compact = false
   export let readonly = false
   export let padding: string | null = null
+  export let timeFormat: 'time' | 'full' = 'time'
   export let onClick: (() => void) | undefined = undefined
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
 
@@ -77,6 +78,7 @@
       compact,
       readonly,
       padding,
+      timeFormat,
       onClick,
       onReply
     }}

@@ -57,9 +57,8 @@ export async function ensureSystemSchema (sql: Sql): Promise<void> {
 
 export async function isUpToDate (sql: Sql, expectedVersion: number): Promise<boolean> {
   const res = await sql.unsafe(`
-    SELECT version 
-    FROM system._version 
-    LIMIT 1
+    SELECT MAX(version) as version 
+    FROM system._version
   `)
   const currentVersion = res[0]?.version
   return currentVersion !== undefined && typeof currentVersion === 'number' && currentVersion >= expectedVersion

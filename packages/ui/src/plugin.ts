@@ -159,7 +159,17 @@ export const uis = plugin(uiId, {
     EmojiStyle: '' as IntlString,
     EmojiSystem: '' as IntlString,
     EmojiNoto: '' as IntlString,
-    AccentColor: '' as IntlString
+    AccentColor: '' as IntlString,
+    Connection: '' as IntlString,
+    Connected: '' as IntlString,
+    Reconnecting: '' as IntlString,
+    RateLimit: '' as IntlString,
+    RateLimitValue: '' as IntlString,
+    Sent: '' as IntlString,
+    Received: '' as IntlString,
+    TrafficValue: '' as IntlString,
+    Latency: '' as IntlString,
+    LatencyValue: '' as IntlString
   },
   metadata: {
     DefaultApplication: '' as Metadata<AnyComponent>,

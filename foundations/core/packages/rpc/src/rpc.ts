@@ -117,6 +117,11 @@ export interface RateLimitInfo {
   retryAfter?: number // in milliseconds
 }
 
+// Platform-event names the connection broadcasts so the UI can show network state.
+export const RateLimitUpdatedEvent = 'rate-limit-updated' // data: RateLimitInfo | undefined
+export const ConnectionStatusEvent = 'connection-status' // data: boolean (connected)
+export const ConnectionStatsEvent = 'connection-stats' // data: { sent, received, sentBytes, receivedBytes, latency }
+
 /**
  * Response object define a server response on transaction request.
  * Also used to inform other clients about operations being performed by server.

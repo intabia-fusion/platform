@@ -42,6 +42,7 @@
   export let hideLink = false
   export let compact = false
   export let readonly: boolean = false
+  export let timeFormat: 'time' | 'full' = 'time'
   export let onClick: (() => void) | undefined = undefined
 
   const client = getClient()
@@ -96,7 +97,7 @@
   {actions}
   {hoverable}
   {hoverStyles}
-  showDatePreposition
+  {timeFormat}
   {onClick}
 >
   <svelte:fragment slot="header">

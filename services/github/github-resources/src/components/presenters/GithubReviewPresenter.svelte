@@ -21,6 +21,7 @@
   export let isSelected: boolean = false
   export let shouldScroll: boolean = false
   export let embedded: boolean = false
+  export let timeFormat: 'time' | 'full' = 'time'
   export let onClick: (() => void) | undefined = undefined
 
   $: personId = value?.createdBy ?? value?.modifiedBy
@@ -72,6 +73,7 @@
       {shouldScroll}
       {embedded}
       viewlet={undefined}
+      {timeFormat}
       {onClick}
     >
       <svelte:fragment slot="header">

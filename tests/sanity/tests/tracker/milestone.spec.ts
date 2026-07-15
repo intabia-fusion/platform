@@ -50,7 +50,7 @@ test.describe('Tracker milestone tests', () => {
     await milestonesDetailsPage.checkCommentExist(commentText)
     await milestonesDetailsPage.checkActivityContentExist(`New milestone: ${editMilestone.name}`)
     await milestonesDetailsPage.checkActivityContentExist(`Status set to ${editMilestone.status}`)
-    await milestonesDetailsPage.checkActivityExist('changed description at')
+    await milestonesDetailsPage.checkActivityExist('changed description')
   })
 
   test('Delete a Milestone', async () => {

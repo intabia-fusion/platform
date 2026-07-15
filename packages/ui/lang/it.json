@@ -47,7 +47,7 @@
     "DueDatePopupOverdueTitle": "Scadeva il {value}",
     "DueDatePopupDescription": "{value, plural, =0 {Oggi} =1 {Domani} other {# giorni rimanenti}}",
     "DueDatePopupOverdueDescription": "{value, plural, =1 {1 giorno di ritardo} other {# giorni di ritardo}}",
-    "English": "Inglese",
+    "English": "English",
     "Russian": "Русский",
     "Portuguese": "Português",
     "PortugueseBrazil": "Português (Brasil)",
@@ -109,6 +109,16 @@
     "ThisYear": "Quest'anno",
     "EmojiStyle": "Stile emoji",
     "EmojiSystem": "Predefinito di sistema",
-    "EmojiNoto": "Noto Color"
+    "EmojiNoto": "Noto Color",
+    "Connection": "Connessione",
+    "Connected": "Connesso",
+    "Reconnecting": "Riconnessione...",
+    "RateLimit": "Limite richieste",
+    "RateLimitValue": "{remaining} di {limit} rimasti, reset tra {seconds}s",
+    "Sent": "Inviato",
+    "Received": "Ricevuto",
+    "TrafficValue": "{count} msg, {kb} KB",
+    "Latency": "Latenza",
+    "LatencyValue": "{ms} ms"
   }
 }
