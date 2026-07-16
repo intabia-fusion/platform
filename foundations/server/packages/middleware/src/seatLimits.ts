@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import contact, { type Employee } from '@hcengineering/contact'
 import core, {
   AccountRole,
   type AccountUuid,
@@ -24,8 +23,6 @@ import core, {
   type Tx,
   type TxApplyIf,
   type TxCUD,
-  type TxMixin,
-  type TxUpdateDoc,
   type Doc,
   type WorkspaceUuid,
   configUserAccountUuid
@@ -39,12 +36,12 @@ import {
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
-import { LIMITS_PROVIDER_VAR, PLAN_LIMITS_MAP_KEY, PLAN_LIMITS_VAR } from './planLimits'
+import { LIMITS_PROVIDER_VAR, MEMBERS_VERSION_KEY, PLAN_LIMITS_MAP_KEY, PLAN_LIMITS_VAR } from './planLimits'
 import { aiBotAccountEmail } from './identity'
 
 const GUEST_ROLES = new Set<AccountRole>([AccountRole.Guest, AccountRole.DocGuest, AccountRole.ReadOnlyGuest])
 
-/** Owners take seats first, then Maintainers, then Users; ties broken by employee createdOn. */
+/** Owners take seats first, then Maintainers, then Users; ties broken by account uuid (deterministic). */
 function rolePriority (role: AccountRole | undefined): number {
   if (role === AccountRole.Owner) return 0
   if (role === AccountRole.Maintainer) return 1
@@ -70,18 +67,17 @@ function isSystemAccount (
  * Seat enforcement: members beyond usersLimit become read-only — write tx are rejected here,
  * except the direct/chat-message classes the provider whitelists. The account role is NOT
  * mutated; the user keeps their role so onboarding/identity flows that read role stay consistent.
- * Seats are assigned to active employees by role priority (Owner, Maintainer, then Users),
- * createdOn order within a role.
+ * Seats are assigned to workspace members by role priority (Owner, Maintainer, then Users),
+ * account-uuid order within a role. The member set is the account ws_members list (a person is
+ * there only after real login); membership changes arrive via the host members-version bump.
  */
 export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
   private usersLimit = 0
   private readonly seatSet = new Set<AccountUuid>()
   /** System/AI account uuids (never occupy a seat). Resolved lazily; undefined = not yet resolved. */
   private systemAccounts: Set<AccountUuid> | undefined
-  /** Set when an Employee tx is seen; triggers a rebuild on the next tx. */
-  private seatSetDirty = false
-  /** Cached countActiveEmployees result — the seatless-member path runs on every tx. */
-  private activeCount: { count: number, ts: number } | undefined
+  /** Last members-version this instance rebuilt against; a bump by the host consumer forces a rebuild. */
+  private membersVersion = -1
   /** Seats init is lazy: PLAN_LIMITS_VAR is published by PlanLimitsMiddleware, which boots after us. */
   private seatsInited = false
 
@@ -128,7 +124,7 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
     }
 
     try {
-      await this.buildSeatSet(ctx)
+      await this.buildSeatSet()
       ctx.info('SeatLimitsMiddleware: seat init complete', {
         usersLimit: this.usersLimit,
         seated: this.seatSet.size
@@ -146,111 +142,51 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
     return this.systemAccounts
   }
 
-  /**
-   * Fill seatSet with the first usersLimit eligible employees (role priority, then createdOn).
-   * The slot counter advances even for unresolvable accounts, so a card without an accepted
-   * invite still consumes budget; seatSet itself holds only resolvable uuids for the downgrade.
-   */
-  private async buildSeatSet (ctx: MeasureContext): Promise<void> {
+  /** Seat-eligible workspace members (uuid), sorted by role priority then uuid for a deterministic set. */
+  private async eligibleMembers (): Promise<AccountUuid[]> {
     const provider = this.provider
-    if (provider === undefined) return
+    if (provider === undefined) return []
     const members = await provider.getWorkspaceMembers(this.context.workspace.uuid)
     const systemAccounts = await this.resolveSystemAccounts()
 
-    // Keep every member role (including Admin) so the seat loop can identify and skip Admins.
-    const memberRole = new Map<AccountUuid, AccountRole>()
-    for (const m of members) memberRole.set(m.person, m.role)
-
-    const employees = (await this.provideFindAll(ctx, contact.mixin.Employee, { active: true })) ?? []
-    const sorted = [...employees].sort((a, b) => {
-      const pa = rolePriority(a.personUuid == null ? undefined : memberRole.get(a.personUuid))
-      const pb = rolePriority(b.personUuid == null ? undefined : memberRole.get(b.personUuid))
-      if (pa !== pb) return pa - pb
-      return (a.createdOn ?? 0) - (b.createdOn ?? 0)
-    })
-
-    this.seatSet.clear()
-    let seatsUsed = 0
-    for (const emp of sorted as Employee[]) {
-      if (seatsUsed >= this.usersLimit) break
-      const uuid = emp.personUuid
-      if (uuid != null && !this.seatEligible(uuid, memberRole.get(uuid), systemAccounts)) continue
-      seatsUsed++
-      if (uuid != null) this.seatSet.add(uuid)
-    }
+    const eligible = members.filter((m) => this.seatEligible(m.person, m.role, systemAccounts))
+    const roleOf = new Map<AccountUuid, AccountRole>()
+    for (const m of members) roleOf.set(m.person, m.role)
+    return eligible
+      .map((m) => m.person)
+      .sort((a, b) => {
+        const pa = rolePriority(roleOf.get(a))
+        const pb = rolePriority(roleOf.get(b))
+        if (pa !== pb) return pa - pb
+        return a < b ? -1 : a > b ? 1 : 0
+      })
   }
 
-  /** A seat is consumed by any active employee except system/AI/Admin and guest-role accounts. */
-  private seatEligible (uuid: AccountUuid, role: AccountRole | undefined, systemAccounts: Set<AccountUuid>): boolean {
+  /** Fill seatSet with the first usersLimit eligible members (role priority, then uuid). */
+  private async buildSeatSet (): Promise<void> {
+    const eligible = await this.eligibleMembers()
+    this.seatSet.clear()
+    for (const uuid of eligible.slice(0, this.usersLimit)) this.seatSet.add(uuid)
+  }
+
+  /** A seat is consumed by any member except system/AI/Admin and guest-role accounts. */
+  private seatEligible (uuid: AccountUuid, role: AccountRole, systemAccounts: Set<AccountUuid>): boolean {
     if (systemAccounts.has(uuid)) return false
     if (role === AccountRole.Admin) return false
-    if (role !== undefined && GUEST_ROLES.has(role)) return false
-    return true
+    return !GUEST_ROLES.has(role)
   }
 
-  private async rebuildSeatSet (ctx: MeasureContext): Promise<void> {
-    this.seatSetDirty = false
+  /** Rebuild the seat set if the host bumped the members-version since our last build. */
+  private async refreshSeatSetIfStale (ctx: MeasureContext): Promise<void> {
+    const versions = this.context.contextVars[MEMBERS_VERSION_KEY] as Map<WorkspaceUuid, number> | undefined
+    const current = versions?.get(this.context.workspace.uuid) ?? 0
+    if (current === this.membersVersion) return
+    this.membersVersion = current
     try {
-      await this.buildSeatSet(ctx)
+      await this.buildSeatSet()
     } catch (err: any) {
       ctx.error('SeatLimitsMiddleware: failed to rebuild seat set', { err })
     }
-  }
-
-  private isEmployeeTx (tx: Tx): boolean {
-    return (tx as TxCUD<Doc>).objectClass === contact.mixin.Employee
-  }
-
-  /**
-   * A tx that turns an employee active: the create-mixin (UI "+Employee") or a re-activation
-   * update (active: false -> true). These add a seat and must be blocked when the plan is full.
-   */
-  private isEmployeeActivation (tx: Tx): boolean {
-    // UI may wrap the create-mixin in apply(); unwrap so the inner CUD is inspected.
-    if (tx._class === core.class.TxApplyIf) {
-      return (tx as TxApplyIf).txes.some((inner) => this.isEmployeeActivation(inner))
-    }
-    if (tx._class === core.class.TxMixin) {
-      const mt = tx as TxMixin<Doc, Doc>
-      return mt.mixin === contact.mixin.Employee && (mt.attributes as Partial<Employee>)?.active === true
-    }
-    if (tx._class === core.class.TxUpdateDoc) {
-      const ut = tx as TxUpdateDoc<Employee>
-      return ut.objectClass === contact.mixin.Employee && ut.operations?.active === true
-    }
-    return false
-  }
-
-  /**
-   * Count seat-consuming active employees: every active Employee minus system/AI identities and
-   * guest-role accounts (read-only, no seat). Mirrors buildSeatSet's seat accounting so the
-   * creation block and the downgrade agree on what fills the budget.
-   */
-  private async countActiveEmployees (ctx: MeasureContext): Promise<number> {
-    const provider = this.provider
-    const systemAccounts = await this.resolveSystemAccounts()
-    const members = (await provider?.getWorkspaceMembers(this.context.workspace.uuid)) ?? []
-    const memberRole = new Map<AccountUuid, AccountRole>()
-    for (const m of members) memberRole.set(m.person, m.role)
-
-    const employees = (await this.provideFindAll(ctx, contact.mixin.Employee, { active: true })) ?? []
-    let count = 0
-    for (const emp of employees as Employee[]) {
-      const uuid = emp.personUuid
-      // Employees without a resolvable account (no membership) still take a slot — a card
-      // pending invite consumes budget; only system/Admin/guest are exempt.
-      if (uuid != null && !this.seatEligible(uuid, memberRole.get(uuid), systemAccounts)) continue
-      count++
-    }
-    this.activeCount = { count, ts: Date.now() }
-    return count
-  }
-
-  /** Cached count (30s TTL, invalidated on Employee tx) — avoids a remote+DB round trip per tx. */
-  private async countActiveEmployeesCached (ctx: MeasureContext): Promise<number> {
-    const cached = this.activeCount
-    if (cached !== undefined && Date.now() - cached.ts < 30_000) return cached.count
-    return await this.countActiveEmployees(ctx)
   }
 
   /** Classes a read-only member may still write (direct/chat messages). Empty if provider omits it. */
@@ -310,42 +246,15 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
       return await this.provideTx(ctx, txes)
     }
 
-    // Hard-block adding a new seat past the limit. Existing over-limit employees (after a plan
-    // downgrade) are kept; only NEW activations are rejected. Counted by active Employee, minus
-    // system/AI. The seatless read-only enforcement below still applies to over-limit members.
-    if (txes.some((tx) => this.isEmployeeActivation(tx))) {
-      const current = await this.countActiveEmployees(ctx)
-      if (current >= this.usersLimit) {
-        ctx.info('SeatLimits: employee creation rejected', { usersLimit: this.usersLimit, current })
-        throw new PlatformError(
-          new Status(Severity.ERROR, platform.status.PlanLimitExceeded, { category: contact.mixin.Employee })
-        )
-      }
-    }
-
-    if (this.seatSetDirty) {
-      await this.rebuildSeatSet(ctx)
-    }
-    // Employee active change invalidates the seat-set and the active count for the next tx.
-    if (!this.seatSetDirty && txes.some((tx) => this.isEmployeeTx(tx))) {
-      this.seatSetDirty = true
-      this.activeCount = undefined
-    }
+    // Membership changes (join/leave/role) arrive as a host members-version bump; rebuild if stale.
+    // The join-time hard cap lives in the account service now (a join is not a transactor tx).
+    await this.refreshSeatSetIfStale(ctx)
 
     if (GUEST_ROLES.has(account.role)) {
       return await this.provideTx(ctx, txes)
     }
 
     if (this.seatSet.has(account.uuid)) {
-      return await this.provideTx(ctx, txes)
-    }
-
-    // Seats not yet full: a free seat is available, so this member takes it (covers the boot window
-    // where a fresh workspace has no active Employee yet — onboarding writes must not be blocked).
-    // Count real active employees rather than seatSet.size, which may be empty if the set has not
-    // been (re)built yet under load — otherwise enforcement would wrongly disable on a full workspace.
-    const activeEmployees = await this.countActiveEmployeesCached(ctx)
-    if (activeEmployees < this.usersLimit) {
       return await this.provideTx(ctx, txes)
     }
 

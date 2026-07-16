@@ -99,13 +99,14 @@ export const main = async (): Promise<void> => {
     QueueTopic.Workspace,
     'billing-plan',
     async (ctx, msgs) => {
-      // A plan change may target a brand-new workspace the periodic loop skips until it is visited.
+      // A plan or membership change may target a workspace the periodic loop skips until visited;
+      // recompute now so the Usage bar seat count refreshes immediately.
       const workspaces = msgs
-        .filter(
-          (m) =>
-            m.value.type === QueueWorkspaceEvent.LimitsChanged &&
-            (m.value as QueueWorkspaceLimitsMessage).category === LimitCategory.Plan
-        )
+        .filter((m) => {
+          if (m.value.type !== QueueWorkspaceEvent.LimitsChanged) return false
+          const category = (m.value as QueueWorkspaceLimitsMessage).category
+          return category === LimitCategory.Plan || category === LimitCategory.Members
+        })
         .map((m) => m.workspace)
       if (workspaces.length > 0) {
         await worker.recomputeWorkspacesNow(ctx, workspaces)

@@ -41,7 +41,7 @@ import { decodeToken, decodeTokenVerbose, generateToken, type PermissionsGrant }
 import { isAdminEmail } from './admin'
 import { accountPlugin, type CrmNotification } from './plugin'
 import { getFreePlanLimits } from './freeLimits'
-import { type AccountServiceMethods, getServiceMethods } from './serviceOperations'
+import { type AccountServiceMethods, getServiceMethods, publishMembersChanged } from './serviceOperations'
 import {
   type Account,
   type AccountDB,
@@ -1101,11 +1101,57 @@ export async function checkJoin (
 
   if (getRolePower(wsLoginInfo.role) < getRolePower(invite.role)) {
     await db.updateWorkspaceRole(accountUuid, workspaceUuid, invite.role)
+    await publishMembersChanged(ctx, workspaceUuid)
   }
 
   return {
     ...wsLoginInfo,
     role: invite.role
+  }
+}
+
+// aiBot is a technical account (system modifiedBy) that lands in ws_members as role=User; it must not
+// occupy a paid seat. Members that count toward a paid seat: ws_members minus the aiBot account.
+const AI_BOT_EMAIL = process.env.AI_BOT_EMAIL ?? 'huly.ai.bot@hc.engineering'
+
+async function getSeatMembers (db: AccountDB, workspace: WorkspaceUuid): Promise<WorkspaceMemberInfo[]> {
+  const members = await db.getWorkspaceMembers(workspace)
+  const aiBot = (await getEmailSocialId(db, AI_BOT_EMAIL))?.personUuid
+  return aiBot == null ? members : members.filter((m) => m.person !== aiBot)
+}
+
+// Roles that never occupy a paid seat (guests are read-only). Admins are operators, also seatless.
+const SEATLESS_ROLES: AccountRole[] = [
+  AccountRole.Admin,
+  AccountRole.Guest,
+  AccountRole.DocGuest,
+  AccountRole.ReadOnlyGuest
+]
+
+/**
+ * Best-effort join-time seat cap: reject a new member when the paid plan's usersLimit is already
+ * filled. ponytail: best-effort — concurrent accepts can overshoot by 1-2 (no atomic count); the
+ * transactor SeatLimitsMiddleware read-only enforcement is the real backstop for over-limit members.
+ */
+async function assertSeatAvailableOnJoin (
+  ctx: MeasureContext,
+  db: AccountDB,
+  workspace: WorkspaceUuid,
+  joiningRole: AccountRole
+): Promise<void> {
+  if (SEATLESS_ROLES.includes(joiningRole)) return
+  const tier = (await db.subscription.find({ workspaceUuid: workspace })).find(
+    (s) =>
+      s.type === SubscriptionType.Tier &&
+      (s.status === SubscriptionStatus.Active || s.status === SubscriptionStatus.Trialing)
+  )
+  const usersLimit = tier?.limits?.usersLimit ?? 0
+  if (usersLimit === 0) return // unlimited or free-fallback: no join-time cap
+  const members = await getSeatMembers(db, workspace)
+  const seatsUsed = members.filter((m) => !SEATLESS_ROLES.includes(m.role)).length
+  if (seatsUsed >= usersLimit) {
+    ctx.info('join rejected: seat limit reached', { workspace, usersLimit, seatsUsed })
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.PlanLimitExceeded, {}))
   }
 }
 
@@ -1257,9 +1303,12 @@ export async function checkAutoJoin (
       const targetRole = await getWorkspaceRole(db, targetAccount.uuid, workspace.uuid)
 
       if (targetRole == null) {
+        await assertSeatAvailableOnJoin(ctx, db, workspace.uuid, invite.role)
         await db.assignWorkspace(targetAccount.uuid, workspace.uuid, invite.role)
+        await publishMembersChanged(ctx, workspace.uuid)
       } else if (getRolePower(targetRole) < getRolePower(invite.role)) {
         await db.updateWorkspaceRole(targetAccount.uuid, workspace.uuid, invite.role)
+        await publishMembersChanged(ctx, workspace.uuid)
       }
 
       if (token === undefined || token === null) {
@@ -1574,6 +1623,7 @@ export async function leaveWorkspace (
 
   await db.unassignWorkspace(targetAccount, workspace)
   ctx.info('Account removed from workspace', { targetAccount, workspace })
+  await publishMembersChanged(ctx, workspace)
 
   if (account === targetAccount) {
     const person = await db.person.findOne({ uuid: account })
@@ -1884,7 +1934,9 @@ export async function getLoginInfoByToken (
 
       // Create an automatic account and assign it to the grant workspace
       await signUpByGrant(ctx, db, branding, accountUuid, grant, params)
+      await assertSeatAvailableOnJoin(ctx, db, workspaceUuid, grant.role)
       await db.assignWorkspace(accountUuid, workspaceUuid, grant.role)
+      await publishMembersChanged(ctx, workspaceUuid)
     } else {
       if (grantAccount.automatic == null || !grantAccount.automatic) {
         // If grant is for existing non-automatic account we need it to be signed in using the regular approach
@@ -1894,9 +1946,12 @@ export async function getLoginInfoByToken (
         // Existing automatic account, check workspace assignment and consider it signed in
         const existingRole = await db.getWorkspaceRole(accountUuid, workspaceUuid)
         if (existingRole == null) {
+          await assertSeatAvailableOnJoin(ctx, db, workspaceUuid, grant.role)
           await db.assignWorkspace(accountUuid, workspaceUuid, grant.role)
+          await publishMembersChanged(ctx, workspaceUuid)
         } else if (getRolePower(existingRole) < getRolePower(grant.role)) {
           await db.updateWorkspaceRole(accountUuid, workspaceUuid, grant.role)
+          await publishMembersChanged(ctx, workspaceUuid)
         }
       }
     }
@@ -2248,7 +2303,7 @@ export async function getWorkspaceMembers (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  return await db.getWorkspaceMembers(workspace)
+  return await getSeatMembers(db, workspace)
 }
 
 export async function getAccountInfo (

@@ -38,7 +38,7 @@
     "Active": "アクティブ",
     "Disabled": "無効",
     "CancelScheduled": "キャンセル予定",
-    "TrialPeriod": "Trial period",
+    "TrialPeriod": "試用期間",
     "SubscriptionEnds": "{date}まで",
     "SubscriptionRenews": "次回更新: {date}",
     "SubscriptionValidUntil": "{date}まで有効",
@@ -100,7 +100,8 @@
     "PayOrUpgrade": "Pay / Upgrade plan",
     "FreePlan": "無料プラン",
     "FreePlanHint": "支払いが延滞しています — ワークスペースは無料プランで動作しています。プランを復元するにはお支払いください。",
-    "TrialPlan": "Trial",
-    "TrialPlanHint": "Business trial — {days} days left. Buy the plan to keep your features after it ends."
+    "TrialPlan": "トライアル",
+    "TrialPlanHint": "Businessプランの試用期間 — 残り{days}日。終了後も機能を維持するにはプランをご購入ください。",
+    "TrialEndsHint": "試用期間は{date}に終了します — ワークスペースは自動的に無料プランに切り替わります。機能を維持するにはプランをご購入ください。"
   }
 }

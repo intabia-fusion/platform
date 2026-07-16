@@ -28,9 +28,11 @@
   const accountClient = getAccountClient()
 
   let seats: number = subscription.limits?.usersLimit ?? 1
+  // For a trial edit the end date IS the trial end (server mirrors it to periodEnd).
+  const isTrial = subscription.status === 'trialing'
+  const endMs = isTrial ? (subscription.trialEnd ?? subscription.periodEnd) : subscription.periodEnd
   // Date input as YYYY-MM-DD; empty means "keep as is"
-  let periodEndDate: string =
-    subscription.periodEnd != null ? new Date(subscription.periodEnd).toISOString().slice(0, 10) : ''
+  let periodEndDate: string = endMs != null ? new Date(endMs).toISOString().slice(0, 10) : ''
   let saving = false
 
   async function save (): Promise<void> {
@@ -38,7 +40,7 @@
     const seatsValid = perSeatPlan && Number.isFinite(seats) && seats >= 1
     const seatsChanged = seatsValid && Math.round(seats) !== (subscription.limits?.usersLimit ?? 0)
     const periodMs = periodEndDate !== '' ? new Date(periodEndDate + 'T00:00:00Z').getTime() : undefined
-    const periodChanged = periodMs != null && Number.isFinite(periodMs) && periodMs !== subscription.periodEnd
+    const periodChanged = periodMs != null && Number.isFinite(periodMs) && periodMs !== endMs
     if (!seatsChanged && !periodChanged) {
       dispatch('close', undefined)
       return
@@ -80,7 +82,7 @@
       </div>
     {/if}
     <div class="flex-row-center">
-      <span class="mr-2"><Label label={adminRes.string.PeriodEnd} />:</span>
+      <span class="mr-2"><Label label={isTrial ? adminRes.string.TrialEnd : adminRes.string.PeriodEnd} />:</span>
       <input type="date" bind:value={periodEndDate} class="date-input" />
     </div>
   </div>

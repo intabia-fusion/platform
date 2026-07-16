@@ -101,6 +101,7 @@
     "FreePlan": "Free plan",
     "FreePlanHint": "Payment is overdue — the workspace runs on the free plan. Pay to restore your plan.",
     "TrialPlan": "Trial",
-    "TrialPlanHint": "Business trial — {days} days left. Buy the plan to keep your features after it ends."
+    "TrialPlanHint": "Business trial — {days} days left. Buy the plan to keep your features after it ends.",
+    "TrialEndsHint": "Trial ends {date} — the workspace will switch to the free plan automatically. Buy a plan to keep your features."
   }
 }

@@ -20,14 +20,13 @@ import {
   SubscriptionType,
   getClient,
   grantsPlan,
-  seatEligible
+  memberOccupiesSeat
 } from '@hcengineering/account-client'
 import {
   type AccountUuid,
   type MeasureContext,
   type UsageStatus,
   type WorkspaceUuid,
-  AccountRole,
   RateLimiter,
   SocialIdType,
   buildSocialIdString,
@@ -39,7 +38,6 @@ import { aiBotAccountEmail } from '@hcengineering/middleware'
 import { type StorageConfig } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
 import { createClient, getTransactorEndpoint } from '@hcengineering/server-client'
-import contact from '@hcengineering/contact'
 import tracker from '@hcengineering/tracker'
 
 import { collectDatalakeStats } from './billing'
@@ -210,29 +208,26 @@ export class UsageWorker {
     const recordingSeconds = liveKitUsage.egress.reduce((acc, egress) => acc + egress.minutes, 0) * 60
     const storageBytes = storageUsage.size
 
-    // Member roles come from account (ws_members); the seat-occupying set comes from active
-    // Employee mixins in the transactor. Count the same way SeatLimitsMiddleware does so the
-    // Usage bar matches the enforced seat count (see foundations/.../middleware/seatLimits.ts).
+    // Seat count is derived from account ws_members only: a person is there only after real login,
+    // so the count matches occupied seats without touching the transactor (aiBot excluded by uuid).
     const aiBotAccount = await this.resolveAiBotAccount(account)
-    const memberRole = await ctx.with(
+    const membersCount = await ctx.with(
       'get workspace members',
       {},
       async () => {
         try {
           const members = await account.getWorkspaceMembers()
-          const map = new Map<AccountUuid, AccountRole>()
-          for (const m of members) map.set(m.person, m.role)
-          return map
+          return members.filter((m) => memberOccupiesSeat(m.person, m.role, aiBotAccount)).length
         } catch (err: any) {
           ctx.error('failed to get workspace members', { workspace, err })
-          return new Map<AccountUuid, AccountRole>()
+          return 0
         }
       },
       { workspace }
     )
 
-    const { membersCount, projectsCount } = await ctx.with(
-      'get workspace employees and projects',
+    const projectsCount = await ctx.with(
+      'get workspace projects',
       {},
       async () => {
         try {
@@ -240,18 +235,14 @@ export class UsageWorker {
           const endpoint = await getTransactorEndpoint(token)
           const client = await createClient(endpoint, token)
           try {
-            const [employees, projects] = await Promise.all([
-              client.findAll(contact.mixin.Employee, { active: true }),
-              client.findAll(tracker.class.Project, { archived: false })
-            ])
-            const members = employees.filter((emp) => seatEligible(emp, memberRole, aiBotAccount)).length
-            return { membersCount: members, projectsCount: projects.length }
+            const projects = await client.findAll(tracker.class.Project, { archived: false })
+            return projects.length
           } finally {
             await client.close()
           }
         } catch (err: any) {
-          ctx.error('failed to get workspace employees and projects', { workspace, err })
-          return { membersCount: 0, projectsCount: 0 }
+          ctx.error('failed to get workspace projects', { workspace, err })
+          return 0
         }
       },
       { workspace }

@@ -197,13 +197,9 @@ plans:
     usersLimit: 0
     index: 3
     color: Lavender
-# Trial for new workspaces: a fresh workspace starts on Business trial (Trialing) for `days`, capped
-# at `usersLimit` seats, then falls back to free on expiry. Tests that need a specific plan wait for
-# this auto-provisioned tier (waitForTier) and then supersede it.
-trial:
-  plan: business
-  days: 14
-  usersLimit: 10
+# No `trial:` block here on purpose: auto-provisioning a Business trial on every new workspace races
+# the limits tests that set an explicit plan right after creation. plan-trial.spec.ts creates the
+# trial explicitly via the admin API instead.
 # Storage add-on packages (small caps so disk tests stay fast). Eligible on the wider plans.
 packages:
   pkg-10mb:

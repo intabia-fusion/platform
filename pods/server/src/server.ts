@@ -52,7 +52,7 @@ import {
   createPostgresTxAdapter,
   shutdownPostgres
 } from '@hcengineering/postgres'
-import { LIMITS_PROVIDER_VAR, PLAN_LIMITS_MAP_KEY } from '@hcengineering/middleware'
+import { LIMITS_PROVIDER_VAR, MEMBERS_VERSION_KEY, PLAN_LIMITS_MAP_KEY } from '@hcengineering/middleware'
 import { readFileSync } from 'node:fs'
 import { AccountLimitsProvider } from './limitsProvider'
 import { startHttpServer } from './server_http'
@@ -135,6 +135,8 @@ export function start (
   }
   // Shared across all per-workspace pipelines in this process; updated live by the consumer below.
   const planLimitsMap = new Map<WorkspaceUuid, PlanLimits>()
+  // Bumped on each membership change so SeatLimitsMiddleware rebuilds its seat set without restart.
+  const membersVersion = new Map<WorkspaceUuid, number>()
   const limitsProvider = new AccountLimitsProvider(opt.accountsUrl)
 
   const limitsConsumer =
@@ -155,6 +157,9 @@ export function start (
                 } catch (err: any) {
                   ctx.error('failed to refresh plan limits', { workspace: m.workspace, err })
                 }
+              } else if (v.category === LimitCategory.Members) {
+                // Membership changed: bump the version so seat middleware rebuilds its set on next tx.
+                membersVersion.set(m.workspace, (membersVersion.get(m.workspace) ?? 0) + 1)
               }
             }
           },
@@ -173,7 +178,8 @@ export function start (
       communicationApiFactory,
       pipelineContextVars: {
         [LIMITS_PROVIDER_VAR]: limitsProvider,
-        [PLAN_LIMITS_MAP_KEY]: planLimitsMap
+        [PLAN_LIMITS_MAP_KEY]: planLimitsMap,
+        [MEMBERS_VERSION_KEY]: membersVersion
       }
     },
     {}

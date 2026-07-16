@@ -322,6 +322,7 @@ export interface AccountClient {
     status?: string
     limits?: Subscription['limits']
     periodDays?: number
+    trialEnd?: number
   }) => Promise<void>
 
   batchAssignWorkspacePermission: (params: { accountIds: AccountUuid[], permission: string }) => Promise<void>
@@ -1581,6 +1582,7 @@ class AccountClientImpl implements AccountClient {
     status?: string
     limits?: Subscription['limits']
     periodDays?: number
+    trialEnd?: number
   }): Promise<void> {
     await this._rpc({
       method: 'adminCreateSubscription',

@@ -38,7 +38,7 @@
     "Active": "Aktiv",
     "Disabled": "Deaktiviert",
     "CancelScheduled": "Wird gekündigt",
-    "TrialPeriod": "Trial period",
+    "TrialPeriod": "Testzeitraum",
     "NoActivePlan": "Kein aktiver Plan",
     "SelectPlanToBegin": "Wählen Sie unten einen Plan aus, um zu beginnen",
     "SubscriptionEnds": "Bis {date}",
@@ -100,7 +100,8 @@
     "PayOrUpgrade": "Pay / Upgrade plan",
     "FreePlan": "Kostenloser Tarif",
     "FreePlanHint": "Zahlung überfällig — der Arbeitsbereich läuft im kostenlosen Tarif. Zahlen Sie, um Ihren Tarif wiederherzustellen.",
-    "TrialPlan": "Trial",
-    "TrialPlanHint": "Business trial — {days} days left. Buy the plan to keep your features after it ends."
+    "TrialPlan": "Testversion",
+    "TrialPlanHint": "Business-Testversion — noch {days} Tage übrig. Kaufen Sie den Plan, um Ihre Funktionen danach zu behalten.",
+    "TrialEndsHint": "Der Testzeitraum endet am {date} — der Arbeitsbereich wechselt automatisch zum kostenlosen Plan. Kaufen Sie einen Plan, um Ihre Funktionen zu behalten."
   }
 }

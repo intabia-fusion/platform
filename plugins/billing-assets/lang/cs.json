@@ -38,7 +38,7 @@
     "Active": "Aktivní",
     "Disabled": "Deaktivováno",
     "CancelScheduled": "Ruší se",
-    "TrialPeriod": "Trial period",
+    "TrialPeriod": "Zkušební období",
     "NoActivePlan": "Žádný aktivní plán",
     "SelectPlanToBegin": "Chcete-li začít, vyberte plán níže",
     "SubscriptionEnds": "Do {date}",
@@ -100,7 +100,8 @@
     "PayOrUpgrade": "Pay / Upgrade plan",
     "FreePlan": "Bezplatný plán",
     "FreePlanHint": "Platba je po splatnosti — pracovní prostor běží na bezplatném plánu. Zaplaťte pro obnovení svého plánu.",
-    "TrialPlan": "Trial",
-    "TrialPlanHint": "Business trial — {days} days left. Buy the plan to keep your features after it ends."
+    "TrialPlan": "Zkušební verze",
+    "TrialPlanHint": "Zkušební verze plánu Business — zbývá dní: {days}. Zakupte plán, abyste si zachovali funkce i po jejím skončení.",
+    "TrialEndsHint": "Zkušební období končí {date} — pracovní prostor automaticky přejde na bezplatný plán. Zakupte plán, abyste si zachovali funkce."
   }
 }

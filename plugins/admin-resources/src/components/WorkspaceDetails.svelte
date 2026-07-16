@@ -25,6 +25,7 @@
   import {
     Button,
     ButtonMenu,
+    CheckBox,
     Dialog,
     EditBox,
     IconCopy,
@@ -233,6 +234,7 @@
   let selectedPlan = ''
   let seats: number = 1
   let periodDays: number = 30
+  let asTrial = false // create a Trialing subscription; trialEnd = now + periodDays (reuses the period)
   let isCreating = false
 
   $: planItems = (plans?.keys ?? []).map((k) => ({
@@ -269,12 +271,17 @@
             usersLimit
           }
         }
+        const days = periodDays > 0 ? periodDays : 30
+        const trialActive = asTrial && inferredType === 'tier'
         await accountClient.adminCreateSubscription({
           workspaceUuid: workspace.uuid as any,
           plan: selectedPlan,
           type: inferredType as any,
+          status: trialActive ? 'trialing' : undefined,
+          // Trial reuses the period length; trialEnd is what grantsPlan checks for expiry.
+          trialEnd: trialActive ? Date.now() + days * 24 * 3600 * 1000 : undefined,
           limits,
-          periodDays: periodDays > 0 ? periodDays : 30
+          periodDays: days
         })
         selectedPlan = ''
         void load()
@@ -533,7 +540,7 @@
                 <td>{s.provider}</td>
                 <td>{s.limits?.usersLimit ?? '-'}</td>
                 <td>{fmtDate(s.createdOn)}</td>
-                <td>{fmtDate(s.periodEnd)}</td>
+                <td>{fmtDate(s.status === 'trialing' ? (s.trialEnd ?? s.periodEnd) : s.periodEnd)}</td>
                 <td>
                   {#if s.status !== 'canceled'}
                     <div class="flex-row-center">
@@ -583,6 +590,12 @@
       <div class="seats-input">
         <EditBox bind:value={periodDays} format={'number'} kind={'editbox'} />
       </div>
+      {#if inferredType === 'tier'}
+        <div class="flex-row-center ml-3">
+          <CheckBox bind:checked={asTrial} />
+          <span class="ml-1"><Label label={adminRes.string.AsTrial} /></span>
+        </div>
+      {/if}
       <div class="ml-2">
         <Button
           label={adminRes.string.Create}

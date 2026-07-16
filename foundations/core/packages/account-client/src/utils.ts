@@ -43,36 +43,19 @@ export function grantsPlan (sub: Pick<Subscription, 'status' | 'providerData' | 
 
 export const GUEST_ROLES: AccountRole[] = [AccountRole.ReadOnlyGuest, AccountRole.DocGuest, AccountRole.Guest]
 
-export function isBillableMember (role: AccountRole): boolean {
-  return !GUEST_ROLES.includes(role)
-}
-
-export interface SeatCandidate {
-  role?: string // Employee mixin flag: 'USER' | 'GUEST' (informational)
-  personUuid?: AccountUuid | null
-}
-
 /**
- * A seat is consumed by any active employee except system/AI/Admin and guests. The single source of
- * truth shared by the displayed usage count (pod-billing) and the per-seat purchase floor (pod-payment).
- * Guests are excluded two ways because either source may be authoritative in a given workspace:
- *   - the Employee 'GUEST' flag on the mixin, and
- *   - the account role in ws_members (Admin / GUEST_ROLES).
- * An employee with no resolved account (pending invite, personUuid unset) still takes a slot.
+ * Whether a workspace_members entry occupies a paid seat. Source of truth for seat counting now that
+ * a person is in ws_members only after real login. Excludes the AI bot (role=User in ws_members),
+ * system/config accounts, Admin, and guest roles.
  */
-export function seatEligible (
-  candidate: SeatCandidate,
-  memberRole: Map<AccountUuid, AccountRole>,
+export function memberOccupiesSeat (
+  person: AccountUuid,
+  role: AccountRole,
   aiBotAccount: AccountUuid | undefined
 ): boolean {
-  if (candidate.role === 'GUEST') return false
-  const uuid = candidate.personUuid
-  if (uuid == null) return true
-  if (uuid === systemAccountUuid || uuid === configUserAccountUuid || uuid === aiBotAccount) return false
-  const role = memberRole.get(uuid)
+  if (person === systemAccountUuid || person === configUserAccountUuid || person === aiBotAccount) return false
   if (role === AccountRole.Admin) return false
-  if (role !== undefined && GUEST_ROLES.includes(role)) return false
-  return true
+  return !GUEST_ROLES.includes(role)
 }
 
 export function makePlanKey (plan: string, type: SubscriptionType | string): string {

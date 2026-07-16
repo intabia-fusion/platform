@@ -38,7 +38,7 @@
     "Active": "Aktif",
     "Disabled": "Devre dışı",
     "CancelScheduled": "İptal ediliyor",
-    "TrialPeriod": "Trial period",
+    "TrialPeriod": "Deneme süresi",
     "NoActivePlan": "Etkin plan yok",
     "SelectPlanToBegin": "Başlamak için aşağıdan bir plan seçin",
     "SubscriptionEnds": "{date} tarihine kadar",
@@ -100,7 +100,8 @@
     "PayOrUpgrade": "Pay / Upgrade plan",
     "FreePlan": "Ücretsiz plan",
     "FreePlanHint": "Ödeme gecikti — çalışma alanı ücretsiz planda çalışıyor. Planınızı geri yüklemek için ödeme yapın.",
-    "TrialPlan": "Trial",
-    "TrialPlanHint": "Business trial — {days} days left. Buy the plan to keep your features after it ends."
+    "TrialPlan": "Deneme",
+    "TrialPlanHint": "Business plan denemesi — {days} gün kaldı. Özelliklerinizi korumak için deneme sona ermeden planı satın alın.",
+    "TrialEndsHint": "Deneme süresi {date} tarihinde sona eriyor — çalışma alanı otomatik olarak ücretsiz plana geçecek. Özelliklerinizi korumak için bir plan satın alın."
   }
 }

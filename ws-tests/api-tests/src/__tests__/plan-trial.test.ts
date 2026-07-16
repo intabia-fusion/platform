@@ -34,16 +34,24 @@ describe('plan-trial', () => {
   let workspaceUuid: WorkspaceUuid
   let accountUuid: AccountUuid // subscription FK requires an existing account
   let account: AccountClient // payment-service scoped: allowed to upsert subscriptions
+  let admin: AccountClient // admin scoped: adminCreateSubscription
 
   beforeAll(async () => {
     config = await loadServerConfig('http://localhost:8083')
-    const adminToken = generateToken(systemAccountUuid, undefined, { admin: 'true' }, 'secret')
-    const admin = getAccountClient(config.ACCOUNTS_URL, adminToken)
-    const ws = (await admin.listWorkspaces()).find((w) => w.url === wsName)
+    const listAdmin = getAccountClient(
+      config.ACCOUNTS_URL,
+      generateToken(systemAccountUuid, undefined, { admin: 'true' }, 'secret')
+    )
+    const ws = (await listAdmin.listWorkspaces()).find((w) => w.url === wsName)
     if (ws == null) throw new Error(`Workspace not found: ${wsName}`)
     workspaceUuid = ws.uuid
     const paymentToken = generateToken(systemAccountUuid, workspaceUuid, { service: 'payment' }, 'secret')
     account = getAccountClient(config.ACCOUNTS_URL, paymentToken)
+    // adminCreateSubscription requires an admin token bound to the workspace.
+    admin = getAccountClient(
+      config.ACCOUNTS_URL,
+      generateToken(systemAccountUuid, workspaceUuid, { admin: 'true' }, 'secret')
+    )
     const members = await account.getWorkspaceMembers()
     const owner = members.find((m) => m.role === 'OWNER') ?? members[0]
     if (owner === undefined) throw new Error(`No members in workspace: ${wsName}`)
@@ -153,5 +161,24 @@ describe('plan-trial', () => {
     expect(tiers[0].status).toBe(SubscriptionStatus.Active)
     expect(tiers[0].provider).toBe('tbank')
     expect(tiers[0].limits?.usersLimit).toBe(3)
+  }, 30000)
+
+  it('admin can create a trial (status=trialing, trialEnd) that grants the plan', async () => {
+    await admin.adminCreateSubscription({
+      workspaceUuid,
+      plan: 'business',
+      type: 'tier',
+      status: 'trialing',
+      trialEnd: Date.now() + 14 * 24 * 3600 * 1000,
+      limits: { usersLimit: 10, storageLimitGB: 50, trafficLimitGB: 0, tokenLimit: 0, meetingMinutesLimit: 0 }
+    })
+
+    const tier = (await account.getSubscriptions(workspaceUuid, false)).find(
+      (s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Trialing
+    )
+    expect(tier).toBeDefined()
+    expect(tier?.plan).toBe('business')
+    expect(tier?.trialEnd).toBeGreaterThan(Date.now())
+    expect(grantsPlan(tier)).toBe(true)
   }, 30000)
 })

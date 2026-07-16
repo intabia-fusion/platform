@@ -38,7 +38,7 @@
     "Active": "Ativo",
     "Disabled": "Desativado",
     "CancelScheduled": "Cancelando",
-    "TrialPeriod": "Trial period",
+    "TrialPeriod": "Período experimental",
     "NoActivePlan": "Nenhum plano ativo",
     "SelectPlanToBegin": "Selecione um plano abaixo para começar",
     "SubscriptionEnds": "Até {date}",
@@ -100,7 +100,8 @@
     "PayOrUpgrade": "Pay / Upgrade plan",
     "FreePlan": "Plano gratuito",
     "FreePlanHint": "O pagamento está em atraso — a área de trabalho funciona no plano gratuito. Pague para restaurar o seu plano.",
-    "TrialPlan": "Trial",
-    "TrialPlanHint": "Business trial — {days} days left. Buy the plan to keep your features after it ends."
+    "TrialPlan": "Teste",
+    "TrialPlanHint": "Período experimental do plano Business — faltam {days} dias. Compre o plano para manter as suas funcionalidades após o términus.",
+    "TrialEndsHint": "O período experimental termina a {date} — o espaço de trabalho mudará automaticamente para o plano gratuito. Compre um plano para manter as suas funcionalidades."
   }
 }

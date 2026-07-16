@@ -15,8 +15,8 @@
 import {
   type AccountClient,
   getClient as getAccountClient,
+  grantsPlan,
   type Subscription,
-  SubscriptionStatus,
   SubscriptionType
 } from '@hcengineering/account-client'
 import core, {
@@ -83,21 +83,22 @@ export class AccountLimitsProvider implements LimitsProvider {
     return free != null ? this.toPlanLimits(free) : undefined
   }
 
-  /** Most recent tier subscription (by createdOn) — the current plan, ignoring superseded ones. */
-  private latestTier (subs: Subscription[]): Subscription | undefined {
-    return subs
-      .filter((s) => s.type === SubscriptionType.Tier)
-      .sort((a, b) => (b.createdOn ?? 0) - (a.createdOn ?? 0))[0]
+  /** Tier subscriptions newest-first (by createdOn) — index 0 is the current plan, ignoring superseded ones. */
+  private tiersNewestFirst (subs: Subscription[]): Subscription[] {
+    return subs.filter((s) => s.type === SubscriptionType.Tier).sort((a, b) => (b.createdOn ?? 0) - (a.createdOn ?? 0))
   }
 
   async getPlanLimits (workspace: WorkspaceUuid): Promise<PlanLimits> {
     try {
       // activeOnly=false: an unpaid (past_due/canceled) tier still carries the free fallback we need.
       const subs = await this.accountClient(workspace).getSubscriptions(workspace, false)
-      const active = subs.find((s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Active)
-      if (active?.limits !== undefined) return this.toPlanLimits(active.limits)
-      // No active paid tier (unpaid): fall back to the current tier's free limits, else unlimited.
-      return this.freeLimitsOf(this.latestTier(subs)) ?? ZERO_LIMITS
+      const tiers = this.tiersNewestFirst(subs)
+      // The current plan is the newest tier that still grants (Active/live-Trialing/in-grace), not just
+      // the first Active row — two Active rows can briefly overlap and .find() would pick either one.
+      const granting = tiers.find((s) => grantsPlan(s))
+      if (granting?.limits !== undefined) return this.toPlanLimits(granting.limits)
+      // No granting tier (unpaid/expired trial): fall back to the newest tier's free limits, else unlimited.
+      return this.freeLimitsOf(tiers[0]) ?? ZERO_LIMITS
     } catch {
       return ZERO_LIMITS
     }

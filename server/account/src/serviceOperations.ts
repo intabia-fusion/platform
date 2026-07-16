@@ -240,6 +240,7 @@ export async function adminUpdateWorkspaceRole (
   }
   await db.updateWorkspaceRole(targetAccount, workspace, role)
   ctx.info('admin: workspace role updated', { workspace, targetAccount, role })
+  await publishMembersChanged(ctx, workspace)
 }
 
 export async function adminAddWorkspaceMember (
@@ -266,6 +267,7 @@ export async function adminAddWorkspaceMember (
   }
   await db.assignWorkspace(target, workspace, role)
   ctx.info('admin: workspace member added', { workspace, target, role })
+  await publishMembersChanged(ctx, workspace)
 }
 
 async function sendReindex (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<void> {
@@ -317,6 +319,7 @@ export async function adminRemoveWorkspaceMember (
   await ensureNotLastOwner(db, workspace, targetAccount)
   await db.unassignWorkspace(targetAccount, workspace)
   ctx.info('admin: workspace member removed', { workspace, targetAccount })
+  await publishMembersChanged(ctx, workspace)
 }
 
 // Supersede a live subscription: keep the old row as a canceled record (history) and insert
@@ -402,6 +405,10 @@ export async function adminUpdateSubscription (
       throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
     }
     overrides.periodEnd = Math.round(periodEndMs)
+    // For a trial the UI/limits key off trialEnd, so keep it in sync with the edited period end.
+    if (existing.status === SubscriptionStatus.Trialing) {
+      overrides.trialEnd = Math.round(periodEndMs)
+    }
   }
   if (Object.keys(overrides).length === 0) return
 
@@ -975,8 +982,10 @@ export async function assignWorkspace (
 
   if (currentRole == null) {
     await db.assignWorkspace(account.uuid, workspaceUuid, role)
+    await publishMembersChanged(ctx, workspaceUuid)
   } else if (getRolePower(currentRole) < getRolePower(role)) {
     await db.updateWorkspaceRole(account.uuid, workspaceUuid, role)
+    await publishMembersChanged(ctx, workspaceUuid)
   }
 }
 
@@ -1445,6 +1454,11 @@ async function publishLimitsEvents (
   }
 }
 
+/** Signal that workspace membership changed so seat-count consumers (transactor/billing) refresh now. */
+export async function publishMembersChanged (ctx: MeasureContext, workspaceUuid: WorkspaceUuid): Promise<void> {
+  await publishLimitsEvents(ctx, workspaceUuid, [workspaceEvents.limitsChanged(LimitCategory.Members, LimitStatus.Ok)])
+}
+
 export async function upsertSubscription (
   ctx: MeasureContext,
   db: AccountDB,
@@ -1823,6 +1837,7 @@ export async function adminCreateSubscription (
     status?: SubscriptionStatus
     limits?: Subscription['limits']
     periodDays?: number
+    trialEnd?: number // when set (with status=Trialing), makes this a real trial subscription
   }
 ): Promise<void> {
   const tokenDecoded = decodeTokenVerbose(ctx, token)
@@ -1838,7 +1853,8 @@ export async function adminCreateSubscription (
     type = SubscriptionType.Tier,
     status = SubscriptionStatus.Active,
     limits,
-    periodDays = 30
+    periodDays = 30,
+    trialEnd
   } = params
 
   // Non-numeric/negative periodDays falls back to 30 days
@@ -1902,6 +1918,7 @@ export async function adminCreateSubscription (
     amount: 0,
     periodStart: now,
     periodEnd: now + safePeriodDays * 24 * 3600 * 1000,
+    trialEnd,
     createdOn: now,
     updatedOn: now,
     id: subId

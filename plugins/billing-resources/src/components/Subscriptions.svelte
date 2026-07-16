@@ -23,8 +23,15 @@
   } from '@hcengineering/payment-client'
   import { type PlanItem, type PlanConfig, type PackageItem } from '@hcengineering/billing'
   import { getMetadata, translate, getEmbeddedLabel } from '@hcengineering/platform'
-  import presentation, { MessageBox, getClient } from '@hcengineering/presentation'
-  import { UsageStatus, type WorkspaceUuid, getCurrentAccount } from '@hcengineering/core'
+  import presentation, { MessageBox, getClient, addTxListener, removeTxListener } from '@hcengineering/presentation'
+  import core, {
+    UsageStatus,
+    type WorkspaceUuid,
+    type Tx,
+    type TxWorkspaceEvent,
+    WorkspaceEvent,
+    getCurrentAccount
+  } from '@hcengineering/core'
   import {
     IconCheckmark,
     IconStorage,
@@ -83,6 +90,8 @@
   // Plan key may be absent from the config (e.g. legacy plan) - fall back to the raw key for display.
   $: currentPlan =
     currentSubscription != null ? (plans[currentSubscription.plan] ?? currentSubscription.plan) : undefined
+  // Compare plans by key, not object identity: resolveLocale() rebuilds the plans map each tick.
+  $: currentPlanKey = currentSubscription?.plan
   $: currentPackage = currentPackageSubscription != null ? packages[currentPackageSubscription.plan] : undefined
   $: arePackagesAvailable =
     currentPlan != null &&
@@ -110,6 +119,16 @@
   $: isCurrentCanceled = currentSubscription?.canceledAt !== undefined && currentSubscription.canceledAt > 0
   // A trial has no paid subscription to cancel — hide the cancel action (buy the plan instead).
   $: isCurrentTrial = currentSubscription?.status === SubscriptionStatus.Trialing
+  // Show the purchase button/seats for a plan when it is not the current one, OR when the user is on a
+  // trial of that same plan — a trial is not a paid subscription, so buying the plan must stay available.
+  // Args passed explicitly so Svelte tracks currentPlanKey/isReadOnly/isCurrentTrial as {#if} deps.
+  const canPurchase = (
+    planKey: string,
+    planItem: PlanItem,
+    curKey: string | undefined,
+    readOnly: boolean,
+    curTrial: boolean
+  ): boolean => !readOnly && (curKey === undefined || curKey !== planKey || (curTrial && planItem.free !== true))
   $: isPackageCanceled =
     currentPackageSubscription?.canceledAt !== undefined && currentPackageSubscription.canceledAt > 0
 
@@ -795,7 +814,22 @@
     }
   }
 
+  // Server broadcasts LimitsChanged on any plan/subscription edit (e.g. admin changing the trial) —
+  // refetch so an open modal reflects it instead of showing the plan as of when it was opened.
+  const txListener = (txes: Tx[]): void => {
+    for (const tx of txes) {
+      if (
+        tx._class === core.class.TxWorkspaceEvent &&
+        (tx as TxWorkspaceEvent).event === WorkspaceEvent.LimitsChanged
+      ) {
+        void fetchSubscriptions()
+        return
+      }
+    }
+  }
+
   onMount(() => {
+    addTxListener(txListener)
     void (async () => {
       // First, load plan config
       await loadPlanConfig()
@@ -814,6 +848,7 @@
   onDestroy(() => {
     destroyed = true
     clearTimeout(pollTimer)
+    removeTxListener(txListener)
   })
 </script>
 
@@ -898,36 +933,43 @@
                 </div>
               {/if}
             </div>
-            <div class="curr-tier-footer">
-              {#if currentSubscription?.periodEnd}
-                {@const date = formatEndDate(currentSubscription.periodEnd, $themeStore.language ?? DEFAULT_LOCALE)}
-                {#if isCurrentCanceled}
-                  <div><Label label={plugin.string.SubscriptionValidUntil} params={{ date }} /></div>
-                {:else}
-                  <div><Label label={plugin.string.SubscriptionRenews} params={{ date }} /></div>
+            {#if isCurrentTrial && currentSubscription?.trialEnd != null}
+              {@const date = formatEndDate(currentSubscription.trialEnd, $themeStore.language ?? DEFAULT_LOCALE)}
+              <div class="curr-tier-hint">
+                <Label label={plugin.string.TrialEndsHint} params={{ date }} />
+              </div>
+            {:else}
+              <div class="curr-tier-footer">
+                {#if currentSubscription?.periodEnd}
+                  {@const date = formatEndDate(currentSubscription.periodEnd, $themeStore.language ?? DEFAULT_LOCALE)}
+                  {#if isCurrentCanceled}
+                    <div><Label label={plugin.string.SubscriptionValidUntil} params={{ date }} /></div>
+                  {:else}
+                    <div><Label label={plugin.string.SubscriptionRenews} params={{ date }} /></div>
+                  {/if}
                 {/if}
-              {/if}
 
-              {#if !isCurrentCanceled && !isCurrentTrial && currentPlan.free !== true}
-                <Button
-                  label={plugin.string.CancelSubscription}
-                  kind="ghost"
-                  disabled={loading || isCheckoutPolling || isCanceling || isUpdating || isRetrying}
-                  on:click={() => {
-                    void handleCancel()
-                  }}
-                />
-              {:else if isCurrentCanceled}
-                <Button
-                  label={plugin.string.UncancelSubscription}
-                  kind="primary"
-                  disabled={loading || isCheckoutPolling || isUncanceling || isUpdating || isRetrying}
-                  on:click={() => {
-                    void handleUncancel()
-                  }}
-                />
-              {/if}
-            </div>
+                {#if !isCurrentCanceled && currentPlan.free !== true}
+                  <Button
+                    label={plugin.string.CancelSubscription}
+                    kind="ghost"
+                    disabled={loading || isCheckoutPolling || isCanceling || isUpdating || isRetrying}
+                    on:click={() => {
+                      void handleCancel()
+                    }}
+                  />
+                {:else if isCurrentCanceled}
+                  <Button
+                    label={plugin.string.UncancelSubscription}
+                    kind="primary"
+                    disabled={loading || isCheckoutPolling || isUncanceling || isUpdating || isRetrying}
+                    on:click={() => {
+                      void handleUncancel()
+                    }}
+                  />
+                {/if}
+              </div>
+            {/if}
 
             {#if currentPackage !== undefined}
               <Label label={plugin.string.AdditionalPackage} />
@@ -1113,7 +1155,7 @@
                     {/each}
                   </div>
                 </div>
-                {#if planItem.priceMonthlyPerUser != null && planItem.contactSales !== true && !isReadOnly && (currentPlan === undefined || currentPlan !== planItem)}
+                {#if planItem.priceMonthlyPerUser != null && planItem.contactSales !== true && canPurchase(planKey, planItem, currentPlanKey, isReadOnly, isCurrentTrial)}
                   <div class="seats-section flex-col flex-gap-2">
                     <Label label={plugin.string.UsersCount} />:
                     <input
@@ -1151,12 +1193,18 @@
                         void openSalesMail(planKey)
                       }}
                     />
-                  {:else if !isReadOnly && (currentPlan === undefined || currentPlan !== planItem)}
+                  {:else if canPurchase(planKey, planItem, currentPlanKey, isReadOnly, isCurrentTrial)}
                     <Button
-                      label={currentPlan === undefined ? plugin.string.Subscribe : plugin.string.ChangePlan}
+                      label={currentPlanKey === undefined || (isCurrentTrial && currentPlanKey === planKey)
+                        ? plugin.string.Subscribe
+                        : plugin.string.ChangePlan}
                       dataId={`planSubscribe-${planKey}`}
                       size={'large'}
-                      kind={currentPlan === undefined || planItem.index > currentPlan.index ? 'primary' : 'regular'}
+                      kind={currentPlanKey === undefined ||
+                      (isCurrentTrial && currentPlanKey === planKey) ||
+                      planItem.index > (plans[currentPlanKey]?.index ?? -1)
+                        ? 'primary'
+                        : 'regular'}
                       disabled={loading ||
                         isCheckoutPolling ||
                         isUpdating ||
@@ -1336,6 +1384,14 @@
     align-items: center;
     padding-bottom: var(--spacing-2);
     border-bottom: 1px solid var(--theme-divider-color);
+  }
+
+  .curr-tier-hint {
+    padding-top: var(--spacing-2);
+    margin-top: var(--spacing-1);
+    border-top: 1px solid var(--theme-divider-color);
+    color: var(--theme-dark-color);
+    font-size: 0.8125rem;
   }
 
   .tier-card-footer {

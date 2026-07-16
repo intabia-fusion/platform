@@ -49,7 +49,8 @@ import {
   getSocialIds,
   createAccessLink,
   getSubscriptions,
-  leaveWorkspace
+  leaveWorkspace,
+  getWorkspaceMembers
 } from '../operations'
 import { accountPlugin } from '../plugin'
 
@@ -107,6 +108,12 @@ describe('account operations', () => {
     getWorkspaceRole: jest.fn(),
     getWorkspaceMembers: jest.fn(),
     unassignWorkspace: jest.fn(),
+    socialId: {
+      findOne: jest.fn()
+    },
+    subscription: {
+      find: jest.fn().mockResolvedValue([])
+    },
     person: {
       findOne: jest.fn()
     },
@@ -124,6 +131,7 @@ describe('account operations', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    ;(mockDb.subscription.find as jest.Mock).mockResolvedValue([])
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
       account: mockAccount.uuid,
       workspace: mockWorkspace.uuid,
@@ -477,7 +485,11 @@ describe('account operations', () => {
       userProfile: {
         insertOne: jest.fn()
       },
+      subscription: {
+        find: jest.fn()
+      },
       getWorkspaceRole: jest.fn(),
+      getWorkspaceMembers: jest.fn(),
       assignWorkspace: jest.fn(),
       updateWorkspaceRole: jest.fn(),
       generatePersonUuid: jest.fn()
@@ -487,6 +499,8 @@ describe('account operations', () => {
 
     beforeEach(() => {
       jest.clearAllMocks()
+      ;(mockDb.subscription.find as jest.Mock).mockResolvedValue([])
+      ;(mockDb.getWorkspaceMembers as jest.Mock).mockResolvedValue([])
       utils.resetRegionConfig()
       process.env = { ...originalEnv }
       // Mock the metadata for endpoints
@@ -1607,6 +1621,39 @@ describe('account operations', () => {
           token: expect.any(String)
         })
       })
+    })
+  })
+
+  describe('getWorkspaceMembers (seat members)', () => {
+    beforeEach(() => {
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Owner)
+    })
+
+    test('excludes the aiBot account from the returned members', async () => {
+      const aiBotUuid = 'aibot-uuid' as PersonUuid
+      const aiBotSocial: SocialId = { personUuid: aiBotUuid } as unknown as SocialId
+      jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(aiBotSocial)
+      ;(mockDb.getWorkspaceMembers as jest.Mock).mockResolvedValue([
+        { person: mockAccount.uuid, role: AccountRole.Owner },
+        { person: aiBotUuid, role: AccountRole.User },
+        { person: 'u1' as PersonUuid, role: AccountRole.User }
+      ])
+
+      const result = await getWorkspaceMembers(mockCtx, mockDb, mockBranding, mockToken)
+
+      expect(result.map((m) => m.person)).toEqual([mockAccount.uuid, 'u1'])
+    })
+
+    test('returns all members when aiBot is not present in this instance', async () => {
+      jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
+      ;(mockDb.getWorkspaceMembers as jest.Mock).mockResolvedValue([
+        { person: mockAccount.uuid, role: AccountRole.Owner },
+        { person: 'u1' as PersonUuid, role: AccountRole.User }
+      ])
+
+      const result = await getWorkspaceMembers(mockCtx, mockDb, mockBranding, mockToken)
+
+      expect(result).toHaveLength(2)
     })
   })
 

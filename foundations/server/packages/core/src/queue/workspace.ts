@@ -35,7 +35,8 @@ export enum LimitCategory {
   Tokens = 'tokens',
   Transcript = 'transcript',
   Payment = 'payment',
-  Plan = 'plan'
+  Plan = 'plan',
+  Members = 'members'
 }
 
 export enum LimitStatus {

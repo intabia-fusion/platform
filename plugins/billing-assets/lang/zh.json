@@ -38,7 +38,7 @@
     "Active": "活跃",
     "Disabled": "已禁用",
     "CancelScheduled": "取消中",
-    "TrialPeriod": "Trial period",
+    "TrialPeriod": "试用期",
     "SubscriptionEnds": "截止至{date}",
     "SubscriptionRenews": "下次续期: {date}",
     "SubscriptionValidUntil": "有效期至{date}",
@@ -100,7 +100,8 @@
     "PayOrUpgrade": "Pay / Upgrade plan",
     "FreePlan": "免费套餐",
     "FreePlanHint": "付款已逾期 — 工作区正在使用免费套餐运行。付款以恢复您的套餐。",
-    "TrialPlan": "Trial",
-    "TrialPlanHint": "Business trial — {days} days left. Buy the plan to keep your features after it ends."
+    "TrialPlan": "试用",
+    "TrialPlanHint": "Business 套餐试用 — 剩余 {days} 天。购买套餐以在试用结束后继续保留您的功能。",
+    "TrialEndsHint": "试用期将于 {date} 结束 — 工作区将自动切换到免费套餐。购买套餐以保留您的功能。"
   }
 }

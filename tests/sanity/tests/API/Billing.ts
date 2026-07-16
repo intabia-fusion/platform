@@ -24,11 +24,12 @@ export async function resolveWorkspaceUuid (urlName: string): Promise<WorkspaceU
 }
 
 export interface PlanLimitsInput {
-  status?: string // active|past_due|canceled|expired
+  status?: string // active|past_due|canceled|expired|trialing
   storageGB?: number // fractional allowed (0.05 = 50MB)
   users?: number
   tokens?: number
   meetingMinutes?: number
+  trialEnd?: number // set with status='trialing' to create a real trial subscription
 }
 
 /** Assign an existing account to a workspace with the given role (requires a service token). */
@@ -102,6 +103,7 @@ export async function setWorkspacePlanByUuid (
     plan,
     type: 'tier',
     status: input.status ?? 'active',
+    trialEnd: input.trialEnd,
     limits: buildLimits(input)
   })
 }
