@@ -19,8 +19,10 @@ import express, { type Express, NextFunction, type Request, type Response } from
 import { type Server } from 'http'
 import {
   AccountRole,
+  buildSocialIdString,
   generateId,
   MeasureContext,
+  SocialIdType,
   systemAccountUuid,
   type WorkspaceUuid,
   type AccountUuid
@@ -29,11 +31,14 @@ import morgan from 'morgan'
 import onHeaders from 'on-headers'
 import rateLimit from 'express-rate-limit'
 import { generateToken } from '@hcengineering/server-token'
+import { createClient, getTransactorEndpoint } from '@hcengineering/server-client'
+import contact from '@hcengineering/contact'
+import { aiBotAccountEmail } from '@hcengineering/middleware'
 import {
+  seatEligible,
   SubscriptionData,
   SubscriptionStatus,
   SubscriptionType,
-  isBillableMember,
   type WorkspaceLoginInfo
 } from '@hcengineering/account-client'
 
@@ -48,6 +53,8 @@ import yaml from 'js-yaml'
 import { existsSync, readFileSync } from 'fs'
 
 const KEEP_ALIVE_TIMEOUT = 5 // seconds
+
+const aiBotSocialKey = buildSocialIdString({ type: SocialIdType.EMAIL, value: aiBotAccountEmail })
 
 const subscriptionRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -369,8 +376,18 @@ export async function createServer (
 
   async function billableMembersCount (workspace: WorkspaceUuid): Promise<number> {
     const wsToken = generateToken(systemAccountUuid, workspace, { service: 'payment' })
-    const members = await getAccountClient(config.AccountsUrl, wsToken).getWorkspaceMembers()
-    return members.filter((m) => isBillableMember(m.role)).length
+    const account = getAccountClient(config.AccountsUrl, wsToken)
+    const aiBotAccount = (await account.findPersonBySocialKey(aiBotSocialKey, true)) as AccountUuid | undefined
+    const memberRole = new Map<AccountUuid, AccountRole>()
+    for (const m of await account.getWorkspaceMembers()) memberRole.set(m.person, m.role)
+
+    const client = await createClient(await getTransactorEndpoint(wsToken), wsToken)
+    try {
+      const employees = await client.findAll(contact.mixin.Employee, { active: true })
+      return employees.filter((emp) => seatEligible(emp, memberRole, aiBotAccount)).length
+    } finally {
+      await client.close()
+    }
   }
 
   // For per-seat plans, validate the requested seat count

@@ -1405,7 +1405,11 @@ export async function findPersonBySocialKey (
 
   // 'transactor': SeatLimitsMiddleware resolves system/AI account uuids (aibot) via this call to
   // exclude them from seat counting; without it the resolve throws and the AI bot wrongly takes a seat.
-  verifyAllowedServices(['tool', 'workspace', 'aibot', 'billing', 'transactor', ...integrationServices], extra)
+  // 'payment': resolves the AI bot to exclude it from the per-seat purchase floor (billableMembersCount).
+  verifyAllowedServices(
+    ['tool', 'workspace', 'aibot', 'billing', 'payment', 'transactor', ...integrationServices],
+    extra
+  )
 
   const socialId = await db.socialId.findOne({ key: socialString })
 
