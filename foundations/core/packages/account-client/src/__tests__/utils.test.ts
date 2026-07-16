@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 
-import { AccountRole } from '@hcengineering/core'
-import { isNetworkError, grantsPlan, isBillableMember, makePlanKey } from '../utils'
+import { AccountRole, type AccountUuid, configUserAccountUuid, systemAccountUuid } from '@hcengineering/core'
+import { isNetworkError, grantsPlan, isBillableMember, makePlanKey, seatEligible } from '../utils'
 import { SubscriptionStatus, SubscriptionType } from '../types'
 
 describe('isNetworkError', () => {
@@ -354,5 +354,45 @@ describe('makePlanKey', () => {
   it('joins plan and type', () => {
     expect(makePlanKey('business', SubscriptionType.Tier)).toBe('business@tier')
     expect(makePlanKey('100gb', SubscriptionType.Package)).toBe('100gb@package')
+  })
+})
+
+describe('seatEligible', () => {
+  const person = 'p-1' as AccountUuid
+  const aiBot = 'ai-bot' as AccountUuid
+  const noRoles = new Map<AccountUuid, AccountRole>()
+
+  it('excludes an employee flagged GUEST on the mixin, whatever the account role', () => {
+    const members = new Map<AccountUuid, AccountRole>([[person, AccountRole.Owner]])
+    expect(seatEligible({ role: 'GUEST', personUuid: person }, members, aiBot)).toBe(false)
+  })
+
+  it('counts an employee with no resolved account (pending invite)', () => {
+    expect(seatEligible({ personUuid: null }, noRoles, aiBot)).toBe(true)
+    expect(seatEligible({ personUuid: undefined }, noRoles, aiBot)).toBe(true)
+  })
+
+  it('excludes the AI bot, system and config accounts', () => {
+    expect(seatEligible({ personUuid: aiBot }, noRoles, aiBot)).toBe(false)
+    expect(seatEligible({ personUuid: systemAccountUuid }, noRoles, aiBot)).toBe(false)
+    expect(seatEligible({ personUuid: configUserAccountUuid }, noRoles, aiBot)).toBe(false)
+  })
+
+  it('does not exclude the AI bot when it is not resolved', () => {
+    expect(seatEligible({ personUuid: aiBot }, noRoles, undefined)).toBe(true)
+  })
+
+  it('excludes Admin and guest account roles from ws_members', () => {
+    for (const role of [AccountRole.Admin, AccountRole.Guest, AccountRole.DocGuest, AccountRole.ReadOnlyGuest]) {
+      const members = new Map<AccountUuid, AccountRole>([[person, role]])
+      expect(seatEligible({ role: 'USER', personUuid: person }, members, aiBot)).toBe(false)
+    }
+  })
+
+  it('counts a real member (Owner/Maintainer/User)', () => {
+    for (const role of [AccountRole.Owner, AccountRole.Maintainer, AccountRole.User]) {
+      const members = new Map<AccountUuid, AccountRole>([[person, role]])
+      expect(seatEligible({ role: 'USER', personUuid: person }, members, aiBot)).toBe(true)
+    }
   })
 })

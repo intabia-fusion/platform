@@ -1,5 +1,6 @@
 //
 // Copyright © 2026 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,7 +14,7 @@
 // limitations under the License.
 //
 
-import { AccountRole } from '@hcengineering/core'
+import { AccountRole, type AccountUuid, configUserAccountUuid, systemAccountUuid } from '@hcengineering/core'
 import {
   type LoginInfoByToken,
   type LoginInfoRequest,
@@ -44,6 +45,34 @@ export const GUEST_ROLES: AccountRole[] = [AccountRole.ReadOnlyGuest, AccountRol
 
 export function isBillableMember (role: AccountRole): boolean {
   return !GUEST_ROLES.includes(role)
+}
+
+export interface SeatCandidate {
+  role?: string // Employee mixin flag: 'USER' | 'GUEST' (informational)
+  personUuid?: AccountUuid | null
+}
+
+/**
+ * A seat is consumed by any active employee except system/AI/Admin and guests. The single source of
+ * truth shared by the displayed usage count (pod-billing) and the per-seat purchase floor (pod-payment).
+ * Guests are excluded two ways because either source may be authoritative in a given workspace:
+ *   - the Employee 'GUEST' flag on the mixin, and
+ *   - the account role in ws_members (Admin / GUEST_ROLES).
+ * An employee with no resolved account (pending invite, personUuid unset) still takes a slot.
+ */
+export function seatEligible (
+  candidate: SeatCandidate,
+  memberRole: Map<AccountUuid, AccountRole>,
+  aiBotAccount: AccountUuid | undefined
+): boolean {
+  if (candidate.role === 'GUEST') return false
+  const uuid = candidate.personUuid
+  if (uuid == null) return true
+  if (uuid === systemAccountUuid || uuid === configUserAccountUuid || uuid === aiBotAccount) return false
+  const role = memberRole.get(uuid)
+  if (role === AccountRole.Admin) return false
+  if (role !== undefined && GUEST_ROLES.includes(role)) return false
+  return true
 }
 
 export function makePlanKey (plan: string, type: SubscriptionType | string): string {

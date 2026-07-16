@@ -20,7 +20,7 @@ import {
   SubscriptionType,
   getClient,
   grantsPlan,
-  GUEST_ROLES
+  seatEligible
 } from '@hcengineering/account-client'
 import {
   type AccountUuid,
@@ -31,7 +31,6 @@ import {
   RateLimiter,
   SocialIdType,
   buildSocialIdString,
-  configUserAccountUuid,
   isArchivingMode,
   isDeletingMode,
   systemAccountUuid
@@ -40,7 +39,7 @@ import { aiBotAccountEmail } from '@hcengineering/middleware'
 import { type StorageConfig } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
 import { createClient, getTransactorEndpoint } from '@hcengineering/server-client'
-import contact, { type Employee } from '@hcengineering/contact'
+import contact from '@hcengineering/contact'
 import tracker from '@hcengineering/tracker'
 
 import { collectDatalakeStats } from './billing'
@@ -171,29 +170,6 @@ export class UsageWorker {
     return this.aiBotAccount
   }
 
-  /**
-   * A seat is consumed by any active employee except system/AI/Admin and guests.
-   * Guests are excluded two ways because either source may be authoritative in a given workspace:
-   *   - Employee.role === 'GUEST' (informational field on the mixin, set on guest onboarding), and
-   *   - the account role in ws_members (Admin / GUEST_ROLES).
-   * An employee whose account is not in ws_members (personUuid unresolved or pending invite) still
-   * takes a slot, matching SeatLimitsMiddleware, unless flagged GUEST on the Employee itself.
-   */
-  private seatEligible (
-    employee: Employee,
-    memberRole: Map<AccountUuid, AccountRole>,
-    aiBotAccount: AccountUuid | undefined
-  ): boolean {
-    if (employee.role === 'GUEST') return false
-    const uuid = employee.personUuid
-    if (uuid == null) return true
-    if (uuid === systemAccountUuid || uuid === configUserAccountUuid || uuid === aiBotAccount) return false
-    const role = memberRole.get(uuid)
-    if (role === AccountRole.Admin) return false
-    if (role !== undefined && GUEST_ROLES.includes(role)) return false
-    return true
-  }
-
   async updateWorkspaceUsageStatistics (ctx: MeasureContext, now: number, workspace: WorkspaceUuid): Promise<void> {
     const account = getAccountClient(this.config.AccountsUrl, workspace)
 
@@ -268,7 +244,7 @@ export class UsageWorker {
               client.findAll(contact.mixin.Employee, { active: true }),
               client.findAll(tracker.class.Project, { archived: false })
             ])
-            const members = employees.filter((emp) => this.seatEligible(emp, memberRole, aiBotAccount)).length
+            const members = employees.filter((emp) => seatEligible(emp, memberRole, aiBotAccount)).length
             return { membersCount: members, projectsCount: projects.length }
           } finally {
             await client.close()
