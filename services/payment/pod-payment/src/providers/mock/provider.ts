@@ -17,7 +17,13 @@ import { generateId, type MeasureContext, type WorkspaceUuid } from '@hcengineer
 import type { Express } from 'express'
 import type { AccountClient, SubscriptionData, SubscriptionType } from '@hcengineering/account-client'
 import { SubscriptionStatus } from '@hcengineering/account-client'
-import type { CheckoutResponse, PaymentProvider, SubscribeRequest, SubscriptionPublisher } from '../index'
+import type {
+  BillingPeriod,
+  CheckoutResponse,
+  PaymentProvider,
+  SubscribeRequest,
+  SubscriptionPublisher
+} from '../index'
 
 interface MockPlanPrice {
   priceMonthly?: string | number
@@ -45,6 +51,11 @@ export class MockProvider implements PaymentProvider {
     this.plans = plans
   }
 
+  // Period length so the UI renewal date and proration (yearly vs monthly) are correct.
+  private periodMs (period?: BillingPeriod): number {
+    return (period === 'yearly' ? 365 : 30) * 24 * 3600 * 1000
+  }
+
   // Per-seat plans charge price-per-seat * seats; flat plans charge priceMonthly.
   // amount is in minor units (kopecks) like the real providers; the config price is in whole rubles.
   private computeAmount (plan: string, quantity?: number): number {
@@ -67,6 +78,7 @@ export class MockProvider implements PaymentProvider {
     const checkoutId = generateId()
     const providerSubscriptionId = generateId()
     const quantity = request.quantity
+    const period = request.period
     const now = Date.now()
 
     const sub: SubscriptionData = {
@@ -81,11 +93,11 @@ export class MockProvider implements PaymentProvider {
       plan: request.plan,
       limits: undefined,
       amount: this.computeAmount(request.plan, quantity),
-      // quantity drives attachLimits (usersLimit) on the server side; undefined for flat plans.
-      providerData: quantity != null ? { quantity } : undefined,
+      // quantity drives attachLimits (usersLimit); period drives the UI monthly/yearly label + proration.
+      providerData: quantity != null || period != null ? { quantity, period } : undefined,
       periodStart: now,
-      // Fixed 30-day period so the UI can show a renewal/cancellation date.
-      periodEnd: now + 30 * 24 * 3600 * 1000
+      // Yearly plans get a 365-day period so the renewal date and proration are correct.
+      periodEnd: now + this.periodMs(period)
     }
 
     // Do not upsert here — the server upserts (attachLimits) right after createSubscription
@@ -131,12 +143,15 @@ export class MockProvider implements PaymentProvider {
     _type: SubscriptionType,
     _workspaceUrl: string,
     _accountUuid: string,
-    quantity?: number
+    quantity?: number,
+    period?: BillingPeriod
   ): Promise<SubscriptionData | CheckoutResponse | null> {
     // Server passes the provider's subscription id, not our db id.
     const sub = await this.accountClient.getSubscriptionByProviderId('mock', providerSubscriptionId)
     if (sub === null) return null
     const now = Date.now()
+    // Keep the current period shape unless the caller changes it (server proration may override periodEnd).
+    const effPeriod = period ?? (sub.providerData?.period as BillingPeriod | undefined)
     // A plan change is a fresh active subscription: clear any scheduled cancel and start a new period.
     return {
       ...sub,
@@ -144,10 +159,10 @@ export class MockProvider implements PaymentProvider {
       status: SubscriptionStatus.Active,
       canceledAt: undefined,
       periodStart: now,
-      periodEnd: now + 30 * 24 * 3600 * 1000,
+      periodEnd: now + this.periodMs(effPeriod),
       limits: undefined,
       amount: this.computeAmount(newPlan, quantity),
-      providerData: quantity != null ? { ...sub.providerData, quantity } : sub.providerData
+      providerData: { ...sub.providerData, quantity, period: effPeriod }
     }
   }
 

@@ -57,6 +57,8 @@
 
   import UsageSection from './UsageSection.svelte'
   import BillingErrorNotification from './BillingErrorNotification.svelte'
+  import ChangeSeatsDialog from './ChangeSeatsDialog.svelte'
+  import PackageChangeDialog from './PackageChangeDialog.svelte'
 
   const paymentClient = getPaymentClient()
 
@@ -118,6 +120,14 @@
   $: isCurrentCanceled = currentSubscription?.canceledAt !== undefined && currentSubscription.canceledAt > 0
   // A trial has no paid subscription to cancel — hide the cancel action (buy the plan instead).
   $: isCurrentTrial = currentSubscription?.status === SubscriptionStatus.Trialing
+  // Active, paid, per-seat tier -> the "Change seats" action is available (pro-rata, no refund).
+  $: isCurrentPerSeat =
+    typeof currentPlan !== 'string' &&
+    currentPlan?.priceMonthlyPerUser != null &&
+    currentPlan?.free !== true &&
+    !isCurrentTrial &&
+    !isCurrentCanceled &&
+    currentSubscription?.status === SubscriptionStatus.Active
   // Show the purchase button/seats for a plan when it is not the current one, OR when the user is on a
   // trial of that same plan — a trial is not a paid subscription, so buying the plan must stay available.
   // Args passed explicitly so Svelte tracks currentPlanKey/isReadOnly/isCurrentTrial as {#if} deps.
@@ -221,27 +231,39 @@
       return
     }
 
-    // Replacing package when another package exists.
+    // Replacing package when another package exists: show a proration preview (charge for a bigger
+    // package, renewal-date shift for a smaller one). Client-side preview, server recomputes on apply.
     if (currentPackageSubscription !== undefined) {
       const replaceSub = currentPackageSubscription
-      showPopup(MessageBox, {
-        label: plugin.string.ConfirmConnectPackage,
-        message: plugin.string.ReplacePackageDescription,
-        params: { package: currentPackage?.description },
-        action: async () => {
-          try {
-            const result = await paymentClient.updateSubscriptionPlan(replaceSub.id, pkgKey)
-            if ('checkoutUrl' in result) {
-              await applyCheckout(result)
-            } else {
-              currentPackageSubscription = result
+      const target = packages[pkgKey]
+      const targetPriceKopecks = Math.round(Number(target?.priceMonthly ?? 0) * 100)
+      showPopup(
+        PackageChangeDialog,
+        {
+          subscription: replaceSub,
+          currentLabel: currentPackage?.description ?? '',
+          targetLabel: target?.description ?? pkgKey,
+          targetPriceKopecks,
+          currency: target?.currency ?? currentPackage?.currency ?? ''
+        },
+        undefined,
+        (confirmed?: boolean) => {
+          if (confirmed !== true) return
+          void (async () => {
+            try {
+              const result = await paymentClient.updateSubscriptionPlan(replaceSub.id, pkgKey)
+              if ('checkoutUrl' in result) {
+                await applyCheckout(result)
+              } else {
+                currentPackageSubscription = result
+              }
+            } catch (error) {
+              console.error('Error replacing package:', error)
+              await showErrorNotification()
             }
-          } catch (error) {
-            console.error('Error replacing package:', error)
-            await showErrorNotification()
-          }
+          })()
         }
-      })
+      )
       // Connecting package, no package connected yet
     } else {
       void subscribePackage(pkgKey)
@@ -440,6 +462,41 @@
     } finally {
       isUpdating = false
     }
+  }
+
+  // Full recurring price (kopecks) for the current plan at a given seat count and the active period.
+  // Mirrors planChargeValue but parameterized by seats (that one reads seatsFor()).
+  function recurringPriceForCurrent (seats: number): number {
+    if (currentPlan == null || typeof currentPlan === 'string' || currentPlan.free === true) return 0
+    const period: BillingPeriod = currentSubscription?.providerData?.period === 'yearly' ? 'yearly' : 'monthly'
+    const perUser = monthlyPerUserBase(currentPlan)
+    if (Number.isFinite(perUser)) {
+      const rub = period === 'yearly' ? monthly(perUser, currentPlan, period) * 12 * seats : perUser * seats
+      return Math.round(rub * 100)
+    }
+    const n = Number(currentPlan.priceMonthly)
+    if (!Number.isFinite(n)) return 0
+    return Math.round((period === 'yearly' ? monthly(n, currentPlan, period) : n) * 100)
+  }
+
+  // Open the seat-change dialog for the active per-seat tier; confirm applies via updateSubscriptionPlan
+  // (server computes the pro-rata charge / period shift).
+  function openChangeSeats (): void {
+    if (currentSubscription === undefined || currentPlanKey === undefined) return
+    const planKey = currentPlanKey
+    showPopup(
+      ChangeSeatsDialog,
+      {
+        subscription: currentSubscription,
+        recurringPriceFor: recurringPriceForCurrent,
+        minSeats,
+        currency: typeof currentPlan !== 'string' ? (currentPlan?.currency ?? '') : ''
+      },
+      undefined,
+      (seats?: number) => {
+        if (seats != null) void executeUpdate(planKey, seats)
+      }
+    )
   }
 
   async function openSalesMail (planKey: string): Promise<void> {
@@ -898,24 +955,28 @@
           {:else}
             <div class="tier-body">
               <div class="tier-body-main flex-col flex-gap-4">
-                <div class="current-tier-card-title">
+                <div class="current-tier-card-title" data-id="currentTierCard">
                   <div class="flex-row-center">
-                    <div class="fs-title">{currentPlan.label ?? currentPlan}</div>
+                    <div class="fs-title" data-id="currentTierName">{currentPlan.label ?? currentPlan}</div>
                     {#if isCurrentCanceled}
-                      <div class="status-badge-warning ml-2 text-md">
+                      <div class="status-badge-warning ml-2 text-md" data-id="currentTierStatus">
                         <Label label={plugin.string.CancelScheduled} />
                       </div>
                     {:else if isCurrentTrial}
-                      <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.TrialPeriod} /></div>
+                      <div class="status-badge-active ml-2 text-md" data-id="currentTierStatus">
+                        <Label label={plugin.string.TrialPeriod} />
+                      </div>
                     {:else if currentSubscription?.status === 'active'}
-                      <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.Active} /></div>
+                      <div class="status-badge-active ml-2 text-md" data-id="currentTierStatus">
+                        <Label label={plugin.string.Active} />
+                      </div>
                     {/if}
                     {#if currentSubscription?.status === 'readonly'}
                       <div class="status-badge-disabled ml-2 text-md"><Label label={plugin.string.Disabled} /></div>
                     {/if}
                   </div>
                   {#if currentSubscription?.amount != null}
-                    <div class="flex-row-center items-end">
+                    <div class="flex-row-center items-end" data-id="currentTierAmount">
                       <span class="fs-title text-xl">
                         {formatAmount(
                           currentSubscription.amount,
@@ -968,25 +1029,38 @@
                       {/if}
                     {/if}
 
-                    {#if !isCurrentCanceled && currentPlan.free !== true}
-                      <Button
-                        label={plugin.string.CancelSubscription}
-                        kind="ghost"
-                        disabled={loading || isCheckoutPolling || isCanceling || isUpdating || isRetrying}
-                        on:click={() => {
-                          void handleCancel()
-                        }}
-                      />
-                    {:else if isCurrentCanceled}
-                      <Button
-                        label={plugin.string.UncancelSubscription}
-                        kind="primary"
-                        disabled={loading || isCheckoutPolling || isUncanceling || isUpdating || isRetrying}
-                        on:click={() => {
-                          void handleUncancel()
-                        }}
-                      />
-                    {/if}
+                    <div class="curr-tier-actions">
+                      {#if isCurrentPerSeat && !isReadOnly}
+                        <Button
+                          label={plugin.string.ChangeSeats}
+                          kind="regular"
+                          dataId="changeSeats"
+                          disabled={loading || isCheckoutPolling || isCanceling || isUpdating || isRetrying}
+                          on:click={openChangeSeats}
+                        />
+                      {/if}
+                      {#if !isCurrentCanceled && currentPlan.free !== true}
+                        <Button
+                          label={plugin.string.CancelSubscription}
+                          kind="ghost"
+                          dataId="cancelSubscription"
+                          disabled={loading || isCheckoutPolling || isCanceling || isUpdating || isRetrying}
+                          on:click={() => {
+                            void handleCancel()
+                          }}
+                        />
+                      {:else if isCurrentCanceled}
+                        <Button
+                          label={plugin.string.UncancelSubscription}
+                          kind="primary"
+                          dataId="uncancelSubscription"
+                          disabled={loading || isCheckoutPolling || isUncanceling || isUpdating || isRetrying}
+                          on:click={() => {
+                            void handleUncancel()
+                          }}
+                        />
+                      {/if}
+                    </div>
                   </div>
                 {/if}
 
@@ -1280,6 +1354,7 @@
                             label={plugin.string.Connect}
                             size={'large'}
                             kind={'secondary'}
+                            dataId={`packageConnect-${pkgKey}`}
                             disabled={loading || isCheckoutPolling || isUpdating || otherPackageCheckoutActive}
                             showTooltip={otherPackageCheckoutActive
                               ? { label: plugin.string.OtherCheckoutActiveTooltip }
@@ -1420,10 +1495,17 @@
 
   .curr-tier-footer {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: var(--spacing-2);
     padding-bottom: var(--spacing-2);
+  }
+
+  /* Action buttons on their own row under the renewal date. */
+  .curr-tier-actions {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-2);
+    align-items: center;
   }
 
   /* Divider above the add-on packages section. */

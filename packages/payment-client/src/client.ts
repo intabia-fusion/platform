@@ -15,7 +15,14 @@
 //
 
 import { concatLink, type WorkspaceUuid } from '@hcengineering/core'
-import { CheckoutResponse, SubscribeRequest, CheckoutStatus, SubscriptionData, type BillingPeriod } from './types'
+import {
+  CheckoutResponse,
+  SubscribeRequest,
+  CheckoutStatus,
+  SubscriptionData,
+  type BillingPeriod,
+  type PlanChangePreview
+} from './types'
 import { PaymentError, NetworkError } from './error'
 
 /**
@@ -138,6 +145,26 @@ export class PaymentClient {
       body
     })
     return (await response.json()) as SubscriptionData | CheckoutResponse
+  }
+
+  /**
+   * Preview a seat/package change without applying it: pro-rata one-time charge, resulting period
+   * end, and the seat floor. Use to show the user the price before confirming updateSubscriptionPlan.
+   */
+  async previewPlanChange (
+    subscriptionId: string,
+    plan: string,
+    quantity?: number,
+    period?: BillingPeriod
+  ): Promise<PlanChangePreview> {
+    const path = `/api/v1/subscriptions/${subscriptionId}/previewPlanChange`
+    const url = concatLink(this.endpoint, path)
+    const response = await fetchSafe(url, {
+      method: 'POST',
+      headers: { ...this.headers },
+      body: JSON.stringify({ plan, quantity, period })
+    })
+    return (await response.json()) as PlanChangePreview
   }
 
   /**

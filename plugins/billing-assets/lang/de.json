@@ -102,6 +102,16 @@
     "FreePlanHint": "Zahlung überfällig — der Arbeitsbereich läuft im kostenlosen Tarif. Zahlen Sie, um Ihren Tarif wiederherzustellen.",
     "TrialPlan": "Testversion",
     "TrialPlanHint": "Business-Testversion — noch {days} Tage übrig. Kaufen Sie den Plan, um Ihre Funktionen danach zu behalten.",
-    "TrialEndsHint": "Der Testzeitraum endet am {date} — der Arbeitsbereich wechselt automatisch zum kostenlosen Plan. Kaufen Sie einen Plan, um Ihre Funktionen zu behalten."
+    "TrialEndsHint": "Der Testzeitraum endet am {date} — der Arbeitsbereich wechselt automatisch zum kostenlosen Plan. Kaufen Sie einen Plan, um Ihre Funktionen zu behalten.",
+    "ChangeSeats": "Plätze ändern",
+    "ChangeSeatsTitle": "Anzahl der Plätze ändern",
+    "ChangeSeatsDescription": "Passen Sie an, für wie viele Mitglieder Ihr Tarif abgerechnet wird. Bei einer Reduzierung gibt es keine Rückerstattung — die ungenutzte Zeit wird stattdessen Ihrem Zeitraum gutgeschrieben.",
+    "SeatMinHint": "Mindestens {min} (aktuelle Mitglieder).",
+    "SeatChargeNow": "Ihnen werden jetzt {amount} berechnet.",
+    "SeatDowngradeExtends": "Keine Abbuchung. Ihr Verlängerungsdatum verschiebt sich um {days} Tage nach vorne, auf {date}.",
+    "NewRecurringPrice": "Neuer wiederkehrender Preis: {amount}.",
+    "UpgradePackage": "Paket erweitern",
+    "SeatsUnchanged": "Ändern Sie die Anzahl der Plätze, um fortzufahren.",
+    "ReplacePackageSwitch": "{current} durch {target} ersetzen?"
   }
 }

@@ -102,6 +102,16 @@
     "FreePlanHint": "Le paiement est en retard — l'espace de travail fonctionne sur le forfait gratuit. Payez pour restaurer votre forfait.",
     "TrialPlan": "Essai",
     "TrialPlanHint": "Essai du plan Business — {days} jours restants. Achetez le plan pour conserver vos fonctionnalités après la fin de l'essai.",
-    "TrialEndsHint": "L'essai se termine le {date} — l'espace de travail passera automatiquement au plan gratuit. Achetez un plan pour conserver vos fonctionnalités."
+    "TrialEndsHint": "L'essai se termine le {date} — l'espace de travail passera automatiquement au plan gratuit. Achetez un plan pour conserver vos fonctionnalités.",
+    "ChangeSeats": "Modifier les sièges",
+    "ChangeSeatsTitle": "Modifier le nombre de sièges",
+    "ChangeSeatsDescription": "Ajustez le nombre de membres facturés sur votre offre. Aucun remboursement en cas de réduction — le temps non utilisé est ajouté à votre période à la place.",
+    "SeatMinHint": "Minimum {min} (membres actuels).",
+    "SeatChargeNow": "{amount} vous sera facturé maintenant.",
+    "SeatDowngradeExtends": "Aucun prélèvement. Votre date de renouvellement avance de {days} jours, au {date}.",
+    "NewRecurringPrice": "Nouveau prix récurrent : {amount}.",
+    "UpgradePackage": "Étendre le forfait",
+    "SeatsUnchanged": "Modifiez le nombre de sièges pour continuer.",
+    "ReplacePackageSwitch": "Remplacer {current} par {target} ?"
   }
 }

@@ -102,6 +102,16 @@
     "FreePlanHint": "El pago está vencido — el espacio de trabajo funciona con el plan gratuito. Pague para restaurar su plan.",
     "TrialPlan": "Prueba",
     "TrialPlanHint": "Prueba del plan Business — quedan {days} días. Compre el plan para conservar sus funciones al finalizar.",
-    "TrialEndsHint": "El periodo de prueba termina el {date} — el espacio de trabajo pasará automáticamente al plan gratuito. Compre un plan para conservar sus funciones."
+    "TrialEndsHint": "El periodo de prueba termina el {date} — el espacio de trabajo pasará automáticamente al plan gratuito. Compre un plan para conservar sus funciones.",
+    "ChangeSeats": "Cambiar plazas",
+    "ChangeSeatsTitle": "Cambiar el número de plazas",
+    "ChangeSeatsDescription": "Ajusta por cuántos miembros se factura tu plan. No hay reembolso al reducir — en su lugar, el tiempo no utilizado se añade a tu período.",
+    "SeatMinHint": "Mínimo {min} (miembros actuales).",
+    "SeatChargeNow": "Se te cobrará {amount} ahora.",
+    "SeatDowngradeExtends": "Sin cargo. Tu fecha de renovación se adelanta {days} días, al {date}.",
+    "NewRecurringPrice": "Nuevo precio recurrente: {amount}.",
+    "UpgradePackage": "Ampliar paquete",
+    "SeatsUnchanged": "Cambia el número de plazas para continuar.",
+    "ReplacePackageSwitch": "¿Reemplazar {current} por {target}?"
   }
 }

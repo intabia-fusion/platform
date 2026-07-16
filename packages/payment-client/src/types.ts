@@ -82,6 +82,19 @@ export interface SubscriptionData {
 }
 
 /**
+ * Pro-rata preview for a seat/package change (no mutation). amount fields are in kopecks.
+ */
+export interface PlanChangePreview {
+  charge: number // one-time charge now (0 for a downgrade)
+  periodEnd?: number // resulting period end (ms); undefined when there is no paid period to prorate
+  minSeats: number // seat floor (current member count)
+  newSeats: number
+  newFullPrice?: number // recurring price after the change
+  isUpgrade?: boolean
+  isYearly?: boolean
+}
+
+/**
  * Checkout status response
  * Contains information about the checkout and subscription status
  */

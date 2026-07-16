@@ -102,6 +102,16 @@
     "FreePlanHint": "支払いが延滞しています — ワークスペースは無料プランで動作しています。プランを復元するにはお支払いください。",
     "TrialPlan": "トライアル",
     "TrialPlanHint": "Businessプランの試用期間 — 残り{days}日。終了後も機能を維持するにはプランをご購入ください。",
-    "TrialEndsHint": "試用期間は{date}に終了します — ワークスペースは自動的に無料プランに切り替わります。機能を維持するにはプランをご購入ください。"
+    "TrialEndsHint": "試用期間は{date}に終了します — ワークスペースは自動的に無料プランに切り替わります。機能を維持するにはプランをご購入ください。",
+    "ChangeSeats": "シート数を変更",
+    "ChangeSeatsTitle": "シート数の変更",
+    "ChangeSeatsDescription": "プランの請求対象となるメンバー数を調整します。減らしても返金はありません — 未使用分は期間に追加されます。",
+    "SeatMinHint": "最小 {min}（現在のメンバー数）。",
+    "SeatChargeNow": "今すぐ {amount} が請求されます。",
+    "SeatDowngradeExtends": "請求はありません。更新日が {days} 日先の {date} に移動します。",
+    "NewRecurringPrice": "新しい継続料金: {amount}。",
+    "UpgradePackage": "パッケージを拡張",
+    "SeatsUnchanged": "続行するにはシート数を変更してください。",
+    "ReplacePackageSwitch": "{current} を {target} に置き換えますか？"
   }
 }

@@ -89,6 +89,16 @@ export default mergeIds(billingId, billing, {
     PaymentFailedDescription: '' as IntlString,
     RetryPayment: '' as IntlString,
     RetriesExhausted: '' as IntlString,
-    RetriesExhaustedDescription: '' as IntlString
+    RetriesExhaustedDescription: '' as IntlString,
+    ChangeSeats: '' as IntlString,
+    ChangeSeatsTitle: '' as IntlString,
+    ChangeSeatsDescription: '' as IntlString,
+    SeatMinHint: '' as IntlString,
+    SeatChargeNow: '' as IntlString,
+    SeatDowngradeExtends: '' as IntlString,
+    NewRecurringPrice: '' as IntlString,
+    UpgradePackage: '' as IntlString,
+    SeatsUnchanged: '' as IntlString,
+    ReplacePackageSwitch: '' as IntlString
   }
 })

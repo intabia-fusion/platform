@@ -227,12 +227,11 @@ describe('plan-seats', () => {
 
   async function removeJoiner (): Promise<void> {
     const account = await joinerAccountUuid()
-    const svc = getAccountClient(
-      config.ACCOUNTS_URL,
-      generateToken(systemAccountUuid, owner.workspaceId, { service: 'tool' }, 'secret')
-    )
+    // Removing someone else needs at least Maintainer in the workspace; the owner token qualifies.
+    // A service/system token is NOT a workspace member, so leaveWorkspace rejects it with 403.
+    const ownerClient = getAccountClient(config.ACCOUNTS_URL, owner.token)
     try {
-      await svc.leaveWorkspace(account)
+      await ownerClient.leaveWorkspace(account)
     } catch {
       /* not a member — nothing to remove */
     }

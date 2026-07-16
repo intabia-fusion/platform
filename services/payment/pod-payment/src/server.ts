@@ -39,8 +39,9 @@ import {
 import { Config } from './config'
 import { ownsSubscription, withAdmin, withLoginInfo, withOwner, withToken, type RequestWithAuth } from './middleware'
 import { PaymentProviderFactory } from './factory'
-import type { CheckoutResponse, PaymentProvider, SubscriptionPublisher } from './providers'
+import type { BillingPeriod, CheckoutResponse, PaymentProvider, SubscriptionPublisher } from './providers'
 import { ProviderHttpError, SubscribeRequest } from './providers'
+import { prorateSeats, proratePackage } from './proration'
 import { startActiveSubscriptionReconciliation } from './reconciliation'
 import { getAccountClient, hasGrantingTier } from './utils'
 import yaml from 'js-yaml'
@@ -245,6 +246,27 @@ export async function createServer (
       tokenLimit: item.tokenLimit ?? 0,
       usersLimit
     }
+  }
+
+  // Full price (kopecks) for a plan at the given seats/period. Mirrors the UI planChargeValue:
+  // per-seat = pricePerUser * seats; yearly applies the plan's yearlyDiscount over 12 months.
+  function planFullPrice (type: SubscriptionType, plan: string, quantity: number, period?: BillingPeriod): number {
+    const source = type === SubscriptionType.Package ? planConfig.packages : planConfig.plans
+    const item = source?.[plan]
+    if (item == null || item.free === true) return 0
+    const isYearly = period === 'yearly'
+    const yearlyDiscount = Number(item.yearlyDiscount ?? 0)
+    const discount = 1 - (Number.isFinite(yearlyDiscount) ? yearlyDiscount : 0) / 100
+    if (item.priceMonthlyPerUser != null) {
+      const perUser = Number(item.priceMonthlyPerUser)
+      const monthly = isYearly ? Math.round(perUser * discount) : perUser
+      const rub = isYearly ? monthly * 12 * quantity : monthly * quantity
+      return Math.round(rub * 100)
+    }
+    const flat = Number(item.priceMonthly)
+    if (!Number.isFinite(flat)) return 0
+    const monthly = isYearly ? Math.round(flat * discount) : flat
+    return Math.round((isYearly ? monthly * 12 : monthly) * 100)
   }
 
   // Free fallback plan (flagged free:true in config) — its name, used to auto-provision a free tier.
@@ -851,11 +873,123 @@ export async function createServer (
             return
           }
 
+          // Pro-rata patch (no refund): when the current subscription was already paid, keep the
+          // subscription's recurring amount = the new full price (what renews) but shift periodEnd by
+          // the server-computed proration (downgrade credit extends it; monthly upgrade resets to 30d;
+          // yearly upgrade leaves it). The one-time delta charge is returned separately for the UI/receipt.
+          // All figures come from the current account subscription, so it is consistent across providers.
+          const oldSeats = Number(subscription.providerData?.quantity ?? 1)
+          const newSeats = quantity ?? oldSeats
+          let prorationCharge: number | undefined
+          // Proration applies to a same-plan seat change (per-seat tier) or a package swap — NOT to a
+          // plain tier plan switch (start->business), which keeps the provider's fresh period/amount.
+          const isSeatChange = subscription.type === SubscriptionType.Tier && plan === subscription.plan
+          const isPackageChange = subscription.type === SubscriptionType.Package
+          if (
+            (isSeatChange || isPackageChange) &&
+            subscription.amount != null &&
+            subscription.periodStart != null &&
+            subscription.periodEnd != null
+          ) {
+            const newFullPrice = planFullPrice(subscription.type, plan, newSeats, period)
+            const common = {
+              oldAmount: subscription.amount,
+              periodStart: subscription.periodStart,
+              periodEnd: subscription.periodEnd,
+              now: Date.now(),
+              newFullPrice
+            }
+            const pro =
+              subscription.type === SubscriptionType.Package
+                ? proratePackage(common)
+                : prorateSeats({ ...common, oldSeats, newSeats })
+            prorationCharge = pro.charge
+            // Take the whole proration-computed period (start+end) so periodDays stays consistent for
+            // a later change — the provider's own period (e.g. mock's now+30d) would otherwise desync.
+            updateResult = {
+              ...updateResult,
+              amount: newFullPrice,
+              periodStart: pro.periodStart,
+              periodEnd: pro.periodEnd
+            }
+            ctx.info('applied proration', {
+              id: subscription.id,
+              oldSeats,
+              newSeats,
+              charge: pro.charge,
+              isUpgrade: pro.isUpgrade,
+              isYearly: pro.isYearly
+            })
+          }
+
           // It's a SubscriptionData - update was direct. Attach the new plan's limits
           // (providers may return without fresh limits) so enforcement and UI are correct.
           await persistSubscription(updateResult)
 
-          res.status(200).json(attachLimits(updateResult))
+          res.status(200).json({ ...attachLimits(updateResult), prorationCharge })
+        },
+        req,
+        res,
+        () => {}
+      )
+    }
+  )
+
+  /**
+   * POST /api/v1/subscriptions/:subscriptionId/previewPlanChange
+   * Preview a seat/package change without mutating: returns the pro-rata one-time charge,
+   * the resulting period end, and the seat floor. Body: { plan, quantity?, period? }.
+   */
+  app.post(
+    '/api/v1/subscriptions/:subscriptionId/previewPlanChange',
+    subscriptionRateLimiter,
+    withToken,
+    withLoginInfo,
+    withOwner,
+    (req: RequestWithAuth, res: Response) => {
+      void handleRequest(
+        ctx,
+        'preview-plan-change',
+        async (ctx) => {
+          const { plan, quantity: requestedQuantity, period } = req.body
+          if (plan === undefined || typeof plan !== 'string') {
+            res.status(400).json({ error: 'Missing or invalid field: plan' })
+            return
+          }
+          const subscription = await loadOwnedSubscription(req, res)
+          if (subscription === undefined) return
+
+          const minSeats = Math.max(await billableMembersCount(subscription.workspaceUuid), 1)
+          const oldSeats = Number(subscription.providerData?.quantity ?? 1)
+          const newSeats = requestedQuantity != null ? Math.max(Number(requestedQuantity), minSeats) : oldSeats
+          const newFullPrice = planFullPrice(subscription.type, plan, newSeats, period)
+
+          if (subscription.amount == null || subscription.periodStart == null || subscription.periodEnd == null) {
+            // No paid period to prorate against (trial/free/manual): the change charges the full price.
+            res.status(200).json({ charge: newFullPrice, periodEnd: undefined, minSeats, newSeats, isUpgrade: true })
+            return
+          }
+
+          const common = {
+            oldAmount: subscription.amount,
+            periodStart: subscription.periodStart,
+            periodEnd: subscription.periodEnd,
+            now: Date.now(),
+            newFullPrice
+          }
+          const pro =
+            subscription.type === SubscriptionType.Package
+              ? proratePackage(common)
+              : prorateSeats({ ...common, oldSeats, newSeats })
+          res.status(200).json({
+            charge: pro.charge,
+            periodEnd: pro.periodEnd,
+            minSeats,
+            newSeats,
+            newFullPrice,
+            isUpgrade: pro.isUpgrade,
+            isYearly: pro.isYearly
+          })
         },
         req,
         res,

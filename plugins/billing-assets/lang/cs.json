@@ -102,6 +102,16 @@
     "FreePlanHint": "Platba je po splatnosti — pracovní prostor běží na bezplatném plánu. Zaplaťte pro obnovení svého plánu.",
     "TrialPlan": "Zkušební verze",
     "TrialPlanHint": "Zkušební verze plánu Business — zbývá dní: {days}. Zakupte plán, abyste si zachovali funkce i po jejím skončení.",
-    "TrialEndsHint": "Zkušební období končí {date} — pracovní prostor automaticky přejde na bezplatný plán. Zakupte plán, abyste si zachovali funkce."
+    "TrialEndsHint": "Zkušební období končí {date} — pracovní prostor automaticky přejde na bezplatný plán. Zakupte plán, abyste si zachovali funkce.",
+    "ChangeSeats": "Změnit místa",
+    "ChangeSeatsTitle": "Změna počtu míst",
+    "ChangeSeatsDescription": "Upravte, za kolik členů se váš plán účtuje. Při snížení se peníze nevracejí — nevyužitý čas se místo toho přičte k vašemu období.",
+    "SeatMinHint": "Minimálně {min} (aktuální členové).",
+    "SeatChargeNow": "Nyní vám bude účtováno {amount}.",
+    "SeatDowngradeExtends": "Bez účtování. Datum obnovení se posune o {days} dní vpřed, na {date}.",
+    "NewRecurringPrice": "Nová opakovaná cena: {amount}.",
+    "UpgradePackage": "Rozšířit balíček",
+    "SeatsUnchanged": "Chcete-li pokračovat, změňte počet míst.",
+    "ReplacePackageSwitch": "Nahradit {current} za {target}?"
   }
 }

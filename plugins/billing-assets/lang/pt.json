@@ -102,6 +102,16 @@
     "FreePlanHint": "O pagamento está em atraso — a área de trabalho funciona no plano gratuito. Pague para restaurar o seu plano.",
     "TrialPlan": "Teste",
     "TrialPlanHint": "Período experimental do plano Business — faltam {days} dias. Compre o plano para manter as suas funcionalidades após o términus.",
-    "TrialEndsHint": "O período experimental termina a {date} — o espaço de trabalho mudará automaticamente para o plano gratuito. Compre um plano para manter as suas funcionalidades."
+    "TrialEndsHint": "O período experimental termina a {date} — o espaço de trabalho mudará automaticamente para o plano gratuito. Compre um plano para manter as suas funcionalidades.",
+    "ChangeSeats": "Alterar lugares",
+    "ChangeSeatsTitle": "Alterar o número de lugares",
+    "ChangeSeatsDescription": "Ajuste para quantos membros o seu plano é cobrado. Sem reembolso ao reduzir — o tempo não utilizado é adicionado ao seu período.",
+    "SeatMinHint": "Mínimo {min} (membros atuais).",
+    "SeatChargeNow": "Ser-lhe-á cobrado {amount} agora.",
+    "SeatDowngradeExtends": "Sem cobrança. A sua data de renovação avança {days} dias, para {date}.",
+    "NewRecurringPrice": "Novo preço recorrente: {amount}.",
+    "UpgradePackage": "Expandir pacote",
+    "SeatsUnchanged": "Altere o número de lugares para continuar.",
+    "ReplacePackageSwitch": "Substituir {current} por {target}?"
   }
 }

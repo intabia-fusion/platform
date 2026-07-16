@@ -102,6 +102,16 @@
     "FreePlanHint": "Payment is overdue — the workspace runs on the free plan. Pay to restore your plan.",
     "TrialPlan": "Trial",
     "TrialPlanHint": "Business trial — {days} days left. Buy the plan to keep your features after it ends.",
-    "TrialEndsHint": "Trial ends {date} — the workspace will switch to the free plan automatically. Buy a plan to keep your features."
+    "TrialEndsHint": "Trial ends {date} — the workspace will switch to the free plan automatically. Buy a plan to keep your features.",
+    "ChangeSeats": "Change seats",
+    "ChangeSeatsTitle": "Change number of seats",
+    "ChangeSeatsDescription": "Adjust how many members your plan is billed for. No refund on downgrade — unused time is added to your period instead.",
+    "SeatMinHint": "Minimum {min} (current members).",
+    "SeatChargeNow": "You will be charged {amount} now.",
+    "SeatDowngradeExtends": "No charge. Your renewal date moves {days, plural, =1 {1 day} other {# days}} forward, to {date}.",
+    "NewRecurringPrice": "New recurring price: {amount}.",
+    "UpgradePackage": "Upgrade package",
+    "SeatsUnchanged": "Change the number of seats to continue.",
+    "ReplacePackageSwitch": "Replace {current} with {target}?"
   }
 }

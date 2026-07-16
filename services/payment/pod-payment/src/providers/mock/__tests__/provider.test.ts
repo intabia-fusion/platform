@@ -84,6 +84,15 @@ describe('MockProvider', () => {
     expect(sub?.periodEnd).toBeGreaterThan(sub?.periodStart ?? 0)
   })
 
+  test('yearly subscription gets a 365-day period and stores period=yearly', async () => {
+    const req = { type: SubscriptionType.Tier, plan: 'team', period: 'yearly' } as any
+    const res = await provider.createSubscription(ctx, req, workspaceUuid, workspaceUrl, accountUuid)
+    const sub = await provider.getSubscriptionByCheckout(ctx, res.checkoutId)
+    const days = ((sub?.periodEnd ?? 0) - (sub?.periodStart ?? 0)) / (24 * 3600 * 1000)
+    expect(Math.round(days)).toBe(365)
+    expect(sub?.providerData?.period).toBe('yearly')
+  })
+
   test('getSubscriptionByCheckout returns the created active subscription with no limits', async () => {
     const res = await provider.createSubscription(ctx, request, workspaceUuid, workspaceUrl, accountUuid)
     const sub = await provider.getSubscriptionByCheckout(ctx, res.checkoutId)

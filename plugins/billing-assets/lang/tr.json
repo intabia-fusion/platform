@@ -102,6 +102,16 @@
     "FreePlanHint": "Ödeme gecikti — çalışma alanı ücretsiz planda çalışıyor. Planınızı geri yüklemek için ödeme yapın.",
     "TrialPlan": "Deneme",
     "TrialPlanHint": "Business plan denemesi — {days} gün kaldı. Özelliklerinizi korumak için deneme sona ermeden planı satın alın.",
-    "TrialEndsHint": "Deneme süresi {date} tarihinde sona eriyor — çalışma alanı otomatik olarak ücretsiz plana geçecek. Özelliklerinizi korumak için bir plan satın alın."
+    "TrialEndsHint": "Deneme süresi {date} tarihinde sona eriyor — çalışma alanı otomatik olarak ücretsiz plana geçecek. Özelliklerinizi korumak için bir plan satın alın.",
+    "ChangeSeats": "Koltukları değiştir",
+    "ChangeSeatsTitle": "Koltuk sayısını değiştir",
+    "ChangeSeatsDescription": "Planınızın kaç üye için faturalandırılacağını ayarlayın. Azaltmada geri ödeme yapılmaz — kullanılmayan süre bunun yerine dönem sürenize eklenir.",
+    "SeatMinHint": "En az {min} (mevcut üyeler).",
+    "SeatChargeNow": "Şimdi {amount} tahsil edilecek.",
+    "SeatDowngradeExtends": "Ücret alınmaz. Yenileme tarihiniz {days} gün ileri, {date} tarihine kayar.",
+    "NewRecurringPrice": "Yeni yinelenen fiyat: {amount}.",
+    "UpgradePackage": "Paketi genişlet",
+    "SeatsUnchanged": "Devam etmek için koltuk sayısını değiştirin.",
+    "ReplacePackageSwitch": "{current} paketini {target} ile değiştirilsin mi?"
   }
 }
