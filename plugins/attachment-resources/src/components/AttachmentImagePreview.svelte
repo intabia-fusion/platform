@@ -61,7 +61,8 @@
         width: metadata.thumbnail?.width ?? metadata.originalWidth,
         height: metadata.thumbnail?.height ?? metadata.originalHeight
       },
-      { maxWidth: maxSizeRem, minWidth: minSizeRem, maxHeight: maxSizeRem, minHeight: minSizeRem }
+      { maxWidth: maxSizeRem, minWidth: minSizeRem, maxHeight: maxSizeRem, minHeight: minSizeRem },
+      { ignoreMinHeight: true, forceFit: 'contain' }
     )
   }
 
@@ -116,7 +117,7 @@
     display: inline-flex;
     background-color: var(--theme-link-preview-bg-color);
     border-radius: 0.75rem;
-    overflow: hidden;
+    overflow: visible;
 
     .image-overlay {
       position: absolute;

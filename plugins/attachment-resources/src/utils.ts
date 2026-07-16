@@ -164,7 +164,8 @@ interface ImageDimensions {
 
 export function getImageDimensions (
   size: { width: number, height: number },
-  maxRem: { maxWidth: number, minWidth: number, maxHeight: number, minHeight: number }
+  maxRem: { maxWidth: number, minWidth: number, maxHeight: number, minHeight: number },
+  options?: { ignoreMinHeight?: boolean, forceFit?: 'contain' | 'cover' }
 ): ImageDimensions {
   const originalWidth = size.width
   const originalHeight = size.height
@@ -187,12 +188,12 @@ export function getImageDimensions (
   let width = Math.min(originalWidth, maxWidthPx)
   let height = Math.ceil(width * ratio)
 
-  const fit = width < minWidthPx || height < minHeightPx ? 'cover' : 'contain'
+  const fit = options?.forceFit ?? (width < minWidthPx || height < minHeightPx ? 'cover' : 'contain')
 
   if (height > maxHeightPx) {
     width = maxHeightPx / ratio
     height = maxHeightPx
-  } else if (height < minHeightPx) {
+  } else if (height < minHeightPx && !(options?.ignoreMinHeight ?? false)) {
     height = minHeightPx
   }
 
