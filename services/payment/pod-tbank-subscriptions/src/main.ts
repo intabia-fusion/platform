@@ -53,11 +53,20 @@ export const main = async (): Promise<void> => {
     })
   )
 
-  // Initialize TBank client
+  // Custom logger: SDK default `console` dumps full payloads (CardId/RebillId) to stdout on debug. Drop it.
   const tbank = new TbankPayments({
     merchantId: config.TbankTerminalKey,
     secret: config.TbankPassword,
-    apiUrl: config.TbankUrl
+    apiUrl: config.TbankUrl,
+    logger: {
+      debug: (message: string) => {
+        metricsContext.info(message)
+      },
+      error: (message: string, data?: any) => {
+        // Keep message/status, drop raw response body which may echo payload.
+        metricsContext.error(message, { message: data?.message, status: data?.status })
+      }
+    }
   })
 
   // Static service token signed with SECRET — rotating SECRET requires restarting this pod.

@@ -232,14 +232,15 @@ services:
       - ACCOUNTS_URL=http://account:3000
       - FRONT_URL=http://localhost:8087
       - USE_SANDBOX=true
-      - PROVIDER=tbank
       - PLAN_CONFIG=/var/cfg/plan-config.yaml
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
-      - TBANK_SUBSCRIPTIONS_URL=http://tbank-subscriptions:4042
-      # Mock provider (uncomment + comment out the tbank block above to activate plans without real payment)
-      # - PROVIDER=mock
-      # - ALLOW_MOCK_PROVIDER=true
+      # TBank provider (needs real terminal credentials; use mock below for local dev)
+      # - PROVIDER=tbank
+      # - TBANK_SUBSCRIPTIONS_URL=http://tbank-subscriptions:4042
+      # Mock provider: activates plans instantly without a real payment gateway.
+      - PROVIDER=mock
+      - ALLOW_MOCK_PROVIDER=true
       # Polar configuration (uncomment if using Polar)
       # - POLAR_ACCESS_TOKEN=${POLAR_ACCESS_TOKEN}
       # - POLAR_WEBHOOK_SECRET=${POLAR_WEBHOOK_SECRET}
@@ -1068,6 +1069,7 @@ services:
         condition: service_started
       payment:
         condition: service_started
+    pull_policy: never
     environment:
       - SECRET=secret
       - PORT=4042

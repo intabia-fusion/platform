@@ -1631,8 +1631,8 @@ describe('account operations', () => {
 
     test('excludes the aiBot account from the returned members', async () => {
       const aiBotUuid = 'aibot-uuid' as PersonUuid
-      const aiBotSocial: SocialId = { personUuid: aiBotUuid } as unknown as SocialId
-      jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(aiBotSocial)
+      // getSeatMembers resolves the aiBot uuid via getEmailSocialId -> db.socialId.findOne.
+      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue({ personUuid: aiBotUuid })
       ;(mockDb.getWorkspaceMembers as jest.Mock).mockResolvedValue([
         { person: mockAccount.uuid, role: AccountRole.Owner },
         { person: aiBotUuid, role: AccountRole.User },
@@ -1645,7 +1645,7 @@ describe('account operations', () => {
     })
 
     test('returns all members when aiBot is not present in this instance', async () => {
-      jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
+      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue(null)
       ;(mockDb.getWorkspaceMembers as jest.Mock).mockResolvedValue([
         { person: mockAccount.uuid, role: AccountRole.Owner },
         { person: 'u1' as PersonUuid, role: AccountRole.User }

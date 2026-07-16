@@ -29,7 +29,9 @@ describe('MockProvider', () => {
   const accountUuid = 'acc-uuid'
   const plans = {
     team: { priceMonthly: 599 },
-    business: { priceMonthlyPerUser: 499 }
+    business: { priceMonthlyPerUser: 499 },
+    // Packages are merged into the price map by the server; the mock must price them too.
+    '1000gb': { priceMonthly: 10000 }
   }
 
   beforeEach(() => {
@@ -51,6 +53,35 @@ describe('MockProvider', () => {
     expect(res.checkoutUrl).toBe(`${frontUrl}/workbench/${workspaceUrl}/setting/setting/billing/subscriptions`)
     // Server attaches limits + upserts on poll, not the provider.
     expect(accountClient.upsertSubscription).not.toHaveBeenCalled()
+  })
+
+  test('amount is in kopecks: flat plan price * 100', async () => {
+    const res = await provider.createSubscription(ctx, request, workspaceUuid, workspaceUrl, accountUuid)
+    const sub = await provider.getSubscriptionByCheckout(ctx, res.checkoutId)
+    // team priceMonthly=599 rub -> 59900 kopecks (UI divides by 100 for display).
+    expect(sub?.amount).toBe(59900)
+  })
+
+  test('amount for a per-seat plan is pricePerUser * quantity * 100', async () => {
+    const req = { type: SubscriptionType.Tier, plan: 'business', quantity: 3 } as any
+    const res = await provider.createSubscription(ctx, req, workspaceUuid, workspaceUrl, accountUuid)
+    const sub = await provider.getSubscriptionByCheckout(ctx, res.checkoutId)
+    // business priceMonthlyPerUser=499 * 3 seats -> 149700 kopecks.
+    expect(sub?.amount).toBe(149700)
+  })
+
+  test('amount for a package plan uses its priceMonthly (not zero)', async () => {
+    const req = { type: SubscriptionType.Package, plan: '1000gb' } as any
+    const res = await provider.createSubscription(ctx, req, workspaceUuid, workspaceUrl, accountUuid)
+    const sub = await provider.getSubscriptionByCheckout(ctx, res.checkoutId)
+    // 1000gb priceMonthly=10000 rub -> 1000000 kopecks; regression: was 0 when packages were not merged.
+    expect(sub?.amount).toBe(1000000)
+  })
+
+  test('createSubscription sets a periodEnd so the UI can show a renewal date', async () => {
+    const res = await provider.createSubscription(ctx, request, workspaceUuid, workspaceUrl, accountUuid)
+    const sub = await provider.getSubscriptionByCheckout(ctx, res.checkoutId)
+    expect(sub?.periodEnd).toBeGreaterThan(sub?.periodStart ?? 0)
   })
 
   test('getSubscriptionByCheckout returns the created active subscription with no limits', async () => {
@@ -111,7 +142,7 @@ describe('MockProvider', () => {
     const res = await provider.createSubscription(ctx, request, workspaceUuid, workspaceUrl, accountUuid)
     const sub = await provider.getSubscriptionByCheckout(ctx, res.checkoutId)
 
-    expect(sub?.amount).toBe(599)
+    expect(sub?.amount).toBe(599 * 100) // kopecks
     expect(sub?.providerData).toBeUndefined()
   })
 
@@ -120,7 +151,7 @@ describe('MockProvider', () => {
     const res = await provider.createSubscription(ctx, perSeatRequest, workspaceUuid, workspaceUrl, accountUuid)
     const sub = await provider.getSubscriptionByCheckout(ctx, res.checkoutId)
 
-    expect(sub?.amount).toBe(499 * 7)
+    expect(sub?.amount).toBe(499 * 7 * 100) // kopecks
     expect(sub?.providerData?.quantity).toBe(7)
   })
 
@@ -145,11 +176,35 @@ describe('MockProvider', () => {
     )
 
     expect(res.plan).toBe('business')
-    expect(res.amount).toBe(499 * 4)
+    expect(res.amount).toBe(499 * 4 * 100) // kopecks
     expect(res.providerData?.quantity).toBe(4)
   })
 
-  test('cancelSubscription flips status to Canceled', async () => {
+  test('updateSubscriptionPlan clears a scheduled cancel and starts a fresh period', async () => {
+    // Regression: replacing a canceled package left the new one stuck in "canceling".
+    accountClient.getSubscriptionByProviderId.mockResolvedValue({
+      id: 'db-1',
+      provider: 'mock',
+      providerSubscriptionId: 'mock-1',
+      plan: '100gb',
+      canceledAt: Date.now() - 1000,
+      status: SubscriptionStatus.Active
+    } as any)
+
+    const res: any = await provider.updateSubscriptionPlan(
+      ctx,
+      'mock-1',
+      '1000gb',
+      SubscriptionType.Package,
+      workspaceUrl,
+      accountUuid
+    )
+
+    expect(res.canceledAt).toBeUndefined()
+    expect(res.periodEnd).toBeGreaterThan(res.periodStart)
+  })
+
+  test('cancelSubscription schedules cancel (canceledAt) and keeps status Active', async () => {
     accountClient.getSubscriptionByProviderId.mockResolvedValue({
       id: 'db-1',
       provider: 'mock',
@@ -157,17 +212,22 @@ describe('MockProvider', () => {
       status: SubscriptionStatus.Active
     } as any)
     const res = await provider.cancelSubscription(ctx, 'mock-1')
-    expect(res.status).toBe(SubscriptionStatus.Canceled)
+    // Cancel at period end: plan stays visible/active until it expires.
+    expect(res.canceledAt).toBeGreaterThan(0)
+    expect(res.status).toBe(SubscriptionStatus.Active)
   })
 
-  test('uncancelSubscription / retryPayment flip status back to Active', async () => {
+  test('uncancelSubscription clears canceledAt / retryPayment flips status back to Active', async () => {
     accountClient.getSubscriptionByProviderId.mockResolvedValue({
       id: 'db-1',
       provider: 'mock',
       providerSubscriptionId: 'mock-1',
-      status: SubscriptionStatus.Canceled
+      canceledAt: Date.now(),
+      status: SubscriptionStatus.Active
     } as any)
-    expect((await provider.uncancelSubscription(ctx, 'mock-1')).status).toBe(SubscriptionStatus.Active)
+    const unc = await provider.uncancelSubscription(ctx, 'mock-1')
+    expect(unc.status).toBe(SubscriptionStatus.Active)
+    expect(unc.canceledAt).toBeUndefined()
     expect((await provider.retryPayment(ctx, 'mock-1'))?.status).toBe(SubscriptionStatus.Active)
   })
 

@@ -46,14 +46,15 @@ export class MockProvider implements PaymentProvider {
   }
 
   // Per-seat plans charge price-per-seat * seats; flat plans charge priceMonthly.
+  // amount is in minor units (kopecks) like the real providers; the config price is in whole rubles.
   private computeAmount (plan: string, quantity?: number): number {
     const item = this.plans[plan]
     if (item == null) return 0
     if (item.priceMonthlyPerUser != null) {
-      return Number(item.priceMonthlyPerUser) * (quantity ?? 1)
+      return Number(item.priceMonthlyPerUser) * (quantity ?? 1) * 100
     }
     const flat = Number(item.priceMonthly)
-    return Number.isFinite(flat) ? flat : 0
+    return Number.isFinite(flat) ? flat * 100 : 0
   }
 
   async createSubscription (
@@ -66,6 +67,7 @@ export class MockProvider implements PaymentProvider {
     const checkoutId = generateId()
     const providerSubscriptionId = generateId()
     const quantity = request.quantity
+    const now = Date.now()
 
     const sub: SubscriptionData = {
       id: generateId(),
@@ -81,7 +83,9 @@ export class MockProvider implements PaymentProvider {
       amount: this.computeAmount(request.plan, quantity),
       // quantity drives attachLimits (usersLimit) on the server side; undefined for flat plans.
       providerData: quantity != null ? { quantity } : undefined,
-      periodStart: Date.now()
+      periodStart: now,
+      // Fixed 30-day period so the UI can show a renewal/cancellation date.
+      periodEnd: now + 30 * 24 * 3600 * 1000
     }
 
     // Do not upsert here — the server upserts (attachLimits) right after createSubscription
@@ -110,15 +114,14 @@ export class MockProvider implements PaymentProvider {
   async cancelSubscription (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData> {
     const sub = await this.accountClient.getSubscriptionByProviderId('mock', providerSubscriptionId)
     if (sub === null) throw new Error(`Mock: subscription not found: ${providerSubscriptionId}`)
-    // Server upserts the returned value
-    return { ...sub, status: SubscriptionStatus.Canceled }
+    // Cancel at period end: mark canceledAt but keep the plan active/visible until it expires.
+    return { ...sub, canceledAt: Date.now() }
   }
 
   async uncancelSubscription (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData> {
     const sub = await this.accountClient.getSubscriptionByProviderId('mock', providerSubscriptionId)
     if (sub === null) throw new Error(`Mock: subscription not found: ${providerSubscriptionId}`)
-    // Server upserts the returned value
-    return { ...sub, status: SubscriptionStatus.Active }
+    return { ...sub, canceledAt: undefined, status: SubscriptionStatus.Active }
   }
 
   async updateSubscriptionPlan (
@@ -133,11 +136,15 @@ export class MockProvider implements PaymentProvider {
     // Server passes the provider's subscription id, not our db id.
     const sub = await this.accountClient.getSubscriptionByProviderId('mock', providerSubscriptionId)
     if (sub === null) return null
-    // Server attaches the new plan's limits and upserts the returned value.
+    const now = Date.now()
+    // A plan change is a fresh active subscription: clear any scheduled cancel and start a new period.
     return {
       ...sub,
       plan: newPlan,
       status: SubscriptionStatus.Active,
+      canceledAt: undefined,
+      periodStart: now,
+      periodEnd: now + 30 * 24 * 3600 * 1000,
       limits: undefined,
       amount: this.computeAmount(newPlan, quantity),
       providerData: quantity != null ? { ...sub.providerData, quantity } : sub.providerData

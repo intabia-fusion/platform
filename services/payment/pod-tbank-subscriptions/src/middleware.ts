@@ -17,12 +17,11 @@ import type { NextFunction, Request, Response } from 'express'
 import { extractToken } from '@hcengineering/server-client'
 import { systemAccountUuid } from '@hcengineering/core'
 
-// The subscriptions API is internal: only pod-payment calls it, under its system service token.
-// Request bodies carry accountUuid/workspaceUuid verbatim, so without this gate anyone reaching
-// the pod could manage arbitrary subscriptions. The TBank webhook route stays open (Token-signed).
+// Internal API: only pod-payment (payment-service token) or system. Bodies carry accountUuid/workspaceUuid
+// verbatim, so without this gate anyone reaching the pod manages arbitrary subs. Webhook route stays open.
 export const withServiceToken = (req: Request, res: Response, next: NextFunction): void => {
   const token = extractToken(req.headers)
-  if (token === undefined || (token.account !== systemAccountUuid && token.extra?.admin !== 'true')) {
+  if (token === undefined || (token.account !== systemAccountUuid && token.extra?.service !== 'payment')) {
     res.status(401).json({ error: 'Service token required' })
     return
   }

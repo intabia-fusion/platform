@@ -31,10 +31,17 @@ import {
   systemAccountUuid,
   type WorkspaceDataId,
   type WorkspaceInfoWithStatus as WorkspaceInfoWithStatusCore,
+  type WorkspaceMemberInfo,
   type WorkspaceMode,
   type WorkspaceUuid
 } from '@hcengineering/core'
 import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
+import {
+  LimitCategory,
+  LimitStatus,
+  workspaceEvents,
+  type QueueWorkspaceLimitsMessage
+} from '@hcengineering/server-core'
 import { getDBClient, setDBExtraOptions } from '@hcengineering/postgres'
 import { pbkdf2Sync, randomBytes } from 'crypto'
 import otpGenerator from 'otp-generator'
@@ -66,6 +73,8 @@ import {
   type OtpInfo,
   type RegionInfo,
   type SocialId,
+  SubscriptionStatus,
+  SubscriptionType,
   type Workspace,
   type WorkspaceInfoWithStatus,
   type WorkspaceInvite,
@@ -1527,6 +1536,66 @@ export async function getWorkspaceJoinInfo (
   throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
 }
 
+// aiBot is a technical account (system modifiedBy) that lands in ws_members as role=User; it must not
+// occupy a paid seat. Members that count toward a paid seat: ws_members minus the aiBot account.
+const AI_BOT_EMAIL = process.env.AI_BOT_EMAIL ?? 'huly.ai.bot@hc.engineering'
+
+export async function getSeatMembers (db: AccountDB, workspace: WorkspaceUuid): Promise<WorkspaceMemberInfo[]> {
+  const members = await db.getWorkspaceMembers(workspace)
+  const aiBot = (await getEmailSocialId(db, AI_BOT_EMAIL))?.personUuid
+  return aiBot == null ? members : members.filter((m) => m.person !== aiBot)
+}
+
+// Roles that never occupy a paid seat (guests are read-only). Admins are operators, also seatless.
+const SEATLESS_ROLES: AccountRole[] = [
+  AccountRole.Admin,
+  AccountRole.Guest,
+  AccountRole.DocGuest,
+  AccountRole.ReadOnlyGuest
+]
+
+/**
+ * Best-effort join-time seat cap: reject a new member when the paid plan's usersLimit is already
+ * filled. ponytail: best-effort — concurrent accepts can overshoot by 1-2 (no atomic count); the
+ * transactor SeatLimitsMiddleware read-only enforcement is the real backstop for over-limit members.
+ */
+export async function assertSeatAvailableOnJoin (
+  ctx: MeasureContext,
+  db: AccountDB,
+  workspace: WorkspaceUuid,
+  joiningRole: AccountRole
+): Promise<void> {
+  if (SEATLESS_ROLES.includes(joiningRole)) return
+  const tier = (await db.subscription.find({ workspaceUuid: workspace })).find(
+    (s) =>
+      s.type === SubscriptionType.Tier &&
+      (s.status === SubscriptionStatus.Active || s.status === SubscriptionStatus.Trialing)
+  )
+  const usersLimit = tier?.limits?.usersLimit ?? 0
+  if (usersLimit === 0) return // unlimited or free-fallback: no join-time cap
+  const members = await getSeatMembers(db, workspace)
+  const seatsUsed = members.filter((m) => !SEATLESS_ROLES.includes(m.role)).length
+  if (seatsUsed >= usersLimit) {
+    ctx.info('join rejected: seat limit reached', { workspace, usersLimit, seatsUsed })
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.PlanLimitExceeded, {}))
+  }
+}
+
+/** Signal that workspace membership changed so seat-count consumers (transactor/billing) refresh now. */
+export async function publishMembersChanged (ctx: MeasureContext, workspaceUuid: WorkspaceUuid): Promise<void> {
+  const producer = getMetadata(accountPlugin.metadata.WorkspaceQueue)
+  if (producer === undefined) {
+    ctx.warn('WorkspaceQueue producer is not configured, members event skipped', { workspaceUuid })
+    return
+  }
+  const events: QueueWorkspaceLimitsMessage[] = [workspaceEvents.limitsChanged(LimitCategory.Members, LimitStatus.Ok)]
+  try {
+    await producer.send(ctx, workspaceUuid, events)
+  } catch (err: any) {
+    ctx.error('Failed to publish members-changed event', { workspaceUuid, err })
+  }
+}
+
 export async function doJoinByInvite (
   ctx: MeasureContext,
   db: AccountDB,
@@ -1541,9 +1610,13 @@ export async function doJoinByInvite (
   if (invite !== undefined && invite != null) {
     // TODO: should we re-join kicked users? How are they marked as inactive?
     if (role == null) {
+      // Join-time seat cap: reject before assign so an over-limit member never enters ws_members.
+      await assertSeatAvailableOnJoin(ctx, db, workspace.uuid, invite.role)
       await db.assignWorkspace(account, workspace.uuid, invite.role)
+      await publishMembersChanged(ctx, workspace.uuid)
     } else if (getRolePower(role) < getRolePower(invite.role)) {
       await db.updateWorkspaceRole(account, workspace.uuid, invite.role)
+      await publishMembersChanged(ctx, workspace.uuid)
     }
     await useInvite(db, invite.id)
   } else if (workspace.allowReadOnlyGuest && workspace.allowGuestSignUp) {

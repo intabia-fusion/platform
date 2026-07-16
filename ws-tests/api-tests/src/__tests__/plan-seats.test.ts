@@ -23,6 +23,7 @@ import {
   type WorkspaceToken
 } from '@hcengineering/api-client'
 import core, {
+  type AccountUuid,
   generateUuid,
   MeasureMetricsContext,
   pickPrimarySocialId,
@@ -32,14 +33,14 @@ import core, {
   type TxOperations
 } from '@hcengineering/core'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
-import contact, { type Person, ensureEmployee } from '@hcengineering/contact'
+import { ensureEmployee } from '@hcengineering/contact'
 import { generateToken } from '@hcengineering/server-token'
 import drivePlugin, { type Drive } from '@hcengineering/drive'
 
-// Workspace api-tests-seats is unlimited at boot so user1(OWNER)/user2/user3 all onboard
-// (create their own Employee). The test then sets usersLimit=2: seats go by role priority
-// (Owner first), then createdOn -> owner + user2 are seated; user3 is downgraded to
-// ReadOnlyGuest. Asserts seat enforcement reacts to a runtime plan change.
+// Workspace api-tests-seats boots with business (10 seats) so user1(OWNER)/user2/user3 all onboard.
+// The test then sets usersLimit=2: seats go by role priority (Owner first), then account uuid — the
+// owner plus one user are seated, the other user is downgraded to read-only. Asserts seat enforcement
+// (now sourced from account ws_members) reacts to a runtime plan change.
 describe('plan-seats', () => {
   const testCtx = new MeasureMetricsContext('test', {})
   const wsName = 'api-tests-seats'
@@ -47,15 +48,14 @@ describe('plan-seats', () => {
   let owner: WorkspaceToken
   let seated: WorkspaceToken
   let seatless: WorkspaceToken
-  let ownerOps: TxOperations
   let seatedOps: TxOperations
   let seatlessOps: TxOperations
 
   beforeAll(async () => {
     config = await loadServerConfig('http://localhost:8083')
 
-    // Onboard all members while the plan is unlimited. Employee.createdOn order (user2 before
-    // user3) decides the seat winner once the limit is applied.
+    // Onboard all members (business has 10 seats at boot). Seat winners are decided later by role
+    // priority then account uuid, not by onboarding order.
     owner = await login('user1')
     await ensureEmployeeFor(owner)
     seated = await login('user2')
@@ -63,7 +63,6 @@ describe('plan-seats', () => {
     seatless = await login('user3')
     await ensureEmployeeFor(seatless)
 
-    ownerOps = await createRestTxOperations(owner.endpoint, owner.workspaceId, owner.token)
     seatedOps = await createRestTxOperations(seated.endpoint, seated.workspaceId, seated.token)
     seatlessOps = await createRestTxOperations(seatless.endpoint, seatless.workspaceId, seatless.token)
   }, 30000)
@@ -125,25 +124,6 @@ describe('plan-seats', () => {
     })
   }
 
-  // Mirror the UI "+Employee": create a Person, then the active Employee mixin. The mixin
-  // is what SeatLimitsMiddleware blocks once active-employee count reaches usersLimit.
-  async function createNewEmployee (ops: TxOperations, name: string): Promise<void> {
-    const personRef = await ops.createDoc(contact.class.Person, contact.space.Contacts, {
-      name,
-      city: '',
-      avatarType: 'color'
-    } as any)
-    await ops.createMixin<Person, any>(
-      personRef,
-      contact.class.Person,
-      contact.space.Contacts,
-      contact.mixin.Employee,
-      {
-        active: true
-      }
-    )
-  }
-
   /** Poll until fn starts throwing (returns true) or deadline passes (returns false). */
   async function pollRejected (fn: () => Promise<unknown>, timeoutMs = 15000): Promise<boolean> {
     const deadline = Date.now() + timeoutMs
@@ -158,23 +138,43 @@ describe('plan-seats', () => {
     return false
   }
 
-  it('usersLimit=2 keeps the earliest member seated, last member is read-only', async () => {
+  it('usersLimit=2 seats the owner plus one user, the other user is read-only', async () => {
+    // Seats go by role priority then account-uuid (createdOn no longer decides), so which of the two
+    // plain users loses the seat depends on uuid order — assert "owner + exactly one user" instead.
     try {
       await setUsersLimit(2)
 
-      // Seatless member (user3) is downgraded once the limit propagates.
-      const blocked = await pollRejected(async () => await createDrive(seatlessOps, `seats-blocked-${generateUuid()}`))
-      expect(blocked).toBe(true)
+      // Poll until one of the two users is downgraded (limit propagates via the members/plan event).
+      let blockedOps: TxOperations | undefined
+      let seatedOps2: TxOperations | undefined
+      const deadline = Date.now() + 20000
+      while (Date.now() < deadline && blockedOps === undefined) {
+        for (const [cand, other] of [
+          [seatlessOps, seatedOps],
+          [seatedOps, seatlessOps]
+        ]) {
+          const rejected = await pollRejected(
+            async () => await createDrive(cand, `seats-probe-${generateUuid()}`),
+            1500
+          )
+          if (rejected) {
+            blockedOps = cand
+            seatedOps2 = other
+            break
+          }
+        }
+        if (blockedOps === undefined) await new Promise((resolve) => setTimeout(resolve, 1000))
+      }
+      expect(blockedOps).toBeDefined()
 
-      // Seated member (user2) still writes.
-      const ok = await createDrive(seatedOps, `seats-ok-${generateUuid()}`)
+      // The other user keeps its seat and still writes.
+      const ok = await createDrive(seatedOps2 as TxOperations, `seats-ok-${generateUuid()}`)
       expect(ok).toBeDefined()
 
       // Reads keep working for the seatless member.
-      const spaces = await seatlessOps.findAll(core.class.Space, {})
+      const spaces = await (blockedOps as TxOperations).findAll(core.class.Space, {})
       expect(spaces.length).toBeGreaterThan(0)
     } finally {
-      // Restore unlimited so repeated runs start clean.
       await setUsersLimit(0)
     }
   }, 60000)
@@ -205,37 +205,64 @@ describe('plan-seats', () => {
     }
   }, 60000)
 
-  it('creating a new active employee past usersLimit is rejected', async () => {
-    // Hard-block: with 3 active employees (user1/2/3) and usersLimit=1, the owner must not be
-    // able to add a NEW employee. Existing over-limit ones stay (downgrade), only new ones fail.
-    try {
-      await setUsersLimit(1)
+  // Join-time hard cap now lives in the account service (a join is not a transactor tx). The old
+  // Employee-mixin block was removed in the seat-source-of-truth refactor: a member occupies a seat
+  // only once in account ws_members, so joining past the limit is what account rejects.
+  const joinerAccountUuid = async (): Promise<AccountUuid> => {
+    const cli = getAccountClient(config.ACCOUNTS_URL)
+    const info = await cli.login('user4', '1234')
+    if (info == null) throw new Error('user4 login failed')
+    return info.account
+  }
 
-      const blocked = await pollRejected(async () => {
-        await createNewEmployee(ownerOps, `seat-overflow-${generateUuid()}`)
-      })
+  // Owner creates an invite; the joiner (an account token, not yet a member) redeems it.
+  async function inviteAndJoin (): Promise<void> {
+    const ownerAccount = getAccountClient(config.ACCOUNTS_URL, owner.token)
+    const inviteId = await ownerAccount.createInvite(24 * 3600 * 1000, '*', 1, 'USER' as any)
+    const cli = getAccountClient(config.ACCOUNTS_URL)
+    const info = await cli.login('user4', '1234')
+    if (info?.token == null) throw new Error('user4 login failed')
+    await getAccountClient(config.ACCOUNTS_URL, info.token).joinByInvite(inviteId)
+  }
+
+  async function removeJoiner (): Promise<void> {
+    const account = await joinerAccountUuid()
+    const svc = getAccountClient(
+      config.ACCOUNTS_URL,
+      generateToken(systemAccountUuid, owner.workspaceId, { service: 'tool' }, 'secret')
+    )
+    try {
+      await svc.leaveWorkspace(account)
+    } catch {
+      /* not a member — nothing to remove */
+    }
+  }
+
+  it('joining past usersLimit is rejected by the account seat cap', async () => {
+    // usersLimit=3 fills all seats with user1/2/3; user4 (not a member) must be rejected on join.
+    try {
+      await setUsersLimit(3)
+      const blocked = await pollRejected(inviteAndJoin)
       expect(blocked).toBe(true)
     } finally {
       await setUsersLimit(0)
+      await removeJoiner()
     }
   }, 60000)
 
-  it('after lifting the limit a new employee can be created again', async () => {
-    // Sanity: once usersLimit is raised the block goes away (live plan refresh, no restart).
+  it('after lifting the limit the new member can join again', async () => {
+    // Once usersLimit is raised past the member count the join-time cap no longer rejects.
     try {
-      await setUsersLimit(1)
-      const blocked = await pollRejected(async () => {
-        await createNewEmployee(ownerOps, `seat-pre-${generateUuid()}`)
-      })
+      await setUsersLimit(3)
+      const blocked = await pollRejected(inviteAndJoin)
       expect(blocked).toBe(true)
 
-      await setUsersLimit(0) // unlimited
-      // Poll until creation succeeds (plan event propagates async).
+      await setUsersLimit(10)
       const deadline = Date.now() + 20000
       let ok = false
       while (Date.now() < deadline && !ok) {
         try {
-          await createNewEmployee(ownerOps, `seat-after-${generateUuid()}`)
+          await inviteAndJoin()
           ok = true
         } catch {
           await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -244,6 +271,7 @@ describe('plan-seats', () => {
       expect(ok).toBe(true)
     } finally {
       await setUsersLimit(0)
+      await removeJoiner()
     }
   }, 60000)
 })

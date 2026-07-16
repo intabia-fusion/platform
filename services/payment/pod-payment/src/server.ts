@@ -48,10 +48,19 @@ import { existsSync, readFileSync } from 'fs'
 
 const KEEP_ALIVE_TIMEOUT = 5 // seconds
 
+// Mutating subscription ops are rare per user; keep tight.
 const subscriptionRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 500,
+  max: 30,
   message: 'Too many subscription requests, please try again later',
+  standardHeaders: true
+})
+
+// Checkout-status is polled ~every 2s while paying; softer ceiling than mutating ops.
+const pollRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: 'Too many status requests, please try again later',
   standardHeaders: true
 })
 
@@ -120,7 +129,8 @@ export async function createServer (
     close: () => void
   }> {
   const app = express()
-  app.set('trust proxy', true)
+  // Trust one proxy hop (traefik). `true` trusts whole XFF chain -> client spoofs IP, evades per-IP limiter.
+  app.set('trust proxy', 1)
   app.use(cors())
 
   const childLogger = ctx.logger.childLogger?.('requests', { enableConsole: 'true' })
@@ -215,7 +225,7 @@ export async function createServer (
     }
   })()
 
-  app.get('/api/v1/plan-config', (req, res) => {
+  app.get('/api/v1/plan-config', pollRateLimiter, (req, res) => {
     res.json(planConfig)
   })
 
@@ -451,9 +461,10 @@ export async function createServer (
   }
 
   if (config.Provider === 'mock') {
+    // Packages have prices too (priceMonthly); merge them so computeAmount finds package plans.
     provider = PaymentProviderFactory.getInstance().create(
       'mock',
-      { frontUrl: config.FrontUrl, plans: planConfig.plans },
+      { frontUrl: config.FrontUrl, plans: { ...planConfig.plans, ...planConfig.packages } },
       accountClient
     )
   }
@@ -467,11 +478,9 @@ export async function createServer (
     throw new Error(`Failed to initialize payment provider: ${config.Provider}`)
   }
 
-  function isPackageEligible (pkgKey: string, currentTierPlan: string | undefined): boolean {
-    if (currentTierPlan === undefined) return false
-    const pkg = planConfig?.packages?.[pkgKey]
-    if (pkg === undefined) return false
-    return Array.isArray(pkg.eligiblePlans) && pkg.eligiblePlans.includes(currentTierPlan)
+  // Packages are available on any tier, including free/no-plan: only require the package to exist.
+  function isPackageEligible (pkgKey: string, _currentTierPlan: string | undefined): boolean {
+    return planConfig?.packages?.[pkgKey] !== undefined
   }
 
   const stopReconciliation = startActiveSubscriptionReconciliation(
@@ -620,6 +629,7 @@ export async function createServer (
    */
   app.post(
     '/api/v1/subscriptions/:subscriptionId/cancel',
+    subscriptionRateLimiter,
     withToken,
     withOwner,
     (req: RequestWithAuth, res: Response) => {
@@ -635,7 +645,8 @@ export async function createServer (
 
           const now = Date.now()
           const canceledSubscription = await runProviderOrLocal(ctx, res, subscription, {
-            localPatch: { status: SubscriptionStatus.Canceled, canceledAt: now },
+            // Cancel at period end: keep the plan active/visible, only mark canceledAt.
+            localPatch: { canceledAt: now },
             localLogMessage: 'Subscription canceled locally (provider mismatch)',
             providerCall: async (ctx, providerSubId) => await activeProvider.cancelSubscription(ctx, providerSubId),
             providerNotFoundMsg: 'Failed to cancel subscription at provider',
@@ -659,6 +670,7 @@ export async function createServer (
    */
   app.post(
     '/api/v1/subscriptions/:subscriptionId/uncancel',
+    subscriptionRateLimiter,
     withToken,
     withOwner,
     (req: RequestWithAuth, res: Response) => {
@@ -859,6 +871,7 @@ export async function createServer (
    */
   app.post(
     '/api/v1/subscriptions/:subscriptionId/retry',
+    subscriptionRateLimiter,
     withToken,
     withOwner,
     (req: RequestWithAuth, res: Response) => {
@@ -941,81 +954,93 @@ export async function createServer (
    * If it exists in DB but has changed (newer modifiedAt), it will be updated
    * Authorization: Only authenticated workspace owners can check checkout status
    */
-  app.get('/api/v1/checkouts/:checkoutId/status', withToken, withOwner, (req: RequestWithAuth, res: Response) => {
-    if (provider === undefined) {
-      res.status(503).json({ error: 'Payment provider is not configured' })
-      return
-    }
+  app.get(
+    '/api/v1/checkouts/:checkoutId/status',
+    pollRateLimiter,
+    withToken,
+    withOwner,
+    (req: RequestWithAuth, res: Response) => {
+      if (provider === undefined) {
+        res.status(503).json({ error: 'Payment provider is not configured' })
+        return
+      }
 
-    // Disable caching for this endpoint - we want fresh data on every poll
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate')
-    res.set('Pragma', 'no-cache')
-    res.set('Expires', '0')
+      // Disable caching for this endpoint - we want fresh data on every poll
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+      res.set('Pragma', 'no-cache')
+      res.set('Expires', '0')
 
-    void handleRequest(
-      ctx,
-      'checkout-subscription-status',
-      async (ctx) => {
-        const checkoutId = req.params.checkoutId
+      void handleRequest(
+        ctx,
+        'checkout-subscription-status',
+        async (ctx) => {
+          const checkoutId = req.params.checkoutId
 
-        // Try to get subscription from provider by checkout ID
-        const subscriptionData = await provider.getSubscriptionByCheckout(ctx, checkoutId)
+          // Try to get subscription from provider by checkout ID
+          const subscriptionData = await provider.getSubscriptionByCheckout(ctx, checkoutId)
 
-        if (subscriptionData !== null) {
-          // For providers that pre-create a subscription before payment confirmation
-          // (e.g. TBank), check providerData.pending flag to determine actual completion
-          const isCompleted = subscriptionData.providerData?.pending !== true
-
-          // Only sync to DB if subscription is confirmed (webhook received)
-          if (isCompleted) {
-            try {
-              // Get existing subscription from our DB if it exists
-              const existingSubscription = await accountClient.getSubscriptionByProviderId(
-                subscriptionData.provider,
-                subscriptionData.providerSubscriptionId
-              )
-
-              // Check if we should upsert (doesn't exist or has changed)
-              const shouldUpsert =
-                existingSubscription === null ||
-                (subscriptionData.providerData?.modifiedAt !== undefined &&
-                  (existingSubscription?.providerData?.modifiedAt ?? 0) < subscriptionData.providerData.modifiedAt)
-
-              if (shouldUpsert) {
-                await persistSubscription(subscriptionData)
-                ctx.info('Subscription upserted from checkout poll', {
-                  checkoutId,
-                  subscriptionId: subscriptionData.id,
-                  isNew: existingSubscription === null
-                })
-              }
-            } catch (err) {
-              ctx.error('Failed to sync subscription to DB', { checkoutId, err })
+          if (subscriptionData !== null) {
+            // IDOR guard: getSubscriptionByCheckout is scoped by checkoutId only, not by caller. 404 hides existence.
+            if (!ownsSubscription(req, subscriptionData)) {
+              res.status(404).json({ checkoutId, subscriptionId: null, status: 'pending', subscription: null })
+              return
             }
+
+            // For providers that pre-create a subscription before payment confirmation
+            // (e.g. TBank), check providerData.pending flag to determine actual completion
+            const isCompleted = subscriptionData.providerData?.pending !== true
+
+            // Only sync to DB if subscription is confirmed (webhook received)
+            if (isCompleted) {
+              try {
+                // Get existing subscription from our DB if it exists
+                const existingSubscription = await accountClient.getSubscriptionByProviderId(
+                  subscriptionData.provider,
+                  subscriptionData.providerSubscriptionId
+                )
+
+                // Check if we should upsert (doesn't exist or has changed)
+                const shouldUpsert =
+                  existingSubscription === null ||
+                  (subscriptionData.providerData?.modifiedAt !== undefined &&
+                    (existingSubscription?.providerData?.modifiedAt ?? 0) < subscriptionData.providerData.modifiedAt)
+
+                if (shouldUpsert) {
+                  await persistSubscription(subscriptionData)
+                  ctx.info('Subscription upserted from checkout poll', {
+                    checkoutId,
+                    subscriptionId: subscriptionData.id,
+                    isNew: existingSubscription === null
+                  })
+                }
+              } catch (err) {
+                ctx.error('Failed to sync subscription to DB', { checkoutId, err })
+              }
+            }
+
+            res.status(200).json({
+              checkoutId,
+              subscriptionId: isCompleted ? subscriptionData.id : null,
+              status: isCompleted ? 'completed' : 'pending',
+              subscription: isCompleted ? subscriptionData : null
+            })
+            return
           }
 
+          // Subscription not yet found in provider
           res.status(200).json({
             checkoutId,
-            subscriptionId: isCompleted ? subscriptionData.id : null,
-            status: isCompleted ? 'completed' : 'pending',
-            subscription: isCompleted ? subscriptionData : null
+            subscriptionId: null,
+            status: 'pending',
+            subscription: null
           })
-          return
-        }
-
-        // Subscription not yet found in provider
-        res.status(200).json({
-          checkoutId,
-          subscriptionId: null,
-          status: 'pending',
-          subscription: null
-        })
-      },
-      req,
-      res,
-      () => {}
-    )
-  })
+        },
+        req,
+        res,
+        () => {}
+      )
+    }
+  )
 
   app.use((_req, res) => {
     res.status(404).json({ message: 'Not Found' })

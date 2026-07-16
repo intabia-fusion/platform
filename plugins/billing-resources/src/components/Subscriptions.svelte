@@ -93,9 +93,8 @@
   // Compare plans by key, not object identity: resolveLocale() rebuilds the plans map each tick.
   $: currentPlanKey = currentSubscription?.plan
   $: currentPackage = currentPackageSubscription != null ? packages[currentPackageSubscription.plan] : undefined
-  $: arePackagesAvailable =
-    currentPlan != null &&
-    Object.values(packages).some((pkg) => pkg.eligiblePlans?.includes(currentSubscription?.plan ?? '') ?? false)
+  // Packages are available on any tier, including free/no-plan.
+  $: arePackagesAvailable = Object.keys(packages).length > 0
   let loading = true
   let pollingCheckoutId: string | null = null
   let isPolling = false
@@ -897,178 +896,201 @@
               {/if}
             </div>
           {:else}
-            <div class="current-tier-card-title">
-              <div class="flex-row-center">
-                <div class="fs-title">{currentPlan.label ?? currentPlan}</div>
-                {#if isCurrentCanceled}
-                  <div class="status-badge-warning ml-2 text-md">
-                    <Label label={plugin.string.CancelScheduled} />
+            <div class="tier-body">
+              <div class="tier-body-main flex-col flex-gap-4">
+                <div class="current-tier-card-title">
+                  <div class="flex-row-center">
+                    <div class="fs-title">{currentPlan.label ?? currentPlan}</div>
+                    {#if isCurrentCanceled}
+                      <div class="status-badge-warning ml-2 text-md">
+                        <Label label={plugin.string.CancelScheduled} />
+                      </div>
+                    {:else if isCurrentTrial}
+                      <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.TrialPeriod} /></div>
+                    {:else if currentSubscription?.status === 'active'}
+                      <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.Active} /></div>
+                    {/if}
+                    {#if currentSubscription?.status === 'readonly'}
+                      <div class="status-badge-disabled ml-2 text-md"><Label label={plugin.string.Disabled} /></div>
+                    {/if}
                   </div>
-                {:else if isCurrentTrial}
-                  <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.TrialPeriod} /></div>
-                {:else if currentSubscription?.status === 'active'}
-                  <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.Active} /></div>
+                  {#if currentSubscription?.amount != null}
+                    <div class="flex-row-center items-end">
+                      <span class="fs-title text-xl">
+                        {formatAmount(
+                          currentSubscription.amount,
+                          currentPlan.currency ?? '',
+                          $themeStore.language ?? DEFAULT_LOCALE
+                        )}
+                      </span>
+                      <span class="ml-1 lower">
+                        <!-- amount is the real charge: yearly total for a yearly plan, monthly otherwise. -->
+                        <Label
+                          label={currentSubscription.providerData?.period === 'yearly'
+                            ? plugin.string.Yearly
+                            : plugin.string.Monthly}
+                        />
+                      </span>
+                    </div>
+                  {/if}
+                </div>
+                {#if typeof currentPlan !== 'string'}
+                  {#if currentPlan.description}
+                    <div class="text-md content-color">{currentPlan.description}</div>
+                  {/if}
+                  {#if (currentPlan.features?.length ?? 0) > 0}
+                    <div class="flex-col flex-gap-2">
+                      {#each currentPlan.features ?? [] as feature}
+                        <div class="flex-row-center flex-gap-2">
+                          <IconCheckmark size="small" />
+                          <span class="text-md">{feature}</span>
+                        </div>
+                      {/each}
+                    </div>
+                  {/if}
                 {/if}
-                {#if currentSubscription?.status === 'readonly'}
-                  <div class="status-badge-disabled ml-2 text-md"><Label label={plugin.string.Disabled} /></div>
+                {#if isCurrentTrial && currentSubscription?.trialEnd != null}
+                  {@const date = formatEndDate(currentSubscription.trialEnd, $themeStore.language ?? DEFAULT_LOCALE)}
+                  <div class="curr-tier-hint">
+                    <Label label={plugin.string.TrialEndsHint} params={{ date }} />
+                  </div>
+                {:else if currentSubscription?.periodEnd || currentPlan.free !== true || isCurrentCanceled}
+                  <div class="curr-tier-footer">
+                    {#if currentSubscription?.periodEnd}
+                      {@const date = formatEndDate(
+                        currentSubscription.periodEnd,
+                        $themeStore.language ?? DEFAULT_LOCALE
+                      )}
+                      {#if isCurrentCanceled}
+                        <div><Label label={plugin.string.SubscriptionValidUntil} params={{ date }} /></div>
+                      {:else}
+                        <div><Label label={plugin.string.SubscriptionRenews} params={{ date }} /></div>
+                      {/if}
+                    {/if}
+
+                    {#if !isCurrentCanceled && currentPlan.free !== true}
+                      <Button
+                        label={plugin.string.CancelSubscription}
+                        kind="ghost"
+                        disabled={loading || isCheckoutPolling || isCanceling || isUpdating || isRetrying}
+                        on:click={() => {
+                          void handleCancel()
+                        }}
+                      />
+                    {:else if isCurrentCanceled}
+                      <Button
+                        label={plugin.string.UncancelSubscription}
+                        kind="primary"
+                        disabled={loading || isCheckoutPolling || isUncanceling || isUpdating || isRetrying}
+                        on:click={() => {
+                          void handleUncancel()
+                        }}
+                      />
+                    {/if}
+                  </div>
+                {/if}
+
+                {#if currentPackage !== undefined}
+                  <div class="current-package-block flex-col flex-gap-2">
+                    <Label label={plugin.string.AdditionalPackage} />
+                    <div class="current-tier-card-title">
+                      <div class="flex-row-center">
+                        <div class="fs-title">{currentPackage?.description}</div>
+                        {#if isPackageCanceled}
+                          <div class="status-badge-warning ml-2 text-md">
+                            <Label label={plugin.string.CancelScheduled} />
+                          </div>
+                        {:else if currentPackageSubscription?.status === 'active'}
+                          <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.Active} /></div>
+                        {/if}
+                      </div>
+                      {#if currentPackageSubscription?.amount != null}
+                        <div class="flex-row-center items-end">
+                          <span class="fs-title text-xl">
+                            {formatAmount(
+                              currentPackageSubscription.amount,
+                              currentPackage.currency ?? '',
+                              $themeStore.language ?? DEFAULT_LOCALE
+                            )}
+                          </span>
+                          <span class="ml-1 lower">
+                            <Label label={plugin.string.Monthly} />
+                          </span>
+                        </div>
+                      {/if}
+                    </div>
+                    <div class="curr-tier-footer">
+                      {#if currentPackageSubscription?.periodEnd}
+                        {@const pkgDate = formatEndDate(
+                          currentPackageSubscription.periodEnd,
+                          $themeStore.language ?? DEFAULT_LOCALE
+                        )}
+                        {#if isPackageCanceled}
+                          <div><Label label={plugin.string.SubscriptionValidUntil} params={{ date: pkgDate }} /></div>
+                        {:else}
+                          <div><Label label={plugin.string.SubscriptionRenews} params={{ date: pkgDate }} /></div>
+                        {/if}
+                      {/if}
+
+                      {#if !isReadOnly}
+                        {#if !isPackageCanceled}
+                          <Button
+                            label={plugin.string.Disconnect}
+                            kind="ghost"
+                            disabled={loading || isCheckoutPolling || isUpdating || isPackageBusy}
+                            on:click={() => {
+                              void handlePackageCancel()
+                            }}
+                          />
+                        {:else}
+                          <Button
+                            label={plugin.string.UncancelSubscription}
+                            kind="primary"
+                            disabled={loading || isCheckoutPolling || isUpdating || isPackageBusy}
+                            on:click={() => {
+                              void handlePackageUncancel()
+                            }}
+                          />
+                        {/if}
+                      {/if}
+                    </div>
+                  </div>
+                {/if}
+                {#if currentSubscription?.status === 'past_due' && currentSubscription.providerData?.pending !== true}
+                  <div class="past-due-warning flex-col flex-gap-2">
+                    <div class="flex-row-center flex-gap-2">
+                      <span class="fs-title">
+                        <Label label={plugin.string.PaymentFailed} />
+                      </span>
+                    </div>
+                    <div class="text-md">
+                      <Label label={plugin.string.PaymentFailedDescription} />
+                    </div>
+                    <div class="flex-row-center flex-gap-2">
+                      <Button
+                        label={plugin.string.RetryPayment}
+                        kind="primary"
+                        disabled={isRetrying || isUpdating || isCanceling || isUncanceling || isCheckoutPolling}
+                        on:click={() => {
+                          void retryPayment()
+                        }}
+                      />
+                    </div>
+                  </div>
                 {/if}
               </div>
-              {#if currentSubscription?.amount != null}
-                <div class="flex-row-center items-end">
-                  <span class="fs-title text-xl">
-                    {formatAmount(
-                      currentSubscription.amount,
-                      currentPlan.currency ?? '',
-                      $themeStore.language ?? DEFAULT_LOCALE
-                    )}
-                  </span>
-                  <span class="ml-1 lower">
-                    <!-- amount is the real charge: yearly total for a yearly plan, monthly otherwise. -->
-                    <Label
-                      label={currentSubscription.providerData?.period === 'yearly'
-                        ? plugin.string.Yearly
-                        : plugin.string.Monthly}
-                    />
-                  </span>
+              {#if usageInfo !== null}
+                <div class="usage-section tier-body-usage">
+                  <UsageSection
+                    usage={usageInfo}
+                    plan={currentPlan}
+                    pkg={currentPackage}
+                    tierSub={currentSubscription}
+                    pkgSub={currentPackageSubscription}
+                  />
                 </div>
               {/if}
             </div>
-            {#if isCurrentTrial && currentSubscription?.trialEnd != null}
-              {@const date = formatEndDate(currentSubscription.trialEnd, $themeStore.language ?? DEFAULT_LOCALE)}
-              <div class="curr-tier-hint">
-                <Label label={plugin.string.TrialEndsHint} params={{ date }} />
-              </div>
-            {:else}
-              <div class="curr-tier-footer">
-                {#if currentSubscription?.periodEnd}
-                  {@const date = formatEndDate(currentSubscription.periodEnd, $themeStore.language ?? DEFAULT_LOCALE)}
-                  {#if isCurrentCanceled}
-                    <div><Label label={plugin.string.SubscriptionValidUntil} params={{ date }} /></div>
-                  {:else}
-                    <div><Label label={plugin.string.SubscriptionRenews} params={{ date }} /></div>
-                  {/if}
-                {/if}
-
-                {#if !isCurrentCanceled && currentPlan.free !== true}
-                  <Button
-                    label={plugin.string.CancelSubscription}
-                    kind="ghost"
-                    disabled={loading || isCheckoutPolling || isCanceling || isUpdating || isRetrying}
-                    on:click={() => {
-                      void handleCancel()
-                    }}
-                  />
-                {:else if isCurrentCanceled}
-                  <Button
-                    label={plugin.string.UncancelSubscription}
-                    kind="primary"
-                    disabled={loading || isCheckoutPolling || isUncanceling || isUpdating || isRetrying}
-                    on:click={() => {
-                      void handleUncancel()
-                    }}
-                  />
-                {/if}
-              </div>
-            {/if}
-
-            {#if currentPackage !== undefined}
-              <Label label={plugin.string.AdditionalPackage} />
-              <div class="current-tier-card-title" style="margin-top: -10px;">
-                <div class="flex-row-center">
-                  <div class="fs-title">{currentPackage?.description}</div>
-                  {#if isPackageCanceled}
-                    <div class="status-badge-warning ml-2 text-md">
-                      <Label label={plugin.string.CancelScheduled} />
-                    </div>
-                  {:else if currentPackageSubscription?.status === 'active'}
-                    <div class="status-badge-active ml-2 text-md"><Label label={plugin.string.Active} /></div>
-                  {/if}
-                </div>
-                {#if currentPackageSubscription?.amount != null}
-                  <div class="flex-row-center items-end">
-                    <span class="fs-title text-xl">
-                      {formatAmount(
-                        currentPackageSubscription.amount,
-                        currentPackage.currency ?? '',
-                        $themeStore.language ?? DEFAULT_LOCALE
-                      )}
-                    </span>
-                    <span class="ml-1 lower">
-                      <Label label={plugin.string.Monthly} />
-                    </span>
-                  </div>
-                {/if}
-              </div>
-              <div class="curr-tier-footer">
-                {#if currentPackageSubscription?.periodEnd}
-                  {@const pkgDate = formatEndDate(
-                    currentPackageSubscription.periodEnd,
-                    $themeStore.language ?? DEFAULT_LOCALE
-                  )}
-                  {#if isPackageCanceled}
-                    <div><Label label={plugin.string.SubscriptionValidUntil} params={{ date: pkgDate }} /></div>
-                  {:else}
-                    <div><Label label={plugin.string.SubscriptionRenews} params={{ date: pkgDate }} /></div>
-                  {/if}
-                {/if}
-
-                {#if !isReadOnly}
-                  {#if !isPackageCanceled}
-                    <Button
-                      label={plugin.string.Disconnect}
-                      kind="ghost"
-                      disabled={loading || isCheckoutPolling || isUpdating || isPackageBusy}
-                      on:click={() => {
-                        void handlePackageCancel()
-                      }}
-                    />
-                  {:else}
-                    <Button
-                      label={plugin.string.UncancelSubscription}
-                      kind="primary"
-                      disabled={loading || isCheckoutPolling || isUpdating || isPackageBusy}
-                      on:click={() => {
-                        void handlePackageUncancel()
-                      }}
-                    />
-                  {/if}
-                {/if}
-              </div>
-            {/if}
-            {#if currentSubscription?.status === 'past_due' && currentSubscription.providerData?.pending !== true}
-              <div class="past-due-warning flex-col flex-gap-2">
-                <div class="flex-row-center flex-gap-2">
-                  <span class="fs-title">
-                    <Label label={plugin.string.PaymentFailed} />
-                  </span>
-                </div>
-                <div class="text-md">
-                  <Label label={plugin.string.PaymentFailedDescription} />
-                </div>
-                <div class="flex-row-center flex-gap-2">
-                  <Button
-                    label={plugin.string.RetryPayment}
-                    kind="primary"
-                    disabled={isRetrying || isUpdating || isCanceling || isUncanceling || isCheckoutPolling}
-                    on:click={() => {
-                      void retryPayment()
-                    }}
-                  />
-                </div>
-              </div>
-            {/if}
-
-            {#if usageInfo !== null}
-              <div class="usage-section">
-                <UsageSection
-                  usage={usageInfo}
-                  plan={currentPlan}
-                  pkg={currentPackage}
-                  tierSub={currentSubscription}
-                  pkgSub={currentPackageSubscription}
-                />
-              </div>
-            {/if}
           {/if}
         </div>
       </div>
@@ -1228,11 +1250,11 @@
       </div>
 
       {#if Object.keys(packages).length > 0}
-        <div class="flex-col flex-gap-4">
+        <div class="flex-col flex-gap-4 packages-section">
           <div class="section-title">
             <Label label={plugin.string.AdditionalSpace} />
           </div>
-          {#if arePackagesAvailable || currentPackage !== undefined}
+          {#if arePackagesAvailable}
             <Scroller contentDirection="horizontal" buttons={false} showOverflowArrows shrink={false} noFade={false}>
               <div class="flex-stretch flex-gap-4 flex-no-shrink mb-3">
                 {#each Object.entries(packages) as [pkgKey, pkgItem] (pkgItem.description)}
@@ -1253,18 +1275,12 @@
                         </span>
                       </div>
                       <div class="tier-card-footer">
-                        {#if !isReadOnly && currentPackage !== pkgItem}
-                          {@const isEligible =
-                            pkgItem.eligiblePlans?.includes(currentSubscription?.plan ?? '') ?? false}
+                        {#if !isReadOnly && currentPackageSubscription?.plan !== pkgKey}
                           <Button
                             label={plugin.string.Connect}
                             size={'large'}
                             kind={'secondary'}
-                            disabled={loading ||
-                              isCheckoutPolling ||
-                              isUpdating ||
-                              !isEligible ||
-                              otherPackageCheckoutActive}
+                            disabled={loading || isCheckoutPolling || isUpdating || otherPackageCheckoutActive}
                             showTooltip={otherPackageCheckoutActive
                               ? { label: plugin.string.OtherCheckoutActiveTooltip }
                               : undefined}
@@ -1279,10 +1295,6 @@
                 {/each}
               </div>
             </Scroller>
-          {:else}
-            <div class="no-plan-container flex-col flex-gap-4">
-              <div class="fs-title text-md"><Label label={plugin.string.UpgradeToAccessPackages} /></div>
-            </div>
           {/if}
         </div>
       {/if}
@@ -1304,6 +1316,35 @@
     border: 1px solid var(--theme-divider-color);
     border-radius: var(--medium-BorderRadius);
     padding: var(--spacing-2);
+  }
+
+  /* Active plan: plan details left, usage right. Widen the card only when usage is present. */
+  .current-tier-card:has(.tier-body-usage) {
+    width: 52rem;
+  }
+
+  .tier-body {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-4);
+    align-items: flex-start;
+  }
+
+  .tier-body-main {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  /* Usage column: divider + padding only when it actually renders. */
+  .tier-body:has(.tier-body-usage) .tier-body-main {
+    border-right: 1px solid var(--theme-divider-color);
+    padding-right: var(--spacing-4);
+  }
+
+  .tier-body-usage {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-top: 0;
   }
 
   .current-tier-card-title {
@@ -1383,7 +1424,19 @@
     justify-content: space-between;
     align-items: center;
     padding-bottom: var(--spacing-2);
-    border-bottom: 1px solid var(--theme-divider-color);
+  }
+
+  /* Divider above the add-on packages section. */
+  .packages-section {
+    padding-top: var(--spacing-4);
+    border-top: 1px solid var(--theme-divider-color);
+  }
+
+  /* Divider above the active add-on package block inside the plan card. */
+  .current-package-block {
+    padding-top: var(--spacing-3);
+    margin-top: var(--spacing-2);
+    border-top: 1px solid var(--theme-divider-color);
   }
 
   .curr-tier-hint {

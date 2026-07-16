@@ -177,24 +177,26 @@ plans:
       ru: Бизнес
       en: Business
     description:
-      ru: Без ограничений
-      en: Unlimited
+      ru: Оплата за место
+      en: Per-seat
     users:
-      ru: без ограничений
-      en: unlimited
+      ru: до 10 пользователей
+      en: up to 10 users
     features:
-      - ru: Без ограничений
-        en: Unlimited
+      - ru: до 10 пользователей
+        en: up to 10 users
+      - ru: широкие лимиты
+        en: wide limits
     additional:
-      ru: Все лимиты сняты
-      en: All limits removed
-    priceMonthly: 900
+      ru: Тариф с оплатой за место
+      en: Per-seat plan
+    priceMonthlyPerUser: 900
     currency: ₽
-    storageLimitGB: 0
+    storagePerUserGB: 1
     trafficLimitGB: 0
     meetingMinutesLimit: 0
     tokenLimit: 0
-    usersLimit: 0
+    usersLimit: 10
     index: 3
     color: Lavender
 # No `trial:` block here on purpose: auto-provisioning a Business trial on every new workspace races

@@ -39,6 +39,8 @@ echo "Creating user accounts..."
 ./tool.sh create-account user1 -f John -l Appleseed -p 1234
 ./tool.sh create-account user2 -f Kainin -l Dirak -p 1234
 ./tool.sh create-account user3 -f Muffin -l Muram -p 1234
+# user4 has no workspace membership: used to test the account-side join-time seat hard-cap.
+./tool.sh create-account user4 -f Seat -l Joiner -p 1234
 
 echo "Creating workspace api-tests..."
 ./tool.sh create-workspace api-tests email:user1
@@ -74,12 +76,12 @@ echo "Creating workspace api-tests-limits with restricted plan..."
 # Plan MUST be set before first client connects: limits snapshot loads at pipeline boot.
 ./tool.sh set-workspace-plan api-tests-limits start
 
-echo "Creating workspace api-tests-seats (unlimited at boot; the test tightens usersLimit at runtime)..."
+echo "Creating workspace api-tests-seats (business 10 seats at boot; the test tightens usersLimit at runtime)..."
 ./tool.sh create-workspace api-tests-seats email:user1
 ./tool.sh assign-workspace user1 api-tests-seats
 ./tool.sh set-user-role user1 api-tests-seats OWNER
-# user2 + user3 are plain Users. The plan is unlimited at boot so every member can onboard
-# (create its own Employee); the test then sets usersLimit=2 to push the last member read-only.
+# user2 + user3 are plain Users. Business has 10 seats at boot so all three members onboard;
+# the test then sets usersLimit=2 to push the last member read-only.
 ./tool.sh assign-workspace user2 api-tests-seats
 ./tool.sh assign-workspace user3 api-tests-seats
 ./tool.sh set-workspace-plan api-tests-seats business

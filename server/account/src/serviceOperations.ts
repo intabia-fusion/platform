@@ -95,7 +95,8 @@ import {
   doMergeAccounts,
   assignableRoles,
   requestAdminOtp,
-  verifyAdminOtp
+  verifyAdminOtp,
+  publishMembersChanged
 } from './utils'
 
 // Note: it is IMPORTANT to always destructure params passed here to avoid sending extra params
@@ -1452,11 +1453,6 @@ async function publishLimitsEvents (
   } catch (err: any) {
     ctx.error('Failed to publish limits events', { workspaceUuid, err })
   }
-}
-
-/** Signal that workspace membership changed so seat-count consumers (transactor/billing) refresh now. */
-export async function publishMembersChanged (ctx: MeasureContext, workspaceUuid: WorkspaceUuid): Promise<void> {
-  await publishLimitsEvents(ctx, workspaceUuid, [workspaceEvents.limitsChanged(LimitCategory.Members, LimitStatus.Ok)])
 }
 
 export async function upsertSubscription (

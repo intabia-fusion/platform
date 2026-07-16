@@ -41,7 +41,7 @@ import { decodeToken, decodeTokenVerbose, generateToken, type PermissionsGrant }
 import { isAdminEmail } from './admin'
 import { accountPlugin, type CrmNotification } from './plugin'
 import { getFreePlanLimits } from './freeLimits'
-import { type AccountServiceMethods, getServiceMethods, publishMembersChanged } from './serviceOperations'
+import { type AccountServiceMethods, getServiceMethods } from './serviceOperations'
 import {
   type Account,
   type AccountDB,
@@ -80,12 +80,14 @@ import {
   createWorkspaceRecord,
   doJoinByInvite,
   doMergePersons,
+  assertSeatAvailableOnJoin,
   doReleaseSocialId,
   EndpointKind,
   generatePassword,
   getAccount,
   getCollaboratorEndpoint,
   getEmailSocialId,
+  getSeatMembers,
   getEndpoint,
   getEndpointInfo,
   getFrontUrl,
@@ -110,6 +112,7 @@ import {
   isEmail,
   isOtpValid,
   normalizeValue,
+  publishMembersChanged,
   recordFailedLoginAttempt,
   resetFailedLoginAttempts,
   selectWorkspace,
@@ -1107,51 +1110,6 @@ export async function checkJoin (
   return {
     ...wsLoginInfo,
     role: invite.role
-  }
-}
-
-// aiBot is a technical account (system modifiedBy) that lands in ws_members as role=User; it must not
-// occupy a paid seat. Members that count toward a paid seat: ws_members minus the aiBot account.
-const AI_BOT_EMAIL = process.env.AI_BOT_EMAIL ?? 'huly.ai.bot@hc.engineering'
-
-async function getSeatMembers (db: AccountDB, workspace: WorkspaceUuid): Promise<WorkspaceMemberInfo[]> {
-  const members = await db.getWorkspaceMembers(workspace)
-  const aiBot = (await getEmailSocialId(db, AI_BOT_EMAIL))?.personUuid
-  return aiBot == null ? members : members.filter((m) => m.person !== aiBot)
-}
-
-// Roles that never occupy a paid seat (guests are read-only). Admins are operators, also seatless.
-const SEATLESS_ROLES: AccountRole[] = [
-  AccountRole.Admin,
-  AccountRole.Guest,
-  AccountRole.DocGuest,
-  AccountRole.ReadOnlyGuest
-]
-
-/**
- * Best-effort join-time seat cap: reject a new member when the paid plan's usersLimit is already
- * filled. ponytail: best-effort — concurrent accepts can overshoot by 1-2 (no atomic count); the
- * transactor SeatLimitsMiddleware read-only enforcement is the real backstop for over-limit members.
- */
-async function assertSeatAvailableOnJoin (
-  ctx: MeasureContext,
-  db: AccountDB,
-  workspace: WorkspaceUuid,
-  joiningRole: AccountRole
-): Promise<void> {
-  if (SEATLESS_ROLES.includes(joiningRole)) return
-  const tier = (await db.subscription.find({ workspaceUuid: workspace })).find(
-    (s) =>
-      s.type === SubscriptionType.Tier &&
-      (s.status === SubscriptionStatus.Active || s.status === SubscriptionStatus.Trialing)
-  )
-  const usersLimit = tier?.limits?.usersLimit ?? 0
-  if (usersLimit === 0) return // unlimited or free-fallback: no join-time cap
-  const members = await getSeatMembers(db, workspace)
-  const seatsUsed = members.filter((m) => !SEATLESS_ROLES.includes(m.role)).length
-  if (seatsUsed >= usersLimit) {
-    ctx.info('join rejected: seat limit reached', { workspace, usersLimit, seatsUsed })
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.PlanLimitExceeded, {}))
   }
 }
 

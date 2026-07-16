@@ -80,6 +80,8 @@ describe('plan-trial', () => {
     )
   }
 
+  // Clear before AND after: a prior failed run can leave an active tier that pollutes the first read.
+  beforeEach(clearSubscriptions)
   afterEach(clearSubscriptions)
 
   it('a trialing business tier is returned by the default (active-only) read', async () => {
