@@ -298,6 +298,23 @@ async function handleCreateSubscription (
   }
 
   // Atomic guard vs parallel purchases for one (workspace, type): only the winner opens a payment.
+  await runClaimedCheckout(ctx, tbank, storage, res, { workspaceUuid, type, fingerprint, force }, openCheckout)
+}
+
+/**
+ * Atomic (workspace, type) checkout guard shared by create and update: only the claim winner opens a
+ * payment (openCheckout), losers reuse the winner's URL or get 409. Covers stale-lease takeover, forced
+ * switch, link-expiry reissue. `openCheckout(intentId)` issues the tbank link and writes the draft.
+ */
+export async function runClaimedCheckout (
+  ctx: MeasureContext,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage,
+  res: Response,
+  params: { workspaceUuid: WorkspaceUuid, type: string, fingerprint: string, force?: boolean },
+  openCheckout: (intentId: string) => Promise<void>
+): Promise<void> {
+  const { workspaceUuid, type, fingerprint, force } = params
   const claim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
 
   if (claim.claimed) {
@@ -310,9 +327,7 @@ async function handleCreateSubscription (
   if (!leaseFresh) {
     const wonTakeover = await storage.reclaimStaleCharge(claim.intentId, CHECKOUT_LEASE_TIMEOUT_MS)
     if (wonTakeover) {
-      ctx.info('Took over orphaned checkout claim', { workspaceUuid, type })
       if (claim.paymentId !== undefined && claim.paymentId !== '') {
-        // Cancel-first frees the key; re-claim with THIS request's order. Already paid -> keep it.
         const canceled = await cancelPendingCheckout(ctx, tbank, storage, claim.paymentId)
         if (!canceled) {
           res.status(409).json(ALREADY_PAID_RESPONSE)
@@ -324,8 +339,6 @@ async function handleCreateSubscription (
         })
         return
       }
-      // Blind window: holder never issued a payment (no paymentId) -> nothing to cancel, reuse the row
-      // in place. order_fingerprint stays the dead holder's — narrow edge.
       await openCheckout(claim.intentId)
       return
     }
@@ -333,38 +346,20 @@ async function handleCreateSubscription (
 
   // A different order is being paid for this type. Never hand back the winner's link for the wrong plan.
   if (claim.orderFingerprint !== undefined && claim.orderFingerprint !== fingerprint) {
-    // Without force: tell the client, which shows a modal offering to wait or switch.
     if (force !== true) {
-      ctx.info('Different checkout already active for this type', {
-        workspaceUuid,
-        type,
-        requested: fingerprint,
-        active: claim.orderFingerprint
-      })
       res.status(409).json({ reason: 'other_checkout_active', error: 'A payment for a different plan is in progress' })
       return
     }
-
-    // Forced switch: cancel the old pending payment, then claim the new order.
     if (claim.paymentId === undefined || claim.paymentId === '') {
-      // Old checkout claimed but hasn't issued a payment yet — nothing to cancel; retry shortly.
       res.status(409).json(IN_FLIGHT_RESPONSE)
       return
     }
-
     const canceled = await cancelPendingCheckout(ctx, tbank, storage, claim.paymentId)
     if (!canceled) {
-      // Old payment already went through (CONFIRMED/REFUNDED) — don't switch (would double-charge).
       res.status(409).json(ALREADY_PAID_RESPONSE)
       return
     }
-
-    // Claim the new order on the now-free key and open its checkout. If someone raced in between,
-    // reuse their URL or retry.
     const reclaim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
-    if (reclaim.claimed) {
-      ctx.info('Switched checkout to a new plan', { workspaceUuid, type, plan })
-    }
     await respondAfterReclaim(res, reclaim, async () => {
       await openCheckout(reclaim.intentId)
     })
@@ -373,20 +368,14 @@ async function handleCreateSubscription (
 
   // Same order (repeat / second tab): reuse the winner's saved URL — unless the link has expired.
   if (claim.paymentUrl !== undefined && claim.paymentUrl !== '') {
-    // The tbank link dies at createdOn + lifetime (RedirectDueDate). Past that it 404s, and the
-    // DEADLINE_EXPIRED webhook that would free the claim may not have arrived yet — so replace it here.
     const linkExpired = Date.now() - claim.createdOn >= CHECKOUT_LINK_LIFETIME_MS
     if (!linkExpired) {
-      ctx.info('Reusing pending TBank checkout', { workspaceUuid, type, plan })
       res.json({ checkoutUrl: claim.paymentUrl })
       return
     }
-
-    ctx.info('Pending checkout link expired, issuing a fresh one', { workspaceUuid, type, plan })
     if (claim.paymentId !== undefined && claim.paymentId !== '') {
       const freed = await cancelPendingCheckout(ctx, tbank, storage, claim.paymentId)
       if (!freed) {
-        // Cancel reported the payment already went through — the plan is paid, don't re-issue.
         res.status(409).json(ALREADY_PAID_RESPONSE)
         return
       }
@@ -398,8 +387,6 @@ async function handleCreateSubscription (
     return
   }
 
-  // Winner claimed but has not written the URL yet — very short window while initPayment is in flight.
-  // The client retries silently.
   res.status(409).json(IN_FLIGHT_RESPONSE)
 }
 
@@ -499,7 +486,7 @@ async function handleUncancelSubscription (storage: SubscriptionStorage, req: Re
   res.json(uncanceledData)
 }
 
-async function handleUpdatePlan (
+export async function handleUpdatePlan (
   ctx: MeasureContext,
   config: Config,
   tbank: TbankPayments,
@@ -512,9 +499,14 @@ async function handleUpdatePlan (
   const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
   if (sub === null) return
 
-  // Same plan is a no-op for a live subscription.
-  // But terminally Canceled can be processed further.
-  if (sub.plan === newPlan && sub.status !== SubscriptionStatus.Canceled) {
+  // Same plan + same seats + same period is a true no-op for a live subscription. A same-plan change
+  // of seat count (per-seat) or period is a real update (pro-rata charge), so let it through.
+  // Terminally Canceled can always be processed further.
+  const curSeats = Number(sub.providerData?.quantity ?? 1)
+  const newSeats = quantity ?? curSeats
+  const curPeriod = sub.providerData?.period
+  const samePlanNoChange = sub.plan === newPlan && newSeats === curSeats && (period ?? curPeriod) === curPeriod
+  if (samePlanNoChange && sub.status !== SubscriptionStatus.Canceled) {
     res.status(400).json({ error: 'Already on this plan' })
     return
   }
@@ -526,63 +518,75 @@ async function handleUpdatePlan (
     return
   }
   // Per-seat plans charge price-per-seat * seats; yearly period applies the plan's yearly discount.
-  const seats = quantity ?? 1
+  // Fall back to the current seat count (not 1) so a plan switch without quantity keeps the seats.
+  const seats = quantity ?? curSeats
   const perSeatAmount = resolvePerSeatAmount(pricing, period === 'yearly')
   const newAmount = perSeatAmount * seats
+  const fingerprint = orderFingerprint(newPlan, seats, period)
+  const workspaceUrl = (req.body as { workspaceUrl?: string }).workspaceUrl ?? ''
+  const force = (req.body as { force?: boolean }).force
 
-  // Mark the old subscription as pending replacement.
-  // Do NOT cancel it yet — if the user never pays for the new plan,
-  // the old subscription should remain active.
-  const markedSub: SubscriptionData = {
-    ...sub,
-    providerData: {
-      ...sub.providerData,
-      pendingReplacement: true,
-      replacementPlan: newPlan
+  // Winner opens the replacement checkout: init tbank link, mark the old sub pending-replacement (do NOT
+  // cancel it — the old plan stays active until the new payment lands), pre-create the new pending sub.
+  const openCheckout = async (intentId: string): Promise<void> => {
+    const heartbeat = setInterval(() => {
+      void storage.heartbeatCharge(intentId)
+    }, CHECKOUT_HEARTBEAT_MS)
+    try {
+      const transactionCount = await storage.getTransactionCount(sub.workspaceUuid)
+      const orderId = buildOrderId(sub.workspaceUuid, transactionCount)
+      const { paymentId, paymentURL } = await initTbankPayment(
+        config,
+        tbank,
+        newAmount,
+        orderId,
+        `Subscription update: ${newPlan} (${sub.type})`,
+        sub.accountUuid,
+        workspaceUrl
+      )
+      await storage.setCheckoutPayment(intentId, String(paymentId), paymentURL)
+
+      // Link+claim first, then drafts: if an upsert below fails the webhook's "any active same-type"
+      // fallback still cancels the old sub on payment (see handleWebhook).
+      await storage.upsert({
+        ...sub,
+        providerData: { ...sub.providerData, pendingReplacement: true, replacementPlan: newPlan }
+      })
+      await storage.upsert(
+        buildSubscriptionData(
+          String(paymentId),
+          orderId,
+          sub.workspaceUuid,
+          sub.accountUuid,
+          sub.type,
+          newPlan,
+          newAmount,
+          sub.accountUuid,
+          config.TbankTerminalKey,
+          undefined,
+          quantity,
+          period,
+          paymentURL
+        )
+      )
+
+      ctx.info('Replacement checkout opened', { oldSubId: sub.id, paymentId, newPlan, seats })
+      res.json({ checkoutId: orderId, checkoutUrl: paymentURL })
+    } finally {
+      clearInterval(heartbeat)
     }
   }
-  await storage.upsert(markedSub)
 
-  const transactionCount = await storage.getTransactionCount(sub.workspaceUuid)
-  const orderId = buildOrderId(sub.workspaceUuid, transactionCount)
-
-  const workspaceUrl = (req.body as { workspaceUrl?: string }).workspaceUrl ?? ''
-
-  const { paymentId, paymentURL } = await initTbankPayment(
-    config,
+  // Same atomic (workspace, type) guard as create: two owners changing seats race for one claim —
+  // only the winner opens a checkout, the loser reuses its URL or gets 409. Package = separate type.
+  await runClaimedCheckout(
+    ctx,
     tbank,
-    newAmount,
-    orderId,
-    `Subscription update: ${newPlan} (${sub.type})`,
-    sub.accountUuid,
-    workspaceUrl
+    storage,
+    res,
+    { workspaceUuid: sub.workspaceUuid, type: sub.type, fingerprint, force },
+    openCheckout
   )
-
-  // Pre-create a pending subscription for the new plan, will be confirmed via webhook
-  const newSubscription = buildSubscriptionData(
-    String(paymentId),
-    orderId,
-    sub.workspaceUuid,
-    sub.accountUuid,
-    sub.type,
-    newPlan,
-    newAmount,
-    sub.accountUuid,
-    config.TbankTerminalKey,
-    undefined,
-    quantity,
-    period
-  )
-  await storage.upsert(newSubscription)
-
-  ctx.info('New subscription payment initiated for plan update', {
-    oldSubId: sub.id,
-    newSubId: newSubscription.id,
-    paymentId,
-    newPlan
-  })
-
-  res.json({ checkoutId: orderId, checkoutUrl: paymentURL })
 }
 
 async function handleRetryPayment (

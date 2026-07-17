@@ -415,7 +415,7 @@
     }
   }
 
-  async function executeUpdate (newPlan: string, quantity?: number, force?: boolean): Promise<void> {
+  async function executeUpdate (newPlan: string, quantity?: number, force?: boolean, attempt = 0): Promise<void> {
     if (paymentClient == null) {
       return
     }
@@ -452,6 +452,12 @@
       currentSubscription = updateResult
     } catch (error) {
       currentSubscription = snapshot
+      // Race: another owner won the claim and hasn't written the URL yet -> retry a few times.
+      if (error instanceof PaymentError && error.reason === 'in_flight' && attempt < CHECKOUT_INFLIGHT_RETRIES) {
+        await new Promise((resolve) => setTimeout(resolve, CHECKOUT_INFLIGHT_DELAY))
+        await executeUpdate(newPlan, quantity, force, attempt + 1)
+        return
+      }
       const handled = await handleCheckoutError(error, async () => {
         await executeUpdate(newPlan, quantity, true)
       })
