@@ -53,6 +53,10 @@ import type {
   UserProfile,
   Subscription,
   PaymentIntent,
+  PaymentOperation,
+  PaymentOperationStats,
+  PaymentOperationFilter,
+  PaymentMonthlyStats,
   DBFlavor,
   WorkspacePermission,
   AccountWorkspaceBadgeStatus,
@@ -553,6 +557,7 @@ export class PostgresAccountDB implements AccountDB {
   userProfile: PostgresDbCollection<UserProfile, 'personUuid'>
   subscription: PostgresDbCollection<Subscription, 'id'>
   paymentIntent: PostgresDbCollection<PaymentIntent, 'id'>
+  paymentOperation: PostgresDbCollection<PaymentOperation, 'id'>
   workspacePermission: PostgresDbCollection<WorkspacePermission>
   accountWorkspaceBadgeStatus: PostgresDbCollection<AccountWorkspaceBadgeStatus>
 
@@ -629,6 +634,12 @@ export class PostgresAccountDB implements AccountDB {
       ns,
       idKey: 'id',
       timestampFields: ['heartbeatAt', 'createdOn', 'updatedOn'],
+      withRetryClient
+    })
+    this.paymentOperation = new PostgresDbCollection<PaymentOperation, 'id'>('payment_operation', client, {
+      ns,
+      idKey: 'id',
+      timestampFields: ['createdOn'],
       withRetryClient
     })
     this.workspacePermission = new PostgresDbCollection<WorkspacePermission>('workspace_permissions', client, {
@@ -1780,6 +1791,171 @@ export class PostgresAccountDB implements AccountDB {
        WHERE payment_id = $1 AND provider = $2 AND claim_key LIKE 'checkout:%'`,
       [paymentId, provider]
     )
+  }
+
+  // Release a checkout claim by intent id — for a claim that failed before issuing a payment (no
+  // payment_id yet), so a retry gets a clean claim immediately instead of waiting out the lease. Idempotent.
+  async deleteCheckoutIntentById (intentId: string): Promise<void> {
+    const table = this.paymentIntent.getTableName()
+    await this.paymentIntent.unsafe(`DELETE FROM ${table} WHERE id = $1 AND claim_key LIKE 'checkout:%'`, [intentId])
+  }
+
+  // Append an immutable payment-operation audit row (never updated/deleted).
+  async logPaymentOperation (op: PaymentOperation): Promise<void> {
+    const table = this.paymentOperation.getTableName()
+    await this.paymentOperation.unsafe(
+      `INSERT INTO ${table}
+        (provider, operation, status, payment_id, order_id, subscription_id, workspace_uuid, account_uuid,
+         action_id, actor, amount, raw)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb)`,
+      [
+        op.provider,
+        op.operation,
+        op.status ?? null,
+        op.paymentId ?? null,
+        op.orderId ?? null,
+        op.subscriptionId ?? null,
+        op.workspaceUuid ?? null,
+        op.accountUuid ?? null,
+        op.actionId ?? null,
+        op.actor ?? null,
+        op.amount ?? null,
+        // Single JSON encoding: the driver serializes the object, $10::jsonb casts it.
+        op.raw ?? null
+      ]
+    )
+  }
+
+  // List ledger operations, newest first, with optional filters + pagination — for the admin page.
+  async getPaymentOperations (filter: PaymentOperationFilter): Promise<PaymentOperation[]> {
+    const table = this.paymentOperation.getTableName()
+    const where: string[] = []
+    const args: any[] = []
+    if (filter.from !== undefined) {
+      args.push(filter.from)
+      where.push(`created_on >= $${args.length}`)
+    }
+    if (filter.to !== undefined) {
+      args.push(filter.to)
+      where.push(`created_on < $${args.length}`)
+    }
+    if (filter.workspaceUuid !== undefined) {
+      args.push(filter.workspaceUuid)
+      where.push(`workspace_uuid = $${args.length}`)
+    }
+    if (filter.operation !== undefined) {
+      args.push(filter.operation)
+      where.push(`operation = $${args.length}`)
+    }
+    if (filter.status !== undefined) {
+      args.push(filter.status)
+      where.push(`status = $${args.length}`)
+    }
+    if (filter.provider !== undefined) {
+      args.push(filter.provider)
+      where.push(`provider = $${args.length}`)
+    }
+    const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
+    args.push(Math.min(filter.limit ?? 100, 500))
+    const limitSql = `LIMIT $${args.length}`
+    args.push(filter.offset ?? 0)
+    const offsetSql = `OFFSET $${args.length}`
+    const rows = await this.paymentOperation.unsafe(
+      `SELECT * FROM ${table} ${whereSql} ORDER BY created_on DESC ${limitSql} ${offsetSql}`,
+      args
+    )
+    return (rows as Array<Record<string, any>>).map((r) => convertKeysToCamelCase(r) as PaymentOperation)
+  }
+
+  // Aggregate operations in [from, to) for the daily billing summary: per-workspace charge counts,
+  // total charged amount, and error count (failed/rejected). Read-only.
+  async getPaymentOperationStats (from: number, to: number): Promise<PaymentOperationStats> {
+    const table = this.paymentOperation.getTableName()
+    const rows = await this.paymentOperation.unsafe(
+      `SELECT workspace_uuid, operation, status, amount, payment_id FROM ${table}
+       WHERE created_on >= $1 AND created_on < $2`,
+      [from, to]
+    )
+    const byWorkspace = new Map<string, { charges: number, amount: number, errors: number }>()
+    let totalCharges = 0
+    let totalAmount = 0
+    let totalErrors = 0
+    // Webhooks are delivered at-least-once: count each (payment, status) charge only once.
+    const seenCharges = new Set<string>()
+    for (const r of rows as Array<Record<string, any>>) {
+      const ws = (r.workspace_uuid as string) ?? 'unknown'
+      const entry = byWorkspace.get(ws) ?? { charges: 0, amount: 0, errors: 0 }
+      const status = (r.status as string) ?? ''
+      // Real charged money: tbank confirms via the webhook row (init_charge stays NEW).
+      let isCharge =
+        (r.operation === 'webhook' && status === 'CONFIRMED') ||
+        (r.operation === 'charge_recurrent' && status === 'success') ||
+        (r.operation === 'init_charge' && status === 'CONFIRMED')
+      if (isCharge && r.payment_id != null) {
+        const key = `${r.payment_id}|${r.operation}|${status}|${r.amount ?? ''}`
+        if (seenCharges.has(key)) isCharge = false
+        seenCharges.add(key)
+      }
+      const isError = status === 'REJECTED' || status === 'failed' || status === 'REVERSED'
+      if (isCharge) {
+        entry.charges++
+        entry.amount += Number(r.amount ?? 0)
+        totalCharges++
+        totalAmount += Number(r.amount ?? 0)
+      }
+      if (isError) {
+        entry.errors++
+        totalErrors++
+      }
+      byWorkspace.set(ws, entry)
+    }
+    return {
+      from,
+      to,
+      totalCharges,
+      totalAmount,
+      totalErrors,
+      workspaces: Array.from(byWorkspace.entries()).map(([workspaceUuid, s]) => ({ workspaceUuid, ...s }))
+    }
+  }
+
+  // Per-calendar-month (UTC) ledger aggregation for the admin finance view. Read-only.
+  async getPaymentMonthlyStats (from: number, to: number): Promise<PaymentMonthlyStats[]> {
+    const table = this.paymentOperation.getTableName()
+    const rows = await this.paymentOperation.unsafe(
+      `SELECT created_on, operation, status, amount, payment_id FROM ${table}
+       WHERE created_on >= $1 AND created_on < $2`,
+      [from, to]
+    )
+    const byMonth = new Map<string, PaymentMonthlyStats>()
+    // Webhooks are delivered at-least-once: count each (payment, status) charge only once.
+    const seenCharges = new Set<string>()
+    for (const r of rows as Array<Record<string, any>>) {
+      const month = new Date(Number(r.created_on)).toISOString().slice(0, 7)
+      const entry = byMonth.get(month) ?? { month, charges: 0, amount: 0, errors: 0, cancels: 0, refunds: 0 }
+      const status = (r.status as string) ?? ''
+      // Real charged money: tbank confirms via the webhook row (init_charge stays NEW).
+      let isCharge =
+        (r.operation === 'webhook' && status === 'CONFIRMED') ||
+        (r.operation === 'charge_recurrent' && status === 'success') ||
+        (r.operation === 'init_charge' && status === 'CONFIRMED')
+      if (isCharge && r.payment_id != null) {
+        const key = `${r.payment_id}|${r.operation}|${status}|${r.amount ?? ''}`
+        if (seenCharges.has(key)) isCharge = false
+        seenCharges.add(key)
+      }
+      if (isCharge) {
+        entry.charges++
+        entry.amount += Number(r.amount ?? 0)
+      }
+      if (status === 'REJECTED' || status === 'failed' || status === 'REVERSED') {
+        entry.errors++
+      }
+      if (r.operation === 'cancel') entry.cancels++
+      if (r.operation === 'refund' || status === 'REFUNDED') entry.refunds++
+      byMonth.set(month, entry)
+    }
+    return Array.from(byMonth.values()).sort((a, b) => a.month.localeCompare(b.month))
   }
 
   // Lease heartbeat: refresh while the charge is in flight so other pods see the claimer is alive.

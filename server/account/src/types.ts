@@ -337,6 +337,57 @@ export interface PaymentIntent {
   updatedOn: Timestamp
 }
 
+/** Append-only payment audit row. Immutable — inserted, never updated/deleted. */
+export type PaymentOperationKind = 'init_charge' | 'webhook' | 'charge_recurrent' | 'cancel' | 'refund'
+/** Who drove this row: the workspace user, our scheduler, the bank callback, or an admin. */
+export type PaymentActor = 'user' | 'system' | 'provider' | 'admin'
+export interface PaymentOperation {
+  id?: string // DB-generated on insert (gen_random_uuid); present on reads
+  provider: string
+  operation: PaymentOperationKind
+  status?: string // provider/webhook status (CONFIRMED|REJECTED|...) or 'success'|'failed'
+  paymentId?: string
+  orderId?: string
+  subscriptionId?: string
+  workspaceUuid?: WorkspaceUuid
+  accountUuid?: AccountUuid
+  actionId?: string // groups every row produced by one intent (purchase, plan change, renewal cycle)
+  actor?: PaymentActor
+  amount?: number // minor units (kopecks)
+  raw?: Record<string, any> // full provider payload for forensics
+  createdOn: Timestamp
+}
+
+export interface PaymentOperationStats {
+  from: Timestamp
+  to: Timestamp
+  totalCharges: number
+  totalAmount: number // kopecks
+  totalErrors: number
+  workspaces: Array<{ workspaceUuid: string, charges: number, amount: number, errors: number }>
+}
+
+export interface PaymentOperationFilter {
+  from?: Timestamp
+  to?: Timestamp
+  workspaceUuid?: WorkspaceUuid
+  operation?: PaymentOperationKind
+  status?: string
+  provider?: string
+  limit?: number
+  offset?: number
+}
+
+/** Ledger aggregation for one calendar month (UTC), month formatted as 'YYYY-MM'. */
+export interface PaymentMonthlyStats {
+  month: string
+  charges: number
+  amount: number // kopecks
+  errors: number
+  cancels: number
+  refunds: number
+}
+
 export interface AccountWorkspaceBadgeStatus {
   accountUuid: AccountUuid
   workspaceUuid: WorkspaceUuid
@@ -539,6 +590,11 @@ export interface AccountDB {
   setIntentPayment: (intentId: string, paymentId: string, paymentUrl?: string) => Promise<void>
   // Release a checkout claim once the webhook reaches a terminal status
   deleteCheckoutIntentByPaymentId: (paymentId: string, provider: string) => Promise<void>
+  deleteCheckoutIntentById: (intentId: string) => Promise<void>
+  logPaymentOperation: (op: PaymentOperation) => Promise<void>
+  getPaymentOperations: (filter: PaymentOperationFilter) => Promise<PaymentOperation[]>
+  getPaymentOperationStats: (from: Timestamp, to: Timestamp) => Promise<PaymentOperationStats>
+  getPaymentMonthlyStats: (from: Timestamp, to: Timestamp) => Promise<PaymentMonthlyStats[]>
 }
 
 export interface DbCollection<T> {
@@ -658,6 +714,13 @@ export interface OtpInfo {
 export interface RegionInfo {
   region: string
   name: string
+}
+
+// Self-host edition, resolved from the license metadata set at startup. Other pods fetch via getLicenseInfo.
+export interface LicenseInfo {
+  edition: 'dev' | 'community' | 'licensed'
+  canRunPayment: boolean
+  maxUsers: number
 }
 
 export interface WorkspaceInviteInfo {

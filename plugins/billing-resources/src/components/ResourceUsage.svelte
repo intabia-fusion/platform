@@ -105,7 +105,7 @@
               $subscriptionStore.currentPackage,
               $subscriptionStore.currentSubscription,
               $subscriptionStore.currentPackageSubscription
-            ).storageLimit}
+            )?.storageLimit ?? 0}
           />
         {/if}
       </Category>

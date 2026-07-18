@@ -34,21 +34,23 @@
   $: limits = calculateLimits(plan, pkg, tierSub, pkgSub)
 </script>
 
-<div class="flex-col flex-gap-2" data-id="billingUsageSection">
-  <div class="fs-bold">
-    <Label label={plugin.string.Usage} />
+{#if limits != null}
+  <div class="flex-col flex-gap-2" data-id="billingUsageSection">
+    <div class="fs-bold">
+      <Label label={plugin.string.Usage} />
+    </div>
+
+    <UsageProgress label={plugin.string.StorageUsage} value={storageUsedBytes} limit={limits.storageLimit} />
+
+    <UsageProgress
+      label={plugin.string.MeetingMinutesUsage}
+      value={meetingMinutes}
+      limit={limits.meetingMinutesLimit}
+      kind={'minutes'}
+    />
+
+    <UsageProgress label={plugin.string.TotalTokens} value={tokensUsage} limit={limits.tokenLimit} kind={'items'} />
+
+    <UsageProgress label={plugin.string.MembersUsage} value={membersCount} limit={limits.usersLimit} kind={'items'} />
   </div>
-
-  <UsageProgress label={plugin.string.StorageUsage} value={storageUsedBytes} limit={limits.storageLimit} />
-
-  <UsageProgress
-    label={plugin.string.MeetingMinutesUsage}
-    value={meetingMinutes}
-    limit={limits.meetingMinutesLimit}
-    kind={'minutes'}
-  />
-
-  <UsageProgress label={plugin.string.TotalTokens} value={tokensUsage} limit={limits.tokenLimit} kind={'items'} />
-
-  <UsageProgress label={plugin.string.MembersUsage} value={membersCount} limit={limits.usersLimit} kind={'items'} />
-</div>
+{/if}

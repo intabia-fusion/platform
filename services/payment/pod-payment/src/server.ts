@@ -36,7 +36,7 @@ import {
   type WorkspaceLoginInfo
 } from '@hcengineering/account-client'
 
-import { Config } from './config'
+import appConfig, { Config } from './config'
 import { ownsSubscription, withAdmin, withLoginInfo, withOwner, withToken, type RequestWithAuth } from './middleware'
 import { PaymentProviderFactory } from './factory'
 import type { BillingPeriod, CheckoutResponse, PaymentProvider, SubscriptionPublisher } from './providers'
@@ -52,7 +52,7 @@ const KEEP_ALIVE_TIMEOUT = 5 // seconds
 // Mutating subscription ops are rare per user; keep tight.
 const subscriptionRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 30,
+  max: appConfig.SubscriptionRateLimitMax ?? 30,
   message: 'Too many subscription requests, please try again later',
   standardHeaders: true
 })
@@ -121,11 +121,13 @@ export async function createServer (
   ctx: MeasureContext,
   config: Config,
   // Publishes provider subscription events to the queue (durable, provider-agnostic). Required.
-  publish: SubscriptionPublisher
+  publish: SubscriptionPublisher,
+  // Best-effort ledger audit for direct (non-queue) writes like free/trial provisioning.
+  logOperation?: (ctx: MeasureContext, sub: SubscriptionData, canceled: boolean) => Promise<void>
 ): Promise<{
     app: Express
     ensureInitialSubscription: (workspace: WorkspaceUuid) => Promise<void>
-    createFreeIfNoActiveTier: (workspace: WorkspaceUuid) => Promise<void>
+    createFreeIfNoActiveTier: (workspace: WorkspaceUuid, actionId?: string) => Promise<void>
     persistSubscription: (data: SubscriptionData) => Promise<void>
     close: () => void
   }> {
@@ -354,17 +356,19 @@ export async function createServer (
       providerData: { quantity: trialConfig.usersLimit }
     } as unknown as SubscriptionData
     await accountClient.upsertSubscription(data)
+    await logOperation?.(ctx, data, false)
     ctx.info('trial subscription created for workspace', { workspace, plan: trialConfig.plan, trialEnd: data.trialEnd })
     return data
   }
 
   // Create a free subscription after finalized user-initiated cancelation of a paid subscription
-  async function createFreeIfNoActiveTier (workspace: WorkspaceUuid): Promise<void> {
+  // actionId of the cancel that dropped the paid tier — the free fallback belongs to that same action.
+  async function createFreeIfNoActiveTier (workspace: WorkspaceUuid, actionId?: string): Promise<void> {
     if (freePlanName === undefined) return
     try {
       const existing = await accountClient.getSubscriptions(workspace, false)
       if (hasGrantingTier(existing)) return
-      await createFreeSubscription(workspace)
+      await createFreeSubscription(workspace, undefined, actionId)
     } catch (err: any) {
       ctx.error('failed to create free subscription after cancel', { workspace, err })
     }
@@ -372,7 +376,8 @@ export async function createServer (
 
   async function createFreeSubscription (
     workspace: WorkspaceUuid,
-    accountUuid?: AccountUuid
+    accountUuid?: AccountUuid,
+    actionId?: string
   ): Promise<SubscriptionData | undefined> {
     if (freePlanName === undefined) return
     // getWorkspaceMembers resolves the workspace from the token, so use a workspace-scoped client.
@@ -391,9 +396,11 @@ export async function createServer (
       periodEnd: undefined,
       type: SubscriptionType.Tier,
       status: SubscriptionStatus.Active,
-      plan: freePlanName
+      plan: freePlanName,
+      providerData: actionId !== undefined ? { actionId } : undefined
     } as unknown as SubscriptionData)
     await accountClient.upsertSubscription(data)
+    await logOperation?.(ctx, data, false)
     ctx.info('free subscription created for workspace', { workspace, plan: freePlanName })
     return data
   }
@@ -781,12 +788,14 @@ export async function createServer (
           const targetIsFree = planConfig.plans?.[plan]?.free === true
           if (targetIsFree) {
             try {
+              // Downgrade to free is one user action: the paid cancel and the free activation share it.
+              const actionId = `act-${Date.now().toString(36)}-${generateId().slice(0, 8)}`
               if (subscription.provider === config.Provider) {
                 // Same provider: stop the recurrent charge / remove the card at the provider
                 await provider.cancelSubscription(ctx, subscription.providerSubscriptionId)
               }
               // Mismatched provider: upsertSubscription inside createFreeSubscription will cancel all existing subs
-              const freeSub = await createFreeSubscription(subscription.workspaceUuid, accountUuid)
+              const freeSub = await createFreeSubscription(subscription.workspaceUuid, accountUuid, actionId)
               if (freeSub === undefined) {
                 res.status(500).json({ error: 'Free plan is not configured' })
                 return

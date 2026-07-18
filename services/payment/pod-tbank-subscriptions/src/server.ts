@@ -18,6 +18,7 @@ import { type SubscriptionData, SubscriptionStatus, SubscriptionType } from '@hc
 import express, { type Express, type Request, type Response } from 'express'
 import cors from 'cors'
 import type TbankPayments from 'tbank-payments'
+import type { MockTbank } from './mockTbank'
 
 import type { Config } from './config'
 import { withServiceToken } from './middleware'
@@ -34,6 +35,7 @@ import {
   orderFingerprint,
   buildRenewedSubscription,
   buildFailedChargeSubscription,
+  newActionId,
   type PlanPricing
 } from './utils'
 import { notifyPaymentFailed } from './notifications'
@@ -59,7 +61,8 @@ export async function createServer (
   ctx: MeasureContext,
   config: Config,
   tbank: TbankPayments,
-  storage: SubscriptionStorage
+  storage: SubscriptionStorage,
+  mock?: MockTbank
 ): Promise<{ app: Express, close: () => void }> {
   const plans = await loadPricing(config.PaymentUrl)
 
@@ -142,6 +145,11 @@ export async function createServer (
       await handleWebhook(ctx, config, tbank, storage, req, res)
     })
   )
+
+  // Local dev only: mock checkout page + pay/cancel actions (TBANK_MOCK=true).
+  if (mock !== undefined) {
+    mock.registerRoutes(app)
+  }
 
   const close = (): void => {}
   return { app, close }
@@ -236,6 +244,9 @@ async function handleCreateSubscription (
 
   ctx.info('Creating TBank subscription', { type, plan, workspaceUuid, accountUuid })
 
+  // One user intent = one actionId; every ledger row it causes (charge, webhook, superseded cancel)
+  // carries it, so the admin sees the whole story as a single action.
+  const actionId = newActionId()
   const planKey = getPlanKey(type, plan)
   const pricing = plans[planKey]
   if (pricing === undefined) {
@@ -254,6 +265,7 @@ async function handleCreateSubscription (
     const heartbeat = setInterval(() => {
       void storage.heartbeatCharge(intentId)
     }, CHECKOUT_HEARTBEAT_MS)
+    let paymentIssued = false
     try {
       const transactionCount = await storage.getTransactionCount(workspaceUuid)
       const orderId = buildOrderId(workspaceUuid, transactionCount)
@@ -269,9 +281,22 @@ async function handleCreateSubscription (
       )
 
       ctx.info('TBank payment initiated', { orderId, paymentId, planKey, amount, seats, period })
+      await storage.logOperation({
+        operation: 'init_charge',
+        status: 'NEW',
+        paymentId: String(paymentId),
+        orderId,
+        workspaceUuid,
+        accountUuid,
+        actionId,
+        actor: 'user',
+        amount,
+        raw: { plan, type, seats, period }
+      })
 
       // Link the claim to the issued charge and save the URL for reuse before exposing the draft.
       await storage.setCheckoutPayment(intentId, String(paymentId), paymentURL)
+      paymentIssued = true
 
       const subscriptionData = buildSubscriptionData(
         String(paymentId),
@@ -286,12 +311,20 @@ async function handleCreateSubscription (
         undefined,
         quantity,
         period,
-        paymentURL
+        paymentURL,
+        actionId
       )
 
       await storage.upsert(subscriptionData)
 
       res.json({ checkoutId: orderId, checkoutUrl: paymentURL })
+    } catch (err) {
+      // Failed before issuing a payment -> free the claim so a retry gets a clean claim (no 15-min
+      // lease wait, no stuck payment_id=null intent).
+      if (!paymentIssued) {
+        await storage.abandonCheckout(intentId).catch(() => {})
+      }
+      throw err
     } finally {
       clearInterval(heartbeat)
     }
@@ -499,6 +532,10 @@ export async function handleUpdatePlan (
   const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
   if (sub === null) return
 
+  // One plan change = one action: the new charge, its webhook and the old subscription's cancel
+  // all report under this id.
+  const actionId = newActionId()
+
   // Same plan + same seats + same period is a true no-op for a live subscription. A same-plan change
   // of seat count (per-seat) or period is a real update (pro-rata charge), so let it through.
   // Terminally Canceled can always be processed further.
@@ -506,6 +543,17 @@ export async function handleUpdatePlan (
   const newSeats = quantity ?? curSeats
   const curPeriod = sub.providerData?.period
   const samePlanNoChange = sub.plan === newPlan && newSeats === curSeats && (period ?? curPeriod) === curPeriod
+  ctx.info('updatePlan no-op check', {
+    curPlan: sub.plan,
+    newPlan,
+    curSeats,
+    newSeats,
+    reqQuantity: quantity,
+    curPeriod,
+    reqPeriod: period,
+    status: sub.status,
+    samePlanNoChange
+  })
   if (samePlanNoChange && sub.status !== SubscriptionStatus.Canceled) {
     res.status(400).json({ error: 'Already on this plan' })
     return
@@ -526,12 +574,56 @@ export async function handleUpdatePlan (
   const workspaceUrl = (req.body as { workspaceUrl?: string }).workspaceUrl ?? ''
   const force = (req.body as { force?: boolean }).force
 
+  // Package downgrade that fits into the already-paid credit: no charge, no checkout — switch the
+  // plan in place and clear any scheduled cancel (reactivation). pod-payment recomputes the exact
+  // pro-rata period shift on top of the returned SubscriptionData.
+  if (
+    sub.type === SubscriptionType.Package &&
+    sub.status === SubscriptionStatus.Active &&
+    sub.amount != null &&
+    sub.periodStart != null &&
+    sub.periodEnd != null
+  ) {
+    const now = Date.now()
+    const total = sub.periodEnd - sub.periodStart
+    const unusedCredit = total > 0 ? Math.round((sub.amount * Math.max(0, sub.periodEnd - now)) / total) : 0
+    if (newAmount <= unusedCredit) {
+      const updated: SubscriptionData = {
+        ...sub,
+        plan: newPlan,
+        amount: newAmount,
+        status: SubscriptionStatus.Active,
+        canceledAt: undefined,
+        willCancelAt: undefined,
+        providerData: { ...sub.providerData, quantity: seats, period: period ?? curPeriod, modifiedAt: now }
+      }
+      await storage.upsert(updated)
+      await storage.logOperation({
+        operation: 'webhook',
+        status: 'active',
+        paymentId: sub.providerSubscriptionId,
+        orderId: sub.providerData?.orderId as string | undefined,
+        subscriptionId: sub.id,
+        workspaceUuid: sub.workspaceUuid,
+        accountUuid: sub.accountUuid,
+        actionId,
+        actor: 'user',
+        amount: newAmount,
+        raw: { plan: newPlan, seats, kind: 'downgrade', unusedCredit }
+      })
+      ctx.info('Package downgrade applied without charge', { subId: sub.id, newPlan, newAmount, unusedCredit })
+      res.json(updated)
+      return
+    }
+  }
+
   // Winner opens the replacement checkout: init tbank link, mark the old sub pending-replacement (do NOT
   // cancel it — the old plan stays active until the new payment lands), pre-create the new pending sub.
   const openCheckout = async (intentId: string): Promise<void> => {
     const heartbeat = setInterval(() => {
       void storage.heartbeatCharge(intentId)
     }, CHECKOUT_HEARTBEAT_MS)
+    let paymentIssued = false
     try {
       const transactionCount = await storage.getTransactionCount(sub.workspaceUuid)
       const orderId = buildOrderId(sub.workspaceUuid, transactionCount)
@@ -545,12 +637,26 @@ export async function handleUpdatePlan (
         workspaceUrl
       )
       await storage.setCheckoutPayment(intentId, String(paymentId), paymentURL)
+      paymentIssued = true
+      await storage.logOperation({
+        operation: 'init_charge',
+        status: 'NEW',
+        paymentId: String(paymentId),
+        orderId,
+        subscriptionId: sub.id,
+        workspaceUuid: sub.workspaceUuid,
+        accountUuid: sub.accountUuid,
+        actionId,
+        actor: 'user',
+        amount: newAmount,
+        raw: { plan: newPlan, type: sub.type, seats, period, kind: 'update' }
+      })
 
       // Link+claim first, then drafts: if an upsert below fails the webhook's "any active same-type"
       // fallback still cancels the old sub on payment (see handleWebhook).
       await storage.upsert({
         ...sub,
-        providerData: { ...sub.providerData, pendingReplacement: true, replacementPlan: newPlan }
+        providerData: { ...sub.providerData, pendingReplacement: true, replacementPlan: newPlan, actionId }
       })
       await storage.upsert(
         buildSubscriptionData(
@@ -566,12 +672,18 @@ export async function handleUpdatePlan (
           undefined,
           quantity,
           period,
-          paymentURL
+          paymentURL,
+          actionId
         )
       )
 
       ctx.info('Replacement checkout opened', { oldSubId: sub.id, paymentId, newPlan, seats })
       res.json({ checkoutId: orderId, checkoutUrl: paymentURL })
+    } catch (err) {
+      if (!paymentIssued) {
+        await storage.abandonCheckout(intentId).catch(() => {})
+      }
+      throw err
     } finally {
       clearInterval(heartbeat)
     }
@@ -689,6 +801,26 @@ async function handleWebhook (
     workspaceUuid: sub?.workspaceUuid
   })
 
+  // Audit every webhook (confirmation / rejection / reversal) with the full notification payload.
+  await storage.logOperation({
+    operation: 'webhook',
+    status: typedNotification.Status,
+    paymentId: typedNotification.PaymentId,
+    orderId: typedNotification.OrderId,
+    subscriptionId: sub?.id,
+    workspaceUuid: sub?.workspaceUuid,
+    accountUuid: sub?.accountUuid,
+    // The intent that opened this checkout, stored on the draft — keeps callback and charge together.
+    actionId: sub?.providerData?.actionId as string | undefined,
+    actor: 'provider',
+    amount: typedNotification.Amount,
+    raw: {
+      ...(typedNotification as unknown as Record<string, any>),
+      plan: sub?.plan,
+      seats: sub?.providerData?.quantity
+    }
+  })
+
   if (typedNotification.Status === 'AUTHORIZED' || typedNotification.Status === 'CONFIRMED') {
     if (sub === null) {
       ctx.error('TBank webhook received but no pending subscription found', {
@@ -735,7 +867,16 @@ async function handleWebhook (
         (s.type === subscriptionData.type && s.status === SubscriptionStatus.Active && s.id !== subscriptionData.id)
     )
     if (oldSub !== undefined && oldSub !== null) {
-      await cancelSubscription(ctx, tbank, storage, oldSub, 'PLAN_CHANGE')
+      // Report under the NEW purchase's action: dropping the old plan is part of that same intent.
+      await cancelSubscription(
+        ctx,
+        tbank,
+        storage,
+        oldSub,
+        'PLAN_CHANGE',
+        subscriptionData.providerData?.actionId as string | undefined,
+        'provider'
+      )
       ctx.info('Old subscription canceled after plan change confirmation', {
         oldSubId: oldSub.id,
         newSubId: subscriptionData.id,
@@ -821,7 +962,8 @@ function buildSubscriptionData (
   existingSub?: SubscriptionData,
   quantity?: number,
   period?: BillingPeriod,
-  paymentUrl?: string
+  paymentUrl?: string,
+  actionId?: string
 ): SubscriptionData {
   const now = Date.now()
   return {
@@ -845,6 +987,8 @@ function buildSubscriptionData (
       customerKey,
       terminalKey,
       pending: true,
+      // Intent that opened this checkout — the webhook and any later cancel reuse it in the ledger.
+      actionId,
       // Seats purchased for a per-seat plan. undefined for flat plans.
       quantity,
       // Billing period ('monthly' | 'yearly'). undefined defaults to monthly.
@@ -884,6 +1028,8 @@ function buildSubscriptionDataFromWebhook (
       rebillId: notification.RebillId,
       paymentId: notification.PaymentId,
       orderId: notification.OrderId,
+      // Keep the originating action so a later cancel/renewal still reports under it.
+      actionId: existingSub.providerData?.actionId,
       terminalKey: notification.TerminalKey,
       status: notification.Status,
       pending: false,
@@ -972,7 +1118,10 @@ async function cancelSubscription (
   tbank: TbankPayments,
   storage: SubscriptionStorage,
   sub: SubscriptionData,
-  status?: string
+  status?: string,
+  // Intent that caused this cancel. Falls back to the subscription's own action (user-initiated cancel).
+  actionId?: string,
+  actor: 'user' | 'system' | 'provider' | 'admin' = 'user'
 ): Promise<SubscriptionData> {
   if (status === 'PLAN_CHANGE') {
     await removeSubscriptionCard(ctx, tbank, sub)
@@ -982,6 +1131,20 @@ async function cancelSubscription (
   await storage.upsert(canceledData)
 
   ctx.info('Subscription canceled', { subId: sub.id, status: canceledData.providerData?.status })
+  await storage.logOperation({
+    operation: 'cancel',
+    status: status ?? 'canceled',
+    paymentId: sub.providerSubscriptionId,
+    // Same orderId as the charge that created this subscription — keeps the ledger chain intact.
+    orderId: sub.providerData?.orderId as string | undefined,
+    subscriptionId: sub.id,
+    workspaceUuid: sub.workspaceUuid,
+    accountUuid: sub.accountUuid,
+    actionId: actionId ?? (sub.providerData?.actionId as string | undefined),
+    actor,
+    amount: sub.amount,
+    raw: { plan: sub.plan, seats: sub.providerData?.quantity, reason: status }
+  })
   return canceledData
 }
 

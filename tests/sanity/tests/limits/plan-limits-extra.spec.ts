@@ -150,52 +150,9 @@ test.describe('limits indicator', () => {
   })
 })
 
-// ── E. subscribe / switch plan via UI (mock provider) ────────────────────────
-// Exercises the real UI button -> mock checkout (instant active) -> plan-change path.
-// Covers the mock checkoutUrl + plan-change lookup bugs end to end.
-test.describe('subscribe and switch plan via UI', () => {
-  test.use({ storageState: PlatformSetting })
-
-  async function openBilling (page: import('@playwright/test').Page, ws: string): Promise<void> {
-    await (await page.goto(`${PlatformURI}/workbench/${ws}/setting/setting/billing/subscriptions`))?.finished()
-    // Wait for plan cards (plan-config loaded).
-    await expect(page.locator('[data-id="planCard-storage-mini"]')).toBeVisible({ timeout: 20000 })
-  }
-
-  // Switching between two existing plans opens a MessageBox confirm (Confirm Upgrade/Downgrade);
-  // creating a first subscription does not. Confirm if the dialog appears, ignore otherwise.
-  async function confirmIfDialog (page: import('@playwright/test').Page): Promise<void> {
-    const ok = page.locator('.msgbox-container .footer button').filter({ hasText: 'Ok' })
-    try {
-      await ok.first().click({ timeout: 4000 })
-    } catch {
-      /* no confirm dialog (first-time subscribe) */
-    }
-  }
-
-  // Click a plan's Subscribe/ChangePlan, confirm the dialog. The mock provider activates instantly
-  // (instant=true) so the dialog refetches in place — no redirect — and the plan becomes current.
-  async function switchToPlan (page: import('@playwright/test').Page, planKey: string): Promise<void> {
-    await page.locator(`[data-id="planSubscribe-${planKey}"]`).click()
-    await confirmIfDialog(page)
-    await expect(page.locator(`[data-id="planSubscribe-${planKey}"]`)).toHaveCount(0, { timeout: 15000 })
-  }
-
-  test('switch from storage-mini to storage-medium and back activates instantly', async ({ page, request }) => {
-    const api = new ApiEndpoint(request)
-    const wsInfo = await api.createWorkspaceWithLogin(`switch-${generateId(8)}`, 'user1', '1234')
-    const wsUrl = wsInfo.workspaceUrl
-    await setWorkspacePlanByUuid(wsInfo.workspace, 'storage-mini', { status: 'active' })
-
-    await openBilling(page, wsUrl)
-    await expect(page.locator('[data-id="planSubscribe-storage-mini"]')).toHaveCount(0, { timeout: 10000 })
-
-    await switchToPlan(page, 'storage-medium')
-    await expect(page.locator('[data-id="planSubscribe-storage-mini"]')).toBeVisible({ timeout: 5000 })
-
-    await switchToPlan(page, 'storage-mini')
-  })
-})
+// NOTE: flat-tier plan switch (storage-mini <-> storage-medium) via UI was removed. Those are
+// test-only synthetic plans (priceMonthly, not per-user) that the tbank provider's catalog does not
+// carry — tbank handles the real per-seat business tier + add-on packages, covered in billing-ui.spec.ts.
 
 // ── F. seat downgrade puts the over-limit member into read-only ──────────────
 // A FRESH workspace per run (no shared state): user1 OWNER + user2 USER, plan usersLimit=2 so both

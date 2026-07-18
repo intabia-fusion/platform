@@ -111,10 +111,35 @@ async function renewSubscription (
     void storage.heartbeatCharge(intentId)
   }, HEARTBEAT_INTERVAL_MS)
 
+  const attempt = ((sub.providerData?.retryAttempt as number) ?? 0) + 1
+  // Renewing one period is a single action even across retries, pods and restarts — derive it from
+  // the period being paid rather than generating a fresh id per attempt.
+  const renewActionId = `renew:${sub.id}:${sub.periodEnd}`
   try {
     const chargeResult = await tbank.chargeRecurrent({
       PaymentId: sub.providerSubscriptionId,
       RebillId: sub.providerData?.rebillId as string
+    })
+
+    await storage.logOperation({
+      operation: 'charge_recurrent',
+      status: chargeResult.Success === true ? 'success' : 'failed',
+      paymentId: chargeResult.PaymentId,
+      // One renewal cycle = one orderId, so retries of the same period stay one chain.
+      orderId: `renew:${sub.id}:${sub.periodEnd ?? 0}`,
+      actionId: renewActionId,
+      actor: 'system',
+      subscriptionId: sub.id,
+      workspaceUuid: sub.workspaceUuid,
+      accountUuid: sub.accountUuid,
+      amount: sub.amount,
+      raw: {
+        errorCode: chargeResult.ErrorCode,
+        message: chargeResult.Message,
+        attempt,
+        plan: sub.plan,
+        seats: sub.providerData?.quantity
+      }
     })
 
     if (chargeResult.Success === true) {
@@ -154,6 +179,18 @@ async function renewSubscription (
       subId: sub.id,
       intentId,
       err
+    })
+    await storage.logOperation({
+      operation: 'charge_recurrent',
+      status: 'unknown',
+      orderId: `renew:${sub.id}:${sub.periodEnd ?? 0}`,
+      actionId: renewActionId,
+      actor: 'system',
+      subscriptionId: sub.id,
+      workspaceUuid: sub.workspaceUuid,
+      accountUuid: sub.accountUuid,
+      amount: sub.amount,
+      raw: { message: err.message, attempt, plan: sub.plan, seats: sub.providerData?.quantity }
     })
     const updatedData = buildChargeErrorSubscription(sub, err.message, RETRY_INTERVAL_MS)
     await storage.upsert(updatedData)

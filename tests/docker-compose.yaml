@@ -492,12 +492,37 @@ services:
       - SECRET=secret
       - ACCOUNTS_URL=http://account:3003
       - FRONT_URL=http://localhost:8083
-      - PROVIDER=mock
-      - ALLOW_MOCK_PROVIDER=true
+      # Route to tbank-subscriptions with in-process mock bank (provider-agnostic, closer to prod).
+      - PROVIDER=tbank
+      - TBANK_SUBSCRIPTIONS_URL=http://tbank-subscriptions:4042
+      - ALLOW_MOCK_PROVIDER=false
+      # Tests fire many subscription mutations in a row from one IP; lift the per-IP cap.
+      - SUBSCRIPTION_RATE_LIMIT_MAX=100000
       - PLAN_CONFIG=/var/cfg/plan-config.yaml
       - QUEUE_CONFIG=${QUEUE_CONFIG}
     volumes:
       - ./plan-config.yaml:/var/cfg/plan-config.yaml:ro
+    restart: unless-stopped
+
+  tbank-subscriptions:
+    image: intabiafusion/tbank-subscriptions
+    pull_policy: never
+    depends_on:
+      account:
+        condition: service_started
+      payment:
+        condition: service_started
+    environment:
+      - SECRET=secret
+      - PORT=4042
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
+      - ACCOUNTS_URL=http://account:3003
+      - FRONT_URL=http://localhost:8083
+      # In-process mock bank: self-fires CONFIRMED/REJECTED webhook, no external terminal.
+      - TBANK_MOCK=true
+      - TBANK_SKIP_WEBHOOK_VERIFICATION=true
+      - PAYMENT_URL=http://payment:4044
     restart: unless-stopped
 
   redis-test:

@@ -16,3 +16,4 @@
 
 export { default } from './plugin'
 export * from './token'
+export * from './license'

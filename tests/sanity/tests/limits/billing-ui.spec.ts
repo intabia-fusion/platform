@@ -4,15 +4,25 @@ import { PlatformSetting, PlatformURI, generateId } from '../utils'
 import { setWorkspacePlanByUuid, getTierSubscription } from '../API/Billing'
 import { ApiEndpoint } from '../API/Api'
 
-// End-to-end UI billing lifecycle against the mock payment provider (instant activation): buy a
+// End-to-end UI billing lifecycle against the tbank provider with the in-process MOCK bank: buy a
 // per-seat plan, change seats up/down, switch add-on packages, cancel/uncancel, monthly/yearly.
-// The mock provider makes every purchase resolve in place (no external checkout), so the current
-// plan card updates without a redirect.
+// Unlike the old instant mock, tbank redirects to a checkout page; the mock bank renders a page
+// with "Оплатить"/"Отменить" that self-fires the CONFIRMED/REJECTED webhook on click, so each
+// purchase completes only after paying on the checkout page and returning to billing.
 
 async function openBilling (page: Page, ws: string): Promise<void> {
   await (await page.goto(`${PlatformURI}/workbench/${ws}/setting/setting/billing/subscriptions`))?.finished()
   // Plan cards render once plan-config is loaded.
   await expect(page.locator('[data-id="planCard-business"]')).toBeVisible({ timeout: 20000 })
+}
+
+// After a subscribe/change/package action the UI navigates to the mock checkout page. Pay there,
+// which fires the CONFIRMED webhook, then go back to billing so the caller can assert the new state.
+async function payMockCheckout (page: Page, ws: string): Promise<void> {
+  await expect(page).toHaveURL(/\/_tbank_subscriptions\/mock-checkout\//, { timeout: 20000 })
+  await page.getByRole('button', { name: 'Оплатить' }).click()
+  await expect(page.getByText('CONFIRMED')).toBeVisible({ timeout: 15000 })
+  await openBilling(page, ws)
 }
 
 // A plan switch between two existing plans opens a MessageBox confirm; a first subscribe does not.
@@ -25,20 +35,20 @@ async function confirmIfDialog (page: Page): Promise<void> {
   }
 }
 
-// Buy the Business per-seat plan for `seats` seats via the plan card. The subscribe button
-// disappears once the plan becomes current (mock activates instantly).
-async function subscribeBusiness (page: Page, seats: number): Promise<void> {
+// Buy the Business per-seat plan for `seats` seats via the plan card, then pay on the mock checkout.
+async function subscribeBusiness (page: Page, ws: string, seats: number): Promise<void> {
   const seatsInput = page.locator('[data-id="planSeats-business"]')
   await seatsInput.fill(String(seats))
   await seatsInput.blur()
   await page.locator('[data-id="planSubscribe-business"]').click()
   await confirmIfDialog(page)
+  await payMockCheckout(page, ws)
   await expect(page.locator('[data-id="planSubscribe-business"]')).toHaveCount(0, { timeout: 20000 })
 }
 
 // Open the "Change seats" dialog, set the new count, verify the preview matches the direction
 // (charge for an upgrade, renewal-date shift for a downgrade), then confirm.
-async function changeSeats (page: Page, seats: number, expect_: 'charge' | 'extend'): Promise<void> {
+async function changeSeats (page: Page, ws: string, seats: number, expect_: 'charge' | 'extend'): Promise<void> {
   await page.locator('[data-id="changeSeats"]').click()
   const dialog = page.locator('[data-id="changeSeatsDialog"]')
   await expect(dialog).toBeVisible({ timeout: 10000 })
@@ -60,12 +70,14 @@ async function changeSeats (page: Page, seats: number, expect_: 'charge' | 'exte
   // The Card ok button (the only primary button in the dialog footer) applies the change.
   await page.locator('.antiCard .buttons-group button').last().click()
   await expect(dialog).toBeHidden({ timeout: 15000 })
+  // A seat change is a new charge -> tbank checkout; pay it on the mock page.
+  await payMockCheckout(page, ws)
 }
 
 // Connect / switch to a package by key. A switch from an existing package opens the change dialog
 // with a proration preview (`expect_`: charge for a bigger package, date shift for a smaller one);
 // the first connect (no active package) goes straight through checkout with no dialog.
-async function connectPackage (page: Page, pkgKey: string, expect_?: 'charge' | 'extend'): Promise<void> {
+async function connectPackage (page: Page, ws: string, pkgKey: string, expect_?: 'charge' | 'extend'): Promise<void> {
   await page.locator(`[data-id="packageConnect-${pkgKey}"]`).click()
   const dialog = page.locator('[data-id="packageChangeDialog"]')
   if (expect_ !== undefined) {
@@ -81,11 +93,13 @@ async function connectPackage (page: Page, pkgKey: string, expect_?: 'charge' | 
     await page.locator('.antiCard .buttons-group button').last().click()
     await expect(dialog).toBeHidden({ timeout: 15000 })
   }
+  // Connect/switch is a new charge -> tbank checkout; pay it on the mock page.
+  await payMockCheckout(page, ws)
   // The connect button for this package disappears once it becomes the current package.
   await expect(page.locator(`[data-id="packageConnect-${pkgKey}"]`)).toHaveCount(0, { timeout: 20000 })
 }
 
-test.describe('billing UI lifecycle (mock provider)', () => {
+test.describe('billing UI lifecycle (tbank + mock bank)', () => {
   test.use({ storageState: PlatformSetting })
 
   async function freshBusinessWorkspace (
@@ -111,7 +125,7 @@ test.describe('billing UI lifecycle (mock provider)', () => {
     // Before buying, the trial state is shown on the active card.
     await expect(page.locator('[data-id="currentTierStatus"]')).toBeVisible({ timeout: 10000 })
 
-    await subscribeBusiness(page, 3)
+    await subscribeBusiness(page, wsUrl, 3)
 
     await expect(async () => {
       const tier = await getTierSubscription(workspace)
@@ -130,16 +144,16 @@ test.describe('billing UI lifecycle (mock provider)', () => {
   test('increase then decrease seats on the active plan', async ({ page, request }) => {
     const { workspace, wsUrl } = await freshBusinessWorkspace(request, 'seats')
     await openBilling(page, wsUrl)
-    await subscribeBusiness(page, 3)
+    await subscribeBusiness(page, wsUrl, 3)
 
     // Up: 3 -> 6, preview shows the one-time charge.
-    await changeSeats(page, 6, 'charge')
+    await changeSeats(page, wsUrl, 6, 'charge')
     await expect(async () => {
       expect((await getTierSubscription(workspace))?.usersLimit).toBe(6)
     }).toPass({ intervals: [1000, 2000, 3000], timeout: 20000 })
 
     // Down: 6 -> 2 (above the single owner member), preview shows the renewal-date shift, no charge.
-    await changeSeats(page, 2, 'extend')
+    await changeSeats(page, wsUrl, 2, 'extend')
     await expect(async () => {
       expect((await getTierSubscription(workspace))?.usersLimit).toBe(2)
     }).toPass({ intervals: [1000, 2000, 3000], timeout: 20000 })
@@ -148,7 +162,7 @@ test.describe('billing UI lifecycle (mock provider)', () => {
   test('seat count cannot go below the current member count', async ({ page, request }) => {
     const { wsUrl } = await freshBusinessWorkspace(request, 'seatmin')
     await openBilling(page, wsUrl)
-    await subscribeBusiness(page, 3)
+    await subscribeBusiness(page, wsUrl, 3)
 
     await page.locator('[data-id="changeSeats"]').click()
     const input = page.locator('[data-id="changeSeatsInput"] input[type="number"]')
@@ -161,20 +175,20 @@ test.describe('billing UI lifecycle (mock provider)', () => {
   test('connect a package, upgrade to a bigger one, then downgrade', async ({ page, request }) => {
     const { wsUrl } = await freshBusinessWorkspace(request, 'pkg')
     await openBilling(page, wsUrl)
-    await subscribeBusiness(page, 2)
+    await subscribeBusiness(page, wsUrl, 2)
 
     // First connect: small package (no active package -> no replace dialog).
-    await connectPackage(page, 'pkg-10mb')
+    await connectPackage(page, wsUrl, 'pkg-10mb')
     // Upgrade: bigger package -> replace dialog shows the one-time charge.
-    await connectPackage(page, 'pkg-100mb', 'charge')
+    await connectPackage(page, wsUrl, 'pkg-100mb', 'charge')
     // Downgrade: back to the small one -> replace dialog shows the date shift, no charge.
-    await connectPackage(page, 'pkg-10mb', 'extend')
+    await connectPackage(page, wsUrl, 'pkg-10mb', 'extend')
   })
 
   test('cancel then uncancel the subscription', async ({ page, request }) => {
     const { wsUrl } = await freshBusinessWorkspace(request, 'cancel')
     await openBilling(page, wsUrl)
-    await subscribeBusiness(page, 2)
+    await subscribeBusiness(page, wsUrl, 2)
 
     // Cancel at period end: the plan stays visible with a "cancel scheduled" state and an uncancel button.
     await page.locator('[data-id="cancelSubscription"]').click()
@@ -198,7 +212,7 @@ test.describe('billing UI lifecycle (mock provider)', () => {
     // Switch the billing period to yearly before subscribing (the Switcher wraps the radio in a
     // label that intercepts clicks; target it by its data-id).
     await page.locator('[data-id="tab-yearly"]').click()
-    await subscribeBusiness(page, 2)
+    await subscribeBusiness(page, wsUrl, 2)
 
     await expect(async () => {
       const tier = await getTierSubscription(workspace)

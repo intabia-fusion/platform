@@ -79,7 +79,7 @@ export const seatCount = derived(subscriptionStore, ($s) => $s.usageInfo?.usage.
  * flips this — the server rejects an over-limit create regardless.
  */
 export const seatLimitReached = derived([seatCount, planLimits], ([$seats, $limits]) => {
-  const limit = $limits.usersLimit
+  const limit = $limits?.usersLimit ?? 0
   return limit > 0 && ($seats === undefined || $seats >= limit)
 })
 

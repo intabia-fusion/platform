@@ -1079,6 +1079,7 @@ services:
       - QUEUE_REGION=
       - ACCOUNTS_URL=http://account:3000
       - FRONT_URL=http://localhost:8087
+      # TBANK_MOCK is set by the docker:up:tbank overlay (docker-compose.tbank-mock.yaml).
       # Sandbox terminal credentials — set in your shell or a local (untracked) env file
       - TBANK_TERMINAL_KEY=${TBANK_TERMINAL_KEY:-test}
       - TBANK_PASSWORD=${TBANK_PASSWORD:-test}

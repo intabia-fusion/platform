@@ -93,6 +93,14 @@ export interface RegionInfo {
   name: string
 }
 
+// Self-host edition, resolved by account (single license-key holder). Other pods fetch this instead
+// of verifying a key themselves. maxUsers 0 = unlimited.
+export interface LicenseInfo {
+  edition: 'dev' | 'community' | 'licensed'
+  canRunPayment: boolean
+  maxUsers: number
+}
+
 export type WorkspaceOperation = 'create' | 'upgrade' | 'all' | 'all+backup'
 
 export interface MailboxOptions {
@@ -290,6 +298,57 @@ export interface PaymentIntent {
   orderFingerprint?: string // checkout: 'plan:seats:period', reuse URL only on an exact order match
   createdOn: number
   updatedOn: number
+}
+
+/** Append-only payment audit row (immutable). */
+export type PaymentOperationKind = 'init_charge' | 'webhook' | 'charge_recurrent' | 'cancel' | 'refund'
+/** Who drove this row: the workspace user, our scheduler, the bank callback, or an admin. */
+export type PaymentActor = 'user' | 'system' | 'provider' | 'admin'
+export interface PaymentOperation {
+  id?: string
+  provider: string
+  operation: PaymentOperationKind
+  status?: string
+  paymentId?: string
+  orderId?: string
+  subscriptionId?: string
+  workspaceUuid?: WorkspaceUuid
+  accountUuid?: AccountUuid
+  actionId?: string // groups every row produced by one intent (purchase, plan change, renewal cycle)
+  actor?: PaymentActor
+  amount?: number
+  raw?: Record<string, any>
+  createdOn?: number
+}
+
+export interface PaymentOperationStats {
+  from: number
+  to: number
+  totalCharges: number
+  totalAmount: number
+  totalErrors: number
+  workspaces: Array<{ workspaceUuid: string, charges: number, amount: number, errors: number }>
+}
+
+export interface PaymentOperationFilter {
+  from?: number
+  to?: number
+  workspaceUuid?: WorkspaceUuid
+  operation?: PaymentOperationKind
+  status?: string
+  provider?: string
+  limit?: number
+  offset?: number
+}
+
+/** Ledger aggregation for one calendar month (UTC), month formatted as 'YYYY-MM'. */
+export interface PaymentMonthlyStats {
+  month: string
+  charges: number
+  amount: number
+  errors: number
+  cancels: number
+  refunds: number
 }
 
 /**

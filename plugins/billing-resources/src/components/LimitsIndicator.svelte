@@ -68,8 +68,9 @@
   $: meetingMinutesUsed = usageInfo?.usage?.meetingMinutes ?? 0
   $: limits = calculateLimits(currentPlan, currentPackage, currentSubscription, currentPackageSubscription)
 
-  $: storagePercent = limits.storageLimit > 0 ? Math.min(storageUsed / limits.storageLimit, 1) : 0
-  $: meetingPercent = limits.meetingMinutesLimit > 0 ? Math.min(meetingMinutesUsed / limits.meetingMinutesLimit, 1) : 0
+  $: storagePercent = limits != null && limits.storageLimit > 0 ? Math.min(storageUsed / limits.storageLimit, 1) : 0
+  $: meetingPercent =
+    limits != null && limits.meetingMinutesLimit > 0 ? Math.min(meetingMinutesUsed / limits.meetingMinutesLimit, 1) : 0
 
   $: storageColor = storagePercent >= 0.9 ? PaletteColorIndexes.Firework : undefined
   $: meetingColor = meetingPercent >= 0.9 ? PaletteColorIndexes.Firework : undefined
@@ -119,13 +120,13 @@
   on:click={handleClick}
 >
   <div class="progress-wrapper">
-    <Progress color={storageColor} value={storageUsed} max={limits.storageLimit} fallback={0} small={true} />
+    <Progress color={storageColor} value={storageUsed} max={limits?.storageLimit ?? 0} fallback={0} small={true} />
   </div>
   <div class="progress-wrapper">
     <Progress
       color={meetingColor}
       value={meetingMinutesUsed}
-      max={limits.meetingMinutesLimit}
+      max={limits?.meetingMinutesLimit ?? 0}
       fallback={0}
       small={true}
     />

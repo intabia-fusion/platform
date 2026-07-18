@@ -30,6 +30,7 @@ export interface Config {
 
   // Dev
   TbankSkipWebhookVerification?: boolean // Skip webhook token verification (for local dev with curl)
+  TbankMock?: boolean // Use the in-process mock bank (no real terminal) — local dev / service-wiring tests
 
   // Scheduler
   SchedulerIntervalMinutes: number // How often to check for expiring subscriptions
@@ -39,6 +40,7 @@ export interface Config {
   MailUrl?: string // pod-mail base URL, e.g. http://mail:8097
   MailApiKey?: string // pod-mail API key (Bearer), optional if pod-mail has none
   MailFrom?: string // From address for outgoing notifications
+  BillingEmails?: string[] // Service inbox(es) notified on failed charges (comma-separated env)
 
   // pod-payment base URL — source of the shared plan-config (charge amounts) and localized plan labels for emails
   PaymentUrl: string
@@ -57,24 +59,29 @@ const config: Config = (() => {
     TbankTerminalKey: process.env.TBANK_TERMINAL_KEY,
     TbankPassword: process.env.TBANK_PASSWORD,
     TbankUrl: process.env.TBANK_URL,
-    TbankSkipWebhookVerification: process.env.TBANK_SKIP_WEBHOOK_VERIFICATION === 'true',
+    // Mock bank sends its own webhook with a dummy token — always skip verification under mock.
+    TbankSkipWebhookVerification:
+      process.env.TBANK_SKIP_WEBHOOK_VERIFICATION === 'true' || process.env.TBANK_MOCK === 'true',
+    TbankMock: process.env.TBANK_MOCK === 'true',
     SchedulerIntervalMinutes: parseNumber(process.env.SCHEDULER_INTERVAL_MINUTES, 60),
     GracePeriodDays: parseNumber(process.env.GRACE_PERIOD_DAYS, 7),
     MailUrl: process.env.MAIL_URL,
     MailApiKey: process.env.MAIL_API_KEY,
     MailFrom: process.env.MAIL_FROM,
+    BillingEmails: process.env.BILLING_EMAILS?.split(',')
+      .map((e) => e.trim())
+      .filter((e) => e.length > 0),
     PaymentUrl: process.env.PAYMENT_URL
   }
 
+  // Mock bank needs no real terminal credentials.
   const requiredKeys: Array<keyof Config> = [
     'Port',
     'Secret',
     'AccountsUrl',
     'FrontUrl',
-    'TbankTerminalKey',
-    'TbankPassword',
-    'TbankUrl',
-    'PaymentUrl'
+    'PaymentUrl',
+    ...((params.TbankMock ?? false) ? [] : (['TbankTerminalKey', 'TbankPassword', 'TbankUrl'] as Array<keyof Config>))
   ]
 
   const missingEnv = requiredKeys.filter((key) => params[key] === undefined)

@@ -77,7 +77,7 @@
       // Guard against a seatless create: the server rejects the Employee-mixin tx but the Person doc
       // is a separate, non-blocked tx that would already be committed — leaving an orphan Person.
       // Bail before writing anything so no partial state is created.
-      const limit = $planLimits.usersLimit
+      const limit = $planLimits?.usersLimit ?? 0
       if (limit > 0 && ($seatCount === undefined || $seatCount >= limit)) {
         return
       }
@@ -216,7 +216,7 @@
       <div class="flex-row-center error-color" data-id="seatLimitError">
         <IconInfo size={'small'} />
         <span class="text-sm overflow-label ml-2">
-          <Label label={contact.string.SeatLimitReached} params={{ limit: $planLimits.usersLimit }} />
+          <Label label={contact.string.SeatLimitReached} params={{ limit: $planLimits?.usersLimit ?? 0 }} />
         </span>
       </div>
     {/if}

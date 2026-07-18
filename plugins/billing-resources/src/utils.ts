@@ -204,33 +204,34 @@ export async function checkWorkspaceLimits (): Promise<void> {
   }
 }
 
+// Limits come ONLY from real data: the subscription's baked limits or the loaded plan-config. No
+// fabricated fallbacks — if neither is present (no billing access / not loaded) return null so callers
+// show/enforce nothing rather than wrong numbers.
 export function calculateLimits (
   plan?: PlanItem,
   pkg?: PackageItem,
   tierSub?: SubscriptionData,
   pkgSub?: SubscriptionData
-): {
+):
+  | {
     storageLimit: number
     trafficLimit: number
     meetingMinutesLimit: number
     tokenLimit: number
     usersLimit: number
-  } {
-  const DEFAULT_STORAGE_GB = 10
-  const DEFAULT_TRAFFIC_GB = 10
-  const DEFAULT_MEETING_MINUTES = 600
-  const DEFAULT_TOKEN = 20
-  const DEFAULT_USERS = 5
+  }
+  | undefined {
+  if (tierSub?.limits == null && plan == null) return undefined
 
-  const baseStorage = tierSub?.limits?.storageLimitGB ?? plan?.storageLimitGB ?? DEFAULT_STORAGE_GB
+  const baseStorage = tierSub?.limits?.storageLimitGB ?? plan?.storageLimitGB ?? 0
   const pkgStorage = pkgSub?.limits?.storageLimitGB ?? pkg?.storageLimitGB ?? 0
 
   return {
     storageLimit: baseStorage * 1e9 + pkgStorage * 1e9,
-    trafficLimit: (tierSub?.limits?.trafficLimitGB ?? plan?.trafficLimitGB ?? DEFAULT_TRAFFIC_GB) * 1e9,
-    meetingMinutesLimit: tierSub?.limits?.meetingMinutesLimit ?? plan?.meetingMinutesLimit ?? DEFAULT_MEETING_MINUTES,
-    tokenLimit: (tierSub?.limits?.tokenLimit ?? plan?.tokenLimit ?? DEFAULT_TOKEN) * 1000,
-    usersLimit: tierSub?.limits?.usersLimit ?? plan?.usersLimit ?? DEFAULT_USERS
+    trafficLimit: (tierSub?.limits?.trafficLimitGB ?? plan?.trafficLimitGB ?? 0) * 1e9,
+    meetingMinutesLimit: tierSub?.limits?.meetingMinutesLimit ?? plan?.meetingMinutesLimit ?? 0,
+    tokenLimit: (tierSub?.limits?.tokenLimit ?? plan?.tokenLimit ?? 0) * 1000,
+    usersLimit: tierSub?.limits?.usersLimit ?? plan?.usersLimit ?? 0
   }
 }
 
@@ -242,12 +243,14 @@ export function checkUsageAgainstLimits (
   pkgSub?: SubscriptionData
 ): boolean {
   if (usageInfo == null) return false
+  const limits = calculateLimits(plan, pkg, tierSub, pkgSub)
+  if (limits == null) return false // no real limits -> don't flag anything
+
   const storageUsedBytes = usageInfo.usage.storageBytes ?? 0
   const meetingMinutes = usageInfo.usage.meetingMinutes ?? 0
   const membersCount = usageInfo.usage.membersCount ?? 0
 
-  const { storageLimit, meetingMinutesLimit, usersLimit } = calculateLimits(plan, pkg, tierSub, pkgSub)
-
+  const { storageLimit, meetingMinutesLimit, usersLimit } = limits
   const usersExceeded = usersLimit > 0 && membersCount > usersLimit
 
   return storageUsedBytes > storageLimit || meetingMinutes > meetingMinutesLimit || usersExceeded
@@ -318,7 +321,13 @@ export async function checkIsLimited (): Promise<void> {
 
     const { currentSubscription, currentPlan, currentPackage, currentPackageSubscription, usageInfo } =
       get(subscriptionStore)
-    const { usersLimit } = calculateLimits(currentPlan, currentPackage, currentSubscription, currentPackageSubscription)
+    const limits = calculateLimits(currentPlan, currentPackage, currentSubscription, currentPackageSubscription)
+    // No real limits (no billing data) -> never enforce read-only.
+    if (limits == null) {
+      setIsLimited(false)
+      return
+    }
+    const { usersLimit } = limits
     const membersCount = usageInfo?.usage.membersCount ?? 0
     if (usersLimit === 0 || membersCount <= usersLimit) {
       setIsLimited(false)

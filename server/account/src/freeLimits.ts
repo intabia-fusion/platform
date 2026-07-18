@@ -37,7 +37,7 @@ export function parseFreePlanLimits (raw: string | undefined): TierLimits {
       console.error('Failed to parse FREE_PLAN_LIMITS, using defaults', err)
     }
   }
-  const usersLimit = item.usersLimit ?? 0
+  const usersLimit = clampToLicense(item.usersLimit ?? 0)
   const storageLimitGB = item.storagePerUserGB != null ? usersLimit * item.storagePerUserGB : (item.storageLimitGB ?? 0)
   return {
     storageLimitGB,
@@ -46,6 +46,15 @@ export function parseFreePlanLimits (raw: string | undefined): TierLimits {
     tokenLimit: item.tokenLimit ?? 0,
     usersLimit
   }
+}
+
+// Clamp the free-path user cap to the license max. licenseMax=0 (dev / unlimited license) -> no clamp.
+// free=0 (config wants unlimited) but licenseMax>0 (community/licensed) -> cap to licenseMax.
+function clampToLicense (freeUsers: number): number {
+  const licenseMax = getMetadata(accountPlugin.metadata.LicenseMaxUsers) ?? 0
+  if (licenseMax <= 0) return freeUsers
+  if (freeUsers <= 0) return licenseMax
+  return Math.min(freeUsers, licenseMax)
 }
 
 const DEFAULT_FREE_LIMITS = parseFreePlanLimits(undefined)

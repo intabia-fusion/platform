@@ -57,7 +57,9 @@ function makeStorage (claim: any, sub = baseSub): any {
     setCheckoutPayment: jest.fn().mockResolvedValue(undefined),
     heartbeatCharge: jest.fn().mockResolvedValue(undefined),
     upsert: jest.fn().mockResolvedValue(undefined),
-    reclaimStaleCharge: jest.fn().mockResolvedValue(false)
+    reclaimStaleCharge: jest.fn().mockResolvedValue(false),
+    abandonCheckout: jest.fn().mockResolvedValue(undefined),
+    logOperation: jest.fn().mockResolvedValue(undefined)
   }
 }
 
@@ -95,6 +97,11 @@ describe('handleUpdatePlan claim guard', () => {
     // Old sub marked pending-replacement, new pending sub created.
     const marked = storage.upsert.mock.calls.find((c: any[]) => c[0].providerData?.pendingReplacement === true)
     expect(marked).toBeDefined()
+    // The charge is audited to the ledger (init_charge, 6 seats * 90000 = 540000 kopecks).
+    const logged = storage.logOperation.mock.calls.find((c: any[]) => c[0].operation === 'init_charge')
+    expect(logged).toBeDefined()
+    expect(logged[0].amount).toBe(540000)
+    expect(logged[0].subscriptionId).toBe('tbank_100')
   })
 
   it('loser with the SAME order reuses the winner URL (no second charge)', async () => {
@@ -143,5 +150,48 @@ describe('handleUpdatePlan claim guard', () => {
     // Claim uses the subscription's type — package, independent of the tier checkout key.
     expect(storage.claimCheckout).toHaveBeenCalledWith('ws-1', 'package', expect.any(String))
     expect(res.body.checkoutUrl).toBe('https://tbank/pay/999')
+  })
+
+  it('package downgrade within paid credit switches in place: no checkout, cancel cleared', async () => {
+    const now = Date.now()
+    const pkgSub = {
+      ...baseSub,
+      type: 'package',
+      plan: '500gb',
+      amount: 1000000,
+      periodStart: now - 5 * 24 * 3600 * 1000,
+      periodEnd: now + 25 * 24 * 3600 * 1000,
+      willCancelAt: now + 25 * 24 * 3600 * 1000,
+      providerData: { period: 'monthly' }
+    }
+    const storage = makeStorage({ claimed: true, intentId: 'i1' }, pkgSub)
+    const res = await run(storage, { plan: '100gb' }, { '100gb@package': { amount: 500000, yearlyDiscount: 0 } })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.checkoutUrl).toBeUndefined()
+    expect(res.body.plan).toBe('100gb')
+    expect(res.body.amount).toBe(500000)
+    expect(res.body.willCancelAt).toBeUndefined()
+    expect(tbank.initPayment).not.toHaveBeenCalled()
+    expect(storage.claimCheckout).not.toHaveBeenCalled()
+    const upserted = storage.upsert.mock.calls[0][0]
+    expect(upserted.status).toBe('active')
+    expect(upserted.canceledAt).toBeUndefined()
+  })
+
+  it('package upgrade beyond the paid credit still opens a checkout', async () => {
+    const now = Date.now()
+    const pkgSub = {
+      ...baseSub,
+      type: 'package',
+      plan: '100gb',
+      amount: 500000,
+      periodStart: now - 15 * 24 * 3600 * 1000,
+      periodEnd: now + 15 * 24 * 3600 * 1000,
+      providerData: { period: 'monthly' }
+    }
+    const storage = makeStorage({ claimed: true, intentId: 'i1' }, pkgSub)
+    const res = await run(storage, { plan: '500gb' }, { '500gb@package': { amount: 1000000, yearlyDiscount: 0 } })
+    expect(res.body.checkoutUrl).toBe('https://tbank/pay/999')
+    expect(tbank.initPayment).toHaveBeenCalledTimes(1)
   })
 })
