@@ -25,7 +25,7 @@ services:
       - DATALAKE_URL=http://localhost:4031
       - PREVIEW_URL=http://localhost:4031
   datalake:
-    image: intabiafusion/datalake
+    image: 'intabiafusion/datalake:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       minio:

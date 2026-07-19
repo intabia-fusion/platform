@@ -18,14 +18,15 @@ echo "# Automatically generated docker-compose override with fixed versions" > $
 echo "services:" >> $OVERRIDE_FILE
 
 # Extract hardcoreeng services and add them to the override file with fixed versions
-grep -B 1 "image: intabiafusion/" $COMPOSE_FILE | grep -v "\-\-" | grep -v "image:" | sed 's/:$//g' | while read -r service; do
+# Image lines may be quoted and carry a ${DOCKER_TAG:-latest} suffix.
+grep -B 1 -E "image: '?intabiafusion/" $COMPOSE_FILE | grep -v "\-\-" | grep -v "image:" | sed 's/:$//g' | while read -r service; do
     service=$(echo $service | tr -d ' ')
     if [ -n "$service" ]; then
         echo "  $service:" >> $OVERRIDE_FILE
 
-        # Get the image name
-        image=$(grep -A 1 "$service:" $COMPOSE_FILE | grep "image: intabiafusion/" | awk '{print $2}')
-        pod_name=$(echo $image | sed 's/haiodo\///')
+        # Get the pod name: strip quotes, registry prefix and tag
+        image=$(grep -A 1 "$service:" $COMPOSE_FILE | grep -E "image: '?intabiafusion/" | awk '{print $2}' | tr -d "'")
+        pod_name=$(echo $image | sed -E 's#^intabiafusion/##; s#:.*$##')
 
         echo "    image: intabiafusion/$pod_name:$VERSION" >> $OVERRIDE_FILE
         echo "    pull_policy: always" >> $OVERRIDE_FILE
