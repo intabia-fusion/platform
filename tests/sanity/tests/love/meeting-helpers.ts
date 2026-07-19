@@ -36,7 +36,7 @@ async function getMeetingsRestClient (): Promise<RestClient> {
   return cachedRestClient
 }
 
-async function getSystemRestClient (): Promise<RestClient> {
+export async function getSystemRestClient (): Promise<RestClient> {
   if (cachedSystemRestClient !== undefined) return cachedSystemRestClient
   const baseUrl = (PlatformURI ?? 'http://localhost:8083').replace(/\/$/, '')
   const config = await loadServerConfig(baseUrl)
