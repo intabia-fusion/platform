@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,7 +14,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AnyAttribute, Class, Doc, Ref, Space, toRank } from '@hcengineering/core'
+  import core, { AnyAttribute, Class, ClassifierKind, Doc, Ref, Space } from '@hcengineering/core'
+  import { toRank } from '@hcengineering/rank'
   import { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import {
@@ -21,20 +23,25 @@
     AnySvelteComponent,
     ButtonIcon,
     IconAdd,
+    IconDelete,
     IconEdit,
     IconSettings,
     Label,
     ModernButton,
     deviceWidths,
+    getColorNumberByText,
     getEventPositionElement,
+    getPlatformColor,
     resizeObserver,
-    showPopup
+    showPopup,
+    themeStore
   } from '@hcengineering/ui'
   import { ObjectPresenter } from '@hcengineering/view-resources'
   import { onDestroy } from 'svelte'
   import settings from '../plugin'
   import { clearSettingsStore, settingsStore } from '../store'
   import ClassAttributesList from './ClassAttributesList.svelte'
+  import ClassMixins from './ClassMixins.svelte'
   import CreateAttribute from './CreateAttribute.svelte'
   import EditAttribute from './EditAttribute.svelte'
   import EditClassLabel from './EditClassLabel.svelte'
@@ -43,7 +50,11 @@
   export let _class: Ref<Class<Doc>>
   export let ofClass: Ref<Class<Doc>> | undefined = undefined
   export let showHierarchy: boolean = false
+  export let showMixins: boolean = false
   export let showTitle: boolean = !showHierarchy
+  export let onDelete: (() => void) | undefined = undefined
+  export let mixinHeader: boolean = false
+  export let flat: boolean = false
   export let showHeader: boolean = true
   export let disabled: boolean = true
   export let isCard: boolean = false
@@ -90,13 +101,17 @@
   }
 
   export function createAttribute (ev: MouseEvent): void {
+    createAttributeFor(_class, ev)
+  }
+
+  function createAttributeFor (targetClass: Ref<Class<Doc>>, ev: MouseEvent): void {
     if (disabled) {
       return
     }
 
-    showPopup(TypesPopup, { _class }, getEventPositionElement(ev), (_id) => {
+    showPopup(TypesPopup, { _class: targetClass }, getEventPositionElement(ev), (_id) => {
       if (_id !== undefined) {
-        $settingsStore = { component: CreateAttribute, props: { selectedType: _id, _class, isCard } }
+        $settingsStore = { component: CreateAttribute, props: { selectedType: _id, _class: targetClass, isCard } }
       }
     })
   }
@@ -130,6 +145,12 @@
   }
   $: classUpdated(_class, ofClass ?? core.class.Doc)
 
+  // For a mixin show the class it is applied to, so it is clear which class the mixin extends.
+  $: mixinBase =
+    clazzHierarchy !== undefined && clazzHierarchy.kind === ClassifierKind.MIXIN && clazzHierarchy.extends !== undefined
+      ? hierarchy.getClass(clazzHierarchy.extends)
+      : undefined
+
   settingsStore.subscribe((value) => {
     if ((value.id === undefined && selected !== undefined) || (value.id !== undefined && value.id !== selected?._id)) {
       selected = undefined
@@ -155,7 +176,7 @@
   })
 </script>
 
-{#if showTitle}
+{#if showTitle && !mixinHeader}
   {#if clazz}
     <div class="flex-row-center flex-no-shrink mb-6">
       <div class="hulyInput-body">
@@ -165,24 +186,47 @@
         <div class="ml-2">
           <ActionIcon icon={IconEdit} size="small" action={editLabel} {disabled} />
         </div>
+        {#if onDelete !== undefined}
+          <div class="ml-2">
+            <ActionIcon icon={IconDelete} size="small" action={() => onDelete?.()} {disabled} />
+          </div>
+        {/if}
       {/if}
     </div>
   {/if}
 {/if}
 <div
   class="hulyTableAttr-container"
+  class:flat
   use:resizeObserver={(el) => {
     if (el.clientWidth < deviceWidths[0] && !el.classList.contains('short')) el.classList.add('short')
     else if (el.clientWidth >= deviceWidths[0] && el.classList.contains('short')) el.classList.remove('short')
   }}
 >
-  <div class="hulyTableAttr-header font-medium-12" class:withButton={showHierarchy}>
+  <div class="hulyTableAttr-header font-medium-12" class:withButton={showHierarchy || mixinHeader}>
     {#if showHeader}
       {#if showHierarchy}
         <ModernButton icon={IconSettings} kind={'secondary'} size={'small'} {disabled} hasMenu>
           <Label label={settings.string.ClassColon} />
+          {#if mixinBase !== undefined}
+            <ObjectPresenter _class={mixinBase._class} objectId={mixinBase._id} value={mixinBase} />
+            <span class="content-halfcontent-color mx-1">·</span>
+          {/if}
           <ObjectPresenter _class={clazzHierarchy._class} objectId={clazzHierarchy._id} value={clazzHierarchy} />
         </ModernButton>
+      {:else if mixinHeader && clazz !== undefined}
+        <div class="flex-row-center flex-gap-2">
+          <ModernButton icon={IconSettings} kind={'secondary'} size={'small'} {disabled} hasMenu>
+            <Label label={settings.string.MixinColon} />
+            <ObjectPresenter _class={clazz._class} objectId={clazz._id} value={clazz} />
+          </ModernButton>
+          {#if hierarchy.hasMixin(clazz, settings.mixin.UserMixin)}
+            <ActionIcon icon={IconEdit} size="small" action={editLabel} {disabled} />
+            {#if onDelete !== undefined}
+              <ActionIcon icon={IconDelete} size="small" action={() => onDelete?.()} {disabled} />
+            {/if}
+          {/if}
+        </div>
       {:else}
         <IconSettings size={'small'} />
         <span><Label label={settings.string.ClassProperties} /></span>
@@ -204,39 +248,56 @@
     />
   </div>
   {#if showHierarchy}
-    <div class="hulyTableAttr-content class withTitle">
-      <div class="hulyTableAttr-content__title">
-        <Label label={settings.string.Properties} />
-      </div>
-      <div class="hulyTableAttr-content__wrapper">
-        <ClassAttributesList
-          {_class}
-          {ofClass}
-          {attributeMapper}
-          {selected}
-          on:deselect={handleDeselect}
-          on:select={handleSelect}
-        />
-      </div>
+    <div class="hulyTableAttr-content class">
+      <ClassAttributesList
+        {_class}
+        {ofClass}
+        {attributeMapper}
+        {selected}
+        on:deselect={handleDeselect}
+        on:select={handleSelect}
+      />
     </div>
-    {#each classes as clazz2}
-      <div class="hulyTableAttr-content class withTitle">
-        <div class="hulyTableAttr-content__title">
-          <Label label={clazz2.label} />
-        </div>
-        <div class="hulyTableAttr-content__wrapper">
-          <ClassAttributesList
-            _class={clazz2._id}
-            {ofClass}
-            {attributeMapper}
-            {selected}
-            notUseOfClass
-            on:deselect={handleDeselect}
-            on:select={handleSelect}
+    {#if classes.length > 0}
+      <div class="hulyTableAttr-header font-medium-12 sectionHeader">
+        <IconSettings size={'small'} />
+        <span class="ml-2"><Label label={settings.string.BaseClasses} /></span>
+      </div>
+      {#each classes as clazz2}
+        {@const barColor = getPlatformColor(getColorNumberByText(clazz2._id), $themeStore.dark)}
+        <div
+          class="hulyTableAttr-header font-medium-12 withButton subHeader"
+          style:border-left={`3px solid ${barColor}`}
+        >
+          <ModernButton icon={IconSettings} kind={'secondary'} size={'small'} disabled hasMenu>
+            <Label label={settings.string.ClassColon} />
+            <ObjectPresenter _class={clazz2._class} objectId={clazz2._id} value={clazz2} />
+          </ModernButton>
+          <ButtonIcon
+            kind={'primary'}
+            icon={IconAdd}
+            size={'small'}
+            {disabled}
+            on:click={(ev) => {
+              createAttributeFor(clazz2._id, ev)
+            }}
           />
         </div>
-      </div>
-    {/each}
+        <div class="hulyTableAttr-content class withTitle" style:border-left={`3px solid ${barColor}`}>
+          <div class="hulyTableAttr-content__wrapper">
+            <ClassAttributesList
+              _class={clazz2._id}
+              {ofClass}
+              {attributeMapper}
+              {selected}
+              notUseOfClass
+              on:deselect={handleDeselect}
+              on:select={handleSelect}
+            />
+          </div>
+        </div>
+      {/each}
+    {/if}
   {:else if attributes.length > 0}
     <div class="hulyTableAttr-content class">
       <ClassAttributesList
@@ -249,6 +310,9 @@
       />
     </div>
   {/if}
+  {#if showMixins}
+    <ClassMixins {_class} {disabled} />
+  {/if}
 </div>
 
 <style lang="scss">
@@ -260,5 +324,16 @@
     font-size: 1.5rem;
     line-height: 2rem;
     color: var(--input-TextColor);
+  }
+  .sectionHeader {
+    border-top: 1px solid var(--theme-divider-color);
+  }
+  .subHeader {
+    margin-top: var(--spacing-1_5);
+  }
+  .hulyTableAttr-container.flat {
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
   }
 </style>

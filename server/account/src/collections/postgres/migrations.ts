@@ -91,7 +91,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV30Migration(ns, flavor),
     getV31Migration(ns, flavor),
     getV32Migration(ns, flavor),
-    getV33Migration(ns)
+    getV33Migration(ns),
+    getV34Migration(ns)
   ]
 }
 
@@ -1021,6 +1022,16 @@ function getV33Migration (ns: string): [string, string] {
        it. SET NOT NULL on an existing column behaves differently across flavors. */
     CREATE UNIQUE INDEX IF NOT EXISTS payment_intent_claim_key_unique ON ${ns}.payment_intent (claim_key);
     CREATE INDEX IF NOT EXISTS payment_intent_payment_id_idx ON ${ns}.payment_intent (payment_id);
+    `
+  ]
+}
+
+function getV34Migration (ns: string): [string, string] {
+  return [
+    'account_db_v34_add_disabled_features_override',
+    `
+    ALTER TABLE ${ns}.workspace
+    ADD COLUMN IF NOT EXISTS disabled_features_override TEXT[];
     `
   ]
 }

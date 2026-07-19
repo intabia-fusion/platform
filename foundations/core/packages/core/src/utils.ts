@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -36,7 +37,6 @@ import {
   type Obj,
   type Permission,
   type PluginConfiguration,
-  type Rank,
   type Ref,
   type Role,
   roleOrder,
@@ -1017,14 +1017,6 @@ export interface PermissionsGrant {
 }
 
 export type KeysByType<O extends object, T> = { [k in keyof O]-?: O[k] extends T ? k : never }[keyof O]
-
-export function toRank (str: string | undefined): Rank | undefined {
-  if (str === undefined) return
-  if (str.startsWith('0|')) {
-    return str
-  }
-  return '0|' + str.replaceAll(/[-:_]/g, '').toLowerCase()
-}
 
 /**
  * Hash a workspace name to a number for consistent endpoint selection.

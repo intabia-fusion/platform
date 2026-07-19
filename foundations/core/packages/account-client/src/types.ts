@@ -66,6 +66,7 @@ export interface WorkspaceLoginInfo extends LoginInfo {
   token: string
   role: AccountRole
   allowGuestSignUp?: boolean
+  disabledFeaturesOverride?: string[]
 }
 
 export interface LoginInfoRequestData {

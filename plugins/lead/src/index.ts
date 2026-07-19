@@ -47,6 +47,12 @@ export interface Customer extends Contact {
   leads?: number
 
   customerDescription: MarkupBlobRef | null
+
+  website?: string
+
+  industry?: string
+
+  labels?: number
 }
 
 /**

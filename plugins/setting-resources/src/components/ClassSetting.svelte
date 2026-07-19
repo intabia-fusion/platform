@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,8 +14,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, Obj, Ref, isOwnerOrMaintainer } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import core, {
+    Class,
+    ClassifierKind,
+    Doc,
+    Obj,
+    PluginConfiguration,
+    Ref,
+    isOwnerOrMaintainer
+  } from '@hcengineering/core'
+  import { Asset, IntlString, getEmbeddedLabel } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import {
     AnySvelteComponent,
@@ -29,12 +38,13 @@
     defineSeparators,
     twoPanelsSeparators,
     Separator,
+    NavItem,
     NavGroup
   } from '@hcengineering/ui'
+  import { showMenu } from '@hcengineering/view-resources'
   import setting from '../plugin'
   import { filterDescendants } from '../utils'
   import ClassAttributes from './ClassAttributes.svelte'
-  import ClassHierarchy from './ClassHierarchy.svelte'
   import { clearSettingsStore } from '../store'
 
   export let ofClass: Ref<Class<Obj>> | undefined = undefined
@@ -56,10 +66,13 @@
 
   let _class: Ref<Class<Doc>> | undefined = ofClass ?? (loc.query?._class as Ref<Class<Doc>> | undefined)
 
+  // Keep the selected class in the URL for deep-linking.
   $: if (_class !== undefined && ofClass === undefined) {
     const loc = getLocation()
-    loc.query = undefined
-    navigate(loc, true)
+    if (loc.query?._class !== _class) {
+      loc.query = { _class }
+      navigate(loc, true)
+    }
   }
 
   const clQuery = createQuery()
@@ -71,28 +84,83 @@
     rawClasses = res
   })
 
-  $: classes = filterDescendants(hierarchy, ofClass, rawClasses)
-  $: if (ofClass !== undefined) {
-    // We need to include all possible mixins as well
-    for (const ancestor of hierarchy.getAncestors(ofClass)) {
-      if (ancestor === ofClass) {
-        continue
-      }
-      const mixins = hierarchy.getDescendants(ancestor).filter((it) => hierarchy.isMixin(it))
-      for (const m of mixins) {
-        const mm = hierarchy.getClass(m)
+  // Dynamically generated mixins (TaskType/SpaceType targetClass) carry an
+  // embedded label; user-created mixins do too but are marked with UserMixin.
+  const embeddedPrefix = getEmbeddedLabel('')
+  function isGeneratedTargetClass (cls: Class<Doc>): boolean {
+    return cls.label.startsWith(embeddedPrefix) && !hierarchy.hasMixin(cls, setting.mixin.UserMixin)
+  }
+
+  // Flat list: filterDescendants gives editable roots; expand each root into
+  // its editable descendants (classes and mixins, incl. user-created ones).
+  function collectEditable (
+    roots: Ref<Class<Doc>>[],
+    pluginConfigs: Map<string, PluginConfiguration>
+  ): Ref<Class<Doc>>[] {
+    const kinds = ofClass === undefined ? [ClassifierKind.CLASS] : [ClassifierKind.MIXIN]
+    const seen = new Set<Ref<Class<Doc>>>()
+    const result: Ref<Class<Doc>>[] = []
+    for (const root of roots) {
+      for (const cl of hierarchy.getDescendants(root)) {
+        if (seen.has(cl)) continue
+        const cls = hierarchy.getClass(cl)
         if (
-          !classes.includes(m) &&
-          mm.extends === ancestor &&
-          mm.label !== undefined &&
-          client.getHierarchy().hasMixin(mm, setting.mixin.Editable)
+          cls.hidden !== true &&
+          cls.label !== undefined &&
+          (cl === root || kinds.includes(cls.kind)) &&
+          !isGeneratedTargetClass(cls) &&
+          (ofClass !== undefined || pluginConfigs.get(pluginOf(cl))?.enabled !== false) &&
+          (!hierarchy.hasMixin(cls, setting.mixin.Editable) || hierarchy.as(cls, setting.mixin.Editable).value)
         ) {
-          // Check if parent of
-          classes.push(m)
+          seen.add(cl)
+          result.push(cl)
         }
       }
     }
+    return result
   }
+
+  $: classes = collectEditable(filterDescendants(hierarchy, ofClass, rawClasses), pluginConfigs)
+
+  // Group classes by owning plugin (id prefix; user mixins inherit the group of their ancestor).
+  const pluginQuery = createQuery()
+  let pluginConfigs = new Map<string, PluginConfiguration>()
+  pluginQuery.query(core.class.PluginConfiguration, {}, (res) => {
+    pluginConfigs = new Map(res.map((it) => [it.pluginId, it]))
+  })
+
+  function pluginOf (cl: Ref<Class<Doc>>): string {
+    for (const anc of [cl, ...hierarchy.getAncestors(cl)]) {
+      const idx = anc.indexOf(':')
+      if (idx > 0) return anc.substring(0, idx)
+    }
+    return 'core'
+  }
+
+  interface ClassGroup {
+    id: string
+    label: IntlString
+    icon?: Asset
+    classes: Ref<Class<Doc>>[]
+  }
+
+  function groupClasses (classes: Ref<Class<Doc>>[], pluginConfigs: Map<string, PluginConfiguration>): ClassGroup[] {
+    const groups = new Map<string, ClassGroup>()
+    for (const cl of classes) {
+      const plugin = pluginOf(cl)
+      let group = groups.get(plugin)
+      if (group === undefined) {
+        const cfg = pluginConfigs.get(plugin)
+        const label = cfg !== undefined && cfg.label !== setting.string.Configure ? cfg.label : getEmbeddedLabel(plugin)
+        group = { id: plugin, label, icon: cfg?.icon, classes: [] }
+        groups.set(plugin, group)
+      }
+      group.classes.push(cl)
+    }
+    return Array.from(groups.values())
+  }
+
+  $: groups = groupClasses(classes, pluginConfigs)
 
   $: if (ofClass !== undefined && _class !== undefined && !client.getHierarchy().isDerived(_class, ofClass)) {
     _class = ofClass
@@ -117,23 +185,32 @@
         </div>
       </div>
       <Scroller>
-        <NavGroup
-          label={setting.string.Classes}
-          highlighted={_class !== undefined}
-          categoryName={'classes'}
-          noDivider
-          isFold
-        >
-          <ClassHierarchy
-            {classes}
-            {_class}
-            {ofClass}
-            on:select={(e) => {
-              _class = e.detail
-              clearSettingsStore()
-            }}
-          />
-        </NavGroup>
+        {#each groups as group (group.id)}
+          <NavGroup
+            label={group.label}
+            categoryName={group.id}
+            highlighted={_class !== undefined && group.classes.includes(_class)}
+            noDivider
+            isFold
+          >
+            {#each group.classes as cl}
+              {@const clazz = hierarchy.getClass(cl)}
+              <NavItem
+                _id={clazz._id}
+                icon={clazz.icon ?? setting.icon.Clazz}
+                label={clazz.label}
+                selected={cl === _class}
+                on:click={() => {
+                  _class = cl
+                  clearSettingsStore()
+                }}
+                on:contextmenu={(evt) => {
+                  showMenu(evt, { object: clazz })
+                }}
+              />
+            {/each}
+          </NavGroup>
+        {/each}
       </Scroller>
     </div>
     <Separator name={'workspaceSettings'} index={0} color={'var(--theme-divider-color)'} />
@@ -141,7 +218,14 @@
       <Scroller align={'center'} padding={'var(--spacing-3)'} bottomPadding={'var(--spacing-3)'}>
         <div class="hulyComponent-content">
           {#if _class !== undefined}
-            <ClassAttributes {_class} {ofClass} {attributeMapper} disabled={!canEdit} />
+            <ClassAttributes
+              {_class}
+              {ofClass}
+              {attributeMapper}
+              showHierarchy
+              showMixins={ofClass === undefined}
+              disabled={!canEdit}
+            />
           {/if}
         </div>
       </Scroller>

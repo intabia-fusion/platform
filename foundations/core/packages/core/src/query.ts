@@ -1,3 +1,4 @@
+import { deepEqual } from 'fast-equals'
 import { type DocumentQuery, type MemDb } from '.'
 import { type Class, type Doc, type Enum, type EnumOf, type Ref } from './classes'
 import core from './component'
@@ -28,7 +29,27 @@ export function findProperty (objects: Doc[], propertyKey: string, value: any): 
 }
 
 function isArrayValueCheck<T, P> (val: T, value: P): boolean {
-  return Array.isArray(val) && !Array.isArray(value) && val.includes(value)
+  if (!Array.isArray(val) || Array.isArray(value)) {
+    return false
+  }
+  // Object value: match if any element contains all its keys (server `@>` semantics),
+  // e.g. { relations: { _id, _class } } against relations: [{ _id, _class }].
+  // Reference `includes` fails for object literals, breaking live-query reactivity.
+  if (typeof value === 'object' && value !== null) {
+    return val.some((v) => containsSubset(v, value))
+  }
+  return val.includes(value)
+}
+
+function containsSubset (el: any, value: any): boolean {
+  if (el === value) return true
+  if (typeof value !== 'object' || value === null || typeof el !== 'object' || el === null) {
+    return el === value
+  }
+  for (const k in value) {
+    if (!deepEqual(el[k], value[k])) return false
+  }
+  return true
 }
 
 function getEnumValue<T extends Doc> (

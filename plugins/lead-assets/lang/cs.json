@@ -35,7 +35,9 @@
     "EditFunnel": "Upravit trychtýř",
     "FunnelMembers": "Členové",
     "ForbidCreateFunnelPermission": "Zakázat vytvoření trychtýře",
-    "ForbidCreateFunnelPermissionDescription": "Zakazuje uživatelům vytvářet nové trychtýře"
+    "ForbidCreateFunnelPermissionDescription": "Zakazuje uživatelům vytvářet nové trychtýře",
+    "Website": "Web",
+    "Industry": "Odvětví"
   },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",

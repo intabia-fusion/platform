@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -877,7 +878,8 @@ export async function selectWorkspace (
       workspace: workspace.uuid,
       workspaceUrl: workspace.url,
       workspaceDataId: workspace.dataId,
-      role: AccountRole.DocGuest
+      role: AccountRole.DocGuest,
+      disabledFeaturesOverride: workspace.disabledFeaturesOverride
     }
   }
 
@@ -894,7 +896,8 @@ export async function selectWorkspace (
       collaboratorEndpoint: getCollaboratorEndpoint(workspace.uuid, workspace.region, getKind(workspace.region)),
       workspace: workspace.uuid,
       workspaceUrl: workspace.url,
-      role: AccountRole.Admin
+      role: AccountRole.Admin,
+      disabledFeaturesOverride: workspace.disabledFeaturesOverride
     }
   }
 
@@ -959,7 +962,8 @@ export async function selectWorkspace (
     workspaceUrl: workspace.url,
     workspaceDataId: workspace.dataId,
     allowGuestSignUp: workspace.allowReadOnlyGuest && workspace.allowGuestSignUp,
-    role
+    role,
+    disabledFeaturesOverride: workspace.disabledFeaturesOverride
   }
 }
 

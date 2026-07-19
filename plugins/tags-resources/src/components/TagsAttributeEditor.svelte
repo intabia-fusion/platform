@@ -15,7 +15,10 @@
   export let label: IntlString = tags.string.AddLabel
   export let readonly: boolean = false
   export let attr: AnyAttribute | undefined = undefined
-  export let targetClass: Ref<Class<Doc>> = object._class
+  // AttributeBarEditor passes the attribute as `attribute`; scope tags by the attribute's
+  // owning class (e.g. lead.mixin.Customer) so mixin labels are shared, not the doc class.
+  export let attribute: AnyAttribute | undefined = undefined
+  export let targetClass: Ref<Class<Doc>> = (attr ?? attribute)?.attributeOf ?? object._class
 
   let items: TagReference[] = []
   let elements: IdMap<TagElement> = new Map()
@@ -53,7 +56,7 @@
     {#each items as value}
       <div class="step-container clear-mins">
         <TagReferencePresenter
-          {attr}
+          attr={attr ?? attribute}
           {value}
           element={elements.get(value.tag)}
           isEditable={!readonly}

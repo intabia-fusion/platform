@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -103,7 +104,10 @@ export default mergeIds(settingId, setting, {
     ConfigBeta: '' as IntlString,
     ClassSettingHint: '' as IntlString,
     ClassProperties: '' as IntlString,
+    Mixins: '' as IntlString,
+    BaseClasses: '' as IntlString,
     ClassColon: '' as IntlString,
+    MixinColon: '' as IntlString,
     NewSpaceType: '' as IntlString,
     SpaceTypeTitle: '' as IntlString,
     Description: '' as IntlString,

@@ -124,6 +124,7 @@
     "CreateWorkspace": "Create workspace",
     "Edit": "Edit",
     "Save": "Save",
+    "DisabledFeaturesOverride": "Disabled features override",
     "EditSubscription": "Edit subscription",
     "CancelSubscription": "Cancel subscription",
     "SearchAccounts": "Search accounts",

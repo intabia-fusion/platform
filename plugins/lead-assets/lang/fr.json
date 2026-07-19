@@ -35,7 +35,9 @@
     "EditFunnel": "Modifier le pipeline",
     "FunnelMembers": "Membres",
     "ForbidCreateFunnelPermission": "Interdire la création de pipeline",
-    "ForbidCreateFunnelPermissionDescription": "Interdit aux utilisateurs de créer de nouveaux pipelines"
+    "ForbidCreateFunnelPermissionDescription": "Interdit aux utilisateurs de créer de nouveaux pipelines",
+    "Website": "Site web",
+    "Industry": "Secteur"
   },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",

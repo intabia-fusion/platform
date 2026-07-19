@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -24,6 +25,7 @@ import core, { defineCollaborators } from '@hcengineering/model-core'
 import { generateClassNotificationTypes } from '@hcengineering/model-notification'
 import task, { actionTemplates } from '@hcengineering/model-task'
 import tracker from '@hcengineering/model-tracker'
+import tags from '@hcengineering/tags'
 import view, { createAction, actionTemplates as viewTemplates } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import notification, { type MessageNotificationType } from '@hcengineering/notification'
@@ -69,12 +71,17 @@ export function createModel (builder: Builder): void {
     value: true
   })
 
+  builder.mixin(lead.mixin.Customer, core.class.Class, setting.mixin.Editable, {
+    value: true
+  })
+
   builder.createDoc(
     workbench.class.Application,
     core.space.Model,
     {
       label: lead.string.LeadApplication,
       icon: lead.icon.LeadApplication,
+      locationResolver: lead.resolver.Location,
       alias: leadId,
       hidden: false,
       navigatorModel: {
@@ -191,6 +198,12 @@ export function createModel (builder: Builder): void {
         '',
         '_class',
         'leads',
+        {
+          key: 'labels',
+          presenter: tags.component.LabelsPresenter,
+          displayProps: { compression: true },
+          props: { kind: 'list', full: false, minItems: 2 }
+        },
         'attachments',
         'comments',
         'modifiedOn',
@@ -532,10 +545,23 @@ export function createModel (builder: Builder): void {
     filters: ['attachedTo']
   })
 
+  builder.mixin(lead.class.Lead, core.class.Class, view.mixin.LinkProvider, {
+    encode: lead.function.GetObjectLinkFragment
+  })
+
+  builder.mixin(lead.class.Lead, core.class.Class, view.mixin.LinkIdProvider, {
+    encode: lead.function.IdProvider,
+    decode: lead.function.ParseLinkId
+  })
+
   defineCollaborators(builder, lead.class.Lead, { fields: ['createdBy', 'assignee'] })
 
   builder.mixin(lead.mixin.Customer, core.class.Class, view.mixin.ClassFilters, {
     filters: ['_class']
+  })
+
+  builder.mixin(lead.mixin.Customer, core.class.Class, view.mixin.LinkProvider, {
+    encode: lead.function.GetIdObjectLinkFragment
   })
 
   builder.mixin(lead.mixin.Customer, core.class.Class, view.mixin.ObjectEditorFooter, {

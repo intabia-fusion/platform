@@ -30,7 +30,15 @@ import EditFunnel from './components/EditFunnel.svelte'
 import MyLeads from './components/MyLeads.svelte'
 import TitlePresenter from './components/TitlePresenter.svelte'
 
-import { getLeadId, getLeadTitle } from './utils'
+import {
+  getLeadId,
+  getLeadTitle,
+  getObjectLink,
+  getSequenceLink,
+  getSequenceId,
+  parseLinkId,
+  resolveLocation
+} from './utils'
 
 export default async (): Promise<Resources> => ({
   component: {
@@ -50,6 +58,13 @@ export default async (): Promise<Resources> => ({
   },
   function: {
     LeadTitleProvider: getLeadTitle,
-    LeadIdProvider: getLeadId
+    LeadIdProvider: getLeadId,
+    GetObjectLinkFragment: getSequenceLink,
+    GetIdObjectLinkFragment: getObjectLink,
+    IdProvider: getSequenceId,
+    ParseLinkId: parseLinkId
+  },
+  resolver: {
+    Location: resolveLocation
   }
 })

@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -19,11 +20,12 @@ import {
   DOMAIN_MODEL,
   type AccountUuid,
   type Blob,
+  type Rank,
   type Ref,
   type IntegrationKind
 } from '@hcengineering/core'
 import exportPlugin from '@hcengineering/export'
-import { Mixin, Model, UX, type Builder } from '@hcengineering/model'
+import { Mixin, Model, Prop, TypeRank, UX, type Builder } from '@hcengineering/model'
 import core, { defineCollaborators, TClass, TConfiguration, TDoc } from '@hcengineering/model-core'
 import view, { createAction } from '@hcengineering/model-view'
 import notification, { type MessageNotificationType } from '@hcengineering/notification'
@@ -31,6 +33,7 @@ import type { Asset, IntlString } from '@hcengineering/platform'
 import {
   DOMAIN_SETTING,
   settingId,
+  type ClassifierOrder,
   type Editable,
   type Handler,
   type Integration,
@@ -105,6 +108,12 @@ export class TEditable extends TClass implements Editable {
 @Mixin(setting.mixin.UserMixin, core.class.Class)
 export class TUserMixin extends TClass implements UserMixin {}
 
+@Mixin(setting.mixin.ClassifierOrder, core.class.Class)
+export class TClassifierOrder extends TClass implements ClassifierOrder {
+  @Prop(TypeRank(), core.string.Rank)
+    rank!: Rank
+}
+
 @Model(setting.class.InviteSettings, core.class.Configuration, DOMAIN_SETTING)
 @UX(setting.string.InviteSettings)
 export class TInviteSettings extends TConfiguration implements InviteSettings {
@@ -145,6 +154,7 @@ export function createModel (builder: Builder): void {
     TWorkspaceSettingCategory,
     TEditable,
     TUserMixin,
+    TClassifierOrder,
     TInviteSettings,
     TOfficeSettings,
     TWorkspaceSetting,
@@ -308,20 +318,20 @@ export function createModel (builder: Builder): void {
     },
     setting.ids.Configure
   )
-  // builder.createDoc(
-  //   setting.class.WorkspaceSettingCategory,
-  //   core.space.Model,
-  //   {
-  //     name: 'classes',
-  //     label: setting.string.Classes,
-  //     icon: setting.icon.Clazz,
-  //     component: setting.component.ClassSetting,
-  //     group: 'settings-editor',
-  //     role: AccountRole.Maintainer,
-  //     order: 4500
-  //   },
-  //   setting.ids.ClassSetting
-  // )
+  builder.createDoc(
+    setting.class.WorkspaceSettingCategory,
+    core.space.Model,
+    {
+      name: 'classes',
+      label: setting.string.Classes,
+      icon: setting.icon.Clazz,
+      component: setting.component.ClassSetting,
+      group: 'settings-editor',
+      role: AccountRole.Maintainer,
+      order: 4500
+    },
+    setting.ids.ClassSetting
+  )
   builder.createDoc(
     setting.class.WorkspaceSettingCategory,
     core.space.Model,
@@ -539,7 +549,12 @@ export function createModel (builder: Builder): void {
     setting.action.DeleteMixin
   )
 
-  // builder.mixin(core.class.Space, core.class.Class, setting.mixin.Editable, {})
+  builder.mixin(core.class.Space, core.class.Class, setting.mixin.Editable, {
+    value: true
+  })
+  builder.mixin(core.class.SpaceType, core.class.Class, setting.mixin.Editable, {
+    value: true
+  })
 
   createAction(builder, {
     action: view.actionImpl.UpdateDocument,
