@@ -21,6 +21,7 @@ import { registerMeetingsTests } from './meetings.tests'
 import { registerMigrationTests } from './meetings.migration.tests'
 import { registerPrivacyTests } from './meetings.privacy.tests'
 import { registerScenariosTests } from './meetings.scenarios.tests'
+import { registerScheduledLinksTests } from './meetings.scheduled-links.tests'
 import { registerSessionTests } from './meetings.session.tests'
 import { registerStartTests } from './meetings.start.tests'
 import { registerWorkspaceOwnerTests } from './meetings.workspace-owner.tests'
@@ -42,4 +43,5 @@ test.describe('love (meetings) — suite', () => {
   registerBidirectionalLoopTests()
   registerRefreshReconnectTests()
   registerGuestTests()
+  registerScheduledLinksTests()
 })

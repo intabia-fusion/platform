@@ -16,9 +16,7 @@ import { parseRoomName } from '@hcengineering/love'
 import { parseParticipantMetadata } from '../utils'
 
 describe('Utils - parseRoomName', () => {
-  // Real format: `${workspaceUuid}_${Ref<MeetingMinutes>}`
-  // workspace = UUID v4 (36 chars, hex + `-`, no `_`)
-  // meetingId = 24 hex chars from generateId (no `_`)
+  // Real format: `${workspaceUuid}_${Ref<MeetingMinutes>}`, neither part contains `_`.
   const realWorkspace = '550e8400-e29b-41d4-a716-446655440000'
   const realMeetingId = '65f4a2c9b1e8d3f7a9c2b4e6'
 

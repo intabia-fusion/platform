@@ -21,12 +21,10 @@ import love, {
   type Room,
   type UserMeetingInvite
 } from '@hcengineering/love'
-import { createMockContext, createMockMeeting, TEST_IDS } from './test-helpers'
+import { createMockContext, createMockMeeting, createMockParticipant, TEST_IDS } from './test-helpers'
 import { WorkspaceClient } from '../workspaceClient'
 
-// Lightweight in-memory fake of the platform client surface that
-// `WorkspaceClient.finishMeeting` touches. Each test seeds the maps,
-// drives the method, then asserts what got removed.
+// Lightweight in-memory fake of the platform client surface that `WorkspaceClient.finishMeeting` touches.
 function createFakeClient (seed: {
   meeting: MeetingMinutes
   participants?: ParticipantInfo[]
@@ -102,6 +100,50 @@ function invite (overrides: Partial<UserMeetingInvite> & { _id: string }): UserM
     _id: overrides._id as Ref<UserMeetingInvite>
   } satisfies UserMeetingInvite
 }
+
+describe('WorkspaceClient.finishMeeting → re-arm vs finish', () => {
+  it('re-arms a future-scheduled meeting to Scheduled instead of finishing (still cleans up participants)', async () => {
+    const meeting = createMockMeeting({
+      status: MeetingStatus.Active,
+      meetingScheduledDate: Date.now() + 24 * 60 * 60 * 1000
+    })
+    const participant = createMockParticipant({ meeting: meeting._id })
+    const { client, updated, removed } = createFakeClient({ meeting, participants: [participant] })
+
+    const wc = makeWorkspaceClient(createMockContext(), client)
+    await wc.finishMeeting(meeting._id)
+
+    const meetingUpdate = updated.find((u) => u.doc._id === meeting._id)
+    expect(meetingUpdate?.update).toEqual({ status: MeetingStatus.Scheduled })
+    expect(meetingUpdate?.update).not.toHaveProperty('meetingEnd')
+    expect(removed).toContain(TEST_IDS.participant1)
+  })
+
+  it('finishes a past-scheduled meeting as before (with meetingEnd)', async () => {
+    const meeting = createMockMeeting({
+      status: MeetingStatus.Active,
+      meetingScheduledDate: Date.now() - 60_000
+    })
+    const { client, updated } = createFakeClient({ meeting })
+
+    const wc = makeWorkspaceClient(createMockContext(), client)
+    await wc.finishMeeting(meeting._id, 123456)
+
+    const meetingUpdate = updated.find((u) => u.doc._id === meeting._id)
+    expect(meetingUpdate?.update).toEqual({ status: MeetingStatus.Finished, meetingEnd: 123456 })
+  })
+
+  it('finishes an ad-hoc meeting without meetingScheduledDate as before', async () => {
+    const meeting = createMockMeeting({ status: MeetingStatus.Active, meetingScheduledDate: undefined })
+    const { client, updated } = createFakeClient({ meeting })
+
+    const wc = makeWorkspaceClient(createMockContext(), client)
+    await wc.finishMeeting(meeting._id, 123456)
+
+    const meetingUpdate = updated.find((u) => u.doc._id === meeting._id)
+    expect(meetingUpdate?.update).toEqual({ status: MeetingStatus.Finished, meetingEnd: 123456 })
+  })
+})
 
 describe('WorkspaceClient.finishMeeting → invite cleanup', () => {
   it('drops every UserMeetingInvite that targeted the finished meeting (by meeting id)', async () => {

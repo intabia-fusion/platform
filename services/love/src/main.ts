@@ -268,12 +268,7 @@ export const main = async (): Promise<void> => {
         const wsClient = await WorkspaceClient.create(workspaceId, ctx)
         const meetingDoc = await wsClient.findMeetingById(meetingId)
         if (meetingDoc !== undefined && meetingDoc.private && !meetingDoc.members.includes(accountUuid)) {
-          // Workspace owners (AccountRole.Owner) bypass private-meeting
-          // membership the same way SpaceSecurityMiddleware bypasses
-          // owner-only checks for them server-side. The client is expected
-          // to self-add the owner to `members` before calling getToken;
-          // we recheck role here to keep the endpoint authoritative even
-          // if the membership write races the token request or fails.
+          // Owners bypass private-meeting membership; rechecked here in case the client's self-add races or fails.
           let isWorkspaceOwner = false
           try {
             const wsLoginInfo = await getAccountClient(token).getLoginInfoByToken()
