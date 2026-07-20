@@ -13,12 +13,24 @@
 // limitations under the License.
 //
 
+// Shared pro-rata math for plan/seat changes. Lives here so pod-payment (preview) and
+// pod-tbank-subscriptions (apply) compute the identical charge/period — a fork of this logic is
+// how the "modal says 'no charge' but the bank bills full price" desync happened.
+
 const DAY = 24 * 3600 * 1000
 const YEARLY_THRESHOLD_DAYS = 180
 const MONTH_MS = 30 * DAY
+const KOPECKS_PER_RUBLE = 100
+
+// Round a kopeck amount DOWN to whole rubles. Pro-rata credits produce fractional-ruble charges
+// (e.g. 400032 kopecks = 4000.32 ₽); charging whole rubles keeps the modal preview (which shows
+// rubles) and the bank page identical, and any rounding favors the customer.
+function floorToRubles (kopecks: number): number {
+  return Math.floor(kopecks / KOPECKS_PER_RUBLE) * KOPECKS_PER_RUBLE
+}
 
 export interface ProrationResult {
-  charge: number // one-time charge now (kopecks), floored, >= 0
+  charge: number // one-time charge now (kopecks), floored to whole rubles, >= 0
   periodStart: number // new period start (ms); reset only when the period resets (monthly upgrade)
   periodEnd: number // new period end (ms); unchanged for a yearly seat upgrade
   isYearly: boolean
@@ -65,13 +77,13 @@ export function prorateSeats (input: {
     if (isYearly) {
       // Yearly upgrade: renewal date and period unchanged, only the extra seats are charged now.
       const paidRatePerSeat = oldSeats > 0 ? oldAmount / oldSeats / periodDays : 0
-      const charge = Math.max(0, Math.floor((newSeats - oldSeats) * paidRatePerSeat * daysLeft))
+      const charge = Math.max(0, floorToRubles((newSeats - oldSeats) * paidRatePerSeat * daysLeft))
       return { charge, periodStart: input.periodStart, periodEnd: input.periodEnd, isYearly, isUpgrade }
     }
     // Monthly upgrade: the period resets to a fresh 30 days from now.
     const unusedCredit = (oldAmount * daysLeft) / periodDays
     return {
-      charge: Math.max(0, Math.floor(newFullPrice - unusedCredit)),
+      charge: Math.max(0, floorToRubles(newFullPrice - unusedCredit)),
       periodStart: now,
       periodEnd: now + MONTH_MS,
       isYearly,
@@ -112,7 +124,7 @@ export function proratePackage (input: {
     // Bigger package: fresh 30-day period.
     const unusedCredit = (oldAmount * daysLeft) / periodDays
     return {
-      charge: Math.max(0, Math.floor(newFullPrice - unusedCredit)),
+      charge: Math.max(0, floorToRubles(newFullPrice - unusedCredit)),
       periodStart: now,
       periodEnd: now + MONTH_MS,
       isYearly,

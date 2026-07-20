@@ -129,7 +129,7 @@ async function renewSubscription (
 
     await storage.logOperation({
       operation: 'charge_recurrent',
-      status: chargeResult.Success === true ? 'success' : 'failed',
+      status: chargeResult.Success ? 'success' : 'failed',
       paymentId: chargeResult.PaymentId,
       // One renewal cycle = one orderId, so retries of the same period stay one chain.
       orderId: `renew:${sub.id}:${sub.periodEnd ?? 0}`,
@@ -148,7 +148,7 @@ async function renewSubscription (
       }
     })
 
-    if (chargeResult.Success === true) {
+    if (chargeResult.Success) {
       await storage.markCharge(intentId, 'charged', chargeResult.PaymentId)
       const updatedData = buildRenewedSubscription(sub, Date.now(), chargeResult.PaymentId)
       await storage.upsert(updatedData)

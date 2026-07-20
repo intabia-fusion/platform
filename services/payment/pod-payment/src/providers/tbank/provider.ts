@@ -208,7 +208,15 @@ export class TbankProvider implements PaymentProvider {
     if (!response.ok) {
       const errorBody = await response.text()
       ctx.error('TBank subscription plan update failed', { status: response.status, errorBody })
-      throw new Error(`TBank subscription plan update failed: ${response.status} ${errorBody}`)
+      // Preserve status + reason so the facade relays them (e.g. 402 declined card, 409 in-flight)
+      // instead of collapsing every failure to a generic 500.
+      let reason: string | undefined
+      try {
+        reason = JSON.parse(errorBody).reason
+      } catch {
+        /* body isn't JSON — leave reason undefined */
+      }
+      throw new ProviderHttpError(response.status, reason, errorBody)
     }
 
     return await response.json()
