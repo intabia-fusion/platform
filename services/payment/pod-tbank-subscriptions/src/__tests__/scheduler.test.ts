@@ -127,6 +127,7 @@ describe('scheduler renewal claim outcomes', () => {
   test('successful chargeRecurrent -> markCharge charged, logOperation success, upsert renewed', async () => {
     const storage = makeStorage(baseSub, { claimed: true, status: 'new', intentId: 'i1' })
     const tbank: any = {
+      initPayment: jest.fn().mockResolvedValue({ Success: true, PaymentId: 'init_1' }),
       chargeRecurrent: jest.fn().mockResolvedValue({ Success: true, PaymentId: 'pay_1' })
     }
     await runOneTick(tbank, storage)
@@ -141,6 +142,7 @@ describe('scheduler renewal claim outcomes', () => {
   test('chargeRecurrent Success=false -> markCharge failed, logOperation failed, PastDue upsert, notify', async () => {
     const storage = makeStorage(baseSub, { claimed: true, status: 'new', intentId: 'i1' })
     const tbank: any = {
+      initPayment: jest.fn().mockResolvedValue({ Success: true, PaymentId: 'init_1' }),
       chargeRecurrent: jest.fn().mockResolvedValue({ Success: false, ErrorCode: '111', Message: 'declined' })
     }
     global.fetch = jest.fn() as any // notifyPaymentFailed short-circuits: config has no MailUrl, so no HTTP happens
@@ -156,7 +158,10 @@ describe('scheduler renewal claim outcomes', () => {
 
   test('chargeRecurrent throws -> markCharge not called, status unknown logged, CHARGE_ERROR upsert', async () => {
     const storage = makeStorage(baseSub, { claimed: true, status: 'new', intentId: 'i1' })
-    const tbank: any = { chargeRecurrent: jest.fn().mockRejectedValue(new Error('timeout')) }
+    const tbank: any = {
+      initPayment: jest.fn().mockResolvedValue({ Success: true, PaymentId: 'init_1' }),
+      chargeRecurrent: jest.fn().mockRejectedValue(new Error('timeout'))
+    }
     await runOneTick(tbank, storage)
     expect(storage.markCharge).not.toHaveBeenCalled()
     const logged = storage.logOperation.mock.calls.find((c: any[]) => c[0].operation === 'charge_recurrent')
@@ -169,6 +174,7 @@ describe('scheduler renewal claim outcomes', () => {
   test('heartbeat interval is cleared after the charge settles (no leaked timer)', async () => {
     const storage = makeStorage(baseSub, { claimed: true, status: 'new', intentId: 'i1' })
     const tbank: any = {
+      initPayment: jest.fn().mockResolvedValue({ Success: true, PaymentId: 'init_1' }),
       chargeRecurrent: jest.fn().mockResolvedValue({ Success: true, PaymentId: 'pay_1' })
     }
     const setSpy = jest.spyOn(global, 'setInterval')
