@@ -13,26 +13,23 @@
 // limitations under the License.
 //
 
-import type { Doc, Ref, Status } from '@hcengineering/core'
-import type { Project, TaskType } from '@hcengineering/task'
+import type { Doc, Ref, Status, AttachedDoc } from '@hcengineering/core'
+import type { Project, TaskType, ProjectType, Rank } from '@hcengineering/task'
 
 export interface Workflow extends Doc {
   name: string
-}
-
-export interface WorkflowTransition extends Doc {
-  workflow: Ref<Workflow>
-  name: string
-  from: Ref<Status> | null
-  to: Ref<Status>
-}
-
-export interface WorkflowMapping {
+  projectType: Ref<ProjectType>
   taskType: Ref<TaskType>
-  workflow: Ref<Workflow>
+  transitions?: number
+}
+
+export interface WorkflowTransition extends AttachedDoc<Workflow, 'transitions'> {
+  name: string
+  from: Ref<Status>[] | null
+  to: Ref<Status>
+  rank: Rank
 }
 
 export interface ProjectWorkflow extends Project {
-  defaultWorkflow?: Ref<Workflow>
-  workflows?: WorkflowMapping[]
+  workflows?: Record<Ref<TaskType>, Ref<Workflow>>
 }

@@ -40,8 +40,17 @@
   "dependencies": {
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/presentation": "workspace:^0.7.0",
+    "@hcengineering/rank": "workspace:^0.7.17",
+    "@hcengineering/setting-resources": "workspace:^0.7.0",
+    "@hcengineering/task": "workspace:^0.7.0",
+    "@hcengineering/task-resources": "workspace:^0.7.0",
+    "@hcengineering/tracker-resources": "workspace:^0.7.0",
     "@hcengineering/ui": "workspace:^0.7.0",
+    "@hcengineering/view": "workspace:^0.7.0",
+    "@hcengineering/view-resources": "workspace:^0.7.0",
     "@hcengineering/workflow": "workspace:^0.7.0",
+    "mermaid": "^11.12.0",
     "svelte": "^4.2.20"
   }
 }

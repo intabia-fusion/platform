@@ -117,15 +117,26 @@
           {@const item = objects[idx]}
 
           <button
-            class="menu-item withList w-full"
+            class="menu-item withList w-full flex-row-center"
             on:click={() => {
               if (multiselect && Array.isArray(selected)) {
-                const index = selected.indexOf(item.id)
-                if (index !== -1) {
-                  selected.splice(index, 1)
-                  selected = selected
+                if (item.exclusive) {
+                  const index = selected.indexOf(item.id)
+                  if (index !== -1) {
+                    selected = []
+                  } else {
+                    selected = [item.id]
+                  }
                 } else {
-                  selected = selected === undefined ? [item.id] : [...selected, item.id]
+                  const exclusiveIds = items.filter((it) => it.exclusive).map((it) => it.id)
+                  const newSelected = selected.filter((id) => !exclusiveIds.includes(id))
+                  const index = newSelected.indexOf(item.id)
+                  if (index !== -1) {
+                    newSelected.splice(index, 1)
+                  } else {
+                    newSelected.push(item.id)
+                  }
+                  selected = newSelected
                 }
                 dispatch('update', selected)
               } else {
@@ -133,6 +144,13 @@
               }
             }}
           >
+            {#if item.icon}
+              <div
+                style="margin-right: 0.75rem; display: flex; align-items: center; justify-content: center; width: 1.25rem; height: 1.25rem; flex-shrink: 0;"
+              >
+                <Icon icon={item.icon} size={'small'} iconProps={item.iconProps} />
+              </div>
+            {/if}
             <div class="label overflow-label flex-grow">{item.label}</div>
             <div class="check">
               {#if isSelected(selected, item)}

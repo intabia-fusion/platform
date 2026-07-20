@@ -23,11 +23,13 @@
   import Icon from './Icon.svelte'
   import ListView from './ListView.svelte'
   import EditWithIcon from './EditWithIcon.svelte'
+  import IconCheck from './icons/Check.svelte'
 
   export let icon: Asset | AnySvelteComponent
   export let placeholder: IntlString = plugin.string.SearchDots
   export let items: ListItem[]
   export let withSearch: boolean = true
+  export let selectedId: string | undefined = undefined
 
   let search: string = ''
   let phTranslate: string = ''
@@ -117,6 +119,11 @@
               </div>
             {/if}
             <div class="flex-grow caption-color font-{item.fontWeight} pl-{item.paddingLeft}">{item.label}</div>
+            {#if selectedId !== undefined && item._id === selectedId}
+              <div class="check">
+                <Icon icon={IconCheck} size={'small'} />
+              </div>
+            {/if}
           </button>
         </svelte:fragment>
       </ListView>

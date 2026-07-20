@@ -13,45 +13,52 @@
 // limitations under the License.
 //
 
-import core, { type Ref, type Status } from '@hcengineering/core'
-import { Model, Prop, TypeString, TypeRef, Mixin, ArrOf, TypeRecord } from '@hcengineering/model'
-import { TDoc } from '@hcengineering/model-core'
-import task from '@hcengineering/task'
-import {
-  type Workflow,
-  type WorkflowTransition,
-  type WorkflowMapping,
-  type ProjectWorkflow
-} from '@hcengineering/workflow'
+import core, { type Ref, type Status, type Domain, type Class } from '@hcengineering/core'
+import { Model, Prop, TypeString, TypeRef, Mixin, TypeRecord, Collection, ArrOf } from '@hcengineering/model'
+import { TDoc, TAttachedDoc } from '@hcengineering/model-core'
+import task, { type TaskType, type ProjectType, type Rank } from '@hcengineering/task'
+import { type Workflow, type WorkflowTransition, type ProjectWorkflow } from '@hcengineering/workflow'
 import workflow from './plugin'
 import { TProject } from '@hcengineering/model-task'
 
-@Model(workflow.class.Workflow, core.class.Doc)
+export const DOMAIN_WORKFLOW = 'workflow' as Domain
+
+@Model(workflow.class.Workflow, core.class.Doc, DOMAIN_WORKFLOW)
 export class TWorkflow extends TDoc implements Workflow {
+  @Prop(TypeRef(task.class.ProjectType), task.string.ProjectType)
+    projectType!: Ref<ProjectType>
+
+  @Prop(TypeRef(task.class.TaskType), task.string.TaskType)
+    taskType!: Ref<TaskType>
+
   @Prop(TypeString(), workflow.string.Name)
     name!: string
+
+  @Prop(Collection(workflow.class.WorkflowTransition), workflow.string.WorkflowTransition)
+    transitions!: number
 }
 
-@Model(workflow.class.WorkflowTransition, core.class.Doc)
-export class TWorkflowTransition extends TDoc implements WorkflowTransition {
-  @Prop(TypeRef(workflow.class.Workflow), workflow.string.Workflow)
-    workflow!: Ref<Workflow>
+@Model(workflow.class.WorkflowTransition, core.class.AttachedDoc, DOMAIN_WORKFLOW)
+export class TWorkflowTransition extends TAttachedDoc implements WorkflowTransition {
+  declare attachedTo: Ref<Workflow>
+  declare attachedToClass: Ref<Class<Workflow>>
+  declare collection: 'transitions'
 
   @Prop(TypeString(), workflow.string.Name)
     name!: string
 
-  @Prop(TypeRef(core.class.Status), workflow.string.From)
-    from!: Ref<Status> | null
+  @Prop(ArrOf(TypeRef(core.class.Status)), workflow.string.From)
+    from!: Ref<Status>[] | null
 
   @Prop(TypeRef(core.class.Status), workflow.string.To)
     to!: Ref<Status>
+
+  @Prop(TypeString(), task.string.Rank)
+    rank!: Rank
 }
 
 @Mixin(workflow.mixin.ProjectWorkflow, task.class.Project)
 export class TProjectWorkflow extends TProject implements ProjectWorkflow {
-  @Prop(TypeRef(workflow.class.Workflow), workflow.string.DefaultWorkflow)
-    defaultWorkflow?: Ref<Workflow>
-
-  @Prop(ArrOf(TypeRecord()), workflow.string.WorkflowMapping)
-    workflows?: WorkflowMapping[]
+  @Prop(TypeRecord(), workflow.string.WorkflowMapping)
+    workflows?: Record<Ref<TaskType>, Ref<Workflow>>
 }

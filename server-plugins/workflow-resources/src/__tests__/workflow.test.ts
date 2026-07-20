@@ -27,12 +27,12 @@ import core, {
   type WithLookup
 } from '@hcengineering/core'
 import { type TriggerControl } from '@hcengineering/server-core'
-import task, { type Task, type Project, type TaskType } from '@hcengineering/task'
+import task, { type Task, type Project, type TaskType, type Rank } from '@hcengineering/task'
 import workflow from '@hcengineering/model-workflow'
 import { type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
 import { ValidateTransition } from '../ValidateTransition'
 
-const testSpace = 'test-space' as Ref<Space>
+const testSpace = 'test-space' as Ref<Project>
 const testAccount = 'test-account' as any
 
 function createMockTask (data: Partial<Task> = {}): WithLookup<Task> {
@@ -94,7 +94,8 @@ function createMockControl (findAllImpl: FindAllFn): TriggerControl {
       error: jest.fn(),
       info: jest.fn(),
       warn: jest.fn(),
-      newChild: jest.fn().mockReturnThis()
+      newChild: jest.fn().mockReturnThis(),
+      contextData: { account: null }
     } as any,
     workspace: { url: 'test-ws', uuid: 'test-ws-uuid', dataId: 'test-data', accountsUrl: '' } as any,
     branding: null,
@@ -103,6 +104,9 @@ function createMockControl (findAllImpl: FindAllFn): TriggerControl {
     hierarchy: {
       isDerived: (_class: Ref<Class<Doc>>, base: Ref<Class<Doc>>) => {
         return _class === base
+      },
+      hasMixin: (doc: any, _class: any) => {
+        return doc.workflows !== undefined
       },
       as: (doc: any, _class: any) => doc
     } as any,
@@ -146,33 +150,38 @@ describe('ValidateTransition Trigger', () => {
     const statusTodo = 'todo-status' as Ref<Status>
     const wfId = 'wf-1' as Ref<Workflow>
 
+    const t = createMockTask({ status: statusTodo })
+    const tx = createCreateTx(t)
+
     const project: Doc & any = {
       _id: testSpace as any,
       _class: task.class.Project,
       space: core.space.Model,
-      defaultWorkflow: wfId
+      workflows: {
+        [t.kind]: wfId
+      }
     }
 
     const transition: Doc & WorkflowTransition = {
       _id: 't-1' as any,
       _class: workflow.class.WorkflowTransition,
       space: testSpace,
-      workflow: wfId,
+      attachedTo: wfId,
+      attachedToClass: workflow.class.Workflow,
+      collection: 'transitions',
       name: 'Create',
-      from: null,
+      from: [],
       to: statusTodo,
+      rank: 'a0' as Rank,
       modifiedOn: 0,
       modifiedBy: testAccount
     }
-
-    const t = createMockTask({ status: statusTodo })
-    const tx = createCreateTx(t)
 
     const control = createMockControl(async (ctx, cl, query) => {
       if (cl === task.class.Project && query._id === testSpace) {
         return [project]
       }
-      if (cl === workflow.class.WorkflowTransition && query.workflow === wfId) {
+      if (cl === workflow.class.WorkflowTransition && query.attachedTo === wfId) {
         return [transition]
       }
       return []
@@ -186,33 +195,38 @@ describe('ValidateTransition Trigger', () => {
     const statusDone = 'done-status' as Ref<Status>
     const wfId = 'wf-1' as Ref<Workflow>
 
+    const t = createMockTask({ status: statusDone })
+    const tx = createCreateTx(t)
+
     const project: Doc & any = {
       _id: testSpace as any,
       _class: task.class.Project,
       space: core.space.Model,
-      defaultWorkflow: wfId
+      workflows: {
+        [t.kind]: wfId
+      }
     }
 
     const transition: Doc & WorkflowTransition = {
       _id: 't-1' as any,
       _class: workflow.class.WorkflowTransition,
       space: testSpace,
-      workflow: wfId,
+      attachedTo: wfId,
+      attachedToClass: workflow.class.Workflow,
+      collection: 'transitions',
       name: 'Create',
-      from: null,
+      from: [],
       to: statusTodo,
+      rank: 'a0' as Rank,
       modifiedOn: 0,
       modifiedBy: testAccount
     }
-
-    const t = createMockTask({ status: statusDone })
-    const tx = createCreateTx(t)
 
     const control = createMockControl(async (ctx, cl, query) => {
       if (cl === task.class.Project && query._id === testSpace) {
         return [project]
       }
-      if (cl === workflow.class.WorkflowTransition && query.workflow === wfId) {
+      if (cl === workflow.class.WorkflowTransition && query.attachedTo === wfId) {
         return [transition]
       }
       return []
@@ -226,27 +240,32 @@ describe('ValidateTransition Trigger', () => {
     const statusInProgress = 'in-progress-status' as Ref<Status>
     const wfId = 'wf-1' as Ref<Workflow>
 
+    const t = createMockTask({ status: statusTodo })
+    const tx = createUpdateTx(t._id, { status: statusInProgress })
+
     const project: Doc & any = {
       _id: testSpace as any,
       _class: task.class.Project,
       space: core.space.Model,
-      defaultWorkflow: wfId
+      workflows: {
+        [t.kind]: wfId
+      }
     }
 
     const transition: Doc & WorkflowTransition = {
       _id: 't-2' as any,
       _class: workflow.class.WorkflowTransition,
       space: testSpace,
-      workflow: wfId,
+      attachedTo: wfId,
+      attachedToClass: workflow.class.Workflow,
+      collection: 'transitions',
       name: 'Start Work',
-      from: statusTodo,
+      from: [statusTodo],
       to: statusInProgress,
+      rank: 'a0' as Rank,
       modifiedOn: 0,
       modifiedBy: testAccount
     }
-
-    const t = createMockTask({ status: statusTodo })
-    const tx = createUpdateTx(t._id, { status: statusInProgress })
 
     const control = createMockControl(async (ctx, cl, query) => {
       if (cl === task.class.Project && query._id === testSpace) {
@@ -255,7 +274,7 @@ describe('ValidateTransition Trigger', () => {
       if (cl === task.class.Task && query._id === t._id) {
         return [t]
       }
-      if (cl === workflow.class.WorkflowTransition && query.workflow === wfId) {
+      if (cl === workflow.class.WorkflowTransition && query.attachedTo === wfId) {
         return [transition]
       }
       return []
@@ -269,27 +288,32 @@ describe('ValidateTransition Trigger', () => {
     const statusDone = 'done-status' as Ref<Status>
     const wfId = 'wf-1' as Ref<Workflow>
 
+    const t = createMockTask({ status: statusTodo })
+    const tx = createUpdateTx(t._id, { status: statusDone })
+
     const project: Doc & any = {
       _id: testSpace as any,
       _class: task.class.Project,
       space: core.space.Model,
-      defaultWorkflow: wfId
+      workflows: {
+        [t.kind]: wfId
+      }
     }
 
     const transition: Doc & WorkflowTransition = {
       _id: 't-2' as any,
       _class: workflow.class.WorkflowTransition,
       space: testSpace,
-      workflow: wfId,
+      attachedTo: wfId,
+      attachedToClass: workflow.class.Workflow,
+      collection: 'transitions',
       name: 'Start Work',
-      from: statusTodo,
+      from: [statusTodo],
       to: 'in-progress-status' as Ref<Status>,
+      rank: 'a0' as Rank,
       modifiedOn: 0,
       modifiedBy: testAccount
     }
-
-    const t = createMockTask({ status: statusTodo })
-    const tx = createUpdateTx(t._id, { status: statusDone })
 
     const control = createMockControl(async (ctx, cl, query) => {
       if (cl === task.class.Project && query._id === testSpace) {
@@ -298,7 +322,7 @@ describe('ValidateTransition Trigger', () => {
       if (cl === task.class.Task && query._id === t._id) {
         return [t]
       }
-      if (cl === workflow.class.WorkflowTransition && query.workflow === wfId) {
+      if (cl === workflow.class.WorkflowTransition && query.attachedTo === wfId) {
         return [transition]
       }
       return []
@@ -317,23 +341,22 @@ describe('ValidateTransition Trigger', () => {
       _id: testSpace as any,
       _class: task.class.Project,
       space: core.space.Model,
-      defaultWorkflow: 'wf-default' as Ref<Workflow>,
-      workflows: [
-        {
-          taskType: taskTypeBug,
-          workflow: wfBugId
-        }
-      ]
+      workflows: {
+        [taskTypeBug]: wfBugId
+      }
     }
 
     const transition: Doc & WorkflowTransition = {
       _id: 't-bug-1' as any,
       _class: workflow.class.WorkflowTransition,
       space: testSpace,
-      workflow: wfBugId,
+      attachedTo: wfBugId,
+      attachedToClass: workflow.class.Workflow,
+      collection: 'transitions',
       name: 'Fix Bug',
-      from: statusTodo,
+      from: [statusTodo],
       to: statusInProgress,
+      rank: 'a0' as Rank,
       modifiedOn: 0,
       modifiedBy: testAccount
     }
@@ -348,7 +371,7 @@ describe('ValidateTransition Trigger', () => {
       if (cl === task.class.Task && query._id === t._id) {
         return [t]
       }
-      if (cl === workflow.class.WorkflowTransition && query.workflow === wfBugId) {
+      if (cl === workflow.class.WorkflowTransition && query.attachedTo === wfBugId) {
         return [transition]
       }
       return []

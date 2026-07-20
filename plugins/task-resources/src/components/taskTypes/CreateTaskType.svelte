@@ -179,7 +179,7 @@
       <span class="label">
         <Label label={task.string.TaskType} />
       </span>
-      <TaskTypeKindEditor bind:kind />
+      <TaskTypeKindEditor bind:kind buttonSize="medium" />
     </div>
     {#if taskTypeDescriptors.length > 1}
       <div class="hulyModal-content__settingsSet-line">
@@ -192,7 +192,7 @@
           icon={taskTypeDescriptor.icon}
           label={taskTypeDescriptor.name}
           kind={'secondary'}
-          size={'large'}
+          size={'medium'}
           on:selected={(evt) => {
             if (evt.detail != null) {
               const tt = taskTypeDescriptors.find((tt) => tt._id === evt.detail)

@@ -18,6 +18,7 @@ import { plugin } from '@hcengineering/platform'
 import type { TriggerFunc } from '@hcengineering/server-core'
 
 export const serverWorkflowId = 'server-workflow' as Plugin
+export { WorkflowMiddleware } from './middleware'
 
 export default plugin(serverWorkflowId, {
   trigger: {

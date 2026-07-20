@@ -14,20 +14,11 @@
 //
 
 import { type Builder } from '@hcengineering/model'
-import core, { AccountRole } from '@hcengineering/core'
-import setting from '@hcengineering/setting'
 import workflow from './plugin'
+import { TWorkflow, TWorkflowTransition, TProjectWorkflow } from './types'
 
 export function createModel (builder: Builder): void {
-  builder.createDoc(setting.class.WorkspaceSettingCategory, core.space.Model, {
-    name: 'workflows',
-    label: workflow.string.Workflow,
-    icon: setting.icon.Views,
-    component: workflow.component.WorkflowsSettings,
-    group: 'settings-editor',
-    role: AccountRole.Maintainer,
-    order: 5500
-  })
+  builder.createModel(TWorkflow, TWorkflowTransition, TProjectWorkflow)
 }
 
 export * from './types'

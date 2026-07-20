@@ -20,6 +20,7 @@ import core, {
   type TxCreateDoc,
   type Ref,
   type TxCUD,
+  type Status,
   Hierarchy
 } from '@hcengineering/core'
 import { type TriggerControl } from '@hcengineering/server-core'
@@ -53,8 +54,10 @@ async function validateCreate (createTx: TxCreateDoc<Task>, control: TriggerCont
 
   const workflowRef = findWorkflowForTaskType(control.hierarchy, project, createTx.attributes.kind)
   if (workflowRef !== undefined) {
-    const transitions = await control.findAll(control.ctx, workflow.class.WorkflowTransition, { workflow: workflowRef })
-    const allowed = transitions.some((t) => t.from === null && t.to === status)
+    const transitions = await control.findAll(control.ctx, workflow.class.WorkflowTransition, {
+      attachedTo: workflowRef
+    })
+    const allowed = transitions.some((t) => getFromStatuses(t.from) === null && t.to === status)
     if (!allowed) {
       throw new Error(`Стартовый статус ${status} не разрешен в воркфлоу для создания новой задачи.`)
     }
@@ -78,8 +81,13 @@ async function validateUpdate (updateTx: TxUpdateDoc<Task>, control: TriggerCont
 
   const workflowRef = findWorkflowForTaskType(control.hierarchy, project, oldTask.kind)
   if (workflowRef !== undefined) {
-    const transitions = await control.findAll(control.ctx, workflow.class.WorkflowTransition, { workflow: workflowRef })
-    const allowed = transitions.some((t) => t.from !== null && t.from === oldStatus && t.to === newStatus)
+    const transitions = await control.findAll(control.ctx, workflow.class.WorkflowTransition, {
+      attachedTo: workflowRef
+    })
+    const allowed = transitions.some((t) => {
+      const froms = getFromStatuses(t.from)
+      return (froms === null || froms.includes(oldStatus)) && t.to === newStatus
+    })
     if (!allowed) {
       throw new Error(`Переход из статуса "${oldStatus}" в "${newStatus}" запрещен правилами воркфлоу.`)
     }
@@ -91,13 +99,13 @@ function findWorkflowForTaskType (
   project: Project,
   taskTypeRef: Ref<TaskType>
 ): Ref<Workflow> | undefined {
+  if (!h.hasMixin(project, workflow.mixin.ProjectWorkflow)) return undefined
   const projectWorkflow = h.as<Project, ProjectWorkflow>(project, workflow.mixin.ProjectWorkflow)
+  return projectWorkflow.workflows?.[taskTypeRef]
+}
 
-  if (projectWorkflow.workflows !== undefined) {
-    const mapping = projectWorkflow.workflows.find((m) => m.taskType === taskTypeRef)
-    if (mapping !== undefined) {
-      return mapping.workflow
-    }
-  }
-  return projectWorkflow.defaultWorkflow
+function getFromStatuses (from: any): Ref<Status>[] | null {
+  if (from == null) return null
+  if (Array.isArray(from)) return from.length === 0 ? null : from
+  return [from]
 }

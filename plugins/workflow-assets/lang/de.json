@@ -1,13 +1,30 @@
 {
   "string": {
     "Workflow": "Workflow",
-    "WorkflowScheme": "Workflow Scheme",
-    "WorkflowTransition": "Workflow Transition",
-    "WorkflowMapping": "Workflow Mapping",
+    "WorkflowScheme": "Workflow-Schema",
+    "WorkflowTransition": "Workflow-Übergang",
+    "WorkflowMapping": "Workflow-Zuordnung",
     "Name": "Name",
-    "From": "From",
-    "To": "To",
-    "TaskType": "Task Type",
-    "WorkflowSchemeField": "Workflow Scheme"
+    "From": "Von",
+    "To": "Nach",
+    "TaskType": "Aufgabentyp",
+    "WorkflowSchemeField": "Workflow-Schema",
+    "Untitled": "Unbenannt",
+    "Workflows": "Workflows",
+    "DeleteWorkflow": "Workflow löschen",
+    "DeleteWorkflowConfirm": "Sind Sie sicher, dass Sie diesen Workflow löschen möchten?",
+    "Export": "Exportieren",
+    "Transitions": "Übergänge",
+    "AddTransition": "Übergang hinzufügen",
+    "DeleteWorkflowTransition": "Übergang löschen",
+    "DeleteWorkflowTransitionConfirm": "Sind Sie sicher, dass Sie diesen Übergang löschen möchten?",
+    "CreateTransition": "Übergang erstellen",
+    "TransitionNamed": "Übergang: {name}",
+    "AnyStatus": "Beliebiger Status",
+    "TaskTypeRequired": "Mindestens ein Aufgabentyp ist erforderlich, um einen Workflow zu erstellen",
+    "UnknownTaskType": "Unbekannter Aufgabentyp",
+    "WorkflowName": "Workflow-Name",
+    "NameRequired": "Name ist erforderlich",
+    "StatusToRequired": "Status „Nach“ ist erforderlich"
   }
 }

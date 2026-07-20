@@ -13,7 +13,7 @@
 //
 
 import { Class, Mixin, Ref } from '@hcengineering/core'
-import { IntlString, plugin, Plugin } from '@hcengineering/platform'
+import { Asset, IntlString, plugin, Plugin } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui'
 import { ProjectWorkflow, Workflow, WorkflowTransition } from './types'
 
@@ -28,7 +28,13 @@ export default plugin(workflowId, {
     ProjectWorkflow: '' as Ref<Mixin<ProjectWorkflow>>
   },
   component: {
-    WorkflowsSettings: '' as AnyComponent
+    ProjectTypeWorkflowsSectionEditor: '' as AnyComponent,
+    WorkflowEditor: '' as AnyComponent
+  },
+  icon: {
+    Workflows: '' as Asset,
+    Workflow: '' as Asset,
+    Transition: '' as Asset
   },
   string: {
     Workflow: '' as IntlString,
@@ -38,6 +44,23 @@ export default plugin(workflowId, {
     From: '' as IntlString,
     To: '' as IntlString,
     TaskType: '' as IntlString,
-    DefaultWorkflow: '' as IntlString
+    DefaultWorkflow: '' as IntlString,
+    Untitled: '' as IntlString,
+    AnyStatus: '' as IntlString,
+    Workflows: '' as IntlString,
+    DeleteWorkflow: '' as IntlString,
+    DeleteWorkflowConfirm: '' as IntlString,
+    DeleteWorkflowTransition: '' as IntlString,
+    DeleteWorkflowTransitionConfirm: '' as IntlString,
+    Export: '' as IntlString,
+    Transitions: '' as IntlString,
+    AddTransition: '' as IntlString,
+    CreateTransition: '' as IntlString,
+    TransitionNamed: '' as IntlString,
+    TaskTypeRequired: '' as IntlString,
+    UnknownTaskType: '' as IntlString,
+    WorkflowName: '' as IntlString,
+    NameRequired: '' as IntlString,
+    StatusToRequired: '' as IntlString
   }
 })

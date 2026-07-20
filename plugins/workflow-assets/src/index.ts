@@ -13,4 +13,12 @@
 // limitations under the License.
 //
 
-export {}
+import { loadMetadata } from '@hcengineering/platform'
+import workflow from '@hcengineering/workflow'
+
+const icons = require('../assets/icons.svg') as string // eslint-disable-line
+loadMetadata(workflow.icon, {
+  Workflows: `${icons}#workflows`,
+  Workflow: `${icons}#workflow`,
+  Transition: `${icons}#transition`
+})

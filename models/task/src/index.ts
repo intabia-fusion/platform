@@ -64,6 +64,7 @@ import view, {
 import { getEmbeddedLabel, type Asset, type IntlString, type Resource } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
 import tags from '@hcengineering/tags'
+import workflow from '@hcengineering/workflow'
 import {
   type KanbanCard,
   type Project,
@@ -502,14 +503,15 @@ export function createModel (builder: Builder): void {
         component: task.component.ProjectTypeTasksTypeSectionEditor
       },
       {
-        id: 'automations',
-        label: setting.string.Automations,
-        component: task.component.ProjectTypeAutomationsSectionEditor
+        id: 'workflows',
+        label: workflow.string.Workflows,
+        component: workflow.component.ProjectTypeWorkflowsSectionEditor
       }
     ],
     subEditors: {
       taskTypes: task.component.TaskTypeEditor,
-      roles: setting.component.RoleEditor
+      roles: setting.component.RoleEditor,
+      workflows: workflow.component.WorkflowEditor
     }
   })
 

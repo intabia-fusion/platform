@@ -13,7 +13,21 @@
 // limitations under the License.
 //
 
-export * from './plugin'
-export { default } from './plugin'
-export * from './types'
-export * from './utils'
+import { type Ref } from '@hcengineering/core'
+import { getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+import { type Workflow } from '@hcengineering/workflow'
+import { clearSettingsStore } from '@hcengineering/setting-resources'
+
+export function navigateToWorkflow (id: Ref<Workflow> | undefined): void {
+  const loc = getCurrentResolvedLocation()
+  if (id !== undefined) {
+    loc.path[5] = 'workflows'
+    loc.path[6] = id
+    loc.path.length = 7
+  } else {
+    loc.path.length = 5
+  }
+
+  clearSettingsStore()
+  navigate(loc)
+}

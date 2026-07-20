@@ -13,7 +13,12 @@
 // limitations under the License.
 //
 
-export * from './plugin'
-export { default } from './plugin'
-export * from './types'
-export * from './utils'
+import { mergeIds } from '@hcengineering/platform'
+import workflow, { workflowId } from '@hcengineering/workflow'
+import { type AnyComponent } from '@hcengineering/ui'
+
+export default mergeIds(workflowId, workflow, {
+  component: {
+    TransitionEditor: '' as AnyComponent
+  }
+})

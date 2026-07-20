@@ -13,31 +13,25 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Breadcrumb, Header, Label, Scroller } from '@hcengineering/ui'
+  import { Icon, IconSize } from '@hcengineering/ui'
   import workflow from '@hcengineering/workflow'
+
+  export let size: IconSize = 'small'
+  export let inline: boolean = false
 </script>
 
-<div class="hulyComponent">
-  <Header adaptive={'disabled'}>
-    <Breadcrumb label={workflow.string.Workflow} size={'large'} isCurrent />
-  </Header>
-  <div class="hulyComponent-content__container columns">
-    <div class="hulyComponent-content__column">
-      <Scroller>
-        <div class="p-6">
-          <Label label={workflow.string.Workflow} />
-          <p class="paragraph-regular-14 secondary-textColor mt-2">To be defined....</p>
-        </div>
-      </Scroller>
-    </div>
-  </div>
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<div class="flex-center state-container clear-mins" class:inline on:click>
+  <Icon icon={workflow.icon.Workflow} {size} />
 </div>
 
 <style lang="scss">
-  .p-6 {
-    padding: 1.5rem;
-  }
-  .mt-2 {
-    margin-top: 0.5rem;
+  .state-container {
+    flex-shrink: 0;
+
+    &.inline {
+      transform: translateY(0.125rem);
+    }
   }
 </style>

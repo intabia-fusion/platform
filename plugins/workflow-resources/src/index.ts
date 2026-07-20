@@ -16,10 +16,12 @@
 import '@hcengineering/platform-rig/profiles/ui/svelte'
 
 import type { Resources } from '@hcengineering/platform'
-import WorkflowsSettings from './components/WorkflowsSettings.svelte'
+import ProjectTypeWorkflowsSectionEditor from './components/ProjectTypeWorkflowsSectionEditor.svelte'
+import WorkflowEditor from './components/editor/WorkflowEditor.svelte'
 
 export default async (): Promise<Resources> => ({
   component: {
-    WorkflowsSettings
+    ProjectTypeWorkflowsSectionEditor,
+    WorkflowEditor
   }
 })

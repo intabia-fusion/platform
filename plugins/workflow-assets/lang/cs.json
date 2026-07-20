@@ -1,13 +1,30 @@
 {
   "string": {
     "Workflow": "Workflow",
-    "WorkflowScheme": "Workflow Scheme",
-    "WorkflowTransition": "Workflow Transition",
-    "WorkflowMapping": "Workflow Mapping",
-    "Name": "Name",
-    "From": "From",
-    "To": "To",
-    "TaskType": "Task Type",
-    "WorkflowSchemeField": "Workflow Scheme"
+    "WorkflowScheme": "Schéma workflow",
+    "WorkflowTransition": "Přechod workflow",
+    "WorkflowMapping": "Mapování workflow",
+    "Name": "Název",
+    "From": "Od",
+    "To": "Do",
+    "TaskType": "Typ úkolu",
+    "WorkflowSchemeField": "Schéma workflow",
+    "Untitled": "Bez názvu",
+    "Workflows": "Workflows",
+    "DeleteWorkflow": "Smazat workflow",
+    "DeleteWorkflowConfirm": "Opravdu chcete toto workflow smazat?",
+    "Export": "Exportovat",
+    "Transitions": "Přechody",
+    "AddTransition": "Přidat přechod",
+    "DeleteWorkflowTransition": "Smazat přechod",
+    "DeleteWorkflowTransitionConfirm": "Opravdu chcete tento přechod smazat?",
+    "CreateTransition": "Vytvořit přechod",
+    "TransitionNamed": "Přechod: {name}",
+    "AnyStatus": "Jakýkoli stav",
+    "TaskTypeRequired": "K vytvoření workflow je vyžadován alespoň jeden typ úkolu",
+    "UnknownTaskType": "Neznámý typ úkolu",
+    "WorkflowName": "Název workflow",
+    "NameRequired": "Název je vyžadován",
+    "StatusToRequired": "Stav „Do“ je vyžadován"
   }
 }

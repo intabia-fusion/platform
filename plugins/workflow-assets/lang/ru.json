@@ -8,6 +8,23 @@
     "From": "Откуда",
     "To": "Куда",
     "TaskType": "Тип задачи",
-    "WorkflowSchemeField": "Схема воркфлоу"
+    "WorkflowSchemeField": "Схема воркфлоу",
+    "Untitled": "Без названия",
+    "AnyStatus": "Любой статус",
+    "Workflows": "Воркфлоу",
+    "DeleteWorkflow": "Удалить воркфлоу",
+    "DeleteWorkflowConfirm": "Вы уверены, что хотите удалить этот воркфлоу?",
+    "DeleteWorkflowTransition": "Удалить переход",
+    "DeleteWorkflowTransitionConfirm": "Вы уверены, что хотите удалить этот переход?",
+    "Export": "Экспорт",
+    "Transitions": "Переходы",
+    "AddTransition": "Добавить переход",
+    "CreateTransition": "Создать переход",
+    "TransitionNamed": "Переход: {name}",
+    "TaskTypeRequired": "Для создания воркфлоу необходим хотя бы один тип задачи",
+    "UnknownTaskType": "Неизвестный тип задачи",
+    "WorkflowName": "Название воркфлоу",
+    "NameRequired": "Название обязательно",
+    "StatusToRequired": "Статус «Куда» обязателен"
   }
 }
