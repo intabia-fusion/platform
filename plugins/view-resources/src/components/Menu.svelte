@@ -19,6 +19,7 @@
   import { Action, Menu } from '@hcengineering/ui'
   import { Action as ViewAction, ViewContextType } from '@hcengineering/view'
   import { actionGroupOrder, getActions, invokeAction } from '../actions'
+  import { createEventDispatcher } from 'svelte'
 
   export let object: Doc | Doc[]
   export let baseMenuClass: Ref<Class<Doc>> | undefined = undefined
@@ -28,8 +29,9 @@
   export let mode: ViewContextType | undefined = undefined
   export let overrides = new Map<Ref<ViewAction>, (object: Doc | Doc[], ev?: Event) => void>()
 
-  let resActions = actions
+  const dispatch = createEventDispatcher()
 
+  let resActions = actions
   let loaded = false
 
   void getActions(getClient(), object, baseMenuClass, mode).then((result) => {
@@ -59,7 +61,18 @@
       inline: a.inline,
       group: a.context.group ?? 'other',
       order: a.context.order,
-      action: async (_: any, evt: Event) => {
+      action: async (_: any, evt: any) => {
+        const detail = typeof evt === 'object' && evt !== null ? evt.detail : undefined
+
+        if (
+          typeof evt === 'string' ||
+          typeof evt === 'number' ||
+          typeof detail === 'string' ||
+          (evt !== undefined && !(evt instanceof Event))
+        ) {
+          return
+        }
+
         if (overrides?.has(a._id)) {
           overrides.get(a._id)?.(object, evt)
           return
@@ -90,5 +103,11 @@
 </script>
 
 {#if loaded}
-  <Menu actions={resActions} on:close on:changeContent />
+  <Menu
+    actions={resActions}
+    on:close={() => {
+      dispatch('close')
+    }}
+    on:changeContent
+  />
 {/if}
