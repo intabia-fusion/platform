@@ -249,24 +249,43 @@
         undefined,
         (confirmed?: boolean) => {
           if (confirmed !== true) return
-          void (async () => {
-            try {
-              const result = await paymentClient.updateSubscriptionPlan(replaceSub.id, pkgKey)
-              if ('checkoutUrl' in result) {
-                await applyCheckout(result)
-              } else {
-                currentPackageSubscription = result
-              }
-            } catch (error) {
-              console.error('Error replacing package:', error)
-              await showErrorNotification()
-            }
-          })()
+          void executePackageUpdate(replaceSub.id, pkgKey)
         }
       )
       // Connecting package, no package connected yet
     } else {
       void subscribePackage(pkgKey)
+    }
+  }
+
+  // Package swap with the same claim-conflict handling as tier updates (in_flight retry, force popup)
+  async function executePackageUpdate (
+    subscriptionId: string,
+    pkgKey: string,
+    force?: boolean,
+    attempt = 0
+  ): Promise<void> {
+    if (paymentClient == null) return
+    try {
+      const result = await paymentClient.updateSubscriptionPlan(subscriptionId, pkgKey, undefined, undefined, force)
+      if ('checkoutUrl' in result) {
+        await applyCheckout(result)
+      } else {
+        currentPackageSubscription = result
+      }
+    } catch (error) {
+      if (error instanceof PaymentError && error.reason === 'in_flight' && attempt < CHECKOUT_INFLIGHT_RETRIES) {
+        await new Promise((resolve) => setTimeout(resolve, CHECKOUT_INFLIGHT_DELAY))
+        await executePackageUpdate(subscriptionId, pkgKey, force, attempt + 1)
+        return
+      }
+      const handled = await handleCheckoutError(error, async () => {
+        await executePackageUpdate(subscriptionId, pkgKey, true)
+      })
+      if (!handled) {
+        console.error('Error replacing package:', error)
+        await showErrorNotification()
+      }
     }
   }
 

@@ -101,6 +101,11 @@ function hashWorkspace (uuid: string): string {
   return Math.abs(hash).toString(36)
 }
 
+/** Correlation id for one user/system intent: every ledger row it causes shares it. */
+export function newActionId (): string {
+  return `act-${Date.now().toString(36)}-${randomBytes(4).toString('hex')}`
+}
+
 export function buildOrderId (workspaceUuid: WorkspaceUuid, transactionCount: number): string {
   const ws = hashWorkspace(workspaceUuid)
   const ts = Date.now().toString(36)

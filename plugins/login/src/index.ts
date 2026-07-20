@@ -90,6 +90,7 @@ export default plugin(loginId, {
     PasswordMinUpperChars: '' as IntlString<{ count: number }>,
     PasswordMinLowerChars: '' as IntlString<{ count: number }>,
     SelectWorkspace: '' as IntlString,
+    CommunityEdition: '' as IntlString,
     ChangePassword: '' as IntlString,
     CurrentPassword: '' as IntlString,
     NewPassword: '' as IntlString,

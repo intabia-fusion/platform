@@ -114,34 +114,33 @@ const usage = (u: Record<string, number>): UsageStatus =>
 describe('calculateLimits — storage packages (mutually exclusive)', () => {
   it('no package: storage = base plan only', () => {
     const r = calculateLimits(plan({ storageLimitGB: 100 }))
-    expect(r.storageLimit).toBe(100 * GB)
+    expect(r?.storageLimit).toBe(100 * GB)
   })
 
   it('one package: storage = base + package', () => {
     const r = calculateLimits(plan({ storageLimitGB: 100 }), pkg({ storageLimitGB: 200 }))
-    expect(r.storageLimit).toBe((100 + 200) * GB)
+    expect(r?.storageLimit).toBe((100 + 200) * GB)
   })
 
   it('package with zero storage adds nothing', () => {
     const r = calculateLimits(plan({ storageLimitGB: 100 }), pkg({ storageLimitGB: 0 }))
-    expect(r.storageLimit).toBe(100 * GB)
+    expect(r?.storageLimit).toBe(100 * GB)
   })
 
   it('subscription limit snapshot overrides config plan', () => {
     const tierSub = { limits: { storageLimitGB: 300 } } as unknown as SubscriptionData
     const r = calculateLimits(plan({ storageLimitGB: 100 }), undefined, tierSub)
-    expect(r.storageLimit).toBe(300 * GB)
+    expect(r?.storageLimit).toBe(300 * GB)
   })
 
   it('package subscription snapshot overrides config package', () => {
     const pkgSub = { limits: { storageLimitGB: 500 } } as unknown as SubscriptionData
     const r = calculateLimits(plan({ storageLimitGB: 100 }), pkg({ storageLimitGB: 200 }), undefined, pkgSub)
-    expect(r.storageLimit).toBe((100 + 500) * GB)
+    expect(r?.storageLimit).toBe((100 + 500) * GB)
   })
 
-  it('falls back to defaults when nothing provided', () => {
-    const r = calculateLimits()
-    expect(r.storageLimit).toBe(10 * GB) // DEFAULT_STORAGE_GB, no package
+  it('returns undefined when no plan and no subscription (no fabricated fallback)', () => {
+    expect(calculateLimits()).toBeUndefined()
   })
 })
 

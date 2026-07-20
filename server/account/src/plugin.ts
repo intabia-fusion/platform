@@ -47,6 +47,13 @@ export const accountPlugin = plugin(accountId, {
     // Free fallback limits (defaults, FREE_PLAN_LIMITS env overrides). Always present — applied to every
     // tier subscription on read; an unpaid workspace runs on these instead of full read-only. Not persisted.
     FreePlanLimits: '' as Metadata<TierLimits>,
+    // Self-host edition gating. account is the single holder of LICENSE_KEY; other pods ask account.
+    // LicenseMaxUsers: 0 = unlimited (dev/licensed-unlimited), >0 = hard cap on the free path
+    // (community=15 or licensed maxUsers). LicenseEdition: dev|community|licensed. LicenseCanRunPayment:
+    // whether the payment pods may run (dev always true; licensed per key; community false).
+    LicenseMaxUsers: '' as Metadata<number>,
+    LicenseEdition: '' as Metadata<string>,
+    LicenseCanRunPayment: '' as Metadata<boolean>,
     MailQueue: '' as Metadata<PlatformQueueProducer<AccountNotification>>,
     CrmQueue: '' as Metadata<PlatformQueueProducer<CrmNotification>>,
     WorkspaceQueue: '' as Metadata<PlatformQueueProducer<QueueWorkspaceLimitsMessage>>,

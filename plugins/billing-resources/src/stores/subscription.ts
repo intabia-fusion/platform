@@ -70,7 +70,7 @@ export const seatCount = derived(subscriptionStore, ($s) => $s.usageInfo?.usage.
 
 // True when the plan's user limit is reached (0 = unlimited). undefined seats block until known.
 export const seatLimitReached = derived([seatCount, planLimits], ([$seats, $limits]) => {
-  const limit = $limits.usersLimit
+  const limit = $limits?.usersLimit ?? 0
   return limit > 0 && ($seats === undefined || $seats >= limit)
 })
 

@@ -15,7 +15,7 @@
 
 import { Analytics } from '@hcengineering/analytics'
 import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { newMetrics } from '@hcengineering/core'
+import { newMetrics, systemAccountUuid, type MeasureContext } from '@hcengineering/core'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
@@ -25,15 +25,34 @@ import {
   QueueWorkspaceEvent,
   type QueueWorkspaceMessage,
   type QueueSubscriptionMessage,
-  subscriptionEvents
+  QueueSubscriptionEvent,
+  subscriptionEvents,
+  type QueuePaymentOperationMessage
 } from '@hcengineering/server-core'
 import { type SubscriptionData } from '@hcengineering/account-client'
-import { isFinalizedUserCancel } from './utils'
+import { getAccountClient, isFinalizedUserCancel } from './utils'
 import type { SubscriptionPublisher } from './providers'
-import serverToken from '@hcengineering/server-token'
+import serverToken, { generateToken } from '@hcengineering/server-token'
 import { join } from 'path'
 import config from './config'
 import { createServer, listen } from './server'
+
+// account is the single license-key holder. Ask it whether payment may run: dev always yes, licensed
+// per key, community no. Refusing here (before HTTP) stops anyone standing up a paid SaaS on our
+// bundle without our sign-off. Fail closed on an unreachable account only outside dev.
+const assertPaymentAllowed = async (): Promise<void> => {
+  const token = generateToken(systemAccountUuid, undefined, { service: 'payment' })
+  let info
+  try {
+    info = await getAccountClient(config.AccountsUrl, token).getLicenseInfo()
+  } catch (err) {
+    console.error('Failed to resolve license from account, refusing to start payment:', err)
+    process.exit(1)
+  }
+  if (info.edition === 'dev' || info.canRunPayment) return
+  console.error(`Payment service is not permitted for this license (edition: ${info.edition}). Exiting.`)
+  process.exit(1)
+}
 
 const setupMetadata = (): void => {
   setMetadata(serverToken.metadata.Secret, config.Secret)
@@ -43,6 +62,7 @@ const setupMetadata = (): void => {
 
 export const main = async (): Promise<void> => {
   setupMetadata()
+  await assertPaymentAllowed()
 
   configureAnalytics('payment', process.env.VERSION ?? '0.7.0')
   Analytics.setTag('application', 'payment')
@@ -72,10 +92,40 @@ export const main = async (): Promise<void> => {
     await producer.send(ctx, data.workspaceUuid, [msg])
   }
 
+  // Durable payment-operation audit for mock/polar/stripe (tbank publishes its own, see pod-tbank-subscriptions).
+  const opProducer = queue.getProducer<QueuePaymentOperationMessage>(metricsContext, QueueTopic.PaymentOperation)
+  const logOperation = async (ctx: MeasureContext, sub: SubscriptionData, canceled: boolean): Promise<void> => {
+    if (sub.provider === 'tbank') return
+    try {
+      await opProducer.send(ctx, sub.workspaceUuid, [
+        {
+          provider: sub.provider,
+          operation: canceled ? 'cancel' : 'webhook',
+          status: sub.status,
+          subscriptionId: sub.id,
+          paymentId: sub.providerSubscriptionId,
+          orderId: sub.providerSubscriptionId,
+          workspaceUuid: sub.workspaceUuid,
+          accountUuid: sub.accountUuid,
+          // Provider pods stamp the originating intent on the subscription; reuse it so a free/trial
+          // activation lands in the same action as the plan change that triggered it.
+          actionId: sub.providerData?.actionId as string | undefined,
+          actor: sub.provider === 'free' || sub.provider === 'trial' ? 'system' : 'provider',
+          amount: sub.amount,
+          raw: { plan: sub.plan, seats: sub.providerData?.quantity, type: sub.type },
+          at: Date.now()
+        }
+      ])
+    } catch {
+      /* audit is best-effort */
+    }
+  }
+
   const { app, ensureInitialSubscription, createFreeIfNoActiveTier, persistSubscription, close } = await createServer(
     metricsContext,
     config,
-    publish
+    publish,
+    logOperation
   )
   const server = listen(app, config.Port)
 
@@ -106,9 +156,11 @@ export const main = async (): Promise<void> => {
           try {
             const sub = msg.value.subscription as SubscriptionData
             await persistSubscription(sub)
+            await logOperation(ctx, sub, msg.value.type === QueueSubscriptionEvent.Canceled)
             // After a user initiated canceling finalized, we create free subscription.
             if (isFinalizedUserCancel(sub)) {
-              await createFreeIfNoActiveTier(sub.workspaceUuid)
+              // Falling back to free is part of the cancel the user just made — same action.
+              await createFreeIfNoActiveTier(sub.workspaceUuid, sub.providerData?.actionId as string | undefined)
             }
           } catch (err: any) {
             ctx.error('failed to persist subscription event', {
@@ -126,6 +178,7 @@ export const main = async (): Promise<void> => {
       await wsConsumer.close()
       await subConsumer.close()
       await producer.close()
+      await opProducer.close()
     }
   }
 

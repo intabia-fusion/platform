@@ -88,7 +88,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV27Migration(ns, flavor),
     getV28Migration(ns, flavor),
     getV29Migration(ns, flavor),
-    getV30Migration(ns, flavor)
+    getV30Migration(ns, flavor),
+    getV31Migration(ns, flavor)
   ]
 }
 
@@ -922,6 +923,45 @@ function getV30Migration (ns: string, flavor: DBFlavor): [string, string] {
 
     CREATE UNIQUE INDEX IF NOT EXISTS payment_intent_claim_key_unique ON ${ns}.payment_intent (claim_key);
     CREATE INDEX IF NOT EXISTS payment_intent_payment_id_idx ON ${ns}.payment_intent (payment_id);
+    `
+  ]
+}
+
+function getV31Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v31_payment_operation_ledger',
+    `
+    /* ======= P A Y M E N T   O P E R A T I O N   L E D G E R ======= */
+    /* Append-only audit trail of every payment operation (init charge, webhook result, recurrent
+       charge, cancel, refund). Immutable — rows are inserted, never updated/deleted. raw holds the
+       full provider payload for forensics/reconciliation. No FK: an init may precede the subscription.
+       action_id groups every row a single user/system intent produced (e.g. a plan change =
+       new charge + old subscription cancel + free activation), actor says who drove that row. */
+
+    CREATE TABLE IF NOT EXISTS ${ns}.payment_operation (
+        id ${types.string} NOT NULL DEFAULT gen_random_uuid()::TEXT,
+        provider ${types.string} NOT NULL,
+        operation ${types.string} NOT NULL, -- init_charge | webhook | charge_recurrent | cancel | refund
+        status ${types.string}, -- provider/webhook status (CONFIRMED|REJECTED|...) or success/failed
+        payment_id ${types.string}, -- provider charge id
+        order_id ${types.string},
+        subscription_id ${types.string},
+        workspace_uuid ${types.string},
+        account_uuid ${types.string}, -- who/what initiated (system for scheduler)
+        action_id ${types.string}, -- correlates every row of one intent (purchase, plan change, renewal)
+        actor ${types.string}, -- user | system | provider | admin
+        amount ${types.int8}, -- minor units (kopecks)
+        raw JSONB, -- full provider request/response/notification payload
+        created_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
+
+        CONSTRAINT payment_operation_pk PRIMARY KEY (id)
+    );
+
+    CREATE INDEX IF NOT EXISTS payment_operation_workspace_idx ON ${ns}.payment_operation (workspace_uuid);
+    CREATE INDEX IF NOT EXISTS payment_operation_payment_id_idx ON ${ns}.payment_operation (payment_id);
+    CREATE INDEX IF NOT EXISTS payment_operation_created_idx ON ${ns}.payment_operation (created_on);
+    CREATE INDEX IF NOT EXISTS payment_operation_action_idx ON ${ns}.payment_operation (action_id);
     `
   ]
 }

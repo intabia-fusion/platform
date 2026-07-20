@@ -21,9 +21,15 @@ import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
 import serverToken, { generateToken } from '@hcengineering/server-token'
 import { getClient, type SubscriptionData } from '@hcengineering/account-client'
-import { QueueTopic, type QueueSubscriptionMessage, subscriptionEvents } from '@hcengineering/server-core'
+import {
+  QueueTopic,
+  type QueueSubscriptionMessage,
+  type QueuePaymentOperationMessage,
+  subscriptionEvents
+} from '@hcengineering/server-core'
 import { join } from 'path'
 import TbankPayments from 'tbank-payments'
+import { createMockTbank } from './mockTbank'
 
 import config from './config'
 import { createServer } from './server'
@@ -35,6 +41,8 @@ const setupMetadata = (): void => {
   setMetadata(serverToken.metadata.Service, 'tbank-subscriptions')
   setMetadata(serverClient.metadata.Endpoint, config.AccountsUrl)
 }
+// No license gate here: tbank-subscriptions sits behind pod-payment (internal), which already refuses
+// to start in community. If payment is down, no traffic reaches this pod.
 
 export const main = async (): Promise<void> => {
   setupMetadata()
@@ -54,20 +62,33 @@ export const main = async (): Promise<void> => {
   )
 
   // Custom logger: SDK default `console` dumps full payloads (CardId/RebillId) to stdout on debug. Drop it.
-  const tbank = new TbankPayments({
-    merchantId: config.TbankTerminalKey,
-    secret: config.TbankPassword,
-    apiUrl: config.TbankUrl,
-    logger: {
-      debug: (message: string) => {
-        metricsContext.info(message)
-      },
-      error: (message: string, data?: any) => {
-        // Keep message/status, drop raw response body which may echo payload.
-        metricsContext.error(message, { message: data?.message, status: data?.status })
+  const mockPair =
+    config.TbankMock === true
+      ? createMockTbank({
+        terminalKey: config.TbankTerminalKey ?? 'mock-terminal',
+        webhookUrl: `http://localhost:${config.Port}/api/v1/webhooks/tbank`,
+        checkoutBase: `${config.FrontUrl}/_tbank_subscriptions`,
+        info: (msg, data) => {
+          metricsContext.info(msg, data)
+        }
+      })
+      : undefined
+  const tbank =
+    mockPair?.tbank ??
+    new TbankPayments({
+      merchantId: config.TbankTerminalKey,
+      secret: config.TbankPassword,
+      apiUrl: config.TbankUrl,
+      logger: {
+        debug: (message: string) => {
+          metricsContext.info(message)
+        },
+        error: (message: string, data?: any) => {
+          // Keep message/status, drop raw response body which may echo payload.
+          metricsContext.error(message, { message: data?.message, status: data?.status })
+        }
       }
-    }
-  })
+    })
 
   // Static service token signed with SECRET — rotating SECRET requires restarting this pod.
   const serviceToken = generateToken(systemAccountUuid, undefined, { service: 'payment' })
@@ -79,9 +100,17 @@ export const main = async (): Promise<void> => {
     await producer.send(metricsContext, data.workspaceUuid, [subscriptionEvents.upserted(data, 'tbank', 'webhook')])
   }
 
-  const storage = new SubscriptionStorage(accountClient, publish)
+  // Durable payment-operation audit: publish to the ledger topic; the account service is the consumer.
+  const opProducer = queue.getProducer<QueuePaymentOperationMessage>(metricsContext, QueueTopic.PaymentOperation)
+  const publishOperation = async (op: Record<string, any>): Promise<void> => {
+    await opProducer.send(metricsContext, op.workspaceUuid ?? op.paymentId ?? 'unknown', [
+      op as QueuePaymentOperationMessage
+    ])
+  }
 
-  const { app, close } = await createServer(metricsContext, config, tbank, storage)
+  const storage = new SubscriptionStorage(accountClient, publish, publishOperation)
+
+  const { app, close } = await createServer(metricsContext, config, tbank, storage, mockPair?.mock)
 
   const server = app.listen(config.Port, () => {
     console.log(`TBank subscriptions service listening on port ${config.Port}`)

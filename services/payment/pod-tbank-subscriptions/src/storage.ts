@@ -26,7 +26,9 @@ import { isFailedRenewal } from './utils'
 export class SubscriptionStorage {
   constructor (
     private readonly accountClient: AccountClient,
-    private readonly publish: (data: SubscriptionData) => Promise<void>
+    private readonly publish: (data: SubscriptionData) => Promise<void>,
+    // Optional audit publisher — a payment-operation ledger event to the durable queue.
+    private readonly publishOperation?: (op: Record<string, any>) => Promise<void>
   ) {}
 
   async upsert (subscription: SubscriptionData): Promise<void> {
@@ -106,6 +108,36 @@ export class SubscriptionStorage {
   // (workspace, type) key for a later purchase. Idempotent — a duplicate webhook deletes nothing.
   async releaseCheckout (paymentId: string): Promise<void> {
     await this.accountClient.deleteCheckoutIntentByPaymentId(paymentId, 'tbank')
+  }
+
+  // Free a claim that never issued a payment (open-checkout failed before setCheckoutPayment), so a
+  // retry gets a clean claim immediately instead of waiting out the 15-min lease.
+  async abandonCheckout (intentId: string): Promise<void> {
+    await this.accountClient.deleteCheckoutIntentById(intentId)
+  }
+
+  // Append an immutable audit row. Best-effort: a ledger write must never break the payment flow.
+  async logOperation (op: {
+    operation: 'init_charge' | 'webhook' | 'charge_recurrent' | 'cancel' | 'refund'
+    status?: string
+    paymentId?: string
+    orderId?: string
+    subscriptionId?: string
+    workspaceUuid?: string
+    accountUuid?: string
+    actionId?: string
+    actor?: 'user' | 'system' | 'provider' | 'admin'
+    amount?: number
+    raw?: Record<string, any>
+  }): Promise<void> {
+    // Publish to the durable payment-operation queue (account service appends the ledger row). Never
+    // fails the payment path — a lost audit event is preferable to a broken charge.
+    if (this.publishOperation === undefined) return
+    try {
+      await this.publishOperation({ provider: 'tbank', at: Date.now(), ...op })
+    } catch {
+      /* audit is best-effort */
+    }
   }
 
   async markCharge (intentId: string, status: 'charged' | 'failed', paymentId?: string): Promise<void> {

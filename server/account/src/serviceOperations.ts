@@ -60,6 +60,10 @@ import type {
   Subscription,
   SubscriptionData,
   PaymentIntent,
+  PaymentOperation,
+  PaymentOperationStats,
+  PaymentOperationFilter,
+  PaymentMonthlyStats,
   Workspace,
   WorkspaceEvent,
   WorkspaceInfoWithStatus,
@@ -1708,6 +1712,78 @@ export async function deleteCheckoutIntentByPaymentId (
   await db.deleteCheckoutIntentByPaymentId(params.paymentId, params.provider)
 }
 
+export async function deleteCheckoutIntentById (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { intentId: string }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  await db.deleteCheckoutIntentById(params.intentId)
+}
+
+export async function logPaymentOperation (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { op: PaymentOperation }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  await db.logPaymentOperation(params.op)
+}
+
+export async function getPaymentOperationStats (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { from: number, to: number }
+): Promise<PaymentOperationStats> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  // payment service writes/reads for the daily summary; admin reads for the audit page.
+  if (extra?.service !== 'payment' && extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return await db.getPaymentOperationStats(params.from, params.to)
+}
+
+export async function getPaymentOperations (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: PaymentOperationFilter
+): Promise<PaymentOperation[]> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment' && extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return await db.getPaymentOperations(params)
+}
+
+export async function getPaymentMonthlyStats (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { from: number, to: number }
+): Promise<PaymentMonthlyStats[]> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  // Admin-only: the finance overview is not needed by service tokens.
+  if (extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return await db.getPaymentMonthlyStats(params.from, params.to)
+}
+
 /**
  * Mark a previously claimed charge intent as charged (with the provider payment id) or failed.
  * @public
@@ -1979,6 +2055,11 @@ export type AccountServiceMethods =
   | 'reclaimStaleChargeIntent'
   | 'setIntentPayment'
   | 'deleteCheckoutIntentByPaymentId'
+  | 'deleteCheckoutIntentById'
+  | 'logPaymentOperation'
+  | 'getPaymentOperationStats'
+  | 'getPaymentOperations'
+  | 'getPaymentMonthlyStats'
   | 'upsertSubscription'
   | 'getAccountWorkspaceBadgeStatuses'
   | 'setWorkspaceBadgeStatuses'
@@ -2041,6 +2122,11 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     reclaimStaleChargeIntent: wrap(reclaimStaleChargeIntent),
     setIntentPayment: wrap(setIntentPayment),
     deleteCheckoutIntentByPaymentId: wrap(deleteCheckoutIntentByPaymentId),
+    deleteCheckoutIntentById: wrap(deleteCheckoutIntentById),
+    logPaymentOperation: wrap(logPaymentOperation),
+    getPaymentOperationStats: wrap(getPaymentOperationStats),
+    getPaymentOperations: wrap(getPaymentOperations),
+    getPaymentMonthlyStats: wrap(getPaymentMonthlyStats),
     upsertSubscription: wrap(upsertSubscription),
     getAccountWorkspaceBadgeStatuses: wrap(getAccountWorkspaceBadgeStatuses),
     setWorkspaceBadgeStatuses: wrap(setWorkspaceBadgeStatuses),

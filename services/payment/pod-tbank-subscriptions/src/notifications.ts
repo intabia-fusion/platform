@@ -168,36 +168,62 @@ export async function notifyPaymentFailed (
     return
   }
 
+  let payerEmail: string | null = null
   try {
     const { email, locale } = await storage.getAccountContact(sub.accountUuid)
+    payerEmail = email
     if (email === null) {
       ctx.warn('Payment-failed email skipped: no email for account', { subId: sub.id, account: sub.accountUuid })
-      return
+    } else {
+      const lang = resolveLang(locale)
+      const planLabel = await getPlanLabel(config, sub.plan, sub.type, lang)
+      const { subject, text, html } = buildMessage(reason, planLabel, config, lang)
+      await sendMail(config, email, { subject, text, html })
+      ctx.info('Payment-failed email sent', { subId: sub.id, reason })
     }
-
-    const lang = resolveLang(locale)
-    const planLabel = await getPlanLabel(config, sub.plan, sub.type, lang)
-    const { subject, text, html } = buildMessage(reason, planLabel, config, lang)
-
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (config.MailApiKey !== undefined) {
-      headers.Authorization = `Bearer ${config.MailApiKey}`
-    }
-
-    const res = await fetch(`${config.MailUrl.replace(/\/+$/, '')}/send`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ from: config.MailFrom, to: email, subject, text, html }),
-      signal: AbortSignal.timeout(MAIL_TIMEOUT_MS)
-    })
-
-    if (!res.ok) {
-      ctx.error('Payment-failed email send failed', { subId: sub.id, status: res.status, reason })
-      return
-    }
-
-    ctx.info('Payment-failed email sent', { subId: sub.id, reason })
   } catch (err: any) {
     ctx.error('Payment-failed email error', { subId: sub.id, reason, err: err?.message ?? String(err) })
+  }
+
+  // Service copy so the team can reach out to the payer directly.
+  if (config.BillingEmails !== undefined && config.BillingEmails.length > 0) {
+    const attempt = (sub.providerData?.retryAttempt as number) ?? 0
+    const lines = [
+      `Workspace: ${sub.workspaceUuid}`,
+      `Plan: ${sub.plan} (${sub.type})`,
+      `Amount: ${((sub.amount ?? 0) / 100).toFixed(2)} RUB`,
+      `Attempt: ${attempt} of 3 (${reason})`,
+      `Payer: ${payerEmail ?? sub.accountUuid}`,
+      `Subscription: ${sub.id ?? '-'}`
+    ]
+    const svc: MailMessage = {
+      subject: `[billing] Не удалось списание: ${sub.plan} (${reason})`,
+      text: lines.join('\n'),
+      html: `<pre>${lines.join('\n')}</pre>`
+    }
+    for (const to of config.BillingEmails) {
+      try {
+        await sendMail(config, to, svc)
+      } catch (err: any) {
+        ctx.error('Billing service email error', { to, err: err?.message ?? String(err) })
+      }
+    }
+  }
+}
+
+// POST one message to pod-mail; throws on transport/HTTP errors (callers log and swallow).
+async function sendMail (config: Config, to: string, msg: MailMessage): Promise<void> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (config.MailApiKey !== undefined) {
+    headers.Authorization = `Bearer ${config.MailApiKey}`
+  }
+  const res = await fetch(`${(config.MailUrl as string).replace(/\/+$/, '')}/send`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ from: config.MailFrom, to, subject: msg.subject, text: msg.text, html: msg.html }),
+    signal: AbortSignal.timeout(MAIL_TIMEOUT_MS)
+  })
+  if (!res.ok) {
+    throw new Error(`mail send failed: ${res.status}`)
   }
 }

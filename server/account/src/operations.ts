@@ -59,6 +59,7 @@ import {
   type PersonWithProfile,
   type Query,
   type RegionInfo,
+  type LicenseInfo,
   type SocialId,
   type Subscription,
   SubscriptionStatus,
@@ -1687,6 +1688,24 @@ export async function getRegionInfo (
   return getRegions()
 }
 
+// account is the single license-key holder; payment pods ask this at startup instead of verifying a
+// key themselves. Values come from metadata set once at account-service startup.
+export async function getLicenseInfo (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string
+): Promise<LicenseInfo> {
+  // Require a valid token (same as sibling methods) — no unauthenticated reads.
+  decodeTokenVerbose(ctx, token)
+  return {
+    edition: (getMetadata(accountPlugin.metadata.LicenseEdition) as LicenseInfo['edition']) ?? 'dev',
+    // Fail closed: missing metadata (startup race / misconfig) must not permit payment.
+    canRunPayment: getMetadata(accountPlugin.metadata.LicenseCanRunPayment) ?? false,
+    maxUsers: getMetadata(accountPlugin.metadata.LicenseMaxUsers) ?? 0
+  }
+}
+
 export async function getUserWorkspaces (
   ctx: MeasureContext,
   db: AccountDB,
@@ -1695,9 +1714,10 @@ export async function getUserWorkspaces (
 ): Promise<WorkspaceInfoWithStatus[]> {
   const { account } = decodeTokenVerbose(ctx, token)
 
-  return (await db.getAccountWorkspaces(account)).filter(
-    (ws) => isWorkspaceCreating(ws.status.mode) || !(isDeletingMode(ws.status.mode) || ws.status.isDisabled)
-  )
+  const edition = getMetadata(accountPlugin.metadata.LicenseEdition)
+  return (await db.getAccountWorkspaces(account))
+    .filter((ws) => isWorkspaceCreating(ws.status.mode) || !(isDeletingMode(ws.status.mode) || ws.status.isDisabled))
+    .map((ws) => ({ ...ws, licenseEdition: edition }))
 }
 
 /**
@@ -3111,6 +3131,7 @@ export type AccountMethods =
   | 'updateWorkspaceName'
   | 'deleteWorkspace'
   | 'getRegionInfo'
+  | 'getLicenseInfo'
   | 'getUserWorkspaces'
   | 'getWorkspaceInfo'
   | 'getWorkspacesInfo'
@@ -3218,6 +3239,7 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
 
     /* READ OPERATIONS */
     getRegionInfo: wrap(getRegionInfo),
+    getLicenseInfo: wrap(getLicenseInfo),
     getUserWorkspaces: wrap(getUserWorkspaces),
     getWorkspaceInfo: wrap(getWorkspaceInfo),
     getWorkspacesInfo: wrap(getWorkspacesInfo),

@@ -20,6 +20,7 @@
   import AccountsTab from './tabs/AccountsTab.svelte'
   import GeneralTab from './tabs/GeneralTab.svelte'
   import WorkspacesTab from './tabs/WorkspacesTab.svelte'
+  import PaymentsTab from './tabs/PaymentsTab.svelte'
 
   let lastUpdated: number | undefined
   let refreshTick = 0
@@ -56,7 +57,8 @@
   const tabItems: TabItem[] = [
     { id: 'general', labelIntl: adminRes.string.General },
     { id: 'workspaces', labelIntl: adminRes.string.Workspaces },
-    { id: 'accounts', labelIntl: adminRes.string.Accounts }
+    { id: 'accounts', labelIntl: adminRes.string.Accounts },
+    { id: 'payments', labelIntl: adminRes.string.Payments }
   ]
 
   function onTabSelect (ev: CustomEvent): void {
@@ -96,6 +98,8 @@
       <WorkspacesTab {refreshTick} />
     {:else if selectedTab === 'accounts'}
       <AccountsTab {refreshTick} />
+    {:else if selectedTab === 'payments'}
+      <PaymentsTab {refreshTick} />
     {/if}
   </div>
 </Scroller>

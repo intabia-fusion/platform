@@ -22,7 +22,12 @@ import {
   type WorkspaceActivityPoint,
   type WorkspacesPagedQuery,
   type WorkspacesPagedResult,
-  type WorkspacesSummary
+  type WorkspacesSummary,
+  type PaymentOperation,
+  type PaymentOperationFilter,
+  type PaymentOperationStats,
+  type PaymentMonthlyStats,
+  type SubscriptionInfo
 } from '@hcengineering/account-client'
 import { type WorkspaceInfoWithStatus, type WorkspaceUserOperation } from '@hcengineering/core'
 import login, { loginId } from '@hcengineering/login'
@@ -83,6 +88,22 @@ export async function getRegistrationStats (from: number, to: number): Promise<R
 
 export async function getWorkspaceActivityStats (workspace: string, from: number): Promise<WorkspaceActivityPoint[]> {
   return await safe(async () => await getAccountClient().getWorkspaceActivityStats(workspace as any, from), [])
+}
+
+export async function getPaymentOperations (filter: PaymentOperationFilter): Promise<PaymentOperation[]> {
+  return await safe(async () => await getAccountClient().getPaymentOperations(filter), [])
+}
+
+export async function getPaymentOperationStats (from: number, to: number): Promise<PaymentOperationStats | null> {
+  return await safe(async () => await getAccountClient().getPaymentOperationStats(from, to), null)
+}
+
+export async function getPaymentMonthlyStats (from: number, to: number): Promise<PaymentMonthlyStats[]> {
+  return await safe(async () => await getAccountClient().getPaymentMonthlyStats(from, to), [])
+}
+
+export async function getAllSubscriptions (): Promise<SubscriptionInfo[]> {
+  return await safe(async () => await getAccountClient().getAllSubscriptions(), [])
 }
 
 export interface PlanOptions {

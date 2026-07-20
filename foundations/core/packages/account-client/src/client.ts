@@ -51,10 +51,15 @@ import type {
   PersonWithProfile,
   ProviderInfo,
   RegionInfo,
+  LicenseInfo,
   SocialId,
   Subscription,
   SubscriptionData,
   PaymentIntent,
+  PaymentOperation,
+  PaymentOperationStats,
+  PaymentOperationFilter,
+  PaymentMonthlyStats,
   SubscriptionInfo,
   UserProfile,
   WorkspaceInviteInfo,
@@ -143,6 +148,7 @@ export interface AccountClient {
   getWorkspacesInfo: (workspaces: WorkspaceUuid[]) => Promise<WorkspaceInfoWithStatus[]>
   updateLastVisit: (workspaces: WorkspaceUuid[]) => Promise<void>
   getRegionInfo: () => Promise<RegionInfo[]>
+  getLicenseInfo: () => Promise<LicenseInfo>
   createWorkspace: (name: string, region?: string) => Promise<WorkspaceLoginInfo>
   signUpOtp: (email: string, first: string, last: string, phone?: string) => Promise<OtpInfo>
   /**
@@ -313,6 +319,11 @@ export interface AccountClient {
   reclaimStaleChargeIntent: (intentId: string, leaseMs: number) => Promise<boolean>
   setIntentPayment: (intentId: string, paymentId: string, paymentUrl?: string) => Promise<void>
   deleteCheckoutIntentByPaymentId: (paymentId: string, provider: string) => Promise<void>
+  deleteCheckoutIntentById: (intentId: string) => Promise<void>
+  logPaymentOperation: (op: PaymentOperation) => Promise<void>
+  getPaymentOperationStats: (from: number, to: number) => Promise<PaymentOperationStats>
+  getPaymentOperations: (filter: PaymentOperationFilter) => Promise<PaymentOperation[]>
+  getPaymentMonthlyStats: (from: number, to: number) => Promise<PaymentMonthlyStats[]>
   getSubscriptionById: (subscriptionId: string) => Promise<Subscription | null>
   upsertSubscription: (subscription: SubscriptionData) => Promise<void>
   adminCreateSubscription: (params: {
@@ -726,6 +737,15 @@ class AccountClientImpl implements AccountClient {
   async getRegionInfo (): Promise<RegionInfo[]> {
     const request = {
       method: 'getRegionInfo' as const,
+      params: {}
+    }
+
+    return await this.rpc(request)
+  }
+
+  async getLicenseInfo (): Promise<LicenseInfo> {
+    const request = {
+      method: 'getLicenseInfo' as const,
       params: {}
     }
 
@@ -1556,6 +1576,41 @@ class AccountClientImpl implements AccountClient {
     await this._rpc({
       method: 'deleteCheckoutIntentByPaymentId',
       params: { paymentId, provider }
+    })
+  }
+
+  async deleteCheckoutIntentById (intentId: string): Promise<void> {
+    await this._rpc({
+      method: 'deleteCheckoutIntentById',
+      params: { intentId }
+    })
+  }
+
+  async logPaymentOperation (op: PaymentOperation): Promise<void> {
+    await this._rpc({
+      method: 'logPaymentOperation',
+      params: { op }
+    })
+  }
+
+  async getPaymentOperationStats (from: number, to: number): Promise<PaymentOperationStats> {
+    return await this._rpc({
+      method: 'getPaymentOperationStats',
+      params: { from, to }
+    })
+  }
+
+  async getPaymentOperations (filter: PaymentOperationFilter): Promise<PaymentOperation[]> {
+    return await this._rpc({
+      method: 'getPaymentOperations',
+      params: filter
+    })
+  }
+
+  async getPaymentMonthlyStats (from: number, to: number): Promise<PaymentMonthlyStats[]> {
+    return await this._rpc({
+      method: 'getPaymentMonthlyStats',
+      params: { from, to }
     })
   }
 

@@ -75,7 +75,7 @@
     try {
       saving = true
       // Guard against creating beyond users limit
-      const limit = $planLimits.usersLimit
+      const limit = $planLimits?.usersLimit ?? 0
       if (limit > 0 && ($seatCount === undefined || $seatCount >= limit)) {
         return
       }
@@ -214,7 +214,7 @@
       <div class="flex-row-center error-color" data-id="seatLimitError">
         <IconInfo size={'small'} />
         <span class="text-sm overflow-label ml-2">
-          <Label label={contact.string.SeatLimitReached} params={{ limit: $planLimits.usersLimit }} />
+          <Label label={contact.string.SeatLimitReached} params={{ limit: $planLimits?.usersLimit ?? 0 }} />
         </span>
       </div>
     {/if}
