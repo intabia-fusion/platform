@@ -70,8 +70,13 @@ async function changeSeats (page: Page, ws: string, seats: number, expect_: 'cha
   // The Card ok button (the only primary button in the dialog footer) applies the change.
   await page.locator('.antiCard .buttons-group button').last().click()
   await expect(dialog).toBeHidden({ timeout: 15000 })
-  // A seat change is a new charge -> tbank checkout; pay it on the mock page.
-  await payMockCheckout(page, ws)
+  // Only an upgrade moves money -> tbank checkout. A downgrade is covered by the unused credit and
+  // is applied server-side in place, so no bank page appears.
+  if (expect_ === 'charge') {
+    await payMockCheckout(page, ws)
+  } else {
+    await openBilling(page, ws)
+  }
 }
 
 // Connect / switch to a package by key. A switch from an existing package opens the change dialog
@@ -93,8 +98,13 @@ async function connectPackage (page: Page, ws: string, pkgKey: string, expect_?:
     await page.locator('.antiCard .buttons-group button').last().click()
     await expect(dialog).toBeHidden({ timeout: 15000 })
   }
-  // Connect/switch is a new charge -> tbank checkout; pay it on the mock page.
-  await payMockCheckout(page, ws)
+  // A first connect or an upgrade charges -> tbank checkout. A downgrade is covered by the unused
+  // credit and applied server-side in place, with no bank page.
+  if (expect_ === 'extend') {
+    await openBilling(page, ws)
+  } else {
+    await payMockCheckout(page, ws)
+  }
   // The connect button for this package disappears once it becomes the current package.
   await expect(page.locator(`[data-id="packageConnect-${pkgKey}"]`)).toHaveCount(0, { timeout: 20000 })
 }
