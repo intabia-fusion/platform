@@ -49,6 +49,9 @@ import { generateToken } from '@hcengineering/server-token'
 import { getClient } from './client'
 import { RecordingPreset } from './preset'
 
+// 2x poll interval: don't force-finish meetings younger than this (see checkUnfinishedMeetings)
+export const UNFINISHED_MEETING_GRACE_MS = 60_000
+
 export class WorkspaceClient {
   private client!: RestClient
 
@@ -121,26 +124,7 @@ export class WorkspaceClient {
     meetingMinutes?: Ref<MeetingMinutes>
   ): Promise<void> {
     this.ctx.info('Save recording', { workspace: this.workspace, meetingMinutes })
-    // NOTE: Drive file creation is disabled - shared Drive bypasses room privacy ACL.
-    // Recording is still attached to MeetingMinutes (whose Space ACL respects room privacy).
-    // TODO: revisit drive integration with per-room privacy support.
-    // const current = await this.client.findOne(drive.class.Drive, { _id: love.space.Drive })
-    // if (current === undefined) {
-    //   await this.client.createDoc(
-    //     drive.class.Drive,
-    //     core.space.Space,
-    //     {
-    //       private: false,
-    //       archived: false,
-    //       members: [],
-    //       name: 'Records',
-    //       description: 'Office records',
-    //       type: drive.spaceType.DefaultDrive,
-    //       autoJoin: true
-    //     },
-    //     love.space.Drive
-    //   )
-    // }
+    // Drive file creation disabled: shared Drive bypasses room privacy ACL. TODO: revisit with per-room ACL support.
     const data = {
       file: uuid as Ref<Blob>,
       size: blob.size,
@@ -179,11 +163,7 @@ export class WorkspaceClient {
     )
   }
 
-  /**
-   * Add an ActivityInfoMessage to a MeetingMinutes document.
-   * `message` may be a simple string (will be converted to { en: string }) or an Intl-like object.
-   * `modifiedBy` allows specifying the person who performed the action (for participant join/leave).
-   */
+  /** Add an ActivityInfoMessage to a MeetingMinutes document. */
   async addActivityToMeeting (
     message: IntlString,
     ref: Ref<MeetingMinutes>,
@@ -217,10 +197,7 @@ export class WorkspaceClient {
     this.ctx.info('[WorkspaceClient.addActivityToMeeting] Added activity message', { meeting: meeting._id, message })
   }
 
-  /**
-   * Activate meeting (set status to Active).
-   * No activity message is added - status change is reflected in meeting document.
-   */
+  /** Activate meeting (set status to Active). */
   async activateMeeting (ref: Ref<MeetingMinutes>): Promise<void> {
     if (ref === undefined) return
 
@@ -230,9 +207,7 @@ export class WorkspaceClient {
       return
     }
 
-    // Never resurrect a finished meeting. A stale client that reconnected with
-    // an old meetingId would otherwise flip Finished -> Active and leave the
-    // meeting stuck "live" in the UI. A fresh meeting must get a new _id.
+    // Never resurrect a finished meeting - a stale client reconnecting with an old meetingId must not flip it back Active.
     if (meeting.status === MeetingStatus.Finished) {
       this.ctx.warn('Refusing to re-activate finished meeting', { meeting: meeting._id })
       return
@@ -242,11 +217,7 @@ export class WorkspaceClient {
     this.ctx.info('Activated meeting', { meeting: meeting._id })
   }
 
-  /**
-   * Mark meeting as finished.
-   * No activity message is added - status change is reflected in meeting document.
-   * Also cleans up all ParticipantInfo entries for this meeting.
-   */
+  /** Mark meeting as finished and clean up all ParticipantInfo entries for it. */
   async finishMeeting (ref: Ref<MeetingMinutes>, meetingEnd?: number): Promise<void> {
     if (ref === undefined) return
 
@@ -256,35 +227,35 @@ export class WorkspaceClient {
       return
     }
 
+    // Aborted early join before scheduled time: re-arm to Scheduled instead of terminal Finished.
+    const rearm = meeting.meetingScheduledDate != null && meeting.meetingScheduledDate > Date.now()
+
     const endTs = meetingEnd ?? Date.now()
-    const upd: DocumentUpdate<MeetingMinutes> = { status: MeetingStatus.Finished, meetingEnd: endTs }
+    const upd: DocumentUpdate<MeetingMinutes> = rearm
+      ? { status: MeetingStatus.Scheduled }
+      : { status: MeetingStatus.Finished, meetingEnd: endTs }
     if (meeting.transcriptionState === TranscriptionState.Transcribing) {
       upd.transcriptionState = TranscriptionState.Finished
     }
     if (meeting.recordingState === RecordingState.Recording) {
-      meeting.recordingState = RecordingState.Finished
+      upd.recordingState = RecordingState.Finished
     }
     await this.client.update(meeting, upd)
-    this.ctx.info('Marked meeting as finished', { meeting: meeting._id, meetingEnd: endTs })
+    if (rearm) {
+      this.ctx.info('Re-armed scheduled meeting instead of finishing', {
+        meeting: meeting._id,
+        meetingScheduledDate: meeting.meetingScheduledDate
+      })
+    } else {
+      this.ctx.info('Marked meeting as finished', { meeting: meeting._id, meetingEnd: endTs })
+    }
 
-    // Clean up all ParticipantInfo entries for this meeting
     await this.cleanupParticipantInfosForMeeting(ref)
-    // Drop any pending knock invites that targeted this meeting — without
-    // this they linger on the sender's screen until the 30s TransientTTL
-    // expires, which surfaces as "I asked to join, nobody admitted me, the
-    // meeting ended, but my request is still up".
+    // Drop pending knock invites for this meeting, else they linger until the 30s TransientTTL expires.
     await this.cleanupInvitesForMeeting(ref, meeting.roomId)
   }
 
-  /**
-   * Remove all pending `UserMeetingInvite` rows that referenced a finished
-   * meeting:
-   *   * Б flow — `room === meeting.roomId` matches both knocker's request
-   *     and the owner-side responses;
-   *   * A1 flow — `meeting === ref` matches sender's request and recipient's
-   *     response in someone-was-invited cases.
-   * Run as a system token so we have access to every PersonSpace.
-   */
+  /** Remove pending UserMeetingInvite rows for a finished meeting (matched by room or by meeting ref). */
   private async cleanupInvitesForMeeting (meeting: Ref<MeetingMinutes>, roomId: Ref<Room> | undefined): Promise<void> {
     try {
       const byMeeting = await this.client.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, { meeting })
@@ -347,12 +318,11 @@ export class WorkspaceClient {
 
   async checkUnfinishedMeetings (meetingMinutes: Ref<MeetingMinutes>[]): Promise<void> {
     try {
-      // Only finish meetings that were actually live (Active/Pending). A
-      // Scheduled meeting has no LiveKit room until someone starts it, so it
-      // would otherwise be force-finished on the first poll before anyone joins.
+      // Only Active/Pending are force-finished. Grace window avoids racing a Pending doc against a not-yet-visible LiveKit room.
       const meetings = await this.client.findAll(love.class.MeetingMinutes, {
         _id: { $nin: meetingMinutes },
-        status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
+        status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] },
+        modifiedOn: { $lt: Date.now() - UNFINISHED_MEETING_GRACE_MS }
       })
 
       for (const meeting of meetings) {
@@ -363,11 +333,7 @@ export class WorkspaceClient {
     }
   }
 
-  /**
-   * Clean up orphaned ParticipantInfo entries that reference finished meetings.
-   * This handles cases where ParticipantInfo was not cleaned up when a meeting finished
-   * (e.g., due to a bug or service restart before cleanup could complete).
-   */
+  /** Clean up orphaned ParticipantInfo entries that reference finished meetings. */
   async cleanupOrphanedParticipantInfos (): Promise<void> {
     try {
       // Find all ParticipantInfo entries first
@@ -549,12 +515,7 @@ export class WorkspaceClient {
     sessionId: string
   ): Promise<void> {
     try {
-      // Drop every ParticipantInfo for this person in this meeting plus
-      // any row carrying the exact LK sessionId. LiveKit guarantees one
-      // live participant per (room, identity); rows that survive into a
-      // `participant_left` are by definition stale, so leaving sessionId
-      // filter narrow (origin behavior) lets prior crashed/reconnected
-      // sessions linger and confuses the client-side dedup.
+      // Drop by (person, meeting) and by sessionId - narrower sessionId-only filtering lets stale/crashed sessions linger.
       const infos = await this.client.findAll(love.class.ParticipantInfo, { person, meeting })
       const bySid = await this.client.findAll(love.class.ParticipantInfo, { person, sessionId })
       const all = [...infos, ...bySid.filter((b) => !infos.some((i) => i._id === b._id))]
@@ -671,15 +632,9 @@ export class WorkspaceClient {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
   // PendingRecording management
-  // ─────────────────────────────────────────────────────────────────────────────
 
-  /**
-   * Create a PendingRecording document when recording starts (from /startRecord endpoint).
-   * This tracks in-progress recordings until they complete (egress_ended webhook).
-   * Uses addCollection to attach to MeetingMinutes.
-   */
+  /** Create a PendingRecording document when recording starts (from /startRecord endpoint). */
   async createPendingRecording (params: {
     meeting: Ref<MeetingMinutes>
     format: RecordingFormat
@@ -863,11 +818,7 @@ export class WorkspaceClient {
     }
   }
 
-  /**
-   * Clean up orphaned PendingRecording entries that reference finished meetings.
-   * This handles cases where PendingRecording was not cleaned up when a meeting finished
-   * (e.g., due to a missed egress_ended webhook or service restart before cleanup could complete).
-   */
+  /** Clean up orphaned PendingRecording entries that reference finished meetings. */
   async cleanupOrphanedPendingRecordings (): Promise<void> {
     try {
       // Find all PendingRecording entries first

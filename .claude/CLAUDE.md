@@ -1,4 +1,4 @@
-Please read ../AGENTS.md file first.
+Please read AGENTS.md in the repository root first.
 
 ## Session Memory (docs/memory)
 
@@ -16,5 +16,5 @@ Prefer spawning sub-agents with `model: "sonnet"` for tasks that fit:
 - Independent parallel lookups
 - Routine refactors with clear scope
 
-Keep Opus (main) for: architectural decisions, tricky debugging, security-sensitive code, final review.
+Keep main model for: architectural decisions, tricky debugging, security-sensitive code, final review.
 Pass self-contained prompts with file paths and explicit scope.

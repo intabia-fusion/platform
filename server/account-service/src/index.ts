@@ -599,8 +599,13 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     try {
       const [db] = await accountsDb
 
-      const shortId = generateShortId()
-      await db.shortLink.insertOne({ id: shortId, payload, workspaceId })
+      // Reuse an existing link for the same payload so repeated requests
+      // (e.g. "copy guest link" for one meeting) yield a stable URL.
+      const existing = await db.shortLink.findOne({ payload, workspaceId })
+      const shortId = existing?.id ?? generateShortId()
+      if (existing == null) {
+        await db.shortLink.insertOne({ id: shortId, payload, workspaceId })
+      }
 
       ctx.res.writeHead(200, KEEP_ALIVE_HEADERS)
       ctx.res.end(JSON.stringify({ shortId }))

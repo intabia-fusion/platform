@@ -31,7 +31,7 @@ services:
     environment:
       - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
   datalake:
-    image: intabiafusion/datalake
+    image: 'intabiafusion/datalake:${DOCKER_TAG:-latest}'
     pull_policy: never
     extra_hosts:
       - "localhost:host-gateway"

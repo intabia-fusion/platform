@@ -11,11 +11,17 @@ fi
 
 echo "Building version: $version"
 
+# Optional extra tag: DOCKER_TAG=mytag rush fast-build:docker -> image:mytag
+tags=(-t "$1" -t "$1:$version")
+if [ -n "$DOCKER_TAG" ]; then
+  tags+=(-t "$1:$DOCKER_TAG")
+fi
+
 # Add PACKAGE_HASH label if provided (for caching)
 if [ -n "$PACKAGE_HASH" ]; then
-  docker build --build-arg BUILD_ID="$version" --label "BUILD_ID=$version" --label "PACKAGE_HASH=$PACKAGE_HASH" -t "$1" -t "$1:$version" ${DOCKER_EXTRA} .
+  docker build --build-arg BUILD_ID="$version" --label "BUILD_ID=$version" --label "PACKAGE_HASH=$PACKAGE_HASH" "${tags[@]}" ${DOCKER_EXTRA} .
 else
-  docker build --build-arg BUILD_ID="$version" --label "BUILD_ID=$version" -t "$1" -t "$1:$version" ${DOCKER_EXTRA} .
+  docker build --build-arg BUILD_ID="$version" --label "BUILD_ID=$version" "${tags[@]}" ${DOCKER_EXTRA} .
 fi
 
 if [ "$cleanup" = true ]; then
