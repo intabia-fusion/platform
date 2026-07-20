@@ -225,6 +225,59 @@ export function resolvePerSeatAmount (pricing: PlanPricing, yearly: boolean): nu
   return monthly * 12
 }
 
+export interface RecurrentChargeResult {
+  Success: boolean
+  PaymentId: string
+  Status: string
+  ErrorCode: string
+  Message: string
+}
+
+/**
+ * Charge a subscription's card off-session for `amount`.
+ *
+ * TBank /v2/Charge takes the amount from the PaymentId (its Init), NOT from RebillId — RebillId is only
+ * the saved-card token. So every recurrent charge needs a FRESH Init on the amount to be charged, then
+ * Charge against that new PaymentId. Reusing the subscription's original (already-CONFIRMED) provider
+ * SubscriptionId as the PaymentId charges the old amount / is rejected — it only "works" under the mock.
+ *
+ * MIT (merchant-initiated, no customer present): OperationInitiatorType 'R' (recurring), no redirect URLs.
+ * Returns the Charge result with its own new PaymentId (use it as lastChargePaymentId).
+ */
+export async function chargeSubscriptionRecurrent (
+  tbank: TbankPayments,
+  sub: SubscriptionData,
+  amount: number,
+  orderId: string,
+  description: string
+): Promise<RecurrentChargeResult> {
+  const rebillId = sub.providerData?.rebillId as string | undefined
+  if (rebillId === undefined || rebillId === '') {
+    throw new Error(`No rebillId on subscription ${sub.id}, cannot charge off-session`)
+  }
+  // Fresh Init for THIS amount. MIT recurring: no SuccessURL/FailURL (no customer redirect).
+  const initResult = await tbank.initPayment({
+    Amount: amount,
+    OrderId: orderId,
+    Description: description,
+    CustomerKey: sub.accountUuid,
+    Recurrent: 'Y',
+    PayType: 'O',
+    OperationInitiatorType: 'R'
+  })
+  const chargeResult = await tbank.chargeRecurrent({
+    PaymentId: initResult.PaymentId,
+    RebillId: rebillId
+  })
+  return {
+    Success: chargeResult.Success === true,
+    PaymentId: String(chargeResult.PaymentId),
+    Status: chargeResult.Status ?? '',
+    ErrorCode: chargeResult.ErrorCode ?? '',
+    Message: chargeResult.Message ?? ''
+  }
+}
+
 /**
  * Build updated subscription data after a successful recurrent charge (scheduler renewal or manual retry).
  */

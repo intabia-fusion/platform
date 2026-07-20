@@ -35,6 +35,7 @@ import {
   orderFingerprint,
   buildRenewedSubscription,
   buildFailedChargeSubscription,
+  chargeSubscriptionRecurrent,
   newActionId,
   type PlanPricing
 } from './utils'
@@ -201,8 +202,15 @@ async function cancelPendingCheckout (
   ctx: MeasureContext,
   tbank: TbankPayments,
   storage: SubscriptionStorage,
-  paymentId: string
+  intentId: string,
+  paymentId: string | null | undefined
 ): Promise<boolean> {
+  // Claim won but never issued a charge (no payment_id): nothing to cancel at tbank.
+  // Release by intent id — releaseCheckout keys off payment_id and would no-op on NULL.
+  if (paymentId == null || paymentId === '') {
+    await storage.abandonCheckout(intentId)
+    return true
+  }
   let dead = false
   try {
     const cancelResult = await tbank.cancelPayment({ PaymentId: paymentId })
@@ -360,19 +368,16 @@ export async function runClaimedCheckout (
   if (!leaseFresh) {
     const wonTakeover = await storage.reclaimStaleCharge(claim.intentId, CHECKOUT_LEASE_TIMEOUT_MS)
     if (wonTakeover) {
-      if (claim.paymentId !== undefined && claim.paymentId !== '') {
-        const canceled = await cancelPendingCheckout(ctx, tbank, storage, claim.paymentId)
-        if (!canceled) {
-          res.status(409).json(ALREADY_PAID_RESPONSE)
-          return
-        }
-        const reclaim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
-        await respondAfterReclaim(res, reclaim, async () => {
-          await openCheckout(reclaim.intentId)
-        })
+      // Cancel the dead holder's charge (or abandon the claim if it never issued one).
+      const canceled = await cancelPendingCheckout(ctx, tbank, storage, claim.intentId, claim.paymentId)
+      if (!canceled) {
+        res.status(409).json(ALREADY_PAID_RESPONSE)
         return
       }
-      await openCheckout(claim.intentId)
+      const reclaim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
+      await respondAfterReclaim(res, reclaim, async () => {
+        await openCheckout(reclaim.intentId)
+      })
       return
     }
   }
@@ -383,11 +388,11 @@ export async function runClaimedCheckout (
       res.status(409).json({ reason: 'other_checkout_active', error: 'A payment for a different plan is in progress' })
       return
     }
-    if (claim.paymentId === undefined || claim.paymentId === '') {
+    if (claim.paymentId == null || claim.paymentId === '') {
       res.status(409).json(IN_FLIGHT_RESPONSE)
       return
     }
-    const canceled = await cancelPendingCheckout(ctx, tbank, storage, claim.paymentId)
+    const canceled = await cancelPendingCheckout(ctx, tbank, storage, claim.intentId, claim.paymentId)
     if (!canceled) {
       res.status(409).json(ALREADY_PAID_RESPONSE)
       return
@@ -406,12 +411,10 @@ export async function runClaimedCheckout (
       res.json({ checkoutUrl: claim.paymentUrl })
       return
     }
-    if (claim.paymentId !== undefined && claim.paymentId !== '') {
-      const freed = await cancelPendingCheckout(ctx, tbank, storage, claim.paymentId)
-      if (!freed) {
-        res.status(409).json(ALREADY_PAID_RESPONSE)
-        return
-      }
+    const freed = await cancelPendingCheckout(ctx, tbank, storage, claim.intentId, claim.paymentId)
+    if (!freed) {
+      res.status(409).json(ALREADY_PAID_RESPONSE)
+      return
     }
     const reclaim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
     await respondAfterReclaim(res, reclaim, async () => {
@@ -727,10 +730,15 @@ async function handleRetryPayment (
   ctx.info('Manual retry payment', { subId: sub.id, plan: sub.plan })
 
   try {
-    const chargeResult = await tbank.chargeRecurrent({
-      PaymentId: sub.providerSubscriptionId,
-      RebillId: rebillId
-    })
+    // Fresh Init on sub.amount + Charge (see chargeSubscriptionRecurrent) — a bare chargeRecurrent on the
+    // original providerSubscriptionId charges the old amount / is rejected by tbank.
+    const chargeResult = await chargeSubscriptionRecurrent(
+      tbank,
+      sub,
+      sub.amount ?? 0,
+      `retry:${sub.id}:${Date.now()}`,
+      `Subscription payment retry: ${sub.plan} (${sub.type})`
+    )
 
     if (chargeResult.Success === true) {
       const renewedData = buildRenewedSubscription(sub, Date.now(), chargeResult.PaymentId)

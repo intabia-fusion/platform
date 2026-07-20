@@ -24,7 +24,8 @@ import {
   isFailedRenewal,
   buildRenewedSubscription,
   buildFailedChargeSubscription,
-  buildChargeErrorSubscription
+  buildChargeErrorSubscription,
+  chargeSubscriptionRecurrent
 } from './utils'
 import { removeSubscriptionCard } from './server'
 
@@ -116,10 +117,15 @@ async function renewSubscription (
   // the period being paid rather than generating a fresh id per attempt.
   const renewActionId = `renew:${sub.id}:${sub.periodEnd}`
   try {
-    const chargeResult = await tbank.chargeRecurrent({
-      PaymentId: sub.providerSubscriptionId,
-      RebillId: sub.providerData?.rebillId as string
-    })
+    // Fresh Init on sub.amount (the current renewal price, post any plan/seat change) + Charge — a bare
+    // chargeRecurrent on the original providerSubscriptionId charges the old amount / is rejected by tbank.
+    const chargeResult = await chargeSubscriptionRecurrent(
+      tbank,
+      sub,
+      sub.amount ?? 0,
+      `renew:${sub.id}:${sub.periodEnd ?? 0}`,
+      `Subscription renewal: ${sub.plan} (${sub.type})`
+    )
 
     await storage.logOperation({
       operation: 'charge_recurrent',
