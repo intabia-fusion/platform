@@ -74,9 +74,7 @@
   async function createEmployee (): Promise<void> {
     try {
       saving = true
-      // Guard against a seatless create: the server rejects the Employee-mixin tx but the Person doc
-      // is a separate, non-blocked tx that would already be committed — leaving an orphan Person.
-      // Bail before writing anything so no partial state is created.
+      // Guard against creating beyond users limit
       const limit = $planLimits?.usersLimit ?? 0
       if (limit > 0 && ($seatCount === undefined || $seatCount >= limit)) {
         return
