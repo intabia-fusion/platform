@@ -14,7 +14,14 @@
 //
 
 import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
-import { type SubscriptionData, SubscriptionStatus, SubscriptionType } from '@hcengineering/account-client'
+import {
+  type SubscriptionData,
+  SubscriptionStatus,
+  SubscriptionType,
+  prorateSeats,
+  proratePackage,
+  type ProrationResult
+} from '@hcengineering/account-client'
 import express, { type Express, type Request, type Response } from 'express'
 import cors from 'cors'
 import type TbankPayments from 'tbank-payments'
@@ -577,20 +584,37 @@ export async function handleUpdatePlan (
   const workspaceUrl = (req.body as { workspaceUrl?: string }).workspaceUrl ?? ''
   const force = (req.body as { force?: boolean }).force
 
-  // Package downgrade that fits into the already-paid credit: no charge, no checkout — switch the
-  // plan in place and clear any scheduled cancel (reactivation). pod-payment recomputes the exact
-  // pro-rata period shift on top of the returned SubscriptionData.
+  // Pro-rata plan/seat change on a live paid subscription (tier seat change OR package swap).
+  //  - charge <= 0 (downgrade / credit covers it): switch in place, no checkout, extend the period.
+  //  - charge > 0 (upgrade): send the user to the bank page for the DELTA (explicit consent), while the
+  //    draft records the full recurring price + the proration period. Set below, applied in openCheckout.
+  const isSeatChange = sub.type === SubscriptionType.Tier && newPlan === sub.plan
+  const isPackageChange = sub.type === SubscriptionType.Package
+  let checkoutOverride:
+  | { chargeAmount: number, recurringAmount: number, periodStart: number, periodEnd: number }
+  | undefined
   if (
-    sub.type === SubscriptionType.Package &&
+    (isSeatChange || isPackageChange) &&
     sub.status === SubscriptionStatus.Active &&
     sub.amount != null &&
     sub.periodStart != null &&
     sub.periodEnd != null
   ) {
     const now = Date.now()
-    const total = sub.periodEnd - sub.periodStart
-    const unusedCredit = total > 0 ? Math.round((sub.amount * Math.max(0, sub.periodEnd - now)) / total) : 0
-    if (newAmount <= unusedCredit) {
+    const common = {
+      oldAmount: sub.amount,
+      periodStart: sub.periodStart,
+      periodEnd: sub.periodEnd,
+      now,
+      newFullPrice: newAmount
+    }
+    const pro: ProrationResult = isPackageChange
+      ? proratePackage(common)
+      : prorateSeats({ ...common, oldSeats: curSeats, newSeats: seats })
+
+    if (pro.charge <= 0) {
+      // Downgrade / credit covers it: no money moves. Switch in place, extend the period, clear any
+      // scheduled cancel. The new full price renews next cycle.
       const updated: SubscriptionData = {
         ...sub,
         plan: newPlan,
@@ -598,6 +622,8 @@ export async function handleUpdatePlan (
         status: SubscriptionStatus.Active,
         canceledAt: undefined,
         willCancelAt: undefined,
+        periodStart: pro.periodStart,
+        periodEnd: pro.periodEnd,
         providerData: { ...sub.providerData, quantity: seats, period: period ?? curPeriod, modifiedAt: now }
       }
       await storage.upsert(updated)
@@ -611,18 +637,37 @@ export async function handleUpdatePlan (
         accountUuid: sub.accountUuid,
         actionId,
         actor: 'user',
-        amount: newAmount,
-        raw: { plan: newPlan, seats, kind: 'downgrade', unusedCredit }
+        amount: 0,
+        raw: { plan: newPlan, seats, kind: 'downgrade', charge: 0, newFullPrice: newAmount }
       })
-      ctx.info('Package downgrade applied without charge', { subId: sub.id, newPlan, newAmount, unusedCredit })
+      ctx.info('Plan change applied without charge', { subId: sub.id, newPlan, seats, newAmount })
       res.json(updated)
       return
+    }
+
+    // Upgrade with a positive charge: send the user to the bank page for the DELTA only, so the money
+    // is charged with explicit consent.
+    // The draft carries the full recurring price + the proration period (see openCheckout override).
+    checkoutOverride = {
+      chargeAmount: pro.charge,
+      recurringAmount: newAmount,
+      periodStart: pro.periodStart,
+      periodEnd: pro.periodEnd
     }
   }
 
   // Winner opens the replacement checkout: init tbank link, mark the old sub pending-replacement (do NOT
   // cancel it — the old plan stays active until the new payment lands), pre-create the new pending sub.
-  const openCheckout = async (intentId: string): Promise<void> => {
+  //
+  // For a pro-rata UPGRADE the bank page charges only the delta (chargeAmount), but the draft carries the
+  // new FULL price (recurringAmount) + the proration-computed period, so renewal bills the full price and
+  // the period stays consistent. For a plain purchase/switch all three coincide with newAmount.
+  const openCheckout = async (
+    intentId: string,
+    override?: { chargeAmount: number, recurringAmount: number, periodStart: number, periodEnd: number }
+  ): Promise<void> => {
+    const chargeAmount = override?.chargeAmount ?? newAmount
+    const recurringAmount = override?.recurringAmount ?? newAmount
     const heartbeat = setInterval(() => {
       void storage.heartbeatCharge(intentId)
     }, CHECKOUT_HEARTBEAT_MS)
@@ -633,7 +678,7 @@ export async function handleUpdatePlan (
       const { paymentId, paymentURL } = await initTbankPayment(
         config,
         tbank,
-        newAmount,
+        chargeAmount,
         orderId,
         `Subscription update: ${newPlan} (${sub.type})`,
         sub.accountUuid,
@@ -651,8 +696,8 @@ export async function handleUpdatePlan (
         accountUuid: sub.accountUuid,
         actionId,
         actor: 'user',
-        amount: newAmount,
-        raw: { plan: newPlan, type: sub.type, seats, period, kind: 'update' }
+        amount: chargeAmount,
+        raw: { plan: newPlan, type: sub.type, seats, period, kind: 'update', recurringAmount }
       })
 
       // Link+claim first, then drafts: if an upsert below fails the webhook's "any active same-type"
@@ -661,26 +706,31 @@ export async function handleUpdatePlan (
         ...sub,
         providerData: { ...sub.providerData, pendingReplacement: true, replacementPlan: newPlan, actionId }
       })
-      await storage.upsert(
-        buildSubscriptionData(
-          String(paymentId),
-          orderId,
-          sub.workspaceUuid,
-          sub.accountUuid,
-          sub.type,
-          newPlan,
-          newAmount,
-          sub.accountUuid,
-          config.TbankTerminalKey,
-          undefined,
-          quantity,
-          period,
-          paymentURL,
-          actionId
-        )
+      const draft = buildSubscriptionData(
+        String(paymentId),
+        orderId,
+        sub.workspaceUuid,
+        sub.accountUuid,
+        sub.type,
+        newPlan,
+        recurringAmount, // draft carries the FULL recurring price (what renews), not the delta charged now
+        sub.accountUuid,
+        config.TbankTerminalKey,
+        undefined,
+        quantity,
+        period,
+        paymentURL,
+        actionId
       )
+      // Carry the proration-computed period so a delta-upgrade keeps the right renewal date (esp. yearly,
+      // where the period must NOT reset to a fresh 30 days).
+      if (override !== undefined) {
+        draft.periodStart = override.periodStart
+        draft.periodEnd = override.periodEnd
+      }
+      await storage.upsert(draft)
 
-      ctx.info('Replacement checkout opened', { oldSubId: sub.id, paymentId, newPlan, seats })
+      ctx.info('Replacement checkout opened', { oldSubId: sub.id, paymentId, newPlan, seats, chargeAmount })
       res.json({ checkoutId: orderId, checkoutUrl: paymentURL })
     } catch (err) {
       if (!paymentIssued) {
@@ -694,13 +744,16 @@ export async function handleUpdatePlan (
 
   // Same atomic (workspace, type) guard as create: two owners changing seats race for one claim —
   // only the winner opens a checkout, the loser reuses its URL or gets 409. Package = separate type.
+  // checkoutOverride is set for a pro-rata upgrade (charge the delta, record the full recurring price).
   await runClaimedCheckout(
     ctx,
     tbank,
     storage,
     res,
     { workspaceUuid: sub.workspaceUuid, type: sub.type, fingerprint, force },
-    openCheckout
+    async (intentId: string) => {
+      await openCheckout(intentId, checkoutOverride)
+    }
   )
 }
 
@@ -740,7 +793,7 @@ async function handleRetryPayment (
       `Subscription payment retry: ${sub.plan} (${sub.type})`
     )
 
-    if (chargeResult.Success === true) {
+    if (chargeResult.Success) {
       const renewedData = buildRenewedSubscription(sub, Date.now(), chargeResult.PaymentId)
       await storage.upsert(renewedData)
       ctx.info('Manual retry payment succeeded', { subId: sub.id })
@@ -1024,9 +1077,15 @@ function buildSubscriptionDataFromWebhook (
     type: existingSub.type,
     status: SubscriptionStatus.Active,
     plan: existingSub.plan,
-    amount: notification.Amount,
+    // The draft carries the FULL recurring price (== notification.Amount for a plain purchase; the delta
+    // is smaller for a pro-rata upgrade). Renewal must bill the full price, so trust the draft over the
+    // one-time charge amount in the notification.
+    amount: existingSub.amount ?? notification.Amount,
+    // The draft already carries the resulting period (fresh for a purchase, proration-computed for an
+    // upgrade — e.g. a yearly upgrade must keep its far-future end, not reset to 30 days).
     periodStart: existingSub.periodStart ?? now,
-    periodEnd: nextPeriodEnd(now, existingSub.providerData?.period as BillingPeriod | undefined),
+    periodEnd:
+      existingSub.periodEnd ?? nextPeriodEnd(now, existingSub.providerData?.period as BillingPeriod | undefined),
     providerData: {
       ...existingSub.providerData,
       modifiedAt: now,

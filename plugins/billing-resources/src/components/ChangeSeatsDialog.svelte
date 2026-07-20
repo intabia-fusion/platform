@@ -18,7 +18,7 @@
   import { NumberInput, Label, themeStore } from '@hcengineering/ui'
   import { type SubscriptionData } from '@hcengineering/payment-client'
   import plugin from '../plugin'
-  import { prorateSeats } from '../proration'
+  import { prorateSeats } from '@hcengineering/account-client'
 
   // The active per-seat subscription being changed (tier or package).
   export let subscription: SubscriptionData

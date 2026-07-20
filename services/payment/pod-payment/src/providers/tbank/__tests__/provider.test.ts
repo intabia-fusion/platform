@@ -201,6 +201,21 @@ describe('TbankProvider', () => {
         provider.updateSubscriptionPlan(ctx, 'sub_1', 'epic', SubscriptionType.Tier, 'ws1', 'acc-1')
       ).rejects.toThrow()
     })
+
+    test('throws ProviderHttpError preserving status + body on a 402 (declined card)', async () => {
+      const provider = new TbankProvider(tbankUrl, accountClient)
+      fetchMock.mockResolvedValue(mockResponse({ ok: false, status: 402, text: '{"error":"declined"}' }))
+
+      let error: ProviderHttpError | undefined
+      try {
+        await provider.updateSubscriptionPlan(ctx, 'sub_1', 'epic', SubscriptionType.Tier, 'ws1', 'acc-1')
+      } catch (err) {
+        error = err as ProviderHttpError
+      }
+      expect(error).toBeInstanceOf(ProviderHttpError)
+      expect(error?.status).toBe(402)
+      expect(error?.body).toBe('{"error":"declined"}')
+    })
   })
 
   describe('retryPayment', () => {

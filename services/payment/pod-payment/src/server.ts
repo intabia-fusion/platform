@@ -33,7 +33,9 @@ import {
   SubscriptionData,
   SubscriptionStatus,
   SubscriptionType,
-  type WorkspaceLoginInfo
+  type WorkspaceLoginInfo,
+  prorateSeats,
+  proratePackage
 } from '@hcengineering/account-client'
 
 import appConfig, { Config } from './config'
@@ -41,7 +43,6 @@ import { ownsSubscription, withAdmin, withLoginInfo, withOwner, withToken, type 
 import { PaymentProviderFactory } from './factory'
 import type { BillingPeriod, CheckoutResponse, PaymentProvider, SubscriptionPublisher } from './providers'
 import { ProviderHttpError, SubscribeRequest } from './providers'
-import { prorateSeats, proratePackage } from './proration'
 import { startActiveSubscriptionReconciliation } from './reconciliation'
 import { getAccountClient, hasGrantingTier } from './utils'
 import yaml from 'js-yaml'
@@ -69,7 +70,17 @@ type AsyncRequestHandler = (ctx: MeasureContext, req: Request, res: Response) =>
 
 function relayProviderError (res: Response, err: unknown, fallbackMsg: string): void {
   if (err instanceof ProviderHttpError) {
-    res.status(err.status).json({ reason: err.reason, error: fallbackMsg })
+    // Prefer the provider's own error text (e.g. a declined-card message) over the generic fallback,
+    // so the user sees why the payment failed rather than "Failed to update subscription at provider".
+    let providerMsg: string | undefined
+    if (err.body !== undefined) {
+      try {
+        providerMsg = JSON.parse(err.body).error
+      } catch {
+        /* body isn't JSON — keep the fallback */
+      }
+    }
+    res.status(err.status).json({ reason: err.reason, error: providerMsg ?? fallbackMsg })
     return
   }
   res.status(500).json({ error: fallbackMsg })

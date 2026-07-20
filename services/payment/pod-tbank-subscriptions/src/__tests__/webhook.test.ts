@@ -197,4 +197,35 @@ describe('handleWebhook', () => {
       server.close()
     }
   })
+
+  test('delta-upgrade CONFIRMED: activated sub bills the FULL recurring price from the draft, not the delta', async () => {
+    // A delta-upgrade draft carries the full recurring price (720000) + a far-future yearly period; the
+    // webhook Amount is only the delta charged now (495000). Renewal must use the draft's full price/period.
+    const now = Date.now()
+    const yearlyEnd = now + 100 * 24 * 3600 * 1000
+    const draft = {
+      ...activeSub,
+      id: 'tbank_2',
+      providerSubscriptionId: 'pay_2',
+      status: SubscriptionStatus.PastDue,
+      amount: 720000,
+      periodStart: now - 265 * 24 * 3600 * 1000,
+      periodEnd: yearlyEnd,
+      providerData: { pending: true, paymentId: 'pay_2', period: 'yearly' }
+    }
+    const storage = makeStorage(draft)
+    storage.getAll = jest.fn().mockResolvedValue([draft])
+    const tbank = makeTbank(true)
+    const { server, url } = await startServer(baseConfig, tbank, storage)
+    try {
+      const res = await postWebhook(url, { PaymentId: 'pay_2', Status: 'CONFIRMED', Token: 'ok', Amount: 495000 })
+      expect(res.status).toBe(200)
+      const activated = storage.upsert.mock.calls.map((c: any[]) => c[0]).find((s: any) => s.id === 'tbank_2')
+      expect(activated.status).toBe(SubscriptionStatus.Active)
+      expect(activated.amount).toBe(720000) // full recurring price from the draft, NOT the 495000 delta
+      expect(activated.periodEnd).toBe(yearlyEnd) // draft's proration period, not a fresh 30d
+    } finally {
+      server.close()
+    }
+  })
 })

@@ -18,7 +18,7 @@
   import { Label, themeStore } from '@hcengineering/ui'
   import { type SubscriptionData } from '@hcengineering/payment-client'
   import plugin from '../plugin'
-  import { proratePackage } from '../proration'
+  import { proratePackage } from '@hcengineering/account-client'
 
   // The active package subscription being replaced, and the target package price/label.
   export let subscription: SubscriptionData

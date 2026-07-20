@@ -270,7 +270,7 @@ export async function chargeSubscriptionRecurrent (
     RebillId: rebillId
   })
   return {
-    Success: chargeResult.Success === true,
+    Success: Boolean(chargeResult.Success),
     PaymentId: String(chargeResult.PaymentId),
     Status: chargeResult.Status ?? '',
     ErrorCode: chargeResult.ErrorCode ?? '',

@@ -396,10 +396,11 @@
         ? plugin.string.DowngradeDescription
         : plugin.string.UpgradeDescription
 
+    const supportEmail = getMetadata(support.metadata.SupportEmail) ?? ''
     showPopup(MessageBox, {
       label: title,
       message: descriptionKey,
-      params: { amount: priceDifference, currency: newPlanItem.currency },
+      params: { amount: priceDifference, currency: newPlanItem.currency, email: supportEmail },
       action: async () => {
         await executeUpdate(newPlan, quantity)
       }

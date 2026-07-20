@@ -61,9 +61,11 @@ describe('prorateSeats', () => {
       newFullPrice: kop(45900)
     })
 
-    it('charges only delta seats for the remaining days at the paid (discounted) rate', () => {
+    it('charges only delta seats for the remaining days at the paid (discounted) rate, floored to rubles', () => {
       const paidRate = oldAmount / 3 / 365
-      expect(res.charge).toBe(Math.floor(2 * paidRate * 100))
+      const raw = 2 * paidRate * 100
+      // charge is floored to whole rubles (kopecks % 100 dropped).
+      expect(res.charge).toBe(Math.floor(Math.floor(raw) / 100) * 100)
     })
     it('keeps the whole period unchanged (start AND end) so a later change still sees a yearly span', () => {
       expect(res.periodStart).toBe(start)
@@ -73,6 +75,20 @@ describe('prorateSeats', () => {
       expect(res.isYearly).toBe(true)
       expect(res.isUpgrade).toBe(true)
     })
+  })
+
+  it('floors a fractional-ruble upgrade charge down to whole rubles', () => {
+    // Craft a partial period so the credit produces a fractional-ruble delta, then assert it is floored.
+    const res = prorateSeats({
+      oldAmount: kop(1000),
+      oldSeats: 1,
+      periodStart: now - 15 * DAY,
+      periodEnd: now + 15.4321 * DAY, // odd remaining days -> fractional-kopeck credit
+      now,
+      newSeats: 2,
+      newFullPrice: kop(2000)
+    })
+    expect(res.charge % 100).toBe(0) // whole rubles, no stray kopecks
   })
 
   it('monthly upgrade resets periodStart to now', () => {
