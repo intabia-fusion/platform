@@ -218,7 +218,7 @@ services:
       # Add to environment: NODE_OPTIONS=--inspect=0.0.0.0:9235
     restart: unless-stopped
   payment:
-    image: intabiafusion/payment
+    image: 'intabiafusion/payment:${DOCKER_TAG:-latest}'
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -1063,7 +1063,7 @@ services:
   #     - AMO_CRM_RESPONSIBLE_USER_ID=
   #   restart: unless-stopped
   tbank-subscriptions:
-    image: intabiafusion/tbank-subscriptions
+    image: 'intabiafusion/tbank-subscriptions:${DOCKER_TAG:-latest}'
     depends_on:
       account:
         condition: service_started

@@ -444,7 +444,7 @@ services:
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   preview:
-    image: intabiafusion/preview
+    image: 'intabiafusion/preview:${DOCKER_TAG:-latest}'
     depends_on:
       datalake:
         condition: service_started
@@ -480,7 +480,7 @@ services:
     restart: unless-stopped
 
   payment:
-    image: intabiafusion/payment
+    image: 'intabiafusion/payment:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       postgres:
@@ -505,7 +505,7 @@ services:
     restart: unless-stopped
 
   tbank-subscriptions:
-    image: intabiafusion/tbank-subscriptions
+    image: 'intabiafusion/tbank-subscriptions:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       account:

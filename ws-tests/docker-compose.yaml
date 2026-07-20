@@ -223,7 +223,7 @@ services:
       - SERVER_SECRET=secret
     restart: unless-stopped
   billing:
-    image: intabiafusion/billing
+    image: 'intabiafusion/billing:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       postgres:
