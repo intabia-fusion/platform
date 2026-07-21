@@ -268,8 +268,13 @@ async function handleCreateSubscription (
     res.status(400).json({ error: `Unknown plan: ${planKey}` })
     return
   }
-  // Per-seat plans charge price-per-seat * seats; yearly period applies the plan's yearly discount.
-  const seats = quantity ?? 1
+  // A package is flat-priced: never multiply by a client quantity. Per-seat plans charge
+  // price-per-seat * seats (validated: positive integer); yearly applies the plan's discount.
+  const seats = type === SubscriptionType.Package ? 1 : (quantity ?? 1)
+  if (!Number.isInteger(seats) || seats < 1) {
+    res.status(400).json({ error: 'Invalid quantity' })
+    return
+  }
   const perSeatAmount = resolvePerSeatAmount(pricing, period === 'yearly')
   const amount = perSeatAmount * seats
   // Exact order behind this request — a loser reuses the pending URL only on an exact match.
@@ -550,7 +555,7 @@ export async function handleUpdatePlan (
   // of seat count (per-seat) or period is a real update (pro-rata charge), so let it through.
   // Terminally Canceled can always be processed further.
   const curSeats = Number(sub.providerData?.quantity ?? 1)
-  const newSeats = quantity ?? curSeats
+  const newSeats = sub.type === SubscriptionType.Package ? curSeats : (quantity ?? curSeats)
   const curPeriod = sub.providerData?.period
   const samePlanNoChange = sub.plan === newPlan && newSeats === curSeats && (period ?? curPeriod) === curPeriod
   ctx.info('updatePlan no-op check', {
@@ -575,9 +580,13 @@ export async function handleUpdatePlan (
     res.status(400).json({ error: `Unknown plan: ${planKey}` })
     return
   }
-  // Per-seat plans charge price-per-seat * seats; yearly period applies the plan's yearly discount.
-  // Fall back to the current seat count (not 1) so a plan switch without quantity keeps the seats.
-  const seats = quantity ?? curSeats
+  // A package is flat-priced: never multiply by a client quantity. Per-seat plans charge
+  // price-per-seat * seats; fall back to current seats so a plain switch keeps the count.
+  const seats = sub.type === SubscriptionType.Package ? 1 : (quantity ?? curSeats)
+  if (!Number.isInteger(seats) || seats < 1) {
+    res.status(400).json({ error: 'Invalid quantity' })
+    return
+  }
   const perSeatAmount = resolvePerSeatAmount(pricing, period === 'yearly')
   const newAmount = perSeatAmount * seats
   const fingerprint = orderFingerprint(newPlan, seats, period)
@@ -1165,7 +1174,7 @@ async function initTbankPayment (
     PayType: 'O',
     Language: 'ru',
     RedirectDueDate: formatTbankDueDate(Date.now() + CHECKOUT_LINK_LIFETIME_MS),
-    NotificationURL: `${config.FrontUrl}/_tbank_subscriptions/api/v1/webhooks/tbank`,
+    NotificationURL: config.TbankNotificationUrl ?? `${config.FrontUrl}/_tbank_subscriptions/api/v1/webhooks/tbank`,
     SuccessURL: `${config.FrontUrl}/workbench/${workspaceUrl}/setting/setting/billing/subscriptions?payment=success&order_id=${orderId}`,
     FailURL: `${config.FrontUrl}/workbench/${workspaceUrl}/setting/setting/billing/subscriptions?payment=canceled`
   }

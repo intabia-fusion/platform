@@ -13,14 +13,14 @@ plans:
         en: up to 5 users
       - ru: до 50 гостей (внешних пользователей)
         en: up to 50 guests (external users)
-      - ru: 2 Гб хранилище / на пользователя
-        en: 2GB storage / per user
+      - ru: 2 ГБ хранилище / на пользователя
+        en: 2 GB storage / per user
       - ru: 100 000 токенов AI-ассистента
         en: 100,000 AI assistant tokens
-      - ru: неограниченное количество проектов в трекере
-        en: unlimited projects in the tracker
-      - ru: общая горячая линия
-        en: general hotline
+      - ru: Без ограничений проекты в трекере
+        en: Unlimited projects in the tracker
+      - ru: Общая горячая линия
+        en: General hotline
     features:
       - ru: Доски и Kanban
         en: Boards and Kanban
@@ -59,18 +59,18 @@ plans:
       ru: Стартапы и ИТ-команды, которым нужны AI и масштабирование (saas)
       en: Startups and IT teams looking for AI and scaling (SaaS)
     limits:
-      - ru: неограниченное количество пользователей
-        en: unlimited users
-      - ru: неограниченное количество гостей (внешних пользователей)
-        en: unlimited guests (external users)
-      - ru: 5 Гб хранилища / на пользователя
-        en: 5GB storage / per user
-      - ru: неограниченное количество токенов AI-ассистента
-        en: unlimited AI assistant tokens
-      - ru: неограниченное количество проектов в трекере
-        en: unlimited projects in the tracker
-      - ru: общая горячая линия
-        en: general hotline
+      - ru: Без ограничений пользователей
+        en: Unlimited users
+      - ru: Без ограничений гостей (внешних пользователей)
+        en: Unlimited guests (external users)
+      - ru: 5 ГБ хранилище / на пользователя
+        en: 5 GB storage / per user
+      - ru: Без лимитов AI-ассистента
+        en: Unlimited AI assistant tokens
+      - ru: Без ограничений проекты в трекере
+        en: Unlimited projects in the tracker
+      - ru: Общая горячая линия
+        en: General hotline
     features:
       - ru: Доски и Kanban
         en: Boards and Kanban
@@ -110,18 +110,18 @@ plans:
       ru: Крупный бизнес, банки, госсектор, где важна работа во внутреннем контуре
       en: Large businesses, banks, and the public sector, where internal operations are important
     limits:
-      - ru: неограниченное количество пользователей
-        en: unlimited users
-      - ru: неограниченное количество гостей (внешних пользователей)
-        en: unlimited guests (external users)
-      - ru: без ограничений на хранилище
-        en: unlimited storage
-      - ru: неограниченное количество токенов AI-ассистента
-        en: unlimited AI assistant tokens
-      - ru: неограниченное количество проектов в трекере
-        en: unlimited projects in the tracker
-      - ru: персональный менеджер, 24/7
-        en: personal manager, 24/7
+      - ru: Без ограничений пользователей
+        en: Unlimited users
+      - ru: Без ограничений гостей (внешних пользователей)
+        en: Unlimited guests (external users)
+      - ru: Без ограничений хранилище / на пользователя
+        en: Unlimited storage / per user
+      - ru: Без лимитов AI-ассистента
+        en: Unlimited AI assistant tokens
+      - ru: Без ограничений проекты в трекере
+        en: Unlimited projects in the tracker
+      - ru: Персональный менеджер, 24/7
+        en: Personal manager, 24/7
     features:
       - ru: Доски и Kanban
         en: Boards and Kanban

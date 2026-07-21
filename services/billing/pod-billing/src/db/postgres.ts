@@ -97,8 +97,17 @@ class PostgresDB implements BillingDB {
   }
 
   async execute<T extends any[] = (Row & Iterable<Row>)[]>(query: string, params?: any[]): Promise<T> {
-    query = params !== undefined && params.length > 0 ? injectVars(query, params) : query
-    return await this.sql.unsafe<T>(query)
+    // Reject non-finite numbers before they reach the driver: a NaN/Infinity usage delta must not
+    // corrupt a counter (previously guarded by the manual escaper).
+    if (params !== undefined) {
+      for (const p of params) {
+        if (typeof p === 'number' && !Number.isFinite(p)) {
+          throw new Error('Invalid numeric parameter')
+        }
+      }
+    }
+    // Native driver bind ($1..$N) — the driver parameterizes, no string interpolation of values.
+    return await this.sql.unsafe<T>(query, params as any)
   }
 
   async initSchema (ctx: MeasureContext): Promise<void> {
@@ -757,39 +766,3 @@ function rowToLimitState (row: any): WorkspaceLimitState {
 }
 
 export default PostgresDB
-
-function injectVars (sql: string, values: any[]): string {
-  return sql.replaceAll(/(\$\d+)/g, (_, idx) => {
-    return escape(values[parseInt(idx.substring(1)) - 1])
-  })
-}
-
-function escape (value: any): string {
-  if (value === null || value === undefined) {
-    return 'NULL'
-  }
-
-  if (Array.isArray(value)) {
-    return 'ARRAY[' + value.map(escape).join(',') + ']'
-  }
-
-  switch (typeof value) {
-    case 'number':
-      if (isNaN(value) || !isFinite(value)) {
-        throw new Error('Invalid number value')
-      }
-      return value.toString()
-    case 'boolean':
-      return value ? 'TRUE' : 'FALSE'
-    case 'string':
-      return `'${value.replace(/'/g, "''")}'`
-    case 'object':
-      if (value instanceof Date) {
-        return `'${value.toISOString()}'`
-      } else {
-        return `'${JSON.stringify(value)}'`
-      }
-    default:
-      throw new Error(`Unsupported value type: ${typeof value}`)
-  }
-}

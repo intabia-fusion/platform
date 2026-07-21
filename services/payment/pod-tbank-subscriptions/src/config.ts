@@ -27,6 +27,9 @@ export interface Config {
   TbankTerminalKey: string
   TbankPassword: string
   TbankUrl: string
+  // Full public webhook URL passed to the bank as NotificationURL.
+  // Unset -> ${FrontUrl}/_tbank_subscriptions/api/v1/webhooks/tbank
+  TbankNotificationUrl?: string
 
   // Dev
   TbankSkipWebhookVerification?: boolean // Skip webhook token verification (for local dev with curl)
@@ -59,6 +62,7 @@ const config: Config = (() => {
     TbankTerminalKey: process.env.TBANK_TERMINAL_KEY,
     TbankPassword: process.env.TBANK_PASSWORD,
     TbankUrl: process.env.TBANK_URL,
+    TbankNotificationUrl: process.env.TBANK_NOTIFICATION_URL,
     // Mock bank sends its own webhook with a dummy token — always skip verification under mock.
     TbankSkipWebhookVerification:
       process.env.TBANK_SKIP_WEBHOOK_VERIFICATION === 'true' || process.env.TBANK_MOCK === 'true',

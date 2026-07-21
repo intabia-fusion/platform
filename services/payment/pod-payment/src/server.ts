@@ -618,7 +618,8 @@ export async function createServer (
             }
           }
 
-          // Per-seat plans: validate the requested seat count
+          // Per-seat plans: validate the requested seat count. A package is a flat-price item — its
+          // amount must never be multiplied by a client-supplied quantity, so force it to undefined.
           if (request.type === SubscriptionType.Tier) {
             const seats = await resolveSeatQuantity(request.plan, request.quantity, workspaceUuid)
             if (seats.error !== undefined) {
@@ -626,6 +627,8 @@ export async function createServer (
               return
             }
             request.quantity = seats.quantity
+          } else {
+            request.quantity = undefined
           }
 
           let createSubResponse: CheckoutResponse
