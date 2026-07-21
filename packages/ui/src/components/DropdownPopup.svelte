@@ -79,7 +79,11 @@
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div class="selectPopup popup {popupClass ?? ''}" use:resizeObserver={() => dispatch('changeContent')} on:keydown={onKeydown}>
+<div
+  class="selectPopup popup {popupClass ?? ''}"
+  use:resizeObserver={() => dispatch('changeContent')}
+  on:keydown={onKeydown}
+>
   {#if withSearch}
     <div class="header">
       <EditWithIcon
@@ -108,7 +112,7 @@
           >
             {#if item.component}
               <div class="flex-grow flex-row-center min-w-0 overflow-hidden">
-                <svelte:component this={item.component} {...(item.componentProps ?? {})} />
+                <svelte:component this={item.component} {...item.componentProps ?? {}} />
               </div>
             {:else}
               {#if item.image || item.icon || icon}

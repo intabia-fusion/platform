@@ -23,7 +23,7 @@
   import DropdownPopup from './DropdownPopup.svelte'
   import Label from './Label.svelte'
   import Icon from './Icon.svelte'
-  import {tooltip as tp} from '../tooltips'
+  import { tooltip as tp } from '../tooltips'
 
   export let icon: Asset | AnySvelteComponent | ComponentType | undefined = undefined
   export let label: IntlString | undefined = undefined
@@ -44,9 +44,7 @@
   export let popupClass: string | undefined = undefined
   export let tooltip: LabelAndProps | undefined = undefined
 
-  $: activeTooltip = tooltip !== undefined
-    ? { timeout: 600, ...tooltip }
-    : undefined
+  $: activeTooltip = tooltip !== undefined ? { timeout: 600, ...tooltip } : undefined
 
   let container: HTMLElement
   let opened: boolean = false
@@ -91,7 +89,7 @@
       <span class="overflow-label grow min-w-0">
         {#if selected}
           {#if selected.component}
-            <svelte:component this={selected.component} {...(selected.componentProps ?? {})} />
+            <svelte:component this={selected.component} {...selected.componentProps ?? {}} />
           {:else}
             <span class="flex-row-center flex-gap-1">
               {#if selected.icon}

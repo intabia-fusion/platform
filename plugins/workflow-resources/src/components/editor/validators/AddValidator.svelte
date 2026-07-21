@@ -154,7 +154,6 @@
     border: 1px solid var(--global-subtle-ui-BorderColor);
     background-color: var(--global-subtle-BackgroundColor, rgba(255, 255, 255, 0.02));
     cursor: pointer;
-    transition: border-color 0.15s ease, background-color 0.15s ease;
 
     &:hover {
       border-color: var(--global-secondary-TextColor);

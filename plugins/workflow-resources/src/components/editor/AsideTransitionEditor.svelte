@@ -64,9 +64,9 @@
   let timer: any = null
   let savePromise: Promise<void> | null = null
 
-  $: transitionsQuery.query(plugin.class.WorkflowTransition, { attachedTo: workflow._id }, res => {
+  $: transitionsQuery.query(plugin.class.WorkflowTransition, { attachedTo: workflow._id }, (res) => {
     transitions = res
-    transition = res.find(it => it._id === _id)
+    transition = res.find((it) => it._id === _id)
   })
 
   $: void translate(plugin.string.AnyStatus, {}, $languageStore).then((it) => {
@@ -158,9 +158,10 @@
     const fromVal = data.from
     const toVal = data.to
     const isSelfTransition = toVal != null && fromVal != null && fromVal.includes(toVal)
-    const conflict = toVal != null && fromVal != null && fromVal.length > 0
-      ? getTransitionConflict({ _id, from: fromVal, to: toVal }, transitions)
-      : null
+    const conflict =
+      toVal != null && fromVal != null && fromVal.length > 0
+        ? getTransitionConflict({ _id, from: fromVal, to: toVal }, transitions)
+        : null
 
     const isStatusesValid = isTransitionFlowValid(toVal, fromVal, isSelfTransition, conflict)
 
@@ -230,7 +231,6 @@
       }
     })
   }
-
 
   onDestroy(() => {
     clearTimeout(timer)

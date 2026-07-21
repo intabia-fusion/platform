@@ -14,19 +14,9 @@
 -->
 <script lang="ts">
   import presentation from '@hcengineering/presentation'
-  import ui, {
-    Modal,
-    Label,
-    IconSearch,
-    EditWithIcon,
-    ModernDropdown,
-    ListItem
-  } from '@hcengineering/ui'
+  import ui, { Modal, Label, IconSearch, EditWithIcon, ModernDropdown, ListItem } from '@hcengineering/ui'
   import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
-  import {
-    Workflow,
-    WorkflowTransition
-  } from '@hcengineering/workflow'
+  import { Workflow, WorkflowTransition } from '@hcengineering/workflow'
   import { createEventDispatcher, ComponentType } from 'svelte'
   import { notEmpty, Status } from '@hcengineering/core'
 
@@ -48,12 +38,14 @@
   let searchQuery = ''
   let activeComponent: any = null
 
-  $: transitionItems = (transitions ?? []).map((t): ListItem => ({
-    _id: t._id,
-    label: t.name,
-    component: TransitionPresenter,
-    componentProps: { transition: t, statuses }
-  }))
+  $: transitionItems = (transitions ?? []).map(
+    (t): ListItem => ({
+      _id: t._id,
+      label: t.name,
+      component: TransitionPresenter,
+      componentProps: { transition: t, statuses }
+    })
+  )
 
   $: selectedTransitionItem = transitionItems.find((it) => it._id === transition?._id) ?? transitionItems[0]
 
@@ -118,11 +110,7 @@
   <div class="rules-modal-layout">
     <!-- Left Sidebar -->
     <div class="rules-sidebar">
-      <button
-        class="sidebar-item"
-        class:active={category === 'all'}
-        on:click={() => (category = 'all')}
-      >
+      <button class="sidebar-item" class:active={category === 'all'} on:click={() => (category = 'all')}>
         <span class="sidebar-label"><Label label={plugin.string.AllRules} /></span>
       </button>
 
@@ -132,11 +120,7 @@
 
       {#each categories as c (c.category)}
         {#if c.category !== 'all'}
-          <button
-            class="sidebar-item"
-            class:active={category === c.category}
-            on:click={() => (category = c.category)}
-          >
+          <button class="sidebar-item" class:active={category === c.category} on:click={() => (category = c.category)}>
             {#if c.icon}
               <span class="sidebar-icon">{c.icon}</span>
             {/if}
@@ -150,16 +134,15 @@
     <div class="rules-content">
       <!-- Search bar -->
       <div class="search-bar">
-        <EditWithIcon
-          icon={IconSearch}
-          placeholder={ui.string.SearchDots}
-          bind:value={searchQuery}
-        />
+        <EditWithIcon icon={IconSearch} placeholder={ui.string.SearchDots} bind:value={searchQuery} />
       </div>
 
       <!-- Select Transition -->
       <div class="hulyModal-content__settingsSet" style="padding: 0; min-width: 0; width: 100%;">
-        <div class="hulyModal-content__settingsSet-line flex-gap-4" style="min-width: 0; width: 100%; overflow: hidden;">
+        <div
+          class="hulyModal-content__settingsSet-line flex-gap-4"
+          style="min-width: 0; width: 100%; overflow: hidden;"
+        >
           <span class="label" style="flex-shrink: 0;"><Label label={plugin.string.Transition} /></span>
           <ModernDropdown
             items={transitionItems}
@@ -179,13 +162,7 @@
       <!-- Rule Cards List -->
       <div class="rules-list">
         {#if component}
-          <svelte:component
-            this={component}
-            bind:this={activeComponent}
-            {transition}
-            {workflow}
-            {searchQuery}
-          />
+          <svelte:component this={component} bind:this={activeComponent} {transition} {workflow} {searchQuery} />
         {/if}
       </div>
     </div>
@@ -232,7 +209,9 @@
     font-weight: 500;
     cursor: pointer;
     text-align: left;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
 
     &:hover {
       background-color: var(--global-ui-highlight-BackgroundColor);

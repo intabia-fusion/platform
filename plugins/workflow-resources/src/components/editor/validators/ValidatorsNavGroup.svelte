@@ -30,7 +30,16 @@
   }
 </script>
 
-<NavGroup _id="validators" label={plugin.string.Validators} categoryName="validators" isFold empty={(transition.validators?.length ?? 0) === 0} noDivider noPadding headerClickType="toggle">
+<NavGroup
+  _id="validators"
+  label={plugin.string.Validators}
+  categoryName="validators"
+  isFold
+  empty={(transition.validators?.length ?? 0) === 0}
+  noDivider
+  noPadding
+  headerClickType="toggle"
+>
   <svelte:fragment slot="afterTitle">
     {#if (transition.validators?.length ?? 0) > 0}
       <div class="antiHSpacer" />
@@ -41,11 +50,7 @@
     {/if}
   </svelte:fragment>
   <svelte:fragment slot="after">
-    <button
-      class="action"
-      data-testid="action-add-validators"
-      on:click|preventDefault|stopPropagation={handleAdd}
-    >
+    <button class="action" data-testid="action-add-validators" on:click|preventDefault|stopPropagation={handleAdd}>
       <Icon icon={IconAdd} size="small" />
     </button>
   </svelte:fragment>
