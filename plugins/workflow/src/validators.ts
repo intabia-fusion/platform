@@ -13,11 +13,11 @@
 // limitations under the License.
 //
 
-import { Client, notEmpty } from '@hcengineering/core'
-import type { Task } from '@hcengineering/task'
+import { notEmpty, Ref, Status } from '@hcengineering/core'
+import task, { type Task } from '@hcengineering/task'
 
 import workflow from './plugin'
-import { type ValidationResult, type WorkflowTransition } from './types'
+import { type ValidationResult, ValidatorClient, ValidatorFunc, type WorkflowTransition } from './types'
 
 export function isEmpty (value: any): boolean {
   if (value === undefined || value === null) {
@@ -38,25 +38,59 @@ export function isEmpty (value: any): boolean {
   return false
 }
 
-export async function FieldRequired (
-  _client: Client,
-  task: Task,
+export const FieldRequired: ValidatorFunc = async (
+  _client: ValidatorClient,
+  taskDoc: Task,
   transition: WorkflowTransition,
   props: Record<string, any>
-): Promise<ValidationResult> {
+): Promise<ValidationResult> => {
   const fields = ((props.fields ?? []) as string[]).filter(notEmpty)
   if (fields.length === 0) {
     return { ok: true }
   }
 
   for (const field of fields) {
-    const val = (task as any)[field]
+    const val = (taskDoc as any)[field]
     if (isEmpty(val)) {
       return {
         ok: false,
         reason: `Field "${field}" is required for transition "${transition.name}".`,
         reasonIntl: workflow.string.FieldRequiredError,
         intlParams: { field, transition: transition.name }
+      }
+    }
+  }
+
+  return { ok: true }
+}
+
+export const SubtaskStatus: ValidatorFunc = async (
+  client: ValidatorClient,
+  taskDoc: Task,
+  transition: WorkflowTransition,
+  props: Record<string, any>
+): Promise<ValidationResult> => {
+  const allowedStatuses = ((props.statuses ?? []) as Ref<Status>[]).filter(notEmpty)
+  if (allowedStatuses.length === 0) {
+    return { ok: true }
+  }
+
+  const subtasks: Pick<Task, 'status'>[] = await client.findAll(
+    task.class.Task,
+    { attachedTo: taskDoc._id },
+    { projection: { status: 1 } }
+  )
+  if (subtasks.length === 0) {
+    return { ok: true }
+  }
+
+  for (const subtask of subtasks) {
+    if (!allowedStatuses.includes(subtask.status)) {
+      return {
+        ok: false,
+        reason: `Subtasks must have allowed statuses for transition "${transition.name}".`,
+        reasonIntl: workflow.string.SubtaskStatusError,
+        intlParams: { transition: transition.name }
       }
     }
   }

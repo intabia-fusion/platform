@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Ref } from '@hcengineering/core'
+  import { Ref, Status } from '@hcengineering/core'
   import ui, {
     ModernDropdownLabels,
     Label,
@@ -22,6 +22,7 @@
     IconCheck,
     type DropdownTextItem
   } from '@hcengineering/ui'
+  import { StatePresenter } from '@hcengineering/task-resources'
   import { translate } from '@hcengineering/platform'
   import {
     Workflow,
@@ -30,19 +31,21 @@
     WorkflowValidatorConfig,
     updateTransition
   } from '@hcengineering/workflow'
-  import presentation, { getClient } from '@hcengineering/presentation'
+  import { getClient } from '@hcengineering/presentation'
 
   import plugin from '../../../plugin'
 
   export let workflow: Workflow | undefined = undefined
   export let transition: WorkflowTransition | undefined = undefined
   export let searchQuery: string = ''
+  export let statuses: Status[] = []
 
   const client = getClient()
   const validators: WorkflowValidator[] = client.getModel().findAllSync(plugin.class.WorkflowValidator, {})
 
   let selectedValidatorId: Ref<WorkflowValidator> | undefined = validators[0]?._id
   let selectedFields: string[] = []
+  let selectedStatusIds: string[] = []
 
   interface RuleItem {
     id: Ref<WorkflowValidator>
@@ -56,10 +59,15 @@
   $: void Promise.all(
     validators.map(async (v) => {
       const title = await translate(v.label, {}, $languageStore)
+      const descKey =
+        v._id === plugin.validator.SubtaskStatus
+          ? plugin.string.SubtaskStatusDescription
+          : plugin.string.FieldRequiredDescription
+      const description = await translate(descKey, {}, $languageStore)
       return {
         id: v._id,
         title,
-        description: 'Ensure that required fields are filled when moving a work item using this transition',
+        description,
         validator: v
       }
     })
@@ -88,15 +96,25 @@
     { id: 'milestone', label: 'Milestone' }
   ]
 
+  $: statusDropdownItems = (statuses ?? []).map(
+    (s): DropdownTextItem => ({
+      id: s._id,
+      label: s.name,
+      icon: StatePresenter,
+      iconProps: { value: s, shouldShowName: false }
+    })
+  )
+
   export async function save (): Promise<void> {
     if (selectedValidatorId == null || transition == null || workflow == null) return
 
     const currentValidators = transition.validators ?? []
+    const isSubtask = selectedValidatorId === plugin.validator.SubtaskStatus
+    const props = isSubtask ? { statuses: selectedStatusIds } : { fields: selectedFields }
+
     const newConfig: WorkflowValidatorConfig = {
       validator: selectedValidatorId,
-      props: {
-        fields: selectedFields
-      }
+      props
     }
 
     await updateTransition(client, workflow._id, transition._id, {
@@ -122,28 +140,37 @@
       <div class="card-description">{rule.description}</div>
 
       {#if selectedValidatorId === rule.id}
-        <div class="fields-selector-row" on:click|stopPropagation>
-          <span class="fields-label"><Label label={plugin.string.FieldRequiredValidator} />:</span>
-          <ModernDropdownLabels
-            items={fieldDropdownItems}
-            bind:selected={selectedFields}
-            multiselect={true}
-            wrap={true}
-            placeholder={ui.string.NotSelected}
-            justify="left"
-            width="100%"
-          />
-        </div>
+        {#if rule.id === plugin.validator.SubtaskStatus}
+          <div class="fields-selector-row" on:click|stopPropagation>
+            <span class="fields-label"><Label label={plugin.string.SubtaskStatusRequired} />:</span>
+            <ModernDropdownLabels
+              items={statusDropdownItems}
+              bind:selected={selectedStatusIds}
+              multiselect={true}
+              wrap={true}
+              placeholder={ui.string.NotSelected}
+              justify="left"
+              width="100%"
+            />
+          </div>
+        {:else}
+          <div class="fields-selector-row" on:click|stopPropagation>
+            <span class="fields-label"><Label label={plugin.string.FieldRequiredValidator} />:</span>
+            <ModernDropdownLabels
+              items={fieldDropdownItems}
+              bind:selected={selectedFields}
+              multiselect={true}
+              wrap={true}
+              placeholder={ui.string.NotSelected}
+              justify="left"
+              width="100%"
+            />
+          </div>
+        {/if}
       {/if}
     </div>
   </div>
 {/each}
-
-{#if filteredRules.length === 0}
-  <div class="empty-rules">
-    <Label label={ui.string.NoResultsFound} />
-  </div>
-{/if}
 
 <style lang="scss">
   .rule-card {

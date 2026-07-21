@@ -13,4 +13,4 @@
 // limitations under the License.
 //
 
-export { FieldRequired } from '@hcengineering/workflow'
+export { FieldRequired, SubtaskStatus } from '@hcengineering/workflow'

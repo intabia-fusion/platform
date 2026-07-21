@@ -162,7 +162,14 @@
       <!-- Rule Cards List -->
       <div class="rules-list">
         {#if component}
-          <svelte:component this={component} bind:this={activeComponent} {transition} {workflow} {searchQuery} />
+          <svelte:component
+            this={component}
+            bind:this={activeComponent}
+            {transition}
+            {workflow}
+            {statuses}
+            {searchQuery}
+          />
         {/if}
       </div>
     </div>

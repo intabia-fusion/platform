@@ -18,7 +18,7 @@ import type { Resources } from '@hcengineering/platform'
 
 import ProjectTypeWorkflowsSectionEditor from './components/ProjectTypeWorkflowsSectionEditor.svelte'
 import WorkflowEditor from './components/editor/WorkflowEditor.svelte'
-import { FieldRequired } from './validators'
+import { FieldRequired, SubtaskStatus } from './validators'
 
 export default async (): Promise<Resources> => ({
   component: {
@@ -26,6 +26,7 @@ export default async (): Promise<Resources> => ({
     WorkflowEditor
   },
   validatorExecutor: {
-    FieldRequired
+    FieldRequired,
+    SubtaskStatus
   }
 })

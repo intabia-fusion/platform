@@ -645,4 +645,54 @@ describe('ValidateTransition Trigger', () => {
       expect(res).toEqual({ ok: true })
     })
   })
+
+  describe('SubtaskStatus Executor', () => {
+    it('should return ok: true when task has no subtasks', async () => {
+      const { SubtaskStatus } = jest.requireActual('../ValidateTransition')
+      const t = createMockTask({ _id: 'parent-1' as any, status: 'in-progress' as Ref<Status> })
+      const control = createMockControl(async () => [])
+
+      const res = await SubtaskStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+        statuses: ['done']
+      })
+      expect(res).toEqual({ ok: true })
+    })
+
+    it('should return ok: false when subtask is not in allowed status', async () => {
+      const { SubtaskStatus } = jest.requireActual('../ValidateTransition')
+      const t = createMockTask({ _id: 'parent-1' as any, status: 'in-progress' as Ref<Status> })
+      const subtask = createMockTask({
+        _id: 'child-1' as any,
+        status: 'in-progress' as Ref<Status>,
+        attachedTo: 'parent-1' as any
+      })
+      const control = createMockControl(async () => [subtask])
+
+      const res = await SubtaskStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+        statuses: ['done']
+      })
+      expect(res).toEqual({
+        ok: false,
+        reason: 'Subtasks must have allowed statuses for transition "Done".',
+        reasonIntl: workflow.string.SubtaskStatusError,
+        intlParams: { transition: 'Done' }
+      })
+    })
+
+    it('should return ok: true when all subtasks have allowed statuses', async () => {
+      const { SubtaskStatus } = jest.requireActual('../ValidateTransition')
+      const t = createMockTask({ _id: 'parent-1' as any, status: 'in-progress' as Ref<Status> })
+      const subtask = createMockTask({
+        _id: 'child-1' as any,
+        status: 'done' as Ref<Status>,
+        attachedTo: 'parent-1' as any
+      })
+      const control = createMockControl(async () => [subtask])
+
+      const res = await SubtaskStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+        statuses: ['done', 'resolved']
+      })
+      expect(res).toEqual({ ok: true })
+    })
+  })
 })

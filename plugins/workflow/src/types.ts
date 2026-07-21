@@ -33,8 +33,10 @@ export type ValidationResult =
     intlParams: Record<string, any>
   }
 
+export type ValidatorClient = Pick<Client, 'findAll' | 'findOne' | 'getHierarchy' | 'getModel'>
+
 export type ValidatorFunc = (
-  client: Client,
+  client: ValidatorClient,
   task: Task,
   transition: WorkflowTransition,
   props: Record<string, any>

@@ -33,7 +33,8 @@ import {
   type Workflow,
   type WorkflowValidator,
   type WorkflowTransition,
-  type WorkflowValidatorConfig
+  type WorkflowValidatorConfig,
+  ValidatorClient
 } from '@hcengineering/workflow'
 
 export async function ValidateTransitionTrigger (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
@@ -150,7 +151,7 @@ async function executeValidator (
   const executorFn = await getResource(validatorImpl.serverExecutor)
   if (executorFn == null) return
 
-  const res = await executorFn(control as any, task, transition, validatorConfig.props)
+  const res = await executorFn(getValidatorClient(control), task, transition, validatorConfig.props)
   if (!res.ok) {
     throw new Error(res.reason ?? 'Validation failed')
   }
@@ -166,4 +167,13 @@ function findWorkflowForTaskType (
   return projectWorkflow.workflows?.[taskTypeRef]
 }
 
-export { FieldRequired } from '@hcengineering/workflow'
+function getValidatorClient (control: TriggerControl): ValidatorClient {
+  return {
+    getHierarchy: () => control.hierarchy,
+    getModel: () => control.modelDb,
+    findAll: (_class, query, options) => control.findAll(control.ctx, _class, query, options),
+    findOne: async (_class, query, options) => (await control.findAll(control.ctx, _class, query, options))[0]
+  }
+}
+
+export { FieldRequired, SubtaskStatus } from '@hcengineering/workflow'
