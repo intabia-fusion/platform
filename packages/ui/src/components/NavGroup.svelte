@@ -155,6 +155,7 @@
         <IconDownOutline size={'tiny'} />
       {/if}
     </div>
+    {#if $$slots.afterTitle}<slot name="afterTitle" />{/if}
     <div class="flex-grow" />
     {#if $$slots.extra}<slot name="extra" />{/if}
     {#if tools || $$slots.tools}

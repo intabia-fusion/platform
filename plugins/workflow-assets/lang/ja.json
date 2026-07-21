@@ -30,6 +30,18 @@
     "FieldRequiredValidator": "必須フィールド",
     "FieldRequiredError": "トランジション「{transition}」にはフィールド「{field}」が必須です。",
     "TransitionConflictError": "ステータス「{from}」からステータス「{to}」への遷移は、既にトランジション「{transition}」に存在します",
-    "SelfTransitionError": "ステータス「{to}」から同じステータスへの遷移は許可されていません"
+    "SelfTransitionError": "ステータス「{to}」から同じステータスへの遷移は許可されていません",
+    "AddValidator": "バリデーターを追加",
+    "Validator": "バリデーター",
+    "AddRule": "ルールを追加",
+    "AllRules": "すべてのルール",
+    "RuleTypes": "ルールタイプ",
+    "RestrictTransition": "遷移の制限",
+    "RequestInput": "入力要求",
+    "ValidateDetails": "詳細の検証",
+    "PerformActions": "アクションの実行",
+    "SearchRules": "ルールを検索",
+    "Transition": "遷移",
+    "AnyStatus": "任意のステータス"
   }
 }

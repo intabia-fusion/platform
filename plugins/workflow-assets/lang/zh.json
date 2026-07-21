@@ -30,6 +30,18 @@
     "FieldRequiredValidator": "必填字段",
     "FieldRequiredError": "过渡 \"{transition}\" 必须填写字段 \"{field}\"。",
     "TransitionConflictError": "从状态 \"{from}\" 到状态 \"{to}\" 的转换已存在于过渡 \"{transition}\" 中",
-    "SelfTransitionError": "不允许从状态 \"{to}\" 转换到自身"
+    "SelfTransitionError": "不允许从状态 \"{to}\" 转换到自身",
+    "AddValidator": "添加验证器",
+    "Validator": "验证器",
+    "AddRule": "添加规则",
+    "AllRules": "所有规则",
+    "RuleTypes": "规则类型",
+    "RestrictTransition": "限制过渡",
+    "RequestInput": "请求输入",
+    "ValidateDetails": "验证详细信息",
+    "PerformActions": "执行操作",
+    "SearchRules": "搜索规则",
+    "Transition": "过渡",
+    "AnyStatus": "任意状态"
   }
 }

@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DocumentUpdate, Ref, Status } from '@hcengineering/core'
+  import { onDestroy } from 'svelte'
+  import { Data, DocumentUpdate, Ref, Status } from '@hcengineering/core'
   import presentation, { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import ui, {
@@ -27,8 +28,8 @@
     languageStore,
     type DropdownTextItem,
     ModernButton,
-    LabelAndProps,
-    IconError
+    IconError,
+    Spinner
   } from '@hcengineering/ui'
   import {
     WorkflowTransition,
@@ -42,6 +43,7 @@
   import { translate } from '@hcengineering/platform'
 
   import plugin from '../../plugin'
+  import ValidatorsNavGroup from './validators/ValidatorsNavGroup.svelte'
 
   export let workflow: Workflow
   export let _id: Ref<WorkflowTransition>
@@ -51,7 +53,7 @@
   export let statuses: Status[] = []
 
   const client = getClient()
-  const transitionQuery = createQuery()
+  const transitionsQuery = createQuery()
 
   let name = ''
   let fromStatusItemIds: string[] | undefined = []
@@ -59,9 +61,12 @@
   let fromStatusItems: DropdownTextItem[] = []
 
   let isSaving = false
+  let timer: any = null
+  let savePromise: Promise<void> | null = null
 
-  $: transitionQuery.query(plugin.class.WorkflowTransition, { _id, attachedTo: workflow._id }, (res) => {
-    transition = res.shift()
+  $: transitionsQuery.query(plugin.class.WorkflowTransition, { attachedTo: workflow._id }, res => {
+    transitions = res
+    transition = res.find(it => it._id === _id)
   })
 
   $: void translate(plugin.string.AnyStatus, {}, $languageStore).then((it) => {
@@ -109,31 +114,108 @@
         : null
   }
 
-  async function save (): Promise<void> {
-    if (transition == null || conflictInfo != null || isSelf) return
-    try {
-      isSaving = true
-      const fromVal = fromStatusItemIds?.includes('null') ? null : (fromStatusItemIds as Ref<Status>[])
-      const toVal = toStatusItem?._id as Ref<Status>
+  function getFromStatus (ids: string[] | undefined): Ref<Status>[] | null {
+    return ids == null || ids.includes('null') ? null : ((ids ?? []) as Ref<Status>[])
+  }
 
-      const update: DocumentUpdate<WorkflowTransition> = {}
-      const hasFromChanged = JSON.stringify(fromVal) !== JSON.stringify(transition.from)
-      if (hasFromChanged) {
-        update.from = fromVal
-      }
-      if (toVal != null && toVal !== transition.to) {
-        update.to = toVal
-      }
-      if (name.trim() !== transition.name) {
-        update.name = name
-      }
+  $: updatedData = {
+    name: name.trim(),
+    from: getFromStatus(fromStatusItemIds),
+    to: toStatusItem?._id as Ref<Status> | undefined
+  }
 
-      if (Object.keys(update).length !== 0) {
-        await updateTransition(client, workflow._id, transition._id, update)
-      }
-    } finally {
-      isSaving = false
+  function isTransitionFlowValid (
+    to: Ref<Status> | undefined,
+    fromItemIds: Ref<Status>[] | null | undefined,
+    isSelfTransition: boolean,
+    conflict: ConflictInfo | null
+  ): boolean {
+    const hasTargetStatus = to != null
+    const hasSourceStatuses = fromItemIds === null || (Array.isArray(fromItemIds) && fromItemIds.length > 0)
+    const isNotSelf = !isSelfTransition
+    const hasNoConflicts = conflict == null
+
+    return hasTargetStatus && hasSourceStatuses && isNotSelf && hasNoConflicts
+  }
+
+  function cloneData (data: Partial<Data<WorkflowTransition>>): Partial<Data<WorkflowTransition>> {
+    return {
+      name: data.name,
+      from: data.from ? [...data.from] : data.from,
+      to: data.to
     }
+  }
+
+  async function save (): Promise<void> {
+    if (transition == null || readonly) return
+
+    if (savePromise != null) {
+      await savePromise
+    }
+
+    const data = cloneData(updatedData)
+
+    const fromVal = data.from
+    const toVal = data.to
+    const isSelfTransition = toVal != null && fromVal != null && fromVal.includes(toVal)
+    const conflict = toVal != null && fromVal != null && fromVal.length > 0
+      ? getTransitionConflict({ _id, from: fromVal, to: toVal }, transitions)
+      : null
+
+    const isStatusesValid = isTransitionFlowValid(toVal, fromVal, isSelfTransition, conflict)
+
+    const hasFromChanged = JSON.stringify(fromVal) !== JSON.stringify(transition.from)
+    const hasToChanged = toVal != null && toVal !== transition.to
+    const hasNameChanged = (data.name?.length ?? 0) > 0 && data.name !== transition.name
+
+    const update: DocumentUpdate<WorkflowTransition> = {}
+
+    if (hasNameChanged && data.name) {
+      update.name = data.name
+    }
+
+    if (isStatusesValid) {
+      if (hasFromChanged) update.from = fromVal
+      if (hasToChanged && toVal) update.to = toVal
+    }
+
+    if (Object.keys(update).length === 0) return
+
+    const currentPromise = (async () => {
+      try {
+        isSaving = true
+        await updateTransition(client, workflow._id, transition._id, update)
+      } catch (err) {
+        console.error('Failed to auto-save transition:', err)
+      } finally {
+        isSaving = false
+      }
+    })()
+
+    savePromise = currentPromise
+    try {
+      await currentPromise
+    } finally {
+      if (savePromise === currentPromise) {
+        savePromise = null
+      }
+    }
+  }
+
+  function handleAutoSave (_: Partial<Data<WorkflowTransition>>): void {
+    if (transition == null || transition._id !== lastLoadedId || readonly) return
+
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      void save()
+    }, 500)
+  }
+
+  $: handleAutoSave(updatedData)
+
+  async function closeEditor (): Promise<void> {
+    clearTimeout(timer)
+    await save()
     clearSettingsStore()
   }
 
@@ -149,54 +231,21 @@
     })
   }
 
-  $: canSave = name.trim().length > 0 && toStatusItem != null && conflictInfo == null && !isSelf
 
-  function getOkTooltip (name: string, toStatusItem: ListItem | undefined): LabelAndProps | undefined {
-    if (name.trim().length === 0) {
-      return {
-        label: plugin.string.NameRequired
-      }
-    }
-    if (toStatusItem == null) {
-      return {
-        label: plugin.string.StatusToRequired
-      }
-    }
-    if (isSelf) {
-      return {
-        label: plugin.string.SelfTransitionError,
-        props: {
-          to: toStatusItem?.label ?? ''
-        }
-      }
-    }
-    if (conflictInfo != null) {
-      const fromItem = fromStatusItems.find((item) => item.id === conflictInfo?.status)
-      return {
-        label: plugin.string.TransitionConflictError,
-        props: {
-          to: toStatusItem?.label ?? '',
-          from: fromItem?.label ?? '',
-          transition: conflictInfo.transition.name
-        }
-      }
-    }
-
-    return undefined
-  }
+  onDestroy(() => {
+    clearTimeout(timer)
+  })
 </script>
 
 <Modal
   type="type-aside"
-  okLabel={presentation.string.Save}
-  okAction={save}
-  {canSave}
   label={plugin.string.WorkflowTransition}
   labelProps={{ name: transition?.name ?? '' }}
-  okLoading={isSaving}
-  okTooltip={getOkTooltip(name, toStatusItem)}
+  canSave={true}
   showCancelButton={false}
-  on:close={clearSettingsStore}
+  okKind="secondary"
+  okAction={closeEditor}
+  on:close={closeEditor}
 >
   <div class="flex-column flex-gap-4 p-8">
     <div class="row">
@@ -209,6 +258,10 @@
         width="100%"
         disabled={readonly}
         style="padding:0"
+        on:blur={() => {
+          clearTimeout(timer)
+          void save()
+        }}
       />
     </div>
 
@@ -274,15 +327,31 @@
     {/if}
   </div>
   <span class="separator" />
-  <svelte:fragment slot="buttons">
-    {#if !readonly}
-      <ModernButton label={presentation.string.Remove} size="large" kind="secondary" on:click={handleRemove} />
-    {/if}
-  </svelte:fragment>
-  <div slot="footer" class="flex-row-center flex-gap-2 w-full"></div>
+
+  {#if transition}
+    <ValidatorsNavGroup {workflow} {transitions} {statuses} {transition} />
+  {/if}
+  <div slot="footer" class="footer-row flex-row-center w-full justify-between">
+    <div class="footer-left">
+      {#if !readonly}
+        <ModernButton label={presentation.string.Remove} size="large" kind="secondary" on:click={handleRemove} />
+      {/if}
+    </div>
+    <div class="footer-right flex-row-center flex-gap-2">
+      {#if isSaving}
+        <div class="save-indicator">
+          <Spinner size="small" />
+          <span class="save-status-text"><Label label={presentation.string.Saving} /></span>
+        </div>
+      {/if}
+    </div>
+  </div>
 </Modal>
 
 <style lang="scss">
+  :global(.hulyNavGroup-container .hulyNavGroup-header) {
+    padding: 0;
+  }
   .row {
     display: flex;
     align-items: center;
@@ -297,6 +366,41 @@
     line-height: 1rem;
     color: var(--global-secondary-TextColor);
     min-width: 3rem;
+  }
+
+  .footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .footer-left {
+    display: flex;
+    align-items: center;
+  }
+
+  .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  .save-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--global-tertiary-TextColor);
+    min-height: 1.5rem;
+  }
+
+  .save-status-text {
+    color: var(--global-tertiary-TextColor);
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    font-weight: 600;
   }
 
   .error-row {

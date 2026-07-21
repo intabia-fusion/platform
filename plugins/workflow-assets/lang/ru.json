@@ -30,6 +30,18 @@
     "FieldRequiredValidator": "Обязательное поле",
     "FieldRequiredError": "Поле \"{field}\" обязательно для перехода \"{transition}\".",
     "TransitionConflictError": "Переход в статус \"{to}\" из статуса \"{from}\" уже существует в переходе \"{transition}\"",
-    "SelfTransitionError": "Переход из статуса \"{to}\" в такой же статус запрещен"
+    "SelfTransitionError": "Переход из статуса \"{to}\" в такой же статус запрещен",
+    "AddValidator": "Добавить валидатор",
+    "Validator": "Валидатор",
+    "AddRule": "Добавить правило",
+    "AllRules": "Все правила",
+    "RuleTypes": "Типы правил",
+    "RestrictTransition": "Ограничить переход",
+    "RequestInput": "Запросить ввод",
+    "ValidateDetails": "Проверить данные",
+    "PerformActions": "Выполнить действия",
+    "SearchRules": "Поиск правил",
+    "Transition": "Переход",
+    "AnyStatus": "Любой статус"
   }
 }

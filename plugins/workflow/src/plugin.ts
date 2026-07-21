@@ -74,6 +74,17 @@ export default plugin(workflowId, {
     FieldRequiredValidator: '' as IntlString,
     FieldRequiredError: '' as IntlString,
     TransitionConflictError: '' as IntlString,
-    SelfTransitionError: '' as IntlString
+    SelfTransitionError: '' as IntlString,
+    AddValidator: '' as IntlString,
+    Validator: '' as IntlString,
+    AddRule: '' as IntlString,
+    AllRules: '' as IntlString,
+    RuleTypes: '' as IntlString,
+    RestrictTransition: '' as IntlString,
+    RequestInput: '' as IntlString,
+    ValidateDetails: '' as IntlString,
+    PerformActions: '' as IntlString,
+    SearchRules: '' as IntlString,
+    Transition: '' as IntlString
   }
 })

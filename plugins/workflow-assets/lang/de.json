@@ -30,6 +30,18 @@
     "FieldRequiredValidator": "Feld erforderlich",
     "FieldRequiredError": "Feld \"{field}\" ist für den Übergang \"{transition}\" erforderlich.",
     "TransitionConflictError": "Übergang in den Status \"{to}\" aus dem Status \"{from}\" existiert bereits im Übergang \"{transition}\"",
-    "SelfTransitionError": "Übergang vom Status \"{to}\" in denselben Status ist nicht erlaubt"
+    "SelfTransitionError": "Übergang vom Status \"{to}\" in denselben Status ist nicht erlaubt",
+    "AddValidator": "Validator hinzufügen",
+    "Validator": "Validator",
+    "AddRule": "Regel hinzufügen",
+    "AllRules": "Alle Regeln",
+    "RuleTypes": "REGELTYPEN",
+    "RestrictTransition": "Übergang einschränken",
+    "RequestInput": "Eingabe anfordern",
+    "ValidateDetails": "Details überprüfen",
+    "PerformActions": "Aktionen ausführen",
+    "SearchRules": "Regeln suchen",
+    "Transition": "Übergang",
+    "AnyStatus": "Jeder Status"
   }
 }

@@ -30,6 +30,18 @@
     "FieldRequiredValidator": "Field required",
     "FieldRequiredError": "Field \"{field}\" is required for transition \"{transition}\".",
     "TransitionConflictError": "Transition to status \"{to}\" from status \"{from}\" already exists in transition \"{transition}\"",
-    "SelfTransitionError": "Transition from status \"{to}\" to itself is not allowed"
+    "SelfTransitionError": "Transition from status \"{to}\" to itself is not allowed",
+    "AddValidator": "Add validator",
+    "Validator": "Validator",
+    "AddRule": "Add rule",
+    "AllRules": "All rules",
+    "RuleTypes": "RULE TYPES",
+    "RestrictTransition": "Restrict transition",
+    "RequestInput": "Request input",
+    "ValidateDetails": "Validate details",
+    "PerformActions": "Perform actions",
+    "SearchRules": "Search rules",
+    "Transition": "Transition",
+    "AnyStatus": "Any status"
   }
 }

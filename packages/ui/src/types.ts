@@ -329,6 +329,8 @@ export interface ListItem {
   icon?: Asset | AnySvelteComponent | ComponentType
   iconProps?: Record<string, any>
   image?: string
+  component?: AnySvelteComponent
+  componentProps?: Record<string, any>
   isSelectable?: boolean
   fontWeight?: 'normal' | 'medium' | 'semi-bold'
   paddingLeft?: number

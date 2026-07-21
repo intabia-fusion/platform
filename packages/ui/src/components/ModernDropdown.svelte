@@ -15,13 +15,15 @@
 <script lang="ts">
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { createEventDispatcher, ComponentType } from 'svelte'
+
   import { getFocusManager } from '../focus'
   import { showPopup } from '../popups'
-  import type { AnySvelteComponent, ListItem, TooltipAlignment } from '../types'
+  import type { AnySvelteComponent, LabelAndProps, ListItem, TooltipAlignment } from '../types'
   import ModernButton from './ModernButton.svelte'
   import DropdownPopup from './DropdownPopup.svelte'
   import Label from './Label.svelte'
   import Icon from './Icon.svelte'
+  import {tooltip as tp} from '../tooltips'
 
   export let icon: Asset | AnySvelteComponent | ComponentType | undefined = undefined
   export let label: IntlString | undefined = undefined
@@ -39,6 +41,12 @@
   export let focusIndex = -1
   export let withSearch: boolean = true
   export let showCheckmark = false
+  export let popupClass: string | undefined = undefined
+  export let tooltip: LabelAndProps | undefined = undefined
+
+  $: activeTooltip = tooltip !== undefined
+    ? { timeout: 600, ...tooltip }
+    : undefined
 
   let container: HTMLElement
   let opened: boolean = false
@@ -52,6 +60,7 @@
   class="modern-dropdown-container"
   class:stretch-width={stretchWidth}
   style:width={stretchWidth ? '100%' : (width ?? 'min-content')}
+  use:tp={activeTooltip}
 >
   <ModernButton
     {focusIndex}
@@ -64,7 +73,7 @@
         opened = true
         showPopup(
           DropdownPopup,
-          { title: label, items, icon, withSearch, selectedId: showCheckmark ? selected?._id : undefined },
+          { title: label, items, icon, withSearch, popupClass, selectedId: showCheckmark ? selected?._id : undefined },
           container,
           (result) => {
             if (result) {
@@ -81,12 +90,16 @@
     <div class="dropdown-content-wrapper flex-row-center w-full min-w-0" class:justify-left={justify === 'left'}>
       <span class="overflow-label grow min-w-0">
         {#if selected}
-          <span class="flex-row-center flex-gap-1">
-            {#if selected.icon}
-              <Icon icon={selected.icon} size={'small'} iconProps={selected.iconProps} />
-            {/if}
-            {selected.label}
-          </span>
+          {#if selected.component}
+            <svelte:component this={selected.component} {...(selected.componentProps ?? {})} />
+          {:else}
+            <span class="flex-row-center flex-gap-1">
+              {#if selected.icon}
+                <Icon icon={selected.icon} size={'small'} iconProps={selected.iconProps} />
+              {/if}
+              {selected.label}
+            </span>
+          {/if}
         {:else}
           <span class="placeholder">
             <Label label={placeholder} />

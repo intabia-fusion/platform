@@ -30,6 +30,18 @@
     "FieldRequiredValidator": "Campo requerido",
     "FieldRequiredError": "El campo \"{field}\" es obligatorio para la transición \"{transition}\".",
     "TransitionConflictError": "La transición al estado \"{to}\" desde el estado \"{from}\" ya existe en la transición \"{transition}\"",
-    "SelfTransitionError": "No se permite la transición del estado \"{to}\" a sí mismo"
+    "SelfTransitionError": "No se permite la transición del estado \"{to}\" a sí mismo",
+    "AddValidator": "Añadir validador",
+    "Validator": "Validador",
+    "AddRule": "Añadir regla",
+    "AllRules": "Todas las reglas",
+    "RuleTypes": "TIPOS DE REGLAS",
+    "RestrictTransition": "Restringir transición",
+    "RequestInput": "Solicitar datos",
+    "ValidateDetails": "Validar detalles",
+    "PerformActions": "Ejecutar acciones",
+    "SearchRules": "Buscar reglas",
+    "Transition": "Transición",
+    "AnyStatus": "Cualquier estado"
   }
 }

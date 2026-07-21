@@ -30,6 +30,18 @@
     "FieldRequiredValidator": "Vyžadovat pole",
     "FieldRequiredError": "Pole \"{field}\" je vyžadováno pro přechod \"{transition}\".",
     "TransitionConflictError": "Přechod do stavu \"{to}\" ze stavu \"{from}\" již existuje v přechodu \"{transition}\"",
-    "SelfTransitionError": "Přechod ze stavu \"{to}\" do stejného stavu není povolen"
+    "SelfTransitionError": "Přechod ze stavu \"{to}\" do stejného stavu není povolen",
+    "AddValidator": "Přidat validátor",
+    "Validator": "Validátor",
+    "AddRule": "Přidat pravidlo",
+    "AllRules": "Všechna pravidla",
+    "RuleTypes": "TYPY PRAVIDEL",
+    "RestrictTransition": "Omezit přechod",
+    "RequestInput": "Vyžadovat vstup",
+    "ValidateDetails": "Ověřit údaje",
+    "PerformActions": "Provést akce",
+    "SearchRules": "Hledat pravidla",
+    "Transition": "Přechod",
+    "AnyStatus": "Jakýkoli stav"
   }
 }
