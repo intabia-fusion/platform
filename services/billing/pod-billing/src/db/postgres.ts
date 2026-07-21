@@ -738,7 +738,14 @@ class PostgresDB implements BillingDB {
             exhausted = EXCLUDED.exhausted,
             updated_at = now()
         `
-    await this.execute(query, [state.workspace, state.category, state.used, state.limitValue, state.exhausted])
+    // used/limit_value are bigint columns; transcript seconds arrive fractional
+    await this.execute(query, [
+      state.workspace,
+      state.category,
+      Math.round(state.used),
+      Math.round(state.limitValue),
+      state.exhausted
+    ])
   }
 
   async getAllExhaustedStates (ctx: MeasureContext): Promise<WorkspaceLimitState[]> {

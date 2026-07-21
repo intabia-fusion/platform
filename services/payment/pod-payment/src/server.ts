@@ -326,11 +326,9 @@ export async function createServer (
     try {
       const existing = await accountClient.getSubscriptions(workspace, false)
       if (existing.some((s) => s.type === SubscriptionType.Tier)) return // already has a tier
-      if (trialConfig !== undefined) {
-        await createTrialSubscription(workspace)
-      } else {
-        await createFreeSubscription(workspace)
-      }
+      // Trial is best-effort: no trial configured, or it could not be built -> fall back to free.
+      if (trialConfig !== undefined && (await createTrialSubscription(workspace)) !== undefined) return
+      await createFreeSubscription(workspace)
     } catch (err: any) {
       ctx.error('failed to ensure initial subscription', { workspace, err })
     }

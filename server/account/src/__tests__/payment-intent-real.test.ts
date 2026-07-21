@@ -14,11 +14,12 @@
 //
 
 import { generateId, generateUuid, systemAccountUuid, type AccountUuid, type WorkspaceUuid } from '@hcengineering/core'
-import { getDBClient, shutdownPostgres, type PostgresClientReference } from '@hcengineering/postgres'
+import { shutdownPostgres, type PostgresClientReference } from '@hcengineering/postgres'
 import { generateToken } from '@hcengineering/server-token'
-import { PostgresAccountDB } from '../collections/postgres/postgres'
-import { SubscriptionStatus, SubscriptionType, type DBFlavor } from '../types'
+import { type PostgresAccountDB } from '../collections/postgres/postgres'
+import { SubscriptionStatus, SubscriptionType } from '../types'
 import { createAccount } from '../utils'
+import { clearTables, openRealDb, realDbFlavors } from './realDbFlavors'
 
 jest.setTimeout(90000)
 
@@ -27,13 +28,24 @@ jest.setTimeout(90000)
 const renewKey = (subscriptionId: string, periodEnd: number): string => `renew:${subscriptionId}:${periodEnd}`
 const checkoutKey = (workspaceUuid: string, type: string): string => `checkout:${workspaceUuid}:${type}`
 
-describe('payment-intent-real', () => {
-  const cockroachDB: string = process.env.DB_URL ?? 'postgresql://root@localhost:26258/defaultdb?sslmode=disable'
-  // Flavor drives the migration SQL (cockroach vs postgres).
-  const dbFlavor: DBFlavor = (process.env.DB_FLAVOR as DBFlavor | undefined) ?? 'cockroach'
+// Rows the tests themselves write; cleared between tests, children before parents.
+const DIRTY_TABLES = ['payment_intent', 'subscription']
+// Fixtures seeded once in beforeAll — also cleared at startup, since the database outlives the run.
+// Children before parents: social_id/account_events/user_profile all reference person, and the
+// database is shared with the other real-db suites, so leftovers of theirs must go too.
+const FIXTURE_TABLES = [
+  'workspace_members',
+  'workspace_status',
+  'workspace',
+  'social_id',
+  'account_events',
+  'user_profile',
+  'account_passwords',
+  'account',
+  'person'
+]
 
-  let crDbUri = cockroachDB
-  let adminClientCRRef: PostgresClientReference
+describe.each(realDbFlavors)('payment-intent-real [$flavor]', ({ flavor: dbFlavor, adminUri, dbUri }) => {
   let dbUuid: string
   let crClient: PostgresClientReference
   let crAccount: PostgresAccountDB
@@ -44,46 +56,16 @@ describe('payment-intent-real', () => {
   let wsUuid: WorkspaceUuid
   const accountUuid = generateUuid() as AccountUuid
 
-  beforeAll(() => {
-    adminClientCRRef = getDBClient(cockroachDB)
-  })
+  // One reused database per flavor: migrations run once (and are skipped entirely on later runs),
+  // and nothing is ever dropped — a DROP DATABASE on cockroach queues a 300s GC job per call.
+  beforeAll(async () => {
+    const db = await openRealDb('pidb', { flavor: dbFlavor, adminUri, dbUri })
+    dbUuid = db.dbUuid
+    crClient = db.dbRef
+    crAccount = db.account
 
-  afterAll(async () => {
-    adminClientCRRef.close()
-    await shutdownPostgres()
-  })
-
-  beforeEach(async () => {
-    dbUuid = 'pidb' + Date.now().toString()
-    crDbUri = cockroachDB.replace('/defaultdb', '/' + dbUuid)
-
-    const adminClient = await adminClientCRRef.getClient()
-    const existing = await adminClient`SELECT datname FROM pg_database WHERE datname LIKE 'pidb%'`
-    for (const row of existing) {
-      // CASCADE is cockroach-only; postgres has no CASCADE for DROP DATABASE.
-      if (dbFlavor === 'cockroach') {
-        await adminClient`DROP DATABASE IF EXISTS ${adminClient(row.datname)} CASCADE`
-      } else {
-        await adminClient`DROP DATABASE IF EXISTS ${adminClient(row.datname)}`
-      }
-    }
-    await adminClient`CREATE DATABASE ${adminClient(dbUuid)}`
-
-    crClient = getDBClient(crDbUri)
-    const pgClient = await crClient.getClient()
-    crAccount = new PostgresAccountDB(pgClient, dbUuid, dbFlavor)
-
-    let error = false
-    do {
-      try {
-        await crAccount.init()
-        error = false
-      } catch (e) {
-        console.error('init error, retrying', e)
-        error = true
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-      }
-    } while (error)
+    // The database survives previous runs, so drop their fixtures before seeding this one.
+    await clearTables(crClient, dbUuid, [...DIRTY_TABLES, ...FIXTURE_TABLES])
 
     await crAccount.person.insertOne({ uuid: accountUuid, firstName: 'Test', lastName: 'User' })
     await createAccount(crAccount, accountUuid, true)
@@ -94,18 +76,14 @@ describe('payment-intent-real', () => {
     )
   })
 
-  afterEach(async () => {
-    try {
-      crClient.close()
-      const adminClient = await adminClientCRRef.getClient()
-      if (dbFlavor === 'cockroach') {
-        await adminClient`DROP DATABASE IF EXISTS ${adminClient(dbUuid)} CASCADE`
-      } else {
-        await adminClient`DROP DATABASE IF EXISTS ${adminClient(dbUuid)}`
-      }
-    } catch (err) {
-      console.error('Cleanup error:', err)
-    }
+  afterAll(async () => {
+    crClient.close()
+    await shutdownPostgres()
+  })
+
+  beforeEach(async () => {
+    // checkout claim keys are derived from the shared workspace, so intents must not leak across tests.
+    await clearTables(crClient, dbUuid, DIRTY_TABLES)
   })
 
   async function createSubscription (): Promise<string> {

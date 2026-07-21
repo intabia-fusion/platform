@@ -89,7 +89,9 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV28Migration(ns, flavor),
     getV29Migration(ns, flavor),
     getV30Migration(ns, flavor),
-    getV31Migration(ns, flavor)
+    getV31Migration(ns, flavor),
+    getV32Migration(ns, flavor),
+    getV33Migration(ns)
   ]
 }
 
@@ -962,6 +964,63 @@ function getV31Migration (ns: string, flavor: DBFlavor): [string, string] {
     CREATE INDEX IF NOT EXISTS payment_operation_payment_id_idx ON ${ns}.payment_operation (payment_id);
     CREATE INDEX IF NOT EXISTS payment_operation_created_idx ON ${ns}.payment_operation (created_on);
     CREATE INDEX IF NOT EXISTS payment_operation_action_idx ON ${ns}.payment_operation (action_id);
+    `
+  ]
+}
+
+function getV32Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v32_payment_intent_claim_key',
+    `
+    /* ======= P A Y M E N T   I N T E N T   R E A L I G N ======= */
+    /* v30 shipped twice with different DDL: an early renew-only shape (subscription_id NOT NULL,
+       UNIQUE (subscription_id, period_end), FK to subscription) and the current claim_key shape.
+       Databases that applied the early one keep the identifier marked applied, so the newer DDL
+       never runs and claimIntent fails with "column claim_key does not exist". Realign in place. */
+
+    ALTER TABLE ${ns}.payment_intent DROP CONSTRAINT IF EXISTS payment_intent_subscription_fk;
+    ${
+      // cockroach refuses DROP CONSTRAINT for a UNIQUE; it wants the backing index dropped instead.
+      flavor === 'cockroach'
+        ? `DROP INDEX IF EXISTS ${ns}.payment_intent@payment_intent_sub_period_unique CASCADE;`
+        : `ALTER TABLE ${ns}.payment_intent DROP CONSTRAINT IF EXISTS payment_intent_sub_period_unique;`
+    }
+    ALTER TABLE ${ns}.payment_intent ALTER COLUMN subscription_id DROP NOT NULL;
+
+    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS claim_key ${types.string};
+    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS payment_url ${types.string};
+    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS workspace_uuid ${types.string};
+    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS order_fingerprint ${types.string};
+
+    /* period_end is old-schema only; add it (nullable) on the current shape so the backfill in v33
+       is plain SQL — no DO block, which CockroachDB does not support. */
+    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS period_end BIGINT;
+    ALTER TABLE ${ns}.payment_intent ALTER COLUMN period_end DROP NOT NULL;
+    `
+  ]
+}
+
+function getV33Migration (ns: string): [string, string] {
+  return [
+    'account_db_v33_payment_intent_claim_key_index',
+    `
+    /* Separate migration on purpose: cockroach backfills a freshly added column asynchronously and
+       rejects an index build while that is in flight ("column is being backfilled"). Splitting lets
+       v32's ADD COLUMN settle before the unique index below is created. */
+
+    /* Rebuild the renew claim key from the old shape; a table already on the current shape has no
+       such rows, so this is a no-op there. */
+    UPDATE ${ns}.payment_intent
+       SET claim_key = 'renew:' || subscription_id || ':' || period_end
+     WHERE claim_key IS NULL AND subscription_id IS NOT NULL AND period_end IS NOT NULL;
+
+    DELETE FROM ${ns}.payment_intent WHERE claim_key IS NULL;
+
+    /* claim_key stays nullable: the unique index is what enforces the claim, and every insert sets
+       it. SET NOT NULL on an existing column behaves differently across flavors. */
+    CREATE UNIQUE INDEX IF NOT EXISTS payment_intent_claim_key_unique ON ${ns}.payment_intent (claim_key);
+    CREATE INDEX IF NOT EXISTS payment_intent_payment_id_idx ON ${ns}.payment_intent (payment_id);
     `
   ]
 }
