@@ -13,8 +13,9 @@
 // limitations under the License.
 //
 
-import { notEmpty, Ref, Status } from '@hcengineering/core'
+import core, { notEmpty, Ref, Status } from '@hcengineering/core'
 import task, { type Task } from '@hcengineering/task'
+import tracker from '@hcengineering/tracker'
 
 import workflow from './plugin'
 import { type ValidationResult, ValidatorClient, ValidatorFunc, type WorkflowTransition } from './types'
@@ -64,6 +65,17 @@ export const FieldRequired: ValidatorFunc = async (
   return { ok: true }
 }
 
+async function getStatusNames (client: ValidatorClient, statusIds: Ref<Status>[]): Promise<string> {
+  if (statusIds.length === 0) return ''
+  const statusDocs: Pick<Status, '_id' | 'name'>[] = await client.findAll(
+    core.class.Status,
+    { _id: { $in: statusIds } },
+    { projection: { _id: 1, name: 1 } }
+  )
+  const nameMap = new Map(statusDocs.map((s) => [s._id, s.name]))
+  return statusIds.map((id) => nameMap.get(id) ?? String(id)).join(', ')
+}
+
 export const SubtaskStatus: ValidatorFunc = async (
   client: ValidatorClient,
   taskDoc: Task,
@@ -86,12 +98,51 @@ export const SubtaskStatus: ValidatorFunc = async (
 
   for (const subtask of subtasks) {
     if (!allowedStatuses.includes(subtask.status)) {
+      const statuses = await getStatusNames(client, allowedStatuses)
       return {
         ok: false,
-        reason: `Subtasks must have allowed statuses for transition "${transition.name}".`,
+        reason: `Subtasks must be in allowed status (${statuses}) for transition "${transition.name}".`,
         reasonIntl: workflow.string.SubtaskStatusError,
-        intlParams: { transition: transition.name }
+        intlParams: { transition: transition.name, statuses }
       }
+    }
+  }
+
+  return { ok: true }
+}
+
+export const ParentStatus: ValidatorFunc = async (
+  client: ValidatorClient,
+  taskDoc: Task,
+  transition: WorkflowTransition,
+  props: Record<string, any>
+): Promise<ValidationResult> => {
+  const allowedStatuses = ((props.statuses ?? []) as Ref<Status>[]).filter(notEmpty)
+  if (allowedStatuses.length === 0) {
+    return { ok: true }
+  }
+
+  if (taskDoc.attachedTo == null || taskDoc.attachedTo === tracker.ids.NoParent) {
+    return { ok: true }
+  }
+
+  const parentTasks: Pick<Task, 'status'>[] = await client.findAll(
+    task.class.Task,
+    { _id: taskDoc.attachedTo as Ref<Task> },
+    { projection: { status: 1 } }
+  )
+  if (parentTasks.length === 0) {
+    return { ok: true }
+  }
+
+  const parentTask = parentTasks[0]
+  if (!allowedStatuses.includes(parentTask.status)) {
+    const statuses = await getStatusNames(client, allowedStatuses)
+    return {
+      ok: false,
+      reason: `Parent task must be in allowed status (${statuses}) for transition "${transition.name}".`,
+      reasonIntl: workflow.string.ParentStatusError,
+      intlParams: { transition: transition.name, statuses }
     }
   }
 

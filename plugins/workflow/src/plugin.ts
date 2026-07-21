@@ -27,11 +27,13 @@ export default plugin(workflowId, {
   },
   validator: {
     FieldRequired: '' as Ref<WorkflowValidator>,
-    SubtaskStatus: '' as Ref<WorkflowValidator>
+    SubtaskStatus: '' as Ref<WorkflowValidator>,
+    ParentStatus: '' as Ref<WorkflowValidator>
   },
   validatorExecutor: {
     FieldRequired: '' as Resource<ValidatorFunc>,
-    SubtaskStatus: '' as Resource<ValidatorFunc>
+    SubtaskStatus: '' as Resource<ValidatorFunc>,
+    ParentStatus: '' as Resource<ValidatorFunc>
   },
   mixin: {
     ProjectWorkflow: '' as Ref<Mixin<ProjectWorkflow>>,
@@ -80,6 +82,10 @@ export default plugin(workflowId, {
     SubtaskStatusDescription: '' as IntlString,
     SubtaskStatusError: '' as IntlString,
     SubtaskStatusRequired: '' as IntlString,
+    ParentStatusValidator: '' as IntlString,
+    ParentStatusDescription: '' as IntlString,
+    ParentStatusError: '' as IntlString,
+    ParentStatusRequired: '' as IntlString,
     TransitionConflictError: '' as IntlString,
     SelfTransitionError: '' as IntlString,
     AddValidator: '' as IntlString,

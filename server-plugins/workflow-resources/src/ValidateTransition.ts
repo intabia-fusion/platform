@@ -176,4 +176,4 @@ function getValidatorClient (control: TriggerControl): ValidatorClient {
   }
 }
 
-export { FieldRequired, SubtaskStatus } from '@hcengineering/workflow'
+export { FieldRequired, SubtaskStatus, ParentStatus } from '@hcengineering/workflow'

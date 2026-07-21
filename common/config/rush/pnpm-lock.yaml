@@ -29949,6 +29949,9 @@ importers:
       '@hcengineering/task':
         specifier: workspace:^0.7.0
         version: link:../task
+      '@hcengineering/tracker':
+        specifier: workspace:^0.7.0
+        version: link:../tracker
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui

@@ -47,4 +47,19 @@ export function defineValidators (builder: Builder): void {
   builder.mixin(workflow.validator.SubtaskStatus, workflow.class.WorkflowValidator, workflow.mixin.ValidatorImpl, {
     executor: workflow.validatorExecutor.SubtaskStatus
   })
+
+  builder.createDoc(
+    workflow.class.WorkflowValidator,
+    core.space.Model,
+    {
+      label: workflow.string.ParentStatusValidator,
+      icon: workflow.icon.Workflow,
+      group: 'parent'
+    },
+    workflow.validator.ParentStatus
+  )
+
+  builder.mixin(workflow.validator.ParentStatus, workflow.class.WorkflowValidator, workflow.mixin.ValidatorImpl, {
+    executor: workflow.validatorExecutor.ParentStatus
+  })
 }

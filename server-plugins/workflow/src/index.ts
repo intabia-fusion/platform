@@ -35,6 +35,7 @@ export default plugin(serverWorkflowId, {
   },
   validatorExecutor: {
     FieldRequired: '' as Resource<ValidatorFunc>,
-    SubtaskStatus: '' as Resource<ValidatorFunc>
+    SubtaskStatus: '' as Resource<ValidatorFunc>,
+    ParentStatus: '' as Resource<ValidatorFunc>
   }
 })

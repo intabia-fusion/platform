@@ -59,4 +59,13 @@ export function createModel (builder: Builder): void {
       serverExecutor: serverWorkflow.validatorExecutor.SubtaskStatus
     }
   )
+
+  builder.mixin(
+    workflow.validator.ParentStatus,
+    workflow.class.WorkflowValidator,
+    serverWorkflow.mixin.ValidatorImpl,
+    {
+      serverExecutor: serverWorkflow.validatorExecutor.ParentStatus
+    }
+  )
 }

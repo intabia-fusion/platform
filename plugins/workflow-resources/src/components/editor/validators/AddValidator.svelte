@@ -62,7 +62,9 @@
       const descKey =
         v._id === plugin.validator.SubtaskStatus
           ? plugin.string.SubtaskStatusDescription
-          : plugin.string.FieldRequiredDescription
+          : v._id === plugin.validator.ParentStatus
+            ? plugin.string.ParentStatusDescription
+            : plugin.string.FieldRequiredDescription
       const description = await translate(descKey, {}, $languageStore)
       return {
         id: v._id,
@@ -109,8 +111,9 @@
     if (selectedValidatorId == null || transition == null || workflow == null) return
 
     const currentValidators = transition.validators ?? []
-    const isSubtask = selectedValidatorId === plugin.validator.SubtaskStatus
-    const props = isSubtask ? { statuses: selectedStatusIds } : { fields: selectedFields }
+    const isStatusBased =
+      selectedValidatorId === plugin.validator.SubtaskStatus || selectedValidatorId === plugin.validator.ParentStatus
+    const props = isStatusBased ? { statuses: selectedStatusIds } : { fields: selectedFields }
 
     const newConfig: WorkflowValidatorConfig = {
       validator: selectedValidatorId,
@@ -143,6 +146,19 @@
         {#if rule.id === plugin.validator.SubtaskStatus}
           <div class="fields-selector-row" on:click|stopPropagation>
             <span class="fields-label"><Label label={plugin.string.SubtaskStatusRequired} />:</span>
+            <ModernDropdownLabels
+              items={statusDropdownItems}
+              bind:selected={selectedStatusIds}
+              multiselect={true}
+              wrap={true}
+              placeholder={ui.string.NotSelected}
+              justify="left"
+              width="100%"
+            />
+          </div>
+        {:else if rule.id === plugin.validator.ParentStatus}
+          <div class="fields-selector-row" on:click|stopPropagation>
+            <span class="fields-label"><Label label={plugin.string.ParentStatusRequired} />:</span>
             <ModernDropdownLabels
               items={statusDropdownItems}
               bind:selected={selectedStatusIds}

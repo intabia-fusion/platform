@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { ValidateTransitionTrigger, FieldRequired, SubtaskStatus } from './ValidateTransition'
+import { ValidateTransitionTrigger, FieldRequired, SubtaskStatus, ParentStatus } from './ValidateTransition'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
@@ -22,6 +22,7 @@ export default async () => ({
   },
   validatorExecutor: {
     FieldRequired,
-    SubtaskStatus
+    SubtaskStatus,
+    ParentStatus
   }
 })
