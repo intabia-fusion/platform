@@ -122,3 +122,67 @@ export async function setWorkflow (
     })
   }
 }
+
+export function findTransitionConflict (
+  t1: Pick<WorkflowTransition, 'from' | 'to'>,
+  t2: Pick<WorkflowTransition, 'from' | 'to'>
+): Ref<Status> | null {
+  if (t1.to !== t2.to) return null
+
+  const t1From = t1.from == null || t1.from.length === 0 ? null : t1.from
+  const t2From = t2.from == null || t2.from.length === 0 ? null : t2.from
+
+  if (t1From === null && t2From === null) {
+    return 'null' as any
+  }
+
+  if (t1From !== null && t2From !== null) {
+    const intersect = t1From.find((s) => t2From.includes(s))
+    return intersect ?? null
+  }
+
+  return null
+}
+
+export function checkConflict (
+  t1: Pick<WorkflowTransition, 'from' | 'to'>,
+  t2: Pick<WorkflowTransition, 'from' | 'to'>
+): boolean {
+  return findTransitionConflict(t1, t2) !== null
+}
+
+export interface ConflictInfo {
+  transition: WorkflowTransition
+  status: Ref<Status>
+}
+
+export function getTransitionConflict (
+  newTransition: Pick<WorkflowTransition, 'from' | 'to'> & { _id?: Ref<WorkflowTransition> },
+  existingTransitions: WorkflowTransition[]
+): ConflictInfo | null {
+  for (const t of existingTransitions) {
+    if (newTransition._id !== undefined && t._id === newTransition._id) continue
+    const conflictStatus = findTransitionConflict(newTransition, t)
+    if (conflictStatus !== null) {
+      return {
+        transition: t,
+        status: conflictStatus
+      }
+    }
+  }
+  return null
+}
+
+export function hasTransitionConflict (
+  newTransition: Pick<WorkflowTransition, 'from' | 'to'> & { _id?: Ref<WorkflowTransition> },
+  existingTransitions: WorkflowTransition[]
+): boolean {
+  return getTransitionConflict(newTransition, existingTransitions) !== null
+}
+
+export function hasSelfTransition (transition: Pick<WorkflowTransition, 'from' | 'to'>): boolean {
+  if (transition.to == null || transition.from == null || !Array.isArray(transition.from)) {
+    return false
+  }
+  return transition.from.includes(transition.to)
+}

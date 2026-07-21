@@ -36,6 +36,8 @@
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/model": "workspace:^0.7.17",
     "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/model-workflow": "workspace:^0.7.0",
+    "@hcengineering/workflow": "workspace:^0.7.0",
     "@hcengineering/server-workflow": "workspace:^0.7.0",
     "@hcengineering/server-core": "workspace:^0.7.18",
     "@hcengineering/task": "workspace:^0.7.0"

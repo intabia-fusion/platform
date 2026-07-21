@@ -30,7 +30,21 @@ import { type TriggerControl } from '@hcengineering/server-core'
 import task, { type Task, type Project, type TaskType, type Rank } from '@hcengineering/task'
 import workflow from '@hcengineering/model-workflow'
 import { type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
-import { ValidateTransition } from '../ValidateTransition'
+import { ValidateTransitionTrigger } from '../ValidateTransition'
+
+jest.mock('@hcengineering/platform', () => {
+  const actual = jest.requireActual('@hcengineering/platform')
+  return {
+    ...actual,
+    getResource: jest.fn().mockImplementation(async (res) => {
+      if (res === 'FieldRequired') {
+        const { FieldRequired } = jest.requireActual('../ValidateTransition')
+        return FieldRequired
+      }
+      return actual.getResource(res)
+    })
+  }
+})
 
 const testSpace = 'test-space' as Ref<Project>
 const testAccount = 'test-account' as any
@@ -47,7 +61,8 @@ function createMockTask (data: Partial<Task> = {}): WithLookup<Task> {
     modifiedOn: Date.now(),
     modifiedBy: testAccount,
     createdBy: testAccount,
-    createdOn: Date.now()
+    createdOn: Date.now(),
+    ...data
   } as unknown as WithLookup<Task>
 }
 
@@ -143,7 +158,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransition([tx], control)).resolves.not.toThrow()
+    await expect(ValidateTransitionTrigger([tx], control)).resolves.not.toThrow()
   })
 
   it('should allow creation with valid start status', async () => {
@@ -187,7 +202,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransition([tx], control)).resolves.not.toThrow()
+    await expect(ValidateTransitionTrigger([tx], control)).resolves.not.toThrow()
   })
 
   it('should throw error on creation with invalid start status', async () => {
@@ -232,7 +247,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransition([tx], control)).rejects.toThrow()
+    await expect(ValidateTransitionTrigger([tx], control)).rejects.toThrow()
   })
 
   it('should allow valid transition on update', async () => {
@@ -280,7 +295,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransition([tx], control)).resolves.not.toThrow()
+    await expect(ValidateTransitionTrigger([tx], control)).resolves.not.toThrow()
   })
 
   it('should throw error on invalid transition on update', async () => {
@@ -328,7 +343,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransition([tx], control)).rejects.toThrow()
+    await expect(ValidateTransitionTrigger([tx], control)).rejects.toThrow()
   })
 
   it('should resolve workflow mapping using project workflows array for task types', async () => {
@@ -377,6 +392,257 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransition([tx], control)).resolves.not.toThrow()
+    await expect(ValidateTransitionTrigger([tx], control)).resolves.not.toThrow()
+  })
+
+  it('should allow transition on update if required field is present in updateTx operations', async () => {
+    const statusTodo = 'todo-status' as Ref<Status>
+    const statusInProgress = 'in-progress-status' as Ref<Status>
+    const wfId = 'wf-1' as Ref<Workflow>
+    const valId = 'val-1' as Ref<any>
+
+    const t = createMockTask({ status: statusTodo })
+    const tx = createUpdateTx(t._id, { status: statusInProgress, assignee: 'person-1' as any })
+
+    const project: Doc & any = {
+      _id: testSpace as any,
+      _class: task.class.Project,
+      space: core.space.Model,
+      workflows: {
+        [t.kind]: wfId
+      }
+    }
+
+    const transition: Doc & WorkflowTransition = {
+      _id: 't-2' as any,
+      _class: workflow.class.WorkflowTransition,
+      space: testSpace,
+      attachedTo: wfId,
+      attachedToClass: workflow.class.Workflow,
+      collection: 'transitions',
+      name: 'Start Work',
+      from: [statusTodo],
+      to: statusInProgress,
+      rank: 'a0' as Rank,
+      modifiedOn: 0,
+      modifiedBy: testAccount,
+      validators: [
+        {
+          validator: valId,
+          props: {
+            fields: ['assignee']
+          }
+        }
+      ]
+    }
+
+    const control = createMockControl(async (ctx, cl, query) => {
+      if (cl === task.class.Project && query._id === testSpace) {
+        return [project]
+      }
+      if (cl === task.class.Task && query._id === t._id) {
+        return [t]
+      }
+      if (cl === workflow.class.WorkflowTransition && query.attachedTo === wfId) {
+        return [transition]
+      }
+      if (cl === workflow.class.WorkflowValidator && query._id === valId) {
+        return [
+          {
+            _id: valId,
+            _class: workflow.class.WorkflowValidator,
+            space: core.space.Model,
+            label: 'Field Required' as any,
+            serverExecutor: 'FieldRequired',
+            group: 'fields',
+            modifiedOn: 0,
+            modifiedBy: testAccount
+          } as any as Doc
+        ]
+      }
+      return []
+    })
+
+    await expect(ValidateTransitionTrigger([tx], control)).resolves.not.toThrow()
+  })
+
+  it('should allow transition on update if required field is already present in task document', async () => {
+    const statusTodo = 'todo-status' as Ref<Status>
+    const statusInProgress = 'in-progress-status' as Ref<Status>
+    const wfId = 'wf-1' as Ref<Workflow>
+    const valId = 'val-1' as Ref<any>
+
+    const t = createMockTask({ status: statusTodo })
+    ;(t as any).assignee = 'person-1'
+    const tx = createUpdateTx(t._id, { status: statusInProgress })
+
+    const project: Doc & any = {
+      _id: testSpace as any,
+      _class: task.class.Project,
+      space: core.space.Model,
+      workflows: {
+        [t.kind]: wfId
+      }
+    }
+
+    const transition: Doc & WorkflowTransition = {
+      _id: 't-2' as any,
+      _class: workflow.class.WorkflowTransition,
+      space: testSpace,
+      attachedTo: wfId,
+      attachedToClass: workflow.class.Workflow,
+      collection: 'transitions',
+      name: 'Start Work',
+      from: [statusTodo],
+      to: statusInProgress,
+      rank: 'a0' as Rank,
+      modifiedOn: 0,
+      modifiedBy: testAccount,
+      validators: [
+        {
+          validator: valId,
+          props: {
+            fields: ['assignee']
+          }
+        }
+      ]
+    }
+
+    const control = createMockControl(async (ctx, cl, query) => {
+      if (cl === task.class.Project && query._id === testSpace) {
+        return [project]
+      }
+      if (cl === task.class.Task && query._id === t._id) {
+        return [t]
+      }
+      if (cl === workflow.class.WorkflowTransition && query.attachedTo === wfId) {
+        return [transition]
+      }
+      if (cl === workflow.class.WorkflowValidator && query._id === valId) {
+        return [
+          {
+            _id: valId,
+            _class: workflow.class.WorkflowValidator,
+            space: core.space.Model,
+            label: 'Field Required' as any,
+            serverExecutor: 'FieldRequired',
+            group: 'fields',
+            modifiedOn: 0,
+            modifiedBy: testAccount
+          } as any as Doc
+        ]
+      }
+      return []
+    })
+
+    await expect(ValidateTransitionTrigger([tx], control)).resolves.not.toThrow()
+  })
+
+  it('should throw error on update if required field is missing', async () => {
+    const statusTodo = 'todo-status' as Ref<Status>
+    const statusInProgress = 'in-progress-status' as Ref<Status>
+    const wfId = 'wf-1' as Ref<Workflow>
+    const valId = 'val-1' as Ref<any>
+
+    const t = createMockTask({ status: statusTodo })
+    const tx = createUpdateTx(t._id, { status: statusInProgress })
+
+    const project: Doc & any = {
+      _id: testSpace as any,
+      _class: task.class.Project,
+      space: core.space.Model,
+      workflows: {
+        [t.kind]: wfId
+      }
+    }
+
+    const transition: Doc & WorkflowTransition = {
+      _id: 't-2' as any,
+      _class: workflow.class.WorkflowTransition,
+      space: testSpace,
+      attachedTo: wfId,
+      attachedToClass: workflow.class.Workflow,
+      collection: 'transitions',
+      name: 'Start Work',
+      from: [statusTodo],
+      to: statusInProgress,
+      rank: 'a0' as Rank,
+      modifiedOn: 0,
+      modifiedBy: testAccount,
+      validators: [
+        {
+          validator: valId,
+          props: {
+            fields: ['assignee']
+          }
+        }
+      ]
+    }
+
+    const control = createMockControl(async (ctx, cl, query) => {
+      if (cl === task.class.Project && query._id === testSpace) {
+        return [project]
+      }
+      if (cl === task.class.Task && query._id === t._id) {
+        return [t]
+      }
+      if (cl === workflow.class.WorkflowTransition && query.attachedTo === wfId) {
+        return [transition]
+      }
+      if (cl === workflow.class.WorkflowValidator && query._id === valId) {
+        return [
+          {
+            _id: valId,
+            _class: workflow.class.WorkflowValidator,
+            space: core.space.Model,
+            label: 'Field Required' as any,
+            serverExecutor: 'FieldRequired',
+            group: 'fields',
+            modifiedOn: 0,
+            modifiedBy: testAccount
+          } as any as Doc
+        ]
+      }
+      return []
+    })
+
+    await expect(ValidateTransitionTrigger([tx], control)).rejects.toThrow(
+      'Field "assignee" is required for transition "Start Work".'
+    )
+  })
+
+  describe('FieldRequired Executor', () => {
+    it('should return ok: false with structured reason when required field is missing', async () => {
+      const { FieldRequired } = jest.requireActual('../ValidateTransition')
+      const t = createMockTask({ status: 'todo' as Ref<Status> })
+      const control = createMockControl(async () => [])
+
+      const res = await FieldRequired(
+        control as any,
+        t,
+        { name: 'Start', status: 'in-progress' as Ref<Status> } as any,
+        { fields: ['assignee'] }
+      )
+      expect(res).toEqual({
+        ok: false,
+        reason: 'Field "assignee" is required for transition "Start".',
+        reasonIntl: workflow.string.FieldRequiredError,
+        intlParams: { field: 'assignee', transition: 'Start' }
+      })
+    })
+
+    it('should return ok: true when required fields are present', async () => {
+      const { FieldRequired } = jest.requireActual('../ValidateTransition')
+      const t = createMockTask({ status: 'todo' as Ref<Status>, assignee: 'person-1' as any })
+      const control = createMockControl(async () => [])
+
+      const res = await FieldRequired(
+        control as any,
+        t,
+        { name: 'Start', status: 'in-progress' as Ref<Status> } as any,
+        { fields: ['assignee'] }
+      )
+      expect(res).toEqual({ ok: true })
+    })
   })
 })

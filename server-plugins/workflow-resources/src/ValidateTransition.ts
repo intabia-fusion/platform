@@ -20,15 +20,23 @@ import core, {
   type TxCreateDoc,
   type Ref,
   type TxCUD,
-  type Status,
-  Hierarchy
+  Hierarchy,
+  TxProcessor
 } from '@hcengineering/core'
 import { type TriggerControl } from '@hcengineering/server-core'
+import { getResource } from '@hcengineering/platform'
 import task, { Project, type Task, type TaskType } from '@hcengineering/task'
 import workflow from '@hcengineering/model-workflow'
-import { type ProjectWorkflow, type Workflow } from '@hcengineering/workflow'
+import serverWorkflow, { type ValidatorImpl } from '@hcengineering/server-workflow'
+import {
+  type ProjectWorkflow,
+  type Workflow,
+  type WorkflowValidator,
+  type WorkflowTransition,
+  type WorkflowValidatorConfig
+} from '@hcengineering/workflow'
 
-export async function ValidateTransition (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
+export async function ValidateTransitionTrigger (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
   for (const tx of txes) {
     if (!control.hierarchy.isDerived(tx.objectClass, task.class.Task)) {
       continue
@@ -57,22 +65,22 @@ async function validateCreate (createTx: TxCreateDoc<Task>, control: TriggerCont
     const transitions = await control.findAll(control.ctx, workflow.class.WorkflowTransition, {
       attachedTo: workflowRef
     })
-    const allowed = transitions.some((t) => getFromStatuses(t.from) === null && t.to === status)
+    const allowed = transitions.some((t) => (t.from == null || t.from.length === 0) && t.to === status)
     if (!allowed) {
-      throw new Error(`Стартовый статус ${status} не разрешен в воркфлоу для создания новой задачи.`)
+      throw new Error(`Initial status "${status}" is not allowed in the workflow for creating a new task.`)
     }
   }
 }
 
 async function validateUpdate (updateTx: TxUpdateDoc<Task>, control: TriggerControl): Promise<void> {
-  const newStatus = updateTx.operations.status
-  if (newStatus == null) return
+  const toStatus = updateTx.operations.status
+  if (toStatus == null) return
 
   const oldTask = (await control.findAll(control.ctx, task.class.Task, { _id: updateTx.objectId }, { limit: 1 }))[0]
   if (oldTask == null) return
-  const oldStatus = oldTask.status
 
-  if (oldStatus === newStatus) return
+  const fromStatus = oldTask.status
+  if (fromStatus === toStatus) return
 
   const project = (
     await control.findAll(control.ctx, task.class.Project, { _id: oldTask.space as Ref<Project> }, { limit: 1 })
@@ -80,17 +88,71 @@ async function validateUpdate (updateTx: TxUpdateDoc<Task>, control: TriggerCont
   if (project == null) return
 
   const workflowRef = findWorkflowForTaskType(control.hierarchy, project, oldTask.kind)
-  if (workflowRef !== undefined) {
-    const transitions = await control.findAll(control.ctx, workflow.class.WorkflowTransition, {
-      attachedTo: workflowRef
-    })
-    const allowed = transitions.some((t) => {
-      const froms = getFromStatuses(t.from)
-      return (froms === null || froms.includes(oldStatus)) && t.to === newStatus
-    })
-    if (!allowed) {
-      throw new Error(`Переход из статуса "${oldStatus}" в "${newStatus}" запрещен правилами воркфлоу.`)
-    }
+  if (workflowRef == null) return
+
+  const transitions = await control.findAll(control.ctx, workflow.class.WorkflowTransition, {
+    attachedTo: workflowRef
+  })
+
+  const allowedTransitions = transitions.filter((t) => {
+    return (t.from == null || t.from.includes(fromStatus)) && t.to === toStatus
+  })
+  if (allowedTransitions.length === 0) {
+    throw new Error(`Transition from status "${fromStatus}" to "${toStatus}" is forbidden by the workflow rules.`)
+  }
+
+  // Prioritize specific transition over "Any Status" general transition
+  const transition =
+    allowedTransitions.find((t) => t.from != null && t.from.includes(fromStatus)) ??
+    allowedTransitions.find((t) => t.from == null || t.from.length === 0)
+
+  if (transition === undefined) {
+    throw new Error(`Transition from status "${fromStatus}" to "${toStatus}" is forbidden by the workflow rules.`)
+  }
+
+  await validateTransitionValidators(control, transition, TxProcessor.updateDoc2Doc(oldTask, updateTx))
+}
+
+async function validateTransitionValidators (
+  control: TriggerControl,
+  transition: WorkflowTransition,
+  task: Task
+): Promise<void> {
+  const validators = transition.validators
+  if (validators == null || validators.length === 0) return
+
+  for (const validatorConfig of validators) {
+    await executeValidator(control, validatorConfig, transition, task)
+  }
+}
+
+async function executeValidator (
+  control: TriggerControl,
+  validatorConfig: WorkflowValidatorConfig,
+  transition: WorkflowTransition,
+  task: Task
+): Promise<void> {
+  const validator = (
+    await control.findAll(
+      control.ctx,
+      workflow.class.WorkflowValidator,
+      { _id: validatorConfig.validator },
+      { limit: 1 }
+    )
+  )[0] as WorkflowValidator | undefined
+
+  if (validator == null) return
+
+  const validatorImpl = control.hierarchy.as<WorkflowValidator, ValidatorImpl>(
+    validator,
+    serverWorkflow.mixin.ValidatorImpl
+  )
+  const executorFn = await getResource(validatorImpl.serverExecutor)
+  if (executorFn == null) return
+
+  const res = await executorFn(control as any, task, transition, validatorConfig.props)
+  if (!res.ok) {
+    throw new Error(res.reason ?? 'Validation failed')
   }
 }
 
@@ -104,8 +166,4 @@ function findWorkflowForTaskType (
   return projectWorkflow.workflows?.[taskTypeRef]
 }
 
-function getFromStatuses (from: any): Ref<Status>[] | null {
-  if (from == null) return null
-  if (Array.isArray(from)) return from.length === 0 ? null : from
-  return [from]
-}
+export { FieldRequired } from '@hcengineering/workflow'

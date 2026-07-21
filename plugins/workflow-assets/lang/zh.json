@@ -25,6 +25,11 @@
     "UnknownTaskType": "未知任务类型",
     "WorkflowName": "工作流名称",
     "NameRequired": "名字是必填项",
-    "StatusToRequired": "“到”状态是必填项"
+    "StatusToRequired": "“到”状态是必填项",
+    "Validators": "验证器",
+    "FieldRequiredValidator": "必填字段",
+    "FieldRequiredError": "过渡 \"{transition}\" 必须填写字段 \"{field}\"。",
+    "TransitionConflictError": "从状态 \"{from}\" 到状态 \"{to}\" 的转换已存在于过渡 \"{transition}\" 中",
+    "SelfTransitionError": "不允许从状态 \"{to}\" 转换到自身"
   }
 }

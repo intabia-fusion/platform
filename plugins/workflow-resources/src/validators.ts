@@ -13,8 +13,4 @@
 // limitations under the License.
 //
 
-export * from './plugin'
-export { default } from './plugin'
-export * from './types'
-export * from './utils'
-export * from './validators'
+export { FieldRequired } from '@hcengineering/workflow'

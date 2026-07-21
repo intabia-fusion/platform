@@ -25,6 +25,11 @@
     "UnknownTaskType": "Неизвестный тип задачи",
     "WorkflowName": "Название воркфлоу",
     "NameRequired": "Название обязательно",
-    "StatusToRequired": "Статус «Куда» обязателен"
+    "StatusToRequired": "Статус «Куда» обязателен",
+    "Validators": "Валидаторы",
+    "FieldRequiredValidator": "Обязательное поле",
+    "FieldRequiredError": "Поле \"{field}\" обязательно для перехода \"{transition}\".",
+    "TransitionConflictError": "Переход в статус \"{to}\" из статуса \"{from}\" уже существует в переходе \"{transition}\"",
+    "SelfTransitionError": "Переход из статуса \"{to}\" в такой же статус запрещен"
   }
 }

@@ -13,8 +13,9 @@
 // limitations under the License.
 //
 
-import type { Doc, Ref, Status, AttachedDoc } from '@hcengineering/core'
-import type { Project, TaskType, ProjectType, Rank } from '@hcengineering/task'
+import type { Doc, Ref, Status, AttachedDoc, Client } from '@hcengineering/core'
+import type { Project, TaskType, ProjectType, Rank, Task } from '@hcengineering/task'
+import type { Asset, IntlString, Resource } from '@hcengineering/platform'
 
 export interface Workflow extends Doc {
   name: string
@@ -23,11 +24,43 @@ export interface Workflow extends Doc {
   transitions?: number
 }
 
+export type ValidationResult =
+  | { ok: true }
+  | {
+    ok: false
+    reason: string
+    reasonIntl: IntlString
+    intlParams: Record<string, any>
+  }
+
+export type ValidatorFunc = (
+  client: Client,
+  task: Task,
+  transition: WorkflowTransition,
+  props: Record<string, any>
+) => Promise<ValidationResult>
+
+export interface WorkflowValidator extends Doc {
+  label: IntlString
+  icon?: Asset
+  group?: string
+}
+
+export interface ValidatorImpl extends WorkflowValidator {
+  executor: Resource<ValidatorFunc>
+}
+
+export interface WorkflowValidatorConfig {
+  validator: Ref<WorkflowValidator>
+  props: Record<string, any>
+}
+
 export interface WorkflowTransition extends AttachedDoc<Workflow, 'transitions'> {
   name: string
   from: Ref<Status>[] | null
   to: Ref<Status>
   rank: Rank
+  validators?: WorkflowValidatorConfig[]
 }
 
 export interface ProjectWorkflow extends Project {

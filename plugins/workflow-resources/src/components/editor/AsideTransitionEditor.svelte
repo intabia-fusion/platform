@@ -27,9 +27,17 @@
     languageStore,
     type DropdownTextItem,
     ModernButton,
-    LabelAndProps
+    LabelAndProps,
+    IconError
   } from '@hcengineering/ui'
-  import { WorkflowTransition, removeTransition, Workflow, updateTransition } from '@hcengineering/workflow'
+  import {
+    WorkflowTransition,
+    removeTransition,
+    Workflow,
+    updateTransition,
+    getTransitionConflict,
+    ConflictInfo
+  } from '@hcengineering/workflow'
   import { StatePresenter } from '@hcengineering/task-resources'
   import { translate } from '@hcengineering/platform'
 
@@ -38,6 +46,7 @@
   export let workflow: Workflow
   export let _id: Ref<WorkflowTransition>
   export let transition: WorkflowTransition | undefined
+  export let transitions: WorkflowTransition[] = []
   export let readonly: boolean
   export let statuses: Status[] = []
 
@@ -88,8 +97,20 @@
     toStatusItem = toStatusItems.find((it) => it._id === transition?.to)
   }
 
+  $: isSelf = toStatusItem?._id != null && fromStatusItemIds != null && fromStatusItemIds.includes(toStatusItem._id)
+
+  let conflictInfo: ConflictInfo | null = null
+  $: {
+    const fromVal = fromStatusItemIds?.includes('null') ? null : (fromStatusItemIds as Ref<Status>[])
+    const toVal = toStatusItem?._id as Ref<Status>
+    conflictInfo =
+      toVal != null && fromStatusItemIds != null && fromStatusItemIds.length > 0
+        ? getTransitionConflict({ _id, from: fromVal, to: toVal }, transitions)
+        : null
+  }
+
   async function save (): Promise<void> {
-    if (transition == null) return
+    if (transition == null || conflictInfo != null || isSelf) return
     try {
       isSaving = true
       const fromVal = fromStatusItemIds?.includes('null') ? null : (fromStatusItemIds as Ref<Status>[])
@@ -128,7 +149,7 @@
     })
   }
 
-  $: canSave = name.trim().length > 0 && toStatusItem != null
+  $: canSave = name.trim().length > 0 && toStatusItem != null && conflictInfo == null && !isSelf
 
   function getOkTooltip (name: string, toStatusItem: ListItem | undefined): LabelAndProps | undefined {
     if (name.trim().length === 0) {
@@ -139,6 +160,25 @@
     if (toStatusItem == null) {
       return {
         label: plugin.string.StatusToRequired
+      }
+    }
+    if (isSelf) {
+      return {
+        label: plugin.string.SelfTransitionError,
+        props: {
+          to: toStatusItem?.label ?? ''
+        }
+      }
+    }
+    if (conflictInfo != null) {
+      const fromItem = fromStatusItems.find((item) => item.id === conflictInfo?.status)
+      return {
+        label: plugin.string.TransitionConflictError,
+        props: {
+          to: toStatusItem?.label ?? '',
+          from: fromItem?.label ?? '',
+          transition: conflictInfo.transition.name
+        }
       }
     }
 
@@ -199,6 +239,39 @@
         showCheckmark={true}
       />
     </div>
+
+    {#if isSelf}
+      <div class="error-row">
+        <div class="error-icon">
+          <IconError size="small" />
+        </div>
+        <span class="error-text">
+          <Label
+            label={plugin.string.SelfTransitionError}
+            params={{
+              to: toStatusItem?.label ?? ''
+            }}
+          />
+        </span>
+      </div>
+    {:else if conflictInfo != null}
+      {@const fromItem = fromStatusItems.find((item) => item.id === conflictInfo?.status)}
+      <div class="error-row">
+        <div class="error-icon">
+          <IconError size="small" />
+        </div>
+        <span class="error-text">
+          <Label
+            label={plugin.string.TransitionConflictError}
+            params={{
+              to: toStatusItem?.label ?? '',
+              from: fromItem?.label ?? '',
+              transition: conflictInfo.transition.name
+            }}
+          />
+        </span>
+      </div>
+    {/if}
   </div>
   <span class="separator" />
   <svelte:fragment slot="buttons">
@@ -224,6 +297,33 @@
     line-height: 1rem;
     color: var(--global-secondary-TextColor);
     min-width: 3rem;
+  }
+
+  .error-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: var(--negative-button-default);
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    margin-top: 1rem;
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+
+    .error-icon {
+      display: flex;
+      align-items: center;
+      margin-top: 0.0625rem;
+      flex-shrink: 0;
+    }
+
+    .error-text {
+      color: var(--negative-button-default);
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      min-width: 0;
+    }
   }
 
   .separator {

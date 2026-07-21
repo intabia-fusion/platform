@@ -17,11 +17,23 @@ import core from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 import task from '@hcengineering/task'
 import serverCore from '@hcengineering/server-core'
+import workflow, { TWorkflowValidator } from '@hcengineering/model-workflow'
+import { Mixin } from '@hcengineering/model'
+import type { Resource } from '@hcengineering/platform'
+import { type ValidatorImpl } from '@hcengineering/server-workflow'
+import { type ValidatorFunc } from '@hcengineering/workflow'
 import serverWorkflow from '@hcengineering/server-workflow'
 
 export { serverWorkflowId } from '@hcengineering/server-workflow'
 
+@Mixin(serverWorkflow.mixin.ValidatorImpl, workflow.class.WorkflowValidator)
+export class TValidatorImpl extends TWorkflowValidator implements ValidatorImpl {
+  serverExecutor!: Resource<ValidatorFunc>
+}
+
 export function createModel (builder: Builder): void {
+  builder.createModel(TValidatorImpl)
+
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverWorkflow.trigger.ValidateTransition,
     isAsync: false,
@@ -29,4 +41,13 @@ export function createModel (builder: Builder): void {
       objectClass: task.class.Task
     }
   })
+
+  builder.mixin(
+    workflow.validator.FieldRequired,
+    workflow.class.WorkflowValidator,
+    serverWorkflow.mixin.ValidatorImpl,
+    {
+      serverExecutor: serverWorkflow.validatorExecutor.FieldRequired
+    }
+  )
 }

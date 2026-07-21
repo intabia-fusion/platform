@@ -25,6 +25,11 @@
     "UnknownTaskType": "Tipo de tarefa desconhecido",
     "WorkflowName": "Nome do fluxo de trabalho",
     "NameRequired": "O nome é obrigatório",
-    "StatusToRequired": "O status «Para» é obrigatório"
+    "StatusToRequired": "O status «Para» é obrigatório",
+    "Validators": "Validadores",
+    "FieldRequiredValidator": "Campo obrigatório",
+    "FieldRequiredError": "O campo \"{field}\" é obrigatório para a transição \"{transition}\".",
+    "TransitionConflictError": "A transição para o status \"{to}\" a partir do status \"{from}\" já existe na transição \"{transition}\"",
+    "SelfTransitionError": "A transição do status \"{to}\" para ele mesmo não é permitida"
   }
 }

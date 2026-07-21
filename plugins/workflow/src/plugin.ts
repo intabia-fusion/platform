@@ -13,19 +13,27 @@
 //
 
 import { Class, Mixin, Ref } from '@hcengineering/core'
-import { Asset, IntlString, plugin, Plugin } from '@hcengineering/platform'
+import { Asset, IntlString, plugin, Plugin, Resource } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui'
-import { ProjectWorkflow, Workflow, WorkflowTransition } from './types'
+import { ProjectWorkflow, Workflow, WorkflowTransition, WorkflowValidator, ValidatorImpl, ValidatorFunc } from './types'
 
 export const workflowId = 'workflow' as Plugin
 
 export default plugin(workflowId, {
   class: {
     Workflow: '' as Ref<Class<Workflow>>,
-    WorkflowTransition: '' as Ref<Class<WorkflowTransition>>
+    WorkflowTransition: '' as Ref<Class<WorkflowTransition>>,
+    WorkflowValidator: '' as Ref<Class<WorkflowValidator>>
+  },
+  validator: {
+    FieldRequired: '' as Ref<WorkflowValidator>
+  },
+  validatorExecutor: {
+    FieldRequired: '' as Resource<ValidatorFunc>
   },
   mixin: {
-    ProjectWorkflow: '' as Ref<Mixin<ProjectWorkflow>>
+    ProjectWorkflow: '' as Ref<Mixin<ProjectWorkflow>>,
+    ValidatorImpl: '' as Ref<Mixin<ValidatorImpl>>
   },
   component: {
     ProjectTypeWorkflowsSectionEditor: '' as AnyComponent,
@@ -61,6 +69,11 @@ export default plugin(workflowId, {
     UnknownTaskType: '' as IntlString,
     WorkflowName: '' as IntlString,
     NameRequired: '' as IntlString,
-    StatusToRequired: '' as IntlString
+    StatusToRequired: '' as IntlString,
+    Validators: '' as IntlString,
+    FieldRequiredValidator: '' as IntlString,
+    FieldRequiredError: '' as IntlString,
+    TransitionConflictError: '' as IntlString,
+    SelfTransitionError: '' as IntlString
   }
 })

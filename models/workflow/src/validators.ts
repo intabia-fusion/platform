@@ -13,16 +13,23 @@
 // limitations under the License.
 //
 
+import core from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 import workflow from './plugin'
-import { TWorkflow, TWorkflowTransition, TProjectWorkflow, TWorkflowValidator, TValidatorImpl } from './types'
-import { defineValidators } from './validators'
 
-export function createModel (builder: Builder): void {
-  builder.createModel(TWorkflow, TWorkflowTransition, TProjectWorkflow, TWorkflowValidator, TValidatorImpl)
-  defineValidators(builder)
+export function defineValidators (builder: Builder): void {
+  builder.createDoc(
+    workflow.class.WorkflowValidator,
+    core.space.Model,
+    {
+      label: workflow.string.FieldRequiredValidator,
+      icon: workflow.icon.Workflow,
+      group: 'fields'
+    },
+    workflow.validator.FieldRequired
+  )
+
+  builder.mixin(workflow.validator.FieldRequired, workflow.class.WorkflowValidator, workflow.mixin.ValidatorImpl, {
+    executor: workflow.validatorExecutor.FieldRequired
+  })
 }
-
-export * from './types'
-export { workflowId } from '@hcengineering/workflow'
-export default workflow

@@ -40,14 +40,14 @@
 
   function addTransition (): void {
     if (readonly) return
-    showPopup(AddTransitionPopup, { workflow, statuses }, 'top')
+    showPopup(AddTransitionPopup, { workflow, statuses, transitions }, 'top')
   }
 
   function editTransition (_id: Ref<WorkflowTransition>): void {
     $settingsStore = {
       id: _id,
       component: AsideTransitionEditor,
-      props: { workflow, statuses, _id, readonly, transition: transitions.find((it) => it._id === _id) }
+      props: { workflow, statuses, _id, readonly, transition: transitions.find((it) => it._id === _id), transitions }
     }
   }
 

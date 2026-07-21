@@ -16,12 +16,24 @@
 import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { TriggerFunc } from '@hcengineering/server-core'
+import type { Mixin, Ref } from '@hcengineering/core'
+import type { WorkflowValidator, ValidatorFunc } from '@hcengineering/workflow'
 
 export const serverWorkflowId = 'server-workflow' as Plugin
 export { WorkflowMiddleware } from './middleware'
 
+export interface ValidatorImpl extends WorkflowValidator {
+  serverExecutor: Resource<ValidatorFunc>
+}
+
 export default plugin(serverWorkflowId, {
   trigger: {
     ValidateTransition: '' as Resource<TriggerFunc>
+  },
+  mixin: {
+    ValidatorImpl: '' as Ref<Mixin<ValidatorImpl>>
+  },
+  validatorExecutor: {
+    FieldRequired: '' as Resource<ValidatorFunc>
   }
 })

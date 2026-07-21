@@ -25,6 +25,11 @@
     "UnknownTaskType": "Neznámý typ úkolu",
     "WorkflowName": "Název workflow",
     "NameRequired": "Název je vyžadován",
-    "StatusToRequired": "Stav „Do“ je vyžadován"
+    "StatusToRequired": "Stav „Do“ je vyžadován",
+    "Validators": "Validátory",
+    "FieldRequiredValidator": "Vyžadovat pole",
+    "FieldRequiredError": "Pole \"{field}\" je vyžadováno pro přechod \"{transition}\".",
+    "TransitionConflictError": "Přechod do stavu \"{to}\" ze stavu \"{from}\" již existuje v přechodu \"{transition}\"",
+    "SelfTransitionError": "Přechod ze stavu \"{to}\" do stejného stavu není povolen"
   }
 }

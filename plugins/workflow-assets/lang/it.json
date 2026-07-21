@@ -25,6 +25,11 @@
     "UnknownTaskType": "Tipo di attività sconosciuto",
     "WorkflowName": "Nome del flusso di lavoro",
     "NameRequired": "Il nome è richiesto",
-    "StatusToRequired": "Lo stato «A» è richiesto"
+    "StatusToRequired": "Lo stato «A» è richiesto",
+    "Validators": "Validatori",
+    "FieldRequiredValidator": "Campo richiesto",
+    "FieldRequiredError": "Il campo \"{field}\" è richiesto per la transizione \"{transition}\".",
+    "TransitionConflictError": "La transizione allo stato \"{to}\" dallo stato \"{from}\" esiste già nella transizione \"{transition}\"",
+    "SelfTransitionError": "La transizione dallo stato \"{to}\" a se stesso non è consentita"
   }
 }

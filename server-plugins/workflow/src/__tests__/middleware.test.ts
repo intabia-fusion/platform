@@ -174,4 +174,156 @@ describe('WorkflowMiddleware', () => {
     await expect(middleware.tx(ctx, [tx])).resolves.not.toThrow()
     expect(nextMock.tx).toHaveBeenCalledWith(ctx, [tx])
   })
+
+  describe('Transition Conflict Validation', () => {
+    let ctx: MeasureContext<SessionData>
+
+    beforeEach(() => {
+      ctx = {
+        contextData: {
+          account: {
+            uuid: 'user-uuid' as AccountUuid,
+            role: AccountRole.Owner
+          }
+        } as any as SessionData
+      } as any as MeasureContext<SessionData>
+    })
+
+    it('should throw error when adding transition with duplicate from status', async () => {
+      const existingTransition: any = {
+        _id: 't-1' as any,
+        _class: workflow.class.WorkflowTransition,
+        space: 'test-space' as any,
+        attachedTo: 'wf-1' as any,
+        attachedToClass: workflow.class.Workflow,
+        name: 'Existing',
+        from: ['todo' as any],
+        to: 'in-progress' as any
+      }
+
+      const tx: any = {
+        _id: generateId(),
+        _class: core.class.TxCreateDoc,
+        space: core.space.DerivedTx,
+        objectId: 't-2' as any,
+        objectClass: workflow.class.WorkflowTransition,
+        objectSpace: 'test-space' as any,
+        modifiedOn: Date.now(),
+        modifiedBy: 'user-uuid' as any,
+        createdBy: 'user-uuid' as any,
+        attributes: {
+          attachedTo: 'wf-1' as any,
+          attachedToClass: workflow.class.Workflow,
+          name: 'New Duplicate',
+          from: ['todo' as any],
+          to: 'in-progress' as any
+        }
+      }
+
+      jest.spyOn(middleware as any, 'provideFindAll').mockResolvedValue([existingTransition])
+
+      await expect(middleware.tx(ctx, [tx])).rejects.toThrow(
+        'Transition to status "in-progress" from status "todo" already exists in transition "Existing".'
+      )
+    })
+
+    it('should throw error when adding transition with duplicate general status', async () => {
+      const existingTransition: any = {
+        _id: 't-1' as any,
+        _class: workflow.class.WorkflowTransition,
+        space: 'test-space' as any,
+        attachedTo: 'wf-1' as any,
+        attachedToClass: workflow.class.Workflow,
+        name: 'Existing General',
+        from: null,
+        to: 'done' as any
+      }
+
+      const tx: any = {
+        _id: generateId(),
+        _class: core.class.TxCreateDoc,
+        space: core.space.DerivedTx,
+        objectId: 't-2' as any,
+        objectClass: workflow.class.WorkflowTransition,
+        objectSpace: 'test-space' as any,
+        modifiedOn: Date.now(),
+        modifiedBy: 'user-uuid' as any,
+        createdBy: 'user-uuid' as any,
+        attributes: {
+          attachedTo: 'wf-1' as any,
+          attachedToClass: workflow.class.Workflow,
+          name: 'New General',
+          from: null,
+          to: 'done' as any
+        }
+      }
+
+      jest.spyOn(middleware as any, 'provideFindAll').mockResolvedValue([existingTransition])
+
+      await expect(middleware.tx(ctx, [tx])).rejects.toThrow(
+        'Transition to status "done" from status "any status" already exists in transition "Existing General".'
+      )
+    })
+
+    it('should throw error when transition source contains destination status (self-transition)', async () => {
+      const tx: any = {
+        _id: generateId(),
+        _class: core.class.TxCreateDoc,
+        space: core.space.DerivedTx,
+        objectId: 't-3' as any,
+        objectClass: workflow.class.WorkflowTransition,
+        objectSpace: 'test-space' as any,
+        modifiedOn: Date.now(),
+        modifiedBy: 'user-uuid' as any,
+        createdBy: 'user-uuid' as any,
+        attributes: {
+          attachedTo: 'wf-1' as any,
+          attachedToClass: workflow.class.Workflow,
+          name: 'Self Transition',
+          from: ['status-a', 'status-b'] as any,
+          to: 'status-a' as any
+        }
+      }
+
+      await expect(middleware.tx(ctx, [tx])).rejects.toThrow(
+        'Transition from status "status-a" to itself is not allowed.'
+      )
+    })
+
+    it('should allow transitions that do not overlap', async () => {
+      const existingTransition: any = {
+        _id: 't-1' as any,
+        _class: workflow.class.WorkflowTransition,
+        space: 'test-space' as any,
+        attachedTo: 'wf-1' as any,
+        attachedToClass: workflow.class.Workflow,
+        name: 'Existing',
+        from: ['todo' as any],
+        to: 'in-progress' as any
+      }
+
+      const tx: any = {
+        _id: generateId(),
+        _class: core.class.TxCreateDoc,
+        space: core.space.DerivedTx,
+        objectId: 't-2' as any,
+        objectClass: workflow.class.WorkflowTransition,
+        objectSpace: 'test-space' as any,
+        modifiedOn: Date.now(),
+        modifiedBy: 'user-uuid' as any,
+        createdBy: 'user-uuid' as any,
+        attributes: {
+          attachedTo: 'wf-1' as any,
+          attachedToClass: workflow.class.Workflow,
+          name: 'New Specific',
+          from: ['on-hold' as any],
+          to: 'in-progress' as any
+        }
+      }
+
+      jest.spyOn(middleware as any, 'provideFindAll').mockResolvedValue([existingTransition])
+
+      await expect(middleware.tx(ctx, [tx])).resolves.not.toThrow()
+    })
+  })
 })

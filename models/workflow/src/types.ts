@@ -17,11 +17,35 @@ import core, { type Ref, type Status, type Domain, type Class } from '@hcenginee
 import { Model, Prop, TypeString, TypeRef, Mixin, TypeRecord, Collection, ArrOf } from '@hcengineering/model'
 import { TDoc, TAttachedDoc } from '@hcengineering/model-core'
 import task, { type TaskType, type ProjectType, type Rank } from '@hcengineering/task'
-import { type Workflow, type WorkflowTransition, type ProjectWorkflow } from '@hcengineering/workflow'
-import workflow from './plugin'
+import {
+  type Workflow,
+  type WorkflowTransition,
+  type ProjectWorkflow,
+  type WorkflowValidator,
+  type WorkflowValidatorConfig,
+  type ValidatorFunc,
+  type ValidatorImpl
+} from '@hcengineering/workflow'
 import { TProject } from '@hcengineering/model-task'
+import { getEmbeddedLabel, type Asset, type IntlString, type Resource } from '@hcengineering/platform'
+
+import workflow from './plugin'
 
 export const DOMAIN_WORKFLOW = 'workflow' as Domain
+
+@Model(workflow.class.WorkflowValidator, core.class.Doc, DOMAIN_WORKFLOW)
+export class TWorkflowValidator extends TDoc implements WorkflowValidator {
+  label!: IntlString
+  icon?: Asset
+
+  @Prop(TypeString(), getEmbeddedLabel('Group'))
+    group?: string
+}
+
+@Mixin(workflow.mixin.ValidatorImpl, workflow.class.WorkflowValidator)
+export class TValidatorImpl extends TWorkflowValidator implements ValidatorImpl {
+  executor!: Resource<ValidatorFunc>
+}
 
 @Model(workflow.class.Workflow, core.class.Doc, DOMAIN_WORKFLOW)
 export class TWorkflow extends TDoc implements Workflow {
@@ -55,6 +79,9 @@ export class TWorkflowTransition extends TAttachedDoc implements WorkflowTransit
 
   @Prop(TypeString(), task.string.Rank)
     rank!: Rank
+
+  @Prop(ArrOf(TypeRecord()), workflow.string.Validators)
+    validators?: WorkflowValidatorConfig[]
 }
 
 @Mixin(workflow.mixin.ProjectWorkflow, task.class.Project)

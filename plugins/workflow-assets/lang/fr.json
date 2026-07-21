@@ -25,6 +25,11 @@
     "UnknownTaskType": "Type de tâche inconnu",
     "WorkflowName": "Nom du flux de travail",
     "NameRequired": "Le nom est requis",
-    "StatusToRequired": "Le statut «À» est requis"
+    "StatusToRequired": "Le statut «À» est requis",
+    "Validators": "Validateurs",
+    "FieldRequiredValidator": "Champ requis",
+    "FieldRequiredError": "Le champ \"{field}\" est obligatoire pour la transition \"{transition}\".",
+    "TransitionConflictError": "La transition vers l'état \"{to}\" depuis l'état \"{from}\" existe déjà dans la transition \"{transition}\"",
+    "SelfTransitionError": "La transition de l'état \"{to}\" vers lui-même n'est pas autorisée"
   }
 }

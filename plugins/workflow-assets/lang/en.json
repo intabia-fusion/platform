@@ -25,6 +25,11 @@
     "UnknownTaskType": "Unknown task type",
     "WorkflowName": "Workflow name",
     "NameRequired": "Name is required",
-    "StatusToRequired": "Status 'To' is required"
+    "StatusToRequired": "Status 'To' is required",
+    "Validators": "Validators",
+    "FieldRequiredValidator": "Field required",
+    "FieldRequiredError": "Field \"{field}\" is required for transition \"{transition}\".",
+    "TransitionConflictError": "Transition to status \"{to}\" from status \"{from}\" already exists in transition \"{transition}\"",
+    "SelfTransitionError": "Transition from status \"{to}\" to itself is not allowed"
   }
 }

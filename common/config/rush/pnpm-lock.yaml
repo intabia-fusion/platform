@@ -12239,6 +12239,9 @@ importers:
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model
+      '@hcengineering/model-workflow':
+        specifier: workspace:^0.7.0
+        version: link:../workflow
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
@@ -12251,6 +12254,9 @@ importers:
       '@hcengineering/task':
         specifier: workspace:^0.7.0
         version: link:../../plugins/task
+      '@hcengineering/workflow':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/workflow
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -35747,6 +35753,9 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
+      '@hcengineering/workflow':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/workflow
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19

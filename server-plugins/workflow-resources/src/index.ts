@@ -13,11 +13,14 @@
 // limitations under the License.
 //
 
-import { ValidateTransition } from './ValidateTransition'
+import { ValidateTransitionTrigger, FieldRequired } from './ValidateTransition'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   trigger: {
-    ValidateTransition
+    ValidateTransition: ValidateTransitionTrigger
+  },
+  validatorExecutor: {
+    FieldRequired
   }
 })

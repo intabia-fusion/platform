@@ -25,6 +25,11 @@
     "UnknownTaskType": "Unbekannter Aufgabentyp",
     "WorkflowName": "Workflow-Name",
     "NameRequired": "Name ist erforderlich",
-    "StatusToRequired": "Status „Nach“ ist erforderlich"
+    "StatusToRequired": "Status „Nach“ ist erforderlich",
+    "Validators": "Validatoren",
+    "FieldRequiredValidator": "Feld erforderlich",
+    "FieldRequiredError": "Feld \"{field}\" ist für den Übergang \"{transition}\" erforderlich.",
+    "TransitionConflictError": "Übergang in den Status \"{to}\" aus dem Status \"{from}\" existiert bereits im Übergang \"{transition}\"",
+    "SelfTransitionError": "Übergang vom Status \"{to}\" in denselben Status ist nicht erlaubt"
   }
 }

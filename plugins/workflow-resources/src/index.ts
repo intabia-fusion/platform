@@ -14,14 +14,18 @@
 //
 
 import '@hcengineering/platform-rig/profiles/ui/svelte'
-
 import type { Resources } from '@hcengineering/platform'
+
 import ProjectTypeWorkflowsSectionEditor from './components/ProjectTypeWorkflowsSectionEditor.svelte'
 import WorkflowEditor from './components/editor/WorkflowEditor.svelte'
+import { FieldRequired } from './validators'
 
 export default async (): Promise<Resources> => ({
   component: {
     ProjectTypeWorkflowsSectionEditor,
     WorkflowEditor
+  },
+  validatorExecutor: {
+    FieldRequired
   }
 })

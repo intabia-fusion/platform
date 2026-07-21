@@ -25,6 +25,11 @@
     "UnknownTaskType": "不明なタスクの種類",
     "WorkflowName": "ワークフロー名",
     "NameRequired": "名前は必須です",
-    "StatusToRequired": "「移行先」のステータスは必須です"
+    "StatusToRequired": "「移行先」のステータスは必須です",
+    "Validators": "バリデーター",
+    "FieldRequiredValidator": "必須フィールド",
+    "FieldRequiredError": "トランジション「{transition}」にはフィールド「{field}」が必須です。",
+    "TransitionConflictError": "ステータス「{from}」からステータス「{to}」への遷移は、既にトランジション「{transition}」に存在します",
+    "SelfTransitionError": "ステータス「{to}」から同じステータスへの遷移は許可されていません"
   }
 }

@@ -26,10 +26,14 @@ import core, {
   TxProcessor,
   AccountRole,
   MeasureContext,
-  SessionData
+  SessionData,
+  type TxCreateDoc,
+  type TxUpdateDoc,
+  DocumentUpdate
 } from '@hcengineering/core'
 import workflow from '@hcengineering/model-workflow'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
+import { type WorkflowTransition, getTransitionConflict, hasSelfTransition } from '@hcengineering/workflow'
 
 export class WorkflowMiddleware extends BaseMiddleware {
   static async create (ctx: MeasureContext, context: PipelineContext, next?: Middleware): Promise<Middleware> {
@@ -51,8 +55,66 @@ export class WorkflowMiddleware extends BaseMiddleware {
             throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
           }
         }
+
+        if (cud.objectClass === workflow.class.WorkflowTransition) {
+          await this.validateTransition(ctx, cud as TxCUD<WorkflowTransition>)
+        }
       }
     }
     return await this.provideTx(ctx, txes)
   }
+
+  private async validateTransition (ctx: MeasureContext<SessionData>, cud: TxCUD<WorkflowTransition>): Promise<void> {
+    if (cud._class === core.class.TxCreateDoc) {
+      const transition = (cud as TxCreateDoc<WorkflowTransition>).attributes
+      if (hasSelfTransition(transition)) {
+        throw new Error(`Transition from status "${transition.to}" to itself is not allowed.`)
+      }
+      const workflowRef = transition.attachedTo
+      if (workflowRef != null) {
+        const existing = await this.provideFindAll(ctx, workflow.class.WorkflowTransition, { attachedTo: workflowRef })
+        const conflict = getTransitionConflict(transition, existing)
+        if (conflict != null) {
+          const fromStatus = conflict.status === 'null' ? 'any status' : conflict.status
+          throw new Error(
+            `Transition to status "${transition.to}" from status "${fromStatus}" already exists in transition "${conflict.transition.name}".`
+          )
+        }
+      }
+    } else if (cud._class === core.class.TxUpdateDoc) {
+      const updateTx = cud as TxUpdateDoc<WorkflowTransition>
+      if (isFieldModified(updateTx.operations, 'from') || isFieldModified(updateTx.operations, 'to')) {
+        const transition = (
+          await this.provideFindAll(ctx, workflow.class.WorkflowTransition, { _id: updateTx.objectId }, { limit: 1 })
+        )[0]
+        if (transition != null) {
+          const updated = TxProcessor.updateDoc2Doc(transition, updateTx)
+          if (hasSelfTransition(updated)) {
+            throw new Error(`Transition from status "${updated.to}" to itself is not allowed.`)
+          }
+          const workflowRef = transition.attachedTo
+          const existingTransitions = await this.provideFindAll(ctx, workflow.class.WorkflowTransition, {
+            attachedTo: workflowRef
+          })
+          const conflict = getTransitionConflict(updated, existingTransitions)
+          if (conflict != null) {
+            const fromStatus = conflict.status === 'null' ? 'any status' : conflict.status
+            throw new Error(
+              `Transition to status "${updated.to}" from status "${fromStatus}" already exists in transition "${conflict.transition.name}".`
+            )
+          }
+        }
+      }
+    }
+  }
+}
+
+function isFieldModified (operations: DocumentUpdate<WorkflowTransition>, field: string): boolean {
+  if (field in operations) return true
+  for (const key of Object.keys(operations)) {
+    if (key.startsWith('$') && (operations as any)[key] != null && typeof (operations as any)[key] === 'object') {
+      if (field in (operations as any)[key]) return true
+    }
+  }
+  return false
 }
