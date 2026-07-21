@@ -17,7 +17,7 @@ services:
   nginx:
     image: nginx:alpine
     extra_hosts:
-      - 'host.docker.internal:host-gateway'
+      - "host.docker.internal:host-gateway"
     depends_on:
       - front
     ports:
@@ -42,12 +42,12 @@ services:
     restart: unless-stopped
   postgres:
     image: postgres:18.1
-    command: ['postgres', '-p', '5432']
+    command: ["postgres", "-p", "5432"]
     shm_size: 128mb
     ports:
       - 5432:5432
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -p 5432']
+      test: ["CMD-SHELL", "pg_isready -U postgres -p 5432"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -81,7 +81,7 @@ services:
     volumes:
       - redpanda:/var/lib/redpanda/data
     healthcheck:
-      test: ['CMD', 'rpk', 'cluster', 'info']
+      test: ["CMD", "rpk", "cluster", "info"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -107,7 +107,7 @@ services:
       redpanda:
         condition: service_healthy
   minio:
-    image: 'minio/minio'
+    image: "minio/minio"
     command: server /data --address ":9000" --console-address ":9001"
     expose:
       - 9000
@@ -118,7 +118,7 @@ services:
     volumes:
       - files:/data
     healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
+      test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       retries: 10
     restart: unless-stopped
@@ -132,7 +132,7 @@ services:
     volumes:
       - elastic-plugins:/mnt/plugins
   elastic:
-    image: 'elasticsearch:8.19.1'
+    image: "elasticsearch:8.19.1"
     command: >
       /bin/sh -c "./bin/elasticsearch-plugin list | grep -q analysis-icu ||
       ./bin/elasticsearch-plugin install --batch analysis-icu; exec
@@ -178,11 +178,16 @@ services:
     environment:
       - ACCOUNT_PORT=3000
       - IGNORE_EMAIL_SIGNUP=false # Set to true if you want to disable email/otp confirmations
+      # Dev/testing only: fixed admin-operation OTP code (email delivery is off in dev). NEVER set in prod.
+      - ADMIN_OTP_DEV_CODE=000000
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - SERVER_SECRET=secret
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
       - STATS_URL=http://stats:4900
       - WORKSPACE_LIMIT_PER_USER=10000
+      # Free fallback limits (must match the free:true plan in plan-config.yaml). Applied to every
+      # tier subscription on read and decides free-vs-readonly on unpaid status. storagePerUserGB scales disk.
+      - FREE_PLAN_LIMITS={"usersLimit":5,"storagePerUserGB":2,"tokenLimit":100000,"trafficLimitGB":0,"meetingMinutesLimit":0}
       - DB_URL=${DB_URL_PG}
       - REGION_CONFIG=/var/cfg/region-config.yaml
       - MAIL_URL=
@@ -212,23 +217,40 @@ services:
       #   - 9235:9235
       # Add to environment: NODE_OPTIONS=--inspect=0.0.0.0:9235
     restart: unless-stopped
-  # payment:
-  #   image: intabiafusion/payment
-  #   extra_hosts:
-  #     - 'host.docker.internal:host-gateway'
-  #   ports:
-  #     - 3040:3040
-  #   environment:
-  #     - SECRET=secret
-  #     - PORT=3040
-  #     - ACCOUNTS_URL=http://account:3000
-  #     - FRONT_URL=http://localhost:8087
-  #     - USE_SANDBOX=true
-  #     - POLAR_ACCESS_TOKEN=${POLAR_ACCESS_TOKEN}
-  #     - POLAR_WEBHOOK_SECRET=${POLAR_WEBHOOK_SECRET}
-  #     - POLAR_SUBSCRIPTION_PLANS=${POLAR_SUBSCRIPTION_PLANS}
-  #     # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-  #   restart: unless-stopped
+  payment:
+    image: 'intabiafusion/payment:${DOCKER_TAG:-latest}'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      account:
+        condition: service_started
+    volumes:
+      - ./plan-config.yaml:/var/cfg/plan-config.yaml
+    environment:
+      - SECRET=secret
+      - PORT=4040
+      - ACCOUNTS_URL=http://account:3000
+      - FRONT_URL=http://localhost:8087
+      - USE_SANDBOX=true
+      - PLAN_CONFIG=/var/cfg/plan-config.yaml
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
+      # TBank provider (needs real terminal credentials; use mock below for local dev)
+      # - PROVIDER=tbank
+      # - TBANK_SUBSCRIPTIONS_URL=http://tbank-subscriptions:4042
+      # Mock provider: activates plans instantly without a real payment gateway.
+      - PROVIDER=mock
+      - ALLOW_MOCK_PROVIDER=true
+      # Polar configuration (uncomment if using Polar)
+      # - POLAR_ACCESS_TOKEN=${POLAR_ACCESS_TOKEN}
+      # - POLAR_WEBHOOK_SECRET=${POLAR_WEBHOOK_SECRET}
+      # - POLAR_SUBSCRIPTION_PLANS=${POLAR_SUBSCRIPTION_PLANS}
+      # Stripe configuration (uncomment if using Stripe)
+      # - STRIPE_API_KEY=${STRIPE_API_KEY}
+      # - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      # - STRIPE_SUBSCRIPTION_PLANS=${STRIPE_SUBSCRIPTION_PLANS}
+      # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+    restart: unless-stopped
   workspace:
     image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'
     links:
@@ -282,7 +304,7 @@ services:
   front:
     image: 'intabiafusion/front:${DOCKER_TAG:-latest}'
     extra_hosts:
-      - 'host.docker.internal:host-gateway'
+      - "host.docker.internal:host-gateway"
     links:
       - stats
     environment:
@@ -454,7 +476,7 @@ services:
   love:
     image: 'intabiafusion/love:${DOCKER_TAG:-latest}'
     extra_hosts:
-      - 'host.docker.internal:host-gateway'
+      - "host.docker.internal:host-gateway"
     environment:
       - PORT=8096
       - SECRET=secret
@@ -487,7 +509,7 @@ services:
   aibot:
     image: 'intabiafusion/ai-bot:${DOCKER_TAG:-latest}'
     extra_hosts:
-      - 'host.docker.internal:host-gateway'
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     environment:
       # Account and Server Configuration
@@ -560,7 +582,7 @@ services:
   aibot_client_llm:
     image: 'intabiafusion/ai-bot:${DOCKER_TAG:-latest}'
     extra_hosts:
-      - 'host.docker.internal:host-gateway'
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     environment:
       - API_TOKEN=api-secret
@@ -592,7 +614,7 @@ services:
   aibot_client_stt:
     image: 'intabiafusion/ai-bot:${DOCKER_TAG:-latest}'
     extra_hosts:
-      - 'host.docker.internal:host-gateway'
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     environment:
       - API_TOKEN=api-secret
@@ -861,7 +883,7 @@ services:
   love-agent:
     image: 'intabiafusion/love-agent:${DOCKER_TAG:-latest}'
     extra_hosts:
-      - 'host.docker.internal:host-gateway'
+      - "host.docker.internal:host-gateway"
     depends_on:
       - love
       - aibot
@@ -895,9 +917,9 @@ services:
   livekit-egress:
     image: livekit/egress
     extra_hosts:
-      - 'host.docker.internal:host-gateway'
+      - "host.docker.internal:host-gateway"
     volumes:
-      - './livekit-egress-config.yaml:/out/config.yaml:ro'
+      - "./livekit-egress-config.yaml:/out/config.yaml:ro"
     environment:
       - EGRESS_CONFIG_FILE=/out/config.yaml
     depends_on:
@@ -914,6 +936,8 @@ services:
         condition: service_started
       datalake:
         condition: service_started
+      redpanda:
+        condition: service_started
     environment:
       - PORT=4041
       - SECRET=secret
@@ -921,6 +945,7 @@ services:
       - DB_URL=${DB_URL_PG}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - USAGE_UPDATE_INTERVAL=30
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
     # Debug: uncomment to enable remote debugging
     # ports:
     #   - 9238:9238
@@ -1013,31 +1038,64 @@ services:
       - APPLY_TX_BATCH_SIZE=100
       - BRANDING_PATH=/var/cfg/branding.json
     restart: unless-stopped
-#  crm:
-#     image: intabiafusion/crm
-#     ports:
-#       - '3001:3001'
-#     extra_hosts:
-#       - 'localhost:host-gateway'
-#     depends_on:
-#       redpanda:
-#         condition: service_started
-#       account:
-#         condition: service_started
-#     environment:
-#       - QUEUE_CONFIG=${QUEUE_CONFIG}
-#       - QUEUE_REGION=
-#       - STATS_URL=http://stats:4900
-#       - SERVICE_ID=crm
-#       - SECRET=secret
-#       - ENABLE_CONSOLE=true
-#       - PORT=3001
-#       - AMO_CRM_DOMAIN=
-#       - AMO_CRM_PIPELINE_ID=
-#       - AMO_CRM_TOKEN=
-#       - AMO_CRM_RESPONSIBLE_USER_ID=
-#       - SUPPORT_EMAIL=platform@intabia.ru
-#     restart: unless-stopped
+  # crm:
+  #   image: intabiafusion/crm
+  #   ports:
+  #     - '3001:3001'
+  #   extra_hosts:
+  #     - 'localhost:host-gateway'
+  #   depends_on:
+  #     redpanda:
+  #       condition: service_started
+  #     account:
+  #       condition: service_started
+  #   environment:
+  #     - QUEUE_CONFIG=${QUEUE_CONFIG}
+  #     - QUEUE_REGION=
+  #     - STATS_URL=http://localhost:4900
+  #     - SERVICE_ID=crm
+  #     - SECRET=secret
+  #     - ENABLE_CONSOLE=true
+  #     - PORT=3001
+  #     - AMO_CRM_DOMAIN=
+  #     - AMO_CRM_PIPELINE_ID=
+  #     - AMO_CRM_TOKEN=
+  #     - AMO_CRM_RESPONSIBLE_USER_ID=
+  #   restart: unless-stopped
+  tbank-subscriptions:
+    image: 'intabiafusion/tbank-subscriptions:${DOCKER_TAG:-latest}'
+    depends_on:
+      account:
+        condition: service_started
+      payment:
+        condition: service_started
+    pull_policy: never
+    environment:
+      - SECRET=secret
+      - PORT=4042
+      # Required: tbank-subscriptions publishes subscription events to the Subscription queue
+      # (pod-payment is the single consumer that bakes limits and writes to account).
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
+      - ACCOUNTS_URL=http://account:3000
+      - FRONT_URL=http://localhost:8087
+      # TBANK_MOCK is set by the docker:up:tbank overlay (docker-compose.tbank-mock.yaml).
+      # Sandbox terminal credentials — set in your shell or a local (untracked) env file
+      - TBANK_TERMINAL_KEY=${TBANK_TERMINAL_KEY:-test}
+      - TBANK_PASSWORD=${TBANK_PASSWORD:-test}
+      - TBANK_URL=https://securepay.tinkoff.ru
+      - SCHEDULER_INTERVAL_MINUTES=${TBANK_SCHEDULER_INTERVAL_MINUTES:-60}
+      # Set to true to skip webhook token verification (for local dev with curl)
+      - TBANK_SKIP_WEBHOOK_VERIFICATION=true
+      # Email notifications for failed payments (via pod-mail -> mailpit on local)
+      - MAIL_URL=http://mail_server:8097
+      - MAIL_API_KEY=naephea1Rai7eeth1noh
+      - MAIL_FROM=platform@intabia.ru
+      # pod-payment URL — source of the shared plan-config (charge amounts) and localized plan labels for emails
+      - PAYMENT_URL=http://payment:4040
+      - GRACE_PERIOD_DAYS=${TBANK_GRACE_PERIOD_DAYS:-7}
+      # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+    restart: unless-stopped
   notifications:
     image: 'intabiafusion/notifications:${DOCKER_TAG:-latest}'
     depends_on:

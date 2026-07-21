@@ -212,6 +212,8 @@ services:
       - ACCOUNTS_URL=http://localhost:8083/_account
       - BRANDING_PATH=/var/cfg/branding.json
       # - DISABLE_SIGNUP=true
+      # Dev/testing only: fixed admin-operation OTP code (email delivery is off in tests). NEVER set in prod.
+      - ADMIN_OTP_DEV_CODE=000000
     restart: unless-stopped
   stats:
     image: 'intabiafusion/stats:${DOCKER_TAG:-latest}'
@@ -219,6 +221,27 @@ services:
     environment:
       - PORT=4901
       - SERVER_SECRET=secret
+    restart: unless-stopped
+  billing:
+    image: 'intabiafusion/billing:${DOCKER_TAG:-latest}'
+    pull_policy: never
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_started
+      account:
+        condition: service_started
+      datalake:
+        condition: service_started
+    environment:
+      - PORT=4041
+      - SECRET=secret
+      - ACCOUNTS_URL=http://account:3003
+      - DB_URL=${DB_PG_URL}
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - USAGE_UPDATE_INTERVAL=30
     restart: unless-stopped
   workspace:
     image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'

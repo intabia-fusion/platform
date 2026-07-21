@@ -13,7 +13,9 @@
 // limitations under the License.
 //
 
-import { isNetworkError } from '../utils'
+import { AccountRole, type AccountUuid, configUserAccountUuid, systemAccountUuid } from '@hcengineering/core'
+import { isNetworkError, grantsPlan, makePlanKey, memberOccupiesSeat } from '../utils'
+import { SubscriptionStatus, SubscriptionType } from '../types'
 
 describe('isNetworkError', () => {
   describe('Node.js-style connection errors', () => {
@@ -300,5 +302,70 @@ describe('isNetworkError', () => {
       }
       expect(isNetworkError(error)).toBe(false)
     })
+  })
+})
+
+describe('grantsPlan', () => {
+  const sub = (status: SubscriptionStatus, pending?: boolean): any => ({
+    status,
+    providerData: pending != null ? { pending } : undefined
+  })
+
+  it('grants for active/trialing/past_due/readonly', () => {
+    expect(grantsPlan(sub(SubscriptionStatus.Active))).toBe(true)
+    expect(grantsPlan(sub(SubscriptionStatus.Trialing))).toBe(true)
+    expect(grantsPlan(sub(SubscriptionStatus.PastDue))).toBe(true)
+    expect(grantsPlan(sub(SubscriptionStatus.ReadOnly))).toBe(true)
+  })
+
+  it('does not grant for canceled/expired or undefined', () => {
+    expect(grantsPlan(sub(SubscriptionStatus.Canceled))).toBe(false)
+    expect(grantsPlan(sub(SubscriptionStatus.Expired))).toBe(false)
+    expect(grantsPlan(undefined)).toBe(false)
+  })
+
+  it('does not grant for a pending past_due first-payment draft', () => {
+    expect(grantsPlan(sub(SubscriptionStatus.PastDue, true))).toBe(false)
+    expect(grantsPlan(sub(SubscriptionStatus.PastDue, false))).toBe(true)
+  })
+
+  it('grants for a live trial, not for an expired one', () => {
+    const day = 24 * 3600 * 1000
+    expect(grantsPlan({ status: SubscriptionStatus.Trialing, trialEnd: Date.now() + day } as any)).toBe(true)
+    expect(grantsPlan({ status: SubscriptionStatus.Trialing, trialEnd: Date.now() - day } as any)).toBe(false)
+  })
+})
+
+describe('makePlanKey', () => {
+  it('joins plan and type', () => {
+    expect(makePlanKey('business', SubscriptionType.Tier)).toBe('business@tier')
+    expect(makePlanKey('100gb', SubscriptionType.Package)).toBe('100gb@package')
+  })
+})
+
+describe('memberOccupiesSeat', () => {
+  const person = 'p-1' as AccountUuid
+  const aiBot = 'ai-bot' as AccountUuid
+
+  it('excludes the AI bot, system and config accounts', () => {
+    expect(memberOccupiesSeat(aiBot, AccountRole.User, aiBot)).toBe(false)
+    expect(memberOccupiesSeat(systemAccountUuid, AccountRole.User, aiBot)).toBe(false)
+    expect(memberOccupiesSeat(configUserAccountUuid, AccountRole.User, aiBot)).toBe(false)
+  })
+
+  it('does not exclude the AI bot when it is not resolved', () => {
+    expect(memberOccupiesSeat(aiBot, AccountRole.User, undefined)).toBe(true)
+  })
+
+  it('excludes Admin and guest roles', () => {
+    for (const role of [AccountRole.Admin, AccountRole.Guest, AccountRole.DocGuest, AccountRole.ReadOnlyGuest]) {
+      expect(memberOccupiesSeat(person, role, aiBot)).toBe(false)
+    }
+  })
+
+  it('counts a real member (Owner/Maintainer/User)', () => {
+    for (const role of [AccountRole.Owner, AccountRole.Maintainer, AccountRole.User]) {
+      expect(memberOccupiesSeat(person, role, aiBot)).toBe(true)
+    }
   })
 })

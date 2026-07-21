@@ -5,6 +5,7 @@
     "InvalidId": "無効なID: {id}",
     "BadRequest": "不正なリクエスト",
     "Forbidden": "アクセスが禁止されています",
+    "PlanLimitExceeded": "プランの制限を超過しました",
     "Conflict": "競合",
     "ExpiredLink": "この招待リンクは期限切れです",
     "Unauthorized": "認証されていません",

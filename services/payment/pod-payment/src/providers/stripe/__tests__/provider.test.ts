@@ -30,6 +30,7 @@ describe('StripeProvider', () => {
   beforeEach(() => {
     accountClient = {
       getSubscriptions: jest.fn(),
+      getSubscriptionsByProvider: jest.fn(),
       upsertSubscription: jest.fn()
     } as any
 
@@ -208,7 +209,7 @@ describe('StripeProvider', () => {
     } as any
 
     stripeClient.getActiveSubscriptions.mockResolvedValue([stripeSubActive])
-    accountClient.getSubscriptions.mockResolvedValue([ourSub])
+    accountClient.getSubscriptionsByProvider.mockResolvedValue([ourSub])
     ;(transformStripeSubscriptionToData as jest.Mock).mockImplementation((_ctx: any, sub: Stripe.Subscription) => ({
       id: sub.id,
       status: sub.status,
@@ -217,15 +218,20 @@ describe('StripeProvider', () => {
       }
     }))
 
-    await provider.reconcileActiveSubscriptions(ctx, 'https://accounts.test', 'token')
+    const publish = jest.fn().mockResolvedValue(undefined)
+    await provider.reconcileActiveSubscriptions(ctx, 'https://accounts.test', 'token', publish)
 
-    expect(accountClient.upsertSubscription).toHaveBeenCalledWith({
-      id: 'sub_1',
-      status: 'active',
-      providerData: {
-        modifiedAt: 2
-      }
-    })
+    expect(publish).toHaveBeenCalledWith(
+      ctx,
+      {
+        id: 'sub_1',
+        status: 'active',
+        providerData: {
+          modifiedAt: 2
+        }
+      },
+      'reconcile'
+    )
   })
 
   test('updateSubscriptionPlan creates checkout for free subscription with accountUuid in metadata', async () => {
@@ -259,7 +265,14 @@ describe('StripeProvider', () => {
       url: 'https://stripe.test/checkout/new'
     })
 
-    const result = await provider.updateSubscriptionPlan(ctx, subscriptionId, newPlan, workspaceUrl, accountUuid)
+    const result = await provider.updateSubscriptionPlan(
+      ctx,
+      subscriptionId,
+      newPlan,
+      SubscriptionType.Tier,
+      workspaceUrl,
+      accountUuid
+    )
 
     expect(result).toEqual({
       checkoutId: 'cs_test_new',
@@ -291,7 +304,8 @@ describe('StripeProvider', () => {
     const accountsUrl = 'https://accounts.test'
     const serviceToken = 'service-token'
 
-    provider.registerWebhookEndpoints(app, ctx, accountsUrl, serviceToken)
+    const publish = jest.fn().mockResolvedValue(undefined)
+    provider.registerWebhookEndpoints(app, ctx, accountsUrl, serviceToken, publish)
 
     expect(appPost).toHaveBeenCalledWith('/api/v1/webhooks/stripe', expect.any(Function))
 
@@ -306,6 +320,15 @@ describe('StripeProvider', () => {
 
     handler(req, res)
 
-    expect(handleStripeWebhookSpy).toHaveBeenCalledWith(ctx, accountsUrl, serviceToken, webhookSecret, apiKey, req, res)
+    expect(handleStripeWebhookSpy).toHaveBeenCalledWith(
+      ctx,
+      accountsUrl,
+      serviceToken,
+      webhookSecret,
+      apiKey,
+      req,
+      res,
+      publish
+    )
   })
 })

@@ -14,6 +14,9 @@
     "OtpSubject": "Codice di conferma {app}: {code}",
     "ResendInviteText": "Sei stato reinvitato a {ws}. Utilizza il seguente link per unirti: {link}. Il link di reinvito è valido per {expHours} ore.",
     "ResendInviteHTML": "<p>Sei stato reinvitato a {ws}. Per unirti, fai clic sul link sottostante: <a href={link}>Unisciti</a></p><p>Se il link di invito sopra non funziona, incolla il seguente link nella barra degli URL del tuo browser: {link}</p><p>Il link di reinvito è valido per {expHours} ore.</p>",
-    "ResendInviteSubject": "Reinvito a {ws}"
+    "ResendInviteSubject": "Reinvito a {ws}",
+    "AdminOtpSubject": "Confirmation code for an administrator action",
+    "AdminOtpText": "You are about to perform a sensitive administrator action in {app} (deleting/archiving a workspace, changing members or a subscription, renaming a URL, or deleting an account).\n\nYour confirmation code is:\n\n{code}\n\nEnter it in the admin panel to confirm. If you did not initiate this action, do NOT share this code and review your account security.",
+    "AdminOtpHTML": "<p>You are about to perform a sensitive administrator action in <b>{app}</b> (deleting/archiving a workspace, changing members or a subscription, renaming a URL, or deleting an account).</p><p>Your confirmation code is:</p><h2>{code}</h2><p>Enter it in the admin panel to confirm. If you did not initiate this action, do NOT share this code and review your account security.</p>"
   }
 }

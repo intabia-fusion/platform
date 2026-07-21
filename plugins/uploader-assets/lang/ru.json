@@ -2,6 +2,7 @@
   "string": {
     "Cancel": "Отмена",
     "Retry": "Повторить",
+    "StorageLimitReached": "Достигнут лимит хранилища. Освободите место или обновите план.",
     "UploadFiles": "Загрузить Файлы",
     "UploadFolders": "Загрузить Папки",
     "UploadingTo": "Загрузка {files, plural, one {# файл} few {# файла} other {# файлов}} в"

@@ -54,6 +54,8 @@ import { TranscriptionTask } from './types'
 import { v4 as uuid } from 'uuid'
 import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
 import { tryAssignToWorkspace } from './utils/account'
+import { LimitsState } from './limits'
+import { ApiError } from './server/error'
 /* LLM helpers moved to ./llm; use provider methods on `this.llm` instead */
 import { WorkspaceClient } from './workspace/workspaceClient'
 
@@ -100,6 +102,7 @@ export class AIControl {
   private transcriptionProducer: PlatformQueueProducer<TranscriptionTask> | undefined
 
   private llm?: LLMProvider
+  private limitsState?: LimitsState
 
   constructor (
     readonly personUuid: AccountUuid,
@@ -121,6 +124,10 @@ export class AIControl {
     this.transcriptionProducer = producer
   }
 
+  setLimitsState (state: LimitsState): void {
+    this.limitsState = state
+  }
+
   /**
    * Process incoming audio chunk: store in storage and queue for transcription
    */
@@ -132,6 +139,12 @@ export class AIControl {
       return
     }
     const { workspace, meetingId } = parsed
+
+    // Transcript/payment limit: skip transcription without error
+    if (this.limitsState?.isTranscriptBlocked(workspace) === true) {
+      this.ctx.info('transcript limit exhausted, skipping transcription', { workspace })
+      return
+    }
 
     // Generate unique blob ID for this chunk
     const blobId = `audio-chunk-${uuid()}`
@@ -343,10 +356,19 @@ export class AIControl {
     return this.workspaces.get(workspace)
   }
 
+  // Token/payment limit: reject before any LLM call, 402 reaches the HTTP client
+  checkTokensLimit (workspace: WorkspaceUuid): void {
+    if (this.limitsState?.isTokensBlocked(workspace) === true) {
+      this.ctx.warn('AI token limit exhausted, rejecting request', { workspace })
+      throw new ApiError(402, 'AI token limit has been reached for this workspace. Please upgrade your plan.')
+    }
+  }
+
   async translate (workspace: WorkspaceUuid, req: TranslateRequest): Promise<TranslateResponse | undefined> {
     if (this.llm === undefined) {
       return undefined
     }
+    this.checkTokensLimit(workspace)
     const html = jsonToHTML(markupToJSON(req.text))
     const result = await this.llm.translateHtml(this.ctx, workspace, html, req.lang)
     const text = result !== undefined ? htmlToMarkup(result) : req.text
@@ -361,6 +383,7 @@ export class AIControl {
     req: SummarizeMessagesRequest
   ): Promise<SummarizeMessagesResponse | undefined> {
     if (this.llm === undefined) return
+    this.checkTokensLimit(workspace)
     if (req.target === undefined || req.targetClass === undefined) {
       return
     }
@@ -493,6 +516,8 @@ export class AIControl {
     if (this.llm === undefined) {
       throw new Error('LLM provider not configured')
     }
+
+    this.checkTokensLimit(workspace)
 
     const i1 = setInterval(() => {
       void control?.heartbeat()

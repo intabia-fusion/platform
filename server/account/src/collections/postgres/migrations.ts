@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -84,7 +85,11 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV24Migration(ns, flavor),
     getV25Migration(ns, flavor),
     getV26Migration(ns, flavor),
-    getV27Migration(ns, flavor)
+    getV27Migration(ns, flavor),
+    getV28Migration(ns, flavor),
+    getV29Migration(ns, flavor),
+    getV30Migration(ns, flavor),
+    getV31Migration(ns, flavor)
   ]
 }
 
@@ -848,6 +853,115 @@ function getV27Migration (ns: string, flavor: DBFlavor): [string, string] {
         CONSTRAINT account_workspace_badge_status_membership_fk FOREIGN KEY (workspace_uuid, account_uuid) 
             REFERENCES ${ns}.workspace_members(workspace_uuid, account_uuid) ON DELETE CASCADE
     );
+    `
+  ]
+}
+
+function getV28Migration (ns: string, flavor: DBFlavor): [string, string] {
+  return [
+    'account_db_v28_subscription_limits',
+    `
+    /* Add limits column to subscription table for plan-limit snapshots */
+    ALTER TABLE ${ns}.subscription
+    ADD COLUMN IF NOT EXISTS limits JSONB;
+    `
+  ]
+}
+
+function getV29Migration (ns: string, flavor: DBFlavor): [string, string] {
+  // Add 'readonly' value to subscription_status enum (grace period expired -> read-only access).
+  const addValueSql =
+    flavor === 'postgres'
+      ? `
+    DO $$     BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_enum
+            WHERE enumlabel = 'readonly'
+            AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'subscription_status' AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = '${ns}'))
+        ) THEN
+            ALTER TYPE ${ns}.subscription_status ADD VALUE 'readonly';
+        END IF;
+    END $$;
+    `
+      : `
+    ALTER TYPE ${ns}.subscription_status ADD VALUE IF NOT EXISTS 'readonly';
+    `
+
+  return ['account_db_v29_subscription_status_readonly', addValueSql]
+}
+
+function getV30Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v30_payment_intent_table',
+    `
+    /* ======= P A Y M E N T   I N T E N T ======= */
+    /* Atomic claim keyed by claim_key (INSERT ... ON CONFLICT DO NOTHING) across pods/replicas:
+         renew:<sub>:<periodEnd>  — one charge per subscription period
+         checkout:<ws>:<type>     — one pending checkout per (workspace, plan type)
+       order_fingerprint ('plan:seats:period') is the exact order behind a checkout claim; a loser
+       reuses the URL only on a match, else 409. No FK — a checkout claim has no subscription yet. */
+
+    CREATE TABLE IF NOT EXISTS ${ns}.payment_intent (
+        id ${types.string} NOT NULL DEFAULT gen_random_uuid()::TEXT,
+        claim_key ${types.string} NOT NULL,
+        provider ${types.string} NOT NULL,
+        status ${types.string} NOT NULL DEFAULT 'pending', -- pending | charged | failed
+        payment_id ${types.string}, -- provider charge id, set once the charge is issued
+        payment_url ${types.string}, -- checkout URL, reused by repeat callers of the same order
+        amount ${types.int8},
+        heartbeat_at BIGINT, -- lease: refreshed ~1s while a live pod awaits the charge response
+        subscription_id ${types.string}, -- set for renew claims; null for checkout claims
+        workspace_uuid ${types.string}, -- set for checkout claims
+        order_fingerprint ${types.string},
+
+        created_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
+        updated_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
+
+        CONSTRAINT payment_intent_pk PRIMARY KEY (id)
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS payment_intent_claim_key_unique ON ${ns}.payment_intent (claim_key);
+    CREATE INDEX IF NOT EXISTS payment_intent_payment_id_idx ON ${ns}.payment_intent (payment_id);
+    `
+  ]
+}
+
+function getV31Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v31_payment_operation_ledger',
+    `
+    /* ======= P A Y M E N T   O P E R A T I O N   L E D G E R ======= */
+    /* Append-only audit trail of every payment operation (init charge, webhook result, recurrent
+       charge, cancel, refund). Immutable — rows are inserted, never updated/deleted. raw holds the
+       full provider payload for forensics/reconciliation. No FK: an init may precede the subscription.
+       action_id groups every row a single user/system intent produced (e.g. a plan change =
+       new charge + old subscription cancel + free activation), actor says who drove that row. */
+
+    CREATE TABLE IF NOT EXISTS ${ns}.payment_operation (
+        id ${types.string} NOT NULL DEFAULT gen_random_uuid()::TEXT,
+        provider ${types.string} NOT NULL,
+        operation ${types.string} NOT NULL, -- init_charge | webhook | charge_recurrent | cancel | refund
+        status ${types.string}, -- provider/webhook status (CONFIRMED|REJECTED|...) or success/failed
+        payment_id ${types.string}, -- provider charge id
+        order_id ${types.string},
+        subscription_id ${types.string},
+        workspace_uuid ${types.string},
+        account_uuid ${types.string}, -- who/what initiated (system for scheduler)
+        action_id ${types.string}, -- correlates every row of one intent (purchase, plan change, renewal)
+        actor ${types.string}, -- user | system | provider | admin
+        amount ${types.int8}, -- minor units (kopecks)
+        raw JSONB, -- full provider request/response/notification payload
+        created_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
+
+        CONSTRAINT payment_operation_pk PRIMARY KEY (id)
+    );
+
+    CREATE INDEX IF NOT EXISTS payment_operation_workspace_idx ON ${ns}.payment_operation (workspace_uuid);
+    CREATE INDEX IF NOT EXISTS payment_operation_payment_id_idx ON ${ns}.payment_operation (payment_id);
+    CREATE INDEX IF NOT EXISTS payment_operation_created_idx ON ${ns}.payment_operation (created_on);
+    CREATE INDEX IF NOT EXISTS payment_operation_action_idx ON ${ns}.payment_operation (action_id);
     `
   ]
 }

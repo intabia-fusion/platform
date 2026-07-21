@@ -138,3 +138,21 @@ export function decodeTokenVerbose (ctx: MeasureContext, token: string): Token {
     throw new TokenError(err.message)
   }
 }
+
+/**
+ * Extract the JWT from a Cookie header. Exact match on `cookieName` (case-insensitive), else any
+ * cookie name containing "token". Skips the koa `.sig` signature cookie (else it can shadow the JWT).
+ * @public
+ */
+export function extractCookieToken (cookieHeader: string | undefined, cookieName?: string): string | undefined {
+  if (cookieHeader == null) return undefined
+  const target = cookieName?.toLowerCase()
+  const tokenCookie = cookieHeader.split(';').find((cookie) => {
+    const name = cookie.split('=')[0].trim().toLowerCase()
+    if (name.endsWith('.sig')) return false
+    return target != null ? name === target : name.includes('token')
+  })
+  if (tokenCookie === undefined) return undefined
+  const value = tokenCookie.split('=').slice(1).join('=').trim()
+  return value.length > 0 ? value : undefined
+}

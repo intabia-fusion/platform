@@ -14,7 +14,7 @@
 //
 
 import { MeasureContext } from '@hcengineering/core'
-import type { PaymentProvider } from './providers'
+import type { PaymentProvider, SubscriptionPublisher } from './providers'
 
 /**
  * Active subscription reconciliation timer management
@@ -32,17 +32,18 @@ export function startActiveSubscriptionReconciliation (
   accountsUrl: string,
   serviceToken: string,
   provider: PaymentProvider,
-  intervalMinutes: number
+  intervalMinutes: number,
+  publish: SubscriptionPublisher
 ): () => void {
   // Run reconciliation immediately on start
-  void provider.reconcileActiveSubscriptions(ctx, accountsUrl, serviceToken).catch((err: any) => {
+  void provider.reconcileActiveSubscriptions(ctx, accountsUrl, serviceToken, publish).catch((err: any) => {
     ctx.error('Initial subscription reconciliation failed', { provider: provider.providerName, err })
   })
 
   // Then run periodically
   const intervalMs = intervalMinutes * 60 * 1000
   const timer = setInterval(() => {
-    void provider.reconcileActiveSubscriptions(ctx, accountsUrl, serviceToken).catch((err: any) => {
+    void provider.reconcileActiveSubscriptions(ctx, accountsUrl, serviceToken, publish).catch((err: any) => {
       ctx.error('Periodic subscription reconciliation failed', { provider: provider.providerName, err })
     })
   }, intervalMs)

@@ -27,7 +27,10 @@ import {
   LiveKitSessionsUsageData,
   LiveKitUsageData,
   ParticipantDailyUsage,
-  ParticipantMinutesUsage
+  ParticipantMinutesUsage,
+  type LimitCategory,
+  type UsageMetric,
+  type WorkspaceLimitState
 } from '../types'
 import postgres, { type Row, Sql } from 'postgres'
 import { MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
@@ -94,8 +97,17 @@ class PostgresDB implements BillingDB {
   }
 
   async execute<T extends any[] = (Row & Iterable<Row>)[]>(query: string, params?: any[]): Promise<T> {
-    query = params !== undefined && params.length > 0 ? injectVars(query, params) : query
-    return await this.sql.unsafe<T>(query)
+    // Reject non-finite numbers before they reach the driver: a NaN/Infinity usage delta must not
+    // corrupt a counter (previously guarded by the manual escaper).
+    if (params !== undefined) {
+      for (const p of params) {
+        if (typeof p === 'number' && !Number.isFinite(p)) {
+          throw new Error('Invalid numeric parameter')
+        }
+      }
+    }
+    // Native driver bind ($1..$N) — the driver parameterizes, no string interpolation of values.
+    return await this.sql.unsafe<T>(query, params as any)
   }
 
   async initSchema (ctx: MeasureContext): Promise<void> {
@@ -664,42 +676,93 @@ class PostgresDB implements BillingDB {
       totalTokens: Number(row.total_tokens ?? 0)
     }))
   }
+
+  async accumulateUsageDelta (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    metric: UsageMetric,
+    amount: number,
+    ref: string
+  ): Promise<boolean> {
+    // RETURNING ref yields a row only when the insert actually happened (new ref); empty on duplicate.
+    const query = `
+      INSERT INTO billing.usage_delta_dedup (workspace, metric, ref, amount)
+      VALUES ($1::uuid, $2, $3, $4)
+      ON CONFLICT (workspace, metric, ref) DO NOTHING
+      RETURNING ref
+    `
+    const rows = await this.execute<any[]>(query, [workspace, metric, ref, amount])
+    return rows.length > 0
+  }
+
+  async cleanupUsageDeltaDedup (ctx: MeasureContext, retentionDays: number): Promise<void> {
+    // Dedup refs only need to outlive the queue redelivery window; prune the rest.
+    const query = `
+      DELETE FROM billing.usage_delta_dedup
+      WHERE created_at < now() - ($1 * INTERVAL '1 day')
+    `
+    await this.execute(query, [retentionDays])
+  }
+
+  async getLimitState (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    category: LimitCategory
+  ): Promise<WorkspaceLimitState | undefined> {
+    const query = `
+      SELECT ${LIMIT_STATE_COLUMNS}
+      FROM billing.workspace_limit_state
+      WHERE workspace = $1::uuid AND category = $2
+    `
+    const rows = await this.execute<any[]>(query, [workspace, category])
+    const row = rows[0]
+    return row == null ? undefined : rowToLimitState(row)
+  }
+
+  async upsertLimitState (ctx: MeasureContext, state: WorkspaceLimitState): Promise<void> {
+    const query =
+      this.flavor === 'cockroach'
+        ? `
+          UPSERT INTO billing.workspace_limit_state
+            (workspace, category, used, limit_value, exhausted, updated_at)
+          VALUES ($1::uuid, $2, $3, $4, $5, now())
+        `
+        : `
+          INSERT INTO billing.workspace_limit_state
+            (workspace, category, used, limit_value, exhausted, updated_at)
+          VALUES ($1::uuid, $2, $3, $4, $5, now())
+          ON CONFLICT (workspace, category)
+          DO UPDATE SET
+            used = EXCLUDED.used,
+            limit_value = EXCLUDED.limit_value,
+            exhausted = EXCLUDED.exhausted,
+            updated_at = now()
+        `
+    await this.execute(query, [state.workspace, state.category, state.used, state.limitValue, state.exhausted])
+  }
+
+  async getAllExhaustedStates (ctx: MeasureContext): Promise<WorkspaceLimitState[]> {
+    const query = `
+      SELECT ${LIMIT_STATE_COLUMNS}
+      FROM billing.workspace_limit_state
+      WHERE exhausted = TRUE
+    `
+    const rows = await this.execute<any[]>(query, [])
+    return rows.map(rowToLimitState)
+  }
+}
+
+const LIMIT_STATE_COLUMNS = 'workspace, category, used, limit_value, exhausted'
+
+function rowToLimitState (row: any): WorkspaceLimitState {
+  return {
+    workspace: row.workspace as WorkspaceUuid,
+    category: row.category as LimitCategory,
+    used: Number(row.used) ?? 0,
+    limitValue: Number(row.limit_value) ?? 0,
+    // postgres bool may arrive as boolean or 't'/'true' string depending on driver
+    exhausted: row.exhausted === true || row.exhausted === 'true' || row.exhausted === 't'
+  }
 }
 
 export default PostgresDB
-
-function injectVars (sql: string, values: any[]): string {
-  return sql.replaceAll(/(\$\d+)/g, (_, idx) => {
-    return escape(values[parseInt(idx.substring(1)) - 1])
-  })
-}
-
-function escape (value: any): string {
-  if (value === null || value === undefined) {
-    return 'NULL'
-  }
-
-  if (Array.isArray(value)) {
-    return 'ARRAY[' + value.map(escape).join(',') + ']'
-  }
-
-  switch (typeof value) {
-    case 'number':
-      if (isNaN(value) || !isFinite(value)) {
-        throw new Error('Invalid number value')
-      }
-      return value.toString()
-    case 'boolean':
-      return value ? 'TRUE' : 'FALSE'
-    case 'string':
-      return `'${value.replace(/'/g, "''")}'`
-    case 'object':
-      if (value instanceof Date) {
-        return `'${value.toISOString()}'`
-      } else {
-        return `'${JSON.stringify(value)}'`
-      }
-    default:
-      throw new Error(`Unsupported value type: ${typeof value}`)
-  }
-}

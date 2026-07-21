@@ -234,7 +234,8 @@ export type PersonWithProfile = Person & Omit<UserProfile, 'personUuid'>
 export enum SubscriptionStatus {
   Active = 'active', // Subscription is active and in good standing
   Trialing = 'trialing', // In trial period
-  PastDue = 'past_due', // Payment failed but still providing service
+  PastDue = 'past_due', // Payment failed but still providing service (grace period — full access)
+  ReadOnly = 'readonly', // Grace period expired — read-only access, payment still due
   Canceled = 'canceled', // Subscription has been canceled
   Paused = 'paused', // Subscription is paused
   Expired = 'expired' // Subscription or trial has expired
@@ -246,7 +247,8 @@ export enum SubscriptionStatus {
  */
 export enum SubscriptionType {
   Tier = 'tier', // Main workspace tier (free, starter, pro, enterprise)
-  Support = 'support' // Voluntary support/donation subscription
+  Support = 'support', // Voluntary support/donation subscription
+  Package = 'package' // Additional package (storage, etc.)
 }
 
 /**
@@ -255,6 +257,15 @@ export enum SubscriptionType {
  * Multiple subscriptions can be active per workspace (tier + addons + support)
  * Historical subscriptions are preserved with status: canceled/expired
  */
+// Plan limits snapshot. Reserved space limits kept for forward compatibility, not enforced yet.
+export interface TierLimits {
+  storageLimitGB: number
+  trafficLimitGB: number
+  meetingMinutesLimit: number
+  tokenLimit: number
+  usersLimit: number
+}
+
 export interface Subscription {
   id: string // Our internal unique subscription ID (UUID)
   workspaceUuid: WorkspaceUuid
@@ -269,6 +280,14 @@ export interface Subscription {
   type: SubscriptionType // What this subscription is for (tier, addon, support)
   status: SubscriptionStatus // Current status
   plan: string // Plan/product identifier (e.g. 'free', 'pro', 'storage-100gb', 'supporter')
+
+  // Snapshot of plan limits at time of subscription creation
+  // Used instead of plan config to ensure limits are stable over time
+  limits?: TierLimits
+
+  // Free fallback limits applied when the paid tier is unpaid: the workspace runs on these
+  // instead of full read-only. Not persisted — account fills it from FREE_PLAN_LIMITS env on read.
+  freeLimits?: TierLimits
 
   // Amount paid (in cents, e.g. 9999 = $99.99)
   // Used primarily for pay-what-you-want/donation subscriptions to track actual payment
@@ -297,6 +316,78 @@ export interface Subscription {
 
 export type SubscriptionData = Omit<Subscription, 'createdOn' | 'updatedOn'>
 
+export type PaymentIntentStatus = 'pending' | 'charged' | 'failed'
+
+// One claim per claimKey. The unique claimKey makes claiming atomic across pods, so concurrent
+// renewals/checkouts can't double-charge — a second claim hits the existing row instead.
+export interface PaymentIntent {
+  id: string
+  claimKey: string // dedup key: 'renew:<sub>:<period>' | 'checkout:<ws>:<type>'
+  provider: string
+  status: PaymentIntentStatus
+  paymentId?: string // provider charge id, set once the charge is issued; webhook links back here
+  paymentUrl?: string // checkout: saved payment URL, reused on repeated checkout
+  amount?: number
+  heartbeatAt?: Timestamp // lease: refreshed ~1s while a live pod awaits the charge response
+  // context columns (nullable; which one is set depends on the claim kind):
+  subscriptionId?: string // renew: set; checkout: undefined
+  workspaceUuid?: WorkspaceUuid // checkout: set; renew: undefined
+  orderFingerprint?: string // checkout: 'plan:seats:period', reuse URL only on an exact order match
+  createdOn: Timestamp
+  updatedOn: Timestamp
+}
+
+/** Append-only payment audit row. Immutable — inserted, never updated/deleted. */
+export type PaymentOperationKind = 'init_charge' | 'webhook' | 'charge_recurrent' | 'cancel' | 'refund'
+/** Who drove this row: the workspace user, our scheduler, the bank callback, or an admin. */
+export type PaymentActor = 'user' | 'system' | 'provider' | 'admin'
+export interface PaymentOperation {
+  id?: string // DB-generated on insert (gen_random_uuid); present on reads
+  provider: string
+  operation: PaymentOperationKind
+  status?: string // provider/webhook status (CONFIRMED|REJECTED|...) or 'success'|'failed'
+  paymentId?: string
+  orderId?: string
+  subscriptionId?: string
+  workspaceUuid?: WorkspaceUuid
+  accountUuid?: AccountUuid
+  actionId?: string // groups every row produced by one intent (purchase, plan change, renewal cycle)
+  actor?: PaymentActor
+  amount?: number // minor units (kopecks)
+  raw?: Record<string, any> // full provider payload for forensics
+  createdOn: Timestamp
+}
+
+export interface PaymentOperationStats {
+  from: Timestamp
+  to: Timestamp
+  totalCharges: number
+  totalAmount: number // kopecks
+  totalErrors: number
+  workspaces: Array<{ workspaceUuid: string, charges: number, amount: number, errors: number }>
+}
+
+export interface PaymentOperationFilter {
+  from?: Timestamp
+  to?: Timestamp
+  workspaceUuid?: WorkspaceUuid
+  operation?: PaymentOperationKind
+  status?: string
+  provider?: string
+  limit?: number
+  offset?: number
+}
+
+/** Ledger aggregation for one calendar month (UTC), month formatted as 'YYYY-MM'. */
+export interface PaymentMonthlyStats {
+  month: string
+  charges: number
+  amount: number // kopecks
+  errors: number
+  cancels: number
+  refunds: number
+}
+
 export interface AccountWorkspaceBadgeStatus {
   accountUuid: AccountUuid
   workspaceUuid: WorkspaceUuid
@@ -309,6 +400,86 @@ export interface AccountWorkspaceBadgeStatus {
 export interface WorkspaceInfoWithStatus extends Workspace {
   status: WorkspaceStatus
 }
+
+export type WorkspacesSortKey = 'name' | 'backupDate' | 'backupSize' | 'lastVisit' | 'createdOn'
+
+export interface WorkspacesPagedQuery {
+  search?: string
+  modes?: WorkspaceMode[]
+  region?: string
+  attemptsGte?: number
+  billingPlan?: string // current tier plan
+  billingExpired?: boolean // has tier subscription, none of them active/trialing
+  sort?: WorkspacesSortKey
+  order?: 'asc' | 'desc'
+  skip?: number
+  limit?: number
+}
+
+/** Workspace row with the current tier subscription snapshot (mirrors account-client type) */
+export type WorkspaceInfoWithBilling = WorkspaceInfoWithStatus & {
+  billingPlan?: string
+  billingStatus?: string
+  billingPeriodEnd?: Timestamp
+}
+
+export interface WorkspacesPagedResult {
+  workspaces: WorkspaceInfoWithBilling[]
+  total: number
+}
+
+export interface BillingPlanSummary {
+  plan: string
+  workspaces: number
+  seats: number // SUM(limits.usersLimit) across active/trialing tier subscriptions
+}
+
+export interface WorkspacesSummary {
+  total: number
+  byMode: Record<string, number>
+  byRegion: Record<string, number>
+  byVersion: Record<string, number> // active workspaces only
+  billing: BillingPlanSummary[]
+}
+
+export interface RegistrationStatsPoint {
+  day: string // YYYY-MM-DD
+  count: number
+}
+
+export interface RegistrationStats {
+  workspaces: RegistrationStatsPoint[]
+  accounts: RegistrationStatsPoint[]
+}
+
+export interface WorkspaceActivityPoint {
+  week: string // YYYY-MM-DD (week start)
+  count: number
+}
+
+export interface WorkspaceMemberDetails {
+  account: AccountUuid
+  role: string
+  firstName?: string
+  lastName?: string
+  email?: string
+  lastActivity?: Timestamp // MAX(tx.modifiedOn) in this workspace
+  txTotal: number
+}
+
+export interface AccountWorkspaceActivity {
+  workspace: WorkspaceUuid
+  name?: string
+  url?: string
+  count: number
+  lastTx: Timestamp
+}
+
+export interface AccountActivityStats {
+  workspaces: AccountWorkspaceActivity[]
+  weekly: WorkspaceActivityPoint[]
+}
+
 export type WorkspaceData = Omit<Workspace, 'uuid' | 'status' | 'members'>
 
 export interface WorkspaceWithEndpoint extends Workspace {
@@ -338,6 +509,7 @@ export interface AccountDB {
   integrationSecret: DbCollection<IntegrationSecret>
   userProfile: DbCollection<UserProfile>
   subscription: DbCollection<Subscription>
+  paymentIntent: DbCollection<PaymentIntent>
   workspacePermission: DbCollection<WorkspacePermission>
   accountWorkspaceBadgeStatus: DbCollection<AccountWorkspaceBadgeStatus>
 
@@ -378,6 +550,15 @@ export interface AccountDB {
   resetPassword: (accountId: AccountUuid) => Promise<void>
   deleteAccount: (accountId: AccountUuid) => Promise<void>
   listAccounts: (search?: string, skip?: number, limit?: number) => Promise<AccountAggregatedInfo[]>
+  listWorkspacesPaged: (query: WorkspacesPagedQuery) => Promise<WorkspacesPagedResult>
+  getWorkspacesSummary: () => Promise<WorkspacesSummary>
+  getRegistrationStats: (from: Timestamp, to: Timestamp) => Promise<RegistrationStats>
+  getWorkspaceActivityStats: (workspace: WorkspaceUuid, from: Timestamp) => Promise<WorkspaceActivityPoint[]>
+  getWorkspaceMembersInfo: (workspace: WorkspaceUuid) => Promise<WorkspaceMemberDetails[]>
+  getAccountActivityStats: (account: AccountUuid, from: Timestamp) => Promise<AccountActivityStats>
+  // Atomically consume an OTP: deletes the (socialId, code) row if it exists and is unexpired,
+  // returns true only if THIS call deleted it. Prevents one code confirming two concurrent ops.
+  consumeOtp: (socialId: PersonId, code: string) => Promise<boolean>
   generatePersonUuid: () => Promise<PersonUuid>
   ensurePerson: (
     socialType: SocialIdType,
@@ -394,6 +575,26 @@ export interface AccountDB {
   batchWorkspaceBadgeStatuses: (
     data: Array<{ accountId: AccountUuid, workspaceId: WorkspaceUuid, hasUnread: boolean }>
   ) => Promise<void>
+  // Atomically claim by claimKey. Returns the intent + whether THIS caller created it (claimed).
+  // Only the creator may charge; concurrent callers get claimed=false and must not charge.
+  claimIntent: (
+    claimKey: string,
+    provider: string,
+    ctx?: { subscriptionId?: string, workspaceUuid?: WorkspaceUuid, amount?: number, orderFingerprint?: string }
+  ) => Promise<{ claimed: boolean, intent: PaymentIntent }>
+  // Refresh the lease while a charge is in flight (the claimer is still alive).
+  heartbeatChargeIntent: (intentId: string) => Promise<void>
+  // Take over an orphaned pending intent whose lease expired. Atomic — only one pod wins.
+  reclaimStaleChargeIntent: (intentId: string, leaseMs: number) => Promise<boolean>
+  // Link a checkout intent to the issued charge (payment_id) and save its URL for reuse.
+  setIntentPayment: (intentId: string, paymentId: string, paymentUrl?: string) => Promise<void>
+  // Release a checkout claim once the webhook reaches a terminal status
+  deleteCheckoutIntentByPaymentId: (paymentId: string, provider: string) => Promise<void>
+  deleteCheckoutIntentById: (intentId: string) => Promise<void>
+  logPaymentOperation: (op: PaymentOperation) => Promise<void>
+  getPaymentOperations: (filter: PaymentOperationFilter) => Promise<PaymentOperation[]>
+  getPaymentOperationStats: (from: Timestamp, to: Timestamp) => Promise<PaymentOperationStats>
+  getPaymentMonthlyStats: (from: Timestamp, to: Timestamp) => Promise<PaymentMonthlyStats[]>
 }
 
 export interface DbCollection<T> {
@@ -513,6 +714,13 @@ export interface OtpInfo {
 export interface RegionInfo {
   region: string
   name: string
+}
+
+// Self-host edition, resolved from the license metadata set at startup. Other pods fetch via getLicenseInfo.
+export interface LicenseInfo {
+  edition: 'dev' | 'community' | 'licensed'
+  canRunPayment: boolean
+  maxUsers: number
 }
 
 export interface WorkspaceInviteInfo {

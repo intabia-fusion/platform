@@ -1,6 +1,7 @@
 <script lang="ts">
   //
   // © 2023 Hardcore Engineering, Inc. All Rights Reserved.
+  // Copyright © 2026 Intabia Fusion.
   // Licensed under the Eclipse Public License v2.0 (SPDX: EPL-2.0).
   //
 
@@ -16,6 +17,8 @@
   export let color: string | undefined = undefined
   export let label: IntlString | undefined = undefined
   export let labelParams: Record<string, any> = {}
+  export let badge: IntlString | undefined = undefined
+  export let badgeParams: Record<string, any> = {}
   export let title: string | undefined = undefined
   export let kind: 'nuance' | 'subtle' = 'nuance'
   export let name: string
@@ -31,6 +34,7 @@
     {#if icon}<div class="icon"><Icon {icon} size={'small'} fill={color} /></div>{/if}
     {#if label}<span><Label {label} params={labelParams} /></span>{/if}
     {#if title}<span>{title}</span>{/if}
+    {#if badge}<span class="switcher-badge"><Label label={badge} params={badgeParams} /></span>{/if}
   </div>
 </label>
 
@@ -65,6 +69,13 @@
       color: var(--global-secondary-TextColor);
       user-select: none;
     }
+    .switcher-badge {
+      font-size: 0.625rem;
+      color: var(--theme-state-positive-color);
+      background-color: var(--theme-state-positive-background-color);
+      border-radius: var(--small-BorderRadius);
+      padding: var(--spacing-0_25) var(--spacing-0_5);
+    }
   }
   .switcher {
     overflow: hidden;
@@ -85,6 +96,9 @@
       span {
         color: var(--global-on-nuance-TextColor);
       }
+      .switcher-badge {
+        color: var(--theme-state-positive-color);
+      }
     }
     &:checked + .switcher-element.subtle {
       background-color: var(--global-ui-active-BackgroundColor);
@@ -94,6 +108,9 @@
       }
       span {
         color: var(--global-primary-TextColor);
+      }
+      .switcher-badge {
+        color: var(--theme-state-positive-color);
       }
     }
     &:focus + .switcher-element {
@@ -111,6 +128,9 @@
     }
     span {
       color: var(--global-primary-TextColor);
+    }
+    .switcher-badge {
+      color: var(--theme-state-positive-color);
     }
   }
 </style>

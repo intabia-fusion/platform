@@ -1,13 +1,9 @@
 import Stripe from 'stripe'
 import type { Request, Response } from 'express'
 import { handleStripeWebhook } from '../webhook'
-import { getAccountClient } from '../../../utils'
 import { createSubscriptionEventFromInvoiceEvent, transformStripeSubscriptionToData } from '../utils'
 
 jest.mock('stripe')
-jest.mock('../../../utils', () => ({
-  getAccountClient: jest.fn()
-}))
 jest.mock('../utils', () => ({
   transformStripeSubscriptionToData: jest.fn(),
   createSubscriptionEventFromInvoiceEvent: jest.fn()
@@ -24,6 +20,7 @@ describe('handleStripeWebhook', () => {
   let res: Partial<Response>
   let jsonMock: jest.Mock
   let statusMock: jest.Mock & ((code: number) => Response)
+  let publish: jest.Mock
 
   beforeEach(() => {
     ctx = {
@@ -49,6 +46,8 @@ describe('handleStripeWebhook', () => {
       status: statusMock as unknown as any
     }
 
+    publish = jest.fn().mockResolvedValue(undefined)
+
     jest.clearAllMocks()
   })
 
@@ -62,7 +61,8 @@ describe('handleStripeWebhook', () => {
       webhookSecret,
       stripeApiKey,
       req as Request,
-      res as Response
+      res as Response,
+      publish
     )
 
     expect(ctx.error).toHaveBeenCalledWith('Invalid webhook body')
@@ -80,7 +80,8 @@ describe('handleStripeWebhook', () => {
       webhookSecret,
       stripeApiKey,
       req as Request,
-      res as Response
+      res as Response,
+      publish
     )
 
     expect(ctx.error).toHaveBeenCalledWith('Missing Stripe signature header')
@@ -106,7 +107,8 @@ describe('handleStripeWebhook', () => {
       webhookSecret,
       stripeApiKey,
       req as Request,
-      res as Response
+      res as Response,
+      publish
     )
 
     expect(constructEventMock).toHaveBeenCalled()
@@ -143,12 +145,6 @@ describe('handleStripeWebhook', () => {
         constructEvent: constructEventMock
       }
     }))
-
-    const accountClient = {
-      upsertSubscription: jest.fn()
-    }
-
-    ;(getAccountClient as jest.Mock).mockReturnValue(accountClient)
     ;(transformStripeSubscriptionToData as jest.Mock).mockReturnValue({
       id: 'sub_123',
       status: 'active',
@@ -162,14 +158,13 @@ describe('handleStripeWebhook', () => {
       webhookSecret,
       stripeApiKey,
       req as Request,
-      res as Response
+      res as Response,
+      publish
     )
 
     expect(constructEventMock).toHaveBeenCalledWith(req.body, 'sig_header', webhookSecret)
 
-    expect(accountClient.upsertSubscription).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'sub_123', status: 'active' })
-    )
+    expect(publish).toHaveBeenCalledWith(ctx, expect.objectContaining({ id: 'sub_123', status: 'active' }), 'webhook')
 
     expect(statusMock).toHaveBeenCalledWith(200)
     expect(jsonMock).toHaveBeenCalledWith({ received: true })
@@ -204,12 +199,6 @@ describe('handleStripeWebhook', () => {
         constructEvent: constructEventMock
       }
     }))
-
-    const accountClient = {
-      upsertSubscription: jest.fn()
-    }
-
-    ;(getAccountClient as jest.Mock).mockReturnValue(accountClient)
     ;(transformStripeSubscriptionToData as jest.Mock).mockReturnValue({
       id: 'sub_456',
       status: 'active',
@@ -236,14 +225,13 @@ describe('handleStripeWebhook', () => {
       webhookSecret,
       stripeApiKey,
       req as Request,
-      res as Response
+      res as Response,
+      publish
     )
 
     expect(constructEventMock).toHaveBeenCalledWith(req.body, 'sig_header', webhookSecret)
     expect(createSubscriptionEventFromInvoiceEvent).toHaveBeenCalledWith(ctx, expect.anything(), event)
-    expect(accountClient.upsertSubscription).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'sub_456', status: 'active' })
-    )
+    expect(publish).toHaveBeenCalledWith(ctx, expect.objectContaining({ id: 'sub_456', status: 'active' }), 'webhook')
 
     expect(statusMock).toHaveBeenCalledWith(200)
     expect(jsonMock).toHaveBeenCalledWith({ received: true })
@@ -282,7 +270,8 @@ describe('handleStripeWebhook', () => {
       webhookSecret,
       stripeApiKey,
       req as Request,
-      res as Response
+      res as Response,
+      publish
     )
 
     expect(ctx.info).toHaveBeenCalledWith('Unhandled Stripe webhook event type', {

@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -50,14 +51,28 @@ import type {
   PersonWithProfile,
   ProviderInfo,
   RegionInfo,
+  LicenseInfo,
   SocialId,
   Subscription,
   SubscriptionData,
+  PaymentIntent,
+  PaymentOperation,
+  PaymentOperationStats,
+  PaymentOperationFilter,
+  PaymentMonthlyStats,
+  SubscriptionInfo,
   UserProfile,
   WorkspaceInviteInfo,
   WorkspaceLoginInfo,
   WorkspaceOperation,
-  AccountWorkspaceBadgeStatus
+  AccountWorkspaceBadgeStatus,
+  WorkspacesPagedQuery,
+  WorkspacesPagedResult,
+  WorkspacesSummary,
+  RegistrationStats,
+  WorkspaceActivityPoint,
+  WorkspaceMemberDetails,
+  AccountActivityStats
 } from './types'
 import { getClientTimezone, isNetworkError } from './utils'
 
@@ -133,6 +148,7 @@ export interface AccountClient {
   getWorkspacesInfo: (workspaces: WorkspaceUuid[]) => Promise<WorkspaceInfoWithStatus[]>
   updateLastVisit: (workspaces: WorkspaceUuid[]) => Promise<void>
   getRegionInfo: () => Promise<RegionInfo[]>
+  getLicenseInfo: () => Promise<LicenseInfo>
   createWorkspace: (name: string, region?: string) => Promise<WorkspaceLoginInfo>
   signUpOtp: (email: string, first: string, last: string, phone?: string) => Promise<OtpInfo>
   /**
@@ -166,7 +182,7 @@ export interface AccountClient {
   getMailboxes: () => Promise<MailboxInfo[]>
   deleteMailbox: (mailbox: string) => Promise<void>
   listAccounts: (search?: string, skip?: number, limit?: number) => Promise<AccountAggregatedInfo[]>
-  deleteAccount: (uuid: AccountUuid) => Promise<void>
+  deleteAccount: (uuid: AccountUuid, otpCode?: string) => Promise<void>
 
   workerHandshake: (region: string, version: Data<Version>, operation: WorkspaceOperation) => Promise<void>
   getPendingWorkspace: (
@@ -190,9 +206,46 @@ export interface AccountClient {
     mode?: WorkspaceMode | null,
     visited?: number
   ) => Promise<WorkspaceInfoWithStatus[]>
+  listWorkspacesPaged: (query: WorkspacesPagedQuery) => Promise<WorkspacesPagedResult>
+  getWorkspacesSummary: () => Promise<WorkspacesSummary>
+  getRegistrationStats: (from: number, to: number) => Promise<RegistrationStats>
+  getWorkspaceActivityStats: (workspace: WorkspaceUuid, from: number) => Promise<WorkspaceActivityPoint[]>
+  getWorkspaceMembersInfo: (workspace: WorkspaceUuid) => Promise<WorkspaceMemberDetails[]>
+  getAccountActivityStats: (account: AccountUuid, from: number) => Promise<AccountActivityStats>
+  requestAdminOperationOtp: () => Promise<OtpInfo>
+  adminUpdateWorkspaceRole: (
+    workspace: WorkspaceUuid,
+    targetAccount: AccountUuid,
+    role: AccountRole,
+    otpCode: string
+  ) => Promise<void>
+  adminAddWorkspaceMember: (
+    workspace: WorkspaceUuid,
+    email: string,
+    role: AccountRole,
+    otpCode: string
+  ) => Promise<void>
+  adminRemoveWorkspaceMember: (workspace: WorkspaceUuid, targetAccount: AccountUuid, otpCode: string) => Promise<void>
+  adminReindexWorkspace: (workspace: WorkspaceUuid) => Promise<void>
+  adminReindexAllWorkspaces: () => Promise<number>
+  adminUpdateSubscription: (
+    subscriptionId: string,
+    otpCode: string,
+    seats?: number,
+    periodEndMs?: number
+  ) => Promise<void>
+  adminCancelSubscription: (subscriptionId: string, otpCode: string) => Promise<void>
+  adminUpdateWorkspaceName: (workspace: WorkspaceUuid, name: string) => Promise<void>
+  adminUpdateWorkspaceUrl: (workspace: WorkspaceUuid, url: string, otpCode: string) => Promise<void>
   performWorkspaceOperation: (
     workspaceId: string | string[],
     event: WorkspaceUserOperation,
+    ...params: any
+  ) => Promise<boolean>
+  performWorkspaceOperationWithOtp: (
+    workspaceId: string | string[],
+    event: WorkspaceUserOperation,
+    otpCode: string,
     ...params: any
   ) => Promise<boolean>
   assignWorkspace: (email: string, workspaceUuid: string, role: AccountRole) => Promise<void>
@@ -253,9 +306,35 @@ export interface AccountClient {
   getUserProfile: (personUuid?: PersonUuid) => Promise<PersonWithProfile | null>
 
   getSubscriptions: (workspaceUuid?: WorkspaceUuid | undefined, activeOnly?: boolean) => Promise<Subscription[]>
+  getAllSubscriptions: () => Promise<SubscriptionInfo[]>
   getSubscriptionByProviderId: (provider: string, providerSubscriptionId: string) => Promise<Subscription | null>
+  getSubscriptionsByProvider: (provider: string, statuses?: string[]) => Promise<Subscription[]>
+  claimIntent: (
+    claimKey: string,
+    provider: string,
+    ctx?: { subscriptionId?: string, workspaceUuid?: WorkspaceUuid, amount?: number, orderFingerprint?: string }
+  ) => Promise<{ claimed: boolean, intent: PaymentIntent }>
+  markChargeIntent: (intentId: string, status: 'charged' | 'failed', paymentId?: string) => Promise<void>
+  heartbeatChargeIntent: (intentId: string) => Promise<void>
+  reclaimStaleChargeIntent: (intentId: string, leaseMs: number) => Promise<boolean>
+  setIntentPayment: (intentId: string, paymentId: string, paymentUrl?: string) => Promise<void>
+  deleteCheckoutIntentByPaymentId: (paymentId: string, provider: string) => Promise<void>
+  deleteCheckoutIntentById: (intentId: string) => Promise<void>
+  logPaymentOperation: (op: PaymentOperation) => Promise<void>
+  getPaymentOperationStats: (from: number, to: number) => Promise<PaymentOperationStats>
+  getPaymentOperations: (filter: PaymentOperationFilter) => Promise<PaymentOperation[]>
+  getPaymentMonthlyStats: (from: number, to: number) => Promise<PaymentMonthlyStats[]>
   getSubscriptionById: (subscriptionId: string) => Promise<Subscription | null>
   upsertSubscription: (subscription: SubscriptionData) => Promise<void>
+  adminCreateSubscription: (params: {
+    workspaceUuid: WorkspaceUuid
+    plan: string
+    type?: string
+    status?: string
+    limits?: Subscription['limits']
+    periodDays?: number
+    trialEnd?: number
+  }) => Promise<void>
 
   batchAssignWorkspacePermission: (params: { accountIds: AccountUuid[], permission: string }) => Promise<void>
   batchRevokeWorkspacePermission: (params: { accountIds: AccountUuid[], permission: string }) => Promise<void>
@@ -664,6 +743,15 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
+  async getLicenseInfo (): Promise<LicenseInfo> {
+    const request = {
+      method: 'getLicenseInfo' as const,
+      params: {}
+    }
+
+    return await this.rpc(request)
+  }
+
   async createWorkspace (workspaceName: string, region?: string): Promise<WorkspaceLoginInfo> {
     const request = {
       method: 'createWorkspace' as const,
@@ -917,6 +1005,76 @@ class AccountClientImpl implements AccountClient {
     return ((await this.rpc<any[]>(request)) ?? []).map((ws) => this.flattenStatus(ws))
   }
 
+  async listWorkspacesPaged (query: WorkspacesPagedQuery): Promise<WorkspacesPagedResult> {
+    const request = {
+      method: 'listWorkspacesPaged' as const,
+      params: query
+    }
+    const res = await this.rpc<{ workspaces: any[], total: number }>(request)
+    return {
+      workspaces: (res?.workspaces ?? []).map((ws) => this.flattenStatus(ws)),
+      total: res?.total ?? 0
+    }
+  }
+
+  async getWorkspacesSummary (): Promise<WorkspacesSummary> {
+    return await this.rpc({ method: 'getWorkspacesSummary' as const, params: {} })
+  }
+
+  async getRegistrationStats (from: number, to: number): Promise<RegistrationStats> {
+    return await this.rpc({ method: 'getRegistrationStats' as const, params: { from, to } })
+  }
+
+  async getWorkspaceActivityStats (workspace: WorkspaceUuid, from: number): Promise<WorkspaceActivityPoint[]> {
+    return (await this.rpc({ method: 'getWorkspaceActivityStats' as const, params: { workspace, from } })) ?? []
+  }
+
+  async getWorkspaceMembersInfo (workspace: WorkspaceUuid): Promise<WorkspaceMemberDetails[]> {
+    return (await this.rpc({ method: 'getWorkspaceMembersInfo' as const, params: { workspace } })) ?? []
+  }
+
+  async getAccountActivityStats (account: AccountUuid, from: number): Promise<AccountActivityStats> {
+    return await this.rpc({ method: 'getAccountActivityStats' as const, params: { account, from } })
+  }
+
+  async requestAdminOperationOtp (): Promise<OtpInfo> {
+    return await this.rpc({ method: 'requestAdminOperationOtp' as const, params: {} })
+  }
+
+  async adminUpdateWorkspaceRole (
+    workspace: WorkspaceUuid,
+    targetAccount: AccountUuid,
+    role: AccountRole,
+    otpCode: string
+  ): Promise<void> {
+    await this.rpc({ method: 'adminUpdateWorkspaceRole' as const, params: { workspace, targetAccount, role, otpCode } })
+  }
+
+  async adminAddWorkspaceMember (
+    workspace: WorkspaceUuid,
+    email: string,
+    role: AccountRole,
+    otpCode: string
+  ): Promise<void> {
+    await this.rpc({ method: 'adminAddWorkspaceMember' as const, params: { workspace, email, role, otpCode } })
+  }
+
+  async adminRemoveWorkspaceMember (
+    workspace: WorkspaceUuid,
+    targetAccount: AccountUuid,
+    otpCode: string
+  ): Promise<void> {
+    await this.rpc({ method: 'adminRemoveWorkspaceMember' as const, params: { workspace, targetAccount, otpCode } })
+  }
+
+  async adminReindexWorkspace (workspace: WorkspaceUuid): Promise<void> {
+    await this.rpc({ method: 'adminReindexWorkspace' as const, params: { workspace } })
+  }
+
+  async adminReindexAllWorkspaces (): Promise<number> {
+    return await this.rpc({ method: 'adminReindexAllWorkspaces' as const, params: {} })
+  }
+
   async performWorkspaceOperation (
     workspaceId: string | string[],
     event: WorkspaceUserOperation,
@@ -928,6 +1086,44 @@ class AccountClientImpl implements AccountClient {
     }
 
     return await this.rpc(request)
+  }
+
+  async performWorkspaceOperationWithOtp (
+    workspaceId: string | string[],
+    event: WorkspaceUserOperation,
+    otpCode: string,
+    ...params: any
+  ): Promise<boolean> {
+    const request = {
+      method: 'performWorkspaceOperation' as const,
+      params: { workspaceId, event, params, otpCode }
+    }
+
+    return await this.rpc(request)
+  }
+
+  async adminUpdateSubscription (
+    subscriptionId: string,
+    otpCode: string,
+    seats?: number,
+    periodEndMs?: number
+  ): Promise<void> {
+    await this.rpc({
+      method: 'adminUpdateSubscription' as const,
+      params: { subscriptionId, seats, periodEndMs, otpCode }
+    })
+  }
+
+  async adminCancelSubscription (subscriptionId: string, otpCode: string): Promise<void> {
+    await this.rpc({ method: 'adminCancelSubscription' as const, params: { subscriptionId, otpCode } })
+  }
+
+  async adminUpdateWorkspaceName (workspace: WorkspaceUuid, name: string): Promise<void> {
+    await this.rpc({ method: 'adminUpdateWorkspaceName' as const, params: { workspace, name } })
+  }
+
+  async adminUpdateWorkspaceUrl (workspace: WorkspaceUuid, url: string, otpCode: string): Promise<void> {
+    await this.rpc({ method: 'adminUpdateWorkspaceUrl' as const, params: { workspace, url, otpCode } })
   }
 
   async updateBackupInfo (backupInfo: BackupStatus): Promise<void> {
@@ -1066,10 +1262,10 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
-  async deleteAccount (uuid: AccountUuid): Promise<void> {
+  async deleteAccount (uuid: AccountUuid, otpCode?: string): Promise<void> {
     const request = {
       method: 'deleteAccount' as const,
-      params: { uuid }
+      params: { uuid, otpCode }
     }
 
     await this.rpc(request)
@@ -1299,6 +1495,13 @@ class AccountClientImpl implements AccountClient {
     })
   }
 
+  async getAllSubscriptions (): Promise<SubscriptionInfo[]> {
+    return await this._rpc({
+      method: 'getAllSubscriptions',
+      params: {}
+    })
+  }
+
   async getSubscriptionByProviderId (provider: string, providerSubscriptionId: string): Promise<Subscription | null> {
     return await this._rpc({
       method: 'getSubscriptionByProviderId',
@@ -1306,6 +1509,108 @@ class AccountClientImpl implements AccountClient {
         provider,
         providerSubscriptionId
       }
+    })
+  }
+
+  async getSubscriptionsByProvider (provider: string, statuses?: string[]): Promise<Subscription[]> {
+    return await this._rpc({
+      method: 'getSubscriptionsByProvider',
+      params: {
+        provider,
+        statuses
+      }
+    })
+  }
+
+  async claimIntent (
+    claimKey: string,
+    provider: string,
+    ctx?: { subscriptionId?: string, workspaceUuid?: WorkspaceUuid, amount?: number, orderFingerprint?: string }
+  ): Promise<{ claimed: boolean, intent: PaymentIntent }> {
+    return await this._rpc({
+      method: 'claimIntent',
+      params: {
+        claimKey,
+        provider,
+        subscriptionId: ctx?.subscriptionId,
+        workspaceUuid: ctx?.workspaceUuid,
+        amount: ctx?.amount,
+        orderFingerprint: ctx?.orderFingerprint
+      }
+    })
+  }
+
+  async markChargeIntent (intentId: string, status: 'charged' | 'failed', paymentId?: string): Promise<void> {
+    await this._rpc({
+      method: 'markChargeIntent',
+      params: {
+        intentId,
+        status,
+        paymentId
+      }
+    })
+  }
+
+  async heartbeatChargeIntent (intentId: string): Promise<void> {
+    await this._rpc({
+      method: 'heartbeatChargeIntent',
+      params: { intentId }
+    })
+  }
+
+  async reclaimStaleChargeIntent (intentId: string, leaseMs: number): Promise<boolean> {
+    return await this._rpc({
+      method: 'reclaimStaleChargeIntent',
+      params: { intentId, leaseMs }
+    })
+  }
+
+  async setIntentPayment (intentId: string, paymentId: string, paymentUrl?: string): Promise<void> {
+    await this._rpc({
+      method: 'setIntentPayment',
+      params: { intentId, paymentId, paymentUrl }
+    })
+  }
+
+  async deleteCheckoutIntentByPaymentId (paymentId: string, provider: string): Promise<void> {
+    await this._rpc({
+      method: 'deleteCheckoutIntentByPaymentId',
+      params: { paymentId, provider }
+    })
+  }
+
+  async deleteCheckoutIntentById (intentId: string): Promise<void> {
+    await this._rpc({
+      method: 'deleteCheckoutIntentById',
+      params: { intentId }
+    })
+  }
+
+  async logPaymentOperation (op: PaymentOperation): Promise<void> {
+    await this._rpc({
+      method: 'logPaymentOperation',
+      params: { op }
+    })
+  }
+
+  async getPaymentOperationStats (from: number, to: number): Promise<PaymentOperationStats> {
+    return await this._rpc({
+      method: 'getPaymentOperationStats',
+      params: { from, to }
+    })
+  }
+
+  async getPaymentOperations (filter: PaymentOperationFilter): Promise<PaymentOperation[]> {
+    return await this._rpc({
+      method: 'getPaymentOperations',
+      params: filter
+    })
+  }
+
+  async getPaymentMonthlyStats (from: number, to: number): Promise<PaymentMonthlyStats[]> {
+    return await this._rpc({
+      method: 'getPaymentMonthlyStats',
+      params: { from, to }
     })
   }
 
@@ -1322,6 +1627,21 @@ class AccountClientImpl implements AccountClient {
     await this._rpc({
       method: 'upsertSubscription',
       params: subscription
+    })
+  }
+
+  async adminCreateSubscription (params: {
+    workspaceUuid: WorkspaceUuid
+    plan: string
+    type?: string
+    status?: string
+    limits?: Subscription['limits']
+    periodDays?: number
+    trialEnd?: number
+  }): Promise<void> {
+    await this._rpc({
+      method: 'adminCreateSubscription',
+      params
     })
   }
 

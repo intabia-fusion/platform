@@ -2,6 +2,7 @@
   "string": {
     "Cancel": "Cancel",
     "Retry": "Retry",
+    "StorageLimitReached": "Storage limit reached. Free up space or upgrade the plan.",
     "UploadFiles": "Upload Files",
     "UploadFolders": "Upload Folders",
     "UploadingTo": "Uploading {files, plural, =1 {# file} other {# files}} to"

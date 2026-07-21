@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -128,6 +129,9 @@ export interface TabItem {
   color?: string
   tooltip?: IntlString
   action?: () => void
+  // Small secondary label rendered next to the main one inside the tab (e.g. a "−15%" discount hint).
+  badge?: IntlString
+  badgeParams?: Record<string, any>
 }
 
 export interface BreadcrumbItem {

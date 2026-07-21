@@ -2,6 +2,7 @@
   "string": {
     "Cancel": "İptal",
     "Retry": "Tekrar Dene",
+    "StorageLimitReached": "Depolama sınırına ulaşıldı. Yer açın veya planı yükseltin.",
     "UploadFiles": "Dosya Yükle",
     "UploadFolders": "Klasör Yükle",
     "UploadingTo": "{files, plural, =1 {# dosya} other {# dosya}} yükleniyor:"

@@ -1,5 +1,6 @@
 //
 // Copyright © 2022-2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,8 +14,9 @@
 // limitations under the License.
 //
 import {
-  type AccountRole,
+  AccountRole,
   type Data,
+  generateId,
   isActiveMode,
   type MeasureContext,
   SocialIdType,
@@ -28,12 +30,22 @@ import {
   type WorkspaceUuid,
   type AccountUuid,
   type UsageStatus,
-  readOnlyGuestAccountUuid
+  type Timestamp,
+  readOnlyGuestAccountUuid,
+  systemAccountUuid
 } from '@hcengineering/core'
 import platform, { getMetadata, PlatformError, Severity, Status, unknownError } from '@hcengineering/platform'
 import { decodeTokenVerbose } from '@hcengineering/server-token'
 
+import {
+  LimitCategory,
+  LimitStatus,
+  workspaceEvents,
+  type QueueWorkspaceLimitsMessage
+} from '@hcengineering/server-core'
+
 import { accountPlugin } from './plugin'
+import { SubscriptionStatus, SubscriptionType } from './types'
 import type {
   AccountAggregatedInfo,
   AccountDB,
@@ -43,14 +55,28 @@ import type {
   IntegrationSecret,
   IntegrationSecretKey,
   Query,
+  OtpInfo,
   SocialId,
   Subscription,
   SubscriptionData,
+  PaymentIntent,
+  PaymentOperation,
+  PaymentOperationStats,
+  PaymentOperationFilter,
+  PaymentMonthlyStats,
   Workspace,
   WorkspaceEvent,
   WorkspaceInfoWithStatus,
   WorkspaceOperation,
-  WorkspaceStatus
+  WorkspaceStatus,
+  WorkspacesPagedQuery,
+  WorkspacesPagedResult,
+  WorkspacesSummary,
+  RegistrationStats,
+  WorkspaceActivityPoint,
+  WorkspaceMemberDetails,
+  AccountActivityStats,
+  TierLimits
 } from './types'
 import {
   integrationServices,
@@ -62,6 +88,7 @@ import {
   getRolePower,
   getSocialIdByKey,
   getWorkspaceById,
+  getWorkspaceByUrl,
   getWorkspacesInfoWithStatusByIds,
   verifyAllowedServices,
   wrap,
@@ -70,7 +97,10 @@ import {
   updateWorkspaceRole,
   getPersonName,
   doMergeAccounts,
-  assignableRoles
+  assignableRoles,
+  requestAdminOtp,
+  verifyAdminOtp,
+  publishMembersChanged
 } from './utils'
 
 // Note: it is IMPORTANT to always destructure params passed here to avoid sending extra params
@@ -101,6 +131,385 @@ export async function listWorkspaces (
   return await getWorkspaces(db, false, region, mode, visited)
 }
 
+function checkAdmin (ctx: MeasureContext, token: string): void {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+}
+
+export async function listWorkspacesPaged (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: WorkspacesPagedQuery
+): Promise<WorkspacesPagedResult> {
+  checkAdmin(ctx, token)
+  return await db.listWorkspacesPaged(params)
+}
+
+export async function getWorkspacesSummary (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  _params: Record<string, unknown>
+): Promise<WorkspacesSummary> {
+  checkAdmin(ctx, token)
+  return await db.getWorkspacesSummary()
+}
+
+export async function getRegistrationStats (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { from: Timestamp, to: Timestamp }
+): Promise<RegistrationStats> {
+  checkAdmin(ctx, token)
+  return await db.getRegistrationStats(params.from, params.to)
+}
+
+export async function getWorkspaceActivityStats (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { workspace: WorkspaceUuid, from: Timestamp }
+): Promise<WorkspaceActivityPoint[]> {
+  checkAdmin(ctx, token)
+  return await db.getWorkspaceActivityStats(params.workspace, params.from)
+}
+
+export async function getWorkspaceMembersInfo (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { workspace: WorkspaceUuid }
+): Promise<WorkspaceMemberDetails[]> {
+  checkAdmin(ctx, token)
+  return await db.getWorkspaceMembersInfo(params.workspace)
+}
+
+export async function getAccountActivityStats (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { account: AccountUuid, from: Timestamp }
+): Promise<AccountActivityStats> {
+  checkAdmin(ctx, token)
+  return await db.getAccountActivityStats(params.account, params.from)
+}
+
+export async function requestAdminOperationOtp (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  _params: Record<string, unknown>
+): Promise<OtpInfo> {
+  checkAdmin(ctx, token)
+  return await requestAdminOtp(ctx, db, branding, token)
+}
+
+async function ensureNotLastOwner (db: AccountDB, workspace: WorkspaceUuid, target: AccountUuid): Promise<void> {
+  const currentRole = await db.getWorkspaceRole(target, workspace)
+  if (currentRole === AccountRole.Owner) {
+    const owners = (await db.getWorkspaceMembers(workspace)).filter((m) => m.role === AccountRole.Owner)
+    if (owners.length === 1) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    }
+  }
+}
+
+export async function adminUpdateWorkspaceRole (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { workspace: WorkspaceUuid, targetAccount: AccountUuid, role: AccountRole, otpCode: string }
+): Promise<void> {
+  checkAdmin(ctx, token)
+  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  const { workspace, targetAccount, role } = params
+  if (!assignableRoles.includes(role)) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  const currentRole = await db.getWorkspaceRole(targetAccount, workspace)
+  if (currentRole == null || currentRole === role) return
+  if (role !== AccountRole.Owner) {
+    await ensureNotLastOwner(db, workspace, targetAccount)
+  }
+  await db.updateWorkspaceRole(targetAccount, workspace, role)
+  ctx.info('admin: workspace role updated', { workspace, targetAccount, role })
+  await publishMembersChanged(ctx, workspace)
+}
+
+export async function adminAddWorkspaceMember (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { workspace: WorkspaceUuid, email: string, role: AccountRole, otpCode: string }
+): Promise<void> {
+  checkAdmin(ctx, token)
+  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  const { workspace, email, role } = params
+  if (!assignableRoles.includes(role)) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  const emailSocialId = await getEmailSocialId(db, cleanEmail(email))
+  if (emailSocialId == null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, { account: email }))
+  }
+  const target = emailSocialId.personUuid as AccountUuid
+  const currentRole = await db.getWorkspaceRole(target, workspace)
+  if (currentRole != null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  await db.assignWorkspace(target, workspace, role)
+  ctx.info('admin: workspace member added', { workspace, target, role })
+  await publishMembersChanged(ctx, workspace)
+}
+
+async function sendReindex (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<void> {
+  const producer = getMetadata(accountPlugin.metadata.FulltextQueue)
+  if (producer === undefined) {
+    throw new PlatformError(unknownError('Fulltext queue is not configured'))
+  }
+  await producer.send(ctx, workspace, [workspaceEvents.fullReindex()])
+}
+
+export async function adminReindexWorkspace (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { workspace: WorkspaceUuid }
+): Promise<void> {
+  checkAdmin(ctx, token)
+  await sendReindex(ctx, params.workspace)
+  ctx.info('admin: reindex requested', { workspace: params.workspace })
+}
+
+export async function adminReindexAllWorkspaces (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  _params: Record<string, unknown>
+): Promise<number> {
+  checkAdmin(ctx, token)
+  const workspaces = await getWorkspaces(db, false, null, 'active')
+  for (const ws of workspaces) {
+    await sendReindex(ctx, ws.uuid)
+  }
+  ctx.info('admin: reindex-all requested', { count: workspaces.length })
+  return workspaces.length
+}
+
+export async function adminRemoveWorkspaceMember (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { workspace: WorkspaceUuid, targetAccount: AccountUuid, otpCode: string }
+): Promise<void> {
+  checkAdmin(ctx, token)
+  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  const { workspace, targetAccount } = params
+  await ensureNotLastOwner(db, workspace, targetAccount)
+  await db.unassignWorkspace(targetAccount, workspace)
+  ctx.info('admin: workspace member removed', { workspace, targetAccount })
+  await publishMembersChanged(ctx, workspace)
+}
+
+// Supersede a live subscription: keep the old row as a canceled record (history) and insert
+// a new one carrying the edits. Returns the new subscription id.
+async function supersedeSubscription (
+  ctx: MeasureContext,
+  db: AccountDB,
+  existing: Subscription,
+  overrides: Partial<Subscription>,
+  reason: string
+): Promise<string> {
+  const now = Date.now()
+  const oldProviderData: Record<string, any> = (existing.providerData as Record<string, any>) ?? {}
+  await db.subscription.update(
+    { id: existing.id },
+    {
+      status: SubscriptionStatus.Canceled,
+      canceledAt: now,
+      updatedOn: now,
+      providerData: { ...oldProviderData, pending: false, status: reason, modifiedAt: now }
+    }
+  )
+  const subId = generateId()
+  const { id, createdOn, updatedOn, canceledAt, ...rest } = existing
+  await db.subscription.insertOne({
+    ...rest,
+    ...overrides,
+    id: subId,
+    providerSubscriptionId: subId,
+    provider: 'manual',
+    createdOn: now,
+    updatedOn: now,
+    providerData: { ...oldProviderData, supersedes: existing.id, reason }
+  })
+  ctx.info('admin: subscription superseded', { oldId: existing.id, newId: subId, reason })
+  return subId
+}
+
+export async function adminUpdateSubscription (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { subscriptionId: string, seats?: number, periodEndMs?: number, otpCode: string }
+): Promise<void> {
+  checkAdmin(ctx, token)
+  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  const { subscriptionId, seats, periodEndMs } = params
+
+  const existing = await db.subscription.findOne({ id: subscriptionId })
+  if (existing == null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  if (existing.status === SubscriptionStatus.Canceled) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+
+  const overrides: Partial<Subscription> = {}
+  if (seats != null) {
+    if (!Number.isFinite(seats) || seats < 1) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+    }
+    const emptyLimits: TierLimits = {
+      storageLimitGB: 0,
+      trafficLimitGB: 0,
+      meetingMinutesLimit: 0,
+      tokenLimit: 0,
+      usersLimit: 0
+    }
+    const baseLimits = existing.limits ?? emptyLimits
+    const perUserStorage =
+      existing.limits != null && (existing.limits.usersLimit ?? 0) > 0
+        ? Math.round((existing.limits.storageLimitGB ?? 0) / existing.limits.usersLimit)
+        : 0
+    overrides.limits = {
+      ...baseLimits,
+      usersLimit: Math.round(seats),
+      storageLimitGB: perUserStorage > 0 ? perUserStorage * Math.round(seats) : (baseLimits.storageLimitGB ?? 0)
+    }
+  }
+  if (periodEndMs != null) {
+    if (!Number.isFinite(periodEndMs)) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+    }
+    overrides.periodEnd = Math.round(periodEndMs)
+    // For a trial the UI/limits key off trialEnd, so keep it in sync with the edited period end.
+    if (existing.status === SubscriptionStatus.Trialing) {
+      overrides.trialEnd = Math.round(periodEndMs)
+    }
+  }
+  if (Object.keys(overrides).length === 0) return
+
+  await supersedeSubscription(ctx, db, existing, overrides, 'ADMIN_EDITED')
+
+  if (existing.type === SubscriptionType.Tier) {
+    await publishLimitsEvents(ctx, existing.workspaceUuid, [
+      workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)
+    ])
+  }
+}
+
+export async function adminCancelSubscription (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { subscriptionId: string, otpCode: string }
+): Promise<void> {
+  checkAdmin(ctx, token)
+  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  const existing = await db.subscription.findOne({ id: params.subscriptionId })
+  if (existing == null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  if (existing.status === SubscriptionStatus.Canceled) return
+
+  const now = Date.now()
+  const oldProviderData: Record<string, any> = (existing.providerData as Record<string, any>) ?? {}
+  await db.subscription.update(
+    { id: existing.id },
+    {
+      status: SubscriptionStatus.Canceled,
+      canceledAt: now,
+      updatedOn: now,
+      providerData: { ...oldProviderData, pending: false, status: 'ADMIN_CANCELED', modifiedAt: now }
+    }
+  )
+  ctx.info('admin: subscription canceled', { id: existing.id, workspaceUuid: existing.workspaceUuid })
+
+  if (existing.type === SubscriptionType.Tier) {
+    await publishLimitsEvents(ctx, existing.workspaceUuid, [
+      workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)
+    ])
+  }
+}
+
+export async function adminUpdateWorkspaceName (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { workspace: WorkspaceUuid, name: string }
+): Promise<void> {
+  checkAdmin(ctx, token)
+  const name = params.name.trim()
+  if (name.length === 0) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  const ws = await getWorkspaceById(db, params.workspace)
+  if (ws == null) {
+    throw new PlatformError(
+      new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid: params.workspace })
+    )
+  }
+  await db.workspace.update({ uuid: params.workspace }, { name })
+  ctx.info('admin: workspace renamed', { workspace: params.workspace, name })
+}
+
+export async function adminUpdateWorkspaceUrl (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { workspace: WorkspaceUuid, url: string, otpCode: string }
+): Promise<void> {
+  checkAdmin(ctx, token)
+  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  const url = params.url.trim().toLowerCase()
+  if (url.length === 0) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  const ws = await getWorkspaceById(db, params.workspace)
+  if (ws == null) {
+    throw new PlatformError(
+      new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid: params.workspace })
+    )
+  }
+  const clash = await getWorkspaceByUrl(db, url)
+  if (clash != null && clash.uuid !== params.workspace) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceAlreadyExists, { workspace: url }))
+  }
+  await db.workspace.update({ uuid: params.workspace }, { url })
+  ctx.info('admin: workspace url changed', { workspace: params.workspace, url })
+}
+
 export async function listAccounts (
   ctx: MeasureContext,
   db: AccountDB,
@@ -129,15 +538,24 @@ export async function performWorkspaceOperation (
     workspaceId: WorkspaceUuid | WorkspaceUuid[]
     event: 'archive' | 'migrate-to' | 'unarchive' | 'delete' | 'reset-attempts'
     params: any[]
+    otpCode?: string
   }
 ): Promise<boolean> {
-  const { workspaceId, event, params } = parameters
-  const { extra, workspace } = decodeTokenVerbose(ctx, token)
+  const { workspaceId, event, params, otpCode } = parameters
+  const { extra, workspace, account } = decodeTokenVerbose(ctx, token)
+
+  const isAdminUser = extra?.admin === 'true' && account !== systemAccountUuid && extra?.service === undefined
 
   if (extra?.admin !== 'true') {
     if (event !== 'unarchive' || workspaceId !== workspace) {
       throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
     }
+  }
+
+  // Destructive operations by a human admin require an emailed OTP.
+  // System/service tokens (backup/workspace/tool) run unattended and are exempt.
+  if (isAdminUser && ['delete', 'archive', 'migrate-to'].includes(event)) {
+    await verifyAdminOtp(ctx, db, token, otpCode ?? '')
   }
 
   const workspaceUuids = Array.isArray(workspaceId) ? workspaceId : [workspaceId]
@@ -569,8 +987,10 @@ export async function assignWorkspace (
 
   if (currentRole == null) {
     await db.assignWorkspace(account.uuid, workspaceUuid, role)
+    await publishMembersChanged(ctx, workspaceUuid)
   } else if (getRolePower(currentRole) < getRolePower(role)) {
     await db.updateWorkspaceRole(account.uuid, workspaceUuid, role)
+    await publishMembersChanged(ctx, workspaceUuid)
   }
 }
 
@@ -583,7 +1003,7 @@ export async function getPersonInfo (
 ): Promise<PersonInfo> {
   const { account } = params
   const { extra } = decodeTokenVerbose(ctx, token)
-  verifyAllowedServices(['workspace', 'tool', 'gmail', 'huly-mail', 'export'], extra)
+  verifyAllowedServices(['workspace', 'tool', 'gmail', 'huly-mail', 'export', 'payment'], extra)
 
   if (account == null || account === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -997,7 +1417,13 @@ export async function findPersonBySocialKey (
 
   const { extra } = decodeTokenVerbose(ctx, token)
 
-  verifyAllowedServices(['tool', 'workspace', 'aibot', ...integrationServices], extra)
+  // 'transactor': SeatLimitsMiddleware resolves system/AI account uuids (aibot) via this call to
+  // exclude them from seat counting; without it the resolve throws and the AI bot wrongly takes a seat.
+  // 'payment': resolves the AI bot to exclude it from the per-seat purchase floor (billableMembersCount).
+  verifyAllowedServices(
+    ['tool', 'workspace', 'aibot', 'billing', 'payment', 'transactor', ...integrationServices],
+    extra
+  )
 
   const socialId = await db.socialId.findOne({ key: socialString })
 
@@ -1014,12 +1440,25 @@ export async function findPersonBySocialKey (
   return socialId.personUuid
 }
 
-/**
- * Upsert (create or update) subscription for a workspace
- * Only accessible by payment service
- * Creates new subscription or updates existing one based on providerId
- * @public
- */
+/** Fire-and-forget edge events to QueueTopic.Workspace; producer set by account-service via metadata. */
+async function publishLimitsEvents (
+  ctx: MeasureContext,
+  workspaceUuid: WorkspaceUuid,
+  events: QueueWorkspaceLimitsMessage[]
+): Promise<void> {
+  if (events.length === 0) return
+  const producer = getMetadata(accountPlugin.metadata.WorkspaceQueue)
+  if (producer === undefined) {
+    ctx.warn('WorkspaceQueue producer is not configured, limits events skipped', { workspaceUuid })
+    return
+  }
+  try {
+    await producer.send(ctx, workspaceUuid, events)
+  } catch (err: any) {
+    ctx.error('Failed to publish limits events', { workspaceUuid, err })
+  }
+}
+
 export async function upsertSubscription (
   ctx: MeasureContext,
   db: AccountDB,
@@ -1044,6 +1483,26 @@ export async function upsertSubscription (
 
   // Check if subscription exists by provider + providerSubscriptionId (unique external ID)
   const existing = await db.subscription.findOne({ provider, providerSubscriptionId })
+
+  // Stale-write guard: concurrent writers (sync poll vs async webhook consumer) may carry an older
+  // provider snapshot. Skip when the incoming modifiedAt is not newer than what we already stored.
+  const existingModifiedAt = existing?.providerData?.modifiedAt
+  const incomingModifiedAt = params.providerData?.modifiedAt
+  if (
+    existing !== null &&
+    typeof existingModifiedAt === 'number' &&
+    typeof incomingModifiedAt === 'number' &&
+    incomingModifiedAt < existingModifiedAt
+  ) {
+    ctx.info('Subscription upsert skipped (stale snapshot)', {
+      id: existing.id,
+      workspaceUuid,
+      existingModifiedAt,
+      incomingModifiedAt
+    })
+    return
+  }
+
   const updateData = {
     workspaceUuid: params.workspaceUuid,
     accountUuid: params.accountUuid,
@@ -1060,8 +1519,35 @@ export async function upsertSubscription (
     canceledAt: params.canceledAt,
     willCancelAt: params.willCancelAt,
     providerData: params.providerData,
+    ...(params.limits !== undefined && { limits: params.limits }),
     updatedOn: Date.now()
   }
+  // Invariant: at most one active tier subscription per workspace. Activating a tier
+  // subscription cancels every other active/trialing tier (different provider/id included).
+  // Trialing included so an early paid purchase supersedes the trial.
+  if (params.type === SubscriptionType.Tier && params.status === SubscriptionStatus.Active) {
+    const others = await db.subscription.find({
+      workspaceUuid,
+      type: SubscriptionType.Tier,
+      status: { $in: [SubscriptionStatus.Active, SubscriptionStatus.Trialing] }
+    })
+    const now = Date.now()
+    for (const sub of others) {
+      if (sub.provider === provider && sub.providerSubscriptionId === providerSubscriptionId) continue
+      const oldProviderData: Record<string, any> = (sub.providerData as Record<string, any>) ?? {}
+      await db.subscription.update(
+        { id: sub.id },
+        {
+          status: SubscriptionStatus.Canceled,
+          canceledAt: now,
+          updatedOn: now,
+          providerData: { ...oldProviderData, pending: false, status: 'REPLACED', modifiedAt: now }
+        }
+      )
+      ctx.info('Superseded active tier subscription canceled', { id: sub.id, workspaceUuid, plan: sub.plan })
+    }
+  }
+
   if (existing !== null) {
     // Update existing subscription
     await db.subscription.update({ id: existing.id }, updateData)
@@ -1086,6 +1572,22 @@ export async function upsertSubscription (
       type: params.type,
       plan: params.plan
     })
+  }
+
+  // Payment/plan state is defined by the tier subscription; notify consumers edge-triggered.
+  if (params.type === SubscriptionType.Tier) {
+    // Refresh the snapshot so consumers re-read free-vs-paid limits without restart. Status matters:
+    // active<->unpaid flips the effective limits (paid vs free fallback) even with the same plan.
+    const wasActive = existing?.status === SubscriptionStatus.Active
+    const isActive = params.status === SubscriptionStatus.Active
+    const planChanged =
+      existing === null ||
+      existing.plan !== params.plan ||
+      wasActive !== isActive ||
+      JSON.stringify(existing.limits ?? null) !== JSON.stringify(params.limits ?? null)
+    if (planChanged) {
+      await publishLimitsEvents(ctx, workspaceUuid, [workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)])
+    }
   }
 }
 
@@ -1117,6 +1619,390 @@ export async function getSubscriptionByProviderId (
   return subscription ?? null
 }
 
+/**
+ * A provider's subscriptions filtered server-side by status (defaults to {active, past_due} — the
+ * renewal candidates). Lets schedulers/reconcilers skip loading the whole table or other providers.
+ * @public
+ */
+export async function getSubscriptionsByProvider (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    provider: string
+    statuses?: SubscriptionStatus[]
+  }
+): Promise<Subscription[]> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const { provider, statuses } = params
+  return await db.subscription.find({
+    provider,
+    status: { $in: statuses ?? [SubscriptionStatus.Active, SubscriptionStatus.PastDue] }
+  })
+}
+
+/**
+ * Atomically claim by claimKey (DB unique constraint). Returns whether THIS caller created the
+ * intent; only the creator may charge. Cross-pod dedup surviving replicas and rolling updates.
+ * @public
+ */
+export async function claimIntent (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    claimKey: string
+    provider: string
+    subscriptionId?: string
+    workspaceUuid?: WorkspaceUuid
+    amount?: number
+    orderFingerprint?: string
+  }
+): Promise<{ claimed: boolean, intent: PaymentIntent }> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const { claimKey, provider, subscriptionId, workspaceUuid, amount, orderFingerprint } = params
+  return await db.claimIntent(claimKey, provider, { subscriptionId, workspaceUuid, amount, orderFingerprint })
+}
+
+/**
+ * Link a checkout intent to its issued charge (payment id) and save the payment URL for reuse.
+ * @public
+ */
+export async function setIntentPayment (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { intentId: string, paymentId: string, paymentUrl?: string }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  await db.setIntentPayment(params.intentId, params.paymentId, params.paymentUrl)
+}
+
+/**
+ * Release a checkout claim once its charge reaches a terminal webhook status. Idempotent.
+ * @public
+ */
+export async function deleteCheckoutIntentByPaymentId (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { paymentId: string, provider: string }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  await db.deleteCheckoutIntentByPaymentId(params.paymentId, params.provider)
+}
+
+export async function deleteCheckoutIntentById (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { intentId: string }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  await db.deleteCheckoutIntentById(params.intentId)
+}
+
+export async function logPaymentOperation (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { op: PaymentOperation }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  await db.logPaymentOperation(params.op)
+}
+
+export async function getPaymentOperationStats (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { from: number, to: number }
+): Promise<PaymentOperationStats> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  // payment service writes/reads for the daily summary; admin reads for the audit page.
+  if (extra?.service !== 'payment' && extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return await db.getPaymentOperationStats(params.from, params.to)
+}
+
+export async function getPaymentOperations (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: PaymentOperationFilter
+): Promise<PaymentOperation[]> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment' && extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return await db.getPaymentOperations(params)
+}
+
+export async function getPaymentMonthlyStats (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { from: number, to: number }
+): Promise<PaymentMonthlyStats[]> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  // Admin-only: the finance overview is not needed by service tokens.
+  if (extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return await db.getPaymentMonthlyStats(params.from, params.to)
+}
+
+/**
+ * Mark a previously claimed charge intent as charged (with the provider payment id) or failed.
+ * @public
+ */
+export async function markChargeIntent (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    intentId: string
+    status: 'charged' | 'failed'
+    paymentId?: string
+  }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const { intentId, status, paymentId } = params
+  await db.paymentIntent.update(
+    { id: intentId },
+    { status, ...(paymentId !== undefined && { paymentId }), updatedOn: Date.now() }
+  )
+}
+
+/**
+ * Refresh a charge intent's lease while the charge is in flight (the claiming pod is alive).
+ * @public
+ */
+export async function heartbeatChargeIntent (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { intentId: string }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  await db.heartbeatChargeIntent(params.intentId)
+}
+
+/**
+ * Atomically take over an orphaned pending intent whose lease expired (claiming pod died mid-charge).
+ * Returns true if THIS caller won the takeover. Only one pod wins.
+ * @public
+ */
+export async function reclaimStaleChargeIntent (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { intentId: string, leaseMs: number }
+): Promise<boolean> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return await db.reclaimStaleChargeIntent(params.intentId, params.leaseMs)
+}
+
+/**
+ * Get all subscriptions (admin only)
+ * @public
+ */
+export async function getAllSubscriptions (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: Record<string, unknown>
+): Promise<any[]> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+
+  if (extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const subscriptions = await db.subscription.find({})
+
+  // Resolve owner emails for unique account UUIDs
+  const accountIds = [...new Set(subscriptions.map((s) => s.accountUuid))]
+  const socialIds = await db.socialId.find({ personUuid: { $in: accountIds }, type: SocialIdType.EMAIL })
+  const emailMap: Record<string, string> = {}
+  for (const si of socialIds) {
+    if (emailMap[si.personUuid] === undefined) {
+      emailMap[si.personUuid] = si.value
+    }
+  }
+
+  // Resolve payer names in one batch query (avoids an N+1 person lookup per subscription).
+  const persons = await db.person.find({ uuid: { $in: accountIds } })
+  const personMap: Record<string, string> = {}
+  for (const person of persons) {
+    const fullName = [person.firstName ?? '', person.lastName ?? ''].filter(Boolean).join(' ')
+    if (fullName.length > 0) personMap[person.uuid] = fullName
+  }
+
+  return subscriptions.map((s) => ({
+    ...s,
+    payerEmail: emailMap[s.accountUuid] ?? undefined,
+    payerName: personMap[s.accountUuid] ?? undefined
+  }))
+}
+
+/**
+ * Admin: manually create a free subscription for a workspace
+ * @public
+ */
+export async function adminCreateSubscription (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    workspaceUuid: WorkspaceUuid
+    plan: string
+    type?: SubscriptionType
+    status?: SubscriptionStatus
+    limits?: Subscription['limits']
+    periodDays?: number
+    trialEnd?: number // when set (with status=Trialing), makes this a real trial subscription
+  }
+): Promise<void> {
+  const tokenDecoded = decodeTokenVerbose(ctx, token)
+  const { account, extra } = tokenDecoded
+
+  if (extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const {
+    workspaceUuid,
+    plan,
+    type = SubscriptionType.Tier,
+    status = SubscriptionStatus.Active,
+    limits,
+    periodDays = 30,
+    trialEnd
+  } = params
+
+  // Non-numeric/negative periodDays falls back to 30 days
+  const safePeriodDays = Number.isFinite(periodDays) && periodDays >= 1 ? Math.round(periodDays) : 30
+
+  // Verify workspace exists
+  const workspace = await getWorkspaceById(db, workspaceUuid)
+  if (workspace === null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
+  }
+
+  const now = Date.now()
+
+  // Cancel ALL non-canceled subscriptions of the same type (invariant: one live sub per type).
+  // Includes unpaid (past_due/expired) ones so repeated admin (re)creation does not pile up duplicates.
+  const existingActive = (await db.subscription.find({ workspaceUuid, type })).filter(
+    (s) => s.status !== SubscriptionStatus.Canceled
+  )
+  for (const existing of existingActive) {
+    const oldProviderData: Record<string, any> = (existing.providerData as Record<string, any>) ?? {}
+    await db.subscription.update(
+      { id: existing.id },
+      {
+        status: SubscriptionStatus.Canceled,
+        canceledAt: now,
+        updatedOn: now,
+        providerData: {
+          ...oldProviderData,
+          pending: false,
+          status: 'ADMIN_REPLACED',
+          modifiedAt: now
+        }
+      }
+    )
+    ctx.info('Manual subscription canceled', { id: existing.id, workspaceUuid, plan, type })
+  }
+
+  // Subscription FK requires an existing account; tool/system tokens are absent
+  // from the account table, so fall back to the workspace owner.
+  let accountUuid = account
+  if ((await db.account.findOne({ uuid: account })) === null) {
+    const members = await db.getWorkspaceMembers(workspaceUuid)
+    const owner = members.find((m) => m.role === AccountRole.Owner) ?? members[0]
+    if (owner === undefined) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
+    }
+    accountUuid = owner.person
+  }
+
+  // Create new subscription
+  const subId = generateId()
+  await db.subscription.insertOne({
+    workspaceUuid,
+    accountUuid,
+    provider: 'manual',
+    providerSubscriptionId: subId,
+    type,
+    status,
+    plan,
+    limits,
+    amount: 0,
+    periodStart: now,
+    periodEnd: now + safePeriodDays * 24 * 3600 * 1000,
+    trialEnd,
+    createdOn: now,
+    updatedOn: now,
+    id: subId
+  })
+  ctx.info('Manual subscription created', { workspaceUuid, plan, type, status })
+
+  if (type === SubscriptionType.Tier) {
+    // Refresh plan snapshot so consumers re-read free-vs-paid limits without restart.
+    await publishLimitsEvents(ctx, workspaceUuid, [workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)])
+  }
+}
+
 export type AccountServiceMethods =
   | 'getPendingWorkspace'
   | 'updateWorkspaceInfo'
@@ -1125,6 +2011,22 @@ export type AccountServiceMethods =
   | 'updateUsageInfo'
   | 'assignWorkspace'
   | 'listWorkspaces'
+  | 'listWorkspacesPaged'
+  | 'getWorkspacesSummary'
+  | 'getRegistrationStats'
+  | 'getWorkspaceActivityStats'
+  | 'getWorkspaceMembersInfo'
+  | 'getAccountActivityStats'
+  | 'requestAdminOperationOtp'
+  | 'adminUpdateWorkspaceRole'
+  | 'adminAddWorkspaceMember'
+  | 'adminRemoveWorkspaceMember'
+  | 'adminReindexWorkspace'
+  | 'adminReindexAllWorkspaces'
+  | 'adminUpdateSubscription'
+  | 'adminCancelSubscription'
+  | 'adminUpdateWorkspaceName'
+  | 'adminUpdateWorkspaceUrl'
   | 'performWorkspaceOperation'
   | 'updateWorkspaceRoleBySocialKey'
   | 'addSocialIdToPerson'
@@ -1146,9 +2048,23 @@ export type AccountServiceMethods =
   | 'listAccounts'
   | 'findFullSocialIds'
   | 'getSubscriptionByProviderId'
+  | 'getSubscriptionsByProvider'
+  | 'claimIntent'
+  | 'markChargeIntent'
+  | 'heartbeatChargeIntent'
+  | 'reclaimStaleChargeIntent'
+  | 'setIntentPayment'
+  | 'deleteCheckoutIntentByPaymentId'
+  | 'deleteCheckoutIntentById'
+  | 'logPaymentOperation'
+  | 'getPaymentOperationStats'
+  | 'getPaymentOperations'
+  | 'getPaymentMonthlyStats'
   | 'upsertSubscription'
   | 'getAccountWorkspaceBadgeStatuses'
   | 'setWorkspaceBadgeStatuses'
+  | 'getAllSubscriptions'
+  | 'adminCreateSubscription'
 
 /**
  * @public
@@ -1162,6 +2078,22 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     updateUsageInfo: wrap(updateUsageInfo),
     assignWorkspace: wrap(assignWorkspace),
     listWorkspaces: wrap(listWorkspaces),
+    listWorkspacesPaged: wrap(listWorkspacesPaged),
+    getWorkspacesSummary: wrap(getWorkspacesSummary),
+    getRegistrationStats: wrap(getRegistrationStats),
+    getWorkspaceActivityStats: wrap(getWorkspaceActivityStats),
+    getWorkspaceMembersInfo: wrap(getWorkspaceMembersInfo),
+    getAccountActivityStats: wrap(getAccountActivityStats),
+    requestAdminOperationOtp: wrap(requestAdminOperationOtp),
+    adminUpdateWorkspaceRole: wrap(adminUpdateWorkspaceRole),
+    adminAddWorkspaceMember: wrap(adminAddWorkspaceMember),
+    adminRemoveWorkspaceMember: wrap(adminRemoveWorkspaceMember),
+    adminReindexWorkspace: wrap(adminReindexWorkspace),
+    adminReindexAllWorkspaces: wrap(adminReindexAllWorkspaces),
+    adminUpdateSubscription: wrap(adminUpdateSubscription),
+    adminCancelSubscription: wrap(adminCancelSubscription),
+    adminUpdateWorkspaceName: wrap(adminUpdateWorkspaceName),
+    adminUpdateWorkspaceUrl: wrap(adminUpdateWorkspaceUrl),
     performWorkspaceOperation: wrap(performWorkspaceOperation),
     updateWorkspaceRoleBySocialKey: wrap(updateWorkspaceRoleBySocialKey),
     addSocialIdToPerson: wrap(addSocialIdToPerson),
@@ -1183,9 +2115,23 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     findPersonBySocialKey: wrap(findPersonBySocialKey),
     listAccounts: wrap(listAccounts),
     getSubscriptionByProviderId: wrap(getSubscriptionByProviderId),
+    getSubscriptionsByProvider: wrap(getSubscriptionsByProvider),
+    claimIntent: wrap(claimIntent),
+    markChargeIntent: wrap(markChargeIntent),
+    heartbeatChargeIntent: wrap(heartbeatChargeIntent),
+    reclaimStaleChargeIntent: wrap(reclaimStaleChargeIntent),
+    setIntentPayment: wrap(setIntentPayment),
+    deleteCheckoutIntentByPaymentId: wrap(deleteCheckoutIntentByPaymentId),
+    deleteCheckoutIntentById: wrap(deleteCheckoutIntentById),
+    logPaymentOperation: wrap(logPaymentOperation),
+    getPaymentOperationStats: wrap(getPaymentOperationStats),
+    getPaymentOperations: wrap(getPaymentOperations),
+    getPaymentMonthlyStats: wrap(getPaymentMonthlyStats),
     upsertSubscription: wrap(upsertSubscription),
     getAccountWorkspaceBadgeStatuses: wrap(getAccountWorkspaceBadgeStatuses),
-    setWorkspaceBadgeStatuses: wrap(setWorkspaceBadgeStatuses)
+    setWorkspaceBadgeStatuses: wrap(setWorkspaceBadgeStatuses),
+    getAllSubscriptions: wrap(getAllSubscriptions),
+    adminCreateSubscription: wrap(adminCreateSubscription)
   }
 }
 

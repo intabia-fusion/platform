@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,7 +15,14 @@
 //
 
 import { concatLink, type WorkspaceUuid } from '@hcengineering/core'
-import { CheckoutResponse, SubscribeRequest, CheckoutStatus, SubscriptionData } from './types'
+import {
+  CheckoutResponse,
+  SubscribeRequest,
+  CheckoutStatus,
+  SubscriptionData,
+  type BillingPeriod,
+  type PlanChangePreview
+} from './types'
 import { PaymentError, NetworkError } from './error'
 
 /**
@@ -59,7 +67,7 @@ export class PaymentClient {
    */
   async createSubscription (workspace: WorkspaceUuid, request: SubscribeRequest): Promise<CheckoutResponse> {
     const path = `/api/v1/subscriptions/${workspace}/subscribe`
-    const url = new URL(concatLink(this.endpoint, path))
+    const url = concatLink(this.endpoint, path)
     const body = JSON.stringify(request)
     const response = await fetchSafe(url, {
       method: 'POST',
@@ -74,11 +82,11 @@ export class PaymentClient {
    * @param subscriptionId - Subscription ID
    * @returns Subscription details from payment provider
    */
-  async getSubscription (subscriptionId: string): Promise<any> {
+  async getSubscription (subscriptionId: string): Promise<SubscriptionData> {
     const path = `/api/v1/subscriptions/${subscriptionId}`
-    const url = new URL(concatLink(this.endpoint, path))
+    const url = concatLink(this.endpoint, path)
     const response = await fetchSafe(url, { headers: { ...this.headers } })
-    return await response.json()
+    return (await response.json()) as SubscriptionData
   }
 
   /**
@@ -88,7 +96,7 @@ export class PaymentClient {
    */
   async cancelSubscription (subscriptionId: string): Promise<SubscriptionData> {
     const path = `/api/v1/subscriptions/${subscriptionId}/cancel`
-    const url = new URL(concatLink(this.endpoint, path))
+    const url = concatLink(this.endpoint, path)
     const response = await fetchSafe(url, {
       method: 'POST',
       headers: { ...this.headers }
@@ -103,7 +111,7 @@ export class PaymentClient {
    */
   async uncancelSubscription (subscriptionId: string): Promise<SubscriptionData> {
     const path = `/api/v1/subscriptions/${subscriptionId}/uncancel`
-    const url = new URL(concatLink(this.endpoint, path))
+    const url = concatLink(this.endpoint, path)
     const response = await fetchSafe(url, {
       method: 'POST',
       headers: { ...this.headers }
@@ -117,18 +125,46 @@ export class PaymentClient {
    * For paid-to-paid updates, returns SubscriptionData (direct update)
    * @param subscriptionId - Subscription ID to update
    * @param plan - New plan name
+   * @param quantity - Number of seats for per-seat plans (total charge = price-per-seat * quantity)
+   * @param period - Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
    * @returns CheckoutResponse for free-to-paid upgrades or updated SubscriptionData for direct updates
    */
-  async updateSubscriptionPlan (subscriptionId: string, plan: string): Promise<SubscriptionData | CheckoutResponse> {
+  async updateSubscriptionPlan (
+    subscriptionId: string,
+    plan: string,
+    quantity?: number,
+    period?: BillingPeriod,
+    force?: boolean
+  ): Promise<SubscriptionData | CheckoutResponse> {
     const path = `/api/v1/subscriptions/${subscriptionId}/updatePlan`
-    const url = new URL(concatLink(this.endpoint, path))
-    const body = JSON.stringify({ plan })
+    const url = concatLink(this.endpoint, path)
+    const body = JSON.stringify({ plan, quantity, period, force })
     const response = await fetchSafe(url, {
       method: 'POST',
       headers: { ...this.headers },
       body
     })
     return (await response.json()) as SubscriptionData | CheckoutResponse
+  }
+
+  /**
+   * Preview a seat/package change without applying it: pro-rata one-time charge, resulting period
+   * end, and the seat floor. Use to show the user the price before confirming updateSubscriptionPlan.
+   */
+  async previewPlanChange (
+    subscriptionId: string,
+    plan: string,
+    quantity?: number,
+    period?: BillingPeriod
+  ): Promise<PlanChangePreview> {
+    const path = `/api/v1/subscriptions/${subscriptionId}/previewPlanChange`
+    const url = concatLink(this.endpoint, path)
+    const response = await fetchSafe(url, {
+      method: 'POST',
+      headers: { ...this.headers },
+      body: JSON.stringify({ plan, quantity, period })
+    })
+    return (await response.json()) as PlanChangePreview
   }
 
   /**
@@ -139,9 +175,25 @@ export class PaymentClient {
    */
   async getCheckoutStatus (checkoutId: string): Promise<CheckoutStatus> {
     const path = `/api/v1/checkouts/${checkoutId}/status`
-    const url = new URL(concatLink(this.endpoint, path))
+    const url = concatLink(this.endpoint, path)
     const response = await fetchSafe(url, { headers: { ...this.headers } })
     return (await response.json()) as CheckoutStatus
+  }
+
+  /**
+   * Retry a failed payment for a subscription in past_due status.
+   * Attempts to charge the saved payment method again.
+   * @param subscriptionId - Subscription ID to retry payment for
+   * @returns Updated subscription data
+   */
+  async retryPayment (subscriptionId: string): Promise<SubscriptionData> {
+    const path = `/api/v1/subscriptions/${subscriptionId}/retry`
+    const url = concatLink(this.endpoint, path)
+    const response = await fetchSafe(url, {
+      method: 'POST',
+      headers: { ...this.headers }
+    })
+    return (await response.json()) as SubscriptionData
   }
 }
 
@@ -157,18 +209,22 @@ async function fetchSafe (url: string | URL, init?: RequestInit): Promise<Respon
   let response
   try {
     response = await fetch(url, init)
-  } catch (err: any) {
+  } catch (err: unknown) {
     throw new NetworkError(`Network error: ${String(err)}`)
   }
 
   if (!response.ok) {
     const text = await response.text()
+    let parsed: { error?: string, reason?: string } | undefined
     try {
-      const error = JSON.parse(text)
-      throw new PaymentError(error.error ?? text)
+      parsed = JSON.parse(text)
     } catch {
-      throw new PaymentError(`Payment service error: ${response.status} ${text}`)
+      /* body isn't JSON */
     }
+    if (parsed !== undefined) {
+      throw new PaymentError(parsed.error ?? text, response.status, parsed.reason)
+    }
+    throw new PaymentError(`Payment service error: ${response.status} ${text}`, response.status)
   }
 
   return response

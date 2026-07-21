@@ -34,8 +34,7 @@ import {
   type AccountUuid,
   type Person,
   type WorkspaceUuid,
-  type WorkspaceInfoWithStatus,
-  type WorkspaceUserOperation
+  type WorkspaceInfoWithStatus
 } from '@hcengineering/core'
 import { loginId } from '@hcengineering/login'
 import platform, {
@@ -275,68 +274,6 @@ export async function getWorkspacePermissions (permission: string): Promise<Work
     Analytics.handleError(err)
     return []
   }
-}
-
-export async function performWorkspaceOperation (
-  workspace: string | string[],
-  operation: WorkspaceUserOperation,
-  ...params: any[]
-): Promise<boolean> {
-  const token = getMetadata(presentation.metadata.Token)
-  if (token === undefined) {
-    const loc = getCurrentLocation()
-    loc.path[1] = 'login'
-    loc.path.length = 2
-    navigate(loc)
-    return true
-  }
-
-  try {
-    return (await getAccountClient(token).performWorkspaceOperation(workspace, operation, ...params)) ?? false
-  } catch (err: any) {
-    if (err instanceof PlatformError) {
-      await handleStatusError('Perform workspace operation error', err.status)
-      throw err
-    } else {
-      Analytics.handleError(err)
-      return false
-    }
-  }
-}
-
-export async function getAllWorkspaces (): Promise<WorkspaceInfoWithStatus[]> {
-  const token = getMetadata(presentation.metadata.Token)
-  if (token === undefined) {
-    const loc = getCurrentLocation()
-    loc.path[1] = 'login'
-    loc.path.length = 2
-    navigate(loc)
-    return []
-  }
-
-  let workspaces: WorkspaceInfoWithStatus[]
-
-  try {
-    workspaces = await getAccountClient(token).listWorkspaces()
-  } catch (err: any) {
-    if (err instanceof PlatformError) {
-      await handleStatusError('Get workspaces error', err.status)
-    } else {
-      Analytics.handleError(err)
-    }
-    workspaces = []
-  }
-
-  workspaces.sort((a, b) => {
-    const adays = getLastVisitDays(a)
-    const bdays = getLastVisitDays(b)
-    if (adays === bdays) {
-      return getWorkspaceSize(b) - getWorkspaceSize(a)
-    }
-    return adays - bdays
-  })
-
-  return workspaces
 }
 
 export async function isReadOnlyGuestAccount (loginInfo: LoginInfo | null): Promise<boolean> {

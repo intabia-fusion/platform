@@ -5,6 +5,7 @@
     "InvalidId": "无效的 Id: {id}",
     "BadRequest": "错误的请求",
     "Forbidden": "禁止访问",
+    "PlanLimitExceeded": "已超过计划限制",
     "Conflict": "冲突",
     "ExpiredLink": "此邀请链接已过期",
     "Unauthorized": "未授权",

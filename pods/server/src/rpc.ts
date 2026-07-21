@@ -258,7 +258,7 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
             ? 400
             : err.status.code === platform.status.Unauthorized
               ? 401
-              : err.status.code === platform.status.Forbidden
+              : err.status.code === platform.status.Forbidden || err.status.code === platform.status.PlanLimitExceeded
                 ? 403
                 : 500
         sendError(res, statusCode, { message: err.message, error: err.status })

@@ -2,6 +2,7 @@
   "string": {
     "Cancel": "Abbrechen",
     "Retry": "Wiederholen",
+    "StorageLimitReached": "Speicherlimit erreicht. Geben Sie Speicher frei oder aktualisieren Sie den Plan.",
     "UploadFiles": "Dateien Hochladen",
     "UploadFolders": "Ordner Hochladen",
     "UploadingTo": "Lade {files, plural, =1 {# Datei} other {# Dateien}} hoch nach"

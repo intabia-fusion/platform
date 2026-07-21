@@ -940,6 +940,9 @@ export interface WorkspaceInfoWithStatus extends WorkspaceInfo {
   backupInfo?: BackupStatus
   usageInfo?: UsageStatus
   processingAttemps: number
+  // Self-host edition of this deployment (dev|community|licensed) — same for every workspace, carried
+  // here so the workspace-select screen can show a "Community" badge. Absent on older servers.
+  licenseEdition?: string
 }
 
 export interface WorkspaceMemberInfo {

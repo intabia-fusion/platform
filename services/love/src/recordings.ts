@@ -11,6 +11,7 @@ import {
 } from 'livekit-server-sdk'
 import { WorkspaceClient } from './workspaceClient'
 import { PlatformQueueProducer, StorageConfig } from '@hcengineering/server-core'
+import { type LimitsState } from './limits'
 import { getS3UploadParams } from './storage'
 import { getRecordingPreset } from './preset'
 import config from './config'
@@ -22,7 +23,8 @@ export class RecordingProcessor {
     readonly eventProducer: PlatformQueueProducer<QueueMeetingMessage>,
     readonly egressClient: EgressClient,
     readonly storageConfig: StorageConfig | undefined,
-    readonly s3storageConfig: StorageConfig | undefined
+    readonly s3storageConfig: StorageConfig | undefined,
+    readonly limitsState?: LimitsState
   ) {}
 
   async startRecording (
@@ -32,6 +34,14 @@ export class RecordingProcessor {
     wsLoginInfo: WorkspaceLoginInfo,
     meetingTitle: string
   ): Promise<void> {
+    // Egress writes straight to S3 (bypasses the datalake gate) — don't start a recording
+    // that would land on a workspace already out of disk or unpaid. Skip, not throw: this also
+    // runs from the queue consumer (auto-record), where a throw would trigger endless redelivery.
+    if (this.limitsState?.isExhausted(workspaceId) === true) {
+      this.ctx.warn('Cannot start recording: workspace disk/payment limit exhausted', { workspaceId, roomName })
+      return
+    }
+
     // Check if LiveKit room exists before starting recording
     const existingRooms = await this.roomClient.listRooms([roomName])
     if (existingRooms === undefined || existingRooms.length === 0) {
@@ -114,6 +124,15 @@ export class RecordingProcessor {
     meetingId: Ref<MeetingMinutes>,
     wsLoginInfo: WorkspaceLoginInfo
   ): Promise<void> {
+    // Audio (transcription) recording also lands in S3 — same disk/payment gate as video.
+    if (this.limitsState?.isExhausted(workspaceId) === true) {
+      this.ctx.warn('Cannot start audio recording: workspace disk/payment limit exhausted', {
+        workspaceId,
+        roomName
+      })
+      return
+    }
+
     // Check if LiveKit room exists before starting audio recording
     const existingRooms = await this.roomClient.listRooms([roomName])
     if (existingRooms === undefined || existingRooms.length === 0) {

@@ -366,6 +366,18 @@ export class ReadOnlyAccessMiddleware extends BasePresentationMiddleware impleme
     try {
       return await this.provideTx(tx)
     } catch (err: any) {
+      if (err instanceof PlatformError && err.status.code === platform.status.PlanLimitExceeded) {
+        addNotification(
+          await translate(view.string.PlanLimitWarningTitle, {}, getCurrentLanguage()),
+          await translate(view.string.PlanLimitWarningMessage, {}, getCurrentLanguage()),
+          ForbiddenNotification,
+          {
+            onClose: () => {}
+          },
+          NotificationSeverity.Info
+        )
+        return {}
+      }
       if (err instanceof PlatformError && err.status.code === platform.status.Forbidden) {
         addNotification(
           await translate(view.string.PermissionWarningTitle, {}, getCurrentLanguage()),

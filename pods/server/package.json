@@ -95,6 +95,12 @@
     "morgan": "^1.10.0",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "@hcengineering/document": "workspace:^0.7.0",
+    "@hcengineering/drive": "workspace:^0.7.0",
+    "@hcengineering/tracker": "workspace:^0.7.0",
+    "@hcengineering/chunter": "workspace:^0.7.0",
+    "@hcengineering/pulse": "workspace:^0.7.0",
+    "@hcengineering/preference": "workspace:^0.7.0"
   }
 }

@@ -13,35 +13,44 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Tier } from '@hcengineering/billing'
+  import { type PlanItem, type PackageItem } from '@hcengineering/billing'
   import { UsageStatus } from '@hcengineering/core'
   import { Label } from '@hcengineering/ui'
+  import type { SubscriptionData } from '@hcengineering/account-client'
   import plugin from '../plugin'
   import UsageProgress from './UsageProgress.svelte'
   import { calculateLimits } from '../utils'
 
   export let usage: UsageStatus | null
-  export let tier: Tier | undefined
+  export let plan: PlanItem | undefined
+  export let pkg: PackageItem | undefined = undefined
+  export let tierSub: SubscriptionData | undefined = undefined
+  export let pkgSub: SubscriptionData | undefined = undefined
 
   $: storageUsedBytes = usage?.usage?.storageBytes ?? 0
   $: meetingMinutes = usage?.usage?.meetingMinutes ?? 0
   $: tokensUsage = usage?.usage?.tokens ?? 0
-  $: limits = calculateLimits(tier)
+  $: membersCount = usage?.usage?.membersCount ?? 0
+  $: limits = calculateLimits(plan, pkg, tierSub, pkgSub)
 </script>
 
-<div class="flex-col flex-gap-2">
-  <div class="fs-bold">
-    <Label label={plugin.string.Usage} />
+{#if limits != null}
+  <div class="flex-col flex-gap-2" data-id="billingUsageSection">
+    <div class="fs-bold">
+      <Label label={plugin.string.Usage} />
+    </div>
+
+    <UsageProgress label={plugin.string.StorageUsage} value={storageUsedBytes} limit={limits.storageLimit} />
+
+    <UsageProgress
+      label={plugin.string.MeetingMinutesUsage}
+      value={meetingMinutes}
+      limit={limits.meetingMinutesLimit}
+      kind={'minutes'}
+    />
+
+    <UsageProgress label={plugin.string.TotalTokens} value={tokensUsage} limit={limits.tokenLimit} kind={'items'} />
+
+    <UsageProgress label={plugin.string.MembersUsage} value={membersCount} limit={limits.usersLimit} kind={'items'} />
   </div>
-
-  <UsageProgress label={plugin.string.StorageUsage} value={storageUsedBytes} limit={limits.storageLimit} />
-
-  <UsageProgress
-    label={plugin.string.MeetingMinutesUsage}
-    value={meetingMinutes}
-    limit={limits.meetingMinutesLimit}
-    kind={'minutes'}
-  />
-
-  <UsageProgress label={plugin.string.TotalTokens} value={tokensUsage} limit={limits.tokenLimit} kind={'items'} />
-</div>
+{/if}

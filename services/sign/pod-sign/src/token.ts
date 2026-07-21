@@ -14,23 +14,9 @@
 //
 
 import { IncomingHttpHeaders } from 'http'
-import { decodeToken, Token } from '@hcengineering/server-token'
+import { decodeToken, extractCookieToken, Token } from '@hcengineering/server-token'
 
 import { ApiError } from './error'
-
-const extractRawCookieToken = (cookie?: string): string | null => {
-  if (cookie === undefined || cookie === null) {
-    return null
-  }
-
-  const cookies = cookie.split(';')
-  const tokenCookie = cookies.find((cookie) => cookie.toLocaleLowerCase().includes('token'))
-  if (tokenCookie === undefined) {
-    return null
-  }
-
-  return tokenCookie.split('=')[1]
-}
 
 const extractRawAuthorizationToken = (authorization?: string): string | null => {
   if (authorization === undefined || authorization === null) {
@@ -53,9 +39,9 @@ export const extractToken = (headers: IncomingHttpHeaders, queryParams: any): { 
     const rawToken =
       extractRawAuthorizationToken(headers.authorization) ??
       extractRawQueryToken(queryParams) ??
-      extractRawCookieToken(headers.cookie)
+      extractCookieToken(headers.cookie)
 
-    if (rawToken === null) {
+    if (rawToken == null) {
       throw new ApiError(401)
     }
 

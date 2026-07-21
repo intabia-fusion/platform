@@ -437,6 +437,78 @@ export function devTool (
       })
     })
 
+  program
+    .command('set-workspace-plan <workspace> <plan>')
+    .description('create manual active tier subscription with limits (0 = unlimited)')
+    .option('--type <type>', 'subscription type', 'tier')
+    .option('--status <status>', 'subscription status (active|past_due|canceled|expired)', 'active')
+    .option('--users <n>', 'usersLimit', '0')
+    .option('--storage <gb>', 'storageLimitGB', '0')
+    .option('--traffic <gb>', 'trafficLimitGB', '0')
+    .option('--tokens <n>', 'tokenLimit', '0')
+    .option('--meeting-minutes <n>', 'meetingMinutesLimit', '0')
+    .action(
+      async (
+        workspace: string,
+        plan: string,
+        cmd: {
+          type: string
+          status: string
+          users: string
+          storage: string
+          traffic: string
+          tokens: string
+          meetingMinutes: string
+        }
+      ) => {
+        await withAccountDatabase(async (db) => {
+          const ws = await getWorkspace(db, workspace)
+          if (ws === null) {
+            throw new Error(`Workspace ${workspace} not found`)
+          }
+          const limits = {
+            usersLimit: parseInt(cmd.users),
+            storageLimitGB: parseFloat(cmd.storage), // fractional GB allowed (e.g. 0.05 = 50MB)
+            trafficLimitGB: parseFloat(cmd.traffic),
+            tokenLimit: parseInt(cmd.tokens),
+            meetingMinutesLimit: parseInt(cmd.meetingMinutes)
+          }
+          const accountClient = getAccountClient(getToolToken())
+          await accountClient.adminCreateSubscription({
+            workspaceUuid: ws.uuid,
+            plan,
+            type: cmd.type,
+            status: cmd.status,
+            limits
+          })
+          console.log(`plan '${plan}' (${cmd.status}) set for workspace '${workspace}'`, limits)
+        })
+      }
+    )
+
+  program
+    .command('show-workspace-plan <workspace>')
+    .description('show workspace subscriptions and limits')
+    .option('--all', 'include inactive subscriptions', false)
+    .action(async (workspace: string, cmd: { all: boolean }) => {
+      await withAccountDatabase(async (db) => {
+        const ws = await getWorkspace(db, workspace)
+        if (ws === null) {
+          throw new Error(`Workspace ${workspace} not found`)
+        }
+        const accountClient = getAccountClient(getToolToken())
+        const subs = await accountClient.getSubscriptions(ws.uuid, !cmd.all)
+        for (const s of subs) {
+          console.log(
+            `${s.type}/${s.plan} status=${s.status} provider=${s.provider} limits=${JSON.stringify(s.limits ?? {})}`
+          )
+        }
+        if (subs.length === 0) {
+          console.log('no subscriptions (all limits unlimited)')
+        }
+      })
+    })
+
   // program
   // .command('set-user-admin <email> <role>')
   // .description('set user role')

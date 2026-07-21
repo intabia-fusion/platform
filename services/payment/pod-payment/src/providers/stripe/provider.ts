@@ -17,36 +17,13 @@ import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import type { Express, Request, Response } from 'express'
 import type Stripe from 'stripe'
 
-import {
-  AccountClient,
-  SubscriptionType,
-  type Subscription,
-  type SubscriptionData
-} from '@hcengineering/account-client'
-import type { PaymentProvider, SubscribeRequest, CheckoutResponse } from '../index'
+import { AccountClient, SubscriptionType, type SubscriptionData } from '@hcengineering/account-client'
+import type { PaymentProvider, SubscribeRequest, CheckoutResponse, SubscriptionPublisher } from '../index'
 import { StripeClient } from './client'
 import { handleStripeWebhook } from './webhook'
 import { transformStripeSubscriptionToData } from './utils'
 import { getPlanKey } from '../../utils'
-
-/**
- * Check if a subscription has changed by comparing modifiedAt timestamps
- * Returns true if the provider's version is newer than what we have stored
- */
-function hasSubscriptionChanged (ourSub: SubscriptionData, newData: SubscriptionData): boolean {
-  const ourModifiedAt = ourSub.providerData?.modifiedAt
-  const newModifiedAt = newData.providerData?.modifiedAt
-
-  if (newModifiedAt === undefined) {
-    return false
-  }
-
-  if (ourModifiedAt === undefined) {
-    return true
-  }
-
-  return newModifiedAt > ourModifiedAt
-}
+import { parseSubscriptionPlans, cancelOrUncancelSubscription, reconcileActiveSubscriptions } from '../shared'
 
 /**
  * Stripe implementation of PaymentProvider
@@ -73,21 +50,8 @@ export class StripeProvider implements PaymentProvider {
     this.webhookSecret = webhookSecret
     // TODO: support branding
     this.frontUrl = frontUrl.replace(/\/+$/, '')
-    this.subscriptionPlans = {}
     this.accountClient = accountClient
-    const plans = subscriptionPlans.split(';')
-    for (const plan of plans) {
-      const [type, priceId] = plan.split(':')
-      this.subscriptionPlans[type] = priceId
-    }
-    // TODO: verify all plans are present in the config - take them from model?
-    // hardcoded check for now
-    const mustHave = ['common@tier', 'rare@tier', 'epic@tier', 'legendary@tier']
-    for (const plan of mustHave) {
-      if (this.subscriptionPlans[plan] === undefined) {
-        throw new Error(`Missing plan in config: ${plan}`)
-      }
-    }
+    this.subscriptionPlans = parseSubscriptionPlans(subscriptionPlans, (priceId) => priceId)
   }
 
   async createSubscription (
@@ -196,104 +160,56 @@ export class StripeProvider implements PaymentProvider {
     }
   }
 
-  async reconcileActiveSubscriptions (ctx: MeasureContext, accountsUrl: string, serviceToken: string): Promise<void> {
-    try {
-      ctx.info('Starting Stripe active subscription reconciliation')
+  async reconcileActiveSubscriptions (
+    ctx: MeasureContext,
+    accountsUrl: string,
+    serviceToken: string,
+    publish: SubscriptionPublisher
+  ): Promise<void> {
+    await reconcileActiveSubscriptions<Stripe.Subscription>(
+      ctx,
+      'stripe',
+      this.accountClient,
+      publish,
+      async (ctx) => await this.stripe.getActiveSubscriptions(ctx),
+      async (ctx, id) => await this.stripe.getSubscription(ctx, id),
+      (sub) => sub.id,
+      transformStripeSubscriptionToData
+    )
+  }
 
-      const stripeActiveSubscriptions = await this.stripe.getActiveSubscriptions(ctx)
-      const ourActiveSubscriptions = await this.accountClient.getSubscriptions()
-
-      const ourSubsByProviderId = new Map(
-        ourActiveSubscriptions.map((sub: Subscription) => [sub.providerSubscriptionId, sub])
-      )
-
-      const stripeActiveIds = new Set(stripeActiveSubscriptions.map((sub: Stripe.Subscription) => sub.id))
-
-      // Step 1: Update subscriptions that exist in Stripe and have changed
-      let upsertCount = 0
-      for (const stripeSub of stripeActiveSubscriptions) {
-        try {
-          const subscriptionData = transformStripeSubscriptionToData(ctx, stripeSub)
-          if (subscriptionData === null) {
-            continue
-          }
-
-          const ourSub = ourSubsByProviderId.get(stripeSub.id)
-
-          // Only upsert if subscription doesn't exist locally or if key fields have changed
-          if (ourSub === undefined || hasSubscriptionChanged(ourSub, subscriptionData)) {
-            await this.accountClient.upsertSubscription(subscriptionData)
-            upsertCount++
-          }
-        } catch (err) {
-          ctx.error('Failed to upsert active subscription', {
-            providerSubId: stripeSub.id,
-            err
-          })
-        }
-      }
-
-      // Step 2: Check for subscriptions we think are active but Stripe says aren't
-      let staleCount = 0
-      for (const ourSub of ourActiveSubscriptions) {
-        const stripeSubId = ourSub.providerSubscriptionId
-        if (!stripeActiveIds.has(stripeSubId)) {
-          try {
-            // Fetch the current state from Stripe directly
-            const currentState = await this.stripe.getSubscription(ctx, stripeSubId)
-            const subscriptionData = transformStripeSubscriptionToData(ctx, currentState)
-
-            // Update our database with current state (may have changed to canceled/ended)
-            if (subscriptionData !== null) {
-              await this.accountClient.upsertSubscription(subscriptionData)
-              staleCount++
-            }
-          } catch (err) {
-            ctx.error('Failed to reconcile subscription status', {
-              subscriptionId: stripeSubId,
-              err
-            })
-          }
-        }
-      }
-
-      ctx.info('Stripe subscription reconciliation completed', {
-        stripeActiveCount: stripeActiveSubscriptions.length,
-        ourActiveCount: ourActiveSubscriptions.length,
-        upsertedCount: upsertCount,
-        staleUpdatedCount: staleCount
-      })
-    } catch (err) {
-      ctx.error('Stripe subscription reconciliation failed', { err })
-      throw err
-    }
+  async retryPayment (ctx: MeasureContext, _providerSubscriptionId: string): Promise<SubscriptionData | null> {
+    ctx.info('Stripe payment retry — delegating to Stripe dunning', {})
+    // Stripe handles retries via its built-in dunning process.
+    // No manual retry needed — Stripe will automatically retry.
+    return null
   }
 
   async cancelSubscription (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData> {
-    const stripeSubscription = await this.stripe.cancelSubscription(ctx, providerSubscriptionId)
-    const subscriptionData = transformStripeSubscriptionToData(ctx, stripeSubscription)
-
-    if (subscriptionData == null) {
-      throw new Error(`Failed to cancel subscription ${providerSubscriptionId}`)
-    }
-
-    return subscriptionData
+    return await cancelOrUncancelSubscription(
+      ctx,
+      providerSubscriptionId,
+      'cancel',
+      async (ctx, id) => await this.stripe.cancelSubscription(ctx, id),
+      transformStripeSubscriptionToData
+    )
   }
 
   async uncancelSubscription (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData> {
-    const stripeSubscription = await this.stripe.uncancelSubscription(ctx, providerSubscriptionId)
-    const subscriptionData = transformStripeSubscriptionToData(ctx, stripeSubscription)
-    if (subscriptionData == null) {
-      throw new Error(`Failed to uncancel subscription ${providerSubscriptionId}`)
-    }
-
-    return subscriptionData
+    return await cancelOrUncancelSubscription(
+      ctx,
+      providerSubscriptionId,
+      'uncancel',
+      async (ctx, id) => await this.stripe.uncancelSubscription(ctx, id),
+      transformStripeSubscriptionToData
+    )
   }
 
   async updateSubscriptionPlan (
     ctx: MeasureContext,
     subscriptionId: string,
     newPlan: string,
+    type: SubscriptionType,
     workspaceUrl: string,
     accountUuid: string
   ): Promise<SubscriptionData | CheckoutResponse | null> {
@@ -304,8 +220,8 @@ export class StripeProvider implements PaymentProvider {
     const price = currentSub.items.data[0]?.price
     const isFreeSubscription = price?.unit_amount === 0 || price === undefined
 
-    // Get the Stripe price ID for the new plan (subscriptions updates are tier type)
-    const planKey = getPlanKey(SubscriptionType.Tier, newPlan)
+    // Get the Stripe price ID for the new plan
+    const planKey = getPlanKey(type, newPlan)
     const priceId = this.subscriptionPlans[planKey]
     if (priceId === undefined) {
       throw new Error(`No price configured for plan: ${planKey}`)
@@ -327,7 +243,7 @@ export class StripeProvider implements PaymentProvider {
         subscriptionId: currentSub.id,
         metadata: {
           workspaceUuid: metadata.workspaceUuid,
-          subscriptionType: SubscriptionType.Tier,
+          subscriptionType: type,
           subscriptionPlan: newPlan,
           accountUuid
         }
@@ -347,12 +263,18 @@ export class StripeProvider implements PaymentProvider {
     return subscriptionData
   }
 
-  registerWebhookEndpoints (app: Express, ctx: MeasureContext, accountsUrl: string, serviceToken: string): void {
+  registerWebhookEndpoints (
+    app: Express,
+    ctx: MeasureContext,
+    accountsUrl: string,
+    serviceToken: string,
+    publish: SubscriptionPublisher
+  ): void {
     ctx.info('Registering Stripe webhook endpoints')
 
     // Register Stripe-specific webhook endpoint (body parsing handled by server middleware)
     app.post('/api/v1/webhooks/stripe', (req: Request, res: Response) => {
-      void handleStripeWebhook(ctx, accountsUrl, serviceToken, this.webhookSecret, this.stripeApiKey, req, res)
+      void handleStripeWebhook(ctx, accountsUrl, serviceToken, this.webhookSecret, this.stripeApiKey, req, res, publish)
     })
   }
 }

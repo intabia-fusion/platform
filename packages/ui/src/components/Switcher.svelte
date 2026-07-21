@@ -1,6 +1,7 @@
 <script lang="ts">
   //
   // © 2023 Hardcore Engineering, Inc. All Rights Reserved.
+  // Copyright © 2026 Intabia Fusion.
   // Licensed under the Eclipse Public License v2.0 (SPDX: EPL-2.0).
   //
 
@@ -29,6 +30,8 @@
       title={onlyIcons ? undefined : item.label}
       label={onlyIcons ? undefined : item.labelIntl}
       labelParams={onlyIcons ? undefined : item.labelParams}
+      badge={onlyIcons ? undefined : item.badge}
+      badgeParams={item.badgeParams}
       tooltip={item.tooltip ? { label: item.tooltip } : undefined}
       on:change={() => {
         dispatch('select', item)

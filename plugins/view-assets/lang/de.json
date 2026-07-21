@@ -153,6 +153,8 @@
     "ReadOnlySignUp": "Arbeitsbereich erstellen",
     "PermissionWarningTitle": "✨ Erweitern Sie Ihren Zugriff!",
     "PermissionWarningMessage": "Ihre aktuelle Rolle hat eingeschränkte Berechtigungen. Um diese und andere erweiterte Funktionen freizuschalten, bitten Sie Ihren Arbeitsbereich-Administrator, Ihr Zugriffslevel zu erhöhen!",
+    "PlanLimitWarningTitle": "Plan-Limit erreicht",
+    "PlanLimitWarningMessage": "Ihr Arbeitsbereich hat das Plan-Limit für diese Ressource erreicht. Upgraden Sie Ihren Plan, um mehr zu erstellen.",
     "Icon": "Symbol",
     "Color": "Farbe",
     "AutomationOnly": "Nur Automatisierung",

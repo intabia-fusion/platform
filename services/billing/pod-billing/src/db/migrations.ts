@@ -58,7 +58,14 @@ export function getMigrations (flavor: DBFlavor): [string, string][] {
     throw new Error(`Unsupported database flavor: ${flavor}`)
   }
 
-  return [migrationV1(flavor), migrationV2(flavor), migrationV3(flavor), migrationV4(flavor)]
+  return [
+    migrationV1(flavor),
+    migrationV2(flavor),
+    migrationV3(flavor),
+    migrationV4(flavor),
+    migrationV5(flavor),
+    migrationV6(flavor)
+  ]
 }
 
 function migrationV1 (flavor: SupportedFlavor): [string, string] {
@@ -153,4 +160,38 @@ function migrationV4 (flavor: SupportedFlavor): [string, string] {
       ON billing.livekit_participant_session (joined_at);
   `
   return ['add_participant_sessions_04', sql]
+}
+
+function migrationV5 (flavor: SupportedFlavor): [string, string] {
+  const types = dbTypes[flavor]
+
+  const sql = `
+    CREATE TABLE IF NOT EXISTS billing.usage_delta_dedup (
+      workspace UUID NOT NULL,
+      metric ${types.string255} NOT NULL,
+      ref ${types.string255} NOT NULL,
+      amount ${types.int8} NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT now(),
+      CONSTRAINT pk_usage_delta_dedup PRIMARY KEY (workspace, metric, ref)
+    );
+
+    CREATE TABLE IF NOT EXISTS billing.workspace_limit_state (
+      workspace UUID NOT NULL,
+      category ${types.string255} NOT NULL,
+      used ${types.int8} NOT NULL DEFAULT 0,
+      limit_value ${types.int8} NOT NULL DEFAULT 0,
+      exhausted BOOLEAN NOT NULL DEFAULT FALSE,
+      updated_at TIMESTAMP NOT NULL DEFAULT now(),
+      CONSTRAINT pk_workspace_limit_state PRIMARY KEY (workspace, category)
+    );
+  `
+  return ['add_usage_dedup_and_limit_state_05', sql]
+}
+
+function migrationV6 (flavor: SupportedFlavor): [string, string] {
+  // Supports the periodic retention cleanup of usage_delta_dedup (see UsageWorker).
+  const sql = `
+    CREATE INDEX IF NOT EXISTS idx_usage_delta_dedup_created_at ON billing.usage_delta_dedup (created_at);
+  `
+  return ['add_usage_dedup_created_at_index_06', sql]
 }

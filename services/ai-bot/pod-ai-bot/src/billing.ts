@@ -14,6 +14,7 @@
 //
 import { groupByArray, MeasureContext, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
 import { generateToken } from '@hcengineering/server-token'
+import { type PlatformQueueProducer } from '@hcengineering/server-core'
 import {
   getClient as getBillingClient,
   type BillingClient,
@@ -21,8 +22,25 @@ import {
   AiTokensData
 } from '@hcengineering/billing-client'
 import { withRetry } from '@hcengineering/retry'
+import { v4 as uuid } from 'uuid'
 
 import config from './config'
+
+/** Mirrors BillingUsageMessage in pod-billing (plan 3). */
+export interface BillingUsageMessage {
+  workspace: WorkspaceUuid
+  metric: 'tokens' | 'transcript'
+  amount: number
+  /** Idempotency key. */
+  ref: string
+}
+
+// Set from queue.ts after queue init; undefined = no-op.
+let usageProducer: PlatformQueueProducer<BillingUsageMessage> | undefined
+
+export function setUsageProducer (producer: PlatformQueueProducer<BillingUsageMessage>): void {
+  usageProducer = producer
+}
 
 interface DeepgramRequest {
   request_id: string
@@ -210,40 +228,28 @@ export async function updateDeepgramBilling (ctx: MeasureContext): Promise<void>
 export async function pushTranscriptDuration (
   ctx: MeasureContext,
   workspace: WorkspaceUuid,
-  durationSec: number
+  durationSec: number,
+  ref?: string
 ): Promise<void> {
-  if (config.BillingUrl === '') return
+  if (usageProducer === undefined) return
   try {
-    const token = generateToken(systemAccountUuid, undefined, { service: 'ai-bot' })
-    const billingClient = getBillingClient(config.BillingUrl, token)
-
-    const now = new Date()
-    const day = new Date(now)
-    day.setHours(0, 0, 0, 0)
-
-    const data: AiTranscriptData[] = [
-      {
-        workspace,
-        day: day.toISOString(),
-        lastRequestId: `local-${Date.now()}`,
-        lastStartTime: now.toISOString(),
-        durationSeconds: durationSec,
-        usd: 0
-      }
-    ]
-    await billingClient.postAiTranscriptData(data)
+    await usageProducer.send(ctx, workspace, [
+      // ref must be deterministic for retry idempotency (billing dedups by it)
+      { workspace, metric: 'transcript', amount: durationSec, ref: `transcript-${workspace}-${ref ?? uuid()}` }
+    ])
   } catch (e) {
-    ctx.error('Failed to push transcript duration', { workspace, durationSec, e })
+    ctx.error('Failed to push transcript duration to billing-usage', { workspace, durationSec, e })
   }
 }
 
-export async function pushTokensData (ctx: MeasureContext, data: AiTokensData[]): Promise<void> {
-  if (config.BillingUrl === '') return
+export async function pushTokensData (ctx: MeasureContext, data: AiTokensData[], ref?: string): Promise<void> {
+  if (usageProducer === undefined) return
   try {
-    const token = generateToken(systemAccountUuid, undefined, { service: 'ai-bot' })
-    const billingClient = getBillingClient(config.BillingUrl, token)
-    await billingClient.postAiTokensData(data)
+    const total = data.reduce((sum, d) => sum + d.tokens, 0)
+    const workspace = data[0]?.workspace
+    if (workspace === undefined || total === 0) return
+    await usageProducer.send(ctx, workspace, [{ workspace, metric: 'tokens', amount: total, ref: ref ?? uuid() }])
   } catch (e) {
-    ctx.error('Failed to push tokens data', { e })
+    ctx.error('Failed to push tokens data to billing-usage', { e })
   }
 }

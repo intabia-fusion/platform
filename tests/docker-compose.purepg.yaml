@@ -26,7 +26,7 @@ services:
       - FILES_URL=http://localhost:4031/blob/:workspace/:blobId/:filename
       - UPLOAD_URL=http://localhost:4031/upload/form-data/:workspace
       - DATALAKE_URL=http://localhost:4031
-      - PREVIEW_URL=http://localhost:4031
+      - PREVIEW_URL=http://localhost:8083/_preview
   collaborator0:
     environment:
       - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}

@@ -1,0 +1,1243 @@
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
+import {
+  type SubscriptionData,
+  SubscriptionStatus,
+  SubscriptionType,
+  prorateSeats,
+  proratePackage,
+  type ProrationResult
+} from '@hcengineering/account-client'
+import express, { type Express, type Request, type Response } from 'express'
+import cors from 'cors'
+import type TbankPayments from 'tbank-payments'
+import type { MockTbank } from './mockTbank'
+
+import type { Config } from './config'
+import { withServiceToken } from './middleware'
+import { SubscriptionStorage } from './storage'
+import {
+  verifyWebhookToken,
+  getPlanKey,
+  buildOrderId,
+  loadPricing,
+  resolvePerSeatAmount,
+  isPendingFirstPayment,
+  nextPeriodEnd,
+  formatTbankDueDate,
+  orderFingerprint,
+  buildRenewedSubscription,
+  buildFailedChargeSubscription,
+  chargeSubscriptionRecurrent,
+  newActionId,
+  type PlanPricing
+} from './utils'
+import { notifyPaymentFailed } from './notifications'
+import type { TbankWebhookNotification, CreateSubscriptionRequest, UpdatePlanRequest, BillingPeriod } from './types'
+
+// Link lifetime = how long the bank keeps the link payable (RedirectDueDate). Lease = heartbeat window
+// for the holder pod. Takeover cancels the old link first.
+const CHECKOUT_LINK_LIFETIME_MS = 5 * 60 * 1000
+const CHECKOUT_LEASE_TIMEOUT_MS = 15 * 60 * 1000
+const CHECKOUT_HEARTBEAT_MS = 1000
+// Back-off before a manually-retried charge can be retried again. Deliberately shorter than the
+// scheduler's RETRY_INTERVAL_MS (24h) — a manual retry is user-initiated, so a tighter window is fine.
+const MANUAL_RETRY_INTERVAL_MS = 60 * 60 * 1000
+
+// Shared 409 payloads for the checkout-reclaim tail (see respondAfterReclaim).
+const IN_FLIGHT_RESPONSE = { reason: 'in_flight', error: 'Payment is being created, please retry shortly' } as const
+const ALREADY_PAID_RESPONSE = {
+  reason: 'already_paid',
+  error: 'The pending payment has already been processed'
+} as const
+
+export async function createServer (
+  ctx: MeasureContext,
+  config: Config,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage,
+  mock?: MockTbank
+): Promise<{ app: Express, close: () => void }> {
+  const plans = await loadPricing(config.PaymentUrl)
+
+  const app = express()
+
+  // Restrict CORS to CORS_ORIGIN (comma-separated) when configured; otherwise open cors() (dev/test).
+  app.use(
+    config.CorsOrigin !== undefined ? cors({ origin: config.CorsOrigin.split(',').map((o) => o.trim()) }) : cors()
+  )
+
+  // Use raw body for webhook routes (TBank signature verification needs raw body)
+  // Use JSON parsing for all other routes
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/v1/webhooks/')) {
+      express.raw({ type: 'application/json' })(req, res, next)
+    } else {
+      express.json()(req, res, next)
+    }
+  })
+
+  app.post(
+    '/api/v1/subscriptions',
+    withServiceToken,
+    wrapHandler(ctx, 'createSubscription', async (req, res) => {
+      await handleCreateSubscription(ctx, config, tbank, storage, plans, req, res)
+    })
+  )
+
+  app.get(
+    '/api/v1/subscriptions/by-checkout/:checkoutId',
+    withServiceToken,
+    wrapHandler(ctx, 'getByCheckout', async (req, res) => {
+      await handleGetByCheckout(storage, req, res)
+    })
+  )
+
+  app.get(
+    '/api/v1/subscriptions/:id',
+    withServiceToken,
+    wrapHandler(ctx, 'getSubscription', async (req, res) => {
+      await handleGetSubscription(storage, req, res)
+    })
+  )
+
+  app.post(
+    '/api/v1/subscriptions/:id/cancel',
+    withServiceToken,
+    wrapHandler(ctx, 'cancelSubscription', async (req, res) => {
+      await handleCancelSubscription(ctx, tbank, storage, req, res)
+    })
+  )
+
+  app.post(
+    '/api/v1/subscriptions/:id/uncancel',
+    withServiceToken,
+    wrapHandler(ctx, 'uncancelSubscription', async (req, res) => {
+      await handleUncancelSubscription(storage, req, res)
+    })
+  )
+
+  app.post(
+    '/api/v1/subscriptions/:id/updatePlan',
+    withServiceToken,
+    wrapHandler(ctx, 'updatePlan', async (req, res) => {
+      await handleUpdatePlan(ctx, config, tbank, storage, plans, req, res)
+    })
+  )
+
+  app.post(
+    '/api/v1/subscriptions/:id/retry',
+    withServiceToken,
+    wrapHandler(ctx, 'retryPayment', async (req, res) => {
+      await handleRetryPayment(ctx, tbank, storage, req, res)
+    })
+  )
+
+  app.post(
+    '/api/v1/webhooks/tbank',
+    wrapHandler(ctx, 'webhook', async (req, res) => {
+      await handleWebhook(ctx, config, tbank, storage, req, res)
+    })
+  )
+
+  // Local dev only: mock checkout page + pay/cancel actions (TBANK_MOCK=true).
+  if (mock !== undefined) {
+    mock.registerRoutes(app)
+  }
+
+  const close = (): void => {}
+  return { app, close }
+}
+
+function wrapHandler (
+  ctx: MeasureContext,
+  name: string,
+  method: (req: Request, res: Response) => Promise<void>
+): (req: Request, res: Response) => void {
+  return (req: Request, res: Response) => {
+    method(req, res).catch((err: any) => {
+      ctx.error(`Failed to ${name}`, { err })
+
+      if (!res.headersSent) {
+        res.status(500).json({ error: err.message })
+      }
+    })
+  }
+}
+
+/**
+ * Find a subscription by id or providerSubscriptionId.
+ * Pod-payment passes providerSubscriptionId as the id parameter,
+ * so we need to try both lookups.
+ */
+async function findSubscription (
+  storage: SubscriptionStorage,
+  idOrProviderId: string
+): Promise<SubscriptionData | null> {
+  // Try exact id match first (format: tbank_<paymentId>)
+  const byId = await storage.getById(idOrProviderId)
+  if (byId !== null) return byId
+
+  // Fallback: search by providerSubscriptionId (the raw paymentId)
+  return await storage.getByProviderId(idOrProviderId)
+}
+
+/**
+ * Cancel a pending checkout's bank link (first, so a concurrent pay is rejected) and free its claim.
+ * Shared by forced switch and orphan takeover. true = bank confirmed CANCELED; false = already paid /
+ * call failed -> caller must NOT open a new checkout (would double-charge).
+ */
+// Terminal tbank states where the money never moved: the link is already dead, so there is
+// nothing to charge and the claim is safe to free. tbank rejects Cancel on these with an error.
+const TBANK_DEAD_LINK_STATES = ['DEADLINE_EXPIRED', 'CANCELED', 'REJECTED']
+
+async function cancelPendingCheckout (
+  ctx: MeasureContext,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage,
+  intentId: string,
+  paymentId: string | null | undefined
+): Promise<boolean> {
+  // Claim won but never issued a charge (no payment_id): nothing to cancel at tbank.
+  // Release by intent id — releaseCheckout keys off payment_id and would no-op on NULL.
+  if (paymentId == null || paymentId === '') {
+    await storage.abandonCheckout(intentId)
+    return true
+  }
+  let dead = false
+  try {
+    const cancelResult = await tbank.cancelPayment({ PaymentId: paymentId })
+    dead = cancelResult.Status === 'CANCELED' || TBANK_DEAD_LINK_STATES.includes(cancelResult.Status)
+    if (!dead) {
+      ctx.info('Pending checkout not cancelable', { paymentId, status: cancelResult.Status })
+      return false
+    }
+  } catch (err: any) {
+    // tbank refuses to cancel an already-dead payment (e.g. DEADLINE_EXPIRED) — treat as freed.
+    const details: string = err?.details ?? err?.message ?? ''
+    if (!TBANK_DEAD_LINK_STATES.some((s) => details.includes(s))) throw err
+    ctx.info('Pending checkout already dead at tbank, releasing', { paymentId, details })
+  }
+  // Abandon the old draft (if still a pending first-payment) and release the claim.
+  const oldDraft = await storage.getByProviderId(paymentId)
+  if (oldDraft !== null && isPendingFirstPayment(oldDraft)) {
+    await storage.upsert({
+      ...oldDraft,
+      status: SubscriptionStatus.Canceled,
+      providerData: { ...oldDraft.providerData, modifiedAt: Date.now(), status: 'ABANDONED', pending: false }
+    })
+  }
+  await storage.releaseCheckout(paymentId)
+  return true
+}
+
+async function handleCreateSubscription (
+  ctx: MeasureContext,
+  config: Config,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage,
+  plans: Record<string, PlanPricing>,
+  req: Request,
+  res: Response
+): Promise<void> {
+  const { type, plan, workspaceUuid, workspaceUrl, accountUuid, quantity, period, force } =
+    req.body as CreateSubscriptionRequest
+
+  ctx.info('Creating TBank subscription', { type, plan, workspaceUuid, accountUuid })
+
+  // One user intent = one actionId; every ledger row it causes (charge, webhook, superseded cancel)
+  // carries it, so the admin sees the whole story as a single action.
+  const actionId = newActionId()
+  const planKey = getPlanKey(type, plan)
+  const pricing = plans[planKey]
+  if (pricing === undefined) {
+    res.status(400).json({ error: `Unknown plan: ${planKey}` })
+    return
+  }
+  // A package is flat-priced: never multiply by a client quantity. Per-seat plans charge
+  // price-per-seat * seats (validated: positive integer); yearly applies the plan's discount.
+  const seats = type === SubscriptionType.Package ? 1 : (quantity ?? 1)
+  if (!Number.isInteger(seats) || seats < 1) {
+    res.status(400).json({ error: 'Invalid quantity' })
+    return
+  }
+  const perSeatAmount = resolvePerSeatAmount(pricing, period === 'yearly')
+  const amount = perSeatAmount * seats
+  // Exact order behind this request — a loser reuses the pending URL only on an exact match.
+  const fingerprint = orderFingerprint(plan, seats, period)
+
+  // Claim winner opens the payment: heartbeat the lease, then save URL + payment_id (reuse / release).
+  const openCheckout = async (intentId: string): Promise<void> => {
+    const heartbeat = setInterval(() => {
+      void storage.heartbeatCharge(intentId)
+    }, CHECKOUT_HEARTBEAT_MS)
+    let paymentIssued = false
+    try {
+      const transactionCount = await storage.getTransactionCount(workspaceUuid)
+      const orderId = buildOrderId(workspaceUuid, transactionCount)
+
+      const { paymentId, paymentURL } = await initTbankPayment(
+        config,
+        tbank,
+        amount,
+        orderId,
+        `Subscription: ${plan} (${type})`,
+        accountUuid,
+        workspaceUrl
+      )
+
+      ctx.info('TBank payment initiated', { orderId, paymentId, planKey, amount, seats, period })
+      await storage.logOperation({
+        operation: 'init_charge',
+        status: 'NEW',
+        paymentId: String(paymentId),
+        orderId,
+        workspaceUuid,
+        accountUuid,
+        actionId,
+        actor: 'user',
+        amount,
+        raw: { plan, type, seats, period }
+      })
+
+      // Link the claim to the issued charge and save the URL for reuse before exposing the draft.
+      await storage.setCheckoutPayment(intentId, String(paymentId), paymentURL)
+      paymentIssued = true
+
+      const subscriptionData = buildSubscriptionData(
+        String(paymentId),
+        orderId,
+        workspaceUuid,
+        accountUuid,
+        type,
+        plan,
+        amount,
+        accountUuid,
+        config.TbankTerminalKey,
+        undefined,
+        quantity,
+        period,
+        paymentURL,
+        actionId
+      )
+
+      await storage.upsert(subscriptionData)
+
+      res.json({ checkoutId: orderId, checkoutUrl: paymentURL })
+    } catch (err) {
+      // Failed before issuing a payment -> free the claim so a retry gets a clean claim (no 15-min
+      // lease wait, no stuck payment_id=null intent).
+      if (!paymentIssued) {
+        await storage.abandonCheckout(intentId).catch(() => {})
+      }
+      throw err
+    } finally {
+      clearInterval(heartbeat)
+    }
+  }
+
+  // Atomic guard vs parallel purchases for one (workspace, type): only the winner opens a payment.
+  await runClaimedCheckout(ctx, tbank, storage, res, { workspaceUuid, type, fingerprint, force }, openCheckout)
+}
+
+/**
+ * Atomic (workspace, type) checkout guard shared by create and update: only the claim winner opens a
+ * payment (openCheckout), losers reuse the winner's URL or get 409. Covers stale-lease takeover, forced
+ * switch, link-expiry reissue. `openCheckout(intentId)` issues the tbank link and writes the draft.
+ */
+export async function runClaimedCheckout (
+  ctx: MeasureContext,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage,
+  res: Response,
+  params: { workspaceUuid: WorkspaceUuid, type: string, fingerprint: string, force?: boolean },
+  openCheckout: (intentId: string) => Promise<void>
+): Promise<void> {
+  const { workspaceUuid, type, fingerprint, force } = params
+  const claim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
+
+  if (claim.claimed) {
+    await openCheckout(claim.intentId)
+    return
+  }
+
+  // Lost the claim. Stale lease -> holder pod died mid-checkout, take over.
+  const leaseFresh = claim.heartbeatAt !== undefined && Date.now() - claim.heartbeatAt < CHECKOUT_LEASE_TIMEOUT_MS
+  if (!leaseFresh) {
+    const wonTakeover = await storage.reclaimStaleCharge(claim.intentId, CHECKOUT_LEASE_TIMEOUT_MS)
+    if (wonTakeover) {
+      // Cancel the dead holder's charge (or abandon the claim if it never issued one).
+      const canceled = await cancelPendingCheckout(ctx, tbank, storage, claim.intentId, claim.paymentId)
+      if (!canceled) {
+        res.status(409).json(ALREADY_PAID_RESPONSE)
+        return
+      }
+      const reclaim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
+      await respondAfterReclaim(res, reclaim, async () => {
+        await openCheckout(reclaim.intentId)
+      })
+      return
+    }
+  }
+
+  // A different order is being paid for this type. Never hand back the winner's link for the wrong plan.
+  if (claim.orderFingerprint !== undefined && claim.orderFingerprint !== fingerprint) {
+    if (force !== true) {
+      res.status(409).json({ reason: 'other_checkout_active', error: 'A payment for a different plan is in progress' })
+      return
+    }
+    if (claim.paymentId == null || claim.paymentId === '') {
+      res.status(409).json(IN_FLIGHT_RESPONSE)
+      return
+    }
+    const canceled = await cancelPendingCheckout(ctx, tbank, storage, claim.intentId, claim.paymentId)
+    if (!canceled) {
+      res.status(409).json(ALREADY_PAID_RESPONSE)
+      return
+    }
+    const reclaim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
+    await respondAfterReclaim(res, reclaim, async () => {
+      await openCheckout(reclaim.intentId)
+    })
+    return
+  }
+
+  // Same order (repeat / second tab): reuse the winner's saved URL — unless the link has expired.
+  if (claim.paymentUrl !== undefined && claim.paymentUrl !== '') {
+    const linkExpired = Date.now() - claim.createdOn >= CHECKOUT_LINK_LIFETIME_MS
+    if (!linkExpired) {
+      res.json({ checkoutUrl: claim.paymentUrl })
+      return
+    }
+    const freed = await cancelPendingCheckout(ctx, tbank, storage, claim.intentId, claim.paymentId)
+    if (!freed) {
+      res.status(409).json(ALREADY_PAID_RESPONSE)
+      return
+    }
+    const reclaim = await storage.claimCheckout(workspaceUuid, type, fingerprint)
+    await respondAfterReclaim(res, reclaim, async () => {
+      await openCheckout(reclaim.intentId)
+    })
+    return
+  }
+
+  res.status(409).json(IN_FLIGHT_RESPONSE)
+}
+
+/**
+ * Shared tail of the checkout-reclaim ladder: after a reclaim attempt, either open the new checkout,
+ * reuse a racing winner's URL, or report in_flight. Identical across all 4 reclaim call sites in
+ * handleCreateSubscription; the surrounding conditions that lead here (takeover / forced switch /
+ * link expiry) genuinely differ and are NOT merged.
+ */
+async function respondAfterReclaim (
+  res: Response,
+  reclaim: { claimed: boolean, paymentUrl?: string, intentId: string },
+  openCheckout: () => Promise<void>
+): Promise<void> {
+  if (reclaim.claimed) {
+    await openCheckout()
+    return
+  }
+  if (reclaim.paymentUrl !== undefined && reclaim.paymentUrl !== '') {
+    res.json({ checkoutUrl: reclaim.paymentUrl })
+    return
+  }
+  res.status(409).json(IN_FLIGHT_RESPONSE)
+}
+
+/**
+ * Resolve a subscription via `lookup`, writing the standard 404 response and returning null on miss.
+ * Callers do `const sub = await loadSubscriptionOr404(...); if (sub === null) return`.
+ */
+async function loadSubscriptionOr404<T> (lookup: () => Promise<T | null>, res: Response): Promise<T | null> {
+  const found = await lookup()
+  if (found === null) {
+    res.status(404).json({ error: 'Subscription not found' })
+    return null
+  }
+  return found
+}
+
+async function handleGetByCheckout (storage: SubscriptionStorage, req: Request, res: Response): Promise<void> {
+  const found = await loadSubscriptionOr404(async () => {
+    const sub = await storage.findSubscriptionByCheckoutId(req.params.checkoutId)
+    return sub !== null && isPendingFirstPayment(sub) ? null : sub
+  }, res)
+  if (found === null) return
+  res.json(found)
+}
+
+async function handleGetSubscription (storage: SubscriptionStorage, req: Request, res: Response): Promise<void> {
+  const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
+  if (sub === null) return
+  res.json(sub)
+}
+
+async function handleCancelSubscription (
+  ctx: MeasureContext,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage,
+  req: Request,
+  res: Response
+): Promise<void> {
+  const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
+  if (sub === null) return
+
+  if (sub.status !== SubscriptionStatus.Active && sub.status !== SubscriptionStatus.Trialing) {
+    res.status(400).json({ error: 'Subscription is not in a cancelable status' })
+    return
+  }
+
+  const canceledData = await cancelSubscription(ctx, tbank, storage, sub)
+  res.json(canceledData)
+}
+
+// Clear the scheduled cancellation
+async function handleUncancelSubscription (storage: SubscriptionStorage, req: Request, res: Response): Promise<void> {
+  const sub = await findSubscription(storage, req.params.id)
+  if (sub === null) {
+    res.status(404).json({ error: 'Subscription not found' })
+    return
+  }
+
+  // Only a scheduled cancel can be reversed
+  if (sub.status === SubscriptionStatus.Canceled) {
+    res.status(400).json({ error: 'Subscription already canceled, a new checkout is required' })
+    return
+  }
+
+  const providerData: Record<string, any> = { ...sub.providerData, modifiedAt: Date.now(), status: 'ACTIVE' }
+  delete providerData.canceledAt
+  delete providerData.willCancelAt
+  const uncanceledData: SubscriptionData = {
+    ...sub,
+    canceledAt: undefined,
+    willCancelAt: undefined,
+    providerData
+  }
+  await storage.upsert(uncanceledData)
+  res.json(uncanceledData)
+}
+
+export async function handleUpdatePlan (
+  ctx: MeasureContext,
+  config: Config,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage,
+  plans: Record<string, PlanPricing>,
+  req: Request,
+  res: Response
+): Promise<void> {
+  const { plan: newPlan, quantity, period } = req.body as UpdatePlanRequest
+  const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
+  if (sub === null) return
+
+  // One plan change = one action: the new charge, its webhook and the old subscription's cancel
+  // all report under this id.
+  const actionId = newActionId()
+
+  // Same plan + same seats + same period is a true no-op for a live subscription. A same-plan change
+  // of seat count (per-seat) or period is a real update (pro-rata charge), so let it through.
+  // Terminally Canceled can always be processed further.
+  const curSeats = Number(sub.providerData?.quantity ?? 1)
+  const newSeats = sub.type === SubscriptionType.Package ? curSeats : (quantity ?? curSeats)
+  const curPeriod = sub.providerData?.period
+  const samePlanNoChange = sub.plan === newPlan && newSeats === curSeats && (period ?? curPeriod) === curPeriod
+  ctx.info('updatePlan no-op check', {
+    curPlan: sub.plan,
+    newPlan,
+    curSeats,
+    newSeats,
+    reqQuantity: quantity,
+    curPeriod,
+    reqPeriod: period,
+    status: sub.status,
+    samePlanNoChange
+  })
+  if (samePlanNoChange && sub.status !== SubscriptionStatus.Canceled) {
+    res.status(400).json({ error: 'Already on this plan' })
+    return
+  }
+
+  const planKey = getPlanKey(sub.type, newPlan)
+  const pricing = plans[planKey]
+  if (pricing === undefined) {
+    res.status(400).json({ error: `Unknown plan: ${planKey}` })
+    return
+  }
+  // A package is flat-priced: never multiply by a client quantity. Per-seat plans charge
+  // price-per-seat * seats; fall back to current seats so a plain switch keeps the count.
+  const seats = sub.type === SubscriptionType.Package ? 1 : (quantity ?? curSeats)
+  if (!Number.isInteger(seats) || seats < 1) {
+    res.status(400).json({ error: 'Invalid quantity' })
+    return
+  }
+  const perSeatAmount = resolvePerSeatAmount(pricing, period === 'yearly')
+  const newAmount = perSeatAmount * seats
+  const fingerprint = orderFingerprint(newPlan, seats, period)
+  const workspaceUrl = (req.body as { workspaceUrl?: string }).workspaceUrl ?? ''
+  const force = (req.body as { force?: boolean }).force
+
+  // Pro-rata plan/seat change on a live paid subscription (tier seat change OR package swap).
+  //  - charge <= 0 (downgrade / credit covers it): switch in place, no checkout, extend the period.
+  //  - charge > 0 (upgrade): send the user to the bank page for the DELTA (explicit consent), while the
+  //    draft records the full recurring price + the proration period. Set below, applied in openCheckout.
+  const isSeatChange = sub.type === SubscriptionType.Tier && newPlan === sub.plan
+  const isPackageChange = sub.type === SubscriptionType.Package
+  let checkoutOverride:
+  | { chargeAmount: number, recurringAmount: number, periodStart: number, periodEnd: number }
+  | undefined
+  if (
+    (isSeatChange || isPackageChange) &&
+    sub.status === SubscriptionStatus.Active &&
+    sub.amount != null &&
+    sub.periodStart != null &&
+    sub.periodEnd != null
+  ) {
+    const now = Date.now()
+    const common = {
+      oldAmount: sub.amount,
+      periodStart: sub.periodStart,
+      periodEnd: sub.periodEnd,
+      now,
+      newFullPrice: newAmount
+    }
+    const pro: ProrationResult = isPackageChange
+      ? proratePackage(common)
+      : prorateSeats({ ...common, oldSeats: curSeats, newSeats: seats })
+
+    if (pro.charge <= 0) {
+      // Downgrade / credit covers it: no money moves. Switch in place, extend the period, clear any
+      // scheduled cancel. The new full price renews next cycle.
+      const updated: SubscriptionData = {
+        ...sub,
+        plan: newPlan,
+        amount: newAmount,
+        status: SubscriptionStatus.Active,
+        canceledAt: undefined,
+        willCancelAt: undefined,
+        periodStart: pro.periodStart,
+        periodEnd: pro.periodEnd,
+        providerData: { ...sub.providerData, quantity: seats, period: period ?? curPeriod, modifiedAt: now }
+      }
+      await storage.upsert(updated)
+      await storage.logOperation({
+        operation: 'webhook',
+        status: 'active',
+        paymentId: sub.providerSubscriptionId,
+        orderId: sub.providerData?.orderId as string | undefined,
+        subscriptionId: sub.id,
+        workspaceUuid: sub.workspaceUuid,
+        accountUuid: sub.accountUuid,
+        actionId,
+        actor: 'user',
+        amount: 0,
+        raw: { plan: newPlan, seats, kind: 'downgrade', charge: 0, newFullPrice: newAmount }
+      })
+      ctx.info('Plan change applied without charge', { subId: sub.id, newPlan, seats, newAmount })
+      res.json(updated)
+      return
+    }
+
+    // Upgrade with a positive charge: send the user to the bank page for the DELTA only, so the money
+    // is charged with explicit consent.
+    // The draft carries the full recurring price + the proration period (see openCheckout override).
+    checkoutOverride = {
+      chargeAmount: pro.charge,
+      recurringAmount: newAmount,
+      periodStart: pro.periodStart,
+      periodEnd: pro.periodEnd
+    }
+  }
+
+  // Winner opens the replacement checkout: init tbank link, mark the old sub pending-replacement (do NOT
+  // cancel it — the old plan stays active until the new payment lands), pre-create the new pending sub.
+  //
+  // For a pro-rata UPGRADE the bank page charges only the delta (chargeAmount), but the draft carries the
+  // new FULL price (recurringAmount) + the proration-computed period, so renewal bills the full price and
+  // the period stays consistent. For a plain purchase/switch all three coincide with newAmount.
+  const openCheckout = async (
+    intentId: string,
+    override?: { chargeAmount: number, recurringAmount: number, periodStart: number, periodEnd: number }
+  ): Promise<void> => {
+    const chargeAmount = override?.chargeAmount ?? newAmount
+    const recurringAmount = override?.recurringAmount ?? newAmount
+    const heartbeat = setInterval(() => {
+      void storage.heartbeatCharge(intentId)
+    }, CHECKOUT_HEARTBEAT_MS)
+    let paymentIssued = false
+    try {
+      const transactionCount = await storage.getTransactionCount(sub.workspaceUuid)
+      const orderId = buildOrderId(sub.workspaceUuid, transactionCount)
+      const { paymentId, paymentURL } = await initTbankPayment(
+        config,
+        tbank,
+        chargeAmount,
+        orderId,
+        `Subscription update: ${newPlan} (${sub.type})`,
+        sub.accountUuid,
+        workspaceUrl
+      )
+      await storage.setCheckoutPayment(intentId, String(paymentId), paymentURL)
+      paymentIssued = true
+      await storage.logOperation({
+        operation: 'init_charge',
+        status: 'NEW',
+        paymentId: String(paymentId),
+        orderId,
+        subscriptionId: sub.id,
+        workspaceUuid: sub.workspaceUuid,
+        accountUuid: sub.accountUuid,
+        actionId,
+        actor: 'user',
+        amount: chargeAmount,
+        raw: { plan: newPlan, type: sub.type, seats, period, kind: 'update', recurringAmount }
+      })
+
+      // Link+claim first, then drafts: if an upsert below fails the webhook's "any active same-type"
+      // fallback still cancels the old sub on payment (see handleWebhook).
+      await storage.upsert({
+        ...sub,
+        providerData: { ...sub.providerData, pendingReplacement: true, replacementPlan: newPlan, actionId }
+      })
+      const draft = buildSubscriptionData(
+        String(paymentId),
+        orderId,
+        sub.workspaceUuid,
+        sub.accountUuid,
+        sub.type,
+        newPlan,
+        recurringAmount, // draft carries the FULL recurring price (what renews), not the delta charged now
+        sub.accountUuid,
+        config.TbankTerminalKey,
+        undefined,
+        quantity,
+        period,
+        paymentURL,
+        actionId
+      )
+      // Carry the proration-computed period so a delta-upgrade keeps the right renewal date (esp. yearly,
+      // where the period must NOT reset to a fresh 30 days).
+      if (override !== undefined) {
+        draft.periodStart = override.periodStart
+        draft.periodEnd = override.periodEnd
+      }
+      await storage.upsert(draft)
+
+      ctx.info('Replacement checkout opened', { oldSubId: sub.id, paymentId, newPlan, seats, chargeAmount })
+      res.json({ checkoutId: orderId, checkoutUrl: paymentURL })
+    } catch (err) {
+      if (!paymentIssued) {
+        await storage.abandonCheckout(intentId).catch(() => {})
+      }
+      throw err
+    } finally {
+      clearInterval(heartbeat)
+    }
+  }
+
+  // Same atomic (workspace, type) guard as create: two owners changing seats race for one claim —
+  // only the winner opens a checkout, the loser reuses its URL or gets 409. Package = separate type.
+  // checkoutOverride is set for a pro-rata upgrade (charge the delta, record the full recurring price).
+  await runClaimedCheckout(
+    ctx,
+    tbank,
+    storage,
+    res,
+    { workspaceUuid: sub.workspaceUuid, type: sub.type, fingerprint, force },
+    async (intentId: string) => {
+      await openCheckout(intentId, checkoutOverride)
+    }
+  )
+}
+
+async function handleRetryPayment (
+  ctx: MeasureContext,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage,
+  req: Request,
+  res: Response
+): Promise<void> {
+  const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
+  if (sub === null) return
+
+  // Allow manual retry both during grace (PastDue) and after it expired (ReadOnly):
+  // the card may have recovered and the user wants to restore access immediately.
+  if (sub.status !== SubscriptionStatus.PastDue && sub.status !== SubscriptionStatus.ReadOnly) {
+    res.status(400).json({ error: 'Subscription is not in a retryable status' })
+    return
+  }
+
+  const rebillId = sub.providerData?.rebillId as string | undefined
+  if (rebillId === undefined) {
+    res.status(400).json({ error: 'No recurring payment method available' })
+    return
+  }
+
+  ctx.info('Manual retry payment', { subId: sub.id, plan: sub.plan })
+
+  try {
+    // Fresh Init on sub.amount + Charge (see chargeSubscriptionRecurrent) — a bare chargeRecurrent on the
+    // original providerSubscriptionId charges the old amount / is rejected by tbank.
+    const chargeResult = await chargeSubscriptionRecurrent(
+      tbank,
+      sub,
+      sub.amount ?? 0,
+      `retry:${sub.id}:${Date.now()}`,
+      `Subscription payment retry: ${sub.plan} (${sub.type})`
+    )
+
+    if (chargeResult.Success) {
+      const renewedData = buildRenewedSubscription(sub, Date.now(), chargeResult.PaymentId)
+      await storage.upsert(renewedData)
+      ctx.info('Manual retry payment succeeded', { subId: sub.id })
+      res.json(renewedData)
+    } else {
+      const failedData = buildFailedChargeSubscription(
+        sub,
+        chargeResult.ErrorCode,
+        chargeResult.Message,
+        MANUAL_RETRY_INTERVAL_MS
+      )
+      await storage.upsert(failedData)
+      ctx.warn('Manual retry payment failed', { subId: sub.id, errorCode: chargeResult.ErrorCode })
+      res.status(402).json({ error: chargeResult.Message ?? 'Payment failed' })
+    }
+  } catch (err: any) {
+    ctx.error('Manual retry payment error', { subId: sub.id, err })
+    res.status(500).json({ error: err.message ?? 'Internal error' })
+  }
+}
+
+async function handleWebhook (
+  ctx: MeasureContext,
+  config: Config,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage,
+  req: Request,
+  res: Response
+): Promise<void> {
+  // req.body is a Buffer for webhook routes (raw body parsing)
+  const rawBody = req.body as Buffer
+  if (rawBody === undefined || rawBody === null || rawBody.length === 0) {
+    ctx.error('Invalid TBank webhook body')
+    res.status(200).send('OK')
+    return
+  }
+
+  // Parse JSON from raw body for processing
+  let notification: Record<string, any>
+  try {
+    notification = JSON.parse(rawBody.toString('utf8'))
+  } catch {
+    ctx.error('Invalid TBank webhook JSON')
+    res.status(200).send('OK')
+    return
+  }
+
+  if (!(config.TbankSkipWebhookVerification ?? false)) {
+    const token = notification.Token as string | undefined
+    if (token === undefined || !verifyWebhookToken(tbank, notification, token, rawBody.toString('utf8'))) {
+      ctx.error('Invalid TBank webhook token')
+      res.status(200).send('OK')
+      return
+    }
+  }
+
+  const typedNotification = notification as unknown as TbankWebhookNotification
+
+  const sub = await storage.getByProviderId(typedNotification.PaymentId)
+
+  ctx.info('Received TBank webhook', {
+    paymentId: typedNotification.PaymentId,
+    orderId: typedNotification.OrderId,
+    status: typedNotification.Status,
+    success: typedNotification.Success,
+    workspaceUuid: sub?.workspaceUuid
+  })
+
+  // Audit every webhook (confirmation / rejection / reversal) with the full notification payload.
+  await storage.logOperation({
+    operation: 'webhook',
+    status: typedNotification.Status,
+    paymentId: typedNotification.PaymentId,
+    orderId: typedNotification.OrderId,
+    subscriptionId: sub?.id,
+    workspaceUuid: sub?.workspaceUuid,
+    accountUuid: sub?.accountUuid,
+    // The intent that opened this checkout, stored on the draft — keeps callback and charge together.
+    actionId: sub?.providerData?.actionId as string | undefined,
+    actor: 'provider',
+    amount: typedNotification.Amount,
+    raw: {
+      ...(typedNotification as unknown as Record<string, any>),
+      plan: sub?.plan,
+      seats: sub?.providerData?.quantity
+    }
+  })
+
+  if (typedNotification.Status === 'AUTHORIZED' || typedNotification.Status === 'CONFIRMED') {
+    if (sub === null) {
+      ctx.error('TBank webhook received but no pending subscription found', {
+        paymentId: typedNotification.PaymentId,
+        orderId: typedNotification.OrderId
+      })
+      res.status(200).send('OK')
+      return
+    }
+
+    // Idempotency guard: TBank delivers webhooks at-least-once
+    const appliedPaymentId =
+      (sub.providerData?.lastChargePaymentId as string | undefined) ?? // is set by recurrent charges (scheduler/retry)
+      (sub.providerData?.paymentId as string | undefined) // is set by the initial checkout
+    if (
+      sub.status === SubscriptionStatus.Active &&
+      sub.providerData?.pending !== true &&
+      appliedPaymentId === typedNotification.PaymentId
+    ) {
+      ctx.info('Duplicate TBank webhook ignored', {
+        paymentId: typedNotification.PaymentId,
+        status: typedNotification.Status
+      })
+      res.status(200).send('OK')
+      return
+    }
+
+    const subscriptionData = buildSubscriptionDataFromWebhook(typedNotification, sub)
+    await storage.upsert(subscriptionData)
+    ctx.info('TBank subscription activated via webhook', {
+      paymentId: typedNotification.PaymentId,
+      plan: subscriptionData.plan,
+      rebillId: typedNotification.RebillId
+    })
+
+    // If this is a plan change, cancel the old subscription now that the new one is confirmed.
+    // First check for a tbank sub with pendingReplacement flag (normal tbank updateSubscriptionPlan flow).
+    // Otherwise, cancel any active subscription of the same type in the workspace
+    // (handles provider-mismatch path where a new sub was created via createSubscription).
+    const allSubs = await storage.getAll(subscriptionData.workspaceUuid)
+    const oldSub = allSubs.find(
+      (s) =>
+        (s.provider === 'tbank' && s.providerData?.pendingReplacement === true) ||
+        (s.type === subscriptionData.type && s.status === SubscriptionStatus.Active && s.id !== subscriptionData.id)
+    )
+    if (oldSub !== undefined && oldSub !== null) {
+      // Report under the NEW purchase's action: dropping the old plan is part of that same intent.
+      await cancelSubscription(
+        ctx,
+        tbank,
+        storage,
+        oldSub,
+        'PLAN_CHANGE',
+        subscriptionData.providerData?.actionId as string | undefined,
+        'provider'
+      )
+      ctx.info('Old subscription canceled after plan change confirmation', {
+        oldSubId: oldSub.id,
+        newSubId: subscriptionData.id,
+        provider: oldSub.provider
+      })
+    }
+
+    // Release the claim on CONFIRMED (money settled), freeing the key for a future purchase.
+    // AUTHORIZED is intermediate (and absent for PayType 'O'). Idempotent for duplicate webhooks.
+    if (typedNotification.Status === 'CONFIRMED') {
+      await storage.releaseCheckout(typedNotification.PaymentId)
+    }
+  } else if (
+    typedNotification.Status === 'REJECTED' ||
+    typedNotification.Status === 'REVERSED' ||
+    typedNotification.Status === 'REFUNDED'
+  ) {
+    if (sub !== null) {
+      // Notify only when an active subscription fails (real renewal/charge failure).
+      // Excludes: repeated webhooks on an already-past_due sub, the pending first-payment draft
+      // (past_due + pending:true), and late REVERSED/REFUNDED on canceled/expired subscriptions.
+      const wasActive = sub.status === SubscriptionStatus.Active
+      // Mark as PastDue instead of canceling — keeps card and rebillId for retry
+      const now = Date.now()
+      const pastDueData: SubscriptionData = {
+        ...sub,
+        status: SubscriptionStatus.PastDue,
+        providerData: {
+          ...sub.providerData,
+          modifiedAt: now,
+          status: typedNotification.Status,
+          pending: false,
+          retryAttempt: 0,
+          retryAfter: now + 60 * 60 * 1000
+        }
+      }
+      await storage.upsert(pastDueData)
+      ctx.info('TBank payment failed, subscription marked PastDue', {
+        subId: sub.id,
+        paymentId: typedNotification.PaymentId,
+        status: typedNotification.Status
+      })
+
+      if (wasActive) {
+        await notifyPaymentFailed(ctx, storage, config, pastDueData, 'failed')
+      }
+    }
+
+    // Release the claim on terminal failure so a retry needn't wait for the lease. Idempotent.
+    await storage.releaseCheckout(typedNotification.PaymentId)
+  } else if (typedNotification.Status === 'DEADLINE_EXPIRED' || typedNotification.Status === 'CANCELED') {
+    // Link expired/canceled before payment: abandon the pending draft + release now (only a
+    // still-pending first-payment draft, never an active sub).
+    if (sub !== null && isPendingFirstPayment(sub)) {
+      const now = Date.now()
+      await storage.upsert({
+        ...sub,
+        status: SubscriptionStatus.Canceled,
+        providerData: { ...sub.providerData, modifiedAt: now, status: 'ABANDONED', pending: false }
+      })
+      ctx.info('TBank checkout link expired/canceled, pending draft abandoned', {
+        subId: sub.id,
+        paymentId: typedNotification.PaymentId,
+        status: typedNotification.Status
+      })
+    }
+    await storage.releaseCheckout(typedNotification.PaymentId)
+  }
+
+  res.status(200).send('OK')
+}
+
+function buildSubscriptionData (
+  paymentId: string,
+  orderId: string,
+  workspaceUuid: WorkspaceUuid,
+  accountUuid: string,
+  type: string,
+  plan: string,
+  amount: number,
+  customerKey: string,
+  terminalKey: string,
+  existingSub?: SubscriptionData,
+  quantity?: number,
+  period?: BillingPeriod,
+  paymentUrl?: string,
+  actionId?: string
+): SubscriptionData {
+  const now = Date.now()
+  return {
+    id: existingSub?.id ?? `tbank_${paymentId}`,
+    workspaceUuid,
+    accountUuid: accountUuid as any,
+    provider: 'tbank',
+    providerSubscriptionId: paymentId,
+    providerCheckoutId: orderId,
+    type: type as SubscriptionType,
+    status: SubscriptionStatus.PastDue,
+    plan,
+    amount,
+    periodStart: existingSub?.periodStart ?? now,
+    periodEnd: nextPeriodEnd(now, period),
+    providerData: {
+      modifiedAt: now,
+      status: 'PENDING',
+      paymentId,
+      orderId,
+      customerKey,
+      terminalKey,
+      pending: true,
+      // Intent that opened this checkout — the webhook and any later cancel reuse it in the ledger.
+      actionId,
+      // Seats purchased for a per-seat plan. undefined for flat plans.
+      quantity,
+      // Billing period ('monthly' | 'yearly'). undefined defaults to monthly.
+      period,
+      // Checkout URL of the pending TBank payment
+      paymentUrl,
+      linkExpiresAt: paymentUrl !== undefined ? now + CHECKOUT_LINK_LIFETIME_MS : undefined
+    }
+  }
+}
+
+function buildSubscriptionDataFromWebhook (
+  notification: TbankWebhookNotification,
+  existingSub: SubscriptionData
+): SubscriptionData {
+  const now = Date.now()
+
+  return {
+    id: existingSub.id,
+    workspaceUuid: existingSub.workspaceUuid,
+    accountUuid: existingSub.accountUuid,
+    provider: 'tbank',
+    providerSubscriptionId: notification.PaymentId,
+    providerCheckoutId: notification.OrderId,
+    type: existingSub.type,
+    status: SubscriptionStatus.Active,
+    plan: existingSub.plan,
+    // The draft carries the FULL recurring price (== notification.Amount for a plain purchase; the delta
+    // is smaller for a pro-rata upgrade). Renewal must bill the full price, so trust the draft over the
+    // one-time charge amount in the notification.
+    amount: existingSub.amount ?? notification.Amount,
+    // The draft already carries the resulting period (fresh for a purchase, proration-computed for an
+    // upgrade — e.g. a yearly upgrade must keep its far-future end, not reset to 30 days).
+    periodStart: existingSub.periodStart ?? now,
+    periodEnd:
+      existingSub.periodEnd ?? nextPeriodEnd(now, existingSub.providerData?.period as BillingPeriod | undefined),
+    providerData: {
+      ...existingSub.providerData,
+      modifiedAt: now,
+      customerKey: notification.CustomerKey ?? existingSub.providerData?.customerKey,
+      cardId: notification.CardId,
+      pan: notification.Pan,
+      rebillId: notification.RebillId,
+      paymentId: notification.PaymentId,
+      orderId: notification.OrderId,
+      // Keep the originating action so a later cancel/renewal still reports under it.
+      actionId: existingSub.providerData?.actionId,
+      terminalKey: notification.TerminalKey,
+      status: notification.Status,
+      pending: false,
+      // Successful payment clears retry state, so a later failure starts a fresh grace cycle
+      // (matches buildRenewedSubscription / manual retry success). Without this a sub recovered
+      // from ReadOnly would keep retryAttempt>=MAX and skip straight back to ReadOnly on next fail.
+      retryAttempt: 0,
+      retryAfter: 0
+    }
+  }
+}
+
+// The subscription stays Active until periodEnd (the user keeps access and
+// can uncancel for free), only renewal is suppressed (see storage.needsRenewal + scheduler
+// enforceScheduledCancel, which flips it to Canceled and removes the card at willCancelAt).
+// status arg is used only for the plan-change path.
+function buildCanceledSubscriptionData (sub: SubscriptionData, status?: string): SubscriptionData {
+  const now = Date.now()
+
+  // Plan change (immediate replacement) cancels the subscription right away.
+  if (status === 'PLAN_CHANGE') {
+    return {
+      ...sub,
+      status: SubscriptionStatus.Canceled,
+      canceledAt: now,
+      providerData: {
+        ...sub.providerData,
+        modifiedAt: now,
+        status
+      }
+    }
+  }
+
+  return {
+    ...sub,
+    // Stays Active; willCancelAt marks the scheduled end of access and blocks renewal.
+    status: SubscriptionStatus.Active,
+    canceledAt: now,
+    willCancelAt: sub.periodEnd,
+    providerData: {
+      ...sub.providerData,
+      modifiedAt: now,
+      status: status ?? 'SCHEDULED_CANCEL',
+      willCancelAt: sub.periodEnd
+    }
+  }
+}
+
+async function initTbankPayment (
+  config: Config,
+  tbank: TbankPayments,
+  amount: number,
+  orderId: string,
+  description: string,
+  accountUuid: string,
+  workspaceUrl: string
+): Promise<{ paymentId: number, paymentURL: string }> {
+  // RedirectDueDate bounds the link lifetime (TBank default 24h). Lib accepts it (Joi) but omits it
+  // from TS types -> extend the param type locally.
+  const initParams: Parameters<typeof tbank.initPayment>[0] & { RedirectDueDate: string } = {
+    Amount: amount,
+    OrderId: orderId,
+    Description: description,
+    CustomerKey: accountUuid,
+    Recurrent: 'Y',
+    PayType: 'O',
+    Language: 'ru',
+    RedirectDueDate: formatTbankDueDate(Date.now() + CHECKOUT_LINK_LIFETIME_MS),
+    NotificationURL: config.TbankNotificationUrl ?? `${config.FrontUrl}/_tbank_subscriptions/api/v1/webhooks/tbank`,
+    SuccessURL: `${config.FrontUrl}/workbench/${workspaceUrl}/setting/setting/billing/subscriptions?payment=success&order_id=${orderId}`,
+    FailURL: `${config.FrontUrl}/workbench/${workspaceUrl}/setting/setting/billing/subscriptions?payment=canceled`
+  }
+  const initResult = await tbank.initPayment(initParams)
+
+  return {
+    paymentId: initResult.PaymentId,
+    paymentURL: initResult.PaymentURL ?? ''
+  }
+}
+
+// User-initiated cancel is scheduled (cancel-at-period-end): the card is kept for a possible
+// uncancel and removed later at willCancelAt (scheduler). Only an immediate cancel (PLAN_CHANGE,
+// where the sub is replaced now) removes the card here.
+async function cancelSubscription (
+  ctx: MeasureContext,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage,
+  sub: SubscriptionData,
+  status?: string,
+  // Intent that caused this cancel. Falls back to the subscription's own action (user-initiated cancel).
+  actionId?: string,
+  actor: 'user' | 'system' | 'provider' | 'admin' = 'user'
+): Promise<SubscriptionData> {
+  if (status === 'PLAN_CHANGE') {
+    await removeSubscriptionCard(ctx, tbank, sub)
+  }
+
+  const canceledData = buildCanceledSubscriptionData(sub, status)
+  await storage.upsert(canceledData)
+
+  ctx.info('Subscription canceled', { subId: sub.id, status: canceledData.providerData?.status })
+  await storage.logOperation({
+    operation: 'cancel',
+    status: status ?? 'canceled',
+    paymentId: sub.providerSubscriptionId,
+    // Same orderId as the charge that created this subscription — keeps the ledger chain intact.
+    orderId: sub.providerData?.orderId as string | undefined,
+    subscriptionId: sub.id,
+    workspaceUuid: sub.workspaceUuid,
+    accountUuid: sub.accountUuid,
+    actionId: actionId ?? (sub.providerData?.actionId as string | undefined),
+    actor,
+    amount: sub.amount,
+    raw: { plan: sub.plan, seats: sub.providerData?.quantity, reason: status }
+  })
+  return canceledData
+}
+
+// Remove the saved card at TBank. Best-effort — a failure is logged, not fatal.
+export async function removeSubscriptionCard (
+  ctx: MeasureContext,
+  tbank: TbankPayments,
+  sub: SubscriptionData
+): Promise<void> {
+  const cardId = sub.providerData?.cardId as string | undefined
+  const customerKey = sub.providerData?.customerKey as string | undefined
+  if (cardId === undefined || customerKey === undefined) return
+
+  try {
+    await tbank.removeCard({ CustomerKey: customerKey, CardId: cardId })
+    ctx.info('TBank card removed for canceled subscription', { subId: sub.id, cardId })
+  } catch (err) {
+    ctx.warn('Failed to remove TBank card during cancel', { subId: sub.id, err })
+  }
+}

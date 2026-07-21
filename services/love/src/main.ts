@@ -49,6 +49,7 @@ import { join } from 'path'
 import { updateLiveKitSessions } from './billing'
 import config from './config'
 import { LiveKitPollingService } from './polling'
+import { LimitsState } from './limits'
 import { RecordingProcessor } from './recordings'
 import { WebhookProcessor } from './webhook'
 import { WorkspaceClient } from './workspaceClient'
@@ -129,6 +130,9 @@ export const main = async (): Promise<void> => {
 
   const eventProducer = queue.getProducer<QueueMeetingMessage>(ctx, QueueTopic.LoveQueue)
 
+  // Disk/payment-exhausted workspaces (LimitsChanged consumer) — gate for starting recordings.
+  const limitsState = new LimitsState(ctx, queue)
+
   const webhookProcessor = new WebhookProcessor(
     ctx,
     roomClient,
@@ -144,7 +148,8 @@ export const main = async (): Promise<void> => {
     eventProducer,
     egressClient,
     storageConfig,
-    s3storageConfig
+    s3storageConfig,
+    limitsState
   )
 
   const guestManager = new GuestManager(ctx, roomClient)
@@ -360,6 +365,12 @@ export const main = async (): Promise<void> => {
 
     const roomName = getRoomName(workspaceId, meetingId)
 
+    // No disk left (or unpaid) — reject with a clear status instead of silently skipping.
+    if (limitsState.isExhausted(workspaceId)) {
+      res.status(413).send({ error: 'Storage limit exceeded' })
+      return
+    }
+
     try {
       const token = extractToken(req.headers)
       const wsLoginInfo = await getAccountClient(token).getLoginInfoByToken()
@@ -513,6 +524,7 @@ export const main = async (): Promise<void> => {
     void workspaceTxConsumer.close()
     void eventConsumer.close()
     void eventProducer.close()
+    void limitsState.close()
     void queue.shutdown()
     pollingService.stop()
     void WorkspaceClient.closeAll()

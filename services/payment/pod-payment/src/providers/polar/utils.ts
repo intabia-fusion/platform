@@ -60,21 +60,19 @@ export function transformPolarSubscriptionToData (subscription: any): Subscripti
 
   // With supporter subscriptions of type pay-what-you-want the actual plan should be
   // determined by the amount paid as it's not possible to define maximum sum for these products.
-  // E.g. one can pay 1000$ using common supporter product which will correspond to 'common' plan
-  // in metadata but should be treated like 'legendary' plan in actual subscription.
+  // E.g. one can pay 1000$ using start supporter product which will correspond to 'start' plan
+  // in metadata but should be treated like 'business' plan in actual subscription.
   // Conditions are hardcoded for now.
   // TODO: take from model
   let actualPlan = subscriptionPlan
   const amount = subscription.amount as number | undefined
   if (amount !== undefined) {
-    if (amount < 1999) {
-      actualPlan = 'common'
-    } else if (amount >= 1999 && amount < 9999) {
-      actualPlan = 'rare'
-    } else if (amount >= 9999 && amount < 39999) {
-      actualPlan = 'epic'
-    } else if (amount >= 39999) {
-      actualPlan = 'legendary'
+    if (amount < 59900) {
+      actualPlan = 'start'
+    } else if (amount >= 59900 && amount < 99900) {
+      actualPlan = 'standard'
+    } else if (amount >= 99900) {
+      actualPlan = 'business'
     }
   }
 

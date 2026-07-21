@@ -90,6 +90,7 @@ import { hulyMailId } from '@hcengineering/huly-mail'
 import { aiAssistantId } from '@hcengineering/ai-assistant'
 import { ratingId } from '@hcengineering/rating'
 import billingPlugin, { billingId } from '@hcengineering/billing'
+import admin, { adminId } from '@hcengineering/admin'
 
 import '@hcengineering/activity-assets'
 import '@hcengineering/analytics-collector-assets'
@@ -145,6 +146,7 @@ import '@hcengineering/emoji-assets'
 import '@hcengineering/media-assets'
 import '@hcengineering/communication-assets'
 import '@hcengineering/billing-assets'
+import '@hcengineering/admin-assets'
 import '@hcengineering/huly-mail-assets'
 import '@hcengineering/ai-assistant-assets'
 import '@hcengineering/rating-assets'
@@ -300,6 +302,7 @@ function configureI18n (): void {
   )
   addStringsLoader(emojiId, async (lang: string) => await import(`@hcengineering/emoji-assets/lang/${lang}.json`))
   addStringsLoader(billingId, async (lang: string) => await import(`@hcengineering/billing-assets/lang/${lang}.json`))
+  addStringsLoader(adminId, async (lang: string) => await import(`@hcengineering/admin-assets/lang/${lang}.json`))
   addStringsLoader(
     hulyMailId,
     async (lang: string) => await import(`@hcengineering/huly-mail-assets/lang/${lang}.json`)
@@ -446,6 +449,7 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
       [calendarId, calendar.component.ConnectApp],
       [guestId, guest.component.GuestApp],
       [globalProfileRoute, globalProfile.component.GlobalProfileApp],
+      [adminId, admin.component.AdminApp],
       ['meetings', love.component.GuestMeetingApp]
     ])
   )
@@ -455,6 +459,7 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
 
   addLocation(clientId, async () => await import('@hcengineering/client-resources'))
   addLocation(loginId, async () => await import('@hcengineering/login-resources'))
+  addLocation(adminId, async () => await import('@hcengineering/admin-resources'))
   addLocation(onboardId, async () => await import('@hcengineering/onboard-resources'))
   addLocation(workbenchId, async () => await import('@hcengineering/workbench-resources'))
   addLocation(viewId, async () => await import('@hcengineering/view-resources'))

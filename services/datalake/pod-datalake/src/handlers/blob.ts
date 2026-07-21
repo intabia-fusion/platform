@@ -23,6 +23,8 @@ import { pipeline, Readable } from 'stream'
 import { cacheControl } from '../const'
 import { type Datalake, wrapETag } from '../datalake'
 import { getBufferSha256, getFileSha256 } from '../hash'
+import { type LimitsState } from '../limits'
+import { type RequestWithAuth } from '../middleware'
 import { type TemporaryDir } from '../tempdir'
 
 const safeInlineTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp']
@@ -253,9 +255,17 @@ export async function handleUploadFormData (
   req: Request,
   res: Response,
   datalake: Datalake,
-  tempDir: TemporaryDir
+  tempDir: TemporaryDir,
+  limitsState?: LimitsState
 ): Promise<void> {
   const workspace = req.params.workspace as WorkspaceUuid
+
+  // Block user uploads when workspace disk or payment limit is exhausted (service tokens bypass).
+  const isServiceToken = (req as RequestWithAuth).token?.extra?.service !== undefined
+  if (!isServiceToken && limitsState?.isExhausted(workspace) === true) {
+    res.status(413).json({ message: 'Resource limit exceeded' })
+    return
+  }
 
   if (req.files == null) {
     res.status(400).send('missing files')
@@ -304,6 +314,11 @@ export async function handleUploadFormData (
           })
 
           ctx.info('uploaded', { workspace, name, etag: metadata.etag, type: contentType })
+
+          // Storage delta to billing (fire-and-forget, user uploads only). ref=sha256 for idempotency.
+          if (!isServiceToken) {
+            limitsState?.sendStorageDelta(ctx, workspace, size, sha256)
+          }
 
           return { key, id: name, metadata }
         } catch (err: any) {

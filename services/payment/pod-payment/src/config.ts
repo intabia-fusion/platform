@@ -21,6 +21,8 @@ export interface Config {
   Secret: string
   AccountsUrl: string
   FrontUrl: string
+  Provider: string
+  PlanConfig: string
   UseSandbox?: boolean
 
   // Polar.sh configuration
@@ -34,7 +36,16 @@ export interface Config {
   StripeWebhookSecret?: string
   StripeSubscriptionPlans?: string
 
+  // TBank configuration
+  TbankSubscriptionsUrl?: string
+
   ReconciliationIntervalMinutes?: number
+
+  // Explicit opt-in for the mock provider (activates plans without payment) — never set in production
+  AllowMockProvider?: boolean
+
+  // Per-IP cap on subscription mutations per 15-min window (raise on test stands that run many in a row)
+  SubscriptionRateLimitMax?: number
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
@@ -45,6 +56,8 @@ const config: Config = (() => {
     Secret: process.env.SECRET,
     AccountsUrl: process.env.ACCOUNTS_URL,
     FrontUrl: process.env.FRONT_URL,
+    Provider: process.env.PROVIDER,
+    PlanConfig: process.env.PLAN_CONFIG ?? '',
     UseSandbox: process.env.USE_SANDBOX === 'true',
     PolarAccessToken: process.env.POLAR_ACCESS_TOKEN,
     PolarWebhookSecret: process.env.POLAR_WEBHOOK_SECRET,
@@ -53,10 +66,13 @@ const config: Config = (() => {
     StripeApiKey: process.env.STRIPE_API_KEY,
     StripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     StripeSubscriptionPlans: process.env.STRIPE_SUBSCRIPTION_PLANS,
-    ReconciliationIntervalMinutes: parseNumber(process.env.RECONCILIATION_INTERVAL_MINUTES)
+    TbankSubscriptionsUrl: process.env.TBANK_SUBSCRIPTIONS_URL,
+    ReconciliationIntervalMinutes: parseNumber(process.env.RECONCILIATION_INTERVAL_MINUTES),
+    AllowMockProvider: process.env.ALLOW_MOCK_PROVIDER === 'true',
+    SubscriptionRateLimitMax: parseNumber(process.env.SUBSCRIPTION_RATE_LIMIT_MAX)
   }
 
-  const requiredKeys: Array<keyof Config> = ['Port', 'Secret', 'AccountsUrl', 'FrontUrl']
+  const requiredKeys: Array<keyof Config> = ['Port', 'Secret', 'AccountsUrl', 'FrontUrl', 'Provider', 'PlanConfig']
   const missingEnv = requiredKeys.filter((key) => params[key] === undefined)
 
   if (missingEnv.length > 0) {

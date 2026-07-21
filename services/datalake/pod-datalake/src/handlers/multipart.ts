@@ -17,6 +17,9 @@ import { MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
 import { type Request, type Response } from 'express'
 import { cacheControl } from '../const'
 import { Datalake } from '../datalake'
+import { type LimitsState } from '../limits'
+import { type RequestWithAuth } from '../middleware'
+import { type TemporaryDir } from '../tempdir'
 
 export interface MultipartUpload {
   key: string
@@ -36,9 +39,18 @@ export async function handleMultipartUploadStart (
   ctx: MeasureContext,
   req: Request,
   res: Response,
-  datalake: Datalake
+  datalake: Datalake,
+  _tempDir?: TemporaryDir,
+  limitsState?: LimitsState
 ): Promise<void> {
   const workspace = req.params.workspace as WorkspaceUuid
+
+  // Block user multipart uploads when disk or payment limit is exhausted (service tokens bypass).
+  const isServiceToken = (req as RequestWithAuth).token?.extra?.service !== undefined
+  if (!isServiceToken && limitsState?.isExhausted(workspace) === true) {
+    res.status(413).json({ message: 'Resource limit exceeded' })
+    return
+  }
 
   const { bucket } = await datalake.selectStorage(ctx, workspace)
 
@@ -98,10 +110,19 @@ export async function handleMultipartUploadComplete (
   ctx: MeasureContext,
   req: Request,
   res: Response,
-  datalake: Datalake
+  datalake: Datalake,
+  _tempDir?: TemporaryDir,
+  limitsState?: LimitsState
 ): Promise<void> {
   const { name } = req.params
   const workspace = req.params.workspace as WorkspaceUuid
+
+  const isServiceToken = (req as RequestWithAuth).token?.extra?.service !== undefined
+  if (!isServiceToken && limitsState?.isExhausted(workspace) === true) {
+    res.status(413).json({ message: 'Resource limit exceeded' })
+    return
+  }
+
   const { bucket } = await datalake.selectStorage(ctx, workspace)
 
   let uuid: string
@@ -118,6 +139,11 @@ export async function handleMultipartUploadComplete (
   const { parts } = req.body as MultipartUploadCompleteRequest
   await bucket.completeMultipartUpload(ctx, uuid, { uploadId }, parts)
   const metadata = await datalake.create(ctx, workspace, name, uuid)
+
+  if (!isServiceToken && metadata != null) {
+    // etag is content-derived — stable ref for retry dedup in billing
+    limitsState?.sendStorageDelta(ctx, workspace, metadata.size, metadata.etag)
+  }
 
   ctx.info('multipart-complete', { workspace, name, uuid, uploadId })
 

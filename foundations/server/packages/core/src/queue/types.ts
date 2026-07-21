@@ -39,7 +39,17 @@ export enum QueueTopic {
 
   TimeMachine = 'timeMachine',
 
-  CrmQueue = 'crm'
+  CrmQueue = 'crm',
+
+  BillingUsage = 'billing-usage',
+
+  // Subscription lifecycle events from payment providers (stripe/polar/tbank). Providers verify and
+  // publish here; pod-payment is the single consumer that bakes limits and writes to the account DB.
+  Subscription = 'subscription',
+
+  // Append-only payment audit events (init charge / webhook / recurrent charge / cancel / refund) from
+  // any provider pod. The account service is the single consumer, writing the immutable ledger row.
+  PaymentOperation = 'payment-operation'
 }
 
 export interface ConsumerHandle {

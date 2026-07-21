@@ -58,6 +58,8 @@
   export let navigateUrl: string | undefined = undefined
 
   let workspaces: WorkspaceInfoWithStatus[] = []
+  // Edition is a deployment-wide signal repeated on every row; show the badge when this build is community.
+  $: isCommunity = workspaces.some((w) => w.licenseEdition === 'community')
   let status = OK
   let accountPromise: Promise<LoginInfo | null>
   let account: LoginInfo | null | undefined = undefined
@@ -170,6 +172,11 @@
   <div class="status">
     <StatusControl {status} />
   </div>
+  {#if isCommunity}
+    <div class="community-badge">
+      <Label label={login.string.CommunityEdition} />
+    </div>
+  {/if}
   {#if workspaces.length > 10}
     <div class="ml-2 mr-2 mb-2 flex-grow">
       <SearchEdit bind:value={search} width={'100%'} />
@@ -322,6 +329,16 @@
     .readonly-warning {
       margin-bottom: 1.5rem;
       color: var(--login-caption-color, var(--theme-caption-color));
+    }
+    .community-badge {
+      align-self: center;
+      margin: 0 0 1rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.75rem;
+      font-size: 0.75rem;
+      background: var(--theme-button-hovered);
+      color: var(--theme-caption-color);
+      opacity: 0.9;
     }
     .grow-separator {
       flex-grow: 1;
