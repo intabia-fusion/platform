@@ -473,7 +473,7 @@ services:
       - OPENAI_SUMMARY_MODEL=openai/gpt-oss-20b
       - OPENAI_TRANSLATE_MODEL=openai/gpt-oss-20b
       - OPENAI_BASE_URL=http://host.docker.internal:1234/v1/
-      - CHUNK_STORAGE_CONFIG="minio|minio?accessKey=minioadmin&secretKey=minioadmin&rootBucket=chunks"
+      - CHUNK_STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin&rootBucket=chunks
   activity:
     image: 'intabiafusion/activity:${DOCKER_TAG:-latest}'
     depends_on:

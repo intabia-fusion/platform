@@ -132,13 +132,15 @@ export const main = async (): Promise<void> => {
   let queueClose: (() => Promise<void>) | undefined
   {
     // 1) Workspace creation -> provision the initial tier (trial when configured, else free).
+    // Up (workspace opened in a transactor) covers workspaces that predate this provisioning or
+    // whose Created event was missed; ensureInitialSubscription is a no-op when a tier exists.
     const wsConsumer = queue.createBatchConsumer<QueueWorkspaceMessage>(
       metricsContext,
       QueueTopic.Workspace,
       'payment-free-tier',
       async (ctx, msgs) => {
         for (const msg of msgs) {
-          if (msg.value.type !== QueueWorkspaceEvent.Created) continue
+          if (msg.value.type !== QueueWorkspaceEvent.Created && msg.value.type !== QueueWorkspaceEvent.Up) continue
           await ensureInitialSubscription(msg.workspace)
         }
       },

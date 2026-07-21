@@ -22,20 +22,34 @@ import {
   type AccountUuid,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import { getDBClient, shutdownPostgres, type PostgresClientReference } from '@hcengineering/postgres'
+import { shutdownPostgres, type PostgresClientReference } from '@hcengineering/postgres'
 import { generateToken } from '@hcengineering/server-token'
-import { PostgresAccountDB } from '../collections/postgres/postgres'
+import { type PostgresAccountDB } from '../collections/postgres/postgres'
 import { getSubscriptionsByProvider, upsertSubscription } from '../serviceOperations'
 import { SubscriptionStatus, SubscriptionType, type SubscriptionData } from '../types'
 import { createAccount } from '../utils'
+import { clearTables, openRealDb, realDbFlavors } from './realDbFlavors'
 
 jest.setTimeout(90000)
 
-describe('subscription-real', () => {
-  const cockroachDB: string = process.env.DB_URL ?? 'postgresql://root@localhost:26258/defaultdb?sslmode=disable'
+// Rows the tests themselves write.
+const DIRTY_TABLES = ['subscription']
+// Fixtures seeded once in beforeAll — cleared at startup, since the database outlives the run.
+// Children before parents: social_id/account_events/user_profile all reference person, and the
+// database is shared with the other real-db suites, so leftovers of theirs must go too.
+const FIXTURE_TABLES = [
+  'workspace_members',
+  'workspace_status',
+  'workspace',
+  'social_id',
+  'account_events',
+  'user_profile',
+  'account_passwords',
+  'account',
+  'person'
+]
 
-  let crDbUri = cockroachDB
-  let adminClientCRRef: PostgresClientReference
+describe.each(realDbFlavors)('subscription-real [$flavor]', ({ flavor: dbFlavor, adminUri, dbUri }) => {
   let dbUuid: string
   let crClient: PostgresClientReference
   let crAccount: PostgresAccountDB
@@ -49,43 +63,16 @@ describe('subscription-real', () => {
   let wsUuid: WorkspaceUuid
   const accountUuid = generateUuid() as AccountUuid
 
-  beforeAll(() => {
-    adminClientCRRef = getDBClient(cockroachDB)
-  })
+  // One reused database per flavor: migrations run once (and are skipped on later runs), and nothing
+  // is ever dropped — a DROP DATABASE on cockroach queues a 300s GC job per call.
+  beforeAll(async () => {
+    const db = await openRealDb('subdb', { flavor: dbFlavor, adminUri, dbUri })
+    dbUuid = db.dbUuid
+    crClient = db.dbRef
+    crAccount = db.account
 
-  afterAll(async () => {
-    adminClientCRRef.close()
-    await shutdownPostgres()
-  })
-
-  beforeEach(async () => {
-    dbUuid = 'subdb' + Date.now().toString()
-    crDbUri = cockroachDB.replace('/defaultdb', '/' + dbUuid)
-
-    const adminClient = await adminClientCRRef.getClient()
-    // Clean up leftover test DBs
-    const existing = await adminClient`SELECT datname FROM pg_database WHERE datname LIKE 'subdb%'`
-    for (const row of existing) {
-      await adminClient`DROP DATABASE IF EXISTS ${adminClient(row.datname)} CASCADE`
-    }
-    await adminClient`CREATE DATABASE ${adminClient(dbUuid)}`
-
-    crClient = getDBClient(crDbUri)
-    const pgClient = await crClient.getClient()
-    crAccount = new PostgresAccountDB(pgClient, dbUuid)
-
-    // Migrate with retry
-    let error = false
-    do {
-      try {
-        await crAccount.init()
-        error = false
-      } catch (e) {
-        console.error('init error, retrying', e)
-        error = true
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-      }
-    } while (error)
+    // The database survives previous runs, so drop their fixtures before seeding this one.
+    await clearTables(crClient, dbUuid, [...DIRTY_TABLES, ...FIXTURE_TABLES])
 
     // Create account required by subscription_account_fk
     await crAccount.person.insertOne({ uuid: accountUuid, firstName: 'Test', lastName: 'User' })
@@ -98,14 +85,13 @@ describe('subscription-real', () => {
     )
   })
 
-  afterEach(async () => {
-    try {
-      crClient.close()
-      const adminClient = await adminClientCRRef.getClient()
-      await adminClient`DROP DATABASE IF EXISTS ${adminClient(dbUuid)} CASCADE`
-    } catch (err) {
-      console.error('Cleanup error:', err)
-    }
+  afterAll(async () => {
+    crClient.close()
+    await shutdownPostgres()
+  })
+
+  beforeEach(async () => {
+    await clearTables(crClient, dbUuid, DIRTY_TABLES)
   })
 
   function makeSub (overrides: Partial<SubscriptionData> & { providerSubscriptionId: string }): SubscriptionData {

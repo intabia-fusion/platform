@@ -3,30 +3,38 @@
  */
 
 import { generateUuid, SocialIdType, type AccountUuid, type PersonId } from '@hcengineering/core'
-import { getDBClient, shutdownPostgres, type PostgresClientReference } from '@hcengineering/postgres'
-import { PostgresAccountDB } from '../collections/postgres/postgres'
+import { shutdownPostgres, type PostgresClientReference } from '@hcengineering/postgres'
+import { type PostgresAccountDB } from '../collections/postgres/postgres'
 import { type SocialId } from '../types'
-import { createAccount, getDbFlavor, normalizeValue } from '../utils'
+import { createAccount, normalizeValue } from '../utils'
+import { clearTables, openRealDb, realDbFlavors } from './realDbFlavors'
 
 jest.setTimeout(90000)
+
+// Children first — every one of these has an FK to workspace.
+// Children before parents; social_id/account_events/user_profile all reference person.
+const PERSON_TABLES = ['social_id', 'account_events', 'user_profile', 'account_passwords', 'account', 'person']
+
+const WORKSPACE_TABLES = [
+  'invite',
+  'workspace_members',
+  'workspace_status',
+  'workspace_permissions',
+  'integrations',
+  'subscription',
+  'workspace'
+]
 
 describe('real-account', () => {
   // It should create a DB and test on it for every execution, and drop it after it.
   //
   // Use environment variable or default to localhost CockroachDB
-  const cockroachDB: string = process.env.DB_URL ?? 'postgresql://root@localhost:26258/defaultdb?sslmode=disable'
-
-  const postgresDB: string = process.env.POSTGRES_URL ?? 'postgresql://postgres:postgres@localhost:5433/postgres'
-
-  let crDbUri = cockroachDB
-  let pgDbUri = postgresDB
 
   // Administrative client for creating/dropping test databases
   // This connects to 'defaultdb' and is used ONLY for DB admin operations
-  let adminClientCRRef: PostgresClientReference
-  let adminClientPGRef: PostgresClientReference
 
   let dbUuid: string
+  let pgDbUuid: string
 
   let crClient: PostgresClientReference
   let pgClient: PostgresClientReference
@@ -77,66 +85,42 @@ describe('real-account', () => {
     }
   }
 
-  beforeAll(() => {
-    // Get admin client for database creation/deletion
-    // This client stays connected to 'defaultdb' for admin operations only
-    adminClientCRRef = getDBClient(cockroachDB)
-    adminClientPGRef = getDBClient(postgresDB)
-  })
+  // One reused database per flavor: migrations run once (and are skipped on later runs), and nothing
+  // is ever dropped — a DROP DATABASE on cockroach queues a 300s GC job per call.
+  beforeAll(async () => {
+    const [cr, pg] = await Promise.all([
+      openRealDb('accountdb', realDbFlavors[0]),
+      openRealDb('accountdb', realDbFlavors[1])
+    ])
+    dbUuid = cr.dbUuid
+    pgDbUuid = pg.dbUuid
+    crClient = cr.dbRef
+    pgClient = pg.dbRef
+    crAccount = cr.account
+    pgAccount = pg.account
 
-  afterAll(async () => {
-    adminClientCRRef.close()
-    adminClientPGRef.close()
-    await shutdownPostgres()
-  })
-
-  beforeEach(async () => {
-    // Create a unique database for each test to ensure isolation
-    dbUuid = 'accountdb' + Date.now().toString()
-    crDbUri = cockroachDB.replace('/defaultdb', '/' + dbUuid)
-    const c = postgresDB.split('/')
-    c[c.length - 1] = dbUuid
-    pgDbUri = c.join('/')
-
-    try {
-      // Use admin client to create the test database
-      await Promise.all([initCockroachDB(adminClientCRRef, dbUuid), initPostgreSQL(adminClientPGRef, dbUuid)])
-    } catch (err) {
-      console.error('Failed to create test database:', err)
-      throw err
-    }
-
-    crClient = getDBClient(crDbUri)
-    const crPGClient = await crClient.getClient()
-
-    pgClient = getDBClient(pgDbUri)
-    const pgPGClient = await pgClient.getClient()
-
-    // Initial DB's
-
-    crAccount = new PostgresAccountDB(crPGClient, dbUuid)
-
-    pgAccount = new PostgresAccountDB(pgPGClient, dbUuid, await getDbFlavor(pgPGClient))
-
-    await Promise.all([migrateCockroachDB(crAccount, crDbUri), migratePostgreSQL(pgAccount, pgDbUri)])
+    // The database outlives the run, so clear the previous run's fixtures before seeding.
+    await Promise.all([
+      clearTables(crClient, dbUuid, [...WORKSPACE_TABLES, ...PERSON_TABLES]),
+      clearTables(pgClient, pgDbUuid, [...WORKSPACE_TABLES, ...PERSON_TABLES])
+    ])
 
     await Promise.all([prepareAccounts(pgAccount), prepareAccounts(crAccount)])
   })
 
-  afterEach(async () => {
-    try {
-      pgClient.close()
-      crClient.close()
+  // Workspaces carry a unique url, so they must not survive into the next test. Persons and accounts
+  // stay: prepareAccounts already re-creates them only when missing.
+  beforeEach(async () => {
+    await Promise.all([
+      clearTables(crClient, dbUuid, WORKSPACE_TABLES),
+      clearTables(pgClient, pgDbUuid, WORKSPACE_TABLES)
+    ])
+  })
 
-      // Use admin client to drop the test database
-      const adminClient = await adminClientCRRef.getClient()
-      await adminClient`DROP DATABASE IF EXISTS ${adminClient(dbUuid)} CASCADE`
-
-      const adminClientPG = await adminClientPGRef.getClient()
-      await adminClientPG`DROP DATABASE IF EXISTS ${adminClient(dbUuid)}`
-    } catch (err) {
-      console.error('Cleanup error:', err)
-    }
+  afterAll(async () => {
+    pgClient.close()
+    crClient.close()
+    await shutdownPostgres()
   })
 
   it('Check accounts', async () => {
@@ -224,55 +208,3 @@ describe('real-account', () => {
     expect(inviteLinkPG).toBeDefined()
   })
 })
-
-async function migratePostgreSQL (pgAccount: PostgresAccountDB, pgDbUri: string): Promise<void> {
-  let error = false
-  do {
-    try {
-      await pgAccount.init()
-      error = false
-    } catch (e) {
-      console.error('Error while initializing postgres account db', e, pgDbUri)
-      error = true
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-    }
-  } while (error)
-}
-
-async function migrateCockroachDB (crAccount: PostgresAccountDB, crDbUri: string): Promise<void> {
-  let error: boolean = false
-  do {
-    try {
-      await crAccount.init()
-      error = false
-    } catch (e) {
-      console.error('Error while initializing postgres account db', e, crDbUri)
-      error = true
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-    }
-  } while (error)
-}
-
-async function initPostgreSQL (adminClientPGRef: PostgresClientReference, dbUuid: string): Promise<void> {
-  const adminClientPg = await adminClientPGRef.getClient()
-  // Clean up any leftover test databases with prefix 'accountdb' for Postgres
-  const existingPgs = await adminClientPg`SELECT datname FROM pg_database WHERE datname LIKE 'accountdb%'`
-  for (const row of existingPgs) {
-    try {
-      await adminClientPg`DROP DATABASE IF EXISTS ${adminClientPg(row.datname)}`
-    } catch (err: any) {
-      // Ignore, Postgress says database is being used by other users
-    }
-  }
-  await adminClientPg`CREATE DATABASE ${adminClientPg(dbUuid)}`
-}
-
-async function initCockroachDB (adminClientCRRef: PostgresClientReference, dbUuid: string): Promise<void> {
-  const adminClient = await adminClientCRRef.getClient()
-  // Clean up any leftover test databases with prefix 'accountdb'
-  const existingCrs = await adminClient`SELECT datname FROM pg_database WHERE datname LIKE 'accountdb%'`
-  for (const row of existingCrs) {
-    await adminClient`DROP DATABASE IF EXISTS ${adminClient(row.datname)} CASCADE`
-  }
-  await adminClient`CREATE DATABASE ${adminClient(dbUuid)}`
-}

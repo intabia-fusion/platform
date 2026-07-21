@@ -704,7 +704,7 @@ export class PostgresAccountDB implements AccountDB {
           await this.client.begin(async (client) => {
             // Only locks if row exists and is not already locked
             const existing = await client`
-              SELECT identifier, applied_at, last_processed_at
+              SELECT identifier, applied_at, last_processed_at, ddl
               FROM ${this.client(this.ns)}._account_applied_migrations
               WHERE identifier = ${name}
               FOR UPDATE NOWAIT
@@ -712,7 +712,14 @@ export class PostgresAccountDB implements AccountDB {
 
             if (existing.length > 0) {
               if (existing[0].applied_at !== null) {
-                // Already completed
+                // Already completed. A changed DDL under an applied identifier never re-runs, so the
+                // schema silently diverges — warn instead of leaving it to fail at query time.
+                if (existing[0].ddl !== ddl) {
+                  console.error(
+                    `Migration ${name} was applied with different DDL than the current build defines. ` +
+                      'Existing migrations must never be modified — add a new one instead.'
+                  )
+                }
                 migrationComplete = true
               } else if (
                 existing[0].last_processed_at === null ||
@@ -749,6 +756,7 @@ export class PostgresAccountDB implements AccountDB {
               SET applied_at = NOW()
               WHERE identifier = ${name}
             `
+            console.log(`Applied migration ${name}`)
             migrationComplete = true
           }
         } catch (err: any) {
