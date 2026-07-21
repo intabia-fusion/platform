@@ -59,10 +59,12 @@
   {src}
   {srcset}
   alt={alt ?? ''}
-  {width}
-  {height}
   {loading}
   style:object-fit={fit}
+  style:width={typeof width === 'number' ? 'auto' : width}
+  style:height={typeof height === 'number' ? 'auto' : height}
+  style:max-width={typeof width === 'number' ? `${width}px` : undefined}
+  style:max-height={typeof height === 'number' ? `${height}px` : undefined}
   on:error={handleError}
   on:loadstart={handleLoadStart}
   on:load={handleLoad}
