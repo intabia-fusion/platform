@@ -669,9 +669,9 @@ function runTheApp (): void {
     void dialog
       .showMessageBox({
         type: 'info',
-        buttons: ['Update & Restart', 'Quit'],
+        buttons: ['Обновить и перезапустить', 'Выход'],
         defaultId: 0,
-        message: `A new version ${info.version} is available and it is required to continue. It will be downloaded and installed automatically.`
+        message: `Доступна новая версия продукта ${info.version}, необходимая для продолжения работы. Загрузка и установка произойдет автоматически.`
       })
       .then(({ response }: any) => {
         log.info(`Update dialog exit code: ${response}`) // eslint-disable-line no-console
