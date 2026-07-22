@@ -359,3 +359,47 @@ async function createTaskTypes (
   }
   return hasUpdates
 }
+
+/**
+ * Returns allowed subtask types for a given parent task type in a project type.
+ *
+ * @public
+ */
+export function getAllowedChildTaskTypes (
+  projectType: Ref<ProjectType>,
+  taskType: Ref<TaskType>,
+  taskTypes: TaskType[]
+): TaskType[] {
+  const scopedTypes = taskTypes.filter((t) => t.parent === projectType)
+
+  return scopedTypes.filter((tt) => {
+    if (tt.kind === 'task') return false
+    if (tt.allowedAsChildOf != null && tt.allowedAsChildOf.length > 0) {
+      return tt.allowedAsChildOf.includes(taskType)
+    }
+    return true
+  })
+}
+
+/**
+ * Returns allowed parent task types for a given child task type in a project type.
+ *
+ * @public
+ */
+export function getAllowedParentTaskTypes (
+  projectType: Ref<ProjectType>,
+  taskType: Ref<TaskType>,
+  taskTypes: TaskType[]
+): TaskType[] {
+  const scopedTypes = taskTypes.filter((t) => t.parent === projectType)
+  const childTaskType = scopedTypes.find((t) => t._id === taskType)
+  return childTaskType == null
+    ? []
+    : scopedTypes.filter((parentTT) => {
+      if (parentTT.kind === 'subtask') return false
+      if (childTaskType.allowedAsChildOf != null && childTaskType.allowedAsChildOf.length > 0) {
+        return childTaskType.allowedAsChildOf.includes(parentTT._id)
+      }
+      return true
+    })
+}

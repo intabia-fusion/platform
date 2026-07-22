@@ -14,20 +14,21 @@
 -->
 <script lang="ts">
   import { Doc, Ref, Status } from '@hcengineering/core'
+  import { settingsStore } from '@hcengineering/setting-resources'
+  import { TaskType } from '@hcengineering/task'
+  import { StatusPresenter } from '@hcengineering/tracker-resources'
   import {
     ButtonIcon,
-    IconAdd,
-    Label,
-    showPopup,
     Icon,
+    IconAdd,
+    IconArrowRight,
     IconMoreV2,
     IconOpenedArrow,
-    IconArrowRight
+    Label,
+    showPopup
   } from '@hcengineering/ui'
-  import { WorkflowTransition, Workflow } from '@hcengineering/workflow'
   import { SortableDocListStatic } from '@hcengineering/view-resources'
-  import { settingsStore } from '@hcengineering/setting-resources'
-  import { StatusPresenter } from '@hcengineering/tracker-resources'
+  import { Workflow, WorkflowTransition } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
   import AddTransitionPopup from './AddTransitionPopup.svelte'
@@ -36,6 +37,7 @@
   export let workflow: Workflow
   export let transitions: WorkflowTransition[] = []
   export let statuses: Status[] = []
+  export let taskType: TaskType
   export let readonly: boolean
 
   function addTransition (): void {
@@ -47,7 +49,15 @@
     $settingsStore = {
       id: _id,
       component: AsideTransitionEditor,
-      props: { workflow, statuses, _id, readonly, transition: transitions.find((it) => it._id === _id), transitions }
+      props: {
+        workflow,
+        statuses,
+        _id,
+        readonly,
+        transition: transitions.find((it) => it._id === _id),
+        transitions,
+        taskType
+      }
     }
   }
 

@@ -15,7 +15,15 @@
 import { Class, Mixin, Ref } from '@hcengineering/core'
 import { Asset, IntlString, plugin, Plugin, Resource } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui'
-import { ProjectWorkflow, Workflow, WorkflowTransition, WorkflowValidator, ValidatorImpl, ValidatorFunc } from './types'
+import {
+  ProjectWorkflow,
+  Workflow,
+  WorkflowTransition,
+  WorkflowValidator,
+  ValidatorImpl,
+  ValidatorFunc,
+  WorkflowRule
+} from './types'
 
 export const workflowId = 'workflow' as Plugin
 
@@ -23,6 +31,7 @@ export default plugin(workflowId, {
   class: {
     Workflow: '' as Ref<Class<Workflow>>,
     WorkflowTransition: '' as Ref<Class<WorkflowTransition>>,
+    WorkflowRule: '' as Ref<Class<WorkflowRule>>,
     WorkflowValidator: '' as Ref<Class<WorkflowValidator>>
   },
   validator: {
@@ -35,6 +44,16 @@ export default plugin(workflowId, {
     SubtaskStatus: '' as Resource<ValidatorFunc>,
     ParentStatus: '' as Resource<ValidatorFunc>
   },
+  validatorEditor: {
+    FieldRequired: '' as AnyComponent,
+    SubtaskStatus: '' as AnyComponent,
+    ParentStatus: '' as AnyComponent
+  },
+  validatorPresenter: {
+    FieldRequired: '' as AnyComponent,
+    SubtaskStatus: '' as AnyComponent,
+    ParentStatus: '' as AnyComponent
+  },
   mixin: {
     ProjectWorkflow: '' as Ref<Mixin<ProjectWorkflow>>,
     ValidatorImpl: '' as Ref<Mixin<ValidatorImpl>>
@@ -46,7 +65,8 @@ export default plugin(workflowId, {
   icon: {
     Workflows: '' as Asset,
     Workflow: '' as Asset,
-    Transition: '' as Asset
+    Transition: '' as Asset,
+    Check: '' as Asset
   },
   string: {
     Workflow: '' as IntlString,

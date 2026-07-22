@@ -60,12 +60,7 @@ export function createModel (builder: Builder): void {
     }
   )
 
-  builder.mixin(
-    workflow.validator.ParentStatus,
-    workflow.class.WorkflowValidator,
-    serverWorkflow.mixin.ValidatorImpl,
-    {
-      serverExecutor: serverWorkflow.validatorExecutor.ParentStatus
-    }
-  )
+  builder.mixin(workflow.validator.ParentStatus, workflow.class.WorkflowValidator, serverWorkflow.mixin.ValidatorImpl, {
+    serverExecutor: serverWorkflow.validatorExecutor.ParentStatus
+  })
 }

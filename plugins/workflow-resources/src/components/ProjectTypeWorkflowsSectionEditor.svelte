@@ -14,20 +14,20 @@
 -->
 <script lang="ts">
   import { SortingOrder } from '@hcengineering/core'
-  import { ButtonIcon, IconAdd, Label, Icon } from '@hcengineering/ui'
   import { createQuery } from '@hcengineering/presentation'
-  import task, { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
-  import { type Workflow } from '@hcengineering/workflow'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
+  import task, { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
+  import { ButtonIcon, Icon, IconAdd, Label } from '@hcengineering/ui'
+  import { Workflow } from '@hcengineering/workflow'
 
-  import CreateWorkflow from './CreateWorkflow.svelte'
-  import { navigateToWorkflow } from '../location'
-  import IconWorkflow from './icon/Workflow.svelte'
   import plugin from '../plugin'
+  import { navigateToWorkflow } from '../location'
+  import CreateWorkflow from './CreateWorkflow.svelte'
+  import IconWorkflow from './icon/Workflow.svelte'
 
   export let type: ProjectType
-  export let descriptor: ProjectTypeDescriptor | undefined
-  export let disabled: boolean = true
+  export let descriptor: ProjectTypeDescriptor | undefined = undefined
+  export let disabled = true
 
   const taskTypesQuery = createQuery()
   const workflowsQuery = createQuery()
@@ -55,6 +55,7 @@
   function getTaskTypeName (taskTypeId: string): string | undefined {
     return taskTypes.find((tt) => tt._id === taskTypeId)?.name
   }
+
   $: isLoading = isWorkflowsLoading || isTaskTypeLoading
   $: addDisabled = disabled || taskTypes.length === 0
 </script>

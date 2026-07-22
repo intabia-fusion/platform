@@ -113,6 +113,13 @@
   <div class="scroll" class:mt-2={!enableSearch}>
     <div class="box">
       <ListView bind:this={list} count={objects.length} bind:selection>
+        <svelte:fragment slot="category" let:item={idx}>
+          {@const item = objects[idx]}
+          {#if item.separatorBefore}
+            <div class="menu-divider" />
+          {/if}
+        </svelte:fragment>
+
         <svelte:fragment slot="item" let:item={idx}>
           {@const item = objects[idx]}
 
@@ -164,3 +171,11 @@
   </div>
   <div class="menu-space" />
 </div>
+
+<style lang="scss">
+  .menu-divider {
+    height: 1px;
+    margin: 0.25rem 0.5rem;
+    background-color: var(--global-subtle-ui-BorderColor, var(--theme-popup-divider, #e5e7eb));
+  }
+</style>

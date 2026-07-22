@@ -1,4 +1,4 @@
-//
+<!--
 // Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -11,15 +11,13 @@
 //
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
+-->
+<script lang="ts">
+  import { WorkflowRule } from '@hcengineering/workflow'
 
-import { loadMetadata } from '@hcengineering/platform'
-import workflow from '@hcengineering/workflow'
+  import RuleCard from './RuleCard.svelte'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
-loadMetadata(workflow.icon, {
-  Workflows: `${icons}#workflows`,
-  Workflow: `${icons}#workflow`,
-  Transition: `${icons}#transition`,
-  Check: `${icons}#check`
-})
+  export let value: WorkflowRule
+</script>
+
+<RuleCard title={value.label} description={value.description} icon={value.icon} on:click />

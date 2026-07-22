@@ -154,21 +154,21 @@ export class TRelatedIssueTarget extends TDoc implements RelatedIssueTarget {
  * @public
  */
 export function TypeReportedTime (): Type<number> {
-  return { _class: tracker.class.TypeReportedTime, label: tracker.string.ReportedTime }
+  return { _class: tracker.class.TypeReportedTime, label: tracker.string.ReportedTime, icon: core.icon.Time }
 }
 
 /**
  * @public
  */
 export function TypeRemainingTime (): Type<number> {
-  return { _class: tracker.class.TypeRemainingTime, label: tracker.string.RemainingTime }
+  return { _class: tracker.class.TypeRemainingTime, label: tracker.string.RemainingTime, icon: core.icon.Time }
 }
 
 /**
  * @public
  */
 export function TypeEstimation (): Type<number> {
-  return { _class: tracker.class.TypeEstimation, label: tracker.string.Estimation }
+  return { _class: tracker.class.TypeEstimation, label: tracker.string.Estimation, icon: core.icon.Time }
 }
 
 /**
@@ -200,6 +200,7 @@ export class TIssue extends TTask implements Issue {
   declare status: Ref<IssueStatus>
 
   @Prop(TypeIssuePriority(), tracker.string.Priority, {
+    icon: tracker.icon.Priority,
     iconComponent: tracker.component.PriorityIconPresenter
   })
   @Index(IndexKind.Indexed)
@@ -273,6 +274,7 @@ export class TIssue extends TTask implements Issue {
   declare childInfo: IssueChildInfo[]
 
   @Prop(Collection(time.class.ToDo), getEmbeddedLabel('Action Items'))
+  @Hidden()
     todos?: CollectionSize<ToDo>
 }
 /**

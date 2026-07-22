@@ -13,24 +13,24 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Scroller, EditBox, IconSettings, IconDelete, ButtonIcon, showPopup, Loading } from '@hcengineering/ui'
-  import { createQuery, getClient, IconDownload, MessageBox } from '@hcengineering/presentation'
   import core, { notEmpty, Ref, type Status, WithLookup } from '@hcengineering/core'
-  import task, { type ProjectType, type TaskType } from '@hcengineering/task'
-  import { type Workflow, type WorkflowTransition, removeWorkflow } from '@hcengineering/workflow'
   import { Asset } from '@hcengineering/platform'
+  import { createQuery, getClient, IconDownload, MessageBox } from '@hcengineering/presentation'
+  import task, { type ProjectType, type TaskType } from '@hcengineering/task'
+  import { ButtonIcon, EditBox, IconDelete, IconSettings, Loading, Scroller, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'
+  import { removeWorkflow, type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
-  import TransitionsEditor from './TransitionsEditor.svelte'
-  import TaskTypeEditor from './TaskTypeEditor.svelte'
   import { navigateToWorkflow } from '../../location'
+  import TaskTypeEditor from './TaskTypeEditor.svelte'
+  import TransitionsEditor from './TransitionsEditor.svelte'
 
   export let spaceType: ProjectType
   export let objectId: Ref<Workflow>
-  export let name: string | undefined
-  export let icon: Asset | undefined
-  export let readonly: boolean = true
+  export let name: string | undefined = undefined
+  export let icon: Asset | undefined = undefined
+  export let readonly = true
 
   const client = getClient()
 
@@ -123,7 +123,7 @@
   <div class="hulyComponent-content__column content">
     {#if loading}
       <Loading />
-    {:else if workflow}
+    {:else if workflow && taskType}
       <Scroller align="center" padding="var(--spacing-3)" bottomPadding="var(--spacing-3)">
         <div class="hulyComponent-content gap">
           <div class="header flex-between flex-wrap">
@@ -162,7 +162,7 @@
             </div>
           </div>
           <div class="hulyComponent-content flex-col-center flex-gap-4">
-            <TransitionsEditor {readonly} {workflow} {transitions} {statuses} />
+            <TransitionsEditor {readonly} {workflow} {transitions} {statuses} {taskType} />
           </div>
         </div>
       </Scroller>

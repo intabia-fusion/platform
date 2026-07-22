@@ -16,6 +16,7 @@
 import type { Doc, Ref, Status, AttachedDoc, Client } from '@hcengineering/core'
 import type { Project, TaskType, ProjectType, Rank, Task } from '@hcengineering/task'
 import type { Asset, IntlString, Resource } from '@hcengineering/platform'
+import { AnyComponent } from '@hcengineering/ui'
 
 export interface Workflow extends Doc {
   name: string
@@ -42,17 +43,25 @@ export type ValidatorFunc = (
   props: Record<string, any>
 ) => Promise<ValidationResult>
 
-export interface WorkflowValidator extends Doc {
+export interface WorkflowRule extends Doc {
   label: IntlString
+  description: IntlString
   icon?: Asset
   group?: string
+  order: number
+
+  editor: AnyComponent
+  presenter?: AnyComponent
 }
+
+export interface WorkflowValidator extends WorkflowRule {}
 
 export interface ValidatorImpl extends WorkflowValidator {
   executor: Resource<ValidatorFunc>
 }
 
 export interface WorkflowValidatorConfig {
+  id: string
   validator: Ref<WorkflowValidator>
   props: Record<string, any>
 }

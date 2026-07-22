@@ -14,7 +14,7 @@
 //
 
 import core, { notEmpty, Ref, Status } from '@hcengineering/core'
-import task, { type Task } from '@hcengineering/task'
+import task, { type Task, TaskType } from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
 
 import workflow from './plugin'
@@ -76,34 +76,61 @@ async function getStatusNames (client: ValidatorClient, statusIds: Ref<Status>[]
   return statusIds.map((id) => nameMap.get(id) ?? String(id)).join(', ')
 }
 
+function checkTaskTypeStatus (
+  statusesProp: Record<Ref<TaskType>, Ref<Status>[] | null> | undefined,
+  taskTypeId: Ref<TaskType>,
+  taskStatus: Ref<Status>
+): { ok: true } | { ok: false, allowedStatuses: Ref<Status>[] } {
+  if (statusesProp == null) return { ok: true }
+
+  const allowed = statusesProp?.[taskTypeId]
+  if (allowed == null) {
+    return { ok: true }
+  }
+
+  if (Array.isArray(allowed)) {
+    const filterAllowed = allowed.filter(notEmpty)
+    if (filterAllowed.length === 0) {
+      return { ok: true }
+    }
+    if (filterAllowed.includes(taskStatus)) {
+      return { ok: true }
+    }
+    return { ok: false, allowedStatuses: filterAllowed }
+  }
+
+  return { ok: true }
+}
+
 export const SubtaskStatus: ValidatorFunc = async (
   client: ValidatorClient,
   taskDoc: Task,
   transition: WorkflowTransition,
   props: Record<string, any>
 ): Promise<ValidationResult> => {
-  const allowedStatuses = ((props.statuses ?? []) as Ref<Status>[]).filter(notEmpty)
-  if (allowedStatuses.length === 0) {
+  const statusesMap = (props.statuses ?? {}) as Record<Ref<TaskType>, Ref<Status>[] | null>
+  if (isEmpty(statusesMap)) {
     return { ok: true }
   }
 
-  const subtasks: Pick<Task, 'status'>[] = await client.findAll(
+  const subtasks: Pick<Task, 'kind' | 'status'>[] = await client.findAll(
     task.class.Task,
     { attachedTo: taskDoc._id },
-    { projection: { status: 1 } }
+    { projection: { kind: 1, status: 1 } }
   )
   if (subtasks.length === 0) {
     return { ok: true }
   }
 
   for (const subtask of subtasks) {
-    if (!allowedStatuses.includes(subtask.status)) {
-      const statuses = await getStatusNames(client, allowedStatuses)
+    const check = checkTaskTypeStatus(statusesMap, subtask.kind, subtask.status)
+    if (!check.ok) {
+      const statusesStr = await getStatusNames(client, check.allowedStatuses)
       return {
         ok: false,
-        reason: `Subtasks must be in allowed status (${statuses}) for transition "${transition.name}".`,
+        reason: `Subtasks must be in allowed status (${statusesStr}) for transition "${transition.name}".`,
         reasonIntl: workflow.string.SubtaskStatusError,
-        intlParams: { transition: transition.name, statuses }
+        intlParams: { transition: transition.name, statuses: statusesStr }
       }
     }
   }
@@ -117,8 +144,8 @@ export const ParentStatus: ValidatorFunc = async (
   transition: WorkflowTransition,
   props: Record<string, any>
 ): Promise<ValidationResult> => {
-  const allowedStatuses = ((props.statuses ?? []) as Ref<Status>[]).filter(notEmpty)
-  if (allowedStatuses.length === 0) {
+  const statusesMap = (props.statuses ?? {}) as Record<Ref<TaskType>, Ref<Status>[] | null>
+  if (isEmpty(statusesMap)) {
     return { ok: true }
   }
 
@@ -126,23 +153,24 @@ export const ParentStatus: ValidatorFunc = async (
     return { ok: true }
   }
 
-  const parentTasks: Pick<Task, 'status'>[] = await client.findAll(
+  const parentTasks: Pick<Task, 'kind' | 'status'>[] = await client.findAll(
     task.class.Task,
     { _id: taskDoc.attachedTo as Ref<Task> },
-    { projection: { status: 1 } }
+    { projection: { kind: 1, status: 1 } }
   )
   if (parentTasks.length === 0) {
     return { ok: true }
   }
 
   const parentTask = parentTasks[0]
-  if (!allowedStatuses.includes(parentTask.status)) {
-    const statuses = await getStatusNames(client, allowedStatuses)
+  const check = checkTaskTypeStatus(statusesMap, parentTask.kind, parentTask.status)
+  if (!check.ok) {
+    const statusesStr = await getStatusNames(client, check.allowedStatuses)
     return {
       ok: false,
-      reason: `Parent task must be in allowed status (${statuses}) for transition "${transition.name}".`,
+      reason: `Parent task must be in allowed status (${statusesStr}) for transition "${transition.name}".`,
       reasonIntl: workflow.string.ParentStatusError,
-      intlParams: { transition: transition.name, statuses }
+      intlParams: { transition: transition.name, statuses: statusesStr }
     }
   }
 

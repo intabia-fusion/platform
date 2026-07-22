@@ -15,11 +15,25 @@
 
 import { type Builder } from '@hcengineering/model'
 import workflow from './plugin'
-import { TWorkflow, TWorkflowTransition, TProjectWorkflow, TWorkflowValidator, TValidatorImpl } from './types'
+import {
+  TWorkflow,
+  TWorkflowTransition,
+  TProjectWorkflow,
+  TWorkflowValidator,
+  TValidatorImpl,
+  TWorkflowRule
+} from './types'
 import { defineValidators } from './validators'
 
 export function createModel (builder: Builder): void {
-  builder.createModel(TWorkflow, TWorkflowTransition, TProjectWorkflow, TWorkflowValidator, TValidatorImpl)
+  builder.createModel(
+    TWorkflow,
+    TWorkflowTransition,
+    TProjectWorkflow,
+    TWorkflowRule,
+    TWorkflowValidator,
+    TValidatorImpl
+  )
   defineValidators(builder)
 }
 

@@ -342,6 +342,7 @@ export interface DropdownTextItem {
   icon?: Asset | AnySvelteComponent | ComponentType
   iconProps?: Record<string, any>
   exclusive?: boolean
+  separatorBefore?: boolean
 }
 
 export interface DropdownIntlItem {

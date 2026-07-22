@@ -15,42 +15,44 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { Data, DocumentUpdate, Ref, Status } from '@hcengineering/core'
+  import { translate } from '@hcengineering/platform'
   import presentation, { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
+  import { TaskType } from '@hcengineering/task'
+  import { StatePresenter } from '@hcengineering/task-resources'
   import ui, {
+    IconError,
     Label,
+    languageStore,
+    ListItem,
     Modal,
-    showPopup,
+    ModernButton,
     ModernDropdown,
     ModernDropdownLabels,
     ModernEditbox,
-    ListItem,
-    languageStore,
-    type DropdownTextItem,
-    ModernButton,
-    IconError,
-    Spinner
+    showPopup,
+    Spinner,
+    type DropdownTextItem
   } from '@hcengineering/ui'
   import {
-    WorkflowTransition,
-    removeTransition,
-    Workflow,
-    updateTransition,
+    ConflictInfo,
     getTransitionConflict,
-    ConflictInfo
+    removeTransition,
+    updateTransition,
+    Workflow,
+    WorkflowTransition
   } from '@hcengineering/workflow'
-  import { StatePresenter } from '@hcengineering/task-resources'
-  import { translate } from '@hcengineering/platform'
 
   import plugin from '../../plugin'
-  import ValidatorsNavGroup from './validators/ValidatorsNavGroup.svelte'
+  import ValidatorsNavGroup from '../validators/ValidatorsNavGroup.svelte'
 
   export let workflow: Workflow
   export let _id: Ref<WorkflowTransition>
   export let transition: WorkflowTransition | undefined
   export let transitions: WorkflowTransition[] = []
-  export let readonly: boolean
   export let statuses: Status[] = []
+  export let taskType: TaskType
+  export let readonly: boolean
 
   const client = getClient()
   const transitionsQuery = createQuery()
@@ -61,7 +63,7 @@
   let fromStatusItems: DropdownTextItem[] = []
 
   let isSaving = false
-  let timer: any = null
+  let timer: ReturnType<typeof setTimeout> | undefined = undefined
   let savePromise: Promise<void> | null = null
 
   $: transitionsQuery.query(plugin.class.WorkflowTransition, { attachedTo: workflow._id }, (res) => {
@@ -206,7 +208,7 @@
   function handleAutoSave (_: Partial<Data<WorkflowTransition>>): void {
     if (transition == null || transition._id !== lastLoadedId || readonly) return
 
-    clearTimeout(timer)
+    if (timer != null) clearTimeout(timer)
     timer = setTimeout(() => {
       void save()
     }, 500)
@@ -215,7 +217,7 @@
   $: handleAutoSave(updatedData)
 
   async function closeEditor (): Promise<void> {
-    clearTimeout(timer)
+    if (timer != null) clearTimeout(timer)
     await save()
     clearSettingsStore()
   }
@@ -233,7 +235,7 @@
   }
 
   onDestroy(() => {
-    clearTimeout(timer)
+    if (timer != null) clearTimeout(timer)
   })
 </script>
 
@@ -259,7 +261,7 @@
         disabled={readonly}
         style="padding:0"
         on:blur={() => {
-          clearTimeout(timer)
+          if (timer != null) clearTimeout(timer)
           void save()
         }}
       />
@@ -329,7 +331,7 @@
   <span class="separator" />
 
   {#if transition}
-    <ValidatorsNavGroup {workflow} {transitions} {statuses} {transition} />
+    <ValidatorsNavGroup {workflow} {transitions} {statuses} {transition} {taskType} />
   {/if}
   <div slot="footer" class="footer-row flex-row-center w-full justify-between">
     <div class="footer-left">

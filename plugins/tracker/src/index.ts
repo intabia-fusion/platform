@@ -563,7 +563,9 @@ const pluginState = plugin(trackerId, {
 
     // Project icons
     Home: '' as Asset,
-    RedCircle: '' as Asset
+    RedCircle: '' as Asset,
+
+    Priority: '' as Asset
   },
   category: {
     Other: '' as Ref<TagCategory>,

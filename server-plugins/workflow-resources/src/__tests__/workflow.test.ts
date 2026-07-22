@@ -428,6 +428,7 @@ describe('ValidateTransition Trigger', () => {
       modifiedBy: testAccount,
       validators: [
         {
+          id: 'cfg-1',
           validator: valId,
           props: {
             fields: ['assignee']
@@ -500,6 +501,7 @@ describe('ValidateTransition Trigger', () => {
       modifiedBy: testAccount,
       validators: [
         {
+          id: 'cfg-1',
           validator: valId,
           props: {
             fields: ['assignee']
@@ -571,6 +573,7 @@ describe('ValidateTransition Trigger', () => {
       modifiedBy: testAccount,
       validators: [
         {
+          id: 'cfg-1',
           validator: valId,
           props: {
             fields: ['assignee']
@@ -653,7 +656,7 @@ describe('ValidateTransition Trigger', () => {
       const control = createMockControl(async () => [])
 
       const res = await SubtaskStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
-        statuses: ['done']
+        statuses: { 'task-type-1': ['done'] }
       })
       expect(res).toEqual({ ok: true })
     })
@@ -663,13 +666,14 @@ describe('ValidateTransition Trigger', () => {
       const t = createMockTask({ _id: 'parent-1' as any, status: 'in-progress' as Ref<Status> })
       const subtask = createMockTask({
         _id: 'child-1' as any,
+        kind: 'subtask-type' as any,
         status: 'in-progress' as Ref<Status>,
         attachedTo: 'parent-1' as any
       })
       const control = createMockControl(async () => [subtask])
 
       const res = await SubtaskStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
-        statuses: ['done']
+        statuses: { 'subtask-type': ['done'] }
       })
       expect(res).toEqual({
         ok: false,
@@ -684,15 +688,40 @@ describe('ValidateTransition Trigger', () => {
       const t = createMockTask({ _id: 'parent-1' as any, status: 'in-progress' as Ref<Status> })
       const subtask = createMockTask({
         _id: 'child-1' as any,
+        kind: 'subtask-type' as any,
         status: 'done' as Ref<Status>,
         attachedTo: 'parent-1' as any
       })
       const control = createMockControl(async () => [subtask])
 
       const res = await SubtaskStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
-        statuses: ['done', 'resolved']
+        statuses: { 'subtask-type': ['done', 'resolved'] }
       })
       expect(res).toEqual({ ok: true })
+    })
+
+    it('should validate subtask status based on TaskType status map in props', async () => {
+      const { SubtaskStatus } = jest.requireActual('../ValidateTransition')
+      const t = createMockTask({ _id: 'parent-1' as any, status: 'in-progress' as Ref<Status> })
+      const subtask = createMockTask({
+        _id: 'child-1' as any,
+        kind: 'bug-type' as any,
+        status: 'todo' as Ref<Status>,
+        attachedTo: 'parent-1' as any
+      })
+      const control = createMockControl(async () => [subtask])
+
+      const res = await SubtaskStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+        statuses: {
+          'bug-type': ['done', 'resolved']
+        }
+      })
+      expect(res).toEqual({
+        ok: false,
+        reason: expect.stringContaining('allowed status'),
+        reasonIntl: workflow.string.SubtaskStatusError,
+        intlParams: { transition: 'Done', statuses: expect.any(String) }
+      })
     })
   })
 
@@ -703,14 +732,18 @@ describe('ValidateTransition Trigger', () => {
       const control = createMockControl(async () => [])
 
       const res = await ParentStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
-        statuses: ['in-progress']
+        statuses: { 'parent-type': ['in-progress'] }
       })
       expect(res).toEqual({ ok: true })
     })
 
     it('should return ok: false when parent task is not in allowed status', async () => {
       const { ParentStatus } = jest.requireActual('../ValidateTransition')
-      const parentTask = createMockTask({ _id: 'parent-1' as any, status: 'todo' as Ref<Status> })
+      const parentTask = createMockTask({
+        _id: 'parent-1' as any,
+        kind: 'parent-type' as any,
+        status: 'todo' as Ref<Status>
+      })
       const t = createMockTask({
         _id: 'child-1' as any,
         status: 'in-progress' as Ref<Status>,
@@ -719,7 +752,7 @@ describe('ValidateTransition Trigger', () => {
       const control = createMockControl(async () => [parentTask])
 
       const res = await ParentStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
-        statuses: ['in-progress', 'done']
+        statuses: { 'parent-type': ['in-progress', 'done'] }
       })
       expect(res).toEqual({
         ok: false,
@@ -731,7 +764,11 @@ describe('ValidateTransition Trigger', () => {
 
     it('should return ok: true when parent task is in allowed status', async () => {
       const { ParentStatus } = jest.requireActual('../ValidateTransition')
-      const parentTask = createMockTask({ _id: 'parent-1' as any, status: 'in-progress' as Ref<Status> })
+      const parentTask = createMockTask({
+        _id: 'parent-1' as any,
+        kind: 'parent-type' as any,
+        status: 'in-progress' as Ref<Status>
+      })
       const t = createMockTask({
         _id: 'child-1' as any,
         status: 'in-progress' as Ref<Status>,
@@ -740,7 +777,56 @@ describe('ValidateTransition Trigger', () => {
       const control = createMockControl(async () => [parentTask])
 
       const res = await ParentStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
-        statuses: ['in-progress', 'done']
+        statuses: { 'parent-type': ['in-progress', 'done'] }
+      })
+      expect(res).toEqual({ ok: true })
+    })
+
+    it('should validate parent task status based on TaskType status map in props', async () => {
+      const { ParentStatus } = jest.requireActual('../ValidateTransition')
+      const parentTask = createMockTask({
+        _id: 'parent-1' as any,
+        kind: 'epic-type' as any,
+        status: 'todo' as Ref<Status>
+      })
+      const t = createMockTask({
+        _id: 'child-1' as any,
+        status: 'in-progress' as Ref<Status>,
+        attachedTo: 'parent-1' as any
+      })
+      const control = createMockControl(async () => [parentTask])
+
+      const res = await ParentStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+        statuses: {
+          'epic-type': ['in-progress', 'done']
+        }
+      })
+      expect(res).toEqual({
+        ok: false,
+        reason: expect.stringContaining('allowed status'),
+        reasonIntl: workflow.string.ParentStatusError,
+        intlParams: { transition: 'Done', statuses: expect.any(String) }
+      })
+    })
+
+    it('should return ok: true when status map value is null for TaskType', async () => {
+      const { ParentStatus } = jest.requireActual('../ValidateTransition')
+      const parentTask = createMockTask({
+        _id: 'parent-1' as any,
+        kind: 'feature-type' as any,
+        status: 'any-status' as Ref<Status>
+      })
+      const t = createMockTask({
+        _id: 'child-1' as any,
+        status: 'in-progress' as Ref<Status>,
+        attachedTo: 'parent-1' as any
+      })
+      const control = createMockControl(async () => [parentTask])
+
+      const res = await ParentStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+        statuses: {
+          'feature-type': null
+        }
       })
       expect(res).toEqual({ ok: true })
     })

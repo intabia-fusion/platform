@@ -15,6 +15,8 @@
 
 import core from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
+import tracker from '@hcengineering/tracker'
+
 import workflow from './plugin'
 
 export function defineValidators (builder: Builder): void {
@@ -23,8 +25,12 @@ export function defineValidators (builder: Builder): void {
     core.space.Model,
     {
       label: workflow.string.FieldRequiredValidator,
-      icon: workflow.icon.Workflow,
-      group: 'fields'
+      description: workflow.string.FieldRequiredDescription,
+      icon: workflow.icon.Check,
+      group: 'fields',
+      order: 10,
+      editor: workflow.validatorEditor.FieldRequired,
+      presenter: workflow.validatorPresenter.FieldRequired
     },
     workflow.validator.FieldRequired
   )
@@ -38,8 +44,11 @@ export function defineValidators (builder: Builder): void {
     core.space.Model,
     {
       label: workflow.string.SubtaskStatusValidator,
-      icon: workflow.icon.Workflow,
-      group: 'subtasks'
+      description: workflow.string.SubtaskStatusDescription,
+      icon: tracker.icon.Subissue,
+      order: 20,
+      editor: workflow.validatorEditor.SubtaskStatus,
+      presenter: workflow.validatorPresenter.SubtaskStatus
     },
     workflow.validator.SubtaskStatus
   )
@@ -53,8 +62,11 @@ export function defineValidators (builder: Builder): void {
     core.space.Model,
     {
       label: workflow.string.ParentStatusValidator,
-      icon: workflow.icon.Workflow,
-      group: 'parent'
+      description: workflow.string.ParentStatusDescription,
+      icon: tracker.icon.Parent,
+      order: 30,
+      editor: workflow.validatorEditor.ParentStatus,
+      presenter: workflow.validatorPresenter.ParentStatus
     },
     workflow.validator.ParentStatus
   )

@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { TaskType } from '@hcengineering/task'
-  import { Label, ButtonMenu } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { Ref } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { TaskType } from '@hcengineering/task'
+  import { ButtonMenu, Label } from '@hcengineering/ui'
 
   export let selected: Ref<TaskType> | undefined
   export let types: TaskType[]
@@ -26,8 +26,8 @@
   export let buttonSize: 'large' | 'medium' | 'small' = 'small'
   export let loading = false
 
-  const dispatch = createEventDispatcher()
-  const items = types.map((it) => ({
+  const dispatch = createEventDispatcher<{ change: Ref<TaskType> }>()
+  $: items = types.map((it) => ({
     id: it._id,
     icon: it.icon,
     label: getEmbeddedLabel(it.name)
@@ -51,7 +51,7 @@
     on:selected={(evt) => {
       if (evt.detail != null) {
         selected = evt.detail
-        dispatch('change', selected)
+        dispatch('change', evt.detail)
       }
     }}
   />

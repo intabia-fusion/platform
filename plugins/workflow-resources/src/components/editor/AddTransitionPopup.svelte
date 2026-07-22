@@ -13,30 +13,30 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte'
   import { Ref, Status } from '@hcengineering/core'
+  import { translate } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
+  import { StatePresenter } from '@hcengineering/task-resources'
   import ui, {
-    ModernDropdown,
-    ModernDropdownLabels,
+    DropdownTextItem,
+    IconError,
     Label,
+    LabelAndProps,
+    languageStore,
     ListItem,
     Modal,
-    ModernEditbox,
-    languageStore,
-    type DropdownTextItem,
-    type LabelAndProps,
-    IconError
+    ModernDropdown,
+    ModernDropdownLabels,
+    ModernEditbox
   } from '@hcengineering/ui'
-  import { createEventDispatcher } from 'svelte'
   import {
-    Workflow,
     addTransition,
-    WorkflowTransition,
+    ConflictInfo,
     getTransitionConflict,
-    ConflictInfo
+    Workflow,
+    WorkflowTransition
   } from '@hcengineering/workflow'
-  import { StatePresenter } from '@hcengineering/task-resources'
-  import { translate } from '@hcengineering/platform'
 
   import plugin from '../../plugin'
 
@@ -45,9 +45,11 @@
   export let transitions: WorkflowTransition[] = []
 
   const client = getClient()
-  const dispatch = createEventDispatcher()
 
-  let name: string = ''
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  const dispatch = createEventDispatcher<{ close: void }>()
+
+  let name = ''
 
   let toStatusItem: ListItem | undefined
   let to: Ref<Status> | undefined = undefined

@@ -13,8 +13,18 @@
 // limitations under the License.
 //
 
-import core, { type Ref, type Status, type Domain, type Class } from '@hcengineering/core'
-import { Model, Prop, TypeString, TypeRef, Mixin, TypeRecord, Collection, ArrOf } from '@hcengineering/model'
+import core, { type Ref, type Status, type Domain, type Class, DOMAIN_MODEL } from '@hcengineering/core'
+import {
+  Model,
+  Prop,
+  TypeString,
+  TypeRef,
+  Mixin,
+  TypeRecord,
+  Collection,
+  ArrOf,
+  TypeNumber
+} from '@hcengineering/model'
 import { TDoc, TAttachedDoc } from '@hcengineering/model-core'
 import task, { type TaskType, type ProjectType, type Rank } from '@hcengineering/task'
 import {
@@ -24,23 +34,34 @@ import {
   type WorkflowValidator,
   type WorkflowValidatorConfig,
   type ValidatorFunc,
-  type ValidatorImpl
+  type ValidatorImpl,
+  type WorkflowRule
 } from '@hcengineering/workflow'
 import { TProject } from '@hcengineering/model-task'
 import { getEmbeddedLabel, type Asset, type IntlString, type Resource } from '@hcengineering/platform'
+import type { AnyComponent } from '@hcengineering/ui'
 
 import workflow from './plugin'
 
 export const DOMAIN_WORKFLOW = 'workflow' as Domain
 
-@Model(workflow.class.WorkflowValidator, core.class.Doc, DOMAIN_WORKFLOW)
-export class TWorkflowValidator extends TDoc implements WorkflowValidator {
+@Model(workflow.class.WorkflowRule, core.class.Doc, DOMAIN_MODEL)
+export class TWorkflowRule extends TDoc implements WorkflowRule {
   label!: IntlString
+  description!: IntlString
   icon?: Asset
 
   @Prop(TypeString(), getEmbeddedLabel('Group'))
     group?: string
+
+  @Prop(TypeNumber(), getEmbeddedLabel('Order'))
+    order!: number
+
+  editor!: AnyComponent
 }
+
+@Model(workflow.class.WorkflowValidator, workflow.class.WorkflowRule)
+export class TWorkflowValidator extends TWorkflowRule implements WorkflowValidator {}
 
 @Mixin(workflow.mixin.ValidatorImpl, workflow.class.WorkflowValidator)
 export class TValidatorImpl extends TWorkflowValidator implements ValidatorImpl {

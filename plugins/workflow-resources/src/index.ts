@@ -18,7 +18,13 @@ import type { Resources } from '@hcengineering/platform'
 
 import ProjectTypeWorkflowsSectionEditor from './components/ProjectTypeWorkflowsSectionEditor.svelte'
 import WorkflowEditor from './components/editor/WorkflowEditor.svelte'
-import { FieldRequired, SubtaskStatus, ParentStatus } from './validators'
+import FieldRequired from './components/validators/editors/FieldRequared.svelte'
+import SubtaskStatus from './components/validators/editors/SubtaskStatus.svelte'
+import ParentStatus from './components/validators/editors/ParentStatus.svelte'
+import FieldRequiredPresenter from './components/validators/presenters/FieldRequiredPresenter.svelte'
+import SubtaskStatusPresenter from './components/validators/presenters/SubtaskStatusPresenter.svelte'
+import ParentStatusPresenter from './components/validators/presenters/ParentStatusPresenter.svelte'
+import * as validators from './validators'
 
 export default async (): Promise<Resources> => ({
   component: {
@@ -26,8 +32,18 @@ export default async (): Promise<Resources> => ({
     WorkflowEditor
   },
   validatorExecutor: {
+    FieldRequired: validators.FieldRequired,
+    SubtaskStatus: validators.SubtaskStatus,
+    ParentStatus: validators.ParentStatus
+  },
+  validatorEditor: {
     FieldRequired,
     SubtaskStatus,
     ParentStatus
+  },
+  validatorPresenter: {
+    FieldRequired: FieldRequiredPresenter,
+    SubtaskStatus: SubtaskStatusPresenter,
+    ParentStatus: ParentStatusPresenter
   }
 })

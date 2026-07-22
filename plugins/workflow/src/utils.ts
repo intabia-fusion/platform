@@ -15,8 +15,9 @@
 
 import core, { DocumentUpdate, type Ref, SortingOrder, type Status, type TxOperations } from '@hcengineering/core'
 import { Project, TaskType, ProjectType, makeRank } from '@hcengineering/task'
+
 import workflow from './plugin'
-import type { Workflow, WorkflowTransition } from './types'
+import type { Workflow, WorkflowTransition, WorkflowValidatorConfig } from './types'
 
 export async function createWorkflow (
   client: TxOperations,
@@ -93,6 +94,65 @@ export async function updateTransition (
     'transitions',
     data
   )
+}
+
+export async function addValidatorConfig (
+  client: TxOperations,
+  workflowId: Ref<Workflow>,
+  transitionId: Ref<WorkflowTransition>,
+  config: WorkflowValidatorConfig
+): Promise<WorkflowValidatorConfig> {
+  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
+  if (transition == null) {
+    throw new Error(`Transition ${transitionId} not found`)
+  }
+  const current = transition.validators ?? []
+
+  const exists = current.some((v) => v.id === config.id)
+  if (exists) {
+    throw new Error(`Validator config already exists on transition ${transitionId}`)
+  }
+
+  await updateTransition(client, workflowId, transitionId, {
+    $push: { validators: config }
+  })
+  return config
+}
+
+export async function removeValidatorConfig (
+  client: TxOperations,
+  workflowId: Ref<Workflow>,
+  transitionId: Ref<WorkflowTransition>,
+  configId: string
+): Promise<void> {
+  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
+  if (transition == null) {
+    throw new Error(`Transition ${transitionId} not found`)
+  }
+  await updateTransition(client, workflowId, transitionId, {
+    $pull: { validators: { id: configId } }
+  })
+}
+
+export async function updateValidatorConfig (
+  client: TxOperations,
+  workflowId: Ref<Workflow>,
+  transitionId: Ref<WorkflowTransition>,
+  configId: string,
+  data: Partial<Pick<WorkflowValidatorConfig, 'props'>>
+): Promise<void> {
+  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
+  if (transition == null) {
+    throw new Error(`Transition ${transitionId} not found`)
+  }
+  await updateTransition(client, workflowId, transitionId, {
+    $update: {
+      validators: {
+        $query: { id: configId },
+        $update: data
+      }
+    }
+  })
 }
 
 export async function setWorkflow (

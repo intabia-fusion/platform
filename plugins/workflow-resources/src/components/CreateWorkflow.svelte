@@ -14,13 +14,13 @@
 -->
 <script lang="ts">
   import { Ref } from '@hcengineering/core'
-  import presentation, { getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import task, { ProjectType, TaskType } from '@hcengineering/task'
-  import { createWorkflow } from '@hcengineering/workflow'
-  import ui, { Modal, ModernEditbox, Label, ButtonMenu } from '@hcengineering/ui'
-  import { clearSettingsStore } from '@hcengineering/setting-resources'
   import { getEmbeddedLabel } from '@hcengineering/platform'
+  import presentation, { getClient, IconWithEmoji } from '@hcengineering/presentation'
+  import { clearSettingsStore } from '@hcengineering/setting-resources'
+  import task, { ProjectType, TaskType } from '@hcengineering/task'
+  import ui, { ButtonMenu, Label, Modal, ModernEditbox } from '@hcengineering/ui'
   import view from '@hcengineering/view'
+  import { createWorkflow } from '@hcengineering/workflow'
 
   import plugin from '../plugin'
 
