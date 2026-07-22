@@ -15,7 +15,7 @@
 <script lang="ts">
   import { type AccountAggregatedInfo } from '@hcengineering/account-client'
   import { type AccountUuid, reduceCalls } from '@hcengineering/core'
-  import { copyTextToClipboard } from '@hcengineering/presentation'
+  import { copyTextToClipboard, isAdminUser, isBillingAdminUser } from '@hcengineering/presentation'
   import { Button, CheckBox, IconCopy, IconDetails, IconStop, Label, SearchEdit, showPopup } from '@hcengineering/ui'
 
   import adminRes from '../../plugin'
@@ -25,6 +25,9 @@
   export let refreshTick: number = 0
 
   const accountClient = getAccountClient()
+
+  // Read-only billing admin: hide all mutating controls (server also rejects).
+  const readOnly = isBillingAdminUser() && !isAdminUser()
 
   let accountSuperAdminMode = false
 
@@ -68,10 +71,12 @@
 
 <div class="flex-between">
   <div class="fs-title p-3"><Label label={adminRes.string.AccountsAdminTitle} /></div>
-  <div class="flex-row-center">
-    <span class="mr-4"><Label label={adminRes.string.EnableDeletion} /></span>
-    <CheckBox bind:checked={accountSuperAdminMode} />
-  </div>
+  {#if !readOnly}
+    <div class="flex-row-center">
+      <span class="mr-4"><Label label={adminRes.string.EnableDeletion} /></span>
+      <CheckBox bind:checked={accountSuperAdminMode} />
+    </div>
+  {/if}
 </div>
 <div class="fs-title p-3 flex-no-shrink">
   <SearchEdit bind:value={accountSearch} width={'100%'} on:change={accountSearchChanged} />
@@ -140,7 +145,7 @@
                   showPopup(AccountDetails, { account })
                 }}
               />
-              {#if accountSuperAdminMode}
+              {#if !readOnly && accountSuperAdminMode}
                 <Button
                   icon={IconStop}
                   size={'small'}

@@ -124,7 +124,11 @@ export async function listWorkspaces (
   const { region, mode, visited } = params
   const { extra } = decodeTokenVerbose(ctx, token)
 
-  if (!['tool', 'backup', 'admin', 'github', 'workspace'].includes(extra?.service) && extra?.admin !== 'true') {
+  if (
+    !['tool', 'backup', 'admin', 'github', 'workspace'].includes(extra?.service) &&
+    extra?.admin !== 'true' &&
+    extra?.billingAdmin !== 'true'
+  ) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
@@ -138,6 +142,14 @@ function checkAdmin (ctx: MeasureContext, token: string): void {
   }
 }
 
+// Read-only admin gate: full admin OR billing (view-only) tokens pass.
+function checkAdminRead (ctx: MeasureContext, token: string): void {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.admin !== 'true' && extra?.billingAdmin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+}
+
 export async function listWorkspacesPaged (
   ctx: MeasureContext,
   db: AccountDB,
@@ -145,7 +157,7 @@ export async function listWorkspacesPaged (
   token: string,
   params: WorkspacesPagedQuery
 ): Promise<WorkspacesPagedResult> {
-  checkAdmin(ctx, token)
+  checkAdminRead(ctx, token)
   return await db.listWorkspacesPaged(params)
 }
 
@@ -156,7 +168,7 @@ export async function getWorkspacesSummary (
   token: string,
   _params: Record<string, unknown>
 ): Promise<WorkspacesSummary> {
-  checkAdmin(ctx, token)
+  checkAdminRead(ctx, token)
   return await db.getWorkspacesSummary()
 }
 
@@ -167,7 +179,7 @@ export async function getRegistrationStats (
   token: string,
   params: { from: Timestamp, to: Timestamp }
 ): Promise<RegistrationStats> {
-  checkAdmin(ctx, token)
+  checkAdminRead(ctx, token)
   return await db.getRegistrationStats(params.from, params.to)
 }
 
@@ -178,7 +190,7 @@ export async function getWorkspaceActivityStats (
   token: string,
   params: { workspace: WorkspaceUuid, from: Timestamp }
 ): Promise<WorkspaceActivityPoint[]> {
-  checkAdmin(ctx, token)
+  checkAdminRead(ctx, token)
   return await db.getWorkspaceActivityStats(params.workspace, params.from)
 }
 
@@ -189,7 +201,7 @@ export async function getWorkspaceMembersInfo (
   token: string,
   params: { workspace: WorkspaceUuid }
 ): Promise<WorkspaceMemberDetails[]> {
-  checkAdmin(ctx, token)
+  checkAdminRead(ctx, token)
   return await db.getWorkspaceMembersInfo(params.workspace)
 }
 
@@ -200,7 +212,7 @@ export async function getAccountActivityStats (
   token: string,
   params: { account: AccountUuid, from: Timestamp }
 ): Promise<AccountActivityStats> {
-  checkAdmin(ctx, token)
+  checkAdminRead(ctx, token)
   return await db.getAccountActivityStats(params.account, params.from)
 }
 
@@ -518,7 +530,7 @@ export async function listAccounts (
   params: { search?: string, skip?: number, limit?: number }
 ): Promise<AccountAggregatedInfo[]> {
   const { extra } = decodeTokenVerbose(ctx, token)
-  const isAdmin = extra?.admin === 'true'
+  const isAdmin = extra?.admin === 'true' || extra?.billingAdmin === 'true'
 
   if (!isAdmin && extra?.service !== 'workspace') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
@@ -1749,7 +1761,7 @@ export async function getPaymentOperationStats (
 ): Promise<PaymentOperationStats> {
   const { extra } = decodeTokenVerbose(ctx, token)
   // payment service writes/reads for the daily summary; admin reads for the audit page.
-  if (extra?.service !== 'payment' && extra?.admin !== 'true') {
+  if (extra?.service !== 'payment' && extra?.admin !== 'true' && extra?.billingAdmin !== 'true') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
   return await db.getPaymentOperationStats(params.from, params.to)
@@ -1763,7 +1775,7 @@ export async function getPaymentOperations (
   params: PaymentOperationFilter
 ): Promise<PaymentOperation[]> {
   const { extra } = decodeTokenVerbose(ctx, token)
-  if (extra?.service !== 'payment' && extra?.admin !== 'true') {
+  if (extra?.service !== 'payment' && extra?.admin !== 'true' && extra?.billingAdmin !== 'true') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
   return await db.getPaymentOperations(params)
@@ -1778,7 +1790,7 @@ export async function getPaymentMonthlyStats (
 ): Promise<PaymentMonthlyStats[]> {
   const { extra } = decodeTokenVerbose(ctx, token)
   // Admin-only: the finance overview is not needed by service tokens.
-  if (extra?.admin !== 'true') {
+  if (extra?.admin !== 'true' && extra?.billingAdmin !== 'true') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
   return await db.getPaymentMonthlyStats(params.from, params.to)
@@ -1862,7 +1874,7 @@ export async function getAllSubscriptions (
 ): Promise<any[]> {
   const { extra } = decodeTokenVerbose(ctx, token)
 
-  if (extra?.admin !== 'true') {
+  if (extra?.admin !== 'true' && extra?.billingAdmin !== 'true') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 

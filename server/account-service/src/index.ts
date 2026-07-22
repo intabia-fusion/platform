@@ -395,7 +395,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     try {
       const token = (req.query.token as string) ?? extractToken(req.headers)
       const payload = decodeToken(token)
-      const admin = payload.extra?.admin === 'true'
+      const admin = payload.extra?.admin === 'true' || payload.extra?.billingAdmin === 'true'
       const data: Record<string, any> = {
         metrics: admin ? metricsAggregate((measureCtx as any).metrics) : {},
         statistics: {}

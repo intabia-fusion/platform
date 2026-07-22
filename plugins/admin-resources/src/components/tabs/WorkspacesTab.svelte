@@ -27,6 +27,8 @@
   import { getEmbeddedLabel, getMetadata, type IntlString, translate } from '@hcengineering/platform'
   import presentation, {
     copyTextToClipboard,
+    isAdminUser,
+    isBillingAdminUser,
     MessageBox,
     type OverviewStatistics,
     type WorkspaceStatistics
@@ -70,6 +72,9 @@
   } from '../../utils'
 
   export let refreshTick: number = 0
+
+  // Read-only billing admin: hide all mutating controls (server also rejects).
+  const readOnly = isBillingAdminUser() && !isAdminUser()
 
   $: now = $ticker
 
@@ -417,31 +422,35 @@
   <div class="flex-between">
     <div class="fs-title p-3"><Label label={adminRes.string.WorkspacesAdminTitle} /></div>
     <div class="flex-row-center">
-      <Button
-        label={adminRes.string.CreateWorkspace}
-        kind={'primary'}
-        size={'small'}
-        on:click={() => {
-          showPopup(CreateWorkspaceDialog, {}, undefined, (created) => {
-            if (created === true) void loadPage()
-          })
-        }}
-      />
-      <div class="ml-2 mr-4">
+      {#if !readOnly}
         <Button
-          label={adminRes.string.ReindexAll}
+          label={adminRes.string.CreateWorkspace}
+          kind={'primary'}
           size={'small'}
           on:click={() => {
-            showPopup(MessageBox, {
-              label: adminRes.string.ReindexAll,
-              message: adminRes.string.PleaseConfirm,
-              action: async () => {
-                await getAccountClient().adminReindexAllWorkspaces()
-              }
+            showPopup(CreateWorkspaceDialog, {}, undefined, (created) => {
+              if (created === true) void loadPage()
             })
           }}
         />
-      </div>
+      {/if}
+      {#if !readOnly}
+        <div class="ml-2 mr-4">
+          <Button
+            label={adminRes.string.ReindexAll}
+            size={'small'}
+            on:click={() => {
+              showPopup(MessageBox, {
+                label: adminRes.string.ReindexAll,
+                message: adminRes.string.PleaseConfirm,
+                action: async () => {
+                  await getAccountClient().adminReindexAllWorkspaces()
+                }
+              })
+            }}
+          />
+        </div>
+      {/if}
       <span class="mr-4"><Label label={adminRes.string.EnableDeletion} /></span>
       <CheckBox bind:checked={superAdminMode} />
     </div>
@@ -594,7 +603,7 @@
                 {/if}
               </svelte:fragment>
               <svelte:fragment slot="tools">
-                {#if activeAll.length > 0}
+                {#if !readOnly && activeAll.length > 0}
                   <Button
                     icon={IconStop}
                     label={adminRes.string.MassArchive}
@@ -611,7 +620,7 @@
                   />
                 {/if}
 
-                {#if regionInfo.length > 0 && activeV.length > 0}
+                {#if !readOnly && regionInfo.length > 0 && activeV.length > 0}
                   <Button
                     icon={IconArrowRight}
                     kind={'positive'}
@@ -694,7 +703,7 @@
                   </div>
                   <div class="label overflow-label flex flex-row-center" style:width={'5rem'}>
                     {workspace.processingAttempts}
-                    {#if workspace.processingAttempts > 0}
+                    {#if !readOnly && workspace.processingAttempts > 0}
                       <Button
                         on:click={() => {
                           showPopup(MessageBox, {
@@ -746,7 +755,7 @@
                     {/if}
                   </div>
                   <div class="flex flex-row-center p-1">
-                    {#if workspace.mode === 'active'}
+                    {#if !readOnly && workspace.mode === 'active'}
                       <Button
                         icon={IconStop}
                         size={'small'}
@@ -760,7 +769,7 @@
                       />
                     {/if}
 
-                    {#if workspace.mode === 'archived'}
+                    {#if !readOnly && workspace.mode === 'archived'}
                       <Button
                         icon={IconStart}
                         size={'small'}
@@ -778,7 +787,7 @@
                         }}
                       />
                     {/if}
-                    {#if regionInfo.length > 0 && workspace.mode === 'active' && (workspace.region ?? '') !== selectedRegionId}
+                    {#if !readOnly && regionInfo.length > 0 && workspace.mode === 'active' && (workspace.region ?? '') !== selectedRegionId}
                       <Button
                         icon={IconArrowRight}
                         size={'small'}
@@ -792,7 +801,7 @@
                       />
                     {/if}
 
-                    {#if superAdminMode && !isDeletingMode(workspace.mode) && !isArchivingMode(workspace.mode)}
+                    {#if !readOnly && superAdminMode && !isDeletingMode(workspace.mode) && !isArchivingMode(workspace.mode)}
                       <Button
                         icon={IconStop}
                         size={'small'}

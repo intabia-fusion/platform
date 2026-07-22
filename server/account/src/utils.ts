@@ -82,7 +82,7 @@ import {
   type WorkspaceLoginInfo,
   type WorkspaceStatus
 } from './types'
-import { isAdminEmail } from './admin'
+import { isAdminEmail, isBillingAdminEmail } from './admin'
 import { type Sql } from 'postgres'
 
 export const GUEST_ACCOUNT = 'b6996120-416f-49cd-841e-e4a5d2e49c9b' as PersonUuid
@@ -1724,7 +1724,11 @@ export async function loginOrSignUpWithProvider (
     }
 
     await confirmHulyIds(ctx, db, personUuid as AccountUuid)
-    const extraToken: Record<string, string> = isAdminEmail(normalizedEmail) ? { admin: 'true' } : {}
+    const extraToken: Record<string, string> = isAdminEmail(normalizedEmail)
+      ? { admin: 'true' }
+      : isBillingAdminEmail(normalizedEmail)
+        ? { billingAdmin: 'true' }
+        : {}
     ctx.info('Provider login succeeded', { email, normalizedEmail, emailSocialId, socialId, ...extraToken })
 
     return {

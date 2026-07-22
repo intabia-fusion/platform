@@ -1017,6 +1017,12 @@ export function isAdminUser (): boolean {
   return decodedToken.extra?.admin === 'true'
 }
 
+// Read-only admin: may open the admin panel, but every mutating action stays gated on isAdminUser().
+export function isBillingAdminUser (): boolean {
+  const decodedToken = decodeTokenPayload(getMetadata(plugin.metadata.Token) ?? '')
+  return decodedToken.extra?.billingAdmin === 'true'
+}
+
 export function isSpace (space: Doc): space is Space {
   return isSpaceClass(space._class)
 }
