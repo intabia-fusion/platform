@@ -1091,6 +1091,9 @@ services:
       - MAIL_URL=http://mail_server:8097
       - MAIL_API_KEY=naephea1Rai7eeth1noh
       - MAIL_FROM=platform@intabia.ru
+      - BILLING_EMAILS=${BILLING_EMAILS:-}
+      - SUPPORT_EMAIL=${SUPPORT_EMAIL:-platform@intabia.ru}
+      - SUPPORT_URL=${SUPPORT_URL:-https://t.me/intabia}
       # pod-payment URL — source of the shared plan-config (charge amounts) and localized plan labels for emails
       - PAYMENT_URL=http://payment:4040
       - GRACE_PERIOD_DAYS=${TBANK_GRACE_PERIOD_DAYS:-7}

@@ -18,7 +18,7 @@ import { type SubscriptionData, type Subscription, SubscriptionStatus } from '@h
 import type TbankPayments from 'tbank-payments'
 import type { Config } from './config'
 import { SubscriptionStorage } from './storage'
-import { notifyPaymentFailed } from './notifications'
+import { notifyPaymentFailed, notifyPaymentSucceeded } from './notifications'
 import {
   isPendingFirstPayment,
   isFailedRenewal,
@@ -156,6 +156,8 @@ async function renewSubscription (
         subId: sub.id,
         newPeriodEnd: updatedData.periodEnd
       })
+      // Receipt email on confirmed renewal charge
+      await notifyPaymentSucceeded(ctx, storage, config, updatedData, 'renewal')
     } else {
       await storage.markCharge(intentId, 'failed')
       ctx.warn('Subscription renewal charge failed', {

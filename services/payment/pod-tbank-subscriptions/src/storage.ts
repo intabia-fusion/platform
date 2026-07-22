@@ -199,11 +199,14 @@ export class SubscriptionStorage {
   }
 
   /**
-   * Resolve the contact info (email + UI locale) of a subscription owner via the central
-   * account server. `email` is the first email-type social id (or null when none). `locale`
-   * is the account's preferred language (or null when unset) — callers fall back to a default.
+   * Resolve the contact info (name + email + UI locale) of a subscription owner.
+   * `email`: first email-type social id (null when none).
+   * `name`: person's display name (null when empty).
+   * `locale`: account's preferred language (null when unset) — callers fall back to a default.
    */
-  async getAccountContact (accountUuid: AccountUuid): Promise<{ email: string | null, locale: string | null }> {
+  async getAccountContact (
+    accountUuid: AccountUuid
+  ): Promise<{ name: string | null, email: string | null, locale: string | null }> {
     const personInfo = await this.accountClient.getPersonInfo(accountUuid)
     const emailSocialId = personInfo.socialIds.find((s) => s.type === SocialIdType.EMAIL && s.isDeleted !== true)
 
@@ -215,6 +218,7 @@ export class SubscriptionStorage {
       // Locale is optional — fall back to the caller's default if it cannot be resolved.
     }
 
-    return { email: emailSocialId?.value ?? null, locale }
+    const name = personInfo.name !== undefined && personInfo.name !== '' ? personInfo.name : null
+    return { name, email: emailSocialId?.value ?? null, locale }
   }
 }

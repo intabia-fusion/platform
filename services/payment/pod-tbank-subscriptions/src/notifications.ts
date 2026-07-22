@@ -29,6 +29,13 @@ const MAIL_TIMEOUT_MS = 10_000
  */
 export type PaymentFailedReason = 'failed' | 'final'
 
+/**
+ * Which successful-payment email to send.
+ * - 'purchase': the first payment for a checkout (new subscription or plan change) settled.
+ * - 'renewal': a recurrent renewal charge for the next period settled.
+ */
+export type PaymentSucceededKind = 'purchase' | 'renewal'
+
 interface MailMessage {
   subject: string
   text: string
@@ -102,6 +109,159 @@ const TEMPLATES: Record<Lang, Record<PaymentFailedReason, MessageBuilder>> = {
         `<p>You can <a href="${url}">retry the payment manually</a>.</p>` +
         '<p>If you need help, reply to this email to contact the administrator.</p>'
     })
+  }
+}
+
+interface SuccessFields {
+  customer: string // payer display: "Имя (email)", or just email/name when one is missing
+  plan: string // localized plan label
+  amount: string // formatted, e.g. "990.00 ₽"
+  paidAtDate: string // payment date only, for the subject line, e.g. "21.08.2026"
+  paidAt: string // payment date + time, e.g. "21.08.2026, 14:30"
+  txId: string // provider transaction id
+  paymentMethod: string // e.g. "Карта •••• 0777"; '' when unknown (hides the row)
+  periodStart: string // subscription period start, e.g. "21.08.2026"
+  periodEnd: string // subscription period end, e.g. "21.09.2026"
+  url: string
+  supportText: string // pre-rendered support contacts block (plain text), '' when none
+  supportHtml: string // pre-rendered support contacts block (html), '' when none
+}
+
+type SuccessBuilder = (f: SuccessFields) => MailMessage
+
+const SUCCESS_TEMPLATES: Record<Lang, Record<PaymentSucceededKind, SuccessBuilder>> = {
+  ru: {
+    purchase: (f) => ({
+      subject: `Чек об оплате — ${f.plan} от ${f.paidAtDate}`,
+      text:
+        `Оплата по подписке «${f.plan}» прошла успешно.\n\n` +
+        `Плательщик: ${f.customer}\n` +
+        `Тариф: ${f.plan}\n` +
+        `Сумма: ${f.amount}\n` +
+        `Дата и время оплаты: ${f.paidAt}\n` +
+        `ID транзакции: ${f.txId}\n` +
+        (f.paymentMethod !== '' ? `Способ оплаты: ${f.paymentMethod}\n` : '') +
+        `Период подписки: ${f.periodStart} — ${f.periodEnd}\n\n` +
+        `Управление подпиской: ${f.url}` +
+        f.supportText,
+      html:
+        `<p>Оплата по подписке «<b>${f.plan}</b>» прошла успешно.</p>` +
+        '<p>' +
+        `Плательщик: <b>${f.customer}</b><br/>` +
+        `Тариф: <b>${f.plan}</b><br/>` +
+        `Сумма: <b>${f.amount}</b><br/>` +
+        `Дата и время оплаты: <b>${f.paidAt}</b><br/>` +
+        `ID транзакции: <b>${f.txId}</b><br/>` +
+        (f.paymentMethod !== '' ? `Способ оплаты: <b>${f.paymentMethod}</b><br/>` : '') +
+        `Период подписки: <b>${f.periodStart} — ${f.periodEnd}</b>` +
+        '</p>' +
+        `<p><a href="${f.url}">Управление подпиской</a></p>` +
+        f.supportHtml
+    }),
+    renewal: (f) => ({
+      subject: `Чек об оплате — ${f.plan} от ${f.paidAtDate}`,
+      text:
+        `Подписка «${f.plan}» успешно продлена.\n\n` +
+        `Плательщик: ${f.customer}\n` +
+        `Тариф: ${f.plan}\n` +
+        `Сумма списания: ${f.amount}\n` +
+        `Дата и время оплаты: ${f.paidAt}\n` +
+        `ID транзакции: ${f.txId}\n` +
+        (f.paymentMethod !== '' ? `Способ оплаты: ${f.paymentMethod}\n` : '') +
+        `Период подписки: ${f.periodStart} — ${f.periodEnd}\n\n` +
+        `Управление подпиской: ${f.url}` +
+        f.supportText,
+      html:
+        `<p>Подписка «<b>${f.plan}</b>» успешно продлена.</p>` +
+        '<p>' +
+        `Плательщик: <b>${f.customer}</b><br/>` +
+        `Тариф: <b>${f.plan}</b><br/>` +
+        `Сумма списания: <b>${f.amount}</b><br/>` +
+        `Дата и время оплаты: <b>${f.paidAt}</b><br/>` +
+        `ID транзакции: <b>${f.txId}</b><br/>` +
+        (f.paymentMethod !== '' ? `Способ оплаты: <b>${f.paymentMethod}</b><br/>` : '') +
+        `Период подписки: <b>${f.periodStart} — ${f.periodEnd}</b>` +
+        '</p>' +
+        `<p><a href="${f.url}">Управление подпиской</a></p>` +
+        f.supportHtml
+    })
+  },
+  en: {
+    purchase: (f) => ({
+      subject: `Payment receipt — ${f.plan} from ${f.paidAtDate}`,
+      text:
+        `Your payment for the "${f.plan}" subscription was successful.\n\n` +
+        `Customer: ${f.customer}\n` +
+        `Plan: ${f.plan}\n` +
+        `Amount: ${f.amount}\n` +
+        `Payment date and time: ${f.paidAt}\n` +
+        `Transaction ID: ${f.txId}\n` +
+        (f.paymentMethod !== '' ? `Payment method: ${f.paymentMethod}\n` : '') +
+        `Subscription period: ${f.periodStart} — ${f.periodEnd}\n\n` +
+        `Manage your subscription: ${f.url}` +
+        f.supportText,
+      html:
+        `<p>Your payment for the "<b>${f.plan}</b>" subscription was successful.</p>` +
+        '<p>' +
+        `Customer: <b>${f.customer}</b><br/>` +
+        `Plan: <b>${f.plan}</b><br/>` +
+        `Amount: <b>${f.amount}</b><br/>` +
+        `Payment date and time: <b>${f.paidAt}</b><br/>` +
+        `Transaction ID: <b>${f.txId}</b><br/>` +
+        (f.paymentMethod !== '' ? `Payment method: <b>${f.paymentMethod}</b><br/>` : '') +
+        `Subscription period: <b>${f.periodStart} — ${f.periodEnd}</b>` +
+        '</p>' +
+        `<p><a href="${f.url}">Manage your subscription</a></p>` +
+        f.supportHtml
+    }),
+    renewal: (f) => ({
+      subject: `Payment receipt — ${f.plan} from ${f.paidAtDate}`,
+      text:
+        `Your "${f.plan}" subscription was renewed successfully.\n\n` +
+        `Customer: ${f.customer}\n` +
+        `Plan: ${f.plan}\n` +
+        `Amount charged: ${f.amount}\n` +
+        `Payment date and time: ${f.paidAt}\n` +
+        `Transaction ID: ${f.txId}\n` +
+        (f.paymentMethod !== '' ? `Payment method: ${f.paymentMethod}\n` : '') +
+        `Subscription period: ${f.periodStart} — ${f.periodEnd}\n\n` +
+        `Manage your subscription: ${f.url}` +
+        f.supportText,
+      html:
+        `<p>Your "<b>${f.plan}</b>" subscription was renewed successfully.</p>` +
+        '<p>' +
+        `Customer: <b>${f.customer}</b><br/>` +
+        `Plan: <b>${f.plan}</b><br/>` +
+        `Amount charged: <b>${f.amount}</b><br/>` +
+        `Payment date and time: <b>${f.paidAt}</b><br/>` +
+        `Transaction ID: <b>${f.txId}</b><br/>` +
+        (f.paymentMethod !== '' ? `Payment method: <b>${f.paymentMethod}</b><br/>` : '') +
+        `Subscription period: <b>${f.periodStart} — ${f.periodEnd}</b>` +
+        '</p>' +
+        `<p><a href="${f.url}">Manage your subscription</a></p>` +
+        f.supportHtml
+    })
+  }
+}
+
+/** Support-contacts footer for the receipt email. Returns empty strings when no contact is configured. */
+function buildSupportFooter (config: Config, lang: Lang): { text: string, html: string } {
+  const parts: string[] = []
+  const partsHtml: string[] = []
+  if (config.SupportEmail !== undefined && config.SupportEmail !== '') {
+    parts.push(config.SupportEmail)
+    partsHtml.push(`<a href="mailto:${config.SupportEmail}">${config.SupportEmail}</a>`)
+  }
+  if (config.SupportUrl !== undefined && config.SupportUrl !== '') {
+    parts.push(config.SupportUrl)
+    partsHtml.push(`<a href="${config.SupportUrl}">${config.SupportUrl}</a>`)
+  }
+  if (parts.length === 0) return { text: '', html: '' }
+
+  const label = lang === 'ru' ? 'Контакты поддержки' : 'Support contacts'
+  return {
+    text: `\n\n${label}: ${parts.join(', ')}`,
+    html: `<hr/><p style="color:#888;font-size:12px">${label}: ${partsHtml.join(', ')}</p>`
   }
 }
 
@@ -189,15 +349,143 @@ export async function notifyPaymentFailed (
   if (config.BillingEmails !== undefined && config.BillingEmails.length > 0) {
     const attempt = (sub.providerData?.retryAttempt as number) ?? 0
     const lines = [
-      `Workspace: ${sub.workspaceUuid}`,
-      `Plan: ${sub.plan} (${sub.type})`,
-      `Amount: ${((sub.amount ?? 0) / 100).toFixed(2)} RUB`,
-      `Attempt: ${attempt} of 3 (${reason})`,
-      `Payer: ${payerEmail ?? sub.accountUuid}`,
-      `Subscription: ${sub.id ?? '-'}`
+      `Воркспейс: ${sub.workspaceUuid}`,
+      `Тариф: ${sub.plan} (${sub.type})`,
+      `Сумма: ${((sub.amount ?? 0) / 100).toFixed(2)} ₽`,
+      `Попытка: ${attempt} из 3 (${reason})`,
+      `Плательщик: ${payerEmail ?? sub.accountUuid}`,
+      `Подписка: ${sub.id ?? '-'}`
     ]
     const svc: MailMessage = {
       subject: `[billing] Не удалось списание: ${sub.plan} (${reason})`,
+      text: lines.join('\n'),
+      html: `<pre>${lines.join('\n')}</pre>`
+    }
+    for (const to of config.BillingEmails) {
+      try {
+        await sendMail(config, to, svc)
+      } catch (err: any) {
+        ctx.error('Billing service email error', { to, err: err?.message ?? String(err) })
+      }
+    }
+  }
+}
+
+function formatAmount (amount: number | undefined): string {
+  return `${((amount ?? 0) / 100).toFixed(2)} ₽`
+}
+
+// Format an epoch-ms timestamp as a locale date (day precision — for periods and the subject line).
+function formatDate (ms: number | undefined, lang: Lang): string {
+  if (ms === undefined) return '-'
+  const locale = lang === 'ru' ? 'ru-RU' : 'en-US'
+  return new Date(ms).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+// Format an epoch-ms timestamp as a locale date + time (minute precision — for the payment moment).
+function formatDateTime (ms: number | undefined, lang: Lang): string {
+  if (ms === undefined) return '-'
+  const locale = lang === 'ru' ? 'ru-RU' : 'en-US'
+  return new Date(ms).toLocaleString(locale, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+// Payer display: "Имя (email)", or whichever of the two is present, or '-' when both missing.
+function formatCustomer (name: string | null, email: string | null): string {
+  if (name !== null && email !== null) return `${name} (${email})`
+  return name ?? email ?? '-'
+}
+
+// Payment method from the stored masked PAN: "Карта •••• 0777".
+// Empty when no card (SBP or PAN not delivered by the webhook).
+// PAN is present -> payment type: card.
+function formatPaymentMethod (sub: SubscriptionData, lang: Lang): string {
+  const pan = sub.providerData?.pan as string | undefined
+  if (pan === undefined || pan === '') return ''
+  const digits = pan.replace(/\D/g, '')
+  const last4 = digits.slice(-4)
+  if (last4.length < 4) return ''
+  const cardLabel = lang === 'ru' ? 'Карта' : 'Card'
+  return `${cardLabel} •••• ${last4}`
+}
+
+/**
+ * Send a successful-payment receipt email to the subscription owner.
+ * A service copy goes to BillingEmails (if configured).
+ */
+export async function notifyPaymentSucceeded (
+  ctx: MeasureContext,
+  storage: SubscriptionStorage,
+  config: Config,
+  sub: SubscriptionData,
+  kind: PaymentSucceededKind,
+  chargedAmount?: number
+): Promise<void> {
+  if (config.MailUrl === undefined || config.MailFrom === undefined) {
+    ctx.info('Payment-succeeded email skipped: mail not configured', { subId: sub.id, kind })
+    return
+  }
+
+  let payerEmail: string | null = null
+  try {
+    const { name, email, locale } = await storage.getAccountContact(sub.accountUuid)
+    payerEmail = email
+    if (email === null) {
+      ctx.warn('Payment-succeeded email skipped: no email for account', { subId: sub.id, account: sub.accountUuid })
+    } else {
+      const lang = resolveLang(locale)
+      const planLabel = await getPlanLabel(config, sub.plan, sub.type, lang)
+      // Transaction id: recurrent charges set lastChargePaymentId; the initial checkout sets paymentId.
+      const txId =
+        (sub.providerData?.lastChargePaymentId as string | undefined) ??
+        (sub.providerData?.paymentId as string | undefined) ??
+        sub.providerSubscriptionId
+      // Payment moment == period start: both purchase activation and renewal set periodStart to now.
+      const support = buildSupportFooter(config, lang)
+      const fields: SuccessFields = {
+        customer: formatCustomer(name, email),
+        plan: planLabel,
+        // Charged: delta in case of upgrade, else - the recurring price.
+        amount: formatAmount(chargedAmount ?? sub.amount),
+        paidAtDate: formatDate(sub.periodStart, lang),
+        paidAt: formatDateTime(sub.periodStart, lang),
+        txId,
+        paymentMethod: formatPaymentMethod(sub, lang),
+        periodStart: formatDate(sub.periodStart, lang),
+        periodEnd: formatDate(sub.periodEnd, lang),
+        url: billingUrl(config),
+        supportText: support.text,
+        supportHtml: support.html
+      }
+      const { subject, text, html } = SUCCESS_TEMPLATES[lang][kind](fields)
+      await sendMail(config, email, { subject, text, html })
+      ctx.info('Payment-succeeded email sent', { subId: sub.id, kind })
+    }
+  } catch (err: any) {
+    ctx.error('Payment-succeeded email error', { subId: sub.id, kind, err: err?.message ?? String(err) })
+  }
+
+  // Service copy to the team about successful charges.
+  if (config.BillingEmails !== undefined && config.BillingEmails.length > 0) {
+    const lines = [
+      `Воркспейс: ${sub.workspaceUuid}`,
+      `Тариф: ${sub.plan} (${sub.type})`,
+      `Списано: ${formatAmount(chargedAmount ?? sub.amount)}`,
+      // Showing both upgrade delta and the recurring price for the team.
+      ...(chargedAmount !== undefined && chargedAmount !== sub.amount
+        ? [`Регулярная цена: ${formatAmount(sub.amount)}`]
+        : []),
+      `Тип: ${kind}`,
+      `Плательщик: ${payerEmail ?? sub.accountUuid}`,
+      `Подписка: ${sub.id ?? '-'}`
+    ]
+    const svc: MailMessage = {
+      subject: `[billing] Успешная оплата: ${sub.plan} (${kind})`,
       text: lines.join('\n'),
       html: `<pre>${lines.join('\n')}</pre>`
     }

@@ -44,6 +44,8 @@ export interface Config {
   MailApiKey?: string // pod-mail API key (Bearer), optional if pod-mail has none
   MailFrom?: string // From address for outgoing notifications
   BillingEmails?: string[] // Service inbox(es) notified on failed charges (comma-separated env)
+  SupportEmail?: string // Support contact shown in the receipt-email footer
+  SupportUrl?: string // Support link (e.g. Telegram) shown in the receipt-email footer
 
   // pod-payment base URL — source of the shared plan-config (charge amounts) and localized plan labels for emails
   PaymentUrl: string
@@ -75,6 +77,8 @@ const config: Config = (() => {
     BillingEmails: process.env.BILLING_EMAILS?.split(',')
       .map((e) => e.trim())
       .filter((e) => e.length > 0),
+    SupportEmail: process.env.SUPPORT_EMAIL,
+    SupportUrl: process.env.SUPPORT_URL,
     PaymentUrl: process.env.PAYMENT_URL
   }
 
