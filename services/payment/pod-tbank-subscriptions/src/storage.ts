@@ -190,6 +190,15 @@ export class SubscriptionStorage {
     )
   }
 
+  async getWorkspaceUrl (workspaceUuid: WorkspaceUuid): Promise<string | null> {
+    try {
+      const [info] = await this.accountClient.getWorkspacesInfo([workspaceUuid])
+      return info?.url ?? null
+    } catch {
+      return null
+    }
+  }
+
   async findSubscriptionByCheckoutId (checkoutId: string): Promise<SubscriptionData | null> {
     return (
       (await this.accountClient.getSubscriptions()).find(

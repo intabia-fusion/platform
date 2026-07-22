@@ -348,8 +348,9 @@ export async function notifyPaymentFailed (
   // Service copy so the team can reach out to the payer directly.
   if (config.BillingEmails !== undefined && config.BillingEmails.length > 0) {
     const attempt = (sub.providerData?.retryAttempt as number) ?? 0
+    const workspace = (await storage.getWorkspaceUrl(sub.workspaceUuid)) ?? sub.workspaceUuid
     const lines = [
-      `Воркспейс: ${sub.workspaceUuid}`,
+      `Воркспейс: ${workspace}`,
       `Тариф: ${sub.plan} (${sub.type})`,
       `Сумма: ${((sub.amount ?? 0) / 100).toFixed(2)} ₽`,
       `Попытка: ${attempt} из 3 (${reason})`,
@@ -472,8 +473,9 @@ export async function notifyPaymentSucceeded (
 
   // Service copy to the team about successful charges.
   if (config.BillingEmails !== undefined && config.BillingEmails.length > 0) {
+    const workspace = (await storage.getWorkspaceUrl(sub.workspaceUuid)) ?? sub.workspaceUuid
     const lines = [
-      `Воркспейс: ${sub.workspaceUuid}`,
+      `Воркспейс: ${workspace}`,
       `Тариф: ${sub.plan} (${sub.type})`,
       `Списано: ${formatAmount(chargedAmount ?? sub.amount)}`,
       // Showing both upgrade delta and the recurring price for the team.
