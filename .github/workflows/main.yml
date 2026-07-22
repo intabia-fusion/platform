@@ -503,6 +503,7 @@ jobs:
           build-package: "@hcengineering/tests-ws-sanity"
           artifact-name-suffix: ws
           run-api-tests: "true"
+          run-backup-tests: "true"
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
   docker-build:

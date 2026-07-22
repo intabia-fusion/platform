@@ -602,6 +602,11 @@
       "shouldPublish": false
     },
     {
+      "packageName": "@hcengineering/backup-tests",
+      "projectFolder": "ws-tests/backup-tests",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@hcengineering/benchmarks",
       "projectFolder": "dev/benchmarks",
       "shouldPublish": false

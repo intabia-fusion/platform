@@ -643,7 +643,17 @@ export async function compactBackup (
                 break
               }
               try {
-                ctx.info('processing', { sf, processed, ...(opt?.msg ?? {}) })
+                const sfStart = Date.now()
+                let sfEntries = 0
+                let sfMatched = 0
+                let lastLog = Date.now()
+                ctx.info('processing', {
+                  sf,
+                  processed,
+                  requiredLeft: requiredDocs.size,
+                  digestLeft: digest.size,
+                  ...(opt?.msg ?? {})
+                })
 
                 const readStream = await storage.load(sf)
                 const ex = extract()
@@ -651,6 +661,23 @@ export async function compactBackup (
                 ex.on('entry', (headers, stream, next) => {
                   const name = headers.name ?? ''
                   processed++
+                  sfEntries++
+                  const isMatch =
+                    requiredDocs.has(name as Ref<Doc>) ||
+                    (name.endsWith('.json') && requiredDocs.has(name.substring(0, name.length - 5) as Ref<Doc>))
+                  if (isMatch) sfMatched++
+                  if (Date.now() - lastLog > 10000) {
+                    lastLog = Date.now()
+                    ctx.info('processing progress', {
+                      sf,
+                      sfEntries,
+                      sfMatched,
+                      requiredLeft: requiredDocs.size,
+                      digestLeft: digest.size,
+                      elapsedMs: Date.now() - sfStart,
+                      ...(opt?.msg ?? {})
+                    })
+                  }
                   // We found blob data
                   if (requiredDocs.has(name as Ref<Doc>)) {
                     const chunks: Buffer[] = []
@@ -761,6 +788,15 @@ export async function compactBackup (
                 unzip.pipe(ex)
 
                 await endPromise
+                ctx.info('processed file', {
+                  sf,
+                  sfEntries,
+                  sfMatched,
+                  requiredLeft: requiredDocs.size,
+                  digestLeft: digest.size,
+                  elapsedMs: Date.now() - sfStart,
+                  ...(opt?.msg ?? {})
+                })
               } catch (err: any) {
                 ctx.error('error processing', err)
               }
@@ -1267,21 +1303,50 @@ export async function verifyDocsFromSnapshot (
     const requiredDocs = new Map(Array.from(sDigest.entries()).filter(([it]) => digest.has(it)))
 
     if (requiredDocs.size > 0) {
-      ctx.info('updating', { domain, requiredDocs: requiredDocs.size })
+      ctx.info('updating (verifyDocsFromSnapshot)', {
+        domain,
+        requiredDocs: requiredDocs.size,
+        storageFiles: (d.storage ?? []).length
+      })
       // We have required documents here.
       for (const sf of d.storage ?? []) {
         if (digest.size === 0) {
           break
         }
         try {
+          const sfStart = Date.now()
+          let sfEntries = 0
+          let sfMatched = 0
+          let lastLog = Date.now()
+          ctx.info('verify processing', {
+            sf,
+            requiredLeft: requiredDocs.size,
+            digestLeft: digest.size,
+            domain
+          })
           const readStream = await storage.load(sf)
           const ex = extract()
 
           ex.on('entry', (headers, stream, next) => {
             const name = headers.name ?? ''
+            sfEntries++
+            if (Date.now() - lastLog > 10000) {
+              lastLog = Date.now()
+              ctx.info('verify progress', {
+                sf,
+                sfEntries,
+                sfMatched,
+                requiredLeft: requiredDocs.size,
+                digestLeft: digest.size,
+                pendingResult: result.length,
+                elapsedMs: Date.now() - sfStart,
+                domain
+              })
+            }
             // We found blob data
             const rdoc = name.substring(0, name.length - 5) as Ref<Doc>
             if (name.endsWith('.json') && requiredDocs.has(rdoc)) {
+              sfMatched++
               const chunks: Buffer[] = []
               const bname = name.substring(0, name.length - 5)
               stream.on('data', (chunk) => {
@@ -1350,6 +1415,15 @@ export async function verifyDocsFromSnapshot (
           if (result.length > 0) {
             await verify(result)
           }
+          ctx.info('verify processed file', {
+            sf,
+            sfEntries,
+            sfMatched,
+            requiredLeft: requiredDocs.size,
+            digestLeft: digest.size,
+            elapsedMs: Date.now() - sfStart,
+            domain
+          })
         } catch (err: any) {
           storageToRemove.add(sf)
           ctx.error('failed to processing', { storageFile: sf })
