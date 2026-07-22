@@ -37,10 +37,10 @@ import {
 import { aiBotAccountEmail } from '@hcengineering/middleware'
 import { type StorageConfig } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
-import { createClient, getTransactorEndpoint } from '@hcengineering/server-client'
 import tracker from '@hcengineering/tracker'
 
 import { collectDatalakeStats } from './billing'
+import { getClient as getRestClient } from './client'
 import { type Config } from './config'
 import { type BillingDB } from './types'
 
@@ -231,15 +231,12 @@ export class UsageWorker {
       {},
       async () => {
         try {
+          // REST client: stateless HTTP, does not load the workspace model into memory.
+          // total gives the count; limit:1 avoids fetching every project doc just to count them.
           const token = generateToken(systemAccountUuid, workspace, { service: 'billing' })
-          const endpoint = await getTransactorEndpoint(token)
-          const client = await createClient(endpoint, token)
-          try {
-            const projects = await client.findAll(tracker.class.Project, { archived: false })
-            return projects.length
-          } finally {
-            await client.close()
-          }
+          const client = await getRestClient(token, workspace)
+          const projects = await client.findAll(tracker.class.Project, { archived: false }, { limit: 1, total: true })
+          return projects.total
         } catch (err: any) {
           ctx.error('failed to get workspace projects', { workspace, err })
           return 0
