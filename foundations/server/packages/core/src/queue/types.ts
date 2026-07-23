@@ -50,7 +50,12 @@ export enum QueueTopic {
 
   // Append-only payment audit events (init charge / webhook / recurrent charge / cancel / refund) from
   // any provider pod. The account service is the single consumer, writing the immutable ledger row.
-  PaymentOperation = 'payment-operation'
+  PaymentOperation = 'payment-operation',
+
+  // Raw inbound TBank webhooks. The HTTP handler verifies the signature and enqueues here; the pod's
+  // own consumer rechecks state via GetState and applies the effect. Decouples the bank's 200 from
+  // downstream processing (reliability) and keeps unverified payloads out of the pipeline (security).
+  TbankWebhook = 'tbank-webhook'
 }
 
 export interface ConsumerHandle {
