@@ -51,6 +51,17 @@
     "PerformActions": "Aktionen ausführen",
     "SearchRules": "Regeln suchen",
     "Transition": "Übergang",
-    "AnyStatus": "Jeder Status"
+    "AnyStatus": "Jeder Status",
+    "Screen": "Bildschirm",
+    "ScreenTab": "Bildschirm-Registerkarte",
+    "ScreenField": "Bildschirmfeld",
+    "FieldId": "Feld-ID",
+    "Label": "Beschriftung",
+    "Required": "Erforderlich",
+    "Description": "Beschreibung",
+    "Requests": "Anfragen",
+    "WorkflowRequest": "Workflow-Anfrage",
+    "ScreenRequest": "Bildschirm anzeigen",
+    "ScreenRequestDescription": "Zeigt einen benutzerdefinierten Bildschirm zur Eingabeaufforderung während des Übergangs an"
   }
 }

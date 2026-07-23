@@ -51,6 +51,17 @@
     "PerformActions": "Eylemleri gerçekleştir",
     "SearchRules": "Kuralları ara",
     "Transition": "Geçiş",
-    "AnyStatus": "Herhangi bir durum"
+    "AnyStatus": "Herhangi bir durum",
+    "Screen": "Ekran",
+    "ScreenTab": "Ekran Sekmesi",
+    "ScreenField": "Ekran Alanı",
+    "FieldId": "Alan Kimliği",
+    "Label": "Etiket",
+    "Required": "Gerekli",
+    "Description": "Açıklama",
+    "Requests": "İstekler",
+    "WorkflowRequest": "İş Akışı İsteği",
+    "ScreenRequest": "Ekranı göster",
+    "ScreenRequestDescription": "Geçiş sırasında veri girişi istemek için özel bir ekran göster"
   }
 }

@@ -51,6 +51,17 @@
     "PerformActions": "アクションの実行",
     "SearchRules": "ルールを検索",
     "Transition": "遷移",
-    "AnyStatus": "任意のステータス"
+    "AnyStatus": "任意のステータス",
+    "Screen": "画面",
+    "ScreenTab": "画面タブ",
+    "ScreenField": "画面フィールド",
+    "FieldId": "フィールドID",
+    "Label": "ラベル",
+    "Required": "必須",
+    "Description": "説明",
+    "Requests": "リクエスト",
+    "WorkflowRequest": "ワークフローリクエスト",
+    "ScreenRequest": "画面を表示",
+    "ScreenRequestDescription": "トランジション中に入力を要求するカスタム画面を表示します"
   }
 }

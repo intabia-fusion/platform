@@ -51,6 +51,17 @@
     "PerformActions": "Выполнить действия",
     "SearchRules": "Поиск правил",
     "Transition": "Переход",
-    "AnyStatus": "Любой статус"
+    "AnyStatus": "Любой статус",
+    "Screen": "Экран",
+    "ScreenTab": "Вкладка экрана",
+    "ScreenField": "Поле экрана",
+    "FieldId": "ID поля",
+    "Label": "Заголовок",
+    "Required": "Обязательное",
+    "Description": "Описание",
+    "Requests": "Запросы",
+    "WorkflowRequest": "Запрос воркфлоу",
+    "ScreenRequest": "Показать экран",
+    "ScreenRequestDescription": "Показать кастомный экран для запроса ввода данных при переходе"
   }
 }

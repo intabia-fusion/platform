@@ -21,9 +21,14 @@ import {
   TProjectWorkflow,
   TWorkflowValidator,
   TValidatorImpl,
-  TWorkflowRule
+  TWorkflowRule,
+  TWorkflowRequest,
+  TScreenField,
+  TScreenTab,
+  TScreen
 } from './types'
 import { defineValidators } from './validators'
+import { defineRequests } from './requests'
 
 export function createModel (builder: Builder): void {
   builder.createModel(
@@ -32,9 +37,14 @@ export function createModel (builder: Builder): void {
     TProjectWorkflow,
     TWorkflowRule,
     TWorkflowValidator,
-    TValidatorImpl
+    TValidatorImpl,
+    TWorkflowRequest,
+    TScreenField,
+    TScreenTab,
+    TScreen
   )
   defineValidators(builder)
+  defineRequests(builder)
 }
 
 export * from './types'

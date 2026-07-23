@@ -51,6 +51,17 @@
     "PerformActions": "Esegui azioni",
     "SearchRules": "Cerca regole",
     "Transition": "Transizione",
-    "AnyStatus": "Qualsiasi stato"
+    "AnyStatus": "Qualsiasi stato",
+    "Screen": "Schermata",
+    "ScreenTab": "Scheda schermata",
+    "ScreenField": "Campo schermata",
+    "FieldId": "ID campo",
+    "Label": "Etichetta",
+    "Required": "Obbligatorio",
+    "Description": "Descrizione",
+    "Requests": "Richieste",
+    "WorkflowRequest": "Richiesta flusso di lavoro",
+    "ScreenRequest": "Mostra schermata",
+    "ScreenRequestDescription": "Mostra una schermata personalizzata per richiedere l'input durante la transizione"
   }
 }

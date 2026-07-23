@@ -51,6 +51,17 @@
     "PerformActions": "执行操作",
     "SearchRules": "搜索规则",
     "Transition": "过渡",
-    "AnyStatus": "任意状态"
+    "AnyStatus": "任意状态",
+    "Screen": "界面",
+    "ScreenTab": "界面标签",
+    "ScreenField": "界面字段",
+    "FieldId": "字段ID",
+    "Label": "标签",
+    "Required": "必填",
+    "Description": "描述",
+    "Requests": "请求",
+    "WorkflowRequest": "工作流请求",
+    "ScreenRequest": "显示界面",
+    "ScreenRequestDescription": "在状态转换期间显示自定义界面以请求输入"
   }
 }

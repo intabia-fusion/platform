@@ -51,6 +51,17 @@
     "PerformActions": "Provést akce",
     "SearchRules": "Hledat pravidla",
     "Transition": "Přechod",
-    "AnyStatus": "Jakýkoli stav"
+    "AnyStatus": "Jakýkoli stav",
+    "Screen": "Obrazovka",
+    "ScreenTab": "Záložka obrazovky",
+    "ScreenField": "Pole obrazovky",
+    "FieldId": "ID pole",
+    "Label": "Popisek",
+    "Required": "Povinné",
+    "Description": "Popis",
+    "Requests": "Požadavky",
+    "WorkflowRequest": "Požadavek workflow",
+    "ScreenRequest": "Zobrazit obrazovku",
+    "ScreenRequestDescription": "Zobrazit vlastní obrazovku pro vyžadování vstupu během přechodu"
   }
 }

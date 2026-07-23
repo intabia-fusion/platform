@@ -22,7 +22,11 @@ import {
   WorkflowValidator,
   ValidatorImpl,
   ValidatorFunc,
-  WorkflowRule
+  WorkflowRule,
+  WorkflowRequest,
+  Screen,
+  ScreenTab,
+  ScreenField
 } from './types'
 
 export const workflowId = 'workflow' as Plugin
@@ -32,7 +36,11 @@ export default plugin(workflowId, {
     Workflow: '' as Ref<Class<Workflow>>,
     WorkflowTransition: '' as Ref<Class<WorkflowTransition>>,
     WorkflowRule: '' as Ref<Class<WorkflowRule>>,
-    WorkflowValidator: '' as Ref<Class<WorkflowValidator>>
+    WorkflowValidator: '' as Ref<Class<WorkflowValidator>>,
+    WorkflowRequest: '' as Ref<Class<WorkflowRequest>>,
+    Screen: '' as Ref<Class<Screen>>,
+    ScreenTab: '' as Ref<Class<ScreenTab>>,
+    ScreenField: '' as Ref<Class<ScreenField>>
   },
   validator: {
     FieldRequired: '' as Ref<WorkflowValidator>,
@@ -53,6 +61,15 @@ export default plugin(workflowId, {
     FieldRequired: '' as AnyComponent,
     SubtaskStatus: '' as AnyComponent,
     ParentStatus: '' as AnyComponent
+  },
+  request: {
+    ScreenRequest: '' as Ref<WorkflowRequest>
+  },
+  requestEditor: {
+    ScreenRequest: '' as AnyComponent
+  },
+  requestPresenter: {
+    ScreenRequest: '' as AnyComponent
   },
   mixin: {
     ProjectWorkflow: '' as Ref<Mixin<ProjectWorkflow>>,
@@ -118,6 +135,17 @@ export default plugin(workflowId, {
     ValidateDetails: '' as IntlString,
     PerformActions: '' as IntlString,
     SearchRules: '' as IntlString,
-    Transition: '' as IntlString
+    Transition: '' as IntlString,
+    Screen: '' as IntlString,
+    ScreenTab: '' as IntlString,
+    ScreenField: '' as IntlString,
+    FieldId: '' as IntlString,
+    Label: '' as IntlString,
+    Required: '' as IntlString,
+    Description: '' as IntlString,
+    Requests: '' as IntlString,
+    WorkflowRequest: '' as IntlString,
+    ScreenRequest: '' as IntlString,
+    ScreenRequestDescription: '' as IntlString
   }
 })

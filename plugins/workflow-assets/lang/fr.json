@@ -51,6 +51,17 @@
     "PerformActions": "Exécuter des actions",
     "SearchRules": "Rechercher des règles",
     "Transition": "Transition",
-    "AnyStatus": "Tout statut"
+    "AnyStatus": "Tout statut",
+    "Screen": "Écran",
+    "ScreenTab": "Onglet d'écran",
+    "ScreenField": "Champ d'écran",
+    "FieldId": "ID du champ",
+    "Label": "Étiquette",
+    "Required": "Requis",
+    "Description": "Description",
+    "Requests": "Demandes",
+    "WorkflowRequest": "Demande de workflow",
+    "ScreenRequest": "Afficher l'écran",
+    "ScreenRequestDescription": "Afficher un écran personnalisé pour demander la saisie lors de la transition"
   }
 }

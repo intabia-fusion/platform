@@ -66,12 +66,41 @@ export interface WorkflowValidatorConfig {
   props: Record<string, any>
 }
 
+export interface WorkflowRequest extends WorkflowRule {}
+
+export interface WorkflowRequestConfig {
+  id: string
+  request: Ref<WorkflowRequest>
+  props: Record<string, any>
+}
+
+export interface ScreenField extends AttachedDoc<ScreenTab, 'fields'> {
+  fieldId: string
+  label?: string
+  required: boolean
+  rank: Rank
+}
+
+export interface ScreenTab extends AttachedDoc<Screen, 'tabs'> {
+  name: string
+  rank: Rank
+  fields?: number
+}
+
+export interface Screen extends Doc {
+  name: string
+  description?: string
+  projectType: Ref<ProjectType>
+  tabs?: number
+}
+
 export interface WorkflowTransition extends AttachedDoc<Workflow, 'transitions'> {
   name: string
   from: Ref<Status>[] | null
   to: Ref<Status>
   rank: Rank
   validators?: WorkflowValidatorConfig[]
+  requests?: WorkflowRequestConfig[]
 }
 
 export interface ProjectWorkflow extends Project {

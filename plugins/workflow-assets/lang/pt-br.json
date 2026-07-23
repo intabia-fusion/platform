@@ -51,6 +51,17 @@
     "PerformActions": "Executar ações",
     "SearchRules": "Pesquisar regras",
     "Transition": "Transição",
-    "AnyStatus": "Qualquer status"
+    "AnyStatus": "Qualquer status",
+    "Screen": "Tela",
+    "ScreenTab": "Aba da tela",
+    "ScreenField": "Campo da tela",
+    "FieldId": "ID do campo",
+    "Label": "Rótulo",
+    "Required": "Obrigatório",
+    "Description": "Descrição",
+    "Requests": "Solicitações",
+    "WorkflowRequest": "Solicitação de fluxo de trabalho",
+    "ScreenRequest": "Mostrar tela",
+    "ScreenRequestDescription": "Exibir uma tela personalizada para solicitar dados durante a transição"
   }
 }

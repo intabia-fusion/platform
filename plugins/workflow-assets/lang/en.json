@@ -51,6 +51,17 @@
     "PerformActions": "Perform actions",
     "SearchRules": "Search rules",
     "Transition": "Transition",
-    "AnyStatus": "Any status"
+    "AnyStatus": "Any status",
+    "Screen": "Screen",
+    "ScreenTab": "Screen Tab",
+    "ScreenField": "Screen Field",
+    "FieldId": "Field ID",
+    "Label": "Label",
+    "Required": "Required",
+    "Description": "Description",
+    "Requests": "Requests",
+    "WorkflowRequest": "Workflow Request",
+    "ScreenRequest": "Show screen",
+    "ScreenRequestDescription": "Display a custom screen to request input during transition"
   }
 }

@@ -23,7 +23,8 @@ import {
   TypeRecord,
   Collection,
   ArrOf,
-  TypeNumber
+  TypeNumber,
+  TypeBoolean
 } from '@hcengineering/model'
 import { TDoc, TAttachedDoc } from '@hcengineering/model-core'
 import task, { type TaskType, type ProjectType, type Rank } from '@hcengineering/task'
@@ -35,7 +36,12 @@ import {
   type WorkflowValidatorConfig,
   type ValidatorFunc,
   type ValidatorImpl,
-  type WorkflowRule
+  type WorkflowRule,
+  type WorkflowRequest,
+  type WorkflowRequestConfig,
+  type Screen,
+  type ScreenTab,
+  type ScreenField
 } from '@hcengineering/workflow'
 import { TProject } from '@hcengineering/model-task'
 import { getEmbeddedLabel, type Asset, type IntlString, type Resource } from '@hcengineering/platform'
@@ -66,6 +72,59 @@ export class TWorkflowValidator extends TWorkflowRule implements WorkflowValidat
 @Mixin(workflow.mixin.ValidatorImpl, workflow.class.WorkflowValidator)
 export class TValidatorImpl extends TWorkflowValidator implements ValidatorImpl {
   executor!: Resource<ValidatorFunc>
+}
+
+@Model(workflow.class.WorkflowRequest, workflow.class.WorkflowRule)
+export class TWorkflowRequest extends TWorkflowRule implements WorkflowRequest {}
+
+@Model(workflow.class.ScreenField, core.class.AttachedDoc, DOMAIN_WORKFLOW)
+export class TScreenField extends TAttachedDoc implements ScreenField {
+  declare attachedTo: Ref<ScreenTab>
+  declare attachedToClass: Ref<Class<ScreenTab>>
+  declare collection: 'fields'
+
+  @Prop(TypeString(), workflow.string.FieldId)
+    fieldId!: string
+
+  @Prop(TypeString(), workflow.string.Label)
+    label?: string
+
+  @Prop(TypeBoolean(), workflow.string.Required)
+    required!: boolean
+
+  @Prop(TypeString(), task.string.Rank)
+    rank!: Rank
+}
+
+@Model(workflow.class.ScreenTab, core.class.AttachedDoc, DOMAIN_WORKFLOW)
+export class TScreenTab extends TAttachedDoc implements ScreenTab {
+  declare attachedTo: Ref<Screen>
+  declare attachedToClass: Ref<Class<Screen>>
+  declare collection: 'tabs'
+
+  @Prop(TypeString(), workflow.string.Name)
+    name!: string
+
+  @Prop(TypeString(), task.string.Rank)
+    rank!: Rank
+
+  @Prop(Collection(workflow.class.ScreenField), workflow.string.ScreenField)
+    fields!: number
+}
+
+@Model(workflow.class.Screen, core.class.Doc, DOMAIN_WORKFLOW)
+export class TScreen extends TDoc implements Screen {
+  @Prop(TypeString(), workflow.string.Name)
+    name!: string
+
+  @Prop(TypeString(), workflow.string.Description)
+    description?: string
+
+  @Prop(TypeRef(task.class.ProjectType), task.string.ProjectType)
+    projectType!: Ref<ProjectType>
+
+  @Prop(Collection(workflow.class.ScreenTab), workflow.string.ScreenTab)
+    tabs!: number
 }
 
 @Model(workflow.class.Workflow, core.class.Doc, DOMAIN_WORKFLOW)
@@ -103,6 +162,9 @@ export class TWorkflowTransition extends TAttachedDoc implements WorkflowTransit
 
   @Prop(ArrOf(TypeRecord()), workflow.string.Validators)
     validators?: WorkflowValidatorConfig[]
+
+  @Prop(ArrOf(TypeRecord()), workflow.string.Requests)
+    requests?: WorkflowRequestConfig[]
 }
 
 @Mixin(workflow.mixin.ProjectWorkflow, task.class.Project)
