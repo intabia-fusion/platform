@@ -13,12 +13,15 @@
 // limitations under the License.
 //
 
-import type { MeasureContext } from '@hcengineering/core'
+import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
 import type { SubscriptionData } from '@hcengineering/account-client'
 
 import type { Config } from './config'
 import type { SubscriptionStorage } from './storage'
 import { fetchPlanConfig, type PlanConfigLike } from './utils'
+import receiptTemplates from './templates/receipt'
+import dunningTemplates from './templates/dunning'
+import serviceTemplate from './templates/service'
 
 const MAIL_TIMEOUT_MS = 10_000
 
@@ -47,68 +50,29 @@ const DEFAULT_LANG = 'ru'
 
 type Lang = 'ru' | 'en'
 
-type MessageBuilder = (plan: string, url: string) => MailMessage
+// Substitute {key} placeholders from params. Missing keys stay literal (surfaces template typos).
+function fill (str: string, params: Record<string, string>): string {
+  return str.replace(/\{(\w+)\}/g, (m, key) => params[key] ?? m)
+}
 
-const TEMPLATES: Record<Lang, Record<PaymentFailedReason, MessageBuilder>> = {
-  ru: {
-    failed: (plan, url) => ({
-      subject: 'Не удалось списать оплату по подписке',
-      text:
-        `Мы не смогли списать оплату по вашей подписке «${plan}». Это могло произойти из-за ` +
-        'недостатка средств, истёкшей карты или ограничения банка.\n\n' +
-        'Мы автоматически повторим попытку в ближайшее время.\n\n' +
-        `Вы можете повторить платёж вручную: ${url}\n\n` +
-        'При необходимости свяжитесь с администратором ответным письмом.',
-      html:
-        `<p>Мы не смогли списать оплату по вашей подписке «<b>${plan}</b>». Это могло произойти из-за ` +
-        'недостатка средств, истёкшей карты или ограничения банка.</p>' +
-        '<p>Мы автоматически повторим попытку в ближайшее время.</p>' +
-        `<p>Вы можете <a href="${url}">повторить платёж вручную</a>.</p>` +
-        '<p>При необходимости свяжитесь с администратором ответным письмом.</p>'
-    }),
-    final: (plan, url) => ({
-      subject: 'Не удалось списать оплату по подписке',
-      text:
-        `Мы несколько раз пытались списать оплату по вашей подписке «${plan}», но платёж не прошёл.\n\n` +
-        'Автоматические попытки списания исчерпаны.\n\n' +
-        `Вы можете повторить платёж вручную: ${url}\n\n` +
-        'При необходимости свяжитесь с администратором ответным письмом.',
-      html:
-        `<p>Мы несколько раз пытались списать оплату по вашей подписке «<b>${plan}</b>», но платёж не прошёл.</p>` +
-        '<p>Автоматические попытки списания исчерпаны.</p>' +
-        `<p>Вы можете <a href="${url}">повторить платёж вручную</a>.</p>` +
-        '<p>При необходимости свяжитесь с администратором ответным письмом.</p>'
-    })
-  },
-  en: {
-    failed: (plan, url) => ({
-      subject: 'We could not charge your subscription',
-      text:
-        `We were unable to charge your subscription "${plan}". This may be due to ` +
-        'insufficient funds, an expired card or a bank restriction.\n\n' +
-        'We will automatically retry shortly.\n\n' +
-        `You can also retry the payment manually: ${url}\n\n` +
-        'If you need help, reply to this email to contact the administrator.',
-      html:
-        `<p>We were unable to charge your subscription "<b>${plan}</b>". This may be due to ` +
-        'insufficient funds, an expired card or a bank restriction.</p>' +
-        '<p>We will automatically retry shortly.</p>' +
-        `<p>You can also <a href="${url}">retry the payment manually</a>.</p>` +
-        '<p>If you need help, reply to this email to contact the administrator.</p>'
-    }),
-    final: (plan, url) => ({
-      subject: 'We could not charge your subscription',
-      text:
-        `We tried several times to charge your subscription "${plan}", but the payment did not go through.\n\n` +
-        'Automatic retries are now exhausted.\n\n' +
-        `You can retry the payment manually: ${url}\n\n` +
-        'If you need help, reply to this email to contact the administrator.',
-      html:
-        `<p>We tried several times to charge your subscription "<b>${plan}</b>", but the payment did not go through.</p>` +
-        '<p>Automatic retries are now exhausted.</p>' +
-        `<p>You can <a href="${url}">retry the payment manually</a>.</p>` +
-        '<p>If you need help, reply to this email to contact the administrator.</p>'
-    })
+// Localized copy for both email families, kept as data in ./templates/* (bundled by esbuild).
+const RECEIPT = receiptTemplates as Record<Lang, (typeof receiptTemplates)['ru']>
+const DUNNING = dunningTemplates as Record<Lang, (typeof dunningTemplates)['ru']>
+const SERVICE = serviceTemplate
+
+// Render a payment-failed email from the dunning template. Markup + retry link stay here; copy is data.
+function buildDunning (reason: PaymentFailedReason, plan: string, url: string, lang: Lang): MailMessage {
+  const t = DUNNING[lang]
+  const block = t[reason]
+  const p = { plan, url }
+  return {
+    subject: t.subject,
+    text: `${fill(block.lead, p)}\n\n${block.note}\n\n${fill(t.retryText, p)}\n\n${t.contactAdmin}`,
+    html:
+      `<p>${fill(block.lead, { plan: `<b>${plan}</b>` })}</p>` +
+      `<p>${block.note}</p>` +
+      `<p>${t.retryHtmlPrefix} <a href="${url}">${t.retryLink}</a>.</p>` +
+      `<p>${t.contactAdmin}</p>`
   }
 }
 
@@ -127,120 +91,33 @@ interface SuccessFields {
   supportHtml: string // pre-rendered support contacts block (html), '' when none
 }
 
-type SuccessBuilder = (f: SuccessFields) => MailMessage
-
-const SUCCESS_TEMPLATES: Record<Lang, Record<PaymentSucceededKind, SuccessBuilder>> = {
-  ru: {
-    purchase: (f) => ({
-      subject: `Чек об оплате — ${f.plan} от ${f.paidAtDate}`,
-      text:
-        `Оплата по подписке «${f.plan}» прошла успешно.\n\n` +
-        `Плательщик: ${f.customer}\n` +
-        `Тариф: ${f.plan}\n` +
-        `Сумма: ${f.amount}\n` +
-        `Дата и время оплаты: ${f.paidAt}\n` +
-        `ID транзакции: ${f.txId}\n` +
-        (f.paymentMethod !== '' ? `Способ оплаты: ${f.paymentMethod}\n` : '') +
-        `Период подписки: ${f.periodStart} — ${f.periodEnd}\n\n` +
-        `Управление подпиской: ${f.url}` +
-        f.supportText,
-      html:
-        `<p>Оплата по подписке «<b>${f.plan}</b>» прошла успешно.</p>` +
-        '<p>' +
-        `Плательщик: <b>${f.customer}</b><br/>` +
-        `Тариф: <b>${f.plan}</b><br/>` +
-        `Сумма: <b>${f.amount}</b><br/>` +
-        `Дата и время оплаты: <b>${f.paidAt}</b><br/>` +
-        `ID транзакции: <b>${f.txId}</b><br/>` +
-        (f.paymentMethod !== '' ? `Способ оплаты: <b>${f.paymentMethod}</b><br/>` : '') +
-        `Период подписки: <b>${f.periodStart} — ${f.periodEnd}</b>` +
-        '</p>' +
-        `<p><a href="${f.url}">Управление подпиской</a></p>` +
-        f.supportHtml
-    }),
-    renewal: (f) => ({
-      subject: `Чек об оплате — ${f.plan} от ${f.paidAtDate}`,
-      text:
-        `Подписка «${f.plan}» успешно продлена.\n\n` +
-        `Плательщик: ${f.customer}\n` +
-        `Тариф: ${f.plan}\n` +
-        `Сумма списания: ${f.amount}\n` +
-        `Дата и время оплаты: ${f.paidAt}\n` +
-        `ID транзакции: ${f.txId}\n` +
-        (f.paymentMethod !== '' ? `Способ оплаты: ${f.paymentMethod}\n` : '') +
-        `Период подписки: ${f.periodStart} — ${f.periodEnd}\n\n` +
-        `Управление подпиской: ${f.url}` +
-        f.supportText,
-      html:
-        `<p>Подписка «<b>${f.plan}</b>» успешно продлена.</p>` +
-        '<p>' +
-        `Плательщик: <b>${f.customer}</b><br/>` +
-        `Тариф: <b>${f.plan}</b><br/>` +
-        `Сумма списания: <b>${f.amount}</b><br/>` +
-        `Дата и время оплаты: <b>${f.paidAt}</b><br/>` +
-        `ID транзакции: <b>${f.txId}</b><br/>` +
-        (f.paymentMethod !== '' ? `Способ оплаты: <b>${f.paymentMethod}</b><br/>` : '') +
-        `Период подписки: <b>${f.periodStart} — ${f.periodEnd}</b>` +
-        '</p>' +
-        `<p><a href="${f.url}">Управление подпиской</a></p>` +
-        f.supportHtml
-    })
-  },
-  en: {
-    purchase: (f) => ({
-      subject: `Payment receipt — ${f.plan} from ${f.paidAtDate}`,
-      text:
-        `Your payment for the "${f.plan}" subscription was successful.\n\n` +
-        `Customer: ${f.customer}\n` +
-        `Plan: ${f.plan}\n` +
-        `Amount: ${f.amount}\n` +
-        `Payment date and time: ${f.paidAt}\n` +
-        `Transaction ID: ${f.txId}\n` +
-        (f.paymentMethod !== '' ? `Payment method: ${f.paymentMethod}\n` : '') +
-        `Subscription period: ${f.periodStart} — ${f.periodEnd}\n\n` +
-        `Manage your subscription: ${f.url}` +
-        f.supportText,
-      html:
-        `<p>Your payment for the "<b>${f.plan}</b>" subscription was successful.</p>` +
-        '<p>' +
-        `Customer: <b>${f.customer}</b><br/>` +
-        `Plan: <b>${f.plan}</b><br/>` +
-        `Amount: <b>${f.amount}</b><br/>` +
-        `Payment date and time: <b>${f.paidAt}</b><br/>` +
-        `Transaction ID: <b>${f.txId}</b><br/>` +
-        (f.paymentMethod !== '' ? `Payment method: <b>${f.paymentMethod}</b><br/>` : '') +
-        `Subscription period: <b>${f.periodStart} — ${f.periodEnd}</b>` +
-        '</p>' +
-        `<p><a href="${f.url}">Manage your subscription</a></p>` +
-        f.supportHtml
-    }),
-    renewal: (f) => ({
-      subject: `Payment receipt — ${f.plan} from ${f.paidAtDate}`,
-      text:
-        `Your "${f.plan}" subscription was renewed successfully.\n\n` +
-        `Customer: ${f.customer}\n` +
-        `Plan: ${f.plan}\n` +
-        `Amount charged: ${f.amount}\n` +
-        `Payment date and time: ${f.paidAt}\n` +
-        `Transaction ID: ${f.txId}\n` +
-        (f.paymentMethod !== '' ? `Payment method: ${f.paymentMethod}\n` : '') +
-        `Subscription period: ${f.periodStart} — ${f.periodEnd}\n\n` +
-        `Manage your subscription: ${f.url}` +
-        f.supportText,
-      html:
-        `<p>Your "<b>${f.plan}</b>" subscription was renewed successfully.</p>` +
-        '<p>' +
-        `Customer: <b>${f.customer}</b><br/>` +
-        `Plan: <b>${f.plan}</b><br/>` +
-        `Amount charged: <b>${f.amount}</b><br/>` +
-        `Payment date and time: <b>${f.paidAt}</b><br/>` +
-        `Transaction ID: <b>${f.txId}</b><br/>` +
-        (f.paymentMethod !== '' ? `Payment method: <b>${f.paymentMethod}</b><br/>` : '') +
-        `Subscription period: <b>${f.periodStart} — ${f.periodEnd}</b>` +
-        '</p>' +
-        `<p><a href="${f.url}">Manage your subscription</a></p>` +
-        f.supportHtml
-    })
+// Render a receipt email from the receipt template.
+function buildReceipt (kind: PaymentSucceededKind, f: SuccessFields, lang: Lang): MailMessage {
+  const t = RECEIPT[lang]
+  const l = t.labels
+  // [label, value] rows; paymentMethod row is not shown when empty.
+  const rows: Array<[string, string]> = [
+    [l.customer, f.customer],
+    [l.plan, f.plan],
+    [l.amount[kind], f.amount],
+    [l.paidAt, f.paidAt],
+    [l.txId, f.txId],
+    ...(f.paymentMethod !== '' ? ([[l.paymentMethod, f.paymentMethod]] as Array<[string, string]>) : []),
+    [l.period, `${f.periodStart} — ${f.periodEnd}`]
+  ]
+  const intro = fill(t.intro[kind], { plan: f.plan })
+  const introHtml = fill(t.intro[kind], { plan: `<b>${f.plan}</b>` })
+  return {
+    subject: fill(t.subject, { plan: f.plan, paidAtDate: f.paidAtDate }),
+    text:
+      `${intro}\n\n` + rows.map(([k, v]) => `${k}: ${v}`).join('\n') + `\n\n${t.manageLink}: ${f.url}` + f.supportText,
+    html:
+      `<p>${introHtml}</p>` +
+      '<p>' +
+      rows.map(([k, v]) => `${k}: <b>${v}</b>`).join('<br/>') +
+      '</p>' +
+      `<p><a href="${f.url}">${t.manageLink}</a></p>` +
+      f.supportHtml
   }
 }
 
@@ -271,10 +148,39 @@ function billingUrl (config: Config): string {
   return `${base}/billing`
 }
 
+/**
+ * Build the full workspace link for service copies.
+ */
+async function resolveWorkspaceLink (
+  storage: SubscriptionStorage,
+  config: Config,
+  workspaceUuid: WorkspaceUuid
+): Promise<string> {
+  const slug = await storage.getWorkspaceUrl(workspaceUuid)
+  if (slug === null) return workspaceUuid
+  const base = config.FrontUrl.replace(/\/+$/, '')
+  return `${base}/workbench/${slug}`
+}
+
+/**
+ * Render the plain-text service-copy lines as HTML, turning workspace value into a clickable link.
+ */
+function serviceHtml (lines: string[], workspace: string): string {
+  const wsPrefix = `${SERVICE.labels.workspace}: `
+  const body = lines
+    .map((line) =>
+      line.startsWith(wsPrefix) && workspace.startsWith('http')
+        ? `${wsPrefix}<a href="${workspace}">${workspace}</a>`
+        : line
+    )
+    .join('\n')
+  return `<pre>${body}</pre>`
+}
+
 /** Normalize an account locale (e.g. 'en-US', 'ru') to a supported language, falling back to default. */
 function resolveLang (locale: string | null): Lang {
   const short = (locale ?? '').slice(0, 2).toLowerCase()
-  return short in TEMPLATES ? (short as Lang) : DEFAULT_LANG
+  return short in RECEIPT ? (short as Lang) : DEFAULT_LANG
 }
 
 const PLAN_CONFIG_TTL_MS = 10 * 60 * 1000 // plan config is static; refresh every 10 min
@@ -296,17 +202,17 @@ async function getPlanLabel (config: Config, plan: string, type: string, lang: L
       planConfigCache = { data, fetchedAt: now }
     }
 
-    // Same source selection as pod-payment (server.ts): packages for package subs, plans otherwise.
-    const source = type === 'package' ? planConfigCache.data?.packages : planConfigCache.data?.plans
-    const label = source?.[plan]?.label
-    return label?.[lang] ?? label?.[DEFAULT_LANG] ?? plan
+    // Display name per type: `label` for plans, `description` for packages (packages don't have label).
+    const data = planConfigCache.data
+    const name = type === 'package' ? data?.packages?.[plan]?.description : data?.plans?.[plan]?.label
+    return name?.[lang] ?? name?.[DEFAULT_LANG] ?? plan
   } catch {
     return plan
   }
 }
 
 function buildMessage (reason: PaymentFailedReason, planLabel: string, config: Config, lang: Lang): MailMessage {
-  return TEMPLATES[lang][reason](planLabel, billingUrl(config))
+  return buildDunning(reason, planLabel, billingUrl(config), lang)
 }
 
 /**
@@ -348,19 +254,24 @@ export async function notifyPaymentFailed (
   // Service copy so the team can reach out to the payer directly.
   if (config.BillingEmails !== undefined && config.BillingEmails.length > 0) {
     const attempt = (sub.providerData?.retryAttempt as number) ?? 0
-    const workspace = (await storage.getWorkspaceUrl(sub.workspaceUuid)) ?? sub.workspaceUuid
+    const workspace = await resolveWorkspaceLink(storage, config, sub.workspaceUuid)
+    // Team inbox is Russian-only: resolve the plan label and the reason enum to Russian.
+    const planRu = await getPlanLabel(config, sub.plan, sub.type, DEFAULT_LANG)
+    const reasonRu = SERVICE.reason[reason]
+    const typeRu = SERVICE.type[sub.type] ?? sub.type
+    const l = SERVICE.labels
     const lines = [
-      `Воркспейс: ${workspace}`,
-      `Тариф: ${sub.plan} (${sub.type})`,
-      `Сумма: ${((sub.amount ?? 0) / 100).toFixed(2)} ₽`,
-      `Попытка: ${attempt} из 3 (${reason})`,
-      `Плательщик: ${payerEmail ?? sub.accountUuid}`,
-      `Подписка: ${sub.id ?? '-'}`
+      `${l.workspace}: ${workspace}`,
+      `${l.plan}: ${planRu} (${typeRu})`,
+      `${l.amount}: ${formatAmount(sub.amount)}`,
+      `${l.attempt}: ${attempt} из 3 (${reasonRu})`,
+      `${l.customer}: ${payerEmail ?? sub.accountUuid}`,
+      `${l.subscription}: ${sub.id ?? '-'}`
     ]
     const svc: MailMessage = {
-      subject: `[billing] Не удалось списание: ${sub.plan} (${reason})`,
+      subject: fill(SERVICE.subject.failed, { plan: planRu, reason: reasonRu }),
       text: lines.join('\n'),
-      html: `<pre>${lines.join('\n')}</pre>`
+      html: serviceHtml(lines, workspace)
     }
     for (const to of config.BillingEmails) {
       try {
@@ -463,7 +374,7 @@ export async function notifyPaymentSucceeded (
         supportText: support.text,
         supportHtml: support.html
       }
-      const { subject, text, html } = SUCCESS_TEMPLATES[lang][kind](fields)
+      const { subject, text, html } = buildReceipt(kind, fields, lang)
       await sendMail(config, email, { subject, text, html })
       ctx.info('Payment-succeeded email sent', { subId: sub.id, kind })
     }
@@ -473,23 +384,28 @@ export async function notifyPaymentSucceeded (
 
   // Service copy to the team about successful charges.
   if (config.BillingEmails !== undefined && config.BillingEmails.length > 0) {
-    const workspace = (await storage.getWorkspaceUrl(sub.workspaceUuid)) ?? sub.workspaceUuid
+    const workspace = await resolveWorkspaceLink(storage, config, sub.workspaceUuid)
+    // Team inbox is Russian-only: resolve the plan label and the kind enum to Russian.
+    const planRu = await getPlanLabel(config, sub.plan, sub.type, DEFAULT_LANG)
+    const kindRu = SERVICE.kind[kind]
+    const typeRu = SERVICE.type[sub.type] ?? sub.type
+    const l = SERVICE.labels
     const lines = [
-      `Воркспейс: ${workspace}`,
-      `Тариф: ${sub.plan} (${sub.type})`,
-      `Списано: ${formatAmount(chargedAmount ?? sub.amount)}`,
+      `${l.workspace}: ${workspace}`,
+      `${l.plan}: ${planRu} (${typeRu})`,
+      `${l.charged}: ${formatAmount(chargedAmount ?? sub.amount)}`,
       // Showing both upgrade delta and the recurring price for the team.
       ...(chargedAmount !== undefined && chargedAmount !== sub.amount
-        ? [`Регулярная цена: ${formatAmount(sub.amount)}`]
+        ? [`${l.regularPrice}: ${formatAmount(sub.amount)}`]
         : []),
-      `Тип: ${kind}`,
-      `Плательщик: ${payerEmail ?? sub.accountUuid}`,
-      `Подписка: ${sub.id ?? '-'}`
+      `${l.kind}: ${kindRu}`,
+      `${l.customer}: ${payerEmail ?? sub.accountUuid}`,
+      `${l.subscription}: ${sub.id ?? '-'}`
     ]
     const svc: MailMessage = {
-      subject: `[billing] Успешная оплата: ${sub.plan} (${kind})`,
+      subject: fill(SERVICE.subject.succeeded, { plan: planRu, kind: kindRu }),
       text: lines.join('\n'),
-      html: `<pre>${lines.join('\n')}</pre>`
+      html: serviceHtml(lines, workspace)
     }
     for (const to of config.BillingEmails) {
       try {
