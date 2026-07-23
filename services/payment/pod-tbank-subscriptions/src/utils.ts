@@ -141,10 +141,10 @@ export interface PlanPricing {
 
 // Minimal subset of pod-payment's plan-config we need to derive charge amounts. Prices are numeric
 // major units (tier: per-user; package: flat). Free / contact-sales plans have no price and are skipped.
-// Also carries an optional localized `label` per plan/package, used by notifications.
+// Display name: plans carry a localized `label`; packages have no `label`, only a `description`.
 export interface PlanConfigLike {
   plans?: Record<string, { priceMonthlyPerUser?: number, yearlyDiscount?: number, label?: Record<string, string> }>
-  packages?: Record<string, { priceMonthly?: number, label?: Record<string, string> }>
+  packages?: Record<string, { priceMonthly?: number, description?: Record<string, string> }>
 }
 
 // TBank Amount is expressed in the currency's minor units; prices in plan-config are whole major units.

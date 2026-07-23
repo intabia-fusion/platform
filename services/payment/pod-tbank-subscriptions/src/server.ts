@@ -46,7 +46,7 @@ import {
   newActionId,
   type PlanPricing
 } from './utils'
-import { notifyPaymentFailed } from './notifications'
+import { notifyPaymentFailed, notifyPaymentSucceeded } from './notifications'
 import type { TbankWebhookNotification, CreateSubscriptionRequest, UpdatePlanRequest, BillingPeriod } from './types'
 
 // Link lifetime = how long the bank keeps the link payable (RedirectDueDate). Lease = heartbeat window
@@ -958,6 +958,9 @@ async function handleWebhook (
     // AUTHORIZED is intermediate (and absent for PayType 'O'). Idempotent for duplicate webhooks.
     if (typedNotification.Status === 'CONFIRMED') {
       await storage.releaseCheckout(typedNotification.PaymentId)
+
+      // Receipt email on settled first payment (new sub / plan change).
+      await notifyPaymentSucceeded(ctx, storage, config, subscriptionData, 'purchase', typedNotification.Amount)
     }
   } else if (
     typedNotification.Status === 'REJECTED' ||
