@@ -14,8 +14,8 @@
 //
 
 import { type Ref } from '@hcengineering/core'
-import { getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
-import { type Workflow } from '@hcengineering/workflow'
+import { desktopPlatform, getCurrentResolvedLocation, locationToUrl, navigate } from '@hcengineering/ui'
+import { type Workflow, type Screen } from '@hcengineering/workflow'
 import { clearSettingsStore } from '@hcengineering/setting-resources'
 
 export function navigateToWorkflow (id: Ref<Workflow> | undefined): void {
@@ -30,4 +30,22 @@ export function navigateToWorkflow (id: Ref<Workflow> | undefined): void {
 
   clearSettingsStore()
   navigate(loc)
+}
+
+export function navigateToScreen (id: Ref<Screen> | undefined, openInNewTab = true): void {
+  const loc = getCurrentResolvedLocation()
+  if (id !== undefined) {
+    loc.path[5] = 'screens'
+    loc.path[6] = id
+    loc.path.length = 7
+  } else {
+    loc.path.length = 5
+  }
+
+  if (!desktopPlatform && openInNewTab) {
+    window.open(locationToUrl(loc), '_blank')
+  } else {
+    clearSettingsStore()
+    navigate(loc)
+  }
 }

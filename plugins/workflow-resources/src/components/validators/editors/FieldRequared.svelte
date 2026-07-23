@@ -17,11 +17,9 @@
   import ui, { DropdownTextItem, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
   import { WorkflowValidatorConfig } from '@hcengineering/workflow'
   import { TaskType } from '@hcengineering/task'
-  import core, { AttachedDoc, Collection, Doc, RefTo } from '@hcengineering/core'
-  import { translate } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
 
   import plugin from '../../../plugin'
+  import { getDisplayAttributes } from '../../../utils'
 
   interface Props {
     fields: string[]
@@ -31,7 +29,6 @@
   export let config: WorkflowValidatorConfig | undefined = undefined
   export let canSave = false
 
-  const client = getClient()
   const dispatch = createEventDispatcher<{ update: Props }>()
 
   let items: DropdownTextItem[] = []
@@ -43,56 +40,10 @@
   $: dispatch('update', { fields: selected })
 
   async function updateItems (lang: string): Promise<void> {
-    const hierarchy = client.getHierarchy()
-    const attrs = Array.from(hierarchy.getAllAttributes(taskType.ofClass).values()).filter(
-      (it) => it.hidden !== true && it.readonly !== true
-    )
+    const { regular, collection } = await getDisplayAttributes(taskType.ofClass, lang)
 
-    const regularAttrs: typeof attrs = []
-    const collectionAttrs: typeof attrs = []
-
-    for (const it of attrs) {
-      if (hierarchy.isDerived(it.type._class, core.class.Collection) || it.type._class === core.class.ArrOf) {
-        collectionAttrs.push(it)
-      } else {
-        regularAttrs.push(it)
-      }
-    }
-
-    const buildItem = async (it: (typeof attrs)[number]): Promise<DropdownTextItem> => {
-      if (hierarchy.isDerived(it.type._class, core.class.RefTo)) {
-        const refTo = it.type as RefTo<Doc>
-        const toClass = hierarchy.findClass(refTo.to)
-        return {
-          id: it._id,
-          label: await translate(it.label, {}, lang),
-          icon: it.icon ?? toClass?.icon ?? it.type?.icon,
-          iconProps: it.iconProps
-        }
-      } else if (hierarchy.isDerived(it.type._class, core.class.Collection)) {
-        const refTo = it.type as Collection<AttachedDoc>
-        const ofClass = hierarchy.findClass(refTo.of)
-        return {
-          id: it._id,
-          label: await translate(it.label, {}, lang),
-          icon: it.icon ?? ofClass?.icon ?? it.type?.icon,
-          iconProps: it.iconProps
-        }
-      }
-      return {
-        id: it._id,
-        label: await translate(it.label, {}, lang),
-        icon: it.icon ?? it.type?.icon,
-        iconProps: it.iconProps
-      }
-    }
-
-    const regularItems = await Promise.all(regularAttrs.map((it) => buildItem(it)))
-    const collectionItems = await Promise.all(collectionAttrs.map((it) => buildItem(it)))
-
-    regularItems.sort((a, b) => a.label.localeCompare(b.label, lang))
-    collectionItems.sort((a, b) => a.label.localeCompare(b.label, lang))
-
+    const regularItems = regular as DropdownTextItem[]
+    const collectionItems = collection as DropdownTextItem[]
     if (regularItems.length > 0 && collectionItems.length > 0) {
       collectionItems[0].separatorBefore = true
     }
@@ -120,10 +71,13 @@
 <style lang="scss">
   .field-required {
     display: flex;
-    flex-direction: column;
-    gap: 0.375rem;
+    gap: 1rem;
 
     &--label {
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      height: 2.375rem;
       font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;

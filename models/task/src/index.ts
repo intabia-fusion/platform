@@ -503,6 +503,11 @@ export function createModel (builder: Builder): void {
         component: task.component.ProjectTypeTasksTypeSectionEditor
       },
       {
+        id: 'screens',
+        label: workflow.string.Screens,
+        component: workflow.component.ProjectTypeScreensSectionEditor
+      },
+      {
         id: 'workflows',
         label: workflow.string.Workflows,
         component: workflow.component.ProjectTypeWorkflowsSectionEditor
@@ -511,7 +516,8 @@ export function createModel (builder: Builder): void {
     subEditors: {
       taskTypes: task.component.TaskTypeEditor,
       roles: setting.component.RoleEditor,
-      workflows: workflow.component.WorkflowEditor
+      workflows: workflow.component.WorkflowEditor,
+      screens: workflow.component.ScreenEditor
     }
   })
 

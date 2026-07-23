@@ -1,0 +1,111 @@
+<!--
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+-->
+<script lang="ts">
+  import { createEventDispatcher } from 'svelte'
+  import { Ref } from '@hcengineering/core'
+  import { createQuery } from '@hcengineering/presentation'
+  import { ProjectType, TaskType } from '@hcengineering/task'
+  import ui, { IconOpenedArrow, Label, ModernButton, ModernDropdownLabels } from '@hcengineering/ui'
+  import { Screen, WorkflowRequestConfig } from '@hcengineering/workflow'
+
+  import plugin from '../../../plugin'
+  import { navigateToScreen } from '../../../location'
+
+  interface Props {
+    screen: Ref<Screen> | undefined
+  }
+
+  export let taskType: TaskType
+  export let projectType: ProjectType | undefined = undefined
+  export let config: WorkflowRequestConfig | undefined = undefined
+  export let canSave = false
+
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  const dispatch = createEventDispatcher<{ update: Props, close: void }>()
+  const screensQuery = createQuery()
+
+  let selectedScreenId: Ref<Screen> | undefined = config?.props?.screen
+  let screens: Screen[] = []
+
+  const projectTypeId = projectType?._id ?? taskType?.parent
+
+  $: if (projectTypeId != null) {
+    screensQuery.query(plugin.class.Screen, { projectType: projectTypeId }, (res) => {
+      screens = res
+    })
+  }
+
+  $: screenItems = screens.map((s) => ({
+    id: s._id,
+    label: s.name,
+    icon: plugin.icon.Screens
+  }))
+
+  $: if (selectedScreenId === undefined && screens.length > 0) {
+    selectedScreenId = screens[0]._id
+  }
+
+  $: canSave = selectedScreenId !== undefined
+  $: dispatch('update', { screen: selectedScreenId })
+
+  function handleOpenScreen (): void {
+    if (selectedScreenId != null) {
+      navigateToScreen(selectedScreenId)
+      dispatch('close')
+    }
+  }
+</script>
+
+<div class="screen-selector">
+  <span class="screen-selector--label">
+    <Label label={plugin.string.Screen} />
+  </span>
+  <ModernDropdownLabels
+    items={screenItems}
+    bind:selected={selectedScreenId}
+    placeholder={ui.string.NotSelected}
+    size="medium"
+    width="100%"
+  />
+</div>
+
+{#if selectedScreenId != null}
+  <div class="flex-row-center">
+    <ModernButton
+      label={plugin.string.ConfigureScreen}
+      icon={IconOpenedArrow}
+      size="small"
+      kind="tertiary"
+      on:click={handleOpenScreen}
+    />
+  </div>
+{/if}
+
+<style lang="scss">
+  .screen-selector {
+    display: flex;
+    gap: 1rem;
+
+    &--label {
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      height: 2.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--global-secondary-TextColor);
+    }
+  }
+</style>

@@ -17,7 +17,15 @@ import core, { DocumentUpdate, type Ref, SortingOrder, type Status, type TxOpera
 import { Project, TaskType, ProjectType, makeRank } from '@hcengineering/task'
 
 import workflow from './plugin'
-import type { Workflow, WorkflowTransition, WorkflowValidatorConfig } from './types'
+import type {
+  Workflow,
+  WorkflowTransition,
+  WorkflowValidatorConfig,
+  WorkflowRequestConfig,
+  Screen,
+  ScreenTab,
+  ScreenField
+} from './types'
 
 export async function createWorkflow (
   client: TxOperations,
@@ -155,6 +163,65 @@ export async function updateValidatorConfig (
   })
 }
 
+export async function addRequestConfig (
+  client: TxOperations,
+  workflowId: Ref<Workflow>,
+  transitionId: Ref<WorkflowTransition>,
+  config: WorkflowRequestConfig
+): Promise<WorkflowRequestConfig> {
+  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
+  if (transition == null) {
+    throw new Error(`Transition ${transitionId} not found`)
+  }
+  const current = transition.requests ?? []
+
+  const exists = current.some((r) => r.id === config.id)
+  if (exists) {
+    throw new Error(`Request config already exists on transition ${transitionId}`)
+  }
+
+  await updateTransition(client, workflowId, transitionId, {
+    $push: { requests: config }
+  })
+  return config
+}
+
+export async function removeRequestConfig (
+  client: TxOperations,
+  workflowId: Ref<Workflow>,
+  transitionId: Ref<WorkflowTransition>,
+  configId: string
+): Promise<void> {
+  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
+  if (transition == null) {
+    throw new Error(`Transition ${transitionId} not found`)
+  }
+  await updateTransition(client, workflowId, transitionId, {
+    $pull: { requests: { id: configId } }
+  })
+}
+
+export async function updateRequestConfig (
+  client: TxOperations,
+  workflowId: Ref<Workflow>,
+  transitionId: Ref<WorkflowTransition>,
+  configId: string,
+  data: Partial<Pick<WorkflowRequestConfig, 'props'>>
+): Promise<void> {
+  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
+  if (transition == null) {
+    throw new Error(`Transition ${transitionId} not found`)
+  }
+  await updateTransition(client, workflowId, transitionId, {
+    $update: {
+      requests: {
+        $query: { id: configId },
+        $update: data
+      }
+    }
+  })
+}
+
 export async function setWorkflow (
   client: TxOperations,
   project: Project,
@@ -245,4 +312,80 @@ export function hasSelfTransition (transition: Pick<WorkflowTransition, 'from' |
     return false
   }
   return transition.from.includes(transition.to)
+}
+
+export async function addScreenTab (client: TxOperations, screenId: Ref<Screen>, name: string): Promise<Ref<ScreenTab>> {
+  const last = await client.findOne(
+    workflow.class.ScreenTab,
+    { attachedTo: screenId },
+    { sort: { rank: SortingOrder.Descending } }
+  )
+  const rank = makeRank(last?.rank, undefined)
+  return await client.addCollection(
+    workflow.class.ScreenTab,
+    core.space.Workspace,
+    screenId,
+    workflow.class.Screen,
+    'tabs',
+    {
+      name,
+      rank
+    }
+  )
+}
+
+export async function removeScreenTab (
+  client: TxOperations,
+  screenId: Ref<Screen>,
+  tabId: Ref<ScreenTab>
+): Promise<void> {
+  await client.removeCollection(
+    workflow.class.ScreenTab,
+    core.space.Workspace,
+    tabId,
+    screenId,
+    workflow.class.Screen,
+    'tabs'
+  )
+}
+
+export async function addScreenField (
+  client: TxOperations,
+  tabId: Ref<ScreenTab>,
+  fieldId: string,
+  required = false
+): Promise<Ref<ScreenField>> {
+  const last = await client.findOne(
+    workflow.class.ScreenField,
+    { attachedTo: tabId },
+    { sort: { rank: SortingOrder.Descending } }
+  )
+  const rank = makeRank(last?.rank, undefined)
+  return await client.addCollection(
+    workflow.class.ScreenField,
+    core.space.Workspace,
+    tabId,
+    workflow.class.ScreenTab,
+    'fields',
+    {
+      fieldId,
+      required,
+      rank
+    }
+  )
+}
+
+export async function removeScreenField (
+  client: TxOperations,
+  tabId: Ref<ScreenTab>,
+  fieldId: Ref<ScreenField>
+): Promise<void> {
+  await client.removeCollection(
+    workflow.class.ScreenField,
+    core.space.Workspace,
+    fieldId,
+    tabId,
+    workflow.class.ScreenTab,
+    'fields'
+  )
 }

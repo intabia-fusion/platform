@@ -53,6 +53,7 @@
     "Transition": "Přechod",
     "AnyStatus": "Jakýkoli stav",
     "Screen": "Obrazovka",
+    "Screens": "Obrazovky",
     "ScreenTab": "Záložka obrazovky",
     "ScreenField": "Pole obrazovky",
     "FieldId": "ID pole",
@@ -62,6 +63,8 @@
     "Requests": "Požadavky",
     "WorkflowRequest": "Požadavek workflow",
     "ScreenRequest": "Zobrazit obrazovku",
-    "ScreenRequestDescription": "Zobrazit vlastní obrazovku pro vyžadování vstupu během přechodu"
+    "ScreenRequestDescription": "Zobrazit vlastní obrazovku pro vyžadování vstupu během přechodu",
+    "TabNumbered": "Záložka {num}",
+    "ConfigureScreen": "Nakonfigurovat obrazovku"
   }
 }

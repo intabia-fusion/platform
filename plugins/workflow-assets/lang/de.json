@@ -53,6 +53,7 @@
     "Transition": "Übergang",
     "AnyStatus": "Jeder Status",
     "Screen": "Bildschirm",
+    "Screens": "Bildschirme",
     "ScreenTab": "Bildschirm-Registerkarte",
     "ScreenField": "Bildschirmfeld",
     "FieldId": "Feld-ID",
@@ -62,6 +63,8 @@
     "Requests": "Anfragen",
     "WorkflowRequest": "Workflow-Anfrage",
     "ScreenRequest": "Bildschirm anzeigen",
-    "ScreenRequestDescription": "Zeigt einen benutzerdefinierten Bildschirm zur Eingabeaufforderung während des Übergangs an"
+    "ScreenRequestDescription": "Zeigt einen benutzerdefinierten Bildschirm zur Eingabeaufforderung während des Übergangs an",
+    "TabNumbered": "Registerkarte {num}",
+    "ConfigureScreen": "Bildschirm konfigurieren"
   }
 }

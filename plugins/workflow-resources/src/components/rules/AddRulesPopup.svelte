@@ -175,7 +175,14 @@
     }
 
     &--transition-label {
-      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      height: 2.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--global-secondary-TextColor);
     }
 
     &--body {

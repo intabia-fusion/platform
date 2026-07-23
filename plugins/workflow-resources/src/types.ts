@@ -20,6 +20,7 @@ import { type AnySvelteComponent } from '@hcengineering/ui'
 
 import plugin from './plugin'
 import ValidatorEditor from './components/validators/ValidatorEditor.svelte'
+import RequestEditor from './components/requests/RequestEditor.svelte'
 
 export interface RuleDisplay {
   _class: Ref<Class<WorkflowRule>>
@@ -37,17 +38,15 @@ export const rulesDisplay: Record<Ref<Class<WorkflowRule>>, RuleDisplay> = {
   // {
   //   category: 'restrict',
   //   _class: plugin.class.WorkflowRule,
-  //   presenter: DumRuleCategory,
   //   icon: '🔒',
   //   label: plugin.string.RestrictTransition
   // },
-  // {
-  //   category: 'request',
-  //   _class: plugin.class.WorkflowRule,
-  //   presenter: DumRuleCategory,
-  //   icon: '📑',
-  //   label: plugin.string.RequestInput
-  // },
+  [plugin.class.WorkflowRequest]: {
+    _class: plugin.class.WorkflowRequest,
+    icon: '📑',
+    label: plugin.string.Requests,
+    editor: RequestEditor
+  },
   [plugin.class.WorkflowValidator]: {
     _class: plugin.class.WorkflowValidator,
     icon: '✓',
@@ -57,7 +56,6 @@ export const rulesDisplay: Record<Ref<Class<WorkflowRule>>, RuleDisplay> = {
   // {
   //   category: 'actions',
   //   _class: plugin.class.WorkflowRule,
-  //   presenter: DumRuleCategory,
   //   icon: '➔',
   //   label: plugin.string.PerformActions
   // }

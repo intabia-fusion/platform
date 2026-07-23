@@ -354,6 +354,7 @@ export interface DropdownIntlItem {
   description?: IntlString
   paramsDescription?: Record<string, any>
   keys?: string[]
+  separatorBefore?: boolean
 }
 
 export interface NestedSelectItem extends DropdownIntlItem {

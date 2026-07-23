@@ -44,6 +44,9 @@
 <div class="hulyPopup-container" use:resizeObserver={() => dispatch('changeContent')}>
   <Scroller padding={'var(--spacing-0_5)'} gap={'flex-gap-0-5'}>
     {#each items as item, i}
+      {#if item.separatorBefore}
+        <div class="hulyPopup-divider" />
+      {/if}
       <!-- svelte-ignore a11y-mouse-events-have-key-events -->
       <button
         class="hulyPopup-row"

@@ -77,13 +77,18 @@ export default plugin(workflowId, {
   },
   component: {
     ProjectTypeWorkflowsSectionEditor: '' as AnyComponent,
-    WorkflowEditor: '' as AnyComponent
+    WorkflowEditor: '' as AnyComponent,
+    ProjectTypeScreensSectionEditor: '' as AnyComponent,
+    ScreenEditor: '' as AnyComponent
   },
   icon: {
     Workflows: '' as Asset,
     Workflow: '' as Asset,
     Transition: '' as Asset,
-    Check: '' as Asset
+    Check: '' as Asset,
+    Screens: '' as Asset,
+    Screen: '' as Asset,
+    ScreenTab: '' as Asset
   },
   string: {
     Workflow: '' as IntlString,
@@ -97,6 +102,7 @@ export default plugin(workflowId, {
     Untitled: '' as IntlString,
     AnyStatus: '' as IntlString,
     Workflows: '' as IntlString,
+    Screens: '' as IntlString,
     DeleteWorkflow: '' as IntlString,
     DeleteWorkflowConfirm: '' as IntlString,
     DeleteWorkflowTransition: '' as IntlString,
@@ -146,6 +152,17 @@ export default plugin(workflowId, {
     Requests: '' as IntlString,
     WorkflowRequest: '' as IntlString,
     ScreenRequest: '' as IntlString,
-    ScreenRequestDescription: '' as IntlString
+    ScreenRequestDescription: '' as IntlString,
+    TabNumbered: '' as IntlString,
+    DeleteScreen: '' as IntlString,
+    DeleteScreenConfirm: '' as IntlString,
+    DeleteScreenTab: '' as IntlString,
+    DeleteScreenTabConfirm: '' as IntlString,
+    AddTab: '' as IntlString,
+    AddField: '' as IntlString,
+    TabName: '' as IntlString,
+    ConfigureScreen: '' as IntlString,
+    ScreenRequestPresenter: '' as IntlString,
+    ScreenNotSelected: '' as IntlString
   }
 })

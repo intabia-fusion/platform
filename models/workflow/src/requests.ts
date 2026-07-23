@@ -25,7 +25,7 @@ export function defineRequests (builder: Builder): void {
     {
       label: workflow.string.ScreenRequest,
       description: workflow.string.ScreenRequestDescription,
-      icon: workflow.icon.Transition,
+      icon: workflow.icon.Screen,
       order: 10,
       editor: workflow.requestEditor.ScreenRequest,
       presenter: workflow.requestPresenter.ScreenRequest

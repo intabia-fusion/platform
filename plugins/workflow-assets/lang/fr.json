@@ -53,6 +53,7 @@
     "Transition": "Transition",
     "AnyStatus": "Tout statut",
     "Screen": "Écran",
+    "Screens": "Écrans",
     "ScreenTab": "Onglet d'écran",
     "ScreenField": "Champ d'écran",
     "FieldId": "ID du champ",
@@ -62,6 +63,7 @@
     "Requests": "Demandes",
     "WorkflowRequest": "Demande de workflow",
     "ScreenRequest": "Afficher l'écran",
-    "ScreenRequestDescription": "Afficher un écran personnalisé pour demander la saisie lors de la transition"
+    "ScreenRequestDescription": "Afficher un écran personnalisé pour demander la saisie lors de la transition",
+    "TabNumbered": "Onglet {num}"
   }
 }

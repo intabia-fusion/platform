@@ -53,6 +53,7 @@
     "Transition": "Переход",
     "AnyStatus": "Любой статус",
     "Screen": "Экран",
+    "Screens": "Экраны",
     "ScreenTab": "Вкладка экрана",
     "ScreenField": "Поле экрана",
     "FieldId": "ID поля",
@@ -62,6 +63,17 @@
     "Requests": "Запросы",
     "WorkflowRequest": "Запрос воркфлоу",
     "ScreenRequest": "Показать экран",
-    "ScreenRequestDescription": "Показать кастомный экран для запроса ввода данных при переходе"
+    "ScreenRequestDescription": "Показать кастомный экран для запроса ввода данных при переходе",
+    "TabNumbered": "Вкладка {num}",
+    "DeleteScreen": "Удалить экран",
+    "DeleteScreenConfirm": "Вы действительно хотите удалить экран \"{name}\"?",
+    "DeleteScreenTab": "Удалить вкладку",
+    "DeleteScreenTabConfirm": "Вы действительно хотите удалить вкладку \"{name}\"? Все поля внутри неё будут удалены.",
+    "AddTab": "+ Добавить вкладку",
+    "AddField": "+ Добавить поле",
+    "TabName": "Название вкладки",
+    "ConfigureScreen": "Настроить экран",
+    "ScreenRequestPresenter": "Обновить поля на экране «{name}»",
+    "ScreenNotSelected": "Экран не выбран"
   }
 }

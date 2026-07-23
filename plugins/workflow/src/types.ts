@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Doc, Ref, Status, AttachedDoc, Client } from '@hcengineering/core'
+import type { Class, Doc, Ref, Status, AttachedDoc, Client } from '@hcengineering/core'
 import type { Project, TaskType, ProjectType, Rank, Task } from '@hcengineering/task'
 import type { Asset, IntlString, Resource } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui'
@@ -91,6 +91,7 @@ export interface Screen extends Doc {
   name: string
   description?: string
   projectType: Ref<ProjectType>
+  targetClass?: Ref<Class<Task>>
   tabs?: number
 }
 

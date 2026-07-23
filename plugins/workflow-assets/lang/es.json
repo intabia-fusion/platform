@@ -53,6 +53,7 @@
     "Transition": "Transición",
     "AnyStatus": "Cualquier estado",
     "Screen": "Pantalla",
+    "Screens": "Pantallas",
     "ScreenTab": "Pestaña de pantalla",
     "ScreenField": "Campo de pantalla",
     "FieldId": "ID de campo",
@@ -62,6 +63,8 @@
     "Requests": "Solicitudes",
     "WorkflowRequest": "Solicitud de flujo de trabajo",
     "ScreenRequest": "Mostrar pantalla",
-    "ScreenRequestDescription": "Mostrar una pantalla personalizada para solicitar datos durante la transición"
+    "ScreenRequestDescription": "Mostrar una pantalla personalizada para solicitar datos durante la transición",
+    "TabNumbered": "Pestaña {num}",
+    "ConfigureScreen": "Configurar pantalla"
   }
 }

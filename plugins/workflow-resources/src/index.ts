@@ -17,7 +17,11 @@ import '@hcengineering/platform-rig/profiles/ui/svelte'
 import type { Resources } from '@hcengineering/platform'
 
 import ProjectTypeWorkflowsSectionEditor from './components/ProjectTypeWorkflowsSectionEditor.svelte'
+import ProjectTypeScreensSectionEditor from './components/ProjectTypeScreensSectionEditor.svelte'
 import WorkflowEditor from './components/editor/WorkflowEditor.svelte'
+import ScreenEditor from './components/editor/ScreenEditor.svelte'
+import ScreenRequestEditor from './components/requests/editors/ScreenRequestEditor.svelte'
+import ScreenRequestPresenter from './components/requests/presenters/ScreenRequestPresenter.svelte'
 import FieldRequired from './components/validators/editors/FieldRequared.svelte'
 import SubtaskStatus from './components/validators/editors/SubtaskStatus.svelte'
 import ParentStatus from './components/validators/editors/ParentStatus.svelte'
@@ -29,7 +33,15 @@ import * as validators from './validators'
 export default async (): Promise<Resources> => ({
   component: {
     ProjectTypeWorkflowsSectionEditor,
-    WorkflowEditor
+    ProjectTypeScreensSectionEditor,
+    WorkflowEditor,
+    ScreenEditor
+  },
+  requestEditor: {
+    ScreenRequest: ScreenRequestEditor
+  },
+  requestPresenter: {
+    ScreenRequest: ScreenRequestPresenter
   },
   validatorExecutor: {
     FieldRequired: validators.FieldRequired,

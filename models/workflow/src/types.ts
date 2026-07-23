@@ -27,7 +27,7 @@ import {
   TypeBoolean
 } from '@hcengineering/model'
 import { TDoc, TAttachedDoc } from '@hcengineering/model-core'
-import task, { type TaskType, type ProjectType, type Rank } from '@hcengineering/task'
+import task, { type TaskType, type ProjectType, type Rank, type Task } from '@hcengineering/task'
 import {
   type Workflow,
   type WorkflowTransition,
@@ -122,6 +122,9 @@ export class TScreen extends TDoc implements Screen {
 
   @Prop(TypeRef(task.class.ProjectType), task.string.ProjectType)
     projectType!: Ref<ProjectType>
+
+  @Prop(TypeRef(core.class.Class), core.string.Class)
+    targetClass?: Ref<Class<Task>>
 
   @Prop(Collection(workflow.class.ScreenTab), workflow.string.ScreenTab)
     tabs!: number

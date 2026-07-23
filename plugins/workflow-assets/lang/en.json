@@ -53,6 +53,7 @@
     "Transition": "Transition",
     "AnyStatus": "Any status",
     "Screen": "Screen",
+    "Screens": "Screens",
     "ScreenTab": "Screen Tab",
     "ScreenField": "Screen Field",
     "FieldId": "Field ID",
@@ -62,6 +63,17 @@
     "Requests": "Requests",
     "WorkflowRequest": "Workflow Request",
     "ScreenRequest": "Show screen",
-    "ScreenRequestDescription": "Display a custom screen to request input during transition"
+    "ScreenRequestDescription": "Display a custom screen to request input during transition",
+    "TabNumbered": "Tab {num}",
+    "DeleteScreen": "Delete screen",
+    "DeleteScreenConfirm": "Are you sure you want to delete \"{name}\" screen?",
+    "DeleteScreenTab": "Delete tab",
+    "DeleteScreenTabConfirm": "Are you sure you want to delete \"{name}\" tab? All fields inside it will be deleted.",
+    "AddTab": "+ Add Tab",
+    "AddField": "+ Add Field",
+    "TabName": "Tab Name",
+    "ConfigureScreen": "Configure screen",
+    "ScreenRequestPresenter": "Update fields in the \"{name}\" screen",
+    "ScreenNotSelected": "Screen not selected"
   }
 }

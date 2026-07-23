@@ -44,6 +44,7 @@
   } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
+  import RequestsNavGroup from '../requests/RequestsNavGroup.svelte'
   import ValidatorsNavGroup from '../validators/ValidatorsNavGroup.svelte'
 
   export let workflow: Workflow
@@ -331,6 +332,7 @@
   <span class="separator" />
 
   {#if transition}
+    <RequestsNavGroup {workflow} {transitions} {statuses} {transition} {taskType} />
     <ValidatorsNavGroup {workflow} {transitions} {statuses} {transition} {taskType} />
   {/if}
   <div slot="footer" class="footer-row flex-row-center w-full justify-between">
