@@ -37,7 +37,9 @@ describe('buildChargeDescription', () => {
   })
 
   test('en phrasing follows the payer locale', async () => {
-    expect(await buildChargeDescription(config, 'business', 'tier', 'purchase', 'en-US')).toBe('Subscription “business”')
+    expect(await buildChargeDescription(config, 'business', 'tier', 'purchase', 'en-US')).toBe(
+      'Subscription “business”'
+    )
     expect(await buildChargeDescription(config, '100gb', 'package', 'update', 'en')).toBe('Package change “100gb”')
   })
 

@@ -478,11 +478,7 @@ export async function notifyPaymentSucceeded (
  * Alert the team that a charge was blocked: no fiscal receipt could be issued (54-ФЗ):
  * no payer contact/the receipt build failed.
  */
-export async function notifyReceiptBlocked (
-  ctx: MeasureContext,
-  config: Config,
-  sub: SubscriptionData
-): Promise<void> {
+export async function notifyReceiptBlocked (ctx: MeasureContext, config: Config, sub: SubscriptionData): Promise<void> {
   const code = (sub.providerData?.lastChargeErrorCode as string) ?? 'RECEIPT_BLOCKED'
   const reason = (sub.providerData?.lastChargeError as string) ?? 'no valid fiscal receipt (54-ФЗ)'
 

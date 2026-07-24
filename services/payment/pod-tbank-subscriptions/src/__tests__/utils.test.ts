@@ -110,7 +110,9 @@ describe('buildPricingFromPlanConfig', () => {
 
 describe('buildTbankReceipt', () => {
   test('email present: single line in minor units, Price = Amount = charge, Quantity = 1', () => {
-    expect(buildTbankReceipt({ email: 'a@b.c', phone: null }, 'usn_income', 'none', 'Subscription: business (tier)', 49900)).toEqual({
+    expect(
+      buildTbankReceipt({ email: 'a@b.c', phone: null }, 'usn_income', 'none', 'Subscription: business (tier)', 49900)
+    ).toEqual({
       Email: 'a@b.c',
       Taxation: 'usn_income',
       Items: [{ Name: 'Subscription: business (tier)', Price: 49900, Quantity: 1, Amount: 49900, Tax: 'none' }]

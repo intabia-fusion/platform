@@ -48,7 +48,12 @@ import {
   type PlanPricing,
   type TbankReceipt
 } from './utils'
-import { notifyPaymentFailed, notifyPaymentSucceeded, notifyReceiptBlocked, buildChargeDescription } from './notifications'
+import {
+  notifyPaymentFailed,
+  notifyPaymentSucceeded,
+  notifyReceiptBlocked,
+  buildChargeDescription
+} from './notifications'
 import type { TbankWebhookNotification, CreateSubscriptionRequest, UpdatePlanRequest, BillingPeriod } from './types'
 
 // Link lifetime = how long the bank keeps the link payable (RedirectDueDate). Lease = heartbeat window
@@ -303,7 +308,12 @@ async function handleCreateSubscription (
         if (err instanceof MissingReceiptContactError) {
           ctx.warn('Checkout blocked: no receipt contact (54-ФЗ)', { workspaceUuid, accountUuid, planKey })
           await storage.abandonCheckout(intentId).catch(() => {})
-          res.status(422).json({ reason: 'no_receipt_contact', error: 'A payer email or phone is required to issue a fiscal receipt' })
+          res
+            .status(422)
+            .json({
+              reason: 'no_receipt_contact',
+              error: 'A payer email or phone is required to issue a fiscal receipt'
+            })
           return
         }
         throw err
@@ -712,9 +722,18 @@ export async function handleUpdatePlan (
         receipt = await resolveReceipt(ctx, storage, config, sub.accountUuid, description, chargeAmount)
       } catch (err) {
         if (err instanceof MissingReceiptContactError) {
-          ctx.warn('Plan-update checkout blocked: no receipt contact (54-ФЗ)', { subId: sub.id, accountUuid: sub.accountUuid, newPlan })
+          ctx.warn('Plan-update checkout blocked: no receipt contact (54-ФЗ)', {
+            subId: sub.id,
+            accountUuid: sub.accountUuid,
+            newPlan
+          })
           await storage.abandonCheckout(intentId).catch(() => {})
-          res.status(422).json({ reason: 'no_receipt_contact', error: 'A payer email or phone is required to issue a fiscal receipt' })
+          res
+            .status(422)
+            .json({
+              reason: 'no_receipt_contact',
+              error: 'A payer email or phone is required to issue a fiscal receipt'
+            })
           return
         }
         throw err
@@ -864,10 +883,17 @@ async function handleRetryPayment (
     if (err instanceof MissingReceiptContactError) {
       ctx.error('Manual retry blocked: no receipt contact', { subId: sub.id })
       // Record the reason on the sub + alert the team (operational 54-ФЗ block).
-      const blockedData = buildFailedChargeSubscription(sub, 'NO_RECEIPT_CONTACT', 'no receipt contact (54-ФЗ)', MANUAL_RETRY_INTERVAL_MS)
+      const blockedData = buildFailedChargeSubscription(
+        sub,
+        'NO_RECEIPT_CONTACT',
+        'no receipt contact (54-ФЗ)',
+        MANUAL_RETRY_INTERVAL_MS
+      )
       await storage.upsert(blockedData)
       await notifyReceiptBlocked(ctx, config, blockedData)
-      res.status(422).json({ reason: 'no_receipt_contact', error: 'A payer email or phone is required to issue a fiscal receipt' })
+      res
+        .status(422)
+        .json({ reason: 'no_receipt_contact', error: 'A payer email or phone is required to issue a fiscal receipt' })
       return
     }
     ctx.error('Manual retry payment error', { subId: sub.id, err })
@@ -1209,7 +1235,10 @@ function buildCanceledSubscriptionData (sub: SubscriptionData, status?: string):
 }
 
 // Payer locale for the charge Description. Optional, falls back to the default language.
-export async function resolveAccountLocale (storage: SubscriptionStorage, accountUuid: AccountUuid): Promise<string | null> {
+export async function resolveAccountLocale (
+  storage: SubscriptionStorage,
+  accountUuid: AccountUuid
+): Promise<string | null> {
   try {
     return (await storage.getAccountContact(accountUuid)).locale
   } catch {
@@ -1220,7 +1249,10 @@ export async function resolveAccountLocale (storage: SubscriptionStorage, accoun
 // Thrown when a fiscal receipt cannot be built (no payer contact, or the contact lookup failed).
 // A charge WITHOUT a receipt would violate 54-ФЗ, so callers must abort the payment on this.
 export class MissingReceiptContactError extends Error {
-  constructor (public readonly accountUuid: AccountUuid, cause?: string) {
+  constructor (
+    public readonly accountUuid: AccountUuid,
+    cause?: string
+  ) {
     super(`Cannot build fiscal receipt for ${accountUuid}: no payer contact${cause !== undefined ? ` (${cause})` : ''}`)
     this.name = 'MissingReceiptContactError'
   }
@@ -1242,12 +1274,17 @@ export async function resolveReceipt (
     const c = await storage.getAccountContact(accountUuid)
     contact = { email: c.email, phone: c.phone }
   } catch (err: any) {
-    ctx.error('Receipt contact lookup failed — aborting charge', { account: accountUuid, err: err?.message ?? String(err) })
+    ctx.error('Receipt contact lookup failed — aborting charge', {
+      account: accountUuid,
+      err: err?.message ?? String(err)
+    })
     throw new MissingReceiptContactError(accountUuid, 'lookup failed')
   }
   const receipt = buildTbankReceipt(contact, config.TbankTaxation, config.TbankVatTax, itemName, amount)
   if (receipt === undefined) {
-    ctx.error('No email or phone for account — aborting charge to avoid a receipt-less payment', { account: accountUuid })
+    ctx.error('No email or phone for account — aborting charge to avoid a receipt-less payment', {
+      account: accountUuid
+    })
     throw new MissingReceiptContactError(accountUuid)
   }
   return receipt
