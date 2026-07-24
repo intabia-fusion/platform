@@ -18,7 +18,7 @@ import { type SubscriptionData, type Subscription, SubscriptionStatus } from '@h
 import type TbankPayments from 'tbank-payments'
 import type { Config } from './config'
 import { SubscriptionStorage } from './storage'
-import { notifyPaymentFailed, notifyPaymentSucceeded } from './notifications'
+import { notifyPaymentFailed, notifyPaymentSucceeded, notifyReceiptBlocked, buildChargeDescription } from './notifications'
 import {
   isPendingFirstPayment,
   isFailedRenewal,
@@ -27,7 +27,7 @@ import {
   buildChargeErrorSubscription,
   chargeSubscriptionRecurrent
 } from './utils'
-import { removeSubscriptionCard } from './server'
+import { removeSubscriptionCard, resolveReceipt, MissingReceiptContactError, resolveAccountLocale } from './server'
 
 export interface SchedulerHandle {
   close: () => Promise<void>
@@ -119,12 +119,45 @@ async function renewSubscription (
   try {
     // Fresh Init on sub.amount (the current renewal price, post any plan/seat change) + Charge — a bare
     // chargeRecurrent on the original providerSubscriptionId charges the old amount / is rejected by tbank.
+    const amount = sub.amount ?? 0
+    // Payer-facing, localized order description (names the receipt line + shown by TBank to the customer).
+    const locale = await resolveAccountLocale(storage, sub.accountUuid)
+    const description = await buildChargeDescription(config, sub.plan, sub.type, 'renewal', locale)
+    // Build the receipt BEFORE charging. ANY failure here (no contact, lookup error, unexpected) aborts
+    // WITHOUT charging (54-ФЗ). Mark 'failed', do not assume paid.
+    let receipt
+    try {
+      receipt = await resolveReceipt(ctx, storage, config, sub.accountUuid, description, amount)
+    } catch (err: any) {
+      const noContact = err instanceof MissingReceiptContactError
+      const reason = noContact ? 'no receipt contact (54-ФЗ)' : `receipt build failed (54-ФЗ): ${err?.message ?? String(err)}`
+      await storage.markCharge(intentId, 'failed')
+      await storage.logOperation({
+        operation: 'charge_recurrent',
+        status: 'failed',
+        orderId: `renew:${sub.id}:${sub.periodEnd ?? 0}`,
+        actionId: renewActionId,
+        actor: 'system',
+        subscriptionId: sub.id,
+        workspaceUuid: sub.workspaceUuid,
+        accountUuid: sub.accountUuid,
+        amount: sub.amount,
+        raw: { message: reason, attempt, plan: sub.plan, seats: sub.providerData?.quantity }
+      })
+      const updatedData = buildFailedChargeSubscription(sub, noContact ? 'NO_RECEIPT_CONTACT' : 'RECEIPT_BUILD_FAILED', reason, RETRY_INTERVAL_MS)
+      await storage.upsert(updatedData)
+      ctx.error('Renewal aborted before charge: receipt unavailable, marked PastDue', { subId: sub.id, reason })
+      // Operational alert to the team on EVERY occurrence.
+      await notifyReceiptBlocked(ctx, config, updatedData)
+      return
+    }
     const chargeResult = await chargeSubscriptionRecurrent(
       tbank,
       sub,
-      sub.amount ?? 0,
+      amount,
       `renew:${sub.id}:${sub.periodEnd ?? 0}`,
-      `Subscription renewal: ${sub.plan} (${sub.type})`
+      description,
+      receipt
     )
 
     await storage.logOperation({

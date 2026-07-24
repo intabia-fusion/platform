@@ -30,7 +30,8 @@ export default {
     attempt: 'Попытка',
     kind: 'Тип',
     customer: 'Плательщик',
-    subscription: 'Подписка'
+    subscription: 'Подписка',
+    cause: 'Причина'
   },
   // Russian labels for the transaction kind / failure reason enums (used in subject + rows).
   kind: {

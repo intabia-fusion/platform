@@ -48,20 +48,23 @@ function makeStorage (sub: any, claim: any, extra: Partial<Record<string, any>> 
     heartbeatCharge: jest.fn().mockResolvedValue(undefined),
     upsert: jest.fn().mockResolvedValue(undefined),
     logOperation: jest.fn().mockResolvedValue(undefined),
-    getAccountContact: jest.fn().mockResolvedValue({ email: null, locale: null }),
+    getAccountContact: jest.fn().mockResolvedValue({ email: 'payer@x.com', phone: null, locale: 'ru' }),
     ...extra
   }
 }
 
-const config: any = { GracePeriodDays: 7 }
+const config: any = { GracePeriodDays: 7, TbankTaxation: 'usn_income', TbankVatTax: 'none' }
 
 // Start the scheduler, flush the immediate renewal-cycle microtasks, then close it.
-async function runOneTick (tbank: any, storage: any): Promise<void> {
-  const handle = startScheduler(makeCtx(), tbank, storage, config, 60)
+// Returns the ctx so tests can assert logged markers. Accepts a config override for mail-alert tests.
+async function runOneTick (tbank: any, storage: any, cfg: any = config): Promise<{ ctx: any }> {
+  const ctx = makeCtx()
+  const handle = startScheduler(ctx, tbank, storage, cfg, 60)
   await Promise.resolve()
   await Promise.resolve()
   await Promise.resolve()
   await handle.close()
+  return { ctx }
 }
 
 beforeEach(() => {
@@ -137,6 +140,100 @@ describe('scheduler renewal claim outcomes', () => {
     expect(logged[0].raw.attempt).toBe(1)
     const renewed = storage.upsert.mock.calls.find((c: any[]) => c[0].providerData?.status === 'ACTIVE')
     expect(renewed).toBeDefined()
+  })
+
+  test('renewal Init carries a fiscal receipt when the payer email resolves', async () => {
+    const storage = makeStorage(baseSub, { claimed: true, status: 'new', intentId: 'i1' })
+    const tbank: any = {
+      initPayment: jest.fn().mockResolvedValue({ Success: true, PaymentId: 'init_1' }),
+      chargeRecurrent: jest.fn().mockResolvedValue({ Success: true, PaymentId: 'pay_1' })
+    }
+    await runOneTick(tbank, storage)
+    const receipt = tbank.initPayment.mock.calls[0][0].Receipt
+    expect(receipt.Email).toBe('payer@x.com')
+    expect(receipt.Taxation).toBe('usn_income')
+    expect(receipt.Items[0].Amount).toBe(baseSub.amount)
+  })
+
+  test('no email -> receipt falls back to the account phone', async () => {
+    const storage = makeStorage(
+      baseSub,
+      { claimed: true, status: 'new', intentId: 'i1' },
+      { getAccountContact: jest.fn().mockResolvedValue({ email: null, phone: '+79001234567', locale: 'ru' }) }
+    )
+    const tbank: any = {
+      initPayment: jest.fn().mockResolvedValue({ Success: true, PaymentId: 'init_1' }),
+      chargeRecurrent: jest.fn().mockResolvedValue({ Success: true, PaymentId: 'pay_1' })
+    }
+    await runOneTick(tbank, storage)
+    const receipt = tbank.initPayment.mock.calls[0][0].Receipt
+    expect(receipt.Phone).toBe('+79001234567')
+    expect(receipt.Email).toBeUndefined()
+  })
+
+  test('no email and no phone -> abort WITHOUT charging, mark failed, PastDue (54-ФЗ)', async () => {
+    const storage = makeStorage(
+      baseSub,
+      { claimed: true, status: 'new', intentId: 'i1' },
+      { getAccountContact: jest.fn().mockResolvedValue({ email: null, phone: null, locale: null }) }
+    )
+    global.fetch = jest.fn() as any // no MailUrl, so no HTTP
+    const tbank: any = { initPayment: jest.fn(), chargeRecurrent: jest.fn() }
+    const { ctx } = await runOneTick(tbank, storage)
+    // Never initiated or charged — no receipt-less payment.
+    expect(tbank.initPayment).not.toHaveBeenCalled()
+    expect(tbank.chargeRecurrent).not.toHaveBeenCalled()
+    // Marked failed (NOT pending): the lease-expiry takeover must not assume-pay this.
+    expect(storage.markCharge).toHaveBeenCalledWith('i1', 'failed')
+    const failed = storage.upsert.mock.calls.find((c: any[]) => c[0].providerData?.status === 'CHARGE_FAILED')
+    expect(failed).toBeDefined()
+    expect(failed[0].status).toBe(SubscriptionStatus.PastDue)
+    // Operational alert marker is always logged (fires external alerting even without BillingEmails).
+    const marker = ctx.error.mock.calls.find((c: any[]) => c[1]?.marker === 'receipt_blocked')
+    expect(marker).toBeDefined()
+    expect(marker[1].code).toBe('NO_RECEIPT_CONTACT')
+  })
+
+  test('no-contact renewal with BillingEmails set -> sends a team alert email', async () => {
+    const storage = makeStorage(
+      baseSub,
+      { claimed: true, status: 'new', intentId: 'i1' },
+      { getAccountContact: jest.fn().mockResolvedValue({ email: null, phone: null, locale: null }) }
+    )
+    const mailConfig = { ...config, MailUrl: 'http://mail', MailFrom: 'noreply@x.com', BillingEmails: ['ops@x.com'] }
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true }) as any
+    global.fetch = fetchMock
+    const tbank: any = { initPayment: jest.fn(), chargeRecurrent: jest.fn() }
+    await runOneTick(tbank, storage, mailConfig)
+    // A team alert email was POSTed to pod-mail; no charge happened.
+    expect(tbank.chargeRecurrent).not.toHaveBeenCalled()
+    const mailCall = fetchMock.mock.calls.find((c: any[]) => String(c[0]).endsWith('/send'))
+    expect(mailCall).toBeDefined()
+    const body = JSON.parse(mailCall[1].body)
+    expect(body.to).toBe('ops@x.com')
+    expect(body.subject).toContain('54-ФЗ')
+  })
+
+  test('account lookup throws during receipt build -> abort WITHOUT charging, mark failed, PastDue (not unknown/pending)', async () => {
+    // A lookup failure aborts the renewal before any charge. It must NOT leave the intent pending —
+    // a pending intent gets assumed-paid by the lease takeover -> a free, receipt-less renewal.
+    const storage = makeStorage(
+      baseSub,
+      { claimed: true, status: 'new', intentId: 'i1' },
+      { getAccountContact: jest.fn().mockRejectedValue(new Error('accounts down')) }
+    )
+    global.fetch = jest.fn() as any // notifyRenewalFailure: no MailUrl, so no HTTP
+    const tbank: any = { initPayment: jest.fn(), chargeRecurrent: jest.fn() }
+    await runOneTick(tbank, storage)
+    expect(tbank.initPayment).not.toHaveBeenCalled()
+    expect(tbank.chargeRecurrent).not.toHaveBeenCalled()
+    // Marked failed, NOT left pending for a lease-expiry assume-paid takeover.
+    expect(storage.markCharge).toHaveBeenCalledWith('i1', 'failed')
+    const logged = storage.logOperation.mock.calls.find((c: any[]) => c[0].operation === 'charge_recurrent')
+    expect(logged[0].status).toBe('failed') // 'failed', not 'unknown'
+    const failed = storage.upsert.mock.calls.find((c: any[]) => c[0].providerData?.status === 'CHARGE_FAILED')
+    expect(failed).toBeDefined()
+    expect(failed[0].status).toBe(SubscriptionStatus.PastDue)
   })
 
   test('chargeRecurrent Success=false -> markCharge failed, logOperation failed, PastDue upsert, notify', async () => {

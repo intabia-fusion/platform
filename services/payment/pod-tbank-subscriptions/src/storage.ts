@@ -208,16 +208,19 @@ export class SubscriptionStorage {
   }
 
   /**
-   * Resolve the contact info (name + email + UI locale) of a subscription owner.
+   * Resolve the contact info (name + email + phone + UI locale) of a subscription owner.
    * `email`: first email-type social id (null when none).
    * `name`: person's display name (null when empty).
+   * `phone`: person's phone (null when empty).
    * `locale`: account's preferred language (null when unset) — callers fall back to a default.
    */
   async getAccountContact (
     accountUuid: AccountUuid
-  ): Promise<{ name: string | null, email: string | null, locale: string | null }> {
+  ): Promise<{ name: string | null, email: string | null, phone: string | null, locale: string | null }> {
     const personInfo = await this.accountClient.getPersonInfo(accountUuid)
     const emailSocialId = personInfo.socialIds.find((s) => s.type === SocialIdType.EMAIL && s.isDeleted !== true)
+    // Phone is the 54-ФЗ receipt fallback when the account has no email (phone-only signup).
+    const phoneSocialId = personInfo.socialIds.find((s) => s.type === SocialIdType.PHONE && s.isDeleted !== true)
 
     let locale: string | null = null
     try {
@@ -228,6 +231,6 @@ export class SubscriptionStorage {
     }
 
     const name = personInfo.name !== undefined && personInfo.name !== '' ? personInfo.name : null
-    return { name, email: emailSocialId?.value ?? null, locale }
+    return { name, email: emailSocialId?.value ?? null, phone: phoneSocialId?.value ?? null, locale }
   }
 }

@@ -63,7 +63,8 @@ function makeStorage (claim: any, sub = baseSub): any {
     upsert: jest.fn().mockResolvedValue(undefined),
     reclaimStaleCharge: jest.fn().mockResolvedValue(false),
     abandonCheckout: jest.fn().mockResolvedValue(undefined),
-    logOperation: jest.fn().mockResolvedValue(undefined)
+    logOperation: jest.fn().mockResolvedValue(undefined),
+    getAccountContact: jest.fn().mockResolvedValue({ email: 'payer@x.com', phone: null, locale: 'ru' })
   }
 }
 
@@ -71,7 +72,7 @@ const tbank: any = {
   initPayment: jest.fn().mockResolvedValue({ PaymentId: 999, PaymentURL: 'https://tbank/pay/999' }),
   chargeRecurrent: jest.fn().mockResolvedValue({ Success: true, PaymentId: 'chg_1', Status: 'CONFIRMED' })
 }
-const config: any = { TbankTerminalKey: 'term' }
+const config: any = { TbankTerminalKey: 'term', TbankTaxation: 'usn_income', TbankVatTax: 'none' }
 
 // Drive handleUpdatePlan with a storage stub + request body; returns the response recorder.
 async function run (storage: any, body: any, subPlans = plans): Promise<any> {

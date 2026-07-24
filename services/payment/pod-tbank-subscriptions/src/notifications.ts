@@ -178,9 +178,61 @@ function serviceHtml (lines: string[], workspace: string): string {
 }
 
 /** Normalize an account locale (e.g. 'en-US', 'ru') to a supported language, falling back to default. */
-function resolveLang (locale: string | null): Lang {
+export function resolveLang (locale: string | null): Lang {
   const short = (locale ?? '').slice(0, 2).toLowerCase()
   return short in RECEIPT ? (short as Lang) : DEFAULT_LANG
+}
+
+/** The charge that a payment Description / receipt line describes. */
+export type ChargeKind = 'purchase' | 'update' | 'renewal' | 'retry'
+
+// Localized "<action> <plan>" copy for the Init Description — shown to the payer by TBank (order
+// description in its email) and used as the fiscal-receipt line name (54-ФЗ). Kept as data.
+const CHARGE_DESCRIPTION: Record<Lang, { tier: Record<ChargeKind, string>, package: Record<ChargeKind, string> }> = {
+  ru: {
+    tier: {
+      purchase: 'Подписка «{plan}»',
+      update: 'Изменение подписки «{plan}»',
+      renewal: 'Продление подписки «{plan}»',
+      retry: 'Оплата подписки «{plan}»'
+    },
+    package: {
+      purchase: 'Пакет «{plan}»',
+      update: 'Изменение пакета «{plan}»',
+      renewal: 'Продление пакета «{plan}»',
+      retry: 'Оплата пакета «{plan}»'
+    }
+  },
+  en: {
+    tier: {
+      purchase: 'Subscription “{plan}”',
+      update: 'Subscription change “{plan}”',
+      renewal: 'Subscription renewal “{plan}”',
+      retry: 'Subscription payment “{plan}”'
+    },
+    package: {
+      purchase: 'Package “{plan}”',
+      update: 'Package change “{plan}”',
+      renewal: 'Package renewal “{plan}”',
+      retry: 'Package payment “{plan}”'
+    }
+  }
+}
+
+/**
+ * Build the payer-facing charge Description (localized to the payer, human plan label).
+ */
+export async function buildChargeDescription (
+  config: Config,
+  plan: string,
+  type: string,
+  kind: ChargeKind,
+  locale: string | null
+): Promise<string> {
+  const lang = resolveLang(locale)
+  const label = await getPlanLabel(config, plan, type, lang)
+  const family = type === 'package' ? CHARGE_DESCRIPTION[lang].package : CHARGE_DESCRIPTION[lang].tier
+  return fill(family[kind], { plan: label })
 }
 
 const PLAN_CONFIG_TTL_MS = 10 * 60 * 1000 // plan config is static; refresh every 10 min
@@ -260,11 +312,16 @@ export async function notifyPaymentFailed (
     const reasonRu = SERVICE.reason[reason]
     const typeRu = SERVICE.type[sub.type] ?? sub.type
     const l = SERVICE.labels
+    // Decline reason from the last charge, so the team sees why (card code / our-side receipt block).
+    const code = sub.providerData?.lastChargeErrorCode as string | undefined
+    const causeMsg = sub.providerData?.lastChargeError as string | undefined
+    const cause = code !== undefined || causeMsg !== undefined ? `${code ?? '-'} — ${causeMsg ?? '-'}` : undefined
     const lines = [
       `${l.workspace}: ${workspace}`,
       `${l.plan}: ${planRu} (${typeRu})`,
       `${l.amount}: ${formatAmount(sub.amount)}`,
       `${l.attempt}: ${attempt} из 3 (${reasonRu})`,
+      ...(cause !== undefined ? [`${l.cause}: ${cause}`] : []),
       `${l.customer}: ${payerEmail ?? sub.accountUuid}`,
       `${l.subscription}: ${sub.id ?? '-'}`
     ]
@@ -413,6 +470,57 @@ export async function notifyPaymentSucceeded (
       } catch (err: any) {
         ctx.error('Billing service email error', { to, err: err?.message ?? String(err) })
       }
+    }
+  }
+}
+
+/**
+ * Alert the team that a charge was blocked: no fiscal receipt could be issued (54-ФЗ):
+ * no payer contact/the receipt build failed.
+ */
+export async function notifyReceiptBlocked (
+  ctx: MeasureContext,
+  config: Config,
+  sub: SubscriptionData
+): Promise<void> {
+  const code = (sub.providerData?.lastChargeErrorCode as string) ?? 'RECEIPT_BLOCKED'
+  const reason = (sub.providerData?.lastChargeError as string) ?? 'no valid fiscal receipt (54-ФЗ)'
+
+  ctx.error('receipt_blocked: charge blocked, fiscal receipt cannot be issued (54-ФЗ)', {
+    marker: 'receipt_blocked',
+    code,
+    reason,
+    subId: sub.id,
+    workspaceUuid: sub.workspaceUuid,
+    accountUuid: sub.accountUuid,
+    plan: `${sub.plan} (${sub.type})`
+  })
+
+  if (config.MailUrl === undefined || config.MailFrom === undefined) return
+  if (config.BillingEmails === undefined || config.BillingEmails.length === 0) return
+
+  const lines = [
+    'Продление заблокировано: невозможно выдать фискальный чек (54-ФЗ). Требуется вмешательство.',
+    '',
+    `Причина: ${code} — ${reason}`,
+    `Workspace: ${sub.workspaceUuid}`,
+    `Account: ${sub.accountUuid}`,
+    `Plan: ${sub.plan} (${sub.type})`,
+    `Amount: ${((sub.amount ?? 0) / 100).toFixed(2)} RUB`,
+    `Subscription: ${sub.id ?? '-'}`,
+    '',
+    'Клиенту письмо не отправлено (нет контакта). Добавьте email/телефон плательщику или проверьте интеграцию.'
+  ]
+  const msg: MailMessage = {
+    subject: `[billing][54-ФЗ] Продление заблокировано без чека: ${sub.plan} (${code})`,
+    text: lines.join('\n'),
+    html: `<pre>${lines.join('\n')}</pre>`
+  }
+  for (const to of config.BillingEmails) {
+    try {
+      await sendMail(config, to, msg)
+    } catch (err: any) {
+      ctx.error('Receipt-blocked service email error', { to, err: err?.message ?? String(err) })
     }
   }
 }
