@@ -129,12 +129,18 @@ export class UsageWorker {
 
   // Refresh usage + limit state for the given workspaces now (deduped, rate-limited). Picks up
   // brand-new workspaces on plan assignment, which the periodic loop skips until they are visited.
-  async recomputeWorkspacesNow (ctx: MeasureContext, workspaces: WorkspaceUuid[]): Promise<void> {
+  async recomputeWorkspacesNow (
+    ctx: MeasureContext,
+    workspaces: WorkspaceUuid[],
+    heartbeat?: () => Promise<void>
+  ): Promise<void> {
     const now = Date.now()
     const limiter = new RateLimiter(10)
     for (const workspace of new Set(workspaces)) {
       await limiter.add(async () => {
         await this.refreshWorkspace(ctx, now, workspace)
+        // Keep consumer membership alive: each workspace refresh is several account/storage round-trips.
+        await heartbeat?.()
       })
     }
     await limiter.waitProcessing()

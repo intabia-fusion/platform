@@ -36,7 +36,7 @@ import config from './config'
 import { createDb } from './db/postgres'
 import { LimitsEngine } from './limits'
 import { createServer, listen } from './server'
-import { type BillingMessage } from './types'
+import { type BillingMessage, type BillingUsageMessage } from './types'
 import { UsageWorker } from './usage'
 import { storageConfigFromEnv } from '@hcengineering/server-storage'
 
@@ -84,12 +84,14 @@ export const main = async (): Promise<void> => {
     metricsContext,
     QueueTopic.BillingUsage,
     'billing-limits',
-    async (ctx, msgs) => {
+    async (ctx, msgs, queue) => {
+      // LiveKit records go straight to their tables; usage deltas are collected and applied as one batch.
+      const usage: BillingUsageMessage[] = []
       for (const msg of msgs) {
         try {
           const value = msg.value
           if (value.kind === 'usage') {
-            await engine.processUsageDelta(ctx, value)
+            usage.push(value)
           } else if (value.kind === 'session') {
             await db.setLiveKitSessions(ctx, value.data)
           } else if (value.kind === 'egress') {
@@ -103,8 +105,17 @@ export const main = async (): Promise<void> => {
           throw err
         }
       }
+      if (usage.length === 0) return
+      try {
+        // Aggregate per workspace/metric. Rethrow so an accumulate (dedup-write) failure retries;
+        // apply failures are best-effort, corrected by the hourly reconcile (see processUsageBatch).
+        await engine.processUsageBatch(ctx, usage, queue.heartbeat)
+      } catch (err: any) {
+        ctx.error('failed to process usage batch', { size: usage.length, err })
+        throw err
+      }
     },
-    { batchSize: 100, batchTimeout: 1000 }
+    { batchSize: 100, batchTimeout: 1000, sessionTimeout: 120000 }
   )
 
   // Plan changes (published by account-service) re-evaluate volume limits without a restart.
@@ -112,7 +123,7 @@ export const main = async (): Promise<void> => {
     metricsContext,
     QueueTopic.Workspace,
     'billing-plan',
-    async (ctx, msgs) => {
+    async (ctx, msgs, queue) => {
       // A plan or membership change may target a workspace the periodic loop skips until visited;
       // recompute now so the Usage bar seat count refreshes immediately.
       const workspaces = msgs
@@ -123,10 +134,10 @@ export const main = async (): Promise<void> => {
         })
         .map((m) => m.workspace)
       if (workspaces.length > 0) {
-        await worker.recomputeWorkspacesNow(ctx, workspaces)
+        await worker.recomputeWorkspacesNow(ctx, workspaces, queue.heartbeat)
       }
     },
-    { batchSize: 50, batchTimeout: 500 }
+    { batchSize: 50, batchTimeout: 500, sessionTimeout: 120000 }
   )
 
   // Publish already-exhausted states on startup (best-effort, non-blocking)

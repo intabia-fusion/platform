@@ -63,7 +63,54 @@ export class LimitsEngine {
       return
     }
     if (amount === 0) return
+    await this.applyDelta(ctx, workspace, metric, amount)
+  }
 
+  /**
+   * Dedup+accumulate every ref, then sum new amounts per (workspace, metric) so a burst on one
+   * workspace costs one apply instead of N. metric->category is 1:1, so grouping never collides.
+   */
+  async processUsageBatch (
+    ctx: MeasureContext,
+    msgs: BillingUsageMessage[],
+    heartbeat?: () => Promise<void>
+  ): Promise<void> {
+    const groups = new Map<string, { workspace: WorkspaceUuid, metric: UsageMetric, amount: number }>()
+    for (const { workspace, metric, amount, ref } of msgs) {
+      const isNew = await this.db.accumulateUsageDelta(ctx, workspace, metric, amount, ref)
+      if (!isNew) {
+        ctx.info('billing-usage duplicate ref, skipping', { workspace, metric, ref })
+        continue
+      }
+      if (amount === 0) continue
+      const key = `${workspace}:${metric}`
+      const g = groups.get(key)
+      if (g === undefined) groups.set(key, { workspace, metric, amount })
+      else g.amount += amount
+    }
+    // Ref is already accumulated (dedup) so a batch retry re-applies nothing. Swallow apply failures:
+    // the hourly reconcile recomputes limit_state from absolute usage, correcting any missed delta.
+    for (const g of groups.values()) {
+      try {
+        await this.applyDelta(ctx, g.workspace, g.metric, g.amount)
+      } catch (err: any) {
+        ctx.error('applyDelta failed; limit_state left for the hourly reconcile', {
+          workspace: g.workspace,
+          metric: g.metric,
+          err
+        })
+      }
+      await heartbeat?.()
+    }
+  }
+
+  /** Apply an aggregated delta to limit_state + usageInfo (edge-triggered LimitsChanged). */
+  private async applyDelta (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    metric: UsageMetric,
+    amount: number
+  ): Promise<void> {
     const category = metricToCategory(metric)
     const subs = await this.accountClient(workspace).getSubscriptions(workspace, false)
     const limitValue = getEffectiveLimit(subs, metric)

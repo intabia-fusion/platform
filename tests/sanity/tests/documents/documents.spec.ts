@@ -252,12 +252,18 @@ test.describe('Documents tests', () => {
     await leftSideMenuPage.clickDocuments()
     await documentsPage.clickOnButtonCreateDocument()
     await documentsPage.createDocument(newDocument)
+    await context.grantPermissions(['clipboard-read'])
     await documentsPage.selectMoreActionOfDocument(newDocument.title, 'Lock')
     await documentsPage.selectMoreActionOfDocument(newDocument.title, 'Copy link')
-    await context.grantPermissions(['clipboard-read'])
-    const handle = await page.evaluateHandle(() => navigator.clipboard.readText())
-    const clipboardContent = await handle.jsonValue()
-    await page.goto(`${clipboardContent}`)
+    // 'Copy link' writes the clipboard asynchronously - poll until a real URL lands, else goto('')
+    let clipboardContent = ''
+    await expect
+      .poll(async () => {
+        clipboardContent = await page.evaluate(async () => await navigator.clipboard.readText())
+        return clipboardContent
+      })
+      .toContain('http')
+    await page.goto(clipboardContent)
     await documentContentPage.checkDocumentTitle(newDocument.title)
     await documentContentPage.checkDocumentLocked()
   })
