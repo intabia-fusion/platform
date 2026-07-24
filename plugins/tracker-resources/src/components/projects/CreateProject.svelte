@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022-2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -29,13 +30,15 @@
     notEmpty,
     AccountUuid
   } from '@hcengineering/core'
-  import { Asset } from '@hcengineering/platform'
+  import { Asset, getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { IconWithEmoji, Card, createQuery, getClient } from '@hcengineering/presentation'
-  import task, { ProjectType, TaskType } from '@hcengineering/task'
+  import task, { ProjectType, TaskType, Project as TaskProject } from '@hcengineering/task'
   import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
   import { IssueStatus, Project, TimeReportDayType, TrackerEvents } from '@hcengineering/tracker'
-  import {
+  import ui, {
     Button,
+    ButtonIcon,
+    IconSettings,
     Component,
     EditBox,
     Label,
@@ -44,15 +47,19 @@
     getPlatformColorDef,
     getPlatformColorForTextDef,
     showPopup,
-    themeStore
+    themeStore,
+    IconOptions,
+    IconToDetails, Modal
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { IconPicker } from '@hcengineering/view-resources'
+  import workflow, { Workflow, ProjectWorkflow } from '@hcengineering/workflow'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
 
   import tracker from '../../plugin'
   import StatusSelector from '../issues/StatusSelector.svelte'
+  import ConfigureProjectWorkflowsModal from './ConfigureProjectWorkflowsModal.svelte'
 
   export let project: Project | undefined = undefined
   export let namePlaceholder: string = ''
@@ -115,6 +122,16 @@
       defaultTimeReportDay: project?.defaultTimeReportDay ?? TimeReportDayType.PreviousWorkDay
     }
   }
+
+  function getProjectWorkflowsMapping (): Record<Ref<TaskType>, Ref<Workflow>> {
+    if (project === undefined || !hierarchy.hasMixin(project, workflow.mixin.ProjectWorkflow)) {
+      return {}
+    }
+    const projectWorkflow = hierarchy.as<TaskProject, ProjectWorkflow>(project, workflow.mixin.ProjectWorkflow)
+    return projectWorkflow?.workflows != null ? hierarchy.clone(projectWorkflow.workflows) : {}
+  }
+
+  let workflowsMapping: Record<Ref<TaskType>, Ref<Workflow>> = getProjectWorkflowsMapping()
 
   function getRolesAssignment (): RolesAssignment {
     if (project === undefined || typeType?.targetClass === undefined || roles === undefined) {
@@ -201,6 +218,29 @@
       )
     }
 
+    const initialWorkflowsMapping = getProjectWorkflowsMapping()
+    if (!deepEqual(workflowsMapping, initialWorkflowsMapping)) {
+      if (!hierarchy.hasMixin(project, workflow.mixin.ProjectWorkflow)) {
+        if (Object.keys(workflowsMapping).length > 0) {
+          await client.createMixin<TaskProject, ProjectWorkflow>(
+            project._id,
+            tracker.class.Project,
+            core.space.Space,
+            workflow.mixin.ProjectWorkflow,
+            { workflows: workflowsMapping }
+          )
+        }
+      } else {
+        await client.updateMixin<TaskProject, ProjectWorkflow>(
+          project._id,
+          tracker.class.Project,
+          core.space.Space,
+          workflow.mixin.ProjectWorkflow,
+          { workflows: workflowsMapping }
+        )
+      }
+    }
+
     close()
   }
 
@@ -220,6 +260,8 @@
       (it) => it.parent === typeId && it.ofClass === tracker.class.Issue
     )
   }
+
+  $: taskTypes = typeId !== undefined ? findTaskTypes(typeId) : []
 
   $: if (defaultStatus === undefined && typeId !== undefined) {
     const sts = findTaskTypes(typeId)?.[0]?.statuses
@@ -250,6 +292,16 @@
           typeType.targetClass,
           rolesAssignment ?? {}
         )
+
+        if (Object.keys(workflowsMapping).length > 0) {
+          await client.createMixin<TaskProject, ProjectWorkflow>(
+            projectId,
+            tracker.class.Project,
+            core.space.Space,
+            workflow.mixin.ProjectWorkflow,
+            { workflows: workflowsMapping }
+          )
+        }
 
         close(projectId)
       } else {
@@ -282,6 +334,28 @@
   function handleTypeChange (evt: CustomEvent<Ref<ProjectType>>): void {
     typeId = evt.detail
     defaultStatus = undefined
+    workflowsMapping = {}
+  }
+
+  let isWorkflowConfigure = false
+  function openConfigureWorkflows (): void {
+    if (typeId == null) return
+    isWorkflowConfigure = true
+    showPopup(
+      ConfigureProjectWorkflowsModal,
+      {
+        taskTypes,
+        projectType: typeId,
+        workflowsMapping
+      },
+      'top',
+      (res) => {
+        if (res != null) {
+          workflowsMapping = { ...res }
+        }
+        isWorkflowConfigure = false
+      }
+    )
   }
 
   $: identifier = identifier.toLocaleUpperCase().replaceAll('-', '_').replaceAll(' ', '_').substring(0, 5)
@@ -348,14 +422,14 @@
     (!isPrivate || owners.some((o) => members.includes(o)))
 </script>
 
-<Card
+<Modal
+  type="type-popup"
   label={isNew ? tracker.string.NewProject : tracker.string.EditProject}
   okLabel={isNew ? presentation.string.Create : presentation.string.Save}
   okAction={handleSave}
   {canSave}
-  accentHeader
+  hidden={isWorkflowConfigure}
   width={'medium'}
-  gap={'gapV-6'}
   onCancel={close}
   on:changeContent
 >
@@ -548,13 +622,42 @@
         />
       </div>
     {/each}
+
+    {#if typeId !== undefined && taskTypes.length > 0}
+      {@const hasConfiguredWorkflows = Object.keys(workflowsMapping ?? {}).length > 0}
+      <div class="antiGrid-row">
+        <div class="antiGrid-row__header withDesciption">
+          <Label label={workflow.string.Workflows} />
+          <span><Label label={workflow.string.WorkflowMapping} /></span>
+        </div>
+        <div class="flex-row-center gap-2">
+          <ButtonIcon
+            icon={view.icon.Setting}
+            kind="secondary"
+            size="large"
+            on:click={openConfigureWorkflows}
+          />
+          {#if hasConfiguredWorkflows}
+            <span class="workflows-status-label lower">
+              (<Label label={tracker.string.Configured} />)
+            </span>
+          {/if}
+        </div>
+      </div>
+    {/if}
   </div>
-</Card>
+</Modal>
 
 <style lang="scss">
   .duplicated-identifier {
     left: 0;
     bottom: -0.25rem;
     color: var(--theme-warning-color);
+  }
+
+  .workflows-status-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--theme-content-secondary-color);
   }
 </style>

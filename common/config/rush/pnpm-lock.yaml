@@ -28886,6 +28886,9 @@ importers:
       '@hcengineering/workbench-resources':
         specifier: workspace:^0.7.0
         version: link:../workbench-resources
+      '@hcengineering/workflow':
+        specifier: workspace:^0.7.0
+        version: link:../workflow
       fast-equals:
         specifier: ^5.2.2
         version: 5.3.2

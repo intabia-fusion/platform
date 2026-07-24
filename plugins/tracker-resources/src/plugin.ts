@@ -112,6 +112,7 @@ export default mergeIds(trackerId, tracker, {
     DefaultIssueStatus: '' as IntlString,
     IssueStatus: '' as IntlString,
     EditWorkflowStatuses: '' as IntlString,
+    Configured: '' as IntlString,
     EditProject: '' as IntlString,
     DeleteProject: '' as IntlString,
     DeleteIssue: '' as IntlString,
