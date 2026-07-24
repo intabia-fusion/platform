@@ -182,6 +182,19 @@ test.describe('billing UI lifecycle (tbank + mock bank)', () => {
     await expect(input).toHaveValue('1')
   })
 
+  test('seat count is capped at the plan maximum', async ({ page, request }) => {
+    const { wsUrl } = await freshBusinessWorkspace(request, 'seatmax')
+    await openBilling(page, wsUrl)
+    await subscribeBusiness(page, wsUrl, 3)
+
+    await page.locator('[data-id="changeSeats"]').click()
+    const input = page.locator('[data-id="changeSeatsInput"] input[type="number"]')
+    // A huge value would otherwise render sci-notation and 500 the provider; clamp to business max.
+    await input.fill('99999999')
+    await input.blur()
+    await expect(input).toHaveValue('10000')
+  })
+
   test('connect a package, upgrade to a bigger one, then downgrade', async ({ page, request }) => {
     const { wsUrl } = await freshBusinessWorkspace(request, 'pkg')
     await openBilling(page, wsUrl)

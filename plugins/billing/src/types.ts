@@ -38,6 +38,8 @@ export interface PlanItem {
   meetingMinutesLimit: number
   tokenLimit: number
   usersLimit: number
+  // Seats-input hard cap (usersLimit=0 = unlimited, can't cap input). Absent -> MAX_SEATS_FALLBACK.
+  maxSeats?: number
   index: number
   color?: string
 }

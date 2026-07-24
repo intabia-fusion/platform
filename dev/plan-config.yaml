@@ -96,6 +96,7 @@ plans:
     yearlyDiscount: 15
     currency: ₽
     storagePerUserGB: 5
+    maxSeats: 10000
     trafficLimitGB: 0
     meetingMinutesLimit: 0
     tokenLimit: 0

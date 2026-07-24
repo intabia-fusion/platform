@@ -193,6 +193,7 @@ plans:
     priceMonthlyPerUser: 900
     currency: ₽
     storagePerUserGB: 1
+    maxSeats: 10000
     trafficLimitGB: 0
     meetingMinutesLimit: 0
     tokenLimit: 0
