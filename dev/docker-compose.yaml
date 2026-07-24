@@ -447,6 +447,8 @@ services:
       # Add to environment: NODE_OPTIONS=--inspect=0.0.0.0:9232
   print:
     image: "intabiafusion/print:${DOCKER_TAG:-latest}"
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     restart: unless-stopped
     environment:
       - SECRET=secret
