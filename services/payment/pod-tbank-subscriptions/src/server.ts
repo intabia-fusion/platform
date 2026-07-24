@@ -308,12 +308,10 @@ async function handleCreateSubscription (
         if (err instanceof MissingReceiptContactError) {
           ctx.warn('Checkout blocked: no receipt contact (54-ФЗ)', { workspaceUuid, accountUuid, planKey })
           await storage.abandonCheckout(intentId).catch(() => {})
-          res
-            .status(422)
-            .json({
-              reason: 'no_receipt_contact',
-              error: 'A payer email or phone is required to issue a fiscal receipt'
-            })
+          res.status(422).json({
+            reason: 'no_receipt_contact',
+            error: 'A payer email or phone is required to issue a fiscal receipt'
+          })
           return
         }
         throw err
@@ -728,12 +726,10 @@ export async function handleUpdatePlan (
             newPlan
           })
           await storage.abandonCheckout(intentId).catch(() => {})
-          res
-            .status(422)
-            .json({
-              reason: 'no_receipt_contact',
-              error: 'A payer email or phone is required to issue a fiscal receipt'
-            })
+          res.status(422).json({
+            reason: 'no_receipt_contact',
+            error: 'A payer email or phone is required to issue a fiscal receipt'
+          })
           return
         }
         throw err

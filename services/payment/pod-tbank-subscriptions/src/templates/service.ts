@@ -19,7 +19,8 @@
 export default {
   subject: {
     succeeded: '[Биллинг] Успешная оплата: {plan} ({kind})',
-    failed: '[Биллинг] Не прошла оплата: {plan} ({reason})'
+    failed: '[Биллинг] Не прошла оплата: {plan} ({reason})',
+    receiptBlocked: '[Биллинг][54-ФЗ] Продление заблокировано без чека: {plan} ({code})'
   },
   labels: {
     workspace: 'Воркспейс',
@@ -31,7 +32,13 @@ export default {
     kind: 'Тип',
     customer: 'Плательщик',
     subscription: 'Подписка',
-    cause: 'Причина'
+    cause: 'Причина',
+    account: 'Аккаунт'
+  },
+  // Body blocks for the receipt-blocked (54-ФЗ) team alert (see notifyReceiptBlocked).
+  receiptBlocked: {
+    lead: 'Продление заблокировано: невозможно выдать фискальный чек (54-ФЗ). Требуется вмешательство.',
+    hint: 'Клиенту письмо не отправлено (нет контакта). Добавьте email/телефон плательщику или проверьте интеграцию.'
   },
   // Russian labels for the transaction kind / failure reason enums (used in subject + rows).
   kind: {

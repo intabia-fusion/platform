@@ -22,6 +22,7 @@ import { fetchPlanConfig, type PlanConfigLike } from './utils'
 import receiptTemplates from './templates/receipt'
 import dunningTemplates from './templates/dunning'
 import serviceTemplate from './templates/service'
+import chargeDescriptionTemplates from './templates/charge-description'
 
 const MAIL_TIMEOUT_MS = 10_000
 
@@ -135,7 +136,7 @@ function buildSupportFooter (config: Config, lang: Lang): { text: string, html: 
   }
   if (parts.length === 0) return { text: '', html: '' }
 
-  const label = lang === 'ru' ? 'Контакты поддержки' : 'Support contacts'
+  const label = RECEIPT[lang].support
   return {
     text: `\n\n${label}: ${parts.join(', ')}`,
     html: `<hr/><p style="color:#888;font-size:12px">${label}: ${partsHtml.join(', ')}</p>`
@@ -186,38 +187,10 @@ export function resolveLang (locale: string | null): Lang {
 /** The charge that a payment Description / receipt line describes. */
 export type ChargeKind = 'purchase' | 'update' | 'renewal' | 'retry'
 
-// Localized "<action> <plan>" copy for the Init Description — shown to the payer by TBank (order
-// description in its email) and used as the fiscal-receipt line name (54-ФЗ). Kept as data.
-const CHARGE_DESCRIPTION: Record<Lang, { tier: Record<ChargeKind, string>, package: Record<ChargeKind, string> }> = {
-  ru: {
-    tier: {
-      purchase: 'Подписка «{plan}»',
-      update: 'Изменение подписки «{plan}»',
-      renewal: 'Продление подписки «{plan}»',
-      retry: 'Оплата подписки «{plan}»'
-    },
-    package: {
-      purchase: 'Пакет «{plan}»',
-      update: 'Изменение пакета «{plan}»',
-      renewal: 'Продление пакета «{plan}»',
-      retry: 'Оплата пакета «{plan}»'
-    }
-  },
-  en: {
-    tier: {
-      purchase: 'Subscription “{plan}”',
-      update: 'Subscription change “{plan}”',
-      renewal: 'Subscription renewal “{plan}”',
-      retry: 'Subscription payment “{plan}”'
-    },
-    package: {
-      purchase: 'Package “{plan}”',
-      update: 'Package change “{plan}”',
-      renewal: 'Package renewal “{plan}”',
-      retry: 'Package payment “{plan}”'
-    }
-  }
-}
+const CHARGE_DESCRIPTION = chargeDescriptionTemplates as Record<
+Lang,
+{ tier: Record<ChargeKind, string>, package: Record<ChargeKind, string> }
+>
 
 /**
  * Build the payer-facing charge Description (localized to the payer, human plan label).
@@ -379,8 +352,7 @@ function formatPaymentMethod (sub: SubscriptionData, lang: Lang): string {
   const digits = pan.replace(/\D/g, '')
   const last4 = digits.slice(-4)
   if (last4.length < 4) return ''
-  const cardLabel = lang === 'ru' ? 'Карта' : 'Card'
-  return `${cardLabel} •••• ${last4}`
+  return `${RECEIPT[lang].card} •••• ${last4}`
 }
 
 /**
@@ -495,20 +467,22 @@ export async function notifyReceiptBlocked (ctx: MeasureContext, config: Config,
   if (config.MailUrl === undefined || config.MailFrom === undefined) return
   if (config.BillingEmails === undefined || config.BillingEmails.length === 0) return
 
+  const l = SERVICE.labels
+  const typeRu = SERVICE.type[sub.type as keyof typeof SERVICE.type] ?? sub.type
   const lines = [
-    'Продление заблокировано: невозможно выдать фискальный чек (54-ФЗ). Требуется вмешательство.',
+    SERVICE.receiptBlocked.lead,
     '',
-    `Причина: ${code} — ${reason}`,
-    `Workspace: ${sub.workspaceUuid}`,
-    `Account: ${sub.accountUuid}`,
-    `Plan: ${sub.plan} (${sub.type})`,
-    `Amount: ${((sub.amount ?? 0) / 100).toFixed(2)} RUB`,
-    `Subscription: ${sub.id ?? '-'}`,
+    `${l.cause}: ${code} — ${reason}`,
+    `${l.workspace}: ${sub.workspaceUuid}`,
+    `${l.account}: ${sub.accountUuid}`,
+    `${l.plan}: ${sub.plan} (${typeRu})`,
+    `${l.amount}: ${formatAmount(sub.amount)}`,
+    `${l.subscription}: ${sub.id ?? '-'}`,
     '',
-    'Клиенту письмо не отправлено (нет контакта). Добавьте email/телефон плательщику или проверьте интеграцию.'
+    SERVICE.receiptBlocked.hint
   ]
   const msg: MailMessage = {
-    subject: `[billing][54-ФЗ] Продление заблокировано без чека: ${sub.plan} (${code})`,
+    subject: fill(SERVICE.subject.receiptBlocked, { plan: sub.plan, code }),
     text: lines.join('\n'),
     html: `<pre>${lines.join('\n')}</pre>`
   }
