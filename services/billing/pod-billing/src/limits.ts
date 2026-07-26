@@ -69,7 +69,8 @@ export class LimitsEngine {
     const limitValue = getEffectiveLimit(subs, metric)
 
     const prev = await this.db.getLimitState(ctx, workspace, category)
-    const used = (prev?.used ?? 0) + amount
+    const prevUsed = prev?.used ?? 0
+    const used = prevUsed + amount
     const prevExhausted = prev?.exhausted ?? false
     const nowExhausted = limitValue > 0 && used >= limitValue
 
@@ -92,11 +93,13 @@ export class LimitsEngine {
     amount: number
   ): Promise<void> {
     const field = usageField(metric)
+    // meetingMinutes deltas arrive in seconds, but usageInfo stores minutes.
+    const delta = metric === 'meetingMinutes' ? amount / 60 : amount
     try {
       const account = this.accountClient(workspace)
       const info = (await account.getWorkspaceInfo(false)).usageInfo
       const usage = { ...(info?.usage ?? {}) }
-      usage[field] = (usage[field] ?? 0) + amount
+      usage[field] = (usage[field] ?? 0) + delta
       await account.updateUsageInfo({
         usage,
         startTime: info?.startTime ?? Date.now(),
@@ -115,7 +118,7 @@ export class LimitsEngine {
 
     for (const ws of workspaces) {
       if (isArchivingMode(ws.mode) || isDeletingMode(ws.mode)) continue
-      for (const metric of ['tokens', 'transcript', 'storage'] as UsageMetric[]) {
+      for (const metric of ['tokens', 'transcript', 'storage', 'meetingMinutes'] as UsageMetric[]) {
         try {
           await this.recompute(ctx, ws.uuid, metric)
         } catch (err: any) {
@@ -127,7 +130,7 @@ export class LimitsEngine {
 
   /** Plan changed: re-evaluate all volume metrics so an upgrade lifts exhausted without a restart. */
   async recomputeWorkspace (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<void> {
-    for (const metric of ['tokens', 'transcript', 'storage'] as UsageMetric[]) {
+    for (const metric of ['tokens', 'transcript', 'storage', 'meetingMinutes'] as UsageMetric[]) {
       try {
         await this.recompute(ctx, workspace, metric)
       } catch (err: any) {
@@ -176,6 +179,12 @@ export class LimitsEngine {
       const stats = await this.db.getAiTokensStats(ctx, workspace, periodStart, periodEnd)
       return stats.map((s) => s.totalTokens).reduce((a, b) => a + b, 0)
     }
+    if (metric === 'meetingMinutes') {
+      // limit state keeps seconds, matching the delta unit love sends
+      const stats = await this.db.getParticipantMinutes(ctx, workspace, periodStart, periodEnd)
+      return stats.totalMinutes * 60
+    }
+
     // transcript (seconds)
     const stats = await this.db.getAiTranscriptStats(ctx, workspace, periodStart, periodEnd)
     return stats.totalDurationSeconds
@@ -225,6 +234,7 @@ function getLimitValue (limits: TierLimits | undefined, metric: UsageMetric): nu
 
   if (metric === 'tokens') return limits.tokenLimit ?? 0
   if (metric === 'transcript') return (limits.meetingMinutesLimit ?? 0) * 60 // minutes -> seconds
+  if (metric === 'meetingMinutes') return (limits.meetingMinutesLimit ?? 0) * 60 // minutes -> seconds
   return (limits.storageLimitGB ?? 0) * 1e9 // GB -> bytes
 }
 

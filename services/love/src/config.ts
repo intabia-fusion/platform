@@ -96,7 +96,7 @@ const config: Config = (() => {
     Agents: (process.env[envMap.Agents] ?? '').split(','),
     WebHookUrl: process.env[envMap.WebHookUrl] ?? '',
     UseEgressWebHook: process.env[envMap.UseEgressWebHook] === 'true',
-    PollingIntervalMs: parseNumber(process.env[envMap.PollingIntervalMs]) ?? 30000 // Default: 30 seconds
+    PollingIntervalMs: parseNumber(process.env[envMap.PollingIntervalMs]) ?? 10000 // Default: 10 seconds
   }
 
   const optional = ['StorageConfig', 'S3StorageConfig', 'BillingUrl', 'PollingIntervalMs']

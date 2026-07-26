@@ -13,11 +13,15 @@
 // limitations under the License.
 //
 
-import { MeasureContext, systemAccountUuid, type WorkspaceUuid } from '@hcengineering/core'
-import { generateToken } from '@hcengineering/server-token'
+import { MeasureContext, groupByArray, type WorkspaceUuid } from '@hcengineering/core'
 import { AccessToken, EgressInfo } from 'livekit-server-sdk'
-import { getClient as getBillingClient, LiveKitSessionData } from '@hcengineering/billing-client'
+import {
+  type LiveKitEgressData,
+  type LiveKitParticipantSessionData,
+  type LiveKitSessionData
+} from '@hcengineering/billing-client'
 import config from './config'
+import { getBillingProducer } from './queue'
 
 interface LiveKitSession {
   sessionId: string
@@ -72,9 +76,6 @@ async function getLiveKitSessions (ctx: MeasureContext, start: string, page: num
 }
 
 export async function updateLiveKitSessions (ctx: MeasureContext): Promise<void> {
-  const token = generateToken(systemAccountUuid, undefined, { service: 'love' })
-  const billingClient = getBillingClient(config.BillingUrl, token)
-
   const startDate = new Date()
   startDate.setHours(0, 0, 0, 0)
   startDate.setDate(startDate.getDate() - 1)
@@ -115,8 +116,16 @@ export async function updateLiveKitSessions (ctx: MeasureContext): Promise<void>
     page++
   } while (liveKitSessions.length > 0)
 
+  const producer = getBillingProducer()
+  if (producer === undefined || sessionsToSend.length === 0) {
+    return
+  }
+
   try {
-    await billingClient.postLiveKitSessions(sessionsToSend)
+    const byWorkspace = groupByArray(sessionsToSend, (s) => s.workspace)
+    for (const [workspace, data] of byWorkspace) {
+      await producer.send(ctx, workspace as WorkspaceUuid, [{ kind: 'session', data }])
+    }
 
     sessionsToCache.forEach((value, key, map) => {
       processedSessionsCache.set(key, value)
@@ -127,7 +136,8 @@ export async function updateLiveKitSessions (ctx: MeasureContext): Promise<void>
 }
 
 export async function saveLiveKitEgressBilling (ctx: MeasureContext, egress: EgressInfo): Promise<void> {
-  if (config.BillingUrl === '') {
+  const producer = getBillingProducer()
+  if (producer === undefined) {
     return
   }
 
@@ -136,20 +146,17 @@ export async function saveLiveKitEgressBilling (ctx: MeasureContext, egress: Egr
   const duration = (egressEnd - egressStart) / 1000
 
   const workspace = egress.roomName.split('_')[0] as WorkspaceUuid
-  const token = generateToken(systemAccountUuid, undefined, { service: 'love' })
-  const billingClient = getBillingClient(config.BillingUrl, token)
+  const data: LiveKitEgressData = {
+    workspace,
+    room: egress.roomName,
+    egressId: egress.egressId,
+    egressStart: new Date(egressStart).toISOString(),
+    egressEnd: new Date(egressEnd).toISOString(),
+    duration
+  }
 
   try {
-    await billingClient.postLiveKitEgress([
-      {
-        workspace,
-        room: egress.roomName,
-        egressId: egress.egressId,
-        egressStart: new Date(egressStart).toISOString(),
-        egressEnd: new Date(egressEnd).toISOString(),
-        duration
-      }
-    ])
+    await producer.send(ctx, workspace, [{ kind: 'egress', data: [data] }])
   } catch (err: any) {
     ctx.error('failed to save egress billing', { workspace, egress, err })
     throw new Error('Failed to save egress billing: ' + err)
@@ -165,7 +172,8 @@ export async function saveParticipantSessionBilling (
   joinedAt: number,
   leftAt: number
 ): Promise<void> {
-  if (config.BillingUrl === '') {
+  const producer = getBillingProducer()
+  if (producer === undefined) {
     return
   }
 
@@ -174,21 +182,18 @@ export async function saveParticipantSessionBilling (
     return
   }
 
-  const token = generateToken(systemAccountUuid, undefined, { service: 'love' })
-  const billingClient = getBillingClient(config.BillingUrl, token)
+  const data: LiveKitParticipantSessionData = {
+    workspace,
+    participantId,
+    sessionId,
+    room,
+    joinedAt: new Date(joinedAt).toISOString(),
+    leftAt: new Date(leftAt).toISOString(),
+    durationSeconds
+  }
 
   try {
-    await billingClient.postParticipantSessions([
-      {
-        workspace,
-        participantId,
-        sessionId,
-        room,
-        joinedAt: new Date(joinedAt).toISOString(),
-        leftAt: new Date(leftAt).toISOString(),
-        durationSeconds
-      }
-    ])
+    await producer.send(ctx, workspace, [{ kind: 'participant', data: [data] }])
   } catch (err: any) {
     ctx.error('failed to save participant session billing', { workspace, participantId, err })
   }

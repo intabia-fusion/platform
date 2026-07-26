@@ -379,7 +379,7 @@
       "summary": "Up development build",
       "description": "Up development build",
       "safeForSimultaneousRushProcesses": true,
-      "shellCommand": "cd ./dev && docker compose up -d --force-recreate love aibot love-agent aibot_client_llm aibot_client_stt nginx"
+      "shellCommand": "cd ./dev && docker compose up -d --force-recreate love aibot love-agent aibot_client_llm aibot_client_stt billing payment nginx"
     },
     {
       "commandKind": "global",

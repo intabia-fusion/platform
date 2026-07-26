@@ -302,7 +302,8 @@ class PostgresDB implements BillingDB {
         values.push(
           `($${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++})`
         )
-        params.push(workspace, egressId, egressStart, egressEnd, room, duration)
+        // duration is an integer column; egress seconds arrive fractional
+        params.push(workspace, egressId, egressStart, egressEnd, room, Math.round(duration))
       }
 
       if (values.length === 0) continue
@@ -691,7 +692,8 @@ class PostgresDB implements BillingDB {
       ON CONFLICT (workspace, metric, ref) DO NOTHING
       RETURNING ref
     `
-    const rows = await this.execute<any[]>(query, [workspace, metric, ref, amount])
+    // amount is a bigint column; transcript seconds arrive fractional
+    const rows = await this.execute<any[]>(query, [workspace, metric, ref, Math.round(amount)])
     return rows.length > 0
   }
 

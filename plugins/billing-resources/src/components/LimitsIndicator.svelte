@@ -24,8 +24,10 @@
   import UsagePopup from './UsagePopup.svelte'
 
   let pollInterval: any
+  let hoverInterval: any
 
   const POLL_INTERVAL_MS = 60 * 60 * 1000 // 1 hour in milliseconds
+  const HOVER_POLL_INTERVAL_MS = 10 * 1000 // refresh usage every 10s while the cursor stays on the indicator
 
   $: state = $subscriptionStore
   $: usageInfo = state.usageInfo
@@ -93,12 +95,31 @@
     if (pollInterval !== undefined) {
       clearInterval(pollInterval)
     }
+    if (hoverInterval !== undefined) {
+      clearInterval(hoverInterval)
+    }
     removeEventListener(workbench.event.NotifyConnection, connectionListener)
     removeTxListener(txListener)
   })
 
   function handleClick (): void {
     void upgradePlan()
+  }
+
+  // Live usage isn't broadcast; refresh on hover and keep polling while the cursor is on the indicator.
+  function handleHoverStart (): void {
+    if (workspace == null || hoverInterval !== undefined) return
+    void refreshLimits()
+    hoverInterval = setInterval(() => {
+      void refreshLimits()
+    }, HOVER_POLL_INTERVAL_MS)
+  }
+
+  function handleHoverEnd (): void {
+    if (hoverInterval !== undefined) {
+      clearInterval(hoverInterval)
+      hoverInterval = undefined
+    }
   }
 </script>
 
@@ -118,6 +139,8 @@
     direction: 'bottom'
   }}
   on:click={handleClick}
+  on:mouseenter={handleHoverStart}
+  on:mouseleave={handleHoverEnd}
 >
   <div class="progress-wrapper">
     <Progress color={storageColor} value={storageUsed} max={limits?.storageLimit ?? 0} fallback={0} small={true} />

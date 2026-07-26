@@ -172,18 +172,29 @@ export interface BillingDB {
 }
 
 // --- billing-usage queue ---
+// Single topic (QueueTopic.BillingUsage) carries every billing event as a discriminated union on `kind`.
 
-export type UsageMetric = 'tokens' | 'transcript' | 'storage'
-export type LimitCategory = 'disk' | 'tokens' | 'transcript'
+export type UsageMetric = 'tokens' | 'transcript' | 'storage' | 'meetingMinutes'
+export type LimitCategory = 'disk' | 'tokens' | 'transcript' | 'meetingMinutes'
 
-/** Message shape for the 'billing-usage' topic. */
+/** Numeric usage delta (idempotent by ref). */
 export interface BillingUsageMessage {
+  kind: 'usage'
   workspace: WorkspaceUuid
   metric: UsageMetric
   amount: number
   /** Idempotency key — duplicate ref for same workspace+metric is ignored. */
   ref: string
 }
+
+/** Structured LiveKit records pushed by love (session/egress/participant). */
+export type LiveKitRecordMessage =
+  | { kind: 'session', data: LiveKitSessionData[] }
+  | { kind: 'egress', data: LiveKitEgressData[] }
+  | { kind: 'participant', data: LiveKitParticipantSessionData[] }
+
+/** Everything on the billing-usage topic. */
+export type BillingMessage = BillingUsageMessage | LiveKitRecordMessage
 
 /** Per-workspace per-category limit state stored in billing DB. */
 export interface WorkspaceLimitState {

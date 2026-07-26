@@ -41,6 +41,7 @@ export enum QueueTopic {
 
   CrmQueue = 'crm',
 
+  // Single billing topic: usage deltas + LiveKit session/egress/participant records (discriminated union).
   BillingUsage = 'billing-usage',
 
   // Subscription lifecycle events from payment providers (stripe/polar/tbank). Providers verify and
