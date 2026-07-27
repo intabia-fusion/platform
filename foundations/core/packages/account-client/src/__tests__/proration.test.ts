@@ -22,8 +22,7 @@ describe('prorateSeats', () => {
   const now = 1_000_000_000_000
 
   describe('monthly upgrade', () => {
-    // 3 seats @ 900r = 2700r, 30d period, 15 days left. Add 2 seats -> full price 5 * 900 = 4500r.
-    // unused credit = 2700 * 15/30 = 1350r. charge = 4500 - 1350 = 3150r. Fresh 30d period.
+    // 3->5 seats, 15d left: bill only 2 added seats: 2 * (2700/3/30) * 15 = 900r. Period unchanged.
     const res = prorateSeats({
       oldAmount: kop(2700),
       oldSeats: 3,
@@ -34,15 +33,42 @@ describe('prorateSeats', () => {
       newFullPrice: kop(4500)
     })
 
-    it('charges new full price minus unused credit', () => {
-      expect(res.charge).toBe(kop(3150))
+    it('charges only the added seats pro-rata for the remaining days', () => {
+      expect(res.charge).toBe(kop(900))
     })
-    it('resets the period to now + 30d', () => {
-      expect(res.periodEnd).toBe(now + 30 * DAY)
+    it('keeps the period unchanged (start AND end)', () => {
+      expect(res.periodStart).toBe(now - 15 * DAY)
+      expect(res.periodEnd).toBe(now + 15 * DAY)
     })
     it('flags upgrade, not yearly', () => {
       expect(res.isUpgrade).toBe(true)
       expect(res.isYearly).toBe(false)
+    })
+  })
+
+  describe('large team, add one seat (FUSIO-983 regression)', () => {
+    // 1526 seats @ 499r, add 1: charge must never exceed one seat's month (499r) at any team size.
+    // Old reset-period formula billed ~729r (re-billed all 1526 old seats for a fresh period).
+    const oldSeats = 1526
+    const perUser = 499
+    const oldAmount = kop(perUser * oldSeats)
+    const res = prorateSeats({
+      oldAmount,
+      oldSeats,
+      periodStart: now - 1 * DAY, // almost-fresh period, 29 days left
+      periodEnd: now + 29 * DAY,
+      now,
+      newSeats: oldSeats + 1,
+      newFullPrice: kop(perUser * (oldSeats + 1))
+    })
+
+    it('charges no more than one seat month, not scaled by team size', () => {
+      expect(res.charge).toBeLessThanOrEqual(kop(perUser))
+      // 1 seat * (761474/1526/30) * 29 ~= 482r, floored to rubles
+      expect(res.charge).toBe(Math.floor((1 * (oldAmount / oldSeats / 30) * 29) / 100) * 100)
+    })
+    it('does not shift the renewal date', () => {
+      expect(res.periodEnd).toBe(now + 29 * DAY)
     })
   })
 
@@ -89,20 +115,6 @@ describe('prorateSeats', () => {
       newFullPrice: kop(2000)
     })
     expect(res.charge % 100).toBe(0) // whole rubles, no stray kopecks
-  })
-
-  it('monthly upgrade resets periodStart to now', () => {
-    const res = prorateSeats({
-      oldAmount: kop(2700),
-      oldSeats: 3,
-      periodStart: now - 15 * DAY,
-      periodEnd: now + 15 * DAY,
-      now,
-      newSeats: 5,
-      newFullPrice: kop(4500)
-    })
-    expect(res.periodStart).toBe(now)
-    expect(res.periodEnd).toBe(now + 30 * DAY)
   })
 
   it('a second yearly upgrade still measures a yearly span (period not desynced)', () => {
@@ -168,14 +180,74 @@ describe('prorateSeats', () => {
     })
     expect(res.charge).toBeGreaterThanOrEqual(0)
   })
+
+  it('a fresh period (full month left) upgrade charges the exact delta-seat price', () => {
+    // 10 seats @ 900r, day 0 of 30. Add 3 -> 3 * 900 * (30/30) = 2700r, no proration discount.
+    const res = prorateSeats({
+      oldAmount: kop(9000),
+      oldSeats: 10,
+      periodStart: now,
+      periodEnd: now + 30 * DAY,
+      now,
+      newSeats: 13,
+      newFullPrice: kop(11700)
+    })
+    expect(res.charge).toBe(kop(2700))
+  })
+
+  it('an expired period (no days left) upgrade charges nothing now', () => {
+    // now == periodEnd: daysLeft = 0, so the added seats cost 0 until the next renewal.
+    const res = prorateSeats({
+      oldAmount: kop(9000),
+      oldSeats: 10,
+      periodStart: now - 30 * DAY,
+      periodEnd: now,
+      now,
+      newSeats: 13,
+      newFullPrice: kop(11700)
+    })
+    expect(res.charge).toBe(0)
+  })
+
+  it('charge scales linearly with the number of added seats', () => {
+    const base = {
+      oldAmount: kop(9000),
+      oldSeats: 10,
+      periodStart: now - 10 * DAY,
+      periodEnd: now + 20 * DAY,
+      now,
+      newFullPrice: 0 // unused by the upgrade branch
+    }
+    const add2 = prorateSeats({ ...base, newSeats: 12 }).charge
+    const add4 = prorateSeats({ ...base, newSeats: 14 }).charge
+    expect(add4).toBe(add2 * 2)
+  })
+
+  it('a paid yearly rate carries the discount into the per-seat upgrade charge', () => {
+    // 10 seats yearly for 8415r (15% off 9900), 365d, 100 left. Adding 2 uses the DISCOUNTED paid
+    // rate (8415/10/365), not the list price -> cheaper than 2 * full monthly.
+    const oldAmount = kop(8415)
+    const res = prorateSeats({
+      oldAmount,
+      oldSeats: 10,
+      periodStart: now - 265 * DAY,
+      periodEnd: now + 100 * DAY,
+      now,
+      newSeats: 12,
+      newFullPrice: kop(10098)
+    })
+    const paidRate = oldAmount / 10 / 365
+    expect(res.charge).toBe(Math.floor(Math.floor(2 * paidRate * 100) / 100) * 100)
+    expect(res.isYearly).toBe(true)
+  })
 })
 
 describe('proratePackage', () => {
   const now = 1_000_000_000_000
 
   describe('bigger package (upgrade)', () => {
-    // 100Gb @ 1000r, 30d period, 15 days left. Switch to 500Gb @ 5000r.
-    // unused credit = 1000 * 15/30 = 500r. charge = 5000 - 500 = 4500r. Fresh 30d.
+    // 100Gb @ 1000r -> 500Gb @ 5000r, 15d left of 30d. Charge only the price diff for the remaining
+    // half-period: (5000-1000)/30*15 = 2000r. Renewal date stays put.
     const res = proratePackage({
       oldAmount: kop(1000),
       periodStart: now - 15 * DAY,
@@ -184,16 +256,58 @@ describe('proratePackage', () => {
       newFullPrice: kop(5000)
     })
 
-    it('charges the new price minus the unused credit', () => {
-      expect(res.charge).toBe(kop(4500))
+    it('charges only the price difference pro-rata for the remaining days', () => {
+      expect(res.charge).toBe(kop(2000))
     })
-    it('resets the period to now + 30d (start AND end)', () => {
-      expect(res.periodStart).toBe(now)
-      expect(res.periodEnd).toBe(now + 30 * DAY)
+    it('keeps the period unchanged (start AND end)', () => {
+      expect(res.periodStart).toBe(now - 15 * DAY)
+      expect(res.periodEnd).toBe(now + 15 * DAY)
     })
     it('flags upgrade', () => {
       expect(res.isUpgrade).toBe(true)
     })
+  })
+
+  it('a fresh period upgrade charges exactly the full price difference, not more', () => {
+    // Day 0 of 30, full month left: (5000-1000)/30*30 = 4000. The old formula billed 4500.
+    const res = proratePackage({
+      oldAmount: kop(1000),
+      periodStart: now,
+      periodEnd: now + 30 * DAY,
+      now,
+      newFullPrice: kop(5000)
+    })
+    expect(res.charge).toBe(kop(4000))
+  })
+
+  it('an expired package period upgrade charges nothing now', () => {
+    // now == periodEnd: daysLeft = 0 -> no charge until the next renewal bills the full new price.
+    const res = proratePackage({
+      oldAmount: kop(1000),
+      periodStart: now - 30 * DAY,
+      periodEnd: now,
+      now,
+      newFullPrice: kop(5000)
+    })
+    expect(res.charge).toBe(0)
+  })
+
+  it('a yearly package upgrade prorates over the long period and keeps the renewal date', () => {
+    // 365d period, 100 left. Diff 4000r over the year -> 4000/365*100, floored. Period unchanged.
+    const start = now - 265 * DAY
+    const end = now + 100 * DAY
+    const res = proratePackage({
+      oldAmount: kop(1000),
+      periodStart: start,
+      periodEnd: end,
+      now,
+      newFullPrice: kop(5000)
+    })
+    // 400000 kop diff / 365 * 100 days = 109589.04 kop, floored to whole rubles = 109500 (1095r).
+    expect(res.charge).toBe(109500)
+    expect(res.isYearly).toBe(true)
+    expect(res.periodStart).toBe(start)
+    expect(res.periodEnd).toBe(end)
   })
 
   describe('smaller package (downgrade)', () => {

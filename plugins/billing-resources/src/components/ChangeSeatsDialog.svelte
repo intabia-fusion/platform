@@ -25,8 +25,10 @@
   // Full recurring price (kopecks) for a given seat count and the current period — from the caller,
   // which already knows the plan prices/period. seats -> price.
   export let recurringPriceFor: (seats: number) => number
-  // Seat floor: current member count. Cannot drop below it. No upper bound.
+  // Seat floor: current member count. Cannot drop below it.
   export let minSeats: number
+  // Seat ceiling: guards against huge values (sci-notation price + provider 500). From the caller.
+  export let maxSeats: number
   export let currency: string = ''
 
   const dispatch = createEventDispatcher()
@@ -87,7 +89,7 @@
 
     <div class="flex-col flex-gap-2" data-id="changeSeatsInput">
       <Label label={plugin.string.UsersCount} />
-      <NumberInput bind:value={seats} minValue={minSeats} maxDigitsAfterPoint={0} focusable />
+      <NumberInput bind:value={seats} minValue={minSeats} maxValue={maxSeats} maxDigitsAfterPoint={0} focusable />
       <div class="text-sm dark-color">
         <Label label={plugin.string.SeatMinHint} params={{ min: minSeats }} />
       </div>

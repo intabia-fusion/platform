@@ -326,17 +326,27 @@
   // Number of seats that user put for each per-seat plan
   let seatsByPlan: Record<string, number> = {}
 
-  // Effective seats
+  // Seats-input hard ceiling. Blocks huge values (6.7e23 -> sci-notation UI + provider 500).
+  // usersLimit=0 = unlimited so it can't cap; config plan.maxSeats overrides this fallback.
+  const MAX_SEATS_FALLBACK = 10000
+  function maxSeatsFor (planKey: string): number {
+    const m = plans[planKey]?.maxSeats
+    // Never below minSeats: a workspace bigger than the ceiling must still be able to buy seats.
+    return Math.max(m != null && m > 0 ? Math.floor(m) : MAX_SEATS_FALLBACK, minSeats)
+  }
+
+  // Effective seats, clamped to [minSeats, maxSeats]
   function seatsFor (planKey: string): number {
-    return Math.max(seatsByPlan[planKey] ?? minSeats, minSeats)
+    return Math.min(Math.max(seatsByPlan[planKey] ?? minSeats, minSeats), maxSeatsFor(planKey))
   }
 
-  // Store raw input
+  // Store raw input, clamped to the plan ceiling (floor of the fractional part).
   function setSeats (planKey: string, value: number): void {
-    seatsByPlan = { ...seatsByPlan, [planKey]: Number.isFinite(value) ? Math.floor(value) : minSeats }
+    const v = Number.isFinite(value) ? Math.min(Math.floor(value), maxSeatsFor(planKey)) : minSeats
+    seatsByPlan = { ...seatsByPlan, [planKey]: v }
   }
 
-  // On blur, snap the visible input value up to the floor.
+  // On blur, snap the visible input value into [minSeats, maxSeats].
   function clampSeats (planKey: string): void {
     seatsByPlan = { ...seatsByPlan, [planKey]: seatsFor(planKey) }
   }
@@ -516,6 +526,7 @@
         subscription: currentSubscription,
         recurringPriceFor: recurringPriceForCurrent,
         minSeats,
+        maxSeats: maxSeatsFor(planKey),
         currency: typeof currentPlan !== 'string' ? (currentPlan?.currency ?? '') : ''
       },
       undefined,
@@ -1221,7 +1232,7 @@
                   : null}
               {@const bgAttr = $themeStore.dark ? 'background' : 'background-color'}
               {@const rawSeats = seatsByPlan[planKey] ?? minSeats}
-              {@const seats = Math.max(rawSeats, minSeats)}
+              {@const seats = Math.min(Math.max(rawSeats, minSeats), maxSeatsFor(planKey))}
               {@const perUserBaseVal = monthlyPerUserBase(planItem)}
               {@const hasPerUser = Number.isFinite(perUserBaseVal)}
               {@const monthlyPerUserVal = hasPerUser ? monthly(perUserBaseVal, planItem, paymentPeriod) : 0}
@@ -1284,6 +1295,7 @@
                       class="seats-input"
                       type="number"
                       min={minSeats}
+                      max={maxSeatsFor(planKey)}
                       step="1"
                       data-id={`planSeats-${planKey}`}
                       value={rawSeats}

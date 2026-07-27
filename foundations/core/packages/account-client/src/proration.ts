@@ -19,7 +19,6 @@
 
 const DAY = 24 * 3600 * 1000
 const YEARLY_THRESHOLD_DAYS = 180
-const MONTH_MS = 30 * DAY
 const KOPECKS_PER_RUBLE = 100
 
 // Round a kopeck amount DOWN to whole rubles. Pro-rata credits produce fractional-ruble charges
@@ -31,8 +30,8 @@ function floorToRubles (kopecks: number): number {
 
 export interface ProrationResult {
   charge: number // one-time charge now (kopecks), floored to whole rubles, >= 0
-  periodStart: number // new period start (ms); reset only when the period resets (monthly upgrade)
-  periodEnd: number // new period end (ms); unchanged for a yearly seat upgrade
+  periodStart: number // period start (ms); unchanged on an upgrade, kept on a downgrade
+  periodEnd: number // period end (ms); unchanged on an upgrade, extended by the credit on a downgrade
   isYearly: boolean
   isUpgrade: boolean
 }
@@ -56,8 +55,7 @@ function metrics (p: Period): { periodDays: number, daysLeft: number, isYearly: 
  * Pro-rata for a per-seat tier seat change WITHOUT refund. Rate comes from what was actually paid
  * (oldAmount/oldSeats/periodDays), so a yearly discount is carried automatically.
  *
- * - Upgrade monthly: charge the new full price minus the unused credit; fresh 30d period.
- * - Upgrade yearly: charge only the added seats for the remaining days; renewal date unchanged.
+ * - Upgrade: charge only the added seats for the remaining days; renewal date unchanged.
  * - Downgrade: no refund — the credit for removed seats extends the period.
  */
 export function prorateSeats (input: {
@@ -69,26 +67,16 @@ export function prorateSeats (input: {
   newSeats: number
   newFullPrice: number
 }): ProrationResult {
-  const { oldAmount, oldSeats, newSeats, newFullPrice, now } = input
+  const { oldAmount, oldSeats, newSeats } = input
   const { periodDays, daysLeft, isYearly } = metrics(input)
   const isUpgrade = newSeats > oldSeats
 
   if (isUpgrade) {
-    if (isYearly) {
-      // Yearly upgrade: renewal date and period unchanged, only the extra seats are charged now.
-      const paidRatePerSeat = oldSeats > 0 ? oldAmount / oldSeats / periodDays : 0
-      const charge = Math.max(0, floorToRubles((newSeats - oldSeats) * paidRatePerSeat * daysLeft))
-      return { charge, periodStart: input.periodStart, periodEnd: input.periodEnd, isYearly, isUpgrade }
-    }
-    // Monthly upgrade: the period resets to a fresh 30 days from now.
-    const unusedCredit = (oldAmount * daysLeft) / periodDays
-    return {
-      charge: Math.max(0, floorToRubles(newFullPrice - unusedCredit)),
-      periodStart: now,
-      periodEnd: now + MONTH_MS,
-      isYearly,
-      isUpgrade
-    }
+    // Seat upgrade (monthly or yearly): charge only the added seats pro-rata, period unchanged.
+    // Old monthly reset-period branch overcharged (1526+1 billed 729₽ instead of ~499).
+    const paidRatePerSeat = oldSeats > 0 ? oldAmount / oldSeats / periodDays : 0
+    const charge = Math.max(0, floorToRubles((newSeats - oldSeats) * paidRatePerSeat * daysLeft))
+    return { charge, periodStart: input.periodStart, periodEnd: input.periodEnd, isYearly, isUpgrade }
   }
 
   // Downgrade: period start stays, only the end extends by the removed-seat credit.
@@ -106,7 +94,7 @@ export function prorateSeats (input: {
  * Pro-rata for a flat package switch WITHOUT refund. Packages are single-unit, so upgrade/downgrade
  * is decided by price, not seats.
  *
- * - Bigger package: charge the new price minus the unused credit of the old one; fresh 30d period.
+ * - Bigger package: charge only the price difference for the remaining days; renewal date unchanged.
  * - Smaller package: no refund — the credit for the price drop extends the period.
  */
 export function proratePackage (input: {
@@ -116,20 +104,17 @@ export function proratePackage (input: {
   now: number
   newFullPrice: number
 }): ProrationResult {
-  const { oldAmount, newFullPrice, now } = input
+  const { oldAmount, newFullPrice } = input
   const { periodDays, daysLeft, isYearly } = metrics(input)
   const isUpgrade = newFullPrice > oldAmount
 
   if (isUpgrade) {
-    // Bigger package: fresh 30-day period.
-    const unusedCredit = (oldAmount * daysLeft) / periodDays
-    return {
-      charge: Math.max(0, floorToRubles(newFullPrice - unusedCredit)),
-      periodStart: now,
-      periodEnd: now + MONTH_MS,
-      isYearly,
-      isUpgrade
-    }
+    // Bigger package: charge only the price difference pro-rata for the remaining days, period
+    // unchanged. Old branch reset to a fresh 30d and billed newFullPrice - partial credit, which
+    // overcharged mid-period (same class of bug as the seat upgrade). Symmetric with prorateSeats:
+    // the per-day delta is (newFullPrice - oldAmount) / periodDays.
+    const charge = Math.max(0, floorToRubles(((newFullPrice - oldAmount) / periodDays) * daysLeft))
+    return { charge, periodStart: input.periodStart, periodEnd: input.periodEnd, isYearly, isUpgrade }
   }
 
   // Smaller package: period start stays, end extends by the price-drop credit.

@@ -234,17 +234,22 @@ describe('handleUpdatePlan proration (live paid sub with a saved card)', () => {
     const res = await run(storage, { plan: 'business', quantity: 8, period: 'monthly' })
     expect(res.statusCode).toBe(200)
     expect(res.body.checkoutUrl).toBe('https://tbank/pay/999') // redirect to the bank
-    // Bank page charges only the delta: newFull(8*90000=720000) - unusedCredit(450000*15/30=225000) = 495000.
+    // Only 3 added seats for ~15d: 3 * (450000/5/30) * 15 ~= 135000 (old formula billed 495000).
+    // Wall-clock drift shaves a few kopecks off daysLeft, then floors to rubles -> range check.
     expect(tbank.initPayment).toHaveBeenCalledTimes(1)
-    expect(tbank.initPayment.mock.calls[0][0].Amount).toBe(495000)
+    const amount = tbank.initPayment.mock.calls[0][0].Amount
+    expect(amount).toBeGreaterThan(134000)
+    expect(amount).toBeLessThanOrEqual(135000)
     // No off-session charge — the money is taken with explicit consent on the bank page.
     expect(tbank.chargeRecurrent).not.toHaveBeenCalled()
     // The pending draft records the FULL recurring price (720000), not the delta, so renewal bills full.
     const draft = storage.upsert.mock.calls.map((c: any[]) => c[0]).find((s: any) => s.providerData?.pending === true)
     expect(draft.amount).toBe(720000)
-    // init_charge is audited at the delta amount actually charged now.
+    // Renewal date is unchanged — adding seats mid-period must not reset the period to now+30d.
+    expect(draft.periodEnd).toBe(liveTier.periodEnd)
+    // init_charge is audited at the same delta amount actually charged now.
     const logged = storage.logOperation.mock.calls.find((c: any[]) => c[0].operation === 'init_charge')
-    expect(logged[0].amount).toBe(495000)
+    expect(logged[0].amount).toBe(amount)
   })
 
   it('package upgrade: opens a checkout charging the DELTA, draft carries the full price', async () => {
@@ -259,11 +264,15 @@ describe('handleUpdatePlan proration (live paid sub with a saved card)', () => {
     const res = await run(storage, { plan: '500gb' }, { '500gb@package': { amount: 1000000, yearlyDiscount: 0 } })
     expect(res.statusCode).toBe(200)
     expect(res.body.checkoutUrl).toBe('https://tbank/pay/999')
-    // Delta = 1000000 - (500000 * 15/30 = 250000) = 750000.
-    expect(tbank.initPayment.mock.calls[0][0].Amount).toBe(750000)
+    // Only the price diff for ~15 remaining days: (1000000-500000)/30*15 ~= 250000 (old: 750000).
+    // Wall-clock drift shaves a few kopecks, then floors to rubles -> range check.
+    const amount = tbank.initPayment.mock.calls[0][0].Amount
+    expect(amount).toBeGreaterThan(249000)
+    expect(amount).toBeLessThanOrEqual(250000)
     expect(tbank.chargeRecurrent).not.toHaveBeenCalled()
     const draft = storage.upsert.mock.calls.map((c: any[]) => c[0]).find((s: any) => s.providerData?.pending === true)
     expect(draft.amount).toBe(1000000) // full recurring price
+    expect(draft.periodEnd).toBe(pkgSub.periodEnd) // renewal date unchanged, not reset to now+30d
   })
 
   it('yearly seat upgrade: checkout delta, and the draft keeps the yearly period (not reset to 30d)', async () => {

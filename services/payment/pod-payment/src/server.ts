@@ -44,7 +44,7 @@ import { PaymentProviderFactory } from './factory'
 import type { BillingPeriod, CheckoutResponse, PaymentProvider, SubscriptionPublisher } from './providers'
 import { ProviderHttpError, SubscribeRequest } from './providers'
 import { startActiveSubscriptionReconciliation } from './reconciliation'
-import { getAccountClient, hasGrantingTier } from './utils'
+import { getAccountClient, hasGrantingTier, computePlanPrice, validateSeatQuantity, MAX_SEATS_FALLBACK } from './utils'
 import yaml from 'js-yaml'
 import { existsSync, readFileSync } from 'fs'
 
@@ -261,25 +261,10 @@ export async function createServer (
     }
   }
 
-  // Full price (kopecks) for a plan at the given seats/period. Mirrors the UI planChargeValue:
-  // per-seat = pricePerUser * seats; yearly applies the plan's yearlyDiscount over 12 months.
+  // Full price (kopecks) for a plan at the given seats/period (see computePlanPrice).
   function planFullPrice (type: SubscriptionType, plan: string, quantity: number, period?: BillingPeriod): number {
     const source = type === SubscriptionType.Package ? planConfig.packages : planConfig.plans
-    const item = source?.[plan]
-    if (item == null || item.free === true) return 0
-    const isYearly = period === 'yearly'
-    const yearlyDiscount = Number(item.yearlyDiscount ?? 0)
-    const discount = 1 - (Number.isFinite(yearlyDiscount) ? yearlyDiscount : 0) / 100
-    if (item.priceMonthlyPerUser != null) {
-      const perUser = Number(item.priceMonthlyPerUser)
-      const monthly = isYearly ? Math.round(perUser * discount) : perUser
-      const rub = isYearly ? monthly * 12 * quantity : monthly * quantity
-      return Math.round(rub * 100)
-    }
-    const flat = Number(item.priceMonthly)
-    if (!Number.isFinite(flat)) return 0
-    const monthly = isYearly ? Math.round(flat * discount) : flat
-    return Math.round((isYearly ? monthly * 12 : monthly) * 100)
+    return computePlanPrice(source?.[plan], quantity, period === 'yearly')
   }
 
   // Free fallback plan (flagged free:true in config) — its name, used to auto-provision a free tier.
@@ -431,18 +416,13 @@ export async function createServer (
     requested: number | undefined,
     workspace: WorkspaceUuid
   ): Promise<{ quantity?: number, error?: string }> {
-    const isPerSeat = planConfig.plans?.[plan]?.priceMonthlyPerUser != null
+    const item = planConfig.plans?.[plan]
+    const isPerSeat = item?.priceMonthlyPerUser != null
     if (!isPerSeat) return { quantity: undefined }
-    const floor = await billableMembersCount(workspace)
-    const min = Math.max(floor, 1)
-    const q = requested ?? min
-    if (!Number.isFinite(q) || !Number.isInteger(q) || q < 1) {
-      return { error: 'Invalid quantity' }
-    }
-    if (q < min) {
-      return { error: `Quantity ${q} is below the current member count ${min}` }
-    }
-    return { quantity: q }
+    const min = Math.max(await billableMembersCount(workspace), 1)
+    const rawMax = Number(item.maxSeats)
+    const max = Number.isFinite(rawMax) && rawMax > 0 ? rawMax : MAX_SEATS_FALLBACK
+    return validateSeatQuantity(requested ?? min, min, max)
   }
 
   // Common preamble for :subscriptionId endpoints: look up by internal id, 404 if missing,
