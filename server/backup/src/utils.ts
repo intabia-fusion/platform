@@ -308,12 +308,18 @@ export async function backupFind (
             }
           })
 
-          const endPromise = new Promise((resolve) => {
+          const unzip = createGunzip({ level: defaultLevel })
+          const endPromise = new Promise((resolve, reject) => {
             ex.on('finish', () => {
               resolve(null)
             })
+            ex.on('error', reject)
+            unzip.on('error', reject)
+            readStream.on('error', (err) => {
+              readStream.destroy()
+              reject(err)
+            })
           })
-          const unzip = createGunzip({ level: defaultLevel })
 
           readStream.on('end', () => {
             readStream.destroy()
@@ -534,7 +540,11 @@ export async function compactBackup (
 
           _packClose = async () => {
             ctx.info('finalize pack(compact)', { storageFile, size: sz, ...(opt?.msg ?? {}) })
-            await new Promise<void>((resolve) => {
+            await new Promise<void>((resolve, reject) => {
+              tempFile.on('error', reject)
+              storageZip.on('error', reject)
+              sizePass.on('error', reject)
+              _pack?.on('error', reject)
               tempFile.on('close', () => {
                 resolve()
               })
@@ -771,14 +781,13 @@ export async function compactBackup (
                   ex.on('finish', () => {
                     resolve(null)
                   })
-                  readStream.on('error', (err) => {
+                  const onError = (err: any): void => {
                     ctx.error('error during processing', { snapshot, err, ...(opt?.msg ?? {}) })
                     reject(err)
-                  })
-                  unzip.on('error', (err) => {
-                    ctx.error('error during processing', { snapshot, err, ...(opt?.msg ?? {}) })
-                    reject(err)
-                  })
+                  }
+                  readStream.on('error', onError)
+                  unzip.on('error', onError)
+                  ex.on('error', onError)
                 })
 
                 readStream.on('end', () => {
@@ -1119,12 +1128,14 @@ export async function verifyDigest (
           ex.on('finish', () => {
             resolve(null)
           })
-          unzip.on('error', (err) => {
+          const onBroken = (err: any): void => {
             ctx.error('error during reading of', { sf, err })
             modified = true
             storageToRemove.add(sf)
             resolve(null)
-          })
+          }
+          unzip.on('error', onBroken)
+          ex.on('error', onBroken)
         })
 
         readStream.on('end', () => {
@@ -1254,7 +1265,10 @@ async function write (chunk: any, stream: Writable): Promise<void> {
     })
   })
   if (needDrain) {
-    await new Promise((resolve) => stream.once('drain', resolve))
+    await new Promise((resolve, reject) => {
+      stream.once('error', reject)
+      stream.once('drain', resolve)
+    })
   }
 }
 
@@ -1263,25 +1277,45 @@ export async function writeChanges (storage: BackupStorage, snapshot: string, ch
   const writable = createGzip({ level: defaultLevel })
   writable.pipe(snapshotWritable)
 
-  // Write size
-  await write(`${changes.added.size}\n`, writable)
-  for (const [k, v] of changes.added.entries()) {
-    await write(`${k};${v}\n`, writable)
-  }
-  await write(`${changes.updated.size}\n`, writable)
-  for (const [k, v] of changes.updated.entries()) {
-    await write(`${k};${v}\n`, writable)
-  }
-  await write(`${changes.removed.length}\n`, writable)
-  for (const k of changes.removed) {
-    await write(`${k}\n`, writable)
-  }
-  writable.end()
-  await new Promise((resolve) => {
-    writable.flush(() => {
-      resolve(null)
-    })
+  // Destination errors are not propagated back to gzip, race them against every await.
+  let fail: (err: any) => void = () => {}
+  const failed = new Promise<never>((_resolve, reject) => {
+    fail = reject
   })
+  failed.catch(() => {}) // no unhandled rejection if writeChanges completes fine
+  snapshotWritable.on('error', fail)
+  writable.on('error', fail)
+
+  const step = async (p: Promise<unknown>): Promise<void> => {
+    await Promise.race([p, failed])
+  }
+
+  try {
+    // Write size
+    await step(write(`${changes.added.size}\n`, writable))
+    for (const [k, v] of changes.added.entries()) {
+      await step(write(`${k};${v}\n`, writable))
+    }
+    await step(write(`${changes.updated.size}\n`, writable))
+    for (const [k, v] of changes.updated.entries()) {
+      await step(write(`${k};${v}\n`, writable))
+    }
+    await step(write(`${changes.removed.length}\n`, writable))
+    for (const k of changes.removed) {
+      await step(write(`${k}\n`, writable))
+    }
+    writable.end()
+    await step(
+      new Promise((resolve) => {
+        writable.flush(() => {
+          resolve(null)
+        })
+      })
+    )
+  } finally {
+    snapshotWritable.off('error', fail)
+    writable.off('error', fail)
+  }
 }
 
 export async function verifyDocsFromSnapshot (
@@ -1396,18 +1430,22 @@ export async function verifyDocsFromSnapshot (
           const unzip = createGunzip({ level: defaultLevel })
 
           const endPromise = new Promise((resolve, reject) => {
+            const onError = (err: any): void => {
+              readStream.destroy()
+              storageToRemove.add(sf)
+              reject(err)
+            }
             ex.on('finish', () => {
               resolve(null)
             })
+            ex.on('error', onError)
 
             readStream.on('end', () => {
               readStream.destroy()
             })
-            readStream.pipe(unzip).on('error', (err) => {
-              readStream.destroy()
-              storageToRemove.add(sf)
-              reject(err)
-            })
+            readStream.on('error', onError)
+            unzip.on('error', onError)
+            readStream.pipe(unzip)
             unzip.pipe(ex)
           })
 

@@ -749,7 +749,11 @@ export async function backup (
             storageZip.pipe(sizePass)
 
             _packClose = async () => {
-              await new Promise<void>((resolve) => {
+              await new Promise<void>((resolve, reject) => {
+                tempFile.on('error', reject)
+                storageZip.on('error', reject)
+                sizePass.on('error', reject)
+                _pack?.on('error', reject)
                 tempFile.on('close', () => {
                   resolve()
                 })
@@ -1196,7 +1200,11 @@ export async function backup (
             storageZip.pipe(sizePass)
 
             _packClose = async () => {
-              await new Promise<void>((resolve) => {
+              await new Promise<void>((resolve, reject) => {
+                tempFile.on('error', reject)
+                storageZip.on('error', reject)
+                sizePass.on('error', reject)
+                _pack?.on('error', reject)
                 tempFile.on('close', () => {
                   resolve()
                 })

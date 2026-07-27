@@ -140,14 +140,20 @@ export async function collectAccountObjects (
         ex.on('finish', () => {
           resolve()
         })
+        ex.on('error', reject)
         const unzip = createGunzip({ level: defaultLevel })
         readStream.on('end', () => {
           readStream.destroy()
         })
-        readStream.pipe(unzip).on('error', (err) => {
+        readStream.on('error', (err) => {
           readStream.destroy()
           reject(err)
         })
+        unzip.on('error', (err) => {
+          readStream.destroy()
+          reject(err)
+        })
+        readStream.pipe(unzip)
         unzip.pipe(ex)
       })
 
@@ -594,14 +600,20 @@ export async function restore (
                 ex.on('finish', () => {
                   resolve(null)
                 })
+                ex.on('error', reject)
 
                 readStream.on('end', () => {
                   readStream.destroy()
                 })
-                readStream.pipe(unzip).on('error', (err) => {
+                readStream.on('error', (err) => {
                   readStream.destroy()
                   reject(err)
                 })
+                unzip.on('error', (err) => {
+                  readStream.destroy()
+                  reject(err)
+                })
+                readStream.pipe(unzip)
                 unzip.pipe(ex)
               })
 

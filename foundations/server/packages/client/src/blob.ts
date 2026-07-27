@@ -56,9 +56,13 @@ export class BlobClient {
         try {
           const chunks: Buffer[] = []
           const readable = await this.storageAdapter.partial(ctx, this.workspace, name, written, chunkSize)
-          await new Promise<void>((resolve) => {
+          await new Promise<void>((resolve, reject) => {
             readable.on('data', (chunk) => {
               chunks.push(chunk)
+            })
+            readable.on('error', (err) => {
+              readable.destroy()
+              reject(err)
             })
             readable.on('end', () => {
               readable.destroy()
