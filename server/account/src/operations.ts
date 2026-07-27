@@ -38,7 +38,7 @@ import {
 import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
 import { decodeToken, decodeTokenVerbose, generateToken, type PermissionsGrant } from '@hcengineering/server-token'
 
-import { isAdminEmail } from './admin'
+import { isAdminEmail, isBillingAdminEmail } from './admin'
 import { accountPlugin, type CrmNotification } from './plugin'
 import { getFreePlanLimits } from './freeLimits'
 import { type AccountServiceMethods, getServiceMethods } from './serviceOperations'
@@ -232,7 +232,9 @@ export async function login (
 
     const extraToken: Record<string, string> = isAdminEmail(normalizedEmail)
       ? { admin: 'true', authMethod: 'password' }
-      : { authMethod: 'password' }
+      : isBillingAdminEmail(normalizedEmail)
+        ? { billingAdmin: 'true', authMethod: 'password' }
+        : { authMethod: 'password' }
     ctx.info('Login succeeded', { email, normalizedEmail, isConfirmed, emailSocialId, ...extraToken })
 
     return {
@@ -555,7 +557,9 @@ export async function validateOtp (
 
     const extraToken: Record<string, string> = isAdminEmail(normalizedEmail)
       ? { admin: 'true', authMethod: 'otp' }
-      : { authMethod: 'otp' }
+      : isBillingAdminEmail(normalizedEmail)
+        ? { billingAdmin: 'true', authMethod: 'otp' }
+        : { authMethod: 'otp' }
 
     return {
       account: emailSocialId.personUuid as AccountUuid,
@@ -2875,8 +2879,8 @@ export async function getSubscriptions (
 
   let targetWorkspace: WorkspaceUuid | null
 
-  // Service and admin tokens can query any workspace/all workspaces
-  const isService = extra?.service !== undefined || extra?.admin === 'true'
+  // Service and admin (incl. read-only billing) tokens can query any workspace/all workspaces
+  const isService = extra?.service !== undefined || extra?.admin === 'true' || extra?.billingAdmin === 'true'
 
   if (isService) {
     // Honor an explicit workspaceUuid; otherwise scope to the token's own workspace so an admin

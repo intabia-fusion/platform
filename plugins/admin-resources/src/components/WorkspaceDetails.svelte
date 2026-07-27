@@ -21,7 +21,7 @@
   } from '@hcengineering/account-client'
   import { AccountRole } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { copyTextToClipboard, MessageBox } from '@hcengineering/presentation'
+  import { copyTextToClipboard, isAdminUser, isBillingAdminUser, MessageBox } from '@hcengineering/presentation'
   import {
     Button,
     ButtonMenu,
@@ -56,6 +56,9 @@
   })
 
   const accountClient = getAccountClient()
+
+  // Read-only billing admin: hide all mutating controls (server also rejects).
+  const readOnly = isBillingAdminUser() && !isAdminUser()
 
   // Destructive member operations require an emailed OTP code
   function withOtp (action: (otpCode: string) => Promise<void>): void {
@@ -365,20 +368,28 @@
           <Label label={adminRes.string.Name} />:
           {#if editingName}
             <div class="ml-1 edit-inline"><EditBox bind:value={nameValue} kind={'editbox'} autoFocus /></div>
-            <Button size={'small'} kind={'ghost'} label={adminRes.string.Save} on:click={saveName} />
+            {#if !readOnly}
+              <Button size={'small'} kind={'ghost'} label={adminRes.string.Save} on:click={saveName} />
+            {/if}
           {:else}
             <span class="ml-1">{workspace.name}</span>
-            <Button size={'small'} kind={'ghost'} label={adminRes.string.Edit} on:click={startEditName} />
+            {#if !readOnly}
+              <Button size={'small'} kind={'ghost'} label={adminRes.string.Edit} on:click={startEditName} />
+            {/if}
           {/if}
         </div>
         <div class="flex-row-center">
           <Label label={adminRes.string.Url} />:
           {#if editingUrl}
             <div class="ml-1 edit-inline"><EditBox bind:value={urlValue} kind={'editbox'} autoFocus /></div>
-            <Button size={'small'} kind={'ghost'} label={adminRes.string.Save} on:click={saveUrl} />
+            {#if !readOnly}
+              <Button size={'small'} kind={'ghost'} label={adminRes.string.Save} on:click={saveUrl} />
+            {/if}
           {:else}
             <span class="ml-1">{workspace.url}</span>
-            <Button size={'small'} kind={'ghost'} label={adminRes.string.Edit} on:click={startEditUrl} />
+            {#if !readOnly}
+              <Button size={'small'} kind={'ghost'} label={adminRes.string.Edit} on:click={startEditUrl} />
+            {/if}
           {/if}
         </div>
         <div>
@@ -389,9 +400,11 @@
         <div><Label label={adminRes.string.Mode} />: {workspace.mode}</div>
         <div><Label label={adminRes.string.CreatedOn} />: {fmtDate(workspace.createdOn)}</div>
         <div><Label label={adminRes.string.LastVisit} />: {fmtDate(workspace.lastVisit)}</div>
-        <div class="mt-2">
-          <Button label={adminRes.string.Reindex} size={'small'} on:click={reindex} />
-        </div>
+        {#if !readOnly}
+          <div class="mt-2">
+            <Button label={adminRes.string.Reindex} size={'small'} on:click={reindex} />
+          </div>
+        {/if}
       </div>
     </div>
 
@@ -415,35 +428,41 @@
                 <td>{m.firstName ?? ''} {m.lastName ?? ''}</td>
                 <td>{m.email ?? '-'}</td>
                 <td>
-                  <ButtonMenu
-                    selected={m.role}
-                    size={'small'}
-                    label={getEmbeddedLabel(m.role)}
-                    items={roleItems}
-                    on:selected={(it) => {
-                      const role = it.detail
-                      if (role !== m.role) {
-                        withOtp(async (code) => {
-                          await accountClient.adminUpdateWorkspaceRole(workspace.uuid, m.account, role, code)
-                        })
-                      }
-                    }}
-                  />
+                  {#if !readOnly}
+                    <ButtonMenu
+                      selected={m.role}
+                      size={'small'}
+                      label={getEmbeddedLabel(m.role)}
+                      items={roleItems}
+                      on:selected={(it) => {
+                        const role = it.detail
+                        if (role !== m.role) {
+                          withOtp(async (code) => {
+                            await accountClient.adminUpdateWorkspaceRole(workspace.uuid, m.account, role, code)
+                          })
+                        }
+                      }}
+                    />
+                  {:else}
+                    <Label label={getEmbeddedLabel(m.role)} />
+                  {/if}
                 </td>
                 <td>{fmtDate(m.lastActivity)}</td>
                 <td>{m.txTotal}</td>
                 <td>
-                  <Button
-                    icon={IconStop}
-                    size={'small'}
-                    kind={'dangerous'}
-                    showTooltip={{ label: adminRes.string.RemoveMember }}
-                    on:click={() => {
-                      withOtp(async (code) => {
-                        await accountClient.adminRemoveWorkspaceMember(workspace.uuid, m.account, code)
-                      })
-                    }}
-                  />
+                  {#if !readOnly}
+                    <Button
+                      icon={IconStop}
+                      size={'small'}
+                      kind={'dangerous'}
+                      showTooltip={{ label: adminRes.string.RemoveMember }}
+                      on:click={() => {
+                        withOtp(async (code) => {
+                          await accountClient.adminRemoveWorkspaceMember(workspace.uuid, m.account, code)
+                        })
+                      }}
+                    />
+                  {/if}
                 </td>
               </tr>
             {/each}
@@ -489,14 +508,16 @@
           }}
         />
       </div>
-      <div class="ml-2">
-        <Button
-          label={adminRes.string.Add}
-          kind={'primary'}
-          disabled={selectedNewMember === undefined}
-          on:click={addSelectedMember}
-        />
-      </div>
+      {#if !readOnly}
+        <div class="ml-2">
+          <Button
+            label={adminRes.string.Add}
+            kind={'primary'}
+            disabled={selectedNewMember === undefined}
+            on:click={addSelectedMember}
+          />
+        </div>
+      {/if}
     </div>
 
     <div class="fs-title mt-3 mb-1"><Label label={adminRes.string.WeeklyActivity} /></div>
@@ -542,7 +563,7 @@
                 <td>{fmtDate(s.createdOn)}</td>
                 <td>{fmtDate(s.status === 'trialing' ? (s.trialEnd ?? s.periodEnd) : s.periodEnd)}</td>
                 <td>
-                  {#if s.status !== 'canceled'}
+                  {#if s.status !== 'canceled' && !readOnly}
                     <div class="flex-row-center">
                       <Button
                         size={'small'}
@@ -596,14 +617,16 @@
           <span class="ml-1"><Label label={adminRes.string.AsTrial} /></span>
         </div>
       {/if}
-      <div class="ml-2">
-        <Button
-          label={adminRes.string.Create}
-          kind={'primary'}
-          disabled={selectedPlan.length === 0 || isCreating}
-          on:click={adminCreateSub}
-        />
-      </div>
+      {#if !readOnly}
+        <div class="ml-2">
+          <Button
+            label={adminRes.string.Create}
+            kind={'primary'}
+            disabled={selectedPlan.length === 0 || isCreating}
+            on:click={adminCreateSub}
+          />
+        </div>
+      {/if}
     </div>
   {/if}
 </Dialog>

@@ -15,7 +15,7 @@
 <script lang="ts">
   import login, { loginId } from '@hcengineering/login'
   import { getMetadata, setMetadata } from '@hcengineering/platform'
-  import presentation, { isAdminUser } from '@hcengineering/presentation'
+  import presentation, { isAdminUser, isBillingAdminUser } from '@hcengineering/presentation'
   import { Component, Loading, location, navigate } from '@hcengineering/ui'
   import { onMount } from 'svelte'
 
@@ -46,8 +46,8 @@
     token = getMetadata(presentation.metadata.Token)
   }
 
-  // Logged in but not an admin - send to the regular login
-  $: notAdmin = !restoring && token != null && !isAdminUser()
+  // Logged in but neither full admin nor read-only billing admin - send to the regular login
+  $: notAdmin = !restoring && token != null && !isAdminUser() && !isBillingAdminUser()
   $: if (notAdmin) {
     navigate({ path: [loginId] }, true)
   }

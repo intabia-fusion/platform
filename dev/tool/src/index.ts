@@ -39,6 +39,7 @@ import {
 } from '@hcengineering/postgres'
 import {
   backup,
+  analyzeAccountRemap,
   backupDownload,
   backupFind,
   checkBackupIntegrity,
@@ -1309,6 +1310,18 @@ export function devTool (
         })
       }
     )
+
+  program
+    .command('backup-account-remap <dirName> [date]')
+    .description(
+      'analyze backup account identities vs target account_db, print report of collisions + remap SQL (run before backup-restore --accounts)'
+    )
+    .action(async (dirName: string, date) => {
+      await withAccountDatabase(async (db) => {
+        const storage = await createFileBackupStorage(dirName)
+        await analyzeAccountRemap(toolCtx, storage, db, parseInt(date ?? '-1'))
+      })
+    })
 
   // program
   // .command('backup-list <dirName>')

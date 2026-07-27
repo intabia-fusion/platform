@@ -12,8 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-const ADMIN_EMAILS = new Set(process.env.ADMIN_EMAILS?.split(',') ?? [])
+const ADMIN_EMAILS = new Set((process.env.ADMIN_EMAILS?.split(',') ?? []).map((e) => e.trim()))
+// Read-only admin panel access: sees everything, cannot mutate.
+const BILLING_EMAILS = new Set((process.env.BILLING_EMAILS?.split(',') ?? []).map((e) => e.trim()))
 
 export function isAdminEmail (email: string): boolean {
   return ADMIN_EMAILS.has(email.trim())
+}
+
+export function isBillingAdminEmail (email: string): boolean {
+  return BILLING_EMAILS.has(email.trim())
 }
