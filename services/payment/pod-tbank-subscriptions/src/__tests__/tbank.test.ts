@@ -184,7 +184,12 @@ describe('endpoint routing (7 methods)', () => {
 
 describe('error contract', () => {
   test('HTTP 200 with Success:false is returned as an object, never thrown (business decline)', async () => {
-    global.fetch = mockJson({ Success: false, ErrorCode: '1051', Message: 'Insufficient funds', Status: 'REJECTED' }) as any
+    global.fetch = mockJson({
+      Success: false,
+      ErrorCode: '1051',
+      Message: 'Insufficient funds',
+      Status: 'REJECTED'
+    }) as any
     const res = await client().chargeRecurrent({ PaymentId: '1', RebillId: 'r' })
     expect(res.Success).toBe(false)
     expect(res.ErrorCode).toBe('1051')
