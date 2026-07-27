@@ -40,7 +40,7 @@ function makeStorage (sub: any = null): any {
     upsert: jest.fn().mockResolvedValue(undefined),
     logOperation: jest.fn().mockResolvedValue(undefined),
     releaseCheckout: jest.fn().mockResolvedValue(undefined),
-    getAccountContact: jest.fn().mockResolvedValue({ email: null, locale: null }),
+    getAccountContact: jest.fn().mockResolvedValue({ email: 'payer@x.com', phone: null, locale: 'ru' }),
     getTransactionCount: jest.fn().mockResolvedValue(0)
   }
 }

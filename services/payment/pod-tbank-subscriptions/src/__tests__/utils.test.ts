@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { buildPricingFromPlanConfig, resolvePerSeatAmount, addMonths, nextPeriodEnd } from '../utils'
+import { buildPricingFromPlanConfig, resolvePerSeatAmount, addMonths, nextPeriodEnd, buildTbankReceipt } from '../utils'
 
 // UTC timestamp for a given calendar date (00:00 UTC).
 const utc = (y: number, m: number, d: number): number => Date.UTC(y, m - 1, d)
@@ -105,6 +105,56 @@ describe('buildPricingFromPlanConfig', () => {
 
   test('handles empty config', () => {
     expect(buildPricingFromPlanConfig({})).toEqual({})
+  })
+})
+
+describe('buildTbankReceipt', () => {
+  test('email present: single line in minor units, Price = Amount = charge, Quantity = 1', () => {
+    expect(
+      buildTbankReceipt({ email: 'a@b.c', phone: null }, 'usn_income', 'none', 'Subscription: business (tier)', 49900)
+    ).toEqual({
+      Email: 'a@b.c',
+      Taxation: 'usn_income',
+      Items: [{ Name: 'Subscription: business (tier)', Price: 49900, Quantity: 1, Amount: 49900, Tax: 'none' }]
+    })
+  })
+
+  test('no email falls back to phone (Phone field, no Email)', () => {
+    const r = buildTbankReceipt({ email: null, phone: '+79001234567' }, 'osn', 'none', 'X', 1000)
+    expect(r?.Phone).toBe('+79001234567')
+    expect(r?.Email).toBeUndefined()
+  })
+
+  test('email wins over phone when both present', () => {
+    const r = buildTbankReceipt({ email: 'a@b.c', phone: '+79001234567' }, 'osn', 'none', 'X', 1000)
+    expect(r?.Email).toBe('a@b.c')
+    expect(r?.Phone).toBeUndefined()
+  })
+
+  test('no contact at all -> undefined (caller must not charge)', () => {
+    expect(buildTbankReceipt({ email: null, phone: null }, 'osn', 'none', 'X', 1000)).toBeUndefined()
+  })
+
+  test('empty-string email is treated as absent -> falls back to phone', () => {
+    // getAccountContact returns socialId.value, which can be '' rather than null; '' must not be used.
+    const r = buildTbankReceipt({ email: '', phone: '+79001234567' }, 'osn', 'none', 'X', 1000)
+    expect(r?.Phone).toBe('+79001234567')
+    expect(r?.Email).toBeUndefined()
+  })
+
+  test('empty-string email and empty-string phone -> undefined', () => {
+    expect(buildTbankReceipt({ email: '', phone: '' }, 'osn', 'none', 'X', 1000)).toBeUndefined()
+  })
+
+  test('passes taxation and vat through', () => {
+    const r = buildTbankReceipt({ email: 'a@b.c', phone: null }, 'osn', 'vat20', 'X', 1000)
+    expect(r?.Taxation).toBe('osn')
+    expect(r?.Items[0].Tax).toBe('vat20')
+  })
+
+  test('truncates the item name to TBank 128-char limit', () => {
+    const r = buildTbankReceipt({ email: 'a@b.c', phone: null }, 'osn', 'none', 'x'.repeat(200), 1000)
+    expect(r?.Items[0].Name).toHaveLength(128)
   })
 
   test('rounds price down and clamps out-of-range / non-finite discount', () => {

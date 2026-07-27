@@ -34,6 +34,7 @@ export default {
       paymentMethod: 'Способ оплаты',
       period: 'Период подписки'
     },
+    card: 'Карта',
     manageLink: 'Управление подпиской',
     support: 'Контакты поддержки'
   },
@@ -55,6 +56,7 @@ export default {
       paymentMethod: 'Payment method',
       period: 'Subscription period'
     },
+    card: 'Card',
     manageLink: 'Manage your subscription',
     support: 'Support contacts'
   }

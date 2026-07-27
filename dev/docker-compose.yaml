@@ -1084,6 +1084,9 @@ services:
       - TBANK_TERMINAL_KEY=${TBANK_TERMINAL_KEY:-test}
       - TBANK_PASSWORD=${TBANK_PASSWORD:-test}
       - TBANK_URL=https://securepay.tinkoff.ru
+      # Fiscal receipt (54-ФЗ) tax params — match the terminal's cash desk settings
+      - TBANK_TAXATION=${TBANK_TAXATION:-usn_income}
+      - TBANK_VAT_TAX=${TBANK_VAT_TAX:-none}
       - SCHEDULER_INTERVAL_MINUTES=${TBANK_SCHEDULER_INTERVAL_MINUTES:-60}
       # Set to true to skip webhook token verification (for local dev with curl)
       - TBANK_SKIP_WEBHOOK_VERIFICATION=true

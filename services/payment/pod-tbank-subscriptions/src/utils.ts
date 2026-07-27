@@ -233,6 +233,34 @@ export interface RecurrentChargeResult {
   Message: string
 }
 
+// TBank fiscal receipt (54-ФЗ). Amounts in kopecks.
+// Contact is Email OR Phone (a mandatory receipt requisite); at least one must be present.
+export interface TbankReceipt {
+  Email?: string
+  Phone?: string
+  Taxation: string
+  Items: Array<{ Name: string, Price: number, Quantity: number, Amount: number, Tax: string }>
+}
+
+// Build a single-line receipt for a subscription charge. Prefers email, falls back to phone.
+// Returns undefined when neither contact is available — caller must not charge without a receipt (54-ФЗ).
+export function buildTbankReceipt (
+  contact: { email: string | null, phone: string | null },
+  taxation: string,
+  vat: string,
+  name: string,
+  amount: number
+): TbankReceipt | undefined {
+  const item = { Name: name.slice(0, 128), Price: amount, Quantity: 1, Amount: amount, Tax: vat }
+  if (contact.email !== null && contact.email !== '') {
+    return { Email: contact.email, Taxation: taxation, Items: [item] }
+  }
+  if (contact.phone !== null && contact.phone !== '') {
+    return { Phone: contact.phone, Taxation: taxation, Items: [item] }
+  }
+  return undefined
+}
+
 /**
  * Charge a subscription's card off-session for `amount`.
  *
@@ -249,7 +277,8 @@ export async function chargeSubscriptionRecurrent (
   sub: SubscriptionData,
   amount: number,
   orderId: string,
-  description: string
+  description: string,
+  receipt: TbankReceipt
 ): Promise<RecurrentChargeResult> {
   const rebillId = sub.providerData?.rebillId as string | undefined
   if (rebillId === undefined || rebillId === '') {
@@ -263,7 +292,8 @@ export async function chargeSubscriptionRecurrent (
     CustomerKey: sub.accountUuid,
     Recurrent: 'Y',
     PayType: 'O',
-    OperationInitiatorType: 'R'
+    OperationInitiatorType: 'R',
+    Receipt: receipt // Mandatory fiscal receipt (54-ФЗ).
   })
   const chargeResult = await tbank.chargeRecurrent({
     PaymentId: initResult.PaymentId,

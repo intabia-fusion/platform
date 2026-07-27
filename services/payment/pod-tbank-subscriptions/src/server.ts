@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
+import type { MeasureContext, WorkspaceUuid, AccountUuid } from '@hcengineering/core'
 import {
   type SubscriptionData,
   SubscriptionStatus,
@@ -43,10 +43,17 @@ import {
   buildRenewedSubscription,
   buildFailedChargeSubscription,
   chargeSubscriptionRecurrent,
+  buildTbankReceipt,
   newActionId,
-  type PlanPricing
+  type PlanPricing,
+  type TbankReceipt
 } from './utils'
-import { notifyPaymentFailed, notifyPaymentSucceeded } from './notifications'
+import {
+  notifyPaymentFailed,
+  notifyPaymentSucceeded,
+  notifyReceiptBlocked,
+  buildChargeDescription
+} from './notifications'
 import type { TbankWebhookNotification, CreateSubscriptionRequest, UpdatePlanRequest, BillingPeriod } from './types'
 
 // Link lifetime = how long the bank keeps the link payable (RedirectDueDate). Lease = heartbeat window
@@ -143,7 +150,7 @@ export async function createServer (
     '/api/v1/subscriptions/:id/retry',
     withServiceToken,
     wrapHandler(ctx, 'retryPayment', async (req, res) => {
-      await handleRetryPayment(ctx, tbank, storage, req, res)
+      await handleRetryPayment(ctx, config, tbank, storage, req, res)
     })
   )
 
@@ -290,14 +297,34 @@ async function handleCreateSubscription (
       const transactionCount = await storage.getTransactionCount(workspaceUuid)
       const orderId = buildOrderId(workspaceUuid, transactionCount)
 
+      // Payer-facing, localized order description (TBank shows it to the customer + it names the receipt line).
+      const locale = await resolveAccountLocale(storage, accountUuid as AccountUuid)
+      const description = await buildChargeDescription(config, plan, type, 'purchase', locale)
+      // No contact -> no receipt: refuse the checkout (a receipt-less payment violates 54-ФЗ).
+      let receipt: TbankReceipt
+      try {
+        receipt = await resolveReceipt(ctx, storage, config, accountUuid as AccountUuid, description, amount)
+      } catch (err) {
+        if (err instanceof MissingReceiptContactError) {
+          ctx.warn('Checkout blocked: no receipt contact (54-ФЗ)', { workspaceUuid, accountUuid, planKey })
+          await storage.abandonCheckout(intentId).catch(() => {})
+          res.status(422).json({
+            reason: 'no_receipt_contact',
+            error: 'A payer email or phone is required to issue a fiscal receipt'
+          })
+          return
+        }
+        throw err
+      }
       const { paymentId, paymentURL } = await initTbankPayment(
         config,
         tbank,
         amount,
         orderId,
-        `Subscription: ${plan} (${type})`,
+        description,
         accountUuid,
-        workspaceUrl
+        workspaceUrl,
+        receipt
       )
 
       ctx.info('TBank payment initiated', { orderId, paymentId, planKey, amount, seats, period })
@@ -684,14 +711,38 @@ export async function handleUpdatePlan (
     try {
       const transactionCount = await storage.getTransactionCount(sub.workspaceUuid)
       const orderId = buildOrderId(sub.workspaceUuid, transactionCount)
+      const locale = await resolveAccountLocale(storage, sub.accountUuid)
+      const description = await buildChargeDescription(config, newPlan, sub.type, 'update', locale)
+      // Receipt covers the amount actually charged now (prorated delta), not the full recurring price.
+      // No contact -> refuse the checkout (a receipt-less payment violates 54-ФЗ).
+      let receipt: TbankReceipt
+      try {
+        receipt = await resolveReceipt(ctx, storage, config, sub.accountUuid, description, chargeAmount)
+      } catch (err) {
+        if (err instanceof MissingReceiptContactError) {
+          ctx.warn('Plan-update checkout blocked: no receipt contact (54-ФЗ)', {
+            subId: sub.id,
+            accountUuid: sub.accountUuid,
+            newPlan
+          })
+          await storage.abandonCheckout(intentId).catch(() => {})
+          res.status(422).json({
+            reason: 'no_receipt_contact',
+            error: 'A payer email or phone is required to issue a fiscal receipt'
+          })
+          return
+        }
+        throw err
+      }
       const { paymentId, paymentURL } = await initTbankPayment(
         config,
         tbank,
         chargeAmount,
         orderId,
-        `Subscription update: ${newPlan} (${sub.type})`,
+        description,
         sub.accountUuid,
-        workspaceUrl
+        workspaceUrl,
+        receipt
       )
       await storage.setCheckoutPayment(intentId, String(paymentId), paymentURL)
       paymentIssued = true
@@ -768,6 +819,7 @@ export async function handleUpdatePlan (
 
 async function handleRetryPayment (
   ctx: MeasureContext,
+  config: Config,
   tbank: TbankPayments,
   storage: SubscriptionStorage,
   req: Request,
@@ -794,12 +846,17 @@ async function handleRetryPayment (
   try {
     // Fresh Init on sub.amount + Charge (see chargeSubscriptionRecurrent) — a bare chargeRecurrent on the
     // original providerSubscriptionId charges the old amount / is rejected by tbank.
+    const amount = sub.amount ?? 0
+    const locale = await resolveAccountLocale(storage, sub.accountUuid)
+    const description = await buildChargeDescription(config, sub.plan, sub.type, 'retry', locale)
+    const receipt = await resolveReceipt(ctx, storage, config, sub.accountUuid, description, amount)
     const chargeResult = await chargeSubscriptionRecurrent(
       tbank,
       sub,
-      sub.amount ?? 0,
+      amount,
       `retry:${sub.id}:${Date.now()}`,
-      `Subscription payment retry: ${sub.plan} (${sub.type})`
+      description,
+      receipt
     )
 
     if (chargeResult.Success) {
@@ -819,6 +876,22 @@ async function handleRetryPayment (
       res.status(402).json({ error: chargeResult.Message ?? 'Payment failed' })
     }
   } catch (err: any) {
+    if (err instanceof MissingReceiptContactError) {
+      ctx.error('Manual retry blocked: no receipt contact', { subId: sub.id })
+      // Record the reason on the sub + alert the team (operational 54-ФЗ block).
+      const blockedData = buildFailedChargeSubscription(
+        sub,
+        'NO_RECEIPT_CONTACT',
+        'no receipt contact (54-ФЗ)',
+        MANUAL_RETRY_INTERVAL_MS
+      )
+      await storage.upsert(blockedData)
+      await notifyReceiptBlocked(ctx, config, blockedData)
+      res
+        .status(422)
+        .json({ reason: 'no_receipt_contact', error: 'A payer email or phone is required to issue a fiscal receipt' })
+      return
+    }
     ctx.error('Manual retry payment error', { subId: sub.id, err })
     res.status(500).json({ error: err.message ?? 'Internal error' })
   }
@@ -1157,6 +1230,62 @@ function buildCanceledSubscriptionData (sub: SubscriptionData, status?: string):
   }
 }
 
+// Payer locale for the charge Description. Optional, falls back to the default language.
+export async function resolveAccountLocale (
+  storage: SubscriptionStorage,
+  accountUuid: AccountUuid
+): Promise<string | null> {
+  try {
+    return (await storage.getAccountContact(accountUuid)).locale
+  } catch {
+    return null
+  }
+}
+
+// Thrown when a fiscal receipt cannot be built (no payer contact, or the contact lookup failed).
+// A charge WITHOUT a receipt would violate 54-ФЗ, so callers must abort the payment on this.
+export class MissingReceiptContactError extends Error {
+  constructor (
+    public readonly accountUuid: AccountUuid,
+    cause?: string
+  ) {
+    super(`Cannot build fiscal receipt for ${accountUuid}: no payer contact${cause !== undefined ? ` (${cause})` : ''}`)
+    this.name = 'MissingReceiptContactError'
+  }
+}
+
+// Build the fiscal receipt for a charge from the account's email/phone. Throws MissingReceiptContactError
+// if no contact resolves — the payment must not proceed receipt-less (54-ФЗ). A lookup failure also
+// throws: better to fail the payment than issue no receipt.
+export async function resolveReceipt (
+  ctx: MeasureContext,
+  storage: SubscriptionStorage,
+  config: Config,
+  accountUuid: AccountUuid,
+  itemName: string,
+  amount: number
+): Promise<TbankReceipt> {
+  let contact: { email: string | null, phone: string | null }
+  try {
+    const c = await storage.getAccountContact(accountUuid)
+    contact = { email: c.email, phone: c.phone }
+  } catch (err: any) {
+    ctx.error('Receipt contact lookup failed — aborting charge', {
+      account: accountUuid,
+      err: err?.message ?? String(err)
+    })
+    throw new MissingReceiptContactError(accountUuid, 'lookup failed')
+  }
+  const receipt = buildTbankReceipt(contact, config.TbankTaxation, config.TbankVatTax, itemName, amount)
+  if (receipt === undefined) {
+    ctx.error('No email or phone for account — aborting charge to avoid a receipt-less payment', {
+      account: accountUuid
+    })
+    throw new MissingReceiptContactError(accountUuid)
+  }
+  return receipt
+}
+
 async function initTbankPayment (
   config: Config,
   tbank: TbankPayments,
@@ -1164,7 +1293,8 @@ async function initTbankPayment (
   orderId: string,
   description: string,
   accountUuid: string,
-  workspaceUrl: string
+  workspaceUrl: string,
+  receipt: TbankReceipt
 ): Promise<{ paymentId: number, paymentURL: string }> {
   // RedirectDueDate bounds the link lifetime (TBank default 24h). Lib accepts it (Joi) but omits it
   // from TS types -> extend the param type locally.
@@ -1179,7 +1309,9 @@ async function initTbankPayment (
     RedirectDueDate: formatTbankDueDate(Date.now() + CHECKOUT_LINK_LIFETIME_MS),
     NotificationURL: config.TbankNotificationUrl ?? `${config.FrontUrl}/_tbank_subscriptions/api/v1/webhooks/tbank`,
     SuccessURL: `${config.FrontUrl}/workbench/${workspaceUrl}/setting/setting/billing/subscriptions?payment=success&order_id=${orderId}`,
-    FailURL: `${config.FrontUrl}/workbench/${workspaceUrl}/setting/setting/billing/subscriptions?payment=canceled`
+    FailURL: `${config.FrontUrl}/workbench/${workspaceUrl}/setting/setting/billing/subscriptions?payment=canceled`,
+    // Mandatory fiscal receipt (54-ФЗ) — resolveReceipt already guaranteed a contact.
+    Receipt: receipt
   }
   const initResult = await tbank.initPayment(initParams)
 
