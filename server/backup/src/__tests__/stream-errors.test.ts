@@ -15,10 +15,11 @@
 
 import { MeasureMetricsContext, type Doc, type Domain, type Ref } from '@hcengineering/core'
 import { PassThrough, Readable, Writable } from 'stream'
+import { gunzipSync } from 'zlib'
 import { type BackupStorage, type FileInfo } from '../storage'
 import { collectAccountObjects } from '../restore'
 import { type BackupSnapshot, type DomainData, type Snapshot } from '../types'
-import { verifyDocsFromSnapshot, writeChanges } from '../utils'
+import { verifyDocsFromSnapshot, watchStreamErrors, writeChanges } from '../utils'
 
 /** Storage whose write stream fails, so a missing error path shows up as a hang. */
 class FailingWriteStorage implements BackupStorage {
@@ -67,6 +68,49 @@ function bigSnapshot (n: number): Snapshot {
     added.set(`doc${i}`, `hash${i}`)
   }
   return { added, updated: new Map(), removed: [] }
+}
+
+/** Destination that acknowledges writes asynchronously, so an early resolve loses data. */
+class SlowWriteStorage implements BackupStorage {
+  chunks: Buffer[] = []
+  stream!: Writable
+
+  async write (name: string): Promise<Writable> {
+    const chunks = this.chunks
+    this.stream = new Writable({
+      write (chunk, enc, cb) {
+        setTimeout(() => {
+          chunks.push(Buffer.from(chunk))
+          cb()
+        }, 5)
+      }
+    })
+    return this.stream
+  }
+
+  async loadFile (name: string): Promise<Buffer> {
+    throw new Error('not used')
+  }
+
+  async load (name: string): Promise<Readable> {
+    throw new Error('not used')
+  }
+
+  async writeFile (name: string, data: string | Buffer | Readable): Promise<void> {}
+  async exists (name: string): Promise<boolean> {
+    return false
+  }
+
+  async stat (name: string): Promise<number> {
+    return 0
+  }
+
+  async statInfo (name: string): Promise<FileInfo> {
+    return { size: 0, etag: name, lastModified: 0 }
+  }
+
+  async delete (name: string): Promise<void> {}
+  async deleteRecursive (name: string): Promise<void> {}
 }
 
 /** In-memory storage; the named data file's read stream fails mid-flight. */
@@ -129,9 +173,35 @@ describe('backup stream error handling', () => {
     ).resolves.toBeUndefined()
   }, 10000)
 
+  // Pack streams error while documents are still being written, long before _packClose awaits.
+  it('watchStreamErrors captures an error raised before anyone awaits it', async () => {
+    const a = new PassThrough()
+    const b = new PassThrough()
+    const failed = watchStreamErrors(a, b)
+
+    expect(() => b.emit('error', new Error('pack write failed'))).not.toThrow()
+    await expect(failed).rejects.toThrow('pack write failed')
+  }, 10000)
+
+  it('writeChanges waits for the destination to finish, not just for gzip flush', async () => {
+    const storage = new SlowWriteStorage()
+    await writeChanges(storage, 'snapshot.gz', bigSnapshot(200))
+
+    expect(storage.stream.writableFinished).toBe(true)
+    const text = gunzipSync(Buffer.concat(storage.chunks as any)).toString()
+    expect(text.startsWith('200\n')).toBe(true)
+    expect(text).toContain('doc199;hash199\n')
+  }, 10000)
+
+  it('a destination error after writeChanges returned does not become an unhandled error event', async () => {
+    const storage = new SlowWriteStorage()
+    await writeChanges(storage, 'snapshot.gz', bigSnapshot(10))
+    expect(() => storage.stream.emit('error', new Error('late storage failure'))).not.toThrow()
+  }, 10000)
+
   // readStream.pipe(unzip).on('error') attached the handler to unzip, not to readStream,
   // so a failing storage read never rejected and the await hung forever.
-  it('verifyDocsFromSnapshot rejects when the data read stream errors', async () => {
+  it('verifyDocsFromSnapshot marks the file broken when the data read stream errors', async () => {
     const ctx = new MeasureMetricsContext('test', {})
     const domain = 'test' as Domain
     const dataFile = 'test-data-1.tar.gz'

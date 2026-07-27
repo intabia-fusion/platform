@@ -36,6 +36,7 @@ import {
   writeFileSync
 } from 'node:fs'
 import { createHash } from 'node:crypto'
+import { type EventEmitter } from 'node:events'
 import { rm } from 'node:fs/promises'
 import { basename, dirname } from 'node:path'
 import { PassThrough, type Writable } from 'node:stream'
@@ -59,6 +60,24 @@ export * from './storage'
 const dataBlobSize = 250 * 1024 * 1024
 
 const defaultLevel = 9
+
+/**
+ * Watches every stream of a pack pipeline from creation until it is closed. Attaching only at
+ * close time leaves the whole document-writing window unguarded: an error there has no listener
+ * and Node turns it into an unhandled 'error' event that kills the process.
+ * @public
+ */
+export function watchStreamErrors (...streams: EventEmitter[]): Promise<never> {
+  let fail: (err: any) => void = () => {}
+  const failed = new Promise<never>((_resolve, reject) => {
+    fail = reject
+  })
+  failed.catch(() => {}) // no unhandled rejection when the pack closes fine
+  for (const s of streams) {
+    s.on('error', fail)
+  }
+  return failed
+}
 
 /**
  * @public
@@ -538,18 +557,20 @@ export async function compactBackup (
           _pack.pipe(storageZip)
           storageZip.pipe(sizePass)
 
+          const packFailed = watchStreamErrors(_pack, storageZip, sizePass, tempFile)
+
           _packClose = async () => {
+            _packClose = async () => {} // tempFile emits 'close' once, a second call would hang
             ctx.info('finalize pack(compact)', { storageFile, size: sz, ...(opt?.msg ?? {}) })
-            await new Promise<void>((resolve, reject) => {
-              tempFile.on('error', reject)
-              storageZip.on('error', reject)
-              sizePass.on('error', reject)
-              _pack?.on('error', reject)
-              tempFile.on('close', () => {
-                resolve()
-              })
-              _pack?.finalize()
-            })
+            await Promise.race([
+              new Promise<void>((resolve) => {
+                tempFile.on('close', () => {
+                  resolve()
+                })
+                _pack?.finalize()
+              }),
+              packFailed
+            ])
             // We need to upload file to storage
             ctx.info('>>>> upload pack(compact)', { storageFile, size: sz, ...(opt?.msg ?? {}) })
             await storage.writeFile(storageFile, createReadStream(tmpFile))
@@ -783,6 +804,7 @@ export async function compactBackup (
                   })
                   const onError = (err: any): void => {
                     ctx.error('error during processing', { snapshot, err, ...(opt?.msg ?? {}) })
+                    readStream.destroy()
                     reject(err)
                   }
                   readStream.on('error', onError)
@@ -1132,6 +1154,7 @@ export async function verifyDigest (
             ctx.error('error during reading of', { sf, err })
             modified = true
             storageToRemove.add(sf)
+            readStream.destroy()
             resolve(null)
           }
           unzip.on('error', onBroken)
@@ -1265,10 +1288,9 @@ async function write (chunk: any, stream: Writable): Promise<void> {
     })
   })
   if (needDrain) {
-    await new Promise((resolve, reject) => {
-      stream.once('error', reject)
-      stream.once('drain', resolve)
-    })
+    // No 'error' listener here on purpose: it is once() per call and would pile up on the stream.
+    // writeChanges races every await against a single shared error promise instead.
+    await new Promise((resolve) => stream.once('drain', resolve))
   }
 }
 
@@ -1283,6 +1305,8 @@ export async function writeChanges (storage: BackupStorage, snapshot: string, ch
     fail = reject
   })
   failed.catch(() => {}) // no unhandled rejection if writeChanges completes fine
+  // Listeners stay for the lifetime of the streams: detaching them would turn a late
+  // destination error into an unhandled 'error' event.
   snapshotWritable.on('error', fail)
   writable.on('error', fail)
 
@@ -1290,32 +1314,26 @@ export async function writeChanges (storage: BackupStorage, snapshot: string, ch
     await Promise.race([p, failed])
   }
 
-  try {
-    // Write size
-    await step(write(`${changes.added.size}\n`, writable))
-    for (const [k, v] of changes.added.entries()) {
-      await step(write(`${k};${v}\n`, writable))
-    }
-    await step(write(`${changes.updated.size}\n`, writable))
-    for (const [k, v] of changes.updated.entries()) {
-      await step(write(`${k};${v}\n`, writable))
-    }
-    await step(write(`${changes.removed.length}\n`, writable))
-    for (const k of changes.removed) {
-      await step(write(`${k}\n`, writable))
-    }
-    writable.end()
-    await step(
-      new Promise((resolve) => {
-        writable.flush(() => {
-          resolve(null)
-        })
-      })
-    )
-  } finally {
-    snapshotWritable.off('error', fail)
-    writable.off('error', fail)
+  // Write size
+  await step(write(`${changes.added.size}\n`, writable))
+  for (const [k, v] of changes.added.entries()) {
+    await step(write(`${k};${v}\n`, writable))
   }
+  await step(write(`${changes.updated.size}\n`, writable))
+  for (const [k, v] of changes.updated.entries()) {
+    await step(write(`${k};${v}\n`, writable))
+  }
+  await step(write(`${changes.removed.length}\n`, writable))
+  for (const k of changes.removed) {
+    await step(write(`${k}\n`, writable))
+  }
+  writable.end()
+  // Wait for the destination, not just for gzip: flush() returns while compressed data is still in flight.
+  await step(
+    new Promise((resolve) => {
+      snapshotWritable.on('finish', resolve)
+    })
+  )
 }
 
 export async function verifyDocsFromSnapshot (
