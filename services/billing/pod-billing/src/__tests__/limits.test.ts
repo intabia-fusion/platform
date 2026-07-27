@@ -227,4 +227,49 @@ describe('LimitsEngine', () => {
       )
     })
   })
+
+  it('batch aggregates same workspace/metric into one apply, deduping refs', async () => {
+    tierLimits({ tokenLimit: 1000 })
+    const db = makeDb()
+    const { engine, producer } = makeEngine(db)
+    const hb = jest.fn(async () => {})
+
+    // ref 'a' repeats -> counted once; new deltas sum 999+2+5=1006, crossing 1000 a single time.
+    await engine.processUsageBatch(ctx, [msg('a', 999), msg('b', 2), msg('a', 999), msg('c', 5)], hb)
+
+    // one (workspace, metric) group -> one subscription fetch and one limit write, not per-message
+    expect(getSubscriptionsMock).toHaveBeenCalledTimes(1)
+    expect(db.upsertLimitState).toHaveBeenCalledTimes(1)
+    const st = (db.upsertLimitState as jest.Mock).mock.calls[0][1]
+    expect(st.used).toBe(1006)
+    expect(st.exhausted).toBe(true)
+    expect(producer.send).toHaveBeenCalledTimes(1)
+    expect(hb).toHaveBeenCalledTimes(1)
+  })
+
+  it('batch keeps distinct metrics as separate groups (one heartbeat each)', async () => {
+    tierLimits({ tokenLimit: 1000 })
+    const db = makeDb()
+    const { engine } = makeEngine(db)
+    const hb = jest.fn(async () => {})
+
+    await engine.processUsageBatch(
+      ctx,
+      [
+        { kind: 'usage', workspace: WS, metric: 'tokens', amount: 3, ref: 't1' },
+        { kind: 'usage', workspace: WS, metric: 'transcript', amount: 5, ref: 'x1' },
+        { kind: 'usage', workspace: WS, metric: 'tokens', amount: 2, ref: 't2' }
+      ],
+      hb
+    )
+
+    // two (workspace, metric) groups -> two limit writes and two heartbeats, sums per category
+    expect(db.upsertLimitState).toHaveBeenCalledTimes(2)
+    expect(hb).toHaveBeenCalledTimes(2)
+    const byCat = Object.fromEntries(
+      (db.upsertLimitState as jest.Mock).mock.calls.map((c) => [c[1].category, c[1].used])
+    )
+    expect(byCat.tokens).toBe(5)
+    expect(byCat.transcript).toBe(5)
+  })
 })
