@@ -26,8 +26,9 @@ import {
   type QueueWorkspaceMessage
 } from '@hcengineering/server-core'
 
-/** Matches BillingUsageMessage from pod-billing (plan 3); defined locally to avoid cross-service import. */
+/** Matches BillingUsageMessage from pod-billing (single billing-usage topic, discriminated by `kind`). */
 interface StorageDeltaMessage {
+  kind: 'usage'
   workspace: WorkspaceUuid
   metric: 'storage'
   amount: number
@@ -80,7 +81,7 @@ export class LimitsState {
   /** Fire-and-forget storage delta to billing-usage. Call only for user uploads. ref=sha256 for idempotency. */
   sendStorageDelta (ctx: MeasureContext, workspace: WorkspaceUuid, size: number, sha256: string): void {
     void this.usageProducer
-      .send(ctx, workspace, [{ workspace, metric: 'storage', amount: size, ref: sha256 }])
+      .send(ctx, workspace, [{ kind: 'usage', workspace, metric: 'storage', amount: size, ref: sha256 }])
       .catch((err) => {
         ctx.error('failed to send storage delta', { workspace, size, sha256, err })
       })

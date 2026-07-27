@@ -58,7 +58,7 @@ const { LimitsEngine } = require('../limits')
 const WS = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' as WorkspaceUuid
 const ctx: any = { info: jest.fn(), error: jest.fn(), warn: jest.fn() }
 
-function makeDb (tokensUsed = 0): BillingDB {
+function makeDb (tokensUsed = 0, participantMinutes = 0): BillingDB {
   const dedup = new Set<string>()
   const states = new Map<string, WorkspaceLimitState>()
   return {
@@ -68,6 +68,7 @@ function makeDb (tokensUsed = 0): BillingDB {
       dedup.add(key)
       return true
     }),
+    getParticipantMinutes: jest.fn(async () => ({ totalMinutes: participantMinutes })),
     getLimitState: jest.fn(async (_c, ws, cat) => states.get(`${ws}:${cat}`)),
     upsertLimitState: jest.fn(async (_c, st) => {
       states.set(`${st.workspace}:${st.category}`, { ...st })
@@ -99,7 +100,7 @@ function makeEngine (db: BillingDB): any {
 }
 
 function msg (ref: string, amount = 1): BillingUsageMessage {
-  return { workspace: WS, metric: 'tokens', amount, ref }
+  return { kind: 'usage', workspace: WS, metric: 'tokens', amount, ref }
 }
 
 describe('LimitsEngine', () => {
@@ -177,5 +178,53 @@ describe('LimitsEngine', () => {
     const { engine, producer } = makeEngine(db)
     await engine.processUsageDelta(ctx, msg('r1', 999999))
     expect(producer.send).not.toHaveBeenCalled()
+  })
+
+  describe('meetingMinutes', () => {
+    function minutesMsg (ref: string, amountSeconds: number): BillingUsageMessage {
+      return { kind: 'usage', workspace: WS, metric: 'meetingMinutes', amount: amountSeconds, ref }
+    }
+
+    it('enforces meetingMinutesLimit in seconds', async () => {
+      // 2 minutes of plan -> exhausted only once past 120 seconds.
+      tierLimits({ meetingMinutesLimit: 2 })
+      const db = makeDb()
+      const { engine, producer } = makeEngine(db)
+
+      await engine.processUsageDelta(ctx, minutesMsg('m1', 119))
+      expect(producer.send).not.toHaveBeenCalled()
+
+      await engine.processUsageDelta(ctx, minutesMsg('m2', 2))
+      expect(producer.send).toHaveBeenCalledWith(
+        ctx,
+        WS,
+        expect.arrayContaining([expect.objectContaining({ category: 'meetingMinutes', status: 'exhausted' })])
+      )
+    })
+
+    it('reports usageInfo in minutes while the queue delta stays in seconds', async () => {
+      tierLimits({ meetingMinutesLimit: 60 })
+      const db = makeDb()
+      const { engine } = makeEngine(db)
+
+      await engine.processUsageDelta(ctx, minutesMsg('m1', 90))
+
+      expect(updateUsageInfoMock).toHaveBeenCalledWith(
+        expect.objectContaining({ usage: expect.objectContaining({ meetingMinutes: 1.5 }) })
+      )
+    })
+
+    it('recomputes used from participant minutes, converted to seconds', async () => {
+      tierLimits({ meetingMinutesLimit: 10 })
+      const db = makeDb(0, 3) // 3 minutes recorded in participant sessions
+      const { engine } = makeEngine(db)
+
+      await engine.recomputeWorkspace(ctx, WS)
+
+      expect(db.upsertLimitState).toHaveBeenCalledWith(
+        ctx,
+        expect.objectContaining({ category: 'meetingMinutes', used: 180, limitValue: 600 })
+      )
+    })
   })
 })

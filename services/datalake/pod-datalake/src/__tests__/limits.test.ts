@@ -98,7 +98,7 @@ describe('LimitsState', () => {
     const state = new LimitsState(ctx, queue)
     state.sendStorageDelta(ctx, WS_A, 1024, 'abc123')
     expect(producer.send).toHaveBeenCalledWith(ctx, WS_A, [
-      { workspace: WS_A, metric: 'storage', amount: 1024, ref: 'abc123' }
+      { kind: 'usage', workspace: WS_A, metric: 'storage', amount: 1024, ref: 'abc123' }
     ])
   })
 })

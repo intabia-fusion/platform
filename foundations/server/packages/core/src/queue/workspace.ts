@@ -14,7 +14,8 @@ export enum QueueWorkspaceEvent {
   FullReindex = 'full-fulltext-reindex',
   Reindex = 'fulltext-reindex',
   ClearIndex = 'clear-fulltext-index',
-  LimitsChanged = 'limits-changed'
+  LimitsChanged = 'limits-changed',
+  UsageChanged = 'usage-changed'
 }
 
 export interface QueueWorkspaceMessage {
@@ -34,6 +35,7 @@ export enum LimitCategory {
   Disk = 'disk',
   Tokens = 'tokens',
   Transcript = 'transcript',
+  MeetingMinutes = 'meetingMinutes',
   Payment = 'payment',
   Plan = 'plan',
   Members = 'members'
@@ -49,6 +51,14 @@ export interface QueueWorkspaceLimitsMessage extends QueueWorkspaceMessage {
 
   category: LimitCategory
   status: LimitStatus
+}
+
+/** Live usage update (e.g. a meeting-minutes tick) for UI to move without waiting for a full recompute. */
+export interface QueueWorkspaceUsageMessage extends QueueWorkspaceMessage {
+  type: QueueWorkspaceEvent.UsageChanged
+
+  category: LimitCategory
+  used: number
 }
 
 export const workspaceEvents = {
@@ -68,6 +78,11 @@ export const workspaceEvents = {
     type: QueueWorkspaceEvent.LimitsChanged,
     category,
     status
+  }),
+  usageChanged: (category: LimitCategory, used: number): QueueWorkspaceUsageMessage => ({
+    type: QueueWorkspaceEvent.UsageChanged,
+    category,
+    used
   }),
   reindex: (domain: Domain, classes: Ref<Class<Doc>>[]): QueueWorkspaceReindexMessage => ({
     type: QueueWorkspaceEvent.Reindex,

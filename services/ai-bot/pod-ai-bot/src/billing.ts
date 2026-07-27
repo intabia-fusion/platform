@@ -26,8 +26,9 @@ import { v4 as uuid } from 'uuid'
 
 import config from './config'
 
-/** Mirrors BillingUsageMessage in pod-billing (plan 3). */
+/** Mirrors BillingUsageMessage in pod-billing (single billing-usage topic, discriminated by `kind`). */
 export interface BillingUsageMessage {
+  kind: 'usage'
   workspace: WorkspaceUuid
   metric: 'tokens' | 'transcript'
   amount: number
@@ -235,7 +236,13 @@ export async function pushTranscriptDuration (
   try {
     await usageProducer.send(ctx, workspace, [
       // ref must be deterministic for retry idempotency (billing dedups by it)
-      { workspace, metric: 'transcript', amount: durationSec, ref: `transcript-${workspace}-${ref ?? uuid()}` }
+      {
+        kind: 'usage',
+        workspace,
+        metric: 'transcript',
+        amount: durationSec,
+        ref: `transcript-${workspace}-${ref ?? uuid()}`
+      }
     ])
   } catch (e) {
     ctx.error('Failed to push transcript duration to billing-usage', { workspace, durationSec, e })
@@ -248,7 +255,9 @@ export async function pushTokensData (ctx: MeasureContext, data: AiTokensData[],
     const total = data.reduce((sum, d) => sum + d.tokens, 0)
     const workspace = data[0]?.workspace
     if (workspace === undefined || total === 0) return
-    await usageProducer.send(ctx, workspace, [{ workspace, metric: 'tokens', amount: total, ref: ref ?? uuid() }])
+    await usageProducer.send(ctx, workspace, [
+      { kind: 'usage', workspace, metric: 'tokens', amount: total, ref: ref ?? uuid() }
+    ])
   } catch (e) {
     ctx.error('Failed to push tokens data to billing-usage', { e })
   }

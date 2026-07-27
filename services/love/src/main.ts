@@ -55,6 +55,7 @@ import { WebhookProcessor } from './webhook'
 import { WorkspaceClient } from './workspaceClient'
 import { GuestManager } from './guests'
 import { createToken, decodeMeetingToken, extractToken, getRoomName, parseMetadata } from './utils'
+import { setBillingProducer, type BillingMessage } from './queue'
 /**
  * Recursively converts all BigInt values in an object to strings.
  * This is needed because JSON.stringify cannot handle BigInt values.
@@ -129,6 +130,8 @@ export const main = async (): Promise<void> => {
   const egressClient = new EgressClient(config.LiveKitHost, config.ApiKey, config.ApiSecret)
 
   const eventProducer = queue.getProducer<QueueMeetingMessage>(ctx, QueueTopic.LoveQueue)
+  const billingProducer = queue.getProducer<BillingMessage>(ctx, QueueTopic.BillingUsage)
+  setBillingProducer(billingProducer)
 
   // Disk/payment-exhausted workspaces (LimitsChanged consumer) — gate for starting recordings.
   const limitsState = new LimitsState(ctx, queue)
@@ -484,10 +487,15 @@ export const main = async (): Promise<void> => {
   })
 
   // Initialize polling service if enabled
-  const pollingService = new LiveKitPollingService(ctx, roomClient, {
-    intervalMs: config.PollingIntervalMs,
-    projectKey: config.LiveKitProject
-  })
+  const pollingService = new LiveKitPollingService(
+    ctx,
+    roomClient,
+    {
+      intervalMs: config.PollingIntervalMs,
+      projectKey: config.LiveKitProject
+    },
+    billingProducer
+  )
   pollingService.start()
 
   const workspaceConsumer = queue.createConsumer(ctx, QueueTopic.Workspace, 'love-client', async (ctx, msg, queue) => {
@@ -524,6 +532,7 @@ export const main = async (): Promise<void> => {
     void workspaceTxConsumer.close()
     void eventConsumer.close()
     void eventProducer.close()
+    void billingProducer.close()
     void limitsState.close()
     void queue.shutdown()
     pollingService.stop()

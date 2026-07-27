@@ -705,3 +705,15 @@ const toMeetingMinutesObjectSearchResult = (e: WithLookup<MeetingMinutes>): Obje
   icon: love.icon.MeetingMinutes,
   component: MeetingMinutesSearchItem
 })
+
+/** Elapsed meeting time as mm:ss, or h:mm:ss past an hour. */
+export function formatElapsedTime (elapsed: number): string {
+  const seconds = Math.floor(elapsed / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+
+  const displaySeconds = (seconds % 60).toString().padStart(2, '0')
+  const displayMinutes = (minutes % 60).toString().padStart(2, '0')
+
+  return hours > 0 ? `${hours}:${displayMinutes}:${displaySeconds}` : `${displayMinutes}:${displaySeconds}`
+}

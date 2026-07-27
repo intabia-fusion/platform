@@ -1,35 +1,18 @@
 <script lang="ts">
   import { DocNavLink } from '@hcengineering/view-resources'
-  import love, { MeetingMinutes, MeetingStatus, Room } from '@hcengineering/love'
+  import { MeetingMinutes, MeetingStatus, Room } from '@hcengineering/love'
   import { onMount } from 'svelte'
-  import { getClient } from '@hcengineering/presentation'
-  import { SortingOrder } from '@hcengineering/core'
+  import { meetings } from '../../stores'
+  import { formatElapsedTime } from '../../utils'
 
   export let room: Room
 
-  const client = getClient()
   let currentMeetingMinutes: MeetingMinutes | undefined
 
-  $: void client
-    .findOne(
-      love.class.MeetingMinutes,
-      { attachedTo: room._id, status: MeetingStatus.Active },
-      { sort: { createdOn: SortingOrder.Descending } }
-    )
-    .then((res) => {
-      currentMeetingMinutes = res
-    })
-
-  function formatElapsedTime (elapsed: number): string {
-    const seconds = Math.floor(elapsed / 1000)
-    const minutes = Math.floor(seconds / 60)
-    const hours = Math.floor(minutes / 60)
-
-    const displaySeconds = (seconds % 60).toString().padStart(2, '0')
-    const displayMinutes = (minutes % 60).toString().padStart(2, '0')
-
-    return hours > 0 ? `${hours}:${displayMinutes}:${displaySeconds}` : `${displayMinutes}:${displaySeconds}`
-  }
+  // Live from the meetings store: a one-shot findOne would never pick up the meeting start.
+  $: currentMeetingMinutes = $meetings.find(
+    (m) => m.roomId === room._id && (m.status === MeetingStatus.Active || m.status === MeetingStatus.Pending)
+  )
 
   let now = Date.now()
 

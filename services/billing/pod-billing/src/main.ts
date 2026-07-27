@@ -26,6 +26,7 @@ import {
   QueueWorkspaceEvent,
   type QueueWorkspaceLimitsMessage,
   type QueueWorkspaceMessage,
+  type QueueWorkspaceUsageMessage,
   StorageConfig
 } from '@hcengineering/server-core'
 import serverToken from '@hcengineering/server-token'
@@ -35,7 +36,7 @@ import config from './config'
 import { createDb } from './db/postgres'
 import { LimitsEngine } from './limits'
 import { createServer, listen } from './server'
-import { type BillingUsageMessage } from './types'
+import { type BillingMessage } from './types'
 import { UsageWorker } from './usage'
 import { storageConfigFromEnv } from '@hcengineering/server-storage'
 
@@ -69,23 +70,36 @@ export const main = async (): Promise<void> => {
   const storageConfigs: StorageConfig[] = storageConfigFromEnv().storages.filter((p) => p.kind === 'datalake')
 
   const queue = getPlatformQueue('billing')
-  const workspaceProducer = queue.getProducer<QueueWorkspaceLimitsMessage>(metricsContext, QueueTopic.Workspace)
+  const workspaceProducer = queue.getProducer<QueueWorkspaceLimitsMessage | QueueWorkspaceUsageMessage>(
+    metricsContext,
+    QueueTopic.Workspace
+  )
   const engine = new LimitsEngine(db, config.AccountsUrl, storageConfigs, workspaceProducer)
   const worker = new UsageWorker(db, storageConfigs, config, async (ctx, workspace) => {
     await engine.recomputeWorkspace(ctx, workspace)
   })
 
-  const usageConsumer = queue.createBatchConsumer<BillingUsageMessage>(
+  // Single billing topic: usage deltas + LiveKit records (session/egress/participant), routed by `kind`.
+  const usageConsumer = queue.createBatchConsumer<BillingMessage>(
     metricsContext,
     QueueTopic.BillingUsage,
     'billing-limits',
     async (ctx, msgs) => {
       for (const msg of msgs) {
         try {
-          await engine.processUsageDelta(ctx, msg.value)
+          const value = msg.value
+          if (value.kind === 'usage') {
+            await engine.processUsageDelta(ctx, value)
+          } else if (value.kind === 'session') {
+            await db.setLiveKitSessions(ctx, value.data)
+          } else if (value.kind === 'egress') {
+            await db.setLiveKitEgress(ctx, value.data)
+          } else {
+            await db.pushParticipantSessions(ctx, value.data)
+          }
         } catch (err: any) {
-          // rethrow to trigger consumer retry: usage deltas drive limit enforcement, must not be silently dropped
-          ctx.error('failed to process usage delta', { workspace: msg.value?.workspace, err })
+          // rethrow to trigger consumer retry: billing events drive limit enforcement, must not be silently dropped
+          ctx.error('failed to process billing message', { workspace: msg.workspace, err })
           throw err
         }
       }

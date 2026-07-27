@@ -16,9 +16,11 @@
 import { MeasureContext, Ref, WorkspaceUuid } from '@hcengineering/core'
 import { Person } from '@hcengineering/contact'
 import { MeetingMinutes, parseRoomName } from '@hcengineering/love'
+import { PlatformQueueProducer } from '@hcengineering/server-core'
 import { RoomServiceClient, ParticipantInfo as LiveKitParticipant, Room } from 'livekit-server-sdk'
 import { WorkspaceClient } from './workspaceClient'
 import { parseParticipantMetadata } from './utils'
+import { type BillingMessage } from './queue'
 
 /**
  * Configuration for the polling service
@@ -30,6 +32,12 @@ export interface PollingConfig {
   projectKey: string
 }
 
+/** Per-participant meeting-minutes billing progress, tracked to send only the un-sent delta each poll. */
+interface ParticipantBillingProgress {
+  joinedAtMs: number
+  sentSeconds: number
+}
+
 /**
  * Tracks the state of a LiveKit room for reconciliation
  */
@@ -39,6 +47,7 @@ interface RoomState {
   meetingId: Ref<MeetingMinutes>
   participants: Map<string, LiveKitParticipant>
   lastUpdated: number
+  sentByParticipant: Map<string, ParticipantBillingProgress>
 }
 
 /** Periodically polls LiveKit to reconcile room/participant state with the platform database. */
@@ -61,7 +70,12 @@ export class LiveKitPollingService {
   private livekitFailureSince: number | null = null
   private livekitDrainedAt: number | null = null
 
-  constructor (ctx: MeasureContext, roomClient: RoomServiceClient, config: PollingConfig) {
+  constructor (
+    ctx: MeasureContext,
+    roomClient: RoomServiceClient,
+    config: PollingConfig,
+    private readonly billingProducer?: PlatformQueueProducer<BillingMessage>
+  ) {
     this.ctx = ctx
     this.roomClient = roomClient
     this.config = config
@@ -289,14 +303,20 @@ export class LiveKitPollingService {
       }
     }
 
+    const sentByParticipant = previousState?.sentByParticipant ?? new Map<string, ParticipantBillingProgress>()
+
     // Update state
     this.roomStates.set(roomName, {
       roomName,
       workspace,
       meetingId,
       participants: currentParticipants,
-      lastUpdated: Date.now()
+      lastUpdated: Date.now(),
+      sentByParticipant
     })
+
+    // Bill the un-sent meeting-minutes delta for every real (non-agent) participant still in the room.
+    await this.trackMeetingMinutesBilling(workspace, roomName, currentParticipants, sentByParticipant)
 
     // Reconcile with database (compare DB state with LiveKit state, not just in-memory cache)
     // Use allParticipants (including agents) to avoid removing AI bot ParticipantInfo entries
@@ -304,6 +324,64 @@ export class LiveKitPollingService {
 
     // Also reconcile in-memory cache for detecting joins (backwards compatibility)
     await this.reconcileParticipants(workspace, meetingId, previousParticipants, currentParticipants)
+  }
+
+  /** Sends the un-sent meeting-minutes delta (in seconds) for each currently-joined participant. */
+  private async trackMeetingMinutesBilling (
+    workspace: WorkspaceUuid,
+    roomName: string,
+    currentParticipants: Map<string, LiveKitParticipant>,
+    sentByParticipant: Map<string, ParticipantBillingProgress>
+  ): Promise<void> {
+    if (this.billingProducer === undefined) return
+
+    for (const participant of currentParticipants.values()) {
+      const sid = participant.sid
+      if (sid === undefined || sid === '') continue
+
+      const joinedAtRaw = Number(participant.joinedAt ?? participant.joinedAtMs ?? 0)
+      if (joinedAtRaw <= 0) continue
+      const joinedAtMs = joinedAtRaw > 1e12 ? joinedAtRaw : joinedAtRaw * 1000
+
+      const progress = sentByParticipant.get(sid) ?? { joinedAtMs, sentSeconds: 0 }
+      const elapsedSec = Math.floor((Date.now() - joinedAtMs) / 1000)
+      const newSec = elapsedSec - progress.sentSeconds
+      if (newSec <= 0) {
+        sentByParticipant.set(sid, progress)
+        continue
+      }
+
+      const newSentTotal = progress.sentSeconds + newSec
+      try {
+        await this.billingProducer.send(this.ctx, workspace, [
+          {
+            kind: 'usage',
+            workspace,
+            metric: 'meetingMinutes',
+            amount: newSec,
+            ref: `meetingMinutes-${roomName}-${sid}-${newSentTotal}`
+          }
+        ])
+        sentByParticipant.set(sid, { joinedAtMs, sentSeconds: newSentTotal })
+      } catch (err: any) {
+        this.ctx.error('[PollingService] Failed to send meeting-minutes usage delta', {
+          workspace,
+          roomName,
+          sid,
+          error: err?.message ?? String(err)
+        })
+      }
+    }
+
+    // Drop those who left: their time is already billed up to the last poll, and keeping them
+    // would make the final flush bill Date.now() - joinedAt, i.e. time after they disconnected.
+    const presentSids = new Set<string>()
+    for (const participant of currentParticipants.values()) {
+      if (participant.sid !== undefined && participant.sid !== '') presentSids.add(participant.sid)
+    }
+    for (const sid of sentByParticipant.keys()) {
+      if (!presentSids.has(sid)) sentByParticipant.delete(sid)
+    }
   }
 
   /** Removes ParticipantInfo entries not present in LiveKit; allParticipants must include agents/bots to avoid removing them. */
@@ -477,6 +555,9 @@ export class LiveKitPollingService {
           meetingId: state.meetingId
         })
 
+        // Flush the final un-sent meeting-minutes remainder for participants still tracked at cleanup time.
+        await this.flushFinalMeetingMinutesBilling(state)
+
         // Room ended - ensure meeting is marked as finished and pending joins are cleaned up
         try {
           const wsClient = await WorkspaceClient.create(state.workspace, this.ctx)
@@ -489,6 +570,36 @@ export class LiveKitPollingService {
         }
 
         this.roomStates.delete(roomName)
+      }
+    }
+  }
+
+  /** Sends the final remainder for participants still present at cleanup time; those who left are already dropped. */
+  private async flushFinalMeetingMinutesBilling (state: RoomState): Promise<void> {
+    if (this.billingProducer === undefined) return
+
+    for (const [sid, progress] of state.sentByParticipant) {
+      const finalSec = Math.floor((Date.now() - progress.joinedAtMs) / 1000) - progress.sentSeconds
+      if (finalSec <= 0) continue
+
+      const newSentTotal = progress.sentSeconds + finalSec
+      try {
+        await this.billingProducer.send(this.ctx, state.workspace, [
+          {
+            kind: 'usage',
+            workspace: state.workspace,
+            metric: 'meetingMinutes',
+            amount: finalSec,
+            ref: `meetingMinutes-${state.roomName}-${sid}-${newSentTotal}`
+          }
+        ])
+      } catch (err: any) {
+        this.ctx.error('[PollingService] Failed to send final meeting-minutes usage delta', {
+          workspace: state.workspace,
+          roomName: state.roomName,
+          sid,
+          error: err?.message ?? String(err)
+        })
       }
     }
   }

@@ -50,18 +50,25 @@ function createMockWsClient (): Record<string, jest.Mock> {
 describe('LiveKitPollingService.poll', () => {
   let roomClient: ReturnType<typeof createMockRoomClient>
   let wsClient: Record<string, jest.Mock>
+  let billingProducer: { send: jest.Mock, close: jest.Mock }
   let service: LiveKitPollingService
 
   beforeEach(() => {
     jest.clearAllMocks()
     roomClient = createMockRoomClient()
     wsClient = createMockWsClient()
+    billingProducer = { send: jest.fn().mockResolvedValue(undefined), close: jest.fn().mockResolvedValue(undefined) }
     ;(WorkspaceClient.create as jest.Mock).mockResolvedValue(wsClient)
 
-    service = new LiveKitPollingService(createMockContext(), roomClient as any, {
-      intervalMs: 1000,
-      projectKey: 'test-project'
-    })
+    service = new LiveKitPollingService(
+      createMockContext(),
+      roomClient as any,
+      {
+        intervalMs: 1000,
+        projectKey: 'test-project'
+      },
+      billingProducer as any
+    )
     // isRunning gate blocks poll() unless start()/stop() flips it; set directly to skip the setInterval side effects.
     ;(service as any).isRunning = true
   })
@@ -156,6 +163,124 @@ describe('LiveKitPollingService.poll', () => {
       await (service as any).poll()
       expect(wsClient.checkUnfinishedMeetings).toHaveBeenCalledTimes(3)
       dateSpy2.mockRestore()
+    })
+  })
+
+  describe('meeting-minutes billing', () => {
+    const activeRoom = { name: roomName, metadata: JSON.stringify({ projectKey: 'test-project' }) }
+
+    // LiveKit reports joinedAt in seconds; polling.ts scales anything below 1e12 to ms.
+    function participant (sid: string, joinedAtSec: number, agent = false): any {
+      return {
+        sid,
+        identity: `identity-${sid}`,
+        joinedAt: joinedAtSec,
+        permission: agent ? { agent: true } : undefined
+      }
+    }
+
+    function usageDeltas (): any[] {
+      return billingProducer.send.mock.calls.flatMap((call) => call[2]).filter((m) => m.metric === 'meetingMinutes')
+    }
+
+    it('bills only the un-sent delta on each poll', async () => {
+      const now = Date.now()
+      const joinedAtSec = Math.floor(now / 1000) - 60
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(now)
+      roomClient.listRooms.mockResolvedValue([activeRoom])
+      roomClient.listParticipants.mockResolvedValue([participant('sid-1', joinedAtSec)])
+
+      await (service as any).poll()
+      dateSpy.mockReturnValue(now + 30_000)
+      await (service as any).poll()
+
+      // 60s elapsed at the first poll, then only the following 30s.
+      expect(usageDeltas().map((m) => m.amount)).toEqual([60, 30])
+      dateSpy.mockRestore()
+    })
+
+    it('uses a distinct idempotency ref per cumulative total', async () => {
+      const now = Date.now()
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(now)
+      roomClient.listRooms.mockResolvedValue([activeRoom])
+      roomClient.listParticipants.mockResolvedValue([participant('sid-1', Math.floor(now / 1000) - 10)])
+
+      await (service as any).poll()
+      dateSpy.mockReturnValue(now + 30_000)
+      await (service as any).poll()
+
+      const refs = usageDeltas().map((m) => m.ref)
+      expect(new Set(refs).size).toBe(refs.length)
+      expect(refs[0]).toContain('sid-1')
+      dateSpy.mockRestore()
+    })
+
+    it('does not bill agent participants', async () => {
+      const now = Date.now()
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(now)
+      roomClient.listRooms.mockResolvedValue([activeRoom])
+      roomClient.listParticipants.mockResolvedValue([participant('agent-1', Math.floor(now / 1000) - 60, true)])
+
+      await (service as any).poll()
+
+      expect(usageDeltas()).toHaveLength(0)
+      dateSpy.mockRestore()
+    })
+
+    it('stops billing a participant who left, even when the room lives on', async () => {
+      const now = Date.now()
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(now)
+      roomClient.listRooms.mockResolvedValue([activeRoom])
+      roomClient.listParticipants.mockResolvedValueOnce([participant('sid-1', Math.floor(now / 1000) - 60)])
+
+      await (service as any).poll()
+      const afterFirst = usageDeltas().length
+
+      // Participant is gone; the room keeps running for another hour.
+      roomClient.listParticipants.mockResolvedValue([])
+      dateSpy.mockReturnValue(now + 3_600_000)
+      await (service as any).poll()
+
+      expect(usageDeltas()).toHaveLength(afterFirst)
+      expect((service as any).roomStates.get(roomName).sentByParticipant.size).toBe(0)
+      dateSpy.mockRestore()
+    })
+
+    it('does not bill a departed participant when the room is later cleaned up', async () => {
+      const now = Date.now()
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(now)
+      roomClient.listRooms.mockResolvedValueOnce([activeRoom])
+      roomClient.listParticipants.mockResolvedValueOnce([participant('sid-1', Math.floor(now / 1000) - 60)])
+      await (service as any).poll()
+
+      // Left after a minute, room stays up for an hour, then disappears -> final flush must add nothing.
+      roomClient.listRooms.mockResolvedValueOnce([activeRoom])
+      roomClient.listParticipants.mockResolvedValueOnce([])
+      dateSpy.mockReturnValue(now + 3_600_000)
+      await (service as any).poll()
+
+      const beforeCleanup = usageDeltas().reduce((sum, m) => sum + m.amount, 0)
+      roomClient.listRooms.mockResolvedValueOnce([])
+      await (service as any).poll()
+
+      expect(usageDeltas().reduce((sum, m) => sum + m.amount, 0)).toBe(beforeCleanup)
+      dateSpy.mockRestore()
+    })
+
+    it('flushes the remaining time for a participant still present at cleanup', async () => {
+      const now = Date.now()
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(now)
+      roomClient.listRooms.mockResolvedValueOnce([activeRoom])
+      roomClient.listParticipants.mockResolvedValue([participant('sid-1', Math.floor(now / 1000) - 60)])
+      await (service as any).poll()
+
+      dateSpy.mockReturnValue(now + 30_000)
+      roomClient.listRooms.mockResolvedValueOnce([])
+      await (service as any).poll()
+
+      // 60s billed while polling, 30s remainder flushed when the room vanished.
+      expect(usageDeltas().reduce((sum, m) => sum + m.amount, 0)).toBe(90)
+      dateSpy.mockRestore()
     })
   })
 

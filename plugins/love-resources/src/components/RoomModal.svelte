@@ -15,11 +15,11 @@
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from 'svelte'
   import presentation from '@hcengineering/presentation'
-  import { Modal } from '@hcengineering/ui'
+  import { Modal, ticker1 } from '@hcengineering/ui'
 
-  import { currentRoom, roomModalActive } from '../stores'
+  import { currentRoom, currentMeetingMinutes, roomModalActive } from '../stores'
   import RoomComponent from './Room.svelte'
-  import { lk } from '../utils'
+  import { lk, formatElapsedTime } from '../utils'
 
   const dispatch = createEventDispatcher()
 
@@ -61,6 +61,11 @@
   >
     <svelte:fragment slot="title">
       {$currentRoom.name}
+      {#if $currentMeetingMinutes?.createdOn !== undefined}
+        <span class="ml-2 font-normal secondary-textColor"
+          >{formatElapsedTime($ticker1 - $currentMeetingMinutes.createdOn)}</span
+        >
+      {/if}
     </svelte:fragment>
     <RoomComponent room={$currentRoom} canMaximize={false} isModal={true} />
   </Modal>
