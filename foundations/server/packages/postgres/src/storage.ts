@@ -1570,7 +1570,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
 
       return createCursorGenerator(client.raw(), sql, undefined, schema, limit, true)
     }
-    let bulk: AsyncGenerator<Doc[]>
+    let bulk: AsyncGenerator<Doc[]> | undefined
 
     return {
       next: async () => {
@@ -1581,8 +1581,9 @@ abstract class PostgresAdapterBase implements DbAdapter {
           initialized = true
           bulk = createBulk('_id, "%hash%"')
         }
+        const it = bulk as AsyncGenerator<Doc[]>
 
-        const docs = await ctx.with('next', { domain }, () => bulk.next(), undefined, { metric: DB_QUERY_DURATION })
+        const docs = await ctx.with('next', { domain }, () => it.next(), undefined, { metric: DB_QUERY_DURATION })
         if (docs.done === true || docs.value.length === 0) {
           return []
         }
@@ -1596,9 +1597,12 @@ abstract class PostgresAdapterBase implements DbAdapter {
         return result
       },
       close: async () => {
-        await bulk.return([]) // We need to close generator, just in case
-        client?.release()
-        ctx.end()
+        try {
+          await bulk?.return([]) // Undefined if next()/find() was never reached
+        } finally {
+          client?.release()
+          ctx.end()
+        }
       }
     }
   }
@@ -1623,7 +1627,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
 
       return createCursorGenerator(client.raw(), sql, undefined, schema, limit)
     }
-    let bulk: AsyncGenerator<Doc[]>
+    let bulk: AsyncGenerator<Doc[]> | undefined
 
     return {
       find: async () => {
@@ -1634,8 +1638,9 @@ abstract class PostgresAdapterBase implements DbAdapter {
           initialized = true
           bulk = createBulk('*')
         }
+        const it = bulk as AsyncGenerator<Doc[]>
 
-        const docs = await ctx.with('next', { domain }, () => bulk.next(), undefined, { metric: DB_QUERY_DURATION })
+        const docs = await ctx.with('next', { domain }, () => it.next(), undefined, { metric: DB_QUERY_DURATION })
         if (docs.done === true || docs.value.length === 0) {
           return []
         }
@@ -1644,9 +1649,12 @@ abstract class PostgresAdapterBase implements DbAdapter {
         return result
       },
       close: async () => {
-        await bulk.return([]) // We need to close generator, just in case
-        client?.release()
-        ctx.end()
+        try {
+          await bulk?.return([]) // Undefined if next()/find() was never reached
+        } finally {
+          client?.release()
+          ctx.end()
+        }
       }
     }
   }
