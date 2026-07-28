@@ -329,15 +329,16 @@ export async function backupFind (
 
           const unzip = createGunzip({ level: defaultLevel })
           const endPromise = new Promise((resolve, reject) => {
+            const onError = (err: any): void => {
+              readStream.destroy()
+              reject(err)
+            }
             ex.on('finish', () => {
               resolve(null)
             })
-            ex.on('error', reject)
-            unzip.on('error', reject)
-            readStream.on('error', (err) => {
-              readStream.destroy()
-              reject(err)
-            })
+            ex.on('error', onError)
+            unzip.on('error', onError)
+            readStream.on('error', onError)
           })
 
           readStream.on('end', () => {
