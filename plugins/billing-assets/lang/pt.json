@@ -63,6 +63,7 @@
     "UncancelDescription": "Sua assinatura será reativada e continuará a partir do final do período de faturamento atual.",
     "PriceDifference": "Diferença de preço: {amount}",
     "ConfirmConnectPackage": "Conectar pacote?",
+    "ConfirmConnectPlan": "Conectar plano?",
     "ReplacePackageDescription": "Já tem {package}. Substituir?",
     "ConfirmCancelPackage": "Cancelar pacote?",
     "ConfirmCancelPackageDescription": "A sua subscrição do pacote permanecerá ativa até ao fim do período pago.",
@@ -109,9 +110,15 @@
     "SeatMinHint": "Mínimo {min} (membros atuais).",
     "SeatChargeNow": "Ser-lhe-á cobrado {amount} agora.",
     "SeatDowngradeExtends": "Sem cobrança. A sua data de renovação avança {days} dias, para {date}.",
+    "SeatDowngradeExtendsOneOff": "Sem cobrança. A data de fim avança {days, plural, one {# dia} other {# dias}}, até {date}.",
     "NewRecurringPrice": "Novo preço recorrente: {amount}.",
     "UpgradePackage": "Expandir pacote",
     "SeatsUnchanged": "Altere o número de lugares para continuar.",
-    "ReplacePackageSwitch": "Substituir {current} por {target}?"
+    "ReplacePackageSwitch": "Substituir {current} por {target}?",
+    "BillingPeriodLabel": "Período de faturação",
+    "YearlyOfferHint": "Subscrição anual: {perMonth} por mês, total: {total}.",
+    "AgreeMonthlyCharge": "Concordo com uma cobrança mensal de {amount}",
+    "AgreeYearlyCharge": "Concordo com uma cobrança anual de {amount}",
+    "NoAutoRenewalHint": "Pagamento único: o cartão não é guardado e a subscrição não será renovada automaticamente."
   }
 }

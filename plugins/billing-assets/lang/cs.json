@@ -63,6 +63,7 @@
     "UncancelDescription": "Vaše předplatné bude reaktivováno a bude pokračovat od konce aktuálního období fakturace.",
     "PriceDifference": "Rozdíl v ceně: {amount}",
     "ConfirmConnectPackage": "Připojit balíček?",
+    "ConfirmConnectPlan": "Připojit tarif?",
     "ReplacePackageDescription": "Již máte {package}. Nahradit?",
     "ConfirmCancelPackage": "Zrušit balíček?",
     "ConfirmCancelPackageDescription": "Vaše předplatné balíčku zůstane aktivní do konce zaplaceného období.",
@@ -109,9 +110,15 @@
     "SeatMinHint": "Minimálně {min} (aktuální členové).",
     "SeatChargeNow": "Nyní vám bude účtováno {amount}.",
     "SeatDowngradeExtends": "Bez účtování. Datum obnovení se posune o {days} dní vpřed, na {date}.",
+    "SeatDowngradeExtendsOneOff": "Bez platby. Datum ukončení se posune o {days, plural, one {# den} few {# dny} other {# dní}}, na {date}.",
     "NewRecurringPrice": "Nová opakovaná cena: {amount}.",
     "UpgradePackage": "Rozšířit balíček",
     "SeatsUnchanged": "Chcete-li pokračovat, změňte počet míst.",
-    "ReplacePackageSwitch": "Nahradit {current} za {target}?"
+    "ReplacePackageSwitch": "Nahradit {current} za {target}?",
+    "BillingPeriodLabel": "Fakturační období",
+    "YearlyOfferHint": "Roční předplatné: {perMonth} měsíčně, celkem: {total}.",
+    "AgreeMonthlyCharge": "Souhlasím s měsíční platbou {amount}",
+    "AgreeYearlyCharge": "Souhlasím s roční platbou {amount}",
+    "NoAutoRenewalHint": "Jednorázová platba: karta se neuloží a předplatné se automaticky neobnoví."
   }
 }

@@ -59,6 +59,7 @@
   import BillingErrorNotification from './BillingErrorNotification.svelte'
   import ChangeSeatsDialog from './ChangeSeatsDialog.svelte'
   import PackageChangeDialog from './PackageChangeDialog.svelte'
+  import PlanCheckoutDialog from './PlanCheckoutDialog.svelte'
 
   const paymentClient = getPaymentClient()
 
@@ -143,6 +144,19 @@
 
   let paymentPeriod: BillingPeriod = 'monthly'
 
+  // Period and recurring-charge consent already stored on the active tier subscription. Operations
+  // that are not a period/consent change (e.g. seat edits) must carry these through unchanged.
+  let currentSubPeriod: BillingPeriod = 'monthly'
+  $: currentSubPeriod = currentSubscription?.providerData?.period === 'yearly' ? 'yearly' : 'monthly'
+  // Absent flag = a subscription created before consent was asked for; those were always recurrent.
+  $: currentSubRecurrent = currentSubscription?.providerData?.recurrent !== false
+  // One-off purchase: nothing renews and nothing can be canceled — it just runs out at periodEnd.
+  $: isCurrentOneOff = currentSubscription != null && !currentSubRecurrent
+
+  // Same consent, tracked separately for the package subscription (independent of the tier).
+  $: currentPackageRecurrent = currentPackageSubscription?.providerData?.recurrent !== false
+  $: isPackageOneOff = currentPackageSubscription != null && !currentPackageRecurrent
+
   // Instant provider (mock) already activated the subscription server-side: refetch instead of
   // redirecting to a checkout page. Real providers return instant=false -> redirect as before.
   async function applyCheckout (result: { checkoutUrl: string, instant?: boolean }): Promise<void> {
@@ -200,7 +214,12 @@
     }
   }
 
-  async function subscribe (plan: string, quantity?: number): Promise<void> {
+  async function subscribe (
+    plan: string,
+    quantity?: number,
+    period: BillingPeriod = paymentPeriod,
+    recurrent: boolean = false
+  ): Promise<void> {
     if (paymentClient == null) {
       return
     }
@@ -212,7 +231,7 @@
     }
 
     try {
-      const request: SubscribeRequest = { type: SubscriptionType.Tier, plan, quantity, period: paymentPeriod }
+      const request: SubscribeRequest = { type: SubscriptionType.Tier, plan, quantity, period, recurrent }
       await createCheckout(workspace, request)
     } catch (error) {
       console.error('Error while upgrading plan:', error)
@@ -244,30 +263,62 @@
           currentLabel: currentPackage?.description ?? '',
           targetLabel: target?.description ?? pkgKey,
           targetPriceKopecks,
-          currency: target?.currency ?? currentPackage?.currency ?? ''
+          currency: target?.currency ?? currentPackage?.currency ?? '',
+          // Default to the consent already on the package subscription.
+          recurrent: currentPackageRecurrent
         },
         undefined,
-        (confirmed?: boolean) => {
-          if (confirmed !== true) return
-          void executePackageUpdate(replaceSub.id, pkgKey)
+        (result?: { recurrent: boolean }) => {
+          if (result == null) return
+          void executePackageUpdate(replaceSub.id, pkgKey, result.recurrent)
         }
       )
       // Connecting package, no package connected yet
     } else {
-      void subscribePackage(pkgKey)
+      showPackageCheckout(pkgKey)
     }
+  }
+
+  // First package purchase: flat monthly price, confirms the total and the recurring-charge consent.
+  function showPackageCheckout (pkgKey: string): void {
+    const pkgItem = packages[pkgKey]
+    if (pkgItem === undefined) return
+    showPopup(
+      PlanCheckoutDialog,
+      {
+        label: plugin.string.ConfirmConnectPackage,
+        okLabel: plugin.string.Connect,
+        perSeat: false,
+        selectablePeriod: false,
+        currency: pkgItem.currency ?? '',
+        chargeFor: () => Number(pkgItem.priceMonthly ?? 0)
+      },
+      undefined,
+      (result?: { recurrent: boolean }) => {
+        if (result == null) return
+        void subscribePackage(pkgKey, result.recurrent)
+      }
+    )
   }
 
   // Package swap with the same claim-conflict handling as tier updates (in_flight retry, force popup)
   async function executePackageUpdate (
     subscriptionId: string,
     pkgKey: string,
+    recurrent: boolean = false,
     force?: boolean,
     attempt = 0
   ): Promise<void> {
     if (paymentClient == null) return
     try {
-      const result = await paymentClient.updateSubscriptionPlan(subscriptionId, pkgKey, undefined, undefined, force)
+      const result = await paymentClient.updateSubscriptionPlan(
+        subscriptionId,
+        pkgKey,
+        undefined,
+        undefined,
+        force,
+        recurrent
+      )
       if ('checkoutUrl' in result) {
         await applyCheckout(result)
       } else {
@@ -276,11 +327,11 @@
     } catch (error) {
       if (error instanceof PaymentError && error.reason === 'in_flight' && attempt < CHECKOUT_INFLIGHT_RETRIES) {
         await new Promise((resolve) => setTimeout(resolve, CHECKOUT_INFLIGHT_DELAY))
-        await executePackageUpdate(subscriptionId, pkgKey, force, attempt + 1)
+        await executePackageUpdate(subscriptionId, pkgKey, recurrent, force, attempt + 1)
         return
       }
       const handled = await handleCheckoutError(error, async () => {
-        await executePackageUpdate(subscriptionId, pkgKey, true)
+        await executePackageUpdate(subscriptionId, pkgKey, recurrent, true)
       })
       if (!handled) {
         console.error('Error replacing package:', error)
@@ -289,7 +340,7 @@
     }
   }
 
-  async function subscribePackage (plan: string): Promise<void> {
+  async function subscribePackage (plan: string, recurrent: boolean = false): Promise<void> {
     if (paymentClient == null) {
       return
     }
@@ -301,7 +352,7 @@
     }
 
     try {
-      const request: SubscribeRequest = { type: SubscriptionType.Package, plan }
+      const request: SubscribeRequest = { type: SubscriptionType.Package, plan, recurrent }
       await createCheckout(workspace, request)
     } catch (error) {
       console.error('Error subscribing to package:', error)
@@ -346,11 +397,6 @@
     seatsByPlan = { ...seatsByPlan, [planKey]: v }
   }
 
-  // On blur, snap the visible input value into [minSeats, maxSeats].
-  function clampSeats (planKey: string): void {
-    seatsByPlan = { ...seatsByPlan, [planKey]: seatsFor(planKey) }
-  }
-
   // Monthly price per seat without discount. NaN for flat/free plans
   function monthlyPerUserBase (item: PlanItem | undefined): number {
     return item?.priceMonthlyPerUser != null ? Number(item.priceMonthlyPerUser) : NaN
@@ -368,12 +414,12 @@
     return Math.round(base * discountFactor(item))
   }
 
-  // Full amount charged for a plan in the given period (monthly/yearly with discount)
-  function planChargeValue (item: PlanItem | undefined, planKey: string, period: BillingPeriod): number {
+  // Full amount charged for a plan in the given period (monthly/yearly with discount), at an
+  // explicit seat count. Flat plans ignore seats.
+  function planChargeFor (item: PlanItem | undefined, seats: number, period: BillingPeriod): number {
     if (item == null || item.free === true) return 0
     const perUser = monthlyPerUserBase(item)
     if (Number.isFinite(perUser)) {
-      const seats = seatsFor(planKey)
       return period === 'yearly' ? monthly(perUser, item, period) * 12 * seats : perUser * seats
     }
     const n = Number(item.priceMonthly)
@@ -381,47 +427,67 @@
     return period === 'yearly' ? monthly(n, item, period) : n
   }
 
-  async function showPlanChangeConfirmation (newPlan: string, newPlanItem: PlanItem): Promise<void> {
-    if (currentPlan === undefined) {
-      return
-    }
-    const quantity = newPlanItem.priceMonthlyPerUser != null ? seatsFor(newPlan) : undefined
-
-    // full charge for the new plan (monthly or yearly)
-    const newPrice = newPlanItem.free === true ? 0 : planChargeValue(newPlanItem, newPlan, paymentPeriod)
-    // the real last charge stored on the active subscription
-    const currentPrice = (currentSubscription?.amount ?? 0) / 100
-    const isDowngrade = newPrice < currentPrice
-    const isFreeDowngrade = newPlanItem.free === true
-    const priceDifference = Math.abs(newPrice - currentPrice)
-
-    const title = isFreeDowngrade
-      ? plugin.string.ConfirmDowngradeToFree
-      : isDowngrade
-        ? plugin.string.ConfirmDowngrade
-        : plugin.string.ConfirmUpgrade
-    const descriptionKey = isFreeDowngrade
-      ? plugin.string.DowngradeToFreeDescription
-      : isDowngrade
-        ? plugin.string.DowngradeDescription
-        : plugin.string.UpgradeDescription
-
+  // Downgrade to the free plan moves no money: keep the plain confirmation box, no seats/period/recurrent.
+  async function showFreeDowngradeConfirmation (newPlan: string): Promise<void> {
     const supportEmail = getMetadata(support.metadata.SupportEmail) ?? ''
     showPopup(MessageBox, {
-      label: title,
-      message: descriptionKey,
-      params: { amount: priceDifference, currency: newPlanItem.currency, email: supportEmail },
+      label: plugin.string.ConfirmDowngradeToFree,
+      message: plugin.string.DowngradeToFreeDescription,
+      params: { amount: 0, currency: '', email: supportEmail },
       action: async () => {
-        await executeUpdate(newPlan, quantity)
+        await executeUpdate(newPlan, undefined, 'monthly', false)
       }
     })
   }
 
+  // Paid plan purchase/change: the checkout dialog owns seats, period and the recurring-charge
+  // consent, so the values sent to the provider are exactly what the user confirmed.
+  function showPlanCheckout (newPlan: string, planItem: PlanItem, isChange: boolean): void {
+    const perSeat = planItem.priceMonthlyPerUser != null
+    showPopup(
+      PlanCheckoutDialog,
+      {
+        label: isChange ? plugin.string.ConfirmUpgrade : plugin.string.ConfirmConnectPlan,
+        okLabel: isChange ? plugin.string.ChangePlan : plugin.string.Subscribe,
+        perSeat,
+        minSeats,
+        maxSeats: maxSeatsFor(newPlan),
+        seats: seatsFor(newPlan),
+        period: paymentPeriod,
+        yearlyDiscount: planItem.yearlyDiscount ?? 0,
+        currency: planItem.currency ?? '',
+        chargeFor: (seats: number, period: BillingPeriod) => planChargeFor(planItem, seats, period),
+        monthlyPerSeatFor: (period: BillingPeriod) => {
+          const perUser = monthlyPerUserBase(planItem)
+          return Number.isFinite(perUser) ? monthly(perUser, planItem, period) : 0
+        }
+      },
+      undefined,
+      (result?: { seats: number, period: BillingPeriod, recurrent: boolean }) => {
+        if (result == null) return
+        // Persist the picks so the plan card reflects what was just confirmed.
+        paymentPeriod = result.period
+        if (perSeat) setSeats(newPlan, result.seats)
+        const quantity = perSeat ? result.seats : undefined
+        if (isChange) {
+          void executeUpdate(newPlan, quantity, result.period, result.recurrent)
+        } else {
+          void subscribe(newPlan, quantity, result.period, result.recurrent)
+        }
+      }
+    )
+  }
+
   async function handlePlanChange (newPlan: string, planItem: PlanItem): Promise<void> {
-    const quantity = planItem.priceMonthlyPerUser != null ? seatsFor(newPlan) : undefined
+    if (planItem.free === true) {
+      if (currentSubscription?.id === undefined || currentPlan === undefined) return
+      await showFreeDowngradeConfirmation(newPlan)
+      return
+    }
+
     if (currentSubscription?.id === undefined) {
       // No active subscription, create new one
-      await subscribe(newPlan, quantity)
+      showPlanCheckout(newPlan, planItem, false)
       return
     }
 
@@ -436,16 +502,23 @@
         label: plugin.string.ConfirmUncancel,
         message: plugin.string.UncancelDescription,
         action: async () => {
-          // After uncanceling, show the plan change confirmation
-          await showPlanChangeConfirmation(newPlan, planItem)
+          // After uncanceling, show the checkout dialog
+          showPlanCheckout(newPlan, planItem, true)
         }
       })
     } else {
-      await showPlanChangeConfirmation(newPlan, planItem)
+      showPlanCheckout(newPlan, planItem, true)
     }
   }
 
-  async function executeUpdate (newPlan: string, quantity?: number, force?: boolean, attempt = 0): Promise<void> {
+  async function executeUpdate (
+    newPlan: string,
+    quantity?: number,
+    period: BillingPeriod = paymentPeriod,
+    recurrent: boolean = false,
+    force?: boolean,
+    attempt = 0
+  ): Promise<void> {
     if (paymentClient == null) {
       return
     }
@@ -468,8 +541,9 @@
         currentSubscription.id,
         newPlan,
         quantity,
-        paymentPeriod,
-        force
+        period,
+        force,
+        recurrent
       )
 
       // CheckoutResponse: instant provider already activated (refetch), real one needs a checkout.
@@ -485,11 +559,11 @@
       // Race: another owner won the claim and hasn't written the URL yet -> retry a few times.
       if (error instanceof PaymentError && error.reason === 'in_flight' && attempt < CHECKOUT_INFLIGHT_RETRIES) {
         await new Promise((resolve) => setTimeout(resolve, CHECKOUT_INFLIGHT_DELAY))
-        await executeUpdate(newPlan, quantity, force, attempt + 1)
+        await executeUpdate(newPlan, quantity, period, recurrent, force, attempt + 1)
         return
       }
       const handled = await handleCheckoutError(error, async () => {
-        await executeUpdate(newPlan, quantity, true)
+        await executeUpdate(newPlan, quantity, period, recurrent, true)
       })
       if (!handled) {
         console.error('Error updating subscription:', error)
@@ -501,7 +575,7 @@
   }
 
   // Full recurring price (kopecks) for the current plan at a given seat count and the active period.
-  // Mirrors planChargeValue but parameterized by seats (that one reads seatsFor()).
+  // Mirrors planChargeFor but pinned to the current plan and its stored period, in kopecks.
   function recurringPriceForCurrent (seats: number): number {
     if (currentPlan == null || typeof currentPlan === 'string' || currentPlan.free === true) return 0
     const period: BillingPeriod = currentSubscription?.providerData?.period === 'yearly' ? 'yearly' : 'monthly'
@@ -527,11 +601,14 @@
         recurringPriceFor: recurringPriceForCurrent,
         minSeats,
         maxSeats: maxSeatsFor(planKey),
-        currency: typeof currentPlan !== 'string' ? (currentPlan?.currency ?? '') : ''
+        currency: typeof currentPlan !== 'string' ? (currentPlan?.currency ?? '') : '',
+        oneOff: isCurrentOneOff
       },
       undefined,
       (seats?: number) => {
-        if (seats != null) void executeUpdate(planKey, seats)
+        // Seat-only change: keep the subscription's own period and recurring-charge consent —
+        // editing seats must not silently switch the period or stop auto-renewal.
+        if (seats != null) void executeUpdate(planKey, seats, currentSubPeriod, currentSubRecurrent)
       }
     )
   }
@@ -1059,7 +1136,7 @@
                         currentSubscription.periodEnd,
                         $themeStore.language ?? DEFAULT_LOCALE
                       )}
-                      {#if isCurrentCanceled}
+                      {#if isCurrentCanceled || isCurrentOneOff}
                         <div><Label label={plugin.string.SubscriptionValidUntil} params={{ date }} /></div>
                       {:else}
                         <div><Label label={plugin.string.SubscriptionRenews} params={{ date }} /></div>
@@ -1076,7 +1153,7 @@
                           on:click={openChangeSeats}
                         />
                       {/if}
-                      {#if !isCurrentCanceled && currentPlan.free !== true}
+                      {#if !isCurrentCanceled && !isCurrentOneOff && currentPlan.free !== true}
                         <Button
                           label={plugin.string.CancelSubscription}
                           kind="ghost"
@@ -1136,7 +1213,7 @@
                           currentPackageSubscription.periodEnd,
                           $themeStore.language ?? DEFAULT_LOCALE
                         )}
-                        {#if isPackageCanceled}
+                        {#if isPackageCanceled || isPackageOneOff}
                           <div><Label label={plugin.string.SubscriptionValidUntil} params={{ date: pkgDate }} /></div>
                         {:else}
                           <div><Label label={plugin.string.SubscriptionRenews} params={{ date: pkgDate }} /></div>
@@ -1144,7 +1221,7 @@
                       {/if}
 
                       {#if !isReadOnly}
-                        {#if !isPackageCanceled}
+                        {#if !isPackageCanceled && !isPackageOneOff}
                           <Button
                             label={plugin.string.Disconnect}
                             kind="ghost"
@@ -1153,7 +1230,7 @@
                               void handlePackageCancel()
                             }}
                           />
-                        {:else}
+                        {:else if isPackageCanceled}
                           <Button
                             label={plugin.string.UncancelSubscription}
                             kind="primary"
@@ -1231,8 +1308,6 @@
                   ? getPlatformColorByName(planItem.color, $themeStore.dark)
                   : null}
               {@const bgAttr = $themeStore.dark ? 'background' : 'background-color'}
-              {@const rawSeats = seatsByPlan[planKey] ?? minSeats}
-              {@const seats = Math.min(Math.max(rawSeats, minSeats), maxSeatsFor(planKey))}
               {@const perUserBaseVal = monthlyPerUserBase(planItem)}
               {@const hasPerUser = Number.isFinite(perUserBaseVal)}
               {@const monthlyPerUserVal = hasPerUser ? monthly(perUserBaseVal, planItem, paymentPeriod) : 0}
@@ -1241,7 +1316,6 @@
                 planItem.priceMonthly != null
                   ? monthly(planItem.priceMonthly, planItem, paymentPeriod).toLocaleString(priceLocale)
                   : undefined}
-              {@const total = paymentPeriod === 'yearly' ? monthlyPerUserVal * 12 * seats : monthlyPerUserVal * seats}
               <div
                 class="tier-card"
                 data-id={`planCard-${planKey}`}
@@ -1288,34 +1362,6 @@
                     {/each}
                   </div>
                 </div>
-                {#if planItem.priceMonthlyPerUser != null && planItem.contactSales !== true && canPurchase(planKey, planItem, currentPlanKey, isReadOnly, isCurrentTrial)}
-                  <div class="seats-section flex-col flex-gap-2">
-                    <Label label={plugin.string.UsersCount} />:
-                    <input
-                      class="seats-input"
-                      type="number"
-                      min={minSeats}
-                      max={maxSeatsFor(planKey)}
-                      step="1"
-                      data-id={`planSeats-${planKey}`}
-                      value={rawSeats}
-                      id={`planSeats-${planKey}`}
-                      on:input={(e) => {
-                        setSeats(planKey, Number(e.currentTarget.value))
-                      }}
-                      on:blur={() => {
-                        clampSeats(planKey)
-                      }}
-                    />
-                    <div class="flex-row-center items-end flex-gap-1">
-                      <Label label={plugin.string.Total} />:
-                      <span class="fs-title">
-                        {total.toLocaleString(priceLocale)}
-                        {planItem.currency ?? ''}
-                      </span>
-                    </div>
-                  </div>
-                {/if}
                 <div class="tier-card-footer">
                   {#if planItem.contactSales === true}
                     <Button
@@ -1572,24 +1618,6 @@
     flex-direction: row-reverse;
     margin-top: var(--spacing-3);
     height: 2.25rem;
-  }
-
-  .seats-section {
-    margin-top: var(--spacing-3);
-  }
-
-  .seats-input {
-    width: 70%;
-    padding: 0.375rem 0.5rem;
-    color: var(--theme-content-color);
-    background-color: var(--theme-button-default);
-    border: 1px solid var(--theme-divider-color);
-    border-radius: var(--small-BorderRadius);
-
-    &:focus {
-      outline: none;
-      border-color: var(--primary-edit-border-color);
-    }
   }
 
   .processing {

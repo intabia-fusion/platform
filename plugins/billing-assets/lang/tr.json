@@ -63,6 +63,7 @@
     "UncancelDescription": "Aboneliğiniz yeniden etkinleştirilecek ve geçerli faturalandırma döneminin sonundan itibaren devam edecektir.",
     "PriceDifference": "Fiyat farkı: {amount}",
     "ConfirmConnectPackage": "Paket bağlansın mı?",
+    "ConfirmConnectPlan": "Plan bağlansın mı?",
     "ReplacePackageDescription": "Zaten {package} paketiniz var. Değiştirilsin mi?",
     "ConfirmCancelPackage": "Paket iptal edilsin mi?",
     "ConfirmCancelPackageDescription": "Paket aboneliğiniz ödenen dönemin sonuna kadar aktif kalacaktır.",
@@ -109,9 +110,15 @@
     "SeatMinHint": "En az {min} (mevcut üyeler).",
     "SeatChargeNow": "Şimdi {amount} tahsil edilecek.",
     "SeatDowngradeExtends": "Ücret alınmaz. Yenileme tarihiniz {days} gün ileri, {date} tarihine kayar.",
+    "SeatDowngradeExtendsOneOff": "Tahsilat yok. Bitiş tarihi {days, plural, one {# gün} other {# gün}} ileri kayarak {date} olur.",
     "NewRecurringPrice": "Yeni yinelenen fiyat: {amount}.",
     "UpgradePackage": "Paketi genişlet",
     "SeatsUnchanged": "Devam etmek için koltuk sayısını değiştirin.",
-    "ReplacePackageSwitch": "{current} paketini {target} ile değiştirilsin mi?"
+    "ReplacePackageSwitch": "{current} paketini {target} ile değiştirilsin mi?",
+    "BillingPeriodLabel": "Faturalandırma dönemi",
+    "YearlyOfferHint": "Yıllık abonelik: ayda {perMonth}, toplam: {total}.",
+    "AgreeMonthlyCharge": "Aylık {amount} tutarında tahsilatı kabul ediyorum",
+    "AgreeYearlyCharge": "Yıllık {amount} tutarında tahsilatı kabul ediyorum",
+    "NoAutoRenewalHint": "Tek seferlik ödeme: kart kaydedilmez ve abonelik otomatik olarak yenilenmez."
   }
 }

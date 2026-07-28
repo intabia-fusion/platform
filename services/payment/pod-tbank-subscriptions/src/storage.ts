@@ -162,6 +162,7 @@ export class SubscriptionStorage {
   }
 
   static needsRenewal (sub: Subscription, now: number): boolean {
+    if (sub.providerData?.recurrent === false) return false
     if (sub.providerData?.rebillId === undefined) return false
     // Scheduled cancel: the sub is still Active until willCancelAt.
     // Then the scheduler flips it to Canceled (enforceScheduledCancel).

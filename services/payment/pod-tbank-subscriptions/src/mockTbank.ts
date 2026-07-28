@@ -20,7 +20,7 @@ interface MockPending {
   paymentId: number
   orderId: string
   amount: number
-  rebillId: string
+  rebillId?: string // only for Recurrent charges — a one-off payment gets no card token
   status: 'NEW' | 'CONFIRMED' | 'CANCELED' | 'REJECTED'
   successUrl?: string
   failUrl?: string
@@ -48,7 +48,7 @@ export class MockTbank {
 
   async initPayment (params: any): Promise<any> {
     const paymentId = this.counter++
-    const rebillId = `mock-rebill-${paymentId}`
+    const rebillId = params.Recurrent === 'Y' ? `mock-rebill-${paymentId}` : undefined
     this.pending.set(String(paymentId), {
       paymentId,
       orderId: params.OrderId,
@@ -61,7 +61,8 @@ export class MockTbank {
     this.opts.info('mock tbank: initPayment (interactive)', {
       orderId: params.OrderId,
       amount: params.Amount,
-      paymentId
+      paymentId,
+      recurrent: params.Recurrent === 'Y'
     })
     return {
       Success: true,

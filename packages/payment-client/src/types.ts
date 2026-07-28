@@ -46,6 +46,7 @@ export interface SubscribeRequest {
   quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
   period?: BillingPeriod // Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
   force?: boolean // Switch tariff: cancel a different pending checkout for this type, then open the new one.
+  recurrent?: boolean // recurring charges; false (default) = one-off payment: don't save the card
 }
 
 /**

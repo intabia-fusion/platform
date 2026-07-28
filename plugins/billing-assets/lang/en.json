@@ -63,6 +63,7 @@
     "UncancelDescription": "Your subscription will be reactivated and continue from the end of the current billing period.",
     "PriceDifference": "Price difference: {amount}",
     "ConfirmConnectPackage": "Connect package?",
+    "ConfirmConnectPlan": "Connect plan?",
     "ReplacePackageDescription": "You already have {package}. Replace it?",
     "ConfirmCancelPackage": "Cancel package?",
     "ConfirmCancelPackageDescription": "Your package subscription will remain active until the end of the paid period.",
@@ -109,9 +110,15 @@
     "SeatMinHint": "Minimum {min} (current members).",
     "SeatChargeNow": "You will be charged {amount} now.",
     "SeatDowngradeExtends": "No charge. Your renewal date moves {days, plural, =1 {1 day} other {# days}} forward, to {date}.",
+    "SeatDowngradeExtendsOneOff": "No charge. The end date moves forward by {days, plural, one {# day} other {# days}}, to {date}.",
     "NewRecurringPrice": "New recurring price: {amount}.",
     "UpgradePackage": "Upgrade package",
     "SeatsUnchanged": "Change the number of seats to continue.",
-    "ReplacePackageSwitch": "Replace {current} with {target}?"
+    "ReplacePackageSwitch": "Replace {current} with {target}?",
+    "BillingPeriodLabel": "Billing period",
+    "YearlyOfferHint": "Yearly subscription: {perMonth} per month, total: {total}.",
+    "AgreeMonthlyCharge": "I agree to a recurring monthly charge of {amount}",
+    "AgreeYearlyCharge": "I agree to a recurring yearly charge of {amount}",
+    "NoAutoRenewalHint": "One-time payment: the card is not saved and the subscription will not renew automatically."
   }
 }

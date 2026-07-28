@@ -33,6 +33,17 @@ describe('SubscriptionStorage.needsRenewal', () => {
     expect(SubscriptionStorage.needsRenewal(sub, NOW)).toBe(false)
   })
 
+  test('recurrent === false -> false (one-off purchase never auto-renews)', () => {
+    // Even with a rebillId present and the period elapsed: the user did not consent to autopay.
+    const sub = { ...baseSub, providerData: { rebillId: 'reb_1', recurrent: false } }
+    expect(SubscriptionStorage.needsRenewal(sub, NOW)).toBe(false)
+  })
+
+  test('recurrent === true -> renews as usual', () => {
+    const sub = { ...baseSub, providerData: { rebillId: 'reb_1', recurrent: true } }
+    expect(SubscriptionStorage.needsRenewal(sub, NOW)).toBe(true)
+  })
+
   test('scheduled cancel already reached (periodEnd >= willCancelAt) -> false', () => {
     const sub = { ...baseSub, willCancelAt: NOW - 2000 } // periodEnd (NOW-1000) >= willCancelAt
     expect(SubscriptionStorage.needsRenewal(sub, NOW)).toBe(false)

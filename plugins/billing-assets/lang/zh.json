@@ -61,6 +61,7 @@
     "UncancelDescription": "您的订阅将被重新激活，并从当前计费周期结束时继续。",
     "PriceDifference": "价格差异: {amount}",
     "ConfirmConnectPackage": "连接套餐?",
+    "ConfirmConnectPlan": "连接套餐方案?",
     "ReplacePackageDescription": "您已连接了 {package}。替换?",
     "ConfirmCancelPackage": "取消套餐?",
     "ConfirmCancelPackageDescription": "您的套餐订阅将在已付费周期结束前保持有效。",
@@ -109,9 +110,15 @@
     "SeatMinHint": "最少 {min}（当前成员数）。",
     "SeatChargeNow": "现在将向您收取 {amount}。",
     "SeatDowngradeExtends": "不收费。您的续订日期将提前 {days} 天，顺延至 {date}。",
+    "SeatDowngradeExtendsOneOff": "不扣款。结束日期将延后 {days, plural, other {# 天}}，至 {date}。",
     "NewRecurringPrice": "新的经常性价格：{amount}。",
     "UpgradePackage": "扩展套餐",
     "SeatsUnchanged": "请更改席位数量以继续。",
-    "ReplacePackageSwitch": "将 {current} 替换为 {target}？"
+    "ReplacePackageSwitch": "将 {current} 替换为 {target}？",
+    "BillingPeriodLabel": "结算周期",
+    "YearlyOfferHint": "年度订阅：每月 {perMonth}，共计：{total}。",
+    "AgreeMonthlyCharge": "我同意每月自动扣款 {amount}",
+    "AgreeYearlyCharge": "我同意每年自动扣款 {amount}",
+    "NoAutoRenewalHint": "一次性付款：不保存银行卡，订阅不会自动续费。"
   }
 }

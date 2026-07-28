@@ -63,6 +63,7 @@
     "UncancelDescription": "Автопродление подписки будет возобновлено. Отмена в конце оплаченного периода не произойдёт.",
     "PriceDifference": "Разница в цене: {amount}",
     "ConfirmConnectPackage": "Подключить пакет?",
+    "ConfirmConnectPlan": "Подключить тариф?",
     "ReplacePackageDescription": "У вас уже подключен пакет {package}. Заменить?",
     "ConfirmCancelPackage": "Отключить пакет?",
     "ConfirmCancelPackageDescription": "Ваша подписка на пакет останется активной до конца оплаченного периода.",
@@ -109,9 +110,15 @@
     "SeatMinHint": "Минимум {min} (текущие участники).",
     "SeatChargeNow": "Сейчас будет списано {amount}.",
     "SeatDowngradeExtends": "Без списания. Дата продления сдвинется вперёд на {days, plural, one {# день} few {# дня} many {# дней} other {# дней}}, до {date}.",
+    "SeatDowngradeExtendsOneOff": "Без списания. Дата окончания сдвинется вперёд на {days, plural, one {# день} few {# дня} many {# дней} other {# дней}}, до {date}.",
     "NewRecurringPrice": "Новая регулярная цена: {amount}.",
     "UpgradePackage": "Расширить пакет",
     "SeatsUnchanged": "Измените число мест, чтобы продолжить.",
-    "ReplacePackageSwitch": "Заменить {current} на {target}?"
+    "ReplacePackageSwitch": "Заменить {current} на {target}?",
+    "BillingPeriodLabel": "Период оплаты",
+    "YearlyOfferHint": "Годовая подписка: {perMonth} в месяц, итого: {total}.",
+    "AgreeMonthlyCharge": "Согласен на ежемесячное списание {amount}",
+    "AgreeYearlyCharge": "Согласен на погодовое списание {amount}",
+    "NoAutoRenewalHint": "Разовый платёж: карта не сохраняется, подписка не продлится автоматически."
   }
 }

@@ -215,6 +215,10 @@ async function findSubscription (
 // Terminal tbank states where the money never moved: the link is already dead, so there is
 // nothing to charge and the claim is safe to free. tbank rejects Cancel on these with an error.
 const TBANK_DEAD_LINK_STATES = ['DEADLINE_EXPIRED', 'CANCELED', 'REJECTED']
+// tbank ErrorCode 4 = "Изменение статуса не разрешено": Cancel hit a payment that is already in a
+// terminal state. The message is localized and names no status, so matching TBANK_DEAD_LINK_STATES
+// against the text alone never catches it on the real API — the code is the stable signal.
+const TBANK_STATUS_CHANGE_FORBIDDEN = '4'
 
 async function cancelPendingCheckout (
   ctx: MeasureContext,
@@ -245,8 +249,9 @@ async function cancelPendingCheckout (
   } catch (err: any) {
     // tbank refuses to cancel an already-dead payment (e.g. DEADLINE_EXPIRED) — treat as freed.
     const details: string = err?.details ?? err?.message ?? ''
-    if (!TBANK_DEAD_LINK_STATES.some((s) => details.includes(s))) throw err
-    ctx.info('Pending checkout already dead at tbank, releasing', { paymentId, details })
+    const statusChangeForbidden = String(err?.code ?? '') === TBANK_STATUS_CHANGE_FORBIDDEN
+    if (!statusChangeForbidden && !TBANK_DEAD_LINK_STATES.some((s) => details.includes(s))) throw err
+    ctx.info('Pending checkout already dead at tbank, releasing', { paymentId, details, code: err?.code })
   }
   // Abandon the old draft (if still a pending first-payment) and release the claim.
   const oldDraft = await storage.getByProviderId(paymentId)
@@ -270,7 +275,7 @@ async function handleCreateSubscription (
   req: Request,
   res: Response
 ): Promise<void> {
-  const { type, plan, workspaceUuid, workspaceUrl, accountUuid, quantity, period, force } =
+  const { type, plan, workspaceUuid, workspaceUrl, accountUuid, quantity, period, force, recurrent } =
     req.body as CreateSubscriptionRequest
 
   ctx.info('Creating TBank subscription', { type, plan, workspaceUuid, accountUuid })
@@ -333,10 +338,11 @@ async function handleCreateSubscription (
         description,
         accountUuid,
         workspaceUrl,
-        receipt
+        receipt,
+        recurrent === true
       )
 
-      ctx.info('TBank payment initiated', { orderId, paymentId, planKey, amount, seats, period })
+      ctx.info('TBank payment initiated', { orderId, paymentId, planKey, amount, seats, period, recurrent })
       await storage.logOperation({
         operation: 'init_charge',
         status: 'NEW',
@@ -347,7 +353,7 @@ async function handleCreateSubscription (
         actionId,
         actor: 'user',
         amount,
-        raw: { plan, type, seats, period }
+        raw: { plan, type, seats, period, recurrent: recurrent === true }
       })
 
       // Link the claim to the issued charge and save the URL for reuse before exposing the draft.
@@ -368,7 +374,8 @@ async function handleCreateSubscription (
         quantity,
         period,
         paymentURL,
-        actionId
+        actionId,
+        recurrent === true
       )
 
       await storage.upsert(subscriptionData)
@@ -579,9 +586,13 @@ export async function handleUpdatePlan (
   req: Request,
   res: Response
 ): Promise<void> {
-  const { plan: newPlan, quantity, period } = req.body as UpdatePlanRequest
+  const { plan: newPlan, quantity, period, recurrent } = req.body as UpdatePlanRequest
   const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
   if (sub === null) return
+
+  // Consent is per-request; an omitted flag keeps whatever the subscription already had, so operations
+  // that don't ask the user again (e.g. a seat-only change) can't silently flip auto-renewal.
+  const newRecurrent = recurrent ?? sub.providerData?.recurrent === true
 
   // One plan change = one action: the new charge, its webhook and the old subscription's cancel
   // all report under this id.
@@ -669,7 +680,13 @@ export async function handleUpdatePlan (
         willCancelAt: undefined,
         periodStart: pro.periodStart,
         periodEnd: pro.periodEnd,
-        providerData: { ...sub.providerData, quantity: seats, period: period ?? curPeriod, modifiedAt: now }
+        providerData: {
+          ...sub.providerData,
+          quantity: seats,
+          period: period ?? curPeriod,
+          recurrent: newRecurrent,
+          modifiedAt: now
+        }
       }
       await storage.upsert(updated)
       await storage.logOperation({
@@ -751,7 +768,8 @@ export async function handleUpdatePlan (
         description,
         sub.accountUuid,
         workspaceUrl,
-        receipt
+        receipt,
+        newRecurrent
       )
       await storage.setCheckoutPayment(intentId, String(paymentId), paymentURL)
       paymentIssued = true
@@ -766,7 +784,7 @@ export async function handleUpdatePlan (
         actionId,
         actor: 'user',
         amount: chargeAmount,
-        raw: { plan: newPlan, type: sub.type, seats, period, kind: 'update', recurringAmount }
+        raw: { plan: newPlan, type: sub.type, seats, period, kind: 'update', recurringAmount, recurrent: newRecurrent }
       })
 
       // Link+claim first, then drafts: if an upsert below fails the webhook's "any active same-type"
@@ -789,7 +807,8 @@ export async function handleUpdatePlan (
         quantity,
         period,
         paymentURL,
-        actionId
+        actionId,
+        newRecurrent
       )
       // Carry the proration-computed period so a delta-upgrade keeps the right renewal date (esp. yearly,
       // where the period must NOT reset to a fresh 30 days).
@@ -1172,7 +1191,8 @@ function buildSubscriptionData (
   quantity?: number,
   period?: BillingPeriod,
   paymentUrl?: string,
-  actionId?: string
+  actionId?: string,
+  recurrent: boolean = false
 ): SubscriptionData {
   const now = Date.now()
   return {
@@ -1202,6 +1222,8 @@ function buildSubscriptionData (
       quantity,
       // Billing period ('monthly' | 'yearly'). undefined defaults to monthly.
       period,
+      // Consent to recurring charges. false = one-off: no RebillId, don't renew this subscription.
+      recurrent,
       // Checkout URL of the pending TBank payment
       paymentUrl,
       linkExpiresAt: paymentUrl !== undefined ? now + CHECKOUT_LINK_LIFETIME_MS : undefined
@@ -1357,7 +1379,8 @@ async function initTbankPayment (
   description: string,
   accountUuid: string,
   workspaceUrl: string,
-  receipt: TbankReceipt
+  receipt: TbankReceipt,
+  recurrent: boolean = false // Recurrent:'Y' -> TBank saves the card and returns a RebillId on the webhook.
 ): Promise<{ paymentId: number, paymentURL: string }> {
   // RedirectDueDate bounds the link lifetime (TBank default 24h). Lib accepts it (Joi) but omits it
   // from TS types -> extend the param type locally.
@@ -1366,7 +1389,7 @@ async function initTbankPayment (
     OrderId: orderId,
     Description: description,
     CustomerKey: accountUuid,
-    Recurrent: 'Y',
+    ...(recurrent ? { Recurrent: 'Y' as const } : {}),
     PayType: 'O',
     Language: 'ru',
     RedirectDueDate: formatTbankDueDate(Date.now() + CHECKOUT_LINK_LIFETIME_MS),
