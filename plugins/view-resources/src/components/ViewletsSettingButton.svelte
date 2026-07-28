@@ -33,6 +33,7 @@
   export let preference: ViewletPreference | undefined = undefined
   export let loading = true
   export let disabled: boolean = false
+  export let noGap: boolean = false
 
   const dispatch = createEventDispatcher()
 
@@ -89,7 +90,7 @@
 </script>
 
 {#if viewlet}
-  <div class="flex-row-center gap-2 reverse">
+  <div class="flex-row-center reverse" class:gap-2={!noGap}>
     {#if viewOptions}
       <ViewOptionsButton {viewlet} {kind} {viewOptions} {disabled} />
     {/if}

@@ -93,6 +93,8 @@
     "BlocksIssuesList": "Tâches bloquantes pour ({blocksIssues})",
     "OpenSubIssues": "Ouvrir les sub-issue",
     "AddSubIssues": "Ajouter un sub-issue",
+    "AddExistingSubIssue": "Ajouter une sous-tâche existante",
+    "CreateSubIssue": "Créer une sous-tâche",
     "BlockedBy": "Bloqué par",
     "RelatedTo": "Lié à",
     "Comments": "Commentaires",

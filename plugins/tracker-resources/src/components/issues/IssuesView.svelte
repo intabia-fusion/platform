@@ -74,7 +74,7 @@
   bind:viewlet
   bind:search
   showLabelSelector={$$slots.label_selector}
-  viewletQuery={{ attachTo: tracker.class.Issue, variant: { $nin: ['subissue', 'component', 'milestone'] } }}
+  viewletQuery={{ attachTo: tracker.class.Issue, variant: { $exists: false } }}
   {viewlets}
   {label}
   {space}

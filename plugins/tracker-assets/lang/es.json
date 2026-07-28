@@ -93,6 +93,8 @@
     "BlocksIssuesList": "Tareas bloqueantes para ({blocksIssues})",
     "OpenSubIssues": "Abrir subtareas",
     "AddSubIssues": "Añadir subtarea",
+    "AddExistingSubIssue": "Añadir subtarea existente",
+    "CreateSubIssue": "Crear subtarea",
     "BlockedBy": "Bloqueado por",
     "RelatedTo": "Relacionado con",
     "Comments": "Comentarios",

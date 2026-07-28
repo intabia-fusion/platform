@@ -93,6 +93,8 @@
     "BlocksIssuesList": "Blockierende Aufgaben für ({blocksIssues})",
     "OpenSubIssues": "Unteraufgaben öffnen",
     "AddSubIssues": "Unteraufgabe hinzufügen",
+    "AddExistingSubIssue": "Vorhandene Teilaufgabe hinzufügen",
+    "CreateSubIssue": "Teilaufgabe erstellen",
     "BlockedBy": "Blockiert durch",
     "RelatedTo": "Verwandt mit",
     "Comments": "Kommentare",

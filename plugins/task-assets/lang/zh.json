@@ -89,6 +89,7 @@
     "CountProjects": "{count, plural, =0 {无项目} =1 {# 个项目} other {# 个项目}}",
     "ProjectTypeTitle": "项目类型标题",
     "ProcessStates": "过程状态",
+    "ShowParentTasks": "显示父任务",
     "Type": "类型",
     "Group": "组",
     "Color": "颜色",

@@ -1,14 +1,35 @@
 <script lang="ts">
   import { Issue } from '@hcengineering/tracker'
-  import { Label } from '@hcengineering/ui'
+  import { ButtonIcon, IconAdd, Label, showPopup } from '@hcengineering/ui'
   import { Class, Doc, Ref, RelatedDocument } from '@hcengineering/core'
   import tracker from '../../../plugin'
   import QueryIssuesList from './QueryIssuesList.svelte'
-  import { createQuery } from '@hcengineering/presentation'
+  import { ObjectSearchPopup, ObjectSearchResult, createQuery, getClient } from '@hcengineering/presentation'
   import { onDestroy } from 'svelte'
   import { Viewlet } from '@hcengineering/view'
+  import { restrictionStore } from '@hcengineering/view-resources'
+  import { updateIssueRelation } from '../../../issues'
 
   export let issue: Issue
+
+  const client = getClient()
+
+  function addRelatedIssue (): void {
+    showPopup(
+      ObjectSearchPopup,
+      {
+        ignore: [issue, ...(issue.relations ?? [])],
+        label: tracker.string.RelatedIssueSearchPlaceholder,
+        allowCategory: [tracker.completion.IssueCategory]
+      },
+      'top',
+      async (result: ObjectSearchResult | undefined) => {
+        if (result == null) return
+        await updateIssueRelation(client, issue, result.doc, 'relations', '$push')
+        await updateIssueRelation(client, result.doc as Issue, issue, 'relations', '$push')
+      }
+    )
+  }
 
   function getIssueIds (docs: RelatedDocument[] | RelatedDocument | undefined): Ref<Issue>[] {
     if (docs == null) return []
@@ -104,6 +125,17 @@
     >
       <svelte:fragment slot="chevron">
         <Label label={tracker.string.RelatedToIssuesList} params={{ relatedToIssue: relatedToIssuesCount }} />
+      </svelte:fragment>
+      <svelte:fragment slot="buttons">
+        {#if !$restrictionStore.readonly}
+          <ButtonIcon
+            icon={IconAdd}
+            size={'small'}
+            kind={'tertiary'}
+            tooltip={{ label: tracker.string.AddRelatedIssue, direction: 'bottom' }}
+            on:click={addRelatedIssue}
+          />
+        {/if}
       </svelte:fragment>
     </QueryIssuesList>
   </div>

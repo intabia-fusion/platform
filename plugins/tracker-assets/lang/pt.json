@@ -93,6 +93,8 @@
     "BlocksIssuesList": "Tarefas bloqueadoras para ({blocksIssues})",
     "OpenSubIssues": "Abrir sub-problemas",
     "AddSubIssues": "Adicionar sub-problema",
+    "AddExistingSubIssue": "Adicionar subtarefa existente",
+    "CreateSubIssue": "Criar subtarefa",
     "BlockedBy": "Bloqueado por",
     "RelatedTo": "Relacionado com",
     "Comments": "Comentários",

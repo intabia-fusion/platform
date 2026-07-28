@@ -89,6 +89,7 @@
     "CountProjects": "{count, plural, =0 {Нет проектов} =1 {# проект} other {# проектов}}",
     "ProjectTypeTitle": "Название типа проекта",
     "ProcessStates": "Состояния процесса",
+    "ShowParentTasks": "Показывать родительские задачи",
     "Type": "Тип",
     "Group": "Группа",
     "Color": "Цвет",

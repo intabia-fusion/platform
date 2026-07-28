@@ -93,6 +93,8 @@
     "BlocksIssuesList": "Blokující úkoly pro ({blocksIssues})",
     "OpenSubIssues": "Otevřít podúkoly",
     "AddSubIssues": "Přidat podúkol",
+    "AddExistingSubIssue": "Přidat existující podúkol",
+    "CreateSubIssue": "Vytvořit podúkol",
     "BlockedBy": "Blokováno",
     "RelatedTo": "Související s",
     "Comments": "Komentáře",

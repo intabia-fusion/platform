@@ -89,6 +89,7 @@
     "CountProjects": "{count, plural, =0 {プロジェクトなし} =1 {プロジェクト # 件} other {プロジェクト # 件}}",
     "ProjectTypeTitle": "プロジェクトタイプのタイトル",
     "ProcessStates": "プロセス状態",
+    "ShowParentTasks": "親タスクを表示",
     "Type": "タイプ",
     "Group": "グループ",
     "Color": "色",

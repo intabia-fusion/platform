@@ -376,7 +376,9 @@
     <div class="mt-6">
       {#key issue._id}
         <SubIssues focusIndex={50} {issue} shouldSaveDraft />
-        <ParentIssues {issue} />
+        {#if taskType?.showParentTasks === true}
+          <ParentIssues {issue} />
+        {/if}
         <DependentIssues {issue} />
       {/key}
     </div>
