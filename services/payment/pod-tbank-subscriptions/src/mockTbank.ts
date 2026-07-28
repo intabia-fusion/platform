@@ -14,7 +14,7 @@
 //
 
 import type { Express } from 'express'
-import type TbankPayments from 'tbank-payments'
+import type TbankPayments from './tbank'
 
 interface MockPending {
   paymentId: number
@@ -88,6 +88,20 @@ export class MockTbank {
 
   async removeCard (): Promise<any> {
     return { Success: true }
+  }
+
+  async getPaymentState (params: any): Promise<any> {
+    const p = this.pending.get(String(params.PaymentId))
+    return { Success: true, PaymentId: params.PaymentId, Status: p?.status ?? 'CONFIRMED' }
+  }
+
+  async checkOrder (params: any): Promise<any> {
+    const found = [...this.pending.values()].filter((p) => p.orderId === params.OrderId)
+    return {
+      Success: true,
+      OrderId: params.OrderId,
+      Payments: found.map((p) => ({ PaymentId: p.paymentId, Status: p.status, Amount: p.amount }))
+    }
   }
 
   verifyNotificationSignature (): boolean {

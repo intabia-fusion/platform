@@ -24,7 +24,7 @@ import {
 } from '@hcengineering/account-client'
 import express, { type Express, type Request, type Response } from 'express'
 import cors from 'cors'
-import type TbankPayments from 'tbank-payments'
+import type TbankPayments from './tbank'
 import type { MockTbank } from './mockTbank'
 
 import type { Config } from './config'
@@ -72,11 +72,15 @@ const ALREADY_PAID_RESPONSE = {
   error: 'The pending payment has already been processed'
 } as const
 
+// Enqueue a signature-verified raw webhook for asynchronous processing by the pod's own consumer.
+export type WebhookEnqueue = (notification: Record<string, any>, verified: boolean) => Promise<void>
+
 export async function createServer (
   ctx: MeasureContext,
   config: Config,
   tbank: TbankPayments,
   storage: SubscriptionStorage,
+  enqueueWebhook: WebhookEnqueue,
   mock?: MockTbank
 ): Promise<{ app: Express, close: () => void }> {
   const plans = await loadPricing(config.PaymentUrl)
@@ -157,7 +161,7 @@ export async function createServer (
   app.post(
     '/api/v1/webhooks/tbank',
     wrapHandler(ctx, 'webhook', async (req, res) => {
-      await handleWebhook(ctx, config, tbank, storage, req, res)
+      await handleWebhook(ctx, config, tbank, enqueueWebhook, req, res)
     })
   )
 
@@ -227,7 +231,12 @@ async function cancelPendingCheckout (
   }
   let dead = false
   try {
-    const cancelResult = await tbank.cancelPayment({ PaymentId: paymentId })
+    // Deterministic idempotency key: a retried Cancel for this payment returns the existing operation's
+    // state instead of issuing a second refund (tbank checks prior Cancels with the same ExternalRequestId).
+    const cancelResult = await tbank.cancelPayment({
+      PaymentId: paymentId,
+      ExternalRequestId: `cancel:${paymentId}`
+    })
     dead = cancelResult.Status === 'CANCELED' || TBANK_DEAD_LINK_STATES.includes(cancelResult.Status)
     if (!dead) {
       ctx.info('Pending checkout not cancelable', { paymentId, status: cancelResult.Status })
@@ -897,11 +906,13 @@ async function handleRetryPayment (
   }
 }
 
+// HTTP ingress: verify the signature (security barrier — unverified payloads never enter the queue),
+// enqueue the raw notification, ack the bank immediately. All effects happen later in processWebhook.
 async function handleWebhook (
   ctx: MeasureContext,
   config: Config,
   tbank: TbankPayments,
-  storage: SubscriptionStorage,
+  enqueueWebhook: WebhookEnqueue,
   req: Request,
   res: Response
 ): Promise<void> {
@@ -923,7 +934,8 @@ async function handleWebhook (
     return
   }
 
-  if (!(config.TbankSkipWebhookVerification ?? false)) {
+  const verify = !(config.TbankSkipWebhookVerification ?? false)
+  if (verify) {
     const token = notification.Token as string | undefined
     if (token === undefined || !verifyWebhookToken(tbank, notification, token, rawBody.toString('utf8'))) {
       ctx.error('Invalid TBank webhook token')
@@ -932,11 +944,58 @@ async function handleWebhook (
     }
   }
 
+  // Enqueue for the pod's own consumer. If enqueue fails, do NOT ack — a 500 makes the bank redeliver
+  // (its at-least-once delivery), so a queue outage doesn't silently drop the webhook.
+  try {
+    await enqueueWebhook(notification, verify)
+  } catch (err) {
+    ctx.error('Failed to enqueue TBank webhook', { paymentId: notification.PaymentId, err })
+    res.status(500).send('enqueue failed')
+    return
+  }
+  res.status(200).send('OK')
+}
+
+// Consumer: process a verified webhook. Rechecks the payment state against the bank before applying
+// money-moved effects, then runs the activation / past-due / abandon logic. Throws on retriable errors
+// (storage/bank transient) so the queue retries; returns on terminal outcomes.
+export async function processWebhook (
+  ctx: MeasureContext,
+  config: Config,
+  tbank: TbankPayments,
+  storage: SubscriptionStorage,
+  notification: Record<string, any>,
+  verified: boolean
+): Promise<void> {
   const typedNotification = notification as unknown as TbankWebhookNotification
+
+  // Money-moved webhooks (CONFIRMED/AUTHORIZED) trigger activation — re-verify against the bank via
+  // GetState so a lost or forged notification can't activate a subscription that wasn't actually paid.
+  // Skipped in dev/mock (verification disabled), where GetState isn't backed by a real bank.
+  if (verified && (typedNotification.Status === 'AUTHORIZED' || typedNotification.Status === 'CONFIRMED')) {
+    try {
+      const state = await tbank.getPaymentState({ PaymentId: typedNotification.PaymentId })
+      if (state.Success && state.Status !== typedNotification.Status) {
+        ctx.error('TBank webhook status mismatch with GetState, ignoring', {
+          paymentId: typedNotification.PaymentId,
+          webhookStatus: typedNotification.Status,
+          actualStatus: state.Status
+        })
+        return
+      }
+    } catch (err) {
+      // GetState unreachable — do not block activation on a transient bank outage; the signed
+      // webhook already passed verification. Log for audit and proceed.
+      ctx.warn('TBank GetState recheck failed, proceeding on verified webhook', {
+        paymentId: typedNotification.PaymentId,
+        err
+      })
+    }
+  }
 
   const sub = await storage.getByProviderId(typedNotification.PaymentId)
 
-  ctx.info('Received TBank webhook', {
+  ctx.info('Processing TBank webhook', {
     paymentId: typedNotification.PaymentId,
     orderId: typedNotification.OrderId,
     status: typedNotification.Status,
@@ -970,7 +1029,6 @@ async function handleWebhook (
         paymentId: typedNotification.PaymentId,
         orderId: typedNotification.OrderId
       })
-      res.status(200).send('OK')
       return
     }
 
@@ -987,7 +1045,6 @@ async function handleWebhook (
         paymentId: typedNotification.PaymentId,
         status: typedNotification.Status
       })
-      res.status(200).send('OK')
       return
     }
 
@@ -1040,7 +1097,15 @@ async function handleWebhook (
     typedNotification.Status === 'REVERSED' ||
     typedNotification.Status === 'REFUNDED'
   ) {
-    if (sub !== null) {
+    // Idempotency: at-least-once delivery (and consumer retry) re-delivers the same terminal webhook.
+    // Once we've recorded this exact status on a non-pending PastDue sub, re-applying only resets
+    // retryAfter and risks a duplicate notify — skip it. releaseCheckout below stays (idempotent).
+    const alreadyApplied =
+      sub !== null &&
+      sub.status === SubscriptionStatus.PastDue &&
+      sub.providerData?.pending !== true &&
+      sub.providerData?.status === typedNotification.Status
+    if (sub !== null && !alreadyApplied) {
       // Notify only when an active subscription fails (real renewal/charge failure).
       // Excludes: repeated webhooks on an already-past_due sub, the pending first-payment draft
       // (past_due + pending:true), and late REVERSED/REFUNDED on canceled/expired subscriptions.
@@ -1091,8 +1156,6 @@ async function handleWebhook (
     }
     await storage.releaseCheckout(typedNotification.PaymentId)
   }
-
-  res.status(200).send('OK')
 }
 
 function buildSubscriptionData (

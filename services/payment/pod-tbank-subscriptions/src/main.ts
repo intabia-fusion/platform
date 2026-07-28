@@ -15,7 +15,7 @@
 
 import { Analytics } from '@hcengineering/analytics'
 import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { newMetrics, systemAccountUuid } from '@hcengineering/core'
+import { newMetrics, systemAccountUuid, type WorkspaceUuid } from '@hcengineering/core'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
@@ -25,14 +25,15 @@ import {
   QueueTopic,
   type QueueSubscriptionMessage,
   type QueuePaymentOperationMessage,
+  type QueueTbankWebhookMessage,
   subscriptionEvents
 } from '@hcengineering/server-core'
 import { join } from 'path'
-import TbankPayments from 'tbank-payments'
+import TbankPayments from './tbank'
 import { createMockTbank } from './mockTbank'
 
 import config from './config'
-import { createServer } from './server'
+import { createServer, processWebhook } from './server'
 import { SubscriptionStorage } from './storage'
 import { startScheduler } from './scheduler'
 
@@ -110,7 +111,44 @@ export const main = async (): Promise<void> => {
 
   const storage = new SubscriptionStorage(accountClient, publish, publishOperation)
 
-  const { app, close } = await createServer(metricsContext, config, tbank, storage, mockPair?.mock)
+  // Inbound webhook queue: the HTTP handler verifies + enqueues; the consumer below rechecks and applies.
+  // Partition by PaymentId so all webhooks for one payment stay ordered on a single partition.
+  // No broker auto-create — this pod owns the topic, so create it on boot (idempotent).
+  await queue.createTopic(QueueTopic.TbankWebhook, 10)
+  const webhookProducer = queue.getProducer<QueueTbankWebhookMessage>(metricsContext, QueueTopic.TbankWebhook)
+  const enqueueWebhook = async (notification: Record<string, any>, verified: boolean): Promise<void> => {
+    const paymentId = String(notification.PaymentId ?? 'unknown')
+    await webhookProducer.send(
+      metricsContext,
+      '00000000-0000-0000-0000-000000000000' as WorkspaceUuid, // placeholder: real workspace resolved in processWebhook
+      [{ notification, verified, receivedAt: Date.now() }],
+      paymentId
+    )
+  }
+
+  // Single consumer of the inbound-webhook topic. A throw retries the SAME message locally forever
+  // (this kafka wrapper does no broker redelivery), so throw only on retriable failures (bank/storage
+  // transient). A programming error (TypeError/RangeError) can never succeed on retry — log and return
+  // so one poison webhook can't wedge its partition.
+  const webhookConsumer = queue.createConsumer<QueueTbankWebhookMessage>(
+    metricsContext,
+    QueueTopic.TbankWebhook,
+    'tbank-webhook-processor',
+    async (ctx, msg) => {
+      try {
+        await processWebhook(ctx, config, tbank, storage, msg.value.notification, msg.value.verified)
+      } catch (err: any) {
+        const poison = err instanceof TypeError || err instanceof RangeError || err instanceof SyntaxError
+        ctx.error(poison ? 'Poison TBank webhook dropped' : 'Failed to process TBank webhook, will retry', {
+          paymentId: msg.value.notification?.PaymentId,
+          err
+        })
+        if (!poison) throw err // retry; processWebhook is idempotent (dedup guards on PaymentId)
+      }
+    }
+  )
+
+  const { app, close } = await createServer(metricsContext, config, tbank, storage, enqueueWebhook, mockPair?.mock)
 
   const server = app.listen(config.Port, () => {
     console.log(`TBank subscriptions service listening on port ${config.Port}`)
@@ -119,13 +157,17 @@ export const main = async (): Promise<void> => {
   const scheduler = startScheduler(metricsContext, tbank, storage, config, config.SchedulerIntervalMinutes)
 
   const shutdown = (): void => {
-    // Drain an in-flight renewal first, then close the producer so its upsert is published.
-    void scheduler.close().finally(() => {
-      close()
-      void producer.close()
-      void queue.shutdown()
-      server.close(() => process.exit())
-    })
+    // Drain an in-flight renewal, then flush producers/consumers BEFORE exit so the last enqueued
+    // webhook/audit messages aren't dropped. Await every close; exit only once they've all settled.
+    void (async () => {
+      try {
+        await scheduler.close()
+        close()
+        await Promise.allSettled([webhookConsumer.close(), webhookProducer.close(), producer.close(), queue.shutdown()])
+      } finally {
+        server.close(() => process.exit())
+      }
+    })()
   }
 
   process.on('SIGINT', shutdown)

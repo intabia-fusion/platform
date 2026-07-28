@@ -21,7 +21,7 @@ import {
   SubscriptionStatus,
   makePlanKey
 } from '@hcengineering/account-client'
-import type TbankPayments from 'tbank-payments'
+import TbankPayments, { TBANK_SUCCESS_STATES, TBANK_FAILED_STATES } from './tbank'
 import { type BillingPeriod } from './types'
 
 /**
@@ -295,6 +295,16 @@ export async function chargeSubscriptionRecurrent (
     OperationInitiatorType: 'R',
     Receipt: receipt // Mandatory fiscal receipt (54-ФЗ).
   })
+  // Init declined (Success:false) — no PaymentId to charge. Surface as a business fail, not a throw.
+  if (!initResult.Success) {
+    return {
+      Success: false,
+      PaymentId: String(initResult.PaymentId ?? ''),
+      Status: initResult.Status ?? '',
+      ErrorCode: initResult.ErrorCode ?? '',
+      Message: initResult.Message ?? 'Init failed'
+    }
+  }
   const chargeResult = await tbank.chargeRecurrent({
     PaymentId: initResult.PaymentId,
     RebillId: rebillId
@@ -305,6 +315,36 @@ export async function chargeSubscriptionRecurrent (
     Status: chargeResult.Status ?? '',
     ErrorCode: chargeResult.ErrorCode ?? '',
     Message: chargeResult.Message ?? ''
+  }
+}
+
+export interface ChargeRecheck {
+  outcome: 'charged' | 'failed' | 'unknown'
+  paymentId?: string
+  status?: string
+}
+
+/**
+ * After a transport error on charge (outcome unknown), ask TBank whether the money actually moved.
+ * CheckOrder(orderId) is authoritative: the orderId is deterministic per renewal, so it finds the
+ * payment even if Init/Charge responses were lost. A confirmed payment => charged; a terminal-negative
+ * one => failed; anything in-flight or another transport error => still unknown (leave to lease takeover).
+ */
+export async function recheckChargeOutcome (tbank: TbankPayments, orderId: string): Promise<ChargeRecheck> {
+  try {
+    const res = await tbank.checkOrder({ OrderId: orderId })
+    const payments = res.Payments ?? []
+    const confirmed = payments.find((p) => TBANK_SUCCESS_STATES.has(p.Status))
+    if (confirmed !== undefined) {
+      return { outcome: 'charged', paymentId: String(confirmed.PaymentId), status: confirmed.Status }
+    }
+    // Every known payment for this order is terminal-negative => the charge did not go through.
+    if (payments.length > 0 && payments.every((p) => TBANK_FAILED_STATES.has(p.Status))) {
+      return { outcome: 'failed', status: payments[0].Status }
+    }
+    return { outcome: 'unknown' }
+  } catch {
+    return { outcome: 'unknown' }
   }
 }
 

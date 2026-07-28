@@ -15,7 +15,7 @@
 
 import { type MeasureContext } from '@hcengineering/core'
 import { type SubscriptionData, type Subscription, SubscriptionStatus } from '@hcengineering/account-client'
-import type TbankPayments from 'tbank-payments'
+import TbankPayments, { TbankTransportError } from './tbank'
 import type { Config } from './config'
 import { SubscriptionStorage } from './storage'
 import {
@@ -30,7 +30,8 @@ import {
   buildRenewedSubscription,
   buildFailedChargeSubscription,
   buildChargeErrorSubscription,
-  chargeSubscriptionRecurrent
+  chargeSubscriptionRecurrent,
+  recheckChargeOutcome
 } from './utils'
 import { removeSubscriptionCard, resolveReceipt, MissingReceiptContactError, resolveAccountLocale } from './server'
 
@@ -225,18 +226,45 @@ async function renewSubscription (
       await notifyRenewalFailure(ctx, storage, config, updatedData, wasActive)
     }
   } catch (err: any) {
-    // Charge outcome UNKNOWN (network/timeout). Stop refreshing the lease and leave the intent pending:
-    // its heartbeat goes stale, so another tick/pod resolves it via the lease-expiry takeover above
-    // (fail safe toward paid). Do NOT mark failed here — that would permit a re-charge.
-    ctx.error('Renewal charge outcome unknown, intent left pending for lease-expiry takeover', {
-      subId: sub.id,
-      intentId,
-      err
-    })
+    // Only a transport error leaves the outcome unknown (money may or may not have moved) — recheck via
+    // CheckOrder. A non-transport error (4xx, programming bug) is deterministic: skip recheck, treat as error.
+    const orderId = `renew:${sub.id}:${sub.periodEnd ?? 0}`
+    const recheck =
+      err instanceof TbankTransportError ? await recheckChargeOutcome(tbank, orderId) : { outcome: 'unknown' as const }
+
+    if (recheck.outcome === 'charged') {
+      await storage.markCharge(intentId, 'charged', recheck.paymentId)
+      const updatedData = buildRenewedSubscription(sub, Date.now(), recheck.paymentId ?? '')
+      await storage.upsert(updatedData)
+      ctx.info('Renewal charge confirmed via recheck after transport error', {
+        subId: sub.id,
+        paymentId: recheck.paymentId
+      })
+    } else if (recheck.outcome === 'failed') {
+      await storage.markCharge(intentId, 'failed')
+      const updatedData = buildFailedChargeSubscription(sub, '', recheck.status ?? 'CHARGE_FAILED', RETRY_INTERVAL_MS)
+      await storage.upsert(updatedData)
+      ctx.warn('Renewal charge failed (confirmed via recheck after transport error)', {
+        subId: sub.id,
+        status: recheck.status
+      })
+      await notifyRenewalFailure(ctx, storage, config, updatedData, wasActive)
+    } else {
+      // Still unknown. Leave the intent pending: its heartbeat goes stale, so another tick/pod resolves
+      // it via the lease-expiry takeover above (fail safe toward paid). Do NOT mark failed here.
+      ctx.error('Renewal charge outcome unknown, intent left pending for lease-expiry takeover', {
+        subId: sub.id,
+        intentId,
+        err
+      })
+      const updatedData = buildChargeErrorSubscription(sub, err.message, RETRY_INTERVAL_MS)
+      await storage.upsert(updatedData)
+      await notifyRenewalFailure(ctx, storage, config, updatedData, wasActive)
+    }
     await storage.logOperation({
       operation: 'charge_recurrent',
-      status: 'unknown',
-      orderId: `renew:${sub.id}:${sub.periodEnd ?? 0}`,
+      status: recheck.outcome,
+      orderId,
       actionId: renewActionId,
       actor: 'system',
       subscriptionId: sub.id,
@@ -245,9 +273,6 @@ async function renewSubscription (
       amount: sub.amount,
       raw: { message: err.message, attempt, plan: sub.plan, seats: sub.providerData?.quantity }
     })
-    const updatedData = buildChargeErrorSubscription(sub, err.message, RETRY_INTERVAL_MS)
-    await storage.upsert(updatedData)
-    await notifyRenewalFailure(ctx, storage, config, updatedData, wasActive)
   } finally {
     clearInterval(heartbeat)
   }
