@@ -63,6 +63,7 @@
     "UncancelDescription": "Votre abonnement sera réactivé et se poursuivra à partir de la fin de la période de facturation actuelle.",
     "PriceDifference": "Différence de prix: {amount}",
     "ConfirmConnectPackage": "Connecter le forfait?",
+    "ConfirmConnectPlan": "Connecter le plan ?",
     "ReplacePackageDescription": "Vous avez déjà {package}. Remplacer?",
     "ConfirmCancelPackage": "Annuler le forfait?",
     "ConfirmCancelPackageDescription": "Votre abonnement au forfait restera actif jusqu'à la fin de la période payée.",
@@ -109,9 +110,15 @@
     "SeatMinHint": "Minimum {min} (membres actuels).",
     "SeatChargeNow": "{amount} vous sera facturé maintenant.",
     "SeatDowngradeExtends": "Aucun prélèvement. Votre date de renouvellement avance de {days} jours, au {date}.",
+    "SeatDowngradeExtendsOneOff": "Aucun prélèvement. La date de fin est repoussée de {days, plural, one {# jour} other {# jours}}, au {date}.",
     "NewRecurringPrice": "Nouveau prix récurrent : {amount}.",
     "UpgradePackage": "Étendre le forfait",
     "SeatsUnchanged": "Modifiez le nombre de sièges pour continuer.",
-    "ReplacePackageSwitch": "Remplacer {current} par {target} ?"
+    "ReplacePackageSwitch": "Remplacer {current} par {target} ?",
+    "BillingPeriodLabel": "Période de facturation",
+    "YearlyOfferHint": "Abonnement annuel : {perMonth} par mois, total : {total}.",
+    "AgreeMonthlyCharge": "J'accepte un prélèvement mensuel de {amount}",
+    "AgreeYearlyCharge": "J'accepte un prélèvement annuel de {amount}",
+    "NoAutoRenewalHint": "Paiement unique : la carte n'est pas enregistrée et l'abonnement ne sera pas renouvelé automatiquement."
   }
 }

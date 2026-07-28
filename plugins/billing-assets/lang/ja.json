@@ -61,6 +61,7 @@
     "UncancelDescription": "サブスクリプションが再度有効化され、現在の請求期間の終了から継続します。",
     "PriceDifference": "価格差: {amount}",
     "ConfirmConnectPackage": "パッケージを接続しますか?",
+    "ConfirmConnectPlan": "プランを接続しますか?",
     "ReplacePackageDescription": "すでに {package} が接続されています。置き換えますか?",
     "ConfirmCancelPackage": "パッケージをキャンセルしますか?",
     "ConfirmCancelPackageDescription": "パッケージのサブスクリプションは、支払い済み期間の終了まで有効です。",
@@ -109,9 +110,15 @@
     "SeatMinHint": "最小 {min}（現在のメンバー数）。",
     "SeatChargeNow": "今すぐ {amount} が請求されます。",
     "SeatDowngradeExtends": "請求はありません。更新日が {days} 日先の {date} に移動します。",
+    "SeatDowngradeExtendsOneOff": "請求はありません。終了日が {days, plural, other {#日}} 延長され、{date} になります。",
     "NewRecurringPrice": "新しい継続料金: {amount}。",
     "UpgradePackage": "パッケージを拡張",
     "SeatsUnchanged": "続行するにはシート数を変更してください。",
-    "ReplacePackageSwitch": "{current} を {target} に置き換えますか？"
+    "ReplacePackageSwitch": "{current} を {target} に置き換えますか？",
+    "BillingPeriodLabel": "請求期間",
+    "YearlyOfferHint": "年間サブスクリプション: 月額 {perMonth}、合計: {total}。",
+    "AgreeMonthlyCharge": "毎月 {amount} の自動請求に同意します",
+    "AgreeYearlyCharge": "毎年 {amount} の自動請求に同意します",
+    "NoAutoRenewalHint": "一回限りの支払い: カードは保存されず、サブスクリプションは自動更新されません。"
   }
 }

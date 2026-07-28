@@ -63,6 +63,7 @@
     "UncancelDescription": "Ihr Abonnement wird reaktiviert und läuft ab dem Ende des aktuellen Abrechnungszeitraums weiter.",
     "PriceDifference": "Preisdifferenz: {amount}",
     "ConfirmConnectPackage": "Paket verbinden?",
+    "ConfirmConnectPlan": "Tarif verbinden?",
     "ReplacePackageDescription": "Sie haben bereits {package}. Ersetzen?",
     "ConfirmCancelPackage": "Paket kündigen?",
     "ConfirmCancelPackageDescription": "Ihr Paket-Abonnement bleibt bis zum Ende des bezahlten Zeitraums aktiv.",
@@ -109,9 +110,15 @@
     "SeatMinHint": "Mindestens {min} (aktuelle Mitglieder).",
     "SeatChargeNow": "Ihnen werden jetzt {amount} berechnet.",
     "SeatDowngradeExtends": "Keine Abbuchung. Ihr Verlängerungsdatum verschiebt sich um {days} Tage nach vorne, auf {date}.",
+    "SeatDowngradeExtendsOneOff": "Keine Abbuchung. Das Enddatum verschiebt sich um {days, plural, one {# Tag} other {# Tage}} auf {date}.",
     "NewRecurringPrice": "Neuer wiederkehrender Preis: {amount}.",
     "UpgradePackage": "Paket erweitern",
     "SeatsUnchanged": "Ändern Sie die Anzahl der Plätze, um fortzufahren.",
-    "ReplacePackageSwitch": "{current} durch {target} ersetzen?"
+    "ReplacePackageSwitch": "{current} durch {target} ersetzen?",
+    "BillingPeriodLabel": "Abrechnungszeitraum",
+    "YearlyOfferHint": "Jahresabonnement: {perMonth} pro Monat, insgesamt: {total}.",
+    "AgreeMonthlyCharge": "Ich stimme einer monatlichen Abbuchung von {amount} zu",
+    "AgreeYearlyCharge": "Ich stimme einer jährlichen Abbuchung von {amount} zu",
+    "NoAutoRenewalHint": "Einmalige Zahlung: Die Karte wird nicht gespeichert und das Abonnement wird nicht automatisch verlängert."
   }
 }

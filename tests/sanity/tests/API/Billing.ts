@@ -78,6 +78,8 @@ export async function getTierSubscription (workspaceUuid: WorkspaceUuid): Promis
   status: string
   usersLimit: number | undefined
   trialEnd: number | undefined
+  // Provider payload — carries the recurring-charge consent and the saved-card token.
+  providerData: { recurrent?: boolean, rebillId?: string, period?: string } | undefined
 }
 | undefined
 > {
@@ -85,7 +87,13 @@ export async function getTierSubscription (workspaceUuid: WorkspaceUuid): Promis
   const subs = await client.getSubscriptions(workspaceUuid, false)
   const tier = subs.find((s) => s.type === 'tier' && (s.status === 'active' || s.status === 'trialing'))
   if (tier == null) return undefined
-  return { plan: tier.plan, status: tier.status, usersLimit: tier.limits?.usersLimit, trialEnd: tier.trialEnd }
+  return {
+    plan: tier.plan,
+    status: tier.status,
+    usersLimit: tier.limits?.usersLimit,
+    trialEnd: tier.trialEnd,
+    providerData: tier.providerData as { recurrent?: boolean, rebillId?: string, period?: string } | undefined
+  }
 }
 
 /** Set a workspace plan by uuid (used for freshly created, per-test workspaces). */

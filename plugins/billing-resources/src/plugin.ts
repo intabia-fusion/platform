@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -63,6 +64,7 @@ export default mergeIds(billingId, billing, {
     UncancelDescription: '' as IntlString,
     PriceDifference: '' as IntlString,
     ConfirmConnectPackage: '' as IntlString,
+    ConfirmConnectPlan: '' as IntlString,
     ReplacePackageDescription: '' as IntlString,
     ConfirmCancelPackage: '' as IntlString,
     ConfirmCancelPackageDescription: '' as IntlString,
@@ -96,9 +98,15 @@ export default mergeIds(billingId, billing, {
     SeatMinHint: '' as IntlString,
     SeatChargeNow: '' as IntlString,
     SeatDowngradeExtends: '' as IntlString,
+    SeatDowngradeExtendsOneOff: '' as IntlString,
     NewRecurringPrice: '' as IntlString,
     UpgradePackage: '' as IntlString,
     SeatsUnchanged: '' as IntlString,
-    ReplacePackageSwitch: '' as IntlString
+    ReplacePackageSwitch: '' as IntlString,
+    BillingPeriodLabel: '' as IntlString,
+    YearlyOfferHint: '' as IntlString,
+    AgreeMonthlyCharge: '' as IntlString,
+    AgreeYearlyCharge: '' as IntlString,
+    NoAutoRenewalHint: '' as IntlString
   }
 })

@@ -366,6 +366,59 @@ async function enforceGracePeriod (ctx: MeasureContext, storage: SubscriptionSto
 }
 
 /**
+ * Expire one-off subscriptions once their paid period runs out.
+ *
+ * A tier is canceled and th workspace switches to the free plan.
+ * A package simply terminates.
+ */
+async function expireOneOffSubscriptions (ctx: MeasureContext, storage: SubscriptionStorage): Promise<void> {
+  try {
+    const now = Date.now()
+    let expired = 0
+
+    const isExpiredOneOff = (sub: Subscription): boolean =>
+      sub.status === SubscriptionStatus.Active &&
+      sub.providerData?.recurrent === false &&
+      sub.providerData?.pending !== true &&
+      sub.periodEnd != null &&
+      sub.periodEnd <= now
+
+    for (const sub of await storage.getCandidates()) {
+      if (!isExpiredOneOff(sub)) continue
+
+      // Re-fetch to avoid racing a concurrent plan change / repurchase that extended the period.
+      const freshSub = await storage.getById(sub.id)
+      if (freshSub === null) continue
+      if (!isExpiredOneOff(freshSub)) continue
+
+      await storage.upsert({
+        ...freshSub,
+        status: SubscriptionStatus.Canceled,
+        canceledAt: now,
+        providerData: {
+          ...freshSub.providerData,
+          modifiedAt: now,
+          // pod-payment keys the free-plan fallback off this exact value (tier only).
+          status: 'CANCELED'
+        }
+      })
+      ctx.info('One-off subscription expired at period end', {
+        subId: freshSub.id,
+        type: freshSub.type,
+        plan: freshSub.plan
+      })
+      expired++
+    }
+
+    if (expired > 0) {
+      ctx.info('One-off subscriptions expired', { expired })
+    }
+  } catch (err) {
+    ctx.error('Expire one-off subscriptions error', { err })
+  }
+}
+
+/**
  * Finalize scheduled cancellations.
  * Once `now >= willCancelAt` the subscription is terminated: status
  * Canceled and the saved card removed at TBank.
@@ -468,6 +521,10 @@ export function startScheduler (
     await enforceScheduledCancel(ctx, tbank, storage)
   }
 
+  const oneOffExpiryCycle = async (): Promise<void> => {
+    await expireOneOffSubscriptions(ctx, storage)
+  }
+
   const schedulerIntervalMs = intervalMinutes * 60 * 1000
   ctx.info('Starting subscription renewal scheduler', { intervalMinutes, gracePeriodDays: config.GracePeriodDays })
 
@@ -476,6 +533,7 @@ export function startScheduler (
   void cleanupCycle()
   void graceCycle()
   void scheduledCancelCycle()
+  void oneOffExpiryCycle()
   const timer = setInterval(trackRenewal, schedulerIntervalMs)
   // Cleanup runs less frequently — once per cycle is fine; abandoned subs are rare
   const cleanupTimer = setInterval(() => {
@@ -489,6 +547,10 @@ export function startScheduler (
   const scheduledCancelTimer = setInterval(() => {
     void scheduledCancelCycle()
   }, schedulerIntervalMs)
+  // One-off expiry runs on its own timer (no charge involved, so it needs no drain on shutdown).
+  const oneOffExpiryTimer = setInterval(() => {
+    void oneOffExpiryCycle()
+  }, schedulerIntervalMs)
 
   return {
     close: async () => {
@@ -496,6 +558,7 @@ export function startScheduler (
       clearInterval(cleanupTimer)
       clearInterval(graceTimer)
       clearInterval(scheduledCancelTimer)
+      clearInterval(oneOffExpiryTimer)
       // Only the renewal cycle is drained: it issues a charge (real money), so a lost upsert orphans
       // the payment. Cleanup/grace upserts are not drained — they re-fetch and re-check, so a missed
       // one is simply redone on the next tick (idempotent, no money lost).

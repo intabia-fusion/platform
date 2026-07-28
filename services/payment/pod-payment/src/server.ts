@@ -744,7 +744,7 @@ export async function createServer (
         ctx,
         'update-plan',
         async (ctx) => {
-          const { plan, quantity: requestedQuantity, period, force } = req.body
+          const { plan, quantity: requestedQuantity, period, force, recurrent } = req.body
           const loginInfo = req.loginInfo as WorkspaceLoginInfo
 
           if (plan === undefined || typeof plan !== 'string') {
@@ -819,7 +819,7 @@ export async function createServer (
               plan
             })
             try {
-              const request: SubscribeRequest = { type: subscription.type, plan, quantity, period, force }
+              const request: SubscribeRequest = { type: subscription.type, plan, quantity, period, force, recurrent }
               const checkoutResponse = await activeProvider.createSubscription(
                 ctx,
                 request,
@@ -854,7 +854,8 @@ export async function createServer (
               loginInfo.workspaceUrl,
               accountUuid,
               quantity,
-              period
+              period,
+              recurrent
             )
           } catch (err) {
             ctx.error('Failed to update subscription at provider', { err })

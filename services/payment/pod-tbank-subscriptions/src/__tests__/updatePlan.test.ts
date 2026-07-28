@@ -63,6 +63,7 @@ function makeStorage (claim: any, sub = baseSub): any {
     upsert: jest.fn().mockResolvedValue(undefined),
     reclaimStaleCharge: jest.fn().mockResolvedValue(false),
     abandonCheckout: jest.fn().mockResolvedValue(undefined),
+    releaseCheckout: jest.fn().mockResolvedValue(undefined),
     logOperation: jest.fn().mockResolvedValue(undefined),
     getAccountContact: jest.fn().mockResolvedValue({ email: 'payer@x.com', phone: null, locale: 'ru' })
   }
@@ -70,7 +71,17 @@ function makeStorage (claim: any, sub = baseSub): any {
 
 const tbank: any = {
   initPayment: jest.fn().mockResolvedValue({ PaymentId: 999, PaymentURL: 'https://tbank/pay/999' }),
-  chargeRecurrent: jest.fn().mockResolvedValue({ Success: true, PaymentId: 'chg_1', Status: 'CONFIRMED' })
+  chargeRecurrent: jest.fn().mockResolvedValue({ Success: true, PaymentId: 'chg_1', Status: 'CONFIRMED' }),
+  cancelPayment: jest.fn().mockResolvedValue({ Success: true, Status: 'CANCELED' })
+}
+
+// The error shape the tbank SDK throws: message/details are localized, ErrorCode lands on `code`
+// (see tbank-payments lib/core/client.js).
+function tbankError (code: string, message: string, details: string): Error {
+  const err: any = new Error(message)
+  err.code = code
+  err.details = details
+  return err
 }
 const config: any = { TbankTerminalKey: 'term', TbankTaxation: 'usn_income', TbankVatTax: 'none' }
 
@@ -86,6 +97,8 @@ beforeEach(() => {
   tbank.initPayment.mockClear()
   tbank.chargeRecurrent.mockClear()
   tbank.chargeRecurrent.mockResolvedValue({ Success: true, PaymentId: 'chg_1', Status: 'CONFIRMED' })
+  tbank.cancelPayment.mockReset()
+  tbank.cancelPayment.mockResolvedValue({ Success: true, Status: 'CANCELED' })
 })
 
 describe('handleUpdatePlan claim guard', () => {
@@ -142,6 +155,61 @@ describe('handleUpdatePlan claim guard', () => {
     expect(res.statusCode).toBe(409)
     expect(res.body.reason).toBe('other_checkout_active')
     expect(tbank.initPayment).not.toHaveBeenCalled()
+  })
+
+  // Forced switch has to cancel the stale checkout at tbank first. If that cancel throws, the claim
+  // row survives in payment_intent and every later attempt dies on it — the checkout deadlocks itself.
+  describe('forced switch over a stale checkout', () => {
+    const staleClaim = {
+      claimed: false,
+      intentId: 'i1',
+      heartbeatAt: Date.now(),
+      orderFingerprint: 'business:5:monthly', // a different order is holding the claim
+      paymentUrl: 'https://tbank/pay/stale',
+      paymentId: '8931598935',
+      createdOn: Date.now()
+    }
+
+    it('tbank refuses the cancel with ErrorCode 4 -> claim released, new checkout opened', async () => {
+      const storage = makeStorage(staleClaim)
+      // Second claimCheckout (after the release) succeeds.
+      storage.claimCheckout.mockResolvedValueOnce(staleClaim).mockResolvedValueOnce({ claimed: true, intentId: 'i2' })
+      tbank.cancelPayment.mockRejectedValue(
+        tbankError('4', 'Не получится изменить статус платежа', 'Изменение статуса не разрешено.')
+      )
+
+      const res = await run(storage, { plan: 'business', quantity: 6, period: 'monthly', force: true })
+
+      // The stale payment_intent row is freed, not left behind.
+      expect(storage.releaseCheckout).toHaveBeenCalledWith('8931598935')
+      // And the user gets a payable link instead of a 500.
+      expect(tbank.initPayment).toHaveBeenCalledTimes(1)
+      expect(res.statusCode).toBe(200)
+      expect(res.body.checkoutUrl).toBe('https://tbank/pay/999')
+    })
+
+    it('a cancel failure that is NOT a dead link still propagates', async () => {
+      const storage = makeStorage(staleClaim)
+      tbank.cancelPayment.mockRejectedValue(tbankError('9999', 'Внутренняя ошибка', 'Попробуйте позже.'))
+
+      // Unknown failure: do not free a claim whose payment might still be alive.
+      await expect(run(storage, { plan: 'business', quantity: 6, period: 'monthly', force: true })).rejects.toThrow(
+        'Внутренняя ошибка'
+      )
+      expect(storage.releaseCheckout).not.toHaveBeenCalled()
+      expect(tbank.initPayment).not.toHaveBeenCalled()
+    })
+
+    it('cancel reports a live payment -> 409 already_paid, no second charge', async () => {
+      const storage = makeStorage(staleClaim)
+      tbank.cancelPayment.mockResolvedValue({ Success: true, Status: 'CONFIRMED' })
+
+      const res = await run(storage, { plan: 'business', quantity: 6, period: 'monthly', force: true })
+
+      expect(res.statusCode).toBe(409)
+      expect(res.body.reason).toBe('already_paid')
+      expect(tbank.initPayment).not.toHaveBeenCalled()
+    })
   })
 
   it('loser while the winner has not written the URL yet gets 409 in_flight', async () => {
@@ -293,5 +361,56 @@ describe('handleUpdatePlan proration (live paid sub with a saved card)', () => {
     const draft = storage.upsert.mock.calls.map((c: any[]) => c[0]).find((s: any) => s.providerData?.pending === true)
     // Yearly upgrade must keep the far-future period end, not reset to now+30d.
     expect(draft.periodEnd).toBe(yearlyTier.periodEnd)
+  })
+})
+
+describe('handleUpdatePlan recurring-charge consent', () => {
+  const now = Date.now()
+  // Live per-seat tier with a consented autopay already in place.
+  const recurrentSub: any = {
+    ...baseSub,
+    amount: 450000,
+    periodStart: now - 15 * DAY,
+    periodEnd: now + 15 * DAY,
+    providerData: { quantity: 5, period: 'monthly', rebillId: 'reb_1', orderId: 'ord_1', recurrent: true }
+  }
+
+  it('recurrent: true sends Recurrent=Y to Init and records the consent on the draft', async () => {
+    const storage = makeStorage({ claimed: true, intentId: 'i1' })
+    await run(storage, { plan: 'business', quantity: 6, period: 'monthly', recurrent: true })
+    expect(tbank.initPayment.mock.calls[0][0].Recurrent).toBe('Y')
+    const draft = storage.upsert.mock.calls.map((c: any[]) => c[0]).find((s: any) => s.providerData?.pending === true)
+    expect(draft.providerData.recurrent).toBe(true)
+  })
+
+  it('recurrent: false omits Recurrent entirely (one-off payment, no card saved)', async () => {
+    const storage = makeStorage({ claimed: true, intentId: 'i1' })
+    await run(storage, { plan: 'business', quantity: 6, period: 'monthly', recurrent: false })
+    expect(tbank.initPayment.mock.calls[0][0].Recurrent).toBeUndefined()
+    const draft = storage.upsert.mock.calls.map((c: any[]) => c[0]).find((s: any) => s.providerData?.pending === true)
+    expect(draft.providerData.recurrent).toBe(false)
+  })
+
+  it('omitted flag keeps the existing consent (a seat-only change must not cancel autopay)', async () => {
+    const storage = makeStorage({ claimed: true, intentId: 'i1' }, recurrentSub)
+    // Seat upgrade with no recurrent field in the body.
+    await run(storage, { plan: 'business', quantity: 8, period: 'monthly' })
+    expect(tbank.initPayment.mock.calls[0][0].Recurrent).toBe('Y')
+  })
+
+  it('packages honour the consent too (flat price, seats forced to 1)', async () => {
+    const pkgSub = { ...baseSub, type: 'package', plan: '100gb', providerData: { period: 'monthly' } }
+    const storage = makeStorage({ claimed: true, intentId: 'i1' }, pkgSub)
+    await run(storage, { plan: '500gb', recurrent: false }, { '500gb@package': { amount: 500000, yearlyDiscount: 0 } })
+    expect(tbank.initPayment.mock.calls[0][0].Recurrent).toBeUndefined()
+    const draft = storage.upsert.mock.calls.map((c: any[]) => c[0]).find((s: any) => s.providerData?.pending === true)
+    expect(draft.providerData.recurrent).toBe(false)
+  })
+
+  it('no-charge downgrade carries the consent onto the updated subscription', async () => {
+    const storage = makeStorage({ claimed: true, intentId: 'i1' }, recurrentSub)
+    const res = await run(storage, { plan: 'business', quantity: 3, period: 'monthly' })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.providerData.recurrent).toBe(true)
   })
 })

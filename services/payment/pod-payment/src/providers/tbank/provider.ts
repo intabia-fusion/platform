@@ -83,7 +83,8 @@ export class TbankProvider implements PaymentProvider {
           customerEmail: request.customerEmail,
           quantity: request.quantity,
           period: request.period,
-          force: request.force
+          force: request.force,
+          recurrent: request.recurrent
         })
       })
 
@@ -189,9 +190,10 @@ export class TbankProvider implements PaymentProvider {
     workspaceUrl: string,
     accountUuid: string,
     quantity?: number,
-    period?: BillingPeriod
+    period?: BillingPeriod,
+    recurrent?: boolean
   ): Promise<SubscriptionData | CheckoutResponse | null> {
-    ctx.info('Updating TBank subscription plan', { subscriptionId, newPlan, quantity, period })
+    ctx.info('Updating TBank subscription plan', { subscriptionId, newPlan, quantity, period, recurrent })
 
     const response = await this.fetchTbank(`${this.tbankUrl}/api/v1/subscriptions/${subscriptionId}/updatePlan`, {
       method: 'POST',
@@ -201,7 +203,8 @@ export class TbankProvider implements PaymentProvider {
         workspaceUrl,
         accountUuid,
         quantity,
-        period
+        period,
+        recurrent
       })
     })
 

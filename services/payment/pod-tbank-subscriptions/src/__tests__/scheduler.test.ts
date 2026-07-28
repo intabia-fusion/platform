@@ -285,3 +285,70 @@ describe('scheduler renewal claim outcomes', () => {
     clearSpy.mockRestore()
   })
 })
+
+// A one-off purchase saves no card, so the renewal cycle skips it forever; without this expiry it
+// would stay Active past periodEnd indefinitely.
+describe('one-off subscription expiry', () => {
+  const oneOffTier: any = {
+    ...baseSub,
+    providerData: { period: 'monthly', recurrent: false }
+  }
+  // No claim is ever taken: expiry moves no money.
+  const noRenewal = { claimed: false, status: 'charged', intentId: 'i1' }
+
+  it('expired one-off tier -> Canceled with the marker pod-payment turns into the free plan', async () => {
+    const storage = makeStorage(oneOffTier, noRenewal)
+    await runOneTick({}, storage)
+
+    const written = storage.upsert.mock.calls.map((c: any[]) => c[0]).find((s: any) => s.status === 'canceled')
+    expect(written).toBeDefined()
+    // isFinalizedUserCancel (pod-payment) keys the free-plan fallback off exactly this value.
+    expect(written.providerData.status).toBe('CANCELED')
+    expect(written.canceledAt).toBe(NOW)
+  })
+
+  it('expired one-off package -> Canceled as well (no free-plan fallback applies to packages)', async () => {
+    const pkg = { ...oneOffTier, type: 'package', plan: '100gb' }
+    const storage = makeStorage(pkg, noRenewal)
+    await runOneTick({}, storage)
+
+    const written = storage.upsert.mock.calls.map((c: any[]) => c[0]).find((s: any) => s.status === 'canceled')
+    expect(written).toBeDefined()
+    expect(written.type).toBe('package')
+  })
+
+  it('one-off still inside its paid period is left alone', async () => {
+    const live = { ...oneOffTier, periodEnd: NOW + 60_000 }
+    const storage = makeStorage(live, noRenewal)
+    await runOneTick({}, storage)
+
+    expect(storage.upsert).not.toHaveBeenCalled()
+  })
+
+  it('a recurring subscription is never expired by this cycle (it renews instead)', async () => {
+    // baseSub is recurrent (rebillId, no recurrent:false) and already past periodEnd.
+    const storage = makeStorage(baseSub, noRenewal)
+    await runOneTick({}, storage)
+
+    const canceled = storage.upsert.mock.calls.map((c: any[]) => c[0]).find((s: any) => s.status === 'canceled')
+    expect(canceled).toBeUndefined()
+  })
+
+  it('a pending first payment is not expired (its checkout may still complete)', async () => {
+    const pending = { ...oneOffTier, providerData: { ...oneOffTier.providerData, pending: true } }
+    const storage = makeStorage(pending, noRenewal)
+    await runOneTick({}, storage)
+
+    expect(storage.upsert).not.toHaveBeenCalled()
+  })
+
+  it('re-fetch showing an extended period aborts the expiry (repurchase race)', async () => {
+    const storage = makeStorage(oneOffTier, noRenewal, {
+      // Candidate looks expired, but the fresh read has a live period again.
+      getById: jest.fn().mockResolvedValue({ ...oneOffTier, periodEnd: NOW + 60_000 })
+    })
+    await runOneTick({}, storage)
+
+    expect(storage.upsert).not.toHaveBeenCalled()
+  })
+})

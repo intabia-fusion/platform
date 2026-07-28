@@ -127,6 +127,7 @@ export class PaymentClient {
    * @param plan - New plan name
    * @param quantity - Number of seats for per-seat plans (total charge = price-per-seat * quantity)
    * @param period - Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
+   * @param recurrent - User consented to recurring charges; false means a one-off payment (no card saved).
    * @returns CheckoutResponse for free-to-paid upgrades or updated SubscriptionData for direct updates
    */
   async updateSubscriptionPlan (
@@ -134,11 +135,12 @@ export class PaymentClient {
     plan: string,
     quantity?: number,
     period?: BillingPeriod,
-    force?: boolean
+    force?: boolean,
+    recurrent?: boolean
   ): Promise<SubscriptionData | CheckoutResponse> {
     const path = `/api/v1/subscriptions/${subscriptionId}/updatePlan`
     const url = concatLink(this.endpoint, path)
-    const body = JSON.stringify({ plan, quantity, period, force })
+    const body = JSON.stringify({ plan, quantity, period, force, recurrent })
     const response = await fetchSafe(url, {
       method: 'POST',
       headers: { ...this.headers },

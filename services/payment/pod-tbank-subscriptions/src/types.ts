@@ -27,12 +27,14 @@ export interface CreateSubscriptionRequest {
   quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
   period?: BillingPeriod // Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
   force?: boolean // Switch tariff: cancel a different pending checkout for this type, then open the new one.
+  recurrent?: boolean // recurring charges; false/undefined = one-off payment: no auto-renew
 }
 
 export interface UpdatePlanRequest {
   plan: string
   quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
   period?: BillingPeriod // Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
+  recurrent?: boolean
 }
 
 /**

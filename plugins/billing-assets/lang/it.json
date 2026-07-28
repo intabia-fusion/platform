@@ -63,6 +63,7 @@
     "UncancelDescription": "Il tuo abbonamento verrà riattivato e continuerà dalla fine del periodo di fatturazione attuale.",
     "PriceDifference": "Differenza di prezzo: {amount}",
     "ConfirmConnectPackage": "Connettere pacchetto?",
+    "ConfirmConnectPlan": "Connettere piano?",
     "ReplacePackageDescription": "Hai già {package}. Sostituirlo?",
     "ConfirmCancelPackage": "Annullare pacchetto?",
     "ConfirmCancelPackageDescription": "L'abbonamento al pacchetto rimarrà attivo fino alla fine del periodo pagato.",
@@ -109,9 +110,15 @@
     "SeatMinHint": "Minimo {min} (membri attuali).",
     "SeatChargeNow": "Ti verranno addebitati {amount} ora.",
     "SeatDowngradeExtends": "Nessun addebito. La data di rinnovo si sposta in avanti di {days} giorni, al {date}.",
+    "SeatDowngradeExtendsOneOff": "Nessun addebito. La data di fine si sposta di {days, plural, one {# giorno} other {# giorni}}, al {date}.",
     "NewRecurringPrice": "Nuovo prezzo ricorrente: {amount}.",
     "UpgradePackage": "Espandi il pacchetto",
     "SeatsUnchanged": "Modifica il numero di posti per continuare.",
-    "ReplacePackageSwitch": "Sostituire {current} con {target}?"
+    "ReplacePackageSwitch": "Sostituire {current} con {target}?",
+    "BillingPeriodLabel": "Periodo di fatturazione",
+    "YearlyOfferHint": "Abbonamento annuale: {perMonth} al mese, totale: {total}.",
+    "AgreeMonthlyCharge": "Accetto un addebito mensile di {amount}",
+    "AgreeYearlyCharge": "Accetto un addebito annuale di {amount}",
+    "NoAutoRenewalHint": "Pagamento una tantum: la carta non viene salvata e l’abbonamento non si rinnoverà automaticamente."
   }
 }

@@ -35,13 +35,44 @@ async function confirmIfDialog (page: Page): Promise<void> {
   }
 }
 
-// Buy the Business per-seat plan for `seats` seats via the plan card, then pay on the mock checkout.
-async function subscribeBusiness (page: Page, ws: string, seats: number): Promise<void> {
-  const seatsInput = page.locator('[data-id="planSeats-business"]')
-  await seatsInput.fill(String(seats))
-  await seatsInput.blur()
+// Every paid purchase now goes through PlanCheckoutDialog, which owns seats, period and the
+// recurring-charge consent. `recurrent: false` unticks the consent -> a one-off payment.
+async function submitCheckoutDialog (
+  page: Page,
+  opts: { seats?: number, period?: 'monthly' | 'yearly', recurrent?: boolean } = {}
+): Promise<void> {
+  const dialog = page.locator('[data-id="planCheckoutDialog"]')
+  await expect(dialog).toBeVisible({ timeout: 10000 })
+
+  if (opts.seats !== undefined) {
+    const input = page.locator('[data-id="checkoutSeatsInput"] input[type="number"]')
+    await input.fill(String(opts.seats))
+    await input.blur()
+  }
+  if (opts.period !== undefined) {
+    await page.locator(`[data-id="checkoutPeriodSwitch"] [data-id="tab-${opts.period}"]`).click()
+  }
+  // The checkbox defaults to checked (auto-renewal); only a one-off purchase needs a click.
+  // CheckBox hides the real input under its own label, so click the label and assert via the hint.
+  if (opts.recurrent === false) {
+    await page.locator('[data-id="checkoutRecurrentCheckbox"] .checkbox-container').click()
+    await expect(page.locator('[data-id="checkoutNoRenewalHint"]')).toBeVisible({ timeout: 5000 })
+  }
+
+  await page.locator('.antiCard .buttons-group button').last().click()
+  await expect(dialog).toBeHidden({ timeout: 15000 })
+}
+
+// Buy the Business per-seat plan for `seats` seats: the plan card opens the checkout dialog (seats,
+// period and consent live there now), then pay on the mock checkout.
+async function subscribeBusiness (
+  page: Page,
+  ws: string,
+  seats: number,
+  opts: { period?: 'monthly' | 'yearly', recurrent?: boolean } = {}
+): Promise<void> {
   await page.locator('[data-id="planSubscribe-business"]').click()
-  await confirmIfDialog(page)
+  await submitCheckoutDialog(page, { seats, ...opts })
   await payMockCheckout(page, ws)
   await expect(page.locator('[data-id="planSubscribe-business"]')).toHaveCount(0, { timeout: 20000 })
 }
@@ -65,6 +96,7 @@ async function changeSeats (page: Page, ws: string, seats: number, expect_: 'cha
     await expect(page.locator('[data-id="seatExtendRow"]')).toBeVisible({ timeout: 5000 })
     await expect(page.locator('[data-id="seatChargeRow"]')).toHaveCount(0)
   }
+  // Recurring price is only announced for a renewing subscription (hidden for a one-off purchase).
   await expect(page.locator('[data-id="seatNewPrice"]')).toBeVisible()
 
   // The Card ok button (the only primary button in the dialog footer) applies the change.
@@ -81,11 +113,15 @@ async function changeSeats (page: Page, ws: string, seats: number, expect_: 'cha
 
 // Connect / switch to a package by key. A switch from an existing package opens the change dialog
 // with a proration preview (`expect_`: charge for a bigger package, date shift for a smaller one);
-// the first connect (no active package) goes straight through checkout with no dialog.
+// the first connect (no active package) opens the plain checkout dialog instead.
 async function connectPackage (page: Page, ws: string, pkgKey: string, expect_?: 'charge' | 'extend'): Promise<void> {
   await page.locator(`[data-id="packageConnect-${pkgKey}"]`).click()
   const dialog = page.locator('[data-id="packageChangeDialog"]')
-  if (expect_ !== undefined) {
+  if (expect_ === undefined) {
+    // First connect: no package to replace, so it is a plain purchase dialog (flat price, no seats
+    // and no period — just the total and the consent checkbox).
+    await submitCheckoutDialog(page)
+  } else {
     await expect(dialog).toBeVisible({ timeout: 8000 })
     if (expect_ === 'charge') {
       await expect(page.locator('[data-id="packageChargeRow"]')).toBeVisible({ timeout: 5000 })
@@ -232,10 +268,9 @@ test.describe('billing UI lifecycle (tbank + mock bank)', () => {
     const { workspace, wsUrl } = await freshBusinessWorkspace(request, 'yearly')
     await openBilling(page, wsUrl)
 
-    // Switch the billing period to yearly before subscribing (the Switcher wraps the radio in a
-    // label that intercepts clicks; target it by its data-id).
-    await page.locator('[data-id="tab-yearly"]').click()
-    await subscribeBusiness(page, wsUrl, 2)
+    // The period is picked inside the checkout dialog — that is what the request carries. The card
+    // switcher only drives the advertised prices.
+    await subscribeBusiness(page, wsUrl, 2, { period: 'yearly' })
 
     await expect(async () => {
       const tier = await getTierSubscription(workspace)
@@ -245,5 +280,27 @@ test.describe('billing UI lifecycle (tbank + mock bank)', () => {
 
     // The active card labels the amount as a yearly charge (not monthly).
     await expect(page.locator('[data-id="currentTierAmount"]')).toContainText(/Yearly|В год/)
+  })
+
+  test('one-off purchase: no card saved, no renewal wording, no cancel action', async ({ page, request }) => {
+    const { workspace, wsUrl } = await freshBusinessWorkspace(request, 'oneoff')
+    await openBilling(page, wsUrl)
+
+    // Unticking the consent sends no Recurrent to the bank, so no card token comes back.
+    await subscribeBusiness(page, wsUrl, 2, { recurrent: false })
+
+    await expect(async () => {
+      const tier = await getTierSubscription(workspace)
+      expect(tier?.status).toBe('active')
+      expect(tier?.providerData?.recurrent).toBe(false)
+      // No RebillId -> nothing for the renewal scheduler to charge.
+      expect(tier?.providerData?.rebillId).toBeUndefined()
+    }).toPass({ intervals: [1000, 2000, 3000], timeout: 20000 })
+
+    // Cancel means "do not renew" — meaningless here, so the action is gone.
+    await expect(page.locator('[data-id="cancelSubscription"]')).toHaveCount(0)
+    await expect(page.locator('[data-id="uncancelSubscription"]')).toHaveCount(0)
+    // Seats stay changeable (buying more is just another one-off payment).
+    await expect(page.locator('[data-id="changeSeats"]')).toBeVisible()
   })
 })

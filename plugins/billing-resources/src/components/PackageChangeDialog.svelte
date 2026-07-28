@@ -15,7 +15,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { Card } from '@hcengineering/presentation'
-  import { Label, themeStore } from '@hcengineering/ui'
+  import { Label, CheckBox, themeStore } from '@hcengineering/ui'
   import { type SubscriptionData } from '@hcengineering/payment-client'
   import plugin from '../plugin'
   import { proratePackage } from '@hcengineering/account-client'
@@ -26,6 +26,8 @@
   export let targetLabel: string = '' // package the user picked
   export let targetPriceKopecks: number // recurring price of the new package (kopecks)
   export let currency: string = ''
+  // Recurring-charge consent, seeded from the subscription being replaced so a plain swap keeps it.
+  export let recurrent: boolean = true
 
   const dispatch = createEventDispatcher()
   const DEFAULT_LOCALE = 'ru'
@@ -56,7 +58,7 @@
   }
 
   async function apply (): Promise<void> {
-    dispatch('close', true)
+    dispatch('close', { recurrent })
   }
 </script>
 
@@ -90,12 +92,32 @@
             />
           </div>
         {/if}
-        <div class="dark-color text-sm" data-id="packageNewPrice">
+        {#if recurrent}
+          <div class="dark-color text-sm" data-id="packageNewPrice">
+            <Label
+              label={plugin.string.NewRecurringPrice}
+              params={{ amount: `${fmt(targetPriceKopecks)} ${currency}` }}
+            />
+          </div>
+        {/if}
+      </div>
+    {/if}
+
+    <!-- One-off purchase, no card is saved, no auto-renew, the package ends at period end. -->
+    <div class="flex-row-top flex-gap-2" data-id="packageRecurrentCheckbox">
+      <CheckBox id="package-recurrent-input" bind:checked={recurrent} kind={'primary'} />
+      <span class="text-sm">
+        <label for="package-recurrent-input" class="cursor-pointer">
           <Label
-            label={plugin.string.NewRecurringPrice}
+            label={plugin.string.AgreeMonthlyCharge}
             params={{ amount: `${fmt(targetPriceKopecks)} ${currency}` }}
           />
-        </div>
+        </label>
+      </span>
+    </div>
+    {#if !recurrent}
+      <div class="text-sm dark-color" data-id="packageNoRenewalHint">
+        <Label label={plugin.string.NoAutoRenewalHint} />
       </div>
     {/if}
   </div>

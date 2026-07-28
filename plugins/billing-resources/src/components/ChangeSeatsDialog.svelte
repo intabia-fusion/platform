@@ -30,6 +30,8 @@
   // Seat ceiling: guards against huge values (sci-notation price + provider 500). From the caller.
   export let maxSeats: number
   export let currency: string = ''
+  // One-off purchase
+  export let oneOff: boolean = false
 
   const dispatch = createEventDispatcher()
   const DEFAULT_LOCALE = 'ru'
@@ -104,14 +106,16 @@
         {:else}
           <div class="flex-row-center flex-gap-1" data-id="seatExtendRow">
             <Label
-              label={plugin.string.SeatDowngradeExtends}
+              label={oneOff ? plugin.string.SeatDowngradeExtendsOneOff : plugin.string.SeatDowngradeExtends}
               params={{ days: extraDays, date: fmtDate(preview.periodEnd) }}
             />
           </div>
         {/if}
-        <div class="flex-row-center flex-gap-1 dark-color text-sm" data-id="seatNewPrice">
-          <Label label={plugin.string.NewRecurringPrice} params={{ amount: `${fmt(newRecurring)} ${currency}` }} />
-        </div>
+        {#if !oneOff}
+          <div class="flex-row-center flex-gap-1 dark-color text-sm" data-id="seatNewPrice">
+            <Label label={plugin.string.NewRecurringPrice} params={{ amount: `${fmt(newRecurring)} ${currency}` }} />
+          </div>
+        {/if}
       </div>
     {:else if !changed}
       <div class="text-sm dark-color"><Label label={plugin.string.SeatsUnchanged} /></div>
