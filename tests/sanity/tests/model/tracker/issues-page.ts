@@ -547,6 +547,11 @@ export class IssuesPage extends CommonTrackerPage {
     await this.selectFromDropdown(this.page, action)
   }
 
+  async openSubmenuOnIssue (issueName: string, action: string): Promise<void> {
+    await this.issueByName(issueName).click({ button: 'right' })
+    await this.openSubmenu(action)
+  }
+
   async checkAllIssuesByPriority (priorityName: string): Promise<void> {
     await expect(async () => {
       for await (const locator of iterateLocator(this.issuesList())) {

@@ -298,4 +298,36 @@ test.describe('Tracker issue tests', () => {
     await issuesPage.searchIssueByName(commentIssue.title)
     await issuesPage.checkCommentsCount(commentIssue.title, '2')
   })
+
+  test('Set status and priority via context menu submenu', async ({ page }) => {
+    const newIssue: NewIssue = {
+      title: `Context menu submenu-${generateId()}`,
+      description: 'Set status and priority via context menu submenu',
+      projectName: 'Default'
+    }
+    await issuesPage.linkSidebarAll().click()
+    await issuesPage.clickModelSelectorAll()
+    await issuesPage.createNewIssue(newIssue)
+    await issuesPage.searchIssueByName(newIssue.title)
+
+    await test.step('Set status from context menu submenu', async () => {
+      await issuesPage.openSubmenuOnIssue(newIssue.title, 'Status')
+      await issuesPage.selectMenuItem(page, 'In Progress')
+      // Submenu popup must not reopen after selection
+      await page.waitForTimeout(500)
+      await expect(page.locator('div.selectPopup')).toHaveCount(0)
+      await expect(page.locator('div.antiPopup')).toHaveCount(0)
+    })
+
+    await test.step('Set priority from context menu submenu', async () => {
+      await issuesPage.openSubmenuOnIssue(newIssue.title, 'Priority')
+      await issuesPage.selectMenuItem(page, 'Urgent')
+      await page.waitForTimeout(500)
+      await expect(page.locator('div.selectPopup')).toHaveCount(0)
+      await expect(page.locator('div.antiPopup')).toHaveCount(0)
+    })
+
+    await issuesPage.openIssueByName(newIssue.title)
+    await issuesDetailsPage.checkIssue({ ...newIssue, status: 'In Progress', priority: 'Urgent' })
+  })
 })

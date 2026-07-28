@@ -413,6 +413,25 @@ test.describe('Channel tests', () => {
     })
   })
 
+  test('User is able to change channel icon via context menu', async ({ page }) => {
+    const emoji = '😤'
+    await test.step('Prepare channel', async () => {
+      await leftSideMenuPage.clickChunter()
+      await chunterPage.clickAddChannel()
+      await chunterPage.createChannel(data.channelName, false)
+      await channelPage.checkIfChannelDefaultExist(true, data.channelName)
+    })
+
+    await test.step('Change icon from submenu', async () => {
+      await channelPage.openChannelSubmenuInMenu(data.channelName, 'Change icon')
+      await channelPage.selectEmoji(emoji).click()
+      // Submenu popup must not reopen after selection
+      await page.waitForTimeout(500)
+      await expect(page.locator('div.popup')).toHaveCount(0)
+      await expect(channelPage.channelContainers().filter({ hasText: data.channelName }).getByText(emoji)).toBeVisible()
+    })
+  })
+
   test('User is able to leave and join a channel', async () => {
     await test.step('Prepare channel', async () => {
       await leftSideMenuPage.clickChunter()

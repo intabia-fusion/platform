@@ -128,6 +128,19 @@ export class CommonPage {
     await this.popupSpanLabel(point).click()
   }
 
+  // Opens submenu of a context menu item: MouseSpeedTracker enables submenu only after slow mouse moves
+  async openSubmenu (point: string): Promise<void> {
+    const item = this.popupSpanLabel(point)
+    await item.hover()
+    const box = await item.boundingBox()
+    if (box != null) {
+      for (let i = 1; i <= 3; i++) {
+        await this.page.mouse.move(box.x + box.width / 2 + i * 2, box.y + box.height / 2)
+        await this.page.waitForTimeout(100)
+      }
+    }
+  }
+
   async checkDropdownHasNo (page: Page, item: string): Promise<void> {
     await expect(this.selectPopupSpanLines(item)).not.toBeVisible()
   }
