@@ -16,6 +16,28 @@
 
   const dispatch = createEventDispatcher()
   const client = getClient()
+  let progress = false
+  const changeStatus = async (newStatus: any) => {
+    if (newStatus === undefined) {
+      dispatch('close', undefined)
+      return
+    }
+    progress = true
+    const docs = Array.isArray(value) ? value : [value]
+
+    const ops = client.apply(undefined, 'set-status')
+    const changed = (d: Task) => d.status !== newStatus
+    for (const it of docs.filter(changed)) {
+      await ops.update(it, { status: newStatus })
+    }
+    await ops.commit()
+
+    progress = false
+
+    dispatch('close', newStatus)
+    const ids = await getAnalyticsIds(docs)
+    Analytics.handleEvent('task.SetStatus', { status: newStatus, objects: ids })
+  }
 
   async function getAnalyticsIds (docs: Task[]): Promise<string[]> {
     const result: string[] = []
@@ -65,37 +87,12 @@
   allowDeselect={true}
   selected={current}
   on:close={(evt) => {
-    const raw = evt.detail
-    const statusId = typeof raw === 'string' ? raw : raw?._id
-    dispatch('close', statusId)
-
-    if (typeof statusId === 'string') {
-      const docs = Array.isArray(value) ? value : [value]
-      if (docs.length > 0) {
-        void (async () => {
-          try {
-            const ops = client.apply(undefined, 'set-status')
-            for (const it of docs) {
-              if (it.status !== statusId) {
-                // @ts-expect-error: runtime string safely matches Ref<Status>
-                await ops.update(it, { status: statusId })
-              }
-            }
-            await ops.commit()
-          } catch (error) {
-            console.error(error)
-          }
-        })()
-      }
-
-      void getAnalyticsIds(docs).then((ids) => {
-        Analytics.handleEvent('task.SetStatus', { status: statusId, objects: ids })
-      })
-    }
+    void changeStatus(evt.detail === null ? null : evt.detail?._id)
   }}
   {placeholder}
   {width}
   {embedded}
+  loading={progress}
   on:changeContent
   on:search={(e) => (searchQuery = e.detail)}
 >

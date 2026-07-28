@@ -90,6 +90,8 @@ export interface Action {
   component?: AnyComponent | AnySvelteComponent
   props?: Record<string, any>
   isSubmenuRightClicking?: boolean
+  // Called with submenu popup close/update result for components which do not apply changes themselves
+  onSubmenuResult?: (result: any) => void | Promise<void>
 
   inlineComponent?: AnyComponent | AnySvelteComponent
   inlineComponentProps?: Record<string, any>

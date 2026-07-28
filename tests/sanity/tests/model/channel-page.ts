@@ -373,6 +373,13 @@ export class ChannelPage extends CommonPage {
     await this.selectFromDropdown(this.page, action)
   }
 
+  async openChannelSubmenuInMenu (channelName: string, action: string): Promise<void> {
+    await this.openNavigator()
+    await this.channelContainers().filter({ hasText: channelName }).hover()
+    await this.channelContainers().filter({ hasText: channelName }).locator('.hulyNavItem-actions').click()
+    await this.openSubmenu(action)
+  }
+
   async checkChannelStarred (shouldExist: boolean, channelName: string): Promise<void> {
     if (shouldExist) {
       await expect(this.starredChannelContainers().filter({ hasText: channelName })).toHaveCount(1)

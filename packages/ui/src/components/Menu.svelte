@@ -90,11 +90,11 @@
         { ...action.props, popupCategory: nextCategory },
         { getBoundingClientRect: () => target.getBoundingClientRect(), kind: 'submenu' },
         (evt) => {
-          void action.action(evt, evt)
+          if (evt !== undefined) void action.onSubmenuResult?.(evt)
           dispatch('close')
         },
         (evt) => {
-          void action.action(evt, evt)
+          if (evt !== undefined) void action.onSubmenuResult?.(evt)
         },
         { category, overlay: false }
       )
