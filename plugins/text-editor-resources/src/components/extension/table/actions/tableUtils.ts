@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 TraceX SAS.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,14 +17,39 @@ import { type Node } from '@tiptap/pm/model'
 import { TableMap } from '@tiptap/pm/tables'
 import type { Client } from '@hcengineering/core'
 import { getClient } from '@hcengineering/presentation'
+import { type MarkupNode, MarkupNodeType } from '@hcengineering/text'
+import { markupToMarkdown } from '@hcengineering/text-markdown'
 import type { TableMetadata } from '@hcengineering/view'
 import { buildMarkdownTableFromDocs } from '../refreshTable'
+
+function hasMergedCells (tableNode: Node): boolean {
+  let result = false
+  tableNode.descendants((node) => {
+    if (
+      (node.type.name === 'tableCell' || node.type.name === 'tableHeader') &&
+      (Number(node.attrs.rowspan ?? 1) > 1 || Number(node.attrs.colspan ?? 1) > 1)
+    ) {
+      result = true
+      return false
+    }
+    return !result
+  })
+  return result
+}
 
 /**
  * Extract markdown string from a ProseMirror table node
  */
 export function extractTableMarkdown (tableNode: Node): string {
   try {
+    if (hasMergedCells(tableNode)) {
+      const tableMarkup = tableNode.toJSON() as unknown as MarkupNode
+      return markupToMarkdown({
+        type: MarkupNodeType.doc,
+        content: [tableMarkup]
+      })
+    }
+
     const map = TableMap.get(tableNode)
     const { width, height } = map
 

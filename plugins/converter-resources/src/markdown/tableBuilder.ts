@@ -1,5 +1,6 @@
 //
 // Copyright © 2026 Hardcore Engineering Inc.
+// Copyright © 2026 TraceX SAS.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,6 +15,8 @@
 //
 
 import core, { type Class, type Client, type Doc, type Hierarchy, type Ref, type PersonId } from '@hcengineering/core'
+import { type MarkupNode, MarkupNodeType } from '@hcengineering/text'
+import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
 import { getCurrentLanguage } from '@hcengineering/theme'
 import type {
   AttributeModel,
@@ -30,6 +33,40 @@ import { generateHeaders, loadViewletConfig, buildTableModel } from '../model'
 import { rebuildRelationshipTableViewModel, isRelationshipTable } from '../data'
 import { escapeMarkdownTableCellContent } from './escape'
 import { createMarkdownLink } from './link'
+
+function markdownToTableCellContent (markdown: string): MarkupNode[] {
+  const content = markdownToMarkup(markdown).content
+  if (content !== undefined && content.length > 0) {
+    return content
+  }
+
+  return [{ type: MarkupNodeType.paragraph, content: [] }]
+}
+
+function buildRelationshipTableMarkup (headers: string[], rows: MarkupNode[]): MarkupNode {
+  const headerRow: MarkupNode = {
+    type: MarkupNodeType.table_row,
+    content: headers.map((header) => ({
+      type: MarkupNodeType.table_header,
+      content: [
+        {
+          type: MarkupNodeType.paragraph,
+          content: header.length > 0 ? [{ type: MarkupNodeType.text, text: header }] : []
+        }
+      ]
+    }))
+  }
+
+  return {
+    type: MarkupNodeType.doc,
+    content: [
+      {
+        type: MarkupNodeType.table,
+        content: [headerRow, ...rows]
+      }
+    ]
+  }
+}
 
 async function preloadRefLookups (
   docs: Doc[],
@@ -351,29 +388,26 @@ export async function buildRelationshipTableMarkdown (
     attributeKeyToIndex.set(attr.key, index)
   })
 
-  const activeRowSpans = new Map<string, { value: string, remaining: number }>()
-  const rows: string[][] = []
+  const rows: MarkupNode[] = []
+  // Without merged cells a plain pipe table is kept, it stays readable outside the editor
+  const pipeRows: string[][] = []
+  let hasRowSpans = false
 
-  for (let rowIdx = 0; rowIdx < props.viewModel.length; rowIdx++) {
-    const rowModel = props.viewModel[rowIdx]
-    const row: string[] = new Array(headers.length).fill('')
+  for (const rowModel of props.viewModel) {
+    const rowCells: MarkupNode[] = []
+    const pipeRow: string[] = new Array(headers.length).fill('')
+    const cells = rowModel.cells
+      .filter((cell) => cell.rowSpan > 0)
+      .sort(
+        (a, b) =>
+          (attributeKeyToIndex.get(a.attribute.key) ?? Number.MAX_SAFE_INTEGER) -
+          (attributeKeyToIndex.get(b.attribute.key) ?? Number.MAX_SAFE_INTEGER)
+      )
 
-    for (const [attrKey, spanInfo] of activeRowSpans.entries()) {
-      if (spanInfo.remaining > 0) {
-        const attrIndex = attributeKeyToIndex.get(attrKey)
-        if (attrIndex !== undefined) {
-          row[attrIndex] = spanInfo.value
-          spanInfo.remaining--
-          if (spanInfo.remaining === 0) {
-            activeRowSpans.delete(attrKey)
-          }
-        }
-      }
-    }
-
-    for (const cell of rowModel.cells) {
+    for (const cell of cells) {
       const attrIndex = attributeKeyToIndex.get(cell.attribute.key)
       if (attrIndex === undefined) continue
+      if (cell.rowSpan > 1) hasRowSpans = true
 
       const isAssociationKey = cell.attribute.key.startsWith('$associations')
 
@@ -385,8 +419,11 @@ export async function buildRelationshipTableMarkdown (
       }
 
       if (doc === undefined) {
-        if (cell.rowSpan === 0) continue
-        row[attrIndex] = ''
+        rowCells.push({
+          type: MarkupNodeType.table_cell,
+          attrs: { rowspan: cell.rowSpan },
+          content: markdownToTableCellContent('')
+        })
         continue
       }
 
@@ -422,8 +459,11 @@ export async function buildRelationshipTableMarkdown (
       }
 
       if (docToUse === undefined) {
-        if (cell.rowSpan === 0) continue
-        row[attrIndex] = ''
+        rowCells.push({
+          type: MarkupNodeType.table_cell,
+          attrs: { rowspan: cell.rowSpan },
+          content: markdownToTableCellContent('')
+        })
         continue
       }
 
@@ -446,24 +486,30 @@ export async function buildRelationshipTableMarkdown (
         value = escapeMarkdownTableCellContent(value == null ? '' : String(value))
       }
 
-      row[attrIndex] = value
-
-      if (cell.rowSpan > 1) {
-        activeRowSpans.set(cell.attribute.key, {
-          value,
-          remaining: cell.rowSpan - 1
-        })
-      }
+      pipeRow[attrIndex] = value
+      rowCells.push({
+        type: MarkupNodeType.table_cell,
+        attrs: { rowspan: cell.rowSpan },
+        content: markdownToTableCellContent(value)
+      })
     }
 
-    rows.push(row)
+    pipeRows.push(pipeRow)
+
+    rows.push({
+      type: MarkupNodeType.table_row,
+      content: rowCells
+    })
   }
 
-  let markdown = '| ' + headers.join(' | ') + ' |\n'
-  markdown += '| ' + headers.map(() => '---').join(' | ') + ' |\n'
-  for (const row of rows) {
-    markdown += '| ' + row.join(' | ') + ' |\n'
+  if (!hasRowSpans) {
+    let markdown = '| ' + headers.join(' | ') + ' |\n'
+    markdown += '| ' + headers.map(() => '---').join(' | ') + ' |\n'
+    for (const row of pipeRows) {
+      markdown += '| ' + row.join(' | ') + ' |\n'
+    }
+    return markdown
   }
 
-  return markdown
+  return markupToMarkdown(buildRelationshipTableMarkup(headers, rows))
 }
