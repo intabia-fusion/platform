@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -52,12 +53,17 @@ export function getProjectTypeStates (
   statuses: IdMap<Status>
 ): Status[] {
   if (projectType === undefined) return []
-  return (
-    (types
-      .get(projectType)
-      ?.statuses?.map((p) => statuses.get(p._id))
-      ?.filter((p) => p !== undefined) as Status[]) ?? []
-  )
+  const seen = new Set<Ref<Status>>()
+  const res: Status[] = []
+  for (const p of types.get(projectType)?.statuses ?? []) {
+    if (seen.has(p._id)) continue
+    const status = statuses.get(p._id)
+    if (status !== undefined) {
+      seen.add(p._id)
+      res.push(status)
+    }
+  }
+  return res
 }
 
 /**

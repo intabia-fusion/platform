@@ -35,7 +35,9 @@
     "EditFunnel": "Editar Funil",
     "FunnelMembers": "Membros",
     "ForbidCreateFunnelPermission": "Proibir criação de funil",
-    "ForbidCreateFunnelPermissionDescription": "Proíbe os utilizadores de criar novos funis"
+    "ForbidCreateFunnelPermissionDescription": "Proíbe os utilizadores de criar novos funis",
+    "Website": "Site",
+    "Industry": "Indústria"
   },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",

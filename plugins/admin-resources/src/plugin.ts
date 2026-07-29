@@ -153,6 +153,7 @@ export default mergeIds(adminId, admin, {
     CreateWorkspace: '' as IntlString,
     Edit: '' as IntlString,
     Save: '' as IntlString,
+    DisabledFeaturesOverride: '' as IntlString,
     EditSubscription: '' as IntlString,
     CancelSubscription: '' as IntlString,
     SearchAccounts: '' as IntlString,

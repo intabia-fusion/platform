@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,7 +18,6 @@
 import { Analytics } from '@hcengineering/analytics'
 import core, {
   AccountRole,
-  ClassifierKind,
   DocManager,
   Hierarchy,
   SortingOrder,
@@ -102,6 +102,7 @@ import view, {
 import { getAllSocialStringsByPersonRef, getCurrentEmployee } from '@hcengineering/contact'
 import { get, writable } from 'svelte/store'
 
+import { filterDocMixins } from './docMixins'
 import plugin from './plugin'
 import { noCategory } from './viewOptions'
 
@@ -1738,23 +1739,7 @@ export function getDocMixins (
     return []
   }
 
-  const client = getClient()
-  const hierarchy = client.getHierarchy()
-
-  const descendants = hierarchy.getDescendants(core.class.Doc).map((p) => hierarchy.getClass(p))
-  const _class = objectClass ?? object._class
-
-  return descendants.filter(
-    (descendant) =>
-      descendant.kind === ClassifierKind.MIXIN &&
-      !ignoreMixins.has(descendant._id) &&
-      (hierarchy.hasMixin(object, descendant._id) ||
-        (showAllMixins &&
-          hierarchy.isDerived(_class, hierarchy.getBaseClass(descendant._id)) &&
-          (descendant.extends !== undefined && hierarchy.isMixin(descendant.extends)
-            ? hierarchy.hasMixin(object, descendant.extends)
-            : true)))
-  )
+  return filterDocMixins(getClient().getHierarchy(), object, showAllMixins, ignoreMixins, objectClass)
 }
 
 export function classIcon (client: Client, _class: Ref<Class<Obj>>): Asset | undefined {

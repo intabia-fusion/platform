@@ -44,6 +44,8 @@ import chunter from '@hcengineering/model-chunter'
 import contact, { TContact } from '@hcengineering/model-contact'
 import core from '@hcengineering/model-core'
 import task, { TProject, TTask } from '@hcengineering/model-task'
+import tags from '@hcengineering/tags'
+import tracker from '@hcengineering/model-tracker'
 
 import lead from './plugin'
 import { getEmbeddedLabel } from '@hcengineering/platform'
@@ -90,7 +92,7 @@ export class TLead extends TTask implements Lead {
 }
 
 @Mixin(lead.mixin.Customer, contact.class.Contact)
-@UX(lead.string.Customer, lead.icon.LeadApplication, undefined, undefined, undefined, lead.string.Customers)
+@UX(lead.string.Customer, lead.icon.LeadApplication, 'CUST', undefined, undefined, lead.string.Customers)
 export class TCustomer extends TContact implements Customer {
   @Prop(Collection(lead.class.Lead), lead.string.Leads)
     leads?: number
@@ -98,6 +100,15 @@ export class TCustomer extends TContact implements Customer {
   @Prop(TypeCollaborativeDoc(), lead.string.Description)
   @Index(IndexKind.FullText)
     customerDescription!: MarkupBlobRef | null
+
+  @Prop(TypeString(), lead.string.Website)
+    website?: string
+
+  @Prop(TypeString(), lead.string.Industry)
+    industry?: string
+
+  @Prop(Collection(tags.class.TagReference, tracker.string.Label), tracker.string.Labels)
+    labels?: number
 }
 
 @Mixin(lead.mixin.DefaultFunnelTypeData, lead.class.Funnel)

@@ -35,7 +35,9 @@
     "EditFunnel": "Modifica Funnel",
     "FunnelMembers": "Membri",
     "ForbidCreateFunnelPermission": "Vieta creazione funnel",
-    "ForbidCreateFunnelPermissionDescription": "Vieta agli utenti di creare nuovi funnel"
+    "ForbidCreateFunnelPermissionDescription": "Vieta agli utenti di creare nuovi funnel",
+    "Website": "Sito web",
+    "Industry": "Settore"
   },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",

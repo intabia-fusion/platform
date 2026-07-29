@@ -495,6 +495,27 @@ export async function adminUpdateWorkspaceName (
   ctx.info('admin: workspace renamed', { workspace: params.workspace, name })
 }
 
+export async function adminUpdateWorkspaceDisabledFeatures (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { workspace: WorkspaceUuid, features: string[] }
+): Promise<void> {
+  checkAdmin(ctx, token)
+  const ws = await getWorkspaceById(db, params.workspace)
+  if (ws == null) {
+    throw new PlatformError(
+      new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid: params.workspace })
+    )
+  }
+  await db.workspace.update({ uuid: params.workspace }, { disabledFeaturesOverride: params.features })
+  ctx.info('admin: workspace disabled features override updated', {
+    workspace: params.workspace,
+    features: params.features
+  })
+}
+
 export async function adminUpdateWorkspaceUrl (
   ctx: MeasureContext,
   db: AccountDB,
@@ -2038,6 +2059,7 @@ export type AccountServiceMethods =
   | 'adminUpdateSubscription'
   | 'adminCancelSubscription'
   | 'adminUpdateWorkspaceName'
+  | 'adminUpdateWorkspaceDisabledFeatures'
   | 'adminUpdateWorkspaceUrl'
   | 'performWorkspaceOperation'
   | 'updateWorkspaceRoleBySocialKey'
@@ -2105,6 +2127,7 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     adminUpdateSubscription: wrap(adminUpdateSubscription),
     adminCancelSubscription: wrap(adminCancelSubscription),
     adminUpdateWorkspaceName: wrap(adminUpdateWorkspaceName),
+    adminUpdateWorkspaceDisabledFeatures: wrap(adminUpdateWorkspaceDisabledFeatures),
     adminUpdateWorkspaceUrl: wrap(adminUpdateWorkspaceUrl),
     performWorkspaceOperation: wrap(performWorkspaceOperation),
     updateWorkspaceRoleBySocialKey: wrap(updateWorkspaceRoleBySocialKey),

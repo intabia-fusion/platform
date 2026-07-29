@@ -35,7 +35,9 @@
     "EditFunnel": "Редактировать воронку",
     "FunnelMembers": "Участники",
     "ForbidCreateFunnelPermission": "Запретить создание воронки",
-    "ForbidCreateFunnelPermissionDescription": "Запрещает пользователям создавать новые воронки"
+    "ForbidCreateFunnelPermissionDescription": "Запрещает пользователям создавать новые воронки",
+    "Website": "Сайт",
+    "Industry": "Отрасль"
   },
   "emailTemplate": {
     "AssigneeNotificationText": "{sender} назначил(а) вам {doc}",

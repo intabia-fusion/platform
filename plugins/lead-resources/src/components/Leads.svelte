@@ -25,7 +25,7 @@
   $: loadingProps = leads !== undefined ? { length: leads } : undefined
 
   const createLead = (ev: MouseEvent): void => {
-    showPopup(CreateLead, { candidate: objectId, preserveCandidate: true }, ev.target as HTMLElement)
+    showPopup(CreateLead, { customer: objectId, preserveCustomer: true }, ev.target as HTMLElement)
   }
   let wSection: number
 </script>

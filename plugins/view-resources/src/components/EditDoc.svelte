@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -34,6 +35,7 @@
 
   import { DocNavLink, ParentsNavigator, getDocAttrsInfo, getDocLabel, getDocMixins, showMenu, parseLinkId } from '..'
   import { getCollectionCounter, openDocInSidebar } from '../utils'
+  import ClassSettingButton from './ClassSettingButton.svelte'
   import DocAttributeBar from './DocAttributeBar.svelte'
   import RelationsEditor from './RelationsEditor.svelte'
 
@@ -311,6 +313,7 @@
           showAllMixins = !showAllMixins
         }}
       />
+      <ClassSettingButton _class={realObjectClass} />
     </svelte:fragment>
 
     <svelte:fragment slot="attributes" let:direction={dir}>

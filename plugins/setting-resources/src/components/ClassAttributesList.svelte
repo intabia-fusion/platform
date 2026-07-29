@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,18 +15,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import core, {
-    AnyAttribute,
-    ArrOf,
-    AttachedDoc,
-    Class,
-    Collection,
-    Doc,
-    Rank,
-    Ref,
-    RefTo,
-    Type
-  } from '@hcengineering/core'
+  import core, { AnyAttribute, ArrOf, AttachedDoc, Class, Collection, Doc, Ref, RefTo, Type } from '@hcengineering/core'
   import { IntlString, getResource } from '@hcengineering/platform'
   import presentation, { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import {
@@ -40,7 +30,7 @@
   import { getContextActions, SortableList } from '@hcengineering/view-resources'
   import settings from '../plugin'
   import ClassAttributeRow from './ClassAttributeRow.svelte'
-  import { makeRank } from '@hcengineering/rank'
+  import { makeRank, toRank } from '@hcengineering/rank'
   import EditAttribute from './EditAttribute.svelte'
 
   export let _class: Ref<Class<Doc>>
@@ -160,14 +150,6 @@
       default:
         return undefined
     }
-  }
-
-  function toRank (str: string | undefined): Rank | undefined {
-    if (str === undefined) return
-    if (str.startsWith('0|')) {
-      return str
-    }
-    return '0|' + str.replaceAll(/[-:_]/g, '').toLowerCase()
   }
 
   async function moveHadler (e: CustomEvent<any>): Promise<void> {

@@ -82,7 +82,8 @@
     }
   )
 
-  const sendOpen = () => dispatch('open', { ignoreKeys: ['comments', 'name', 'channels', 'city'] })
+  const sendOpen = () =>
+    dispatch('open', { ignoreKeys: ['comments', 'name', 'channels', 'city'], allowedCollections: ['labels'] })
   onMount(sendOpen)
 
   async function onAvatarDone (): Promise<void> {

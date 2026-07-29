@@ -157,6 +157,8 @@
   let nameValue = ''
   let editingUrl = false
   let urlValue = ''
+  let editingDisabledFeatures = false
+  let disabledFeaturesValue = ''
 
   function startEditName (): void {
     nameValue = workspace.name ?? ''
@@ -165,6 +167,10 @@
   function startEditUrl (): void {
     urlValue = workspace.url ?? ''
     editingUrl = true
+  }
+  function startEditDisabledFeatures (): void {
+    disabledFeaturesValue = (workspace.disabledFeaturesOverride ?? []).join(', ')
+    editingDisabledFeatures = true
   }
   async function saveName (): Promise<void> {
     const name = nameValue.trim()
@@ -193,6 +199,20 @@
       workspace = { ...workspace, url }
     })
     editingUrl = false
+  }
+  async function saveDisabledFeatures (): Promise<void> {
+    const features = disabledFeaturesValue
+      .split(',')
+      .map((f) => f.trim())
+      .filter((f) => f.length > 0)
+    try {
+      await accountClient.adminUpdateWorkspaceDisabledFeatures(workspace.uuid, features)
+      workspace = { ...workspace, disabledFeaturesOverride: features }
+    } catch (err) {
+      console.error('Failed to update disabled features override:', err)
+    } finally {
+      editingDisabledFeatures = false
+    }
   }
 
   let subscriptions: Subscription[] = []
@@ -390,6 +410,18 @@
             {#if !readOnly}
               <Button size={'small'} kind={'ghost'} label={adminRes.string.Edit} on:click={startEditUrl} />
             {/if}
+          {/if}
+        </div>
+        <div class="flex-row-center">
+          <Label label={adminRes.string.DisabledFeaturesOverride} />:
+          {#if editingDisabledFeatures}
+            <div class="ml-1 edit-inline">
+              <EditBox bind:value={disabledFeaturesValue} kind={'editbox'} autoFocus />
+            </div>
+            <Button size={'small'} kind={'ghost'} label={adminRes.string.Save} on:click={saveDisabledFeatures} />
+          {:else}
+            <span class="ml-1">{(workspace.disabledFeaturesOverride ?? []).join(', ') || '-'}</span>
+            <Button size={'small'} kind={'ghost'} label={adminRes.string.Edit} on:click={startEditDisabledFeatures} />
           {/if}
         </div>
         <div>

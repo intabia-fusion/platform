@@ -236,6 +236,7 @@ export interface AccountClient {
   ) => Promise<void>
   adminCancelSubscription: (subscriptionId: string, otpCode: string) => Promise<void>
   adminUpdateWorkspaceName: (workspace: WorkspaceUuid, name: string) => Promise<void>
+  adminUpdateWorkspaceDisabledFeatures: (workspace: WorkspaceUuid, features: string[]) => Promise<void>
   adminUpdateWorkspaceUrl: (workspace: WorkspaceUuid, url: string, otpCode: string) => Promise<void>
   performWorkspaceOperation: (
     workspaceId: string | string[],
@@ -1120,6 +1121,10 @@ class AccountClientImpl implements AccountClient {
 
   async adminUpdateWorkspaceName (workspace: WorkspaceUuid, name: string): Promise<void> {
     await this.rpc({ method: 'adminUpdateWorkspaceName' as const, params: { workspace, name } })
+  }
+
+  async adminUpdateWorkspaceDisabledFeatures (workspace: WorkspaceUuid, features: string[]): Promise<void> {
+    await this.rpc({ method: 'adminUpdateWorkspaceDisabledFeatures' as const, params: { workspace, features } })
   }
 
   async adminUpdateWorkspaceUrl (workspace: WorkspaceUuid, url: string, otpCode: string): Promise<void> {

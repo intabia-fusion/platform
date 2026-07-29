@@ -1,5 +1,6 @@
 //
 // Copyright © 2022-2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -116,6 +117,7 @@ export interface Workspace {
   allowReadOnlyGuest: boolean
   allowGuestSignUp: boolean
   passwordAgingRule?: number // Number of days after which password must be changed
+  disabledFeaturesOverride?: string[] // Features from DISABLED_FEATURES to re-enable for this workspace
   dataId?: WorkspaceDataId // Old workspace identifier. E.g. Database name in Mongo, bucket in R2, etc.
   branding?: string
   location?: Location
@@ -704,6 +706,7 @@ export interface WorkspaceLoginInfo extends LoginInfo {
   collaboratorEndpoint?: string
   role: AccountRole
   allowGuestSignUp?: boolean
+  disabledFeaturesOverride?: string[]
 }
 
 export interface OtpInfo {
