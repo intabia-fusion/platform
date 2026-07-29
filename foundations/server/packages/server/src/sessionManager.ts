@@ -342,7 +342,9 @@ export class TSessionManager implements SessionManager {
       for (const [wsId, workspace] of this.workspaces.entries()) {
         // update account lastVisit every minute per every workspace.
         for (const val of workspace.sessions.values()) {
-          if (val.session.getUser() !== systemAccountUuid) {
+          // Services may hold a person account (aibot), so the system account alone is not enough
+          // to tell a real visit from a service connection.
+          if (val.session.getUser() !== systemAccountUuid && val.session.token?.extra?.service === undefined) {
             workspacesToUpdate.push(wsId)
             break
           }

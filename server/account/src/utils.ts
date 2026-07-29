@@ -1831,10 +1831,11 @@ export async function getWorkspaces (
   const nowD = Date.now() / (1000 * 60 * 60 * 24)
   const workspaces = (await db.workspace.find(region != null ? { region } : {})).filter((it) => {
     const status = statusesMap[it.uuid]
-    if (isDisabled === true) {
-      return status.isDisabled
-    } else if (isDisabled === false) {
-      return !status.isDisabled
+    if (isDisabled === true && !status.isDisabled) {
+      return false
+    }
+    if (isDisabled === false && status.isDisabled) {
+      return false
     }
 
     const lastVisitDays = (status.lastVisit ?? 0) / (1000 * 60 * 60 * 24)
