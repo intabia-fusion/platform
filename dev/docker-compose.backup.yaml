@@ -1,0 +1,42 @@
+# Overlay: run the periodic backup service against the dev stand.
+# Backups land in the ${BACKUP_BUCKET_NAME} bucket in minio; INTERVAL is short so a full
+# pass over every workspace starts right away instead of once an hour.
+#
+# Usage:
+#   docker compose -f docker-compose.yaml -f docker-compose.backup.yaml up -d backup
+#   (or: rush docker:up:backup)
+#
+services:
+  backup:
+    image: 'intabiafusion/backup:${DOCKER_TAG:-latest}'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      minio:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+      stats:
+        condition: service_started
+      account:
+        condition: service_started
+    environment:
+      - SECRET=secret
+      - ACCOUNTS_URL=http://account:3000
+      - ACCOUNTS_DB_URL=${DB_URL_PG}
+      - STATS_URL=http://stats:4900
+      - DB_URL=${DB_URL_PG}
+      - REGION=
+      - BUCKET_NAME=${BACKUP_BUCKET_NAME}
+      - STORAGE=${BACKUP_STORAGE_CONFIG}
+      - WORKSPACE_STORAGE=${STORAGE_CONFIG}
+      # INTERVAL is both the backup period and the "was visited recently" window: a workspace
+      # whose lastVisit is older than INTERVAL is skipped. A minute-long window skips everything
+      # on a dev stand, so use a week.
+      - INTERVAL=604800
+      - COOL_DOWN=30
+      - PARALLEL=2
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      # - SKIP_WORKSPACES=ws1,ws2
+      # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+    restart: unless-stopped

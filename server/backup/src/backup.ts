@@ -69,6 +69,7 @@ import {
   rebuildSizeInfo,
   toAccountDomain,
   verifyDocsFromSnapshot,
+  watchStreamErrors,
   writeChanges
 } from './utils'
 export * from './storage'
@@ -77,6 +78,8 @@ const dataBlobSize = 250 * 1024 * 1024
 const batchSize = 5000
 
 const defaultLevel = 9
+
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
  * @public
@@ -517,6 +520,11 @@ export async function backup (
       let _packClose = async (): Promise<void> => {}
       let addedDocuments = (): number => 0
 
+      // Orphan blob records are common on long-lived workspaces; report a count per domain
+      // instead of two log lines per blob.
+      let missingBlobs = 0
+      let mismatchedBlobs = 0
+
       if (progress !== undefined) {
         await progress(0)
       }
@@ -748,13 +756,19 @@ export async function backup (
             _pack.pipe(storageZip)
             storageZip.pipe(sizePass)
 
+            const packFailed = watchStreamErrors(_pack, storageZip, sizePass, tempFile)
+
             _packClose = async () => {
-              await new Promise<void>((resolve) => {
-                tempFile.on('close', () => {
-                  resolve()
-                })
-                _pack?.finalize()
-              })
+              _packClose = async () => {} // tempFile emits 'close' once, a second call would hang
+              await Promise.race([
+                new Promise<void>((resolve) => {
+                  tempFile.on('close', () => {
+                    resolve()
+                  })
+                  _pack?.finalize()
+                }),
+                packFailed
+              ])
 
               // We need to upload file to storage
               ctx.info('>>>> upload pack', { storageFile, size: sz, url: wsIds.url, workspace: workspaceId })
@@ -827,7 +841,7 @@ export async function backup (
             )
             try {
               const buffers: Buffer[] = []
-              await blobClient.writeTo(ctx, blob._id, blob.size, {
+              const found = await blobClient.writeTo(ctx, blob._id, blob.size, {
                 write (buffer, cb) {
                   buffers.push(buffer)
                   cb()
@@ -838,14 +852,10 @@ export async function backup (
               })
 
               const finalBuffer = Buffer.concat(buffers as any)
-              if (finalBuffer.length !== blob.size) {
-                ctx.error('download blob size mismatch', {
-                  _id: blob._id,
-                  contentType: blob.contentType,
-                  size: blob.size,
-                  bufferSize: finalBuffer.length,
-                  provider: blob.provider
-                })
+              if (!found) {
+                missingBlobs++
+              } else if (finalBuffer.length !== blob.size) {
+                mismatchedBlobs++
               }
               await new Promise<void>((resolve, reject) => {
                 _pack?.entry({ name: d._id + '.json' }, descrJson, (err) => {
@@ -926,6 +936,15 @@ export async function backup (
         domainChanges++
         // This will allow to retry in case of critical error.
         await storage.writeFile(infoFile, gzipSync(JSON.stringify(backupInfo, undefined, 2), { level: defaultLevel }))
+      }
+
+      if (missingBlobs > 0 || mismatchedBlobs > 0) {
+        ctx.warn('blobs not backed up', {
+          domain,
+          missing: missingBlobs,
+          mismatched: mismatchedBlobs,
+          ...(options.msg ?? {})
+        })
       }
     }
 
@@ -1114,19 +1133,24 @@ export async function backup (
       // 1. We need to include global records based on persons/socialIdentities info which are missing in digest
       // 2. We need to check updates for all records present in digest
       const batchSize = 1000
-      // BigInt filter fits only socialId keys (numeric _id); person keys are UUIDs.
-      const toLoad = new Set(
-        isPersonDomain
-          ? [...digest.keys(), ...affectedObjects]
-          : [...digest.keys(), ...affectedObjects].filter((it) => {
-              try {
-                BigInt(it)
-                return true
-              } catch (err: any) {
-                return false
-              }
-            })
-      ) as Set<PersonUuid>
+      // account.person.uuid is UUID and account.social_id._id is BIGINT: legacy hex-ObjectId
+      // personUuid values (pre-migration DOMAIN_CONTACT) make PG reject the whole $in batch.
+      const keepKey = isPersonDomain
+        ? (it: string) => uuidRegex.test(it)
+        : (it: string) => {
+            try {
+              BigInt(it)
+              return true
+            } catch (err: any) {
+              return false
+            }
+          }
+      const allKeys = [...digest.keys(), ...affectedObjects]
+      const keptKeys = allKeys.filter(keepKey)
+      if (keptKeys.length !== allKeys.length) {
+        ctx.warn('skipped malformed account keys', { domain, skipped: allKeys.length - keptKeys.length })
+      }
+      const toLoad = new Set(keptKeys) as Set<PersonUuid>
       if (toLoad.size === 0) {
         ctx.info('No records updates')
         return
@@ -1195,13 +1219,19 @@ export async function backup (
             _pack.pipe(storageZip)
             storageZip.pipe(sizePass)
 
+            const packFailed = watchStreamErrors(_pack, storageZip, sizePass, tempFile)
+
             _packClose = async () => {
-              await new Promise<void>((resolve) => {
-                tempFile.on('close', () => {
-                  resolve()
-                })
-                _pack?.finalize()
-              })
+              _packClose = async () => {} // tempFile emits 'close' once, a second call would hang
+              await Promise.race([
+                new Promise<void>((resolve) => {
+                  tempFile.on('close', () => {
+                    resolve()
+                  })
+                  _pack?.finalize()
+                }),
+                packFailed
+              ])
 
               // We need to upload file to storage
               ctx.info('>>>> upload pack', { storageFile, size: sz, url: wsIds.url, workspace: workspaceId })

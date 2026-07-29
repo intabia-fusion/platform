@@ -1553,7 +1553,6 @@ abstract class PostgresAdapterBase implements DbAdapter {
   find (_ctx: MeasureContext, domain: Domain): StorageIterator {
     const ctx = _ctx.newChild('find', { domain })
 
-    let initialized: boolean = false
     let client: DBClient
 
     const tdomain = translateDomain(domain)
@@ -1570,19 +1569,29 @@ abstract class PostgresAdapterBase implements DbAdapter {
 
       return createCursorGenerator(client.raw(), sql, undefined, schema, limit, true)
     }
-    let bulk: AsyncGenerator<Doc[]>
+    let bulk: AsyncGenerator<Doc[]> | undefined
+    let init: Promise<AsyncGenerator<Doc[]>> | undefined
+
+    // Memoized: concurrent next() calls must not reserve two clients, the second would leak.
+    const ensureBulk = async (): Promise<AsyncGenerator<Doc[]>> => {
+      if (init === undefined) {
+        init = (async () => {
+          client = await this.client.reserve()
+          bulk = createBulk('_id, "%hash%"')
+          return bulk
+        })().catch((err) => {
+          init = undefined // reserve() may fail transiently, let the next call retry
+          throw err
+        })
+      }
+      return await init
+    }
 
     return {
       next: async () => {
-        if (!initialized) {
-          if (client === undefined) {
-            client = await this.client.reserve()
-          }
-          initialized = true
-          bulk = createBulk('_id, "%hash%"')
-        }
+        const it = await ensureBulk()
 
-        const docs = await ctx.with('next', { domain }, () => bulk.next(), undefined, { metric: DB_QUERY_DURATION })
+        const docs = await ctx.with('next', { domain }, () => it.next(), undefined, { metric: DB_QUERY_DURATION })
         if (docs.done === true || docs.value.length === 0) {
           return []
         }
@@ -1596,9 +1605,12 @@ abstract class PostgresAdapterBase implements DbAdapter {
         return result
       },
       close: async () => {
-        await bulk.return([]) // We need to close generator, just in case
-        client?.release()
-        ctx.end()
+        try {
+          await bulk?.return([]) // Undefined if next()/find() was never reached
+        } finally {
+          client?.release()
+          ctx.end()
+        }
       }
     }
   }
@@ -1606,7 +1618,6 @@ abstract class PostgresAdapterBase implements DbAdapter {
   rawFind (_ctx: MeasureContext, domain: Domain): RawFindIterator {
     const ctx = _ctx.newChild('findRaw', { domain })
 
-    let initialized: boolean = false
     let client: DBClient
 
     const tdomain = translateDomain(domain)
@@ -1623,19 +1634,29 @@ abstract class PostgresAdapterBase implements DbAdapter {
 
       return createCursorGenerator(client.raw(), sql, undefined, schema, limit)
     }
-    let bulk: AsyncGenerator<Doc[]>
+    let bulk: AsyncGenerator<Doc[]> | undefined
+    let init: Promise<AsyncGenerator<Doc[]>> | undefined
+
+    // Memoized: concurrent find() calls must not reserve two clients, the second would leak.
+    const ensureBulk = async (): Promise<AsyncGenerator<Doc[]>> => {
+      if (init === undefined) {
+        init = (async () => {
+          client = await this.client.reserve()
+          bulk = createBulk('*')
+          return bulk
+        })().catch((err) => {
+          init = undefined // reserve() may fail transiently, let the next call retry
+          throw err
+        })
+      }
+      return await init
+    }
 
     return {
       find: async () => {
-        if (!initialized) {
-          if (client === undefined) {
-            client = await this.client.reserve()
-          }
-          initialized = true
-          bulk = createBulk('*')
-        }
+        const it = await ensureBulk()
 
-        const docs = await ctx.with('next', { domain }, () => bulk.next(), undefined, { metric: DB_QUERY_DURATION })
+        const docs = await ctx.with('next', { domain }, () => it.next(), undefined, { metric: DB_QUERY_DURATION })
         if (docs.done === true || docs.value.length === 0) {
           return []
         }
@@ -1644,9 +1665,12 @@ abstract class PostgresAdapterBase implements DbAdapter {
         return result
       },
       close: async () => {
-        await bulk.return([]) // We need to close generator, just in case
-        client?.release()
-        ctx.end()
+        try {
+          await bulk?.return([]) // Undefined if next()/find() was never reached
+        } finally {
+          client?.release()
+          ctx.end()
+        }
       }
     }
   }
