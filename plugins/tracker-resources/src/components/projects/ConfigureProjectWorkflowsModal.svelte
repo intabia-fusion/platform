@@ -18,7 +18,15 @@
   import { translate } from '@hcengineering/platform'
   import presentation, { createQuery, IconWithEmoji } from '@hcengineering/presentation'
   import task, { ProjectType, TaskType } from '@hcengineering/task'
-  import ui, { DropdownTextItem, Icon, Label, languageStore, Modal, ModernDropdownLabels, Scroller } from '@hcengineering/ui'
+  import ui, {
+    DropdownTextItem,
+    Icon,
+    Label,
+    languageStore,
+    Modal,
+    ModernDropdownLabels,
+    Scroller
+  } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import workflow, { Workflow } from '@hcengineering/workflow'
 
@@ -34,7 +42,7 @@
   let dropdownItemsMap: Record<Ref<TaskType>, DropdownTextItem[]> = {}
 
   let workflows: Workflow[] = []
-  $:workflowsQuery.query(
+  $: workflowsQuery.query(
     workflow.class.Workflow,
     { projectType },
     (res) => {
@@ -118,7 +126,8 @@
         {#each taskTypes as taskType (taskType._id)}
           {@const taskTypeWorkflows = workflows.filter((w) => w.taskType === taskType._id)}
           {@const selectedWfId = localMapping[taskType._id]}
-          {@const taskTypeIcon = taskType.icon === view.ids.IconWithEmoji ? IconWithEmoji : (taskType.icon ?? task.icon.Task)}
+          {@const taskTypeIcon =
+            taskType.icon === view.ids.IconWithEmoji ? IconWithEmoji : (taskType.icon ?? task.icon.Task)}
           {@const workflowItems = dropdownItemsMap[taskType._id] ?? []}
           <div class="hulyModal-content__settingsSet-line no-top-border">
             <div class="label col-task-type">

@@ -57,7 +57,8 @@
     "LineTool": "直线",
     "RectangleTool": "矩形",
     "EllipseTool": "椭圆",
-    "PaletteManagementMenu": "管理颜色预设"
+    "PaletteManagementMenu": "管理颜色预设",
+    "Draft": "草稿"
   },
   "status": {
     "FileTooLarge": "文件太大"

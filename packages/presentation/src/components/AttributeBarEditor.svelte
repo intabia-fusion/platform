@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { reduceCalls, type Class, type Doc, type Ref } from '@hcengineering/core'
+  import { reduceCalls, type Class, type Doc, type Ref, getAttributeUpdate, TxProcessor } from '@hcengineering/core'
   import type { AnySvelteComponent, ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { Icon, Label, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
@@ -32,6 +32,7 @@
   export let readonly = false
   export let draft = false
   export let identifier: string | undefined = undefined
+  export let props: Record<string, any> = {}
 
   export let kind: ButtonKind = 'link'
   export let size: ButtonSize = 'large'
@@ -57,12 +58,23 @@
     dispatch('update', { key, value })
 
     if (draft) {
-      ;(doc as any)[attributeKey] = value
+      const update = getAttributeUpdate(client, doc, doc._class, { key: attributeKey, attr: attribute }, value)
+      TxProcessor.applyUpdate(doc, update)
     } else {
       void updateAttribute(client, doc, doc._class, { key: attributeKey, attr: attribute }, value, false, {
         objectId: identifier ?? doc._id
       })
     }
+  }
+
+  function handleEditorUpdate (evt: CustomEvent<{ value: any }>): void {
+    const val = evt?.detail?.value
+    onChange(val)
+  }
+
+  function handleEditorChange (evt: CustomEvent): void {
+    const val = evt?.detail
+    onChange(val)
   }
 
   const resolveEditor = reduceCalls(async (_class: Ref<Class<Doc>>, key: KeyedAttribute | string): Promise<void> => {
@@ -117,11 +129,16 @@
         {maxWidth}
         {attribute}
         {attributeKey}
+        key={typeof key === 'string' ? { key: attributeKey, attr: attribute } : key}
         value={getAttribute(client, object, { key: attributeKey, attr: attribute })}
         space={object.space}
         {onChange}
         {focus}
         {object}
+        {draft}
+        {...props}
+        on:update={handleEditorUpdate}
+        on:change={handleEditorChange}
       />
     </div>
   {:else}
@@ -131,15 +148,21 @@
         type={attribute?.type}
         {maxWidth}
         {attributeKey}
+        key={typeof key === 'string' ? { key: attributeKey, attr: attribute } : key}
         value={getAttribute(client, object, { key: attributeKey, attr: attribute })}
         readonly={isReadonly}
         disabled={isReadonly}
         space={object.space}
         {onChange}
         {attribute}
+        {kind}
         {focus}
         {object}
         {size}
+        {draft}
+        {...props}
+        on:update={handleEditorUpdate}
+        on:change={handleEditorChange}
       />
     </div>
   {/if}

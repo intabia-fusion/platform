@@ -13,13 +13,22 @@
 // limitations under the License.
 //
 
-import core, { type Ref, type Status, type Domain, type Class, DOMAIN_MODEL } from '@hcengineering/core'
+import core, {
+  type Ref,
+  type Status,
+  type Domain,
+  type Class,
+  DOMAIN_MODEL,
+  type AnyAttribute,
+  type Doc,
+  type Mixin
+} from '@hcengineering/core'
 import {
   Model,
   Prop,
   TypeString,
   TypeRef,
-  Mixin,
+  Mixin as TypeMixin,
   TypeRecord,
   Collection,
   ArrOf,
@@ -69,7 +78,7 @@ export class TWorkflowRule extends TDoc implements WorkflowRule {
 @Model(workflow.class.WorkflowValidator, workflow.class.WorkflowRule)
 export class TWorkflowValidator extends TWorkflowRule implements WorkflowValidator {}
 
-@Mixin(workflow.mixin.ValidatorImpl, workflow.class.WorkflowValidator)
+@TypeMixin(workflow.mixin.ValidatorImpl, workflow.class.WorkflowValidator)
 export class TValidatorImpl extends TWorkflowValidator implements ValidatorImpl {
   executor!: Resource<ValidatorFunc>
 }
@@ -83,8 +92,13 @@ export class TScreenField extends TAttachedDoc implements ScreenField {
   declare attachedToClass: Ref<Class<ScreenTab>>
   declare collection: 'fields'
 
-  @Prop(TypeString(), workflow.string.FieldId)
-    fieldId!: string
+  @Prop(TypeRef(core.class.Mixin), core.string.Class)
+    mixin?: Ref<Class<Mixin<Doc>>>
+
+  fieldId!: Ref<AnyAttribute>
+
+  @Prop(TypeString(), workflow.string.FieldKey)
+    fieldKey!: string
 
   @Prop(TypeString(), workflow.string.Label)
     label?: string
@@ -170,7 +184,7 @@ export class TWorkflowTransition extends TAttachedDoc implements WorkflowTransit
     requests?: WorkflowRequestConfig[]
 }
 
-@Mixin(workflow.mixin.ProjectWorkflow, task.class.Project)
+@TypeMixin(workflow.mixin.ProjectWorkflow, task.class.Project)
 export class TProjectWorkflow extends TProject implements ProjectWorkflow {
   @Prop(TypeRecord(), workflow.string.WorkflowMapping)
     workflows?: Record<Ref<TaskType>, Ref<Workflow>>

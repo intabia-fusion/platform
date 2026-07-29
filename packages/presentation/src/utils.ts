@@ -860,6 +860,11 @@ export function getAttrEditor (type: Type<any>, hierarchy: Hierarchy): AnyCompon
     return
   }
 
+  if (attrClass.category === 'inplace') {
+    const editorMixin = hierarchy.classHierarchyMixin(attrClass.attrClass, view.mixin.InlineAttributEditor)
+    return (editorMixin as any)?.editor
+  }
+
   let mixin: Ref<Mixin<AttributeEditor>>
 
   switch (attrClass.category) {
@@ -917,10 +922,16 @@ export function findAttributeEditorByAttribute (client: Client, attribute: AnyAt
 
   const editorMixin = hierarchy.classHierarchyMixin(presenterClass.attrClass, mixin)
 
-  if (editorMixin?.inlineEditor === undefined) {
-    return
+  if (editorMixin?.inlineEditor != null) {
+    return editorMixin.inlineEditor
   }
-  return editorMixin.inlineEditor
+
+  if (presenterClass.category === 'inplace') {
+    const editorMixin = hierarchy.classHierarchyMixin(presenterClass.attrClass, view.mixin.InlineAttributEditor)
+    return (editorMixin as any)?.editor
+  }
+
+  return undefined
 }
 
 export function findAttributeEditor (

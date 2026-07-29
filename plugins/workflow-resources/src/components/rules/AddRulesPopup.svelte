@@ -112,6 +112,7 @@
               {taskType}
               {transition}
               {workflow}
+              {statuses}
               on:close={() => {
                 selectedRule = undefined
               }}

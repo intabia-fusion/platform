@@ -24,6 +24,7 @@
   export let transitions: WorkflowTransition[] = []
   export let statuses: Status[] = []
   export let selected: Ref<WorkflowTransition> | undefined = undefined
+  export let disabled = false
 
   const dispatch = createEventDispatcher<{ select: Ref<WorkflowTransition> }>()
 
@@ -72,4 +73,5 @@
   showCheckmark={true}
   popupClass="wide"
   withSearch={false}
+  {disabled}
 />

@@ -331,7 +331,7 @@ export class TIssueTemplate extends TDoc implements IssueTemplate {
   @Prop(ArrOf(TypeRef(tracker.class.IssueTemplate)), tracker.string.IssueTemplate)
     children!: IssueTemplateChild[]
 
-  @Prop(Collection(chunter.class.ChatMessage), tracker.string.Comments)
+  @Prop(Collection(chunter.class.ChatMessage, chunter.string.Comment), chunter.string.Comments)
     comments!: number
 
   @Prop(Collection(attachment.class.Attachment), tracker.string.Attachments)
@@ -387,7 +387,7 @@ export class TComponent extends TDoc implements Component {
   @Prop(TypeRef(contact.mixin.Employee), tracker.string.ComponentLead)
     lead!: Ref<Employee> | null
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  @Prop(Collection(chunter.class.ChatMessage, chunter.string.Comment), chunter.string.Comments)
     comments!: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
@@ -415,7 +415,7 @@ export class TMilestone extends TDoc implements Milestone {
   @Index(IndexKind.Indexed)
     status!: MilestoneStatus
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  @Prop(Collection(chunter.class.ChatMessage, chunter.string.Comment), chunter.string.Comments)
     comments!: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })

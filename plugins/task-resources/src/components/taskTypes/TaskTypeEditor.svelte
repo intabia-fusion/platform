@@ -35,6 +35,9 @@
     showPopup
   } from '@hcengineering/ui'
   import { IconPicker, deleteObjects, statusStore } from '@hcengineering/view-resources'
+  import workflow from '@hcengineering/workflow'
+
+  import TaskTypeTiedWorkflows from './TaskTypeTiedWorkflows.svelte'
   import { taskTypeStore } from '../..'
   import plugin from '../../plugin'
   import StatesProjectEditor from '../state/StatesProjectEditor.svelte'
@@ -134,28 +137,39 @@
     }
   }
 
+  let isDeleteLoading = false
+
   $: canDelete = !loading && tasksCounter === 0
 
   async function handleDelete (): Promise<void> {
-    if (!canDelete || readonly || taskType == null) {
+    if (!canDelete || readonly || taskType == null || isDeleteLoading) {
       return
     }
+    isDeleteLoading = true
+    try {
+      const tiedWorkflows = await client.findAll(workflow.class.Workflow, { taskType: taskType._id })
 
-    showPopup(MessageBox, {
-      label: plugin.string.Delete,
-      message: plugin.string.Delete,
-      action: async () => {
-        if (taskType == null) {
-          return
+      showPopup(MessageBox, {
+        label: plugin.string.Delete,
+        message: plugin.string.Delete,
+        component: tiedWorkflows.length > 0 ? TaskTypeTiedWorkflows : undefined,
+        componentProps: { workflows: tiedWorkflows },
+        dangerous: true,
+        action: async () => {
+          if (taskType == null) {
+            return
+          }
+
+          await deleteObjects(client, [taskType, ...tiedWorkflows])
+
+          const loc = getCurrentLocation()
+          loc.path.length -= 2
+          navigate(loc)
         }
-
-        await deleteObjects(client, [taskType])
-
-        const loc = getCurrentLocation()
-        loc.path.length -= 2
-        navigate(loc)
-      }
-    })
+      })
+    } finally {
+      isDeleteLoading = false
+    }
   }
   async function showIssuesOfTaskType (): Promise<void> {
     if (taskType == null) return
@@ -218,7 +232,8 @@
                     icon={IconDelete}
                     size="small"
                     kind="secondary"
-                    disabled={readonly}
+                    loading={isDeleteLoading}
+                    disabled={readonly || isDeleteLoading}
                     on:click={handleDelete}
                   />
                 {/if}

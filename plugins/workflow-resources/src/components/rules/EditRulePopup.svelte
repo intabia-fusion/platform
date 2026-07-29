@@ -15,7 +15,7 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
   import ui, { Modal, Label } from '@hcengineering/ui'
-  import { Workflow, WorkflowTransition, WorkflowValidatorConfig } from '@hcengineering/workflow'
+  import { Workflow, WorkflowTransition, WorkflowValidatorConfig, WorkflowRequestConfig } from '@hcengineering/workflow'
   import { createEventDispatcher, SvelteComponent } from 'svelte'
   import { Ref, Status } from '@hcengineering/core'
   import { TaskType } from '@hcengineering/task'
@@ -29,7 +29,7 @@
   export let transitions: WorkflowTransition[] = []
   export let statuses: Status[] = []
   export let transition: WorkflowTransition
-  export let config: WorkflowValidatorConfig
+  export let config: WorkflowValidatorConfig | WorkflowRequestConfig
 
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   const dispatch = createEventDispatcher<{ close: void }>()
@@ -39,15 +39,8 @@
   let isSaving = false
   let editorComponent: SvelteComponent | undefined = undefined
 
-  $: selectedRule = client.getModel().findObject(config.validator)
-
-  function onSelectTransition (event: CustomEvent<Ref<WorkflowTransition>>): void {
-    const _id = event.detail
-    const found = transitions.find((t) => t._id === _id)
-    if (found != null) {
-      transition = found
-    }
-  }
+  $: ruleId = (config as WorkflowValidatorConfig).validator ?? (config as WorkflowRequestConfig).request
+  $: selectedRule = ruleId != null ? client.getModel().findObject(ruleId) : undefined
 
   async function handleSave (): Promise<void> {
     if (editorComponent == null) return
@@ -74,12 +67,12 @@
     <!-- Main Content Area -->
     <div class="edit-rule-popup--content">
       {#if transitions.length > 0}
-        <!-- Transition Selector -->
+        <!-- Transition Display -->
         <div class="edit-rule-popup--transition-bar">
           <span class="edit-rule-popup--transition-label">
             <Label label={plugin.string.Transition} />
           </span>
-          <TransitionsDropdown {transitions} {statuses} selected={transition._id} on:select={onSelectTransition} />
+          <TransitionsDropdown {transitions} {statuses} selected={transition._id} disabled />
         </div>
       {/if}
 

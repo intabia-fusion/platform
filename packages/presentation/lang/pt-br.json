@@ -57,7 +57,8 @@
     "LineTool": "Linha",
     "RectangleTool": "Retângulo",
     "EllipseTool": "Elipse",
-    "PaletteManagementMenu": "Gerenciar predefinições de cor"
+    "PaletteManagementMenu": "Gerenciar predefinições de cor",
+    "Draft": "Rascunho"
   },
   "status": {
     "FileTooLarge": "Arquivo muito grande"

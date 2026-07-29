@@ -14,13 +14,18 @@
 //
 
 import { type IntlString } from '@hcengineering/platform'
-import { type Class, type Ref } from '@hcengineering/core'
+import { type Class, type Doc, type DocumentUpdate, type Ref, type TxCUD } from '@hcengineering/core'
 import { type WorkflowRule } from '@hcengineering/workflow'
 import { type AnySvelteComponent } from '@hcengineering/ui'
 
 import plugin from './plugin'
 import ValidatorEditor from './components/validators/ValidatorEditor.svelte'
 import RequestEditor from './components/requests/RequestEditor.svelte'
+
+export interface ScreenModalResult<T extends Doc = Doc> {
+  update?: DocumentUpdate<T>
+  txes?: Array<TxCUD<Doc>>
+}
 
 export interface RuleDisplay {
   _class: Ref<Class<WorkflowRule>>

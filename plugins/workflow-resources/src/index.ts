@@ -13,13 +13,14 @@
 // limitations under the License.
 //
 
-import '@hcengineering/platform-rig/profiles/ui/svelte'
+import type { Client } from '@hcengineering/core'
 import type { Resources } from '@hcengineering/platform'
+import type { PresentationMiddleware } from '@hcengineering/presentation'
 
 import ProjectTypeWorkflowsSectionEditor from './components/ProjectTypeWorkflowsSectionEditor.svelte'
 import ProjectTypeScreensSectionEditor from './components/ProjectTypeScreensSectionEditor.svelte'
 import WorkflowEditor from './components/editor/WorkflowEditor.svelte'
-import ScreenEditor from './components/editor/ScreenEditor.svelte'
+import ScreenEditor from './components/screen/ScreenEditor.svelte'
 import ScreenRequestEditor from './components/requests/editors/ScreenRequestEditor.svelte'
 import ScreenRequestPresenter from './components/requests/presenters/ScreenRequestPresenter.svelte'
 import FieldRequired from './components/validators/editors/FieldRequared.svelte'
@@ -29,6 +30,7 @@ import FieldRequiredPresenter from './components/validators/presenters/FieldRequ
 import SubtaskStatusPresenter from './components/validators/presenters/SubtaskStatusPresenter.svelte'
 import ParentStatusPresenter from './components/validators/presenters/ParentStatusPresenter.svelte'
 import * as validators from './validators'
+import { WorkflowMiddleware } from './middleware'
 
 export default async (): Promise<Resources> => ({
   component: {
@@ -57,5 +59,8 @@ export default async (): Promise<Resources> => ({
     FieldRequired: FieldRequiredPresenter,
     SubtaskStatus: SubtaskStatusPresenter,
     ParentStatus: ParentStatusPresenter
+  },
+  function: {
+    CreateMiddleware: (client: Client, next?: PresentationMiddleware) => WorkflowMiddleware.create(client, next)
   }
 })

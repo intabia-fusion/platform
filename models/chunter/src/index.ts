@@ -19,7 +19,7 @@ import contact from '@hcengineering/contact'
 import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
 import presentation from '@hcengineering/model-presentation'
-import view from '@hcengineering/model-view'
+import view, { createAttributeApplier } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { WidgetType } from '@hcengineering/workbench'
 import { AccountRole, type Class, type IndexingConfiguration } from '@hcengineering/core'
@@ -54,6 +54,8 @@ export function createModel (builder: Builder): void {
     TChatSyncInfo,
     TChat
   )
+
+  createAttributeApplier(builder, core.class.Doc, 'comments', chunter.function.CommentsApplier)
 
   builder.createDoc(
     workbench.class.Application,

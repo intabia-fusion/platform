@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { DocumentUpdate, type Ref, SortingOrder, type Status, type TxOperations } from '@hcengineering/core'
+import core, { Data, DocumentUpdate, type Ref, SortingOrder, type Status, type TxOperations } from '@hcengineering/core'
 import { Project, TaskType, ProjectType, makeRank } from '@hcengineering/task'
 
 import workflow from './plugin'
@@ -352,8 +352,7 @@ export async function removeScreenTab (
 export async function addScreenField (
   client: TxOperations,
   tabId: Ref<ScreenTab>,
-  fieldId: string,
-  required = false
+  data: Omit<Data<ScreenField>, 'collection' | 'attachedTo' | 'attachedToClass' | 'rank'>
 ): Promise<Ref<ScreenField>> {
   const last = await client.findOne(
     workflow.class.ScreenField,
@@ -368,8 +367,7 @@ export async function addScreenField (
     workflow.class.ScreenTab,
     'fields',
     {
-      fieldId,
-      required,
+      ...data,
       rank
     }
   )

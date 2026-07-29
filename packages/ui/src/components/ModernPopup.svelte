@@ -31,11 +31,11 @@
 
   const keyDown = (ev: KeyboardEvent, n: number): void => {
     if (ev.key === 'ArrowDown') {
-      if (n === btns.length - 1) btns[0].focus()
-      else btns[n + 1].focus()
+      if (n === btns.length - 1) btns[0]?.focus()
+      else btns[n + 1]?.focus()
     } else if (ev.key === 'ArrowUp') {
-      if (n === 0) btns[btns.length - 1].focus()
-      else btns[n - 1].focus()
+      if (n === 0) btns[btns.length - 1]?.focus()
+      else btns[n - 1]?.focus()
     }
   }
   $: withIcons = items.some((it) => it.icon !== undefined)
@@ -44,13 +44,24 @@
 <div class="hulyPopup-container" use:resizeObserver={() => dispatch('changeContent')}>
   <Scroller padding={'var(--spacing-0_5)'} gap={'flex-gap-0-5'}>
     {#each items as item, i}
-      {#if item.separatorBefore}
-        <div class="hulyPopup-divider" />
+      {#if item.separatorBefore || item.separatorLabel}
+        {#if item.separatorLabel}
+          <div class="hulyPopup-category">
+            <div class="hulyPopup-line" />
+            <span class="hulyPopup-category-label">
+              <Label label={item.separatorLabel} params={item.params ?? params} />
+            </span>
+            <div class="hulyPopup-line" />
+          </div>
+        {:else}
+          <div class="hulyPopup-divider" />
+        {/if}
       {/if}
       <!-- svelte-ignore a11y-mouse-events-have-key-events -->
       <button
         class="hulyPopup-row"
         class:withKeys={item.keys}
+        bind:this={btns[i]}
         on:mouseover={(ev) => {
           ev.currentTarget.focus()
         }}
@@ -84,7 +95,7 @@
               {#if j !== 0}
                 <div class="mr-1 ml-1">/</div>
               {/if}
-              {#each formatKey(key) as k, jj}
+              {#each formatKey(key) as k}
                 <div class="key">
                   {#each k as kk, j}
                     {#if j !== 0}
@@ -106,3 +117,30 @@
     {/each}
   </Scroller>
 </div>
+
+<style lang="scss">
+  .hulyPopup-category {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    padding: var(--spacing-1_5) var(--spacing-1) var(--spacing-0_5) var(--spacing-1);
+    min-width: 0;
+    overflow: hidden;
+
+    &-label {
+      font-size: 0.625rem;
+      font-weight: 500;
+      color: var(--global-tertiary-TextColor);
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .hulyPopup-line {
+      flex: 1;
+      height: 1px;
+      background-color: var(--theme-popup-divider);
+      min-width: 0.5rem;
+    }
+  }
+</style>

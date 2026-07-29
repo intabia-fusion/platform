@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -24,10 +25,12 @@ import {
   Doc,
   DocManager,
   DocumentQuery,
+  DocumentUpdate,
   FindOptions,
   Hierarchy,
   Lookup,
   Mixin,
+  TxCUD,
   Obj,
   ObjQueryType,
   PrimitiveType,
@@ -187,6 +190,16 @@ export interface AttributePresenter extends Class<Doc> {
   presenter: AnyComponent
   arrayPresenter?: AnyComponent
 }
+
+export interface AttributeApplierResult<T extends Doc = Doc> {
+  update?: DocumentUpdate<T>
+  txes?: Array<TxCUD<Doc>>
+}
+
+export type AttributeApplierFn<T extends Doc = Doc, V = any> = (
+  doc: Doc,
+  value: V
+) => Promise<AttributeApplierResult<T>> | AttributeApplierResult<T>
 
 /**
  * @public
@@ -936,6 +949,12 @@ export interface AttrPresenter extends Doc {
   category: AttributeCategory
   objectClass: Ref<Class<Doc>>
   component: AnyComponent
+}
+
+export interface AttrApplier extends Doc {
+  objectClass: Ref<Class<Doc>>
+  key: string
+  applier: Resource<AttributeApplierFn>
 }
 
 /**

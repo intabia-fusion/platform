@@ -59,7 +59,7 @@ import core, {
   type WithLookup
 } from '@hcengineering/core'
 import { type Restrictions } from '@hcengineering/guest'
-import type { Asset, IntlString } from '@hcengineering/platform'
+import type { Asset, IntlString, Resource } from '@hcengineering/platform'
 import { getEmbeddedLabel, getMetadata, getResource, translate } from '@hcengineering/platform'
 import presentation, {
   createQuery,
@@ -88,6 +88,7 @@ import {
 } from '@hcengineering/ui'
 import view, {
   AttributeCategoryOrder,
+  type AttributeApplierFn,
   type AttributeCategory,
   type AttributeModel,
   type AttributePresenter,
@@ -313,6 +314,31 @@ export function getAttrTypePresenter (hierarchy: Hierarchy, type: Type<any>): An
     const typeAny = type as TypeAny
     return typeAny.presenter
   }
+}
+
+export function findAttributeApplier (
+  client: Client,
+  _class: Ref<Class<Doc>>,
+  key: string
+): Resource<AttributeApplierFn> | undefined {
+  const model = client.getModel()
+  const exact = model.findAllSync(view.class.AttrApplier, { objectClass: _class, key })[0]
+  if (exact != null) {
+    return exact.applier
+  }
+
+  const hierarchy = client.getHierarchy()
+  const appliers = model.findAllSync(view.class.AttrApplier, { key })
+  const ancestors = hierarchy.getAncestors(_class)
+
+  for (const ancestorClass of ancestors) {
+    const matched = appliers.find((it) => it.objectClass === ancestorClass)
+    if (matched != null) {
+      return matched.applier
+    }
+  }
+
+  return undefined
 }
 
 export function findAttributePresenter (

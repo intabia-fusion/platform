@@ -12,7 +12,7 @@
 // limitations under the License.
 
 import { type Resources } from '@hcengineering/platform'
-import { type TagElement as TagElementType } from '@hcengineering/tags'
+import tags, { type TagElement as TagElementType, type TagReference } from '@hcengineering/tags'
 import { eventToHTMLElement, showPopup } from '@hcengineering/ui'
 import TagsCategoryBar from './components/CategoryBar.svelte'
 import CategoryPresenter from './components/CategoryPresenter.svelte'
@@ -33,9 +33,10 @@ import LabelsPresenter from './components/LabelsPresenter.svelte'
 import CreateTagElement from './components/CreateTagElement.svelte'
 import ObjectsTagsEditorPopup from './components/ObjectsTagsEditorPopup.svelte'
 import TagElement from './components/TagElement.svelte'
-import { type ObjQueryType } from '@hcengineering/core'
+import { type Doc, type ObjQueryType, type Ref, type TxCUD } from '@hcengineering/core'
+import { getClient } from '@hcengineering/presentation'
 import { getRefs, selectedTagElements } from './utils'
-import { type Filter } from '@hcengineering/view'
+import { type AttributeApplierResult, type Filter } from '@hcengineering/view'
 import WeightPopup from './components/WeightPopup.svelte'
 import DraftTagsEditor from './components/DraftTagsEditor.svelte'
 import TagsFilterPresenter from './components/TagsFilterPresenter.svelte'
@@ -86,6 +87,50 @@ export default async (): Promise<Resources> => ({
   function: {
     FilterTagsInResult: tagsInResult,
     FilterTagsNinResult: tagsNinResult,
-    CreateTagElement: createTagElement
+    CreateTagElement: createTagElement,
+    LabelsApplier: labelsApplier
   }
 })
+
+export async function labelsApplier (
+  doc: Doc,
+  value: Array<Ref<TagElementType>> | undefined
+): Promise<AttributeApplierResult<Doc>> {
+  if (!Array.isArray(value)) return {}
+
+  const client = getClient()
+  const txes: Array<TxCUD<Doc>> = []
+
+  const existing = (await client.findAll(tags.class.TagReference, { attachedTo: doc._id })) as TagReference[]
+  const existingTagIds = existing.map((it) => it.tag)
+
+  const toAdd = value.filter((tagId) => !existingTagIds.includes(tagId))
+  const toRemove = existing.filter((it) => !value.includes(it.tag))
+
+  if (toAdd.length > 0) {
+    const tagElements = await client.findAll(tags.class.TagElement, { _id: { $in: toAdd } })
+    const tagElementsMap = new Map(tagElements.map((el) => [el._id, el]))
+
+    for (const tagId of toAdd) {
+      const tagElement = tagElementsMap.get(tagId)
+      const createTx = client.txFactory.createTxCreateDoc(tags.class.TagReference, doc.space, {
+        attachedTo: doc._id,
+        attachedToClass: doc._class,
+        collection: 'labels',
+        tag: tagId,
+        title: tagElement?.title ?? '',
+        color: tagElement?.color ?? 0
+      })
+      const tx = client.txFactory.createTxCollectionCUD(doc._class, doc._id, doc.space, 'labels', createTx)
+      txes.push(tx)
+    }
+  }
+
+  for (const it of toRemove) {
+    const removeTx = client.txFactory.createTxRemoveDoc(tags.class.TagReference, it.space, it._id)
+    const tx = client.txFactory.createTxCollectionCUD(doc._class, doc._id, doc.space, 'labels', removeTx)
+    txes.push(tx)
+  }
+
+  return { txes }
+}

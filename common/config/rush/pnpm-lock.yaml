@@ -13728,12 +13728,18 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
+      '@hcengineering/model-presentation':
+        specifier: workspace:^0.7.0
+        version: link:../presentation
       '@hcengineering/model-task':
         specifier: workspace:^0.7.0
         version: link:../task
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/presentation':
+        specifier: workspace:^0.7.0
+        version: link:../../packages/presentation
       '@hcengineering/setting':
         specifier: workspace:^0.7.0
         version: link:../../plugins/setting
@@ -27167,6 +27173,9 @@ importers:
       '@hcengineering/workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
+      '@hcengineering/workflow':
+        specifier: workspace:^0.7.0
+        version: link:../workflow
       svelte:
         specifier: ^4.2.20
         version: 4.2.20
@@ -30059,6 +30068,9 @@ importers:
 
   ../../plugins/workflow-resources:
     dependencies:
+      '@hcengineering/chunter-resources':
+        specifier: workspace:^0.7.0
+        version: link:../chunter-resources
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -30080,6 +30092,9 @@ importers:
       '@hcengineering/task-resources':
         specifier: workspace:^0.7.0
         version: link:../task-resources
+      '@hcengineering/text':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/text
       '@hcengineering/tracker-resources':
         specifier: workspace:^0.7.0
         version: link:../tracker-resources

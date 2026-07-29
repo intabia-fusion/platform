@@ -25,6 +25,7 @@
   import { navigateToWorkflow } from '../../location'
   import TaskTypeEditor from './TaskTypeEditor.svelte'
   import TransitionsEditor from './TransitionsEditor.svelte'
+  import WorkflowUsedProjects from './WorkflowUsedProjects.svelte'
 
   export let spaceType: ProjectType
   export let objectId: Ref<Workflow>
@@ -88,15 +89,29 @@
     }
   }
 
+  let isDeleteLoading = false
+
   async function handleRemove (): Promise<void> {
-    showPopup(MessageBox, {
-      label: plugin.string.DeleteWorkflow,
-      message: plugin.string.DeleteWorkflowConfirm,
-      action: async () => {
-        await removeWorkflow(client, objectId)
-        navigateToWorkflow(undefined)
-      }
-    })
+    if (isDeleteLoading) return
+    isDeleteLoading = true
+    try {
+      const allProjects = await client.findAll(plugin.mixin.ProjectWorkflow, {})
+      const usedProjects = allProjects.filter((p) => Object.values(p.workflows ?? {}).includes(objectId))
+
+      showPopup(MessageBox, {
+        label: plugin.string.DeleteWorkflow,
+        message: plugin.string.DeleteWorkflowConfirm,
+        component: usedProjects.length > 0 ? WorkflowUsedProjects : undefined,
+        componentProps: { projects: usedProjects },
+        dangerous: true,
+        action: async () => {
+          await removeWorkflow(client, objectId)
+          navigateToWorkflow(undefined)
+        }
+      })
+    } finally {
+      isDeleteLoading = false
+    }
   }
 
   async function handleTaskTypeChange (evt: CustomEvent<Ref<TaskType>>): Promise<void> {
@@ -157,6 +172,8 @@
                 tooltip={{ label: view.string.Delete, direction: 'bottom' }}
                 size="small"
                 kind="secondary"
+                loading={isDeleteLoading}
+                disabled={isDeleteLoading}
                 on:click={handleRemove}
               />
             </div>

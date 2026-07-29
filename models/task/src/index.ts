@@ -58,6 +58,7 @@ import { createPublicLinkAction } from '@hcengineering/model-guest'
 import view, {
   classPresenter,
   createAction,
+  createAttributePresenter,
   template,
   actionTemplates as viewTemplates
 } from '@hcengineering/model-view'
@@ -124,7 +125,7 @@ export class TTask extends TAttachedDoc implements Task {
   @Prop(Collection(tags.class.TagReference, task.string.TaskLabels), task.string.TaskLabels)
     labels?: number
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  @Prop(Collection(chunter.class.ChatMessage, chunter.string.Comment), chunter.string.Comments)
     comments?: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
@@ -280,6 +281,12 @@ export function createModel (builder: Builder): void {
   builder.mixin(task.class.Task, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: view.component.ObjectPresenter
   })
+
+  builder.mixin(task.class.Task, core.class.Class, view.mixin.AttributePresenter, {
+    presenter: task.component.TaskPresenter
+  })
+
+  createAttributePresenter(builder, task.component.TaskPresenter, task.class.Task, 'attachedTo', 'attribute')
 
   builder.mixin(task.class.ProjectType, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: task.component.KanbanTemplatePresenter

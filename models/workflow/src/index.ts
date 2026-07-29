@@ -13,7 +13,10 @@
 // limitations under the License.
 //
 
+import core from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
+import presentation from '@hcengineering/model-presentation'
+
 import workflow from './plugin'
 import {
   TWorkflow,
@@ -45,6 +48,15 @@ export function createModel (builder: Builder): void {
   )
   defineValidators(builder)
   defineRequests(builder)
+
+  builder.createDoc(
+    presentation.class.PresentationMiddlewareFactory,
+    core.space.Model,
+    {
+      createPresentationMiddleware: workflow.function.CreateMiddleware
+    },
+    workflow.pipeline.WorkflowMiddleware
+  )
 }
 
 export * from './types'

@@ -57,7 +57,8 @@
     "LineTool": "Линия",
     "RectangleTool": "Прямоугольник",
     "EllipseTool": "Эллипс",
-    "PaletteManagementMenu": "Управление цветовыми пресетами"
+    "PaletteManagementMenu": "Управление цветовыми пресетами",
+    "Draft": "Черновик"
   },
   "status": {
     "FileTooLarge": "Файл слишком большой"

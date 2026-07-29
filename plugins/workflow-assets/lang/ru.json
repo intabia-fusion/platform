@@ -30,6 +30,8 @@
     "FieldRequiredValidator": "Обязательное поле",
     "FieldRequiredDescription": "Убедитесь, что обязательные поля заполнены при переходе задачи",
     "FieldRequiredError": "Поле \"{field}\" обязательно для перехода \"{transition}\".",
+    "FieldRequiredSingleError": "Заполните обязательное поле: {field}",
+    "FieldRequiredMultipleError": "Заполните обязательные поля: {fields}",
     "SubtaskStatusValidator": "Статус подзадач",
     "SubtaskStatusDescription": "Разрешить переход только когда подзадачи находятся в определенных статусах",
     "SubtaskStatusError": "Подзадачи должны находиться в разрешенном статусе ({statuses}) для перехода \"{transition}\".",
@@ -56,6 +58,7 @@
     "Screens": "Экраны",
     "ScreenTab": "Вкладка экрана",
     "ScreenField": "Поле экрана",
+    "Attribute": "Атрибут",
     "FieldId": "ID поля",
     "Label": "Заголовок",
     "Required": "Обязательное",
@@ -74,6 +77,11 @@
     "TabName": "Название вкладки",
     "ConfigureScreen": "Настроить экран",
     "ScreenRequestPresenter": "Обновить поля на экране «{name}»",
-    "ScreenNotSelected": "Экран не выбран"
+    "ScreenNotSelected": "Экран не выбран",
+    "UsedInWorkflows": "Используется в процессах:",
+    "UsedInProjects": "Используется в проектах:",
+    "WorkflowsWillBeDeleted": "Следующие процессы привязаны к этому типу задач и тоже будут удалены:",
+    "General": "Основная",
+    "NoAvailableFields": "Все доступные поля уже добавлены"
   }
 }

@@ -37,12 +37,14 @@
 
   let selectedScreenId: Ref<Screen> | undefined = config?.props?.screen
   let screens: Screen[] = []
+  let isLoaded = false
 
   const projectTypeId = projectType?._id ?? taskType?.parent
 
   $: if (projectTypeId != null) {
     screensQuery.query(plugin.class.Screen, { projectType: projectTypeId }, (res) => {
       screens = res
+      isLoaded = true
     })
   }
 
@@ -52,8 +54,12 @@
     icon: plugin.icon.Screens
   }))
 
-  $: if (selectedScreenId === undefined && screens.length > 0) {
-    selectedScreenId = screens[0]._id
+  $: if (isLoaded) {
+    if (selectedScreenId !== undefined && !screens.some((s) => s._id === selectedScreenId)) {
+      selectedScreenId = screens.length > 0 ? screens[0]._id : undefined
+    } else if (selectedScreenId === undefined && screens.length > 0) {
+      selectedScreenId = screens[0]._id
+    }
   }
 
   $: canSave = selectedScreenId !== undefined
@@ -61,7 +67,7 @@
 
   function handleOpenScreen (): void {
     if (selectedScreenId != null) {
-      navigateToScreen(selectedScreenId)
+      navigateToScreen(selectedScreenId, true)
       dispatch('close')
     }
   }

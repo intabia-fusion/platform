@@ -34,6 +34,7 @@ import {
   type SocialIdType
 } from '@hcengineering/core'
 import type { Asset, Metadata, Plugin, Resource } from '@hcengineering/platform'
+import type { AttributeApplierFn } from '@hcengineering/view'
 import { IntlString, plugin } from '@hcengineering/platform'
 import { TemplateField, TemplateFieldCategory } from '@hcengineering/templates'
 import type { AnyComponent, ResolvedLocation, Location, ComponentExtensionId } from '@hcengineering/ui/src/types'
@@ -305,7 +306,8 @@ export const contactPlugin = plugin(contactId, {
     GetColorUrl: '' as Resource<GetAvatarUrl>,
     GetFileUrl: '' as Resource<GetAvatarUrl>,
     GetGravatarUrl: '' as Resource<GetAvatarUrl>,
-    GetExternalUrl: '' as Resource<GetAvatarUrl>
+    GetExternalUrl: '' as Resource<GetAvatarUrl>,
+    CollaboratorsApplier: '' as Resource<AttributeApplierFn>
   },
   icon: {
     ContactApplication: '' as Asset,

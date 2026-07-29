@@ -21,92 +21,195 @@ import core, {
   type Collection,
   type AttachedDoc,
   type Ref,
-  type Class
+  type Class,
+  type Mixin,
+  notEmpty,
+  ClassifierKind
 } from '@hcengineering/core'
-import { translate } from '@hcengineering/platform'
+import { type Asset, type IntlString, translate } from '@hcengineering/platform'
 import { type IconComponent } from '@hcengineering/ui'
 import { getClient } from '@hcengineering/presentation'
 
 export interface DisplayAttribute {
-  id: string
+  id: Ref<AnyAttribute>
+  key: string
   label: string
   collection: boolean
   icon?: IconComponent
   iconProps?: Record<string, any>
+  mixin?: Ref<Class<Mixin<Doc>>>
+}
+
+export interface DisplayAttributeGroup {
+  _class: Ref<Class<Doc>>
+  classLabel: string
+  regular: DisplayAttribute[]
+  collection: DisplayAttribute[]
+}
+
+export function getAttributeIcon (
+  hierarchy: Hierarchy,
+  attr: AnyAttribute
+): {
+    icon?: Asset
+    iconProps?: Record<string, any>
+  } {
+  if (hierarchy.isDerived(attr.type._class, core.class.RefTo)) {
+    const refTo = attr.type as RefTo<Doc>
+    const toClass = hierarchy.findClass(refTo.to)
+    return {
+      icon: attr.icon ?? toClass?.icon ?? attr.type?.icon,
+      iconProps: attr.iconProps
+    }
+  } else if (hierarchy.isDerived(attr.type._class, core.class.Collection)) {
+    const refTo = attr.type as Collection<AttachedDoc>
+    const ofClass = hierarchy.findClass(refTo.of)
+    return {
+      icon: attr.icon ?? ofClass?.icon ?? attr.type?.icon,
+      iconProps: attr.iconProps
+    }
+  }
+  return {
+    icon: attr.icon ?? attr.type?.icon,
+    iconProps: attr.iconProps
+  }
 }
 
 const buildAttributeDisplayItem = async (
   hierarchy: Hierarchy,
   it: AnyAttribute,
   collection: boolean,
-  lang: string
+  lang: string,
+  mixin?: Ref<Class<Mixin<Doc>>>
 ): Promise<DisplayAttribute> => {
   if (hierarchy.isDerived(it.type._class, core.class.RefTo)) {
     const refTo = it.type as RefTo<Doc>
     const toClass = hierarchy.findClass(refTo.to)
     return {
       id: it._id,
+      key: it.name,
       label: await translate(it.label, {}, lang),
       icon: it.icon ?? toClass?.icon ?? it.type?.icon,
       iconProps: it.iconProps,
-      collection
+      collection,
+      mixin
     }
   } else if (hierarchy.isDerived(it.type._class, core.class.Collection)) {
-    const refTo = it.type as Collection<AttachedDoc>
+    const refTo = it.type as Collection<AttachedDoc> & { itemLabel?: IntlString }
     const ofClass = hierarchy.findClass(refTo.of)
+    const isComments = it.name === 'comments'
+    const labelIntl = (
+      isComments ? (refTo.itemLabel ?? ofClass?.label ?? ofClass?.shortLabel ?? it.label) : it.label
+    ) as IntlString
     return {
       id: it._id,
-      label: await translate(it.label, {}, lang),
+      key: it.name,
+      label: await translate(labelIntl, {}, lang),
       icon: it.icon ?? ofClass?.icon ?? it.type?.icon,
       iconProps: it.iconProps,
-      collection
+      collection,
+      mixin
     }
   }
   return {
     id: it._id,
+    key: it.name,
     label: await translate(it.label, {}, lang),
     icon: it.icon ?? it.type?.icon,
     iconProps: it.iconProps,
-    collection
+    collection,
+    mixin
   }
 }
 
 export async function getDisplayAttributes (
   _class: Ref<Class<Doc>>,
-  lang: string
-): Promise<{
-    regular: DisplayAttribute[]
-    collection: DisplayAttribute[]
-  }> {
+  lang: string,
+  skip: string[] = []
+): Promise<DisplayAttributeGroup[]> {
   const client = getClient()
   const hierarchy = client.getHierarchy()
-  const attrs = Array.from(hierarchy.getAllAttributes(_class).values()).filter(
-    (it) => it.hidden !== true && it.readonly !== true
-  )
 
-  const regularAttrs: typeof attrs = []
-  const collectionAttrs: typeof attrs = []
+  const mixins = hierarchy
+    .getDescendants(_class)
+    .map((it) => hierarchy.findClass(it))
+    .filter(notEmpty)
+    .filter((it) => it._id !== _class && it.kind === ClassifierKind.MIXIN)
 
-  for (const it of attrs) {
-    if (hierarchy.isDerived(it.type._class, core.class.Collection) || it.type._class === core.class.ArrOf) {
-      collectionAttrs.push(it)
-    } else {
-      regularAttrs.push(it)
+  const targetClasses: Array<Ref<Class<Doc>>> = [_class, ...mixins.map((it) => it._id)]
+  const result: DisplayAttributeGroup[] = []
+
+  const processedAttrs = new Set<string>()
+
+  for (const targetClass of targetClasses) {
+    const targetClazz = hierarchy.findClass(targetClass)
+    const classLabel =
+      targetClazz != null ? await translate(targetClazz.label ?? targetClazz.shortLabel ?? targetClass, {}, lang) : ''
+
+    const isMixin = targetClass !== _class
+    const mixin = isMixin ? (targetClass as Ref<Class<Mixin<Doc>>>) : undefined
+
+    const attrs = Array.from(hierarchy.getAllAttributes(targetClass).values()).filter(
+      (it) =>
+        it.hidden !== true &&
+        it.readonly !== true &&
+        it.automationOnly !== true &&
+        it.type?._class !== core.class.TypeIdentifier &&
+        !hierarchy.isDerived(it.type._class, core.class.TypeIdentifier) &&
+        !processedAttrs.has(it._id) &&
+        !processedAttrs.has(it.name) &&
+        !skip.includes(it.name)
+    )
+
+    for (const it of attrs) {
+      processedAttrs.add(it._id)
+      processedAttrs.add(it.name)
+    }
+
+    const regularAttrs: typeof attrs = []
+    const collectionAttrs: typeof attrs = []
+
+    for (const it of attrs) {
+      if (hierarchy.isDerived(it.type._class, core.class.Collection) || it.type._class === core.class.ArrOf) {
+        collectionAttrs.push(it)
+      } else {
+        regularAttrs.push(it)
+      }
+    }
+
+    const regularItems = await Promise.all(
+      regularAttrs.map(async (it) => await buildAttributeDisplayItem(hierarchy, it, false, lang, mixin))
+    )
+    const collectionItems = await Promise.all(
+      collectionAttrs.map(async (it) => await buildAttributeDisplayItem(hierarchy, it, true, lang, mixin))
+    )
+
+    regularItems.sort((a, b) => a.label.localeCompare(b.label, lang))
+    collectionItems.sort((a, b) => a.label.localeCompare(b.label, lang))
+
+    if (targetClass === _class || regularItems.length > 0 || collectionItems.length > 0) {
+      result.push({
+        _class: targetClass,
+        classLabel,
+        regular: regularItems,
+        collection: collectionItems
+      })
     }
   }
 
-  const regularItems = await Promise.all(
-    regularAttrs.map(async (it) => await buildAttributeDisplayItem(hierarchy, it, false, lang))
-  )
-  const collectionItems = await Promise.all(
-    collectionAttrs.map(async (it) => await buildAttributeDisplayItem(hierarchy, it, true, lang))
-  )
+  result.sort((a, b) => {
+    if (a._class === _class) return -1
+    if (b._class === _class) return 1
 
-  regularItems.sort((a, b) => a.label.localeCompare(b.label, lang))
-  collectionItems.sort((a, b) => a.label.localeCompare(b.label, lang))
+    const isMixinA = hierarchy.isDerived(a._class, core.class.Mixin)
+    const isMixinB = hierarchy.isDerived(b._class, core.class.Mixin)
 
-  return {
-    regular: regularItems,
-    collection: collectionItems
-  }
+    if (isMixinA !== isMixinB) {
+      return isMixinA ? -1 : 1
+    }
+
+    return a.classLabel.localeCompare(b.classLabel, lang)
+  })
+
+  return result
 }

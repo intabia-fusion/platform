@@ -13,11 +13,12 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Doc, Ref } from '@hcengineering/core'
-  import { getEmbeddedLabel, translate } from '@hcengineering/platform'
+  import { AnyAttribute, Doc, Ref } from '@hcengineering/core'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { getClient, MessageBox } from '@hcengineering/presentation'
   import {
     ButtonIcon,
+    DropdownIntlItem,
     EditBox,
     Icon,
     IconDelete,
@@ -26,13 +27,14 @@
     languageStore,
     ModernCheckbox,
     ModernPopup,
-    showPopup
+    showPopup,
+    tooltip
   } from '@hcengineering/ui'
   import { SortableDocListStatic } from '@hcengineering/view-resources'
   import { addScreenField, removeScreenField, removeScreenTab, ScreenField, ScreenTab } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
-  import { DisplayAttribute } from '../../utils'
+  import { DisplayAttribute, DisplayAttributeGroup } from '../../utils'
 
   export let tab: ScreenTab
   export let readonly = false
@@ -40,6 +42,7 @@
   export let fields: ScreenField[] = []
   export let displayAttributes: DisplayAttribute[] = []
   export let availableAttributes: DisplayAttribute[] = []
+  export let availableAttributeGroups: DisplayAttributeGroup[] = []
 
   const client = getClient()
 
@@ -71,8 +74,9 @@
   async function removeTab (): Promise<void> {
     if (fields.length > 0) {
       showPopup(MessageBox, {
-        label: await translate(plugin.string.DeleteScreenTab, {}, $languageStore),
-        message: await translate(plugin.string.DeleteScreenTabConfirm, { name: tab.name }, $languageStore),
+        label: plugin.string.DeleteScreenTab,
+        message: plugin.string.DeleteScreenTabConfirm,
+        params: { name: tab.name },
         dangerous: true,
         action: async () => {
           await removeScreenTab(client, tab.attachedTo, tab._id)
@@ -83,9 +87,16 @@
     }
   }
 
-  async function addField (fieldId: string): Promise<void> {
+  async function addField (fieldId: Ref<AnyAttribute>): Promise<void> {
     if (fields.some((f) => f.fieldId === fieldId)) return // prevent duplicates
-    await addScreenField(client, tab._id, fieldId, false)
+    const attr = availableAttributes.find((it) => it.id === fieldId)
+    if (attr == null) return
+    await addScreenField(client, tab._id, {
+      fieldId,
+      fieldKey: attr.key,
+      mixin: attr.mixin,
+      required: true
+    })
   }
 
   async function removeField (field: ScreenField): Promise<void> {
@@ -101,32 +112,66 @@
   function openAddFieldPopup (target: HTMLElement | undefined): void {
     if (availableAttributes.length === 0 || target == null) return
 
-    const regular = availableAttributes
-      .filter((f) => !f.collection)
-      .sort((a, b) => a.label.localeCompare(b.label, $languageStore))
-    const collection = availableAttributes
-      .filter((f) => f.collection)
-      .sort((a, b) => a.label.localeCompare(b.label, $languageStore))
+    const popupItems: DropdownIntlItem[] = []
 
-    const popupItems = [
-      ...regular.map((f) => ({
-        id: f.id,
-        label: getEmbeddedLabel(f.label),
-        icon: f.icon,
-        iconProps: f.iconProps
-      })),
-      ...collection.map((f, idx) => ({
-        id: f.id,
-        label: getEmbeddedLabel(f.label),
-        icon: f.icon,
-        iconProps: f.iconProps,
-        separatorBefore: idx === 0 && regular.length > 0
-      }))
-    ]
+    if (availableAttributeGroups.length > 0) {
+      availableAttributeGroups.forEach((group, groupIdx) => {
+        const regular = group.regular
+        const collection = group.collection
+
+        regular.forEach((f, idx) => {
+          const isFirstInGroup = groupIdx > 0 && idx === 0
+          popupItems.push({
+            id: f.id,
+            label: getEmbeddedLabel(f.label),
+            icon: f.icon,
+            iconProps: f.iconProps,
+            separatorBefore: isFirstInGroup,
+            separatorLabel: isFirstInGroup ? getEmbeddedLabel(group.classLabel) : undefined
+          })
+        })
+
+        collection.forEach((f, idx) => {
+          const isFirstInGroup = groupIdx > 0 && regular.length === 0 && idx === 0
+          const isFirstCollection = regular.length > 0 && idx === 0
+          popupItems.push({
+            id: f.id,
+            label: getEmbeddedLabel(f.label),
+            icon: f.icon,
+            iconProps: f.iconProps,
+            separatorBefore: isFirstInGroup || isFirstCollection,
+            separatorLabel: isFirstInGroup ? getEmbeddedLabel(group.classLabel) : undefined
+          })
+        })
+      })
+    } else {
+      const regular = availableAttributes
+        .filter((f) => !f.collection)
+        .sort((a, b) => a.label.localeCompare(b.label, $languageStore))
+      const collection = availableAttributes
+        .filter((f) => f.collection)
+        .sort((a, b) => a.label.localeCompare(b.label, $languageStore))
+
+      popupItems.push(
+        ...regular.map((f) => ({
+          id: f.id,
+          label: getEmbeddedLabel(f.label),
+          icon: f.icon,
+          iconProps: f.iconProps
+        })),
+        ...collection.map((f, idx) => ({
+          id: f.id,
+          label: getEmbeddedLabel(f.label),
+          icon: f.icon,
+          iconProps: f.iconProps,
+          separatorBefore: idx === 0 && regular.length > 0
+        }))
+      )
+    }
 
     showPopup(ModernPopup, { items: popupItems }, target, (result) => {
       if (result != null) {
-        void addField(result as string)
+        void addField(result)
       }
     })
   }
@@ -219,6 +264,7 @@
       type="button"
       class="add-field-btn font-normal-14 text-secondary"
       disabled={availableAttributes.length === 0}
+      use:tooltip={availableAttributes.length === 0 ? { label: plugin.string.NoAvailableFields } : undefined}
       on:click={() => {
         openAddFieldPopup(labelEl)
       }}

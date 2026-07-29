@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Class, Doc, Ref, Status, AttachedDoc, Client } from '@hcengineering/core'
+import type { Class, Doc, Ref, Status, AttachedDoc, Client, AnyAttribute, Mixin } from '@hcengineering/core'
 import type { Project, TaskType, ProjectType, Rank, Task } from '@hcengineering/task'
 import type { Asset, IntlString, Resource } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui'
@@ -75,7 +75,9 @@ export interface WorkflowRequestConfig {
 }
 
 export interface ScreenField extends AttachedDoc<ScreenTab, 'fields'> {
-  fieldId: string
+  mixin?: Ref<Class<Mixin<Doc>>>
+  fieldId: Ref<AnyAttribute>
+  fieldKey: string
   label?: string
   required: boolean
   rank: Rank

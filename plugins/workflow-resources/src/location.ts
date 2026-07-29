@@ -16,9 +16,25 @@
 import { type Ref } from '@hcengineering/core'
 import { desktopPlatform, getCurrentResolvedLocation, locationToUrl, navigate } from '@hcengineering/ui'
 import { type Workflow, type Screen } from '@hcengineering/workflow'
+import { type Project } from '@hcengineering/task'
 import { clearSettingsStore } from '@hcengineering/setting-resources'
 
-export function navigateToWorkflow (id: Ref<Workflow> | undefined): void {
+export function navigateToProject (project: Project, openInNewTab = false): void {
+  const loc = getCurrentResolvedLocation()
+  loc.path[2] = 'tracker'
+  loc.path[3] = project._id
+  loc.path[4] = 'issues'
+  loc.path.length = 5
+
+  if (!desktopPlatform && openInNewTab) {
+    window.open(locationToUrl(loc), '_blank')
+  } else {
+    clearSettingsStore()
+    navigate(loc)
+  }
+}
+
+export function navigateToWorkflow (id: Ref<Workflow> | undefined, openInNewTab = false): void {
   const loc = getCurrentResolvedLocation()
   if (id !== undefined) {
     loc.path[5] = 'workflows'
@@ -28,8 +44,12 @@ export function navigateToWorkflow (id: Ref<Workflow> | undefined): void {
     loc.path.length = 5
   }
 
-  clearSettingsStore()
-  navigate(loc)
+  if (!desktopPlatform && openInNewTab && id !== undefined) {
+    window.open(locationToUrl(loc), '_blank')
+  } else {
+    clearSettingsStore()
+    navigate(loc)
+  }
 }
 
 export function navigateToScreen (id: Ref<Screen> | undefined, openInNewTab = true): void {
@@ -42,7 +62,7 @@ export function navigateToScreen (id: Ref<Screen> | undefined, openInNewTab = tr
     loc.path.length = 5
   }
 
-  if (!desktopPlatform && openInNewTab) {
+  if (!desktopPlatform && openInNewTab && id !== undefined) {
     window.open(locationToUrl(loc), '_blank')
   } else {
     clearSettingsStore()

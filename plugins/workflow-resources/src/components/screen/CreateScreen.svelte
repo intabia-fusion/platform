@@ -13,11 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, Ref } from '@hcengineering/core'
-  import { Resource, translate } from '@hcengineering/platform'
-  import presentation, { getClient, hasResource } from '@hcengineering/presentation'
+  import core, { type Class, type Doc, Ref } from '@hcengineering/core'
+  import { translate } from '@hcengineering/platform'
+  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import task, { ProjectType, ProjectTypeDescriptor, Task } from '@hcengineering/task'
+  import task, { ProjectType, TaskType } from '@hcengineering/task'
   import ui, {
     DropdownTextItem,
     Label,
@@ -29,67 +29,61 @@
   } from '@hcengineering/ui'
   import { addScreenTab } from '@hcengineering/workflow'
 
-  import plugin from '../plugin'
+  import plugin from '../../plugin'
 
   export let type: ProjectType
-  export let descriptor: ProjectTypeDescriptor | undefined = undefined
 
   const client = getClient()
+  const taskTypesQuery = createQuery()
 
   let name = ''
   let description = ''
-  let selectedClass: Ref<Class<Task>> | undefined = undefined
+  let selected: Ref<Class<Doc>> | undefined = undefined
   let classItems: DropdownTextItem[] = []
 
-  $: allowedClasses = Array.from(
-    new Set(
-      client
-        .getModel()
-        .findAllSync(
-          task.class.TaskTypeDescriptor,
-          descriptor?.allowedTaskTypeDescriptors != null
-            ? { allowCreate: true, _id: { $in: descriptor.allowedTaskTypeDescriptors } }
-            : { allowCreate: true }
-        )
-        .filter((p) => hasResource(p._id as unknown as Resource<unknown>))
-        .map((it) => it.baseClass)
-    )
-  )
+  let taskTypes: TaskType[] = []
+  $: taskTypesQuery.query(task.class.TaskType, { parent: type._id }, (res) => {
+    taskTypes = res
+  })
 
-  $: if (selectedClass === undefined && allowedClasses.length > 0) {
-    selectedClass = allowedClasses[0]
+  $: if (selected === undefined && taskTypes.length > 0) {
+    selected = taskTypes[0].ofClass
   }
 
-  $: canSave = name.trim().length > 0 && name.length <= 100 && description.length <= 500 && selectedClass != null
+  $: canSave = name.trim().length > 0 && name.length <= 100 && description.length <= 500 && selected != null
 
-  $: void updateClassItems(allowedClasses, $languageStore)
+  $: void updateClassItems(taskTypes, $languageStore)
 
-  async function updateClassItems (classes: Ref<Class<Doc>>[], lang: string): Promise<void> {
+  async function updateClassItems (types: TaskType[], lang: string): Promise<void> {
     const res: DropdownTextItem[] = []
-    for (const cls of classes) {
-      const _clazz = client.getHierarchy().getClass(cls)
+    const classes = new Set(types.map((type) => type.ofClass))
+    for (const _class of classes) {
+      const _clazz = client.getHierarchy().getClass(_class)
       res.push({
-        id: cls,
+        id: _class,
         icon: _clazz.icon,
         label: await translate(_clazz.label, {}, lang)
       })
     }
 
-    classItems = res.sort((a, b) => a.label.localeCompare(b.label))
+    classItems = res.sort((a, b) => a.label.localeCompare(b.label, lang))
   }
 
   async function save (): Promise<void> {
     if (!canSave) return
+    if (selected == null) return
+
     const descTrimmed = description.trim()
     const screenId = await client.createDoc(plugin.class.Screen, core.space.Workspace, {
       name: name.trim(),
       description: descTrimmed.length > 0 ? descTrimmed : undefined,
       projectType: type._id,
-      targetClass: selectedClass
+      targetClass: selected
     })
 
     // Create initial default tab for the screen
-    await addScreenTab(client, screenId, 'General')
+    const defaultTabName = await translate(plugin.string.General, {}, $languageStore)
+    await addScreenTab(client, screenId, defaultTabName)
 
     clearSettingsStore()
   }
@@ -110,7 +104,7 @@
     <ModernEditbox bind:value={name} label={plugin.string.Name} size="large" kind="ghost" autoFocus limit={100} />
   </div>
   <div class="hulyModal-content__settingsSet">
-    <div class="hulyModal-content__settingsSet-line flex-col" style="align-items: flex-start;">
+    <div class="hulyModal-content__settingsSet-line flex-col description-line">
       <span class="label mb-2">
         <Label label={plugin.string.Description} />
       </span>
@@ -123,14 +117,14 @@
         noFocusBorder
       />
     </div>
-    {#if allowedClasses.length > 0}
+    {#if taskTypes.length > 0}
       <div class="hulyModal-content__settingsSet-line">
         <span class="label">
           <Label label={core.string.Class} />
         </span>
         <ModernDropdownLabels
           items={classItems}
-          bind:selected={selectedClass}
+          bind:selected
           size="medium"
           placeholder={ui.string.NotSelected}
           autoSelect={true}
@@ -140,3 +134,9 @@
     {/if}
   </div>
 </Modal>
+
+<style lang="scss">
+  .description-line {
+    align-items: flex-start;
+  }
+</style>

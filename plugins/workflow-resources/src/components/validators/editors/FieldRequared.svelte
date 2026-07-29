@@ -40,15 +40,35 @@
   $: dispatch('update', { fields: selected })
 
   async function updateItems (lang: string): Promise<void> {
-    const { regular, collection } = await getDisplayAttributes(taskType.ofClass, lang)
+    const res = await getDisplayAttributes(taskType.ofClass, lang)
 
-    const regularItems = regular as DropdownTextItem[]
-    const collectionItems = collection as DropdownTextItem[]
-    if (regularItems.length > 0 && collectionItems.length > 0) {
-      collectionItems[0].separatorBefore = true
-    }
+    const resultItems: DropdownTextItem[] = []
 
-    items = [...regularItems, ...collectionItems]
+    res.forEach((group, groupIdx) => {
+      const regular = group.regular as DropdownTextItem[]
+      const collection = group.collection as DropdownTextItem[]
+
+      regular.forEach((f, idx) => {
+        const isFirstInGroup = groupIdx > 0 && idx === 0
+        resultItems.push({
+          ...f,
+          separatorBefore: isFirstInGroup,
+          separatorLabel: isFirstInGroup ? group.classLabel : undefined
+        })
+      })
+
+      collection.forEach((f, idx) => {
+        const isFirstInGroup = groupIdx > 0 && regular.length === 0 && idx === 0
+        const isFirstCollection = regular.length > 0 && idx === 0
+        resultItems.push({
+          ...f,
+          separatorBefore: isFirstInGroup || isFirstCollection,
+          separatorLabel: isFirstInGroup ? group.classLabel : undefined
+        })
+      })
+    })
+
+    items = resultItems
   }
 </script>
 

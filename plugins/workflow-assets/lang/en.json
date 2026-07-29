@@ -30,6 +30,8 @@
     "FieldRequiredValidator": "Field required",
     "FieldRequiredDescription": "Ensure that required fields are filled when moving a work item using this transition",
     "FieldRequiredError": "Field \"{field}\" is required for transition \"{transition}\".",
+    "FieldRequiredSingleError": "Fill in the required field: {field}",
+    "FieldRequiredMultipleError": "Fill in the required fields: {fields}",
     "SubtaskStatusValidator": "Subtask status",
     "SubtaskStatusDescription": "Only allow transition when subtasks have specific statuses",
     "SubtaskStatusError": "Subtasks must be in allowed status ({statuses}) for transition \"{transition}\".",
@@ -56,6 +58,7 @@
     "Screens": "Screens",
     "ScreenTab": "Screen Tab",
     "ScreenField": "Screen Field",
+    "Attribute": "Attribute",
     "FieldId": "Field ID",
     "Label": "Label",
     "Required": "Required",
@@ -74,6 +77,11 @@
     "TabName": "Tab Name",
     "ConfigureScreen": "Configure screen",
     "ScreenRequestPresenter": "Update fields in the \"{name}\" screen",
-    "ScreenNotSelected": "Screen not selected"
+    "ScreenNotSelected": "Screen not selected",
+    "UsedInWorkflows": "Used in workflows:",
+    "UsedInProjects": "Used in projects:",
+    "WorkflowsWillBeDeleted": "The following workflows are tied to this task type and will also be deleted:",
+    "General": "General",
+    "NoAvailableFields": "All available fields have already been added"
   }
 }

@@ -31,12 +31,13 @@
     TextArea
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import { addScreenTab, Screen, ScreenField, ScreenTab } from '@hcengineering/workflow'
+  import { addScreenTab, Screen, ScreenField, ScreenTab, WorkflowTransition } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
   import { navigateToScreen } from '../../location'
+  import { DisplayAttribute, DisplayAttributeGroup, getDisplayAttributes } from '../../utils'
   import ScreenTabEditor from './ScreenTabEditor.svelte'
-  import { DisplayAttribute, getDisplayAttributes } from '../../utils'
+  import ScreenUsedWorkflows from './ScreenUsedWorkflows.svelte'
 
   export let objectId: Ref<Screen>
   export let name: string | undefined = undefined
@@ -50,6 +51,7 @@
   let screen: Screen | undefined
   let tabs: ScreenTab[] = []
   let allFields: ScreenField[] = []
+  let displayAttributeGroups: DisplayAttributeGroup[] = []
   let displayAttributes: DisplayAttribute[] = []
   let isScreenLoading = true
 
@@ -104,11 +106,18 @@
 
   async function updateDisplayAttributes (_class: Ref<Class<Task>> | undefined, lang: string): Promise<void> {
     if (_class == null) {
+      displayAttributeGroups = []
       displayAttributes = []
       return
     }
 
-    const { regular, collection } = await getDisplayAttributes(_class, lang)
+    const skipRegular = ['status', 'modifiedOn', 'modifiedBy', 'createdOn', 'createdBy']
+    const skipCollections = ['reports', 'subIssues', 'blockedBy', 'relations', 'parents']
+    const res = await getDisplayAttributes(_class, lang, [...skipRegular, ...skipCollections])
+    displayAttributeGroups = res
+
+    const regular = res.flatMap((it) => it.regular)
+    const collection = res.flatMap((it) => it.collection)
 
     displayAttributes = [...regular, ...collection]
   }
@@ -137,20 +146,46 @@
     void saveDescription()
   })
 
+  let isDeleteLoading = false
+
   async function handleRemoveScreen (): Promise<void> {
-    if (screen == null) return
-    showPopup(MessageBox, {
-      label: plugin.string.DeleteScreen,
-      message: plugin.string.DeleteScreenConfirm,
-      params: { name: screen.name },
-      dangerous: true,
-      action: async () => {
-        if (screen != null) {
-          await client.remove(screen)
-          navigateToScreen(undefined)
+    if (screen == null || isDeleteLoading) return
+    isDeleteLoading = true
+    try {
+      const workflows = await client.findAll(
+        plugin.class.Workflow,
+        { projectType: screen.projectType },
+        {
+          lookup: {
+            _id: {
+              transitions: plugin.class.WorkflowTransition
+            }
+          }
         }
-      }
-    })
+      )
+
+      const usedWorkflows = workflows.filter((wf) => {
+        const transitions = (wf.$lookup?.transitions ?? []) as WorkflowTransition[]
+        return transitions.some((t) => t.requests?.some((r) => r.props?.screen === objectId))
+      })
+
+      showPopup(MessageBox, {
+        label: plugin.string.DeleteScreen,
+        message: plugin.string.DeleteScreenConfirm,
+        params: { name: screen.name },
+        component: usedWorkflows.length > 0 ? ScreenUsedWorkflows : undefined,
+        componentProps: { workflows: usedWorkflows },
+        dangerous: true,
+        action: async () => {
+          if (screen != null) {
+            await client.remove(screen)
+            navigateToScreen(undefined, false)
+          }
+        }
+      })
+    } finally {
+      isDeleteLoading = false
+    }
   }
 
   async function updateClassItem (_class: Ref<Class<Doc>> | undefined, lang: string): Promise<void> {
@@ -170,7 +205,21 @@
     await addScreenTab(client, screen._id, tabName)
   }
 
-  $: availableAttributes = displayAttributes.filter((f) => !usedFields.has(f.id))
+  const skipRegular = ['status', 'modifiedOn', 'modifiedBy', 'createdOn', 'createdBy']
+
+  $: availableAttributeGroups = displayAttributeGroups
+    .map((group) => ({
+      ...group,
+      regular: group.regular
+        .filter((it) => !skipRegular.includes(it.key) && !usedFields.has(it.id))
+        .sort((a, b) => a.label.localeCompare(b.label, $languageStore)),
+      collection: group.collection
+        .filter((it) => !usedFields.has(it.id))
+        .sort((a, b) => a.label.localeCompare(b.label, $languageStore))
+    }))
+    .filter((group) => group.regular.length > 0 || group.collection.length > 0)
+
+  $: availableAttributes = availableAttributeGroups.flatMap((group) => [...group.regular, ...group.collection])
 </script>
 
 <div class="hulyComponent-content__container columns">
@@ -209,6 +258,8 @@
                     tooltip={{ label: view.string.Delete, direction: 'bottom' }}
                     size="small"
                     kind="secondary"
+                    loading={isDeleteLoading}
+                    disabled={readonly || isDeleteLoading}
                     on:click={handleRemoveScreen}
                   />
                 {/if}
@@ -234,6 +285,7 @@
               canDelete={tabs.length > 1}
               {displayAttributes}
               {availableAttributes}
+              {availableAttributeGroups}
               fields={allFields.filter((it) => it.attachedTo === tab._id)}
             />
           {/each}

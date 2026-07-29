@@ -15,9 +15,11 @@
 
 import activity, { type ActivityMessage } from '@hcengineering/activity'
 import { type Channel, type ChatMessage } from '@hcengineering/chunter'
+import { generateId, getCurrentAccount, type Doc, type Markup } from '@hcengineering/core'
 import { type Resources } from '@hcengineering/platform'
 import { MessageBox, getClient } from '@hcengineering/presentation'
 import { getLocation, navigate, showPopup } from '@hcengineering/ui'
+import type { AttributeApplierResult } from '@hcengineering/view'
 import { get, writable } from 'svelte/store'
 import { type DocNotifyContext, type NotificationAppearancePreference } from '@hcengineering/notification'
 import {
@@ -98,9 +100,11 @@ import {
   replyToMessage
 } from './utils'
 import DeleteMessageConfirmationPopup from './components/DeleteMessageConfirmationPopup.svelte'
+import { isEmptyMarkup } from '@hcengineering/text'
 
 export { default as ChannelEmbeddedContent } from './components/ChannelEmbeddedContent.svelte'
 export { default as ChatMessageInput } from './components/chat-message/ChatMessageInput.svelte'
+export { default as ChatMessageInputLite } from './components/chat-message/ChatMessageInputLite.svelte'
 export { default as ChatMessagePopup } from './components/chat-message/ChatMessagePopup.svelte'
 export { default as ChatMessagesPresenter } from './components/chat-message/ChatMessagesPresenter.svelte'
 export { default as Header } from './components/Header.svelte'
@@ -160,6 +164,43 @@ export async function deleteChatMessage (message: ChatMessage): Promise<void> {
 
 export { replyToThread } from './navigation'
 
+export async function CommentsApplier (object: Doc, value: Markup | undefined | null): Promise<AttributeApplierResult> {
+  if (value == null || (typeof value === 'string' && value.trim().length === 0) || isEmptyMarkup(value)) {
+    return {}
+  }
+  const client = getClient()
+  const txFactory = client.txFactory
+  const id = generateId<ChatMessage>()
+  const modifiedOn = Date.now()
+  const modifiedBy = getCurrentAccount().primarySocialId
+
+  const createDocTx = txFactory.createTxCreateDoc<ChatMessage>(
+    chunter.class.ChatMessage,
+    object.space,
+    {
+      attachedTo: object._id,
+      attachedToClass: object._class,
+      collection: 'comments',
+      message: value
+    },
+    id,
+    modifiedOn,
+    modifiedBy
+  )
+
+  const collectionTx = txFactory.createTxCollectionCUD(
+    object._class,
+    object._id,
+    object.space,
+    'comments',
+    createDocTx,
+    modifiedOn,
+    modifiedBy
+  )
+
+  return { txes: [collectionTx] }
+}
+
 export default async (): Promise<Resources> => ({
   filter: {
     ChatMessagesFilter: chatMessagesFilter
@@ -206,6 +247,7 @@ export default async (): Promise<Resources> => ({
     MembersChangedMessage
   },
   function: {
+    CommentsApplier,
     GetDmName: getDmName,
     ChunterBrowserVisible: chunterBrowserVisible,
     GetFragment: getTitle,

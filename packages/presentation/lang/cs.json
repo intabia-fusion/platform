@@ -57,7 +57,8 @@
     "LineTool": "Čára",
     "RectangleTool": "Obdélník",
     "EllipseTool": "Elipsa",
-    "PaletteManagementMenu": "Spravovat barevné předvolby"
+    "PaletteManagementMenu": "Spravovat barevné předvolby",
+    "Draft": "Koncept"
   },
   "status": {
     "FileTooLarge": "Soubor je příliš velký"

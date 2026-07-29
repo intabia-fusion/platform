@@ -13,8 +13,17 @@
 // limitations under the License.
 //
 
-import { mergeIds } from '@hcengineering/platform'
+import { mergeIds, type Resource } from '@hcengineering/platform'
 import workflow, { workflowId } from '@hcengineering/workflow'
 import {} from '@hcengineering/ui'
+import { type Ref } from '@hcengineering/core'
+import { type PresentationMiddlewareCreator, type PresentationMiddlewareFactory } from '@hcengineering/presentation'
 
-export default mergeIds(workflowId, workflow, {})
+export default mergeIds(workflowId, workflow, {
+  function: {
+    CreateMiddleware: '' as Resource<PresentationMiddlewareCreator>
+  },
+  pipeline: {
+    WorkflowMiddleware: '' as Ref<PresentationMiddlewareFactory>
+  }
+})

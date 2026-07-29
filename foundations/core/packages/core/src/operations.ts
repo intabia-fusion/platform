@@ -662,3 +662,39 @@ export async function updateAttribute (
     }
   }
 }
+
+export function getAttributeUpdate (
+  client: TxOperations,
+  object: Doc,
+  _class: Ref<Class<Doc>>,
+  attribute: { key: string, attr: AnyAttribute },
+  value: any
+): DocumentUpdate<Doc> {
+  const doc = object
+  const attributeKey = attribute.key
+  if ((doc as any)[attributeKey] === value) return {}
+  const attr = attribute.attr
+
+  if (client.getHierarchy().isMixin(attr.attributeOf)) {
+    return { [`${attr.attributeOf}.${attributeKey}`]: value }
+  } else {
+    const update: DocumentUpdate<Doc> = {}
+    if (client.getHierarchy().isDerived(attribute.attr.type._class, core.class.ArrOf)) {
+      const oldValue: any[] = (object as any)[attributeKey] ?? []
+      const val: any[] = Array.isArray(value) ? value : [value]
+      const toPull = oldValue.filter((it: any) => !val.includes(it))
+
+      const toPush = val.filter((it) => !oldValue.includes(it))
+      if (toPull.length > 0) {
+        update.$pull = { [attributeKey]: { $in: toPull } }
+        if (toPush.length > 0) {
+          update.$push = { [attributeKey]: { $each: toPush, $position: 0 } }
+        }
+      } else {
+        return { [attributeKey]: value }
+      }
+    }
+  }
+
+  return {}
+}

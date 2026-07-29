@@ -21,7 +21,7 @@
 
   import plugin from '../plugin'
   import { navigateToScreen } from '../location'
-  import CreateScreen from './CreateScreen.svelte'
+  import CreateScreen from './screen/CreateScreen.svelte'
 
   export let type: ProjectType
   export let descriptor: ProjectTypeDescriptor | undefined = undefined

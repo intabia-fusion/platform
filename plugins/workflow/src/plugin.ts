@@ -121,6 +121,8 @@ export default plugin(workflowId, {
     FieldRequiredValidator: '' as IntlString,
     FieldRequiredDescription: '' as IntlString,
     FieldRequiredError: '' as IntlString,
+    FieldRequiredSingleError: '' as IntlString,
+    FieldRequiredMultipleError: '' as IntlString,
     SubtaskStatusValidator: '' as IntlString,
     SubtaskStatusDescription: '' as IntlString,
     SubtaskStatusError: '' as IntlString,
@@ -145,7 +147,9 @@ export default plugin(workflowId, {
     Screen: '' as IntlString,
     ScreenTab: '' as IntlString,
     ScreenField: '' as IntlString,
+    Attribute: '' as IntlString,
     FieldId: '' as IntlString,
+    FieldKey: '' as IntlString,
     Label: '' as IntlString,
     Required: '' as IntlString,
     Description: '' as IntlString,
@@ -163,6 +167,11 @@ export default plugin(workflowId, {
     TabName: '' as IntlString,
     ConfigureScreen: '' as IntlString,
     ScreenRequestPresenter: '' as IntlString,
-    ScreenNotSelected: '' as IntlString
+    ScreenNotSelected: '' as IntlString,
+    UsedInWorkflows: '' as IntlString,
+    UsedInProjects: '' as IntlString,
+    WorkflowsWillBeDeleted: '' as IntlString,
+    General: '' as IntlString,
+    NoAvailableFields: '' as IntlString
   }
 })

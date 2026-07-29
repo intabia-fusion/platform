@@ -343,6 +343,7 @@ export interface DropdownTextItem {
   iconProps?: Record<string, any>
   exclusive?: boolean
   separatorBefore?: boolean
+  separatorLabel?: string
 }
 
 export interface DropdownIntlItem {
@@ -355,6 +356,7 @@ export interface DropdownIntlItem {
   paramsDescription?: Record<string, any>
   keys?: string[]
   separatorBefore?: boolean
+  separatorLabel?: IntlString
 }
 
 export interface NestedSelectItem extends DropdownIntlItem {

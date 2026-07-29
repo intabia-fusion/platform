@@ -12,7 +12,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { generateId } from '@hcengineering/core'
+  import { generateId, Status } from '@hcengineering/core'
   import { getResourceP } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { ProjectType, TaskType } from '@hcengineering/task'
@@ -32,6 +32,7 @@
   export let transition: WorkflowTransition
   export let workflow: Workflow | undefined = undefined
   export let config: WorkflowRequestConfig | undefined = undefined
+  export let statuses: Status[] = []
   export let canSave = false
   export let isSaving = false
 

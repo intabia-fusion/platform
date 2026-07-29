@@ -9,53 +9,50 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte'
   import { Analytics } from '@hcengineering/analytics'
   import { Employee } from '@hcengineering/contact'
   import { AccountArrayEditor, AssigneeBox, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
   import core, {
+    AccountUuid,
     Data,
     DocumentUpdate,
+    generateId,
+    getCurrentAccount,
+    notEmpty,
     Ref,
     Role,
     RolesAssignment,
     SortingOrder,
-    SpaceType,
-    generateId,
-    getCurrentAccount,
-    notEmpty,
-    AccountUuid
+    SpaceType
   } from '@hcengineering/core'
-  import { Asset, getEmbeddedLabel } from '@hcengineering/platform'
-  import presentation, { IconWithEmoji, Card, createQuery, getClient } from '@hcengineering/presentation'
-  import task, { ProjectType, TaskType, Project as TaskProject } from '@hcengineering/task'
+  import { Asset } from '@hcengineering/platform'
+  import presentation, { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
+  import task, { Project as TaskProject, ProjectType, TaskType } from '@hcengineering/task'
   import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
   import { IssueStatus, Project, TimeReportDayType, TrackerEvents } from '@hcengineering/tracker'
-  import ui, {
+  import {
     Button,
     ButtonIcon,
-    IconSettings,
     Component,
     EditBox,
-    Label,
-    Toggle,
     getColorNumberByText,
     getPlatformColorDef,
     getPlatformColorForTextDef,
+    Label,
+    Modal,
     showPopup,
     themeStore,
-    IconOptions,
-    IconToDetails, Modal
+    Toggle
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { IconPicker } from '@hcengineering/view-resources'
-  import workflow, { Workflow, ProjectWorkflow } from '@hcengineering/workflow'
+  import workflow, { ProjectWorkflow, Workflow } from '@hcengineering/workflow'
   import { deepEqual } from 'fast-equals'
-  import { createEventDispatcher } from 'svelte'
 
   import tracker from '../../plugin'
   import StatusSelector from '../issues/StatusSelector.svelte'
@@ -631,12 +628,7 @@
           <span><Label label={workflow.string.WorkflowMapping} /></span>
         </div>
         <div class="flex-row-center gap-2">
-          <ButtonIcon
-            icon={view.icon.Setting}
-            kind="secondary"
-            size="large"
-            on:click={openConfigureWorkflows}
-          />
+          <ButtonIcon icon={view.icon.Setting} kind="secondary" size="large" on:click={openConfigureWorkflows} />
           {#if hasConfiguredWorkflows}
             <span class="workflows-status-label lower">
               (<Label label={tracker.string.Configured} />)
