@@ -74,6 +74,7 @@ export const main = async (): Promise<void> => {
         }
       })
       : undefined
+  const tbankVerboseLogging = process.env.TBANK_DEBUG_LOG === 'true'
   const tbank =
     mockPair?.tbank ??
     new TbankPayments({
@@ -81,12 +82,14 @@ export const main = async (): Promise<void> => {
       secret: config.TbankPassword,
       apiUrl: config.TbankUrl,
       logger: {
-        debug: (message: string) => {
-          metricsContext.info(message)
+        debug: (message: string, data) => {
+          metricsContext.info(message, tbankVerboseLogging ? data : {})
         },
         error: (message: string, data?: any) => {
-          // Keep message/status, drop raw response body which may echo payload.
-          metricsContext.error(message, { message: data?.message, status: data?.status })
+          // If not verbose logging Keep message/status, drop raw response body which may echo payload.
+          metricsContext.error(message, {
+            ...(tbankVerboseLogging ? data : { message: data?.message, status: data?.status })
+          })
         }
       }
     })
