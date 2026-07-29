@@ -42,6 +42,8 @@ export class AmoCrmClient {
     phone?: string,
     comment?: string
   ): Promise<void> {
+    console.error('DEBUG [client.ts] createLead, cookieValues - ', JSON.stringify(cookieValues, null, 2))
+
     if (email === undefined && phone === undefined) {
       this.ctx.error('AmoCRM lead requires email or phone', { firstName, lastName })
       return
@@ -50,10 +52,15 @@ export class AmoCrmClient {
     const leadCustomFields: AmoCrmLeadCustomFieldValue[] = []
 
     const textCustomFields = await this.fetchTextCustomFields()
+
+    console.error('DEBUG [client.ts] createLead, textCustomFields - ', textCustomFields)
+
     this.addCustomFieldsFromCookies(cookieValues, textCustomFields, leadCustomFields, true)
 
     const trackingDataCustomFields = await this.fetchTrackigDataCustomFields()
     this.addCustomFieldsFromCookies(cookieValues, trackingDataCustomFields, leadCustomFields, false)
+
+    console.error('DEBUG [client.ts] createLead, leadCustomFields - ', JSON.stringify(leadCustomFields, null, 2))
 
     const contactCustomFields: AmoCrmContactCustomFieldValue[] = []
     if (email !== undefined) {
@@ -101,6 +108,8 @@ export class AmoCrmClient {
       },
       ...(leadCustomFields.length > 0 && { custom_fields_values: leadCustomFields })
     }
+
+    console.error('DEBUG [client.ts] createLead, AmoCrmLeadRequest - ', JSON.stringify(lead, null, 2))
 
     const response = await this.post<AmoCrmLeadRequest[], AmoCrmLeadResponse[]>(
       '/api/v4/leads/complex',

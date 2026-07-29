@@ -53,6 +53,9 @@ async function handleLeadRequest (ctx: MeasureContext, config: Config, req: Requ
     }
 
     const cookies = parseCookies(req.headers.cookie)
+
+    console.error('DEBUG [server.ts] handleLeadRequest, cookies - ', JSON.stringify(cookies, null, 2))
+
     const amocrm = new AmoCrmClient(ctx)
     await amocrm.createLead(cookies, config.AmoCrmNotProcessedStatus, name, undefined, undefined, phone, comment)
 

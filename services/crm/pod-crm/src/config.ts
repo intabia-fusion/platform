@@ -40,7 +40,7 @@ const config: Config = (() => {
     process.env.AMO_CRM_RESPONSIBLE_USER_ID !== undefined ? parseInt(process.env.AMO_CRM_RESPONSIBLE_USER_ID, 10) : 0
   const amoCrmToken = process.env.AMO_CRM_TOKEN ?? ''
   const amoCrmTrialStatus = process.env.AMO_CRM_TRIAL_STATUS ?? 'Подключили триал'
-  const amoCrmNotProcessedStatus = process.env.AMO_CRM_NOT_PROCESSED_STATUS ?? 'Не обработали'
+  const amoCrmNotProcessedStatus = process.env.AMO_CRM_NOT_PROCESSED_STATUS ?? 'Неразобранное'
   const port = process.env.PORT !== undefined ? parseInt(process.env.PORT, 10) : 3001
   const queueConfig = process.env.QUEUE_CONFIG ?? ''
   const queueRegion = process.env.QUEUE_REGION ?? ''
