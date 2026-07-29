@@ -14,7 +14,6 @@
 -->
 <script lang="ts">
   import core, { Class, ClassifierKind, Doc, Rank, Ref } from '@hcengineering/core'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import { makeRank, toRank } from '@hcengineering/rank'
   import {
@@ -38,11 +37,6 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
-  const embeddedPrefix = getEmbeddedLabel('')
-  function isGeneratedTargetClass (cls: Class<Doc>): boolean {
-    return cls.label.startsWith(embeddedPrefix) && !hierarchy.hasMixin(cls, setting.mixin.UserMixin)
-  }
-
   function getRank (m: Class<Doc>): Rank | undefined {
     if (hierarchy.hasMixin(m, setting.mixin.ClassifierOrder)) {
       return hierarchy.as(m, setting.mixin.ClassifierOrder).rank
@@ -58,8 +52,9 @@
         (cls) =>
           cls.hidden !== true &&
           cls.label !== undefined &&
-          !isGeneratedTargetClass(cls) &&
-          (!hierarchy.hasMixin(cls, setting.mixin.Editable) || hierarchy.as(cls, setting.mixin.Editable).value)
+          // generated targetClass mixins have no Editable, unlike user- and model-declared ones
+          hierarchy.hasMixin(cls, setting.mixin.Editable) &&
+          hierarchy.as(cls, setting.mixin.Editable).value
       )
       .sort((a, b) => (getRank(a) ?? '').localeCompare(getRank(b) ?? ''))
   })

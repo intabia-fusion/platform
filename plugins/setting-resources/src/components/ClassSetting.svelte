@@ -84,11 +84,11 @@
     rawClasses = res
   })
 
-  // Dynamically generated mixins (TaskType/SpaceType targetClass) carry an
-  // embedded label; user-created mixins do too but are marked with UserMixin.
-  const embeddedPrefix = getEmbeddedLabel('')
+  // Generated targetClass mixins carry neither UserMixin nor Editable.
   function isGeneratedTargetClass (cls: Class<Doc>): boolean {
-    return cls.label.startsWith(embeddedPrefix) && !hierarchy.hasMixin(cls, setting.mixin.UserMixin)
+    if (cls.kind !== ClassifierKind.MIXIN) return false
+    if (hierarchy.hasMixin(cls, setting.mixin.UserMixin)) return false
+    return !(hierarchy.hasMixin(cls, setting.mixin.Editable) && hierarchy.as(cls, setting.mixin.Editable).value)
   }
 
   // Flat list: filterDescendants gives editable roots; expand each root into
