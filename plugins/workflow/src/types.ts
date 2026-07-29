@@ -74,6 +74,29 @@ export interface WorkflowRequestConfig {
   props: Record<string, any>
 }
 
+export interface WorkflowPostFunction extends WorkflowRule {}
+
+export interface SetFieldValueProps {
+  fieldKey?: string
+  mixin?: Ref<Mixin<Doc>>
+  value?: any
+}
+
+export interface ClearFieldConfig {
+  fieldKey: string
+  mixin?: Ref<Mixin<Doc>>
+}
+
+export interface ClearFieldValueProps {
+  fields?: ClearFieldConfig[]
+}
+
+export interface WorkflowPostFunctionConfig {
+  id: string
+  postFunction: Ref<WorkflowPostFunction>
+  props: Record<string, any>
+}
+
 export interface ScreenField extends AttachedDoc<ScreenTab, 'fields'> {
   mixin?: Ref<Class<Mixin<Doc>>>
   fieldId: Ref<AnyAttribute>
@@ -104,6 +127,7 @@ export interface WorkflowTransition extends AttachedDoc<Workflow, 'transitions'>
   rank: Rank
   validators?: WorkflowValidatorConfig[]
   requests?: WorkflowRequestConfig[]
+  postFunctions?: WorkflowPostFunctionConfig[]
 }
 
 export interface ProjectWorkflow extends Project {

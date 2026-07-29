@@ -29,6 +29,10 @@ import ParentStatus from './components/validators/editors/ParentStatus.svelte'
 import FieldRequiredPresenter from './components/validators/presenters/FieldRequiredPresenter.svelte'
 import SubtaskStatusPresenter from './components/validators/presenters/SubtaskStatusPresenter.svelte'
 import ParentStatusPresenter from './components/validators/presenters/ParentStatusPresenter.svelte'
+import SetFieldValue from './components/postFunctions/editors/SetFieldValue.svelte'
+import ClearFieldValue from './components/postFunctions/editors/ClearFieldValue.svelte'
+import SetFieldValuePresenter from './components/postFunctions/presenters/SetFieldValuePresenter.svelte'
+import ClearFieldValuePresenter from './components/postFunctions/presenters/ClearFieldValuePresenter.svelte'
 import * as validators from './validators'
 import { WorkflowMiddleware } from './middleware'
 
@@ -59,6 +63,14 @@ export default async (): Promise<Resources> => ({
     FieldRequired: FieldRequiredPresenter,
     SubtaskStatus: SubtaskStatusPresenter,
     ParentStatus: ParentStatusPresenter
+  },
+  postFunctionEditor: {
+    SetFieldValue,
+    ClearFieldValue
+  },
+  postFunctionPresenter: {
+    SetFieldValue: SetFieldValuePresenter,
+    ClearFieldValue: ClearFieldValuePresenter
   },
   function: {
     CreateMiddleware: (client: Client, next?: PresentationMiddleware) => WorkflowMiddleware.create(client, next)

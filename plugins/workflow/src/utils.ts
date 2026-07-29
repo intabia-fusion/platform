@@ -22,6 +22,7 @@ import type {
   WorkflowTransition,
   WorkflowValidatorConfig,
   WorkflowRequestConfig,
+  WorkflowPostFunctionConfig,
   Screen,
   ScreenTab,
   ScreenField
@@ -215,6 +216,65 @@ export async function updateRequestConfig (
   await updateTransition(client, workflowId, transitionId, {
     $update: {
       requests: {
+        $query: { id: configId },
+        $update: data
+      }
+    }
+  })
+}
+
+export async function addPostFunctionConfig (
+  client: TxOperations,
+  workflowId: Ref<Workflow>,
+  transitionId: Ref<WorkflowTransition>,
+  config: WorkflowPostFunctionConfig
+): Promise<WorkflowPostFunctionConfig> {
+  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
+  if (transition == null) {
+    throw new Error(`Transition ${transitionId} not found`)
+  }
+  const current = transition.postFunctions ?? []
+
+  const exists = current.some((pf) => pf.id === config.id)
+  if (exists) {
+    throw new Error(`Post-function config already exists on transition ${transitionId}`)
+  }
+
+  await updateTransition(client, workflowId, transitionId, {
+    $push: { postFunctions: config }
+  })
+  return config
+}
+
+export async function removePostFunctionConfig (
+  client: TxOperations,
+  workflowId: Ref<Workflow>,
+  transitionId: Ref<WorkflowTransition>,
+  configId: string
+): Promise<void> {
+  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
+  if (transition == null) {
+    throw new Error(`Transition ${transitionId} not found`)
+  }
+  await updateTransition(client, workflowId, transitionId, {
+    $pull: { postFunctions: { id: configId } }
+  })
+}
+
+export async function updatePostFunctionConfig (
+  client: TxOperations,
+  workflowId: Ref<Workflow>,
+  transitionId: Ref<WorkflowTransition>,
+  configId: string,
+  data: Partial<Pick<WorkflowPostFunctionConfig, 'props'>>
+): Promise<void> {
+  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
+  if (transition == null) {
+    throw new Error(`Transition ${transitionId} not found`)
+  }
+  await updateTransition(client, workflowId, transitionId, {
+    $update: {
+      postFunctions: {
         $query: { id: configId },
         $update: data
       }

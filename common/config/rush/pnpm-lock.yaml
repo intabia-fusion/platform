@@ -35777,6 +35777,9 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
+      '@hcengineering/task':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/task
       '@hcengineering/workflow':
         specifier: workspace:^0.7.0
         version: link:../../plugins/workflow

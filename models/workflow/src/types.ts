@@ -48,6 +48,8 @@ import {
   type WorkflowRule,
   type WorkflowRequest,
   type WorkflowRequestConfig,
+  type WorkflowPostFunction,
+  type WorkflowPostFunctionConfig,
   type Screen,
   type ScreenTab,
   type ScreenField
@@ -85,6 +87,9 @@ export class TValidatorImpl extends TWorkflowValidator implements ValidatorImpl 
 
 @Model(workflow.class.WorkflowRequest, workflow.class.WorkflowRule)
 export class TWorkflowRequest extends TWorkflowRule implements WorkflowRequest {}
+
+@Model(workflow.class.WorkflowPostFunction, workflow.class.WorkflowRule)
+export class TWorkflowPostFunction extends TWorkflowRule implements WorkflowPostFunction {}
 
 @Model(workflow.class.ScreenField, core.class.AttachedDoc, DOMAIN_WORKFLOW)
 export class TScreenField extends TAttachedDoc implements ScreenField {
@@ -182,6 +187,9 @@ export class TWorkflowTransition extends TAttachedDoc implements WorkflowTransit
 
   @Prop(ArrOf(TypeRecord()), workflow.string.Requests)
     requests?: WorkflowRequestConfig[]
+
+  @Prop(ArrOf(TypeRecord()), workflow.string.PostFunctions)
+    postFunctions?: WorkflowPostFunctionConfig[]
 }
 
 @TypeMixin(workflow.mixin.ProjectWorkflow, task.class.Project)

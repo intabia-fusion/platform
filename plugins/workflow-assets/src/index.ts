@@ -24,5 +24,6 @@ loadMetadata(workflow.icon, {
   Check: `${icons}#check`,
   Screens: `${icons}#screens`,
   Screen: `${icons}#screen`,
-  ScreenTab: `${icons}#screen-tab`
+  ScreenTab: `${icons}#screen-tab`,
+  Action: `${icons}#action`
 })

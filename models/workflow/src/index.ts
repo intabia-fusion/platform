@@ -26,12 +26,14 @@ import {
   TValidatorImpl,
   TWorkflowRule,
   TWorkflowRequest,
+  TWorkflowPostFunction,
   TScreenField,
   TScreenTab,
   TScreen
 } from './types'
 import { defineValidators } from './validators'
 import { defineRequests } from './requests'
+import { definePostFunctions } from './postFunctions'
 
 export function createModel (builder: Builder): void {
   builder.createModel(
@@ -42,12 +44,14 @@ export function createModel (builder: Builder): void {
     TWorkflowValidator,
     TValidatorImpl,
     TWorkflowRequest,
+    TWorkflowPostFunction,
     TScreenField,
     TScreenTab,
     TScreen
   )
   defineValidators(builder)
   defineRequests(builder)
+  definePostFunctions(builder)
 
   builder.createDoc(
     presentation.class.PresentationMiddlewareFactory,

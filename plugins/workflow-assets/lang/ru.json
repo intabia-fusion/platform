@@ -82,6 +82,17 @@
     "UsedInProjects": "Используется в проектах:",
     "WorkflowsWillBeDeleted": "Следующие процессы привязаны к этому типу задач и тоже будут удалены:",
     "General": "Основная",
-    "NoAvailableFields": "Все доступные поля уже добавлены"
+    "NoAvailableFields": "Все доступные поля уже добавлены",
+    "PostFunctions": "Пост-функции",
+    "WorkflowPostFunction": "Пост-функция воркфлоу",
+    "AddPostFunction": "Добавить пост-функцию",
+    "PostFunction": "Пост-функция",
+    "SetFieldValuePostFunction": "Автозаполнение поля",
+    "SetFieldValueDescription": "Автоматически установить значение поля задачи при переходе",
+    "ClearFieldValuePostFunction": "Очистка полей",
+    "ClearFieldValueDescription": "Автоматически очистить поля задачи (например, поле решения) при переходе",
+    "Value": "Значение",
+    "ClearFields": "Поля для очистки",
+    "SelectFieldToClear": "Выберите поля для очистки"
   }
 }

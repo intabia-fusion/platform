@@ -24,6 +24,7 @@ import {
   ValidatorFunc,
   WorkflowRule,
   WorkflowRequest,
+  WorkflowPostFunction,
   Screen,
   ScreenTab,
   ScreenField
@@ -38,6 +39,7 @@ export default plugin(workflowId, {
     WorkflowRule: '' as Ref<Class<WorkflowRule>>,
     WorkflowValidator: '' as Ref<Class<WorkflowValidator>>,
     WorkflowRequest: '' as Ref<Class<WorkflowRequest>>,
+    WorkflowPostFunction: '' as Ref<Class<WorkflowPostFunction>>,
     Screen: '' as Ref<Class<Screen>>,
     ScreenTab: '' as Ref<Class<ScreenTab>>,
     ScreenField: '' as Ref<Class<ScreenField>>
@@ -71,6 +73,18 @@ export default plugin(workflowId, {
   requestPresenter: {
     ScreenRequest: '' as AnyComponent
   },
+  postFunction: {
+    SetFieldValue: '' as Ref<WorkflowPostFunction>,
+    ClearFieldValue: '' as Ref<WorkflowPostFunction>
+  },
+  postFunctionEditor: {
+    SetFieldValue: '' as AnyComponent,
+    ClearFieldValue: '' as AnyComponent
+  },
+  postFunctionPresenter: {
+    SetFieldValue: '' as AnyComponent,
+    ClearFieldValue: '' as AnyComponent
+  },
   mixin: {
     ProjectWorkflow: '' as Ref<Mixin<ProjectWorkflow>>,
     ValidatorImpl: '' as Ref<Mixin<ValidatorImpl>>
@@ -88,7 +102,8 @@ export default plugin(workflowId, {
     Check: '' as Asset,
     Screens: '' as Asset,
     Screen: '' as Asset,
-    ScreenTab: '' as Asset
+    ScreenTab: '' as Asset,
+    Action: '' as Asset
   },
   string: {
     Workflow: '' as IntlString,
@@ -172,6 +187,17 @@ export default plugin(workflowId, {
     UsedInProjects: '' as IntlString,
     WorkflowsWillBeDeleted: '' as IntlString,
     General: '' as IntlString,
-    NoAvailableFields: '' as IntlString
+    NoAvailableFields: '' as IntlString,
+    PostFunctions: '' as IntlString,
+    WorkflowPostFunction: '' as IntlString,
+    AddPostFunction: '' as IntlString,
+    PostFunction: '' as IntlString,
+    SetFieldValuePostFunction: '' as IntlString,
+    SetFieldValueDescription: '' as IntlString,
+    ClearFieldValuePostFunction: '' as IntlString,
+    ClearFieldValueDescription: '' as IntlString,
+    Value: '' as IntlString,
+    ClearFields: '' as IntlString,
+    SelectFieldToClear: '' as IntlString
   }
 })

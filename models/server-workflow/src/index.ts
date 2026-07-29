@@ -17,10 +17,10 @@ import core from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 import task from '@hcengineering/task'
 import serverCore from '@hcengineering/server-core'
-import workflow, { TWorkflowValidator } from '@hcengineering/model-workflow'
+import workflow, { TWorkflowValidator, TWorkflowPostFunction } from '@hcengineering/model-workflow'
 import { Mixin } from '@hcengineering/model'
 import type { Resource } from '@hcengineering/platform'
-import { type ValidatorImpl } from '@hcengineering/server-workflow'
+import { type ValidatorImpl, type PostFunctionImpl, type PostFunctionFunc } from '@hcengineering/server-workflow'
 import { type ValidatorFunc } from '@hcengineering/workflow'
 import serverWorkflow from '@hcengineering/server-workflow'
 
@@ -31,8 +31,13 @@ export class TValidatorImpl extends TWorkflowValidator implements ValidatorImpl 
   serverExecutor!: Resource<ValidatorFunc>
 }
 
+@Mixin(serverWorkflow.mixin.PostFunctionImpl, workflow.class.WorkflowPostFunction)
+export class TPostFunctionImpl extends TWorkflowPostFunction implements PostFunctionImpl {
+  serverExecutor!: Resource<PostFunctionFunc>
+}
+
 export function createModel (builder: Builder): void {
-  builder.createModel(TValidatorImpl)
+  builder.createModel(TValidatorImpl, TPostFunctionImpl)
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverWorkflow.trigger.ValidateTransition,
@@ -63,4 +68,22 @@ export function createModel (builder: Builder): void {
   builder.mixin(workflow.validator.ParentStatus, workflow.class.WorkflowValidator, serverWorkflow.mixin.ValidatorImpl, {
     serverExecutor: serverWorkflow.validatorExecutor.ParentStatus
   })
+
+  builder.mixin(
+    workflow.postFunction.SetFieldValue,
+    workflow.class.WorkflowPostFunction,
+    serverWorkflow.mixin.PostFunctionImpl,
+    {
+      serverExecutor: serverWorkflow.postFunctionExecutor.SetFieldValue
+    }
+  )
+
+  builder.mixin(
+    workflow.postFunction.ClearFieldValue,
+    workflow.class.WorkflowPostFunction,
+    serverWorkflow.mixin.PostFunctionImpl,
+    {
+      serverExecutor: serverWorkflow.postFunctionExecutor.ClearFieldValue
+    }
+  )
 }

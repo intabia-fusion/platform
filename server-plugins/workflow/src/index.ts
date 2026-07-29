@@ -15,9 +15,10 @@
 
 import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
-import type { TriggerFunc } from '@hcengineering/server-core'
-import type { Mixin, Ref } from '@hcengineering/core'
-import type { WorkflowValidator, ValidatorFunc } from '@hcengineering/workflow'
+import type { TriggerControl, TriggerFunc } from '@hcengineering/server-core'
+import type { Mixin, Ref, Tx } from '@hcengineering/core'
+import type { Task } from '@hcengineering/task'
+import type { WorkflowValidator, ValidatorFunc, WorkflowPostFunction, WorkflowTransition } from '@hcengineering/workflow'
 
 export const serverWorkflowId = 'server-workflow' as Plugin
 export { WorkflowMiddleware } from './middleware'
@@ -26,16 +27,32 @@ export interface ValidatorImpl extends WorkflowValidator {
   serverExecutor: Resource<ValidatorFunc>
 }
 
+export type PostFunctionFunc = (
+  control: TriggerControl,
+  task: Task,
+  transition: WorkflowTransition,
+  props: Record<string, any>
+) => Promise<Tx[]>
+
+export interface PostFunctionImpl extends WorkflowPostFunction {
+  serverExecutor: Resource<PostFunctionFunc>
+}
+
 export default plugin(serverWorkflowId, {
   trigger: {
     ValidateTransition: '' as Resource<TriggerFunc>
   },
   mixin: {
-    ValidatorImpl: '' as Ref<Mixin<ValidatorImpl>>
+    ValidatorImpl: '' as Ref<Mixin<ValidatorImpl>>,
+    PostFunctionImpl: '' as Ref<Mixin<PostFunctionImpl>>
   },
   validatorExecutor: {
     FieldRequired: '' as Resource<ValidatorFunc>,
     SubtaskStatus: '' as Resource<ValidatorFunc>,
     ParentStatus: '' as Resource<ValidatorFunc>
+  },
+  postFunctionExecutor: {
+    SetFieldValue: '' as Resource<PostFunctionFunc>,
+    ClearFieldValue: '' as Resource<PostFunctionFunc>
   }
 })

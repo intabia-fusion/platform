@@ -34,10 +34,12 @@ import {
   type WorkflowValidator,
   type WorkflowTransition,
   type WorkflowValidatorConfig,
-  ValidatorClient
+  type ValidatorClient
 } from '@hcengineering/workflow'
+import { executeTransitionPostFunctions } from './ExecutePostFunctions'
 
 export async function ValidateTransitionTrigger (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
+  const result: Tx[] = []
   for (const tx of txes) {
     if (!control.hierarchy.isDerived(tx.objectClass, task.class.Task)) {
       continue
@@ -46,10 +48,13 @@ export async function ValidateTransitionTrigger (txes: TxCUD<Doc>[], control: Tr
     if (tx._class === core.class.TxCreateDoc) {
       await validateCreate(tx as TxCreateDoc<Task>, control)
     } else if (tx._class === core.class.TxUpdateDoc) {
-      await validateUpdate(tx as TxUpdateDoc<Task>, control)
+      const postTxes = await validateUpdate(tx as TxUpdateDoc<Task>, control)
+      if (postTxes != null && postTxes.length > 0) {
+        result.push(...postTxes)
+      }
     }
   }
-  return []
+  return result
 }
 
 async function validateCreate (createTx: TxCreateDoc<Task>, control: TriggerControl): Promise<void> {
@@ -73,23 +78,23 @@ async function validateCreate (createTx: TxCreateDoc<Task>, control: TriggerCont
   }
 }
 
-async function validateUpdate (updateTx: TxUpdateDoc<Task>, control: TriggerControl): Promise<void> {
+async function validateUpdate (updateTx: TxUpdateDoc<Task>, control: TriggerControl): Promise<Tx[]> {
   const toStatus = updateTx.operations.status
-  if (toStatus == null) return
+  if (toStatus == null) return []
 
   const oldTask = (await control.findAll(control.ctx, task.class.Task, { _id: updateTx.objectId }, { limit: 1 }))[0]
-  if (oldTask == null) return
+  if (oldTask == null) return []
 
   const fromStatus = oldTask.status
-  if (fromStatus === toStatus) return
+  if (fromStatus === toStatus) return []
 
   const project = (
     await control.findAll(control.ctx, task.class.Project, { _id: oldTask.space as Ref<Project> }, { limit: 1 })
   )[0]
-  if (project == null) return
+  if (project == null) return []
 
   const workflowRef = findWorkflowForTaskType(control.hierarchy, project, oldTask.kind)
-  if (workflowRef == null) return
+  if (workflowRef == null) return []
 
   const transitions = await control.findAll(control.ctx, workflow.class.WorkflowTransition, {
     attachedTo: workflowRef
@@ -112,6 +117,7 @@ async function validateUpdate (updateTx: TxUpdateDoc<Task>, control: TriggerCont
   }
 
   await validateTransitionValidators(control, transition, TxProcessor.updateDoc2Doc(oldTask, updateTx))
+  return await executeTransitionPostFunctions(control, transition, oldTask)
 }
 
 async function validateTransitionValidators (

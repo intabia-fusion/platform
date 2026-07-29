@@ -82,6 +82,17 @@
     "UsedInProjects": "Used in projects:",
     "WorkflowsWillBeDeleted": "The following workflows are tied to this task type and will also be deleted:",
     "General": "General",
-    "NoAvailableFields": "All available fields have already been added"
+    "NoAvailableFields": "All available fields have already been added",
+    "PostFunctions": "Post-functions",
+    "WorkflowPostFunction": "Workflow Post-function",
+    "AddPostFunction": "Add post-function",
+    "PostFunction": "Post-function",
+    "SetFieldValuePostFunction": "Set field value",
+    "SetFieldValueDescription": "Automatically set a task field/attribute value during status transition",
+    "ClearFieldValuePostFunction": "Clear field value",
+    "ClearFieldValueDescription": "Automatically clear task fields (e.g. resolution) during status transition",
+    "Value": "Value",
+    "ClearFields": "Fields to clear",
+    "SelectFieldToClear": "Select fields to clear"
   }
 }
