@@ -160,7 +160,7 @@
     for (const res of result) {
       const key = getKey(res.value)
       if (key === undefined) continue
-      if (key === attribute.name || key === value) return
+      if (key === attribute.name || key === value || key === proxiedValue) return
       if (key === '' && isAttribute(res) && res.label === attribute.label) return
     }
     const mixin =

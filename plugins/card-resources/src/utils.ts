@@ -42,7 +42,7 @@ import core, {
   type TxOperations,
   type WithLookup
 } from '@hcengineering/core'
-import { toRank } from '@hcengineering/rank'
+import { makeRank, toRank } from '@hcengineering/rank'
 import login from '@hcengineering/login'
 import { getMetadata, translate } from '@hcengineering/platform'
 import presentation, {
@@ -71,7 +71,6 @@ import workbench, { type LocationData, type Widget, type WidgetTab } from '@hcen
 import { createWidgetTab } from '@hcengineering/workbench-resources'
 
 import attachment from '@hcengineering/attachment'
-import { makeRank } from '@hcengineering/rank'
 import { writable } from 'svelte/store'
 import CardSearchItem from './components/CardSearchItem.svelte'
 import CreateSpace from './components/navigator/CreateSpace.svelte'

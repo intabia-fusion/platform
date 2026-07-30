@@ -15,7 +15,8 @@
 
 <script lang="ts">
   import { Card, Tag } from '@hcengineering/card'
-  import core, { Class, Doc, Ref, toRank } from '@hcengineering/core'
+  import core, { Class, Doc, Ref } from '@hcengineering/core'
+  import { toRank } from '@hcengineering/rank'
   import { getClient, KeyedAttribute, updateAttribute } from '@hcengineering/presentation'
   import { isEmptyMarkup } from '@hcengineering/text'
   import { Label } from '@hcengineering/ui'

@@ -201,7 +201,7 @@
     for (const res of result) {
       const key = getKey(res.value)
       if (key === undefined) continue
-      if (key === attribute.name || key === value) return
+      if (key === attribute.name || key === value || key === proxiedValue) return
       if (key === '' && isAttribute(res) && res.label === attribute.label) return
     }
     const mixin =
@@ -664,18 +664,21 @@
         {@const selectedViewlet = viewlets.find((it) => it._id === selected)}
         {@const selectedPreferece = preferences.find((it) => it.attachedTo === selected)}
         {#if selectedViewlet}
-          {@const citems = getConfig(selectedViewlet, selectedPreferece)}
           {@const customItems = getCustomAttributes(selectedViewlet, selectedPreferece)}
-          <ViewletClassSettings
-            {viewlet}
-            items={citems}
-            on:restoreDefaults={() => {
-              restoreDefault(selected)
-            }}
-            on:save={(evt) => {
-              save(selected, evt.detail)
-            }}
-          />
+          {#await getConfig(selectedViewlet, selectedPreferece)}
+            <Loading />
+          {:then citems}
+            <ViewletClassSettings
+              {viewlet}
+              items={citems}
+              on:restoreDefaults={() => {
+                restoreDefault(selected)
+              }}
+              on:save={(evt) => {
+                save(selected, evt.detail)
+              }}
+            />
+          {/await}
           {#if customItems.length > 0}
             <div class="antiDivider" />
             <div class="menu-group__header">

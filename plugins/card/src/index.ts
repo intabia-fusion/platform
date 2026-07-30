@@ -222,6 +222,7 @@ const cardPlugin = plugin(cardId, {
     UnLockSection: '' as IntlString,
     SectionLocked: '' as IntlString,
     SectionUnlocked: '' as IntlString,
+    ShowAllVersions: '' as IntlString,
     Default: '' as IntlString
   },
   section: {

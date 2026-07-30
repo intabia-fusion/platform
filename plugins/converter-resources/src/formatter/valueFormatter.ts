@@ -16,12 +16,11 @@
 import converter from '@hcengineering/converter'
 import core, {
   type AnyAttribute,
-  type Association,
   type Class,
   type Doc,
   type Hierarchy,
   type PersonId,
-  getDisplayTime,
+  type Ref,
   getObjectValue
 } from '@hcengineering/core'
 import { translate, type IntlString, getResource } from '@hcengineering/platform'
@@ -30,7 +29,14 @@ import { loadPersonName } from '../data/personLoader'
 import { createMarkdownLink } from '../markdown/link'
 import type { ValueFormatter } from '../types'
 import { getFormattersForClass } from './registry'
-import { DocumentAttributeKey, extractObjectTitleOrName, formatArrayValue, formatSingleValue } from './utils'
+import {
+  DocumentAttributeKey,
+  extractObjectTitleOrName,
+  formatArrayValue,
+  formatDateValue,
+  formatSingleValue,
+  isIntlString
+} from './utils'
 
 /** Resolved context for formatting: which object we display and its value */
 export interface DisplayContext {

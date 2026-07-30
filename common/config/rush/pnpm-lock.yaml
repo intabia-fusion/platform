@@ -786,7 +786,7 @@ importers:
         version: 5.9.3
       update-browserslist-db:
         specifier: ^1.1.3
-        version: 1.1.4(browserslist@4.28.2)
+        version: 1.2.3(browserslist@4.28.2)
       webpack:
         specifier: ^5.97.1
         version: 5.102.1(esbuild@0.25.12)(webpack-cli@5.1.4)
@@ -1817,7 +1817,7 @@ importers:
         version: 5.9.3
       update-browserslist-db:
         specifier: ^1.1.3
-        version: 1.1.4(browserslist@4.28.2)
+        version: 1.2.3(browserslist@4.28.2)
       webpack:
         specifier: ^5.97.1
         version: 5.102.1(esbuild@0.25.12)(webpack-cli@5.1.4)
@@ -10201,6 +10201,9 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
+      '@hcengineering/view':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/view
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -18684,10 +18687,10 @@ importers:
         specifier: workspace:^0.7.0
         version: link:../../packages/presentation
       '@hcengineering/text':
-        specifier: workspace:^0.7.19
+        specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/text
       '@hcengineering/text-markdown':
-        specifier: workspace:^0.7.21
+        specifier: workspace:^0.7.20
         version: link:../../foundations/core/packages/text-markdown
       '@hcengineering/theme':
         specifier: workspace:^0.7.0
@@ -24347,7 +24350,7 @@ importers:
         specifier: workspace:^0.7.0
         version: link:../setting-resources
       '@hcengineering/text-core':
-        specifier: workspace:^0.7.19
+        specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/text-core
       '@hcengineering/time':
         specifier: workspace:^0.7.0
@@ -33833,7 +33836,7 @@ importers:
         specifier: workspace:^0.7.0
         version: link:../process
       '@hcengineering/text-core':
-        specifier: workspace:^0.7.19
+        specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/text-core
       '@hcengineering/time':
         specifier: workspace:^0.7.0
@@ -65903,12 +65906,6 @@ snapshots:
     dependencies:
       escape-string-regexp: 5.0.0
       path-exists: 5.0.0
-
-  update-browserslist-db@1.1.4(browserslist@4.28.2):
-    dependencies:
-      browserslist: 4.28.2
-      escalade: 3.2.0
-      picocolors: 1.1.1
 
   update-browserslist-db@1.2.3(browserslist@4.28.2):
     dependencies:

@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { reduceCalls, type Class, type Doc, type Ref } from '@hcengineering/core'
+  import core, { reduceCalls, type Class, type Doc, type Ref } from '@hcengineering/core'
   import type { AnySvelteComponent, ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { Icon, Label, tooltip } from '@hcengineering/ui'
   import { isEmptyMarkup } from '@hcengineering/text'
@@ -81,6 +81,15 @@
 
   $: isReadonly = readonly || (resolved?.attribute.readonly ?? false)
   $: icon = resolved?.attribute?.icon ?? resolved?.attribute?.type?.icon
+  $: value =
+    resolved !== undefined
+      ? getAttribute(client, object, { key: resolved.attributeKey, attr: resolved.attribute })
+      : undefined
+  $: isRequiredAndEmpty =
+    (resolved?.attribute?.required ?? false) &&
+    (resolved?.attribute?.type?._class === core.class.TypeMarkup
+      ? isEmptyMarkup(value)
+      : value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0))
 </script>
 
 {#if resolved}

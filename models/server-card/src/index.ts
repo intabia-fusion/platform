@@ -21,6 +21,7 @@ import serverCard from '@hcengineering/server-card'
 import card from '@hcengineering/card'
 import communication from '@hcengineering/communication'
 import serverActivity from '@hcengineering/server-activity'
+import view from '@hcengineering/view'
 
 export { serverCardId } from '@hcengineering/server-card'
 
