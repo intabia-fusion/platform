@@ -531,7 +531,7 @@ async function handleGetSubscription (storage: SubscriptionStorage, req: Request
   res.json(sub)
 }
 
-async function handleCancelSubscription (
+export async function handleCancelSubscription (
   ctx: MeasureContext,
   tbank: TbankPayments,
   storage: SubscriptionStorage,
@@ -541,7 +541,14 @@ async function handleCancelSubscription (
   const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
   if (sub === null) return
 
-  if (sub.status !== SubscriptionStatus.Active && sub.status !== SubscriptionStatus.Trialing) {
+  // Idempotent: canceling an already-canceled sub is a success, not an error.
+  if (sub.status === SubscriptionStatus.Canceled || sub.status === SubscriptionStatus.Expired) {
+    res.json(sub)
+    return
+  }
+  // Only a pending first-payment draft is not cancelable (webhook/scheduler abandons it).
+  // PastDue/ReadOnly must stay cancelable so a downgrade to free can stop billing retries.
+  if (isPendingFirstPayment(sub)) {
     res.status(400).json({ error: 'Subscription is not in a cancelable status' })
     return
   }
@@ -1150,7 +1157,9 @@ export async function processWebhook (
         status: typedNotification.Status
       })
 
-      if (wasActive) {
+      // REJECTED = real charge failure -> dunning email. REVERSED/REFUNDED = refund issued
+      // (by support/admin) -> no "payment failed" email to the customer.
+      if (wasActive && typedNotification.Status === 'REJECTED') {
         await notifyPaymentFailed(ctx, storage, config, pastDueData, 'failed')
       }
     }

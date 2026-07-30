@@ -173,17 +173,47 @@ describe('processWebhook (consumer)', () => {
   test('REJECTED on wasActive=true -> PastDue and notify attempted', async () => {
     const storage = makeStorage(activeSub)
     const mailConfig = { ...baseConfig, MailUrl: 'http://mail', MailFrom: 'noreply@x.com' }
-    await processWebhook(
-      newCtx(),
-      mailConfig,
-      makeTbank(true),
-      storage,
-      { PaymentId: 'pay_1', Status: 'REJECTED', Amount: 49900 },
-      true
-    )
+    // Notify does real HTTP (plan-config + mail) — stub it so the test never hits the network.
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) }) as any
+    try {
+      await processWebhook(
+        newCtx(),
+        mailConfig,
+        makeTbank(true),
+        storage,
+        { PaymentId: 'pay_1', Status: 'REJECTED', Amount: 49900 },
+        true
+      )
+    } finally {
+      global.fetch = realFetch
+    }
     const pastDue = storage.upsert.mock.calls.find((c: any[]) => c[0].status === SubscriptionStatus.PastDue)
     expect(pastDue).toBeDefined()
     expect(storage.getAccountContact).toHaveBeenCalled()
+  })
+
+  test.each(['REVERSED', 'REFUNDED'])('%s (refund) on Active sub -> PastDue, NO dunning email', async (status) => {
+    const storage = makeStorage(activeSub)
+    const mailConfig = { ...baseConfig, MailUrl: 'http://mail', MailFrom: 'noreply@x.com' }
+    // Guard: if notify regresses back in, the stubbed fetch must be observed instead of a network hang.
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
+    global.fetch = fetchMock as any
+    try {
+      await processWebhook(
+        newCtx(),
+        mailConfig,
+        makeTbank(true),
+        storage,
+        { PaymentId: 'pay_1', Status: status, Amount: 49900 },
+        true
+      )
+    } finally {
+      global.fetch = realFetch
+    }
+    const pastDue = storage.upsert.mock.calls.find((c: any[]) => c[0].status === SubscriptionStatus.PastDue)
+    expect(pastDue).toBeDefined()
+    expect(storage.getAccountContact).not.toHaveBeenCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   test('REJECTED on a PastDue sub with a DIFFERENT prior status -> upsert, no notify', async () => {

@@ -117,3 +117,10 @@ REFUNDING, PARTIAL_REFUNDED, REFUNDED, REJECTED, DEADLINE_EXPIRED, CANCELED, 3DS
 Build+validate чистые. 55/55 тестов PASS.
 Гейча: тесты utils/updatePlan падали из-за устаревшего собранного @hcengineering/account-client (makePlanKey undefined) —
 не связано с заменой; лечится `rush fast-build:lint --to @hcengineering/account-client`.
+
+## Cancel semantics (2026-07-30)
+- handleCancelSubscription: уже Canceled/Expired -> идемпотентный 200 с текущим sub; PastDue/ReadOnly
+  отменяемы (нужно для downgrade на free после неудачного платежа/возврата); 400 только для
+  pending first-payment draft (isPendingFirstPayment).
+- Dunning email ("не удалось списать") шлётся только на REJECTED. REVERSED/REFUNDED = возврат
+  средств (support/admin) — письмо клиенту не шлём, но sub всё равно уходит в PastDue.
