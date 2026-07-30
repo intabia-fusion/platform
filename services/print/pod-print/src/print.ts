@@ -16,23 +16,36 @@ export const validKinds = ['pdf', 'jpeg', 'png', 'webp'] as const
 export type ExportKind = (typeof validKinds)[number]
 
 let sharedBrowser: Browser | null = null
+let sharedBrowserPromise: Promise<Browser> | null = null
 
 async function getBrowser (): Promise<Browser> {
-  if (sharedBrowser == null || !sharedBrowser.connected) {
-    sharedBrowser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-gpu',
-        '--disable-dev-shm-usage',
-        '--disable-extensions',
-        '--disable-setuid-sandbox',
-        ...config.PuppeteerArgs
-      ]
-    })
+  if (sharedBrowser != null && sharedBrowser.connected) {
+    return sharedBrowser
   }
 
-  return sharedBrowser
+  if (sharedBrowserPromise == null) {
+    sharedBrowserPromise = puppeteer
+      .launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-gpu',
+          '--disable-dev-shm-usage',
+          '--disable-extensions',
+          '--disable-setuid-sandbox',
+          ...config.PuppeteerArgs
+        ]
+      })
+      .then((browser) => {
+        sharedBrowser = browser
+        return browser
+      })
+      .finally(() => {
+        sharedBrowserPromise = null
+      })
+  }
+
+  return await sharedBrowserPromise
 }
 
 /**
