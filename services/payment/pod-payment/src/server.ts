@@ -330,10 +330,12 @@ export async function createServer (
     const owner = members.find((m) => m.role === AccountRole.Owner) ?? members[0]
     if (owner === undefined) return
     const subId = generateId()
+    // Trial seats: at least current members + 5 so existing users keep working on trial start.
+    const usersLimit = Math.max(trialConfig.usersLimit, members.length + 5)
     // Plan limits (storage/tokens/etc), then force usersLimit to the trial cap so the seat count is
     // independent of the plan's per-seat/flat shape. resolveLimits fully-populates or returns undefined.
-    const planLimits = resolveLimits(SubscriptionType.Tier, trialConfig.plan, trialConfig.usersLimit)
-    const limits = { ...planLimits, usersLimit: trialConfig.usersLimit }
+    const planLimits = resolveLimits(SubscriptionType.Tier, trialConfig.plan, usersLimit)
+    const limits = { ...planLimits, usersLimit }
     const data: SubscriptionData = {
       id: subId,
       workspaceUuid: workspace,
@@ -347,7 +349,7 @@ export async function createServer (
       status: SubscriptionStatus.Trialing,
       plan: trialConfig.plan,
       limits,
-      providerData: { quantity: trialConfig.usersLimit }
+      providerData: { quantity: usersLimit }
     } as unknown as SubscriptionData
     await accountClient.upsertSubscription(data)
     await logOperation?.(ctx, data, false)
