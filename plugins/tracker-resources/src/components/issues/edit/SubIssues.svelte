@@ -14,18 +14,43 @@
 -->
 <script lang="ts">
   import { Issue, trackerId } from '@hcengineering/tracker'
-  import { Button, IconScaleFull, Label, closeTooltip, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+  import {
+    ButtonIcon,
+    IconAdd,
+    IconScaleFull,
+    Label,
+    SelectPopupValueType,
+    closeTooltip,
+    getCurrentResolvedLocation,
+    navigate,
+    showPopup
+  } from '@hcengineering/ui'
   import { createFilter, restrictionStore, setFilters } from '@hcengineering/view-resources'
   import tracker from '../../../plugin'
+  import AddSubIssuePopup from './AddSubIssuePopup.svelte'
   import QueryIssuesList from './QueryIssuesList.svelte'
 
   export let issue: Issue
   export let shouldSaveDraft: boolean = false
 
-  // showPopup(tracker.component.CreateIssue, { space: issue.space, parentIssue: issue, shouldSaveDraft }, 'top')
   export let focusIndex = -1
 
   let size = issue.subIssues
+
+  const dropdownItems: SelectPopupValueType[] = [
+    { id: 'create', icon: IconAdd, label: tracker.string.CreateSubIssue },
+    { id: 'existing', icon: tracker.icon.Subissue, label: tracker.string.AddExistingSubIssue }
+  ]
+
+  function addExistingSubIssue (): void {
+    closeTooltip()
+    showPopup(AddSubIssuePopup, { issue }, 'top')
+  }
+
+  function createSubIssue (): void {
+    closeTooltip()
+    showPopup(tracker.component.CreateIssue, { space: issue.space, parentIssue: issue, shouldSaveDraft }, 'top')
+  }
 </script>
 
 <QueryIssuesList
@@ -34,10 +59,15 @@
   createParams={{ space: issue.space, parentIssue: issue }}
   createLabel={tracker.string.AddSubIssues}
   hasSubIssues={issue.subIssues > 0}
+  dropdownItems={$restrictionStore.readonly ? undefined : dropdownItems}
   {focusIndex}
   {shouldSaveDraft}
   on:docs={(evt) => {
     size = evt.detail.length
+  }}
+  on:dropdown-selected={(evt) => {
+    if (evt.detail === 'create') createSubIssue()
+    if (evt.detail === 'existing') addExistingSubIssue()
   }}
 >
   <svelte:fragment slot="chevron">
@@ -45,10 +75,12 @@
   </svelte:fragment>
   <svelte:fragment slot="buttons">
     {#if !$restrictionStore.disableNavigation}
-      <Button
+      <div class="w-4 flex-no-shrink" />
+      <ButtonIcon
         icon={IconScaleFull}
-        kind={'ghost'}
-        showTooltip={{ label: tracker.string.OpenSubIssues, direction: 'bottom' }}
+        kind={'tertiary'}
+        size={'small'}
+        tooltip={{ label: tracker.string.OpenSubIssues, direction: 'bottom' }}
         on:click={() => {
           const filter = createFilter(tracker.class.Issue, 'attachedTo', [issue._id])
           if (filter !== undefined) {
@@ -63,6 +95,17 @@
             setFilters([filter])
           }
         }}
+      />
+    {/if}
+  </svelte:fragment>
+  <svelte:fragment slot="buttons-after">
+    {#if !$restrictionStore.readonly}
+      <ButtonIcon
+        icon={tracker.icon.Subissue}
+        kind={'tertiary'}
+        size={'small'}
+        tooltip={{ label: tracker.string.AddExistingSubIssue, direction: 'bottom' }}
+        on:click={addExistingSubIssue}
       />
     {/if}
   </svelte:fragment>

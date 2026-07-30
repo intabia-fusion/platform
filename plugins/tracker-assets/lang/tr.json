@@ -93,6 +93,8 @@
     "BlocksIssuesList": "Engelleyen görevler ({blocksIssues})",
     "OpenSubIssues": "Alt sorunları aç",
     "AddSubIssues": "Alt sorun ekle",
+    "AddExistingSubIssue": "Mevcut alt görevi ekle",
+    "CreateSubIssue": "Alt görev oluştur",
     "BlockedBy": "Engelleyen",
     "RelatedTo": "İlgili",
     "Comments": "Yorumlar",

@@ -212,6 +212,9 @@ export class TTaskType extends TDoc implements TaskType {
   @Prop(ArrOf(TypeRef(task.class.TaskType)), getEmbeddedLabel('Parent'))
     allowedAsChildOf!: Ref<TaskType>[] // In case of specified, task type is for sub-tasks
 
+  @Prop(TypeBoolean(), getEmbeddedLabel('Show parent tasks'))
+    showParentTasks?: boolean
+
   @Prop(TypeRef(core.class.Class), getEmbeddedLabel('Task class'))
     ofClass!: Ref<Class<Task>> // Base class for task
 

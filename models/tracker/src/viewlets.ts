@@ -113,7 +113,8 @@ export function issueConfig (
   key: string = '',
   compact: boolean = false,
   milestone: boolean = true,
-  component: boolean = true
+  component: boolean = true,
+  showParent: boolean = false
 ): (BuildModelKey | string)[] {
   return [
     {
@@ -147,7 +148,7 @@ export function issueConfig (
       key: '',
       label: tracker.string.Title,
       presenter: tracker.component.TitlePresenter,
-      props: compact ? { shouldUseMargin: true, showParent: false } : {},
+      props: compact ? { shouldUseMargin: true, showParent } : {},
       displayProps: { key: key + 'title' }
     },
     {
@@ -327,6 +328,34 @@ export function defineViewlets (builder: Builder): void {
       config: issueConfig('sub', true, true)
     },
     tracker.viewlet.SubIssues
+  )
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: tracker.class.Issue,
+      descriptor: view.viewlet.List,
+      viewOptions: subIssuesOptions,
+      variant: 'parentissue',
+      configOptions: {
+        strict: true,
+        hiddenKeys: [
+          'priority',
+          'number',
+          'status',
+          'title',
+          'dueDate',
+          'milestone',
+          'estimation',
+          'remainingTime',
+          'createdBy',
+          'modifiedBy'
+        ]
+      },
+      config: issueConfig('parent', true, true, true, true)
+    },
+    tracker.viewlet.ParentIssues
   )
 
   const milestoneIssueOptions: ViewOptionsModel = {

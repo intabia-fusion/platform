@@ -93,6 +93,8 @@
     "BlocksIssuesList": "Attività bloccanti per ({blocksIssues})",
     "OpenSubIssues": "Apri subissue",
     "AddSubIssues": "Aggiungi subissue",
+    "AddExistingSubIssue": "Aggiungi sottoattività esistente",
+    "CreateSubIssue": "Crea sottoattività",
     "BlockedBy": "Bloccato da",
     "RelatedTo": "Correlato a",
     "Comments": "Commenti",

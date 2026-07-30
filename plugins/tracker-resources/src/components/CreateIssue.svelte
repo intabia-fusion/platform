@@ -536,20 +536,27 @@
         })
       }
 
-      if (relatedTo !== undefined) {
-        const doc = await client.findOne(tracker.class.Issue, { _id })
-        if (doc !== undefined) {
-          if (client.getHierarchy().isDerived(relatedTo._class, tracker.class.Issue)) {
-            await updateIssueRelation(operations, relatedTo as Issue, doc, 'relations', '$push')
-          } else {
-            const update = await getResource(activity.backreference.Update)
-            await update(doc, 'relations', [relatedTo], tracker.string.AddedReference)
-          }
-        }
+      if (relatedTo !== undefined && client.getHierarchy().isDerived(relatedTo._class, tracker.class.Issue)) {
+        // The new issue is not committed yet, so pass its ref directly instead of findOne
+        await updateIssueRelation(
+          operations,
+          relatedTo as Issue,
+          { _id, _class: tracker.class.Issue },
+          'relations',
+          '$push'
+        )
       }
 
       await descriptionBox?.createAttachments(_id, operations)
       const result = await operations.commit()
+
+      if (relatedTo !== undefined && !client.getHierarchy().isDerived(relatedTo._class, tracker.class.Issue)) {
+        const doc = await client.findOne(tracker.class.Issue, { _id })
+        if (doc !== undefined) {
+          const update = await getResource(activity.backreference.Update)
+          await update(doc, 'relations', [relatedTo], tracker.string.AddedReference)
+        }
+      }
 
       const parents: IssueParentInfo[] =
         parentIssue != null
