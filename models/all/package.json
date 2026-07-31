@@ -124,16 +124,11 @@
     "@hcengineering/model-pulse": "workspace:^0.7.0",
     "@hcengineering/model-card": "workspace:^0.7.0",
     "@hcengineering/model-mail": "workspace:^0.7.0",
-    "@hcengineering/model-chat": "workspace:^0.7.0",
     "@hcengineering/model-process": "workspace:^0.7.0",
-    "@hcengineering/model-server-process": "workspace:^0.7.0",
     "@hcengineering/model-achievement": "workspace:^0.7.0",
-    "@hcengineering/model-communication": "workspace:^0.7.0",
-    "@hcengineering/model-emoji": "workspace:^0.7.0",
     "@hcengineering/model-billing": "workspace:^0.7.0",
     "@hcengineering/model-huly-mail": "workspace:^0.7.0",
     "@hcengineering/model-ai-assistant": "workspace:^0.7.0",
-    "@hcengineering/model-inbox": "workspace:^0.7.0",
     "@hcengineering/model-rating": "workspace:^0.7.0"
   }
 }

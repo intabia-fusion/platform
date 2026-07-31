@@ -59,14 +59,6 @@ export function createModel (builder: Builder): void {
   builder.createModel(TIdentifierPresenter, TUrlPresenter, TTitlePresenter, TAttributePresenter)
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverActivity.trigger.HandleCardActivity,
-    isAsync: true,
-    txMatch: {
-      objectClass: card.class.Card
-    }
-  })
-
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverActivity.trigger.OnDocRemoved,
     isAsync: true
   })
