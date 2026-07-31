@@ -339,7 +339,7 @@
             <Button
               icon={tracker.icon.UnsetParent}
               iconProps={{ size: 'medium' }}
-              kind={'regular'}
+              kind={'ghost'}
               showTooltip={{ label: tracker.string.UnsetParentIssue }}
               dataId={'btnUnsetParent'}
               on:click={() => {

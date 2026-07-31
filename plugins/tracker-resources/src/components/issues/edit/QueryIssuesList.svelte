@@ -18,7 +18,6 @@
   import { Issue } from '@hcengineering/tracker'
   import {
     Button,
-    ButtonIcon,
     ButtonWithDropdown,
     Chevron,
     ExpandCollapse,
@@ -164,12 +163,11 @@
   <div class="flex-row-center no-print">
     {#if !$restrictionStore.readonly && showCreateButton}
       {#if hasSubIssues}
-        <ButtonIcon
+        <Button
           id="add-sub-issue"
           icon={IconAdd}
-          kind={'tertiary'}
-          size={'small'}
-          tooltip={{ label: createLabel, direction: 'bottom' }}
+          kind={'ghost'}
+          showTooltip={{ label: createLabel, direction: 'bottom' }}
           on:click={() => {
             isCollapsed = false
             closeTooltip()
@@ -217,8 +215,8 @@
     {/if}
     {#if hasSubIssues}
       <slot name="buttons" />
-      <div class="w-4 flex-no-shrink" />
-      <ViewletsSettingButton bind:viewOptions viewletQuery={{ _id: viewletId }} kind={'tertiary'} noGap bind:viewlet />
+      <div class="w-1 flex-no-shrink" />
+      <ViewletsSettingButton bind:viewOptions viewletQuery={{ _id: viewletId }} kind={'ghost'} noGap bind:viewlet />
     {/if}
   </div>
 </div>

@@ -15,10 +15,11 @@
 <script lang="ts">
   import { Issue, trackerId } from '@hcengineering/tracker'
   import {
-    ButtonIcon,
+    Button,
     IconAdd,
     IconScaleFull,
     Label,
+    SelectPopup,
     SelectPopupValueType,
     closeTooltip,
     getCurrentResolvedLocation,
@@ -51,6 +52,16 @@
     closeTooltip()
     showPopup(tracker.component.CreateIssue, { space: issue.space, parentIssue: issue, shouldSaveDraft }, 'top')
   }
+
+  let dropdownBtn: HTMLButtonElement
+
+  function openAddMenu (): void {
+    closeTooltip()
+    showPopup(SelectPopup, { value: dropdownItems }, dropdownBtn, (id) => {
+      if (id === 'create') createSubIssue()
+      if (id === 'existing') addExistingSubIssue()
+    })
+  }
 </script>
 
 <QueryIssuesList
@@ -75,12 +86,11 @@
   </svelte:fragment>
   <svelte:fragment slot="buttons">
     {#if !$restrictionStore.disableNavigation}
-      <div class="w-4 flex-no-shrink" />
-      <ButtonIcon
+      <div class="w-1 flex-no-shrink" />
+      <Button
         icon={IconScaleFull}
-        kind={'tertiary'}
-        size={'small'}
-        tooltip={{ label: tracker.string.OpenSubIssues, direction: 'bottom' }}
+        kind={'ghost'}
+        showTooltip={{ label: tracker.string.OpenSubIssues, direction: 'bottom' }}
         on:click={() => {
           const filter = createFilter(tracker.class.Issue, 'attachedTo', [issue._id])
           if (filter !== undefined) {
@@ -100,12 +110,12 @@
   </svelte:fragment>
   <svelte:fragment slot="buttons-after">
     {#if !$restrictionStore.readonly}
-      <ButtonIcon
+      <Button
         icon={tracker.icon.Subissue}
-        kind={'tertiary'}
-        size={'small'}
-        tooltip={{ label: tracker.string.AddExistingSubIssue, direction: 'bottom' }}
-        on:click={addExistingSubIssue}
+        kind={'ghost'}
+        showTooltip={{ label: tracker.string.AddSubIssues, direction: 'bottom' }}
+        bind:input={dropdownBtn}
+        on:click={openAddMenu}
       />
     {/if}
   </svelte:fragment>
