@@ -27,16 +27,6 @@ import { Widget, WidgetTab } from '@hcengineering/workbench'
  * @public
  */
 export interface ChunterSpace extends Space {
-  // For new communication migration
-  messages?: number
-
-  // For new communication migration
-  __migratedToCard?: {
-    card?: Ref<Doc>
-    space?: Ref<Space>
-  }
-  // For new communication migration
-  __migratedUntil?: Timestamp
 }
 
 /**
