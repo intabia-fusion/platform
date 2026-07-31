@@ -8,7 +8,6 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
@@ -16,7 +15,7 @@
   import { createEventDispatcher } from 'svelte'
   import { Ref, Status } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
-  import presentation, { getClient } from '@hcengineering/presentation'
+  import presentation, { getClient, reduceCalls } from '@hcengineering/presentation'
   import { StatePresenter } from '@hcengineering/task-resources'
   import ui, {
     DropdownTextItem,
@@ -58,10 +57,13 @@
   let fromStatusItemIds: string[] | undefined = []
   let fromStatusItems: DropdownTextItem[] = []
 
-  $: void translate(plugin.string.AnyStatus, {}, $languageStore).then((it) => {
+  $: void updateFromStatusItems($languageStore, statuses)
+
+  const updateFromStatusItems = reduceCalls(async (lang: string, stList: Status[]): Promise<void> => {
+    const it = await translate(plugin.string.AnyStatus, {}, lang)
     fromStatusItems = [
       { label: it, id: 'null', exclusive: true },
-      ...statuses.map((s) => ({
+      ...stList.map((s) => ({
         id: s._id,
         label: s.name,
         icon: StatePresenter,
@@ -155,11 +157,11 @@
   width="medium"
   onCancel={() => dispatch('close')}
 >
-  <div class="hulyModal-content__titleGroup" style="padding: 0">
+  <div class="hulyModal-content__titleGroup title-group">
     <ModernEditbox bind:value={name} label={plugin.string.Name} kind="transparent" autoFocus={true} width="100%" />
   </div>
 
-  <div class="hulyModal-content__settingsSet" style="padding: 1rem 1rem 0 1rem">
+  <div class="hulyModal-content__settingsSet settings-set">
     <div class="hulyModal-content__settingsSet-line">
       <span class="label"> <Label label={plugin.string.From} /></span>
       <ModernDropdownLabels
@@ -222,6 +224,14 @@
 </Modal>
 
 <style lang="scss">
+  .title-group {
+    padding: 0;
+  }
+
+  .settings-set {
+    padding: 1rem 1rem 0 1rem;
+  }
+
   .error-row {
     display: flex;
     align-items: flex-start;

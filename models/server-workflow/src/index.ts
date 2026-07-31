@@ -41,7 +41,7 @@ export function createModel (builder: Builder): void {
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverWorkflow.trigger.ValidateTransition,
-    isAsync: false,
+    isAsync: true,
     txMatch: {
       objectClass: task.class.Task
     }
@@ -70,11 +70,11 @@ export function createModel (builder: Builder): void {
   })
 
   builder.mixin(
-    workflow.postFunction.SetFieldValue,
+    workflow.postFunction.UpdateFieldValue,
     workflow.class.WorkflowPostFunction,
     serverWorkflow.mixin.PostFunctionImpl,
     {
-      serverExecutor: serverWorkflow.postFunctionExecutor.SetFieldValue
+      serverExecutor: serverWorkflow.postFunctionExecutor.UpdateFieldValue
     }
   )
 

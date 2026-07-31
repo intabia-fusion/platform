@@ -8,18 +8,17 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
 <script lang="ts">
-  import { WorkflowRule } from '@hcengineering/workflow'
-  import { getClient } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
   import { Class, Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { WorkflowRule } from '@hcengineering/workflow'
 
-  import RulePresenter from './RulePresenter.svelte'
   import { RuleDisplay } from '../../types'
+  import RulePresenter from './RulePresenter.svelte'
 
   export let _class: Ref<Class<WorkflowRule>>
   export let display: RuleDisplay
@@ -29,8 +28,8 @@
 
   $: rules = client.getModel().findAllSync(_class, {}, {})
 
-  function handleClick (_class: Ref<Class<WorkflowRule>>, _id: Ref<WorkflowRule>): void {
-    dispatch('select', { _id, _class })
+  function handleClick (ruleClass: Ref<Class<WorkflowRule>>, id: Ref<WorkflowRule>): void {
+    dispatch('select', { _id: id, _class: ruleClass })
   }
 </script>
 

@@ -8,7 +8,6 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
@@ -78,6 +77,7 @@
       {@const statusTo = statuses.find((it) => it._id === transition.to)}
       <div class="hulyTableAttr-content class withTitle">
         <button
+          type="button"
           class="hulyTableAttr-content__row"
           class:selected={false}
           draggable={!readonly}
@@ -85,16 +85,16 @@
             editTransition(transition._id)
           }}
         >
-          <button class="hulyTableAttr-content__row-dragMenu" on:click|stopPropagation={() => {}}>
+          <button type="button" class="hulyTableAttr-content__row-dragMenu" on:click|stopPropagation={() => {}}>
             <IconMoreV2 size="small" />
           </button>
-          <span class="hulyTableAttr-content__title" class:center={true}>
+          <span class="hulyTableAttr-content__title center">
             <span class="overflow-label" title={transition.name}>{transition.name}</span>
           </span>
           <span class="hulyTableAttr-content__row noPadding">
             {#if transition.from !== null}
               <div class="status-column">
-                {#each transition.from as from}
+                {#each transition.from as from (from)}
                   {@const status = statuses.find((it) => it._id === from)}
                   {#if status}
                     <div class="flex-row-center flex-gap-1">

@@ -8,17 +8,22 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getClient } from '@hcengineering/presentation'
-  import ui, { Modal, Label } from '@hcengineering/ui'
-  import { Workflow, WorkflowTransition, WorkflowValidatorConfig, WorkflowRequestConfig } from '@hcengineering/workflow'
   import { createEventDispatcher, SvelteComponent } from 'svelte'
-  import { Ref, Status } from '@hcengineering/core'
+  import { Status } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
   import { TaskType } from '@hcengineering/task'
+  import ui, { Label, Modal } from '@hcengineering/ui'
+  import {
+    Workflow,
+    WorkflowPostFunctionConfig,
+    WorkflowRequestConfig,
+    WorkflowTransition,
+    WorkflowValidatorConfig
+  } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
   import { rulesDisplay } from '../../types'
@@ -29,7 +34,7 @@
   export let transitions: WorkflowTransition[] = []
   export let statuses: Status[] = []
   export let transition: WorkflowTransition
-  export let config: WorkflowValidatorConfig | WorkflowRequestConfig
+  export let config: WorkflowValidatorConfig | WorkflowRequestConfig | WorkflowPostFunctionConfig
 
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   const dispatch = createEventDispatcher<{ close: void }>()
@@ -39,7 +44,10 @@
   let isSaving = false
   let editorComponent: SvelteComponent | undefined = undefined
 
-  $: ruleId = (config as WorkflowValidatorConfig).validator ?? (config as WorkflowRequestConfig).request
+  $: ruleId =
+    (config as WorkflowValidatorConfig).validator ??
+    (config as WorkflowRequestConfig).request ??
+    (config as WorkflowPostFunctionConfig).postFunction
   $: selectedRule = ruleId != null ? client.getModel().findObject(ruleId) : undefined
 
   async function handleSave (): Promise<void> {
@@ -57,7 +65,7 @@
   okLabel={ui.string.Save}
   okLoading={isSaving}
   canSave={transition != null && selectedRule != null && editorComponent != null && canSave}
-  label={selectedRule?.label ?? plugin.string.Validators}
+  label={selectedRule?.label ?? plugin.string.AllRules}
   maxWidth="45rem"
   padding="0"
   scrollableContent={false}
@@ -72,7 +80,9 @@
           <span class="edit-rule-popup--transition-label">
             <Label label={plugin.string.Transition} />
           </span>
-          <TransitionsDropdown {transitions} {statuses} selected={transition._id} disabled />
+          <div class="edit-rule-popup--transition-dropdown">
+            <TransitionsDropdown {transitions} {statuses} selected={transition._id} disabled />
+          </div>
         </div>
       {/if}
 
@@ -126,11 +136,23 @@
       gap: 1rem;
       width: 100%;
       min-width: 0;
-      overflow: hidden;
     }
 
     &--transition-label {
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      height: 2.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--global-secondary-TextColor);
       flex-shrink: 0;
+    }
+
+    &--transition-dropdown {
+      flex: 1;
+      min-width: 0;
     }
 
     &--body {

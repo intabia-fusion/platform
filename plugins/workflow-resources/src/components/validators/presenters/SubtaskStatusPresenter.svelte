@@ -16,7 +16,7 @@
   import core, { Status } from '@hcengineering/core'
   import task, { TaskType } from '@hcengineering/task'
   import { WorkflowValidatorConfig } from '@hcengineering/workflow'
-  import { getClient, IconWithEmoji } from '@hcengineering/presentation'
+  import { getClient, IconWithEmoji, reduceCalls } from '@hcengineering/presentation'
   import { Icon, languageStore } from '@hcengineering/ui'
   import { StatePresenter } from '@hcengineering/task-resources'
   import { translate } from '@hcengineering/platform'
@@ -40,8 +40,10 @@
   let rows: RowData[] = []
   let anyStatusLabel: string = ''
 
-  $: void translate(plugin.string.AnyStatus, {}, $languageStore).then((val) => {
-    anyStatusLabel = val
+  $: void updateAnyStatusLabel($languageStore)
+
+  const updateAnyStatusLabel = reduceCalls(async (lang: string): Promise<void> => {
+    anyStatusLabel = await translate(plugin.string.AnyStatus, {}, lang)
   })
 
   $: {

@@ -76,19 +76,67 @@ export interface WorkflowRequestConfig {
 
 export interface WorkflowPostFunction extends WorkflowRule {}
 
-export interface SetFieldValueProps {
-  fieldKey?: string
-  mixin?: Ref<Mixin<Doc>>
-  value?: any
+export type WorkflowValuePreset = '$currentUser' | '$now'
+
+export interface WorkflowTransformCall {
+  func: Ref<WorkflowValueFunction>
+  props?: Record<string, any>
 }
 
-export interface ClearFieldConfig {
+export type WorkflowTransformKind = WorkflowTransformCall
+
+export type WorkflowValueType = 'preset' | 'this' | 'parent' | 'const'
+
+export interface WorkflowPresetValue {
+  type: 'preset'
+  preset: WorkflowValuePreset
+  functions?: WorkflowTransformCall[]
+}
+
+export interface WorkflowThisValue extends Field {
+  type: 'this'
+  functions?: WorkflowTransformCall[]
+}
+
+export interface WorkflowParentValue extends Field {
+  type: 'parent'
+  functions?: WorkflowTransformCall[]
+}
+
+export interface WorkflowConstValue {
+  type: 'const'
+  value: any
+  functions?: WorkflowTransformCall[]
+}
+
+export type WorkflowFieldValue = WorkflowPresetValue | WorkflowThisValue | WorkflowParentValue | WorkflowConstValue
+
+export interface UpdateFieldValueConfig extends Field {
+  value: WorkflowFieldValue
+}
+
+export interface UpdateFieldValueProps {
+  fields?: UpdateFieldValueConfig[]
+}
+
+export interface WorkflowValueFunction extends Doc {
+  of: Ref<Class<Doc>>
+  to?: Ref<Class<Doc>>
+  category: string
+  label: IntlString
+  type: 'convert' | 'transform'
+  editor?: AnyComponent
+  propsLabelPresenter?: Resource<(props: Record<string, any>) => IntlString>
+}
+
+export interface Field {
+  _id: Ref<AnyAttribute>
   fieldKey: string
   mixin?: Ref<Mixin<Doc>>
 }
 
 export interface ClearFieldValueProps {
-  fields?: ClearFieldConfig[]
+  fields?: Field[]
 }
 
 export interface WorkflowPostFunctionConfig {
@@ -132,4 +180,8 @@ export interface WorkflowTransition extends AttachedDoc<Workflow, 'transitions'>
 
 export interface ProjectWorkflow extends Project {
   workflows?: Record<Ref<TaskType>, Ref<Workflow>>
+}
+
+export interface FieldRequiredProps {
+  fields: Field[]
 }

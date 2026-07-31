@@ -8,21 +8,20 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { notEmpty, Ref, type Status, WithLookup } from '@hcengineering/core'
+  import core, { notEmpty, Ref, Status, WithLookup } from '@hcengineering/core'
   import { Asset } from '@hcengineering/platform'
   import { createQuery, getClient, IconDownload, MessageBox } from '@hcengineering/presentation'
-  import task, { type ProjectType, type TaskType } from '@hcengineering/task'
+  import task, { ProjectType, TaskType } from '@hcengineering/task'
   import { ButtonIcon, EditBox, IconDelete, IconSettings, Loading, Scroller, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import { removeWorkflow, type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
+  import { removeWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
 
-  import plugin from '../../plugin'
   import { navigateToWorkflow } from '../../location'
+  import plugin from '../../plugin'
   import TaskTypeEditor from './TaskTypeEditor.svelte'
   import TransitionsEditor from './TransitionsEditor.svelte'
   import WorkflowUsedProjects from './WorkflowUsedProjects.svelte'

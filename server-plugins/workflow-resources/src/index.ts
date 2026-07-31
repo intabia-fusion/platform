@@ -14,10 +14,7 @@
 //
 
 import { ValidateTransitionTrigger, FieldRequired, SubtaskStatus, ParentStatus } from './ValidateTransition'
-import { SetFieldValue, ClearFieldValue } from './ExecutePostFunctions'
-import { type SetFieldValueProps, type ClearFieldValueProps, type ClearFieldConfig } from '@hcengineering/workflow'
-
-export type { SetFieldValueProps, ClearFieldValueProps, ClearFieldConfig }
+import { UpdateFieldValue, ClearFieldValue } from './post-functions'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
@@ -30,7 +27,7 @@ export default async () => ({
     ParentStatus
   },
   postFunctionExecutor: {
-    SetFieldValue,
+    UpdateFieldValue,
     ClearFieldValue
   }
 })

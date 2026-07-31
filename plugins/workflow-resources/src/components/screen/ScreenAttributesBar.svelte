@@ -164,6 +164,10 @@
       width: 100%;
       padding-bottom: var(--spacing-2);
       border-bottom: 1px solid var(--global-subtle-ui-BorderColor);
+
+      &:last-child {
+        border-bottom: none;
+      }
     }
 
     &--line {
@@ -176,6 +180,10 @@
       min-width: 0;
       min-height: var(--global-max-Size);
       border-bottom: 1px solid var(--global-subtle-ui-BorderColor);
+
+      &:last-child {
+        border-bottom: none;
+      }
     }
 
     &--label-header {

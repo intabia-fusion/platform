@@ -19,8 +19,8 @@
   import { ButtonIcon, Icon, IconAdd, Label } from '@hcengineering/ui'
   import { Screen } from '@hcengineering/workflow'
 
-  import plugin from '../plugin'
   import { navigateToScreen } from '../location'
+  import plugin from '../plugin'
   import CreateScreen from './screen/CreateScreen.svelte'
 
   export let type: ProjectType
@@ -65,9 +65,10 @@
 
 {#if screens.length > 0 && !isLoading}
   <div class="hulyTableAttr-content screen">
-    {#each screens as screen}
+    {#each screens as screen (screen._id)}
       <button
-        class="hulyTableAttr-content__row w-full justify-start text-left"
+        type="button"
+        class="hulyTableAttr-content__row"
         on:click|stopPropagation={() => {
           navigateToScreen(screen._id, false)
         }}

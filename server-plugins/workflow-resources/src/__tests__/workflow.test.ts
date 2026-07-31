@@ -26,10 +26,12 @@ import core, {
   type Status,
   type WithLookup
 } from '@hcengineering/core'
-import { type TriggerControl } from '@hcengineering/server-core'
+import { type TriggerControl, type PipelineContext } from '@hcengineering/server-core'
 import task, { type Task, type Project, type TaskType, type Rank } from '@hcengineering/task'
 import workflow from '@hcengineering/model-workflow'
 import { type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
+import { WorkflowMiddleware } from '@hcengineering/server-workflow'
+
 import { ValidateTransitionTrigger } from '../ValidateTransition'
 
 jest.mock('@hcengineering/platform', () => {
@@ -47,7 +49,7 @@ jest.mock('@hcengineering/platform', () => {
 })
 
 const testSpace = 'test-space' as Ref<Project>
-const testAccount = 'test-account' as any
+const testAccount = 'user-account' as any
 
 function createMockTask (data: Partial<Task> = {}): WithLookup<Task> {
   return {
@@ -133,8 +135,26 @@ function createMockControl (findAllImpl: FindAllFn): TriggerControl {
     withScope: async <T>(_scope: string, fn: () => Promise<T>) => await fn(),
     txes: [],
     apply: jest.fn().mockResolvedValue({}),
-    queryFind: jest.fn().mockResolvedValue([])
   } as unknown as TriggerControl
+}
+
+async function createMockMiddleware (findAllImpl: FindAllFn): Promise<WorkflowMiddleware> {
+  const context: PipelineContext = {
+    workspace: { url: 'test-ws', uuid: 'test-ws-uuid', dataId: 'test-data', accountsUrl: '' } as any,
+    hierarchy: {
+      isDerived: (_class: any, base: any) => _class === base || base === task.class.Task,
+      hasMixin: (doc: any, _class: any) => doc.workflows !== undefined,
+      as: (doc: any, _class: any) => doc
+    } as any,
+    modelDb: {} as any,
+    branding: null,
+    contextVars: {}
+  } as any
+  const middleware = (await WorkflowMiddleware.create({} as any, context)) as WorkflowMiddleware
+  jest.spyOn(middleware as any, 'provideFindAll').mockImplementation(async (...args: any[]) => {
+    return await findAllImpl(args[0], args[1], args[2], args[3])
+  })
+  return middleware
 }
 
 describe('ValidateTransition Trigger', () => {
@@ -237,7 +257,7 @@ describe('ValidateTransition Trigger', () => {
       modifiedBy: testAccount
     }
 
-    const control = createMockControl(async (ctx, cl, query) => {
+    const middleware = await createMockMiddleware(async (ctx, cl, query) => {
       if (cl === task.class.Project && query._id === testSpace) {
         return [project]
       }
@@ -247,7 +267,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransitionTrigger([tx], control)).rejects.toThrow()
+    await expect(middleware.tx({ contextData: { account: null } } as any, [tx])).rejects.toThrow()
   })
 
   it('should allow valid transition on update', async () => {
@@ -330,7 +350,7 @@ describe('ValidateTransition Trigger', () => {
       modifiedBy: testAccount
     }
 
-    const control = createMockControl(async (ctx, cl, query) => {
+    const middleware = await createMockMiddleware(async (ctx, cl, query) => {
       if (cl === task.class.Project && query._id === testSpace) {
         return [project]
       }
@@ -343,7 +363,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransitionTrigger([tx], control)).rejects.toThrow()
+    await expect(middleware.tx({ contextData: { account: null } } as any, [tx])).rejects.toThrow()
   })
 
   it('should resolve workflow mapping using project workflows array for task types', async () => {
@@ -582,7 +602,7 @@ describe('ValidateTransition Trigger', () => {
       ]
     }
 
-    const control = createMockControl(async (ctx, cl, query) => {
+    const middleware = await createMockMiddleware(async (ctx, cl, query) => {
       if (cl === task.class.Project && query._id === testSpace) {
         return [project]
       }
@@ -609,7 +629,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransitionTrigger([tx], control)).rejects.toThrow(
+    await expect(middleware.tx({ contextData: { account: null } } as any, [tx])).rejects.toThrow(
       'Field "assignee" is required for transition "Start Work".'
     )
   })

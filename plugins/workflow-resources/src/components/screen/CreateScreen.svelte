@@ -8,14 +8,13 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { type Class, type Doc, Ref } from '@hcengineering/core'
+  import core, { Class, Doc, Ref } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
-  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
+  import presentation, { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import task, { ProjectType, TaskType } from '@hcengineering/task'
   import ui, {
@@ -54,9 +53,9 @@
 
   $: void updateClassItems(taskTypes, $languageStore)
 
-  async function updateClassItems (types: TaskType[], lang: string): Promise<void> {
+  const updateClassItems = reduceCalls(async (types: TaskType[], lang: string): Promise<void> => {
     const res: DropdownTextItem[] = []
-    const classes = new Set(types.map((type) => type.ofClass))
+    const classes = new Set(types.map((t) => t.ofClass))
     for (const _class of classes) {
       const _clazz = client.getHierarchy().getClass(_class)
       res.push({
@@ -67,7 +66,7 @@
     }
 
     classItems = res.sort((a, b) => a.label.localeCompare(b.label, lang))
-  }
+  })
 
   async function save (): Promise<void> {
     if (!canSave) return
@@ -105,7 +104,7 @@
   </div>
   <div class="hulyModal-content__settingsSet">
     <div class="hulyModal-content__settingsSet-line flex-col description-line">
-      <span class="label mb-2">
+      <span class="label desc-label">
         <Label label={plugin.string.Description} />
       </span>
       <TextArea
@@ -138,5 +137,9 @@
 <style lang="scss">
   .description-line {
     align-items: flex-start;
+
+    .desc-label {
+      margin-bottom: 0.5rem;
+    }
   }
 </style>

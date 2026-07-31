@@ -8,14 +8,13 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Label } from '@hcengineering/ui'
   import { Class, Ref } from '@hcengineering/core'
+  import { Label } from '@hcengineering/ui'
   import { WorkflowRule } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
@@ -34,6 +33,7 @@
 
 <div class="rules-sidebar">
   <button
+    type="button"
     class="rules-sidebar--item"
     class:active={_class === plugin.class.WorkflowRule}
     on:click={() => {
@@ -50,6 +50,7 @@
   {#each Object.values(rulesDisplay) as display (display._class)}
     {#if display._class !== plugin.class.WorkflowRule}
       <button
+        type="button"
         class="rules-sidebar--item"
         class:active={_class === display._class}
         on:click={() => {

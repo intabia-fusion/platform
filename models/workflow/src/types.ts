@@ -28,6 +28,7 @@ import {
   Prop,
   TypeString,
   TypeRef,
+  TypeAny,
   Mixin as TypeMixin,
   TypeRecord,
   Collection,
@@ -50,6 +51,7 @@ import {
   type WorkflowRequestConfig,
   type WorkflowPostFunction,
   type WorkflowPostFunctionConfig,
+  type WorkflowValueFunction,
   type Screen,
   type ScreenTab,
   type ScreenField
@@ -196,4 +198,28 @@ export class TWorkflowTransition extends TAttachedDoc implements WorkflowTransit
 export class TProjectWorkflow extends TProject implements ProjectWorkflow {
   @Prop(TypeRecord(), workflow.string.WorkflowMapping)
     workflows?: Record<Ref<TaskType>, Ref<Workflow>>
+}
+
+@Model(workflow.class.WorkflowValueFunction, core.class.Doc, DOMAIN_WORKFLOW)
+export class TWorkflowValueFunction extends TDoc implements WorkflowValueFunction {
+  @Prop(TypeRef(core.class.Class), core.string.Class)
+    of!: Ref<Class<Doc>>
+
+  @Prop(TypeRef(core.class.Class), core.string.Class)
+    to?: Ref<Class<Doc>>
+
+  @Prop(TypeString(), getEmbeddedLabel('Category'))
+    category!: string
+
+  @Prop(TypeRecord(), core.string.Object)
+    label!: IntlString
+
+  @Prop(TypeString(), getEmbeddedLabel('Type'))
+    type!: 'convert' | 'transform'
+
+  @Prop(TypeAny('', getEmbeddedLabel('Editor')), getEmbeddedLabel('Editor'))
+    editor?: AnyComponent
+
+  @Prop(TypeAny('', getEmbeddedLabel('Props Label Presenter')), getEmbeddedLabel('Props Label Presenter'))
+    propsLabelPresenter?: Resource<(props: Record<string, any>) => IntlString>
 }

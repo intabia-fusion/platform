@@ -16,15 +16,13 @@
 import { type Tx } from '@hcengineering/core'
 import { type TriggerControl } from '@hcengineering/server-core'
 import { getResource } from '@hcengineering/platform'
-import taskPlugin, { type Task } from '@hcengineering/task'
+import { type Task } from '@hcengineering/task'
 import workflow from '@hcengineering/model-workflow'
 import serverWorkflow, { type PostFunctionImpl } from '@hcengineering/server-workflow'
 import {
   type WorkflowPostFunction,
   type WorkflowTransition,
-  type WorkflowPostFunctionConfig,
-  type SetFieldValueProps,
-  type ClearFieldValueProps
+  type WorkflowPostFunctionConfig
 } from '@hcengineering/workflow'
 
 export async function executeTransitionPostFunctions (
@@ -37,11 +35,19 @@ export async function executeTransitionPostFunctions (
 
   const resultTxes: Tx[] = []
   for (const pfConfig of postFunctions) {
-    const txes = await executePostFunction(control, pfConfig, transition, task)
-    if (txes.length > 0) {
-      resultTxes.push(...txes)
+    try {
+      const txes = await executePostFunction(control, pfConfig, transition, task)
+      if (txes.length > 0) {
+        resultTxes.push(...txes)
+      }
+    } catch (err) {
+      console.error(
+        `[WorkflowPostFunctions] Error executing post-function ${pfConfig.id ?? (pfConfig.postFunction as string)}:`,
+        err
+      )
     }
   }
+  console.log(resultTxes)
   return resultTxes
 }
 
@@ -51,6 +57,8 @@ async function executePostFunction (
   transition: WorkflowTransition,
   task: Task
 ): Promise<Tx[]> {
+  if (pfConfig?.postFunction == null) return []
+
   const postFunction = (
     await control.findAll(
       control.ctx,
@@ -62,57 +70,18 @@ async function executePostFunction (
 
   if (postFunction == null) return []
 
+  if (!control.hierarchy.hasMixin(postFunction, serverWorkflow.mixin.PostFunctionImpl)) {
+    return []
+  }
+
   const pfImpl = control.hierarchy.as<WorkflowPostFunction, PostFunctionImpl>(
     postFunction,
     serverWorkflow.mixin.PostFunctionImpl
   )
+  if (pfImpl.serverExecutor == null) return []
+
   const executorFn = await getResource(pfImpl.serverExecutor)
   if (executorFn == null) return []
 
   return (await executorFn(control, task, transition, pfConfig.props)) ?? []
-}
-
-export async function SetFieldValue (
-  control: TriggerControl,
-  task: Task,
-  transition: WorkflowTransition,
-  props: SetFieldValueProps
-): Promise<Tx[]> {
-  const fieldKey = props.fieldKey
-  if (fieldKey == null || fieldKey === '') return []
-
-  let value = props.value
-  if (value === '$currentUser') {
-    value = task.modifiedBy ?? null
-  } else if (value === '$now') {
-    value = Date.now()
-  }
-
-  return [
-    control.txFactory.createTxUpdateDoc(task._class ?? taskPlugin.class.Task, task.space, task._id, {
-      [fieldKey]: value
-    })
-  ]
-}
-
-export async function ClearFieldValue (
-  control: TriggerControl,
-  task: Task,
-  transition: WorkflowTransition,
-  props: ClearFieldValueProps
-): Promise<Tx[]> {
-  const fields = props.fields
-  if (fields == null || fields.length === 0) return []
-
-  const ops: Record<string, any> = {}
-  for (const item of fields) {
-    const key = typeof item === 'string' ? item : item?.fieldKey
-    if (key != null && key !== '') {
-      ops[key] = null
-    }
-  }
-
-  if (Object.keys(ops).length === 0) return []
-
-  return [control.txFactory.createTxUpdateDoc(task._class ?? taskPlugin.class.Task, task.space, task._id, ops)]
 }

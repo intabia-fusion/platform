@@ -27,6 +27,7 @@ import {
   TWorkflowRule,
   TWorkflowRequest,
   TWorkflowPostFunction,
+  TWorkflowValueFunction,
   TScreenField,
   TScreenTab,
   TScreen
@@ -34,6 +35,7 @@ import {
 import { defineValidators } from './validators'
 import { defineRequests } from './requests'
 import { definePostFunctions } from './postFunctions'
+import { defineValueFunctions } from './functions'
 
 export function createModel (builder: Builder): void {
   builder.createModel(
@@ -45,6 +47,7 @@ export function createModel (builder: Builder): void {
     TValidatorImpl,
     TWorkflowRequest,
     TWorkflowPostFunction,
+    TWorkflowValueFunction,
     TScreenField,
     TScreenTab,
     TScreen
@@ -52,6 +55,7 @@ export function createModel (builder: Builder): void {
   defineValidators(builder)
   defineRequests(builder)
   definePostFunctions(builder)
+  defineValueFunctions(builder)
 
   builder.createDoc(
     presentation.class.PresentationMiddlewareFactory,

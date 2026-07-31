@@ -136,7 +136,7 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
             fields: _fields,
             object: clone
           },
-          'centered',
+          'center',
           (result) => {
             resolve(result as ScreenModalResult<Task> | null)
           }

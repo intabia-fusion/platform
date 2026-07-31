@@ -15,7 +15,8 @@
 <script lang="ts">
   import { AnySvelteComponent } from '@hcengineering/ui'
   import { TaskType } from '@hcengineering/task'
-  import { getResourceP } from '@hcengineering/platform'
+  import { getResourceP, Resource } from '@hcengineering/platform'
+  import { reduceCalls } from '@hcengineering/presentation'
   import { WorkflowValidator, WorkflowValidatorConfig } from '@hcengineering/workflow'
 
   export let config: WorkflowValidatorConfig
@@ -24,20 +25,15 @@
 
   let presenterCtor: AnySvelteComponent | undefined = undefined
 
-  $: presenterResource = validator?.presenter
+  $: void loadPresenter(validator?.presenter)
 
-  $: if (presenterResource != null) {
-    const res = getResourceP(presenterResource)
-    if (res instanceof Promise) {
-      void res.then((c) => {
-        presenterCtor = c
-      })
+  const loadPresenter = reduceCalls(async (resource?: Resource<AnySvelteComponent>): Promise<void> => {
+    if (resource != null) {
+      presenterCtor = await getResourceP(resource)
     } else {
-      presenterCtor = res
+      presenterCtor = undefined
     }
-  } else {
-    presenterCtor = undefined
-  }
+  })
 </script>
 
 {#if presenterCtor}

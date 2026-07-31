@@ -14,62 +14,84 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import ui, { DropdownTextItem, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
-  import { WorkflowValidatorConfig } from '@hcengineering/workflow'
+  import { reduceCalls } from '@hcengineering/presentation'
+  import ui, {
+    DropdownTextItem,
+    Label,
+    languageStore,
+    ModernDropdownLabels
+  } from '@hcengineering/ui'
+  import { FieldRequiredProps, WorkflowValidatorConfig } from '@hcengineering/workflow'
   import { TaskType } from '@hcengineering/task'
+  import { AnyAttribute, Ref } from '@hcengineering/core'
 
   import plugin from '../../../plugin'
-  import { getDisplayAttributes } from '../../../utils'
-
-  interface Props {
-    fields: string[]
-  }
+  import { DisplayAttribute, getDisplayAttributes } from '../../../utils'
 
   export let taskType: TaskType
   export let config: WorkflowValidatorConfig | undefined = undefined
   export let canSave = false
 
-  const dispatch = createEventDispatcher<{ update: Props }>()
+  const dispatch = createEventDispatcher<{ update: FieldRequiredProps }>()
+
+  const props: FieldRequiredProps | undefined = config?.props as FieldRequiredProps
 
   let items: DropdownTextItem[] = []
-  let selected: string[] =
-    config?.props?.fields != null && Array.isArray(config.props.fields) ? config.props.fields : []
+  let selected: Ref<AnyAttribute>[] = props?.fields?.map((it) => it._id) ?? []
 
-  $: void updateItems($languageStore)
-  $: canSave = selected.length > 0
-  $: dispatch('update', { fields: selected })
+  let displayAttributes: DisplayAttribute[] = []
 
-  async function updateItems (lang: string): Promise<void> {
+  const updateItems = reduceCalls(async (lang: string): Promise<void> => {
     const res = await getDisplayAttributes(taskType.ofClass, lang)
 
-    const resultItems: DropdownTextItem[] = []
-
+    const _items: DropdownTextItem[] = []
+    const _displayAttributes: DisplayAttribute[] = []
     res.forEach((group, groupIdx) => {
-      const regular = group.regular as DropdownTextItem[]
-      const collection = group.collection as DropdownTextItem[]
+      const regular = group.regular
+      const collection = group.collection
 
-      regular.forEach((f, idx) => {
+      regular.forEach((attr, idx) => {
+        _displayAttributes.push(attr)
         const isFirstInGroup = groupIdx > 0 && idx === 0
-        resultItems.push({
-          ...f,
+        _items.push({
+          id: attr.id,
+          label: attr.label,
+          icon: attr.icon,
+          iconProps: attr.iconProps,
           separatorBefore: isFirstInGroup,
           separatorLabel: isFirstInGroup ? group.classLabel : undefined
         })
       })
 
-      collection.forEach((f, idx) => {
+      collection.forEach((attr, idx) => {
+        _displayAttributes.push(attr)
         const isFirstInGroup = groupIdx > 0 && regular.length === 0 && idx === 0
         const isFirstCollection = regular.length > 0 && idx === 0
-        resultItems.push({
-          ...f,
+        _items.push({
+          id: attr.id,
+          label: attr.label,
+          icon: attr.icon,
+          iconProps: attr.iconProps,
           separatorBefore: isFirstInGroup || isFirstCollection,
           separatorLabel: isFirstInGroup ? group.classLabel : undefined
         })
       })
     })
 
-    items = resultItems
-  }
+    displayAttributes = _displayAttributes
+    items = _items
+  })
+
+  $: void updateItems($languageStore)
+  $: canSave = selected.length > 0
+  $: dispatch('update', {
+    fields: displayAttributes.filter(it => selected.includes(it.id)).map(it => ({
+      _id: it.id,
+      fieldKey: it.key,
+      mixin: it.mixin
+    }))
+  })
+
 </script>
 
 <div class="field-required">

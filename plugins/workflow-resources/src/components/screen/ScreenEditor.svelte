@@ -15,7 +15,7 @@
   import { onDestroy } from 'svelte'
   import { Class, Doc, Ref } from '@hcengineering/core'
   import { Asset, translate } from '@hcengineering/platform'
-  import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
+  import { createQuery, getClient, MessageBox, reduceCalls } from '@hcengineering/presentation'
   import { Task } from '@hcengineering/task'
   import ui, {
     ButtonIcon,
@@ -33,8 +33,8 @@
   import view from '@hcengineering/view'
   import { addScreenTab, Screen, ScreenField, ScreenTab, WorkflowTransition } from '@hcengineering/workflow'
 
-  import plugin from '../../plugin'
   import { navigateToScreen } from '../../location'
+  import plugin from '../../plugin'
   import { DisplayAttribute, DisplayAttributeGroup, getDisplayAttributes } from '../../utils'
   import ScreenTabEditor from './ScreenTabEditor.svelte'
   import ScreenUsedWorkflows from './ScreenUsedWorkflows.svelte'
@@ -104,23 +104,25 @@
   $: void updateDisplayAttributes(screen?.targetClass, $languageStore)
   $: void updateClassItem(screen?.targetClass, $languageStore)
 
-  async function updateDisplayAttributes (_class: Ref<Class<Task>> | undefined, lang: string): Promise<void> {
-    if (_class == null) {
-      displayAttributeGroups = []
-      displayAttributes = []
-      return
+  const updateDisplayAttributes = reduceCalls(
+    async (_class: Ref<Class<Task>> | undefined, lang: string): Promise<void> => {
+      if (_class == null) {
+        displayAttributeGroups = []
+        displayAttributes = []
+        return
+      }
+
+      const skipRegular = ['status', 'modifiedOn', 'modifiedBy', 'createdOn', 'createdBy']
+      const skipCollections = ['reports', 'subIssues', 'blockedBy', 'relations', 'parents']
+      const res = await getDisplayAttributes(_class, lang, [...skipRegular, ...skipCollections])
+      displayAttributeGroups = res
+
+      const regular = res.flatMap((it) => it.regular)
+      const collection = res.flatMap((it) => it.collection)
+
+      displayAttributes = [...regular, ...collection]
     }
-
-    const skipRegular = ['status', 'modifiedOn', 'modifiedBy', 'createdOn', 'createdBy']
-    const skipCollections = ['reports', 'subIssues', 'blockedBy', 'relations', 'parents']
-    const res = await getDisplayAttributes(_class, lang, [...skipRegular, ...skipCollections])
-    displayAttributeGroups = res
-
-    const regular = res.flatMap((it) => it.regular)
-    const collection = res.flatMap((it) => it.collection)
-
-    displayAttributes = [...regular, ...collection]
-  }
+  )
 
   async function saveName (): Promise<void> {
     if (screen != null) {
@@ -188,7 +190,7 @@
     }
   }
 
-  async function updateClassItem (_class: Ref<Class<Doc>> | undefined, lang: string): Promise<void> {
+  const updateClassItem = reduceCalls(async (_class: Ref<Class<Doc>> | undefined, lang: string): Promise<void> => {
     if (_class == null) return
     const _clazz = client.getHierarchy().getClass(_class)
 
@@ -197,7 +199,7 @@
       icon: _clazz.icon,
       label: await translate(_clazz.label, {}, lang)
     }
-  }
+  })
 
   async function addTab (): Promise<void> {
     if (screen == null) return
@@ -291,7 +293,7 @@
           {/each}
 
           {#if !readonly}
-            <div class="flex justify-start">
+            <div class="add-tab-container">
               <ModernButton
                 kind="secondary"
                 size="small"
@@ -313,5 +315,10 @@
     :global(.antiEditBox) {
       margin-left: -1rem;
     }
+  }
+
+  .add-tab-container {
+    display: flex;
+    justify-content: flex-start;
   }
 </style>

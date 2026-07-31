@@ -8,23 +8,22 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
 <script lang="ts">
-  import presentation, { getClient } from '@hcengineering/presentation'
-  import ui, { Modal, Label, ButtonBase } from '@hcengineering/ui'
-  import { Workflow, WorkflowRule, WorkflowTransition } from '@hcengineering/workflow'
   import { createEventDispatcher, SvelteComponent } from 'svelte'
   import { Class, Ref, Status } from '@hcengineering/core'
+  import presentation, { getClient } from '@hcengineering/presentation'
   import { TaskType } from '@hcengineering/task'
+  import ui, { ButtonBase, Label, Modal } from '@hcengineering/ui'
+  import { Workflow, WorkflowRule, WorkflowTransition } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
-  import RulesSidebar from './RulesSidebar.svelte'
   import { rulesDisplay } from '../../types'
   import TransitionsDropdown from '../TransitionsDropdown.svelte'
   import RulesList from './RulesList.svelte'
+  import RulesSidebar from './RulesSidebar.svelte'
 
   export let workflow: Workflow
   export let taskType: TaskType

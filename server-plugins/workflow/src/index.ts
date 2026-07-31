@@ -18,7 +18,12 @@ import { plugin } from '@hcengineering/platform'
 import type { TriggerControl, TriggerFunc } from '@hcengineering/server-core'
 import type { Mixin, Ref, Tx } from '@hcengineering/core'
 import type { Task } from '@hcengineering/task'
-import type { WorkflowValidator, ValidatorFunc, WorkflowPostFunction, WorkflowTransition } from '@hcengineering/workflow'
+import type {
+  WorkflowValidator,
+  ValidatorFunc,
+  WorkflowPostFunction,
+  WorkflowTransition
+} from '@hcengineering/workflow'
 
 export const serverWorkflowId = 'server-workflow' as Plugin
 export { WorkflowMiddleware } from './middleware'
@@ -52,7 +57,7 @@ export default plugin(serverWorkflowId, {
     ParentStatus: '' as Resource<ValidatorFunc>
   },
   postFunctionExecutor: {
-    SetFieldValue: '' as Resource<PostFunctionFunc>,
+    UpdateFieldValue: '' as Resource<PostFunctionFunc>,
     ClearFieldValue: '' as Resource<PostFunctionFunc>
   }
 })

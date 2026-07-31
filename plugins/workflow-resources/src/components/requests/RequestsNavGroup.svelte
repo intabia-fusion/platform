@@ -12,6 +12,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { Status } from '@hcengineering/core'
+  import presentation, { getClient } from '@hcengineering/presentation'
+  import { TaskType } from '@hcengineering/task'
   import {
     ButtonMenu,
     DropdownIntlItem,
@@ -27,13 +30,10 @@
   import {
     removeRequestConfig,
     Workflow,
-    WorkflowTransition,
     WorkflowRequest,
-    WorkflowRequestConfig
+    WorkflowRequestConfig,
+    WorkflowTransition
   } from '@hcengineering/workflow'
-  import { Status } from '@hcengineering/core'
-  import { TaskType } from '@hcengineering/task'
-  import presentation, { getClient } from '@hcengineering/presentation'
 
   import plugin from '../../plugin'
   import AddRulesPopup from '../rules/AddRulesPopup.svelte'
@@ -117,6 +117,7 @@
 
     <svelte:fragment slot="after">
       <button
+        type="button"
         class="requests-nav-group--action"
         data-testid="action-add-requests"
         on:click|preventDefault|stopPropagation={handleAdd}

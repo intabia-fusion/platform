@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,7 +15,7 @@
 -->
 <script lang="ts">
   import { AttachedData, Ref, WithLookup } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import { getTaskTypeStates } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import { Issue, IssueDraft, IssueStatus, Project, TrackerEvents } from '@hcengineering/tracker'
@@ -31,8 +32,10 @@
   import { statusStore } from '@hcengineering/view-resources'
   import { Analytics } from '@hcengineering/analytics'
   import { createEventDispatcher } from 'svelte'
+  import workflow, { ProjectWorkflow, WorkflowTransition } from '@hcengineering/workflow'
 
   import tracker from '../../plugin'
+  import { activeProjects } from '../../utils'
   import IssueStatusIcon from './IssueStatusIcon.svelte'
   import StatusPresenter from './StatusPresenter.svelte'
 
@@ -90,7 +93,61 @@
     )
   }
 
-  $: statuses = getTaskTypeStates(value.kind, $taskTypeStore, $statusStore.byId)
+  const transitionsQuery = createQuery()
+
+  let transitions: WorkflowTransition[] | undefined = undefined
+
+  const h = client.getHierarchy()
+  $: project = value?.space ? ($activeProjects.get(value.space) as ProjectWorkflow | undefined) : undefined
+  $: workflowId = project && value?.kind ? h.as(project, workflow.mixin.ProjectWorkflow).workflows?.[value.kind] : undefined
+
+  $: if (workflowId != null) {
+    transitionsQuery.query(
+      workflow.class.WorkflowTransition,
+      { attachedTo: workflowId },
+      (res) => {
+        transitions = res
+      }
+    )
+  } else {
+    transitions = undefined
+  }
+
+  $: allStatuses = getTaskTypeStates(value.kind, $taskTypeStore, $statusStore.byId) as WithLookup<IssueStatus>[] | undefined
+
+  function filterStatusesByWorkflow (
+    all: WithLookup<IssueStatus>[] | undefined,
+    wfId: Ref<any> | undefined,
+    transitions: WorkflowTransition[] | undefined,
+    currentStatus: Ref<IssueStatus> | undefined
+  ): WithLookup<IssueStatus>[] | undefined {
+    if (all == null) return undefined
+    if (wfId == null || transitions == null) return all
+
+    const allowed = new Set<string>()
+
+    if (currentStatus != null) {
+      allowed.add(currentStatus)
+    }
+
+    for (const t of transitions) {
+      if (
+        t.from == null ||
+        t.from.length === 0 ||
+        (currentStatus != null && t.from.includes(currentStatus))
+      ) {
+        allowed.add(t.to)
+      }
+    }
+
+    if (allowed.size === 0) {
+      return all
+    }
+
+    return all.filter((s) => allowed.has(s._id))
+  }
+
+  $: statuses = filterStatusesByWorkflow(allStatuses, workflowId, transitions, value?.status)
 
   function getSelectedStatus (
     statuses: WithLookup<IssueStatus>[] | undefined,

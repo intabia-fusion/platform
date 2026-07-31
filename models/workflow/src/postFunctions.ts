@@ -23,15 +23,15 @@ export function definePostFunctions (builder: Builder): void {
     workflow.class.WorkflowPostFunction,
     core.space.Model,
     {
-      label: workflow.string.SetFieldValuePostFunction,
-      description: workflow.string.SetFieldValueDescription,
+      label: workflow.string.UpdateFieldValuePostFunction,
+      description: workflow.string.UpdateFieldValueDescription,
       icon: workflow.icon.Action,
       group: 'fields',
       order: 10,
-      editor: workflow.postFunctionEditor.SetFieldValue,
-      presenter: workflow.postFunctionPresenter.SetFieldValue
+      editor: workflow.postFunctionEditor.UpdateFieldValue,
+      presenter: workflow.postFunctionPresenter.UpdateFieldValue
     },
-    workflow.postFunction.SetFieldValue
+    workflow.postFunction.UpdateFieldValue
   )
 
   builder.createDoc(

@@ -20,7 +20,7 @@
   import ui, { DropdownTextItem, Icon, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
   import { StatePresenter } from '@hcengineering/task-resources'
   import { WorkflowValidatorConfig } from '@hcengineering/workflow'
-  import { getClient } from '@hcengineering/presentation'
+  import { getClient, reduceCalls } from '@hcengineering/presentation'
 
   import plugin from '../../../plugin'
 
@@ -103,13 +103,13 @@
     ]
   }
 
-  async function updateStatusItems (taskTypes: TaskType[]): Promise<void> {
+  const updateStatusItems = reduceCalls(async (taskTypes: TaskType[]): Promise<void> => {
     const map: Record<Ref<TaskType>, DropdownTextItem[]> = {}
     for (const tt of taskTypes) {
       map[tt._id] = await getStatusItems(tt._id)
     }
     statusItemsMap = map
-  }
+  })
 
   function handleStatusChange (ttId: Ref<TaskType>, selected: string[]): void {
     statusesMap = {

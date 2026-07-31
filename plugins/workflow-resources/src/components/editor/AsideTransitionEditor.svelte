@@ -8,7 +8,6 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
@@ -16,11 +15,12 @@
   import { onDestroy } from 'svelte'
   import { Data, DocumentUpdate, Ref, Status } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
-  import presentation, { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
+  import presentation, { createQuery, getClient, MessageBox, reduceCalls } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import { TaskType } from '@hcengineering/task'
   import { StatePresenter } from '@hcengineering/task-resources'
   import ui, {
+    DropdownTextItem,
     IconError,
     Label,
     languageStore,
@@ -31,8 +31,7 @@
     ModernDropdownLabels,
     ModernEditbox,
     showPopup,
-    Spinner,
-    type DropdownTextItem
+    Spinner
   } from '@hcengineering/ui'
   import {
     ConflictInfo,
@@ -44,6 +43,7 @@
   } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
+  import PostFunctionsNavGroup from '../postFunctions/PostFunctionsNavGroup.svelte'
   import RequestsNavGroup from '../requests/RequestsNavGroup.svelte'
   import ValidatorsNavGroup from '../validators/ValidatorsNavGroup.svelte'
 
@@ -72,10 +72,13 @@
     transition = res.find((it) => it._id === _id)
   })
 
-  $: void translate(plugin.string.AnyStatus, {}, $languageStore).then((it) => {
+  $: void updateFromStatusItems($languageStore, statuses)
+
+  const updateFromStatusItems = reduceCalls(async (lang: string, stList: Status[]): Promise<void> => {
+    const it = await translate(plugin.string.AnyStatus, {}, lang)
     fromStatusItems = [
       { label: it, id: 'null', exclusive: true },
-      ...statuses.map((s) => ({
+      ...stList.map((s) => ({
         id: s._id,
         label: s.name,
         icon: StatePresenter,
@@ -252,7 +255,7 @@
 >
   <div class="flex-column flex-gap-4 p-8">
     <div class="row">
-      <span class="label"> <Label label={plugin.string.Name} /></span>
+      <span class="label"><Label label={plugin.string.Name} /></span>
       <ModernEditbox
         bind:value={name}
         label={plugin.string.Name}
@@ -260,7 +263,6 @@
         autoFocus={false}
         width="100%"
         disabled={readonly}
-        style="padding:0"
         on:blur={() => {
           if (timer != null) clearTimeout(timer)
           void save()
@@ -268,8 +270,8 @@
       />
     </div>
 
-    <div class="row" style="align-items: flex-start">
-      <span class="label" style="margin-top: 0.625rem"> <Label label={plugin.string.From} /> </span>
+    <div class="row row-top">
+      <span class="label label-top"><Label label={plugin.string.From} /></span>
       <ModernDropdownLabels
         items={fromStatusItems}
         bind:selected={fromStatusItemIds}
@@ -283,7 +285,7 @@
     </div>
 
     <div class="row">
-      <span class="label"> <Label label={plugin.string.To} /></span>
+      <span class="label"><Label label={plugin.string.To} /></span>
       <ModernDropdown
         items={toStatusItems}
         bind:selected={toStatusItem}
@@ -334,6 +336,7 @@
   {#if transition}
     <RequestsNavGroup {workflow} {transitions} {statuses} {transition} {taskType} />
     <ValidatorsNavGroup {workflow} {transitions} {statuses} {transition} {taskType} />
+    <PostFunctionsNavGroup {workflow} {transitions} {statuses} {transition} {taskType} />
   {/if}
   <div slot="footer" class="footer-row flex-row-center w-full justify-between">
     <div class="footer-left">
@@ -356,12 +359,18 @@
   :global(.hulyNavGroup-container .hulyNavGroup-header) {
     padding: 0;
   }
+
   .row {
     display: flex;
     align-items: center;
     gap: 1rem;
     min-height: 2.5rem;
+
+    &.row-top {
+      align-items: flex-start;
+    }
   }
+
   .label {
     text-transform: uppercase;
     font-weight: 500;
@@ -370,6 +379,10 @@
     line-height: 1rem;
     color: var(--global-secondary-TextColor);
     min-width: 3rem;
+
+    &.label-top {
+      margin-top: 0.625rem;
+    }
   }
 
   .footer-row {
@@ -411,7 +424,7 @@
     display: flex;
     align-items: flex-start;
     gap: 0.5rem;
-    color: var(--negative-button-default);
+    color: var(--global-error-TextColor, #f87171);
     font-size: 0.8125rem;
     line-height: 1.125rem;
     margin-top: 1rem;
@@ -427,7 +440,7 @@
     }
 
     .error-text {
-      color: var(--negative-button-default);
+      color: var(--global-error-TextColor, #f87171);
       word-break: break-word;
       overflow-wrap: anywhere;
       min-width: 0;

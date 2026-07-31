@@ -13,8 +13,8 @@
 -->
 <script lang="ts">
   import { generateId, Status } from '@hcengineering/core'
-  import { getResourceP } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
+  import { getResourceP, Resource } from '@hcengineering/platform'
+  import { getClient, reduceCalls } from '@hcengineering/presentation'
   import { ProjectType, TaskType } from '@hcengineering/task'
   import { AnySvelteComponent, Label } from '@hcengineering/ui'
   import {
@@ -41,18 +41,15 @@
   let editorCtor: AnySvelteComponent | undefined = undefined
   let props: WorkflowRequestConfig['props'] | undefined = undefined
 
-  $: if (value?.editor != null) {
-    const res = getResourceP(value.editor)
-    if (res instanceof Promise) {
-      void res.then((c) => {
-        editorCtor = c
-      })
+  $: void loadEditor(value?.editor)
+
+  const loadEditor = reduceCalls(async (resource?: Resource<AnySvelteComponent>): Promise<void> => {
+    if (resource != null) {
+      editorCtor = await getResourceP(resource)
     } else {
-      editorCtor = res
+      editorCtor = undefined
     }
-  } else {
-    editorCtor = undefined
-  }
+  })
 
   export async function save (): Promise<void> {
     if (editorCtor == null || props == null) return

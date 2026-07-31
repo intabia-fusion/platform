@@ -24,17 +24,19 @@ import {
 } from '@hcengineering/core'
 import { type TriggerControl } from '@hcengineering/server-core'
 import task, { type Task, type Project, type TaskType, type Rank } from '@hcengineering/task'
+const contactPersonClass = 'contact:class:Person' as any
 import workflow from '@hcengineering/model-workflow'
+import serverWorkflow from '@hcengineering/server-workflow'
 import { type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
 import { ValidateTransitionTrigger } from '../ValidateTransition'
-import { SetFieldValue, ClearFieldValue } from '../ExecutePostFunctions'
+import { UpdateFieldValue, ClearFieldValue } from '../post-functions'
 
 jest.mock('@hcengineering/platform', () => {
   const actual = jest.requireActual('@hcengineering/platform')
   return {
     ...actual,
     getResource: jest.fn().mockImplementation(async (res) => {
-      if (res === 'SetFieldValue') return SetFieldValue
+      if (res === 'UpdateFieldValue') return UpdateFieldValue
       if (res === 'ClearFieldValue') return ClearFieldValue
       return actual.getResource(res)
     })
@@ -43,7 +45,7 @@ jest.mock('@hcengineering/platform', () => {
 
 const testSpace = 'test-space' as Ref<Project>
 
-function createMockTask (data: Partial<Task> = {}): WithLookup<Task> {
+function createMockTask (data: Partial<Task> & Record<string, any> = {}): WithLookup<Task> {
   return {
     _id: data._id ?? generateId(),
     _class: task.class.Task,
@@ -64,6 +66,13 @@ function createMockTask (data: Partial<Task> = {}): WithLookup<Task> {
 
 describe('Workflow Post-Functions', () => {
   const txFactory = new TxFactory('test-account' as any)
+  const mockCtx = {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    newChild: jest.fn().mockReturnThis(),
+    contextData: { account: 'user-current' }
+  } as any
 
   it('should execute SetFieldValue post-function on status transition', async () => {
     const fromStatus = generateId<Status>()
@@ -107,7 +116,7 @@ describe('Workflow Post-Functions', () => {
         {
           id: 'pf-1',
           postFunction: pfRuleId as any,
-          props: { fieldKey: 'assignee', value: 'user-2' }
+          props: { fields: [{ fieldKey: 'assignee', value: 'user-2' }] }
         }
       ]
     } as any
@@ -122,7 +131,7 @@ describe('Workflow Post-Functions', () => {
       description: '',
       order: 10,
       editor: 'editor',
-      serverExecutor: 'SetFieldValue'
+      serverExecutor: 'UpdateFieldValue'
     } as any
 
     const hierarchy = {
@@ -130,13 +139,13 @@ describe('Workflow Post-Functions', () => {
       hasMixin: () => true,
       as: (obj: any, mixin: any) => {
         if (mixin === workflow.mixin.ProjectWorkflow) return project
-        if (mixin === 'server-workflow:mixin:PostFunctionImpl') return pfRule
+        if (mixin === serverWorkflow.mixin.PostFunctionImpl || mixin === 'server-workflow:mixin:PostFunctionImpl' || String(mixin).includes('PostFunctionImpl')) return pfRule
         return obj
       }
     } as any
 
     const control: TriggerControl = {
-      ctx: {} as any,
+      ctx: mockCtx,
       hierarchy,
       txFactory,
       modelDb: {} as any,
@@ -154,6 +163,84 @@ describe('Workflow Post-Functions', () => {
     expect(resultTxes.length).toBe(1)
     const pfTx = resultTxes[0] as TxUpdateDoc<Task>
     expect((pfTx.operations as any).assignee).toBe('user-2')
+  })
+
+  it('should evaluate presets, field functions, and parent references in UpdateFieldValue', async () => {
+    const parentId = generateId<Task>()
+    const parentTask = createMockTask({ _id: parentId, description: 'Parent Desc' })
+    const currentTask = createMockTask({
+      attachedTo: parentId,
+      attachedToClass: task.class.Task,
+      identifier: 'task-10'
+    })
+
+    const txFactoryUser = new TxFactory('email:user-current' as any)
+    const control: TriggerControl = {
+      ctx: mockCtx,
+      hierarchy: {} as any,
+      txFactory: txFactoryUser,
+      modelDb: {
+        findAllSync: () => [
+          { _id: workflow.function.UpperCase, type: 'transform' },
+          { _id: workflow.function.Append, type: 'transform' },
+          { _id: workflow.function.FirstValue, type: 'transform' }
+        ]
+      } as any,
+      findAll: jest.fn().mockImplementation(async (ctx, _class, query) => {
+        if (_class === task.class.Task && query._id === parentId) {
+          return toFindResult([parentTask])
+        }
+        if (String(_class).includes('SocialIdentity')) {
+          return toFindResult([{ _id: 'sid-1', space: 'test', modifiedOn: 0, modifiedBy: 'test', _class: 'contact:class:SocialIdentity', attachedTo: 'user-current', attachedToClass: contactPersonClass } as any])
+        }
+        if (String(_class).includes('Person')) {
+          return toFindResult([{ _id: 'user-current', space: 'test', modifiedOn: 0, modifiedBy: 'test', _class: contactPersonClass } as any])
+        }
+        return toFindResult([])
+      })
+    } as any
+
+    const props = {
+      fields: [
+        {
+          fieldKey: 'assignee',
+          value: { type: 'preset', preset: '$currentUser' }
+        },
+        {
+          fieldKey: 'titleUpper',
+          value: {
+            type: 'const',
+            value: 'hello world',
+            functions: [{ func: workflow.function.UpperCase }, { func: workflow.function.Append, props: { value: '!' } }]
+          }
+        },
+        {
+          fieldKey: 'parentDesc',
+          value: {
+            type: 'parent',
+            fieldKey: 'description'
+          }
+        },
+        {
+          fieldKey: 'firstItem',
+          value: {
+            type: 'const',
+            value: ['val1', 'val2'],
+            functions: [{ func: workflow.function.FirstValue }]
+          }
+        }
+      ]
+    }
+
+    const transition: WorkflowTransition = { _id: 't-1' } as any
+    const txes = await UpdateFieldValue(control, currentTask, transition, props as any)
+
+    expect(txes.length).toBe(1)
+    const ops = (txes[0] as TxUpdateDoc<Task>).operations as any
+    expect(ops.assignee).toBe('user-current')
+    expect(ops.titleUpper).toBe('HELLO WORLD!')
+    expect(ops.parentDesc).toBe('Parent Desc')
+    expect(ops.firstItem).toBe('val1')
   })
 
   it('should execute ClearFieldValue post-function on status transition', async () => {
@@ -221,13 +308,13 @@ describe('Workflow Post-Functions', () => {
       hasMixin: () => true,
       as: (obj: any, mixin: any) => {
         if (mixin === workflow.mixin.ProjectWorkflow) return project
-        if (mixin === 'server-workflow:mixin:PostFunctionImpl') return pfRule
+        if (mixin === serverWorkflow.mixin.PostFunctionImpl || mixin === 'server-workflow:mixin:PostFunctionImpl' || String(mixin).includes('PostFunctionImpl')) return pfRule
         return obj
       }
     } as any
 
     const control: TriggerControl = {
-      ctx: {} as any,
+      ctx: mockCtx,
       hierarchy,
       txFactory,
       modelDb: {} as any,
@@ -244,6 +331,6 @@ describe('Workflow Post-Functions', () => {
 
     expect(resultTxes.length).toBe(1)
     const pfTx = resultTxes[0] as TxUpdateDoc<Task>
-    expect((pfTx.operations as any).resolution).toBeNull()
+    expect((pfTx.operations as any).$unset?.resolution).toBe(true)
   })
 })

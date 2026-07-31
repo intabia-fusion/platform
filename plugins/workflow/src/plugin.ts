@@ -25,6 +25,7 @@ import {
   WorkflowRule,
   WorkflowRequest,
   WorkflowPostFunction,
+  WorkflowValueFunction,
   Screen,
   ScreenTab,
   ScreenField
@@ -40,9 +41,68 @@ export default plugin(workflowId, {
     WorkflowValidator: '' as Ref<Class<WorkflowValidator>>,
     WorkflowRequest: '' as Ref<Class<WorkflowRequest>>,
     WorkflowPostFunction: '' as Ref<Class<WorkflowPostFunction>>,
+    WorkflowValueFunction: '' as Ref<Class<WorkflowValueFunction>>,
     Screen: '' as Ref<Class<Screen>>,
     ScreenTab: '' as Ref<Class<ScreenTab>>,
     ScreenField: '' as Ref<Class<ScreenField>>
+  },
+  function: {
+    ToString: '' as Ref<WorkflowValueFunction>,
+    TextFromNumber: '' as Ref<WorkflowValueFunction>,
+    TextFromDate: '' as Ref<WorkflowValueFunction>,
+    TextFromCheckbox: '' as Ref<WorkflowValueFunction>,
+    NumberFromText: '' as Ref<WorkflowValueFunction>,
+    DateFromText: '' as Ref<WorkflowValueFunction>,
+    YearFromDate: '' as Ref<WorkflowValueFunction>,
+    MonthFromDate: '' as Ref<WorkflowValueFunction>,
+    DayFromDate: '' as Ref<WorkflowValueFunction>,
+    NumberFromDate: '' as Ref<WorkflowValueFunction>,
+    DateFromNumber: '' as Ref<WorkflowValueFunction>,
+    UpperCase: '' as Ref<WorkflowValueFunction>,
+    LowerCase: '' as Ref<WorkflowValueFunction>,
+    Trim: '' as Ref<WorkflowValueFunction>,
+    Round: '' as Ref<WorkflowValueFunction>,
+    Absolute: '' as Ref<WorkflowValueFunction>,
+    Ceil: '' as Ref<WorkflowValueFunction>,
+    Floor: '' as Ref<WorkflowValueFunction>,
+    Sqrt: '' as Ref<WorkflowValueFunction>,
+    FirstValue: '' as Ref<WorkflowValueFunction>,
+    LastValue: '' as Ref<WorkflowValueFunction>,
+    Random: '' as Ref<WorkflowValueFunction>,
+    Prepend: '' as Ref<WorkflowValueFunction>,
+    Append: '' as Ref<WorkflowValueFunction>,
+    Replace: '' as Ref<WorkflowValueFunction>,
+    ReplaceAll: '' as Ref<WorkflowValueFunction>,
+    Split: '' as Ref<WorkflowValueFunction>,
+    Cut: '' as Ref<WorkflowValueFunction>,
+    Add: '' as Ref<WorkflowValueFunction>,
+    Subtract: '' as Ref<WorkflowValueFunction>,
+    Multiply: '' as Ref<WorkflowValueFunction>,
+    Divide: '' as Ref<WorkflowValueFunction>,
+    Modulo: '' as Ref<WorkflowValueFunction>,
+    Power: '' as Ref<WorkflowValueFunction>,
+    Min: '' as Ref<WorkflowValueFunction>,
+    Max: '' as Ref<WorkflowValueFunction>,
+    Offset: '' as Ref<WorkflowValueFunction>,
+    DateDifference: '' as Ref<WorkflowValueFunction>
+  },
+  transformEditor: {
+    AppendEditor: '' as AnyComponent,
+    ReplaceEditor: '' as AnyComponent,
+    SplitEditor: '' as AnyComponent,
+    CutEditor: '' as AnyComponent,
+    NumberEditor: '' as AnyComponent,
+    DateOffsetEditor: '' as AnyComponent,
+    DateDifferenceEditor: '' as AnyComponent
+  },
+  propsLabelPresenter: {
+    AppendPresenter: '' as Resource<(props: Record<string, any>) => IntlString>,
+    ReplacePresenter: '' as Resource<(props: Record<string, any>) => IntlString>,
+    SplitPresenter: '' as Resource<(props: Record<string, any>) => IntlString>,
+    CutPresenter: '' as Resource<(props: Record<string, any>) => IntlString>,
+    NumberPresenter: '' as Resource<(props: Record<string, any>) => IntlString>,
+    DateOffsetPresenter: '' as Resource<(props: Record<string, any>) => IntlString>,
+    DateDifferencePresenter: '' as Resource<(props: Record<string, any>) => IntlString>
   },
   validator: {
     FieldRequired: '' as Ref<WorkflowValidator>,
@@ -74,15 +134,15 @@ export default plugin(workflowId, {
     ScreenRequest: '' as AnyComponent
   },
   postFunction: {
-    SetFieldValue: '' as Ref<WorkflowPostFunction>,
+    UpdateFieldValue: '' as Ref<WorkflowPostFunction>,
     ClearFieldValue: '' as Ref<WorkflowPostFunction>
   },
   postFunctionEditor: {
-    SetFieldValue: '' as AnyComponent,
+    UpdateFieldValue: '' as AnyComponent,
     ClearFieldValue: '' as AnyComponent
   },
   postFunctionPresenter: {
-    SetFieldValue: '' as AnyComponent,
+    UpdateFieldValue: '' as AnyComponent,
     ClearFieldValue: '' as AnyComponent
   },
   mixin: {
@@ -106,6 +166,11 @@ export default plugin(workflowId, {
     Action: '' as Asset
   },
   string: {
+    Search: '' as IntlString,
+    Replacement: '' as IntlString,
+    Separator: '' as IntlString,
+    Start: '' as IntlString,
+    End: '' as IntlString,
     Workflow: '' as IntlString,
     WorkflowTransition: '' as IntlString,
     WorkflowMapping: '' as IntlString,
@@ -192,12 +257,22 @@ export default plugin(workflowId, {
     WorkflowPostFunction: '' as IntlString,
     AddPostFunction: '' as IntlString,
     PostFunction: '' as IntlString,
-    SetFieldValuePostFunction: '' as IntlString,
-    SetFieldValueDescription: '' as IntlString,
+    UpdateFieldValuePostFunction: '' as IntlString,
+    UpdateFieldValueDescription: '' as IntlString,
     ClearFieldValuePostFunction: '' as IntlString,
     ClearFieldValueDescription: '' as IntlString,
     Value: '' as IntlString,
     ClearFields: '' as IntlString,
-    SelectFieldToClear: '' as IntlString
+    SelectFieldToClear: '' as IntlString,
+    CurrentUser: '' as IntlString,
+    ParentAssignee: '' as IntlString,
+    DefaultAssignee: '' as IntlString,
+    Now: '' as IntlString,
+    ThisTaskField: '' as IntlString,
+    ParentTaskField: '' as IntlString,
+    Parent: '' as IntlString,
+    SelectFieldFirst: '' as IntlString,
+    NoTransformationsForAttribute: '' as IntlString,
+    SetValueFirst: '' as IntlString
   }
 })

@@ -18,7 +18,14 @@ import task, { type Task, TaskType } from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
 
 import workflow from './plugin'
-import { type ValidationResult, ValidatorClient, ValidatorFunc, type WorkflowTransition } from './types'
+import {
+  FieldRequiredProps,
+  type ValidationResult,
+  ValidatorClient,
+  ValidatorFunc,
+  type WorkflowTransition
+} from './types'
+import { translate } from '@hcengineering/platform'
 
 export function isEmpty (value: any): boolean {
   if (value === undefined || value === null) {
@@ -40,24 +47,35 @@ export function isEmpty (value: any): boolean {
 }
 
 export const FieldRequired: ValidatorFunc = async (
-  _client: ValidatorClient,
+  client: ValidatorClient,
   taskDoc: Task,
   transition: WorkflowTransition,
-  props: Record<string, any>
+  _props: Record<string, any>
 ): Promise<ValidationResult> => {
-  const fields = ((props.fields ?? []) as string[]).filter(notEmpty)
+  const props = _props as FieldRequiredProps | undefined
+  const fields = props?.fields ?? []
   if (fields.length === 0) {
     return { ok: true }
   }
 
-  for (const field of fields) {
-    const val = (taskDoc as any)[field]
+  const h = client.getHierarchy()
+  for (const f of fields) {
+    const fieldKey = f.fieldKey
+    if (fieldKey == null || fieldKey === '') continue
+
+    const attribute = h.findAttribute(f.mixin ?? taskDoc._class, fieldKey)
+    if (attribute == null) continue
+    const val = f.mixin != null ? (h.as(taskDoc, f.mixin) as any)[f.fieldKey] : (taskDoc as any)[f.fieldKey]
     if (isEmpty(val)) {
+      // TODO: add lang
+      const from = transition.from != null ? (await getStatusNames(client, transition.from))[0] : 'Any status'
+      const to = (await getStatusNames(client, [transition.to]))[0]
+      const fieldName = await translate(attribute.label, {})
       return {
         ok: false,
-        reason: `Field "${field}" is required for transition "${transition.name}".`,
+        reason: `Field "${fieldName}" is required for transition ${from} ➜ ${to}.`,
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field, transition: transition.name }
+        intlParams: { field: fieldName, transition: transition.name }
       }
     }
   }
@@ -128,7 +146,7 @@ export const SubtaskStatus: ValidatorFunc = async (
       const statusesStr = await getStatusNames(client, check.allowedStatuses)
       return {
         ok: false,
-        reason: `Subtasks must be in allowed status (${statusesStr}) for transition "${transition.name}".`,
+        reason: `Subtasks must be in allowed statuses (${statusesStr})".`,
         reasonIntl: workflow.string.SubtaskStatusError,
         intlParams: { transition: transition.name, statuses: statusesStr }
       }
@@ -168,7 +186,7 @@ export const ParentStatus: ValidatorFunc = async (
     const statusesStr = await getStatusNames(client, check.allowedStatuses)
     return {
       ok: false,
-      reason: `Parent task must be in allowed status (${statusesStr}) for transition "${transition.name}".`,
+      reason: `Parent task must be in allowed statuses (${statusesStr}).`,
       reasonIntl: workflow.string.ParentStatusError,
       intlParams: { transition: transition.name, statuses: statusesStr }
     }

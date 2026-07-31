@@ -8,7 +8,6 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
@@ -20,8 +19,8 @@
   import { ButtonIcon, Icon, IconAdd, Label } from '@hcengineering/ui'
   import { Workflow } from '@hcengineering/workflow'
 
-  import plugin from '../plugin'
   import { navigateToWorkflow } from '../location'
+  import plugin from '../plugin'
   import CreateWorkflow from './CreateWorkflow.svelte'
   import IconWorkflow from './icon/Workflow.svelte'
 
@@ -83,9 +82,10 @@
 
 {#if workflows.length > 0 && !isLoading}
   <div class="hulyTableAttr-content workflow">
-    {#each workflows as workflow}
+    {#each workflows as workflow (workflow._id)}
       {@const taskTypeName = getTaskTypeName(workflow.taskType)}
       <button
+        type="button"
         class="hulyTableAttr-content__row"
         on:click|stopPropagation={() => {
           navigateToWorkflow(workflow._id)
@@ -97,7 +97,7 @@
         <span class="hulyTableAttr-content__row-label font-medium-14" title={workflow.name}>
           {workflow.name}
         </span>
-        <span class="hulyTableAttr-content__row-label grow dark font-regular-14" style="flex-shrink: 0;">
+        <span class="hulyTableAttr-content__row-label grow dark font-regular-14 type-label">
           {#if taskTypeName}
             {taskTypeName}
           {:else}
@@ -108,3 +108,9 @@
     {/each}
   </div>
 {/if}
+
+<style lang="scss">
+  .type-label {
+    flex-shrink: 0;
+  }
+</style>

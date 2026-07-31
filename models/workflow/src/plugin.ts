@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { mergeIds, type Resource } from '@hcengineering/platform'
+import { mergeIds, type Resource, type IntlString } from '@hcengineering/platform'
 import workflow, { workflowId } from '@hcengineering/workflow'
 import {} from '@hcengineering/ui'
 import { type Ref } from '@hcengineering/core'
@@ -22,6 +22,46 @@ import { type PresentationMiddlewareCreator, type PresentationMiddlewareFactory 
 export default mergeIds(workflowId, workflow, {
   function: {
     CreateMiddleware: '' as Resource<PresentationMiddlewareCreator>
+  },
+  string: {
+    DayFromDate: '' as IntlString,
+    MonthFromDate: '' as IntlString,
+    YearFromDate: '' as IntlString,
+    TextFromNumber: '' as IntlString,
+    TextFromDate: '' as IntlString,
+    TextFromCheckbox: '' as IntlString,
+    NumberFromText: '' as IntlString,
+    DateFromText: '' as IntlString,
+    NumberFromDate: '' as IntlString,
+    DateFromNumber: '' as IntlString,
+    UpperCase: '' as IntlString,
+    LowerCase: '' as IntlString,
+    Trim: '' as IntlString,
+    Round: '' as IntlString,
+    Absolute: '' as IntlString,
+    Ceil: '' as IntlString,
+    Floor: '' as IntlString,
+    Sqrt: '' as IntlString,
+    FirstValue: '' as IntlString,
+    LastValue: '' as IntlString,
+    Random: '' as IntlString,
+    ToString: '' as IntlString,
+    Prepend: '' as IntlString,
+    Append: '' as IntlString,
+    Replace: '' as IntlString,
+    ReplaceAll: '' as IntlString,
+    Split: '' as IntlString,
+    Cut: '' as IntlString,
+    Add: '' as IntlString,
+    Subtract: '' as IntlString,
+    Multiply: '' as IntlString,
+    Divide: '' as IntlString,
+    Modulo: '' as IntlString,
+    Power: '' as IntlString,
+    Min: '' as IntlString,
+    Max: '' as IntlString,
+    Offset: '' as IntlString,
+    DateDifference: '' as IntlString
   },
   pipeline: {
     WorkflowMiddleware: '' as Ref<PresentationMiddlewareFactory>

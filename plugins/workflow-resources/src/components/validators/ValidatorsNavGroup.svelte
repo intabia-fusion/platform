@@ -8,11 +8,13 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
 <script lang="ts">
+  import { Status } from '@hcengineering/core'
+  import presentation, { getClient } from '@hcengineering/presentation'
+  import { TaskType } from '@hcengineering/task'
   import {
     ButtonMenu,
     DropdownIntlItem,
@@ -32,9 +34,6 @@
     WorkflowValidator,
     WorkflowValidatorConfig
   } from '@hcengineering/workflow'
-  import { Status } from '@hcengineering/core'
-  import { TaskType } from '@hcengineering/task'
-  import presentation, { getClient } from '@hcengineering/presentation'
 
   import plugin from '../../plugin'
   import AddRulesPopup from '../rules/AddRulesPopup.svelte'
@@ -118,6 +117,7 @@
 
     <svelte:fragment slot="after">
       <button
+        type="button"
         class="validators-nav-group--action"
         data-testid="action-add-validators"
         on:click|preventDefault|stopPropagation={handleAdd}

@@ -47,6 +47,29 @@ export interface DisplayAttributeGroup {
   collection: DisplayAttribute[]
 }
 
+export function getAllClassAttributes (hierarchy: Hierarchy, _class: Ref<Class<Doc>>): AnyAttribute[] {
+  const mixins = hierarchy
+    .getDescendants(_class)
+    .map((it) => hierarchy.findClass(it))
+    .filter(notEmpty)
+    .filter((it) => it._id !== _class && it.kind === ClassifierKind.MIXIN)
+
+  const targetClasses: Array<Ref<Class<Doc>>> = [_class, ...mixins.map((it) => it._id)]
+  const result: AnyAttribute[] = []
+  const processedAttrs = new Set<string>()
+
+  for (const targetClass of targetClasses) {
+    const attrs = hierarchy.getAllAttributes(targetClass)
+    for (const attr of attrs.values()) {
+      if (processedAttrs.has(attr._id)) continue
+      processedAttrs.add(attr._id)
+      result.push(attr)
+    }
+  }
+
+  return result
+}
+
 export function getAttributeIcon (
   hierarchy: Hierarchy,
   attr: AnyAttribute
@@ -125,7 +148,8 @@ const buildAttributeDisplayItem = async (
 export async function getDisplayAttributes (
   _class: Ref<Class<Doc>>,
   lang: string,
-  skip: string[] = []
+  skipFields: string[] = [],
+  skipTypes: Array<Ref<Class<Doc>>> = []
 ): Promise<DisplayAttributeGroup[]> {
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -158,7 +182,8 @@ export async function getDisplayAttributes (
         !hierarchy.isDerived(it.type._class, core.class.TypeIdentifier) &&
         !processedAttrs.has(it._id) &&
         !processedAttrs.has(it.name) &&
-        !skip.includes(it.name)
+        !skipFields.includes(it.name) &&
+        !skipTypes.includes(it.type._class)
     )
 
     for (const it of attrs) {
