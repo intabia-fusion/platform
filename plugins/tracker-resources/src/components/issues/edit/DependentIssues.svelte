@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Issue } from '@hcengineering/tracker'
-  import { ButtonIcon, IconAdd, Label, showPopup } from '@hcengineering/ui'
+  import { Button, IconAdd, Label, showPopup } from '@hcengineering/ui'
   import { Class, Doc, Ref, RelatedDocument } from '@hcengineering/core'
   import tracker from '../../../plugin'
   import QueryIssuesList from './QueryIssuesList.svelte'
@@ -128,11 +128,10 @@
       </svelte:fragment>
       <svelte:fragment slot="buttons">
         {#if !$restrictionStore.readonly}
-          <ButtonIcon
+          <Button
             icon={IconAdd}
-            size={'small'}
-            kind={'tertiary'}
-            tooltip={{ label: tracker.string.AddRelatedIssue, direction: 'bottom' }}
+            kind={'ghost'}
+            showTooltip={{ label: tracker.string.AddRelatedIssue, direction: 'bottom' }}
             on:click={addRelatedIssue}
           />
         {/if}
