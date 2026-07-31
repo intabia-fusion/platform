@@ -267,6 +267,32 @@ describe('processWebhook (consumer)', () => {
     expect(storage.releaseCheckout).toHaveBeenCalledWith('pay_1')
   })
 
+  // Regression: the bank sends AUTHORIZED then CONFIRMED for the same payment. AUTHORIZED activates the
+  // sub (pending:false), so the CONFIRMED that follows hits the duplicate guard. The claim release must
+  // still happen, otherwise the checkout intent leaks and blocks every later purchase for that (ws, type).
+  test('CONFIRMED after AUTHORIZED still releases the checkout claim', async () => {
+    const draft = {
+      ...activeSub,
+      status: SubscriptionStatus.PastDue,
+      providerData: { ...activeSub.providerData, pending: true, paymentId: 8958842784 }
+    }
+    const storage = makeStorage(draft)
+    const notification = { PaymentId: 8958842784, Status: 'AUTHORIZED', Amount: 100000, RebillId: 1 }
+
+    await processWebhook(newCtx(), baseConfig, makeTbank(true), storage, notification, true)
+
+    // AUTHORIZED activated the sub: money not settled yet, so no release at this point.
+    const activated = storage.upsert.mock.calls.at(-1)[0]
+    expect(activated.status).toBe(SubscriptionStatus.Active)
+    expect(activated.providerData.pending).toBe(false)
+    expect(storage.releaseCheckout).not.toHaveBeenCalled()
+
+    // CONFIRMED now sees an Active, non-pending sub for the same payment -> duplicate guard returns early.
+    storage.getByProviderId = jest.fn().mockResolvedValue(activated)
+    await processWebhook(newCtx(), baseConfig, makeTbank(true), storage, { ...notification, Status: 'CONFIRMED' }, true)
+    expect(storage.releaseCheckout).toHaveBeenCalledWith('8958842784')
+  })
+
   test('CONFIRMED with pendingReplacement cancels the old subscription', async () => {
     const newSub = {
       ...activeSub,

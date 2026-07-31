@@ -219,6 +219,9 @@ const TBANK_DEAD_LINK_STATES = ['DEADLINE_EXPIRED', 'CANCELED', 'REJECTED']
 // terminal state. The message is localized and names no status, so matching TBANK_DEAD_LINK_STATES
 // against the text alone never catches it on the real API — the code is the stable signal.
 const TBANK_STATUS_CHANGE_FORBIDDEN = '4'
+// Cancel answers with these when it hit a payment whose money had already settled: the call did not
+// kill a link, it moved money back. Only reachable by losing the GetState->Cancel race.
+const TBANK_REFUNDED_STATES = ['REFUNDED', 'PARTIAL_REFUNDED', 'REVERSED']
 
 async function cancelPendingCheckout (
   ctx: MeasureContext,
@@ -233,6 +236,24 @@ async function cancelPendingCheckout (
     await storage.abandonCheckout(intentId)
     return true
   }
+  // Check the state BEFORE cancelling: /v2/Cancel on a CONFIRMED payment is a full REFUND, not a
+  // no-op. A settled checkout must never be cancelled here — the goods were paid for. Its claim is
+  // stale (the CONFIRMED webhook was lost or swallowed), so free it and let the caller proceed.
+  // AUTHORIZED is deliberately NOT short-circuited: there Cancel only releases the hold (no refund),
+  // and the payment could still reach CONFIRMED — freeing the claim without cancelling would risk a
+  // double charge. It goes through the normal Cancel path below.
+  try {
+    const state = await tbank.getPaymentState({ PaymentId: paymentId })
+    if (state.Success && state.Status === 'CONFIRMED') {
+      ctx.info('Pending checkout already settled, releasing claim without cancel', { paymentId })
+      await storage.releaseCheckout(paymentId)
+      return true
+    }
+  } catch (err) {
+    // GetState unreachable: fall through to Cancel rather than wedging the checkout. Cancel on a
+    // still-unpaid link is the correct action, and on a settled one tbank answers ErrorCode 4 below.
+    ctx.warn('GetState before checkout cancel failed, proceeding to cancel', { paymentId, err })
+  }
   let dead = false
   try {
     // Deterministic idempotency key: a retried Cancel for this payment returns the existing operation's
@@ -241,8 +262,39 @@ async function cancelPendingCheckout (
       PaymentId: paymentId,
       ExternalRequestId: `cancel:${paymentId}`
     })
-    dead = cancelResult.Status === 'CANCELED' || TBANK_DEAD_LINK_STATES.includes(cancelResult.Status)
+    // Lost the race: the payment settled between GetState and Cancel, so tbank refunded it instead of
+    // just killing the link. Nothing to undo — record it loudly so the money movement is traceable
+    // (a bare REFUNDED webhook from the bank gives no hint that WE triggered it).
+    if (TBANK_REFUNDED_STATES.includes(cancelResult.Status)) {
+      ctx.error('Cancel refunded an already-settled checkout (race with payment)', {
+        paymentId,
+        status: cancelResult.Status,
+        amount: cancelResult.OriginalAmount
+      })
+      await storage.logOperation({
+        operation: 'refund',
+        status: cancelResult.Status,
+        paymentId,
+        actor: 'system',
+        amount: cancelResult.OriginalAmount,
+        raw: { reason: 'cancel_race_after_settle', newAmount: cancelResult.NewAmount }
+      })
+    }
+    // A refunded payment is as dead as a cancelled one: the money is back and the link is spent, so
+    // the claim must be freed. Leaving it held would wedge the checkout on top of the refund.
+    dead =
+      cancelResult.Status === 'CANCELED' ||
+      TBANK_DEAD_LINK_STATES.includes(cancelResult.Status) ||
+      TBANK_REFUNDED_STATES.includes(cancelResult.Status)
     if (!dead) {
+      // A business decline (Success:false) is RETURNED by the client, never thrown — the ErrorCode 4
+      // branch in the catch below never sees it. Treat "status change forbidden" as an already-dead
+      // link here, otherwise the claim can never be freed and the checkout stays wedged forever.
+      if (String(cancelResult.ErrorCode ?? '') === TBANK_STATUS_CHANGE_FORBIDDEN) {
+        ctx.info('Cancel forbidden (terminal state), releasing claim', { paymentId, status: cancelResult.Status })
+        await storage.releaseCheckout(paymentId)
+        return true
+      }
       ctx.info('Pending checkout not cancelable', { paymentId, status: cancelResult.Status })
       return false
     }
@@ -1056,6 +1108,13 @@ export async function processWebhook (
         orderId: typedNotification.OrderId
       })
       return
+    }
+
+    // Release the claim BEFORE the idempotency guard: a CONFIRMED arriving after AUTHORIZED already
+    // activated the sub is swallowed by the guard below, so a release placed after it never runs and
+    // the checkout claim leaks forever. Idempotent (DELETE), safe on consumer retry.
+    if (typedNotification.Status === 'CONFIRMED') {
+      await storage.releaseCheckout(String(typedNotification.PaymentId))
     }
 
     // Idempotency guard: TBank delivers webhooks at-least-once
