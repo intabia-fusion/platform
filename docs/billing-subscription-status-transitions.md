@@ -8,7 +8,10 @@
 > - `pod-tbank-subscriptions/src/`: `server.ts` (`buildCanceledSubscriptionData`, `isImmediateCancel`,
 >   `processWebhook`, `handleCancelSubscription`, `handleRetryPayment`), `scheduler.ts` (любой `upsert`
 >   со сменой статуса), `storage.ts` (`needsRenewal`), `utils.ts` (`build*Subscription`)
-> - `pod-payment/src/utils.ts` (`isFinalizedUserCancel`, `hasGrantingTier`) и `main.ts` (free-fallback)
+> - `pod-payment/src/utils.ts` (`isFinalizedUserCancel`, `hasGrantingTier`), `main.ts` (free-fallback) и
+>   `server.ts` (гейты статусов на ручках cancel/retry — они уже, чем в tbank-поде, см. §7)
+> - `plugins/billing-resources/src/components/Subscriptions.svelte` (условия показа блоков/бейджей по
+>   статусу: `isUnpaid`, past-due-блок, бейджи tier и package)
 > - `foundations/core/packages/account-client/src/utils.ts` (`PLAN_GRANTING_STATUSES`, `grantsPlan`)
 > - `server/account/src/serviceOperations.ts` (админские переходы, инвариант «одна активная tier»)
 > - enum `SubscriptionStatus` в любом из 4 источников ниже + миграция Postgres ENUM
@@ -66,11 +69,11 @@ PLAN_GRANTING_STATUSES = [Active, Trialing, PastDue, ReadOnly]
 
 `canceled` / `expired` не дают план никогда. Проверка лимитов биллинга использует тот же набор (`services/billing/pod-billing/src/__tests__/limits.test.ts:35`: `['active','trialing','past_due','readonly']`).
 
-Отсюда важное: **`readonly` тариф даёт** и **режима только-чтение по неоплате в коде НЕТ**. Проверено: строка `PaymentOverdueReadonly` не встречается в репозитории ни разу — ни продюсера, ни enforcement. Лимиты в `readonly` те же, что в `active`; единственный видимый эффект — бейдж в UI.
+Отсюда важное: **`readonly` тариф даёт** и **режима только-чтение по неоплате в коде НЕТ**. Проверено: строка `PaymentOverdueReadonly` не встречается в репозитории ни разу — ни продюсера, ни enforcement. Лимиты в `readonly` те же, что в `active`; единственный видимый эффект — бейдж «Не активен» в карточке тарифа (`Subscriptions.svelte:1095-1096`, `status-badge-disabled`).
 
 Единственный работающий read-only — `SeatLimitsMiddleware` (`foundations/server/packages/middleware/src/seatLimits.ts:74-263`): участники сверх `usersLimit` получают отказ на запись, кроме разрешённых классов (`pods/server/src/limitsProvider.ts:113-131` — direct/chat/thread, `UserStatus`, presence/typing, `Preference`). Это ограничение по **числу мест**, не по неоплате.
 
-Не путать три «readonly» (подробно — `docs/memory/billing-cancel-free-fallback.md`): **A** seat-limit (работает) · **B** payment-overdue (мёртвый) · **C** роль `ReadOnlyGuest` (не про биллинг).
+Не путать три «readonly»: **A** seat-limit (работает) · **B** payment-overdue (мёртвый) · **C** роль `ReadOnlyGuest` (не про биллинг).
 
 ---
 
@@ -131,13 +134,21 @@ isFailedRenewal (past_due, pending:false)              -> retryAttempt < 3 && re
 
 Grace = `GRACE_PERIOD_DAYS`, дефолт **7 дней** (`config.ts:80`), считается **от `periodEnd`**, не от первого провала. Оба условия обязательны: не исчерпав 3 ретрая, подписка в `readonly` не уйдёт даже спустя недели. Черновики первого платежа (`pending:true`) сюда не попадают — их закрывает `cleanupAbandonedSubscriptions`.
 
-`readonly` — не терминальный: запись сохраняется, оплата её восстанавливает. Выйти можно и отменой — тогда подписка уходит в `canceled` сразу (см. §Отмена).
+**Из `readonly` автоматических переходов нет.**
+
+- Три sweep-а планировщика, ставящих `canceled`, требуют `active`: `cleanupAbandoned` (`:325`, только pending-черновики), `expireOneOffSubscriptions` (`:421`), `enforceScheduledCancel` (`:475`). `readonly` не берёт ни один.
+- Free-подписка создаётся только через `isFinalizedUserCancel` (`pod-payment/main.ts:163`) по паре `(Tier, Canceled, 'CANCELED')` — сама в `canceled` запись не приходит, значит и отката на free не происходит.
+- `readonly` входит в `PLAN_GRANTING_STATUSES` → лимиты тарифа продолжают выдаваться, без ограничений по времени (энфорсинга нет, см. §7).
+- Ручная оплата из `readonly` не проходит: `handleRetryPayment` в tbank-поде её допускает (`server.ts:868`), но фасад `pod-payment` пропускает только `past_due` (`server.ts:1024`) → 400. UI кнопку в `readonly` тоже не рисует (`Subscriptions.svelte:1254` — жёстко `=== 'past_due'`). Автоматический ретрай мимо: `needsRenewal` заходит в ретрай-ветку через `isFailedRenewal` (= `past_due` + `pending:false`).
+
+Единственный выход из `readonly` — **отмена пользователем**: запись уходит в `canceled` сразу, и `pod-payment` заводит free (см. §Отмена). До FUSIO-1099 отмена в `past_due`/`readonly` возвращала ошибку.
 
 ### Погашение долга вручную
 
 | Из | В | Триггер | Место |
 |---|---|---|---|
-| `past_due` или `readonly` | `active` | ручка retry-payment (пользователь платит с восстановившейся карты) | `server.ts:848-870` (`handleRetryPayment`) |
+| `past_due` | `active` | ручка retry-payment (пользователь платит с восстановившейся карты) | `server.ts:848-870` (`handleRetryPayment`) |
+| ~~`readonly`~~ | — | tbank-под допускает (`server.ts:868`), но фасад `pod-payment` отбивает 400 (`server.ts:1024`, гейт только `past_due`), и UI кнопку не рисует — см. §Grace → только чтение | `pod-payment/src/server.ts:1024` |
 
 Любой другой статус → `400 'Subscription is not in a retryable status'`. Нужен `rebillId`, иначе `400 'No recurring payment method available'`. Неудача ручного ретрая тоже инкрементит `retryAttempt` с back-off `MANUAL_RETRY_INTERVAL_MS = 1 ч` (`server.ts:66`, использование `:900`, `:914`) — то есть ручные попытки расходуют тот же лимит из 3, что и автоматические.
 
@@ -156,7 +167,7 @@ Grace = `GRACE_PERIOD_DAYS`, дефолт **7 дней** (`config.ts:80`), сч�
 
 Почему неоплаченные отменяются иначе: у них `periodEnd` уже в прошлом, поэтому scheduled-ветка оставила бы запись **`active` с истёкшим периодом** → `grantsPlan` отдаёт платный тариф бесплатно, `enforceGracePeriod` её не подберёт (`isFailedRenewal` требует `past_due`), а `enforceScheduledCancel` подберёт лишь на следующем тике (окно до 60 мин). Отсюда немедленный `canceled`.
 
-`providerData.status === 'CANCELED'` — точное значение, по которому `pod-payment` включает откат на бесплатный тариф. Условие — **пара** `(status=Canceled, providerData.status='CANCELED')` **и** `type === Tier` (`isFinalizedUserCancel`, `pod-payment/src/utils.ts:44-50`). `SCHEDULED_CANCEL`/`ABANDONED`/`REPLACED`/`PLAN_CHANGE` намеренно не триггерят free. Отмена `package` free-подписку не создаёт (см. B49 в бэклоге — аддон переживает уход tier на free).
+`providerData.status === 'CANCELED'` — точное значение, по которому `pod-payment` включает откат на бесплатный тариф. Условие — **пара** `(status=Canceled, providerData.status='CANCELED')` **и** `type === Tier` (`isFinalizedUserCancel`, `pod-payment/src/utils.ts:44-50`). `SCHEDULED_CANCEL`/`ABANDONED`/`REPLACED`/`PLAN_CHANGE` не триггерят free. Отмена `package` free-подписку не создаёт (условие требует `type === Tier`), и уже оплаченный package остаётся `active` до конца своего периода даже после ухода tier на free — `isPackageEligible` проверяется только при смене package (`pod-payment/src/server.ts:769-778`).
 
 ### Вебхуки tbank → статус
 
@@ -221,7 +232,7 @@ Grace = `GRACE_PERIOD_DAYS`, дефолт **7 дней** (`config.ts:80`), сч�
 ## 5. Отображение и enforcement
 
 - `plugins/billing-resources/src/stores/subscription.ts:108-109` — `readonly` и `expired` сворачиваются в одно состояние UI.
-- `plugins/billing-resources/src/components/Subscriptions.svelte:794`, `:1088` — отдельная ветка для `readonly`.
+- `plugins/billing-resources/src/components/Subscriptions.svelte:797` — `readonly` в `DISPLAY_STATUS_PRIORITY` (запись показывается как требующая внимания); `:1095-1096` — бейдж «Не активен» (`status-badge-disabled`) для tier. Для `package` такой ветки нет: бейдж рисуется только при `status === 'active'` (`:1198`), при `past_due`/`readonly` он пропадает без замены.
 - `plugins/admin-resources/src/components/tabs/PaymentsTab.svelte:172`, `:262` — админка объединяет `past_due` и `readonly` в «Подписка просрочена».
 Лимиты по статусам:
 
@@ -254,7 +265,7 @@ stateDiagram-v2
     Grace --> Grace: ретрай раз в 24ч, до 3 попыток
     Grace --> Active: ретрай успешен / ручная оплата
     Grace --> ReadOnly: 3 ретрая исчерпаны И now > periodEnd + 7д
-    ReadOnly --> Active: ручная оплата (retry-payment)
+    ReadOnly --> Active: ручная оплата — гейт pod-payment отбивает 400
 
     Grace --> Canceled: отмена пользователем (немедленно)
     ReadOnly --> Canceled: отмена пользователем (немедленно)
@@ -269,19 +280,20 @@ stateDiagram-v2
     Canceled --> [*]
 ```
 
-В tbank-потоке недостижимы `paused` и `expired`. `trialing` приходит только из `pod-payment` при заведении воркспейса.
+В tbank-потоке недостижимы `paused` и `expired`. `trialing` приходит только из `pod-payment` при заведении воркспейса. Ребро `ReadOnly --> Active` реализовано в tbank-поде, но недостижимо через фасад — единственный работающий выход из `ReadOnly` идёт через отмену.
 
 ---
 
 ## 7. Известные квирки
 
 - Grace считается от `periodEnd`, а ретраи — от момента провала. Если первый провал случился заметно позже `periodEnd`, оба условия могут выполниться почти одновременно и grace фактически сожмётся.
-- **`readonly` ничего не ограничивает.** Статус — источник истины «биллинг просрочен», но блокировка записи по неоплате не спроектирована и не реализована (T6 п.7 в бэклоге). Считать `readonly` работающим ограничением — ошибка.
-- **`past_due` перегружен**: черновик первой оплаты и провал продления — одно значение статуса, различаются только флагом `providerData.pending`. Отдельный статус `Pending` предложен (B43), не сделан. Код, ветвящийся по `past_due` без проверки `pending`, скорее всего неверен.
-- `REFUNDED`/`REVERSED` обрабатываются как `REJECTED` → уходят в `past_due` с ретраем, хотя деньги уже возвращены; повторное списание после возврата логически неверно (B12, не исправлено).
-- Ручной ретрай расходует тот же лимит из 3 попыток, что и автоматический — исчерпав его вручную, пользователь ускоряет уход в `readonly`.
+- **`readonly` ничего не ограничивает и никуда не ведёт.** Блокировки записи по неоплате в коде нет: строка `PaymentOverdueReadonly` лежит в 12 локалях и не используется нигде. План продолжает выдаваться, автоперехода на free нет, оплатой из статуса не выйти.
+- **`past_due` перегружен**: черновик первой оплаты и провал продления — одно значение статуса, различаются только флагом `providerData.pending`. Ветвление по `past_due` без проверки `pending` затрагивает оба случая сразу.
+- `REFUNDED`/`REVERSED` обрабатываются как `REJECTED` → уходят в `past_due` с ретраем, хотя деньги уже возвращены.
+- Ручной ретрай расходует тот же лимит из 3 попыток, что и автоматический — исчерпав его вручную, пользователь ускоряет уход в `readonly`, откуда оплатой уже не выберется.
+- Гейты retry в фасаде и tbank-поде расходятся: `pod-payment/src/server.ts:1024` пропускает только `past_due`, `pod-tbank-subscriptions/src/server.ts:868` — `past_due` и `readonly`.
+- Просроченный `package` в UI не отображается: бейдж «Активен» рисуется по `status === 'active'` (`Subscriptions.svelte:1198`) и при `past_due` пропадает, футер продолжает показывать «Продление: {дата}» (`:1226`), кнопки retry для пакета нет — блок `:1254` завязан на tier.
 - Переход в `canceled` может случиться без явной отмены — побочный эффект инварианта «одна активная tier» (`REPLACED`, `serviceOperations.ts:1540-1561`).
 - `getPlanLimits` при отсутствии free-лимитов и при исключении отдаёт `ZERO_LIMITS` = безлимит. Отвал аккаунт-сервиса **открывает** лимиты, не закрывает.
 - Комментарий в `scheduler.ts` рядом с ретраями называет интервал «1-hour», по факту `RETRY_INTERVAL_MS` = 24 ч.
-- IDOR: `cancel`/`uncancel`/`updatePlan` в `pod-payment` не проверяют принадлежность подписки воркспейсу (B1, не исправлено).
-- Открытые находки по переходам и рассинхрону `canceledAt` — `docs/memory/billing-subscriptions-backlog.md` (B1, B12, B14/B22, B2, B43) и `docs/memory/billing-cancel-desync.md`; откат на free и три вида readonly — `docs/memory/billing-cancel-free-fallback.md`; ручной чек-лист цикла `Active→PastDue→ReadOnly→Active` (автотестов нет) — `docs/billing-grace-readonly-tests.md`.
+- Free-план в конфиге необязателен: `freePlanName` (`pod-payment/src/server.ts:272-274`) ищется по флагу `free: true` и может быть `undefined`. Тогда `createFreeIfNoActiveTier:361` выходит сразу без лога, откат на free не происходит, а новый воркспейс остаётся без tier-подписки.

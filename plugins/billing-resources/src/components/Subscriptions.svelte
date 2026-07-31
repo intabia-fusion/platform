@@ -119,6 +119,11 @@
   let usageInfo: UsageStatus | null = null
 
   $: isCurrentCanceled = currentSubscription?.canceledAt !== undefined && currentSubscription.canceledAt > 0
+  // Unpaid = the cancel is immediate on the server (isImmediateCancel in pod-tbank-subscriptions).
+  const isUnpaid = (sub: SubscriptionData | undefined): boolean =>
+    sub?.status === SubscriptionStatus.PastDue || sub?.status === SubscriptionStatus.ReadOnly
+  $: isCurrentUnpaid = isUnpaid(currentSubscription)
+  $: isPackageUnpaid = isUnpaid(currentPackageSubscription)
   // A trial has no paid subscription to cancel — hide the cancel action (buy the plan instead).
   $: isCurrentTrial = currentSubscription?.status === SubscriptionStatus.Trialing
   // Active, paid, per-seat tier -> the "Change seats" action is available (pro-rata, no refund).
@@ -662,7 +667,7 @@
     showPopup(MessageBox, {
       label: plugin.string.ConfirmCancel,
       dangerous: true,
-      message: plugin.string.CancelDescription,
+      message: isCurrentUnpaid ? plugin.string.CancelUnpaidDescription : plugin.string.CancelDescription,
       action: async () => {
         await executeCancel()
       }
@@ -738,7 +743,9 @@
     const cancelSub = currentPackageSubscription
     showPopup(MessageBox, {
       label: plugin.string.ConfirmCancelPackage,
-      message: plugin.string.ConfirmCancelPackageDescription,
+      message: isPackageUnpaid
+        ? plugin.string.ConfirmCancelUnpaidPackageDescription
+        : plugin.string.ConfirmCancelPackageDescription,
       dangerous: true,
       action: async () => {
         if (paymentClient == null) {
@@ -746,7 +753,7 @@
         }
         try {
           isPackageBusy = true
-          // Scheduled cancel: the package stays Active until periodEnd.
+          // Paid package: scheduled cancel, stays Active until periodEnd. Unpaid: canceled right away.
           currentPackageSubscription = await paymentClient.cancelSubscription(cancelSub.id)
         } catch (error) {
           console.error('Error canceling package:', error)
