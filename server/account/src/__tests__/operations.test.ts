@@ -2669,7 +2669,7 @@ describe('account operations', () => {
           accountId: callerAccount
         })
 
-        expect(result).toEqual({ timezone: 'America/New_York', locale: 'en-US', tfaEnabled: true })
+        expect(result).toEqual({ timezone: 'America/New_York', locale: 'en-US' })
         expect(accountInfoDb.account.findOne).toHaveBeenCalledWith({ uuid: callerAccount })
       })
 
@@ -2696,7 +2696,7 @@ describe('account operations', () => {
           accountId: otherAccount
         })
 
-        expect(result).toEqual({ timezone: 'Europe/London', locale: 'en-GB', tfaEnabled: false })
+        expect(result).toEqual({ timezone: 'Europe/London', locale: 'en-GB' })
         expect(accountInfoDb.account.findOne).toHaveBeenCalledWith({ uuid: otherAccount })
       })
 
@@ -2716,7 +2716,7 @@ describe('account operations', () => {
           accountId: otherAccount
         })
 
-        expect(result).toEqual({ timezone: 'Asia/Tokyo', locale: 'ja-JP', tfaEnabled: false })
+        expect(result).toEqual({ timezone: 'Asia/Tokyo', locale: 'ja-JP' })
       })
 
       test('throws BadRequest when accountId is missing', async () => {
