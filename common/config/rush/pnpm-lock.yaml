@@ -5378,6 +5378,9 @@ importers:
       '@hcengineering/model-drive':
         specifier: workspace:^0.7.0
         version: link:../drive
+      '@hcengineering/model-emoji':
+        specifier: workspace:^0.7.0
+        version: link:../emoji
       '@hcengineering/model-export':
         specifier: workspace:^0.7.0
         version: link:../export
@@ -5507,6 +5510,9 @@ importers:
       '@hcengineering/model-server-notification':
         specifier: workspace:^0.7.0
         version: link:../server-notification
+      '@hcengineering/model-server-process':
+        specifier: workspace:^0.7.0
+        version: link:../server-process
       '@hcengineering/model-server-products':
         specifier: workspace:^0.7.0
         version: link:../server-products
