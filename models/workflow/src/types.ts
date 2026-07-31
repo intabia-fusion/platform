@@ -33,7 +33,6 @@ import {
   TypeRecord,
   Collection,
   ArrOf,
-  TypeNumber,
   TypeBoolean
 } from '@hcengineering/model'
 import { TDoc, TAttachedDoc } from '@hcengineering/model-core'
@@ -162,6 +161,9 @@ export class TWorkflow extends TDoc implements Workflow {
 
   @Prop(Collection(workflow.class.WorkflowTransition), workflow.string.WorkflowTransition)
     transitions?: number
+
+  @Prop(ArrOf(TypeRef(core.class.Status)), getEmbeddedLabel('Initial Statuses'))
+    initialStatuses?: Ref<Status>[]
 }
 
 @Model(workflow.class.WorkflowTransition, core.class.AttachedDoc, DOMAIN_WORKFLOW)

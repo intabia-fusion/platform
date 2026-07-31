@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core from '@hcengineering/core'
+import core, { AccountRole } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
 import presentation from '@hcengineering/model-presentation'
 
@@ -56,6 +56,18 @@ export function createModel (builder: Builder): void {
   defineRequests(builder)
   definePostFunctions(builder)
   defineValueFunctions(builder)
+
+  builder.mixin(workflow.class.Workflow, core.class.Class, core.mixin.TxAccessLevel, {
+    createAccessLevel: AccountRole.Maintainer,
+    updateAccessLevel: AccountRole.Maintainer,
+    removeAccessLevel: AccountRole.Maintainer
+  })
+
+  builder.mixin(workflow.class.WorkflowTransition, core.class.Class, core.mixin.TxAccessLevel, {
+    createAccessLevel: AccountRole.Maintainer,
+    updateAccessLevel: AccountRole.Maintainer,
+    removeAccessLevel: AccountRole.Maintainer
+  })
 
   builder.createDoc(
     presentation.class.PresentationMiddlewareFactory,

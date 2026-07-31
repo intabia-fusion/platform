@@ -397,9 +397,7 @@ describe('Workflow Utilities', () => {
         } else if (data.$update?.requests != null) {
           const queryId = data.$update.requests.$query?.id
           const updateData = data.$update.requests.$update
-          transition.requests = (transition.requests ?? []).map((r) =>
-            r.id === queryId ? { ...r, ...updateData } : r
-          )
+          transition.requests = (transition.requests ?? []).map((r) => (r.id === queryId ? { ...r, ...updateData } : r))
         }
       })
     })
@@ -609,7 +607,9 @@ describe('Workflow Utilities', () => {
       })
 
       await updatePostFunctionConfig(mockClient, workflowId, transitionId, config.id, {
-        props: { fields: [{ fieldKey: 'assignee', attribute: attrAssignee, value: { type: 'preset', preset: '$currentUser' } }] }
+        props: {
+          fields: [{ fieldKey: 'assignee', attribute: attrAssignee, value: { type: 'preset', preset: '$currentUser' } }]
+        }
       })
 
       expect(transition.postFunctions?.[0].props.fields).toHaveLength(1)
@@ -637,9 +637,9 @@ describe('Workflow Utilities', () => {
 
     it('should throw error when removing post-function config if transition is not found', async () => {
       const missingTransitionId = 'non-existent' as Ref<WorkflowTransition>
-      await expect(
-        removePostFunctionConfig(mockClient, workflowId, missingTransitionId, 'pf-cfg-1')
-      ).rejects.toThrow('Transition non-existent not found')
+      await expect(removePostFunctionConfig(mockClient, workflowId, missingTransitionId, 'pf-cfg-1')).rejects.toThrow(
+        'Transition non-existent not found'
+      )
     })
   })
 
@@ -763,14 +763,24 @@ describe('Workflow Utilities', () => {
       })
 
       it('should return "null" string representation when both from arrays are null or empty for same target status', () => {
-        expect(findTransitionConflict({ from: null, to: statusInProgress }, { from: [], to: statusInProgress })).toBe('null')
-        expect(findTransitionConflict({ from: null, to: statusInProgress }, { from: null, to: statusInProgress })).toBe('null')
-        expect(findTransitionConflict({ from: [], to: statusInProgress }, { from: [], to: statusInProgress })).toBe('null')
+        expect(findTransitionConflict({ from: null, to: statusInProgress }, { from: [], to: statusInProgress })).toBe(
+          'null'
+        )
+        expect(findTransitionConflict({ from: null, to: statusInProgress }, { from: null, to: statusInProgress })).toBe(
+          'null'
+        )
+        expect(findTransitionConflict({ from: [], to: statusInProgress }, { from: [], to: statusInProgress })).toBe(
+          'null'
+        )
       })
 
       it('should return null when one from is null/empty and the other is non-empty', () => {
-        expect(findTransitionConflict({ from: null, to: statusInProgress }, { from: [statusOpen], to: statusInProgress })).toBeNull()
-        expect(findTransitionConflict({ from: [statusOpen], to: statusInProgress }, { from: null, to: statusInProgress })).toBeNull()
+        expect(
+          findTransitionConflict({ from: null, to: statusInProgress }, { from: [statusOpen], to: statusInProgress })
+        ).toBeNull()
+        expect(
+          findTransitionConflict({ from: [statusOpen], to: statusInProgress }, { from: null, to: statusInProgress })
+        ).toBeNull()
       })
 
       it('should return intersecting status when target status is same and from arrays overlap', () => {
@@ -1048,7 +1058,12 @@ describe('Workflow Utilities', () => {
 
       it('should create parent value without transforms', () => {
         const val = WorkflowValue.parent(field)
-        expect(val).toEqual({ type: 'parent', attribute: attrAssignee, fieldKey: 'parentAssignee', functions: undefined })
+        expect(val).toEqual({
+          type: 'parent',
+          attribute: attrAssignee,
+          fieldKey: 'parentAssignee',
+          functions: undefined
+        })
         expect(isParentValue(val)).toBe(true)
         expect(isPresetValue(val)).toBe(false)
         expect(isThisValue(val)).toBe(false)
@@ -1057,7 +1072,12 @@ describe('Workflow Utilities', () => {
 
       it('should create parent value with transforms', () => {
         const val = WorkflowValue.parent(field, [transformCall])
-        expect(val).toEqual({ type: 'parent', attribute: attrAssignee, fieldKey: 'parentAssignee', functions: [transformCall] })
+        expect(val).toEqual({
+          type: 'parent',
+          attribute: attrAssignee,
+          fieldKey: 'parentAssignee',
+          functions: [transformCall]
+        })
       })
     })
 

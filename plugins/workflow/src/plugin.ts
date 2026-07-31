@@ -274,5 +274,13 @@ export default plugin(workflowId, {
     SelectFieldFirst: '' as IntlString,
     NoTransformationsForAttribute: '' as IntlString,
     SetValueFirst: '' as IntlString
+  },
+  status: {
+    InitialStatusNotAllowed: '' as IntlString,
+    ForbiddenTransition: '' as IntlString,
+    SelfTransitionNotAllowed: '' as IntlString,
+    TransitionConflict: '' as IntlString,
+    ValidationFailed: '' as IntlString,
+    WorkflowNotFound: '' as IntlString
   }
 })

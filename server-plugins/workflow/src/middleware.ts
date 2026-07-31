@@ -24,18 +24,17 @@ import core, {
   type Tx,
   type TxCUD,
   type Ref,
-  Hierarchy,
   TxProcessor,
-  AccountRole,
   MeasureContext,
   SessionData,
   type TxCreateDoc,
   type TxUpdateDoc,
-  DocumentUpdate
+  DocumentUpdate,
+  TxMixin
 } from '@hcengineering/core'
 import task, { Project, type Task, type TaskType } from '@hcengineering/task'
 import workflow from '@hcengineering/model-workflow'
-import platform, { getResource, PlatformError, Severity, Status } from '@hcengineering/platform'
+import { getResource, PlatformError, Severity, Status } from '@hcengineering/platform'
 import {
   type ProjectWorkflow,
   type Workflow,
@@ -49,27 +48,20 @@ import {
 import serverWorkflow, { type ValidatorImpl } from './index'
 
 export class WorkflowMiddleware extends BaseMiddleware {
+  private readonly projectWorkflowsCache = new Map<Ref<Project>, Record<Ref<TaskType>, Ref<Workflow>> | null>()
+
   static async create (ctx: MeasureContext, context: PipelineContext, next?: Middleware): Promise<Middleware> {
     return new WorkflowMiddleware(context, next)
   }
 
   async tx (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
-    const account = ctx.contextData.account
     for (const t of txes) {
       if (TxProcessor.isExtendsCUD(t._class)) {
         const cud = t as TxCUD<Doc>
 
-        if (cud.modifiedBy === core.account.System) {
-          continue
-        }
+        this.updateCache(cud)
 
-        if (cud.objectClass === workflow.class.Workflow || cud.objectClass === workflow.class.WorkflowTransition) {
-          if (account == null || (account.role !== AccountRole.Owner && account.role !== AccountRole.Admin)) {
-            throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-          }
-        }
-
-        if (cud.objectClass === workflow.class.WorkflowTransition) {
+        if (this.context.hierarchy.isDerived(cud.objectClass, workflow.class.WorkflowTransition)) {
           await this.validateTransition(ctx, cud as TxCUD<WorkflowTransition>)
         }
 
@@ -85,30 +77,86 @@ export class WorkflowMiddleware extends BaseMiddleware {
     return await this.provideTx(ctx, txes)
   }
 
+  // TODO: check it
+  private updateCache (cud: TxCUD<Doc>): void {
+    if (
+      cud._class === core.class.TxRemoveDoc &&
+      this.context.hierarchy.isDerived(cud.objectClass, task.class.Project)
+    ) {
+      this.projectWorkflowsCache.delete(cud.objectId as Ref<Project>)
+      return
+    }
+
+    if (cud._class === core.class.TxMixin && (cud as TxMixin<Doc, Doc>).mixin === workflow.mixin.ProjectWorkflow) {
+      const mixinTx = cud as TxMixin<Project, ProjectWorkflow>
+      const workflows = mixinTx.attributes?.workflows ?? {}
+      this.projectWorkflowsCache.set(mixinTx.objectId, workflows)
+      return
+    }
+
+    if (
+      cud._class === core.class.TxUpdateDoc &&
+      this.context.hierarchy.isDerived(cud.objectClass, task.class.Project)
+    ) {
+      const updateTx = cud as TxUpdateDoc<Project>
+      const updatedWorkflows = getUpdatedFieldValue(
+        updateTx.operations,
+        `${workflow.mixin.ProjectWorkflow}.workflows` as any
+      )
+      if (updatedWorkflows != null) {
+        this.projectWorkflowsCache.set(cud.objectId as Ref<Project>, updatedWorkflows)
+      }
+    }
+  }
+
+  private async getWorkflowRef (
+    ctx: MeasureContext<SessionData>,
+    projectId: Ref<Project>,
+    taskTypeRef: Ref<TaskType>
+  ): Promise<Ref<Workflow> | undefined> {
+    if (this.projectWorkflowsCache.has(projectId)) {
+      const workflows = this.projectWorkflowsCache.get(projectId)
+      return workflows?.[taskTypeRef]
+    }
+
+    const project = (await this.provideFindAll(ctx, task.class.Project, { _id: projectId }, { limit: 1 }))[0]
+
+    if (project == null || !this.context.hierarchy.hasMixin(project, workflow.mixin.ProjectWorkflow)) {
+      this.projectWorkflowsCache.set(projectId, null)
+      return undefined
+    }
+
+    const projectWorkflow = this.context.hierarchy.as<Project, ProjectWorkflow>(project, workflow.mixin.ProjectWorkflow)
+    const workflows = projectWorkflow.workflows ?? {}
+    this.projectWorkflowsCache.set(projectId, workflows)
+    return workflows[taskTypeRef]
+  }
+
   private async validateTaskCreate (ctx: MeasureContext<SessionData>, createTx: TxCreateDoc<Task>): Promise<void> {
-    const status = createTx.attributes.status
-    if (status == null) return
+    const task = TxProcessor.createDoc2Doc(createTx)
+    const projectId = task.space as Ref<Project>
 
-    const project = (
-      await this.provideFindAll(ctx, task.class.Project, { _id: createTx.objectSpace as Ref<Project> }, { limit: 1 })
-    )[0]
-    if (project == null) return
-
-    const workflowRef = findWorkflowForTaskType(this.context.hierarchy, project, createTx.attributes.kind)
+    const workflowRef = await this.getWorkflowRef(ctx, projectId, task.kind)
     if (workflowRef !== undefined) {
-      const transitions = await this.provideFindAll(ctx, workflow.class.WorkflowTransition, {
-        attachedTo: workflowRef
-      })
-      const allowed = transitions.some((t) => (t.from == null || t.from.length === 0) && t.to === status)
-      if (!allowed) {
-        throw new Error(`Initial status "${status}" is not allowed in the workflow for creating a new task.`)
+      const wf = (await this.provideFindAll(ctx, workflow.class.Workflow, { _id: workflowRef }, { limit: 1 }))[0]
+      if (wf.initialStatuses != null && wf.initialStatuses.length > 0) {
+        if (!wf.initialStatuses.includes(task.status)) {
+          throw new PlatformError(
+            new Status(Severity.ERROR, workflow.status.InitialStatusNotAllowed, { status: task.status })
+          )
+        }
       }
     }
   }
 
   private async validateTaskUpdate (ctx: MeasureContext<SessionData>, updateTx: TxUpdateDoc<Task>): Promise<void> {
-    const toStatus = updateTx.operations.status
+    const toStatus = getUpdatedFieldValue(updateTx.operations, 'status')
     if (toStatus == null) return
+
+    const projectId = updateTx.objectSpace as Ref<Project>
+    if (this.projectWorkflowsCache.has(projectId) && this.projectWorkflowsCache.get(projectId) === null) {
+      return
+    }
 
     const oldTask = (await this.provideFindAll(ctx, task.class.Task, { _id: updateTx.objectId }, { limit: 1 }))[0]
     if (oldTask == null) return
@@ -121,12 +169,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
 
     if (fromStatus === toStatus) return
 
-    const project = (
-      await this.provideFindAll(ctx, task.class.Project, { _id: oldTask.space as Ref<Project> }, { limit: 1 })
-    )[0]
-    if (project == null) return
-
-    const workflowRef = findWorkflowForTaskType(this.context.hierarchy, project, oldTask.kind)
+    const workflowRef = await this.getWorkflowRef(ctx, oldTask.space as Ref<Project>, oldTask.kind)
     if (workflowRef == null) return
 
     const transitions = await this.provideFindAll(ctx, workflow.class.WorkflowTransition, {
@@ -138,7 +181,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
     })
 
     if (allowedTransitions.length === 0) {
-      throw new Error(`Transition from status "${fromStatus}" to "${toStatus}" is forbidden by the workflow rules.`)
+      throw new PlatformError(new Status(Severity.ERROR, workflow.status.ForbiddenTransition, { fromStatus, toStatus }))
     }
 
     const transition =
@@ -146,7 +189,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
       allowedTransitions.find((t) => t.from == null || t.from.length === 0)
 
     if (transition === undefined) {
-      throw new Error(`Transition from status "${fromStatus}" to "${toStatus}" is forbidden by the workflow rules.`)
+      throw new PlatformError(new Status(Severity.ERROR, workflow.status.ForbiddenTransition, { fromStatus, toStatus }))
     }
 
     const updatedTask = TxProcessor.updateDoc2Doc(oldTask, updateTx)
@@ -156,10 +199,10 @@ export class WorkflowMiddleware extends BaseMiddleware {
   private async validateTransitionValidators (
     ctx: MeasureContext<SessionData>,
     transition: WorkflowTransition,
-    task: Task
+    taskDoc: Task
   ): Promise<void> {
-    const validators = transition.validators
-    if (validators == null || validators.length === 0) return
+    const validatorConfigs = transition.validators
+    if (validatorConfigs == null || validatorConfigs.length === 0) return
 
     const client: ValidatorClient = {
       getHierarchy: () => this.context.hierarchy,
@@ -168,48 +211,60 @@ export class WorkflowMiddleware extends BaseMiddleware {
       findOne: async (_class, query, options) => (await this.provideFindAll(ctx, _class, query, options))[0]
     }
 
-    for (const validatorConfig of validators) {
-      const validator = (
-        await this.provideFindAll(
-          ctx,
-          workflow.class.WorkflowValidator,
-          { _id: validatorConfig.validator },
-          { limit: 1 }
-        )
-      )[0] as WorkflowValidator | undefined
+    const validatorIds = Array.from(new Set(validatorConfigs.map((v) => v.rule)))
+    const validators = await this.provideFindAll(ctx, workflow.class.WorkflowValidator, { _id: { $in: validatorIds } })
+    const validatorMap = new Map(validators.map((v) => [v._id as Ref<WorkflowValidator>, v as WorkflowValidator]))
 
-      if (validator == null) return
+    for (const config of validatorConfigs) {
+      const validator = validatorMap.get(config.rule)
+      if (validator == null) continue
 
       const validatorImpl = this.context.hierarchy.as<WorkflowValidator, ValidatorImpl>(
         validator,
         serverWorkflow.mixin.ValidatorImpl
       )
       const executorFn = await getResource(validatorImpl.serverExecutor)
-      if (executorFn == null) return
+      if (executorFn == null) continue
 
-      const res = await executorFn(client, task, transition, validatorConfig.props)
+      const res = await executorFn(client, taskDoc, transition, config.props)
       if (!res.ok) {
-        throw new Error(res.reason ?? 'Validation failed')
+        // TODO: improve
+        throw new PlatformError(
+          new Status(Severity.ERROR, workflow.status.ValidationFailed, {
+            reason: res.reason
+          })
+        )
       }
     }
   }
 
   private async validateTransition (ctx: MeasureContext<SessionData>, cud: TxCUD<WorkflowTransition>): Promise<void> {
     if (cud._class === core.class.TxCreateDoc) {
-      const transition = (cud as TxCreateDoc<WorkflowTransition>).attributes
+      const createTx = cud as TxCreateDoc<WorkflowTransition>
+      const transition = TxProcessor.createDoc2Doc(createTx)
       if (hasSelfTransition(transition)) {
-        throw new Error(`Transition from status "${transition.to}" to itself is not allowed.`)
+        throw new PlatformError(
+          new Status(Severity.ERROR, workflow.status.SelfTransitionNotAllowed, { status: transition.to })
+        )
       }
       const workflowRef = transition.attachedTo
-      if (workflowRef != null) {
-        const existing = await this.provideFindAll(ctx, workflow.class.WorkflowTransition, { attachedTo: workflowRef })
-        const conflict = getTransitionConflict(transition, existing)
-        if (conflict != null) {
-          const fromStatus = conflict.status === 'null' ? 'any status' : conflict.status
-          throw new Error(
-            `Transition to status "${transition.to}" from status "${fromStatus}" already exists in transition "${conflict.transition.name}".`
-          )
-        }
+      if (workflowRef == null) {
+        throw new PlatformError(new Status(Severity.ERROR, workflow.status.WorkflowNotFound, {}))
+      }
+
+      const currentTransitions = await this.provideFindAll(ctx, workflow.class.WorkflowTransition, {
+        attachedTo: workflowRef
+      })
+      const conflict = getTransitionConflict(transition, currentTransitions)
+      if (conflict != null) {
+        const fromStatus = conflict.status === 'null' ? 'any' : conflict.status
+        throw new PlatformError(
+          new Status(Severity.ERROR, workflow.status.TransitionConflict, {
+            toStatus: transition.to,
+            fromStatus,
+            name: conflict.transition.name
+          })
+        )
       }
     } else if (cud._class === core.class.TxUpdateDoc) {
       const updateTx = cud as TxUpdateDoc<WorkflowTransition>
@@ -220,17 +275,23 @@ export class WorkflowMiddleware extends BaseMiddleware {
         if (transition != null) {
           const updated = TxProcessor.updateDoc2Doc(transition, updateTx)
           if (hasSelfTransition(updated)) {
-            throw new Error(`Transition from status "${updated.to}" to itself is not allowed.`)
+            throw new PlatformError(
+              new Status(Severity.ERROR, workflow.status.SelfTransitionNotAllowed, { status: updated.to })
+            )
           }
-          const workflowRef = transition.attachedTo
+          const workflowRef = updated.attachedTo ?? transition.attachedTo
           const existingTransitions = await this.provideFindAll(ctx, workflow.class.WorkflowTransition, {
             attachedTo: workflowRef
           })
           const conflict = getTransitionConflict(updated, existingTransitions)
           if (conflict != null) {
-            const fromStatus = conflict.status === 'null' ? 'any status' : conflict.status
-            throw new Error(
-              `Transition to status "${updated.to}" from status "${fromStatus}" already exists in transition "${conflict.transition.name}".`
+            const fromStatus = conflict.status === 'null' ? 'any' : conflict.status
+            throw new PlatformError(
+              new Status(Severity.ERROR, workflow.status.TransitionConflict, {
+                toStatus: updated.to,
+                fromStatus,
+                name: conflict.transition.name
+              })
             )
           }
         }
@@ -239,17 +300,21 @@ export class WorkflowMiddleware extends BaseMiddleware {
   }
 }
 
-function findWorkflowForTaskType (
-  h: Hierarchy,
-  project: Project,
-  taskTypeRef: Ref<TaskType>
-): Ref<Workflow> | undefined {
-  if (!h.hasMixin(project, workflow.mixin.ProjectWorkflow)) return undefined
-  const projectWorkflow = h.as<Project, ProjectWorkflow>(project, workflow.mixin.ProjectWorkflow)
-  return projectWorkflow.workflows?.[taskTypeRef]
+function getUpdatedFieldValue<T extends Doc, K extends keyof T> (
+  operations: DocumentUpdate<T>,
+  field: K
+): T[K] | undefined {
+  if (field in operations) {
+    return (operations as any)[field]
+  }
+  const setOps = (operations as any).$set
+  if (setOps != null && typeof setOps === 'object' && field in setOps) {
+    return setOps[field]
+  }
+  return undefined
 }
 
-function isFieldModified (operations: DocumentUpdate<WorkflowTransition>, field: string): boolean {
+function isFieldModified<T extends Doc> (operations: DocumentUpdate<T>, field: string): boolean {
   if (field in operations) return true
   for (const key of Object.keys(operations)) {
     if (key.startsWith('$') && (operations as any)[key] != null && typeof (operations as any)[key] === 'object') {

@@ -23,6 +23,7 @@ export interface Workflow extends Doc {
   projectType: Ref<ProjectType>
   taskType: Ref<TaskType>
   transitions?: number
+  initialStatuses?: Ref<Status>[]
 }
 
 export interface WorkflowTransition extends AttachedDoc<Workflow, 'transitions'> {
