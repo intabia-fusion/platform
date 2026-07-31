@@ -140,7 +140,6 @@ export class WorkspaceIndexer {
         }
       },
       hulylake,
-      undefined,
       listener
     )
     return result
