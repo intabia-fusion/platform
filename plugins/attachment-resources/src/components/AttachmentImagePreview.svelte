@@ -87,7 +87,11 @@
   }
 </script>
 
-<div class="container" class:loading style="width:{toStyle(dimensions.width)}; height:{toStyle(dimensions.height)}">
+<div
+  class="container"
+  class:loading
+  style="max-width: {toStyle(dimensions.width)}; width: 100%; aspect-ratio: {dimensions.width} / {dimensions.height};"
+>
   {#if error}
     {#if value.metadata?.thumbnail?.blurhash !== undefined}
       <Blurhash blurhash={value.metadata.thumbnail.blurhash} />
@@ -114,7 +118,7 @@
 
 <style lang="scss">
   .container {
-    display: inline-flex;
+    display: inline-block;
     background-color: var(--theme-link-preview-bg-color);
     border-radius: 0.75rem;
     overflow: visible;
