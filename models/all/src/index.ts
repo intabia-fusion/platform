@@ -476,10 +476,8 @@ export default function buildModel (): Builder {
     ],
     [presenceModel, presenceId],
     [pulseModel, pulseId],
-
     [achievementModel, achievementId],
     [emojiModel, emojiId],
-
     [mailModel, mailId],
     [
       billingModel,

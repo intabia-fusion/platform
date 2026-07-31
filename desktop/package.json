@@ -249,11 +249,9 @@
     "@hcengineering/export-resources": "workspace:^0.7.0",
     "@hcengineering/mail": "workspace:^0.7.0",
     "@hcengineering/mail-assets": "workspace:^0.7.0",
-
     "@hcengineering/achievement": "workspace:^0.7.0",
     "@hcengineering/achievement-assets": "workspace:^0.7.0",
     "@hcengineering/achievement-resources": "workspace:^0.7.0",
-
     "@hcengineering/emoji": "workspace:^0.7.0",
     "@hcengineering/emoji-assets": "workspace:^0.7.0",
     "@hcengineering/emoji-resources": "workspace:^0.7.0",
@@ -269,7 +267,6 @@
     "@hcengineering/ai-assistant": "workspace:^0.7.0",
     "@hcengineering/ai-assistant-assets": "workspace:^0.7.0",
     "@hcengineering/ai-assistant-resources": "workspace:^0.7.0",
-
     "@hcengineering/rating": "workspace:^0.7.0",
     "@hcengineering/rating-assets": "workspace:^0.7.0",
     "@hcengineering/rating-resources": "workspace:^0.7.0",

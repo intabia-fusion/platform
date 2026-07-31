@@ -59,7 +59,6 @@ import CreateCardButton from './components/CreateCardButton.svelte'
 import CardArrayEditor from './components/CardArrayEditor.svelte'
 import SpacePresenter from './components/navigator/SpacePresenter.svelte'
 import TypesNavigator from './components/navigator/TypesNavigator.svelte'
-import LabelsPresenter from './components/LabelsPresenter.svelte'
 import RolesSection from './components/settings/RolesSection.svelte'
 import EditRole from './components/settings/EditRole.svelte'
 import CreateRolePopup from './components/settings/CreateRolePopup.svelte'
@@ -124,7 +123,6 @@ export default async (): Promise<Resources> => ({
     CardArrayEditor,
     SpacePresenter,
     TypesNavigator,
-    LabelsPresenter,
     RolesSection,
     EditRole,
     CardWidget,
