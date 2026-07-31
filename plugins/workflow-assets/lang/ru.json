@@ -1,9 +1,11 @@
 {
   "string": {
     "Workflow": "Воркфлоу",
+    "WorkflowSettings": "Настройки воркфлоу",
     "WorkflowScheme": "Схема воркфлоу",
     "WorkflowTransition": "Переход воркфлоу",
     "WorkflowMapping": "Сопоставление воркфлоу",
+    "InitialStatuses": "Начальные статусы",
     "Name": "Название",
     "From": "Откуда",
     "To": "Куда",
@@ -53,7 +55,6 @@
     "PerformActions": "Выполнить действия",
     "SearchRules": "Поиск правил",
     "Transition": "Переход",
-    "AnyStatus": "Любой статус",
     "Screen": "Экран",
     "Screens": "Экраны",
     "ScreenTab": "Вкладка экрана",
@@ -128,7 +129,7 @@
     "Replace": "Заменить текст",
     "ReplaceAll": "Заменить все вхождения",
     "Split": "Разбить текст",
-    "Cut": "Ообрезать текст",
+    "Cut": "Обрезать текст",
     "Add": "Прибавить число",
     "Subtract": "Вычесть число",
     "Multiply": "Умножить на число",
