@@ -99,21 +99,20 @@
 
   const h = client.getHierarchy()
   $: project = value?.space ? ($activeProjects.get(value.space) as ProjectWorkflow | undefined) : undefined
-  $: workflowId = project && value?.kind ? h.as(project, workflow.mixin.ProjectWorkflow).workflows?.[value.kind] : undefined
+  $: workflowId =
+    project && value?.kind ? h.as(project, workflow.mixin.ProjectWorkflow).workflows?.[value.kind] : undefined
 
   $: if (workflowId != null) {
-    transitionsQuery.query(
-      workflow.class.WorkflowTransition,
-      { attachedTo: workflowId },
-      (res) => {
-        transitions = res
-      }
-    )
+    transitionsQuery.query(workflow.class.WorkflowTransition, { attachedTo: workflowId }, (res) => {
+      transitions = res
+    })
   } else {
     transitions = undefined
   }
 
-  $: allStatuses = getTaskTypeStates(value.kind, $taskTypeStore, $statusStore.byId) as WithLookup<IssueStatus>[] | undefined
+  $: allStatuses = getTaskTypeStates(value.kind, $taskTypeStore, $statusStore.byId) as
+    | WithLookup<IssueStatus>[]
+    | undefined
 
   function filterStatusesByWorkflow (
     all: WithLookup<IssueStatus>[] | undefined,
@@ -131,11 +130,7 @@
     }
 
     for (const t of transitions) {
-      if (
-        t.from == null ||
-        t.from.length === 0 ||
-        (currentStatus != null && t.from.includes(currentStatus))
-      ) {
+      if (t.from == null || t.from.length === 0 || (currentStatus != null && t.from.includes(currentStatus))) {
         allowed.add(t.to)
       }
     }

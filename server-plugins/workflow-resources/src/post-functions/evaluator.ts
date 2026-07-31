@@ -15,10 +15,7 @@
 
 import { type TriggerControl } from '@hcengineering/server-core'
 import { type Task } from '@hcengineering/task'
-import workflow, {
-  type WorkflowFieldValue,
-  WorkflowValueFunction
-} from '@hcengineering/workflow'
+import workflow, { type WorkflowFieldValue, WorkflowValueFunction } from '@hcengineering/workflow'
 
 import tracker from '@hcengineering/tracker'
 import { Class, Doc, Mixin, Ref } from '@hcengineering/core'
@@ -34,7 +31,7 @@ export async function resolveValue (val: WorkflowFieldValue, task: Task, control
     let result = await evaluateWorkflowValue(val, task, control)
     if (result == null) return undefined
 
-    const transforms = functions.filter(it => it.type === 'transform')
+    const transforms = functions.filter((it) => it.type === 'transform')
     if (transforms.length > 0 && val.functions != null) {
       result = applyValueFunctions(result, val.functions, transforms)
     }
@@ -46,7 +43,7 @@ export async function resolveValue (val: WorkflowFieldValue, task: Task, control
 }
 
 function getFunctions (control: TriggerControl, val: WorkflowFieldValue): WorkflowValueFunction[] {
-  const functions = (val.functions ?? []).map(it => it.func)
+  const functions = (val.functions ?? []).map((it) => it.func)
   if (functions.length === 0) return []
   return control.modelDb.findAllSync(workflow.class.WorkflowValueFunction, { _id: { $in: functions } })
 }
@@ -84,13 +81,18 @@ function evalThisField (control: TriggerControl, task: Task, fieldKey: string, m
   return getDocFieldValue(control, task, fieldKey, mixin)
 }
 
-async function evalParentField (control: TriggerControl, task: Task, fieldKey: string, mixin?: Ref<Mixin<Doc>>): Promise<unknown> {
+async function evalParentField (
+  control: TriggerControl,
+  task: Task,
+  fieldKey: string,
+  mixin?: Ref<Mixin<Doc>>
+): Promise<unknown> {
   if (
     task.attachedTo == null ||
     task.attachedToClass == null ||
     task.attachedTo === tracker.ids.NoParent ||
     fieldKey === ''
-  ) return undefined
+  ) { return undefined }
 
   try {
     const parent = (await control.findAll(control.ctx, task.attachedToClass, { _id: task.attachedTo }, { limit: 1 }))[0]

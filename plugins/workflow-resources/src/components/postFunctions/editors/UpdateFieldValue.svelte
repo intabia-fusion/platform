@@ -118,7 +118,11 @@
 
   $: usedAttributes = new Set(rows.map((r) => r.attribute?._id).filter(notEmpty))
 
-  function getRowAvailableItems (currentRow: FieldRow, used: Set<Ref<AnyAttribute>>, items: DropdownTextItem[]): DropdownTextItem[] {
+  function getRowAvailableItems (
+    currentRow: FieldRow,
+    used: Set<Ref<AnyAttribute>>,
+    items: DropdownTextItem[]
+  ): DropdownTextItem[] {
     const currentAttrId = currentRow.attribute?._id
 
     return items.filter((item) => item.id === currentAttrId || !used.has(item.id as Ref<AnyAttribute>))

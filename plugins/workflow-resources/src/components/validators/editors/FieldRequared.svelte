@@ -15,12 +15,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { reduceCalls } from '@hcengineering/presentation'
-  import ui, {
-    DropdownTextItem,
-    Label,
-    languageStore,
-    ModernDropdownLabels
-  } from '@hcengineering/ui'
+  import ui, { DropdownTextItem, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
   import { FieldRequiredProps, WorkflowValidatorConfig } from '@hcengineering/workflow'
   import { TaskType } from '@hcengineering/task'
   import { AnyAttribute, Ref } from '@hcengineering/core'
@@ -85,13 +80,14 @@
   $: void updateItems($languageStore)
   $: canSave = selected.length > 0
   $: dispatch('update', {
-    fields: displayAttributes.filter(it => selected.includes(it.id)).map(it => ({
-      _id: it.id,
-      fieldKey: it.key,
-      mixin: it.mixin
-    }))
+    fields: displayAttributes
+      .filter((it) => selected.includes(it.id))
+      .map((it) => ({
+        _id: it.id,
+        fieldKey: it.key,
+        mixin: it.mixin
+      }))
   })
-
 </script>
 
 <div class="field-required">

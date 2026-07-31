@@ -110,9 +110,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
     const toStatus = updateTx.operations.status
     if (toStatus == null) return
 
-    const oldTask = (
-      await this.provideFindAll(ctx, task.class.Task, { _id: updateTx.objectId }, { limit: 1 })
-    )[0]
+    const oldTask = (await this.provideFindAll(ctx, task.class.Task, { _id: updateTx.objectId }, { limit: 1 }))[0]
     if (oldTask == null) return
 
     const fromStatus = oldTask.status

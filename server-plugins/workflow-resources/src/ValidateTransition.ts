@@ -25,10 +25,7 @@ import core, {
 import { type TriggerControl } from '@hcengineering/server-core'
 import task, { Project, type Task, type TaskType } from '@hcengineering/task'
 import workflow from '@hcengineering/model-workflow'
-import {
-  type ProjectWorkflow,
-  type Workflow
-} from '@hcengineering/workflow'
+import { type ProjectWorkflow, type Workflow } from '@hcengineering/workflow'
 
 import { executeTransitionPostFunctions } from './post-functions'
 
@@ -43,7 +40,9 @@ export async function ValidateTransitionTrigger (txes: TxCUD<Doc>[], control: Tr
       control.ctx.info('[ValidateTransitionTrigger] Processing update tx', { objectId: tx.objectId, meta: tx.meta })
       const postTxes = await processTaskPostFunctions(tx as TxUpdateDoc<Task>, control)
       if (postTxes != null && postTxes.length > 0) {
-        control.ctx.info('[ValidateTransitionTrigger] Executed post-functions resulting in txes', { count: postTxes.length })
+        control.ctx.info('[ValidateTransitionTrigger] Executed post-functions resulting in txes', {
+          count: postTxes.length
+        })
         result.push(...postTxes)
       }
     }
@@ -90,7 +89,10 @@ async function processTaskPostFunctions (updateTx: TxUpdateDoc<Task>, control: T
 
   const workflowRef = findWorkflowForTaskType(control.hierarchy, project, taskDoc.kind)
   if (workflowRef == null) {
-    control.ctx.info('[ValidateTransitionTrigger] Exit: workflowRef not found', { project: project._id, kind: taskDoc.kind })
+    control.ctx.info('[ValidateTransitionTrigger] Exit: workflowRef not found', {
+      project: project._id,
+      kind: taskDoc.kind
+    })
     return []
   }
 
@@ -102,7 +104,12 @@ async function processTaskPostFunctions (updateTx: TxUpdateDoc<Task>, control: T
     return (t.from == null || t.from.includes(fromStatus)) && t.to === toStatus
   })
   if (allowedTransitions.length === 0) {
-    control.ctx.info('[ValidateTransitionTrigger] Exit: no allowed transitions found', { fromStatus, toStatus, workflowRef, totalTransitions: transitions.length })
+    control.ctx.info('[ValidateTransitionTrigger] Exit: no allowed transitions found', {
+      fromStatus,
+      toStatus,
+      workflowRef,
+      totalTransitions: transitions.length
+    })
     return []
   }
 
@@ -111,7 +118,11 @@ async function processTaskPostFunctions (updateTx: TxUpdateDoc<Task>, control: T
     allowedTransitions.find((t) => t.from == null || t.from.length === 0)
 
   if (transition === undefined) {
-    control.ctx.info('[ValidateTransitionTrigger] Exit: transition resolution undefined', { fromStatus, toStatus, allowedCount: allowedTransitions.length })
+    control.ctx.info('[ValidateTransitionTrigger] Exit: transition resolution undefined', {
+      fromStatus,
+      toStatus,
+      allowedCount: allowedTransitions.length
+    })
     return []
   }
 
@@ -122,7 +133,13 @@ async function processTaskPostFunctions (updateTx: TxUpdateDoc<Task>, control: T
     fromStatus,
     toStatus
   })
-  console.log('[ValidateTransitionTrigger] TRANSITION matched:', transition._id, transition.name, 'postFunctions:', transition.postFunctions?.length ?? 0)
+  console.log(
+    '[ValidateTransitionTrigger] TRANSITION matched:',
+    transition._id,
+    transition.name,
+    'postFunctions:',
+    transition.postFunctions?.length ?? 0
+  )
 
   return await executeTransitionPostFunctions(control, transition, taskDoc)
 }

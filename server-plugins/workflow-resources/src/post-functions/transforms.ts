@@ -24,7 +24,9 @@ export function applyValueFunctions (
   funcs: WorkflowValueFunction[]
 ): unknown {
   let result = initialValue
-  const converts: WorkflowTransformCall[] = calls.filter(it => funcs?.find(f => f._id === it.func)?.type === 'convert')
+  const converts: WorkflowTransformCall[] = calls.filter(
+    (it) => funcs?.find((f) => f._id === it.func)?.type === 'convert'
+  )
   const transforms: WorkflowTransformCall[] = calls.filter(
     (it) => funcs?.find((f) => f._id === it.func)?.type === 'transform'
   )
@@ -42,10 +44,7 @@ function applyConvertFunction (val: unknown, call: WorkflowTransformCall): unkno
   return transform != null ? transform(val, call.props ?? {}) : val
 }
 
-function applyTransformFunction (
-  val: unknown,
-  call: WorkflowTransformCall
-): unknown {
+function applyTransformFunction (val: unknown, call: WorkflowTransformCall): unknown {
   const transform = ALL_TRANSFORMS[call.func]
   return transform != null ? transform(val, call.props ?? {}) : val
 }
@@ -146,7 +145,8 @@ function extractDatePart (val: unknown, getter: (d: Date) => number): number | n
 const ARRAY_TRANSFORMS: Record<Ref<WorkflowValueFunction>, TransformFn> = {
   [workflow.function.FirstValue]: (v) => (Array.isArray(v) ? (v.length > 0 ? v[0] : null) : v),
   [workflow.function.LastValue]: (v) => (Array.isArray(v) ? (v.length > 0 ? v[v.length - 1] : null) : v),
-  [workflow.function.Random]: (v) => (Array.isArray(v) ? (v.length > 0 ? v[Math.floor(Math.random() * v.length)] : null) : v)
+  [workflow.function.Random]: (v) =>
+    Array.isArray(v) ? (v.length > 0 ? v[Math.floor(Math.random() * v.length)] : null) : v
 }
 
 const ALL_TRANSFORMS: Record<Ref<WorkflowValueFunction>, TransformFn> = {

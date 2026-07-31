@@ -24,12 +24,12 @@ import {
 } from '@hcengineering/core'
 import { type TriggerControl } from '@hcengineering/server-core'
 import task, { type Task, type Project, type TaskType, type Rank } from '@hcengineering/task'
-const contactPersonClass = 'contact:class:Person' as any
 import workflow from '@hcengineering/model-workflow'
 import serverWorkflow from '@hcengineering/server-workflow'
 import { type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
 import { ValidateTransitionTrigger } from '../ValidateTransition'
 import { UpdateFieldValue, ClearFieldValue } from '../post-functions'
+const contactPersonClass = 'contact:class:Person' as any
 
 jest.mock('@hcengineering/platform', () => {
   const actual = jest.requireActual('@hcengineering/platform')
@@ -139,7 +139,11 @@ describe('Workflow Post-Functions', () => {
       hasMixin: () => true,
       as: (obj: any, mixin: any) => {
         if (mixin === workflow.mixin.ProjectWorkflow) return project
-        if (mixin === serverWorkflow.mixin.PostFunctionImpl || mixin === 'server-workflow:mixin:PostFunctionImpl' || String(mixin).includes('PostFunctionImpl')) return pfRule
+        if (
+          mixin === serverWorkflow.mixin.PostFunctionImpl ||
+          mixin === 'server-workflow:mixin:PostFunctionImpl' ||
+          String(mixin).includes('PostFunctionImpl')
+        ) { return pfRule }
         return obj
       }
     } as any
@@ -191,10 +195,22 @@ describe('Workflow Post-Functions', () => {
           return toFindResult([parentTask])
         }
         if (String(_class).includes('SocialIdentity')) {
-          return toFindResult([{ _id: 'sid-1', space: 'test', modifiedOn: 0, modifiedBy: 'test', _class: 'contact:class:SocialIdentity', attachedTo: 'user-current', attachedToClass: contactPersonClass } as any])
+          return toFindResult([
+            {
+              _id: 'sid-1',
+              space: 'test',
+              modifiedOn: 0,
+              modifiedBy: 'test',
+              _class: 'contact:class:SocialIdentity',
+              attachedTo: 'user-current',
+              attachedToClass: contactPersonClass
+            } as any
+          ])
         }
         if (String(_class).includes('Person')) {
-          return toFindResult([{ _id: 'user-current', space: 'test', modifiedOn: 0, modifiedBy: 'test', _class: contactPersonClass } as any])
+          return toFindResult([
+            { _id: 'user-current', space: 'test', modifiedOn: 0, modifiedBy: 'test', _class: contactPersonClass } as any
+          ])
         }
         return toFindResult([])
       })
@@ -211,7 +227,10 @@ describe('Workflow Post-Functions', () => {
           value: {
             type: 'const',
             value: 'hello world',
-            functions: [{ func: workflow.function.UpperCase }, { func: workflow.function.Append, props: { value: '!' } }]
+            functions: [
+              { func: workflow.function.UpperCase },
+              { func: workflow.function.Append, props: { value: '!' } }
+            ]
           }
         },
         {
@@ -308,7 +327,11 @@ describe('Workflow Post-Functions', () => {
       hasMixin: () => true,
       as: (obj: any, mixin: any) => {
         if (mixin === workflow.mixin.ProjectWorkflow) return project
-        if (mixin === serverWorkflow.mixin.PostFunctionImpl || mixin === 'server-workflow:mixin:PostFunctionImpl' || String(mixin).includes('PostFunctionImpl')) return pfRule
+        if (
+          mixin === serverWorkflow.mixin.PostFunctionImpl ||
+          mixin === 'server-workflow:mixin:PostFunctionImpl' ||
+          String(mixin).includes('PostFunctionImpl')
+        ) { return pfRule }
         return obj
       }
     } as any

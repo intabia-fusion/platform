@@ -16,11 +16,7 @@
 import { DocumentUpdate, groupByArray, MixinUpdate, type Tx } from '@hcengineering/core'
 import { type TriggerControl } from '@hcengineering/server-core'
 import { type Task } from '@hcengineering/task'
-import {
-  type WorkflowTransition,
-  type UpdateFieldValueProps,
-  type ClearFieldValueProps
-} from '@hcengineering/workflow'
+import { type WorkflowTransition, type UpdateFieldValueProps, type ClearFieldValueProps } from '@hcengineering/workflow'
 
 import { resolveValue } from './evaluator'
 
