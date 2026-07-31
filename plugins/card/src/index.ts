@@ -222,8 +222,7 @@ const cardPlugin = plugin(cardId, {
     Content: '' as Ref<CardSection>,
     Properties: '' as Ref<CardSection>,
     Relations: '' as Ref<CardSection>,
-    OldMessages: '' as Ref<CardSection>,
-    CommunicationMessages: '' as Ref<CardSection>
+    OldMessages: '' as Ref<CardSection>
   },
   ids: {
     CardWidget: '' as Ref<Doc>,
