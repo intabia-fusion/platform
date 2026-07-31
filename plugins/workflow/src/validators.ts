@@ -16,6 +16,7 @@
 import core, { notEmpty, Ref, Status } from '@hcengineering/core'
 import task, { type Task, TaskType } from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
+import { translate } from '@hcengineering/platform'
 
 import workflow from './plugin'
 import {
@@ -24,8 +25,7 @@ import {
   ValidatorClient,
   ValidatorFunc,
   type WorkflowTransition
-} from './types'
-import { translate } from '@hcengineering/platform'
+} from './schema'
 
 export function isEmpty (value: any): boolean {
   if (value === undefined || value === null) {

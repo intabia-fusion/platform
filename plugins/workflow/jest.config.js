@@ -13,8 +13,10 @@
 // limitations under the License.
 //
 
-export * from './plugin'
-export { default } from './plugin'
-export * from './schema'
-export * from './utils'
-export * from './validators'
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
+  roots: ['./src'],
+  coverageReporters: ['text-summary', 'html']
+}

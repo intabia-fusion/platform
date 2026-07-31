@@ -68,15 +68,12 @@ export const DOMAIN_WORKFLOW = 'workflow' as Domain
 export class TWorkflowRule extends TDoc implements WorkflowRule {
   label!: IntlString
   description!: IntlString
-  icon?: Asset
-
-  @Prop(TypeString(), getEmbeddedLabel('Group'))
-    group?: string
-
-  @Prop(TypeNumber(), getEmbeddedLabel('Order'))
-    order!: number
+  icon!: Asset
+  group?: string
+  order!: number
 
   editor!: AnyComponent
+  presenter!: AnyComponent
 }
 
 @Model(workflow.class.WorkflowValidator, workflow.class.WorkflowRule)
@@ -102,13 +99,14 @@ export class TScreenField extends TAttachedDoc implements ScreenField {
   @Prop(TypeRef(core.class.Mixin), core.string.Class)
     mixin?: Ref<Class<Mixin<Doc>>>
 
-  fieldId!: Ref<AnyAttribute>
+  @Prop(TypeRef(core.class.Attribute), getEmbeddedLabel('Attribute'))
+    attribute!: Ref<AnyAttribute>
 
   @Prop(TypeString(), workflow.string.FieldKey)
     fieldKey!: string
 
-  @Prop(TypeString(), workflow.string.Label)
-    label?: string
+  // @Prop(TypeString(), workflow.string.Label)
+  //   label?: string
 
   @Prop(TypeBoolean(), workflow.string.Required)
     required!: boolean
@@ -130,7 +128,7 @@ export class TScreenTab extends TAttachedDoc implements ScreenTab {
     rank!: Rank
 
   @Prop(Collection(workflow.class.ScreenField), workflow.string.ScreenField)
-    fields!: number
+    fields?: number
 }
 
 @Model(workflow.class.Screen, core.class.Doc, DOMAIN_WORKFLOW)
@@ -148,7 +146,7 @@ export class TScreen extends TDoc implements Screen {
     targetClass?: Ref<Class<Task>>
 
   @Prop(Collection(workflow.class.ScreenTab), workflow.string.ScreenTab)
-    tabs!: number
+    tabs?: number
 }
 
 @Model(workflow.class.Workflow, core.class.Doc, DOMAIN_WORKFLOW)
@@ -163,7 +161,7 @@ export class TWorkflow extends TDoc implements Workflow {
     name!: string
 
   @Prop(Collection(workflow.class.WorkflowTransition), workflow.string.WorkflowTransition)
-    transitions!: number
+    transitions?: number
 }
 
 @Model(workflow.class.WorkflowTransition, core.class.AttachedDoc, DOMAIN_WORKFLOW)

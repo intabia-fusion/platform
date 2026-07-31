@@ -13,8 +13,27 @@
 // limitations under the License.
 //
 
-export * from './plugin'
-export { default } from './plugin'
-export * from './schema'
-export * from './utils'
-export * from './validators'
+import type { AttachedDoc, Class, Doc, Ref } from '@hcengineering/core'
+import type { ProjectType, Rank, Task } from '@hcengineering/task'
+
+import type { Field } from './values'
+
+export interface ScreenField extends AttachedDoc<ScreenTab, 'fields'>, Field {
+  // label?: string
+  required: boolean
+  rank: Rank
+}
+
+export interface ScreenTab extends AttachedDoc<Screen, 'tabs'> {
+  name: string
+  rank: Rank
+  fields?: number
+}
+
+export interface Screen extends Doc {
+  name: string
+  description?: string
+  projectType: Ref<ProjectType>
+  targetClass?: Ref<Class<Task>>
+  tabs?: number
+}

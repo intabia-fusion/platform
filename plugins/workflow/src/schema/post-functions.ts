@@ -13,8 +13,19 @@
 // limitations under the License.
 //
 
-export * from './plugin'
-export { default } from './plugin'
-export * from './schema'
-export * from './utils'
-export * from './validators'
+import type { Tx } from '@hcengineering/core'
+import type { IntlString } from '@hcengineering/platform'
+
+export interface PostFunctionSuccess {
+  ok: true
+  txes: Tx[]
+}
+
+export interface PostFunctionError {
+  ok: false
+  error: string
+  errorIntl?: IntlString
+  intlParams?: Record<string, any>
+}
+
+export type PostFunctionResult = PostFunctionSuccess | PostFunctionError

@@ -25,8 +25,16 @@ import type {
   WorkflowPostFunctionConfig,
   Screen,
   ScreenTab,
-  ScreenField
-} from './types'
+  ScreenField,
+  Field,
+  WorkflowFieldValue,
+  WorkflowPresetValue,
+  WorkflowThisValue,
+  WorkflowParentValue,
+  WorkflowConstValue,
+  WorkflowValuePreset,
+  WorkflowTransformCall
+} from './schema'
 
 export async function createWorkflow (
   client: TxOperations,
@@ -320,7 +328,7 @@ export function findTransitionConflict (
   const t2From = t2.from == null || t2.from.length === 0 ? null : t2.from
 
   if (t1From === null && t2From === null) {
-    return 'null' as any
+    return 'null' as unknown as Ref<Status>
   }
 
   if (t1From !== null && t2From !== null) {
@@ -446,4 +454,37 @@ export async function removeScreenField (
     workflow.class.ScreenTab,
     'fields'
   )
+}
+
+// Builder API for Workflow Value Expressions
+export const WorkflowValue = {
+  preset (preset: WorkflowValuePreset, functions?: WorkflowTransformCall[]): WorkflowPresetValue {
+    return { type: 'preset', preset, functions }
+  },
+  this (field: Field, functions?: WorkflowTransformCall[]): WorkflowThisValue {
+    return { ...field, type: 'this', functions }
+  },
+  parent (field: Field, functions?: WorkflowTransformCall[]): WorkflowParentValue {
+    return { ...field, type: 'parent', functions }
+  },
+  const (value: unknown, functions?: WorkflowTransformCall[]): WorkflowConstValue {
+    return { type: 'const', value, functions }
+  }
+}
+
+// Type Guards
+export function isPresetValue (val: WorkflowFieldValue): val is WorkflowPresetValue {
+  return val.type === 'preset'
+}
+
+export function isThisValue (val: WorkflowFieldValue): val is WorkflowThisValue {
+  return val.type === 'this'
+}
+
+export function isParentValue (val: WorkflowFieldValue): val is WorkflowParentValue {
+  return val.type === 'parent'
+}
+
+export function isConstValue (val: WorkflowFieldValue): val is WorkflowConstValue {
+  return val.type === 'const'
 }

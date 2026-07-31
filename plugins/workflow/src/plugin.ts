@@ -29,7 +29,7 @@ import {
   Screen,
   ScreenTab,
   ScreenField
-} from './types'
+} from './schema'
 
 export const workflowId = 'workflow' as Plugin
 
