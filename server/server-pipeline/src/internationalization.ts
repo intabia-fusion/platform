@@ -34,10 +34,8 @@ import { viewId } from '@hcengineering/view'
 import { workbenchId } from '@hcengineering/workbench'
 import { timeId } from '@hcengineering/time'
 import { surveyId } from '@hcengineering/survey'
-import { chatId } from '@hcengineering/chat'
 import { cardId } from '@hcengineering/card'
 import { mailId } from '@hcengineering/mail'
-import { communicationId } from '@hcengineering/communication'
 
 import coreEng from '@hcengineering/core/lang/en.json'
 import loginEng from '@hcengineering/login-assets/lang/en.json'
@@ -75,10 +73,8 @@ import viewEn from '@hcengineering/view-assets/lang/en.json'
 import workbenchEn from '@hcengineering/workbench-assets/lang/en.json'
 import timeEn from '@hcengineering/time-assets/lang/en.json'
 import surveyEn from '@hcengineering/survey-assets/lang/en.json'
-import chatEn from '@hcengineering/chat-assets/lang/en.json'
 import cardEn from '@hcengineering/card-assets/lang/en.json'
 import mailEn from '@hcengineering/mail-assets/lang/en.json'
-import communicationEn from '@hcengineering/communication-assets/lang/en.json'
 
 import coreRu from '@hcengineering/core/lang/ru.json'
 import loginRu from '@hcengineering/login-assets/lang/ru.json'
@@ -116,10 +112,8 @@ import viewRu from '@hcengineering/view-assets/lang/ru.json'
 import workbenchRu from '@hcengineering/workbench-assets/lang/ru.json'
 import timeRu from '@hcengineering/time-assets/lang/ru.json'
 import surveyRu from '@hcengineering/survey-assets/lang/ru.json'
-import chatRu from '@hcengineering/chat-assets/lang/ru.json'
 import cardRu from '@hcengineering/card-assets/lang/ru.json'
 import mailRu from '@hcengineering/mail-assets/lang/ru.json'
-import communicationRu from '@hcengineering/communication-assets/lang/ru.json'
 
 function createLoader (en: any, ru: any): (lang: string) => Promise<any> {
   return async (lang: string) => {
@@ -171,8 +165,6 @@ export function registerStringLoaders (): void {
   addStringsLoader(githubId, createLoader(githubEn, githubRu))
   addStringsLoader(timeId, createLoader(timeEn, timeRu))
   addStringsLoader(surveyId, createLoader(surveyEn, surveyRu))
-  addStringsLoader(chatId, createLoader(chatEn, chatRu))
   addStringsLoader(cardId, createLoader(cardEn, cardRu))
   addStringsLoader(mailId, createLoader(mailEn, mailRu))
-  addStringsLoader(communicationId, createLoader(communicationEn, communicationRu))
 }
