@@ -14,12 +14,11 @@
 <script lang="ts">
   import { Action, Menu, ModernTab, showPopup } from '@hcengineering/ui'
   import { Widget, WidgetTab } from '@hcengineering/workbench'
-  import { createNotificationsQuery, createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
+  import { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { Card, MasterTag } from '@hcengineering/card'
   import { Ref, SortingOrder } from '@hcengineering/core'
   import { closeWidgetTab } from '@hcengineering/workbench-resources'
   import view from '@hcengineering/view'
-  import { NotificationType } from '@hcengineering/communication-types'
 
   import cardPlugin from '../plugin'
 
@@ -32,13 +31,10 @@
   const hierarchy = client.getHierarchy()
 
   const cardQuery = createQuery()
-  const notificationsQuery = createNotificationsQuery()
 
   let card: Card | undefined
   let cardId: Ref<Card> = tab.id as Ref<Card>
   $: cardId = tab.id as Ref<Card>
-
-  let count: number = 0
 
   $: cardQuery.query(cardPlugin.class.Card, { _id: cardId }, (res) => {
     card = res[0]
@@ -46,13 +42,6 @@
       void closeWidgetTab(widget, tab.id)
     }
   })
-
-  $: notificationsQuery.query(
-    { cardId, limit: 1, read: false, order: SortingOrder.Descending, type: NotificationType.Message },
-    (res) => {
-      count = res.getResult().length
-    }
-  )
 
   function handleMenu (event: CustomEvent<MouseEvent>): void {
     if (actions.length === 0) {
@@ -81,11 +70,11 @@
   on:click
   on:contextmenu={handleMenu}
 >
-  <svelte:fragment slot="prefix">
-    {#if count > 0}
-      <div class="notifyMarker" />
-    {/if}
-  </svelte:fragment>
+<!--  <svelte:fragment slot="prefix">-->
+<!--    {#if count > 0}-->
+<!--      <div class="notifyMarker" />-->
+<!--    {/if}-->
+<!--  </svelte:fragment>-->
 </ModernTab>
 
 <style lang="scss">

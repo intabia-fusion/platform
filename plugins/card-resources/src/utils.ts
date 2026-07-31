@@ -15,8 +15,6 @@
 import { type AccountClient, getClient as getAccountClientRaw } from '@hcengineering/account-client'
 import { Analytics } from '@hcengineering/analytics'
 import { type Card, CardEvents, cardId, type CardSpace, type MasterTag, type Tag } from '@hcengineering/card'
-import { chatId } from '@hcengineering/chat'
-import communication from '@hcengineering/communication'
 import { type PermissionsStore } from '@hcengineering/contact'
 import core, {
   AccountRole,
@@ -587,12 +585,8 @@ export async function createChildCard (object: Card): Promise<void> {
   Analytics.handleEvent(CardEvents.CardCreated)
 
   const loc = getCurrentLocation()
-  if (loc.path[2] === chatId) {
-    loc.path[3] = encodeObjectURI(_id, card.class.Card)
-  } else {
-    loc.path[2] = cardId
-    loc.path[3] = _id
-  }
+  loc.path[2] = cardId
+  loc.path[3] = _id
   loc.path.length = 4
   navigate(loc)
 }
@@ -658,19 +652,7 @@ export function cardCustomLinkEncode (doc: Card): Location {
 }
 
 export async function checkOldMessagesSectionVisibility (doc: Card): Promise<boolean> {
-  if (!hasAccountRole(getCurrentAccount(), AccountRole.User)) {
-    return false
-  }
-
-  return getMetadata(communication.metadata.Enabled) !== true
-}
-
-export async function checkCommunicationMessagesSectionVisibility (doc: Card): Promise<boolean> {
-  if (!hasAccountRole(getCurrentAccount(), AccountRole.User)) {
-    return false
-  }
-
-  return getMetadata(communication.metadata.Enabled) === true
+  return hasAccountRole(getCurrentAccount(), AccountRole.User)
 }
 
 export async function checkChildrenSectionVisibility (doc: Card): Promise<boolean> {
