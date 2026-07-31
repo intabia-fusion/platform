@@ -119,14 +119,12 @@ import { performGmailAccountMigrations } from './gmail'
 import { getToolToken, getWorkspace, getWorkspaceTransactorEndpoint } from './utils'
 
 import { createRestClient } from '@hcengineering/api-client'
-import { type CardID } from '@hcengineering/communication-types'
 import { sendTransactorEvent } from '@hcengineering/server-tool'
 import { existsSync } from 'fs'
 import { mkdir, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { restoreMarkupRefs } from './markup'
 import { restoreGithubIntegrations } from './restoreGithub'
-import { migrateWorkspaceChat } from './communication'
 
 const colorConstants = {
   colorRed: '\u001b[31m',
@@ -3072,96 +3070,7 @@ export function devTool (
       }, dbUrl)
     })
 
-  program
-    .command('migrate-chat-to-communication')
-    .description('Migrate old chat to new communication')
-    .option('-w, --workspace <workspace>', 'Workspace to migrate')
-    .action(async (cmd: { workspace?: WorkspaceUuid }) => {
-      const { dbUrl, txes } = prepareTools()
-      const hulylakeUrl = process.env.HULYLAKE_URL ?? ''
 
-      const workspace = cmd.workspace
-      console.log('Workspace', workspace)
-
-      if (hulylakeUrl === '') {
-        throw new Error('HULYLAKE_URL should be specified')
-      }
-
-      const token = generateToken(systemAccountUuid, undefined, {
-        service: 'tool'
-      })
-      const db = getDBClient(dbUrl, undefined, 'tool')
-      const dbClient = await db.getClient()
-      const accountClient = getAccountClient(token)
-      const personUuidBySocialId = new Map<PersonId, PersonUuid>()
-      const storageConfig = storageConfigFromEnv()
-      const storage: StorageAdapter = buildStorageFromConfig(storageConfig)
-
-      await withAccountDatabase(async (accountDb) => {
-        const workspaces =
-          workspace != null
-            ? await accountDb.workspaceStatus.find({ workspaceUuid: workspace })
-            : await accountDb.workspaceStatus.find({}, { lastVisit: 'descending' })
-        for (const wss of workspaces) {
-          try {
-            const ws = await accountDb.workspace.findOne({ uuid: wss.workspaceUuid })
-            if (ws == null) continue
-            const hulylake = getHulylakeClient(hulylakeUrl, ws.uuid, token)
-
-            let pipeline: Pipeline | undefined
-            try {
-              pipeline = await createBackupPipeline(toolCtx, dbUrl, txes, {
-                externalStorage: storage,
-                usePassedCtx: true
-              })(
-                toolCtx,
-                {
-                  uuid: ws.uuid,
-                  url: ws.url ?? '',
-                  dataId: ws.dataId
-                },
-                createEmptyBroadcastOps(),
-                null
-              )
-            } catch (e) {
-              pipeline = undefined
-            }
-            if (pipeline === undefined) {
-              toolCtx.error('failed to migrate, pipeline is undefined', { ws })
-              return
-            }
-            const client = pipeline.context.lowLevelStorage
-
-            if (client == null) {
-              toolCtx.error('failed to migrate, lowLevelStorage is undefined', { ws })
-              return
-            }
-
-            console.log('------------start workspace migration', ws.name)
-            const s = Date.now()
-            await migrateWorkspaceChat(
-              toolCtx.newChild(ws.name, {}),
-              ws,
-              dbClient,
-              client,
-              pipeline.context.hierarchy,
-              hulylake,
-              accountClient,
-              personUuidBySocialId
-            )
-            const e = Date.now()
-            console.log('---------------done workspace migration', ws.name, ((e - s) / 1000 / 60).toFixed(2), 'minutes')
-            await pipeline.close()
-          } catch (err: any) {
-            console.error('failed to migrate workspace', wss.workspaceUuid)
-            console.error(err)
-          }
-        }
-        db.close()
-      }, dbUrl)
-
-      console.log('done')
-    })
 
   program
     .command('calculate-ratings <workspace>')

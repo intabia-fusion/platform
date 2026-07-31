@@ -24,7 +24,6 @@
   "PUBLIC_SCHEDULE_URL": "http://localhost:8060",
   "CALDAV_SERVER_URL": "http://localhost:9070",
   "EXPORT_URL": "/_export",
-  "COMMUNICATION_API_ENABLED": "false",
   "HULYLAKE_URL": "/_love",
   "EXCLUDED_APPLICATIONS_FOR_ANONYMOUS": "[\"chunter\", \"notification\"]",
   "ANALYTICS_COLLECTOR_URL": "",

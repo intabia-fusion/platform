@@ -83,9 +83,7 @@
     "@hcengineering/card": "workspace:^0.7.0",
     "@hcengineering/card-assets": "workspace:^0.7.0",
     "@hcengineering/card-resources": "workspace:^0.7.0",
-    "@hcengineering/chat": "workspace:^0.7.0",
-    "@hcengineering/chat-assets": "workspace:^0.7.0",
-    "@hcengineering/chat-resources": "workspace:^0.7.0",
+
     "@hcengineering/chunter": "workspace:^0.7.0",
     "@hcengineering/chunter-assets": "workspace:^0.7.0",
     "@hcengineering/chunter-resources": "workspace:^0.7.0",
@@ -274,9 +272,7 @@
     "@hcengineering/process": "workspace:^0.7.0",
     "@hcengineering/process-assets": "workspace:^0.7.0",
     "@hcengineering/process-resources": "workspace:^0.7.0",
-    "@hcengineering/communication": "workspace:^0.7.0",
-    "@hcengineering/communication-assets": "workspace:^0.7.0",
-    "@hcengineering/communication-resources": "workspace:^0.7.0",
+
     "@hcengineering/emoji": "workspace:^0.7.0",
     "@hcengineering/emoji-assets": "workspace:^0.7.0",
     "@hcengineering/emoji-resources": "workspace:^0.7.0",
@@ -292,9 +288,7 @@
     "@hcengineering/ai-assistant": "workspace:^0.7.0",
     "@hcengineering/ai-assistant-assets": "workspace:^0.7.0",
     "@hcengineering/ai-assistant-resources": "workspace:^0.7.0",
-    "@hcengineering/inbox": "workspace:^0.7.0",
-    "@hcengineering/inbox-assets": "workspace:^0.7.0",
-    "@hcengineering/inbox-resources": "workspace:^0.7.0",
+
     "@hcengineering/rating": "workspace:^0.7.0",
     "@hcengineering/rating-assets": "workspace:^0.7.0",
     "@hcengineering/rating-resources": "workspace:^0.7.0",
