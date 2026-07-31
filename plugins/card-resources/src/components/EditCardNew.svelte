@@ -18,11 +18,7 @@
   import { Card } from '@hcengineering/card'
   import { Ref, WithLookup } from '@hcengineering/core'
   import presence from '@hcengineering/presence'
-  import {
-    ComponentExtensions,
-    createQuery,
-    getClient
-  } from '@hcengineering/presentation'
+  import { ComponentExtensions, createQuery, getClient } from '@hcengineering/presentation'
   import {
     Button,
     Component,

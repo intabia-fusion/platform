@@ -161,16 +161,10 @@ export class WorkspaceManager {
       { batchSize: txBatchSize, batchTimeout: txBatchTimeout }
     )
 
-    this.txDeadLetterProducer = this.opt.queue.getProducer<TxCUD<Doc>>(
-      this.ctx,
-      getDeadletterTopic(QueueTopic.Tx)
-    )
+    this.txDeadLetterProducer = this.opt.queue.getProducer<TxCUD<Doc>>(this.ctx, getDeadletterTopic(QueueTopic.Tx))
   }
 
-  private async processTransactions (
-    msgs: ConsumerMessage<TxCUD<Doc>>[],
-    control: ConsumerControl
-  ): Promise<void> {
+  private async processTransactions (msgs: ConsumerMessage<TxCUD<Doc>>[], control: ConsumerControl): Promise<void> {
     if (msgs.length === 0) return
 
     // Group by workspace - one batch may contain messages from multiple workspaces

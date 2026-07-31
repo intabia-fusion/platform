@@ -139,10 +139,7 @@ export class WorkspaceManager {
     )
   }
 
-  private async processTxTransactions (
-    m: ConsumerMessage<TxCUD<Doc>>,
-    control: ConsumerControl
-  ): Promise<void> {
+  private async processTxTransactions (m: ConsumerMessage<TxCUD<Doc>>, control: ConsumerControl): Promise<void> {
     try {
       const ws = m.workspace
 

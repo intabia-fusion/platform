@@ -580,11 +580,7 @@ export class FullTextIndexPipeline implements FullTextPipeline {
     await rateLimit.waitProcessing()
   }
 
-  public async processTransactions (
-    ctx: MeasureContext,
-    result: TxCUD<Doc>[],
-    control: ConsumerControl
-  ): Promise<void> {
+  public async processTransactions (ctx: MeasureContext, result: TxCUD<Doc>[], control: ConsumerControl): Promise<void> {
     const contextData = this.createContextData()
     ctx.contextData = contextData
 

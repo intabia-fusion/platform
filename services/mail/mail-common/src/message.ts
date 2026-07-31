@@ -15,10 +15,7 @@
 import { Producer } from 'kafkajs'
 
 import { WorkspaceLoginInfo } from '@hcengineering/account-client'
-import {
-  type MeasureContext,
-  type TxOperations
-} from '@hcengineering/core'
+import { type MeasureContext, type TxOperations } from '@hcengineering/core'
 import { type KeyValueClient } from '@hcengineering/kvs-client'
 
 import { BaseConfig, SyncOptions, type Attachment } from './types'

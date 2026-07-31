@@ -26,8 +26,7 @@ import { Widget, WidgetTab } from '@hcengineering/workbench'
 /**
  * @public
  */
-export interface ChunterSpace extends Space {
-}
+export interface ChunterSpace extends Space {}
 
 /**
  * @public

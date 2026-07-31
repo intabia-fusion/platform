@@ -253,7 +253,6 @@
     }
   )
 
-
   const onSelected = (e: CustomEvent<string>): void => {
     selected = e.detail
     localStorage.setItem('firstDayOfWeek', `${e.detail}`)
@@ -374,7 +373,6 @@
                   }}
                 />
               </div>
-
             </div>
           {/if}
 

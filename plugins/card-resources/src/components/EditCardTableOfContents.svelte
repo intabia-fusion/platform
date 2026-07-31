@@ -217,7 +217,6 @@
   const onRenderTopChange = (active: boolean): void => {
     renderTopSections = active
   }
-
 </script>
 
 <div class="hulyComponent-content__container columns relative">

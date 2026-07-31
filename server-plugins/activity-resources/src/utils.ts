@@ -1,11 +1,5 @@
 import activity, { type ActivityMessage } from '@hcengineering/activity'
-import core, {
-  type Class,
-  type Doc,
-  type Hierarchy,
-  type Ref,
-  type Type
-} from '@hcengineering/core'
+import core, { type Class, type Doc, type Hierarchy, type Ref, type Type } from '@hcengineering/core'
 import { getResource } from '@hcengineering/platform'
 import {
   type IdentifierPresenter,

@@ -14,9 +14,7 @@
 //
 
 import { MeasureContext, WorkspaceUuid, Doc, TxCUD, Tx } from '@hcengineering/core'
-import {
-  isNewChannelTx
-} from '@hcengineering/mail-common'
+import { isNewChannelTx } from '@hcengineering/mail-common'
 import { ConsumerHandle, PlatformQueue, QueueTopic } from '@hcengineering/server-core'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { Card } from '@hcengineering/card'

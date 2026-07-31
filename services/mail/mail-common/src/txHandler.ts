@@ -13,13 +13,7 @@
 // limitations under the License.
 //
 
-import {
-  Tx,
-  TxOperations,
-  PersonId,
-  SocialIdType,
-  MeasureContext
-} from '@hcengineering/core'
+import { Tx, TxOperations, PersonId, SocialIdType, MeasureContext } from '@hcengineering/core'
 import { Card } from '@hcengineering/card'
 import mail from '@hcengineering/mail'
 import { AccountClient } from '@hcengineering/account-client'

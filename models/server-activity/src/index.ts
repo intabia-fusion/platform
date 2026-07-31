@@ -28,7 +28,6 @@ import serverActivity, {
 import { TClass, TDoc } from '@hcengineering/model-core'
 import activity from '@hcengineering/activity'
 import notification from '@hcengineering/notification'
-import card from '@hcengineering/card'
 import type { Resource } from '@hcengineering/platform'
 
 export { activityServerOperation } from './migration'

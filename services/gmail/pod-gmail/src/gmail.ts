@@ -35,12 +35,7 @@ import {
   isWorkspaceLoginInfo,
   AccountClient
 } from '@hcengineering/account-client'
-import {
-  MailRecipient,
-  type SyncOptions,
-  getChannel,
-  getMailHeaders
-} from '@hcengineering/mail-common'
+import { MailRecipient, type SyncOptions, getChannel, getMailHeaders } from '@hcengineering/mail-common'
 
 import { encode64 } from './base64'
 import config from './config'

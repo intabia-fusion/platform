@@ -790,9 +790,7 @@
     }
   }
 
-  $: customAppProps = new Map([
-    [notificationId, inboxProps]
-  ])
+  $: customAppProps = new Map([[notificationId, inboxProps]])
 
   defineSeparators('workbench', workbenchSeparators)
   defineSeparators('main', mainSeparators)
@@ -878,20 +876,20 @@
           />
         </div>
         {#if !isExcludedApp(activeInboxId)}
-            <NavLink
-              app={notificationId}
-              shrink={0}
-              disabled={!$deviceInfo.navigator.visible &&
-                $deviceInfo.navigator.float &&
-                currentAppAlias === notificationId}
-            >
-              <AppItem
-                icon={notification.icon.Notifications}
-                label={notification.string.Inbox}
-                {...inboxProps}
-                on:click={inboxProps.onClick}
-              />
-            </NavLink>
+          <NavLink
+            app={notificationId}
+            shrink={0}
+            disabled={!$deviceInfo.navigator.visible &&
+              $deviceInfo.navigator.float &&
+              currentAppAlias === notificationId}
+          >
+            <AppItem
+              icon={notification.icon.Notifications}
+              label={notification.string.Inbox}
+              {...inboxProps}
+              on:click={inboxProps.onClick}
+            />
+          </NavLink>
         {/if}
         <Applications
           {apps}

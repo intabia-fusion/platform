@@ -14,13 +14,7 @@
 // limitations under the License.
 //
 
-import {
-  type BrandingMap,
-  generateId,
-  type MeasureContext,
-  type Tx,
-  type WorkspaceUuid
-} from '@hcengineering/core'
+import { type BrandingMap, generateId, type MeasureContext, type Tx, type WorkspaceUuid } from '@hcengineering/core'
 import { buildStorageFromConfig } from '@hcengineering/server-storage'
 
 import { startSessionManager } from '@hcengineering/server'

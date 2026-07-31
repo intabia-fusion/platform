@@ -3070,8 +3070,6 @@ export function devTool (
       }, dbUrl)
     })
 
-
-
   program
     .command('calculate-ratings <workspace>')
     .description('Perform a rating re-calculation')

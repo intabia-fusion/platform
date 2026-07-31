@@ -70,11 +70,11 @@
   on:click
   on:contextmenu={handleMenu}
 >
-<!--  <svelte:fragment slot="prefix">-->
-<!--    {#if count > 0}-->
-<!--      <div class="notifyMarker" />-->
-<!--    {/if}-->
-<!--  </svelte:fragment>-->
+  <!--  <svelte:fragment slot="prefix">-->
+  <!--    {#if count > 0}-->
+  <!--      <div class="notifyMarker" />-->
+  <!--    {/if}-->
+  <!--  </svelte:fragment>-->
 </ModernTab>
 
 <style lang="scss">

@@ -1,7 +1,5 @@
 import { gmail_v1 } from 'googleapis'
-import {
-  MailHeader
-} from '@hcengineering/mail-common'
+import { MailHeader } from '@hcengineering/mail-common'
 
 // export async function makeHTMLBodyV2 (
 //   ctx: MeasureContext,

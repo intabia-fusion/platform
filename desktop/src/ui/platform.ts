@@ -377,7 +377,6 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
     setForceAccent(config.ACCENT_THEME as AccentColorType)
   }
 
-
   if (config.MODEL_VERSION != null) {
     console.log('Minimal Model version requirement', config.MODEL_VERSION)
     setMetadata(presentation.metadata.ModelVersion, config.MODEL_VERSION)

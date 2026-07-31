@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Card } from '@hcengineering/card'
-import { OperationDomain, PersonId, PersonUuid, Ref, Space, WorkspaceUuid } from '@hcengineering/core'
+import { PersonId, PersonUuid, Ref, Space, WorkspaceUuid } from '@hcengineering/core'
 
 //
 export interface Attachment {

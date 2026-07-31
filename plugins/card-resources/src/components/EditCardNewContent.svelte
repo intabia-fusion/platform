@@ -22,7 +22,6 @@
   export let _id: Ref<Card>
   export let doc: Card
   export let readonly: boolean = false
-
 </script>
 
 {#if _id === doc._id}

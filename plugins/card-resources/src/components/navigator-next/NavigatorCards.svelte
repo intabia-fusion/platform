@@ -98,14 +98,7 @@
       {#if visibleItem !== undefined && !isOpen}
         {@const card = getCard(visibleItem)}
         {#if card}
-          <NavigatorCard
-            {card}
-            favorite={visibleItem}
-            {applicationId}
-            {selectedCard}
-            {config}
-            on:selectCard
-          />
+          <NavigatorCard {card} favorite={visibleItem} {applicationId} {selectedCard} {config} on:selectCard />
         {/if}
       {/if}
     </svelte:fragment>
