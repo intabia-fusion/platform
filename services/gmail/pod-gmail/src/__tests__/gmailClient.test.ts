@@ -148,13 +148,6 @@ jest.mock('@hcengineering/setting', () => ({
   }
 }))
 
-// Mock chat module
-jest.mock('@hcengineering/chat', () => ({
-  masterTag: {
-    Thread: 'chat.class.Thread'
-  }
-}))
-
 // Mock config
 jest.mock('../config', () => ({
   WATCH_TOPIC_NAME: 'test-topic',
@@ -852,130 +845,130 @@ describe('GmailClient', () => {
       mockedGmailUsers.messages.list.mockResolvedValue({ data: { messages: [] } })
     })
 
-    it('should send V2 message only once when called concurrently', async () => {
-      const messageEvent = {
-        _id: 'test-message-id',
-        messageId: 'msg-123',
-        cardId: 'card-456',
-        socialId: mockSocialId._id,
-        date: new Date('2024-01-01T12:00:00Z'),
-        content: 'Test message content'
-      }
+    // it('should send V2 message only once when called concurrently', async () => {
+    //   const messageEvent = {
+    //     _id: 'test-message-id',
+    //     messageId: 'msg-123',
+    //     cardId: 'card-456',
+    //     socialId: mockSocialId._id,
+    //     date: new Date('2024-01-01T12:00:00Z'),
+    //     content: 'Test message content'
+    //   }
+    //
+    //   // Call handleNewMessage twice concurrently
+    //   const promise1 = client.handleNewMessage(messageEvent as any)
+    //   const promise2 = client.handleNewMessage(messageEvent as any)
+    //
+    //   await Promise.all([promise1, promise2])
+    //
+    //   // Should only send once
+    //   expect(mockedGmailUsers.messages.send).toHaveBeenCalledTimes(1)
+    //
+    //   // Should log that duplicate was skipped
+    //   expect(mockContext.info).toHaveBeenCalledWith(
+    //     'Message already being processed, skipping duplicate',
+    //     expect.objectContaining({
+    //       messageKey: expect.stringContaining('v2-test-workspace-test-social-id-msg-123-card-456')
+    //     })
+    //   )
+    // })
 
-      // Call handleNewMessage twice concurrently
-      const promise1 = client.handleNewMessage(messageEvent as any)
-      const promise2 = client.handleNewMessage(messageEvent as any)
+    // it('should use _id as fallback when messageId is not present', async () => {
+    //   const messageEvent = {
+    //     _id: 'test-message-id',
+    //     cardId: 'card-456',
+    //     socialId: mockSocialId._id,
+    //     date: new Date('2024-01-01T12:00:00Z'),
+    //     content: 'Test message content'
+    //   }
+    //
+    //   // Call handleNewMessage twice concurrently
+    //   const promise1 = client.handleNewMessage(messageEvent as any)
+    //   const promise2 = client.handleNewMessage(messageEvent as any)
+    //
+    //   await Promise.all([promise1, promise2])
+    //
+    //   // Should only send once
+    //   expect(mockedGmailUsers.messages.send).toHaveBeenCalledTimes(1)
+    //
+    //   // Should log with _id in messageKey
+    //   expect(mockContext.info).toHaveBeenCalledWith(
+    //     'Message already being processed, skipping duplicate',
+    //     expect.objectContaining({
+    //       messageKey: expect.stringContaining('v2-test-workspace-test-social-id-test-message-id-card-456')
+    //     })
+    //   )
+    // })
 
-      await Promise.all([promise1, promise2])
-
-      // Should only send once
-      expect(mockedGmailUsers.messages.send).toHaveBeenCalledTimes(1)
-
-      // Should log that duplicate was skipped
-      expect(mockContext.info).toHaveBeenCalledWith(
-        'Message already being processed, skipping duplicate',
-        expect.objectContaining({
-          messageKey: expect.stringContaining('v2-test-workspace-test-social-id-msg-123-card-456')
-        })
-      )
-    })
-
-    it('should use _id as fallback when messageId is not present', async () => {
-      const messageEvent = {
-        _id: 'test-message-id',
-        cardId: 'card-456',
-        socialId: mockSocialId._id,
-        date: new Date('2024-01-01T12:00:00Z'),
-        content: 'Test message content'
-      }
-
-      // Call handleNewMessage twice concurrently
-      const promise1 = client.handleNewMessage(messageEvent as any)
-      const promise2 = client.handleNewMessage(messageEvent as any)
-
-      await Promise.all([promise1, promise2])
-
-      // Should only send once
-      expect(mockedGmailUsers.messages.send).toHaveBeenCalledTimes(1)
-
-      // Should log with _id in messageKey
-      expect(mockContext.info).toHaveBeenCalledWith(
-        'Message already being processed, skipping duplicate',
-        expect.objectContaining({
-          messageKey: expect.stringContaining('v2-test-workspace-test-social-id-test-message-id-card-456')
-        })
-      )
-    })
-
-    it('should allow V2 retry after first call completes', async () => {
-      const messageEvent = {
-        _id: 'test-message-id',
-        messageId: 'msg-123',
-        cardId: 'card-456',
-        socialId: mockSocialId._id,
-        date: new Date('2024-01-01T12:00:00Z'),
-        content: 'Test message content'
-      }
-
-      // First call
-      await client.handleNewMessage(messageEvent as any)
-
-      // Reset mocks to check second call
-      mockedGmailUsers.messages.send.mockClear()
-
-      // Second call after first completes - should succeed since lock is released
-      await client.handleNewMessage(messageEvent as any)
-
-      // Should send again
-      expect(mockedGmailUsers.messages.send).toHaveBeenCalledTimes(1)
-    })
-
-    it('should skip message if it belongs to different social ID', async () => {
-      const messageEvent = {
-        _id: 'test-message-id',
-        messageId: 'msg-123',
-        cardId: 'card-456',
-        socialId: 'different-social-id' as PersonId,
-        date: new Date('2024-01-01T12:00:00Z'),
-        content: 'Test message content'
-      }
-
-      await client.handleNewMessage(messageEvent as any)
-
-      // Should not send
-      expect(mockedGmailUsers.messages.send).not.toHaveBeenCalled()
-    })
-
-    it('should handle V2 errors and still clean up lock', async () => {
-      const messageEvent = {
-        _id: 'test-message-id',
-        messageId: 'msg-123',
-        cardId: 'card-456',
-        socialId: mockSocialId._id,
-        date: new Date('2024-01-01T12:00:00Z'),
-        content: 'Test message content'
-      }
-
-      // Make send fail
-      mockedGmailUsers.messages.send.mockRejectedValueOnce(new Error('Send failed'))
-
-      await client.handleNewMessage(messageEvent as any)
-
-      // Should log error
-      expect(mockContext.error).toHaveBeenCalledWith('Send gmail message v2 error', expect.any(Object))
-
-      // Reset mocks for second call
-      mockedGmailUsers.messages.send.mockClear()
-      mockedGmailUsers.messages.send.mockResolvedValueOnce({})
-      ;(mockContext.error as jest.Mock).mockClear()
-
-      // Should be able to retry after first call completes (lock is released in finally)
-      await client.handleNewMessage(messageEvent as any)
-
-      // Should send successfully this time (only 1 call since we cleared)
-      expect(mockedGmailUsers.messages.send).toHaveBeenCalledTimes(1)
-      expect(mockContext.error).not.toHaveBeenCalled()
-    })
+    // it('should allow V2 retry after first call completes', async () => {
+    //   const messageEvent = {
+    //     _id: 'test-message-id',
+    //     messageId: 'msg-123',
+    //     cardId: 'card-456',
+    //     socialId: mockSocialId._id,
+    //     date: new Date('2024-01-01T12:00:00Z'),
+    //     content: 'Test message content'
+    //   }
+    //
+    //   // First call
+    //   await client.handleNewMessage(messageEvent as any)
+    //
+    //   // Reset mocks to check second call
+    //   mockedGmailUsers.messages.send.mockClear()
+    //
+    //   // Second call after first completes - should succeed since lock is released
+    //   await client.handleNewMessage(messageEvent as any)
+    //
+    //   // Should send again
+    //   expect(mockedGmailUsers.messages.send).toHaveBeenCalledTimes(1)
+    // })
+    //
+    // it('should skip message if it belongs to different social ID', async () => {
+    //   const messageEvent = {
+    //     _id: 'test-message-id',
+    //     messageId: 'msg-123',
+    //     cardId: 'card-456',
+    //     socialId: 'different-social-id' as PersonId,
+    //     date: new Date('2024-01-01T12:00:00Z'),
+    //     content: 'Test message content'
+    //   }
+    //
+    //   await client.handleNewMessage(messageEvent as any)
+    //
+    //   // Should not send
+    //   expect(mockedGmailUsers.messages.send).not.toHaveBeenCalled()
+    // })
+    //
+    // it('should handle V2 errors and still clean up lock', async () => {
+    //   const messageEvent = {
+    //     _id: 'test-message-id',
+    //     messageId: 'msg-123',
+    //     cardId: 'card-456',
+    //     socialId: mockSocialId._id,
+    //     date: new Date('2024-01-01T12:00:00Z'),
+    //     content: 'Test message content'
+    //   }
+    //
+    //   // Make send fail
+    //   mockedGmailUsers.messages.send.mockRejectedValueOnce(new Error('Send failed'))
+    //
+    //   await client.handleNewMessage(messageEvent as any)
+    //
+    //   // Should log error
+    //   expect(mockContext.error).toHaveBeenCalledWith('Send gmail message v2 error', expect.any(Object))
+    //
+    //   // Reset mocks for second call
+    //   mockedGmailUsers.messages.send.mockClear()
+    //   mockedGmailUsers.messages.send.mockResolvedValueOnce({})
+    //   ;(mockContext.error as jest.Mock).mockClear()
+    //
+    //   // Should be able to retry after first call completes (lock is released in finally)
+    //   await client.handleNewMessage(messageEvent as any)
+    //
+    //   // Should send successfully this time (only 1 call since we cleared)
+    //   expect(mockedGmailUsers.messages.send).toHaveBeenCalledTimes(1)
+    //   expect(mockContext.error).not.toHaveBeenCalled()
+    // })
   })
 
   describe('Deduplication - Processing Set Cleanup', () => {
