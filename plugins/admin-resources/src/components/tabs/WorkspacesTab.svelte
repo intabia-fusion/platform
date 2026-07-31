@@ -186,6 +186,7 @@
   // Billing filters
   let billingPlanFilter = ''
   let showBillingExpired = false
+  let showTrialingOnly = false
   let plans: PlanOptions | null = null
   void loadPlanOptions($themeStore.language ?? 'en').then((p) => {
     plans = p
@@ -200,6 +201,7 @@
       region: showSelectedRegionOnly ? filterRegionId : undefined,
       attemptsGte: showGrAttempts ? 1 : undefined,
       billingPlan: billingPlanFilter !== '' ? billingPlanFilter : undefined,
+      billingStatus: showTrialingOnly ? 'trialing' : undefined,
       billingExpired: showBillingExpired ? true : undefined,
       sort: serverSort[sortingRule] ?? 'lastVisit',
       order: sortingRule === SortingRule.Name ? 'asc' : 'desc',
@@ -220,6 +222,7 @@
     region: showSelectedRegionOnly ? filterRegionId : null,
     attempts: showGrAttempts,
     billingPlanFilter,
+    showTrialingOnly,
     showBillingExpired
   })
   let prevQueryKey = ''
@@ -552,6 +555,8 @@
         billingPlanFilter = it.detail === '#' ? '' : it.detail
       }}
     />
+    <span class="ml-3 mr-1"><Label label={adminRes.string.TrialingOnly} /></span>
+    <CheckBox bind:checked={showTrialingOnly} />
     <span class="ml-3 mr-1"><Label label={adminRes.string.BillingExpired} /></span>
     <CheckBox bind:checked={showBillingExpired} />
   </div>

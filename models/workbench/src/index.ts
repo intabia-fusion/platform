@@ -130,18 +130,18 @@ export function createModel (builder: Builder): void {
     actions: [view.action.Delete]
   })
 
+  // Client-side statistics of the current session, available to everyone
   createAction(builder, {
     action: view.actionImpl.ShowPopup,
     actionProps: {
       component: workbench.component.ServerManager,
       element: 'content'
     },
-    label: getEmbeddedLabel('Server statistics'),
+    label: getEmbeddedLabel('Client statistics'),
     icon: view.icon.Configure,
     input: 'none',
     category: view.category.General,
     target: core.class.Doc,
-    secured: true,
     context: {
       mode: ['workbench']
     }

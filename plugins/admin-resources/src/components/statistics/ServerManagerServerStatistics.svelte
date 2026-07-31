@@ -4,8 +4,8 @@
   import presentation, { type OverviewStatistics } from '@hcengineering/presentation'
   import { Button, DropdownLabels, Expandable, IconArrowRight, ticker } from '@hcengineering/ui'
   import MetricsStats from './MetricsStats.svelte'
-  import TopProblems from './statistics/TopProblems.svelte'
-  import { fetchStatsJson } from './statistics/statsFetch'
+  import TopProblems from './TopProblems.svelte'
+  import { fetchStatsJson } from './statsFetch'
 
   const token: string = getMetadata(presentation.metadata.Token) ?? ''
 

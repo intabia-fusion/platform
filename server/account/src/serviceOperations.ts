@@ -48,7 +48,9 @@ import { accountPlugin } from './plugin'
 import { SubscriptionStatus, SubscriptionType } from './types'
 import type {
   AccountAggregatedInfo,
+  AccountsSortKey,
   AccountDB,
+  TransactorEndpointInfo,
   AccountMethodHandler,
   Integration,
   IntegrationKey,
@@ -84,6 +86,7 @@ import {
   cleanEmail,
   getAccount,
   getEmailSocialId,
+  getRegionConfig,
   getRegions,
   getRolePower,
   getSocialIdByKey,
@@ -543,12 +546,33 @@ export async function adminUpdateWorkspaceUrl (
   ctx.info('admin: workspace url changed', { workspace: params.workspace, url })
 }
 
+/** All configured transactor endpoints (admin-only), for targeting manage calls at a specific transactor */
+export async function getTransactorEndpoints (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string
+): Promise<TransactorEndpointInfo[]> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  const config = getRegionConfig()
+  const res: TransactorEndpointInfo[] = []
+  for (const [region, eps] of Object.entries(config.regions)) {
+    for (const t of eps.transactors) {
+      res.push({ region, name: eps.name, external: t.external })
+    }
+  }
+  return res
+}
+
 export async function listAccounts (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: { search?: string, skip?: number, limit?: number }
+  params: { search?: string, skip?: number, limit?: number, sort?: AccountsSortKey }
 ): Promise<AccountAggregatedInfo[]> {
   const { extra } = decodeTokenVerbose(ctx, token)
   const isAdmin = extra?.admin === 'true' || extra?.billingAdmin === 'true'
@@ -557,9 +581,9 @@ export async function listAccounts (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  const { skip, limit, search } = params
+  const { skip, limit, search, sort } = params
 
-  return await db.listAccounts(search, skip, limit)
+  return await db.listAccounts(search, skip, limit, sort)
 }
 
 export async function performWorkspaceOperation (
@@ -1036,7 +1060,9 @@ export async function getPersonInfo (
 ): Promise<PersonInfo> {
   const { account } = params
   const { extra } = decodeTokenVerbose(ctx, token)
-  verifyAllowedServices(['workspace', 'tool', 'gmail', 'huly-mail', 'export', 'payment'], extra)
+  if (extra?.admin !== 'true') {
+    verifyAllowedServices(['workspace', 'tool', 'gmail', 'huly-mail', 'export', 'payment'], extra)
+  }
 
   if (account == null || account === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -2099,6 +2125,7 @@ export type AccountServiceMethods =
   | 'setWorkspaceBadgeStatuses'
   | 'getAllSubscriptions'
   | 'adminCreateSubscription'
+  | 'getTransactorEndpoints'
 
 /**
  * @public
@@ -2115,6 +2142,7 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     listWorkspacesPaged: wrap(listWorkspacesPaged),
     getWorkspacesSummary: wrap(getWorkspacesSummary),
     getRegistrationStats: wrap(getRegistrationStats),
+    getTransactorEndpoints: wrap(getTransactorEndpoints),
     getWorkspaceActivityStats: wrap(getWorkspaceActivityStats),
     getWorkspaceMembersInfo: wrap(getWorkspaceMembersInfo),
     getAccountActivityStats: wrap(getAccountActivityStats),

@@ -379,7 +379,7 @@
       "summary": "Up development build",
       "description": "Up development build",
       "safeForSimultaneousRushProcesses": true,
-      "shellCommand": "cd ./dev && docker compose up -d --force-recreate transactor"
+      "shellCommand": "cd ./dev && docker compose up -d --force-recreate transactor account"
     },
     {
       "commandKind": "global",

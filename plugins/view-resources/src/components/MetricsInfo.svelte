@@ -2,8 +2,8 @@
   import { Metrics, type MetricsData } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Button, Expandable, showPopup } from '@hcengineering/ui'
-  import { FixedColumn } from '@hcengineering/view-resources'
-  import Params from './Params.svelte'
+  import FixedColumn from './FixedColumn.svelte'
+  import Params from './MetricsParams.svelte'
 
   export let metrics: Metrics
   export let level = 0

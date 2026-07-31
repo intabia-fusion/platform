@@ -319,9 +319,6 @@ export function startHttpServer (
           res.end()
           return
         }
-        case 'reboot': {
-          process.exit(0)
-        }
       }
 
       res.writeHead(404, {})
@@ -503,7 +500,8 @@ export function startHttpServer (
       language: request.headers['accept-language'] ?? '',
       account: token.account,
       mode: token.extra?.mode,
-      model: token.extra?.model
+      model: token.extra?.model,
+      service: token.extra?.service
     }
     const cs: ConnectionSocket = createWebsocketClientSocket(ws, data)
 
@@ -670,6 +668,7 @@ function createWebsocketClientSocket (
     account: string
     mode: any
     model: any
+    service?: string
   }
 ): ConnectionSocket {
   const pendingClasses = new Set<Ref<Class<Doc>>>()
