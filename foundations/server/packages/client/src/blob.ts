@@ -35,6 +35,7 @@ export class BlobClient {
     return false
   }
 
+  /** Returns false when the blob is absent in storage, so callers can report it once instead of per blob. */
   async writeTo (
     ctx: MeasureContext,
     name: string,
@@ -43,7 +44,7 @@ export class BlobClient {
       write: (buffer: Buffer, cb: (err?: any) => void) => void
       end: (cb: () => void) => void
     }
-  ): Promise<void> {
+  ): Promise<boolean> {
     let written = 0
     const chunkSize = 50 * 1024 * 1024
     let emptyChunkRetries = 0
@@ -56,9 +57,13 @@ export class BlobClient {
         try {
           const chunks: Buffer[] = []
           const readable = await this.storageAdapter.partial(ctx, this.workspace, name, written, chunkSize)
-          await new Promise<void>((resolve) => {
+          await new Promise<void>((resolve, reject) => {
             readable.on('data', (chunk) => {
               chunks.push(chunk)
+            })
+            readable.on('error', (err) => {
+              readable.destroy()
+              reject(err)
             })
             readable.on('end', () => {
               readable.destroy()
@@ -103,8 +108,7 @@ export class BlobClient {
             err?.message === 'No such key' ||
             err?.Code === 'NoSuchKey'
           ) {
-            ctx.info('No such key', { name })
-            return
+            return false
           }
           if (i >= 4) {
             await new Promise<void>((resolve) => {
@@ -120,6 +124,7 @@ export class BlobClient {
     await new Promise<void>((resolve) => {
       writable.end(resolve)
     })
+    return true
   }
 
   async upload (ctx: MeasureContext, name: string, size: number, contentType: string, buffer: Buffer): Promise<void> {

@@ -1,0 +1,204 @@
+plans:
+  # Free fallback tier. Applied when a workspace has no active paid tier (unpaid / no subscription).
+  # Disk = usersLimit * storagePerUserGB (5 * 2 = 10 GB).
+  start:
+    label:
+      ru: Старт
+      en: Start
+    description:
+      ru: Соло-предприниматели и команды до 5 человек
+      en: Solo entrepreneurs and teams of up to 5 people
+    limits:
+      - ru: до 5 пользователей
+        en: up to 5 users
+      - ru: до 50 гостей (внешних пользователей)
+        en: up to 50 guests (external users)
+      - ru: 2 ГБ хранилище / на пользователя
+        en: 2 GB storage / per user
+      - ru: 100 000 токенов AI-ассистента
+        en: 100,000 AI assistant tokens
+      - ru: Без ограничений проекты в трекере
+        en: Unlimited projects in the tracker
+      - ru: Общая горячая линия
+        en: General hotline
+    features:
+      - ru: Доски и Kanban
+        en: Boards and Kanban
+      - ru: Документы и базы знаний
+        en: Documents and knowledge bases
+      - ru: Чат, треды и сквозные уведомления
+        en: Chat, threads, and push notifications
+      - ru: Календарь и планировщик созвонов
+        en: Call calendar and scheduler
+      - ru: Видеоконференции с записью
+        en: Video conferences with recording
+      - ru: AI-транскрибация и протоколы
+        en: AI transcription and protocols
+      - ru: Синхронный перевод в реальном времени
+        en: Real-time simultaneous translation
+      - ru: Использование API платформы
+        en: Using the platform API
+    priceMonthlyText:
+      ru: Бесплатно
+      en: Free
+    currency:
+    free: true
+    storagePerUserGB: 2
+    trafficLimitGB: 0
+    meetingMinutesLimit: 0
+    tokenLimit: 100000
+    usersLimit: 5
+    guestsLimit: 50
+    index: 0
+    color: Sky
+  business:
+    label:
+      ru: Бизнес
+      en: Business
+    description:
+      ru: Стартапы и ИТ-команды, которым нужны AI и масштабирование (saas)
+      en: Startups and IT teams looking for AI and scaling (SaaS)
+    limits:
+      - ru: Без ограничений пользователей
+        en: Unlimited users
+      - ru: Без ограничений гостей (внешних пользователей)
+        en: Unlimited guests (external users)
+      - ru: 5 ГБ хранилище / на пользователя
+        en: 5 GB storage / per user
+      - ru: Без лимитов AI-ассистента
+        en: Unlimited AI assistant tokens
+      - ru: Без ограничений проекты в трекере
+        en: Unlimited projects in the tracker
+      - ru: Общая горячая линия
+        en: General hotline
+    features:
+      - ru: Доски и Kanban
+        en: Boards and Kanban
+      - ru: Документы и базы знаний
+        en: Documents and knowledge bases
+      - ru: Чат, треды и сквозные уведомления
+        en: Chat, threads, and push notifications
+      - ru: Календарь и планировщик созвонов
+        en: Call calendar and scheduler
+      - ru: Видеоконференции с записью
+        en: Video conferences with recording
+      - ru: AI-транскрибация и протоколы
+        en: AI transcription and protocols
+      - ru: Синхронный перевод в реальном времени
+        en: Real-time simultaneous translation
+      - ru: Использование API платформы
+        en: Using the platform API
+      - ru: API-интеграции с внешними сервисами
+        en: API integration with external services
+      - ru: Корпоративный домен
+        en: Corporate domain
+    priceMonthlyPerUser: 499
+    yearlyDiscount: 15
+    currency: ₽
+    storagePerUserGB: 5
+    maxSeats: 10000
+    trafficLimitGB: 0
+    meetingMinutesLimit: 0
+    tokenLimit: 0
+    usersLimit: 0
+    index: 1
+    color: Orchid
+  corporation:
+    label:
+      ru: Корпорация
+      en: Corporation
+    description:
+      ru: Крупный бизнес, банки, госсектор, где важна работа во внутреннем контуре
+      en: Large businesses, banks, and the public sector, where internal operations are important
+    limits:
+      - ru: Без ограничений пользователей
+        en: Unlimited users
+      - ru: Без ограничений гостей (внешних пользователей)
+        en: Unlimited guests (external users)
+      - ru: Без ограничений хранилище / на пользователя
+        en: Unlimited storage / per user
+      - ru: Без лимитов AI-ассистента
+        en: Unlimited AI assistant tokens
+      - ru: Без ограничений проекты в трекере
+        en: Unlimited projects in the tracker
+      - ru: Персональный менеджер, 24/7
+        en: Personal manager, 24/7
+    features:
+      - ru: Доски и Kanban
+        en: Boards and Kanban
+      - ru: Документы и базы знаний
+        en: Documents and knowledge bases
+      - ru: Чат, треды и сквозные уведомления
+        en: Chat, threads, and push notifications
+      - ru: Календарь и планировщик созвонов
+        en: Call calendar and scheduler
+      - ru: Видеоконференции с записью
+        en: Video conferences with recording
+      - ru: AI-транскрибация и протоколы
+        en: AI transcription and protocols
+      - ru: Синхронный перевод в реальном времени
+        en: Real-time simultaneous translation
+      - ru: Использование API платформы
+        en: Using the platform API
+      - ru: API-интеграции с внешними сервисами
+        en: API integration with external services
+      - ru: Корпоративный домен
+        en: Corporate domain
+      - ru: SSO / OpenID Connect (Active Directory)
+        en: SSO / OpenID Connect (Active Directory)
+      - ru: On-premise в контуре компании
+        en: On-premise within the company's framework
+      - ru: Кастомизация под процессы заказчика с 1С, АМО, СБИС
+        en: Customization for customer processes with 1C, AMO, SBIS
+      - ru: Миграция данных и обучение команды
+        en: Data migration and team training
+    priceMonthlyText:
+      ru: По запросу
+      en: On request
+    currency:
+    contactSales: true
+    storageLimitGB: 0
+    trafficLimitGB: 0
+    meetingMinutesLimit: 0
+    tokenLimit: 0
+    usersLimit: 0
+    index: 2
+    color: Orange
+# Trial for new workspaces. When set, a new workspace starts on this plan with Trialing status
+# for `days`, capped at `usersLimit` seats. On expiry it falls back to the free plan.
+# Remove this block to keep the old behavior (new workspace -> free plan immediately).
+trial:
+  plan: business
+  days: 14
+  usersLimit: 10
+packages:
+  100gb:
+    description:
+      ru: 100 Гб
+      en: 100 GB
+    priceMonthly: 1000
+    currency: ₽
+    eligiblePlans:
+      - start
+      - business
+    storageLimitGB: 100
+  500gb:
+    description:
+      ru: 500 Гб
+      en: 500 GB
+    priceMonthly: 5000
+    currency: ₽
+    eligiblePlans:
+      - start
+      - business
+    storageLimitGB: 500
+  1000gb:
+    description:
+      ru: 1 000 Гб
+      en: 1 000 GB
+    priceMonthly: 10000
+    currency: ₽
+    eligiblePlans:
+      - start
+      - business
+    storageLimitGB: 1000

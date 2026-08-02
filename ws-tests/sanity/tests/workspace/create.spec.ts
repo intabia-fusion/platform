@@ -228,7 +228,9 @@ test.describe('Workspace tests', () => {
     await loginPage.clickSignUp()
     await signUpPage.signUp(newUser)
     await selectWorkspacePage.createWorkspace(newWorkspaceName)
-    await trackerNavigationMenuPage.checkIfTrackerSidebarIsVisible()
+    // Readiness gate only: wait for the workbench app bar. Do NOT click the active Tracker icon
+    // (it collapses the navigator) and do not assert the sidebar — this test never uses it.
+    await leftSideMenuPage.buttonTracker().waitFor({ state: 'visible', timeout: 45000 })
 
     // Invite a second user so the first user is no longer the only owner (required to leave)
     await leftSideMenuPage.openProfileMenu()

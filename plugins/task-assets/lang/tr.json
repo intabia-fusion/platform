@@ -89,6 +89,7 @@
     "CountProjects": "{count, plural, =0 {Proje yok} =1 {# proje} other {# proje}}",
     "ProjectTypeTitle": "Proje tipi başlığı",
     "ProcessStates": "Süreç durumları",
+    "ShowParentTasks": "Üst görevleri göster",
     "Type": "Tip",
     "Group": "Grup",
     "Color": "Renk",

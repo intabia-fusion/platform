@@ -547,6 +547,9 @@ async function runBuildPipeline(packagesToBundle, packagesToPackage, packagesToD
         taskQueue.completeTask(taskType, packageName, result)
       } catch (err) {
         console.error(`    ${packageName} ${taskType} failed: ${err.message}`)
+        // A thrown task was only logged before, so it never affected the exit code.
+        const bucket = taskType === TaskType.BUNDLE ? 'bundle' : taskType === TaskType.PACKAGE ? 'package' : 'dockerBuild'
+        results[bucket].errors.push({ package: packageName, error: err })
         taskQueue.completeTask(taskType, packageName, { success: false, error: err })
       }
     }
@@ -891,6 +894,10 @@ async function compileAll(rootDir, options = {}) {
       force,
       packageHashes
     )
+    // Pipeline failures never reached allErrors, so a failed bundle/package/docker build still exited 0.
+    for (const phase of ['bundle', 'package', 'dockerBuild']) {
+      for (const err of buildResults[phase]?.errors ?? []) allErrors.push({ phase, ...err })
+    }
   }
 
   // Stop CPU tracking

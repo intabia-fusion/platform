@@ -71,6 +71,7 @@ if (!gotTheLock) {
 function runTheApp (): void {
   let winBadge: any
   let mainWindow: BrowserWindow | undefined
+  const windows = new Map<number, BrowserWindow>()
 
   const isMac = process.platform === 'darwin'
   const isWindows = process.platform === 'win32'
@@ -136,6 +137,28 @@ function runTheApp (): void {
     }
   }
 
+  function setupWindowCleanup (window: BrowserWindow): void {
+    window.on('closed', () => {
+      windows.delete(window.id)
+
+      if (mainWindow === window) {
+        const nextMain = Array.from(windows.values()).find((window) => !window.isDestroyed())
+
+        if (nextMain != null) {
+          mainWindow = nextMain
+
+          if (isWindows) {
+            winBadge = new WinBadge(mainWindow, { font: '14px arial' })
+          }
+
+          setupWindowCleanup(mainWindow)
+        } else {
+          mainWindow = undefined
+        }
+      }
+    })
+  }
+
   function hookOpenWindow (window: BrowserWindow): void {
     window.webContents.on('will-navigate', (event, url) => {
       const isInternal = url.startsWith(FRONT_URL) || url.startsWith('file://')
@@ -188,6 +211,9 @@ function runTheApp (): void {
           }
           setupWindowTitleBar(windowOptions)
           const childWindow = new BrowserWindow(windowOptions)
+          windows.set(childWindow.id, childWindow)
+          setupWindowCleanup(childWindow)
+
           await childWindow.loadFile(containerPagePath)
           hookOpenWindow(childWindow)
         })()
@@ -288,6 +314,8 @@ function runTheApp (): void {
     }
     setupWindowTitleBar(windowOptions)
     mainWindow = new BrowserWindow(windowOptions)
+    windows.set(mainWindow.id, mainWindow)
+    setupWindowCleanup(mainWindow)
     app.dock?.setIcon(nativeImage.createFromPath(iconKey))
     if (isDev) {
       mainWindow.webContents.openDevTools()
@@ -538,8 +566,12 @@ function runTheApp (): void {
     }
   })
 
-  ipcMain.handle(IpcMessage.WindowClose, () => {
-    mainWindow?.close()
+  ipcMain.handle(IpcMessage.WindowClose, (event: Electron.IpcMainInvokeEvent) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+
+    if (window != null && !window.isDestroyed()) {
+      window.close()
+    }
   })
 
   ipcMain.handle(IpcMessage.GetIsOsUsingDarkTheme, () => {
@@ -637,9 +669,9 @@ function runTheApp (): void {
     void dialog
       .showMessageBox({
         type: 'info',
-        buttons: ['Update & Restart', 'Quit'],
+        buttons: ['Обновить и перезапустить', 'Выход'],
         defaultId: 0,
-        message: `A new version ${info.version} is available and it is required to continue. It will be downloaded and installed automatically.`
+        message: `Доступна новая версия продукта ${info.version}, необходимая для продолжения работы. Загрузка и установка произойдет автоматически.`
       })
       .then(({ response }: any) => {
         log.info(`Update dialog exit code: ${response}`) // eslint-disable-line no-console

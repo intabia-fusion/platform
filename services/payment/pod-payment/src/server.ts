@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,31 +17,84 @@
 import cors from 'cors'
 import express, { type Express, NextFunction, type Request, type Response } from 'express'
 import { type Server } from 'http'
-import { MeasureContext, systemAccountUuid } from '@hcengineering/core'
+import {
+  AccountRole,
+  generateId,
+  MeasureContext,
+  systemAccountUuid,
+  type WorkspaceUuid,
+  type AccountUuid
+} from '@hcengineering/core'
 import morgan from 'morgan'
 import onHeaders from 'on-headers'
 import rateLimit from 'express-rate-limit'
 import { generateToken } from '@hcengineering/server-token'
-import { SubscriptionData, type WorkspaceLoginInfo } from '@hcengineering/account-client'
+import {
+  SubscriptionData,
+  SubscriptionStatus,
+  SubscriptionType,
+  type WorkspaceLoginInfo,
+  prorateSeats,
+  proratePackage
+} from '@hcengineering/account-client'
 
-import { Config } from './config'
-import { withAdmin, withLoginInfo, withOwner, withToken, type RequestWithAuth } from './middleware'
+import appConfig, { Config } from './config'
+import { ownsSubscription, withAdmin, withLoginInfo, withOwner, withToken, type RequestWithAuth } from './middleware'
 import { PaymentProviderFactory } from './factory'
-import type { CheckoutResponse, PaymentProvider } from './providers'
-import { SubscribeRequest } from './providers'
+import type { BillingPeriod, CheckoutResponse, PaymentProvider, SubscriptionPublisher } from './providers'
+import { ProviderHttpError, SubscribeRequest } from './providers'
 import { startActiveSubscriptionReconciliation } from './reconciliation'
-import { getAccountClient } from './utils'
+import { getAccountClient, hasGrantingTier, computePlanPrice, validateSeatQuantity, MAX_SEATS_FALLBACK } from './utils'
+import yaml from 'js-yaml'
+import { existsSync, readFileSync } from 'fs'
 
 const KEEP_ALIVE_TIMEOUT = 5 // seconds
 
+// Mutating subscription ops are rare per user; keep tight.
 const subscriptionRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: appConfig.SubscriptionRateLimitMax ?? 30,
   message: 'Too many subscription requests, please try again later',
   standardHeaders: true
 })
 
+// Checkout-status is polled ~every 2s while paying; softer ceiling than mutating ops.
+const pollRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: 'Too many status requests, please try again later',
+  standardHeaders: true
+})
+
 type AsyncRequestHandler = (ctx: MeasureContext, req: Request, res: Response) => Promise<void>
+
+function relayProviderError (res: Response, err: unknown, fallbackMsg: string): void {
+  if (err instanceof ProviderHttpError) {
+    // Prefer the provider's own error text (e.g. a declined-card message) over the generic fallback,
+    // so the user sees why the payment failed rather than "Failed to update subscription at provider".
+    let providerMsg: string | undefined
+    if (err.body !== undefined) {
+      try {
+        providerMsg = JSON.parse(err.body).error
+      } catch {
+        /* body isn't JSON — keep the fallback */
+      }
+    }
+    res.status(err.status).json({ reason: err.reason, error: providerMsg ?? fallbackMsg })
+    return
+  }
+  res.status(500).json({ error: fallbackMsg })
+}
+
+// 503 guard for endpoints that require a configured payment provider. Returns true if the
+// response was written (caller must return immediately).
+function requireProvider (provider: PaymentProvider | undefined, res: Response): boolean {
+  if (provider === undefined) {
+    res.status(503).json({ error: 'Payment provider is not configured' })
+    return true
+  }
+  return false
+}
 
 const handleRequest = async (
   ctx: MeasureContext,
@@ -74,9 +128,23 @@ const handleRequest = async (
   }
 }
 
-export async function createServer (ctx: MeasureContext, config: Config): Promise<{ app: Express, close: () => void }> {
+export async function createServer (
+  ctx: MeasureContext,
+  config: Config,
+  // Publishes provider subscription events to the queue (durable, provider-agnostic). Required.
+  publish: SubscriptionPublisher,
+  // Best-effort ledger audit for direct (non-queue) writes like free/trial provisioning.
+  logOperation?: (ctx: MeasureContext, sub: SubscriptionData, canceled: boolean) => Promise<void>
+): Promise<{
+    app: Express
+    ensureInitialSubscription: (workspace: WorkspaceUuid) => Promise<void>
+    createFreeIfNoActiveTier: (workspace: WorkspaceUuid, actionId?: string) => Promise<void>
+    persistSubscription: (data: SubscriptionData) => Promise<void>
+    close: () => void
+  }> {
   const app = express()
-  app.set('trust proxy', true)
+  // Trust one proxy hop (traefik). `true` trusts whole XFF chain -> client spoofs IP, evades per-IP limiter.
+  app.set('trust proxy', 1)
   app.use(cors())
 
   const childLogger = ctx.logger.childLogger?.('requests', { enableConsole: 'true' })
@@ -103,16 +171,18 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
   const serviceToken = generateToken(systemAccountUuid, undefined, { service: 'payment' })
   const accountClient = getAccountClient(config.AccountsUrl, serviceToken)
 
-  // Initialize payment provider if configured
   let provider: PaymentProvider | undefined
 
-  // Try Polar provider first
-  if (
-    config.PolarAccessToken !== undefined &&
-    config.PolarWebhookSecret !== undefined &&
-    config.PolarSubscriptionPlans !== undefined
-  ) {
-    try {
+  switch (config.Provider) {
+    case 'mock':
+      // Mock activates any plan without payment — require an explicit opt-in so it cannot
+      // reach production through a misconfigured PROVIDER env.
+      if (config.AllowMockProvider !== true) {
+        throw new Error('PROVIDER=mock requires ALLOW_MOCK_PROVIDER=true (mock activates plans without payment)')
+      }
+      // created after planConfig loads — see below
+      break
+    case 'polar':
       provider = PaymentProviderFactory.getInstance().create(
         'polar',
         {
@@ -124,26 +194,8 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
         accountClient,
         config.UseSandbox
       )
-
-      if (provider !== undefined) {
-        // Register provider-specific endpoints (e.g., webhooks)
-        provider.registerWebhookEndpoints(app, ctx, config.AccountsUrl, serviceToken)
-
-        ctx.info('polar.sh payment provider initialized successfully')
-      }
-    } catch (err) {
-      ctx.error('Failed to initialize payment provider polar.sh', { err })
-    }
-  }
-
-  // Try Stripe provider if Polar is not configured
-  if (
-    provider == null &&
-    config.StripeApiKey !== undefined &&
-    config.StripeWebhookSecret !== undefined &&
-    config.StripeSubscriptionPlans !== undefined
-  ) {
-    try {
+      break
+    case 'stripe':
       provider = PaymentProviderFactory.getInstance().create(
         'stripe',
         {
@@ -155,20 +207,300 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
         accountClient,
         false
       )
+      break
+    case 'tbank':
+      provider = PaymentProviderFactory.getInstance().create(
+        'tbank',
+        {
+          tbankSubscriptionsUrl: config.TbankSubscriptionsUrl
+        },
+        accountClient,
+        false
+      )
+      break
+    default:
+      throw new Error(`Unknown payment provider: ${config.Provider}. Expected one of: mock, polar, stripe, tbank`)
+  }
 
-      if (provider !== undefined) {
-        // Register provider-specific endpoints (e.g., webhooks)
-        provider.registerWebhookEndpoints(app, ctx, config.AccountsUrl, serviceToken)
-
-        ctx.info('Stripe payment provider initialized successfully')
+  // Plan config — loaded from PLAN_CONFIG env (YAML file path), falls back to empty config
+  const planConfig: any = (() => {
+    try {
+      const configPath = config.PlanConfig
+      if (configPath === undefined || configPath.length === 0) return { plans: {}, packages: {} }
+      if (!existsSync(configPath)) {
+        ctx.error('Plan config file not found', { path: configPath })
+        return { plans: {}, packages: {} }
       }
-    } catch (err) {
-      ctx.error('Failed to initialize payment provider Stripe', { err })
+      const content = readFileSync(configPath, 'utf-8')
+      return yaml.load(content)
+    } catch (err: any) {
+      ctx.error('Failed to load plan config', { err })
+      return { plans: {}, packages: {} }
+    }
+  })()
+
+  app.get('/api/v1/plan-config', pollRateLimiter, (req, res) => {
+    res.json(planConfig)
+  })
+
+  function resolveLimits (type: SubscriptionType, plan: string, quantity?: number): SubscriptionData['limits'] {
+    const source = type === SubscriptionType.Package ? planConfig.packages : planConfig.plans
+    const item = source?.[plan]
+    if (item == null) return undefined
+    const isPerSeat = item.priceMonthlyPerUser != null
+    const usersLimit = isPerSeat && quantity != null ? quantity : (item.usersLimit ?? 0)
+    // storagePerUserGB (e.g. free tier) -> disk scales with the seat budget; else fixed storageLimitGB.
+    const storageLimitGB =
+      item.storagePerUserGB != null ? usersLimit * item.storagePerUserGB : (item.storageLimitGB ?? 0)
+    return {
+      storageLimitGB,
+      trafficLimitGB: item.trafficLimitGB ?? 0,
+      meetingMinutesLimit: item.meetingMinutesLimit ?? 0,
+      tokenLimit: item.tokenLimit ?? 0,
+      usersLimit
     }
   }
 
+  // Full price (kopecks) for a plan at the given seats/period (see computePlanPrice).
+  function planFullPrice (type: SubscriptionType, plan: string, quantity: number, period?: BillingPeriod): number {
+    const source = type === SubscriptionType.Package ? planConfig.packages : planConfig.plans
+    return computePlanPrice(source?.[plan], quantity, period === 'yearly')
+  }
+
+  // Free fallback plan (flagged free:true in config) — its name, used to auto-provision a free tier.
+  // Free fallback LIMITS are no longer baked here: the account server fills them from FREE_PLAN_LIMITS.
+  const freePlanName: string | undefined = Object.entries(planConfig.plans ?? {}).find(
+    ([, p]: [string, any]) => p?.free === true
+  )?.[0]
+
+  // Optional trial for new workspaces (plan-config.yaml `trial:`). When absent/malformed, new
+  // workspaces get free. Validate numbers so a bad yaml can't yield NaN trialEnd (a dead trial).
+  const trialConfig: { plan: string, days: number, usersLimit: number } | undefined = (() => {
+    const t = planConfig.trial
+    if (t?.plan == null || planConfig.plans?.[t.plan] == null) return undefined
+    if (!Number.isFinite(t.days) || t.days <= 0 || !Number.isFinite(t.usersLimit) || t.usersLimit < 0) {
+      ctx.error('invalid trial config, ignoring', { trial: t })
+      return undefined
+    }
+    return { plan: t.plan, days: t.days, usersLimit: t.usersLimit }
+  })()
+
+  function attachLimits (data: SubscriptionData): SubscriptionData {
+    const quantity = data.providerData?.quantity as number | undefined
+    const limits = resolveLimits(data.type, data.plan, quantity)
+    if (limits === undefined) return data
+    return { ...data, limits }
+  }
+
+  // The single chokepoint that writes a subscription to the account DB. Bakes paid limits, then upserts.
+  // Both sync (HTTP user actions) and async (provider events via the Subscription queue) funnel through
+  // here so limits are always baked consistently regardless of provider. Idempotent (account dedups by
+  // provider + providerSubscriptionId), so queue replays are safe.
+  async function persistSubscription (data: SubscriptionData): Promise<void> {
+    await accountClient.upsertSubscription(attachLimits(data))
+  }
+
+  // Provider events go through the queue (durable: a webhook is ack'd to the provider even if the
+  // account DB is momentarily down; the consumer persists later).
+  const publishSubscription: SubscriptionPublisher = publish
+
+  // On workspace creation: if no tier subscription exists and a free plan is configured, create one
+  // so the workspace is bounded by free limits from the start. Idempotent (skips if a tier exists).
+  // Provision the initial tier for a new workspace: a trial when configured, else the free plan.
+  async function ensureInitialSubscription (workspace: WorkspaceUuid): Promise<void> {
+    try {
+      const existing = await accountClient.getSubscriptions(workspace, false)
+      if (existing.some((s) => s.type === SubscriptionType.Tier)) return // already has a tier
+      // Trial is best-effort: no trial configured, or it could not be built -> fall back to free.
+      if (trialConfig !== undefined && (await createTrialSubscription(workspace)) !== undefined) return
+      await createFreeSubscription(workspace)
+    } catch (err: any) {
+      ctx.error('failed to ensure initial subscription', { workspace, err })
+    }
+  }
+
+  // Create a Trialing subscription on the configured trial plan for a new workspace.
+  async function createTrialSubscription (
+    workspace: WorkspaceUuid,
+    accountUuid?: AccountUuid
+  ): Promise<SubscriptionData | undefined> {
+    if (trialConfig === undefined) return
+    const wsToken = generateToken(systemAccountUuid, workspace, { service: 'payment' })
+    const members = await getAccountClient(config.AccountsUrl, wsToken).getWorkspaceMembers()
+    const owner = members.find((m) => m.role === AccountRole.Owner) ?? members[0]
+    if (owner === undefined) return
+    const subId = generateId()
+    // Trial seats: at least current members + 5 so existing users keep working on trial start.
+    const usersLimit = Math.max(trialConfig.usersLimit, members.length + 5)
+    // Plan limits (storage/tokens/etc), then force usersLimit to the trial cap so the seat count is
+    // independent of the plan's per-seat/flat shape. resolveLimits fully-populates or returns undefined.
+    const planLimits = resolveLimits(SubscriptionType.Tier, trialConfig.plan, usersLimit)
+    const limits = { ...planLimits, usersLimit }
+    const data: SubscriptionData = {
+      id: subId,
+      workspaceUuid: workspace,
+      accountUuid: accountUuid ?? owner.person,
+      provider: 'trial',
+      providerSubscriptionId: `trial-${subId}`,
+      periodStart: Date.now(),
+      periodEnd: undefined,
+      trialEnd: Date.now() + trialConfig.days * 24 * 60 * 60 * 1000,
+      type: SubscriptionType.Tier,
+      status: SubscriptionStatus.Trialing,
+      plan: trialConfig.plan,
+      limits,
+      providerData: { quantity: usersLimit }
+    } as unknown as SubscriptionData
+    await accountClient.upsertSubscription(data)
+    await logOperation?.(ctx, data, false)
+    ctx.info('trial subscription created for workspace', { workspace, plan: trialConfig.plan, trialEnd: data.trialEnd })
+    return data
+  }
+
+  // Create a free subscription after finalized user-initiated cancelation of a paid subscription
+  // actionId of the cancel that dropped the paid tier — the free fallback belongs to that same action.
+  async function createFreeIfNoActiveTier (workspace: WorkspaceUuid, actionId?: string): Promise<void> {
+    if (freePlanName === undefined) return
+    try {
+      const existing = await accountClient.getSubscriptions(workspace, false)
+      if (hasGrantingTier(existing)) return
+      await createFreeSubscription(workspace, undefined, actionId)
+    } catch (err: any) {
+      ctx.error('failed to create free subscription after cancel', { workspace, err })
+    }
+  }
+
+  async function createFreeSubscription (
+    workspace: WorkspaceUuid,
+    accountUuid?: AccountUuid,
+    actionId?: string
+  ): Promise<SubscriptionData | undefined> {
+    if (freePlanName === undefined) return
+    // getWorkspaceMembers resolves the workspace from the token, so use a workspace-scoped client.
+    const wsToken = generateToken(systemAccountUuid, workspace, { service: 'payment' })
+    const members = await getAccountClient(config.AccountsUrl, wsToken).getWorkspaceMembers()
+    const owner = members.find((m) => m.role === AccountRole.Owner) ?? members[0]
+    if (owner === undefined) return
+    const subId = generateId()
+    const data = attachLimits({
+      id: subId,
+      workspaceUuid: workspace,
+      accountUuid: accountUuid ?? owner.person,
+      provider: 'free',
+      providerSubscriptionId: `free-${subId}`,
+      periodStart: Date.now(),
+      periodEnd: undefined,
+      type: SubscriptionType.Tier,
+      status: SubscriptionStatus.Active,
+      plan: freePlanName,
+      providerData: actionId !== undefined ? { actionId } : undefined
+    } as unknown as SubscriptionData)
+    await accountClient.upsertSubscription(data)
+    await logOperation?.(ctx, data, false)
+    ctx.info('free subscription created for workspace', { workspace, plan: freePlanName })
+    return data
+  }
+
+  // Seat floor for a purchase = the current seat count already computed by pod-billing (same
+  // seatEligible rule as usage/enforcement) and stored on the account. Read it from account instead
+  // of re-counting via the transactor, so payment stays decoupled from the workspace. Lags the
+  // pod-billing refresh (~25s); acceptable for a purchase floor.
+  async function billableMembersCount (workspace: WorkspaceUuid): Promise<number> {
+    const wsToken = generateToken(systemAccountUuid, workspace, { service: 'payment' })
+    const account = getAccountClient(config.AccountsUrl, wsToken)
+    const info = await account.getWorkspaceInfo(false)
+    return info.usageInfo?.usage.membersCount ?? 0
+  }
+
+  // For per-seat plans, validate the requested seat count
+  async function resolveSeatQuantity (
+    plan: string,
+    requested: number | undefined,
+    workspace: WorkspaceUuid
+  ): Promise<{ quantity?: number, error?: string }> {
+    const item = planConfig.plans?.[plan]
+    const isPerSeat = item?.priceMonthlyPerUser != null
+    if (!isPerSeat) return { quantity: undefined }
+    const min = Math.max(await billableMembersCount(workspace), 1)
+    const rawMax = Number(item.maxSeats)
+    const max = Number.isFinite(rawMax) && rawMax > 0 ? rawMax : MAX_SEATS_FALLBACK
+    return validateSeatQuantity(requested ?? min, min, max)
+  }
+
+  // Common preamble for :subscriptionId endpoints: look up by internal id, 404 if missing,
+  // 403 if it doesn't belong to the caller's workspace. Writes the response and returns
+  // undefined on failure.
+  async function loadOwnedSubscription (req: RequestWithAuth, res: Response): Promise<SubscriptionData | undefined> {
+    const subscriptionId = req.params.subscriptionId
+    const subscription = await accountClient.getSubscriptionById(subscriptionId)
+    if (subscription === undefined || subscription === null) {
+      res.status(404).json({ error: 'Subscription not found' })
+      return undefined
+    }
+    if (!ownsSubscription(req, subscription)) {
+      res.status(403).json({ error: 'Subscription does not belong to this workspace' })
+      return undefined
+    }
+    return subscription
+  }
+
+  // Shared cancel/uncancel logic: provider-mismatched subscriptions are mutated locally,
+  // same-provider ones go through the provider call. `res` is written on all failure paths.
+  async function runProviderOrLocal (
+    ctx: MeasureContext,
+    res: Response,
+    subscription: SubscriptionData,
+    opts: {
+      localPatch: Partial<SubscriptionData>
+      localLogMessage: string
+      providerCall: (ctx: MeasureContext, providerSubId: string) => Promise<SubscriptionData | null>
+      providerNotFoundMsg: string
+      providerErrorMsg: string
+    }
+  ): Promise<SubscriptionData | undefined> {
+    if (subscription.provider !== config.Provider) {
+      const updated: SubscriptionData = { ...subscription, ...opts.localPatch }
+      await persistSubscription(updated)
+      ctx.info(opts.localLogMessage, { id: subscription.id, provider: subscription.provider })
+      return updated
+    }
+
+    try {
+      const result = await opts.providerCall(ctx, subscription.providerSubscriptionId)
+      if (result === null) {
+        res.status(404).json({ error: opts.providerNotFoundMsg })
+        return undefined
+      }
+      await persistSubscription(result)
+      return result
+    } catch (err) {
+      ctx.error(opts.providerErrorMsg, { err })
+      res.status(500).json({ error: opts.providerErrorMsg })
+      return undefined
+    }
+  }
+
+  if (config.Provider === 'mock') {
+    // Packages have prices too (priceMonthly); merge them so computeAmount finds package plans.
+    provider = PaymentProviderFactory.getInstance().create(
+      'mock',
+      { frontUrl: config.FrontUrl, plans: { ...planConfig.plans, ...planConfig.packages } },
+      accountClient
+    )
+  }
+
+  if (provider !== undefined) {
+    provider.registerWebhookEndpoints(app, ctx, config.AccountsUrl, serviceToken, publishSubscription)
+    ctx.info(`${config.Provider} payment provider initialized successfully`)
+  }
+
   if (provider == null) {
-    throw new Error('Payment provider is not configured. Please provide payment provider configuration.')
+    throw new Error(`Failed to initialize payment provider: ${config.Provider}`)
+  }
+
+  // Packages are available on any tier, including free/no-plan: only require the package to exist.
+  function isPackageEligible (pkgKey: string, _currentTierPlan: string | undefined): boolean {
+    return planConfig?.packages?.[pkgKey] !== undefined
   }
 
   const stopReconciliation = startActiveSubscriptionReconciliation(
@@ -176,7 +508,8 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
     config.AccountsUrl,
     serviceToken,
     provider,
-    config.ReconciliationIntervalMinutes ?? 60
+    config.ReconciliationIntervalMinutes ?? 60,
+    publishSubscription
   )
 
   // ============ Generic Payment Service Endpoints ============
@@ -228,6 +561,56 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
+          // Activating Free subscription
+          if (request.type === SubscriptionType.Tier && planConfig.plans?.[request.plan]?.free === true) {
+            try {
+              // Stop the recurrent charge at the provider before switching to free (same as /updatePlan):
+              // otherwise the local DB shows free while the provider keeps billing.
+              const subscriptions = await accountClient.getSubscriptions(workspaceUuid)
+              const activeTier = subscriptions.find(
+                (s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Active
+              )
+              if (activeTier !== undefined && activeTier.provider === config.Provider) {
+                await provider.cancelSubscription(ctx, activeTier.providerSubscriptionId)
+              }
+              const freeSub = await createFreeSubscription(workspaceUuid, accountUuid)
+              if (freeSub === undefined) {
+                res.status(500).json({ error: 'Free plan is not configured' })
+                return
+              }
+              res.status(200).json({ instant: true, checkoutUrl: '' })
+              return
+            } catch (err) {
+              ctx.error('Failed to create free subscription', { err })
+              res.status(500).json({ error: 'Failed to create free subscription' })
+              return
+            }
+          }
+
+          if (request.type === SubscriptionType.Package) {
+            const subscriptions = await accountClient.getSubscriptions(workspaceUuid)
+            const activeTierPlan = subscriptions.find(
+              (s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Active
+            )?.plan
+            if (!isPackageEligible(request.plan, activeTierPlan)) {
+              res.status(400).json({ error: 'Package not available on current plan' })
+              return
+            }
+          }
+
+          // Per-seat plans: validate the requested seat count. A package is a flat-price item — its
+          // amount must never be multiplied by a client-supplied quantity, so force it to undefined.
+          if (request.type === SubscriptionType.Tier) {
+            const seats = await resolveSeatQuantity(request.plan, request.quantity, workspaceUuid)
+            if (seats.error !== undefined) {
+              res.status(400).json({ error: seats.error })
+              return
+            }
+            request.quantity = seats.quantity
+          } else {
+            request.quantity = undefined
+          }
+
           let createSubResponse: CheckoutResponse
 
           try {
@@ -240,8 +623,17 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             )
           } catch (err) {
             ctx.error('Failed to create subscription at provider', { err })
-            res.status(500).json({ error: 'Failed to create subscription at provider' })
+            relayProviderError(res, err, 'Failed to create subscription at provider')
             return
+          }
+
+          // Instant providers (mock) already activated the subscription — persist it now so the
+          // client can just refetch instead of redirecting to a checkout page and polling.
+          if (createSubResponse.instant === true) {
+            const sub = await provider.getSubscriptionByCheckout(ctx, createSubResponse.checkoutId)
+            if (sub !== null) {
+              await persistSubscription(sub)
+            }
           }
 
           res.status(200).json(createSubResponse)
@@ -260,46 +652,30 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
    */
   app.post(
     '/api/v1/subscriptions/:subscriptionId/cancel',
+    subscriptionRateLimiter,
     withToken,
     withOwner,
     (req: RequestWithAuth, res: Response) => {
-      if (provider === undefined) {
-        res.status(503).json({ error: 'Payment provider is not configured' })
-        return
-      }
+      if (requireProvider(provider, res)) return
+      const activeProvider = provider
 
       void handleRequest(
         ctx,
         'cancel-subscription',
         async (ctx) => {
-          const subscriptionId = req.params.subscriptionId
+          const subscription = await loadOwnedSubscription(req, res)
+          if (subscription === undefined) return
 
-          // Get subscription from our database using internal ID
-          const subscription = await accountClient.getSubscriptionById(subscriptionId)
-
-          if (subscription === undefined || subscription === null) {
-            res.status(404).json({ error: 'Subscription not found' })
-            return
-          }
-
-          let canceledSubscription: SubscriptionData | null
-
-          try {
-            // Cancel via provider using the provider's subscription ID
-            canceledSubscription = await provider.cancelSubscription(ctx, subscription.providerSubscriptionId)
-          } catch (err) {
-            ctx.error('Failed to cancel subscription at provider', { err })
-            res.status(500).json({ error: 'Failed to cancel subscription at provider' })
-            return
-          }
-
-          if (canceledSubscription === null) {
-            res.status(404).json({ error: 'Failed to cancel subscription at provider' })
-            return
-          }
-
-          // Upsert the updated subscription into our database
-          await accountClient.upsertSubscription(canceledSubscription)
+          const now = Date.now()
+          const canceledSubscription = await runProviderOrLocal(ctx, res, subscription, {
+            // Cancel at period end: keep the plan active/visible, only mark canceledAt.
+            localPatch: { canceledAt: now },
+            localLogMessage: 'Subscription canceled locally (provider mismatch)',
+            providerCall: async (ctx, providerSubId) => await activeProvider.cancelSubscription(ctx, providerSubId),
+            providerNotFoundMsg: 'Failed to cancel subscription at provider',
+            providerErrorMsg: 'Failed to cancel subscription at provider'
+          })
+          if (canceledSubscription === undefined) return
 
           res.status(200).json(canceledSubscription)
         },
@@ -317,46 +693,28 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
    */
   app.post(
     '/api/v1/subscriptions/:subscriptionId/uncancel',
+    subscriptionRateLimiter,
     withToken,
     withOwner,
     (req: RequestWithAuth, res: Response) => {
-      if (provider === undefined) {
-        res.status(503).json({ error: 'Payment provider is not configured' })
-        return
-      }
+      if (requireProvider(provider, res)) return
+      const activeProvider = provider
 
       void handleRequest(
         ctx,
         'uncancel-subscription',
         async (ctx) => {
-          const subscriptionId = req.params.subscriptionId
+          const subscription = await loadOwnedSubscription(req, res)
+          if (subscription === undefined) return
 
-          // Get subscription from our database using internal ID
-          const subscription = await accountClient.getSubscriptionById(subscriptionId)
-
-          if (subscription === undefined || subscription === null) {
-            res.status(404).json({ error: 'Subscription not found' })
-            return
-          }
-
-          let uncanceledSubscription: SubscriptionData | null
-
-          try {
-            // Uncancel via provider using the provider's subscription ID
-            uncanceledSubscription = await provider.uncancelSubscription(ctx, subscription.providerSubscriptionId)
-          } catch (err) {
-            ctx.error('Failed to uncancel subscription at provider', { err })
-            res.status(500).json({ error: 'Failed to uncancel subscription at provider' })
-            return
-          }
-
-          if (uncanceledSubscription === null) {
-            res.status(404).json({ error: 'Failed to uncancel subscription at provider' })
-            return
-          }
-
-          // Upsert the updated subscription into our database
-          await accountClient.upsertSubscription(uncanceledSubscription)
+          const uncanceledSubscription = await runProviderOrLocal(ctx, res, subscription, {
+            localPatch: { canceledAt: undefined, status: 'active' as SubscriptionStatus },
+            localLogMessage: 'Subscription uncanceled locally (provider mismatch)',
+            providerCall: async (ctx, providerSubId) => await activeProvider.uncancelSubscription(ctx, providerSubId),
+            providerNotFoundMsg: 'Failed to uncancel subscription at provider',
+            providerErrorMsg: 'Failed to uncancel subscription at provider'
+          })
+          if (uncanceledSubscription === undefined) return
 
           res.status(200).json(uncanceledSubscription)
         },
@@ -370,7 +728,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
   /**
    * POST /api/v1/subscriptions/:subscriptionId/updatePlan
    * Update a subscription to a different plan
-   * Body: { plan: string } - The new plan name (e.g., 'common', 'rare', 'epic', 'legendary')
+   * Body: { plan: string } - The new plan name (e.g., 'start', 'standard', 'business')
    * Authorization: Only workspace owner/admin can update
    * Note: subscriptionId is the internal subscription ID, not the provider's ID
    */
@@ -381,17 +739,14 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
     withLoginInfo,
     withOwner,
     (req: RequestWithAuth, res: Response) => {
-      if (provider === undefined) {
-        res.status(503).json({ error: 'Payment provider is not configured' })
-        return
-      }
+      if (requireProvider(provider, res)) return
+      const activeProvider = provider
 
       void handleRequest(
         ctx,
         'update-plan',
         async (ctx) => {
-          const subscriptionId = req.params.subscriptionId
-          const { plan } = req.body
+          const { plan, quantity: requestedQuantity, period, force, recurrent } = req.body
           const loginInfo = req.loginInfo as WorkspaceLoginInfo
 
           if (plan === undefined || typeof plan !== 'string') {
@@ -404,13 +759,8 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
-          // Get subscription from our database using internal ID
-          const subscription = await accountClient.getSubscriptionById(subscriptionId)
-
-          if (subscription === undefined || subscription === null) {
-            res.status(404).json({ error: 'Subscription not found' })
-            return
-          }
+          const subscription = await loadOwnedSubscription(req, res)
+          if (subscription === undefined) return
 
           const accountUuid = subscription.accountUuid ?? req.token?.account
           if (accountUuid == null) {
@@ -418,20 +768,100 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
+          if (subscription.type === SubscriptionType.Package) {
+            const subscriptions = await accountClient.getSubscriptions(subscription.workspaceUuid)
+            const activeTierPlan = subscriptions.find(
+              (s) => s.type === SubscriptionType.Tier && s.status === SubscriptionStatus.Active
+            )?.plan
+            if (!isPackageEligible(plan, activeTierPlan)) {
+              res.status(400).json({ error: 'Package not available on current plan' })
+              return
+            }
+          }
+
+          const targetIsFree = planConfig.plans?.[plan]?.free === true
+          if (targetIsFree) {
+            try {
+              // Downgrade to free is one user action: the paid cancel and the free activation share it.
+              const actionId = `act-${Date.now().toString(36)}-${generateId().slice(0, 8)}`
+              if (subscription.provider === config.Provider) {
+                // Same provider: stop the recurrent charge / remove the card at the provider
+                await provider.cancelSubscription(ctx, subscription.providerSubscriptionId)
+              }
+              // Mismatched provider: upsertSubscription inside createFreeSubscription will cancel all existing subs
+              const freeSub = await createFreeSubscription(subscription.workspaceUuid, accountUuid, actionId)
+              if (freeSub === undefined) {
+                res.status(500).json({ error: 'Free plan is not configured' })
+                return
+              }
+              res.status(200).json(freeSub)
+            } catch (err) {
+              ctx.error('Failed to create free subscription', { err })
+              res.status(500).json({ error: 'Failed to create free subscription' })
+            }
+            return
+          }
+
+          // Per-seat plans: validate the requested seat count
+          const seats = await resolveSeatQuantity(plan, requestedQuantity, subscription.workspaceUuid)
+          if (seats.error !== undefined) {
+            res.status(400).json({ error: seats.error })
+            return
+          }
+          const quantity = seats.quantity
+
+          // If the subscription was created by a different provider (e.g. manual/admin),
+          // create a new subscription at the current provider — don't cancel the old one,
+          // it stays active until the new payment is confirmed via webhook.
+          if (subscription.provider !== config.Provider) {
+            ctx.info('Subscription provider mismatch, creating new subscription', {
+              existingProvider: subscription.provider,
+              currentProvider: config.Provider,
+              workspaceUuid: subscription.workspaceUuid,
+              plan
+            })
+            try {
+              const request: SubscribeRequest = { type: subscription.type, plan, quantity, period, force, recurrent }
+              const checkoutResponse = await activeProvider.createSubscription(
+                ctx,
+                request,
+                subscription.workspaceUuid,
+                loginInfo.workspaceUrl,
+                accountUuid
+              )
+              // Instant provider: persist the new subscription now (see createSubscription handler).
+              if (checkoutResponse.instant === true) {
+                const sub = await activeProvider.getSubscriptionByCheckout(ctx, checkoutResponse.checkoutId)
+                if (sub !== null) {
+                  await persistSubscription(sub)
+                }
+              }
+              res.status(200).json(checkoutResponse)
+            } catch (err) {
+              ctx.error('Failed to create subscription at provider', { err })
+              relayProviderError(res, err, 'Failed to create subscription at provider')
+            }
+            return
+          }
+
           let updateResult: SubscriptionData | CheckoutResponse | null
 
           try {
             // Update via provider using the provider's subscription ID
-            updateResult = await provider.updateSubscriptionPlan(
+            updateResult = await activeProvider.updateSubscriptionPlan(
               ctx,
               subscription.providerSubscriptionId,
               plan,
+              subscription.type,
               loginInfo.workspaceUrl,
-              accountUuid
+              accountUuid,
+              quantity,
+              period,
+              recurrent
             )
           } catch (err) {
             ctx.error('Failed to update subscription at provider', { err })
-            res.status(500).json({ error: 'Failed to update subscription at provider' })
+            relayProviderError(res, err, 'Failed to update subscription at provider')
             return
           }
 
@@ -447,11 +877,179 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
             return
           }
 
-          // It's a SubscriptionData - update was direct
-          // Upsert the updated subscription into our database
-          await accountClient.upsertSubscription(updateResult)
+          // Pro-rata patch (no refund): when the current subscription was already paid, keep the
+          // subscription's recurring amount = the new full price (what renews) but shift periodEnd by
+          // the server-computed proration (downgrade credit extends it; monthly upgrade resets to 30d;
+          // yearly upgrade leaves it). The one-time delta charge is returned separately for the UI/receipt.
+          // All figures come from the current account subscription, so it is consistent across providers.
+          const oldSeats = Number(subscription.providerData?.quantity ?? 1)
+          const newSeats = quantity ?? oldSeats
+          let prorationCharge: number | undefined
+          // Proration applies to a same-plan seat change (per-seat tier) or a package swap — NOT to a
+          // plain tier plan switch (start->business), which keeps the provider's fresh period/amount.
+          const isSeatChange = subscription.type === SubscriptionType.Tier && plan === subscription.plan
+          const isPackageChange = subscription.type === SubscriptionType.Package
+          if (
+            (isSeatChange || isPackageChange) &&
+            subscription.amount != null &&
+            subscription.periodStart != null &&
+            subscription.periodEnd != null
+          ) {
+            const newFullPrice = planFullPrice(subscription.type, plan, newSeats, period)
+            const common = {
+              oldAmount: subscription.amount,
+              periodStart: subscription.periodStart,
+              periodEnd: subscription.periodEnd,
+              now: Date.now(),
+              newFullPrice
+            }
+            const pro =
+              subscription.type === SubscriptionType.Package
+                ? proratePackage(common)
+                : prorateSeats({ ...common, oldSeats, newSeats })
+            prorationCharge = pro.charge
+            // Take the whole proration-computed period (start+end) so periodDays stays consistent for
+            // a later change — the provider's own period (e.g. mock's now+30d) would otherwise desync.
+            updateResult = {
+              ...updateResult,
+              amount: newFullPrice,
+              periodStart: pro.periodStart,
+              periodEnd: pro.periodEnd
+            }
+            ctx.info('applied proration', {
+              id: subscription.id,
+              oldSeats,
+              newSeats,
+              charge: pro.charge,
+              isUpgrade: pro.isUpgrade,
+              isYearly: pro.isYearly
+            })
+          }
 
-          res.status(200).json(updateResult)
+          // It's a SubscriptionData - update was direct. Attach the new plan's limits
+          // (providers may return without fresh limits) so enforcement and UI are correct.
+          await persistSubscription(updateResult)
+
+          res.status(200).json({ ...attachLimits(updateResult), prorationCharge })
+        },
+        req,
+        res,
+        () => {}
+      )
+    }
+  )
+
+  /**
+   * POST /api/v1/subscriptions/:subscriptionId/previewPlanChange
+   * Preview a seat/package change without mutating: returns the pro-rata one-time charge,
+   * the resulting period end, and the seat floor. Body: { plan, quantity?, period? }.
+   */
+  app.post(
+    '/api/v1/subscriptions/:subscriptionId/previewPlanChange',
+    subscriptionRateLimiter,
+    withToken,
+    withLoginInfo,
+    withOwner,
+    (req: RequestWithAuth, res: Response) => {
+      void handleRequest(
+        ctx,
+        'preview-plan-change',
+        async (ctx) => {
+          const { plan, quantity: requestedQuantity, period } = req.body
+          if (plan === undefined || typeof plan !== 'string') {
+            res.status(400).json({ error: 'Missing or invalid field: plan' })
+            return
+          }
+          const subscription = await loadOwnedSubscription(req, res)
+          if (subscription === undefined) return
+
+          const minSeats = Math.max(await billableMembersCount(subscription.workspaceUuid), 1)
+          const oldSeats = Number(subscription.providerData?.quantity ?? 1)
+          const newSeats = requestedQuantity != null ? Math.max(Number(requestedQuantity), minSeats) : oldSeats
+          const newFullPrice = planFullPrice(subscription.type, plan, newSeats, period)
+
+          if (subscription.amount == null || subscription.periodStart == null || subscription.periodEnd == null) {
+            // No paid period to prorate against (trial/free/manual): the change charges the full price.
+            res.status(200).json({ charge: newFullPrice, periodEnd: undefined, minSeats, newSeats, isUpgrade: true })
+            return
+          }
+
+          const common = {
+            oldAmount: subscription.amount,
+            periodStart: subscription.periodStart,
+            periodEnd: subscription.periodEnd,
+            now: Date.now(),
+            newFullPrice
+          }
+          const pro =
+            subscription.type === SubscriptionType.Package
+              ? proratePackage(common)
+              : prorateSeats({ ...common, oldSeats, newSeats })
+          res.status(200).json({
+            charge: pro.charge,
+            periodEnd: pro.periodEnd,
+            minSeats,
+            newSeats,
+            newFullPrice,
+            isUpgrade: pro.isUpgrade,
+            isYearly: pro.isYearly
+          })
+        },
+        req,
+        res,
+        () => {}
+      )
+    }
+  )
+
+  /**
+   * POST /api/v1/subscriptions/:subscriptionId/retry
+   * Retry a failed payment for a subscription in past_due status.
+   * Only supported by TBank (Stripe/Polar handle retries via built-in dunning).
+   */
+  app.post(
+    '/api/v1/subscriptions/:subscriptionId/retry',
+    subscriptionRateLimiter,
+    withToken,
+    withOwner,
+    (req: RequestWithAuth, res: Response) => {
+      if (requireProvider(provider, res)) return
+      const activeProvider = provider
+
+      void handleRequest(
+        ctx,
+        'retry-payment',
+        async (ctx) => {
+          const subscription = await loadOwnedSubscription(req, res)
+          if (subscription === undefined) return
+
+          if (subscription.status !== SubscriptionStatus.PastDue) {
+            res.status(400).json({ error: 'Subscription is not in past_due status' })
+            return
+          }
+
+          if (subscription.provider !== config.Provider) {
+            // Provider mismatch — retry locally is not supported
+            ctx.info('Retry not supported for provider-mismatched subscription', {
+              id: subscription.id,
+              provider: subscription.provider
+            })
+            res.status(400).json({ error: 'Retry not supported for this subscription' })
+            return
+          }
+
+          try {
+            const result = await activeProvider.retryPayment(ctx, subscription.providerSubscriptionId)
+            if (result === null) {
+              res.status(404).json({ error: 'Failed to retry payment' })
+              return
+            }
+            await persistSubscription(result)
+            res.json(result)
+          } catch (err) {
+            ctx.error('Failed to retry payment', { err })
+            res.status(402).json({ error: 'Payment retry failed' })
+          }
         },
         req,
         res,
@@ -494,77 +1092,93 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
    * If it exists in DB but has changed (newer modifiedAt), it will be updated
    * Authorization: Only authenticated workspace owners can check checkout status
    */
-  app.get('/api/v1/checkouts/:checkoutId/status', withToken, withOwner, (req: RequestWithAuth, res: Response) => {
-    if (provider === undefined) {
-      res.status(503).json({ error: 'Payment provider is not configured' })
-      return
-    }
+  app.get(
+    '/api/v1/checkouts/:checkoutId/status',
+    pollRateLimiter,
+    withToken,
+    withOwner,
+    (req: RequestWithAuth, res: Response) => {
+      if (provider === undefined) {
+        res.status(503).json({ error: 'Payment provider is not configured' })
+        return
+      }
 
-    // Disable caching for this endpoint - we want fresh data on every poll
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate')
-    res.set('Pragma', 'no-cache')
-    res.set('Expires', '0')
+      // Disable caching for this endpoint - we want fresh data on every poll
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+      res.set('Pragma', 'no-cache')
+      res.set('Expires', '0')
 
-    void handleRequest(
-      ctx,
-      'checkout-subscription-status',
-      async (ctx) => {
-        const checkoutId = req.params.checkoutId
-        const accountClient = getAccountClient(config.AccountsUrl, serviceToken)
+      void handleRequest(
+        ctx,
+        'checkout-subscription-status',
+        async (ctx) => {
+          const checkoutId = req.params.checkoutId
 
-        // Try to get subscription from Polar by checkout ID
-        const subscriptionData = await provider.getSubscriptionByCheckout(ctx, checkoutId)
+          // Try to get subscription from provider by checkout ID
+          const subscriptionData = await provider.getSubscriptionByCheckout(ctx, checkoutId)
 
-        if (subscriptionData !== null) {
-          // Subscription exists in Polar - check if we need to update our DB
-          try {
-            // Get existing subscription from our DB if it exists
-            const existingSubscription = await accountClient.getSubscriptionByProviderId(
-              subscriptionData.provider,
-              subscriptionData.providerSubscriptionId
-            )
-
-            // Check if we should upsert (doesn't exist or has changed)
-            const shouldUpsert =
-              existingSubscription === null ||
-              (subscriptionData.providerData?.modifiedAt !== undefined &&
-                (existingSubscription?.providerData?.modifiedAt ?? 0) < subscriptionData.providerData.modifiedAt)
-
-            if (shouldUpsert) {
-              await accountClient.upsertSubscription(subscriptionData)
-              ctx.info('Subscription upserted from checkout poll', {
-                checkoutId,
-                subscriptionId: subscriptionData.id,
-                isNew: existingSubscription === null
-              })
+          if (subscriptionData !== null) {
+            // IDOR guard: getSubscriptionByCheckout is scoped by checkoutId only, not by caller. 404 hides existence.
+            if (!ownsSubscription(req, subscriptionData)) {
+              res.status(404).json({ checkoutId, subscriptionId: null, status: 'pending', subscription: null })
+              return
             }
-          } catch (err) {
-            ctx.error('Failed to sync subscription to DB', { checkoutId, err })
-            // Still return the subscription data even if DB update failed
+
+            // For providers that pre-create a subscription before payment confirmation
+            // (e.g. TBank), check providerData.pending flag to determine actual completion
+            const isCompleted = subscriptionData.providerData?.pending !== true
+
+            // Only sync to DB if subscription is confirmed (webhook received)
+            if (isCompleted) {
+              try {
+                // Get existing subscription from our DB if it exists
+                const existingSubscription = await accountClient.getSubscriptionByProviderId(
+                  subscriptionData.provider,
+                  subscriptionData.providerSubscriptionId
+                )
+
+                // Check if we should upsert (doesn't exist or has changed)
+                const shouldUpsert =
+                  existingSubscription === null ||
+                  (subscriptionData.providerData?.modifiedAt !== undefined &&
+                    (existingSubscription?.providerData?.modifiedAt ?? 0) < subscriptionData.providerData.modifiedAt)
+
+                if (shouldUpsert) {
+                  await persistSubscription(subscriptionData)
+                  ctx.info('Subscription upserted from checkout poll', {
+                    checkoutId,
+                    subscriptionId: subscriptionData.id,
+                    isNew: existingSubscription === null
+                  })
+                }
+              } catch (err) {
+                ctx.error('Failed to sync subscription to DB', { checkoutId, err })
+              }
+            }
+
+            res.status(200).json({
+              checkoutId,
+              subscriptionId: isCompleted ? subscriptionData.id : null,
+              status: isCompleted ? 'completed' : 'pending',
+              subscription: isCompleted ? subscriptionData : null
+            })
+            return
           }
 
+          // Subscription not yet found in provider
           res.status(200).json({
             checkoutId,
-            subscriptionId: subscriptionData.id,
-            status: 'completed',
-            subscription: subscriptionData
+            subscriptionId: null,
+            status: 'pending',
+            subscription: null
           })
-          return
-        }
-
-        // Subscription not yet completed in Polar
-        res.status(200).json({
-          checkoutId,
-          subscriptionId: null,
-          status: 'pending',
-          subscription: null
-        })
-      },
-      req,
-      res,
-      () => {}
-    )
-  })
+        },
+        req,
+        res,
+        () => {}
+      )
+    }
+  )
 
   app.use((_req, res) => {
     res.status(404).json({ message: 'Not Found' })
@@ -572,6 +1186,9 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
 
   return {
     app,
+    ensureInitialSubscription,
+    createFreeIfNoActiveTier,
+    persistSubscription,
     close: () => {
       stopReconciliation()
     }

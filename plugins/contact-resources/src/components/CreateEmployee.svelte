@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -35,6 +36,7 @@
   import { getResource } from '@hcengineering/platform'
   import { Card, getClient } from '@hcengineering/presentation'
   import { createFocusManager, EditBox, FocusHandler, IconInfo, Label } from '@hcengineering/ui'
+  import { planLimits, checkWorkspaceLimits, seatCount, seatLimitReached } from '@hcengineering/billing-resources'
   import { createEventDispatcher } from 'svelte'
   import { ChannelsDropdown } from '..'
   import contact from '../plugin'
@@ -72,6 +74,11 @@
   async function createEmployee (): Promise<void> {
     try {
       saving = true
+      // Guard against creating beyond users limit
+      const limit = $planLimits?.usersLimit ?? 0
+      if (limit > 0 && ($seatCount === undefined || $seatCount >= limit)) {
+        return
+      }
       changeEmail()
       const mail = email.trim()
       const socialString = buildSocialIdString({
@@ -159,6 +166,10 @@
 
   $: exists = $employeeBySocialKeyStore.get(emailSocialString) !== undefined
 
+  // Plan seat limit, from the billing store's server-computed seat count — counting Employee mixins
+  // here would include the AI bot and block the last seat. Trails the pod-billing refresh (~25s).
+  void checkWorkspaceLimits()
+
   const manager = createFocusManager()
 
   function changeEmail (): void {
@@ -180,7 +191,12 @@
 <Card
   label={contact.string.CreateEmployee}
   okAction={createEmployee}
-  canSave={firstName.trim().length > 0 && lastName.trim().length > 0 && email.trim().length > 0 && !exists && canSave}
+  canSave={firstName.trim().length > 0 &&
+    lastName.trim().length > 0 &&
+    email.trim().length > 0 &&
+    !exists &&
+    !$seatLimitReached &&
+    canSave}
   on:close={() => {
     dispatch('close')
   }}
@@ -192,6 +208,13 @@
         <IconInfo size={'small'} />
         <span class="text-sm overflow-label ml-2">
           <Label label={contact.string.PersonAlreadyExists} />
+        </span>
+      </div>
+    {:else if $seatLimitReached && !saving}
+      <div class="flex-row-center error-color" data-id="seatLimitError">
+        <IconInfo size={'small'} />
+        <span class="text-sm overflow-label ml-2">
+          <Label label={contact.string.SeatLimitReached} params={{ limit: $planLimits?.usersLimit ?? 0 }} />
         </span>
       </div>
     {/if}

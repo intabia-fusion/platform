@@ -111,7 +111,12 @@ async function main() {
   const env = {
     MODEL_VERSION: define['MODEL_VERSION'] ? getVersionFromScript('./show_version.js') : undefined,
     VERSION: getVersionFromScript('./show_tag.js'),
-    GIT_REVISION: define['GIT_REVISION'] ? getGitRevision() : undefined
+    GIT_REVISION: define['GIT_REVISION'] ? getGitRevision() : undefined,
+    // License public key (base64 PEM), baked at CI build time. Empty/unset on dev/local builds ->
+    // license.ts treats the build as edition 'dev' (unlimited, no gating). JSON.stringify so esbuild
+    // define gets a quoted string literal (VERSION etc. arrive pre-quoted from their scripts).
+    LICENSE_PUBLIC_KEY:
+      process.env.LICENSE_PUBLIC_KEY !== undefined ? JSON.stringify(process.env.LICENSE_PUBLIC_KEY) : undefined
   }
 
   Object.entries(env).forEach(([key, value]) => {

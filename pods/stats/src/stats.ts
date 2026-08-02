@@ -23,7 +23,8 @@ import bodyParser from 'koa-body'
 import Router from 'koa-router'
 import { compress as snappyCompress } from 'snappy'
 
-const serviceTimeout = 5 * 60000
+// Services report every 5s (METRICS_UPDATE_INTERVAL) - 20s means 4 missed reports
+const serviceTimeout = 20_000
 
 interface ServiceStatisticsEx extends ServiceStatistics {
   lastUpdate: number // Last updated
@@ -95,7 +96,18 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
   setMetadata(serverToken.metadata.Service, 'stats')
 
   const statistics = new Map<string, ServiceStatisticsEx>()
-  const timeouts = new Map<string, number>()
+
+  const isStale = (v: ServiceStatisticsEx): boolean => Date.now() - v.lastUpdate > serviceTimeout
+
+  // Background sweep: dead instances (restarted pods register under a new hostname id)
+  // must not linger in the map even when nobody opens the overview.
+  const sweepInterval = setInterval(() => {
+    for (const [k, v] of statistics.entries()) {
+      if (isStale(v)) {
+        statistics.delete(k)
+      }
+    }
+  }, serviceTimeout)
 
   const app = new Koa()
   const router = new Router()
@@ -135,8 +147,6 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
         return
       }
 
-      const toClean: string[] = []
-
       let usersTotal: number = 0
       let connectionsTotal: number = 0
 
@@ -144,11 +154,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
 
       const json: Record<string, Omit<ServiceStatistics, 'stats' | 'workspaces'>> = {}
       for (const [k, v] of statistics.entries()) {
-        if (Date.now() - v.lastUpdate > serviceTimeout) {
-          timeouts.set(k, (timeouts.get(k) ?? 0) + 1)
-          toClean.push(k)
-          continue
-        }
+        if (isStale(v)) continue
         const { stats: _, workspaces, ...data } = v
 
         allWorkspaces.push(...(workspaces ?? []))
@@ -162,10 +168,6 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
         json[k] = {
           ...data
         }
-      }
-      for (const k of toClean) {
-        timeouts.delete(k)
-        statistics.delete(k)
       }
 
       const dta: OverviewStatistics = {
@@ -193,7 +195,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
       ctx.info('get stats', { admin, service: req.query.name })
       if (admin) {
         const json = statistics.get((req.query.name as string) ?? '')
-        if (json !== undefined) {
+        if (json !== undefined && !isStale(json)) {
           req.res.setHeader('Content-Type', 'application/json')
           const result: ServiceStatistics = {
             ...json,
@@ -355,7 +357,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
 
       let serviceCount = 0
       for (const [name, svc] of statistics.entries()) {
-        if (Date.now() - svc.lastUpdate > serviceTimeout) continue
+        if (isStale(svc)) continue
         if (svc.stats === undefined) continue
         serviceCount++
         for (const [op, child] of Object.entries(svc.stats.measurements)) {
@@ -452,6 +454,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
   })
 
   const close = (): void => {
+    clearInterval(sweepInterval)
     onClose?.()
     server.close()
   }

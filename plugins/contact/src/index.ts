@@ -354,6 +354,7 @@ export const contactPlugin = plugin(contactId, {
   },
   string: {
     PersonAlreadyExists: '' as IntlString,
+    SeatLimitReached: '' as IntlString,
     Person: '' as IntlString,
     Employee: '' as IntlString,
     CreateOrganization: '' as IntlString,

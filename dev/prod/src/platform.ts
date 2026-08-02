@@ -78,6 +78,7 @@ import { achievementId } from '@hcengineering/achievement'
 import communication, { communicationId } from '@hcengineering/communication'
 import { emojiId } from '@hcengineering/emoji'
 import billingPlugin, { billingId } from '@hcengineering/billing'
+import admin, { adminId } from '@hcengineering/admin'
 import { hulyMailId } from '@hcengineering/huly-mail'
 import { aiAssistantId } from '@hcengineering/ai-assistant'
 import { ratingId } from '@hcengineering/rating'
@@ -415,6 +416,7 @@ function configureI18n(): void {
   addStringsLoader(inboxId, async (lang: string) => await import(`@hcengineering/inbox-assets/lang/${lang}.json`))
   addStringsLoader(emojiId, async (lang: string) => await import(`@hcengineering/emoji-assets/lang/${lang}.json`))
   addStringsLoader(billingId, async (lang: string) => await import(`@hcengineering/billing-assets/lang/${lang}.json`))
+  addStringsLoader(adminId, async (lang: string) => await import(`@hcengineering/admin-assets/lang/${lang}.json`))
   addStringsLoader(
     hulyMailId,
     async (lang: string) => await import(`@hcengineering/huly-mail-assets/lang/${lang}.json`)
@@ -613,6 +615,7 @@ export async function configurePlatform() {
       [calendarId, calendar.component.ConnectApp],
       [guestId, guest.component.GuestApp],
       [globalProfileRoute, globalProfile.component.GlobalProfileApp],
+      [adminId, admin.component.AdminApp],
       ['themes', workbench.component.Themes],
       ['meetings', love.component.GuestMeetingApp]
     ])
@@ -623,6 +626,7 @@ export async function configurePlatform() {
 
   addLocation(clientId, async () => await import(/* webpackChunkName: "client" */ '@hcengineering/client-resources'))
   addLocation(loginId, async () => await import(/* webpackChunkName: "login" */ '@hcengineering/login-resources'))
+  addLocation(adminId, async () => await import(/* webpackChunkName: "admin" */ '@hcengineering/admin-resources'))
   addLocation(onboardId, async () => await import(/* webpackChunkName: "onboard" */ '@hcengineering/onboard-resources'))
   addLocation(
     workbenchId,

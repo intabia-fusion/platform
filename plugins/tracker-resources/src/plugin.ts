@@ -34,6 +34,7 @@ import type { ValueFormatter } from '@hcengineering/converter'
 export default mergeIds(trackerId, tracker, {
   viewlet: {
     SubIssues: '' as Ref<Viewlet>,
+    ParentIssues: '' as Ref<Viewlet>,
     List: '' as Ref<ViewletDescriptor>,
     Kanban: '' as Ref<ViewletDescriptor>,
     MilestoneIssuesList: '' as Ref<Viewlet>,
@@ -148,6 +149,8 @@ export default mergeIds(trackerId, tracker, {
     OpenParent: '' as IntlString,
     OpenSubIssues: '' as IntlString,
     AddSubIssues: '' as IntlString,
+    AddExistingSubIssue: '' as IntlString,
+    CreateSubIssue: '' as IntlString,
     BlockedBy: '' as IntlString,
     RelatedTo: '' as IntlString,
     Comments: '' as IntlString,

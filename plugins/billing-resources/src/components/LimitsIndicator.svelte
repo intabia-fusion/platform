@@ -14,49 +14,79 @@
 -->
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte'
-  import { checkWorkspaceLimits, upgradePlan, calculateLimits } from '../utils'
+  import { checkWorkspaceLimits, upgradePlan, calculateLimits, checkIsLimited } from '../utils'
   import { subscriptionStore, resetSubscriptionStore } from '../stores/subscription'
   import { location, PaletteColorIndexes, Progress, tooltip } from '@hcengineering/ui'
   import { addEventListener, removeEventListener } from '@hcengineering/platform'
+  import core, { type Tx, type TxWorkspaceEvent, WorkspaceEvent } from '@hcengineering/core'
+  import { addTxListener, removeTxListener } from '@hcengineering/presentation'
   import workbench from '@hcengineering/workbench'
   import UsagePopup from './UsagePopup.svelte'
 
   let pollInterval: any
+  let hoverInterval: any
 
   const POLL_INTERVAL_MS = 60 * 60 * 1000 // 1 hour in milliseconds
+  const HOVER_POLL_INTERVAL_MS = 10 * 1000 // refresh usage every 10s while the cursor stays on the indicator
 
   $: state = $subscriptionStore
   $: usageInfo = state.usageInfo
-  $: currentTier = state.currentTier
+  $: currentPlan = state.currentPlan
+  $: currentSubscription = state.currentSubscription
+  $: currentPackage = state.currentPackage
+  $: currentPackageSubscription = state.currentPackageSubscription
   $: workspace = $location.path[1]
+
+  // checkIsLimited reads the subscription store, so it must run AFTER checkWorkspaceLimits has
+  // refreshed it — otherwise it sees the stale plan and misses a seat downgrade.
+  const refreshLimits = async (): Promise<void> => {
+    await checkWorkspaceLimits()
+    await checkIsLimited()
+  }
 
   const connectionListener = async (): Promise<void> => {
     resetSubscriptionStore()
     if (workspace !== undefined) {
-      void checkWorkspaceLimits()
+      void refreshLimits()
+    }
+  }
+
+  // Server broadcasts this when usage/limit state flips; re-read so the UI is immediate.
+  const txListener = (txes: Tx[]): void => {
+    if (workspace === undefined) return
+    for (const tx of txes) {
+      if (
+        tx._class === core.class.TxWorkspaceEvent &&
+        (tx as TxWorkspaceEvent).event === WorkspaceEvent.LimitsChanged
+      ) {
+        void refreshLimits()
+        return
+      }
     }
   }
 
   // Calculate usage percentages from store data
   $: storageUsed = usageInfo?.usage?.storageBytes ?? 0
   $: meetingMinutesUsed = usageInfo?.usage?.meetingMinutes ?? 0
-  $: limits = calculateLimits(currentTier)
+  $: limits = calculateLimits(currentPlan, currentPackage, currentSubscription, currentPackageSubscription)
 
-  $: storagePercent = limits.storageLimit > 0 ? Math.min(storageUsed / limits.storageLimit, 1) : 0
-  $: meetingPercent = limits.meetingMinutesLimit > 0 ? Math.min(meetingMinutesUsed / limits.meetingMinutesLimit, 1) : 0
+  $: storagePercent = limits != null && limits.storageLimit > 0 ? Math.min(storageUsed / limits.storageLimit, 1) : 0
+  $: meetingPercent =
+    limits != null && limits.meetingMinutesLimit > 0 ? Math.min(meetingMinutesUsed / limits.meetingMinutesLimit, 1) : 0
 
   $: storageColor = storagePercent >= 0.9 ? PaletteColorIndexes.Firework : undefined
   $: meetingColor = meetingPercent >= 0.9 ? PaletteColorIndexes.Firework : undefined
 
   onMount(() => {
     addEventListener(workbench.event.NotifyConnection, connectionListener)
+    addTxListener(txListener)
 
     // Initial check if workspace exists
     if (workspace != null) {
-      void checkWorkspaceLimits()
+      void refreshLimits()
 
       pollInterval = setInterval(() => {
-        void checkWorkspaceLimits()
+        void refreshLimits()
       }, POLL_INTERVAL_MS)
     }
   })
@@ -65,32 +95,61 @@
     if (pollInterval !== undefined) {
       clearInterval(pollInterval)
     }
+    if (hoverInterval !== undefined) {
+      clearInterval(hoverInterval)
+    }
     removeEventListener(workbench.event.NotifyConnection, connectionListener)
+    removeTxListener(txListener)
   })
 
   function handleClick (): void {
     void upgradePlan()
+  }
+
+  // Live usage isn't broadcast; refresh on hover and keep polling while the cursor is on the indicator.
+  function handleHoverStart (): void {
+    if (workspace == null || hoverInterval !== undefined) return
+    void refreshLimits()
+    hoverInterval = setInterval(() => {
+      void refreshLimits()
+    }, HOVER_POLL_INTERVAL_MS)
+  }
+
+  function handleHoverEnd (): void {
+    if (hoverInterval !== undefined) {
+      clearInterval(hoverInterval)
+      hoverInterval = undefined
+    }
   }
 </script>
 
 <button
   type="button"
   class="limits-container"
+  data-id="billingLimitsIndicator"
   use:tooltip={{
     component: UsagePopup,
-    props: { usage: usageInfo, tier: currentTier },
+    props: {
+      usage: usageInfo,
+      plan: currentPlan,
+      tierSub: currentSubscription,
+      pkg: currentPackage,
+      pkgSub: currentPackageSubscription
+    },
     direction: 'bottom'
   }}
   on:click={handleClick}
+  on:mouseenter={handleHoverStart}
+  on:mouseleave={handleHoverEnd}
 >
   <div class="progress-wrapper">
-    <Progress color={storageColor} value={storageUsed} max={limits.storageLimit} fallback={0} small={true} />
+    <Progress color={storageColor} value={storageUsed} max={limits?.storageLimit ?? 0} fallback={0} small={true} />
   </div>
   <div class="progress-wrapper">
     <Progress
       color={meetingColor}
       value={meetingMinutesUsed}
-      max={limits.meetingMinutesLimit}
+      max={limits?.meetingMinutesLimit ?? 0}
       fallback={0}
       small={true}
     />

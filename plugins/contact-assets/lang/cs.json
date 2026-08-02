@@ -48,6 +48,7 @@
     "SocialLinks": "Sociální odkazy",
     "ViewActivity": "Zobrazit aktivitu",
     "PersonAlreadyExists": "Kontakt již existuje...",
+    "SeatLimitReached": "Dosažen limit míst ({limit}). Upgradujte plán pro přidání dalších členů.",
     "Status": "Stav",
     "SetStatus": "Nastavit stav",
     "ClearStatus": "Vymazat stav",

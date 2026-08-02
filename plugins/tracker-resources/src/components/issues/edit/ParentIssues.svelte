@@ -21,7 +21,7 @@
       createParams={{}}
       createLabel={tracker.string.AddIssue}
       hasSubIssues={true}
-      viewletId={tracker.viewlet.SubIssues}
+      viewletId={tracker.viewlet.ParentIssues}
       showCreateButton={false}
     >
       <svelte:fragment slot="chevron">

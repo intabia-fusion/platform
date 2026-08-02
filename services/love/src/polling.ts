@@ -16,9 +16,11 @@
 import { MeasureContext, Ref, WorkspaceUuid } from '@hcengineering/core'
 import { Person } from '@hcengineering/contact'
 import { MeetingMinutes, parseRoomName } from '@hcengineering/love'
+import { PlatformQueueProducer } from '@hcengineering/server-core'
 import { RoomServiceClient, ParticipantInfo as LiveKitParticipant, Room } from 'livekit-server-sdk'
 import { WorkspaceClient } from './workspaceClient'
 import { parseParticipantMetadata } from './utils'
+import { type BillingMessage } from './queue'
 
 /**
  * Configuration for the polling service
@@ -30,6 +32,12 @@ export interface PollingConfig {
   projectKey: string
 }
 
+/** Per-participant meeting-minutes billing progress, tracked to send only the un-sent delta each poll. */
+interface ParticipantBillingProgress {
+  joinedAtMs: number
+  sentSeconds: number
+}
+
 /**
  * Tracks the state of a LiveKit room for reconciliation
  */
@@ -39,19 +47,10 @@ interface RoomState {
   meetingId: Ref<MeetingMinutes>
   participants: Map<string, LiveKitParticipant>
   lastUpdated: number
+  sentByParticipant: Map<string, ParticipantBillingProgress>
 }
 
-/**
- * LiveKit Polling Service
- *
- * Periodically polls LiveKit to reconcile state with the platform database.
- * This ensures consistency when webhooks are missed or delayed.
- *
- * Features:
- * - Reconciles ParticipantInfo with actual LiveKit participants
- * - Reconciles participants and fixes missed events
- * - Detects and handles missed participant_joined/left events
- */
+/** Periodically polls LiveKit to reconcile room/participant state with the platform database. */
 export class LiveKitPollingService {
   private readonly ctx: MeasureContext
   private readonly roomClient: RoomServiceClient
@@ -61,22 +60,22 @@ export class LiveKitPollingService {
   private readonly roomStates = new Map<string, RoomState>()
 
   private readonly workspacesToCheck = new Set<WorkspaceUuid>()
-  // Persistent set of workspaces we've ever seen — used by the LiveKit-outage
-  // fallback to know which workspaces to drain. `workspacesToCheck` is cleared
-  // every poll cycle so we cannot rely on it for outage handling.
+  // Unlike workspacesToCheck (cleared each cycle), this persists — outage drain needs the full history.
   private readonly knownWorkspaces = new Set<WorkspaceUuid>()
   private readonly lastCleanupTime = new Map<WorkspaceUuid, number>()
   private static readonly CLEANUP_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
 
-  // When `getOurRooms` keeps failing we cannot tell whether a meeting is still
-  // live in LiveKit. After this window we assume LiveKit is unreachable and
-  // forcibly Finish all Active/Pending meetings in workspaces we've polled, so
-  // clients don't stay stuck on a phantom meeting indefinitely.
+  // After this long unreachable, assume LiveKit is down and force-finish meetings so clients aren't stuck.
   private static readonly LIVEKIT_OUTAGE_MS = 15 * 1000
   private livekitFailureSince: number | null = null
   private livekitDrainedAt: number | null = null
 
-  constructor (ctx: MeasureContext, roomClient: RoomServiceClient, config: PollingConfig) {
+  constructor (
+    ctx: MeasureContext,
+    roomClient: RoomServiceClient,
+    config: PollingConfig,
+    private readonly billingProducer?: PlatformQueueProducer<BillingMessage>
+  ) {
     this.ctx = ctx
     this.roomClient = roomClient
     this.config = config
@@ -155,16 +154,7 @@ export class LiveKitPollingService {
     })
   }
 
-  /**
-   * Force-finish all Active/Pending meetings across known workspaces.
-   *
-   * Called when LiveKit has been unreachable for longer than
-   * `LIVEKIT_OUTAGE_MS`. Without LiveKit we cannot tell which meetings still
-   * have live participants, so users would otherwise see a "Connected to
-   * meeting" widget pointing at a room that no longer exists. Draining
-   * forcibly closes those meetings — when LiveKit comes back, callers
-   * simply start a new meeting via the usual flow.
-   */
+  /** Force-finish all Active/Pending meetings across known workspaces during a LiveKit outage. */
   private async drainAllActiveMeetings (): Promise<void> {
     const targets = Array.from(this.knownWorkspaces)
     if (targets.length === 0) return
@@ -222,9 +212,7 @@ export class LiveKitPollingService {
         return
       }
 
-      // Track every workspace we've seen so the outage fallback knows where
-      // to drain. processRoom() only fires for workspaces that currently
-      // have a LiveKit room, but addWorkspaceToCheck callers may add others.
+      // Track every workspace seen, since processRoom() only covers workspaces with a current LiveKit room.
       for (const room of ourRooms) {
         const parsed = parseRoomName(room.name ?? '')
         if (parsed !== undefined) this.knownWorkspaces.add(parsed.workspace)
@@ -315,14 +303,20 @@ export class LiveKitPollingService {
       }
     }
 
+    const sentByParticipant = previousState?.sentByParticipant ?? new Map<string, ParticipantBillingProgress>()
+
     // Update state
     this.roomStates.set(roomName, {
       roomName,
       workspace,
       meetingId,
       participants: currentParticipants,
-      lastUpdated: Date.now()
+      lastUpdated: Date.now(),
+      sentByParticipant
     })
+
+    // Bill the un-sent meeting-minutes delta for every real (non-agent) participant still in the room.
+    await this.trackMeetingMinutesBilling(workspace, roomName, currentParticipants, sentByParticipant)
 
     // Reconcile with database (compare DB state with LiveKit state, not just in-memory cache)
     // Use allParticipants (including agents) to avoid removing AI bot ParticipantInfo entries
@@ -332,14 +326,65 @@ export class LiveKitPollingService {
     await this.reconcileParticipants(workspace, meetingId, previousParticipants, currentParticipants)
   }
 
-  /**
-   * Reconcile database ParticipantInfo with actual LiveKit participants.
-   * Removes ParticipantInfo entries for participants not present in LiveKit.
-   * This handles cases where webhooks were missed and in-memory cache was lost (e.g., service restart).
-   *
-   * Note: allParticipants should include ALL participants (including agents/bots)
-   * to avoid incorrectly removing ParticipantInfo for AI bots.
-   */
+  /** Sends the un-sent meeting-minutes delta (in seconds) for each currently-joined participant. */
+  private async trackMeetingMinutesBilling (
+    workspace: WorkspaceUuid,
+    roomName: string,
+    currentParticipants: Map<string, LiveKitParticipant>,
+    sentByParticipant: Map<string, ParticipantBillingProgress>
+  ): Promise<void> {
+    if (this.billingProducer === undefined) return
+
+    for (const participant of currentParticipants.values()) {
+      const sid = participant.sid
+      if (sid === undefined || sid === '') continue
+
+      const joinedAtRaw = Number(participant.joinedAt ?? participant.joinedAtMs ?? 0)
+      if (joinedAtRaw <= 0) continue
+      const joinedAtMs = joinedAtRaw > 1e12 ? joinedAtRaw : joinedAtRaw * 1000
+
+      const progress = sentByParticipant.get(sid) ?? { joinedAtMs, sentSeconds: 0 }
+      const elapsedSec = Math.floor((Date.now() - joinedAtMs) / 1000)
+      const newSec = elapsedSec - progress.sentSeconds
+      if (newSec <= 0) {
+        sentByParticipant.set(sid, progress)
+        continue
+      }
+
+      const newSentTotal = progress.sentSeconds + newSec
+      try {
+        await this.billingProducer.send(this.ctx, workspace, [
+          {
+            kind: 'usage',
+            workspace,
+            metric: 'meetingMinutes',
+            amount: newSec,
+            ref: `meetingMinutes-${roomName}-${sid}-${newSentTotal}`
+          }
+        ])
+        sentByParticipant.set(sid, { joinedAtMs, sentSeconds: newSentTotal })
+      } catch (err: any) {
+        this.ctx.error('[PollingService] Failed to send meeting-minutes usage delta', {
+          workspace,
+          roomName,
+          sid,
+          error: err?.message ?? String(err)
+        })
+      }
+    }
+
+    // Drop those who left: their time is already billed up to the last poll, and keeping them
+    // would make the final flush bill Date.now() - joinedAt, i.e. time after they disconnected.
+    const presentSids = new Set<string>()
+    for (const participant of currentParticipants.values()) {
+      if (participant.sid !== undefined && participant.sid !== '') presentSids.add(participant.sid)
+    }
+    for (const sid of sentByParticipant.keys()) {
+      if (!presentSids.has(sid)) sentByParticipant.delete(sid)
+    }
+  }
+
+  /** Removes ParticipantInfo entries not present in LiveKit; allParticipants must include agents/bots to avoid removing them. */
   private async reconcileParticipantsWithDatabase (
     workspace: WorkspaceUuid,
     meetingId: Ref<MeetingMinutes>,
@@ -400,9 +445,7 @@ export class LiveKitPollingService {
     try {
       const wsClient = await WorkspaceClient.create(workspace, this.ctx)
 
-      // Preload existing ParticipantInfo for this meeting to avoid false positives in detection.
-      // We collect both person refs (person field) and stored display names to catch cases
-      // where a ParticipantInfo already exists but the in-memory `previousParticipants` cache was stale.
+      // Preload existing ParticipantInfo (by person id and name) to catch a stale in-memory cache.
       const existingParticipantInfos = await wsClient.findParticipantInfosByMeeting(meetingId)
       const existingPersonIds = new Set(existingParticipantInfos.map((it) => String(it.person)))
       const existingNames = new Set(existingParticipantInfos.map((it) => (it.name ?? '').toString()))
@@ -512,6 +555,9 @@ export class LiveKitPollingService {
           meetingId: state.meetingId
         })
 
+        // Flush the final un-sent meeting-minutes remainder for participants still tracked at cleanup time.
+        await this.flushFinalMeetingMinutesBilling(state)
+
         // Room ended - ensure meeting is marked as finished and pending joins are cleaned up
         try {
           const wsClient = await WorkspaceClient.create(state.workspace, this.ctx)
@@ -524,6 +570,36 @@ export class LiveKitPollingService {
         }
 
         this.roomStates.delete(roomName)
+      }
+    }
+  }
+
+  /** Sends the final remainder for participants still present at cleanup time; those who left are already dropped. */
+  private async flushFinalMeetingMinutesBilling (state: RoomState): Promise<void> {
+    if (this.billingProducer === undefined) return
+
+    for (const [sid, progress] of state.sentByParticipant) {
+      const finalSec = Math.floor((Date.now() - progress.joinedAtMs) / 1000) - progress.sentSeconds
+      if (finalSec <= 0) continue
+
+      const newSentTotal = progress.sentSeconds + finalSec
+      try {
+        await this.billingProducer.send(this.ctx, state.workspace, [
+          {
+            kind: 'usage',
+            workspace: state.workspace,
+            metric: 'meetingMinutes',
+            amount: finalSec,
+            ref: `meetingMinutes-${state.roomName}-${sid}-${newSentTotal}`
+          }
+        ])
+      } catch (err: any) {
+        this.ctx.error('[PollingService] Failed to send final meeting-minutes usage delta', {
+          workspace: state.workspace,
+          roomName: state.roomName,
+          sid,
+          error: err?.message ?? String(err)
+        })
       }
     }
   }

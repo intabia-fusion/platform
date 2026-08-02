@@ -39,8 +39,9 @@ import {
 import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
 import { decodeToken, decodeTokenVerbose, generateToken, type PermissionsGrant } from '@hcengineering/server-token'
 
-import { isAdminEmail } from './admin'
+import { isAdminEmail, isBillingAdminEmail } from './admin'
 import { accountPlugin, type CrmNotification } from './plugin'
+import { getFreePlanLimits } from './freeLimits'
 import { type AccountServiceMethods, getServiceMethods } from './serviceOperations'
 import {
   type Account,
@@ -59,13 +60,15 @@ import {
   type PersonWithProfile,
   type Query,
   type RegionInfo,
+  type LicenseInfo,
   type SocialId,
   type Subscription,
   SubscriptionStatus,
   type UserProfile,
   type WorkspaceInfoWithStatus,
   type WorkspaceInviteInfo,
-  type WorkspaceLoginInfo
+  type WorkspaceLoginInfo,
+  SubscriptionType
 } from './types'
 import {
   addSocialIdBase,
@@ -79,12 +82,14 @@ import {
   createWorkspaceRecord,
   doJoinByInvite,
   doMergePersons,
+  assertSeatAvailableOnJoin,
   doReleaseSocialId,
   EndpointKind,
   generatePassword,
   getAccount,
   getCollaboratorEndpoint,
   getEmailSocialId,
+  getSeatMembers,
   getEndpoint,
   getEndpointInfo,
   getFrontUrl,
@@ -109,6 +114,7 @@ import {
   isEmail,
   isOtpValid,
   normalizeValue,
+  publishMembersChanged,
   recordFailedLoginAttempt,
   resetFailedLoginAttempts,
   selectWorkspace,
@@ -122,6 +128,7 @@ import {
   updateAllowReadOnlyGuests,
   updatePasswordAgingRule,
   updateWorkspaceRole,
+  verifyAdminOtp,
   verifyAllowedRole,
   verifyAllowedServices,
   verifyPassword,
@@ -226,7 +233,9 @@ export async function login (
 
     const extraToken: Record<string, string> = isAdminEmail(normalizedEmail)
       ? { admin: 'true', authMethod: 'password' }
-      : { authMethod: 'password' }
+      : isBillingAdminEmail(normalizedEmail)
+        ? { billingAdmin: 'true', authMethod: 'password' }
+        : { authMethod: 'password' }
     ctx.info('Login succeeded', { email, normalizedEmail, isConfirmed, emailSocialId, ...extraToken })
 
     return {
@@ -549,7 +558,9 @@ export async function validateOtp (
 
     const extraToken: Record<string, string> = isAdminEmail(normalizedEmail)
       ? { admin: 'true', authMethod: 'otp' }
-      : { authMethod: 'otp' }
+      : isBillingAdminEmail(normalizedEmail)
+        ? { billingAdmin: 'true', authMethod: 'otp' }
+        : { authMethod: 'otp' }
 
     return {
       account: emailSocialId.personUuid as AccountUuid,
@@ -1099,6 +1110,7 @@ export async function checkJoin (
 
   if (getRolePower(wsLoginInfo.role) < getRolePower(invite.role)) {
     await db.updateWorkspaceRole(accountUuid, workspaceUuid, invite.role)
+    await publishMembersChanged(ctx, workspaceUuid)
   }
 
   return {
@@ -1255,9 +1267,12 @@ export async function checkAutoJoin (
       const targetRole = await getWorkspaceRole(db, targetAccount.uuid, workspace.uuid)
 
       if (targetRole == null) {
+        await assertSeatAvailableOnJoin(ctx, db, workspace.uuid, invite.role)
         await db.assignWorkspace(targetAccount.uuid, workspace.uuid, invite.role)
+        await publishMembersChanged(ctx, workspace.uuid)
       } else if (getRolePower(targetRole) < getRolePower(invite.role)) {
         await db.updateWorkspaceRole(targetAccount.uuid, workspace.uuid, invite.role)
+        await publishMembersChanged(ctx, workspace.uuid)
       }
 
       if (token === undefined || token === null) {
@@ -1573,6 +1588,7 @@ export async function leaveWorkspace (
 
   await db.unassignWorkspace(targetAccount, workspace)
   ctx.info('Account removed from workspace', { targetAccount, workspace })
+  await publishMembersChanged(ctx, workspace)
 
   if (account === targetAccount) {
     const person = await db.person.findOne({ uuid: account })
@@ -1678,6 +1694,24 @@ export async function getRegionInfo (
   return getRegions()
 }
 
+// account is the single license-key holder; payment pods ask this at startup instead of verifying a
+// key themselves. Values come from metadata set once at account-service startup.
+export async function getLicenseInfo (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string
+): Promise<LicenseInfo> {
+  // Require a valid token (same as sibling methods) — no unauthenticated reads.
+  decodeTokenVerbose(ctx, token)
+  return {
+    edition: (getMetadata(accountPlugin.metadata.LicenseEdition) as LicenseInfo['edition']) ?? 'dev',
+    // Fail closed: missing metadata (startup race / misconfig) must not permit payment.
+    canRunPayment: getMetadata(accountPlugin.metadata.LicenseCanRunPayment) ?? false,
+    maxUsers: getMetadata(accountPlugin.metadata.LicenseMaxUsers) ?? 0
+  }
+}
+
 export async function getUserWorkspaces (
   ctx: MeasureContext,
   db: AccountDB,
@@ -1686,9 +1720,10 @@ export async function getUserWorkspaces (
 ): Promise<WorkspaceInfoWithStatus[]> {
   const { account } = decodeTokenVerbose(ctx, token)
 
-  return (await db.getAccountWorkspaces(account)).filter(
-    (ws) => isWorkspaceCreating(ws.status.mode) || !(isDeletingMode(ws.status.mode) || ws.status.isDisabled)
-  )
+  const edition = getMetadata(accountPlugin.metadata.LicenseEdition)
+  return (await db.getAccountWorkspaces(account))
+    .filter((ws) => isWorkspaceCreating(ws.status.mode) || !(isDeletingMode(ws.status.mode) || ws.status.isDisabled))
+    .map((ws) => ({ ...ws, licenseEdition: edition }))
 }
 
 /**
@@ -1883,7 +1918,9 @@ export async function getLoginInfoByToken (
 
       // Create an automatic account and assign it to the grant workspace
       await signUpByGrant(ctx, db, branding, accountUuid, grant, params)
+      await assertSeatAvailableOnJoin(ctx, db, workspaceUuid, grant.role)
       await db.assignWorkspace(accountUuid, workspaceUuid, grant.role)
+      await publishMembersChanged(ctx, workspaceUuid)
     } else {
       if (grantAccount.automatic == null || !grantAccount.automatic) {
         // If grant is for existing non-automatic account we need it to be signed in using the regular approach
@@ -1893,9 +1930,12 @@ export async function getLoginInfoByToken (
         // Existing automatic account, check workspace assignment and consider it signed in
         const existingRole = await db.getWorkspaceRole(accountUuid, workspaceUuid)
         if (existingRole == null) {
+          await assertSeatAvailableOnJoin(ctx, db, workspaceUuid, grant.role)
           await db.assignWorkspace(accountUuid, workspaceUuid, grant.role)
+          await publishMembersChanged(ctx, workspaceUuid)
         } else if (getRolePower(existingRole) < getRolePower(grant.role)) {
           await db.updateWorkspaceRole(accountUuid, workspaceUuid, grant.role)
+          await publishMembersChanged(ctx, workspaceUuid)
         }
       }
     }
@@ -2247,7 +2287,7 @@ export async function getWorkspaceMembers (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  return await db.getWorkspaceMembers(workspace)
+  return await getSeatMembers(db, workspace)
 }
 
 export async function getAccountInfo (
@@ -2606,9 +2646,9 @@ export async function deleteAccount (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: { uuid?: AccountUuid }
+  params: { uuid?: AccountUuid, otpCode?: string }
 ): Promise<void> {
-  const { extra } = decodeTokenVerbose(ctx, token)
+  const { account, extra } = decodeTokenVerbose(ctx, token)
 
   const isAdmin = extra?.admin === 'true'
 
@@ -2620,6 +2660,24 @@ export async function deleteAccount (
 
   if (uuid == null || uuid === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+
+  // Irreversible identity purge — require an emailed OTP confirmation.
+  await verifyAdminOtp(ctx, db, token, params.otpCode ?? '')
+
+  if (uuid === account) {
+    // Admin must not delete their own account (would also break the OTP-email lookup).
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  // Refuse if the target is the sole owner of any workspace — that would orphan it.
+  const workspaces = await db.getAccountWorkspaces(uuid)
+  for (const ws of workspaces) {
+    const members = await db.getWorkspaceMembers(ws.uuid)
+    const owners = members.filter((m) => m.role === AccountRole.Owner)
+    if (owners.length === 1 && owners[0].person === uuid) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    }
   }
 
   await db.deleteAccount(uuid)
@@ -2823,12 +2881,14 @@ export async function getSubscriptions (
 
   let targetWorkspace: WorkspaceUuid | null
 
-  // Check if this is a service token
-  const isService = extra?.service !== undefined
+  // Service and admin (incl. read-only billing) tokens can query any workspace/all workspaces
+  const isService = extra?.service !== undefined || extra?.admin === 'true' || extra?.billingAdmin === 'true'
 
   if (isService) {
-    // Services can query any workspace/all workspaces
-    targetWorkspace = workspaceUuid ?? null
+    // Honor an explicit workspaceUuid; otherwise scope to the token's own workspace so an admin
+    // browsing their workspace sees only its plan. Only a workspace-less backend service token
+    // (no explicit uuid, no bound workspace) falls through to "all workspaces".
+    targetWorkspace = workspaceUuid ?? tokenWorkspace ?? null
   } else {
     // Regular users: use workspace from token (ignores workspaceUuid param)
     if (tokenWorkspace === undefined) {
@@ -2836,29 +2896,31 @@ export async function getSubscriptions (
     }
     targetWorkspace = tokenWorkspace
 
-    // Verify user has OWNER or MAINTAINER role
+    // Any workspace member may read its subscriptions (to see their plan/usage/limits).
+    // Mutating methods (upsert/cancel/adminCreate) keep their own stricter guards.
     const role = await db.getWorkspaceRole(account, targetWorkspace)
     if (role === null) {
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-    }
-
-    const rolePower = getRolePower(role)
-    const maintainerPower = getRolePower(AccountRole.Maintainer)
-
-    if (rolePower < maintainerPower) {
       throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
     }
   }
 
   // Fetch subscriptions for workspace (tier + addons + support)
-  // By default return only active subscriptions, unless activeOnly=false
+  // By default return only plan-granting subscriptions, unless activeOnly=false.
+  // Trialing grants the plan too, so a trial workspace shows its current plan/limits.
   const query: Query<Subscription> = targetWorkspace != null ? { workspaceUuid: targetWorkspace } : {}
   if (activeOnly) {
-    query.status = SubscriptionStatus.Active
+    query.status = { $in: [SubscriptionStatus.Active, SubscriptionStatus.Trialing] }
   }
 
   const subscriptions = await db.subscription.find(query)
+  for (const sub of subscriptions) fillFreeLimits(sub)
   return subscriptions
+}
+
+// Free fallback is provider-agnostic and not persisted: fill it on read so every consumer sees it.
+function fillFreeLimits (sub: Subscription): void {
+  if (sub.type !== SubscriptionType.Tier) return
+  sub.freeLimits = getFreePlanLimits()
 }
 
 /**
@@ -2891,6 +2953,7 @@ export async function getSubscriptionById (
 
   if (isService) {
     // Services can query any subscription by internal ID
+    fillFreeLimits(subscription)
     return subscription
   }
 
@@ -2917,6 +2980,7 @@ export async function getSubscriptionById (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
+  fillFreeLimits(subscription)
   return subscription
 }
 
@@ -3073,6 +3137,7 @@ export type AccountMethods =
   | 'updateWorkspaceName'
   | 'deleteWorkspace'
   | 'getRegionInfo'
+  | 'getLicenseInfo'
   | 'getUserWorkspaces'
   | 'getWorkspaceInfo'
   | 'getWorkspacesInfo'
@@ -3180,6 +3245,7 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
 
     /* READ OPERATIONS */
     getRegionInfo: wrap(getRegionInfo),
+    getLicenseInfo: wrap(getLicenseInfo),
     getUserWorkspaces: wrap(getUserWorkspaces),
     getWorkspaceInfo: wrap(getWorkspaceInfo),
     getWorkspacesInfo: wrap(getWorkspacesInfo),

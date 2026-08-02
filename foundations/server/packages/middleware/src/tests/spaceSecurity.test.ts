@@ -93,6 +93,7 @@ function createSpace (
     members: members as AccountUuid[],
     owners: (opts.owners as AccountUuid[]) ?? [],
     autoJoin: opts.autoJoin,
+    createdBy: core.account.System,
     modifiedOn: Date.now(),
     modifiedBy: core.account.System
   } satisfies Space

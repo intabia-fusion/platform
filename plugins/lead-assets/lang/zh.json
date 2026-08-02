@@ -35,7 +35,9 @@
     "EditFunnel": "编辑漏斗",
     "FunnelMembers": "成员",
     "ForbidCreateFunnelPermission": "禁止创建漏斗",
-    "ForbidCreateFunnelPermissionDescription": "禁止用户创建新漏斗"
+    "ForbidCreateFunnelPermissionDescription": "禁止用户创建新漏斗",
+    "Website": "网站",
+    "Industry": "行业"
   },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",

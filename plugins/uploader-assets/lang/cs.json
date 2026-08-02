@@ -2,6 +2,7 @@
   "string": {
     "Cancel": "Zrušit",
     "Retry": "Zkusit znovu",
+    "StorageLimitReached": "Dosažen limit úložiště. Uvolněte místo nebo upgradujte plán.",
     "UploadingTo": "Nahrávání {files, plural, =1 {# souboru} other {# souborů}} do",
     "UploadFiles": "Nahrát Soubory",
     "UploadFolders": "Nahrát Složky"

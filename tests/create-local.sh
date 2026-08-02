@@ -26,3 +26,7 @@
 
 ./tool-local.sh configure meetings-ws --enable=*
 ./tool-local.sh configure meetings-ws --list
+
+# Max plan, all limits 0 = unlimited
+./tool-local.sh set-workspace-plan sanity-ws business
+./tool-local.sh set-workspace-plan meetings-ws business

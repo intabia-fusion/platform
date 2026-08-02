@@ -86,6 +86,7 @@ import {
   type QueueUserMessage,
   QueueWorkspaceEvent,
   type QueueWorkspaceMessage,
+  type QueueWorkspaceMaintenanceMessage,
   type Session,
   SessionDataImpl,
   type SessionHealth,
@@ -184,6 +185,27 @@ export class TSessionManager implements SessionManager {
         ) {
           // Handle workspace messages
           this.workspaceInfoCache.delete(msg.workspace)
+        } else if (m.type === QueueWorkspaceEvent.LimitsChanged) {
+          // Notify connected clients so they re-read usage/limits without waiting for the poll.
+          // Skip when no session is active for this workspace — broadcast would log "cannot find sessions".
+          if (this.workspaces.has(msg.workspace)) {
+            const tx: TxWorkspaceEvent = {
+              _id: generateId(),
+              _class: core.class.TxWorkspaceEvent,
+              event: WorkspaceEvent.LimitsChanged,
+              modifiedBy: core.account.System,
+              modifiedOn: Date.now(),
+              objectSpace: core.space.DerivedTx,
+              space: core.space.DerivedTx,
+              createdBy: core.account.System,
+              params: null
+            }
+            this.broadcast(ctx, null, msg.workspace, [tx], undefined)
+          }
+        } else if (m.type === QueueWorkspaceEvent.Maintenance) {
+          // Global maintenance warning from the account service; workspace key is not meaningful here
+          const mm = m as QueueWorkspaceMaintenanceMessage
+          this.scheduleMaintenance(mm.timeoutMinutes, mm.message)
         }
       }
     )
@@ -325,7 +347,9 @@ export class TSessionManager implements SessionManager {
       for (const [wsId, workspace] of this.workspaces.entries()) {
         // update account lastVisit every minute per every workspace.
         for (const val of workspace.sessions.values()) {
-          if (val.session.getUser() !== systemAccountUuid) {
+          // Services may hold a person account (aibot), so the system account alone is not enough
+          // to tell a real visit from a service connection.
+          if (val.session.getUser() !== systemAccountUuid && val.session.token?.extra?.service === undefined) {
             workspacesToUpdate.push(wsId)
             break
           }
@@ -1689,7 +1713,8 @@ export class TSessionManager implements SessionManager {
       userId: session.getUser(),
       sessionId: socket.id,
       total: session.total,
-      data: socket.data
+      // data is an accessor - assigning the function itself loses it on serialization to stats
+      data: socket.data()
     }
   }
 

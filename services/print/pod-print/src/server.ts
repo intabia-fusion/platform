@@ -25,6 +25,7 @@ import { IncomingHttpHeaders, type Server } from 'http'
 import { join } from 'path'
 
 import config from './config'
+import { extractCookieToken } from '@hcengineering/server-token'
 import { convertToHtml } from './convert'
 import { ApiError } from './error'
 import { PrintOptions, print, validKinds } from './print'
@@ -32,25 +33,6 @@ import { withMeasureContext } from './middleware'
 
 function getAccountClient (token: string): AccountClient {
   return getAccountClientRaw(config.AccountsUrl, token)
-}
-
-const extractCookieToken = (cookie?: string): string | null => {
-  if (cookie === undefined || cookie === null) {
-    return null
-  }
-
-  const cookies = cookie.split(';')
-  const tokenCookie = cookies.find((cookie) => cookie.toLocaleLowerCase().includes('token'))
-  if (tokenCookie === undefined) {
-    return null
-  }
-
-  const encodedToken = tokenCookie.split('=')[1]
-  if (encodedToken === undefined) {
-    return null
-  }
-
-  return encodedToken
 }
 
 const extractAuthorizationToken = (authorization?: string): string | null => {
@@ -87,7 +69,7 @@ const extractToken = (headers: IncomingHttpHeaders, queryParams: any): string =>
       extractQueryToken(queryParams) ??
       extractCookieToken(headers.cookie)
 
-    if (token === null) {
+    if (token == null) {
       throw new ApiError(401)
     }
 

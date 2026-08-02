@@ -98,7 +98,10 @@ export class BackupClientOps {
       const chunk = this.chunkInfo.get(idx)
       this.chunkInfo.delete(idx)
       if (chunk != null) {
-        await chunk.iterator.close(ctx)
+        // The chunk is already dropped from the map; a close failure must not abort the caller.
+        await chunk.iterator.close(ctx).catch((err) => {
+          ctx.error('failed to close chunk iterator', { idx, err })
+        })
       }
     })
   }

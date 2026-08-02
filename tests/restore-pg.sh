@@ -27,5 +27,9 @@
 ./tool-pg.sh configure meetings-ws --enable=*
 ./tool-pg.sh configure meetings-ws --list
 
+# Max plan, all limits 0 = unlimited
+./tool-pg.sh set-workspace-plan sanity-ws business
+./tool-pg.sh set-workspace-plan meetings-ws business
+
 # setup issue createdOn for yesterday
 ./tool-pg.sh change-field sanity-ws --objectId 65e47f1f1b875b51e3b4b983 --objectClass tracker:class:Issue --attribute createdOn --value $(($(date +%s)*1000 - 86400000)) --type number

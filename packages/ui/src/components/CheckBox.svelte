@@ -15,6 +15,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
 
+  export let id: string | undefined = undefined
   export let checked: boolean = false
   export let symbol: 'check' | 'minus' = 'check'
   export let size: 'small' | 'medium' | 'large' = 'small'
@@ -55,6 +56,7 @@
   on:click|stopPropagation
 >
   <input
+    {id}
     class="chBox"
     disabled={readonly || disabled}
     type="checkbox"

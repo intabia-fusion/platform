@@ -2,6 +2,7 @@
   "string": {
     "Cancel": "取消",
     "Retry": "重试",
+    "StorageLimitReached": "已达到存储上限。请释放空间或升级套餐。",
     "UploadFiles": "上传文件",
     "UploadFolders": "上传文件夹",
     "UploadingTo": "上传 {files, plural, =1 {# 文件} other {# 文件}} 至"

@@ -10,6 +10,7 @@ import {
   type WorkspaceMode,
   Person,
   WorkspaceInfo,
+  type WorkspaceInfoWithStatus,
   AccountInfo,
   IntegrationKind
 } from '@hcengineering/core'
@@ -65,6 +66,7 @@ export interface WorkspaceLoginInfo extends LoginInfo {
   token: string
   role: AccountRole
   allowGuestSignUp?: boolean
+  disabledFeaturesOverride?: string[]
 }
 
 export interface LoginInfoRequestData {
@@ -90,6 +92,14 @@ export interface OtpInfo {
 export interface RegionInfo {
   region: string
   name: string
+}
+
+// Self-host edition, resolved by account (single license-key holder). Other pods fetch this instead
+// of verifying a key themselves. maxUsers 0 = unlimited.
+export interface LicenseInfo {
+  edition: 'dev' | 'community' | 'licensed'
+  canRunPayment: boolean
+  maxUsers: number
 }
 
 export type WorkspaceOperation = 'create' | 'upgrade' | 'all' | 'all+backup'
@@ -148,6 +158,17 @@ export interface AccountAggregatedInfo extends AccountInfo, Person {
   integrations: Omit<Integration, 'data'>[]
   socialIds: SocialId[]
   workspaces: Omit<WorkspaceInfo, 'allowReadOnlyGuest' | 'allowGuestSignUp'>[]
+  // Max last_visit across the account's workspaces (approximation of user's last activity)
+  lastVisit?: number
+}
+
+export type AccountsSortKey = 'name' | 'lastVisit'
+
+/** Transactor endpoint entry for admin manage calls */
+export interface TransactorEndpointInfo {
+  region: string
+  name?: string
+  external: string
 }
 
 /**
@@ -173,7 +194,8 @@ export type PersonWithProfile = Person & Omit<UserProfile, 'personUuid'>
 export enum SubscriptionStatus {
   Active = 'active', // Subscription is active and paid
   Trialing = 'trialing', // In trial period (free usage)
-  PastDue = 'past_due', // Payment failed but subscription not yet canceled
+  PastDue = 'past_due', // Payment failed but subscription not yet canceled (grace period — full access)
+  ReadOnly = 'readonly', // Grace period expired — read-only access, payment still due
   Canceled = 'canceled', // Subscription was canceled by user or admin
   Paused = 'paused', // Subscription is temporarily paused (some providers support this)
   Expired = 'expired' // Subscription or trial has expired
@@ -185,7 +207,8 @@ export enum SubscriptionStatus {
  */
 export enum SubscriptionType {
   Tier = 'tier', // Main workspace tier (free, starter, pro, enterprise)
-  Support = 'support' // Voluntary support/donation subscription
+  Support = 'support', // Voluntary support/donation subscription
+  Package = 'package' // Additional package (storage, etc.)
 }
 
 /**
@@ -209,6 +232,26 @@ export interface Subscription {
   status: SubscriptionStatus // Current status
   plan: string // Plan/product identifier (e.g. 'free', 'pro', 'storage-100gb', 'supporter')
 
+  // Snapshot of plan limits at time of subscription creation
+  // Used instead of plan config to ensure limits are stable over time
+  limits?: {
+    storageLimitGB: number
+    trafficLimitGB: number
+    meetingMinutesLimit: number
+    tokenLimit: number
+    usersLimit: number
+  }
+
+  // Free fallback limits (from the plan flagged free in config). Applied when the paid tier is unpaid:
+  // the workspace runs on these instead of full read-only. Same shape as limits.
+  freeLimits?: {
+    storageLimitGB: number
+    trafficLimitGB: number
+    meetingMinutesLimit: number
+    tokenLimit: number
+    usersLimit: number
+  }
+
   // Amount paid (in cents, e.g. 9999 = $99.99)
   // Used primarily for pay-what-you-want/donation subscriptions to track actual payment
   amount?: number
@@ -222,6 +265,7 @@ export interface Subscription {
 
   // Cancellation tracking (optional)
   canceledAt?: Timestamp
+  willCancelAt?: Timestamp // Scheduled cancellation date (cancel at period end)
 
   // Provider-specific data stored as JSONB (optional)
   providerData?: Record<string, any>
@@ -242,4 +286,167 @@ export interface AccountWorkspaceBadgeStatus {
   workspaceUuid: WorkspaceUuid
   hasUnread: boolean
   updatedOn: Timestamp
+}
+
+export type PaymentIntentStatus = 'pending' | 'charged' | 'failed'
+
+/**
+ * One claim per claimKey. The unique claimKey makes claiming atomic across pods/replicas/
+ * rolling-updates. claimKey is 'renew:<subscriptionId>:<periodEnd>' (one charge per subscription
+ * period) or 'checkout:<workspaceUuid>:<type>' (one pending checkout per workspace + plan type).
+ */
+export interface PaymentIntent {
+  id: string
+  claimKey: string
+  provider: string
+  status: PaymentIntentStatus
+  paymentId?: string
+  paymentUrl?: string
+  amount?: number
+  heartbeatAt?: number
+  // context columns (nullable; which one is set depends on the claim kind):
+  subscriptionId?: string
+  workspaceUuid?: WorkspaceUuid
+  orderFingerprint?: string // checkout: 'plan:seats:period', reuse URL only on an exact order match
+  createdOn: number
+  updatedOn: number
+}
+
+/** Append-only payment audit row (immutable). */
+export type PaymentOperationKind = 'init_charge' | 'webhook' | 'charge_recurrent' | 'cancel' | 'refund'
+/** Who drove this row: the workspace user, our scheduler, the bank callback, or an admin. */
+export type PaymentActor = 'user' | 'system' | 'provider' | 'admin'
+export interface PaymentOperation {
+  id?: string
+  provider: string
+  operation: PaymentOperationKind
+  status?: string
+  paymentId?: string
+  orderId?: string
+  subscriptionId?: string
+  workspaceUuid?: WorkspaceUuid
+  accountUuid?: AccountUuid
+  actionId?: string // groups every row produced by one intent (purchase, plan change, renewal cycle)
+  actor?: PaymentActor
+  amount?: number
+  raw?: Record<string, any>
+  createdOn?: number
+}
+
+export interface PaymentOperationStats {
+  from: number
+  to: number
+  totalCharges: number
+  totalAmount: number
+  totalErrors: number
+  workspaces: Array<{ workspaceUuid: string, charges: number, amount: number, errors: number }>
+}
+
+export interface PaymentOperationFilter {
+  from?: number
+  to?: number
+  workspaceUuid?: WorkspaceUuid
+  operation?: PaymentOperationKind
+  status?: string
+  provider?: string
+  limit?: number
+  offset?: number
+}
+
+/** Ledger aggregation for one calendar month (UTC), month formatted as 'YYYY-MM'. */
+export interface PaymentMonthlyStats {
+  month: string
+  charges: number
+  amount: number
+  errors: number
+  cancels: number
+  refunds: number
+}
+
+/**
+ * Subscription with resolved owner email (used in admin panel)
+ */
+export interface SubscriptionInfo extends Subscription {
+  payerEmail?: string
+  payerName?: string
+}
+
+export type WorkspacesSortKey = 'name' | 'backupDate' | 'backupSize' | 'lastVisit' | 'createdOn'
+
+export interface WorkspacesPagedQuery {
+  search?: string
+  modes?: WorkspaceMode[]
+  region?: string
+  attemptsGte?: number
+  billingPlan?: string
+  billingStatus?: string
+  billingExpired?: boolean
+  sort?: WorkspacesSortKey
+  order?: 'asc' | 'desc'
+  skip?: number
+  limit?: number
+}
+
+/** Workspace row with the current tier subscription snapshot */
+export type WorkspaceInfoWithBilling = WorkspaceInfoWithStatus & {
+  billingPlan?: string
+  billingStatus?: string
+  billingPeriodEnd?: number
+}
+
+export interface WorkspacesPagedResult {
+  workspaces: WorkspaceInfoWithBilling[]
+  total: number
+}
+
+export interface BillingPlanSummary {
+  plan: string
+  workspaces: number
+  seats: number
+}
+
+export interface WorkspacesSummary {
+  total: number
+  byMode: Record<string, number>
+  byRegion: Record<string, number>
+  byVersion: Record<string, number>
+  billing: BillingPlanSummary[]
+}
+
+export interface RegistrationStatsPoint {
+  day: string
+  count: number
+}
+
+export interface RegistrationStats {
+  workspaces: RegistrationStatsPoint[]
+  accounts: RegistrationStatsPoint[]
+}
+
+export interface WorkspaceActivityPoint {
+  week: string
+  count: number
+}
+
+export interface WorkspaceMemberDetails {
+  account: AccountUuid
+  role: string
+  firstName?: string
+  lastName?: string
+  email?: string
+  lastActivity?: number
+  txTotal: number
+}
+
+export interface AccountWorkspaceActivity {
+  workspace: WorkspaceUuid
+  name?: string
+  url?: string
+  count: number
+  lastTx: number
+}
+
+export interface AccountActivityStats {
+  workspaces: AccountWorkspaceActivity[]
+  weekly: WorkspaceActivityPoint[]
 }

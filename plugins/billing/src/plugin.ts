@@ -12,18 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type Class, type Ref } from '@hcengineering/core'
 import { type Asset, type IntlString, type Metadata, plugin, type Plugin } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui'
-import { Tier } from './types'
 
 /** @public */
 export const billingId = 'billing' as Plugin
 
 export const billingPlugin = plugin(billingId, {
-  class: {
-    Tier: '' as Ref<Class<Tier>>
-  },
   metadata: {
     BillingURL: '' as Metadata<string>
   },
@@ -55,29 +50,18 @@ export const billingPlugin = plugin(billingId, {
     OtherFiles: '' as IntlString,
     StorageByType: '' as IntlString,
     LargestFiles: '' as IntlString,
-    Tier: '' as IntlString,
-    StorageLimit: '' as IntlString,
-    TrafficLimit: '' as IntlString,
-    Common: '' as IntlString,
-    CommonDescription: '' as IntlString,
-    Rare: '' as IntlString,
-    RareDescription: '' as IntlString,
-    Epic: '' as IntlString,
-    EpicDescription: '' as IntlString,
-    Legendary: '' as IntlString,
-    LegendaryDescription: '' as IntlString,
     UpgradePlan: '' as IntlString,
-    LimitReached: '' as IntlString
+    LimitReached: '' as IntlString,
+    SeatLimitReadonly: '' as IntlString,
+    PayOrUpgrade: '' as IntlString,
+    FreePlan: '' as IntlString,
+    FreePlanHint: '' as IntlString,
+    TrialPlan: '' as IntlString,
+    TrialPlanHint: '' as IntlString
   },
   icon: {
     Billing: '' as Asset,
     Subscriptions: '' as Asset
-  },
-  tier: {
-    Common: '' as Ref<Tier>,
-    Rare: '' as Ref<Tier>,
-    Epic: '' as Ref<Tier>,
-    Legendary: '' as Ref<Tier>
   }
 })
 

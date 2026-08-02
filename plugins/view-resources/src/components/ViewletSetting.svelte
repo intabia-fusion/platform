@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -192,6 +193,8 @@
 
   function processAttribute (attribute: AnyAttribute, result: Config[], useMixinProxy = false): void {
     if (attribute.hidden === true || attribute.label === undefined) return
+    // Custom attributes have a dedicated CUSTOM ATTRIBUTES section, skip here to avoid duplicates.
+    if (attribute.isCustom === true) return
     if (viewlet.configOptions?.hiddenKeys?.includes(attribute.name)) return
     if (hierarchy.isDerived(attribute.type._class, core.class.Collection)) return
     const { attrClass, category } = getAttributePresenterClass(hierarchy, attribute.type)
@@ -412,6 +415,17 @@
     for (const d of hierarchy.getDescendants(selectedViewlet.attachTo)) {
       if (!hierarchy.isMixin(d)) continue
       hierarchy.getOwnAttributes(d).forEach((attr) => {
+        addAttr(attr, true)
+      })
+    }
+    // Parent-side mixins (mixins on ancestors, not descendants of attachTo) - matches
+    // getConfig/addAssociations coverage so every custom attribute lands in this section.
+    const ancestors = new Set(hierarchy.getAncestors(selectedViewlet.attachTo))
+    const parent = hierarchy.getParentClass(selectedViewlet.attachTo)
+    for (const p of hierarchy.getDescendants(parent)) {
+      const cls = hierarchy.getClass(p)
+      if (!hierarchy.isMixin(p) || cls.extends === undefined || !ancestors.has(cls.extends)) continue
+      hierarchy.getOwnAttributes(p).forEach((attr) => {
         addAttr(attr, true)
       })
     }

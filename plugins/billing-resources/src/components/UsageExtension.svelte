@@ -14,8 +14,10 @@
 -->
 <script lang="ts">
   import LimitsIndicator from './LimitsIndicator.svelte'
+  import ReadOnlyBanner from './ReadOnlyBanner.svelte'
 </script>
 
-<div class="px-2">
+<div class="px-2 flex-row-center flex-gap-2">
+  <ReadOnlyBanner />
   <LimitsIndicator />
 </div>

@@ -30,6 +30,7 @@
   "ANALYTICS_COLLECTOR_URL": "",
   "LOVE_ENDPOINT": "/_love",
   "LIVEKIT_WS":"ws://localhost:7880",
+  "PAYMENT_URL": "/_payment",
   "BILLING_URL": "/_billing",
   "DESKTOP_UPDATES_URL": "https://platform-stage.intabia.ru/_dist",
   "LINK_PREVIEW_URL": "/_link-preview",

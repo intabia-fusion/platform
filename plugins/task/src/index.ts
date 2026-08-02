@@ -119,6 +119,9 @@ export interface TaskType extends Doc, IconProps {
   // Specify if task is allowed to be used as subtask of following tasks.
   allowedAsChildOf?: Ref<TaskType>[]
 
+  // Show parent tasks block in task editor
+  showParentTasks?: boolean
+
   ofClass: Ref<Class<Task>> // Base class for task
   targetClass: Ref<Class<Task>> // Class or Mixin mixin to hold all user defined attributes.
 

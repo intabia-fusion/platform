@@ -89,6 +89,7 @@
     "CountProjects": "{count, plural, =0 {No projects} =1 {# project} other {# projects}}",
     "ProjectTypeTitle": "Project type title",
     "ProcessStates": "Process states",
+    "ShowParentTasks": "Show parent tasks",
     "Type": "Type",
     "Group": "Group",
     "Color": "Color",

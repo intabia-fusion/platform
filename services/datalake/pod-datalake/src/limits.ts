@@ -1,0 +1,94 @@
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+import { generateId, type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
+import {
+  type ConsumerControl,
+  type ConsumerHandle,
+  LimitCategory,
+  LimitStatus,
+  type PlatformQueue,
+  type PlatformQueueProducer,
+  QueueTopic,
+  QueueWorkspaceEvent,
+  type QueueWorkspaceLimitsMessage,
+  type QueueWorkspaceMessage
+} from '@hcengineering/server-core'
+
+/** Matches BillingUsageMessage from pod-billing (single billing-usage topic, discriminated by `kind`). */
+interface StorageDeltaMessage {
+  kind: 'usage'
+  workspace: WorkspaceUuid
+  metric: 'storage'
+  amount: number
+  /** Idempotency key — sha256 of blob content. */
+  ref: string
+}
+
+/** Tracks disk/payment-exhausted workspaces (consumed from Workspace topic) and emits storage deltas. */
+export class LimitsState {
+  private readonly diskExhausted = new Set<WorkspaceUuid>()
+  private readonly paymentExhausted = new Set<WorkspaceUuid>()
+
+  private readonly usageProducer: PlatformQueueProducer<StorageDeltaMessage>
+  private readonly consumer: ConsumerHandle
+
+  constructor (ctx: MeasureContext, queue: PlatformQueue) {
+    this.usageProducer = queue.getProducer<StorageDeltaMessage>(ctx, QueueTopic.BillingUsage)
+
+    this.consumer = queue.createBatchConsumer<QueueWorkspaceMessage>(
+      ctx,
+      QueueTopic.Workspace,
+      `datalake-limits-${generateId()}`, // unique per-process group: every k8s replica must receive all LimitsChanged events
+      async (_ctx: MeasureContext, messages, _control: ConsumerControl) => {
+        for (const m of messages) {
+          const value = m.value
+          if (value.type !== QueueWorkspaceEvent.LimitsChanged) continue
+          const { category, status } = value as QueueWorkspaceLimitsMessage
+          // disk exhaustion or payment exhaustion (readonly) both block uploads, tracked separately
+          let set: Set<WorkspaceUuid> | undefined
+          if (category === LimitCategory.Disk) set = this.diskExhausted
+          else if (category === LimitCategory.Payment) set = this.paymentExhausted
+          if (set === undefined) continue
+
+          if (status === LimitStatus.Exhausted) {
+            set.add(m.workspace)
+          } else {
+            set.delete(m.workspace)
+          }
+        }
+      },
+      { batchSize: 50, batchTimeout: 500 }
+    )
+  }
+
+  /** True when user uploads should be blocked for this workspace (disk or payment exhausted). */
+  isExhausted (workspace: WorkspaceUuid): boolean {
+    return this.diskExhausted.has(workspace) || this.paymentExhausted.has(workspace)
+  }
+
+  /** Fire-and-forget storage delta to billing-usage. Call only for user uploads. ref=sha256 for idempotency. */
+  sendStorageDelta (ctx: MeasureContext, workspace: WorkspaceUuid, size: number, sha256: string): void {
+    void this.usageProducer
+      .send(ctx, workspace, [{ kind: 'usage', workspace, metric: 'storage', amount: size, ref: sha256 }])
+      .catch((err) => {
+        ctx.error('failed to send storage delta', { workspace, size, sha256, err })
+      })
+  }
+
+  async close (): Promise<void> {
+    await this.consumer.close()
+    await this.usageProducer.close()
+  }
+}

@@ -35,7 +35,9 @@
     "EditFunnel": "ファネルを編集",
     "FunnelMembers": "メンバー",
     "ForbidCreateFunnelPermission": "ファネルの作成禁止",
-    "ForbidCreateFunnelPermissionDescription": "ユーザーが新しいファネルを作成することを禁止します"
+    "ForbidCreateFunnelPermissionDescription": "ユーザーが新しいファネルを作成することを禁止します",
+    "Website": "ウェブサイト",
+    "Industry": "業界"
   },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",

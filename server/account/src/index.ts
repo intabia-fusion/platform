@@ -20,5 +20,6 @@ export * from './plugin'
 export * from './utils'
 export * from './types'
 export * from './region-config'
+export * from './freeLimits'
 
 export default accountPlugin

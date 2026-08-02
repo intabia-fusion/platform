@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,19 +14,48 @@
 // limitations under the License.
 //
 
-import { Doc } from '@hcengineering/core'
-import { IntlString } from '@hcengineering/platform'
+/** @public */
+export type LocalizedString = string | Record<string, string>
 
 /** @public */
-export interface Tier extends Doc {
-  label: IntlString
-  description: IntlString
-  priceMonthly: number
+export interface PlanItem {
+  label: LocalizedString
+  description: LocalizedString
+  limits: LocalizedString[]
+  features: LocalizedString[]
+  // Monthly price in whole rubles; absent for free / contact-sales plans.
+  priceMonthly?: number
+  priceMonthlyPerUser?: number
+  // Optional display override shown instead of a numeric price (e.g. "Бесплатно", "По запросу").
+  priceMonthlyText?: LocalizedString
+  // Yearly discount in percent
+  yearlyDiscount?: number
+  currency?: string
+  free?: boolean
+  contactSales?: boolean
   storageLimitGB: number
   trafficLimitGB: number
-  meetingMinutesLimit: number // In minutes
-  tokenLimit: number // In thousands of tokens
-
+  meetingMinutesLimit: number
+  tokenLimit: number
+  usersLimit: number
+  // Seats-input hard cap (usersLimit=0 = unlimited, can't cap input). Absent -> MAX_SEATS_FALLBACK.
+  maxSeats?: number
   index: number
   color?: string
+}
+
+/** @public */
+export interface PackageItem {
+  description: LocalizedString
+  // Monthly price in whole rubles.
+  priceMonthly: number
+  currency: string
+  eligiblePlans: string[]
+  storageLimitGB: number
+}
+
+/** @public */
+export interface PlanConfig {
+  plans: Record<string, PlanItem>
+  packages: Record<string, PackageItem>
 }

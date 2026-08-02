@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022, 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -347,7 +348,15 @@
     const resolvedSpace = resolved.loc.path[3]
     const resolvedSpecial = resolved.loc.path[4]
     if (resolvedApp === undefined) {
-      if (currentAppAlias === undefined) {
+      // On Back from a hidden app (settings), honor the explicit app in the URL
+      // instead of the stale current app; content apps keep it (panel in place).
+      const explicitApp = loc.path[2]
+      const explicitSwitch =
+        explicitApp != null &&
+        explicitApp !== currentAppAlias &&
+        apps.some((a) => a.alias === explicitApp) &&
+        !apps.some((a) => a.alias === currentAppAlias)
+      if (currentAppAlias === undefined || explicitSwitch) {
         loc.path = [loc.path[0], loc.path[1], ...resolved.defaultLocation.path.splice(2)]
       } else {
         const isSameApp = currentAppAlias === loc.path[2]

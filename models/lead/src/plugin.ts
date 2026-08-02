@@ -32,7 +32,9 @@ export default mergeIds(leadId, lead, {
     Title: '' as IntlString,
     ManageFunnelStatuses: '' as IntlString,
     GotoLeadApplication: '' as IntlString,
-    ConfigDescription: '' as IntlString
+    ConfigDescription: '' as IntlString,
+    Website: '' as IntlString,
+    Industry: '' as IntlString
   },
   component: {
     CreateLead: '' as AnyComponent,

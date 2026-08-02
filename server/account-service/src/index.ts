@@ -6,24 +6,37 @@ import account, {
   type AccountMethods,
   type Meta,
   type ClientNetworkPosition,
-  EndpointKind,
   accountId,
   getAccountDB,
-  getAllTransactors,
   getMethods,
   cleanExpiredOtp,
   accountPlugin,
   type AccountNotification,
   type CrmNotification,
+  parseFreePlanLimits,
   initRegionConfig
 } from '@hcengineering/account'
 import accountEn from '@hcengineering/account/lang/en.json'
 import accountRu from '@hcengineering/account/lang/ru.json'
 import { Analytics } from '@hcengineering/analytics'
 import { registerProviders } from '@hcengineering/auth-providers'
-import { metricsAggregate, type Branding, type BrandingMap, type MeasureContext } from '@hcengineering/core'
+import {
+  metricsAggregate,
+  type Branding,
+  type BrandingMap,
+  type MeasureContext,
+  type WorkspaceUuid
+} from '@hcengineering/core'
 import platform, { Severity, Status, addStringsLoader, setMetadata, unknownStatus } from '@hcengineering/platform'
-import serverToken, { decodeToken, decodeTokenVerbose, generateToken } from '@hcengineering/server-token'
+import serverToken, {
+  decodeToken,
+  decodeTokenVerbose,
+  extractCookieToken,
+  generateToken,
+  resolveEdition,
+  resolveMaxUsers,
+  verifyLicense
+} from '@hcengineering/server-token'
 import cors from '@koa/cors'
 import type Cookies from 'cookies'
 import { type IncomingHttpHeaders } from 'http'
@@ -32,7 +45,14 @@ import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import os from 'os'
 import { getPlatformQueue } from '@hcengineering/kafka'
-import { QueueTopic, type QueueUserMessage, type QueueOnlineUserTx } from '@hcengineering/server-core'
+import {
+  QueueTopic,
+  type QueueUserMessage,
+  type QueueOnlineUserTx,
+  type QueueWorkspaceMessage,
+  type QueuePaymentOperationMessage,
+  workspaceEvents
+} from '@hcengineering/server-core'
 import { randomBytes } from 'node:crypto'
 
 import { handlePresenceBatch } from './presence'
@@ -105,6 +125,14 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   const crmProducer = platformQueue.getProducer<CrmNotification>(measureCtx, QueueTopic.CrmQueue)
   setMetadata(accountPlugin.metadata.CrmQueue, crmProducer)
 
+  // Limits/payment/maintenance events for transactor/datalake/aibot consumers
+  const workspaceProducer = platformQueue.getProducer<QueueWorkspaceMessage>(measureCtx, QueueTopic.Workspace)
+  setMetadata(accountPlugin.metadata.WorkspaceQueue, workspaceProducer)
+
+  // Admin-triggered fulltext reindex requests
+  const fulltextProducer = platformQueue.getProducer<QueueWorkspaceMessage>(measureCtx, QueueTopic.Fulltext)
+  setMetadata(accountPlugin.metadata.FulltextQueue, fulltextProducer)
+
   addStringsLoader(accountId, async (lang: string) => {
     switch (lang) {
       case 'en':
@@ -137,8 +165,21 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   setMetadata(account.metadata.ProductName, productName)
   setMetadata(account.metadata.OtpTimeToLiveSec, parseInt(process.env.OTP_TIME_TO_LIVE ?? '60'))
   setMetadata(account.metadata.OtpRetryDelaySec, parseInt(process.env.OTP_RETRY_DELAY ?? '60'))
+  setMetadata(account.metadata.AdminOtpDevCode, process.env.ADMIN_OTP_DEV_CODE)
 
   setMetadata(account.metadata.AllowReadonlyGuests, process.env.ALLOW_READONLY_GUESTS === 'true')
+  // Self-host edition: account is the single LICENSE_KEY holder. Verify once at startup; payment pods
+  // fetch the result via getLicenseInfo (no key of their own). maxUsers=0 on dev (no baked key) ->
+  // no clamp; community (no/invalid key) -> 15; licensed -> key's maxUsers. Payment allowed on dev,
+  // per-key when licensed, never in community.
+  const licenseEdition = resolveEdition(process.env.LICENSE_KEY)
+  setMetadata(account.metadata.LicenseMaxUsers, resolveMaxUsers(process.env.LICENSE_KEY))
+  setMetadata(account.metadata.LicenseEdition, licenseEdition)
+  setMetadata(
+    account.metadata.LicenseCanRunPayment,
+    licenseEdition === 'dev' || verifyLicense(process.env.LICENSE_KEY)?.canRunPayment === true
+  )
+  setMetadata(account.metadata.FreePlanLimits, parseFreePlanLimits(process.env.FREE_PLAN_LIMITS))
 
   setMetadata(account.metadata.FrontURL, frontURL)
   setMetadata(account.metadata.WsLivenessDays, wsLivenessDays)
@@ -166,6 +207,36 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       await handlePresenceBatch(ctx, msgs, accountsDb, onlineUserTxProducer)
     },
     { batchSize: 500, batchTimeout: 1000 }
+  )
+
+  // Payment audit: any provider pod publishes operations; the account service appends the ledger row.
+  // Durable — a provider ack's its webhook immediately, this consumer persists the audit later.
+  const paymentOperationConsumer = platformQueue.createBatchConsumer<QueuePaymentOperationMessage>(
+    measureCtx.newChild('payment-operation-consumer', {}, { span: false }),
+    QueueTopic.PaymentOperation,
+    'payment-ledger',
+    async (ctx, msgs) => {
+      const [db] = await accountsDb
+      for (const m of msgs) {
+        const op = m.value
+        await db.logPaymentOperation({
+          provider: op.provider,
+          operation: op.operation,
+          status: op.status,
+          paymentId: op.paymentId,
+          orderId: op.orderId,
+          subscriptionId: op.subscriptionId,
+          workspaceUuid: op.workspaceUuid as any,
+          accountUuid: op.accountUuid as any,
+          actionId: op.actionId,
+          actor: op.actor,
+          amount: op.amount,
+          raw: op.raw,
+          createdOn: op.at
+        })
+      }
+    },
+    { batchSize: 200, batchTimeout: 1000 }
   )
 
   const app = new Koa()
@@ -204,16 +275,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     )
   })
 
-  const extractCookieToken = (headers: IncomingHttpHeaders): string | undefined => {
-    if (headers.cookie != null) {
-      const cookies = headers.cookie.split(';')
-      const tokenCookie = cookies.find((cookie) => cookie.includes(AUTH_TOKEN_COOKIE))
-      return tokenCookie?.split('=')[1]
-    }
-
-    return undefined
-  }
-
   const extractAuthorizationToken = (headers: IncomingHttpHeaders): string | undefined => {
     try {
       return headers.authorization?.slice(7) ?? undefined
@@ -223,7 +284,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   }
 
   const extractToken = (headers: IncomingHttpHeaders): string | undefined => {
-    return extractAuthorizationToken(headers) ?? extractCookieToken(headers)
+    return extractAuthorizationToken(headers) ?? extractCookieToken(headers.cookie, AUTH_TOKEN_COOKIE)
   }
 
   function generateShortId (length = 12): string {
@@ -338,7 +399,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     try {
       const token = (req.query.token as string) ?? extractToken(req.headers)
       const payload = decodeToken(token)
-      const admin = payload.extra?.admin === 'true'
+      const admin = payload.extra?.admin === 'true' || payload.extra?.billingAdmin === 'true'
       const data: Record<string, any> = {
         metrics: admin ? metricsAggregate((measureCtx as any).metrics) : {},
         statistics: {}
@@ -412,18 +473,11 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       switch (operation) {
         case 'maintenance': {
           const timeMinutes = parseInt((req.query.timeout as string) ?? '5')
-          const transactors = getAllTransactors(EndpointKind.Internal)
-          for (const tr of transactors) {
-            const serverEndpoint = tr.replaceAll('wss://', 'https://').replace('ws://', 'http://')
-            const jsonBody = JSON.stringify(req.request.body as any)
-            await fetch(serverEndpoint + `/api/v1/manage?token=${token}&operation=maintenance&timeout=${timeMinutes}`, {
-              method: 'PUT',
-              body: jsonBody,
-              headers: {
-                'Content-Type': 'application/json;charset=utf-8'
-              }
-            })
-          }
+          const message = (req.request.body as any)?.message
+          // Global event: every transactor consumes the workspace topic in its own group,
+          // the workspace key carries no meaning here
+          const nilWorkspace = '00000000-0000-0000-0000-000000000000' as WorkspaceUuid
+          await workspaceProducer.send(measureCtx, nilWorkspace, [workspaceEvents.maintenance(timeMinutes, message)])
 
           req.res.writeHead(200)
           req.res.end()
@@ -542,8 +596,13 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     try {
       const [db] = await accountsDb
 
-      const shortId = generateShortId()
-      await db.shortLink.insertOne({ id: shortId, payload, workspaceId })
+      // Reuse an existing link for the same payload so repeated requests
+      // (e.g. "copy guest link" for one meeting) yield a stable URL.
+      const existing = await db.shortLink.findOne({ payload, workspaceId })
+      const shortId = existing?.id ?? generateShortId()
+      if (existing == null) {
+        await db.shortLink.insertOne({ id: shortId, payload, workspaceId })
+      }
 
       ctx.res.writeHead(200, KEEP_ALIVE_HEADERS)
       ctx.res.end(JSON.stringify({ shortId }))
@@ -596,6 +655,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     void notificationProducer.close()
     void crmProducer.close()
     void usersConsumer.close()
+    void paymentOperationConsumer.close()
     void platformQueue.shutdown()
     void accountsDb.then(([, closeAccountsDb]) => {
       closeAccountsDb()

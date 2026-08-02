@@ -430,7 +430,10 @@ export async function calcHashHash (ctx: MeasureContext, domain: Domain, adapter
     }
     return hash.digest('hex')
   } finally {
-    await it.close(ctx)
+    // Do not let a close failure mask the real error from find/next
+    await it.close(ctx).catch((err) => {
+      ctx.error('failed to close domain iterator', { domain, err })
+    })
   }
 }
 

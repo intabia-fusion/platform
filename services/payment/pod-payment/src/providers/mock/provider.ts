@@ -1,0 +1,194 @@
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+import { generateId, type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
+import type { Express } from 'express'
+import type { AccountClient, SubscriptionData, SubscriptionType } from '@hcengineering/account-client'
+import { SubscriptionStatus } from '@hcengineering/account-client'
+import type {
+  BillingPeriod,
+  CheckoutResponse,
+  PaymentProvider,
+  SubscribeRequest,
+  SubscriptionPublisher
+} from '../index'
+
+interface MockPlanPrice {
+  priceMonthly?: string | number
+  priceMonthlyPerUser?: string | number
+}
+
+/**
+ * Mock payment provider for test stands.
+ * Instantly activates subscriptions with no external API keys.
+ * Limits are attached by the server (attachLimits) on checkout poll, matching real provider behavior.
+ */
+export class MockProvider implements PaymentProvider {
+  readonly providerName = 'mock'
+
+  private readonly accountClient: AccountClient
+  private readonly frontUrl: string
+  // planKey -> prices, used to compute amount (per-seat = priceMonthlyPerUser * quantity)
+  private readonly plans: Record<string, MockPlanPrice>
+  // checkoutId -> created subscription (for getSubscriptionByCheckout polling)
+  private readonly checkoutMap = new Map<string, SubscriptionData>()
+
+  constructor (accountClient: AccountClient, frontUrl: string, plans: Record<string, MockPlanPrice> = {}) {
+    this.accountClient = accountClient
+    this.frontUrl = frontUrl
+    this.plans = plans
+  }
+
+  // Period length so the UI renewal date and proration (yearly vs monthly) are correct.
+  private periodMs (period?: BillingPeriod): number {
+    return (period === 'yearly' ? 365 : 30) * 24 * 3600 * 1000
+  }
+
+  // Per-seat plans charge price-per-seat * seats; flat plans charge priceMonthly.
+  // amount is in minor units (kopecks) like the real providers; the config price is in whole rubles.
+  private computeAmount (plan: string, quantity?: number): number {
+    const item = this.plans[plan]
+    if (item == null) return 0
+    if (item.priceMonthlyPerUser != null) {
+      return Number(item.priceMonthlyPerUser) * (quantity ?? 1) * 100
+    }
+    const flat = Number(item.priceMonthly)
+    return Number.isFinite(flat) ? flat * 100 : 0
+  }
+
+  async createSubscription (
+    ctx: MeasureContext,
+    request: SubscribeRequest,
+    workspaceUuid: WorkspaceUuid,
+    workspaceUrl: string,
+    accountUuid: string
+  ): Promise<CheckoutResponse> {
+    const checkoutId = generateId()
+    const providerSubscriptionId = generateId()
+    const quantity = request.quantity
+    const period = request.period
+    const now = Date.now()
+
+    const sub: SubscriptionData = {
+      id: generateId(),
+      workspaceUuid,
+      accountUuid: accountUuid as any,
+      provider: 'mock',
+      providerSubscriptionId,
+      providerCheckoutId: checkoutId,
+      type: request.type,
+      status: SubscriptionStatus.Active,
+      plan: request.plan,
+      limits: undefined,
+      amount: this.computeAmount(request.plan, quantity),
+      // quantity drives attachLimits (usersLimit); period drives the UI monthly/yearly label + proration.
+      providerData: quantity != null || period != null ? { quantity, period } : undefined,
+      periodStart: now,
+      // Yearly plans get a 365-day period so the renewal date and proration are correct.
+      periodEnd: now + this.periodMs(period)
+    }
+
+    // Do not upsert here — the server upserts (attachLimits) right after createSubscription
+    // because we report instant=true; no checkout page is involved.
+    this.checkoutMap.set(checkoutId, sub)
+
+    ctx.info('Mock: subscription created instantly', { plan: request.plan, type: request.type, workspaceUuid })
+
+    // instant=true: the subscription is already active, so the client refetches instead of
+    // redirecting+polling. checkoutUrl is a no-op fallback for clients that ignore the flag.
+    return {
+      instant: true,
+      checkoutId,
+      checkoutUrl: `${this.frontUrl}/workbench/${workspaceUrl}/setting/setting/billing/subscriptions`
+    }
+  }
+
+  async getSubscriptionByCheckout (ctx: MeasureContext, checkoutId: string): Promise<SubscriptionData | null> {
+    return this.checkoutMap.get(checkoutId) ?? null
+  }
+
+  async getSubscription (ctx: MeasureContext, subscriptionId: string): Promise<SubscriptionData | null> {
+    return await this.accountClient.getSubscriptionById(subscriptionId)
+  }
+
+  async cancelSubscription (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData> {
+    const sub = await this.accountClient.getSubscriptionByProviderId('mock', providerSubscriptionId)
+    if (sub === null) throw new Error(`Mock: subscription not found: ${providerSubscriptionId}`)
+    // Cancel at period end: mark canceledAt but keep the plan active/visible until it expires.
+    return { ...sub, canceledAt: Date.now() }
+  }
+
+  async uncancelSubscription (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData> {
+    const sub = await this.accountClient.getSubscriptionByProviderId('mock', providerSubscriptionId)
+    if (sub === null) throw new Error(`Mock: subscription not found: ${providerSubscriptionId}`)
+    return { ...sub, canceledAt: undefined, status: SubscriptionStatus.Active }
+  }
+
+  async updateSubscriptionPlan (
+    ctx: MeasureContext,
+    providerSubscriptionId: string,
+    newPlan: string,
+    _type: SubscriptionType,
+    _workspaceUrl: string,
+    _accountUuid: string,
+    quantity?: number,
+    period?: BillingPeriod
+  ): Promise<SubscriptionData | CheckoutResponse | null> {
+    // Server passes the provider's subscription id, not our db id.
+    const sub = await this.accountClient.getSubscriptionByProviderId('mock', providerSubscriptionId)
+    if (sub === null) return null
+    const now = Date.now()
+    // Keep the current period shape unless the caller changes it (server proration may override periodEnd).
+    const effPeriod = period ?? (sub.providerData?.period as BillingPeriod | undefined)
+    // A plan change is a fresh active subscription: clear any scheduled cancel and start a new period.
+    return {
+      ...sub,
+      plan: newPlan,
+      status: SubscriptionStatus.Active,
+      canceledAt: undefined,
+      periodStart: now,
+      periodEnd: now + this.periodMs(effPeriod),
+      limits: undefined,
+      amount: this.computeAmount(newPlan, quantity),
+      providerData: { ...sub.providerData, quantity, period: effPeriod }
+    }
+  }
+
+  async retryPayment (ctx: MeasureContext, providerSubscriptionId: string): Promise<SubscriptionData | null> {
+    const sub = await this.accountClient.getSubscriptionByProviderId('mock', providerSubscriptionId)
+    if (sub === null) return null
+    // Server upserts the returned value
+    return { ...sub, status: SubscriptionStatus.Active }
+  }
+
+  async reconcileActiveSubscriptions (
+    _ctx: MeasureContext,
+    _accountsUrl: string,
+    _serviceToken: string,
+    _publish: SubscriptionPublisher
+  ): Promise<void> {
+    // no-op: mock subscriptions are already consistent
+  }
+
+  registerWebhookEndpoints (
+    _app: Express,
+    _ctx: MeasureContext,
+    _accountsUrl: string,
+    _serviceToken: string,
+    _publish: SubscriptionPublisher
+  ): void {
+    // no-op: mock needs no webhooks
+  }
+}

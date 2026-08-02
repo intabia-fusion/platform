@@ -29,7 +29,6 @@
   export let overrides = new Map<Ref<ViewAction>, (object: Doc | Doc[], ev?: Event) => void>()
 
   let resActions = actions
-
   let loaded = false
 
   void getActions(getClient(), object, baseMenuClass, mode).then((result) => {

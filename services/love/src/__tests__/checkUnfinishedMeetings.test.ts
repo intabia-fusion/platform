@@ -16,18 +16,20 @@ import {
 } from '@hcengineering/core'
 import love, { MeetingStatus, type MeetingMinutes } from '@hcengineering/love'
 import { createMockContext, createMockMeeting } from './test-helpers'
-import { WorkspaceClient } from '../workspaceClient'
+import { WorkspaceClient, UNFINISHED_MEETING_GRACE_MS } from '../workspaceClient'
 
 // In-memory fake covering the client surface `checkUnfinishedMeetings` and the
 // `finishMeeting` it calls per meeting touch.
 function createFakeClient (meetings: MeetingMinutes[]): {
   client: any
   finished: Array<Ref<MeetingMinutes>>
+  queries: any[]
 } {
   const store = new Map<Ref<MeetingMinutes>, MeetingMinutes>()
   for (const m of meetings) store.set(m._id, { ...m })
 
   const finished: Array<Ref<MeetingMinutes>> = []
+  const queries: any[] = []
 
   const matchStatus = (status: MeetingStatus, cond: any): boolean => {
     if (cond === undefined) return true
@@ -36,13 +38,20 @@ function createFakeClient (meetings: MeetingMinutes[]): {
     return status === cond
   }
 
+  const matchModifiedOn = (modifiedOn: number, cond: any): boolean => {
+    if (cond === undefined) return true
+    if (cond.$lt !== undefined) return modifiedOn < cond.$lt
+    return true
+  }
+
   const client = {
     findAll: jest.fn(async <T extends Doc>(_class: Ref<Class<T>>, query: DocumentQuery<T>) => {
       if (_class === love.class.MeetingMinutes) {
         const q = query as any
+        queries.push(q)
         const exclude = new Set<Ref<MeetingMinutes>>((q._id?.$nin as Ref<MeetingMinutes>[]) ?? [])
         return Array.from(store.values()).filter(
-          (m) => !exclude.has(m._id) && matchStatus(m.status, q.status)
+          (m) => !exclude.has(m._id) && matchStatus(m.status, q.status) && matchModifiedOn(m.modifiedOn, q.modifiedOn)
         ) as unknown as T[]
       }
       return [] as unknown as T[]
@@ -60,7 +69,7 @@ function createFakeClient (meetings: MeetingMinutes[]): {
     }),
     remove: jest.fn(async () => {})
   }
-  return { client, finished }
+  return { client, finished, queries }
 }
 
 function makeWorkspaceClient (ctx: MeasureContext, client: any): WorkspaceClient {
@@ -70,10 +79,20 @@ function makeWorkspaceClient (ctx: MeasureContext, client: any): WorkspaceClient
   return wc as WorkspaceClient
 }
 
+const oldModifiedOn = Date.now() - UNFINISHED_MEETING_GRACE_MS - 1000
+
 describe('WorkspaceClient.checkUnfinishedMeetings', () => {
   it('finishes Active and Pending meetings not in the active room list', async () => {
-    const active = createMockMeeting({ _id: 'm:active' as Ref<MeetingMinutes>, status: MeetingStatus.Active })
-    const pending = createMockMeeting({ _id: 'm:pending' as Ref<MeetingMinutes>, status: MeetingStatus.Pending })
+    const active = createMockMeeting({
+      _id: 'm:active' as Ref<MeetingMinutes>,
+      status: MeetingStatus.Active,
+      modifiedOn: oldModifiedOn
+    })
+    const pending = createMockMeeting({
+      _id: 'm:pending' as Ref<MeetingMinutes>,
+      status: MeetingStatus.Pending,
+      modifiedOn: oldModifiedOn
+    })
     const fake = createFakeClient([active, pending])
 
     const wc = makeWorkspaceClient(createMockContext(), fake.client)
@@ -83,8 +102,16 @@ describe('WorkspaceClient.checkUnfinishedMeetings', () => {
   })
 
   it('does NOT finish a Scheduled meeting (no LiveKit room until someone starts it)', async () => {
-    const scheduled = createMockMeeting({ _id: 'm:scheduled' as Ref<MeetingMinutes>, status: MeetingStatus.Scheduled })
-    const active = createMockMeeting({ _id: 'm:active' as Ref<MeetingMinutes>, status: MeetingStatus.Active })
+    const scheduled = createMockMeeting({
+      _id: 'm:scheduled' as Ref<MeetingMinutes>,
+      status: MeetingStatus.Scheduled,
+      modifiedOn: oldModifiedOn
+    })
+    const active = createMockMeeting({
+      _id: 'm:active' as Ref<MeetingMinutes>,
+      status: MeetingStatus.Active,
+      modifiedOn: oldModifiedOn
+    })
     const fake = createFakeClient([scheduled, active])
 
     const wc = makeWorkspaceClient(createMockContext(), fake.client)
@@ -95,12 +122,47 @@ describe('WorkspaceClient.checkUnfinishedMeetings', () => {
   })
 
   it('does not finish meetings present in the active room list', async () => {
-    const active = createMockMeeting({ _id: 'm:active' as Ref<MeetingMinutes>, status: MeetingStatus.Active })
+    const active = createMockMeeting({
+      _id: 'm:active' as Ref<MeetingMinutes>,
+      status: MeetingStatus.Active,
+      modifiedOn: oldModifiedOn
+    })
     const fake = createFakeClient([active])
 
     const wc = makeWorkspaceClient(createMockContext(), fake.client)
     await wc.checkUnfinishedMeetings([active._id])
 
     expect(fake.finished).not.toContain(active._id)
+  })
+
+  it('does NOT finish an Active meeting with fresh modifiedOn (grace window)', async () => {
+    const fresh = createMockMeeting({
+      _id: 'm:fresh' as Ref<MeetingMinutes>,
+      status: MeetingStatus.Active,
+      modifiedOn: Date.now()
+    })
+    const fake = createFakeClient([fresh])
+
+    const wc = makeWorkspaceClient(createMockContext(), fake.client)
+    await wc.checkUnfinishedMeetings([])
+
+    expect(fake.finished).not.toContain(fresh._id)
+  })
+
+  it('passes a modifiedOn $lt grace-window constraint to findAll', async () => {
+    const active = createMockMeeting({
+      _id: 'm:active' as Ref<MeetingMinutes>,
+      status: MeetingStatus.Active,
+      modifiedOn: oldModifiedOn
+    })
+    const fake = createFakeClient([active])
+    const before = Date.now()
+
+    const wc = makeWorkspaceClient(createMockContext(), fake.client)
+    await wc.checkUnfinishedMeetings([])
+
+    const query = fake.queries[0]
+    expect(query.modifiedOn.$lt).toBeLessThanOrEqual(Date.now() - UNFINISHED_MEETING_GRACE_MS)
+    expect(query.modifiedOn.$lt).toBeGreaterThanOrEqual(before - UNFINISHED_MEETING_GRACE_MS)
   })
 })

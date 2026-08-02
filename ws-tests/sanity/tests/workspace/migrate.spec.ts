@@ -76,19 +76,17 @@ test.describe('Workspace Migration tests', () => {
 
       const adminPage = new AdminPage(page2)
       await adminPage.gotoAdmin()
+      await adminPage.openWorkspacesTab()
+      // Migrate button only appears when the target region differs from the workspace region.
+      // New workspaces are in the default region (America), so pick Europe as target.
+      await adminPage.selectMigrationRegion('America', 'Europe')
+      await adminPage.searchWorkspace(workspaceInfo.workspace)
 
-      await page2.getByText('Hour -').click()
-      await page2.locator('div:nth-child(3) > .checkbox-container > .checkSVG').click()
-      await page2.locator('div:nth-child(4) > .checkbox-container > .checkSVG').click()
-
-      await page2.getByRole('button', { name: 'America', exact: true }).first().click()
-      await page2.getByRole('button', { name: 'europe' }).first().click()
-      await page2.locator('[data-testid="workspace-search-container"] input').click()
-      await page2.locator('[data-testid="workspace-search-container"] input').fill(workspaceInfo.workspace)
       await page2.locator(`[id="${workspaceInfo.workspace}"]`).getByRole('button', { name: 'Migrate' }).click()
-
-      await page2.getByRole('button', { name: 'Ok' }).click()
-      await page2.locator(`[id="${workspaceInfo.workspace}"]`).getByText('europe').waitFor()
+      // Migrate is OTP-gated; enter the dev code.
+      await adminPage.confirmOtp()
+      // Migration is async; poll Refresh until the region column shows europe.
+      await adminPage.waitWorkspaceMode(workspaceInfo.workspace, 'europe')
     })
     await test.step('Check workspace is active again', async () => {
       await page.reload()

@@ -82,6 +82,7 @@ export default mergeIds(taskId, task, {
     CountProjects: '' as IntlString,
     ProjectTypeTitle: '' as IntlString,
     ProcessStates: '' as IntlString,
+    ShowParentTasks: '' as IntlString,
     Type: '' as IntlString,
     Group: '' as IntlString,
     Color: '' as IntlString,

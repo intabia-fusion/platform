@@ -26,7 +26,10 @@ import {
   LiveKitSessionData,
   LiveKitUsageData,
   ParticipantDailyUsage,
-  ParticipantMinutesUsage
+  ParticipantMinutesUsage,
+  type LimitCategory,
+  type UsageMetric,
+  type WorkspaceLimitState
 } from '../types'
 
 export class LoggedDB implements BillingDB {
@@ -127,5 +130,37 @@ export class LoggedDB implements BillingDB {
     end?: Date
   ): Promise<AiTokensUsage[]> {
     return await ctx.with('db.getAiTokensStats', {}, () => this.db.getAiTokensStats(ctx, workspace, start, end))
+  }
+
+  async accumulateUsageDelta (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    metric: UsageMetric,
+    amount: number,
+    ref: string
+  ): Promise<boolean> {
+    return await ctx.with('db.accumulateUsageDelta', {}, () =>
+      this.db.accumulateUsageDelta(ctx, workspace, metric, amount, ref)
+    )
+  }
+
+  async cleanupUsageDeltaDedup (ctx: MeasureContext, retentionDays: number): Promise<void> {
+    await ctx.with('db.cleanupUsageDeltaDedup', {}, () => this.db.cleanupUsageDeltaDedup(ctx, retentionDays))
+  }
+
+  async getLimitState (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    category: LimitCategory
+  ): Promise<WorkspaceLimitState | undefined> {
+    return await ctx.with('db.getLimitState', {}, () => this.db.getLimitState(ctx, workspace, category))
+  }
+
+  async upsertLimitState (ctx: MeasureContext, state: WorkspaceLimitState): Promise<void> {
+    await ctx.with('db.upsertLimitState', {}, () => this.db.upsertLimitState(ctx, state))
+  }
+
+  async getAllExhaustedStates (ctx: MeasureContext): Promise<WorkspaceLimitState[]> {
+    return await ctx.with('db.getAllExhaustedStates', {}, () => this.db.getAllExhaustedStates(ctx))
   }
 }

@@ -105,6 +105,11 @@ const devProxy = {
     changeOrigin: true,
     logLevel: 'debug'
   },
+  '/_payment': {
+    target: 'http://localhost:8087',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
   '/_ai': {
     target: 'http://localhost:8087',
     changeOrigin: true,
@@ -209,6 +214,11 @@ const devProxyTest = {
     logLevel: 'debug'
   },
   '/_billing': {
+    target: 'http://localhost:8083',
+    changeOrigin: true,
+    logLevel: 'debug'
+  },
+  '/_payment': {
     target: 'http://localhost:8083',
     changeOrigin: true,
     logLevel: 'debug'

@@ -602,6 +602,11 @@
       "shouldPublish": false
     },
     {
+      "packageName": "@hcengineering/backup-tests",
+      "projectFolder": "ws-tests/backup-tests",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@hcengineering/benchmarks",
       "projectFolder": "dev/benchmarks",
       "shouldPublish": false
@@ -2237,6 +2242,11 @@
       "shouldPublish": false
     },
     {
+      "packageName": "@hcengineering/pod-tbank-subscriptions",
+      "projectFolder": "services/payment/pod-tbank-subscriptions",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@hcengineering/pod-love",
       "projectFolder": "services/love",
       "shouldPublish": false
@@ -2584,6 +2594,21 @@
     {
       "packageName": "@hcengineering/backup-api-pod",
       "projectFolder": "services/backup/backup-api-pod",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/admin",
+      "projectFolder": "plugins/admin",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/admin-assets",
+      "projectFolder": "plugins/admin-assets",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/admin-resources",
+      "projectFolder": "plugins/admin-resources",
       "shouldPublish": false
     },
     {

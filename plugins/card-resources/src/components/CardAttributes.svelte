@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,7 +17,8 @@
   import { Card } from '@hcengineering/card'
   import { PermissionsStore } from '@hcengineering/contact'
   import { permissionsStore } from '@hcengineering/contact-resources'
-  import core, { AnyAttribute, Class, Doc, Ref, toRank, TypedSpace } from '@hcengineering/core'
+  import core, { AnyAttribute, Class, Doc, Ref, TypedSpace } from '@hcengineering/core'
+  import { toRank } from '@hcengineering/rank'
   import {
     AttributeBarEditor,
     createQuery,

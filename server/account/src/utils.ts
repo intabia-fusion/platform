@@ -32,10 +32,17 @@ import {
   systemAccountUuid,
   type WorkspaceDataId,
   type WorkspaceInfoWithStatus as WorkspaceInfoWithStatusCore,
+  type WorkspaceMemberInfo,
   type WorkspaceMode,
   type WorkspaceUuid
 } from '@hcengineering/core'
 import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
+import {
+  LimitCategory,
+  LimitStatus,
+  workspaceEvents,
+  type QueueWorkspaceLimitsMessage
+} from '@hcengineering/server-core'
 import { getDBClient, setDBExtraOptions } from '@hcengineering/postgres'
 import { pbkdf2Sync, randomBytes } from 'crypto'
 import otpGenerator from 'otp-generator'
@@ -67,6 +74,8 @@ import {
   type OtpInfo,
   type RegionInfo,
   type SocialId,
+  SubscriptionStatus,
+  SubscriptionType,
   type Workspace,
   type WorkspaceInfoWithStatus,
   type WorkspaceInvite,
@@ -74,7 +83,7 @@ import {
   type WorkspaceLoginInfo,
   type WorkspaceStatus
 } from './types'
-import { isAdminEmail } from './admin'
+import { isAdminEmail, isBillingAdminEmail } from './admin'
 import { type Sql } from 'postgres'
 
 export const GUEST_ACCOUNT = 'b6996120-416f-49cd-841e-e4a5d2e49c9b' as PersonUuid
@@ -532,7 +541,9 @@ export async function sendOtp (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
-  socialId: SocialId
+  socialId: SocialId,
+  ttlSec?: number,
+  adminAction: boolean = false
 ): Promise<OtpInfo> {
   const ts = Date.now()
   const otpData = (await db.otp.find({ socialId: socialId._id }, { createdOn: 'descending' }, 1))[0]
@@ -542,22 +553,15 @@ export async function sendOtp (
     return { sent: true, retryOn: otpData.createdOn + retryDelay * 1000 }
   }
 
-  let sendMethod: (ctx: MeasureContext, branding: Branding | null, code: string, target: string) => Promise<void>
-
-  switch (socialId.type) {
-    case SocialIdType.EMAIL: {
-      sendMethod = sendOtpEmail
-      break
-    }
-    default:
-      throw new Error('Unsupported OTP social id type')
+  if (socialId.type !== SocialIdType.EMAIL) {
+    throw new Error('Unsupported OTP social id type')
   }
 
   const retryDelayMs = (getMetadata(accountPlugin.metadata.OtpRetryDelaySec) ?? 30) * 1000
-  const ttlMs = (getMetadata(accountPlugin.metadata.OtpTimeToLiveSec) ?? 60) * 1000
+  const ttlMs = (ttlSec ?? getMetadata(accountPlugin.metadata.OtpTimeToLiveSec) ?? 60) * 1000
   const code = await generateUniqueOtp(db)
 
-  await sendMethod(ctx, branding, code, socialId.value)
+  await sendOtpEmail(ctx, branding, code, socialId.value, adminAction)
   await db.otp.insertOne({ socialId: socialId._id, code, expiresOn: ts + ttlMs, createdOn: ts })
 
   return { sent: true, retryOn: ts + retryDelayMs }
@@ -567,7 +571,8 @@ export async function sendOtpEmail (
   ctx: MeasureContext,
   branding: Branding | null,
   otp: string,
-  email: string
+  email: string,
+  adminAction: boolean = false
 ): Promise<void> {
   const notificationProducer = getMetadata(accountPlugin.metadata.MailQueue)
 
@@ -575,9 +580,14 @@ export async function sendOtpEmail (
 
   const app = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
 
-  const text = await translate(accountPlugin.string.OtpText, { code: otp, app }, lang)
-  const html = await translate(accountPlugin.string.OtpHTML, { code: otp, app }, lang)
-  const subject = await translate(accountPlugin.string.OtpSubject, { code: otp, app }, lang)
+  // Admin-operation OTP uses a distinct message so the admin knows what they are confirming.
+  const textKey = adminAction ? accountPlugin.string.AdminOtpText : accountPlugin.string.OtpText
+  const htmlKey = adminAction ? accountPlugin.string.AdminOtpHTML : accountPlugin.string.OtpHTML
+  const subjectKey = adminAction ? accountPlugin.string.AdminOtpSubject : accountPlugin.string.OtpSubject
+
+  const text = await translate(textKey, { code: otp, app }, lang)
+  const html = await translate(htmlKey, { code: otp, app }, lang)
+  const subject = await translate(subjectKey, { code: otp, app }, lang)
 
   const to = email
 
@@ -605,6 +615,69 @@ export async function isOtpValid (db: AccountDB, socialId: PersonId, code: strin
   const otpData = await db.otp.findOne({ socialId, code })
 
   return (otpData?.expiresOn ?? 0) > Date.now()
+}
+
+// ===== Admin-operation OTP (destructive admin actions) =====
+
+// OTP for destructive admin ops is emailed to the admin; login TTL (60s) is too short, use 5 min.
+export const ADMIN_OTP_TTL_SEC = 300
+
+// Dev/testing bypass: when ADMIN_OTP_DEV_CODE is set, admin OTP is not emailed and this
+// fixed code is accepted. NEVER set in production.
+export function getAdminOtpDevCode (): string | undefined {
+  const code = getMetadata(accountPlugin.metadata.AdminOtpDevCode)
+  return code != null && code !== '' ? code : undefined
+}
+
+export async function getAdminEmailSocialId (ctx: MeasureContext, db: AccountDB, token: string): Promise<SocialId> {
+  const { account } = decodeTokenVerbose(ctx, token)
+  // Deterministic: pick the earliest verified email so OTP always goes to a trusted address.
+  const emails = (
+    await db.socialId.find({ personUuid: account, type: SocialIdType.EMAIL, verifiedOn: { $gt: 0 } })
+  ).sort((a, b) => (a.createdOn ?? 0) - (b.createdOn ?? 0))
+  const sid = emails[0]
+  if (sid == null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  return sid
+}
+
+export async function requestAdminOtp (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string
+): Promise<OtpInfo> {
+  if (getAdminOtpDevCode() !== undefined) {
+    return { sent: true, retryOn: Date.now() }
+  }
+  const sid = await getAdminEmailSocialId(ctx, db, token)
+  return await sendOtp(ctx, db, branding, sid, ADMIN_OTP_TTL_SEC, true)
+}
+
+export async function verifyAdminOtp (
+  ctx: MeasureContext,
+  db: AccountDB,
+  token: string,
+  otpCode: string
+): Promise<void> {
+  if (otpCode == null || otpCode === '') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
+  }
+  const devCode = getAdminOtpDevCode()
+  if (devCode !== undefined) {
+    if (otpCode !== devCode) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
+    }
+    return
+  }
+  const sid = await getAdminEmailSocialId(ctx, db, token)
+  // Atomic consume: only the caller that deletes the row succeeds. Prevents one code
+  // confirming two concurrent ops; each wrong guess deletes nothing (no reuse).
+  const ok = await db.consumeOtp(sid._id, otpCode)
+  if (!ok) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
+  }
 }
 
 /**
@@ -805,7 +878,8 @@ export async function selectWorkspace (
       workspace: workspace.uuid,
       workspaceUrl: workspace.url,
       workspaceDataId: workspace.dataId,
-      role: AccountRole.DocGuest
+      role: AccountRole.DocGuest,
+      disabledFeaturesOverride: workspace.disabledFeaturesOverride
     }
   }
 
@@ -822,7 +896,8 @@ export async function selectWorkspace (
       collaboratorEndpoint: getCollaboratorEndpoint(workspace.uuid, workspace.region, getKind(workspace.region)),
       workspace: workspace.uuid,
       workspaceUrl: workspace.url,
-      role: AccountRole.Admin
+      role: AccountRole.Admin,
+      disabledFeaturesOverride: workspace.disabledFeaturesOverride
     }
   }
 
@@ -887,7 +962,8 @@ export async function selectWorkspace (
     workspaceUrl: workspace.url,
     workspaceDataId: workspace.dataId,
     allowGuestSignUp: workspace.allowReadOnlyGuest && workspace.allowGuestSignUp,
-    role
+    role,
+    disabledFeaturesOverride: workspace.disabledFeaturesOverride
   }
 }
 
@@ -1465,6 +1541,66 @@ export async function getWorkspaceJoinInfo (
   throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
 }
 
+// aiBot is a technical account (system modifiedBy) that lands in ws_members as role=User; it must not
+// occupy a paid seat. Members that count toward a paid seat: ws_members minus the aiBot account.
+const AI_BOT_EMAIL = process.env.AI_BOT_EMAIL ?? 'huly.ai.bot@hc.engineering'
+
+export async function getSeatMembers (db: AccountDB, workspace: WorkspaceUuid): Promise<WorkspaceMemberInfo[]> {
+  const members = await db.getWorkspaceMembers(workspace)
+  const aiBot = (await getEmailSocialId(db, AI_BOT_EMAIL))?.personUuid
+  return aiBot == null ? members : members.filter((m) => m.person !== aiBot)
+}
+
+// Roles that never occupy a paid seat (guests are read-only). Admins are operators, also seatless.
+const SEATLESS_ROLES: AccountRole[] = [
+  AccountRole.Admin,
+  AccountRole.Guest,
+  AccountRole.DocGuest,
+  AccountRole.ReadOnlyGuest
+]
+
+/**
+ * Best-effort join-time seat cap: reject a new member when the paid plan's usersLimit is already
+ * filled. ponytail: best-effort — concurrent accepts can overshoot by 1-2 (no atomic count); the
+ * transactor SeatLimitsMiddleware read-only enforcement is the real backstop for over-limit members.
+ */
+export async function assertSeatAvailableOnJoin (
+  ctx: MeasureContext,
+  db: AccountDB,
+  workspace: WorkspaceUuid,
+  joiningRole: AccountRole
+): Promise<void> {
+  if (SEATLESS_ROLES.includes(joiningRole)) return
+  const tier = (await db.subscription.find({ workspaceUuid: workspace })).find(
+    (s) =>
+      s.type === SubscriptionType.Tier &&
+      (s.status === SubscriptionStatus.Active || s.status === SubscriptionStatus.Trialing)
+  )
+  const usersLimit = tier?.limits?.usersLimit ?? 0
+  if (usersLimit === 0) return // unlimited or free-fallback: no join-time cap
+  const members = await getSeatMembers(db, workspace)
+  const seatsUsed = members.filter((m) => !SEATLESS_ROLES.includes(m.role)).length
+  if (seatsUsed >= usersLimit) {
+    ctx.info('join rejected: seat limit reached', { workspace, usersLimit, seatsUsed })
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.PlanLimitExceeded, {}))
+  }
+}
+
+/** Signal that workspace membership changed so seat-count consumers (transactor/billing) refresh now. */
+export async function publishMembersChanged (ctx: MeasureContext, workspaceUuid: WorkspaceUuid): Promise<void> {
+  const producer = getMetadata(accountPlugin.metadata.WorkspaceQueue)
+  if (producer === undefined) {
+    ctx.warn('WorkspaceQueue producer is not configured, members event skipped', { workspaceUuid })
+    return
+  }
+  const events: QueueWorkspaceLimitsMessage[] = [workspaceEvents.limitsChanged(LimitCategory.Members, LimitStatus.Ok)]
+  try {
+    await producer.send(ctx, workspaceUuid, events)
+  } catch (err: any) {
+    ctx.error('Failed to publish members-changed event', { workspaceUuid, err })
+  }
+}
+
 export async function doJoinByInvite (
   ctx: MeasureContext,
   db: AccountDB,
@@ -1479,9 +1615,13 @@ export async function doJoinByInvite (
   if (invite !== undefined && invite != null) {
     // TODO: should we re-join kicked users? How are they marked as inactive?
     if (role == null) {
+      // Join-time seat cap: reject before assign so an over-limit member never enters ws_members.
+      await assertSeatAvailableOnJoin(ctx, db, workspace.uuid, invite.role)
       await db.assignWorkspace(account, workspace.uuid, invite.role)
+      await publishMembersChanged(ctx, workspace.uuid)
     } else if (getRolePower(role) < getRolePower(invite.role)) {
       await db.updateWorkspaceRole(account, workspace.uuid, invite.role)
+      await publishMembersChanged(ctx, workspace.uuid)
     }
     await useInvite(db, invite.id)
   } else if (workspace.allowReadOnlyGuest && workspace.allowGuestSignUp) {
@@ -1589,7 +1729,11 @@ export async function loginOrSignUpWithProvider (
     }
 
     await confirmHulyIds(ctx, db, personUuid as AccountUuid)
-    const extraToken: Record<string, string> = isAdminEmail(normalizedEmail) ? { admin: 'true' } : {}
+    const extraToken: Record<string, string> = isAdminEmail(normalizedEmail)
+      ? { admin: 'true' }
+      : isBillingAdminEmail(normalizedEmail)
+        ? { billingAdmin: 'true' }
+        : {}
     ctx.info('Provider login succeeded', { email, normalizedEmail, emailSocialId, socialId, ...extraToken })
 
     return {
@@ -1692,10 +1836,11 @@ export async function getWorkspaces (
   const nowD = Date.now() / (1000 * 60 * 60 * 24)
   const workspaces = (await db.workspace.find(region != null ? { region } : {})).filter((it) => {
     const status = statusesMap[it.uuid]
-    if (isDisabled === true) {
-      return status.isDisabled
-    } else if (isDisabled === false) {
-      return !status.isDisabled
+    if (isDisabled === true && !status.isDisabled) {
+      return false
+    }
+    if (isDisabled === false && status.isDisabled) {
+      return false
     }
 
     const lastVisitDays = (status.lastVisit ?? 0) / (1000 * 60 * 60 * 24)

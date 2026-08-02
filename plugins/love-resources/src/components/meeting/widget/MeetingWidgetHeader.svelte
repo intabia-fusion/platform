@@ -20,13 +20,15 @@
     IconMaximize,
     ButtonIcon,
     showPopup,
-    PopupResult
+    PopupResult,
+    ticker1
   } from '@hcengineering/ui'
   import { MeetingMinutes, Room } from '@hcengineering/love'
   import { onDestroy } from 'svelte'
 
   import RoomModal from '../../RoomModal.svelte'
   import { currentRoom } from '../../../stores'
+  import { formatElapsedTime } from '../../../utils'
   import MeetingOptionsButton from '../controls/MeetingOptionsButton.svelte'
   import RecordingButton from '../controls/RecordingButton.svelte'
   import TranscriptionButton from '../controls/TranscriptionButton.svelte'
@@ -57,6 +59,9 @@
   <Breadcrumbs items={breadcrumbs} currentOnly />
   <svelte:fragment slot="actions">
     {#if $currentRoom !== undefined}
+      {#if doc?.createdOn !== undefined}
+        <span class="font-medium-12 secondary-textColor">{formatElapsedTime($ticker1 - doc.createdOn)}</span>
+      {/if}
       <RecordingButton kind="tertiary" size="small" />
       <TranscriptionButton kind="tertiary" size="small" />
       <MeetingOptionsButton {room} meetingMinutes={doc} kind="tertiary" size="small" />

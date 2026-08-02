@@ -1,6 +1,7 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -36,6 +37,7 @@ import DateEditor from './components/DateEditor.svelte'
 import DatePresenter from './components/DatePresenter.svelte'
 import DateTimePresenter from './components/DateTimePresenter.svelte'
 import DocAttributeBar from './components/DocAttributeBar.svelte'
+import ClassSettingButton from './components/ClassSettingButton.svelte'
 import DocNavLink from './components/DocNavLink.svelte'
 import DocReferencePresenter from './components/DocReferencePresenter.svelte'
 import EditBoxPopup from './components/EditBoxPopup.svelte'
@@ -163,6 +165,7 @@ export { default as ActionHandler } from './components/ActionHandler.svelte'
 export { default as BaseDocPresenter } from './components/BaseDocPresenter.svelte'
 export { default as DocsNavigator } from './components/DocsNavigator.svelte'
 export { default as FixedColumn } from './components/FixedColumn.svelte'
+export { default as MetricsInfo } from './components/MetricsInfo.svelte'
 export { default as LinkPresenter } from './components/LinkPresenter.svelte'
 export { default as MarkupDiffPresenter } from './components/MarkupDiffPresenter.svelte'
 export { default as MarkupPresenter } from './components/MarkupPresenter.svelte'
@@ -236,6 +239,7 @@ export {
   ColorsPopup,
   DateEditor,
   DocAttributeBar,
+  ClassSettingButton,
   DocNavLink,
   DocReferencePresenter,
   EditBoxPopup,

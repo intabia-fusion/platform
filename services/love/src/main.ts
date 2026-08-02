@@ -49,11 +49,13 @@ import { join } from 'path'
 import { updateLiveKitSessions } from './billing'
 import config from './config'
 import { LiveKitPollingService } from './polling'
+import { LimitsState } from './limits'
 import { RecordingProcessor } from './recordings'
 import { WebhookProcessor } from './webhook'
 import { WorkspaceClient } from './workspaceClient'
 import { GuestManager } from './guests'
 import { createToken, decodeMeetingToken, extractToken, getRoomName, parseMetadata } from './utils'
+import { setBillingProducer, type BillingMessage } from './queue'
 /**
  * Recursively converts all BigInt values in an object to strings.
  * This is needed because JSON.stringify cannot handle BigInt values.
@@ -128,6 +130,11 @@ export const main = async (): Promise<void> => {
   const egressClient = new EgressClient(config.LiveKitHost, config.ApiKey, config.ApiSecret)
 
   const eventProducer = queue.getProducer<QueueMeetingMessage>(ctx, QueueTopic.LoveQueue)
+  const billingProducer = queue.getProducer<BillingMessage>(ctx, QueueTopic.BillingUsage)
+  setBillingProducer(billingProducer)
+
+  // Disk/payment-exhausted workspaces (LimitsChanged consumer) — gate for starting recordings.
+  const limitsState = new LimitsState(ctx, queue)
 
   const webhookProcessor = new WebhookProcessor(
     ctx,
@@ -144,7 +151,8 @@ export const main = async (): Promise<void> => {
     eventProducer,
     egressClient,
     storageConfig,
-    s3storageConfig
+    s3storageConfig,
+    limitsState
   )
 
   const guestManager = new GuestManager(ctx, roomClient)
@@ -268,12 +276,7 @@ export const main = async (): Promise<void> => {
         const wsClient = await WorkspaceClient.create(workspaceId, ctx)
         const meetingDoc = await wsClient.findMeetingById(meetingId)
         if (meetingDoc !== undefined && meetingDoc.private && !meetingDoc.members.includes(accountUuid)) {
-          // Workspace owners (AccountRole.Owner) bypass private-meeting
-          // membership the same way SpaceSecurityMiddleware bypasses
-          // owner-only checks for them server-side. The client is expected
-          // to self-add the owner to `members` before calling getToken;
-          // we recheck role here to keep the endpoint authoritative even
-          // if the membership write races the token request or fails.
+          // Owners bypass private-meeting membership; rechecked here in case the client's self-add races or fails.
           let isWorkspaceOwner = false
           try {
             const wsLoginInfo = await getAccountClient(token).getLoginInfoByToken()
@@ -364,6 +367,12 @@ export const main = async (): Promise<void> => {
     }
 
     const roomName = getRoomName(workspaceId, meetingId)
+
+    // No disk left (or unpaid) — reject with a clear status instead of silently skipping.
+    if (limitsState.isExhausted(workspaceId)) {
+      res.status(413).send({ error: 'Storage limit exceeded' })
+      return
+    }
 
     try {
       const token = extractToken(req.headers)
@@ -478,10 +487,15 @@ export const main = async (): Promise<void> => {
   })
 
   // Initialize polling service if enabled
-  const pollingService = new LiveKitPollingService(ctx, roomClient, {
-    intervalMs: config.PollingIntervalMs,
-    projectKey: config.LiveKitProject
-  })
+  const pollingService = new LiveKitPollingService(
+    ctx,
+    roomClient,
+    {
+      intervalMs: config.PollingIntervalMs,
+      projectKey: config.LiveKitProject
+    },
+    billingProducer
+  )
   pollingService.start()
 
   const workspaceConsumer = queue.createConsumer(ctx, QueueTopic.Workspace, 'love-client', async (ctx, msg, queue) => {
@@ -518,6 +532,8 @@ export const main = async (): Promise<void> => {
     void workspaceTxConsumer.close()
     void eventConsumer.close()
     void eventProducer.close()
+    void billingProducer.close()
+    void limitsState.close()
     void queue.shutdown()
     pollingService.stop()
     void WorkspaceClient.closeAll()

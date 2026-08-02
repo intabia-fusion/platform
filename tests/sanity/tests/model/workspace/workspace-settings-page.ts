@@ -19,7 +19,7 @@ export class WorkspaceSettingsPage {
   }
 
   general = (): Locator => this.page.getByRole('button', { name: 'General' })
-  owners = (): Locator => this.page.getByRole('button', { name: 'Owners' })
+  owners = (): Locator => this.page.getByRole('button', { name: 'Members' })
   spaces = (): Locator => this.page.getByRole('button', { name: 'Spaces', exact: true })
   textTemplate = (): Locator => this.page.getByRole('button', { name: 'Text Templates' })
   relatedIssues = (): Locator => this.page.getByRole('button', { name: 'Related issues' })

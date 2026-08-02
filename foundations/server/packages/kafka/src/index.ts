@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -24,6 +25,62 @@ import {
 } from '@hcengineering/server-core'
 import { type Admin, CompressionTypes, type Consumer, Kafka, Partitioners, type Producer } from 'kafkajs'
 import type * as tls from 'tls'
+
+// Member is out of the group: heartbeat/commit keep failing until kafkajs rejoins, so bail.
+// Any other heartbeat error is transient and should be retried.
+const REBALANCE_ERROR_TYPES = new Set(['UNKNOWN_MEMBER_ID', 'REBALANCE_IN_PROGRESS', 'ILLEGAL_GENERATION'])
+function isRebalanceError (err: any): boolean {
+  if (err == null) return false
+  const type: string = typeof err.type === 'string' ? err.type : ''
+  const name: string = typeof err.name === 'string' ? err.name : ''
+  return (
+    REBALANCE_ERROR_TYPES.has(type) ||
+    name.includes('Rebalance') ||
+    name.includes('IllegalGeneration') ||
+    name.includes('UnknownMemberId')
+  )
+}
+
+// Pump heartbeats every second while a handler runs so a slow message/batch never trips
+// sessionTimeout. kafkajs throttles internally, so frequent calls are safe.
+const HEARTBEAT_PUMP_INTERVAL = 1000
+
+export function startHeartbeatPump (
+  ctx: MeasureContext,
+  heartbeat: () => Promise<void>,
+  intervalMs: number = HEARTBEAT_PUMP_INTERVAL
+): () => Promise<void> {
+  let running = true
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let wake: (() => void) | undefined
+  const loop = (async () => {
+    while (running) {
+      await new Promise<void>((resolve) => {
+        wake = resolve
+        timer = setTimeout(resolve, intervalMs)
+      })
+      if (!running) break
+      try {
+        await heartbeat()
+      } catch (err: any) {
+        if (isRebalanceError(err)) {
+          // Member gone: stop pumping. The handler loop's own checks bail and kafkajs rejoins.
+          ctx.warn('heartbeat pump: member evicted, stopping', { err })
+          running = false
+        } else {
+          // Transient (network blip): keep pumping, next beat likely recovers.
+          ctx.warn('heartbeat pump: transient error, continuing', { err })
+        }
+      }
+    }
+  })()
+  return async () => {
+    running = false
+    if (timer !== undefined) clearTimeout(timer)
+    wake?.() // resolve the pending sleep immediately so shutdown does not wait a full interval
+    await loop
+  }
+}
 
 export interface QueueConfig {
   postfix: string // a topic prefix to be used do distinguish between staging and production topics in same broker
@@ -200,6 +257,7 @@ class PlatformQueueImpl implements PlatformQueue {
       await this.checkCreateTopic(admin, QueueTopic.NotificationQueue, topics, 2)
       await this.checkCreateTopic(admin, QueueTopic.LoveQueue, topics, 1)
       await this.checkCreateTopic(admin, QueueTopic.CrmQueue, topics, 1)
+      await this.checkCreateTopic(admin, QueueTopic.BillingUsage, topics, 1)
     } finally {
       await admin.disconnect()
     }
@@ -338,31 +396,42 @@ class PlatformQueueConsumerImpl implements ConsumerHandle {
         const retryDelay = this.options?.retryDelay ?? 1000
         const maxRetryDelay = this.options?.maxRetryDelay ?? 10
         let to = 1
-        while (true) {
-          try {
-            await this.ctx.with(
-              'handle-msg',
-              {},
-              (ctx) => this.onMessage(ctx, { workspace, value: msgData }, { heartbeat, pause }),
-              {},
-              {
-                meta
-              }
-            )
-            break
-          } catch (err: any) {
-            this.ctx.error('failed to process message', { err, msgKey, msgData, workspace })
+        // Keep group membership alive even if a single message handler runs long.
+        const stopPump = startHeartbeatPump(this.ctx, heartbeat)
+        try {
+          while (true) {
             try {
-              await heartbeat()
-            } catch (hbErr) {
-              // Ignore transient heartbeat errors during retry attempts to reduce flakiness.
-              this.ctx.warn('heartbeat failed during retry, ignoring transient error', { err: hbErr })
-            }
-            await new Promise((resolve) => setTimeout(resolve, to * retryDelay))
-            if (to < maxRetryDelay) {
-              to++
+              await this.ctx.with(
+                'handle-msg',
+                {},
+                (ctx) => this.onMessage(ctx, { workspace, value: msgData }, { heartbeat, pause }),
+                {},
+                {
+                  meta
+                }
+              )
+              break
+            } catch (err: any) {
+              this.ctx.error('failed to process message', { err, msgKey, msgData, workspace })
+              // Probe liveness: bail only on a rebalance (auto-commit fails there, so the message is
+              // redelivered, not lost). Transient heartbeat errors are ignored and we retry.
+              try {
+                await heartbeat()
+              } catch (hbErr) {
+                if (isRebalanceError(hbErr)) {
+                  this.ctx.warn('member evicted during message, bailing to rejoin', { err: hbErr })
+                  return
+                }
+                this.ctx.warn('heartbeat failed during retry, ignoring transient error', { err: hbErr })
+              }
+              await new Promise((resolve) => setTimeout(resolve, to * retryDelay))
+              if (to < maxRetryDelay) {
+                to++
+              }
             }
           }
+        } finally {
+          await stopPump()
         }
       }
     })
@@ -482,45 +551,58 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
           parsed.push({ offset: message.offset, workspace, value: msgData, meta })
         }
 
-        // Process in chunks of batchSize, retry whole chunk on error
-        for (let i = 0; i < parsed.length; i += batchSize) {
-          if (!isRunning() || isStale()) return
-          const chunk = parsed.slice(i, i + batchSize)
-          const msgs = chunk.map((m) => ({ workspace: m.workspace, value: m.value }))
+        // Keep group membership alive for the whole batch, even if a single onMessage runs long.
+        const stopPump = startHeartbeatPump(this.ctx, heartbeat)
+        try {
+          // Process in chunks of batchSize, retry whole chunk on error
+          for (let i = 0; i < parsed.length; i += batchSize) {
+            if (!isRunning() || isStale()) return
+            const chunk = parsed.slice(i, i + batchSize)
+            const msgs = chunk.map((m) => ({ workspace: m.workspace, value: m.value }))
 
-          let to = 1
-          while (true) {
-            try {
-              await this.ctx.with(
-                'handle-msg',
-                {},
-                (ctx) => this.onMessage(ctx, msgs, { heartbeat, pause }),
-                {},
-                { meta: { batchCount: chunk.length } }
-              )
-              // Mark all offsets in chunk as resolved
+            let to = 1
+            while (true) {
+              try {
+                await this.ctx.with(
+                  'handle-msg',
+                  {},
+                  (ctx) => this.onMessage(ctx, msgs, { heartbeat, pause }),
+                  {},
+                  { meta: { batchCount: chunk.length } }
+                )
+              } catch (err: any) {
+                this.ctx.error('failed to process message batch', {
+                  err,
+                  partition: partitionNum,
+                  size: chunk.length
+                })
+                // Bail if we were evicted/stopped - retrying with a dead member never commits and
+                // reprocesses forever. Otherwise back off and retry (the pump keeps us alive).
+                if (isStale() || !isRunning()) return
+                await new Promise((resolve) => setTimeout(resolve, to * retryDelay))
+                if (to < maxRetryDelay) to++
+                if (!isRunning() || isStale()) return
+                continue
+              }
+              // Commit offsets. A heartbeat throw here is a post-work eviction - bail to rejoin
+              // (offsets recommit on redelivery; handlers are idempotent), not a processing failure.
               for (const m of chunk) resolveOffset(m.offset)
-              await heartbeat()
-              break
-            } catch (err: any) {
-              this.ctx.error('failed to process message batch', {
-                err,
-                partition: partitionNum,
-                size: chunk.length
-              })
               try {
                 await heartbeat()
               } catch (hbErr) {
-                this.ctx.warn('heartbeat failed during batch retry, ignoring transient error', {
-                  err: hbErr,
-                  partition: partitionNum
-                })
+                if (isRebalanceError(hbErr)) {
+                  this.ctx.warn('member evicted after batch chunk, rejoining', {
+                    err: hbErr,
+                    partition: partitionNum
+                  })
+                  return
+                }
               }
-              await new Promise((resolve) => setTimeout(resolve, to * retryDelay))
-              if (to < maxRetryDelay) to++
-              if (!isRunning() || isStale()) return
+              break
             }
           }
+        } finally {
+          await stopPump()
         }
       }
     })
@@ -570,6 +652,13 @@ export function getPlatformQueue (serviceId: string, region?: string): PlatformQ
   return createPlatformQueue(config)
 }
 
+function intEnv (name: string, def: number): number {
+  const raw = process.env[name]
+  if (raw === undefined || raw === '') return def
+  const v = parseInt(raw, 10)
+  return Number.isFinite(v) ? v : def
+}
+
 export function createPlatformQueue (config: QueueConfig): PlatformQueue {
   console.info({ message: 'Using queue', config })
 
@@ -577,7 +666,17 @@ export function createPlatformQueue (config: QueueConfig): PlatformQueue {
     new Kafka({
       clientId: config.clientId,
       brokers: config.brokers,
-      ssl: config.ssl
+      ssl: config.ssl,
+      // Never give up on the broker by default: retries=5 gets exhausted during a redpanda
+      // restart/rebalance and kills producers/consumers. Overridable via env (e.g. bound retries
+      // in tests so a transient broker error fails fast instead of hanging).
+      retry: {
+        initialRetryTime: intEnv('QUEUE_INITIAL_RETRY_TIME', 300),
+        maxRetryTime: intEnv('QUEUE_MAX_RETRY_TIME', 30000),
+        factor: 0.2,
+        multiplier: 2,
+        retries: intEnv('QUEUE_RETRIES', Number.MAX_SAFE_INTEGER)
+      }
     }),
     config
   )

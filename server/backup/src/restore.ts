@@ -40,7 +40,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { extract } from 'tar-stream'
 import { createGunzip, gunzipSync } from 'zlib'
 import { BackupStorage } from './storage'
-import type { BackupInfo } from './types'
+import type { BackupInfo, BackupSnapshot } from './types'
 import { chunkArray, doTrimHash, isAccountDomain, loadDigest, migradeBlobData, toAccountDomain } from './utils'
 export * from './storage'
 
@@ -81,6 +81,85 @@ async function verifyBlobContent (
     return 'mismatch'
   }
   return Buffer.concat(chunks).equals(expected) ? 'ok' : 'mismatch'
+}
+
+/**
+ * @public
+ * Collect account-domain objects (person/socialId) from backup snapshots for a domain.
+ * Shared by restore and account-remap analysis.
+ */
+export async function collectAccountObjects (
+  ctx: MeasureContext,
+  storage: BackupStorage,
+  snapshots: BackupSnapshot[],
+  domain: Domain,
+  date: number
+): Promise<any[]> {
+  const changeset = await loadDigest(ctx, storage, snapshots, domain, date)
+  if (changeset.size === 0) return []
+
+  const rsnapshots = Array.from(snapshots).reverse()
+  const processed = new Set<string>()
+  const collectedObjects: any[] = []
+
+  for (const s of rsnapshots) {
+    const d = s.domains[domain]
+    if (d === undefined) continue
+
+    for (const sf of d.storage ?? []) {
+      const readStream = await storage.load(sf)
+      const ex = extract()
+
+      const endPromise = new Promise<void>((resolve, reject) => {
+        ex.on('entry', (headers, stream, next) => {
+          const name = headers.name ?? ''
+          if (name.endsWith('.json')) {
+            const objKey = name.substring(0, name.length - 5)
+            if (changeset.has(objKey as any) && !processed.has(objKey)) {
+              const chunks: Buffer[] = []
+              stream.on('data', (chunk) => {
+                chunks.push(chunk)
+              })
+              stream.on('end', () => {
+                try {
+                  processed.add(objKey)
+                  collectedObjects.push(JSON.parse(Buffer.concat(chunks as any).toString()))
+                } catch (err) {
+                  ctx.warn('failed to parse account object', { name, err })
+                }
+                next()
+              })
+            } else {
+              next()
+            }
+          } else {
+            next()
+          }
+          stream.resume()
+        })
+        const onError = (err: any): void => {
+          readStream.destroy()
+          reject(err)
+        }
+        ex.on('finish', () => {
+          resolve()
+        })
+        ex.on('error', onError)
+        const unzip = createGunzip({ level: defaultLevel })
+        readStream.on('end', () => {
+          readStream.destroy()
+        })
+        readStream.on('error', onError)
+        unzip.on('error', onError)
+        readStream.pipe(unzip)
+        unzip.pipe(ex)
+      })
+
+      await endPromise
+    }
+  }
+
+  return collectedObjects
 }
 
 /**
@@ -516,17 +595,21 @@ export async function restore (
               const unzip = createGunzip({ level: defaultLevel })
 
               const endPromise = new Promise((resolve, reject) => {
+                const onError = (err: any): void => {
+                  readStream.destroy()
+                  reject(err)
+                }
                 ex.on('finish', () => {
                   resolve(null)
                 })
+                ex.on('error', onError)
 
                 readStream.on('end', () => {
                   readStream.destroy()
                 })
-                readStream.pipe(unzip).on('error', (err) => {
-                  readStream.destroy()
-                  reject(err)
-                })
+                readStream.on('error', onError)
+                unzip.on('error', onError)
+                readStream.pipe(unzip)
                 unzip.pipe(ex)
               })
 
@@ -567,73 +650,11 @@ export async function restore (
     }
 
     const isPersonDomain = c === toAccountDomain('person')
-    const changeset = await loadDigest(ctx, storage, snapshots, c, opt.date)
 
-    if (changeset.size === 0) {
+    const collectedObjects = await collectAccountObjects(ctx, storage, snapshots, c, opt.date)
+    if (collectedObjects.length === 0) {
       ctx.info('no account domain data to restore', { domain: c })
       return
-    }
-
-    ctx.info('restoring account domain', { domain: c, total: changeset.size, workspace: workspaceId })
-
-    const processed = new Set<string>()
-    const collectedObjects: any[] = []
-
-    // Collect all objects from backup snapshots
-    for (const s of rsnapshots) {
-      const d = s.domains[c]
-      if (d === undefined) continue
-
-      for (const sf of d.storage ?? []) {
-        const readStream = await storage.load(sf)
-        const ex = extract()
-
-        const endPromise = new Promise<void>((resolve, reject) => {
-          ex.on('entry', (headers, stream, next) => {
-            const name = headers.name ?? ''
-            if (name.endsWith('.json')) {
-              const objKey = name.substring(0, name.length - 5)
-              if (changeset.has(objKey) && !processed.has(objKey)) {
-                const chunks: Buffer[] = []
-                stream.on('data', (chunk) => {
-                  chunks.push(chunk)
-                })
-                stream.on('end', () => {
-                  try {
-                    const obj = JSON.parse(Buffer.concat(chunks as any).toString())
-                    processed.add(objKey)
-                    collectedObjects.push(obj)
-                  } catch (err) {
-                    ctx.warn('failed to parse account object', { name, err })
-                  }
-                  next()
-                })
-              } else {
-                next()
-              }
-            } else {
-              next()
-            }
-            stream.resume()
-          })
-
-          ex.on('finish', () => {
-            resolve()
-          })
-
-          const unzip = createGunzip({ level: defaultLevel })
-          readStream.on('end', () => {
-            readStream.destroy()
-          })
-          readStream.pipe(unzip).on('error', (err) => {
-            readStream.destroy()
-            reject(err)
-          })
-          unzip.pipe(ex)
-        })
-
-        await endPromise
-      }
     }
 
     ctx.info('collected account objects', { domain: c, count: collectedObjects.length, workspace: workspaceId })
@@ -728,7 +749,8 @@ async function restorePersons (
       .filter((p) => !existingPersonUuids.has(p.uuid))
       .map((it) => {
         const { '%hash%': _, ...data } = it as any
-        return data
+        // firstName/lastName are NOT NULL in account_db; backup may carry nulls
+        return { ...data, firstName: data.firstName ?? '', lastName: data.lastName ?? '' }
       })
     if (personsToInsert.length > 0) {
       await accountDb.person.insertMany(personsToInsert)

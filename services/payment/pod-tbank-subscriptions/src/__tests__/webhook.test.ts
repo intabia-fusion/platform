@@ -1,0 +1,327 @@
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+import { createServer as createHttpServer, type Server } from 'http'
+import type { AddressInfo } from 'net'
+import { SubscriptionStatus } from '@hcengineering/account-client'
+import { createServer, processWebhook } from '../server'
+
+const activeSub: any = {
+  id: 'tbank_1',
+  provider: 'tbank',
+  providerSubscriptionId: 'pay_1',
+  workspaceUuid: 'ws-1',
+  accountUuid: 'acc-1',
+  type: 'tier',
+  plan: 'business',
+  status: SubscriptionStatus.Active,
+  amount: 49900,
+  periodEnd: Date.now() + 1000000,
+  providerData: { rebillId: 'reb_1', period: 'monthly', pending: false, paymentId: 'pay_1' }
+}
+
+function makeStorage (sub: any = null): any {
+  return {
+    getByProviderId: jest.fn().mockResolvedValue(sub),
+    getById: jest.fn().mockResolvedValue(sub),
+    getAll: jest.fn().mockResolvedValue(sub !== null ? [sub] : []),
+    upsert: jest.fn().mockResolvedValue(undefined),
+    logOperation: jest.fn().mockResolvedValue(undefined),
+    releaseCheckout: jest.fn().mockResolvedValue(undefined),
+    getAccountContact: jest.fn().mockResolvedValue({ email: 'payer@x.com', phone: null, locale: 'ru' }),
+    getTransactionCount: jest.fn().mockResolvedValue(0)
+  }
+}
+
+// GetState mock returns Success:false by default, so processWebhook skips the recheck branch and trusts
+// the webhook status as-is. Pass an explicit getState (Success:true) to exercise the recheck path.
+function makeTbank (verifyResult = true, getState?: any): any {
+  return {
+    verifyNotificationSignature: jest.fn().mockReturnValue(verifyResult),
+    getPaymentState: jest.fn().mockResolvedValue(getState ?? { Success: false }),
+    removeCard: jest.fn().mockResolvedValue({ Success: true })
+  }
+}
+
+const baseConfig: any = {
+  FrontUrl: 'https://front',
+  TbankTerminalKey: 'term',
+  TbankSkipWebhookVerification: false,
+  PaymentUrl: 'https://payment'
+}
+
+const newCtx = (): any => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() })
+const realFetch = global.fetch
+
+// ---- HTTP ingress: only verify + enqueue happen here; effects are the consumer's job. ----
+async function startServer (
+  config: any,
+  tbank: any,
+  storage: any,
+  enqueue: any
+): Promise<{ server: Server, url: string }> {
+  const ctx = newCtx()
+  // createServer loads the shared plan-config on boot via fetch; stub only that one call, then restore
+  // the real fetch so the test's own webhook POST goes over the wire.
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) }) as any
+  const { app } = await createServer(ctx, config, tbank, storage, enqueue)
+  global.fetch = realFetch
+  const server = createHttpServer(app)
+  await new Promise<void>((resolve) => server.listen(0, resolve))
+  const { port } = server.address() as AddressInfo
+  return { server, url: `http://127.0.0.1:${port}/api/v1/webhooks/tbank` }
+}
+
+async function postWebhook (url: string, body: Record<string, any>): Promise<Response> {
+  return await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  })
+}
+
+describe('handleWebhook (HTTP ingress)', () => {
+  test('invalid token -> 200 OK, nothing enqueued', async () => {
+    const enqueue = jest.fn().mockResolvedValue(undefined)
+    const { server, url } = await startServer(baseConfig, makeTbank(false), makeStorage(activeSub), enqueue)
+    try {
+      const res = await postWebhook(url, { PaymentId: 'pay_1', Status: 'CONFIRMED', Token: 'bad', Amount: 49900 })
+      expect(res.status).toBe(200)
+      expect(enqueue).not.toHaveBeenCalled()
+    } finally {
+      server.close()
+    }
+  })
+
+  test('valid token -> 200 OK, enqueued as verified', async () => {
+    const enqueue = jest.fn().mockResolvedValue(undefined)
+    const { server, url } = await startServer(baseConfig, makeTbank(true), makeStorage(activeSub), enqueue)
+    try {
+      const res = await postWebhook(url, { PaymentId: 'pay_1', Status: 'CONFIRMED', Token: 'ok', Amount: 49900 })
+      expect(res.status).toBe(200)
+      expect(enqueue).toHaveBeenCalledWith(expect.objectContaining({ PaymentId: 'pay_1' }), true)
+    } finally {
+      server.close()
+    }
+  })
+
+  test('skip-verification -> enqueued as unverified', async () => {
+    const enqueue = jest.fn().mockResolvedValue(undefined)
+    const cfg = { ...baseConfig, TbankSkipWebhookVerification: true }
+    const { server, url } = await startServer(cfg, makeTbank(false), makeStorage(null), enqueue)
+    try {
+      const res = await postWebhook(url, { PaymentId: 'unknown_pay', Status: 'CONFIRMED', Amount: 100 })
+      expect(res.status).toBe(200)
+      expect(enqueue).toHaveBeenCalledWith(expect.objectContaining({ PaymentId: 'unknown_pay' }), false)
+    } finally {
+      server.close()
+    }
+  })
+
+  test('enqueue failure -> 500 so the bank redelivers', async () => {
+    const enqueue = jest.fn().mockRejectedValue(new Error('queue down'))
+    const { server, url } = await startServer(baseConfig, makeTbank(true), makeStorage(activeSub), enqueue)
+    try {
+      const res = await postWebhook(url, { PaymentId: 'pay_1', Status: 'CONFIRMED', Token: 'ok', Amount: 49900 })
+      expect(res.status).toBe(500)
+    } finally {
+      server.close()
+    }
+  })
+})
+
+describe('processWebhook (consumer)', () => {
+  test('CONFIRMED status mismatch with GetState -> ignored, no upsert', async () => {
+    const storage = makeStorage(activeSub)
+    const tbank = makeTbank(true, { Success: true, Status: 'REJECTED' })
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      tbank,
+      storage,
+      { PaymentId: 'pay_1', Status: 'CONFIRMED', Amount: 49900 },
+      true
+    )
+    expect(storage.upsert).not.toHaveBeenCalled()
+  })
+
+  test('repeat CONFIRMED on already-Active non-pending sub -> idempotent, no upsert', async () => {
+    const storage = makeStorage(activeSub)
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_1', Status: 'CONFIRMED', Amount: 49900 },
+      true
+    )
+    expect(storage.upsert).not.toHaveBeenCalled()
+  })
+
+  test('REJECTED on wasActive=true -> PastDue and notify attempted', async () => {
+    const storage = makeStorage(activeSub)
+    const mailConfig = { ...baseConfig, MailUrl: 'http://mail', MailFrom: 'noreply@x.com' }
+    // Notify does real HTTP (plan-config + mail) — stub it so the test never hits the network.
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) }) as any
+    try {
+      await processWebhook(
+        newCtx(),
+        mailConfig,
+        makeTbank(true),
+        storage,
+        { PaymentId: 'pay_1', Status: 'REJECTED', Amount: 49900 },
+        true
+      )
+    } finally {
+      global.fetch = realFetch
+    }
+    const pastDue = storage.upsert.mock.calls.find((c: any[]) => c[0].status === SubscriptionStatus.PastDue)
+    expect(pastDue).toBeDefined()
+    expect(storage.getAccountContact).toHaveBeenCalled()
+  })
+
+  test.each(['REVERSED', 'REFUNDED'])('%s (refund) on Active sub -> PastDue, NO dunning email', async (status) => {
+    const storage = makeStorage(activeSub)
+    const mailConfig = { ...baseConfig, MailUrl: 'http://mail', MailFrom: 'noreply@x.com' }
+    // Guard: if notify regresses back in, the stubbed fetch must be observed instead of a network hang.
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
+    global.fetch = fetchMock as any
+    try {
+      await processWebhook(
+        newCtx(),
+        mailConfig,
+        makeTbank(true),
+        storage,
+        { PaymentId: 'pay_1', Status: status, Amount: 49900 },
+        true
+      )
+    } finally {
+      global.fetch = realFetch
+    }
+    const pastDue = storage.upsert.mock.calls.find((c: any[]) => c[0].status === SubscriptionStatus.PastDue)
+    expect(pastDue).toBeDefined()
+    expect(storage.getAccountContact).not.toHaveBeenCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  test('REJECTED on a PastDue sub with a DIFFERENT prior status -> upsert, no notify', async () => {
+    // First time this REJECTED lands (prior providerData.status was a charge-fail marker, not REJECTED).
+    const storage = makeStorage({
+      ...activeSub,
+      status: SubscriptionStatus.PastDue,
+      providerData: { ...activeSub.providerData, status: 'CHARGE_FAILED', pending: false }
+    })
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_1', Status: 'REJECTED', Amount: 49900 },
+      true
+    )
+    expect(storage.upsert).toHaveBeenCalled()
+    expect(storage.getAccountContact).not.toHaveBeenCalled()
+  })
+
+  test('duplicate REJECTED (same status already applied, non-pending) -> idempotent, no upsert', async () => {
+    const storage = makeStorage({
+      ...activeSub,
+      status: SubscriptionStatus.PastDue,
+      providerData: { ...activeSub.providerData, status: 'REJECTED', pending: false }
+    })
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_1', Status: 'REJECTED', Amount: 49900 },
+      true
+    )
+    expect(storage.upsert).not.toHaveBeenCalled()
+    expect(storage.getAccountContact).not.toHaveBeenCalled()
+  })
+
+  test('DEADLINE_EXPIRED on active (not pending-first) sub -> no cancel, releases checkout', async () => {
+    const storage = makeStorage(activeSub)
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_1', Status: 'DEADLINE_EXPIRED', Amount: 49900 },
+      true
+    )
+    expect(storage.upsert).not.toHaveBeenCalled()
+    expect(storage.releaseCheckout).toHaveBeenCalledWith('pay_1')
+  })
+
+  test('CONFIRMED with pendingReplacement cancels the old subscription', async () => {
+    const newSub = {
+      ...activeSub,
+      id: 'tbank_2',
+      providerSubscriptionId: 'pay_2',
+      status: SubscriptionStatus.PastDue,
+      providerData: { pending: true, paymentId: 'pay_2' }
+    }
+    const oldSub = {
+      ...activeSub,
+      id: 'tbank_1',
+      providerSubscriptionId: 'pay_1',
+      providerData: { ...activeSub.providerData, pendingReplacement: true }
+    }
+    const storage = makeStorage(newSub)
+    storage.getAll = jest.fn().mockResolvedValue([oldSub, newSub])
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_2', Status: 'CONFIRMED', Amount: 49900 },
+      true
+    )
+    const canceled = storage.upsert.mock.calls.find((c: any[]) => c[0].id === 'tbank_1')
+    expect(canceled).toBeDefined()
+    expect(canceled[0].status).toBe(SubscriptionStatus.Canceled)
+  })
+
+  test('delta-upgrade CONFIRMED: activated sub bills the FULL recurring price from the draft, not the delta', async () => {
+    const now = Date.now()
+    const yearlyEnd = now + 100 * 24 * 3600 * 1000
+    const draft = {
+      ...activeSub,
+      id: 'tbank_2',
+      providerSubscriptionId: 'pay_2',
+      status: SubscriptionStatus.PastDue,
+      amount: 720000,
+      periodStart: now - 265 * 24 * 3600 * 1000,
+      periodEnd: yearlyEnd,
+      providerData: { pending: true, paymentId: 'pay_2', period: 'yearly' }
+    }
+    const storage = makeStorage(draft)
+    storage.getAll = jest.fn().mockResolvedValue([draft])
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_2', Status: 'CONFIRMED', Amount: 495000 },
+      true
+    )
+    const activated = storage.upsert.mock.calls.map((c: any[]) => c[0]).find((s: any) => s.id === 'tbank_2')
+    expect(activated.status).toBe(SubscriptionStatus.Active)
+    expect(activated.amount).toBe(720000)
+    expect(activated.periodEnd).toBe(yearlyEnd)
+  })
+})

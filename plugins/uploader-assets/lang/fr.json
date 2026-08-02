@@ -2,6 +2,7 @@
   "string": {
     "Cancel": "Annuler",
     "Retry": "Réessayer",
+    "StorageLimitReached": "Limite de stockage atteinte. Libérez de l'espace ou mettez à niveau le forfait.",
     "UploadFiles": "Téléverser des Fichiers",
     "UploadFolders": "Téléverser des Dossiers",
     "UploadingTo": "Téléchargement de {files, plural, =1 {# fichier} other {# fichiers}} vers"

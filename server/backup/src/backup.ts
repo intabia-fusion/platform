@@ -69,6 +69,7 @@ import {
   rebuildSizeInfo,
   toAccountDomain,
   verifyDocsFromSnapshot,
+  watchStreamErrors,
   writeChanges
 } from './utils'
 export * from './storage'
@@ -77,6 +78,8 @@ const dataBlobSize = 250 * 1024 * 1024
 const batchSize = 5000
 
 const defaultLevel = 9
+
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
  * @public
@@ -517,6 +520,11 @@ export async function backup (
       let _packClose = async (): Promise<void> => {}
       let addedDocuments = (): number => 0
 
+      // Orphan blob records are common on long-lived workspaces; report a count per domain
+      // instead of two log lines per blob.
+      let missingBlobs = 0
+      let mismatchedBlobs = 0
+
       if (progress !== undefined) {
         await progress(0)
       }
@@ -748,13 +756,19 @@ export async function backup (
             _pack.pipe(storageZip)
             storageZip.pipe(sizePass)
 
+            const packFailed = watchStreamErrors(_pack, storageZip, sizePass, tempFile)
+
             _packClose = async () => {
-              await new Promise<void>((resolve) => {
-                tempFile.on('close', () => {
-                  resolve()
-                })
-                _pack?.finalize()
-              })
+              _packClose = async () => {} // tempFile emits 'close' once, a second call would hang
+              await Promise.race([
+                new Promise<void>((resolve) => {
+                  tempFile.on('close', () => {
+                    resolve()
+                  })
+                  _pack?.finalize()
+                }),
+                packFailed
+              ])
 
               // We need to upload file to storage
               ctx.info('>>>> upload pack', { storageFile, size: sz, url: wsIds.url, workspace: workspaceId })
@@ -827,7 +841,7 @@ export async function backup (
             )
             try {
               const buffers: Buffer[] = []
-              await blobClient.writeTo(ctx, blob._id, blob.size, {
+              const found = await blobClient.writeTo(ctx, blob._id, blob.size, {
                 write (buffer, cb) {
                   buffers.push(buffer)
                   cb()
@@ -838,14 +852,10 @@ export async function backup (
               })
 
               const finalBuffer = Buffer.concat(buffers as any)
-              if (finalBuffer.length !== blob.size) {
-                ctx.error('download blob size mismatch', {
-                  _id: blob._id,
-                  contentType: blob.contentType,
-                  size: blob.size,
-                  bufferSize: finalBuffer.length,
-                  provider: blob.provider
-                })
+              if (!found) {
+                missingBlobs++
+              } else if (finalBuffer.length !== blob.size) {
+                mismatchedBlobs++
               }
               await new Promise<void>((resolve, reject) => {
                 _pack?.entry({ name: d._id + '.json' }, descrJson, (err) => {
@@ -927,6 +937,15 @@ export async function backup (
         // This will allow to retry in case of critical error.
         await storage.writeFile(infoFile, gzipSync(JSON.stringify(backupInfo, undefined, 2), { level: defaultLevel }))
       }
+
+      if (missingBlobs > 0 || mismatchedBlobs > 0) {
+        ctx.warn('blobs not backed up', {
+          domain,
+          missing: missingBlobs,
+          mismatched: mismatchedBlobs,
+          ...(options.msg ?? {})
+        })
+      }
     }
 
     async function processAccountDomain (
@@ -946,15 +965,30 @@ export async function backup (
         getObjKey = (obj: GlobalPerson) => obj.uuid
 
         if (fullCheck) {
+          const fullCheckStart = Date.now()
           let idx: number | undefined
-          while (true) {
-            const currentChunk = await ctx.with('loadChunk', {}, () => connection.loadChunk(ctx, DOMAIN_CONTACT, idx))
-            idx = currentChunk.idx
-            const chuckDocs = await connection.loadDocs(
-              ctx,
-              DOMAIN_CONTACT,
-              currentChunk.docs.map((it) => it.id) as Ref<Doc>[]
-            )
+          ctx.info('fullCheck: scanning DOMAIN_CONTACT for Person.personUuid')
+          // Collect ids first, close cursor, then loadDocs in batches.
+          // Reason: PG pool may be size=1; cursor held by loadChunk blocks loadDocs.
+          const allIds: Ref<Doc>[] = []
+          try {
+            while (true) {
+              const currentChunk = await ctx.with('loadChunk', {}, () => connection.loadChunk(ctx, DOMAIN_CONTACT, idx))
+              idx = currentChunk.idx
+              for (const d of currentChunk.docs) {
+                allIds.push(d.id as Ref<Doc>)
+              }
+              if (currentChunk.finished) break
+            }
+          } finally {
+            if (idx !== undefined) {
+              await ctx.with('closeChunk', {}, () => connection.closeChunk(ctx, idx as number))
+            }
+          }
+          let totalDocs = 0
+          for (const batch of chunkArray(allIds, 1000)) {
+            const chuckDocs = await connection.loadDocs(ctx, DOMAIN_CONTACT, batch)
+            totalDocs += chuckDocs.length
             for (const doc of chuckDocs) {
               if (doc._class === contact.class.Person) {
                 const person = doc as Person
@@ -963,10 +997,61 @@ export async function backup (
                 }
               }
             }
-            if (currentChunk.finished) {
-              break
+          }
+          ctx.info('fullCheck: DOMAIN_CONTACT done', {
+            totalIds: allIds.length,
+            totalDocs,
+            affectedPersons: affectedPersons.size,
+            elapsedMs: Date.now() - fullCheckStart
+          })
+        }
+
+        // Seed affected socialIds from existing account.socialId digest only when
+        // DOMAIN_CHANNEL scan was skipped (fullCheck off or "no changes in domain").
+        // Reason: without this account.person snapshot never builds, breaking FK
+        // social_id.person_uuid on restore.
+        if (affectedSocialIds.size === 0) {
+          try {
+            const sidDomain = toAccountDomain('socialId')
+            const sidDigest = await loadDigest(ctx, storage, backupInfo.snapshots, sidDomain, undefined, options.msg)
+            for (const sidId of sidDigest.keys()) {
+              affectedSocialIds.add(sidId as SocialIdentityRef)
+            }
+            ctx.info('seeded affectedSocialIds from account.socialId digest', {
+              added: sidDigest.size,
+              total: affectedSocialIds.size
+            })
+          } catch (err: any) {
+            ctx.error('failed to seed affectedSocialIds from digest', { err })
+          }
+        }
+
+        // Always derive personUuids referenced by affected socialIds, regardless of fullCheck.
+        // This guarantees FK integrity: every social_id.person_uuid has matching person snapshot.
+        // Filter out legacy hex-ObjectId values (pre-migration SocialIdentity in DOMAIN_CHANNEL):
+        // account.social_id._id is BIGINT, hex strings fail PG parse.
+        if (affectedSocialIds.size > 0) {
+          const numericIds = Array.from(affectedSocialIds).filter((it) => {
+            try {
+              BigInt(it)
+              return true
+            } catch (err: any) {
+              return false
+            }
+          })
+          const sidChunks = chunkArray(numericIds, 1000)
+          for (const sidChunk of sidChunks) {
+            const sids = await accountDb.socialId.find({ _id: { $in: sidChunk } })
+            for (const sid of sids) {
+              if (sid.personUuid != null) {
+                affectedPersons.add(sid.personUuid)
+              }
             }
           }
+          ctx.info('derived affectedPersons from affectedSocialIds', {
+            affectedSocialIds: affectedSocialIds.size,
+            affectedPersons: affectedPersons.size
+          })
         }
         affectedObjects = affectedPersons
       } else {
@@ -975,25 +1060,42 @@ export async function backup (
         getObjKey = (obj: SocialId) => obj._id
 
         if (fullCheck) {
+          const fullCheckStart = Date.now()
           let idx: number | undefined
-          while (true) {
-            const currentChunk = await ctx.with('loadChunk', {}, () => connection.loadChunk(ctx, DOMAIN_CHANNEL, idx))
-            idx = currentChunk.idx
-            const chuckDocs = await connection.loadDocs(
-              ctx,
-              DOMAIN_CHANNEL,
-              currentChunk.docs.map((it) => it.id) as Ref<Doc>[]
-            )
+          ctx.info('fullCheck: scanning DOMAIN_CHANNEL for SocialIdentity')
+          // Collect ids first, close cursor, then loadDocs in batches (pool size=1 deadlock avoidance).
+          const allIds: Ref<Doc>[] = []
+          try {
+            while (true) {
+              const currentChunk = await ctx.with('loadChunk', {}, () => connection.loadChunk(ctx, DOMAIN_CHANNEL, idx))
+              idx = currentChunk.idx
+              for (const d of currentChunk.docs) {
+                allIds.push(d.id as Ref<Doc>)
+              }
+              if (currentChunk.finished) break
+            }
+          } finally {
+            if (idx !== undefined) {
+              await ctx.with('closeChunk', {}, () => connection.closeChunk(ctx, idx as number))
+            }
+          }
+          let totalDocs = 0
+          for (const batch of chunkArray(allIds, 1000)) {
+            const chuckDocs = await connection.loadDocs(ctx, DOMAIN_CHANNEL, batch)
+            totalDocs += chuckDocs.length
             for (const doc of chuckDocs) {
               if (doc._class === contact.class.SocialIdentity) {
                 const sid = doc as SocialIdentity
                 affectedSocialIds.add(sid._id)
               }
             }
-            if (currentChunk.finished) {
-              break
-            }
           }
+          ctx.info('fullCheck: DOMAIN_CHANNEL done', {
+            totalIds: allIds.length,
+            totalDocs,
+            affectedSocialIds: affectedSocialIds.size,
+            elapsedMs: Date.now() - fullCheckStart
+          })
         }
         affectedObjects = affectedSocialIds
       }
@@ -1031,19 +1133,24 @@ export async function backup (
       // 1. We need to include global records based on persons/socialIdentities info which are missing in digest
       // 2. We need to check updates for all records present in digest
       const batchSize = 1000
-      // BigInt filter fits only socialId keys (numeric _id); person keys are UUIDs.
-      const toLoad = new Set(
-        isPersonDomain
-          ? [...digest.keys(), ...affectedObjects]
-          : [...digest.keys(), ...affectedObjects].filter((it) => {
-              try {
-                BigInt(it)
-                return true
-              } catch (err: any) {
-                return false
-              }
-            })
-      ) as Set<PersonUuid>
+      // account.person.uuid is UUID and account.social_id._id is BIGINT: legacy hex-ObjectId
+      // personUuid values (pre-migration DOMAIN_CONTACT) make PG reject the whole $in batch.
+      const keepKey = isPersonDomain
+        ? (it: string) => uuidRegex.test(it)
+        : (it: string) => {
+            try {
+              BigInt(it)
+              return true
+            } catch (err: any) {
+              return false
+            }
+          }
+      const allKeys = [...digest.keys(), ...affectedObjects]
+      const keptKeys = allKeys.filter(keepKey)
+      if (keptKeys.length !== allKeys.length) {
+        ctx.warn('skipped malformed account keys', { domain, skipped: allKeys.length - keptKeys.length })
+      }
+      const toLoad = new Set(keptKeys) as Set<PersonUuid>
       if (toLoad.size === 0) {
         ctx.info('No records updates')
         return
@@ -1052,9 +1159,9 @@ export async function backup (
       const toLoadSorted = Array.from(toLoad).sort()
       const chunks = chunkArray(toLoadSorted, batchSize)
       for (const chunk of chunks) {
-        const objs = await accountDb[collection].find({
-          [key]: { $in: chunk, $gte: chunk[0], $lte: chunk[chunk.length - 1] }
-        })
+        // No $gte/$lte bounds: buildWhereClause only honors the first operator per
+        // field, so they were silently dropped anyway.
+        const objs = await accountDb[collection].find({ [key]: { $in: chunk } })
         for (const obj of objs) {
           // check if existing package need to be dumped
           if (addedDocuments() > dataBlobSize && _pack !== undefined) {
@@ -1112,13 +1219,19 @@ export async function backup (
             _pack.pipe(storageZip)
             storageZip.pipe(sizePass)
 
+            const packFailed = watchStreamErrors(_pack, storageZip, sizePass, tempFile)
+
             _packClose = async () => {
-              await new Promise<void>((resolve) => {
-                tempFile.on('close', () => {
-                  resolve()
-                })
-                _pack?.finalize()
-              })
+              _packClose = async () => {} // tempFile emits 'close' once, a second call would hang
+              await Promise.race([
+                new Promise<void>((resolve) => {
+                  tempFile.on('close', () => {
+                    resolve()
+                  })
+                  _pack?.finalize()
+                }),
+                packFailed
+              ])
 
               // We need to upload file to storage
               ctx.info('>>>> upload pack', { storageFile, size: sz, url: wsIds.url, workspace: workspaceId })

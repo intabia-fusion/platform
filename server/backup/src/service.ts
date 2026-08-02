@@ -87,6 +87,8 @@ class BackupWorker {
     this.canceled = true
   }
 
+  lastRecheckState = ''
+
   recheckWorkspaces = reduceCalls(async (ctx: MeasureContext) => {
     try {
       const workspacesIgnore = new Set(this.config.SkipWorkspaces.split(';'))
@@ -157,7 +159,17 @@ class BackupWorker {
       for (const ws of mixedBackupSorting) {
         this.workspacesToBackup.set(ws.uuid, ws)
       }
-      ctx.info('skipped workspaces', { skipped, workspaces: this.workspacesToBackup.size, workspacesIgnore })
+      // Recheck runs every CoolDown/5 seconds; log only when the picture actually changed.
+      const state = `${skipped}:${this.workspacesToBackup.size}`
+      if (state !== this.lastRecheckState) {
+        this.lastRecheckState = state
+        ctx.info('workspaces to backup', {
+          skipped,
+          workspaces: this.workspacesToBackup.size,
+          ignored: Array.from(workspacesIgnore).filter((it) => it !== ''),
+          nextCheck: new Date(now + (this.config.CoolDown / 5) * 1000).toISOString()
+        })
+      }
     } catch (err: any) {
       ctx.error('Error in recheckWorkspaces', { error: err })
     }

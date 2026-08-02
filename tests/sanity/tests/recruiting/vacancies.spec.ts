@@ -29,7 +29,7 @@ test.describe('Vacancy tests', () => {
     await settingsPage.selectPopupAp('Settings')
     const wsPage: WorkspaceSettingsPage = new WorkspaceSettingsPage(page)
     await wsPage.owners().click()
-    await settingsPage.checkOpened('Owners')
+    await settingsPage.checkOpened('Members')
     const count = await page.locator('div[id="workbench:component:WorkbenchTabs"] div.container.main').count()
     for (let i = 1; i < count; i++) {
       await page.locator('div[id="workbench:component:WorkbenchTabs"] div.container.main:first-child button').click()

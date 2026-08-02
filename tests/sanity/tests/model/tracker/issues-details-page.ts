@@ -215,7 +215,7 @@ export class IssuesDetailsPage extends CommonTrackerPage {
   }
 
   async checkIssueContainsAttachment (fileName: string): Promise<void> {
-    await this.page.locator('div.attachment-grid div.name', { hasText: fileName }).click()
+    await this.page.locator('div.attachment-list div.name', { hasText: fileName }).click()
   }
 
   async checkCollaborators (names: Array<string>): Promise<void> {

@@ -15,6 +15,7 @@
 
 import {
   type AccountUuid,
+  AccountRole,
   type IntegrationKind,
   type MeasureContext,
   type PersonId,
@@ -22,7 +23,7 @@ import {
   SocialIdType,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import platform, { PlatformError, Status, Severity } from '@hcengineering/platform'
+import platform, { PlatformError, Status, Severity, getMetadata } from '@hcengineering/platform'
 import { decodeTokenVerbose } from '@hcengineering/server-token'
 
 import {
@@ -47,7 +48,8 @@ import {
   updateIntegration,
   updateIntegrationSecret,
   addIntegrationSecret,
-  upsertSubscription
+  upsertSubscription,
+  adminCreateSubscription
 } from '../serviceOperations'
 
 // Mock platform
@@ -1411,7 +1413,8 @@ describe('integration methods', () => {
 describe('upsertSubscription', () => {
   const mockCtx = {
     error: jest.fn(),
-    info: jest.fn()
+    info: jest.fn(),
+    warn: jest.fn()
   } as unknown as MeasureContext
 
   const mockBranding = null
@@ -1426,6 +1429,7 @@ describe('upsertSubscription', () => {
     mockDb = {
       subscription: {
         findOne: jest.fn(),
+        find: jest.fn().mockResolvedValue([]),
         insertOne: jest.fn(),
         update: jest.fn()
       }
@@ -1601,5 +1605,177 @@ describe('upsertSubscription', () => {
         providerData: subscriptionData.providerData
       })
     )
+  })
+
+  // Invariant: at most one active tier subscription per workspace.
+  describe('one-active-tier invariant', () => {
+    const workspaceUuid = 'ws-1' as WorkspaceUuid
+    const accountUuid = 'acc-1' as AccountUuid
+
+    beforeEach(() => {
+      ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ extra: { service: 'payment' } })
+      getWorkspaceByIdSpy.mockResolvedValue({ uuid: workspaceUuid })
+      mockDb.subscription.findOne.mockResolvedValue(null)
+    })
+
+    function tier (over: Record<string, any> = {}): any {
+      return {
+        id: 'new-sub',
+        workspaceUuid,
+        accountUuid,
+        provider: 'mock',
+        providerSubscriptionId: 'mock-new',
+        type: SubscriptionType.Tier,
+        status: SubscriptionStatus.Active,
+        plan: 'team',
+        ...over
+      }
+    }
+
+    test('cancels other active tier when a new tier is activated', async () => {
+      mockDb.subscription.find.mockResolvedValue([
+        { id: 'old-business', provider: 'stripe', providerSubscriptionId: 'st-1', plan: 'business', providerData: {} }
+      ])
+
+      await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, tier())
+
+      expect(mockDb.subscription.find).toHaveBeenCalledWith({
+        workspaceUuid,
+        type: 'tier',
+        status: { $in: ['active', 'trialing'] }
+      })
+      expect(mockDb.subscription.update).toHaveBeenCalledWith(
+        { id: 'old-business' },
+        expect.objectContaining({
+          status: 'canceled',
+          providerData: expect.objectContaining({ status: 'REPLACED', pending: false })
+        })
+      )
+    })
+
+    test('does not cancel the same subscription being upserted', async () => {
+      mockDb.subscription.find.mockResolvedValue([
+        { id: 'same', provider: 'mock', providerSubscriptionId: 'mock-new', plan: 'team', providerData: {} }
+      ])
+
+      await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, tier())
+
+      expect(mockDb.subscription.update).not.toHaveBeenCalledWith(
+        { id: 'same' },
+        expect.objectContaining({ status: 'canceled' })
+      )
+    })
+
+    test('does not run invariant for non-active status', async () => {
+      await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, tier({ status: SubscriptionStatus.PastDue }))
+      expect(mockDb.subscription.find).not.toHaveBeenCalled()
+    })
+
+    test('does not run invariant for non-tier type', async () => {
+      await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, tier({ type: SubscriptionType.Package }))
+      expect(mockDb.subscription.find).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe('adminCreateSubscription', () => {
+  const mockCtx = {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn()
+  } as unknown as MeasureContext
+  const mockBranding = null
+  const mockToken = 'admin-token'
+  const workspaceUuid = 'ws-1' as WorkspaceUuid
+
+  let mockDb: any
+  let getWorkspaceByIdSpy: jest.SpyInstance
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockDb = {
+      subscription: {
+        find: jest.fn().mockResolvedValue([]),
+        insertOne: jest.fn(),
+        update: jest.fn()
+      },
+      account: { findOne: jest.fn().mockResolvedValue({ uuid: 'admin-acc' }) },
+      getWorkspaceMembers: jest.fn().mockResolvedValue([])
+    }
+    getWorkspaceByIdSpy = jest.spyOn(utils, 'getWorkspaceById').mockResolvedValue({ uuid: workspaceUuid } as any)
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: 'admin-acc', extra: { admin: 'true' } })
+  })
+
+  afterAll(() => {
+    getWorkspaceByIdSpy.mockRestore()
+  })
+
+  test('rejects non-admin token', async () => {
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: 'u', extra: {} })
+    await expect(
+      adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, { workspaceUuid, plan: 'team' })
+    ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {})))
+    expect(mockDb.subscription.insertOne).not.toHaveBeenCalled()
+  })
+
+  test('cancels ALL non-canceled tier subscriptions before inserting (active + past_due, not canceled)', async () => {
+    mockDb.subscription.find.mockResolvedValue([
+      { id: 'a', provider: 'mock', providerData: {}, status: SubscriptionStatus.Active },
+      { id: 'b', provider: 'stripe', providerData: {}, status: SubscriptionStatus.PastDue },
+      { id: 'c', provider: 'old', providerData: {}, status: SubscriptionStatus.Canceled }
+    ])
+
+    await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, { workspaceUuid, plan: 'team' })
+
+    expect(mockDb.subscription.find).toHaveBeenCalledWith({ workspaceUuid, type: 'tier' })
+    // 'c' is already canceled -> skipped; 'a' and 'b' get canceled.
+    expect(mockDb.subscription.update).toHaveBeenCalledTimes(2)
+    expect(mockDb.subscription.update).toHaveBeenCalledWith(
+      { id: 'a' },
+      expect.objectContaining({
+        status: 'canceled',
+        providerData: expect.objectContaining({ status: 'ADMIN_REPLACED' })
+      })
+    )
+    expect(mockDb.subscription.update).toHaveBeenCalledWith(
+      { id: 'b' },
+      expect.objectContaining({ status: 'canceled' })
+    )
+    expect(mockDb.subscription.insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({ plan: 'team', type: 'tier', status: 'active', provider: 'manual' })
+    )
+  })
+
+  test('passes through custom status (past_due) for unpaid simulation', async () => {
+    await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      workspaceUuid,
+      plan: 'team',
+      status: SubscriptionStatus.PastDue
+    })
+    expect(mockDb.subscription.insertOne).toHaveBeenCalledWith(expect.objectContaining({ status: 'past_due' }))
+  })
+
+  test('falls back to workspace owner when token account is not in account table', async () => {
+    mockDb.account.findOne.mockResolvedValue(null)
+    mockDb.getWorkspaceMembers.mockResolvedValue([
+      { person: 'member-1', role: AccountRole.User },
+      { person: 'owner-1', role: AccountRole.Owner }
+    ])
+
+    await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, { workspaceUuid, plan: 'team' })
+
+    expect(mockDb.subscription.insertOne).toHaveBeenCalledWith(expect.objectContaining({ accountUuid: 'owner-1' }))
+  })
+
+  test('does not persist freeLimits; unpaid with free env is not payment-exhausted', async () => {
+    // Free fallback comes from FREE_PLAN_LIMITS env (account fills it on read), never persisted.
+    ;(getMetadata as jest.Mock).mockReturnValue({ usersLimit: 5, storageLimitGB: 10 })
+    await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      workspaceUuid,
+      plan: 'team',
+      status: SubscriptionStatus.PastDue
+    })
+    const inserted = mockDb.subscription.insertOne.mock.calls[0][0]
+    expect(inserted.freeLimits).toBeUndefined()
   })
 })

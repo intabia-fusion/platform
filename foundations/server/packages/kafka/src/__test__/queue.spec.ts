@@ -399,6 +399,59 @@ describe('queue', () => {
     }
   })
 
+  it('batch-pump-keeps-consumer-alive-without-manual-heartbeat', async () => {
+    const genId = generateId()
+    const topic = 'batch-pump-' + genId
+    const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
+    try {
+      let invocations = 0
+      let processed = 0
+      let consumerHandle: any
+      const p = new Promise<void>((resolve, reject) => {
+        const to = setTimeout(() => {
+          reject(new Error(`Timeout: invocations=${invocations} processed=${processed}`))
+        }, 25000)
+
+        consumerHandle = (queue as any).createBatchConsumer(
+          testCtx,
+          topic,
+          genId,
+          async (_ctx: any, msgs: any) => {
+            // Process LONGER than sessionTimeout WITHOUT calling heartbeat: the consumer's own
+            // heartbeat pump must keep the session alive so we are not evicted and redelivered.
+            invocations++
+            await new Promise((resolve) => setTimeout(resolve, 8000))
+            processed += Array.isArray(msgs) ? msgs.length : 1
+            clearTimeout(to)
+            resolve()
+          },
+          {
+            batchSize: 1,
+            batchTimeout: 100,
+            sessionTimeout: 6000,
+            retryDelay: 50,
+            maxRetryDelay: 3,
+            fromBegining: true
+          }
+        )
+      })
+
+      await waitConnected(consumerHandle)
+      const producer = queue.getProducer<string>(testCtx, topic)
+      await producer.send(testCtx, genId as any as WorkspaceUuid, ['m1'])
+
+      await p
+      // Eviction would redeliver the message -> a second invocation. The pump prevents that.
+      expect(processed).toBe(1)
+      expect(invocations).toBe(1)
+      expect(consumerHandle.isConnected()).toBe(true)
+    } finally {
+      await queue.shutdown()
+      await queue.deleteTopics([topic])
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+  })
+
   it('pause-and-heartbeat-keeps-consumer-alive', async () => {
     const genId = generateId()
     const topic = 'pause-heartbeat-' + genId

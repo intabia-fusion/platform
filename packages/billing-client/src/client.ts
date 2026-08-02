@@ -130,13 +130,15 @@ async function fetchSafe (url: string | URL, init?: RequestInit): Promise<Respon
   let response
   try {
     response = await fetch(url, init)
-  } catch (err: any) {
-    throw new NetworkError(`Network error ${err}`)
+  } catch (err: unknown) {
+    throw new NetworkError(`Network error: ${String(err)}`)
   }
 
   if (!response.ok) {
     const text = await response.text()
-    throw new BillingError(text)
+    // truncate body: may contain stack traces / internal paths
+    console.error(`Billing request failed: ${response.status}`, text.slice(0, 200))
+    throw new BillingError(`Billing request failed with status ${response.status}`)
   }
 
   return response

@@ -13,11 +13,25 @@
 // limitations under the License.
 //
 
-import { type FileUploadOptions, type FileUploadPopupOptions, toFileWithPath } from '@hcengineering/uploader'
+import uploader, { type FileUploadOptions, type FileUploadPopupOptions, toFileWithPath } from '@hcengineering/uploader'
 import { type Ref, type Blob, RateLimiter } from '@hcengineering/core'
-import { getMetadata } from '@hcengineering/platform'
+import { getMetadata, setPlatformStatus, Severity, Status, translate } from '@hcengineering/platform'
 import presentation, { generateFileId, getFileMetadata, getFileStorage } from '@hcengineering/presentation'
+import { themeStore } from '@hcengineering/theme'
+import { get } from 'svelte/store'
 import { type FileUpload, type FileUploadInfo, type Upload, trackUpload, untrackUpload } from './store'
+
+/**
+ * Map an upload failure to a user-facing message, localizing the storage-limit (413) case. For the
+ * storage limit also raise a platform error toast — the inline upload bar is easy to miss in forms.
+ */
+async function uploadErrorMessage (error: unknown): Promise<string> {
+  if ((error as any)?.isStorageLimit === true) {
+    await setPlatformStatus(new Status(Severity.ERROR, uploader.string.StorageLimitReached, {}))
+    return await translate(uploader.string.StorageLimitReached, {}, get(themeStore).language)
+  }
+  return error instanceof Error ? error.message : String(error)
+}
 
 const DEFAULT_MAX_PARALLEL_UPLOADS = 10
 const UPLOAD_SUCCESS_DISPLAY_DURATION = 2000
@@ -225,7 +239,7 @@ async function uploadFile (info: FileUploadInfo, upload: Upload, options: FileUp
           })
         })
       } catch (error) {
-        fileUpload.error = error instanceof Error ? error.message : String(error)
+        fileUpload.error = await uploadErrorMessage(error)
         trackUpload(upload)
       }
     }
@@ -234,7 +248,7 @@ async function uploadFile (info: FileUploadInfo, upload: Upload, options: FileUp
       return
     }
 
-    fileUpload.error = error instanceof Error ? error.message : String(error)
+    fileUpload.error = await uploadErrorMessage(error)
     trackUpload(upload)
   }
 }

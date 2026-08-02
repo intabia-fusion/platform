@@ -49,7 +49,8 @@ import {
   getSocialIds,
   createAccessLink,
   getSubscriptions,
-  leaveWorkspace
+  leaveWorkspace,
+  getWorkspaceMembers
 } from '../operations'
 import { accountPlugin } from '../plugin'
 
@@ -107,6 +108,12 @@ describe('account operations', () => {
     getWorkspaceRole: jest.fn(),
     getWorkspaceMembers: jest.fn(),
     unassignWorkspace: jest.fn(),
+    socialId: {
+      findOne: jest.fn()
+    },
+    subscription: {
+      find: jest.fn().mockResolvedValue([])
+    },
     person: {
       findOne: jest.fn()
     },
@@ -124,6 +131,7 @@ describe('account operations', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    ;(mockDb.subscription.find as jest.Mock).mockResolvedValue([])
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
       account: mockAccount.uuid,
       workspace: mockWorkspace.uuid,
@@ -477,7 +485,11 @@ describe('account operations', () => {
       userProfile: {
         insertOne: jest.fn()
       },
+      subscription: {
+        find: jest.fn()
+      },
       getWorkspaceRole: jest.fn(),
+      getWorkspaceMembers: jest.fn(),
       assignWorkspace: jest.fn(),
       updateWorkspaceRole: jest.fn(),
       generatePersonUuid: jest.fn()
@@ -487,6 +499,8 @@ describe('account operations', () => {
 
     beforeEach(() => {
       jest.clearAllMocks()
+      ;(mockDb.subscription.find as jest.Mock).mockResolvedValue([])
+      ;(mockDb.getWorkspaceMembers as jest.Mock).mockResolvedValue([])
       utils.resetRegionConfig()
       process.env = { ...originalEnv }
       // Mock the metadata for endpoints
@@ -1610,6 +1624,39 @@ describe('account operations', () => {
     })
   })
 
+  describe('getWorkspaceMembers (seat members)', () => {
+    beforeEach(() => {
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Owner)
+    })
+
+    test('excludes the aiBot account from the returned members', async () => {
+      const aiBotUuid = 'aibot-uuid' as PersonUuid
+      // getSeatMembers resolves the aiBot uuid via getEmailSocialId -> db.socialId.findOne.
+      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue({ personUuid: aiBotUuid })
+      ;(mockDb.getWorkspaceMembers as jest.Mock).mockResolvedValue([
+        { person: mockAccount.uuid, role: AccountRole.Owner },
+        { person: aiBotUuid, role: AccountRole.User },
+        { person: 'u1' as PersonUuid, role: AccountRole.User }
+      ])
+
+      const result = await getWorkspaceMembers(mockCtx, mockDb, mockBranding, mockToken)
+
+      expect(result.map((m) => m.person)).toEqual([mockAccount.uuid, 'u1'])
+    })
+
+    test('returns all members when aiBot is not present in this instance', async () => {
+      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue(null)
+      ;(mockDb.getWorkspaceMembers as jest.Mock).mockResolvedValue([
+        { person: mockAccount.uuid, role: AccountRole.Owner },
+        { person: 'u1' as PersonUuid, role: AccountRole.User }
+      ])
+
+      const result = await getWorkspaceMembers(mockCtx, mockDb, mockBranding, mockToken)
+
+      expect(result).toHaveLength(2)
+    })
+  })
+
   describe('registration operations', () => {
     const mockCtx = {
       error: jest.fn(),
@@ -2642,7 +2689,10 @@ describe('getSubscriptions', () => {
     const result = await getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})
 
     expect(result).toEqual(mockSubscriptions)
-    expect(mockDb.subscription.find).toHaveBeenCalledWith({ workspaceUuid, status: 'active' })
+    expect(mockDb.subscription.find).toHaveBeenCalledWith({
+      workspaceUuid,
+      status: { $in: ['active', 'trialing'] }
+    })
     expect(mockDb.getWorkspaceRole).toHaveBeenCalledWith(accountUuid, workspaceUuid)
   })
 
@@ -2689,7 +2739,7 @@ describe('getSubscriptions', () => {
     expect(mockDb.subscription.find).toHaveBeenCalled()
   })
 
-  test('should reject user without sufficient role', async () => {
+  test('should allow regular member (User role) to view subscriptions', async () => {
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
       account: accountUuid,
       workspace: workspaceUuid,
@@ -2697,8 +2747,10 @@ describe('getSubscriptions', () => {
     })
 
     mockDb.getWorkspaceRole.mockResolvedValue(AccountRole.User)
+    mockDb.subscription.find.mockResolvedValue([])
 
-    await expect(getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})).rejects.toThrow(PlatformError)
+    await getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})
+    expect(mockDb.subscription.find).toHaveBeenCalled()
   })
 
   test('should reject user without workspace membership', async () => {
@@ -2726,8 +2778,42 @@ describe('getSubscriptions', () => {
 
     await getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', { workspaceUuid: serviceWorkspaceUuid })
 
-    expect(mockDb.subscription.find).toHaveBeenCalledWith({ workspaceUuid: serviceWorkspaceUuid, status: 'active' })
+    expect(mockDb.subscription.find).toHaveBeenCalledWith({
+      workspaceUuid: serviceWorkspaceUuid,
+      status: { $in: ['active', 'trialing'] }
+    })
     expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
+  })
+
+  test('service/admin token without explicit uuid scopes to its own workspace, not all', async () => {
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: accountUuid,
+      workspace: workspaceUuid,
+      extra: { admin: 'true' }
+    })
+
+    mockDb.subscription.find.mockResolvedValue([])
+
+    await getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})
+
+    expect(mockDb.subscription.find).toHaveBeenCalledWith({
+      workspaceUuid,
+      status: { $in: ['active', 'trialing'] }
+    })
+  })
+
+  test('workspace-less service token with no explicit uuid queries all workspaces', async () => {
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: accountUuid,
+      workspace: undefined,
+      extra: { service: 'tbank' }
+    })
+
+    mockDb.subscription.find.mockResolvedValue([])
+
+    await getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})
+
+    expect(mockDb.subscription.find).toHaveBeenCalledWith({ status: { $in: ['active', 'trialing'] } })
   })
 
   test('should reject non-service users without workspace in token', async () => {

@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,17 +18,21 @@ import type { AccountUuid, WorkspaceUuid } from '@hcengineering/core'
 
 export enum SubscriptionType {
   Tier = 'tier', // Main workspace tier (free, starter, pro, enterprise)
-  Support = 'support' // Voluntary support/donation subscription
+  Support = 'support', // Voluntary support/donation subscription
+  Package = 'package' // Additional package (storage, etc.)
 }
 
 export enum SubscriptionStatus {
   Active = 'active', // Subscription is active and paid
   Trialing = 'trialing', // In trial period (free usage)
-  PastDue = 'past_due', // Payment failed but subscription not yet canceled
+  PastDue = 'past_due', // Payment failed but subscription not yet canceled (grace period — full access)
+  ReadOnly = 'readonly', // Grace period expired — read-only access, payment still due
   Canceled = 'canceled', // Subscription was canceled by user or admin
   Paused = 'paused', // Subscription is temporarily paused (some providers support this)
   Expired = 'expired' // Subscription or trial has expired
 }
+
+export type BillingPeriod = 'monthly' | 'yearly'
 
 /**
  * Subscription request parameters
@@ -38,6 +43,10 @@ export interface SubscribeRequest {
   plan: string // Plan identifier
   customerEmail?: string // Optional customer email
   customerName?: string // Optional customer name
+  quantity?: number // Number of seats for per-seat plans (total charge = price-per-seat * quantity)
+  period?: BillingPeriod // Billing period; 'yearly' applies the plan's yearly discount. Defaults to 'monthly'.
+  force?: boolean // Switch tariff: cancel a different pending checkout for this type, then open the new one.
+  recurrent?: boolean // recurring charges; false (default) = one-off payment: don't save the card
 }
 
 /**
@@ -47,6 +56,7 @@ export interface SubscribeRequest {
 export interface CheckoutResponse {
   checkoutId: string // Checkout session ID
   checkoutUrl: string // URL to redirect user to for payment
+  instant?: boolean // Subscription already active (no checkout page) — refetch instead of redirect
 }
 
 /**
@@ -70,6 +80,19 @@ export interface SubscriptionData {
   trialEnd?: number
   canceledAt?: number
   providerData?: Record<string, any>
+}
+
+/**
+ * Pro-rata preview for a seat/package change (no mutation). amount fields are in kopecks.
+ */
+export interface PlanChangePreview {
+  charge: number // one-time charge now (0 for a downgrade)
+  periodEnd?: number // resulting period end (ms); undefined when there is no paid period to prorate
+  minSeats: number // seat floor (current member count)
+  newSeats: number
+  newFullPrice?: number // recurring price after the change
+  isUpgrade?: boolean
+  isYearly?: boolean
 }
 
 /**

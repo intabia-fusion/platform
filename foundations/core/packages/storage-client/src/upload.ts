@@ -17,6 +17,26 @@ import { concatLink } from '@hcengineering/core'
 import { withRetry, DelayStrategyFactory, type IsRetryable } from '@hcengineering/retry'
 import { FileStorageUploadOptions } from './types'
 
+/** Upload rejected because the workspace storage/plan limit is reached (HTTP 413). @public */
+export class StorageLimitError extends Error {
+  readonly isStorageLimit = true
+  constructor (message: string) {
+    super(message)
+    this.name = 'StorageLimitError'
+  }
+}
+
+/** Extract the server's JSON `message`, falling back to a generic limit text. */
+function serverMessage (body: string): string {
+  try {
+    const m = JSON.parse(body)?.message
+    if (typeof m === 'string' && m.length > 0) return m
+  } catch {
+    /* not JSON */
+  }
+  return 'Resource limit exceeded'
+}
+
 /** @public */
 export interface XHRUpload {
   url: string
@@ -69,6 +89,9 @@ export async function uploadXhr (upload: XHRUpload, options?: FileStorageUploadO
             status: xhr.status,
             responseText: xhr.responseText
           })
+        } else if (xhr.status === 413) {
+          // Storage/plan limit reached — surface the server's message, not the generic HTTP text.
+          reject(new StorageLimitError(serverMessage(xhr.responseText)))
         } else {
           reject(new Error(`Upload failed with status ${xhr.status}: ${xhr.statusText}`))
         }
@@ -221,6 +244,10 @@ async function multipartUploadCreate (
   })
 
   if (!response.ok) {
+    if (response.status === 413) {
+      throw new StorageLimitError(serverMessage(await response.text().catch(() => '')))
+    }
+    // Keep "(status NNN)" — retryStage.isRetryable parses it to skip retrying client 4xx.
     throw new Error(`Failed to initialize multipart upload (status ${response.status})`)
   }
 
@@ -249,6 +276,9 @@ async function multipartUploadComplete (
   })
 
   if (!response.ok) {
+    if (response.status === 413) {
+      throw new StorageLimitError(serverMessage(await response.text().catch(() => '')))
+    }
     throw new Error(`Failed to complete multipart upload (status ${response.status})`)
   }
 }

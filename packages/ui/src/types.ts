@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -90,6 +91,8 @@ export interface Action {
   component?: AnyComponent | AnySvelteComponent
   props?: Record<string, any>
   isSubmenuRightClicking?: boolean
+  // Called with submenu popup close/update result for components which do not apply changes themselves
+  onSubmenuResult?: (result: any) => void | Promise<void>
 
   inlineComponent?: AnyComponent | AnySvelteComponent
   inlineComponentProps?: Record<string, any>
@@ -128,6 +131,9 @@ export interface TabItem {
   color?: string
   tooltip?: IntlString
   action?: () => void
+  // Small secondary label rendered next to the main one inside the tab (e.g. a "−15%" discount hint).
+  badge?: IntlString
+  badgeParams?: Record<string, any>
 }
 
 export interface BreadcrumbItem {

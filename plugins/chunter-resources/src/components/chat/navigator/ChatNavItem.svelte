@@ -131,7 +131,8 @@
         group: 'tools',
         component: IconPicker,
         props: { icon: channel.icon, color: channel.emoji },
-        action: async (result) => {
+        action: async () => {},
+        onSubmenuResult: async (result) => {
           if (result == null) return
           await toggleChannelIcon(channel, result.icon, result.color)
         }

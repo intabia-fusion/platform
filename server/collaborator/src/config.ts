@@ -1,5 +1,6 @@
 //
 // Copyright © 2022, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -23,6 +24,7 @@ export interface Config {
   Interval: number
   StorageRetryCount: number
   StorageRetryInterval: number
+  ActivityAggregationDelay: number
 
   Port: number
 
@@ -36,7 +38,8 @@ const envMap: { [key in keyof Config]: string } = {
   Port: 'COLLABORATOR_PORT',
   AccountsUrl: 'ACCOUNTS_URL',
   StorageRetryCount: 'STORAGE_RETRY_COUNT',
-  StorageRetryInterval: 'STORAGE_RETRY_INTERVAL'
+  StorageRetryInterval: 'STORAGE_RETRY_INTERVAL',
+  ActivityAggregationDelay: 'ACTIVITY_AGGREGATION_DELAY'
 }
 
 const required: Array<keyof Config> = ['Secret', 'ServiceID', 'Port', 'AccountsUrl']
@@ -49,7 +52,8 @@ const config: Config = (() => {
     Port: parseInt(process.env[envMap.Port] ?? '3078'),
     AccountsUrl: process.env[envMap.AccountsUrl],
     StorageRetryCount: parseInt(process.env[envMap.StorageRetryCount] ?? '5'),
-    StorageRetryInterval: parseInt(process.env[envMap.StorageRetryInterval] ?? '50')
+    StorageRetryInterval: parseInt(process.env[envMap.StorageRetryInterval] ?? '50'),
+    ActivityAggregationDelay: parseInt(process.env[envMap.ActivityAggregationDelay] ?? '300000')
   }
 
   const missingEnv = required.filter((key) => params[key] === undefined).map((key) => envMap[key])

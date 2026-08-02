@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import { ButtonIcon, closeTooltip, IconOptions, showPopup } from '@hcengineering/ui'
+  import { Button, ButtonIcon, closeTooltip, IconOptions, showPopup } from '@hcengineering/ui'
   import { OrderOption, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
@@ -24,7 +24,7 @@
   import core, { Class, Doc, Hierarchy, Ref, SortingOrder, Type } from '@hcengineering/core'
 
   export let viewlet: Viewlet | undefined
-  export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
+  export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' | 'ghost' = 'secondary'
   export let viewOptions: ViewOptions
   export let disabled: boolean = false
   export let viewOptionsConfig: ViewOptionModel[] | undefined = undefined
@@ -104,16 +104,29 @@
 </script>
 
 {#if viewlet?.viewOptions !== undefined}
-  <ButtonIcon
-    icon={IconOptions}
-    {disabled}
-    {kind}
-    size={'small'}
-    hasMenu
-    {pressed}
-    tooltip={{ label: view.string.GroupAndSort, direction: 'bottom' }}
-    dataId={'btn-viewOptions'}
-    bind:element={btn}
-    on:click={clickHandler}
-  />
+  {#if kind === 'ghost'}
+    <Button
+      icon={IconOptions}
+      {disabled}
+      kind={'ghost'}
+      {pressed}
+      showTooltip={{ label: view.string.GroupAndSort, direction: 'bottom' }}
+      dataId={'btn-viewOptions'}
+      bind:input={btn}
+      on:click={clickHandler}
+    />
+  {:else}
+    <ButtonIcon
+      icon={IconOptions}
+      {disabled}
+      {kind}
+      size={'small'}
+      hasMenu
+      {pressed}
+      tooltip={{ label: view.string.GroupAndSort, direction: 'bottom' }}
+      dataId={'btn-viewOptions'}
+      bind:element={btn}
+      on:click={clickHandler}
+    />
+  {/if}
 {/if}

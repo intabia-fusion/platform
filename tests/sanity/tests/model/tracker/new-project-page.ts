@@ -46,7 +46,7 @@ export class NewProjectPage extends CommonTrackerPage {
     if (data.iconNumber != null) {
       await this.buttonChooseIcon().click()
     }
-    if (data.private) {
+    if (data.private === true) {
       await this.buttonMakePrivate().click()
     }
     if (data.defaultAssigneeForIssues != null) {

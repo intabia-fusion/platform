@@ -13,7 +13,10 @@ export enum QueueWorkspaceEvent {
   Restoring = 'restoring',
   FullReindex = 'full-fulltext-reindex',
   Reindex = 'fulltext-reindex',
-  ClearIndex = 'clear-fulltext-index'
+  ClearIndex = 'clear-fulltext-index',
+  LimitsChanged = 'limits-changed',
+  UsageChanged = 'usage-changed',
+  Maintenance = 'maintenance'
 }
 
 export interface QueueWorkspaceMessage {
@@ -25,6 +28,47 @@ export interface QueueWorkspaceReindexMessage extends QueueWorkspaceMessage {
 
   domain: Domain
   classes: Ref<Class<Doc>>[]
+}
+
+/** Which limit a LimitsChanged event is about. 'plan' = plan/limits snapshot changed
+ * (upgrade/downgrade): consumers re-read plan limits. */
+export enum LimitCategory {
+  Disk = 'disk',
+  Tokens = 'tokens',
+  Transcript = 'transcript',
+  MeetingMinutes = 'meetingMinutes',
+  Payment = 'payment',
+  Plan = 'plan',
+  Members = 'members'
+}
+
+export enum LimitStatus {
+  Exhausted = 'exhausted',
+  Ok = 'ok'
+}
+
+export interface QueueWorkspaceLimitsMessage extends QueueWorkspaceMessage {
+  type: QueueWorkspaceEvent.LimitsChanged
+
+  category: LimitCategory
+  status: LimitStatus
+}
+
+/** Live usage update (e.g. a meeting-minutes tick) for UI to move without waiting for a full recompute. */
+export interface QueueWorkspaceUsageMessage extends QueueWorkspaceMessage {
+  type: QueueWorkspaceEvent.UsageChanged
+
+  category: LimitCategory
+  used: number
+}
+
+/** Global maintenance warning (new version incoming). Not workspace-scoped: every transactor
+ * schedules the warning for all its clients; timeoutMinutes < 0 clears it. */
+export interface QueueWorkspaceMaintenanceMessage extends QueueWorkspaceMessage {
+  type: QueueWorkspaceEvent.Maintenance
+
+  timeoutMinutes: number
+  message?: string
 }
 
 export const workspaceEvents = {
@@ -40,9 +84,24 @@ export const workspaceEvents = {
   restored: (): QueueWorkspaceMessage => ({ type: QueueWorkspaceEvent.Restored }),
   fullReindex: (): QueueWorkspaceMessage => ({ type: QueueWorkspaceEvent.FullReindex }),
   clearIndex: (): QueueWorkspaceMessage => ({ type: QueueWorkspaceEvent.ClearIndex }),
+  limitsChanged: (category: LimitCategory, status: LimitStatus): QueueWorkspaceLimitsMessage => ({
+    type: QueueWorkspaceEvent.LimitsChanged,
+    category,
+    status
+  }),
+  usageChanged: (category: LimitCategory, used: number): QueueWorkspaceUsageMessage => ({
+    type: QueueWorkspaceEvent.UsageChanged,
+    category,
+    used
+  }),
   reindex: (domain: Domain, classes: Ref<Class<Doc>>[]): QueueWorkspaceReindexMessage => ({
     type: QueueWorkspaceEvent.Reindex,
     domain,
     classes
+  }),
+  maintenance: (timeoutMinutes: number, message?: string): QueueWorkspaceMaintenanceMessage => ({
+    type: QueueWorkspaceEvent.Maintenance,
+    timeoutMinutes,
+    message
   })
 }

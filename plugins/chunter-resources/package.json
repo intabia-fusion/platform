@@ -66,6 +66,11 @@
     "@hcengineering/workbench": "workspace:^0.7.0",
     "@hcengineering/workbench-resources": "workspace:^0.7.0",
     "fast-equals": "^5.2.2",
-    "svelte": "^4.2.20"
+    "svelte": "^4.2.20",
+    "@hcengineering/text-editor-resources": "workspace:^0.7.0",
+    "@hcengineering/text-editor": "workspace:^0.7.0",
+    "@hcengineering/love": "workspace:^0.7.0",
+    "@hcengineering/billing-resources": "workspace:^0.7.0",
+    "@hcengineering/billing": "workspace:^0.7.0"
   }
 }

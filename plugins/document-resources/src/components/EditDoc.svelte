@@ -149,8 +149,12 @@
 
   $: _id !== undefined &&
     query.query(document.class.Document, { _id }, async (result) => {
+      const prev = doc
       ;[doc] = result
-      title = doc?.title ?? ''
+      // reset only when title itself changed on server, otherwise unrelated updates clobber unsaved input
+      if (prev?._id !== doc?._id || prev?.title !== doc?.title) {
+        title = doc?.title ?? ''
+      }
     })
 
   $: canSave = title.trim().length > 0

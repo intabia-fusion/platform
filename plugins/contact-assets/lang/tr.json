@@ -48,6 +48,7 @@
     "SocialLinks": "Sosyal bağlantılar",
     "ViewActivity": "Aktiviteyi görüntüle",
     "PersonAlreadyExists": "Kişi zaten mevcut...",
+    "SeatLimitReached": "Koltuk sınırına ulaşıldı ({limit}). Daha fazla üye eklemek için planı yükseltin.",
     "Status": "Durum",
     "SetStatus": "Durum belirle",
     "ClearStatus": "Durumu temizle",

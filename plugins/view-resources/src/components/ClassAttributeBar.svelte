@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,11 +14,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Class, Doc, Rank, Ref, toRank } from '@hcengineering/core'
+  import core, { Class, Doc, Mixin, Rank, Ref } from '@hcengineering/core'
+  import { toRank } from '@hcengineering/rank'
   import { IntlString } from '@hcengineering/platform'
-  import { AttributesBar, KeyedAttribute, createQuery, getAttribute, getClient } from '@hcengineering/presentation'
+  import presentation, {
+    AttributesBar,
+    KeyedAttribute,
+    createQuery,
+    getAttribute,
+    getClient
+  } from '@hcengineering/presentation'
   import setting, { settingId } from '@hcengineering/setting'
-  import { Button, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+  import { Button, IconAdd, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
   import { getFiltredKeys, isCollectionAttr, restrictionStore } from '../utils'
 
   export let object: Doc | Record<string, any>
@@ -30,6 +38,9 @@
   export let draft = false
   export let showHeader: boolean = true
   export let isMainClass: boolean = false
+  // Raw doc (not the mixin proxy) - enables an "add mixin" button for an
+  // applicable but not-yet-stamped mixin section.
+  export let rawObject: Doc | undefined = undefined
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -76,9 +87,18 @@
 
   $: clazz = hierarchy.getClass(_class)
   $: isEditable = hierarchy.hasMixin(clazz, setting.mixin.Editable) && hierarchy.as(clazz, setting.mixin.Editable).value
+
+  $: isMixinClass = hierarchy.isMixin(_class)
+  $: canApply =
+    isMixinClass && !readonly && rawObject !== undefined && !hierarchy.hasMixin(rawObject, _class as Ref<Mixin<Doc>>)
+
+  async function applyMixin (): Promise<void> {
+    if (rawObject === undefined) return
+    await client.createMixin(rawObject._id, rawObject._class, rawObject.space, _class as Ref<Mixin<Doc>>, {})
+  }
 </script>
 
-{#if showHeader && (keys.length > 0 || isMainClass)}
+{#if showHeader && (keys.length > 0 || isMainClass || canApply)}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div
@@ -99,6 +119,18 @@
       </div>
     </div>
     <div class="tool">
+      {#if canApply}
+        <Button
+          icon={IconAdd}
+          kind={'link'}
+          size={'medium'}
+          showTooltip={{ label: presentation.string.Add }}
+          on:click={(ev) => {
+            ev.stopPropagation()
+            void applyMixin()
+          }}
+        />
+      {/if}
       {#if !$restrictionStore.disableNavigation && isEditable}
         <Button
           icon={setting.icon.Setting}

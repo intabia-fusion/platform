@@ -36,6 +36,7 @@ import {
   writeFileSync
 } from 'node:fs'
 import { createHash } from 'node:crypto'
+import { type EventEmitter } from 'node:events'
 import { rm } from 'node:fs/promises'
 import { basename, dirname } from 'node:path'
 import { PassThrough, type Writable } from 'node:stream'
@@ -59,6 +60,24 @@ export * from './storage'
 const dataBlobSize = 250 * 1024 * 1024
 
 const defaultLevel = 9
+
+/**
+ * Watches every stream of a pack pipeline from creation until it is closed. Attaching only at
+ * close time leaves the whole document-writing window unguarded: an error there has no listener
+ * and Node turns it into an unhandled 'error' event that kills the process.
+ * @public
+ */
+export function watchStreamErrors (...streams: EventEmitter[]): Promise<never> {
+  let fail: (err: any) => void = () => {}
+  const failed = new Promise<never>((_resolve, reject) => {
+    fail = reject
+  })
+  failed.catch(() => {}) // no unhandled rejection when the pack closes fine
+  for (const s of streams) {
+    s.on('error', fail)
+  }
+  return failed
+}
 
 /**
  * @public
@@ -308,12 +327,19 @@ export async function backupFind (
             }
           })
 
-          const endPromise = new Promise((resolve) => {
+          const unzip = createGunzip({ level: defaultLevel })
+          const endPromise = new Promise((resolve, reject) => {
+            const onError = (err: any): void => {
+              readStream.destroy()
+              reject(err)
+            }
             ex.on('finish', () => {
               resolve(null)
             })
+            ex.on('error', onError)
+            unzip.on('error', onError)
+            readStream.on('error', onError)
           })
-          const unzip = createGunzip({ level: defaultLevel })
 
           readStream.on('end', () => {
             readStream.destroy()
@@ -532,14 +558,20 @@ export async function compactBackup (
           _pack.pipe(storageZip)
           storageZip.pipe(sizePass)
 
+          const packFailed = watchStreamErrors(_pack, storageZip, sizePass, tempFile)
+
           _packClose = async () => {
+            _packClose = async () => {} // tempFile emits 'close' once, a second call would hang
             ctx.info('finalize pack(compact)', { storageFile, size: sz, ...(opt?.msg ?? {}) })
-            await new Promise<void>((resolve) => {
-              tempFile.on('close', () => {
-                resolve()
-              })
-              _pack?.finalize()
-            })
+            await Promise.race([
+              new Promise<void>((resolve) => {
+                tempFile.on('close', () => {
+                  resolve()
+                })
+                _pack?.finalize()
+              }),
+              packFailed
+            ])
             // We need to upload file to storage
             ctx.info('>>>> upload pack(compact)', { storageFile, size: sz, ...(opt?.msg ?? {}) })
             await storage.writeFile(storageFile, createReadStream(tmpFile))
@@ -643,7 +675,17 @@ export async function compactBackup (
                 break
               }
               try {
-                ctx.info('processing', { sf, processed, ...(opt?.msg ?? {}) })
+                const sfStart = Date.now()
+                let sfEntries = 0
+                let sfMatched = 0
+                let lastLog = Date.now()
+                ctx.info('processing', {
+                  sf,
+                  processed,
+                  requiredLeft: requiredDocs.size,
+                  digestLeft: digest.size,
+                  ...(opt?.msg ?? {})
+                })
 
                 const readStream = await storage.load(sf)
                 const ex = extract()
@@ -651,6 +693,23 @@ export async function compactBackup (
                 ex.on('entry', (headers, stream, next) => {
                   const name = headers.name ?? ''
                   processed++
+                  sfEntries++
+                  const isMatch =
+                    requiredDocs.has(name as Ref<Doc>) ||
+                    (name.endsWith('.json') && requiredDocs.has(name.substring(0, name.length - 5) as Ref<Doc>))
+                  if (isMatch) sfMatched++
+                  if (Date.now() - lastLog > 10000) {
+                    lastLog = Date.now()
+                    ctx.info('processing progress', {
+                      sf,
+                      sfEntries,
+                      sfMatched,
+                      requiredLeft: requiredDocs.size,
+                      digestLeft: digest.size,
+                      elapsedMs: Date.now() - sfStart,
+                      ...(opt?.msg ?? {})
+                    })
+                  }
                   // We found blob data
                   if (requiredDocs.has(name as Ref<Doc>)) {
                     const chunks: Buffer[] = []
@@ -744,14 +803,14 @@ export async function compactBackup (
                   ex.on('finish', () => {
                     resolve(null)
                   })
-                  readStream.on('error', (err) => {
+                  const onError = (err: any): void => {
                     ctx.error('error during processing', { snapshot, err, ...(opt?.msg ?? {}) })
+                    readStream.destroy()
                     reject(err)
-                  })
-                  unzip.on('error', (err) => {
-                    ctx.error('error during processing', { snapshot, err, ...(opt?.msg ?? {}) })
-                    reject(err)
-                  })
+                  }
+                  readStream.on('error', onError)
+                  unzip.on('error', onError)
+                  ex.on('error', onError)
                 })
 
                 readStream.on('end', () => {
@@ -761,6 +820,15 @@ export async function compactBackup (
                 unzip.pipe(ex)
 
                 await endPromise
+                ctx.info('processed file', {
+                  sf,
+                  sfEntries,
+                  sfMatched,
+                  requiredLeft: requiredDocs.size,
+                  digestLeft: digest.size,
+                  elapsedMs: Date.now() - sfStart,
+                  ...(opt?.msg ?? {})
+                })
               } catch (err: any) {
                 ctx.error('error processing', err)
               }
@@ -1083,12 +1151,15 @@ export async function verifyDigest (
           ex.on('finish', () => {
             resolve(null)
           })
-          unzip.on('error', (err) => {
+          const onBroken = (err: any): void => {
             ctx.error('error during reading of', { sf, err })
             modified = true
             storageToRemove.add(sf)
+            readStream.destroy()
             resolve(null)
-          })
+          }
+          unzip.on('error', onBroken)
+          ex.on('error', onBroken)
         })
 
         readStream.on('end', () => {
@@ -1218,6 +1289,8 @@ async function write (chunk: any, stream: Writable): Promise<void> {
     })
   })
   if (needDrain) {
+    // No 'error' listener here on purpose: it is once() per call and would pile up on the stream.
+    // writeChanges races every await against a single shared error promise instead.
     await new Promise((resolve) => stream.once('drain', resolve))
   }
 }
@@ -1227,25 +1300,41 @@ export async function writeChanges (storage: BackupStorage, snapshot: string, ch
   const writable = createGzip({ level: defaultLevel })
   writable.pipe(snapshotWritable)
 
+  // Destination errors are not propagated back to gzip, race them against every await.
+  let fail: (err: any) => void = () => {}
+  const failed = new Promise<never>((_resolve, reject) => {
+    fail = reject
+  })
+  failed.catch(() => {}) // no unhandled rejection if writeChanges completes fine
+  // Listeners stay for the lifetime of the streams: detaching them would turn a late
+  // destination error into an unhandled 'error' event.
+  snapshotWritable.on('error', fail)
+  writable.on('error', fail)
+
+  const step = async (p: Promise<unknown>): Promise<void> => {
+    await Promise.race([p, failed])
+  }
+
   // Write size
-  await write(`${changes.added.size}\n`, writable)
+  await step(write(`${changes.added.size}\n`, writable))
   for (const [k, v] of changes.added.entries()) {
-    await write(`${k};${v}\n`, writable)
+    await step(write(`${k};${v}\n`, writable))
   }
-  await write(`${changes.updated.size}\n`, writable)
+  await step(write(`${changes.updated.size}\n`, writable))
   for (const [k, v] of changes.updated.entries()) {
-    await write(`${k};${v}\n`, writable)
+    await step(write(`${k};${v}\n`, writable))
   }
-  await write(`${changes.removed.length}\n`, writable)
+  await step(write(`${changes.removed.length}\n`, writable))
   for (const k of changes.removed) {
-    await write(`${k}\n`, writable)
+    await step(write(`${k}\n`, writable))
   }
   writable.end()
-  await new Promise((resolve) => {
-    writable.flush(() => {
-      resolve(null)
+  // Wait for the destination, not just for gzip: flush() returns while compressed data is still in flight.
+  await step(
+    new Promise((resolve) => {
+      snapshotWritable.on('finish', resolve)
     })
-  })
+  )
 }
 
 export async function verifyDocsFromSnapshot (
@@ -1267,21 +1356,50 @@ export async function verifyDocsFromSnapshot (
     const requiredDocs = new Map(Array.from(sDigest.entries()).filter(([it]) => digest.has(it)))
 
     if (requiredDocs.size > 0) {
-      ctx.info('updating', { domain, requiredDocs: requiredDocs.size })
+      ctx.info('updating (verifyDocsFromSnapshot)', {
+        domain,
+        requiredDocs: requiredDocs.size,
+        storageFiles: (d.storage ?? []).length
+      })
       // We have required documents here.
       for (const sf of d.storage ?? []) {
         if (digest.size === 0) {
           break
         }
         try {
+          const sfStart = Date.now()
+          let sfEntries = 0
+          let sfMatched = 0
+          let lastLog = Date.now()
+          ctx.info('verify processing', {
+            sf,
+            requiredLeft: requiredDocs.size,
+            digestLeft: digest.size,
+            domain
+          })
           const readStream = await storage.load(sf)
           const ex = extract()
 
           ex.on('entry', (headers, stream, next) => {
             const name = headers.name ?? ''
+            sfEntries++
+            if (Date.now() - lastLog > 10000) {
+              lastLog = Date.now()
+              ctx.info('verify progress', {
+                sf,
+                sfEntries,
+                sfMatched,
+                requiredLeft: requiredDocs.size,
+                digestLeft: digest.size,
+                pendingResult: result.length,
+                elapsedMs: Date.now() - sfStart,
+                domain
+              })
+            }
             // We found blob data
             const rdoc = name.substring(0, name.length - 5) as Ref<Doc>
             if (name.endsWith('.json') && requiredDocs.has(rdoc)) {
+              sfMatched++
               const chunks: Buffer[] = []
               const bname = name.substring(0, name.length - 5)
               stream.on('data', (chunk) => {
@@ -1331,18 +1449,22 @@ export async function verifyDocsFromSnapshot (
           const unzip = createGunzip({ level: defaultLevel })
 
           const endPromise = new Promise((resolve, reject) => {
+            const onError = (err: any): void => {
+              readStream.destroy()
+              storageToRemove.add(sf)
+              reject(err)
+            }
             ex.on('finish', () => {
               resolve(null)
             })
+            ex.on('error', onError)
 
             readStream.on('end', () => {
               readStream.destroy()
             })
-            readStream.pipe(unzip).on('error', (err) => {
-              readStream.destroy()
-              storageToRemove.add(sf)
-              reject(err)
-            })
+            readStream.on('error', onError)
+            unzip.on('error', onError)
+            readStream.pipe(unzip)
             unzip.pipe(ex)
           })
 
@@ -1350,6 +1472,15 @@ export async function verifyDocsFromSnapshot (
           if (result.length > 0) {
             await verify(result)
           }
+          ctx.info('verify processed file', {
+            sf,
+            sfEntries,
+            sfMatched,
+            requiredLeft: requiredDocs.size,
+            digestLeft: digest.size,
+            elapsedMs: Date.now() - sfStart,
+            domain
+          })
         } catch (err: any) {
           storageToRemove.add(sf)
           ctx.error('failed to processing', { storageFile: sf })

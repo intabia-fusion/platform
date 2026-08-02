@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022, 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -28,6 +29,7 @@
     Label,
     ModernButton,
     Scroller,
+    ToggleWithLabel,
     getCurrentLocation,
     navigate,
     showPopup
@@ -251,6 +253,20 @@
                 />
               {/if}
             </div>
+
+            <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
+              <ToggleWithLabel
+                label={plugin.string.ShowParentTasks}
+                on={taskType.showParentTasks ?? false}
+                disabled={readonly}
+                on:change={(evt) => {
+                  if (taskType === undefined) {
+                    return
+                  }
+                  void client.diffUpdate(taskType, { showParentTasks: evt.detail })
+                }}
+              />
+            </div>
           </div>
 
           <div class="hulyTableAttr-container">
@@ -317,7 +333,7 @@
             />
           </div>
 
-          <ClassAttributes _class={taskType.targetClass} showHierarchy disabled={readonly} />
+          <ClassAttributes _class={taskType.targetClass} showHierarchy showMixins disabled={readonly} />
         </div>
       </Scroller>
     </div>

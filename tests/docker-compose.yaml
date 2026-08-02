@@ -1,6 +1,6 @@
 services:
   stream:
-    image: intabiafusion/stream
+    image: 'intabiafusion/stream:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       datalake:
@@ -15,7 +15,7 @@ services:
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   time-machine:
-    image: intabiafusion/worker
+    image: 'intabiafusion/worker:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       redpanda:
@@ -31,7 +31,7 @@ services:
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   activity:
-    image: intabiafusion/activity
+    image: 'intabiafusion/activity:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       redpanda:
@@ -75,7 +75,7 @@ services:
     restart: unless-stopped
 
   db-migrator:
-    image: intabiafusion/db-migrator
+    image: 'intabiafusion/db-migrator:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       postgres:
@@ -160,6 +160,7 @@ services:
         condition: service_completed_successfully
     ports:
       - 9201:9200
+    restart: unless-stopped
     environment:
       - ELASTICSEARCH_PORT_NUMBER=9200
       - BITNAMI_DEBUG=true
@@ -172,7 +173,7 @@ services:
       retries: 10
       test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
   account:
-    image: intabiafusion/account
+    image: 'intabiafusion/account:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       postgres:
@@ -190,6 +191,8 @@ services:
       - SERVER_SECRET=secret
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
       - WORKSPACE_LIMIT_PER_USER=100
+      # Free fallback limits (match the free:true plan in plan-config.yaml). storagePerUserGB scales disk.
+      - FREE_PLAN_LIMITS={"usersLimit":5,"storagePerUserGB":2,"tokenLimit":100000,"trafficLimitGB":0,"meetingMinutesLimit":0}
       - DB_URL=${DB_PG_URL}
       - REGION_CONFIG=/var/cfg/region-config.yaml
       - STORAGE_CONFIG=${STORAGE_CONFIG}
@@ -197,7 +200,7 @@ services:
       - STATS_URL=http://stats:4901
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
   workspace:
-    image: intabiafusion/workspace
+    image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'
     pull_policy: never
     links:
       - cockroach
@@ -237,13 +240,14 @@ services:
       - fulltext
       - billing
       - sign
+      - payment
     ports:
       - 8083:8083
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
   front0:
-    image: intabiafusion/front
+    image: 'intabiafusion/front:${DOCKER_TAG:-latest}'
     pull_policy: never
     links:
       - account
@@ -271,13 +275,15 @@ services:
       - STATS_API=http://localhost:8083/_stats
       - STREAM_URL=http://localhost:8083/_stream/recording
       - DATALAKE_URL=http://localhost:8083/_datalake
+      - BILLING_URL=http://localhost:8083/_billing
+      - PAYMENT_URL=http://localhost:8083/_payment
       - USE_OTP=false
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
       - ANALYTICS_COLLECTOR_URL=http://localhost:4018
       - LOVE_ENDPOINT=http://localhost:8083/_love
       - LIVEKIT_WS=ws://localhost:7890
   transactor0:
-    image: intabiafusion/transactor
+    image: 'intabiafusion/transactor:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       redpanda:
@@ -314,7 +320,7 @@ services:
       - WS_SLOW_CLIENT_DROP=${WS_SLOW_CLIENT_DROP:-1}
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
   collaborator0:
-    image: intabiafusion/collaborator
+    image: 'intabiafusion/collaborator:${DOCKER_TAG:-latest}'
     pull_policy: never
     links:
       - minio
@@ -329,7 +335,7 @@ services:
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   rekoni:
-    image: intabiafusion/rekoni-service
+    image: 'intabiafusion/rekoni-service:${DOCKER_TAG:-latest}'
     pull_policy: never
     restart: on-failure
     environment:
@@ -337,7 +343,7 @@ services:
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 
   fulltext:
-    image: intabiafusion/fulltext
+    image: 'intabiafusion/fulltext:${DOCKER_TAG:-latest}'
     pull_policy: never
     restart: unless-stopped
     depends_on:
@@ -365,7 +371,7 @@ services:
       - STATS_URL=http://stats:4901
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
   stats:
-    image: intabiafusion/stats
+    image: 'intabiafusion/stats:${DOCKER_TAG:-latest}'
     pull_policy: never
     environment:
       - PORT=4901
@@ -373,7 +379,7 @@ services:
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   analytics:
-    image: intabiafusion/analytics-collector
+    image: 'intabiafusion/analytics-collector:${DOCKER_TAG:-latest}'
     pull_policy: never
     extra_hosts:
       - "localhost:host-gateway"
@@ -391,7 +397,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   notifications:
-    image: intabiafusion/notifications
+    image: 'intabiafusion/notifications:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       redpanda:
@@ -414,7 +420,7 @@ services:
       - BRANDING_PATH=/var/cfg/branding.json
     restart: unless-stopped
   datalake:
-    image: intabiafusion/datalake
+    image: 'intabiafusion/datalake:${DOCKER_TAG:-latest}'
     depends_on:
       minio:
         condition: service_healthy
@@ -423,6 +429,8 @@ services:
       stats:
         condition: service_started
       account:
+        condition: service_started
+      redpanda:
         condition: service_started
     environment:
       - PORT=4031
@@ -435,8 +443,44 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
+  preview:
+    image: 'intabiafusion/preview:${DOCKER_TAG:-latest}'
+    depends_on:
+      datalake:
+        condition: service_started
+    environment:
+      - SECRET=secret
+      # Preview reads blobs through datalake for on-the-fly image resizing (proxied via nginx /_preview).
+      - STORAGE_CONFIG=datalake|http://datalake:4031
+      - CACHE_PATH=/data/cache
+    restart: unless-stopped
   billing:
-    image: intabiafusion/billing
+    image: 'intabiafusion/billing:${DOCKER_TAG:-latest}'
+    pull_policy: never
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_started
+      account:
+        condition: service_started
+      datalake:
+        condition: service_started
+    environment:
+      - PORT=4043
+      - SECRET=secret
+      - ACCOUNTS_URL=http://account:3003
+      - DB_URL=${DB_PG_URL}
+      # Storage usage is read from datalake stats; billing needs a datalake-kind config,
+      # not the global minio one (collectDatalakeStats filters by kind === 'datalake').
+      - STORAGE_CONFIG=datalake|http://datalake:4031
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - USAGE_UPDATE_INTERVAL=30
+      # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+    restart: unless-stopped
+
+  payment:
+    image: 'intabiafusion/payment:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       postgres:
@@ -444,13 +488,41 @@ services:
       account:
         condition: service_started
     environment:
-      - PORT=4043
+      - PORT=4044
       - SECRET=secret
       - ACCOUNTS_URL=http://account:3003
-      - DB_URL=${DB_PG_URL}
-      - STORAGE_CONFIG=${STORAGE_CONFIG}
-      - USAGE_UPDATE_INTERVAL=30
-      # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+      - FRONT_URL=http://localhost:8083
+      # Route to tbank-subscriptions with in-process mock bank (provider-agnostic, closer to prod).
+      - PROVIDER=tbank
+      - TBANK_SUBSCRIPTIONS_URL=http://tbank-subscriptions:4042
+      - ALLOW_MOCK_PROVIDER=false
+      # Tests fire many subscription mutations in a row from one IP; lift the per-IP cap.
+      - SUBSCRIPTION_RATE_LIMIT_MAX=100000
+      - PLAN_CONFIG=/var/cfg/plan-config.yaml
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+    volumes:
+      - ./plan-config.yaml:/var/cfg/plan-config.yaml:ro
+    restart: unless-stopped
+
+  tbank-subscriptions:
+    image: 'intabiafusion/tbank-subscriptions:${DOCKER_TAG:-latest}'
+    pull_policy: never
+    depends_on:
+      account:
+        condition: service_started
+      payment:
+        condition: service_started
+    environment:
+      - SECRET=secret
+      - PORT=4042
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - QUEUE_REGION=
+      - ACCOUNTS_URL=http://account:3003
+      - FRONT_URL=http://localhost:8083
+      # In-process mock bank: self-fires CONFIRMED/REJECTED webhook, no external terminal.
+      - TBANK_MOCK=true
+      - TBANK_SKIP_WEBHOOK_VERIFICATION=true
+      - PAYMENT_URL=http://payment:4044
     restart: unless-stopped
 
   redis-test:
@@ -460,7 +532,7 @@ services:
     restart: unless-stopped
 
   love:
-    image: intabiafusion/love
+    image: 'intabiafusion/love:${DOCKER_TAG:-latest}'
     pull_policy: never
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -501,7 +573,7 @@ services:
     restart: unless-stopped
 
   sign:
-    image: intabiafusion/sign
+    image: 'intabiafusion/sign:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       account:

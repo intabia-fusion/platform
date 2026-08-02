@@ -64,6 +64,7 @@ interface SpaceInfo {
   private: boolean
   archived: boolean
   autoJoin: boolean
+  systemCreated: boolean
 }
 
 /**
@@ -97,7 +98,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
   }
 
   private addSpace (
-    space: Pick<Space, '_id' | 'members' | 'owners' | 'private' | '_class' | 'archived' | 'autoJoin'>
+    space: Pick<Space, '_id' | 'members' | 'owners' | 'private' | '_class' | 'archived' | 'autoJoin' | 'createdBy'>
   ): void {
     this.spacesMap.set(space._id, {
       _id: space._id,
@@ -106,7 +107,8 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
       owners: new Set(space.owners ?? []),
       private: space.private,
       archived: space.archived ?? false,
-      autoJoin: space.autoJoin === true
+      autoJoin: space.autoJoin === true,
+      systemCreated: space.createdBy === core.account.System
     })
   }
 
@@ -131,7 +133,8 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
                   _id: 1,
                   members: 1,
                   owners: 1,
-                  autoJoin: 1
+                  autoJoin: 1,
+                  createdBy: 1
                 }
               }
             )) ?? []
@@ -712,7 +715,8 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         owners: new Set(removedSpace.owners ?? []),
         private: removedSpace.private,
         archived: removedSpace.archived,
-        autoJoin: removedSpace.autoJoin === true
+        autoJoin: removedSpace.autoJoin === true,
+        systemCreated: removedSpace.createdBy === core.account.System
       }
     }
   }

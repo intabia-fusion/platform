@@ -159,9 +159,7 @@ export class WebhookProcessor {
       return
     }
 
-    // Skip activity logs only for agent/system participants.
-    // If personRef is known (even without SocialIdentity), we still add activity entries
-    // so joins/leaves from real Person records are visible in MeetingMinutes.
+    // Skip activity logs only for agent/system participants; known personRef still logs even without SocialIdentity.
     const isAgent = participant?.kind !== 0
 
     if (!isAgent) {
@@ -217,11 +215,7 @@ export class WebhookProcessor {
         )
       }
 
-      // Office owner left their own office meeting → close the LiveKit room
-      // so every remaining participant is disconnected (and produces their
-      // own `participant_left` webhook to clean up their ParticipantInfo).
-      // Clients never delete participants directly; the lifecycle is driven
-      // by LiveKit events only.
+      // Office owner left -> close the LiveKit room; remaining participants get their own participant_left webhook.
       const meetingDoc = await wsClient.findMeetingById(roomName.meetingId)
       if (meetingDoc?.roomId !== undefined) {
         const officeOwner = await wsClient.findOfficeOwner(meetingDoc.roomId)

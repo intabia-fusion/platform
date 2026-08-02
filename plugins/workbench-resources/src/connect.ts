@@ -75,6 +75,11 @@ let _token: string | undefined
 let _client: Client | undefined
 let _clientSet: boolean = false
 
+// True global DISABLED_FEATURES baseline, captured once from platform init metadata.
+// connect() narrows presentation.metadata.DisabledFeatures per workspace on every call, so we must not
+// recompute "effective" from the already-narrowed value on a later workspace switch.
+let _globalDisabledFeatures: Set<string> | undefined
+
 export async function disconnect (): Promise<void> {
   if (_client !== undefined) {
     await _client.close()
@@ -152,6 +157,19 @@ export async function connect (title: string): Promise<Client | undefined> {
   if (workspaceLoginInfo.collaboratorEndpoint != null && workspaceLoginInfo.collaboratorEndpoint !== '') {
     setMetadata(presentation.metadata.CollaboratorUrl, workspaceLoginInfo.collaboratorEndpoint)
   }
+
+  // DISABLED_FEATURES disables features globally; a workspace's disabledFeaturesOverride re-enables them.
+  // _globalDisabledFeatures is captured once so switching workspaces always recomputes from the true
+  // global set, not from a previous workspace's already-narrowed metadata.
+  if (_globalDisabledFeatures === undefined) {
+    _globalDisabledFeatures = new Set(getMetadata(presentation.metadata.DisabledFeatures) ?? [])
+  }
+  const disabledFeaturesOverride = new Set(workspaceLoginInfo.disabledFeaturesOverride ?? [])
+  const effectiveDisabledFeatures = new Set(
+    [..._globalDisabledFeatures].filter((f) => !disabledFeaturesOverride.has(f))
+  )
+  setMetadata(presentation.metadata.DisabledFeatures, effectiveDisabledFeatures)
+  setMetadata(client.metadata.ExtraFilter, [...effectiveDisabledFeatures])
 
   const fetchWorkspace = await getResource(login.function.FetchWorkspace)
 

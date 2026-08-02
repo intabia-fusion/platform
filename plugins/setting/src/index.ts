@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -20,6 +21,7 @@ import type {
   Configuration,
   Doc,
   Mixin,
+  Rank,
   Ref,
   AccountUuid,
   Domain,
@@ -89,6 +91,15 @@ export interface Editable extends Class<Doc> {
  * Mixin to allow delete of Custom classes.
  */
 export interface UserMixin extends Class<Doc> {}
+
+/**
+ * @public
+ *
+ * Mixin to keep ordering of classifiers (mixins) in the class editor.
+ */
+export interface ClassifierOrder extends Class<Doc> {
+  rank: Rank
+}
 
 /**
  * @public
@@ -163,7 +174,7 @@ export default plugin(settingId, {
     Terms: '' as Ref<Doc>,
     ClassSetting: '' as Ref<Doc>,
     General: '' as Ref<Doc>,
-    Owners: '' as Ref<Doc>,
+    Members: '' as Ref<Doc>,
     InviteSettings: '' as Ref<Doc>,
     WorkspaceSetting: '' as Ref<Doc>,
     ManageSpaces: '' as Ref<Doc>,
@@ -177,6 +188,7 @@ export default plugin(settingId, {
   mixin: {
     Editable: '' as Ref<Mixin<Editable>>,
     UserMixin: '' as Ref<Mixin<UserMixin>>,
+    ClassifierOrder: '' as Ref<Mixin<ClassifierOrder>>,
     SpaceTypeEditor: '' as Ref<Mixin<SpaceTypeEditor>>,
     SpaceTypeCreator: '' as Ref<Mixin<SpaceTypeCreator>>
   },
@@ -244,7 +256,7 @@ export default plugin(settingId, {
     Reconnect: '' as IntlString,
     ClassSetting: '' as IntlString,
     Classes: '' as IntlString,
-    Owners: '' as IntlString,
+    Members: '' as IntlString,
     Configure: '' as IntlString,
     InviteSettings: '' as IntlString,
     General: '' as IntlString,
@@ -314,7 +326,7 @@ export default plugin(settingId, {
   },
   icon: {
     AccountSettings: '' as Asset,
-    Owners: '' as Asset,
+    Members: '' as Asset,
     Password: '' as Asset,
     Setting: '' as Asset,
     Integrations: '' as Asset,

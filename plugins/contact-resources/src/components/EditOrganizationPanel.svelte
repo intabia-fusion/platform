@@ -8,6 +8,7 @@
   import { type AnyComponent, Button, Component, IconMixin, IconMoreH, Label } from '@hcengineering/ui'
   import view, { AttributeCategory } from '@hcengineering/view'
   import {
+    ClassSettingButton,
     DocAttributeBar,
     DocNavLink,
     getCollectionCounter,
@@ -107,7 +108,7 @@
 
     <svelte:fragment slot="attributes" let:direction={dir}>
       {#if dir === 'column'}
-        <DocAttributeBar {object} {mixins} {ignoreKeys} {readonly} />
+        <DocAttributeBar {object} {mixins} {ignoreKeys} {readonly} allowedCollections={['labels']} />
       {/if}
     </svelte:fragment>
 
@@ -138,6 +139,9 @@
           showAllMixins = !showAllMixins
         }}
       />
+      {#if object}
+        <ClassSettingButton _class={object._class} />
+      {/if}
     </svelte:fragment>
 
     <div class="flex-col flex-grow flex-no-shrink step-tb-6">

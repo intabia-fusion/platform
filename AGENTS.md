@@ -1,6 +1,6 @@
 # Foundation Platform
 
-TypeScript/Svelte 4 monorepo. Rush.js (pnpm), Node >=24 <25, Webpack 5, Electron, Jest.
+TypeScript/Svelte 4 monorepo. Rush.js (pnpm), Node 24 (`.nvmrc`; rush.json accepts >=20 <25), Webpack 5, Electron, Jest.
 
 ## Repository Structure
 

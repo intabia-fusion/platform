@@ -20,7 +20,7 @@ export class CategoryDetailsPage extends CalendarPage {
     this.textDescription = page.locator('div.grid div.tiptap')
     this.inputAttachFile = page.locator('div.grid input#file')
     this.buttonMoreActions = page.locator('.popupPanel > .hulyHeader-container button[data-id="btnMoreActions"]')
-    this.textAttachFile = page.locator('div.attachment-grid-container div[class*="attachment"] div.name')
+    this.textAttachFile = page.locator('div.attachment-list-container div[class*="attachment"] div.name')
   }
 
   async checkTitle (categoryTitle: string): Promise<void> {

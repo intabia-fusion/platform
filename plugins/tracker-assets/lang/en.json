@@ -93,6 +93,8 @@
     "BlocksIssuesList": "Blocking Issues ({blocksIssues})",
     "OpenSubIssues": "Open sub-issues",
     "AddSubIssues": "Add sub-issue",
+    "AddExistingSubIssue": "Add existing sub-issue",
+    "CreateSubIssue": "Create sub-issue",
     "BlockedBy": "Blocked by",
     "RelatedTo": "Related to",
     "Comments": "Comments",

@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -911,6 +912,7 @@ export interface WorkspaceInfo {
   allowReadOnlyGuest?: boolean // Should always be set for NEW workspaces
   allowGuestSignUp?: boolean // Should always be set for NEW workspaces
   passwordAgingRule?: number // in days
+  disabledFeaturesOverride?: string[] // Features from DISABLED_FEATURES to re-enable for this workspace
 }
 
 export interface BackupStatus {
@@ -940,6 +942,9 @@ export interface WorkspaceInfoWithStatus extends WorkspaceInfo {
   backupInfo?: BackupStatus
   usageInfo?: UsageStatus
   processingAttemps: number
+  // Self-host edition of this deployment (dev|community|licensed) — same for every workspace, carried
+  // here so the workspace-select screen can show a "Community" badge. Absent on older servers.
+  licenseEdition?: string
 }
 
 export interface WorkspaceMemberInfo {

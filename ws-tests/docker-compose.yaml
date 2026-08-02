@@ -18,7 +18,7 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
   stream:
-    image: 'intabiafusion/stream'
+    image: 'intabiafusion/stream:${DOCKER_TAG:-latest}'
     pull_policy: never
     environment:
       - STREAM_ENDPOINT_URL=datalake://datalake:4031
@@ -53,7 +53,7 @@ services:
     restart: unless-stopped
 
   db-migrator:
-    image: intabiafusion/db-migrator
+    image: 'intabiafusion/db-migrator:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       postgres:
@@ -126,7 +126,7 @@ services:
       interval: 5s
       retries: 10
   datalake:
-    image: intabiafusion/datalake
+    image: 'intabiafusion/datalake:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       minio:
@@ -182,7 +182,7 @@ services:
       retries: 10
       test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
   account:
-    image: intabiafusion/account
+    image: 'intabiafusion/account:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       cockroach:
@@ -212,16 +212,39 @@ services:
       - ACCOUNTS_URL=http://localhost:8083/_account
       - BRANDING_PATH=/var/cfg/branding.json
       # - DISABLE_SIGNUP=true
+      # Dev/testing only: fixed admin-operation OTP code (email delivery is off in tests). NEVER set in prod.
+      - ADMIN_OTP_DEV_CODE=000000
     restart: unless-stopped
   stats:
-    image: intabiafusion/stats
+    image: 'intabiafusion/stats:${DOCKER_TAG:-latest}'
     pull_policy: never
     environment:
       - PORT=4901
       - SERVER_SECRET=secret
     restart: unless-stopped
+  billing:
+    image: 'intabiafusion/billing:${DOCKER_TAG:-latest}'
+    pull_policy: never
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_started
+      account:
+        condition: service_started
+      datalake:
+        condition: service_started
+    environment:
+      - PORT=4041
+      - SECRET=secret
+      - ACCOUNTS_URL=http://account:3003
+      - DB_URL=${DB_PG_URL}
+      - STORAGE_CONFIG=${STORAGE_CONFIG}
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - USAGE_UPDATE_INTERVAL=30
+    restart: unless-stopped
   workspace:
-    image: intabiafusion/workspace
+    image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'
     pull_policy: never
     links:
       - cockroach
@@ -245,7 +268,7 @@ services:
       # - INIT_WORKSPACE=huly
     restart: unless-stopped
   workspace_europe:
-    image: intabiafusion/workspace
+    image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       postgres:
@@ -273,7 +296,7 @@ services:
       # - INIT_WORKSPACE=huly
     restart: unless-stopped
   collaborator:
-    image: intabiafusion/collaborator
+    image: 'intabiafusion/collaborator:${DOCKER_TAG:-latest}'
     pull_policy: never
     links:
       - minio
@@ -287,7 +310,7 @@ services:
       - STATS_URL=http://stats:4901
     restart: unless-stopped
   front:
-    image: intabiafusion/front
+    image: 'intabiafusion/front:${DOCKER_TAG:-latest}'
     pull_policy: never
     links:
       - account
@@ -320,7 +343,7 @@ services:
       - USE_OTP=false
     restart: unless-stopped
   transactor:
-    image: intabiafusion/transactor
+    image: 'intabiafusion/transactor:${DOCKER_TAG:-latest}'
     pull_policy: never
     links:
       - cockroach
@@ -349,7 +372,7 @@ services:
       - RATE_LIMIT_MAX=25000
       - RATE_LIMIT_WINDOW=1000
   transactor-europe:
-    image: intabiafusion/transactor
+    image: 'intabiafusion/transactor:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       postgres:
@@ -382,13 +405,13 @@ services:
       - RATE_LIMIT_WINDOW=1000
     restart: unless-stopped
   rekoni:
-    image: intabiafusion/rekoni-service
+    image: 'intabiafusion/rekoni-service:${DOCKER_TAG:-latest}'
     pull_policy: never
     restart: unless-stopped
     environment:
       - STATS_URL=http://stats:4901
   fulltext:
-    image: intabiafusion/fulltext
+    image: 'intabiafusion/fulltext:${DOCKER_TAG:-latest}'
     pull_policy: never
     restart: unless-stopped
     links:
@@ -407,7 +430,7 @@ services:
       - REKONI_URL=http://rekoni:4004
       - ACCOUNTS_URL=http://account:3003
   fulltext-europe:
-    image: intabiafusion/fulltext
+    image: 'intabiafusion/fulltext:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
       postgres:
@@ -430,7 +453,7 @@ services:
       - ACCOUNTS_URL=http://account:3003
     restart: unless-stopped
   aiBot:
-    image: intabiafusion/ai-bot
+    image: 'intabiafusion/ai-bot:${DOCKER_TAG:-latest}'
     pull_policy: never
     extra_hosts:
       - 'host.docker.internal:host-gateway'
@@ -450,9 +473,9 @@ services:
       - OPENAI_SUMMARY_MODEL=openai/gpt-oss-20b
       - OPENAI_TRANSLATE_MODEL=openai/gpt-oss-20b
       - OPENAI_BASE_URL=http://host.docker.internal:1234/v1/
-      - CHUNK_STORAGE_CONFIG="minio|minio?accessKey=minioadmin&secretKey=minioadmin&rootBucket=chunks"
+      - CHUNK_STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin&rootBucket=chunks
   activity:
-    image: intabiafusion/activity
+    image: 'intabiafusion/activity:${DOCKER_TAG:-latest}'
     depends_on:
       redpanda:
         condition: service_started

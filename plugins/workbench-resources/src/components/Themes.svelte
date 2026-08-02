@@ -13,8 +13,8 @@
   limitations under the License.
 -->
 <script lang="ts">
-  import platform, { getMetadata } from '@hcengineering/platform'
-  import { PreviewControls } from '@hcengineering/ui'
+  import platform, { getMetadata, type Asset, type Metadata } from '@hcengineering/platform'
+  import { Icon, PreviewControls } from '@hcengineering/ui'
   import { onMount } from 'svelte'
 
   // Check if we're in development mode
@@ -39,6 +39,73 @@
     { id: 'graphite', name: 'Graphite', color: '#989898' }
   ]
 
+  // Tracker icons overview (dev page): resolved by metadata id to avoid a tracker dependency
+  interface IconInfo {
+    name: string
+    desc: string
+    unused?: boolean
+  }
+  const trackerIcons: Record<string, IconInfo[]> = {
+    'Navigation / application': [
+      { name: 'TrackerApplication', desc: 'Tracker application icon' },
+      { name: 'MyIssues', desc: 'My Issues navigation item' },
+      { name: 'Issues', desc: 'Issues panel, classic project icon' },
+      { name: 'Components', desc: 'Components navigation item, IconComponent' },
+      { name: 'Labels', desc: 'LabelsView, Labels navigation item' },
+      { name: 'Milestone', desc: 'Milestone presenters, navigation' },
+      { name: 'IssueTemplates', desc: 'issue templates, CreateIssue' },
+      { name: 'Inbox', desc: '', unused: true },
+      { name: 'Views', desc: '', unused: true },
+      { name: 'Project', desc: '', unused: true },
+      { name: 'Magnifier', desc: '', unused: true }
+    ],
+    'Issues and hierarchy': [
+      { name: 'Issue', desc: 'issue icon: RelationsPopup, RelatedIssues, GitHub' },
+      { name: 'Subissue', desc: 'add existing sub-issue (SubIssues, action)' },
+      { name: 'Parent', desc: 'parent selector in CreateIssue, Set parent action' },
+      { name: 'UnsetParent', desc: 'unset parent in EditIssue, Unset parent action' },
+      { name: 'NewIssue', desc: 'new issue actions' },
+      { name: 'Relations', desc: 'related issues: actions, settings' },
+      { name: 'Component', desc: 'ComponentPresenter/Selector/Browser' },
+      { name: 'DueDate', desc: 'EstimationEditor, Set due date action' },
+      { name: 'Estimation', desc: 'estimation editor' },
+      { name: 'TimeReport', desc: 'time report' },
+      { name: 'CopyBranch', desc: 'Copy branch name' },
+      { name: 'Duplicate', desc: 'Duplicate issue action' },
+      { name: 'Home', desc: 'default for project/component/milestone' },
+      { name: 'Start', desc: '', unused: true },
+      { name: 'Stop', desc: '', unused: true },
+      { name: 'RedCircle', desc: '', unused: true },
+      { name: 'ComponentsList', desc: '', unused: true }
+    ],
+    'Status categories': [
+      { name: 'CategoryBacklog', desc: 'Move to Backlog action' },
+      { name: 'CategoryUnstarted', desc: '', unused: true },
+      { name: 'CategoryStarted', desc: '', unused: true },
+      { name: 'CategoryCompleted', desc: '', unused: true },
+      { name: 'CategoryCanceled', desc: '', unused: true }
+    ],
+    Priorities: [
+      { name: 'PriorityNoPriority', desc: 'No priority' },
+      { name: 'PriorityUrgent', desc: 'Urgent' },
+      { name: 'PriorityHigh', desc: 'High' },
+      { name: 'PriorityMedium', desc: 'Medium' },
+      { name: 'PriorityLow', desc: 'Low' }
+    ],
+    'Milestone statuses': [
+      { name: 'MilestoneStatusPlanned', desc: 'Planned' },
+      { name: 'MilestoneStatusInProgress', desc: 'In Progress' },
+      { name: 'MilestoneStatusPaused', desc: '', unused: true },
+      { name: 'MilestoneStatusCompleted', desc: 'Completed' },
+      { name: 'MilestoneStatusCanceled', desc: 'Canceled' }
+    ]
+  }
+
+  function trackerIcon (name: string): Asset | undefined {
+    const id = `tracker:icon:${name}` as Metadata<Asset>
+    return getMetadata(id) !== undefined ? (id as unknown as Asset) : undefined
+  }
+
   onMount(() => {
     document.documentElement.setAttribute('class', '')
   })
@@ -46,6 +113,28 @@
 
 {#if isDevelopment}
   <div class="theme-preview-container">
+    <h1>Tracker icons</h1>
+    {#each Object.entries(trackerIcons) as [group, icons]}
+      <h2>{group}</h2>
+      <div class="icon-grid">
+        {#each icons as info}
+          {@const asset = trackerIcon(info.name)}
+          <div class="icon-cell" class:unused={info.unused}>
+            {#if asset}
+              <span class="icon-sample"><Icon icon={asset} size={'small'} /></span>
+              <span class="icon-sample"><Icon icon={asset} size={'medium'} /></span>
+              <span class="icon-sample"><Icon icon={asset} size={'large'} /></span>
+            {:else}
+              <span class="icon-sample">?</span>
+            {/if}
+            <div class="icon-info">
+              <b>{info.name}</b>
+              <span>{info.unused ? 'unused' : info.desc}</span>
+            </div>
+          </div>
+        {/each}
+      </div>
+    {/each}
     {#each accents as accent}
       <div class="accent-group flex flex-row-center">
         <!-- Light theme version -->
@@ -83,5 +172,37 @@
   .theme-preview-container {
     padding: 2rem;
     overflow: auto;
+  }
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .icon-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid var(--theme-divider-color);
+    border-radius: 0.375rem;
+
+    &.unused {
+      opacity: 0.5;
+    }
+  }
+  .icon-sample {
+    display: flex;
+    align-items: center;
+    color: var(--theme-content-color);
+  }
+  .icon-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.75rem;
+
+    span {
+      color: var(--theme-dark-color);
+    }
   }
 </style>

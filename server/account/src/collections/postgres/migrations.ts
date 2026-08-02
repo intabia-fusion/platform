@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -84,7 +85,14 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV24Migration(ns, flavor),
     getV25Migration(ns, flavor),
     getV26Migration(ns, flavor),
-    getV27Migration(ns, flavor)
+    getV27Migration(ns, flavor),
+    getV28Migration(ns, flavor),
+    getV29Migration(ns, flavor),
+    getV30Migration(ns, flavor),
+    getV31Migration(ns, flavor),
+    getV32Migration(ns, flavor),
+    getV33Migration(ns),
+    getV34Migration(ns)
   ]
 }
 
@@ -848,6 +856,182 @@ function getV27Migration (ns: string, flavor: DBFlavor): [string, string] {
         CONSTRAINT account_workspace_badge_status_membership_fk FOREIGN KEY (workspace_uuid, account_uuid) 
             REFERENCES ${ns}.workspace_members(workspace_uuid, account_uuid) ON DELETE CASCADE
     );
+    `
+  ]
+}
+
+function getV28Migration (ns: string, flavor: DBFlavor): [string, string] {
+  return [
+    'account_db_v28_subscription_limits',
+    `
+    /* Add limits column to subscription table for plan-limit snapshots */
+    ALTER TABLE ${ns}.subscription
+    ADD COLUMN IF NOT EXISTS limits JSONB;
+    `
+  ]
+}
+
+function getV29Migration (ns: string, flavor: DBFlavor): [string, string] {
+  // Add 'readonly' value to subscription_status enum (grace period expired -> read-only access).
+  const addValueSql =
+    flavor === 'postgres'
+      ? `
+    DO $$     BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_enum
+            WHERE enumlabel = 'readonly'
+            AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'subscription_status' AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = '${ns}'))
+        ) THEN
+            ALTER TYPE ${ns}.subscription_status ADD VALUE 'readonly';
+        END IF;
+    END $$;
+    `
+      : `
+    ALTER TYPE ${ns}.subscription_status ADD VALUE IF NOT EXISTS 'readonly';
+    `
+
+  return ['account_db_v29_subscription_status_readonly', addValueSql]
+}
+
+function getV30Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v30_payment_intent_table',
+    `
+    /* ======= P A Y M E N T   I N T E N T ======= */
+    /* Atomic claim keyed by claim_key (INSERT ... ON CONFLICT DO NOTHING) across pods/replicas:
+         renew:<sub>:<periodEnd>  — one charge per subscription period
+         checkout:<ws>:<type>     — one pending checkout per (workspace, plan type)
+       order_fingerprint ('plan:seats:period') is the exact order behind a checkout claim; a loser
+       reuses the URL only on a match, else 409. No FK — a checkout claim has no subscription yet. */
+
+    CREATE TABLE IF NOT EXISTS ${ns}.payment_intent (
+        id ${types.string} NOT NULL DEFAULT gen_random_uuid()::TEXT,
+        claim_key ${types.string} NOT NULL,
+        provider ${types.string} NOT NULL,
+        status ${types.string} NOT NULL DEFAULT 'pending', -- pending | charged | failed
+        payment_id ${types.string}, -- provider charge id, set once the charge is issued
+        payment_url ${types.string}, -- checkout URL, reused by repeat callers of the same order
+        amount ${types.int8},
+        heartbeat_at BIGINT, -- lease: refreshed ~1s while a live pod awaits the charge response
+        subscription_id ${types.string}, -- set for renew claims; null for checkout claims
+        workspace_uuid ${types.string}, -- set for checkout claims
+        order_fingerprint ${types.string},
+
+        created_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
+        updated_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
+
+        CONSTRAINT payment_intent_pk PRIMARY KEY (id)
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS payment_intent_claim_key_unique ON ${ns}.payment_intent (claim_key);
+    CREATE INDEX IF NOT EXISTS payment_intent_payment_id_idx ON ${ns}.payment_intent (payment_id);
+    `
+  ]
+}
+
+function getV31Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v31_payment_operation_ledger',
+    `
+    /* ======= P A Y M E N T   O P E R A T I O N   L E D G E R ======= */
+    /* Append-only audit trail of every payment operation (init charge, webhook result, recurrent
+       charge, cancel, refund). Immutable — rows are inserted, never updated/deleted. raw holds the
+       full provider payload for forensics/reconciliation. No FK: an init may precede the subscription.
+       action_id groups every row a single user/system intent produced (e.g. a plan change =
+       new charge + old subscription cancel + free activation), actor says who drove that row. */
+
+    CREATE TABLE IF NOT EXISTS ${ns}.payment_operation (
+        id ${types.string} NOT NULL DEFAULT gen_random_uuid()::TEXT,
+        provider ${types.string} NOT NULL,
+        operation ${types.string} NOT NULL, -- init_charge | webhook | charge_recurrent | cancel | refund
+        status ${types.string}, -- provider/webhook status (CONFIRMED|REJECTED|...) or success/failed
+        payment_id ${types.string}, -- provider charge id
+        order_id ${types.string},
+        subscription_id ${types.string},
+        workspace_uuid ${types.string},
+        account_uuid ${types.string}, -- who/what initiated (system for scheduler)
+        action_id ${types.string}, -- correlates every row of one intent (purchase, plan change, renewal)
+        actor ${types.string}, -- user | system | provider | admin
+        amount ${types.int8}, -- minor units (kopecks)
+        raw JSONB, -- full provider request/response/notification payload
+        created_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
+
+        CONSTRAINT payment_operation_pk PRIMARY KEY (id)
+    );
+
+    CREATE INDEX IF NOT EXISTS payment_operation_workspace_idx ON ${ns}.payment_operation (workspace_uuid);
+    CREATE INDEX IF NOT EXISTS payment_operation_payment_id_idx ON ${ns}.payment_operation (payment_id);
+    CREATE INDEX IF NOT EXISTS payment_operation_created_idx ON ${ns}.payment_operation (created_on);
+    CREATE INDEX IF NOT EXISTS payment_operation_action_idx ON ${ns}.payment_operation (action_id);
+    `
+  ]
+}
+
+function getV32Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v32_payment_intent_claim_key',
+    `
+    /* ======= P A Y M E N T   I N T E N T   R E A L I G N ======= */
+    /* v30 shipped twice with different DDL: an early renew-only shape (subscription_id NOT NULL,
+       UNIQUE (subscription_id, period_end), FK to subscription) and the current claim_key shape.
+       Databases that applied the early one keep the identifier marked applied, so the newer DDL
+       never runs and claimIntent fails with "column claim_key does not exist". Realign in place. */
+
+    ALTER TABLE ${ns}.payment_intent DROP CONSTRAINT IF EXISTS payment_intent_subscription_fk;
+    ${
+      // cockroach refuses DROP CONSTRAINT for a UNIQUE; it wants the backing index dropped instead.
+      flavor === 'cockroach'
+        ? `DROP INDEX IF EXISTS ${ns}.payment_intent@payment_intent_sub_period_unique CASCADE;`
+        : `ALTER TABLE ${ns}.payment_intent DROP CONSTRAINT IF EXISTS payment_intent_sub_period_unique;`
+    }
+    ALTER TABLE ${ns}.payment_intent ALTER COLUMN subscription_id DROP NOT NULL;
+
+    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS claim_key ${types.string};
+    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS payment_url ${types.string};
+    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS workspace_uuid ${types.string};
+    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS order_fingerprint ${types.string};
+
+    /* period_end is old-schema only; add it (nullable) on the current shape so the backfill in v33
+       is plain SQL — no DO block, which CockroachDB does not support. */
+    ALTER TABLE ${ns}.payment_intent ADD COLUMN IF NOT EXISTS period_end BIGINT;
+    ALTER TABLE ${ns}.payment_intent ALTER COLUMN period_end DROP NOT NULL;
+    `
+  ]
+}
+
+function getV33Migration (ns: string): [string, string] {
+  return [
+    'account_db_v33_payment_intent_claim_key_index',
+    `
+    /* Separate migration on purpose: cockroach backfills a freshly added column asynchronously and
+       rejects an index build while that is in flight ("column is being backfilled"). Splitting lets
+       v32's ADD COLUMN settle before the unique index below is created. */
+
+    /* Rebuild the renew claim key from the old shape; a table already on the current shape has no
+       such rows, so this is a no-op there. */
+    UPDATE ${ns}.payment_intent
+       SET claim_key = 'renew:' || subscription_id || ':' || period_end
+     WHERE claim_key IS NULL AND subscription_id IS NOT NULL AND period_end IS NOT NULL;
+
+    DELETE FROM ${ns}.payment_intent WHERE claim_key IS NULL;
+
+    /* claim_key stays nullable: the unique index is what enforces the claim, and every insert sets
+       it. SET NOT NULL on an existing column behaves differently across flavors. */
+    CREATE UNIQUE INDEX IF NOT EXISTS payment_intent_claim_key_unique ON ${ns}.payment_intent (claim_key);
+    CREATE INDEX IF NOT EXISTS payment_intent_payment_id_idx ON ${ns}.payment_intent (payment_id);
+    `
+  ]
+}
+
+function getV34Migration (ns: string): [string, string] {
+  return [
+    'account_db_v34_add_disabled_features_override',
+    `
+    ALTER TABLE ${ns}.workspace
+    ADD COLUMN IF NOT EXISTS disabled_features_override TEXT[];
     `
   ]
 }
