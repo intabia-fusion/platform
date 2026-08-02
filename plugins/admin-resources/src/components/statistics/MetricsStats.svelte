@@ -2,8 +2,8 @@
   import { getMetadata } from '@hcengineering/platform'
   import presentation, { type ServiceStatistics } from '@hcengineering/presentation'
   import { ticker } from '@hcengineering/ui'
-  import MetricsInfo from './statistics/MetricsInfo.svelte'
-  import { fetchStatsJson } from './statistics/statsFetch'
+  import { MetricsInfo } from '@hcengineering/view-resources'
+  import { fetchStatsJson } from './statsFetch'
 
   export let serviceName: string
   export let sortOrder: 'ops' | 'avg' | 'total'

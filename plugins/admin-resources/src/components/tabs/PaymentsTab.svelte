@@ -37,6 +37,7 @@
   let periodDays = 7
   let onlyPaid = false
   let onlyFree = false
+  let onlyTrial = false
   let sortByAmount = false
   let onlyErrors = false
   let groupMode: 'payment' | 'workspace' | 'none' = 'payment'
@@ -586,6 +587,9 @@
         <CheckBox bind:checked={onlyFree} /><Label label={adminRes.string.OnlyFree} />
       </label>
       <label class="flex-row-center flex-gap-1">
+        <CheckBox bind:checked={onlyTrial} /><Label label={adminRes.string.OnlyTrial} />
+      </label>
+      <label class="flex-row-center flex-gap-1">
         <CheckBox bind:checked={sortByAmount} /><Label label={adminRes.string.SortByAmount} />
       </label>
     </div>
@@ -603,7 +607,7 @@
       <tbody>
         {#each subscriptions
           .filter((s) => s.type === 'tier' && s.status !== 'canceled')
-          .filter((s) => (!onlyPaid || isPaid(s)) && (!onlyFree || !isPaid(s)))
+          .filter((s) => (!onlyPaid || isPaid(s)) && (!onlyFree || !isPaid(s)) && (!onlyTrial || s.status === 'trialing'))
           .sort((a, b) => (sortByAmount ? Number(b.amount ?? 0) - Number(a.amount ?? 0) : 0)) as s}
           <tr>
             <td>{wsLabel(s.workspaceUuid)}</td>

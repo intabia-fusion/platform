@@ -13,10 +13,22 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type AccountAggregatedInfo } from '@hcengineering/account-client'
+  import { type AccountAggregatedInfo, type AccountsSortKey } from '@hcengineering/account-client'
   import { type AccountUuid, reduceCalls } from '@hcengineering/core'
+  import { type IntlString, translate } from '@hcengineering/platform'
   import { copyTextToClipboard, isAdminUser, isBillingAdminUser } from '@hcengineering/presentation'
-  import { Button, CheckBox, IconCopy, IconDetails, IconStop, Label, SearchEdit, showPopup } from '@hcengineering/ui'
+  import {
+    Button,
+    ButtonMenu,
+    CheckBox,
+    IconCopy,
+    IconDetails,
+    IconStop,
+    Label,
+    SearchEdit,
+    showPopup,
+    themeStore
+  } from '@hcengineering/ui'
 
   import adminRes from '../../plugin'
   import AccountDetails from '../AccountDetails.svelte'
@@ -36,14 +48,60 @@
   const accountLimit = 25
   let accounts: AccountAggregatedInfo[] = []
 
-  const loadAccounts = reduceCalls(async (search?: string, skip?: number, limit?: number): Promise<void> => {
-    accounts = await accountClient.listAccounts(search, skip, limit)
+  let sortKey: AccountsSortKey = 'lastVisit'
+  const sortLabels: Record<AccountsSortKey, IntlString> = {
+    name: adminRes.string.SortName,
+    lastVisit: adminRes.string.SortLastVisit
+  }
+  let sortTitle = ''
+  $: void translate(sortLabels[sortKey], {}, $themeStore.language).then((t) => {
+    sortTitle = t
   })
 
-  let prevTick = -1
-  $: if (refreshTick !== prevTick) {
-    prevTick = refreshTick
+  const loadAccounts = reduceCalls(async (search?: string, skip?: number, limit?: number): Promise<void> => {
+    accounts = await accountClient.listAccounts(search, skip, limit, sortKey)
+  })
+
+  let prevKey = ''
+  $: key = `${refreshTick}:${sortKey}`
+  $: if (key !== prevKey) {
+    if (prevKey !== '') accountSkip = 0
+    prevKey = key
     void loadAccounts(accountSearch, accountSkip, accountLimit)
+  }
+
+  // Last-visit buckets (page-local, list arrives sorted by last_visit DESC)
+  const dayRanges: Array<[string, number]> = [
+    ['Today', 1],
+    ['Week', 7],
+    ['Month', 30],
+    ['Quarter', 90],
+    ['Year', 365],
+    ['Older', Infinity]
+  ]
+  function bucketOf (lastVisit: number | undefined): string {
+    if (lastVisit == null || lastVisit === 0) return 'Never'
+    const days = (Date.now() - lastVisit) / (24 * 3600 * 1000)
+    return dayRanges.find(([, max]) => days <= max)?.[0] ?? 'Older'
+  }
+  $: groups =
+    sortKey === 'lastVisit'
+      ? accounts.reduce<Array<{ label: string | null, items: AccountAggregatedInfo[] }>>((res, a) => {
+        const label = bucketOf(a.lastVisit)
+        const last = res[res.length - 1]
+        if (last?.label === label) {
+          last.items.push(a)
+        } else {
+          res.push({ label, items: [a] })
+        }
+        return res
+      }, [])
+      : [{ label: null, items: accounts }]
+
+  function lastVisitDays (lastVisit: number | undefined): string {
+    if (lastVisit == null || lastVisit === 0) return '-'
+    const days = Math.floor((Date.now() - lastVisit) / (24 * 3600 * 1000))
+    return `${days}d`
   }
 
   // Account deletion is an irreversible identity purge -> OTP-gated on the server
@@ -102,6 +160,17 @@
       await loadAccounts(accountSearch, accountSkip, accountLimit)
     }}
   />
+
+  <span class="ml-4 mr-1"><Label label={adminRes.string.SortingOrder} /></span>
+  <ButtonMenu
+    selected={sortKey}
+    autoSelectionIfOne
+    title={sortTitle}
+    items={Object.entries(sortLabels).map(([id, label]) => ({ id, label }))}
+    on:selected={(it) => {
+      sortKey = it.detail
+    }}
+  />
 </div>
 
 <div class="p-3 select-text-i">
@@ -112,53 +181,62 @@
         <th><Label label={adminRes.string.Email} /></th>
         <th><Label label={adminRes.string.SocialIds} /></th>
         <th><Label label={adminRes.string.Workspaces} /></th>
+        <th><Label label={adminRes.string.LastVisit} /></th>
         <th></th>
       </tr>
     </thead>
     <tbody>
-      {#each accounts as account}
-        <tr class="focused-button">
-          <td>
-            <div class="fs-title">{account.firstName} {account.lastName}</div>
-            <div class="content-dark-color flex-row-center">
-              {account.uuid}
-              <Button
-                icon={IconCopy}
-                size={'small'}
-                kind={'ghost'}
-                on:click={() => copyTextToClipboard(account.uuid)}
-                showTooltip={{ label: adminRes.string.CopyUuid }}
-              />
-            </div>
-          </td>
-          <td>{primaryEmail(account)}</td>
-          <td>{account.socialIds.length}</td>
-          <td>{account.workspaces.length}</td>
-          <td>
-            <div class="flex-row-center">
-              <Button
-                icon={IconDetails}
-                size={'small'}
-                kind={'ghost'}
-                label={adminRes.string.Details}
-                on:click={() => {
-                  showPopup(AccountDetails, { account })
-                }}
-              />
-              {#if !readOnly && accountSuperAdminMode}
+      {#each groups as group}
+        {#if group.label != null}
+          <tr class="group-row">
+            <td colspan="6">{group.label} ({group.items.length})</td>
+          </tr>
+        {/if}
+        {#each group.items as account}
+          <tr class="focused-button">
+            <td>
+              <div class="fs-title">{account.firstName} {account.lastName}</div>
+              <div class="content-dark-color flex-row-center">
+                {account.uuid}
                 <Button
-                  icon={IconStop}
+                  icon={IconCopy}
                   size={'small'}
-                  kind={'dangerous'}
-                  label={adminRes.string.Delete}
+                  kind={'ghost'}
+                  on:click={() => copyTextToClipboard(account.uuid)}
+                  showTooltip={{ label: adminRes.string.CopyUuid }}
+                />
+              </div>
+            </td>
+            <td>{primaryEmail(account)}</td>
+            <td>{account.socialIds.length}</td>
+            <td>{account.workspaces.length}</td>
+            <td>{lastVisitDays(account.lastVisit)}</td>
+            <td>
+              <div class="flex-row-center">
+                <Button
+                  icon={IconDetails}
+                  size={'small'}
+                  kind={'ghost'}
+                  label={adminRes.string.Details}
                   on:click={() => {
-                    deleteAccount(account.uuid)
+                    showPopup(AccountDetails, { account })
                   }}
                 />
-              {/if}
-            </div>
-          </td>
-        </tr>
+                {#if !readOnly && accountSuperAdminMode}
+                  <Button
+                    icon={IconStop}
+                    size={'small'}
+                    kind={'dangerous'}
+                    label={adminRes.string.Delete}
+                    on:click={() => {
+                      deleteAccount(account.uuid)
+                    }}
+                  />
+                {/if}
+              </div>
+            </td>
+          </tr>
+        {/each}
       {/each}
     </tbody>
   </table>
@@ -173,6 +251,10 @@
       text-align: left;
       padding: 0.35rem 1rem 0.35rem 0;
       border-bottom: 1px solid var(--theme-divider-color, #8883);
+    }
+    .group-row td {
+      font-weight: 600;
+      background: var(--theme-comp-header-color);
     }
   }
 </style>

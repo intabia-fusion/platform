@@ -50,6 +50,7 @@ import type {
   Integration,
   IntegrationSecret,
   AccountAggregatedInfo,
+  AccountsSortKey,
   UserProfile,
   Subscription,
   PaymentIntent,
@@ -1145,7 +1146,12 @@ export class PostgresAccountDB implements AccountDB {
     })
   }
 
-  async listAccounts (search?: string, skip?: number, limit?: number): Promise<AccountAggregatedInfo[]> {
+  async listAccounts (
+    search?: string,
+    skip?: number,
+    limit?: number,
+    sort?: AccountsSortKey
+  ): Promise<AccountAggregatedInfo[]> {
     const sqlChunks: string[] = [
       `
       WITH account_data AS (
@@ -1197,7 +1203,13 @@ export class PostgresAccountDB implements AccountDB {
             FROM ${this.workspace.getTableName()} w
             INNER JOIN ${this.getWsMembersTableName()} m ON m.workspace_uuid = w.uuid
             WHERE m.account_uuid = a.uuid
-          ) as workspaces
+          ) as workspaces,
+          (
+            SELECT MAX(ws.last_visit)
+            FROM ${this.workspaceStatus.getTableName()} ws
+            INNER JOIN ${this.getWsMembersTableName()} m2 ON m2.workspace_uuid = ws.workspace_uuid
+            WHERE m2.account_uuid = a.uuid
+          ) as last_visit
         FROM ${this.account.getTableName()} a
         INNER JOIN ${this.ns}.person p ON p.uuid = a.uuid
         LEFT JOIN ${this.userProfile.getTableName()} up ON up.person_uuid = p.uuid
@@ -1221,7 +1233,9 @@ export class PostgresAccountDB implements AccountDB {
       paramIndex++
     }
 
-    sqlChunks.push('ORDER BY p.first_name')
+    // ORDER BY/LIMIT must live on the outer SELECT: row order of a CTE is not guaranteed outside it
+    sqlChunks.push(') SELECT * FROM account_data')
+    sqlChunks.push(sort === 'lastVisit' ? 'ORDER BY last_visit DESC NULLS LAST' : 'ORDER BY first_name')
 
     if (limit !== undefined) {
       sqlChunks.push(`LIMIT $${paramIndex}`)
@@ -1233,8 +1247,6 @@ export class PostgresAccountDB implements AccountDB {
       sqlChunks.push(`OFFSET $${paramIndex}`)
       values.push(skip)
     }
-
-    sqlChunks.push(') SELECT * FROM account_data')
 
     return await this.withRetry(async (rTx) => {
       const result = await rTx.unsafe(sqlChunks.join(' '), values)
@@ -1260,6 +1272,8 @@ export class PostgresAccountDB implements AccountDB {
             sid.verifiedOn = convertTimestamp(sid.verifiedOn)
           }
         }
+
+        converted.lastVisit = convertTimestamp(converted.lastVisit)
 
         return converted as AccountAggregatedInfo
       })
@@ -1311,6 +1325,11 @@ export class PostgresAccountDB implements AccountDB {
     if (query.billingPlan !== undefined && query.billingPlan !== '') {
       where.push(`bs.plan = $${idx}`)
       values.push(query.billingPlan)
+      idx++
+    }
+    if (query.billingStatus !== undefined && query.billingStatus !== '') {
+      where.push(`bs.status = $${idx}`)
+      values.push(query.billingStatus)
       idx++
     }
     if (query.billingExpired === true) {

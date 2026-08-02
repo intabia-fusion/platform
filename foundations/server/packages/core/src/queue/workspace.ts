@@ -15,7 +15,8 @@ export enum QueueWorkspaceEvent {
   Reindex = 'fulltext-reindex',
   ClearIndex = 'clear-fulltext-index',
   LimitsChanged = 'limits-changed',
-  UsageChanged = 'usage-changed'
+  UsageChanged = 'usage-changed',
+  Maintenance = 'maintenance'
 }
 
 export interface QueueWorkspaceMessage {
@@ -61,6 +62,15 @@ export interface QueueWorkspaceUsageMessage extends QueueWorkspaceMessage {
   used: number
 }
 
+/** Global maintenance warning (new version incoming). Not workspace-scoped: every transactor
+ * schedules the warning for all its clients; timeoutMinutes < 0 clears it. */
+export interface QueueWorkspaceMaintenanceMessage extends QueueWorkspaceMessage {
+  type: QueueWorkspaceEvent.Maintenance
+
+  timeoutMinutes: number
+  message?: string
+}
+
 export const workspaceEvents = {
   open: (): QueueWorkspaceMessage => ({ type: QueueWorkspaceEvent.Up }),
   down: (): QueueWorkspaceMessage => ({ type: QueueWorkspaceEvent.Down }),
@@ -88,5 +98,10 @@ export const workspaceEvents = {
     type: QueueWorkspaceEvent.Reindex,
     domain,
     classes
+  }),
+  maintenance: (timeoutMinutes: number, message?: string): QueueWorkspaceMaintenanceMessage => ({
+    type: QueueWorkspaceEvent.Maintenance,
+    timeoutMinutes,
+    message
   })
 }

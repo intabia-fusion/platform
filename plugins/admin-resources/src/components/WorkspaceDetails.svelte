@@ -20,8 +20,13 @@
     WorkspaceMemberDetails
   } from '@hcengineering/account-client'
   import { AccountRole } from '@hcengineering/core'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { copyTextToClipboard, isAdminUser, isBillingAdminUser, MessageBox } from '@hcengineering/presentation'
+  import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
+  import presentation, {
+    copyTextToClipboard,
+    isAdminUser,
+    isBillingAdminUser,
+    MessageBox
+  } from '@hcengineering/presentation'
   import {
     Button,
     ButtonMenu,
@@ -158,7 +163,11 @@
   let editingUrl = false
   let urlValue = ''
   let editingDisabledFeatures = false
-  let disabledFeaturesValue = ''
+  // Feature checkboxes: candidates are the globally disabled features (DISABLED_FEATURES),
+  // checked = re-enabled for this workspace. Union with the current override keeps entries
+  // visible even if the global metadata was narrowed by a workspace connect in this session.
+  let featureOptions: string[] = []
+  let featureChecked: Record<string, boolean> = {}
 
   function startEditName (): void {
     nameValue = workspace.name ?? ''
@@ -169,7 +178,10 @@
     editingUrl = true
   }
   function startEditDisabledFeatures (): void {
-    disabledFeaturesValue = (workspace.disabledFeaturesOverride ?? []).join(', ')
+    const global = getMetadata(presentation.metadata.DisabledFeatures) ?? new Set<string>()
+    const override = workspace.disabledFeaturesOverride ?? []
+    featureOptions = Array.from(new Set([...global, ...override])).sort()
+    featureChecked = Object.fromEntries(featureOptions.map((f) => [f, override.includes(f)]))
     editingDisabledFeatures = true
   }
   async function saveName (): Promise<void> {
@@ -201,10 +213,7 @@
     editingUrl = false
   }
   async function saveDisabledFeatures (): Promise<void> {
-    const features = disabledFeaturesValue
-      .split(',')
-      .map((f) => f.trim())
-      .filter((f) => f.length > 0)
+    const features = featureOptions.filter((f) => featureChecked[f])
     try {
       await accountClient.adminUpdateWorkspaceDisabledFeatures(workspace.uuid, features)
       workspace = { ...workspace, disabledFeaturesOverride: features }
@@ -415,9 +424,15 @@
         <div class="flex-row-center">
           <Label label={adminRes.string.DisabledFeaturesOverride} />:
           {#if editingDisabledFeatures}
-            <div class="ml-1 edit-inline">
-              <EditBox bind:value={disabledFeaturesValue} kind={'editbox'} autoFocus />
-            </div>
+            {#if featureOptions.length === 0}
+              <span class="ml-1 content-dark-color">-</span>
+            {/if}
+            {#each featureOptions as f}
+              <label class="ml-2 flex-row-center">
+                <CheckBox bind:checked={featureChecked[f]} />
+                <span class="ml-1">{f}</span>
+              </label>
+            {/each}
             <Button size={'small'} kind={'ghost'} label={adminRes.string.Save} on:click={saveDisabledFeatures} />
           {:else}
             <span class="ml-1">{(workspace.disabledFeaturesOverride ?? []).join(', ') || '-'}</span>

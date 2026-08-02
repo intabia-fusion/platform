@@ -208,7 +208,11 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
       let transactorRpc = rpcSessions.get(token)
 
       if (transactorRpc === undefined) {
-        const cs: ConnectionSocket = createClosingSocket(token, rpcSessions)
+        const cs: ConnectionSocket = createClosingSocket(token, rpcSessions, {
+          rpc: true,
+          account: decodedToken.account,
+          service: decodedToken.extra?.service
+        })
         const s = await sessions.addSession(ctx, cs, decodedToken, token, token)
         if (!('session' in s)) {
           sendError(res, 403, {
@@ -746,7 +750,11 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
   })
 }
 
-function createClosingSocket (rawToken: string, rpcSessions: Map<string, RPCClientInfo>): ConnectionSocket {
+function createClosingSocket (
+  rawToken: string,
+  rpcSessions: Map<string, RPCClientInfo>,
+  data: Record<string, any> = {}
+): ConnectionSocket {
   return {
     id: rawToken,
     isClosed: false,
@@ -757,7 +765,7 @@ function createClosingSocket (rawToken: string, rpcSessions: Map<string, RPCClie
     isBackpressure: () => false,
     backpressure: async (ctx) => {},
     sendPong: () => {},
-    data: () => ({}),
+    data: () => data,
     readRequest: (buffer, binary) => ({ method: '', params: [], id: -1, time: Date.now() }),
     checkState: () => true
   }
