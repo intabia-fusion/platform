@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 
 import account, {
@@ -16,7 +17,8 @@ import account, {
   parseFreePlanLimits,
   initRegionConfig,
   generateShortId,
-  sweepScheduledDeletions
+  sweepScheduledDeletions,
+  getRegions
 } from '@hcengineering/account'
 import accountCs from '@hcengineering/account/lang/cs.json'
 import accountDe from '@hcengineering/account/lang/de.json'
@@ -54,8 +56,6 @@ import { getPlatformQueue } from '@hcengineering/kafka'
 import {
   QueueTopic,
   type QueueUserMessage,
-  type QueueOnlineUserTx,
-  type QueueWorkspaceMessage,
   type QueuePaymentOperationMessage,
   type QueueSubscriptionMessage
 } from '@hcengineering/server-core'
@@ -139,21 +139,16 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     process.exit(1)
   }
 
+  // Own region (env REGION) serves the global pairs (mail, crm, payment ledger); workspace-scoped
+  // events pass the workspace's region explicitly on the same queue.
   const platformQueue = getPlatformQueue(SERVICE_ID)
+  setMetadata(accountPlugin.metadata.RegionalQueue, platformQueue)
 
   const notificationProducer = platformQueue.getProducer<AccountNotification>(measureCtx, QueueTopic.NotificationQueue)
   setMetadata(accountPlugin.metadata.MailQueue, notificationProducer)
 
   const crmProducer = platformQueue.getProducer<CrmNotification>(measureCtx, QueueTopic.CrmQueue)
   setMetadata(accountPlugin.metadata.CrmQueue, crmProducer)
-
-  // Limits/payment/maintenance events for transactor/datalake/aibot consumers
-  const workspaceProducer = platformQueue.getProducer<QueueWorkspaceMessage>(measureCtx, QueueTopic.Workspace)
-  setMetadata(accountPlugin.metadata.WorkspaceQueue, workspaceProducer)
-
-  // Admin-triggered fulltext reindex requests
-  const fulltextProducer = platformQueue.getProducer<QueueWorkspaceMessage>(measureCtx, QueueTopic.Fulltext)
-  setMetadata(accountPlugin.metadata.FulltextQueue, fulltextProducer)
 
   // Admin-initiated subscription events consumed by pod-payment (free-plan fallback after a cancel)
   const subscriptionProducer = platformQueue.getProducer<QueueSubscriptionMessage>(measureCtx, QueueTopic.Subscription)
@@ -216,19 +211,22 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   const dbNs = process.env.DB_NS
   const accountsDb = getAccountDB(dbUrl, dbNs)
 
-  const onlineUserTxProducer = platformQueue.getProducer<QueueOnlineUserTx>(
-    measureCtx.newChild('online-user-tx-producer', {}, { span: false }),
-    QueueTopic.OnlineUserTx
-  )
+  // Regional wiring: users are consumed from every known region (one consumer, multi-topic
+  // subscription); presence notifications go back to the region of each workspace. Ensure regional
+  // wakeup topics exist for early consumers.
+  const regions = getRegions().map((it) => it.region)
+  void platformQueue.createTopic(QueueTopic.WorkspaceWakeup, 1, regions).catch((err) => {
+    measureCtx.error('failed to ensure wakeup topics', { regions, err })
+  })
 
   const usersConsumer = platformQueue.createBatchConsumer<QueueUserMessage>(
     measureCtx.newChild('users-consumer', {}, { span: false }),
     QueueTopic.Users,
     'presence-tracker',
     async (ctx, msgs) => {
-      await handlePresenceBatch(ctx, msgs, accountsDb, onlineUserTxProducer)
+      await handlePresenceBatch(ctx, msgs, accountsDb, platformQueue)
     },
-    { batchSize: 500, batchTimeout: 1000 }
+    { batchSize: 500, batchTimeout: 1000, regions }
   )
 
   // Payment audit: any provider pod publishes operations; the account service appends the ledger row.
@@ -413,6 +411,16 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
     return hostname
   }
+
+  // Latched: ready once the consumers joined their groups, so a rolling update stops the old pod only
+  // then. A later kafka outage must not pull account out of the Service - the dead watchdog restarts it.
+  let consumersReady = false
+  void Promise.all([usersConsumer.waitReady?.(), paymentOperationConsumer.waitReady?.()]).then(() => {
+    consumersReady = true
+  })
+  router.get('/api/v1/ready', (ctx) => {
+    ctx.status = consumersReady ? 200 : 503
+  })
 
   router.get('/api/v1/statistics', (req, res) => {
     try {

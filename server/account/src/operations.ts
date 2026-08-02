@@ -155,6 +155,7 @@ import {
   normalizeValue,
   publishMembersChanged,
   parseEnvInt,
+  publishWorkspaceWakeup,
   recordFailedLoginAttempt,
   resetFailedLoginAttempts,
   sanitizeEmail,
@@ -1199,7 +1200,7 @@ export async function checkJoin (
 
   if (getRolePower(wsLoginInfo.role) < getRolePower(invite.role)) {
     await db.updateWorkspaceRole(accountUuid, workspaceUuid, invite.role)
-    await publishMembersChanged(ctx, workspaceUuid)
+    await publishMembersChanged(ctx, db, workspaceUuid)
   }
 
   return {
@@ -1381,10 +1382,10 @@ export async function checkAutoJoin (
       if (targetRole == null) {
         await assertSeatAvailable(ctx, db, workspace.uuid, invite.role)
         await db.assignWorkspace(targetAccount.uuid, workspace.uuid, invite.role)
-        await publishMembersChanged(ctx, workspace.uuid)
+        await publishMembersChanged(ctx, db, workspace.uuid)
       } else if (getRolePower(targetRole) < getRolePower(invite.role)) {
         await db.updateWorkspaceRole(targetAccount.uuid, workspace.uuid, invite.role)
-        await publishMembersChanged(ctx, workspace.uuid)
+        await publishMembersChanged(ctx, db, workspace.uuid)
       }
 
       token ??= generateToken(targetAccount.uuid)
@@ -1721,7 +1722,7 @@ export async function leaveWorkspace (
 
   await db.unassignWorkspace(targetAccount, workspace)
   ctx.info('Account removed from workspace', { targetAccount, workspace })
-  await publishMembersChanged(ctx, workspace)
+  await publishMembersChanged(ctx, db, workspace)
 
   if (account === targetAccount) {
     const person = await db.person.findOne({ uuid: account })
@@ -1989,7 +1990,20 @@ export async function getWorkspaceInfo (
   }
 
   if (!isGuest && updateLastVisit && !isAdmin) {
+    const wsLivenessDays = getMetadata(accountPlugin.metadata.WsLivenessDays)
+    const wsLivenessMs = wsLivenessDays !== undefined ? wsLivenessDays * 24 * 60 * 60 * 1000 : undefined
+    // Dormant workspace is excluded from upgrade selection by last_visit; this visit makes it
+    // eligible again, so wake the workers to upgrade it right away.
+    const wasDormant =
+      wsLivenessMs !== undefined &&
+      workspace.status.mode === 'active' &&
+      (workspace.status.lastVisit ?? 0) < Date.now() - wsLivenessMs
+
     await db.workspaceStatus.update({ workspaceUuid }, { lastVisit: Date.now() })
+
+    if (wasDormant) {
+      await publishWorkspaceWakeup(ctx, db, workspaceUuid, workspace.region ?? '')
+    }
   }
 
   return workspace
@@ -2088,7 +2102,7 @@ export async function getLoginInfoByToken (
       await signUpByGrant(ctx, db, branding, accountUuid, grant, params)
       await assertSeatAvailable(ctx, db, workspaceUuid, grant.role)
       await db.assignWorkspace(accountUuid, workspaceUuid, grant.role)
-      await publishMembersChanged(ctx, workspaceUuid)
+      await publishMembersChanged(ctx, db, workspaceUuid)
     } else {
       if (grantAccount.automatic == null || !grantAccount.automatic) {
         // If grant is for existing non-automatic account we need it to be signed in using the regular approach
@@ -2100,10 +2114,10 @@ export async function getLoginInfoByToken (
         if (existingRole == null) {
           await assertSeatAvailable(ctx, db, workspaceUuid, grant.role)
           await db.assignWorkspace(accountUuid, workspaceUuid, grant.role)
-          await publishMembersChanged(ctx, workspaceUuid)
+          await publishMembersChanged(ctx, db, workspaceUuid)
         } else if (getRolePower(existingRole) < getRolePower(grant.role)) {
           await db.updateWorkspaceRole(accountUuid, workspaceUuid, grant.role)
-          await publishMembersChanged(ctx, workspaceUuid)
+          await publishMembersChanged(ctx, db, workspaceUuid)
         }
       }
     }
@@ -3456,7 +3470,7 @@ async function rollbackApiKey (
     const sid = await db.socialId.findOne({ _id: socialId })
     if (sid != null) {
       await db.unassignWorkspace(sid.personUuid as AccountUuid, workspace)
-      await publishMembersChanged(ctx, workspace)
+      await publishMembersChanged(ctx, db, workspace)
     }
   }
 }
@@ -3667,7 +3681,7 @@ export async function createApiKey (
     await createAccount(db, ensured.uuid, false)
     await db.assignWorkspace(ensured.uuid as AccountUuid, workspace, AccountRole.User)
     // Seat enforcement rebuilds its sets on a members-version bump; without this the new key stays unknown.
-    await publishMembersChanged(ctx, workspace)
+    await publishMembersChanged(ctx, db, workspace)
   }
 
   const secret: ApiKeySecret = {
@@ -3784,7 +3798,7 @@ export async function revokeApiKey (
     const socialId = await db.socialId.findOne({ _id: found.socialId })
     if (socialId != null) {
       await db.unassignWorkspace(socialId.personUuid as AccountUuid, workspace)
-      await publishMembersChanged(ctx, workspace)
+      await publishMembersChanged(ctx, db, workspace)
     }
   }
 
