@@ -33,7 +33,9 @@
     "@types/jest": "catalog:",
     "eslint-plugin-svelte": "catalog:",
     "eslint-config-standard": "catalog:",
-    "@stylistic/eslint-plugin": "catalog:"
+    "@stylistic/eslint-plugin": "catalog:",
+    "@testcontainers/redpanda": "catalog:",
+    "testcontainers": "catalog:"
   },
   "dependencies": {
     "@hcengineering/core": "workspace:^0.7.24",

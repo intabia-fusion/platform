@@ -15,10 +15,11 @@
 import { QueueTopic } from '@hcengineering/server-core'
 
 // jest.mock factory may only reference vars prefixed with `mock`.
-const mockState: any = { eachBatch: undefined, listeners: {} }
+const mockState: any = { eachBatch: undefined, listeners: {}, topics: ['workspace'] }
 const mockConsumer = {
   connect: jest.fn(async () => {}),
   subscribe: jest.fn(async () => {}),
+  stop: jest.fn(async () => {}),
   disconnect: jest.fn(async () => {}),
   events: {
     FETCH: 'consumer.fetch',
@@ -46,7 +47,11 @@ jest.mock('kafkajs', () => ({
   Kafka: jest.fn().mockImplementation(() => ({
     consumer: jest.fn(() => mockConsumer),
     producer: jest.fn(() => ({})),
-    admin: jest.fn(() => ({}))
+    admin: jest.fn(() => ({
+      connect: jest.fn(async () => {}),
+      disconnect: jest.fn(async () => {}),
+      listTopics: jest.fn(async () => mockState.topics)
+    }))
   })),
   CompressionTypes: { GZIP: 1 },
   Partitioners: { DefaultPartitioner: jest.fn() }
@@ -115,6 +120,7 @@ const sleep = async (ms: number): Promise<void> => {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockState.topics = ['workspace']
 })
 
 describe('kafka client', () => {
@@ -355,4 +361,47 @@ describe('dead queue watchdog', () => {
     await sleep(40)
     expect(onDead).not.toHaveBeenCalled()
   })
+})
+
+describe('multi-region subscription', () => {
+  it('consumes the existing regional topics and re-subscribes once a missing one appears', async () => {
+    const q = createPlatformQueue(config)
+    const handle = q.createBatchConsumer(ctx, QueueTopic.Workspace, 'grp', jest.fn(), {
+      regions: ['', 'eu'],
+      missingTopicPollMs: 5
+    })
+    await sleep(20)
+    expect(mockConsumer.subscribe).toHaveBeenCalledTimes(1)
+    expect(mockConsumer.subscribe).toHaveBeenLastCalledWith(expect.objectContaining({ topics: ['workspace'] }))
+
+    mockState.topics = ['workspace', 'eu.workspace']
+    await sleep(50)
+    expect(mockConsumer.stop).toHaveBeenCalledTimes(1)
+    expect(mockConsumer.subscribe).toHaveBeenLastCalledWith(
+      expect.objectContaining({ topics: ['workspace', 'eu.workspace'] })
+    )
+    await handle.close()
+  })
+
+  it.each(['batch', 'single'] as const)(
+    'a crash restart while a region is missing keeps a single re-subscribe watcher (%s)',
+    async (kind) => {
+      mockState.listeners = {}
+      const q = createPlatformQueue(config)
+      const opts = { regions: ['', 'eu'], missingTopicPollMs: 5, crashRestartDelay: 5, deadTimeout: 0 }
+      const handle =
+        kind === 'batch'
+          ? q.createBatchConsumer(ctx, QueueTopic.Workspace, 'grp', jest.fn(), opts)
+          : q.createConsumer(ctx, QueueTopic.Workspace, 'grp', jest.fn(), opts)
+      await sleep(20)
+      emit('consumer.crash', { error: new Error('Broker not connected'), restart: false })
+      await sleep(30)
+      expect(mockConsumer.stop).not.toHaveBeenCalled()
+
+      mockState.topics = ['workspace', 'eu.workspace']
+      await sleep(50)
+      expect(mockConsumer.stop).toHaveBeenCalledTimes(1)
+      await handle.close()
+    }
+  )
 })

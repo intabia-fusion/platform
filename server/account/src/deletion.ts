@@ -23,7 +23,12 @@ import {
 } from '@hcengineering/core'
 
 import { AccountEventType, type AccountDB, type WorkspaceInfoWithStatus } from './types'
-import { getWorkspaceInfoWithStatusById, notifyAccountDeletion, notifyWorkspaceDeletionScheduled } from './utils'
+import {
+  getWorkspaceInfoWithStatusById,
+  notifyAccountDeletion,
+  notifyWorkspaceDeletionScheduled,
+  publishWorkspaceWakeup
+} from './utils'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -89,6 +94,7 @@ export async function sweepScheduledDeletions (
       { workspaceUuid: status.workspaceUuid, mode: 'active' },
       { mode: 'archiving-pending-backup', processingAttempts: 0, processingProgress: 0, lastProcessingTime: 0 }
     )
+    await publishWorkspaceWakeup(ctx, db, status.workspaceUuid, undefined)
   }
 
   for (const status of await db.workspaceStatus.find({ deleteOn: { $lte: now }, mode: 'archived' })) {
@@ -103,6 +109,7 @@ export async function sweepScheduledDeletions (
         lastProcessingTime: 0
       }
     )
+    await publishWorkspaceWakeup(ctx, db, status.workspaceUuid, undefined)
 
     try {
       const workspace = await getWorkspaceInfoWithStatusById(db, status.workspaceUuid)

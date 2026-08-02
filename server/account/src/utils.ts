@@ -37,10 +37,18 @@ import {
   type WorkspaceMode,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import platform, { getMetadata, PlatformError, Severity, Status, translate } from '@hcengineering/platform'
+import platform, {
+  getMetadata,
+  PlatformError,
+  Severity,
+  Status,
+  translate,
+  unknownError
+} from '@hcengineering/platform'
 import {
   LimitCategory,
   LimitStatus,
+  QueueTopic,
   workspaceEvents,
   type QueueWorkspaceLimitsMessage
 } from '@hcengineering/server-core'
@@ -1260,7 +1268,7 @@ export async function updateWorkspaceRole (
 
   await db.updateWorkspaceRole(targetAccount, workspace, targetRole)
   // Guests are seatless, so a role change shifts the seat count - refresh the usage snapshot now.
-  await publishMembersChanged(ctx, workspace)
+  await publishMembersChanged(ctx, db, workspace)
 }
 
 /**
@@ -1367,6 +1375,10 @@ export async function createWorkspaceRecord (
           isDisabled: true
         }
       )
+
+      if (initMode === 'pending-creation') {
+        await publishWorkspaceWakeup(ctx, db, workspaceUuid, region)
+      }
 
       return {
         workspaceUuid,
@@ -1749,19 +1761,72 @@ export async function assertSeatAvailable (
   throw new PlatformError(new Status(Severity.ERROR, platform.status.PlanLimitExceeded, {}))
 }
 
-/** Signal that workspace membership changed so seat-count consumers (transactor/billing) refresh now. */
-export async function publishMembersChanged (ctx: MeasureContext, workspaceUuid: WorkspaceUuid): Promise<void> {
-  const producer = getMetadata(accountPlugin.metadata.WorkspaceQueue)
-  if (producer === undefined) {
-    ctx.warn('WorkspaceQueue producer is not configured, members event skipped', { workspaceUuid })
+// Lease time for a pending workspace operation taken by a workspace-service worker.
+export const processingTimeoutMs = 30 * 1000
+
+/** Send to a workspace-scoped regional topic, throwing on failure. Region is resolved from the
+ * workspace record when not provided by the caller. */
+export async function sendToWorkspaceRegion (
+  ctx: MeasureContext,
+  db: AccountDB,
+  workspaceUuid: WorkspaceUuid,
+  topic: QueueTopic,
+  msgs: any[],
+  region?: string | null
+): Promise<void> {
+  const queue = getMetadata(accountPlugin.metadata.RegionalQueue)
+  if (queue === undefined) {
+    throw new PlatformError(unknownError('Regional queue is not configured'))
+  }
+  const r = region ?? (await getWorkspaceById(db, workspaceUuid))?.region ?? ''
+  await queue.getProducer(ctx, topic, r).send(ctx, workspaceUuid, msgs)
+}
+
+/** Fire-and-forget variant of sendToWorkspaceRegion. */
+export async function publishToWorkspaceRegion (
+  ctx: MeasureContext,
+  db: AccountDB,
+  workspaceUuid: WorkspaceUuid,
+  topic: QueueTopic,
+  msgs: any[],
+  region?: string | null
+): Promise<void> {
+  if (getMetadata(accountPlugin.metadata.RegionalQueue) === undefined) {
+    ctx.warn('RegionalQueue is not configured, event skipped', { workspaceUuid, topic })
     return
   }
-  const events: QueueWorkspaceLimitsMessage[] = [workspaceEvents.limitsChanged(LimitCategory.Members, LimitStatus.Ok)]
   try {
-    await producer.send(ctx, workspaceUuid, events)
+    await sendToWorkspaceRegion(ctx, db, workspaceUuid, topic, msgs, region)
   } catch (err: any) {
-    ctx.error('Failed to publish members-changed event', { workspaceUuid, err })
+    ctx.error('Failed to publish regional event', { workspaceUuid, topic, err })
   }
+}
+
+/** Fire-and-forget wakeup for workspace-service workers of the workspace's region. */
+export async function publishWorkspaceWakeup (
+  ctx: MeasureContext,
+  db: AccountDB,
+  workspaceUuid: WorkspaceUuid,
+  region: string | null | undefined
+): Promise<void> {
+  let r: string
+  try {
+    r = region ?? (await getWorkspaceById(db, workspaceUuid))?.region ?? ''
+  } catch (err: any) {
+    ctx.error('Failed to resolve workspace region for wakeup', { workspaceUuid, err })
+    return
+  }
+  await publishToWorkspaceRegion(ctx, db, workspaceUuid, QueueTopic.WorkspaceWakeup, [{ region: r }], r)
+}
+
+/** Signal that workspace membership changed so seat-count consumers (transactor/billing) refresh now. */
+export async function publishMembersChanged (
+  ctx: MeasureContext,
+  db: AccountDB,
+  workspaceUuid: WorkspaceUuid
+): Promise<void> {
+  const events: QueueWorkspaceLimitsMessage[] = [workspaceEvents.limitsChanged(LimitCategory.Members, LimitStatus.Ok)]
+  await publishToWorkspaceRegion(ctx, db, workspaceUuid, QueueTopic.Workspace, events)
 }
 
 export async function doJoinByInvite (
@@ -1781,10 +1846,10 @@ export async function doJoinByInvite (
       // Join-time seat cap: reject before assign so an over-limit member never enters ws_members.
       await assertSeatAvailable(ctx, db, workspace.uuid, invite.role)
       await db.assignWorkspace(account, workspace.uuid, invite.role)
-      await publishMembersChanged(ctx, workspace.uuid)
+      await publishMembersChanged(ctx, db, workspace.uuid)
     } else if (getRolePower(role) < getRolePower(invite.role)) {
       await db.updateWorkspaceRole(account, workspace.uuid, invite.role)
-      await publishMembersChanged(ctx, workspace.uuid)
+      await publishMembersChanged(ctx, db, workspace.uuid)
     }
     await useInvite(db, invite.id)
   } else if (workspace.allowReadOnlyGuest && workspace.allowGuestSignUp) {
