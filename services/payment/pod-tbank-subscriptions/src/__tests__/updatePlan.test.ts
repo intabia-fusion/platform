@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 
+import { SubscriptionStatus } from '@hcengineering/account-client'
 import { handleUpdatePlan } from '../server'
 
 const DAY = 24 * 3600 * 1000
@@ -161,8 +162,7 @@ describe('handleUpdatePlan claim guard', () => {
     expect(tbank.initPayment).not.toHaveBeenCalled()
   })
 
-  // The abandoned-checkout case: the user got a link, never paid, and came back after it expired.
-  // Retrying the SAME order must not answer 409 — the dead link is cancelled and a fresh one issued.
+  // Expired unpaid link, same order: cancel old, open new - no 409.
   it('same order with an expired link -> old link cancelled, new checkout opened', async () => {
     const expired = {
       claimed: false,
@@ -229,8 +229,7 @@ describe('handleUpdatePlan claim guard', () => {
       expect(tbank.initPayment).not.toHaveBeenCalled()
     })
 
-    // /v2/Cancel on a settled payment is a full REFUND at tbank, so the state must be checked first:
-    // the paid-for goods stay paid, and the stale claim (its CONFIRMED webhook never freed it) is released.
+    // Cancel on settled = refund -> GetState first, stale claim just released.
     it('held payment already settled -> no cancel call, claim released, new checkout opened', async () => {
       const storage = makeStorage(staleClaim)
       storage.claimCheckout.mockResolvedValueOnce(staleClaim).mockResolvedValueOnce({ claimed: true, intentId: 'i2' })
@@ -244,8 +243,7 @@ describe('handleUpdatePlan claim guard', () => {
       expect(res.body.checkoutUrl).toBe('https://tbank/pay/999')
     })
 
-    // AUTHORIZED is a hold, not a settlement: Cancel releases it without refunding anything, and the
-    // payment could still be confirmed later. It must be cancelled, never just released.
+    // AUTHORIZED = hold: Cancel releases it without refund, must not be skipped.
     it('held payment is AUTHORIZED -> hold is cancelled before the claim is freed', async () => {
       const storage = makeStorage(staleClaim)
       storage.claimCheckout.mockResolvedValueOnce(staleClaim).mockResolvedValueOnce({ claimed: true, intentId: 'i2' })
@@ -259,9 +257,21 @@ describe('handleUpdatePlan claim guard', () => {
       expect(res.statusCode).toBe(200)
     })
 
-    // The payment settled between GetState and Cancel, so tbank refunded it. The claim is freed (the
-    // link is spent either way) and the money movement is recorded — a bare REFUNDED webhook from the
-    // bank does not say who triggered it.
+    // GetState outage must not wedge the checkout: fall through to Cancel.
+    it('GetState fails -> falls through to Cancel, claim released', async () => {
+      const storage = makeStorage(staleClaim)
+      storage.claimCheckout.mockResolvedValueOnce(staleClaim).mockResolvedValueOnce({ claimed: true, intentId: 'i2' })
+      tbank.getPaymentState.mockRejectedValue(new Error('ECONNRESET'))
+      tbank.cancelPayment.mockResolvedValue({ Success: true, Status: 'CANCELED' })
+
+      const res = await run(storage, { plan: 'business', quantity: 6, period: 'monthly', force: true })
+
+      expect(tbank.cancelPayment).toHaveBeenCalledTimes(1)
+      expect(storage.releaseCheckout).toHaveBeenCalledWith('8931598935')
+      expect(res.statusCode).toBe(200)
+    })
+
+    // Settled between GetState and Cancel: refund logged, claim freed.
     it('payment settles between GetState and Cancel -> refund is logged, claim freed', async () => {
       const storage = makeStorage(staleClaim)
       storage.claimCheckout.mockResolvedValueOnce(staleClaim).mockResolvedValueOnce({ claimed: true, intentId: 'i2' })
@@ -289,8 +299,23 @@ describe('handleUpdatePlan claim guard', () => {
       expect(res.statusCode).toBe(200)
     })
 
-    // Cancel neither succeeded nor reported a terminal state: the link may still be payable, so the
-    // claim must NOT be freed — opening a second checkout could double-charge.
+    // ErrorCode 4 on a dead (not settled) link: the pending draft is abandoned, not just released.
+    it('cancel declined with ErrorCode 4 on an expired link -> draft abandoned, claim released', async () => {
+      const storage = makeStorage(staleClaim)
+      storage.claimCheckout.mockResolvedValueOnce(staleClaim).mockResolvedValueOnce({ claimed: true, intentId: 'i2' })
+      const draft = { status: SubscriptionStatus.PastDue, providerData: { pending: true } }
+      storage.getByProviderId = jest.fn().mockResolvedValue(draft)
+      tbank.cancelPayment.mockResolvedValue({ Success: false, ErrorCode: '4', Status: 'DEADLINE_EXPIRED' })
+
+      const res = await run(storage, { plan: 'business', quantity: 6, period: 'monthly', force: true })
+
+      const abandoned = storage.upsert.mock.calls.find((c: any[]) => c[0].providerData?.status === 'ABANDONED')
+      expect(abandoned).toBeDefined()
+      expect(storage.releaseCheckout).toHaveBeenCalledWith('8931598935')
+      expect(res.statusCode).toBe(200)
+    })
+
+    // Non-terminal state after failed Cancel: link maybe payable -> keep claim, 409.
     it('cancel leaves the payment in a non-terminal state -> 409 already_paid, no second charge', async () => {
       const storage = makeStorage(staleClaim)
       tbank.cancelPayment.mockResolvedValue({ Success: false, ErrorCode: '9999', Status: 'FORM_SHOWED' })
