@@ -117,3 +117,28 @@ REFUNDING, PARTIAL_REFUNDED, REFUNDED, REJECTED, DEADLINE_EXPIRED, CANCELED, 3DS
 Build+validate чистые. 55/55 тестов PASS.
 Гейча: тесты utils/updatePlan падали из-за устаревшего собранного @hcengineering/account-client (makePlanKey undefined) —
 не связано с заменой; лечится `rush fast-build:lint --to @hcengineering/account-client`.
+
+> Полная карта статусов и переходов — `docs/billing-subscription-status-transitions.md`.
+> При правке логики отмены обновлять оба файла в одном PR.
+
+## Cancel semantics (FUSIO-1099, 2026-07-30)
+`handleCancelSubscription` — что отменяемо:
+- Canceled/Expired → идемпотентный 200 с текущим sub, без записи.
+- PastDue/ReadOnly → отменяемы (нужно для downgrade на free после неудачного платежа/возврата).
+- 400 только для pending first-payment draft (`isPendingFirstPayment`) — его закрывают вебхук/планировщик.
+
+Куда ведёт отмена — две ветки `buildCanceledSubscriptionData`:
+- **Оплаченная (Active)** → scheduled-cancel: остаётся Active, `willCancelAt = periodEnd`,
+  `providerData.status='SCHEDULED_CANCEL'`, карта сохраняется (возможен uncancel). Финализирует
+  планировщик в `willCancelAt`.
+- **Неоплаченная (`isImmediateCancel` = PastDue || ReadOnly) и PLAN_CHANGE** → немедленно:
+  `status: Canceled`, `canceledAt: now`, `willCancelAt: undefined`, карта снимается тут же
+  (планировщик эту строку больше не увидит), `retryAttempt`/`retryAfter`/`pending` удаляются.
+
+**`providerData.status = 'CANCELED'` — load-bearing.** `isFinalizedUserCancel`
+(`pod-payment/src/utils.ts:44-50`) требует **пару** `(status=Canceled, providerData.status='CANCELED')`,
+и только по ней `pod-payment` создаёт реальную free-подписку (`createFreeIfNoActiveTier`, main.ts:163).
+`SCHEDULED_CANCEL`/`ABANDONED`/`REPLACED`/`PLAN_CHANGE` намеренно НЕ триггерят free.
+
+Dunning email («не удалось списать») — только на REJECTED. REVERSED/REFUNDED = возврат средств
+(support/admin), письмо клиенту не шлём.

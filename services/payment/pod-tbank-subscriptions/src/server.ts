@@ -531,7 +531,7 @@ async function handleGetSubscription (storage: SubscriptionStorage, req: Request
   res.json(sub)
 }
 
-async function handleCancelSubscription (
+export async function handleCancelSubscription (
   ctx: MeasureContext,
   tbank: TbankPayments,
   storage: SubscriptionStorage,
@@ -541,7 +541,14 @@ async function handleCancelSubscription (
   const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
   if (sub === null) return
 
-  if (sub.status !== SubscriptionStatus.Active && sub.status !== SubscriptionStatus.Trialing) {
+  // Idempotent: canceling an already-canceled sub is a success, not an error.
+  if (sub.status === SubscriptionStatus.Canceled || sub.status === SubscriptionStatus.Expired) {
+    res.json(sub)
+    return
+  }
+  // Only a pending first-payment draft is not cancelable (webhook/scheduler abandons it).
+  // PastDue/ReadOnly must stay cancelable so a downgrade to free can stop billing retries.
+  if (isPendingFirstPayment(sub)) {
     res.status(400).json({ error: 'Subscription is not in a cancelable status' })
     return
   }
@@ -845,7 +852,7 @@ export async function handleUpdatePlan (
   )
 }
 
-async function handleRetryPayment (
+export async function handleRetryPayment (
   ctx: MeasureContext,
   config: Config,
   tbank: TbankPayments,
@@ -1150,7 +1157,9 @@ export async function processWebhook (
         status: typedNotification.Status
       })
 
-      if (wasActive) {
+      // REJECTED = real charge failure -> dunning email. REVERSED/REFUNDED = refund issued
+      // (by support/admin) -> no "payment failed" email to the customer.
+      if (wasActive && typedNotification.Status === 'REJECTED') {
         await notifyPaymentFailed(ctx, storage, config, pastDueData, 'failed')
       }
     }
@@ -1279,24 +1288,38 @@ function buildSubscriptionDataFromWebhook (
   }
 }
 
-// The subscription stays Active until periodEnd (the user keeps access and
-// can uncancel for free), only renewal is suppressed (see storage.needsRenewal + scheduler
-// enforceScheduledCancel, which flips it to Canceled and removes the card at willCancelAt).
+// An unpaid subscription (past_due after a failed charge/refund, or readonly after the grace period)
+// has no paid period left to run out. Cancel those immediately.
+export function isImmediateCancel (sub: Pick<SubscriptionData, 'status'>): boolean {
+  return sub.status === SubscriptionStatus.PastDue || sub.status === SubscriptionStatus.ReadOnly
+}
+
+// A paid subscription stays Active until periodEnd (the user keeps access and can uncancel for free),
+// only renewal is suppressed (see storage.needsRenewal + scheduler enforceScheduledCancel, which flips
+// it to Canceled and removes the card at willCancelAt). Plan change and unpaid subs cancel right away.
 // status arg is used only for the plan-change path.
 function buildCanceledSubscriptionData (sub: SubscriptionData, status?: string): SubscriptionData {
   const now = Date.now()
 
-  // Plan change (immediate replacement) cancels the subscription right away.
-  if (status === 'PLAN_CHANGE') {
+  // Immediate cancel. 'CANCELED' is load-bearing: pod-payment keys the free-plan fallback off the
+  // (status=Canceled, providerData.status='CANCELED') pair (isFinalizedUserCancel).
+  if (status === 'PLAN_CHANGE' || isImmediateCancel(sub)) {
+    const providerData: Record<string, any> = {
+      ...sub.providerData,
+      modifiedAt: now,
+      status: status ?? 'CANCELED'
+    }
+    // Dunning state dies with the subscription
+    delete providerData.retryAttempt
+    delete providerData.retryAfter
+    delete providerData.pending
     return {
       ...sub,
       status: SubscriptionStatus.Canceled,
       canceledAt: now,
-      providerData: {
-        ...sub.providerData,
-        modifiedAt: now,
-        status
-      }
+      // No scheduled end
+      willCancelAt: undefined,
+      providerData
     }
   }
 
@@ -1407,9 +1430,9 @@ async function initTbankPayment (
   }
 }
 
-// User-initiated cancel is scheduled (cancel-at-period-end): the card is kept for a possible
-// uncancel and removed later at willCancelAt (scheduler). Only an immediate cancel (PLAN_CHANGE,
-// where the sub is replaced now) removes the card here.
+// A cancel is scheduled (cancel-at-period-end): the card is kept for a possible
+// uncancel and removed later at willCancelAt (scheduler).
+// An immediate cancel (PLAN_CHANGE, or an unpaid past_due/readonly sub) removes the card.
 async function cancelSubscription (
   ctx: MeasureContext,
   tbank: TbankPayments,
@@ -1420,7 +1443,7 @@ async function cancelSubscription (
   actionId?: string,
   actor: 'user' | 'system' | 'provider' | 'admin' = 'user'
 ): Promise<SubscriptionData> {
-  if (status === 'PLAN_CHANGE') {
+  if (status === 'PLAN_CHANGE' || isImmediateCancel(sub)) {
     await removeSubscriptionCard(ctx, tbank, sub)
   }
 
