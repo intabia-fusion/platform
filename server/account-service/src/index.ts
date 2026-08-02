@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 
 import account, {
@@ -15,7 +16,8 @@ import account, {
   type CrmNotification,
   parseFreePlanLimits,
   initRegionConfig,
-  generateShortId
+  generateShortId,
+  getRegions
 } from '@hcengineering/account'
 import accountEn from '@hcengineering/account/lang/en.json'
 import accountRu from '@hcengineering/account/lang/ru.json'
@@ -49,8 +51,6 @@ import { getPlatformQueue } from '@hcengineering/kafka'
 import {
   QueueTopic,
   type QueueUserMessage,
-  type QueueOnlineUserTx,
-  type QueueWorkspaceMessage,
   type QueuePaymentOperationMessage,
   workspaceEvents
 } from '@hcengineering/server-core'
@@ -117,21 +117,16 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     process.exit(1)
   }
 
+  // Own region (env REGION) serves the global pairs (mail, crm, payment ledger); workspace-scoped
+  // events pass the workspace's region explicitly on the same queue.
   const platformQueue = getPlatformQueue(SERVICE_ID)
+  setMetadata(accountPlugin.metadata.RegionalQueue, platformQueue)
 
   const notificationProducer = platformQueue.getProducer<AccountNotification>(measureCtx, QueueTopic.NotificationQueue)
   setMetadata(accountPlugin.metadata.MailQueue, notificationProducer)
 
   const crmProducer = platformQueue.getProducer<CrmNotification>(measureCtx, QueueTopic.CrmQueue)
   setMetadata(accountPlugin.metadata.CrmQueue, crmProducer)
-
-  // Limits/payment/maintenance events for transactor/datalake/aibot consumers
-  const workspaceProducer = platformQueue.getProducer<QueueWorkspaceMessage>(measureCtx, QueueTopic.Workspace)
-  setMetadata(accountPlugin.metadata.WorkspaceQueue, workspaceProducer)
-
-  // Admin-triggered fulltext reindex requests
-  const fulltextProducer = platformQueue.getProducer<QueueWorkspaceMessage>(measureCtx, QueueTopic.Fulltext)
-  setMetadata(accountPlugin.metadata.FulltextQueue, fulltextProducer)
 
   addStringsLoader(accountId, async (lang: string) => {
     switch (lang) {
@@ -198,19 +193,22 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   const dbNs = process.env.DB_NS
   const accountsDb = getAccountDB(dbUrl, dbNs)
 
-  const onlineUserTxProducer = platformQueue.getProducer<QueueOnlineUserTx>(
-    measureCtx.newChild('online-user-tx-producer', {}, { span: false }),
-    QueueTopic.OnlineUserTx
-  )
+  // Regional wiring: users are consumed from every known region (one consumer, multi-topic
+  // subscription); presence notifications go back to the region of each workspace. Ensure regional
+  // wakeup topics exist for early consumers.
+  const regions = getRegions().map((it) => it.region)
+  void platformQueue.createTopic(QueueTopic.WorkspaceWakeup, 1, regions).catch((err) => {
+    measureCtx.error('failed to ensure wakeup topics', { regions, err })
+  })
 
   const usersConsumer = platformQueue.createBatchConsumer<QueueUserMessage>(
     measureCtx.newChild('users-consumer', {}, { span: false }),
     QueueTopic.Users,
     'presence-tracker',
     async (ctx, msgs) => {
-      await handlePresenceBatch(ctx, msgs, accountsDb, onlineUserTxProducer)
+      await handlePresenceBatch(ctx, msgs, accountsDb, platformQueue)
     },
-    { batchSize: 500, batchTimeout: 1000 }
+    { batchSize: 500, batchTimeout: 1000, regions }
   )
 
   // Payment audit: any provider pod publishes operations; the account service appends the ledger row.
@@ -468,10 +466,14 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
         case 'maintenance': {
           const timeMinutes = parseInt((req.query.timeout as string) ?? '5')
           const message = (req.request.body as any)?.message
-          // Global event: every transactor consumes the workspace topic in its own group,
-          // the workspace key carries no meaning here
+          // Global event: broadcast to the workspace topic of every region, the workspace key
+          // carries no meaning here
           const nilWorkspace = '00000000-0000-0000-0000-000000000000' as WorkspaceUuid
-          await workspaceProducer.send(measureCtx, nilWorkspace, [workspaceEvents.maintenance(timeMinutes, message)])
+          for (const region of regions) {
+            await platformQueue
+              .getProducer(measureCtx, QueueTopic.Workspace, region)
+              .send(measureCtx, nilWorkspace, [workspaceEvents.maintenance(timeMinutes, message)])
+          }
 
           req.res.writeHead(200)
           req.res.end()

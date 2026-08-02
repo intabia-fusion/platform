@@ -40,6 +40,7 @@ import { decodeTokenVerbose } from '@hcengineering/server-token'
 import {
   LimitCategory,
   LimitStatus,
+  QueueTopic,
   workspaceEvents,
   type QueueWorkspaceLimitsMessage
 } from '@hcengineering/server-core'
@@ -108,15 +109,15 @@ import {
   verifyAdminOtp,
   logAdminAction,
   doReleaseSocialId,
-  publishMembersChanged
+  publishMembersChanged,
+  publishWorkspaceWakeup,
+  publishToWorkspaceRegion,
+  processingTimeoutMs
 } from './utils'
 
 // Note: it is IMPORTANT to always destructure params passed here to avoid sending extra params
 // to the database layer when searching/inserting as they may contain SQL injection
 // !!! NEVER PASS "params" DIRECTLY in any DB functions !!!
-
-// Move to config?
-const processingTimeoutMs = 30 * 1000
 
 export async function listWorkspaces (
   ctx: MeasureContext,
@@ -332,7 +333,7 @@ export async function adminUpdateWorkspaceRole (
   await db.updateWorkspaceRole(targetAccount, workspace, role)
   ctx.info('admin: workspace role updated', { workspace, targetAccount, role })
   await logAdminAction(ctx, db, token, 'update_workspace_role', workspace, undefined, { targetAccount, role })
-  await publishMembersChanged(ctx, workspace)
+  await publishMembersChanged(ctx, db, workspace)
 }
 
 export async function adminAddWorkspaceMember (
@@ -360,15 +361,11 @@ export async function adminAddWorkspaceMember (
   await db.assignWorkspace(target, workspace, role)
   ctx.info('admin: workspace member added', { workspace, target, role })
   await logAdminAction(ctx, db, token, 'add_workspace_member', workspace, email, { target, role })
-  await publishMembersChanged(ctx, workspace)
+  await publishMembersChanged(ctx, db, workspace)
 }
 
-async function sendReindex (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<void> {
-  const producer = getMetadata(accountPlugin.metadata.FulltextQueue)
-  if (producer === undefined) {
-    throw new PlatformError(unknownError('Fulltext queue is not configured'))
-  }
-  await producer.send(ctx, workspace, [workspaceEvents.fullReindex()])
+async function sendReindex (ctx: MeasureContext, db: AccountDB, workspace: WorkspaceUuid): Promise<void> {
+  await publishToWorkspaceRegion(ctx, db, workspace, QueueTopic.Fulltext, [workspaceEvents.fullReindex()])
 }
 
 export async function adminReindexWorkspace (
@@ -379,7 +376,7 @@ export async function adminReindexWorkspace (
   params: { workspace: WorkspaceUuid }
 ): Promise<void> {
   checkAdmin(ctx, token)
-  await sendReindex(ctx, params.workspace)
+  await sendReindex(ctx, db, params.workspace)
   ctx.info('admin: reindex requested', { workspace: params.workspace })
 }
 
@@ -393,7 +390,7 @@ export async function adminReindexAllWorkspaces (
   checkAdmin(ctx, token)
   const workspaces = await getWorkspaces(db, false, null, 'active')
   for (const ws of workspaces) {
-    await sendReindex(ctx, ws.uuid)
+    await publishToWorkspaceRegion(ctx, db, ws.uuid, QueueTopic.Fulltext, [workspaceEvents.fullReindex()], ws.region)
   }
   ctx.info('admin: reindex-all requested', { count: workspaces.length })
   return workspaces.length
@@ -413,7 +410,7 @@ export async function adminRemoveWorkspaceMember (
   await db.unassignWorkspace(targetAccount, workspace)
   ctx.info('admin: workspace member removed', { workspace, targetAccount })
   await logAdminAction(ctx, db, token, 'remove_workspace_member', workspace, undefined, { targetAccount })
-  await publishMembersChanged(ctx, workspace)
+  await publishMembersChanged(ctx, db, workspace)
 }
 
 // Supersede a live subscription: keep the old row as a canceled record (history) and insert
@@ -514,7 +511,7 @@ export async function adminUpdateSubscription (
   })
 
   if (existing.type === SubscriptionType.Tier) {
-    await publishLimitsEvents(ctx, existing.workspaceUuid, [
+    await publishLimitsEvents(ctx, db, existing.workspaceUuid, [
       workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)
     ])
   }
@@ -552,7 +549,7 @@ export async function adminCancelSubscription (
   })
 
   if (existing.type === SubscriptionType.Tier) {
-    await publishLimitsEvents(ctx, existing.workspaceUuid, [
+    await publishLimitsEvents(ctx, db, existing.workspaceUuid, [
       workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)
     ])
   }
@@ -775,6 +772,8 @@ export async function performWorkspaceOperation (
 
     if (Object.keys(update).length !== 0) {
       await db.workspaceStatus.update({ workspaceUuid: workspace.uuid }, update)
+      // For migrate-to the work starts in the current region (backup), so always the workspace's own region
+      await publishWorkspaceWakeup(ctx, db, workspace.uuid, workspace.region ?? '')
       ops++
     }
   }
@@ -991,6 +990,15 @@ export async function updateWorkspaceInfo (
       update.mode = 'archived'
       update.processingProgress = 100
       break
+    case 'delete-started':
+      update.mode = 'deleting'
+      update.processingAttempts = 0
+      update.processingProgress = progress
+      break
+    case 'delete-done':
+      update.mode = 'deleted'
+      update.processingProgress = 100
+      break
     case 'ping':
     default:
       query.lastProcessingTime = { $lte: ts }
@@ -1008,6 +1016,14 @@ export async function updateWorkspaceInfo (
 
   if (Object.keys(wsUpdate).length !== 0) {
     await db.workspace.update({ uuid: workspaceUuid }, wsUpdate)
+  }
+
+  // A hand-off event leaves the workspace in a new pending-* mode: nudge workers right away.
+  if (event === 'migrate-clean-done') {
+    await publishWorkspaceWakeup(ctx, db, workspaceUuid, wsStatus?.targetRegion ?? '')
+  } else if (event === 'migrate-backup-done' || event === 'archiving-backup-done') {
+    const ws = await getWorkspaceById(db, workspaceUuid)
+    await publishWorkspaceWakeup(ctx, db, workspaceUuid, ws?.region ?? '')
   }
 }
 
@@ -1135,10 +1151,10 @@ export async function assignWorkspace (
 
   if (currentRole == null) {
     await db.assignWorkspace(account.uuid, workspaceUuid, role)
-    await publishMembersChanged(ctx, workspaceUuid)
+    await publishMembersChanged(ctx, db, workspaceUuid)
   } else if (getRolePower(currentRole) < getRolePower(role)) {
     await db.updateWorkspaceRole(account.uuid, workspaceUuid, role)
-    await publishMembersChanged(ctx, workspaceUuid)
+    await publishMembersChanged(ctx, db, workspaceUuid)
   }
 }
 
@@ -1591,23 +1607,15 @@ export async function findPersonBySocialKey (
   return socialId.personUuid
 }
 
-/** Fire-and-forget edge events to QueueTopic.Workspace; producer set by account-service via metadata. */
+/** Fire-and-forget edge events to the workspace's regional QueueTopic.Workspace. */
 async function publishLimitsEvents (
   ctx: MeasureContext,
+  db: AccountDB,
   workspaceUuid: WorkspaceUuid,
   events: QueueWorkspaceLimitsMessage[]
 ): Promise<void> {
   if (events.length === 0) return
-  const producer = getMetadata(accountPlugin.metadata.WorkspaceQueue)
-  if (producer === undefined) {
-    ctx.warn('WorkspaceQueue producer is not configured, limits events skipped', { workspaceUuid })
-    return
-  }
-  try {
-    await producer.send(ctx, workspaceUuid, events)
-  } catch (err: any) {
-    ctx.error('Failed to publish limits events', { workspaceUuid, err })
-  }
+  await publishToWorkspaceRegion(ctx, db, workspaceUuid, QueueTopic.Workspace, events)
 }
 
 export async function upsertSubscription (
@@ -1737,7 +1745,9 @@ export async function upsertSubscription (
       wasActive !== isActive ||
       JSON.stringify(existing.limits ?? null) !== JSON.stringify(params.limits ?? null)
     if (planChanged) {
-      await publishLimitsEvents(ctx, workspaceUuid, [workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)])
+      await publishLimitsEvents(ctx, db, workspaceUuid, [
+        workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)
+      ])
     }
   }
 }
@@ -2150,7 +2160,9 @@ export async function adminCreateSubscription (
 
   if (type === SubscriptionType.Tier) {
     // Refresh plan snapshot so consumers re-read free-vs-paid limits without restart.
-    await publishLimitsEvents(ctx, workspaceUuid, [workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)])
+    await publishLimitsEvents(ctx, db, workspaceUuid, [
+      workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)
+    ])
   }
 }
 
