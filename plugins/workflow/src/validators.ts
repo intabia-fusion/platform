@@ -16,7 +16,7 @@
 import core, { notEmpty, Ref, Status } from '@hcengineering/core'
 import task, { type Task, TaskType } from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
-import { translate } from '@hcengineering/platform'
+import { type IntlString, translate } from '@hcengineering/platform'
 
 import workflow from './plugin'
 import {
@@ -31,6 +31,12 @@ export function isEmpty (value: any): boolean {
   if (value === undefined || value === null) {
     return true
   }
+  if (typeof value === 'number') {
+    return value === 0 || isNaN(value)
+  }
+  if (typeof value === 'boolean') {
+    return false
+  }
   if (typeof value === 'string') {
     return value.trim() === ''
   }
@@ -41,6 +47,12 @@ export function isEmpty (value: any): boolean {
     return value.size === 0
   }
   if (typeof value === 'object') {
+    if ('reportedTime' in value) {
+      return value.reportedTime == null || value.reportedTime === 0 || value.reportedTime === ''
+    }
+    if ('value' in value && Object.keys(value).length === 1) {
+      return isEmpty(value.value)
+    }
     return Object.keys(value).length === 0
   }
   return false
@@ -67,20 +79,25 @@ export const FieldRequired: ValidatorFunc = async (
     if (attribute == null) continue
     const val = f.mixin != null ? (h.as(taskDoc, f.mixin) as any)[f.fieldKey] : (taskDoc as any)[f.fieldKey]
     if (isEmpty(val)) {
-      // TODO: add lang
-      const from = transition.from != null ? (await getStatusNames(client, transition.from))[0] : 'Any status'
-      const to = (await getStatusNames(client, [transition.to]))[0]
+      const flow = await getTransitionFlow(client, transition)
       const fieldName = await translate(attribute.label, {})
       return {
         ok: false,
-        reason: `Field "${fieldName}" is required for transition ${from} ➜ ${to}.`,
+        reason: `Field "${fieldName}" is required for transition ${flow}.`,
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: fieldName, transition: transition.name }
+        intlParams: { field: fieldName, transition: flow }
       }
     }
   }
 
   return { ok: true }
+}
+
+async function getTransitionFlow (client: ValidatorClient, transition: WorkflowTransition): Promise<string> {
+  const fromStr =
+    transition.from != null && transition.from.length > 0 ? await getStatusNames(client, transition.from) : 'Any'
+  const toStr = await getStatusNames(client, [transition.to])
+  return `${fromStr} ➜ ${toStr}`
 }
 
 async function getStatusNames (client: ValidatorClient, statusIds: Ref<Status>[]): Promise<string> {
@@ -91,7 +108,13 @@ async function getStatusNames (client: ValidatorClient, statusIds: Ref<Status>[]
     { projection: { _id: 1, name: 1 } }
   )
   const nameMap = new Map(statusDocs.map((s) => [s._id, s.name]))
-  return statusIds.map((id) => nameMap.get(id) ?? String(id)).join(', ')
+  const translatedNames = await Promise.all(
+    statusIds.map(async (id) => {
+      const name = nameMap.get(id) ?? String(id)
+      return await translate(name as IntlString, {})
+    })
+  )
+  return translatedNames.join(', ')
 }
 
 function checkTaskTypeStatus (
@@ -143,12 +166,13 @@ export const SubtaskStatus: ValidatorFunc = async (
   for (const subtask of subtasks) {
     const check = checkTaskTypeStatus(statusesMap, subtask.kind, subtask.status)
     if (!check.ok) {
+      const flow = await getTransitionFlow(client, transition)
       const statusesStr = await getStatusNames(client, check.allowedStatuses)
       return {
         ok: false,
-        reason: `Subtasks must be in allowed statuses (${statusesStr})".`,
+        reason: `Subtasks must be in allowed statuses (${statusesStr}) for transition ${flow}.`,
         reasonIntl: workflow.string.SubtaskStatusError,
-        intlParams: { transition: transition.name, statuses: statusesStr }
+        intlParams: { transition: flow, statuses: statusesStr }
       }
     }
   }
@@ -183,12 +207,13 @@ export const ParentStatus: ValidatorFunc = async (
   const parentTask = parentTasks[0]
   const check = checkTaskTypeStatus(statusesMap, parentTask.kind, parentTask.status)
   if (!check.ok) {
+    const flow = await getTransitionFlow(client, transition)
     const statusesStr = await getStatusNames(client, check.allowedStatuses)
     return {
       ok: false,
-      reason: `Parent task must be in allowed statuses (${statusesStr}).`,
+      reason: `Parent task must be in allowed statuses (${statusesStr}) for transition ${flow}.`,
       reasonIntl: workflow.string.ParentStatusError,
-      intlParams: { transition: transition.name, statuses: statusesStr }
+      intlParams: { transition: flow, statuses: statusesStr }
     }
   }
 

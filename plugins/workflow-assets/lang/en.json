@@ -31,16 +31,16 @@
     "Validators": "Validators",
     "FieldRequiredValidator": "Field required",
     "FieldRequiredDescription": "Ensure that required fields are filled when moving a task using this transition",
-    "FieldRequiredError": "Field \"{field}\" is required for transition \"{transition}\".",
+    "FieldRequiredError": "Field \"{field}\" is required for transition {transition}.",
     "FieldRequiredSingleError": "Fill in the required field: {field}",
     "FieldRequiredMultipleError": "Fill in the required fields: {fields}",
     "SubtaskStatusValidator": "Subtask status",
     "SubtaskStatusDescription": "Only allow transition when subtasks have specific statuses",
-    "SubtaskStatusError": "Subtasks must be in allowed status ({statuses}) for transition \"{transition}\".",
+    "SubtaskStatusError": "Subtasks must be in allowed status ({statuses}) for transition {transition}.",
     "SubtaskStatusRequired": "Allowed subtask status",
     "ParentStatusValidator": "Parent task status",
     "ParentStatusDescription": "Only allow transition when the parent task has specific statuses",
-    "ParentStatusError": "Parent task must be in allowed status ({statuses}) for transition \"{transition}\".",
+    "ParentStatusError": "Parent task must be in allowed status ({statuses}) for transition {transition}.",
     "ParentStatusRequired": "Allowed parent task status",
     "TransitionConflictError": "Transition to status \"{to}\" from status \"{from}\" already exists in transition \"{transition}\"",
     "SelfTransitionError": "Transition from status \"{to}\" to itself is not allowed",
@@ -155,5 +155,13 @@
     "SelectFieldFirst": "Select a field first",
     "NoTransformationsForAttribute": "Transformations are not available for this field type",
     "SetValueFirst": "Specify a value first"
+  },
+  "status": {
+    "InitialStatusNotAllowed": "Initial status is not allowed",
+    "ForbiddenTransition": "Transition from status {from} to {to} is not allowed",
+    "SelfTransitionNotAllowed": "Self transition is not allowed for status {status}",
+    "TransitionConflict": "Transition conflict between status {from} and {to}",
+    "ValidationFailed": "{reason}",
+    "WorkflowNotFound": "Workflow not found"
   }
 }

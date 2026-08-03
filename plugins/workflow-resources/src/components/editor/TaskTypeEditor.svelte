@@ -18,6 +18,8 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { TaskType } from '@hcengineering/task'
   import { ButtonMenu, Label } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
+  import { IconWithEmoji } from '@hcengineering/presentation'
 
   export let selected: Ref<TaskType> | undefined
   export let types: TaskType[]
@@ -29,7 +31,8 @@
   const dispatch = createEventDispatcher<{ change: Ref<TaskType> }>()
   $: items = types.map((it) => ({
     id: it._id,
-    icon: it.icon,
+    icon: it.icon === view.ids.IconWithEmoji ? IconWithEmoji : it.icon,
+    iconProps: { icon: it.color },
     label: getEmbeddedLabel(it.name)
   }))
   $: _selected = items.find((it) => it.id === selected)
@@ -44,6 +47,7 @@
     {selected}
     {items}
     icon={_selected?.icon}
+    iconProps={_selected?.iconProps}
     label={_selected?.label}
     kind={buttonKind}
     size={buttonSize}

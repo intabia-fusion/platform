@@ -228,10 +228,10 @@ export class WorkflowMiddleware extends BaseMiddleware {
 
       const res = await executorFn(client, taskDoc, transition, config.props)
       if (!res.ok) {
-        // TODO: improve
         throw new PlatformError(
-          new Status(Severity.ERROR, workflow.status.ValidationFailed, {
-            reason: res.reason
+          new Status(Severity.ERROR, res.reasonIntl ?? workflow.status.ValidationFailed, {
+            reason: res.reason,
+            ...res.intlParams
           })
         )
       }

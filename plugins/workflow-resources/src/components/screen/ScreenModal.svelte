@@ -98,6 +98,19 @@
     return attr.type?._class === core.class.Collection || hierarchy.isDerived(attr.type?._class, core.class.Collection)
   }
 
+  function isMarkupField (field: ScreenField): boolean {
+    const attr =
+      field.mixin != null
+        ? hierarchy.findAttribute(field.mixin, field.fieldKey)
+        : hierarchy.findAttribute(object._class, field.fieldKey)
+    if (attr?.type?._class == null) return false
+    const attrClass = attr.type._class
+    return (
+      hierarchy.isDerived(attrClass, core.class.TypeCollaborativeDoc) ||
+      hierarchy.isDerived(attrClass, core.class.TypeMarkup)
+    )
+  }
+
   async function handleSave (): Promise<void> {
     const missingFields: ScreenField[] = []
     const obj = object as Record<string, any>
@@ -117,7 +130,10 @@
           val = obj[key]
         }
 
-        if (isEmpty(val) || isEmptyMarkup(val)) {
+        const isMarkup = isMarkupField(field)
+        const fieldIsEmpty = isMarkup ? isEmptyMarkup(val) : isEmpty(val)
+
+        if (fieldIsEmpty) {
           missingFields.push(field)
         }
       }

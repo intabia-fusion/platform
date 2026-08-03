@@ -1,14 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
     <symbol id="workflow" viewBox="0 0 24 24" fill="none">
-        <path d="M7 15H5C3.89543 15 3 15.8954 3 17V19C3 20.1046 3.89543 21 5 21H7C8.10457 21 9 20.1046 9 19V17C9 15.8954 8.10457 15 7 15Z"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M19 15H17C15.8954 15 15 15.8954 15 17V19C15 20.1046 15.8954 21 17 21H19C20.1046 21 21 20.1046 21 19V17C21 15.8954 20.1046 15 19 15Z"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M13 3H11C9.89543 3 9 3.89543 9 5V7C9 8.10457 9.89543 9 11 9H13C14.1046 9 15 8.10457 15 7V5C15 3.89543 14.1046 3 13 3Z"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M6 15V14C6 13.4696 6.21071 12.9609 6.58579 12.5858C6.96086 12.2107 7.46957 12 8 12H16C16.5304 12 17.0391 12.2107 17.4142 12.5858C17.7893 12.9609 18 13.4696 18 14V15"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M12 9V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="3" y="15" width="6" height="6" rx="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="15" y="15" width="6" height="6" rx="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="9" y="3" width="6" height="6" rx="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 15v-1a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M12 9v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     </symbol>
 
     <symbol id="workflows" viewBox="0 0 24 24" fill="none">
@@ -55,19 +51,22 @@
     </symbol>
     <!-- Список/группа экранов (Screens) -->
     <symbol id="screens" viewBox="0 0 24 24" fill="none">
-        <path d="M7 4V3C7 2.44772 7.44772 2 8 2H20C20.5523 2 21 2.44772 21 3V15C21 15.5523 20.5523 16 20 16H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M7 4V3C7 2.44772 7.44772 2 8 2H20C20.5523 2 21 2.44772 21 3V15C21 15.5523 20.5523 16 20 16H19"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         <rect x="3" y="6" width="14" height="15" rx="2" stroke="currentColor" stroke-width="2"/>
         <path d="M3 10H17" stroke="currentColor" stroke-width="2"/>
         <path d="M6 14H11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     </symbol>
     <!-- Вкладка экрана (ScreenTab) -->
     <symbol id="screen-tab" viewBox="0 0 24 24" fill="none">
-        <path d="M3 8V18C3 19.1046 3.89543 20 5 20H19C20.1046 20 21 19.1046 21 18V8C21 6.89543 20.1046 6 19 6H12L10 4H5C3.89543 4 3 4.89543 3 6V8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3 8V18C3 19.1046 3.89543 20 5 20H19C20.1046 20 21 19.1046 21 18V8C21 6.89543 20.1046 6 19 6H12L10 4H5C3.89543 4 3 4.89543 3 6V8Z"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M3 10H21" stroke="currentColor" stroke-width="2"/>
     </symbol>
 
     <!-- Пост-функция / Действие (Action) -->
     <symbol id="action" viewBox="0 0 24 24" fill="none">
-        <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round"/>
     </symbol>
 </svg>
