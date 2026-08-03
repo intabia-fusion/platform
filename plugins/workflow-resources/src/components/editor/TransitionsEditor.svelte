@@ -114,7 +114,9 @@
                 <Label label={plugin.string.AnyStatus} />
               </div>
             {/if}
-            <Icon icon={IconArrowRight} size="small" />
+            <div class="transition-arrow">
+              <Icon icon={IconArrowRight} size="small" />
+            </div>
             <span class="hulyTableAttr-content__row flex-no-grow noPadding">
               <StatusPresenter
                 value={statusTo}
@@ -137,6 +139,38 @@
 <style lang="scss">
   .editor {
     min-width: 25rem;
+
+    :global(.hulyTableAttr-content__row) {
+      :global(.hulyTableAttr-content__row-dragMenu) {
+        color: var(--global-secondary-TextColor);
+        transition: color 0.15s ease;
+      }
+
+      :global(.hulyTableAttr-content__row-arrow) {
+        color: var(--global-secondary-TextColor);
+        transition: color 0.15s ease;
+      }
+
+      &:hover {
+        :global(.hulyTableAttr-content__row-dragMenu),
+        :global(.hulyTableAttr-content__row-arrow) {
+          color: var(--global-primary-TextColor);
+        }
+      }
+    }
+  }
+
+  .transition-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--global-secondary-TextColor);
+    flex-shrink: 0;
+    padding: 0 0.25rem;
+
+    :global(svg) {
+      color: inherit;
+    }
   }
 
   .any-status {

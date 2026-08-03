@@ -70,8 +70,6 @@
     transition = res.find((it) => it._id === _id)
   })
 
-  $: void updateFromStatusItems($languageStore, statuses)
-
   const updateFromStatusItems = reduceCalls(async (lang: string, stList: Status[]): Promise<void> => {
     const it = await translate(plugin.string.AnyStatus, {}, lang)
     fromStatusItems = [
@@ -84,6 +82,8 @@
       }))
     ]
   })
+
+  $: void updateFromStatusItems($languageStore, statuses)
 
   $: toStatusItems = statuses.map((s) => ({
     _id: s._id,
@@ -378,10 +378,6 @@
 </Modal>
 
 <style lang="scss">
-  :global(.hulyNavGroup-container .hulyNavGroup-header) {
-    padding: 0;
-  }
-
   .row {
     display: flex;
     align-items: center;

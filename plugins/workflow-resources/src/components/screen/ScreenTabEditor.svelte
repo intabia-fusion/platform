@@ -294,6 +294,7 @@
     }
 
     .hulyTableAttr-content__row {
+      width: 100%;
       gap: var(--spacing-1);
       padding: var(--spacing-1) var(--spacing-2) var(--spacing-1) var(--spacing-1);
       border-radius: var(--small-BorderRadius) !important;
@@ -303,6 +304,15 @@
 
       :global(.checkbox-container) {
         align-items: center;
+      }
+
+      :global(.hulyTableAttr-content__row-dragMenu) {
+        color: var(--global-secondary-TextColor);
+        transition: color 0.15s ease;
+      }
+
+      &:hover :global(.hulyTableAttr-content__row-dragMenu) {
+        color: var(--global-primary-TextColor);
       }
 
       .delete-btn {

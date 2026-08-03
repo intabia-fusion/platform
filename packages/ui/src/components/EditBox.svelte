@@ -45,7 +45,6 @@
   export let uppercase: boolean = false
   export let propagateClick: boolean = false
   export let shrink: boolean = false
-  export let margin: string = ''
 
   const dispatch = createEventDispatcher()
 

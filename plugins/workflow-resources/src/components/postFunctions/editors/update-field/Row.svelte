@@ -44,7 +44,7 @@
 <div class="update-field-row">
   <div class="update-field-row__main">
     <div class="update-field-row__col">
-      <span class="update-field-row__label"><Label label={plugin.string.FieldId} /></span>
+      <span class="update-field-row__label"><Label label={plugin.string.Field} /></span>
       <div class="update-field-row__input-wrapper">
         <ModernDropdownLabels
           items={dropdownItems}

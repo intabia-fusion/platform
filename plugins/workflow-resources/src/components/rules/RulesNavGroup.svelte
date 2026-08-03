@@ -182,6 +182,10 @@
 
 <style lang="scss">
   .rules-nav-group {
+    :global(.hulyNavGroup-header) {
+      padding: 0;
+    }
+
     &--action {
       display: flex;
       align-items: center;

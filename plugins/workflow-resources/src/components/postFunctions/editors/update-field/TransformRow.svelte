@@ -16,7 +16,6 @@
   import { Button, IconAdd } from '@hcengineering/ui'
   import type { WorkflowFieldValue, WorkflowTransformCall } from '@hcengineering/workflow'
   import { getClient } from '@hcengineering/presentation'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
 
   import plugin from '../../../../plugin'
   import { FieldRow } from './types'
@@ -90,7 +89,7 @@
   {/if}
 
   <Button
-    label={getEmbeddedLabel('Transform')}
+    label={plugin.string.Transform}
     icon={IconAdd}
     kind="ghost"
     size="small"

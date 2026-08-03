@@ -14,34 +14,23 @@
 //
 
 import { Analytics } from '@hcengineering/analytics'
-import core, {
+import {
   type Attribute,
   type Class,
   type Client,
   type Doc,
   type DocManager,
   type DocumentQuery,
-  generateId,
   getCurrentAccount,
   type Ref,
   type RelatedDocument,
   type Space,
   toIdMap,
-  type TxCreateDoc,
-  type TxCUD,
-  type TxOperations,
-  type TxRemoveDoc,
-  type TxUpdateDoc
+  type TxOperations
 } from '@hcengineering/core'
 import { type Resources, type Status, translate } from '@hcengineering/platform'
 import { getClient, MessageBox, type ObjectSearchResult } from '@hcengineering/presentation'
-import {
-  type Component,
-  type Issue,
-  type Milestone,
-  type Project,
-  type TimeSpendReport as TimeSpendReportDoc
-} from '@hcengineering/tracker'
+import { type Component, type Issue, type Milestone, type Project } from '@hcengineering/tracker'
 import {
   closePanel,
   getCurrentLocation,
@@ -166,6 +155,7 @@ import {
   issueStatusSort,
   milestoneSort,
   moveIssuesToAnotherMilestone,
+  reportedTimeApplier,
   subIssueQuery
 } from './utils'
 
@@ -187,12 +177,11 @@ import { get } from 'svelte/store'
 import { settingId } from '@hcengineering/setting'
 import type { TaskType } from '@hcengineering/task'
 import { getAllStates } from '@hcengineering/task-resources'
-import view, { type AttributeApplierResult, type Filter } from '@hcengineering/view'
+import view, { type Filter } from '@hcengineering/view'
 import EstimationValueEditor from './components/issues/timereport/EstimationValueEditor.svelte'
 import TimePresenter from './components/issues/timereport/TimePresenter.svelte'
 import { getTargetObjectFromUrl } from '@hcengineering/text-editor-resources'
 import contact from '@hcengineering/contact'
-import { type DraftTimeReportPayload } from './components/issues/timereport/service'
 
 export { default as AssigneeEditor } from './components/issues/AssigneeEditor.svelte'
 export { default as SubIssueList } from './components/issues/edit/SubIssueList.svelte'
@@ -571,100 +560,3 @@ export default async (): Promise<Resources> => ({
     GrouppingComponentManager: grouppingComponentManager
   }
 })
-
-export function reportedTimeApplier (
-  doc: Issue,
-  value: number | DraftTimeReportPayload | Array<DraftTimeReportPayload | number>
-): AttributeApplierResult<Issue> {
-  const txes: Array<TxCUD<TimeSpendReportDoc>> = []
-  let finalReportedTime = doc.reportedTime ?? 0
-
-  const items = Array.isArray(value) ? value : [value]
-
-  for (const item of items) {
-    if (typeof item === 'number') {
-      finalReportedTime = item
-    } else if (typeof item === 'object' && item !== null) {
-      if (typeof item.reportedTime === 'number') {
-        finalReportedTime = item.reportedTime
-      }
-
-      if (Array.isArray(item.draftReports)) {
-        for (const report of item.draftReports) {
-          const tx: TxCreateDoc<TimeSpendReportDoc> = {
-            _id: generateId(),
-            _class: core.class.TxCreateDoc,
-            objectId: report._id,
-            objectClass: tracker.class.TimeSpendReport,
-            objectSpace: doc.space,
-            space: core.space.Tx,
-            modifiedOn: Date.now(),
-            modifiedBy: getCurrentAccount().primarySocialId,
-            collection: 'reports',
-            attachedTo: doc._id,
-            attachedToClass: doc._class,
-            attributes: {
-              attachedTo: doc._id,
-              attachedToClass: doc._class,
-              collection: 'reports',
-              date: report.date,
-              description: report.description,
-              value: report.value,
-              employee: report.employee
-            }
-          }
-          txes.push(tx)
-        }
-      }
-
-      if (Array.isArray(item.deletedReportIds)) {
-        for (const id of item.deletedReportIds) {
-          const tx: TxRemoveDoc<TimeSpendReportDoc> = {
-            _id: generateId(),
-            _class: core.class.TxRemoveDoc,
-            objectId: id,
-            objectClass: tracker.class.TimeSpendReport,
-            objectSpace: doc.space,
-            attachedTo: doc._id,
-            attachedToClass: doc._class,
-            space: core.space.Tx,
-            modifiedOn: Date.now(),
-            collection: 'reports',
-            modifiedBy: getCurrentAccount().primarySocialId
-          }
-          txes.push(tx)
-        }
-      }
-
-      if (Array.isArray(item.updatedReports)) {
-        for (const report of item.updatedReports) {
-          const tx: TxUpdateDoc<TimeSpendReportDoc> = {
-            _id: generateId(),
-            _class: core.class.TxUpdateDoc,
-            objectId: report._id,
-            objectClass: tracker.class.TimeSpendReport,
-            space: core.space.Tx,
-            objectSpace: doc.space,
-            attachedTo: doc._id,
-            attachedToClass: doc._class,
-            collection: 'reports',
-            operations: {
-              date: report.date,
-              description: report.description,
-              value: report.value,
-              employee: report.employee
-            },
-            modifiedOn: Date.now(),
-            modifiedBy: getCurrentAccount().primarySocialId
-          }
-          txes.push(tx)
-        }
-      }
-    }
-  }
-
-  return {
-    update: { reportedTime: finalReportedTime },
-    txes
-  }
-}

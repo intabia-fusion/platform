@@ -305,7 +305,7 @@ export function getContextOptions (client: Client, taskType: TaskType, attr?: An
   if (thisDirectItems.length > 0) {
     options.push({
       id: 'thisTaskGroup',
-      label: getEmbeddedLabel('Fields'),
+      label: plugin.string.Fields,
       children: thisDirectItems,
       separatorBefore: options.length > 0
     })

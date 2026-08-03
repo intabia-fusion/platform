@@ -19,7 +19,6 @@ import type { ProjectType, Rank, Task } from '@hcengineering/task'
 import type { Field } from './values'
 
 export interface ScreenField extends AttachedDoc<ScreenTab, 'fields'>, Field {
-  // label?: string
   required: boolean
   rank: Rank
 }

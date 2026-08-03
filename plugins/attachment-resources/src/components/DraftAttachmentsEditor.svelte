@@ -20,8 +20,7 @@
   import { Icon, IconAdd, IconClose, Label, Spinner } from '@hcengineering/ui'
   import filesize from 'filesize'
 
-  import { savedBlobs } from '../index'
-  import { createAttachment, openAttachmentInSidebar, showAttachmentPreviewPopup } from '../utils'
+  import { createAttachment, openAttachmentInSidebar, showAttachmentPreviewPopup, savedBlobs } from '../utils'
   import IconAttachments from './icons/Attachments.svelte'
 
   export let object: Doc | undefined = undefined

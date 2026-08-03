@@ -283,9 +283,11 @@
     align-self: center;
   }
 
-  :global(.screen-modal-tabs .tabs-container) {
-    flex-wrap: wrap !important;
-    height: auto !important;
-    overflow-x: visible !important;
+  .screen-modal-tabs {
+    :global(.tabs-container) {
+      flex-wrap: wrap !important;
+      height: auto !important;
+      overflow-x: visible !important;
+    }
   }
 </style>

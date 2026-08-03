@@ -18,6 +18,8 @@
   import { getClient } from '@hcengineering/presentation'
   import { getEmbeddedLabel, getResource, IntlString, translate } from '@hcengineering/platform'
 
+  import plugin from '../../../../plugin'
+
   export let fn: WorkflowTransformCall
   export let index: number
 
@@ -38,7 +40,7 @@
 
   function getFunctionLabel (fn: WorkflowTransformCall): IntlString {
     const funcRef = fn?.func
-    if (funcRef == null) return getEmbeddedLabel('Function')
+    if (funcRef == null) return plugin.string.Function
     const client = getClient()
     const doc = client.getModel().getObject(funcRef)
     return doc?.label ?? getEmbeddedLabel(funcRef.toString())

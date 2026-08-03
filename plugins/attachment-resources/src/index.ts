@@ -14,18 +14,10 @@
 //
 
 import activity, { type ActivityMessage, type DocUpdateMessage } from '@hcengineering/activity'
-import attachment, { type Attachment, type AttachmentValue, type DraftAttachment } from '@hcengineering/attachment'
-import core, {
-  SortingOrder,
-  type Doc,
-  type Markup,
-  type ObjQueryType,
-  type SortingQuery,
-  type TxCUD
-} from '@hcengineering/core'
+import attachment, { type Attachment } from '@hcengineering/attachment'
+import core, { SortingOrder, type Markup, type ObjQueryType, type SortingQuery } from '@hcengineering/core'
 import { type IntlString, type Resources } from '@hcengineering/platform'
 import { PDFViewer, deleteFile, getClient, uploadFile } from '@hcengineering/presentation'
-import type { AttributeApplierResult } from '@hcengineering/view'
 
 import AccordionEditor from './components/AccordionEditor.svelte'
 import AddAttachment from './components/AddAttachment.svelte'
@@ -56,9 +48,11 @@ import LinkPreview from './components/LinkPreview.svelte'
 import LinkPreviewCard from './components/LinkPreviewCard.svelte'
 import AttachmentSimplePreview from './components/AttachmentSimplePreview.svelte'
 import DraftAttachmentsEditor from './components/DraftAttachmentsEditor.svelte'
+import { attachmentsApplier } from './utils'
 
 export * from './types'
 export * from './stores'
+export * from './utils'
 
 export {
   AccordionEditor,
@@ -298,84 +292,6 @@ export default async (): Promise<Resources> => ({
     AttachmentsApplier: attachmentsApplier
   }
 })
-
-export const savedBlobs = new Set<string>()
-
-export async function attachmentsApplier (
-  doc: Doc,
-  value: AttachmentValue[] | undefined
-): Promise<AttributeApplierResult> {
-  if (!Array.isArray(value)) return {}
-
-  const client = getClient()
-  const txes: Array<TxCUD<Doc>> = []
-
-  for (const item of value) {
-    const fileId = typeof item === 'string' ? item : item?.file
-    if (fileId != null) {
-      savedBlobs.add(fileId)
-    }
-  }
-
-  const existing = (await client.findAll(attachment.class.Attachment, { attachedTo: doc._id })) as Attachment[]
-  const existingFileIds = new Set(existing.map((it) => it.file))
-
-  for (const item of value) {
-    if (typeof item === 'string') {
-      const blobRef = item as any
-      if (!existingFileIds.has(blobRef) && !existing.some((e) => e._id === blobRef)) {
-        const createTx = client.txFactory.createTxCreateDoc<Attachment>(attachment.class.Attachment, doc.space, {
-          name: 'Attachment',
-          file: blobRef,
-          size: 0,
-          type: '',
-          lastModified: Date.now(),
-          attachedTo: doc._id,
-          attachedToClass: doc._class,
-          collection: 'attachments'
-        })
-        const tx = client.txFactory.createTxCollectionCUD(doc._class, doc._id, doc.space, 'attachments', createTx)
-        txes.push(tx)
-      }
-    } else if (typeof item === 'object' && item != null) {
-      const att = item as DraftAttachment
-      const blobRef = att.file
-      if (blobRef != null && !existingFileIds.has(blobRef)) {
-        const createTx = client.txFactory.createTxCreateDoc<Attachment>(attachment.class.Attachment, doc.space, {
-          name: att.name ?? 'Attachment',
-          file: blobRef,
-          size: att.size ?? 0,
-          type: att.type ?? '',
-          lastModified: Date.now(),
-          attachedTo: doc._id,
-          attachedToClass: doc._class,
-          collection: 'attachments'
-        })
-        const tx = client.txFactory.createTxCollectionCUD(doc._class, doc._id, doc.space, 'attachments', createTx)
-        txes.push(tx)
-      }
-    }
-  }
-
-  const valueFiles = new Set(
-    value.map((v) => (typeof v === 'string' ? v : (v as DraftAttachment)?.file)).filter(Boolean)
-  )
-  const valueIds = new Set(value.map((v) => (typeof v === 'string' ? v : (v as DraftAttachment)?._id)).filter(Boolean))
-
-  for (const existingAtt of existing) {
-    if (!valueFiles.has(existingAtt.file) && !valueIds.has(existingAtt._id)) {
-      const removeTx = client.txFactory.createTxRemoveDoc(
-        attachment.class.Attachment,
-        existingAtt.space,
-        existingAtt._id
-      )
-      const tx = client.txFactory.createTxCollectionCUD(doc._class, doc._id, doc.space, 'attachments', removeTx)
-      txes.push(tx)
-    }
-  }
-
-  return { txes }
-}
 
 export interface AccordionItem {
   id: string

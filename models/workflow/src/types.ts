@@ -56,7 +56,7 @@ import {
   type ScreenField
 } from '@hcengineering/workflow'
 import { TProject } from '@hcengineering/model-task'
-import { getEmbeddedLabel, type Asset, type IntlString, type Resource } from '@hcengineering/platform'
+import { type Asset, type IntlString, type Resource } from '@hcengineering/platform'
 import type { AnyComponent } from '@hcengineering/ui'
 
 import workflow from './plugin'
@@ -98,14 +98,11 @@ export class TScreenField extends TAttachedDoc implements ScreenField {
   @Prop(TypeRef(core.class.Mixin), core.string.Class)
     mixin?: Ref<Class<Mixin<Doc>>>
 
-  @Prop(TypeRef(core.class.Attribute), getEmbeddedLabel('Attribute'))
+  @Prop(TypeRef(core.class.Attribute), workflow.string.Attribute)
     attribute!: Ref<AnyAttribute>
 
   @Prop(TypeString(), workflow.string.FieldKey)
     fieldKey!: string
-
-  // @Prop(TypeString(), workflow.string.Label)
-  //   label?: string
 
   @Prop(TypeBoolean(), workflow.string.Required)
     required!: boolean
@@ -162,7 +159,7 @@ export class TWorkflow extends TDoc implements Workflow {
   @Prop(Collection(workflow.class.WorkflowTransition), workflow.string.WorkflowTransition)
     transitions?: number
 
-  @Prop(ArrOf(TypeRef(core.class.Status)), getEmbeddedLabel('Initial Statuses'))
+  @Prop(ArrOf(TypeRef(core.class.Status)), workflow.string.InitialStatuses)
     initialStatuses?: Ref<Status>[]
 }
 
@@ -208,18 +205,18 @@ export class TWorkflowValueFunction extends TDoc implements WorkflowValueFunctio
   @Prop(TypeRef(core.class.Class), core.string.Class)
     to?: Ref<Class<Doc>>
 
-  @Prop(TypeString(), getEmbeddedLabel('Category'))
+  @Prop(TypeString(), workflow.string.Category)
     category!: string
 
   @Prop(TypeRecord(), core.string.Object)
     label!: IntlString
 
-  @Prop(TypeString(), getEmbeddedLabel('Type'))
+  @Prop(TypeString(), workflow.string.Type)
     type!: 'convert' | 'transform'
 
-  @Prop(TypeAny('', getEmbeddedLabel('Editor')), getEmbeddedLabel('Editor'))
+  @Prop(TypeAny('', workflow.string.Editor), workflow.string.Editor)
     editor?: AnyComponent
 
-  @Prop(TypeAny('', getEmbeddedLabel('Props Label Presenter')), getEmbeddedLabel('Props Label Presenter'))
+  @Prop(TypeAny('', workflow.string.PropsLabelPresenter), workflow.string.PropsLabelPresenter)
     propsLabelPresenter?: Resource<(props: Record<string, any>) => IntlString>
 }

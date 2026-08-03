@@ -23,21 +23,18 @@ import {
   type Person,
   contactId
 } from '@hcengineering/contact'
-import core, {
+import {
   AccountRole,
   SocialIdType,
   type AccountUuid,
   type Class,
   type Client,
   type Data,
-  type Doc,
   type DocumentQuery,
   type Ref,
   type RelatedDocument,
-  type TxCUD,
   type WithLookup
 } from '@hcengineering/core'
-import type { AttributeApplierResult } from '@hcengineering/view'
 import login from '@hcengineering/login'
 import { getResource, type IntlString, type Resources } from '@hcengineering/platform'
 import { MessageBox, getBlobRef, getClient, type ObjectSearchResult, isDisabled } from '@hcengineering/presentation'
@@ -156,7 +153,8 @@ import {
   grouppingPersonManager,
   permissionsStore,
   resolveLocation,
-  resolveLocationData
+  resolveLocationData,
+  collaboratorsApplier
 } from './utils'
 
 export * from './utils'
@@ -489,38 +487,3 @@ export default async (): Promise<Resources> => ({
     Permissions: permissionsStore
   }
 })
-
-export async function collaboratorsApplier (
-  doc: Doc,
-  value: AccountUuid[] | undefined
-): Promise<AttributeApplierResult> {
-  if (!Array.isArray(value)) return {}
-
-  const client = getClient()
-  const txes: Array<TxCUD<Doc>> = []
-
-  const existing = await client.findAll(core.class.Collaborator, { attachedTo: doc._id })
-  const existingAccounts = existing.map((c) => c.collaborator)
-
-  const toAdd = value.filter((a) => !existingAccounts.includes(a))
-  const toRemove = existing.filter((c) => !value.includes(c.collaborator))
-
-  for (const account of toAdd) {
-    const createTx = client.txFactory.createTxCreateDoc(core.class.Collaborator, doc.space, {
-      attachedTo: doc._id,
-      attachedToClass: doc._class,
-      collection: 'collaborators',
-      collaborator: account
-    })
-    const tx = client.txFactory.createTxCollectionCUD(doc._class, doc._id, doc.space, 'collaborators', createTx)
-    txes.push(tx)
-  }
-
-  for (const c of toRemove) {
-    const removeTx = client.txFactory.createTxRemoveDoc(core.class.Collaborator, c.space, c._id)
-    const tx = client.txFactory.createTxCollectionCUD(doc._class, doc._id, doc.space, 'collaborators', removeTx)
-    txes.push(tx)
-  }
-
-  return { txes }
-}
