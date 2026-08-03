@@ -152,6 +152,7 @@ export default plugin(workflowId, {
   component: {
     ProjectTypeWorkflowsSectionEditor: '' as AnyComponent,
     WorkflowEditor: '' as AnyComponent,
+    WorkflowDiagramPopup: '' as AnyComponent,
     ProjectTypeScreensSectionEditor: '' as AnyComponent,
     ScreenEditor: '' as AnyComponent
   },

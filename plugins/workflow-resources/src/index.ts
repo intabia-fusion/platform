@@ -19,6 +19,7 @@ import type { PresentationMiddleware } from '@hcengineering/presentation'
 import ProjectTypeWorkflowsSectionEditor from './components/ProjectTypeWorkflowsSectionEditor.svelte'
 import ProjectTypeScreensSectionEditor from './components/ProjectTypeScreensSectionEditor.svelte'
 import WorkflowEditor from './components/editor/WorkflowEditor.svelte'
+import WorkflowDiagramPopup from './components/editor/WorkflowDiagramPopup.svelte'
 import ScreenEditor from './components/screen/ScreenEditor.svelte'
 import ScreenRequestEditor from './components/requests/editors/ScreenRequestEditor.svelte'
 import ScreenRequestPresenter from './components/requests/presenters/ScreenRequestPresenter.svelte'
@@ -80,11 +81,14 @@ export function dateDifferencePresenter (props: Record<string, any>): IntlString
   return getEmbeddedLabel(`${props.unit ?? ''}`)
 }
 
+export { WorkflowDiagramPopup }
+
 export default async (): Promise<Resources> => ({
   component: {
     ProjectTypeWorkflowsSectionEditor,
     ProjectTypeScreensSectionEditor,
     WorkflowEditor,
+    WorkflowDiagramPopup,
     ScreenEditor,
     ContextSubmenuPopup
   },

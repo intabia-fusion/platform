@@ -437,6 +437,9 @@
   }
 
   function cardDragOver (evt: CardDragEvent, object: Item, state: CategoryType): void {
+    if (dragCardAvailableCategories !== undefined && !dragCardAvailableCategories.includes(state)) {
+      return
+    }
     if (swimLaneMode) {
       if (dragCard === undefined) return
       if (object._id === dragCard._id) return
@@ -498,6 +501,12 @@
 
   async function cardDrop (evt: CardDragEvent, object: Item, state: CategoryType, swimLane?: SwimLane): Promise<void> {
     if (dragCard !== undefined) {
+      const canDrop = dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state)
+      if (!canDrop) {
+        dragCard = undefined
+        dragCardAvailableCategories = undefined
+        return
+      }
       let updates: DocumentUpdate<Item> | undefined
       // Drop on the source card itself with no movement: skip rank update entirely.
       const droppedOnSelf = object._id === dragCard._id && dragCardTargetIndex === undefined
@@ -810,7 +819,14 @@
         >
           {#each categories as state, si (typeof state === 'object' ? state.name : state)}
             {@const stateObjects = getGroupByValues(groupByDocs, state)}
-            <div class="swimlane-col-header">
+            <div
+              class="swimlane-col-header"
+              class:drop-allowed={isDragging &&
+                (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state))}
+              class:drop-disabled={isDragging &&
+                dragCardAvailableCategories !== undefined &&
+                !dragCardAvailableCategories.includes(state)}
+            >
               {#if $$slots.header !== undefined}
                 {#key si}
                   <slot name="header" state={toAny(state)} count={stateObjects.length} index={si} />
@@ -873,6 +889,11 @@
                   <div
                     class="swimlane-cell"
                     class:drop-target={isDragging}
+                    class:drop-allowed={isDragging &&
+                      (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state))}
+                    class:drop-disabled={isDragging &&
+                      dragCardAvailableCategories !== undefined &&
+                      !dragCardAvailableCategories.includes(state)}
                     data-id="kanban-swimlane-cell"
                     data-swimlane-id={swimLane._id}
                     data-state={stateKey(state)}
@@ -938,6 +959,11 @@
           <!-- svelte-ignore a11y-no-static-element-interactions -->
           <div
             class="panel-container"
+            class:drop-allowed={isDragging &&
+              (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state))}
+            class:drop-disabled={isDragging &&
+              dragCardAvailableCategories !== undefined &&
+              !dragCardAvailableCategories.includes(state)}
             data-id="kanban-column"
             data-state={stateKey(state)}
             bind:this={stateRefs[si]}
@@ -1121,6 +1147,21 @@
     &.drop-target {
       background-color: var(--theme-drop-zone-bg-color, var(--theme-button-hovered));
       border: 1px dashed var(--theme-divider-color);
+    }
+  }
+
+  .panel-container,
+  .swimlane-cell,
+  .swimlane-col-header {
+    transition:
+      opacity 0.15s ease,
+      filter 0.15s ease;
+
+    &.drop-disabled {
+      opacity: 0.45;
+      filter: grayscale(0.6);
+      pointer-events: none;
+      cursor: not-allowed;
     }
   }
   .swimlane-title {

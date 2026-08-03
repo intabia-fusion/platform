@@ -48,6 +48,7 @@
     "@hcengineering/task": "workspace:^0.7.0",
     "@hcengineering/task-resources": "workspace:^0.7.0",
     "@hcengineering/text": "workspace:^0.7.18",
+    "@hcengineering/tracker": "workspace:^0.7.0",
     "@hcengineering/tracker-resources": "workspace:^0.7.0",
     "@hcengineering/ui": "workspace:^0.7.0",
     "@hcengineering/view": "workspace:^0.7.0",
