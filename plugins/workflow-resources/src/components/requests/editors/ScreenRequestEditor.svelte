@@ -17,22 +17,18 @@
   import { createQuery } from '@hcengineering/presentation'
   import { ProjectType, TaskType } from '@hcengineering/task'
   import ui, { IconOpenedArrow, Label, ModernButton, ModernDropdownLabels } from '@hcengineering/ui'
-  import { Screen, WorkflowRequestConfig } from '@hcengineering/workflow'
+  import { Screen, ScreenProps, ScreenRequestConfig } from '@hcengineering/workflow'
 
   import plugin from '../../../plugin'
   import { navigateToScreen } from '../../../location'
 
-  interface Props {
-    screen: Ref<Screen> | undefined
-  }
-
   export let taskType: TaskType
   export let projectType: ProjectType | undefined = undefined
-  export let config: WorkflowRequestConfig | undefined = undefined
+  export let config: ScreenRequestConfig | undefined = undefined
   export let canSave = false
 
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  const dispatch = createEventDispatcher<{ update: Props, close: void }>()
+  const dispatch = createEventDispatcher<{ update: ScreenProps, close: void }>()
   const screensQuery = createQuery()
 
   let selectedScreenId: Ref<Screen> | undefined = config?.props?.screen
@@ -63,7 +59,9 @@
   }
 
   $: canSave = selectedScreenId !== undefined
-  $: dispatch('update', { screen: selectedScreenId })
+  $: if (selectedScreenId != null) {
+    dispatch('update', { screen: selectedScreenId })
+  }
 
   function handleOpenScreen (): void {
     if (selectedScreenId != null) {

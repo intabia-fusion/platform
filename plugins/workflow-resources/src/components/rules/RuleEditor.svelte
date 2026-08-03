@@ -8,39 +8,40 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Label, AnySvelteComponent } from '@hcengineering/ui'
-  import { TaskType } from '@hcengineering/task'
-  import { generateId } from '@hcengineering/core'
+  import { Class, generateId, Ref, Status } from '@hcengineering/core'
   import { getResourceP, Resource } from '@hcengineering/platform'
   import { getClient, reduceCalls } from '@hcengineering/presentation'
+  import { ProjectType, TaskType } from '@hcengineering/task'
+  import { AnySvelteComponent, Label } from '@hcengineering/ui'
   import {
-    addValidatorConfig,
-    updateValidatorConfig,
+    addRuleConfig,
+    updateRuleConfig,
     Workflow,
-    WorkflowTransition,
-    WorkflowValidator,
-    WorkflowValidatorConfig
+    WorkflowRule,
+    WorkflowRuleConfig,
+    WorkflowTransition
   } from '@hcengineering/workflow'
 
-  export let value: WorkflowValidator
+  import plugin from '../../plugin'
+
+  export let value: WorkflowRule
   export let taskType: TaskType
+  export let projectType: ProjectType | undefined = undefined
   export let transition: WorkflowTransition
   export let workflow: Workflow | undefined = undefined
-  export let config: WorkflowValidatorConfig | undefined = undefined
+  export let config: WorkflowRuleConfig | undefined = undefined
+  export let statuses: Status[] = []
   export let canSave = false
   export let isSaving = false
 
   const client = getClient()
 
   let editorCtor: AnySvelteComponent | undefined = undefined
-  let props: WorkflowValidatorConfig['props'] | undefined = undefined
-
-  $: void loadEditor(value?.editor)
+  let props: Record<string, any> | undefined = undefined
 
   const loadEditor = reduceCalls(async (resource?: Resource<AnySvelteComponent>): Promise<void> => {
     if (resource != null) {
@@ -50,16 +51,27 @@
     }
   })
 
+  $: void loadEditor(value?.editor)
+
+  function getCategory (ruleClass: Ref<Class<WorkflowRule>>): 'validators' | 'requests' | 'postFunctions' {
+    if (ruleClass === plugin.class.WorkflowValidator) return 'validators'
+    if (ruleClass === plugin.class.WorkflowRequest) return 'requests'
+    if (ruleClass === plugin.class.WorkflowPostFunction) return 'postFunctions'
+    return 'validators'
+  }
+
   export async function save (): Promise<void> {
     if (editorCtor == null || props == null) return
     try {
       isSaving = true
+      const category = getCategory(value._class)
       if (config != null) {
-        await updateValidatorConfig(client, transition.attachedTo, transition._id, config.id, { props })
+        await updateRuleConfig(client, transition.attachedTo, transition._id, category, config.id, { props })
       } else {
-        await addValidatorConfig(client, transition.attachedTo, transition._id, {
+        await addRuleConfig(client, transition.attachedTo, transition._id, category, {
           id: generateId(),
-          validator: value._id,
+          rule: value._id,
+          ruleClass: value._class,
           props
         })
       }
@@ -68,29 +80,31 @@
     }
   }
 
-  function handlePropsUpdate (ev: CustomEvent<WorkflowValidatorConfig['props']>): void {
+  function handlePropsUpdate (ev: CustomEvent<Record<string, any>>): void {
     props = ev.detail
   }
 </script>
 
-<div class="validator-editor">
-  <div class="validator-editor--header">
-    <div class="validator-editor--title">
+<div class="rule-editor">
+  <div class="rule-editor--header">
+    <div class="rule-editor--title">
       <Label label={value.label} />
     </div>
-    <div class="validator-editor--subtitle">
+    <div class="rule-editor--subtitle">
       <Label label={value.description} />
     </div>
   </div>
 
-  <div class="validator-editor--body">
+  <div class="rule-editor--body">
     {#if editorCtor}
       <svelte:component
         this={editorCtor}
         bind:canSave
         {taskType}
+        {projectType}
         {transition}
         {workflow}
+        {statuses}
         {config}
         on:update={handlePropsUpdate}
       />
@@ -99,7 +113,7 @@
 </div>
 
 <style lang="scss">
-  .validator-editor {
+  .rule-editor {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;

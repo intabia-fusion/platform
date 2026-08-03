@@ -16,6 +16,9 @@
 import type { Tx } from '@hcengineering/core'
 import type { IntlString } from '@hcengineering/platform'
 
+import { WorkflowRule, WorkflowRuleConfig } from './rules'
+import { FieldListProps, UpdateFieldValueConfig } from './values'
+
 export interface PostFunctionSuccess {
   ok: true
   txes: Tx[]
@@ -29,3 +32,18 @@ export interface PostFunctionError {
 }
 
 export type PostFunctionResult = PostFunctionSuccess | PostFunctionError
+
+export interface WorkflowPostFunction extends WorkflowRule {}
+export type WorkflowPostFunctionConfig<TProps extends Record<string, any> = Record<string, any>> = WorkflowRuleConfig<
+WorkflowPostFunction,
+TProps
+>
+
+export interface UpdateFieldValueProps extends FieldListProps<UpdateFieldValueConfig> {}
+
+export interface ClearFieldValueProps extends FieldListProps {}
+
+export type UpdateFieldValuePostFnConfig = WorkflowPostFunctionConfig<UpdateFieldValueProps>
+export type ClearFieldValuePostFnConfig = WorkflowPostFunctionConfig<ClearFieldValueProps>
+
+export type AnyPostFnConfig = UpdateFieldValuePostFnConfig | ClearFieldValuePostFnConfig

@@ -41,13 +41,12 @@ export async function executeTransitionPostFunctions (
         resultTxes.push(...txes)
       }
     } catch (err) {
-      console.error(
-        `[WorkflowPostFunctions] Error executing post-function ${pfConfig.id ?? (pfConfig.postFunction as string)}:`,
-        err
-      )
+      control.ctx.error('[WorkflowPostFunctions] Error executing post-function', {
+        pfId: pfConfig.id ?? (pfConfig.rule as string),
+        error: err
+      })
     }
   }
-  console.log(resultTxes)
   return resultTxes
 }
 
@@ -57,15 +56,10 @@ async function executePostFunction (
   transition: WorkflowTransition,
   task: Task
 ): Promise<Tx[]> {
-  if (pfConfig?.postFunction == null) return []
+  if (pfConfig?.rule == null) return []
 
   const postFunction = (
-    await control.findAll(
-      control.ctx,
-      workflow.class.WorkflowPostFunction,
-      { _id: pfConfig.postFunction },
-      { limit: 1 }
-    )
+    await control.findAll(control.ctx, workflow.class.WorkflowPostFunction, { _id: pfConfig.rule }, { limit: 1 })
   )[0]
 
   if (postFunction == null) return []

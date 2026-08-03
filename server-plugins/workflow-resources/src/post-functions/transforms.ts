@@ -24,12 +24,11 @@ export function applyValueFunctions (
   funcs: WorkflowValueFunction[]
 ): unknown {
   let result = initialValue
-  const converts: WorkflowTransformCall[] = calls.filter(
-    (it) => funcs?.find((f) => f._id === it.func)?.type === 'convert'
-  )
-  const transforms: WorkflowTransformCall[] = calls.filter(
-    (it) => funcs?.find((f) => f._id === it.func)?.type === 'transform'
-  )
+
+  const funcMap = new Map((funcs ?? []).map((f) => [f._id, f]))
+
+  const converts: WorkflowTransformCall[] = calls.filter((it) => funcMap.get(it.func)?.type === 'convert')
+  const transforms: WorkflowTransformCall[] = calls.filter((it) => funcMap.get(it.func)?.type === 'transform')
   for (const c of converts) {
     result = applyConvertFunction(result, c)
   }

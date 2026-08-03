@@ -202,7 +202,7 @@ function getDirectFieldOptions (
         id: `${type}.${srcAttr._id}`,
         value: {
           type,
-          _id: srcAttr._id,
+          attribute: srcAttr._id,
           fieldKey: srcAttr.name,
           mixin: srcAttr.attributeOf
         },
@@ -244,7 +244,7 @@ function getConversionGroupOptions (
         id: `${type}.${srcAttr._id}`,
         value: {
           type,
-          _id: srcAttr._id,
+          attribute: srcAttr._id,
           fieldKey: srcAttr.name,
           mixin: srcAttr.attributeOf,
           functions: compat.functions

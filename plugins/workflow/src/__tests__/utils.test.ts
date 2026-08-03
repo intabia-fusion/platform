@@ -31,15 +31,9 @@ import {
   addTransition,
   removeTransition,
   updateTransition,
-  addValidatorConfig,
-  removeValidatorConfig,
-  updateValidatorConfig,
-  addRequestConfig,
-  removeRequestConfig,
-  updateRequestConfig,
-  addPostFunctionConfig,
-  removePostFunctionConfig,
-  updatePostFunctionConfig,
+  addRuleConfig,
+  removeRuleConfig,
+  updateRuleConfig,
   setWorkflow,
   findTransitionConflict,
   checkConflict,
@@ -55,6 +49,7 @@ import {
   isThisValue,
   isParentValue,
   isConstValue,
+  type AnyRuleConfig,
   type Workflow,
   type WorkflowTransition,
   type WorkflowValidator,
@@ -255,87 +250,84 @@ describe('Workflow Utilities', () => {
     })
 
     it('should add validator config', async () => {
-      const config = await addValidatorConfig(mockClient, workflowId, transitionId, {
+      const config = {
         id: 'custom-id-1',
         ruleClass: workflow.class.WorkflowValidator,
         rule: validatorType,
         props: { field: 'assignee' }
-      })
+      } as unknown as AnyRuleConfig
+      await addRuleConfig(mockClient, workflowId, transitionId, 'validators', config)
 
-      expect(config.id).toBe('custom-id-1')
-      expect(config.rule).toBe(validatorType)
-      expect(config.props).toEqual({ field: 'assignee' })
       expect(transition.validators).toHaveLength(1)
       expect(transition.validators?.[0]).toEqual(config)
     })
 
     it('should throw error when adding duplicate validator config', async () => {
-      await addValidatorConfig(mockClient, workflowId, transitionId, {
+      const config = {
         id: 'cfg-1',
         ruleClass: workflow.class.WorkflowValidator,
         rule: validatorType,
         props: { field: 'assignee' }
-      })
+      } as unknown as AnyRuleConfig
+      await addRuleConfig(mockClient, workflowId, transitionId, 'validators', config)
 
-      await expect(
-        addValidatorConfig(mockClient, workflowId, transitionId, {
-          id: 'cfg-1',
-          ruleClass: workflow.class.WorkflowValidator,
-          rule: validatorType,
-          props: { field: 'assignee' }
-        })
-      ).rejects.toThrow(`Validator config already exists on transition ${transitionId}`)
+      await expect(addRuleConfig(mockClient, workflowId, transitionId, 'validators', config)).rejects.toThrow(
+        `validators config already exists on transition ${transitionId}`
+      )
     })
 
     it('should throw error when adding validator config if transition is not found', async () => {
       const missingTransitionId = 'non-existent' as Ref<WorkflowTransition>
       await expect(
-        addValidatorConfig(mockClient, workflowId, missingTransitionId, {
+        addRuleConfig(mockClient, workflowId, missingTransitionId, 'validators', {
           id: 'cfg-1',
           ruleClass: workflow.class.WorkflowValidator,
           rule: validatorType,
           props: {}
-        })
+        } as unknown as AnyRuleConfig)
       ).rejects.toThrow('Transition non-existent not found')
     })
 
     it('should allow multiple validator configs of the same validator type', async () => {
-      const config1 = await addValidatorConfig(mockClient, workflowId, transitionId, {
+      const config1 = {
         id: 'cfg-1',
         ruleClass: workflow.class.WorkflowValidator,
         rule: validatorType,
         props: { field: 'assignee' }
-      })
-      const config2 = await addValidatorConfig(mockClient, workflowId, transitionId, {
+      } as unknown as AnyRuleConfig
+      const config2 = {
         id: 'cfg-2',
         ruleClass: workflow.class.WorkflowValidator,
         rule: validatorType,
         props: { field: 'dueDate' }
-      })
+      } as unknown as AnyRuleConfig
+      await addRuleConfig(mockClient, workflowId, transitionId, 'validators', config1)
+      await addRuleConfig(mockClient, workflowId, transitionId, 'validators', config2)
 
-      expect(config1.id).not.toEqual(config2.id)
       expect(transition.validators).toHaveLength(2)
       expect(transition.validators?.[0].props).toEqual({ field: 'assignee' })
       expect(transition.validators?.[1].props).toEqual({ field: 'dueDate' })
     })
 
     it('should update specific validator config by id', async () => {
-      const config1 = await addValidatorConfig(mockClient, workflowId, transitionId, {
+      const config1 = {
         id: 'cfg-1',
         ruleClass: workflow.class.WorkflowValidator,
         rule: validatorType,
         props: { field: 'assignee' }
-      })
-      await addValidatorConfig(mockClient, workflowId, transitionId, {
+      } as unknown as AnyRuleConfig
+      const config2 = {
         id: 'cfg-2',
         ruleClass: workflow.class.WorkflowValidator,
         rule: validatorType,
         props: { field: 'dueDate' }
-      })
+      } as unknown as AnyRuleConfig
+      await addRuleConfig(mockClient, workflowId, transitionId, 'validators', config1)
+      await addRuleConfig(mockClient, workflowId, transitionId, 'validators', config2)
 
-      await updateValidatorConfig(mockClient, workflowId, transitionId, config1.id, {
+      await updateRuleConfig(mockClient, workflowId, transitionId, 'validators', config1.id, {
         props: { field: 'assignee', required: true }
-      })
+      } as unknown as Partial<Pick<AnyRuleConfig, 'props'>>)
 
       expect(transition.validators?.[0].props).toEqual({ field: 'assignee', required: true })
       expect(transition.validators?.[1].props).toEqual({ field: 'dueDate' })
@@ -343,26 +335,28 @@ describe('Workflow Utilities', () => {
 
     it('should throw error when updating validator config if transition is not found', async () => {
       const missingTransitionId = 'non-existent' as Ref<WorkflowTransition>
-      await expect(updateValidatorConfig(mockClient, workflowId, missingTransitionId, 'cfg-1', {})).rejects.toThrow(
-        'Transition non-existent not found'
-      )
+      await expect(
+        updateRuleConfig(mockClient, workflowId, missingTransitionId, 'validators', 'cfg-1', {})
+      ).rejects.toThrow('Transition non-existent not found')
     })
 
     it('should remove specific validator config by id', async () => {
-      const config1 = await addValidatorConfig(mockClient, workflowId, transitionId, {
+      const config1 = {
         id: 'cfg-1',
         ruleClass: workflow.class.WorkflowValidator,
         rule: validatorType,
         props: { field: 'assignee' }
-      })
-      const config2 = await addValidatorConfig(mockClient, workflowId, transitionId, {
+      } as unknown as AnyRuleConfig
+      const config2 = {
         id: 'cfg-2',
         ruleClass: workflow.class.WorkflowValidator,
         rule: validatorType,
         props: { field: 'dueDate' }
-      })
+      } as unknown as AnyRuleConfig
+      await addRuleConfig(mockClient, workflowId, transitionId, 'validators', config1)
+      await addRuleConfig(mockClient, workflowId, transitionId, 'validators', config2)
 
-      await removeValidatorConfig(mockClient, workflowId, transitionId, config1.id)
+      await removeRuleConfig(mockClient, workflowId, transitionId, 'validators', config1.id)
 
       expect(transition.validators).toHaveLength(1)
       expect(transition.validators?.[0].id).toEqual(config2.id)
@@ -370,9 +364,9 @@ describe('Workflow Utilities', () => {
 
     it('should throw error when removing validator config if transition is not found', async () => {
       const missingTransitionId = 'non-existent' as Ref<WorkflowTransition>
-      await expect(removeValidatorConfig(mockClient, workflowId, missingTransitionId, 'cfg-1')).rejects.toThrow(
-        'Transition non-existent not found'
-      )
+      await expect(
+        removeRuleConfig(mockClient, workflowId, missingTransitionId, 'validators', 'cfg-1')
+      ).rejects.toThrow('Transition non-existent not found')
     })
   })
 
@@ -421,90 +415,86 @@ describe('Workflow Utilities', () => {
     })
 
     it('should add request config', async () => {
-      const config = await addRequestConfig(mockClient, workflowId, transitionId, {
+      const config = {
         id: 'req-cfg-1',
         ruleClass: workflow.class.WorkflowRequest,
         rule: requestType,
         props: { approver: 'user-1' }
-      })
+      } as unknown as AnyRuleConfig
+      await addRuleConfig(mockClient, workflowId, transitionId, 'requests', config)
 
-      expect(config.id).toBe('req-cfg-1')
-      expect(config.rule).toBe(requestType)
-      expect(config.props).toEqual({ approver: 'user-1' })
       expect(transition.requests).toHaveLength(1)
       expect(transition.requests?.[0]).toEqual(config)
     })
 
     it('should throw error when adding duplicate request config', async () => {
-      await addRequestConfig(mockClient, workflowId, transitionId, {
+      const config = {
         id: 'req-cfg-1',
         ruleClass: workflow.class.WorkflowRequest,
         rule: requestType,
         props: {}
-      })
+      } as unknown as AnyRuleConfig
+      await addRuleConfig(mockClient, workflowId, transitionId, 'requests', config)
 
-      await expect(
-        addRequestConfig(mockClient, workflowId, transitionId, {
-          id: 'req-cfg-1',
-          ruleClass: workflow.class.WorkflowRequest,
-          rule: requestType,
-          props: {}
-        })
-      ).rejects.toThrow(`Request config already exists on transition ${transitionId}`)
+      await expect(addRuleConfig(mockClient, workflowId, transitionId, 'requests', config)).rejects.toThrow(
+        `requests config already exists on transition ${transitionId}`
+      )
     })
 
     it('should throw error when adding request config if transition is not found', async () => {
       const missingTransitionId = 'non-existent' as Ref<WorkflowTransition>
       await expect(
-        addRequestConfig(mockClient, workflowId, missingTransitionId, {
+        addRuleConfig(mockClient, workflowId, missingTransitionId, 'requests', {
           id: 'req-cfg-1',
           ruleClass: workflow.class.WorkflowRequest,
           rule: requestType,
           props: {}
-        })
+        } as unknown as AnyRuleConfig)
       ).rejects.toThrow('Transition non-existent not found')
     })
 
     it('should update specific request config by id', async () => {
-      const config = await addRequestConfig(mockClient, workflowId, transitionId, {
+      const config = {
         id: 'req-cfg-1',
         ruleClass: workflow.class.WorkflowRequest,
         rule: requestType,
         props: { approver: 'user-1' }
-      })
+      } as unknown as AnyRuleConfig
+      await addRuleConfig(mockClient, workflowId, transitionId, 'requests', config)
 
-      await updateRequestConfig(mockClient, workflowId, transitionId, config.id, {
+      await updateRuleConfig(mockClient, workflowId, transitionId, 'requests', config.id, {
         props: { approver: 'user-2' }
-      })
+      } as unknown as Partial<Pick<AnyRuleConfig, 'props'>>)
 
       expect(transition.requests?.[0].props).toEqual({ approver: 'user-2' })
     })
 
     it('should throw error when updating request config if transition is not found', async () => {
       const missingTransitionId = 'non-existent' as Ref<WorkflowTransition>
-      await expect(updateRequestConfig(mockClient, workflowId, missingTransitionId, 'req-cfg-1', {})).rejects.toThrow(
-        'Transition non-existent not found'
-      )
+      await expect(
+        updateRuleConfig(mockClient, workflowId, missingTransitionId, 'requests', 'req-cfg-1', {})
+      ).rejects.toThrow('Transition non-existent not found')
     })
 
     it('should remove specific request config by id', async () => {
-      const config = await addRequestConfig(mockClient, workflowId, transitionId, {
+      const config = {
         id: 'req-cfg-1',
         ruleClass: workflow.class.WorkflowRequest,
         rule: requestType,
         props: {}
-      })
+      } as unknown as AnyRuleConfig
+      await addRuleConfig(mockClient, workflowId, transitionId, 'requests', config)
 
-      await removeRequestConfig(mockClient, workflowId, transitionId, config.id)
+      await removeRuleConfig(mockClient, workflowId, transitionId, 'requests', config.id)
 
       expect(transition.requests).toHaveLength(0)
     })
 
     it('should throw error when removing request config if transition is not found', async () => {
       const missingTransitionId = 'non-existent' as Ref<WorkflowTransition>
-      await expect(removeRequestConfig(mockClient, workflowId, missingTransitionId, 'req-cfg-1')).rejects.toThrow(
-        'Transition non-existent not found'
-      )
+      await expect(
+        removeRuleConfig(mockClient, workflowId, missingTransitionId, 'requests', 'req-cfg-1')
+      ).rejects.toThrow('Transition non-existent not found')
     })
   })
 
@@ -555,58 +545,54 @@ describe('Workflow Utilities', () => {
     })
 
     it('should add post-function config', async () => {
-      const config = await addPostFunctionConfig(mockClient, workflowId, transitionId, {
+      const config = {
         id: 'pf-cfg-1',
         ruleClass: workflow.class.WorkflowPostFunction,
         rule: postFunctionType,
         props: { fields: [] }
-      })
+      } as unknown as AnyRuleConfig
+      await addRuleConfig(mockClient, workflowId, transitionId, 'postFunctions', config)
 
-      expect(config.id).toBe('pf-cfg-1')
-      expect(config.rule).toBe(postFunctionType)
       expect(transition.postFunctions).toHaveLength(1)
       expect(transition.postFunctions?.[0]).toEqual(config)
     })
 
     it('should throw error when adding duplicate post-function config', async () => {
-      await addPostFunctionConfig(mockClient, workflowId, transitionId, {
+      const config = {
         id: 'pf-cfg-1',
         ruleClass: workflow.class.WorkflowPostFunction,
         rule: postFunctionType,
         props: {}
-      })
+      } as unknown as AnyRuleConfig
+      await addRuleConfig(mockClient, workflowId, transitionId, 'postFunctions', config)
 
-      await expect(
-        addPostFunctionConfig(mockClient, workflowId, transitionId, {
-          id: 'pf-cfg-1',
-          ruleClass: workflow.class.WorkflowPostFunction,
-          rule: postFunctionType,
-          props: {}
-        })
-      ).rejects.toThrow(`Post-function config already exists on transition ${transitionId}`)
+      await expect(addRuleConfig(mockClient, workflowId, transitionId, 'postFunctions', config)).rejects.toThrow(
+        `postFunctions config already exists on transition ${transitionId}`
+      )
     })
 
     it('should throw error when adding post-function config if transition is not found', async () => {
       const missingTransitionId = 'non-existent' as Ref<WorkflowTransition>
       await expect(
-        addPostFunctionConfig(mockClient, workflowId, missingTransitionId, {
+        addRuleConfig(mockClient, workflowId, missingTransitionId, 'postFunctions', {
           id: 'pf-cfg-1',
           ruleClass: workflow.class.WorkflowPostFunction,
           rule: postFunctionType,
           props: {}
-        })
+        } as unknown as AnyRuleConfig)
       ).rejects.toThrow('Transition non-existent not found')
     })
 
     it('should update specific post-function config by id', async () => {
-      const config = await addPostFunctionConfig(mockClient, workflowId, transitionId, {
+      const config = {
         id: 'pf-cfg-1',
         ruleClass: workflow.class.WorkflowPostFunction,
         rule: postFunctionType,
         props: { fields: [] }
-      })
+      } as unknown as AnyRuleConfig
+      await addRuleConfig(mockClient, workflowId, transitionId, 'postFunctions', config)
 
-      await updatePostFunctionConfig(mockClient, workflowId, transitionId, config.id, {
+      await updateRuleConfig(mockClient, workflowId, transitionId, 'postFunctions', config.id, {
         props: {
           fields: [{ fieldKey: 'assignee', attribute: attrAssignee, value: { type: 'preset', preset: '$currentUser' } }]
         }
@@ -618,28 +604,29 @@ describe('Workflow Utilities', () => {
     it('should throw error when updating post-function config if transition is not found', async () => {
       const missingTransitionId = 'non-existent' as Ref<WorkflowTransition>
       await expect(
-        updatePostFunctionConfig(mockClient, workflowId, missingTransitionId, 'pf-cfg-1', {})
+        updateRuleConfig(mockClient, workflowId, missingTransitionId, 'postFunctions', 'pf-cfg-1', {})
       ).rejects.toThrow('Transition non-existent not found')
     })
 
     it('should remove specific post-function config by id', async () => {
-      const config = await addPostFunctionConfig(mockClient, workflowId, transitionId, {
+      const config = {
         id: 'pf-cfg-1',
         ruleClass: workflow.class.WorkflowPostFunction,
         rule: postFunctionType,
         props: {}
-      })
+      } as unknown as AnyRuleConfig
+      await addRuleConfig(mockClient, workflowId, transitionId, 'postFunctions', config)
 
-      await removePostFunctionConfig(mockClient, workflowId, transitionId, config.id)
+      await removeRuleConfig(mockClient, workflowId, transitionId, 'postFunctions', config.id)
 
       expect(transition.postFunctions).toHaveLength(0)
     })
 
     it('should throw error when removing post-function config if transition is not found', async () => {
       const missingTransitionId = 'non-existent' as Ref<WorkflowTransition>
-      await expect(removePostFunctionConfig(mockClient, workflowId, missingTransitionId, 'pf-cfg-1')).rejects.toThrow(
-        'Transition non-existent not found'
-      )
+      await expect(
+        removeRuleConfig(mockClient, workflowId, missingTransitionId, 'postFunctions', 'pf-cfg-1')
+      ).rejects.toThrow('Transition non-existent not found')
     })
   })
 

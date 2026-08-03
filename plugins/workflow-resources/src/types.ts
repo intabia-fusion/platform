@@ -19,9 +19,7 @@ import { type WorkflowRule } from '@hcengineering/workflow'
 import { type AnySvelteComponent } from '@hcengineering/ui'
 
 import plugin from './plugin'
-import ValidatorEditor from './components/validators/ValidatorEditor.svelte'
-import RequestEditor from './components/requests/RequestEditor.svelte'
-import PostFunctionEditor from './components/postFunctions/PostFunctionEditor.svelte'
+import RuleEditor from './components/rules/RuleEditor.svelte'
 
 export interface ScreenModalResult<T extends Doc = Doc> {
   update?: DocumentUpdate<T>
@@ -45,18 +43,18 @@ export const rulesDisplay: Record<Ref<Class<WorkflowRule>>, RuleDisplay> = {
     _class: plugin.class.WorkflowRequest,
     icon: '📑',
     label: plugin.string.Requests,
-    editor: RequestEditor
+    editor: RuleEditor
   },
   [plugin.class.WorkflowValidator]: {
     _class: plugin.class.WorkflowValidator,
     icon: '✓',
     label: plugin.string.ValidateDetails,
-    editor: ValidatorEditor
+    editor: RuleEditor
   },
   [plugin.class.WorkflowPostFunction]: {
     _class: plugin.class.WorkflowPostFunction,
     icon: '➔',
     label: plugin.string.PerformActions,
-    editor: PostFunctionEditor
+    editor: RuleEditor
   }
 }

@@ -17,6 +17,10 @@ import type { Class, Doc, Ref } from '@hcengineering/core'
 import type { Asset, IntlString } from '@hcengineering/platform'
 import type { AnyComponent } from '@hcengineering/ui'
 
+import { AnyValidatorConfig } from './validators'
+import { AnyPostFnConfig } from './post-functions'
+import { AnyRequestConfig } from './request'
+
 export interface WorkflowRule extends Doc {
   label: IntlString
   description: IntlString
@@ -41,20 +45,4 @@ export interface WorkflowRuleConfig<
   props: TProps
 }
 
-export interface WorkflowValidator extends WorkflowRule {}
-export type WorkflowValidatorConfig<TProps extends Record<string, any> = Record<string, any>> = WorkflowRuleConfig<
-WorkflowValidator,
-TProps
->
-
-export interface WorkflowRequest extends WorkflowRule {}
-export type WorkflowRequestConfig<TProps extends Record<string, any> = Record<string, any>> = WorkflowRuleConfig<
-WorkflowRequest,
-TProps
->
-
-export interface WorkflowPostFunction extends WorkflowRule {}
-export type WorkflowPostFunctionConfig<TProps extends Record<string, any> = Record<string, any>> = WorkflowRuleConfig<
-WorkflowPostFunction,
-TProps
->
+export type AnyRuleConfig = AnyValidatorConfig | AnyPostFnConfig | AnyRequestConfig

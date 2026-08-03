@@ -17,8 +17,6 @@ import type { AnyAttribute, Class, Doc, Mixin, Ref } from '@hcengineering/core'
 import type { IntlString, Resource } from '@hcengineering/platform'
 import type { AnyComponent } from '@hcengineering/ui'
 
-import type { WorkflowPostFunctionConfig, WorkflowValidatorConfig, WorkflowRuleConfig } from './rules'
-
 /**
  * Base field reference descriptor
  */
@@ -73,18 +71,3 @@ export interface UpdateFieldValueConfig extends Field {
 export interface FieldListProps<TField extends Field = Field> {
   fields?: TField[]
 }
-
-export interface UpdateFieldValueProps extends FieldListProps<UpdateFieldValueConfig> {}
-
-export interface ClearFieldValueProps extends FieldListProps {}
-
-export interface FieldRequiredProps extends FieldListProps {}
-
-// Specific Rule Config Discriminated Union Aliases
-export type UpdateFieldValueRuleConfig = WorkflowPostFunctionConfig<UpdateFieldValueProps>
-export type ClearFieldValueRuleConfig = WorkflowPostFunctionConfig<ClearFieldValueProps>
-export type FieldRequiredRuleConfig = WorkflowValidatorConfig<FieldRequiredProps>
-
-export type AnyPostFunctionConfig = UpdateFieldValueRuleConfig | ClearFieldValueRuleConfig
-export type AnyValidatorConfig = FieldRequiredRuleConfig
-export type AnyRuleConfig = AnyValidatorConfig | AnyPostFunctionConfig | WorkflowRuleConfig

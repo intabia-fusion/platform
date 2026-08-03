@@ -26,9 +26,9 @@
   } from '@hcengineering/ui'
   import {
     UpdateFieldValueConfig,
+    UpdateFieldValuePostFnConfig,
     UpdateFieldValueProps,
     WorkflowFieldValue,
-    WorkflowPostFunctionConfig,
     WorkflowTransformCall,
     WorkflowValueFunction
   } from '@hcengineering/workflow'
@@ -46,7 +46,7 @@
   } from './update-field/utils'
 
   export let taskType: TaskType
-  export let config: WorkflowPostFunctionConfig | undefined = undefined
+  export let config: UpdateFieldValuePostFnConfig | undefined = undefined
   export let canSave = false
 
   const dispatch = createEventDispatcher<{ update: UpdateFieldValueProps }>()
@@ -107,7 +107,7 @@
   $: resultFields = rows
     .filter((r) => r.fieldKey.trim() !== '' && r.attribute != null)
     .map<UpdateFieldValueConfig>((r) => ({
-    _id: (r.attribute?._id ?? '') as Ref<AnyAttribute>,
+    attribute: (r.attribute?._id ?? '') as Ref<AnyAttribute>,
     fieldKey: r.fieldKey,
     value: r.value,
     mixin: r.mixin
@@ -142,7 +142,7 @@
   }
 
   function initRows (): FieldRow[] {
-    const props = config?.props as UpdateFieldValueProps | undefined
+    const props = config?.props
     if (props?.fields != null && (props?.fields?.length ?? 0) > 0) {
       return props.fields.map((it) => createRow(it.fieldKey, it.value, it.mixin))
     }
@@ -291,11 +291,10 @@
         }
         return fn
       })
-      const updatedValue: WorkflowFieldValue = {
+      row.value = {
         ...row.value,
         functions: newFuncs
       }
-      row.value = updatedValue
       rows = [...rows]
     }
   }

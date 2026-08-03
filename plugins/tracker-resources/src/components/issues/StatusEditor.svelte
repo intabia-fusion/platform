@@ -16,7 +16,7 @@
 <script lang="ts">
   import { AttachedData, Ref, WithLookup } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { getTaskTypeStates } from '@hcengineering/task'
+  import task, { getTaskTypeStates } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import { Issue, IssueDraft, IssueStatus, Project, TrackerEvents } from '@hcengineering/tracker'
   import {
@@ -32,7 +32,7 @@
   import { statusStore } from '@hcengineering/view-resources'
   import { Analytics } from '@hcengineering/analytics'
   import { createEventDispatcher } from 'svelte'
-  import workflow, { ProjectWorkflow, WorkflowTransition } from '@hcengineering/workflow'
+  import workflow, { ProjectWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
 
   import tracker from '../../plugin'
   import { activeProjects } from '../../utils'
@@ -57,6 +57,7 @@
   export let defaultIssueStatus: Ref<IssueStatus> | undefined = undefined
   export let focusIndex: number | undefined = undefined
   export let short: boolean = false
+  export let isCreate: boolean = false
 
   const client = getClient()
   const dispatch = createEventDispatcher()
@@ -93,9 +94,10 @@
     )
   }
 
-  const transitionsQuery = createQuery()
+  const workflowQuery = createQuery()
 
-  let transitions: WorkflowTransition[] | undefined = undefined
+  let currentWorkflow: Workflow | undefined = undefined
+  let transitions: WorkflowTransition[] = []
 
   const h = client.getHierarchy()
   $: project = value?.space ? ($activeProjects.get(value.space) as ProjectWorkflow | undefined) : undefined
@@ -103,11 +105,22 @@
     project && value?.kind ? h.as(project, workflow.mixin.ProjectWorkflow).workflows?.[value.kind] : undefined
 
   $: if (workflowId != null) {
-    transitionsQuery.query(workflow.class.WorkflowTransition, { attachedTo: workflowId }, (res) => {
-      transitions = res
-    })
+    workflowQuery.query(
+      workflow.class.Workflow,
+      { _id: workflowId },
+      (res) => {
+        currentWorkflow = res[0]
+        transitions = (res[0]?.$lookup?.transitions ?? []) as WorkflowTransition[]
+      },
+      {
+        lookup: {
+          _id: { transitions: workflow.class.WorkflowTransition }
+        }
+      }
+    )
   } else {
-    transitions = undefined
+    currentWorkflow = undefined
+    transitions = []
   }
 
   $: allStatuses = getTaskTypeStates(value.kind, $taskTypeStore, $statusStore.byId) as
@@ -117,11 +130,20 @@
   function filterStatusesByWorkflow (
     all: WithLookup<IssueStatus>[] | undefined,
     wfId: Ref<any> | undefined,
-    transitions: WorkflowTransition[] | undefined,
-    currentStatus: Ref<IssueStatus> | undefined
+    wf: Workflow | undefined,
+    transitions: WorkflowTransition[],
+    currentStatus: Ref<IssueStatus> | undefined,
+    isCreate: boolean
   ): WithLookup<IssueStatus>[] | undefined {
     if (all == null) return undefined
-    if (wfId == null || transitions == null) return all
+    if (wfId == null) return all
+
+    if (isCreate) {
+      if (wf?.initialStatuses != null && wf.initialStatuses.length > 0) {
+        return all.filter((s) => wf.initialStatuses?.includes(s._id))
+      }
+      return all
+    }
 
     const allowed = new Set<string>()
 
@@ -142,7 +164,7 @@
     return all.filter((s) => allowed.has(s._id))
   }
 
-  $: statuses = filterStatusesByWorkflow(allStatuses, workflowId, transitions, value?.status)
+  $: statuses = filterStatusesByWorkflow(allStatuses, workflowId, currentWorkflow, transitions, value?.status, isCreate)
 
   function getSelectedStatus (
     statuses: WithLookup<IssueStatus>[] | undefined,

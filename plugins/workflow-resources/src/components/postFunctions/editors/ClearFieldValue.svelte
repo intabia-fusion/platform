@@ -17,13 +17,13 @@
   import { reduceCalls } from '@hcengineering/presentation'
   import { TaskType } from '@hcengineering/task'
   import ui, { DropdownTextItem, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
-  import { ClearFieldValueProps, Field, WorkflowPostFunctionConfig } from '@hcengineering/workflow'
+  import { ClearFieldValueProps, Field, ClearFieldValuePostFnConfig } from '@hcengineering/workflow'
 
   import plugin from '../../../plugin'
   import { DisplayAttribute, getDisplayAttributes } from '../../../utils'
 
   export let taskType: TaskType
-  export let config: WorkflowPostFunctionConfig | undefined = undefined
+  export let config: ClearFieldValuePostFnConfig | undefined = undefined
   export let canSave = false
 
   const dispatch = createEventDispatcher<{ update: ClearFieldValueProps }>()
@@ -56,7 +56,7 @@
 
   let displayAttributes: DisplayAttribute[] = []
   let items: DropdownTextItem[] = []
-  let selected: Ref<AnyAttribute>[] = props?.fields?.map((f) => f._id) ?? []
+  let selected: Ref<AnyAttribute>[] = props?.fields?.map((f) => f.attribute) ?? []
 
   const updateItems = reduceCalls(async (lang: string): Promise<void> => {
     const res = await getDisplayAttributes(taskType.ofClass, lang, EXCLUDED_FIELDS, EXCLUDED_TYPES)
@@ -90,7 +90,7 @@
         const match = displayAttributes.find((attr) => attr.id === id)
         if (match == null) return undefined
         const item: Field = {
-          _id: match.id,
+          attribute: match.id,
           fieldKey: match.key,
           mixin: match.mixin
         }

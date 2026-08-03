@@ -40,11 +40,11 @@
   let rows: RowData[] = []
   let anyStatusLabel: string = ''
 
-  $: void updateAnyStatusLabel($languageStore)
-
   const updateAnyStatusLabel = reduceCalls(async (lang: string): Promise<void> => {
     anyStatusLabel = await translate(plugin.string.AnyStatus, {}, lang)
   })
+
+  $: void updateAnyStatusLabel($languageStore)
 
   $: {
     const res: RowData[] = []

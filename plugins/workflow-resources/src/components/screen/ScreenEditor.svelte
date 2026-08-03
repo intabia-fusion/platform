@@ -93,16 +93,13 @@
 
   $: name = localName
   $: icon = plugin.icon.Screens
-  $: usedFields = new Set(allFields.map((f) => f.fieldId))
+  $: usedFields = new Set(allFields.map((f) => f.attribute))
 
   $: sortedTabs = [...tabs].sort((a: ScreenTab, b: ScreenTab) => {
     const rankA = a.rank ?? ''
     const rankB = b.rank ?? ''
     return rankA < rankB ? -1 : rankA > rankB ? 1 : 0
   })
-
-  $: void updateDisplayAttributes(screen?.targetClass, $languageStore)
-  $: void updateClassItem(screen?.targetClass, $languageStore)
 
   const updateDisplayAttributes = reduceCalls(
     async (_class: Ref<Class<Task>> | undefined, lang: string): Promise<void> => {
@@ -123,6 +120,20 @@
       displayAttributes = [...regular, ...collection]
     }
   )
+
+  const updateClassItem = reduceCalls(async (_class: Ref<Class<Doc>> | undefined, lang: string): Promise<void> => {
+    if (_class == null) return
+    const _clazz = client.getHierarchy().getClass(_class)
+
+    classItem = {
+      id: _class,
+      icon: _clazz.icon,
+      label: await translate(_clazz.label, {}, lang)
+    }
+  })
+
+  $: void updateDisplayAttributes(screen?.targetClass, $languageStore)
+  $: void updateClassItem(screen?.targetClass, $languageStore)
 
   async function saveName (): Promise<void> {
     if (screen != null) {
@@ -189,17 +200,6 @@
       isDeleteLoading = false
     }
   }
-
-  const updateClassItem = reduceCalls(async (_class: Ref<Class<Doc>> | undefined, lang: string): Promise<void> => {
-    if (_class == null) return
-    const _clazz = client.getHierarchy().getClass(_class)
-
-    classItem = {
-      id: _class,
-      icon: _clazz.icon,
-      label: await translate(_clazz.label, {}, lang)
-    }
-  })
 
   async function addTab (): Promise<void> {
     if (screen == null) return

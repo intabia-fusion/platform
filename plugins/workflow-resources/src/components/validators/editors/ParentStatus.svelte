@@ -19,23 +19,19 @@
   import { translate } from '@hcengineering/platform'
   import ui, { DropdownTextItem, Icon, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
   import { StatePresenter } from '@hcengineering/task-resources'
-  import { WorkflowValidatorConfig } from '@hcengineering/workflow'
+  import { ParentStatusesProps, ParentStatusesValidatorConfig } from '@hcengineering/workflow'
   import { getClient, reduceCalls } from '@hcengineering/presentation'
 
   import plugin from '../../../plugin'
 
-  interface Props {
-    statuses: Record<Ref<TaskType>, Ref<Status>[] | null>
-  }
-
   type StatusId = Ref<Status> | 'null'
 
   export let taskType: TaskType
-  export let config: WorkflowValidatorConfig | undefined = undefined
+  export let config: ParentStatusesValidatorConfig | undefined = undefined
   export let canSave = false
 
   const client = getClient()
-  const dispatch = createEventDispatcher<{ update: Props }>()
+  const dispatch = createEventDispatcher<{ update: ParentStatusesProps }>()
 
   const allTaskTypes: TaskType[] = client.getModel().findAllSync(task.class.TaskType, {})
   const allStatuses: Status[] = client.getModel().findAllSync(core.class.Status, {})
@@ -67,10 +63,18 @@
     }
   }
 
+  const updateStatusItems = reduceCalls(async (taskTypes: TaskType[]): Promise<void> => {
+    const map: Record<Ref<TaskType>, DropdownTextItem[]> = {}
+    for (const tt of taskTypes) {
+      map[tt._id] = await getStatusItems(tt._id)
+    }
+    statusItemsMap = map
+  })
+
   $: void updateStatusItems(relevantTaskTypes)
 
   $: {
-    const result: Props['statuses'] = {}
+    const result: ParentStatusesProps['statuses'] = {}
     for (const tt of relevantTaskTypes) {
       const selected = statusesMap[tt._id]
       if (Array.isArray(selected) && selected.includes('null')) {
@@ -102,14 +106,6 @@
       )
     ]
   }
-
-  const updateStatusItems = reduceCalls(async (taskTypes: TaskType[]): Promise<void> => {
-    const map: Record<Ref<TaskType>, DropdownTextItem[]> = {}
-    for (const tt of taskTypes) {
-      map[tt._id] = await getStatusItems(tt._id)
-    }
-    statusItemsMap = map
-  })
 
   function handleStatusChange (ttId: Ref<TaskType>, selected: string[]): void {
     statusesMap = {

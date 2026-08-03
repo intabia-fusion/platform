@@ -1,4 +1,4 @@
-<!--
+//
 // Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -8,20 +8,26 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
 // See the License for the specific language governing permissions and
 // limitations under the License.
--->
-<script lang="ts">
-  import { TaskType } from '@hcengineering/task'
-  import { FieldRequiredProps, WorkflowValidatorConfig } from '@hcengineering/workflow'
+//
 
-  import FieldsListPresenter from '../../presenters/FieldsListPresenter.svelte'
+import type { Ref } from '@hcengineering/core'
 
-  export let config: WorkflowValidatorConfig
-  export let taskType: TaskType
+import { Screen } from './screens'
+import { WorkflowRule, WorkflowRuleConfig } from './rules'
 
-  $: props = config.props as FieldRequiredProps
-  $: fieldIds = props?.fields?.map((it) => it.attribute) ?? []
-</script>
+export interface WorkflowRequest extends WorkflowRule {}
+export type WorkflowRequestConfig<TProps extends Record<string, any> = Record<string, any>> = WorkflowRuleConfig<
+WorkflowRequest,
+TProps
+>
 
-<FieldsListPresenter {fieldIds} {taskType} />
+export interface ScreenProps {
+  screen: Ref<Screen>
+}
+
+export type ScreenRequestConfig = WorkflowRequestConfig<ScreenProps>
+
+export type AnyRequestConfig = ScreenRequestConfig

@@ -13,15 +13,15 @@
 -->
 <script lang="ts">
   import { TaskType } from '@hcengineering/task'
-  import { ClearFieldValueProps, WorkflowPostFunctionConfig } from '@hcengineering/workflow'
+  import { ClearFieldValuePostFnConfig } from '@hcengineering/workflow'
 
   import FieldsListPresenter from '../../presenters/FieldsListPresenter.svelte'
 
-  export let config: WorkflowPostFunctionConfig
+  export let config: ClearFieldValuePostFnConfig
   export let taskType: TaskType
 
-  $: props = config.props as ClearFieldValueProps
-  $: fieldIds = props?.fields?.map((it) => it._id) ?? []
+  $: props = config.props
+  $: fieldIds = props?.fields?.map((it) => it.attribute) ?? []
 </script>
 
 <FieldsListPresenter {fieldIds} {taskType} />

@@ -39,14 +39,16 @@ import ScreenModal from './components/screen/ScreenModal.svelte'
 import { type ScreenModalResult } from './types'
 
 export class WorkflowMiddleware extends BasePresentationMiddleware implements PresentationMiddleware {
-  private readonly txFactory = new TxOperations(this.client, getCurrentAccount().primarySocialId).txFactory
-
   private constructor (client: Client, next?: PresentationMiddleware) {
     super(client, next)
   }
 
   static create (client: Client, next?: PresentationMiddleware): WorkflowMiddleware {
     return new WorkflowMiddleware(client, next)
+  }
+
+  private get txFactory (): TxOperations['txFactory'] {
+    return new TxOperations(this.client, getCurrentAccount().primarySocialId).txFactory
   }
 
   async notifyTx (...tx: Tx[]): Promise<void> {
@@ -67,20 +69,17 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
 
     const shouldProceed = await this.handleStatusTransition(updateTx)
     if (!shouldProceed) {
-      const canceledResult: TxResult = { status: 400, error: 'Transition canceled by user' }
-      return canceledResult
+      return { status: 400, error: 'Transition canceled by user' }
     }
 
     return await this.provideTx(tx)
   }
 
   private async handleStatusTransition (updateTx: TxUpdateDoc<Task>): Promise<boolean> {
-    const hierarchy = this.client.getHierarchy()
     const toStatus = updateTx.operations.status
     if (toStatus == null) return true
 
     const taskDoc = await this.client.findOne(task.class.Task, { _id: updateTx.objectId })
-
     if (taskDoc == null || taskDoc.status === toStatus) return true
 
     const workflow = await this.getWorkflowForTask(taskDoc)
@@ -89,20 +88,16 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
     const fromStatus = taskDoc.status
     const transitions = (workflow.$lookup?.transitions ?? []) as WorkflowTransition[]
 
-    const matchingTransitions = transitions.filter((t) => t.to === toStatus)
     const transition =
-      matchingTransitions.find((t) => t.from != null && t.from.includes(fromStatus)) ??
-      matchingTransitions.find((t) => t.from == null || t.from.length === 0)
+      transitions.find((t) => t.to === toStatus && t.from != null && t.from.includes(fromStatus)) ??
+      transitions.find((t) => t.to === toStatus && (t.from == null || t.from.length === 0))
 
     if (transition == null) return false
 
-    const screenRequests = (transition.requests ?? []).filter((r) => r.request === plugin.request.ScreenRequest)
+    const screenRequests = (transition.requests ?? []).filter((r) => r.rule === plugin.request.ScreenRequest)
     if (screenRequests.length === 0) return true
 
-    const clone = hierarchy.clone(taskDoc)
-
     const screenIds = screenRequests.map((it) => it.props?.screen as Ref<Screen> | undefined).filter(notEmpty)
-
     if (screenIds.length === 0) return true
 
     const screens = await this.client.findAll(
@@ -114,18 +109,27 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
         }
       }
     )
-
     if (screens.length === 0) return true
 
-    const tabs = screens.flatMap((it) => (it.$lookup?.tabs ?? []) as ScreenTab[])
+    // Reorder screens to preserve the sequence defined in transition screenRequests
+    const screenMap = new Map(screens.map((s) => [s._id, s]))
+    const orderedScreens = screenIds.map((id) => screenMap.get(id)).filter(notEmpty)
+
+    const tabs = orderedScreens.flatMap((it) => (it.$lookup?.tabs ?? []) as ScreenTab[])
     const tabIds = tabs.map((t) => t._id)
     const allFields = await this.client.findAll(plugin.class.ScreenField, { attachedTo: { $in: tabIds } })
     if (allFields.length === 0) return true
 
-    for (const screen of screens) {
+    const hierarchy = this.client.getHierarchy()
+    const clone = hierarchy.clone(taskDoc)
+
+    for (const screen of orderedScreens) {
       const _tabs = tabs.filter((it) => it.attachedTo === screen._id)
       const _tabIds = new Set(_tabs.map((t) => t._id))
       const _fields = allFields.filter((it) => _tabIds.has(it.attachedTo))
+
+      // Skip screens with no fields to avoid popping up an empty modal
+      if (_fields.length === 0) continue
 
       const res = await new Promise<ScreenModalResult<Task> | null>((resolve) => {
         showPopup(
@@ -147,6 +151,7 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
 
       if (res.update != null) {
         Object.assign(updateTx.operations, res.update)
+        Object.assign(clone, res.update)
       }
 
       if (res.txes != null && res.txes.length > 0) {
@@ -162,23 +167,23 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
     const hierarchy = this.client.getHierarchy()
     const taskType = taskDoc.kind
 
-    const project = await this.client.findOne(task.class.Project, { _id: taskDoc.space as unknown as Ref<Project> })
-
-    if (project == null) return undefined
-    if (!hierarchy.hasMixin(project, plugin.mixin.ProjectWorkflow)) return undefined
+    const project = await this.client.findOne(task.class.Project, { _id: taskDoc.space as Ref<Project> })
+    if (project == null || !hierarchy.hasMixin(project, plugin.mixin.ProjectWorkflow)) {
+      return undefined
+    }
 
     const projectWorkflow = hierarchy.as<Project, ProjectWorkflow>(project, plugin.mixin.ProjectWorkflow)
     const mappedWorkflowId = projectWorkflow?.workflows?.[taskType]
-    if (mappedWorkflowId != null) {
-      return await this.client.findOne(
-        plugin.class.Workflow,
-        { _id: mappedWorkflowId },
-        {
-          lookup: {
-            _id: { transitions: plugin.class.WorkflowTransition }
-          }
+    if (mappedWorkflowId == null) return undefined
+
+    return await this.client.findOne(
+      plugin.class.Workflow,
+      { _id: mappedWorkflowId },
+      {
+        lookup: {
+          _id: { transitions: plugin.class.WorkflowTransition }
         }
-      )
-    }
+      }
+    )
   }
 }

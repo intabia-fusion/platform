@@ -12,19 +12,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AnySvelteComponent } from '@hcengineering/ui'
-  import { TaskType } from '@hcengineering/task'
   import { getResourceP, Resource } from '@hcengineering/platform'
   import { reduceCalls } from '@hcengineering/presentation'
-  import { WorkflowRequest, WorkflowRequestConfig } from '@hcengineering/workflow'
+  import { TaskType } from '@hcengineering/task'
+  import { AnySvelteComponent } from '@hcengineering/ui'
+  import { WorkflowRule, WorkflowRuleConfig } from '@hcengineering/workflow'
 
-  export let config: WorkflowRequestConfig
+  export let config: WorkflowRuleConfig
   export let taskType: TaskType
-  export let request: WorkflowRequest | undefined = undefined
+  export let rule: WorkflowRule | undefined = undefined
 
   let presenterCtor: AnySvelteComponent | undefined = undefined
-
-  $: void loadPresenter(request?.presenter)
 
   const loadPresenter = reduceCalls(async (resource?: Resource<AnySvelteComponent>): Promise<void> => {
     if (resource != null) {
@@ -33,8 +31,18 @@
       presenterCtor = undefined
     }
   })
+
+  $: void loadPresenter(rule?.presenter)
 </script>
 
 {#if presenterCtor}
-  <svelte:component this={presenterCtor} {config} {taskType} {request} />
+  <svelte:component
+    this={presenterCtor}
+    {config}
+    {taskType}
+    {rule}
+    validator={rule}
+    request={rule}
+    postFunction={rule}
+  />
 {/if}

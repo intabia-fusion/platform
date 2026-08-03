@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-import { ValidateTransitionTrigger, FieldRequired, SubtaskStatus, ParentStatus } from './ValidateTransition'
+import { PostFunctionsTrigger, FieldRequired, SubtaskStatus, ParentStatus } from './PostFunctions'
 import { UpdateFieldValue, ClearFieldValue } from './post-functions'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   trigger: {
-    ValidateTransition: ValidateTransitionTrigger
+    PostFunctionsTrigger
   },
   validatorExecutor: {
     FieldRequired,

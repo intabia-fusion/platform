@@ -12,7 +12,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Status } from '@hcengineering/core'
+  import { Class, Ref, Status } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
   import { TaskType } from '@hcengineering/task'
   import {
@@ -28,18 +29,20 @@
     showPopup
   } from '@hcengineering/ui'
   import {
-    removeRequestConfig,
+    removeRuleConfig,
     Workflow,
-    WorkflowRequest,
-    WorkflowRequestConfig,
+    WorkflowRule,
+    WorkflowRuleConfig,
     WorkflowTransition
   } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
-  import AddRulesPopup from '../rules/AddRulesPopup.svelte'
-  import EditRulePopup from '../rules/EditRulePopup.svelte'
-  import RequestConfigPresenter from './RequestConfigPresenter.svelte'
+  import AddRulesPopup from './AddRulesPopup.svelte'
+  import EditRulePopup from './EditRulePopup.svelte'
+  import RuleConfigPresenter from './RuleConfigPresenter.svelte'
 
+  export let _class: Ref<Class<WorkflowRule>>
+  export let label: IntlString
   export let workflow: Workflow
   export let taskType: TaskType
   export let transitions: WorkflowTransition[] = []
@@ -47,7 +50,8 @@
   export let transition: WorkflowTransition
 
   const client = getClient()
-  const requests: WorkflowRequest[] = client.getModel().findAllSync(plugin.class.WorkflowRequest, {})
+
+  $: rules = client.getModel().findAllSync(_class, {})
 
   const actionItems: DropdownIntlItem[] = [
     {
@@ -62,54 +66,66 @@
     }
   ]
 
-  $: requestCount = transition.requests?.length ?? 0
-
-  async function handleAdd (): Promise<void> {
-    showPopup(
-      AddRulesPopup,
-      { workflow, transitions, statuses, transition, _class: plugin.class.WorkflowRequest, taskType },
-      'center'
-    )
+  function getCategory (ruleClass: Ref<Class<WorkflowRule>>): 'validators' | 'requests' | 'postFunctions' {
+    if (ruleClass === plugin.class.WorkflowValidator) return 'validators'
+    if (ruleClass === plugin.class.WorkflowRequest) return 'requests'
+    if (ruleClass === plugin.class.WorkflowPostFunction) return 'postFunctions'
+    return 'validators'
   }
 
-  function handleEdit (config: WorkflowRequestConfig): void {
-    showPopup(EditRulePopup, { workflow, transitions, statuses, transition, taskType, config: config as any }, 'center')
+  function getConfigs (ruleClass: Ref<Class<WorkflowRule>>, trans: WorkflowTransition): WorkflowRuleConfig[] {
+    if (ruleClass === plugin.class.WorkflowValidator) return trans.validators ?? []
+    if (ruleClass === plugin.class.WorkflowRequest) return trans.requests ?? []
+    if (ruleClass === plugin.class.WorkflowPostFunction) return trans.postFunctions ?? []
+    return []
   }
 
-  async function removeRequest (configId: string): Promise<void> {
-    await removeRequestConfig(client, workflow._id, transition._id, configId)
+  $: configs = getConfigs(_class, transition)
+  $: count = configs.length
+  $: category = getCategory(_class)
+
+  function handleAdd (): void {
+    showPopup(AddRulesPopup, { workflow, transitions, statuses, transition, _class, taskType }, 'center')
   }
 
-  async function handleAction (actionId: string, config: WorkflowRequestConfig): Promise<void> {
+  function handleEdit (config: WorkflowRuleConfig): void {
+    showPopup(EditRulePopup, { workflow, transitions, statuses, transition, taskType, config }, 'center')
+  }
+
+  async function remove (configId: string): Promise<void> {
+    await removeRuleConfig(client, workflow._id, transition._id, category, configId)
+  }
+
+  async function handleAction (actionId: string, config: WorkflowRuleConfig): Promise<void> {
     if (actionId === 'edit') {
       handleEdit(config)
     } else if (actionId === 'delete') {
-      await removeRequest(config.id)
+      await remove(config.id)
     }
   }
 
-  function getRequest (reqId: string): WorkflowRequest | undefined {
-    return requests.find((r) => r._id === reqId)
+  function getRule (ruleId: string): WorkflowRule | undefined {
+    return rules.find((r) => r._id === ruleId)
   }
 </script>
 
-<div class="requests-nav-group">
+<div class="rules-nav-group">
   <NavGroup
-    _id="requests"
-    label={plugin.string.Requests}
-    categoryName="requests"
+    _id={category}
+    {label}
+    categoryName={category}
     isFold
     defaultOpen={false}
-    empty={requestCount === 0}
+    empty={count === 0}
     noDivider
     noPadding
     headerClickType="toggle"
   >
     <svelte:fragment slot="afterTitle">
-      {#if requestCount > 0}
+      {#if count > 0}
         <div class="antiHSpacer" />
-        <div class="requests-nav-group--counter">
-          {requestCount}
+        <div class="rules-nav-group--counter">
+          {count}
         </div>
         <div class="antiHSpacer" />
       {/if}
@@ -118,30 +134,30 @@
     <svelte:fragment slot="after">
       <button
         type="button"
-        class="requests-nav-group--action"
-        data-testid="action-add-requests"
+        class="rules-nav-group--action"
+        data-testid={`action-add-${category}`}
         on:click|preventDefault|stopPropagation={handleAdd}
       >
         <Icon icon={IconAdd} size="small" />
       </button>
     </svelte:fragment>
 
-    <div class="requests-nav-group--list">
-      {#each transition.requests ?? [] as config, idx (config.id ?? idx)}
-        {@const request = getRequest(config.request)}
-        <div class="request-card">
-          <div class="request-card--header">
-            <div class="request-card--title">
-              {#if request?.icon}
-                <div class="request-card--icon">
-                  <Icon icon={request.icon} size="small" />
+    <div class="rules-nav-group--list">
+      {#each configs as config, idx (config.id ?? idx)}
+        {@const rule = getRule(config.rule)}
+        <div class="rule-card">
+          <div class="rule-card--header">
+            <div class="rule-card--title">
+              {#if rule?.icon}
+                <div class="rule-card--icon">
+                  <Icon icon={rule.icon} size="small" />
                 </div>
               {/if}
-              {#if request?.label}
-                <span class="request-card--name"><Label label={request.label} /></span>
+              {#if rule?.label}
+                <span class="rule-card--name"><Label label={rule.label} /></span>
               {/if}
             </div>
-            <div class="request-card--actions" on:click|stopPropagation>
+            <div class="rule-card--actions" on:click|stopPropagation>
               <ButtonMenu
                 items={actionItems}
                 icon={IconMoreV}
@@ -155,8 +171,8 @@
             </div>
           </div>
 
-          <div class="request-card--body">
-            <RequestConfigPresenter {config} {taskType} {request} />
+          <div class="rule-card--body">
+            <RuleConfigPresenter {config} {taskType} {rule} />
           </div>
         </div>
       {/each}
@@ -165,7 +181,7 @@
 </div>
 
 <style lang="scss">
-  .requests-nav-group {
+  .rules-nav-group {
     &--action {
       display: flex;
       align-items: center;
@@ -203,7 +219,7 @@
     }
   }
 
-  .request-card {
+  .rule-card {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;

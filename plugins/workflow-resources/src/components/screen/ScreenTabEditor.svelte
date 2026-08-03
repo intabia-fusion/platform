@@ -87,12 +87,12 @@
     }
   }
 
-  async function addField (fieldId: Ref<AnyAttribute>): Promise<void> {
-    if (fields.some((f) => f.fieldId === fieldId)) return // prevent duplicates
-    const attr = availableAttributes.find((it) => it.id === fieldId)
+  async function addField (attribute: Ref<AnyAttribute>): Promise<void> {
+    if (fields.some((f) => f.attribute === attribute)) return // prevent duplicates
+    const attr = availableAttributes.find((it) => it.id === attribute)
     if (attr == null) return
     await addScreenField(client, tab._id, {
-      fieldId,
+      attribute,
       fieldKey: attr.key,
       mixin: attr.mixin,
       required: true
@@ -208,7 +208,7 @@
       <SortableDocListStatic _class={plugin.class.ScreenField} items={fields}>
         <svelte:fragment slot="object" let:value>
           {@const field = toScreenField(value)}
-          {@const displayAttr = displayAttributes.find((f) => f.id === field.fieldId)}
+          {@const displayAttr = displayAttributes.find((f) => f.id === field.attribute)}
           <div class="hulyTableAttr-content__row w-full flex-between flex-row-center">
             <div class="flex-row-center flex-gap-2 min-w-0 flex-grow">
               <div class="hulyTableAttr-content__row-dragMenu">
@@ -222,10 +222,8 @@
               <div class="hulyTableAttr-content__row-label font-medium-14 text-primary truncate">
                 {#if displayAttr?.label}
                   {displayAttr.label}
-                {:else if field.label}
-                  {field.label}
                 {:else}
-                  {field.fieldId}
+                  {field.fieldKey}
                 {/if}
               </div>
             </div>

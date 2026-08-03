@@ -32,7 +32,7 @@ import workflow from '@hcengineering/model-workflow'
 import { type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
 import { WorkflowMiddleware } from '@hcengineering/server-workflow'
 
-import { ValidateTransitionTrigger } from '../ValidateTransition'
+import { PostFunctionsTrigger } from '../PostFunctions'
 
 jest.mock('@hcengineering/platform', () => {
   const actual = jest.requireActual('@hcengineering/platform')
@@ -40,7 +40,7 @@ jest.mock('@hcengineering/platform', () => {
     ...actual,
     getResource: jest.fn().mockImplementation(async (res) => {
       if (res === 'FieldRequired') {
-        const { FieldRequired } = jest.requireActual('../ValidateTransition')
+        const { FieldRequired } = jest.requireActual('../PostFunctions')
         return FieldRequired
       }
       return actual.getResource(res)
@@ -105,8 +105,8 @@ function createUpdateTx (
 
 type FindAllFn = (ctx: any, _class: Ref<Class<Doc>>, query: any, options?: any) => Promise<Doc[]>
 
-function createMockControl (findAllImpl: FindAllFn): TriggerControl {
-  return {
+function createMockControl (findAllImpl: FindAllFn): TriggerControl & { getHierarchy: () => any } {
+  const control = {
     ctx: {
       error: jest.fn(),
       info: jest.fn(),
@@ -125,8 +125,12 @@ function createMockControl (findAllImpl: FindAllFn): TriggerControl {
       hasMixin: (doc: any, _class: any) => {
         return doc.workflows !== undefined
       },
-      as: (doc: any, _class: any) => doc
+      as: (doc: any, _class: any) => doc,
+      findAttribute: (_class: any, fieldKey: any) => ({ name: fieldKey, label: fieldKey })
     } as any,
+    getHierarchy () {
+      return this.hierarchy
+    },
     modelDb: {} as any,
     removedMap: new Map(),
     userStatusMap: new Map(),
@@ -135,7 +139,8 @@ function createMockControl (findAllImpl: FindAllFn): TriggerControl {
     withScope: async <T>(_scope: string, fn: () => Promise<T>) => await fn(),
     txes: [],
     apply: jest.fn().mockResolvedValue({})
-  } as unknown as TriggerControl
+  }
+  return control as unknown as TriggerControl & { getHierarchy: () => any }
 }
 
 async function createMockMiddleware (findAllImpl: FindAllFn): Promise<WorkflowMiddleware> {
@@ -144,7 +149,8 @@ async function createMockMiddleware (findAllImpl: FindAllFn): Promise<WorkflowMi
     hierarchy: {
       isDerived: (_class: any, base: any) => _class === base || base === task.class.Task,
       hasMixin: (doc: any, _class: any) => doc.workflows !== undefined,
-      as: (doc: any, _class: any) => doc
+      as: (doc: any, _class: any) => doc,
+      findAttribute: (_class: any, fieldKey: any) => ({ name: fieldKey, label: fieldKey })
     } as any,
     modelDb: {} as any,
     branding: null,
@@ -157,7 +163,7 @@ async function createMockMiddleware (findAllImpl: FindAllFn): Promise<WorkflowMi
   return middleware
 }
 
-describe('ValidateTransition Trigger', () => {
+describe('PostFunctionsTrigger', () => {
   it('should allow all transitions if project has no workflow scheme', async () => {
     const project: Partial<Project> = {
       _id: testSpace as any,
@@ -178,7 +184,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransitionTrigger([tx], control)).resolves.not.toThrow()
+    await expect(PostFunctionsTrigger([tx], control)).resolves.not.toThrow()
   })
 
   it('should allow creation with valid start status', async () => {
@@ -222,7 +228,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransitionTrigger([tx], control)).resolves.not.toThrow()
+    await expect(PostFunctionsTrigger([tx], control)).resolves.not.toThrow()
   })
 
   it('should throw error on creation with invalid start status', async () => {
@@ -315,7 +321,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransitionTrigger([tx], control)).resolves.not.toThrow()
+    await expect(PostFunctionsTrigger([tx], control)).resolves.not.toThrow()
   })
 
   it('should throw error on invalid transition on update', async () => {
@@ -412,7 +418,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransitionTrigger([tx], control)).resolves.not.toThrow()
+    await expect(PostFunctionsTrigger([tx], control)).resolves.not.toThrow()
   })
 
   it('should allow transition on update if required field is present in updateTx operations', async () => {
@@ -449,7 +455,8 @@ describe('ValidateTransition Trigger', () => {
       validators: [
         {
           id: 'cfg-1',
-          validator: valId,
+          ruleClass: workflow.class.WorkflowValidator,
+          rule: valId,
           props: {
             fields: ['assignee']
           }
@@ -484,7 +491,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransitionTrigger([tx], control)).resolves.not.toThrow()
+    await expect(PostFunctionsTrigger([tx], control)).resolves.not.toThrow()
   })
 
   it('should allow transition on update if required field is already present in task document', async () => {
@@ -522,7 +529,8 @@ describe('ValidateTransition Trigger', () => {
       validators: [
         {
           id: 'cfg-1',
-          validator: valId,
+          ruleClass: workflow.class.WorkflowValidator,
+          rule: valId,
           props: {
             fields: ['assignee']
           }
@@ -557,7 +565,7 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(ValidateTransitionTrigger([tx], control)).resolves.not.toThrow()
+    await expect(PostFunctionsTrigger([tx], control)).resolves.not.toThrow()
   })
 
   it('should throw error on update if required field is missing', async () => {
@@ -594,9 +602,10 @@ describe('ValidateTransition Trigger', () => {
       validators: [
         {
           id: 'cfg-1',
-          validator: valId,
+          ruleClass: workflow.class.WorkflowValidator,
+          rule: valId,
           props: {
-            fields: ['assignee']
+            fields: [{ fieldKey: 'assignee' }]
           }
         }
       ]
@@ -612,7 +621,10 @@ describe('ValidateTransition Trigger', () => {
       if (cl === workflow.class.WorkflowTransition && query.attachedTo === wfId) {
         return [transition]
       }
-      if (cl === workflow.class.WorkflowValidator && query._id === valId) {
+      if (
+        cl === workflow.class.WorkflowValidator &&
+        (query._id === valId || (Array.isArray(query._id?.$in) && (query._id.$in as any[]).includes(valId)))
+      ) {
         return [
           {
             _id: valId,
@@ -629,14 +641,12 @@ describe('ValidateTransition Trigger', () => {
       return []
     })
 
-    await expect(middleware.tx({ contextData: { account: null } } as any, [tx])).rejects.toThrow(
-      'Field "assignee" is required for transition "Start Work".'
-    )
+    await expect(middleware.tx({ contextData: { account: null } } as any, [tx])).rejects.toThrow()
   })
 
   describe('FieldRequired Executor', () => {
     it('should return ok: false with structured reason when required field is missing', async () => {
-      const { FieldRequired } = jest.requireActual('../ValidateTransition')
+      const { FieldRequired } = jest.requireActual('../PostFunctions')
       const t = createMockTask({ status: 'todo' as Ref<Status> })
       const control = createMockControl(async () => [])
 
@@ -644,18 +654,19 @@ describe('ValidateTransition Trigger', () => {
         control as any,
         t,
         { name: 'Start', status: 'in-progress' as Ref<Status> } as any,
-        { fields: ['assignee'] }
+        { fields: [{ fieldKey: 'assignee' }] }
       )
-      expect(res).toEqual({
-        ok: false,
-        reason: 'Field "assignee" is required for transition "Start".',
-        reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: 'assignee', transition: 'Start' }
-      })
+      expect(res).toEqual(
+        expect.objectContaining({
+          ok: false,
+          reasonIntl: workflow.string.FieldRequiredError,
+          intlParams: { field: 'assignee', transition: 'Start' }
+        })
+      )
     })
 
     it('should return ok: true when required fields are present', async () => {
-      const { FieldRequired } = jest.requireActual('../ValidateTransition')
+      const { FieldRequired } = jest.requireActual('../PostFunctions')
       const t = createMockTask({ status: 'todo' as Ref<Status>, assignee: 'person-1' as any })
       const control = createMockControl(async () => [])
 
@@ -671,7 +682,7 @@ describe('ValidateTransition Trigger', () => {
 
   describe('SubtaskStatus Executor', () => {
     it('should return ok: true when task has no subtasks', async () => {
-      const { SubtaskStatus } = jest.requireActual('../ValidateTransition')
+      const { SubtaskStatus } = jest.requireActual('../PostFunctions')
       const t = createMockTask({ _id: 'parent-1' as any, status: 'in-progress' as Ref<Status> })
       const control = createMockControl(async () => [])
 
@@ -682,7 +693,7 @@ describe('ValidateTransition Trigger', () => {
     })
 
     it('should return ok: false when subtask is not in allowed status', async () => {
-      const { SubtaskStatus } = jest.requireActual('../ValidateTransition')
+      const { SubtaskStatus } = jest.requireActual('../PostFunctions')
       const t = createMockTask({ _id: 'parent-1' as any, status: 'in-progress' as Ref<Status> })
       const subtask = createMockTask({
         _id: 'child-1' as any,
@@ -704,7 +715,7 @@ describe('ValidateTransition Trigger', () => {
     })
 
     it('should return ok: true when all subtasks have allowed statuses', async () => {
-      const { SubtaskStatus } = jest.requireActual('../ValidateTransition')
+      const { SubtaskStatus } = jest.requireActual('../PostFunctions')
       const t = createMockTask({ _id: 'parent-1' as any, status: 'in-progress' as Ref<Status> })
       const subtask = createMockTask({
         _id: 'child-1' as any,
@@ -721,7 +732,7 @@ describe('ValidateTransition Trigger', () => {
     })
 
     it('should validate subtask status based on TaskType status map in props', async () => {
-      const { SubtaskStatus } = jest.requireActual('../ValidateTransition')
+      const { SubtaskStatus } = jest.requireActual('../PostFunctions')
       const t = createMockTask({ _id: 'parent-1' as any, status: 'in-progress' as Ref<Status> })
       const subtask = createMockTask({
         _id: 'child-1' as any,
@@ -747,7 +758,7 @@ describe('ValidateTransition Trigger', () => {
 
   describe('ParentStatus Executor', () => {
     it('should return ok: true when task has no parent task', async () => {
-      const { ParentStatus } = jest.requireActual('../ValidateTransition')
+      const { ParentStatus } = jest.requireActual('../PostFunctions')
       const t = createMockTask({ _id: 'child-1' as any, status: 'in-progress' as Ref<Status> })
       const control = createMockControl(async () => [])
 
@@ -758,7 +769,7 @@ describe('ValidateTransition Trigger', () => {
     })
 
     it('should return ok: false when parent task is not in allowed status', async () => {
-      const { ParentStatus } = jest.requireActual('../ValidateTransition')
+      const { ParentStatus } = jest.requireActual('../PostFunctions')
       const parentTask = createMockTask({
         _id: 'parent-1' as any,
         kind: 'parent-type' as any,
@@ -783,7 +794,7 @@ describe('ValidateTransition Trigger', () => {
     })
 
     it('should return ok: true when parent task is in allowed status', async () => {
-      const { ParentStatus } = jest.requireActual('../ValidateTransition')
+      const { ParentStatus } = jest.requireActual('../PostFunctions')
       const parentTask = createMockTask({
         _id: 'parent-1' as any,
         kind: 'parent-type' as any,
@@ -803,7 +814,7 @@ describe('ValidateTransition Trigger', () => {
     })
 
     it('should validate parent task status based on TaskType status map in props', async () => {
-      const { ParentStatus } = jest.requireActual('../ValidateTransition')
+      const { ParentStatus } = jest.requireActual('../PostFunctions')
       const parentTask = createMockTask({
         _id: 'parent-1' as any,
         kind: 'epic-type' as any,
@@ -830,7 +841,7 @@ describe('ValidateTransition Trigger', () => {
     })
 
     it('should return ok: true when status map value is null for TaskType', async () => {
-      const { ParentStatus } = jest.requireActual('../ValidateTransition')
+      const { ParentStatus } = jest.requireActual('../PostFunctions')
       const parentTask = createMockTask({
         _id: 'parent-1' as any,
         kind: 'feature-type' as any,

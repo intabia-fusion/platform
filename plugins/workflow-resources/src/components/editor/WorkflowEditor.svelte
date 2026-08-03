@@ -22,8 +22,10 @@
 
   import { navigateToWorkflow } from '../../location'
   import plugin from '../../plugin'
+  import InitialStatusesEditor from './InitialStatusesEditor.svelte'
   import TaskTypeEditor from './TaskTypeEditor.svelte'
   import TransitionsEditor from './TransitionsEditor.svelte'
+  import WorkflowSettingsPopup from './WorkflowSettingsPopup.svelte'
   import WorkflowUsedProjects from './WorkflowUsedProjects.svelte'
 
   export let spaceType: ProjectType
@@ -120,9 +122,9 @@
     console.log('TODO: change task type', evt.detail)
   }
 
-  async function handleSettings (): Promise<void> {
-    // TODO: implement
-    console.log('TODO: change workflow settings')
+  function handleSettings (): void {
+    if (workflow === undefined) return
+    showPopup(WorkflowSettingsPopup, { workflow, statuses, readonly }, 'top')
   }
 
   async function handleExport (): Promise<void> {
@@ -178,6 +180,7 @@
             </div>
           </div>
           <div class="hulyComponent-content flex-col-center flex-gap-4">
+            <InitialStatusesEditor {readonly} {workflow} {statuses} />
             <TransitionsEditor {readonly} {workflow} {transitions} {statuses} {taskType} />
           </div>
         </div>

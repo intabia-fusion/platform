@@ -43,9 +43,7 @@
   } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
-  import PostFunctionsNavGroup from '../postFunctions/PostFunctionsNavGroup.svelte'
-  import RequestsNavGroup from '../requests/RequestsNavGroup.svelte'
-  import ValidatorsNavGroup from '../validators/ValidatorsNavGroup.svelte'
+  import RulesNavGroup from '../rules/RulesNavGroup.svelte'
 
   export let workflow: Workflow
   export let _id: Ref<WorkflowTransition>
@@ -334,9 +332,33 @@
   <span class="separator" />
 
   {#if transition}
-    <RequestsNavGroup {workflow} {transitions} {statuses} {transition} {taskType} />
-    <ValidatorsNavGroup {workflow} {transitions} {statuses} {transition} {taskType} />
-    <PostFunctionsNavGroup {workflow} {transitions} {statuses} {transition} {taskType} />
+    <RulesNavGroup
+      _class={plugin.class.WorkflowRequest}
+      label={plugin.string.Requests}
+      {workflow}
+      {transitions}
+      {statuses}
+      {transition}
+      {taskType}
+    />
+    <RulesNavGroup
+      _class={plugin.class.WorkflowValidator}
+      label={plugin.string.Validators}
+      {workflow}
+      {transitions}
+      {statuses}
+      {transition}
+      {taskType}
+    />
+    <RulesNavGroup
+      _class={plugin.class.WorkflowPostFunction}
+      label={plugin.string.PostFunctions}
+      {workflow}
+      {transitions}
+      {statuses}
+      {transition}
+      {taskType}
+    />
   {/if}
   <div slot="footer" class="footer-row flex-row-center w-full justify-between">
     <div class="footer-left">

@@ -919,6 +919,7 @@
         <StatusEditor
           focusIndex={3}
           value={{ ...object, kind }}
+          isCreate={true}
           kind={'regular'}
           size={'large'}
           defaultIssueStatus={currentProject?.defaultIssueStatus}

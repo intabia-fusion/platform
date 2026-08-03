@@ -16,7 +16,7 @@
   import { createEventDispatcher } from 'svelte'
   import { reduceCalls } from '@hcengineering/presentation'
   import ui, { DropdownTextItem, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
-  import { FieldRequiredProps, WorkflowValidatorConfig } from '@hcengineering/workflow'
+  import { FieldRequiredProps, FieldRequiredValidatorConfig } from '@hcengineering/workflow'
   import { TaskType } from '@hcengineering/task'
   import { AnyAttribute, Ref } from '@hcengineering/core'
 
@@ -24,15 +24,15 @@
   import { DisplayAttribute, getDisplayAttributes } from '../../../utils'
 
   export let taskType: TaskType
-  export let config: WorkflowValidatorConfig | undefined = undefined
+  export let config: FieldRequiredValidatorConfig | undefined = undefined
   export let canSave = false
 
   const dispatch = createEventDispatcher<{ update: FieldRequiredProps }>()
 
-  const props: FieldRequiredProps | undefined = config?.props as FieldRequiredProps
+  const props: FieldRequiredProps | undefined = config?.props
 
   let items: DropdownTextItem[] = []
-  let selected: Ref<AnyAttribute>[] = props?.fields?.map((it) => it._id) ?? []
+  let selected: Ref<AnyAttribute>[] = props?.fields?.map((it) => it.attribute) ?? []
 
   let displayAttributes: DisplayAttribute[] = []
 
@@ -83,7 +83,7 @@
     fields: displayAttributes
       .filter((it) => selected.includes(it.id))
       .map((it) => ({
-        _id: it.id,
+        attribute: it.id,
         fieldKey: it.key,
         mixin: it.mixin
       }))

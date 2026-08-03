@@ -102,7 +102,6 @@
     const missingFields: ScreenField[] = []
     const obj = object as Record<string, any>
     const up = updates as Record<string, any>
-    console.log('SAVE', { ...up })
 
     for (const field of fields) {
       if (field.required) {
@@ -127,18 +126,12 @@
     if (missingFields.length > 0) {
       const lang = $languageStore
       const fieldNamesPromises = missingFields.map(async (f) => {
-        if (f.label != null && f.label.trim().length > 0) {
-          return f.label
-        }
         const attr =
           f.mixin != null
             ? hierarchy.findAttribute(f.mixin, f.fieldKey)
             : hierarchy.findAttribute(object._class, f.fieldKey)
         if (attr?.label != null) {
-          const translated = await translate(attr.label, {}, lang)
-          if (translated && translated.trim().length > 0 && !translated.startsWith('embedded:')) {
-            return translated
-          }
+          return await translate(attr.label, {}, lang)
         }
         return f.fieldKey
       })
@@ -159,7 +152,7 @@
     }
 
     errorMessage = undefined
-    console.log('save updates', updates, object)
+
     const keys = Object.keys(updates)
 
     const _update: DocumentUpdate<Task> = {}
@@ -232,7 +225,7 @@
         ;(_update as any)[attrKey] = val
       }
     }
-    console.log('RESULT', { ..._update }, [..._txes])
+
     dispatch('close', { update: _update, txes: _txes })
   }
 

@@ -57,8 +57,6 @@
   let fromStatusItemIds: string[] | undefined = []
   let fromStatusItems: DropdownTextItem[] = []
 
-  $: void updateFromStatusItems($languageStore, statuses)
-
   const updateFromStatusItems = reduceCalls(async (lang: string, stList: Status[]): Promise<void> => {
     const it = await translate(plugin.string.AnyStatus, {}, lang)
     fromStatusItems = [
@@ -71,6 +69,8 @@
       }))
     ]
   })
+
+  $: void updateFromStatusItems($languageStore, statuses)
 
   $: toStatusItems = statuses.map((s) => ({
     _id: s._id,

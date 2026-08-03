@@ -58,7 +58,7 @@
   function handleUpdate (event: CustomEvent<{ key: string | KeyedAttribute, value: any }>): void {
     const { key, value } = event.detail
     const attributeKey = typeof key === 'string' ? key : key.key
-    const mixinId = keys.find(([_, k]) => k === attributeKey)?.[0]
+    const mixinId = keys.find(([, k]) => k === attributeKey)?.[0]
 
     ;(updates as Record<string, any>)[attributeKey] = value
 

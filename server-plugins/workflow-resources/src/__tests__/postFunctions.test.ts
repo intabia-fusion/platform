@@ -27,7 +27,7 @@ import task, { type Task, type Project, type TaskType, type Rank } from '@hcengi
 import workflow from '@hcengineering/model-workflow'
 import serverWorkflow from '@hcengineering/server-workflow'
 import { type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
-import { ValidateTransitionTrigger } from '../ValidateTransition'
+import { PostFunctionsTrigger } from '../PostFunctions'
 import { UpdateFieldValue, ClearFieldValue } from '../post-functions'
 const contactPersonClass = 'contact:class:Person' as any
 
@@ -85,6 +85,7 @@ describe('Workflow Post-Functions', () => {
     const updateTx: TxUpdateDoc<Task> = txFactory.createTxUpdateDoc(task.class.Task, testSpace, oldTask._id, {
       status: toStatus
     })
+    updateTx.meta = { fromStatus }
 
     const project: Project = {
       _id: testSpace,
@@ -115,8 +116,8 @@ describe('Workflow Post-Functions', () => {
       postFunctions: [
         {
           id: 'pf-1',
-          postFunction: pfRuleId as any,
-          props: { fields: [{ fieldKey: 'assignee', value: 'user-2' }] }
+          rule: pfRuleId as any,
+          props: { fields: [{ fieldKey: 'assignee', value: { type: 'const', value: 'user-2' } }] }
         }
       ]
     } as any
@@ -143,7 +144,9 @@ describe('Workflow Post-Functions', () => {
           mixin === serverWorkflow.mixin.PostFunctionImpl ||
           mixin === 'server-workflow:mixin:PostFunctionImpl' ||
           String(mixin).includes('PostFunctionImpl')
-        ) { return pfRule }
+        ) {
+          return pfRule
+        }
         return obj
       }
     } as any
@@ -152,7 +155,7 @@ describe('Workflow Post-Functions', () => {
       ctx: mockCtx,
       hierarchy,
       txFactory,
-      modelDb: {} as any,
+      modelDb: { findAllSync: () => [] } as any,
       findAll: jest.fn().mockImplementation(async (ctx, _class, query) => {
         if (_class === task.class.Project) return toFindResult([project])
         if (_class === task.class.Task) return toFindResult([oldTask])
@@ -162,8 +165,7 @@ describe('Workflow Post-Functions', () => {
       })
     } as any
 
-    const resultTxes = await ValidateTransitionTrigger([updateTx], control)
-
+    const resultTxes = await PostFunctionsTrigger([updateTx], control)
     expect(resultTxes.length).toBe(1)
     const pfTx = resultTxes[0] as TxUpdateDoc<Task>
     expect((pfTx.operations as any).assignee).toBe('user-2')
@@ -273,6 +275,7 @@ describe('Workflow Post-Functions', () => {
     const updateTx: TxUpdateDoc<Task> = txFactory.createTxUpdateDoc(task.class.Task, testSpace, oldTask._id, {
       status: toStatus
     })
+    updateTx.meta = { fromStatus }
 
     const project: Project = {
       _id: testSpace,
@@ -303,7 +306,7 @@ describe('Workflow Post-Functions', () => {
       postFunctions: [
         {
           id: 'pf-1',
-          postFunction: pfRuleId as any,
+          rule: pfRuleId as any,
           props: { fields: [{ fieldKey: 'resolution' }] }
         }
       ]
@@ -331,7 +334,9 @@ describe('Workflow Post-Functions', () => {
           mixin === serverWorkflow.mixin.PostFunctionImpl ||
           mixin === 'server-workflow:mixin:PostFunctionImpl' ||
           String(mixin).includes('PostFunctionImpl')
-        ) { return pfRule }
+        ) {
+          return pfRule
+        }
         return obj
       }
     } as any
@@ -340,7 +345,7 @@ describe('Workflow Post-Functions', () => {
       ctx: mockCtx,
       hierarchy,
       txFactory,
-      modelDb: {} as any,
+      modelDb: { findAllSync: () => [] } as any,
       findAll: jest.fn().mockImplementation(async (ctx, _class, query) => {
         if (_class === task.class.Project) return toFindResult([project])
         if (_class === task.class.Task) return toFindResult([oldTask])
@@ -350,7 +355,7 @@ describe('Workflow Post-Functions', () => {
       })
     } as any
 
-    const resultTxes = await ValidateTransitionTrigger([updateTx], control)
+    const resultTxes = await PostFunctionsTrigger([updateTx], control)
 
     expect(resultTxes.length).toBe(1)
     const pfTx = resultTxes[0] as TxUpdateDoc<Task>

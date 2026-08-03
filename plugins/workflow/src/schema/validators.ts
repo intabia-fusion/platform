@@ -13,11 +13,13 @@
 // limitations under the License.
 //
 
-import type { Client } from '@hcengineering/core'
-import type { Task } from '@hcengineering/task'
+import type { Client, Ref, Status } from '@hcengineering/core'
+import type { Task, TaskType } from '@hcengineering/task'
 import type { IntlString, Resource } from '@hcengineering/platform'
+
 import type { WorkflowTransition } from './core'
-import type { WorkflowValidator } from './rules'
+import { WorkflowRule, WorkflowRuleConfig } from './rules'
+import { FieldListProps } from './values'
 
 export interface ValidationSuccess {
   ok: true
@@ -44,3 +46,27 @@ export type ValidatorFunc = (
 export interface ValidatorImpl extends WorkflowValidator {
   executor: Resource<ValidatorFunc>
 }
+
+export interface WorkflowValidator extends WorkflowRule {}
+export type WorkflowValidatorConfig<TProps extends Record<string, any> = Record<string, any>> = WorkflowRuleConfig<
+WorkflowValidator,
+TProps
+>
+
+export interface FieldRequiredProps extends FieldListProps {}
+export interface SubtaskStatusesProps {
+  statuses: Record<Ref<TaskType>, Ref<Status>[] | null>
+}
+
+export interface ParentStatusesProps {
+  statuses: Record<Ref<TaskType>, Ref<Status>[] | null>
+}
+
+export type FieldRequiredValidatorConfig = WorkflowValidatorConfig<FieldRequiredProps>
+export type SubtaskStatusesValidatorConfig = WorkflowValidatorConfig<SubtaskStatusesProps>
+export type ParentStatusesValidatorConfig = WorkflowValidatorConfig<ParentStatusesProps>
+
+export type AnyValidatorConfig =
+  | FieldRequiredValidatorConfig
+  | SubtaskStatusesValidatorConfig
+  | ParentStatusesValidatorConfig

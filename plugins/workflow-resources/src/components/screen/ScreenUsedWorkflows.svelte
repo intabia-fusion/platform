@@ -38,13 +38,13 @@
             navigateToWorkflow(wf._id, true)
           }}
         >
-          <div class="screen-used-workflows--icon-box">
+          <span class="screen-used-workflows--icon-box">
             <Icon icon={plugin.icon.Workflow} size="small" />
-          </div>
+          </span>
           <span class="screen-used-workflows--name">{wf.name}</span>
-          <div class="screen-used-workflows--arrow">
+          <span class="screen-used-workflows--arrow">
             <Icon icon={IconOpenedArrow} size="x-small" />
-          </div>
+          </span>
         </button>
       {/each}
     </div>

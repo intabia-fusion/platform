@@ -23,7 +23,7 @@ import contact, { SocialIdentityRef } from '@hcengineering/contact'
 
 import { applyValueFunctions } from './transforms'
 
-export async function resolveValue (val: WorkflowFieldValue, task: Task, control: TriggerControl): Promise<any> {
+export async function resolveValue (val: WorkflowFieldValue, task: Task, control: TriggerControl): Promise<unknown> {
   try {
     if (val == null) return undefined
 
@@ -33,7 +33,7 @@ export async function resolveValue (val: WorkflowFieldValue, task: Task, control
 
     const transforms = functions.filter((it) => it.type === 'transform')
     if (transforms.length > 0 && val.functions != null) {
-      result = applyValueFunctions(result, val.functions, transforms)
+      result = applyValueFunctions(val.functions, result, transforms)
     }
 
     return result
@@ -43,12 +43,16 @@ export async function resolveValue (val: WorkflowFieldValue, task: Task, control
 }
 
 function getFunctions (control: TriggerControl, val: WorkflowFieldValue): WorkflowValueFunction[] {
-  const functions = (val.functions ?? []).map((it) => it.func)
-  if (functions.length === 0) return []
+  if (val.functions == null || val.functions.length === 0) return []
+  const functions = val.functions.map((it) => it.func)
   return control.modelDb.findAllSync(workflow.class.WorkflowValueFunction, { _id: { $in: functions } })
 }
 
-async function evaluateWorkflowValue (parsed: WorkflowFieldValue, task: Task, control: TriggerControl): Promise<any> {
+async function evaluateWorkflowValue (
+  parsed: WorkflowFieldValue,
+  task: Task,
+  control: TriggerControl
+): Promise<unknown> {
   switch (parsed.type) {
     case 'preset':
       return await evalPreset(parsed.preset, control)
@@ -92,14 +96,16 @@ async function evalParentField (
     task.attachedToClass == null ||
     task.attachedTo === tracker.ids.NoParent ||
     fieldKey === ''
-  ) { return undefined }
+  ) {
+    return undefined
+  }
 
   try {
     const parent = (await control.findAll(control.ctx, task.attachedToClass, { _id: task.attachedTo }, { limit: 1 }))[0]
     if (parent == null) return undefined
     return getDocFieldValue(control, parent, fieldKey, mixin)
   } catch (ex) {
-    console.error('[UpdateFieldValue] Failed to fetch parent task field for ' + fieldKey, ex)
+    control.ctx.error('[UpdateFieldValue] Failed to fetch parent task field for ' + fieldKey, { error: ex })
   }
 }
 

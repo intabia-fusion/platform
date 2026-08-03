@@ -44,17 +44,17 @@
             navigateToProject(project, true)
           }}
         >
-          <div class="workflow-used-projects--icon-box">
+          <span class="workflow-used-projects--icon-box">
             <Icon
               icon={iconProps.icon === view.ids.IconWithEmoji ? IconWithEmoji : (iconProps.icon ?? task.icon.Task)}
               iconProps={{ icon: iconProps.color }}
               size="small"
             />
-          </div>
+          </span>
           <span class="workflow-used-projects--name">{project.name}</span>
-          <div class="workflow-used-projects--arrow">
+          <span class="workflow-used-projects--arrow">
             <Icon icon={IconOpenedArrow} size="x-small" />
-          </div>
+          </span>
         </button>
       {/each}
     </div>

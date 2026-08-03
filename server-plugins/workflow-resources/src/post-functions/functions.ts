@@ -29,8 +29,8 @@ export async function UpdateFieldValue (
   if (props?.fields == null || !Array.isArray(props.fields) || props.fields.length === 0) return []
 
   const res: Tx[] = []
-
-  let update: DocumentUpdate<Task> = {}
+  const update: DocumentUpdate<Task> = {}
+  const unset: Record<string, true> = {}
 
   const fieldsByMixin = groupByArray(props.fields, (it) => it.mixin)
 
@@ -41,13 +41,7 @@ export async function UpdateFieldValue (
         const v = await resolveValue(f.value, task, control)
         if (v === undefined) continue
         if (v === null) {
-          update = {
-            ...update,
-            $unset: {
-              ...update.$unset,
-              [f.fieldKey]: true
-            }
-          }
+          unset[f.fieldKey] = true
         } else {
           ;(update as any)[f.fieldKey] = v
         }
@@ -64,6 +58,10 @@ export async function UpdateFieldValue (
         res.push(control.txFactory.createTxMixin(task._id, task._class, task.space, mixin, mixinUpdate))
       }
     }
+  }
+
+  if (Object.keys(unset).length > 0) {
+    update.$unset = unset
   }
 
   if (Object.keys(update).length > 0) {
@@ -86,30 +84,18 @@ export async function ClearFieldValue (
   if (fieldsToUpdate.length === 0) return []
 
   const h = control.hierarchy
-
-  let update: DocumentUpdate<Task> = {}
+  const unset: Record<string, true> = {}
 
   for (const f of fieldsToUpdate) {
     if (f.mixin == null) {
-      update = {
-        $unset: {
-          ...update.$unset,
-          [f.fieldKey]: true
-        }
-      }
-    } else {
-      if (h.hasMixin(task, f.mixin)) {
-        update = {
-          $unset: {
-            ...update.$unset,
-            [`${f.mixin}.${f.fieldKey}`]: true
-          }
-        }
-      }
+      unset[f.fieldKey] = true
+    } else if (h.hasMixin(task, f.mixin)) {
+      unset[`${f.mixin}.${f.fieldKey}`] = true
     }
   }
 
-  if (Object.keys(update).length === 0) return []
+  if (Object.keys(unset).length === 0) return []
 
+  const update: DocumentUpdate<Task> = { $unset: unset }
   return [control.txFactory.createTxUpdateDoc(task._class, task.space, task._id, update)]
 }

@@ -20,9 +20,6 @@ import workflow from './plugin'
 import type {
   Workflow,
   WorkflowTransition,
-  WorkflowValidatorConfig,
-  WorkflowRequestConfig,
-  WorkflowPostFunctionConfig,
   Screen,
   ScreenTab,
   ScreenField,
@@ -33,7 +30,8 @@ import type {
   WorkflowParentValue,
   WorkflowConstValue,
   WorkflowValuePreset,
-  WorkflowTransformCall
+  WorkflowTransformCall,
+  AnyRuleConfig
 } from './schema'
 
 export async function createWorkflow (
@@ -113,181 +111,70 @@ export async function updateTransition (
   )
 }
 
-export async function addValidatorConfig (
+type ConfigType = 'validators' | 'requests' | 'postFunctions'
+
+export async function addRuleConfig (
   client: TxOperations,
   workflowId: Ref<Workflow>,
   transitionId: Ref<WorkflowTransition>,
-  config: WorkflowValidatorConfig
-): Promise<WorkflowValidatorConfig> {
+  configType: ConfigType,
+  config: AnyRuleConfig
+): Promise<void> {
   const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
   if (transition == null) {
     throw new Error(`Transition ${transitionId} not found`)
   }
-  const current = transition.validators ?? []
+  const current = transition[configType] ?? []
 
-  const exists = current.some((v) => v.id === config.id)
+  const exists = current.some((c) => c.id === config.id)
   if (exists) {
-    throw new Error(`Validator config already exists on transition ${transitionId}`)
+    throw new Error(`${configType} config already exists on transition ${transitionId}`)
   }
 
-  await updateTransition(client, workflowId, transitionId, {
-    $push: { validators: config }
-  })
-  return config
+  const update: DocumentUpdate<WorkflowTransition> = {
+    $push: { [configType]: config }
+  }
+  await updateTransition(client, workflowId, transitionId, update)
 }
 
-export async function removeValidatorConfig (
+export async function removeRuleConfig (
   client: TxOperations,
   workflowId: Ref<Workflow>,
   transitionId: Ref<WorkflowTransition>,
+  configType: ConfigType,
   configId: string
 ): Promise<void> {
   const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
   if (transition == null) {
     throw new Error(`Transition ${transitionId} not found`)
   }
-  await updateTransition(client, workflowId, transitionId, {
-    $pull: { validators: { id: configId } }
-  })
+  const update: DocumentUpdate<WorkflowTransition> = {
+    $pull: { [configType]: { id: configId } }
+  }
+  await updateTransition(client, workflowId, transitionId, update)
 }
 
-export async function updateValidatorConfig (
+export async function updateRuleConfig (
   client: TxOperations,
   workflowId: Ref<Workflow>,
   transitionId: Ref<WorkflowTransition>,
+  configType: ConfigType,
   configId: string,
-  data: Partial<Pick<WorkflowValidatorConfig, 'props'>>
+  data: Partial<Pick<AnyRuleConfig, 'props'>>
 ): Promise<void> {
   const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
   if (transition == null) {
     throw new Error(`Transition ${transitionId} not found`)
   }
-  await updateTransition(client, workflowId, transitionId, {
+  const update: DocumentUpdate<WorkflowTransition> = {
     $update: {
-      validators: {
+      [configType]: {
         $query: { id: configId },
         $update: data
       }
     }
-  })
-}
-
-export async function addRequestConfig (
-  client: TxOperations,
-  workflowId: Ref<Workflow>,
-  transitionId: Ref<WorkflowTransition>,
-  config: WorkflowRequestConfig
-): Promise<WorkflowRequestConfig> {
-  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
-  if (transition == null) {
-    throw new Error(`Transition ${transitionId} not found`)
   }
-  const current = transition.requests ?? []
-
-  const exists = current.some((r) => r.id === config.id)
-  if (exists) {
-    throw new Error(`Request config already exists on transition ${transitionId}`)
-  }
-
-  await updateTransition(client, workflowId, transitionId, {
-    $push: { requests: config }
-  })
-  return config
-}
-
-export async function removeRequestConfig (
-  client: TxOperations,
-  workflowId: Ref<Workflow>,
-  transitionId: Ref<WorkflowTransition>,
-  configId: string
-): Promise<void> {
-  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
-  if (transition == null) {
-    throw new Error(`Transition ${transitionId} not found`)
-  }
-  await updateTransition(client, workflowId, transitionId, {
-    $pull: { requests: { id: configId } }
-  })
-}
-
-export async function updateRequestConfig (
-  client: TxOperations,
-  workflowId: Ref<Workflow>,
-  transitionId: Ref<WorkflowTransition>,
-  configId: string,
-  data: Partial<Pick<WorkflowRequestConfig, 'props'>>
-): Promise<void> {
-  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
-  if (transition == null) {
-    throw new Error(`Transition ${transitionId} not found`)
-  }
-  await updateTransition(client, workflowId, transitionId, {
-    $update: {
-      requests: {
-        $query: { id: configId },
-        $update: data
-      }
-    }
-  })
-}
-
-export async function addPostFunctionConfig (
-  client: TxOperations,
-  workflowId: Ref<Workflow>,
-  transitionId: Ref<WorkflowTransition>,
-  config: WorkflowPostFunctionConfig
-): Promise<WorkflowPostFunctionConfig> {
-  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
-  if (transition == null) {
-    throw new Error(`Transition ${transitionId} not found`)
-  }
-  const current = transition.postFunctions ?? []
-
-  const exists = current.some((pf) => pf.id === config.id)
-  if (exists) {
-    throw new Error(`Post-function config already exists on transition ${transitionId}`)
-  }
-
-  await updateTransition(client, workflowId, transitionId, {
-    $push: { postFunctions: config }
-  })
-  return config
-}
-
-export async function removePostFunctionConfig (
-  client: TxOperations,
-  workflowId: Ref<Workflow>,
-  transitionId: Ref<WorkflowTransition>,
-  configId: string
-): Promise<void> {
-  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
-  if (transition == null) {
-    throw new Error(`Transition ${transitionId} not found`)
-  }
-  await updateTransition(client, workflowId, transitionId, {
-    $pull: { postFunctions: { id: configId } }
-  })
-}
-
-export async function updatePostFunctionConfig (
-  client: TxOperations,
-  workflowId: Ref<Workflow>,
-  transitionId: Ref<WorkflowTransition>,
-  configId: string,
-  data: Partial<Pick<WorkflowPostFunctionConfig, 'props'>>
-): Promise<void> {
-  const transition = await client.findOne(workflow.class.WorkflowTransition, { _id: transitionId })
-  if (transition == null) {
-    throw new Error(`Transition ${transitionId} not found`)
-  }
-  await updateTransition(client, workflowId, transitionId, {
-    $update: {
-      postFunctions: {
-        $query: { id: configId },
-        $update: data
-      }
-    }
-  })
+  await updateTransition(client, workflowId, transitionId, update)
 }
 
 export async function setWorkflow (

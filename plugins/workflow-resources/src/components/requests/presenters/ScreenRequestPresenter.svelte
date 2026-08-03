@@ -14,11 +14,11 @@
 <script lang="ts">
   import { createQuery } from '@hcengineering/presentation'
   import { Label } from '@hcengineering/ui'
-  import { Screen, WorkflowRequestConfig } from '@hcengineering/workflow'
+  import { Screen, ScreenRequestConfig } from '@hcengineering/workflow'
 
   import plugin from '../../../plugin'
 
-  export let config: WorkflowRequestConfig
+  export let config: ScreenRequestConfig
 
   const screenQuery = createQuery()
   let screen: Screen | undefined

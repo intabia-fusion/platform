@@ -17,13 +17,7 @@
   import { getClient } from '@hcengineering/presentation'
   import { TaskType } from '@hcengineering/task'
   import ui, { Label, Modal } from '@hcengineering/ui'
-  import {
-    Workflow,
-    WorkflowPostFunctionConfig,
-    WorkflowRequestConfig,
-    WorkflowTransition,
-    WorkflowValidatorConfig
-  } from '@hcengineering/workflow'
+  import { Workflow, WorkflowRuleConfig, WorkflowTransition } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
   import { rulesDisplay } from '../../types'
@@ -34,7 +28,7 @@
   export let transitions: WorkflowTransition[] = []
   export let statuses: Status[] = []
   export let transition: WorkflowTransition
-  export let config: WorkflowValidatorConfig | WorkflowRequestConfig | WorkflowPostFunctionConfig
+  export let config: WorkflowRuleConfig
 
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   const dispatch = createEventDispatcher<{ close: void }>()
@@ -44,10 +38,7 @@
   let isSaving = false
   let editorComponent: SvelteComponent | undefined = undefined
 
-  $: ruleId =
-    (config as WorkflowValidatorConfig).validator ??
-    (config as WorkflowRequestConfig).request ??
-    (config as WorkflowPostFunctionConfig).postFunction
+  $: ruleId = config.rule
   $: selectedRule = ruleId != null ? client.getModel().findObject(ruleId) : undefined
 
   async function handleSave (): Promise<void> {

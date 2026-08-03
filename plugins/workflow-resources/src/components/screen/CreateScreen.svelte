@@ -51,8 +51,6 @@
 
   $: canSave = name.trim().length > 0 && name.length <= 100 && description.length <= 500 && selected != null
 
-  $: void updateClassItems(taskTypes, $languageStore)
-
   const updateClassItems = reduceCalls(async (types: TaskType[], lang: string): Promise<void> => {
     const res: DropdownTextItem[] = []
     const classes = new Set(types.map((t) => t.ofClass))
@@ -67,6 +65,8 @@
 
     classItems = res.sort((a, b) => a.label.localeCompare(b.label, lang))
   })
+
+  $: void updateClassItems(taskTypes, $languageStore)
 
   async function save (): Promise<void> {
     if (!canSave) return

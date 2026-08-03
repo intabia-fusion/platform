@@ -16,7 +16,9 @@
 import type { AttachedDoc, Doc, Ref, Status } from '@hcengineering/core'
 import type { Project, ProjectType, Rank, TaskType } from '@hcengineering/task'
 
-import type { WorkflowPostFunctionConfig, WorkflowRequestConfig, WorkflowValidatorConfig } from './rules'
+import { WorkflowRequestConfig } from './request'
+import { WorkflowValidatorConfig } from './validators'
+import { WorkflowPostFunctionConfig } from './post-functions'
 
 export interface Workflow extends Doc {
   name: string

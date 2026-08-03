@@ -16,10 +16,9 @@
   import core, { Status } from '@hcengineering/core'
   import task, { TaskType } from '@hcengineering/task'
   import { WorkflowValidatorConfig } from '@hcengineering/workflow'
-  import { getClient, IconWithEmoji, reduceCalls } from '@hcengineering/presentation'
-  import { Icon, languageStore } from '@hcengineering/ui'
+  import { getClient, IconWithEmoji } from '@hcengineering/presentation'
+  import { Icon, Label } from '@hcengineering/ui'
   import { StatePresenter } from '@hcengineering/task-resources'
-  import { translate } from '@hcengineering/platform'
   import view from '@hcengineering/view'
 
   import plugin from '../../../plugin'
@@ -38,13 +37,6 @@
   }
 
   let rows: RowData[] = []
-  let anyStatusLabel = 'Any status'
-
-  $: void updateAnyStatusLabel($languageStore)
-
-  const updateAnyStatusLabel = reduceCalls(async (lang: string): Promise<void> => {
-    anyStatusLabel = await translate(plugin.string.AnyStatus, {}, lang)
-  })
 
   $: {
     const res: RowData[] = []
@@ -83,7 +75,7 @@
 
       <div class="parent-status-presenter--status-list">
         {#if row.isAny}
-          <span class="parent-status-presenter--any-badge">{anyStatusLabel}</span>
+          <span class="parent-status-presenter--any-badge"><Label label={plugin.string.AnyStatus} /></span>
         {:else if row.statuses.length > 0}
           {#each row.statuses as st (st._id)}
             <StatePresenter value={st} />

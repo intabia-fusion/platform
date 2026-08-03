@@ -40,7 +40,7 @@ export function createModel (builder: Builder): void {
   builder.createModel(TValidatorImpl, TPostFunctionImpl)
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverWorkflow.trigger.ValidateTransition,
+    trigger: serverWorkflow.trigger.PostFunctionsTrigger,
     isAsync: true,
     txMatch: {
       objectClass: task.class.Task
