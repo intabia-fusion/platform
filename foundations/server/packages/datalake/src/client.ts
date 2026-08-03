@@ -124,13 +124,17 @@ export class DatalakeClient {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     cursor: string | undefined,
-    limit: number = 100
+    limit: number = 100,
+    prefix?: string
   ): Promise<ListObjectOutput> {
     const path = `/blob/${workspace}`
     const url = new URL(concatLink(this.endpoint, path))
     url.searchParams.append('limit', String(limit))
     if (cursor !== undefined) {
       url.searchParams.append('cursor', cursor)
+    }
+    if (prefix !== undefined && prefix !== '') {
+      url.searchParams.append('prefix', prefix)
     }
 
     const response = await fetchSafe(ctx, url, { headers: { ...this.headers } })

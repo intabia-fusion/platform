@@ -57,6 +57,7 @@ export interface ListBlobOptions {
   cursor?: string
   limit?: number
   derived?: boolean
+  prefix?: string
 }
 
 export interface ListBlobResult {
@@ -221,19 +222,30 @@ export class PostgresDB implements BlobDB {
 
   async listBlobs (ctx: MeasureContext, workspace: string, options: ListBlobOptions): Promise<ListBlobResult> {
     let { cursor, limit, derived } = options
-    cursor = cursor ?? ''
+    const { prefix } = options
     limit = Math.min(limit ?? 100, 1000)
+    // seek just past the prefix (the comparison below is exclusive, and a blob named exactly
+    // like the prefix is not a match anyway). No upper bound: the db collation is not
+    // byte-ordered, so a computed one would drop matching rows.
+    cursor = cursor ?? prefix ?? ''
+
+    const params: Array<string | number> = [workspace, cursor, limit]
+    let prefixClause = ''
+    if (prefix !== undefined && prefix !== '') {
+      params.push(prefix.replace(/([%_\\])/g, '\\$1') + '%')
+      prefixClause = `AND b.name LIKE $${params.length}`
+    }
 
     const rows = await this.execute<BlobWithDataRecord[]>(
       `
       SELECT b.workspace, b.name, b.hash, b.location, b.parent, b.deleted_at, d.filename, d.size, d.type
       FROM blob.blob AS b
       JOIN blob.data AS d ON b.hash = d.hash AND b.location = d.location
-      WHERE b.workspace = $1 AND b.name > $2 AND b.deleted_at IS NULL ${derived !== true ? 'AND b.parent IS NULL' : ''}
+      WHERE b.workspace = $1 AND b.name > $2 AND b.deleted_at IS NULL ${prefixClause} ${derived !== true ? 'AND b.parent IS NULL' : ''}
       ORDER BY b.workspace, b.name
       LIMIT $3
     `,
-      [workspace, cursor, limit]
+      params
     )
 
     return {

@@ -52,7 +52,7 @@ export interface Datalake {
   list: (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
-    options: { cursor?: string, limit?: number, derived?: boolean }
+    options: { cursor?: string, limit?: number, derived?: boolean, prefix?: string }
   ) => Promise<BlobList>
   head: (ctx: MeasureContext, workspace: WorkspaceUuid, name: string) => Promise<BlobHead | null>
   get: (

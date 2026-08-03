@@ -100,7 +100,13 @@
     })
 
     editor = new Editor({
-      editorProps: { attributes: mergeAttributes(defaultEditorAttributes, { class: 'flex-grow' }) },
+      editorProps: {
+        // tabindex from the defaults makes the node focusable, and Safari scrolls to it on mount;
+        // a read-only diff never needs focus
+        attributes: mergeAttributes(defaultEditorAttributes, { class: 'flex-grow', tabindex: '-1' }),
+        // a read-only diff must never scroll the page to its selection
+        handleScrollToSelection: () => true
+      },
       element,
       editable: false,
       extensions: [kit, DecorationExtension],

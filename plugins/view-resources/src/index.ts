@@ -228,6 +228,7 @@ export * from './viewOptions'
 export * from './viewletContextStore'
 export { getViewletSpecialActions } from './viewletUtils'
 export { copyMarkdown } from './actionImpl'
+export { cleanupDiff } from './markupDiff'
 export { default as SimpleNotification } from './components/SimpleNotification.svelte'
 export type { BuildMarkdownTableMetadata } from '@hcengineering/view'
 export {

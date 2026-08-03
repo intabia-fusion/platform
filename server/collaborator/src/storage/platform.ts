@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import activity, { DocUpdateMessage } from '@hcengineering/activity'
+import activity, { DocAttributeUpdates, DocUpdateMessage } from '@hcengineering/activity'
 import { Analytics } from '@hcengineering/analytics'
 import { loadCollabJson, loadCollabYdoc, saveCollabJson, saveCollabYdoc } from '@hcengineering/collaboration'
 import { decodeDocumentId } from '@hcengineering/collaborator-client'
@@ -40,7 +40,7 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
   private readonly retryCount: number
   private readonly retryInterval: number
   private readonly activityAggregationDelay: number
-  private readonly lastDUMs = new Map<string, { _id: Ref<DocUpdateMessage>, createdOn: number }>()
+  private readonly lastDUMs = new Map<string, { _id: Ref<DocUpdateMessage>, createdOn: number, prevValue: any }>()
 
   constructor (
     private readonly storage: StorageAdapter,
@@ -79,7 +79,7 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
       )
 
       if (ydoc !== undefined) {
-        ctx.info('loaded from storage', { documentName })
+        ctx.info('loaded from storage', { documentName, clients: ydoc.store.clients.size })
         return ydoc
       }
     } catch (err: any) {
@@ -224,9 +224,12 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
     const prevMarkup = markup.prev[objectAttr] ?? ''
 
     if (areEqualMarkups(currMarkup, prevMarkup)) {
-      ctx.info('markup not changed, skip platform update', { documentName })
+      ctx.info('markup not changed, skip platform update', { documentName, size: currMarkup.length })
       return
     }
+
+    // sizes make content loss diagnosable after the fact
+    ctx.info('markup changed', { documentName, prevSize: prevMarkup.length, currSize: currMarkup.length })
 
     const current = await ctx.with('query', {}, () => {
       return client.findOne(objectClass, { _id: objectId })
@@ -262,6 +265,8 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
       }
     )
 
+    ctx.info('saved document content', { documentName, blobId, size: currMarkup.length })
+
     await ctx.with('update', {}, () => client.diffUpdate(current, { [objectAttr]: blobId }))
 
     const prevValue = prevMarkup.length > activityMarkupLimit ? activity.string.ValueTooLarge : prevMarkup
@@ -280,7 +285,21 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
         const cached = this.lastDUMs.get(cacheKey)
         const now = Date.now()
 
-        if (cached !== undefined && now - cached.createdOn < this.activityAggregationDelay) {
+        const aggregate = cached !== undefined && now - cached.createdOn < this.activityAggregationDelay
+        // keep the original prevValue: it is the baseline of the aggregation window
+        const basePrevValue = aggregate && cached !== undefined ? cached.prevValue : prevValue
+        const attributeUpdates: DocAttributeUpdates = {
+          attrKey: objectAttr,
+          attrClass: core.class.TypeMarkup,
+          prevValue: basePrevValue,
+          set: [currValue],
+          added: [],
+          removed: [],
+          isMixin: hierarchy.isMixin(objectClass)
+        }
+
+        if (aggregate && cached !== undefined) {
+          // dot paths are not resolved by the postgres adapter, update the whole object
           await client.updateCollection(
             activity.class.DocUpdateMessage,
             space,
@@ -288,10 +307,7 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
             current._id,
             current._class,
             'docUpdateMessages',
-            {
-              createdOn: now,
-              'attributeUpdates.set': [currValue]
-            } as any
+            { createdOn: now, attributeUpdates } as any
           )
           cached.createdOn = now
         } else {
@@ -299,15 +315,7 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
             objectId,
             objectClass,
             action: 'update',
-            attributeUpdates: {
-              attrKey: objectAttr,
-              attrClass: core.class.TypeMarkup,
-              prevValue,
-              set: [currValue],
-              added: [],
-              removed: [],
-              isMixin: hierarchy.isMixin(objectClass)
-            },
+            attributeUpdates,
             history: []
           }
           const newDUMId = await client.addCollection(
@@ -320,7 +328,8 @@ export class PlatformStorageAdapter implements CollabStorageAdapter {
           )
           this.lastDUMs.set(cacheKey, {
             _id: newDUMId,
-            createdOn: now
+            createdOn: now,
+            prevValue: basePrevValue
           })
         }
       },

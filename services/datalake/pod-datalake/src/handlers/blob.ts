@@ -69,8 +69,9 @@ export async function handleBlobList (
   const cursor = req.query.cursor as string
   const limit = extractIntParam(req.query.limit as string)
   const derived = req.query.derived === 'true'
+  const prefix = req.query.prefix as string
 
-  const blobs = await datalake.list(ctx, workspace, { cursor, limit, derived })
+  const blobs = await datalake.list(ctx, workspace, { cursor, limit, derived, prefix })
   res.status(200).json(blobs)
 }
 
