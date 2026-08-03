@@ -163,7 +163,9 @@ export default plugin(workflowId, {
     Screens: '' as Asset,
     Screen: '' as Asset,
     ScreenTab: '' as Asset,
-    Action: '' as Asset
+    Action: '' as Asset,
+    Editor: '' as Asset,
+    Chart: '' as Asset
   },
   string: {
     Search: '' as IntlString,

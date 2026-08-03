@@ -20,10 +20,8 @@
   import {
     ButtonIcon,
     EditBox,
-    IconCircles,
     IconDelete,
     IconTableOfContents,
-    IconToDetails,
     Loading,
     Scroller,
     showPopup,
@@ -71,9 +69,9 @@
   })
 
   const viewModeItems: TabItem[] = [
-    { id: 'editor', icon: IconTableOfContents },
-    { id: 'split', icon: IconToDetails },
-    { id: 'diagram', icon: IconCircles }
+    { id: 'editor', icon: plugin.icon.Editor },
+    { id: 'diagram', icon: plugin.icon.Chart },
+    { id: 'split', icon: IconTableOfContents }
   ]
 
   const workflowQuery = createQuery()

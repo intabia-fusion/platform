@@ -551,6 +551,7 @@
           taskType={findTaskTypes(typeId)[0]?._id}
           bind:value={defaultStatus}
           type={typeId}
+          workflowId={taskTypes[0]?._id ? workflowsMapping[taskTypes[0]._id] : undefined}
           kind={'regular'}
           size={'large'}
         />
