@@ -12,7 +12,7 @@
   "GITHUB_CLIENTID": "Iv1.43f9cac43bd68617",
   "GITHUB_URL": "http://localhost:3500",
   "LAST_NAME_FIRST": "true",
-  "PRINT_URL": "/_print",
+  "PRINT_URL": "http://localhost:8087/_print",
   "SIGN_URL": "/_sign",
   "AI_URL": "/_ai",
   "BRANDING_URL": "/branding.json",

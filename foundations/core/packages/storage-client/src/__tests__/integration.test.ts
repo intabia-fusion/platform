@@ -111,7 +111,9 @@ describe('Storage Client Integration Tests', () => {
 
       // Generate file URL
       const fileUrl = storage.getFileUrl(workspace, uuid, filename)
-      expect(fileUrl).toBe(`https://files.example.com/${workspace}/${filename}?file=${uuid}&workspace=${workspace}`)
+      expect(fileUrl).toBe(
+        `https://files.example.com/${workspace}/${encodeURIComponent(filename)}?file=${uuid}&workspace=${workspace}`
+      )
 
       // Get file metadata (should return empty object for Front storage)
       const meta = await storage.getFileMeta(token, workspace, uuid)
@@ -201,7 +203,7 @@ describe('Storage Client Integration Tests', () => {
 
       // Generate file URL
       const fileUrl = storage.getFileUrl(workspace, uuid, filename)
-      expect(fileUrl).toBe(`https://datalake.example.com/blob/${workspace}/${uuid}/${filename}`)
+      expect(fileUrl).toBe(`https://datalake.example.com/blob/${workspace}/${uuid}/${encodeURIComponent(filename)}`)
 
       // Mock file metadata response
       const expectedMeta = { size: 1024, contentType: 'text/plain' }
@@ -253,7 +255,7 @@ describe('Storage Client Integration Tests', () => {
 
       // Verify other operations work the same
       const fileUrl = storage.getFileUrl(workspace, uuid, filename)
-      expect(fileUrl).toBe(`https://datalake.example.com/blob/${workspace}/${uuid}/${filename}`)
+      expect(fileUrl).toBe(`https://datalake.example.com/blob/${workspace}/${uuid}/${encodeURIComponent(filename)}`)
     })
 
     it('should handle file size threshold correctly', async () => {

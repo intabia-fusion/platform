@@ -45,7 +45,7 @@ describe('DatalakeStorage', () => {
 
       const url = storage.getFileUrl(workspace, file, filename)
 
-      expect(url).toBe(`${baseUrl}/blob/${workspace}/${file}/${filename}`)
+      expect(url).toBe(`${baseUrl}/blob/${workspace}/${file}/${encodeURIComponent(filename)}`)
     })
 
     it('should generate correct URL without filename', () => {
@@ -64,7 +64,7 @@ describe('DatalakeStorage', () => {
 
       const url = storage.getFileUrl(workspace, file, filename)
 
-      expect(url).toBe(`${baseUrl}/blob/${workspace}/${file}/${filename}`)
+      expect(url).toBe(`${baseUrl}/blob/${workspace}/${file}/${encodeURIComponent(filename)}`)
     })
 
     it('should handle base URL with trailing slash', () => {
@@ -75,7 +75,7 @@ describe('DatalakeStorage', () => {
 
       const url = storageWithSlash.getFileUrl(workspace, file, filename)
 
-      expect(url).toBe('https://datalake.example.com/blob/test-workspace/file-123/test.txt')
+      expect(url).toBe(`${baseUrl}/blob/${workspace}/${file}/${encodeURIComponent(filename)}`)
     })
   })
 
@@ -379,7 +379,7 @@ describe('DatalakeStorage', () => {
 
       // Get file URL
       const url = storage.getFileUrl(workspace, uuid, filename)
-      expect(url).toBe(`${baseUrl}/blob/${workspace}/${uuid}/${filename}`)
+      expect(url).toBe(`${baseUrl}/blob/${workspace}/${uuid}/${encodeURIComponent(filename)}`)
 
       // Get file meta
       const expectedMeta = { size: 1024, contentType: 'text/plain' }
@@ -412,7 +412,7 @@ describe('DatalakeStorage', () => {
 
       // Get file URL
       const url = storage.getFileUrl(workspace, uuid, filename)
-      expect(url).toBe(`${baseUrl}/blob/${workspace}/${uuid}/${filename}`)
+      expect(url).toBe(`${baseUrl}/blob/${workspace}/${uuid}/${encodeURIComponent(filename)}`)
 
       // Get file meta
       const expectedMeta = { size: 15 * 1024 * 1024, contentType: 'text/plain' }
