@@ -47,9 +47,6 @@ export function isEmpty (value: any): boolean {
     return value.size === 0
   }
   if (typeof value === 'object') {
-    if ('reportedTime' in value) {
-      return value.reportedTime == null || value.reportedTime === 0 || value.reportedTime === ''
-    }
     if ('value' in value && Object.keys(value).length === 1) {
       return isEmpty(value.value)
     }

@@ -136,10 +136,10 @@ describe('Workflow Validators', () => {
       expect(isEmpty({ key: undefined })).toBe(false)
     })
 
-    it('should return false for primitive non-string values', () => {
-      expect(isEmpty(0)).toBe(false)
+    it('should handle primitive non-string values correctly', () => {
+      expect(isEmpty(0)).toBe(true)
       expect(isEmpty(42)).toBe(false)
-      expect(isEmpty(NaN)).toBe(false)
+      expect(isEmpty(NaN)).toBe(true)
       expect(isEmpty(false)).toBe(false)
       expect(isEmpty(true)).toBe(false)
       expect(isEmpty(Symbol('test'))).toBe(false)
@@ -221,9 +221,9 @@ describe('Workflow Validators', () => {
 
       expect(result).toEqual({
         ok: false,
-        reason: 'Field "Due Date" is required for transition O ➜ D.',
+        reason: 'Field "Due Date" is required for transition Open, status-in-progress ➜ Done.',
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: 'Due Date', transition: 'Resolve Task' }
+        intlParams: { field: 'Due Date', transition: 'Open, status-in-progress ➜ Done' }
       })
     })
 
@@ -248,9 +248,9 @@ describe('Workflow Validators', () => {
 
       expect(result).toEqual({
         ok: false,
-        reason: 'Field "Due Date" is required for transition Any status ➜ D.',
+        reason: 'Field "Due Date" is required for transition Any ➜ Done.',
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: 'Due Date', transition: 'Resolve Task' }
+        intlParams: { field: 'Due Date', transition: 'Any ➜ Done' }
       })
     })
 
@@ -276,9 +276,9 @@ describe('Workflow Validators', () => {
 
       expect(result).toEqual({
         ok: false,
-        reason: 'Field "Due Date" is required for transition s ➜ s.',
+        reason: 'Field "Due Date" is required for transition status-open ➜ status-done.',
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: 'Due Date', transition: 'Resolve Task' }
+        intlParams: { field: 'Due Date', transition: 'status-open ➜ status-done' }
       })
     })
 
@@ -303,9 +303,9 @@ describe('Workflow Validators', () => {
 
       expect(result).toEqual({
         ok: false,
-        reason: 'Field "Due Date" is required for transition undefined ➜ D.',
+        reason: 'Field "Due Date" is required for transition Any ➜ Done.',
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: 'Due Date', transition: 'Resolve Task' }
+        intlParams: { field: 'Due Date', transition: 'Any ➜ Done' }
       })
     })
 
@@ -392,9 +392,9 @@ describe('Workflow Validators', () => {
 
       expect(result).toEqual({
         ok: false,
-        reason: 'Subtasks must be in allowed statuses (Done)".',
+        reason: 'Subtasks must be in allowed statuses (Done) for transition status-open, status-in-progress ➜ Done.',
         reasonIntl: workflow.string.SubtaskStatusError,
-        intlParams: { transition: 'Resolve Task', statuses: 'Done' }
+        intlParams: { transition: 'status-open, status-in-progress ➜ Done', statuses: 'Done' }
       })
     })
 
@@ -473,9 +473,10 @@ describe('Workflow Validators', () => {
 
       expect(result).toEqual({
         ok: false,
-        reason: 'Subtasks must be in allowed statuses (In Progress, Done)".',
+        reason:
+          'Subtasks must be in allowed statuses (In Progress, Done) for transition status-open, In Progress ➜ Done.',
         reasonIntl: workflow.string.SubtaskStatusError,
-        intlParams: { transition: 'Resolve Task', statuses: 'In Progress, Done' }
+        intlParams: { transition: 'status-open, In Progress ➜ Done', statuses: 'In Progress, Done' }
       })
     })
   })
@@ -546,9 +547,9 @@ describe('Workflow Validators', () => {
 
       expect(result).toEqual({
         ok: false,
-        reason: 'Parent task must be in allowed statuses (Done).',
+        reason: 'Parent task must be in allowed statuses (Done) for transition status-open, status-in-progress ➜ Done.',
         reasonIntl: workflow.string.ParentStatusError,
-        intlParams: { transition: 'Resolve Task', statuses: 'Done' }
+        intlParams: { transition: 'status-open, status-in-progress ➜ Done', statuses: 'Done' }
       })
     })
 

@@ -12,11 +12,24 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { onMount } from 'svelte'
   import core, { notEmpty, Ref, Status, WithLookup } from '@hcengineering/core'
   import { Asset } from '@hcengineering/platform'
-  import { createQuery, getClient, IconDownload, MessageBox } from '@hcengineering/presentation'
+  import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
   import task, { ProjectType, TaskType } from '@hcengineering/task'
-  import { ButtonIcon, EditBox, IconDelete, IconSettings, Loading, Scroller, showPopup } from '@hcengineering/ui'
+  import {
+    ButtonIcon,
+    EditBox,
+    IconCircles,
+    IconDelete,
+    IconTableOfContents,
+    IconToDetails,
+    Loading,
+    Scroller,
+    showPopup,
+    Switcher,
+    TabItem
+  } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { removeWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
 
@@ -25,7 +38,7 @@
   import InitialStatusesEditor from './InitialStatusesEditor.svelte'
   import TaskTypeEditor from './TaskTypeEditor.svelte'
   import TransitionsEditor from './TransitionsEditor.svelte'
-  import WorkflowSettingsPopup from './WorkflowSettingsPopup.svelte'
+  import WorkflowDiagram from './WorkflowDiagram.svelte'
   import WorkflowUsedProjects from './WorkflowUsedProjects.svelte'
 
   export let spaceType: ProjectType
@@ -35,6 +48,33 @@
   export let readonly = true
 
   const client = getClient()
+
+  type WorkflowViewMode = 'editor' | 'diagram' | 'split'
+
+  let userViewMode: WorkflowViewMode = 'editor'
+  let isNarrowScreen = false
+
+  $: effectiveViewMode = isNarrowScreen && userViewMode === 'split' ? 'editor' : userViewMode
+
+  function updateScreenSize (): void {
+    if (typeof window !== 'undefined') {
+      isNarrowScreen = window.innerWidth < 1100
+    }
+  }
+
+  onMount(() => {
+    updateScreenSize()
+    window.addEventListener('resize', updateScreenSize)
+    return () => {
+      window.removeEventListener('resize', updateScreenSize)
+    }
+  })
+
+  const viewModeItems: TabItem[] = [
+    { id: 'editor', icon: IconTableOfContents },
+    { id: 'split', icon: IconToDetails },
+    { id: 'diagram', icon: IconCircles }
+  ]
 
   const workflowQuery = createQuery()
   const taskTypesQuery = createQuery()
@@ -122,26 +162,30 @@
     console.log('TODO: change task type', evt.detail)
   }
 
-  function handleSettings (): void {
-    if (workflow === undefined) return
-    showPopup(WorkflowSettingsPopup, { workflow, statuses, readonly }, 'top')
-  }
-
-  async function handleExport (): Promise<void> {
-    // TODO: implement
-    console.log('TODO: export workflow')
+  function handleViewModeSelect (evt: CustomEvent<TabItem>): void {
+    if (evt.detail?.id != null) {
+      userViewMode = evt.detail.id as WorkflowViewMode
+    }
   }
 
   $: loading = isWorkflowLoading || isStatusesLoading
 </script>
 
-<div class="hulyComponent-content__container columns">
+<div class="workflow-editor-root hulyComponent-content__container columns">
   <div class="hulyComponent-content__column content">
     {#if loading}
       <Loading />
-    {:else if workflow && taskType}
-      <Scroller align="center" padding="var(--spacing-3)" bottomPadding="var(--spacing-3)">
-        <div class="hulyComponent-content gap">
+    {:else if workflow != null && taskType != null}
+      <Scroller
+        align={effectiveViewMode === 'split' ? 'stretch' : 'center'}
+        padding="var(--spacing-3)"
+        bottomPadding="var(--spacing-3)"
+      >
+        <div
+          class="hulyComponent-content gap"
+          class:split-container={effectiveViewMode === 'split'}
+          class:withoutMaxWidth={effectiveViewMode === 'split'}
+        >
           <div class="header flex-between flex-wrap">
             <div class="flex-grow min-w-0">
               <EditBox
@@ -157,16 +201,16 @@
               <TaskTypeEditor
                 selected={taskType?._id}
                 types={taskTypes.length > 0 ? taskTypes : [taskType].filter(notEmpty)}
-                {readonly}
+                readonly
                 on:change={handleTaskTypeChange}
               />
-              <ButtonIcon icon={IconSettings} size="small" kind="secondary" on:click={handleSettings} />
-              <ButtonIcon
-                icon={IconDownload}
-                tooltip={{ label: plugin.string.Export, direction: 'bottom' }}
-                size="small"
-                kind="secondary"
-                on:click={handleExport}
+              <Switcher
+                items={viewModeItems}
+                selected={userViewMode}
+                kind="subtle"
+                name="workflowViewMode"
+                onlyIcons={true}
+                on:select={handleViewModeSelect}
               />
               <ButtonIcon
                 icon={IconDelete}
@@ -179,10 +223,27 @@
               />
             </div>
           </div>
-          <div class="hulyComponent-content flex-col-center flex-gap-4">
-            <InitialStatusesEditor {readonly} {workflow} {statuses} />
-            <TransitionsEditor {readonly} {workflow} {transitions} {statuses} {taskType} />
-          </div>
+          {#if effectiveViewMode === 'editor'}
+            <div class="hulyComponent-content flex-col-center flex-gap-4">
+              <InitialStatusesEditor {readonly} {workflow} {statuses} />
+              <TransitionsEditor {readonly} {workflow} {transitions} {statuses} {taskType} />
+            </div>
+          {:else if effectiveViewMode === 'diagram'}
+            <div class="hulyComponent-content embedded-diagram">
+              <WorkflowDiagram {workflow} {statuses} {transitions} embedded />
+            </div>
+          {:else if effectiveViewMode === 'split'}
+            <div class="hulyComponent-content split-layout withoutMaxWidth">
+              <div class="split-column left">
+                <InitialStatusesEditor {readonly} {workflow} {statuses} />
+                <TransitionsEditor {readonly} {workflow} {transitions} {statuses} {taskType} />
+              </div>
+              <div class="split-divider" />
+              <div class="split-column right">
+                <WorkflowDiagram {workflow} {statuses} {transitions} embedded />
+              </div>
+            </div>
+          {/if}
         </div>
       </Scroller>
     {/if}
@@ -190,9 +251,68 @@
 </div>
 
 <style lang="scss">
+  .workflow-editor-root {
+    &.hulyComponent-content__container {
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+
+    :global(.hulyComponent-content.split-container) {
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+
+    :global(.hulyComponent-content__column) {
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+  }
+
   .header {
     :global(.antiEditBox) {
       margin-left: -1rem;
+    }
+  }
+
+  .embedded-diagram {
+    width: 100%;
+    height: calc(100vh - 12rem);
+    max-height: calc(100vh - 12rem);
+  }
+
+  .split-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 0.0625rem minmax(0, 1fr);
+    gap: var(--spacing-4, 1rem);
+    width: 100% !important;
+    max-width: 100% !important;
+    align-items: stretch;
+
+    .split-divider {
+      width: 1px;
+      height: 100%;
+      background: var(--theme-border-color, rgba(0, 0, 0, 0.08));
+      align-self: stretch;
+    }
+
+    .split-column {
+      min-width: 0;
+
+      &.left {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-4, 1rem);
+        min-width: 0;
+      }
+
+      &.right {
+        position: sticky;
+        top: 0;
+        height: calc(100vh - 12rem);
+        max-height: calc(100vh - 12rem);
+        min-height: 0;
+        min-width: 0;
+      }
     }
   }
 </style>

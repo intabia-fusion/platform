@@ -38,25 +38,20 @@
   $: _selected = items.find((it) => it.id === selected)
 </script>
 
-{#if readonly}
-  {#if _selected}
-    <Label label={_selected.label} />
-  {/if}
-{:else}
-  <ButtonMenu
-    {selected}
-    {items}
-    icon={_selected?.icon}
-    iconProps={_selected?.iconProps}
-    label={_selected?.label}
-    kind={buttonKind}
-    size={buttonSize}
-    {loading}
-    on:selected={(evt) => {
-      if (evt.detail != null) {
-        selected = evt.detail
-        dispatch('change', evt.detail)
-      }
-    }}
-  />
-{/if}
+<ButtonMenu
+  {selected}
+  {items}
+  icon={_selected?.icon}
+  iconProps={_selected?.iconProps}
+  label={_selected?.label}
+  kind={buttonKind}
+  size={buttonSize}
+  {loading}
+  disabled={readonly}
+  on:selected={(evt) => {
+    if (evt.detail != null) {
+      selected = evt.detail
+      dispatch('change', evt.detail)
+    }
+  }}
+/>
