@@ -43,7 +43,7 @@ export default mergeIds(chunterId, chunter, {
     DirectLabelProvider: '' as Resource<(client: Client, id: Ref<Doc>) => Promise<IntlString>>,
     ChannelTitleProvider: '' as Resource<(client: Client, id: Ref<Doc>) => Promise<string>>,
     ChunterBrowserVisible: '' as Resource<(spaces: Space[]) => Promise<boolean>>,
-    GetUnreadThreadsCount: '' as Resource<() => number>
+    GetUnreadThreadsCount: '' as Resource<() => Promise<number>>
   },
   actionImpl: {},
   string: {

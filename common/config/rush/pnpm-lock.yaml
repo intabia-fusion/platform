@@ -38472,6 +38472,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/core/packages/platform
+      '@hcengineering/retry':
+        specifier: workspace:^0.7.17
+        version: link:../../../foundations/core/packages/retry
       '@hcengineering/server-client':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/server/packages/client

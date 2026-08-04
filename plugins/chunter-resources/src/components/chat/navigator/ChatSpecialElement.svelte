@@ -46,7 +46,7 @@
 
     const providerFn = await getResource(special.notificationsCountProvider)
 
-    return providerFn(totalUnreadCount)
+    return await providerFn(totalUnreadCount)
   }
 
   function getElementsCount (

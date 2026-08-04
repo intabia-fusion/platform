@@ -64,6 +64,7 @@ import { DOMAIN_DOC_NOTIFY, DOMAIN_USER_NOTIFY, DOMAIN_READ_STATE } from './inde
 import { updateReadStatesFromDocNotifyContexts, initReadStatesLatestMessages } from './migrations/readState'
 import { removeArchivedNotifications, removeEmptyContexts, removeArchivedContexts } from './migrations/clear'
 import { migrateNotificationsToEmbedded } from './migrations/migrateNotificationsToEmbedded'
+import { migrateDocNotifyContextSettings } from './migrations/settings'
 
 interface OldCollaborators extends Doc {
   collaborators: AccountUuid[]
@@ -1283,6 +1284,11 @@ export const notificationOperation: MigrateOperation = {
         state: 'update-read-states-from-contexts-v6',
         mode: 'upgrade',
         func: updateReadStatesFromDocNotifyContexts
+      },
+      {
+        state: 'migrate-doc-notify-context-settings-v1',
+        mode: 'upgrade',
+        func: migrateDocNotifyContextSettings
       },
       {
         state: 'remove-archived-contexts-v6',

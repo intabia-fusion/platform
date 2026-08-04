@@ -179,7 +179,7 @@ export interface SpecialNavModel {
   // If defined, will be used to find spaces for visibleIf
   spaceClass?: Ref<Class<Space>>
   checkIsDisabled?: Resource<() => Promise<boolean>>
-  notificationsCountProvider?: Resource<(totalCount: number) => number>
+  notificationsCountProvider?: Resource<(totalCount: number) => Promise<number>>
   navigationModel?: ParentsNavigationModel
   queryBuilder?: Resource<() => Promise<DocumentQuery<Doc>>>
 }

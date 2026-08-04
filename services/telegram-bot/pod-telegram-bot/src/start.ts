@@ -86,6 +86,7 @@ export const start = async (): Promise<void> => {
   ctx.info('Starting server...')
   const server = listen(app, ctx, config.Port)
 
+  // Telegram delivery is temporarily disabled until needed.
   // const consumer = queue.createConsumer<TelegramQueueMessage>(
   //   ctx,
   //   QueueTopic.TelegramBot,

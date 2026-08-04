@@ -63,7 +63,7 @@ const config: Config = (() => {
     Secret: process.env[envMap.Secret]
   }
 
-  const required: Array<keyof Config> = ['Source']
+  const required: Array<keyof Config> = ['Source', 'AccountsUrl', 'Secret']
 
   const missingEnv = required.filter((key) => params[key] === undefined).map((key) => envMap[key])
 

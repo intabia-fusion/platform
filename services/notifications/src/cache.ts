@@ -194,7 +194,7 @@ class WorkspaceCache {
   private readonly socialIdToEmployeeMap = new Map<Ref<SocialIdentity>, Ref<Employee>>()
   private readonly employeeToAccountMap = new Map<Ref<Employee>, AccountUuid>()
 
-  private readonly serviceTxes = new Set<Ref<TxCUD<Doc>>>()
+  private readonly serviceTxes = new LRUCache<Ref<TxCUD<Doc>>, boolean>({ max: 10000 })
 
   constructor (
     private readonly ctx: MeasureContext,
@@ -230,7 +230,7 @@ class WorkspaceCache {
     }
 
     if (service) {
-      this.serviceTxes.add(tx._id)
+      this.serviceTxes.set(tx._id, true)
     }
   }
 
@@ -799,6 +799,10 @@ class WorkspaceCache {
     if (docId !== undefined) {
       const state = this.readStatesByDocCache.get(docId)
       if (state != null) {
+        if (tx.modifiedOn < state.modifiedOn) {
+          this.readStatesByDocCache.delete(docId)
+          return
+        }
         this.readStatesByDocCache.set(docId, this.updateOrMixin(tx, state))
       }
     }
@@ -822,6 +826,11 @@ class WorkspaceCache {
     const docId = this.settingToDocMap.get(tx.objectId as Ref<DocNotificationSetting>)
     if (docId !== undefined) {
       const current = this.notificationSettingsByDocCache.get(docId) ?? []
+      const setting = current.find((it) => it._id === tx.objectId)
+      if (setting !== undefined && tx.modifiedOn < setting.modifiedOn) {
+        this.notificationSettingsByDocCache.delete(docId)
+        return
+      }
       const updated = current.map((it) => (it._id === tx.objectId ? this.updateOrMixin(tx, it) : it))
       this.notificationSettingsByDocCache.set(docId, updated)
     }
@@ -853,11 +862,15 @@ class WorkspaceCache {
     const docId = this.collaboratorToDocMap.get(tx.objectId as Ref<Collaborator>)
     if (docId !== undefined) {
       const current = this.collaboratorsByDocCache.get(docId) ?? []
+      const removedCollab = current.find((it) => it._id === tx.objectId)
       this.collaboratorsByDocCache.set(
         docId,
         current.filter((it) => it._id !== tx.objectId)
       )
       this.collaboratorToDocMap.delete(tx.objectId as Ref<Collaborator>)
+      if (removedCollab != null) {
+        this.invalidateContexts(docId)
+      }
     }
   }
 

@@ -354,7 +354,7 @@
     if (isScrollInitialized) {
       await wait()
       updateScrollData()
-      updateDownButtonVisibility(messages, scrollDiv)
+      updateDownButtonVisibility(messages, scrollDiv, $isTailLoadedStore)
       loadMore()
     }
   }
@@ -376,15 +376,19 @@
     isScrollAtBottom = Math.abs(scrollTop) < 50
   }
 
-  $: updateDownButtonVisibility(messages, scrollDiv)
+  $: updateDownButtonVisibility(messages, scrollDiv, $isTailLoadedStore)
 
-  function updateDownButtonVisibility (messages: ActivityMessage[], scrollDiv?: HTMLDivElement | null): void {
-    if (messages.length === 0) {
+  function updateDownButtonVisibility (
+    messages: ActivityMessage[],
+    scrollDiv?: HTMLDivElement | null,
+    isTailLoaded: boolean = $isTailLoadedStore
+  ): void {
+    if (messages.length === 0 || !isScrollInitialized) {
       isLatestMessageButtonVisible = false
       return
     }
 
-    if (!$isTailLoadedStore) {
+    if (!isTailLoaded) {
       isLatestMessageButtonVisible = true
     } else if (scrollDiv != null) {
       const { scrollTop } = scrollDiv
@@ -613,7 +617,7 @@
 
   async function handleScroll (): Promise<void> {
     updateScrollData()
-    updateDownButtonVisibility(messages, scrollDiv)
+    updateDownButtonVisibility(messages, scrollDiv, $isTailLoadedStore)
     updateShouldScrollToNew()
     loadMore()
   }

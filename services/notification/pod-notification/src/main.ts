@@ -27,6 +27,7 @@ import notification, {
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { QueueTopic } from '@hcengineering/server-core'
 import { setMetadata } from '@hcengineering/platform'
+import { withRetry, DelayStrategyFactory } from '@hcengineering/retry'
 import serverClient, { getTransactorEndpoint } from '@hcengineering/server-client'
 import serverToken, { generateToken } from '@hcengineering/server-token'
 import { createRestClient } from '@hcengineering/api-client'
@@ -89,41 +90,54 @@ export const main = async (): Promise<void> => {
     queue.getClientId(),
     async (ctx, queueMessage) => {
       try {
-        const value = queueMessage.value
-        const shouldPush = (value.providers[notification.providers.PushNotificationProvider]?.length ?? 0) > 0
-        if (shouldPush) {
-          const failedSubscriptionIds = await sendPushToSubscription(value.pushSubscriptions, {
-            tag: value.id,
-            title: truncate(value.title, PUSH_NOTIFICATION_TITLE_SIZE),
-            body: truncate(value.body, PUSH_NOTIFICATION_BODY_SIZE),
-            domain: value.domain,
-            url: value.url
-          })
+        await withRetry(
+          async () => {
+            const value = queueMessage.value
+            const shouldPush = (value.providers[notification.providers.PushNotificationProvider]?.length ?? 0) > 0
+            if (shouldPush) {
+              const failedSubscriptionIds = await sendPushToSubscription(value.pushSubscriptions, {
+                tag: value.id,
+                title: truncate(value.title, PUSH_NOTIFICATION_TITLE_SIZE),
+                body: truncate(value.body, PUSH_NOTIFICATION_BODY_SIZE),
+                domain: value.domain,
+                url: value.url
+              })
 
-          if (failedSubscriptionIds.length > 0) {
-            try {
-              const token = generateToken(systemAccountUuid, queueMessage.workspace, { service: config.ServiceId })
-              const endpoint = await getTransactorEndpoint(token)
-              const restClient = createRestClient(endpoint, queueMessage.workspace, token)
-
-              for (const subId of failedSubscriptionIds) {
+              if (failedSubscriptionIds.length > 0) {
                 try {
-                  await restClient.removeDoc(notification.class.PushSubscription, core.space.Workspace, subId)
-                  ctx.info(
-                    `Successfully removed invalid push subscription ${subId} from workspace ${queueMessage.workspace}`
-                  )
-                } catch (removeErr: any) {
-                  ctx.error(`Failed to remove expired subscription ${subId}:`, { removeErr })
+                  const token = generateToken(systemAccountUuid, queueMessage.workspace, { service: config.ServiceId })
+                  const endpoint = await getTransactorEndpoint(token)
+                  const restClient = createRestClient(endpoint, queueMessage.workspace, token)
+
+                  for (const subId of failedSubscriptionIds) {
+                    try {
+                      await restClient.removeDoc(notification.class.PushSubscription, core.space.Workspace, subId)
+                      ctx.info(
+                        `Successfully removed invalid push subscription ${subId} from workspace ${queueMessage.workspace}`
+                      )
+                    } catch (removeErr: any) {
+                      ctx.error(`Failed to remove expired subscription ${subId}:`, { removeErr })
+                    }
+                  }
+                } catch (clientErr: any) {
+                  ctx.error('Failed to initialize RestClient or fetch transactor endpoint for cleanup:', { clientErr })
                 }
               }
-            } catch (clientErr: any) {
-              ctx.error('Failed to initialize RestClient or fetch transactor endpoint for cleanup:', { clientErr })
             }
-          }
-        }
-      } catch (e) {
-        ctx.error('Failed to process notification', { e })
-        throw e
+          },
+          {
+            maxRetries: 3,
+            isRetryable: () => true,
+            delayStrategy: DelayStrategyFactory.exponentialBackoff({
+              initialDelayMs: 1000,
+              maxDelayMs: 5000,
+              backoffFactor: 2.0
+            })
+          },
+          'process-notification'
+        )
+      } catch (e: any) {
+        ctx.error('Failed to process notification after retries, acknowledging poison message:', { e })
       }
     }
   )

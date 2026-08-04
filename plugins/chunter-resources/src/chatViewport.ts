@@ -377,8 +377,11 @@ export class ChatViewport implements IChatViewport {
         return undefined
       }
 
-      this.resetViewport()
-      await this.initializeViewport(msg._id)
+      const isLoaded = get(this.messages).some((it) => it._id === msg._id)
+      if (!isLoaded) {
+        this.resetViewport()
+        await this.initializeViewport(msg._id)
+      }
       return msg._id
     } catch (err) {
       if (err instanceof StaleVersionError) return undefined
@@ -436,7 +439,7 @@ export class ChatViewport implements IChatViewport {
         return
       }
 
-      const res = await client.findOne(
+      const res = await client.findAll(
         activity.class.ActivityMessage,
         {
           attachedTo: this.chatId,
@@ -450,7 +453,7 @@ export class ChatViewport implements IChatViewport {
         }
       )
 
-      this.newTimestamp.set(res?.createdOn)
+      this.newTimestamp.set(res[0]?.createdOn)
     } catch (err) {
       if (err instanceof StaleVersionError) return
       console.error('Failed to sync unread marker:', err)

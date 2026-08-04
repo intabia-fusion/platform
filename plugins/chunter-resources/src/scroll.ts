@@ -25,7 +25,8 @@ export function messageInView (msgElement: Element, containerRect: DOMRect): boo
   return rect.bottom > containerRect.top && rect.top < containerRect.bottom
 }
 
-const accumulatorsByChannel = new Map<string, Set<Pick<ActivityMessage, '_id' | 'createdOn' | 'modifiedOn'>>>()
+type MessagePick = Pick<ActivityMessage, '_id' | 'createdOn' | 'modifiedOn'>
+const accumulatorsByChannel = new Map<string, Map<Ref<Doc>, MessagePick>>()
 const timersByChannel = new Map<string, any>()
 
 // NOTE: Store timestamp updates to avoid unnecessary updates if the server takes a long time to respond
@@ -56,10 +57,10 @@ export function readViewportMessages (
     if (messageInView(msgElement, scrollRect)) {
       let accumulator = accumulatorsByChannel.get(chatId)
       if (accumulator == null) {
-        accumulator = new Set<ActivityMessage>()
+        accumulator = new Map<Ref<Doc>, MessagePick>()
         accumulatorsByChannel.set(chatId, accumulator)
       }
-      accumulator.add({
+      accumulator.set(message._id, {
         _id: message._id,
         createdOn: message.createdOn,
         modifiedOn: message.modifiedOn
@@ -78,7 +79,7 @@ export function readViewportMessages (
     if (accumulator == null) return
     accumulatorsByChannel.delete(chatId)
 
-    const messagesToRead = [...accumulator]
+    const messagesToRead = Array.from(accumulator.values())
     if (messagesToRead.length === 0) return
     void readMessages(sortActivityMessages(messagesToRead), context, readState)
   }, 500)

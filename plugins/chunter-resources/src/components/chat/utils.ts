@@ -218,7 +218,7 @@ function sortActivityChannels (items: ChatNavItemModel[], option: SortFnOptions)
     const context2 = contextByDoc.get(i2.id) ?? undefined
 
     const hasUnreadMessages1 = (context1?.unreadMessages?.length ?? 0) > 0
-    const hasUnreadMessages2 = (context1?.unreadMessages?.length ?? 0) > 0
+    const hasUnreadMessages2 = (context2?.unreadMessages?.length ?? 0) > 0
 
     if (hasUnreadMessages1 && hasUnreadMessages2) {
       const unreadMessages1 = context1?.unreadMessages ?? []

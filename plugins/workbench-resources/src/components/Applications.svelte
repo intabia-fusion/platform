@@ -91,6 +91,7 @@
   const totalUnreadCountStore = inboxClient.totalUnreadCount
 
   let notifyStates: Record<string, boolean> = {}
+  let updateSeq = 0
 
   $: void updateNotifyStatuses(apps, $totalUnreadCountStore, $appearancePreferences)
 
@@ -99,12 +100,14 @@
     unreadCount: number,
     preference?: NotificationAppearancePreference
   ): Promise<void> {
+    const seq = ++updateSeq
     for (const app of apps) {
       let res = false
       if (app.showNotifyMarkerFn != null) {
         const fn = await getResource(app.showNotifyMarkerFn)
         res = await fn(unreadCount, preference)
       }
+      if (seq !== updateSeq) return
 
       if (notifyStates[app._id] !== res) {
         notifyStates = { ...notifyStates, [app._id]: res }

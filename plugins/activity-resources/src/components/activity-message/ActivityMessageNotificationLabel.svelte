@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Component, Icon, Label, languageStore, tooltip } from '@hcengineering/ui'
+  import { Component, Icon, Label, tooltip } from '@hcengineering/ui'
   import notification, { DocNotifyContext } from '@hcengineering/notification'
   import activity, { ActivityMessage, ActivityMessageLite } from '@hcengineering/activity'
   import { getClient, IconWithEmoji } from '@hcengineering/presentation'

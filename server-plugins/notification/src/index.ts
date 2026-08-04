@@ -114,8 +114,7 @@ export default plugin(serverNotificationId, {
     OnDocUpdate: '' as Resource<TriggerFunc>,
     OnDocCreated: '' as Resource<TriggerFunc>,
     OnDocSpaceChanged: '' as Resource<TriggerFunc>,
-    OnEmployeeDeactivate: '' as Resource<TriggerFunc>,
-    PushNotificationsHandler: '' as Resource<TriggerFunc>
+    OnEmployeeDeactivate: '' as Resource<TriggerFunc>
   },
   function: {
     IsUserFieldValueTypeMatch: '' as TypeMatchFuncResource,

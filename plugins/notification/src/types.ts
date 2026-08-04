@@ -206,7 +206,7 @@ export interface DocNotifyContext<T extends Doc = Doc> extends Doc<PersonSpace> 
   latestNotifications: ContextNotification[] // store n latest notifications to show in inbox
 
   unreadReactions: UnreadReaction[] // store unread reaction notifications
-  unreadMentions: UnreadMention[] // store unread mention notifications
+  unreadMentions: UnreadMention[] // store unread mentions NOT in messages (collaborative content)
   unreadMessages: UnreadMessage[] // unified timeline of unread messages and chunks
   unreadCommons: CommonNotification[] // store unread common notifications
 

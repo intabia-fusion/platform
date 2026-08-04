@@ -77,7 +77,23 @@ export class NotificationClientImpl implements NotificationClient {
     onClient(this.init.bind(this))
   }
 
+  clear (): void {
+    this.contextByDoc.set(new Map())
+    this.contextById.set(new Map())
+    this.readStateByDoc.set(new Map())
+    this.docSettingByDoc.set(new Map())
+
+    this.readStatePromises.clear()
+    this.docSettingPromises.clear()
+    this.contextByIdPromises.clear()
+    this.contextByDocPromises.clear()
+
+    this.totalUnreadCount.set(0)
+  }
+
   private async init (_client: Client, account: Account): Promise<void> {
+    this.clear()
+
     this.unreadQuery.query(
       notification.class.DocNotifyContext,
       {
