@@ -25,11 +25,13 @@
   import {
     ComponentExtensions,
     IconWithEmoji,
+    MessageBox,
     copyTextToClipboard,
     createQuery,
     getClient
   } from '@hcengineering/presentation'
   import tags from '@hcengineering/tags'
+  import { type MarkupNode } from '@hcengineering/text'
   import { Heading } from '@hcengineering/text-editor'
   import { TableOfContents } from '@hcengineering/text-editor-resources'
   import TeamspacePresenter from './teamspace/TeamspacePresenter.svelte'
@@ -211,13 +213,22 @@
     dispatch('open', { ignoreKeys: ['comments', 'name'] })
   })
 
-  const aside: ButtonItem[] = [
+  $: aside = [
     {
       id: 'references',
       icon: document.icon.References,
       showTooltip: { label: document.string.Backlinks, direction: 'bottom' }
-    }
-  ]
+    },
+    ...(readonly
+      ? []
+      : [
+          {
+            id: 'history',
+            icon: document.icon.History,
+            showTooltip: { label: document.string.History, direction: 'bottom' as const }
+          }
+        ])
+  ] satisfies ButtonItem[]
   let selectedAside: string | boolean = false
 
   $: actions = [
@@ -241,6 +252,33 @@
 
   let editor: DocumentEditor
   let content: HTMLElement
+
+  function getCurrentContent (): MarkupNode | undefined {
+    if (!loadedDocumentContent) return undefined
+    let result: MarkupNode | undefined
+    editor?.commands()?.command(({ editor }) => {
+      result = editor.getJSON() as MarkupNode
+      return true
+    })
+    return result
+  }
+
+  function restoreVersion (node: MarkupNode): void {
+    showPopup(
+      MessageBox,
+      {
+        label: document.string.RestoreVersion,
+        message: document.string.RestoreVersionConfirm,
+        dangerous: true
+      },
+      undefined,
+      (result?: boolean) => {
+        if (result !== true) return
+        // replace the editor state, collaboration propagates it to everyone
+        editor?.commands()?.command(({ commands }) => commands.setContent(node as any))
+      }
+    )
+  }
 
   const manager = createFocusManager()
 
@@ -418,7 +456,14 @@
       {#if selectedAside === 'references'}
         <References doc={doc._id} />
       {:else if selectedAside === 'history'}
-        <History value={doc} {readonly} />
+        <History
+          value={doc}
+          {readonly}
+          {getCurrentContent}
+          on:restore={(evt) => {
+            restoreVersion(evt.detail)
+          }}
+        />
       {/if}
     </svelte:fragment>
 

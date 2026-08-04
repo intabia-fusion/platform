@@ -19669,6 +19669,9 @@ importers:
       '@hcengineering/attachment-resources':
         specifier: workspace:^0.7.0
         version: link:../attachment-resources
+      '@hcengineering/collaborator-client':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/collaborator-client
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -19708,6 +19711,9 @@ importers:
       '@hcengineering/tags':
         specifier: workspace:^0.7.0
         version: link:../tags
+      '@hcengineering/text':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/text
       '@hcengineering/text-editor':
         specifier: workspace:^0.7.0
         version: link:../text-editor
