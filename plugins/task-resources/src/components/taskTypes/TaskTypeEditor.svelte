@@ -30,6 +30,7 @@
     ModernButton,
     Scroller,
     ToggleWithLabel,
+    CheckBox,
     getCurrentLocation,
     navigate,
     showPopup
@@ -67,6 +68,20 @@
   $: color = taskType?.color !== undefined && typeof taskType?.color !== 'string' ? taskType?.color : undefined
   $: descriptor = client.getModel().findAllSync(task.class.TaskTypeDescriptor, { _id: taskType?.descriptor })
   $: states = (taskType?.statuses.map((p) => $statusStore.byId.get(p)).filter((p) => p !== undefined) as Status[]) ?? []
+  $: selectableTaskTypes = taskTypes.filter((tt) => tt._id !== objectId)
+
+  let isRootTaskType = false
+  let initialValueApplied = false
+
+  $: if (!initialValueApplied && taskType !== undefined) {
+    isRootTaskType = taskType.isRootTaskType ?? false
+    initialValueApplied = true
+  }
+
+  $: if (initialValueApplied && taskType !== undefined &&
+    isRootTaskType !== (taskType.isRootTaskType ?? false)) {
+    void handleIsRootTaskTypeChange(isRootTaskType)
+  }
 
   let tasksCounter: number = 0
   let loading: boolean = true
@@ -87,6 +102,20 @@
         }
       }
     )
+  }
+
+  async function handleIsRootTaskTypeChange (isRoot: boolean): Promise<void> {
+    if (taskType === undefined || readonly) {
+      return
+    }
+
+    const updates: Partial<TaskType> = { isRootTaskType: isRoot }
+
+    if (isRoot && (taskType.allowedAsChildOf?.length ?? 0) > 0) {
+      updates.allowedAsChildOf = []
+    }
+
+    await client.diffUpdate(taskType, updates)
   }
 
   function selectIcon (el: MouseEvent): void {
@@ -226,16 +255,25 @@
           </div>
 
           <div class="hulyTableAttr-container">
-            <TaskTypeRefEditorTable
-              value={taskType.allowedAsChildOf}
-              types={taskTypes}
-              onChange={(evt) => {
-                if (taskType === undefined) {
-                  return
-                }
-                void client.diffUpdate(taskType, { allowedAsChildOf: evt })
-              }}
-            />
+            <div class="hulyTableAttr-header">
+              <span class="label">
+                <Label label={task.string.RootTaskType} />
+              </span>
+              <CheckBox bind:checked={isRootTaskType} disabled={readonly} />
+            </div>
+
+            {#if !isRootTaskType}
+              <TaskTypeRefEditorTable
+                value={taskType.allowedAsChildOf}
+                types={selectableTaskTypes}
+                onChange={(evt) => {
+                  if (taskType === undefined) {
+                    return
+                  }
+                  void client.diffUpdate(taskType, { allowedAsChildOf: evt })
+                }}
+              />
+            {/if}
           </div>
 
             <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">

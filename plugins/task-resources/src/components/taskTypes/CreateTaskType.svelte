@@ -25,7 +25,7 @@
     createState,
     findStatusAttr
   } from '@hcengineering/task'
-  import { DropdownIntlItem, Modal, ModernEditbox, Label, ButtonMenu } from '@hcengineering/ui'
+  import { DropdownIntlItem, Modal, ModernEditbox, Label, ButtonMenu, CheckBox } from '@hcengineering/ui'
   import task from '../../plugin'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import TaskTypeRefEditor from './TaskTypeRefEditor.svelte'
@@ -68,6 +68,13 @@
   let { name, targetClass, statusCategories, statuses, allowedAsChildOf } =
     taskType !== undefined ? { ...taskType } : { ...defaultTaskType(type) }
 
+  let isRootTaskType: boolean = taskType?.isRootTaskType ?? false
+
+  $: if (isRootTaskType) {
+    console.error('[CreateTaskType.svelte] - Clearing allowedAsChildOf')
+    allowedAsChildOf = []
+  }
+
   function findStatusClass (_class: Ref<Class<Task>>): Ref<Class<Status>> | undefined {
     const h = getClient().getHierarchy()
     const attrs = h.getAllAttributes(_class)
@@ -95,6 +102,7 @@
       statusCategories,
       statuses,
       allowedAsChildOf,
+      isRootTaskType,
       statusClass: findStatusClass(ofClass) ?? core.class.Status,
       parent: type._id,
       icon: descr.icon
@@ -171,7 +179,7 @@
   }}
 >
   <div class="hulyModal-content__titleGroup">
-    <ModernEditbox bind:value={name} label={task.string.TaskName} size={'large'} kind={'ghost'} autoFocus />
+    <ModernEditbox bind:value={name} label={task.string.TaskTypeName} size={'large'} kind={'ghost'} autoFocus />
   </div>
   <div class="hulyModal-content__settingsSet">
     {#if taskTypeDescriptors.length > 1}
@@ -195,12 +203,22 @@
         />
       </div>
     {/if}
-    <TaskTypeRefEditor
-      value={allowedAsChildOf}
-      types={taskTypes}
-      onChange={(evt) => {
-        allowedAsChildOf = evt
-      }}
-    />
+
+    <div class="hulyModal-content__settingsSet-line">
+      <span class="label">
+        <Label label={task.string.RootTaskType} />
+      </span>
+      <CheckBox bind:checked={isRootTaskType} />
+    </div>
+
+    {#if !isRootTaskType}
+      <TaskTypeRefEditor
+        value={allowedAsChildOf}
+        types={taskTypes}
+        onChange={(evt) => {
+          allowedAsChildOf = evt
+        }}
+      />
+    {/if}
   </div>
 </Modal>

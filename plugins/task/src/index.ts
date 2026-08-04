@@ -115,6 +115,8 @@ export interface TaskType extends Doc, IconProps {
   // Show parent tasks block in task editor
   showParentTasks?: boolean
 
+  isRootTaskType?: boolean
+
   ofClass: Ref<Class<Task>> // Base class for task
   targetClass: Ref<Class<Task>> // Class or Mixin mixin to hold all user defined attributes.
 
