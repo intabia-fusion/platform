@@ -12,13 +12,8 @@
 <!-- limitations under the License. -->
 
 <script lang="ts">
-  import cardPlugin, { Card } from '@hcengineering/card'
-  import { CardID, Label as CardLabel, Message, MessageType } from '@hcengineering/communication-types'
-  import { SortingOrder, WithLookup } from '@hcengineering/core'
-  import { createMessagesQuery } from '@hcengineering/presentation'
-
-  import chat from '@hcengineering/chat'
-  import { ExtendedMessagePreview, labelsStore } from '@hcengineering/communication-resources'
+  import { Card } from '@hcengineering/card'
+  import { WithLookup } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Button, IconDetailsFilled, IconMoreH, tooltip } from '@hcengineering/ui'
   import { DocNavLink, showMenu } from '@hcengineering/view-resources'
@@ -38,37 +33,6 @@
   export let isCompact = false
   export let isComfortable2 = false
 
-  const messagesQuery = createMessagesQuery()
-
-  let messages: Message[] = []
-
-  // Check if the card is a thread type
-  $: isThreadCard = card._class === chat.masterTag.Thread
-
-  // Only query messages if this is a thread card
-  $: if (isThreadCard) {
-    messagesQuery.query(
-      { cardId: card._id, limit: 3, order: SortingOrder.Descending },
-      (res) => {
-        messages = res
-          .getResult()
-          .filter((msg) => msg.type === MessageType.Text)
-          .reverse()
-      },
-      {
-        attachments: true,
-        reactions: true
-      }
-    )
-  } else {
-    // Clear message data for non-thread cards
-    messages = []
-  }
-
-  function hasNewMessages (labels: CardLabel[], cardId: CardID): boolean {
-    return labels.some((it) => (it.labelId as string) === cardPlugin.label.NewMessages && it.cardId === cardId)
-  }
-
   $: truncatedTitle = card.title.length > 300 ? card.title.substring(0, 300) + '...' : card.title
 
   let isActionsOpened = false
@@ -84,11 +48,6 @@
     <div class="card__body">
       <div class="card__header">
         <div class="flex-presenter">
-          {#if hasNewMessages($labelsStore, card._id)}
-            <div class="flex pr-1">
-              <span class="notifyMarker" />
-            </div>
-          {/if}
           <span
             class="card__title overflow-label"
             use:tooltip={{ label: getEmbeddedLabel(truncatedTitle), textAlign: 'left' }}
@@ -147,13 +106,7 @@
   </div>
   <div class="card__content-preview">
     <CardSection>
-      {#if isThreadCard && messages.length > 0}
-        <div class="content-preview">
-          {#each messages as message}
-            <ExtendedMessagePreview {card} {message} socialId={message.creator} date={message.created} />
-          {/each}
-        </div>
-      {:else if !isThreadCard && card.content}
+      {#if card.content}
         <div class="content-preview extra-padding">
           <ContentPreview {card} maxHeight={'10rem'} />
         </div>
@@ -234,17 +187,6 @@
       min-width: 4rem;
     }
 
-    .notifyMarker {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      border-radius: 50%;
-      background-color: var(--global-higlight-Color);
-
-      min-width: 0.5rem;
-      height: 0.5rem;
-    }
     .tags-container {
       max-width: none;
       flex-grow: 1;

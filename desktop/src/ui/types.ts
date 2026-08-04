@@ -61,7 +61,6 @@ export interface Config {
   CALDAV_SERVER_URL?: string
   EXPORT_URL?: string
   USE_OTP?: string
-  COMMUNICATION_API_ENABLED?: string
   BILLING_URL?: string
   PAYMENT_URL?: string
   PASSWORD_STRICTNESS?: 'very_strict' | 'strict' | 'normal' | 'none'

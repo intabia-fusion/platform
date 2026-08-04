@@ -20,9 +20,7 @@ import { aiBotId, aiBotOperation } from '@hcengineering/model-ai-bot'
 import { attachmentOperation } from '@hcengineering/model-attachment'
 import { calendarOperation } from '@hcengineering/model-calendar'
 import { cardOperation } from '@hcengineering/model-card'
-import { chatId, chatOperation } from '@hcengineering/model-chat'
 import { chunterOperation } from '@hcengineering/model-chunter'
-import { communicationId, communicationOperation } from '@hcengineering/model-communication'
 import { contactOperation } from '@hcengineering/model-contact'
 import { documentsOperation } from '@hcengineering/model-controlled-documents'
 import { coreOperation } from '@hcengineering/model-core'
@@ -32,7 +30,6 @@ import { githubOperation, githubOperationPreTime } from '@hcengineering/model-gi
 import { gmailOperation } from '@hcengineering/model-gmail'
 import { guestOperation } from '@hcengineering/model-guest'
 import { hrOperation } from '@hcengineering/model-hr'
-import { inboxId, inboxOperation } from '@hcengineering/model-inbox'
 import { inventoryOperation } from '@hcengineering/model-inventory'
 import { leadOperation } from '@hcengineering/model-lead'
 import { loveId, loveOperation } from '@hcengineering/model-love'
@@ -102,9 +99,6 @@ export const migrateOperations: [string, MigrateOperation][] = [
   ['testManagement', testManagementOperation],
   ['survey', surveyOperation],
   [aiBotId, aiBotOperation],
-  [chatId, chatOperation],
-  [inboxId, inboxOperation],
   [processId, processOperation],
-  [communicationId, communicationOperation],
   [recorderId, recorderOperation]
 ]

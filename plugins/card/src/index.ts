@@ -222,15 +222,13 @@ const cardPlugin = plugin(cardId, {
     Content: '' as Ref<CardSection>,
     Properties: '' as Ref<CardSection>,
     Relations: '' as Ref<CardSection>,
-    OldMessages: '' as Ref<CardSection>,
-    CommunicationMessages: '' as Ref<CardSection>
+    OldMessages: '' as Ref<CardSection>
   },
   ids: {
     CardWidget: '' as Ref<Doc>,
     CardNotificationGroup: '' as Ref<Doc>
   },
   component: {
-    LabelsPresenter: '' as AnyComponent,
     CardTagColored: '' as AnyComponent,
     CardTagsColored: '' as AnyComponent,
     CardIcon: '' as AnyComponent,

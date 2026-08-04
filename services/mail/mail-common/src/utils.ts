@@ -16,7 +16,7 @@ import TurndownService from 'turndown'
 import sanitizeHtml from 'sanitize-html'
 import { imageSize } from 'image-size'
 
-import { BlobMetadata, MeasureContext } from '@hcengineering/core'
+import { BlobMetadata, generateId, MeasureContext } from '@hcengineering/core'
 import {
   Attachment,
   EmailContact,
@@ -26,9 +26,6 @@ import {
   HulyMessageTypeHeader,
   MailHeader
 } from './types'
-import { MessageExtra, MessageID } from '@hcengineering/communication-types'
-import { CreateMessageEvent } from '@hcengineering/communication-sdk-types'
-import { generateMessageId } from '@hcengineering/communication-shared'
 
 const NAME_EMAIL_PATTERN = /^(?:"?([^"<]+)"?\s*)?<([^>]+)>$/
 const NAME_SEGMENT_REGEX = /[\s,;]+/
@@ -172,14 +169,14 @@ export enum MessageTimeShift {
   Subject = -1
 }
 
-export function getMessageExtra (type: string, synced: boolean): MessageExtra {
+export function getMessageExtra (type: string, synced: boolean): { type: string, mailSynced: boolean } {
   return {
     type,
     mailSynced: synced
   }
 }
 
-export function isSyncedMessage (message: CreateMessageEvent): boolean {
+export function isSyncedMessage (message: any): boolean {
   return message.extra?.mailSynced ?? false
 }
 
@@ -247,11 +244,11 @@ export function getDomainFromEmail (email: string): string {
 
 export function getEmailMessageIdFromHulyId (hulyId: string | undefined, email: string): string {
   const domain = getDomainFromEmail(email)
-  const id = hulyId ?? generateMessageId()
+  const id = hulyId ?? generateId()
   return `<${id}@${domain}>`
 }
 
-export function getHulyIdFromEmailMessageId (messageId: string, email: string): MessageID | undefined {
+export function getHulyIdFromEmailMessageId (messageId: string, email: string): string | undefined {
   const domain = getDomainFromEmail(email)
 
   const cleanMessageId = messageId.replace(/^<|>$/g, '')
@@ -261,11 +258,11 @@ export function getHulyIdFromEmailMessageId (messageId: string, email: string): 
     return undefined
   }
 
-  return cleanMessageId.substring(0, cleanMessageId.length - domainSuffix.length) as MessageID
+  return cleanMessageId.substring(0, cleanMessageId.length - domainSuffix.length)
 }
 
 export function generateNewEmailId (email: string): string {
-  return getEmailMessageIdFromHulyId(generateMessageId(), email)
+  return getEmailMessageIdFromHulyId(generateId(), email)
 }
 
 export function isHulyEmailMessageId (messageId: string, email: string): boolean {

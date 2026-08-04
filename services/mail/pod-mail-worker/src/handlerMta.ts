@@ -19,7 +19,6 @@ import {
   type EmailMessage,
   createMessages,
   getProducer,
-  getMessageExtra,
   isHulyMessage,
   generateNewEmailId,
   MailHeader
@@ -29,7 +28,7 @@ import { createRestTxOperations } from '@hcengineering/api-client'
 
 import { mailServiceToken, baseConfig, kvsClient } from './client'
 import config from './config'
-import { MtaMessage, HulyMessageType } from './types'
+import { MtaMessage } from './types'
 import { getHeader, parseContent } from './utils'
 import { decodeEncodedWords } from './decode'
 
@@ -90,8 +89,8 @@ export async function handleMtaHook (req: Request, res: Response, ctx: MeasureCo
       replyTo: inReplyTo,
       incoming: true,
       modifiedOn: date,
-      sendOn: date,
-      extra: getMessageExtra(HulyMessageType, true)
+      sendOn: date
+      // extra: getMessageExtra(HulyMessageType, true)
     }
 
     const accountClient = getAccountClient(config.accountsUrl, mailServiceToken)

@@ -1237,7 +1237,6 @@ export class TSessionManager implements SessionManager {
                 if (another === -1 && !workspace.maintenance) {
                   void workspace.with(async (pipeline) => {
                     await pipeline.closeSession(ctx, sessionRef.session.sessionId)
-                    // await communicationApi.closeSession(sessionRef.session.sessionId)
                     if (user !== guestAccount && user !== systemAccountUuid) {
                       await this.trySetStatus(
                         workspace.context.newChild('status', {}),

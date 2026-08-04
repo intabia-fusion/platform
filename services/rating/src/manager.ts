@@ -1,16 +1,13 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { type Event } from '@hcengineering/communication-sdk-types'
 import type {
   Class,
   Doc,
   Domain,
   MeasureContext,
   Ref,
-  Space,
   Tx,
   TxCreateDoc,
   TxCUD,
-  TxDomainEvent,
   Version,
   WorkspaceInfoWithStatus,
   WorkspaceUuid
@@ -32,18 +29,6 @@ import { generateToken } from '@hcengineering/server-token'
 import { RatingCalculator } from './calculator'
 import { QueueRatingEvent, ratingEvents, type QueueCalculateMessage, type QueueRatingMessage } from './types'
 import { getIgnoreDomains } from './utils'
-
-// Inner presentation in message queue differs from sdk-types,
-// also date is always filled at the output queue
-export type QueueSourced<T extends Event> = Omit<T, 'date'> & { date: string }
-
-// type IndexableCommunicationEvent =
-//   | QueueSourced<CreateMessageEvent>
-//   | QueueSourced<UpdatePatchEvent>
-//   | QueueSourced<AttachmentPatchEvent>
-//   | QueueSourced<RemovePatchEvent>
-//   | QueueSourced<UpdateCardTypeEvent>
-//   | QueueSourced<RemoveCardEvent>
 
 const ratingTopic = 'rating'
 
@@ -136,7 +121,7 @@ export class WorkspaceManager {
     )
 
     let txMessages: number = 0
-    this.txConsumer = this.opt.queue.createConsumer<TxCUD<Doc> | TxDomainEvent<QueueSourced<Event>>>(
+    this.txConsumer = this.opt.queue.createConsumer<TxCUD<Doc>>(
       this.ctx,
       QueueTopic.Tx,
       this.opt.queue.getClientId(),
@@ -154,10 +139,7 @@ export class WorkspaceManager {
     )
   }
 
-  private async processTxTransactions (
-    m: ConsumerMessage<TxCUD<Doc<Space>> | TxDomainEvent<QueueSourced<Event>>>,
-    control: ConsumerControl
-  ): Promise<void> {
+  private async processTxTransactions (m: ConsumerMessage<TxCUD<Doc>>, control: ConsumerControl): Promise<void> {
     try {
       const ws = m.workspace
 
@@ -165,7 +147,7 @@ export class WorkspaceManager {
         return
       }
       if (TxProcessor.isExtendsCUD(m.value._class)) {
-        const cud = m.value as TxCUD<Doc>
+        const cud = m.value
         const domain = this.sysHierarchy.findDomain(cud.objectClass)
 
         // If in ignore domains, skip

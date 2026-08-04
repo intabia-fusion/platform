@@ -14,8 +14,6 @@
 //
 
 import attachment, { type Attachment } from '@hcengineering/attachment'
-import { Event, MessageEventType } from '@hcengineering/communication-sdk-types'
-import { BlobAttachment } from '@hcengineering/communication-types'
 import drive, { type FileVersion } from '@hcengineering/drive'
 import core, {
   type Blob,
@@ -24,15 +22,12 @@ import core, {
   type Ref,
   type Tx,
   type TxCreateDoc,
-  type TxDomainEvent,
-  type WorkspaceUuid,
-  OperationDomain
+  type WorkspaceUuid
 } from '@hcengineering/core'
 import { PlatformQueueProducer } from '@hcengineering/server-core'
+
 import { BlobSource, BlobSourceType, VideoTranscodeRequest, VideoTranscodeResult } from './types'
 import { WorkspaceClient } from './client'
-
-const COMMUNICATION = 'communication' as OperationDomain
 
 const transcodeIgnoredContentTypes = [
   'video/x-mpegurl', // HLS playlist
@@ -51,8 +46,6 @@ export async function handleTx (
 ): Promise<void> {
   if (tx._class === core.class.TxCreateDoc) {
     await handleCreateDocTx(ctx, workspaceUuid, tx as TxCreateDoc<Doc>, producer)
-  } else if (tx._class === core.class.TxDomainEvent) {
-    await handleCommunicationTx(ctx, workspaceUuid, tx as TxDomainEvent<Event>, producer)
   }
 }
 
@@ -89,38 +82,6 @@ async function handleCreateDocTx (
   }
 }
 
-async function handleCommunicationTx (
-  ctx: MeasureContext,
-  workspaceUuid: WorkspaceUuid,
-  tx: TxDomainEvent<Event>,
-  producer: PlatformQueueProducer<VideoTranscodeRequest>
-): Promise<void> {
-  if (tx.domain === COMMUNICATION && tx.event.type === MessageEventType.AttachmentPatch) {
-    const event = tx.event
-    const source: BlobSource = {
-      source: BlobSourceType.Message,
-      cardId: event.cardId,
-      messageId: event.messageId
-    }
-
-    const attachments = event.operations
-      .filter((it) => it.opcode === 'add' || it.opcode === 'set')
-      .flatMap((it) => it.attachments)
-      .filter((it): it is BlobAttachment => 'blobId' in it.params)
-
-    const messages: VideoTranscodeRequest[] = attachments.map(({ mimeType, params }) => ({
-      workspaceUuid,
-      blobId: params.blobId,
-      contentType: mimeType,
-      source
-    }))
-
-    if (messages.length > 0) {
-      await producer.send(ctx, workspaceUuid, messages)
-    }
-  }
-}
-
 export async function handleTranscodeResult (
   ctx: MeasureContext,
   workspaceUuid: WorkspaceUuid,
@@ -138,7 +99,5 @@ export async function handleTranscodeResult (
 
   if (msg.source !== undefined && msg.source.source === BlobSourceType.Doc) {
     await client.updateBlobMetadata(ctx, msg, metadata)
-  } else if (msg.source !== undefined && msg.source.source === BlobSourceType.Message) {
-    await client.updateCommMetadata(ctx, msg, metadata)
   }
 }
