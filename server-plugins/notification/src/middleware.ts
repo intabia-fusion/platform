@@ -171,8 +171,6 @@ export class NotificationMiddleware extends BaseMiddleware {
         if (currentTimestamp > updateTimestamp) return false
 
         this.activeStates.set(state._id, TxProcessor.updateDoc2Doc(state, updateTx))
-      } else {
-        this.throwForbidden()
       }
     } else if (tx._class === core.class.TxRemoveDoc && tx.objectClass === notification.class.ReadState) {
       if (!this.isSystemAccess(ctx)) {
