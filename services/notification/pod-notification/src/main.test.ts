@@ -19,6 +19,19 @@ import notification, { type PushSubscription } from '@hcengineering/notification
 
 import { sendPushToSubscription } from './main'
 
+jest.mock('./config', () => ({
+  default: {
+    Source: 'test-source',
+    PushPublicKey: 'test-key',
+    PushPrivateKey: 'test-private-key',
+    PushSubject: 'mailto:test@example.com',
+    TTL: 86400,
+    ServiceId: 'web-push-service',
+    AccountsUrl: 'http://localhost:3000',
+    Secret: 'secret'
+  }
+}))
+
 jest.mock('web-push', () => {
   class WebPushError extends Error {
     statusCode: number
