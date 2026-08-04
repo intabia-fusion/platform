@@ -88,7 +88,7 @@ export const main = async (): Promise<void> => {
         error: (message: string, data?: any) => {
           // If not verbose logging Keep message/status, drop raw response body which may echo payload.
           metricsContext.error(message, {
-            ...(tbankVerboseLogging ? data : { message: data?.message, status: data?.status })
+            ...(tbankVerboseLogging ? data : { reason: data?.reason, status: data?.status })
           })
         }
       }
