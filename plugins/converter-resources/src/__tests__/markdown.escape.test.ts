@@ -106,9 +106,7 @@ describe('markdown/escape', () => {
     })
 
     it('preserves markdown link and escapes pipes inside text and URL', () => {
-      expect(escapeMarkdownTableCellContent('[a|b](http://example.com/x|y)')).toBe(
-        '[a\\|b](http://example.com/x\\|y)'
-      )
+      expect(escapeMarkdownTableCellContent('[a|b](http://example.com/x|y)')).toBe('[a\\|b](http://example.com/x\\|y)')
     })
 
     it('escapes pipes even when value contains escaped characters', () => {
