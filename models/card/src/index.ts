@@ -238,12 +238,6 @@ const listConfig: (BuildModelKey | string)[] = [
     displayProps: { optional: true }
   },
   {
-    key: '',
-    presenter: card.component.LabelsPresenter,
-    label: card.string.Labels,
-    props: { fullSize: true }
-  },
-  {
     key: 'modifiedOn',
     displayProps: { fixed: 'right', key: 'modifiedOn', dividerBefore: true }
   },
@@ -290,12 +284,6 @@ const favoritesViewletConfig: (BuildModelKey | string)[] = [
       showType: false
     },
     presenter: card.component.CardTagsColored
-  },
-  {
-    key: '$lookup.attachedTo',
-    presenter: card.component.LabelsPresenter,
-    label: card.string.Labels,
-    props: { fullSize: true, key: 'labels' }
   },
   {
     key: '$lookup.attachedTo.parent'
@@ -362,12 +350,6 @@ export function createSystemType (
         props: {
           showType: false
         }
-      },
-      {
-        key: '',
-        presenter: card.component.LabelsPresenter,
-        label: card.string.Labels,
-        props: { fullSize: true }
       },
       'modifiedOn'
     ]

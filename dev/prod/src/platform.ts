@@ -403,6 +403,7 @@ function configureI18n(): void {
     achievementId,
     async (lang: string) => await import(`@hcengineering/achievement-assets/lang/${lang}.json`)
   )
+  addStringsLoader(emojiId, async (lang: string) => await import(`@hcengineering/emoji-assets/lang/${lang}.json`))
   addStringsLoader(billingId, async (lang: string) => await import(`@hcengineering/billing-assets/lang/${lang}.json`))
   addStringsLoader(adminId, async (lang: string) => await import(`@hcengineering/admin-assets/lang/${lang}.json`))
   addStringsLoader(

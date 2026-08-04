@@ -229,7 +229,6 @@ const cardPlugin = plugin(cardId, {
     CardNotificationGroup: '' as Ref<Doc>
   },
   component: {
-    LabelsPresenter: '' as AnyComponent,
     CardTagColored: '' as AnyComponent,
     CardTagsColored: '' as AnyComponent,
     CardIcon: '' as AnyComponent,
