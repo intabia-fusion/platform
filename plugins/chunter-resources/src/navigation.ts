@@ -383,15 +383,10 @@ export async function openThreadInSidebar (
       const targetDocUri = encodeObjectURI(targetDocLinkId, message.attachedToClass)
       const pathCopy = [...loc.path]
       pathCopy[3] = targetDocUri
-      pathCopy[4] = message._id
-      pathCopy.length = 5
-      allowedPath = pathCopy.join('/')
+      allowedPath = pathCopy.slice(0, 4).join('/')
     }
   } else {
-    if (loc.path[2] === chunterId || loc.path[2] === notificationId) {
-      loc.path[4] = message._id
-    }
-    allowedPath = loc.path.join('/')
+    allowedPath = loc.path.slice(0, 4).join('/')
   }
 
   const tabsToClose = currentTabs.filter((t) => t.isPinned !== true && t.allowedPath === allowedPath).map((t) => t.id)

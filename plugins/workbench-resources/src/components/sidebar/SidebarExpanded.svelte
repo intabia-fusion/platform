@@ -58,9 +58,9 @@
 
   function closeWrongTabs (loc: Location): void {
     if (widget === undefined) return
+    const path = loc.path.join('/')
     for (const tab of tabs) {
       if (tab.allowedPath !== undefined && !tab.isPinned) {
-        const path = loc.path.join('/')
         if (!path.startsWith(tab.allowedPath)) {
           void handleTabClose(tab.id, widget)
         }
