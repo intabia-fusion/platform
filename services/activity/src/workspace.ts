@@ -46,12 +46,13 @@ import {
   LowLevelMiddleware,
   ModelMiddleware
 } from '@hcengineering/middleware'
-import activity, { type DocUpdateMessage } from '@hcengineering/activity'
+import activity, { type DocUpdateMessage, type VotePollAction } from '@hcengineering/activity'
 
 import config from './config'
 import WsCache, { CACHE_TTL_MS } from './cache'
 import { type Client } from './types'
 import { ActivityMessagesHandler } from './activity'
+import { VotePollHandler } from './poll'
 
 class Workspace {
   private readonly cache: WsCache
@@ -93,7 +94,14 @@ class Workspace {
 
       if (this.hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) return
 
-      const res: TxCUD<Doc>[] = await ActivityMessagesHandler(tx, this.getClient(), this.cache)
+      const res: TxCUD<Doc>[] = []
+      if (this.hierarchy.isDerived(tx.objectClass, activity.class.VotePollAction)) {
+        const voteTxes = await VotePollHandler(tx as TxCUD<VotePollAction>, this.getClient(), this.cache)
+        console.log(voteTxes)
+        res.push(...voteTxes)
+      } else {
+        res.push(...(await ActivityMessagesHandler(tx, this.getClient(), this.cache)))
+      }
 
       if (res.length > 0) {
         this.lastTxDate = tx.createdOn ?? tx.modifiedOn

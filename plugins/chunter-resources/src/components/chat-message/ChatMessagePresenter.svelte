@@ -18,6 +18,7 @@
   import {
     ActivityDocLink,
     ActivityMessageTemplate,
+    AppletsList,
     MessageInlineAction,
     editingMessageStore
   } from '@hcengineering/activity-resources'
@@ -332,6 +333,7 @@
             <div class="mt-2" />
           {/if}
           <AttachmentDocList {value} {attachments} imageSize={attachmentImageSize} {videoPreload} {isOwn} />
+          <AppletsList {value} />
           <ForwardedMessagePresenter parent={value} {object} />
         </div>
       {:else if object}

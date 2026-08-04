@@ -72,6 +72,7 @@
     "@hcengineering/storage": "workspace:^0.7.17",
     "@hcengineering/text-core": "workspace:^0.7.18",
     "@hcengineering/server-activity": "workspace:^0.7.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "lru-cache": "^11.1.0"
   }
 }

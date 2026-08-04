@@ -25,6 +25,11 @@ import ActivityReferencePresenter from './components/activity-reference/Activity
 import DocUpdateMessagePreview from './components/doc-update-message/DocUpdateMessagePreview.svelte'
 import ActivityReferencePreview from './components/activity-reference/ActivityReferencePreview.svelte'
 import ActivityInfoMessagePreview from './components/activity-info-message/ActivityInfoMessagePreview.svelte'
+import PollPresenter from './components/poll/PollPresenter.svelte'
+import CreatePoll from './components/poll/CreatePoll.svelte'
+import PollPreview from './components/poll/PollPreview.svelte'
+import AppletPreview from './components/input/AppletPreview.svelte'
+import AppletsList from './components/applet/AppletsList.svelte'
 
 import { attributesFilter, pinnedFilter, referencesFilter } from './activityMessagesUtils'
 import { updateReferences } from './references'
@@ -42,12 +47,15 @@ import {
   activityMessageTooltipProvider
 } from './utils'
 
+import { getPollTitle, getPollSummary, createPoll } from './poll'
+
 export * from './types'
 export * from './activity'
 export * from './utils'
 export * from './activityMessagesUtils'
 export * from './references'
 export * from './stores'
+export * from './poll'
 
 export { default as Reactions } from './components/reactions/Reactions.svelte'
 export { default as ActivityMessageTemplate } from './components/activity-message/ActivityMessageTemplate.svelte'
@@ -65,6 +73,11 @@ export { default as ActivityMessagePreview } from './components/activity-message
 // export { default as MessageTimestamp } from './components/MessageTimestamp.svelte'
 export { default as BaseMessagePreview } from './components/activity-message/BaseMessagePreview.svelte'
 export { default as BasePreview } from './components/BasePreview.svelte'
+export { default as PollPresenter } from './components/poll/PollPresenter.svelte'
+export { default as CreatePoll } from './components/poll/CreatePoll.svelte'
+export { default as PollPreview } from './components/poll/PollPreview.svelte'
+export { default as AppletPreview } from './components/input/AppletPreview.svelte'
+export { default as AppletsList } from './components/applet/AppletsList.svelte'
 
 export default async (): Promise<Resources> => ({
   component: {
@@ -77,7 +90,12 @@ export default async (): Promise<Resources> => ({
     ActivityReferencePresenter,
     DocUpdateMessagePreview,
     ActivityReferencePreview,
-    ActivityInfoMessagePreview
+    ActivityInfoMessagePreview,
+    PollPresenter,
+    CreatePoll,
+    PollPreview,
+    AppletPreview,
+    AppletsList
   },
   filter: {
     AttributesFilter: attributesFilter,
@@ -90,7 +108,10 @@ export default async (): Promise<Resources> => ({
     CanPinMessage: canPinMessage,
     CanUnpinMessage: canUnpinMessage,
     ShouldScrollToActivity: shouldScrollToActivity,
-    ActivityMessageTooltipProvider: activityMessageTooltipProvider
+    ActivityMessageTooltipProvider: activityMessageTooltipProvider,
+    GetPollTitleFn: getPollTitle,
+    GetPollSummaryFn: getPollSummary,
+    CreatePollFn: createPoll
   },
   backreference: {
     Update: updateReferences

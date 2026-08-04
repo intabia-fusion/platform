@@ -38,6 +38,18 @@ import { Preference } from '@hcengineering/preference'
 import type { AnyComponent, ComponentExtensionId, LabelAndProps } from '@hcengineering/ui/src/types'
 import type { Action } from '@hcengineering/view'
 
+import type {
+  Applet,
+  AppletInstance,
+  AppletGetTitleFnResource,
+  AppletGetSummaryFnResource,
+  AppletCreateFnResource
+} from './applet'
+import type { Poll, PollAnswer, VotePollAction } from './poll'
+
+export * from './applet'
+export * from './poll'
+
 /**
  * @public
  */
@@ -53,6 +65,7 @@ export interface ActivityMessage extends AttachedDoc {
 
   replies?: number
   reactions?: number
+  applets?: number
   editedOn?: Timestamp
 
   forwardedMessage?: Ref<ActivityMessage>
@@ -312,15 +325,12 @@ export default plugin(activityId, {
     SavedMessage: '' as Ref<Class<SavedMessage>>,
     ActivityReference: '' as Ref<Class<ActivityReference>>,
     ReplyProvider: '' as Ref<Class<ReplyProvider>>,
-    UserMentionInfo: '' as Ref<Class<UserMentionInfo>>
-  },
-  icon: {
-    Activity: '' as Asset,
-    Emoji: '' as Asset,
-    Bookmark: '' as Asset,
-    BookmarkFilled: '' as Asset,
-    Forward: '' as Asset,
-    ReplyTo: '' as Asset
+    UserMentionInfo: '' as Ref<Class<UserMentionInfo>>,
+    Applet: '' as Ref<Class<Applet>>,
+    AppletInstance: '' as Ref<Class<AppletInstance>>,
+    Poll: '' as Ref<Class<Poll>>,
+    PollAnswer: '' as Ref<Class<PollAnswer>>,
+    VotePollAction: '' as Ref<Class<VotePollAction>>
   },
   string: {
     Activity: '' as IntlString,
@@ -378,7 +388,55 @@ export default plugin(activityId, {
     ForwardedMessage: '' as IntlString,
     ForwardedMessageFrom: '' as IntlString,
     Forward: '' as IntlString,
-    Reply: '' as IntlString
+    Reply: '' as IntlString,
+    Applet: '' as IntlString,
+    Applets: '' as IntlString,
+    Poll: '' as IntlString,
+    Polls: '' as IntlString,
+    CreatePoll: '' as IntlString,
+    EditPoll: '' as IntlString,
+    AnonymousVoting: '' as IntlString,
+    AnonymousQuiz: '' as IntlString,
+    MultipleChoice: '' as IntlString,
+    QuizMode: '' as IntlString,
+    Quiz: '' as IntlString,
+    Question: '' as IntlString,
+    AskQuestion: '' as IntlString,
+    PollOptions: '' as IntlString,
+    Option: '' as IntlString,
+    VotesCount: '' as IntlString,
+    PollResults: '' as IntlString,
+    VotedParticipants: '' as IntlString,
+    Vote: '' as IntlString,
+    ShowResults: '' as IntlString,
+    RetractVote: '' as IntlString,
+    OpenPoll: '' as IntlString,
+    StartsAt: '' as IntlString,
+    EndsAt: '' as IntlString,
+    StartsTomorrow: '' as IntlString,
+    EndsTomorrow: '' as IntlString,
+    Ended: '' as IntlString,
+    StartTime: '' as IntlString,
+    EndTime: '' as IntlString,
+    Type: '' as IntlString,
+    Label: '' as IntlString,
+    Icon: '' as IntlString,
+    Description: '' as IntlString,
+    State: '' as IntlString,
+    Settings: '' as IntlString,
+    Options: '' as IntlString,
+    StaticConfig: '' as IntlString,
+    DynamicConfig: '' as IntlString,
+    Data: '' as IntlString
+  },
+  icon: {
+    Activity: '' as Asset,
+    Emoji: '' as Asset,
+    Bookmark: '' as Asset,
+    BookmarkFilled: '' as Asset,
+    Forward: '' as Asset,
+    ReplyTo: '' as Asset,
+    Poll: '' as Asset
   },
   component: {
     Activity: '' as AnyComponent,
@@ -390,7 +448,14 @@ export default plugin(activityId, {
     ActivityReferencePresenter: '' as AnyComponent,
     DocUpdateMessagePreview: '' as AnyComponent,
     ActivityReferencePreview: '' as AnyComponent,
-    ActivityInfoMessagePreview: '' as AnyComponent
+    ActivityInfoMessagePreview: '' as AnyComponent,
+    PollPresenter: '' as AnyComponent,
+    CreatePoll: '' as AnyComponent,
+    PollPreview: '' as AnyComponent,
+    AppletPreview: '' as AnyComponent
+  },
+  applet: {
+    Poll: '' as Ref<Applet>
   },
   ids: {
     AddReactionNotification: '' as Ref<any>
@@ -402,7 +467,10 @@ export default plugin(activityId, {
     ShouldScrollToActivity: '' as Resource<() => boolean>,
     ActivityMessageTooltipProvider: '' as Resource<
     (client: Client, doc?: Doc | null) => Promise<LabelAndProps | undefined>
-    >
+    >,
+    GetPollTitleFn: '' as AppletGetTitleFnResource,
+    GetPollSummaryFn: '' as AppletGetSummaryFnResource,
+    CreatePollFn: '' as AppletCreateFnResource
   },
   backreference: {
     // Update list of back references

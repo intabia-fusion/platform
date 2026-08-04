@@ -80,6 +80,7 @@
   export let placeholder: IntlString | undefined = undefined
   export let disableSubmit = false
   export let clearOnSubmit = true
+  export let hasHeader: boolean | undefined = undefined
   export let extraActions: RefAction[] = []
   export let boundary: HTMLElement | undefined = undefined
   export let skipAttachmentsPreload = false
@@ -547,7 +548,7 @@
             ]),
         ...(disableAttachments ? [] : uploadActions)
       ]}
-      showHeader={attachments.size > 0 || progress}
+      showHeader={attachments.size > 0 || progress || (hasHeader ?? $$slots.header)}
       haveAttachment={attachments.size > 0}
       on:focus
       on:blur
@@ -562,7 +563,7 @@
       }}
     >
       <div slot="header">
-        {#if (attachments.size > 0 || progress) && !disableAttachments}
+        {#if (attachments.size > 0 || progress || (hasHeader ?? $$slots.header)) && !disableAttachments}
           <div class="flex-row-center list scroll-divider-color">
             {#if progress}
               <div class="flex p-3">
@@ -581,6 +582,7 @@
                 />
               </div>
             {/each}
+            <slot name="header" />
           </div>
         {/if}
       </div>
