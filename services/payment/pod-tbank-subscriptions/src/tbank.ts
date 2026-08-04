@@ -276,9 +276,11 @@ export default class TbankPayments {
   }
 }
 
-function describeFetchError (err: any): string {
+export function describeFetchError (err: any): string {
   const parts: string[] = [err?.message ?? String(err)]
-  for (let cause = err?.cause; cause != null; cause = cause.cause) {
+  // depth cap guards against a self-referencing cause chain
+  let cause = err?.cause
+  for (let depth = 0; cause != null && depth < 5; depth++, cause = cause.cause) {
     parts.push([cause.code, cause.message ?? String(cause)].filter(Boolean).join(' '))
   }
   return parts.join(' <- ')
