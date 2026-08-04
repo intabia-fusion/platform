@@ -15,26 +15,21 @@
 
 <script lang="ts">
   import card, { Card, CardSection, CardViewDefaults } from '@hcengineering/card'
-  import communication from '@hcengineering/communication'
-  import { NotificationContext } from '@hcengineering/communication-types'
   import { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { Heading } from '@hcengineering/text-editor'
   import { TableOfContents } from '@hcengineering/text-editor-resources'
-  import { Component, Loading, ModernButton, Scroller } from '@hcengineering/ui'
+  import { Component, Loading, Scroller } from '@hcengineering/ui'
   import { SvelteComponent, tick } from 'svelte'
 
-  import { getMetadata } from '@hcengineering/platform'
   import { getCardSections, getCardToc } from '../card'
   import { CardSectionAction } from '../types'
 
   export let doc: Card
-  export let context: NotificationContext | undefined = undefined
-  export let isContextLoaded: boolean = false
   export let readonly: boolean = false
   export let scrollDiv: HTMLDivElement | undefined | null = undefined
 
-  const messagesId = communication.ids.CardMessagesSection
+  const messagesId = card.section.OldMessages
   const client = getClient()
 
   let selectedToc: Heading | undefined = undefined
@@ -65,7 +60,7 @@
     .classHierarchyMixin(doc._class, card.mixin.CardViewDefaults)
   $: defaults = client.getHierarchy().classHierarchyMixin(doc._class, card.mixin.CardViewDefaults)
 
-  let renderTopSections = defaults?.defaultSection !== communication.ids.CardMessagesSection
+  let renderTopSections = defaults?.defaultSection !== card.section.OldMessages
 
   export function scrollDown (): void {
     if (scrollDiv == null) return
@@ -222,8 +217,6 @@
   const onRenderTopChange = (active: boolean): void => {
     renderTopSections = active
   }
-
-  const bottomPadding = getMetadata(communication.metadata.Enabled) === true ? 'var(--spacing-3)' : undefined
 </script>
 
 <div class="hulyComponent-content__container columns relative">
@@ -248,7 +241,6 @@
     <Scroller
       padding="0"
       {hideBar}
-      {bottomPadding}
       disablePointerEventsOnScroll
       disableOverscroll
       bind:divScroll={scrollDiv}
@@ -270,8 +262,6 @@
                 hidden: !renderTopSections,
                 isDefault: defaults?.defaultSection === section._id,
                 active: selectedToc?.group === section._id,
-                context,
-                isContextLoaded,
                 onRenderTopChange
               }}
               on:loaded={() => {
@@ -288,17 +278,6 @@
         {/each}
       </div>
     </Scroller>
-    {#if toc.length > 0 && (bottomOffset > 400 || canScrollDown()) && selectedToc?.group === messagesId}
-      <div class="down-button">
-        <ModernButton
-          label={communication.string.ArrowDownMessages}
-          shape="round"
-          size="small"
-          kind="primary"
-          on:click={handleScrollDown}
-        />
-      </div>
-    {/if}
   </div>
 </div>
 

@@ -13,14 +13,11 @@
 // limitations under the License.
 //
 
-import { MeasureContext, PersonId, Ref, Space, TxOperations, WorkspaceUuid, generateId } from '@hcengineering/core'
+import { MeasureContext, PersonId, Ref, Space, TxOperations, WorkspaceUuid } from '@hcengineering/core'
 import { type Card } from '@hcengineering/card'
-import chat from '@hcengineering/chat'
 import mail from '@hcengineering/mail'
-import { SyncMutex } from './mutex'
-import { MessageTimeShift, normalizeEmail } from './utils'
 
-const createMutex = new SyncMutex()
+import { normalizeEmail } from './utils'
 
 /**
  * Caches channel references to reduce calls to create mail channels
@@ -113,55 +110,56 @@ export class ChannelCache {
     email: string,
     personId: PersonId
   ): Promise<Ref<Card>> {
-    const normalizedEmail = normalizeEmail(email)
-    const mutexKey = `channel:${this.workspace}:${space}:${normalizedEmail}`
-    const releaseLock = await createMutex.lock(mutexKey)
-
-    try {
-      // Double-check that channel doesn't exist after acquiring lock
-      const existingChannel = await this.client.findOne(mail.tag.MailThread, { title: normalizedEmail })
-      if (existingChannel != null) {
-        this.ctx.info('Using existing channel (found after mutex lock)', {
-          me: normalizedEmail,
-          space,
-          channel: existingChannel._id
-        })
-        return existingChannel._id as Ref<Card>
-      }
-
-      // Create new channel if it doesn't exist
-      this.ctx.info('Creating new channel', { me: normalizedEmail, space, personId })
-      const channelId = await this.client.createDoc(
-        chat.masterTag.Thread,
-        space,
-        {
-          title: normalizedEmail,
-          private: true,
-          members: participants,
-          archived: false,
-          createdBy: personId,
-          modifiedBy: personId
-        },
-        generateId(),
-        Date.now() + MessageTimeShift.Channel,
-        personId
-      )
-
-      this.ctx.info('Creating mixin', { me: normalizedEmail, space, personId, channelId })
-      await this.client.createMixin(
-        channelId,
-        chat.masterTag.Thread,
-        space,
-        mail.tag.MailThread,
-        {},
-        Date.now() + MessageTimeShift.MailTag,
-        personId
-      )
-
-      return channelId as Ref<Card>
-    } finally {
-      releaseLock()
-    }
+    // const normalizedEmail = normalizeEmail(email)
+    // const mutexKey = `channel:${this.workspace}:${space}:${normalizedEmail}`
+    // const releaseLock = await createMutex.lock(mutexKey)
+    //
+    // try {
+    //   // Double-check that channel doesn't exist after acquiring lock
+    //   const existingChannel = await this.client.findOne(mail.tag.MailThread, { title: normalizedEmail })
+    //   if (existingChannel != null) {
+    //     this.ctx.info('Using existing channel (found after mutex lock)', {
+    //       me: normalizedEmail,
+    //       space,
+    //       channel: existingChannel._id
+    //     })
+    //     return existingChannel._id as Ref<Card>
+    //   }
+    //
+    //   // Create new channel if it doesn't exist
+    //   this.ctx.info('Creating new channel', { me: normalizedEmail, space, personId })
+    //   const channelId = await this.client.createDoc(
+    //     card.class.Card,
+    //     space,
+    //     {
+    //       title: normalizedEmail,
+    //       private: true,
+    //       members: participants,
+    //       archived: false,
+    //       createdBy: personId,
+    //       modifiedBy: personId
+    //     },
+    //     generateId(),
+    //     Date.now() + MessageTimeShift.Channel,
+    //     personId
+    //   )
+    //
+    //   this.ctx.info('Creating mixin', { me: normalizedEmail, space, personId, channelId })
+    //   await this.client.createMixin(
+    //     channelId,
+    //     card.class.Card,
+    //     space,
+    //     mail.tag.MailThread,
+    //     {},
+    //     Date.now() + MessageTimeShift.MailTag,
+    //     personId
+    //   )
+    //
+    //   return channelId as Ref<Card>
+    // } finally {
+    //   releaseLock()
+    // }
+    return '' as Ref<Card>
   }
 }
 

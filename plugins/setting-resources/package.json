@@ -60,8 +60,6 @@
     "@hcengineering/templates": "workspace:^0.7.0",
     "@hcengineering/workbench": "workspace:^0.7.0",
     "@hcengineering/workbench-resources": "workspace:^0.7.0",
-    "@hcengineering/communication": "workspace:^0.7.0",
-    "@hcengineering/chat": "workspace:^0.7.0",
     "@hcengineering/integration-client": "workspace:^0.7.0",
     "@hcengineering/rank": "workspace:^0.7.17",
     "@hcengineering/rating": "workspace:^0.7.0"

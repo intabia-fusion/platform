@@ -24,7 +24,6 @@ import {
   EmailMessage,
   getProducer,
   MailRecipient,
-  getMessageExtra,
   MailHeader,
   SyncOptions
 } from '@hcengineering/mail-common'
@@ -35,7 +34,6 @@ import { IMessageManager } from '../types'
 import config from '../../config'
 import { AttachmentHandler } from '../attachments'
 import { decode64 } from '../../base64'
-import { GmailMessageType } from '../../types'
 
 export class MessageManagerV2 implements IMessageManager {
   private wsInfo: WorkspaceLoginInfo | undefined = undefined
@@ -150,7 +148,7 @@ function convertMessage (message: GaxiosResponse<gmail_v1.Schema$Message>, me: s
     to,
     incoming,
     subject: getHeaderValue(message.data.payload, 'Subject') ?? '',
-    sendOn: date.getTime(),
-    extra: getMessageExtra(GmailMessageType, true)
+    sendOn: date.getTime()
+    // extra: getMessageExtra(GmailMessageType, true)
   }
 }

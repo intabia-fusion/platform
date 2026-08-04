@@ -334,7 +334,6 @@ services:
       - STREAM_URL=http://localhost:8087/_stream/recording
       - PAYMENT_URL=http://localhost:8087/_payment
       - BILLING_URL=http://localhost:8087/_billing
-      - COMMUNICATION_API_ENABLED=false
       # - BACKUP_URL=http://localhost:8087/_backup/api/backup
       - EXCLUDED_APPLICATIONS_FOR_ANONYMOUS=["chunter", "notification"]
       # - DISABLE_SIGNUP=true
@@ -397,11 +396,9 @@ services:
       - LAST_NAME_FIRST=true
       - BRANDING_PATH=/var/cfg/branding.json
       - AI_BOT_URL=http://aibot:4010
-      - COMMUNICATION_TIME_LOGGING_ENABLED=true
       - RATE_LIMIT_MAX=25000 # 250 requests per 30 seconds
       - RATE_LIMIT_WINDOW=3000
       - FILES_URL=http://localhost:8087/_datalake/blob/:workspace/:blobId/:filename
-      - COMMUNICATION_API_ENABLED=false
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
       - HYLYLAKE_URL=http://love:8096
       - AI_BOT_URL=http://aibot:4010
@@ -780,24 +777,6 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
     restart: unless-stopped
-  #  translate:
-  #    image: intabiafusion/translate
-  #    extra_hosts:
-  #      - 'host.docker.internal:host-gateway'
-  #    depends_on:
-  #      redpanda:
-  #        condition: service_started
-  #      account:
-  #        condition: service_started
-  #    environment:
-  #      - SECRET=secret
-  #      - ACCOUNTS_URL=http://account:3000
-  #      - HULYLAKE_URL=http://love:8096
-  #      - QUEUE_CONFIG=${QUEUE_CONFIG}
-  #      - QUEUE_REGION=
-  #      - OPENAI_API_KEY=
-  #      - BILLING_URL=http://billing:4041
-  #    restart: unless-stopped
   # backup:
   #   image: intabiafusion/backup
   #   extra_hosts:
@@ -867,8 +846,6 @@ services:
       - DB_URL=${DB_URL_PG}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - ACCOUNTS_URL=http://account:3000
-      - COMMUNICATION_TIME_LOGGING_ENABLED=true
-      - COMMUNICATION_API_ENABLED=false
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
       - HYLYLAKE_URL=http://love:8096
     restart: unless-stopped

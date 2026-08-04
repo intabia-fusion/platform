@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Api as CommunicationApi } from '@hcengineering/communication-server'
 import core, {
   type Class,
   type Doc,
@@ -102,15 +101,6 @@ export class WorkspaceIndexer {
     const token = generateToken(systemAccountUuid, workspace.uuid, { service: 'fulltext' })
     const transactorEndpoint = await endpointProvider(token)
 
-    let communicationApi: CommunicationApi | undefined
-    if (process.env.COMMUNICATION_API_ENABLED === 'true') {
-      communicationApi = await CommunicationApi.create(ctx, workspace.uuid, dbURL, {
-        broadcast: () => {},
-        enqueue: () => {},
-        registerAsyncRequest: () => {}
-      })
-    }
-
     result.fulltext = new FullTextIndexPipeline(
       ftadapter,
       defaultAdapter,
@@ -150,7 +140,6 @@ export class WorkspaceIndexer {
         }
       },
       hulylake,
-      communicationApi,
       listener
     )
     return result

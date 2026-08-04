@@ -13,15 +13,15 @@
 
 <script lang="ts">
   import card, { Card, CardSpace, MasterTag } from '@hcengineering/card'
-  import presentation, { getClient, getCommunicationClient, SpaceSelector } from '@hcengineering/presentation'
+  import presentation, { getClient, SpaceSelector } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
-  import core, { Data, generateId, Ref, Markup, notEmpty, getCurrentAccount } from '@hcengineering/core'
+  import core, { Data, generateId, Ref, Markup, getCurrentAccount } from '@hcengineering/core'
   import { getResource, translate, getEmbeddedLabel } from '@hcengineering/platform'
   import { Label, Modal, ModernEditbox, languageStore, showPopup, Component } from '@hcengineering/ui'
   import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
   import { EmptyMarkup } from '@hcengineering/text'
   import { Employee, getCurrentEmployee } from '@hcengineering/contact'
-  import { SelectUsersPopup, employeeByIdStore, permissionsStore } from '@hcengineering/contact-resources'
+  import { SelectUsersPopup, permissionsStore } from '@hcengineering/contact-resources'
   import view from '@hcengineering/view'
 
   import { createCard } from '../utils'
@@ -39,7 +39,7 @@
   const dispatch = createEventDispatcher()
   const client = getClient()
   const hierarchy = client.getHierarchy()
-  const communicationClient = getCommunicationClient()
+
   const me = getCurrentEmployee()
   const _id = generateId<Card>()
 
@@ -56,18 +56,6 @@
   let collaborators: Ref<Employee>[] = [me]
 
   let creating = false
-
-  async function addCollaborators (): Promise<void> {
-    if (type == null) return
-    const accounts = collaborators
-      .filter((it) => it !== me)
-      .map((it) => $employeeByIdStore.get(it)?.personUuid)
-      .filter(notEmpty)
-
-    if (accounts.length > 0) {
-      await communicationClient.addCollaborators(_id, type, accounts)
-    }
-  }
 
   async function okAction (): Promise<void> {
     if (_space === undefined || type == null) return
@@ -88,7 +76,6 @@
       }
 
       await createCard(type, _space, data, description, _id)
-      await addCollaborators()
 
       dispatch('close', _id)
     } finally {

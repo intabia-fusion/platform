@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Api as CommunicationApi } from '@hcengineering/communication-server'
 import contact, { type Person, type SocialIdentity } from '@hcengineering/contact'
 import core, {
   type AccountUuid,
@@ -77,8 +76,6 @@ export class RatingCalculator {
 
   operations: number = 0
   closing: boolean = false
-
-  communicationApi: CommunicationApi | undefined
 
   modifiedPersons = new Map<AccountUuid, PersonRating>()
 
@@ -173,13 +170,6 @@ export class RatingCalculator {
     const defaultAdapter = result.pipeline.context.adapterManager?.getDefaultAdapter()
     if (defaultAdapter === undefined) {
       throw new PlatformError(unknownError('Default adapter should be set'))
-    }
-    if (process.env.COMMUNICATION_API_ENABLED === 'true') {
-      result.communicationApi = await CommunicationApi.create(ctx, workspace.uuid, dbURL, {
-        broadcast: () => {},
-        enqueue: () => {},
-        registerAsyncRequest: () => {}
-      })
     }
 
     // Initialize a workspace socialId -> accountUuid map
@@ -835,7 +825,6 @@ export class RatingCalculator {
     if (this.operations === 0) {
       try {
         await this.pipeline.close()
-        await this.communicationApi?.close()
       } catch (err: any) {
         console.error('error during closing', { err })
       }

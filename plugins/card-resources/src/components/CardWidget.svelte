@@ -15,8 +15,7 @@
 <script lang="ts">
   import { closeWidget } from '@hcengineering/workbench-resources'
   import { Widget, WidgetTab } from '@hcengineering/workbench'
-  import { createQuery, createNotificationContextsQuery, getClient } from '@hcengineering/presentation'
-  import { NotificationContext } from '@hcengineering/communication-types'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
   import { Card } from '@hcengineering/card'
   import { Ref } from '@hcengineering/core'
@@ -34,12 +33,9 @@
   export let width: string
 
   const query = createQuery()
-  const contextsQuery = createNotificationContextsQuery()
   const dispatch = createEventDispatcher()
 
   let doc: Card | undefined = undefined
-  let context: NotificationContext | undefined = undefined
-  let isContextLoaded = false
 
   let title: string = ''
   let isTitleEditing = false
@@ -64,12 +60,6 @@
       },
       { limit: 1 }
     )
-
-  $: tab?.id &&
-    contextsQuery.query({ cardId: tab.id as Ref<Card>, limit: 1 }, (res) => {
-      context = res.getResult()[0]
-      isContextLoaded = true
-    })
 
   async function saveTitle (ev: Event): Promise<void> {
     ev.preventDefault()
@@ -140,7 +130,7 @@
       </svelte:fragment>
     </Header>
     {#if doc}
-      <EditCardNewContent _id={doc._id} {doc} {context} {isContextLoaded} />
+      <EditCardNewContent _id={doc._id} {doc} />
     {/if}
   </div>
 {/if}

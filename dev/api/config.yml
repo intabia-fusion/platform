@@ -17,7 +17,6 @@ roots:
   - "@hcengineering/chunter"
   - "@hcengineering/contact"
   - "@hcengineering/card"
-  - "@hcengineering/chat"
   - "@hcengineering/client"
   - "@hcengineering/client-resources"
   - "@hcengineering/api-client"

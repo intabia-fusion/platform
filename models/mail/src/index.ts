@@ -13,26 +13,7 @@
 // limitations under the License.
 //
 
-import core, { ClassifierKind } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
-import chat from '@hcengineering/chat'
-
-import card from '@hcengineering/card'
-import mail from '@hcengineering/mail'
-
 export { mailId } from '@hcengineering/mail'
 
-export function createModel (builder: Builder): void {
-  // Create mail tags for Thread and Channel master tags
-  builder.createDoc(
-    card.class.Tag,
-    core.space.Model,
-    {
-      extends: chat.masterTag.Thread,
-      label: mail.string.MailTag,
-      kind: ClassifierKind.MIXIN,
-      icon: mail.icon.Mail
-    },
-    mail.tag.MailThread
-  )
-}
+export function createModel (builder: Builder): void {}

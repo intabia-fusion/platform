@@ -2,11 +2,9 @@
 import type {
   Doc,
   MeasureContext,
-  Space,
   Tx,
   TxCreateDoc,
   TxCUD,
-  TxDomainEvent,
   Version,
   WorkspaceInfoWithStatus,
   WorkspaceUuid
@@ -31,9 +29,8 @@ import {
   type QueueWorkspaceReindexMessage,
   type StorageAdapter
 } from '@hcengineering/server-core'
-import { type QueueSourced, type FulltextDBConfiguration } from '@hcengineering/server-indexer'
+import { type FulltextDBConfiguration } from '@hcengineering/server-indexer'
 import { generateToken } from '@hcengineering/server-token'
-import { type Event } from '@hcengineering/communication-sdk-types'
 import { getWorkspaceClient as getHulylakeClient } from '@hcengineering/hulylake-client'
 
 import { WorkspaceIndexer } from './workspace'
@@ -51,7 +48,7 @@ export class WorkspaceManager {
 
   fulltextConsumer?: ConsumerHandle
   txConsumer?: ConsumerHandle
-  txDeadLetterProducer?: PlatformQueueProducer<TxCUD<Doc> | TxDomainEvent<QueueSourced<Event>>>
+  txDeadLetterProducer?: PlatformQueueProducer<TxCUD<Doc>>
 
   constructor (
     readonly ctx: MeasureContext,
@@ -146,7 +143,7 @@ export class WorkspaceManager {
     const txBatchSize = parseIntInRange(process.env.FULLTEXT_TX_BATCH_SIZE, 100, 1, 500)
     // batchTimeout: maps to kafkajs maxWaitTimeInMs. Cap at 5s to avoid multi-second broker waits
     const txBatchTimeout = parseIntInRange(process.env.FULLTEXT_TX_BATCH_TIMEOUT, 100, 0, 5000)
-    this.txConsumer = this.opt.queue.createBatchConsumer<TxCUD<Doc> | TxDomainEvent<QueueSourced<Event>>>(
+    this.txConsumer = this.opt.queue.createBatchConsumer<TxCUD<Doc>>(
       this.ctx,
       QueueTopic.Tx,
       this.opt.queue.getClientId(),
@@ -164,16 +161,10 @@ export class WorkspaceManager {
       { batchSize: txBatchSize, batchTimeout: txBatchTimeout }
     )
 
-    this.txDeadLetterProducer = this.opt.queue.getProducer<TxCUD<Doc> | TxDomainEvent<QueueSourced<Event>>>(
-      this.ctx,
-      getDeadletterTopic(QueueTopic.Tx)
-    )
+    this.txDeadLetterProducer = this.opt.queue.getProducer<TxCUD<Doc>>(this.ctx, getDeadletterTopic(QueueTopic.Tx))
   }
 
-  private async processTransactions (
-    msgs: ConsumerMessage<TxCUD<Doc<Space>> | TxDomainEvent<QueueSourced<Event>>>[],
-    control: ConsumerControl
-  ): Promise<void> {
+  private async processTransactions (msgs: ConsumerMessage<TxCUD<Doc>>[], control: ConsumerControl): Promise<void> {
     if (msgs.length === 0) return
 
     // Group by workspace - one batch may contain messages from multiple workspaces

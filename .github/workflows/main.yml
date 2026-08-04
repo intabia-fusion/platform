@@ -32,7 +32,6 @@ on:
 
 env:
   CacheFolders: |
-    communication
     common
     desktop
     desktop-package

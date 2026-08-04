@@ -14,14 +14,11 @@
 //
 
 import cardPlugin, { Card } from '@hcengineering/card'
-import { CreateMessageEvent, MessageEventType } from '@hcengineering/communication-sdk-types'
-import { ActivityProcess, ActivityUpdateType, MessageType } from '@hcengineering/communication-types'
 import core, {
   Doc,
   generateId,
   getDiffUpdate,
   MeasureContext,
-  OperationDomain,
   Ref,
   SortingOrder,
   Tx,
@@ -523,7 +520,6 @@ async function executeTransition (
           })
           break
         }
-        await sendEvent(control, execution, transition, card, isDone)
         TxProcessor.applyUpdate(execution, executionUpdate)
         if (execution.parentId !== undefined) {
           await checkParent(execution, control, isDone)
@@ -546,58 +542,6 @@ async function executeTransition (
       break
     }
   }
-}
-
-async function sendEvent (
-  control: ProcessControl,
-  execution: Execution,
-  transition: Transition,
-  card: Card,
-  isDone: boolean
-): Promise<void> {
-  const eventData: ActivityProcess = {
-    type: ActivityUpdateType.Process,
-    process: execution.process,
-    action: isDone ? 'complete' : transition.from == null ? 'started' : 'transition',
-    transitionTo: transition.to
-  }
-  const event: CreateMessageEvent = {
-    type: MessageEventType.CreateMessage,
-    messageType: MessageType.Activity,
-    cardId: execution.card,
-    cardType: card._class,
-    extra: {
-      action: 'update',
-      update: eventData
-    },
-    content: await getActivityContent(control, eventData),
-    socialId: control.modifiedBy,
-    date: new Date(control.modifiedOn)
-  }
-  await control.client.domainRequest('communication' as OperationDomain, { event })
-}
-
-async function getActivityContent (control: ProcessControl, extra: ActivityProcess): Promise<string> {
-  const process = control.client.getModel().findObject(extra.process)
-  if (process === undefined) return ''
-
-  if (extra.action === 'started') {
-    return `Process ${process.name} started`
-  }
-  if (extra.action === 'complete' && extra.transitionTo != null) {
-    const state = control.client.getModel().findObject(extra.transitionTo)
-    if (state != null) {
-      return `Process ${process.name} completed with state ${state.title}`
-    }
-  }
-  if (extra.action === 'transition' && extra.transitionTo != null) {
-    const state = control.client.getModel().findObject(extra.transitionTo)
-    if (state != null) {
-      return `Process ${process.name} moved to state ${state.title}`
-    }
-  }
-
-  return ''
 }
 
 async function updateTimers (control: ProcessControl, record: ProcessMessage): Promise<void> {
