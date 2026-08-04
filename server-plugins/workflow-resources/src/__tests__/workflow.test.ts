@@ -650,17 +650,14 @@ describe('PostFunctionsTrigger', () => {
       const t = createMockTask({ status: 'todo' as Ref<Status> })
       const control = createMockControl(async () => [])
 
-      const res = await FieldRequired(
-        control as any,
-        t,
-        { name: 'Start', status: 'in-progress' as Ref<Status> } as any,
-        { fields: [{ fieldKey: 'assignee' }] }
-      )
+      const res = await FieldRequired(control as any, t, { name: 'Start', to: 'in-progress' as Ref<Status> } as any, {
+        fields: [{ fieldKey: 'assignee' }]
+      })
       expect(res).toEqual(
         expect.objectContaining({
           ok: false,
           reasonIntl: workflow.string.FieldRequiredError,
-          intlParams: { field: 'assignee', transition: 'Start' }
+          intlParams: { field: 'assignee', transition: 'Any ➜ in-progress' }
         })
       )
     })
@@ -670,12 +667,9 @@ describe('PostFunctionsTrigger', () => {
       const t = createMockTask({ status: 'todo' as Ref<Status>, assignee: 'person-1' as any })
       const control = createMockControl(async () => [])
 
-      const res = await FieldRequired(
-        control as any,
-        t,
-        { name: 'Start', status: 'in-progress' as Ref<Status> } as any,
-        { fields: ['assignee'] }
-      )
+      const res = await FieldRequired(control as any, t, { name: 'Start', to: 'in-progress' as Ref<Status> } as any, {
+        fields: ['assignee']
+      })
       expect(res).toEqual({ ok: true })
     })
   })
@@ -686,7 +680,7 @@ describe('PostFunctionsTrigger', () => {
       const t = createMockTask({ _id: 'parent-1' as any, status: 'in-progress' as Ref<Status> })
       const control = createMockControl(async () => [])
 
-      const res = await SubtaskStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+      const res = await SubtaskStatus(control as any, t, { name: 'Done', to: 'done' as Ref<Status> } as any, {
         statuses: { 'task-type-1': ['done'] }
       })
       expect(res).toEqual({ ok: true })
@@ -703,14 +697,14 @@ describe('PostFunctionsTrigger', () => {
       })
       const control = createMockControl(async () => [subtask])
 
-      const res = await SubtaskStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+      const res = await SubtaskStatus(control as any, t, { name: 'Done', to: 'done' as Ref<Status> } as any, {
         statuses: { 'subtask-type': ['done'] }
       })
       expect(res).toEqual({
         ok: false,
         reason: expect.stringContaining('allowed status'),
         reasonIntl: workflow.string.SubtaskStatusError,
-        intlParams: { transition: 'Done', statuses: expect.any(String) }
+        intlParams: { transition: 'Any ➜ done', statuses: expect.any(String) }
       })
     })
 
@@ -725,7 +719,7 @@ describe('PostFunctionsTrigger', () => {
       })
       const control = createMockControl(async () => [subtask])
 
-      const res = await SubtaskStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+      const res = await SubtaskStatus(control as any, t, { name: 'Done', to: 'done' as Ref<Status> } as any, {
         statuses: { 'subtask-type': ['done', 'resolved'] }
       })
       expect(res).toEqual({ ok: true })
@@ -742,7 +736,7 @@ describe('PostFunctionsTrigger', () => {
       })
       const control = createMockControl(async () => [subtask])
 
-      const res = await SubtaskStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+      const res = await SubtaskStatus(control as any, t, { name: 'Done', to: 'done' as Ref<Status> } as any, {
         statuses: {
           'bug-type': ['done', 'resolved']
         }
@@ -751,7 +745,7 @@ describe('PostFunctionsTrigger', () => {
         ok: false,
         reason: expect.stringContaining('allowed status'),
         reasonIntl: workflow.string.SubtaskStatusError,
-        intlParams: { transition: 'Done', statuses: expect.any(String) }
+        intlParams: { transition: 'Any ➜ done', statuses: expect.any(String) }
       })
     })
   })
@@ -762,7 +756,7 @@ describe('PostFunctionsTrigger', () => {
       const t = createMockTask({ _id: 'child-1' as any, status: 'in-progress' as Ref<Status> })
       const control = createMockControl(async () => [])
 
-      const res = await ParentStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+      const res = await ParentStatus(control as any, t, { name: 'Done', to: 'done' as Ref<Status> } as any, {
         statuses: { 'parent-type': ['in-progress'] }
       })
       expect(res).toEqual({ ok: true })
@@ -782,14 +776,14 @@ describe('PostFunctionsTrigger', () => {
       })
       const control = createMockControl(async () => [parentTask])
 
-      const res = await ParentStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+      const res = await ParentStatus(control as any, t, { name: 'Done', to: 'done' as Ref<Status> } as any, {
         statuses: { 'parent-type': ['in-progress', 'done'] }
       })
       expect(res).toEqual({
         ok: false,
         reason: expect.stringContaining('allowed status'),
         reasonIntl: workflow.string.ParentStatusError,
-        intlParams: { transition: 'Done', statuses: expect.any(String) }
+        intlParams: { transition: 'Any ➜ done', statuses: expect.any(String) }
       })
     })
 
@@ -807,7 +801,7 @@ describe('PostFunctionsTrigger', () => {
       })
       const control = createMockControl(async () => [parentTask])
 
-      const res = await ParentStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+      const res = await ParentStatus(control as any, t, { name: 'Done', to: 'done' as Ref<Status> } as any, {
         statuses: { 'parent-type': ['in-progress', 'done'] }
       })
       expect(res).toEqual({ ok: true })
@@ -827,7 +821,7 @@ describe('PostFunctionsTrigger', () => {
       })
       const control = createMockControl(async () => [parentTask])
 
-      const res = await ParentStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+      const res = await ParentStatus(control as any, t, { name: 'Done', to: 'done' as Ref<Status> } as any, {
         statuses: {
           'epic-type': ['in-progress', 'done']
         }
@@ -836,7 +830,7 @@ describe('PostFunctionsTrigger', () => {
         ok: false,
         reason: expect.stringContaining('allowed status'),
         reasonIntl: workflow.string.ParentStatusError,
-        intlParams: { transition: 'Done', statuses: expect.any(String) }
+        intlParams: { transition: 'Any ➜ done', statuses: expect.any(String) }
       })
     })
 
@@ -854,7 +848,7 @@ describe('PostFunctionsTrigger', () => {
       })
       const control = createMockControl(async () => [parentTask])
 
-      const res = await ParentStatus(control as any, t, { name: 'Done', status: 'done' as Ref<Status> } as any, {
+      const res = await ParentStatus(control as any, t, { name: 'Done', to: 'done' as Ref<Status> } as any, {
         statuses: {
           'feature-type': null
         }
