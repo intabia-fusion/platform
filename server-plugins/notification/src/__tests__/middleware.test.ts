@@ -251,12 +251,14 @@ describe('NotificationMiddleware', () => {
       await expect(middleware.tx(mockMeasureContext, [tx])).rejects.toThrow(PlatformError)
     })
 
-    it('forbids normal user from updating fields other than their own position', async () => {
+    it('strips fields other than user own position for normal user', async () => {
       middleware = (await NotificationMiddleware.create(
         mockMeasureContext,
         mockPipelineContext,
         mockNext
       )) as NotificationMiddleware
+
+      mockNext.findAll.mockResolvedValue(toFindResult([{ _id: 'readstate-1' } as any]))
 
       const tx: TxUpdateDoc<ReadState> = updateTx({
         latestMessageId: 'new-msg-id' as Ref<ActivityMessage>,
@@ -266,7 +268,14 @@ describe('NotificationMiddleware', () => {
         } as any
       })
 
-      await expect(middleware.tx(mockMeasureContext, [tx])).rejects.toThrow(PlatformError)
+      await middleware.tx(mockMeasureContext, [tx])
+
+      expect(tx.operations).toEqual({
+        [userAccountUuid]: {
+          messageId: 'new-msg-id',
+          timestamp: 200
+        }
+      })
     })
 
     it('does not apply update transaction if update timestamp is older than current timestamp', async () => {
@@ -403,7 +412,7 @@ describe('NotificationMiddleware', () => {
       await expect(middleware.tx(mockMeasureContext, [tx])).resolves.not.toThrow()
     })
 
-    it('forbids normal user from updating ReadState if it does not exist', async () => {
+    it('allows normal user to send update for non-existent ReadState without throwing', async () => {
       middleware = (await NotificationMiddleware.create(
         mockMeasureContext,
         mockPipelineContext,
@@ -419,7 +428,8 @@ describe('NotificationMiddleware', () => {
         }
       })
 
-      await expect(middleware.tx(mockMeasureContext, [tx])).rejects.toThrow(PlatformError)
+      const res = await middleware.tx(mockMeasureContext, [tx])
+      expect(res).toBeDefined()
     })
 
     it('skips only the transaction with older timestamp when multiple transactions are provided', async () => {
