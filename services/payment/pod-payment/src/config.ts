@@ -46,6 +46,10 @@ export interface Config {
 
   // Per-IP cap on subscription mutations per 15-min window (raise on test stands that run many in a row)
   SubscriptionRateLimitMax?: number
+
+  // Per-IP cap on plan-config reads per 15-min window (raise on test stands: every browser behind
+  // the same NAT counts as one client)
+  PlanConfigRateLimitMax?: number
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
@@ -69,7 +73,8 @@ const config: Config = (() => {
     TbankSubscriptionsUrl: process.env.TBANK_SUBSCRIPTIONS_URL,
     ReconciliationIntervalMinutes: parseNumber(process.env.RECONCILIATION_INTERVAL_MINUTES),
     AllowMockProvider: process.env.ALLOW_MOCK_PROVIDER === 'true',
-    SubscriptionRateLimitMax: parseNumber(process.env.SUBSCRIPTION_RATE_LIMIT_MAX)
+    SubscriptionRateLimitMax: parseNumber(process.env.SUBSCRIPTION_RATE_LIMIT_MAX),
+    PlanConfigRateLimitMax: parseNumber(process.env.PLAN_CONFIG_RATE_LIMIT_MAX)
   }
 
   const requiredKeys: Array<keyof Config> = ['Port', 'Secret', 'AccountsUrl', 'FrontUrl', 'Provider', 'PlanConfig']
