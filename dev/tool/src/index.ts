@@ -1014,13 +1014,17 @@ export function devTool (
           fullVerify: boolean
         }
       ) => {
+        toolCtx.info('backup: opening storage', { dirName })
         const storage = await createFileBackupStorage(dirName)
+        toolCtx.info('backup: connecting to account db')
         await withAccountDatabase(async (db) => {
           const { txes, dbUrl } = prepareTools()
+          toolCtx.info('backup: looking up workspace', { workspace })
           const ws = await getWorkspace(db, workspace)
           if (ws === null) {
             throw new Error(`workspace ${workspace} not found`)
           }
+          toolCtx.info('backup: workspace found', { uuid: ws.uuid, url: ws.url, dataId: ws.dataId })
           const wsIds = {
             uuid: ws.uuid,
             dataId: ws.dataId,
@@ -1032,6 +1036,7 @@ export function devTool (
 
           let pipeline: Pipeline | undefined
           try {
+            toolCtx.info('backup: creating pipeline')
             pipeline = await createBackupPipeline(toolCtx, dbUrl, txes, {
               externalStorage: workspaceStorage,
               usePassedCtx: true
@@ -1049,6 +1054,7 @@ export function devTool (
               toolCtx.error('failed to restore, pipeline is undefined', { workspace })
               return
             }
+            toolCtx.info('backup: pipeline ready')
             const include = cmd.include === '*' ? undefined : new Set(cmd.include.split(';').map((it) => it.trim()))
 
             if (include != null && include.has('account.socialId')) {
@@ -1058,6 +1064,7 @@ export function devTool (
               include.add('contact')
             }
             toolCtx.info('OPT', { include: include != null ? Array.from(include) : '', skip: cmd.skip })
+            toolCtx.info('backup: starting')
             await backup(toolCtx, pipeline, wsIds, storage, db, {
               force: cmd.force,
               include,
