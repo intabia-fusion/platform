@@ -19,7 +19,6 @@ import core, { type Doc, type Tx, type TxCUD } from '@hcengineering/core'
 import type { TriggerControl } from '@hcengineering/server-core'
 
 import { ReferenceTrigger } from './references'
-import { OnPollVoted } from './poll'
 
 async function OnDocRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
@@ -44,13 +43,11 @@ async function OnDocRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promi
 }
 
 export * from './references'
-export * from './poll'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   trigger: {
     ReferenceTrigger,
-    OnDocRemoved,
-    OnPollVoted
+    OnDocRemoved
   }
 })
