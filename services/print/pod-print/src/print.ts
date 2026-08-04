@@ -2,7 +2,7 @@
 // Copyright © 2024 Hardcore Engineering Inc.
 //
 import { MeasureContext } from '@hcengineering/core'
-import puppeteer, { Page, Viewport } from 'puppeteer'
+import puppeteer, { Browser, Page, Viewport } from 'puppeteer'
 
 import config from './config'
 
@@ -14,6 +14,39 @@ export interface PrintOptions {
 export const validKinds = ['pdf', 'jpeg', 'png', 'webp'] as const
 
 export type ExportKind = (typeof validKinds)[number]
+
+let sharedBrowser: Browser | null = null
+let sharedBrowserPromise: Promise<Browser> | null = null
+
+async function getBrowser (): Promise<Browser> {
+  if (sharedBrowser != null && sharedBrowser.connected) {
+    return sharedBrowser
+  }
+
+  if (sharedBrowserPromise == null) {
+    sharedBrowserPromise = puppeteer
+      .launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-gpu',
+          '--disable-dev-shm-usage',
+          '--disable-extensions',
+          '--disable-setuid-sandbox',
+          ...config.PuppeteerArgs
+        ]
+      })
+      .then((browser) => {
+        sharedBrowser = browser
+        return browser
+      })
+      .finally(() => {
+        sharedBrowserPromise = null
+      })
+  }
+
+  return await sharedBrowserPromise
+}
 
 /**
  * Prints a webpage with the specified options
@@ -28,18 +61,7 @@ export async function print (ctx: MeasureContext, url: string, options?: PrintOp
 
   ctx.info('print', { url, kind, viewport })
 
-  // TODO: think of having a "hot" browser instance to avoid the overhead of launching a new one every time
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-gpu',
-      '--disable-dev-shm-usage',
-      '--disable-extensions',
-      '--disable-setuid-sandbox',
-      ...config.PuppeteerArgs
-    ]
-  })
+  const browser = await getBrowser()
   const page = await browser.newPage()
 
   page
@@ -50,6 +72,12 @@ export async function print (ctx: MeasureContext, url: string, options?: PrintOp
     .on('requestfailed', (request) => {
       ctx.warn('requestfailed', { url: request.url(), errorText: request.failure()?.errorText })
     })
+    .on('console', (message) => {
+      const type = message.type()
+      if (type === 'error') {
+        ctx.error(`${message.text()}`)
+      }
+    })
 
   await page.setViewport(viewport)
 
@@ -58,52 +86,51 @@ export async function print (ctx: MeasureContext, url: string, options?: PrintOp
   await page.goto(url, {
     waitUntil: ['domcontentloaded', 'networkidle0']
   })
-  await page.waitForNetworkIdle({ idleTime: 1000 })
 
   let res: Uint8Array | undefined
 
-  if (kind === 'pdf') {
-    await page.emulateMediaType('print')
-    // Scroll throught the page to render all the content (e.g. as images are only rendered
-    // when they are visible in the viewport)
-    await scrollThrough(page)
+  try {
+    if (kind === 'pdf') {
+      await page.emulateMediaType('print')
+      await scrollThrough(page)
 
-    // Read page header and footer if defined
-    const pageHeader = await page.evaluate(() => {
-      const header = document.querySelector('#page-header')
-      return header?.innerHTML ?? ''
-    })
-
-    const pageFooter = await page.evaluate(() => {
-      const footer = document.querySelector('#page-footer')
-      return footer?.innerHTML ?? ''
-    })
-
-    const displayHeaderFooter = pageHeader !== '' || pageFooter !== ''
-
-    res = await ctx.with('pdf', {}, () =>
-      page.pdf({
-        format: 'A4',
-        landscape: false,
-        timeout: 0,
-        headerTemplate: pageHeader,
-        footerTemplate: pageFooter,
-        displayHeaderFooter,
-        margin: {
-          top: '1.5cm',
-          right: '1cm',
-          bottom: '1.5cm',
-          left: '1cm'
-        }
+      // Read page header and footer if defined
+      const pageHeader = await page.evaluate(() => {
+        const header = document.querySelector('#page-header')
+        return header?.innerHTML ?? ''
       })
-    )
-  } else {
-    // Note: currently we do not take the full page screenshot - only the viewport
-    // might make it configurable in the future
-    res = await ctx.with('screenshot', { kind }, () => page.screenshot({ type: kind }))
-  }
 
-  await browser.close()
+      const pageFooter = await page.evaluate(() => {
+        const footer = document.querySelector('#page-footer')
+        return footer?.innerHTML ?? ''
+      })
+
+      const displayHeaderFooter = pageHeader !== '' || pageFooter !== ''
+
+      res = await ctx.with('pdf', {}, () =>
+        page.pdf({
+          format: 'A4',
+          landscape: false,
+          timeout: 0,
+          headerTemplate: pageHeader,
+          footerTemplate: pageFooter,
+          displayHeaderFooter,
+          margin: {
+            top: '1.5cm',
+            right: '1cm',
+            bottom: '1.5cm',
+            left: '1cm'
+          }
+        })
+      )
+    } else {
+      // Note: currently we do not take the full page screenshot - only the viewport
+      // might make it configurable in the future
+      res = await ctx.with('screenshot', { kind }, () => page.screenshot({ type: kind }))
+    }
+  } finally {
+    await page.close()
+  }
 
   return res !== undefined ? Buffer.from(res) : undefined
 }

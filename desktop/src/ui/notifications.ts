@@ -14,7 +14,7 @@
 //
 
 import { formatName, getPersonByPersonId } from '@hcengineering/contact'
-import { Doc, Ref, SortingOrder, TxOperations, WithLookup, Hierarchy } from '@hcengineering/core'
+import { Doc, Ref, TxOperations, WithLookup, Hierarchy } from '@hcengineering/core'
 import notification, {
   notificationId,
   ActivityInboxNotification,
@@ -24,15 +24,13 @@ import notification, {
   getNotificationMessageId,
   getNotificationThreadId
 } from '@hcengineering/notification'
-import { addEventListener, getMetadata, IntlString, translate } from '@hcengineering/platform'
-import { createNotificationsQuery, getClient, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
+import { addEventListener, IntlString, translate } from '@hcengineering/platform'
+import { getClient, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
 import { location, languageStore } from '@hcengineering/ui'
 import workbench, { workbenchId } from '@hcengineering/workbench'
 import desktopPreferences, { defaultNotificationPreference } from '@hcengineering/desktop-preferences'
 import { activePreferences } from '@hcengineering/desktop-preferences-resources'
 import { getDisplayInboxData, InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
-import { inboxId } from '@hcengineering/inbox'
-import communication from '@hcengineering/communication'
 import activity from '@hcengineering/activity'
 import chunter, { ThreadMessage } from '@hcengineering/chunter'
 import { workspacesNotificationStore, workspacesStore } from '@hcengineering/workbench-resources'
@@ -143,15 +141,12 @@ export function configureNotifications (): void {
   // because we generate them on a client
   let initTimestamp = 0
   const notificationHistory = new Map<string, number>()
-  let newUnreadNotifications = 0
 
   addEventListener(workbench.event.NotifyConnection, async () => {
     client = getClient()
     const electronAPI = ipcMainExposed()
 
     const inboxClient = InboxNotificationsClientImpl.getClient()
-    const notificationsQuery = createNotificationsQuery(true)
-    const notificationsCountQuery = createNotificationsQuery(true)
 
     let hasOtherWorkspaceNotifications = false
 
@@ -161,7 +156,7 @@ export function configureNotifications (): void {
         return
       }
 
-      const total = prevUnViewdNotificationsCount + newUnreadNotifications
+      const total = prevUnViewdNotificationsCount
       if (total > 0) {
         const unreadsCountTooltip = await translate(
           notification.string.UnreadNotificationsCount,
@@ -185,55 +180,6 @@ export function configureNotifications (): void {
       }
       void updateBadge()
     })
-
-    const isCommunicationEnabled = getMetadata(communication.metadata.Enabled) ?? false
-
-    if (isCommunicationEnabled) {
-      notificationsCountQuery.query({ read: false, limit: 1, strict: true, total: true }, (res) => {
-        newUnreadNotifications = res.getTotal()
-
-        void updateBadge().then(() => {
-          if (preferences.bounceAppIcon) {
-            electronAPI.dockBounce()
-          }
-        })
-      })
-    }
-
-    function startNotificationQuery (): void {
-      if (!isCommunicationEnabled) return
-      notificationsQuery.query(
-        {
-          read: false,
-          limit: 1,
-          strict: true,
-          order: SortingOrder.Descending,
-          created: {
-            greaterOrEqual: new Date()
-          }
-        },
-        (res) => {
-          if (!preferences.showNotifications) return
-          const notification = res.getResult()[0]
-          if (notification !== undefined && !notificationHistory.has(notification.id)) {
-            notificationHistory.set(notification.id, notification.created.getTime())
-            electronAPI.sendNotification({
-              silent: !preferences.playSound,
-              application: inboxId,
-              title: notification.content.title,
-              body: `${notification.content.senderName}: ${notification.content.shortText}`,
-              cardId: notification.cardId,
-              objectId: notification.content.objectId,
-              objectClass: notification.content.objectClass
-            })
-          }
-        }
-      )
-    }
-
-    if (preferences.showNotifications) {
-      startNotificationQuery()
-    }
 
     async function handleNotifications (
       notificationsByContext: Map<Ref<DocNotifyContext>, InboxNotification[]>
@@ -298,14 +244,8 @@ export function configureNotifications (): void {
     })
 
     activePreferences.subscribe((newPreferences) => {
-      const showNotificationsChanged = newPreferences.showNotifications && !preferences.showNotifications
-
       preferences = newPreferences
       void updateBadge()
-
-      if (showNotificationsChanged) {
-        startNotificationQuery()
-      }
     })
   })
 

@@ -35,21 +35,14 @@ import {
   isWorkspaceLoginInfo,
   AccountClient
 } from '@hcengineering/account-client'
-import {
-  MailRecipient,
-  type SyncOptions,
-  getChannel,
-  getMailHeaders,
-  isSyncedMessage
-} from '@hcengineering/mail-common'
-import chat from '@hcengineering/chat'
+import { MailRecipient, type SyncOptions, getChannel, getMailHeaders } from '@hcengineering/mail-common'
 
 import { encode64 } from './base64'
 import config from './config'
 import { GmailController } from './gmailController'
 import { RateLimiter } from './rateLimiter'
 import { type ProjectCredentials, type Token, type User, type SyncState, GmailMessageType } from './types'
-import { addFooter, isToken, serviceToken, getKvsClient, createGmailSearchQuery, getSpaceId } from './utils'
+import { addFooter, isToken, serviceToken, getKvsClient, getSpaceId } from './utils'
 import type { WorkspaceClient } from './workspaceClient'
 import { getOrCreateSocialId } from './accounts'
 import { createIntegrationIfNotExists, disableIntegration, removeIntegration } from './integrations'
@@ -59,9 +52,7 @@ import { createMessageManager } from './message/adapter'
 import { SyncManager } from './message/sync'
 import { getEmail } from './gmail/utils'
 import { IMessageManager } from './message/types'
-import { CreateMessageEvent } from '@hcengineering/communication-sdk-types'
 import { Card } from '@hcengineering/card'
-import { makeHTMLBodyV2 } from './message/v2/send'
 
 const SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 
@@ -393,74 +384,74 @@ export class GmailClient {
     }
   }
 
-  async handleNewMessage (message: CreateMessageEvent): Promise<void> {
-    const messageKey = `v2-${this.user.workspace}-${this.socialId._id}-${message.messageId ?? message._id}-${message.cardId}`
-
-    if (GmailClient.processingMessages.has(messageKey)) {
-      this.ctx.info('Message already being processed, skipping duplicate', {
-        messageKey,
-        cardId: message.cardId,
-        email: this.email,
-        workspace: this.user.workspace
-      })
-      return
-    }
-
-    GmailClient.processingMessages.add(messageKey)
-
-    try {
-      const personId = message.socialId
-      if (personId !== this.socialId._id && !this.allSocialIds.has(personId)) {
-        return
-      }
-
-      if (!this.isConfigured()) {
-        return
-      }
-
-      if (message.date !== undefined) {
-        const messageDate = message.date instanceof Date ? message.date : new Date(message.date)
-        if (messageDate < config.OutgoingSyncStartDate) {
-          return
-        }
-      }
-      const email = await this.getEmail()
-      const thread = await this.client.findOne<Card>(chat.masterTag.Thread, { _id: message.cardId })
-      const mailChannel = await this.getMailChannel()
-      if (mailChannel === undefined) {
-        this.ctx.error('Mail channel is not defined', { email, workspace: this.workspace })
-      }
-      if (thread === undefined || thread?.parent !== mailChannel?._id) {
-        return
-      }
-      const isExisting = await this.isExistingGmailMessage(message, email)
-      if (isExisting) {
-        this.ctx.info('Skip existing message', { id: message._id, email })
-        return
-      }
-
-      this.ctx.info('Sending gmail message', { id: message._id, email })
-      const gmailBody = await makeHTMLBodyV2(this.ctx, this.accountClient, message, thread, this.socialId._id, email)
-      await this.rateLimiter.take(100)
-      await this.gmail.messages.send({
-        userId: 'me',
-        requestBody: {
-          raw: gmailBody
-        }
-      })
-    } catch (err: any) {
-      this.ctx.error('Send gmail message v2 error', {
-        workspaceUuid: this.user.workspace,
-        userId: this.user.userId,
-        message: err.message
-      })
-      if (err?.response?.data?.error === 'invalid_grant') {
-        await this.refreshToken()
-      }
-    } finally {
-      GmailClient.processingMessages.delete(messageKey)
-    }
-  }
+  // async handleNewMessage (message: CreateMessageEvent): Promise<void> {
+  //   const messageKey = `v2-${this.user.workspace}-${this.socialId._id}-${message.messageId ?? message._id}-${message.cardId}`
+  //
+  //   if (GmailClient.processingMessages.has(messageKey)) {
+  //     this.ctx.info('Message already being processed, skipping duplicate', {
+  //       messageKey,
+  //       cardId: message.cardId,
+  //       email: this.email,
+  //       workspace: this.user.workspace
+  //     })
+  //     return
+  //   }
+  //
+  //   GmailClient.processingMessages.add(messageKey)
+  //
+  //   try {
+  //     const personId = message.socialId
+  //     if (personId !== this.socialId._id && !this.allSocialIds.has(personId)) {
+  //       return
+  //     }
+  //
+  //     if (!this.isConfigured()) {
+  //       return
+  //     }
+  //
+  //     if (message.date !== undefined) {
+  //       const messageDate = message.date instanceof Date ? message.date : new Date(message.date)
+  //       if (messageDate < config.OutgoingSyncStartDate) {
+  //         return
+  //       }
+  //     }
+  //     const email = await this.getEmail()
+  //     const thread = await this.client.findOne<Card>(card.class.Card, { _id: message.cardId })
+  //     const mailChannel = await this.getMailChannel()
+  //     if (mailChannel === undefined) {
+  //       this.ctx.error('Mail channel is not defined', { email, workspace: this.workspace })
+  //     }
+  //     if (thread === undefined || thread?.parent !== mailChannel?._id) {
+  //       return
+  //     }
+  //     const isExisting = await this.isExistingGmailMessage(message, email)
+  //     if (isExisting) {
+  //       this.ctx.info('Skip existing message', { id: message._id, email })
+  //       return
+  //     }
+  //
+  //     this.ctx.info('Sending gmail message', { id: message._id, email })
+  //     const gmailBody = await makeHTMLBodyV2(this.ctx, this.accountClient, message, thread, this.socialId._id, email)
+  //     await this.rateLimiter.take(100)
+  //     await this.gmail.messages.send({
+  //       userId: 'me',
+  //       requestBody: {
+  //         raw: gmailBody
+  //       }
+  //     })
+  //   } catch (err: any) {
+  //     this.ctx.error('Send gmail message v2 error', {
+  //       workspaceUuid: this.user.workspace,
+  //       userId: this.user.userId,
+  //       message: err.message
+  //     })
+  //     if (err?.response?.data?.error === 'invalid_grant') {
+  //       await this.refreshToken()
+  //     }
+  //   } finally {
+  //     GmailClient.processingMessages.delete(messageKey)
+  //   }
+  // }
 
   async getMailChannel (): Promise<Card | undefined> {
     if (this.channel === undefined) {
@@ -469,42 +460,42 @@ export class GmailClient {
     return this.channel
   }
 
-  async isExistingGmailMessage (message: CreateMessageEvent, from: string): Promise<boolean> {
-    try {
-      if (isSyncedMessage(message)) {
-        return true
-      }
-      await this.rateLimiter.take(10)
-
-      const rawDate = message.date ?? new Date()
-      const messageDate = rawDate instanceof Date ? rawDate : new Date(rawDate)
-
-      const startDate = new Date(messageDate.getTime() - 1000 * 60 * 60) // 1 hour before
-      const endDate = new Date(messageDate.getTime() + 1000 * 60 * 60) // 1 hour after
-
-      const query: gmail_v1.Params$Resource$Users$Messages$List = {
-        userId: 'me',
-        q: createGmailSearchQuery(startDate, endDate, from),
-        maxResults: 20 // Limit results for performance
-      }
-
-      const existingMessages = await this.gmail.messages.list(query)
-
-      for (const msg of existingMessages.data.messages ?? []) {
-        const gmailDate = msg.internalDate != null ? new Date(Number.parseInt(msg.internalDate)) : undefined
-        if (gmailDate !== undefined && gmailDate?.getTime() === message.date?.getTime()) {
-          return true
-        }
-      }
-      return false
-    } catch (err: any) {
-      this.ctx.error('Error checking existing Gmail message', {
-        messageId: message.messageId,
-        error: err.message
-      })
-      return false
-    }
-  }
+  // async isExistingGmailMessage (message: CreateMessageEvent, from: string): Promise<boolean> {
+  //   try {
+  //     if (isSyncedMessage(message)) {
+  //       return true
+  //     }
+  //     await this.rateLimiter.take(10)
+  //
+  //     const rawDate = message.date ?? new Date()
+  //     const messageDate = rawDate instanceof Date ? rawDate : new Date(rawDate)
+  //
+  //     const startDate = new Date(messageDate.getTime() - 1000 * 60 * 60) // 1 hour before
+  //     const endDate = new Date(messageDate.getTime() + 1000 * 60 * 60) // 1 hour after
+  //
+  //     const query: gmail_v1.Params$Resource$Users$Messages$List = {
+  //       userId: 'me',
+  //       q: createGmailSearchQuery(startDate, endDate, from),
+  //       maxResults: 20 // Limit results for performance
+  //     }
+  //
+  //     const existingMessages = await this.gmail.messages.list(query)
+  //
+  //     for (const msg of existingMessages.data.messages ?? []) {
+  //       const gmailDate = msg.internalDate != null ? new Date(Number.parseInt(msg.internalDate)) : undefined
+  //       if (gmailDate !== undefined && gmailDate?.getTime() === message.date?.getTime()) {
+  //         return true
+  //       }
+  //     }
+  //     return false
+  //   } catch (err: any) {
+  //     this.ctx.error('Error checking existing Gmail message', {
+  //       messageId: message.messageId,
+  //       error: err.message
+  //     })
+  //     return false
+  //   }
+  // }
 
   private checkError (err: any): boolean {
     return err?.response?.data?.error === 'invalid_grant'

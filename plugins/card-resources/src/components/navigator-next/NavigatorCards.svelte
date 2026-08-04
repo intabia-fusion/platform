@@ -16,13 +16,11 @@
 <script lang="ts">
   import cardPlugin, { Card, CardSpace, FavoriteCard, MasterTag } from '@hcengineering/card'
   import { Ref, WithLookup } from '@hcengineering/core'
-  import { createQuery, createNotificationContextsQuery, getClient } from '@hcengineering/presentation'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import view from '@hcengineering/view'
-  import { Label, NotificationContext, NotificationType, SortingOrder } from '@hcengineering/communication-types'
   import { NavGroup } from '@hcengineering/ui'
   import preference from '@hcengineering/preference'
   import { createEventDispatcher } from 'svelte'
-  import { labelsStore } from '@hcengineering/communication-resources'
 
   import type { CardsNavigatorConfig } from '../../types'
   import NavigatorCard from './NavigatorCard.svelte'
@@ -40,13 +38,8 @@
   const hierarchy = client.getHierarchy()
   const dispatch = createEventDispatcher()
   const favoritesQuery = createQuery()
-  const contextsQuery = createNotificationContextsQuery()
 
   let favorites: WithLookup<FavoriteCard>[] = []
-  let contexts: NotificationContext[] = []
-
-  let labels: Label[] = []
-  $: labels = config.labelFilter ? $labelsStore.filter((it) => (config.labelFilter ?? []).includes(it.labelId)) : []
 
   $: favoritesQuery.query(
     cardPlugin.class.FavoriteCard,
@@ -66,27 +59,6 @@
       }
     }
   )
-
-  $: if (favorites.length > 0) {
-    contextsQuery.query(
-      {
-        cardId: favorites.map((it) => it.attachedTo),
-        notifications: {
-          read: false,
-          type: NotificationType.Message,
-          order: SortingOrder.Descending,
-          limit: 1,
-          total: true
-        }
-      },
-      (res) => {
-        contexts = res.getResult()
-      }
-    )
-  } else {
-    contexts = []
-    contextsQuery.unsubscribe()
-  }
 
   function getCard (favorite: WithLookup<FavoriteCard>): Card | undefined {
     return favorite.$lookup?.attachedTo
@@ -117,8 +89,7 @@
     {#each favorites as favorite (favorite.attachedTo)}
       {@const card = getCard(favorite)}
       {#if card}
-        {@const context = contexts.find((it) => it.cardId === card._id)}
-        <NavigatorCard {card} {context} {favorite} {applicationId} {selectedCard} {config} on:selectCard />
+        <NavigatorCard {card} {favorite} {applicationId} {selectedCard} {config} on:selectCard />
       {/if}
     {/each}
 
@@ -127,16 +98,7 @@
       {#if visibleItem !== undefined && !isOpen}
         {@const card = getCard(visibleItem)}
         {#if card}
-          {@const context = contexts.find((it) => it.cardId === card._id)}
-          <NavigatorCard
-            {card}
-            {context}
-            favorite={visibleItem}
-            {applicationId}
-            {selectedCard}
-            {config}
-            on:selectCard
-          />
+          <NavigatorCard {card} favorite={visibleItem} {applicationId} {selectedCard} {config} on:selectCard />
         {/if}
       {/if}
     </svelte:fragment>
@@ -150,7 +112,6 @@
     {selectedType}
     {selectedCard}
     {applicationId}
-    labels={labels.filter((it) => hierarchy.isDerived(it.cardType, type._id))}
     {favorites}
     on:selectType
     on:selectCard

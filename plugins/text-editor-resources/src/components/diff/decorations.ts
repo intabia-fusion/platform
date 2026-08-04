@@ -16,7 +16,7 @@
 import { type MarkupNode } from '@hcengineering/text'
 import { type Editor } from '@tiptap/core'
 import { ChangeSet } from '@tiptap/pm/changeset'
-import { type Node as ProseMirrorNode, type Schema } from '@tiptap/pm/model'
+import { DOMSerializer, type Node as ProseMirrorNode, type Schema } from '@tiptap/pm/model'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import { deepEqual } from 'fast-equals'
 import { yDocToProsemirrorJSON } from 'y-prosemirror'
@@ -75,11 +75,24 @@ export function calculateDecorations (
       return icon
     }
 
-    function deleted (prob: any): any {
-      const icon = document.createElement('span')
-      icon.className = 'text-editor-highlighted-node-delete'
-      icon.innerText = prob
-      return icon
+    // rendering the removed slice keeps its paragraphs, lists and tables instead of
+    // flattening everything into one run of text
+    const serializer = DOMSerializer.fromSchema(editor.schema)
+    const oldDoc = comparedDoc
+
+    function deleted (from: number, to: number): any {
+      const node = document.createElement('span')
+      node.className = 'text-editor-highlighted-node-delete'
+
+      const slice = oldDoc.slice(from, to)
+      if (slice.content.size > 0) {
+        node.appendChild(serializer.serializeFragment(slice.content))
+      } else {
+        // an emptied block carries no content, mark it so the deletion is still visible
+        node.innerText = '¶'
+      }
+
+      return node
     }
     changes.forEach((change) => {
       if (change.inserted.length > 0) {
@@ -88,8 +101,7 @@ export function calculateDecorations (
       }
 
       if (change.deleted.length > 0) {
-        const cont = comparedDoc.textBetween(change.fromA, change.toA)
-        decorations.push(Decoration.widget(change.fromB, deleted(cont)))
+        decorations.push(Decoration.widget(change.fromB, deleted(change.fromA, change.toA)))
         decorations.push(Decoration.widget(change.fromB, lintIcon('delete')))
       }
     })

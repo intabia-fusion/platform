@@ -13,7 +13,6 @@
 
 import type { Ref } from '@hcengineering/core'
 import type { MasterTag } from '@hcengineering/card'
-import type { LabelID } from '@hcengineering/communication-types'
 import { type Heading } from '@hcengineering/text-editor'
 
 interface BaseNavigatorConfig {
@@ -36,7 +35,6 @@ export interface CardsNavigatorConfig extends BaseNavigatorConfig {
   limit: number
   lookback?: string // e.g. 1m, 1h, 1d, 1w
   hideEmpty?: boolean
-  labelFilter?: LabelID[]
   fixedTypes?: Array<Ref<MasterTag>>
   defaultSorting?: Sorting
   specialSorting?: Record<Ref<MasterTag>, Sorting>

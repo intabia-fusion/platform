@@ -14,19 +14,11 @@
 // limitations under the License.
 //
 
-import {
-  type BrandingMap,
-  generateId,
-  type MeasureContext,
-  type Tx,
-  type WorkspaceIds,
-  type WorkspaceUuid
-} from '@hcengineering/core'
+import { type BrandingMap, generateId, type MeasureContext, type Tx, type WorkspaceUuid } from '@hcengineering/core'
 import { buildStorageFromConfig } from '@hcengineering/server-storage'
 
 import { startSessionManager } from '@hcengineering/server'
 import {
-  type CommunicationCallbacks,
   LimitCategory,
   type PlanLimits,
   type PlatformQueue,
@@ -37,7 +29,6 @@ import {
   type StorageConfiguration
 } from '@hcengineering/server-core'
 
-import { Api as CommunicationApi } from '@hcengineering/communication-server'
 import {
   createServerPipeline,
   registerAdapterFactory,
@@ -56,7 +47,7 @@ import { LIMITS_PROVIDER_VAR, MEMBERS_VERSION_KEY, PLAN_LIMITS_MAP_KEY } from '@
 import { readFileSync } from 'node:fs'
 import { AccountLimitsProvider } from './limitsProvider'
 import { startHttpServer } from './server_http'
-import type { ServerApi } from '@hcengineering/communication-sdk-types'
+
 const model = JSON.parse(readFileSync(process.env.MODEL_JSON ?? 'model.json').toString()) as Tx[]
 
 registerStringLoaders()
@@ -79,7 +70,6 @@ export function start (
     storageConfig: StorageConfiguration
     port: number
     brandingMap: BrandingMap
-    communicationApiEnabled: boolean
 
     enableCompression?: boolean
 
@@ -102,37 +92,6 @@ export function start (
 
   const externalStorage = buildStorageFromConfig(opt.storageConfig)
 
-  const communicationApiFactory = async (
-    ctx: MeasureContext,
-    workspace: WorkspaceIds,
-    broadcastSessions: CommunicationCallbacks
-  ): Promise<ServerApi> => {
-    if (!opt.communicationApiEnabled) {
-      return {
-        findMessagesMeta: async () => [],
-        findMessagesGroups: async () => [],
-        findNotificationContexts: async () => [],
-        findCollaborators: async () => [],
-        findNotifications: async () => [],
-        findLabels: async () => [],
-        findPeers: async () => [],
-        subscribeCard: () => {},
-        unsubscribeCard: () => {},
-        event: async () => {
-          return {}
-        },
-        closeSession: async () => {},
-        close: async () => {}
-      }
-    }
-
-    return await CommunicationApi.create(
-      ctx.newChild('💬 communication api', {}, { span: false }),
-      workspace.uuid,
-      dbUrl,
-      broadcastSessions
-    )
-  }
   // Shared across all per-workspace pipelines in this process; updated live by the consumer below.
   const planLimitsMap = new Map<WorkspaceUuid, PlanLimits>()
   // Bumped on each membership change so SeatLimitsMiddleware rebuilds its seat set without restart.
@@ -175,7 +134,6 @@ export function start (
       ...opt,
       externalStorage,
       queue: opt.queue,
-      communicationApiFactory,
       pipelineContextVars: {
         [LIMITS_PROVIDER_VAR]: limitsProvider,
         [PLAN_LIMITS_MAP_KEY]: planLimitsMap,

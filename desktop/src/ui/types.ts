@@ -62,7 +62,6 @@ export interface Config {
   CALDAV_SERVER_URL?: string
   EXPORT_URL?: string
   USE_OTP?: string
-  COMMUNICATION_API_ENABLED?: string
   BILLING_URL?: string
   PAYMENT_URL?: string
   PASSWORD_STRICTNESS?: 'very_strict' | 'strict' | 'normal' | 'none'
@@ -130,7 +129,6 @@ export interface NotificationParams {
   body: string
   silent: boolean
   application: Plugin
-  cardId?: string
   objectId?: Ref<Doc>
   objectClass?: Ref<Class<Doc>>
   messageId?: Ref<ActivityMessage>

@@ -13,50 +13,21 @@
 // limitations under the License.
 //
 
-import core, {
-  Tx,
-  TxDomainEvent,
-  TxOperations,
-  TxCreateDoc,
-  PersonId,
-  SocialIdType,
-  MeasureContext
-} from '@hcengineering/core'
-import { CreateMessageEvent, MessageEventType } from '@hcengineering/communication-sdk-types'
-import chat from '@hcengineering/chat'
-
-import { MessageType } from '@hcengineering/communication-types'
+import { Tx, TxOperations, PersonId, SocialIdType, MeasureContext } from '@hcengineering/core'
 import { Card } from '@hcengineering/card'
 import mail from '@hcengineering/mail'
-
-import { normalizeEmail } from './utils'
-import { COMMUNICATION_DOMAIN, MailRecipients } from './types'
 import { AccountClient } from '@hcengineering/account-client'
 
-export function toMessageEvent (tx: Tx): CreateMessageEvent | undefined {
-  if (tx._class !== core.class.TxDomainEvent) {
-    return undefined
-  }
-  const domainTx = tx as TxDomainEvent
-  const isCreateMessage =
-    domainTx.domain === COMMUNICATION_DOMAIN && domainTx.event?.type === MessageEventType.CreateMessage
-  if (!isCreateMessage) {
-    return undefined
-  }
-  const event: CreateMessageEvent = domainTx.event
-  const isMessage = event.cardType === chat.masterTag.Thread && event.messageType === MessageType.Text
-  if (!isMessage) {
-    return undefined
-  }
-  return event
-}
+import { normalizeEmail } from './utils'
+import { MailRecipients } from './types'
 
 export function isNewChannelTx (tx: Tx): boolean {
-  if (tx._class !== core.class.TxCreateDoc) {
-    return false
-  }
-  const createTx = tx as TxCreateDoc<any>
-  return createTx.objectClass === chat.masterTag.Thread
+  // if (tx._class !== core.class.TxCreateDoc) {
+  //   return false
+  // }
+  // const createTx = tx as TxCreateDoc<any>
+  // return createTx.objectClass === chat.masterTag.Thread
+  return false
 }
 
 export async function getChannel (client: TxOperations, email: string): Promise<Card | undefined> {

@@ -15,13 +15,11 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import core, { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
-  import { createNotificationsQuery, createQuery } from '@hcengineering/presentation'
+  import { createQuery } from '@hcengineering/presentation'
   import { Scroller, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import { NavLink } from '@hcengineering/view-resources'
   import type { Application } from '@hcengineering/workbench'
   import workbench from '@hcengineering/workbench'
-  import { chatId } from '@hcengineering/chat'
-  import { inboxId } from '@hcengineering/inbox'
   import { getMetadata, getResource } from '@hcengineering/platform'
   import { InboxNotificationsClientImpl, appearancePreferences } from '@hcengineering/notification-resources'
   import notification, {
@@ -29,7 +27,6 @@
     InboxNotification,
     NotificationAppearancePreference
   } from '@hcengineering/notification'
-  import { NotificationType } from '@hcengineering/communication-types'
 
   import AppItem from './AppItem.svelte'
 
@@ -64,19 +61,6 @@
       loaded = true
     }
   )
-
-  let hasNewInboxNotifications = false
-  let hasNewMessagesNotification = false
-  const notificationCountQuery = createNotificationsQuery()
-  const messageNotificationCountQuery = createNotificationsQuery()
-
-  notificationCountQuery.query({ read: false, limit: 1 }, (res) => {
-    hasNewInboxNotifications = res.getResult().length > 0
-  })
-
-  messageNotificationCountQuery.query({ read: false, type: NotificationType.Message, limit: 1 }, (res) => {
-    hasNewMessagesNotification = res.getResult().length > 0
-  })
 
   function updateExcludedApps (): void {
     const me = getCurrentAccount()
@@ -127,18 +111,8 @@
     app: Application,
     contexts: DocNotifyContext[],
     hasOldNotifications: boolean,
-    hasNewNotifications: boolean,
-    hasNewMessagesNotifications: boolean,
     preference: NotificationAppearancePreference | undefined
   ): Promise<boolean> {
-    const { alias } = app
-    if (alias === inboxId) {
-      return hasOldNotifications || hasNewNotifications
-    }
-    if (alias === chatId) {
-      return hasNewMessagesNotifications
-    }
-
     if (app.showNotifyMarkerFn != null) {
       const fn = await getResource(app.showNotifyMarkerFn)
       return await fn(contexts, preference)
@@ -160,7 +134,7 @@
     >
       {#each topApps as app}
         {@const customProps = customAppProps.get(app.alias) ?? {}}
-        {#await showNotify(app, $inboxContextsStore, hasInboxNotifications, hasNewInboxNotifications, hasNewMessagesNotification, $appearancePreferences) then notify}
+        {#await showNotify(app, $inboxContextsStore, hasInboxNotifications, $appearancePreferences) then notify}
           <NavLink app={app.alias} shrink={0} disabled={app._id === active}>
             <AppItem
               selected={app._id === active}
@@ -200,7 +174,7 @@
               icon={app.icon}
               label={app.label}
               navigator={app._id === active && $deviceInfo.navigator.visible}
-              notify={app.alias === chatId && hasNewInboxNotifications}
+              notify={false}
               {...customProps}
               on:click={getClickHandler(app, customProps)}
             />

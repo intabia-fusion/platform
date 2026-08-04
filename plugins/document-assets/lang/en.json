@@ -34,6 +34,13 @@
     "NoParentDocument": "No parent document",
     "NoBacklinks": "No backlinks",
     "NoHistory": "No previous history",
+    "RestoreVersion": "Restore this version",
+    "SameAsCurrent": "Identical to the current version",
+    "PreviewVersion": "Preview",
+    "NoComparison": "No comparison",
+    "ChangedInThisVersion": "Changed in this version",
+    "RestoreVersionConfirm": "Replace the current content with this version?",
+    "CurrentVersion": "Current version",
     "Untitled": "Untitled",
 
     "Description": "Description",

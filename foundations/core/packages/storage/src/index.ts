@@ -51,7 +51,8 @@ export interface StorageAdapter {
 
   listBuckets: (ctx: MeasureContext) => Promise<BucketInfo[]>
   remove: (ctx: MeasureContext, wsIds: WorkspaceIds, objectNames: string[]) => Promise<void>
-  listStream: (ctx: MeasureContext, wsIds: WorkspaceIds) => Promise<BlobStorageIterator>
+  // prefix is a hint, adapters that cannot filter server-side may ignore it
+  listStream: (ctx: MeasureContext, wsIds: WorkspaceIds, prefix?: string) => Promise<BlobStorageIterator>
   stat: (ctx: MeasureContext, wsIds: WorkspaceIds, objectName: string) => Promise<Blob | undefined>
   get: (ctx: MeasureContext, wsIds: WorkspaceIds, objectName: string) => Promise<Readable>
   put: (

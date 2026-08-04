@@ -14,29 +14,15 @@
 //
 
 import { MeasureContext, WorkspaceUuid, Doc, TxCUD, Tx } from '@hcengineering/core'
-import {
-  toMessageEvent,
-  isNewChannelTx,
-  markdownToHtml,
-  getRecipients,
-  getReplySubject,
-  markdownToText,
-  isSyncedMessage,
-  getMailHeadersRecord
-} from '@hcengineering/mail-common'
+import { isNewChannelTx } from '@hcengineering/mail-common'
 import { ConsumerHandle, PlatformQueue, QueueTopic } from '@hcengineering/server-core'
 import { getPlatformQueue } from '@hcengineering/kafka'
-import { CreateMessageEvent } from '@hcengineering/communication-sdk-types'
-import chat from '@hcengineering/chat'
 import { Card } from '@hcengineering/card'
 import { LRUCache } from 'lru-cache'
+import { AccountClient, MailboxOptions } from '@hcengineering/account-client'
 
 import config from './config'
-import { AccountClient, MailboxOptions } from '@hcengineering/account-client'
 import { getAccountClient } from './client'
-import { getClient as getWorkspaceClient, releaseClient } from './workspaceClient'
-import { sendEmail } from './send'
-import { HulyMessageType, MailMessage } from './types'
 
 export class MailWorker {
   private queue: PlatformQueue | undefined
@@ -140,12 +126,6 @@ export class MailWorker {
           // Check for new channel creation
           if (isNewChannelTx(tx)) {
             await this.handleNewChannelTx(workspaceUuid, tx)
-            return
-          }
-          // Check for message events
-          const messageEvent = toMessageEvent(tx)
-          if (messageEvent !== undefined) {
-            await this.handleNewMessage(workspaceUuid, messageEvent)
           }
         },
         {
@@ -177,126 +157,6 @@ export class MailWorker {
         txId: tx._id,
         error: err.message
       })
-    }
-  }
-
-  async handleNewMessage (workspaceUuid: WorkspaceUuid, message: CreateMessageEvent): Promise<void> {
-    try {
-      if (isSyncedMessage(message)) {
-        return
-      }
-
-      if (message.date !== undefined) {
-        const messageDate = message.date instanceof Date ? message.date : new Date(message.date)
-        if (messageDate < config.outgoingSyncStartDate) {
-          return
-        }
-      }
-
-      if (message._id !== undefined && this.sentMessagesCache.has(message._id)) {
-        this.ctx.info('Message already sent, skipping', {
-          workspaceUuid,
-          messageId: message.messageId,
-          hulyMessageId: message._id
-        })
-        return
-      }
-
-      // Await any active load/reload promise before processing CreateMessageEvent
-      if (this.loadingPromise !== undefined) {
-        await this.loadingPromise
-      }
-
-      try {
-        const workspaceClient = await getWorkspaceClient(workspaceUuid)
-        const thread = await workspaceClient.findOne<Card>(chat.masterTag.Thread, { _id: message.cardId })
-        if (thread?.parent == null) {
-          return
-        }
-        const channel = await workspaceClient.findOne<Card>(chat.masterTag.Thread, { _id: thread.parent })
-        if (channel === undefined || !this.isHulyMailChannel(channel)) {
-          return
-        }
-
-        // Convert the platform message to email format and send
-        await this.sendMessageAsEmail(message, thread, channel, workspaceUuid)
-      } finally {
-        await releaseClient(this.ctx, workspaceUuid)
-      }
-    } catch (err: any) {
-      this.ctx.error('Failed to handle new message', {
-        workspaceUuid,
-        messageId: message.messageId,
-        error: err.message
-      })
-    }
-  }
-
-  private async sendMessageAsEmail (
-    message: CreateMessageEvent,
-    thread: Card,
-    channel: Card,
-    workspaceUuid: WorkspaceUuid
-  ): Promise<void> {
-    try {
-      this.ctx.info('Sending email message', {
-        workspaceUuid,
-        messageId: message.messageId,
-        socialId: message.socialId
-      })
-
-      const personUuid = await this.accountClient.findPersonBySocialId(message.socialId)
-      if (personUuid === undefined) {
-        this.ctx.error('Person not found for social ID', { socialId: message.socialId })
-        return
-      }
-      const socialIds = await this.accountClient.getPersonInfo(personUuid)
-      const emailSocialId = socialIds.socialIds.find((id) => id.value.toLowerCase() === channel.title.toLowerCase())
-      if (emailSocialId === undefined) {
-        this.ctx.error('Email social ID not found for channel', {
-          channelTitle: channel.title,
-          personUuid,
-          socialIds: socialIds.socialIds.map((id) => id.value)
-        })
-        return
-      }
-      const recipients = await getRecipients(this.ctx, this.accountClient, thread, emailSocialId._id)
-      let html = markdownToHtml(message.content)
-      if (config.footerMessage != null && !html.includes(config.footerMessage)) {
-        html = html + config.footerMessage
-      }
-      const text = markdownToText(message.content)
-      const subject = getReplySubject(thread.title) ?? ''
-      const to = [recipients?.to, ...(recipients?.copy ?? [])].filter(
-        (address) => address != null && address !== ''
-      ) as string[]
-
-      const email = emailSocialId.value
-      const secret = (await this.accountClient.getMailboxSecret(email))?.secret
-      if (secret === undefined) {
-        this.ctx.error('Mailbox secret not found for email', { email })
-        return
-      }
-      const mailMessage: MailMessage = {
-        from: email,
-        to,
-        subject,
-        html,
-        text,
-        headers: getMailHeadersRecord(HulyMessageType, message._id, email)
-      }
-
-      await sendEmail(this.ctx, mailMessage, secret)
-
-      if (message._id !== undefined) {
-        this.sentMessagesCache.set(message._id, Date.now())
-      }
-    } catch (err: any) {
-      this.ctx.error('Failed to send message as email', {
-        messageId: message.messageId,
-        error: err.message
-      })
-      throw err
     }
   }
 

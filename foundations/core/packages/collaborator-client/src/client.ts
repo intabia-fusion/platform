@@ -46,11 +46,39 @@ export interface UpdateContentRequest {
 export interface UpdateContentResponse {}
 
 /** @public */
+export interface DocumentVersion {
+  blobId: MarkupBlobRef
+  createdOn: number
+  size: number
+}
+
+/** @public */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface GetVersionsRequest {}
+
+/** @public */
+export interface GetVersionsResponse {
+  versions: DocumentVersion[]
+}
+
+/** @public */
+export interface GetVersionContentRequest {
+  blobId: MarkupBlobRef
+}
+
+/** @public */
+export interface GetVersionContentResponse {
+  content: Markup
+}
+
+/** @public */
 export interface CollaboratorClient {
   getMarkup: (document: CollaborativeDoc, source?: Ref<Blob> | null) => Promise<Markup>
   createMarkup: (document: CollaborativeDoc, markup: Markup) => Promise<MarkupBlobRef>
   updateMarkup: (document: CollaborativeDoc, markup: Markup) => Promise<void>
   copyContent: (source: CollaborativeDoc, target: CollaborativeDoc) => Promise<void>
+  getVersions: (document: CollaborativeDoc) => Promise<DocumentVersion[]>
+  getVersionContent: (document: CollaborativeDoc, blobId: MarkupBlobRef) => Promise<Markup>
 }
 
 /** @public */
@@ -138,6 +166,32 @@ class CollaboratorClientImpl implements CollaboratorClient {
       },
       50
     )
+  }
+
+  async getVersions (document: CollaborativeDoc): Promise<DocumentVersion[]> {
+    const res = await retry(
+      3,
+      async () => {
+        return await this.rpc<GetVersionsRequest, GetVersionsResponse>(document, 'getVersions', {})
+      },
+      50
+    )
+
+    return res.versions
+  }
+
+  async getVersionContent (document: CollaborativeDoc, blobId: MarkupBlobRef): Promise<Markup> {
+    const res = await retry(
+      3,
+      async () => {
+        return await this.rpc<GetVersionContentRequest, GetVersionContentResponse>(document, 'getVersionContent', {
+          blobId
+        })
+      },
+      50
+    )
+
+    return res.content
   }
 
   async copyContent (source: CollaborativeDoc, target: CollaborativeDoc, content?: Ref<Blob>): Promise<void> {

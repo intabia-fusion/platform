@@ -475,47 +475,7 @@
       "projectFolder": "foundations/core/packages/postgres-base",
       "shouldPublish": true
     },
-    // Communication
-    {
-      "packageName": "@hcengineering/communication-types",
-      "projectFolder": "foundations/communication/packages/types",
-      "shouldPublish": true
-    },
-    {
-      "packageName": "@hcengineering/communication-sdk-types",
-      "projectFolder": "foundations/communication/packages/sdk-types",
-      "shouldPublish": true
-    },
-    {
-      "packageName": "@hcengineering/communication-shared",
-      "projectFolder": "foundations/communication/packages/shared",
-      "shouldPublish": true
-    },
-    {
-      "packageName": "@hcengineering/communication-rest-client",
-      "projectFolder": "foundations/communication/packages/rest-client",
-      "shouldPublish": true
-    },
-    {
-      "packageName": "@hcengineering/communication-cockroach",
-      "projectFolder": "foundations/communication/packages/cockroach",
-      "shouldPublish": true
-    },
-    {
-      "packageName": "@hcengineering/communication-server",
-      "projectFolder": "foundations/communication/packages/server",
-      "shouldPublish": true
-    },
-    {
-      "packageName": "@hcengineering/communication-query",
-      "projectFolder": "foundations/communication/packages/query",
-      "shouldPublish": true
-    },
-    {
-      "packageName": "@hcengineering/communication-client-query",
-      "projectFolder": "foundations/communication/packages/client-query",
-      "shouldPublish": true
-    },
+
     /// Server
 
     {
@@ -2476,26 +2436,7 @@
       "projectFolder": "services/mail/pod-mail",
       "shouldPublish": false
     },
-    {
-      "packageName": "@hcengineering/chat",
-      "projectFolder": "plugins/chat",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/chat-assets",
-      "projectFolder": "plugins/chat-assets",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/chat-resources",
-      "projectFolder": "plugins/chat-resources",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/model-chat",
-      "projectFolder": "models/chat",
-      "shouldPublish": false
-    },
+
     {
       "packageName": "@hcengineering/process",
       "projectFolder": "plugins/process",
@@ -2531,26 +2472,7 @@
       "projectFolder": "server-plugins/process-resources",
       "shouldPublish": false
     },
-    {
-      "packageName": "@hcengineering/inbox",
-      "projectFolder": "plugins/inbox",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/inbox-assets",
-      "projectFolder": "plugins/inbox-assets",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/inbox-resources",
-      "projectFolder": "plugins/inbox-resources",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/model-inbox",
-      "projectFolder": "models/inbox",
-      "shouldPublish": false
-    },
+
     {
       "packageName": "@hcengineering/pod-mail-worker",
       "projectFolder": "services/mail/pod-mail-worker",
@@ -2581,26 +2503,7 @@
       "projectFolder": "packages/kvs-client",
       "shouldPublish": false
     },
-    {
-      "packageName": "@hcengineering/communication",
-      "projectFolder": "plugins/communication",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/communication-assets",
-      "projectFolder": "plugins/communication-assets",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/communication-resources",
-      "projectFolder": "plugins/communication-resources",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "@hcengineering/model-communication",
-      "projectFolder": "models/communication",
-      "shouldPublish": false
-    },
+
     {
       "packageName": "@hcengineering/mail-common",
       "projectFolder": "services/mail/mail-common",
@@ -2721,11 +2624,7 @@
       "projectFolder": "services/worker",
       "shouldPublish": false
     },
-    {
-      "packageName": "@hcengineering/pod-translate",
-      "projectFolder": "services/translate",
-      "shouldPublish": false
-    },
+
     {
       "packageName": "@hcengineering/pod-activity",
       "projectFolder": "services/activity",

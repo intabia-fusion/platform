@@ -106,7 +106,6 @@
     "@hcengineering/view-assets": "workspace:^0.7.0",
     "@hcengineering/task-assets": "workspace:^0.7.0",
     "@hcengineering/chunter-assets": "workspace:^0.7.0",
-    "@hcengineering/chat-assets": "workspace:^0.7.0",
     "@hcengineering/card-assets": "workspace:^0.7.0",
     "@hcengineering/mail-assets": "workspace:^0.7.0",
     "@hcengineering/recruit-assets": "workspace:^0.7.0",
@@ -180,13 +179,8 @@
     "@hcengineering/survey-assets": "workspace:^0.7.0",
     "@hcengineering/server-process": "workspace:^0.7.0",
     "@hcengineering/server-process-resources": "workspace:^0.7.0",
-    "@hcengineering/chat": "workspace:^0.7.0",
     "@hcengineering/card": "workspace:^0.7.0",
     "@hcengineering/mail": "workspace:^0.7.0",
-    "@hcengineering/kafka": "workspace:^0.7.19",
-    "@hcengineering/communication-types": "workspace:^0.7.12",
-    "@hcengineering/communication-sdk-types": "workspace:^0.7.12",
-    "@hcengineering/communication": "workspace:^0.7.0",
-    "@hcengineering/communication-assets": "workspace:^0.7.0"
+    "@hcengineering/kafka": "workspace:^0.7.19"
   }
 }

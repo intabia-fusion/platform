@@ -27,7 +27,14 @@ export class DatalakeStorage implements FileStorage {
   constructor (private readonly baseUrl: string) {}
 
   getFileUrl (workspace: string, file: string, filename?: string): string {
-    const path = filename !== undefined ? `/blob/${workspace}/${file}/${filename}` : `/blob/${workspace}/${file}`
+    if (filename !== undefined && filename !== '') {
+      const encodedFilename = encodeURIComponent(filename)
+      const path = `/blob/${workspace}/${file}/${encodedFilename}`
+
+      return concatLink(this.baseUrl, path)
+    }
+
+    const path = `/blob/${workspace}/${file}`
     return concatLink(this.baseUrl, path)
   }
 

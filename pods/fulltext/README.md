@@ -17,11 +17,6 @@ Fulltext indexing service for the Platform. Provides full-text search capabiliti
 
 - **`PORT`** - Service port (default: `4700`)
 - **`MODEL_JSON`** - Path to model JSON file (default: `model.json`)
-- **`HULYLAKE_URL`** - Hulylake service URL for communication indexing (default: empty string)
-  - Required only if `COMMUNICATION_API_ENABLED=true`
-- **`COMMUNICATION_API_ENABLED`** - Enable communication API for indexing messages (default: disabled)
-  - Set to `'true'` to enable indexing of communication messages from cards
-  - When disabled, communication indexing is skipped even if `HULYLAKE_URL` is provided
 - **`ENABLE_CONSOLE`** - Enable console logging (default: `'true'`)
 - **`VERSION`** - Service version (default: `'0.7.0'`)
 - **`DB_PREPARE`** - Enable database prepared statements (default: `'true'`)
@@ -30,7 +25,6 @@ Fulltext indexing service for the Platform. Provides full-text search capabiliti
 ## Features
 
 - Full-text indexing of documents and attachments
-- Communication message indexing (when `COMMUNICATION_API_ENABLED=true`)
 - Elasticsearch integration for search
 - Rekoni integration for content extraction from various file types
 - Workspace-based indexing with automatic reindexing support
@@ -87,12 +81,4 @@ curl -X PUT http://localhost:4700/api/v1/reindex \
 
 **Note:** The token must be generated with the workspace UUID and signed with the same `SERVER_SECRET` used by the fulltext service.
 
-## Communication API
-
-When `COMMUNICATION_API_ENABLED=true`, the service will:
-- Index communication messages from cards
-- Use Hulylake service to fetch message groups and messages
-- Require `HULYLAKE_URL` to be set
-
-When disabled (default), communication indexing is skipped, preventing errors if Hulylake is not available.
 

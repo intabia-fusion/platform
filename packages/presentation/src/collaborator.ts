@@ -13,8 +13,12 @@
 // limitations under the License.
 //
 
-import { type CollaboratorClient, getClient as getCollaborator } from '@hcengineering/collaborator-client'
-import { type Blob, type CollaborativeDoc, type Markup, type Ref } from '@hcengineering/core'
+import {
+  type CollaboratorClient,
+  type DocumentVersion,
+  getClient as getCollaborator
+} from '@hcengineering/collaborator-client'
+import { type Blob, type CollaborativeDoc, type Markup, type MarkupBlobRef, type Ref } from '@hcengineering/core'
 import { getMetadata } from '@hcengineering/platform'
 
 import presentation from './plugin'
@@ -47,6 +51,18 @@ export async function createMarkup (doc: CollaborativeDoc, markup: Markup): Prom
 export async function updateMarkup (doc: CollaborativeDoc, markup: Markup): Promise<void> {
   const client = getClient()
   await client.updateMarkup(doc, markup)
+}
+
+/** @public */
+export async function getMarkupVersions (doc: CollaborativeDoc): Promise<DocumentVersion[]> {
+  const client = getClient()
+  return await client.getVersions(doc)
+}
+
+/** @public */
+export async function getMarkupVersionContent (doc: CollaborativeDoc, blobId: MarkupBlobRef): Promise<Markup> {
+  const client = getClient()
+  return await client.getVersionContent(doc, blobId)
 }
 
 /** @public */

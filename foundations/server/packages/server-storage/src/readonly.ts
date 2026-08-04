@@ -55,8 +55,8 @@ export class ReadonlyStorageAdapter implements StorageAdapter {
     throw new ReadonlyError()
   }
 
-  async listStream (ctx: MeasureContext, wsIds: WorkspaceIds): Promise<BlobStorageIterator> {
-    return await this.adapter.listStream(ctx, wsIds)
+  async listStream (ctx: MeasureContext, wsIds: WorkspaceIds, prefix?: string): Promise<BlobStorageIterator> {
+    return await this.adapter.listStream(ctx, wsIds, prefix)
   }
 
   async stat (ctx: MeasureContext, wsIds: WorkspaceIds, objectName: string): Promise<Blob | undefined> {

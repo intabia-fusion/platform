@@ -13,9 +13,6 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import card, { Card } from '@hcengineering/card'
-  import chat from '@hcengineering/chat'
-  import communication, { GuestCommunicationSettings } from '@hcengineering/communication'
   import contact, { AvatarType, ensureEmployeeForPerson } from '@hcengineering/contact'
   import { EditableAvatar, getAccountClient } from '@hcengineering/contact-resources'
   import core, {
@@ -26,7 +23,6 @@
     getCurrentAccount,
     pickPrimarySocialId,
     readOnlyGuestAccountUuid,
-    Ref,
     WorkspaceAccountPermission
   } from '@hcengineering/core'
   import { loginId } from '@hcengineering/login'
@@ -36,7 +32,6 @@
   import {
     Breadcrumb,
     Button,
-    Component,
     deviceOptionsStore as deviceInfo,
     DropdownLabels,
     type DropdownTextItem,
@@ -57,9 +52,7 @@
     Toggle
   } from '@hcengineering/ui'
   import settingsRes from '../plugin'
-  import ApiTokenPopup from './ApiTokenPopup.svelte'
   import WorkspacePermissionEditor from './WorkspacePermissionEditor.svelte'
-  import de from 'date-fns/locale/de'
 
   let loading = true
   let isEditingName = false
@@ -260,29 +253,6 @@
     }
   )
 
-  let existingGuestChatSettings: GuestCommunicationSettings | undefined = undefined
-  const query = createQuery()
-
-  $: query.query(communication.class.GuestCommunicationSettings, {}, (settings) => {
-    existingGuestChatSettings = settings[0]
-  })
-
-  async function onAllowedCardsChange (value: Ref<Card>[]): Promise<void> {
-    if (existingGuestChatSettings === undefined) {
-      await client.createDoc(communication.class.GuestCommunicationSettings, core.space.Workspace, {
-        allowedCards: value,
-        enabled: true
-      })
-    } else {
-      await client.updateDoc(
-        communication.class.GuestCommunicationSettings,
-        core.space.Workspace,
-        existingGuestChatSettings._id,
-        { allowedCards: value, enabled: true }
-      )
-    }
-  }
-
   const onSelected = (e: CustomEvent<string>): void => {
     selected = e.detail
     localStorage.setItem('firstDayOfWeek', `${e.detail}`)
@@ -400,19 +370,6 @@
                   on={allowGuestSignUp}
                   on:change={(e) => {
                     void handleToggleGuestSignUp(e)
-                  }}
-                />
-              </div>
-
-              <div class="flex-row-center flex-gap-4">
-                <Label label={settingsRes.string.GuestChannelsDescription} />
-                <Component
-                  is={card.component.CardArrayEditor}
-                  props={{
-                    _class: chat.masterTag.Thread,
-                    value: existingGuestChatSettings !== undefined ? existingGuestChatSettings.allowedCards : [],
-                    label: settingsRes.string.GuestChannelsArrayLabel,
-                    onChange: onAllowedCardsChange
                   }}
                 />
               </div>
