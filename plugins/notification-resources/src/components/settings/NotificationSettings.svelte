@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Ref } from '@hcengineering/core'
+  import { Ref, reduceCalls } from '@hcengineering/core'
   import type {
     NotificationType,
     NotificationGroup,
@@ -84,11 +84,13 @@
     }
   }
 
+  const syncLocation = reduceCalls(async (loc: Location): Promise<void> => {
+    group = loc.path[4] as Ref<NotificationGroup>
+    currentPreferenceGroup = undefined
+  })
+
   const unsubscribeLocation = resolvedLocationStore.subscribe((loc) => {
-    void (async (loc: Location): Promise<void> => {
-      group = loc.path[4] as Ref<NotificationGroup>
-      currentPreferenceGroup = undefined
-    })(loc)
+    void syncLocation(loc)
   })
 
   onDestroy(() => {

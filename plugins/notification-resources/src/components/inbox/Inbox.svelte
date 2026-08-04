@@ -51,12 +51,12 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
+  let syncLocationToken = 0
+
   const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
   const unsubscribeLoc = locationStore.subscribe((loc) => {
     void syncLocation(loc)
   })
-
-  let syncLocationToken = 0
 
   let urlObjectId: Ref<Doc> | undefined = undefined
   let urlObjectClass: Ref<Class<Doc>> | undefined = undefined
@@ -154,6 +154,7 @@
       context = await client.findOne(notification.class.DocNotifyContext, { objectId: _id })
     }
 
+    if (token !== syncLocationToken) return
     selectedContextId = context?._id
 
     if (selectedContextId !== selectedContext?._id) {

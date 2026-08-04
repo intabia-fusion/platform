@@ -13,7 +13,7 @@
 -->
 <script lang="ts">
   import { BasePreview } from '@hcengineering/activity-resources'
-  import { Markup } from '@hcengineering/core'
+  import { Markup, reduceCalls } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import { themeStore } from '@hcengineering/ui'
   import { CommonNotification } from '@hcengineering/notification'
@@ -24,7 +24,7 @@
 
   $: void updateContent(value, $themeStore.language)
 
-  async function updateContent (commonNotification: CommonNotification, lang: string): Promise<void> {
+  const updateContent = reduceCalls(async (commonNotification: CommonNotification, lang: string): Promise<void> => {
     if (commonNotification.markup !== undefined) {
       markup = commonNotification.markup
     } else if (commonNotification.messageIntl !== undefined) {
@@ -34,7 +34,7 @@
       }
       markup = await translate(commonNotification.messageIntl, params, lang)
     }
-  }
+  })
 </script>
 
 <BasePreview

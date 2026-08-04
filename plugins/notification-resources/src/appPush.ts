@@ -14,7 +14,7 @@
  */
 
 import notification, { type AppPushNotification } from '@hcengineering/notification'
-import { type Account, AccountRole, getCurrentAccount } from '@hcengineering/core'
+import { type Account, AccountRole, getCurrentAccount, reduceCalls } from '@hcengineering/core'
 import { createQuery, getClient, onClient } from '@hcengineering/presentation'
 import { deviceOptionsStore, desktopPlatform } from '@hcengineering/ui'
 import { get, writable } from 'svelte/store'
