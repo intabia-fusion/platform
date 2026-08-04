@@ -267,7 +267,8 @@ export class ChatViewport implements IChatViewport {
   private readonly LOOKUP: Lookup<ActivityMessage> = {
     _id: {
       attachments: attachment.class.Attachment,
-      reactions: activity.class.Reaction
+      reactions: activity.class.Reaction,
+      applets: activity.class.AppletInstance
     },
     forwardedMessage: chunter.class.ChatMessage
   }

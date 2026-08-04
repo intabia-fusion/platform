@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,6 +19,7 @@ import core, { type Doc, type Tx, type TxCUD } from '@hcengineering/core'
 import type { TriggerControl } from '@hcengineering/server-core'
 
 import { ReferenceTrigger } from './references'
+import { OnPollVoted } from './poll'
 
 async function OnDocRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
@@ -42,11 +44,13 @@ async function OnDocRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promi
 }
 
 export * from './references'
+export * from './poll'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   trigger: {
     ReferenceTrigger,
-    OnDocRemoved
+    OnDocRemoved,
+    OnPollVoted
   }
 })

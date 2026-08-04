@@ -23,5 +23,6 @@ loadMetadata(activity.icon, {
   Bookmark: `${icons}#bookmark`,
   BookmarkFilled: `${icons}#bookmark-filled`,
   Forward: `${icons}#forward`,
-  ReplyTo: `${icons}#reply-to`
+  ReplyTo: `${icons}#reply-to`,
+  Poll: `${icons}#poll`
 })

@@ -104,4 +104,12 @@ export function createModel (builder: Builder): void {
     },
     isAsync: true
   })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverActivity.trigger.OnPollVoted,
+    txMatch: {
+      objectClass: activity.class.PollAnswer
+    },
+    isAsync: true
+  })
 }

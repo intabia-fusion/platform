@@ -21,6 +21,7 @@ export interface Config {
   QueueConfig: string
   QueueRegion: string
   Secret: string
+  QuizSecret: string
   ServiceId: string
   StorageConfig: string
   DbUrl: string
@@ -30,6 +31,7 @@ export interface Config {
 const config: Config = (() => {
   const params: Partial<Config> = {
     Secret: process.env.SECRET ?? 'secret',
+    QuizSecret: process.env.QUIZ_SECRET ?? 'platform_quiz-secret-v1',
     QueueConfig: process.env.QUEUE_CONFIG ?? '',
     QueueRegion: process.env.QUEUE_REGION ?? '',
     AccountsUrl: process.env.ACCOUNTS_URL ?? '',

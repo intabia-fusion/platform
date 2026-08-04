@@ -13,19 +13,27 @@
 // limitations under the License.
 //
 
+import { LRUCache } from 'lru-cache'
 import core, {
   type Class,
   type Doc,
   type MeasureContext,
   type Ref,
   type Space,
+  type TxCreateDoc,
   type TxCUD,
   type TxMixin,
   TxProcessor,
   type TxRemoveDoc,
   type TxUpdateDoc
 } from '@hcengineering/core'
-import activity, { type DocUpdateMessage } from '@hcengineering/activity'
+import activity, {
+  type AppletInstance,
+  type DocUpdateMessage,
+  type Poll,
+  type PollAnswer
+} from '@hcengineering/activity'
+import type { PersonSpace } from '@hcengineering/contact'
 
 import { type Client } from './types'
 
@@ -35,6 +43,8 @@ class WsCache {
   private readonly docs = new Map<Ref<Doc>, Doc>()
   private readonly recentMessages = new Map<Ref<DocUpdateMessage>, DocUpdateMessage>()
   private readonly attachedToIndex = new Map<Ref<Doc>, Set<Ref<DocUpdateMessage>>>()
+  private readonly pollsCache = new LRUCache<Ref<AppletInstance>, Poll>({ max: 1000, ttl: CACHE_TTL_MS })
+  private readonly pollAnswersCache = new LRUCache<string, PollAnswer>({ max: 1000, ttl: CACHE_TTL_MS })
   private logicalTime: number = 0
   private lastCleanLogicalTime: number = 0
 
@@ -62,12 +72,25 @@ class WsCache {
 
     this.clearLargeCaches()
 
+    if (tx._class === core.class.TxCreateDoc) {
+      this.txCreateDoc(tx as TxCreateDoc<Doc>)
+    }
+
     if ([core.class.TxUpdateDoc, core.class.TxMixin].includes(tx._class)) {
       this.txUpdateDoc(tx as TxUpdateDoc<Doc> | TxMixin<Doc, Doc>)
     }
 
     if (tx._class === core.class.TxRemoveDoc) {
       this.txRemoveDoc(tx as TxRemoveDoc<Doc>)
+    }
+  }
+
+  private txCreateDoc (tx: TxCreateDoc<Doc>): void {
+    const { hierarchy } = this.client
+    if (hierarchy.isDerived(tx.objectClass, activity.class.PollAnswer)) {
+      const answer = TxProcessor.createDoc2Doc(tx as TxCreateDoc<PollAnswer>)
+      const key = this.buildPollAnswerKey(answer.attachedTo, answer.space)
+      this.pollAnswersCache.set(key, answer)
     }
   }
 
@@ -80,6 +103,24 @@ class WsCache {
       this.docs.set(updated._id, updated)
     }
 
+    if (this.client.hierarchy.isDerived(tx.objectClass, activity.class.AppletInstance)) {
+      const cachedPoll = this.pollsCache.get(tx.objectId as Ref<AppletInstance>)
+      if (cachedPoll != null) {
+        const updated = this.updateOrMixin(tx, cachedPoll)
+        this.pollsCache.set(updated._id, updated)
+      }
+    }
+
+    if (hierarchy.isDerived(tx.objectClass, activity.class.PollAnswer)) {
+      for (const [key, answer] of this.pollAnswersCache.entries()) {
+        if (answer._id === tx.objectId) {
+          const updated = this.updateOrMixin(tx, answer)
+          this.pollAnswersCache.set(key, updated)
+          break
+        }
+      }
+    }
+
     if (hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) {
       const message = this.recentMessages.get(tx.objectId as Ref<DocUpdateMessage>)
       if (message != null) {
@@ -90,9 +131,22 @@ class WsCache {
   }
 
   private txRemoveDoc (tx: TxRemoveDoc<Doc>): void {
+    const { hierarchy } = this.client
+
     this.docs.delete(tx.objectId)
 
-    const { hierarchy } = this.client
+    if (hierarchy.isDerived(tx.objectClass, activity.class.AppletInstance)) {
+      this.pollsCache.delete(tx.objectId as Ref<AppletInstance>)
+    }
+
+    if (hierarchy.isDerived(tx.objectClass, activity.class.PollAnswer)) {
+      for (const [key, answer] of this.pollAnswersCache.entries()) {
+        if (answer._id === tx.objectId) {
+          this.pollAnswersCache.delete(key)
+          break
+        }
+      }
+    }
 
     if (hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) {
       const msg = this.recentMessages.get(tx.objectId as Ref<DocUpdateMessage>)
@@ -103,12 +157,51 @@ class WsCache {
     }
   }
 
+  private buildPollAnswerKey (attachedTo: Ref<Doc>, space: Ref<Space>): string {
+    return `${attachedTo}:${space}`
+  }
+
+  public async getPollAnswer (
+    attachedTo: Ref<AppletInstance>,
+    space: Ref<PersonSpace>
+  ): Promise<PollAnswer | undefined> {
+    const key = this.buildPollAnswerKey(attachedTo, space)
+    const cached = this.pollAnswersCache.get(key)
+    if (cached !== undefined) return cached
+
+    const answer = (await this.client.findOne(activity.class.PollAnswer, { attachedTo, space })) as
+      | PollAnswer
+      | undefined
+    if (answer != null) {
+      this.pollAnswersCache.set(key, answer)
+      return answer
+    }
+
+    return undefined
+  }
+
   private updateOrMixin<T extends Doc>(tx: TxUpdateDoc<Doc> | TxMixin<Doc, Doc>, doc: T): T {
     if (tx._class === core.class.TxUpdateDoc) {
       return TxProcessor.updateDoc2Doc(doc, tx as TxUpdateDoc<Doc>) as T
     }
 
     return TxProcessor.updateMixin4Doc(doc, tx as TxMixin<Doc, Doc>) as T
+  }
+
+  public async getPoll (id: Ref<AppletInstance>): Promise<Poll | undefined> {
+    const cached = this.pollsCache.get(id)
+    if (cached != null) return cached
+
+    const poll = (await this.client.findOne(activity.class.AppletInstance, {
+      _id: id,
+      applet: activity.applet.Poll
+    })) as Poll | undefined
+    if (poll != null) {
+      this.pollsCache.set(id, poll)
+      return poll
+    }
+
+    return undefined
   }
 
   public async getDoc (_id: Ref<Doc>, _class: Ref<Class<Doc>>): Promise<Doc | undefined> {
