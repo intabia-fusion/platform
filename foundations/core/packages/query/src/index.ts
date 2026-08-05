@@ -1065,9 +1065,12 @@ export class LiveQuery implements WithTx, Client {
       }
       const value = (lookup as any)[key]
       const tkey = checkMixinKey(key, _class, this.client.getHierarchy())
+      const refId = getObjectValue(tkey, doc)
+      if (refId == null) continue
+
       if (Array.isArray(value)) {
         const [_class, nested] = value
-        ;(result as any)[key] = await this.findOne(_class, { _id: getObjectValue(tkey, doc) })
+        ;(result as any)[key] = await this.findOne(_class, { _id: refId })
         const nestedResult = {}
         const parent = (result as any)[key]
         if (parent !== undefined) {
@@ -1077,7 +1080,7 @@ export class LiveQuery implements WithTx, Client {
           })
         }
       } else {
-        ;(result as any)[key] = await this.findOne(value, { _id: getObjectValue(tkey, doc) })
+        ;(result as any)[key] = await this.findOne(value, { _id: refId })
       }
     }
   }

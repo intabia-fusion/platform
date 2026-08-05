@@ -103,9 +103,12 @@ export abstract class MemDb extends TxProcessor implements Storage {
       }
       const value = (lookup as any)[key]
       const tkey = checkMixinKey(key, _class, this.hierarchy)
+      const refId = getObjectValue(tkey, doc)
+      if (refId == null) continue
+
       if (Array.isArray(value)) {
         const [_class, nested] = value
-        const objects = await this.findAll(_class, { _id: getObjectValue(tkey, doc) })
+        const objects = await this.findAll(_class, { _id: refId })
         ;(result as any)[key] = objects[0]
         const nestedResult = {}
         const parent = (result as any)[key]
@@ -114,7 +117,7 @@ export abstract class MemDb extends TxProcessor implements Storage {
           $lookup: nestedResult
         })
       } else {
-        const objects = await this.findAll(value, { _id: getObjectValue(tkey, doc) })
+        const objects = await this.findAll(value, { _id: refId })
         ;(result as any)[key] = objects[0]
       }
     }
