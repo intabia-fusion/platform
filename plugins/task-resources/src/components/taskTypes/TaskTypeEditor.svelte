@@ -68,7 +68,8 @@
   $: color = taskType?.color !== undefined && typeof taskType?.color !== 'string' ? taskType?.color : undefined
   $: descriptor = client.getModel().findAllSync(task.class.TaskTypeDescriptor, { _id: taskType?.descriptor })
   $: states = (taskType?.statuses.map((p) => $statusStore.byId.get(p)).filter((p) => p !== undefined) as Status[]) ?? []
-  $: selectableTaskTypes = taskTypes.filter((tt) => tt._id !== objectId)
+  $: selectableTaskTypes = taskTypes.filter((tt) => tt._id !== objectId &&
+    !(tt.allowedAsChildOf ?? []).includes(objectId))
 
   let isRootTaskType = false
   let initialValueApplied = false
@@ -162,7 +163,7 @@
     }
   }
 
-  $: canDelete = !loading && tasksCounter === 0
+  $: canDelete = !loading && tasksCounter === 0 && taskTypes.length > 1
 
   async function handleDelete (): Promise<void> {
     if (!canDelete || readonly || taskType == null) {
