@@ -105,7 +105,7 @@
 
     if (node != null) {
       contentResizeObserver = new ResizeObserver(() => {
-        if (shouldScrollToNew && isScrollInitialized) {
+        if ((shouldScrollToNew || isScrollAtBottom) && isScrollInitialized) {
           scrollToBottom()
         }
       })
@@ -374,6 +374,17 @@
     const { scrollTop } = scrollDiv
 
     isScrollAtBottom = Math.abs(scrollTop) < 50
+    if (isScrollAtBottom && $isTailLoadedStore) {
+      shouldScrollToNew = true
+      restoreScrollTop = 0
+      restoreScrollHeight = 0
+    }
+  }
+
+  $: if ($isTailLoadedStore && isScrollAtBottom) {
+    shouldScrollToNew = true
+    restoreScrollTop = 0
+    restoreScrollHeight = 0
   }
 
   $: updateDownButtonVisibility(messages, scrollDiv, $isTailLoadedStore)
@@ -458,7 +469,13 @@
       backwardRequested = false
     }
 
-    if (isLoadMoreUp && !backwardRequested && viewport.canLoadMore('backward', messages[0]?.createdOn)) {
+    if (
+      isLoadMoreUp &&
+      !backwardRequested &&
+      !shouldScrollToNew &&
+      !isScrollAtBottom &&
+      viewport.canLoadMore('backward', messages[0]?.createdOn)
+    ) {
       shouldScrollToNew = false
       restoreScrollTop = scrollDiv?.scrollTop ?? 0
       restoreScrollHeight = 0
@@ -466,7 +483,7 @@
       backwardRequested = true
     } else if (isLoadMoreUp && backwardRequested) {
       restoreScrollTop = scrollDiv?.scrollTop ?? 0
-    } else if (isLoadMoreDown && !$isTailLoadedStore) {
+    } else if (isLoadMoreDown && !$isTailLoadedStore && !shouldScrollToNew && !isScrollAtBottom) {
       restoreScrollTop = 0
       restoreScrollHeight = scrollDiv?.scrollHeight ?? 0
       shouldScrollToNew = false
