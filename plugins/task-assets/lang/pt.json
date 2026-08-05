@@ -83,6 +83,7 @@
     "Export": "Exportar",
     "CreateProjectType": "Criar tipo de projeto",
     "ClassicProject": "Projeto clássico",
+    "ShowParentTasks": "Mostrar tarefas pai",
     "Última gravação": "Última gravação",
     "Publicado": "Publicado",
     "ContagemTarefas": "{count, plural, zero {Sem tarefas} one {# tarefa} other {# tarefas}}",

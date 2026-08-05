@@ -417,6 +417,20 @@
   background-color: var(--text-editor-highlighted-node-delete-background-color);
   color: var(--text-editor-highlighted-node-delete-font-color);
   text-decoration: line-through;
+
+  // removed content is rendered as real nodes, so it may carry blocks
+  display: inline-block;
+  width: 100%;
+
+  p,
+  li,
+  h1,
+  h2,
+  h3,
+  td,
+  th {
+    text-decoration: line-through;
+  }
 }
 
 .text-editor-highlighted-node-add {

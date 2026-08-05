@@ -93,6 +93,8 @@
     "BlocksIssuesList": "ブロック中のタスク ({blocksIssues})",
     "OpenSubIssues": "子イシューを開く",
     "AddSubIssues": "子イシューを追加",
+    "AddExistingSubIssue": "既存のサブタスクを追加",
+    "CreateSubIssue": "サブタスクを作成",
     "BlockedBy": "ブロックされている",
     "RelatedTo": "関連する",
     "Comments": "コメント",

@@ -15,13 +15,32 @@
 <script lang="ts">
   import type { WorkspacesSummary } from '@hcengineering/account-client'
   import { reduceCalls } from '@hcengineering/core'
-  import { getMetadata } from '@hcengineering/platform'
+  import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import presentation, { type OverviewStatistics } from '@hcengineering/presentation'
-  import { Button, Label, themeStore } from '@hcengineering/ui'
+  import { Button, ButtonMenu, Label, themeStore } from '@hcengineering/ui'
 
   import adminRes from '../../plugin'
   import RegistrationsChart from '../RegistrationsChart.svelte'
+  import { downloadReport, type ReportFormat, type ReportId } from '../../reports'
   import { getWorkspacesSummary, loadPlanOptions, type PlanOptions } from '../../utils'
+
+  let generating = false
+  let reportFormat: ReportFormat = 'csv'
+  const reportItems = [
+    { id: 'accounts', label: adminRes.string.ReportAccounts },
+    { id: 'workspaces', label: adminRes.string.ReportWorkspaces },
+    { id: 'paid', label: adminRes.string.ReportPaidWorkspaces }
+  ]
+  async function runReport (id: ReportId): Promise<void> {
+    generating = true
+    try {
+      await downloadReport(id, reportFormat)
+    } catch (err) {
+      console.error('Report generation failed:', err)
+    } finally {
+      generating = false
+    }
+  }
 
   export let refreshTick: number = 0
 
@@ -61,64 +80,37 @@
   $: paidSeats = billing
     .filter((b) => plans?.config?.plans?.[b.plan]?.free !== true)
     .reduce((acc, b) => acc + b.seats, 0)
-
-  $: services = Object.entries(overview?.data ?? {}).sort((a, b) => a[1].serviceName.localeCompare(b[1].serviceName))
-
-  interface ServiceRow {
-    name: string
-    count: number
-    memoryUsed: number
-    memoryTotal: number
-    memoryRSS: number
-    cpu: number
-  }
-
-  let groupByName = true
-
-  $: totals = services.reduce(
-    (acc, [, svc]) => {
-      acc.memoryUsed += svc.memory.memoryUsed
-      acc.memoryTotal += svc.memory.memoryTotal
-      acc.memoryRSS += svc.memory.memoryRSS
-      acc.cpu += svc.cpu.usage
-      return acc
-    },
-    { memoryUsed: 0, memoryTotal: 0, memoryRSS: 0, cpu: 0 }
-  )
-
-  $: serviceRows = ((): ServiceRow[] => {
-    if (!groupByName) {
-      return services.map(([id, svc]) => ({
-        name: `${svc.serviceName} - ${id}`,
-        count: 1,
-        memoryUsed: svc.memory.memoryUsed,
-        memoryTotal: svc.memory.memoryTotal,
-        memoryRSS: svc.memory.memoryRSS,
-        cpu: svc.cpu.usage
-      }))
-    }
-    const byName = new Map<string, ServiceRow>()
-    for (const [, svc] of services) {
-      const row = byName.get(svc.serviceName) ?? {
-        name: svc.serviceName,
-        count: 0,
-        memoryUsed: 0,
-        memoryTotal: 0,
-        memoryRSS: 0,
-        cpu: 0
-      }
-      row.count++
-      row.memoryUsed += svc.memory.memoryUsed
-      row.memoryTotal += svc.memory.memoryTotal
-      row.memoryRSS += svc.memory.memoryRSS
-      row.cpu += svc.cpu.usage
-      byName.set(svc.serviceName, row)
-    }
-    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name))
-  })()
 </script>
 
 <div class="p-3">
+  <div class="flex-row-center mb-2">
+    <span class="fs-title mr-4"><Label label={adminRes.string.Reports} /></span>
+    <ButtonMenu
+      label={adminRes.string.CreateReport}
+      kind={'primary'}
+      size={'small'}
+      disabled={generating}
+      items={reportItems}
+      on:selected={(it) => {
+        void runReport(it.detail)
+      }}
+    />
+    <div class="ml-2 flex-row-center">
+      <Button
+        label={getEmbeddedLabel('CSV')}
+        kind={reportFormat === 'csv' ? 'primary' : 'regular'}
+        size={'small'}
+        on:click={() => (reportFormat = 'csv')}
+      />
+      <Button
+        label={getEmbeddedLabel('PDF')}
+        kind={reportFormat === 'pdf' ? 'primary' : 'regular'}
+        size={'small'}
+        on:click={() => (reportFormat = 'pdf')}
+      />
+    </div>
+  </div>
+
   <div class="fs-title mb-2"><Label label={adminRes.string.Workspaces} /></div>
   <div class="flex-row-center flex-wrap">
     <span class="mr-4"><Label label={adminRes.string.Total} />: {summary?.total ?? '-'}</span>
@@ -155,52 +147,3 @@
 </div>
 
 <RegistrationsChart {refreshTick} />
-
-<div class="p-3">
-  <div class="flex-row-center mb-2">
-    <span class="fs-title mr-4"><Label label={adminRes.string.Services} /></span>
-    <Button
-      label={adminRes.string.GroupByName}
-      kind={groupByName ? 'primary' : 'regular'}
-      size={'small'}
-      on:click={() => (groupByName = !groupByName)}
-    />
-    <span class="ml-4 content-dark-color">
-      <Label label={adminRes.string.Total} />: mem {Math.round(totals.memoryUsed)}/{Math.round(totals.memoryTotal)} MB, RSS
-      {Math.round(totals.memoryRSS)}
-      MB, CPU {Math.round(totals.cpu * 10) / 10}%
-    </span>
-  </div>
-  <table class="services-table">
-    <thead>
-      <tr>
-        <th><Label label={adminRes.string.Service} /></th>
-        <th>Mem (MB)</th>
-        <th>RSS (MB)</th>
-        <th>CPU (%)</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each serviceRows as row}
-        <tr>
-          <td>{row.name}{row.count > 1 ? ` x${row.count}` : ''}</td>
-          <td>{Math.round(row.memoryUsed)}/{Math.round(row.memoryTotal)}</td>
-          <td>{Math.round(row.memoryRSS)}</td>
-          <td>{Math.round(row.cpu * 10) / 10}</td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
-</div>
-
-<style lang="scss">
-  .services-table {
-    border-collapse: collapse;
-    th,
-    td {
-      text-align: left;
-      padding: 0.25rem 1rem 0.25rem 0;
-      border-bottom: 1px solid var(--theme-divider-color, #8883);
-    }
-  }
-</style>

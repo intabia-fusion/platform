@@ -58,7 +58,6 @@ import { promisify } from 'util'
 import { gzip } from 'zlib'
 import { retrieveJson } from './utils'
 
-export const COMMUNICATION_DOMAIN = 'communication' as OperationDomain
 interface RPCClientInfo {
   client: ConnectionSocket
   session: Session
@@ -208,7 +207,11 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
       let transactorRpc = rpcSessions.get(token)
 
       if (transactorRpc === undefined) {
-        const cs: ConnectionSocket = createClosingSocket(token, rpcSessions)
+        const cs: ConnectionSocket = createClosingSocket(token, rpcSessions, {
+          rpc: true,
+          account: decodedToken.account,
+          service: decodedToken.extra?.service
+        })
         const s = await sessions.addSession(ctx, cs, decodedToken, token, token)
         if (!('session' in s)) {
           sendError(res, 403, {
@@ -563,17 +566,6 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
   /**
    * @deprecated Use /api/v1/tx/:workspaceIdd instead
    */
-  app.post('/api/v1/event/:workspaceId', (req, res) => {
-    void withSession(req, res, 'domainRequest', async (ctx, session) => {
-      const event: any = (await retrieveJson(req)) ?? {}
-
-      const { result } = await session.domainRequestRaw(ctx, COMMUNICATION_DOMAIN, {
-        event
-      })
-      await sendJson(req, res, result.value)
-    })
-  })
-
   app.get('/api/v1/account/:workspaceId', (req, res) => {
     void withSession(req, res, 'account', async (ctx, session, rateLimit) => {
       const result = session.getRawAccount()
@@ -746,7 +738,11 @@ export function registerRPC (app: Express, sessions: SessionManager, ctx: Measur
   })
 }
 
-function createClosingSocket (rawToken: string, rpcSessions: Map<string, RPCClientInfo>): ConnectionSocket {
+function createClosingSocket (
+  rawToken: string,
+  rpcSessions: Map<string, RPCClientInfo>,
+  data: Record<string, any> = {}
+): ConnectionSocket {
   return {
     id: rawToken,
     isClosed: false,
@@ -757,7 +753,7 @@ function createClosingSocket (rawToken: string, rpcSessions: Map<string, RPCClie
     isBackpressure: () => false,
     backpressure: async (ctx) => {},
     sendPong: () => {},
-    data: () => ({}),
+    data: () => data,
     readRequest: (buffer, binary) => ({ method: '', params: [], id: -1, time: Date.now() }),
     checkState: () => true
   }

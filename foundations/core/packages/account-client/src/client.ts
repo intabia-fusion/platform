@@ -36,6 +36,8 @@ import {
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import type {
   AccountAggregatedInfo,
+  AccountsSortKey,
+  TransactorEndpointInfo,
   Integration,
   IntegrationKey,
   IntegrationSecret,
@@ -181,7 +183,13 @@ export interface AccountClient {
   createMailbox: (name: string, domain: string) => Promise<{ mailbox: string, socialId: PersonId }>
   getMailboxes: () => Promise<MailboxInfo[]>
   deleteMailbox: (mailbox: string) => Promise<void>
-  listAccounts: (search?: string, skip?: number, limit?: number) => Promise<AccountAggregatedInfo[]>
+  listAccounts: (
+    search?: string,
+    skip?: number,
+    limit?: number,
+    sort?: AccountsSortKey
+  ) => Promise<AccountAggregatedInfo[]>
+  getTransactorEndpoints: () => Promise<TransactorEndpointInfo[]>
   deleteAccount: (uuid: AccountUuid, otpCode?: string) => Promise<void>
 
   workerHandshake: (region: string, version: Data<Version>, operation: WorkspaceOperation) => Promise<void>
@@ -1258,10 +1266,24 @@ class AccountClientImpl implements AccountClient {
     await this.rpc(request)
   }
 
-  async listAccounts (search?: string, skip?: number, limit?: number): Promise<AccountAggregatedInfo[]> {
+  async listAccounts (
+    search?: string,
+    skip?: number,
+    limit?: number,
+    sort?: AccountsSortKey
+  ): Promise<AccountAggregatedInfo[]> {
     const request = {
       method: 'listAccounts' as const,
-      params: { search, skip, limit }
+      params: { search, skip, limit, sort }
+    }
+
+    return await this.rpc(request)
+  }
+
+  async getTransactorEndpoints (): Promise<TransactorEndpointInfo[]> {
+    const request = {
+      method: 'getTransactorEndpoints' as const,
+      params: {}
     }
 
     return await this.rpc(request)

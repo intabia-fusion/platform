@@ -119,14 +119,12 @@ import { performGmailAccountMigrations } from './gmail'
 import { getToolToken, getWorkspace, getWorkspaceTransactorEndpoint } from './utils'
 
 import { createRestClient } from '@hcengineering/api-client'
-import { type CardID } from '@hcengineering/communication-types'
 import { sendTransactorEvent } from '@hcengineering/server-tool'
 import { existsSync } from 'fs'
 import { mkdir, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { restoreMarkupRefs } from './markup'
 import { restoreGithubIntegrations } from './restoreGithub'
-import { migrateWorkspaceChat } from './communication'
 
 const colorConstants = {
   colorRed: '\u001b[31m',
@@ -1014,13 +1012,17 @@ export function devTool (
           fullVerify: boolean
         }
       ) => {
+        toolCtx.info('backup: opening storage', { dirName })
         const storage = await createFileBackupStorage(dirName)
+        toolCtx.info('backup: connecting to account db')
         await withAccountDatabase(async (db) => {
           const { txes, dbUrl } = prepareTools()
+          toolCtx.info('backup: looking up workspace', { workspace })
           const ws = await getWorkspace(db, workspace)
           if (ws === null) {
             throw new Error(`workspace ${workspace} not found`)
           }
+          toolCtx.info('backup: workspace found', { uuid: ws.uuid, url: ws.url, dataId: ws.dataId })
           const wsIds = {
             uuid: ws.uuid,
             dataId: ws.dataId,
@@ -1032,6 +1034,7 @@ export function devTool (
 
           let pipeline: Pipeline | undefined
           try {
+            toolCtx.info('backup: creating pipeline')
             pipeline = await createBackupPipeline(toolCtx, dbUrl, txes, {
               externalStorage: workspaceStorage,
               usePassedCtx: true
@@ -1049,6 +1052,7 @@ export function devTool (
               toolCtx.error('failed to restore, pipeline is undefined', { workspace })
               return
             }
+            toolCtx.info('backup: pipeline ready')
             const include = cmd.include === '*' ? undefined : new Set(cmd.include.split(';').map((it) => it.trim()))
 
             if (include != null && include.has('account.socialId')) {
@@ -1058,6 +1062,7 @@ export function devTool (
               include.add('contact')
             }
             toolCtx.info('OPT', { include: include != null ? Array.from(include) : '', skip: cmd.skip })
+            toolCtx.info('backup: starting')
             await backup(toolCtx, pipeline, wsIds, storage, db, {
               force: cmd.force,
               include,
@@ -3070,97 +3075,6 @@ export function devTool (
           { conflictSuffix: suffix, region, branding, force }
         )
       }, dbUrl)
-    })
-
-  program
-    .command('migrate-chat-to-communication')
-    .description('Migrate old chat to new communication')
-    .option('-w, --workspace <workspace>', 'Workspace to migrate')
-    .action(async (cmd: { workspace?: WorkspaceUuid }) => {
-      const { dbUrl, txes } = prepareTools()
-      const hulylakeUrl = process.env.HULYLAKE_URL ?? ''
-
-      const workspace = cmd.workspace
-      console.log('Workspace', workspace)
-
-      if (hulylakeUrl === '') {
-        throw new Error('HULYLAKE_URL should be specified')
-      }
-
-      const token = generateToken(systemAccountUuid, undefined, {
-        service: 'tool'
-      })
-      const db = getDBClient(dbUrl, undefined, 'tool')
-      const dbClient = await db.getClient()
-      const accountClient = getAccountClient(token)
-      const personUuidBySocialId = new Map<PersonId, PersonUuid>()
-      const storageConfig = storageConfigFromEnv()
-      const storage: StorageAdapter = buildStorageFromConfig(storageConfig)
-
-      await withAccountDatabase(async (accountDb) => {
-        const workspaces =
-          workspace != null
-            ? await accountDb.workspaceStatus.find({ workspaceUuid: workspace })
-            : await accountDb.workspaceStatus.find({}, { lastVisit: 'descending' })
-        for (const wss of workspaces) {
-          try {
-            const ws = await accountDb.workspace.findOne({ uuid: wss.workspaceUuid })
-            if (ws == null) continue
-            const hulylake = getHulylakeClient(hulylakeUrl, ws.uuid, token)
-
-            let pipeline: Pipeline | undefined
-            try {
-              pipeline = await createBackupPipeline(toolCtx, dbUrl, txes, {
-                externalStorage: storage,
-                usePassedCtx: true
-              })(
-                toolCtx,
-                {
-                  uuid: ws.uuid,
-                  url: ws.url ?? '',
-                  dataId: ws.dataId
-                },
-                createEmptyBroadcastOps(),
-                null
-              )
-            } catch (e) {
-              pipeline = undefined
-            }
-            if (pipeline === undefined) {
-              toolCtx.error('failed to migrate, pipeline is undefined', { ws })
-              return
-            }
-            const client = pipeline.context.lowLevelStorage
-
-            if (client == null) {
-              toolCtx.error('failed to migrate, lowLevelStorage is undefined', { ws })
-              return
-            }
-
-            console.log('------------start workspace migration', ws.name)
-            const s = Date.now()
-            await migrateWorkspaceChat(
-              toolCtx.newChild(ws.name, {}),
-              ws,
-              dbClient,
-              client,
-              pipeline.context.hierarchy,
-              hulylake,
-              accountClient,
-              personUuidBySocialId
-            )
-            const e = Date.now()
-            console.log('---------------done workspace migration', ws.name, ((e - s) / 1000 / 60).toFixed(2), 'minutes')
-            await pipeline.close()
-          } catch (err: any) {
-            console.error('failed to migrate workspace', wss.workspaceUuid)
-            console.error(err)
-          }
-        }
-        db.close()
-      }, dbUrl)
-
-      console.log('done')
     })
 
   program

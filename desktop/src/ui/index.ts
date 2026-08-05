@@ -16,7 +16,6 @@
 import { loginId } from '@hcengineering/login'
 import { loveId } from '@hcengineering/love'
 import { timeId } from '@hcengineering/time'
-
 import { getEmbeddedLabel, getMetadata, getResource, translate } from '@hcengineering/platform'
 import presentation, { MessageBox, setDownloadProgress, getClient } from '@hcengineering/presentation'
 import setting, { settingId } from '@hcengineering/setting'
@@ -33,17 +32,14 @@ import {
 } from '@hcengineering/ui'
 import { handleDownloadItem } from '@hcengineering/desktop-downloads'
 import notification, { notificationId } from '@hcengineering/notification'
-import { inboxId } from '@hcengineering/inbox'
 import workbench, { workbenchId, logOut } from '@hcengineering/workbench'
 import view, { Action, encodeObjectURI } from '@hcengineering/view'
 import { resolveLocation } from '@hcengineering/notification-resources'
 import { themeStore, ThemeVariant } from '@hcengineering/theme'
 import type { Application } from '@hcengineering/workbench'
 import { isAllowedToRole } from '@hcengineering/workbench-resources'
-import card from '@hcengineering/card'
-import communication from '@hcengineering/communication'
-
 import { isOwnerOrMaintainer, getCurrentAccount, Ref } from '@hcengineering/core'
+
 import { configurePlatform } from './platform'
 import { setupTitleBarMenu } from './titleBarMenu'
 import { defineScreenShare, defineGetDisplayMedia } from './screenShare'
@@ -219,15 +215,7 @@ window.addEventListener('DOMContentLoaded', () => {
   ipcMain.handleNotificationNavigation((notificationParams: NotificationParams) => {
     const currentLocation = getCurrentResolvedLocation()
     const workspace = currentLocation.path[1]
-    // Support for new inbox with cardId (card-based)
-    if (notificationParams.cardId != null) {
-      const objectUri = encodeObjectURI(notificationParams.cardId, card.class.Card)
-      navigateToUrl(`${workbenchId}/${workspace}/${inboxId}/${objectUri}`)
-      return
-    }
-
-    const isCommunicationEnabled = getMetadata(communication.metadata.Enabled) ?? false
-    const app = isCommunicationEnabled ? inboxId : notificationParams.application
+    const app = notificationParams.application
 
     // Support for old inbox with objectId + objectClass (legacy)
     if (notificationParams.objectId != null && notificationParams.objectClass != null) {

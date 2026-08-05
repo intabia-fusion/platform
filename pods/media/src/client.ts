@@ -44,10 +44,8 @@ import core, {
 import { type RestClient, createRestClient } from '@hcengineering/api-client'
 import { getTransactorEndpoint } from '@hcengineering/server-client'
 import { generateToken } from '@hcengineering/server-token'
-import { AttachmentPatchEvent, MessageEventType } from '@hcengineering/communication-sdk-types'
 
 import { BlobSourceType, type VideoTranscodeResult } from './types'
-import { AttachmentID } from '@hcengineering/communication-types'
 
 async function getClient (workspace: WorkspaceUuid, token: string): Promise<Client> {
   const endpoint = await getTransactorEndpoint(token)
@@ -122,33 +120,6 @@ export class WorkspaceClient {
         await txOps.update(doc, { ...doc.metadata, ...metadata })
       }
     }
-  }
-
-  async updateCommMetadata (ctx: MeasureContext, result: VideoTranscodeResult, metadata: BlobMetadata): Promise<void> {
-    if (result.source.source !== BlobSourceType.Message) {
-      return
-    }
-
-    const event: AttachmentPatchEvent = {
-      type: MessageEventType.AttachmentPatch,
-      cardId: result.source.cardId,
-      messageId: result.source.messageId,
-      socialId: core.account.System,
-      operations: [
-        {
-          opcode: 'update',
-          attachments: [
-            {
-              id: result.blobId as AttachmentID,
-              params: { metadata }
-            }
-          ]
-        }
-      ]
-    }
-
-    const txOps = new TxOperations(this.client, core.account.System)
-    await txOps.domainRequest('communication' as OperationDomain, { event })
   }
 }
 

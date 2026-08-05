@@ -13,29 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import {
-    DraftController,
-    draftsStore,
-    getClient,
-    getCommunicationClient,
-    SpaceSelector
-  } from '@hcengineering/presentation'
+  import { DraftController, draftsStore, getClient, SpaceSelector } from '@hcengineering/presentation'
   import { ButtonIcon, IconMinimize, IconSend, ModernButton, ModernEditbox } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-
-  import { Analytics } from '@hcengineering/analytics'
   import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
-  import { Card, MasterTag, type CardSpace } from '@hcengineering/card'
-  import chat from '@hcengineering/chat'
-  import { defaultMessageInputActions } from '@hcengineering/communication-resources'
-  import { AttachmentID, BlobParams } from '@hcengineering/communication-types'
+  import { Card, type CardSpace, MasterTag } from '@hcengineering/card'
   import core, { Data, generateId, getCurrentAccount, Markup, Ref } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
-  import { EmptyMarkup, isEmptyMarkup, markupToJSON, markupToText } from '@hcengineering/text'
+  import { EmptyMarkup, isEmptyMarkup, markupToText } from '@hcengineering/text'
   import textEditor, { type RefAction } from '@hcengineering/text-editor'
   import { AttachIcon } from '@hcengineering/text-editor-resources'
-  import { markupToMarkdown } from '@hcengineering/text-markdown'
-  import { getCardDraftKey, getEmptyCardDraft, type CardDraft } from '../draft'
+
+  import { type CardDraft, getCardDraftKey, getEmptyCardDraft } from '../draft'
   import { TypeSelector } from '../index'
   import card from '../plugin'
   import { createCard, isBaseTypeWithSubtypes } from '../utils'
@@ -45,11 +34,8 @@
   import EditorActions from './EditorActions.svelte'
 
   const dispatch = createEventDispatcher()
-  const communicationClient = getCommunicationClient()
 
-  const threadMasterTag = chat.masterTag.Thread
-
-  export let type: Ref<MasterTag> = threadMasterTag
+  export let type: Ref<MasterTag> = card.types.Document
   export let space: Ref<CardSpace> | undefined = undefined
 
   const draftKey = getCardDraftKey()
@@ -128,24 +114,8 @@
         }
       }
 
-      const isThread = type === threadMasterTag
-      const cardDescription = isThread ? EmptyMarkup : description
-      const createdCard = await createCard(type, space, data, cardDescription, _id)
-      if (isThread) {
-        if (createdCard == null) {
-          Analytics.handleError(new Error('Failed to create thread card'))
-          return
-        }
-        const blobs: (BlobParams & { mimeType: string })[] = descriptionBox.getAttachments().map((attachment) => ({
-          blobId: attachment.file,
-          mimeType: attachment.type,
-          fileName: attachment.name,
-          size: attachment.size
-        }))
-        await createMessage(createdCard, description, blobs)
-      } else {
-        await descriptionBox.createAttachments()
-      }
+      const createdCard = await createCard(type, space, data, description, _id)
+      await descriptionBox.createAttachments()
       if (createdCard != null) {
         dispatch('selectCard', createdCard)
       }
@@ -153,25 +123,6 @@
     } finally {
       _id = generateId<Card>()
       creating = false
-    }
-  }
-
-  async function createMessage (
-    card: Ref<Card>,
-    markup: Markup,
-    blobs: (BlobParams & { mimeType: string })[]
-  ): Promise<void> {
-    const markdown = markupToMarkdown(markupToJSON(markup))
-    const { messageId } = await communicationClient.createMessage(card, type, markdown)
-
-    if (blobs.length > 0) {
-      void communicationClient.attachmentPatch<BlobParams>(card, messageId, {
-        add: blobs.map((it) => ({
-          id: it.blobId as any as AttachmentID,
-          mimeType: it.mimeType,
-          params: it
-        }))
-      })
     }
   }
 
@@ -263,7 +214,7 @@
               <TypeSelector size={'small'} bind:value={type} disabled={creating} excludeBaseTypes />
               <div class="spacer" />
               <div class="right-divider" />
-              <EditorActions actions={[...defaultMessageInputActions, attachAction]} />
+              <EditorActions actions={[attachAction]} />
             </div>
             <ModernButton
               label={card.string.Post}

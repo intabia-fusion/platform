@@ -19,6 +19,7 @@
   import document, { Document } from '@hcengineering/document'
   import { getResource } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
+  import { type TextEditorCommandHandler } from '@hcengineering/text-editor'
   import { CollaboratorEditor, ImageUploadOptions } from '@hcengineering/text-editor-resources'
   import { AnySvelteComponent } from '@hcengineering/ui'
   import { getCollaborationUser } from '@hcengineering/view-resources'
@@ -47,6 +48,10 @@
 
   export function focus (position?: FocusPosition): void {
     collabEditor.focus(position)
+  }
+
+  export function commands (): TextEditorCommandHandler | undefined {
+    return collabEditor?.commands()
   }
 
   $: attribute = {

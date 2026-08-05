@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Metadata, Plugin, Resource } from '@hcengineering/platform'
+import type { Plugin, Resource } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { TriggerFunc } from '@hcengineering/server-core'
 import { Presenter } from '@hcengineering/server-activity'
@@ -27,9 +27,6 @@ export const serverCardId = 'server-card' as Plugin
  * @public
  */
 export default plugin(serverCardId, {
-  metadata: {
-    CommunicationEnabled: '' as Metadata<boolean>
-  },
   function: {
     CardUrlPresenter: '' as Resource<Presenter>
   },
@@ -41,8 +38,6 @@ export default plugin(serverCardId, {
     OnTagRemove: '' as Resource<TriggerFunc>,
     OnMasterTagRemove: '' as Resource<TriggerFunc>,
     OnCardCreate: '' as Resource<TriggerFunc>,
-    OnDirectCreate: '' as Resource<TriggerFunc>,
-    OnThreadCreate: '' as Resource<TriggerFunc>,
     OnCardUpdate: '' as Resource<TriggerFunc>,
     OnCardTag: '' as Resource<TriggerFunc>,
     OnCardRemove: '' as Resource<TriggerFunc>

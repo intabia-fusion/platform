@@ -19,7 +19,6 @@
   import { getClient } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
   import { IconMoreV, NavItem, Action, ButtonIcon } from '@hcengineering/ui'
-  import { NotificationContext } from '@hcengineering/communication-types'
   import view from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
   import preference from '@hcengineering/preference'
@@ -31,7 +30,6 @@
 
   export let type: Ref<MasterTag> | undefined = undefined
   export let card: Card
-  export let context: NotificationContext | undefined = undefined
   export let favorite: FavoriteCard | undefined = undefined
   export let applicationId: string
   export let selectedCard: Ref<Card> | undefined = undefined
@@ -132,41 +130,4 @@
       {/if}
     {/each}
   </svelte:fragment>
-
-  <svelte:fragment slot="notify">
-    {#if context && (context.totalNotifications ?? 0) > 0}
-      <div class="antiHSpacer" />
-      <div class="notify">
-        <div class="notifyMarker">
-          {context.totalNotifications}
-        </div>
-      </div>
-      <div class="antiHSpacer" />
-    {/if}
-  </svelte:fragment>
 </NavItem>
-
-<style lang="scss">
-  .notify {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    min-width: 1rem;
-    height: 1rem;
-  }
-  .notifyMarker {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    border-radius: 0.5rem;
-    font-weight: 700;
-    background-color: var(--global-higlight-Color);
-    color: var(--global-on-accent-TextColor);
-    min-width: 1rem;
-    height: 1rem;
-    font-size: 0.5rem;
-    padding: 0 0.25rem;
-  }
-</style>

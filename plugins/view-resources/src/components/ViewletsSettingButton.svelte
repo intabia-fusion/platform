@@ -15,7 +15,7 @@
 <script lang="ts">
   import core, { DocumentQuery, WithLookup } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { ButtonIcon, showPopup, closeTooltip } from '@hcengineering/ui'
+  import { Button, ButtonIcon, showPopup, closeTooltip } from '@hcengineering/ui'
   import { ViewOptions, ViewOptionsModel, Viewlet, ViewletPreference } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
@@ -25,7 +25,7 @@
   import { restrictionStore } from '../utils'
 
   export let viewletQuery: DocumentQuery<Viewlet> = {}
-  export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
+  export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' | 'ghost' = 'secondary'
   export let viewOptions: ViewOptions | undefined = undefined
 
   export let viewlet: Viewlet | undefined = undefined
@@ -33,6 +33,7 @@
   export let preference: ViewletPreference | undefined = undefined
   export let loading = true
   export let disabled: boolean = false
+  export let noGap: boolean = false
 
   const dispatch = createEventDispatcher()
 
@@ -89,20 +90,32 @@
 </script>
 
 {#if viewlet}
-  <div class="flex-row-center gap-2 reverse">
+  <div class="flex-row-center reverse" class:gap-2={!noGap}>
     {#if viewOptions}
       <ViewOptionsButton {viewlet} {kind} {viewOptions} {disabled} />
     {/if}
-    <ButtonIcon
-      icon={view.icon.Configure}
-      {kind}
-      size={'small'}
-      iconSize={'small'}
-      {disabled}
-      {pressed}
-      tooltip={{ label: view.string.CustomizeView, direction: 'bottom' }}
-      bind:element={btn}
-      on:click={clickHandler}
-    />
+    {#if kind === 'ghost'}
+      <Button
+        icon={view.icon.Configure}
+        kind={'ghost'}
+        {disabled}
+        {pressed}
+        showTooltip={{ label: view.string.CustomizeView, direction: 'bottom' }}
+        bind:input={btn}
+        on:click={clickHandler}
+      />
+    {:else}
+      <ButtonIcon
+        icon={view.icon.Configure}
+        {kind}
+        size={'small'}
+        iconSize={'small'}
+        {disabled}
+        {pressed}
+        tooltip={{ label: view.string.CustomizeView, direction: 'bottom' }}
+        bind:element={btn}
+        on:click={clickHandler}
+      />
+    {/if}
   </div>
 {/if}

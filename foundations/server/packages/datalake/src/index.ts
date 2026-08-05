@@ -130,7 +130,7 @@ export class DatalakeService implements StorageAdapter {
   }
 
   @withContext('listStream')
-  async listStream (ctx: MeasureContext, wsIds: WorkspaceIds): Promise<BlobStorageIterator> {
+  async listStream (ctx: MeasureContext, wsIds: WorkspaceIds, prefix?: string): Promise<BlobStorageIterator> {
     let hasMore = true
     const buffer: ListBlobResult[] = []
     let cursor: string | undefined
@@ -139,7 +139,7 @@ export class DatalakeService implements StorageAdapter {
       next: async () => {
         try {
           while (hasMore && buffer.length < 50) {
-            const res = await this.retry(ctx, () => this.client.listObjects(ctx, wsIds.uuid, cursor, 10000))
+            const res = await this.retry(ctx, () => this.client.listObjects(ctx, wsIds.uuid, cursor, 10000, prefix))
             hasMore = res.cursor !== undefined
             cursor = res.cursor
 

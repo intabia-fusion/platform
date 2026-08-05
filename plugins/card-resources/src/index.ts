@@ -32,7 +32,6 @@ import {
   openCardInSidebar,
   checkRelationsSectionVisibility,
   checkOldMessagesSectionVisibility,
-  checkCommunicationMessagesSectionVisibility,
   getSpaceAccessPublicLink,
   canGetSpaceAccessPublicLink,
   cardFactory,
@@ -62,7 +61,6 @@ import CreateCardPopup from './components/CreateCardPopup.svelte'
 import CardArrayEditor from './components/CardArrayEditor.svelte'
 import SpacePresenter from './components/navigator/SpacePresenter.svelte'
 import TypesNavigator from './components/navigator/TypesNavigator.svelte'
-import LabelsPresenter from './components/LabelsPresenter.svelte'
 import RolesSection from './components/settings/RolesSection.svelte'
 import EditRole from './components/settings/EditRole.svelte'
 import CreateRolePopup from './components/settings/CreateRolePopup.svelte'
@@ -78,7 +76,6 @@ import ChildrenCardSection from './components/sections/ChildrenSection.svelte'
 import ContentCardSection from './components/sections/ContentSection.svelte'
 import PropertiesCardSection from './components/sections/PropertiesSection.svelte'
 import RelationsCardSection from './components/sections/RelationsSection.svelte'
-import CardCommunicatiomMessages from './components/sections/CardCommunicatiomMessages.svelte'
 import OldMessagesCardSection from './components/sections/OldMessagesCardSection.svelte'
 
 import FavoriteCardPresenter from './components/FavoriteCardPresenter.svelte'
@@ -130,7 +127,6 @@ export default async (): Promise<Resources> => ({
     CardArrayEditor,
     SpacePresenter,
     TypesNavigator,
-    LabelsPresenter,
     RolesSection,
     EditRole,
     CardWidget,
@@ -153,8 +149,7 @@ export default async (): Promise<Resources> => ({
     ContentSection: ContentCardSection,
     PropertiesSection: PropertiesCardSection,
     RelationsSection: RelationsCardSection,
-    OldMessagesSection: OldMessagesCardSection,
-    CommunicationMessagesSection: CardCommunicatiomMessages
+    OldMessagesSection: OldMessagesCardSection
   },
   completion: {
     CardQuery: queryCard
@@ -177,7 +172,6 @@ export default async (): Promise<Resources> => ({
     OpenCardInSidebar: openCardInSidebar,
     CheckRelationsSectionVisibility: checkRelationsSectionVisibility,
     CheckOldMessagesSectionVisibility: checkOldMessagesSectionVisibility,
-    CheckCommunicationMessagesSectionVisibility: checkCommunicationMessagesSectionVisibility,
     CheckChildrenSectionVisibility: checkChildrenSectionVisibility,
     GetSpaceAccessPublicLink: getSpaceAccessPublicLink,
     CanGetSpaceAccessPublicLink: canGetSpaceAccessPublicLink,

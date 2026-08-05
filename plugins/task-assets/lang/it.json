@@ -89,6 +89,7 @@
     "CountProjects": "{count, plural, =0 {Nessun progetto} =1 {# progetto} other {# progetti}}",
     "ProjectTypeTitle": "Titolo tipo di progetto",
     "ProcessStates": "Stati del processo",
+    "ShowParentTasks": "Mostra attività padre",
     "Type": "Tipo",
     "Group": "Gruppo",
     "Color": "Colore",

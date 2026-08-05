@@ -102,15 +102,6 @@ importers:
       '@hcengineering/card-resources':
         specifier: workspace:^0.7.0
         version: link:../plugins/card-resources
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/chat
-      '@hcengineering/chat-assets':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/chat-assets
-      '@hcengineering/chat-resources':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/chat-resources
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../plugins/chunter
@@ -126,18 +117,6 @@ importers:
       '@hcengineering/client-resources':
         specifier: workspace:^0.7.18
         version: link:../foundations/core/packages/client-resources
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/communication
-      '@hcengineering/communication-assets':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/communication-assets
-      '@hcengineering/communication-resources':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/communication-resources
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../plugins/contact
@@ -288,15 +267,6 @@ importers:
       '@hcengineering/image-cropper-resources':
         specifier: workspace:^0.7.0
         version: link:../plugins/image-cropper-resources
-      '@hcengineering/inbox':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/inbox
-      '@hcengineering/inbox-assets':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/inbox-assets
-      '@hcengineering/inbox-resources':
-        specifier: workspace:^0.7.0
-        version: link:../plugins/inbox-resources
       '@hcengineering/inventory':
         specifier: workspace:^0.7.0
         version: link:../plugins/inventory
@@ -1112,15 +1082,6 @@ importers:
       '@hcengineering/card-resources':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card-resources
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chat
-      '@hcengineering/chat-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chat-assets
-      '@hcengineering/chat-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chat-resources
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chunter
@@ -1136,15 +1097,6 @@ importers:
       '@hcengineering/client-resources':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client-resources
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
-      '@hcengineering/communication-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication-assets
-      '@hcengineering/communication-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication-resources
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -1292,15 +1244,6 @@ importers:
       '@hcengineering/image-cropper-resources':
         specifier: workspace:^0.7.0
         version: link:../../plugins/image-cropper-resources
-      '@hcengineering/inbox':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/inbox
-      '@hcengineering/inbox-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/inbox-assets
-      '@hcengineering/inbox-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/inbox-resources
       '@hcengineering/inventory':
         specifier: workspace:^0.7.0
         version: link:../../plugins/inventory
@@ -1866,9 +1809,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chat
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chunter
@@ -1881,12 +1821,6 @@ importers:
       '@hcengineering/collaboration':
         specifier: workspace:^0.7.17
         version: link:../../foundations/server/packages/collaboration
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -2290,512 +2224,6 @@ importers:
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.19.0)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../foundations/communication/packages/client-query:
-    dependencies:
-      '@hcengineering/communication-query':
-        specifier: workspace:^0.7.11
-        version: link:../query
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../sdk-types
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../types
-      '@hcengineering/hulylake-client':
-        specifier: workspace:^0.7.17
-        version: link:../../../core/packages/hulylake-client
-      fast-equals:
-        specifier: ^5.2.2
-        version: 5.3.2
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../../utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      esbuild:
-        specifier: ^0.25.10
-        version: 0.25.12
-      esbuild-plugin-copy:
-        specifier: ~2.1.1
-        version: 2.1.1(esbuild@0.25.12)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../foundations/communication/packages/cockroach:
-    dependencies:
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../sdk-types
-      '@hcengineering/communication-shared':
-        specifier: workspace:^0.7.11
-        version: link:../shared
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../types
-      postgres:
-        specifier: ^3.4.7
-        version: 3.4.7
-      uuid:
-        specifier: ^8.3.2
-        version: 8.3.2
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../../utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@types/uuid':
-        specifier: ^8.3.1
-        version: 8.3.4
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      esbuild:
-        specifier: ^0.25.10
-        version: 0.25.12
-      esbuild-plugin-copy:
-        specifier: ~2.1.1
-        version: 2.1.1(esbuild@0.25.12)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../foundations/communication/packages/query:
-    dependencies:
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../sdk-types
-      '@hcengineering/communication-shared':
-        specifier: workspace:^0.7.11
-        version: link:../shared
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../types
-      '@hcengineering/hulylake-client':
-        specifier: workspace:^0.7.17
-        version: link:../../../core/packages/hulylake-client
-      fast-equals:
-        specifier: ^5.2.2
-        version: 5.3.2
-      uuid:
-        specifier: ^8.3.2
-        version: 8.3.2
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../../utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/uuid':
-        specifier: ^8.3.1
-        version: 8.3.4
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      esbuild:
-        specifier: ^0.25.10
-        version: 0.25.12
-      esbuild-plugin-copy:
-        specifier: ~2.1.1
-        version: 2.1.1(esbuild@0.25.12)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../foundations/communication/packages/rest-client:
-    dependencies:
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../sdk-types
-      '@hcengineering/communication-shared':
-        specifier: workspace:^0.7.11
-        version: link:../shared
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../types
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../../core/packages/core
-      snappyjs:
-        specifier: ^0.7.0
-        version: 0.7.0
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../../utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/snappyjs':
-        specifier: ^0.7.1
-        version: 0.7.1
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      esbuild:
-        specifier: ^0.25.10
-        version: 0.25.12
-      esbuild-plugin-copy:
-        specifier: ~2.1.1
-        version: 2.1.1(esbuild@0.25.12)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../foundations/communication/packages/sdk-types:
-    dependencies:
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../types
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../../core/packages/core
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../../utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      esbuild:
-        specifier: ^0.25.10
-        version: 0.25.12
-      esbuild-plugin-copy:
-        specifier: ~2.1.1
-        version: 2.1.1(esbuild@0.25.12)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../foundations/communication/packages/server:
-    dependencies:
-      '@hcengineering/account-client':
-        specifier: workspace:^0.7.21
-        version: link:../../../core/packages/account-client
-      '@hcengineering/communication-cockroach':
-        specifier: workspace:^0.7.11
-        version: link:../cockroach
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../sdk-types
-      '@hcengineering/communication-shared':
-        specifier: workspace:^0.7.11
-        version: link:../shared
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../types
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../../core/packages/core
-      '@hcengineering/hulylake-client':
-        specifier: workspace:^0.7.17
-        version: link:../../../core/packages/hulylake-client
-      '@hcengineering/server-token':
-        specifier: workspace:^0.7.17
-        version: link:../../../core/packages/token
-      '@hcengineering/text-core':
-        specifier: workspace:^0.7.18
-        version: link:../../../core/packages/text-core
-      '@hcengineering/text-markdown':
-        specifier: workspace:^0.7.20
-        version: link:../../../core/packages/text-markdown
-      uuid:
-        specifier: ^8.3.2
-        version: 8.3.2
-      zod:
-        specifier: ^3.22.4
-        version: 3.25.76
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../../utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@types/uuid':
-        specifier: ^8.3.1
-        version: 8.3.4
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      esbuild:
-        specifier: ^0.25.10
-        version: 0.25.12
-      esbuild-plugin-copy:
-        specifier: ~2.1.1
-        version: 2.1.1(esbuild@0.25.12)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../foundations/communication/packages/shared:
-    dependencies:
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../sdk-types
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../types
-      '@hcengineering/hulylake-client':
-        specifier: workspace:^0.7.17
-        version: link:../../../core/packages/hulylake-client
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../../utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      esbuild:
-        specifier: ^0.25.10
-        version: 0.25.12
-      esbuild-plugin-copy:
-        specifier: ~2.1.1
-        version: 2.1.1(esbuild@0.25.12)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../foundations/communication/packages/types:
-    dependencies:
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../../core/packages/core
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../../utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      esbuild:
-        specifier: ^0.25.10
-        version: 0.25.12
-      esbuild-plugin-copy:
-        specifier: ~2.1.1
-        version: 2.1.1(esbuild@0.25.12)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -5923,15 +5351,9 @@ importers:
       '@hcengineering/model-card':
         specifier: workspace:^0.7.0
         version: link:../card
-      '@hcengineering/model-chat':
-        specifier: workspace:^0.7.0
-        version: link:../chat
       '@hcengineering/model-chunter':
         specifier: workspace:^0.7.0
         version: link:../chunter
-      '@hcengineering/model-communication':
-        specifier: workspace:^0.7.0
-        version: link:../communication
       '@hcengineering/model-contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -5977,9 +5399,6 @@ importers:
       '@hcengineering/model-huly-mail':
         specifier: workspace:^0.7.0
         version: link:../huly-mail
-      '@hcengineering/model-inbox':
-        specifier: workspace:^0.7.0
-        version: link:../inbox
       '@hcengineering/model-inventory':
         specifier: workspace:^0.7.0
         version: link:../inventory
@@ -6512,9 +5931,6 @@ importers:
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chunter
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -6566,103 +5982,6 @@ importers:
       '@hcengineering/time':
         specifier: workspace:^0.7.0
         version: link:../../plugins/time
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/view
-      '@hcengineering/workbench':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/workbench
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../models/chat:
-    dependencies:
-      '@hcengineering/card':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/card
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chat
-      '@hcengineering/chat-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chat-resources
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/model':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/model
-      '@hcengineering/model-card':
-        specifier: workspace:^0.7.0
-        version: link:../card
-      '@hcengineering/model-core':
-        specifier: workspace:^0.7.0
-        version: link:../core
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/model-view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-      '@hcengineering/model-workbench':
-        specifier: workspace:^0.7.0
-        version: link:../workbench
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/setting':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/setting
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
@@ -6775,100 +6094,6 @@ importers:
       '@hcengineering/workbench':
         specifier: workspace:^0.7.0
         version: link:../../plugins/workbench
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../models/communication:
-    dependencies:
-      '@hcengineering/card':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/card
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
-      '@hcengineering/communication-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication-resources
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/model':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/model
-      '@hcengineering/model-card':
-        specifier: workspace:^0.7.0
-        version: link:../card
-      '@hcengineering/model-core':
-        specifier: workspace:^0.7.0
-        version: link:../core
-      '@hcengineering/model-emoji':
-        specifier: workspace:^0.7.0
-        version: link:../emoji
-      '@hcengineering/model-notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/model-view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/notification
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/setting':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/setting
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -8172,88 +7397,6 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  ../../models/inbox:
-    dependencies:
-      '@hcengineering/card':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/card
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/inbox':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/inbox
-      '@hcengineering/inbox-resources':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/inbox-resources
-      '@hcengineering/model':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/model
-      '@hcengineering/model-core':
-        specifier: workspace:^0.7.0
-        version: link:../core
-      '@hcengineering/model-workbench':
-        specifier: workspace:^0.7.0
-        version: link:../workbench
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/setting':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/setting
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/view
-      '@hcengineering/workbench':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/workbench
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   ../../models/inventory:
     dependencies:
       '@hcengineering/activity':
@@ -8595,9 +7738,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chat
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chunter
@@ -10180,9 +9320,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -14584,21 +13721,6 @@ importers:
       '@hcengineering/collaborator-client':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/collaborator-client
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
-      '@hcengineering/communication-client-query':
-        specifier: workspace:^0.7.11
-        version: link:../../foundations/communication/packages/client-query
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-shared':
-        specifier: workspace:^0.7.11
-        version: link:../../foundations/communication/packages/shared
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -15280,9 +14402,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../card
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -15520,9 +14639,18 @@ importers:
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
+      '@hcengineering/view-resources':
+        specifier: workspace:^0.7.0
+        version: link:../view-resources
       '@hcengineering/workbench':
         specifier: workspace:^0.7.0
         version: link:../workbench
+      html2pdf.js:
+        specifier: ^0.14.0
+        version: 0.14.0
+      snappyjs:
+        specifier: ^0.7.0
+        version: 0.7.0
       svelte:
         specifier: ^4.2.20
         version: 4.2.20
@@ -15536,6 +14664,9 @@ importers:
       '@types/node':
         specifier: ^22.18.1
         version: 22.19.0
+      '@types/snappyjs':
+        specifier: ^0.7.1
+        version: 0.7.1
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.21.0
         version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
@@ -17034,18 +16165,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../card
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../chat
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../communication
-      '@hcengineering/communication-resources':
-        specifier: workspace:^0.7.0
-        version: link:../communication-resources
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -17149,246 +16268,6 @@ importers:
       '@types/html-to-text':
         specifier: ^8.1.1
         version: 8.1.1
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      eslint-plugin-svelte:
-        specifier: ^2.35.1
-        version: 2.46.1(eslint@8.57.1)(svelte@4.2.20)(ts-node@10.9.2(@types/node@24.10.9)(typescript@5.9.3))
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@24.10.9)(ts-node@10.9.2(@types/node@24.10.9)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      prettier-plugin-svelte:
-        specifier: ^3.4.0
-        version: 3.4.0(prettier@3.6.2)(svelte@4.2.20)
-      sass:
-        specifier: ^1.80.0
-        version: 1.93.3
-      svelte-check:
-        specifier: ^3.6.9
-        version: 3.8.6(@babel/core@7.28.5)(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@types/node@24.10.9)(typescript@5.9.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)
-      svelte-eslint-parser:
-        specifier: ^0.33.1
-        version: 0.33.1(svelte@4.2.20)
-      svelte-loader:
-        specifier: ^3.2.0
-        version: 3.2.4(svelte@4.2.20)
-      svelte-preprocess:
-        specifier: ^5.1.4
-        version: 5.1.4(@babel/core@7.28.5)(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@types/node@24.10.9)(typescript@5.9.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)(typescript@5.9.3)
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(jest-util@30.2.0)(jest@29.7.0(@types/node@24.10.9)(ts-node@10.9.2(@types/node@24.10.9)(typescript@5.9.3)))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/chat:
-    dependencies:
-      '@hcengineering/card':
-        specifier: workspace:^0.7.0
-        version: link:../card
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(jest-util@30.2.0)(jest@29.7.0)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/chat-assets:
-    dependencies:
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../chat
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/chat-resources:
-    dependencies:
-      '@hcengineering/analytics':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/analytics
-      '@hcengineering/card':
-        specifier: workspace:^0.7.0
-        version: link:../card
-      '@hcengineering/card-resources':
-        specifier: workspace:^0.7.0
-        version: link:../card-resources
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../chat
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../communication
-      '@hcengineering/communication-resources':
-        specifier: workspace:^0.7.0
-        version: link:../communication-resources
-      '@hcengineering/communication-shared':
-        specifier: workspace:^0.7.11
-        version: link:../../foundations/communication/packages/shared
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../contact
-      '@hcengineering/contact-resources':
-        specifier: workspace:^0.7.0
-        version: link:../contact-resources
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/emoji-resources':
-        specifier: workspace:^0.7.0
-        version: link:../emoji-resources
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/presentation':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/presentation
-      '@hcengineering/rank':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/rank
-      '@hcengineering/text':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/core/packages/text
-      '@hcengineering/text-markdown':
-        specifier: workspace:^0.7.20
-        version: link:../../foundations/core/packages/text-markdown
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-      '@hcengineering/view-resources':
-        specifier: workspace:^0.7.0
-        version: link:../view-resources
-      '@hcengineering/workbench':
-        specifier: workspace:^0.7.0
-        version: link:../workbench
-      '@hcengineering/workbench-resources':
-        specifier: workspace:^0.7.0
-        version: link:../workbench-resources
-      fast-equals:
-        specifier: ^5.2.2
-        version: 5.3.2
-      svelte:
-        specifier: ^4.2.20
-        version: 4.2.20
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
       '@types/jest':
         specifier: ^29.5.5
         version: 29.5.14
@@ -17728,288 +16607,6 @@ importers:
       ts-jest:
         specifier: ^29.1.1
         version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(jest-util@30.2.0)(jest@29.7.0(@types/node@24.10.9)(ts-node@10.9.2(@types/node@24.10.9)(typescript@5.9.3)))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/communication:
-    dependencies:
-      '@hcengineering/card':
-        specifier: workspace:^0.7.0
-        version: link:../card
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(jest-util@30.2.0)(jest@29.7.0)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/communication-assets:
-    dependencies:
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../communication
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/communication-resources:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/ai-bot':
-        specifier: workspace:^0.7.0
-        version: link:../ai-bot
-      '@hcengineering/ai-bot-resources':
-        specifier: workspace:^0.7.0
-        version: link:../ai-bot-resources
-      '@hcengineering/analytics':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/analytics
-      '@hcengineering/attachment-resources':
-        specifier: workspace:^0.7.0
-        version: link:../attachment-resources
-      '@hcengineering/card':
-        specifier: workspace:^0.7.0
-        version: link:../card
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../chat
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../communication
-      '@hcengineering/communication-shared':
-        specifier: workspace:^0.7.11
-        version: link:../../foundations/communication/packages/shared
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../contact
-      '@hcengineering/contact-resources':
-        specifier: workspace:^0.7.0
-        version: link:../contact-resources
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/emoji':
-        specifier: workspace:^0.7.0
-        version: link:../emoji
-      '@hcengineering/emoji-resources':
-        specifier: workspace:^0.7.0
-        version: link:../emoji-resources
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/presence-resources':
-        specifier: workspace:^0.7.0
-        version: link:../presence-resources
-      '@hcengineering/presentation':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/presentation
-      '@hcengineering/process':
-        specifier: workspace:^0.7.0
-        version: link:../process
-      '@hcengineering/rank':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/rank
-      '@hcengineering/text':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/core/packages/text
-      '@hcengineering/text-editor':
-        specifier: workspace:^0.7.0
-        version: link:../text-editor
-      '@hcengineering/text-editor-resources':
-        specifier: workspace:^0.7.0
-        version: link:../text-editor-resources
-      '@hcengineering/text-markdown':
-        specifier: workspace:^0.7.20
-        version: link:../../foundations/core/packages/text-markdown
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/uploader':
-        specifier: workspace:^0.7.0
-        version: link:../uploader
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-      '@hcengineering/view-resources':
-        specifier: workspace:^0.7.0
-        version: link:../view-resources
-      '@tiptap/core':
-        specifier: ^2.11.7
-        version: 2.27.1(@tiptap/pm@2.27.1)
-      '@tiptap/pm':
-        specifier: ^2.11.7
-        version: 2.27.1
-      svelte:
-        specifier: ^4.2.20
-        version: 4.2.20
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      autoprefixer:
-        specifier: ^10.4.14
-        version: 10.4.21(postcss@8.5.6)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      eslint-plugin-svelte:
-        specifier: ^2.35.1
-        version: 2.46.1(eslint@8.57.1)(svelte@4.2.20)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
-      postcss:
-        specifier: ^8.4.20
-        version: 8.5.6
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      prettier-plugin-svelte:
-        specifier: ^3.4.0
-        version: 3.4.0(prettier@3.6.2)(svelte@4.2.20)
-      sass:
-        specifier: ^1.80.0
-        version: 1.93.3
-      svelte-check:
-        specifier: ^3.6.9
-        version: 3.8.6(@babel/core@7.28.5)(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)
-      svelte-eslint-parser:
-        specifier: ^0.33.1
-        version: 0.33.1(svelte@4.2.20)
-      svelte-loader:
-        specifier: ^3.2.0
-        version: 3.2.4(svelte@4.2.20)
-      svelte-preprocess:
-        specifier: ^5.1.4
-        version: 5.1.4(@babel/core@7.28.5)(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)(typescript@5.9.3)
-      tailwindcss:
-        specifier: ^3.3.5
-        version: 3.4.18(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -19666,6 +18263,9 @@ importers:
       '@hcengineering/attachment-resources':
         specifier: workspace:^0.7.0
         version: link:../attachment-resources
+      '@hcengineering/collaborator-client':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/collaborator-client
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -19705,6 +18305,9 @@ importers:
       '@hcengineering/tags':
         specifier: workspace:^0.7.0
         version: link:../tags
+      '@hcengineering/text':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/text
       '@hcengineering/text-editor':
         specifier: workspace:^0.7.0
         version: link:../text-editor
@@ -21621,249 +20224,6 @@ importers:
       smartcrop:
         specifier: ~2.0.5
         version: 2.0.5
-      svelte:
-        specifier: ^4.2.20
-        version: 4.2.20
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      eslint-plugin-svelte:
-        specifier: ^2.35.1
-        version: 2.46.1(eslint@8.57.1)(svelte@4.2.20)(ts-node@10.9.2(@types/node@24.10.9)(typescript@5.9.3))
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@24.10.9)(ts-node@10.9.2(@types/node@24.10.9)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      prettier-plugin-svelte:
-        specifier: ^3.4.0
-        version: 3.4.0(prettier@3.6.2)(svelte@4.2.20)
-      sass:
-        specifier: ^1.80.0
-        version: 1.93.3
-      svelte-check:
-        specifier: ^3.6.9
-        version: 3.8.6(@babel/core@7.28.5)(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@types/node@24.10.9)(typescript@5.9.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)
-      svelte-eslint-parser:
-        specifier: ^0.33.1
-        version: 0.33.1(svelte@4.2.20)
-      svelte-loader:
-        specifier: ^3.2.0
-        version: 3.2.4(svelte@4.2.20)
-      svelte-preprocess:
-        specifier: ^5.1.4
-        version: 5.1.4(@babel/core@7.28.5)(postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@types/node@24.10.9)(typescript@5.9.3)))(postcss@8.5.6)(sass@1.93.3)(svelte@4.2.20)(typescript@5.9.3)
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(jest-util@30.2.0)(jest@29.7.0(@types/node@24.10.9)(ts-node@10.9.2(@types/node@24.10.9)(typescript@5.9.3)))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/inbox:
-    dependencies:
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(jest-util@30.2.0)(jest@29.7.0)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/inbox-assets:
-    dependencies:
-      '@hcengineering/inbox':
-        specifier: workspace:^0.7.0
-        version: link:../inbox
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../plugins/inbox-resources:
-    dependencies:
-      '@hcengineering/activity':
-        specifier: workspace:^0.7.0
-        version: link:../activity
-      '@hcengineering/activity-resources':
-        specifier: workspace:^0.7.0
-        version: link:../activity-resources
-      '@hcengineering/analytics':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/analytics
-      '@hcengineering/card':
-        specifier: workspace:^0.7.0
-        version: link:../card
-      '@hcengineering/chunter':
-        specifier: workspace:^0.7.0
-        version: link:../chunter
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../communication
-      '@hcengineering/communication-resources':
-        specifier: workspace:^0.7.0
-        version: link:../communication-resources
-      '@hcengineering/communication-shared':
-        specifier: workspace:^0.7.11
-        version: link:../../foundations/communication/packages/shared
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../contact
-      '@hcengineering/contact-resources':
-        specifier: workspace:^0.7.0
-        version: link:../contact-resources
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/emoji-resources':
-        specifier: workspace:^0.7.0
-        version: link:../emoji-resources
-      '@hcengineering/inbox':
-        specifier: workspace:^0.7.0
-        version: link:../inbox
-      '@hcengineering/notification':
-        specifier: workspace:^0.7.0
-        version: link:../notification
-      '@hcengineering/notification-resources':
-        specifier: workspace:^0.7.0
-        version: link:../notification-resources
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/presentation':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/presentation
-      '@hcengineering/rank':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/rank
-      '@hcengineering/text':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/core/packages/text
-      '@hcengineering/text-markdown':
-        specifier: workspace:^0.7.20
-        version: link:../../foundations/core/packages/text-markdown
-      '@hcengineering/ui':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/ui
-      '@hcengineering/view':
-        specifier: workspace:^0.7.0
-        version: link:../view
-      '@hcengineering/view-resources':
-        specifier: workspace:^0.7.0
-        version: link:../view-resources
-      fast-equals:
-        specifier: ^5.2.2
-        version: 5.3.2
       svelte:
         specifier: ^4.2.20
         version: 4.2.20
@@ -26024,12 +24384,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../card
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../chat
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../communication
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -29616,18 +27970,9 @@ importers:
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../chat
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../communication
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact
@@ -29637,9 +27982,6 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
-      '@hcengineering/inbox':
-        specifier: workspace:^0.7.0
-        version: link:../inbox
       '@hcengineering/login':
         specifier: workspace:^0.7.0
         version: link:../login
@@ -29697,9 +28039,6 @@ importers:
       fast-equals:
         specifier: ^5.2.2
         version: 5.3.2
-      snappyjs:
-        specifier: ^0.7.0
-        version: 0.7.0
       svelte:
         specifier: ^4.2.20
         version: 4.2.20
@@ -29710,9 +28049,6 @@ importers:
       '@types/jest':
         specifier: ^29.5.5
         version: 29.5.14
-      '@types/snappyjs':
-        specifier: ^0.7.1
-        version: 0.7.1
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.21.0
         version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
@@ -30303,12 +28639,6 @@ importers:
       '@hcengineering/client-resources':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client-resources
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-server':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/server
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -30560,12 +28890,6 @@ importers:
       '@hcengineering/attachment':
         specifier: workspace:^0.7.0
         version: link:../../plugins/attachment
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -30790,12 +29114,6 @@ importers:
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chunter
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-server':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/server
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -30829,9 +29147,6 @@ importers:
       '@hcengineering/pod-telegram-bot':
         specifier: workspace:^0.7.0
         version: link:../../services/telegram-bot/pod-telegram-bot
-      '@hcengineering/pod-translate':
-        specifier: workspace:^0.7.0
-        version: link:../../services/translate
       '@hcengineering/postgres':
         specifier: workspace:^0.7.22
         version: link:../../foundations/server/packages/postgres
@@ -30853,9 +29168,6 @@ importers:
       '@hcengineering/server-calendar':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/calendar
-      '@hcengineering/server-card':
-        specifier: workspace:^0.7.0
-        version: link:../../server-plugins/card
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -31293,12 +29605,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -31829,15 +30135,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -35779,12 +34076,6 @@ importers:
       '@hcengineering/collaborator-client':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/collaborator-client
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -36051,18 +34342,6 @@ importers:
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chunter
-      '@hcengineering/communication-rest-client':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/rest-client
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-shared':
-        specifier: workspace:^0.7.11
-        version: link:../../foundations/communication/packages/shared
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -36172,30 +34451,12 @@ importers:
       '@hcengineering/card-assets':
         specifier: workspace:^0.7.0
         version: link:../../plugins/card-assets
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chat
-      '@hcengineering/chat-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/chat-assets
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chunter
       '@hcengineering/chunter-assets':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chunter-assets
-      '@hcengineering/communication':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication
-      '@hcengineering/communication-assets':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/communication-assets
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -39516,21 +37777,12 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/card
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/chat
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/core/packages/client
       '@hcengineering/client-resources':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/core/packages/client-resources
-      '@hcengineering/communication-rest-client':
-        specifier: workspace:^0.7.12
-        version: link:../../../foundations/communication/packages/rest-client
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../../foundations/communication/packages/sdk-types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/contact
@@ -39845,21 +38097,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/card
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/chat
-      '@hcengineering/communication-rest-client':
-        specifier: workspace:^0.7.12
-        version: link:../../../foundations/communication/packages/rest-client
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-shared':
-        specifier: workspace:^0.7.11
-        version: link:../../../foundations/communication/packages/shared
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/contact
@@ -40096,18 +38333,6 @@ importers:
       '@hcengineering/card':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/card
-      '@hcengineering/chat':
-        specifier: workspace:^0.7.0
-        version: link:../../../plugins/chat
-      '@hcengineering/communication-rest-client':
-        specifier: workspace:^0.7.12
-        version: link:../../../foundations/communication/packages/rest-client
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../../foundations/communication/packages/types
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/contact
@@ -40912,12 +39137,6 @@ importers:
       '@hcengineering/collaborator-client':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/collaborator-client
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -41018,12 +39237,6 @@ importers:
       '@hcengineering/analytics-service':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics-service
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-server':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/server
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact
@@ -41728,130 +39941,6 @@ importers:
       ts-node-dev:
         specifier: ^2.0.0
         version: 2.0.0(@types/node@22.19.0)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  ../../services/translate:
-    dependencies:
-      '@hcengineering/account-client':
-        specifier: workspace:^0.7.21
-        version: link:../../foundations/core/packages/account-client
-      '@hcengineering/analytics':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/analytics
-      '@hcengineering/analytics-service':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/analytics-service
-      '@hcengineering/api-client':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/core/packages/api-client
-      '@hcengineering/billing-client':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/billing-client
-      '@hcengineering/card':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/card
-      '@hcengineering/communication-sdk-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/sdk-types
-      '@hcengineering/communication-shared':
-        specifier: workspace:^0.7.11
-        version: link:../../foundations/communication/packages/shared
-      '@hcengineering/communication-types':
-        specifier: workspace:^0.7.12
-        version: link:../../foundations/communication/packages/types
-      '@hcengineering/contact':
-        specifier: workspace:^0.7.0
-        version: link:../../plugins/contact
-      '@hcengineering/core':
-        specifier: workspace:^0.7.24
-        version: link:../../foundations/core/packages/core
-      '@hcengineering/hulylake-client':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/hulylake-client
-      '@hcengineering/kafka':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/server/packages/kafka
-      '@hcengineering/platform':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/core/packages/platform
-      '@hcengineering/retry':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/retry
-      '@hcengineering/server-client':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/server/packages/client
-      '@hcengineering/server-core':
-        specifier: workspace:^0.7.18
-        version: link:../../foundations/server/packages/core
-      '@hcengineering/server-token':
-        specifier: workspace:^0.7.17
-        version: link:../../foundations/core/packages/token
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.6.1
-      openai:
-        specifier: ^4.56.0
-        version: 4.104.0(encoding@0.1.13)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.76)
-    devDependencies:
-      '@hcengineering/platform-rig':
-        specifier: workspace:^0.7.19
-        version: link:../../foundations/utils/packages/platform-rig
-      '@tsconfig/node16':
-        specifier: ^1.0.4
-        version: 1.0.4
-      '@types/jest':
-        specifier: ^29.5.5
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.18.1
-        version: 22.19.0
-      '@types/uuid':
-        specifier: ^8.3.1
-        version: 8.3.4
-      '@types/ws':
-        specifier: ^8.5.12
-        version: 8.18.1
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.21.0
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.21.0
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      esbuild:
-        specifier: ^0.25.10
-        version: 0.25.12
-      eslint:
-        specifier: ^8.54.0
-        version: 8.57.1
-      eslint-config-standard-with-typescript:
-        specifier: ^40.0.0
-        version: 40.0.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint-plugin-n@15.7.0(eslint@8.57.1))(eslint-plugin-promise@6.6.0(eslint@8.57.1))(eslint@8.57.1)(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: ^2.26.0
-        version: 2.32.0(eslint@8.57.1)
-      eslint-plugin-n:
-        specifier: ^15.4.0
-        version: 15.7.0(eslint@8.57.1)
-      eslint-plugin-node:
-        specifier: ^11.1.0
-        version: 11.1.0(eslint@8.57.1)
-      eslint-plugin-promise:
-        specifier: ^6.1.1
-        version: 6.6.0(eslint@8.57.1)
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3))
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.4.5(@babel/core@7.28.5)(@jest/transform@29.7.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.28.5))(esbuild@0.25.12)(jest-util@30.2.0)(jest@29.7.0(@types/node@22.19.0)(ts-node@10.9.2(@types/node@22.19.0)(typescript@5.9.3)))(typescript@5.9.3)
-      ts-node:
-        specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.19.0)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -42697,6 +40786,10 @@ packages:
 
   '@babel/runtime@7.28.4':
     resolution: {integrity: sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@7.29.7':
+    resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.27.2':
@@ -45876,6 +43969,9 @@ packages:
   '@types/querystringify@2.0.2':
     resolution: {integrity: sha512-7d6OQK6pJ//zE32XLK3vI6GHYhBDcYooaRco9cKFGNu59GVatL5+u7rkiAViq44DxDTd/7QQNBWSDHfJGBz/Pw==}
 
+  '@types/raf@3.4.3':
+    resolution: {integrity: sha512-c4YAvMedbPZ5tEyxzQdMoOhhJ4RD3rngZIdwC2/qDN3d7JpEhB6fiBRKVY1lg5B7Wk+uPBjn5f39j1/2MY1oOw==}
+
   '@types/range-parser@1.2.7':
     resolution: {integrity: sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==}
 
@@ -46553,6 +44649,10 @@ packages:
   bare-url@2.3.2:
     resolution: {integrity: sha512-ZMq4gd9ngV5aTMa5p9+UfY0b3skwhHELaDkhEHetMdX0LRkW9kzaym4oo/Eh+Ghm0CCDuMTsRIGM/ytUc1ZYmw==}
 
+  base64-arraybuffer@1.0.2:
+    resolution: {integrity: sha512-I3yl4r9QB5ZRY3XuJVEPfc2XhZO6YweFPI+UovAzn+8/hb3oJ6lnysaFcjVpkCPfVWFUDvoZ8kmVDP7WyRtYtQ==}
+    engines: {node: '>= 0.6.0'}
+
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
@@ -46812,6 +44912,10 @@ packages:
 
   caniuse-lite@1.0.30001793:
     resolution: {integrity: sha512-iwSsYWaCOoh26cV8NwNRViHlrfUvYsHDfRVcbtmw0Kg6PJIZZXwMkj1442FYLBGkeUf1juAsU3DTfxW579mrPA==}
+
+  canvg@3.0.11:
+    resolution: {integrity: sha512-5ON+q7jCTgMp9cjpu4Jo6XbvfYwSB2Ow3kzHKfIyJfaCAOHLbdKPQqGKgfED/R5B+3TFFfe8pegYA+b423SRyA==}
+    engines: {node: '>=10.0.0'}
 
   centra@2.7.0:
     resolution: {integrity: sha512-PbFMgMSrmgx6uxCdm57RUos9Tc3fclMvhLSATYN39XsDV29B89zZ3KA89jmY0vwSGazyU+uerqwa6t+KaodPcg==}
@@ -47209,6 +45313,9 @@ packages:
 
   crypto-js@4.2.0:
     resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
+
+  css-line-break@2.1.0:
+    resolution: {integrity: sha512-FHcKFCZcAha3LwfVBhCQbW2nCNbkZXn7KVUJcsT5/P8YmfsVja0FMPJr0B903j/E69HUphKiV9iQArX8SDYA4w==}
 
   css-loader@5.2.7:
     resolution: {integrity: sha512-Q7mOvpBNBG7YrVGMxRxcBJZFL75o+cH2abNASdibkj/fffYD8qWbInZrD0S9ccI6vZclF3DsHE7njGlLtaHbhg==}
@@ -47703,6 +45810,9 @@ packages:
 
   dompurify@3.3.0:
     resolution: {integrity: sha512-r+f6MYR1gGN1eJv0TVQbhA7if/U7P87cdPl3HN5rikqaBSBxLiCb/b9O+2eG0cxz0ghyU+mU1QkbsOwERMYlWQ==}
+
+  dompurify@3.4.12:
+    resolution: {integrity: sha512-zQvGet8Z2sWbQhCmfFz/T5QWH2oBmjnqK3qvOjaqaNLrLEF912WamU+ohnTp0TCep/MFVHpdJuCZEdFOdTnEFg==}
 
   domutils@2.8.0:
     resolution: {integrity: sha512-w96Cjofp72M5IIhpjgobBimYEfoPjx1Vx0BSX9P30WBdZW2WIKU0T1Bd0kz2eNZ9ikjKgHbEyKx8BB6H1L3h3A==}
@@ -48292,6 +46402,9 @@ packages:
   fast-levenshtein@2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
 
+  fast-png@6.4.0:
+    resolution: {integrity: sha512-kAqZq1TlgBjZcLr5mcN6NP5Rv4V2f22z00c3g8vRrwkcqjerx7BEhPbOnWCPqaHUl2XWQBJQvOT/FQhdMT7X/Q==}
+
   fast-redact@3.5.0:
     resolution: {integrity: sha512-dwsoQlS7h9hMeYUq1W++23NDcBLV4KqONnITDV9DjfS3q1SgDGVrBdvvTLUotWtPSD7asWDV9/CmsZPy8Hf70A==}
     engines: {node: '>=6'}
@@ -48335,6 +46448,9 @@ packages:
 
   fecha@4.2.3:
     resolution: {integrity: sha512-OP2IUU6HeYKJi3i0z4A19kHMQoLVs4Hc+DPqqxI2h/DPZHTm/vjsfC6P0b4jCMy14XizLBqvndQ+UilD7707Jw==}
+
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   file-api@0.10.4:
     resolution: {integrity: sha512-RVBXJGmsnQxokdpy264pmsdBjbUuxE6QT2xxhOrO2pzwTetbTNoWVFgkONFWmopm5mellsXrQIQhMY9fjufi9g==}
@@ -48869,6 +46985,13 @@ packages:
       webpack:
         optional: true
 
+  html2canvas@1.4.1:
+    resolution: {integrity: sha512-fPU6BHNpsyIhr8yyMpTLLxAbkaK8ArIBcmZIRiBLiDhjeqvXolaEmDGmELFuX9I4xDcaKKcJl+TKZLqruBbmWA==}
+    engines: {node: '>=8.0.0'}
+
+  html2pdf.js@0.14.0:
+    resolution: {integrity: sha512-yvNJgE/8yru2UeGflkPdjW8YEY+nDH5X7/2WG4uiuSCwYiCp8PZ8EKNiTAa6HxJ1NjC51fZSIEq6xld5CADKBQ==}
+
   htmlparser2@10.1.0:
     resolution: {integrity: sha512-VTZkM9GWRAtEpveh7MSF6SjjrpNVNNVJfFup7xTY3UpFtm67foy9HDVXneLtFVt4pMz5kZtgNcvCniNFb1hlEQ==}
 
@@ -49056,6 +47179,9 @@ packages:
   invert-kv@2.0.0:
     resolution: {integrity: sha512-wPVv/y/QQ/Uiirj/vh3oP+1Ww+AWehmi1g5fFWGPF6IpCBCDVrhgHRMvrLfdYcwDh3QJbGXDW4JAuzxElLSqKA==}
     engines: {node: '>=4'}
+
+  iobuffer@5.4.0:
+    resolution: {integrity: sha512-DRebOWuqDvxunfkNJAlc3IzWIPD5xVxwUNbHr7xKB8E6aLJxIPfNX3CoMJghcFjpv6RWQsrcJbghtEwSPoJqMA==}
 
   ip-address@10.1.0:
     resolution: {integrity: sha512-XXADHxXmvT9+CRxhXg56LJovE+bmWnEWB78LB83VZTprKTmaC5QfruXocxzTZ2Kl0DNwKuBdlIhjL8LeY8Sf8Q==}
@@ -49618,6 +47744,9 @@ packages:
   jsonwebtoken@9.0.2:
     resolution: {integrity: sha512-PRp66vJ865SSqOlgqS8hujT5U4AOgMfhrwYIuIhfKaoSCZcirrmASQr8CX7cUg+RMih+hgznrjp99o+W4pJLHQ==}
     engines: {node: '>=12', npm: '>=6'}
+
+  jspdf@4.2.1:
+    resolution: {integrity: sha512-YyAXyvnmjTbR4bHQRLzex3CuINCDlQnBqoSYyjJwTP2x9jDLuKDzy7aKUl0hgx3uhcl7xzg32agn5vlie6HIlQ==}
 
   jszip@3.10.1:
     resolution: {integrity: sha512-xXDvecyTpGLrqFrvkrUSoxxfJI5AH7U8zxxtVclpsUtMCq4JQ290LY8AW5c7Ggnr/Y/oK+bQMbqK2qmtk3pN4g==}
@@ -50800,6 +48929,9 @@ packages:
   pend@1.2.0:
     resolution: {integrity: sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg==}
 
+  performance-now@2.1.0:
+    resolution: {integrity: sha512-7EAHlyLHI56VEIdK57uwHdHKIaAGbnXPiw0yWbarQZOKaKpvUIgW0jWRVLiatnM+XXlSwsanIBH/hzGMJulMow==}
+
   periscopic@3.1.0:
     resolution: {integrity: sha512-vKiQ8RRtkl9P+r/+oefh25C3fhybptkHKCZSPlcXiJux2tJF55GnEj3BVn4A5gKfq9NWWXXrxkHBwVPUfH0opw==}
 
@@ -51256,6 +49388,9 @@ packages:
     resolution: {integrity: sha512-AAFUA5O1d83pIHEhJwWCq/RQcRukCkn/NSm2QsTEMle5f2hP0ChI2+3Xb051PZCkLryI/Ir1MVKviT2FIloaTQ==}
     engines: {node: '>=12'}
 
+  raf@3.4.1:
+    resolution: {integrity: sha512-Sq4CW4QhwOHE8ucn6J34MqtZCeWFP2aQSmrlroYgqAV1PjStIhJXxYuTgUIfkEk7zTLjmIjLmU5q+fbD1NnOJA==}
+
   random-bytes@1.0.0:
     resolution: {integrity: sha512-iv7LhNVO047HzYR3InF6pUcUsPQiHTM1Qal51DcGSuZFBil1aBBWG5eHPNek7bvILMaYJ/8RU1e8w1AMdHmLQQ==}
     engines: {node: '>= 0.8'}
@@ -51428,6 +49563,10 @@ packages:
 
   rfc6902@5.1.2:
     resolution: {integrity: sha512-zxcb+PWlE8PwX0tiKE6zP97THQ8/lHmeiwucRrJ3YFupWEmp25RmFSlB1dNTqjkovwqG4iq+u1gzJMBS3um8mA==}
+
+  rgbcolor@1.0.1:
+    resolution: {integrity: sha512-9aZLIrhRaD97sgVhtJOW6ckOEh6/GnvQtdVNfdZ6s67+3/XwLS9lBcQYzEEhYVeUowN7pRzMLsyGhK2i/xvWbw==}
+    engines: {node: '>= 0.8.15'}
 
   rimraf@2.7.1:
     resolution: {integrity: sha512-uWjbaKIK3T1OSVptzX7Nl6PvQ3qAGtKEtVRjRuazjfL3Bx5eI409VZSqgND+4UNnmzLVdPj9FqFJNPqBZFve4w==}
@@ -51847,6 +49986,10 @@ packages:
     resolution: {integrity: sha512-XlkWvfIm6RmsWtNJx+uqtKLS8eqFbxUg0ZzLXqY0caEy9l7hruX8IpiDnjsLavoBgqCCR71TqWO8MaXYheJ3RQ==}
     engines: {node: '>=10'}
 
+  stackblur-canvas@2.7.0:
+    resolution: {integrity: sha512-yf7OENo23AGJhBriGx0QivY5JP6Y1HbrrDI6WLt6C5auYZXlQrheoY8hD4ibekFKz1HOfE48Ww8kMWMnJD/zcQ==}
+    engines: {node: '>=0.1.14'}
+
   standardwebhooks@1.0.0:
     resolution: {integrity: sha512-BbHGOQK9olHPMvQNHWul6MYlrRTAOKn03rOe4A8O3CLWhNf4YHBqq2HJKKC+sfqpxiBY52pNeesD6jIiLDz8jg==}
 
@@ -52116,6 +50259,10 @@ packages:
     resolution: {integrity: sha512-eeEgGc2DtiUil5ANdtd8vPwt9AgaMdnuUFnPft9F5oMvU/FHu5IHFic+p1dR/UOB7XU2mX2yHW+NcTch4DCh5Q==}
     engines: {node: '>=16'}
 
+  svg-pathdata@6.0.3:
+    resolution: {integrity: sha512-qsjeeq5YjBZ5eMdFuUa4ZosMLxgr5RZ+F+Y1OrDhuOCEInRMA3x74XdBtggJcj9kOeInz0WE+LgCPDkZFlBYJw==}
+    engines: {node: '>=12.0.0'}
+
   svgo-loader@3.0.3:
     resolution: {integrity: sha512-6YdWYge3h0aCb8xHvPhGP4hofIU1OWfZm0I8bteab7hddeRN4fl3aIkN8Z/ZB/ji9QrMOd6C8wT8F1p31GUwuQ==}
 
@@ -52199,6 +50346,9 @@ packages:
 
   text-hex@1.0.0:
     resolution: {integrity: sha512-uuVGNWzgJ4yhRaNSiubPY7OjISw4sw4E5Uv0wbjp+OzcbmVU/rsT8ujgcXJhn9ypzsgr5vlzpPqP+MBBKcGvbg==}
+
+  text-segmentation@1.0.3:
+    resolution: {integrity: sha512-iOiPUo/BGnZ6+54OsWxZidGCsdU8YbE4PSpdPinp7DeMtUJNJBoJ/ouUSTJjHkh1KntHaltHl/gDs2FC4i5+Nw==}
 
   text-table@0.2.0:
     resolution: {integrity: sha512-N+8UisAXDGk8PFXP4HAzVR9nbfmVJ3zYLAWiTIoqC5v5isinhr+r5uaO8+7r3BMfuNIufIsA7RdpVgacC2cSpw==}
@@ -52617,6 +50767,9 @@ packages:
   utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
+
+  utrie@1.0.2:
+    resolution: {integrity: sha512-1MLa5ouZiOmQzUbjbu9VmjLzn1QLXBhwpUa7kdLUQK+KQ5KA9I1vk5U4YHe/X2Ch7PYnJfWuWT+VbuxbGwljhw==}
 
   uuid@11.1.0:
     resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
@@ -53797,6 +51950,8 @@ snapshots:
       '@babel/helper-plugin-utils': 7.27.1
 
   '@babel/runtime@7.28.4': {}
+
+  '@babel/runtime@7.29.7': {}
 
   '@babel/template@7.27.2':
     dependencies:
@@ -57748,6 +55903,9 @@ snapshots:
 
   '@types/querystringify@2.0.2': {}
 
+  '@types/raf@3.4.3':
+    optional: true
+
   '@types/range-parser@1.2.7': {}
 
   '@types/readdir-glob@1.1.5':
@@ -58569,6 +56727,8 @@ snapshots:
       bare-path: 3.0.0
     optional: true
 
+  base64-arraybuffer@1.0.2: {}
+
   base64-js@1.5.1: {}
 
   base64url@3.0.1: {}
@@ -58860,6 +57020,18 @@ snapshots:
   caniuse-lite@1.0.30001754: {}
 
   caniuse-lite@1.0.30001793: {}
+
+  canvg@3.0.11:
+    dependencies:
+      '@babel/runtime': 7.29.7
+      '@types/raf': 3.4.3
+      core-js: 3.46.0
+      raf: 3.4.1
+      regenerator-runtime: 0.13.11
+      rgbcolor: 1.0.1
+      stackblur-canvas: 2.7.0
+      svg-pathdata: 6.0.3
+    optional: true
 
   centra@2.7.0:
     dependencies:
@@ -59303,6 +57475,10 @@ snapshots:
   crypt@0.0.2: {}
 
   crypto-js@4.2.0: {}
+
+  css-line-break@2.1.0:
+    dependencies:
+      utrie: 1.0.2
 
   css-loader@5.2.7(webpack@5.102.1):
     dependencies:
@@ -59812,6 +57988,10 @@ snapshots:
       domelementtype: 2.3.0
 
   dompurify@3.3.0:
+    optionalDependencies:
+      '@types/trusted-types': 2.0.7
+
+  dompurify@3.4.12:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -60616,6 +58796,12 @@ snapshots:
 
   fast-levenshtein@2.0.6: {}
 
+  fast-png@6.4.0:
+    dependencies:
+      '@types/pako': 2.0.4
+      iobuffer: 5.4.0
+      pako: 2.1.0
+
   fast-redact@3.5.0: {}
 
   fast-safe-stringify@2.1.1: {}
@@ -60653,6 +58839,8 @@ snapshots:
       pend: 1.2.0
 
   fecha@4.2.3: {}
+
+  fflate@0.8.3: {}
 
   file-api@0.10.4:
     dependencies:
@@ -61312,6 +59500,17 @@ snapshots:
     optionalDependencies:
       webpack: 5.102.1(esbuild@0.25.12)(webpack-cli@5.1.4)
 
+  html2canvas@1.4.1:
+    dependencies:
+      css-line-break: 2.1.0
+      text-segmentation: 1.0.3
+
+  html2pdf.js@0.14.0:
+    dependencies:
+      dompurify: 3.4.12
+      html2canvas: 1.4.1
+      jspdf: 4.2.1
+
   htmlparser2@10.1.0:
     dependencies:
       domelementtype: 2.3.0
@@ -61534,6 +59733,8 @@ snapshots:
       tslib: 2.8.1
 
   invert-kv@2.0.0: {}
+
+  iobuffer@5.4.0: {}
 
   ip-address@10.1.0: {}
 
@@ -62454,6 +60655,17 @@ snapshots:
       lodash.once: 4.1.1
       ms: 2.1.3
       semver: 7.7.3
+
+  jspdf@4.2.1:
+    dependencies:
+      '@babel/runtime': 7.29.7
+      fast-png: 6.4.0
+      fflate: 0.8.3
+    optionalDependencies:
+      canvg: 3.0.11
+      core-js: 3.46.0
+      dompurify: 3.4.12
+      html2canvas: 1.4.1
 
   jszip@3.10.1:
     dependencies:
@@ -63690,6 +61902,9 @@ snapshots:
 
   pend@1.2.0: {}
 
+  performance-now@2.1.0:
+    optional: true
+
   periscopic@3.1.0:
     dependencies:
       '@types/estree': 1.0.8
@@ -64271,6 +62486,11 @@ snapshots:
 
   quick-lru@6.1.2: {}
 
+  raf@3.4.1:
+    dependencies:
+      performance-now: 2.1.0
+    optional: true
+
   random-bytes@1.0.0: {}
 
   randombytes@2.1.0:
@@ -64449,6 +62669,9 @@ snapshots:
   reusify@1.1.0: {}
 
   rfc6902@5.1.2: {}
+
+  rgbcolor@1.0.1:
+    optional: true
 
   rimraf@2.7.1:
     dependencies:
@@ -64961,6 +63184,9 @@ snapshots:
     dependencies:
       escape-string-regexp: 2.0.0
 
+  stackblur-canvas@2.7.0:
+    optional: true
+
   standardwebhooks@1.0.0:
     dependencies:
       '@stablelib/base64': 1.0.1
@@ -65292,6 +63518,9 @@ snapshots:
       magic-string: 0.30.21
       periscopic: 3.1.0
 
+  svg-pathdata@6.0.3:
+    optional: true
+
   svgo-loader@3.0.3:
     dependencies:
       loader-utils: 2.0.4
@@ -65473,6 +63702,10 @@ snapshots:
       - react-native-b4a
 
   text-hex@1.0.0: {}
+
+  text-segmentation@1.0.3:
+    dependencies:
+      utrie: 1.0.2
 
   text-table@0.2.0: {}
 
@@ -65962,6 +64195,10 @@ snapshots:
   utila@0.4.0: {}
 
   utils-merge@1.0.1: {}
+
+  utrie@1.0.2:
+    dependencies:
+      base64-arraybuffer: 1.0.2
 
   uuid@11.1.0: {}
 

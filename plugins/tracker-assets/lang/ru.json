@@ -93,6 +93,8 @@
     "BlocksIssuesList": "Блокирующая задача для ({blocksIssues})",
     "OpenSubIssues": "Открыть подзадачи",
     "AddSubIssues": "Добавить подзадачу",
+    "AddExistingSubIssue": "Добавить существующую",
+    "CreateSubIssue": "Создать подзадачу",
     "BlockedBy": "Блокируется",
     "RelatedTo": "Связано",
     "Comments": "Комментарии",

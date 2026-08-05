@@ -411,6 +411,7 @@ export interface WorkspacesPagedQuery {
   region?: string
   attemptsGte?: number
   billingPlan?: string // current tier plan
+  billingStatus?: string // current tier subscription status (e.g. 'trialing')
   billingExpired?: boolean // has tier subscription, none of them active/trialing
   sort?: WorkspacesSortKey
   order?: 'asc' | 'desc'
@@ -551,7 +552,12 @@ export interface AccountDB {
   setPassword: (accountId: AccountUuid, passwordHash: Buffer, salt: Buffer) => Promise<void>
   resetPassword: (accountId: AccountUuid) => Promise<void>
   deleteAccount: (accountId: AccountUuid) => Promise<void>
-  listAccounts: (search?: string, skip?: number, limit?: number) => Promise<AccountAggregatedInfo[]>
+  listAccounts: (
+    search?: string,
+    skip?: number,
+    limit?: number,
+    sort?: AccountsSortKey
+  ) => Promise<AccountAggregatedInfo[]>
   listWorkspacesPaged: (query: WorkspacesPagedQuery) => Promise<WorkspacesPagedResult>
   getWorkspacesSummary: () => Promise<WorkspacesSummary>
   getRegistrationStats: (from: Timestamp, to: Timestamp) => Promise<RegistrationStats>
@@ -752,4 +758,15 @@ export interface AccountAggregatedInfo extends Omit<Account, 'hash' | 'salt'>, P
   integrations: Omit<Integration, 'data'>[]
   socialIds: SocialId[]
   workspaces: Omit<WorkspaceInfo, 'allowReadOnlyGuest' | 'allowGuestSignUp'>[]
+  // Max last_visit across the account's workspaces
+  lastVisit?: number
+}
+
+export type AccountsSortKey = 'name' | 'lastVisit'
+
+/** Transactor endpoint entry for admin manage calls (mirrors account-client type) */
+export interface TransactorEndpointInfo {
+  region: string
+  name?: string
+  external: string
 }

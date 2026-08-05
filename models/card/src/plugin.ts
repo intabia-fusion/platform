@@ -69,7 +69,6 @@ export default mergeIds(cardId, card, {
     CardCustomLinkEncode: '' as Resource<(doc: Doc) => Location>,
     CheckRelationsSectionVisibility: '' as Resource<(doc: Card) => Promise<boolean>>,
     CheckOldMessagesSectionVisibility: '' as Resource<(doc: Card) => Promise<boolean>>,
-    CheckCommunicationMessagesSectionVisibility: '' as Resource<(doc: Card) => Promise<boolean>>,
     ShowAllVersions: '' as Resource<(value: any, query: DocumentQuery<Doc>) => DocumentQuery<Doc>>
   }
 })

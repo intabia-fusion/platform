@@ -16,15 +16,9 @@
 -->
 <script lang="ts">
   import { Card } from '@hcengineering/card'
-  import { NotificationContext } from '@hcengineering/communication-types'
   import { Ref, WithLookup } from '@hcengineering/core'
   import presence from '@hcengineering/presence'
-  import {
-    ComponentExtensions,
-    createNotificationContextsQuery,
-    createQuery,
-    getClient
-  } from '@hcengineering/presentation'
+  import { ComponentExtensions, createQuery, getClient } from '@hcengineering/presentation'
   import {
     Button,
     Component,
@@ -36,7 +30,6 @@
     eventToHTMLElement,
     FocusHandler,
     getCurrentLocation,
-    Icon,
     IconDetailsFilled,
     IconMaxWidth,
     IconMoreH,
@@ -49,7 +42,7 @@
   import { canChangeDoc, showMenu } from '@hcengineering/view-resources'
 
   import { permissionsStore } from '@hcengineering/contact-resources'
-  import { afterUpdate, getContext, setContext } from 'svelte'
+  import { afterUpdate } from 'svelte'
   import card from '../plugin'
   import { openCardInSidebar, setViewMode, viewStore } from '../utils'
   import CardIcon from './CardIcon.svelte'
@@ -68,11 +61,8 @@
 
   const manager = createFocusManager()
   const query = createQuery()
-  const contextsQuery = createNotificationContextsQuery()
 
   let doc: WithLookup<Card> | undefined
-  let context: NotificationContext | undefined = undefined
-  let isContextLoaded = false
 
   let title: string = ''
   let isTitleEditing = false
@@ -80,8 +70,6 @@
 
   $: if (prevId !== _id) {
     prevId = _id
-    context = undefined
-    isContextLoaded = false
     isTitleEditing = false
   }
 
@@ -96,11 +84,6 @@
       loc.path.length = 3
       navigate(loc)
     }
-  })
-
-  $: contextsQuery.query({ cardId: _id, limit: 1 }, (res) => {
-    context = res.getResult()[0]
-    isContextLoaded = true
   })
 
   async function saveTitle (ev: Event): Promise<void> {
@@ -207,7 +190,7 @@
     on:close
   >
     <div class="main-content clear-mins">
-      <EditCardNewContent {_id} {doc} readonly={_readonly} {context} {isContextLoaded} />
+      <EditCardNewContent {_id} {doc} readonly={_readonly} />
     </div>
 
     <svelte:fragment slot="beforeTitle">

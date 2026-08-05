@@ -16,10 +16,21 @@
   import core, { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { Issue } from '@hcengineering/tracker'
-  import { Button, Chevron, ExpandCollapse, IconAdd, closeTooltip, resizeObserver, showPopup } from '@hcengineering/ui'
+  import {
+    Button,
+    ButtonWithDropdown,
+    Chevron,
+    ExpandCollapse,
+    IconAdd,
+    IconDropdown,
+    SelectPopupValueType,
+    closeTooltip,
+    resizeObserver,
+    showPopup
+  } from '@hcengineering/ui'
+  import { createEventDispatcher, afterUpdate } from 'svelte'
   import view, { ViewOptions, Viewlet, ViewletPreference, BuildModelKey } from '@hcengineering/view'
   import { ViewletsSettingButton, restrictionStore } from '@hcengineering/view-resources'
-  import { afterUpdate } from 'svelte'
   import tracker from '../../../plugin'
   import CreateIssue from '../../CreateIssue.svelte'
   import SubIssueList from './SubIssueList.svelte'
@@ -33,7 +44,10 @@
   export let createLabel = tracker.string.AddIssue
   export let hasSubIssues = false
   export let showCreateButton: boolean = true
+  export let dropdownItems: SelectPopupValueType[] | undefined = undefined
   export let additionalConfig: Record<Ref<Class<Doc>>, Viewlet['config']> = {}
+
+  const dispatch = createEventDispatcher()
 
   let isCollapsed = false
   let listWidth: number
@@ -146,27 +160,63 @@
       </Button>
     {/if}
   {/if}
-  <div class="flex-row-center gap-2 no-print">
+  <div class="flex-row-center no-print">
+    {#if !$restrictionStore.readonly && showCreateButton}
+      {#if hasSubIssues}
+        <Button
+          id="add-sub-issue"
+          icon={IconAdd}
+          kind={'ghost'}
+          showTooltip={{ label: createLabel, direction: 'bottom' }}
+          on:click={() => {
+            isCollapsed = false
+            closeTooltip()
+            openNewIssueDialog()
+          }}
+        />
+      {:else if dropdownItems !== undefined}
+        <ButtonWithDropdown
+          mainButtonId={'add-sub-issue'}
+          icon={IconAdd}
+          label={createLabel}
+          labelParams={{ subIssues: 0 }}
+          kind={'ghost'}
+          {dropdownItems}
+          dropdownIcon={IconDropdown}
+          showTooltipMain={{ label: createLabel, direction: 'bottom' }}
+          on:click={() => {
+            isCollapsed = false
+            closeTooltip()
+            openNewIssueDialog()
+          }}
+          on:dropdown-selected={(evt) => {
+            closeTooltip()
+            dispatch('dropdown-selected', evt.detail)
+          }}
+        />
+      {:else}
+        <Button
+          id="add-sub-issue"
+          icon={IconAdd}
+          label={createLabel}
+          labelParams={{ subIssues: 0 }}
+          kind={'ghost'}
+          showTooltip={{ label: createLabel, direction: 'bottom' }}
+          on:click={() => {
+            isCollapsed = false
+            closeTooltip()
+            openNewIssueDialog()
+          }}
+        />
+      {/if}
+    {/if}
     {#if hasSubIssues}
-      <ViewletsSettingButton bind:viewOptions viewletQuery={{ _id: viewletId }} kind={'tertiary'} bind:viewlet />
+      <slot name="buttons-after" />
     {/if}
     {#if hasSubIssues}
       <slot name="buttons" />
-    {/if}
-    {#if !$restrictionStore.readonly && showCreateButton}
-      <Button
-        id="add-sub-issue"
-        icon={IconAdd}
-        label={hasSubIssues ? undefined : createLabel}
-        labelParams={{ subIssues: 0 }}
-        kind={'ghost'}
-        showTooltip={{ label: createLabel, direction: 'bottom' }}
-        on:click={() => {
-          isCollapsed = false
-          closeTooltip()
-          openNewIssueDialog()
-        }}
-      />
+      <div class="w-1 flex-no-shrink" />
+      <ViewletsSettingButton bind:viewOptions viewletQuery={{ _id: viewletId }} kind={'ghost'} noGap bind:viewlet />
     {/if}
   </div>
 </div>

@@ -86,6 +86,7 @@ import {
   type QueueUserMessage,
   QueueWorkspaceEvent,
   type QueueWorkspaceMessage,
+  type QueueWorkspaceMaintenanceMessage,
   type Session,
   SessionDataImpl,
   type SessionHealth,
@@ -201,6 +202,10 @@ export class TSessionManager implements SessionManager {
             }
             this.broadcast(ctx, null, msg.workspace, [tx], undefined)
           }
+        } else if (m.type === QueueWorkspaceEvent.Maintenance) {
+          // Global maintenance warning from the account service; workspace key is not meaningful here
+          const mm = m as QueueWorkspaceMaintenanceMessage
+          this.scheduleMaintenance(mm.timeoutMinutes, mm.message)
         }
       }
     )
@@ -1232,7 +1237,6 @@ export class TSessionManager implements SessionManager {
                 if (another === -1 && !workspace.maintenance) {
                   void workspace.with(async (pipeline) => {
                     await pipeline.closeSession(ctx, sessionRef.session.sessionId)
-                    // await communicationApi.closeSession(sessionRef.session.sessionId)
                     if (user !== guestAccount && user !== systemAccountUuid) {
                       await this.trySetStatus(
                         workspace.context.newChild('status', {}),
@@ -1708,7 +1712,8 @@ export class TSessionManager implements SessionManager {
       userId: session.getUser(),
       sessionId: socket.id,
       total: session.total,
-      data: socket.data
+      // data is an accessor - assigning the function itself loses it on serialization to stats
+      data: socket.data()
     }
   }
 

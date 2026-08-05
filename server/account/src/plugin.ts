@@ -1,9 +1,5 @@
 import { type IntlString, type Metadata, plugin, type Plugin } from '@hcengineering/platform'
-import {
-  type PlatformQueueProducer,
-  type QueueWorkspaceLimitsMessage,
-  type QueueWorkspaceMessage
-} from '@hcengineering/server-core'
+import { type PlatformQueueProducer, type QueueWorkspaceMessage } from '@hcengineering/server-core'
 import { type TierLimits } from './types'
 
 /**
@@ -56,7 +52,7 @@ export const accountPlugin = plugin(accountId, {
     LicenseCanRunPayment: '' as Metadata<boolean>,
     MailQueue: '' as Metadata<PlatformQueueProducer<AccountNotification>>,
     CrmQueue: '' as Metadata<PlatformQueueProducer<CrmNotification>>,
-    WorkspaceQueue: '' as Metadata<PlatformQueueProducer<QueueWorkspaceLimitsMessage>>,
+    WorkspaceQueue: '' as Metadata<PlatformQueueProducer<QueueWorkspaceMessage>>,
     FulltextQueue: '' as Metadata<PlatformQueueProducer<QueueWorkspaceMessage>>
   },
   string: {

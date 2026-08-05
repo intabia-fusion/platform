@@ -93,6 +93,8 @@
     "BlocksIssuesList": "阻塞任务 ({blocksIssues})",
     "OpenSubIssues": "打开子问题",
     "AddSubIssues": "添加子问题",
+    "AddExistingSubIssue": "添加现有子任务",
+    "CreateSubIssue": "创建子任务",
     "BlockedBy": "被阻塞",
     "RelatedTo": "相关",
     "Comments": "评论",

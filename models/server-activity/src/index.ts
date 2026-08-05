@@ -28,7 +28,6 @@ import serverActivity, {
 import { TClass, TDoc } from '@hcengineering/model-core'
 import activity from '@hcengineering/activity'
 import notification from '@hcengineering/notification'
-import card from '@hcengineering/card'
 import type { Resource } from '@hcengineering/platform'
 
 export { activityServerOperation } from './migration'
@@ -57,14 +56,6 @@ export class TAttributePresenter extends TDoc implements AttributePresenter {
 
 export function createModel (builder: Builder): void {
   builder.createModel(TIdentifierPresenter, TUrlPresenter, TTitlePresenter, TAttributePresenter)
-
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverActivity.trigger.HandleCardActivity,
-    isAsync: true,
-    txMatch: {
-      objectClass: card.class.Card
-    }
-  })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverActivity.trigger.OnDocRemoved,

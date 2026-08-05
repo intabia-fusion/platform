@@ -13,105 +13,216 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, Label } from '@hcengineering/ui'
+  import { Label, themeStore } from '@hcengineering/ui'
+  import type { IntlString } from '@hcengineering/platform'
+  import type { SubscriptionInfo } from '@hcengineering/account-client'
 
   import adminRes from '../plugin'
-  import { getRegistrationStats } from '../utils'
+  import { getAllSubscriptions, getRegistrationStats } from '../utils'
 
   export let refreshTick: number = 0
 
-  let days = 90
-  let points: Array<{ day: string, workspaces: number, accounts: number }> = []
+  const MONTHS = 12
 
-  async function load (): Promise<void> {
-    const to = Date.now()
-    const from = to - days * 24 * 3600 * 1000
-    const stats = await getRegistrationStats(from, to)
-    if (stats == null) return
-    const ws = new Map(stats.workspaces.map((p) => [p.day, p.count]))
-    const acc = new Map(stats.accounts.map((p) => [p.day, p.count]))
-    const res: typeof points = []
-    for (let i = days - 1; i >= 0; i--) {
-      const day = new Date(to - i * 24 * 3600 * 1000).toISOString().slice(0, 10)
-      res.push({ day, workspaces: ws.get(day) ?? 0, accounts: acc.get(day) ?? 0 })
-    }
-    points = res
+  interface MonthPoint {
+    month: string
+    count: number
+    label?: string
+  }
+  let wsMonths: MonthPoint[] = []
+  let accMonths: MonthPoint[] = []
+  let paidMonths: MonthPoint[] = []
+  let trialMonths: MonthPoint[] = []
+
+  function monthStartUTC (now: Date, back: number): number {
+    return Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 1)
   }
 
-  let prevKey = ''
-  $: key = `${refreshTick}:${days}`
-  $: if (key !== prevKey) {
-    prevKey = key
+  async function load (): Promise<void> {
+    const now = new Date()
+    const from = monthStartUTC(now, MONTHS - 1)
+    const [stats, subs] = await Promise.all([getRegistrationStats(from, Date.now()), getAllSubscriptions()])
+    if (stats != null) {
+      const toMonths = (points: Array<{ day: string, count: number }>): MonthPoint[] => {
+        const byMonth = new Map<string, number>()
+        for (const p of points) {
+          const m = p.day.slice(0, 7)
+          byMonth.set(m, (byMonth.get(m) ?? 0) + p.count)
+        }
+        const res: MonthPoint[] = []
+        for (let i = MONTHS - 1; i >= 0; i--) {
+          const month = new Date(monthStartUTC(now, i)).toISOString().slice(0, 7)
+          res.push({ month, count: byMonth.get(month) ?? 0 })
+        }
+        return res
+      }
+      wsMonths = toMonths(stats.workspaces)
+      accMonths = toMonths(stats.accounts)
+    }
+
+    // Numbers are wrapped: INT8 columns arrive as strings from the PG driver.
+    const nowMs = Date.now()
+    const stillActive = ['active', 'past_due', 'readonly']
+    const paid = subs.filter(
+      (s) =>
+        s.type === 'tier' &&
+        s.status !== 'trialing' &&
+        s.provider !== 'free' &&
+        s.provider !== 'trial' &&
+        Number(s.amount ?? 0) > 0
+    )
+    paidMonths = seatsByMonth(now, paid, (s) => [
+      Number(s.periodStart ?? s.createdOn),
+      stillActive.includes(s.status) ? nowMs : Number(s.periodEnd ?? s.canceledAt ?? s.updatedOn)
+    ])
+
+    // Trial workspaces: currently trialing, or a past trial (trialEnd set)
+    const trial = subs.filter((s) => s.type === 'tier' && (s.status === 'trialing' || s.trialEnd != null))
+    trialMonths = seatsByMonth(now, trial, (s) => [
+      Number(s.createdOn),
+      s.status === 'trialing' ? nowMs : Number(s.trialEnd ?? s.canceledAt ?? s.updatedOn)
+    ])
+  }
+
+  // Per month: workspaces (deduped) and their seats, for subscriptions whose interval overlaps the month.
+  // Dedup keeps the latest overlapping row per workspace — plan changes/renewals leave several rows.
+  function seatsByMonth (
+    now: Date,
+    subs: SubscriptionInfo[],
+    intervalOf: (s: SubscriptionInfo) => [number, number]
+  ): MonthPoint[] {
+    const res: MonthPoint[] = []
+    for (let i = MONTHS - 1; i >= 0; i--) {
+      const mStart = monthStartUTC(now, i)
+      const mEnd = monthStartUTC(now, i - 1)
+      const perWs = new Map<string, { from: number, seats: number }>()
+      for (const s of subs) {
+        const [from, to] = intervalOf(s)
+        if (from >= mEnd || to < mStart) continue
+        const prev = perWs.get(s.workspaceUuid)
+        if (prev === undefined || from > prev.from) {
+          perWs.set(s.workspaceUuid, {
+            from,
+            seats: Number(s.providerData?.quantity ?? s.limits?.usersLimit ?? 0)
+          })
+        }
+      }
+      const seats = [...perWs.values()].reduce((sum, v) => sum + v.seats, 0)
+      res.push({
+        month: new Date(mStart).toISOString().slice(0, 7),
+        count: seats,
+        label: `${perWs.size} / ${seats}`
+      })
+    }
+    return res
+  }
+
+  let prevTick = -1
+  $: if (refreshTick !== prevTick) {
+    prevTick = refreshTick
     void load()
   }
 
+  function monthLabel (month: string, lang: string): string {
+    const [y, m] = month.split('-').map(Number)
+    const name = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(lang, { month: 'short', timeZone: 'UTC' })
+    return `${name} ${String(y).slice(2)}`
+  }
+
   // Chart layout (viewBox units)
-  const W = 640
-  const H = 100
-  const padL = 26
-  const padR = 4
-  const chartTop = 6
-  const chartBottom = 78
-  $: chartH = chartBottom - chartTop
-  $: slotW = (W - padL - padR) / Math.max(1, points.length)
-  $: barW = Math.max(1, slotW * 0.38)
+  const W = 420
+  const H = 140
+  const padL = 8
+  const padR = 8
+  const chartTop = 16
+  const chartBottom = 112
+  const chartH = chartBottom - chartTop
+  const slotW = (W - padL - padR) / MONTHS
 
-  $: maxVal = Math.max(1, ...points.map((p) => Math.max(p.workspaces, p.accounts)))
-  $: midVal = Math.ceil(maxVal / 2)
-
-  // Date labels: ~10 evenly spaced
-  $: labelStep = Math.max(1, Math.ceil(points.length / 10))
+  interface Chart {
+    title: IntlString
+    points: MonthPoint[]
+    grad: string
+    color: string
+  }
+  $: charts = [
+    {
+      title: adminRes.string.AccountsPerMonth,
+      points: accMonths,
+      grad: 'acc-grad',
+      color: 'var(--primary-button-default, #3b82f6)'
+    },
+    {
+      title: adminRes.string.WorkspacesPerMonth,
+      points: wsMonths,
+      grad: 'ws-grad',
+      color: 'var(--positive-button-default, #22c55e)'
+    },
+    {
+      title: adminRes.string.PaidSeatsPerMonth,
+      points: paidMonths,
+      grad: 'paid-grad',
+      color: '#8b5cf6'
+    },
+    {
+      title: adminRes.string.TrialSeatsPerMonth,
+      points: trialMonths,
+      grad: 'trial-grad',
+      color: '#f59e0b'
+    }
+  ] as Chart[]
 </script>
 
-<div class="p-3 border">
-  <div class="flex-row-center mb-2">
-    <span class="fs-title mr-4"><Label label={adminRes.string.Registrations} /></span>
-    <Button label={adminRes.string.Days30} kind={days === 30 ? 'primary' : 'regular'} on:click={() => (days = 30)} />
-    <Button label={adminRes.string.Days90} kind={days === 90 ? 'primary' : 'regular'} on:click={() => (days = 90)} />
-    <span class="ml-4 content-dark-color">
-      <span class="ws-color">■</span>
-      <Label label={adminRes.string.Workspaces} />
-      <span class="ml-2 acc-color">■</span>
-      <Label label={adminRes.string.Accounts} />
-    </span>
-  </div>
-  <svg viewBox={`0 0 ${W} ${H}`} width="100%" preserveAspectRatio="xMidYMid meet">
-    <!-- Y grid + scale -->
-    {#each [{ v: 0, y: chartBottom }, { v: midVal, y: chartBottom - (midVal / maxVal) * chartH }, { v: maxVal, y: chartTop }] as tick}
-      <line x1={padL} y1={tick.y} x2={W - padR} y2={tick.y} class="grid-line" />
-      <text x={padL - 3} y={tick.y + 2.5} class="axis-text" text-anchor="end">{tick.v}</text>
-    {/each}
-    {#each points as p, i}
-      {@const x = padL + i * slotW}
-      {@const wh = (p.workspaces / maxVal) * chartH}
-      {@const ah = (p.accounts / maxVal) * chartH}
-      <g>
-        <title>{p.day}: ws {p.workspaces}, acc {p.accounts}</title>
-        <rect {x} y={chartBottom - wh} width={barW} height={wh} class="ws-bar" />
-        <rect x={x + barW + 0.5} y={chartBottom - ah} width={barW} height={ah} class="acc-bar" />
-        <!-- invisible hover strip for tooltip over empty days -->
-        <rect {x} y={chartTop} width={slotW} height={chartH} fill="transparent" />
-      </g>
-      {#if i % labelStep === 0}
-        <text x={x + slotW / 2} y={chartBottom + 10} class="axis-text" text-anchor="middle">{p.day.slice(5)}</text>
-        <line x1={x + slotW / 2} y1={chartBottom} x2={x + slotW / 2} y2={chartBottom + 2} class="grid-line" />
-      {/if}
-    {/each}
-  </svg>
+<div class="charts-row p-3">
+  {#each charts as chart}
+    {@const maxVal = Math.max(1, ...chart.points.map((p) => p.count))}
+    <div class="chart-card border">
+      <div class="fs-title mb-2"><Label label={chart.title} /></div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id={chart.grad} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color={chart.color} />
+            <stop offset="100%" stop-color={chart.color} stop-opacity="0.25" />
+          </linearGradient>
+        </defs>
+        <line x1={padL} y1={chartBottom} x2={W - padR} y2={chartBottom} class="grid-line" />
+        {#each chart.points as p, i}
+          {@const x = padL + i * slotW}
+          {@const h = p.count > 0 ? Math.max((p.count / maxVal) * chartH, 2) : 0}
+          <g>
+            <title>{monthLabel(p.month, $themeStore.language ?? 'en')}: {p.label ?? p.count}</title>
+            <rect
+              x={x + slotW * 0.2}
+              y={chartBottom - h}
+              width={slotW * 0.6}
+              height={h}
+              rx="3"
+              fill={`url(#${chart.grad})`}
+            />
+            <rect {x} y={chartTop} width={slotW} height={chartH} fill="transparent" />
+          </g>
+          <text x={x + slotW / 2} y={chartBottom - h - 4} class="value-text" text-anchor="middle">
+            {p.label ?? p.count}
+          </text>
+          <text x={x + slotW / 2} y={chartBottom + 12} class="axis-text" text-anchor="middle">
+            {monthLabel(p.month, $themeStore.language ?? 'en')}
+          </text>
+        {/each}
+      </svg>
+    </div>
+  {/each}
 </div>
 
 <style lang="scss">
-  .ws-bar {
-    fill: var(--primary-button-default, #3b82f6);
+  .charts-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
   }
-  .acc-bar {
-    fill: var(--positive-button-default, #22c55e);
-  }
-  .ws-color {
-    color: var(--primary-button-default, #3b82f6);
-  }
-  .acc-color {
-    color: var(--positive-button-default, #22c55e);
+  .chart-card {
+    flex: 1 1 40%;
+    min-width: 20rem;
+    padding: 0.75rem;
   }
   .grid-line {
     stroke: var(--theme-divider-color, #8883);
@@ -119,6 +230,11 @@
   }
   .axis-text {
     fill: var(--theme-dark-color, #888);
-    font-size: 7px;
+    font-size: 8px;
+  }
+  .value-text {
+    fill: var(--theme-content-color, #444);
+    font-size: 9px;
+    font-weight: 600;
   }
 </style>

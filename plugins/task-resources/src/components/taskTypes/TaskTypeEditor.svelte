@@ -29,6 +29,7 @@
     Label,
     ModernButton,
     Scroller,
+    ToggleWithLabel,
     getCurrentLocation,
     navigate,
     showPopup
@@ -251,6 +252,20 @@
                   }}
                 />
               {/if}
+            </div>
+
+            <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
+              <ToggleWithLabel
+                label={plugin.string.ShowParentTasks}
+                on={taskType.showParentTasks ?? false}
+                disabled={readonly}
+                on:change={(evt) => {
+                  if (taskType === undefined) {
+                    return
+                  }
+                  void client.diffUpdate(taskType, { showParentTasks: evt.detail })
+                }}
+              />
             </div>
           </div>
 

@@ -14,12 +14,10 @@
 //
 
 import activity from '@hcengineering/activity'
-import core, { type Doc, type Ref, type Tx, type TxCUD } from '@hcengineering/core'
+import core, { type Doc, type Tx, type TxCUD } from '@hcengineering/core'
 import type { TriggerControl } from '@hcengineering/server-core'
-import { type Card } from '@hcengineering/card'
 
 import { ReferenceTrigger } from './references'
-import { generateActivity } from './newActivity'
 
 async function OnDocRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
@@ -43,15 +41,6 @@ async function OnDocRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promi
   return result
 }
 
-async function HandleCardActivity (txes: TxCUD<Card>[], control: TriggerControl): Promise<Tx[]> {
-  const cache = new Map<Ref<Card>, Card>()
-  for (const tx of txes) {
-    await generateActivity(tx, control, cache)
-  }
-
-  return []
-}
-
 export * from './references'
 export { getDocTitle, getDocUrl, getDocIdentifier, isActivityDoc } from './utils'
 
@@ -59,7 +48,6 @@ export { getDocTitle, getDocUrl, getDocIdentifier, isActivityDoc } from './utils
 export default async () => ({
   trigger: {
     ReferenceTrigger,
-    OnDocRemoved,
-    HandleCardActivity
+    OnDocRemoved
   }
 })

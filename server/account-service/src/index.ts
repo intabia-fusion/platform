@@ -6,10 +6,8 @@ import account, {
   type AccountMethods,
   type Meta,
   type ClientNetworkPosition,
-  EndpointKind,
   accountId,
   getAccountDB,
-  getAllTransactors,
   getMethods,
   cleanExpiredOtp,
   accountPlugin,
@@ -22,7 +20,13 @@ import accountEn from '@hcengineering/account/lang/en.json'
 import accountRu from '@hcengineering/account/lang/ru.json'
 import { Analytics } from '@hcengineering/analytics'
 import { registerProviders } from '@hcengineering/auth-providers'
-import { metricsAggregate, type Branding, type BrandingMap, type MeasureContext } from '@hcengineering/core'
+import {
+  metricsAggregate,
+  type Branding,
+  type BrandingMap,
+  type MeasureContext,
+  type WorkspaceUuid
+} from '@hcengineering/core'
 import platform, { Severity, Status, addStringsLoader, setMetadata, unknownStatus } from '@hcengineering/platform'
 import serverToken, {
   decodeToken,
@@ -45,9 +49,9 @@ import {
   QueueTopic,
   type QueueUserMessage,
   type QueueOnlineUserTx,
-  type QueueWorkspaceLimitsMessage,
   type QueueWorkspaceMessage,
-  type QueuePaymentOperationMessage
+  type QueuePaymentOperationMessage,
+  workspaceEvents
 } from '@hcengineering/server-core'
 import { randomBytes } from 'node:crypto'
 
@@ -121,8 +125,8 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   const crmProducer = platformQueue.getProducer<CrmNotification>(measureCtx, QueueTopic.CrmQueue)
   setMetadata(accountPlugin.metadata.CrmQueue, crmProducer)
 
-  // Limits/payment events for transactor/datalake/aibot consumers (subscription status changes)
-  const workspaceProducer = platformQueue.getProducer<QueueWorkspaceLimitsMessage>(measureCtx, QueueTopic.Workspace)
+  // Limits/payment/maintenance events for transactor/datalake/aibot consumers
+  const workspaceProducer = platformQueue.getProducer<QueueWorkspaceMessage>(measureCtx, QueueTopic.Workspace)
   setMetadata(accountPlugin.metadata.WorkspaceQueue, workspaceProducer)
 
   // Admin-triggered fulltext reindex requests
@@ -469,18 +473,11 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       switch (operation) {
         case 'maintenance': {
           const timeMinutes = parseInt((req.query.timeout as string) ?? '5')
-          const transactors = getAllTransactors(EndpointKind.Internal)
-          for (const tr of transactors) {
-            const serverEndpoint = tr.replaceAll('wss://', 'https://').replace('ws://', 'http://')
-            const jsonBody = JSON.stringify(req.request.body as any)
-            await fetch(serverEndpoint + `/api/v1/manage?token=${token}&operation=maintenance&timeout=${timeMinutes}`, {
-              method: 'PUT',
-              body: jsonBody,
-              headers: {
-                'Content-Type': 'application/json;charset=utf-8'
-              }
-            })
-          }
+          const message = (req.request.body as any)?.message
+          // Global event: every transactor consumes the workspace topic in its own group,
+          // the workspace key carries no meaning here
+          const nilWorkspace = '00000000-0000-0000-0000-000000000000' as WorkspaceUuid
+          await workspaceProducer.send(measureCtx, nilWorkspace, [workspaceEvents.maintenance(timeMinutes, message)])
 
           req.res.writeHead(200)
           req.res.end()

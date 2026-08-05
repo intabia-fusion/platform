@@ -158,6 +158,17 @@ export interface AccountAggregatedInfo extends AccountInfo, Person {
   integrations: Omit<Integration, 'data'>[]
   socialIds: SocialId[]
   workspaces: Omit<WorkspaceInfo, 'allowReadOnlyGuest' | 'allowGuestSignUp'>[]
+  // Max last_visit across the account's workspaces (approximation of user's last activity)
+  lastVisit?: number
+}
+
+export type AccountsSortKey = 'name' | 'lastVisit'
+
+/** Transactor endpoint entry for admin manage calls */
+export interface TransactorEndpointInfo {
+  region: string
+  name?: string
+  external: string
 }
 
 /**
@@ -368,6 +379,7 @@ export interface WorkspacesPagedQuery {
   region?: string
   attemptsGte?: number
   billingPlan?: string
+  billingStatus?: string
   billingExpired?: boolean
   sort?: WorkspacesSortKey
   order?: 'asc' | 'desc'
