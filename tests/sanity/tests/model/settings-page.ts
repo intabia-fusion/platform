@@ -46,7 +46,7 @@ export class SettingsPage extends CommonPage {
   addTaskTypeButton = (): Locator =>
     this.page.locator('div.hulyTableAttr-header', { hasText: 'Task types' }).locator('button[data-id="btnAdd"]')
 
-  taskNameInput = (): Locator => this.page.getByPlaceholder('Task name *')
+  taskNameInput = (): Locator => this.page.getByPlaceholder('Task type name')
   parentTypeAddButton = (): Locator =>
     this.page.locator('div.hulyModal-content__settingsSet-line', { hasText: 'Parent' }).locator('button')
 

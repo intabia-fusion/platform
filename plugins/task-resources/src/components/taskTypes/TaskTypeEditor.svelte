@@ -68,8 +68,9 @@
   $: color = taskType?.color !== undefined && typeof taskType?.color !== 'string' ? taskType?.color : undefined
   $: descriptor = client.getModel().findAllSync(task.class.TaskTypeDescriptor, { _id: taskType?.descriptor })
   $: states = (taskType?.statuses.map((p) => $statusStore.byId.get(p)).filter((p) => p !== undefined) as Status[]) ?? []
-  $: selectableTaskTypes = taskTypes.filter((tt) => tt._id !== objectId &&
-    !(tt.allowedAsChildOf ?? []).includes(objectId))
+  $: selectableTaskTypes = taskTypes.filter(
+    (tt) => tt._id === objectId || !(tt.allowedAsChildOf ?? []).includes(objectId)
+  )
 
   let isRootTaskType = false
   let initialValueApplied = false
@@ -79,8 +80,7 @@
     initialValueApplied = true
   }
 
-  $: if (initialValueApplied && taskType !== undefined &&
-    isRootTaskType !== (taskType.isRootTaskType ?? false)) {
+  $: if (initialValueApplied && taskType !== undefined && isRootTaskType !== (taskType.isRootTaskType ?? false)) {
     void handleIsRootTaskTypeChange(isRootTaskType)
   }
 
@@ -107,9 +107,7 @@
 
   let lastValidName: string | undefined
   $: if (taskType !== undefined) {
-    const isDuplicate = taskTypes.some(
-      (tt) => tt._id !== taskType._id && isSameString(tt.name, taskType.name)
-    )
+    const isDuplicate = taskTypes.some((tt) => tt._id !== taskType._id && isSameString(tt.name, taskType.name))
     if (!isDuplicate) {
       lastValidName = taskType.name
     } else if (lastValidName !== undefined) {
@@ -278,7 +276,7 @@
           <div class="hulyTableAttr-container">
             <div class="hulyTableAttr-header">
               <span class="label">
-                <Label label={task.string.RootTaskType} />
+                <Label label={plugin.string.RootTaskType} />
               </span>
               <CheckBox bind:checked={isRootTaskType} disabled={readonly} />
             </div>
@@ -297,19 +295,19 @@
             {/if}
           </div>
 
-            <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
-              <ToggleWithLabel
-                label={plugin.string.ShowParentTasks}
-                on={taskType.showParentTasks ?? false}
-                disabled={readonly}
-                on:change={(evt) => {
-                  if (taskType === undefined) {
-                    return
-                  }
-                  void client.diffUpdate(taskType, { showParentTasks: evt.detail })
-                }}
-              />
-            </div>
+          <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
+            <ToggleWithLabel
+              label={plugin.string.ShowParentTasks}
+              on={taskType.showParentTasks ?? false}
+              disabled={readonly}
+              on:change={(evt) => {
+                if (taskType === undefined) {
+                  return
+                }
+                void client.diffUpdate(taskType, { showParentTasks: evt.detail })
+              }}
+            />
+          </div>
 
           <div class="hulyTableAttr-container">
             <div class="hulyTableAttr-header font-medium-12">

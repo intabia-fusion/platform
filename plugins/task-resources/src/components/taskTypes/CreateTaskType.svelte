@@ -91,8 +91,9 @@
     if (type === undefined) return
 
     const trimmedName = name.trim()
-    const duplicate = taskTypes.find((tt) => tt._id !== taskType?._id &&
-        tt.name.trim().toLocaleLowerCase() === trimmedName.toLocaleLowerCase())
+    const duplicate = taskTypes.find(
+      (tt) => tt._id !== taskType?._id && tt.name.trim().toLocaleLowerCase() === trimmedName.toLocaleLowerCase()
+    )
 
     if (duplicate !== undefined) {
       showPopup(MessageBox, {

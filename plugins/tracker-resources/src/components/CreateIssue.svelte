@@ -781,6 +781,8 @@
     originalIssue,
     preferences
   }
+
+  $: parentType = parentIssue?.kind
 </script>
 
 <FocusHandler {manager} />
@@ -844,8 +846,10 @@
       <TaskKindSelector
         projectType={currentProject?.type}
         bind:value={kind}
+        {parentType}
         baseClass={tracker.class.Issue}
         size={'small'}
+        showAlways={true}
       />
       {#if relatedTo}
         <div class="lower mr-2">
