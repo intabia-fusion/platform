@@ -37,6 +37,7 @@
     "SelectProject": "Seleccionar proyecto",
     "TaskTypeName": "Nombre del tipo de tarea",
     "RootTaskType": "Tipo raíz",
+    "TaskTypeNameAlreadyExists": "Ya existe un tipo de tarea con este nombre",
     "AssignThisTask": "Asignar esta tarea",
     "AssigneeRequired": "Se requiere asignar a alguien",
     "More": "Opciones",

@@ -37,6 +37,7 @@
     "SelectProject": "Sélectionner un projet",
     "TaskTypeName": "Nom du type de tâche",
     "RootTaskType": "Type racine",
+    "TaskTypeNameAlreadyExists": "Un type de tâche portant ce nom existe déjà",
     "AssignThisTask": "Assigner cette tâche",
     "AssigneeRequired": "L'assigné est requis",
     "More": "Options",

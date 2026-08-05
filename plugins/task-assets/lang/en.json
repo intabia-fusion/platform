@@ -37,6 +37,7 @@
     "SelectProject": "Select project",
     "TaskTypeName": "Task type name",
     "RootTaskType": "Root type",
+    "TaskTypeNameAlreadyExists": "A task type with this name already exists",
     "AssignThisTask": "Assign this task",
     "AssigneeRequired": "Assignee is required",
     "More": "Options",

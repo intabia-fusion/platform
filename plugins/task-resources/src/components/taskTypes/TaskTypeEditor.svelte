@@ -105,6 +105,22 @@
     )
   }
 
+  let lastValidName: string | undefined
+  $: if (taskType !== undefined) {
+    const isDuplicate = taskTypes.some(
+      (tt) => tt._id !== taskType._id && isSameString(tt.name, taskType.name)
+    )
+    if (!isDuplicate) {
+      lastValidName = taskType.name
+    } else if (lastValidName !== undefined) {
+      showPopup(MessageBox, {
+        label: plugin.string.TaskType,
+        message: plugin.string.TaskTypeNameAlreadyExists
+      })
+      void client.diffUpdate(taskType, { name: lastValidName })
+    }
+  }
+
   async function handleIsRootTaskTypeChange (isRoot: boolean): Promise<void> {
     if (taskType === undefined || readonly) {
       return
@@ -117,6 +133,10 @@
     }
 
     await client.diffUpdate(taskType, updates)
+  }
+
+  function isSameString (a: string, b: string): boolean {
+    return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase()
   }
 
   function selectIcon (el: MouseEvent): void {

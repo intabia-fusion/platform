@@ -37,6 +37,7 @@
     "SelectProject": "プロジェクトを選択",
     "TaskTypeName": "タスクタイプ名",
     "RootTaskType": "ルートタイプ",
+    "TaskTypeNameAlreadyExists": "この名前のタスクタイプは既に存在します",
     "AssignThisTask": "このタスクを割り当てる",
     "AssigneeRequired": "担当者は必須です",
     "More": "オプション",

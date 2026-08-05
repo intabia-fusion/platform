@@ -37,6 +37,7 @@
     "SelectProject": "Vyberte projekt",
     "TaskTypeName": "Název typu úkolu",
     "RootTaskType": "Kořenový typ",
+    "TaskTypeNameAlreadyExists": "Typ úlohy s tímto názvem již existuje",
     "AssignThisTask": "Přiřadit tento úkol",
     "AssigneeRequired": "Je vyžadován přiřazený uživatel",
     "More": "Možnosti",

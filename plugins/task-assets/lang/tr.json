@@ -37,6 +37,7 @@
     "SelectProject": "Proje seç",
     "TaskTypeName": "Görev tipi adı",
     "RootTaskType": "Kök tip",
+    "TaskTypeNameAlreadyExists": "Bu ada sahip bir görev tipi zaten var",
     "AssignThisTask": "Bu görevi ata",
     "AssigneeRequired": "Atanan gerekli",
     "More": "Seçenekler",

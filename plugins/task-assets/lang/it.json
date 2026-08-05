@@ -37,6 +37,7 @@
     "SelectProject": "Seleziona progetto",
     "TaskTypeName": "Nome del tipo di attività",
     "RootTaskType": "Tipo radice",
+    "TaskTypeNameAlreadyExists": "Esiste già un tipo di attività con questo nome",
     "AssignThisTask": "Assegna questo task",
     "AssigneeRequired": "L'assegnatario è obbligatorio",
     "More": "Opzioni",

@@ -39,6 +39,7 @@ export default mergeIds(taskId, task, {
     SelectProject: '' as IntlString,
     TaskTypeName: '' as IntlString,
     RootTaskType: '' as IntlString,
+    TaskTypeNameAlreadyExists: '' as IntlString,
     AssignThisTask: '' as IntlString,
     TaskUnAssign: '' as IntlString,
     More: '' as IntlString,

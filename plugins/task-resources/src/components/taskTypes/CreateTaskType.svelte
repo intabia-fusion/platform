@@ -15,7 +15,7 @@
 <script lang="ts">
   import core, { Class, ClassifierKind, Data, Ref, RefTo, Status, generateId, toIdMap } from '@hcengineering/core'
   import { Resource, getEmbeddedLabel, getResource } from '@hcengineering/platform'
-  import presentation, { getClient, hasResource } from '@hcengineering/presentation'
+  import presentation, { MessageBox, getClient, hasResource } from '@hcengineering/presentation'
   import {
     ProjectType,
     ProjectTypeDescriptor,
@@ -25,7 +25,7 @@
     createState,
     findStatusAttr
   } from '@hcengineering/task'
-  import { DropdownIntlItem, Modal, ModernEditbox, Label, ButtonMenu, CheckBox } from '@hcengineering/ui'
+  import { DropdownIntlItem, Modal, ModernEditbox, Label, ButtonMenu, CheckBox, showPopup } from '@hcengineering/ui'
   import task from '../../plugin'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import TaskTypeRefEditor from './TaskTypeRefEditor.svelte'
@@ -89,6 +89,18 @@
 
   async function save (): Promise<void> {
     if (type === undefined) return
+
+    const trimmedName = name.trim()
+    const duplicate = taskTypes.find((tt) => tt._id !== taskType?._id &&
+        tt.name.trim().toLocaleLowerCase() === trimmedName.toLocaleLowerCase())
+
+    if (duplicate !== undefined) {
+      showPopup(MessageBox, {
+        label: task.string.TaskType,
+        message: task.string.TaskTypeNameAlreadyExists
+      })
+      return
+    }
 
     const descr = taskTypeDescriptors.find((it) => it._id === taskTypeDescriptor._id)
     if (descr === undefined) return

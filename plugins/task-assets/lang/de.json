@@ -37,6 +37,7 @@
     "SelectProject": "Projekt auswählen",
     "TaskTypeName": "Name des Aufgabentyps",
     "RootTaskType": "Wurzeltyp",
+    "TaskTypeNameAlreadyExists": "Ein Aufgabentyp mit diesem Namen existiert bereits",
     "AssignThisTask": "Diese Aufgabe zuweisen",
     "AssigneeRequired": "Zuständiger wird benötigt",
     "More": "Optionen",
