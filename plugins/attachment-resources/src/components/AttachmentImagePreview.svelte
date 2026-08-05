@@ -90,7 +90,9 @@
 <div
   class="container"
   class:loading
-  style="max-width: {toStyle(dimensions.width)}; width: 100%; aspect-ratio: {dimensions.width} / {dimensions.height};"
+  style="width: {toStyle(dimensions.width)}; height: {toStyle(
+    dimensions.height
+  )}; max-width: 100%; aspect-ratio: {dimensions.width} / {dimensions.height};"
 >
   {#if error}
     {#if value.metadata?.thumbnail?.blurhash !== undefined}
