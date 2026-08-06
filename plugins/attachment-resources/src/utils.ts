@@ -164,18 +164,64 @@ interface ImageDimensions {
   fit: 'cover' | 'contain'
 }
 
+export type AttachmentImageSize = 'medium' | 'x-large' | 'auto'
+
+export function calculateAttachmentDimensions (
+  metadata: BlobMetadata | undefined,
+  size: AttachmentImageSize = 'x-large',
+  dpr: number = 1
+): ImageDimensions {
+  const defaultSizes: Record<AttachmentImageSize, { width: number, height: number }> = {
+    medium: { width: 200, height: 200 },
+    'x-large': { width: 300, height: 300 },
+    auto: { width: 300, height: 300 }
+  }
+
+  const minMaxSizes: Record<AttachmentImageSize, { min: number, max: number }> = {
+    medium: { min: 1, max: 18 },
+    'x-large': { min: 1, max: 25 },
+    auto: { min: 1, max: 25 }
+  }
+
+  const _default = defaultSizes[size] ?? defaultSizes.auto
+  const byDefault = { ..._default, fit: 'contain' as const }
+  if (size === 'auto' || size == null) return byDefault
+
+  if (metadata === undefined) return byDefault
+  const pixelRatio = Math.max(metadata.pixelRatio ?? 1, dpr)
+
+  const rawWidth = metadata.originalWidth ?? metadata.thumbnail?.width
+  const rawHeight = metadata.originalHeight ?? metadata.thumbnail?.height
+
+  if (rawWidth == null || rawHeight == null) return byDefault
+
+  const width = Math.round(rawWidth / pixelRatio)
+  const height = Math.round(rawHeight / pixelRatio)
+
+  const { min: minSizeRem, max: maxSizeRem } = minMaxSizes[size] ?? minMaxSizes.auto
+  return getImageDimensions(
+    { width, height },
+    { maxWidth: maxSizeRem, minWidth: minSizeRem, maxHeight: maxSizeRem, minHeight: minSizeRem },
+    { forceFit: 'contain' }
+  )
+}
+
+function getRootFontSize (): number {
+  if (typeof document === 'undefined' || typeof window === 'undefined') return 16
+  const parsed = parseFloat(window.getComputedStyle(document.documentElement).fontSize)
+  return Number.isNaN(parsed) || parsed <= 0 ? 16 : parsed
+}
+
 export function getImageDimensions (
   size: { width: number, height: number },
-  maxRem: { maxWidth: number, minWidth: number, maxHeight: number, minHeight: number },
-  options?: { ignoreMinHeight?: boolean, forceFit?: 'contain' | 'cover' }
+  maxRem: { maxWidth: number, maxHeight: number, minWidth?: number, minHeight?: number },
+  options?: { enforceMinBounds?: boolean, forceFit?: 'contain' | 'cover' }
 ): ImageDimensions {
   const originalWidth = size.width
   const originalHeight = size.height
-  const fontSize = parseFloat(getComputedStyle(document.documentElement).fontSize)
+  const fontSize = getRootFontSize()
   let maxWidthPx = maxRem.maxWidth * fontSize
-  const minWidthPx = maxRem.minWidth * fontSize
   let maxHeightPx = maxRem.maxHeight * fontSize
-  const minHeightPx = maxRem.minHeight * fontSize
 
   const ratio = originalHeight / originalWidth
 
@@ -188,16 +234,29 @@ export function getImageDimensions (
   }
 
   let width = Math.min(originalWidth, maxWidthPx)
-  let height = Math.ceil(width * ratio)
-
-  const fit = options?.forceFit ?? (width < minWidthPx || height < minHeightPx ? 'cover' : 'contain')
+  let height = Math.max(1, Math.round(width * ratio))
 
   if (height > maxHeightPx) {
     width = maxHeightPx / ratio
     height = maxHeightPx
-  } else if (height < minHeightPx && !(options?.ignoreMinHeight ?? false)) {
-    height = minHeightPx
   }
+
+  if (options?.enforceMinBounds === true) {
+    if (maxRem.minWidth !== undefined) {
+      width = Math.max(width, maxRem.minWidth * fontSize)
+    }
+    if (maxRem.minHeight !== undefined) {
+      height = Math.max(height, maxRem.minHeight * fontSize)
+    }
+  }
+
+  const minWidthPx = (maxRem.minWidth ?? 0) * fontSize
+  const minHeightPx = (maxRem.minHeight ?? 0) * fontSize
+
+  const isBelowMin =
+    (maxRem.minWidth !== undefined && width < minWidthPx) || (maxRem.minHeight !== undefined && height < minHeightPx)
+
+  const fit = options?.forceFit ?? (isBelowMin ? 'cover' : 'contain')
 
   return { width: Math.round(width), height: Math.round(height), fit }
 }
