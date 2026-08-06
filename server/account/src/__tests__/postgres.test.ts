@@ -491,6 +491,38 @@ describe('PostgresAccountDB', () => {
     })
   })
 
+  // unsafe() bypasses the collection mapping, so these must route through convertToObj
+  describe('raw query timestamp conversion', () => {
+    it('listAdminActions returns createdOn as a number and strips the window count', async () => {
+      mockClient.unsafe.mockResolvedValue([
+        { id: 'a1', actor: 'admin', action: 'delete_person', created_on: '1786004113426', total: '7' }
+      ])
+
+      const res = await accountDb.listAdminActions({ limit: 10 })
+
+      expect(res.total).toBe(7)
+      expect(res.actions[0].createdOn).toBe(1786004113426)
+      expect((res.actions[0] as any).total).toBeUndefined()
+    })
+
+    it('getPaymentOperations returns createdOn as a number', async () => {
+      mockClient.unsafe.mockResolvedValue([{ id: 'op1', provider: 'tbank', created_on: '1786004113426' }])
+
+      const res = await accountDb.getPaymentOperations({})
+
+      expect(res[0].createdOn).toBe(1786004113426)
+    })
+
+    it('listAdminActions clamps negative paging', async () => {
+      mockClient.unsafe.mockResolvedValue([])
+
+      await accountDb.listAdminActions({ limit: -5, skip: -10 })
+
+      const args = mockClient.unsafe.mock.calls[0][1]
+      expect(args).toEqual([1, 0])
+    })
+  })
+
   describe('workspace operations', () => {
     const accountId = 'acc1' as AccountUuid
     const workspaceId = 'ws1' as WorkspaceUuid

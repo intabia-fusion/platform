@@ -89,6 +89,33 @@ export interface Member {
   role: AccountRole
 }
 
+/**
+ * Admin audit trail. Deliberately FK-free: rows must survive deletion of their target.
+ * Duplicated in account-client/src/types.ts - change both.
+ */
+export interface AdminAction {
+  id?: string // DB-generated on insert
+  actor: string
+  actorEmail?: string
+  action: string
+  target?: string
+  targetLabel?: string
+  data?: Record<string, any>
+  createdOn: Timestamp
+}
+
+export interface AdminActionsQuery {
+  search?: string // actor email / target uuid / target label
+  action?: string
+  skip?: number
+  limit?: number
+}
+
+export interface AdminActionsResult {
+  actions: AdminAction[]
+  total: number
+}
+
 export interface WorkspaceVersion {
   versionMajor: number
   versionMinor: number
@@ -515,6 +542,7 @@ export interface AccountDB {
   paymentIntent: DbCollection<PaymentIntent>
   workspacePermission: DbCollection<WorkspacePermission>
   accountWorkspaceBadgeStatus: DbCollection<AccountWorkspaceBadgeStatus>
+  adminAction: DbCollection<AdminAction>
 
   init: () => Promise<void>
   createWorkspace: (data: WorkspaceData, status: WorkspaceStatusData) => Promise<WorkspaceUuid>
@@ -552,12 +580,16 @@ export interface AccountDB {
   setPassword: (accountId: AccountUuid, passwordHash: Buffer, salt: Buffer) => Promise<void>
   resetPassword: (accountId: AccountUuid) => Promise<void>
   deleteAccount: (accountId: AccountUuid) => Promise<void>
+  /** Purge an unfinished signup: person + social ids, no account row involved */
+  deletePerson: (personUuid: PersonUuid) => Promise<void>
   listAccounts: (
     search?: string,
     skip?: number,
     limit?: number,
-    sort?: AccountsSortKey
+    sort?: AccountsSortKey,
+    filter?: AccountsFilter
   ) => Promise<AccountAggregatedInfo[]>
+  listAdminActions: (query: AdminActionsQuery) => Promise<AdminActionsResult>
   listWorkspacesPaged: (query: WorkspacesPagedQuery) => Promise<WorkspacesPagedResult>
   getWorkspacesSummary: () => Promise<WorkspacesSummary>
   getRegistrationStats: (from: Timestamp, to: Timestamp) => Promise<RegistrationStats>
@@ -760,9 +792,20 @@ export interface AccountAggregatedInfo extends Omit<Account, 'hash' | 'salt'>, P
   workspaces: Omit<WorkspaceInfo, 'allowReadOnlyGuest' | 'allowGuestSignUp'>[]
   // Max last_visit across the account's workspaces
   lastVisit?: number
+  // Earliest social id creation time - when the person first appeared
+  registeredOn?: number
+  // False for an unfinished signup: person + social ids exist, but no account row yet
+  hasAccount?: boolean
 }
 
-export type AccountsSortKey = 'name' | 'lastVisit'
+export type AccountsSortKey = 'name' | 'lastVisit' | 'registeredOn'
+
+/** Server-side filters for listAccounts. Duplicated in account-client/src/types.ts - change both */
+export interface AccountsFilter {
+  noWorkspaces?: boolean
+  inactiveDays?: number
+  pendingOnly?: boolean
+}
 
 /** Transactor endpoint entry for admin manage calls (mirrors account-client type) */
 export interface TransactorEndpointInfo {

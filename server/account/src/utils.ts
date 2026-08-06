@@ -620,6 +620,36 @@ export async function isOtpValid (db: AccountDB, socialId: PersonId, code: strin
 // ===== Admin-operation OTP (destructive admin actions) =====
 
 // OTP for destructive admin ops is emailed to the admin; login TTL (60s) is too short, use 5 min.
+/**
+ * Append an entry to the admin audit trail. Never throws: a failed log must not roll back
+ * an operation that already happened.
+ */
+export async function logAdminAction (
+  ctx: MeasureContext,
+  db: AccountDB,
+  token: string,
+  action: string,
+  target?: string,
+  targetLabel?: string,
+  data?: Record<string, any>
+): Promise<void> {
+  try {
+    const { account } = decodeTokenVerbose(ctx, token)
+    const emails = await db.socialId.find({ personUuid: account, type: SocialIdType.EMAIL })
+    await db.adminAction.insertOne({
+      actor: account,
+      actorEmail: emails.sort((a, b) => (a.createdOn ?? 0) - (b.createdOn ?? 0))[0]?.value,
+      action,
+      target,
+      targetLabel,
+      data,
+      createdOn: Date.now()
+    })
+  } catch (err) {
+    ctx.warn('Failed to record admin action', { action, target, err })
+  }
+}
+
 export const ADMIN_OTP_TTL_SEC = 300
 
 // Dev/testing bypass: when ADMIN_OTP_DEV_CODE is set, admin OTP is not emailed and this

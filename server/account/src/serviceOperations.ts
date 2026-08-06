@@ -48,7 +48,10 @@ import { accountPlugin } from './plugin'
 import { SubscriptionStatus, SubscriptionType } from './types'
 import type {
   AccountAggregatedInfo,
+  AccountsFilter,
   AccountsSortKey,
+  AdminActionsQuery,
+  AdminActionsResult,
   AccountDB,
   TransactorEndpointInfo,
   AccountMethodHandler,
@@ -103,6 +106,8 @@ import {
   assignableRoles,
   requestAdminOtp,
   verifyAdminOtp,
+  logAdminAction,
+  doReleaseSocialId,
   publishMembersChanged
 } from './utils'
 
@@ -230,6 +235,71 @@ export async function requestAdminOperationOtp (
   return await requestAdminOtp(ctx, db, branding, token)
 }
 
+export async function listAdminActions (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: AdminActionsQuery
+): Promise<AdminActionsResult> {
+  checkAdminRead(ctx, token)
+  return await db.listAdminActions(params)
+}
+
+/** Release (soft-delete) one social id of any person. OTP-gated and audited. */
+export async function adminReleaseSocialId (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { personUuid: PersonUuid, type: SocialIdType, value: string, otpCode: string }
+): Promise<void> {
+  checkAdmin(ctx, token)
+  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  const { account } = decodeTokenVerbose(ctx, token)
+  const { personUuid, type, value } = params
+
+  if (personUuid === account) {
+    // Admins must not cut their own login - that would also break the OTP-email lookup.
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  await doReleaseSocialId(db, personUuid, type, value, account, true)
+  await logAdminAction(ctx, db, token, 'release_social_id', personUuid, `${type}:${value}`)
+  ctx.info('admin: social id released', { personUuid, type })
+}
+
+/** Purge an unfinished signup (person without an account row). OTP-gated and audited. */
+export async function adminDeletePerson (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { personUuid: PersonUuid, otpCode: string }
+): Promise<void> {
+  checkAdmin(ctx, token)
+  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  const { personUuid } = params
+
+  const person = await db.person.findOne({ uuid: personUuid })
+  if (person == null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  // A finished account must go through deleteAccount - it has workspace/ownership checks.
+  const existingAccount = await db.account.findOne({ uuid: personUuid as AccountUuid })
+  if (existingAccount != null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+
+  const socialIds = await db.socialId.find({ personUuid })
+  const label = `${person.firstName ?? ''} ${person.lastName ?? ''}`.trim()
+  await db.deletePerson(personUuid)
+  await logAdminAction(ctx, db, token, 'delete_person', personUuid, label, {
+    socialIds: socialIds.map((s) => `${s.type}:${s.value}`)
+  })
+  ctx.info('admin: unfinished signup purged', { personUuid })
+}
+
 async function ensureNotLastOwner (db: AccountDB, workspace: WorkspaceUuid, target: AccountUuid): Promise<void> {
   const currentRole = await db.getWorkspaceRole(target, workspace)
   if (currentRole === AccountRole.Owner) {
@@ -260,6 +330,7 @@ export async function adminUpdateWorkspaceRole (
   }
   await db.updateWorkspaceRole(targetAccount, workspace, role)
   ctx.info('admin: workspace role updated', { workspace, targetAccount, role })
+  await logAdminAction(ctx, db, token, 'update_workspace_role', workspace, undefined, { targetAccount, role })
   await publishMembersChanged(ctx, workspace)
 }
 
@@ -287,6 +358,7 @@ export async function adminAddWorkspaceMember (
   }
   await db.assignWorkspace(target, workspace, role)
   ctx.info('admin: workspace member added', { workspace, target, role })
+  await logAdminAction(ctx, db, token, 'add_workspace_member', workspace, email, { target, role })
   await publishMembersChanged(ctx, workspace)
 }
 
@@ -339,6 +411,7 @@ export async function adminRemoveWorkspaceMember (
   await ensureNotLastOwner(db, workspace, targetAccount)
   await db.unassignWorkspace(targetAccount, workspace)
   ctx.info('admin: workspace member removed', { workspace, targetAccount })
+  await logAdminAction(ctx, db, token, 'remove_workspace_member', workspace, undefined, { targetAccount })
   await publishMembersChanged(ctx, workspace)
 }
 
@@ -433,6 +506,11 @@ export async function adminUpdateSubscription (
   if (Object.keys(overrides).length === 0) return
 
   await supersedeSubscription(ctx, db, existing, overrides, 'ADMIN_EDITED')
+  await logAdminAction(ctx, db, token, 'update_subscription', existing.workspaceUuid, existing.plan, {
+    subscriptionId,
+    seats,
+    periodEndMs
+  })
 
   if (existing.type === SubscriptionType.Tier) {
     await publishLimitsEvents(ctx, existing.workspaceUuid, [
@@ -468,6 +546,9 @@ export async function adminCancelSubscription (
     }
   )
   ctx.info('admin: subscription canceled', { id: existing.id, workspaceUuid: existing.workspaceUuid })
+  await logAdminAction(ctx, db, token, 'cancel_subscription', existing.workspaceUuid, existing.plan, {
+    subscriptionId: existing.id
+  })
 
   if (existing.type === SubscriptionType.Tier) {
     await publishLimitsEvents(ctx, existing.workspaceUuid, [
@@ -496,6 +577,7 @@ export async function adminUpdateWorkspaceName (
   }
   await db.workspace.update({ uuid: params.workspace }, { name })
   ctx.info('admin: workspace renamed', { workspace: params.workspace, name })
+  await logAdminAction(ctx, db, token, 'rename_workspace', params.workspace, name)
 }
 
 export async function adminUpdateWorkspaceDisabledFeatures (
@@ -544,6 +626,7 @@ export async function adminUpdateWorkspaceUrl (
   }
   await db.workspace.update({ uuid: params.workspace }, { url })
   ctx.info('admin: workspace url changed', { workspace: params.workspace, url })
+  await logAdminAction(ctx, db, token, 'change_workspace_url', params.workspace, url)
 }
 
 /** All configured transactor endpoints (admin-only), for targeting manage calls at a specific transactor */
@@ -572,7 +655,7 @@ export async function listAccounts (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: { search?: string, skip?: number, limit?: number, sort?: AccountsSortKey }
+  params: { search?: string, skip?: number, limit?: number, sort?: AccountsSortKey, filter?: AccountsFilter }
 ): Promise<AccountAggregatedInfo[]> {
   const { extra } = decodeTokenVerbose(ctx, token)
   const isAdmin = extra?.admin === 'true' || extra?.billingAdmin === 'true'
@@ -581,9 +664,9 @@ export async function listAccounts (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  const { skip, limit, search, sort } = params
+  const { skip, limit, search, sort, filter } = params
 
-  return await db.listAccounts(search, skip, limit, sort)
+  return await db.listAccounts(search, skip, limit, sort, filter)
 }
 
 export async function performWorkspaceOperation (
@@ -692,6 +775,13 @@ export async function performWorkspaceOperation (
     if (Object.keys(update).length !== 0) {
       await db.workspaceStatus.update({ workspaceUuid: workspace.uuid }, update)
       ops++
+    }
+  }
+
+  // Only human admin actions belong in the audit trail; service tokens run unattended.
+  if (isAdminUser && ops > 0) {
+    for (const workspace of workspaces) {
+      await logAdminAction(ctx, db, token, `workspace_${event}`, workspace.uuid, workspace.name, { params })
     }
   }
   return ops > 0
@@ -2087,6 +2177,9 @@ export type AccountServiceMethods =
   | 'adminUpdateWorkspaceName'
   | 'adminUpdateWorkspaceDisabledFeatures'
   | 'adminUpdateWorkspaceUrl'
+  | 'adminReleaseSocialId'
+  | 'adminDeletePerson'
+  | 'listAdminActions'
   | 'performWorkspaceOperation'
   | 'updateWorkspaceRoleBySocialKey'
   | 'addSocialIdToPerson'
@@ -2157,6 +2250,9 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     adminUpdateWorkspaceName: wrap(adminUpdateWorkspaceName),
     adminUpdateWorkspaceDisabledFeatures: wrap(adminUpdateWorkspaceDisabledFeatures),
     adminUpdateWorkspaceUrl: wrap(adminUpdateWorkspaceUrl),
+    adminReleaseSocialId: wrap(adminReleaseSocialId),
+    adminDeletePerson: wrap(adminDeletePerson),
+    listAdminActions: wrap(listAdminActions),
     performWorkspaceOperation: wrap(performWorkspaceOperation),
     updateWorkspaceRoleBySocialKey: wrap(updateWorkspaceRoleBySocialKey),
     addSocialIdToPerson: wrap(addSocialIdToPerson),

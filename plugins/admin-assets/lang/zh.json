@@ -164,6 +164,16 @@
     "GroupByPayment": "按付款链",
     "Event": "事件",
     "CurrentPlan": "当前",
-    "Actor": "操作者"
+    "Actor": "操作者",
+    "NoWorkspaces": "无工作区",
+    "InactiveOver": "未登录超过",
+    "AnyActivity": "任意",
+    "Export": "导出",
+    "PendingSignups": "未完成的注册",
+    "SortRegistered": "注册日期",
+    "Audit": "审计",
+    "AuditTitle": "管理员操作",
+    "Target": "对象",
+    "ReleaseSocialId": "删除 social id"
   }
 }
