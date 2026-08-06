@@ -100,6 +100,8 @@ test.describe('Workspace tests', () => {
     await signUpPage.enterLastName(newUser.lastName)
     await signUpPage.checkInfo(page, 'Required field Email')
     await signUpPage.enterEmail(newUser.email)
+    // With USE_OTP the password fields sit behind a checkbox; the validation order is the same.
+    await signUpPage.ensurePasswordFields()
     await signUpPage.checkInfo(page, 'Required field Password')
     await signUpPage.enterPassword(newUser.password)
     await signUpPage.checkInfo(page, "Repeat password don't match Password")
@@ -107,6 +109,7 @@ test.describe('Workspace tests', () => {
     await signUpPage.checkInfoSectionNotExist(page)
     await signUpPage.acceptConsents()
     await signUpPage.clickSignUp()
+    await signUpPage.confirmOtpIfNeeded(newUser.email)
     await selectWorkspacePage.checkInfo(page, 'Required field Workspace name')
     await selectWorkspacePage.enterWorkspaceName(newWorkspaceName)
     await selectWorkspacePage.checkInfoSectionNotExist(page)

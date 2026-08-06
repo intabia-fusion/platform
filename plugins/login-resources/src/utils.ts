@@ -740,6 +740,32 @@ export async function requestPassword (email: string): Promise<Status> {
   }
 }
 
+/**
+ * Resolves a short activation id into the token it stands for.
+ * Returns null once the link has been used - the row is dropped on confirm.
+ * Throws on anything else, so a network blip is not reported as "already registered".
+ */
+export async function resolveConfirmToken (id: string): Promise<string | null> {
+  // A JWT always carries dots, a short id never does.
+  if (id.includes('.')) return id
+
+  const accountsUrl = getMetadata(login.metadata.AccountsUrl)
+  if (accountsUrl == null || accountsUrl === '') {
+    throw new Error('Accounts url is not configured')
+  }
+
+  const resp = await fetch(concatLink(accountsUrl, `/api/v1/resolveShortLink/${id}`), {
+    signal: AbortSignal.timeout(15000)
+  })
+
+  if (resp.status === 404) return null
+  if (!resp.ok) {
+    throw new Error(`Failed to resolve the activation link: ${resp.status}`)
+  }
+
+  return (await resp.json())?.payload ?? null
+}
+
 export async function confirm (confirmationToken: string): Promise<[Status, LoginInfo | null]> {
   try {
     const loginInfo = await getAccountClient(confirmationToken).confirm()

@@ -49,7 +49,8 @@ import {
   updateIntegrationSecret,
   addIntegrationSecret,
   upsertSubscription,
-  adminCreateSubscription
+  adminCreateSubscription,
+  getPersonInfo
 } from '../serviceOperations'
 
 // Mock platform
@@ -1777,5 +1778,55 @@ describe('adminCreateSubscription', () => {
     })
     const inserted = mockDb.subscription.insertOne.mock.calls[0][0]
     expect(inserted.freeLimits).toBeUndefined()
+  })
+})
+
+describe('getPersonInfo', () => {
+  const mockCtx = {
+    error: jest.fn()
+  } as unknown as MeasureContext
+
+  const mockDb = {
+    person: {
+      findOne: jest.fn()
+    },
+    socialId: {
+      find: jest.fn()
+    }
+  } as unknown as AccountDB
+
+  const mockBranding = null
+  const mockToken = 'test-token'
+  const account = 'person-uuid' as PersonUuid
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ extra: { admin: 'true' } })
+    ;(mockDb.socialId.find as jest.Mock).mockResolvedValue([])
+  })
+
+  test('should expose the phone hint', async () => {
+    ;(mockDb.person.findOne as jest.Mock).mockResolvedValue({
+      uuid: account,
+      firstName: 'Test',
+      lastName: 'Person',
+      phoneHint: '+79000000011'
+    })
+
+    const result = await getPersonInfo(mockCtx, mockDb, mockBranding, mockToken, { account })
+
+    expect(result.phoneHint).toBe('+79000000011')
+  })
+
+  test('should leave the phone hint undefined when the person has none', async () => {
+    ;(mockDb.person.findOne as jest.Mock).mockResolvedValue({
+      uuid: account,
+      firstName: 'Test',
+      lastName: 'Person'
+    })
+
+    const result = await getPersonInfo(mockCtx, mockDb, mockBranding, mockToken, { account })
+
+    expect(result.phoneHint).toBeUndefined()
   })
 })

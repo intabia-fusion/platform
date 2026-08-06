@@ -106,6 +106,12 @@
     "ExpiredLink": "Срок приглашения истёк",
     "ExpiredLinkDescription": "Пожалуйста, запросите новую ссылку",
     "UsageConditions": "Условия использования",
-    "IntabiaFusion": "Интабия Фьюжн"
+    "IntabiaFusion": "Интабия Фьюжн",
+    "Continue": "Продолжить",
+    "AlreadyRegistered": "Вы уже зарегистрированы в платформе",
+    "RegistrationComplete": "Регистрация завершена",
+    "RegistrationCompleteHint": "Создайте собственное пространство или попросите у владельца существующего пространства ссылку на доступ.",
+    "CheckingLink": "Проверяем ссылку...",
+    "ConfirmationFailed": "Не удалось завершить регистрацию"
   }
 }

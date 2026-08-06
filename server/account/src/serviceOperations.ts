@@ -1169,7 +1169,8 @@ export async function getPersonInfo (
   return {
     personUuid: account,
     name: getPersonName(person),
-    socialIds: verifiedSocialIds
+    socialIds: verifiedSocialIds,
+    phoneHint: person.phoneHint
   }
 }
 

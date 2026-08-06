@@ -220,8 +220,6 @@ export class SubscriptionStorage {
   ): Promise<{ name: string | null, email: string | null, phone: string | null, locale: string | null }> {
     const personInfo = await this.accountClient.getPersonInfo(accountUuid)
     const emailSocialId = personInfo.socialIds.find((s) => s.type === SocialIdType.EMAIL && s.isDeleted !== true)
-    // Phone is the 54-ФЗ receipt fallback when the account has no email (phone-only signup).
-    const phoneSocialId = personInfo.socialIds.find((s) => s.type === SocialIdType.PHONE && s.isDeleted !== true)
 
     let locale: string | null = null
     try {
@@ -232,6 +230,7 @@ export class SubscriptionStorage {
     }
 
     const name = personInfo.name !== undefined && personInfo.name !== '' ? personInfo.name : null
-    return { name, email: emailSocialId?.value ?? null, phone: phoneSocialId?.value ?? null, locale }
+    // Phone is the 54-ФЗ receipt fallback when the account has no email.
+    return { name, email: emailSocialId?.value ?? null, phone: personInfo.phoneHint ?? null, locale }
   }
 }

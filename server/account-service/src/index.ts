@@ -14,7 +14,8 @@ import account, {
   type AccountNotification,
   type CrmNotification,
   parseFreePlanLimits,
-  initRegionConfig
+  initRegionConfig,
+  generateShortId
 } from '@hcengineering/account'
 import accountEn from '@hcengineering/account/lang/en.json'
 import accountRu from '@hcengineering/account/lang/ru.json'
@@ -53,7 +54,6 @@ import {
   type QueuePaymentOperationMessage,
   workspaceEvents
 } from '@hcengineering/server-core'
-import { randomBytes } from 'node:crypto'
 
 import { handlePresenceBatch } from './presence'
 export * from './migration/utils'
@@ -165,6 +165,10 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   setMetadata(account.metadata.ProductName, productName)
   setMetadata(account.metadata.OtpTimeToLiveSec, parseInt(process.env.OTP_TIME_TO_LIVE ?? '60'))
   setMetadata(account.metadata.OtpRetryDelaySec, parseInt(process.env.OTP_RETRY_DELAY ?? '60'))
+  setMetadata(
+    account.metadata.SignUpLinkTimeToLiveSec,
+    parseInt(process.env.SIGNUP_LINK_TIME_TO_LIVE ?? `${7 * 24 * 60 * 60}`)
+  )
   setMetadata(account.metadata.AdminOtpDevCode, process.env.ADMIN_OTP_DEV_CODE)
 
   setMetadata(account.metadata.AllowReadonlyGuests, process.env.ALLOW_READONLY_GUESTS === 'true')
@@ -285,16 +289,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
   const extractToken = (headers: IncomingHttpHeaders): string | undefined => {
     return extractAuthorizationToken(headers) ?? extractCookieToken(headers.cookie, AUTH_TOKEN_COOKIE)
-  }
-
-  function generateShortId (length = 12): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    const bytes = randomBytes(length)
-    let result = ''
-    for (let i = 0; i < length; i++) {
-      result += chars[bytes[i] % chars.length]
-    }
-    return result
   }
 
   const getRequestMeta = (headers: IncomingHttpHeaders, isServiceRequest: boolean): Meta => {

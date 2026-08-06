@@ -106,6 +106,12 @@
     "ExpiredLink": "Questo link di invito è scaduto",
     "ExpiredLinkDescription": "Richiedi un nuovo link di invito",
     "UsageConditions": "Condizioni d'uso",
-    "IntabiaFusion": "Intabia Fusion"
+    "IntabiaFusion": "Intabia Fusion",
+    "Continue": "Continua",
+    "AlreadyRegistered": "Sei già registrato sulla piattaforma",
+    "RegistrationComplete": "La registrazione è completata",
+    "RegistrationCompleteHint": "Crea il tuo spazio di lavoro, oppure chiedi al proprietario di uno esistente un link di accesso.",
+    "CheckingLink": "Verifica del link...",
+    "ConfirmationFailed": "Non è stato possibile completare la registrazione"
   }
 }
