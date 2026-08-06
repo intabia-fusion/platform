@@ -37,6 +37,7 @@ import workbench, { type WidgetTab } from '@hcengineering/workbench'
 
 import attachment from './plugin'
 import AttachmentPreviewPopup from './components/AttachmentPreviewPopup.svelte'
+import { type AttachmentImageSize } from './types'
 
 export async function createAttachments (
   client: Client,
@@ -163,8 +164,6 @@ interface ImageDimensions {
   height: number
   fit: 'cover' | 'contain'
 }
-
-export type AttachmentImageSize = 'medium' | 'x-large' | 'auto'
 
 export function calculateAttachmentDimensions (
   metadata: BlobMetadata | undefined,
