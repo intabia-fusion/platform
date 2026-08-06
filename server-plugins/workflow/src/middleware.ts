@@ -139,7 +139,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
     const workflowRef = await this.getWorkflowRef(ctx, projectId, task.kind)
     if (workflowRef !== undefined) {
       const wf = (await this.provideFindAll(ctx, workflow.class.Workflow, { _id: workflowRef }, { limit: 1 }))[0]
-      if (wf.initialStatuses != null && wf.initialStatuses.length > 0) {
+      if (wf?.initialStatuses != null && wf.initialStatuses.length > 0) {
         if (!wf.initialStatuses.includes(task.status)) {
           throw new PlatformError(
             new Status(Severity.ERROR, workflow.status.InitialStatusNotAllowed, { status: task.status })
