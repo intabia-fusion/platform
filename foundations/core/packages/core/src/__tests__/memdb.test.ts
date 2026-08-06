@@ -29,7 +29,7 @@ import {
   type WithLookup
 } from '../storage'
 import { type Tx } from '../tx'
-import { genMinModel, test, type TestMixin } from './minmodel'
+import { createDoc, genMinModel, test, type TestMixin } from './minmodel'
 
 const txes = genMinModel()
 
@@ -553,5 +553,61 @@ describe('memdb', () => {
     } catch (e) {
       expect(e).toEqual(new Error('createDoc cannot be used for objects inherited from AttachedDoc'))
     }
+  })
+
+  it('lookup on undefined reference field should return undefined without attaching random doc', async () => {
+    const { model } = await createModel()
+
+    // Create an existing task in memdb
+    await model.tx(
+      createDoc(test.class.Task, {
+        name: 'Existing Task',
+        number: 1,
+        state: 0
+      })
+    )
+
+    // Create a task where reference property is undefined
+    const taskTx = createDoc(test.class.Task, {
+      name: 'Task with undefined reference',
+      number: 2,
+      state: 0
+    })
+    await model.tx(taskTx)
+
+    const spyFindAll = jest.spyOn(model, 'findAll')
+
+    const results = await model.findAll(
+      test.class.Task,
+      { _id: taskTx.objectId },
+      { lookup: { attachedTo: test.class.Task } as any }
+    )
+    expect(results).toHaveLength(1)
+    expect((results[0].$lookup as any)?.attachedTo).toBeUndefined()
+
+    // Verify that findAll was NOT called for lookup when refId is undefined
+    expect(spyFindAll).not.toHaveBeenCalledWith(test.class.Task, { _id: undefined })
+    expect(spyFindAll).not.toHaveBeenCalledWith(test.class.Task, { _id: null })
+
+    spyFindAll.mockRestore()
+  })
+
+  it('reverse lookup should return empty array when collection is empty', async () => {
+    const { model } = await createModel()
+
+    const taskTx = createDoc(test.class.Task, {
+      name: 'Task without comments',
+      number: 3,
+      state: 0
+    })
+    await model.tx(taskTx)
+
+    const results = await model.findAll(
+      test.class.Task,
+      { _id: taskTx.objectId },
+      { lookup: { _id: { comments: test.class.TestComment } } as any }
+    )
+    expect(results).toHaveLength(1)
+    expect((results[0].$lookup as any)?.comments).toHaveLength(0)
   })
 })
