@@ -117,6 +117,8 @@
       statuses = res
       isStatusesLoading = false
     })
+  } else if (!isWorkflowLoading) {
+    isStatusesLoading = false
   }
 
   let transitions: WorkflowTransition[] = []
@@ -173,7 +175,7 @@
   <div class="hulyComponent-content__column content">
     {#if loading}
       <Loading />
-    {:else if workflow != null && taskType != null}
+    {:else if workflow != null}
       <Scroller
         align={effectiveViewMode === 'split' ? 'stretch' : 'center'}
         padding="var(--spacing-3)"
@@ -196,12 +198,14 @@
               />
             </div>
             <div class="flex-row-center flex-gap-2">
-              <TaskTypeEditor
-                selected={taskType?._id}
-                types={taskTypes.length > 0 ? taskTypes : [taskType].filter(notEmpty)}
-                readonly
-                on:change={handleTaskTypeChange}
-              />
+              {#if taskType != null}
+                <TaskTypeEditor
+                  selected={taskType?._id}
+                  types={taskTypes.length > 0 ? taskTypes : [taskType].filter(notEmpty)}
+                  readonly
+                  on:change={handleTaskTypeChange}
+                />
+              {/if}
               <Switcher
                 items={viewModeItems}
                 selected={userViewMode}
@@ -221,26 +225,28 @@
               />
             </div>
           </div>
-          {#if effectiveViewMode === 'editor'}
-            <div class="hulyComponent-content flex-col-center flex-gap-4">
-              <InitialStatusesEditor {readonly} {workflow} {statuses} />
-              <TransitionsEditor {readonly} {workflow} {transitions} {statuses} {taskType} />
-            </div>
-          {:else if effectiveViewMode === 'diagram'}
-            <div class="hulyComponent-content embedded-diagram">
-              <WorkflowDiagram {workflow} {statuses} {transitions} embedded />
-            </div>
-          {:else if effectiveViewMode === 'split'}
-            <div class="hulyComponent-content split-layout withoutMaxWidth">
-              <div class="split-column left">
+          {#if taskType != null}
+            {#if effectiveViewMode === 'editor'}
+              <div class="hulyComponent-content flex-col-center flex-gap-4">
                 <InitialStatusesEditor {readonly} {workflow} {statuses} />
                 <TransitionsEditor {readonly} {workflow} {transitions} {statuses} {taskType} />
               </div>
-              <div class="split-divider" />
-              <div class="split-column right">
+            {:else if effectiveViewMode === 'diagram'}
+              <div class="hulyComponent-content embedded-diagram">
                 <WorkflowDiagram {workflow} {statuses} {transitions} embedded />
               </div>
-            </div>
+            {:else if effectiveViewMode === 'split'}
+              <div class="hulyComponent-content split-layout withoutMaxWidth">
+                <div class="split-column left">
+                  <InitialStatusesEditor {readonly} {workflow} {statuses} />
+                  <TransitionsEditor {readonly} {workflow} {transitions} {statuses} {taskType} />
+                </div>
+                <div class="split-divider" />
+                <div class="split-column right">
+                  <WorkflowDiagram {workflow} {statuses} {transitions} embedded />
+                </div>
+              </div>
+            {/if}
           {/if}
         </div>
       </Scroller>

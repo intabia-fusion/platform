@@ -263,9 +263,24 @@ describe('PostFunctionsTrigger', () => {
       modifiedBy: testAccount
     }
 
+    const wfDoc: Doc & Workflow = {
+      _id: wfId,
+      _class: workflow.class.Workflow,
+      space: testSpace,
+      projectType: 'pt-1' as any,
+      taskType: t.kind,
+      name: 'WF 1',
+      initialStatuses: [statusTodo],
+      modifiedOn: 0,
+      modifiedBy: testAccount
+    }
+
     const middleware = await createMockMiddleware(async (ctx, cl, query) => {
       if (cl === task.class.Project && query._id === testSpace) {
         return [project]
+      }
+      if (cl === workflow.class.Workflow && query._id === wfId) {
+        return [wfDoc]
       }
       if (cl === workflow.class.WorkflowTransition && query.attachedTo === wfId) {
         return [transition]
@@ -854,6 +869,204 @@ describe('PostFunctionsTrigger', () => {
         }
       })
       expect(res).toEqual({ ok: true })
+    })
+  })
+
+  describe('OnWorkflowDelete', () => {
+    it('should generate TxMixin updating workflows mapping when a workflow referenced by project is deleted', async () => {
+      const { OnWorkflowDelete } = jest.requireActual('../WorkflowTrigger')
+      const workflowId = 'wf-1' as Ref<Workflow>
+      const otherWorkflowId = 'wf-2' as Ref<Workflow>
+      const projectId = 'proj-1' as Ref<Project>
+      const projectSpace = 'space-1' as Ref<Space>
+
+      const removeTx = {
+        _id: generateId(),
+        _class: core.class.TxRemoveDoc,
+        space: core.space.DerivedTx,
+        objectId: workflowId,
+        objectClass: workflow.class.Workflow,
+        objectSpace: projectSpace,
+        modifiedOn: Date.now(),
+        modifiedBy: testAccount
+      }
+
+      const projectWorkflow = {
+        _id: projectId,
+        _class: task.class.Project,
+        space: projectSpace,
+        workflows: {
+          'task-type-1': workflowId,
+          'task-type-2': otherWorkflowId
+        }
+      }
+
+      const txFactory = new TxFactory(testAccount)
+      const mockControl = {
+        ctx: {} as any,
+        hierarchy: {
+          isDerived: (derived: any, base: any) =>
+            derived === workflow.class.Workflow && base === workflow.class.Workflow
+        },
+        findAll: jest.fn().mockResolvedValue([projectWorkflow]),
+        txFactory
+      }
+
+      const result = await OnWorkflowDelete([removeTx as any], mockControl as any)
+
+      expect(result).toHaveLength(1)
+      expect(result[0]).toMatchObject({
+        _class: core.class.TxMixin,
+        objectId: projectId,
+        objectClass: task.class.Project,
+        objectSpace: projectSpace,
+        mixin: workflow.mixin.ProjectWorkflow,
+        attributes: {
+          workflows: {
+            'task-type-2': otherWorkflowId
+          }
+        }
+      })
+    })
+
+    it('should not generate TxMixin when deleted workflow is not referenced by any project', async () => {
+      const { OnWorkflowDelete } = jest.requireActual('../WorkflowTrigger')
+      const workflowId = 'wf-1' as Ref<Workflow>
+      const otherWorkflowId = 'wf-2' as Ref<Workflow>
+      const projectId = 'proj-1' as Ref<Project>
+      const projectSpace = 'space-1' as Ref<Space>
+
+      const removeTx = {
+        _id: generateId(),
+        _class: core.class.TxRemoveDoc,
+        space: core.space.DerivedTx,
+        objectId: workflowId,
+        objectClass: workflow.class.Workflow,
+        objectSpace: projectSpace,
+        modifiedOn: Date.now(),
+        modifiedBy: testAccount
+      }
+
+      const projectWorkflow = {
+        _id: projectId,
+        _class: task.class.Project,
+        space: projectSpace,
+        workflows: {
+          'task-type-2': otherWorkflowId
+        }
+      }
+
+      const txFactory = new TxFactory(testAccount)
+      const mockControl = {
+        ctx: {} as any,
+        hierarchy: {
+          isDerived: (derived: any, base: any) =>
+            derived === workflow.class.Workflow && base === workflow.class.Workflow
+        },
+        findAll: jest.fn().mockResolvedValue([projectWorkflow]),
+        txFactory
+      }
+
+      const result = await OnWorkflowDelete([removeTx as any], mockControl as any)
+
+      expect(result).toHaveLength(0)
+    })
+  })
+
+  describe('OnTaskTypeDelete', () => {
+    it('should generate TxRemoveDoc for Workflow when associated TaskType is deleted', async () => {
+      const { OnTaskTypeDelete } = jest.requireActual('../WorkflowTrigger')
+      const taskTypeId = 'task-type-1' as Ref<TaskType>
+      const workflowId = 'wf-1' as Ref<Workflow>
+      const wfSpace = 'space-1' as Ref<Space>
+
+      const removeTx = {
+        _id: generateId(),
+        _class: core.class.TxRemoveDoc,
+        space: core.space.DerivedTx,
+        objectId: taskTypeId,
+        objectClass: task.class.TaskType,
+        objectSpace: wfSpace,
+        modifiedOn: Date.now(),
+        modifiedBy: testAccount
+      }
+
+      const workflowDoc = {
+        _id: workflowId,
+        _class: workflow.class.Workflow,
+        space: wfSpace,
+        taskType: taskTypeId
+      }
+
+      const txFactory = new TxFactory(testAccount)
+      const mockControl = {
+        ctx: {} as any,
+        findAll: jest.fn().mockImplementation(async (ctx, _class, query) => {
+          if (query?.taskType?.$in?.includes(taskTypeId) === true) {
+            return [workflowDoc]
+          }
+          return []
+        }),
+        txFactory
+      }
+
+      const result = await OnTaskTypeDelete([removeTx as any], mockControl as any)
+
+      expect(mockControl.findAll).toHaveBeenCalledWith(expect.anything(), workflow.class.Workflow, {
+        taskType: { $in: [taskTypeId] }
+      })
+      expect(result).toHaveLength(1)
+      expect(result[0]).toMatchObject({
+        _class: core.class.TxRemoveDoc,
+        objectId: workflowId,
+        objectClass: workflow.class.Workflow,
+        objectSpace: wfSpace
+      })
+    })
+
+    it('should not generate TxRemoveDoc when deleted TaskType is not associated with any Workflow', async () => {
+      const { OnTaskTypeDelete } = jest.requireActual('../WorkflowTrigger')
+      const taskTypeId = 'task-type-1' as Ref<TaskType>
+      const otherTaskTypeId = 'task-type-2' as Ref<TaskType>
+      const workflowId = 'wf-1' as Ref<Workflow>
+      const wfSpace = 'space-1' as Ref<Space>
+
+      const removeTx = {
+        _id: generateId(),
+        _class: core.class.TxRemoveDoc,
+        space: core.space.DerivedTx,
+        objectId: taskTypeId,
+        objectClass: task.class.TaskType,
+        objectSpace: wfSpace,
+        modifiedOn: Date.now(),
+        modifiedBy: testAccount
+      }
+
+      const workflowDoc = {
+        _id: workflowId,
+        _class: workflow.class.Workflow,
+        space: wfSpace,
+        taskType: otherTaskTypeId
+      }
+
+      const txFactory = new TxFactory(testAccount)
+      const mockControl = {
+        ctx: {} as any,
+        findAll: jest.fn().mockImplementation(async (ctx, _class, query) => {
+          if (query?.taskType?.$in?.includes(otherTaskTypeId) === true) {
+            return [workflowDoc]
+          }
+          return []
+        }),
+        txFactory
+      }
+
+      const result = await OnTaskTypeDelete([removeTx as any], mockControl as any)
+
+      expect(mockControl.findAll).toHaveBeenCalledWith(expect.anything(), workflow.class.Workflow, {
+        taskType: { $in: [taskTypeId] }
+      })
+      expect(result).toHaveLength(0)
     })
   })
 })

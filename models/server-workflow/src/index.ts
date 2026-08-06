@@ -47,6 +47,24 @@ export function createModel (builder: Builder): void {
     }
   })
 
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverWorkflow.trigger.OnWorkflowDelete,
+    isAsync: false,
+    txMatch: {
+      _class: core.class.TxRemoveDoc,
+      objectClass: workflow.class.Workflow
+    }
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverWorkflow.trigger.OnTaskTypeDelete,
+    isAsync: false,
+    txMatch: {
+      _class: core.class.TxRemoveDoc,
+      objectClass: task.class.TaskType
+    }
+  })
+
   builder.mixin(
     workflow.validator.FieldRequired,
     workflow.class.WorkflowValidator,

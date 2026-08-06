@@ -160,7 +160,7 @@
             return
           }
 
-          await deleteObjects(client, [taskType, ...tiedWorkflows])
+          await deleteObjects(client, [taskType])
 
           const loc = getCurrentLocation()
           loc.path.length -= 2

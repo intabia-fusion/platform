@@ -86,9 +86,9 @@
     "ConfigureScreen": "Настроить экран",
     "ScreenRequestPresenter": "Обновить поля на экране «{name}»",
     "ScreenNotSelected": "Экран не выбран",
-    "UsedInWorkflows": "Используется в процессах:",
+    "UsedInWorkflows": "Используется в воркфлоу:",
     "UsedInProjects": "Используется в проектах:",
-    "WorkflowsWillBeDeleted": "Следующие процессы привязаны к этому типу задач и тоже будут удалены:",
+    "WorkflowsWillBeDeleted": "Следующие воркфлоу привязаны к этому типу задач и тоже будут удалены:",
     "General": "Основная",
     "NoAvailableFields": "Все доступные поля уже добавлены",
     "PostFunctions": "Пост-функции",
@@ -162,6 +162,6 @@
     "SelfTransitionNotAllowed": "Переход статуса в самого себя не разрешен",
     "TransitionConflict": "Конфликт переходов между статусами {from} и {to}",
     "ValidationFailed": "{reason}",
-    "WorkflowNotFound": "Рабочий процесс не найден"
+    "WorkflowNotFound": "Воркфлоу не найден"
   }
 }

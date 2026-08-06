@@ -45,7 +45,9 @@ export interface PostFunctionImpl extends WorkflowPostFunction {
 
 export default plugin(serverWorkflowId, {
   trigger: {
-    PostFunctionsTrigger: '' as Resource<TriggerFunc>
+    PostFunctionsTrigger: '' as Resource<TriggerFunc>,
+    OnWorkflowDelete: '' as Resource<TriggerFunc>,
+    OnTaskTypeDelete: '' as Resource<TriggerFunc>
   },
   mixin: {
     ValidatorImpl: '' as Ref<Mixin<ValidatorImpl>>,
