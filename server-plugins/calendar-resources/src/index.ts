@@ -42,8 +42,13 @@ import serverCalendar from '@hcengineering/server-calendar'
 import { getAccountBySocialId, getPerson, getSocialIds, getSocialStrings } from '@hcengineering/server-contact'
 import { QueueTopic, TriggerControl } from '@hcengineering/server-core'
 import { generateToken } from '@hcengineering/server-token'
-import { Presenter, PresenterControl } from '@hcengineering/server-activity'
-import { getDocIdentifier, getDocTitle, getDocUrl } from '@hcengineering/server-activity-resources'
+import {
+  StringPresenterFn,
+  PresenterControl,
+  getDocIdentifier,
+  getDocTitle,
+  getDocUrl
+} from '@hcengineering/server-activity'
 
 /**
  * @public
@@ -60,14 +65,17 @@ export async function FindReminders (
   return await findAll(calendar.class.Event, { attachedTo: doc._id })
 }
 
-const ReminderUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string | undefined> => {
+const ReminderUrlPresenter: StringPresenterFn = async (
+  doc: Doc,
+  control: PresenterControl
+): Promise<string | undefined> => {
   const event = doc as Event
   const target = (await control.findAll(control.ctx, event.attachedToClass, { _id: event.attachedTo }, { limit: 1 }))[0]
 
   return await getDocUrl(control, target)
 }
 
-const ReminderIdentifierPresenter: Presenter = async (
+const ReminderIdentifierPresenter: StringPresenterFn = async (
   doc: Doc,
   control: PresenterControl
 ): Promise<string | undefined> => {
@@ -77,7 +85,10 @@ const ReminderIdentifierPresenter: Presenter = async (
   return await getDocIdentifier(control, target)
 }
 
-const ReminderTitlePresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string | undefined> => {
+const ReminderTitlePresenter: StringPresenterFn = async (
+  doc: Doc,
+  control: PresenterControl
+): Promise<string | undefined> => {
   const event = doc as Event
   const target = (await control.findAll(control.ctx, event.attachedToClass, { _id: event.attachedTo }, { limit: 1 }))[0]
   if (target == null) return undefined

@@ -1061,7 +1061,7 @@ export async function getPersonInfo (
   const { account } = params
   const { extra } = decodeTokenVerbose(ctx, token)
   if (extra?.admin !== 'true') {
-    verifyAllowedServices(['workspace', 'tool', 'gmail', 'huly-mail', 'export', 'payment'], extra)
+    verifyAllowedServices(['workspace', 'tool', 'gmail', 'huly-mail', 'mail-service', 'export', 'payment'], extra)
   }
 
   if (account == null || account === '') {
@@ -1429,7 +1429,7 @@ export async function findFullSocialIds (
 ): Promise<SocialId[]> {
   const { socialIds } = params
   const { extra } = decodeTokenVerbose(ctx, token)
-  verifyAllowedServices(['gmail', 'tool', 'workspace', 'huly-mail', 'rating'], extra)
+  verifyAllowedServices(['gmail', 'tool', 'workspace', 'huly-mail', 'mail-service', 'rating'], extra)
 
   if (socialIds == null || socialIds.length === 0) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))

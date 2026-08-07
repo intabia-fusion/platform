@@ -77,6 +77,7 @@ import { createStorageDataAdapter } from './blobStorage'
 import { RatingMiddleware } from '@hcengineering/server-rating'
 import { ChunterMiddleware } from '@hcengineering/server-chunter'
 import { NotificationMiddleware } from '@hcengineering/server-notification'
+
 /**
  * @public
  */

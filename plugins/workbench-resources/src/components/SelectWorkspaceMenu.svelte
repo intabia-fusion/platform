@@ -54,7 +54,7 @@
   import ratingPlugin from '@hcengineering/rating'
 
   import { workspacesStore } from '../utils'
-  import { workspacesNotificationStore } from '../workbench'
+  import { crossWorkspaceNotificationStore } from '../workbench'
   // import Drag from './icons/Drag.svelte'
 
   onMount(() => {
@@ -167,7 +167,7 @@
     }>
     >) ?? {}
 
-  $: workspacesNotification = $workspacesNotificationStore
+  $: workspacesNotification = $crossWorkspaceNotificationStore
   $: sortedWorkspaces = $workspacesStore
     .filter((it) => search === '' || (it.name?.includes(search) ?? false) || it.url.includes(search))
     .sort((a, b) => {

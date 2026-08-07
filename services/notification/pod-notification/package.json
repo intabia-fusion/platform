@@ -13,7 +13,7 @@
   "scripts": {
     "build": "compile",
     "build:watch": "compile",
-    "test": "jest --passWithNoTests --silent",
+    "test": "cross-env SOURCE=test jest --passWithNoTests --silent",
     "_phase:bundle": "rushx bundle",
     "_phase:docker-build": "rushx docker:build",
     "_phase:docker-staging": "rushx docker:staging",
@@ -25,7 +25,7 @@
     "run-local": "cross-env SOURCE=no-reply@bold.ru ts-node src/index.ts",
     "format": "format src",
     "_phase:build": "compile transpile src",
-    "_phase:test": "jest --passWithNoTests --silent",
+    "_phase:test": "cross-env SOURCE=test jest --passWithNoTests --silent",
     "_phase:format": "format src",
     "_phase:validate": "compile validate"
   },
@@ -48,21 +48,24 @@
     "ts-jest": "^29.1.1",
     "@types/jest": "^29.5.5",
     "@tsconfig/node16": "^1.0.4",
-    "@types/cors": "^2.8.12",
-    "@types/express": "^4.17.13",
     "eslint-plugin-node": "^11.1.0",
     "@types/web-push": "^3.6.4"
   },
   "dependencies": {
+    "@hcengineering/analytics": "workspace:^0.7.17",
+    "@hcengineering/analytics-service": "workspace:^0.7.17",
+    "@hcengineering/api-client": "workspace:^0.7.18",
     "@hcengineering/client": "workspace:^0.7.18",
     "@hcengineering/client-resources": "workspace:^0.7.18",
     "@hcengineering/core": "workspace:^0.7.24",
+    "@hcengineering/kafka": "workspace:^0.7.19",
     "@hcengineering/notification": "workspace:^0.7.0",
     "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/retry": "workspace:^0.7.17",
+    "@hcengineering/server-core": "workspace:^0.7.18",
+    "@hcengineering/server-client": "workspace:^0.7.17",
     "@hcengineering/server-token": "workspace:^0.7.17",
-    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.21.2",
     "web-push": "^3.6.7"
   }
 }

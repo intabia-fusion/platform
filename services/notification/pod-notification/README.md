@@ -1,24 +1,19 @@
 # Notification Service
 
-A microservice for sending push notifications via web push protocol.
+A microservice for sending push notifications via the web push protocol.
 
 ## Overview
 
-The notification service provides endpoints for sending web push notifications to subscribed clients. It uses the Web Push Protocol with VAPID (Voluntary Application Server Identification) for secure delivery of notifications.
+The notification service is a background worker that consumes user notification messages from Kafka (`user-notifications` topic) and delivers them to subscribed clients via the Web Push Protocol. It uses VAPID (Voluntary Application Server Identification) keys for secure authentication and automatically handles cleanup of expired or unregistered subscriptions.
 
 ## Features
 
-- **Web Push Notifications**: Send push notifications to web browsers
-- **VAPID Support**: Secure authentication using VAPID keys
-- **Subscription Management**: Handles expired and invalid subscriptions
-- **Token Authentication**: Optional bearer token authentication
-- **Error Handling**: Automatic cleanup of invalid subscriptions
-
-## Prerequisites
-
-- Node.js (version specified in package.json)
-- VAPID key pair for web push authentication
-- Valid push subscriptions from client applications
+- **Kafka Consumer**: Consumes messages from `user-notifications` topic.
+- **Web Push Delivery**: Delivers push notifications directly to browsers.
+- **VAPID Authentication**: Secures notification delivery with VAPID key signing.
+- **Automatic Subscription Cleanup**: Cleans up expired, unregistered, or invalid push subscriptions directly in the database using the transactor API if `ACCOUNTS_URL` and `SERVER_SECRET` are configured.
+- **Robust Error Handling**: Prevents loops/crashes when processing invalid JSON bodies or encountering network timeouts.
+- **Graceful Shutdown**: Properly closes Kafka consumers on shutdown to prevent partition rebalance lags.
 
 ## Configuration
 
@@ -26,226 +21,73 @@ The service is configured via environment variables:
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `PORT` | Yes | 8091 | Port number for the service |
-| `SOURCE` | Yes | - | Source identifier for the service |
-| `AUTH_TOKEN` | No | - | Bearer token for API authentication |
-| `PUSH_PUBLIC_KEY` | No | - | VAPID public key for web push |
-| `PUSH_PRIVATE_KEY` | No | - | VAPID private key for web push |
+| `SOURCE` | Yes | - | Source email or URI identifier for VAPID push payload |
+| `SERVICE_ID` | No | `web-push-service` | The identifier of this service used for tracing, queue client IDs, and tokens |
+| `PUSH_PUBLIC_KEY` | No | - | VAPID public key for signing push notifications |
+| `PUSH_PRIVATE_KEY` | No | - | VAPID private key for signing push notifications |
 | `PUSH_SUBJECT` | No | `mailto:hey@huly.io` | VAPID subject (email or URL) |
+| `TTL` | No | `86400` | Time-to-live for push notifications in seconds (default is 24 hours) |
+| `QUEUE_CONFIG` | Yes | - | Kafka broker addresses and configuration |
+| `QUEUE_REGION` | No | - | The Kafka partition region to connect to |
+| `ACCOUNTS_URL` | No | - | URL of the internal accounts service, required for failed subscription cleanups |
+| `SERVER_SECRET` / `SECRET` | No | - | Shared secret used to sign service tokens for database cleanups |
 
-### VAPID Keys
+### VAPID Keys Generation
 
-To generate VAPID keys, you can use the `web-push` library:
+If you need to generate new VAPID keys, you can run:
 
 ```bash
 npx web-push generate-vapid-keys
 ```
 
-This will output a public and private key pair that should be set in the environment variables.
-
-## Installation
-
-```bash
-npm install
-```
-
 ## Running the Service
 
-### Development
+### Development Local Run
 ```bash
-rushx run-local
+cross-env SOURCE=no-reply@huly.io QUEUE_CONFIG=localhost:9092 rushx run-local
 ```
 
-### Docker
+### Docker Run
 ```bash
-docker build -t notification-service .
-docker run -p 8091:8091 \
-  -e SOURCE=notification \
+docker run -d \
+  -e SOURCE=no-reply@huly.io \
   -e PUSH_PUBLIC_KEY=your_public_key \
   -e PUSH_PRIVATE_KEY=your_private_key \
-  notification-service
+  -e QUEUE_CONFIG=redpanda:9092 \
+  -e ACCOUNTS_URL=http://account:3000 \
+  -e SERVER_SECRET=secret \
+  intabiafusion/notification
 ```
 
-## API Endpoints
+## Internal Architecture
 
-### POST `/web-push`
+The consumer listens to `QueueTopic.UserNotifications` for `QueueNotificationMessage` payloads.
 
-Sends web push notifications to subscribed clients.
+When a message is received:
+1. It extracts target browser push subscriptions.
+2. It sends push payloads via `web-push` library.
+3. If an endpoint responds with an expiration error (e.g. `expired`, `Unregistered`, `No such subscription` error body), the service returns the failed subscription ID.
+4. The service generates a temporary system token, contacts the transactor via `RestClient`, and removes the failed subscription documents from the database (`TxRemoveDoc`).
 
-#### Authentication
-- **Header**: `Authorization: Bearer <token>` (if `AUTH_TOKEN` is configured)
+## Testing
 
-#### Request Body
-```json
-{
-  "data": {
-    "title": "Notification Title",
-    "body": "Notification message",
-    "icon": "/icon.png",
-    "badge": "/badge.png",
-    "tag": "notification-tag",
-    "url": "/target-url"
-  },
-  "subscriptions": [
-    {
-      "_id": "subscription-id",
-      "endpoint": "https://fcm.googleapis.com/fcm/send/...",
-      "keys": {
-        "p256dh": "client-public-key",
-        "auth": "client-auth-secret"
-      }
-    }
-  ]
-}
-```
+Jest is used for unit and integration testing.
 
-#### Response
-```json
-{
-  "result": ["subscription-id-1", "subscription-id-2"]
-}
-```
-
-The `result` array contains IDs of subscriptions that failed due to:
-- Expired subscriptions
-- Unregistered subscriptions  
-- Invalid subscriptions
-
-These subscription IDs should be removed from your database.
-
-#### Error Responses
-
-- **400 Bad Request**: Missing `data` or `subscriptions` in request body
-- **401 Unauthorized**: Invalid or missing auth token (when auth is enabled)
-- **500 Internal Server Error**: Server error during processing
-
-## Push Data Format
-
-The `data` object supports the following properties:
-
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `title` | string | Yes | Notification title |
-| `body` | string | No | Notification body text |
-| `icon` | string | No | URL to notification icon |
-| `badge` | string | No | URL to notification badge |
-| `tag` | string | No | Tag for grouping notifications |
-| `url` | string | No | URL to open when notification is clicked |
-| `data` | object | No | Custom data payload |
-
-## Client Integration
-
-### Subscribing to Push Notifications
-
-```javascript
-// Register service worker
-const registration = await navigator.serviceWorker.register('/sw.js');
-
-// Subscribe to push notifications
-const subscription = await registration.pushManager.subscribe({
-  userVisibleOnly: true,
-  applicationServerKey: 'your-vapid-public-key'
-});
-
-// Send subscription to your server
-await fetch('/api/subscribe', {
-  method: 'POST',
-  body: JSON.stringify(subscription),
-  headers: { 'Content-Type': 'application/json' }
-});
-```
-
-### Service Worker (sw.js)
-
-```javascript
-self.addEventListener('push', event => {
-  const data = event.data ? event.data.json() : {};
-  
-  const options = {
-    body: data.body,
-    icon: data.icon,
-    badge: data.badge,
-    tag: data.tag,
-    data: { url: data.url }
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
-});
-
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  
-  if (event.notification.data?.url) {
-    event.waitUntil(
-      clients.openWindow(event.notification.data.url)
-    );
-  }
-});
-```
-
-## Error Handling
-
-The service automatically handles common web push errors:
-
-- **Expired subscriptions**: Automatically identified and returned in response
-- **Invalid endpoints**: Subscriptions with invalid endpoints are flagged
-- **Unregistered subscriptions**: Previously valid subscriptions that are no longer active
-
-Applications should monitor the response and remove failed subscription IDs from their database.
-
-## Monitoring
-
-The service logs the following events:
-
-- Service startup and VAPID configuration
-- Authentication failures
-- Push notification errors
-- Subscription cleanup events
-
-## Security
-
-- **VAPID Authentication**: All push messages are signed with VAPID keys
-- **Token Authentication**: Optional bearer token authentication for API access
-- **HTTPS Required**: Web Push Protocol requires HTTPS in production
-- **Origin Validation**: Push subscriptions are tied to specific origins
-
-## Development
-
-### Project Structure
-```
-src/
-├── main.ts          # Main application entry point
-├── config.ts        # Configuration management
-├── server.ts        # Express server setup
-└── types.ts         # TypeScript type definitions
+Run tests:
+```bash
+npm run test
 ```
 
 ## Troubleshooting
 
-### Common Issues
+### Failed subscriptions are not being deleted
+- Verify that both `ACCOUNTS_URL` and `SERVER_SECRET` (or `SECRET`) are set correctly in the service environment.
+- Check service logs for "Failed to initialize RestClient or fetch transactor endpoint" or "Failed to remove expired subscription" error messages.
 
-1. **"No VAPID keys configured"**
-   - Ensure `PUSH_PUBLIC_KEY` and `PUSH_PRIVATE_KEY` are set
-   - Verify keys are valid VAPID keys
+### TypeError on bad error bodies
+- The service uses safe error parsing to prevent type crashes if `web-push` throws an error with a `null` or `undefined` body. Check that you are using version `0.7.0` or higher which contains this fix.
 
-2. **"Invalid auth token"**
-   - Check `AUTH_TOKEN` environment variable
-   - Verify bearer token in Authorization header
-
-3. **Push notifications not delivered**
-   - Verify subscription is still valid
-   - Check browser developer tools for service worker errors
-   - Ensure HTTPS is used in production
-
-4. **High subscription failure rate**
-   - Check if users are unsubscribing
-   - Verify subscription objects are properly formatted
-   - Monitor browser console for push registration errors
-
-## Related Documentation
-
+### Links
 - [Web Push Protocol](https://tools.ietf.org/html/rfc8030)
 - [VAPID Specification](https://tools.ietf.org/html/rfc8292)
 - [Push API MDN Documentation](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)

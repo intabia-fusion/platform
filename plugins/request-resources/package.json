@@ -36,22 +36,23 @@
     "svelte-eslint-parser": "^0.33.1"
   },
   "dependencies": {
-    "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/core": "workspace:^0.7.24",
-    "@hcengineering/presentation": "workspace:^0.7.0",
-    "svelte": "^4.2.20",
-    "@hcengineering/ui": "workspace:^0.7.0",
-    "@hcengineering/request": "workspace:^0.7.0",
     "@hcengineering/activity": "workspace:^0.7.0",
     "@hcengineering/activity-resources": "workspace:^0.7.0",
-    "@hcengineering/contact": "workspace:^0.7.0",
-    "@hcengineering/contact-resources": "workspace:^0.7.0",
+    "@hcengineering/attachment-resources": "workspace:^0.7.0",
     "@hcengineering/chunter": "workspace:^0.7.0",
     "@hcengineering/chunter-resources": "workspace:^0.7.0",
-    "@hcengineering/attachment-resources": "workspace:^0.7.0",
+    "@hcengineering/contact": "workspace:^0.7.0",
+    "@hcengineering/contact-resources": "workspace:^0.7.0",
+    "@hcengineering/core": "workspace:^0.7.24",
+    "@hcengineering/notification": "workspace:^0.7.0",
+    "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/presentation": "workspace:^0.7.0",
+    "@hcengineering/request": "workspace:^0.7.0",
+    "@hcengineering/text": "workspace:^0.7.18",
+    "@hcengineering/text-editor": "workspace:^0.7.0",
+    "@hcengineering/ui": "workspace:^0.7.0",
     "@hcengineering/view": "workspace:^0.7.0",
     "@hcengineering/view-resources": "workspace:^0.7.0",
-    "@hcengineering/text-editor": "workspace:^0.7.0",
-    "@hcengineering/text": "workspace:^0.7.18"
+    "svelte": "^4.2.20"
   }
 }

@@ -16,7 +16,7 @@
 import type { MeasureContext } from '@hcengineering/core'
 import type { DBClient } from '@hcengineering/postgres-base'
 
-export const EXPECTED_SCHEMA_VERSION = 10
+export const EXPECTED_SCHEMA_VERSION = 11
 export const CHECK_VERSION_INTERVAL = 5000
 
 export async function waitForSchemaVersion (ctx: MeasureContext, client: DBClient): Promise<void> {

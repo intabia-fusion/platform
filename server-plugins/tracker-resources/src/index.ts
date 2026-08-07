@@ -41,7 +41,13 @@ import tracker, {
   IssueStatus
 } from '@hcengineering/tracker'
 import { workbenchId } from '@hcengineering/workbench'
-import { Presenter, PresenterControl, AttributePresenterFn } from '@hcengineering/server-activity'
+import {
+  StringPresenterFn,
+  PresenterControl,
+  IconPresenterFn,
+  Icon,
+  AttributePresenterFn
+} from '@hcengineering/server-activity'
 
 async function updateSubIssues (
   updateTx: TxUpdateDoc<Issue>,
@@ -56,14 +62,14 @@ async function updateSubIssues (
   })
 }
 
-const issueUrlPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
+const issueUrlPresenter: StringPresenterFn = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const issue = doc as Issue
   const front = control.branding?.front ?? getMetadata(serverCore.metadata.FrontUrl) ?? ''
   const path = `${workbenchId}/${control.workspace.url}/${trackerId}/${issue.identifier}`
   return concatLink(front, path)
 }
 
-const issueIdentifierPresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
+const issueIdentifierPresenter: StringPresenterFn = async (doc: Doc, control: PresenterControl): Promise<string> => {
   return await getIssueId(doc as Issue, control)
 }
 
@@ -470,6 +476,17 @@ async function issueLinkIdProvider (issue: Issue): Promise<string> {
   return issue.identifier
 }
 
+const issueIconPresenter: IconPresenterFn<Issue> = async (issue: Issue): Promise<Icon> => {
+  return {
+    asset: tracker.icon.Issue,
+    props: {
+      space: issue.space,
+      kind: issue.kind,
+      status: issue.status
+    }
+  }
+}
+
 const issueStatusPresenter: AttributePresenterFn = async (
   _,
   value: Ref<IssueStatus>,
@@ -519,7 +536,7 @@ const issuePriorityPresenter: AttributePresenterFn = async (
   }
 }
 
-const timeSpendReportTitlePresenter: Presenter<TimeSpendReport> = async (
+const timeSpendReportTitlePresenter: StringPresenterFn<TimeSpendReport> = async (
   doc: TimeSpendReport,
   control: PresenterControl
 ): Promise<string> => {
@@ -537,6 +554,7 @@ export default async () => ({
     IssueIdentifierPresenter: issueIdentifierPresenter,
     IssueUrlPresenter: issueUrlPresenter,
     IssueLinkIdProvider: issueLinkIdProvider,
+    IssueIconPresenter: issueIconPresenter,
     IssueStatusPresenter: issueStatusPresenter,
     IssuePriorityPresenter: issuePriorityPresenter,
     TimeSpendReportTitlePresenter: timeSpendReportTitlePresenter

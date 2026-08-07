@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -289,8 +290,22 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
 
   private async processDerivedTxes (ctx: MeasureContext<SessionData>, derived: Tx[]): Promise<void> {
     if (derived.length > 0) {
-      derived.sort((a, b) => a.modifiedOn - b.modifiedOn)
-      await this.context.derived?.tx(ctx, derived)
+      const prevFlag = ctx.contextData?.isTriggerCtx
+      if (ctx.contextData !== undefined) {
+        ctx.contextData.isTriggerCtx = true
+      }
+      try {
+        derived.sort((a, b) => a.modifiedOn - b.modifiedOn)
+        await this.context.derived?.tx(ctx, derived)
+      } finally {
+        if (ctx.contextData !== undefined) {
+          if (prevFlag === undefined) {
+            delete ctx.contextData.isTriggerCtx
+          } else {
+            ctx.contextData.isTriggerCtx = prevFlag
+          }
+        }
+      }
       // We need to perform broadcast here
     }
   }

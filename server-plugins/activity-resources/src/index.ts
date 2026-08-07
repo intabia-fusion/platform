@@ -42,7 +42,6 @@ async function OnDocRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promi
 }
 
 export * from './references'
-export { getDocTitle, getDocUrl, getDocIdentifier, isActivityDoc } from './utils'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
