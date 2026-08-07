@@ -267,6 +267,46 @@ describe('processWebhook (consumer)', () => {
     expect(storage.releaseCheckout).toHaveBeenCalledWith('pay_1')
   })
 
+  // AUTHORIZED activates the sub, following CONFIRMED hits the duplicate guard -
+  // release must still run or the claim leaks and blocks later purchases.
+  test('CONFIRMED after AUTHORIZED still releases the checkout claim', async () => {
+    const draft = {
+      ...activeSub,
+      status: SubscriptionStatus.PastDue,
+      providerData: { ...activeSub.providerData, pending: true, paymentId: 8958842784 }
+    }
+    const storage = makeStorage(draft)
+    const notification = { PaymentId: 8958842784, Status: 'AUTHORIZED', Amount: 100000, RebillId: 1 }
+
+    await processWebhook(newCtx(), baseConfig, makeTbank(true), storage, notification, true)
+
+    // AUTHORIZED activated the sub: money not settled yet, so no release at this point.
+    const activated = storage.upsert.mock.calls.at(-1)[0]
+    expect(activated.status).toBe(SubscriptionStatus.Active)
+    expect(activated.providerData.pending).toBe(false)
+    expect(storage.releaseCheckout).not.toHaveBeenCalled()
+
+    // CONFIRMED now sees an Active, non-pending sub for the same payment -> duplicate guard returns early.
+    storage.getByProviderId = jest.fn().mockResolvedValue(activated)
+    await processWebhook(newCtx(), baseConfig, makeTbank(true), storage, { ...notification, Status: 'CONFIRMED' }, true)
+    expect(storage.releaseCheckout).toHaveBeenCalledWith('8958842784')
+  })
+
+  // Draft already gone (e.g. cleaned up): the claim must not leak on the early sub-null return.
+  test('CONFIRMED with no matching subscription still releases the claim', async () => {
+    const storage = makeStorage(null)
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_x', Status: 'CONFIRMED', Amount: 100 },
+      true
+    )
+    expect(storage.releaseCheckout).toHaveBeenCalledWith('pay_x')
+    expect(storage.upsert).not.toHaveBeenCalled()
+  })
+
   test('CONFIRMED with pendingReplacement cancels the old subscription', async () => {
     const newSub = {
       ...activeSub,
