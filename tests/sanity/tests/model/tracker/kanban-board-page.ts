@@ -119,6 +119,25 @@ export class KanbanBoardPage extends CommonTrackerPage {
       await this.page.locator('[data-id="kanban-column"]').first().waitFor({ state: 'visible', timeout: 10000 })
     } else {
       await this.page.locator('[data-id="kanban-swimlane"]').first().waitFor({ state: 'visible', timeout: 10000 })
+      // Lanes from the previous grouping stay in the DOM while the board
+      // re-renders, so a bare visibility wait returns stale lane ids. Wait for
+      // the id list to stop changing before the caller reads it.
+      let previous = ''
+      await expect
+        .poll(
+          async () => {
+            const ids = (
+              await this.page
+                .locator('[data-id="kanban-swimlane"]')
+                .evaluateAll((els) => els.map((el) => el.getAttribute('data-swimlane-id') ?? ''))
+            ).join(',')
+            const stable = ids !== '' && ids === previous
+            previous = ids
+            return stable
+          },
+          { timeout: 10000, intervals: [200, 300, 500, 1000] }
+        )
+        .toBe(true)
     }
   }
 

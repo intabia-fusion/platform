@@ -14,13 +14,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { reduceCalls, type Class, type Doc, type Ref } from '@hcengineering/core'
+  import core, { reduceCalls, type Class, type Doc, type Ref } from '@hcengineering/core'
   import type { AnySvelteComponent, ButtonKind, ButtonSize } from '@hcengineering/ui'
   import { Icon, Label, tooltip } from '@hcengineering/ui'
+  import { isEmptyMarkup } from '@hcengineering/text'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { getAttribute, KeyedAttribute, updateAttribute } from '../attributes'
   import { getAttributeEditor, getClient } from '../utils'
-  import view from '@hcengineering/view'
 
   export let key: KeyedAttribute | string
   export let object: Doc | Record<string, any>
@@ -80,6 +81,15 @@
 
   $: isReadonly = readonly || (resolved?.attribute.readonly ?? false)
   $: icon = resolved?.attribute?.icon ?? resolved?.attribute?.type?.icon
+  $: value =
+    resolved !== undefined
+      ? getAttribute(client, object, { key: resolved.attributeKey, attr: resolved.attribute })
+      : undefined
+  $: isRequiredAndEmpty =
+    (resolved?.attribute?.required ?? false) &&
+    (resolved?.attribute?.type?._class === core.class.TypeMarkup
+      ? isEmptyMarkup(value)
+      : value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0))
 </script>
 
 {#if resolved}
@@ -87,6 +97,7 @@
   {#if showHeader}
     <span
       class="labelOnPanel"
+      class:required-empty={isRequiredAndEmpty}
       use:tooltip={{
         component: Label,
         props: { label: attribute.automationOnly ? view.string.AutomationOnly : attribute.label }
@@ -96,9 +107,15 @@
         <div class="flex flex-gap-1 items-center">
           <Icon icon={icon ?? view.icon.Setting} size="small" />
           <Label label={attribute.label} />
+          {#if attribute.required}
+            <span class="required-asterisk">*</span>
+          {/if}
         </div>
       {:else}
         <Label label={attribute.label} />
+        {#if attribute.required}
+          <span class="required-asterisk">*</span>
+        {/if}
       {/if}
     </span>
     <div class="flex flex-grow min-w-0">
@@ -117,7 +134,7 @@
         {maxWidth}
         {attribute}
         {attributeKey}
-        value={getAttribute(client, object, { key: attributeKey, attr: attribute })}
+        {value}
         space={object.space}
         {onChange}
         {focus}
@@ -125,13 +142,13 @@
       />
     </div>
   {:else}
-    <div style="grid-column: 1/3;">
+    <div style="grid-column: 1/3;" class:required-empty={isRequiredAndEmpty}>
       <svelte:component
         this={editor}
         type={attribute?.type}
         {maxWidth}
         {attributeKey}
-        value={getAttribute(client, object, { key: attributeKey, attr: attribute })}
+        {value}
         readonly={isReadonly}
         disabled={isReadonly}
         space={object.space}
@@ -144,3 +161,13 @@
     </div>
   {/if}
 {/if}
+
+<style lang="scss">
+  .labelOnPanel.required-empty {
+    color: var(--theme-error-color, #eb5757) !important;
+  }
+  .required-asterisk {
+    color: var(--theme-error-color, #eb5757);
+    margin-left: 2px;
+  }
+</style>
