@@ -54,9 +54,18 @@
   function getItems (value: Doc | Doc[]): Item[] {
     const _class = getCommonClass(value)
     if (_class === undefined) return []
-    const descendants = h.getDescendants(_class)
-    const leftAssociations = client.getModel().findAllSync(core.class.Association, { classA: { $in: descendants } })
-    const rightAssociations = client.getModel().findAllSync(core.class.Association, { classB: { $in: descendants } })
+    const values = Array.isArray(value) ? value : [value]
+    const ancestors = h.getAncestors(_class)
+    const mixins = h
+      .getDescendants(_class)
+      .filter((descendant) => h.isMixin(descendant) && values.every((val) => h.hasMixin(val, descendant)))
+    const associationClasses = [...ancestors, ...mixins]
+    const leftAssociations = client
+      .getModel()
+      .findAllSync(core.class.Association, { classA: { $in: associationClasses } })
+    const rightAssociations = client
+      .getModel()
+      .findAllSync(core.class.Association, { classB: { $in: associationClasses } })
     const items: Item[] = []
     rightAssociations.forEach((a) => {
       items.push({
