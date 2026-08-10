@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,13 +18,16 @@ import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 import core, {
   DOMAIN_MODEL_TX,
   DOMAIN_STATUS,
-  type Attribute,
   type Ref,
   type Status,
   type TxCreateDoc,
   TxOperations,
   generateId,
-  toIdMap
+  toIdMap,
+  type Mixin,
+  type Doc,
+  type Class,
+  type DocumentUpdate
 } from '@hcengineering/core'
 import {
   type MigrateOperation,
@@ -51,6 +55,7 @@ import tracker, {
 } from '@hcengineering/tracker'
 
 import { classicIssueTaskStatuses } from '.'
+import notification, { type MessageNotificationType } from '@hcengineering/notification'
 
 async function createDefaultProject (tx: TxOperations): Promise<void> {
   const current = await tx.findOne(tracker.class.Project, {
@@ -333,6 +338,37 @@ async function migrateDefaultTypeMixins (client: MigrationClient): Promise<void>
   )
 }
 
+async function migrateMixinToClassInModel (
+  client: MigrationClient,
+  oldMixin: Ref<Mixin<Doc>>,
+  newClass: Ref<Class<Doc>>
+): Promise<void> {
+  const txes1 = await client.find<TxCreateDoc<MessageNotificationType>>(DOMAIN_MODEL_TX, {
+    _class: core.class.TxCreateDoc,
+    objectClass: notification.class.MessageNotificationType,
+    'attributes.objectClass': oldMixin
+  } as any)
+
+  const txes2 = await client.find<TxCreateDoc<MessageNotificationType>>(DOMAIN_MODEL_TX, {
+    _class: core.class.TxCreateDoc,
+    objectClass: notification.class.MessageNotificationType,
+    'attributes.attachedToClass': oldMixin
+  } as any)
+
+  const txes = new Map([...txes1, ...txes2].map((it) => [it._id, it]))
+
+  for (const [, tx] of txes.entries()) {
+    const updateData: DocumentUpdate<TxCreateDoc<MessageNotificationType>> = {}
+
+    updateData.attributes = {
+      ...tx.attributes,
+      objectClass: tx.attributes.objectClass === oldMixin ? newClass : tx.attributes.objectClass,
+      attachedToClass: tx.attributes.attachedToClass === oldMixin ? newClass : tx.attributes.attachedToClass
+    }
+    await client.update(DOMAIN_MODEL_TX, { _id: tx._id }, updateData)
+  }
+}
+
 async function migrateTaskTypesToClasses (client: MigrationClient): Promise<void> {
   const issueTtTxes = await client.find<TxCreateDoc<TaskType>>(DOMAIN_MODEL_TX, {
     _class: core.class.TxCreateDoc,
@@ -352,23 +388,7 @@ async function migrateTaskTypesToClasses (client: MigrationClient): Promise<void
     )
   }
 
-  const attrTxes = await client.find<TxCreateDoc<Attribute<any>>>(DOMAIN_MODEL_TX, {
-    _class: core.class.TxCreateDoc,
-    objectClass: core.class.Attribute,
-    'attributes.attributeOf': 'tracker:mixin:IssueTypeData' as any
-  })
-  for (const attrTx of attrTxes) {
-    await client.update(
-      DOMAIN_MODEL_TX,
-      { _id: attrTx._id },
-      {
-        attributes: {
-          ...attrTx.attributes,
-          attributeOf: tracker.class.IssueTaskType
-        }
-      }
-    )
-  }
+  await migrateMixinToClassInModel(client, 'tracker:mixin:IssueTypeData' as any, tracker.class.IssueTaskType)
 
   const iterator = await client.traverse<Issue>(DOMAIN_TASK, {
     kind: tracker.taskTypes.Issue
@@ -537,7 +557,7 @@ export const trackerOperation: MigrateOperation = {
         func: migrateChildInfoParentId
       },
       {
-        state: 'migrateTaskTypesToClasses-v6',
+        state: 'migrateTaskTypesToClasses-v8',
         mode: 'upgrade',
         func: migrateTaskTypesToClasses
       }
