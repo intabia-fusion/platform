@@ -153,10 +153,14 @@ export async function startIndexer (
         'full-text-search',
         {},
         async (ctx) => {
+          let hierarchy = manager.sysHierarchy
+          await manager.withIndexer(ctx, decoded.workspace, token, true, async (indexer) => {
+            hierarchy = indexer.fulltext.hierarchy
+          })
           const result = await searchFulltext(
             ctx,
             decoded.workspace,
-            manager.sysHierarchy,
+            hierarchy,
             manager.fulltextAdapter,
             request.query,
             request.options,

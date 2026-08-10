@@ -1116,6 +1116,7 @@ export function createModel (builder: Builder): void {
       query: recruit.completion.ApplicationQuery,
       context: ['search', 'mention', 'spotlight'],
       classToSearch: recruit.class.Applicant,
+      includeChilds: true,
       priority: 500
     },
     recruit.completion.ApplicationCategory

@@ -141,7 +141,11 @@
         extends: ofClass,
         kind: ClassifierKind.CLASS,
         label: getEmbeddedLabel(name),
-        icon: ofClassClass.icon
+        icon: ofClassClass.icon,
+        shortLabel: ofClassClass.shortLabel,
+        sortingKey: ofClassClass.sortingKey,
+        filteringKey: ofClassClass.filteringKey,
+        titleKey: ofClassClass.titleKey
       })
 
       await client.createMixin(_taskType.targetClass, core.class.Class, core.space.Model, task.mixin.TaskTypeClass, {

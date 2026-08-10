@@ -343,7 +343,11 @@ async function createTaskTypes (
           extends: data.ofClass,
           kind: ClassifierKind.CLASS,
           label: ofClassClass.label,
-          icon: ofClassClass.icon
+          icon: ofClassClass.icon,
+          shortLabel: ofClassClass.shortLabel,
+          sortingKey: ofClassClass.sortingKey,
+          filteringKey: ofClassClass.filteringKey,
+          titleKey: ofClassClass.titleKey
         },
         targetClassId
       )
