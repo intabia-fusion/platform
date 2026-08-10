@@ -219,7 +219,7 @@ export class TTaskType extends TDoc implements TaskType {
     ofClass!: Ref<Class<Task>> // Base class for task
 
   @Prop(TypeRef(core.class.Class), getEmbeddedLabel('Task target class'))
-    targetClass!: Ref<Class<Task>> // Class or Mixin mixin to hold all user defined attributes.
+    targetClass!: Ref<Class<Task>> // Class to hold all user defined attributes.
 
   @Prop(ArrOf(TypeRef(core.class.Status)), getEmbeddedLabel('Task statuses'))
     statuses!: Ref<Status>[]

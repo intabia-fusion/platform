@@ -257,6 +257,6 @@ export class TDefaultVacancyTypeData extends TVacancy implements RolesAssignment
   [key: Ref<Role>]: AccountUuid[]
 }
 
-@Mixin(recruit.mixin.ApplicantTypeData, recruit.class.Applicant)
+@Model(recruit.class.ApplicantTaskType, recruit.class.Applicant)
 @UX(getEmbeddedLabel('Applicant'), recruit.icon.Application)
-export class TApplicantTypeData extends TApplicant {}
+export class TApplicantTaskType extends TApplicant {}

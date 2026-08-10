@@ -18,10 +18,12 @@ import core, {
   DOMAIN_MODEL_TX,
   toIdMap,
   TxOperations,
+  type Attribute,
   type Doc,
   type Ref,
   type Space,
-  type Status
+  type Status,
+  type TxCreateDoc
 } from '@hcengineering/core'
 import {
   createOrUpdate,
@@ -31,11 +33,14 @@ import {
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient,
-  type ModelLogger
+  type ModelLogger,
+  type MigrationDocumentQuery,
+  type MigrateUpdate
 } from '@hcengineering/model'
 import tags, { type TagCategory } from '@hcengineering/model-tags'
 import task, { createSequence, DOMAIN_TASK, migrateDefaultStatusesBase } from '@hcengineering/model-task'
 import { recruitId, type Applicant } from '@hcengineering/recruit'
+import type { Task, TaskType } from '@hcengineering/task'
 
 import { DOMAIN_CALENDAR } from '@hcengineering/model-calendar'
 import { DOMAIN_SPACE } from '@hcengineering/model-core'
@@ -80,6 +85,11 @@ export const recruitOperation: MigrateOperation = {
             { isDone: false }
           )
         }
+      },
+      {
+        state: 'migrateTaskTypesToClasses-v6',
+        mode: 'upgrade',
+        func: migrateTaskTypesToClasses
       }
     ])
   },
@@ -148,7 +158,7 @@ async function migrateDefaultTypeMixins (client: MigrationClient): Promise<void>
   const oldSpaceTypeMixin = `${recruit.template.DefaultVacancy}:type:mixin`
   const newSpaceTypeMixin = recruit.mixin.DefaultVacancyTypeData
   const oldTaskTypeMixin = `${recruit.taskTypes.Applicant}:type:mixin`
-  const newTaskTypeMixin = recruit.mixin.ApplicantTypeData
+  const newTaskTypeMixin = 'recruit:mixin:ApplicantTypeData' as any
 
   await client.update(
     DOMAIN_MODEL_TX,
@@ -186,6 +196,84 @@ async function migrateDefaultTypeMixins (client: MigrationClient): Promise<void>
       }
     }
   )
+}
+
+async function migrateTaskTypesToClasses (client: MigrationClient): Promise<void> {
+  const recruitTtTxes = await client.find<TxCreateDoc<TaskType>>(DOMAIN_MODEL_TX, {
+    _class: core.class.TxCreateDoc,
+    objectClass: task.class.TaskType,
+    objectId: recruit.taskTypes.Applicant
+  })
+  for (const ttTx of recruitTtTxes) {
+    await client.update(
+      DOMAIN_MODEL_TX,
+      { _id: ttTx._id },
+      {
+        attributes: {
+          ...ttTx.attributes,
+          targetClass: recruit.class.ApplicantTaskType
+        }
+      }
+    )
+  }
+
+  const attrTxes = await client.find<TxCreateDoc<Attribute<any>>>(DOMAIN_MODEL_TX, {
+    _class: core.class.TxCreateDoc,
+    objectClass: core.class.Attribute,
+    'attributes.attributeOf': 'recruit:mixin:ApplicantTypeData' as any
+  })
+  for (const attrTx of attrTxes) {
+    await client.update(
+      DOMAIN_MODEL_TX,
+      { _id: attrTx._id },
+      {
+        attributes: {
+          ...attrTx.attributes,
+          attributeOf: recruit.class.ApplicantTaskType
+        }
+      }
+    )
+  }
+
+  const iterator = await client.traverse<Applicant>(DOMAIN_TASK, {
+    kind: recruit.taskTypes.Applicant
+  })
+
+  try {
+    while (true) {
+      const existingApplicants = (await iterator.next(500)) ?? []
+      if (existingApplicants.length === 0) break
+
+      const operations: { filter: MigrationDocumentQuery<Task>, update: MigrateUpdate<Task> }[] = []
+
+      for (const doc of existingApplicants) {
+        const updateData: Record<string, any> = {
+          _class: recruit.class.ApplicantTaskType
+        }
+
+        const oldMixin = 'recruit:mixin:ApplicantTypeData'
+        const mixinData = (doc as any)[oldMixin]
+        if (mixinData != null && typeof mixinData === 'object') {
+          for (const [key, value] of Object.entries(mixinData)) {
+            updateData[key] = value
+          }
+        }
+
+        operations.push({
+          filter: { _id: doc._id },
+          update: {
+            $set: updateData
+          }
+        })
+      }
+
+      if (operations.length > 0) {
+        await client.bulk(DOMAIN_TASK, operations)
+      }
+    }
+  } finally {
+    await iterator.close()
+  }
 }
 
 async function createDefaults (client: MigrationUpgradeClient, tx: TxOperations): Promise<void> {

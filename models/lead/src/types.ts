@@ -117,6 +117,6 @@ export class TDefaultFunnelTypeData extends TFunnel implements RolesAssignment {
   [key: Ref<Role>]: AccountUuid[]
 }
 
-@Mixin(lead.mixin.LeadTypeData, lead.class.Lead)
+@Model(lead.class.LeadTaskType, lead.class.Lead)
 @UX(getEmbeddedLabel('Lead'), lead.icon.Lead)
-export class TLeadTypeData extends TLead {}
+export class TLeadTaskType extends TLead {}

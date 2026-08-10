@@ -17,6 +17,7 @@ import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 import core, {
   DOMAIN_MODEL_TX,
   DOMAIN_STATUS,
+  type Attribute,
   type Ref,
   type Status,
   type TxCreateDoc,
@@ -31,13 +32,15 @@ import {
   type ModelLogger,
   createOrUpdate,
   tryMigrate,
-  tryUpgrade
+  tryUpgrade,
+  type MigrationDocumentQuery,
+  type MigrateUpdate
 } from '@hcengineering/model'
 import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
 import { DOMAIN_SPACE } from '@hcengineering/model-core'
 import { DOMAIN_TASK, migrateDefaultStatusesBase } from '@hcengineering/model-task'
 import tags from '@hcengineering/tags'
-import task from '@hcengineering/task'
+import task, { type Task, type TaskType } from '@hcengineering/task'
 import tracker, {
   type Issue,
   type IssueChildInfo,
@@ -290,7 +293,7 @@ async function migrateDefaultTypeMixins (client: MigrationClient): Promise<void>
   const oldSpaceTypeMixin = `${tracker.ids.ClassingProjectType}:type:mixin`
   const newSpaceTypeMixin = tracker.mixin.ClassicProjectTypeData
   const oldTaskTypeMixin = `${tracker.taskTypes.Issue}:type:mixin`
-  const newTaskTypeMixin = tracker.mixin.IssueTypeData
+  const newTaskTypeMixin = 'tracker:mixin:IssueTypeData' as any
 
   await client.update(
     DOMAIN_MODEL_TX,
@@ -328,6 +331,84 @@ async function migrateDefaultTypeMixins (client: MigrationClient): Promise<void>
       }
     }
   )
+}
+
+async function migrateTaskTypesToClasses (client: MigrationClient): Promise<void> {
+  const issueTtTxes = await client.find<TxCreateDoc<TaskType>>(DOMAIN_MODEL_TX, {
+    _class: core.class.TxCreateDoc,
+    objectClass: task.class.TaskType,
+    objectId: tracker.taskTypes.Issue
+  })
+  for (const ttTx of issueTtTxes) {
+    await client.update(
+      DOMAIN_MODEL_TX,
+      { _id: ttTx._id },
+      {
+        attributes: {
+          ...ttTx.attributes,
+          targetClass: tracker.class.IssueTaskType
+        }
+      }
+    )
+  }
+
+  const attrTxes = await client.find<TxCreateDoc<Attribute<any>>>(DOMAIN_MODEL_TX, {
+    _class: core.class.TxCreateDoc,
+    objectClass: core.class.Attribute,
+    'attributes.attributeOf': 'tracker:mixin:IssueTypeData' as any
+  })
+  for (const attrTx of attrTxes) {
+    await client.update(
+      DOMAIN_MODEL_TX,
+      { _id: attrTx._id },
+      {
+        attributes: {
+          ...attrTx.attributes,
+          attributeOf: tracker.class.IssueTaskType
+        }
+      }
+    )
+  }
+
+  const iterator = await client.traverse<Issue>(DOMAIN_TASK, {
+    kind: tracker.taskTypes.Issue
+  })
+
+  try {
+    while (true) {
+      const existingIssues = (await iterator.next(500)) ?? []
+      if (existingIssues.length === 0) break
+
+      const operations: { filter: MigrationDocumentQuery<Task>, update: MigrateUpdate<Task> }[] = []
+
+      for (const doc of existingIssues) {
+        const updateData: Record<string, any> = {
+          _class: tracker.class.IssueTaskType
+        }
+
+        const oldMixin = 'tracker:mixin:IssueTypeData'
+        const mixinData = (doc as any)[oldMixin]
+        if (mixinData != null && typeof mixinData === 'object') {
+          for (const [key, value] of Object.entries(mixinData)) {
+            updateData[key] = value
+          }
+        }
+
+        operations.push({
+          filter: { _id: doc._id },
+          update: {
+            $set: updateData
+          }
+        })
+      }
+
+      if (operations.length > 0) {
+        await client.bulk(DOMAIN_TASK, operations)
+      }
+    }
+  } finally {
+    await iterator.close()
+  }
 }
 
 async function migrateIssueStatuses (client: MigrationClient): Promise<void> {
@@ -454,6 +535,11 @@ export const trackerOperation: MigrateOperation = {
         state: 'childInfo-parentId-v2',
         mode: 'upgrade',
         func: migrateChildInfoParentId
+      },
+      {
+        state: 'migrateTaskTypesToClasses-v6',
+        mode: 'upgrade',
+        func: migrateTaskTypesToClasses
       }
     ])
   },

@@ -15,6 +15,7 @@
 
 import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 import {
+  ClassifierKind,
   DOMAIN_MODEL_TX,
   DOMAIN_SEQUENCE,
   DOMAIN_STATUS,
@@ -29,7 +30,8 @@ import {
   type Space,
   type Status,
   type TxCreateDoc,
-  type TxUpdateDoc
+  type TxUpdateDoc,
+  TxProcessor
 } from '@hcengineering/core'
 import {
   createOrUpdate,
@@ -40,7 +42,9 @@ import {
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient,
-  type ModelLogger
+  type ModelLogger,
+  type MigrationDocumentQuery,
+  type MigrateUpdate
 } from '@hcengineering/model'
 import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
 import core, { DOMAIN_SPACE } from '@hcengineering/model-core'
@@ -593,6 +597,83 @@ export const taskOperation: MigrateOperation = {
             { _class: core.class.Sequence }
           )
           await client.move('kanban' as Domain, { _class: core.class.Sequence }, DOMAIN_SEQUENCE)
+        }
+      },
+      {
+        state: 'migrateCustomTaskTypesToClasses-v6',
+        mode: 'upgrade',
+        func: async (client: MigrationClient) => {
+          const taskTypeTxes = await client.find<TxCreateDoc<TaskType>>(DOMAIN_MODEL_TX, {
+            _class: core.class.TxCreateDoc,
+            objectClass: task.class.TaskType
+          })
+          const taskTypes = taskTypeTxes.map((it) => TxProcessor.createDoc2Doc(it))
+
+          const targetClassIds = taskTypes.map((it) => it.targetClass)
+
+          if (targetClassIds.length > 0) {
+            const classTxes = await client.find<TxCreateDoc<Class<Doc>>>(DOMAIN_MODEL_TX, {
+              _class: core.class.TxCreateDoc,
+              objectClass: core.class.Class,
+              objectId: { $in: targetClassIds }
+            })
+
+            for (const classTx of classTxes) {
+              if (classTx.attributes?.kind === ClassifierKind.MIXIN) {
+                await client.update(
+                  DOMAIN_MODEL_TX,
+                  { _id: classTx._id },
+                  {
+                    attributes: {
+                      ...classTx.attributes,
+                      kind: ClassifierKind.CLASS
+                    }
+                  }
+                )
+              }
+            }
+          }
+
+          for (const tt of taskTypes) {
+            const targetClass = tt.targetClass
+
+            const iterator = await client.traverse<Task>(DOMAIN_TASK, { kind: tt._id })
+
+            try {
+              while (true) {
+                const existingTasks = (await iterator.next(500)) ?? []
+                if (existingTasks.length === 0) break
+
+                const operations: { filter: MigrationDocumentQuery<Task>, update: MigrateUpdate<Task> }[] = []
+
+                for (const doc of existingTasks) {
+                  const updateData: Record<string, any> = {
+                    _class: targetClass
+                  }
+
+                  const mixinData = (doc as any)[targetClass]
+                  if (mixinData != null && typeof mixinData === 'object') {
+                    for (const [key, value] of Object.entries(mixinData)) {
+                      updateData[key] = value
+                    }
+                  }
+
+                  operations.push({
+                    filter: { _id: doc._id },
+                    update: {
+                      $set: updateData
+                    }
+                  })
+                }
+
+                if (operations.length > 0) {
+                  await client.bulk(DOMAIN_TASK, operations)
+                }
+              }
+            } finally {
+              await iterator.close()
+            }
+          }
         }
       }
     ])
