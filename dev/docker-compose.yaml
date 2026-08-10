@@ -1100,6 +1100,8 @@ services:
       # pod-payment URL — source of the shared plan-config (charge amounts) and localized plan labels for emails
       - PAYMENT_URL=http://payment:4040
       - GRACE_PERIOD_DAYS=${TBANK_GRACE_PERIOD_DAYS:-7}
+      # Days before a charge / expiry date the reminder email is sent
+      - UPCOMING_NOTICE_DAYS=${TBANK_UPCOMING_NOTICE_DAYS:-5}
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   notifications:

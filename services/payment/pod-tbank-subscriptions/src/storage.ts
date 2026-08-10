@@ -161,6 +161,13 @@ export class SubscriptionStorage {
     return await this.accountClient.getSubscriptionsByProvider('tbank')
   }
 
+  /**
+   * Trial subscriptions (provider 'trial'), bounded by `trialEnd`.
+   */
+  async getTrialCandidates (): Promise<Subscription[]> {
+    return await this.accountClient.getSubscriptionsByProvider('trial', [SubscriptionStatus.Trialing])
+  }
+
   static needsRenewal (sub: Subscription, now: number): boolean {
     if (sub.providerData?.recurrent === false) return false
     if (sub.providerData?.rebillId === undefined) return false
@@ -195,6 +202,20 @@ export class SubscriptionStorage {
     try {
       const [info] = await this.accountClient.getWorkspacesInfo([workspaceUuid])
       return info?.url ?? null
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Workspace display name + url slug. `name` is what the owner sees in the UI, `url` builds the
+   * link — customer-facing emails need both (name as the link text). Best-effort: null on failure.
+   */
+  async getWorkspaceInfo (workspaceUuid: WorkspaceUuid): Promise<{ name: string, url: string } | null> {
+    try {
+      const [info] = await this.accountClient.getWorkspacesInfo([workspaceUuid])
+      if (info === undefined) return null
+      return { name: info.name, url: info.url }
     } catch {
       return null
     }
