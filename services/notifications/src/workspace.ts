@@ -136,6 +136,8 @@ class Workspace {
     if (this.hierarchy.isDerived(tx.objectClass, notification.class.BrowserNotification)) return
     if (this.hierarchy.isDerived(tx.objectClass, activity.class.ActivityReference)) return
 
+    if (tx.meta?.silent === true) return
+
     const res: TxCUD<Doc>[] = []
 
     if (this.hierarchy.isDerived(tx.objectClass, notification.class.ReadState)) {
