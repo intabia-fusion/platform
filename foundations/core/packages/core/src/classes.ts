@@ -234,6 +234,7 @@ export interface Attribute<T extends PropertyType> extends Doc, UXObject {
   defaultValue?: any
   automationOnly?: boolean
   rank?: Rank
+  required?: boolean
   activity?: { set?: IntlString, unset?: IntlString }
 
   // Extra customization properties
@@ -911,7 +912,7 @@ export interface WorkspaceInfo {
   billingAccount?: PersonUuid // Should always be set for NEW workspaces
   allowReadOnlyGuest?: boolean // Should always be set for NEW workspaces
   allowGuestSignUp?: boolean // Should always be set for NEW workspaces
-  passwordAgingRule?: number // in days
+  passwordAgingRule?: number | null // in days, null disables the rule
   disabledFeaturesOverride?: string[] // Features from DISABLED_FEATURES to re-enable for this workspace
 }
 

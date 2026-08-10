@@ -73,7 +73,8 @@
       {#if value != null}
         <span class="caption-color overflow-label pointer-events-none">{value}</span>
       {:else}
-        <span class="content-dark-color pointer-events-none"><Label label={placeholder ?? label} /></span>
+        <span class="content-dark-color overflow-label pointer-events-none"><Label label={placeholder ?? label} /></span
+        >
       {/if}
     </svelte:fragment>
   </Button>

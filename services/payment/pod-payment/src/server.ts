@@ -66,6 +66,15 @@ const pollRateLimiter = rateLimit({
   standardHeaders: true
 })
 
+// Plan-config is a static read hit twice per billing page open. Behind NAT (docker, CI) the whole
+// suite shares one IP and starves the shared poll ceiling, so it gets its own knob to lift.
+const planConfigRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: appConfig.PlanConfigRateLimitMax ?? 200,
+  message: 'Too many plan-config requests, please try again later',
+  standardHeaders: true
+})
+
 type AsyncRequestHandler = (ctx: MeasureContext, req: Request, res: Response) => Promise<void>
 
 function relayProviderError (res: Response, err: unknown, fallbackMsg: string): void {
@@ -239,7 +248,7 @@ export async function createServer (
     }
   })()
 
-  app.get('/api/v1/plan-config', pollRateLimiter, (req, res) => {
+  app.get('/api/v1/plan-config', planConfigRateLimiter, (req, res) => {
     res.json(planConfig)
   })
 
