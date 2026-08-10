@@ -38,6 +38,7 @@
     "TaskTypeName": "Название типа задачи",
     "RootTaskType": "Корневой тип",
     "TaskTypeNameAlreadyExists": "Тип задачи с таким именем уже существует",
+    "TaskTypeNameEmpty": "Название типа задачи не может быть пустым",
     "AssignThisTask": "Назначить эту задачу",
     "AssigneeRequired": "Назначение обязательно",
     "More": "Опции",

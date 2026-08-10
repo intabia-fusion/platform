@@ -31,22 +31,25 @@
 
   $: effectiveKind = kind ?? (!Array.isArray(value) && 'kind' in value ? value.kind : undefined)
 
-  $: allowedParentKinds = (() => {
+  $: allowedParentKinds = getAllowedParentKinds(effectiveKind, $taskTypeStore)
+
+  function getAllowedParentKinds (
+    effectiveKind: Ref<TaskType> | undefined,
+    typesMap: Map<Ref<TaskType>, TaskType>
+  ): Ref<TaskType>[] | undefined {
     if (effectiveKind === undefined) return undefined
 
-    const currentType = $taskTypeStore.get(effectiveKind)
+    const currentType = typesMap.get(effectiveKind)
     if (currentType === undefined) return undefined
-
     if (currentType.isRootTaskType === true) return []
 
     const explicit = currentType.allowedAsChildOf ?? []
     if (explicit.length > 0) return explicit
 
-    const typesWithChildren = new Set(Array.from($taskTypeStore.values()).flatMap((tt) => tt.allowedAsChildOf ?? []))
-    return Array.from($taskTypeStore.values())
-      .filter((tt) => !typesWithChildren.has(tt._id))
-      .map((tt) => tt._id)
-  })()
+    const allTypes = Array.from(typesMap.values())
+    const childTypeIds = new Set(allTypes.flatMap((tt) => tt.allowedAsChildOf ?? []))
+    return allTypes.filter((tt) => !childTypeIds.has(tt._id)).map((tt) => tt._id)
+  }
 
   const options: FindOptions<Issue> = {
     lookup: {
@@ -55,11 +58,7 @@
     sort: { modifiedOn: SortingOrder.Descending }
   }
 
-  $: docQuery = (() => {
-    if (allowedParentKinds === undefined) return {}
-    if (allowedParentKinds.length === 0) return { kind: { $in: [] } }
-    return { kind: { $in: allowedParentKinds } }
-  })()
+  $: docQuery = allowedParentKinds === undefined ? {} : { kind: { $in: allowedParentKinds } }
 
   $: noParentIssuesExist = false
 
@@ -73,6 +72,8 @@
           noParentIssuesExist = found === undefined
         })
     }
+  } else {
+    noParentIssuesExist = false
   }
 
   async function onClose ({ detail: parentIssue }: CustomEvent<Issue | undefined | null>): Promise<void> {

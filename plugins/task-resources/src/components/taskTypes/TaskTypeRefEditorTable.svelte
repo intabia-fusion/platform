@@ -15,17 +15,7 @@
 <script lang="ts">
   import { Ref } from '@hcengineering/core'
   import { TaskType } from '@hcengineering/task'
-  import {
-    ButtonIcon,
-    DropdownLabelsPopup,
-    DropdownTextItem,
-    getFocusManager,
-    Icon,
-    IconAdd,
-    IconClose,
-    Label,
-    showPopup
-  } from '@hcengineering/ui'
+  import { DropdownLabels, DropdownTextItem, Icon, IconAdd, IconClose, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
   import task from '../../plugin'
@@ -35,43 +25,26 @@
   export let types: TaskType[]
   export let readonly: boolean = false
 
-  let container: HTMLElement
-  let opened: boolean = false
-
   $: items = types.map(
     (p): DropdownTextItem => ({ id: p._id, label: p.name, icon: TaskTypeIcon, iconProps: { value: p } })
   )
-  $: selectedItems = types.filter((p) => (value as string[])?.includes(p._id))
+  $: selectedItems = types.filter((p) => value?.includes(p._id))
 
   const dispatch = createEventDispatcher()
-  const mgr = getFocusManager()
 
   function removeItem (id: Ref<TaskType>): void {
     if (readonly) return
-    value = [...value].filter((v) => v !== id)
+    value = value.filter((v) => v !== id)
     onChange(value)
     dispatch('selected', value)
   }
 
-  function openDropdown (): void {
-    if (opened || readonly) return
-    opened = true
-    showPopup(
-      DropdownLabelsPopup,
-      { items, selected: [...value], enableSearch: false, multiselect: true },
-      container,
-      () => {
-        opened = false
-        mgr?.setFocusPos(-1)
-      },
-      (result) => {
-        if (result != null) {
-          value = result
-          onChange(value)
-          dispatch('selected', result)
-        }
-      }
-    )
+  function handleSelected (evt: CustomEvent<Ref<TaskType>[] | null>): void {
+    if (evt.detail != null) {
+      value = evt.detail
+      onChange(value)
+      dispatch('selected', value)
+    }
   }
 </script>
 
@@ -79,9 +52,18 @@
   <div class="hulyTableAttr-header font-medium-12">
     <span><Label label={task.string.TaskParent} /></span>
     {#if !readonly}
-      <div bind:this={container}>
-        <ButtonIcon kind={'primary'} icon={IconAdd} size={'small'} pressed={opened} on:click={openDropdown} />
-      </div>
+      <DropdownLabels
+        kind={'primary'}
+        size={'small'}
+        icon={IconAdd}
+        {items}
+        selected={value}
+        enableSearch={false}
+        multiselect={true}
+        on:selected={handleSelected}
+      >
+        <span slot="content"></span>
+      </DropdownLabels>
     {/if}
   </div>
 
@@ -89,7 +71,7 @@
     <div class="hulyTableAttr-content class">
       <div class="hulyTableAttr-content__row disableMouseOver">
         <div class="row-item">
-          <svelte:component this={TaskTypeIcon} value={item} size={'small'} />
+          <TaskTypeIcon value={item} size="small" />
           <span class="label overflow-label">{item.name}</span>
         </div>
         {#if !readonly}

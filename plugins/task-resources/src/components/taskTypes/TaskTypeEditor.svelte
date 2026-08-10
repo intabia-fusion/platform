@@ -16,8 +16,8 @@
 -->
 <script lang="ts">
   import { Ref, SortingOrder, Status } from '@hcengineering/core'
-  import { Asset, getResource } from '@hcengineering/platform'
-  import { AttributeEditor, MessageBox, createQuery, getClient } from '@hcengineering/presentation'
+  import { Asset, getResource, IntlString } from '@hcengineering/platform'
+  import { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import { ClassAttributes, settingsStore } from '@hcengineering/setting-resources'
   import task, { ProjectType, TaskType, calculateStatuses, findStatusAttr } from '@hcengineering/task'
   import {
@@ -31,6 +31,7 @@
     Scroller,
     ToggleWithLabel,
     CheckBox,
+    ModernEditbox,
     getCurrentLocation,
     navigate,
     showPopup
@@ -72,17 +73,7 @@
     (tt) => tt._id === objectId || !(tt.allowedAsChildOf ?? []).includes(objectId)
   )
 
-  let isRootTaskType = false
-  let initialValueApplied = false
-
-  $: if (!initialValueApplied && taskType !== undefined) {
-    isRootTaskType = taskType.isRootTaskType ?? false
-    initialValueApplied = true
-  }
-
-  $: if (initialValueApplied && taskType !== undefined && isRootTaskType !== (taskType.isRootTaskType ?? false)) {
-    void handleIsRootTaskTypeChange(isRootTaskType)
-  }
+  $: isRootTaskType = taskType?.isRootTaskType ?? false
 
   let tasksCounter: number = 0
   let loading: boolean = true
@@ -105,17 +96,31 @@
     )
   }
 
-  let lastValidName: string | undefined
-  $: if (taskType !== undefined) {
-    const isDuplicate = taskTypes.some((tt) => tt._id !== taskType._id && isSameString(tt.name, taskType.name))
-    if (!isDuplicate) {
-      lastValidName = taskType.name
-    } else if (lastValidName !== undefined) {
-      showPopup(MessageBox, {
-        label: plugin.string.TaskType,
-        message: plugin.string.TaskTypeNameAlreadyExists
-      })
-      void client.diffUpdate(taskType, { name: lastValidName })
+  let errorMessage: IntlString | undefined = undefined
+  let errorTaskTypeId: Ref<TaskType> | undefined = undefined
+
+  $: if (taskType !== undefined && errorTaskTypeId !== taskType._id) {
+    errorTaskTypeId = taskType._id
+    errorMessage = undefined
+  }
+
+  function commitName (value: string): void {
+    if (taskType === undefined || readonly) return
+
+    const trimmed = value.trim()
+    if (trimmed.length === 0) {
+      errorMessage = plugin.string.TaskTypeNameEmpty
+      return
+    }
+
+    const isDuplicate = taskTypes.some((tt) => tt._id !== taskType._id && isSameString(tt.name, trimmed))
+    if (isDuplicate) {
+      errorMessage = plugin.string.TaskTypeNameAlreadyExists
+      return
+    }
+    errorMessage = undefined
+    if (trimmed !== taskType.name) {
+      void client.diffUpdate(taskType, { name: trimmed })
     }
   }
 
@@ -263,13 +268,22 @@
             </div>
 
             <div class="name" class:editable={!readonly}>
-              <AttributeEditor
-                _class={task.class.TaskType}
-                object={taskType}
-                key="name"
-                editKind={'modern-ghost-large'}
-                editable={!readonly}
+              <ModernEditbox
+                value={taskType?.name ?? ''}
+                label={plugin.string.TaskTypeName}
+                size={'large'}
+                kind={'ghost'}
+                disabled={readonly}
+                error={errorMessage !== undefined}
+                on:blur={(evt) => {
+                  commitName(evt.detail ?? '')
+                }}
               />
+              {#if errorMessage !== undefined}
+                <div class="name-error">
+                  <Label label={errorMessage} />
+                </div>
+              {/if}
             </div>
           </div>
 
@@ -278,7 +292,13 @@
               <span class="label">
                 <Label label={plugin.string.RootTaskType} />
               </span>
-              <CheckBox bind:checked={isRootTaskType} disabled={readonly} />
+              <CheckBox
+                checked={isRootTaskType}
+                disabled={readonly}
+                on:value={(evt) => {
+                  void handleIsRootTaskTypeChange(evt.detail)
+                }}
+              />
             </div>
 
             {#if !isRootTaskType}

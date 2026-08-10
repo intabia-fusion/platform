@@ -50,8 +50,8 @@
     SpaceSelector
   } from '@hcengineering/presentation'
   import tags, { type TagElement, TagReference } from '@hcengineering/tags'
-  import task, { TaskType } from '@hcengineering/task'
-  import { TaskKindSelector } from '@hcengineering/task-resources'
+  import { TaskType } from '@hcengineering/task'
+  import { TaskKindSelector, taskTypeStore } from '@hcengineering/task-resources'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import {
     Component as ComponentType,
@@ -133,16 +133,15 @@
   let isAssigneeTouched = false
   let kind: Ref<TaskType> | undefined = undefined
 
-  $: if (kind !== undefined) {
-    void client.findOne(task.class.TaskType, { _id: kind }).then((tt) => {
-      // Clear parent if it's no longer a valid parent type for the new kind
-      if (parentIssue !== undefined && tt !== undefined) {
-        const allowed = tt.allowedAsChildOf ?? []
-        if (allowed.length > 0 && !allowed.includes(parentIssue.kind)) {
-          clearParentIssue()
-        }
+  $: if (kind !== undefined && parentIssue !== undefined) {
+    const taskType = $taskTypeStore.get(kind)
+
+    if (taskType !== undefined) {
+      const allowed = taskType.allowedAsChildOf ?? []
+      if (allowed.length > 0 && !allowed.includes(parentIssue.kind)) {
+        clearParentIssue()
       }
-    })
+    }
   }
 
   let templateId: Ref<IssueTemplate> | undefined = draft?.template?.template

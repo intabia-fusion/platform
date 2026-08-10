@@ -38,6 +38,7 @@
     "TaskTypeName": "Název typu úkolu",
     "RootTaskType": "Kořenový typ",
     "TaskTypeNameAlreadyExists": "Typ úlohy s tímto názvem již existuje",
+    "TaskTypeNameEmpty": "Název typu úlohy nesmí být prázdný",
     "AssignThisTask": "Přiřadit tento úkol",
     "AssigneeRequired": "Je vyžadován přiřazený uživatel",
     "More": "Možnosti",

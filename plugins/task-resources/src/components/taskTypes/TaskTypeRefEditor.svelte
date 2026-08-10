@@ -15,16 +15,7 @@
 <script lang="ts">
   import { Ref } from '@hcengineering/core'
   import { TaskType } from '@hcengineering/task'
-  import {
-    ButtonIcon,
-    DropdownLabelsPopup,
-    getFocusManager,
-    Icon,
-    IconAdd,
-    IconClose,
-    Label,
-    showPopup
-  } from '@hcengineering/ui'
+  import { DropdownLabels, Icon, IconAdd, IconClose, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import task from '../../plugin'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
@@ -33,40 +24,23 @@
   export let onChange: (value: Ref<TaskType>[]) => void
   export let types: TaskType[]
 
-  let container: HTMLElement
-  let opened: boolean = false
-
   $: items = types.map((p) => ({ id: p._id, label: p.name, icon: TaskTypeIcon, iconProps: { value: p } })) ?? []
-  $: selectedItems = types.filter((p) => (value as string[])?.includes(p._id))
+  $: selectedItems = types.filter((p) => value?.includes(p._id))
 
   const dispatch = createEventDispatcher()
-  const mgr = getFocusManager()
 
   function removeItem (id: Ref<TaskType>): void {
-    value = [...value].filter((v) => v !== id)
+    value = value.filter((v) => v !== id)
     onChange(value)
     dispatch('selected', value)
   }
 
-  function openDropdown (): void {
-    if (opened) return
-    opened = true
-    showPopup(
-      DropdownLabelsPopup,
-      { items, selected: [...value], enableSearch: false, multiselect: true },
-      container,
-      () => {
-        opened = false
-        mgr?.setFocusPos(-1)
-      },
-      (result) => {
-        if (result != null) {
-          value = result
-          onChange(value)
-          dispatch('selected', result)
-        }
-      }
-    )
+  function handleSelected (evt: CustomEvent<Ref<TaskType>[] | null>): void {
+    if (evt.detail != null) {
+      value = evt.detail
+      onChange(value)
+      dispatch('selected', value)
+    }
   }
 </script>
 
@@ -76,24 +50,25 @@
     <span class="label">
       <Label label={task.string.TaskParent} />
     </span>
-    <div bind:this={container}>
-      <ButtonIcon
-        kind={'primary'}
-        icon={IconAdd}
-        size={'small'}
-        focusIndex={-1}
-        disabled={false}
-        pressed={opened}
-        on:click={openDropdown}
-      />
-    </div>
+    <DropdownLabels
+      kind={'primary'}
+      size={'small'}
+      icon={IconAdd}
+      {items}
+      selected={value}
+      enableSearch={false}
+      multiselect={true}
+      on:selected={handleSelected}
+    >
+      <span slot="content"></span>
+    </DropdownLabels>
   </div>
   <!-- Selected items -->
   {#each selectedItems as item (item._id)}
     <div class="ref-editor-selected-item">
       {#if item.icon}
         <div class="icon">
-          <svelte:component this={TaskTypeIcon} value={item} size={'small'} />
+          <TaskTypeIcon value={item} size="small" />
         </div>
       {/if}
       <span class="ref-editor-selected-label">{item.name}</span>

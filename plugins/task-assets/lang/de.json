@@ -38,6 +38,7 @@
     "TaskTypeName": "Name des Aufgabentyps",
     "RootTaskType": "Wurzeltyp",
     "TaskTypeNameAlreadyExists": "Ein Aufgabentyp mit diesem Namen existiert bereits",
+    "TaskTypeNameEmpty": "Der Name des Aufgabentyps darf nicht leer sein",
     "AssignThisTask": "Diese Aufgabe zuweisen",
     "AssigneeRequired": "Zuständiger wird benötigt",
     "More": "Optionen",

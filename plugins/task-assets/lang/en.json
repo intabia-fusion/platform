@@ -38,6 +38,7 @@
     "TaskTypeName": "Task type name",
     "RootTaskType": "Root type",
     "TaskTypeNameAlreadyExists": "A task type with this name already exists",
+    "TaskTypeNameEmpty": "Task type name cannot be empty",
     "AssignThisTask": "Assign this task",
     "AssigneeRequired": "Assignee is required",
     "More": "Options",

@@ -38,6 +38,7 @@
     "TaskTypeName": "Nombre del tipo de tarea",
     "RootTaskType": "Tipo raíz",
     "TaskTypeNameAlreadyExists": "Ya existe un tipo de tarea con este nombre",
+    "TaskTypeNameEmpty": "El nombre del tipo de tarea no puede estar vacío",
     "AssignThisTask": "Asignar esta tarea",
     "AssigneeRequired": "Se requiere asignar a alguien",
     "More": "Opciones",
