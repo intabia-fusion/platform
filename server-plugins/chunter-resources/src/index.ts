@@ -44,7 +44,8 @@ import core, {
   TxRemoveDoc,
   SortingOrder,
   getClassCollaborators,
-  AccountUuid
+  AccountUuid,
+  RateLimiter
 } from '@hcengineering/core'
 import notification, { DocNotifyContext } from '@hcengineering/notification'
 import { getMetadata, translate } from '@hcengineering/platform'
@@ -64,6 +65,13 @@ import { ChatSearchTitleProvider } from './search'
 
 const updateChatInfoDelay = 24 * 60 * 60 * 1000 // 24 hours
 const hideChannelDelay = 7 * 24 * 60 * 60 * 1000 // 7 days
+
+// UserStatus is DOMAIN_TRANSIENT: a transactor restart re-creates every user's status,
+// firing N syncChat at once. Bound concurrency + coalesce so it drains behind reconnects
+// (persisted 24h ChatSyncInfo is the real debounce; this only de-dups redundant runs).
+const syncChatLimiter = new RateLimiter(4)
+const syncChatCoalesceMs = 60 * 1000
+const syncChatRecent = new Map<string, number>() // `${workspace}:${user}` -> last-run ms
 
 const channelTitlePresenter: Presenter = async (doc: Doc, control: PresenterControl): Promise<string> => {
   const channel = doc as ChunterSpace
@@ -335,16 +343,22 @@ async function getActivityToHide (
 }
 
 export async function syncChat (control: TriggerControl, status: UserStatus, date: Timestamp): Promise<Tx[]> {
-  const syncInfo = (await control.findAll(control.ctx, chunter.class.ChatSyncInfo, { user: status.user })).shift()
+  const syncInfo = (
+    await control.ctx.with('syncChat:findSyncInfo', {}, () =>
+      control.findAll(control.ctx, chunter.class.ChatSyncInfo, { user: status.user })
+    )
+  ).shift()
   const shouldSync = syncInfo === undefined || date - syncInfo.timestamp > updateChatInfoDelay
 
   if (!shouldSync) return []
 
-  const chats = await control.findAll(control.ctx, chunter.class.Chat, {
-    user: status.user,
-    hidden: false,
-    isPinned: false
-  })
+  const chats = await control.ctx.with('syncChat:findChats', {}, () =>
+    control.findAll(control.ctx, chunter.class.Chat, {
+      user: status.user,
+      hidden: false,
+      isPinned: false
+    })
+  )
 
   const { hierarchy } = control
   const res: Tx[] = []
@@ -372,7 +386,11 @@ export async function syncChat (control: TriggerControl, status: UserStatus, dat
     }
   }
   if (syncInfo === undefined) {
-    const personSpace = (await control.findAll(control.ctx, contact.class.PersonSpace, { account: status.user }))[0]
+    const personSpace = (
+      await control.ctx.with('syncChat:findPersonSpace', {}, () =>
+        control.findAll(control.ctx, contact.class.PersonSpace, { account: status.user })
+      )
+    )[0]
     if (personSpace !== undefined) {
       res.push(
         control.txFactory.createTxCreateDoc(chunter.class.ChatSyncInfo, personSpace._id, {
@@ -392,27 +410,46 @@ export async function syncChat (control: TriggerControl, status: UserStatus, dat
   return res
 }
 
+// Skip if the same (workspace, user) ran within the coalesce window. Opportunistic prune.
+function shouldRunSyncChat (workspace: string, user: AccountUuid, now: number): boolean {
+  const key = `${workspace}:${user}`
+  const last = syncChatRecent.get(key) ?? 0
+  if (now - last < syncChatCoalesceMs) return false
+  syncChatRecent.set(key, now)
+  if (syncChatRecent.size > 5000) {
+    for (const [k, t] of syncChatRecent) {
+      if (now - t > syncChatCoalesceMs) syncChatRecent.delete(k)
+    }
+  }
+  return true
+}
+
 async function OnUserStatus (txes: TxCUD<UserStatus>[], control: TriggerControl): Promise<Tx[]> {
   const res: Tx[] = []
+  const now = Date.now()
 
   for (const tx of txes) {
     if (tx.objectClass !== core.class.UserStatus) continue
 
+    let status: UserStatus | undefined
     if (tx._class === core.class.TxCreateDoc) {
       const createTx = tx as TxCreateDoc<UserStatus>
-      const { online } = createTx.attributes
-      if (online) {
-        const status = TxProcessor.createDoc2Doc(createTx)
-        res.push(...(await syncChat(control, status, tx.modifiedOn)))
+      if (createTx.attributes.online) {
+        status = TxProcessor.createDoc2Doc(createTx)
       }
     } else if (tx._class === core.class.TxUpdateDoc) {
       const updateTx = tx as TxUpdateDoc<UserStatus>
-      const { online } = updateTx.operations
-      if (online === true) {
-        const status = (await control.findAll(control.ctx, core.class.UserStatus, { _id: updateTx.objectId }))[0]
-        res.push(...(await syncChat(control, status, tx.modifiedOn)))
+      if (updateTx.operations.online === true) {
+        status = (await control.findAll(control.ctx, core.class.UserStatus, { _id: updateTx.objectId }))[0]
       }
     }
+    if (status === undefined) continue
+    if (!shouldRunSyncChat(control.workspace.uuid, status.user, now)) continue
+
+    // Bound concurrency so a reconnect storm's N syncChats don't saturate the event loop.
+    const st = status
+    const date = tx.modifiedOn
+    res.push(...(await syncChatLimiter.exec(() => syncChat(control, st, date))))
   }
 
   await control.apply(control.ctx, res, true)

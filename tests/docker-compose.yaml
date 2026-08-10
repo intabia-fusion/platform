@@ -498,6 +498,8 @@ services:
       - ALLOW_MOCK_PROVIDER=false
       # Tests fire many subscription mutations in a row from one IP; lift the per-IP cap.
       - SUBSCRIPTION_RATE_LIMIT_MAX=100000
+      # Same for plan-config: every billing page open reads it twice, the whole suite shares one IP.
+      - PLAN_CONFIG_RATE_LIMIT_MAX=100000
       - PLAN_CONFIG=/var/cfg/plan-config.yaml
       - QUEUE_CONFIG=${QUEUE_CONFIG}
     volumes:
