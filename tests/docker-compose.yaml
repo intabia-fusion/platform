@@ -275,6 +275,7 @@ services:
       - STATS_API=http://localhost:8083/_stats
       - STREAM_URL=http://localhost:8083/_stream/recording
       - DATALAKE_URL=http://localhost:8083/_datalake
+      - PRINT_URL=http://localhost:8083/_print
       - BILLING_URL=http://localhost:8083/_billing
       - PAYMENT_URL=http://localhost:8083/_payment
       - USE_OTP=false
@@ -612,6 +613,21 @@ services:
       - redis-test
       - minio
     restart: unless-stopped
+
+  print:
+    image: "intabiafusion/print:${DOCKER_TAG:-latest}"
+    network_mode: "service:nginx"
+    depends_on:
+     nginx:
+      condition: service_started
+    restart: unless-stopped
+    environment:
+      - SECRET=secret
+      - REGION=
+      - QUEUE_CONFIG=${QUEUE_CONFIG}
+      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
+      - STATS_URL=http://stats:4901
+      - ACCOUNTS_URL=http://account:3003
 
 volumes:
   elastic-plugins:

@@ -58,6 +58,7 @@
     "@hcengineering/love": "workspace:^0.7.0",
     "@hcengineering/tracker": "workspace:^0.7.0",
     "@hcengineering/task": "workspace:^0.7.0",
-    "@hcengineering/rank": "workspace:^0.7.17"
+    "@hcengineering/rank": "workspace:^0.7.17",
+    "pdf-parse": "~2.4.5"
   }
 }
