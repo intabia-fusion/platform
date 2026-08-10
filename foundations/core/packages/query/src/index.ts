@@ -645,7 +645,9 @@ export class LiveQuery implements WithTx, Client {
       current = this.asMixin(current, q._class)
     }
     if (current !== undefined && this.match(q, current)) {
-      q.result.updateDoc(current, false)
+      // Clone: docCache hands the same object to every query in the batch, and later $inc txes
+      // are applied per query - a shared object would be incremented once per subscriber.
+      q.result.updateDoc(current)
       this.refs.updateDocuments(q, [current])
     } else {
       if (q.options?.limit === q.result.length) {
