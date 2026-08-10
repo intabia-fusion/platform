@@ -18,6 +18,7 @@
 
   import adminRes from '../plugin'
   import AccountsTab from './tabs/AccountsTab.svelte'
+  import AuditTab from './tabs/AuditTab.svelte'
   import GeneralTab from './tabs/GeneralTab.svelte'
   import StatisticsTab from './tabs/StatisticsTab.svelte'
   import WorkspacesTab from './tabs/WorkspacesTab.svelte'
@@ -60,7 +61,8 @@
     { id: 'workspaces', labelIntl: adminRes.string.Workspaces },
     { id: 'accounts', labelIntl: adminRes.string.Accounts },
     { id: 'payments', labelIntl: adminRes.string.Payments },
-    { id: 'statistics', labelIntl: adminRes.string.Statistics }
+    { id: 'statistics', labelIntl: adminRes.string.Statistics },
+    { id: 'audit', labelIntl: adminRes.string.Audit }
   ]
 
   function onTabSelect (ev: CustomEvent): void {
@@ -104,6 +106,8 @@
       <PaymentsTab {refreshTick} />
     {:else if selectedTab === 'statistics'}
       <StatisticsTab {refreshTick} />
+    {:else if selectedTab === 'audit'}
+      <AuditTab {refreshTick} />
     {/if}
   </div>
 </Scroller>

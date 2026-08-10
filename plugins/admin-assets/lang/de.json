@@ -164,6 +164,16 @@
     "GroupByPayment": "Nach Zahlungskette",
     "Event": "Ereignis",
     "CurrentPlan": "aktuell",
-    "Actor": "Wer"
+    "Actor": "Wer",
+    "NoWorkspaces": "Keine Arbeitsbereiche",
+    "InactiveOver": "Inaktiv seit über",
+    "AnyActivity": "Beliebig",
+    "Export": "Exportieren",
+    "PendingSignups": "Unvollständige Registrierungen",
+    "SortRegistered": "Registrierungsdatum",
+    "Audit": "Audit",
+    "AuditTitle": "Administratoraktionen",
+    "Target": "Ziel",
+    "ReleaseSocialId": "Social ID löschen"
   }
 }

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
+import { type MeasureContext, type WorkspaceUuid, SocialIdType } from '@hcengineering/core'
 import platform, { PlatformError, Status, Severity } from '@hcengineering/platform'
 import { decodeTokenVerbose } from '@hcengineering/server-token'
 
@@ -26,7 +26,10 @@ import {
   listAccounts,
   getPaymentOperations,
   getPaymentMonthlyStats,
-  performWorkspaceOperation
+  performWorkspaceOperation,
+  listAdminActions,
+  adminReleaseSocialId,
+  adminDeletePerson
 } from '../serviceOperations'
 
 jest.mock('@hcengineering/platform', () => {
@@ -119,6 +122,17 @@ describe('billing read-only admin - read access', () => {
     await expect(listAccounts(mockCtx, db, mockBranding, mockToken, {})).rejects.toThrow(forbidden)
   })
 
+  test('listAccounts: filter is passed through to db', async () => {
+    const listFn = jest.fn().mockResolvedValue([])
+    const db = { listAccounts: listFn } as unknown as AccountDB
+
+    setToken(BILLING)
+    const filter = { noWorkspaces: true, inactiveDays: 7 }
+    await listAccounts(mockCtx, db, mockBranding, mockToken, { search: 'a@b.c', limit: 10, filter })
+
+    expect(listFn).toHaveBeenCalledWith('a@b.c', undefined, 10, undefined, filter)
+  })
+
   test('getPaymentOperations: billing allowed, regular forbidden', async () => {
     const db = { getPaymentOperations: jest.fn().mockResolvedValue([]) } as unknown as AccountDB
 
@@ -139,6 +153,78 @@ describe('billing read-only admin - read access', () => {
     await expect(getPaymentMonthlyStats(mockCtx, db, mockBranding, mockToken, { from: 0, to: 1 })).rejects.toThrow(
       forbidden
     )
+  })
+})
+
+describe('admin account actions', () => {
+  const verifyOtpSpy = jest.spyOn(utils, 'verifyAdminOtp')
+  const logSpy = jest.spyOn(utils, 'logAdminAction')
+  const releaseSpy = jest.spyOn(utils, 'doReleaseSocialId')
+
+  beforeEach(() => {
+    verifyOtpSpy.mockResolvedValue(undefined)
+    logSpy.mockResolvedValue(undefined)
+    releaseSpy.mockResolvedValue({} as any)
+  })
+
+  afterAll(() => {
+    verifyOtpSpy.mockRestore()
+    logSpy.mockRestore()
+    releaseSpy.mockRestore()
+  })
+
+  test('listAdminActions: billing allowed, regular forbidden', async () => {
+    const db = { listAdminActions: jest.fn().mockResolvedValue({ actions: [], total: 0 }) } as unknown as AccountDB
+
+    setToken(BILLING)
+    await expect(listAdminActions(mockCtx, db, mockBranding, mockToken, {})).resolves.toEqual({
+      actions: [],
+      total: 0
+    })
+
+    setToken(REGULAR)
+    await expect(listAdminActions(mockCtx, db, mockBranding, mockToken, {})).rejects.toThrow(forbidden)
+  })
+
+  test('adminReleaseSocialId: admin cannot cut their own login, others are logged', async () => {
+    const db = {} as unknown as AccountDB
+    const params = { personUuid: 'admin-acc' as any, type: SocialIdType.EMAIL, value: 'a@b.c', otpCode: '1' }
+
+    setToken({ account: 'admin-acc', ...ADMIN })
+    await expect(adminReleaseSocialId(mockCtx, db, mockBranding, mockToken, params)).rejects.toThrow(forbidden)
+
+    await adminReleaseSocialId(mockCtx, db, mockBranding, mockToken, { ...params, personUuid: 'other' as any })
+    expect(releaseSpy).toHaveBeenCalledWith(db, 'other', SocialIdType.EMAIL, 'a@b.c', 'admin-acc', true)
+    expect(logSpy).toHaveBeenCalledWith(
+      mockCtx,
+      db,
+      mockToken,
+      'release_social_id',
+      'other',
+      `${SocialIdType.EMAIL}:a@b.c`
+    )
+  })
+
+  test('adminDeletePerson: refuses a person that already has an account', async () => {
+    const deletePerson = jest.fn()
+    const db = {
+      person: { findOne: jest.fn().mockResolvedValue({ uuid: 'p1', firstName: 'A', lastName: 'B' }) },
+      account: { findOne: jest.fn().mockResolvedValue({ uuid: 'p1' }) },
+      socialId: { find: jest.fn().mockResolvedValue([]) },
+      deletePerson
+    } as unknown as AccountDB
+
+    setToken({ account: 'admin-acc', ...ADMIN })
+    await expect(
+      adminDeletePerson(mockCtx, db, mockBranding, mockToken, { personUuid: 'p1' as any, otpCode: '1' })
+    ).rejects.toThrow(PlatformError)
+    expect(deletePerson).not.toHaveBeenCalled()
+
+    // Unfinished signup: no account row -> purged and audited
+    ;(db.account.findOne as jest.Mock).mockResolvedValue(null)
+    await adminDeletePerson(mockCtx, db, mockBranding, mockToken, { personUuid: 'p1' as any, otpCode: '1' })
+    expect(deletePerson).toHaveBeenCalledWith('p1')
+    expect(logSpy).toHaveBeenCalledWith(mockCtx, db, mockToken, 'delete_person', 'p1', 'A B', { socialIds: [] })
   })
 })
 

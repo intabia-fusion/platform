@@ -164,6 +164,16 @@
     "GroupByPayment": "Ödeme zincirine göre",
     "Event": "Olay",
     "CurrentPlan": "geçerli",
-    "Actor": "Kim"
+    "Actor": "Kim",
+    "NoWorkspaces": "Çalışma alanı yok",
+    "InactiveOver": "Şu süredir etkin değil",
+    "AnyActivity": "Herhangi",
+    "Export": "Dışa aktar",
+    "PendingSignups": "Tamamlanmamış kayıtlar",
+    "SortRegistered": "Kayıt tarihi",
+    "Audit": "Denetim",
+    "AuditTitle": "Yönetici işlemleri",
+    "Target": "Hedef",
+    "ReleaseSocialId": "Social id sil"
   }
 }

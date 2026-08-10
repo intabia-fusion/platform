@@ -164,6 +164,16 @@
     "GroupByPayment": "Por cadena de pago",
     "Event": "Evento",
     "CurrentPlan": "vigente",
-    "Actor": "Quién"
+    "Actor": "Quién",
+    "NoWorkspaces": "Sin espacios de trabajo",
+    "InactiveOver": "Inactivo más de",
+    "AnyActivity": "Cualquiera",
+    "Export": "Exportar",
+    "PendingSignups": "Registros incompletos",
+    "SortRegistered": "Fecha de registro",
+    "Audit": "Auditoría",
+    "AuditTitle": "Acciones de administradores",
+    "Target": "Objetivo",
+    "ReleaseSocialId": "Eliminar social id"
   }
 }

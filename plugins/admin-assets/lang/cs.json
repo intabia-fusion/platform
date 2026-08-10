@@ -164,6 +164,16 @@
     "GroupByPayment": "Podle řetězce platby",
     "Event": "Událost",
     "CurrentPlan": "aktivní",
-    "Actor": "Kdo"
+    "Actor": "Kdo",
+    "NoWorkspaces": "Bez pracovních prostorů",
+    "InactiveOver": "Neaktivní déle než",
+    "AnyActivity": "Libovolná",
+    "Export": "Exportovat",
+    "PendingSignups": "Nedokončené registrace",
+    "SortRegistered": "Datum registrace",
+    "Audit": "Audit",
+    "AuditTitle": "Akce administrátorů",
+    "Target": "Cíl",
+    "ReleaseSocialId": "Smazat social id"
   }
 }

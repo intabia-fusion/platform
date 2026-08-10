@@ -160,9 +160,47 @@ export interface AccountAggregatedInfo extends AccountInfo, Person {
   workspaces: Omit<WorkspaceInfo, 'allowReadOnlyGuest' | 'allowGuestSignUp'>[]
   // Max last_visit across the account's workspaces (approximation of user's last activity)
   lastVisit?: number
+  // Earliest social id creation time - when the person first appeared
+  registeredOn?: number
+  // False for an unfinished signup: person + social ids exist, but no account row yet
+  hasAccount?: boolean
 }
 
-export type AccountsSortKey = 'name' | 'lastVisit'
+export type AccountsSortKey = 'name' | 'lastVisit' | 'registeredOn'
+
+/** Admin audit trail entry. Duplicated in server/account/src/types.ts - change both */
+export interface AdminAction {
+  id?: string
+  actor: string
+  actorEmail?: string
+  action: string
+  target?: string
+  targetLabel?: string
+  data?: Record<string, any>
+  createdOn: number
+}
+
+export interface AdminActionsQuery {
+  search?: string
+  action?: string
+  skip?: number
+  limit?: number
+}
+
+export interface AdminActionsResult {
+  actions: AdminAction[]
+  total: number
+}
+
+/** Server-side filters for listAccounts */
+export interface AccountsFilter {
+  /** Accounts not belonging to any workspace */
+  noWorkspaces?: boolean
+  /** Accounts with no visit for at least this many days (never visited counts as inactive) */
+  inactiveDays?: number
+  /** Unfinished signups only: person + social ids without an account row */
+  pendingOnly?: boolean
+}
 
 /** Transactor endpoint entry for admin manage calls */
 export interface TransactorEndpointInfo {
