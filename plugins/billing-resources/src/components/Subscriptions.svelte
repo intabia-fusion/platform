@@ -25,7 +25,6 @@
   import { getMetadata, translate, getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { MessageBox, getClient, addTxListener, removeTxListener } from '@hcengineering/presentation'
   import core, {
-    UsageStatus,
     type WorkspaceUuid,
     type Tx,
     type TxWorkspaceEvent,
@@ -53,7 +52,8 @@
   import contact, { getCurrentEmployee, formatName } from '@hcengineering/contact'
 
   import plugin from '../plugin'
-  import { getAccountClient, getPaymentClient, resolveLocale } from '../utils'
+  import { getAccountClient, getPaymentClient, resolveLocale, checkWorkspaceLimits } from '../utils'
+  import { subscriptionStore } from '../stores/subscription'
 
   import UsageSection from './UsageSection.svelte'
   import BillingErrorNotification from './BillingErrorNotification.svelte'
@@ -116,7 +116,11 @@
   let configError = false
   const DEFAULT_LOCALE = 'ru'
 
-  let usageInfo: UsageStatus | null = null
+  // Usage comes from the shared subscription store, refreshed by the poll below.
+  $: usageInfo = $subscriptionStore.usageInfo ?? null
+
+  const USAGE_POLL_INTERVAL = 10 * 1000
+  let usageTimer: ReturnType<typeof setInterval> | undefined
 
   $: isCurrentCanceled = currentSubscription?.canceledAt !== undefined && currentSubscription.canceledAt > 0
   // Unpaid = the cancel is immediate on the server (isImmediateCancel in pod-tbank-subscriptions).
@@ -854,20 +858,6 @@
     }
   }
 
-  async function fetchUsageStats (): Promise<void> {
-    try {
-      const accountClient = getAccountClient()
-      if (accountClient == null) return
-
-      const workspaceInfo = await accountClient.getWorkspaceInfo(false)
-      usageInfo = workspaceInfo.usageInfo ?? null
-    } catch (err) {
-      console.error('Error fetching usage stats:', err)
-      await showErrorNotification()
-      usageInfo = null
-    }
-  }
-
   async function pollCheckoutStatus (checkoutId: string): Promise<void> {
     if (destroyed || paymentClient == null) {
       return
@@ -947,6 +937,7 @@
   }
 
   $: isCheckoutPolling = pollingCheckoutId !== null
+  $: isBusy = isUpdating || isCanceling || isUncanceling || isPackageBusy || isRetrying || isCheckoutPolling
 
   function formatEndDate (endDate: number, lang: string): string {
     const date = new Date(endDate)
@@ -1015,16 +1006,24 @@
       await fetchSubscriptions()
 
       // Then fetch usage stats
-      await fetchUsageStats()
+      await checkWorkspaceLimits()
 
       // Then check if we need to poll for a new subscription from checkout
       checkForCheckoutParam()
     })()
+
+    usageTimer = setInterval(() => {
+      // A poll started before a payment operation can land after it and push a pre-operation
+      // subscription back into the store, desyncing the banner/indicator from this page.
+      if (isBusy) return
+      void checkWorkspaceLimits()
+    }, USAGE_POLL_INTERVAL)
   })
 
   onDestroy(() => {
     destroyed = true
     clearTimeout(pollTimer)
+    clearInterval(usageTimer)
     removeTxListener(txListener)
   })
 </script>
