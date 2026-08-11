@@ -244,7 +244,7 @@ services:
       - DB_URL=${DB_PG_URL}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - QUEUE_CONFIG=${QUEUE_CONFIG}
-      - USAGE_UPDATE_INTERVAL=30
+      - USAGE_UPDATE_INTERVAL=600
     restart: unless-stopped
   workspace:
     image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'

@@ -467,7 +467,7 @@ services:
       # not the global minio one (collectDatalakeStats filters by kind === 'datalake').
       - STORAGE_CONFIG=datalake|http://datalake:4031
       - QUEUE_CONFIG=${QUEUE_CONFIG}
-      - USAGE_UPDATE_INTERVAL=30
+      - USAGE_UPDATE_INTERVAL=600
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
 

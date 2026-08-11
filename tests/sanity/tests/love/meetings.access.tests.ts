@@ -46,6 +46,8 @@ export function registerAccessTests (): void {
 
     test('clicking a regular room opens its meeting panel', async ({ page }) => {
       const candidates = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
+      // Rooms render after the grid, so without this the loop sees an empty floor and skips every candidate.
+      await expect(page.locator('div.floorGrid-room').first()).toBeVisible({ timeout: 15000 })
       let opened = false
       for (const name of candidates) {
         const room = page.locator(`[data-id="room-${name}"]`).first()
