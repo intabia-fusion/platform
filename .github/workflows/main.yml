@@ -573,7 +573,11 @@ jobs:
           docker builder prune -a -f
         env:
           DOCKER_CLI_HINTS: false
-          DOCKER_EXTRA: --platform=linux/amd64,linux/arm64
+          # arm64 is built under QEMU emulation and dominates this step. Only release tags are
+          # pushed, so non-tag runs validate amd64 only.
+          DOCKER_EXTRA: ${{ (startsWith(github.ref, 'refs/tags/v') ||
+            startsWith(github.ref, 'refs/tags/s')) &&
+            '--platform=linux/amd64,linux/arm64' || '--platform=linux/amd64' }}
           DOCKER_BUILDKIT: 1
           DOCKER_BUILD_CLEANUP: true
           # Bakes the license public key into the release bundles (esbuild define). Absent -> edition
