@@ -25,7 +25,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      - DB_URL=postgres://postgres:postgres@postgres:5433/postgres
+      - DB_URL=${DB_PG_URL}
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
@@ -43,7 +43,7 @@ services:
     volumes:
       - ./branding-test.json:/var/cfg/branding.json
     environment:
-      - DB_URL=postgres://postgres:postgres@postgres:5433/postgres
+      - DB_URL=${DB_PG_URL}
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
       - ACCOUNTS_URL=http://account:3003
@@ -51,12 +51,6 @@ services:
       - SECRET=secret
       - BRANDING_PATH=/var/cfg/branding.json
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-    restart: unless-stopped
-  cockroach:
-    image: cockroachdb/cockroach:v24.1.2
-    command: start-single-node --insecure
-    ports:
-      - "26258:26257"
     restart: unless-stopped
   postgres:
     image: postgres:18.1
@@ -81,7 +75,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      - DB_URL=postgres://postgres:postgres@postgres:5433/postgres
+      - DB_URL=${DB_PG_URL}
     restart: "no"
 
   redpanda:
@@ -180,7 +174,6 @@ services:
         condition: service_healthy
     links:
       - minio
-      - cockroach
       - postgres
     volumes:
       - ./branding-test.json:/var/cfg/branding.json
@@ -203,7 +196,6 @@ services:
     image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'
     pull_policy: never
     links:
-      - cockroach
       - postgres
       - minio
       - redpanda
@@ -293,7 +285,6 @@ services:
       - elastic
       - minio
       - rekoni
-      - cockroach
       - postgres
       - account
       - stats
@@ -350,13 +341,13 @@ services:
     depends_on:
       redpanda:
         condition: service_started
-      cockroach:
-        condition: service_started
+      postgres:
+        condition: service_healthy
       elastic:
         condition: service_healthy
     links:
       - elastic
-      - cockroach
+      - postgres
       - rekoni
       - redpanda
     environment:
@@ -425,8 +416,8 @@ services:
     depends_on:
       minio:
         condition: service_healthy
-      cockroach:
-        condition: service_started
+      postgres:
+        condition: service_healthy
       stats:
         condition: service_started
       account:
