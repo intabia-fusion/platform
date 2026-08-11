@@ -9,6 +9,9 @@ services:
     restart: unless-stopped
 
   db-migrator:
+    depends_on:
+      cockroach:
+        condition: service_started
     environment:
       - DB_URL=${DB_COCKROACH_URL}
   account:
