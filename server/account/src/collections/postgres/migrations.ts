@@ -92,7 +92,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV31Migration(ns, flavor),
     getV32Migration(ns, flavor),
     getV33Migration(ns),
-    getV34Migration(ns)
+    getV34Migration(ns),
+    getV35Migration(ns, flavor)
   ]
 }
 
@@ -1032,6 +1033,33 @@ function getV34Migration (ns: string): [string, string] {
     `
     ALTER TABLE ${ns}.workspace
     ADD COLUMN IF NOT EXISTS disabled_features_override TEXT[];
+    `
+  ]
+}
+
+function getV35Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v35_admin_action_log',
+    `
+    /* ======= A D M I N   A C T I O N   L O G ======= */
+    /* No FK on actor/target on purpose: the log must outlive the rows it describes
+       (account deletion, person purge), and targets may be workspaces or social ids. */
+    CREATE TABLE IF NOT EXISTS ${ns}.admin_action (
+        id ${types.string} NOT NULL DEFAULT gen_random_uuid()::TEXT,
+        actor ${types.string} NOT NULL, -- admin account uuid from the token
+        actor_email ${types.string},
+        action ${types.string} NOT NULL,
+        target ${types.string}, -- person/workspace uuid the action was applied to
+        target_label ${types.string}, -- readable name/email/url, kept for deleted targets
+        data JSONB,
+        created_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
+
+        CONSTRAINT admin_action_pk PRIMARY KEY (id)
+    );
+
+    CREATE INDEX IF NOT EXISTS admin_action_created_idx ON ${ns}.admin_action (created_on);
+    CREATE INDEX IF NOT EXISTS admin_action_target_idx ON ${ns}.admin_action (target);
     `
   ]
 }

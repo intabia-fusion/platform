@@ -10,6 +10,7 @@
 
   export let value: Ref<TaskType> | undefined
   export let projectType: Ref<ProjectType> | undefined
+  export let parentType: Ref<TaskType> | undefined = undefined
   export let focusIndex: number = -1
   export let baseClass: Ref<Class<Doc>> | undefined = undefined
   export let kind: ButtonKind = 'regular'
@@ -22,19 +23,25 @@
 
   $: taskTypeDescriptors = toIdMap(client.getModel().findAllSync(task.class.TaskTypeDescriptor, {}))
 
-  $: items = Array.from($taskTypeStore.values())
-    .filter(
-      (it) =>
-        it.parent === projectType &&
-        (taskTypeDescriptors.get(it.descriptor)?.allowCreate ?? false) &&
-        (baseClass === undefined || client.getHierarchy().isDerived(it.targetClass, baseClass))
-    )
-    .map((it) => ({
-      id: it._id,
-      label: getEmbeddedLabel(it.name),
-      icon: TaskTypeIcon,
-      iconProps: { value: it }
-    })) as DropdownIntlItem[]
+  $: allItems = Array.from($taskTypeStore.values()).filter(
+    (it) =>
+      it.parent === projectType &&
+      (taskTypeDescriptors.get(it.descriptor)?.allowCreate ?? false) &&
+      (baseClass === undefined || client.getHierarchy().isDerived(it.targetClass, baseClass))
+  )
+
+  $: childItems = allItems.filter((it) => parentType !== undefined && (it.allowedAsChildOf ?? []).includes(parentType))
+
+  $: freeItems = allItems.filter(
+    (it) => (it.allowedAsChildOf ?? []).length === 0 && it.isRootTaskType !== true && it._id !== parentType
+  )
+
+  $: items = (parentType === undefined ? allItems : childItems.length > 0 ? childItems : freeItems).map((it) => ({
+    id: it._id,
+    label: getEmbeddedLabel(it.name),
+    icon: TaskTypeIcon,
+    iconProps: { value: it }
+  })) as DropdownIntlItem[]
 
   $: if (
     (value === undefined && items.length > 0) ||

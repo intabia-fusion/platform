@@ -86,6 +86,8 @@
     "ChangeParent": "Change parent issue…",
     "RemoveParent": "Remove parent issue",
     "OpenParent": "Open parent issue",
+    "ParentNotApplicable": "Tasks of this type cannot have a parent",
+    "NoParentIssuesExist": "No tasks of the parent type found",
     "SubIssues": "Sub-issues",
     "SubIssuesList": "Sub-issues ({subIssues})",
     "ParentIssuesList": "Parent Issues ({parentIssues})",

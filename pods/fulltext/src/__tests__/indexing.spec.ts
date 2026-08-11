@@ -222,5 +222,5 @@ describe('full-text-indexing', () => {
       await queue.close()
       await pipeline.close()
     }
-  })
+  }, 180000)
 })

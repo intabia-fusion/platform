@@ -86,6 +86,8 @@
     "ChangeParent": "Übergeordnete Aufgabe ändern...",
     "RemoveParent": "Übergeordnete Aufgabe entfernen",
     "OpenParent": "Übergeordnete Aufgabe öffnen",
+    "ParentNotApplicable": "Aufgaben dieses Typs haben keine übergeordnete Aufgabe",
+    "NoParentIssuesExist": "Keine Aufgaben des übergeordneten Typs gefunden",
     "SubIssues": "Unteraufgaben",
     "SubIssuesList": "Unteraufgaben ({subIssues})",
     "ParentIssuesList": "Übergeordnete Aufgaben ({parentIssues})",

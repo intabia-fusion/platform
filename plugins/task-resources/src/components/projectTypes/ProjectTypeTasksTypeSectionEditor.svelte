@@ -21,7 +21,6 @@
 
   import IconLayers from '../icons/Layers.svelte'
   import TaskTypeIcon from '../taskTypes/TaskTypeIcon.svelte'
-  import TaskTypeKindEditor from '../taskTypes/TaskTypeKindEditor.svelte'
   import CreateTaskType from '../taskTypes/CreateTaskType.svelte'
   import task from '../../plugin'
 
@@ -69,7 +68,7 @@
         if (disabled) {
           return
         }
-        $settingsStore = { id: 'createTaskType', component: CreateTaskType, props: { type, descriptor } }
+        $settingsStore = { id: 'createTaskType', component: CreateTaskType, props: { type, descriptor, taskTypes } }
       }}
     />
   </div>
@@ -86,13 +85,10 @@
             <TaskTypeIcon value={taskType} size={'small'} />
           </div>
           {#if taskType.name}
-            <div class="hulyTableAttr-content__row-label font-medium-14">
+            <div class="hulyTableAttr-content__row-label grow font-medium-14">
               {taskType.name}
             </div>
           {/if}
-          <div class="hulyTableAttr-content__row-label grow dark font-regular-14">
-            <TaskTypeKindEditor readonly kind={taskType.kind} />
-          </div>
         </button>
       {/each}
     </div>

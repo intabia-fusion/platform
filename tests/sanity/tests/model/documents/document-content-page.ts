@@ -236,7 +236,13 @@ export class DocumentContentPage extends CommonPage {
     if (shallow) {
       await loc.click({ clickCount: 3 })
     } else {
-      await loc.selectText()
+      // A re-render after a document change drops the DOM selection, and with it the toolbar.
+      // Retry until this exact line is selected - a stale selection is non-empty too.
+      const expected = (await loc.textContent()) ?? text
+      await expect(async () => {
+        await loc.selectText()
+        expect(await this.page.evaluate(() => window.getSelection()?.toString() ?? '')).toEqual(expected)
+      }).toPass({ timeout: 15000 })
     }
   }
 

@@ -51,7 +51,7 @@
   } from '@hcengineering/presentation'
   import tags, { type TagElement, TagReference } from '@hcengineering/tags'
   import { TaskType } from '@hcengineering/task'
-  import { TaskKindSelector } from '@hcengineering/task-resources'
+  import { TaskKindSelector, taskTypeStore } from '@hcengineering/task-resources'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import {
     Component as ComponentType,
@@ -132,6 +132,17 @@
   let object = getDefaultObjectFromDraft() ?? getDefaultObject(id)
   let isAssigneeTouched = false
   let kind: Ref<TaskType> | undefined = undefined
+
+  $: if (kind !== undefined && parentIssue !== undefined) {
+    const taskType = $taskTypeStore.get(kind)
+
+    if (taskType !== undefined) {
+      const allowed = taskType.allowedAsChildOf ?? []
+      if (allowed.length > 0 && !allowed.includes(parentIssue.kind)) {
+        clearParentIssue()
+      }
+    }
+  }
 
   let templateId: Ref<IssueTemplate> | undefined = draft?.template?.template
   let appliedTemplateId: Ref<IssueTemplate> | undefined = draft?.template?.template
@@ -608,7 +619,7 @@
   async function setParentIssue (): Promise<void> {
     showPopup(
       SetParentIssueActionPopup,
-      { value: { ...object, space: _space, attachedTo: parentIssue?._id } },
+      { value: { ...object, space: _space, attachedTo: parentIssue?._id }, kind },
       'top',
       (selectedIssue) => {
         if (selectedIssue !== undefined) {
@@ -769,6 +780,8 @@
     originalIssue,
     preferences
   }
+
+  $: parentType = parentIssue?.kind
 </script>
 
 <FocusHandler {manager} />
@@ -832,8 +845,10 @@
       <TaskKindSelector
         projectType={currentProject?.type}
         bind:value={kind}
+        {parentType}
         baseClass={tracker.class.Issue}
         size={'small'}
+        showAlways={true}
       />
       {#if relatedTo}
         <div class="lower mr-2">

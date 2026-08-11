@@ -370,15 +370,17 @@ export function getAllowedChildTaskTypes (
   taskType: Ref<TaskType>,
   taskTypes: TaskType[]
 ): TaskType[] {
-  const scopedTypes = taskTypes.filter((t) => t.parent === projectType)
+  // const scopedTypes = taskTypes.filter((t) => t.parent === projectType)
 
-  return scopedTypes.filter((tt) => {
-    if (tt.kind === 'task') return false
-    if (tt.allowedAsChildOf != null && tt.allowedAsChildOf.length > 0) {
-      return tt.allowedAsChildOf.includes(taskType)
-    }
-    return true
-  })
+  // return scopedTypes.filter((tt) => {
+  //   if (tt.kind === 'task') return false
+  //   if (tt.allowedAsChildOf != null && tt.allowedAsChildOf.length > 0) {
+  //     return tt.allowedAsChildOf.includes(taskType)
+  //   }
+  //   return true
+  // })
+  // TODO: FIXME
+  return []
 }
 
 /**
@@ -391,15 +393,17 @@ export function getAllowedParentTaskTypes (
   taskType: Ref<TaskType>,
   taskTypes: TaskType[]
 ): TaskType[] {
-  const scopedTypes = taskTypes.filter((t) => t.parent === projectType)
-  const childTaskType = scopedTypes.find((t) => t._id === taskType)
-  return childTaskType == null
-    ? []
-    : scopedTypes.filter((parentTT) => {
-      if (parentTT.kind === 'subtask') return false
-      if (childTaskType.allowedAsChildOf != null && childTaskType.allowedAsChildOf.length > 0) {
-        return childTaskType.allowedAsChildOf.includes(parentTT._id)
-      }
-      return true
-    })
+  // const scopedTypes = taskTypes.filter((t) => t.parent === projectType)
+  // const childTaskType = scopedTypes.find((t) => t._id === taskType)
+  // return childTaskType == null
+  //   ? []
+  //   : scopedTypes.filter((parentTT) => {
+  //     if (parentTT.kind === 'subtask') return false
+  //     if (childTaskType.allowedAsChildOf != null && childTaskType.allowedAsChildOf.length > 0) {
+  //       return childTaskType.allowedAsChildOf.includes(parentTT._id)
+  //     }
+  //     return true
+  //   })
+  // TODO: FIXME
+  return []
 }

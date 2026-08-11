@@ -180,6 +180,16 @@ export default mergeIds(adminId, admin, {
     MassMigrate: '' as IntlString,
     ResetAttempts: '' as IntlString,
     UnarchiveWorkspace: '' as IntlString,
-    ReplaceSubscriptionConfirm: '' as IntlString
+    ReplaceSubscriptionConfirm: '' as IntlString,
+    NoWorkspaces: '' as IntlString,
+    InactiveOver: '' as IntlString,
+    AnyActivity: '' as IntlString,
+    Export: '' as IntlString,
+    PendingSignups: '' as IntlString,
+    SortRegistered: '' as IntlString,
+    Audit: '' as IntlString,
+    AuditTitle: '' as IntlString,
+    Target: '' as IntlString,
+    ReleaseSocialId: '' as IntlString
   }
 })

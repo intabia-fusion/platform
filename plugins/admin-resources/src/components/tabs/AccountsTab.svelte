@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type AccountAggregatedInfo, type AccountsSortKey } from '@hcengineering/account-client'
+  import { type AccountAggregatedInfo, type AccountsFilter, type AccountsSortKey } from '@hcengineering/account-client'
   import { type AccountUuid, reduceCalls } from '@hcengineering/core'
-  import { type IntlString, translate } from '@hcengineering/platform'
+  import { type IntlString, getEmbeddedLabel, translate } from '@hcengineering/platform'
   import { copyTextToClipboard, isAdminUser, isBillingAdminUser } from '@hcengineering/presentation'
   import {
     Button,
@@ -32,6 +32,7 @@
 
   import adminRes from '../../plugin'
   import AccountDetails from '../AccountDetails.svelte'
+  import { downloadReport, type ReportFormat } from '../../reports'
   import { getAccountClient, requestAdminOtpCode } from '../../utils'
 
   export let refreshTick: number = 0
@@ -51,23 +52,61 @@
   let sortKey: AccountsSortKey = 'lastVisit'
   const sortLabels: Record<AccountsSortKey, IntlString> = {
     name: adminRes.string.SortName,
-    lastVisit: adminRes.string.SortLastVisit
+    lastVisit: adminRes.string.SortLastVisit,
+    registeredOn: adminRes.string.SortRegistered
   }
   let sortTitle = ''
   $: void translate(sortLabels[sortKey], {}, $themeStore.language).then((t) => {
     sortTitle = t
   })
 
+  let noWorkspaces = false
+  let pendingOnly = false
+  let inactiveDays: number | undefined
+  // ButtonMenu drops falsy ids (`if (result)`), so ids must be non-empty strings
+  const inactiveItems = [
+    { id: 'any', label: adminRes.string.AnyActivity },
+    ...[1, 5, 7, 14].map((d) => ({ id: String(d), label: getEmbeddedLabel(`${d}d+`) }))
+  ]
+  let filter: AccountsFilter = {}
+  $: filter = {
+    noWorkspaces: noWorkspaces ? true : undefined,
+    pendingOnly: pendingOnly ? true : undefined,
+    inactiveDays
+  }
+
+  let inactiveTitle = ''
+  $: if (inactiveDays === undefined) {
+    void translate(adminRes.string.AnyActivity, {}, $themeStore.language).then((t) => {
+      inactiveTitle = t
+    })
+  } else {
+    inactiveTitle = `${inactiveDays}d+`
+  }
+
   const loadAccounts = reduceCalls(async (search?: string, skip?: number, limit?: number): Promise<void> => {
-    accounts = await accountClient.listAccounts(search, skip, limit, sortKey)
+    accounts = await accountClient.listAccounts(search, skip, limit, sortKey, filter)
   })
 
   let prevKey = ''
-  $: key = `${refreshTick}:${sortKey}`
+  $: key = `${refreshTick}:${sortKey}:${String(noWorkspaces)}:${String(pendingOnly)}:${inactiveDays ?? ''}`
   $: if (key !== prevKey) {
     if (prevKey !== '') accountSkip = 0
     prevKey = key
     void loadAccounts(accountSearch, accountSkip, accountLimit)
+  }
+
+  let exporting = false
+  let reportFormat: ReportFormat = 'csv'
+  async function exportAccounts (): Promise<void> {
+    exporting = true
+    try {
+      await downloadReport('accounts', reportFormat, { search: accountSearch, filter })
+    } catch (err) {
+      console.error('Accounts export failed:', err)
+    } finally {
+      exporting = false
+    }
   }
 
   // Last-visit buckets (page-local, list arrives sorted by last_visit DESC)
@@ -104,6 +143,11 @@
     return `${days}d`
   }
 
+  function fmtDay (ms: number | undefined): string {
+    if (ms == null || ms === 0) return '-'
+    return new Date(ms).toISOString().slice(0, 10)
+  }
+
   // Account deletion is an irreversible identity purge -> OTP-gated on the server
   function deleteAccount (uuid: AccountUuid): void {
     void requestAdminOtpCode().then((code) => {
@@ -113,6 +157,19 @@
         .then(() => loadAccounts(accountSearch, accountSkip, accountLimit))
         .catch((err) => {
           console.error('Failed to delete account:', err)
+        })
+    })
+  }
+
+  // Unfinished signup has no account row - purge person + social ids instead
+  function deletePerson (uuid: AccountUuid): void {
+    void requestAdminOtpCode().then((code) => {
+      if (code === undefined) return
+      void accountClient
+        .adminDeletePerson(uuid, code)
+        .then(() => loadAccounts(accountSearch, accountSkip, accountLimit))
+        .catch((err) => {
+          console.error('Failed to delete person:', err)
         })
     })
   }
@@ -173,6 +230,52 @@
   />
 </div>
 
+<div class="flex-row-center flex-wrap p-3">
+  <div class="flex-row-center mr-4">
+    <CheckBox bind:checked={noWorkspaces} />
+    <span class="ml-1"><Label label={adminRes.string.NoWorkspaces} /></span>
+  </div>
+
+  <div class="flex-row-center mr-4">
+    <CheckBox bind:checked={pendingOnly} />
+    <span class="ml-1"><Label label={adminRes.string.PendingSignups} /></span>
+  </div>
+
+  <span class="mr-1"><Label label={adminRes.string.InactiveOver} /></span>
+  <ButtonMenu
+    selected={inactiveDays === undefined ? 'any' : String(inactiveDays)}
+    title={inactiveTitle}
+    items={inactiveItems}
+    on:selected={(it) => {
+      inactiveDays = it.detail === 'any' ? undefined : Number(it.detail)
+    }}
+  />
+
+  <div class="ml-4 flex-row-center">
+    <Button
+      label={adminRes.string.Export}
+      kind={'primary'}
+      size={'small'}
+      disabled={exporting}
+      on:click={() => {
+        void exportAccounts()
+      }}
+    />
+    <Button
+      label={getEmbeddedLabel('CSV')}
+      kind={reportFormat === 'csv' ? 'primary' : 'regular'}
+      size={'small'}
+      on:click={() => (reportFormat = 'csv')}
+    />
+    <Button
+      label={getEmbeddedLabel('PDF')}
+      kind={reportFormat === 'pdf' ? 'primary' : 'regular'}
+      size={'small'}
+      on:click={() => (reportFormat = 'pdf')}
+    />
+  </div>
+</div>
+
 <div class="p-3 select-text-i">
   <table class="accounts-table">
     <thead>
@@ -181,6 +284,7 @@
         <th><Label label={adminRes.string.Email} /></th>
         <th><Label label={adminRes.string.SocialIds} /></th>
         <th><Label label={adminRes.string.Workspaces} /></th>
+        <th><Label label={adminRes.string.CreatedOn} /></th>
         <th><Label label={adminRes.string.LastVisit} /></th>
         <th></th>
       </tr>
@@ -189,7 +293,7 @@
       {#each groups as group}
         {#if group.label != null}
           <tr class="group-row">
-            <td colspan="6">{group.label} ({group.items.length})</td>
+            <td colspan="7">{group.label} ({group.items.length})</td>
           </tr>
         {/if}
         {#each group.items as account}
@@ -210,6 +314,7 @@
             <td>{primaryEmail(account)}</td>
             <td>{account.socialIds.length}</td>
             <td>{account.workspaces.length}</td>
+            <td>{fmtDay(account.registeredOn)}</td>
             <td>{lastVisitDays(account.lastVisit)}</td>
             <td>
               <div class="flex-row-center">
@@ -229,7 +334,11 @@
                     kind={'dangerous'}
                     label={adminRes.string.Delete}
                     on:click={() => {
-                      deleteAccount(account.uuid)
+                      if (account.hasAccount === false) {
+                        deletePerson(account.uuid)
+                      } else {
+                        deleteAccount(account.uuid)
+                      }
                     }}
                   />
                 {/if}

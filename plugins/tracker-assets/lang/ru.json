@@ -86,6 +86,8 @@
     "ChangeParent": "Изменить родительскую задачу…",
     "RemoveParent": "Удалить родительскую задачу",
     "OpenParent": "Открыть родительскую задачу",
+    "ParentNotApplicable": "Задачи этого типа не имеют родителя",
+    "NoParentIssuesExist": "Не найдены задачи родительского типа",
     "SubIssues": "Подзадачи",
     "SubIssuesList": "Подзадачи ({subIssues})",
     "ParentIssuesList": "Родительские задачи ({parentIssues})",

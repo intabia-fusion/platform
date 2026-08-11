@@ -77,8 +77,7 @@ import {
   type Task,
   type TaskType,
   type TaskTypeClass,
-  type TaskTypeDescriptor,
-  type TaskTypeKind
+  type TaskTypeDescriptor
 } from '@hcengineering/task'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
@@ -207,9 +206,6 @@ export class TTaskType extends TDoc implements TaskType {
 
   @Prop(TypeRef(task.class.ProjectType), getEmbeddedLabel('Task class'))
     parent!: Ref<ProjectType> // Base class for task
-
-  @Prop(TypeString(), getEmbeddedLabel('Kind'))
-    kind!: TaskTypeKind
 
   @Prop(ArrOf(TypeRef(task.class.TaskType)), getEmbeddedLabel('Parent'))
     allowedAsChildOf!: Ref<TaskType>[] // In case of specified, task type is for sub-tasks

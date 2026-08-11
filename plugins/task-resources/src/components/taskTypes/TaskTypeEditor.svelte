@@ -16,8 +16,8 @@
 -->
 <script lang="ts">
   import { Ref, SortingOrder, Status } from '@hcengineering/core'
-  import { Asset, getEmbeddedLabel, getResource } from '@hcengineering/platform'
-  import { AttributeEditor, MessageBox, createQuery, getClient } from '@hcengineering/presentation'
+  import { Asset, getResource, IntlString } from '@hcengineering/platform'
+  import { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import { ClassAttributes, settingsStore } from '@hcengineering/setting-resources'
   import task, { ProjectType, TaskType, calculateStatuses, findStatusAttr } from '@hcengineering/task'
   import {
@@ -30,6 +30,8 @@
     ModernButton,
     Scroller,
     ToggleWithLabel,
+    CheckBox,
+    ModernEditbox,
     getCurrentLocation,
     navigate,
     showPopup
@@ -41,9 +43,8 @@
   import { taskTypeStore } from '../..'
   import plugin from '../../plugin'
   import StatesProjectEditor from '../state/StatesProjectEditor.svelte'
-  import TaskTypeKindEditor from '../taskTypes/TaskTypeKindEditor.svelte'
-  import TaskTypeRefEditor from '../taskTypes/TaskTypeRefEditor.svelte'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
+  import TaskTypeRefEditorTable from './TaskTypeRefEditorTable.svelte'
 
   export let spaceType: ProjectType
   export let objectId: Ref<TaskType>
@@ -71,6 +72,11 @@
   $: color = taskType?.color !== undefined && typeof taskType?.color !== 'string' ? taskType?.color : undefined
   $: descriptor = client.getModel().findAllSync(task.class.TaskTypeDescriptor, { _id: taskType?.descriptor })
   $: states = (taskType?.statuses.map((p) => $statusStore.byId.get(p)).filter((p) => p !== undefined) as Status[]) ?? []
+  $: selectableTaskTypes = taskTypes.filter(
+    (tt) => tt._id === objectId || !(tt.allowedAsChildOf ?? []).includes(objectId)
+  )
+
+  $: isRootTaskType = taskType?.isRootTaskType ?? false
 
   let tasksCounter: number = 0
   let loading: boolean = true
@@ -91,6 +97,52 @@
         }
       }
     )
+  }
+
+  let errorMessage: IntlString | undefined = undefined
+  let errorTaskTypeId: Ref<TaskType> | undefined = undefined
+
+  $: if (taskType !== undefined && errorTaskTypeId !== taskType._id) {
+    errorTaskTypeId = taskType._id
+    errorMessage = undefined
+  }
+
+  function commitName (value: string): void {
+    if (taskType === undefined || readonly) return
+
+    const trimmed = value.trim()
+    if (trimmed.length === 0) {
+      errorMessage = plugin.string.TaskTypeNameEmpty
+      return
+    }
+
+    const isDuplicate = taskTypes.some((tt) => tt._id !== taskType._id && isSameString(tt.name, trimmed))
+    if (isDuplicate) {
+      errorMessage = plugin.string.TaskTypeNameAlreadyExists
+      return
+    }
+    errorMessage = undefined
+    if (trimmed !== taskType.name) {
+      void client.diffUpdate(taskType, { name: trimmed })
+    }
+  }
+
+  async function handleIsRootTaskTypeChange (isRoot: boolean): Promise<void> {
+    if (taskType === undefined || readonly) {
+      return
+    }
+
+    const updates: Partial<TaskType> = { isRootTaskType: isRoot }
+
+    if (isRoot && (taskType.allowedAsChildOf?.length ?? 0) > 0) {
+      updates.allowedAsChildOf = []
+    }
+
+    await client.diffUpdate(taskType, updates)
+  }
+
+  function isSameString (a: string, b: string): boolean {
+    return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase()
   }
 
   function selectIcon (el: MouseEvent): void {
@@ -139,7 +191,7 @@
 
   let isDeleteLoading = false
 
-  $: canDelete = !loading && tasksCounter === 0
+  $: canDelete = !loading && tasksCounter === 0 && taskTypes.length > 1
 
   async function handleDelete (): Promise<void> {
     if (!canDelete || readonly || taskType == null || isDeleteLoading) {
@@ -192,16 +244,6 @@
           <div class="hulyComponent-content__column-group mt-4">
             <div class="hulyComponent-content__header mb-6">
               <div class="flex-row-center gap-1-5">
-                <TaskTypeKindEditor
-                  kind={taskType.kind}
-                  on:change={(evt) => {
-                    if (taskType === undefined) {
-                      return
-                    }
-                    void client.diffUpdate(taskType, { kind: evt.detail })
-                  }}
-                  {readonly}
-                />
                 {#if !readonly}
                   <ButtonIcon
                     icon={TaskTypeIcon}
@@ -241,47 +283,65 @@
             </div>
 
             <div class="name" class:editable={!readonly}>
-              <AttributeEditor
-                _class={task.class.TaskType}
-                object={taskType}
-                key="name"
-                editKind={'modern-ghost-large'}
-                editable={!readonly}
+              <ModernEditbox
+                value={taskType?.name ?? ''}
+                label={plugin.string.TaskTypeName}
+                size={'large'}
+                kind={'ghost'}
+                disabled={readonly}
+                error={errorMessage !== undefined}
+                on:blur={(evt) => {
+                  commitName(evt.detail ?? '')
+                }}
               />
-            </div>
-
-            <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
-              <div class="flex-no-shrink trans-title uppercase">
-                <Label label={getEmbeddedLabel('Parent type restrictions')} />
-              </div>
-              {#if taskType.kind === 'subtask' || taskType.kind === 'both'}
-                <TaskTypeRefEditor
-                  label={getEmbeddedLabel('Allowed parents')}
-                  value={taskType.allowedAsChildOf}
-                  types={taskTypes.filter((it) => it.kind === 'task' || it.kind === 'both')}
-                  onChange={(evt) => {
-                    if (taskType === undefined) {
-                      return
-                    }
-                    void client.diffUpdate(taskType, { allowedAsChildOf: evt })
-                  }}
-                />
+              {#if errorMessage !== undefined}
+                <div class="name-error">
+                  <Label label={errorMessage} />
+                </div>
               {/if}
             </div>
+          </div>
 
-            <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
-              <ToggleWithLabel
-                label={plugin.string.ShowParentTasks}
-                on={taskType.showParentTasks ?? false}
+          <div class="hulyTableAttr-container">
+            <div class="hulyTableAttr-header">
+              <span class="label">
+                <Label label={plugin.string.RootTaskType} />
+              </span>
+              <CheckBox
+                checked={isRootTaskType}
                 disabled={readonly}
-                on:change={(evt) => {
-                  if (taskType === undefined) {
-                    return
-                  }
-                  void client.diffUpdate(taskType, { showParentTasks: evt.detail })
+                on:value={(evt) => {
+                  void handleIsRootTaskTypeChange(evt.detail)
                 }}
               />
             </div>
+
+            {#if !isRootTaskType}
+              <TaskTypeRefEditorTable
+                value={taskType.allowedAsChildOf}
+                types={selectableTaskTypes}
+                onChange={(evt) => {
+                  if (taskType === undefined) {
+                    return
+                  }
+                  void client.diffUpdate(taskType, { allowedAsChildOf: evt })
+                }}
+              />
+            {/if}
+          </div>
+
+          <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
+            <ToggleWithLabel
+              label={plugin.string.ShowParentTasks}
+              on={taskType.showParentTasks ?? false}
+              disabled={readonly}
+              on:change={(evt) => {
+                if (taskType === undefined) {
+                  return
+                }
+                void client.diffUpdate(taskType, { showParentTasks: evt.detail })
+              }}
+            />
           </div>
 
           <div class="hulyTableAttr-container">

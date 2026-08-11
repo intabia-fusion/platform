@@ -149,6 +149,8 @@ export default mergeIds(trackerId, tracker, {
     ChangeParent: '' as IntlString,
     RemoveParent: '' as IntlString,
     OpenParent: '' as IntlString,
+    ParentNotApplicable: '' as IntlString,
+    NoParentIssuesExist: '' as IntlString,
     OpenSubIssues: '' as IntlString,
     AddSubIssues: '' as IntlString,
     AddExistingSubIssue: '' as IntlString,

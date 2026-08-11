@@ -179,6 +179,11 @@ export class Worker {
     }
 
     const exists = this.workspaces.get(ws)
+
+    if (tx.meta?.silent === true && exists === undefined) {
+      return
+    }
+
     const isTrigger = isTxTrigger(this.sysHierarchy, tx, this.triggerClasses, this.txTypes)
 
     if (exists === undefined && !isTrigger) {

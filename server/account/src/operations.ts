@@ -128,6 +128,7 @@ import {
   updatePasswordAgingRule,
   updateWorkspaceRole,
   verifyAdminOtp,
+  logAdminAction,
   verifyAllowedRole,
   verifyAllowedServices,
   verifyPassword,
@@ -2678,12 +2679,21 @@ export async function deleteAccount (
     }
   }
 
+  const person = await db.person.findOne({ uuid })
   await db.deleteAccount(uuid)
   await db.accountEvent.insertOne({
     accountUuid: uuid,
     eventType: AccountEventType.ACCOUNT_DELETED,
     time: Date.now()
   })
+  await logAdminAction(
+    ctx,
+    db,
+    token,
+    'delete_account',
+    uuid,
+    `${person?.firstName ?? ''} ${person?.lastName ?? ''}`.trim()
+  )
 }
 
 export async function canMergeSpecifiedPersons (
