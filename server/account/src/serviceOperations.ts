@@ -133,7 +133,8 @@ export async function listWorkspaces (
   const { extra } = decodeTokenVerbose(ctx, token)
 
   if (
-    !['tool', 'backup', 'admin', 'github', 'workspace'].includes(extra?.service) &&
+    // 'love' polls recently visited workspaces to find meetings left hanging after a restart.
+    !['tool', 'backup', 'admin', 'github', 'workspace', 'love'].includes(extra?.service) &&
     extra?.admin !== 'true' &&
     extra?.billingAdmin !== 'true'
   ) {
