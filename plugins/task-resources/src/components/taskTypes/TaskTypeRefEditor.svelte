@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,7 +16,7 @@
 <script lang="ts">
   import { Ref } from '@hcengineering/core'
   import { TaskType } from '@hcengineering/task'
-  import { DropdownLabels, Icon, IconAdd, IconClose, Label } from '@hcengineering/ui'
+  import { Button, DropdownTextItem, IconAdd, IconClose, Label, ModernDropdownLabels } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import task from '../../plugin'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
@@ -24,8 +25,15 @@
   export let onChange: (value: Ref<TaskType>[]) => void
   export let types: TaskType[]
 
-  $: items = types.map((p) => ({ id: p._id, label: p.name, icon: TaskTypeIcon, iconProps: { value: p } })) ?? []
   $: selectedItems = types.filter((p) => value?.includes(p._id))
+  $: items = types.map(
+    (p): DropdownTextItem => ({
+      id: p._id,
+      label: p.name,
+      icon: TaskTypeIcon,
+      iconProps: { value: p }
+    })
+  )
 
   const dispatch = createEventDispatcher()
 
@@ -35,7 +43,7 @@
     dispatch('selected', value)
   }
 
-  function handleSelected (evt: CustomEvent<Ref<TaskType>[] | null>): void {
+  function handleDropdownSelected (evt: CustomEvent<Ref<TaskType>[] | null>): void {
     if (evt.detail != null) {
       value = evt.detail
       onChange(value)
@@ -44,81 +52,98 @@
   }
 </script>
 
-<!-- Add button row -->
-<div class="ref-editor-wrapper">
-  <div class="hulyModal-content__settingsSet-line">
-    <span class="label">
-      <Label label={task.string.TaskParent} />
-    </span>
-    <DropdownLabels
-      kind={'primary'}
-      size={'small'}
-      icon={IconAdd}
-      {items}
-      selected={value}
-      enableSearch={false}
-      multiselect={true}
-      on:selected={handleSelected}
-    >
-      <span slot="content"></span>
-    </DropdownLabels>
-  </div>
-  <!-- Selected items -->
-  {#each selectedItems as item (item._id)}
-    <div class="ref-editor-selected-item">
-      {#if item.icon}
-        <div class="icon">
-          <TaskTypeIcon value={item} size="small" />
-        </div>
-      {/if}
-      <span class="ref-editor-selected-label">{item.name}</span>
-      <button
-        class="btn-close"
-        on:click={() => {
-          removeItem(item._id)
-        }}
-      >
-        <Icon icon={IconClose} size={'x-small'} />
-      </button>
-    </div>
-  {/each}
+<div class="hulyModal-content__settingsSet-line" class:has-chips={selectedItems.length > 0}>
+  <span class="label">
+    <Label label={task.string.TaskParent} />
+  </span>
+  <ModernDropdownLabels
+    kind="secondary"
+    size="small"
+    iconSize="small"
+    icon={IconAdd}
+    showContent={false}
+    {items}
+    selected={value}
+    enableSearch={false}
+    autoSelect={false}
+    multiselect={true}
+    on:selected={handleDropdownSelected}
+  />
 </div>
 
+{#if selectedItems.length > 0}
+  <div class="parent-chips-container">
+    {#each selectedItems as item (item._id)}
+      <div class="parent-chip">
+        {#if item.icon}
+          <div class="chip-icon">
+            <TaskTypeIcon value={item} size="x-small" />
+          </div>
+        {/if}
+        <span class="chip-label">{item.name}</span>
+        <Button
+          icon={IconClose}
+          kind="ghost"
+          size="inline"
+          on:click={(e) => {
+            e.stopPropagation()
+            removeItem(item._id)
+          }}
+        />
+      </div>
+    {/each}
+  </div>
+{/if}
+
 <style lang="scss">
-  .ref-editor-wrapper {
-    display: flex;
-    flex-direction: column;
-    border-bottom: 1px solid var(--theme-divider-color);
-
-    /* The inner settingsSet-line should not draw its own border */
-    .hulyModal-content__settingsSet-line {
-      border: none;
-    }
-  }
-
-  .ref-editor-selected-item {
+  .hulyModal-content__settingsSet-line {
     display: flex;
     align-items: center;
-    gap: 0.375rem;
-    min-width: 0;
-    /* match horizontal padding of settingsSet-line */
-    padding: 1rem;
+    justify-content: space-between;
+    width: 100%;
 
-    .icon {
-      display: flex;
-      align-items: center;
-      flex-shrink: 0;
-      color: var(--global-primary-TextColor);
+    &.has-chips {
+      border-bottom: none;
     }
   }
 
-  .ref-editor-selected-label {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 0.875rem;
+  .parent-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0 0 var(--spacing-2) 0;
+    border-bottom: 1px solid var(--theme-divider-color);
+  }
+
+  .parent-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.1875rem 0.5rem;
+    border-radius: 0.375rem;
+    background-color: var(--global-surface-02-BackgroundColor);
+    border: 1px solid var(--global-ui-BorderColor);
+    font-size: 0.75rem;
+    font-weight: 500;
     color: var(--global-primary-TextColor);
+    max-width: 100%;
+    min-width: 0;
+
+    .chip-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .chip-label {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+      flex-shrink: 1;
+      max-width: 10rem;
+    }
   }
 </style>

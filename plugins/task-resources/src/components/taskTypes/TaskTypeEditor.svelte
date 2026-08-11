@@ -25,12 +25,13 @@
     Icon,
     IconAdd,
     IconDelete,
+    IconError,
     IconSquareExpand,
     Label,
     ModernButton,
     Scroller,
     ToggleWithLabel,
-    CheckBox,
+    Toggle,
     ModernEditbox,
     getCurrentLocation,
     navigate,
@@ -225,7 +226,7 @@
 {#if taskType !== undefined}
   <div class="hulyComponent-content__container columns">
     <div class="hulyComponent-content__column content">
-      <Scroller align={'center'} padding={'var(--spacing-3)'} bottomPadding={'var(--spacing-3)'}>
+      <Scroller align="center" padding="var(--spacing-3)" bottomPadding="var(--spacing-3)">
         <div class="hulyComponent-content gap">
           <div class="hulyComponent-content__column-group mt-4">
             <div class="hulyComponent-content__header mb-6">
@@ -234,9 +235,9 @@
                   <ButtonIcon
                     icon={TaskTypeIcon}
                     iconProps={{ value: taskType, size: 'medium' }}
-                    size={'large'}
-                    kind={'secondary'}
-                    dataId={'btnSelectIcon'}
+                    size="large"
+                    kind="secondary"
+                    dataId="btnSelectIcon"
                     disabled={readonly}
                     on:click={selectIcon}
                   />
@@ -248,8 +249,8 @@
                   label={plugin.string.CountTasks}
                   labelParams={{ count: tasksCounter }}
                   disabled={tasksCounter === 0}
-                  kind={'tertiary'}
-                  size={'medium'}
+                  kind="tertiary"
+                  size="medium"
                   hasMenu
                   on:click={() => {
                     showIssuesOfTaskType()
@@ -271,40 +272,50 @@
               <ModernEditbox
                 value={taskType?.name ?? ''}
                 label={plugin.string.TaskTypeName}
-                size={'large'}
-                kind={'ghost'}
+                size="large"
+                kind="ghost"
+                width="100%"
                 disabled={readonly}
                 error={errorMessage !== undefined}
+                on:input={() => {
+                  if (errorMessage !== undefined) {
+                    errorMessage = undefined
+                  }
+                }}
                 on:blur={(evt) => {
                   commitName(evt.detail ?? '')
                 }}
               />
               {#if errorMessage !== undefined}
                 <div class="name-error">
-                  <Label label={errorMessage} />
+                  <Icon icon={IconError} size="small" />
+                  <span><Label label={errorMessage} /></span>
                 </div>
               {/if}
             </div>
           </div>
 
           <div class="hulyTableAttr-container">
-            <div class="hulyTableAttr-header">
+            <div class="hulyTableAttr-header font-medium-12 root-task-type-header">
               <span class="label">
                 <Label label={plugin.string.RootTaskType} />
               </span>
-              <CheckBox
-                checked={isRootTaskType}
-                disabled={readonly}
-                on:value={(evt) => {
-                  void handleIsRootTaskTypeChange(evt.detail)
-                }}
-              />
+              <div class="toggle-wrapper">
+                <Toggle
+                  on={isRootTaskType}
+                  disabled={readonly}
+                  on:change={(evt) => {
+                    void handleIsRootTaskTypeChange(evt.detail)
+                  }}
+                />
+              </div>
             </div>
 
             {#if !isRootTaskType}
               <TaskTypeRefEditorTable
-                value={taskType.allowedAsChildOf}
+                value={taskType.allowedAsChildOf ?? []}
                 types={selectableTaskTypes}
+                {readonly}
                 onChange={(evt) => {
                   if (taskType === undefined) {
                     return
@@ -331,15 +342,9 @@
 
           <div class="hulyTableAttr-container">
             <div class="hulyTableAttr-header font-medium-12">
-              <Icon icon={task.icon.ManageTemplates} size={'small'} />
+              <Icon icon={task.icon.ManageTemplates} size="small" />
               <span><Label label={plugin.string.ProcessStates} /></span>
-              <ButtonIcon
-                kind={'primary'}
-                icon={IconAdd}
-                size={'small'}
-                on:click={handleAddStatus}
-                disabled={readonly}
-              />
+              <ButtonIcon kind="primary" icon={IconAdd} size="small" on:click={handleAddStatus} disabled={readonly} />
             </div>
             <StatesProjectEditor
               {taskType}
@@ -401,16 +406,37 @@
 {/if}
 
 <style lang="scss">
+  .root-task-type-header {
+    padding: var(--spacing-1_5) var(--spacing-2_5);
+  }
+
+  .toggle-wrapper {
+    margin-right: 0.375rem;
+    display: flex;
+    align-items: center;
+  }
+
   .name {
     width: 100%;
     font-weight: 500;
     margin-left: 1rem;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     font-size: 1.5rem;
 
     &.editable {
       margin-left: 0;
+    }
+
+    .name-error {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      margin-top: 0.375rem;
+      font-size: 0.8125rem;
+      font-weight: 400;
+      color: var(--global-negative-TextColor, #ef4444);
     }
   }
 </style>
