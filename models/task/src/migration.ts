@@ -25,7 +25,9 @@ import {
   type Attribute,
   type Class,
   type Doc,
+  type DocumentUpdate,
   type Domain,
+  type Mixin,
   type Ref,
   type Space,
   type Status,
@@ -33,6 +35,7 @@ import {
   type TxUpdateDoc,
   TxProcessor
 } from '@hcengineering/core'
+import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import {
   createOrUpdate,
   migrateSpace,
@@ -614,7 +617,7 @@ export const taskOperation: MigrateOperation = {
           if (targetClassIds.length > 0) {
             const classTxes = await client.find<TxCreateDoc<Class<Doc>>>(DOMAIN_MODEL_TX, {
               _class: core.class.TxCreateDoc,
-              objectClass: core.class.Class,
+              objectClass: { $in: [core.class.Class, core.class.Mixin] },
               objectId: { $in: targetClassIds }
             })
 
@@ -627,6 +630,7 @@ export const taskOperation: MigrateOperation = {
                   DOMAIN_MODEL_TX,
                   { _id: classTx._id },
                   {
+                    objectClass: core.class.Class,
                     attributes: {
                       ...classTx.attributes,
                       kind: ClassifierKind.CLASS,
@@ -709,5 +713,137 @@ export const taskOperation: MigrateOperation = {
         }
       }
     ])
+  }
+}
+
+export async function migrateMixinToClassInModel (
+  client: MigrationClient,
+  oldMixin: Ref<Mixin<Doc>>,
+  newClass: Ref<Class<Doc>>
+): Promise<void> {
+  const txes1 = await client.find<TxCreateDoc<MessageNotificationType>>(DOMAIN_MODEL_TX, {
+    _class: core.class.TxCreateDoc,
+    objectClass: notification.class.MessageNotificationType,
+    'attributes.objectClass': oldMixin
+  } as any)
+
+  const txes2 = await client.find<TxCreateDoc<MessageNotificationType>>(DOMAIN_MODEL_TX, {
+    _class: core.class.TxCreateDoc,
+    objectClass: notification.class.MessageNotificationType,
+    'attributes.attachedToClass': oldMixin
+  } as any)
+
+  const txes = new Map([...txes1, ...txes2].map((it) => [it._id, it]))
+
+  for (const [, tx] of txes.entries()) {
+    const updateData: DocumentUpdate<TxCreateDoc<any>> = {}
+
+    updateData.attributes = {
+      ...tx.attributes,
+      objectClass: tx.attributes.objectClass === oldMixin ? newClass : tx.attributes.objectClass,
+      attachedToClass: tx.attributes.attachedToClass === oldMixin ? newClass : tx.attributes.attachedToClass
+    }
+    await client.update(DOMAIN_MODEL_TX, { _id: tx._id }, updateData)
+  }
+
+  // Migrate custom Attribute definitions bound to oldMixin
+  const attrTxes = await client.find<TxCreateDoc<Attribute<Task>>>(DOMAIN_MODEL_TX, {
+    _class: core.class.TxCreateDoc,
+    objectClass: core.class.Attribute,
+    'attributes.attributeOf': oldMixin
+  })
+
+  for (const attrTx of attrTxes) {
+    await client.update(
+      DOMAIN_MODEL_TX,
+      { _id: attrTx._id },
+      {
+        attributes: {
+          ...attrTx.attributes,
+          attributeOf: newClass
+        }
+      }
+    )
+  }
+
+  // Migrate AttributePermission objects bound to oldMixin
+  const permTxes = await client.find<TxCreateDoc<any>>(DOMAIN_MODEL_TX, {
+    objectClass: oldMixin
+  } as any)
+
+  for (const permTx of permTxes) {
+    await client.update(
+      DOMAIN_MODEL_TX,
+      { _id: permTx._id },
+      {
+        objectClass: newClass
+      }
+    )
+  }
+}
+
+export async function migrateTaskTypesToClasses (
+  client: MigrationClient,
+  taskTypeId: Ref<TaskType>,
+  oldMixin: Ref<Mixin<Doc>>,
+  targetClass: Ref<Class<Task>>
+): Promise<void> {
+  const ttTxes = await client.find<TxCreateDoc<TaskType>>(DOMAIN_MODEL_TX, {
+    _class: core.class.TxCreateDoc,
+    objectClass: task.class.TaskType,
+    objectId: taskTypeId
+  })
+  for (const ttTx of ttTxes) {
+    await client.update(
+      DOMAIN_MODEL_TX,
+      { _id: ttTx._id },
+      {
+        attributes: {
+          ...ttTx.attributes,
+          targetClass
+        }
+      }
+    )
+  }
+
+  await migrateMixinToClassInModel(client, oldMixin, targetClass)
+
+  const iterator = await client.traverse<Task>(DOMAIN_TASK, {
+    kind: taskTypeId
+  })
+
+  try {
+    while (true) {
+      const existingTasks = (await iterator.next(500)) ?? []
+      if (existingTasks.length === 0) break
+
+      const operations: { filter: MigrationDocumentQuery<Task>, update: MigrateUpdate<Task> }[] = []
+
+      for (const doc of existingTasks) {
+        const updateData: Record<string, any> = {
+          _class: targetClass
+        }
+
+        const mixinData = (doc as any)[oldMixin]
+        if (mixinData != null && typeof mixinData === 'object') {
+          for (const [key, value] of Object.entries(mixinData)) {
+            updateData[key] = value
+          }
+        }
+
+        operations.push({
+          filter: { _id: doc._id },
+          update: {
+            $set: updateData
+          }
+        })
+      }
+
+      if (operations.length > 0) {
+        await client.bulk(DOMAIN_TASK, operations)
+      }
+    }
+  } finally {
+    await iterator.close()
   }
 }

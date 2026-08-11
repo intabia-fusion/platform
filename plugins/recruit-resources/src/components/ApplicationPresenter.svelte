@@ -44,22 +44,14 @@
             <Icon icon={recruit.icon.Application} size={'small'} />
           </div>
         {/if}
-        <span class="label nowrap" class:no-underline={noUnderline || disabled} class:fs-bold={accent}>
-          {#if shortLabel}
-            {shortLabel}-{value.number}
-          {:else}
-            {value.identifier}
-          {/if}
-        </span>
+        <span class="label nowrap" class:no-underline={noUnderline || disabled} class:fs-bold={accent}
+          >{#if shortLabel}{shortLabel}-{value.number}{:else}{value.identifier}{/if}</span
+        >
       </div>
     </DocNavLink>
   {:else if type === 'text'}
-    <span class="overflow-label" use:tooltip={{ label: clazz.label }}>
-      {#if shortLabel}
-        {shortLabel}-{value.number}
-      {:else}
-        {value.identifier}
-      {/if}
-    </span>
+    <span class="overflow-label" use:tooltip={{ label: clazz.label }}
+      >{#if shortLabel}{shortLabel}-{value.number}{:else}{value.identifier}{/if}</span
+    >
   {/if}
 {/if}

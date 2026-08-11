@@ -164,8 +164,8 @@ export function createServerPipeline (
       UserStatusMiddleware.create,
       ApplyTxMiddleware.create, // Extract apply
       VersioningMiddleware.create,
-      IdentifierMiddleware.create, // After ApplyTx to ensure that it pass
       TaskMiddleware.create,
+      IdentifierMiddleware.create, // After ApplyTx to ensure that it pass
       RatingMiddleware.create, // Rating editing restrictions
       TransientMiddleware.create,
       ChunterMiddleware.create,

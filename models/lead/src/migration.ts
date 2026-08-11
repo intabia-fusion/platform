@@ -14,17 +14,7 @@
 // limitations under the License.
 //
 
-import {
-  DOMAIN_MODEL_TX,
-  TxOperations,
-  type Ref,
-  type Status,
-  type TxCreateDoc,
-  type Mixin,
-  type Doc,
-  type DocumentUpdate,
-  type Class
-} from '@hcengineering/core'
+import { DOMAIN_MODEL_TX, TxOperations, type Ref, type Status } from '@hcengineering/core'
 import { leadId, type Lead } from '@hcengineering/lead'
 import {
   findCachedSpace,
@@ -33,15 +23,16 @@ import {
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient,
-  type ModelLogger,
-  type MigrationDocumentQuery,
-  type MigrateUpdate
+  type ModelLogger
 } from '@hcengineering/model'
 import core, { DOMAIN_SPACE } from '@hcengineering/model-core'
 import { DOMAIN_CONTACT } from '@hcengineering/model-contact'
-import task, { createSequence, DOMAIN_TASK, migrateDefaultStatusesBase } from '@hcengineering/model-task'
-import type { TaskType } from '@hcengineering/task'
-import notification, { type MessageNotificationType } from '@hcengineering/notification'
+import task, {
+  createSequence,
+  DOMAIN_TASK,
+  migrateDefaultStatusesBase,
+  migrateTaskTypesToClasses
+} from '@hcengineering/model-task'
 
 import lead from './plugin'
 import { defaultLeadStatuses } from './spaceType'
@@ -160,97 +151,8 @@ async function migrateDefaultTypeMixins (client: MigrationClient): Promise<void>
   )
 }
 
-async function migrateMixinToClassInModel (
-  client: MigrationClient,
-  oldMixin: Ref<Mixin<Doc>>,
-  newClass: Ref<Class<Doc>>
-): Promise<void> {
-  const txes1 = await client.find<TxCreateDoc<MessageNotificationType>>(DOMAIN_MODEL_TX, {
-    _class: core.class.TxCreateDoc,
-    objectClass: notification.class.MessageNotificationType,
-    'attributes.objectClass': oldMixin
-  } as any)
-
-  const txes2 = await client.find<TxCreateDoc<MessageNotificationType>>(DOMAIN_MODEL_TX, {
-    _class: core.class.TxCreateDoc,
-    objectClass: notification.class.MessageNotificationType,
-    'attributes.attachedToClass': oldMixin
-  } as any)
-
-  const txes = new Map([...txes1, ...txes2].map((it) => [it._id, it]))
-
-  for (const [, tx] of txes.entries()) {
-    const updateData: DocumentUpdate<TxCreateDoc<MessageNotificationType>> = {}
-
-    updateData.attributes = {
-      ...tx.attributes,
-      objectClass: tx.attributes.objectClass === oldMixin ? newClass : tx.attributes.objectClass,
-      attachedToClass: tx.attributes.attachedToClass === oldMixin ? newClass : tx.attributes.attachedToClass
-    }
-    await client.update(DOMAIN_MODEL_TX, { _id: tx._id }, updateData)
-  }
-}
-
-async function migrateTaskTypesToClasses (client: MigrationClient): Promise<void> {
-  const leadTtTxes = await client.find<TxCreateDoc<TaskType>>(DOMAIN_MODEL_TX, {
-    _class: core.class.TxCreateDoc,
-    objectClass: task.class.TaskType,
-    objectId: lead.taskType.Lead
-  })
-  for (const ttTx of leadTtTxes) {
-    await client.update(
-      DOMAIN_MODEL_TX,
-      { _id: ttTx._id },
-      {
-        attributes: {
-          ...ttTx.attributes,
-          targetClass: lead.class.LeadTaskType
-        }
-      }
-    )
-  }
-
-  await migrateMixinToClassInModel(client, 'lead:mixin:LeadTypeData' as any, lead.class.LeadTaskType)
-
-  const iterator = await client.traverse<Lead>(DOMAIN_TASK, {
-    kind: lead.taskType.Lead
-  })
-
-  try {
-    while (true) {
-      const existingLeads = (await iterator.next(500)) ?? []
-      if (existingLeads.length === 0) break
-
-      const operations: { filter: MigrationDocumentQuery<Lead>, update: MigrateUpdate<Lead> }[] = []
-
-      for (const doc of existingLeads) {
-        const updateData: Record<string, any> = {
-          _class: lead.class.LeadTaskType
-        }
-
-        const oldMixin = 'lead:mixin:LeadTypeData'
-        const mixinData = (doc as any)[oldMixin]
-        if (mixinData != null && typeof mixinData === 'object') {
-          for (const [key, value] of Object.entries(mixinData)) {
-            updateData[key] = value
-          }
-        }
-
-        operations.push({
-          filter: { _id: doc._id },
-          update: {
-            $set: updateData
-          }
-        })
-      }
-
-      if (operations.length > 0) {
-        await client.bulk(DOMAIN_TASK, operations)
-      }
-    }
-  } finally {
-    await iterator.close()
-  }
+async function migrateLeadTaskTypesToClasses (client: MigrationClient): Promise<void> {
+  await migrateTaskTypesToClasses(client, lead.taskType.Lead, 'lead:mixin:LeadTypeData' as any, lead.class.LeadTaskType)
 }
 
 export const leadOperation: MigrateOperation = {
@@ -295,7 +197,7 @@ export const leadOperation: MigrateOperation = {
       {
         state: 'migrateTaskTypesToClasses-v6',
         mode: 'upgrade',
-        func: migrateTaskTypesToClasses
+        func: migrateLeadTaskTypesToClasses
       }
     ])
   },

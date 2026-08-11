@@ -328,7 +328,13 @@ export class ClientSession implements Session {
           }
         } catch (err) {
           await ctx.sendError(ctx.requestId, 'Failed to tx', unknownError(err))
-          ctx.ctx.error('failed to tx', { err, tx })
+          ctx.ctx.error('failed to tx', {
+            err,
+            _id: tx._id,
+            _class: tx._class,
+            objectClass: (tx as any).objectClass,
+            objectId: (tx as any).objectId
+          })
         }
       },
       { domain }

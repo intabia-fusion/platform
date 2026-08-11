@@ -29,7 +29,7 @@ import {
   type PipelineContext,
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
-import task, { type Task } from '@hcengineering/task'
+import task, { type Task, type TaskType } from '@hcengineering/task'
 
 /**
  * @public
@@ -47,7 +47,7 @@ export class TaskMiddleware extends BaseMiddleware {
         const createTx = tx as TxCreateDoc<Task>
         const kind = createTx.attributes.kind
         if (kind != null) {
-          const taskType = (await this.findAll(ctx, task.class.TaskType, { _id: kind }))[0]
+          const taskType = (await this.findAll<TaskType>(ctx, task.class.TaskType, { _id: kind }))[0]
           if (taskType == null) {
             throw new PlatformError(
               new Status(Severity.ERROR, platform.status.BadRequest, {
@@ -66,7 +66,7 @@ export class TaskMiddleware extends BaseMiddleware {
         const updateTx = tx as TxUpdateDoc<Task>
         const newKind = updateTx.operations.kind
         if (newKind != null) {
-          const taskType = (await this.findAll(ctx, task.class.TaskType, { _id: newKind }))[0]
+          const taskType = (await this.findAll<TaskType>(ctx, task.class.TaskType, { _id: newKind }))[0]
           if (taskType == null) {
             throw new PlatformError(
               new Status(Severity.ERROR, platform.status.BadRequest, {

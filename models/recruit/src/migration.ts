@@ -22,11 +22,7 @@ import core, {
   type Doc,
   type Ref,
   type Space,
-  type Status,
-  type TxCreateDoc,
-  type Mixin,
-  type Class,
-  type DocumentUpdate
+  type Status
 } from '@hcengineering/core'
 import {
   createOrUpdate,
@@ -36,20 +32,21 @@ import {
   type MigrateOperation,
   type MigrationClient,
   type MigrationUpgradeClient,
-  type ModelLogger,
-  type MigrationDocumentQuery,
-  type MigrateUpdate
+  type ModelLogger
 } from '@hcengineering/model'
 import tags, { type TagCategory } from '@hcengineering/model-tags'
-import task, { createSequence, DOMAIN_TASK, migrateDefaultStatusesBase } from '@hcengineering/model-task'
+import task, {
+  createSequence,
+  DOMAIN_TASK,
+  migrateDefaultStatusesBase,
+  migrateTaskTypesToClasses
+} from '@hcengineering/model-task'
 import { recruitId, type Applicant } from '@hcengineering/recruit'
-import type { Task, TaskType } from '@hcengineering/task'
-
 import { DOMAIN_CALENDAR } from '@hcengineering/model-calendar'
 import { DOMAIN_SPACE } from '@hcengineering/model-core'
+
 import recruit from './plugin'
 import { defaultApplicantStatuses } from './spaceType'
-import notification, { type MessageNotificationType } from '@hcengineering/notification'
 
 export const recruitOperation: MigrateOperation = {
   async preMigrate (client: MigrationClient, logger: ModelLogger, mode): Promise<void> {
@@ -93,7 +90,7 @@ export const recruitOperation: MigrateOperation = {
       {
         state: 'migrateTaskTypesToClasses-v6',
         mode: 'upgrade',
-        func: migrateTaskTypesToClasses
+        func: migrateApplicationTaskTypes
       }
     ])
   },
@@ -202,97 +199,13 @@ async function migrateDefaultTypeMixins (client: MigrationClient): Promise<void>
   )
 }
 
-async function migrateMixinToClassInModel (
-  client: MigrationClient,
-  oldMixin: Ref<Mixin<Doc>>,
-  newClass: Ref<Class<Doc>>
-): Promise<void> {
-  const txes1 = await client.find<TxCreateDoc<MessageNotificationType>>(DOMAIN_MODEL_TX, {
-    _class: core.class.TxCreateDoc,
-    objectClass: notification.class.MessageNotificationType,
-    'attributes.objectClass': oldMixin
-  } as any)
-
-  const txes2 = await client.find<TxCreateDoc<MessageNotificationType>>(DOMAIN_MODEL_TX, {
-    _class: core.class.TxCreateDoc,
-    objectClass: notification.class.MessageNotificationType,
-    'attributes.attachedToClass': oldMixin
-  } as any)
-
-  const txes = new Map([...txes1, ...txes2].map((it) => [it._id, it]))
-
-  for (const [, tx] of txes.entries()) {
-    const updateData: DocumentUpdate<TxCreateDoc<MessageNotificationType>> = {}
-
-    updateData.attributes = {
-      ...tx.attributes,
-      objectClass: tx.attributes.objectClass === oldMixin ? newClass : tx.attributes.objectClass,
-      attachedToClass: tx.attributes.attachedToClass === oldMixin ? newClass : tx.attributes.attachedToClass
-    }
-    await client.update(DOMAIN_MODEL_TX, { _id: tx._id }, updateData)
-  }
-}
-
-async function migrateTaskTypesToClasses (client: MigrationClient): Promise<void> {
-  const recruitTtTxes = await client.find<TxCreateDoc<TaskType>>(DOMAIN_MODEL_TX, {
-    _class: core.class.TxCreateDoc,
-    objectClass: task.class.TaskType,
-    objectId: recruit.taskTypes.Applicant
-  })
-  for (const ttTx of recruitTtTxes) {
-    await client.update(
-      DOMAIN_MODEL_TX,
-      { _id: ttTx._id },
-      {
-        attributes: {
-          ...ttTx.attributes,
-          targetClass: recruit.class.ApplicantTaskType
-        }
-      }
-    )
-  }
-
-  await migrateMixinToClassInModel(client, 'recruit:mixin:ApplicantTypeData' as any, recruit.class.ApplicantTaskType)
-
-  const iterator = await client.traverse<Applicant>(DOMAIN_TASK, {
-    kind: recruit.taskTypes.Applicant
-  })
-
-  try {
-    while (true) {
-      const existingApplicants = (await iterator.next(500)) ?? []
-      if (existingApplicants.length === 0) break
-
-      const operations: { filter: MigrationDocumentQuery<Task>, update: MigrateUpdate<Task> }[] = []
-
-      for (const doc of existingApplicants) {
-        const updateData: Record<string, any> = {
-          _class: recruit.class.ApplicantTaskType
-        }
-
-        const oldMixin = 'recruit:mixin:ApplicantTypeData'
-        const mixinData = (doc as any)[oldMixin]
-        if (mixinData != null && typeof mixinData === 'object') {
-          for (const [key, value] of Object.entries(mixinData)) {
-            updateData[key] = value
-          }
-        }
-
-        operations.push({
-          filter: { _id: doc._id },
-          update: {
-            $set: updateData
-          }
-        })
-      }
-
-      if (operations.length > 0) {
-        await client.bulk(DOMAIN_TASK, operations)
-      }
-    }
-  } finally {
-    await iterator.close()
-  }
+async function migrateApplicationTaskTypes (client: MigrationClient): Promise<void> {
+  await migrateTaskTypesToClasses(
+    client,
+    recruit.taskTypes.Applicant,
+    'recruit:mixin:ApplicantTypeData' as any,
+    recruit.class.ApplicantTaskType
+  )
 }
 
 async function createDefaults (client: MigrationUpgradeClient, tx: TxOperations): Promise<void> {

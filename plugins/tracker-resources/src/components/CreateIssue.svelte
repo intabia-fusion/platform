@@ -355,7 +355,7 @@
     if (object.kind !== undefined) {
       kind = object.kind
     }
-    fillDefaults(hierarchy, object, tracker.class.Issue)
+    fillDefaults(hierarchy, object, issueClass)
   }
 
   $: if (template !== undefined) {

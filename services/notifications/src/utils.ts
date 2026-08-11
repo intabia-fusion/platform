@@ -171,7 +171,7 @@ function isMessageTypeMatched (
 
   const messageAttachedToBaseClass = safeGetBaseClass(hierarchy, message.attachedToClass)
   if (messageAttachedToBaseClass === undefined) {
-    ctx.error('base class not found in hierarchy', { _class: messageAttachedToBaseClass, message })
+    ctx.error('base class not found in hierarchy', { _class: message.attachedToClass, message })
     return false
   }
   const typeAttachedToBaseClass = safeGetBaseClass(hierarchy, type.attachedToClass)

@@ -344,6 +344,7 @@ async function createTaskTypes (
           kind: ClassifierKind.CLASS,
           label: ofClassClass.label,
           icon: ofClassClass.icon,
+          color: ofClassClass.color,
           shortLabel: ofClassClass.shortLabel,
           sortingKey: ofClassClass.sortingKey,
           filteringKey: ofClassClass.filteringKey,

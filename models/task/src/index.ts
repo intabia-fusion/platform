@@ -84,7 +84,13 @@ import type { AnyComponent } from '@hcengineering/ui/src/types'
 import task from './plugin'
 
 export { createProjectType, taskId } from '@hcengineering/task'
-export { createSequence, migrateDefaultStatusesBase, taskOperation } from './migration'
+export {
+  createSequence,
+  migrateDefaultStatusesBase,
+  taskOperation,
+  migrateMixinToClassInModel,
+  migrateTaskTypesToClasses
+} from './migration'
 export { default } from './plugin'
 
 export const DOMAIN_TASK = 'task' as Domain
