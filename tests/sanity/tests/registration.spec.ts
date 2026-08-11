@@ -145,9 +145,9 @@ test.describe('registration test', () => {
     await page.waitForURL((url) => url.pathname.startsWith('/login/registered'))
     expect(await accountOf(value)).toBe(person)
 
-    // confirm drops the row, so resolving it now 404s and the page says "already registered".
+    // confirm drops the row, so resolving it now 404s and the page reports an invalid link.
     await registrationPage.openConfirmLink(shortId)
-    await registrationPage.checkAlreadyRegistered()
+    await registrationPage.checkInvalidLink()
   })
 
   test('the phone is kept as a hint and never blocks a repeated sign up', async () => {

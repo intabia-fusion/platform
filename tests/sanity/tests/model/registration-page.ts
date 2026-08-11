@@ -39,6 +39,7 @@ export class RegistrationPage extends CommonPage {
     this.page.getByText('Create your own workspace, or ask the owner of an existing one for an access link.')
 
   alreadyRegisteredTitle = (): Locator => this.title('You are already registered on the platform')
+  invalidLinkTitle = (): Locator => this.title('This link is no longer valid')
   expiredLinkTitle = (): Locator => this.title('This invite link has expired')
   confirmationFailedTitle = (): Locator => this.title('Could not complete the registration')
 
@@ -73,6 +74,11 @@ export class RegistrationPage extends CommonPage {
   async checkAlreadyRegistered (): Promise<void> {
     await expect(this.alreadyRegisteredTitle()).toBeVisible()
     await expect(this.buttonContinue()).toBeVisible()
+  }
+
+  async checkInvalidLink (): Promise<void> {
+    await expect(this.invalidLinkTitle()).toBeVisible()
+    await expect(this.buttonLogIn()).toBeVisible()
   }
 
   async checkExpiredLink (): Promise<void> {

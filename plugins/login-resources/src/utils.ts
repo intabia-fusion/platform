@@ -742,8 +742,8 @@ export async function requestPassword (email: string): Promise<Status> {
 
 /**
  * Resolves a short activation id into the token it stands for.
- * Returns null once the link has been used - the row is dropped on confirm.
- * Throws on anything else, so a network blip is not reported as "already registered".
+ * Returns null when no such row exists - a mistyped id, or one dropped on confirm.
+ * Throws on anything else, so a network blip is not reported as an invalid link.
  */
 export async function resolveConfirmToken (id: string): Promise<string | null> {
   // A JWT always carries dots, a short id never does.
