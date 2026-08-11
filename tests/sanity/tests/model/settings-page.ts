@@ -1,6 +1,6 @@
 import { expect, type Locator } from '@playwright/test'
 import { CommonPage } from './common-page'
-import { SpaceTypes, TaskTypes } from './types'
+import { SpaceTypes } from './types'
 
 export class SettingsPage extends CommonPage {
   profileButton = (): Locator => this.page.locator('#profile-button')
@@ -46,9 +46,11 @@ export class SettingsPage extends CommonPage {
   addTaskTypeButton = (): Locator =>
     this.page.locator('div.hulyTableAttr-header', { hasText: 'Task types' }).locator('button[data-id="btnAdd"]')
 
-  taskNameInput = (): Locator => this.page.getByPlaceholder('Task name *')
-  taskTypeButton = (): Locator =>
-    this.page.locator('div.hulyModal-content__settingsSet-line', { hasText: 'Task type' }).locator('button')
+  taskNameInput = (): Locator => this.page.getByPlaceholder('Task type name')
+  parentTypeAddButton = (): Locator =>
+    this.page.locator('div.hulyModal-content__settingsSet-line', { hasText: 'Parent' }).locator('button')
+
+  parentTypeItem = (name: string): Locator => this.page.locator('div.selectPopup button', { hasText: name })
 
   asideFooterButton = (hasText: string): Locator =>
     this.page.locator('div.hulyModal-container.type-aside div.hulyModal-footer button', { hasText })
@@ -95,23 +97,23 @@ export class SettingsPage extends CommonPage {
     await this.spaceTypeButton(name, category).click()
   }
 
-  async addTaskType (name: string, taskType?: TaskTypes): Promise<void> {
+  async addTaskType (name: string, parentTypeName?: string): Promise<void> {
     await this.addTaskTypeButton().click()
     await this.taskNameInput().fill(name)
-    if (taskType !== undefined) {
-      await this.taskTypeButton().click()
-      await this.selectPopupItem(taskType)
+    if (parentTypeName !== undefined) {
+      await this.parentTypeAddButton().click()
+      await this.parentTypeItem(parentTypeName).click()
     }
     await this.asideFooterButton('Create').click()
-    await expect(this.taskTypeRow(`${name} ${taskType ?? TaskTypes.Task}`)).toBeVisible()
+    await expect(this.taskTypeRow(name)).toBeVisible()
   }
 
-  async checkTaskType (name: string, taskType?: TaskTypes): Promise<void> {
-    await expect(this.taskTypeRow(`${name} ${taskType ?? TaskTypes.Task}`)).toBeVisible()
+  async checkTaskType (name: string): Promise<void> {
+    await expect(this.taskTypeRow(name)).toBeVisible()
   }
 
-  async openTaskType (name: string, taskType?: TaskTypes): Promise<void> {
-    await this.taskTypeRow(`${name} ${taskType ?? TaskTypes.Task}`).click()
+  async openTaskType (name: string): Promise<void> {
+    await this.taskTypeRow(name).click()
   }
 
   async checkOpened (breadcrumbOne: string, breadcrumbTwo?: string): Promise<void> {

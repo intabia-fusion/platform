@@ -85,6 +85,8 @@
     "ChangeParent": "Alterar problema superior…",
     "RemoveParent": "Remover problema superior",
     "OpenParent": "Abrir problema superior",
+    "ParentNotApplicable": "Tarefas deste tipo não possuem tarefa pai",
+    "NoParentIssuesExist": "Nenhuma tarefa do tipo pai encontrada",
     "SubIssues": "Sub-problemas",
     "SubIssuesList": "Sub-problemas ({subIssues})",
     "ParentIssuesList": "Tarefas principais ({parentIssues})",

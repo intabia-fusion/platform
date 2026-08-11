@@ -13,24 +13,67 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { AttachedData, Doc, FindOptions, type Rank, Ref, SortingOrder } from '@hcengineering/core'
+  import core, { AttachedData, FindOptions, type Rank, Ref, SortingOrder } from '@hcengineering/core'
   import { ObjectPopup, getClient } from '@hcengineering/presentation'
-  import { makeRank } from '@hcengineering/task'
+  import { makeRank, TaskType } from '@hcengineering/task'
   import { Issue, IssueDraft } from '@hcengineering/tracker'
   import { createEventDispatcher } from 'svelte'
   import tracker from '../plugin'
   import IssueStatusIcon from './issues/IssueStatusIcon.svelte'
+  import { taskTypeStore } from '@hcengineering/task-resources'
 
   export let value: Issue | AttachedData<Issue> | Issue[] | IssueDraft
   export let width: 'medium' | 'large' | 'full' = 'large'
+  export let kind: Ref<TaskType> | undefined
 
   const client = getClient()
   const dispatch = createEventDispatcher()
+
+  $: effectiveKind = kind ?? (!Array.isArray(value) && 'kind' in value ? value.kind : undefined)
+
+  $: allowedParentKinds = getAllowedParentKinds(effectiveKind, $taskTypeStore)
+
+  function getAllowedParentKinds (
+    effectiveKind: Ref<TaskType> | undefined,
+    typesMap: Map<Ref<TaskType>, TaskType>
+  ): Ref<TaskType>[] | undefined {
+    if (effectiveKind === undefined) return undefined
+
+    const currentType = typesMap.get(effectiveKind)
+    if (currentType === undefined) return undefined
+    if (currentType.isRootTaskType === true) return []
+
+    const explicit = currentType.allowedAsChildOf ?? []
+    if (explicit.length > 0) return explicit
+
+    const allTypes = Array.from(typesMap.values())
+    const childTypeIds = new Set(allTypes.flatMap((tt) => tt.allowedAsChildOf ?? []))
+    return allTypes.filter((tt) => !childTypeIds.has(tt._id)).map((tt) => tt._id)
+  }
+
   const options: FindOptions<Issue> = {
     lookup: {
       status: [tracker.class.IssueStatus, { category: core.class.StatusCategory }]
     },
     sort: { modifiedOn: SortingOrder.Descending }
+  }
+
+  $: docQuery = allowedParentKinds === undefined ? {} : { kind: { $in: allowedParentKinds } }
+
+  $: noParentIssuesExist = false
+
+  $: if (allowedParentKinds !== undefined) {
+    if (allowedParentKinds.length === 0) {
+      noParentIssuesExist = true
+    } else {
+      void client
+        .findOne(tracker.class.Issue, { kind: { $in: allowedParentKinds } }, { projection: { _id: 1 } })
+        .then((found) => {
+          noParentIssuesExist = found === undefined
+        })
+    }
+  } else {
+    noParentIssuesExist = false
   }
 
   async function onClose ({ detail: parentIssue }: CustomEvent<Issue | undefined | null>): Promise<void> {
@@ -96,11 +139,12 @@
 <ObjectPopup
   _class={tracker.class.Issue}
   {options}
+  {docQuery}
   {selected}
   category={tracker.completion.IssueCategory}
   multiSelect={false}
   allowDeselect={true}
-  placeholder={tracker.string.SetParent}
+  placeholder={noParentIssuesExist ? tracker.string.NoParentIssuesExist : tracker.string.SetParent}
   create={undefined}
   {ignoreObjects}
   shadows={true}

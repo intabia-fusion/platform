@@ -85,6 +85,8 @@
     "ChangeParent": "Üst sorunu değiştir…",
     "RemoveParent": "Üst sorunu kaldır",
     "OpenParent": "Üst sorunu aç",
+    "ParentNotApplicable": "Bu türdeki görevlerin üst görevi yoktur",
+    "NoParentIssuesExist": "Üst türde görev bulunamadı",
     "SubIssues": "Alt sorunlar",
     "SubIssuesList": "Alt sorunlar ({subIssues})",
     "ParentIssuesList": "Üst Görevler ({parentIssues})",

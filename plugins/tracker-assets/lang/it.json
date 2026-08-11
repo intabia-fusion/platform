@@ -85,6 +85,8 @@
     "ChangeParent": "Cambia issue genitore…",
     "RemoveParent": "Rimuovi issue genitore",
     "OpenParent": "Apri issue genitore",
+    "ParentNotApplicable": "Le attività di questo tipo non hanno un'attività padre",
+    "NoParentIssuesExist": "Nessuna attività del tipo padre trovata",
     "SubIssues": "Subissue",
     "SubIssuesList": "Subissue ({subIssues})",
     "ParentIssuesList": "Attività genitore ({parentIssues})",

@@ -14,35 +14,111 @@
 -->
 <script lang="ts">
   import { Ref } from '@hcengineering/core'
-  import type { IntlString } from '@hcengineering/platform'
   import { TaskType } from '@hcengineering/task'
-  import { DropdownLabels, DropdownTextItem } from '@hcengineering/ui'
+  import { DropdownLabels, Icon, IconAdd, IconClose, Label } from '@hcengineering/ui'
+  import { createEventDispatcher } from 'svelte'
+  import task from '../../plugin'
+  import TaskTypeIcon from './TaskTypeIcon.svelte'
 
-  export let label: IntlString
   export let value: Ref<TaskType>[] = []
   export let onChange: (value: Ref<TaskType>[]) => void
   export let types: TaskType[]
 
-  let items: DropdownTextItem[] = []
+  $: items = types.map((p) => ({ id: p._id, label: p.name, icon: TaskTypeIcon, iconProps: { value: p } })) ?? []
+  $: selectedItems = types.filter((p) => value?.includes(p._id))
 
-  $: items =
-    types.map((p) => {
-      return { id: p._id, label: p.name }
-    }) ?? []
+  const dispatch = createEventDispatcher()
+
+  function removeItem (id: Ref<TaskType>): void {
+    value = value.filter((v) => v !== id)
+    onChange(value)
+    dispatch('selected', value)
+  }
+
+  function handleSelected (evt: CustomEvent<Ref<TaskType>[] | null>): void {
+    if (evt.detail != null) {
+      value = evt.detail
+      onChange(value)
+      dispatch('selected', value)
+    }
+  }
 </script>
 
-<DropdownLabels
-  selected={[...(value ?? [])]}
-  {items}
-  {label}
-  useFlexGrow={true}
-  justify={'left'}
-  size={'large'}
-  kind={'link'}
-  width={'10rem'}
-  autoSelect={false}
-  on:selected={(e) => {
-    value = e.detail
-    onChange(e.detail)
-  }}
-/>
+<!-- Add button row -->
+<div class="ref-editor-wrapper">
+  <div class="hulyModal-content__settingsSet-line">
+    <span class="label">
+      <Label label={task.string.TaskParent} />
+    </span>
+    <DropdownLabels
+      kind={'primary'}
+      size={'small'}
+      icon={IconAdd}
+      {items}
+      selected={value}
+      enableSearch={false}
+      multiselect={true}
+      on:selected={handleSelected}
+    >
+      <span slot="content"></span>
+    </DropdownLabels>
+  </div>
+  <!-- Selected items -->
+  {#each selectedItems as item (item._id)}
+    <div class="ref-editor-selected-item">
+      {#if item.icon}
+        <div class="icon">
+          <TaskTypeIcon value={item} size="small" />
+        </div>
+      {/if}
+      <span class="ref-editor-selected-label">{item.name}</span>
+      <button
+        class="btn-close"
+        on:click={() => {
+          removeItem(item._id)
+        }}
+      >
+        <Icon icon={IconClose} size={'x-small'} />
+      </button>
+    </div>
+  {/each}
+</div>
+
+<style lang="scss">
+  .ref-editor-wrapper {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid var(--theme-divider-color);
+
+    /* The inner settingsSet-line should not draw its own border */
+    .hulyModal-content__settingsSet-line {
+      border: none;
+    }
+  }
+
+  .ref-editor-selected-item {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: 0;
+    /* match horizontal padding of settingsSet-line */
+    padding: 1rem;
+
+    .icon {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      color: var(--global-primary-TextColor);
+    }
+  }
+
+  .ref-editor-selected-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    color: var(--global-primary-TextColor);
+  }
+</style>

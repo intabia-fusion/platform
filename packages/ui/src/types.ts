@@ -337,6 +337,8 @@ export interface ListItem {
 export interface DropdownTextItem {
   id: string
   label: string
+  icon?: AnySvelteComponent
+  iconProps?: Record<string, any>
 }
 
 export interface DropdownIntlItem {
