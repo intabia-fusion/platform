@@ -8,14 +8,13 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
 <script lang="ts">
   import { Ref } from '@hcengineering/core'
   import { TaskType } from '@hcengineering/task'
-  import { DropdownLabels, DropdownTextItem, Icon, IconAdd, IconClose, Label } from '@hcengineering/ui'
+  import { ButtonIcon, DropdownTextItem, IconClose, Label, ModernPopupLabels, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
   import task from '../../plugin'
@@ -31,6 +30,7 @@
   $: selectedItems = types.filter((p) => value?.includes(p._id))
 
   const dispatch = createEventDispatcher()
+  let labelEl: HTMLElement | undefined
 
   function removeItem (id: Ref<TaskType>): void {
     if (readonly) return
@@ -39,62 +39,116 @@
     dispatch('selected', value)
   }
 
-  function handleSelected (evt: CustomEvent<Ref<TaskType>[] | null>): void {
-    if (evt.detail != null) {
-      value = evt.detail
-      onChange(value)
-      dispatch('selected', value)
-    }
+  function handleAdd (target: HTMLElement | undefined): void {
+    if (readonly || target == null) return
+
+    showPopup(
+      ModernPopupLabels,
+      {
+        placeholder: task.string.TaskParent,
+        items,
+        multiselect: true,
+        selected: value,
+        enableSearch: false
+      },
+      target,
+      (result) => {
+        if (result != null) {
+          value = result
+          onChange(value)
+          dispatch('selected', value)
+        }
+      },
+      (result) => {
+        if (result != null) {
+          value = result
+          onChange(value)
+          dispatch('selected', value)
+        }
+      }
+    )
   }
 </script>
 
-<div class="hulyTableAttr-container">
-  <div class="hulyTableAttr-header font-medium-12">
-    <span><Label label={task.string.TaskParent} /></span>
-    {#if !readonly}
-      <DropdownLabels
-        kind={'primary'}
-        size={'small'}
-        icon={IconAdd}
-        {items}
-        selected={value}
-        enableSearch={false}
-        multiselect={true}
-        on:selected={handleSelected}
-      >
-        <span slot="content"></span>
-      </DropdownLabels>
-    {/if}
-  </div>
-
-  {#each selectedItems as item (item._id)}
-    <div class="hulyTableAttr-content class">
-      <div class="hulyTableAttr-content__row disableMouseOver">
-        <div class="row-item">
+{#if selectedItems.length > 0}
+  <div class="hulyTableAttr-content task parent-list">
+    {#each selectedItems as item (item._id)}
+      <div class="hulyTableAttr-content__row row-with-hover">
+        <div class="hulyTableAttr-content__row-icon-wrapper">
           <TaskTypeIcon value={item} size="small" />
-          <span class="label overflow-label">{item.name}</span>
+        </div>
+        <div class="hulyTableAttr-content__row-label grow font-medium-14 overflow-label">
+          {item.name}
         </div>
         {#if !readonly}
-          <button
-            class="btn-close"
-            on:click={() => {
-              removeItem(item._id)
-            }}
-          >
-            <Icon icon={IconClose} size={'x-small'} />
-          </button>
+          <div class="delete-action">
+            <ButtonIcon
+              icon={IconClose}
+              kind="tertiary"
+              size="small"
+              on:click={(e) => {
+                e.stopPropagation()
+                removeItem(item._id)
+              }}
+            />
+          </div>
         {/if}
       </div>
-    </div>
-  {/each}
-</div>
+    {/each}
+  </div>
+{/if}
+
+{#if !readonly}
+  <button
+    type="button"
+    class="add-parent-btn font-normal-14 text-secondary"
+    on:click={() => {
+      handleAdd(labelEl)
+    }}
+  >
+    <span bind:this={labelEl} class="font-normal-14 text-secondary flex-center">
+      + <Label label={task.string.TaskParent} />
+    </span>
+  </button>
+{/if}
 
 <style lang="scss">
-  .row-item {
+  .parent-list {
+    border-top: 1px solid var(--theme-divider-color);
+  }
+
+  .row-with-hover {
+    .delete-action {
+      opacity: 0;
+      transition: opacity 0.15s ease-in-out;
+      margin-left: auto;
+    }
+
+    &:hover .delete-action {
+      opacity: 1;
+    }
+  }
+
+  .add-parent-btn {
     display: flex;
     align-items: center;
-    gap: 0.375rem;
-    flex: 1;
-    min-width: 0;
+    justify-content: center;
+    width: 100%;
+    padding: var(--spacing-2);
+    background: transparent;
+    border: none;
+    border-top: 1px solid var(--theme-divider-color);
+    border-radius: 0 0 var(--large-BorderRadius) var(--large-BorderRadius);
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+
+    &:hover:not(:disabled) {
+      background-color: var(--theme-table-header-color);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
   }
 </style>
