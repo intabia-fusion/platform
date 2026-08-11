@@ -112,6 +112,7 @@
     "RegistrationComplete": "Kayıt tamamlandı",
     "RegistrationCompleteHint": "Kendi çalışma alanınızı oluşturun veya mevcut bir alanın sahibinden erişim bağlantısı isteyin.",
     "CheckingLink": "Bağlantı kontrol ediliyor...",
+    "InvalidLink": "Bu bağlantı artık geçerli değil",
     "ConfirmationFailed": "Kayıt tamamlanamadı"
   }
 }

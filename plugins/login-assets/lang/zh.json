@@ -112,6 +112,7 @@
     "RegistrationComplete": "注册已完成",
     "RegistrationCompleteHint": "创建您自己的工作区，或向现有工作区的所有者索取访问链接。",
     "CheckingLink": "正在检查链接...",
+    "InvalidLink": "此链接已失效",
     "ConfirmationFailed": "无法完成注册"
   }
 }

@@ -27,7 +27,7 @@
 
   export let status: Status<any> = OK
 
-  type Outcome = 'checking' | 'alreadyRegistered' | 'expired' | 'failed'
+  type Outcome = 'checking' | 'alreadyRegistered' | 'invalidLink' | 'expired' | 'failed'
   let outcome: Outcome = 'checking'
 
   async function check (): Promise<void> {
@@ -48,9 +48,9 @@
     }
 
     if (token == null) {
-      // The short link is dropped on confirm, so a missing one means it was already used.
+      // No such short link: either a mistyped id or already confirmed with OTP code.
       status = OK
-      outcome = 'alreadyRegistered'
+      outcome = 'invalidLink'
       return
     }
 
@@ -101,6 +101,8 @@
   </div>
 {:else if outcome === 'alreadyRegistered'}
   <Form caption={login.string.AlreadyRegistered} {status} fields={[]} object={{}} action={continueAction} />
+{:else if outcome === 'invalidLink'}
+  <Form caption={login.string.InvalidLink} {status} fields={[]} object={{}} action={logInAction} />
 {:else if outcome === 'expired'}
   <Form caption={login.string.ExpiredLink} {status} fields={[]} object={{}} action={logInAction} />
 {:else}

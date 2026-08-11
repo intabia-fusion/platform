@@ -112,6 +112,7 @@
     "RegistrationComplete": "Registrace je dokončena",
     "RegistrationCompleteHint": "Vytvořte si vlastní pracovní prostor, nebo si vyžádejte odkaz s přístupem od vlastníka existujícího prostoru.",
     "CheckingLink": "Kontrolujeme odkaz...",
+    "InvalidLink": "Tento odkaz již není platný",
     "ConfirmationFailed": "Registraci se nepodařilo dokončit"
   }
 }

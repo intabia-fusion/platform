@@ -112,6 +112,7 @@
     "RegistrationComplete": "登録が完了しました",
     "RegistrationCompleteHint": "自分のワークスペースを作成するか、既存のワークスペースの所有者にアクセスリンクを依頼してください。",
     "CheckingLink": "リンクを確認しています...",
+    "InvalidLink": "このリンクは無効です",
     "ConfirmationFailed": "登録を完了できませんでした"
   }
 }

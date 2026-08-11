@@ -112,6 +112,7 @@
     "RegistrationComplete": "Die Registrierung ist abgeschlossen",
     "RegistrationCompleteHint": "Erstellen Sie einen eigenen Arbeitsbereich oder bitten Sie den Eigentümer eines bestehenden Bereichs um einen Zugangslink.",
     "CheckingLink": "Link wird geprüft...",
+    "InvalidLink": "Dieser Link ist nicht mehr gültig",
     "ConfirmationFailed": "Die Registrierung konnte nicht abgeschlossen werden"
   }
 }

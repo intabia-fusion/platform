@@ -112,6 +112,7 @@
     "RegistrationComplete": "O registro foi concluído",
     "RegistrationCompleteHint": "Crie o seu próprio espaço de trabalho ou peça ao proprietário de um espaço existente um link de acesso.",
     "CheckingLink": "Verificando o link...",
+    "InvalidLink": "Este link não é mais válido",
     "ConfirmationFailed": "Não foi possível concluir o registro"
   }
 }
