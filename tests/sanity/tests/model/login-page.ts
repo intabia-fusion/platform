@@ -12,7 +12,7 @@ export class LoginPage {
   inputPassword = (): Locator => this.page.locator('input[name=current-password]')
   buttonLogin = (): Locator => this.page.locator('button', { hasText: 'Log In' })
   loginWithPassword = (): Locator => this.page.locator('a', { hasText: 'Login with password' })
-  loginWithCode_ = (): Locator => this.page.locator('a', { hasText: 'Login with code' })
+  loginWithCodeLink = (): Locator => this.page.locator('a', { hasText: 'Login with code' })
   linkSignUp = (): Locator => this.page.locator('a.title', { hasText: 'Sign Up' })
   invalidCredentialsMessage = (): Locator =>
     this.page.getByText('Account not found or the provided credentials are incorrect')
@@ -70,7 +70,7 @@ export class LoginPage {
   async loginWithCode (email: string): Promise<void> {
     await this.inputEmail().waitFor({ state: 'visible' })
     if (await this.inputPassword().isVisible()) {
-      await this.loginWithCode_().click()
+      await this.loginWithCodeLink().click()
       await expect(this.inputPassword()).toBeHidden()
     }
     await this.inputEmail().fill(email)
