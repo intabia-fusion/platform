@@ -16,8 +16,9 @@
   import { type IntlString, OK, Severity, Status } from '@hcengineering/platform'
   import { type LoginInfo } from '@hcengineering/account-client'
 
-  import { doLogin, doLoginNavigate } from '../utils'
+  import { doLogin, doLoginNavigate, goTo } from '../utils'
   import Form from './Form.svelte'
+  import Label from './internal/Label.svelte'
   import { recoveryAction } from '../actions'
   import type { BottomAction } from '../index'
   import login from '../plugin'
@@ -29,6 +30,7 @@
   export let subtitle: string | undefined = undefined
   export let onLogin: ((loginInfo: LoginInfo | null, status: Status) => void | Promise<void>) | undefined = undefined
   export let extraBottomActions: BottomAction[] = []
+  export let signedInAs: string | undefined = undefined
 
   $: fields = [
     { id: 'email', name: 'username', i18n: login.string.Email, disabled: email !== undefined && email !== '' },
@@ -89,6 +91,26 @@
   {signUpDisabled}
   {isLoading}
   bottomActions={[recoveryAction, ...extraBottomActions]}
+  secondaryButtonLabel={signedInAs !== undefined ? login.string.SelectWorkspace : undefined}
+  secondaryButtonAction={() => {
+    goTo('selectWorkspace')
+  }}
   ignoreInitialValidation
   withProviders
-/>
+>
+  <svelte:fragment slot="before-secondary">
+    <div class="signed-in">
+      <Label label={login.string.SignedInAs} params={{ name: signedInAs ?? '' }} />
+    </div>
+  </svelte:fragment>
+</Form>
+
+<style lang="scss">
+  .signed-in {
+    grid-column-start: 1;
+    grid-column-end: 3;
+    text-align: center;
+    margin-bottom: -0.75rem;
+    color: var(--login-label-color, var(--login-content-color, var(--theme-content-color)));
+  }
+</style>

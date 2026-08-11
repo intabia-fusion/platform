@@ -161,6 +161,13 @@ export class SubscriptionStorage {
     return await this.accountClient.getSubscriptionsByProvider('tbank')
   }
 
+  /**
+   * Trial subscriptions (provider 'trial'), bounded by `trialEnd`.
+   */
+  async getTrialCandidates (): Promise<Subscription[]> {
+    return await this.accountClient.getSubscriptionsByProvider('trial', [SubscriptionStatus.Trialing])
+  }
+
   static needsRenewal (sub: Subscription, now: number): boolean {
     if (sub.providerData?.recurrent === false) return false
     if (sub.providerData?.rebillId === undefined) return false
@@ -200,6 +207,20 @@ export class SubscriptionStorage {
     }
   }
 
+  /**
+   * Workspace display name + url slug. `name` is what the owner sees in the UI, `url` builds the
+   * link — customer-facing emails need both (name as the link text). Best-effort: null on failure.
+   */
+  async getWorkspaceInfo (workspaceUuid: WorkspaceUuid): Promise<{ name: string, url: string } | null> {
+    try {
+      const [info] = await this.accountClient.getWorkspacesInfo([workspaceUuid])
+      if (info === undefined) return null
+      return { name: info.name, url: info.url }
+    } catch {
+      return null
+    }
+  }
+
   async findSubscriptionByCheckoutId (checkoutId: string): Promise<SubscriptionData | null> {
     return (
       (await this.accountClient.getSubscriptions()).find(
@@ -220,8 +241,6 @@ export class SubscriptionStorage {
   ): Promise<{ name: string | null, email: string | null, phone: string | null, locale: string | null }> {
     const personInfo = await this.accountClient.getPersonInfo(accountUuid)
     const emailSocialId = personInfo.socialIds.find((s) => s.type === SocialIdType.EMAIL && s.isDeleted !== true)
-    // Phone is the 54-ФЗ receipt fallback when the account has no email (phone-only signup).
-    const phoneSocialId = personInfo.socialIds.find((s) => s.type === SocialIdType.PHONE && s.isDeleted !== true)
 
     let locale: string | null = null
     try {
@@ -232,6 +251,7 @@ export class SubscriptionStorage {
     }
 
     const name = personInfo.name !== undefined && personInfo.name !== '' ? personInfo.name : null
-    return { name, email: emailSocialId?.value ?? null, phone: phoneSocialId?.value ?? null, locale }
+    // Phone is the 54-ФЗ receipt fallback when the account has no email.
+    return { name, email: emailSocialId?.value ?? null, phone: personInfo.phoneHint ?? null, locale }
   }
 }

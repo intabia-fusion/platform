@@ -138,7 +138,6 @@
     return `${Math.round(n / 100).toLocaleString('ru')} ₽`
   }
   function fmtDate (ms: number | string | undefined): string {
-    // created_on is INT8 — the PG driver returns it as a string.
     const n = Number(ms)
     return ms != null && Number.isFinite(n) ? new Date(n).toLocaleString('ru') : '-'
   }

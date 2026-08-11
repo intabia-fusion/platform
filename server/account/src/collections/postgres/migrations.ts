@@ -43,6 +43,14 @@ const dbTypes = {
   }
 }
 
+/**
+ * Adding a column and reading it must be two separate migrations.
+ *
+ * CockroachDB parses a multi-statement batch as a whole, so a backfill sitting next to its own
+ * ADD COLUMN fails with "column does not exist" and the migration retries forever - the workspace
+ * pod then stops processing anything. PostgreSQL runs the same batch fine, so this only shows up on
+ * the cockroach regions. See v35/v36 and v32/v33.
+ */
 export function getMigrations (ns: string, flavor: DBFlavor): [string, string][] {
   if (flavor === 'unknown') {
     throw new Error('Cannot generate migrations for an unknown database flavor.')
@@ -92,7 +100,10 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV31Migration(ns, flavor),
     getV32Migration(ns, flavor),
     getV33Migration(ns),
-    getV34Migration(ns)
+    getV34Migration(ns),
+    getV35Migration(ns, flavor),
+    getV36Migration(ns),
+    getV37Migration(ns)
   ]
 }
 
@@ -1032,6 +1043,63 @@ function getV34Migration (ns: string): [string, string] {
     `
     ALTER TABLE ${ns}.workspace
     ADD COLUMN IF NOT EXISTS disabled_features_override TEXT[];
+    `
+  ]
+}
+
+function getV35Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v35_admin_action_log',
+    `
+    /* ======= A D M I N   A C T I O N   L O G ======= */
+    /* No FK on actor/target on purpose: the log must outlive the rows it describes
+       (account deletion, person purge), and targets may be workspaces or social ids. */
+    CREATE TABLE IF NOT EXISTS ${ns}.admin_action (
+        id ${types.string} NOT NULL DEFAULT gen_random_uuid()::TEXT,
+        actor ${types.string} NOT NULL, -- admin account uuid from the token
+        actor_email ${types.string},
+        action ${types.string} NOT NULL,
+        target ${types.string}, -- person/workspace uuid the action was applied to
+        target_label ${types.string}, -- readable name/email/url, kept for deleted targets
+        data JSONB,
+        created_on BIGINT NOT NULL DEFAULT current_epoch_ms(),
+
+        CONSTRAINT admin_action_pk PRIMARY KEY (id)
+    );
+
+    CREATE INDEX IF NOT EXISTS admin_action_created_idx ON ${ns}.admin_action (created_on);
+    CREATE INDEX IF NOT EXISTS admin_action_target_idx ON ${ns}.admin_action (target);
+    `
+  ]
+}
+
+function getV36Migration (ns: string): [string, string] {
+  return [
+    'account_db_v36_person_phone_hint',
+    `
+    /* Existing phone social ids stay in place and are reused once SMS verification lands. */
+    ALTER TABLE ${ns}.person ADD COLUMN IF NOT EXISTS phone_hint TEXT;
+    `
+  ]
+}
+
+function getV37Migration (ns: string): [string, string] {
+  return [
+    'account_db_v37_person_phone_hint_backfill',
+    /* Separate migration on purpose: a multi-statement batch is parsed as a whole, so an UPDATE
+       reading phone_hint next to the ADD COLUMN fails with "column does not exist". Same reason
+       v33 was split off from v32. */
+    `
+    UPDATE ${ns}.person p
+       SET phone_hint = s.value
+      FROM (
+        SELECT DISTINCT ON (person_uuid) person_uuid, value
+          FROM ${ns}.social_id
+         WHERE type = 'phone'
+         ORDER BY person_uuid, created_on DESC
+      ) s
+     WHERE s.person_uuid = p.uuid AND p.phone_hint IS NULL;
     `
   ]
 }

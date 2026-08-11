@@ -18,8 +18,18 @@ import {
   type AccountClient
 } from '@hcengineering/account-client'
 import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { AccountRole, MeasureContext, newMetrics, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
 import {
+  AccountRole,
+  type Doc,
+  MeasureContext,
+  newMetrics,
+  systemAccountUuid,
+  type Tx,
+  type TxCUD,
+  WorkspaceUuid
+} from '@hcengineering/core'
+import {
+  loveId,
   parseRoomName,
   ParticipantMetadata,
   queueEvents,
@@ -33,7 +43,14 @@ import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
 
 import { getPlatformQueue } from '@hcengineering/kafka'
-import { initStatisticsContext, QueueTopic, StorageConfig, StorageConfiguration } from '@hcengineering/server-core'
+import {
+  initStatisticsContext,
+  QueueTopic,
+  QueueWorkspaceEvent,
+  type QueueWorkspaceMessage,
+  StorageConfig,
+  StorageConfiguration
+} from '@hcengineering/server-core'
 import { storageConfigFromEnv } from '@hcengineering/server-storage'
 import serverToken, { decodeToken, generateToken } from '@hcengineering/server-token'
 import cors from 'cors'
@@ -78,6 +95,13 @@ function convertBigIntToString (obj: unknown): unknown {
     return result
   }
   return obj
+}
+
+const ACTIVE_WORKSPACES_SYNC_MS = 5 * 60 * 1000
+
+// Prefix match covers every love class and mixin (loveId === 'love'), including future ones.
+function isLoveTx (tx: Tx): boolean {
+  return (tx as TxCUD<Doc>).objectClass?.startsWith(`${loveId}:`) ?? false
 }
 
 function getAccountClient (token?: string): AccountClient {
@@ -498,17 +522,26 @@ export const main = async (): Promise<void> => {
   )
   pollingService.start()
 
-  const workspaceConsumer = queue.createConsumer(ctx, QueueTopic.Workspace, 'love-client', async (ctx, msg, queue) => {
-    pollingService.addWorkspaceToCheck(msg.workspace)
-  })
+  const workspaceConsumer = queue.createConsumer<QueueWorkspaceMessage>(
+    ctx,
+    QueueTopic.Workspace,
+    'love-client',
+    async (ctx, msg, queue) => {
+      // Checking back on 'down' reopens the workspace, which closes and re-sends 'down' - endless loop.
+      if (msg.value?.type === QueueWorkspaceEvent.Down) return
+      pollingService.addWorkspaceToCheck(msg.workspace)
+    }
+  )
 
-  const workspaceTxConsumer = queue.createBatchConsumer(
+  const workspaceTxConsumer = queue.createBatchConsumer<Tx>(
     ctx,
     QueueTopic.Tx,
     'love-client',
     async (ctx, msgs, queue) => {
       const workspaces = new Set<WorkspaceUuid>()
       for (const msg of msgs) {
+        // Without the filter any tx in any workspace makes the transactor build a full pipeline.
+        if (!isLoveTx(msg.value)) continue
         workspaces.add(msg.workspace)
       }
       for (const ws of workspaces) {
@@ -517,6 +550,25 @@ export const main = async (): Promise<void> => {
     },
     { batchSize: 500, batchTimeout: 200 }
   )
+
+  // Workspace events only fire on open/close, so a meeting hung before a love restart in an
+  // already-open workspace would never be seen. These workspaces are open anyway - no extra pipelines.
+  const syncActiveWorkspaces = async (): Promise<void> => {
+    try {
+      const token = generateToken(systemAccountUuid, undefined, { service: 'love' })
+      const visitedDays = ACTIVE_WORKSPACES_SYNC_MS / (24 * 60 * 60 * 1000)
+      const list = await getAccountClient(token).listWorkspaces(null, 'active', visitedDays)
+      for (const ws of list) {
+        pollingService.addWorkspaceToCheck(ws.uuid)
+      }
+    } catch (err: any) {
+      ctx.error('[love] failed to list recently visited workspaces', { error: err?.message ?? String(err) })
+    }
+  }
+  void syncActiveWorkspaces()
+  const activeWorkspacesSyncHandle = setInterval(() => {
+    void syncActiveWorkspaces()
+  }, ACTIVE_WORKSPACES_SYNC_MS)
 
   ctx.info('LiveKit polling service started', {
     intervalMs: config.PollingIntervalMs,
@@ -528,6 +580,7 @@ export const main = async (): Promise<void> => {
   })
 
   const shutdown = (): void => {
+    clearInterval(activeWorkspacesSyncHandle)
     void workspaceConsumer.close()
     void workspaceTxConsumer.close()
     void eventConsumer.close()

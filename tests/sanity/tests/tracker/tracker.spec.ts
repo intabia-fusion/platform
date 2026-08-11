@@ -14,7 +14,6 @@ import {
   performPanelTest
 } from './tracker.utils'
 import { SettingsPage } from '../model/settings-page'
-import { TaskTypes } from '../model/types'
 test.use({
   storageState: PlatformSetting
 })
@@ -206,7 +205,7 @@ test.describe('Tracker tests', () => {
       await settingsPage.openProfileMenu()
       await settingsPage.openSettings()
       await settingsPage.selectSpaceType('Default', 'Tracker')
-      await settingsPage.addTaskType(taskTypeName, TaskTypes.TaskAndSubtask)
+      await settingsPage.addTaskType(taskTypeName)
 
       await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/tracker%3Aproject%3ADefaultProject/issues`)
       await page.waitForLoadState('networkidle')

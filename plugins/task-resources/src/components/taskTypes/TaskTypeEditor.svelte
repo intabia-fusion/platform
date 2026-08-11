@@ -16,8 +16,8 @@
 -->
 <script lang="ts">
   import { Ref, SortingOrder, Status } from '@hcengineering/core'
-  import { Asset, getEmbeddedLabel, getResource } from '@hcengineering/platform'
-  import { AttributeEditor, MessageBox, createQuery, getClient } from '@hcengineering/presentation'
+  import { Asset, getResource, IntlString } from '@hcengineering/platform'
+  import { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import { ClassAttributes, settingsStore } from '@hcengineering/setting-resources'
   import task, { ProjectType, TaskType, calculateStatuses, findStatusAttr } from '@hcengineering/task'
   import {
@@ -25,11 +25,14 @@
     Icon,
     IconAdd,
     IconDelete,
+    IconError,
     IconSquareExpand,
     Label,
     ModernButton,
     Scroller,
     ToggleWithLabel,
+    Toggle,
+    ModernEditbox,
     getCurrentLocation,
     navigate,
     showPopup
@@ -38,9 +41,8 @@
   import { taskTypeStore } from '../..'
   import plugin from '../../plugin'
   import StatesProjectEditor from '../state/StatesProjectEditor.svelte'
-  import TaskTypeKindEditor from '../taskTypes/TaskTypeKindEditor.svelte'
-  import TaskTypeRefEditor from '../taskTypes/TaskTypeRefEditor.svelte'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
+  import TaskTypeRefEditorTable from './TaskTypeRefEditorTable.svelte'
 
   export let spaceType: ProjectType
   export let objectId: Ref<TaskType>
@@ -68,6 +70,11 @@
   $: color = taskType?.color !== undefined && typeof taskType?.color !== 'string' ? taskType?.color : undefined
   $: descriptor = client.getModel().findAllSync(task.class.TaskTypeDescriptor, { _id: taskType?.descriptor })
   $: states = (taskType?.statuses.map((p) => $statusStore.byId.get(p)).filter((p) => p !== undefined) as Status[]) ?? []
+  $: selectableTaskTypes = taskTypes.filter(
+    (tt) => tt._id === objectId || !(tt.allowedAsChildOf ?? []).includes(objectId)
+  )
+
+  $: isRootTaskType = taskType?.isRootTaskType ?? false
 
   let tasksCounter: number = 0
   let loading: boolean = true
@@ -88,6 +95,52 @@
         }
       }
     )
+  }
+
+  let errorMessage: IntlString | undefined = undefined
+  let errorTaskTypeId: Ref<TaskType> | undefined = undefined
+
+  $: if (taskType !== undefined && errorTaskTypeId !== taskType._id) {
+    errorTaskTypeId = taskType._id
+    errorMessage = undefined
+  }
+
+  function commitName (value: string): void {
+    if (taskType === undefined || readonly) return
+
+    const trimmed = value.trim()
+    if (trimmed.length === 0) {
+      errorMessage = plugin.string.TaskTypeNameEmpty
+      return
+    }
+
+    const isDuplicate = taskTypes.some((tt) => tt._id !== taskType._id && isSameString(tt.name, trimmed))
+    if (isDuplicate) {
+      errorMessage = plugin.string.TaskTypeNameAlreadyExists
+      return
+    }
+    errorMessage = undefined
+    if (trimmed !== taskType.name) {
+      void client.diffUpdate(taskType, { name: trimmed })
+    }
+  }
+
+  async function handleIsRootTaskTypeChange (isRoot: boolean): Promise<void> {
+    if (taskType === undefined || readonly) {
+      return
+    }
+
+    const updates: Partial<TaskType> = { isRootTaskType: isRoot }
+
+    if (isRoot && (taskType.allowedAsChildOf?.length ?? 0) > 0) {
+      updates.allowedAsChildOf = []
+    }
+
+    await client.diffUpdate(taskType, updates)
+  }
+
+  function isSameString (a: string, b: string): boolean {
+    return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase()
   }
 
   function selectIcon (el: MouseEvent): void {
@@ -134,7 +187,7 @@
     }
   }
 
-  $: canDelete = !loading && tasksCounter === 0
+  $: canDelete = !loading && tasksCounter === 0 && taskTypes.length > 1
 
   async function handleDelete (): Promise<void> {
     if (!canDelete || readonly || taskType == null) {
@@ -173,28 +226,18 @@
 {#if taskType !== undefined}
   <div class="hulyComponent-content__container columns">
     <div class="hulyComponent-content__column content">
-      <Scroller align={'center'} padding={'var(--spacing-3)'} bottomPadding={'var(--spacing-3)'}>
+      <Scroller align="center" padding="var(--spacing-3)" bottomPadding="var(--spacing-3)">
         <div class="hulyComponent-content gap">
           <div class="hulyComponent-content__column-group mt-4">
             <div class="hulyComponent-content__header mb-6">
               <div class="flex-row-center gap-1-5">
-                <TaskTypeKindEditor
-                  kind={taskType.kind}
-                  on:change={(evt) => {
-                    if (taskType === undefined) {
-                      return
-                    }
-                    void client.diffUpdate(taskType, { kind: evt.detail })
-                  }}
-                  {readonly}
-                />
                 {#if !readonly}
                   <ButtonIcon
                     icon={TaskTypeIcon}
                     iconProps={{ value: taskType, size: 'medium' }}
-                    size={'large'}
-                    kind={'secondary'}
-                    dataId={'btnSelectIcon'}
+                    size="large"
+                    kind="secondary"
+                    dataId="btnSelectIcon"
                     disabled={readonly}
                     on:click={selectIcon}
                   />
@@ -206,8 +249,8 @@
                   label={plugin.string.CountTasks}
                   labelParams={{ count: tasksCounter }}
                   disabled={tasksCounter === 0}
-                  kind={'tertiary'}
-                  size={'medium'}
+                  kind="tertiary"
+                  size="medium"
                   hasMenu
                   on:click={() => {
                     showIssuesOfTaskType()
@@ -226,60 +269,82 @@
             </div>
 
             <div class="name" class:editable={!readonly}>
-              <AttributeEditor
-                _class={task.class.TaskType}
-                object={taskType}
-                key="name"
-                editKind={'modern-ghost-large'}
-                editable={!readonly}
-              />
-            </div>
-
-            <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
-              <div class="flex-no-shrink trans-title uppercase">
-                <Label label={getEmbeddedLabel('Parent type restrictions')} />
-              </div>
-              {#if taskType.kind === 'subtask' || taskType.kind === 'both'}
-                <TaskTypeRefEditor
-                  label={getEmbeddedLabel('Allowed parents')}
-                  value={taskType.allowedAsChildOf}
-                  types={taskTypes.filter((it) => it.kind === 'task' || it.kind === 'both')}
-                  onChange={(evt) => {
-                    if (taskType === undefined) {
-                      return
-                    }
-                    void client.diffUpdate(taskType, { allowedAsChildOf: evt })
-                  }}
-                />
-              {/if}
-            </div>
-
-            <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
-              <ToggleWithLabel
-                label={plugin.string.ShowParentTasks}
-                on={taskType.showParentTasks ?? false}
+              <ModernEditbox
+                value={taskType?.name ?? ''}
+                label={plugin.string.TaskTypeName}
+                size="large"
+                kind="ghost"
+                width="100%"
                 disabled={readonly}
-                on:change={(evt) => {
-                  if (taskType === undefined) {
-                    return
+                error={errorMessage !== undefined}
+                on:input={() => {
+                  if (errorMessage !== undefined) {
+                    errorMessage = undefined
                   }
-                  void client.diffUpdate(taskType, { showParentTasks: evt.detail })
+                }}
+                on:blur={(evt) => {
+                  commitName(evt.detail ?? '')
                 }}
               />
+              {#if errorMessage !== undefined}
+                <div class="name-error">
+                  <Icon icon={IconError} size="small" />
+                  <span><Label label={errorMessage} /></span>
+                </div>
+              {/if}
             </div>
           </div>
 
           <div class="hulyTableAttr-container">
-            <div class="hulyTableAttr-header font-medium-12">
-              <Icon icon={task.icon.ManageTemplates} size={'small'} />
-              <span><Label label={plugin.string.ProcessStates} /></span>
-              <ButtonIcon
-                kind={'primary'}
-                icon={IconAdd}
-                size={'small'}
-                on:click={handleAddStatus}
-                disabled={readonly}
+            <div class="hulyTableAttr-header font-medium-12 root-task-type-header">
+              <span class="label">
+                <Label label={plugin.string.RootTaskType} />
+              </span>
+              <div class="toggle-wrapper">
+                <Toggle
+                  on={isRootTaskType}
+                  disabled={readonly}
+                  on:change={(evt) => {
+                    void handleIsRootTaskTypeChange(evt.detail)
+                  }}
+                />
+              </div>
+            </div>
+
+            {#if !isRootTaskType}
+              <TaskTypeRefEditorTable
+                value={taskType.allowedAsChildOf ?? []}
+                types={selectableTaskTypes}
+                {readonly}
+                onChange={(evt) => {
+                  if (taskType === undefined) {
+                    return
+                  }
+                  void client.diffUpdate(taskType, { allowedAsChildOf: evt })
+                }}
               />
+            {/if}
+          </div>
+
+          <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
+            <ToggleWithLabel
+              label={plugin.string.ShowParentTasks}
+              on={taskType.showParentTasks ?? false}
+              disabled={readonly}
+              on:change={(evt) => {
+                if (taskType === undefined) {
+                  return
+                }
+                void client.diffUpdate(taskType, { showParentTasks: evt.detail })
+              }}
+            />
+          </div>
+
+          <div class="hulyTableAttr-container">
+            <div class="hulyTableAttr-header font-medium-12">
+              <Icon icon={task.icon.ManageTemplates} size="small" />
+              <span><Label label={plugin.string.ProcessStates} /></span>
+              <ButtonIcon kind="primary" icon={IconAdd} size="small" on:click={handleAddStatus} disabled={readonly} />
             </div>
             <StatesProjectEditor
               {taskType}
@@ -341,16 +406,37 @@
 {/if}
 
 <style lang="scss">
+  .root-task-type-header {
+    padding: var(--spacing-1_5) var(--spacing-2_5);
+  }
+
+  .toggle-wrapper {
+    margin-right: 0.375rem;
+    display: flex;
+    align-items: center;
+  }
+
   .name {
     width: 100%;
     font-weight: 500;
     margin-left: 1rem;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     font-size: 1.5rem;
 
     &.editable {
       margin-left: 0;
+    }
+
+    .name-error {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      margin-top: 0.375rem;
+      font-size: 0.8125rem;
+      font-weight: 400;
+      color: var(--global-negative-TextColor, #ef4444);
     }
   }
 </style>

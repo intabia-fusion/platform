@@ -82,7 +82,6 @@
       {
         _id: issueId,
         descriptor: tracker.descriptors.Issue,
-        kind: 'both',
         name: await translate(tracker.string.Issue, {}),
         ofClass: tracker.class.Issue,
         statusCategories: baseIssueTaskStatuses.map((it) => it.category),
@@ -95,7 +94,6 @@
       {
         _id: generateId(),
         descriptor: github.descriptors.PullRequest,
-        kind: 'both',
         name: await translate(github.string.PullRequest, {}),
         ofClass: github.class.GithubPullRequest,
         statusCategories: githubPullRequestStates.map((it) => it.category),

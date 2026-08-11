@@ -30,6 +30,7 @@
   import Auth from './Auth.svelte'
   import Confirmation from './Confirmation.svelte'
   import ConfirmationSend from './ConfirmationSend.svelte'
+  import Registered from './Registered.svelte'
   import CreateWorkspaceForm from './CreateWorkspaceForm.svelte'
   import Join from './Join.svelte'
   import AutoJoin from './AutoJoin.svelte'
@@ -153,6 +154,8 @@
       <Confirmation />
     {:else if page === 'confirmationSend'}
       <ConfirmationSend />
+    {:else if page === 'registered'}
+      <Registered />
     {:else if page === 'auth'}
       <Auth />
     {:else if page === 'changePassword'}

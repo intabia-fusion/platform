@@ -143,7 +143,6 @@ export function defineSpaceType (builder: Builder): void {
       ofClass: plugin.class.Applicant,
       targetClass: plugin.class.ApplicantTaskType,
       parent: plugin.template.DefaultVacancy,
-      kind: 'task',
       statuses: defaultStatuses,
       statusClass: core.class.Status,
       statusCategories: [

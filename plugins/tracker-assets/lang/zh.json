@@ -86,6 +86,8 @@
     "ChangeParent": "更改父问题…",
     "RemoveParent": "移除父问题",
     "OpenParent": "打开父问题",
+    "ParentNotApplicable": "此类型的任务没有父任务",
+    "NoParentIssuesExist": "未找到父类型的任务",
     "SubIssues": "子问题",
     "SubIssuesList": "子问题 ({subIssues})",
     "ParentIssuesList": "父任务 ({parentIssues})",

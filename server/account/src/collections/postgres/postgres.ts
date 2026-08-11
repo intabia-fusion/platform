@@ -50,7 +50,11 @@ import type {
   Integration,
   IntegrationSecret,
   AccountAggregatedInfo,
+  AccountsFilter,
   AccountsSortKey,
+  AdminAction,
+  AdminActionsQuery,
+  AdminActionsResult,
   UserProfile,
   Subscription,
   PaymentIntent,
@@ -268,7 +272,8 @@ implements DbCollection<T> {
     return `ORDER BY ${sortChunks.join(', ')}`
   }
 
-  protected convertToObj (row: unknown): T {
+  // Public so raw unsafe() queries can reuse the same timestamp/field mapping the collection does.
+  convertToObj (row: unknown): T {
     const res = convertKeysToCamelCase(row)
     for (const field of this.timestampFields) {
       res[field] = convertTimestamp(res[field])
@@ -561,6 +566,7 @@ export class PostgresAccountDB implements AccountDB {
   paymentOperation: PostgresDbCollection<PaymentOperation, 'id'>
   workspacePermission: PostgresDbCollection<WorkspacePermission>
   accountWorkspaceBadgeStatus: PostgresDbCollection<AccountWorkspaceBadgeStatus>
+  adminAction: PostgresDbCollection<AdminAction, 'id'>
 
   constructor (
     readonly client: Sql,
@@ -657,6 +663,12 @@ export class PostgresAccountDB implements AccountDB {
         withRetryClient
       }
     )
+    this.adminAction = new PostgresDbCollection<AdminAction, 'id'>('admin_action', client, {
+      ns,
+      idKey: 'id',
+      timestampFields: ['createdOn'],
+      withRetryClient
+    })
   }
 
   getWsMembersTableName (): string {
@@ -1146,26 +1158,53 @@ export class PostgresAccountDB implements AccountDB {
     })
   }
 
+  /**
+   * Purge an unfinished signup: a person row with social ids but no account.
+   * Children first - account_events, user_profile and social_id all have FKs to person.
+   */
+  async deletePerson (personUuid: PersonUuid): Promise<void> {
+    await this.withRetry(async (rTx) => {
+      const socialIds = await this.socialId.find({ personUuid }, undefined, undefined, rTx)
+      for (const socialIdObj of socialIds) {
+        await this.integrationSecret.deleteMany({ socialId: socialIdObj._id }, rTx)
+        await this.integration.deleteMany({ socialId: socialIdObj._id }, rTx)
+      }
+
+      await rTx`DELETE FROM ${this.client(this.getWsMembersTableName())} WHERE account_uuid = ${personUuid}`
+      await this.accountEvent.deleteMany({ accountUuid: personUuid as AccountUuid }, rTx)
+      await this.userProfile.deleteMany({ personUuid }, rTx)
+      await this.socialId.deleteMany({ personUuid }, rTx)
+      await this.person.deleteMany({ uuid: personUuid }, rTx)
+    })
+  }
+
   async listAccounts (
     search?: string,
     skip?: number,
     limit?: number,
-    sort?: AccountsSortKey
+    sort?: AccountsSortKey,
+    filter?: AccountsFilter
   ): Promise<AccountAggregatedInfo[]> {
     const sqlChunks: string[] = [
       `
       WITH account_data AS (
         SELECT
-          a.uuid,
+          p.uuid,
           a.timezone,
           a.locale,
           a.automatic,
           a.max_workspaces,
+          (a.uuid IS NOT NULL) as has_account,
           p.first_name,
           p.last_name,
           up.country,
           up.city,
           p.migrated_to,
+          (
+            SELECT MIN(s.created_on)
+            FROM ${this.socialId.getTableName()} s
+            WHERE s.person_uuid = p.uuid
+          ) as registered_on,
           (
             SELECT jsonb_agg(jsonb_build_object(
               'socialId', i.social_id,
@@ -1173,7 +1212,7 @@ export class PostgresAccountDB implements AccountDB {
               'workspaceUuid', i.workspace_uuid
             ))
             FROM ${this.integration.getTableName()} i
-            WHERE i.social_id IN (SELECT _id FROM ${this.socialId.getTableName()} s WHERE s.person_uuid = a.uuid)
+            WHERE i.social_id IN (SELECT _id FROM ${this.socialId.getTableName()} s WHERE s.person_uuid = p.uuid)
           ) as integrations,
           (
             SELECT jsonb_agg(jsonb_build_object(
@@ -1186,7 +1225,7 @@ export class PostgresAccountDB implements AccountDB {
               'displayValue', s.display_value
             ))
             FROM ${this.socialId.getTableName()} s
-            WHERE s.person_uuid = a.uuid AND s.is_deleted = FALSE
+            WHERE s.person_uuid = p.uuid AND s.is_deleted = FALSE
           ) as social_ids,
           (
             SELECT jsonb_agg(jsonb_build_object(
@@ -1202,16 +1241,16 @@ export class PostgresAccountDB implements AccountDB {
             ))
             FROM ${this.workspace.getTableName()} w
             INNER JOIN ${this.getWsMembersTableName()} m ON m.workspace_uuid = w.uuid
-            WHERE m.account_uuid = a.uuid
+            WHERE m.account_uuid = p.uuid
           ) as workspaces,
           (
             SELECT MAX(ws.last_visit)
             FROM ${this.workspaceStatus.getTableName()} ws
             INNER JOIN ${this.getWsMembersTableName()} m2 ON m2.workspace_uuid = ws.workspace_uuid
-            WHERE m2.account_uuid = a.uuid
+            WHERE m2.account_uuid = p.uuid
           ) as last_visit
-        FROM ${this.account.getTableName()} a
-        INNER JOIN ${this.ns}.person p ON p.uuid = a.uuid
+        FROM ${this.ns}.person p
+        LEFT JOIN ${this.account.getTableName()} a ON a.uuid = p.uuid
         LEFT JOIN ${this.userProfile.getTableName()} up ON up.person_uuid = p.uuid
     `
     ]
@@ -1226,7 +1265,7 @@ export class PostgresAccountDB implements AccountDB {
           p.last_name ILIKE $${paramIndex} OR
           EXISTS (
             SELECT 1 FROM ${this.socialId.getTableName()} s
-            WHERE s.person_uuid = a.uuid AND s.value ILIKE $${paramIndex}
+            WHERE s.person_uuid = p.uuid AND s.value ILIKE $${paramIndex}
           )
       `)
       values.push(`%${search}%`)
@@ -1235,7 +1274,26 @@ export class PostgresAccountDB implements AccountDB {
 
     // ORDER BY/LIMIT must live on the outer SELECT: row order of a CTE is not guaranteed outside it
     sqlChunks.push(') SELECT * FROM account_data')
-    sqlChunks.push(sort === 'lastVisit' ? 'ORDER BY last_visit DESC NULLS LAST' : 'ORDER BY first_name')
+
+    // Filters use the CTE's aggregated columns, so they belong to the outer WHERE.
+    // The CTE is person-based, so accounts must be selected explicitly (default behaviour).
+    const outerWhere: string[] = [filter?.pendingOnly === true ? 'has_account = FALSE' : 'has_account = TRUE']
+    if (filter?.noWorkspaces === true) {
+      outerWhere.push('(workspaces IS NULL OR jsonb_array_length(workspaces) = 0)')
+    }
+    if (filter?.inactiveDays !== undefined) {
+      outerWhere.push(`(last_visit IS NULL OR last_visit < $${paramIndex})`)
+      values.push(Date.now() - filter.inactiveDays * 24 * 3600 * 1000)
+      paramIndex++
+    }
+    sqlChunks.push(`WHERE ${outerWhere.join(' AND ')}`)
+
+    const orderBy: Record<AccountsSortKey, string> = {
+      name: 'first_name',
+      lastVisit: 'last_visit DESC NULLS LAST',
+      registeredOn: 'registered_on DESC NULLS LAST'
+    }
+    sqlChunks.push(`ORDER BY ${orderBy[sort ?? 'name'] ?? orderBy.name}`)
 
     if (limit !== undefined) {
       sqlChunks.push(`LIMIT $${paramIndex}`)
@@ -1274,10 +1332,47 @@ export class PostgresAccountDB implements AccountDB {
         }
 
         converted.lastVisit = convertTimestamp(converted.lastVisit)
+        converted.registeredOn = convertTimestamp(converted.registeredOn)
 
         return converted as AccountAggregatedInfo
       })
     })
+  }
+
+  async listAdminActions (query: AdminActionsQuery): Promise<AdminActionsResult> {
+    const table = this.adminAction.getTableName()
+    const where: string[] = []
+    const args: any[] = []
+
+    if (query.search !== undefined && query.search !== '') {
+      args.push(`%${query.search}%`)
+      where.push(
+        `(actor_email ILIKE $${args.length} OR target ILIKE $${args.length} OR target_label ILIKE $${args.length})`
+      )
+    }
+    if (query.action !== undefined && query.action !== '') {
+      args.push(query.action)
+      where.push(`action = $${args.length}`)
+    }
+    const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
+
+    args.push(Math.min(Math.max(query.limit ?? 50, 1), 1000))
+    const limitSql = `LIMIT $${args.length}`
+    args.push(Math.max(query.skip ?? 0, 0))
+    const offsetSql = `OFFSET $${args.length}`
+
+    const rows = await this.adminAction.unsafe(
+      `SELECT *, COUNT(*) OVER() AS total FROM ${table} ${whereSql} ORDER BY created_on DESC ${limitSql} ${offsetSql}`,
+      args
+    )
+    const list = rows as Array<Record<string, any>>
+    return {
+      actions: list.map((r) => {
+        const { total, ...rest } = r
+        return this.adminAction.convertToObj(rest)
+      }),
+      total: list.length > 0 ? Number(list[0].total) : 0
+    }
   }
 
   private workspaceStatusJson (alias: string): string {
@@ -1793,11 +1888,11 @@ export class PostgresAccountDB implements AccountDB {
       ]
     )
     if (inserted.length > 0) {
-      return { claimed: true, intent: convertKeysToCamelCase(inserted[0]) as PaymentIntent }
+      return { claimed: true, intent: this.paymentIntent.convertToObj(inserted[0]) }
     }
     // Conflict: another caller already claimed this key — return the existing intent.
     const existing = await this.paymentIntent.unsafe(`SELECT * FROM ${table} WHERE claim_key = $1`, [claimKey])
-    return { claimed: false, intent: convertKeysToCamelCase(existing[0]) as PaymentIntent }
+    return { claimed: false, intent: this.paymentIntent.convertToObj(existing[0]) }
   }
 
   // Link a checkout intent to its charge (payment_id) + save URL for reuse; webhook releases by payment_id.
@@ -1891,7 +1986,7 @@ export class PostgresAccountDB implements AccountDB {
       `SELECT * FROM ${table} ${whereSql} ORDER BY created_on DESC ${limitSql} ${offsetSql}`,
       args
     )
-    return (rows as Array<Record<string, any>>).map((r) => convertKeysToCamelCase(r) as PaymentOperation)
+    return (rows as Array<Record<string, any>>).map((r) => this.paymentOperation.convertToObj(r))
   }
 
   // Aggregate operations in [from, to) for the daily billing summary: per-workspace charge counts,

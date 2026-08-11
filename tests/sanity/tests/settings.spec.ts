@@ -4,7 +4,6 @@ import { UserProfilePage } from './model/profile/user-profile-page'
 import { TemplatePage } from './model/tracker/templates-page'
 import { SettingsPage } from './model/settings-page'
 import { IssuesPage } from './model/tracker/issues-page'
-import { TaskTypes } from './model/types'
 
 test.use({
   storageState: PlatformSetting
@@ -50,9 +49,9 @@ test.describe('settings tests', () => {
     await settingsPage.openSettings()
     await settingsPage.createSpaceType(spaceName, 'Tracker')
     await settingsPage.selectSpaceType(spaceName, 'Tracker')
-    await settingsPage.addTaskType('Issue', TaskTypes.TaskAndSubtask)
-    await settingsPage.checkTaskType('Issue', TaskTypes.TaskAndSubtask)
-    await settingsPage.openTaskType('Issue', TaskTypes.TaskAndSubtask)
+    await settingsPage.addTaskType('Issue')
+    await settingsPage.checkTaskType('Issue')
+    await settingsPage.openTaskType('Issue')
     await settingsPage.checkOpened(spaceName, 'Issue')
   })
 
@@ -62,9 +61,9 @@ test.describe('settings tests', () => {
     await settingsPage.openProfileMenu()
     await settingsPage.openSettings()
     await settingsPage.selectSpaceType('Default', 'Tracker')
-    await settingsPage.addTaskType(taskTypeName, TaskTypes.TaskAndSubtask)
-    await settingsPage.checkTaskType(taskTypeName, TaskTypes.TaskAndSubtask)
-    await settingsPage.openTaskType(taskTypeName, TaskTypes.TaskAndSubtask)
+    await settingsPage.addTaskType(taskTypeName)
+    await settingsPage.checkTaskType(taskTypeName)
+    await settingsPage.openTaskType(taskTypeName)
     await settingsPage.checkOpened('Default', taskTypeName)
     await settingsPage.changeIcon()
     await settingsPage.checkState('Todo')

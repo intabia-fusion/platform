@@ -19,7 +19,8 @@
   import OtpForm from './OtpForm.svelte'
   import login from '../plugin'
   import Form from './Form.svelte'
-  import { OtpLoginSteps, loginOtp } from '../index'
+  import Label from './internal/Label.svelte'
+  import { OtpLoginSteps, goTo, loginOtp } from '../index'
   import type { BottomAction } from '../index'
 
   export let navigateUrl: string | undefined = undefined
@@ -29,6 +30,7 @@
   export let subtitle: string | undefined = undefined
   export let onLogin: ((loginInfo: LoginInfo | null, status: Status) => void | Promise<void>) | undefined = undefined
   export let extraBottomActions: BottomAction[] = []
+  export let signedInAs: string | undefined = undefined
 
   $: fields = [
     { id: 'email', name: 'username', i18n: login.string.Email, disabled: email !== undefined && email !== '' }
@@ -74,9 +76,19 @@
     {action}
     {signUpDisabled}
     bottomActions={extraBottomActions}
+    secondaryButtonLabel={signedInAs !== undefined ? login.string.SelectWorkspace : undefined}
+    secondaryButtonAction={() => {
+      goTo('selectWorkspace')
+    }}
     ignoreInitialValidation
     withProviders
-  />
+  >
+    <svelte:fragment slot="before-secondary">
+      <div class="signed-in">
+        <Label label={login.string.SignedInAs} params={{ name: signedInAs ?? '' }} />
+      </div>
+    </svelte:fragment>
+  </Form>
 {/if}
 
 {#if step === OtpLoginSteps.Otp && formData.username !== ''}
@@ -89,3 +101,13 @@
     on:step={handleStep}
   />
 {/if}
+
+<style lang="scss">
+  .signed-in {
+    grid-column-start: 1;
+    grid-column-end: 3;
+    text-align: center;
+    margin-bottom: -0.75rem;
+    color: var(--login-label-color, var(--login-content-color, var(--theme-content-color)));
+  }
+</style>

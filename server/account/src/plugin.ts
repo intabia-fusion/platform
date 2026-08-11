@@ -36,6 +36,8 @@ export const accountPlugin = plugin(accountId, {
     Transactors: '' as Metadata<string>,
     OtpTimeToLiveSec: '' as Metadata<number>,
     OtpRetryDelaySec: '' as Metadata<number>,
+    // Activation link in the sign up email. Outlives the OTP code so a delayed email is still usable.
+    SignUpLinkTimeToLiveSec: '' as Metadata<number>,
     // Dev/testing only: fixed admin-operation OTP code (ADMIN_OTP_DEV_CODE). Never set in prod.
     AdminOtpDevCode: '' as Metadata<string>,
     WsLivenessDays: '' as Metadata<number>,
@@ -71,6 +73,8 @@ export const accountPlugin = plugin(accountId, {
     OtpText: '' as IntlString,
     OtpHTML: '' as IntlString,
     OtpSubject: '' as IntlString,
+    SignUpOtpText: '' as IntlString,
+    SignUpOtpHTML: '' as IntlString,
     AdminOtpText: '' as IntlString,
     AdminOtpHTML: '' as IntlString,
     AdminOtpSubject: '' as IntlString

@@ -86,7 +86,6 @@ async function createDefaultProject (tx: TxOperations): Promise<void> {
   //         targetClass: tracker.class.Issue,
   //         statusCategories: baseIssueTaskStatuses.map((it) => it.category),
   //         statusClass: core.class.Status,
-  //         kind: 'both',
   //         allowedAsChildOf: [issueId]
   //       }
   //     ],

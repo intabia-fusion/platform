@@ -326,8 +326,10 @@ export interface LabelAndProps {
 export interface ListItem {
   _id: string
   label: string
-  icon?: Asset
-  iconProps?: any
+  icon?: IconComponent
+  iconProps?: Record<string, any>
+  component?: AnySvelteComponent
+  componentProps?: Record<string, any>
   image?: string
   isSelectable?: boolean
   fontWeight?: 'normal' | 'medium' | 'semi-bold'
@@ -337,6 +339,8 @@ export interface ListItem {
 export interface DropdownTextItem {
   id: string
   label: string
+  icon?: AnySvelteComponent
+  iconProps?: Record<string, any>
 }
 
 export interface DropdownIntlItem {

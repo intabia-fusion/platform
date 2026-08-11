@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -159,6 +160,8 @@ export { default as ButtonIcon } from './components/ButtonIcon.svelte'
 export { default as ButtonMenu } from './components/ButtonMenu.svelte'
 export { default as ButtonBase } from './components/ButtonBase.svelte'
 export { default as ModernButton } from './components/ModernButton.svelte'
+export { default as ModernDropdownLabels } from './components/ModernDropdownLabels.svelte'
+export { default as ModernPopupLabels } from './components/ModernPopupLabels.svelte'
 export { default as SplitButton } from './components/SplitButton.svelte'
 export { default as ModernEditbox } from './components/ModernEditbox.svelte'
 export { default as ModernPopup } from './components/ModernPopup.svelte'

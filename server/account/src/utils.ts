@@ -453,6 +453,12 @@ export function normalizeValue (value: string): string {
   return value.toLowerCase().trim()
 }
 
+// "+7-913-787-80-00" and "+79137878000" must not be two different phones in CRM and 54-FZ receipts.
+export function normalizePhone (phone: string): string {
+  const digits = phone.replace(/\D/g, '')
+  return digits === '' ? '' : `+${digits}`
+}
+
 export function isEmail (email: string): boolean {
   // RFC 5322 compliant email regex
   const EMAIL_REGEX =
@@ -537,6 +543,14 @@ export async function generateUniqueOtp (db: AccountDB): Promise<string> {
   return code
 }
 
+export function getOtpRetryDelayMs (): number {
+  return (getMetadata(accountPlugin.metadata.OtpRetryDelaySec) ?? 60) * 1000
+}
+
+export function getSignUpLinkTtlMs (): number {
+  return (getMetadata(accountPlugin.metadata.SignUpLinkTimeToLiveSec) ?? 7 * 24 * 60 * 60) * 1000
+}
+
 export async function sendOtp (
   ctx: MeasureContext,
   db: AccountDB,
@@ -547,21 +561,25 @@ export async function sendOtp (
 ): Promise<OtpInfo> {
   const ts = Date.now()
   const otpData = (await db.otp.find({ socialId: socialId._id }, { createdOn: 'descending' }, 1))[0]
-  const retryDelay = getMetadata(accountPlugin.metadata.OtpRetryDelaySec) ?? 30
+  const retryDelayMs = getOtpRetryDelayMs()
 
-  if (otpData !== undefined && otpData.expiresOn > ts && otpData.createdOn + retryDelay * 1000 > ts) {
-    return { sent: true, retryOn: otpData.createdOn + retryDelay * 1000 }
+  if (otpData !== undefined && otpData.expiresOn > ts && otpData.createdOn + retryDelayMs > ts) {
+    return { sent: true, retryOn: otpData.createdOn + retryDelayMs }
   }
 
   if (socialId.type !== SocialIdType.EMAIL) {
     throw new Error('Unsupported OTP social id type')
   }
 
-  const retryDelayMs = (getMetadata(accountPlugin.metadata.OtpRetryDelaySec) ?? 30) * 1000
   const ttlMs = (ttlSec ?? getMetadata(accountPlugin.metadata.OtpTimeToLiveSec) ?? 60) * 1000
   const code = await generateUniqueOtp(db)
 
-  await sendOtpEmail(ctx, branding, code, socialId.value, adminAction)
+  // The code dies in a minute and a delayed email arrives too late; the link outlives it by a week.
+  // Only while unverified - on a plain login it would be a pointless long-lived bearer credential.
+  const link =
+    !adminAction && socialId.verifiedOn == null ? await buildConfirmLink(ctx, db, branding, socialId) : undefined
+
+  await sendOtpEmail(ctx, branding, code, socialId.value, adminAction, link)
   await db.otp.insertOne({ socialId: socialId._id, code, expiresOn: ts + ttlMs, createdOn: ts })
 
   return { sent: true, retryOn: ts + retryDelayMs }
@@ -572,7 +590,8 @@ export async function sendOtpEmail (
   branding: Branding | null,
   otp: string,
   email: string,
-  adminAction: boolean = false
+  adminAction: boolean = false,
+  link?: string
 ): Promise<void> {
   const notificationProducer = getMetadata(accountPlugin.metadata.MailQueue)
 
@@ -581,13 +600,23 @@ export async function sendOtpEmail (
   const app = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
 
   // Admin-operation OTP uses a distinct message so the admin knows what they are confirming.
-  const textKey = adminAction ? accountPlugin.string.AdminOtpText : accountPlugin.string.OtpText
-  const htmlKey = adminAction ? accountPlugin.string.AdminOtpHTML : accountPlugin.string.OtpHTML
+  // The sign up variant carries an activation link; a template cannot include one conditionally.
+  const textKey = adminAction
+    ? accountPlugin.string.AdminOtpText
+    : link !== undefined
+      ? accountPlugin.string.SignUpOtpText
+      : accountPlugin.string.OtpText
+  const htmlKey = adminAction
+    ? accountPlugin.string.AdminOtpHTML
+    : link !== undefined
+      ? accountPlugin.string.SignUpOtpHTML
+      : accountPlugin.string.OtpHTML
   const subjectKey = adminAction ? accountPlugin.string.AdminOtpSubject : accountPlugin.string.OtpSubject
 
-  const text = await translate(textKey, { code: otp, app }, lang)
-  const html = await translate(htmlKey, { code: otp, app }, lang)
-  const subject = await translate(subjectKey, { code: otp, app }, lang)
+  const params = { code: otp, app, link }
+  const text = await translate(textKey, params, lang)
+  const html = await translate(htmlKey, params, lang)
+  const subject = await translate(subjectKey, params, lang)
 
   const to = email
 
@@ -620,6 +649,36 @@ export async function isOtpValid (db: AccountDB, socialId: PersonId, code: strin
 // ===== Admin-operation OTP (destructive admin actions) =====
 
 // OTP for destructive admin ops is emailed to the admin; login TTL (60s) is too short, use 5 min.
+/**
+ * Append an entry to the admin audit trail. Never throws: a failed log must not roll back
+ * an operation that already happened.
+ */
+export async function logAdminAction (
+  ctx: MeasureContext,
+  db: AccountDB,
+  token: string,
+  action: string,
+  target?: string,
+  targetLabel?: string,
+  data?: Record<string, any>
+): Promise<void> {
+  try {
+    const { account } = decodeTokenVerbose(ctx, token)
+    const emails = await db.socialId.find({ personUuid: account, type: SocialIdType.EMAIL })
+    await db.adminAction.insertOne({
+      actor: account,
+      actorEmail: emails.sort((a, b) => (a.createdOn ?? 0) - (b.createdOn ?? 0))[0]?.value,
+      action,
+      target,
+      targetLabel,
+      data,
+      createdOn: Date.now()
+    })
+  } catch (err) {
+    ctx.warn('Failed to record admin action', { action, target, err })
+  }
+}
+
 export const ADMIN_OTP_TTL_SEC = 300
 
 // Dev/testing bypass: when ADMIN_OTP_DEV_CODE is set, admin OTP is not emailed and this
@@ -1303,6 +1362,51 @@ export async function checkInvite (ctx: MeasureContext, invite: WorkspaceInvite)
   return invite.workspaceUuid
 }
 
+export function generateShortId (length = 12): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const bytes = randomBytes(length)
+  let result = ''
+  for (let i = 0; i < length; i++) {
+    result += chars[bytes[i] % chars.length]
+  }
+  return result
+}
+
+/**
+ * Builds an activation link for an unverified email social id.
+ * Single use comes for free: `confirmEmail` refuses an already verified social id.
+ */
+export async function buildConfirmLink (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  socialId: SocialId
+): Promise<string | undefined> {
+  const front = branding?.front ?? getMetadata(accountPlugin.metadata.FrontURL)
+  if (front === undefined || front === '') {
+    // Degrade to a code-only email rather than break sign in entirely.
+    ctx.error('Please provide front url via branding configuration or FRONT_URL variable')
+    return undefined
+  }
+
+  // generateToken without an explicit exp mints a token that never expires.
+  const token = generateToken(socialId.personUuid, undefined, { confirmEmail: socialId.value }, undefined, {
+    exp: Math.floor((Date.now() + getSignUpLinkTtlMs()) / 1000)
+  })
+
+  // A raw JWT in a mail body gets wrapped by clients and is unreadable; short id keeps it clickable.
+  const shortId = generateShortId()
+  try {
+    await db.shortLink.insertOne({ id: shortId, payload: token, workspaceId: '' })
+  } catch (err: any) {
+    // A code-only email still works; failing here would block sign in entirely.
+    ctx.error('Failed to store the activation link', { err })
+    return undefined
+  }
+
+  return concatLink(front, `/login/confirm?id=${shortId}`)
+}
+
 export async function sendEmailConfirmation (
   ctx: MeasureContext,
   branding: Branding | null,
@@ -1375,6 +1479,12 @@ export async function confirmEmail (
         type: SocialIdType.EMAIL
       })
     )
+  }
+
+  // The social id may have moved to another person since the link was issued.
+  if (emailSocialId.personUuid !== account) {
+    ctx.error('Email social id belongs to another person', { account, normalizedEmail })
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
   await db.socialId.update({ _id: emailSocialId._id }, { verifiedOn: Date.now() })
@@ -1466,10 +1576,6 @@ export async function getSocialIdByKey (db: AccountDB, socialKey: string): Promi
 
 export async function getEmailSocialId (db: AccountDB, email: string): Promise<SocialId | null> {
   return await db.socialId.findOne({ type: SocialIdType.EMAIL, value: email })
-}
-
-export async function getPhoneSocialId (db: AccountDB, phone: string): Promise<SocialId | null> {
-  return await db.socialId.findOne({ type: SocialIdType.PHONE, value: phone })
 }
 
 export function getFrontUrl (branding: Branding | null): string {
@@ -1817,6 +1923,10 @@ export function flattenStatus (ws: WorkspaceInfoWithStatus): WorkspaceInfoWithSt
 
 export async function cleanExpiredOtp (db: AccountDB): Promise<void> {
   await db.otp.deleteMany({ expiresOn: { $lte: Date.now() } })
+
+  // Every OTP resend mints a new activation link, and only the one actually followed is dropped on
+  // confirm. workspaceId '' marks a sign up link, so guest meeting links are left alone.
+  await db.shortLink.deleteMany({ workspaceId: '', createdAt: { $lte: Date.now() - getSignUpLinkTtlMs() } })
 }
 
 export async function getWorkspaces (

@@ -36,6 +36,9 @@ import {
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import type {
   AccountAggregatedInfo,
+  AccountsFilter,
+  AdminActionsQuery,
+  AdminActionsResult,
   AccountsSortKey,
   TransactorEndpointInfo,
   Integration,
@@ -163,7 +166,6 @@ export interface AccountClient {
   getPerson: () => Promise<Person>
   getPersonInfo: (account: PersonUuid) => Promise<PersonInfo>
   getSocialIds: (includeDeleted?: boolean) => Promise<SocialId[]>
-  getUnverifiedPhoneSocialIds: () => Promise<SocialId[]>
   getWorkspaceMembers: () => Promise<WorkspaceMemberInfo[]>
   updateWorkspaceRole: (account: string, role: AccountRole) => Promise<void>
   isAllowReadOnlyGuests: () => Promise<{ allowed: boolean }>
@@ -187,7 +189,8 @@ export interface AccountClient {
     search?: string,
     skip?: number,
     limit?: number,
-    sort?: AccountsSortKey
+    sort?: AccountsSortKey,
+    filter?: AccountsFilter
   ) => Promise<AccountAggregatedInfo[]>
   getTransactorEndpoints: () => Promise<TransactorEndpointInfo[]>
   deleteAccount: (uuid: AccountUuid, otpCode?: string) => Promise<void>
@@ -246,6 +249,9 @@ export interface AccountClient {
   adminUpdateWorkspaceName: (workspace: WorkspaceUuid, name: string) => Promise<void>
   adminUpdateWorkspaceDisabledFeatures: (workspace: WorkspaceUuid, features: string[]) => Promise<void>
   adminUpdateWorkspaceUrl: (workspace: WorkspaceUuid, url: string, otpCode: string) => Promise<void>
+  adminReleaseSocialId: (personUuid: PersonUuid, type: SocialIdType, value: string, otpCode: string) => Promise<void>
+  adminDeletePerson: (personUuid: PersonUuid, otpCode: string) => Promise<void>
+  listAdminActions: (query: AdminActionsQuery) => Promise<AdminActionsResult>
   performWorkspaceOperation: (
     workspaceId: string | string[],
     event: WorkspaceUserOperation,
@@ -842,15 +848,6 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
-  async getUnverifiedPhoneSocialIds (): Promise<SocialId[]> {
-    const request = {
-      method: 'getUnverifiedPhoneSocialIds' as const,
-      params: {}
-    }
-
-    return await this.rpc(request)
-  }
-
   async workerHandshake (region: string, version: Data<Version>, operation: WorkspaceOperation): Promise<void> {
     const request = {
       method: 'workerHandshake' as const,
@@ -1135,6 +1132,23 @@ class AccountClientImpl implements AccountClient {
     await this.rpc({ method: 'adminUpdateWorkspaceDisabledFeatures' as const, params: { workspace, features } })
   }
 
+  async adminReleaseSocialId (
+    personUuid: PersonUuid,
+    type: SocialIdType,
+    value: string,
+    otpCode: string
+  ): Promise<void> {
+    await this.rpc({ method: 'adminReleaseSocialId' as const, params: { personUuid, type, value, otpCode } })
+  }
+
+  async adminDeletePerson (personUuid: PersonUuid, otpCode: string): Promise<void> {
+    await this.rpc({ method: 'adminDeletePerson' as const, params: { personUuid, otpCode } })
+  }
+
+  async listAdminActions (query: AdminActionsQuery): Promise<AdminActionsResult> {
+    return await this.rpc({ method: 'listAdminActions' as const, params: query })
+  }
+
   async adminUpdateWorkspaceUrl (workspace: WorkspaceUuid, url: string, otpCode: string): Promise<void> {
     await this.rpc({ method: 'adminUpdateWorkspaceUrl' as const, params: { workspace, url, otpCode } })
   }
@@ -1270,11 +1284,12 @@ class AccountClientImpl implements AccountClient {
     search?: string,
     skip?: number,
     limit?: number,
-    sort?: AccountsSortKey
+    sort?: AccountsSortKey,
+    filter?: AccountsFilter
   ): Promise<AccountAggregatedInfo[]> {
     const request = {
       method: 'listAccounts' as const,
-      params: { search, skip, limit, sort }
+      params: { search, skip, limit, sort, filter }
     }
 
     return await this.rpc(request)

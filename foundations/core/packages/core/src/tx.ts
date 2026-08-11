@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -36,12 +37,17 @@ import { _toDoc } from './proxy'
 import type { DocumentQuery, TxResult } from './storage'
 import { generateId, type KeysByType } from './utils'
 
+export type TxMeta = {
+  // ignore notifications if true, allowed for system account only
+  silent?: boolean
+} & Record<string, string | number | boolean>
+
 /**
  * @public
  */
 export interface Tx extends Doc {
   objectSpace: Ref<Space> // space where transaction will operate
-  meta?: Record<string, string | number | boolean> // meta information about transaction, non persisted to final DB's
+  meta?: TxMeta // meta information about transaction, non persisted to final DB's
 }
 
 /**
@@ -481,7 +487,8 @@ export class TxFactory {
     attributes: Data<T>,
     objectId?: Ref<T>,
     modifiedOn?: Timestamp,
-    modifiedBy?: PersonId
+    modifiedBy?: PersonId,
+    meta?: TxMeta
   ): TxCreateDoc<T> {
     return {
       _id: generateId(),
@@ -493,7 +500,8 @@ export class TxFactory {
       modifiedOn: modifiedOn ?? Date.now(),
       modifiedBy: modifiedBy ?? this.account,
       createdBy: modifiedBy ?? this.account,
-      attributes
+      attributes,
+      ...(meta !== undefined ? { meta } : {})
     }
   }
 
@@ -504,7 +512,8 @@ export class TxFactory {
     collection: string,
     tx: TxCUD<P>,
     modifiedOn?: Timestamp,
-    modifiedBy?: PersonId
+    modifiedBy?: PersonId,
+    meta?: TxMeta
   ): TxCUD<P> {
     return {
       ...tx,
@@ -512,7 +521,8 @@ export class TxFactory {
       attachedTo: objectId,
       attachedToClass: _class,
       modifiedOn: modifiedOn ?? Date.now(),
-      modifiedBy: modifiedBy ?? this.account
+      modifiedBy: modifiedBy ?? this.account,
+      ...(meta !== undefined ? { meta: { ...(tx.meta ?? {}), ...meta } } : {})
     }
   }
 
@@ -523,7 +533,8 @@ export class TxFactory {
     operations: DocumentUpdate<T>,
     retrieve?: boolean,
     modifiedOn?: Timestamp,
-    modifiedBy?: PersonId
+    modifiedBy?: PersonId,
+    meta?: TxMeta
   ): TxUpdateDoc<T> {
     return {
       _id: generateId(),
@@ -535,7 +546,8 @@ export class TxFactory {
       objectClass: _class,
       objectSpace: space,
       operations,
-      retrieve
+      retrieve,
+      ...(meta !== undefined ? { meta } : {})
     }
   }
 
@@ -544,7 +556,8 @@ export class TxFactory {
     space: Ref<Space>,
     objectId: Ref<T>,
     modifiedOn?: Timestamp,
-    modifiedBy?: PersonId
+    modifiedBy?: PersonId,
+    meta?: TxMeta
   ): TxRemoveDoc<T> {
     return {
       _id: generateId(),
@@ -554,7 +567,8 @@ export class TxFactory {
       modifiedOn: modifiedOn ?? Date.now(),
       objectId,
       objectClass: _class,
-      objectSpace: space
+      objectSpace: space,
+      ...(meta !== undefined ? { meta } : {})
     }
   }
 
@@ -565,7 +579,8 @@ export class TxFactory {
     mixin: Ref<Mixin<M>>,
     attributes: MixinUpdate<D, M>,
     modifiedOn?: Timestamp,
-    modifiedBy?: PersonId
+    modifiedBy?: PersonId,
+    meta?: TxMeta
   ): TxMixin<D, M> {
     return {
       _id: generateId(),
@@ -577,7 +592,8 @@ export class TxFactory {
       objectClass,
       objectSpace,
       mixin,
-      attributes
+      attributes,
+      ...(meta !== undefined ? { meta } : {})
     }
   }
 
@@ -591,7 +607,8 @@ export class TxFactory {
     notify: boolean = true,
     extraNotify: Ref<Class<Doc>>[] = [],
     modifiedOn?: Timestamp,
-    modifiedBy?: PersonId
+    modifiedBy?: PersonId,
+    meta?: TxMeta
   ): TxApplyIf {
     return {
       _id: generateId(),
@@ -606,7 +623,8 @@ export class TxFactory {
       txes,
       measureName,
       notify,
-      extraNotify
+      extraNotify,
+      ...(meta !== undefined ? { meta } : {})
     }
   }
 }

@@ -311,3 +311,104 @@ describe('$inc match handling — doc inside the result (handleDocUpdate)', () =
     expect(q.last().length).toBe(before + 1) // private:false makes it match; $inc rides along
   })
 })
+
+// An equal-timestamp non-$inc update sends every subscriber through getCurrentDoc, which reads
+// the doc from the per-batch docCache. All subscribers must end up with their own copy: a shared
+// object would take one $inc per subscriber, which is how a collection counter drifts upwards.
+describe('$inc on a doc shared by several queries', () => {
+  async function shared (
+    count: number,
+    extra?: Partial<CounterSpace>
+  ): Promise<{
+      ctx: Awaited<ReturnType<typeof getCountingClient>>
+      id: Ref<CounterSpace>
+      qs: Array<{ last: () => CounterSpace[] }>
+    }> {
+    const ctx = await getCountingClient()
+    const id = (await createSpace(ctx.factory, false, {
+      rate: 0,
+      name: 'shared',
+      ...extra
+    } as any)) as Ref<CounterSpace>
+    // Distinct queries that all keep matching, same class and options -> one docCache entry.
+    const variants = [{}, { private: false }, { archived: false }, { members: [] }]
+    const qs: Array<{ last: () => CounterSpace[] }> = []
+    for (let i = 0; i < count; i++) {
+      qs.push(await subscribe<CounterSpace>(ctx.liveQuery, core.class.Space, { name: 'shared', ...variants[i] } as any))
+    }
+    await ctx.storage.tx(
+      ctx.txFactory.createTxUpdateDoc<CounterSpace>(
+        core.class.Space,
+        core.space.Model,
+        id,
+        { description: 'forces getCurrentDoc' } as any,
+        false,
+        qs[0].last()[0].modifiedOn
+      )
+    )
+    await settle()
+    return { ctx, id, qs }
+  }
+
+  it('applies a single $inc once for two subscribers', async () => {
+    const { ctx, id, qs } = await shared(2)
+
+    await ctx.factory.updateDoc<CounterSpace>(core.class.Space, core.space.Model, id, { $inc: { rate: 1 } } as any)
+    await settle()
+
+    expect(qs.map((q) => q.last()[0].rate)).toEqual([1, 1])
+  })
+
+  it('does not scale the drift with the number of subscribers', async () => {
+    const { ctx, id, qs } = await shared(3)
+
+    await ctx.factory.updateDoc<CounterSpace>(core.class.Space, core.space.Model, id, { $inc: { rate: 1 } } as any)
+    await settle()
+
+    expect(qs.map((q) => q.last()[0].rate)).toEqual([1, 1, 1])
+  })
+
+  it('keeps consecutive $inc txes in sync with the server', async () => {
+    const { ctx, id, qs } = await shared(2)
+
+    for (let i = 0; i < 5; i++) {
+      await ctx.factory.updateDoc<CounterSpace>(core.class.Space, core.space.Model, id, { $inc: { rate: 1 } } as any)
+    }
+    await settle()
+
+    const server = await ctx.storage.findOne<CounterSpace>(core.class.Space, { _id: id })
+    expect(server?.rate).toBe(5)
+    expect(qs.map((q) => q.last()[0].rate)).toEqual([5, 5])
+  })
+
+  it('applies equal-timestamp $inc txes from one batch exactly once', async () => {
+    // Two attachments added by one operation: the server derives two counter txes that
+    // share the parent timestamp, and both arrive in a single tx batch.
+    const { ctx, id, qs } = await shared(2)
+    const ts = qs[0].last()[0].modifiedOn + 1
+    const inc = (): any =>
+      ctx.txFactory.createTxUpdateDoc<CounterSpace>(
+        core.class.Space,
+        core.space.Model,
+        id,
+        { $inc: { rate: 1 } } as any,
+        false,
+        ts
+      )
+
+    await ctx.storage.tx(inc())
+    await ctx.storage.tx(inc())
+    await settle()
+
+    expect(qs.map((q) => q.last()[0].rate)).toEqual([2, 2])
+  })
+
+  it('applies a negative $inc once', async () => {
+    const { ctx, id, qs } = await shared(2, { rate: 3 })
+
+    await ctx.factory.updateDoc<CounterSpace>(core.class.Space, core.space.Model, id, { $inc: { rate: -1 } } as any)
+    await settle()
+
+    expect(qs.map((q) => q.last()[0].rate)).toEqual([2, 2])
+  })
+})

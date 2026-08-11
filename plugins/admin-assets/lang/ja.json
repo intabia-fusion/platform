@@ -164,6 +164,16 @@
     "GroupByPayment": "支払いチェーン別",
     "Event": "イベント",
     "CurrentPlan": "有効",
-    "Actor": "実行者"
+    "Actor": "実行者",
+    "NoWorkspaces": "ワークスペースなし",
+    "InactiveOver": "最終アクセスから",
+    "AnyActivity": "すべて",
+    "Export": "エクスポート",
+    "PendingSignups": "未完了の登録",
+    "SortRegistered": "登録日",
+    "Audit": "監査",
+    "AuditTitle": "管理者の操作",
+    "Target": "対象",
+    "ReleaseSocialId": "ソーシャルIDを削除"
   }
 }
