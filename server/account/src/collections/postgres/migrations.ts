@@ -43,6 +43,14 @@ const dbTypes = {
   }
 }
 
+/**
+ * Adding a column and reading it must be two separate migrations.
+ *
+ * CockroachDB parses a multi-statement batch as a whole, so a backfill sitting next to its own
+ * ADD COLUMN fails with "column does not exist" and the migration retries forever - the workspace
+ * pod then stops processing anything. PostgreSQL runs the same batch fine, so this only shows up on
+ * the cockroach regions. See v35/v36 and v32/v33.
+ */
 export function getMigrations (ns: string, flavor: DBFlavor): [string, string][] {
   if (flavor === 'unknown') {
     throw new Error('Cannot generate migrations for an unknown database flavor.')
@@ -93,7 +101,9 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV32Migration(ns, flavor),
     getV33Migration(ns),
     getV34Migration(ns),
-    getV35Migration(ns, flavor)
+    getV35Migration(ns, flavor),
+    getV36Migration(ns),
+    getV37Migration(ns)
   ]
 }
 
@@ -1060,6 +1070,36 @@ function getV35Migration (ns: string, flavor: DBFlavor): [string, string] {
 
     CREATE INDEX IF NOT EXISTS admin_action_created_idx ON ${ns}.admin_action (created_on);
     CREATE INDEX IF NOT EXISTS admin_action_target_idx ON ${ns}.admin_action (target);
+    `
+  ]
+}
+
+function getV36Migration (ns: string): [string, string] {
+  return [
+    'account_db_v36_person_phone_hint',
+    `
+    /* Existing phone social ids stay in place and are reused once SMS verification lands. */
+    ALTER TABLE ${ns}.person ADD COLUMN IF NOT EXISTS phone_hint TEXT;
+    `
+  ]
+}
+
+function getV37Migration (ns: string): [string, string] {
+  return [
+    'account_db_v37_person_phone_hint_backfill',
+    /* Separate migration on purpose: a multi-statement batch is parsed as a whole, so an UPDATE
+       reading phone_hint next to the ADD COLUMN fails with "column does not exist". Same reason
+       v33 was split off from v32. */
+    `
+    UPDATE ${ns}.person p
+       SET phone_hint = s.value
+      FROM (
+        SELECT DISTINCT ON (person_uuid) person_uuid, value
+          FROM ${ns}.social_id
+         WHERE type = 'phone'
+         ORDER BY person_uuid, created_on DESC
+      ) s
+     WHERE s.person_uuid = p.uuid AND p.phone_hint IS NULL;
     `
   ]
 }

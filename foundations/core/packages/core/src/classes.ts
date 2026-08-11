@@ -640,10 +640,13 @@ export interface Person {
   uuid: PersonUuid
   firstName: string
   lastName: string
+  // No SMS verification yet, so a phone cannot be a social id.
+  phoneHint?: string
 }
 
 export interface PersonInfo extends BasePerson {
   socialIds: SocialId[]
+  phoneHint?: string
 }
 
 /**
