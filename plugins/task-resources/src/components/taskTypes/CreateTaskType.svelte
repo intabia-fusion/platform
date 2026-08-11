@@ -142,6 +142,7 @@
         kind: ClassifierKind.CLASS,
         label: getEmbeddedLabel(name),
         icon: ofClassClass.icon,
+        color: ofClassClass.color,
         shortLabel: ofClassClass.shortLabel,
         sortingKey: ofClassClass.sortingKey,
         filteringKey: ofClassClass.filteringKey,

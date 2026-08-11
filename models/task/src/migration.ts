@@ -620,13 +620,21 @@ export const taskOperation: MigrateOperation = {
 
             for (const classTx of classTxes) {
               if (classTx.attributes?.kind === ClassifierKind.MIXIN) {
+                const extendsClass = classTx.attributes.extends
+                const clazz = extendsClass != null ? client.hierarchy.findClass(extendsClass) : undefined
+
                 await client.update(
                   DOMAIN_MODEL_TX,
                   { _id: classTx._id },
                   {
                     attributes: {
                       ...classTx.attributes,
-                      kind: ClassifierKind.CLASS
+                      kind: ClassifierKind.CLASS,
+                      color: classTx.attributes.color ?? clazz?.color,
+                      shortLabel: classTx.attributes.shortLabel ?? clazz?.shortLabel,
+                      sortingKey: classTx.attributes.sortingKey ?? clazz?.sortingKey,
+                      filteringKey: classTx.attributes.filteringKey ?? clazz?.filteringKey,
+                      titleKey: classTx.attributes.titleKey ?? clazz?.titleKey
                     }
                   }
                 )

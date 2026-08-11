@@ -135,22 +135,51 @@ function getMatchedMessageTypes (client: Client, message: ActivityMessage, doc: 
   )
 }
 
+function safeGetBaseClass<T extends Doc> (
+  hierarchy: Hierarchy,
+  _class: Ref<Class<T>> | undefined
+): Ref<Class<T>> | undefined {
+  if (_class === undefined) {
+    return undefined
+  }
+  if (!hierarchy.hasClass(_class)) {
+    return undefined
+  }
+  try {
+    return hierarchy.getBaseClass(_class)
+  } catch (err: any) {
+    return undefined
+  }
+}
+
 function isMessageTypeMatched (
   client: Client,
   message: ActivityMessage,
   doc: Doc,
   type: MessageNotificationType
 ): boolean {
-  const { hierarchy } = client
-  const baseClass = hierarchy.getBaseClass(type.objectClass)
+  const { hierarchy, ctx } = client
+  const baseClass = safeGetBaseClass(hierarchy, type.objectClass)
+  if (baseClass === undefined) {
+    ctx.error('base class not found in hierarchy', { class: type.objectClass, type })
+    return false
+  }
 
   if (!hierarchy.isDerived(message._class, type.messageClass)) {
     return false
   }
 
-  if (
-    !hierarchy.isDerived(hierarchy.getBaseClass(message.attachedToClass), hierarchy.getBaseClass(type.attachedToClass))
-  ) {
+  const messageAttachedToBaseClass = safeGetBaseClass(hierarchy, message.attachedToClass)
+  if (messageAttachedToBaseClass === undefined) {
+    ctx.error('base class not found in hierarchy', { _class: messageAttachedToBaseClass, message })
+    return false
+  }
+  const typeAttachedToBaseClass = safeGetBaseClass(hierarchy, type.attachedToClass)
+  if (typeAttachedToBaseClass === undefined) {
+    ctx.error('base class not found in hierarchy', { _class: type.attachedToClass, type })
+    return false
+  }
+  if (!hierarchy.isDerived(messageAttachedToBaseClass, typeAttachedToBaseClass)) {
     return false
   }
 
@@ -170,8 +199,14 @@ function isMessageTypeMatched (
   }
 
   const docUpdateMessage = message as DocUpdateMessage
+  const docUpdateObjectBase = safeGetBaseClass(hierarchy, docUpdateMessage.objectClass)
 
-  if (!hierarchy.isDerived(hierarchy.getBaseClass(docUpdateMessage.objectClass), baseClass)) {
+  if (docUpdateObjectBase === undefined) {
+    ctx.error('base class not found in hierarchy', { class: docUpdateMessage.objectClass, docUpdateMessage })
+    return false
+  }
+
+  if (!hierarchy.isDerived(docUpdateObjectBase, baseClass)) {
     return false
   }
 
@@ -364,21 +399,40 @@ export async function getTxNotifyResult (
 }
 
 export function isMatchedTxType (client: Client, tx: TxCUD<Doc>, type: TxNotificationType): boolean {
-  const { hierarchy } = client
+  const { hierarchy, ctx } = client
 
   if (!type.txClasses.includes(tx._class)) return false
 
   if (type.attachedToClass != null) {
     if (tx.attachedToClass == null) return false
-    if (
-      !hierarchy.isDerived(hierarchy.getBaseClass(tx.attachedToClass), hierarchy.getBaseClass(type.attachedToClass))
-    ) {
+    const txAttachedBase = safeGetBaseClass(hierarchy, tx.attachedToClass)
+    if (txAttachedBase === undefined) {
+      ctx.error('base class not found in hierarchy', { class: tx.attachedToClass, tx })
+      return false
+    }
+    const typeAttachedBase = safeGetBaseClass(hierarchy, type.attachedToClass)
+    if (typeAttachedBase === undefined) {
+      ctx.error('base class not found in hierarchy', { class: type.attachedToClass, type })
+      return false
+    }
+    if (!hierarchy.isDerived(txAttachedBase, typeAttachedBase)) {
       return false
     }
   }
 
   if (type.objectClass !== core.class.Doc) {
-    if (!hierarchy.isDerived(hierarchy.getBaseClass(tx.objectClass), hierarchy.getBaseClass(type.objectClass))) {
+    const txObjectBase = safeGetBaseClass(hierarchy, tx.objectClass)
+    if (txObjectBase === undefined) {
+      ctx.error('base class not found in hierarchy', { class: tx.objectClass, tx })
+      return false
+    }
+
+    const typeObjectBase = safeGetBaseClass(hierarchy, type.objectClass)
+    if (typeObjectBase === undefined) {
+      ctx.error('base class not found in hierarchy', { class: type.objectClass, type })
+      return false
+    }
+    if (!hierarchy.isDerived(txObjectBase, typeObjectBase)) {
       return false
     }
   }
