@@ -594,27 +594,36 @@ export class IssuesPage extends CommonTrackerPage {
     }).toPass(retryOptions)
   }
 
+  // use:tooltip opens the list on mousemove, so hovering a button the cursor already rests on
+  // can leave a closed tooltip closed. Park the pointer elsewhere first.
+  private async hoverAttachmentButton (issueName: string): Promise<void> {
+    await this.page.mouse.move(0, 0)
+    await this.addAttachmentButton(issueName).hover()
+  }
+
   async addAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
-    await this.addAttachmentButton(issueName).click()
+    await this.hoverAttachmentButton(issueName)
     await this.inputPopupAddAttachmentsFile().setInputFiles(path.join(__dirname, `../../files/${filePath}`))
     await expect(this.textPopupAddAttachmentsFile().filter({ hasText: filePath })).toBeVisible()
   }
 
   async deleteAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
-    await this.addAttachmentButton(issueName).click()
+    await this.hoverAttachmentButton(issueName)
     await this.deleteAttachmentLink(filePath).hover()
     await this.deleteAttachmentLink(filePath).click()
     await expect(this.textPopupAddAttachmentsFile().filter({ hasText: filePath })).toBeVisible({ visible: false })
   }
 
   async checkCannotDeleteAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
-    await this.addAttachmentButton(issueName).click()
+    await this.hoverAttachmentButton(issueName)
     await this.deleteAttachmentLink(filePath).hover()
     await expect(this.deleteAttachmentLink(filePath)).not.toBeVisible()
   }
 
+  // The attachment list is a hover tooltip on a DocNavLink. Clicking the link runs NavLink's
+  // closeTooltip(), so a click races the very popup these helpers read.
   async checkAddAttachmentPopupContainsFile (issueName: string, filePath: string): Promise<void> {
-    await this.addAttachmentButton(issueName).click()
+    await this.hoverAttachmentButton(issueName)
     await expect(this.textPopupAddAttachmentsFile().filter({ hasText: filePath })).toBeVisible()
   }
 

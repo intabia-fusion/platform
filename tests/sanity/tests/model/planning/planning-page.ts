@@ -164,14 +164,18 @@ export class PlanningPage extends CalendarPage {
   }
 
   async markDoneInToDos (title: string): Promise<void> {
-    // Retry logic to handle DOM detachment issues and slow loading
-    // First ensure the todo is visible in the list with longer timeout
-    await expect(this.toDoInToDos(title)).toBeVisible({ timeout: 20000 })
+    const toDo = this.toDoInToDos(title)
+    await expect(toDo).toBeVisible({ timeout: 20000 })
+    // The list rebuilds while a todo is being marked, so a click can land on a detached node
+    // and still report success. Retry until the row itself reports isDone.
     await expect(async () => {
-      await this.toDoInToDos(title).scrollIntoViewIfNeeded()
-      await this.toDoInToDos(title).hover()
-      await this.checkboxToDoInToDos(title).hover()
-      await this.checkboxToDoInToDos(title).click()
+      if (!((await toDo.getAttribute('class')) ?? '').includes('isDone')) {
+        await toDo.scrollIntoViewIfNeeded()
+        await toDo.hover()
+        await this.checkboxToDoInToDos(title).hover()
+        await this.checkboxToDoInToDos(title).click()
+      }
+      await expect(toDo).toHaveClass(/isDone/, { timeout: 5000 })
     }).toPass({ intervals: [100, 200, 500, 1000], timeout: 20000 })
   }
 
@@ -294,9 +298,29 @@ export class PlanningPage extends CalendarPage {
       .locator('div.dateEditor-container:nth-child(1) .hulyButton span.digit:last-child')
       .pressSequentially(minutes, { delay: 100 })
 
-    // dateEnd + timeEnd
-    await row.locator('div.dateEditor-container.difference .hulyButton').click()
-    await this.fillSelectDatePopup(slot.dateEnd.day, slot.dateEnd.month, slot.dateEnd.year, slot.timeEnd)
+    // dateEnd + timeEnd. DateEditor opens the date+time popup from the time field only while the
+    // slot fits one day. Once it spans two days that click merely focuses the field and a separate
+    // date button appears, so date and time have to be set one by one.
+    const endContainer = row.locator('div.dateEditor-container.difference')
+    const endDateButton = endContainer.locator('button.hulyButton')
+    if ((await endDateButton.count()) === 0) {
+      await endContainer.locator('div.hulyButton').click()
+      await this.fillSelectDatePopup(slot.dateEnd.day, slot.dateEnd.month, slot.dateEnd.year, slot.timeEnd)
+      return
+    }
+
+    await endDateButton.click()
+    // ponytail: picks the day within the month already shown - callers only ever use the current
+    // month. Add month navigation here if a test ever needs an end date outside it.
+    await this.page
+      .locator('div.popup div.calendar button.day')
+      .filter({ has: this.page.locator(`text="${slot.dateEnd.day}"`) })
+      .click()
+    const endDigits = endContainer.locator('div.hulyButton span.digit')
+    await endDigits.first().focus()
+    await endDigits.first().pressSequentially(slot.timeEnd.substring(0, 2), { delay: 100 })
+    await endDigits.last().focus()
+    await endDigits.last().pressSequentially(slot.timeEnd.substring(2), { delay: 100 })
   }
 
   private async checkTimeSlot (rowNumber: number, slot: Slot, popup: boolean = false): Promise<void> {
