@@ -172,9 +172,19 @@
       // Create target class for custom field.
       _taskType.targetClass = await client.createDoc(core.class.Class, core.space.Model, {
         extends: ofClass,
-        kind: ClassifierKind.MIXIN,
+        kind: ClassifierKind.CLASS,
         label: getEmbeddedLabel(name),
-        icon: ofClassClass.icon
+        icon: ofClassClass.icon,
+        color: ofClassClass.color,
+        shortLabel: ofClassClass.shortLabel,
+        sortingKey: ofClassClass.sortingKey,
+        filteringKey: ofClassClass.filteringKey,
+        titleKey: ofClassClass.titleKey
+      })
+
+      await client.createMixin(_taskType.targetClass, core.class.Class, core.space.Model, task.mixin.TaskTypeClass, {
+        taskType: taskTypeId,
+        projectType: type._id
       })
 
       await client.createDoc(task.class.TaskType, core.space.Model, _taskType, taskTypeId)

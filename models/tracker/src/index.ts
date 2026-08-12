@@ -41,7 +41,7 @@ import {
   TIssue,
   TIssueStatus,
   TIssueTemplate,
-  TIssueTypeData,
+  TIssueTaskType,
   TMilestone,
   TProject,
   TProjectTargetPreference,
@@ -444,6 +444,7 @@ export function createModel (builder: Builder): void {
     TProject,
     TComponent,
     TIssue,
+    TIssueTaskType,
     TIssueTemplate,
     TIssueStatus,
     TTypeIssuePriority,
@@ -556,6 +557,7 @@ export function createModel (builder: Builder): void {
       query: tracker.completion.IssueQuery,
       context: ['search', 'mention', 'spotlight'],
       classToSearch: tracker.class.Issue,
+      includeChilds: true,
       priority: 300
     },
     tracker.completion.IssueCategory
@@ -690,7 +692,12 @@ function defineSpaceType (builder: Builder): void {
   }
 
   // Create default task type
-  builder.createModel(TIssueTypeData)
+  builder.createModel(TIssueTaskType)
+
+  builder.mixin(tracker.class.IssueTaskType, core.class.Class, task.mixin.TaskTypeClass, {
+    taskType: tracker.taskTypes.Issue,
+    projectType: pluginState.ids.ClassingProjectType
+  })
 
   builder.createDoc(
     task.class.TaskType,
@@ -701,7 +708,7 @@ function defineSpaceType (builder: Builder): void {
       descriptor: tracker.descriptors.Issue,
       name: 'Issue',
       ofClass: tracker.class.Issue,
-      targetClass: tracker.mixin.IssueTypeData,
+      targetClass: tracker.class.IssueTaskType,
       statusClass: tracker.class.IssueStatus,
       statusCategories: classicIssueTaskStatuses.map((it) => it.category),
       allowedAsChildOf: [tracker.taskTypes.Issue],

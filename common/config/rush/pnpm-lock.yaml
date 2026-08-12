@@ -33185,6 +33185,9 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
+      '@hcengineering/task':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/task
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -35772,6 +35775,9 @@ importers:
       '@hcengineering/postgres':
         specifier: workspace:^0.7.22
         version: link:../../foundations/server/packages/postgres
+      '@hcengineering/pulse':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/pulse
       '@hcengineering/retry':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/retry

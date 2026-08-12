@@ -372,7 +372,8 @@ export default function buildModel (): Builder {
         beta: false,
         icon: github.icon.Github,
         classFilter: defaultFilter,
-        mixinFilter: defaultMixinFilter
+        mixinFilter: defaultMixinFilter,
+        objectIdFilter: [github.mixin.GithubIssue]
       }
     ],
     [

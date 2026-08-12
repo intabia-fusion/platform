@@ -85,7 +85,13 @@ import type { AnyComponent } from '@hcengineering/ui/src/types'
 import task from './plugin'
 
 export { createProjectType, taskId } from '@hcengineering/task'
-export { createSequence, migrateDefaultStatusesBase, taskOperation } from './migration'
+export {
+  createSequence,
+  migrateDefaultStatusesBase,
+  taskOperation,
+  migrateMixinToClassInModel,
+  migrateTaskTypesToClasses
+} from './migration'
 export { default } from './plugin'
 
 export const DOMAIN_TASK = 'task' as Domain
@@ -217,7 +223,7 @@ export class TTaskType extends TDoc implements TaskType {
     ofClass!: Ref<Class<Task>> // Base class for task
 
   @Prop(TypeRef(core.class.Class), getEmbeddedLabel('Task target class'))
-    targetClass!: Ref<Class<Task>> // Class or Mixin mixin to hold all user defined attributes.
+    targetClass!: Ref<Class<Task>> // Class to hold all user defined attributes.
 
   @Prop(ArrOf(TypeRef(core.class.Status)), getEmbeddedLabel('Task statuses'))
     statuses!: Ref<Status>[]

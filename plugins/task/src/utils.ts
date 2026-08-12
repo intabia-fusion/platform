@@ -337,18 +337,23 @@ async function createTaskTypes (
       tdata.targetClass = targetClassId
 
       await client.createDoc(
-        core.class.Mixin,
+        core.class.Class,
         core.space.Model,
         {
           extends: data.ofClass,
-          kind: ClassifierKind.MIXIN,
+          kind: ClassifierKind.CLASS,
           label: ofClassClass.label,
-          icon: ofClassClass.icon
+          icon: ofClassClass.icon,
+          color: ofClassClass.color,
+          shortLabel: ofClassClass.shortLabel,
+          sortingKey: ofClassClass.sortingKey,
+          filteringKey: ofClassClass.filteringKey,
+          titleKey: ofClassClass.titleKey
         },
         targetClassId
       )
 
-      await client.createMixin(targetClassId, core.class.Mixin, core.space.Model, task.mixin.TaskTypeClass, {
+      await client.createMixin(targetClassId, core.class.Class, core.space.Model, task.mixin.TaskTypeClass, {
         taskType: taskId,
         projectType: _id
       })

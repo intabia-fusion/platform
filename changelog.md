@@ -2,6 +2,60 @@
 
 Changelog.
 
+## [0.8.20] - 2026-08-11
+
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-427 - Скрыть функционал связей из документов и диска (#324) · FUSIO-647 Email about upcoming payment, canceling, trial period ending (#319)
+* 🐛 BUG FIXES: · FUSIO-1121: Phone registration fixes (#320) · FUSIO-1169: Fix tables (#318) · Fix love workspace hold (#321)
+
+## [0.8.19] - 2026-08-10
+
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-865 - Доработка регулярного выражения в маршруте получения blob (#314) · FUSIO-1145: Improve admin reports (#313) · FUSIO-1020: Speedup restart storm (#262) · Platform sync (#307)
+* 🐛 BUG FIXES: · Fix live query for $inc (#316) · Fixes for platform sync · FUSIO-830 Checkout releasing fix (#299)
+* 🚀 FEATURES: · Add silent mode for tx
+
+## [0.8.18] - 2026-08-06
+
+* ⚙️ MISCELLANEOUS TASKS: · Adjust image dimensions (#312)
+* 🐛 BUG FIXES: · Fix random doc in lookup
+
+## [0.8.17] - 2026-08-05
+
+* 🐛 BUG FIXES: · fix image resize
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-1132 (#306) · Drop communication (#301) · FUSIO-1127: Allow to recover document state (#304) · FUSIO-1114: Improve admin stuff (#302) · FUSIO-1099: Handle payment cancel (#295)
+
+## [0.8.16] - 2026-07-31
+
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-1105 - Исправление отображения картинок в чате (#298) · FUSIO-1062: Make more neutral colors (#297)
+
+## [0.8.15] - 2026-07-30
+
+* 🐛 BUG FIXES: · FUSIO-1100: Fix trial user limit (#294)
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-1062: Allow to configure parents (#290)
+
+## [0.8.14] - 2026-07-29
+
+* ⚙️ MISCELLANEOUS TASKS: · Remove projects from billing calc (#293) · FUSIO-964 - Доработка логики закрытия окон в меню задач (#276) · FUSIO-1092 One-off payment (#289) · FUSIO-1078: Use own implementation (#281) · FUSIO-1084: Move love to billing queue (#286) · FUSIO-1071: Billing admin access (#282)
+* 🐛 BUG FIXES: · FUSIO-1086: Fix backup stop on error (#287) · FUSIO-1052: Improve class editor + few fixes (#279) · FUSIO-1082: Fix billing kafka disbalance (#284) · FUSIO-957: Fix seat change price (#283) · FUSIO-341: Fix backup of accounts (#157) · FUSIO-1064: Claim migration fixes (#277)
+
+## [0.8.4] - 2026-07-13
+
+* 🐛 BUG FIXES: · FUSIO-932: Fix performance for meetings (#257) · FUSIO-220: Attempt to fix sound (#251) · FUSIO-982: Fix backup/restore and datalake retry issues (#248) · Fixes for gh-picker
+* ⚙️ MISCELLANEOUS TASKS: · fusio-222: show full time format for activity (#255) · fusio-995: DВ schema migrations (#252) · fusio-996: Disable message dblclick reply for mobile devices and interactive elements (#253) · FUSIO-898 - Отображение родительских и связанных задач в виде списка (#243) · Update current set of features
+* 🚀 FEATURES: · fusio-656: add translations for activity messages (#249)
+
+## [0.8.3] - 2026-07-02
+
+* 🚀 FEATURES: · fusio-948: add yandex metrika (#246)
+
+## [0.8.2] - 2026-07-01
+
+* ⚙️ MISCELLANEOUS TASKS: · Do not clear input during sending (#244)
+* 🐛 BUG FIXES: · Fix thread open (#245)
+
+## [0.8.1] - 2026-06-27
+
+* ⚙️ MISCELLANEOUS TASKS: · FUSIO-427 - Отключение функционала связей (#241) · FUSIO-927 - Отфильтровал каналы общения, чтобы не выводились запрещенные (#235)
+
 ## [0.8.0] - 2026-06-26
 
 * ⚙️ MISCELLANEOUS TASKS: · Update project name in README.md · Bump model to 0.8.0

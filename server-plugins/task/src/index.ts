@@ -22,6 +22,8 @@ import { TriggerFunc } from '@hcengineering/server-core'
  */
 export const serverTaskId = 'server-task' as Plugin
 
+export { TaskMiddleware } from './middleware'
+
 /**
  * @public
  */
