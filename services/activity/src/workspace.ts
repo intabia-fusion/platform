@@ -97,7 +97,8 @@ class Workspace {
 
       if (res.length > 0) {
         this.lastTxDate = tx.createdOn ?? tx.modifiedOn
-        await this.applyTxes(res)
+        const silent = tx.meta?.silent
+        await this.applyTxes(res.map((it) => (silent !== undefined ? { ...it, meta: { ...it.meta, silent } } : it)))
       }
     } finally {
       this.inProgress = false

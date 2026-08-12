@@ -211,16 +211,29 @@ class WsCache {
       this.userStatuses.set(updated._id, updated)
     }
 
-    if (hierarchy.isDerived(tx.objectClass, contact.class.Person)) {
+    if (
+      hierarchy.isDerived(tx.objectClass, contact.mixin.Employee) ||
+      hierarchy.isDerived(tx.objectClass, contact.class.Person)
+    ) {
+      const employees = Array.from(this.employees.values())
+      const employee = employees.find((emp) => emp._id === tx.objectId)
+      if (employee != null) {
+        const updated = this.updateOrMixin(tx, employee as Employee) as EmployeeInfo
+        if (updated.personUuid != null) {
+          this.employees.set(updated.personUuid, updated)
+        }
+      }
+
       const persons: Array<[PersonId, Person]> = Array.from(this.persons.entries())
       const matched = persons.filter(([_, person]) => person._id === tx.objectId)
-      if (matched.length === 0) return
-      const updated = matched.map(([personId, person]): [PersonId, Person] => [
-        personId,
-        this.updateOrMixin(tx, person)
-      ])
-      for (const [personId, person] of updated) {
-        this.persons.set(personId, person)
+      if (matched.length > 0) {
+        const updated = matched.map(([personId, person]): [PersonId, Person] => [
+          personId,
+          this.updateOrMixin(tx, person)
+        ])
+        for (const [personId, person] of updated) {
+          this.persons.set(personId, person)
+        }
       }
     }
   }
@@ -283,11 +296,14 @@ class WsCache {
       return
     }
 
-    if (hierarchy.isDerived(tx.objectClass, contact.class.Person)) {
+    if (
+      hierarchy.isDerived(tx.objectClass, contact.mixin.Employee) ||
+      hierarchy.isDerived(tx.objectClass, contact.class.Person)
+    ) {
       const employees = Array.from(this.employees.values())
       const employee = employees.find((employee) => employee._id === tx.objectId)
-      if (employee != null) {
-        this.employees.delete(employee.personUuid as AccountUuid)
+      if (employee?.personUuid != null) {
+        this.employees.delete(employee.personUuid)
       }
 
       const persons: Array<[PersonId, Person]> = Array.from(this.persons.entries())
@@ -422,22 +438,33 @@ class WsCache {
 
   private async getEmployeesInfo (collaborators: AccountUuid[]): Promise<EmployeeInfo[]> {
     const existing = collaborators.map((it) => this.employees.get(it)).filter(notEmpty)
-
     const toLoad = collaborators.filter((it) => !this.employees.has(it))
-    if (toLoad.length === 0) return existing
+    if (toLoad.length === 0) {
+      return existing.filter((it) => it.active)
+    }
 
-    const employees: Pick<Employee, '_id' | 'personUuid' | 'role'>[] = await this.client.findAll(
+    const loaded = await this.client.findAll(
       contact.mixin.Employee,
       { personUuid: { $in: toLoad }, active: true },
-      { projection: { _id: 1, personUuid: 1, role: 1 } }
+      { projection: { _id: 1, personUuid: 1, role: 1, active: 1 } }
     )
+
+    const employees: EmployeeInfo[] = loaded.map((doc) => {
+      const emp = this.client.hierarchy.as(doc, contact.mixin.Employee)
+      return {
+        _id: emp._id,
+        personUuid: emp.personUuid,
+        role: emp.role,
+        active: emp.active ?? true
+      }
+    })
 
     for (const employee of employees) {
       if (employee.personUuid == null) continue
       this.employees.set(employee.personUuid, employee)
     }
 
-    return existing.concat(employees)
+    return existing.concat(employees).filter((it) => it.active)
   }
 
   public async findPersonSpace (_id: Ref<PersonSpace>): Promise<PersonSpace | undefined> {
