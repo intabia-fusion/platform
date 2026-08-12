@@ -45,7 +45,8 @@
     showPopup,
     addNotification,
     NotificationSeverity,
-    Switcher
+    Switcher,
+    ticker
   } from '@hcengineering/ui'
   import { onMount, onDestroy } from 'svelte'
   import support from '@hcengineering/support'
@@ -111,16 +112,14 @@
   const MAX_POLL_ATTEMPTS = 120
   const POLL_INTERVAL = 2000
   let destroyed = false
+  let mounted = false
   let pollErrorCount = 0
   let pollErrorShown = false
   let configError = false
   const DEFAULT_LOCALE = 'ru'
 
-  // Usage comes from the shared subscription store, refreshed by the poll below.
+  // Usage comes from the shared subscription store, refreshed by the ticker below.
   $: usageInfo = $subscriptionStore.usageInfo ?? null
-
-  const USAGE_POLL_INTERVAL = 10 * 1000
-  let usageTimer: ReturnType<typeof setInterval> | undefined
 
   $: isCurrentCanceled = currentSubscription?.canceledAt !== undefined && currentSubscription.canceledAt > 0
   // Unpaid = the cancel is immediate on the server (isImmediateCancel in pod-tbank-subscriptions).
@@ -939,6 +938,12 @@
   $: isCheckoutPolling = pollingCheckoutId !== null
   $: isBusy = isUpdating || isCanceling || isUncanceling || isPackageBusy || isRetrying || isCheckoutPolling
 
+  // A refresh started before a payment operation can land after it and push a pre-operation
+  // subscription back into the store, desyncing the banner/indicator from this page.
+  $: if ($ticker > 0 && mounted && !isBusy) {
+    void checkWorkspaceLimits()
+  }
+
   function formatEndDate (endDate: number, lang: string): string {
     const date = new Date(endDate)
     return date.toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })
@@ -1010,20 +1015,14 @@
 
       // Then check if we need to poll for a new subscription from checkout
       checkForCheckoutParam()
-    })()
 
-    usageTimer = setInterval(() => {
-      // A poll started before a payment operation can land after it and push a pre-operation
-      // subscription back into the store, desyncing the banner/indicator from this page.
-      if (isBusy) return
-      void checkWorkspaceLimits()
-    }, USAGE_POLL_INTERVAL)
+      mounted = true
+    })()
   })
 
   onDestroy(() => {
     destroyed = true
     clearTimeout(pollTimer)
-    clearInterval(usageTimer)
     removeTxListener(txListener)
   })
 </script>
