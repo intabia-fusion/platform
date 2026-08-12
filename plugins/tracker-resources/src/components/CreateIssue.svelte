@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -235,7 +236,13 @@
     }
     return base
   }
-  fillDefaults(hierarchy, object, tracker.class.Issue)
+  $: taskType = kind !== undefined ? $taskTypeStore.get(kind) : undefined
+  $: issueClass =
+    taskType?.targetClass != null && hierarchy.hasClass(taskType.targetClass)
+      ? taskType.targetClass
+      : (taskType?.ofClass ?? tracker.class.Issue)
+
+  $: fillDefaults(hierarchy, object, issueClass)
 
   let currentProject: Project | undefined
 
@@ -271,7 +278,7 @@
     templateId = undefined
     template = undefined
     object = getDefaultObject(undefined, true)
-    fillDefaults(hierarchy, object, tracker.class.Issue)
+    fillDefaults(hierarchy, object, issueClass ?? tracker.class.Issue)
   }
 
   $: if (templateId !== undefined) {
@@ -359,7 +366,7 @@
     if (object.kind !== undefined) {
       kind = object.kind
     }
-    fillDefaults(hierarchy, object, tracker.class.Issue)
+    fillDefaults(hierarchy, object, issueClass)
   }
 
   $: if (template !== undefined) {
@@ -523,14 +530,14 @@
       }
 
       if (!isEmptyMarkup(object.description)) {
-        const collabId = makeCollabId(tracker.class.Issue, _id, 'description')
+        const collabId = makeCollabId(issueClass, _id, 'description')
         value.description = await createMarkup(collabId, object.description)
       }
 
       await docCreateManager.commit(operations, _id, currentProject, value, 'pre')
 
       await operations.addCollection(
-        tracker.class.Issue,
+        issueClass,
         _space,
         parentIssue?._id ?? tracker.ids.NoParent,
         parentIssue?._class ?? tracker.class.Issue,
@@ -540,7 +547,7 @@
       )
       await docCreateManager.commit(operations, _id, currentProject, value, 'post')
       for (const label of object.labels) {
-        await operations.addCollection(label._class, label.space, _id, tracker.class.Issue, 'labels', {
+        await operations.addCollection(label._class, label.space, _id, issueClass, 'labels', {
           title: label.title,
           color: label.color,
           tag: label.tag
@@ -549,20 +556,14 @@
 
       if (relatedTo !== undefined && client.getHierarchy().isDerived(relatedTo._class, tracker.class.Issue)) {
         // The new issue is not committed yet, so pass its ref directly instead of findOne
-        await updateIssueRelation(
-          operations,
-          relatedTo as Issue,
-          { _id, _class: tracker.class.Issue },
-          'relations',
-          '$push'
-        )
+        await updateIssueRelation(operations, relatedTo as Issue, { _id, _class: issueClass }, 'relations', '$push')
       }
 
       await descriptionBox?.createAttachments(_id, operations)
       const result = await operations.commit()
 
       if (relatedTo !== undefined && !client.getHierarchy().isDerived(relatedTo._class, tracker.class.Issue)) {
-        const doc = await client.findOne(tracker.class.Issue, { _id })
+        const doc = await client.findOne(issueClass, { _id })
         if (doc !== undefined) {
           const update = await getResource(activity.backreference.Update)
           await update(doc, 'relations', [relatedTo], tracker.string.AddedReference)
@@ -898,7 +899,7 @@
         showButtons={false}
         kind={'indented'}
         isScrollable={false}
-        kitOptions={{ reference: true }}
+        kitOptions={{ reference: true, leftMenu: false }}
         enableAttachments={false}
         bind:content={object.description}
         placeholder={tracker.string.IssueDescriptionPlaceholder}

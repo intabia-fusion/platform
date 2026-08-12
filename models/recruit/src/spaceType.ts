@@ -18,7 +18,7 @@ import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
 import { type Ref, type Status } from '@hcengineering/core'
 
-import { TDefaultVacancyTypeData, TApplicantTypeData } from './types'
+import { TDefaultVacancyTypeData, TApplicantTaskType } from './types'
 import plugin from './plugin'
 
 export const defaultApplicantStatuses = [
@@ -127,7 +127,12 @@ export function defineSpaceType (builder: Builder): void {
   }
 
   // Create default task type
-  builder.createModel(TApplicantTypeData)
+  builder.createModel(TApplicantTaskType)
+
+  builder.mixin(plugin.class.ApplicantTaskType, core.class.Class, task.mixin.TaskTypeClass, {
+    taskType: plugin.taskTypes.Applicant,
+    projectType: plugin.template.DefaultVacancy
+  })
 
   builder.createDoc(
     task.class.TaskType,
@@ -136,7 +141,7 @@ export function defineSpaceType (builder: Builder): void {
       name: 'Applicant',
       descriptor: plugin.descriptors.Application,
       ofClass: plugin.class.Applicant,
-      targetClass: plugin.mixin.ApplicantTypeData,
+      targetClass: plugin.class.ApplicantTaskType,
       parent: plugin.template.DefaultVacancy,
       statuses: defaultStatuses,
       statusClass: core.class.Status,

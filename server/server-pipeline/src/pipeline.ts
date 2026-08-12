@@ -77,6 +77,7 @@ import { createStorageDataAdapter } from './blobStorage'
 import { RatingMiddleware } from '@hcengineering/server-rating'
 import { ChunterMiddleware } from '@hcengineering/server-chunter'
 import { NotificationMiddleware } from '@hcengineering/server-notification'
+import { TaskMiddleware } from '@hcengineering/server-task'
 /**
  * @public
  */
@@ -163,6 +164,7 @@ export function createServerPipeline (
       UserStatusMiddleware.create,
       ApplyTxMiddleware.create, // Extract apply
       VersioningMiddleware.create,
+      TaskMiddleware.create,
       IdentifierMiddleware.create, // After ApplyTx to ensure that it pass
       RatingMiddleware.create, // Rating editing restrictions
       TransientMiddleware.create,

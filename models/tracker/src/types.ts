@@ -450,11 +450,11 @@ export class TProjectTargetPreference extends TPreference implements ProjectTarg
 }
 
 @Mixin(tracker.mixin.ClassicProjectTypeData, tracker.class.Project)
-@UX(getEmbeddedLabel('Classic project'), tracker.icon.Issues)
+@UX(tracker.string.ClassicProject, tracker.icon.Issues)
 export class TClassicProjectTypeData extends TProject implements RolesAssignment {
   [key: Ref<Role>]: AccountUuid[]
 }
 
-@Mixin(tracker.mixin.IssueTypeData, tracker.class.Issue)
-@UX(getEmbeddedLabel('Issue'), tracker.icon.Issue)
-export class TIssueTypeData extends TIssue {}
+@Model(tracker.class.IssueTaskType, tracker.class.Issue)
+@UX(tracker.string.Issue, tracker.icon.Issue, 'TSK', 'title', undefined, tracker.string.Issues, 'title')
+export class TIssueTaskType extends TIssue {}

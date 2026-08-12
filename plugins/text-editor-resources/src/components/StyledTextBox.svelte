@@ -49,6 +49,8 @@
   export let readonly: boolean = false
   export let kitOptions: Partial<EditorKitOptions> = {}
 
+  $: hasLeftMenu = kitOptions?.leftMenu !== false
+
   export let attachFile: FileAttachFunction | undefined = undefined
 
   // TODO: Expose
@@ -257,6 +259,7 @@
   class="flex-col styled-box"
   class:antiEmphasized={kind === 'emphasized'}
   class:antiIndented={kind === 'indented'}
+  class:hasLeftMenu
   class:focusable={(mode === Mode.Edit || alwaysEdit) && focused}
   on:click={() => {
     if (alwaysEdit && focused && !readonly) {
@@ -300,26 +303,28 @@
           handleCommandSelected,
           attachFile == null ? ['drawing-board', 'todo-list', 'image'] : ['drawing-board', 'todo-list']
         ),
-        ...kitOptions,
-        leftMenu: {
-          width: 20,
-          height: 20,
-          marginX: 8,
-          className: 'tiptap-left-menu',
-          icon: view.icon.Add,
-          iconProps: {
-            className: 'svg-tiny',
-            fill: 'currentColor'
-          },
-          items: [
-            { id: 'image', label: textEditor.string.Image, icon: view.icon.Image },
-            { id: 'table', label: textEditor.string.Table, icon: view.icon.Table2 },
-            { id: 'code-block', label: textEditor.string.CodeBlock, icon: view.icon.CodeBlock },
-            { id: 'separator-line', label: textEditor.string.SeparatorLine, icon: view.icon.SeparatorLine },
-            { id: 'mermaid', label: textEditor.string.MermaidDiargram, icon: view.icon.Model }
-          ],
-          handleSelect: handleCommandSelected
-        }
+        leftMenu: hasLeftMenu
+          ? {
+              width: 20,
+              height: 20,
+              marginX: 8,
+              className: 'tiptap-left-menu',
+              icon: view.icon.Add,
+              iconProps: {
+                className: 'svg-tiny',
+                fill: 'currentColor'
+              },
+              items: [
+                { id: 'image', label: textEditor.string.Image, icon: view.icon.Image },
+                { id: 'table', label: textEditor.string.Table, icon: view.icon.Table2 },
+                { id: 'code-block', label: textEditor.string.CodeBlock, icon: view.icon.CodeBlock },
+                { id: 'separator-line', label: textEditor.string.SeparatorLine, icon: view.icon.SeparatorLine },
+                { id: 'mermaid', label: textEditor.string.MermaidDiargram, icon: view.icon.Model }
+              ],
+              handleSelect: handleCommandSelected
+            }
+          : false,
+        ...kitOptions
       }}
       bind:content={rawValue}
       bind:this={editor}
@@ -419,8 +424,11 @@
       overflow: visible !important;
     }
 
+    &.hasLeftMenu :global(.select-text) {
+      padding-left: 40px;
+    }
+
     :global(.select-text) {
-      padding-left: 40px; /* Увеличил отступ */
       position: relative;
     }
   }

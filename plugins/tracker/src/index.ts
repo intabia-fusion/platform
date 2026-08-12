@@ -473,11 +473,11 @@ const pluginState = plugin(trackerId, {
     TypeEstimation: '' as Ref<Class<Type<number>>>,
     TypeRemainingTime: '' as Ref<Class<Type<number>>>,
     RelatedIssueTarget: '' as Ref<Class<RelatedIssueTarget>>,
-    ProjectTargetPreference: '' as Ref<Class<ProjectTargetPreference>>
+    ProjectTargetPreference: '' as Ref<Class<ProjectTargetPreference>>,
+    IssueTaskType: '' as Ref<Class<Issue>>
   },
   mixin: {
-    ClassicProjectTypeData: '' as Ref<Mixin<Project>>,
-    IssueTypeData: '' as Ref<Mixin<Issue>>
+    ClassicProjectTypeData: '' as Ref<Mixin<Project>>
   },
   ids: {
     NoParent: '' as Ref<Issue>,

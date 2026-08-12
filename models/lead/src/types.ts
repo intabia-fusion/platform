@@ -48,7 +48,6 @@ import tags from '@hcengineering/tags'
 import tracker from '@hcengineering/model-tracker'
 
 import lead from './plugin'
-import { getEmbeddedLabel } from '@hcengineering/platform'
 
 export { leadId } from '@hcengineering/lead'
 export { leadOperation } from './migration'
@@ -112,11 +111,11 @@ export class TCustomer extends TContact implements Customer {
 }
 
 @Mixin(lead.mixin.DefaultFunnelTypeData, lead.class.Funnel)
-@UX(getEmbeddedLabel('Default funnel'), lead.icon.Funnel)
+@UX(lead.string.DefaultFunnel, lead.icon.Funnel)
 export class TDefaultFunnelTypeData extends TFunnel implements RolesAssignment {
   [key: Ref<Role>]: AccountUuid[]
 }
 
-@Mixin(lead.mixin.LeadTypeData, lead.class.Lead)
-@UX(getEmbeddedLabel('Lead'), lead.icon.Lead)
-export class TLeadTypeData extends TLead {}
+@Model(lead.class.LeadTaskType, lead.class.Lead)
+@UX(lead.string.Lead, lead.icon.Lead, 'LEAD', 'title', undefined, lead.string.Leads, 'title')
+export class TLeadTaskType extends TLead {}
