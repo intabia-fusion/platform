@@ -849,6 +849,7 @@
         baseClass={tracker.class.Issue}
         size={'small'}
         showAlways={true}
+        width="10rem"
       />
       {#if relatedTo}
         <div class="lower mr-2">

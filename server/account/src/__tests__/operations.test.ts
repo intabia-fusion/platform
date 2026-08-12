@@ -1344,6 +1344,9 @@ describe('account operations', () => {
       socialId: {
         findOne: jest.fn(),
         find: jest.fn()
+      },
+      shortLink: {
+        deleteMany: jest.fn()
       }
     } as unknown as AccountDB
 
@@ -1510,15 +1513,39 @@ describe('account operations', () => {
         expect(utils.sendOtp).toHaveBeenCalledWith(mockCtx, mockDb, mockBranding, mockSocialId)
       })
 
-      test('should fail for non-existent account', async () => {
+      test('should not reveal that the email is unknown', async () => {
         jest.spyOn(utils, 'cleanEmail').mockReturnValue(mockEmail)
         jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
+        jest.spyOn(utils, 'sendOtp')
 
-        await expect(
-          loginOtp(mockCtx, mockDb, mockBranding, mockToken, {
-            email: mockEmail
-          })
-        ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {})))
+        const result = await loginOtp(mockCtx, mockDb, mockBranding, mockToken, {
+          email: mockEmail
+        })
+
+        expect(result.sent).toBe(true)
+        // No email is sent and nothing is created: the login form must not become a sign up form.
+        expect(utils.sendOtp).not.toHaveBeenCalled()
+      })
+
+      test('should send otp for a person without an account (unfinished sign up)', async () => {
+        const mockSocialId: SocialId = {
+          _id: 'social-id' as PersonId,
+          personUuid: mockAccountId,
+          type: SocialIdType.EMAIL,
+          value: mockEmail,
+          key: `email:${mockEmail}`
+        }
+        const mockOtpInfo = { email: mockEmail, sent: true, retryOn: Date.now() }
+
+        jest.spyOn(utils, 'cleanEmail').mockReturnValue(mockEmail)
+        jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(mockSocialId)
+        jest.spyOn(utils, 'sendOtp').mockResolvedValue(mockOtpInfo)
+        ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(null)
+
+        const result = await loginOtp(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail })
+
+        expect(result).toEqual(mockOtpInfo)
+        expect(utils.sendOtp).toHaveBeenCalledWith(mockCtx, mockDb, mockBranding, mockSocialId)
       })
     })
 
@@ -1691,6 +1718,9 @@ describe('account operations', () => {
       },
       otp: {
         deleteMany: jest.fn()
+      },
+      shortLink: {
+        deleteMany: jest.fn()
       }
     } as unknown as AccountDB
 
@@ -1793,7 +1823,9 @@ describe('account operations', () => {
 
         jest.spyOn(utils, 'confirmEmail').mockResolvedValue(mockSocialId._id)
         jest.spyOn(utils, 'confirmHulyIds').mockResolvedValue()
+        jest.spyOn(utils, 'createAccount').mockResolvedValue(mockSocialId._id)
         ;(mockDb.person.findOne as jest.Mock).mockResolvedValue(mockPerson)
+        ;(mockDb.account.findOne as jest.Mock).mockResolvedValue({ uuid: mockAccountId })
 
         const result = await confirm(mockCtx, mockDb, mockBranding, mockToken)
 
@@ -1806,6 +1838,31 @@ describe('account operations', () => {
 
         expect(utils.confirmEmail).toHaveBeenCalledWith(mockCtx, mockDb, mockAccountId, mockEmail)
         expect(utils.confirmHulyIds).toHaveBeenCalledWith(mockCtx, mockDb, mockAccountId)
+        expect(utils.createAccount).not.toHaveBeenCalled()
+      })
+
+      test('should create the account when the activation link completes an unfinished sign up', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+          account: mockAccountId,
+          extra: { confirmEmail: mockEmail }
+        })
+
+        jest.spyOn(utils, 'confirmEmail').mockResolvedValue('social-id' as PersonId)
+        jest.spyOn(utils, 'confirmHulyIds').mockResolvedValue()
+        jest.spyOn(utils, 'createAccount').mockResolvedValue('social-id' as PersonId)
+        ;(mockDb.person.findOne as jest.Mock).mockResolvedValue({
+          uuid: mockPersonId,
+          firstName: mockFirstName,
+          lastName: mockLastName
+        })
+        ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(null)
+
+        const result = await confirm(mockCtx, mockDb, mockBranding, mockToken)
+
+        expect(utils.createAccount).toHaveBeenCalledWith(mockDb, mockAccountId, true)
+        expect(result.token).toEqual(expect.any(String))
+        // Dropped so a second visit reports "already registered" instead of retrying.
+        expect(mockDb.shortLink.deleteMany).toHaveBeenCalledWith({ payload: mockToken })
       })
 
       test('should fail if confirmation email not in token', async () => {
@@ -1827,7 +1884,9 @@ describe('account operations', () => {
 
         jest.spyOn(utils, 'confirmEmail').mockResolvedValue('social-id' as PersonId)
         jest.spyOn(utils, 'confirmHulyIds').mockResolvedValue()
+        jest.spyOn(utils, 'createAccount').mockResolvedValue('social-id' as PersonId)
         ;(mockDb.person.findOne as jest.Mock).mockResolvedValue(null)
+        ;(mockDb.account.findOne as jest.Mock).mockResolvedValue({ uuid: mockAccountId })
 
         await expect(confirm(mockCtx, mockDb, mockBranding, mockToken)).rejects.toThrow(
           new PlatformError(new Status(Severity.ERROR, platform.status.PersonNotFound, { person: mockAccountId }))
@@ -1891,7 +1950,7 @@ describe('account operations', () => {
         )
       })
 
-      test('should fail if email already exists with account', async () => {
+      test('should not reveal an existing account and must not touch its person', async () => {
         const mockSocialId: SocialId = {
           _id: 'social-id' as PersonId,
           personUuid: mockPersonId,
@@ -1901,15 +1960,68 @@ describe('account operations', () => {
         }
 
         jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(mockSocialId)
+        jest.spyOn(utils, 'sendOtp').mockResolvedValue({ retryOn: Date.now() + 60000, sent: true })
         ;(mockDb.account.findOne as jest.Mock).mockResolvedValue({ uuid: mockPersonId })
 
-        await expect(
-          signUpOtp(mockCtx, mockDb, mockBranding, mockToken, {
-            email: mockEmail,
-            firstName: mockFirstName,
-            lastName: mockLastName
-          })
-        ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.AccountAlreadyExists, {})))
+        const result = await signUpOtp(mockCtx, mockDb, mockBranding, mockToken, {
+          email: mockEmail,
+          firstName: 'Attacker',
+          lastName: 'Rename',
+          phone: '+7-999-000-11-22'
+        })
+
+        expect(result).toEqual({ retryOn: expect.any(Number), sent: true })
+        // Anyone knowing an email could otherwise rename its owner through the sign up form.
+        expect(mockDb.person.update).not.toHaveBeenCalled()
+        expect(mockDb.person.insertOne).not.toHaveBeenCalled()
+      })
+
+      test('should store a normalized phone hint and never a phone social id', async () => {
+        jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
+        jest.spyOn(utils, 'sendOtp').mockResolvedValue({ retryOn: Date.now() + 60000, sent: true })
+        ;(mockDb.person.insertOne as jest.Mock).mockResolvedValue(mockPersonId)
+
+        await signUpOtp(mockCtx, mockDb, mockBranding, mockToken, {
+          email: mockEmail,
+          firstName: mockFirstName,
+          lastName: mockLastName,
+          phone: '+7-900-000-00-11'
+        })
+
+        expect(mockDb.person.insertOne).toHaveBeenCalledWith({
+          firstName: mockFirstName,
+          lastName: mockLastName,
+          phoneHint: '+79000000011'
+        })
+        expect(mockDb.socialId.insertOne).toHaveBeenCalledTimes(1)
+        expect(mockDb.socialId.insertOne).toHaveBeenCalledWith(expect.objectContaining({ type: SocialIdType.EMAIL }))
+      })
+
+      test('should not block a repeated sign up with the same phone', async () => {
+        const mockSocialId: SocialId = {
+          _id: 'social-id' as PersonId,
+          personUuid: mockPersonId,
+          type: SocialIdType.EMAIL,
+          value: mockEmail,
+          key: `email:${mockEmail}`
+        }
+
+        jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(mockSocialId)
+        jest.spyOn(utils, 'sendOtp').mockResolvedValue({ retryOn: Date.now() + 60000, sent: true })
+        ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(null)
+
+        const result = await signUpOtp(mockCtx, mockDb, mockBranding, mockToken, {
+          email: mockEmail,
+          firstName: mockFirstName,
+          lastName: mockLastName,
+          phone: '+79000000011'
+        })
+
+        expect(result).toEqual({ retryOn: expect.any(Number), sent: true })
+        expect(mockDb.person.update).toHaveBeenCalledWith(
+          { uuid: mockPersonId },
+          { firstName: mockFirstName, lastName: mockLastName, phoneHint: '+79000000011' }
+        )
       })
 
       test('should fail with missing required fields', async () => {
@@ -2182,17 +2294,16 @@ describe('account operations', () => {
         ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {})))
       })
 
-      test('should fail if email not found', async () => {
+      test('should answer an unknown email exactly like a wrong code', async () => {
         jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
 
+        // A distinct error here would undo the anti-enumeration in loginOtp.
         await expect(
           validateOtp(mockCtx, mockDb, mockBranding, mockToken, {
             email: mockEmail,
             code: '123456'
           })
-        ).rejects.toThrow(
-          new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, { account: mockEmail }))
-        )
+        ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {})))
       })
 
       test('should fail if verifying for existing verified social id', async () => {

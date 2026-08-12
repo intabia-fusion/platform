@@ -94,7 +94,6 @@ import {
   getFrontUrl,
   getInviteEmail,
   getPersonName,
-  getPhoneSocialId,
   getRegions,
   getRolePower,
   getWorkspaceByDataId,
@@ -112,6 +111,8 @@ import {
   isAllowReadOnlyGuests,
   isEmail,
   isOtpValid,
+  getOtpRetryDelayMs,
+  normalizePhone,
   normalizeValue,
   publishMembersChanged,
   recordFailedLoginAttempt,
@@ -252,7 +253,8 @@ export async function login (
 }
 
 /**
- * Given an email sends an OTP code to the existing user and returns the OTP information.
+ * Given an email sends an OTP code and returns the OTP information.
+ * Never reveals whether the email is known. A person without an account is an unfinished sign up.
  */
 export async function loginOtp (
   ctx: MeasureContext,
@@ -272,13 +274,9 @@ export async function loginOtp (
   const emailSocialId = await getEmailSocialId(db, normalizedEmail)
 
   if (emailSocialId == null) {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {}))
-  }
-
-  const account = await getAccount(db, emailSocialId.personUuid as AccountUuid)
-
-  if (account == null) {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {}))
+    // Nothing is created: the login form must not become a sign up form. retryOn matches a fresh
+    // code so the timer cannot be used to probe existence.
+    return { sent: true, retryOn: Date.now() + getOtpRetryDelayMs() }
   }
 
   return await sendOtp(ctx, db, branding, emailSocialId)
@@ -347,39 +345,29 @@ export async function signUpOtp (
 
   // Note: can support OTP based on any other social logins later
   const normalizedEmail = cleanEmail(email)
+  const normalizedPhone = phone !== undefined && phone !== '' ? normalizePhone(phone) : ''
+  // A phone is never verified, so claiming exclusive ownership of it would block re-signup forever.
+  const personData = normalizedPhone !== '' ? { phoneHint: normalizedPhone } : {}
   let emailSocialId = await getEmailSocialId(db, normalizedEmail)
-  let personUuid: PersonUuid
 
   if (emailSocialId !== null) {
     const existingAccount = await db.account.findOne({ uuid: emailSocialId.personUuid as AccountUuid })
 
-    if (existingAccount !== null) {
-      ctx.warn('An account with the provided email already exists', { email })
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountAlreadyExists, {}))
+    // Account exists -> this is a login. Touching the person would let anyone knowing an email
+    // rename its owner through the sign up form.
+    if (existingAccount === null) {
+      await db.person.update({ uuid: emailSocialId.personUuid }, { firstName, lastName: lastName ?? '', ...personData })
     }
-
-    await db.person.update({ uuid: emailSocialId.personUuid }, { firstName, lastName: lastName ?? '' })
-
-    personUuid = emailSocialId.personUuid
   } else {
     // There's no person linked to this email, so we need to create a new one
-    personUuid = await db.person.insertOne({ firstName, lastName: lastName ?? '' })
+    const personUuid: PersonUuid = await db.person.insertOne({
+      firstName,
+      lastName: lastName ?? '',
+      ...personData
+    })
     const newSocialId = { type: SocialIdType.EMAIL, value: normalizedEmail, personUuid }
     const emailSocialIdId = await db.socialId.insertOne(newSocialId)
     emailSocialId = { ...newSocialId, _id: emailSocialIdId, key: buildSocialIdString(newSocialId) }
-  }
-
-  if (phone !== undefined && phone.length > 0) {
-    const normalizedPhone = phone.trim()
-    const existingPhoneSocialId = await getPhoneSocialId(db, normalizedPhone)
-
-    if (existingPhoneSocialId !== null) {
-      ctx.warn('Provided phone already exists', { phone: normalizedPhone })
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.PhoneAlreadyExists, {}))
-    }
-
-    const newPhoneSocialId = { type: SocialIdType.PHONE, value: normalizedPhone, personUuid }
-    await db.socialId.insertOne(newPhoneSocialId)
   }
 
   return await sendOtp(ctx, db, branding, emailSocialId)
@@ -394,7 +382,6 @@ async function sendCrmNotificationIfNotInvited (
   db: AccountDB,
   email: string,
   personUuid: PersonUuid,
-  phone: string | null,
   meta?: Meta
 ): Promise<void> {
   const crmQueue = getMetadata(accountPlugin.metadata.CrmQueue)
@@ -409,7 +396,7 @@ async function sendCrmNotificationIfNotInvited (
     firstName: person.firstName,
     lastName: person.lastName,
     email,
-    phone,
+    phone: person.phoneHint ?? null,
     cookies: meta?.cookies
   }
 
@@ -444,7 +431,9 @@ export async function validateOtp (
     let emailSocialId = await getEmailSocialId(db, normalizedEmail)
 
     if (emailSocialId == null) {
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, { account: email }))
+      // Indistinguishable from a wrong code on purpose: a separate error here would undo the
+      // anti-enumeration in loginOtp - two requests would tell whether an address is registered.
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
     }
 
     const isValid = await isOtpValid(db, emailSocialId._id, code)
@@ -638,19 +627,7 @@ export async function createWorkspace (
   })
 
   if (emailSocialId != null) {
-    const phoneSocialId = await db.socialId.findOne({
-      type: SocialIdType.PHONE,
-      personUuid: socialId.personUuid
-    })
-
-    await sendCrmNotificationIfNotInvited(
-      ctx,
-      db,
-      emailSocialId.value,
-      socialId.personUuid,
-      phoneSocialId?.value ?? null,
-      meta
-    )
+    await sendCrmNotificationIfNotInvited(ctx, db, emailSocialId.value, socialId.personUuid, meta)
   }
 
   return {
@@ -1365,6 +1342,16 @@ export async function confirm (
   }
 
   const socialId = await confirmEmail(ctx, db, account, email)
+
+  // Right after confirmEmail: the email is verified now, so the link is dead even if a later step
+  // throws. Links from earlier resends stay inert until cleanExpiredOtp sweeps them.
+  await db.shortLink.deleteMany({ payload: token })
+
+  // The link also completes a sign up whose OTP code was never entered.
+  if ((await db.account.findOne({ uuid: account })) == null) {
+    await createAccount(db, account, true)
+    ctx.info('Account created via activation link', { account, email })
+  }
 
   await confirmHulyIds(ctx, db, account)
 
@@ -2158,24 +2145,6 @@ export async function getSocialIds (
   const socialIds = await db.socialId.find({ personUuid: account, verifiedOn: { $gt: 0 } })
 
   return includeDeleted ? socialIds : socialIds.filter((si) => si.isDeleted !== true)
-}
-
-export async function getUnverifiedPhoneSocialIds (
-  ctx: MeasureContext,
-  db: AccountDB,
-  branding: Branding | null,
-  token: string
-): Promise<SocialId[]> {
-  const { account: accountUuid, sub } = decodeTokenVerbose(ctx, token)
-  const account = sub ?? accountUuid
-
-  const result = await db.socialId.find({
-    personUuid: account,
-    type: SocialIdType.PHONE,
-    verifiedOn: undefined
-  })
-
-  return result
 }
 
 export async function isReadOnlyGuest (
@@ -3153,7 +3122,6 @@ export type AccountMethods =
   | 'getLoginInfoByToken'
   | 'getLoginWithWorkspaceInfo'
   | 'getSocialIds'
-  | 'getUnverifiedPhoneSocialIds'
   | 'getPerson'
   | 'getWorkspaceMembers'
   | 'updateWorkspaceRole'
@@ -3261,7 +3229,6 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
     getLoginInfoByToken: wrap(getLoginInfoByToken),
     getLoginWithWorkspaceInfo: wrap(getLoginWithWorkspaceInfo),
     getSocialIds: wrap(getSocialIds),
-    getUnverifiedPhoneSocialIds: wrap(getUnverifiedPhoneSocialIds),
     getPerson: wrap(getPerson),
     findPersonBySocialId: wrap(findPersonBySocialId),
     findSocialIdBySocialKey: wrap(findSocialIdBySocialKey),

@@ -106,6 +106,13 @@
     "ExpiredLink": "Platnost odkazu na pozvánku vypršela",
     "ExpiredLinkDescription": "Požádejte prosím o nový odkaz na pozvánku",
     "UsageConditions": "Podmínky použití",
-    "IntabiaFusion": "Intabia Fusion"
+    "IntabiaFusion": "Intabia Fusion",
+    "Continue": "Pokračovat",
+    "AlreadyRegistered": "Jste již zaregistrováni na platformě",
+    "RegistrationComplete": "Registrace je dokončena",
+    "RegistrationCompleteHint": "Vytvořte si vlastní pracovní prostor, nebo si vyžádejte odkaz s přístupem od vlastníka existujícího prostoru.",
+    "CheckingLink": "Kontrolujeme odkaz...",
+    "InvalidLink": "Tento odkaz již není platný",
+    "ConfirmationFailed": "Registraci se nepodařilo dokončit"
   }
 }

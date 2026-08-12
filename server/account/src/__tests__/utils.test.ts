@@ -28,6 +28,8 @@ import {
 import {
   generateWorkspaceUrl,
   cleanEmail,
+  confirmEmail,
+  normalizePhone,
   isEmail,
   isShallowEqual,
   getRolePower,
@@ -110,6 +112,19 @@ describe('account utils', () => {
       ['   spaced@email.com   ', 'spaced@email.com', 'should trim multiple spaces']
     ])('%s -> %s (%s)', (input, expected) => {
       expect(cleanEmail(input)).toBe(expected)
+    })
+  })
+
+  describe('normalizePhone', () => {
+    test.each([
+      ['+7-900-000-00-11', '+79000000011', 'strips separators'],
+      ['+79000000011', '+79000000011', 'keeps an already normalized number'],
+      [' +7 (900) 000 00 11 ', '+79000000011', 'strips spaces and brackets'],
+      ['89000000011', '+89000000011', 'keeps digits it cannot interpret'],
+      ['', '', 'empty stays empty'],
+      ['---', '', 'no digits means no phone']
+    ])('%s -> %s (%s)', (input, expected) => {
+      expect(normalizePhone(input)).toBe(expected)
     })
   })
 
@@ -875,6 +890,9 @@ describe('account utils', () => {
           findOne: jest.fn(),
           find: jest.fn(),
           insertOne: jest.fn()
+        },
+        shortLink: {
+          insertOne: jest.fn()
         }
       } as unknown as AccountDB
 
@@ -968,6 +986,74 @@ describe('account utils', () => {
             code: expect.any(String),
             expiresOn: expect.any(Number),
             createdOn: expect.any(Number)
+          })
+        })
+
+        describe('activation link', () => {
+          const mailSend = jest.fn()
+
+          beforeEach(() => {
+            mailSend.mockClear()
+            ;(getMetadata as jest.Mock).mockImplementation((key) => {
+              switch (key) {
+                case accountPlugin.metadata.OtpRetryDelaySec:
+                  return 30
+                case accountPlugin.metadata.OtpTimeToLiveSec:
+                  return 60
+                case accountPlugin.metadata.FrontURL:
+                  return 'https://front.test'
+                case accountPlugin.metadata.MailQueue:
+                  return { send: mailSend }
+                default:
+                  return undefined
+              }
+            })
+            ;(mockDb.otp.find as jest.Mock).mockResolvedValue([])
+            ;(mockDb.otp.findOne as jest.Mock).mockResolvedValue(null)
+          })
+
+          function sentHtml (): string {
+            return mailSend.mock.calls[0][2][0].data.html
+          }
+
+          test('is included while the email is unverified', async () => {
+            await sendOtp(mockCtx, mockDb, mockBranding, mockSocialId)
+
+            expect(sentHtml()).toContain('account:string:SignUpOtpHTML')
+
+            const [row] = (mockDb.shortLink.insertOne as jest.Mock).mock.calls[0]
+            expect(row.payload).toBe(generateToken(mockSocialId.personUuid))
+            // A raw JWT gets mangled by mail clients; the link must carry the short id instead.
+            expect(sentHtml()).toContain(`https://front.test/login/confirm?id=${row.id}`)
+            expect(row.id).toMatch(/^[A-Za-z0-9]{12}$/)
+          })
+
+          test('is omitted once the email is verified', async () => {
+            await sendOtp(mockCtx, mockDb, mockBranding, { ...mockSocialId, verifiedOn: Date.now() })
+
+            // A verified email is a plain login: a week-long bearer link there has no purpose.
+            expect(sentHtml()).toContain('account:string:OtpHTML')
+            expect(sentHtml()).not.toContain('/login/confirm')
+          })
+
+          test('is omitted when the link cannot be stored', async () => {
+            ;(mockDb.shortLink.insertOne as jest.Mock).mockRejectedValueOnce(new Error('duplicate id'))
+
+            await sendOtp(mockCtx, mockDb, mockBranding, mockSocialId)
+
+            // A code-only email still works; failing here would block sign in entirely.
+            expect(sentHtml()).toContain('account:string:OtpHTML')
+          })
+
+          test('is omitted when the front url is not configured', async () => {
+            ;(getMetadata as jest.Mock).mockImplementation((key) =>
+              key === accountPlugin.metadata.MailQueue ? { send: mailSend } : undefined
+            )
+
+            await sendOtp(mockCtx, mockDb, mockBranding, mockSocialId)
+
+            // Degrades to a code-only email instead of breaking sign in entirely.
+            expect(sentHtml()).toContain('account:string:OtpHTML')
           })
         })
 
@@ -1532,6 +1618,76 @@ describe('account utils', () => {
     })
   })
 
+  describe('confirmEmail', () => {
+    const mockCtx = {
+      info: jest.fn(),
+      error: jest.fn()
+    } as unknown as MeasureContext
+    const owner = 'owner-uuid' as PersonUuid
+    const value = 'test@example.com'
+    const mockDb = {
+      socialId: {
+        findOne: jest.fn(),
+        update: jest.fn()
+      }
+    } as unknown as AccountDB
+
+    const socialId = {
+      _id: 'social-id' as PersonId,
+      personUuid: owner,
+      type: SocialIdType.EMAIL,
+      value,
+      key: `email:${value}`
+    }
+
+    beforeEach(() => {
+      jest.clearAllMocks()
+    })
+
+    test('should confirm an unverified social id of the same person', async () => {
+      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue(socialId)
+
+      const result = await confirmEmail(mockCtx, mockDb, owner, value)
+
+      expect(result).toBe(socialId._id)
+      expect(mockDb.socialId.update).toHaveBeenCalledWith({ _id: socialId._id }, { verifiedOn: expect.any(Number) })
+    })
+
+    test('should refuse an already verified social id', async () => {
+      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue({ ...socialId, verifiedOn: Date.now() })
+
+      // This is what makes an activation link single use.
+      await expect(confirmEmail(mockCtx, mockDb, owner, value)).rejects.toThrow(
+        new PlatformError(
+          new Status(Severity.ERROR, platform.status.SocialIdAlreadyConfirmed, {
+            socialId: value,
+            type: SocialIdType.EMAIL
+          })
+        )
+      )
+      expect(mockDb.socialId.update).not.toHaveBeenCalled()
+    })
+
+    test('should refuse a social id that moved to another person', async () => {
+      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue({ ...socialId, personUuid: 'other-uuid' as PersonUuid })
+
+      await expect(confirmEmail(mockCtx, mockDb, owner, value)).rejects.toThrow(
+        new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      )
+      expect(mockDb.socialId.update).not.toHaveBeenCalled()
+    })
+
+    test('should fail when the social id does not exist', async () => {
+      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue(null)
+
+      await expect(confirmEmail(mockCtx, mockDb, owner, value)).rejects.toThrow(
+        new PlatformError(
+          new Status(Severity.ERROR, platform.status.SocialIdNotFound, { value, type: SocialIdType.EMAIL })
+        )
+      )
+    })
+  })
+
   describe('workspace utils', () => {
     const mockDb = {
       workspace: {
@@ -1628,6 +1784,9 @@ describe('account utils', () => {
     const mockDb = {
       otp: {
         deleteMany: jest.fn()
+      },
+      shortLink: {
+        deleteMany: jest.fn()
       }
     } as unknown as AccountDB
 
@@ -1640,6 +1799,16 @@ describe('account utils', () => {
 
       expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({
         expiresOn: { $lte: expect.any(Number) }
+      })
+    })
+
+    test('should sweep stale sign up links without touching guest links', async () => {
+      await cleanExpiredOtp(mockDb)
+
+      // workspaceId '' is what marks a sign up link; guest meeting links carry a real workspace.
+      expect(mockDb.shortLink.deleteMany).toHaveBeenCalledWith({
+        workspaceId: '',
+        createdAt: { $lte: expect.any(Number) }
       })
     })
   })

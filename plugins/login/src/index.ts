@@ -37,6 +37,7 @@ export const pages = [
   'autoJoin',
   'confirm',
   'confirmationSend',
+  'registered',
   'auth',
   'login-password',
   'changePassword',

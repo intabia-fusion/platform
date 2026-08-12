@@ -40930,12 +40930,18 @@ importers:
 
   ../../ws-tests/sanity:
     dependencies:
+      '@hcengineering/account-client':
+        specifier: workspace:^0.7.21
+        version: link:../../foundations/core/packages/account-client
       '@hcengineering/client-resources':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client-resources
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
+      '@hcengineering/server-token':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/token
       cross-env:
         specifier: ~7.0.3
         version: 7.0.3

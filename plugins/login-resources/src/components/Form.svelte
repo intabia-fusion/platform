@@ -246,6 +246,7 @@
       />
     </div>
     {#if secondaryButtonLabel !== undefined && secondaryButtonAction}
+      <slot name="before-secondary" />
       <div class="form-row">
         <FormButton
           label={secondaryButtonLabel}

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,8 +15,8 @@
 -->
 <script lang="ts">
   import core, { Class, ClassifierKind, Data, Ref, RefTo, Status, generateId, toIdMap } from '@hcengineering/core'
-  import { Resource, getEmbeddedLabel, getResource } from '@hcengineering/platform'
-  import presentation, { MessageBox, getClient, hasResource } from '@hcengineering/presentation'
+  import { IntlString, Resource, getEmbeddedLabel, getResource } from '@hcengineering/platform'
+  import presentation, { getClient, hasResource } from '@hcengineering/presentation'
   import {
     ProjectType,
     ProjectTypeDescriptor,
@@ -25,7 +26,16 @@
     createState,
     findStatusAttr
   } from '@hcengineering/task'
-  import { DropdownIntlItem, Modal, ModernEditbox, Label, ButtonMenu, CheckBox, showPopup } from '@hcengineering/ui'
+  import {
+    DropdownIntlItem,
+    Icon,
+    IconError,
+    Modal,
+    ModernEditbox,
+    Label,
+    ButtonMenu,
+    Toggle
+  } from '@hcengineering/ui'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
 
   import task from '../../plugin'
@@ -72,7 +82,6 @@
   let isRootTaskType: boolean = taskType?.isRootTaskType ?? false
 
   $: if (isRootTaskType) {
-    console.error('[CreateTaskType.svelte] - Clearing allowedAsChildOf')
     allowedAsChildOf = []
   }
 
@@ -87,22 +96,26 @@
   }
 
   let taskTypeDescriptor: TaskTypeDescriptor = taskTypeDescriptors[0]
+  let errorMessage: IntlString | undefined = undefined
 
   async function save (): Promise<void> {
     if (type === undefined) return
 
     const trimmedName = name.trim()
+    if (trimmedName.length === 0) {
+      errorMessage = task.string.TaskTypeNameEmpty
+      return
+    }
+
     const duplicate = taskTypes.find(
       (tt) => tt._id !== taskType?._id && tt.name.trim().toLocaleLowerCase() === trimmedName.toLocaleLowerCase()
     )
 
     if (duplicate !== undefined) {
-      showPopup(MessageBox, {
-        label: task.string.TaskType,
-        message: task.string.TaskTypeNameAlreadyExists
-      })
+      errorMessage = task.string.TaskTypeNameAlreadyExists
       return
     }
+    errorMessage = undefined
 
     const descr = taskTypeDescriptors.find((it) => it._id === taskTypeDescriptor._id)
     if (descr === undefined) return
@@ -183,7 +196,7 @@
 
 <Modal
   label={task.string.TaskType}
-  type={'type-aside'}
+  type="type-aside"
   okAction={save}
   canSave
   okLabel={taskType !== undefined ? presentation.string.Save : presentation.string.Create}
@@ -193,7 +206,26 @@
   }}
 >
   <div class="hulyModal-content__titleGroup">
-    <ModernEditbox bind:value={name} label={task.string.TaskTypeName} size={'large'} kind={'ghost'} autoFocus />
+    <ModernEditbox
+      bind:value={name}
+      label={task.string.TaskTypeName}
+      size="large"
+      kind="ghost"
+      error={errorMessage !== undefined}
+      autoFocus
+      limit={32}
+      on:input={() => {
+        if (errorMessage !== undefined) {
+          errorMessage = undefined
+        }
+      }}
+    />
+    {#if errorMessage !== undefined}
+      <div class="name-error">
+        <Icon icon={IconError} size="small" />
+        <span><Label label={errorMessage} /></span>
+      </div>
+    {/if}
   </div>
   <div class="hulyModal-content__settingsSet">
     {#if taskTypeDescriptors.length > 1}
@@ -206,8 +238,8 @@
           items={descriptorItems}
           icon={taskTypeDescriptor.icon}
           label={taskTypeDescriptor.name}
-          kind={'secondary'}
-          size={'medium'}
+          kind="secondary"
+          size="medium"
           on:selected={(evt) => {
             if (evt.detail != null) {
               const tt = taskTypeDescriptors.find((tt) => tt._id === evt.detail)
@@ -222,7 +254,7 @@
       <span class="label">
         <Label label={task.string.RootTaskType} />
       </span>
-      <CheckBox bind:checked={isRootTaskType} />
+      <Toggle bind:on={isRootTaskType} />
     </div>
 
     {#if !isRootTaskType}
@@ -236,3 +268,22 @@
     {/if}
   </div>
 </Modal>
+
+<style lang="scss">
+  .hulyModal-content__titleGroup {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+
+    .name-error {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      margin-top: 0.375rem;
+      font-size: 0.8125rem;
+      font-weight: 400;
+      color: var(--global-error-TextColor);
+    }
+  }
+</style>

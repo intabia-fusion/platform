@@ -38,6 +38,11 @@ export class SelectWorkspacePage extends CommonPage {
   async createWorkspace (workspaceName: string, worskpaceNew: boolean = true): Promise<void> {
     if (worskpaceNew) {
       await this.buttonCreateWorkspace().waitFor({ state: 'visible' })
+      // OTP sign up lands on select workspace, password sign up goes straight to the create form.
+      if (!this.page.url().includes('/login/createWorkspace')) {
+        await this.buttonCreateWorkspace().click()
+        await this.page.waitForURL((url) => url.pathname.startsWith('/login/createWorkspace'))
+      }
       await this.enterWorkspaceName(workspaceName)
       expect(await this.buttonCreateNewWorkspace().isEnabled()).toBe(true)
       await this.buttonCreateNewWorkspace().click()
@@ -47,9 +52,12 @@ export class SelectWorkspacePage extends CommonPage {
       expect(await this.buttonCreateNewWorkspace().isEnabled()).toBe(true)
       await this.buttonCreateNewWorkspace().click()
     }
+    // Creation shows a progress screen first; callers expect to be inside the workspace.
+    await this.page.waitForURL((url) => url.pathname.startsWith('/workbench/'))
   }
 
   async checkIfWorkspaceExists (workspace: string): Promise<void> {
-    await expect(this.workspaceList(workspace)).toBeVisible()
+    // Rows are divs, not buttons - use the same locator selectWorkspace clicks.
+    await expect(this.workspaceButtonByName(workspace)).toBeVisible()
   }
 }

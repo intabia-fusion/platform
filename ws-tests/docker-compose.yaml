@@ -214,6 +214,9 @@ services:
       # - DISABLE_SIGNUP=true
       # Dev/testing only: fixed admin-operation OTP code (email delivery is off in tests). NEVER set in prod.
       - ADMIN_OTP_DEV_CODE=000000
+      # OTP codes are short-lived by design; tests need room between requesting and entering one.
+      - OTP_TIME_TO_LIVE=600
+      - OTP_RETRY_DELAY=1
     restart: unless-stopped
   stats:
     image: 'intabiafusion/stats:${DOCKER_TAG:-latest}'
@@ -340,7 +343,7 @@ services:
       - STATS_API=http://localhost:8083/_stats
       - STREAM_URL=http://localhost:8083/_stream/recording
       # - DISABLE_SIGNUP=true
-      - USE_OTP=false
+      # OTP is on here so tests drive the real sign in flow; they read the code from account_db.
     restart: unless-stopped
   transactor:
     image: 'intabiafusion/transactor:${DOCKER_TAG:-latest}'

@@ -16,12 +16,13 @@
   import { IntlString, Asset } from '@hcengineering/platform'
   import { createEventDispatcher, ComponentType } from 'svelte'
 
-  import type { AnySvelteComponent, DropdownTextItem, TooltipAlignment } from '../types'
+  import type { AnySvelteComponent, DropdownTextItem, IconSize, TooltipAlignment } from '../types'
   import ui from '../plugin'
   import { showPopup } from '../popups'
   import { getFocusManager } from '../focus'
   import ModernButton from './ModernButton.svelte'
-  import DropdownLabelsPopup from './DropdownLabelsPopup.svelte'
+  import ButtonIcon from './ButtonIcon.svelte'
+  import ModernPopupLabels from './ModernPopupLabels.svelte'
   import Label from './Label.svelte'
   import Icon from './Icon.svelte'
   import DropdownIcon from './icons/Dropdown.svelte'
@@ -35,10 +36,12 @@
   export let selected: DropdownTextItem['id'] | Array<DropdownTextItem['id']> | undefined = multiselect ? [] : undefined
   export let allowDeselect: boolean = false
   export let showDropdownIcon: boolean = false
+  export let showContent: boolean = true
 
   export let dataId: string | undefined = undefined
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
   export let size: 'small' | 'medium' | 'large' = 'large'
+  export let iconSize: IconSize | undefined = undefined
   export let justify: 'left' | 'center' = 'center'
   export let width: string | undefined = undefined
   export let labelDirection: TooltipAlignment | undefined = undefined
@@ -62,6 +65,36 @@
 
   const dispatch = createEventDispatcher()
   const mgr = getFocusManager()
+
+  function handleClick (): void {
+    if (!opened) {
+      opened = true
+      showPopup(
+        ModernPopupLabels,
+        { placeholder: ui.string.SearchDots, items, multiselect, selected, enableSearch },
+        container,
+        (result) => {
+          if (result != null) {
+            if (allowDeselect && selected === result) {
+              selected = undefined
+              dispatch('selected', undefined)
+            } else {
+              selected = result
+              dispatch('selected', result)
+            }
+          }
+          opened = false
+          mgr?.setFocusPos(focusIndex)
+        },
+        (result) => {
+          if (result != null) {
+            selected = result
+            dispatch('selected', result)
+          }
+        }
+      )
+    }
+  }
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -71,94 +104,84 @@
   class:min-w-0={minW0}
   class:flex-grow={useFlexGrow}
   class:multiselect-wrap={wrap}
+  class:icon-only={!showContent}
   style:width={width ?? (wrap ? '100%' : 'min-content')}
 >
-  <ModernButton
-    {focusIndex}
-    {icon}
-    {size}
-    {kind}
-    {disabled}
-    pressed={opened}
-    {dataId}
-    {loading}
-    tooltip={label !== undefined ? { label, direction: labelDirection } : undefined}
-    on:click={() => {
-      if (!opened) {
-        opened = true
-        showPopup(
-          DropdownLabelsPopup,
-          { placeholder: ui.string.SearchDots, items, multiselect, selected, enableSearch },
-          container,
-          (result) => {
-            if (result != null) {
-              if (allowDeselect && selected === result) {
-                selected = undefined
-                dispatch('selected', undefined)
-              } else {
-                selected = result
-                dispatch('selected', result)
-              }
-            }
-            opened = false
-            mgr?.setFocusPos(focusIndex)
-          },
-          (result) => {
-            if (result != null) {
-              selected = result
-              dispatch('selected', result)
-            }
-          }
-        )
-      }
-    }}
-  >
-    <div class="dropdown-content-wrapper flex-row-center w-full min-w-0" class:justify-left={justify === 'left'}>
-      <span
-        class="content overflow-label grow min-w-0"
-        class:mr-2={showDropdownIcon}
-        class:content-color={selectedItem === undefined}
-      >
-        {#if $$slots.content}
-          <slot name="content" />
-        {:else if Array.isArray(selectedItem)}
-          {#if selectedItem.length > 0}
-            {#each selectedItem as seleceted}
-              <span class="step-row flex-row-center flex-gap-1">
-                {#if seleceted.icon}
-                  <Icon icon={seleceted.icon} size={'small'} iconProps={seleceted.iconProps} />
-                {/if}
-                {seleceted.label}
+  {#if showContent}
+    <ModernButton
+      {focusIndex}
+      {icon}
+      {size}
+      {iconSize}
+      {kind}
+      {disabled}
+      pressed={opened}
+      {dataId}
+      {loading}
+      tooltip={label !== undefined ? { label, direction: labelDirection } : undefined}
+      on:click={handleClick}
+    >
+      <div class="dropdown-content-wrapper flex-row-center w-full min-w-0" class:justify-left={justify === 'left'}>
+        <span
+          class="content overflow-label grow min-w-0"
+          class:mr-2={showDropdownIcon}
+          class:content-color={selectedItem === undefined}
+        >
+          {#if $$slots.content}
+            <slot name="content" />
+          {:else if Array.isArray(selectedItem)}
+            {#if selectedItem.length > 0}
+              {#each selectedItem as seleceted}
+                <span class="step-row flex-row-center flex-gap-1">
+                  {#if seleceted.icon}
+                    <Icon icon={seleceted.icon} size="small" iconProps={seleceted.iconProps} />
+                  {/if}
+                  {seleceted.label}
+                </span>
+              {/each}
+            {:else}
+              <span class="placeholder-text">
+                <Label label={label ?? placeholder ?? ui.string.NotSelected} />
               </span>
-            {/each}
+            {/if}
+          {:else if selectedItem}
+            <span class="flex-row-center flex-gap-1">
+              {#if selectedItem.icon}
+                <Icon icon={selectedItem.icon} size="small" iconProps={selectedItem.iconProps} />
+              {/if}
+              {selectedItem.label}
+            </span>
           {:else}
             <span class="placeholder-text">
               <Label label={label ?? placeholder ?? ui.string.NotSelected} />
             </span>
           {/if}
-        {:else if selectedItem}
-          <span class="flex-row-center flex-gap-1">
-            {#if selectedItem.icon}
-              <Icon icon={selectedItem.icon} size={'small'} iconProps={selectedItem.iconProps} />
-            {/if}
-            {selectedItem.label}
-          </span>
-        {:else}
-          <span class="placeholder-text">
-            <Label label={label ?? placeholder ?? ui.string.NotSelected} />
-          </span>
+        </span>
+        {#if showDropdownIcon}
+          <div class="dropdown-arrow-icon ml-2 flex-row-center">
+            <DropdownIcon
+              size="small"
+              fill={kind === 'primary' && !disabled ? 'var(--primary-button-content-color)' : 'var(--theme-dark-color)'}
+            />
+          </div>
         {/if}
-      </span>
-      {#if showDropdownIcon}
-        <div class="dropdown-arrow-icon ml-2 flex-row-center">
-          <DropdownIcon
-            size={'small'}
-            fill={kind === 'primary' && !disabled ? 'var(--primary-button-content-color)' : 'var(--theme-dark-color)'}
-          />
-        </div>
-      {/if}
-    </div>
-  </ModernButton>
+      </div>
+    </ModernButton>
+  {:else if icon}
+    <ButtonIcon
+      {focusIndex}
+      {icon}
+      {size}
+      {iconSize}
+      {kind}
+      {disabled}
+      pressed={opened}
+      {dataId}
+      {loading}
+      tooltip={label !== undefined ? { label, direction: labelDirection } : undefined}
+      on:click={handleClick}
+    />
+  {/if}
 </div>
 
 <style lang="scss">
@@ -166,13 +189,14 @@
     display: inline-flex;
     min-width: 0;
 
-    :global(.hulyButton) {
-      width: 100%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: flex-start;
-      min-width: 0;
-      //height: 2.25rem;
+    &:not(.icon-only) {
+      :global(.hulyButton) {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-start;
+        min-width: 0;
+      }
     }
   }
 
