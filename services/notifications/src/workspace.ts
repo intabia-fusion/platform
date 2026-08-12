@@ -154,9 +154,8 @@ class Workspace {
 
     if (res.length > 0) {
       this.lastUpdate = Date.now()
+      await this.applyTxes(res)
     }
-
-    await this.applyTxes(res)
 
     this.inProgress = false
   }
