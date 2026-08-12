@@ -140,6 +140,7 @@
     border-top: 1px solid var(--theme-divider-color);
     border-radius: 0 0 var(--large-BorderRadius) var(--large-BorderRadius);
     cursor: pointer;
+    color: inherit;
     transition: background-color 0.15s ease-in-out;
 
     &:hover:not(:disabled) {

@@ -277,6 +277,7 @@
                 width="100%"
                 disabled={readonly}
                 error={errorMessage !== undefined}
+                limit={32}
                 on:input={() => {
                   if (errorMessage !== undefined) {
                     errorMessage = undefined
