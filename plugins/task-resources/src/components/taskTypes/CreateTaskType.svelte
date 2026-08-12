@@ -213,6 +213,7 @@
       kind="ghost"
       error={errorMessage !== undefined}
       autoFocus
+      limit={32}
       on:input={() => {
         if (errorMessage !== undefined) {
           errorMessage = undefined
