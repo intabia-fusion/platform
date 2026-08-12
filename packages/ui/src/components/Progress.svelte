@@ -62,9 +62,7 @@
 
   $: position = proc !== 0 ? Math.round((value - min) / proc) : fallback
   // Editable bars reserve room for the control knob, non-editable ones have no knob.
-  $: barWidth = editable
-    ? `calc(calc(100% - 1rem) * ${position} / 100 + .5rem)`
-    : `${position}%`
+  $: barWidth = editable ? `calc(calc(100% - 1rem) * ${position} / 100 + .5rem)` : `${position}%`
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
