@@ -32,6 +32,7 @@ import {
   type Workflow,
   type WorkflowTransition
 } from '@hcengineering/workflow'
+import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import { showPopup } from '@hcengineering/ui'
 
 import plugin from './plugin'
@@ -69,7 +70,17 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
 
     const shouldProceed = await this.handleStatusTransition(updateTx)
     if (!shouldProceed) {
-      return { status: 400, error: 'Transition canceled by user' }
+      throw new PlatformError(
+        new Status(
+          Severity.INFO,
+          platform.status.OK,
+          {
+            reason: 'Transition canceled by user',
+            propagate: true
+          }
+        ),
+        true
+      )
     }
 
     return await this.provideTx(tx)

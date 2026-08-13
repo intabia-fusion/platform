@@ -142,7 +142,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
       if (wf?.initialStatuses != null && wf.initialStatuses.length > 0) {
         if (!wf.initialStatuses.includes(task.status)) {
           throw new PlatformError(
-            new Status(Severity.ERROR, workflow.status.InitialStatusNotAllowed, { status: task.status })
+            new Status(Severity.ERROR, workflow.status.InitialStatusNotAllowed, { status: task.status }), true
           )
         }
       }
@@ -185,7 +185,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
         new Status(Severity.ERROR, workflow.status.ForbiddenTransition, {
           from: fromStatus,
           to: toStatus
-        })
+        }), true
       )
     }
 
@@ -195,10 +195,15 @@ export class WorkflowMiddleware extends BaseMiddleware {
 
     if (transition === undefined) {
       throw new PlatformError(
-        new Status(Severity.ERROR, workflow.status.ForbiddenTransition, {
-          from: fromStatus,
-          to: toStatus
-        })
+        new Status(
+          Severity.ERROR,
+          workflow.status.ForbiddenTransition,
+          {
+            from: fromStatus,
+            to: toStatus
+          }
+        ),
+        true
       )
     }
 
@@ -244,10 +249,12 @@ export class WorkflowMiddleware extends BaseMiddleware {
             res.reasonIntl ?? workflow.status.ValidationFailed,
             {
               reason: res.reason,
-              ...res.intlParams
+              ...res.intlParams,
+              propagate: true
             },
             res.intlParamsNotLocalized
-          )
+          ),
+          true
         )
       }
     }
@@ -259,12 +266,12 @@ export class WorkflowMiddleware extends BaseMiddleware {
       const transition = TxProcessor.createDoc2Doc(createTx)
       if (hasSelfTransition(transition)) {
         throw new PlatformError(
-          new Status(Severity.ERROR, workflow.status.SelfTransitionNotAllowed, { status: transition.to })
+          new Status(Severity.ERROR, workflow.status.SelfTransitionNotAllowed, { status: transition.to }), true
         )
       }
       const workflowRef = transition.attachedTo
       if (workflowRef == null) {
-        throw new PlatformError(new Status(Severity.ERROR, workflow.status.WorkflowNotFound, {}))
+        throw new PlatformError(new Status(Severity.ERROR, workflow.status.WorkflowNotFound, {}), true)
       }
 
       const currentTransitions = await this.provideFindAll(ctx, workflow.class.WorkflowTransition, {
@@ -278,7 +285,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
             from: fromStatus,
             to: transition.to,
             name: conflict.transition.name
-          })
+          }), true
         )
       }
     } else if (cud._class === core.class.TxUpdateDoc) {
@@ -291,7 +298,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
           const updated = TxProcessor.updateDoc2Doc(transition, updateTx)
           if (hasSelfTransition(updated)) {
             throw new PlatformError(
-              new Status(Severity.ERROR, workflow.status.SelfTransitionNotAllowed, { status: updated.to })
+              new Status(Severity.ERROR, workflow.status.SelfTransitionNotAllowed, { status: updated.to }), true
             )
           }
           const workflowRef = updated.attachedTo ?? transition.attachedTo
@@ -306,7 +313,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
                 from: fromStatus,
                 to: updated.to,
                 name: conflict.transition.name
-              })
+              }), true
             )
           }
         }

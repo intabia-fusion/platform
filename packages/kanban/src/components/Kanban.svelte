@@ -55,6 +55,7 @@
   export let dontUpdateRank: boolean = false
   export let orderBy: [string, 1 | -1] | undefined = undefined
   export let onMoveCommit: ((id: string, fields: Record<string, unknown>) => void) | undefined = undefined
+  export let onMoveRollback: ((id: string) => void) | undefined = undefined
 
   export let getUpdateProps: (doc: Doc, state: CategoryType) => DocumentUpdate<Item> | undefined
   export let getAvailableCategories: ((doc: Doc) => Promise<CategoryType[]>) | undefined = undefined
@@ -300,7 +301,11 @@
     // from there, mirroring the mouse-hover focus path.
     dispatch('obj-focus', { ...movedCard, ...merged })
     if (Object.keys(merged).length > 0) {
-      await client.update(dragCard, merged)
+      try {
+        await client.update(dragCard, merged)
+      } catch (err) {
+        onMoveRollback?.(movedCard._id)
+      }
     }
     dragCard = undefined
     dragCardAvailableCategories = undefined
@@ -568,11 +573,15 @@
       // Restore focus on the just-moved card so keyboard navigation continues
       // from there, mirroring the mouse-hover focus path.
       dispatch('obj-focus', { ...dragCard, ...overlay })
-      if (updates !== undefined && Object.keys(updates).length > 0) {
-        await client.diffUpdate(dragCard, updates)
-      }
-      if (swimUpdates !== undefined && Object.keys(swimUpdates).length > 0) {
-        await client.update(dragCard, swimUpdates)
+      try {
+        if (updates !== undefined && Object.keys(updates).length > 0) {
+          await client.diffUpdate(dragCard, updates)
+        }
+        if (swimUpdates !== undefined && Object.keys(swimUpdates).length > 0) {
+          await client.update(dragCard, swimUpdates)
+        }
+      } catch (err) {
+        onMoveRollback?.(dragCard._id)
       }
     }
     isDragging = false

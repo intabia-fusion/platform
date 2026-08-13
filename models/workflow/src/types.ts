@@ -139,7 +139,7 @@ export class TScreen extends TDoc implements Screen {
     projectType!: Ref<ProjectType>
 
   @Prop(TypeRef(core.class.Class), core.string.Class)
-    targetClass?: Ref<Class<Task>>
+    targetClass!: Ref<Class<Task>>
 
   @Prop(Collection(workflow.class.ScreenTab), workflow.string.ScreenTab)
     tabs?: number

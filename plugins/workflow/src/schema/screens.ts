@@ -33,6 +33,6 @@ export interface Screen extends Doc {
   name: string
   description?: string
   projectType: Ref<ProjectType>
-  targetClass?: Ref<Class<Task>>
+  targetClass: Ref<Class<Task>>
   tabs?: number
 }

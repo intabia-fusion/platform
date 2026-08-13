@@ -14,7 +14,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { Ref } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import { ProjectType, TaskType } from '@hcengineering/task'
   import ui, { IconOpenedArrow, Label, ModernButton, ModernDropdownLabels } from '@hcengineering/ui'
   import { Screen, ScreenProps, ScreenRequestConfig } from '@hcengineering/workflow'
@@ -29,6 +29,8 @@
 
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   const dispatch = createEventDispatcher<{ update: ScreenProps, close: void }>()
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
   const screensQuery = createQuery()
 
   let selectedScreenId: Ref<Screen> | undefined = config?.props?.screen
@@ -39,7 +41,7 @@
 
   $: if (projectTypeId != null) {
     screensQuery.query(plugin.class.Screen, { projectType: projectTypeId }, (res) => {
-      screens = res
+      screens = res.filter(it => hierarchy.isDerived(taskType.targetClass, it.targetClass))
       isLoaded = true
     })
   }

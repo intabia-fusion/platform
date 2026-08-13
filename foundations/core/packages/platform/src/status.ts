@@ -60,13 +60,27 @@ export class Status<P extends Record<string, any> = any> {
  * Error object wrapping `Status`
  * @public
  */
-export class PlatformError<P extends Record<string, any>> extends Error {
+export class PlatformError<P extends Record<string, any> = any> extends Error {
   readonly status: Status<P>
+  readonly propagate: boolean
 
-  constructor (status: Status<P>) {
+  constructor (status: Status<P>, propagate: boolean = false) {
     super(`${status.severity}: ${status.code} ${JSON.stringify(status.params)}`)
     this.status = status
+    this.propagate = propagate || status.params?.propagate === true
   }
+}
+
+/**
+ * Helper to check if a platform error should be propagated to client callers
+ * @public
+ */
+export function isPlatformPropagateError (err: unknown): boolean {
+  return (
+    (err instanceof PlatformError && (err.propagate === true || err.status?.params?.propagate === true)) ||
+    (err as any)?.propagate === true ||
+    (err as any)?.status?.params?.propagate === true
+  )
 }
 
 /**

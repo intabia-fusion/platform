@@ -221,6 +221,13 @@
     pendingMoves = pendingMoves
   }
 
+  function clearPendingMove (id: string): void {
+    if (pendingMoves.has(id)) {
+      pendingMoves.delete(id)
+      pendingMoves = pendingMoves
+    }
+  }
+
   $: effectiveTasks = pendingMoves.size > 0 ? applyPendingMoves(tasks) : tasks
 
   // Memoize groupByDocs by a cheap content hash so that downstream Kanban
@@ -649,6 +656,9 @@
     {orderBy}
     onMoveCommit={(id, fields) => {
       registerPendingMove(id, fields)
+    }}
+    onMoveRollback={(id) => {
+      clearPendingMove(id)
     }}
     {_class}
     query={resultQuery}
