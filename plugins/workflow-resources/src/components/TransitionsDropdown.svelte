@@ -16,7 +16,6 @@
   import { createEventDispatcher } from 'svelte'
   import { notEmpty, Ref, Status } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { type IntlString } from '@hcengineering/platform'
   import ui, { DropdownIntlItem, ModernDropdown } from '@hcengineering/ui'
   import { WorkflowTransition } from '@hcengineering/workflow'
 
@@ -32,7 +31,7 @@
   $: transitionItems = (transitions ?? []).map(
     (t): DropdownIntlItem => ({
       id: t._id,
-      label: t.name as IntlString,
+      label: getEmbeddedLabel(t.name),
       component: TransitionPresenter,
       componentProps: { transition: t, statuses }
     })

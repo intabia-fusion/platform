@@ -18,7 +18,7 @@
   import presentation, { getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import task, { ProjectType, TaskType } from '@hcengineering/task'
-  import ui, { ButtonMenu, Label, Modal, ModernEditbox } from '@hcengineering/ui'
+  import ui, { Label, Modal, ModernDropdown, ModernEditbox } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { createWorkflow } from '@hcengineering/workflow'
 
@@ -42,7 +42,6 @@
     icon: tt.icon === view.ids.IconWithEmoji ? IconWithEmoji : tt.icon,
     iconProps: { icon: tt.color }
   }))
-  $: selectedTaskType = taskTypes.find((tt) => tt._id === selectedTaskTypeId)
   $: canSave = name.trim() !== '' && selectedTaskTypeId != null
 
   async function save (): Promise<void> {
@@ -71,19 +70,13 @@
       <span class="label">
         <Label label={task.string.TaskType} />
       </span>
-      <ButtonMenu
-        selected={selectedTaskTypeId}
+      <ModernDropdown
         items={taskTypeMenuItems}
-        icon={selectedTaskType?.icon === view.ids.IconWithEmoji ? IconWithEmoji : selectedTaskType?.icon}
-        iconProps={{ icon: selectedTaskType?.color }}
-        label={selectedTaskType != null ? getEmbeddedLabel(selectedTaskType.name) : ui.string.NotSelected}
+        bind:selected={selectedTaskTypeId}
         kind="secondary"
         size="medium"
-        on:selected={(e) => {
-          if (e.detail != null) {
-            selectedTaskTypeId = e.detail
-          }
-        }}
+        placeholder={ui.string.NotSelected}
+        showDropdownIcon
       />
     </div>
   </div>

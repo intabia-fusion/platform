@@ -33,6 +33,7 @@
   export let params: Record<string, any> = {}
   export let withSearch: boolean = false
   export let searchPlaceholder: IntlString = ui.string.SearchDots
+  export let popupClass: string | undefined = undefined
 
   const dispatch = createEventDispatcher<{
     update: DropdownIntlItem['id'] | Array<DropdownIntlItem['id']>
@@ -132,7 +133,7 @@
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div class="hulyPopup-container" use:resizeObserver={() => dispatch('changeContent')}>
+<div class="hulyPopup-container {popupClass ?? ''}" use:resizeObserver={() => dispatch('changeContent')}>
   {#if withSearch}
     <div class="search-wrapper">
       <ModernEditbox
@@ -183,7 +184,11 @@
             {#if item.icon}<Icon icon={item.icon} iconProps={item.iconProps} size="small" />{/if}
           </div>
         {/if}
-        {#if item.description !== undefined}
+        {#if item.component}
+          <div class="hulyPopup-row__label flex-grow">
+            <svelte:component this={item.component} {...item.componentProps ?? {}} />
+          </div>
+        {:else if item.description !== undefined}
           <div class="hulyPopup-row__labels-wrapper">
             <div class="hulyPopup-row__label overflow-label">
               <Label label={item.label} params={item.params ?? params} />
@@ -225,6 +230,19 @@
 </div>
 
 <style lang="scss">
+  .hulyPopup-container {
+    &.wide {
+      max-width: 90vw;
+      width: 32rem;
+      min-width: 24rem;
+    }
+    &.x-wide {
+      max-width: 90vw;
+      width: 40rem;
+      min-width: 28rem;
+    }
+  }
+
   .search-wrapper {
     padding: var(--spacing-1) var(--spacing-1_5);
     border-bottom: 1px solid var(--theme-divider-color);

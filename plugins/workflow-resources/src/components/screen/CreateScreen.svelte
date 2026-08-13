@@ -126,6 +126,7 @@
           placeholder={ui.string.NotSelected}
           autoSelect={true}
           withSearch={false}
+          showDropdownIcon
         />
       </div>
     {/if}
