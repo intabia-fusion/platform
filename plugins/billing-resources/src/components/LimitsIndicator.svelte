@@ -143,16 +143,10 @@
   on:mouseleave={handleHoverEnd}
 >
   <div class="progress-wrapper">
-    <Progress color={storageColor} value={storageUsed} max={limits?.storageLimit ?? 0} fallback={0} small={true} />
+    <Progress color={storageColor} value={storageUsed} max={limits?.storageLimit ?? 0} fallback={0} />
   </div>
   <div class="progress-wrapper">
-    <Progress
-      color={meetingColor}
-      value={meetingMinutesUsed}
-      max={limits?.meetingMinutesLimit ?? 0}
-      fallback={0}
-      small={true}
-    />
+    <Progress color={meetingColor} value={meetingMinutesUsed} max={limits?.meetingMinutesLimit ?? 0} fallback={0} />
   </div>
 </button>
 

@@ -32,8 +32,17 @@
     return `${m}m`
   }
 
+  const GB = 1e9
+  const TB_THRESHOLD = 1e13 // 10 TB: above this, raw GB gets too long to read
+
+  // A 50 GB plan plus a 1000 GB package rounds to "1 TB" and hides the package.
+  function formatBytes (v: number): string {
+    if (v >= GB && v < TB_THRESHOLD) return `${Math.round(v / GB)} GB`
+    return humanReadableFileSize(v, 10, 0)
+  }
+
   function formatValue (v: number): string {
-    if (kind === 'bytes') return humanReadableFileSize(v, 10, 0)
+    if (kind === 'bytes') return formatBytes(v)
     if (kind === 'minutes') return formatMinutes(v)
     return humanReadableNumbers(v, 10, 0)
   }
