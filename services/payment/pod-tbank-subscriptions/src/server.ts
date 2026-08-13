@@ -643,7 +643,14 @@ export async function handleUpdatePlan (
   req: Request,
   res: Response
 ): Promise<void> {
-  const { plan: newPlan, quantity, period, recurrent } = req.body as UpdatePlanRequest
+  const {
+    plan: newPlan,
+    quantity,
+    period,
+    recurrent,
+    force,
+    workspaceUrl: reqWorkspaceUrl
+  } = req.body as UpdatePlanRequest
   const sub = await loadSubscriptionOr404(async () => await findSubscription(storage, req.params.id), res)
   if (sub === null) return
 
@@ -694,8 +701,7 @@ export async function handleUpdatePlan (
   const perSeatAmount = resolvePerSeatAmount(pricing, period === 'yearly')
   const newAmount = perSeatAmount * seats
   const fingerprint = orderFingerprint(newPlan, seats, period)
-  const workspaceUrl = (req.body as { workspaceUrl?: string }).workspaceUrl ?? ''
-  const force = (req.body as { force?: boolean }).force
+  const workspaceUrl = reqWorkspaceUrl ?? ''
 
   // Pro-rata plan/seat change on a live paid subscription (tier seat change OR package swap).
   //  - charge <= 0 (downgrade / credit covers it): switch in place, no checkout, extend the period.

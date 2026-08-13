@@ -866,7 +866,8 @@ export async function createServer (
               accountUuid,
               quantity,
               period,
-              recurrent
+              recurrent,
+              force
             )
           } catch (err) {
             ctx.error('Failed to update subscription at provider', { err })
