@@ -40,7 +40,9 @@
     'modifiedOn',
     'number',
     'space',
-    'status'
+    'status',
+    'title',
+    'reportedTime'
   ]
   const EXCLUDED_TYPES = [
     core.class.TypeMarkup,
@@ -61,6 +63,7 @@
 
   const updateItems = reduceCalls(async (lang: string): Promise<void> => {
     const res = await getDisplayAttributes(taskType.targetClass, lang, EXCLUDED_FIELDS, EXCLUDED_TYPES)
+    console.log(res)
     const resultItems: DropdownTextItem[] = []
     const newDisplayAttrs: DisplayAttribute[] = []
 

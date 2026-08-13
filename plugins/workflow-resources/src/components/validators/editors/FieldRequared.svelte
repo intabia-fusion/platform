@@ -28,7 +28,7 @@
   export let config: FieldRequiredValidatorConfig | undefined = undefined
   export let canSave = false
 
-  const SKIP_FIELDS = ['createdBy', 'modifiedBy', 'createdOn', 'modifiedOn', 'status', 'priority', 'title', 'reports']
+  const SKIP_FIELDS = ['createdBy', 'modifiedBy', 'createdOn', 'modifiedOn', 'status', 'title', 'reports']
   const dispatch = createEventDispatcher<{ update: FieldRequiredProps }>()
 
   const props: FieldRequiredProps | undefined = config?.props
