@@ -21,33 +21,33 @@ describe('Task type hierarchy helpers', () => {
   const projectType1 = 'proj-1' as Ref<ProjectType>
   const projectType2 = 'proj-2' as Ref<ProjectType>
 
-  const epic: TaskType = {
+  const epic = {
     _id: 'epic' as Ref<TaskType>,
     parent: projectType1,
     name: 'Epic',
     isRootTaskType: true
-  } as TaskType
+  } as any as TaskType
 
-  const issue: TaskType = {
+  const issue = {
     _id: 'issue' as Ref<TaskType>,
     parent: projectType1,
     name: 'Issue',
     isRootTaskType: false
-  } as TaskType
+  } as any as TaskType
 
-  const subtask: TaskType = {
+  const subtask = {
     _id: 'subtask' as Ref<TaskType>,
     parent: projectType1,
     name: 'Subtask',
     isRootTaskType: false,
     allowedAsChildOf: ['issue' as Ref<TaskType>]
-  } as TaskType
+  } as any as TaskType
 
-  const otherProjectTask: TaskType = {
+  const otherProjectTask = {
     _id: 'other-task' as Ref<TaskType>,
     parent: projectType2,
     name: 'Other Task'
-  } as TaskType
+  } as any as TaskType
 
   const allTaskTypes = [epic, issue, subtask, otherProjectTask]
 

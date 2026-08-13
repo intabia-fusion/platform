@@ -35,12 +35,12 @@
   let fieldItems: FieldItem[] = []
 
   const updateFields = reduceCalls(async (ids: string[], lang: string): Promise<void> => {
-    if (taskType?.ofClass == null || ids.length === 0) {
+    if (taskType?.targetClass == null || ids.length === 0) {
       fieldItems = []
       return
     }
     const hierarchy = client.getHierarchy()
-    const allAttrs = getAllClassAttributes(hierarchy, taskType.ofClass)
+    const allAttrs = getAllClassAttributes(hierarchy, taskType.targetClass)
 
     const res: FieldItem[] = []
     for (const id of new Set(ids)) {

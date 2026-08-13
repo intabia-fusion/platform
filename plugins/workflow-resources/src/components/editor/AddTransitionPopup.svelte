@@ -14,19 +14,15 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { Ref, Status } from '@hcengineering/core'
-  import { translate } from '@hcengineering/platform'
-  import presentation, { getClient, reduceCalls } from '@hcengineering/presentation'
+  import presentation, { getClient } from '@hcengineering/presentation'
   import { StatePresenter } from '@hcengineering/task-resources'
   import ui, {
-    DropdownTextItem,
+    DropdownIntlItem,
     IconError,
     Label,
     LabelAndProps,
-    languageStore,
-    ListItem,
     Modal,
     ModernDropdown,
-    ModernDropdownLabels,
     ModernEditbox
   } from '@hcengineering/ui'
   import {
@@ -38,6 +34,7 @@
   } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
 
   export let workflow: Workflow
   export let statuses: Status[] = []
@@ -45,51 +42,52 @@
 
   const client = getClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  const dispatch = createEventDispatcher<{ close: void }>()
+  const dispatch = createEventDispatcher<{ close: undefined }>()
 
   let name = ''
 
-  let toStatusItem: ListItem | undefined
-  let to: Ref<Status> | undefined = undefined
-  $: to = toStatusItem?._id as Ref<Status>
+  let toStatusId: Ref<Status> | undefined = undefined
+  $: toStatusItem = statuses.find((s) => s._id === toStatusId)
+  $: to = toStatusId
 
-  let fromStatusItemIds: string[] | undefined = []
-  let fromStatusItems: DropdownTextItem[] = []
+  let fromStatusItemIds: string[] | undefined = ['null']
 
-  const updateFromStatusItems = reduceCalls(async (lang: string, stList: Status[]): Promise<void> => {
-    const it = await translate(plugin.string.AnyStatus, {}, lang)
-    fromStatusItems = [
-      { label: it, id: 'null', exclusive: true },
-      ...stList.map((s) => ({
+  $: fromStatusItems = [
+    { label: plugin.string.AnyStatus, id: 'null', exclusive: true },
+    ...statuses.map(
+      (s): DropdownIntlItem => ({
         id: s._id,
-        label: s.name,
+        label: getEmbeddedLabel(s.name),
         icon: StatePresenter,
         iconProps: { value: s, shouldShowName: false }
-      }))
-    ]
-  })
+      })
+    )
+  ]
 
-  $: void updateFromStatusItems($languageStore, statuses)
-
-  $: toStatusItems = statuses.map((s) => ({
-    _id: s._id,
-    label: s.name,
-    icon: StatePresenter,
-    iconProps: { value: s, shouldShowName: false }
-  }))
+  $: toStatusItems = statuses.map(
+    (s): DropdownIntlItem => ({
+      id: s._id,
+      label: getEmbeddedLabel(s.name),
+      icon: StatePresenter,
+      iconProps: { value: s, shouldShowName: false }
+    })
+  )
 
   $: isSelf = to != null && fromStatusItemIds != null && fromStatusItemIds.includes(to)
 
   let conflictInfo: ConflictInfo | null = null
   $: {
-    const fromVal = fromStatusItemIds?.includes('null') ? null : (fromStatusItemIds as Ref<Status>[])
+    const fromVal =
+      fromStatusItemIds !== undefined && fromStatusItemIds.includes('null')
+        ? null
+        : (fromStatusItemIds as Ref<Status>[])
     conflictInfo =
       to != null && fromStatusItemIds != null && fromStatusItemIds.length > 0
         ? getTransitionConflict({ from: fromVal, to }, transitions)
         : null
   }
 
+  let isSaving = false
   async function save (): Promise<void> {
     if (
       to === undefined ||
@@ -101,13 +99,17 @@
     ) {
       return
     }
-
-    const from = fromStatusItemIds.includes('null') ? null : (fromStatusItemIds as Ref<Status>[])
-    await addTransition(client, workflow._id, name.trim(), from, to)
-    dispatch('close')
+    try {
+      isSaving = true
+      const from = fromStatusItemIds.includes('null') ? null : (fromStatusItemIds as Ref<Status>[])
+      await addTransition(client, workflow._id, name.trim(), from, to)
+      dispatch('close')
+    } finally {
+      isSaving = false
+    }
   }
 
-  function getOkTooltip (name: string, toStatusItem: ListItem | undefined): LabelAndProps | undefined {
+  function getOkTooltip (name: string, toStatusItem: Status | undefined): LabelAndProps | undefined {
     if (name.trim().length === 0) {
       return {
         label: plugin.string.NameRequired
@@ -119,20 +121,22 @@
       }
     }
     if (isSelf) {
+      const st = statuses.find((s) => s._id === to)
       return {
         label: plugin.string.SelfTransitionError,
         props: {
-          to: toStatusItem?.label ?? ''
+          to: st?.name ?? ''
         }
       }
     }
     if (conflictInfo != null) {
-      const fromItem = fromStatusItems.find((item) => item.id === conflictInfo?.status)
+      const toStatus = statuses.find((s) => s._id === to)
+      const fromStatus = statuses.find((s) => s._id === conflictInfo?.status)
       return {
         label: plugin.string.TransitionConflictError,
         props: {
-          to: toStatusItem?.label ?? '',
-          from: fromItem?.label ?? '',
+          to: toStatus?.name ?? '',
+          from: fromStatus?.name ?? '',
           transition: conflictInfo.transition.name
         }
       }
@@ -146,6 +150,7 @@
   type="type-popup"
   okAction={save}
   okLabel={presentation.string.Create}
+  okLoading={isSaving}
   canSave={name.trim() !== '' &&
     to != null &&
     fromStatusItemIds != null &&
@@ -164,11 +169,12 @@
   <div class="hulyModal-content__settingsSet settings-set">
     <div class="hulyModal-content__settingsSet-line">
       <span class="label"> <Label label={plugin.string.From} /></span>
-      <ModernDropdownLabels
+      <ModernDropdown
         items={fromStatusItems}
         bind:selected={fromStatusItemIds}
         multiselect={true}
         wrap={true}
+        autoSelect={false}
         placeholder={ui.string.NotSelected}
         justify="left"
         width="25rem"
@@ -179,16 +185,16 @@
       <span class="label"> <Label label={plugin.string.To} /> </span>
       <ModernDropdown
         items={toStatusItems}
-        bind:selected={toStatusItem}
+        bind:selected={toStatusId}
+        autoSelect={false}
         placeholder={ui.string.NotSelected}
-        icon={StatePresenter}
         justify="left"
         width="25rem"
-        showCheckmark={true}
       />
     </div>
 
     {#if isSelf}
+      {@const toStatus = statuses.find((s) => s._id === to)}
       <div class="error-row">
         <div class="error-icon">
           <IconError size="small" />
@@ -197,13 +203,14 @@
           <Label
             label={plugin.string.SelfTransitionError}
             params={{
-              to: toStatusItem?.label ?? ''
+              to: toStatus?.name ?? ''
             }}
           />
         </span>
       </div>
     {:else if conflictInfo != null}
-      {@const fromItem = fromStatusItems.find((item) => item.id === conflictInfo?.status)}
+      {@const toStatus = statuses.find((s) => s._id === to)}
+      {@const fromStatus = statuses.find((s) => s._id === conflictInfo?.status)}
       <div class="error-row">
         <div class="error-icon">
           <IconError size="small" />
@@ -212,8 +219,8 @@
           <Label
             label={plugin.string.TransitionConflictError}
             params={{
-              to: toStatusItem?.label ?? '',
-              from: fromItem?.label ?? '',
+              to: toStatus?.name ?? '',
+              from: fromStatus?.name ?? '',
               transition: conflictInfo.transition.name
             }}
           />

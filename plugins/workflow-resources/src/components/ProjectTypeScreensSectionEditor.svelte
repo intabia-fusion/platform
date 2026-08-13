@@ -12,10 +12,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { SortingOrder } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
+  import { Class, Ref, SortingOrder } from '@hcengineering/core'
+  import { IntlString } from '@hcengineering/platform'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import { ProjectType, ProjectTypeDescriptor } from '@hcengineering/task'
+  import { ProjectType, ProjectTypeDescriptor, Task } from '@hcengineering/task'
+  import tracker from '@hcengineering/tracker'
   import { ButtonIcon, Icon, IconAdd, Label } from '@hcengineering/ui'
   import { Screen } from '@hcengineering/workflow'
 
@@ -27,6 +29,7 @@
   export let descriptor: ProjectTypeDescriptor | undefined = undefined
   export let disabled = true
 
+  const client = getClient()
   const screensQuery = createQuery()
 
   let isLoading = true
@@ -41,6 +44,15 @@
     },
     { sort: { name: SortingOrder.Ascending } }
   )
+
+  function getClassLabel (targetClass?: Ref<Class<Task>>): IntlString | undefined {
+    if (targetClass == null) return undefined
+    if (targetClass === tracker.class.Issue) {
+      return plugin.string.BasicIssue
+    }
+    const clazz = client.getHierarchy().findClass(targetClass)
+    return clazz?.label
+  }
 </script>
 
 <div class="hulyTableAttr-header font-medium-12">
@@ -66,6 +78,7 @@
 {#if screens.length > 0 && !isLoading}
   <div class="hulyTableAttr-content screen">
     {#each screens as screen (screen._id)}
+      {@const classLabel = getClassLabel(screen.targetClass)}
       <button
         type="button"
         class="hulyTableAttr-content__row"
@@ -73,16 +86,21 @@
           navigateToScreen(screen._id, false)
         }}
       >
-        <div class="hulyTableAttr-content__row-icon-wrapper">
+        <span class="hulyTableAttr-content__row-icon-wrapper">
           <Icon icon={plugin.icon.Screen} size="small" />
-        </div>
-        <div
+        </span>
+        <span
           class="hulyTableAttr-content__row-label font-medium-14 screen-name"
           class:has-description={screen.description != null}
           title={screen.name}
         >
           {screen.name}
-        </div>
+        </span>
+        {#if classLabel}
+          <span class="screen-class">
+            <Label label={classLabel} />
+          </span>
+        {/if}
         {#if screen.description}
           <div
             class="hulyTableAttr-content__row-label dark font-regular-14 screen-description"
@@ -100,6 +118,7 @@
   .hulyTableAttr-content__row {
     width: 100%;
     justify-content: flex-start;
+    align-items: center;
     text-align: left;
   }
 
@@ -107,8 +126,24 @@
     flex-shrink: 0;
 
     &.has-description {
-      max-width: 50%;
+      max-width: 35%;
     }
+  }
+
+  .screen-class {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1rem;
+    letter-spacing: 0.01em;
+    padding: 0.1875rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: var(--text-editor-selected-node-background, rgba(76, 56, 189, 0.12));
+    color: var(--primary-color-purple-02, #6452db);
+    white-space: nowrap;
+    margin: 0 0.25rem;
   }
 
   .screen-description {

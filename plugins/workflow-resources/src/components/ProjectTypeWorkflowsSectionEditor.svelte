@@ -97,7 +97,7 @@
         <span class="hulyTableAttr-content__row-label font-medium-14" title={workflow.name}>
           {workflow.name}
         </span>
-        <span class="hulyTableAttr-content__row-label grow dark font-regular-14 type-label">
+        <span class="type-label">
           {#if taskTypeName}
             {taskTypeName}
           {:else}
@@ -110,7 +110,26 @@
 {/if}
 
 <style lang="scss">
+  .hulyTableAttr-content__row {
+    width: 100%;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: left;
+  }
+
   .type-label {
+    display: inline-flex;
+    align-items: center;
     flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1rem;
+    letter-spacing: 0.01em;
+    padding: 0.1875rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: var(--text-editor-selected-node-background, rgba(76, 56, 189, 0.12));
+    color: var(--primary-color-purple-02, #6452db);
+    white-space: nowrap;
+    margin-left: 0.5rem;
   }
 </style>

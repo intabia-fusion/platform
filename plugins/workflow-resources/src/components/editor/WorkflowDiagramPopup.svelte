@@ -66,9 +66,10 @@
     dispatch('fullsize', fullSize)
   }
 
-  function handleTaskTypeChange (newId: string | undefined): void {
-    if (newId != null) {
-      currentTaskTypeId = newId as Ref<TaskType>
+  function handleTaskTypeChange (newId: DropdownTextItem['id'] | DropdownTextItem['id'][] | undefined | null): void {
+    const rawId = Array.isArray(newId) ? newId[0] : newId
+    if (rawId != null) {
+      currentTaskTypeId = String(rawId) as Ref<TaskType>
     }
   }
 

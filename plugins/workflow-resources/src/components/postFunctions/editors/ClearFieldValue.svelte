@@ -18,6 +18,7 @@
   import { TaskType } from '@hcengineering/task'
   import ui, { DropdownTextItem, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
   import { ClearFieldValueProps, Field, ClearFieldValuePostFnConfig } from '@hcengineering/workflow'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
 
   import plugin from '../../../plugin'
   import { DisplayAttribute, getDisplayAttributes } from '../../../utils'
@@ -59,7 +60,7 @@
   let selected: Ref<AnyAttribute>[] = props?.fields?.map((f) => f.attribute) ?? []
 
   const updateItems = reduceCalls(async (lang: string): Promise<void> => {
-    const res = await getDisplayAttributes(taskType.ofClass, lang, EXCLUDED_FIELDS, EXCLUDED_TYPES)
+    const res = await getDisplayAttributes(taskType.targetClass, lang, EXCLUDED_FIELDS, EXCLUDED_TYPES)
     const resultItems: DropdownTextItem[] = []
     const newDisplayAttrs: DisplayAttribute[] = []
 
@@ -73,7 +74,7 @@
           icon: attr.icon,
           iconProps: attr.iconProps,
           separatorBefore: isFirstInGroup,
-          separatorLabel: isFirstInGroup ? group.classLabel : undefined
+          separatorLabel: isFirstInGroup ? getEmbeddedLabel(group.classLabel) : undefined
         })
       })
     })

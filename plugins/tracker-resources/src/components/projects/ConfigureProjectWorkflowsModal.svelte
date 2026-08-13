@@ -74,9 +74,14 @@
     dropdownItemsMap = map
   }
 
-  function handleWorkflowSelected (taskTypeId: Ref<TaskType>, selectedId: string | undefined | null): void {
-    if (selectedId != null && selectedId !== 'none') {
-      localMapping[taskTypeId] = selectedId as Ref<Workflow>
+  function handleWorkflowSelected (
+    taskTypeId: Ref<TaskType>,
+    selectedId: DropdownTextItem['id'] | DropdownTextItem['id'][] | undefined | null
+  ): void {
+    const rawId = Array.isArray(selectedId) ? selectedId[0] : selectedId
+    const idStr = rawId != null ? String(rawId) : null
+    if (idStr != null && idStr !== 'none') {
+      localMapping[taskTypeId] = idStr as Ref<Workflow>
     } else {
       // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete localMapping[taskTypeId]
@@ -146,6 +151,7 @@
                 disabled={taskTypeWorkflows.length === 0}
                 kind="secondary"
                 size="large"
+                multiselect={false}
                 showDropdownIcon={true}
                 on:selected={(evt) => {
                   handleWorkflowSelected(taskType._id, evt.detail)

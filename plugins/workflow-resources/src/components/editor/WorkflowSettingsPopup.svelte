@@ -14,10 +14,10 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { Ref, Status } from '@hcengineering/core'
-  import { translate } from '@hcengineering/platform'
-  import { getClient, reduceCalls } from '@hcengineering/presentation'
+  import { type IntlString } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
   import { StatePresenter } from '@hcengineering/task-resources'
-  import ui, { DropdownTextItem, Label, languageStore, Modal, ModernDropdownLabels } from '@hcengineering/ui'
+  import ui, { DropdownIntlItem, Label, Modal, ModernDropdown } from '@hcengineering/ui'
   import { Workflow } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
@@ -32,31 +32,28 @@
   const dispatch = createEventDispatcher<{ close: void }>()
 
   let initialStatusItemIds: string[] = []
-  let initialStatusItems: DropdownTextItem[] = []
 
   $: initialStatusItemIds =
     workflow?.initialStatuses != null && workflow.initialStatuses.length > 0 ? workflow.initialStatuses : ['null']
 
-  const updateInitialStatusItems = reduceCalls(async (lang: string, stList: Status[]): Promise<void> => {
-    const anyStatusLabel = await translate(plugin.string.AnyStatus, {}, lang)
-    initialStatusItems = [
-      { label: anyStatusLabel, id: 'null', exclusive: true },
-      ...stList.map(
-        (s): DropdownTextItem => ({
-          id: s._id,
-          label: s.name,
-          icon: StatePresenter,
-          iconProps: { value: s, shouldShowName: false }
-        })
-      )
-    ]
-  })
+  $: initialStatusItems = [
+    { label: plugin.string.AnyStatus, id: 'null', exclusive: true },
+    ...statuses.map(
+      (s): DropdownIntlItem => ({
+        id: s._id,
+        label: s.name as unknown as IntlString,
+        icon: StatePresenter,
+        iconProps: { value: s, shouldShowName: false }
+      })
+    )
+  ]
 
-  $: void updateInitialStatusItems($languageStore, statuses)
-
-  async function handleInitialStatusesChange (evt: CustomEvent<string[]>): Promise<void> {
+  async function handleInitialStatusesChange (
+    evt: CustomEvent<DropdownIntlItem['id'] | DropdownIntlItem['id'][] | undefined | null>
+  ): Promise<void> {
     if (readonly || workflow === undefined) return
-    const selected = evt.detail
+    const raw = evt.detail
+    const selected = Array.isArray(raw) ? raw.map(String) : raw != null ? [String(raw)] : []
     const initialStatuses = selected.includes('null') ? [] : (selected as Ref<Status>[])
     await client.update(workflow, { initialStatuses })
   }
@@ -66,7 +63,7 @@
   <div class="hulyModal-content__settingsSet settings-set">
     <div class="hulyModal-content__settingsSet-line">
       <span class="label"> <Label label={plugin.string.InitialStatuses} /></span>
-      <ModernDropdownLabels
+      <ModernDropdown
         items={initialStatusItems}
         selected={initialStatusItemIds}
         multiselect={true}

@@ -337,13 +337,13 @@ export interface ListItem {
 }
 
 export interface DropdownTextItem {
-  id: string
+  id: string | number
   label: string
   icon?: IconComponent
   iconProps?: Record<string, any>
   exclusive?: boolean
   separatorBefore?: boolean
-  separatorLabel?: string
+  separatorLabel?: IntlString
 }
 
 export interface DropdownIntlItem {
@@ -354,6 +354,9 @@ export interface DropdownIntlItem {
   params?: Record<string, any>
   description?: IntlString
   paramsDescription?: Record<string, any>
+  component?: AnySvelteComponent
+  componentProps?: Record<string, any>
+  exclusive?: boolean
   keys?: string[]
   separatorBefore?: boolean
   separatorLabel?: IntlString

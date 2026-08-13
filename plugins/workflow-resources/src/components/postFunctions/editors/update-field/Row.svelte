@@ -56,7 +56,10 @@
           width="100%"
           on:selected={(e) => {
             if (e.detail != null) {
-              dispatch('select', e.detail)
+              const val = Array.isArray(e.detail) ? e.detail[0] : e.detail
+              if (val != null) {
+                dispatch('select', String(val))
+              }
             }
           }}
         />

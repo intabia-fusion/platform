@@ -32,6 +32,7 @@
     WorkflowTransformCall,
     WorkflowValueFunction
   } from '@hcengineering/workflow'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
 
   import { DisplayAttribute, getDisplayAttributes } from '../../../utils'
   import ContextSubmenuPopup from './update-field/ContextSubmenuPopup.svelte'
@@ -78,7 +79,7 @@
           icon: attr.icon,
           iconProps: attr.iconProps,
           separatorBefore: isFirstInGroup,
-          separatorLabel: isFirstInGroup ? group.classLabel : undefined
+          separatorLabel: isFirstInGroup ? getEmbeddedLabel(group.classLabel) : undefined
         })
       }
 
@@ -101,7 +102,7 @@
     }
   })
 
-  $: void updateItems(taskType.ofClass, $languageStore)
+  $: void updateItems(taskType.targetClass, $languageStore)
   $: void syncRows(rows)
 
   $: resultFields = rows
@@ -160,7 +161,7 @@
   async function loadRowEditor (rowId: string, key: string, mixin?: Ref<Class<Mixin<Doc>>>): Promise<void> {
     if (key === '') return
 
-    const targetClass = mixin ?? taskType?.ofClass
+    const targetClass = mixin ?? taskType?.targetClass
     const hierarchy = client.getHierarchy()
     const attr = hierarchy.findAttribute(targetClass, key)
 
@@ -304,12 +305,12 @@
   {#each rows as row (row.id)}
     <Row
       {row}
-      _class={taskType.ofClass}
+      _class={taskType.targetClass}
       canRemove={rows.length > 1}
       dropdownItems={getRowAvailableItems(row, usedAttributes, items)}
       contextOptions={getContextOptions(client, taskType, row.attribute)}
       on:select={(e) => {
-        void onSelectField(row.id, e.detail)
+        void onSelectField(row.id, String(e.detail))
       }}
       on:context={(e) => {
         selectContext(row.id, e.detail)

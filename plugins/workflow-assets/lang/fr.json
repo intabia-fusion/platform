@@ -10,6 +10,7 @@
     "From": "De",
     "To": "À",
     "TaskType": "Type de tâche",
+    "BasicIssue": "Ticket de base",
     "WorkflowSchemeField": "Schéma de flux de travail",
     "Untitled": "Sans titre",
     "AnyStatus": "Tout statut",

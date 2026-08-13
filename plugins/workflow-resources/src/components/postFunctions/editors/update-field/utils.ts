@@ -298,7 +298,7 @@ export function getContextOptions (client: Client, taskType: TaskType, attr?: An
   options.push(...presets)
 
   // 2. Gather all attributes from class and mixins
-  const allAttrs = getAllClassAttributes(hierarchy, taskType.ofClass)
+  const allAttrs = getAllClassAttributes(hierarchy, taskType.targetClass)
 
   // 3. Direct Current Task Fields Submenu Group (ThisTaskField ►)
   const thisDirectItems = getDirectFieldOptions(hierarchy, allAttrs, attr, 'this')

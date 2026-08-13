@@ -413,4 +413,3 @@ export function getAllowedParentTaskTypes (
     return true
   })
 }
-

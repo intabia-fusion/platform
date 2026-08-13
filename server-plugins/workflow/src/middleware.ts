@@ -181,7 +181,12 @@ export class WorkflowMiddleware extends BaseMiddleware {
     })
 
     if (allowedTransitions.length === 0) {
-      throw new PlatformError(new Status(Severity.ERROR, workflow.status.ForbiddenTransition, { fromStatus, toStatus }))
+      throw new PlatformError(
+        new Status(Severity.ERROR, workflow.status.ForbiddenTransition, {
+          from: fromStatus,
+          to: toStatus
+        })
+      )
     }
 
     const transition =
@@ -189,7 +194,12 @@ export class WorkflowMiddleware extends BaseMiddleware {
       allowedTransitions.find((t) => t.from == null || t.from.length === 0)
 
     if (transition === undefined) {
-      throw new PlatformError(new Status(Severity.ERROR, workflow.status.ForbiddenTransition, { fromStatus, toStatus }))
+      throw new PlatformError(
+        new Status(Severity.ERROR, workflow.status.ForbiddenTransition, {
+          from: fromStatus,
+          to: toStatus
+        })
+      )
     }
 
     const updatedTask = TxProcessor.updateDoc2Doc(oldTask, updateTx)
@@ -260,8 +270,8 @@ export class WorkflowMiddleware extends BaseMiddleware {
         const fromStatus = conflict.status === 'null' ? 'any' : conflict.status
         throw new PlatformError(
           new Status(Severity.ERROR, workflow.status.TransitionConflict, {
-            toStatus: transition.to,
-            fromStatus,
+            from: fromStatus,
+            to: transition.to,
             name: conflict.transition.name
           })
         )
@@ -288,8 +298,8 @@ export class WorkflowMiddleware extends BaseMiddleware {
             const fromStatus = conflict.status === 'null' ? 'any' : conflict.status
             throw new PlatformError(
               new Status(Severity.ERROR, workflow.status.TransitionConflict, {
-                toStatus: updated.to,
-                fromStatus,
+                from: fromStatus,
+                to: updated.to,
                 name: conflict.transition.name
               })
             )

@@ -14,17 +14,17 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { Data, DocumentUpdate, Ref, Status } from '@hcengineering/core'
-  import { translate } from '@hcengineering/platform'
+  import { translate, getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { createQuery, getClient, MessageBox, reduceCalls } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import { TaskType } from '@hcengineering/task'
   import { StatePresenter } from '@hcengineering/task-resources'
   import ui, {
+    DropdownIntlItem,
     DropdownTextItem,
     IconError,
     Label,
     languageStore,
-    ListItem,
     Modal,
     ModernButton,
     ModernDropdown,
@@ -57,9 +57,9 @@
   const transitionsQuery = createQuery()
 
   let name = ''
-  let fromStatusItemIds: string[] | undefined = []
-  let toStatusItem: ListItem | undefined = undefined
   let fromStatusItems: DropdownTextItem[] = []
+  let fromStatusItemIds: Array<DropdownTextItem['id']> | undefined = []
+  let toStatusId: DropdownIntlItem['id'] | undefined = undefined
 
   let isSaving = false
   let timer: ReturnType<typeof setTimeout> | undefined = undefined
@@ -85,14 +85,18 @@
 
   $: void updateFromStatusItems($languageStore, statuses)
 
-  $: toStatusItems = statuses.map((s) => ({
-    _id: s._id,
-    label: s.name,
-    icon: StatePresenter,
-    iconProps: { value: s, shouldShowName: false }
-  }))
+  $: toStatusItems = statuses.map(
+    (s): DropdownIntlItem => ({
+      id: s._id,
+      label: getEmbeddedLabel(s.name),
+      icon: StatePresenter,
+      iconProps: { value: s, shouldShowName: false }
+    })
+  )
 
-  let lastLoadedId: string | undefined = undefined
+  $: toStatusItem = toStatusItems.find((it) => it.id === toStatusId)
+
+  let lastLoadedId: Ref<WorkflowTransition> | undefined = undefined
 
   $: if (
     transition != null &&
@@ -103,29 +107,29 @@
     lastLoadedId = transition._id
     name = transition.name ?? ''
     fromStatusItemIds = transition.from ?? ['null']
-    toStatusItem = toStatusItems.find((it) => it._id === transition?.to)
+    toStatusId = transition.to
   }
 
-  $: isSelf = toStatusItem?._id != null && fromStatusItemIds != null && fromStatusItemIds.includes(toStatusItem._id)
+  $: isSelf = toStatusId != null && fromStatusItemIds != null && fromStatusItemIds.includes(toStatusId)
 
   let conflictInfo: ConflictInfo | null = null
   $: {
     const fromVal = fromStatusItemIds?.includes('null') ? null : (fromStatusItemIds as Ref<Status>[])
-    const toVal = toStatusItem?._id as Ref<Status>
+    const toVal = toStatusId as Ref<Status>
     conflictInfo =
       toVal != null && fromStatusItemIds != null && fromStatusItemIds.length > 0
         ? getTransitionConflict({ _id, from: fromVal, to: toVal }, transitions)
         : null
   }
 
-  function getFromStatus (ids: string[] | undefined): Ref<Status>[] | null {
+  function getFromStatus (ids: DropdownTextItem['id'][] | undefined): Ref<Status>[] | null {
     return ids == null || ids.includes('null') ? null : ((ids ?? []) as Ref<Status>[])
   }
 
   $: updatedData = {
     name: name.trim(),
     from: getFromStatus(fromStatusItemIds),
-    to: toStatusItem?._id as Ref<Status> | undefined
+    to: toStatusId as Ref<Status> | undefined
   }
 
   function isTransitionFlowValid (
@@ -286,17 +290,16 @@
       <span class="label"><Label label={plugin.string.To} /></span>
       <ModernDropdown
         items={toStatusItems}
-        bind:selected={toStatusItem}
+        bind:selected={toStatusId}
         placeholder={ui.string.NotSelected}
-        icon={StatePresenter}
         justify="left"
         width="100%"
         disabled={readonly}
-        showCheckmark={true}
       />
     </div>
 
-    {#if isSelf}
+    {#if isSelf && toStatusItem}
+      {@const st = statuses.find(it => it._id === toStatusItem.id)}
       <div class="error-row">
         <div class="error-icon">
           <IconError size="small" />
@@ -305,13 +308,14 @@
           <Label
             label={plugin.string.SelfTransitionError}
             params={{
-              to: toStatusItem?.label ?? ''
+              to: st?.name ?? toStatusItem.label
             }}
           />
         </span>
       </div>
     {:else if conflictInfo != null}
-      {@const fromItem = fromStatusItems.find((item) => item.id === conflictInfo?.status)}
+      {@const toStatus = statuses.find(it => it._id === toStatusItem?.id)}
+      {@const fromStatus = statuses.find(it => it._id === conflictInfo?.status)}
       <div class="error-row">
         <div class="error-icon">
           <IconError size="small" />
@@ -320,8 +324,8 @@
           <Label
             label={plugin.string.TransitionConflictError}
             params={{
-              to: toStatusItem?.label ?? '',
-              from: fromItem?.label ?? '',
+              to: toStatus?.name ?? toStatusItem?.label ?? '',
+              from: fromStatus?.name ?? '',
               transition: conflictInfo.transition.name
             }}
           />

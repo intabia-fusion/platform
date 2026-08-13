@@ -220,6 +220,8 @@
     "SelectUsers": "ユーザーを選択",
     "ShowInTitle": "タイトルに表示",
     "SpaceMembersOnly": "スペースメンバーのみ",
+    "OverrideAttribute": "属性をオーバーライド",
+    "Required": "必須",
     "Reset": "リセット"
   },
   "emailTemplate": {

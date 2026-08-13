@@ -190,15 +190,15 @@
     }
   }
 
-  let isDeleteLoading = false
+  let isDeleting = false
 
-  $: canDelete = !loading && tasksCounter === 0 && taskTypes.length > 1
+  $: canDelete = !loading && !isDeleting && tasksCounter === 0 && taskTypes.length > 1
 
   async function handleDelete (): Promise<void> {
-    if (!canDelete || readonly || taskType == null || isDeleteLoading) {
+    if (!canDelete || readonly || taskType == null || isDeleting) {
       return
     }
-    isDeleteLoading = true
+    isDeleting = true
     try {
       const tiedWorkflows = await client.findAll(workflow.class.Workflow, { taskType: taskType._id })
 
@@ -221,7 +221,7 @@
         }
       })
     } finally {
-      isDeleteLoading = false
+      isDeleting = false
     }
   }
   async function showIssuesOfTaskType (): Promise<void> {
@@ -275,8 +275,8 @@
                     icon={IconDelete}
                     size="small"
                     kind="secondary"
-                    loading={isDeleteLoading}
-                    disabled={readonly || isDeleteLoading}
+                    loading={isDeleting}
+                    disabled={readonly || isDeleting}
                     on:click={handleDelete}
                   />
                 {/if}

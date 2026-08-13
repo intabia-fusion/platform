@@ -19,6 +19,7 @@
   import { FieldRequiredProps, FieldRequiredValidatorConfig } from '@hcengineering/workflow'
   import { TaskType } from '@hcengineering/task'
   import { AnyAttribute, Ref } from '@hcengineering/core'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
 
   import plugin from '../../../plugin'
   import { DisplayAttribute, getDisplayAttributes } from '../../../utils'
@@ -27,6 +28,7 @@
   export let config: FieldRequiredValidatorConfig | undefined = undefined
   export let canSave = false
 
+  const SKIP_FIELDS = ['createdBy', 'modifiedBy', 'createdOn', 'modifiedOn', 'status', 'priority', 'title', 'reports']
   const dispatch = createEventDispatcher<{ update: FieldRequiredProps }>()
 
   const props: FieldRequiredProps | undefined = config?.props
@@ -37,7 +39,7 @@
   let displayAttributes: DisplayAttribute[] = []
 
   const updateItems = reduceCalls(async (lang: string): Promise<void> => {
-    const res = await getDisplayAttributes(taskType.ofClass, lang)
+    const res = await getDisplayAttributes(taskType.targetClass, lang, SKIP_FIELDS)
 
     const _items: DropdownTextItem[] = []
     const _displayAttributes: DisplayAttribute[] = []
@@ -54,7 +56,7 @@
           icon: attr.icon,
           iconProps: attr.iconProps,
           separatorBefore: isFirstInGroup,
-          separatorLabel: isFirstInGroup ? group.classLabel : undefined
+          separatorLabel: isFirstInGroup ? getEmbeddedLabel(group.classLabel) : undefined
         })
       })
 
@@ -68,7 +70,7 @@
           icon: attr.icon,
           iconProps: attr.iconProps,
           separatorBefore: isFirstInGroup || isFirstCollection,
-          separatorLabel: isFirstInGroup ? group.classLabel : undefined
+          separatorLabel: isFirstInGroup ? getEmbeddedLabel(group.classLabel) : undefined
         })
       })
     })

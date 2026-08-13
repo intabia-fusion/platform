@@ -14,18 +14,21 @@
 <script lang="ts">
   import core, { Class, Doc, Ref } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
-  import presentation, { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
+  import presentation, { getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import task, { ProjectType, TaskType } from '@hcengineering/task'
+  import tracker from '@hcengineering/tracker'
+  import { ProjectType } from '@hcengineering/task'
+  import { taskTypeStore } from '@hcengineering/task-resources'
   import ui, {
-    DropdownTextItem,
+    DropdownIntlItem,
     Label,
     languageStore,
     Modal,
-    ModernDropdownLabels,
+    ModernDropdown,
     ModernEditbox,
     TextArea
   } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { addScreenTab } from '@hcengineering/workflow'
 
   import plugin from '../../plugin'
@@ -33,40 +36,35 @@
   export let type: ProjectType
 
   const client = getClient()
-  const taskTypesQuery = createQuery()
 
   let name = ''
   let description = ''
   let selected: Ref<Class<Doc>> | undefined = undefined
-  let classItems: DropdownTextItem[] = []
 
-  let taskTypes: TaskType[] = []
-  $: taskTypesQuery.query(task.class.TaskType, { parent: type._id }, (res) => {
-    taskTypes = res
-  })
-
-  $: if (selected === undefined && taskTypes.length > 0) {
-    selected = taskTypes[0].ofClass
-  }
+  $: taskTypes = Array.from($taskTypeStore.values()).filter((t) => t.parent === type._id)
 
   $: canSave = name.trim().length > 0 && name.length <= 100 && description.length <= 500 && selected != null
 
-  const updateClassItems = reduceCalls(async (types: TaskType[], lang: string): Promise<void> => {
-    const res: DropdownTextItem[] = []
-    const classes = new Set(types.map((t) => t.ofClass))
-    for (const _class of classes) {
-      const _clazz = client.getHierarchy().getClass(_class)
-      res.push({
-        id: _class,
-        icon: _clazz.icon,
-        label: await translate(_clazz.label, {}, lang)
-      })
-    }
+  $: classItems = [
+    {
+      id: tracker.class.Issue,
+      icon: tracker.icon.Issue,
+      label: plugin.string.BasicIssue
+    },
+    ...taskTypes.map((t): DropdownIntlItem => {
+      const _clazz = client.getHierarchy().getClass(t.targetClass)
+      return {
+        id: t.targetClass,
+        icon: _clazz.icon === view.ids.IconWithEmoji ? IconWithEmoji : _clazz.icon,
+        iconProps: _clazz.icon === view.ids.IconWithEmoji ? { icon: _clazz.color } : {},
+        label: _clazz.label
+      }
+    })
+  ]
 
-    classItems = res.sort((a, b) => a.label.localeCompare(b.label, lang))
-  })
-
-  $: void updateClassItems(taskTypes, $languageStore)
+  $: if (selected === undefined) {
+    selected = tracker.class.Issue
+  }
 
   async function save (): Promise<void> {
     if (!canSave) return
@@ -121,13 +119,13 @@
         <span class="label">
           <Label label={core.string.Class} />
         </span>
-        <ModernDropdownLabels
+        <ModernDropdown
           items={classItems}
           bind:selected
           size="medium"
           placeholder={ui.string.NotSelected}
           autoSelect={true}
-          enableSearch={false}
+          withSearch={false}
         />
       </div>
     {/if}

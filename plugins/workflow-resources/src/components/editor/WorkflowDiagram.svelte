@@ -70,7 +70,10 @@
     }
 
     // Initial status entry points
-    if (initialStatuses.length > 0) {
+    const effectiveInitialStatuses =
+      initialStatuses.length === 0 || initialStatuses.includes('null') ? statuses.map((s) => s._id) : initialStatuses
+
+    if (effectiveInitialStatuses.length > 0) {
       lines.push('  init[" "]')
       lines.push('  init@{ shape: sm-circ}')
       const initStyle = isDark
@@ -78,7 +81,7 @@
         : 'fill:none,stroke:#242538,stroke-width:2px'
       lines.push(`  style init ${initStyle}`)
 
-      for (const initId of initialStatuses) {
+      for (const initId of effectiveInitialStatuses) {
         const targetNode = statusNodeIds.get(initId)
         if (targetNode) {
           lines.push(`  init --> ${targetNode}`)

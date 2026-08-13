@@ -10,6 +10,7 @@
     "From": "Von",
     "To": "Nach",
     "TaskType": "Aufgabentyp",
+    "BasicIssue": "Basisaufgabe",
     "WorkflowSchemeField": "Workflow-Schema",
     "Untitled": "Unbenannt",
     "AnyStatus": "Jeder Status",

@@ -13,25 +13,36 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Class, Doc, Ref } from '@hcengineering/core'
+  import { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
   import { Asset, translate } from '@hcengineering/platform'
-  import { createQuery, getClient, MessageBox, reduceCalls } from '@hcengineering/presentation'
+  import { createQuery, getClient, IconWithEmoji, MessageBox, reduceCalls } from '@hcengineering/presentation'
   import { Task } from '@hcengineering/task'
+  import { taskTypeStore } from '@hcengineering/task-resources'
   import ui, {
     ButtonIcon,
-    DropdownTextItem,
+    DropdownIntlItem,
     EditBox,
     IconDelete,
     languageStore,
     Loading,
     ModernButton,
-    ModernDropdownLabels,
+    ModernDropdown,
     Scroller,
     showPopup,
-    TextArea
+    TextArea,
+    tooltip
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import { addScreenTab, Screen, ScreenField, ScreenTab, WorkflowTransition } from '@hcengineering/workflow'
+  import {
+    addScreenTab,
+    Screen,
+    ScreenField,
+    ScreenProps,
+    ScreenTab,
+    Workflow,
+    WorkflowTransition
+  } from '@hcengineering/workflow'
+  import tracker from '@hcengineering/tracker'
 
   import { navigateToScreen } from '../../location'
   import plugin from '../../plugin'
@@ -47,6 +58,7 @@
   const client = getClient()
   const screenQuery = createQuery()
   const fieldsQuery = createQuery()
+  const workflowsQuery = createQuery()
 
   let screen: Screen | undefined
   let tabs: ScreenTab[] = []
@@ -55,7 +67,7 @@
   let displayAttributes: DisplayAttribute[] = []
   let isScreenLoading = true
 
-  let classItem: DropdownTextItem | undefined = undefined
+  let workflows: WithLookup<Workflow>[] = []
 
   let localName = ''
   let localDescription = ''
@@ -91,6 +103,55 @@
     allFields = res
   })
 
+  $: taskTypes = Array.from($taskTypeStore.values()).filter((t) => t.parent === screen?.projectType)
+
+  $: if (screen?.projectType != null) {
+    workflowsQuery.query(
+      plugin.class.Workflow,
+      { projectType: screen.projectType },
+      (res) => {
+        workflows = res
+      },
+      {
+        lookup: {
+          _id: {
+            transitions: plugin.class.WorkflowTransition
+          }
+        }
+      }
+    )
+  }
+
+  $: usedWorkflows = workflows.filter((wf) => {
+    const transitions = (wf.$lookup?.transitions ?? []) as WorkflowTransition[]
+    return transitions.some((t) =>
+      t.requests?.some((r) => r.id === plugin.request.ScreenRequest && (r.props as ScreenProps)?.screen === objectId)
+    )
+  })
+
+  $: hasUsedWorkflows = usedWorkflows.length > 0
+  $: usedWorkflowNames = usedWorkflows
+    .map((w) => w.name)
+    .filter((n): n is string => Boolean(n))
+    .join(', ')
+
+  $: classItems = [
+    {
+      id: tracker.class.Issue,
+      icon: tracker.icon.Issue,
+      label: plugin.string.BasicIssue
+    },
+    ...taskTypes.map((t): DropdownIntlItem => {
+      const _clazz = client.getHierarchy().getClass(t.targetClass)
+      return {
+        id: t.targetClass,
+        icon: _clazz.icon === view.ids.IconWithEmoji ? IconWithEmoji : _clazz.icon,
+        iconProps: _clazz.icon === view.ids.IconWithEmoji ? { icon: _clazz.color } : {},
+        label: _clazz.label
+      }
+    })
+  ]
+
   $: name = localName
   $: icon = plugin.icon.Screens
   $: usedFields = new Set(allFields.map((f) => f.attribute))
@@ -121,19 +182,19 @@
     }
   )
 
-  const updateClassItem = reduceCalls(async (_class: Ref<Class<Doc>> | undefined, lang: string): Promise<void> => {
-    if (_class == null) return
-    const _clazz = client.getHierarchy().getClass(_class)
-
-    classItem = {
-      id: _class,
-      icon: _clazz.icon,
-      label: await translate(_clazz.label, {}, lang)
-    }
-  })
-
   $: void updateDisplayAttributes(screen?.targetClass, $languageStore)
-  $: void updateClassItem(screen?.targetClass, $languageStore)
+
+  async function handleClassSelect (
+    event: CustomEvent<DropdownIntlItem['id'] | Array<DropdownIntlItem['id']> | undefined>
+  ): Promise<void> {
+    const id = event.detail
+    if (id == null) return
+    const newClass = (Array.isArray(id) ? id[0] : id) as Ref<Class<Doc>> | undefined
+
+    if (screen != null && newClass != null && newClass !== screen.targetClass) {
+      await client.update(screen, { targetClass: newClass })
+    }
+  }
 
   async function saveName (): Promise<void> {
     if (screen != null) {
@@ -165,23 +226,6 @@
     if (screen == null || isDeleteLoading) return
     isDeleteLoading = true
     try {
-      const workflows = await client.findAll(
-        plugin.class.Workflow,
-        { projectType: screen.projectType },
-        {
-          lookup: {
-            _id: {
-              transitions: plugin.class.WorkflowTransition
-            }
-          }
-        }
-      )
-
-      const usedWorkflows = workflows.filter((wf) => {
-        const transitions = (wf.$lookup?.transitions ?? []) as WorkflowTransition[]
-        return transitions.some((t) => t.requests?.some((r) => r.props?.screen === objectId))
-      })
-
       showPopup(MessageBox, {
         label: plugin.string.DeleteScreen,
         message: plugin.string.DeleteScreenConfirm,
@@ -245,14 +289,24 @@
                 />
               </div>
               <div class="flex-row-center flex-gap-2 flex-shrink-0">
-                {#if classItem != null}
-                  <ModernDropdownLabels
-                    items={[classItem]}
-                    selected={screen.targetClass}
-                    placeholder={ui.string.NotSelected}
-                    size="small"
-                    disabled
-                  />
+                {#if classItems.length > 0}
+                  <div
+                    use:tooltip={hasUsedWorkflows
+                      ? {
+                          label: plugin.string.ScreenClassDisabledUsedInWorkflows,
+                          props: { names: usedWorkflowNames }
+                        }
+                      : undefined}
+                  >
+                    <ModernDropdown
+                      items={classItems}
+                      selected={screen.targetClass}
+                      on:selected={handleClassSelect}
+                      placeholder={ui.string.NotSelected}
+                      size="small"
+                      disabled={readonly || hasUsedWorkflows}
+                    />
+                  </div>
                 {/if}
                 {#if !readonly}
                   <ButtonIcon

@@ -26,16 +26,7 @@
     createState,
     findStatusAttr
   } from '@hcengineering/task'
-  import {
-    DropdownIntlItem,
-    Icon,
-    IconError,
-    Modal,
-    ModernEditbox,
-    Label,
-    ButtonMenu,
-    Toggle
-  } from '@hcengineering/ui'
+  import { DropdownIntlItem, Icon, IconError, Modal, ModernEditbox, Label, ButtonMenu, Toggle } from '@hcengineering/ui'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
 
   import task from '../../plugin'

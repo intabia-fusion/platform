@@ -435,7 +435,14 @@ describe('WorkflowMiddleware', () => {
           to: 'in-progress' as Ref<DocStatus>
         })
 
-        await expect(middleware.tx(defaultCtx, [tx])).rejects.toThrow('workflow:status:TransitionConflict')
+        try {
+          await middleware.tx(defaultCtx, [tx])
+          expect(true).toBe(false)
+        } catch (err: any) {
+          expect(err.status?.code).toBe('workflow:status:TransitionConflict')
+          expect(err.status?.params?.from).toBe('todo')
+          expect(err.status?.params?.to).toBe('in-progress')
+        }
       })
 
       it('should throw TransitionConflict when new transition uses general (null) status and overlap exists', async () => {

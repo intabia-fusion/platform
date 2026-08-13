@@ -13,7 +13,7 @@
 //
 
 import { Class, Mixin, Ref } from '@hcengineering/core'
-import { Asset, IntlString, plugin, Plugin, Resource } from '@hcengineering/platform'
+import { Asset, IntlString, plugin, Plugin, Resource, StatusCode } from '@hcengineering/platform'
 import { AnyComponent } from '@hcengineering/ui'
 import {
   ProjectWorkflow,
@@ -183,6 +183,7 @@ export default plugin(workflowId, {
     From: '' as IntlString,
     To: '' as IntlString,
     TaskType: '' as IntlString,
+    BasicIssue: '' as IntlString,
     DefaultWorkflow: '' as IntlString,
     Untitled: '' as IntlString,
     AnyStatus: '' as IntlString,
@@ -261,6 +262,7 @@ export default plugin(workflowId, {
     ScreenRequestPresenter: '' as IntlString,
     ScreenNotSelected: '' as IntlString,
     UsedInWorkflows: '' as IntlString,
+    ScreenClassDisabledUsedInWorkflows: '' as IntlString,
     UsedInProjects: '' as IntlString,
     WorkflowsWillBeDeleted: '' as IntlString,
     General: '' as IntlString,
@@ -288,11 +290,11 @@ export default plugin(workflowId, {
     SetValueFirst: '' as IntlString
   },
   status: {
-    InitialStatusNotAllowed: '' as IntlString,
-    ForbiddenTransition: '' as IntlString,
-    SelfTransitionNotAllowed: '' as IntlString,
-    TransitionConflict: '' as IntlString,
-    ValidationFailed: '' as IntlString,
-    WorkflowNotFound: '' as IntlString
+    InitialStatusNotAllowed: '' as StatusCode,
+    ForbiddenTransition: '' as StatusCode<{ from: string; to: string }>,
+    SelfTransitionNotAllowed: '' as StatusCode<{ status: string }>,
+    TransitionConflict: '' as StatusCode<{ from: string; to: string; name?: string }>,
+    ValidationFailed: '' as StatusCode<{ reason: string }>,
+    WorkflowNotFound: '' as StatusCode
   }
 })

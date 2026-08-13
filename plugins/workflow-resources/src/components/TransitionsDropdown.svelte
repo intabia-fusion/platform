@@ -16,7 +16,8 @@
   import { createEventDispatcher } from 'svelte'
   import { notEmpty, Ref, Status } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import ui, { ListItem, ModernDropdown } from '@hcengineering/ui'
+  import { type IntlString } from '@hcengineering/platform'
+  import ui, { DropdownIntlItem, ModernDropdown } from '@hcengineering/ui'
   import { WorkflowTransition } from '@hcengineering/workflow'
 
   import TransitionPresenter from './TransitionPresenter.svelte'
@@ -29,20 +30,20 @@
   const dispatch = createEventDispatcher<{ select: Ref<WorkflowTransition> }>()
 
   $: transitionItems = (transitions ?? []).map(
-    (t): ListItem => ({
-      _id: t._id,
-      label: t.name,
+    (t): DropdownIntlItem => ({
+      id: t._id,
+      label: t.name as IntlString,
       component: TransitionPresenter,
       componentProps: { transition: t, statuses }
     })
   )
 
-  $: selectedTransitionItem = transitionItems.find((it) => it._id === selected) ?? transitionItems[0]
-  $: transitionTooltip = getTransitionTooltipText(selectedTransitionItem)
+  $: selectedTransitionId = selected ?? (transitionItems[0]?.id as Ref<WorkflowTransition> | undefined)
+  $: transitionTooltip = getTransitionTooltipText(selectedTransitionId)
 
-  function getTransitionTooltipText (item: ListItem | undefined): string | undefined {
-    if (item == null) return undefined
-    const transitionObj = transitions.find((it) => it._id === item?._id) ?? undefined
+  function getTransitionTooltipText (itemId: DropdownIntlItem['id'] | undefined): string | undefined {
+    if (itemId == null) return undefined
+    const transitionObj = transitions.find((it) => it._id === itemId) ?? undefined
     if (transitionObj == null) return undefined
 
     const fromStatuses = (transitionObj?.from ?? [])
@@ -55,8 +56,13 @@
     return `${transitionObj?.name ?? ''}: ${fromNamesStr} → ${toStatus?.name ?? ''}`
   }
 
-  function handleSelect (event: CustomEvent<ListItem>): void {
-    const _id = event.detail._id as Ref<WorkflowTransition>
+  function handleSelect (
+    event: CustomEvent<DropdownIntlItem['id'] | DropdownIntlItem['id'][] | undefined | null>
+  ): void {
+    if (event.detail == null) return
+    const rawId = Array.isArray(event.detail) ? event.detail[0] : event.detail
+    if (rawId == null) return
+    const _id = String(rawId) as Ref<WorkflowTransition>
     selected = _id
     dispatch('select', _id)
   }
@@ -65,12 +71,11 @@
 <ModernDropdown
   items={transitionItems}
   tooltip={transitionTooltip ? { label: getEmbeddedLabel(transitionTooltip) } : undefined}
-  selected={selectedTransitionItem}
+  selected={selectedTransitionId}
   on:selected={handleSelect}
   placeholder={ui.string.NotSelected}
   justify="left"
   width="100%"
-  showCheckmark={true}
   popupClass="wide"
   withSearch={false}
   {disabled}

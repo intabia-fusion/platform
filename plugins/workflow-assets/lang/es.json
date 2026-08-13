@@ -10,6 +10,7 @@
     "From": "Desde",
     "To": "A",
     "TaskType": "Tipo de tarea",
+    "BasicIssue": "Tarea básica",
     "WorkflowSchemeField": "Esquema de flujo de trabajo",
     "Untitled": "Sin título",
     "AnyStatus": "Cualquier estado",

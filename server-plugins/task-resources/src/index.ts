@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,7 +16,7 @@
 
 import core, { Doc, Tx, TxCUD, TxCreateDoc, TxProcessor, TxUpdateDoc } from '@hcengineering/core'
 import { TriggerControl } from '@hcengineering/server-core'
-import task, { Task } from '@hcengineering/task'
+import task, { Task, TaskType } from '@hcengineering/task'
 
 /**
  * @public
@@ -53,9 +54,31 @@ export async function OnStateUpdate (txes: TxCUD<Doc>[], control: TriggerControl
   return result
 }
 
+/**
+ * @public
+ */
+export async function OnTaskTypeUpdate (txes: TxUpdateDoc<TaskType>[], control: TriggerControl): Promise<Tx[]> {
+  const result: Tx[] = []
+  for (const updateTx of txes) {
+    if (updateTx.operations.icon == null && updateTx.operations.color == null) continue
+
+    const taskType = control.modelDb.findAllSync<TaskType>(task.class.TaskType, { _id: updateTx.objectId })[0]
+    if (taskType?.targetClass != null) {
+      result.push(
+        control.txFactory.createTxUpdateDoc(core.class.Class, core.space.Model, taskType.targetClass, {
+          ...(updateTx.operations.icon == null ? {} : { icon: updateTx.operations.icon }),
+          ...(updateTx.operations.color == null ? {} : { color: updateTx.operations.color })
+        })
+      )
+    }
+  }
+  return result
+}
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   trigger: {
-    OnStateUpdate
+    OnStateUpdate,
+    OnTaskTypeUpdate
   }
 })

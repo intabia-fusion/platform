@@ -126,7 +126,7 @@ export type PropertyType = any
 export interface UXObject extends Obj {
   label: IntlString
   icon?: Asset
-  color?: number
+  color?: number | number[] | Ref<Blob>
   hidden?: boolean
   readonly?: boolean
 }

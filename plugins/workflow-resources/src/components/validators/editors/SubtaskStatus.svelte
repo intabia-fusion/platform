@@ -110,10 +110,14 @@
     ]
   }
 
-  function handleStatusChange (ttId: Ref<TaskType>, selected: string[]): void {
+  function handleStatusChange (
+    ttId: Ref<TaskType>,
+    selected: DropdownTextItem['id'] | DropdownTextItem['id'][] | undefined | null
+  ): void {
+    const list = Array.isArray(selected) ? selected.map(String) : selected != null ? [String(selected)] : []
     statusesByTaskType = {
       ...statusesByTaskType,
-      [ttId]: selected
+      [ttId]: list
     }
   }
 </script>

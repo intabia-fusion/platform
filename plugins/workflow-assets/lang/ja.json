@@ -10,6 +10,7 @@
     "From": "移行元",
     "To": "移行先",
     "TaskType": "タスクタイプ",
+    "BasicIssue": "基本イシュー",
     "WorkflowSchemeField": "ワークフロースキーム",
     "Untitled": "無題",
     "AnyStatus": "任意のステータス",

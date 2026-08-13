@@ -43,9 +43,11 @@
     dispatch('selected', value)
   }
 
-  function handleDropdownSelected (evt: CustomEvent<Ref<TaskType>[] | null>): void {
+  function handleDropdownSelected (
+    evt: CustomEvent<DropdownTextItem['id'] | DropdownTextItem['id'][] | undefined | null>
+  ): void {
     if (evt.detail != null) {
-      value = evt.detail
+      value = Array.isArray(evt.detail) ? (evt.detail as Ref<TaskType>[]) : ([evt.detail] as Ref<TaskType>[])
       onChange(value)
       dispatch('selected', value)
     }
