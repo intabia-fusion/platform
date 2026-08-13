@@ -14,10 +14,13 @@
 
 import core, {
   type Client,
+  type Doc,
+  type DocumentUpdate,
   getCurrentAccount,
   notEmpty,
   type Ref,
   type Tx,
+  type TxCUD,
   type TxResult,
   type TxUpdateDoc,
   TxOperations,
@@ -38,6 +41,11 @@ import { showPopup } from '@hcengineering/ui'
 import plugin from './plugin'
 import ScreenModal from './components/screen/ScreenModal.svelte'
 import { type ScreenModalResult } from './types'
+
+interface TransitionResult {
+  proceed: boolean
+  extraTxes?: Array<TxCUD<Doc>>
+}
 
 export class WorkflowMiddleware extends BasePresentationMiddleware implements PresentationMiddleware {
   private constructor (client: Client, next?: PresentationMiddleware) {
@@ -68,8 +76,8 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
 
     if (!hierarchy.isDerived(updateTx.objectClass, task.class.Task)) return await this.provideTx(tx)
 
-    const shouldProceed = await this.handleStatusTransition(updateTx)
-    if (!shouldProceed) {
+    const res = await this.handleStatusTransition(updateTx)
+    if (!res.proceed) {
       throw new PlatformError(
         new Status(
           Severity.INFO,
@@ -83,18 +91,24 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
       )
     }
 
+    if (res.extraTxes != null && res.extraTxes.length > 0) {
+      const allTxes: Array<TxCUD<Doc>> = [updateTx, ...res.extraTxes]
+      const batchTx = this.txFactory.createTxApplyIf(core.space.Tx, 'workflow', [], [], allTxes, 'workflow')
+      return await this.provideTx(batchTx)
+    }
+
     return await this.provideTx(tx)
   }
 
-  private async handleStatusTransition (updateTx: TxUpdateDoc<Task>): Promise<boolean> {
+  private async handleStatusTransition (updateTx: TxUpdateDoc<Task>): Promise<TransitionResult> {
     const toStatus = updateTx.operations.status
-    if (toStatus == null) return true
+    if (toStatus == null) return { proceed: true }
 
     const taskDoc = await this.client.findOne(task.class.Task, { _id: updateTx.objectId })
-    if (taskDoc == null || taskDoc.status === toStatus) return true
+    if (taskDoc == null || taskDoc.status === toStatus) return { proceed: true }
 
     const workflow = await this.getWorkflowForTask(taskDoc)
-    if (workflow == null) return true
+    if (workflow == null) return { proceed: true }
 
     const fromStatus = taskDoc.status
     const transitions = (workflow.$lookup?.transitions ?? []) as WorkflowTransition[]
@@ -103,13 +117,13 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
       transitions.find((t) => t.to === toStatus && t.from != null && t.from.includes(fromStatus)) ??
       transitions.find((t) => t.to === toStatus && (t.from == null || t.from.length === 0))
 
-    if (transition == null) return false
+    if (transition == null) return { proceed: false }
 
     const screenRequests = (transition.requests ?? []).filter((r) => r.rule === plugin.request.ScreenRequest)
-    if (screenRequests.length === 0) return true
+    if (screenRequests.length === 0) return { proceed: true }
 
     const screenIds = screenRequests.map((it) => it.props?.screen as Ref<Screen> | undefined).filter(notEmpty)
-    if (screenIds.length === 0) return true
+    if (screenIds.length === 0) return { proceed: true }
 
     const screens = await this.client.findAll(
       plugin.class.Screen,
@@ -120,7 +134,7 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
         }
       }
     )
-    if (screens.length === 0) return true
+    if (screens.length === 0) return { proceed: true }
 
     // Reorder screens to preserve the sequence defined in transition screenRequests
     const screenMap = new Map(screens.map((s) => [s._id, s]))
@@ -129,10 +143,13 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
     const tabs = orderedScreens.flatMap((it) => (it.$lookup?.tabs ?? []) as ScreenTab[])
     const tabIds = tabs.map((t) => t._id)
     const allFields = await this.client.findAll(plugin.class.ScreenField, { attachedTo: { $in: tabIds } })
-    if (allFields.length === 0) return true
+    if (allFields.length === 0) return { proceed: true }
 
     const hierarchy = this.client.getHierarchy()
     const clone = hierarchy.clone(taskDoc)
+    const extraTxes: Array<TxCUD<Doc>> = []
+
+    let screenUpdates: DocumentUpdate<Task> = {}
 
     for (const screen of orderedScreens) {
       const _tabs = tabs.filter((it) => it.attachedTo === screen._id)
@@ -158,20 +175,30 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
         )
       })
 
-      if (res == null) return false
+      if (res == null) return { proceed: false }
 
-      if (res.update != null) {
-        Object.assign(updateTx.operations, res.update)
-        Object.assign(clone, res.update)
+      if (res.update != null && Object.keys(res.update).length > 0) {
+        screenUpdates = {
+          ...res.update
+        }
       }
 
       if (res.txes != null && res.txes.length > 0) {
-        const applyTx = this.txFactory.createTxApplyIf(core.space.Tx, 'workflow', [], [], res.txes, 'workflow')
-        await this.client.tx(applyTx)
+        extraTxes.push(...res.txes)
       }
     }
 
-    return true
+    if (Object.keys(screenUpdates).length > 0) {
+      const screenUpdateTx = this.txFactory.createTxUpdateDoc(
+        updateTx.objectClass,
+        updateTx.objectSpace,
+        updateTx.objectId,
+        screenUpdates
+      )
+      extraTxes.unshift(screenUpdateTx)
+    }
+
+    return { proceed: true, extraTxes }
   }
 
   private async getWorkflowForTask (taskDoc: Task): Promise<WithLookup<Workflow> | undefined> {
