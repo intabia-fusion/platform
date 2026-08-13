@@ -30,6 +30,7 @@ export interface ValidationError {
   reason: string
   reasonIntl: IntlString
   intlParams: Record<string, any>
+  intlParamsNotLocalized?: Record<string, IntlString>
 }
 
 export type ValidationResult = ValidationSuccess | ValidationError

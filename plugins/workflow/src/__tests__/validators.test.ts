@@ -223,7 +223,8 @@ describe('Workflow Validators', () => {
         ok: false,
         reason: 'Field "Due Date" is required for transition Open, status-in-progress ➜ Done.',
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: 'Due Date', transition: 'Open, status-in-progress ➜ Done' }
+        intlParams: { field: 'Due Date', transition: 'Open, status-in-progress ➜ Done' },
+        intlParamsNotLocalized: { field: 'Due Date' }
       })
     })
 
@@ -250,7 +251,8 @@ describe('Workflow Validators', () => {
         ok: false,
         reason: 'Field "Due Date" is required for transition Any ➜ Done.',
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: 'Due Date', transition: 'Any ➜ Done' }
+        intlParams: { field: 'Due Date', transition: 'Any ➜ Done' },
+        intlParamsNotLocalized: { field: 'Due Date' }
       })
     })
 
@@ -278,7 +280,8 @@ describe('Workflow Validators', () => {
         ok: false,
         reason: 'Field "Due Date" is required for transition status-open ➜ status-done.',
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: 'Due Date', transition: 'status-open ➜ status-done' }
+        intlParams: { field: 'Due Date', transition: 'status-open ➜ status-done' },
+        intlParamsNotLocalized: { field: 'Due Date' }
       })
     })
 
@@ -305,7 +308,8 @@ describe('Workflow Validators', () => {
         ok: false,
         reason: 'Field "Due Date" is required for transition Any ➜ Done.',
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: 'Due Date', transition: 'Any ➜ Done' }
+        intlParams: { field: 'Due Date', transition: 'Any ➜ Done' },
+        intlParamsNotLocalized: { field: 'Due Date' }
       })
     })
 

@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,7 +19,7 @@
  * @packageDocumentation
  */
 
-import type { StatusCode } from './platform'
+import type { IntlString, StatusCode } from './platform'
 import platform from './platform'
 
 /**
@@ -40,11 +41,18 @@ export class Status<P extends Record<string, any> = any> {
   readonly severity: Severity
   readonly code: StatusCode<P>
   readonly params: P
+  readonly notLocalizedParams?: Record<string, IntlString>
 
-  constructor (severity: Severity, code: StatusCode<P>, params: P) {
+  constructor (
+    severity: Severity,
+    code: StatusCode<P>,
+    params: P,
+    notLocalizedParams?: Record<string, IntlString>
+  ) {
     this.severity = severity
     this.code = code
     this.params = params
+    this.notLocalizedParams = notLocalizedParams
   }
 }
 

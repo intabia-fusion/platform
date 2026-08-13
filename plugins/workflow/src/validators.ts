@@ -82,7 +82,8 @@ export const FieldRequired: ValidatorFunc = async (
         ok: false,
         reason: `Field "${fieldName}" is required for transition ${flow}.`,
         reasonIntl: workflow.string.FieldRequiredError,
-        intlParams: { field: fieldName, transition: flow }
+        intlParams: { field: fieldName, transition: flow },
+        intlParamsNotLocalized: { field: attribute.label }
       }
     }
   }
