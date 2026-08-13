@@ -19,13 +19,28 @@
   import { type IntlString } from '@hcengineering/platform'
   import presentation, { Card, createQuery, getClient } from '@hcengineering/presentation'
   import { UserBox } from '@hcengineering/contact-resources'
-  import { Issue, type Project, TimeReportDayType, TimeSpendReport, TrackerEvents } from '@hcengineering/tracker'
-  import { Button, DatePresenter, EditBox, IconChevronLeft, IconChevronRight, Label } from '@hcengineering/ui'
+  import {
+    Issue,
+    type Project,
+    TimeReportDayType,
+    TimeSpendReport,
+    TrackerEvents,
+    formatDuration
+  } from '@hcengineering/tracker'
+  import {
+    Button,
+    DatePresenter,
+    EditBox,
+    IconChevronLeft,
+    IconChevronRight,
+    Label,
+    themeStore
+  } from '@hcengineering/ui'
   import { Analytics } from '@hcengineering/analytics'
-
   import tracker from '../../../plugin'
   import TitlePresenter from '../TitlePresenter.svelte'
   import { type ITimeReportService, DirectTimeReportService } from './service'
+  import DurationInput from './DurationInput.svelte'
 
   export let issue: Issue | undefined = undefined
   export let issueId: Ref<Issue> | undefined = issue?._id
@@ -38,6 +53,8 @@
   export let defaultTimeReportDay: TimeReportDayType = TimeReportDayType.CurrentWorkDay
   export let initialDate: number | undefined = undefined
   export let service: ITimeReportService | undefined = undefined
+
+  let durationInput: DurationInput
 
   const data = {
     date: value?.date ?? initialDate ?? Date.now(),
@@ -95,40 +112,7 @@
     dayTotalHours = 0
   }
 
-  // Suffix → multiplier in hours. 1 day = 8h, 1 week = 40h.
-  const unitMultipliers: Array<{ suffixes: string[], hours: number }> = [
-    { suffixes: ['m', 'min', 'mins', 'minute', 'minutes', 'м', 'мин', 'минута', 'минуты', 'минут'], hours: 1 / 60 },
-    { suffixes: ['h', 'hr', 'hrs', 'hour', 'hours', 'ч', 'час', 'часа', 'часов'], hours: 1 },
-    { suffixes: ['d', 'day', 'days', 'д', 'дн', 'день', 'дня', 'дней'], hours: 8 },
-    { suffixes: ['w', 'week', 'weeks', 'н', 'нед', 'неделя', 'недели', 'недель'], hours: 40 }
-  ]
-
-  function parseTimeInput (input: string): number | undefined {
-    const trimmed = input.trim().toLowerCase().replace(',', '.')
-    if (trimmed === '') return undefined
-    const match = trimmed.match(/^([0-9]*\.?[0-9]+)\s*([a-zA-Zа-яА-Я]*)$/)
-    if (match === null) return undefined
-    const num = Number(match[1])
-    if (!Number.isFinite(num)) return undefined
-    const suffix = match[2]
-    if (suffix === '') return num
-    for (const unit of unitMultipliers) {
-      if (unit.suffixes.includes(suffix)) {
-        return num * unit.hours
-      }
-    }
-    return undefined
-  }
-
-  let textValue: string = data.value !== undefined ? String(data.value) : ''
-
-  $: data.value = parseTimeInput(textValue)
-  $: hasSuffix = /[a-zA-Zа-яА-Я]/.test(textValue.trim())
-  $: dayProjectedHours = dayTotalHours + (Number.isFinite(data.value) ? (data.value as number) : 0)
-
-  function setNumericValue (hours: number): void {
-    textValue = String(hours)
-  }
+  $: dayProjectedHours = dayTotalHours + (data.value ?? 0)
 
   function shiftDay (delta: number): void {
     const base = data.date != null ? new Date(data.date) : new Date()
@@ -155,8 +139,7 @@
     }
   }
 
-  $: canSave =
-    canEdit && Number.isFinite(data.value) && data.value !== 0 && space !== undefined && issueId !== undefined
+  $: canSave = canEdit && data.value !== undefined && data.value !== 0 && space !== undefined && issueId !== undefined
 </script>
 
 <Card
@@ -175,68 +158,7 @@
       <TitlePresenter showParent={false} value={issue} />
     {/if}
   </svelte:fragment>
-  <div class="flex-row-center gap-2">
-    <EditBox autoFocus bind:value={textValue} {placeholder} maxWidth={'15rem'} kind={'editbox'} disabled={!canEdit} />
-    {#if hasSuffix && data.value !== undefined && Number.isFinite(data.value)}
-      <span class="text-sm content-dark-color">
-        = {Math.round(data.value * 1000) / 1000}<Label label={tracker.string.HourLabel} />
-      </span>
-    {/if}
-    <Button
-      kind={'link-bordered'}
-      disabled={!canEdit}
-      on:click={() => {
-        setNumericValue(0.25)
-      }}
-    >
-      <span slot="content">15<Label label={tracker.string.MinuteLabel} /></span>
-    </Button>
-    <Button
-      kind={'link-bordered'}
-      disabled={!canEdit}
-      on:click={() => {
-        setNumericValue(0.5)
-      }}
-    >
-      <span slot="content">30<Label label={tracker.string.MinuteLabel} /></span>
-    </Button>
-    <Button
-      kind={'link-bordered'}
-      disabled={!canEdit}
-      on:click={() => {
-        setNumericValue(1)
-      }}
-    >
-      <span slot="content">1<Label label={tracker.string.HourLabel} /></span>
-    </Button>
-    <Button
-      kind={'link-bordered'}
-      disabled={!canEdit}
-      on:click={() => {
-        setNumericValue(2)
-      }}
-    >
-      <span slot="content">2<Label label={tracker.string.HourLabel} /></span>
-    </Button>
-    <Button
-      kind={'link-bordered'}
-      disabled={!canEdit}
-      on:click={() => {
-        setNumericValue(4)
-      }}
-    >
-      <span slot="content">4<Label label={tracker.string.HourLabel} /></span>
-    </Button>
-    <Button
-      kind={'link-bordered'}
-      disabled={!canEdit}
-      on:click={() => {
-        setNumericValue(8)
-      }}
-    >
-      <span slot="content">8<Label label={tracker.string.HourLabel} /></span>
-    </Button>
-  </div>
+  <DurationInput bind:this={durationInput} bind:hours={data.value} readonly={!canEdit} />
   <div class="mt-2 mb-2">
     <EditBox
       bind:value={data.description}
@@ -255,7 +177,7 @@
         >
           <Label
             label={tracker.string.AlreadyReportedThisDay}
-            params={{ hours: Math.round(dayProjectedHours * 1000) / 1000 }}
+            params={{ hours: formatDuration(dayProjectedHours, $themeStore.language) }}
           />
         </div>
         {#if dayProjectedHours > 8 && canEdit}
@@ -264,8 +186,7 @@
             size={'small'}
             label={tracker.string.FixToEightHours}
             on:click={() => {
-              const remaining = 8 - dayTotalHours
-              setNumericValue(Math.max(0, Math.round(remaining * 1000) / 1000))
+              durationInput.setDurationText(Math.max(0, 8 - dayTotalHours))
             }}
           />
         {/if}

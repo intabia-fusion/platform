@@ -161,6 +161,13 @@ export class CommonPage {
     await this.selectPopupButton().click()
   }
 
+  async fillEstimationPopup (page: Page, input: string): Promise<void> {
+    const form = page.locator('form[id="tracker\\:string\\:Estimation"]')
+    await expect(form.locator('input').first()).toBeVisible()
+    await form.locator('input').first().fill(input)
+    await form.locator('button', { hasText: 'Save' }).click()
+  }
+
   async checkFromDropdown (page: Page, point: string): Promise<void> {
     await this.selectPopupSpanLines(point).first().click()
   }

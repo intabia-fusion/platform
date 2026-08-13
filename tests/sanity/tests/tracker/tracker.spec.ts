@@ -87,7 +87,7 @@ test.describe('Tracker tests', () => {
     const issuesPage = new IssuesPage(page)
     const assignee = 'Chen Rosamund'
     const status = 'In Progress'
-    const time = 0.25
+    const time = '15m'
     const name = getIssueName()
     await issuesPage.createAndOpenIssue(name, assignee, status)
     await issuesPage.clickOnReportedTimeEditor()
@@ -159,7 +159,7 @@ test.describe('Tracker tests', () => {
     await issuesPage.selectPriority()
     await issuesPage.clickAssignee()
     await issuesPage.setEstimation()
-    await issuesPage.inputTextPlaceholderFill('1')
+    await issuesPage.fillEstimationPopup(page, '1')
     await issuesPage.setDueDate('19')
     await issuesPage.pressEscapeTwice()
     await issuesPage.clickOnDraftIssue()

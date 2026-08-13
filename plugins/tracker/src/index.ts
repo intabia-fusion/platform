@@ -49,6 +49,7 @@ import { AnyComponent, ComponentExtensionId, Location, ResolvedLocation } from '
 import { Action, ActionCategory, IconProps } from '@hcengineering/view'
 
 export * from './analytics'
+export * from './duration'
 
 /**
  * @public

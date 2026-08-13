@@ -67,7 +67,7 @@ export class TemplatePage extends CommonTrackerPage {
     }
     if (data.estimation != null) {
       await this.buttonPopupCreateNewTemplateEstimation().click()
-      await this.fillToSelectPopup(this.page, data.estimation)
+      await this.fillEstimationPopup(this.page, data.estimation)
     }
     if (data.component != null) {
       await this.buttonPopupCreateNewTemplateComponent().click()
