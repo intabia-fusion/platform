@@ -47,6 +47,8 @@ import {
 
 import serverWorkflow, { type ValidatorImpl } from './index'
 
+const ErrorTimeout = 3 * 1000
+
 export class WorkflowMiddleware extends BaseMiddleware {
   private readonly projectWorkflowsCache = new Map<Ref<Project>, Record<Ref<TaskType>, Ref<Workflow>> | null>()
 
@@ -77,7 +79,6 @@ export class WorkflowMiddleware extends BaseMiddleware {
     return await this.provideTx(ctx, txes)
   }
 
-  // TODO: check it
   private updateCache (cud: TxCUD<Doc>): void {
     if (
       cud._class === core.class.TxRemoveDoc &&
@@ -142,7 +143,10 @@ export class WorkflowMiddleware extends BaseMiddleware {
       if (wf?.initialStatuses != null && wf.initialStatuses.length > 0) {
         if (!wf.initialStatuses.includes(task.status)) {
           throw new PlatformError(
-            new Status(Severity.ERROR, workflow.status.InitialStatusNotAllowed, { status: task.status }), true
+            new Status(Severity.ERROR, workflow.status.InitialStatusNotAllowed, { status: task.status }, undefined, {
+              propagate: true,
+              timeout: ErrorTimeout
+            })
           )
         }
       }
@@ -182,10 +186,16 @@ export class WorkflowMiddleware extends BaseMiddleware {
 
     if (allowedTransitions.length === 0) {
       throw new PlatformError(
-        new Status(Severity.ERROR, workflow.status.ForbiddenTransition, {
-          from: fromStatus,
-          to: toStatus
-        }), true
+        new Status(
+          Severity.ERROR,
+          workflow.status.ForbiddenTransition,
+          {
+            from: fromStatus,
+            to: toStatus
+          },
+          undefined,
+          { propagate: true, timeout: ErrorTimeout }
+        )
       )
     }
 
@@ -201,9 +211,10 @@ export class WorkflowMiddleware extends BaseMiddleware {
           {
             from: fromStatus,
             to: toStatus
-          }
-        ),
-        true
+          },
+          undefined,
+          { propagate: true, timeout: ErrorTimeout }
+        )
       )
     }
 
@@ -249,12 +260,11 @@ export class WorkflowMiddleware extends BaseMiddleware {
             res.reasonIntl ?? workflow.status.ValidationFailed,
             {
               reason: res.reason,
-              ...res.intlParams,
-              propagate: true
+              ...res.intlParams
             },
-            res.intlParamsNotLocalized
-          ),
-          true
+            res.intlParamsNotLocalized,
+            { propagate: true, timeout: ErrorTimeout }
+          )
         )
       }
     }
@@ -266,12 +276,20 @@ export class WorkflowMiddleware extends BaseMiddleware {
       const transition = TxProcessor.createDoc2Doc(createTx)
       if (hasSelfTransition(transition)) {
         throw new PlatformError(
-          new Status(Severity.ERROR, workflow.status.SelfTransitionNotAllowed, { status: transition.to }), true
+          new Status(Severity.ERROR, workflow.status.SelfTransitionNotAllowed, { status: transition.to }, undefined, {
+            propagate: true,
+            timeout: ErrorTimeout
+          })
         )
       }
       const workflowRef = transition.attachedTo
       if (workflowRef == null) {
-        throw new PlatformError(new Status(Severity.ERROR, workflow.status.WorkflowNotFound, {}), true)
+        throw new PlatformError(
+          new Status(Severity.ERROR, workflow.status.WorkflowNotFound, {}, undefined, {
+            propagate: true,
+            timeout: ErrorTimeout
+          })
+        )
       }
 
       const currentTransitions = await this.provideFindAll(ctx, workflow.class.WorkflowTransition, {
@@ -281,11 +299,20 @@ export class WorkflowMiddleware extends BaseMiddleware {
       if (conflict != null) {
         const fromStatus = conflict.status === 'null' ? 'any' : conflict.status
         throw new PlatformError(
-          new Status(Severity.ERROR, workflow.status.TransitionConflict, {
-            from: fromStatus,
-            to: transition.to,
-            name: conflict.transition.name
-          }), true
+          new Status(
+            Severity.ERROR,
+            workflow.status.TransitionConflict,
+            {
+              from: fromStatus,
+              to: transition.to,
+              name: conflict.transition.name
+            },
+            undefined,
+            {
+              propagate: true,
+              timeout: ErrorTimeout
+            }
+          )
         )
       }
     } else if (cud._class === core.class.TxUpdateDoc) {
@@ -298,7 +325,10 @@ export class WorkflowMiddleware extends BaseMiddleware {
           const updated = TxProcessor.updateDoc2Doc(transition, updateTx)
           if (hasSelfTransition(updated)) {
             throw new PlatformError(
-              new Status(Severity.ERROR, workflow.status.SelfTransitionNotAllowed, { status: updated.to }), true
+              new Status(Severity.ERROR, workflow.status.SelfTransitionNotAllowed, { status: updated.to }, undefined, {
+                propagate: true,
+                timeout: ErrorTimeout
+              })
             )
           }
           const workflowRef = updated.attachedTo ?? transition.attachedTo
@@ -309,11 +339,20 @@ export class WorkflowMiddleware extends BaseMiddleware {
           if (conflict != null) {
             const fromStatus = conflict.status === 'null' ? 'any' : conflict.status
             throw new PlatformError(
-              new Status(Severity.ERROR, workflow.status.TransitionConflict, {
-                from: fromStatus,
-                to: updated.to,
-                name: conflict.transition.name
-              }), true
+              new Status(
+                Severity.ERROR,
+                workflow.status.TransitionConflict,
+                {
+                  from: fromStatus,
+                  to: updated.to,
+                  name: conflict.transition.name
+                },
+                undefined,
+                {
+                  propagate: true,
+                  timeout: ErrorTimeout
+                }
+              )
             )
           }
         }

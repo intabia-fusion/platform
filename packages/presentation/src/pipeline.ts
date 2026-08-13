@@ -209,7 +209,6 @@ export class PresentationPipelineImpl implements PresentationPipeline {
       const status = unknownError(err)
       await setPlatformStatus(status)
 
-      console.log(isPlatformPropagateError(err), err)
       if (isPlatformPropagateError(err)) {
         throw err
       }

@@ -34,6 +34,15 @@ export enum Severity {
 }
 
 /**
+ * Options for Status
+ * @public
+ */
+export interface StatusOptions {
+  timeout?: number
+  propagate?: boolean
+}
+
+/**
  * Status of an operation
  * @public
  */
@@ -42,17 +51,20 @@ export class Status<P extends Record<string, any> = any> {
   readonly code: StatusCode<P>
   readonly params: P
   readonly notLocalizedParams?: Record<string, IntlString>
+  readonly options?: StatusOptions
 
   constructor (
     severity: Severity,
     code: StatusCode<P>,
     params: P,
-    notLocalizedParams?: Record<string, IntlString>
+    notLocalizedParams?: Record<string, IntlString>,
+    options?: StatusOptions
   ) {
     this.severity = severity
     this.code = code
     this.params = params
     this.notLocalizedParams = notLocalizedParams
+    this.options = options
   }
 }
 
@@ -62,12 +74,18 @@ export class Status<P extends Record<string, any> = any> {
  */
 export class PlatformError<P extends Record<string, any> = any> extends Error {
   readonly status: Status<P>
-  readonly propagate: boolean
 
-  constructor (status: Status<P>, propagate: boolean = false) {
+  constructor (status: Status<P>) {
     super(`${status.severity}: ${status.code} ${JSON.stringify(status.params)}`)
     this.status = status
-    this.propagate = propagate || status.params?.propagate === true
+  }
+
+  get propagate (): boolean {
+    return this.status.options?.propagate === true
+  }
+
+  get timeout (): number | undefined {
+    return this.status.options?.timeout
   }
 }
 
@@ -76,11 +94,7 @@ export class PlatformError<P extends Record<string, any> = any> extends Error {
  * @public
  */
 export function isPlatformPropagateError (err: unknown): boolean {
-  return (
-    (err instanceof PlatformError && (err.propagate === true || err.status?.params?.propagate === true)) ||
-    (err as any)?.propagate === true ||
-    (err as any)?.status?.params?.propagate === true
-  )
+  return err instanceof PlatformError && err.status?.options?.propagate === true
 }
 
 /**

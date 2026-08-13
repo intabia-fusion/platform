@@ -83,11 +83,11 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
           Severity.INFO,
           platform.status.OK,
           {
-            reason: 'Transition canceled by user',
-            propagate: true
-          }
-        ),
-        true
+            reason: 'Transition canceled by user'
+          },
+          undefined,
+          { propagate: true }
+        )
       )
     }
 
