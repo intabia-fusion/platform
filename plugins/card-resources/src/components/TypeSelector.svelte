@@ -38,7 +38,7 @@
   const dispatch = createEventDispatcher()
 
   function isAllowedBySpace (type: Ref<MasterTag>, roots: Ref<MasterTag>[] | undefined): boolean {
-    return roots === undefined || roots.includes(getRootType(hierarchy, type))
+    return roots === undefined || roots.includes(getRootType(hierarchy, type)) || roots.includes(type)
   }
 
   function isSelectableClass (_class: Class<Doc>, roots: Ref<MasterTag>[] | undefined, skipBaseTypes: boolean): boolean {
