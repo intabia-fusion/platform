@@ -48,7 +48,10 @@ function readMetrics (metrics: Array<{ name: string, value: number }>): FrameMet
 }
 
 function slug (value: string): string {
-  return value.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80)
+  return value
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 80)
 }
 
 async function startProfile (page: Page): Promise<void> {
