@@ -149,7 +149,7 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       } else {
         await this.checkFromDropdownWithSearch(this.page, data.labels)
       }
-      await this.inputTitle().press('Escape')
+      await this.closePopups()
     }
     if (data.component != null) {
       await this.buttonComponent().click()
@@ -169,6 +169,12 @@ export class IssuesDetailsPage extends CommonTrackerPage {
         await expect(this.textEstimation()).toHaveText(convertEstimation(estimation), { timeout: 3000 })
       }).toPass({ intervals: [300, 1000], timeout: 20000 })
     }
+  }
+
+  async addExistingLabel (label: string): Promise<void> {
+    await this.buttonAddLabel().click()
+    await this.checkFromDropdownWithSearch(this.page, label)
+    await this.closePopups()
   }
 
   async checkIssue (data: NewIssue): Promise<void> {
