@@ -924,7 +924,7 @@ services:
       - ACCOUNTS_URL=http://account:3000
       - DB_URL=${DB_URL_PG}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
-      - USAGE_UPDATE_INTERVAL=30
+      - USAGE_UPDATE_INTERVAL=600
       - QUEUE_CONFIG=${QUEUE_CONFIG}
     # Debug: uncomment to enable remote debugging
     # ports:
