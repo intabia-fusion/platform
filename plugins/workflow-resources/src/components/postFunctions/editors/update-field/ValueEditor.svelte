@@ -15,7 +15,7 @@
   import { createEventDispatcher } from 'svelte'
   import type { Class, Doc, Ref } from '@hcengineering/core'
   import { Button, IconAdd, Label, ModernEditbox } from '@hcengineering/ui'
-  import type { WorkflowFieldValue } from '@hcengineering/workflow'
+  import type { WorkflowConstValue, WorkflowFieldValue } from '@hcengineering/workflow'
 
   import plugin from '../../../../plugin'
   import { ContextOption, FieldRow } from './types'
@@ -33,6 +33,10 @@
 
   function handleEditorChange (val: WorkflowFieldValue | any): void {
     dispatch('value', ensureFieldValue(val))
+  }
+
+  function toConstValue (v: WorkflowFieldValue): WorkflowConstValue {
+    return v as WorkflowConstValue
   }
 </script>
 
@@ -75,6 +79,12 @@
           kind="ghost"
           width="100%"
           disabled={row.fieldKey === ''}
+          on:input={() => {
+            handleEditorChange({ type: 'const', value: toConstValue(row.value).value })
+          }}
+          on:change={() => {
+            handleEditorChange({ type: 'const', value: toConstValue(row.value).value })
+          }}
         />
       </div>
     {/if}

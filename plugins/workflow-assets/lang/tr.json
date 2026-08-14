@@ -49,6 +49,7 @@
     "Validator": "Doğrulayıcı",
     "AddRule": "Kural ekle",
     "AllRules": "Tüm kurallar",
+    "TransitionRulesConfigured": "Geçiş kuralları yapılandırıldı",
     "RuleTypes": "KURAL TÜRLERİ",
     "RestrictTransition": "Geçişi kısıtla",
     "RequestInput": "Girdi iste",

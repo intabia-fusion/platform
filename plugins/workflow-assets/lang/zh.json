@@ -49,6 +49,7 @@
     "Validator": "验证器",
     "AddRule": "添加规则",
     "AllRules": "所有规则",
+    "TransitionRulesConfigured": "已配置转换规则",
     "RuleTypes": "规则类型",
     "RestrictTransition": "限制过渡",
     "RequestInput": "请求输入",

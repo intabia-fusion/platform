@@ -223,6 +223,7 @@ export default plugin(workflowId, {
     Validator: '' as IntlString,
     AddRule: '' as IntlString,
     AllRules: '' as IntlString,
+    TransitionRulesConfigured: '' as IntlString,
     RuleTypes: '' as IntlString,
     RestrictTransition: '' as IntlString,
     RequestInput: '' as IntlString,

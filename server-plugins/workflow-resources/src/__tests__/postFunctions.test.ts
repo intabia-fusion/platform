@@ -189,7 +189,9 @@ describe('Workflow Post-Functions', () => {
         findAllSync: () => [
           { _id: workflow.function.UpperCase, type: 'transform' },
           { _id: workflow.function.Append, type: 'transform' },
-          { _id: workflow.function.FirstValue, type: 'transform' }
+          { _id: workflow.function.FirstValue, type: 'transform' },
+          { _id: workflow.function.Replace, type: 'transform' },
+          { _id: workflow.function.ReplaceAll, type: 'transform' }
         ]
       } as any,
       findAll: jest.fn().mockImplementation(async (ctx, _class, query) => {
@@ -249,6 +251,22 @@ describe('Workflow Post-Functions', () => {
             value: ['val1', 'val2'],
             functions: [{ func: workflow.function.FirstValue }]
           }
+        },
+        {
+          fieldKey: 'titleReplaced',
+          value: {
+            type: 'const',
+            value: 'NEW TASK NEW',
+            functions: [{ func: workflow.function.Replace, props: { search: 'NEW', replacement: 'ТУЦ' } }]
+          }
+        },
+        {
+          fieldKey: 'titleReplacedAll',
+          value: {
+            type: 'const',
+            value: 'NEW TASK NEW',
+            functions: [{ func: workflow.function.ReplaceAll, props: { search: 'NEW', replacement: 'ТУЦ' } }]
+          }
         }
       ]
     }
@@ -262,6 +280,8 @@ describe('Workflow Post-Functions', () => {
     expect(ops.titleUpper).toBe('HELLO WORLD!')
     expect(ops.parentDesc).toBe('Parent Desc')
     expect(ops.firstItem).toBe('val1')
+    expect(ops.titleReplaced).toBe('ТУЦ TASK NEW')
+    expect(ops.titleReplacedAll).toBe('ТУЦ TASK ТУЦ')
   })
 
   it('should execute ClearFieldValue post-function on status transition', async () => {

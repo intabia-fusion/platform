@@ -196,7 +196,11 @@
   function onRowValueChange (rowId: string, val: WorkflowFieldValue): void {
     const row = rows.find((r) => r.id === rowId)
     if (row != null) {
-      row.value = val
+      const functions = val.functions ?? row.value?.functions
+      row.value = {
+        ...val,
+        ...(functions != null && functions.length > 0 ? { functions } : {})
+      }
       rows = [...rows]
     }
   }
@@ -325,8 +329,7 @@
         removeRow(row.id)
       }}
       on:clear={() => {
-        row.value = { type: 'const', value: '' }
-        rows = [...rows]
+        onRowValueChange(row.id, { type: 'const', value: '' })
       }}
       on:value={(e) => {
         onRowValueChange(row.id, e.detail)

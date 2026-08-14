@@ -13,18 +13,19 @@
 -->
 <script lang="ts">
   import { Doc, Ref, Status } from '@hcengineering/core'
-  import { settingsStore } from '@hcengineering/setting-resources'
+  import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import { TaskType } from '@hcengineering/task'
   import { StatusPresenter } from '@hcengineering/tracker-resources'
   import {
-    ButtonIcon,
+    ButtonIcon, closePanel, closePopup,
     Icon,
     IconAdd,
     IconArrowRight,
     IconMoreV2,
     IconOpenedArrow,
     Label,
-    showPopup
+    showPopup,
+    tooltip
   } from '@hcengineering/ui'
   import { SortableDocListStatic } from '@hcengineering/view-resources'
   import { Workflow, WorkflowTransition } from '@hcengineering/workflow'
@@ -45,6 +46,12 @@
   }
 
   function editTransition (_id: Ref<WorkflowTransition>): void {
+    if ($settingsStore.id === _id) {
+      clearSettingsStore()
+      closePanel()
+      closePopup()
+      return
+    }
     $settingsStore = {
       id: _id,
       component: AsideTransitionEditor,
@@ -63,6 +70,14 @@
   function toTransition (doc: Doc): WorkflowTransition {
     return doc as WorkflowTransition
   }
+
+  function hasRules (transition: WorkflowTransition): boolean {
+    return (
+      (transition.requests?.length ?? 0) > 0 ||
+      (transition.validators?.length ?? 0) > 0 ||
+      (transition.postFunctions?.length ?? 0) > 0
+    )
+  }
 </script>
 
 <div class="hulyTableAttr-container editor">
@@ -75,11 +90,12 @@
     <svelte:fragment slot="object" let:value>
       {@const transition = toTransition(value)}
       {@const statusTo = statuses.find((it) => it._id === transition.to)}
+      {@const rulesPresent = hasRules(transition)}
       <div class="hulyTableAttr-content class withTitle">
         <button
           type="button"
           class="hulyTableAttr-content__row"
-          class:selected={false}
+          class:selected={$settingsStore?.id === transition._id}
           draggable={!readonly}
           on:click={() => {
             editTransition(transition._id)
@@ -88,7 +104,12 @@
           <button type="button" class="hulyTableAttr-content__row-dragMenu" on:click|stopPropagation={() => {}}>
             <IconMoreV2 size="small" />
           </button>
-          <span class="hulyTableAttr-content__title center">
+          <span class="hulyTableAttr-content__title center flex-row-center flex-gap-1">
+            {#if rulesPresent}
+              <span use:tooltip={{ label: plugin.string.TransitionRulesConfigured }}>
+                <Icon icon={plugin.icon.Action} size="x-small" />
+              </span>
+            {/if}
             <span class="overflow-label" title={transition.name}>{transition.name}</span>
           </span>
           <span class="hulyTableAttr-content__row noPadding">

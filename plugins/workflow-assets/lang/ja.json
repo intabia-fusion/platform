@@ -49,6 +49,7 @@
     "Validator": "バリデーター",
     "AddRule": "ルールを追加",
     "AllRules": "すべてのルール",
+    "TransitionRulesConfigured": "遷移ルールが設定されています",
     "RuleTypes": "ルールタイプ",
     "RestrictTransition": "遷移の制限",
     "RequestInput": "入力要求",

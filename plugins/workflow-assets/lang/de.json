@@ -49,6 +49,7 @@
     "Validator": "Validator",
     "AddRule": "Regel hinzufügen",
     "AllRules": "Alle Regeln",
+    "TransitionRulesConfigured": "Übergangsregeln konfiguriert",
     "RuleTypes": "REGELTYPEN",
     "RestrictTransition": "Übergang einschränken",
     "RequestInput": "Eingabe anfordern",

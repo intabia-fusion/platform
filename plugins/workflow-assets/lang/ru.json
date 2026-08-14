@@ -49,6 +49,7 @@
     "Validator": "Валидатор",
     "AddRule": "Добавить правило",
     "AllRules": "Все правила",
+    "TransitionRulesConfigured": "Настроены правила перехода",
     "RuleTypes": "Типы правил",
     "RestrictTransition": "Ограничить переход",
     "RequestInput": "Запросить ввод",

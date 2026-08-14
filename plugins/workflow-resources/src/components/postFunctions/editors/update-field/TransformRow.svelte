@@ -44,7 +44,7 @@
     const newFuncs = row.value.functions.filter((fn) => fn !== fnTarget)
     const updatedValue: WorkflowFieldValue = {
       ...row.value,
-      functions: newFuncs.length > 0 ? newFuncs : undefined
+      functions: newFuncs
     }
     dispatch('value', updatedValue)
   }

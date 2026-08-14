@@ -67,8 +67,9 @@
 
   $: transitionsQuery.query(plugin.class.WorkflowTransition, { attachedTo: workflow._id }, (res) => {
     transitions = res
-    transition = res.find((it) => it._id === _id)
   })
+
+  $: transition = transitions.find((it) => it._id === _id) ?? transition
 
   const updateFromStatusItems = reduceCalls(async (lang: string, stList: Status[]): Promise<void> => {
     const it = await translate(plugin.string.AnyStatus, {}, lang)
@@ -279,6 +280,7 @@
         bind:selected={fromStatusItemIds}
         multiselect={true}
         wrap={true}
+        enableSearch={false}
         placeholder={ui.string.NotSelected}
         justify="left"
         width="100%"

@@ -58,10 +58,20 @@ const STRING_TRANSFORMS: Record<Ref<WorkflowValueFunction>, TransformFn> = {
   [workflow.function.Trim]: (v) => (v != null ? String(v).trim() : v),
   [workflow.function.Prepend]: (v, p) => String(p.value ?? '') + String(v ?? ''),
   [workflow.function.Append]: (v, p) => String(v ?? '') + String(p.value ?? ''),
-  [workflow.function.Replace]: (v, p) =>
-    v != null ? String(v).replace(String(p.from ?? p.target ?? ''), String(p.to ?? p.replacement ?? '')) : v,
-  [workflow.function.ReplaceAll]: (v, p) =>
-    v != null ? String(v).replaceAll(String(p.from ?? p.target ?? ''), String(p.to ?? p.replacement ?? '')) : v,
+  [workflow.function.Replace]: (v, p) => {
+    if (v == null) return v
+    const search = String(p.search ?? p.from ?? p.target ?? '')
+    if (!search) return v
+    const replacement = String(p.replacement ?? p.to ?? '')
+    return String(v).replace(search, replacement)
+  },
+  [workflow.function.ReplaceAll]: (v, p) => {
+    if (v == null) return v
+    const search = String(p.search ?? p.from ?? p.target ?? '')
+    if (!search) return v
+    const replacement = String(p.replacement ?? p.to ?? '')
+    return String(v).replaceAll(search, replacement)
+  },
   [workflow.function.Cut]: cutString
 }
 

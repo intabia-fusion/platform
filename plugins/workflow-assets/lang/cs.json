@@ -49,6 +49,7 @@
     "Validator": "Validátor",
     "AddRule": "Přidat pravidlo",
     "AllRules": "Všechna pravidla",
+    "TransitionRulesConfigured": "Pravidla přechodu nakonfigurována",
     "RuleTypes": "TYPY PRAVIDEL",
     "RestrictTransition": "Omezit přechod",
     "RequestInput": "Vyžadovat vstup",
