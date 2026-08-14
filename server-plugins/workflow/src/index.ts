@@ -47,7 +47,9 @@ export default plugin(serverWorkflowId, {
   trigger: {
     PostFunctionsTrigger: '' as Resource<TriggerFunc>,
     OnWorkflowDelete: '' as Resource<TriggerFunc>,
-    OnTaskTypeDelete: '' as Resource<TriggerFunc>
+    OnTaskTypeDelete: '' as Resource<TriggerFunc>,
+    OnStatusDelete: '' as Resource<TriggerFunc>,
+    OnTaskTypeUpdate: '' as Resource<TriggerFunc>
   },
   mixin: {
     ValidatorImpl: '' as Ref<Mixin<ValidatorImpl>>,

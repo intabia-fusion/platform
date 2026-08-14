@@ -1069,4 +1069,170 @@ describe('PostFunctionsTrigger', () => {
       expect(result).toHaveLength(0)
     })
   })
+
+  describe('OnStatusDelete', () => {
+    it('should remove transitions where "to" is deleted status, update/remove "from", and update initialStatuses', async () => {
+      const { OnStatusDelete } = jest.requireActual('../WorkflowTrigger')
+      const deletedStatusId = 'status-1' as Ref<Status>
+      const otherStatusId = 'status-2' as Ref<Status>
+      const space = 'space-1' as Ref<Space>
+
+      const removeTx = {
+        _id: generateId(),
+        _class: core.class.TxRemoveDoc,
+        space: core.space.DerivedTx,
+        objectId: deletedStatusId,
+        objectClass: core.class.Status,
+        objectSpace: space,
+        modifiedOn: Date.now(),
+        modifiedBy: testAccount
+      }
+
+      const transitionToDeleted = {
+        _id: 't-1' as Ref<WorkflowTransition>,
+        _class: workflow.class.WorkflowTransition,
+        space,
+        to: deletedStatusId,
+        from: [otherStatusId]
+      }
+
+      const transitionFromDeletedMulti = {
+        _id: 't-2' as Ref<WorkflowTransition>,
+        _class: workflow.class.WorkflowTransition,
+        space,
+        to: otherStatusId,
+        from: [deletedStatusId, otherStatusId]
+      }
+
+      const transitionFromDeletedSingle = {
+        _id: 't-3' as Ref<WorkflowTransition>,
+        _class: workflow.class.WorkflowTransition,
+        space,
+        to: otherStatusId,
+        from: [deletedStatusId]
+      }
+
+      const workflowDoc = {
+        _id: 'wf-1' as Ref<Workflow>,
+        _class: workflow.class.Workflow,
+        space,
+        initialStatuses: [deletedStatusId, otherStatusId]
+      }
+
+      const txFactory = new TxFactory(testAccount)
+      const mockControl = {
+        ctx: {} as any,
+        findAll: jest.fn().mockImplementation(async (ctx, _class) => {
+          if (_class === workflow.class.WorkflowTransition) {
+            return [transitionToDeleted, transitionFromDeletedMulti, transitionFromDeletedSingle]
+          }
+          if (_class === workflow.class.Workflow) {
+            return [workflowDoc]
+          }
+          return []
+        }),
+        txFactory
+      }
+
+      const result = await OnStatusDelete([removeTx as any], mockControl as any)
+
+      expect(result).toHaveLength(4)
+      // t-1 (to == deletedStatusId) -> remove
+      expect(result[0]).toMatchObject({
+        _class: core.class.TxRemoveDoc,
+        objectId: 't-1'
+      })
+      // t-2 (from has deletedStatusId & otherStatusId) -> update from to [otherStatusId]
+      expect(result[1]).toMatchObject({
+        _class: core.class.TxUpdateDoc,
+        objectId: 't-2',
+        operations: { from: [otherStatusId] }
+      })
+      // t-3 (from has only deletedStatusId) -> remove
+      expect(result[2]).toMatchObject({
+        _class: core.class.TxRemoveDoc,
+        objectId: 't-3'
+      })
+      // wf-1 (initialStatuses has deletedStatusId) -> update initialStatuses to [otherStatusId]
+      expect(result[3]).toMatchObject({
+        _class: core.class.TxUpdateDoc,
+        objectId: 'wf-1',
+        operations: { initialStatuses: [otherStatusId] }
+      })
+    })
+  })
+
+  describe('OnTaskTypeUpdate', () => {
+    it('should clean up transitions and initialStatuses when statuses array on TaskType is updated (removed a status)', async () => {
+      const { OnTaskTypeUpdate } = jest.requireActual('../WorkflowTrigger')
+      const taskTypeId = 'task-type-issue' as Ref<TaskType>
+      const removedStatusId = 'status-removed' as Ref<Status>
+      const keptStatusId = 'status-kept' as Ref<Status>
+      const space = 'space-1' as Ref<Space>
+      const workflowId = 'wf-issue' as Ref<Workflow>
+
+      const updateTx = {
+        _id: generateId(),
+        _class: core.class.TxUpdateDoc,
+        space: core.space.DerivedTx,
+        objectId: taskTypeId,
+        objectClass: task.class.TaskType,
+        objectSpace: space,
+        operations: { statuses: [keptStatusId] },
+        modifiedOn: Date.now(),
+        modifiedBy: testAccount
+      }
+
+      const oldTaskType = {
+        _id: taskTypeId,
+        _class: task.class.TaskType,
+        space,
+        statuses: [removedStatusId, keptStatusId]
+      }
+
+      const workflowDoc = {
+        _id: workflowId,
+        _class: workflow.class.Workflow,
+        space,
+        taskType: taskTypeId,
+        initialStatuses: [removedStatusId, keptStatusId]
+      }
+
+      const transitionToRemoved = {
+        _id: 't-removed-to' as Ref<WorkflowTransition>,
+        _class: workflow.class.WorkflowTransition,
+        space,
+        attachedTo: workflowId,
+        to: removedStatusId,
+        from: [keptStatusId]
+      }
+
+      const txFactory = new TxFactory(testAccount)
+      const mockControl = {
+        ctx: {} as any,
+        findAll: jest.fn().mockImplementation(async (ctx, _class, query) => {
+          if (_class === task.class.TaskType) return [oldTaskType]
+          if (_class === workflow.class.Workflow) return [workflowDoc]
+          if (_class === workflow.class.WorkflowTransition) return [transitionToRemoved]
+          return []
+        }),
+        txFactory
+      }
+
+      const result = await OnTaskTypeUpdate([updateTx as any], mockControl as any)
+
+      expect(result).toHaveLength(2)
+      // Initial status updated for workflow
+      expect(result[0]).toMatchObject({
+        _class: core.class.TxUpdateDoc,
+        objectId: workflowId,
+        operations: { initialStatuses: [keptStatusId] }
+      })
+      // Transition leading to removed status deleted
+      expect(result[1]).toMatchObject({
+        _class: core.class.TxRemoveDoc,
+        objectId: 't-removed-to'
+      })
+    })
+  })
 })

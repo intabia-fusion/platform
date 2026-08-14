@@ -15,14 +15,16 @@
 
 import { PostFunctionsTrigger, FieldRequired, SubtaskStatus, ParentStatus } from './PostFunctions'
 import { UpdateFieldValue, ClearFieldValue } from './post-functions'
-import { OnWorkflowDelete, OnTaskTypeDelete } from './WorkflowTrigger'
+import { OnWorkflowDelete, OnTaskTypeDelete, OnStatusDelete, OnTaskTypeUpdate } from './WorkflowTrigger'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   trigger: {
     PostFunctionsTrigger,
     OnWorkflowDelete,
-    OnTaskTypeDelete
+    OnTaskTypeDelete,
+    OnStatusDelete,
+    OnTaskTypeUpdate
   },
   validatorExecutor: {
     FieldRequired,
