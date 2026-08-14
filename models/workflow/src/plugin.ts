@@ -61,11 +61,7 @@ export default mergeIds(workflowId, workflow, {
     Min: '' as IntlString,
     Max: '' as IntlString,
     Offset: '' as IntlString,
-    DateDifference: '' as IntlString,
-    FailedToRenderDiagram: '' as IntlString,
-    DiagramErrorHint: '' as IntlString,
-    ShowDetails: '' as IntlString,
-    HideDetails: '' as IntlString
+    DateDifference: '' as IntlString
   },
   pipeline: {
     WorkflowMiddleware: '' as Ref<PresentationMiddlewareFactory>

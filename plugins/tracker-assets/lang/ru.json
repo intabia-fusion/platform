@@ -225,7 +225,7 @@
     "MoveAndDeleteMilestone": "Переместить Задачи в {newMilestone} и Удалить {deleteMilestone}",
     "MoveAndDeleteMilestoneConfirm": "Вы действительно хотите удалить этап и перенести задачи в другой?",
     "Estimation": "Оценка",
-    "ReportedTime": "Потраченное времени",
+    "ReportedTime": "Потраченное время",
     "RemainingTime": "Осталось времени",
     "TimeSpendReports": "Отчеты по времени",
     "TimeSpendReport": "Время",

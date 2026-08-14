@@ -13,10 +13,19 @@
 // limitations under the License.
 //
 
-import core, { notEmpty, Ref, Status } from '@hcengineering/core'
+import core, {
+  AnyAttribute,
+  Doc,
+  Hierarchy,
+  notEmpty,
+  Ref,
+  RefTo,
+  Status
+} from '@hcengineering/core'
 import task, { type Task, TaskType } from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
 import { type IntlString, translate } from '@hcengineering/platform'
+import { isEmptyMarkup } from '@hcengineering/text'
 
 import workflow from './plugin'
 import {
@@ -27,7 +36,32 @@ import {
   type WorkflowTransition
 } from './schema'
 
-export function isEmpty (value: any): boolean {
+export function isEmptyAttribute (h: Hierarchy, attribute: AnyAttribute, value: any): boolean {
+  if (value == null) return true
+
+  if (h.isDerived(attribute.type._class, core.class.RefTo)) {
+    const type = attribute.type as RefTo<Doc>
+    if (h.isDerived(type.to, tracker.class.Issue) && value === tracker.ids.NoParent) {
+      return true
+    }
+  }
+
+  if (h.isDerived(attribute.type._class, core.class.Collection)) {
+    const count = Number(value)
+    if (!Number.isInteger(count) || count <= 0) {
+      return true
+    }
+  }
+
+  if (h.isDerived(attribute.type._class, core.class.TypeCollaborativeDoc) ||
+    h.isDerived(attribute.type._class, core.class.TypeMarkup)) {
+    return isEmptyMarkup(value)
+  }
+
+  return isEmptyValue(value)
+}
+
+function isEmptyValue (value: any): boolean {
   if (value === undefined || value === null) {
     return true
   }
@@ -48,10 +82,11 @@ export function isEmpty (value: any): boolean {
   }
   if (typeof value === 'object') {
     if ('value' in value && Object.keys(value).length === 1) {
-      return isEmpty(value.value)
+      return isEmptyValue(value.value)
     }
     return Object.keys(value).length === 0
   }
+
   return false
 }
 
@@ -63,6 +98,7 @@ export const FieldRequired: ValidatorFunc = async (
 ): Promise<ValidationResult> => {
   const props = _props as FieldRequiredProps | undefined
   const fields = props?.fields ?? []
+
   if (fields.length === 0) {
     return { ok: true }
   }
@@ -73,9 +109,11 @@ export const FieldRequired: ValidatorFunc = async (
     if (fieldKey == null || fieldKey === '') continue
 
     const attribute = h.findAttribute(f.mixin ?? taskDoc._class, fieldKey)
-    if (attribute == null) continue
+
     const val = f.mixin != null ? (h.as(taskDoc, f.mixin) as any)[f.fieldKey] : (taskDoc as any)[f.fieldKey]
-    if (isEmpty(val)) {
+    if (attribute == null) continue
+
+    if (isEmptyAttribute(h, attribute, val)) {
       const flow = await getTransitionFlow(client, transition)
       const fieldName = await translate(attribute.label, {})
       return {
@@ -148,7 +186,7 @@ export const SubtaskStatus: ValidatorFunc = async (
   props: Record<string, any>
 ): Promise<ValidationResult> => {
   const statusesMap = (props.statuses ?? {}) as Record<Ref<TaskType>, Ref<Status>[] | null>
-  if (isEmpty(statusesMap)) {
+  if (isEmptyValue(statusesMap)) {
     return { ok: true }
   }
 
@@ -185,7 +223,7 @@ export const ParentStatus: ValidatorFunc = async (
   props: Record<string, any>
 ): Promise<ValidationResult> => {
   const statusesMap = (props.statuses ?? {}) as Record<Ref<TaskType>, Ref<Status>[] | null>
-  if (isEmpty(statusesMap)) {
+  if (isEmptyValue(statusesMap)) {
     return { ok: true }
   }
 

@@ -27,8 +27,7 @@
   import type { Task } from '@hcengineering/task'
   import ui, { Label, languageStore, Modal, type TabBase, TabsControl } from '@hcengineering/ui'
   import { findAttributeApplier } from '@hcengineering/view-resources'
-  import { isEmptyMarkup } from '@hcengineering/text'
-  import workflow, { isEmpty, type Screen, type ScreenField, type ScreenTab } from '@hcengineering/workflow'
+  import workflow, { isEmptyAttribute, type Screen, type ScreenField, type ScreenTab } from '@hcengineering/workflow'
 
   import ScreenAttributesBar from './ScreenAttributesBar.svelte'
   import { type ScreenModalResult } from '../../types'
@@ -98,19 +97,6 @@
     return attr.type?._class === core.class.Collection || hierarchy.isDerived(attr.type?._class, core.class.Collection)
   }
 
-  function isMarkupField (field: ScreenField): boolean {
-    const attr =
-      field.mixin != null
-        ? hierarchy.findAttribute(field.mixin, field.fieldKey)
-        : hierarchy.findAttribute(object._class, field.fieldKey)
-    if (attr?.type?._class == null) return false
-    const attrClass = attr.type._class
-    return (
-      hierarchy.isDerived(attrClass, core.class.TypeCollaborativeDoc) ||
-      hierarchy.isDerived(attrClass, core.class.TypeMarkup)
-    )
-  }
-
   async function handleSave (): Promise<void> {
     const missingFields: ScreenField[] = []
     const obj = object as Record<string, any>
@@ -130,10 +116,14 @@
           val = obj[key]
         }
 
-        const isMarkup = isMarkupField(field)
-        const fieldIsEmpty = isMarkup ? isEmptyMarkup(val) : isEmpty(val)
+        const attr =
+          field.mixin != null
+            ? hierarchy.findAttribute(field.mixin, field.fieldKey)
+            : hierarchy.findAttribute(object._class, field.fieldKey)
 
-        if (fieldIsEmpty) {
+        const isEmpty = attr == null ? true : isEmptyAttribute(hierarchy, attr, val)
+
+        if (isEmpty) {
           missingFields.push(field)
         }
       }

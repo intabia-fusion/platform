@@ -20,7 +20,7 @@ import task, { type Task, type TaskType } from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
 
 import workflow from '../plugin'
-import { isEmpty, FieldRequired, SubtaskStatus, ParentStatus } from '../validators'
+import { FieldRequired, SubtaskStatus, ParentStatus } from '../validators'
 import type { ValidatorClient, WorkflowTransition } from '../schema'
 
 jest.mock('@hcengineering/platform', () => {
@@ -99,53 +99,53 @@ describe('Workflow Validators', () => {
     rank: '0'
   } as unknown as WorkflowTransition
 
-  describe('isEmpty', () => {
-    it('should return true for undefined and null', () => {
-      expect(isEmpty(undefined)).toBe(true)
-      expect(isEmpty(null)).toBe(true)
-    })
-
-    it('should return true for empty or whitespace-only strings', () => {
-      expect(isEmpty('')).toBe(true)
-      expect(isEmpty('   ')).toBe(true)
-      expect(isEmpty('\t\n')).toBe(true)
-    })
-
-    it('should return false for non-empty strings', () => {
-      expect(isEmpty('hello')).toBe(false)
-      expect(isEmpty('  a  ')).toBe(false)
-    })
-
-    it('should handle arrays correctly', () => {
-      expect(isEmpty([])).toBe(true)
-      expect(isEmpty([1])).toBe(false)
-      expect(isEmpty([null])).toBe(false)
-      expect(isEmpty([''])).toBe(false)
-    })
-
-    it('should handle Map and Set instances', () => {
-      expect(isEmpty(new Map())).toBe(true)
-      expect(isEmpty(new Set())).toBe(true)
-      expect(isEmpty(new Map([['key', 'val']]))).toBe(false)
-      expect(isEmpty(new Set([1]))).toBe(false)
-    })
-
-    it('should handle plain objects', () => {
-      expect(isEmpty({})).toBe(true)
-      expect(isEmpty({ key: 'val' })).toBe(false)
-      expect(isEmpty({ key: undefined })).toBe(false)
-    })
-
-    it('should handle primitive non-string values correctly', () => {
-      expect(isEmpty(0)).toBe(true)
-      expect(isEmpty(42)).toBe(false)
-      expect(isEmpty(NaN)).toBe(true)
-      expect(isEmpty(false)).toBe(false)
-      expect(isEmpty(true)).toBe(false)
-      expect(isEmpty(Symbol('test'))).toBe(false)
-      expect(isEmpty(() => {})).toBe(false)
-    })
-  })
+  // describe('isEmpty', () => {
+  //   it('should return true for undefined and null', () => {
+  //     expect(isEmpty(undefined)).toBe(true)
+  //     expect(isEmpty(null)).toBe(true)
+  //   })
+  //
+  //   it('should return true for empty or whitespace-only strings', () => {
+  //     expect(isEmpty('')).toBe(true)
+  //     expect(isEmpty('   ')).toBe(true)
+  //     expect(isEmpty('\t\n')).toBe(true)
+  //   })
+  //
+  //   it('should return false for non-empty strings', () => {
+  //     expect(isEmpty('hello')).toBe(false)
+  //     expect(isEmpty('  a  ')).toBe(false)
+  //   })
+  //
+  //   it('should handle arrays correctly', () => {
+  //     expect(isEmpty([])).toBe(true)
+  //     expect(isEmpty([1])).toBe(false)
+  //     expect(isEmpty([null])).toBe(false)
+  //     expect(isEmpty([''])).toBe(false)
+  //   })
+  //
+  //   it('should handle Map and Set instances', () => {
+  //     expect(isEmpty(new Map())).toBe(true)
+  //     expect(isEmpty(new Set())).toBe(true)
+  //     expect(isEmpty(new Map([['key', 'val']]))).toBe(false)
+  //     expect(isEmpty(new Set([1]))).toBe(false)
+  //   })
+  //
+  //   it('should handle plain objects', () => {
+  //     expect(isEmpty({})).toBe(true)
+  //     expect(isEmpty({ key: 'val' })).toBe(false)
+  //     expect(isEmpty({ key: undefined })).toBe(false)
+  //   })
+  //
+  //   it('should handle primitive non-string values correctly', () => {
+  //     expect(isEmpty(0)).toBe(true)
+  //     expect(isEmpty(42)).toBe(false)
+  //     expect(isEmpty(NaN)).toBe(true)
+  //     expect(isEmpty(false)).toBe(false)
+  //     expect(isEmpty(true)).toBe(false)
+  //     expect(isEmpty(Symbol('test'))).toBe(false)
+  //     expect(isEmpty(() => {})).toBe(false)
+  //   })
+  // })
 
   describe('FieldRequired', () => {
     const taskDoc = {

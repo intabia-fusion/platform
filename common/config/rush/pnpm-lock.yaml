@@ -28306,6 +28306,9 @@ importers:
       '@hcengineering/task':
         specifier: workspace:^0.7.0
         version: link:../task
+      '@hcengineering/text':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/text
       '@hcengineering/tracker':
         specifier: workspace:^0.7.0
         version: link:../tracker
