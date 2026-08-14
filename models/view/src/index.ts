@@ -109,7 +109,8 @@ import {
   type Viewlet,
   type ViewletDescriptor,
   type ViewletPreference,
-  type ViewletViewAction
+  type ViewletViewAction,
+  type DescendantAttribute
 } from '@hcengineering/view'
 
 import view from './plugin'
@@ -331,6 +332,7 @@ export class TViewletPreference extends TPreference implements ViewletPreference
   declare attachedTo: Ref<Viewlet>
   config!: (BuildModelKey | string)[]
   customAttributes?: string[]
+  descendantAttributes?: DescendantAttribute[]
 }
 
 @Model(view.class.ViewletDescriptor, core.class.Doc, DOMAIN_MODEL)

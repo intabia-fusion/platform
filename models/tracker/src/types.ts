@@ -456,5 +456,5 @@ export class TClassicProjectTypeData extends TProject implements RolesAssignment
 }
 
 @Model(tracker.class.IssueTaskType, tracker.class.Issue)
-@UX(tracker.string.Issue, tracker.icon.Issue, 'TSK', 'title', undefined, tracker.string.Issues, 'title')
+@UX(tracker.string.ClassicIssue, tracker.icon.Issue, 'TSK', 'title', undefined, tracker.string.ClassicIssues, 'title')
 export class TIssueTaskType extends TIssue {}
