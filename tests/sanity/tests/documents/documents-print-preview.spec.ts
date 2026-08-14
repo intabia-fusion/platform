@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { PlatformSetting, PlatformURI } from '../utils'
+import { generateId, PlatformSetting, PlatformURI } from '../utils'
 import { NewDocument } from '../model/documents/types'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { DocumentsPage } from '../model/documents/documents-page'
@@ -41,7 +41,10 @@ test.describe('Открытие pdf-preview документов через prin
         }
       })
 
-      const newDocument: NewDocument = { title, space: 'Default' }
+      // Suffix keeps the title unique per run: a leftover document from a previous run
+      // makes every navigator locator ambiguous and fails the test on strict mode.
+      const uniqueTitle = `${title} ${generateId(5)}`
+      const newDocument: NewDocument = { title: uniqueTitle, space: 'Default' }
 
       await test.step('Создание и открытие документа', async () => {
         await leftSideMenuPage.clickDocuments()
@@ -70,6 +73,8 @@ test.describe('Открытие pdf-preview документов через prin
         try {
           const result = await parser.getText()
           const text = result.text.replace(/\s+/g, ' ').trim()
+          // Only the base title is asserted: the print service truncates long headers,
+          // so the uniqueness suffix may not survive into the PDF.
           expect(text).toContain(title)
         } finally {
           await parser.destroy()

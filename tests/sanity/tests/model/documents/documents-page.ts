@@ -110,10 +110,16 @@ export class DocumentsPage extends CommonPage {
   }
 
   async moreActionTeamspace (name: string, action: string): Promise<void> {
-    await this.page.locator('button.hulyNavGroup-header span[class*="label"]', { hasText: name }).hover()
-    await this.page
-      .locator(`xpath=//span[text()="${name}"]/../../div[@class="hulyNavGroup-header__tools"]/button[last()]`)
-      .click()
+    const header = this.page.locator('button.hulyNavGroup-header span[class*="label"]', { hasText: name })
+    const tools = this.page.locator(
+      `xpath=//span[text()="${name}"]/../../div[@class="hulyNavGroup-header__tools"]/button[last()]`
+    )
+    // The tools button only exists while the group is hovered, so a re-render of the navigator
+    // hides it again and a plain click waits out the whole timeout. Re-hover on every attempt.
+    await expect(async () => {
+      await header.hover()
+      await tools.click({ timeout: 5000 })
+    }).toPass({ intervals: [300, 1000], timeout: 20000 })
     await this.selectFromDropdown(this.page, action)
   }
 

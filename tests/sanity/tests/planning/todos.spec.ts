@@ -121,14 +121,16 @@ test.describe('Planning ToDo tests', () => {
   })
 
   test('Delete a ToDo', async ({ page }) => {
+    // Created here on purpose: the test destroys it, so seeded data would only survive one run.
     const deleteToDo: NewToDo = {
-      title: 'ToDo For delete'
+      title: `ToDo For delete-${generateId()}`
     }
 
     const planningNavigationMenuPage = new PlanningNavigationMenuPage(page)
     await planningNavigationMenuPage.clickOnButtonToDoAll()
 
     const planningPage = new PlanningPage(page)
+    await planningPage.createNewToDo(deleteToDo)
     await planningPage.deleteToDoByName(deleteToDo.title)
     await planningPage.checkToDoNotExist(deleteToDo.title)
   })

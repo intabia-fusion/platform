@@ -165,21 +165,22 @@ export class LimitsEngine {
 
     for (const ws of workspaces) {
       if (isArchivingMode(ws.mode) || isDeletingMode(ws.mode)) continue
-      for (const metric of ['tokens', 'transcript', 'storage', 'meetingMinutes'] as UsageMetric[]) {
-        try {
-          await this.recompute(ctx, ws.uuid, metric)
-        } catch (err: any) {
-          ctx.error('startup scan failed', { workspace: ws.uuid, metric, err })
-        }
+      try {
+        await this.recomputeWorkspace(ctx, ws.uuid)
+      } catch (err: any) {
+        ctx.error('startup scan failed', { workspace: ws.uuid, err })
       }
     }
   }
 
   /** Plan changed: re-evaluate all volume metrics so an upgrade lifts exhausted without a restart. */
   async recomputeWorkspace (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<void> {
+    // Subscriptions cannot change between the four metrics of one pass - fetch them once instead
+    // of paying an account round-trip per metric.
+    const subs = await this.accountClient(workspace).getSubscriptions(workspace, false)
     for (const metric of ['tokens', 'transcript', 'storage', 'meetingMinutes'] as UsageMetric[]) {
       try {
-        await this.recompute(ctx, workspace, metric)
+        await this.recompute(ctx, workspace, metric, subs)
       } catch (err: any) {
         ctx.error('plan recompute failed', { workspace, metric, err })
       }
@@ -187,9 +188,14 @@ export class LimitsEngine {
   }
 
   /** Recompute used vs limit for one metric and publish on exhausted-flag flip. */
-  private async recompute (ctx: MeasureContext, workspace: WorkspaceUuid, metric: UsageMetric): Promise<void> {
+  private async recompute (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    metric: UsageMetric,
+    knownSubs?: Subscription[]
+  ): Promise<void> {
     const category = metricToCategory(metric)
-    const subs = await this.accountClient(workspace).getSubscriptions(workspace, false)
+    const subs = knownSubs ?? (await this.accountClient(workspace).getSubscriptions(workspace, false))
     const tier = latestGrantingTier(subs)
     const used = await this.computeUsed(ctx, workspace, metric, tier)
     const limitValue = getEffectiveLimit(subs, metric)

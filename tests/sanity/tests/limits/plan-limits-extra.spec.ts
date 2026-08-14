@@ -28,8 +28,12 @@ async function uploadChunksWatching413 (page: Page, count: number, stopOnReject:
     // buffers would all collapse to one chunk and never cross the limit via the delta path.
     const buffer = Buffer.alloc(CHUNK, i + 1)
     await openForm.first().click()
+    // Wait for the upload response itself instead of a flat 2s guess, then leave a short margin
+    // for billing to record the delta before the next chunk goes up.
+    const uploaded = page.waitForResponse((r) => r.url().includes('/upload/'), { timeout: 15000 }).catch(() => null)
     await fileInput.setInputFiles({ name: `big-${i}.bin`, mimeType: 'application/octet-stream', buffer })
-    await page.waitForTimeout(2000) // let the upload resolve + billing record used storage
+    await uploaded
+    await page.waitForTimeout(300)
     await page.keyboard.press('Escape')
   }
   return rejected

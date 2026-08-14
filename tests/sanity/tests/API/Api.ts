@@ -23,7 +23,7 @@ export class ApiEndpoint {
     return headers
   }
 
-  private async loginAndGetToken (email: string, password: string): Promise<string> {
+  async loginAndGetToken (email: string, password: string): Promise<string> {
     const loginUrl = this.baseUrl
     const loginPayload = {
       method: 'login',

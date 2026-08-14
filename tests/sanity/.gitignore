@@ -3,3 +3,5 @@ test-results/*
 allure-report
 allure-results
 .auth
+browser-profiles
+.stats-started-at

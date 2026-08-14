@@ -54,12 +54,14 @@ test.describe('Tracker milestone tests', () => {
   })
 
   test('Delete a Milestone', async () => {
+    // Created here on purpose: the test destroys it, so seeded data would only survive one run.
     const deleteMilestone: NewMilestone = {
-      name: 'Delete Milestone',
+      name: `Delete Milestone-${generateId()}`,
       description: 'Delete Milestone Description',
       status: 'Canceled'
     }
     await trackerNavigationMenuPage.openMilestonesForProject('Default')
+    await milestonesPage.createNewMilestone(deleteMilestone)
     await milestonesPage.openMilestoneByName(deleteMilestone.name)
     await milestonesDetailsPage.checkIssue(deleteMilestone)
     await milestonesDetailsPage.deleteMilestone()

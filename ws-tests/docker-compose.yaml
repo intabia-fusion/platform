@@ -244,7 +244,7 @@ services:
       - DB_URL=${DB_PG_URL}
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - QUEUE_CONFIG=${QUEUE_CONFIG}
-      - USAGE_UPDATE_INTERVAL=30
+      - USAGE_UPDATE_INTERVAL=600
     restart: unless-stopped
   workspace:
     image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'
@@ -256,6 +256,7 @@ services:
     volumes:
       - ./branding-test.json:/var/cfg/branding.json
     environment:
+      - WAIT_TIMEOUT=100
       - WS_OPERATION=all+backup
       - SERVER_SECRET=secret
       - QUEUE_CONFIG=${QUEUE_CONFIG}

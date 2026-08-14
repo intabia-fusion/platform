@@ -123,8 +123,15 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       await this.inputTitle().fill(data.title)
     }
     if (data.status != null) {
-      await this.buttonStatus().click()
-      await this.selectFromDropdown(this.page, data.status)
+      const status = data.status
+      // The dropdown locator matches any element whose class ends in "opup", so a stray tooltip or
+      // leftover popup can swallow the click and leave the status untouched. Retry until it sticks.
+      await expect(async () => {
+        await this.buttonStatus().click()
+        await this.selectFromDropdown(this.page, status)
+        // Case-insensitive on purpose: callers pass labels like "ToDo" while the UI renders "Todo".
+        await expect(this.buttonStatus()).toHaveText(status, { timeout: 3000, ignoreCase: true })
+      }).toPass({ intervals: [300, 1000, 2000], timeout: 20000 })
     }
     if (data.priority != null) {
       await this.buttonPriority().click()
@@ -153,8 +160,14 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       await this.selectMenuItem(this.page, data.milestone)
     }
     if (data.estimation != null) {
-      await this.buttonEstimation().click()
-      await this.fillToSelectPopup(this.page, data.estimation)
+      const estimation = data.estimation
+      // Same story as the status above: the popup click can be swallowed, leaving the old value
+      // and turning the later check into a 10s wait for something that never happens.
+      await expect(async () => {
+        await this.buttonEstimation().click()
+        await this.fillToSelectPopup(this.page, estimation)
+        await expect(this.textEstimation()).toHaveText(convertEstimation(estimation), { timeout: 3000 })
+      }).toPass({ intervals: [300, 1000], timeout: 20000 })
     }
   }
 
