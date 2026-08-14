@@ -155,6 +155,10 @@
     "End": "Bitiş dizini",
     "SelectFieldFirst": "Önce bir alan seçin",
     "NoTransformationsForAttribute": "Dönüşümler bu alan türü için kullanılamaz",
-    "SetValueFirst": "Önce bir değer belirtin"
+    "SetValueFirst": "Önce bir değer belirtin",
+    "FailedToRenderDiagram": "İş akışı diyagramı oluşturulamadı",
+    "DiagramErrorHint": "Geçiş diyagramı oluşturulurken bir hata oluştu.",
+    "ShowDetails": "Detayları göster",
+    "HideDetails": "Detayları gizle"
   }
 }

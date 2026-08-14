@@ -156,7 +156,11 @@
     "End": "Конечный индекс",
     "SelectFieldFirst": "Выберите поле",
     "NoTransformationsForAttribute": "Трансформации недоступны для этого типа поля",
-    "SetValueFirst": "Сначала укажите значение"
+    "SetValueFirst": "Сначала укажите значение",
+    "FailedToRenderDiagram": "Не удалось отобразить схему воркфлоу",
+    "DiagramErrorHint": "Произошла ошибка при генерации схемы переходов.",
+    "ShowDetails": "Показать подробности",
+    "HideDetails": "Скрыть подробности"
   },
   "status": {
     "InitialStatusNotAllowed": "Начальный статус не разрешен",

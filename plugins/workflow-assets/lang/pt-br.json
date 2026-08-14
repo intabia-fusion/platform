@@ -154,7 +154,11 @@
     "Start": "Índice inicial",
     "End": "Índice final",
     "SelectFieldFirst": "Selecione um campo primeiro",
-    "NoTransformationsForAttribute": "Transformações não estão disponíveis para este tipo de campo",
-    "SetValueFirst": "Especifique um valor primeiro"
+    "NoTransformationsForAttribute": "As transformações não estão disponíveis para este tipo de campo",
+    "SetValueFirst": "Especifique um valor primeiro",
+    "FailedToRenderDiagram": "Falha ao renderizar o diagrama do fluxo de trabalho",
+    "DiagramErrorHint": "Ocorreu um erro ao gerar o diagrama de transições.",
+    "ShowDetails": "Mostrar detalhes",
+    "HideDetails": "Ocultar detalhes"
   }
 }

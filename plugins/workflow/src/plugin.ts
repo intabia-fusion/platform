@@ -287,13 +287,17 @@ export default plugin(workflowId, {
     Parent: '' as IntlString,
     SelectFieldFirst: '' as IntlString,
     NoTransformationsForAttribute: '' as IntlString,
-    SetValueFirst: '' as IntlString
+    SetValueFirst: '' as IntlString,
+    FailedToRenderDiagram: '' as IntlString,
+    DiagramErrorHint: '' as IntlString,
+    ShowDetails: '' as IntlString,
+    HideDetails: '' as IntlString
   },
   status: {
     InitialStatusNotAllowed: '' as StatusCode,
-    ForbiddenTransition: '' as StatusCode<{ from: string; to: string }>,
+    ForbiddenTransition: '' as StatusCode<{ from: string, to: string }>,
     SelfTransitionNotAllowed: '' as StatusCode<{ status: string }>,
-    TransitionConflict: '' as StatusCode<{ from: string; to: string; name?: string }>,
+    TransitionConflict: '' as StatusCode<{ from: string, to: string, name?: string }>,
     ValidationFailed: '' as StatusCode<{ reason: string }>,
     WorkflowNotFound: '' as StatusCode
   }

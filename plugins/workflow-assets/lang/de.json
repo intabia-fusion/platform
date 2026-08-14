@@ -155,6 +155,10 @@
     "End": "Endindex",
     "SelectFieldFirst": "Wählen Sie zuerst ein Feld aus",
     "NoTransformationsForAttribute": "Transformationen sind für diesen Feldtyp nicht verfügbar",
-    "SetValueFirst": "Geben Sie zuerst einen Wert an"
+    "SetValueFirst": "Geben Sie zuerst einen Wert an",
+    "FailedToRenderDiagram": "Workflow-Diagramm konnte nicht gerendert werden",
+    "DiagramErrorHint": "Beim Erstellen des Übergangsdiagramms ist ein Fehler aufgetreten.",
+    "ShowDetails": "Details anzeigen",
+    "HideDetails": "Details ausblenden"
   }
 }

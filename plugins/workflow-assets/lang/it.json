@@ -155,6 +155,10 @@
     "End": "Indice finale",
     "SelectFieldFirst": "Seleziona prima un campo",
     "NoTransformationsForAttribute": "Le trasformazioni non sono disponibili per questo tipo di campo",
-    "SetValueFirst": "Specifica prima un valore"
+    "SetValueFirst": "Specificare prima un valore",
+    "FailedToRenderDiagram": "Impossibile visualizzare il diagramma del flusso di lavoro",
+    "DiagramErrorHint": "Si è verificato un errore durante la generazione del diagramma delle transizioni.",
+    "ShowDetails": "Mostra dettagli",
+    "HideDetails": "Nascondi dettagli"
   }
 }

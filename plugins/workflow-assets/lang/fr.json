@@ -155,6 +155,10 @@
     "End": "Index de fin",
     "SelectFieldFirst": "Sélectionnez d'abord un champ",
     "NoTransformationsForAttribute": "Les transformations ne sont pas disponibles pour ce type de champ",
-    "SetValueFirst": "Spécifiez d'abord une valeur"
+    "SetValueFirst": "Spécifiez d'abord une valeur",
+    "FailedToRenderDiagram": "Échec de l'affichage du diagramme de flux de travail",
+    "DiagramErrorHint": "Une erreur est survenue lors de la génération du diagramme de transitions.",
+    "ShowDetails": "Afficher les détails",
+    "HideDetails": "Masquer les détails"
   }
 }

@@ -15,10 +15,13 @@
   import { onDestroy } from 'svelte'
   import { Status } from '@hcengineering/core'
   import {
+    Button,
     ButtonIcon,
     getColorNumberByText,
     getPlatformColorDef,
+    IconError,
     IconSquareExpand,
+    Label,
     languageStore,
     Loading,
     showPopup,
@@ -36,13 +39,25 @@
 
   let imageUrl: string | undefined = undefined
   let errorMsg: string | undefined = undefined
+  let showDetails = false
   let loading = true
   let currentObjectUrl: string | undefined = undefined
   let renderSequence = 0
 
   function sanitizeLabel (str: string): string {
     if (!str) return ''
-    return str.replace(/"/g, '#quot;').replace(/[\r\n]+/g, ' ')
+    return str.replace(/"/g, '#quot;').replace(/[\r\n]+/g, ' ').trim()
+  }
+
+  function sanitizeColor (color: string | undefined, fallback: string): string {
+    if (!color) return fallback
+    const trimmed = color.trim()
+    if (trimmed.includes('gradient') || trimmed.includes('(') || trimmed.includes(',')) {
+      const match = trimmed.match(/#(?:[0-9a-fA-F]{3,8})/)
+      if (match) return match[0]
+      return fallback
+    }
+    return trimmed
   }
 
   function generateMermaidCode (
@@ -66,7 +81,12 @@
 
       const colorNum = s.color !== undefined && typeof s.color !== 'string' ? s.color : getColorNumberByText(s.name)
       const colorDef = getPlatformColorDef(colorNum, isDark)
-      lines.push(`  style ${nodeId} fill:${colorDef.background},color:${colorDef.color},stroke:${colorDef.title}`)
+
+      const fill = sanitizeColor(colorDef.background, isDark ? '#1e293b' : '#f1f5f9')
+      const textColor = sanitizeColor(colorDef.color, isDark ? '#f8fafc' : '#0f172a')
+      const stroke = sanitizeColor(colorDef.title, isDark ? '#475569' : '#64748b')
+
+      lines.push(`  style ${nodeId} fill:${fill},color:${textColor},stroke:${stroke}`)
     }
 
     // Initial status entry points
@@ -240,6 +260,12 @@
     loading = true
     errorMsg = undefined
 
+    if (!statuses || statuses.length === 0) {
+      loading = false
+      imageUrl = undefined
+      return
+    }
+
     try {
       const isDark = $themeStore.dark
       const code = generateMermaidCode(statuses, transitions, workflow?.initialStatuses, isDark)
@@ -337,7 +363,7 @@
 </script>
 
 <div class="mermaid-wrapper" class:embedded>
-  {#if embedded}
+  {#if embedded && imageUrl}
     <div class="mermaid-controls">
       <ButtonIcon
         icon={IconSquareExpand}
@@ -352,7 +378,31 @@
     {#if loading}
       <Loading />
     {:else if errorMsg}
-      <div class="error-message">{errorMsg}</div>
+      <div class="diagram-error-state">
+        <div class="diagram-error-icon">
+          <IconError size="large" />
+        </div>
+        <div class="diagram-error-title">
+          <Label label={plugin.string.FailedToRenderDiagram ?? 'Не удалось отобразить схему воркфлоу'} />
+        </div>
+        <div class="diagram-error-hint">
+          <Label label={plugin.string.DiagramErrorHint ?? 'Произошла ошибка при генерации схемы переходов.'} />
+        </div>
+        <div class="diagram-error-actions">
+          <Button
+            kind="ghost"
+            size="small"
+            on:click={() => (showDetails = !showDetails)}
+          >
+            <Label label={showDetails ? (plugin.string.HideDetails ?? 'Скрыть подробности') : (plugin.string.ShowDetails ?? 'Показать подробности')} />
+          </Button>
+        </div>
+        {#if showDetails}
+          <div class="diagram-error-details">
+            <code>{errorMsg}</code>
+          </div>
+        {/if}
+      </div>
     {:else if imageUrl}
       <img src={imageUrl} alt="Workflow Transitions Diagram" class="mermaid-image" />
     {/if}
@@ -406,8 +456,62 @@
     display: block;
   }
 
-  .error-message {
-    color: var(--theme-text-error, #f44336);
-    font-size: 0.9rem;
+  .diagram-error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    text-align: center;
+    max-width: 24rem;
+    box-sizing: border-box;
+
+    .diagram-error-icon {
+      color: var(--negative-button-default, #f44336);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .diagram-error-title {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--theme-text-primary, #f8fafc);
+      margin-bottom: 0.25rem;
+    }
+
+    .diagram-error-hint {
+      font-size: 0.8125rem;
+      color: var(--theme-text-secondary, #94a3b8);
+      line-height: 1.35;
+      margin-bottom: 0.75rem;
+    }
+
+    .diagram-error-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .diagram-error-details {
+      margin-top: 0.75rem;
+      width: 100%;
+      max-height: 10rem;
+      overflow-y: auto;
+      background: var(--theme-surface-tertiary, rgba(0, 0, 0, 0.2));
+      border: 1px solid var(--theme-border-color, rgba(255, 255, 255, 0.08));
+      border-radius: 0.375rem;
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      box-sizing: border-box;
+
+      code {
+        font-family: var(--font-family-mono, monospace);
+        font-size: 0.75rem;
+        color: var(--negative-button-default, #f44336);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+    }
   }
 </style>

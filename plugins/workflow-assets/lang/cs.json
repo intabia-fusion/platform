@@ -155,6 +155,10 @@
     "End": "Koncový index",
     "SelectFieldFirst": "Nejprve vyberte pole",
     "NoTransformationsForAttribute": "Transformace nejsou pro tento typ pole k dispozici",
-    "SetValueFirst": "Nejprve zadejte hodnotu"
+    "SetValueFirst": "Nejprve zadejte hodnotu",
+    "FailedToRenderDiagram": "Nepodařilo se zobrazit schéma workflow",
+    "DiagramErrorHint": "Při generování schématu přechodů došlo k chybě.",
+    "ShowDetails": "Zobrazit podrobnosti",
+    "HideDetails": "Skrýt podrobnosti"
   }
 }

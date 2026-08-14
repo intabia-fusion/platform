@@ -156,7 +156,11 @@
     "End": "End index",
     "SelectFieldFirst": "Select a field first",
     "NoTransformationsForAttribute": "Transformations are not available for this field type",
-    "SetValueFirst": "Specify a value first"
+    "SetValueFirst": "Specify a value first",
+    "FailedToRenderDiagram": "Failed to render workflow diagram",
+    "DiagramErrorHint": "An error occurred while generating the transition diagram.",
+    "ShowDetails": "Show details",
+    "HideDetails": "Hide details"
   },
   "status": {
     "InitialStatusNotAllowed": "Initial status is not allowed",
