@@ -78,6 +78,14 @@ export interface TagElementInfo {
 export const selectedTagElements = writable<Array<Ref<TagElement>>>([])
 
 /**
+ * Task type classes extend the base one (Issue, Lead...), tags are bound to the class declaring the attribute.
+ * @public
+ */
+export function getTagsTargetClass (_class: Ref<Class<Doc>>, key: string = 'labels'): Ref<Class<Doc>> {
+  return getClient().getHierarchy().findAttribute(_class, key)?.attributeOf ?? _class
+}
+
+/**
  * @public
  */
 export async function createTagElement (
