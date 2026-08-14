@@ -20,9 +20,10 @@
 
   import TagsPopup from './TagsPopup.svelte'
   import { getObjectId } from '@hcengineering/view-resources'
+  import { getTagsTargetClass } from '../utils'
 
   export let object: Doc
-  export let targetClass: Ref<Class<Doc>> = object._class
+  export let targetClass: Ref<Class<Doc>> = getTagsTargetClass(object._class)
 
   let selected: Ref<TagElement>[] = []
   const query = createQuery()

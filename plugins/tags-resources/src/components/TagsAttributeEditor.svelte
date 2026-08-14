@@ -7,6 +7,7 @@
   import { getObjectId } from '@hcengineering/view-resources'
   import { Analytics } from '@hcengineering/analytics'
 
+  import { getTagsTargetClass } from '../utils'
   import TagReferencePresenter from './TagReferencePresenter.svelte'
   import TagsEditorPopup from './TagsEditorPopup.svelte'
   import TagIcon from './icons/TagIcon.svelte'
@@ -18,7 +19,7 @@
   // AttributeBarEditor passes the attribute as `attribute`; scope tags by the attribute's
   // owning class (e.g. lead.mixin.Customer) so mixin labels are shared, not the doc class.
   export let attribute: AnyAttribute | undefined = undefined
-  export let targetClass: Ref<Class<Doc>> = (attr ?? attribute)?.attributeOf ?? object._class
+  export let targetClass: Ref<Class<Doc>> = (attr ?? attribute)?.attributeOf ?? getTagsTargetClass(object._class)
 
   let items: TagReference[] = []
   let elements: IdMap<TagElement> = new Map()
