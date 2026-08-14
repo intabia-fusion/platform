@@ -73,34 +73,38 @@ export class KanbanBoardPage extends CommonTrackerPage {
       target =
         (await cardInCell.count()) > 0 && (await cardInCell.getAttribute('data-card-id')) !== cardId ? cardInCell : cell
     }
-    await target.scrollIntoViewIfNeeded()
-    await this.card(cardId).scrollIntoViewIfNeeded()
-    await this.card(cardId).dragTo(target)
+    await this.ensureVisible(target)
+    await this.ensureVisible(this.card(cardId))
+    await this.dragPointer(this.card(cardId), target)
   }
 
   async dragCardToSwimLaneCell (cardId: string, laneId: string, targetState: string): Promise<void> {
     const cell = this.swimLaneCell(laneId, targetState)
-    await cell.scrollIntoViewIfNeeded()
-    await this.card(cardId).scrollIntoViewIfNeeded()
+    await this.ensureVisible(cell)
+    await this.ensureVisible(this.card(cardId))
     // Prefer dropping onto an existing card inside the cell — Svelte's drop handler
     // fires reliably on card-container, while empty cells sometimes miss CDP drag.
     const cardInCell = cell.locator('[data-id="kanban-card"]').first()
     const target =
       (await cardInCell.count()) > 0 && (await cardInCell.getAttribute('data-card-id')) !== cardId ? cardInCell : cell
-    await this.card(cardId).dragTo(target)
+    await this.dragPointer(this.card(cardId), target)
   }
 
-  async dragCardToCard (cardId: string, targetCardId: string): Promise<void> {
-    const source = this.card(cardId)
-    const target = this.card(targetCardId)
-    await source.scrollIntoViewIfNeeded()
-    await target.scrollIntoViewIfNeeded()
+  /** Scrolling can race the board re-rendering, which detaches the node mid-action. */
+  private async ensureVisible (locator: Locator): Promise<void> {
+    await expect(async () => {
+      await locator.scrollIntoViewIfNeeded({ timeout: 5000 })
+    }).toPass({ intervals: [200, 500], timeout: 15000 })
+  }
 
-    // dragTo() moves to the target in one hop, and a single dragover is often not enough for the
-    // board to register the drop target - the drag then ends with no status change and no error.
-    // Walk the pointer across in steps and jiggle on the target so dragover fires repeatedly.
+  /**
+   * dragTo() moves to the target in one hop, and a single dragover is often not enough for the
+   * board to register the drop target - the drag then ends with no status change and no error.
+   * Walk the pointer across in steps and jiggle on the target so dragover fires repeatedly.
+   */
+  private async dragPointer (source: Locator, target: Locator): Promise<void> {
     const box = await target.boundingBox()
-    if (box === null) throw new Error(`Target card ${targetCardId} has no bounding box`)
+    if (box === null) throw new Error('Drop target has no bounding box')
     const x = box.x + box.width / 2
     const y = box.y + box.height / 2
 
@@ -110,6 +114,14 @@ export class KanbanBoardPage extends CommonTrackerPage {
     await this.page.mouse.move(x + 2, y + 2)
     await this.page.mouse.move(x, y)
     await this.page.mouse.up()
+  }
+
+  async dragCardToCard (cardId: string, targetCardId: string): Promise<void> {
+    const source = this.card(cardId)
+    const target = this.card(targetCardId)
+    await this.ensureVisible(source)
+    await this.ensureVisible(target)
+    await this.dragPointer(source, target)
   }
 
   async getScrollTop (): Promise<number> {

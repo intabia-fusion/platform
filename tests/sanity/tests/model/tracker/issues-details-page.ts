@@ -160,8 +160,14 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       await this.selectMenuItem(this.page, data.milestone)
     }
     if (data.estimation != null) {
-      await this.buttonEstimation().click()
-      await this.fillToSelectPopup(this.page, data.estimation)
+      const estimation = data.estimation
+      // Same story as the status above: the popup click can be swallowed, leaving the old value
+      // and turning the later check into a 10s wait for something that never happens.
+      await expect(async () => {
+        await this.buttonEstimation().click()
+        await this.fillToSelectPopup(this.page, estimation)
+        await expect(this.textEstimation()).toHaveText(convertEstimation(estimation), { timeout: 3000 })
+      }).toPass({ intervals: [300, 1000], timeout: 20000 })
     }
   }
 
