@@ -1,3 +1,4 @@
+import type { WorkspaceLoginInfo } from '@hcengineering/account'
 import { faker } from '@faker-js/faker'
 import { APIRequestContext, Browser, BrowserContext, Locator, Page, expect } from '@playwright/test'
 import { attachment } from 'allure-js-commons'
@@ -177,8 +178,14 @@ export function expectToContainsOrdered (val: Locator, text: string[], timeout?:
   return expect(val).toHaveText(origIssuesExp, { timeout })
 }
 
-export async function * iterateLocator (locator: Locator): AsyncGenerator<Locator> {
-  for (let index = 0; index < (await locator.count()); index++) {
+/**
+ * Walks matched elements. Pass `limit` where the check is per-element and the list grows with the
+ * data other tests leave behind - otherwise the test slows down as the stand fills up.
+ */
+export async function * iterateLocator (locator: Locator, limit?: number): AsyncGenerator<Locator> {
+  const total = await locator.count()
+  const max = limit !== undefined ? Math.min(limit, total) : total
+  for (let index = 0; index < max; index++) {
     yield locator.nth(index)
   }
 }
@@ -276,11 +283,31 @@ export async function reLogin (page: Page, data: TestData): Promise<void> {
   await swp.selectWorkspace(data.workspaceName)
 }
 
+/**
+ * Opens the workspace straight from an account token instead of walking the login form and the
+ * workspace picker. The client restores the session itself: with LastAccount set and the account
+ * cookie present it fetches the token via getAccount() on first load, so one navigation replaces
+ * three page loads.
+ */
+export async function loginByToken (page: Page, accountToken: string, ws: WorkspaceLoginInfo): Promise<void> {
+  await page.context().addCookies([{ name: 'account-metadata-Token', value: accountToken, url: PlatformURI }])
+  await page.context().addInitScript(
+    ([account, endpoint]) => {
+      localStorage.setItem('login:metadata:LastAccount', account)
+      localStorage.setItem('login:metadata:LoginAccount', account)
+      localStorage.setItem('login:metadata:LoginEndpoint', endpoint)
+    },
+    [ws.account, ws.endpoint]
+  )
+  await (await page.goto(`${PlatformURI}/workbench/${ws.workspaceUrl}`))?.finished()
+}
+
 export async function createAccountAndWorkspace (page: Page, request: APIRequestContext, data: TestData): Promise<void> {
   const api: ApiEndpoint = new ApiEndpoint(request)
   await api.createAccount(data.userName, '1234', data.firstName, data.lastName)
-  await api.createWorkspaceWithLogin(data.workspaceName, data.userName, '1234')
-  await reLogin(page, data)
+  const ws = await api.createWorkspaceWithLogin(data.workspaceName, data.userName, '1234')
+  const token = await api.loginAndGetToken(data.userName, '1234')
+  await loginByToken(page, token, ws)
 }
 
 export const convertDate = (date: Date): { day: string, month: string, year: string } => {

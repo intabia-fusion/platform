@@ -190,15 +190,25 @@ export class IssuesPage extends CommonTrackerPage {
   }
 
   async reportTime (time: number): Promise<void> {
-    await this.reportedTimeEditor().click()
-    await this.page.waitForSelector('text="Time spent reports"')
-    await this.addReportButton().click()
-    await this.page.waitForSelector('text="Add time report"')
-    await expect(this.createButton()).toBeDisabled()
-    await this.spentTimeInput().fill(`${time}`)
-    await expect(this.createButton()).toBeEnabled()
-    await this.createButton().click()
-    await this.okButton().click()
+    const expected = await toTime(time)
+    // The dialog can close without persisting the report (the OK click lands over a form that
+    // never saved), leaving the issue at 0h. Verify the value landed and redo the report if not -
+    // the guard above keeps a successful report from being counted twice.
+    await expect(async () => {
+      if ((await this.reportedTimeEditor().innerText()).includes(expected)) return
+
+      await this.reportedTimeEditor().click()
+      await this.page.waitForSelector('text="Time spent reports"')
+      await this.addReportButton().click()
+      await this.page.waitForSelector('text="Add time report"')
+      await expect(this.createButton()).toBeDisabled()
+      await this.spentTimeInput().fill(`${time}`)
+      await expect(this.createButton()).toBeEnabled()
+      await this.createButton().click()
+      await this.page.waitForSelector('text="Add time report"', { state: 'detached', timeout: 15000 })
+      await this.okButton().click()
+      await expect(this.reportedTimeEditor()).toContainText(expected, { timeout: 5000 })
+    }).toPass({ intervals: [1000, 2000], timeout: 45000 })
   }
 
   async verifyReportedTime (time: number): Promise<void> {
@@ -533,9 +543,15 @@ export class IssuesPage extends CommonTrackerPage {
   async checkAllIssuesInStatus (statusId?: string, statusName?: string): Promise<void> {
     if (statusId === undefined) throw new Error(`Unknown status id ${statusId}`)
 
+    let checked = 0
     for await (const locator of iterateLocator(this.issuesList())) {
-      await expect(locator.locator('div[class*="square"] > div')).toHaveAttribute('id', `${statusId}:${statusName}`)
+      const square = locator.locator('div[class*="square"] > div')
+      // Rows scrolled out of the virtual list are not in the DOM - skip them, not a status mismatch.
+      if ((await square.count()) === 0) continue
+      await expect(square).toHaveAttribute('id', `${statusId}:${statusName}`)
+      checked++
     }
+    expect(checked).toBeGreaterThan(0)
   }
 
   async checkParentIssue (issueName: string, parentName: string): Promise<void> {
@@ -594,28 +610,46 @@ export class IssuesPage extends CommonTrackerPage {
     }).toPass(retryOptions)
   }
 
+  // use:tooltip opens the list on mousemove, so hovering a button the cursor already rests on
+  // can leave a closed tooltip closed. Park the pointer elsewhere first.
+  private async hoverAttachmentButton (issueName: string): Promise<void> {
+    await this.page.mouse.move(0, 0)
+    await this.addAttachmentButton(issueName).hover()
+  }
+
   async addAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
-    await this.addAttachmentButton(issueName).click()
-    await this.inputPopupAddAttachmentsFile().setInputFiles(path.join(__dirname, `../../files/${filePath}`))
-    await expect(this.textPopupAddAttachmentsFile().filter({ hasText: filePath })).toBeVisible()
+    const uploaded = this.textPopupAddAttachmentsFile().filter({ hasText: filePath })
+    // Same hover tooltip as the check below: it can close between the hover and the upload, so
+    // re-open it per attempt. Uploading the file twice is harmless - the assertion is on presence.
+    await expect(async () => {
+      await this.hoverAttachmentButton(issueName)
+      if (await uploaded.isVisible()) return
+      await this.inputPopupAddAttachmentsFile().setInputFiles(path.join(__dirname, `../../files/${filePath}`))
+      await expect(uploaded).toBeVisible({ timeout: 10000 })
+    }).toPass({ intervals: [500, 1000], timeout: 40000 })
   }
 
   async deleteAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
-    await this.addAttachmentButton(issueName).click()
+    await this.hoverAttachmentButton(issueName)
     await this.deleteAttachmentLink(filePath).hover()
     await this.deleteAttachmentLink(filePath).click()
     await expect(this.textPopupAddAttachmentsFile().filter({ hasText: filePath })).toBeVisible({ visible: false })
   }
 
   async checkCannotDeleteAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
-    await this.addAttachmentButton(issueName).click()
+    await this.hoverAttachmentButton(issueName)
     await this.deleteAttachmentLink(filePath).hover()
     await expect(this.deleteAttachmentLink(filePath)).not.toBeVisible()
   }
 
+  // The attachment list is a hover tooltip on a DocNavLink. Clicking the link runs NavLink's
+  // closeTooltip(), so a click races the very popup these helpers read - and under load the
+  // tooltip can also close on its own between the hover and the assertion. Re-hover each attempt.
   async checkAddAttachmentPopupContainsFile (issueName: string, filePath: string): Promise<void> {
-    await this.addAttachmentButton(issueName).click()
-    await expect(this.textPopupAddAttachmentsFile().filter({ hasText: filePath })).toBeVisible()
+    await expect(async () => {
+      await this.hoverAttachmentButton(issueName)
+      await expect(this.textPopupAddAttachmentsFile().filter({ hasText: filePath })).toBeVisible({ timeout: 5000 })
+    }).toPass({ intervals: [300, 1000], timeout: 30000 })
   }
 
   async checkCommentsCount (issueName: string, count: string): Promise<void> {

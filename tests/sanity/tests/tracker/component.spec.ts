@@ -60,12 +60,15 @@ test.describe('Tracker component tests', () => {
   })
 
   test('Delete a component', async () => {
+    // Created here on purpose: the test destroys it, so relying on seeded data would make
+    // every rerun on the same workspace fail.
     const newComponent: NewComponent = {
-      name: 'Delete component test',
+      name: `Delete component test-${generateId()}`,
       description: 'Delete component test description'
     }
 
     await trackerNavigationMenuPage.openComponentsForProject('Default')
+    await componentsPage.createNewComponent(newComponent)
     await componentsPage.openComponentByName(newComponent.name)
     await componentsDetailsPage.checkComponent(newComponent)
     await componentsDetailsPage.deleteComponent()

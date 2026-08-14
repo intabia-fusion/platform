@@ -636,7 +636,11 @@ test.describe('Kanban board', () => {
       const projectPath = encodeURIComponent(ctx.project._id)
       await (await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/${projectPath}/issues`))?.finished()
       await page.locator(ViewletSelectors.Board).click()
-      await page.locator('[data-id="kanban-swimlane"]').first().waitFor({ state: 'visible', timeout: 10000 })
+      // Wait for the very lane under test: lanes render one by one, so waiting for "any lane"
+      // can return while this one is still missing.
+      await page
+        .locator(`[data-id="kanban-swimlane"][data-swimlane-id="${laneId}"]`)
+        .waitFor({ state: 'visible', timeout: 10000 })
       await board.expectSwimLaneCollapsed(laneId, true)
 
       // Cleanup so other tests are not affected.
@@ -794,8 +798,10 @@ test.describe('Kanban board', () => {
           await board.revealCard(c1)
           try {
             await board.dragCardToCard(c1, c2)
-          } catch {
-            // ignore single failures
+          } catch (err) {
+            // Reported, not rethrown: a bare catch leaves the 30s timeout with no cause to read.
+            // Log the error itself so the stack survives into CI output.
+            console.error('dragCardToCard failed:', err)
           }
           return current
         },

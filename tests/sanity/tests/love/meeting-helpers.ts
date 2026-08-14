@@ -75,12 +75,14 @@ async function drainPendingInvites (): Promise<void> {
  * exactly this on receiving the webhook, but in tests we don't need to
  * exercise that path; we just want a clean slate for the next test.
  */
+// Scheduled belongs here too: the meetings store only filters out Finished, so a leftover
+// Scheduled meeting keeps EditRoom.connect() joining it instead of starting a new one.
 async function forceFinishAllMeetings (): Promise<void> {
   try {
     const sys = await getSystemRestClient()
     const [meetings, participants] = await Promise.all([
       sys.findAll<MeetingMinutes>(love.class.MeetingMinutes, {
-        status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
+        status: { $in: [MeetingStatus.Active, MeetingStatus.Pending, MeetingStatus.Scheduled] }
       }),
       sys.findAll<ParticipantInfo>(love.class.ParticipantInfo, {})
     ])
@@ -116,7 +118,7 @@ export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise
     const [meetings, participants, invites] = await Promise.all([
       client.findAll<MeetingMinutes>(
         love.class.MeetingMinutes,
-        { status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] } },
+        { status: { $in: [MeetingStatus.Active, MeetingStatus.Pending, MeetingStatus.Scheduled] } },
         { limit: 1 }
       ),
       // Drain *all* ParticipantInfo — a leftover PI in a non-Reception room

@@ -45,11 +45,14 @@ test.describe('Teamspace tests', () => {
   })
 
   test('Archive teamspace', async ({ page }) => {
+    // Create the teamspace here instead of archiving a fixture from the stand's init data:
+    // archiving is one-way, so the fixture-based test only ever passed on a fresh stand.
     const archiveTeamspace: NewTeamspace = {
-      title: 'Teamspace for archive'
+      title: `Teamspace for archive-${generateId()}`
     }
 
     await leftSideMenuPage.clickDocuments()
+    await documentsPage.createNewTeamspace(archiveTeamspace)
     await documentsPage.checkTeamspaceExist(archiveTeamspace.title)
     await documentsPage.moreActionTeamspace(archiveTeamspace.title, 'Archive')
     await documentsPage.pressYesForPopup(page)

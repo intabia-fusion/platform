@@ -59,16 +59,28 @@ export class DrivesPage extends CommonPage {
     await this.clickButtonDriveContextMenu(drive, 'Edit drive')
   }
 
+  // The context menu can close without applying (a right click landing during a table re-render),
+  // leaving the drive in its old state. Check the resulting status and redo only if it did not move.
   async archiveDrive (drive: Drive): Promise<void> {
-    await this.clickButtonDriveContextMenu(drive, 'Archive')
-    await this.popupSubmitButton().click()
-    await this.popupArchive().waitFor({ state: 'detached' })
+    const archived = this.cellArchiveStatusYes(drive.name)
+    await expect(async () => {
+      if (await archived.isVisible()) return
+      await this.clickButtonDriveContextMenu(drive, 'Archive')
+      await this.popupSubmitButton().click()
+      await this.popupArchive().waitFor({ state: 'detached' })
+      await expect(archived).toBeVisible({ timeout: 5000 })
+    }).toPass({ intervals: [500, 1000], timeout: 30000 })
   }
 
   async unarchiveDrive (drive: Drive): Promise<void> {
-    await this.clickButtonDriveContextMenu(drive, 'Unarchive')
-    await this.popupSubmitButton().click()
-    await this.popupArchive().waitFor({ state: 'detached' })
+    const archived = this.cellArchiveStatusYes(drive.name)
+    await expect(async () => {
+      if (!(await archived.isVisible())) return
+      await this.clickButtonDriveContextMenu(drive, 'Unarchive')
+      await this.popupSubmitButton().click()
+      await this.popupArchive().waitFor({ state: 'detached' })
+      await expect(archived).toBeHidden({ timeout: 5000 })
+    }).toPass({ intervals: [500, 1000], timeout: 30000 })
   }
 
   async disableHideArchived (): Promise<void> {
