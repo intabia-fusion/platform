@@ -68,12 +68,12 @@ test.describe('otp signup', () => {
 
   async function personOf (value: string): Promise<PersonUuid | undefined> {
     const service = await getServiceAccountClient('tool')
-    return service.findPersonBySocialKey(`email:${value}`)
+    return await service.findPersonBySocialKey(`email:${value}`)
   }
 
   async function accountOf (value: string): Promise<PersonUuid | undefined> {
     const service = await getServiceAccountClient('tool')
-    return service.findPersonBySocialKey(`email:${value}`, true)
+    return await service.findPersonBySocialKey(`email:${value}`, true)
   }
 
   test('sign up with a real code creates the account', async ({ page }) => {

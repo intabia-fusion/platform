@@ -110,8 +110,13 @@ export class CommonPage {
     if (name !== 'first') {
       const filterText = fullWordFilter ? name : name.split(' ')[0]
       await this.selectPopupInput().fill(filterText)
-      // TODO need to remove after fixed UBERF-4968
-      await page.waitForTimeout(300)
+      // Wait for the list to actually re-filter: a fixed delay lets the stale first item be
+      // clicked under load. Items whose text does not carry the filter fall back to the delay.
+      await expect(this.selectPopupListItemFirst().first())
+        .toContainText(filterText, { timeout: 5000, ignoreCase: true })
+        .catch(async () => {
+          await page.waitForTimeout(300)
+        })
     }
     await this.selectPopupListItemFirst().first().click()
   }

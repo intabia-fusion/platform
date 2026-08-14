@@ -91,9 +91,25 @@ export class KanbanBoardPage extends CommonTrackerPage {
   }
 
   async dragCardToCard (cardId: string, targetCardId: string): Promise<void> {
-    await this.card(cardId).scrollIntoViewIfNeeded()
-    await this.card(targetCardId).scrollIntoViewIfNeeded()
-    await this.card(cardId).dragTo(this.card(targetCardId))
+    const source = this.card(cardId)
+    const target = this.card(targetCardId)
+    await source.scrollIntoViewIfNeeded()
+    await target.scrollIntoViewIfNeeded()
+
+    // dragTo() moves to the target in one hop, and a single dragover is often not enough for the
+    // board to register the drop target - the drag then ends with no status change and no error.
+    // Walk the pointer across in steps and jiggle on the target so dragover fires repeatedly.
+    const box = await target.boundingBox()
+    if (box === null) throw new Error(`Target card ${targetCardId} has no bounding box`)
+    const x = box.x + box.width / 2
+    const y = box.y + box.height / 2
+
+    await source.hover()
+    await this.page.mouse.down()
+    await this.page.mouse.move(x, y, { steps: 10 })
+    await this.page.mouse.move(x + 2, y + 2)
+    await this.page.mouse.move(x, y)
+    await this.page.mouse.up()
   }
 
   async getScrollTop (): Promise<number> {

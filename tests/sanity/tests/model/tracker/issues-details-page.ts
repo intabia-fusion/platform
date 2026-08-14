@@ -129,7 +129,8 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       await expect(async () => {
         await this.buttonStatus().click()
         await this.selectFromDropdown(this.page, status)
-        await expect(this.buttonStatus()).toHaveText(status, { timeout: 3000 })
+        // Case-insensitive on purpose: callers pass labels like "ToDo" while the UI renders "Todo".
+        await expect(this.buttonStatus()).toHaveText(status, { timeout: 3000, ignoreCase: true })
       }).toPass({ intervals: [300, 1000, 2000], timeout: 20000 })
     }
     if (data.priority != null) {
