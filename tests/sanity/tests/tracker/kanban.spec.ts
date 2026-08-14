@@ -800,7 +800,8 @@ test.describe('Kanban board', () => {
             await board.dragCardToCard(c1, c2)
           } catch (err) {
             // Reported, not rethrown: a bare catch leaves the 30s timeout with no cause to read.
-            console.error(`dragCardToCard failed: ${err instanceof Error ? err.message : String(err)}`)
+            // Log the error itself so the stack survives into CI output.
+            console.error('dragCardToCard failed:', err)
           }
           return current
         },

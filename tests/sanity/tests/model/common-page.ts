@@ -196,7 +196,12 @@ export class CommonPage {
 
   async checkFromDropdownWithSearch (page: Page, point: string): Promise<void> {
     await this.selectPopupInput().fill(point)
-    await this.selectPopupSpanLines(point).click()
+    const item = this.selectPopupSpanLines(point)
+    // The popup keeps re-rendering while the query narrows, so a click issued right away chases a
+    // moving element and can wait out the whole timeout. Let the list settle on a single match
+    // first - clicking twice is not an option here, the row toggles selection.
+    await expect(item).toHaveCount(1, { timeout: 15000 })
+    await item.click()
   }
 
   async closeNotification (): Promise<void> {

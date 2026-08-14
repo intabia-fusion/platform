@@ -198,6 +198,9 @@ export class IssuesPage extends CommonTrackerPage {
     await this.spentTimeInput().fill(`${time}`)
     await expect(this.createButton()).toBeEnabled()
     await this.createButton().click()
+    // The report form must be gone before closing the dialog: clicking OK over a still-open form
+    // dismisses it without saving, and the test then sees the original 0h.
+    await this.page.waitForSelector('text="Add time report"', { state: 'detached', timeout: 15000 })
     await this.okButton().click()
   }
 

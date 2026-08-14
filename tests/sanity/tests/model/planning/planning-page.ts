@@ -245,6 +245,28 @@ export class PlanningPage extends CalendarPage {
     }
   }
 
+  /**
+   * TimeInputBox decides where a digit lands from its own `startTyping` flag, so a field that was
+   * already touched can swallow the first digit and clamp the hour (23 instead of 15) or push the
+   * second digit into minutes (01). Retype until the field shows what we asked for.
+   */
+  private async typeTime (field: Locator, value: string): Promise<void> {
+    const hours = value.substring(0, 2)
+    const minutes = value.substring(2)
+    const hourDigit = field.locator('span.digit:first-child')
+    const minuteDigit = field.locator('span.digit:last-child')
+
+    await expect(async () => {
+      await hourDigit.focus()
+      await hourDigit.press('Backspace')
+      await hourDigit.pressSequentially(hours, { delay: 100 })
+      await minuteDigit.focus()
+      await minuteDigit.press('Backspace')
+      await minuteDigit.pressSequentially(minutes, { delay: 100 })
+      await expect(field.locator('div.datetime-input')).toHaveText(`${hours} : ${minutes}`, { timeout: 3000 })
+    }).toPass({ intervals: [300, 1000], timeout: 20000 })
+  }
+
   public async setTimeSlot (rowNumber: number, slot: Slot, popup: boolean = false): Promise<void> {
     const p = popup
       ? 'div.popup div.horizontalBox div.end div.scroller-container div.box div.flex-between.min-w-full'
@@ -287,16 +309,7 @@ export class PlanningPage extends CalendarPage {
         .click()
     }
     // timeStart
-    const hours = slot.timeStart.substring(0, 2)
-    const minutes = slot.timeStart.substring(2, slot.timeStart.length)
-    await row.locator('div.dateEditor-container:nth-child(1) .hulyButton span.digit:first-child').focus()
-    await row
-      .locator('div.dateEditor-container:nth-child(1) .hulyButton span.digit:first-child')
-      .pressSequentially(hours, { delay: 100 })
-    await row.locator('div.dateEditor-container:nth-child(1) .hulyButton span.digit:last-child').focus()
-    await row
-      .locator('div.dateEditor-container:nth-child(1) .hulyButton span.digit:last-child')
-      .pressSequentially(minutes, { delay: 100 })
+    await this.typeTime(row.locator('div.dateEditor-container:nth-child(1) .hulyButton'), slot.timeStart)
 
     // dateEnd + timeEnd. DateEditor opens the date+time popup from the time field only while the
     // slot fits one day. Once it spans two days that click merely focuses the field and a separate
@@ -310,8 +323,8 @@ export class PlanningPage extends CalendarPage {
     }
 
     await endDateButton.click()
-    // ponytail: picks the day within the month already shown - callers only ever use the current
-    // month. Add month navigation here if a test ever needs an end date outside it.
+    // Picks the day within the month already shown - callers only ever use the current month.
+    // Add month navigation here if a test ever needs an end date outside it.
     await this.page
       .locator('div.popup div.calendar button.day')
       .filter({ has: this.page.locator(`text="${slot.dateEnd.day}"`) })

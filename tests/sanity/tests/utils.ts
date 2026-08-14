@@ -178,8 +178,14 @@ export function expectToContainsOrdered (val: Locator, text: string[], timeout?:
   return expect(val).toHaveText(origIssuesExp, { timeout })
 }
 
-export async function * iterateLocator (locator: Locator): AsyncGenerator<Locator> {
-  for (let index = 0; index < (await locator.count()); index++) {
+/**
+ * Walks matched elements. Pass `limit` where the check is per-element and the list grows with the
+ * data other tests leave behind - otherwise the test slows down as the stand fills up.
+ */
+export async function * iterateLocator (locator: Locator, limit?: number): AsyncGenerator<Locator> {
+  const total = await locator.count()
+  const max = limit !== undefined ? Math.min(limit, total) : total
+  for (let index = 0; index < max; index++) {
     yield locator.nth(index)
   }
 }

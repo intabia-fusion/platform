@@ -194,9 +194,10 @@ export function registerScheduledLinksTests (): void {
       const client = await getMeetingsRestClient()
       const meetingId = await createScheduledMeeting(client, 'Voice only room', 60 * 60 * 1000)
 
-      // Polling interval is 30s; wait past it and assert the meeting is
-      // still Scheduled, not force-finished by checkUnfinishedMeetings.
-      await new Promise((resolve) => setTimeout(resolve, 40000))
+      // Polling runs every POLLING_INTERVAL_MS (10s on the test stand, same as the product
+      // default); wait past one cycle and assert the meeting is still Scheduled, not
+      // force-finished by checkUnfinishedMeetings.
+      await new Promise((resolve) => setTimeout(resolve, 14000))
 
       const mm = await client.findOne<MeetingMinutes>(love.class.MeetingMinutes, { _id: meetingId })
       expect(mm?.status).toBe(MeetingStatus.Scheduled)

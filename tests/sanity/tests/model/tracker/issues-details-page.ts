@@ -123,8 +123,14 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       await this.inputTitle().fill(data.title)
     }
     if (data.status != null) {
-      await this.buttonStatus().click()
-      await this.selectFromDropdown(this.page, data.status)
+      const status = data.status
+      // The dropdown locator matches any element whose class ends in "opup", so a stray tooltip or
+      // leftover popup can swallow the click and leave the status untouched. Retry until it sticks.
+      await expect(async () => {
+        await this.buttonStatus().click()
+        await this.selectFromDropdown(this.page, status)
+        await expect(this.buttonStatus()).toHaveText(status, { timeout: 3000 })
+      }).toPass({ intervals: [300, 1000, 2000], timeout: 20000 })
     }
     if (data.priority != null) {
       await this.buttonPriority().click()

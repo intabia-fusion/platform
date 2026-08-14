@@ -560,7 +560,7 @@ services:
       # a global webhook in livekit-test-config.yaml pointing back to love
       # via nginx, so per-egress webhook override is not needed.
       - POLLING_ENABLED=true
-      - POLLING_INTERVAL_MS=30000
+      - POLLING_INTERVAL_MS=10000
       - PENDING_JOIN_TIMEOUT_MS=60000
       - STATS_URL=http://stats:4901
       - QUEUE_CONFIG=${QUEUE_CONFIG}

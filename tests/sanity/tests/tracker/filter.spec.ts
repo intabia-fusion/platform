@@ -12,6 +12,9 @@ test.use({
 })
 
 test.describe('Tracker filters tests', () => {
+  // Opening every filtered issue makes the test scale with leftover data; a handful proves the filter.
+  const issuesToCheck = 5
+
   let leftSideMenuPage: LeftSideMenuPage
   let issuesPage: IssuesPage
   let issuesDetailsPage: IssuesDetailsPage
@@ -277,7 +280,7 @@ test.describe('Tracker filters tests', () => {
     await issuesPage.inputSearch().press('Escape')
 
     await issuesPage.checkFilter('Created by', 'is')
-    for await (const issue of iterateLocator(issuesPage.issuesList())) {
+    for await (const issue of iterateLocator(issuesPage.issuesList(), issuesToCheck)) {
       await issue.locator('span.list > a').click()
 
       await issuesDetailsPage.checkIfButtonCbuttonCreatedByHaveTextCreatedBy(createdBy)
@@ -295,7 +298,7 @@ test.describe('Tracker filters tests', () => {
     await issuesPage.inputSearch().press('Escape')
 
     await issuesPage.checkFilter('Component', 'is')
-    for await (const issue of iterateLocator(issuesPage.issuesList())) {
+    for await (const issue of iterateLocator(issuesPage.issuesList(), issuesToCheck)) {
       await issue.locator('span.list > a').click()
 
       await issuesDetailsPage.checkIfButtonComponentHasTextDefaultComponent(defaultComponent)
@@ -317,7 +320,7 @@ test.describe('Tracker filters tests', () => {
       // Wait for the list to load after filter is applied
       await expect(issuesPage.issuesList().first()).toBeVisible({ timeout: 10000 })
 
-      for await (const issue of iterateLocator(issuesPage.issuesList())) {
+      for await (const issue of iterateLocator(issuesPage.issuesList(), issuesToCheck)) {
         await expect(issue.locator('span.presenter-label > a')).toContainText(firstSearch, { ignoreCase: true })
       }
     })
@@ -329,7 +332,7 @@ test.describe('Tracker filters tests', () => {
       // Wait for the list to load after filter is applied
       await expect(issuesPage.issuesList().first()).toBeVisible({ timeout: 10000 })
 
-      for await (const issue of iterateLocator(issuesPage.issuesList())) {
+      for await (const issue of iterateLocator(issuesPage.issuesList(), issuesToCheck)) {
         await expect(issue.locator('span.presenter-label > a')).toContainText(secondSearch, { ignoreCase: true })
       }
     })
@@ -381,7 +384,7 @@ test.describe('Tracker filters tests', () => {
       await issuesPage.inputSearch().press('Escape')
       await issuesPage.checkFilter('Milestone', 'is', '1 state')
 
-      for await (const issue of iterateLocator(issuesPage.issuesList())) {
+      for await (const issue of iterateLocator(issuesPage.issuesList(), issuesToCheck)) {
         await expect(issue.locator('div.compression-bar #milestone span.label')).toContainText(filterMilestoneName)
       }
     })
@@ -392,7 +395,7 @@ test.describe('Tracker filters tests', () => {
       await issuesPage.inputSearch().press('Escape')
       await issuesPage.checkFilter('Milestone', 'is', '1 state')
 
-      for await (const issue of iterateLocator(issuesPage.issuesList())) {
+      for await (const issue of iterateLocator(issuesPage.issuesList(), issuesToCheck)) {
         await issue.locator('span.list > a').click()
         await expect(issuesDetailsPage.buttonMilestone()).toHaveText('Milestone')
 
@@ -417,7 +420,7 @@ test.describe('Tracker filters tests', () => {
       await issuesPage.selectFilter('Labels', filterLabel)
       await issuesPage.closePopup()
       await issuesPage.checkFilter('Labels', 'is', filterLabel)
-      for await (const issue of iterateLocator(issuesPage.issuesList())) {
+      for await (const issue of iterateLocator(issuesPage.issuesList(), issuesToCheck)) {
         await expect(issue.locator('div.compression-bar > div.label-box span.label')).toContainText(filterLabel)
       }
     })

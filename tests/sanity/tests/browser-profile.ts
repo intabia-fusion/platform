@@ -118,6 +118,12 @@ function watchNetwork (page: Page): void {
   })
 }
 
+// Playwright runs workers as separate processes, so a shared append target would interleave lines
+// and produce invalid JSONL. Each process writes its own file; concatenate them when reading.
+function reportFile (kind: string): string {
+  return path.join(outDir, `${kind}.${process.pid}.jsonl`)
+}
+
 async function stopProfile (page: Page, name: string): Promise<void> {
   const session = sessions.get(page)
   if (session === undefined) return
@@ -132,7 +138,7 @@ async function stopProfile (page: Page, name: string): Promise<void> {
   await writeFile(file, JSON.stringify(profile))
 
   const frame = readMetrics(metrics)
-  await appendFile(path.join(outDir, 'metrics.jsonl'), JSON.stringify({ test: name, ...frame }) + '\n')
+  await appendFile(reportFile('metrics'), JSON.stringify({ test: name, ...frame }) + '\n')
 
   const stats = network.get(page)
   if (stats !== undefined) {
@@ -140,7 +146,7 @@ async function stopProfile (page: Page, name: string): Promise<void> {
     const rows = [...stats.entries()]
       .map(([key, v]) => ({ key, count: v.count, totalMs: Math.round(v.totalMs) }))
       .sort((a, b) => b.count - a.count)
-    await appendFile(path.join(outDir, 'network.jsonl'), JSON.stringify({ test: name, rows }) + '\n')
+    await appendFile(reportFile('network'), JSON.stringify({ test: name, rows }) + '\n')
   }
 }
 
