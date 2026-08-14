@@ -299,7 +299,7 @@
     </div>
 
     {#if isSelf && toStatusItem}
-      {@const st = statuses.find(it => it._id === toStatusItem.id)}
+      {@const st = statuses.find((it) => it._id === toStatusItem.id)}
       <div class="error-row">
         <div class="error-icon">
           <IconError size="small" />
@@ -314,8 +314,8 @@
         </span>
       </div>
     {:else if conflictInfo != null}
-      {@const toStatus = statuses.find(it => it._id === toStatusItem?.id)}
-      {@const fromStatus = statuses.find(it => it._id === conflictInfo?.status)}
+      {@const toStatus = statuses.find((it) => it._id === toStatusItem?.id)}
+      {@const fromStatus = statuses.find((it) => it._id === conflictInfo?.status)}
       <div class="error-row">
         <div class="error-icon">
           <IconError size="small" />

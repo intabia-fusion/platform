@@ -13,15 +13,7 @@
 // limitations under the License.
 //
 
-import core, {
-  AnyAttribute,
-  Doc,
-  Hierarchy,
-  notEmpty,
-  Ref,
-  RefTo,
-  Status
-} from '@hcengineering/core'
+import core, { AnyAttribute, Doc, Hierarchy, notEmpty, Ref, RefTo, Status } from '@hcengineering/core'
 import task, { type Task, TaskType } from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
 import { type IntlString, translate } from '@hcengineering/platform'
@@ -53,8 +45,10 @@ export function isEmptyAttribute (h: Hierarchy, attribute: AnyAttribute, value: 
     }
   }
 
-  if (h.isDerived(attribute.type._class, core.class.TypeCollaborativeDoc) ||
-    h.isDerived(attribute.type._class, core.class.TypeMarkup)) {
+  if (
+    h.isDerived(attribute.type._class, core.class.TypeCollaborativeDoc) ||
+    h.isDerived(attribute.type._class, core.class.TypeMarkup)
+  ) {
     return isEmptyMarkup(value)
   }
 

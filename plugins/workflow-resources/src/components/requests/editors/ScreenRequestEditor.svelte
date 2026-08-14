@@ -41,7 +41,7 @@
 
   $: if (projectTypeId != null) {
     screensQuery.query(plugin.class.Screen, { projectType: projectTypeId }, (res) => {
-      screens = res.filter(it => hierarchy.isDerived(taskType.targetClass, it.targetClass))
+      screens = res.filter((it) => hierarchy.isDerived(taskType.targetClass, it.targetClass))
       isLoaded = true
     })
   }

@@ -46,7 +46,10 @@
 
   function sanitizeLabel (str: string): string {
     if (!str) return ''
-    return str.replace(/"/g, '#quot;').replace(/[\r\n]+/g, ' ').trim()
+    return str
+      .replace(/"/g, '#quot;')
+      .replace(/[\r\n]+/g, ' ')
+      .trim()
   }
 
   function sanitizeColor (color: string | undefined, fallback: string): string {
@@ -389,12 +392,12 @@
           <Label label={plugin.string.DiagramErrorHint ?? 'Произошла ошибка при генерации схемы переходов.'} />
         </div>
         <div class="diagram-error-actions">
-          <Button
-            kind="ghost"
-            size="small"
-            on:click={() => (showDetails = !showDetails)}
-          >
-            <Label label={showDetails ? (plugin.string.HideDetails ?? 'Скрыть подробности') : (plugin.string.ShowDetails ?? 'Показать подробности')} />
+          <Button kind="ghost" size="small" on:click={() => (showDetails = !showDetails)}>
+            <Label
+              label={showDetails
+                ? (plugin.string.HideDetails ?? 'Скрыть подробности')
+                : (plugin.string.ShowDetails ?? 'Показать подробности')}
+            />
           </Button>
         </div>
         {#if showDetails}

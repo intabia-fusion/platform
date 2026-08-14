@@ -11,7 +11,8 @@
     checkMobile,
     deviceOptionsStore as deviceInfo,
     checkAdaptiveMatching,
-    getLocalWeekStart, ticker1
+    getLocalWeekStart,
+    ticker1
   } from '../../'
   import { desktopPlatform, getCurrentLocation, location, locationStorageKeyId, navigate } from '../../location'
   import uiPlugin from '../../plugin'

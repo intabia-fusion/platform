@@ -141,11 +141,11 @@ export async function OnTaskTypeUpdate (txes: TxUpdateDoc<TaskType>[], control: 
       attachedTo: { $in: workflowIds }
     })
     for (const wf of workflows) {
-      const newInitialStatuses = (wf.initialStatuses ?? []).filter(it => newStatuses.includes(it))
+      const newInitialStatuses = (wf.initialStatuses ?? []).filter((it) => newStatuses.includes(it))
       if (newInitialStatuses.length !== (wf.initialStatuses?.length ?? 0)) {
         result.push(
           control.txFactory.createTxUpdateDoc(workflow.class.Workflow, wf.space, wf._id, {
-            initialStatuses: newInitialStatuses.length === 0 ? undefined :newInitialStatuses
+            initialStatuses: newInitialStatuses.length === 0 ? undefined : newInitialStatuses
           })
         )
       }
