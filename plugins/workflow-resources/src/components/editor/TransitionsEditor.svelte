@@ -17,7 +17,9 @@
   import { TaskType } from '@hcengineering/task'
   import { StatusPresenter } from '@hcengineering/tracker-resources'
   import {
-    ButtonIcon, closePanel, closePopup,
+    ButtonIcon,
+    closePanel,
+    closePopup,
     Icon,
     IconAdd,
     IconArrowRight,

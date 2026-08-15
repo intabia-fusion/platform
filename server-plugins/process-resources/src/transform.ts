@@ -218,14 +218,14 @@ export async function Append (
 export function Replace (value: string, props: Record<string, string>): string {
   if (typeof value !== 'string') return value
   const search = props.search ?? props.from ?? props.target
-  if (!search) return value
+  if (search == null) return value
   return value.replace(search, props.replacement ?? props.to ?? '')
 }
 
 export function ReplaceAll (value: string, props: Record<string, string>): string {
   if (typeof value !== 'string') return value
   const search = props.search ?? props.from ?? props.target
-  if (!search) return value
+  if (search == null) return value
   return value.replaceAll(search, props.replacement ?? props.to ?? '')
 }
 

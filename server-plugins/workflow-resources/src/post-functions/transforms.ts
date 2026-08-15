@@ -61,14 +61,14 @@ const STRING_TRANSFORMS: Record<Ref<WorkflowValueFunction>, TransformFn> = {
   [workflow.function.Replace]: (v, p) => {
     if (v == null) return v
     const search = String(p.search ?? p.from ?? p.target ?? '')
-    if (!search) return v
+    if (search == null) return v
     const replacement = String(p.replacement ?? p.to ?? '')
     return String(v).replace(search, replacement)
   },
   [workflow.function.ReplaceAll]: (v, p) => {
     if (v == null) return v
     const search = String(p.search ?? p.from ?? p.target ?? '')
-    if (!search) return v
+    if (search == null) return v
     const replacement = String(p.replacement ?? p.to ?? '')
     return String(v).replaceAll(search, replacement)
   },

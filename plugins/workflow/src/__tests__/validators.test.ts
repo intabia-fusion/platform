@@ -42,19 +42,24 @@ function createMockValidatorClient (options?: {
   parentTasks?: Array<Pick<Task, 'kind' | 'status'>>
 }): ValidatorClient {
   const findAttribute = jest.fn((_class: Ref<Class<any>>, fieldKey: string) => {
-    if (options?.attributes !== undefined && fieldKey in options.attributes) {
-      return options.attributes[fieldKey]
+    const attr = options?.attributes !== undefined && fieldKey in options.attributes ? options.attributes[fieldKey] : {}
+    return {
+      label: fieldKey,
+      type: { _class: core.class.TypeString },
+      ...attr
     }
-    return { label: fieldKey }
   })
 
   const as = jest.fn((doc: any, mixin: Ref<Class<any>>) => {
     return doc[mixin] ?? doc
   })
 
+  const isDerived = jest.fn((c: any, parent: any) => c === parent)
+
   const hierarchy = {
     findAttribute,
-    as
+    as,
+    isDerived
   }
 
   const findAll = jest.fn().mockImplementation(async (_class: Ref<Class<any>>, query: any) => {
