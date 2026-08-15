@@ -183,7 +183,6 @@ export default plugin(workflowId, {
     From: '' as IntlString,
     To: '' as IntlString,
     TaskType: '' as IntlString,
-    BasicIssue: '' as IntlString,
     DefaultWorkflow: '' as IntlString,
     Untitled: '' as IntlString,
     AnyStatus: '' as IntlString,

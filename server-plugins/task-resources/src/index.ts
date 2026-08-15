@@ -15,6 +15,7 @@
 //
 
 import core, { Doc, Tx, TxCUD, TxCreateDoc, TxProcessor, TxUpdateDoc } from '@hcengineering/core'
+import { getEmbeddedLabel } from '@hcengineering/platform'
 import { TriggerControl } from '@hcengineering/server-core'
 import task, { Task, TaskType } from '@hcengineering/task'
 
@@ -60,14 +61,15 @@ export async function OnStateUpdate (txes: TxCUD<Doc>[], control: TriggerControl
 export async function OnTaskTypeUpdate (txes: TxUpdateDoc<TaskType>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
   for (const updateTx of txes) {
-    if (updateTx.operations.icon == null && updateTx.operations.color == null) continue
+    if (updateTx.operations.icon == null && updateTx.operations.color == null && updateTx.operations.name == null) { continue }
 
     const taskType = control.modelDb.findAllSync<TaskType>(task.class.TaskType, { _id: updateTx.objectId })[0]
     if (taskType?.targetClass != null) {
       result.push(
         control.txFactory.createTxUpdateDoc(core.class.Class, core.space.Model, taskType.targetClass, {
           ...(updateTx.operations.icon == null ? {} : { icon: updateTx.operations.icon }),
-          ...(updateTx.operations.color == null ? {} : { color: updateTx.operations.color })
+          ...(updateTx.operations.color == null ? {} : { color: updateTx.operations.color }),
+          ...(updateTx.operations.name == null ? {} : { label: getEmbeddedLabel(updateTx.operations.name) })
         })
       )
     }

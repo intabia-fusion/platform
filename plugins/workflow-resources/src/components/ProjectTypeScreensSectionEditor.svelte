@@ -47,9 +47,6 @@
 
   function getClassLabel (targetClass?: Ref<Class<Task>>): IntlString | undefined {
     if (targetClass == null) return undefined
-    if (targetClass === tracker.class.Issue) {
-      return plugin.string.BasicIssue
-    }
     const clazz = client.getHierarchy().findClass(targetClass)
     return clazz?.label
   }

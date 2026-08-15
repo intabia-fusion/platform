@@ -139,7 +139,7 @@
     {
       id: tracker.class.Issue,
       icon: tracker.icon.Issue,
-      label: plugin.string.BasicIssue
+      label: tracker.string.Issue
     },
     ...taskTypes.map((t): DropdownIntlItem => {
       const _clazz = client.getHierarchy().getClass(t.targetClass)
