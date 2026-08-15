@@ -61,7 +61,9 @@ export async function OnStateUpdate (txes: TxCUD<Doc>[], control: TriggerControl
 export async function OnTaskTypeUpdate (txes: TxUpdateDoc<TaskType>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
   for (const updateTx of txes) {
-    if (updateTx.operations.icon == null && updateTx.operations.color == null && updateTx.operations.name == null) { continue }
+    if (updateTx.operations.icon == null && updateTx.operations.color == null && updateTx.operations.name == null) {
+      continue
+    }
 
     const taskType = control.modelDb.findAllSync<TaskType>(task.class.TaskType, { _id: updateTx.objectId })[0]
     if (taskType?.targetClass != null) {
