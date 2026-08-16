@@ -14,6 +14,7 @@
 //
 
 export * from './client'
+export * from './rateLimit'
 export * from './types'
 export * from './utils'
 export * from './proration'

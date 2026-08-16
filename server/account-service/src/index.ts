@@ -28,6 +28,13 @@ import {
   type WorkspaceUuid
 } from '@hcengineering/core'
 import platform, { Severity, Status, addStringsLoader, setMetadata, unknownStatus } from '@hcengineering/platform'
+import {
+  SENSITIVE_METHODS,
+  createRateLimiterFromEnv,
+  getClientIp,
+  isRateLimitExempt,
+  toRateLimitHeaders
+} from './rateLimit'
 import serverToken, {
   decodeToken,
   decodeTokenVerbose,
@@ -241,6 +248,11 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
   const app = new Koa()
   const router = new Router()
+
+  const rateLimiter = createRateLimiterFromEnv()
+  // Opt-out: behind an ingress the socket address is the proxy's, so ignoring x-forwarded-for would
+  // put every user in one bucket. Set to false only when the service is directly exposed.
+  const trustProxy = process.env.ACCOUNT_TRUST_PROXY !== 'false'
 
   app.use(
     cors({
@@ -498,6 +510,41 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     const token = extractToken(ctx.request.headers)
 
     const request = ctx.request.body as any
+
+    let source = ''
+    let isServiceRequest = false
+    let rateLimitExempt = false
+    try {
+      const decodedToken = token != null ? decodeToken(token) : null
+      const serviceName = decodedToken?.extra?.service
+      source = serviceName ?? '🤦‍♂️user'
+      isServiceRequest = serviceName !== undefined
+      // decodeToken verifies the signature, so a forged claim throws and leaves this false.
+      rateLimitExempt = isRateLimitExempt(decodedToken)
+    } catch (err) {
+      // Ignore
+    }
+
+    // Runs before dispatch so an unknown method is not a free way around the limit. Headers go on
+    // every response, not just 429, so a client can back off before it runs out.
+    let rateLimitHeaders: Record<string, string> = {}
+    if (!rateLimitExempt) {
+      const clientIp = getClientIp(ctx.request.headers, ctx.request.ip, trustProxy)
+      const verdict = rateLimiter.check(clientIp, request.method)
+      rateLimitHeaders = toRateLimitHeaders(verdict)
+      if (!verdict.allowed) {
+        // Labelled by bucket, not method: request.method is caller-controlled here and would blow up
+        // metric cardinality.
+        measureCtx.measure('account.rpc.rate_limited', 1, {
+          bucket: SENSITIVE_METHODS.has(request.method) ? 'auth' : 'general'
+        })
+        measureCtx.warn('account rpc rate limited', { ip: clientIp, method: request.method })
+        ctx.res.writeHead(429, { ...KEEP_ALIVE_HEADERS, ...rateLimitHeaders })
+        ctx.res.end(JSON.stringify({ id: request.id, error: unknownStatus('Too many requests') }))
+        return
+      }
+    }
+
     const method = methods[request.method as AccountMethods]
     if (method === undefined) {
       const response = {
@@ -506,7 +553,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       }
 
       const body = JSON.stringify(response)
-      ctx.res.writeHead(404, KEEP_ALIVE_HEADERS)
+      ctx.res.writeHead(404, { ...KEEP_ALIVE_HEADERS, ...rateLimitHeaders })
       ctx.res.end(body)
       return
     }
@@ -515,16 +562,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
     const branding = getBranding(ctx)
 
-    let source = ''
-    let isServiceRequest = false
-    try {
-      const decodedToken = token != null ? decodeToken(token) : null
-      const serviceName = decodedToken?.extra?.service
-      source = serviceName ?? '🤦‍♂️user'
-      isServiceRequest = serviceName !== undefined
-    } catch (err) {
-      // Ignore
-    }
     const meta = getRequestMeta(ctx.request.headers, isServiceRequest)
 
     await measureCtx.with(
@@ -546,14 +583,14 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
           const result = await method(_ctx, db, branding, request, token, meta)
 
           const body = JSON.stringify(result)
-          ctx.res.writeHead(200, KEEP_ALIVE_HEADERS)
+          ctx.res.writeHead(200, { ...KEEP_ALIVE_HEADERS, ...rateLimitHeaders })
           ctx.res.end(body)
         } catch (err: any) {
           const response = {
             id: request.id,
             error: unknownStatus(err.message)
           }
-          ctx.res.writeHead(400, KEEP_ALIVE_HEADERS)
+          ctx.res.writeHead(400, { ...KEEP_ALIVE_HEADERS, ...rateLimitHeaders })
           ctx.res.end(JSON.stringify(response))
         }
       },
