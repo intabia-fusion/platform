@@ -260,7 +260,6 @@
   }
 </script>
 
-я
 <div class="hulyComponent">
   <Header adaptive={'disabled'}>
     <Breadcrumb icon={settingsRes.icon.Setting} label={settingsRes.string.WorkspaceSettings} size={'large'} isCurrent />
