@@ -2185,6 +2185,16 @@ export async function getPerson (
   return person
 }
 
+// A social key is just `type:value`, so an email is enough to probe whether an account exists.
+// Regular callers resolve only their own; system/admin/services keep the lookup migrations need.
+function canLookUpForeignSocialIds (account: PersonUuid | undefined, extra: any): boolean {
+  return (
+    account === systemAccountUuid ||
+    extra?.admin === 'true' ||
+    verifyAllowedServices(['workspace', 'tool'], extra, false)
+  )
+}
+
 export async function findPersonBySocialId (
   ctx: MeasureContext,
   db: AccountDB,
@@ -2198,11 +2208,16 @@ export async function findPersonBySocialId (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
-  decodeTokenVerbose(ctx, token)
+  const { account: caller, extra } = decodeTokenVerbose(ctx, token)
 
   const socialIdObj = await db.socialId.findOne({ _id: socialId })
 
   if (socialIdObj == null) {
+    return
+  }
+
+  // Answer as if absent, not Forbidden - a distinct error still reveals that the id is taken.
+  if (socialIdObj.personUuid !== caller && !canLookUpForeignSocialIds(caller, extra)) {
     return
   }
 
@@ -2225,7 +2240,7 @@ export async function findSocialIdBySocialKey (
   params: { socialKey: string, requireAccount?: boolean }
 ): Promise<PersonId | undefined> {
   const { socialKey, requireAccount } = params
-  decodeTokenVerbose(ctx, token)
+  const { account: caller, extra } = decodeTokenVerbose(ctx, token)
 
   if (socialKey == null || socialKey === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -2234,6 +2249,11 @@ export async function findSocialIdBySocialKey (
   const socialIdObj = await db.socialId.findOne({ key: socialKey })
 
   if (socialIdObj == null) {
+    return
+  }
+
+  // See findPersonBySocialId: stay indistinguishable from "no such social id".
+  if (socialIdObj.personUuid !== caller && !canLookUpForeignSocialIds(caller, extra)) {
     return
   }
 
@@ -2759,79 +2779,6 @@ async function verifyMergePersonsAuthority (
   return true
 }
 
-// Social ids that resolve to an account on their own, and therefore hand over the ability to
-// authenticate as its owner once they are re-pointed. Password recovery and OTP login look an
-// account up by social id value alone (see requestPasswordReset, loginOtp).
-const loginCapableSocialTypes = [SocialIdType.EMAIL, SocialIdType.HULY]
-
-/**
- * Merging re-points the secondary person's social ids onto the primary person, so an unrestricted
- * caller could both absorb the identifiers of a person they do not own and inject their own
- * identifiers into somebody else's person. Restrict it to callers with authority over both persons.
- */
-async function verifyMergePersonsAuthority (
-  db: AccountDB,
-  { account, workspace, extra }: Token,
-  primaryPerson: PersonUuid,
-  secondaryPerson: PersonUuid,
-  shouldThrow = true
-): Promise<boolean> {
-  // Global admins and the tool/workspace services act on behalf of the whole installation,
-  // the same way the account level merge (mergeSpecifiedAccounts) allows them to.
-  // Note this must precede the workspace check below: such tokens carry no workspace.
-  if (extra?.admin === 'true' || verifyAllowedServices(['tool', 'workspace'], extra, false)) {
-    return true
-  }
-
-  const forbidden = (): boolean => {
-    if (shouldThrow) {
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-    }
-
-    return false
-  }
-
-  // Everybody else acts within a single workspace they maintain.
-  if (workspace == null) {
-    return forbidden()
-  }
-
-  if (!verifyAllowedRole(await db.getWorkspaceRole(account, workspace), AccountRole.Maintainer, extra, false)) {
-    return forbidden()
-  }
-
-  // The platform wide accounts are not anybody's to merge.
-  for (const person of [primaryPerson, secondaryPerson]) {
-    if (person === systemAccountUuid || person === readOnlyGuestAccountUuid) {
-      return forbidden()
-    }
-
-    if ((await db.getWorkspaceRole(person as AccountUuid, workspace)) != null) {
-      // A member of the caller's workspace.
-      continue
-    }
-
-    if ((await db.account.findOne({ uuid: person as AccountUuid })) != null) {
-      // An account outside of the caller's workspace: no workspace maintainer may take it over.
-      return forbidden()
-    }
-  }
-
-  // Both persons are in reach of the caller by now, but the primary keeps receiving the secondary's
-  // social ids. When the primary is somebody else's account, a login capable social id would grant
-  // whoever controls it access to that account, so leave those merges to the verification flows.
-  // Note doMergePersons only refuses *verified* secondary social ids, which does not cover this.
-  if (primaryPerson !== account && (await db.account.findOne({ uuid: primaryPerson as AccountUuid })) != null) {
-    const secondarySocialIds = await db.socialId.find({ personUuid: secondaryPerson })
-
-    if (secondarySocialIds.some((si) => loginCapableSocialTypes.includes(si.type))) {
-      return forbidden()
-    }
-  }
-
-  return true
-}
-
 export async function canMergeSpecifiedPersons (
   ctx: MeasureContext,
   db: AccountDB,
@@ -3197,10 +3144,18 @@ export async function hasWorkspacePermission (
   }
 ): Promise<boolean> {
   const { accountId, permission } = params
-  const { workspace } = decodeTokenVerbose(ctx, token)
+  const { account, workspace, extra } = decodeTokenVerbose(ctx, token)
 
   if (workspace === null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid: workspace }))
+  }
+
+  // Same rule as getWorkspacePermissions: self is free, probing others takes Maintainer+.
+  if (accountId !== account) {
+    const accRole = account === systemAccountUuid ? AccountRole.Owner : await db.getWorkspaceRole(account, workspace)
+    if (!verifyAllowedRole(accRole, AccountRole.Maintainer, extra, false)) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    }
   }
 
   return await db.hasWorkspacePermission(accountId, workspace, permission)

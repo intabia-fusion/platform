@@ -79,10 +79,13 @@ import type {
   WorkspaceMemberDetails,
   AccountActivityStats
 } from './types'
+import { RateLimitError, parseRateLimitHeaders, type RateLimitInfo } from './rateLimit'
 import { getClientTimezone, isNetworkError } from './utils'
 
 /** @public */
 export interface AccountClient {
+  /** Budget reported by the last RPC, undefined if the service did not report one. */
+  getLastRateLimit: () => RateLimitInfo | undefined
   // Static methods
   getProviders: () => Promise<ProviderInfo[]>
 
@@ -387,6 +390,7 @@ interface Request {
 class AccountClientImpl implements AccountClient {
   private readonly request: RequestInit
   private readonly rpc: typeof this._rpc
+  private lastRateLimit: RateLimitInfo | undefined
 
   constructor (
     private readonly url: string,
@@ -438,12 +442,26 @@ class AccountClientImpl implements AccountClient {
       body: JSON.stringify(request)
     })
 
+    this.lastRateLimit = parseRateLimitHeaders(response.headers)
+
+    if (response.status === 429) {
+      // Undici keeps the socket out of the pool until the body is drained.
+      void response.body?.cancel().catch(() => {})
+      // Not a network error, so withRetryUntilTimeout re-throws instead of hammering the service.
+      throw new RateLimitError(this.lastRateLimit ?? {})
+    }
+
     const result = await response.json()
     if (result.error != null) {
       throw new PlatformError(result.error)
     }
 
     return result.result
+  }
+
+  /** Rate limit budget reported by the last RPC, or undefined if the service did not report one. */
+  getLastRateLimit (): RateLimitInfo | undefined {
+    return this.lastRateLimit
   }
 
   private flattenStatus (ws: any): WorkspaceInfoWithStatus {

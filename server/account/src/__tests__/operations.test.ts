@@ -53,6 +53,9 @@ import {
   leaveWorkspace,
   getWorkspaceMembers,
   checkJoin,
+  findPersonBySocialId,
+  findSocialIdBySocialKey,
+  hasWorkspacePermission,
   mergeSpecifiedPersons,
   canMergeSpecifiedPersons
 } from '../operations'
@@ -2847,6 +2850,250 @@ describe('account operations', () => {
         await expect(
           getAccountInfo(mockCtx, accountInfoDb, mockBranding, mockToken, { accountId: callerAccount })
         ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {})))
+      })
+    })
+
+    describe('social id lookups', () => {
+      const callerAccount = 'caller-account-uuid' as AccountUuid
+      const otherPerson = 'other-person-uuid' as PersonUuid
+      const socialId = 'social-id-1' as PersonId
+      const socialKey = 'email:victim@example.com'
+
+      const lookupDb = {
+        socialId: {
+          findOne: jest.fn()
+        },
+        account: {
+          findOne: jest.fn()
+        }
+      } as unknown as AccountDB
+
+      beforeEach(() => {
+        jest.clearAllMocks()
+      })
+
+      describe('findSocialIdBySocialKey', () => {
+        test('resolves own social id', async () => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: {} })
+          ;(lookupDb.socialId.findOne as jest.Mock).mockResolvedValue({ _id: socialId, personUuid: callerAccount })
+
+          expect(await findSocialIdBySocialKey(mockCtx, lookupDb, mockBranding, mockToken, { socialKey })).toBe(
+            socialId
+          )
+        })
+
+        test('hides a foreign social id from a regular caller', async () => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: {} })
+          ;(lookupDb.socialId.findOne as jest.Mock).mockResolvedValue({ _id: socialId, personUuid: otherPerson })
+
+          expect(
+            await findSocialIdBySocialKey(mockCtx, lookupDb, mockBranding, mockToken, { socialKey })
+          ).toBeUndefined()
+        })
+
+        test('returns undefined rather than throwing, so existence stays indistinguishable', async () => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: {} })
+          ;(lookupDb.socialId.findOne as jest.Mock).mockResolvedValue(null)
+          const missing = await findSocialIdBySocialKey(mockCtx, lookupDb, mockBranding, mockToken, { socialKey })
+          ;(lookupDb.socialId.findOne as jest.Mock).mockResolvedValue({ _id: socialId, personUuid: otherPerson })
+          const foreign = await findSocialIdBySocialKey(mockCtx, lookupDb, mockBranding, mockToken, { socialKey })
+
+          expect(foreign).toEqual(missing)
+        })
+
+        test('allows the system account', async () => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: systemAccountUuid, extra: {} })
+          ;(lookupDb.socialId.findOne as jest.Mock).mockResolvedValue({ _id: socialId, personUuid: otherPerson })
+
+          expect(await findSocialIdBySocialKey(mockCtx, lookupDb, mockBranding, mockToken, { socialKey })).toBe(
+            socialId
+          )
+        })
+
+        test('allows a global admin', async () => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: { admin: 'true' } })
+          ;(lookupDb.socialId.findOne as jest.Mock).mockResolvedValue({ _id: socialId, personUuid: otherPerson })
+
+          expect(await findSocialIdBySocialKey(mockCtx, lookupDb, mockBranding, mockToken, { socialKey })).toBe(
+            socialId
+          )
+        })
+
+        test('allows the tool service', async () => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: { service: 'tool' } })
+          ;(lookupDb.socialId.findOne as jest.Mock).mockResolvedValue({ _id: socialId, personUuid: otherPerson })
+
+          expect(await findSocialIdBySocialKey(mockCtx, lookupDb, mockBranding, mockToken, { socialKey })).toBe(
+            socialId
+          )
+        })
+
+        test('does not exempt an arbitrary service that is not on the list', async () => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+            account: callerAccount,
+            extra: { service: 'some-other-service' }
+          })
+          ;(lookupDb.socialId.findOne as jest.Mock).mockResolvedValue({ _id: socialId, personUuid: otherPerson })
+
+          expect(
+            await findSocialIdBySocialKey(mockCtx, lookupDb, mockBranding, mockToken, { socialKey })
+          ).toBeUndefined()
+        })
+
+        test('throws BadRequest on an empty social key', async () => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: {} })
+
+          await expect(
+            findSocialIdBySocialKey(mockCtx, lookupDb, mockBranding, mockToken, { socialKey: '' })
+          ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {})))
+          expect(lookupDb.socialId.findOne).not.toHaveBeenCalled()
+        })
+      })
+
+      describe('findPersonBySocialId', () => {
+        test('resolves own person', async () => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: {} })
+          ;(lookupDb.socialId.findOne as jest.Mock).mockResolvedValue({ _id: socialId, personUuid: callerAccount })
+
+          expect(await findPersonBySocialId(mockCtx, lookupDb, mockBranding, mockToken, { socialId })).toBe(
+            callerAccount
+          )
+        })
+
+        test('hides a foreign person from a regular caller', async () => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: {} })
+          ;(lookupDb.socialId.findOne as jest.Mock).mockResolvedValue({ _id: socialId, personUuid: otherPerson })
+
+          expect(await findPersonBySocialId(mockCtx, lookupDb, mockBranding, mockToken, { socialId })).toBeUndefined()
+          expect(lookupDb.account.findOne).not.toHaveBeenCalled()
+        })
+
+        test('allows a workspace service token', async () => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+            account: callerAccount,
+            extra: { service: 'workspace' }
+          })
+          ;(lookupDb.socialId.findOne as jest.Mock).mockResolvedValue({ _id: socialId, personUuid: otherPerson })
+
+          expect(await findPersonBySocialId(mockCtx, lookupDb, mockBranding, mockToken, { socialId })).toBe(otherPerson)
+        })
+
+        test('still honours requireAccount for an own social id', async () => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: {} })
+          ;(lookupDb.socialId.findOne as jest.Mock).mockResolvedValue({ _id: socialId, personUuid: callerAccount })
+          ;(lookupDb.account.findOne as jest.Mock).mockResolvedValue(null)
+
+          expect(
+            await findPersonBySocialId(mockCtx, lookupDb, mockBranding, mockToken, { socialId, requireAccount: true })
+          ).toBeUndefined()
+          expect(lookupDb.account.findOne).toHaveBeenCalledWith({ uuid: callerAccount })
+        })
+
+        test('throws BadRequest on an empty social id', async () => {
+          ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: {} })
+
+          await expect(
+            findPersonBySocialId(mockCtx, lookupDb, mockBranding, mockToken, { socialId: '' as PersonId })
+          ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {})))
+          expect(lookupDb.socialId.findOne).not.toHaveBeenCalled()
+        })
+      })
+    })
+
+    describe('hasWorkspacePermission', () => {
+      const callerAccount = 'caller-account-uuid' as AccountUuid
+      const otherAccount = 'other-account-uuid' as AccountUuid
+      const workspace = 'workspace-uuid' as WorkspaceUuid
+      const permission = 'some-permission'
+
+      const permDb = {
+        getWorkspaceRole: jest.fn(),
+        hasWorkspacePermission: jest.fn().mockResolvedValue(true)
+      } as unknown as AccountDB
+
+      beforeEach(() => {
+        jest.clearAllMocks()
+        ;(permDb.hasWorkspacePermission as jest.Mock).mockResolvedValue(true)
+      })
+
+      test('allows querying own permission without a role check', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, workspace, extra: {} })
+
+        expect(
+          await hasWorkspacePermission(mockCtx, permDb, mockBranding, mockToken, {
+            accountId: callerAccount,
+            permission
+          })
+        ).toBe(true)
+        expect(permDb.getWorkspaceRole).not.toHaveBeenCalled()
+      })
+
+      test('rejects querying somebody else below Maintainer', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, workspace, extra: {} })
+        ;(permDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.User)
+
+        await expect(
+          hasWorkspacePermission(mockCtx, permDb, mockBranding, mockToken, { accountId: otherAccount, permission })
+        ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {})))
+        expect(permDb.hasWorkspacePermission).not.toHaveBeenCalled()
+      })
+
+      test('allows a Maintainer to query somebody else', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, workspace, extra: {} })
+        ;(permDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Maintainer)
+
+        expect(
+          await hasWorkspacePermission(mockCtx, permDb, mockBranding, mockToken, {
+            accountId: otherAccount,
+            permission
+          })
+        ).toBe(true)
+      })
+
+      test('allows the system account to query somebody else', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: systemAccountUuid, workspace, extra: {} })
+
+        expect(
+          await hasWorkspacePermission(mockCtx, permDb, mockBranding, mockToken, {
+            accountId: otherAccount,
+            permission
+          })
+        ).toBe(true)
+        expect(permDb.getWorkspaceRole).not.toHaveBeenCalled()
+      })
+
+      test('throws WorkspaceNotFound when the token carries no workspace', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, workspace: null, extra: {} })
+
+        await expect(
+          hasWorkspacePermission(mockCtx, permDb, mockBranding, mockToken, { accountId: callerAccount, permission })
+        ).rejects.toMatchObject({ status: { code: platform.status.WorkspaceNotFound } })
+        expect(permDb.hasWorkspacePermission).not.toHaveBeenCalled()
+      })
+
+      test('rejects when the caller holds no role in the workspace at all', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, workspace, extra: {} })
+        ;(permDb.getWorkspaceRole as jest.Mock).mockResolvedValue(null)
+
+        await expect(
+          hasWorkspacePermission(mockCtx, permDb, mockBranding, mockToken, { accountId: otherAccount, permission })
+        ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {})))
+      })
+
+      test('allows a global admin to query somebody else', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+          account: callerAccount,
+          workspace,
+          extra: { admin: 'true' }
+        })
+        ;(permDb.getWorkspaceRole as jest.Mock).mockResolvedValue(null)
+
+        expect(
+          await hasWorkspacePermission(mockCtx, permDb, mockBranding, mockToken, {
+            accountId: otherAccount,
+            permission
+          })
+        ).toBe(true)
       })
     })
   })
