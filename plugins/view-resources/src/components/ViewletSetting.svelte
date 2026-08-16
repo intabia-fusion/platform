@@ -19,7 +19,6 @@
     Association,
     AssociationQuery,
     Class,
-    Client,
     Doc,
     Ref,
     TxOperations,
@@ -27,10 +26,11 @@
   } from '@hcengineering/core'
   import { Asset, getEmbeddedLabel, IntlString, translate } from '@hcengineering/platform'
   import { createQuery, getAttributePresenterClass, getClient, hasResource } from '@hcengineering/presentation'
-  import { DropdownLabelsIntl, Label, Loading, ToggleWithLabel, resizeObserver } from '@hcengineering/ui'
-  import { BuildModelKey, Viewlet, ViewletPreference } from '@hcengineering/view'
+  import { DropdownLabelsIntl, Label, Loading, resizeObserver, ToggleWithLabel } from '@hcengineering/ui'
+  import { BuildModelKey, DescendantAttribute, Viewlet, ViewletPreference } from '@hcengineering/view'
   import { deepEqual } from 'fast-equals'
-  import { createEventDispatcher } from 'svelte'
+  import { createEventDispatcher, onDestroy } from 'svelte'
+
   import view from '../plugin'
   import { buildConfigLookup, canResolveAttribute, getKeyLabel } from '../utils'
   import ViewletClassSettings from './ViewletClassSettings.svelte'
@@ -253,7 +253,17 @@
   }
 
   function getKey (value: string | BuildModelKey | undefined): string | undefined {
-    return typeof value === 'string' ? value : value?.key
+    if (value === undefined) return undefined
+    if (typeof value === 'string') return value
+
+    if (value.displayProps?.key !== undefined && value.displayProps.key.length > 0) {
+      return value.displayProps.key
+    }
+    if (value.key !== undefined && value.key.length > 0) {
+      return value.key
+    }
+
+    return value.key
   }
 
   function getAttributeKey (key: string): string {
@@ -382,7 +392,7 @@
 
     if (preference === undefined) return
     const exists = preference.config.find((p) => {
-      const key = typeof p === 'string' ? p : p.key
+      const key = getKey(p)
       return key === resultName
     })
     if (exists) {
@@ -397,10 +407,10 @@
     associationKey: string,
     associationLabel: string
   ): Promise<void> {
-    const allAttributes = hierarchy.getAllAttributes(targetClass)
-    for (const [, attribute] of allAttributes) {
-      if (attribute.hidden || attribute.label === undefined) continue
-      if (hierarchy.isDerived(attribute.type._class, core.class.Collection)) continue
+    const allAttributes = Array.from(hierarchy.getAllAttributes(targetClass).values())
+    const tasks = allAttributes.map(async (attribute) => {
+      if (attribute.hidden || attribute.label === undefined) return null
+      if (hierarchy.isDerived(attribute.type._class, core.class.Collection)) return null
       const { attrClass, category } = getAttributePresenterClass(hierarchy, attribute.type)
       const mixin =
         category === 'object'
@@ -413,21 +423,25 @@
         mixin,
         (m) => hasResource(m.presenter) ?? false
       )?.presenter
-      if (presenter === undefined) continue
+      if (presenter === undefined) return null
 
       const fieldKey = `${associationKey}.${attribute.name}`
       const fieldLabel = getAssociationLabel(client, fieldKey)
       const translatedLabel = await translate(fieldLabel, {})
       const clazz = hierarchy.getClass(targetClass)
-      const newValue: AttributeConfig = {
-        type: 'attribute',
+      return {
+        type: 'attribute' as const,
         value: fieldKey,
         label: getEmbeddedLabel(associationLabel + ' > ' + translatedLabel),
         enabled: false,
         _class: targetClass,
         icon: clazz.icon
       }
-      if (!isExist(result, newValue)) {
+    })
+
+    const items = await Promise.all(tasks)
+    for (const newValue of items) {
+      if (newValue != null && !isExist(result, newValue)) {
         result.push(newValue)
       }
     }
@@ -456,21 +470,18 @@
     return preference === undefined ? result : setStatus(result, preference)
   }
 
-  async function upsertViewletPreference (
-    viewletId: Ref<Viewlet>,
-    config: Array<BuildModelKey | string>
-  ): Promise<void> {
-    const preference = preferences.find((p) => p.attachedTo === viewletId)
+  async function updatePreference (viewletId: Ref<Viewlet>, changes: Partial<ViewletPreference>): Promise<void> {
+    const preference =
+      preferences.find((p) => p.attachedTo === viewletId) ??
+      (await client.findOne(view.class.ViewletPreference, { space: core.space.Workspace, attachedTo: viewletId }))
     if (preference !== undefined) {
-      if (!deepEqual(preference.config, config)) {
-        await client.update(preference, {
-          config
-        })
-      }
+      await client.update(preference, changes)
     } else {
+      const vl = viewlets.find((it) => it._id === viewletId)
       await client.createDoc(view.class.ViewletPreference, core.space.Workspace, {
         attachedTo: viewletId,
-        config
+        config: vl?.config ?? [],
+        ...changes
       })
     }
   }
@@ -483,6 +494,7 @@
     const descendants = new Set(
       hierarchy.getDescendants(sourceViewlet.attachTo).filter((it) => it !== sourceViewlet.attachTo)
     )
+    const childTasks: Promise<void>[] = []
     for (const childViewlet of viewlets) {
       if (!descendants.has(childViewlet.attachTo)) continue
 
@@ -491,7 +503,10 @@
       const config = syncConfigOrder(sourceViewlet.attachTo, previousSourceConfig, sourceConfig, targetConfig)
       if (deepEqual(targetConfig, config)) continue
 
-      await upsertViewletPreference(childViewlet._id, config)
+      childTasks.push(updatePreference(childViewlet._id, { config }))
+    }
+    if (childTasks.length > 0) {
+      await Promise.all(childTasks)
     }
   }
 
@@ -531,6 +546,64 @@
     key: string
     label: IntlString
     enabled: boolean
+  }
+
+  interface DescendantAttributeSection {
+    _class: Ref<Class<Doc>>
+    label: IntlString
+    attrs: {
+      label: IntlString
+      enabled: boolean
+      key: string
+    }[]
+  }
+
+  function getDescendantAttributes (
+    selectedViewlet: Viewlet,
+    preference: ViewletPreference | undefined
+  ): DescendantAttributeSection[] {
+    const d = hierarchy
+      .getDescendants(viewlet.attachTo)
+      .filter((it) => !hierarchy.isMixin(it) && it !== selectedViewlet.attachTo)
+    const mixins = hierarchy.getDescendants(viewlet.attachTo).filter((it) => hierarchy.isMixin(it))
+
+    return d
+      .map((it) => {
+        const clazz = hierarchy.getClass(it)
+
+        const enabled = new Set(
+          (preference?.descendantAttributes?.filter((da) => da._class === it) ?? []).map((da) => da.key)
+        )
+        const seen = new Set<string>()
+        const attrs: DescendantAttributeSection['attrs'] = []
+
+        const addAttr = (attr: AnyAttribute, useMixinProxy: boolean): void => {
+          if (attr.hidden === true || attr.label === undefined) return
+          if (hierarchy.isDerived(attr.type._class, core.class.Collection)) return
+          const key = useMixinProxy ? `${attr.attributeOf}.${attr.name}` : attr.name
+          if (seen.has(key)) return
+          seen.add(key)
+          attrs.push({ key, label: attr.label, enabled: enabled.has(key) })
+        }
+
+        for (const [, attr] of hierarchy.getOwnAttributes(it)) {
+          addAttr(attr, false)
+        }
+
+        for (const d of hierarchy.getDescendants(it)) {
+          if (!hierarchy.isMixin(d) || mixins.includes(d)) continue
+          hierarchy.getOwnAttributes(d).forEach((attr) => {
+            addAttr(attr, true)
+          })
+        }
+
+        return {
+          _class: it,
+          label: clazz.label,
+          attrs
+        }
+      })
+      .filter((it) => it.attrs.length > 0)
   }
 
   function getCustomAttributes (
@@ -574,22 +647,84 @@
     return result
   }
 
-  async function saveCustomAttributes (viewletId: Ref<Viewlet>, items: CustomAttributeItem[]): Promise<void> {
-    const customAttributes = items.filter((i) => i.enabled).map((i) => i.key)
-    const preference = preferences.find((p) => p.attachedTo === viewletId)
-    if (preference !== undefined) {
-      await client.update(preference, { customAttributes })
-    } else {
-      const vl = viewlets.find((it) => it._id === viewletId)
-      await client.createDoc(view.class.ViewletPreference, core.space.Workspace, {
-        attachedTo: viewletId,
-        config: vl?.config ?? [],
-        customAttributes
-      })
+  let saveTimer: ReturnType<typeof setTimeout> | undefined
+  let pendingUpdates: Partial<ViewletPreference> | undefined
+  let saveChain: Promise<void> = Promise.resolve()
+
+  onDestroy(() => {
+    if (saveTimer !== undefined) {
+      clearTimeout(saveTimer)
+      saveTimer = undefined
+    }
+    void flushPendingSave()
+  })
+
+  async function flushPendingSave (): Promise<void> {
+    if (saveTimer !== undefined) {
+      clearTimeout(saveTimer)
+      saveTimer = undefined
+    }
+    if (pendingUpdates !== undefined) {
+      const updates = pendingUpdates
+      pendingUpdates = undefined
+      const viewletId = selected
+      const selectedV = selectedViewlet
+      const previousSourceConfig =
+        preferences.find((p) => p.attachedTo === viewletId)?.config ?? selectedV?.config ?? []
+
+      saveChain = saveChain
+        .then(async () => {
+          await updatePreference(viewletId, updates)
+          if (updates.config !== undefined && selectedV !== undefined) {
+            await syncChildViewletPreferences(selectedV, previousSourceConfig, updates.config)
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to save viewlet preference', err)
+        })
+      await saveChain
     }
   }
 
-  async function save (viewletId: Ref<Viewlet>, items: Array<Config | AttributeConfig>): Promise<void> {
+  function scheduleSave (changes: Partial<ViewletPreference>, delayMs = 150): void {
+    pendingUpdates = {
+      ...pendingUpdates,
+      ...changes
+    }
+    if (saveTimer !== undefined) {
+      clearTimeout(saveTimer)
+    }
+    saveTimer = setTimeout(() => {
+      saveTimer = undefined
+      void flushPendingSave()
+    }, delayMs)
+  }
+
+  function saveCustomAttributes (viewletId: Ref<Viewlet>, items: CustomAttributeItem[]): void {
+    const customAttributes = items.filter((i) => i.enabled).map((i) => i.key)
+    lastSavedCustomAttributes = customAttributes
+    scheduleSave({ customAttributes })
+  }
+
+  function extractDescendantAttributes (groups: DescendantAttributeSection[]): DescendantAttribute[] {
+    const result: DescendantAttribute[] = []
+    for (const group of groups) {
+      for (const attr of group.attrs) {
+        if (attr.enabled) {
+          result.push({ _class: group._class, key: attr.key })
+        }
+      }
+    }
+    return result
+  }
+
+  function saveDescendantAttributes (viewletId: Ref<Viewlet>, descendantAttributes: DescendantAttributeSection[]): void {
+    const res = extractDescendantAttributes(descendantAttributes)
+    lastSavedDescendantAttributes = res
+    scheduleSave({ descendantAttributes: res })
+  }
+
+  function save (viewletId: Ref<Viewlet>, items: Array<Config | AttributeConfig>): void {
     const configValues = items.filter(
       (p) =>
         p.value !== undefined &&
@@ -603,32 +738,56 @@
       }
       return value
     })
-    const selectedViewlet = viewlets.find((it) => it._id === viewletId)
-    const previousSourceConfig =
-      preferences.find((p) => p.attachedTo === viewletId)?.config ?? selectedViewlet?.config ?? []
-
-    await upsertViewletPreference(viewletId, config)
-
-    if (selectedViewlet !== undefined) {
-      await syncChildViewletPreferences(selectedViewlet, previousSourceConfig, config)
-    }
+    lastSavedConfig = config
+    scheduleSave({ config })
   }
 
-  async function restoreDefault (viewletId: Ref<Viewlet>): Promise<void> {
-    const preference = preferences.find((p) => p.attachedTo === viewletId)
-    if (preference !== undefined) {
-      await client.remove(preference)
+  function restoreDefault (viewletId: Ref<Viewlet>): void {
+    if (saveTimer !== undefined) {
+      clearTimeout(saveTimer)
+      saveTimer = undefined
     }
+    pendingUpdates = undefined
+    lastSavedConfig = undefined
+    lastSavedCustomAttributes = undefined
+    lastSavedDescendantAttributes = undefined
+
+    saveChain = saveChain
+      .then(async () => {
+        const preference =
+          preferences.find((p) => p.attachedTo === viewletId) ??
+          (await client.findOne(view.class.ViewletPreference, { space: core.space.Workspace, attachedTo: viewletId }))
+        if (preference !== undefined) {
+          await client.remove(preference)
+        }
+        if (selectedViewlet) {
+          configLoading = true
+          citems = await getConfig(selectedViewlet, undefined)
+          customItems = getCustomAttributes(selectedViewlet, undefined)
+          sections = getDescendantAttributes(selectedViewlet, undefined)
+          configLoading = false
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to restore defaults for viewlet preference', err)
+      })
   }
 
   function setStatus (result: Config[], preference: ViewletPreference): Config[] {
+    const orderMap = new Map<string, number>()
+    preference.config.forEach((p, idx) => {
+      const key = getKey(p)
+      if (key !== undefined) orderMap.set(key, idx)
+    })
+
     for (const key of result) {
       if (!isAttribute(key)) continue
-      const index = preference.config.findIndex((p) => deepEqual(p, key.value))
-      key.enabled = index !== -1
-      key.order = index !== -1 ? index : undefined
+      const itemKey = getKey(key.value)
+      const index = itemKey !== undefined ? orderMap.get(itemKey) : undefined
+      key.enabled = index !== undefined
+      key.order = index
     }
-    if (viewlet.configOptions?.sortable) {
+    if (viewlet.configOptions?.sortable != null) {
       result.sort((a, b) => {
         if (!isAttribute(a) || !isAttribute(b)) return 0
         if (a.order === undefined && b.order === undefined) return 0
@@ -638,6 +797,60 @@
       })
     }
     return result
+  }
+
+  let citems: Config[] = []
+  let customItems: CustomAttributeItem[] = []
+  let sections: DescendantAttributeSection[] = []
+  let configLoading = true
+  let loadedSelected: Ref<Viewlet> | undefined
+  let lastSavedConfig: Array<BuildModelKey | string> | undefined
+  let lastSavedCustomAttributes: string[] | undefined
+  let lastSavedDescendantAttributes: DescendantAttribute[] | undefined
+
+  let lastSelected: Ref<Viewlet> | undefined
+
+  $: if (selected !== lastSelected) {
+    lastSelected = selected
+    loadedSelected = undefined
+    lastSavedConfig = undefined
+    lastSavedCustomAttributes = undefined
+    lastSavedDescendantAttributes = undefined
+  }
+
+  function updateCustomAndDescendants (selectedV: Viewlet, pref: ViewletPreference | undefined): void {
+    const isNewViewlet = loadedSelected !== selectedV._id
+    if (isNewViewlet || lastSavedCustomAttributes === undefined) {
+      customItems = getCustomAttributes(selectedV, pref)
+    }
+
+    if (isNewViewlet || lastSavedDescendantAttributes === undefined) {
+      sections = getDescendantAttributes(selectedV, pref)
+    }
+  }
+
+  async function loadConfig (selectedV: Viewlet, pref: ViewletPreference | undefined): Promise<void> {
+    const isNewViewlet = loadedSelected !== selectedV._id
+
+    if (!isNewViewlet && lastSavedConfig !== undefined) {
+      return
+    }
+
+    if (isNewViewlet) {
+      configLoading = true
+    }
+    const result = await getConfig(selectedV, pref)
+    citems = result
+    loadedSelected = selectedV._id
+    configLoading = false
+  }
+
+  $: selectedViewlet = viewlets.find((it) => it._id === selected)
+  $: selectedPreferece = preferences.find((it) => it.attachedTo === selected)
+
+  $: if (selectedViewlet && !loading) {
+    void loadConfig(selectedViewlet, selectedPreferece)
+    updateCustomAndDescendants(selectedViewlet, selectedPreferece)
   }
 </script>
 
@@ -661,13 +874,11 @@
             />
           </div>
         {/if}
-        {@const selectedViewlet = viewlets.find((it) => it._id === selected)}
-        {@const selectedPreferece = preferences.find((it) => it.attachedTo === selected)}
+
         {#if selectedViewlet}
-          {@const customItems = getCustomAttributes(selectedViewlet, selectedPreferece)}
-          {#await getConfig(selectedViewlet, selectedPreferece)}
+          {#if configLoading}
             <Loading />
-          {:then citems}
+          {:else}
             <ViewletClassSettings
               {viewlet}
               items={citems}
@@ -678,7 +889,7 @@
                 save(selected, evt.detail)
               }}
             />
-          {/await}
+          {/if}
           {#if customItems.length > 0}
             <div class="antiDivider" />
             <div class="menu-group__header">
@@ -687,14 +898,32 @@
             {#each customItems as item}
               <div class="menu-item flex-row-center">
                 <ToggleWithLabel
-                  on={item.enabled}
+                  bind:on={item.enabled}
                   label={item.label}
                   on:change={(e) => {
-                    item.enabled = e.detail
                     saveCustomAttributes(selected, customItems)
                   }}
                 />
               </div>
+            {/each}
+          {/if}
+          {#if sections.length > 0}
+            {#each sections as s}
+              <div class="antiDivider" />
+              <div class="menu-group__header">
+                <Label label={s.label} />
+              </div>
+              {#each s.attrs as attr}
+                <div class="menu-item flex-row-center">
+                  <ToggleWithLabel
+                    bind:on={attr.enabled}
+                    label={attr.label}
+                    on:change={(e) => {
+                      saveDescendantAttributes(selected, sections)
+                    }}
+                  />
+                </div>
+              {/each}
             {/each}
           {/if}
         {/if}

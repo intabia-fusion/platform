@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -23,6 +24,7 @@
     FindOptions,
     generateId,
     getObjectValue,
+    groupByArray,
     Lookup,
     mergeQueries,
     Ref,
@@ -119,7 +121,15 @@
       customAttrModels = []
       return
     }
-    customAttrModels = await buildModel({ client, _class, keys: customKeys, ignoreMissing: true })
+    const groups = groupByArray(customKeys, (k) => k.displayProps?._class ?? _class)
+    const models = (
+      await Promise.all(
+        Array.from(groups.entries()).map(([targetClass, keys]) =>
+          buildModel({ client, _class: targetClass as Ref<Class<Doc>>, keys, ignoreMissing: true, lookup })
+        )
+      )
+    ).flat()
+    customAttrModels = models
   })
   $: void buildCustomAttrModels(config)
 
