@@ -42,7 +42,7 @@ import {
   LimitStatus,
   subscriptionEvents,
   workspaceEvents,
-  type QueueWorkspaceLimitsMessage
+  type QueueWorkspaceMessage
 } from '@hcengineering/server-core'
 
 import { accountPlugin } from './plugin'
@@ -70,6 +70,8 @@ import type {
   PaymentOperationStats,
   PaymentOperationFilter,
   PaymentMonthlyStats,
+  WorkspacePurchase,
+  WorkspacePurchaseStatus,
   Workspace,
   WorkspaceEvent,
   WorkspaceInfoWithStatus,
@@ -1618,7 +1620,7 @@ export async function findPersonBySocialKey (
 async function publishLimitsEvents (
   ctx: MeasureContext,
   workspaceUuid: WorkspaceUuid,
-  events: QueueWorkspaceLimitsMessage[]
+  events: QueueWorkspaceMessage[]
 ): Promise<void> {
   if (events.length === 0) return
   const producer = getMetadata(accountPlugin.metadata.WorkspaceQueue)
@@ -1777,6 +1779,16 @@ async function doUpsertSubscription (ctx: MeasureContext, db: AccountDB, params:
       type: params.type,
       plan: params.plan
     })
+  }
+
+  // Active AI package grants tokens once per billing period via purchase-activated event.
+  if (params.type === SubscriptionType.Package && params.status === SubscriptionStatus.Active) {
+    const tokens = params.limits?.tokenLimit ?? 0
+    if (tokens > 0 && params.periodStart !== undefined) {
+      await publishLimitsEvents(ctx, workspaceUuid, [
+        workspaceEvents.purchaseActivated(params.plan, `${params.id}:${params.periodStart}`, 'add-ai-tokens', tokens)
+      ])
+    }
   }
 
   // Payment/plan state is defined by the tier subscription; notify consumers edge-triggered.
@@ -2033,6 +2045,61 @@ export async function getPaymentMonthlyStats (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
   return await db.getPaymentMonthlyStats(params.from, params.to)
+}
+
+export async function createPurchase (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { purchase: WorkspacePurchase }
+): Promise<string> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return await db.createPurchase(params.purchase)
+}
+
+export async function updatePurchaseStatus (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { id: string, status: WorkspacePurchaseStatus, activatedOn?: number }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  // payment activates purchases; the SKU-owning pod (e.g. ai-bot) marks them consumed via an admin token.
+  if (extra?.service !== 'payment' && extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  await db.updatePurchaseStatus(params.id, params.status, params.activatedOn)
+}
+
+export async function getPurchases (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { workspaceUuid?: WorkspaceUuid }
+): Promise<WorkspacePurchase[]> {
+  const { account, extra, workspace: tokenWorkspace } = decodeTokenVerbose(ctx, token)
+  // Payment ledger is sensitive: only payment/billing services or admins may target an arbitrary
+  // workspace. A plain service token must not read another workspace's purchase history.
+  const isService =
+    extra?.service === 'payment' ||
+    extra?.service === 'billing' ||
+    extra?.admin === 'true' ||
+    extra?.billingAdmin === 'true'
+  const targetWorkspace = isService ? (params.workspaceUuid ?? tokenWorkspace) : tokenWorkspace
+  if (targetWorkspace === undefined) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  // Any workspace member may read its purchase history (mirrors getSubscriptions gating).
+  if (!isService && (await db.getWorkspaceRole(account, targetWorkspace)) === null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return await db.getPurchases(targetWorkspace)
 }
 
 /**
@@ -2315,6 +2382,9 @@ export type AccountServiceMethods =
   | 'getPaymentOperationStats'
   | 'getPaymentOperations'
   | 'getPaymentMonthlyStats'
+  | 'createPurchase'
+  | 'updatePurchaseStatus'
+  | 'getPurchases'
   | 'upsertSubscription'
   | 'upsertSubscriptionsBulk'
   | 'getAccountWorkspaceBadgeStatuses'
@@ -2389,6 +2459,9 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     getPaymentOperationStats: wrap(getPaymentOperationStats),
     getPaymentOperations: wrap(getPaymentOperations),
     getPaymentMonthlyStats: wrap(getPaymentMonthlyStats),
+    createPurchase: wrap(createPurchase),
+    updatePurchaseStatus: wrap(updatePurchaseStatus),
+    getPurchases: wrap(getPurchases),
     upsertSubscription: wrap(upsertSubscription),
     upsertSubscriptionsBulk: wrap(upsertSubscriptionsBulk),
     getAccountWorkspaceBadgeStatuses: wrap(getAccountWorkspaceBadgeStatuses),

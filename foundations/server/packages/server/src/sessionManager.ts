@@ -894,6 +894,11 @@ export class TSessionManager implements SessionManager {
           workspace.workspaceInitCompleted = true
         }
 
+        // AI bot uses REST, not hello-time status; mark it online on first request.
+        if (token.extra?.service === 'aibot') {
+          this.queueStatus(workspace.wsId.uuid, session, true)
+        }
+
         if (this.timeMinutes > 0) {
           void ws
             .send(ctx, { result: this.createMaintenanceWarning() }, session.binaryMode, session.useCompression)
@@ -1277,7 +1282,10 @@ export class TSessionManager implements SessionManager {
                   void workspace.with(async (pipeline) => {
                     await pipeline.closeSession(ctx, sessionRef.session.sessionId)
                   })
-                  if (user !== guestAccount && user !== systemAccountUuid) {
+                  // Keep the AI bot online while the workspace is up: its REST sessions come and
+                  // go per request, so flipping it offline on session close would blink it out.
+                  const isAiBot = sessionRef.session.token.extra?.service === 'aibot'
+                  if (user !== guestAccount && user !== systemAccountUuid && !isAiBot) {
                     this.queueStatus(workspaceUuid, sessionRef.session, false)
                   }
                 }

@@ -1015,6 +1015,31 @@ describe('PostgresAccountDB', () => {
     })
   })
 
+  describe('workspace purchase operations', () => {
+    // updatePurchaseStatus must not null out activated_on when called without activatedOn
+    // (e.g. a plain status flip) - regression guard for the COALESCE fix.
+    describe('updatePurchaseStatus', () => {
+      it('uses COALESCE so a missing activatedOn keeps the existing column value', async () => {
+        await accountDb.updatePurchaseStatus('purchase-1', 'active')
+
+        expect(mockClient.unsafe).toHaveBeenCalledWith(
+          expect.stringContaining('activated_on = COALESCE($3, activated_on)'),
+          ['purchase-1', 'active', null]
+        )
+      })
+
+      it('passes the given activatedOn through as $3', async () => {
+        await accountDb.updatePurchaseStatus('purchase-1', 'consumed', 12345)
+
+        expect(mockClient.unsafe).toHaveBeenCalledWith(expect.stringContaining('COALESCE($3, activated_on)'), [
+          'purchase-1',
+          'consumed',
+          12345
+        ])
+      })
+    })
+  })
+
   describe('password operations', () => {
     const accountId = 'acc1' as AccountUuid
     const hash: any = {

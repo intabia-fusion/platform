@@ -14,22 +14,30 @@
 -->
 <script lang="ts">
   import { Ref } from '@hcengineering/core'
-  import { ActionContext, createQuery } from '@hcengineering/presentation'
+  import { ActionContext, createQuery, MessageViewer } from '@hcengineering/presentation'
   import { TaskKindSelector } from '@hcengineering/task-resources'
   import tracker, { Component, Issue, IssueTemplateChild, Milestone, Project } from '@hcengineering/tracker'
-  import { IconCircles, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import { IconCircles, eventToHTMLElement, showPopup, CheckBox } from '@hcengineering/ui'
   import { FixedColumn } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { flip } from 'svelte/animate'
   import AssigneeEditor from '../issues/AssigneeEditor.svelte'
   import PriorityEditor from '../issues/PriorityEditor.svelte'
-  import EstimationEditor from './EstimationEditor.svelte'
-  import IssueTemplateChildEditor from './IssueTemplateChildEditor.svelte'
+  import EstimationEditor from '../templates/EstimationEditor.svelte'
+  import SubtaskEditor from './SubtaskEditor.svelte'
 
   export let issues: IssueTemplateChild[]
   export let project: Ref<Project>
   export let milestone: Ref<Milestone> | null = null
   export let component: Ref<Component> | null = null
+  // Optional pick-list mode: a checkbox per row, `selected` holds the ids that stay checked.
+  // Used where the list is a proposal the user confirms (AI task card), not a template body.
+  export let selectable: boolean = false
+  export let selected: Array<Ref<Issue>> = []
+  // Show the body under the title - a proposal has to be readable without opening each row.
+  export let showDescription: boolean = false
+  export let readonly: boolean = false
+  export let doneRows = new Set<Ref<Issue>>()
 
   const dispatch = createEventDispatcher()
 
@@ -38,8 +46,9 @@
   let hoveringIndex: number | null = null
 
   function openIssue (evt: MouseEvent, target: IssueTemplateChild): void {
+    if (readonly) return
     showPopup(
-      IssueTemplateChildEditor,
+      SubtaskEditor,
       {
         showBorder: true,
         projectId: project,
@@ -64,6 +73,12 @@
         }
       }
     )
+  }
+
+  function toggle (id: Ref<Issue>): void {
+    if (doneRows.has(id)) return
+    selected = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]
+    dispatch('select', selected)
   }
 
   function resetDrag (): void {
@@ -119,97 +134,138 @@
 {#each issues as issue, index (issue.id)}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <!-- svelte-ignore a11y-no-static-element-interactions -->
-  <div
-    class="flex-between row"
-    class:is-dragging={issue.id === dragId}
-    class:is-dragged-over-up={dragIndex !== null && index < dragIndex && index === hoveringIndex}
-    class:is-dragged-over-down={dragIndex !== null && index > dragIndex && index === hoveringIndex}
-    animate:flip={{ duration: 400 }}
-    draggable={true}
-    on:click|self={(evt) => {
-      openIssue(evt, issue)
-    }}
-    on:dragstart={(ev) => {
-      handleDragStart(ev, index, issue)
-    }}
-    on:dragover|preventDefault={() => false}
-    on:dragenter={() => (hoveringIndex = index)}
-    on:drop|preventDefault={(ev) => {
-      handleDrop(ev, index)
-    }}
-    on:dragend={resetDrag}
-  >
-    <div class="draggable-container">
-      <IconCircles size={'small'} />
+  <!-- One wrapper per row: `animate:flip` must be the sole child of a keyed each, and the
+       optional description lives under the row. -->
+  <div class="item" class:done={doneRows.has(issue.id)} animate:flip={{ duration: 400 }}>
+    <div
+      class="flex-between row"
+      class:is-dragging={issue.id === dragId}
+      class:is-dragged-over-up={dragIndex !== null && index < dragIndex && index === hoveringIndex}
+      class:is-dragged-over-down={dragIndex !== null && index > dragIndex && index === hoveringIndex}
+      draggable={!readonly}
+      on:click|self={(evt) => {
+        openIssue(evt, issue)
+      }}
+      on:dragstart={(ev) => {
+        handleDragStart(ev, index, issue)
+      }}
+      on:dragover|preventDefault={() => false}
+      on:dragenter={() => (hoveringIndex = index)}
+      on:drop|preventDefault={(ev) => {
+        handleDrop(ev, index)
+      }}
+      on:dragend={resetDrag}
+    >
+      <div class="draggable-container">
+        <IconCircles size={'small'} />
+      </div>
+      <div class="flex-row-center ml-6 clear-mins gap-2">
+        {#if selectable}
+          <CheckBox
+            checked={doneRows.has(issue.id) || selected.includes(issue.id)}
+            readonly={doneRows.has(issue.id)}
+            on:value={() => {
+              toggle(issue.id)
+            }}
+          />
+        {/if}
+        <PriorityEditor
+          value={issue}
+          isEditable={!readonly}
+          kind={'list'}
+          size={'small'}
+          justify={'center'}
+          on:change={(evt) => {
+            dispatch('update-issue', { id: issue.id, priority: evt.detail })
+            issue.priority = evt.detail
+          }}
+        />
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <span
+          class="issuePresenter"
+          on:click={(evt) => {
+            openIssue(evt, issue)
+          }}
+        >
+          <FixedColumn key={'issue_template_issue'} justify={'left'}>
+            {getIssueTemplateId(currentProject, issue)}
+          </FixedColumn>
+        </span>
+        <span
+          class="text name"
+          title={issue.title}
+          on:click={(evt) => {
+            openIssue(evt, issue)
+          }}
+        >
+          {issue.title}
+        </span>
+      </div>
+      <div class="flex-center flex-no-shrink">
+        <!-- The selector has no readonly mode; in a frozen list there is nothing to pick. -->
+        {#if !readonly}
+          <TaskKindSelector
+            projectType={currentProject?.type}
+            kind={'link'}
+            bind:value={issue.kind}
+            baseClass={tracker.class.Issue}
+            on:change={(evt) => {
+              dispatch('update-issue', { id: issue.id, kind: evt.detail })
+              issue.kind = evt.detail
+            }}
+          />
+        {/if}
+        <EstimationEditor
+          kind={'link'}
+          size={'large'}
+          isEditable={!readonly}
+          bind:value={issue}
+          on:change={(evt) => {
+            dispatch('update-issue', { id: issue.id, estimation: evt.detail })
+            issue.estimation = evt.detail
+          }}
+        />
+        <AssigneeEditor
+          object={{ ...issue, space: project }}
+          {readonly}
+          on:change={(evt) => {
+            dispatch('update-issue', { id: issue.id, assignee: evt.detail })
+            issue.assignee = evt.detail
+          }}
+        />
+      </div>
     </div>
-    <div class="flex-row-center ml-6 clear-mins gap-2">
-      <PriorityEditor
-        value={issue}
-        isEditable
-        kind={'list'}
-        size={'small'}
-        justify={'center'}
-        on:change={(evt) => {
-          dispatch('update-issue', { id: issue.id, priority: evt.detail })
-          issue.priority = evt.detail
-        }}
-      />
-      <!-- svelte-ignore a11y-click-events-have-key-events -->
-      <span
-        class="issuePresenter"
-        on:click={(evt) => {
-          openIssue(evt, issue)
-        }}
-      >
-        <FixedColumn key={'issue_template_issue'} justify={'left'}>
-          {getIssueTemplateId(currentProject, issue)}
-        </FixedColumn>
-      </span>
-      <span
-        class="text name"
-        title={issue.title}
-        on:click={(evt) => {
-          openIssue(evt, issue)
-        }}
-      >
-        {issue.title}
-      </span>
-    </div>
-    <div class="flex-center flex-no-shrink">
-      <TaskKindSelector
-        projectType={currentProject?.type}
-        kind={'link'}
-        bind:value={issue.kind}
-        baseClass={tracker.class.Issue}
-        on:change={(evt) => {
-          dispatch('update-issue', { id: issue.id, kind: evt.detail })
-          issue.kind = evt.detail
-        }}
-      />
-      <EstimationEditor
-        kind={'link'}
-        size={'large'}
-        bind:value={issue}
-        on:change={(evt) => {
-          dispatch('update-issue', { id: issue.id, estimation: evt.detail })
-          issue.estimation = evt.detail
-        }}
-      />
-      <AssigneeEditor
-        object={{ ...issue, space: project }}
-        on:change={(evt) => {
-          dispatch('update-issue', { id: issue.id, assignee: evt.detail })
-          issue.assignee = evt.detail
-        }}
-      />
-    </div>
+    {#if showDescription && issue.description !== undefined && issue.description !== ''}
+      <div class="description">
+        <MessageViewer message={issue.description} />
+      </div>
+    {/if}
   </div>
 {/each}
 
 <style lang="scss">
+  .item {
+    border-bottom: 1px solid var(--theme-divider-color);
+
+    // Already created: visibly out of play, so a second run cannot pick it again.
+    &.done {
+      opacity: 0.6;
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .description {
+    padding: 0.25rem 1rem 0.75rem 4rem;
+    color: var(--theme-darker-color);
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
   .row {
     position: relative;
-    border-bottom: 1px solid var(--theme-divider-color);
 
     .text {
       font-weight: 500;

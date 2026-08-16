@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 import { type WorkspaceUuid } from '@hcengineering/core'
-import { type BillingDB, type BillingUsageMessage, type WorkspaceLimitState } from '../types'
+import { BillingMessageKind, type BillingDB, type BillingUsageMessage, type WorkspaceLimitState } from '../types'
 
 const getSubscriptionsMock = jest.fn()
 const collectDatalakeStatsMock = jest.fn()
@@ -34,6 +34,7 @@ jest.mock('@hcengineering/account-client', () => ({
     if (sub.status === 'trialing' && sub.trialEnd != null && sub.trialEnd < Date.now()) return false
     return ['active', 'trialing', 'past_due', 'readonly'].includes(sub.status)
   },
+  isFreePlan: (tier: any): boolean => tier === undefined || tier.provider === 'free' || tier.plan === 'free',
   SubscriptionType: { Tier: 'tier', Support: 'support', Package: 'package' },
   SubscriptionStatus: {
     Active: 'active',
@@ -51,17 +52,24 @@ jest.mock('@hcengineering/server-token', () => ({
 jest.mock('../billing', () => ({
   collectDatalakeStats: (...args: any[]) => collectDatalakeStatsMock(...args)
 }))
+// config validates env on import; limits.ts only reads the window fallback from it.
+jest.mock('../config', () => ({ __esModule: true, default: { WindowMonthLimit: 0 } }))
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { LimitsEngine } = require('../limits')
+const { LimitsEngine, grantPeriodAnchor, getPeriodStartDate } = require('../limits')
 
 const WS = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' as WorkspaceUuid
 const ctx: any = { info: jest.fn(), error: jest.fn(), warn: jest.fn() }
 
-function makeDb (tokensUsed = 0, participantMinutes = 0): BillingDB {
+function makeDb (tokensUsed = 0, participantMinutes = 0, balance?: any): BillingDB {
   const dedup = new Set<string>()
   const states = new Map<string, WorkspaceLimitState>()
+  let row = balance
   return {
+    getTokenBalance: jest.fn(async () => row),
+    updateTokenBalanceAbsorption: jest.fn(async (_c, _ws, remaining, absorbedUntil, absorbedPeriod, periodStart) => {
+      row = { ...row, remainingTokens: remaining, absorbedUntil, absorbedPeriod, periodStart }
+    }),
     accumulateUsageDelta: jest.fn(async (_c, ws, metric, _a, ref) => {
       const key = `${ws}:${metric}:${ref}`
       if (dedup.has(key)) return false
@@ -100,7 +108,7 @@ function makeEngine (db: BillingDB): any {
 }
 
 function msg (ref: string, amount = 1): BillingUsageMessage {
-  return { kind: 'usage', workspace: WS, metric: 'tokens', amount, ref }
+  return { kind: BillingMessageKind.Usage, workspace: WS, metric: 'tokens', amount, ref }
 }
 
 describe('LimitsEngine', () => {
@@ -180,9 +188,93 @@ describe('LimitsEngine', () => {
     expect(producer.send).not.toHaveBeenCalled()
   })
 
+  describe('purchased token balance', () => {
+    // Balance granted an hour before the period so the whole period's usage is absorbable.
+    function balanceRow (remaining: number, periodStart: Date): any {
+      return {
+        workspace: WS,
+        remainingTokens: remaining,
+        absorbedUntil: null,
+        absorbedPeriod: 0,
+        periodStart: periodStart.toISOString()
+      }
+    }
+
+    // recompute() anchors the period at the tier start; keep it in the past so usage falls inside.
+    function tierWithPeriod (tokenLimit: number): Date {
+      const periodStart = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+      getSubscriptionsMock.mockResolvedValue([
+        { type: 'tier', status: 'active', limits: { tokenLimit }, periodStart: periodStart.getTime() }
+      ])
+      return periodStart
+    }
+
+    it('spends the balance before the tier window', async () => {
+      const periodStart = tierWithPeriod(1000)
+      // 800 tokens used, 500 of them paid from the balance -> 300 charged to the tier window.
+      const db = makeDb(800, 0, balanceRow(500, periodStart))
+      const { engine } = makeEngine(db)
+
+      await engine.recomputeWorkspace(ctx, WS)
+
+      const state = await db.getLimitState(ctx, WS, 'tokens')
+      expect(state?.used).toBe(300)
+      expect(state?.exhausted).toBe(false)
+      const balance: any = await db.getTokenBalance(ctx, WS)
+      expect(balance.remainingTokens).toBe(0)
+      expect(balance.absorbedPeriod).toBe(500)
+    })
+
+    it('keeps serving on balance alone once the tier window is spent', async () => {
+      const periodStart = tierWithPeriod(1000)
+      // Tier window fully spent, but the balance still covers the overage -> not exhausted.
+      const db = makeDb(1000, 0, balanceRow(5000, periodStart))
+      const { engine, producer } = makeEngine(db)
+
+      await engine.recomputeWorkspace(ctx, WS)
+
+      const state = await db.getLimitState(ctx, WS, 'tokens')
+      expect(state?.exhausted).toBe(false)
+      expect(producer.send).not.toHaveBeenCalled()
+    })
+
+    it('exhausts only when both pools are empty', async () => {
+      const periodStart = tierWithPeriod(1000)
+      const db = makeDb(1200, 0, balanceRow(200, periodStart))
+      const { engine, producer } = makeEngine(db)
+
+      await engine.recomputeWorkspace(ctx, WS)
+
+      const state = await db.getLimitState(ctx, WS, 'tokens')
+      expect(state?.exhausted).toBe(true)
+      expect(producer.send).toHaveBeenCalledWith(
+        ctx,
+        WS,
+        expect.arrayContaining([expect.objectContaining({ category: 'tokens', status: 'exhausted' })])
+      )
+    })
+
+    it('restarts the absorbed counter on a new period but keeps the balance', async () => {
+      const periodStart = tierWithPeriod(1000)
+      // Balance row still carries last period's counters; only absorbedPeriod must reset.
+      const stale = balanceRow(400, new Date(periodStart.getTime() - 30 * 24 * 60 * 60 * 1000))
+      stale.absorbedPeriod = 900
+      const db = makeDb(500, 0, stale)
+      const { engine } = makeEngine(db)
+
+      await engine.recomputeWorkspace(ctx, WS)
+
+      const balance: any = await db.getTokenBalance(ctx, WS)
+      expect(balance.remainingTokens).toBe(0)
+      expect(balance.absorbedPeriod).toBe(400)
+      const state = await db.getLimitState(ctx, WS, 'tokens')
+      expect(state?.used).toBe(100)
+    })
+  })
+
   describe('meetingMinutes', () => {
     function minutesMsg (ref: string, amountSeconds: number): BillingUsageMessage {
-      return { kind: 'usage', workspace: WS, metric: 'meetingMinutes', amount: amountSeconds, ref }
+      return { kind: BillingMessageKind.Usage, workspace: WS, metric: 'meetingMinutes', amount: amountSeconds, ref }
     }
 
     it('enforces meetingMinutesLimit in seconds', async () => {
@@ -271,5 +363,81 @@ describe('LimitsEngine', () => {
     )
     expect(byCat.tokens).toBe(5)
     expect(byCat.transcript).toBe(5)
+  })
+})
+
+describe('window step notify (5% fill)', () => {
+  // windowMonthLimit 100 -> 5% step = 5 tokens; getAiTokensStats is stubbed to a fixed "current usage".
+  function tierWithWindow (tokenLimit: number, windowMonthLimit: number): void {
+    getSubscriptionsMock.mockResolvedValue([
+      { type: 'tier', status: 'active', limits: { tokenLimit, windowMonthLimit } }
+    ])
+  }
+
+  it('calls getSubscriptions exactly once per delta (no second account round trip)', async () => {
+    tierWithWindow(1000000, 100)
+    const db = makeDb(5) // usedNow = 5 -> step 1
+    const { engine } = makeEngine(db)
+
+    await engine.processUsageDelta(ctx, msg('r1', 5))
+
+    expect(getSubscriptionsMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('publishes LimitsChanged when the delta crosses a 5% step', async () => {
+    tierWithWindow(1000000, 100)
+    const db = makeDb(5) // absolute usage stub: stepNow = floor(5/5) = 1, stepPrev (usedNow-amount=0) = 0
+    const { engine, producer } = makeEngine(db)
+
+    await engine.processUsageDelta(ctx, msg('r1', 5))
+
+    expect(producer.send).toHaveBeenCalledWith(
+      ctx,
+      WS,
+      expect.arrayContaining([expect.objectContaining({ category: 'tokens', status: 'ok' })])
+    )
+  })
+
+  it('does not publish when the delta stays within the same 5% step', async () => {
+    tierWithWindow(1000000, 100)
+    const db = makeDb(51) // stepNow = floor(51/5) = 10, stepPrev (51-1=50) = floor(50/5) = 10
+    const { engine, producer } = makeEngine(db)
+
+    await engine.processUsageDelta(ctx, msg('r1', 1))
+
+    expect(producer.send).not.toHaveBeenCalled()
+  })
+})
+
+describe('getPeriodStartDate', () => {
+  // Usage lives in hourly buckets: a period starting at 18:19 must still count its own 18:00
+  // bucket, or every purchase silently loses up to an hour of spend from the window.
+  it('floors the period start to the hour', () => {
+    const start = getPeriodStartDate(Date.UTC(2026, 7, 16, 18, 19, 59, 123))
+    expect(start.getMinutes()).toBe(0)
+    expect(start.getSeconds()).toBe(0)
+    expect(start.getMilliseconds()).toBe(0)
+    expect(start.getHours()).toBe(new Date(Date.UTC(2026, 7, 16, 18, 19, 59)).getHours())
+  })
+
+  it('falls back to 30 days ago at midnight when the tier has no period', () => {
+    const start = getPeriodStartDate(undefined)
+    expect(start.getHours()).toBe(0)
+    expect(start.getMinutes()).toBe(0)
+  })
+})
+
+describe('grantPeriodAnchor (AI grant period)', () => {
+  it('anchors on the earliest active AI package so tier and package top up together', () => {
+    const pkgs = [
+      { periodStart: 5000, limits: { tokenLimit: 1000 } },
+      { periodStart: 3000, limits: { tokenLimit: 2000 } }
+    ]
+    expect(grantPeriodAnchor(1000, pkgs)).toBe(3000)
+  })
+  it('ignores non-token packages and falls back to the tier start', () => {
+    expect(grantPeriodAnchor(1000, [{ periodStart: 5000, limits: { storageLimitGB: 10 } }])).toBe(1000)
+    expect(grantPeriodAnchor(1000, [])).toBe(1000)
+    expect(grantPeriodAnchor(undefined, [])).toBeUndefined()
   })
 })

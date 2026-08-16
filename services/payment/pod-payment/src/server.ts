@@ -145,7 +145,16 @@ export async function createServer (
   // Publishes provider subscription events to the queue (durable, provider-agnostic). Required.
   publish: SubscriptionPublisher,
   // Best-effort ledger audit for direct (non-queue) writes like free/trial provisioning.
-  logOperation?: (ctx: MeasureContext, sub: SubscriptionData, canceled: boolean) => Promise<void>
+  logOperation?: (ctx: MeasureContext, sub: SubscriptionData, canceled: boolean) => Promise<void>,
+  // Announces a confirmed one-time purchase (generic) so the owning pod applies its SKU effect.
+  publishPurchaseActivated?: (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    sku: string,
+    purchaseId: string,
+    effect?: string,
+    quantity?: number
+  ) => Promise<void>
 ): Promise<{
     app: Express
     ensureInitialSubscription: (workspace: WorkspaceUuid) => Promise<void>
@@ -237,16 +246,24 @@ export async function createServer (
   const planConfig: any = (() => {
     try {
       const configPath = config.PlanConfig
-      if (configPath === undefined || configPath.length === 0) return { plans: {}, packages: {} }
+      if (configPath === undefined || configPath.length === 0) return { plans: {}, packages: {}, purchasables: {} }
       if (!existsSync(configPath)) {
         ctx.error('Plan config file not found', { path: configPath })
-        return { plans: {}, packages: {} }
+        return { plans: {}, packages: {}, purchasables: {} }
       }
       const content = readFileSync(configPath, 'utf-8')
-      return yaml.load(content)
+      const loaded = yaml.load(content) as any
+      // windowMonthLimit 0/missing means "unlimited" by convention — flag paid plans that forgot it.
+      for (const [name, item] of Object.entries<any>(loaded?.plans ?? {})) {
+        const isPaid = item?.free !== true && (item?.priceMonthlyPerUser != null || item?.priceMonthly != null)
+        if (isPaid && (item?.windowMonthLimit == null || item.windowMonthLimit === 0)) {
+          ctx.warn('paid plan has no windowMonthLimit configured, AI window will be unlimited', { plan: name })
+        }
+      }
+      return loaded
     } catch (err: any) {
       ctx.error('Failed to load plan config', { err })
-      return { plans: {}, packages: {} }
+      return { plans: {}, packages: {}, purchasables: {} }
     }
   })()
 
@@ -255,6 +272,8 @@ export async function createServer (
   })
 
   function resolveLimits (type: SubscriptionType, plan: string, quantity?: number): SubscriptionData['limits'] {
+    // Purchases grant no limit snapshot — their effect runs on activation, not as baked limits.
+    if (type === SubscriptionType.Purchase) return undefined
     const source = type === SubscriptionType.Package ? planConfig.packages : planConfig.plans
     const item = source?.[plan]
     if (item == null) return undefined
@@ -263,18 +282,35 @@ export async function createServer (
     // storagePerUserGB (e.g. free tier) -> disk scales with the seat budget; else fixed storageLimitGB.
     const storageLimitGB =
       item.storagePerUserGB != null ? usersLimit * item.storagePerUserGB : (item.storageLimitGB ?? 0)
+    // AI window: per-seat plans scale the token window by paid seats; flat plans (free) keep it fixed.
+    const baseWindow = item.windowMonthLimit ?? 0
+    const windowMonthLimit = isPerSeat && quantity != null ? baseWindow * quantity : baseWindow
     return {
       storageLimitGB,
       trafficLimitGB: item.trafficLimitGB ?? 0,
       meetingMinutesLimit: item.meetingMinutesLimit ?? 0,
       tokenLimit: item.tokenLimit ?? 0,
-      usersLimit
+      usersLimit,
+      windowMonthLimit,
+      tokenPackageMultiplier: item.tokenPackageMultiplier ?? 1
     }
+  }
+
+  // Token budget of a plan, for the downgrade gate: tier -> monthly window, package -> package quota.
+  function planTokenBudget (type: SubscriptionType, plan: string): number {
+    const item = (type === SubscriptionType.Package ? planConfig.packages : planConfig.plans)?.[plan]
+    if (item == null) return 0
+    return type === SubscriptionType.Package ? (item.tokenLimit ?? 0) : (item.windowMonthLimit ?? 0)
   }
 
   // Full price (kopecks) for a plan at the given seats/period (see computePlanPrice).
   function planFullPrice (type: SubscriptionType, plan: string, quantity: number, period?: BillingPeriod): number {
-    const source = type === SubscriptionType.Package ? planConfig.packages : planConfig.plans
+    const source =
+      type === SubscriptionType.Package
+        ? planConfig.packages
+        : type === SubscriptionType.Purchase
+          ? planConfig.purchasables
+          : planConfig.plans
     return computePlanPrice(source?.[plan], quantity, period === 'yearly')
   }
 
@@ -307,7 +343,42 @@ export async function createServer (
   // Both sync (HTTP user actions) and async (provider events via the Subscription queue) funnel through
   // here so limits are always baked consistently regardless of provider. Idempotent (account dedups by
   // provider + providerSubscriptionId), so queue replays are safe.
+  // A confirmed one-time purchase: record it, then announce PurchaseActivated so the owning
+  // pod (e.g. aibot) applies the SKU effect. Never touches the subscription table.
+  async function activatePurchase (data: SubscriptionData): Promise<void> {
+    // Dedup here by provider payment id: purchases never hit the subscription table,
+    // so the caller-side dedup does not cover the queue/poll redelivery of this call.
+    const existing = await accountClient.getPurchases(data.workspaceUuid)
+    const item = planConfig.purchasables?.[data.plan]
+    const dup = existing.find((p) => p.paymentId === data.providerSubscriptionId && p.provider === data.provider)
+    if (dup !== undefined) {
+      // Pod may have died between createPurchase and the publish below — republish until the
+      // consumer marks it consumed. Consumer (ai-bot) dedups by purchaseId, so a redundant publish is safe.
+      if (dup.status !== 'consumed' && dup.id !== undefined) {
+        await publishPurchaseActivated?.(ctx, data.workspaceUuid, data.plan, dup.id, item?.effect, item?.tokenLimit)
+      }
+      return
+    }
+    const category: string | undefined = item?.category
+    const id = await accountClient.createPurchase({
+      workspaceUuid: data.workspaceUuid,
+      accountUuid: data.accountUuid,
+      sku: data.plan,
+      category,
+      status: 'active',
+      amount: data.amount,
+      paymentId: data.providerSubscriptionId,
+      provider: data.provider,
+      raw: { providerData: data.providerData }
+    })
+    await publishPurchaseActivated?.(ctx, data.workspaceUuid, data.plan, id, item?.effect, item?.tokenLimit)
+  }
+
   async function persistSubscription (data: SubscriptionData): Promise<void> {
+    if (data.type === SubscriptionType.Purchase) {
+      await activatePurchase(data)
+      return
+    }
     await accountClient.upsertSubscription(attachLimits(data))
   }
 
@@ -509,7 +580,7 @@ export async function createServer (
     // Packages have prices too (priceMonthly); merge them so computeAmount finds package plans.
     provider = PaymentProviderFactory.getInstance().create(
       'mock',
-      { frontUrl: config.FrontUrl, plans: { ...planConfig.plans, ...planConfig.packages } },
+      { frontUrl: config.FrontUrl, plans: { ...planConfig.plans, ...planConfig.packages, ...planConfig.purchasables } },
       accountClient
     )
   }
@@ -628,6 +699,44 @@ export async function createServer (
             if (!isPackageEligible(request.plan, activeTierPlan)) {
               res.status(400).json({ error: 'Package not available on current plan' })
               return
+            }
+
+            // Cancel any active package of the same category before creating the new one.
+            // Storage and AI packages are independent slots; same-category replacement must not stack.
+            const requestedCategory: string = planConfig.packages?.[request.plan]?.category ?? 'storage'
+            const sameCategory = subscriptions.filter((s) => {
+              if (s.type !== SubscriptionType.Package || s.status !== SubscriptionStatus.Active) return false
+              if (s.plan === request.plan) return false
+              const cat: string = planConfig.packages?.[s.plan]?.category ?? 'storage'
+              return cat === requestedCategory
+            })
+            // Downgrade to a smaller token budget is only allowed with no active package: cancel the
+            // current one first (stays until period end), then subscribe to the smaller one.
+            const newBudget = planTokenBudget(SubscriptionType.Package, request.plan)
+            if (sameCategory.some((s) => planTokenBudget(SubscriptionType.Package, s.plan) > newBudget)) {
+              res
+                .status(400)
+                .json({ error: 'Switching to a smaller package is only allowed after cancelling the current one.' })
+              return
+            }
+            for (const existing of sameCategory) {
+              try {
+                if (existing.provider === config.Provider) {
+                  const canceled = await provider.cancelSubscription(ctx, existing.providerSubscriptionId)
+                  if (canceled !== null) {
+                    await persistSubscription(canceled)
+                  }
+                } else {
+                  const now = Date.now()
+                  await persistSubscription({ ...existing, status: SubscriptionStatus.Canceled, canceledAt: now })
+                }
+              } catch (err) {
+                // Must abort: proceeding to create a new package while the old one is still active
+                // at the provider would leave the client with two active packages, billed twice.
+                ctx.error('Failed to cancel same-category package', { plan: existing.plan, err })
+                relayProviderError(res, err, 'Failed to cancel current package before switching')
+                return
+              }
             }
           }
 
@@ -813,6 +922,16 @@ export async function createServer (
           }
 
           const targetIsFree = planConfig.plans?.[plan]?.free === true
+          // Downgrade to a smaller token budget only when nothing active: to go smaller, cancel the
+          // current plan (ends at period end) and subscribe fresh. Free is the cancel path, not a switch.
+          if (!targetIsFree && subscription.status === SubscriptionStatus.Active) {
+            if (planTokenBudget(subscription.type, plan) < planTokenBudget(subscription.type, subscription.plan)) {
+              res
+                .status(400)
+                .json({ error: 'Switching to a smaller plan is only allowed after cancelling the current one.' })
+              return
+            }
+          }
           if (targetIsFree) {
             try {
               // Downgrade to free is one user action: the paid cancel and the free activation share it.

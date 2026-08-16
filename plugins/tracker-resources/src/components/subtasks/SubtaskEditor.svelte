@@ -30,7 +30,7 @@
   import tracker from '../../plugin'
   import AssigneeEditor from '../issues/AssigneeEditor.svelte'
   import PriorityEditor from '../issues/PriorityEditor.svelte'
-  import EstimationEditor from './EstimationEditor.svelte'
+  import EstimationEditor from '../templates/EstimationEditor.svelte'
 
   export let projectId: Ref<Project>
   export let milestone: Ref<Milestone> | null = null

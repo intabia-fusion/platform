@@ -68,6 +68,7 @@ import { KanbanSwimLaneActions } from '@hcengineering/kanban'
 import ModificationDatePresenter from './components/issues/ModificationDatePresenter.svelte'
 import NotificationIssuePresenter from './components/issues/NotificationIssuePresenter.svelte'
 import PriorityEditor from './components/issues/PriorityEditor.svelte'
+import SubtaskSection from './components/subtasks/SubtaskSection.svelte'
 import PriorityFilterValuePresenter from './components/issues/PriorityFilterValuePresenter.svelte'
 import PriorityInlineEditor from './components/issues/PriorityInlineEditor.svelte'
 import PriorityPresenter from './components/issues/PriorityPresenter.svelte'
@@ -182,6 +183,7 @@ import EstimationValueEditor from './components/issues/timereport/EstimationValu
 import TimePresenter from './components/issues/timereport/TimePresenter.svelte'
 import { getTargetObjectFromUrl } from '@hcengineering/text-editor-resources'
 import contact from '@hcengineering/contact'
+import { createIssue } from './createIssue'
 
 export { default as AssigneeEditor } from './components/issues/AssigneeEditor.svelte'
 export { default as SubIssueList } from './components/issues/edit/SubIssueList.svelte'
@@ -189,6 +191,7 @@ export { default as IssueStatusIcon } from './components/issues/IssueStatusIcon.
 export { default as StatusPresenter } from './components/issues/StatusPresenter.svelte'
 
 export { activeProjects, CreateProject, IssuePresenter, PriorityEditor, StatusEditor, TitlePresenter }
+export { createIssue }
 
 export async function queryIssue<D extends Issue> (
   _class: Ref<Class<D>>,
@@ -418,6 +421,7 @@ async function openIssuesOfTaskType (taskType: TaskType): Promise<void> {
 
 export default async (): Promise<Resources> => ({
   component: {
+    SubtaskSection,
     NopeComponent,
     Issues,
     MyIssues,
@@ -511,6 +515,7 @@ export default async (): Promise<Resources> => ({
       await queryIssue(tracker.class.Issue, client, query, filter)
   },
   function: {
+    CreateIssue: createIssue,
     IssueIdentifierProvider: issueIdentifierProvider,
     IssueTitleProvider: issueTitleProvider,
     ComponentTitleProvider: getComponentTitle,

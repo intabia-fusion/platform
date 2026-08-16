@@ -54,13 +54,15 @@
     ticker
   } from '@hcengineering/ui'
   import { workbenchId } from '@hcengineering/workbench'
-  import { onDestroy } from 'svelte'
+  import { formatMinutes } from '@hcengineering/billing-resources'
+  import { onDestroy, onMount } from 'svelte'
 
   import adminRes from '../../plugin'
   import CreateWorkspaceDialog from '../CreateWorkspaceDialog.svelte'
   import WorkspaceDetails from '../WorkspaceDetails.svelte'
   import {
     getAccountClient,
+    getBillingClient,
     getRegionInfo,
     listWorkspacesPaged,
     loadPlanOptions,
@@ -97,7 +99,9 @@
     Name = '2',
     BackupDate = '3',
     BackupSize = '4',
-    LastVisit = '5'
+    LastVisit = '5',
+    Tokens = '6',
+    Minutes = '7'
   }
 
   let sortingRule = SortingRule.LastVisit
@@ -107,7 +111,9 @@
     [SortingRule.Name]: adminRes.string.SortName,
     [SortingRule.BackupDate]: adminRes.string.SortBackupDate,
     [SortingRule.BackupSize]: adminRes.string.SortBackupSize,
-    [SortingRule.LastVisit]: adminRes.string.SortLastVisit
+    [SortingRule.LastVisit]: adminRes.string.SortLastVisit,
+    [SortingRule.Tokens]: adminRes.string.SortTokens,
+    [SortingRule.Minutes]: adminRes.string.SortMinutes
   }
 
   // ButtonMenu.title takes a plain string, so translate the selected sort label
@@ -122,7 +128,9 @@
     [SortingRule.Name]: 'name',
     [SortingRule.BackupDate]: 'backupDate',
     [SortingRule.BackupSize]: 'backupSize',
-    [SortingRule.LastVisit]: 'lastVisit'
+    [SortingRule.LastVisit]: 'lastVisit',
+    [SortingRule.Tokens]: undefined,
+    [SortingRule.Minutes]: undefined
   }
 
   // Individual filters
@@ -193,6 +201,29 @@
   })
 
   let loadFailed = false
+
+  // Best-effort: billing may be unconfigured in the admin panel, columns just stay empty then.
+  let aiTokensByWs = new Map<string, number>()
+  let asrMinutesByWs = new Map<string, number>()
+
+  async function loadBillingUsage (): Promise<void> {
+    const billingClient = getBillingClient()
+    if (billingClient === null) return
+    try {
+      const [breakdown, transcript] = await Promise.all([
+        billingClient.getWorkspaceBreakdown(1000, 0),
+        billingClient.getTranscriptUsage('workspace')
+      ])
+      aiTokensByWs = new Map(breakdown.map((it) => [it.workspace, it.usedRolling30d]))
+      asrMinutesByWs = new Map(transcript.map((it) => [it.workspace ?? '', (it.durationSeconds ?? 0) / 60]))
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  onMount(() => {
+    void loadBillingUsage()
+  })
 
   const loadPage = reduceCalls(async (): Promise<void> => {
     const res = await listWorkspacesPaged({
@@ -265,7 +296,7 @@
     return false
   }
 
-  // Server returns the page filtered/sorted; page-local: inactive filter (live stats) and Activity sort
+  // Server returns the page filtered/sorted; page-local: inactive filter (live stats) and Activity/Tokens/Minutes sort
   $: sortedWorkspaces = workspaces
     .filter((it) => (showInactive ? isWorkspaceInactive(it, statsByWorkspace.get(it.uuid)) : true))
     .sort((a, b) => {
@@ -273,6 +304,12 @@
         const aStats = statsByWorkspace.get(a.uuid ?? '')
         const bStats = statsByWorkspace.get(b.uuid ?? '')
         return (bStats?.sessions?.length ?? 0) - (aStats?.sessions?.length ?? 0)
+      }
+      if (sortingRule === SortingRule.Tokens) {
+        return (aiTokensByWs.get(b.uuid ?? '') ?? 0) - (aiTokensByWs.get(a.uuid ?? '') ?? 0)
+      }
+      if (sortingRule === SortingRule.Minutes) {
+        return (asrMinutesByWs.get(b.uuid ?? '') ?? 0) - (asrMinutesByWs.get(a.uuid ?? '') ?? 0)
       }
       return 0
     })
@@ -419,6 +456,13 @@
         ? filteredRegionRef.name
         : filteredRegionRef.region
       : ''
+
+  function fmtTokens (n: number): string {
+    if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B'
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'k'
+    return `${n}`
+  }
 </script>
 
 <div class="anticrm-panel flex-row flex-grow" style:overflow-y={'auto'}>
@@ -705,6 +749,16 @@
                     {:else}
                       -
                     {/if}
+                  </div>
+                  <div
+                    class="label overflow-label p-1 flex flex-row-center"
+                    style:width={'6rem'}
+                    title="Rolling 30-day usage (not aligned to billing period)"
+                  >
+                    {fmtTokens(aiTokensByWs.get(workspace.uuid) ?? 0)}
+                  </div>
+                  <div class="label overflow-label p-1 flex flex-row-center" style:width={'6rem'}>
+                    {formatMinutes(asrMinutesByWs.get(workspace.uuid) ?? 0)}
                   </div>
                   <div class="label overflow-label flex flex-row-center" style:width={'5rem'}>
                     {workspace.processingAttempts}

@@ -20,6 +20,7 @@ import {
   type BlobMetadata,
   type Blob,
   type Class,
+  type Hierarchy,
   type TxOperations as Client,
   type Data,
   type Doc,
@@ -31,7 +32,7 @@ import {
 } from '@hcengineering/core'
 import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
 import { type FileOrBlob, getClient, getPreviewAlignment, uploadFile } from '@hcengineering/presentation'
-import { closeTooltip, showPopup, type PopupResult } from '@hcengineering/ui'
+import { closeTooltip, showPopup, type AnyComponent, type PopupResult } from '@hcengineering/ui'
 import view, { type AttributeApplierResult } from '@hcengineering/view'
 import workbench, { type WidgetTab } from '@hcengineering/workbench'
 
@@ -149,6 +150,18 @@ export async function openFilePreviewInSidebar (
 
 export function isAttachment (value: Attachment | BlobType): value is WithLookup<Attachment> {
   return (value as Attachment)._id !== undefined
+}
+
+// Subclasses of Attachment (e.g. voice-note) may register their own ObjectPresenter mixin to render instead.
+export function getCustomPresenter (hierarchy: Hierarchy, _class: Ref<Class<Doc>>): AnyComponent | undefined {
+  if (!hierarchy.hasClass(_class)) return undefined
+  const m = hierarchy.classHierarchyMixin(_class, view.mixin.ObjectPresenter)
+  // Only a class-specific override is used. The base Attachment presenter IS this component, so
+  // returning it would recurse infinitely - guard by its resource id.
+  if (m?.presenter === undefined || (m.presenter as string) === 'attachment:component:AttachmentPresenter') {
+    return undefined
+  }
+  return m.presenter
 }
 
 export function showAttachmentPreviewPopup (

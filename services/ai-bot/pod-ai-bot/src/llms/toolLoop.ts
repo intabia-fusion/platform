@@ -1,0 +1,192 @@
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+import type { TokenUsage, ToolCall, ToolResult, ToolDefinition } from './types'
+import type { ChatCompletionWithToolsReply } from './server'
+import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
+
+/**
+ * One round of asking the model: returns a final completion or new tool calls to execute.
+ * `noTools` forces a plain-text answer (tools withheld), used for the final round.
+ */
+export type AskModel = (
+  priorToolResults: ToolResult[],
+  noTools?: boolean,
+  // Text produced so far when the model hit its output cap: the round must continue it, not restart.
+  continueFrom?: string
+) => Promise<ChatCompletionWithToolsReply | undefined>
+
+// A cut-off answer is resumed at most this many times: enough for a long reply, bounded so a model
+// that keeps hitting the cap cannot spin (each round costs a full request).
+const MAX_CONTINUATIONS = 3
+
+// Max model<->tool round trips before we force a plain-text answer.
+export const MAX_TOOL_ITERATIONS = 8
+
+/** Execute a single tool call (on the pod, where WorkspaceClient context lives). */
+export type ExecuteTool = (call: ToolCall) => Promise<string>
+
+/** Serializable defs plus a local executor bound to the (non-serializable) runnable tools. */
+export interface ToolExecutor {
+  toolDefinitions: ToolDefinition[]
+  execute: ExecuteTool
+}
+
+/** Build serializable tool defs and a local executor from SDK-runnable tools (WorkspaceClient
+ * context is already bound into each tool's function closure by getTools). */
+export function buildToolExecutor (tools: RunnableTools<BaseFunctionsArgs>): ToolExecutor {
+  const toolDefinitions: ToolDefinition[] = tools.map((tool) => ({
+    name: tool.function.name ?? '',
+    description: tool.function.description ?? '',
+    parameters: (tool.function.parameters ?? {}) as Record<string, unknown>
+  }))
+
+  const executors = new Map<string, (args: any) => Promise<any> | any>()
+  for (const tool of tools) {
+    const name = tool.function.name
+    if (name !== undefined && name !== '') {
+      executors.set(name, tool.function.function as (args: any) => Promise<any> | any)
+    }
+  }
+
+  const execute: ExecuteTool = async (call) => {
+    const fn = executors.get(call.name)
+    if (fn === undefined) return `Error: unknown tool '${call.name}'`
+    let args: any = {}
+    try {
+      args = call.arguments === '' ? {} : JSON.parse(call.arguments)
+    } catch {
+      return `Error: invalid arguments for tool '${call.name}'`
+    }
+    try {
+      const res = await fn(args)
+      return typeof res === 'string' ? res : JSON.stringify(res)
+    } catch (err: any) {
+      return `Error executing tool '${call.name}': ${err?.message ?? String(err)}`
+    }
+  }
+
+  return { toolDefinitions, execute }
+}
+
+export interface ToolLoopResult {
+  completion?: string
+  usage?: TokenUsage
+  // The clisr worker that served the run (from the last reply that carried one). Empty for direct.
+  clientId?: string
+}
+
+/**
+ * Drive the model<->tool loop: the pod executes `toolCalls` via `execute` and resubmits until
+ * `completion` or `maxIterations`. Pure orchestration - `ask`/`execute` injected for testability.
+ */
+export async function runToolCalls (
+  ask: AskModel,
+  execute: ExecuteTool,
+  maxIterations: number
+): Promise<ToolLoopResult | undefined> {
+  const priorToolResults: ToolResult[] = []
+  let promptTokens = 0
+  let completionTokens = 0
+  let reasoningTokens = 0
+  let sawUsage = false
+  let lastContent: string | undefined
+  let clientId: string | undefined
+
+  const addUsage = (usage?: TokenUsage): void => {
+    if (usage === undefined) return
+    sawUsage = true
+    promptTokens += usage.promptTokens
+    completionTokens += usage.completionTokens
+    reasoningTokens += usage.reasoningTokens ?? 0
+  }
+  const usageResult = (): TokenUsage | undefined =>
+    sawUsage ? { promptTokens, completionTokens, ...(reasoningTokens > 0 ? { reasoningTokens } : {}) } : undefined
+
+  for (let iter = 0; iter < maxIterations; iter++) {
+    const reply = await ask(priorToolResults)
+    if (reply === undefined) {
+      return undefined
+    }
+
+    if (reply.clientId !== undefined && reply.clientId !== '') {
+      clientId = reply.clientId
+    }
+    addUsage(reply.usage)
+    if (reply.content !== undefined && reply.content !== '') {
+      lastContent = reply.content
+    }
+
+    const calls = reply.toolCalls ?? []
+    if (calls.length === 0) {
+      // Final answer, unless the model ran into its output cap: then keep asking for the rest and
+      // join it, so the user gets the whole answer instead of a sentence cut in half.
+      let completion = reply.content
+      if (reply.truncated === true && completion !== undefined && completion !== '') {
+        for (let cont = 0; cont < MAX_CONTINUATIONS; cont++) {
+          const more = await ask(priorToolResults, true, completion)
+          if (more?.content === undefined || more.content === '') break
+          addUsage(more.usage)
+          completion += more.content
+          if (more.truncated !== true) break
+        }
+      }
+      return {
+        completion,
+        usage: usageResult(),
+        clientId
+      }
+    }
+
+    // Execute the calls on the pod and keep every result: dropping earlier rounds would
+    // hide already-fetched data from the model.
+    priorToolResults.push(
+      ...(await Promise.all(
+        calls.map(async (call) => ({
+          id: call.id,
+          name: call.name,
+          arguments: call.arguments,
+          content: await execute(call)
+        }))
+      ))
+    )
+  }
+
+  // Exhausted iterations or stuck re-requesting the same tool: collapse results into one digest and
+  // ask again with tools withheld. `inline_` results must replay as plain text; keep native transcript otherwise.
+  const wasInline = priorToolResults.some((r) => r.id.startsWith('inline_'))
+  const digest: ToolResult[] =
+    priorToolResults.length > 0 && wasInline
+      ? [
+          {
+            id: 'inline_summary',
+            name: 'context',
+            arguments: '{}',
+            content: priorToolResults.map((r) => `[${r.name}]\n${r.content}`).join('\n\n')
+          }
+        ]
+      : priorToolResults
+  const final = await ask(digest, true)
+  if (final?.clientId !== undefined && final.clientId !== '') {
+    clientId = final.clientId
+  }
+  addUsage(final?.usage)
+  const completion = final?.content !== undefined && final.content !== '' ? final.content : lastContent
+  return {
+    completion,
+    usage: usageResult(),
+    clientId
+  }
+}

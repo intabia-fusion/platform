@@ -23,6 +23,7 @@ import {
   Data,
   Doc,
   Markup,
+  type TxOperations,
   Mixin,
   Ref,
   RelatedDocument,
@@ -459,6 +460,24 @@ export interface Component extends Doc {
 export const trackerId = 'tracker' as Plugin
 export * from './analytics'
 
+/** Input of the shared issue-creation helper (tracker.function.CreateIssue). */
+export interface NewIssue {
+  title: string
+  description?: Markup
+  priority?: IssuePriority
+  // Effort in hours, as the estimation editor shows it.
+  estimation?: number
+  assignee?: Ref<Person> | null
+  parent?: Issue
+}
+
+/** What the helper returns: enough to link to the created issue. */
+export interface CreatedIssue {
+  _id: Ref<Issue>
+  _class: Ref<Class<Issue>>
+  identifier: string
+}
+
 const pluginState = plugin(trackerId, {
   class: {
     Project: '' as Ref<Class<Project>>,
@@ -496,6 +515,7 @@ const pluginState = plugin(trackerId, {
     Canceled: '' as Ref<Status>
   },
   component: {
+    SubtaskSection: '' as AnyComponent,
     Tracker: '' as AnyComponent,
     TrackerApp: '' as AnyComponent,
     RelatedIssues: '' as AnyComponent,
@@ -605,6 +625,10 @@ const pluginState = plugin(trackerId, {
   },
   resolver: {
     Location: '' as Resource<(loc: Location) => Promise<ResolvedLocation | undefined>>
+  },
+  function: {
+    // Shared issue creation, so other plugins do not depend on tracker-resources (import cycle).
+    CreateIssue: '' as Resource<(client: TxOperations, project: Project, data: NewIssue) => Promise<CreatedIssue>>
   },
   string: {
     TrackerApplication: '' as IntlString,

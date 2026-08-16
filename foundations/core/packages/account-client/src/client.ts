@@ -65,6 +65,8 @@ import type {
   PaymentOperationStats,
   PaymentOperationFilter,
   PaymentMonthlyStats,
+  WorkspacePurchase,
+  WorkspacePurchaseStatus,
   SubscriptionInfo,
   UserProfile,
   WorkspaceInviteInfo,
@@ -343,6 +345,9 @@ export interface AccountClient {
   getPaymentOperationStats: (from: number, to: number) => Promise<PaymentOperationStats>
   getPaymentOperations: (filter: PaymentOperationFilter) => Promise<PaymentOperation[]>
   getPaymentMonthlyStats: (from: number, to: number) => Promise<PaymentMonthlyStats[]>
+  createPurchase: (purchase: WorkspacePurchase) => Promise<string>
+  updatePurchaseStatus: (id: string, status: WorkspacePurchaseStatus, activatedOn?: number) => Promise<void>
+  getPurchases: (workspaceUuid?: WorkspaceUuid) => Promise<WorkspacePurchase[]>
   getSubscriptionById: (subscriptionId: string) => Promise<Subscription | null>
   upsertSubscription: (subscription: SubscriptionUpsert) => Promise<void>
   upsertSubscriptionsBulk: (
@@ -1665,6 +1670,27 @@ class AccountClientImpl implements AccountClient {
     return await this._rpc({
       method: 'getPaymentMonthlyStats',
       params: { from, to }
+    })
+  }
+
+  async createPurchase (purchase: WorkspacePurchase): Promise<string> {
+    return await this._rpc({
+      method: 'createPurchase',
+      params: { purchase }
+    })
+  }
+
+  async updatePurchaseStatus (id: string, status: WorkspacePurchaseStatus, activatedOn?: number): Promise<void> {
+    await this._rpc({
+      method: 'updatePurchaseStatus',
+      params: { id, status, activatedOn }
+    })
+  }
+
+  async getPurchases (workspaceUuid?: WorkspaceUuid): Promise<WorkspacePurchase[]> {
+    return await this._rpc({
+      method: 'getPurchases',
+      params: { workspaceUuid }
     })
   }
 
