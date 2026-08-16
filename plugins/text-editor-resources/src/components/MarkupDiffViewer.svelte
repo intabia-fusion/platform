@@ -56,6 +56,7 @@
       decorateFailed = false
     } catch (err: unknown) {
       decorateFailed = true
+      console.error(`MarkupDiffViewer diff failed: ${err instanceof Error ? err.message : String(err)}`)
       Analytics.handleError(err instanceof Error ? err : new Error(String(err)))
     }
   }
@@ -109,6 +110,8 @@
         extensions: [kit, DecorationExtension],
         onContentError: ({ error, disableCollaboration }) => {
           disableCollaboration()
+          // Analytics swallows it; the console line is what tells which node the schema rejected.
+          console.error(`MarkupDiffViewer content error: ${error?.message ?? String(error)}`)
           Analytics.handleError(error)
           editorMountFailed = true
         },
@@ -119,6 +122,7 @@
       })
     } catch (err: unknown) {
       editorMountFailed = true
+      console.error(`MarkupDiffViewer mount failed: ${err instanceof Error ? err.message : String(err)}`)
       Analytics.handleError(err instanceof Error ? err : new Error(String(err)))
     }
   })

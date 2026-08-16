@@ -142,7 +142,9 @@ export default plugin(attachmentId, {
     Attachments: '' as IntlString,
     FileBrowser: '' as IntlString,
     OpenInWindow: '' as IntlString,
-    Embeddings: '' as IntlString
+    Embeddings: '' as IntlString,
+    Transcribing: '' as IntlString,
+    TranscriptionFailed: '' as IntlString
   },
   function: {
     AttachmentsApplier: '' as Resource<any>
