@@ -865,6 +865,10 @@ describe('hierarchy', () => {
     // Verify the attribute was updated
     const attr = hierarchy.findAttribute(core.class.Space, 'updatedAttr')
     expect(attr).toBeDefined()
+    // and is no longer reachable under the name it had before
+    expect(hierarchy.findAttribute(core.class.Space, 'testAttr')).toBeUndefined()
+    expect(hierarchy.getAllAttributes(core.class.Space).has('testAttr')).toBe(false)
+    expect(hierarchy.getOwnAttributes(core.class.Space).has('testAttr')).toBe(false)
   })
 
   it('should handle txRemoveDoc with Attribute', async () => {
