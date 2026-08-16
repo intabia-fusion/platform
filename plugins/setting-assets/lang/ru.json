@@ -220,7 +220,9 @@
     "ImportDocumentDescription": "Предоставляет пользователям возможность импортировать документы в рабочее пространство",
     "SelectUsers": "Выбрать пользователей",
     "ShowInTitle": "Показывать в заголовке",
-    "SpaceMembersOnly": "Только участники пространства"
+    "SpaceMembersOnly": "Только участники пространства",
+    "OverrideAttribute": "Переопределить атрибут",
+    "Required": "Обязательное"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Интеграция с {doc} была отключена",

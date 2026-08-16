@@ -249,7 +249,7 @@
         ...Array.from(weekNames.entries()).map((it) => ({ id: it[0].toString(), label: it[1] }))
       ]
       const savedFirstDayOfWeek = localStorage.getItem('firstDayOfWeek') ?? 'system'
-      selected = items[savedFirstDayOfWeek === 'system' ? 0 : $deviceInfo.firstDayOfWeek + 1].id
+      selected = items[savedFirstDayOfWeek === 'system' ? 0 : $deviceInfo.firstDayOfWeek + 1].id.toString()
     }
   )
 

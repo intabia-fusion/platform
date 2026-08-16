@@ -37,8 +37,10 @@ jest.mock('@hcengineering/workbench', () => ({}), { virtual: true })
 jest.mock('@hcengineering/view', () => ({}), { virtual: true })
 jest.mock('../components/AttachmentPreviewPopup.svelte', () => ({}), { virtual: true })
 
-import { calculateAttachmentDimensions, getImageDimensions, type AttachmentImageSize } from '../utils'
 import type { BlobMetadata } from '@hcengineering/core'
+
+import { type AttachmentImageSize } from '../types'
+import { calculateAttachmentDimensions, getImageDimensions } from '../utils'
 
 interface AttachmentDimensionTestCase {
   name: string

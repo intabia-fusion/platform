@@ -24,6 +24,7 @@
 
   export let value: Issue | AttachedData<Issue> | Issue[] | IssueDraft
   export let width: 'medium' | 'large' | 'full' = 'large'
+  export let draft = false
   export let kind: Ref<TaskType> | undefined
 
   const client = getClient()
@@ -77,30 +78,32 @@
   }
 
   async function onClose ({ detail: parentIssue }: CustomEvent<Issue | undefined | null>): Promise<void> {
-    const vv = Array.isArray(value) ? value : [value]
-    for (const docValue of vv) {
-      if (
-        '_class' in docValue &&
-        parentIssue !== undefined &&
-        parentIssue?._id !== docValue.attachedTo &&
-        parentIssue?._id !== docValue._id
-      ) {
-        let rank: Rank | null = null
+    if (!draft) {
+      const vv = Array.isArray(value) ? value : [value]
+      for (const docValue of vv) {
+        if (
+          '_class' in docValue &&
+          parentIssue !== undefined &&
+          parentIssue?._id !== docValue.attachedTo &&
+          parentIssue?._id !== docValue._id
+        ) {
+          let rank: Rank | null = null
 
-        if (parentIssue) {
-          const lastAttachedIssue = await client.findOne<Issue>(
-            tracker.class.Issue,
-            { attachedTo: parentIssue._id },
-            { sort: { rank: SortingOrder.Descending } }
-          )
+          if (parentIssue) {
+            const lastAttachedIssue = await client.findOne<Issue>(
+              tracker.class.Issue,
+              { attachedTo: parentIssue._id },
+              { sort: { rank: SortingOrder.Descending } }
+            )
 
-          rank = makeRank(lastAttachedIssue?.rank, undefined)
+            rank = makeRank(lastAttachedIssue?.rank, undefined)
+          }
+
+          await client.update(docValue, {
+            attachedTo: parentIssue === null ? tracker.ids.NoParent : parentIssue._id,
+            ...(rank ? { rank } : {})
+          })
         }
-
-        await client.update(docValue, {
-          attachedTo: parentIssue === null ? tracker.ids.NoParent : parentIssue._id,
-          ...(rank ? { rank } : {})
-        })
       }
     }
 

@@ -47,14 +47,18 @@ import DrawingPresenter from './components/DrawingPresenter.svelte'
 import LinkPreview from './components/LinkPreview.svelte'
 import LinkPreviewCard from './components/LinkPreviewCard.svelte'
 import AttachmentSimplePreview from './components/AttachmentSimplePreview.svelte'
+import DraftAttachmentsEditor from './components/DraftAttachmentsEditor.svelte'
+import { attachmentsApplier } from './utils'
 
 export * from './types'
 export * from './stores'
+export * from './utils'
 
 export {
   AccordionEditor,
   AddAttachment,
   AttachmentDocList,
+  DraftAttachmentsEditor,
   AttachmentDroppable,
   AttachmentGalleryPresenter,
   AttachmentList,
@@ -267,6 +271,7 @@ export default async (): Promise<Resources> => ({
     AttachmentPresenter,
     AttachmentGalleryPresenter,
     Attachments,
+    DraftAttachmentsEditor,
     DrawingPresenter,
     FileBrowser,
     Photos,
@@ -282,6 +287,9 @@ export default async (): Promise<Resources> => ({
     AddAttachmentToSaved,
     DeleteAttachmentFromSaved,
     DeleteAttachment
+  },
+  function: {
+    AttachmentsApplier: attachmentsApplier
   }
 })
 

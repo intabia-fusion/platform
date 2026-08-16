@@ -20,7 +20,8 @@
   import { Blurhash, devicePixelRatioStore } from '@hcengineering/ui'
 
   import BrokenImage from './icons/BrokenImage.svelte'
-  import { AttachmentImageSize, calculateAttachmentDimensions } from '../utils'
+  import { calculateAttachmentDimensions } from '../utils'
+  import { AttachmentImageSize } from '../types'
 
   export let value: WithLookup<Attachment> | BlobType
   export let size: AttachmentImageSize = 'auto'

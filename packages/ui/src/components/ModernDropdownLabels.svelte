@@ -13,58 +13,71 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IntlString, Asset } from '@hcengineering/platform'
-  import { createEventDispatcher, ComponentType } from 'svelte'
+  import { type IntlString } from '@hcengineering/platform'
+  import { createEventDispatcher } from 'svelte'
 
-  import type { AnySvelteComponent, DropdownTextItem, IconSize, TooltipAlignment } from '../types'
+  import { getFocusManager } from '../focus'
   import ui from '../plugin'
   import { showPopup } from '../popups'
-  import { getFocusManager } from '../focus'
-  import ModernButton from './ModernButton.svelte'
+  import type {
+    ButtonBaseKind,
+    ButtonBaseSize,
+    DropdownTextItem,
+    IconComponent,
+    IconSize,
+    TooltipAlignment
+  } from '../types'
   import ButtonIcon from './ButtonIcon.svelte'
-  import ModernPopupLabels from './ModernPopupLabels.svelte'
-  import Label from './Label.svelte'
   import Icon from './Icon.svelte'
   import DropdownIcon from './icons/Dropdown.svelte'
+  import Label from './Label.svelte'
+  import ModernButton from './ModernButton.svelte'
+  import ModernPopupLabels from './ModernPopupLabels.svelte'
 
-  export let icon: Asset | AnySvelteComponent | ComponentType | undefined = undefined
+  export let icon: IconComponent | undefined = undefined
   export let label: IntlString | undefined = undefined
   export let placeholder: IntlString | undefined = ui.string.SearchDots
-  export let items: DropdownTextItem[]
-  export let multiselect = false
-  export let wrap = false
+  export let items: DropdownTextItem[] = []
+  export let multiselect: boolean = false
+  export let wrap: boolean = false
   export let selected: DropdownTextItem['id'] | Array<DropdownTextItem['id']> | undefined = multiselect ? [] : undefined
   export let allowDeselect: boolean = false
   export let showDropdownIcon: boolean = false
   export let showContent: boolean = true
 
   export let dataId: string | undefined = undefined
-  export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' = 'secondary'
-  export let size: 'small' | 'medium' | 'large' = 'large'
+  export let kind: ButtonBaseKind = 'secondary'
+  export let size: ButtonBaseSize = 'large'
   export let iconSize: IconSize | undefined = undefined
   export let justify: 'left' | 'center' = 'center'
   export let width: string | undefined = undefined
   export let labelDirection: TooltipAlignment | undefined = undefined
-  export let focusIndex = -1
+  export let focusIndex: number = -1
   export let autoSelect: boolean = true
-  export let useFlexGrow = false
-  export let minW0 = true
+  export let useFlexGrow: boolean = false
+  export let minW0: boolean = true
   export let disabled: boolean = false
   export let loading: boolean = false
   export let enableSearch: boolean = true
+
+  const dispatch = createEventDispatcher<{
+    selected: DropdownTextItem['id'] | Array<DropdownTextItem['id']> | undefined
+  }>()
+  const mgr = getFocusManager()
 
   let container: HTMLElement
   let opened: boolean = false
 
   $: selectedItem = multiselect
-    ? (items ?? []).filter((p) => selected?.includes(p.id))
+    ? (items ?? []).filter((p) => (Array.isArray(selected) ? selected?.includes(p.id) : p.id === selected))
     : (items ?? []).find((x) => x.id === selected)
-  $: if (autoSelect && selected === undefined && items?.[0] !== undefined) {
-    selected = multiselect ? [items?.[0]?.id] : items?.[0]?.id
-  }
 
-  const dispatch = createEventDispatcher()
-  const mgr = getFocusManager()
+  $: fallbackLabel = label ?? placeholder ?? ui.string.NotSelected
+  $: computedWidth = width ?? (wrap ? '100%' : 'min-content')
+
+  $: if (autoSelect && selected === undefined && items?.[0] !== undefined) {
+    selected = multiselect ? [items[0].id] : items[0].id
+  }
 
   function handleClick (): void {
     if (!opened) {
@@ -105,7 +118,7 @@
   class:flex-grow={useFlexGrow}
   class:multiselect-wrap={wrap}
   class:icon-only={!showContent}
-  style:width={width ?? (wrap ? '100%' : 'min-content')}
+  style:width={computedWidth}
 >
   {#if showContent}
     <ModernButton
@@ -131,17 +144,17 @@
             <slot name="content" />
           {:else if Array.isArray(selectedItem)}
             {#if selectedItem.length > 0}
-              {#each selectedItem as seleceted}
+              {#each selectedItem as item (item.id)}
                 <span class="step-row flex-row-center flex-gap-1">
-                  {#if seleceted.icon}
-                    <Icon icon={seleceted.icon} size="small" iconProps={seleceted.iconProps} />
+                  {#if item.icon}
+                    <Icon icon={item.icon} size="small" iconProps={item.iconProps} />
                   {/if}
-                  {seleceted.label}
+                  {item.label}
                 </span>
               {/each}
             {:else}
               <span class="placeholder-text">
-                <Label label={label ?? placeholder ?? ui.string.NotSelected} />
+                <Label label={fallbackLabel} />
               </span>
             {/if}
           {:else if selectedItem}
@@ -153,7 +166,7 @@
             </span>
           {:else}
             <span class="placeholder-text">
-              <Label label={label ?? placeholder ?? ui.string.NotSelected} />
+              <Label label={fallbackLabel} />
             </span>
           {/if}
         </span>
@@ -249,6 +262,7 @@
       padding-top: 0.25rem !important;
       padding-bottom: 0.25rem !important;
     }
+
     :global(.overflow-label) {
       white-space: normal !important;
       overflow: visible !important;
@@ -258,8 +272,10 @@
       align-items: center;
       gap: 0.25rem 0.5rem;
     }
+
     .step-row + .step-row {
       margin-left: 0;
+
       &::before {
         display: none;
       }

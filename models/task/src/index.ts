@@ -58,12 +58,14 @@ import { createPublicLinkAction } from '@hcengineering/model-guest'
 import view, {
   classPresenter,
   createAction,
+  createAttributePresenter,
   template,
   actionTemplates as viewTemplates
 } from '@hcengineering/model-view'
 import { getEmbeddedLabel, type Asset, type IntlString, type Resource } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
 import tags from '@hcengineering/tags'
+import workflow from '@hcengineering/workflow'
 import {
   type KanbanCard,
   type Project,
@@ -128,7 +130,7 @@ export class TTask extends TAttachedDoc implements Task {
   @Prop(Collection(tags.class.TagReference, task.string.TaskLabels), task.string.TaskLabels)
     labels?: number
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  @Prop(Collection(chunter.class.ChatMessage, chunter.string.Comment), chunter.string.Comments)
     comments?: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
@@ -281,6 +283,12 @@ export function createModel (builder: Builder): void {
   builder.mixin(task.class.Task, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: view.component.ObjectPresenter
   })
+
+  builder.mixin(task.class.Task, core.class.Class, view.mixin.AttributePresenter, {
+    presenter: task.component.TaskPresenter
+  })
+
+  createAttributePresenter(builder, task.component.TaskPresenter, task.class.Task, 'attachedTo', 'attribute')
 
   builder.mixin(task.class.ProjectType, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: task.component.KanbanTemplatePresenter
@@ -504,14 +512,21 @@ export function createModel (builder: Builder): void {
         component: task.component.ProjectTypeTasksTypeSectionEditor
       },
       {
-        id: 'automations',
-        label: setting.string.Automations,
-        component: task.component.ProjectTypeAutomationsSectionEditor
+        id: 'screens',
+        label: workflow.string.Screens,
+        component: workflow.component.ProjectTypeScreensSectionEditor
+      },
+      {
+        id: 'workflows',
+        label: workflow.string.Workflows,
+        component: workflow.component.ProjectTypeWorkflowsSectionEditor
       }
     ],
     subEditors: {
       taskTypes: task.component.TaskTypeEditor,
-      roles: setting.component.RoleEditor
+      roles: setting.component.RoleEditor,
+      workflows: workflow.component.WorkflowEditor,
+      screens: workflow.component.ScreenEditor
     }
   })
 

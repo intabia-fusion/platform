@@ -16,7 +16,7 @@
 <script lang="ts">
   import core, { Class, ClassifierKind, Data, Ref, RefTo, Status, generateId, toIdMap } from '@hcengineering/core'
   import { IntlString, Resource, getEmbeddedLabel, getResource } from '@hcengineering/platform'
-  import presentation, { MessageBox, getClient, hasResource } from '@hcengineering/presentation'
+  import presentation, { getClient, hasResource } from '@hcengineering/presentation'
   import {
     ProjectType,
     ProjectTypeDescriptor,
@@ -26,19 +26,10 @@
     createState,
     findStatusAttr
   } from '@hcengineering/task'
-  import {
-    DropdownIntlItem,
-    Icon,
-    IconError,
-    Modal,
-    ModernEditbox,
-    Label,
-    ButtonMenu,
-    Toggle,
-    showPopup
-  } from '@hcengineering/ui'
-  import task from '../../plugin'
+  import { DropdownIntlItem, Icon, IconError, Modal, ModernEditbox, Label, ButtonMenu, Toggle } from '@hcengineering/ui'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
+
+  import task from '../../plugin'
   import TaskTypeRefEditor from './TaskTypeRefEditor.svelte'
 
   const client = getClient()
@@ -249,7 +240,7 @@
           icon={taskTypeDescriptor.icon}
           label={taskTypeDescriptor.name}
           kind="secondary"
-          size="large"
+          size="medium"
           on:selected={(evt) => {
             if (evt.detail != null) {
               const tt = taskTypeDescriptors.find((tt) => tt._id === evt.detail)

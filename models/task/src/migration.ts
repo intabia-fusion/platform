@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -684,6 +685,36 @@ export const taskOperation: MigrateOperation = {
               }
             } finally {
               await iterator.close()
+            }
+          }
+        }
+      },
+      {
+        state: 'sync-task-type-target-class-icon-v1',
+        mode: 'upgrade',
+        func: async (client: MigrationClient) => {
+          const taskTypes = await client.model.findAll(task.class.TaskType, {})
+
+          for (const tt of taskTypes) {
+            if (tt.icon != null || tt.color != null) {
+              const classTxes = await client.find<TxCreateDoc<Class<Doc>>>(DOMAIN_MODEL_TX, {
+                _class: core.class.TxCreateDoc,
+                objectClass: core.class.Class,
+                objectId: tt.targetClass
+              })
+              for (const classTx of classTxes) {
+                await client.update(
+                  DOMAIN_MODEL_TX,
+                  { _id: classTx._id },
+                  {
+                    attributes: {
+                      ...classTx.attributes,
+                      icon: tt.icon ?? classTx.attributes.icon,
+                      color: tt.color ?? classTx.attributes.color
+                    }
+                  }
+                )
+              }
             }
           }
         }

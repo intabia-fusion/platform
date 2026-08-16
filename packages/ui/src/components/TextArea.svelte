@@ -28,6 +28,7 @@
   export let placeholderParam: any | undefined = undefined
   export let noFocusBorder: boolean = false
   export let disabled: boolean = false
+  export let wrap: 'soft' | 'hard' | 'off' = 'off'
 
   let input: HTMLTextAreaElement
   let phTranslate: string = ''
@@ -47,7 +48,8 @@
     bind:value
     bind:this={input}
     {disabled}
-    wrap="off"
+    {wrap}
+    class:wrap-soft={wrap !== 'off'}
     placeholder={phTranslate}
     on:keydown
     on:change
@@ -92,6 +94,10 @@
       resize: none;
       scrollbar-width: thin;
       scrollbar-color: var(--scrollbar-bar-color) transparent;
+
+      &.wrap-soft {
+        white-space: pre-wrap;
+      }
 
       &::-webkit-scrollbar {
         width: 8px;

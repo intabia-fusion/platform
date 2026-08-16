@@ -21,6 +21,7 @@ import { type ProjectType, type TaskType } from '@hcengineering/task'
 import tracker, { trackerId, type IssueDraft, type Issue } from '@hcengineering/tracker'
 import { type AnyComponent, type ComponentExtensionId, type Location } from '@hcengineering/ui/src/types'
 import {
+  type AttributeApplierFn,
   type CreateAggregationManagerFunc,
   type GetAllValuesFunc,
   type GrouppingManagerResource,
@@ -114,6 +115,7 @@ export default mergeIds(trackerId, tracker, {
     DefaultIssueStatus: '' as IntlString,
     IssueStatus: '' as IntlString,
     EditWorkflowStatuses: '' as IntlString,
+    Configured: '' as IntlString,
     EditProject: '' as IntlString,
     DeleteProject: '' as IntlString,
     DeleteIssue: '' as IntlString,
@@ -397,6 +399,7 @@ export default mergeIds(trackerId, tracker, {
     IssueStatusIcon: '' as AnyComponent,
     MilestoneStatusIcon: '' as AnyComponent,
     ParentIssuePresenter: '' as AnyComponent,
+    ParentIssueSelector: '' as AnyComponent,
     RemoveRelationButton: '' as AnyComponent
   },
   extensions: {
@@ -429,7 +432,8 @@ export default mergeIds(trackerId, tracker, {
     GetIssueStatusCategories: '' as Resource<(project: ProjectType) => Array<Ref<StatusCategory>>>,
     GetIssueIdByIdentifier: '' as Resource<(id: string) => Promise<Ref<Issue> | undefined>>,
     OpenIssuesOfTaskType: '' as Resource<(taskType: TaskType) => Promise<void>>,
-    FormatIssueMarkdownValue: '' as Resource<ValueFormatter>
+    FormatIssueMarkdownValue: '' as Resource<ValueFormatter>,
+    ReportedTimeApplier: '' as Resource<AttributeApplierFn>
   },
   aggregation: {
     CreateComponentAggregationManager: '' as CreateAggregationManagerFunc,

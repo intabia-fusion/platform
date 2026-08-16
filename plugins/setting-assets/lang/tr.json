@@ -220,6 +220,8 @@
     "SelectUsers": "Kullanıcıları seç",
     "ShowInTitle": "Başlıkta göster",
     "SpaceMembersOnly": "Yalnızca alan üyeleri",
+    "OverrideAttribute": "Özniteliği geçersiz kıl",
+    "Required": "Zorunlu",
     "Reset": "Sıfırla"
   },
   "emailTemplate": {

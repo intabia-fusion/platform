@@ -26,7 +26,8 @@
 
   let label = ''
 
-  $: hours = floorFractionDigits(value, 3)
+  $: safeValue = typeof value === 'number' && !isNaN(value) ? value : 0
+  $: hours = floorFractionDigits(safeValue, 3)
 
   $: void getLabel(hours, $themeStore.language, $useShowDaysStore)
 

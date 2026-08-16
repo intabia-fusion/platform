@@ -79,6 +79,7 @@ import StatusFilterValuePresenter from './components/issues/StatusFilterValuePre
 import StatusPresenter from './components/issues/StatusPresenter.svelte'
 import TitlePresenter from './components/issues/TitlePresenter.svelte'
 import ParentIssuePresenter from './components/issues/ParentIssuePresenter.svelte'
+import ParentIssueSelector from './components/issues/ParentIssueSelector.svelte'
 import LabelsView from './components/LabelsView.svelte'
 import EditMilestone from './components/milestones/EditMilestone.svelte'
 import MilestoneDatePresenter from './components/milestones/MilestoneDatePresenter.svelte'
@@ -154,6 +155,7 @@ import {
   issueStatusSort,
   milestoneSort,
   moveIssuesToAnotherMilestone,
+  reportedTimeApplier,
   subIssueQuery
 } from './utils'
 
@@ -500,6 +502,7 @@ export default async (): Promise<Resources> => ({
     IssueStatusPresenter,
     LabelsView,
     ParentIssuePresenter,
+    ParentIssueSelector,
     TimeSpendReportList,
     RemoveRelationButton
   },
@@ -537,7 +540,8 @@ export default async (): Promise<Resources> => ({
     SetComponentStore: setStore,
     ComponentFilterFunction: filterComponents,
     OpenIssuesOfTaskType: openIssuesOfTaskType,
-    FormatIssueMarkdownValue: formatIssueValue
+    FormatIssueMarkdownValue: formatIssueValue,
+    ReportedTimeApplier: reportedTimeApplier
   },
   actionImpl: {
     Move: move,

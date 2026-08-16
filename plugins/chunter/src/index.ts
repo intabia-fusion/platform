@@ -149,6 +149,7 @@ export default plugin(chunterId, {
     EditUpdate: '' as IntlString,
     EditCancel: '' as IntlString,
     Comments: '' as IntlString,
+    Comment: '' as IntlString,
     Settings: '' as IntlString,
     ArchiveChannel: '' as IntlString,
     UnarchiveChannel: '' as IntlString,

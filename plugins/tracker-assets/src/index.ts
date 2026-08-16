@@ -52,6 +52,7 @@ loadMetadata(tracker.icon, {
   PriorityHigh: `${icons}#priority-high`,
   PriorityMedium: `${icons}#priority-medium`,
   PriorityLow: `${icons}#priority-low`,
+  Priority: `${icons}#priority`,
 
   ComponentsList: `${icons}#list`,
 

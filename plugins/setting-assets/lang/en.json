@@ -220,7 +220,9 @@
     "ImportDocumentDescription": "Grants users ability to import documents into the workspace",
     "SelectUsers": "Select users",
     "ShowInTitle": "Show in title",
-    "SpaceMembersOnly": "Space members only"
+    "SpaceMembersOnly": "Space members only",
+    "OverrideAttribute": "Override attribute",
+    "Required": "Required"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

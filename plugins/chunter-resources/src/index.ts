@@ -95,12 +95,14 @@ import {
   canSummarizeMessages,
   DirectLabelProvider,
   forwardMessage,
-  replyToMessage
+  replyToMessage,
+  CommentsApplier
 } from './utils'
 import DeleteMessageConfirmationPopup from './components/DeleteMessageConfirmationPopup.svelte'
 
 export { default as ChannelEmbeddedContent } from './components/ChannelEmbeddedContent.svelte'
 export { default as ChatMessageInput } from './components/chat-message/ChatMessageInput.svelte'
+export { default as ChatMessageInputLite } from './components/chat-message/ChatMessageInputLite.svelte'
 export { default as ChatMessagePopup } from './components/chat-message/ChatMessagePopup.svelte'
 export { default as ChatMessagesPresenter } from './components/chat-message/ChatMessagesPresenter.svelte'
 export { default as Header } from './components/Header.svelte'
@@ -206,6 +208,7 @@ export default async (): Promise<Resources> => ({
     MembersChangedMessage
   },
   function: {
+    CommentsApplier,
     GetDmName: getDmName,
     ChunterBrowserVisible: chunterBrowserVisible,
     GetFragment: getTitle,

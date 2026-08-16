@@ -20,7 +20,6 @@ import core, {
   Class,
   Collaborator,
   Doc,
-  parseSocialIdString,
   PersonId,
   type Ref,
   SocialId,
@@ -30,8 +29,11 @@ import core, {
 } from '@hcengineering/core'
 
 export async function getCurrentPerson (control: TriggerControl): Promise<Person | undefined> {
-  const { type, value } = parseSocialIdString(control.txFactory.account)
-  const socialIdentity = (await control.findAll(control.ctx, contact.class.SocialIdentity, { type, value }))[0]
+  const socialIdentity = (
+    await control.findAll(control.ctx, contact.class.SocialIdentity, {
+      _id: control.ctx.contextData.account.primarySocialId as SocialIdentityRef
+    })
+  )[0]
 
   if (socialIdentity === undefined) {
     return undefined
