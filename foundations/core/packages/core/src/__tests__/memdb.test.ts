@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 
+import { PlatformError } from '@hcengineering/platform'
 import { type Client, type DomainParams, type DomainRequestOptions, type DomainResult } from '..'
 import type { Class, Doc, Obj, OperationDomain, Ref, Space } from '../classes'
 import core from '../component'
@@ -28,8 +29,8 @@ import {
   SortingOrder,
   type WithLookup
 } from '../storage'
-import { type Tx } from '../tx'
-import { createDoc, genMinModel, test, type TestMixin } from './minmodel'
+import { TxFactory, type Tx } from '../tx'
+import { createDoc, deleteDoc, genMinModel, test, updateDoc, type TestMixin } from './minmodel'
 
 const txes = genMinModel()
 
@@ -442,6 +443,85 @@ describe('memdb', () => {
     ).toEqual(third)
   })
 
+  it('check reverse associations', async () => {
+    const { model } = await createModel()
+    const operations = new TxOperations(model, core.account.System)
+    const association = await operations.findOne(core.class.Association, {})
+    if (association == null) {
+      throw new Error('Association not found')
+    }
+
+    const spaces = await operations.findAll(core.class.Space, {})
+    const first = await operations.addCollection(
+      test.class.TestComment,
+      core.space.Model,
+      spaces[0]._id,
+      spaces[0]._class,
+      'comments',
+      { message: 'msg' }
+    )
+    const second = await operations.addCollection(
+      test.class.TestComment,
+      core.space.Model,
+      first,
+      test.class.TestComment,
+      'comments',
+      { message: 'msg2' }
+    )
+
+    await operations.createDoc(core.class.Relation, '' as Ref<Space>, {
+      docA: first,
+      docB: second,
+      association: association._id
+    })
+
+    // direction -1 walks the relation from docB back to docA
+    const r = await operations.findAll(
+      test.class.TestComment,
+      { _id: second },
+      { associations: [[association._id, -1]] }
+    )
+    expect(r.length).toEqual(1)
+    expect((r[0].$associations?.[association._id + '_a'][0] as any)?._id).toEqual(first)
+  })
+
+  it('association lookup should skip an unknown association', async () => {
+    const { model } = await createModel()
+    const operations = new TxOperations(model, core.account.System)
+    const spaces = await operations.findAll(core.class.Space, {})
+    const first = await operations.addCollection(
+      test.class.TestComment,
+      core.space.Model,
+      spaces[0]._id,
+      spaces[0]._class,
+      'comments',
+      { message: 'msg' }
+    )
+
+    const bogusAssoc = 'association:bogus' as any
+    const r = await operations.findAll(test.class.TestComment, { _id: first }, { associations: [[bogusAssoc, 1]] })
+    expect(r.length).toEqual(1)
+    expect(r[0].$associations?.[`${bogusAssoc}_b`]).toBeUndefined()
+  })
+
+  it('findAll should treat an explicit null _id as no match', async () => {
+    const { model } = await createModel()
+    const result = await model.findAll(core.class.Class, { _id: null as any })
+    expect(result.length).toBe(0)
+  })
+
+  it('findAllSync should treat an explicit null _id as no match', async () => {
+    const { model } = await createModel()
+    const result = model.findAllSync(core.class.Class, { _id: null as any })
+    expect(result.length).toBe(0)
+  })
+
+  it('findAllSync should honor sort options', async () => {
+    const { model } = await createModel()
+    const asc = model.findAllSync(core.class.Space, {}, { sort: { name: SortingOrder.Ascending } })
+    expect(asc[0].name).toBe('Sp1')
+  })
+
   it('lookups', async () => {
     const { model } = await createModel()
 
@@ -609,5 +689,147 @@ describe('memdb', () => {
     )
     expect(results).toHaveLength(1)
     expect((results[0].$lookup as any)?.comments).toHaveLength(0)
+  })
+
+  it('getObject should throw PlatformError for a non-existent document', async () => {
+    const { model } = await createModel()
+
+    expect(() => model.getObject('space:bogus' as Ref<Doc>)).toThrow(PlatformError)
+  })
+
+  it('reverse lookup should support the [class, field] array form', async () => {
+    const { model } = await createModel()
+
+    const client = new TxOperations(model, core.account.System)
+    const spaces = await client.findAll(core.class.Space, {})
+    expect(spaces).toHaveLength(2)
+
+    await client.addCollection(test.class.TestComment, core.space.Model, spaces[0]._id, spaces[0]._class, 'comments', {
+      message: 'msg'
+    })
+    await client.addCollection(test.class.TestComment, core.space.Model, spaces[0]._id, spaces[0]._class, 'comments', {
+      message: 'msg2'
+    })
+
+    const reverse = await client.findAll(
+      spaces[0]._class,
+      { _id: spaces[0]._id },
+      { lookup: { _id: { comments: [test.class.TestComment, 'attachedTo'] } as any } }
+    )
+    expect((reverse[0].$lookup as any).comments).toHaveLength(2)
+  })
+
+  it('findOne (base MemDb implementation) should return a single matching document', async () => {
+    const hierarchy = new Hierarchy()
+    for (const tx of txes) hierarchy.tx(tx)
+    const model = new ModelDb(hierarchy)
+    for (const tx of txes) await model.tx(tx)
+
+    const space = await model.findOne(core.class.Space, {})
+    expect(space).toBeDefined()
+    expect(space?._class).toBe(core.class.Space)
+  })
+
+  it('findAllSync should filter out documents without the queried mixin', async () => {
+    const { model } = await createModel()
+    const ops = new TxOperations(model, core.account.System)
+
+    const spaces = model.findAllSync(core.class.Space, {})
+    const withMixin = await ops.createDoc(test.class.Task, spaces[0]._id, { name: 'T1', number: 1, state: 0 })
+    await ops.createDoc(test.class.Task, spaces[0]._id, { name: 'T2', number: 2, state: 0 })
+    await ops.createMixin(withMixin, test.class.Task, spaces[0]._id, test.mixin.TaskMixinTodos, { todos: 0 })
+
+    const mixed = model.findAllSync(test.mixin.TaskMixinTodos, {})
+    expect(mixed.map((d) => d._id)).toEqual([withMixin])
+  })
+
+  it('delDoc should throw PlatformError for a non-existent document', async () => {
+    const { model } = await createModel()
+
+    expect(() => {
+      model.delDoc('space:bogus' as Ref<Doc>)
+    }).toThrow(PlatformError)
+  })
+
+  it('TxDb protected tx handlers should throw Method not implemented', async () => {
+    const { txDb } = await createModel()
+    const anyDb = txDb as any
+
+    expect(() => anyDb.txCreateDoc({})).toThrow('Method not implemented.')
+    expect(() => anyDb.txUpdateDoc({})).toThrow('Method not implemented.')
+    expect(() => anyDb.txRemoveDoc({})).toThrow('Method not implemented.')
+    expect(() => anyDb.txMixin({})).toThrow('Method not implemented.')
+  })
+
+  it('addTxes should warn and skip when removing a non-existent document', async () => {
+    const hierarchy = new Hierarchy()
+    for (const tx of txes) hierarchy.tx(tx)
+    const model = new ModelDb(hierarchy)
+    for (const tx of txes) await model.tx(tx)
+    const ctx = { warn: jest.fn() } as any
+
+    const bogusId = 'space:bogus-remove' as Ref<Doc>
+    model.addTxes(ctx, [deleteDoc(core.class.Space, core.space.Model, bogusId as any)], false)
+
+    expect(ctx.warn).toHaveBeenCalledWith(
+      'no document found, failed to apply model transaction, skipping',
+      expect.objectContaining({ objectId: bogusId })
+    )
+  })
+
+  it('addTxes should warn and skip when mixin target document is missing', async () => {
+    const hierarchy = new Hierarchy()
+    for (const tx of txes) hierarchy.tx(tx)
+    const model = new ModelDb(hierarchy)
+    for (const tx of txes) await model.tx(tx)
+    const ctx = { warn: jest.fn() } as any
+
+    const txFactory = new TxFactory(core.account.System)
+    const bogusId = 'space:bogus-mixin' as Ref<Doc>
+    const mixinTx = txFactory.createTxMixin(bogusId as any, core.class.Space, core.space.Model, test.mixin.TestMixin, {
+      arr: []
+    } as any)
+    model.addTxes(ctx, [mixinTx], false)
+
+    expect(ctx.warn).toHaveBeenCalledWith(
+      'no document found, failed to apply model transaction, skipping',
+      expect.objectContaining({ objectId: bogusId })
+    )
+  })
+
+  it('txUpdateDoc via tx() should swallow errors for a missing document', async () => {
+    const { model } = await createModel()
+
+    const bogusId = 'space:bogus-update' as Ref<Doc>
+    const result = await model.tx(updateDoc(core.class.Space, core.space.Model, bogusId as any, { name: 'x' }))
+    expect(result).toEqual([{}])
+  })
+
+  it('txUpdateDoc via tx() should apply the update and honor the retrieve flag', async () => {
+    const { model } = await createModel()
+    const ops = new TxOperations(model, core.account.System)
+    const space = await ops.createDoc(core.class.Space, core.space.Model, {
+      name: 'RetrieveMe',
+      description: '',
+      private: false,
+      members: [],
+      archived: false
+    })
+
+    const txFactory = new TxFactory(core.account.System)
+    const updateTx = txFactory.createTxUpdateDoc(core.class.Space, core.space.Model, space, { name: 'Updated' }, true)
+    const [result] = await model.tx(updateTx)
+    expect((result as any).object?.name).toBe('Updated')
+  })
+
+  it('txMixin via tx() should throw PlatformError for a missing document', async () => {
+    const { model } = await createModel()
+    const txFactory = new TxFactory(core.account.System)
+
+    const bogusId = 'space:bogus-txmixin' as Ref<Doc>
+    const mixinTx = txFactory.createTxMixin(bogusId as any, core.class.Space, core.space.Model, test.mixin.TestMixin, {
+      arr: []
+    } as any)
+    await expect(model.tx(mixinTx)).rejects.toThrow(PlatformError)
   })
 })
