@@ -367,10 +367,7 @@ export default function buildModel (): Builder {
         description: github.string.ConfigDescription,
         enabled: false,
         beta: false,
-        icon: github.icon.Github,
-        classFilter: defaultFilter,
-        mixinFilter: defaultMixinFilter,
-        objectIdFilter: [github.mixin.GithubIssue]
+        icon: github.icon.Github
       }
     ],
     [

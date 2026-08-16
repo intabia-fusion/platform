@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -681,6 +682,7 @@ export interface DisplayProps {
   custom?: boolean // render as custom attribute label
   minWidth?: string
   maxWidth?: string
+  _class?: Ref<Class<Doc>> // Target model class for descendant attribute
 }
 
 /**
@@ -746,12 +748,22 @@ export interface ObjectFactory extends Class<Obj> {
 }
 
 /**
+ * Represents an attribute belonging to a descendant subclass to be displayed in a viewlet.
+ *
+ * @public
+ */
+export interface DescendantAttribute {
+  _class: Ref<Class<Doc>>
+  key: string
+}
+/**
  * @public
  */
 export interface ViewletPreference extends Preference {
   attachedTo: Ref<Viewlet>
   config: (BuildModelKey | string)[]
   customAttributes?: string[]
+  descendantAttributes?: DescendantAttribute[]
 }
 
 /**
