@@ -36,7 +36,13 @@ export class UserManager {
   }
 
   private secretToUserRecord (secret: IntegrationSecret, login: string): GithubUserRecord | undefined {
-    const parsed = JSON.parse(secret.secret) ?? {} // TODO: Add security
+    // Stored payload is external input; malformed JSON must not break user resolution.
+    let parsed: any = {}
+    try {
+      parsed = JSON.parse(secret.secret) ?? {} // TODO: Add security
+    } catch (err) {
+      return undefined
+    }
     return {
       ...parsed,
       account: secret.socialId,

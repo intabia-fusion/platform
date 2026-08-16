@@ -67,7 +67,6 @@
     const loc = await getObjectLinkFragment(hierarchy, employee, {}, comp)
     navigate(loc)
   }
-
 </script>
 
 <ModernProfilePopup {disabled}>

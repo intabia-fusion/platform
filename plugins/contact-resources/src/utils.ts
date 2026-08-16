@@ -390,8 +390,10 @@ async function syncMyEmployeeTimezone (employee: WithLookup<Employee> | undefine
   }
 }
 
-myEmployeeStore.subscribe((employee) => {
-  void syncMyEmployeeTimezone(employee)
+onClient(() => {
+  myEmployeeStore.subscribe((employee) => {
+    void syncMyEmployeeTimezone(employee)
+  })
 })
 
 /**
