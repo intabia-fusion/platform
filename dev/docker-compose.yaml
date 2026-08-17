@@ -251,6 +251,10 @@ services:
       # - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       # - STRIPE_SUBSCRIPTION_PLANS=${STRIPE_SUBSCRIPTION_PLANS}
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+      # Nightly trial-expiry sweep. Leave TRIAL_EXPIRY_INTERVAL_MINUTES unset to use the schedule;
+      # set it in .env to sweep every N minutes instead (testing only).
+      - TRIAL_EXPIRY_HOUR_UTC=${TRIAL_EXPIRY_HOUR_UTC:-21}
+      - TRIAL_EXPIRY_INTERVAL_MINUTES=${TRIAL_EXPIRY_INTERVAL_MINUTES:-}
     restart: unless-stopped
   workspace:
     image: "intabiafusion/workspace:${DOCKER_TAG:-latest}"

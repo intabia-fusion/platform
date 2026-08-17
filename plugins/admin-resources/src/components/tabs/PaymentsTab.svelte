@@ -153,6 +153,10 @@
     if (op.operation === 'refund') return 'Возврат'
     if (op.operation === 'cancel') {
       if (st === 'PLAN_CHANGE') return 'Снят при смене плана'
+      // Only the expiry sweep writes a trial cancel to the ledger: the admin cancel goes to the
+      // admin action log and the user's own cancel just sets canceledAt. Revisit if either starts
+      // logging payment operations.
+      if (op.provider === 'trial') return 'Пробный период истёк'
       return 'Подписка отменена'
     }
     if (op.operation === 'charge_recurrent') {
@@ -166,7 +170,7 @@
     if (st === 'REVERSED') return 'Оплата отменена банком'
     if (st === 'REFUNDED') return 'Возврат проведён'
     if (st === 'DEADLINE_EXPIRED') return 'Счёт просрочен'
-    if (st === 'active') return 'Подписка активирована'
+    if (st === 'active') return op.provider === 'free' ? 'Переведён на бесплатный тариф' : 'Подписка активирована'
     if (st === 'trialing') return 'Пробный период начат'
     if (st === 'canceled') return 'Подписка снята'
     if (st === 'past_due' || st === 'readonly') return 'Подписка просрочена'

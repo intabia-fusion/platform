@@ -345,6 +345,11 @@ export interface Subscription {
 
 export type SubscriptionData = Omit<Subscription, 'createdOn' | 'updatedOn'>
 
+/**
+ * Upsert payload. `accountUuid` is optional here only: a free/trial tier has no payer.
+ */
+export type SubscriptionUpsert = Omit<SubscriptionData, 'accountUuid'> & { accountUuid?: AccountUuid }
+
 export type PaymentIntentStatus = 'pending' | 'charged' | 'failed'
 
 // One claim per claimKey. The unique claimKey makes claiming atomic across pods, so concurrent

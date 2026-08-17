@@ -31,6 +31,7 @@ import rateLimit from 'express-rate-limit'
 import { generateToken } from '@hcengineering/server-token'
 import {
   SubscriptionData,
+  SubscriptionUpsert,
   SubscriptionStatus,
   SubscriptionType,
   type WorkspaceLoginInfo,
@@ -380,22 +381,21 @@ export async function createServer (
     }
   }
 
-  async function createFreeSubscription (
+  /**
+   * Assemble a free-tier payload without writing it.
+   * `accountUuid` may stay empty — account fills the workspace owner in under the NOT NULL FK.
+   */
+  function buildFreeSubscription (
     workspace: WorkspaceUuid,
     accountUuid?: AccountUuid,
     actionId?: string
-  ): Promise<SubscriptionData | undefined> {
+  ): SubscriptionUpsert | undefined {
     if (freePlanName === undefined) return
-    // getWorkspaceMembers resolves the workspace from the token, so use a workspace-scoped client.
-    const wsToken = generateToken(systemAccountUuid, workspace, { service: 'payment' })
-    const members = await getAccountClient(config.AccountsUrl, wsToken).getWorkspaceMembers()
-    const owner = members.find((m) => m.role === AccountRole.Owner) ?? members[0]
-    if (owner === undefined) return
     const subId = generateId()
-    const data = attachLimits({
+    return attachLimits({
       id: subId,
       workspaceUuid: workspace,
-      accountUuid: accountUuid ?? owner.person,
+      accountUuid,
       provider: 'free',
       providerSubscriptionId: `free-${subId}`,
       periodStart: Date.now(),
@@ -405,8 +405,17 @@ export async function createServer (
       plan: freePlanName,
       providerData: actionId !== undefined ? { actionId } : undefined
     } as unknown as SubscriptionData)
+  }
+
+  async function createFreeSubscription (
+    workspace: WorkspaceUuid,
+    accountUuid?: AccountUuid,
+    actionId?: string
+  ): Promise<SubscriptionUpsert | undefined> {
+    const data = buildFreeSubscription(workspace, accountUuid, actionId)
+    if (data === undefined) return
     await accountClient.upsertSubscription(data)
-    await logOperation?.(ctx, data, false)
+    await logOperation?.(ctx, data as SubscriptionData, false)
     ctx.info('free subscription created for workspace', { workspace, plan: freePlanName })
     return data
   }
@@ -525,8 +534,9 @@ export async function createServer (
   const stopTrialExpiry = startTrialExpiry(
     ctx,
     accountClient,
-    freePlanName !== undefined ? async (workspace) => await createFreeSubscription(workspace) : undefined,
-    config.TrialExpiryIntervalMinutes ?? 60
+    freePlanName !== undefined ? (workspace) => buildFreeSubscription(workspace) : undefined,
+    { hourUtc: config.TrialExpiryHourUtc ?? 21, intervalMinutes: config.TrialExpiryIntervalMinutes },
+    logOperation
   )
 
   // ============ Generic Payment Service Endpoints ============
