@@ -66,6 +66,7 @@ import core, {
   type PersonId,
   pickPrimarySocialId,
   type Ref,
+  type SocialId,
   SocialIdType,
   type Space,
   type Timestamp,
@@ -221,6 +222,16 @@ export async function getCurrentEmployeeEmail (): Promise<string> {
   return emailSocialId?.value ?? ''
 }
 
+export function isSocialIdOwnedByCurrentUser (value: SocialIdentity | SocialId): boolean {
+  if ('attachedTo' in value) {
+    const me = getCurrentEmployee()
+    return me != null && value.attachedTo === me
+  }
+
+  const account = getCurrentAccount()
+  return account.primarySocialId === value._id || account.socialIds.includes(value._id)
+}
+
 export async function getCurrentEmployeePosition (): Promise<string | undefined> {
   const me = getCurrentEmployee()
   const employee = await getClient().findOne<Employee>(contact.mixin.Employee, { _id: me })
@@ -349,6 +360,41 @@ export const myEmployeeStore = derived(
     return currentEmployeeRef !== undefined ? employeeById.get(currentEmployeeRef) : undefined
   }
 )
+
+function detectBrowserTimezone (): string | undefined {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    return tz !== '' ? tz : undefined
+  } catch {
+    return undefined
+  }
+}
+
+let timezoneSyncInFlight = false
+
+async function syncMyEmployeeTimezone (employee: WithLookup<Employee> | undefined): Promise<void> {
+  if (timezoneSyncInFlight || employee === undefined) return
+  const browserTz = detectBrowserTimezone()
+  if (browserTz === undefined || employee.timezone === browserTz) return
+
+  timezoneSyncInFlight = true
+  try {
+    const client = getClient()
+    await client.updateMixin(employee._id, contact.class.Person, employee.space, contact.mixin.Employee, {
+      timezone: browserTz
+    })
+  } catch (err) {
+    console.error('Failed to sync employee timezone', err)
+  } finally {
+    timezoneSyncInFlight = false
+  }
+}
+
+onClient(() => {
+  myEmployeeStore.subscribe((employee) => {
+    void syncMyEmployeeTimezone(employee)
+  })
+})
 
 /**
  * [Ref<Employee> => PersonId (primary)] mapping
