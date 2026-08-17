@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -41,6 +42,9 @@ export interface Config {
 
   ReconciliationIntervalMinutes?: number
 
+  // How often expired trials are swept
+  TrialExpiryIntervalMinutes?: number
+
   // Explicit opt-in for the mock provider (activates plans without payment) — never set in production
   AllowMockProvider?: boolean
 
@@ -72,6 +76,7 @@ const config: Config = (() => {
     StripeSubscriptionPlans: process.env.STRIPE_SUBSCRIPTION_PLANS,
     TbankSubscriptionsUrl: process.env.TBANK_SUBSCRIPTIONS_URL,
     ReconciliationIntervalMinutes: parseNumber(process.env.RECONCILIATION_INTERVAL_MINUTES),
+    TrialExpiryIntervalMinutes: parseNumber(process.env.TRIAL_EXPIRY_INTERVAL_MINUTES),
     AllowMockProvider: process.env.ALLOW_MOCK_PROVIDER === 'true',
     SubscriptionRateLimitMax: parseNumber(process.env.SUBSCRIPTION_RATE_LIMIT_MAX),
     PlanConfigRateLimitMax: parseNumber(process.env.PLAN_CONFIG_RATE_LIMIT_MAX)

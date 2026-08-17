@@ -74,6 +74,7 @@ import {
   type OtpInfo,
   type RegionInfo,
   type SocialId,
+  type Subscription,
   SubscriptionStatus,
   SubscriptionType,
   type Workspace,
@@ -1665,6 +1666,14 @@ const SEATLESS_ROLES: AccountRole[] = [
 ]
 
 /**
+ * Whether a subscription still grants its plan.
+ */
+function grantsPlan (sub: Pick<Subscription, 'status' | 'trialEnd'>): boolean {
+  if (sub.status === SubscriptionStatus.Trialing) return sub.trialEnd != null && sub.trialEnd >= Date.now()
+  return sub.status === SubscriptionStatus.Active
+}
+
+/**
  * Best-effort join-time seat cap: reject a new member when the paid plan's usersLimit is already
  * filled. ponytail: best-effort — concurrent accepts can overshoot by 1-2 (no atomic count); the
  * transactor SeatLimitsMiddleware read-only enforcement is the real backstop for over-limit members.
@@ -1677,9 +1686,7 @@ export async function assertSeatAvailableOnJoin (
 ): Promise<void> {
   if (SEATLESS_ROLES.includes(joiningRole)) return
   const tier = (await db.subscription.find({ workspaceUuid: workspace })).find(
-    (s) =>
-      s.type === SubscriptionType.Tier &&
-      (s.status === SubscriptionStatus.Active || s.status === SubscriptionStatus.Trialing)
+    (s) => s.type === SubscriptionType.Tier && grantsPlan(s)
   )
   const usersLimit = tier?.limits?.usersLimit ?? 0
   if (usersLimit === 0) return // unlimited or free-fallback: no join-time cap

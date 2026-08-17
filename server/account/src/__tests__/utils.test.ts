@@ -65,14 +65,22 @@ import {
   doReleaseSocialId,
   getLastPasswordChangeEvent,
   isPasswordChangedSince,
-  resetRegionConfig
+  resetRegionConfig,
+  assertSeatAvailableOnJoin
 } from '../utils'
 // eslint-disable-next-line import/no-named-default
 import platform, { getMetadata, PlatformError, Severity, Status } from '@hcengineering/platform'
 import { decodeTokenVerbose, generateToken, TokenError } from '@hcengineering/server-token'
 import { randomBytes } from 'crypto'
 
-import { type AccountDB, type AccountEvent, AccountEventType, type Workspace } from '../types'
+import {
+  type AccountDB,
+  type AccountEvent,
+  AccountEventType,
+  SubscriptionStatus,
+  SubscriptionType,
+  type Workspace
+} from '../types'
 import { accountPlugin } from '../plugin'
 
 // Mock platform with minimum required functionality
@@ -2496,6 +2504,71 @@ describe('account utils', () => {
         expect(mockDb.socialId.update).not.toHaveBeenCalled()
         expect(mockDb.accountEvent.insertOne).not.toHaveBeenCalled()
       })
+    })
+  })
+
+  describe('assertSeatAvailableOnJoin', () => {
+    const ctx = { info: jest.fn(), error: jest.fn() } as unknown as MeasureContext
+    const workspace = 'ws-1' as WorkspaceUuid
+    const DAY = 24 * 60 * 60 * 1000
+
+    // Two seats used, so a usersLimit of 2 is exactly full and any smaller cap is over.
+    const members = [
+      { person: 'p1' as AccountUuid, role: AccountRole.User },
+      { person: 'p2' as AccountUuid, role: AccountRole.User }
+    ]
+
+    const mockDb = (subscriptions: any[]): any => ({
+      subscription: { find: jest.fn().mockResolvedValue(subscriptions) },
+      getWorkspaceMembers: jest.fn().mockResolvedValue(members),
+      socialId: { findOne: jest.fn().mockResolvedValue(null) }
+    })
+
+    const tier = (status: SubscriptionStatus, usersLimit: number, trialEnd?: number): any => ({
+      type: SubscriptionType.Tier,
+      status,
+      trialEnd,
+      limits: { usersLimit }
+    })
+
+    const join = async (db: any): Promise<void> => {
+      await assertSeatAvailableOnJoin(ctx, db, workspace, AccountRole.User)
+    }
+
+    test('should reject a join when a live trial is full', async () => {
+      const db = mockDb([tier(SubscriptionStatus.Trialing, 2, Date.now() + DAY)])
+
+      await expect(join(db)).rejects.toThrow(
+        new PlatformError(new Status(Severity.ERROR, platform.status.PlanLimitExceeded, {}))
+      )
+    })
+
+    test('should ignore an expired trial instead of granting its seat cap', async () => {
+      // The record keeps status 'trialing' until the payment sweep retires it — the date decides.
+      const db = mockDb([tier(SubscriptionStatus.Trialing, 2, Date.now() - DAY)])
+
+      await expect(join(db)).resolves.toBeUndefined()
+    })
+
+    test('should reject a join when the active paid tier is full', async () => {
+      const db = mockDb([tier(SubscriptionStatus.Active, 2)])
+
+      await expect(join(db)).rejects.toThrow(
+        new PlatformError(new Status(Severity.ERROR, platform.status.PlanLimitExceeded, {}))
+      )
+    })
+
+    test('should allow a join below the cap', async () => {
+      const db = mockDb([tier(SubscriptionStatus.Active, 5)])
+
+      await expect(join(db)).resolves.toBeUndefined()
+    })
+
+    test('should not cap seatless roles', async () => {
+      const db = mockDb([tier(SubscriptionStatus.Active, 2)])
+
+      await expect(assertSeatAvailableOnJoin(ctx, db, workspace, AccountRole.Guest)).resolves.toBeUndefined()
+      expect(db.subscription.find).not.toHaveBeenCalled()
     })
   })
 })
