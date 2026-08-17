@@ -36,13 +36,20 @@ test.describe('Tracker milestone tests', () => {
 
   test('Edit a Milestone', async () => {
     const commentText = 'Edit Milestone comment'
+    // Created here on purpose: editing the seeded milestone appends one more "Status set to" message
+    // to its activity on every run/retry, so the activity check hits a strict mode violation.
     const editMilestone: NewMilestone = {
-      name: 'Edit Milestone',
+      name: `Edit Milestone-${generateId()}`,
       description: 'Edit Milestone Description',
       status: 'Completed',
       targetDateInDays: 'in 30 days'
     }
     await trackerNavigationMenuPage.openMilestonesForProject('Default')
+    await milestonesPage.createNewMilestone({
+      name: editMilestone.name,
+      description: 'Milestone description before edit',
+      status: 'In progress'
+    })
     await milestonesPage.openMilestoneByName(editMilestone.name)
     await milestonesDetailsPage.editIssue(editMilestone)
     await milestonesDetailsPage.checkIssue(editMilestone)

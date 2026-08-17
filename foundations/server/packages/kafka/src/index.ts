@@ -41,6 +41,17 @@ function isRebalanceError (err: any): boolean {
   )
 }
 
+// A brand new group starts at the latest offset resolved on its first fetch, so anything produced
+// before that fetch is never delivered. Resolve once the first fetch is done to close that window.
+function firstFetchDone (cc: Consumer): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const off = cc.on(cc.events.FETCH, () => {
+      off()
+      resolve()
+    })
+  })
+}
+
 // Pump heartbeats every second while a handler runs so a slow message/batch never trips
 // sessionTimeout. kafkajs throttles internally, so frequent calls are safe.
 const HEARTBEAT_PUMP_INTERVAL = 1000
@@ -351,6 +362,7 @@ class PlatformQueueProducerImpl implements PlatformQueueProducer<any> {
 class PlatformQueueConsumerImpl implements ConsumerHandle {
   connected = false
   cc: Consumer
+  private readonly ready: Promise<void>
   constructor (
     readonly ctx: MeasureContext,
     readonly kafka: Kafka,
@@ -374,6 +386,7 @@ class PlatformQueueConsumerImpl implements ConsumerHandle {
       sessionTimeout: this.options?.sessionTimeout,
       allowAutoTopicCreation: true
     })
+    this.ready = firstFetchDone(this.cc)
 
     void this.start().catch((err) => {
       ctx.error('failed to consume', { err })
@@ -458,6 +471,10 @@ class PlatformQueueConsumerImpl implements ConsumerHandle {
     return this.connected
   }
 
+  async waitReady (): Promise<void> {
+    await this.ready
+  }
+
   close (): Promise<void> {
     return this.cc.disconnect()
   }
@@ -475,6 +492,7 @@ class PlatformQueueConsumerImpl implements ConsumerHandle {
 class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
   connected = false
   cc: Consumer
+  private readonly ready: Promise<void>
   constructor (
     readonly ctx: MeasureContext,
     readonly kafka: Kafka,
@@ -504,6 +522,7 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
       maxWaitTimeInMs: sanitizedMaxWait,
       allowAutoTopicCreation: true
     })
+    this.ready = firstFetchDone(this.cc)
 
     void this.start().catch((err) => {
       ctx.error('failed to consume', { err })
@@ -627,6 +646,10 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
 
   isConnected (): boolean {
     return this.connected
+  }
+
+  async waitReady (): Promise<void> {
+    await this.ready
   }
 
   close (): Promise<void> {
