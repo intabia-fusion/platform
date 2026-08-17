@@ -47,10 +47,14 @@ import {
   changePassword,
   getPerson,
   getSocialIds,
+  getAccountInfo,
   createAccessLink,
   getSubscriptions,
   leaveWorkspace,
-  getWorkspaceMembers
+  getWorkspaceMembers,
+  checkJoin,
+  mergeSpecifiedPersons,
+  canMergeSpecifiedPersons
 } from '../operations'
 import { accountPlugin } from '../plugin'
 
@@ -108,13 +112,14 @@ describe('account operations', () => {
     getWorkspaceRole: jest.fn(),
     getWorkspaceMembers: jest.fn(),
     unassignWorkspace: jest.fn(),
-    socialId: {
-      findOne: jest.fn()
-    },
+    updateWorkspaceRole: jest.fn(),
     subscription: {
       find: jest.fn().mockResolvedValue([])
     },
     person: {
+      findOne: jest.fn()
+    },
+    socialId: {
       findOne: jest.fn()
     },
     generatePersonUuid: jest.fn().mockResolvedValue('generated-person-uuid' as PersonUuid)
@@ -2747,6 +2752,156 @@ describe('account operations', () => {
         )
       })
     })
+
+    describe('getAccountInfo', () => {
+      const callerAccount = 'caller-account-uuid' as AccountUuid
+      const otherAccount = 'other-account-uuid' as AccountUuid
+
+      const accountInfoDb = {
+        account: {
+          findOne: jest.fn()
+        }
+      } as unknown as AccountDB
+
+      beforeEach(() => {
+        jest.clearAllMocks()
+      })
+
+      test('returns own info when accountId matches caller', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: {} })
+        ;(accountInfoDb.account.findOne as jest.Mock).mockResolvedValue({
+          uuid: callerAccount,
+          timezone: 'America/New_York',
+          locale: 'en-US',
+          tfaSecret: 'secret'
+        })
+
+        const result = await getAccountInfo(mockCtx, accountInfoDb, mockBranding, mockToken, {
+          accountId: callerAccount
+        })
+
+        expect(result).toEqual({ timezone: 'America/New_York', locale: 'en-US' })
+        expect(accountInfoDb.account.findOne).toHaveBeenCalledWith({ uuid: callerAccount })
+      })
+
+      test('rejects cross-account lookup for non-admin, non-service caller', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: {} })
+
+        await expect(
+          getAccountInfo(mockCtx, accountInfoDb, mockBranding, mockToken, { accountId: otherAccount })
+        ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {})))
+
+        expect(accountInfoDb.account.findOne).not.toHaveBeenCalled()
+      })
+
+      test('allows admin to read other account info', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: { admin: 'true' } })
+        ;(accountInfoDb.account.findOne as jest.Mock).mockResolvedValue({
+          uuid: otherAccount,
+          timezone: 'Europe/London',
+          locale: 'en-GB',
+          tfaSecret: null
+        })
+
+        const result = await getAccountInfo(mockCtx, accountInfoDb, mockBranding, mockToken, {
+          accountId: otherAccount
+        })
+
+        expect(result).toEqual({ timezone: 'Europe/London', locale: 'en-GB' })
+        expect(accountInfoDb.account.findOne).toHaveBeenCalledWith({ uuid: otherAccount })
+      })
+
+      test('allows workspace service token to read other account info', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+          account: callerAccount,
+          extra: { service: 'workspace' }
+        })
+        ;(accountInfoDb.account.findOne as jest.Mock).mockResolvedValue({
+          uuid: otherAccount,
+          timezone: 'Asia/Tokyo',
+          locale: 'ja-JP',
+          tfaSecret: null
+        })
+
+        const result = await getAccountInfo(mockCtx, accountInfoDb, mockBranding, mockToken, {
+          accountId: otherAccount
+        })
+
+        expect(result).toEqual({ timezone: 'Asia/Tokyo', locale: 'ja-JP' })
+      })
+
+      test('throws BadRequest when accountId is missing', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: {} })
+
+        await expect(
+          getAccountInfo(mockCtx, accountInfoDb, mockBranding, mockToken, { accountId: '' as AccountUuid })
+        ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {})))
+
+        expect(accountInfoDb.account.findOne).not.toHaveBeenCalled()
+      })
+
+      test('throws AccountNotFound when account does not exist', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerAccount, extra: {} })
+        ;(accountInfoDb.account.findOne as jest.Mock).mockResolvedValue(null)
+
+        await expect(
+          getAccountInfo(mockCtx, accountInfoDb, mockBranding, mockToken, { accountId: callerAccount })
+        ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {})))
+      })
+    })
+  })
+
+  describe('checkJoin', () => {
+    const mockInvite = {
+      id: 'invite-uuid',
+      workspaceUuid: 'workspace-uuid' as WorkspaceUuid,
+      role: AccountRole.User,
+      expiresOn: 0,
+      remainingUses: -1
+    }
+
+    test('should return workspace login info if user is already a member', async () => {
+      const mockEmail = 'user@example.com'
+      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue({ value: mockEmail })
+
+      jest.spyOn(utils, 'getWorkspaceInvite').mockResolvedValue(mockInvite as any)
+      jest.spyOn(utils, 'checkInvite').mockResolvedValue(mockInvite.workspaceUuid)
+      jest.spyOn(utils, 'getWorkspaceById').mockResolvedValue(mockWorkspace as any)
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.User)
+
+      const mockLoginInfo = {
+        account: mockAccount.uuid,
+        role: AccountRole.User,
+        token: 'workspace-token'
+      }
+      jest.spyOn(utils, 'selectWorkspace').mockResolvedValue(mockLoginInfo as any)
+
+      const result = await checkJoin(mockCtx, mockDb, mockBranding, mockToken, { inviteId: 'invite-uuid' })
+
+      expect(result).toEqual({
+        account: mockAccount.uuid,
+        role: AccountRole.User,
+        token: 'workspace-token'
+      })
+      expect(mockDb.getWorkspaceRole).toHaveBeenCalledWith(mockAccount.uuid, mockWorkspace.uuid)
+      expect(mockDb.updateWorkspaceRole).not.toHaveBeenCalled()
+    })
+
+    test('should throw Forbidden error if user is not a member', async () => {
+      const mockEmail = 'user@example.com'
+      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue({ value: mockEmail })
+
+      jest.spyOn(utils, 'getWorkspaceInvite').mockResolvedValue(mockInvite as any)
+      jest.spyOn(utils, 'checkInvite').mockResolvedValue(mockInvite.workspaceUuid)
+      jest.spyOn(utils, 'getWorkspaceById').mockResolvedValue(mockWorkspace as any)
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(null)
+
+      await expect(checkJoin(mockCtx, mockDb, mockBranding, mockToken, { inviteId: 'invite-uuid' })).rejects.toThrow(
+        new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      )
+
+      expect(mockDb.getWorkspaceRole).toHaveBeenCalledWith(mockAccount.uuid, mockWorkspace.uuid)
+    })
   })
 })
 
@@ -2935,5 +3090,289 @@ describe('getSubscriptions', () => {
     })
 
     await expect(getSubscriptions(mockCtx, mockDb, mockBranding, 'test-token', {})).rejects.toThrow(PlatformError)
+  })
+})
+
+describe('merge specified persons', () => {
+  const mockCtx = {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn()
+  } as unknown as MeasureContext
+
+  const mockBranding = null
+  const workspaceUuid = 'caller-workspace-uuid' as WorkspaceUuid
+  const callerUuid = 'caller-account-uuid' as AccountUuid
+  const primaryPerson = 'primary-person-uuid' as PersonUuid
+  const secondaryPerson = 'secondary-person-uuid' as PersonUuid
+  const params = { primaryPerson, secondaryPerson }
+
+  let mockDb: any
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest.restoreAllMocks()
+
+    mockDb = {
+      account: {
+        findOne: jest.fn().mockResolvedValue(null)
+      },
+      person: {
+        findOne: jest.fn().mockImplementation(async ({ uuid }: { uuid: PersonUuid }) => ({ uuid }))
+      },
+      socialId: {
+        find: jest.fn().mockResolvedValue([])
+      },
+      getWorkspaceRole: jest.fn().mockResolvedValue(null)
+    }
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: callerUuid,
+      workspace: workspaceUuid,
+      extra: {}
+    })
+  })
+
+  // The caller maintains the workspace, and neither merged person belongs to another one.
+  const asWorkspaceMaintainer = (): void => {
+    mockDb.getWorkspaceRole.mockImplementation(async (account: AccountUuid) =>
+      account === callerUuid ? AccountRole.Maintainer : null
+    )
+  }
+
+  describe('mergeSpecifiedPersons', () => {
+    test('should throw BadRequest for empty params', async () => {
+      await expect(
+        mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', {
+          primaryPerson: '' as PersonUuid,
+          secondaryPerson
+        })
+      ).rejects.toThrow(PlatformError)
+
+      expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
+    })
+
+    test('should throw Forbidden for a token without workspace', async () => {
+      ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: callerUuid, extra: {} })
+      const spy = jest.spyOn(utils, 'doMergePersons').mockResolvedValue()
+
+      await expect(mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).rejects.toThrow(
+        PlatformError
+      )
+
+      expect(spy).not.toHaveBeenCalled()
+      // Pins the workspace guard itself rather than the role lookup that follows it.
+      expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
+    })
+
+    test('should throw Forbidden when caller is below Maintainer', async () => {
+      mockDb.getWorkspaceRole.mockResolvedValue(AccountRole.User)
+      const spy = jest.spyOn(utils, 'doMergePersons').mockResolvedValue()
+
+      await expect(mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).rejects.toThrow(
+        PlatformError
+      )
+
+      expect(spy).not.toHaveBeenCalled()
+    })
+
+    test('should throw Forbidden when the secondary person is an account of another workspace', async () => {
+      asWorkspaceMaintainer()
+      mockDb.account.findOne.mockImplementation(async ({ uuid }: { uuid: AccountUuid }) =>
+        uuid === secondaryPerson ? { uuid } : null
+      )
+      const spy = jest.spyOn(utils, 'doMergePersons').mockResolvedValue()
+
+      await expect(mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).rejects.toThrow(
+        PlatformError
+      )
+
+      expect(spy).not.toHaveBeenCalled()
+    })
+
+    test('should throw Forbidden when the primary person is an account of another workspace', async () => {
+      asWorkspaceMaintainer()
+      mockDb.account.findOne.mockImplementation(async ({ uuid }: { uuid: AccountUuid }) =>
+        uuid === primaryPerson ? { uuid } : null
+      )
+      const spy = jest.spyOn(utils, 'doMergePersons').mockResolvedValue()
+
+      await expect(mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).rejects.toThrow(
+        PlatformError
+      )
+
+      expect(spy).not.toHaveBeenCalled()
+    })
+
+    test('should merge workspace contacts without accounts for a Maintainer', async () => {
+      asWorkspaceMaintainer()
+      const spy = jest.spyOn(utils, 'doMergePersons').mockResolvedValue()
+
+      await mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)
+
+      expect(spy).toHaveBeenCalledWith(mockDb, primaryPerson, secondaryPerson)
+    })
+
+    test('should merge a contact into a member of the caller workspace', async () => {
+      mockDb.getWorkspaceRole.mockImplementation(async (account: AccountUuid) =>
+        account === secondaryPerson ? null : AccountRole.Maintainer
+      )
+      mockDb.account.findOne.mockImplementation(async ({ uuid }: { uuid: AccountUuid }) =>
+        uuid === primaryPerson ? { uuid } : null
+      )
+      const spy = jest.spyOn(utils, 'doMergePersons').mockResolvedValue()
+
+      await mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)
+
+      expect(spy).toHaveBeenCalledWith(mockDb, primaryPerson, secondaryPerson)
+    })
+
+    test('should throw Forbidden when a login capable social id would move onto a foreign account', async () => {
+      // A maintainer minting a person that carries their own email and merging it into a
+      // co-member would hand them that member's account through password recovery.
+      mockDb.getWorkspaceRole.mockImplementation(async (account: AccountUuid) =>
+        account === secondaryPerson ? null : AccountRole.Maintainer
+      )
+      mockDb.account.findOne.mockImplementation(async ({ uuid }: { uuid: AccountUuid }) =>
+        uuid === primaryPerson ? { uuid } : null
+      )
+      mockDb.socialId.find.mockResolvedValue([{ _id: 'attacker-email', type: SocialIdType.EMAIL }])
+      const spy = jest.spyOn(utils, 'doMergePersons').mockResolvedValue()
+
+      await expect(mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).rejects.toThrow(
+        PlatformError
+      )
+
+      expect(spy).not.toHaveBeenCalled()
+    })
+
+    test('should allow a login capable social id to move onto the caller own account', async () => {
+      ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+        account: primaryPerson as unknown as AccountUuid,
+        workspace: workspaceUuid,
+        extra: {}
+      })
+      mockDb.getWorkspaceRole.mockImplementation(async (account: AccountUuid) =>
+        account === secondaryPerson ? null : AccountRole.Maintainer
+      )
+      mockDb.account.findOne.mockImplementation(async ({ uuid }: { uuid: AccountUuid }) =>
+        uuid === primaryPerson ? { uuid } : null
+      )
+      mockDb.socialId.find.mockResolvedValue([{ _id: 'own-email', type: SocialIdType.EMAIL }])
+      const spy = jest.spyOn(utils, 'doMergePersons').mockResolvedValue()
+
+      await mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)
+
+      expect(spy).toHaveBeenCalledWith(mockDb, primaryPerson, secondaryPerson)
+    })
+
+    test('should throw Forbidden when merging the platform guest account', async () => {
+      asWorkspaceMaintainer()
+      const spy = jest.spyOn(utils, 'doMergePersons').mockResolvedValue()
+
+      await expect(
+        mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', {
+          primaryPerson: readOnlyGuestAccountUuid as PersonUuid,
+          secondaryPerson
+        })
+      ).rejects.toThrow(PlatformError)
+
+      expect(spy).not.toHaveBeenCalled()
+    })
+
+    test('should merge for an allowed service token', async () => {
+      ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+        account: systemAccountUuid,
+        extra: { service: 'tool' }
+      })
+      const spy = jest.spyOn(utils, 'doMergePersons').mockResolvedValue()
+
+      await mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)
+
+      expect(spy).toHaveBeenCalledWith(mockDb, primaryPerson, secondaryPerson)
+      expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
+    })
+
+    test('should merge for a global admin token', async () => {
+      ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+        account: callerUuid,
+        extra: { admin: 'true' }
+      })
+      const spy = jest.spyOn(utils, 'doMergePersons').mockResolvedValue()
+
+      await mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)
+
+      expect(spy).toHaveBeenCalledWith(mockDb, primaryPerson, secondaryPerson)
+      expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('canMergeSpecifiedPersons', () => {
+    beforeEach(() => {
+      asWorkspaceMaintainer()
+    })
+
+    // The merge dialog awaits this predicate without a catch, so refusals must be answered,
+    // not thrown: a rejection leaves it spinning on a disabled Save button forever.
+    test('should return false without looking persons up when caller does not maintain a workspace', async () => {
+      mockDb.getWorkspaceRole.mockResolvedValue(null)
+
+      expect(await canMergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).toBe(false)
+      expect(mockDb.person.findOne).not.toHaveBeenCalled()
+    })
+
+    test('should return false when a person is an account of another workspace', async () => {
+      mockDb.account.findOne.mockImplementation(async ({ uuid }: { uuid: AccountUuid }) =>
+        uuid === secondaryPerson ? { uuid } : null
+      )
+
+      expect(await canMergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).toBe(false)
+      expect(mockDb.person.findOne).not.toHaveBeenCalled()
+    })
+
+    test('should return false for equal persons without authorizing or looking them up', async () => {
+      const result = await canMergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', {
+        primaryPerson,
+        secondaryPerson: primaryPerson
+      })
+
+      expect(result).toBe(false)
+      expect(mockDb.person.findOne).not.toHaveBeenCalled()
+      expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
+    })
+
+    test('should return true for a Maintainer when secondary has no verified social ids', async () => {
+      const result = await canMergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)
+
+      expect(result).toBe(true)
+      expect(mockDb.socialId.find).toHaveBeenCalledWith({ personUuid: secondaryPerson, verifiedOn: { $ne: null } })
+    })
+
+    test('should return false when secondary person has verified social ids', async () => {
+      mockDb.socialId.find.mockResolvedValue([{ _id: 'verified-social-id' }])
+
+      const result = await canMergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)
+
+      expect(result).toBe(false)
+    })
+
+    test('should allow an allowed service token', async () => {
+      ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+        account: systemAccountUuid,
+        extra: { service: 'tool' }
+      })
+
+      expect(await canMergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).toBe(true)
+      expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
+    })
+
+    test('should allow a global admin token', async () => {
+      ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+        account: callerUuid,
+        extra: { admin: 'true' }
+      })
+
+      expect(await canMergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).toBe(true)
+      expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
+    })
   })
 })
