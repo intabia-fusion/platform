@@ -1,5 +1,5 @@
 import { type IntlString, type Metadata, plugin, type Plugin } from '@hcengineering/platform'
-import { type PlatformQueueProducer, type QueueWorkspaceMessage } from '@hcengineering/server-core'
+import { type PlatformQueue, type PlatformQueueProducer } from '@hcengineering/server-core'
 import { type TierLimits } from './types'
 
 /**
@@ -54,8 +54,9 @@ export const accountPlugin = plugin(accountId, {
     LicenseCanRunPayment: '' as Metadata<boolean>,
     MailQueue: '' as Metadata<PlatformQueueProducer<AccountNotification>>,
     CrmQueue: '' as Metadata<PlatformQueueProducer<CrmNotification>>,
-    WorkspaceQueue: '' as Metadata<PlatformQueueProducer<QueueWorkspaceMessage>>,
-    FulltextQueue: '' as Metadata<PlatformQueueProducer<QueueWorkspaceMessage>>
+    // Workspace-scoped events (workspace, fulltext, workspace-wakeup, online-user-tx) are sent
+    // with an explicit region of the workspace.
+    RegionalQueue: '' as Metadata<PlatformQueue>
   },
   string: {
     ConfirmationText: '' as IntlString,

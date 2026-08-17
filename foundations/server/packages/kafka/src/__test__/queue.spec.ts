@@ -21,6 +21,8 @@ describe('queue', () => {
     const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
     const docsCount = 50 // Reduced from 100 for faster tests
     try {
+      // Consumers block until the topic exists, so create it before subscribing.
+      await queue.createTopic('qtest', 1)
       let msgCount = 0
       let consumerHandle: any
       const p1 = new Promise<void>((resolve, reject) => {
@@ -78,6 +80,7 @@ describe('queue', () => {
     const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
 
     try {
+      await queue.createTopic('test', 1)
       let counter = 2
       let consumerHandle: any
       const p = new Promise<void>((resolve, reject) => {
@@ -128,6 +131,7 @@ describe('queue', () => {
     const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
     const docsCount = 50 // number of messages to produce
     try {
+      await queue.createTopic('qtest-batch', 1)
       let msgCount = 0
       let consumerHandle: any
       const p1 = new Promise<void>((resolve, reject) => {
@@ -190,6 +194,7 @@ describe('queue', () => {
     const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
 
     try {
+      await queue.createTopic('test-batch', 1)
       let attempts = 0
       let consumerHandle: any
       const p = new Promise<void>((resolve, reject) => {
@@ -244,6 +249,7 @@ describe('queue', () => {
     const docsCount = 20
 
     try {
+      await queue.createTopic(topic, 1)
       const expected = Array.from({ length: docsCount }, (_, i) => `msg${i}`)
       const received: string[] = []
       let consumerHandle: any
@@ -301,6 +307,7 @@ describe('queue', () => {
     const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
 
     try {
+      await queue.createTopic(topic, 1)
       let handlerCalled = 0
       let batchSizeReceived = 0
       let consumerHandle: any
@@ -404,6 +411,7 @@ describe('queue', () => {
     const topic = 'batch-pump-' + genId
     const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
     try {
+      await queue.createTopic(topic, 1)
       let invocations = 0
       let processed = 0
       let consumerHandle: any
@@ -457,6 +465,7 @@ describe('queue', () => {
     const topic = 'pause-heartbeat-' + genId
     const queue = createPlatformQueue(parseQueueConfig('localhost:19093;-queue_testing-' + genId, 'test-' + genId, ''))
     try {
+      await queue.createTopic(topic, 1)
       let processed = 0
       let processingStartedResolve: (() => void) | undefined
       const processingStartedP = new Promise<void>((_resolve) => {

@@ -12,10 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { QueueTopic } from '@hcengineering/server-core'
+import { getRegionTopic, QueueTopic } from '@hcengineering/server-core'
 
 // jest.mock factory may only reference vars prefixed with `mock`.
 const mockState: any = { eachBatch: undefined }
+// The consumer blocks until admin.listTopics() reports its topic, so report it as existing.
+const mockAdmin = {
+  connect: jest.fn(async () => {}),
+  disconnect: jest.fn(async () => {}),
+  listTopics: jest.fn(async () => [getRegionTopic(QueueTopic.Workspace, '')])
+}
 const mockConsumer = {
   connect: jest.fn(async () => {}),
   subscribe: jest.fn(async () => {}),
@@ -29,7 +35,7 @@ jest.mock('kafkajs', () => ({
   Kafka: jest.fn().mockImplementation(() => ({
     consumer: jest.fn(() => mockConsumer),
     producer: jest.fn(() => ({})),
-    admin: jest.fn(() => ({}))
+    admin: jest.fn(() => mockAdmin)
   })),
   CompressionTypes: { GZIP: 1 },
   Partitioners: { DefaultPartitioner: jest.fn() }

@@ -699,6 +699,8 @@ export type WorkspaceEvent =
   | 'archiving-clean-started'
   | 'archiving-clean-done'
   | 'archiving-done'
+  | 'delete-started' // -> state = 'deleting'
+  | 'delete-done' // -> state = 'deleted'
 export type WorkspaceOperation = 'create' | 'upgrade' | 'all' | 'all+backup'
 export interface LoginInfo {
   account: AccountUuid
