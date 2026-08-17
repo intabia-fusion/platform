@@ -44,6 +44,7 @@ import { PaymentProviderFactory } from './factory'
 import type { BillingPeriod, CheckoutResponse, PaymentProvider, SubscriptionPublisher } from './providers'
 import { ProviderHttpError, SubscribeRequest } from './providers'
 import { startActiveSubscriptionReconciliation } from './reconciliation'
+import { startTrialExpiry } from './trialExpiry'
 import { getAccountClient, hasGrantingTier, computePlanPrice, validateSeatQuantity, MAX_SEATS_FALLBACK } from './utils'
 import yaml from 'js-yaml'
 import { existsSync, readFileSync } from 'fs'
@@ -519,6 +520,13 @@ export async function createServer (
     provider,
     config.ReconciliationIntervalMinutes ?? 60,
     publishSubscription
+  )
+
+  const stopTrialExpiry = startTrialExpiry(
+    ctx,
+    accountClient,
+    freePlanName !== undefined ? async (workspace) => await createFreeSubscription(workspace) : undefined,
+    config.TrialExpiryIntervalMinutes ?? 60
   )
 
   // ============ Generic Payment Service Endpoints ============
@@ -1201,6 +1209,7 @@ export async function createServer (
     persistSubscription,
     close: () => {
       stopReconciliation()
+      stopTrialExpiry()
     }
   }
 }
