@@ -102,6 +102,9 @@ class BenchHarness {
 
   async close (): Promise<void> {
     await this.mgr.shutdown(true)
+    // Each harness creates its own postfixed topics. Redpanda in tests caps total partitions, so
+    // leftovers from previous runs eventually block topic creation and starve the consumer.
+    await this.queue.deleteTopics()
     await this.queue.shutdown()
   }
 
