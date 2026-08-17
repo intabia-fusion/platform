@@ -164,6 +164,14 @@ export class WorkspaceManager {
     this.txDeadLetterProducer = this.opt.queue.getProducer<TxCUD<Doc>>(this.ctx, getDeadletterTopic(QueueTopic.Tx))
   }
 
+  // Consumers join their groups in background, a brand new group skips anything produced before the
+  // first fetch. Await this before producing into a freshly started indexer.
+  async waitConsumersReady (): Promise<void> {
+    for (const c of [this.workspaceConsumer, this.fulltextConsumer, this.txConsumer]) {
+      await c?.waitReady?.()
+    }
+  }
+
   private async processTransactions (msgs: ConsumerMessage<TxCUD<Doc>>[], control: ConsumerControl): Promise<void> {
     if (msgs.length === 0) return
 

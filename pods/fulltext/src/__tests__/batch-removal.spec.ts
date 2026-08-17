@@ -101,6 +101,7 @@ class Harness {
       }
     })
     await this.mgr.startIndexer()
+    await this.mgr.waitConsumersReady()
   }
 
   async close (): Promise<void> {

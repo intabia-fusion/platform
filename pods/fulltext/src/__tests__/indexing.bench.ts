@@ -97,6 +97,7 @@ class BenchHarness {
       }
     })
     await this.mgr.startIndexer()
+    await this.mgr.waitConsumersReady()
   }
 
   async close (): Promise<void> {
