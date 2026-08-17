@@ -72,6 +72,18 @@ export function usageFromApi (usage?: ApiUsage): TokenUsage | undefined {
 export interface ChatCompletionWithToolsResult {
   completion?: string
   usage?: TokenUsage
+  // The user stopped the run: the completion is what one final step could assemble.
+  cancelled?: boolean
+}
+
+/**
+ * Optional observation/steering of a tool run: `onProgress` fires after every model round (so the
+ * user sees tokens accumulate), `isCancelled` is checked between rounds - a cancelled run stops
+ * calling tools and answers once with what it already has.
+ */
+export interface ToolLoopHooks {
+  onProgress?: (progress: { iteration: number, usage: TokenUsage }) => void
+  isCancelled?: () => Promise<boolean> | boolean
 }
 
 /** Serializable tool definition (OpenAI function schema) passed to a provider step. */
@@ -170,7 +182,8 @@ export interface LLMProvider {
     reason?: string,
     level?: AILevel,
     planContext?: PlanContext,
-    lang?: string
+    lang?: string,
+    hooks?: ToolLoopHooks
   ) => Promise<ChatCompletionWithToolsResult | undefined>
 
   /**

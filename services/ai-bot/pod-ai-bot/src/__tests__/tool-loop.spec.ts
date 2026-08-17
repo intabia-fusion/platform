@@ -195,4 +195,44 @@ describe('runToolCalls', () => {
       expect(ask).toHaveBeenCalledTimes(1)
     })
   })
+
+  describe('hooks', () => {
+    it('cancels: skips the tools and answers in one final round', async () => {
+      const ask = jest
+        .fn()
+        .mockResolvedValueOnce({
+          toolCalls: [{ id: 'c1', name: 'slow_tool', arguments: '{}' }],
+          usage: { promptTokens: 5, completionTokens: 1 }
+        })
+        .mockResolvedValueOnce({ content: 'partial answer', usage: { promptTokens: 4, completionTokens: 2 } })
+      const execute = jest.fn(async () => 'never')
+
+      const result = await runToolCalls(ask, execute, 8, { isCancelled: () => true })
+
+      expect(execute).not.toHaveBeenCalled()
+      expect(ask).toHaveBeenCalledTimes(2)
+      expect(ask).toHaveBeenNthCalledWith(2, [], true) // final round, tools withheld
+      expect(result?.completion).toBe('partial answer')
+      expect(result?.cancelled).toBe(true)
+      expect(result?.usage).toEqual({ promptTokens: 9, completionTokens: 3 })
+    })
+
+    it('reports accumulated tokens after every model round', async () => {
+      const ask = jest
+        .fn()
+        .mockResolvedValueOnce({
+          toolCalls: [{ id: 'c1', name: 't', arguments: '{}' }],
+          usage: { promptTokens: 10, completionTokens: 2 }
+        })
+        .mockResolvedValueOnce({ content: 'ok', usage: { promptTokens: 6, completionTokens: 3 } })
+      const onProgress = jest.fn()
+
+      await runToolCalls(ask, jest.fn(async () => 'r'), 8, { onProgress })
+
+      expect(onProgress.mock.calls.map((c) => c[0])).toEqual([
+        { iteration: 1, usage: { promptTokens: 10, completionTokens: 2 } },
+        { iteration: 2, usage: { promptTokens: 16, completionTokens: 5 } }
+      ])
+    })
+  })
 })

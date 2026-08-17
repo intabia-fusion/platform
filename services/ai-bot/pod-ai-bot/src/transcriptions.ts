@@ -29,6 +29,9 @@ import { ClisrServer } from '@intabiafusion/clisr'
 import { createTranscriptionProvider } from './transcription'
 import { resolveTranscriptionConfig } from './transcription/asrRegistry'
 
+// Upper bound for one voice-note ASR call; past it the attachment is marked failed.
+const CHAT_VOICE_ASR_TIMEOUT_MS = 120000
+
 export interface TranscriptionSupport {
   consumer: TranscriptionConsumer
   processChatVoice: (ctx: MeasureContext, workspace: WorkspaceUuid, task: ChatVoiceTranscriptionTask) => Promise<void>
@@ -230,7 +233,16 @@ export async function createTranscriptionsSupport (
         const resolved = await resolveProvider(pctx, workspace)
         const asrProvider = resolved?.provider ?? provider
         const asrLevel = resolved?.level ?? config.AsrDefaultLevel
-        const result = await asrProvider.transcribe(Buffer.concat(audio), { audioFormat, language: task.language })
+        // ponytail: race, not abort - providers take no signal, so a hung request leaks until it
+        // settles. Bounded here so the attachment never stays 'pending' forever when ASR is down.
+        const result = await Promise.race([
+          asrProvider.transcribe(Buffer.concat(audio), { audioFormat, language: task.language }),
+          new Promise<never>((_resolve, reject) =>
+            setTimeout(() => {
+              reject(new Error('chat-voice transcription timed out'))
+            }, CHAT_VOICE_ASR_TIMEOUT_MS)
+          )
+        ])
 
         if (task.durationSec > 0) {
           await pushTranscriptDuration(pctx, workspace, task.durationSec, task.blobId)

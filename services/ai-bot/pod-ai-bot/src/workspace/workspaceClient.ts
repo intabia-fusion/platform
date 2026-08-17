@@ -62,7 +62,7 @@ import core, {
 import love, { type MeetingMinutes } from '@hcengineering/love'
 import pulse, { type TypingIndicator } from '@hcengineering/pulse'
 import fs from 'fs'
-import type { LLMProvider, ChatMessage as LLMChatMessage, ContextMode } from '../llms'
+import type { LLMProvider, ChatMessage as LLMChatMessage, ContextMode, ToolLoopHooks } from '../llms'
 import type { AILevel } from '../config'
 import { getTools, type PendingProposal, type ReqCtx } from '../utils/tools'
 import { sanitizeDocumentMarkdown } from '../utils/documentMarkdown'
@@ -88,6 +88,9 @@ import { connectPlatform } from '../utils/platform'
 import { LoveController } from './love'
 import { RestClient } from '@hcengineering/api-client'
 import { CollaboratorClient, getClient as getCollaboratorClient } from '@hcengineering/collaborator-client'
+
+// How long a reply waits for a still-running voice transcription before answering without it.
+const VOICE_TRANSCRIPT_WAIT_MS = 60000
 
 interface LLMHistoryRecord {
   role: 'user' | 'assistant' | 'system'
@@ -401,28 +404,63 @@ export class WorkspaceClient {
     )
   }
 
-  /** The user's PersonSpace (where their AIRequest status docs live). */
-  private async getUserPersonSpace (personUuid: PersonUuid): Promise<Ref<Space> | undefined> {
-    const space = await this.client?.findOne(contact.class.PersonSpace, { account: personUuid as AccountUuid })
-    return space?._id
-  }
-
-  /** Create an AIRequest status doc in the user's PersonSpace; undefined if space can't be resolved. */
+  /**
+   * Create an AIRequest status doc in the chat's own space. NOT the user's PersonSpace: that one is
+   * private to the user, so the bot account cannot read or write it (the doc was silently never
+   * created). The chat space is visible to both, which is also what the progress UI needs.
+   */
   async createAIRequest (
     personUuid: PersonUuid,
-    seed: { level: AILevel, modelId: string, kind: string }
+    space: Ref<Space>,
+    seed: { level: AILevel, modelId: string, kind: string, objectId?: Ref<Doc> }
   ): Promise<Ref<AIRequest> | undefined> {
-    const space = await this.getUserPersonSpace(personUuid)
-    if (space === undefined) return undefined
-    const modifiedBy = await this.getUserSocialId(personUuid)
-    return await this.client.createDoc<AIRequest>(
-      aiBot.class.AIRequest,
-      space,
-      { ...queuedRequest(seed.level, seed.modelId, seed.kind), status: 'processing' },
-      undefined,
-      undefined,
-      modifiedBy
-    )
+    try {
+      const modifiedBy = await this.getUserSocialId(personUuid)
+      return await this.client.createDoc<AIRequest>(
+        aiBot.class.AIRequest,
+        space,
+        { ...queuedRequest(seed.level, seed.modelId, seed.kind), status: 'processing', objectId: seed.objectId },
+        undefined,
+        undefined,
+        modifiedBy
+      )
+    } catch (err: any) {
+      // Status telemetry must never cost the user their answer.
+      this.ctx.warn('failed to create AI request doc', { err: err?.message })
+      return undefined
+    }
+  }
+
+  /**
+   * Live progress + cancel for one request: token counts land on the AIRequest doc (the user sees
+   * them next to "Yulia is typing"), and the user cancelling that doc stops the tool loop.
+   */
+  private requestHooks (
+    personUuid: PersonUuid,
+    id: Ref<AIRequest> | undefined,
+    space: Ref<Space> | undefined
+  ): ToolLoopHooks | undefined {
+    if (id === undefined || space === undefined) return undefined
+    return {
+      onProgress: ({ iteration, usage }) => {
+        void this.updateAIRequest(personUuid, id, space, {
+          iteration,
+          promptTokens: usage.promptTokens,
+          completionTokens: usage.completionTokens
+        }).catch((err) => {
+          this.ctx.warn('failed to report AI request progress', { err: err?.message })
+        })
+      },
+      isCancelled: async () => {
+        try {
+          const doc = await this.client.findOne(aiBot.class.AIRequest, { _id: id })
+          return doc?.status === 'cancelled'
+        } catch (err: any) {
+          this.ctx.warn('failed to read AI request status', { err: err?.message })
+          return false
+        }
+      }
+    }
   }
 
   /** Apply a status patch (done/failed) to an AIRequest, on the user's behalf. */
@@ -478,12 +516,13 @@ export class WorkspaceClient {
   }
 
   // Collect the transcript text of voice-note attachments, waiting for any still-transcribing ones
-  // to finish (bounded poll). Failed/empty ones are skipped.
-  private async collectVoiceTranscripts (messageId: Ref<Doc>, files: Attachment[]): Promise<string[]> {
+  // to finish (bounded poll). Failed/empty ones are reported as `missing` so the reply can say so
+  // instead of answering an empty prompt.
+  private async collectVoiceTranscripts (files: Attachment[]): Promise<{ texts: string[], missing: number }> {
     const voice = files.filter((f) => f._class === aiBot.class.AudioTranscribe) as AudioTranscribe[]
-    if (voice.length === 0) return []
+    if (voice.length === 0) return { texts: [], missing: 0 }
 
-    const deadline = Date.now() + 60000
+    const deadline = Date.now() + VOICE_TRANSCRIPT_WAIT_MS
     let pending = voice.filter((v) => v.state === 'pending').map((v) => v._id)
     while (pending.length > 0 && Date.now() < deadline) {
       await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -497,7 +536,8 @@ export class WorkspaceClient {
       pending = voice.filter((v) => v.state === 'pending').map((v) => v._id)
     }
 
-    return voice.map((v) => (v.text ?? '').trim()).filter((t) => t !== '')
+    const texts = voice.map((v) => (v.text ?? '').trim()).filter((t) => t !== '')
+    return { texts, missing: voice.length - texts.length }
   }
 
   async processMessageEvent (
@@ -529,9 +569,12 @@ export class WorkspaceClient {
     const files = await this.getAttachments(this.client, event.messageId)
     // Voice-note transcripts are part of what the user "said": wait for pending ones to finish,
     // then fold their text into the prompt. Non-voice attachments stay as file references.
-    const transcripts = await this.collectVoiceTranscripts(event.messageId, files)
-    if (transcripts.length > 0) {
-      promptText += '\n\n' + transcripts.join('\n')
+    const transcripts = await this.collectVoiceTranscripts(files)
+    if (transcripts.texts.length > 0) {
+      promptText += '\n\n' + transcripts.texts.join('\n')
+    }
+    if (transcripts.missing > 0) {
+      promptText += '\n\n[A voice message could not be transcribed - tell the user the transcription failed]'
     }
     const otherFiles = files.filter((f) => f._class !== aiBot.class.AudioTranscribe)
     if (otherFiles.length > 0) {
@@ -897,11 +940,11 @@ export class WorkspaceClient {
       }
     }
 
-    const aiRequestSpace = await this.getUserPersonSpace(personUuid)
-    const aiRequestId = await this.createAIRequest(personUuid, {
+    const aiRequestId = await this.createAIRequest(personUuid, space, {
       level: resolved.level,
       modelId: resolved.model.model,
-      kind: 'chat'
+      kind: 'chat',
+      objectId
     })
 
     // Shared with the tools: a proposal tool stages its result here instead of posting a message.
@@ -924,13 +967,14 @@ export class WorkspaceClient {
         'chat',
         effectiveLevel,
         { isFree: windows.isFree, hasPackages: windows.hasPackages },
-        replyLang
+        replyLang,
+        this.requestHooks(personUuid, aiRequestId, space)
       )
     } catch (err: any) {
       // LLM failed after in-worker retries; swallow instead of rethrow so the queue does not reprocess.
       this.ctx.error('chat completion failed', { workspace: this.wsIds.uuid, error: err?.message })
-      if (aiRequestId !== undefined && aiRequestSpace !== undefined) {
-        await this.updateAIRequest(personUuid, aiRequestId, aiRequestSpace, failedPatch(err?.message ?? 'error'))
+      if (aiRequestId !== undefined) {
+        await this.updateAIRequest(personUuid, aiRequestId, space, failedPatch(err?.message ?? 'error'))
       }
       const lang = event.language ?? config.DefaultLanguage
       await this.notifyLimit(
@@ -944,8 +988,8 @@ export class WorkspaceClient {
     const response = chatCompletion?.completion
 
     if (response == null) {
-      if (aiRequestId !== undefined && aiRequestSpace !== undefined) {
-        await this.updateAIRequest(personUuid, aiRequestId, aiRequestSpace, failedPatch('empty response'))
+      if (aiRequestId !== undefined) {
+        await this.updateAIRequest(personUuid, aiRequestId, space, failedPatch('empty response'))
       }
       // Silence reads as a broken bot: say so instead (e.g. the model kept asking for tools
       // and never produced text).
@@ -959,12 +1003,14 @@ export class WorkspaceClient {
       return
     }
 
-    if (aiRequestId !== undefined && aiRequestSpace !== undefined) {
+    if (aiRequestId !== undefined) {
+      const multiplier = planMultiplier(resolved.model, windows.isFree, windows.hasPackages)
+      const patch = donePatch(chatCompletion?.usage, multiplier)
       await this.updateAIRequest(
         personUuid,
         aiRequestId,
-        aiRequestSpace,
-        donePatch(chatCompletion?.usage, planMultiplier(resolved.model, windows.isFree, windows.hasPackages))
+        space,
+        chatCompletion?.cancelled === true ? { ...patch, status: 'cancelled' } : patch
       )
     }
     const parseResponse = jsonToMarkup(markdownToMarkup(response, { refUrl: '', imageUrl: '' }))

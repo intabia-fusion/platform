@@ -203,8 +203,8 @@
       on:click={onSend}
     />
   {:else}
+    <!-- Upload only: the message is sent without waiting for the transcript. -->
     <Spinner size="small" />
-    <span class="timer"><Label label={chunter.string.Transcribing} /></span>
   {/if}
 </div>
 

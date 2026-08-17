@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { TokenUsage, ToolCall, ToolResult, ToolDefinition } from './types'
+import type { TokenUsage, ToolCall, ToolResult, ToolDefinition, ToolLoopHooks } from './types'
 import type { ChatCompletionWithToolsReply } from './server'
 import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
 
@@ -86,6 +86,8 @@ export interface ToolLoopResult {
   usage?: TokenUsage
   // The clisr worker that served the run (from the last reply that carried one). Empty for direct.
   clientId?: string
+  // The user stopped the run: the completion is what could be assembled in one final step.
+  cancelled?: boolean
 }
 
 /**
@@ -95,7 +97,8 @@ export interface ToolLoopResult {
 export async function runToolCalls (
   ask: AskModel,
   execute: ExecuteTool,
-  maxIterations: number
+  maxIterations: number,
+  hooks?: ToolLoopHooks
 ): Promise<ToolLoopResult | undefined> {
   const priorToolResults: ToolResult[] = []
   let promptTokens = 0
@@ -115,6 +118,7 @@ export async function runToolCalls (
   const usageResult = (): TokenUsage | undefined =>
     sawUsage ? { promptTokens, completionTokens, ...(reasoningTokens > 0 ? { reasoningTokens } : {}) } : undefined
 
+  let cancelled = false
   for (let iter = 0; iter < maxIterations; iter++) {
     const reply = await ask(priorToolResults)
     if (reply === undefined) {
@@ -125,6 +129,7 @@ export async function runToolCalls (
       clientId = reply.clientId
     }
     addUsage(reply.usage)
+    hooks?.onProgress?.({ iteration: iter + 1, usage: { promptTokens, completionTokens } })
     if (reply.content !== undefined && reply.content !== '') {
       lastContent = reply.content
     }
@@ -134,7 +139,7 @@ export async function runToolCalls (
       // Final answer, unless the model ran into its output cap: then keep asking for the rest and
       // join it, so the user gets the whole answer instead of a sentence cut in half.
       let completion = reply.content
-      if (reply.truncated === true && completion !== undefined && completion !== '') {
+      if (reply.truncated === true && completion !== undefined && completion !== '' && !cancelled) {
         for (let cont = 0; cont < MAX_CONTINUATIONS; cont++) {
           const more = await ask(priorToolResults, true, completion)
           if (more?.content === undefined || more.content === '') break
@@ -148,6 +153,13 @@ export async function runToolCalls (
         usage: usageResult(),
         clientId
       }
+    }
+
+    // Cancelled: skip the tools and drop straight to the final round, so the user gets an answer
+    // built from what was already gathered instead of nothing.
+    if ((await hooks?.isCancelled?.()) === true) {
+      cancelled = true
+      break
     }
 
     // Execute the calls on the pod and keep every result: dropping earlier rounds would
@@ -164,8 +176,8 @@ export async function runToolCalls (
     )
   }
 
-  // Exhausted iterations or stuck re-requesting the same tool: collapse results into one digest and
-  // ask again with tools withheld. `inline_` results must replay as plain text; keep native transcript otherwise.
+  // Exhausted iterations, cancelled, or stuck re-requesting the same tool: collapse results into one
+  // digest and ask again with tools withheld. `inline_` results must replay as plain text; keep native transcript otherwise.
   const wasInline = priorToolResults.some((r) => r.id.startsWith('inline_'))
   const digest: ToolResult[] =
     priorToolResults.length > 0 && wasInline
@@ -183,10 +195,12 @@ export async function runToolCalls (
     clientId = final.clientId
   }
   addUsage(final?.usage)
+  hooks?.onProgress?.({ iteration: maxIterations, usage: { promptTokens, completionTokens } })
   const completion = final?.content !== undefined && final.content !== '' ? final.content : lastContent
   return {
     completion,
     usage: usageResult(),
-    clientId
+    clientId,
+    cancelled
   }
 }

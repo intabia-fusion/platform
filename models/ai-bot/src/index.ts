@@ -92,6 +92,12 @@ export class TAIRequest extends TDoc implements AIRequest {
 
   @Prop(TypeString(), core.string.String)
     error?: string
+
+  @Prop(TypeRef(core.class.Doc), core.string.Object)
+    objectId?: Ref<Doc>
+
+  @Prop(TypeNumber(), core.string.Number)
+    iteration?: number
 }
 
 @Model(aiBot.class.AISpaceSettings, core.class.Doc, DOMAIN_AI)

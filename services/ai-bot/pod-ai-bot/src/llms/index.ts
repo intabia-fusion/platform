@@ -24,7 +24,14 @@ import { createMockProvider } from './mock'
 import { LLMProvider } from './types'
 
 // Re-export types for convenience
-export type { LLMProvider, ChatMessage, ChatCompletionWithToolsResult, ContextMode, TokenUsage } from './types'
+export type {
+  LLMProvider,
+  ChatMessage,
+  ChatCompletionWithToolsResult,
+  ContextMode,
+  TokenUsage,
+  ToolLoopHooks
+} from './types'
 export { totalTokens } from './types'
 
 // Re-export server provider request types

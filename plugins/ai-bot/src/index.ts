@@ -55,9 +55,9 @@ export interface AIPersonalData extends Preference {
 }
 
 /** Lifecycle of a queued AI request, surfaced to the user for status/ETA. */
-export type AIRequestStatus = 'queued' | 'processing' | 'done' | 'failed'
+export type AIRequestStatus = 'queued' | 'processing' | 'done' | 'failed' | 'cancelled'
 
-/** Status of one AI request, stored in the user's PersonSpace; the pod updates it as the request progresses. */
+/** Status of one AI request, stored in the chat's space; the pod updates it as the request progresses. */
 export interface AIRequest extends Doc {
   status: AIRequestStatus
   level: AILevel
@@ -67,6 +67,10 @@ export interface AIRequest extends Doc {
   completionTokens: number
   billedTokens: number // (prompt+completion) * model.tokenMultiplier
   error?: string
+  // Chat/thread the request answers: lets the UI show progress and a cancel button in that chat.
+  objectId?: Ref<Doc>
+  // Model<->tool round trips done so far, surfaced as progress while the request runs.
+  iteration?: number
 }
 
 /** Per-space (or workspace-wide when attachedTo is unset) AI settings: level ceiling and reply language. */

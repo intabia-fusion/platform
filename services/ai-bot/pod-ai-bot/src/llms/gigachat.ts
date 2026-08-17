@@ -36,6 +36,7 @@ import type {
   PlanContext,
   ToolCall,
   ToolDefinition,
+  ToolLoopHooks,
   ToolResult
 } from './types'
 import { usageFromApi } from './types'
@@ -185,7 +186,8 @@ export default class GigaChatProvider implements LLMProvider {
     reason = 'chat',
     level?: AILevel,
     planContext?: PlanContext,
-    lang?: string
+    lang?: string,
+    hooks?: ToolLoopHooks
   ): Promise<ChatCompletionWithToolsResult | undefined> {
     try {
       // GigaChat has no SDK auto-loop (unlike OpenAI runTools), so drive the shared tool loop
@@ -212,8 +214,8 @@ export default class GigaChatProvider implements LLMProvider {
           continueFrom
         )
 
-      const result = await runToolCalls(ask, execute, MAX_TOOL_ITERATIONS)
-      return { completion: result?.completion, usage: result?.usage }
+      const result = await runToolCalls(ask, execute, MAX_TOOL_ITERATIONS, hooks)
+      return { completion: result?.completion, usage: result?.usage, cancelled: result?.cancelled }
     } catch (error) {
       // Rethrow so the pod marks the request failed instead of silently returning no reply.
       ctx.error('GigaChat tools completion failed', { error: (error as any)?.message })

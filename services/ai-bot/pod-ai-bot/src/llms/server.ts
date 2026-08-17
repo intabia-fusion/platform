@@ -29,7 +29,8 @@ import type {
   ContextMode,
   ToolDefinition,
   ToolResult,
-  PlanContext
+  PlanContext,
+  ToolLoopHooks
 } from './types'
 
 import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
@@ -222,7 +223,8 @@ export default class ServerLLMProvider implements LLMProvider {
     reason = 'chat',
     level?: AILevel,
     planContext?: PlanContext,
-    lang?: string
+    lang?: string,
+    hooks?: ToolLoopHooks
   ): Promise<ChatCompletionWithToolsResult | undefined> {
     const startTime = Date.now()
 
@@ -259,7 +261,7 @@ export default class ServerLLMProvider implements LLMProvider {
           | undefined
       }
 
-      const result = await runToolCalls(ask, execute, MAX_TOOL_ITERATIONS)
+      const result = await runToolCalls(ask, execute, MAX_TOOL_ITERATIONS, hooks)
 
       const elapsed = Date.now() - startTime
       this.ctx.info('Server LLM createChatCompletionWithTools completed', {
@@ -284,7 +286,7 @@ export default class ServerLLMProvider implements LLMProvider {
         result.clientId
       )
 
-      return { completion: result.completion, usage: result.usage }
+      return { completion: result.completion, usage: result.usage, cancelled: result.cancelled }
     } catch (err: any) {
       const elapsed = Date.now() - startTime
       this.ctx.error('Server LLM createChatCompletionWithTools failed', {

@@ -44,6 +44,7 @@
   import { getChannelSpace, getForwardData } from '../../utils'
   import { replyingToMessageStore } from '../../stores'
   import ChannelTypingInfo from '../ChannelTypingInfo.svelte'
+  import AIRequestProgress from '../AIRequestProgress.svelte'
   import VoiceRecordingHud from './VoiceRecordingHud.svelte'
   import IconMic from '../icons/IconMic.svelte'
 
@@ -402,5 +403,16 @@
 />
 
 {#if withTypingInfo}
-  <ChannelTypingInfo {object} />
+  <div class="typing-row">
+    <ChannelTypingInfo {object} />
+    <AIRequestProgress {object} />
+  </div>
 {/if}
+
+<style lang="scss">
+  .typing-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+</style>
