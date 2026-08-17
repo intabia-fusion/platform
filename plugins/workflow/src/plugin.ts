@@ -186,6 +186,7 @@ export default plugin(workflowId, {
     DefaultWorkflow: '' as IntlString,
     Untitled: '' as IntlString,
     AnyStatus: '' as IntlString,
+    AnyTaskType: '' as IntlString,
     Workflows: '' as IntlString,
     Screens: '' as IntlString,
     DeleteWorkflow: '' as IntlString,

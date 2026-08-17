@@ -216,6 +216,7 @@
               />
               <ButtonIcon
                 icon={IconDelete}
+                dataId="btnDeleteWorkflow"
                 tooltip={{ label: view.string.Delete, direction: 'bottom' }}
                 size="small"
                 kind="secondary"

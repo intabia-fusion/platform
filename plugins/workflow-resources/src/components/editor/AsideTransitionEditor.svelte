@@ -276,6 +276,7 @@
     <div class="row row-top">
       <span class="label label-top"><Label label={plugin.string.From} /></span>
       <ModernDropdownLabels
+        dataId="transition-from"
         items={fromStatusItems}
         bind:selected={fromStatusItemIds}
         multiselect={true}
@@ -291,6 +292,7 @@
     <div class="row">
       <span class="label"><Label label={plugin.string.To} /></span>
       <ModernDropdown
+        dataId="transition-to"
         items={toStatusItems}
         bind:selected={toStatusId}
         placeholder={ui.string.NotSelected}
@@ -369,7 +371,13 @@
   <div slot="footer" class="footer-row flex-row-center w-full justify-between">
     <div class="footer-left">
       {#if !readonly}
-        <ModernButton label={presentation.string.Remove} size="large" kind="secondary" on:click={handleRemove} />
+        <ModernButton
+          dataId="btnRemoveTransition"
+          label={presentation.string.Remove}
+          size="large"
+          kind="secondary"
+          on:click={handleRemove}
+        />
       {/if}
     </div>
     <div class="footer-right flex-row-center flex-gap-2">

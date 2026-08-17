@@ -13,6 +13,7 @@
     "WorkflowSchemeField": "İş akışı şeması",
     "Untitled": "Adsız",
     "AnyStatus": "Herhangi bir durum",
+    "AnyTaskType": "Herhangi bir görev türü",
     "Workflows": "İş akışları",
     "DeleteWorkflow": "İş akışını sil",
     "DeleteWorkflowConfirm": "Bu iş akışını silmek istediğinizden emin misiniz?",

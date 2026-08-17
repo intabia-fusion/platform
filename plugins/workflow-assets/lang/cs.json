@@ -13,6 +13,7 @@
     "WorkflowSchemeField": "Schéma workflow",
     "Untitled": "Bez názvu",
     "AnyStatus": "Jakýkoli stav",
+    "AnyTaskType": "Libovolný typ úkolu",
     "Workflows": "Workflows",
     "DeleteWorkflow": "Smazat workflow",
     "DeleteWorkflowConfirm": "Opravdu chcete toto workflow smazat?",

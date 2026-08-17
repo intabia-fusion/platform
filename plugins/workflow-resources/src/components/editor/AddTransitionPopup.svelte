@@ -170,6 +170,7 @@
     <div class="hulyModal-content__settingsSet-line">
       <span class="label"> <Label label={plugin.string.From} /></span>
       <ModernDropdown
+        dataId="transition-from"
         items={fromStatusItems}
         bind:selected={fromStatusItemIds}
         multiselect={true}
@@ -184,6 +185,7 @@
     <div class="hulyModal-content__settingsSet-line">
       <span class="label"> <Label label={plugin.string.To} /> </span>
       <ModernDropdown
+        dataId="transition-to"
         items={toStatusItems}
         bind:selected={toStatusId}
         autoSelect={false}

@@ -145,7 +145,7 @@
     <div class="rules-nav-group--list">
       {#each configs as config, idx (config.id ?? idx)}
         {@const rule = getRule(config.rule)}
-        <div class="rule-card">
+        <div class="rule-card" data-id="rule-card" data-rule-id={config.rule}>
           <div class="rule-card--header">
             <div class="rule-card--title">
               {#if rule?.icon}

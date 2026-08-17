@@ -181,7 +181,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
     })
 
     const allowedTransitions = transitions.filter((t) => {
-      return (t.from == null || t.from.includes(fromStatus)) && t.to === toStatus
+      return (t.from == null || t.from.length === 0 || t.from.includes(fromStatus)) && t.to === toStatus
     })
 
     if (allowedTransitions.length === 0) {

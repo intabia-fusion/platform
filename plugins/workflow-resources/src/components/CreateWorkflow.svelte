@@ -71,6 +71,7 @@
         <Label label={task.string.TaskType} />
       </span>
       <ModernDropdown
+        dataId="workflow-taskType"
         items={taskTypeMenuItems}
         bind:selected={selectedTaskTypeId}
         kind="secondary"
