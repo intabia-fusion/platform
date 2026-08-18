@@ -2,8 +2,7 @@
 // Copyright © 2026 Intabia Fusion
 //
 
-import { type AILevel, type AIProviderConfig } from '../config'
-import { providerLevels } from '../llms/modelRegistry'
+import { type AILevel } from '../config'
 
 export interface WindowUsage {
   // Tier token window for the current period [periodStart, +30d]; burns at period end.
@@ -46,20 +45,4 @@ export function decideLevel (requested: AILevel, usage: WindowUsage): LimitDecis
     return { action: 'block', reason: 'limit' }
   }
   return { action: 'proceed', level: requested }
-}
-
-// Cheapest fallback-eligible level across all providers (lowest order).
-export function cheapestEligible (registry: AIProviderConfig[]): AILevel | undefined {
-  let best: { level: AILevel, order: number } | undefined
-  for (const provider of registry) {
-    for (const level of providerLevels(provider)) {
-      const model = provider.levels[level]
-      if (model?.fallbackEligible === true) {
-        if (best === undefined || model.order < best.order) {
-          best = { level, order: model.order }
-        }
-      }
-    }
-  }
-  return best?.level
 }

@@ -13,6 +13,14 @@
     "AILevelSummary": "Résumer",
     "AILevelTasks": "Gestion des tâches",
     "Language": "Langue",
-    "LanguageHint": "Langue par défaut des réponses du bot (ex. fr, en). Vide = défaut du pod."
+    "LanguageHint": "Langue par défaut des réponses du bot (ex. fr, en). Vide = défaut du pod.",
+    "AssistIssue": "Yulia IA",
+    "AssistIssueUndo": "Annuler",
+    "AssistIssueApply": "Appliquer",
+    "AssistIssueThreadStart": "Brouillon de tâche{project, select, undefined {} other { dans {project}}}",
+    "AssistIssueNewContext": "Nouveau contexte",
+    "AssistIssueCreated": "Tâche {identifier} créée",
+    "AssistIssueApplyAgain": "Appliquer à nouveau",
+    "AssistIssueAppliedMark": "Appliqué"
   }
 }

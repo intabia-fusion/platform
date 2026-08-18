@@ -22,11 +22,9 @@ llm:
       description: Базовая модель
       # Billed factor: free without packages = freeMultiplier, otherwise tokenMultiplier.
       # tokenMultiplier bills the on-prem security surcharge, not raw compute cost.
-      # fallbackEligible: may take over when a provider pool runs dry (not on token limits).
       tokenMultiplier: 2
       freeMultiplier: 1
       displayMultiplier: 1
-      fallbackEligible: true
       # Small local model: chat only, it handles tool calls poorly.
       features:
         talk: false
@@ -101,7 +99,7 @@ llm:
           model: GigaChat-2
           capabilities:
             tools: true
-            maxContextTokens: 16384
+            maxContextTokens: 128000
             # Explicit answer cap. 4096 cut long tool calls short (finish_reason=length, empty body);
             # 10k fits a big proposal in one call and still bounds a runaway generation.
             maxOutputTokens: 4096
@@ -109,7 +107,7 @@ llm:
           model: GigaChat-2-Pro
           capabilities:
             tools: true
-            maxContextTokens: 32768
+            maxContextTokens: 128000
             # Explicit answer cap. 4096 cut long tool calls short (finish_reason=length, empty body);
             # 10k fits a big proposal in one call and still bounds a runaway generation.
             maxOutputTokens: 8192
@@ -117,7 +115,7 @@ llm:
           model: GigaChat-2-Max
           capabilities:
             tools: true
-            maxContextTokens: 32768
+            maxContextTokens: 128000
             # Explicit answer cap. 4096 cut long tool calls short (finish_reason=length, empty body);
             # 10k fits a big proposal in one call and still bounds a runaway generation.
             maxOutputTokens: 8192
@@ -125,7 +123,7 @@ llm:
           model: GigaChat-3-Ultra
           capabilities:
             tools: true
-            maxContextTokens: 32768
+            maxContextTokens: 128000
             maxOutputTokens: 8192
 
 # ASR registry, mirrors llm: above. tokenMultiplier here bills per SECOND of audio,

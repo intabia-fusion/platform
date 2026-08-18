@@ -582,7 +582,7 @@ services:
       - LLM_SHOW_USAGE=false
 
       # Content and History Limits
-      - MAX_CONTENT_TOKENS=12800
+      - MAX_CONTENT_TOKENS=100000
       - MAX_HISTORY_RECORDS=500
 
       # Additional environment variables
@@ -627,7 +627,7 @@ services:
       # - GIGACHAT_TIMEOUT=600
 
       # Content and History Limits
-      - MAX_CONTENT_TOKENS=12800
+      - MAX_CONTENT_TOKENS=100000
       - MAX_HISTORY_RECORDS=500
 
       - STATS_URL=http://stats:4900
@@ -661,7 +661,7 @@ services:
       - DATALAB_API_KEY=
 
       # Content and History Limits
-      - MAX_CONTENT_TOKENS=12800
+      - MAX_CONTENT_TOKENS=100000
       - MAX_HISTORY_RECORDS=500
 
       - STATS_URL=http://stats:4900

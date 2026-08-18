@@ -253,6 +253,9 @@ export interface IssueDraft {
     // Child id in template
     childId?: string
   }
+  // Root message of the AI assistant conversation about this draft. Kept in the draft so coming
+  // back to an unfinished issue restores the discussion with it, not just the fields.
+  assistConversation?: Ref<Doc>
 }
 
 /**
@@ -689,7 +692,11 @@ const pluginState = plugin(trackerId, {
   extensions: {
     IssueListHeader: '' as ComponentExtensionId,
     EditIssueHeader: '' as ComponentExtensionId,
-    EditIssueTitle: '' as ComponentExtensionId
+    EditIssueTitle: '' as ComponentExtensionId,
+    // Create-issue dialog: the AI assistant. The toggle sits in the header's right corner,
+    // the panel itself slides out beside the dialog.
+    CreateIssueAssist: '' as ComponentExtensionId,
+    CreateIssueHeaderActions: '' as ComponentExtensionId
   },
   taskTypes: {
     Issue: '' as Ref<TaskType>,

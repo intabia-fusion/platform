@@ -5314,6 +5314,9 @@ importers:
       '@hcengineering/setting':
         specifier: workspace:^0.7.0
         version: link:../../plugins/setting
+      '@hcengineering/tracker':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/tracker
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui

@@ -301,7 +301,9 @@
     "AddedBlocker": "Přidán blokující úkol {identifier}{value}",
     "RemovedBlocker": "Odebrán blokující úkol {identifier}{value}",
     "AddedRelation": "Přidán související úkol {identifier}{value}",
-    "RemovedRelation": "Odebrán související úkol {identifier}{value}"
+    "RemovedRelation": "Odebrán související úkol {identifier}{value}",
+    "CreateAndOpen": "Vytvořit a otevřít",
+    "CreateAndNew": "Vytvořit a začít další"
   },
   "status": {},
   "emailTemplate": {

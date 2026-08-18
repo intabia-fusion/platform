@@ -26,6 +26,7 @@ import {
 } from '@hcengineering/core'
 import {
   type AIContextMessage,
+  type AIConversationPurpose,
   type AIEditProposalMessage,
   type AILevel,
   type AsrLevel,
@@ -43,6 +44,7 @@ import { type Builder, Model, Prop, TypeBoolean, TypeNumber, TypeRef, TypeAny, T
 import core, { TDoc } from '@hcengineering/model-core'
 import chunter, { TChatMessage, TThreadMessage } from '@hcengineering/model-chunter'
 import preference, { TPreference } from '@hcengineering/model-preference'
+import tracker from '@hcengineering/tracker'
 import presentation from '@hcengineering/model-presentation'
 import setting from '@hcengineering/setting'
 import view from '@hcengineering/model-view'
@@ -137,6 +139,15 @@ export class TAIContextMessage extends TChatMessage implements AIContextMessage 
 
   @Prop(TypeString(), core.string.String)
     level?: AILevel
+
+  @Prop(TypeString(), core.string.String)
+    purpose?: AIConversationPurpose
+
+  @Prop(TypeRef(core.class.Doc), core.string.Object)
+    resultId?: Ref<Doc>
+
+  @Prop(TypeString(), core.string.String)
+    workingContext?: string
 }
 
 @Model(aiBot.class.AIEditProposalMessage, chunter.class.ThreadMessage)
@@ -239,6 +250,16 @@ export function createModel (builder: Builder): void {
     group: 'settings-account',
     role: AccountRole.Guest,
     order: 1700
+  })
+
+  // Assistant in the create-issue dialog: toggle in the header, panel beside the dialog.
+  builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
+    extension: tracker.extensions.CreateIssueHeaderActions,
+    component: aiBot.component.IssueAssistToggle
+  })
+  builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
+    extension: tracker.extensions.CreateIssueAssist,
+    component: aiBot.component.IssueAssistPanel
   })
 
   // "Discuss with Yulia" button in the object header (issues, documents, etc.).

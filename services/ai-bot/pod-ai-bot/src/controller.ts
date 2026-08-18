@@ -59,7 +59,6 @@ import { tryAssignToWorkspace } from './utils/account'
 import { LimitsState } from './limits'
 import { PoolLimits } from './billing'
 import { resolveModel, registryForFeature } from './llms/modelRegistry'
-import { cheapestEligible } from './workspace/windowLimit'
 import { ApiError } from './server/error'
 /* LLM helpers moved to ./llm; use provider methods on `this.llm` instead */
 import { WorkspaceClient } from './workspace/workspaceClient'
@@ -611,17 +610,6 @@ export class AIControl {
     return await this.llm.correctTranscript(this.ctx, workspace, text, lang, level)
   }
 
-  // Cheapest fallback-eligible (provider, level) whose pool is not exhausted; undefined if none.
-  private resolvePoolFallback (fromLevel: AILevel): { providerId: string, level: AILevel } | undefined {
-    const fbLevel = cheapestEligible(config.AIProviders)
-    if (fbLevel === undefined || fbLevel === fromLevel) return undefined
-    const resolved = resolveModel(fbLevel, config.AIProviders)
-    if (this.poolLimits?.isBlockedByLevel(config.AIProviders, resolved.provider.id, resolved.level) === true) {
-      return undefined
-    }
-    return { providerId: resolved.provider.id, level: resolved.level }
-  }
-
   async processEvent (
     workspace: WorkspaceUuid,
     events: AIEventRequest[],
@@ -637,29 +625,18 @@ export class AIControl {
 
     this.checkTokensLimit(workspace)
 
-    // Global per-model pool guard: if the (provider, level) budget is exhausted, try the
-    // cheapest fallback-eligible level instead of failing outright.
-    let effProvider = provider
-    let effProviderId = providerId
-    let effLevel = level
+    // Global per-model pool guard. An exhausted pool blocks: silently dropping to a weaker model
+    // produced garbage (a level that cannot call tools answered a tool request with "}").
+    const effProvider = provider
+    const effProviderId = providerId
+    const effLevel = level
     if (providerId !== undefined && level !== undefined && this.poolLimits !== undefined) {
       if (this.poolLimits.isBlockedByLevel(config.AIProviders, providerId, level)) {
-        const fb = this.resolvePoolFallback(level)
-        if (fb === undefined) {
-          this.ctx.warn('AI provider pool exhausted, no fallback available', { workspace, providerId, level })
-          throw new ApiError(
-            402,
-            'The global token budget for this model has been reached. Please contact your administrator.'
-          )
-        }
-        this.ctx.info('AI pool exhausted, falling back to a simpler model', {
-          workspace,
-          from: { providerId, level },
-          to: { providerId: fb.providerId, level: fb.level }
-        })
-        effProviderId = fb.providerId
-        effLevel = fb.level
-        effProvider = this.providers.get(fb.providerId) ?? provider
+        this.ctx.warn('AI provider pool exhausted', { workspace, providerId, level })
+        throw new ApiError(
+          402,
+          'The global token budget for this model has been reached. Please contact your administrator.'
+        )
       }
     }
 

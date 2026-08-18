@@ -301,7 +301,9 @@
     "AddedBlocker": "Issue bloquante ajoutée {identifier}{value}",
     "RemovedBlocker": "Issue bloquante retirée {identifier}{value}",
     "AddedRelation": "Issue liée ajoutée {identifier}{value}",
-    "RemovedRelation": "Issue liée retirée {identifier}{value}"
+    "RemovedRelation": "Issue liée retirée {identifier}{value}",
+    "CreateAndOpen": "Créer et ouvrir",
+    "CreateAndNew": "Créer et en commencer une autre"
   },
   "status": {},
   "emailTemplate": {

@@ -241,3 +241,27 @@ describe('runToolCalls', () => {
     })
   })
 })
+
+describe('oversized answer', () => {
+  it('retries once with a hint when the model is cut off with nothing to show', async () => {
+    // finish_reason=length inside a function call loses the call whole: content and toolCalls
+    // both come back empty.
+    const replies: any[] = [
+      { truncated: true, usage: { promptTokens: 10, completionTokens: 4096 } },
+      { content: 'short answer', usage: { promptTokens: 12, completionTokens: 5 } }
+    ]
+    const seen: any[][] = []
+    const ask = async (priorToolResults: any[]): Promise<any> => {
+      seen.push([...priorToolResults])
+      return replies.shift()
+    }
+
+    const result = await runToolCalls(ask as any, async () => 'unused', 8)
+
+    expect(result?.completion).toBe('short answer')
+    // The retry carries the instruction to split the payload.
+    expect(seen[1].some((r) => r.content.includes('has_more=true'))).toBe(true)
+    // Tokens burnt on the lost answer are still billed.
+    expect(result?.usage?.completionTokens).toBe(4101)
+  })
+})

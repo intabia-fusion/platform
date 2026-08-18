@@ -36,6 +36,14 @@
     "HideDiff": "Änderungen ausblenden",
     "NewContext": "Neuer Kontext",
     "NewContextHint": "Dieses Gespräch archivieren und einen neuen Kontext für dieses Objekt beginnen",
-    "NewContextConfirm": "Aktuelles Gespräch archivieren und neuen Kontext beginnen? Die aktuelle Diskussion bleibt verfügbar, wird aber vom Assistenten nicht mehr verwendet."
+    "NewContextConfirm": "Aktuelles Gespräch archivieren und neuen Kontext beginnen? Die aktuelle Diskussion bleibt verfügbar, wird aber vom Assistenten nicht mehr verwendet.",
+    "AssistIssue": "Yulia KI",
+    "AssistIssueUndo": "Rückgängig",
+    "AssistIssueApply": "Übernehmen",
+    "AssistIssueThreadStart": "Aufgabenentwurf{project, select, undefined {} other { in {project}}}",
+    "AssistIssueNewContext": "Neuer Kontext",
+    "AssistIssueCreated": "Aufgabe {identifier} erstellt",
+    "AssistIssueApplyAgain": "Erneut übernehmen",
+    "AssistIssueAppliedMark": "Übernommen"
   }
 }

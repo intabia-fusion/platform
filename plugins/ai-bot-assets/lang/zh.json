@@ -13,6 +13,14 @@
     "AILevelSummary": "总结",
     "AILevelTasks": "任务管理",
     "Language": "语言",
-    "LanguageHint": "机器人回复的默认语言（如 zh、en）。留空 = pod 默认。"
+    "LanguageHint": "机器人回复的默认语言（如 zh、en）。留空 = pod 默认。",
+    "AssistIssue": "Yulia AI",
+    "AssistIssueUndo": "撤销",
+    "AssistIssueApply": "应用",
+    "AssistIssueThreadStart": "任务草稿{project, select, undefined {} other {（{project}）}}",
+    "AssistIssueNewContext": "新上下文",
+    "AssistIssueCreated": "已创建任务 {identifier}",
+    "AssistIssueApplyAgain": "再次应用",
+    "AssistIssueAppliedMark": "已应用"
   }
 }

@@ -40,9 +40,6 @@ export interface AILevelModel {
   displayMultiplier?: number // UI-facing "xN" relative to the base (middle) level; falls back to tokenMultiplier when unset
   order: number // sort key for UI + fallback ladder (lower = weaker/cheaper)
   label: string // UI label shown to the user
-  // May take over when a provider pool is exhausted (a cheap/local model). Workspace token
-  // limits never downgrade a level — they block.
-  fallbackEligible?: boolean
   capabilities?: {
     maxContextTokens?: number
     // Output token cap for a single generation. Set per model/level in the yaml registry so a
@@ -75,7 +72,6 @@ export interface AILevelClass {
   // Billed factor for free plans without packages. Defaults to tokenMultiplier.
   freeMultiplier?: number
   displayMultiplier?: number
-  fallbackEligible?: boolean
   // Per-feature availability of this level (unset = allowed). e.g. Базовый -> { talk: false }.
   features?: AILevelFeatures
 }
@@ -357,7 +353,6 @@ const resolveProviderSpec = (
       displayMultiplier: cls.displayMultiplier,
       order: cls.order,
       label: cls.label,
-      fallbackEligible: cls.fallbackEligible,
       features: overrides?.features ?? cls.features,
       capabilities: overrides?.capabilities
     }

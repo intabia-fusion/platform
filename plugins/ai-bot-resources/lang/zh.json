@@ -36,6 +36,14 @@
     "HideDiff": "隐藏更改",
     "NewContext": "新建上下文",
     "NewContextHint": "归档此对话，并为该对象开始新的上下文",
-    "NewContextConfirm": "归档当前对话并开始新的上下文？当前讨论仍可查看，但助手将不再使用它。"
+    "NewContextConfirm": "归档当前对话并开始新的上下文？当前讨论仍可查看，但助手将不再使用它。",
+    "AssistIssue": "Yulia AI",
+    "AssistIssueUndo": "撤销",
+    "AssistIssueApply": "应用",
+    "AssistIssueThreadStart": "任务草稿{project, select, undefined {} other {（{project}）}}",
+    "AssistIssueNewContext": "新上下文",
+    "AssistIssueCreated": "已创建任务 {identifier}",
+    "AssistIssueApplyAgain": "再次应用",
+    "AssistIssueAppliedMark": "已应用"
   }
 }

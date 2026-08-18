@@ -30,7 +30,7 @@ import type { IntlString, Metadata, Plugin } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
 import type { Preference } from '@hcengineering/preference'
 import type { AnyComponent } from '@hcengineering/ui/src/types'
-import type { AILevel, AsrLevel } from './rest'
+import type { AIConversationPurpose, AILevel, AsrLevel } from './rest'
 
 export * from './rest'
 
@@ -97,6 +97,15 @@ export interface AIContextMessage extends ChatMessage {
   // Per-thread AI level chosen by the user in the thread header. The server trigger forwards it
   // on every reply in this thread (overrides the space/workspace level); unset -> space default.
   level?: AILevel
+  // What this conversation is for. Unset = a plain "discuss this object" thread; 'issue-draft'
+  // marks a thread started by the create-issue dialog's assistant, so history views can tell
+  // assistant sessions apart from ordinary discussions.
+  purpose?: AIConversationPurpose
+  // The issue that was finally created from this conversation (set by the dialog on save).
+  resultId?: Ref<Doc>
+  // Working state the conversation is about (the create-issue dialog keeps the draft here).
+  // Never rendered in chat: it is context for the model, not a message for people to read.
+  workingContext?: string
 }
 
 /** Bot's proposed edit to a document/issue, posted as a chat message the user reviews and applies via a button. */
@@ -140,6 +149,17 @@ export interface AITaskProposalMessage extends ThreadMessage {
   createdIds?: Ref<Doc>[]
   // The parent issue this proposal created (absent for a split, which reuses `parent`).
   createdRootId?: Ref<Doc>
+  // tracker IssuePriority (0 none, 1 urgent, 2 high, 3 medium, 4 low), kept ref-free.
+  priority?: number
+  // Estimate in hours, as the tracker estimation editor shows it.
+  estimation?: number
+  // Due date, ISO-8601 (YYYY-MM-DD): the model has no notion of the workspace timezone.
+  dueDate?: string
+  // Label names. Only labels that already exist in the workspace are applied.
+  labels?: string[]
+  // Draft sessions: the user pushed this proposal into the create dialog. Nothing is created,
+  // so this is the only way to tell an applied proposal from a pending one.
+  applied?: boolean
 }
 
 /** Lifecycle of a voice-note transcription. */
@@ -178,7 +198,9 @@ const aiBot = plugin(aiBotId, {
     DiscussWithAI: '' as AnyComponent,
     EditProposalPresenter: '' as AnyComponent,
     TaskProposalPresenter: '' as AnyComponent,
-    ThreadContextActions: '' as AnyComponent
+    ThreadContextActions: '' as AnyComponent,
+    IssueAssistPanel: '' as AnyComponent,
+    IssueAssistToggle: '' as AnyComponent
   },
   string: {
     AISettings: '' as IntlString,
@@ -205,6 +227,15 @@ const aiBot = plugin(aiBotId, {
     PersonalContext: '' as IntlString,
     PersonalContextHint: '' as IntlString,
     DiscussWithAI: '' as IntlString,
+    AssistIssue: '' as IntlString,
+    AssistIssueThreadStart: '' as IntlString,
+    AssistIssueCreated: '' as IntlString,
+    AssistIssueApply: '' as IntlString,
+    AssistIssueApplyAgain: '' as IntlString,
+    AssistIssueAppliedMark: '' as IntlString,
+    AssistIssueNewContext: '' as IntlString,
+    AssistIssueUndo: '' as IntlString,
+
     DiscussFirstMessage: '' as IntlString,
     ProposedEdit: '' as IntlString,
     ProposedTask: '' as IntlString,

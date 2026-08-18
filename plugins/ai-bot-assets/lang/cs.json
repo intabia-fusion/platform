@@ -13,6 +13,14 @@
     "AILevelSummary": "Shrnutí",
     "AILevelTasks": "Správa úkolů",
     "Language": "Jazyk",
-    "LanguageHint": "Výchozí jazyk odpovědí bota (např. cs, en). Prázdné = výchozí podu."
+    "LanguageHint": "Výchozí jazyk odpovědí bota (např. cs, en). Prázdné = výchozí podu.",
+    "AssistIssue": "Yulia AI",
+    "AssistIssueUndo": "Zpět",
+    "AssistIssueApply": "Použít",
+    "AssistIssueThreadStart": "Návrh úkolu{project, select, undefined {} other { v {project}}}",
+    "AssistIssueNewContext": "Nový kontext",
+    "AssistIssueCreated": "Úkol {identifier} vytvořen",
+    "AssistIssueApplyAgain": "Použít znovu",
+    "AssistIssueAppliedMark": "Použito"
   }
 }

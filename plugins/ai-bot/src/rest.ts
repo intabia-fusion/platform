@@ -21,6 +21,9 @@ import { ChatMessage } from '@hcengineering/chunter'
 /** ЮляИИ quality level id: data-driven string, not a fixed enum; new levels need no code change. */
 export type AILevel = string
 
+/** What an AI conversation was started for (mirrors AIContextMessage.purpose). */
+export type AIConversationPurpose = 'issue-draft'
+
 export interface AIEventRequest {
   message: string
   messageClass: Ref<Class<ChatMessage>>
@@ -41,6 +44,9 @@ export interface AIEventRequest {
   // Space language for the bot's non-personal replies (set by the server trigger
   // from AISpaceSettings); the pod falls back to AI_DEFAULT_LANGUAGE when unset.
   language?: string
+  // What the conversation is for, taken from its root. Narrows the toolset: drafting an issue
+  // that does not exist yet has no use for sub-task or document tools.
+  purpose?: AIConversationPurpose
 }
 
 /** Queue task for a chat voice-note transcription (kind='chat-voice'), handled by the stt-worker. */

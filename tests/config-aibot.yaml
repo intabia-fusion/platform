@@ -18,7 +18,6 @@ llm:
       tokenMultiplier: 0.1
       freeMultiplier: 0.5
       displayMultiplier: 0.5
-      fallbackEligible: true
     middle:
       order: 10
       label: Стандарт

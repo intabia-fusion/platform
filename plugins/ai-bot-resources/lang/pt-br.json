@@ -36,6 +36,14 @@
     "HideDiff": "Ocultar alterações",
     "NewContext": "Novo contexto",
     "NewContextHint": "Arquivar esta conversa e iniciar um novo contexto para este objeto",
-    "NewContextConfirm": "Arquivar a conversa atual e iniciar um novo contexto? A discussão atual continuará disponível, mas o assistente não a usará mais."
+    "NewContextConfirm": "Arquivar a conversa atual e iniciar um novo contexto? A discussão atual continuará disponível, mas o assistente não a usará mais.",
+    "AssistIssue": "Yulia IA",
+    "AssistIssueUndo": "Desfazer",
+    "AssistIssueApply": "Aplicar",
+    "AssistIssueThreadStart": "Rascunho da tarefa{project, select, undefined {} other { em {project}}}",
+    "AssistIssueNewContext": "Novo contexto",
+    "AssistIssueCreated": "Tarefa {identifier} criada",
+    "AssistIssueApplyAgain": "Aplicar novamente",
+    "AssistIssueAppliedMark": "Aplicado"
   }
 }

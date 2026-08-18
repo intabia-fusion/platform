@@ -1,4 +1,4 @@
-import { type AIFeature } from '@hcengineering/ai-bot'
+import { type AIConversationPurpose, type AIFeature } from '@hcengineering/ai-bot'
 import { AccountUuid, Class, Doc, MarkupBlobRef, Ref, Space } from '@hcengineering/core'
 import document, { Document, getFirstRank, Teamspace } from '@hcengineering/document'
 import { makeRank } from '@hcengineering/rank'
@@ -185,6 +185,12 @@ export type PendingProposal =
     description?: string
     subtasks?: Array<{ title: string, description?: string }>
     parent?: Ref<Doc>
+    priority?: number
+    estimation?: number
+    dueDate?: string
+    labels?: string[]
+    // The model said the description continues, so the next call appends instead of replacing.
+    awaitingMore?: boolean
   }
 
 export interface ReqCtx {
@@ -192,6 +198,8 @@ export interface ReqCtx {
   objectClass: Ref<Class<Doc>>
   space: Ref<Space>
   collection: string
+  // What the conversation is for; tools narrow their behaviour by it.
+  purpose?: AIConversationPurpose
   // Filled by the proposal tools, read once the reply text is ready.
   pending?: PendingProposal
 }
@@ -202,16 +210,18 @@ type ToolFunc = (
   reqCtx?: ReqCtx
 ) => Promise<string> | string
 
-// [definition, handler, where it applies, AI feature it needs (level flags may deny it)]
-const tools: [PredefinedTool<any>, ToolFunc, 'direct' | 'thread' | 'any', AIFeature?][] = []
+// [definition, handler, where it applies, AI feature it needs, conversation purpose it belongs to]
+const tools: [PredefinedTool<any>, ToolFunc, 'direct' | 'thread' | 'any', AIFeature?, AIConversationPurpose?][] = []
 
 export function registerTool<T extends object | string> (
   tool: PredefinedTool<T>,
   func: ToolFunc,
   contextMode: 'direct' | 'thread' | 'any',
-  feature?: AIFeature
+  feature?: AIFeature,
+  // Set for tools that make sense in one kind of conversation only; they are hidden elsewhere.
+  purpose?: AIConversationPurpose
 ): void {
-  tools.push([tool, func, contextMode, feature])
+  tools.push([tool, func, contextMode, feature, purpose])
 }
 
 if (config.DataLabApiKey !== '') {
@@ -380,14 +390,88 @@ const createTask: ToolFunc = async (workspaceClient, _user, args, reqCtx) => {
   if (title === '' && staged === undefined) return 'No title provided; pass a short task title.'
 
   const subtasks = [...(staged?.subtasks ?? []), ...batch].slice(0, MAX_SUBTASKS)
+  const hasMore = args?.has_more === true
+  const incoming = typeof args?.description === 'string' ? args.description : undefined
+  // A description sent in parts is appended; a fresh one replaces what was staged.
+  const description =
+    incoming === undefined
+      ? staged?.description
+      : staged?.awaitingMore === true
+        ? (staged.description ?? '') + incoming
+        : incoming
   const posted = await workspaceClient.postTaskProposal(reqCtx, {
     title: title !== '' ? title : (staged?.title ?? ''),
-    description: typeof args?.description === 'string' ? args.description : staged?.description,
+    description,
     subtasks,
-    parent: staged?.parent
+    parent: staged?.parent,
+    priority: parsePriority(args?.priority) ?? staged?.priority,
+    estimation: typeof args?.estimation === 'number' ? args.estimation : staged?.estimation,
+    dueDate: typeof args?.due_date === 'string' ? args.due_date : staged?.dueDate,
+    labels: Array.isArray(args?.labels)
+      ? args.labels.filter((l: unknown): l is string => typeof l === 'string' && l.trim() !== '')
+      : staged?.labels,
+    awaitingMore: hasMore
   })
   if (!posted) return 'Could not post the task proposal.'
+  if (hasMore) {
+    return (
+      'Part staged. Call propose_task again with ONLY the next part of the description ' +
+      '(no title, no repetition), and set has_more=false on the last part.'
+    )
+  }
   return batchReply(batch.length, subtasks.length)
+}
+
+/**
+ * The create-issue dialog's assistant. It edits the draft the user is filling in - there is no
+ * issue yet and nothing is created here: the staged result is offered as "apply to the form".
+ */
+const editIssueDraft: ToolFunc = async (workspaceClient, _user, args, reqCtx) => {
+  if (reqCtx === undefined) return 'No conversation context available.'
+  const staged = reqCtx.pending?.kind === 'task' ? reqCtx.pending : undefined
+  const title = typeof args?.title === 'string' ? args.title.trim() : ''
+  const hasMore = args?.has_more === true
+  const incoming = typeof args?.description === 'string' ? args.description : undefined
+  // A description sent in parts is appended; a fresh one replaces what was staged.
+  const description =
+    incoming === undefined
+      ? staged?.description
+      : staged?.awaitingMore === true
+        ? (staged.description ?? '') + incoming
+        : incoming
+
+  const posted = await workspaceClient.postTaskProposal(reqCtx, {
+    title: title !== '' ? title : (staged?.title ?? ''),
+    description,
+    subtasks: [],
+    priority: parsePriority(args?.priority) ?? staged?.priority,
+    estimation: typeof args?.estimation === 'number' ? args.estimation : staged?.estimation,
+    dueDate: typeof args?.due_date === 'string' ? args.due_date : staged?.dueDate,
+    labels: Array.isArray(args?.labels)
+      ? args.labels.filter((l: unknown): l is string => typeof l === 'string' && l.trim() !== '')
+      : staged?.labels,
+    awaitingMore: hasMore
+  })
+  if (!posted) return 'Could not stage the draft.'
+  if (hasMore) {
+    return (
+      'Part staged. Call edit_issue_draft again with ONLY the next part of the description ' +
+      '(no title, no repetition), and set has_more=false on the last part.'
+    )
+  }
+  return 'Draft staged; the user sees it and applies it to the form. Do not repeat its content in your reply.'
+}
+
+function normalizeTitle (title: string): string {
+  return title.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+// tracker IssuePriority: 0 none, 1 urgent, 2 high, 3 medium, 4 low.
+const PRIORITY_BY_NAME: Record<string, number> = { none: 0, urgent: 1, high: 2, medium: 3, low: 4 }
+
+function parsePriority (value: unknown): number | undefined {
+  if (typeof value !== 'string') return undefined
+  return PRIORITY_BY_NAME[value.trim().toLowerCase()]
 }
 
 // Tell the model what is already staged, so it continues the list instead of restarting it.
@@ -410,14 +494,26 @@ const splitTask: ToolFunc = async (workspaceClient, _user, args, reqCtx) => {
     return 'This conversation is not linked to a task, so there is nothing to split. Use create_task instead.'
   }
   const staged = reqCtx.pending?.kind === 'task' ? reqCtx.pending : undefined
-  const all = [...(staged?.subtasks ?? []), ...subtasks].slice(0, MAX_SUBTASKS)
+  // Sub-tasks the task already has: proposing them again would create duplicates, and the user
+  // asked about the existing split, not for a fresh one.
+  const existing = await workspaceClient.existingSubIssueTitles(parent)
+  const fresh = subtasks.filter((s) => !existing.has(normalizeTitle(s.title)))
+  const skipped = subtasks.length - fresh.length
+  if (fresh.length === 0) {
+    return (
+      `All ${subtasks.length} sub-task(s) already exist on this task, so nothing was staged. ` +
+      'Answer in plain text about the current split instead of proposing it again.'
+    )
+  }
+  const all = [...(staged?.subtasks ?? []), ...fresh].slice(0, MAX_SUBTASKS)
   const posted = await workspaceClient.postTaskProposal(reqCtx, {
     title: typeof args?.title === 'string' ? args.title.trim() : (staged?.title ?? ''),
     subtasks: all,
     parent
   })
   if (!posted) return 'Could not post the task proposal.'
-  return batchReply(subtasks.length, all.length)
+  const reply = batchReply(fresh.length, all.length)
+  return skipped > 0 ? `${reply} ${skipped} of them already existed and were dropped.` : reply
 }
 
 const listSubtasks: ToolFunc = async (workspaceClient, _user, _args, reqCtx) => {
@@ -489,6 +585,27 @@ registerTool<object>(
             description:
               'Task body as markdown: what the problem is and what has to be done, summarized from the conversation.'
           },
+          has_more: {
+            type: 'boolean',
+            description:
+              'Set to true when the description does not fit this call: send the next part in the following ' +
+              'call and it will be appended. Set false (or omit) on the last part.'
+          },
+          priority: {
+            type: 'string',
+            enum: ['none', 'urgent', 'high', 'medium', 'low'],
+            description: 'How urgent the task is. Omit to leave the current one.'
+          },
+          estimation: { type: 'number', description: 'Rough effort in HOURS. Omit when you cannot judge it.' },
+          due_date: {
+            type: 'string',
+            description: 'Deadline as YYYY-MM-DD. Omit unless the user named a date.'
+          },
+          labels: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Label names. Only labels that already exist in the workspace are applied.'
+          },
           subtasks: SUBTASKS_PARAM
         },
         required: ['title']
@@ -497,12 +614,61 @@ registerTool<object>(
         'Propose a new task built from the conversation (a summary of the problem plus what to do). NOTHING IS ' +
         'CREATED by this call: the user gets an editable card and presses the create button themselves, so it is ' +
         'always safe to call. Use when the user asks to create a task or to turn the discussion into one. ' +
-        'Do not echo its content in your reply.'
+        'A long description must be sent across several calls with has_more=true - one oversized call is cut ' +
+        'off at the output limit and lost entirely. Do not echo its content in your reply.'
     }
   },
   createTask,
   'any',
   'tasks'
+)
+
+registerTool<object>(
+  {
+    type: 'function',
+    function: {
+      name: 'edit_issue_draft',
+      parse: JSON.parse,
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Task title, one line, no markdown.' },
+          description: {
+            type: 'string',
+            description: 'Task body as markdown, complete and ready to replace what the user has.'
+          },
+          has_more: {
+            type: 'boolean',
+            description:
+              'Set to true when the description does not fit this call: send the next part in the ' +
+              'following call and it will be appended. Set false (or omit) on the last part.'
+          },
+          priority: {
+            type: 'string',
+            enum: ['none', 'urgent', 'high', 'medium', 'low'],
+            description: 'How urgent the task is. Omit to leave the current one.'
+          },
+          estimation: { type: 'number', description: 'Rough effort in HOURS. Omit when you cannot judge it.' },
+          due_date: { type: 'string', description: 'Deadline as YYYY-MM-DD. Omit unless the user named a date.' },
+          labels: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Label names. Only labels that already exist in the workspace are applied.'
+          }
+        }
+      },
+      description:
+        'Edit the issue the user is drafting in the create dialog. NOTHING IS CREATED: the user gets the ' +
+        'result next to the form and applies it themselves. This is the only way to change the draft - ' +
+        'always answer with this call and never with the text of the task in your reply. Send only the ' +
+        'fields you change, but a description must always be complete (use has_more for a long one). ' +
+        'The draft has no sub-tasks: it is a single issue that does not exist yet.'
+    }
+  },
+  editIssueDraft,
+  'any',
+  'tasks',
+  'issue-draft'
 )
 
 registerTool<object>(
@@ -610,15 +776,27 @@ registerTool<object>(
   'thread'
 )
 
+// Drafting an issue that does not exist yet: the model may only rewrite that draft. propose_task
+// creates a separate issue, sub-task and document tools act on objects that do not exist here.
+const PURPOSE_TOOLS: Record<AIConversationPurpose, Set<string>> = {
+  'issue-draft': new Set(['edit_issue_draft', 'load_thread_history'])
+}
+
 export function getTools (
   workspaceClient: WorkspaceClient,
   contextMode: 'direct' | 'thread',
   user: AccountUuid | undefined,
   reqCtx?: ReqCtx,
-  features?: AILevelFeatures
+  features?: AILevelFeatures,
+  purpose?: AIConversationPurpose
 ): RunnableTools<BaseFunctionsArgs> {
+  const allowed = purpose !== undefined ? PURPOSE_TOOLS[purpose] : undefined
   const result: (RunnableToolFunctionWithoutParse | RunnableToolFunctionWithParse<any>)[] = []
   for (const tool of tools) {
+    const name = tool[0].function.name
+    if (allowed !== undefined && (name === undefined || !allowed.has(name))) continue
+    // Purpose-bound tools stay out of every other conversation.
+    if (tool[4] !== undefined && tool[4] !== purpose) continue
     // A level that denies the feature does not get its tools: a weak model would call them and fail.
     if (tool[3] !== undefined && features?.[tool[3]] === false) continue
     if (tool[2] === contextMode || tool[2] === 'any') {

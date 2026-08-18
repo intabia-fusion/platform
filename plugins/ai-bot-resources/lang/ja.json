@@ -36,6 +36,14 @@
     "HideDiff": "変更を非表示",
     "NewContext": "新しいコンテキスト",
     "NewContextHint": "この会話をアーカイブし、このオブジェクトの新しいコンテキストを開始します",
-    "NewContextConfirm": "現在の会話をアーカイブして新しいコンテキストを開始しますか？現在の会話は引き続き閲覧できますが、アシスタントは使用しなくなります。"
+    "NewContextConfirm": "現在の会話をアーカイブして新しいコンテキストを開始しますか？現在の会話は引き続き閲覧できますが、アシスタントは使用しなくなります。",
+    "AssistIssue": "ユリアAI",
+    "AssistIssueUndo": "元に戻す",
+    "AssistIssueApply": "適用",
+    "AssistIssueThreadStart": "タスクの下書き{project, select, undefined {} other {（{project}）}}",
+    "AssistIssueNewContext": "新しいコンテキスト",
+    "AssistIssueCreated": "タスク {identifier} を作成しました",
+    "AssistIssueApplyAgain": "もう一度適用",
+    "AssistIssueAppliedMark": "適用済み"
   }
 }

@@ -301,7 +301,9 @@
     "AddedBlocker": "Questão bloqueadora adicionada {identifier}{value}",
     "RemovedBlocker": "Questão bloqueadora removida {identifier}{value}",
     "AddedRelation": "Questão relacionada adicionada {identifier}{value}",
-    "RemovedRelation": "Questão relacionada removida {identifier}{value}"
+    "RemovedRelation": "Questão relacionada removida {identifier}{value}",
+    "CreateAndOpen": "Criar e abrir",
+    "CreateAndNew": "Criar e começar outra"
   },
   "status": {},
   "emailTemplate": {

@@ -107,12 +107,18 @@ function normalizeForCompare (md: string): string {
  * History budget for a level: the model's own context window minus the room its answer needs,
  * capped by the pod-wide budget. Falls back to the pod-wide budget when the level says nothing.
  */
+// Token counts are estimates (tiktoken for a GigaChat model is a guess), so the history is cut
+// to 85% of what is nominally free: filling the window to the brim ends in a 422 from the
+// provider, and the request is lost rather than trimmed.
+const CONTEXT_SAFETY = 0.85
+
 function contextBudgetFor (level: AILevel): number {
   const caps = resolveLevelCapabilities(level)
   const contextWindow = caps?.maxContextTokens
   if (contextWindow === undefined || contextWindow <= 0) return config.MaxContentTokens
   const reserved = caps?.maxOutputTokens ?? 0
-  return Math.max(1, Math.min(config.MaxContentTokens, contextWindow - reserved))
+  const free = Math.floor((contextWindow - reserved) * CONTEXT_SAFETY)
+  return Math.max(1, Math.min(config.MaxContentTokens, free))
 }
 
 /** Capabilities of the level as served by whichever provider serves it. */
@@ -639,6 +645,16 @@ export class WorkspaceClient {
       parts.push(`This conversation is about task ${is.identifier ?? ''}.`)
       parts.push('TITLE: ' + is.title)
       body = is.description != null ? await this.readMarkupBlobAsMarkdown(is.description) : undefined
+      // The sub-tasks come with the task itself: asked to review the split, the model used to
+      // propose a fresh list without ever calling list_subtasks.
+      const subs = await this.listSubIssues(is._id)
+      parts.push('EXISTING SUB-TASKS:')
+      parts.push(subs)
+      parts.push(
+        'Those already exist. When the user asks about the split, judge THIS list: say what is ' +
+          'missing, redundant or misnamed. Only propose sub-tasks that are genuinely new, and never ' +
+          'restate the existing ones as a proposal.'
+      )
     } else if (hierarchy.isDerived(doc._class, document.class.Document)) {
       const d = doc as Document
       parts.push('This conversation is about document ' + d.title + '.')
@@ -702,10 +718,31 @@ export class WorkspaceClient {
   // so the text and the card land in one message.
   async postTaskProposal (
     ctx: ReqCtx,
-    proposal: { title: string, description?: string, subtasks?: AITaskProposal[], parent?: Ref<Doc> }
+    proposal: {
+      title: string
+      description?: string
+      subtasks?: AITaskProposal[]
+      parent?: Ref<Doc>
+      priority?: number
+      estimation?: number
+      dueDate?: string
+      labels?: string[]
+      // More description parts are coming: the next call appends instead of replacing.
+      awaitingMore?: boolean
+    }
   ): Promise<boolean> {
     ctx.pending = { kind: 'task', ...proposal }
     return true
+  }
+
+  /** Titles of the sub-issues a task already has, normalized for comparison. */
+  async existingSubIssueTitles (parentId: Ref<Doc>): Promise<Set<string>> {
+    const subs = await this.client.findAll<Issue>(
+      tracker.class.Issue,
+      { attachedTo: parentId as Ref<Issue> },
+      { limit: 200, projection: { title: 1 } }
+    )
+    return new Set(subs.map((s) => s.title.trim().toLowerCase().replace(/\s+/g, ' ')))
   }
 
   // Compact listing of existing sub-issues for the model; bodies are trimmed.
@@ -841,6 +878,11 @@ export class WorkspaceClient {
         if (msg._class === aiBot.class.AIContextMessage) {
           const link = msg as AIContextMessage
           linked = await this.client?.findOne<Doc>(link.objectClass, { _id: link.objectId })
+          // Draft the conversation works on (create-issue dialog). Kept off the message body so
+          // the chat stays readable; the model still needs it on every turn.
+          if (link.workingContext !== undefined && link.workingContext.trim() !== '') {
+            systemPrompts.push({ role: 'system' as const, content: link.workingContext })
+          }
         }
         // Any non-chat source object (issue, document, ...) is described from its class schema.
         const source = linked ?? (msg._class !== chunter.class.ChatMessage ? msg : undefined)
@@ -948,8 +990,8 @@ export class WorkspaceClient {
     })
 
     // Shared with the tools: a proposal tool stages its result here instead of posting a message.
-    const reqCtx: ReqCtx = { objectId, objectClass, space, collection: event.collection }
-    const tools = getTools(this, contextMode, personUuid as AccountUuid, reqCtx, resolved.model.features)
+    const reqCtx: ReqCtx = { objectId, objectClass, space, collection: event.collection, purpose: event.purpose }
+    const tools = getTools(this, contextMode, personUuid as AccountUuid, reqCtx, resolved.model.features, event.purpose)
     const replyLang = await this.resolveChatLanguage(personUuid, space, contextMode === 'direct')
     let chatCompletion
     try {

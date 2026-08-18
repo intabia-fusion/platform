@@ -13,6 +13,14 @@
     "AILevelSummary": "Подвести итоги",
     "AILevelTasks": "Управление задачами",
     "Language": "Язык",
-    "LanguageHint": "Язык ответов бота (напр. ru, en). Пусто = по умолчанию пода."
+    "LanguageHint": "Язык ответов бота (напр. ru, en). Пусто = по умолчанию пода.",
+    "AssistIssue": "ЮляИИ",
+    "AssistIssueUndo": "Вернуть",
+    "AssistIssueApply": "Применить",
+    "AssistIssueThreadStart": "Черновик задачи{project, select, undefined {} other { в проекте {project}}}",
+    "AssistIssueNewContext": "Новый контекст",
+    "AssistIssueCreated": "Создана задача {identifier}",
+    "AssistIssueApplyAgain": "Применить снова",
+    "AssistIssueAppliedMark": "Применено"
   }
 }

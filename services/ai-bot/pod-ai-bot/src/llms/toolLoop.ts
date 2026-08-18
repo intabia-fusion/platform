@@ -32,6 +32,13 @@ export type AskModel = (
 // that keeps hitting the cap cannot spin (each round costs a full request).
 const MAX_CONTINUATIONS = 3
 
+// One retry per run: an oversized tool call is worth another shot with an explicit instruction,
+// but a model that keeps overrunning must not loop forever.
+const OVERSIZE_HINT =
+  'Your previous answer hit the output limit before it was finished, so it was lost entirely. ' +
+  'Send the same thing again in parts: keep each tool call small and set has_more=true on every ' +
+  'part except the last one. Never try to fit a long body into a single call.'
+
 // Max model<->tool round trips before we force a plain-text answer.
 export const MAX_TOOL_ITERATIONS = 8
 
@@ -119,10 +126,24 @@ export async function runToolCalls (
     sawUsage ? { promptTokens, completionTokens, ...(reasoningTokens > 0 ? { reasoningTokens } : {}) } : undefined
 
   let cancelled = false
+  let retriedOversize = false
   for (let iter = 0; iter < maxIterations; iter++) {
     const reply = await ask(priorToolResults)
     if (reply === undefined) {
       return undefined
+    }
+
+    // Nothing came back and the model was cut off: the whole answer (usually a tool call with a
+    // long body) was lost. Ask again, telling it to split the payload.
+    const emptyTruncated =
+      reply.truncated === true &&
+      (reply.content === undefined || reply.content === '') &&
+      (reply.toolCalls ?? []).length === 0
+    if (emptyTruncated && !retriedOversize && !cancelled) {
+      retriedOversize = true
+      addUsage(reply.usage)
+      priorToolResults.push({ id: `oversize-${iter}`, name: 'system', content: OVERSIZE_HINT })
+      continue
     }
 
     if (reply.clientId !== undefined && reply.clientId !== '') {

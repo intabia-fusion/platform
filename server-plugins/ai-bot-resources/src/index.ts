@@ -231,6 +231,11 @@ async function applySpaceSettings (control: TriggerControl, event: AIEventReques
 
 /** Per-thread level (from the AIContextMessage root) overrides the space/workspace level. */
 async function applyThreadLevel (control: TriggerControl, message: ChatMessage, event: AIEventRequest): Promise<void> {
+  // The root of an assistant conversation carries the purpose itself; a reply carries it on its root.
+  if (control.hierarchy.isDerived(message._class, aiBot.class.AIContextMessage)) {
+    applyConversationPurpose(message as AIContextMessage, event)
+    return
+  }
   if (!control.hierarchy.isDerived(message._class, chunter.class.ThreadMessage)) return
   try {
     const rootId = (message as ThreadMessage).attachedTo as unknown as Ref<AIContextMessage>
@@ -239,11 +244,23 @@ async function applyThreadLevel (control: TriggerControl, message: ChatMessage, 
     // An AIContextMessage thread is the "discuss with Julia" feature; the level stays the space
     // one unless this thread carries an explicit pick.
     event.feature = 'talk'
+    applyConversationPurpose(root, event)
     if (root.level != null && root.level !== '') {
       event.level = root.level
     }
   } catch (err: any) {
     control.ctx.warn('failed to apply thread AI level', { error: err?.message })
+  }
+}
+
+/**
+ * A conversation started by the create-issue assistant is task work, not a chat: routing must pick
+ * a level that is allowed to propose tasks, otherwise a chat-only level would answer with prose.
+ */
+function applyConversationPurpose (root: AIContextMessage, event: AIEventRequest): void {
+  if (root.purpose === 'issue-draft') {
+    event.feature = 'tasks'
+    event.purpose = root.purpose
   }
 }
 

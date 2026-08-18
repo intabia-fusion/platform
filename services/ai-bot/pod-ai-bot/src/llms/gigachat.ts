@@ -351,11 +351,8 @@ export default class GigaChatProvider implements LLMProvider {
 
       const str = msg?.content ?? undefined
       const truncated = choice?.finish_reason === 'length'
-      // The model hit the output token limit before finishing (e.g. a huge rewrite_document body).
-      // Return a plain message instead of undefined, else the user just gets silence.
-      if (truncated && (str === undefined || str === '')) {
-        return { content: 'Ответ получился слишком длинным и был обрезан. Попробуйте сузить запрос.', usage }
-      }
+      // Cut off with nothing to show: the model spent its budget inside a function_call, which is
+      // then lost whole. The loop retries it with an instruction to send the body in parts.
       return { content: str !== '' ? str : undefined, usage, truncated }
     } catch (e) {
       const resp = (e as any)?.response

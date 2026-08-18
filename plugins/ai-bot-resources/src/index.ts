@@ -18,6 +18,8 @@ import AIPersonalDataSettings from './components/AIPersonalDataSettings.svelte'
 import AISpaceSettingsEditor from './components/AISpaceSettingsEditor.svelte'
 import AISettings from './components/AISettings.svelte'
 import DiscussWithAI from './components/DiscussWithAI.svelte'
+import IssueAssistPanel from './components/IssueAssistPanel.svelte'
+import IssueAssistToggle from './components/IssueAssistToggle.svelte'
 import EditProposalPresenter from './components/EditProposalPresenter.svelte'
 import TaskProposalPresenter from './components/TaskProposalPresenter.svelte'
 import ThreadContextActions from './components/ThreadContextActions.svelte'
@@ -32,6 +34,8 @@ export default async (): Promise<Resources> => ({
     AISpaceSettingsEditor,
     AISettings,
     DiscussWithAI,
+    IssueAssistPanel,
+    IssueAssistToggle,
     EditProposalPresenter,
     TaskProposalPresenter,
     ThreadContextActions

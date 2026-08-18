@@ -13,10 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { type AITaskProposal, type AITaskProposalMessage } from '@hcengineering/ai-bot'
+  import { type AIContextMessage, type AITaskProposal, type AITaskProposalMessage } from '@hcengineering/ai-bot'
   import { type Doc, generateId, type Ref, type Space } from '@hcengineering/core'
   import { getResource, translate } from '@hcengineering/platform'
   import { createQuery, getClient, MessageViewer } from '@hcengineering/presentation'
+  import { get } from 'svelte/store'
+
+  import { issueDraftApplier } from '../stores'
   import { jsonToMarkup, markupToJSON, type MarkupNode } from '@hcengineering/text'
   import { markdownToMarkup } from '@hcengineering/text-markdown'
   import tracker, {
@@ -59,6 +62,35 @@
 
   let projects: Project[] = []
   const projectsQuery = createQuery()
+  const rootQuery = createQuery()
+
+  // A proposal made while drafting an issue in the create dialog belongs to that dialog: the
+  // issue is created there, from the form the user can still edit. Creating it from the card too
+  // would produce a second, half-edited issue.
+  let isDraftSession = false
+  // Applied proposals fold away: the thread keeps the history without a wall of repeated text.
+  let collapsed = false
+  $: collapsed = value.applied === true
+
+  // No title check here: the model often changes the description only, and the panel keeps
+  // whatever the proposal leaves out.
+  async function applyToDraft (): Promise<void> {
+    const applier = get(issueDraftApplier)
+    if (applier === undefined) return
+    applier(value)
+    if (value.applied !== true) {
+      await client.update(value, { applied: true })
+    }
+  }
+
+  $: rootQuery.query(
+    plugin.class.AIContextMessage,
+    { _id: value.attachedTo as Ref<AIContextMessage> },
+    (res) => {
+      isDraftSession = res[0]?.purpose === 'issue-draft'
+    },
+    { limit: 1 }
+  )
   projectsQuery.query(tracker.class.Project, { archived: false }, (res) => {
     projects = res
   })
@@ -262,24 +294,39 @@
     {/if}
 
     <div class="proposal">
-      <div class="header"><Label label={plugin.string.ProposedTask} /></div>
+      <div class="header">
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <span
+          class="caption"
+          on:click={() => {
+            collapsed = !collapsed
+          }}
+        >
+          <Label label={plugin.string.ProposedTask} />
+          {#if value.applied === true}
+            <span class="applied"><Label label={plugin.string.AssistIssueAppliedMark} /></span>
+          {/if}
+        </span>
+      </div>
 
-      {#if !isSplit}
-        <div class="title">
-          <EditBox
-            bind:value={value.title}
-            placeholder={plugin.string.TaskTitle}
-            disabled={created}
-            fullSize
-            on:blur={() => patch({ title: value.title })}
-          />
-        </div>
-        {#if value.description != null && value.description !== ''}
-          <div class="description"><MessageViewer message={toMarkup(value.description)} /></div>
+      {#if !collapsed}
+        {#if !isSplit}
+          <div class="title">
+            <EditBox
+              bind:value={value.title}
+              placeholder={plugin.string.TaskTitle}
+              disabled={created}
+              fullSize
+              on:blur={() => patch({ title: value.title })}
+            />
+          </div>
+          {#if value.description != null && value.description !== ''}
+            <div class="description"><MessageViewer message={toMarkup(value.description)} /></div>
+          {/if}
         {/if}
       {/if}
-
-      {#if project !== undefined && children.length > 0}
+      {#if project !== undefined && children.length > 0 && !collapsed}
         <!-- The tracker sub-task control, rendered through the registry (no tracker-resources import). -->
         <Component
           is={tracker.component.SubtaskSection}
@@ -321,13 +368,25 @@
               on:selected={onProjectSelected}
             />
           {/if}
-          <Button
-            label={plugin.string.CreateTask}
-            kind={'primary'}
-            loading={creating}
-            disabled={creating || project === undefined || (!isSplit && value.title.trim() === '')}
-            on:click={create}
-          />
+          {#if isDraftSession}
+            <!-- Applying belongs on the card, next to what is being applied. The button shows up
+                 only where there is a form to apply to: in the chat sidebar there is none. -->
+            {#if $issueDraftApplier !== undefined}
+              <Button
+                label={value.applied === true ? plugin.string.AssistIssueApplyAgain : plugin.string.AssistIssueApply}
+                kind={value.applied === true ? 'regular' : 'primary'}
+                on:click={applyToDraft}
+              />
+            {/if}
+          {:else}
+            <Button
+              label={plugin.string.CreateTask}
+              kind={'primary'}
+              loading={creating}
+              disabled={creating || project === undefined || (!isSplit && value.title.trim() === '')}
+              on:click={create}
+            />
+          {/if}
         {/if}
       </div>
     </div>
@@ -345,6 +404,17 @@
     background: var(--theme-comp-header-color);
     border: 1px solid var(--theme-divider-color);
     border-radius: 0.75rem;
+  }
+
+  .caption {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+
+  .applied {
+    color: var(--theme-halfcontent-color);
   }
 
   .header {

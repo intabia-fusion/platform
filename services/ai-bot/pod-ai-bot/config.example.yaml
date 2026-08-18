@@ -50,11 +50,9 @@ llm:
       label: Базовый
       description: Локальная модель Intabia, экономичная
       # Billed factor: free w/o packages = freeMultiplier, otherwise tokenMultiplier.
-      # fallbackEligible: may take over when a provider pool runs dry (not on token limits).
       tokenMultiplier: 0.1
       freeMultiplier: 0.5
       displayMultiplier: 0.5
-      fallbackEligible: true
     middle:
       order: 10
       label: Стандарт
@@ -75,7 +73,6 @@ llm:
       displayMultiplier: 10
 
   providers:
-    # Local / on-prem models served over clisr; fallbackEligible keeps it answering
     # when a purchased provider pool is exhausted.
     - id: clisr
       provider: clisr
@@ -108,19 +105,19 @@ llm:
           model: GigaChat-2
           capabilities:
             tools: false
-            maxContextTokens: 16384
+            maxContextTokens: 128000
             maxOutputTokens: 4096
         pro:
           model: GigaChat-2-Pro
           capabilities:
             tools: false
-            maxContextTokens: 32768
+            maxContextTokens: 128000
             maxOutputTokens: 8192
         max:
           model: GigaChat-2-Max
           capabilities:
             tools: false
-            maxContextTokens: 32768
+            maxContextTokens: 128000
             maxOutputTokens: 8192
 
     # Optional OpenAI-compatible provider (cloud or self-hosted gateway).
@@ -181,5 +178,7 @@ services:
     url: http://billing:4041
 
 limits:
-  maxContentTokens: 12800
+  # Well under the 128k window: the pod trims history to 85% of what a level leaves free, and
+  # this is the ceiling across levels.
+  maxContentTokens: 100000
   maxHistoryRecords: 500

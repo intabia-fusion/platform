@@ -90,6 +90,67 @@ describe('subtask parsing', () => {
     expect(reply).toContain('holds 3')
   })
 
+  it('appends the description across parts and replaces it on a fresh one', async () => {
+    const ctxWithState: any = { ...ctx }
+    const client = {
+      postTaskProposal: async (c: any, p: any) => {
+        c.pending = { kind: 'task', ...p }
+        return true
+      }
+    } as unknown as WorkspaceClient
+    const tool: any = getTools(client, 'thread', undefined, ctxWithState).find(
+      (t: any) => t.function.name === 'propose_task'
+    )
+
+    const first = await tool.function.function({ title: 'Root', description: 'part one ', has_more: true })
+    expect(first).toContain('next part')
+    await tool.function.function({ description: 'part two', has_more: false })
+    expect(ctxWithState.pending.description).toBe('part one part two')
+
+    // A new description after the last part starts over instead of appending to the old body.
+    await tool.function.function({ description: 'brand new' })
+    expect(ctxWithState.pending.description).toBe('brand new')
+  })
+
+  it('gives a draft session the draft editor and hides task creation', async () => {
+    const draftCtx: any = { ...ctx, purpose: 'issue-draft' }
+    const names = getTools(wsClient, 'thread', undefined, draftCtx, undefined, 'issue-draft').map(
+      (t: any) => t.function.name
+    )
+    expect(names).toContain('edit_issue_draft')
+    expect(names).not.toContain('propose_task')
+    expect(names).not.toContain('propose_subtasks')
+
+    // ...and the draft editor stays out of ordinary conversations.
+    const ordinary = getTools(wsClient, 'thread', undefined, ctx).map((t: any) => t.function.name)
+    expect(ordinary).not.toContain('edit_issue_draft')
+    expect(ordinary).toContain('propose_task')
+  })
+
+  it('drops sub-tasks the task already has instead of proposing them again', async () => {
+    const ctxWithState: any = { ...ctx }
+    const client = {
+      resolveLinkedIssue: async () => 'parent' as any,
+      // The workspace client hands back normalized titles; the tool normalizes what the model sends.
+      existingSubIssueTitles: async () => new Set(['design the ui', 'write tests']),
+      postTaskProposal: async (c: any, p: any) => {
+        c.pending = { kind: 'task', ...p }
+        return true
+      }
+    } as unknown as WorkspaceClient
+    const tool: any = getTools(client, 'thread', undefined, ctxWithState).find(
+      (t: any) => t.function.name === 'propose_subtasks'
+    )
+
+    // Spacing and case must not smuggle a duplicate through.
+    const reply = await tool.function.function({ subtasks: ['Design the UI', 'Ship it'] })
+    expect(ctxWithState.pending.subtasks.map((s: any) => s.title)).toEqual(['Ship it'])
+    expect(reply).toContain('already existed')
+
+    const allKnown = await tool.function.function({ subtasks: ['Write tests'] })
+    expect(allKnown).toContain('already exist')
+  })
+
   it('refuses an empty title instead of posting a card', async () => {
     const tool: any = getTools(wsClient, 'thread', undefined, ctx).find((t: any) => t.function.name === 'propose_task')
     expect(await tool.function.function({ title: '  ' })).toContain('No title provided')
