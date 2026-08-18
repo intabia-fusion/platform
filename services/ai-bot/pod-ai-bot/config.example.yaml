@@ -8,7 +8,7 @@
 #   providers[].serves:  per-provider model bindings.
 #             Each entry maps a level id to a concrete model.
 #             Short form:  low: my-model-name
-#             Long form:   low: { model: my-model-name, tokenizer: approx, capabilities: { tools: true } }
+#             Long form:   low: { model: my-model-name, capabilities: { tools: true } }
 #             Metadata (label, order, multipliers) is merged from models[level] at startup.
 #             `enabled: false` on a provider or on a serves entry parks it (kept in the file,
 #             out of the registry) - the way to keep alternative models around and flip one on.
@@ -83,10 +83,9 @@ llm:
       batch: 1
       endpoint: ws://aibot:4010
       serves:
-        # Long form: override tokenizer and capabilities per model.
+        # Long form: override capabilities per model.
         low:
           model: qwen/qwen3.5-9b
-          tokenizer: approx
           capabilities:
             tools: true
             maxContextTokens: 8192
@@ -107,21 +106,18 @@ llm:
         # Long form with overrides:
         middle:
           model: GigaChat-2
-          tokenizer: gigachat
           capabilities:
             tools: false
             maxContextTokens: 16384
             maxOutputTokens: 4096
         pro:
           model: GigaChat-2-Pro
-          tokenizer: gigachat
           capabilities:
             tools: false
             maxContextTokens: 32768
             maxOutputTokens: 8192
         max:
           model: GigaChat-2-Max
-          tokenizer: gigachat
           capabilities:
             tools: false
             maxContextTokens: 32768
@@ -138,7 +134,6 @@ llm:
     #   serves:
     #     pro:
     #       model: gpt-4o
-    #       tokenizer: tiktoken
     #       capabilities:
     #         tools: true
     #         maxContextTokens: 131072

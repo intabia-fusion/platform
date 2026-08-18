@@ -149,7 +149,8 @@ export interface LLMProvider {
     workspace: WorkspaceUuid,
     messages: PersonMessage[],
     lang: string,
-    description?: string
+    description?: string,
+    level?: AILevel
   ) => Promise<string | undefined>
 
   /**

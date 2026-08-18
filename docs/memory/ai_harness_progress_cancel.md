@@ -31,10 +31,13 @@ space чата): добавили `objectId` (чат/тред) + `iteration`, с
 дальше та же ветка. Ноль новой логики сборки ответа, требование «за 1 шаг отдать что есть»
 выполняется само.
 
-## Что НЕ покрыто
+## Все три провайдера на одном цикле (17.08)
 
-`openai.ts` использует SDK `client.beta.chat.completions.runTools` — собственный цикл внутри SDK,
-`ToolLoopHooks` туда не доходят. Прогресс/отмена живут только на gigachat и clisr(server.ts).
+`openai.ts` раньше крутил SDK `client.beta.chat.completions.runTools` — свой цикл внутри SDK, hooks
+туда не доходили. Переведён на `runToolCalls` через собственный `chatToolStep` (он и так умел
+inline tool calls, truncated, retry). **Важно при таком переносе**: биллинг у SDK-пути был один раз
+в конце, а `chatToolStep` биллит каждый раунд — финальный `billUsage` надо убрать, иначе двойной
+счёт. Очистка `</think>` жила только в SDK-пути, перенесена на итоговый completion.
 
 ## Голосовые: где реально висло
 

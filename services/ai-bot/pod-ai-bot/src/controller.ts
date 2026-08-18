@@ -17,6 +17,7 @@ import { Readable } from 'stream'
 import { isWorkspaceLoginInfo } from '@hcengineering/account-client'
 import aiBot, {
   AIEventRequest,
+  type AISpaceSettings,
   ConnectMeetingRequest,
   DisconnectMeetingRequest,
   IdentityResponse,
@@ -50,14 +51,14 @@ import { ClisrServer } from '@intabiafusion/clisr'
 
 import { ConsumerControl, PlatformQueueProducer, StorageAdapter } from '@hcengineering/server-core'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
-import config, { type AILevel } from './config'
+import config, { type AILevel, type AILevelFeatures } from './config'
 import { TranscriptionTask } from './types'
 import { v4 as uuid } from 'uuid'
 import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
 import { tryAssignToWorkspace } from './utils/account'
 import { LimitsState } from './limits'
 import { PoolLimits } from './billing'
-import { resolveModel } from './llms/modelRegistry'
+import { resolveModel, registryForFeature } from './llms/modelRegistry'
 import { cheapestEligible } from './workspace/windowLimit'
 import { ApiError } from './server/error'
 /* LLM helpers moved to ./llm; use provider methods on `this.llm` instead */
@@ -380,20 +381,48 @@ export class AIControl {
     }
   }
 
+  // AISpaceSettings that apply to a space: the space's own settings, else the workspace-wide ones.
+  private async spaceSettings (
+    workspace: WorkspaceUuid,
+    space?: Ref<Space>
+  ): Promise<{ forSpace?: AISpaceSettings, wsDefault?: AISpaceSettings }> {
+    const wsClient = await this.getWorkspaceClient(workspace)
+    const client = wsClient?.client
+    if (client === undefined) return {}
+    const settings = await client.findAll(aiBot.class.AISpaceSettings, {})
+    return {
+      forSpace: space !== undefined ? settings.find((s) => s.attachedTo === space) : undefined,
+      wsDefault: settings.find((s) => s.attachedTo == null)
+    }
+  }
+
   // Language for non-personal output: AISpaceSettings for the space -> workspace default ->
   // pod's DefaultLanguage. req.lang is intentionally ignored (the space owns it).
   async resolveLanguage (workspace: WorkspaceUuid, space?: Ref<Space>): Promise<string> {
     try {
-      const wsClient = await this.getWorkspaceClient(workspace)
-      const client = wsClient?.client
-      if (client === undefined) return config.DefaultLanguage
-
-      const settings = await client.findAll(aiBot.class.AISpaceSettings, {})
-      const forSpace = space !== undefined ? settings.find((s) => s.attachedTo === space) : undefined
-      const wsDefault = settings.find((s) => s.attachedTo == null)
+      const { forSpace, wsDefault } = await this.spaceSettings(workspace, space)
       return forSpace?.language ?? wsDefault?.language ?? config.DefaultLanguage
     } catch {
       return config.DefaultLanguage
+    }
+  }
+
+  /**
+   * Provider + level for a non-chat feature, honouring the space's configured level instead of
+   * always running service ops on the strongest model of the default provider.
+   */
+  private async resolveFeatureProvider (
+    workspace: WorkspaceUuid,
+    space: Ref<Space> | undefined,
+    feature: keyof AILevelFeatures
+  ): Promise<{ llm?: LLMProvider, level?: AILevel }> {
+    try {
+      const { forSpace, wsDefault } = await this.spaceSettings(workspace, space)
+      const requested = forSpace?.level ?? wsDefault?.level ?? config.DefaultLevel
+      const resolved = resolveModel(requested, registryForFeature(config.AIProviders, feature))
+      return { llm: this.providers.get(resolved.provider.id) ?? this.llm, level: resolved.level }
+    } catch {
+      return { llm: this.llm }
     }
   }
 
@@ -524,7 +553,16 @@ export class AIControl {
       }
     }
     const lang = await this.resolveLanguage(workspace, target.space)
-    const summary = await this.llm.summarizeMessages(this.ctx, workspace, messagesToSummarize, lang, description)
+    const feature = await this.resolveFeatureProvider(workspace, target.space, 'summary')
+    const llm = feature.llm ?? this.llm
+    const summary = await llm.summarizeMessages(
+      this.ctx,
+      workspace,
+      messagesToSummarize,
+      lang,
+      description,
+      feature.level
+    )
     if (summary === undefined) return
 
     const summaryMarkup = jsonToMarkup(markdownToMarkup(summary))

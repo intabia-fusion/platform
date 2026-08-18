@@ -227,7 +227,12 @@ describe('runToolCalls', () => {
         .mockResolvedValueOnce({ content: 'ok', usage: { promptTokens: 6, completionTokens: 3 } })
       const onProgress = jest.fn()
 
-      await runToolCalls(ask, jest.fn(async () => 'r'), 8, { onProgress })
+      await runToolCalls(
+        ask,
+        jest.fn(async () => 'r'),
+        8,
+        { onProgress }
+      )
 
       expect(onProgress.mock.calls.map((c) => c[0])).toEqual([
         { iteration: 1, usage: { promptTokens: 10, completionTokens: 2 } },

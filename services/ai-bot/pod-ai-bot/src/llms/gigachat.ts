@@ -137,7 +137,8 @@ export default class GigaChatProvider implements LLMProvider {
     workspace: WorkspaceUuid,
     messages: PersonMessage[],
     lang: string,
-    description?: string
+    description?: string,
+    level?: AILevel
   ): Promise<string | undefined> {
     try {
       const personToName = buildPersonNameMap(messages)
@@ -154,11 +155,11 @@ export default class GigaChatProvider implements LLMProvider {
             content: text
           }
         ],
-        model: this.modelFor()
+        model: this.modelFor(level)
       })
 
       const usage = usageFromApi(response.usage)
-      billUsage(ctx, workspace, usage, this.billingFor(), 'summarize', new Date().toISOString())
+      billUsage(ctx, workspace, usage, this.billingFor(level), 'summarize', new Date().toISOString())
 
       let responseText = response.choices?.[0]?.message?.content ?? undefined
       if (responseText === undefined) return undefined

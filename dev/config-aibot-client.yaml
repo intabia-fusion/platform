@@ -47,13 +47,11 @@ llm:
       serves:
         low:
           model: ${CLISR_MODEL:-GigaChat3.1-10B-A1.8B-MLX-oQ4}
-          tokenizer: tiktoken
           capabilities:
             tools: true
             maxContextTokens: 4096
         low-plus:
           model: ${CLISR_TOOLS_MODEL:-Ternary-Bonsai-27B-mlx-2bit}
-          tokenizer: tiktoken
           capabilities:
             tools: true
             maxContextTokens: 16576
@@ -71,7 +69,6 @@ llm:
       serves:
         low:
           model: ${CLISR_ALT_MODEL:-Qwen3-4B-MLX-4bit}
-          tokenizer: tiktoken
           capabilities:
             tools: false
             maxContextTokens: 8192

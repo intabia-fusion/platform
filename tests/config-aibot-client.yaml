@@ -22,7 +22,6 @@ llm:
       serves:
         middle:
           model: "${LLM_TEST_MODEL:-GigaChat3.1-10B-A1.8B-MLX-oQ4}"
-          tokenizer: tiktoken
           capabilities:
             tools: true
             maxContextTokens: 32768

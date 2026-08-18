@@ -36,9 +36,11 @@ import type {
   ToolDefinition,
   ToolResult,
   ChatToolStepResult,
-  PlanContext
+  PlanContext,
+  ToolLoopHooks
 } from './types'
 import { totalTokens, usageFromApi } from './types'
+import { runToolCalls, buildToolExecutor, MAX_TOOL_ITERATIONS, type AskModel } from './toolLoop'
 import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
 import { PROMPTS, buildSystemPrompt, CONTINUE_PROMPT } from './prompts'
 import { buildPersonNameMap, buildMessageText, replacePersonRefs } from './summarizeUtils'
@@ -142,13 +144,14 @@ export default class OpenAIProvider implements LLMProvider {
     workspace: WorkspaceUuid,
     messages: PersonMessage[],
     lang: string,
-    description?: string
+    description?: string,
+    level?: AILevel
   ): Promise<string | undefined> {
     const personToName = buildPersonNameMap(messages)
     const text = buildMessageText(messages)
 
     const response = await this.client.chat.completions.create({
-      model: this.modelFor(),
+      model: this.modelFor(level),
       messages: [
         {
           role: 'system',
@@ -164,7 +167,7 @@ export default class OpenAIProvider implements LLMProvider {
     const usage = usageFromApi(response.usage)
     const total = totalTokens(usage)
     if (total !== 0 && usage !== undefined) {
-      const { multiplier, modelId, providerId, level } = this.billingFor()
+      const billing = this.billingFor(level)
       void pushTokensData(
         ctx,
         [
@@ -172,12 +175,12 @@ export default class OpenAIProvider implements LLMProvider {
             workspace,
             usage.promptTokens,
             usage.completionTokens,
-            multiplier,
+            billing.multiplier,
             'summarize',
-            modelId,
+            billing.modelId,
             new Date((response.created ?? Date.now() / 1000) * 1000).toISOString(),
-            providerId,
-            level
+            billing.providerId,
+            billing.level
           )
         ],
         response.id
@@ -235,66 +238,46 @@ export default class OpenAIProvider implements LLMProvider {
     reason = 'chat',
     level?: AILevel,
     planContext?: PlanContext,
-    lang?: string
+    lang?: string,
+    hooks?: ToolLoopHooks
   ): Promise<ChatCompletionWithToolsResult | undefined> {
-    const opt: OpenAI.RequestOptions = {}
-    const date = new Date()
-    if (skipCache) {
-      opt.headers = { 'cf-skip-cache': 'true' }
-    }
-
     try {
-      const isDirectMode = contextMode === 'direct'
+      // Shared tool loop instead of the SDK's own `runTools`: only this loop reports per-round
+      // progress and honours cancellation. Billing happens inside chatToolStep, per round.
+      const { toolDefinitions, execute } = buildToolExecutor(tools)
 
-      // Join all other system prompts in history
-      const systemMessages = history.filter((it) => it.role === 'system')
-
-      const systemPrompt = buildSystemPrompt(
-        isDirectMode,
-        sharedPrompt,
-        personalContext,
-        systemMessages,
-        lang,
-        this.provider.levels[level ?? this.defaultLevel]?.capabilities?.maxOutputTokens
-      )
-
-      const res = this.client.beta.chat.completions.runTools(
-        {
-          messages: [
-            {
-              role: 'system',
-              content: systemPrompt
-            },
-            ...(history as any[]),
-            message as any
-          ],
-          model: this.modelFor(level),
+      const ask: AskModel = async (priorToolResults, noTools, continueFrom) =>
+        await this.chatToolStep(
+          ctx,
+          workspace,
+          message,
+          contextMode,
+          sharedPrompt,
+          personalContext,
           user,
-          tools
-        },
-        opt
-      )
+          noTools === true ? [] : toolDefinitions,
+          priorToolResults,
+          history,
+          skipCache,
+          reason,
+          level,
+          planContext,
+          lang,
+          continueFrom
+        )
 
-      let str = await res.finalContent()
-      const usage = usageFromApi(await res.totalUsage())
+      const result = await runToolCalls(ask, execute, MAX_TOOL_ITERATIONS, hooks)
 
-      const pos = (str ?? '').indexOf('</think>')
+      // Reasoning models leak their scratchpad; keep only what follows the closing tag.
+      let completion = result?.completion
+      const pos = (completion ?? '').indexOf('</think>')
       if (pos > 0) {
-        str = (str ?? '').substring(pos + 8)
+        completion = (completion ?? '').substring(pos + 8)
       }
 
-      // Strip leaked harmony function-call markup (servers without a tool-call parser)
-      // so the user never sees raw <|function_call|>{...} text in the reply.
-      str = parseInlineToolCalls(str ?? '').content
-
-      billUsage(ctx, workspace, usage, this.billingFor(level, planContext), reason, date.toISOString())
-
-      return {
-        completion: str ?? undefined,
-        usage
-      }
+      return { completion, usage: result?.usage, cancelled: result?.cancelled }
     } catch (e) {
-      console.error(e)
+      ctx.error('openai tools completion failed', { error: (e as any)?.message })
     }
 
     return undefined

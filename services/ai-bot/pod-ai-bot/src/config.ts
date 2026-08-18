@@ -51,7 +51,6 @@ export interface AILevelModel {
   }
   // Per-feature availability (unset = allowed); a weak model can be chat-only. Surfaced in /levels.
   features?: AILevelFeatures
-  tokenizer?: 'tiktoken' | 'gigachat' | 'approx'
 }
 
 /** One provider instance: a single client/auth and one queue topic `llm-<id>`, shared across the levels it serves. */
@@ -86,7 +85,6 @@ export type ServesEntry =
   | string
   | {
     model: string
-    tokenizer?: 'tiktoken' | 'gigachat' | 'approx'
     // false skips this binding: keep several alternative models for a level in the yaml
     // and flip which one is live without deleting config.
     enabled?: boolean
@@ -361,7 +359,6 @@ const resolveProviderSpec = (
       label: cls.label,
       fallbackEligible: cls.fallbackEligible,
       features: overrides?.features ?? cls.features,
-      tokenizer: overrides?.tokenizer,
       capabilities: overrides?.capabilities
     }
   }
@@ -430,8 +427,7 @@ const buildProviderRegistry = (yamlConfig: YamlConfig | null): AIProviderConfig[
             model,
             tokenMultiplier: 1,
             order: 0,
-            label: 'GigaChat',
-            tokenizer: 'gigachat'
+            label: 'GigaChat'
           }
         }
       }
@@ -452,7 +448,6 @@ const buildProviderRegistry = (yamlConfig: YamlConfig | null): AIProviderConfig[
           tokenMultiplier: isClisr ? 2 : 1,
           order: 0,
           label: isClisr ? 'Local' : 'Standard',
-          tokenizer: 'tiktoken',
           capabilities: { maxContextTokens: 128 * 1024 }
         }
       }

@@ -163,7 +163,8 @@ export const startClient = async (): Promise<void> => {
           request.workspace,
           request.messages,
           request.lang,
-          request.description
+          request.description,
+          request.level
         )
       case 'createChatCompletionWithTools': {
         // Runs one model step, returning tool_calls or a final completion; falls back

@@ -55,6 +55,7 @@ export interface SummarizeMessagesRequest {
   lang: string
   workspace: WorkspaceUuid
   description?: string
+  level?: AILevel
 }
 
 export interface ChatCompletionWithToolsRequest {
@@ -173,7 +174,8 @@ export default class ServerLLMProvider implements LLMProvider {
     workspace: WorkspaceUuid,
     messages: PersonMessage[],
     lang: string,
-    description?: string
+    description?: string,
+    level?: AILevel
   ): Promise<string | undefined> {
     const startTime = Date.now()
 
@@ -183,7 +185,8 @@ export default class ServerLLMProvider implements LLMProvider {
         messages,
         lang,
         workspace,
-        description
+        description,
+        level
       }
 
       const result = await this.server.requestWithFilter(ctx, 'llm', [request], this.selectLLMClient)

@@ -78,13 +78,11 @@ llm:
       serves:
         low:
           model: Base
-          tokenizer: approx
           capabilities:
             maxContextTokens: 8192
             maxOutputTokens: 2048
         low-plus:
           model: Base
-          tokenizer: approx
           capabilities:
             maxContextTokens: 8192
             maxOutputTokens: 2048
@@ -101,7 +99,6 @@ llm:
       serves:
         middle:
           model: GigaChat-2
-          tokenizer: gigachat
           capabilities:
             tools: true
             maxContextTokens: 16384
@@ -110,7 +107,6 @@ llm:
             maxOutputTokens: 4096
         pro:
           model: GigaChat-2-Pro
-          tokenizer: gigachat
           capabilities:
             tools: true
             maxContextTokens: 32768
@@ -119,7 +115,6 @@ llm:
             maxOutputTokens: 8192
         max:
           model: GigaChat-2-Max
-          tokenizer: gigachat
           capabilities:
             tools: true
             maxContextTokens: 32768
@@ -128,7 +123,6 @@ llm:
             maxOutputTokens: 8192
         ultra:
           model: GigaChat-3-Ultra
-          tokenizer: gigachat
           capabilities:
             tools: true
             maxContextTokens: 32768
