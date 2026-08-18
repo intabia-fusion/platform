@@ -204,6 +204,7 @@ describe('checkout-status -> activatePurchase (dedup by paymentId+provider)', ()
     type: SubscriptionType.Purchase,
     plan: 'credits_100',
     amount: 999,
+    status: SubscriptionStatus.Active,
     providerData: {}
   }
 
@@ -276,6 +277,20 @@ describe('checkout-status -> activatePurchase (dedup by paymentId+provider)', ()
     const { res, done } = makeRes()
     handler(req(), res)
     await done
+
+    expect(accountClient.createPurchase).not.toHaveBeenCalled()
+    expect(publishPurchaseActivated).not.toHaveBeenCalled()
+  })
+
+  // The checkout draft hits the queue when the payment link opens - it must not grant anything.
+  it.each([
+    ['pending draft', { status: SubscriptionStatus.PastDue, providerData: { pending: true } }],
+    ['rejected payment', { status: SubscriptionStatus.PastDue, providerData: { pending: false } }],
+    ['abandoned checkout', { status: SubscriptionStatus.Canceled, providerData: { pending: false } }]
+  ])('%s: never activates the purchase', async (_name, patch) => {
+    const { persistSubscription } = await buildApp()
+
+    await persistSubscription({ ...purchaseSub, ...patch })
 
     expect(accountClient.createPurchase).not.toHaveBeenCalled()
     expect(publishPurchaseActivated).not.toHaveBeenCalled()

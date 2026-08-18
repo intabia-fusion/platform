@@ -499,6 +499,17 @@ export async function handleGetWorkspaceBreakdown (
   res.json(augmented)
 }
 
+// Period end of the token window: +1 calendar month, matching the subscription period (nextPeriodEnd).
+function addMonth (start: Date): Date {
+  const anchorDay = start.getUTCDate()
+  const d = new Date(start)
+  d.setUTCDate(1)
+  d.setUTCMonth(d.getUTCMonth() + 1)
+  const daysInTargetMonth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate()
+  d.setUTCDate(Math.min(anchorDay, daysInTargetMonth))
+  return d
+}
+
 // Tier window (burns at period end) + purchased balance (never expires, spent first).
 export async function handleGetWorkspaceTokenWindows (
   ctx: MeasureContext,
@@ -536,8 +547,7 @@ export async function handleGetWorkspaceTokenWindows (
     month: {
       used: usedMonth,
       limit: limitMonth,
-      windowHours: 24 * 30,
-      resetAt: new Date(periodStart.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      resetAt: addMonth(periodStart).toISOString(),
       levels
     }
   })

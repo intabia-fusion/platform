@@ -127,7 +127,6 @@ export interface LevelUsage {
 export interface TokenWindowUsage {
   used: number
   limit: number
-  windowHours: number
   resetAt: string | null
   // Spend split by AI level within this window (for the usage popup, e.g. "30% pro / 70% low").
   levels: LevelUsage[]

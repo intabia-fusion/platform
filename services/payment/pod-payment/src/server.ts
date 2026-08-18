@@ -376,6 +376,10 @@ export async function createServer (
 
   async function persistSubscription (data: SubscriptionData): Promise<void> {
     if (data.type === SubscriptionType.Purchase) {
+      // Store the checkout record too: the provider pod looks the draft up by paymentId on webhook.
+      await accountClient.upsertSubscription(data)
+      // Only a settled payment grants the SKU effect - the draft is queued when the link opens.
+      if (data.providerData?.pending === true || data.status !== SubscriptionStatus.Active) return
       await activatePurchase(data)
       return
     }

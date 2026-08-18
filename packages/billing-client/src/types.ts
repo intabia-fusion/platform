@@ -164,7 +164,6 @@ export interface LevelUsage {
 export interface TokenWindowUsage {
   used: number
   limit: number
-  windowHours: number
   resetAt: string | null
   levels: LevelUsage[]
 }
