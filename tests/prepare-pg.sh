@@ -16,6 +16,20 @@ else
     COMPOSE_FILES="-f docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml"
 fi
 
+# `restart`: pick up rebuilt images without touching data. Compose recreates only the containers
+# whose image or config changed; postgres/minio keep their (anonymous) volumes.
+if [[ " $* " == *" restart "* ]]; then
+    echo "=== restart: recreating changed containers, data kept ==="
+    docker compose ${COMPOSE_FILES} -p sanity up -d --remove-orphans
+    echo "Waiting for account service..."
+    for i in $(seq 1 90); do
+        CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+            -d '{}' http://localhost:8083/_account || true)
+        case "$CODE" in 000|502|503|504) sleep 2 ;; *) echo "account is up ($CODE)"; break ;; esac
+    done
+    exit 0
+fi
+
 # `restore_bench` / RESTORE_BENCH=1 / BENCH_DUMP=<path>: restore a full snapshot (accounts,
 # workspaces, data, blobs) from BENCH_BACKUPS instead of seeding from scratch. Storage comes up
 # first so the dump lands in a virgin DB, before db-migrator and account create objects there.
