@@ -187,6 +187,9 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - SERVER_SECRET=secret
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
+      # Without it the upgrade queue takes every outdated workspace, and a restored bench dump
+      # (hundreds of them, last_visit NULL) blocks workspace creation for the whole test run.
+      - WS_LIVENESS_DAYS=1
       - WORKSPACE_LIMIT_PER_USER=100
       # Free fallback limits (match the free:true plan in plan-config.yaml). storagePerUserGB scales disk.
       - FREE_PLAN_LIMITS={"usersLimit":5,"storagePerUserGB":2,"tokenLimit":100000,"trafficLimitGB":0,"meetingMinutesLimit":0}

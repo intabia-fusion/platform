@@ -27,6 +27,9 @@ if [[ " $* " == *" restart "* ]]; then
             -d '{}' http://localhost:8083/_account || true)
         case "$CODE" in 000|502|503|504) sleep 2 ;; *) echo "account is up ($CODE)"; break ;; esac
     done
+    # Rebuilt images may carry a newer model - bring our workspaces up to it right here.
+    ./tool-pg.sh upgrade-workspace sanity-ws
+    ./tool-pg.sh upgrade-workspace meetings-ws
     exit 0
 fi
 
@@ -152,6 +155,11 @@ else
 ./restore-pg.sh
 rm -rf ./sanity/.auth
 fi
+
+# Upgrade ours explicitly: the queue skips workspaces whose last_visit is stale (WS_LIVENESS_DAYS),
+# and meetings-ws is never opened through login, so it would never be picked up.
+./tool-pg.sh upgrade-workspace sanity-ws
+./tool-pg.sh upgrade-workspace meetings-ws
 
 
 # Apply the deployment index set (composite/expression indexes from the deployment repo)
