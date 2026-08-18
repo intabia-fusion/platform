@@ -61,6 +61,25 @@ import { getAccountUuid } from './utils/account'
 import { ClisrServer } from '@intabiafusion/clisr'
 import { QueueMeetingEvent, QueueMeetingMessage } from '@hcengineering/love'
 
+// Consumer groups are per-role, never one shared 'ai-bot': a single group across topics makes one
+// role's rebalance stall the others, and workspace events would land on a pod that does not serve
+// the workspace.
+// Keeps the historical name on purpose: a new group starts at `latest`, and a purchase left
+// unconsumed at deploy time would be dropped — that one is money.
+const GROUP_PURCHASE = 'ai-bot'
+const GROUP_EVENT_ROUTER = 'ai-bot-event-router'
+const GROUP_STT_INGEST = 'ai-bot-stt-ingest'
+const GROUP_TRANSCRIPTION = 'ai-bot-transcription'
+const providerGroup = (providerId: string): string => `ai-bot-llm-${providerId}`
+
+// LimitsChanged/Up must reach EVERY pod (each keeps its own 30s window cache and limitsState), so
+// the state consumer joins a group of its own instead of sharing one. Empty groups expire by the
+// broker's offset retention.
+const podGroupId = (): string => {
+  const id = config.ClientId !== '' ? config.ClientId : (process.env.HOSTNAME ?? `${process.pid}`)
+  return `ai-bot-state-${id}`
+}
+
 /** Shared startup context for every pod role. */
 interface Boot {
   ctx: MeasureContext
@@ -166,25 +185,36 @@ async function bootstrap (role: string): Promise<Boot> {
   return { ctx, queue, aiControl, app, clisrServer, limitsState, onClose }
 }
 
-/** Consume Workspace up/down events so AIControl can connect workspace clients. */
+/**
+ * Workspace events, split by delivery semantics:
+ * - purchases must be applied exactly once -> one shared group across all pods;
+ * - limits/up must reach every pod -> a per-pod group (broadcast).
+ */
 function startWorkspaceConsumer (boot: Boot): void {
   const { ctx, queue, aiControl, limitsState } = boot
-  const consumer = queue.createConsumer<QueueWorkspaceMessage>(
+
+  const purchases = queue.createConsumer<QueueWorkspaceMessage>(
     ctx,
     QueueTopic.Workspace,
-    'ai-bot',
+    GROUP_PURCHASE,
     async (ctx, message) => {
-      if (message.value.type === QueueWorkspaceEvent.PurchaseActivated) {
-        // A one-time purchase was paid: apply its effect (e.g. a token top-up) if aibot owns it.
-        const msg = message.value as QueueWorkspacePurchaseMessage
-        try {
-          await applyPurchase(ctx, message.workspace, msg.purchaseId, msg.effect, msg.quantity)
-        } catch (err: any) {
-          ctx.error('failed to handle operation', { error: err.message })
-          throw err // rethrow so Kafka redelivers; applyPurchase is idempotent
-        }
-        return
+      if (message.value.type !== QueueWorkspaceEvent.PurchaseActivated) return
+      // A one-time purchase was paid: apply its effect (e.g. a token top-up) if aibot owns it.
+      const msg = message.value as QueueWorkspacePurchaseMessage
+      try {
+        await applyPurchase(ctx, message.workspace, msg.purchaseId, msg.effect, msg.quantity)
+      } catch (err: any) {
+        ctx.error('failed to apply purchase', { error: err.message })
+        throw err // rethrow so Kafka redelivers; applyPurchase is idempotent
       }
+    }
+  )
+
+  const state = queue.createConsumer<QueueWorkspaceMessage>(
+    ctx,
+    QueueTopic.Workspace,
+    podGroupId(),
+    async (ctx, message) => {
       try {
         if (message.value.type === QueueWorkspaceEvent.Up) {
           await aiControl.connect(message.workspace)
@@ -198,8 +228,10 @@ function startWorkspaceConsumer (boot: Boot): void {
       }
     }
   )
+
   boot.onClose.push(() => {
-    void consumer?.close()
+    void purchases?.close()
+    void state?.close()
   })
 }
 
@@ -217,24 +249,41 @@ async function startEventRouter (boot: Boot): Promise<void> {
     producers.set(topic, queue.getProducer<AIPipelineMessage>(ctx, topic))
   }
 
-  const consumer = queue.createConsumer<AIEventRequest>(ctx, QueueTopic.AIQueue, 'ai-bot', async (ctx, message) => {
-    try {
+  const deadLetter = queue.getProducer<{ event: AIEventRequest, error: string }>(
+    ctx,
+    getDeadletterTopic(QueueTopic.AIQueue)
+  )
+
+  const consumer = queue.createConsumer<AIEventRequest>(
+    ctx,
+    QueueTopic.AIQueue,
+    GROUP_EVENT_ROUTER,
+    async (ctx, message) => {
       const event = message.value
-      // Narrow to levels the request's feature allows, so a denied level routes to a capable one.
-      const target = dispatch(event.level ?? config.DefaultLevel, registryForFeature(config.AIProviders, event.feature))
+      let target: { topic: string, level: string } | undefined
+      try {
+        // Narrow to levels the request's feature allows, so a denied level routes to a capable one.
+        target = dispatch(event.level ?? config.DefaultLevel, registryForFeature(config.AIProviders, event.feature))
+      } catch (err: any) {
+        // No provider serves the requested level: redelivery cannot fix a config mismatch.
+        ctx.error('failed to dispatch ai event', { error: err.message })
+        await deadLetter?.send(ctx, message.workspace, [{ event, error: err.message }])
+        return
+      }
       const producer = producers.get(target.topic)
       if (producer === undefined) {
         ctx.error('No producer for resolved provider topic', { topic: target.topic })
+        await deadLetter?.send(ctx, message.workspace, [{ event, error: `no producer for ${target.topic}` }])
         return
       }
+      // Send failures are transient (broker down): rethrow so Kafka redelivers instead of dropping.
       await producer.send(ctx, message.workspace, [{ event, level: target.level }])
-    } catch (err: any) {
-      ctx.error('failed to dispatch ai event', { error: err.message })
     }
-  })
+  )
 
   boot.onClose.push(() => {
     void consumer?.close()
+    void deadLetter?.close()
     for (const p of producers.values()) void p.close()
   })
 }
@@ -246,20 +295,31 @@ function startLlmRouter (boot: Boot): void {
   const served = aiControl.getProviderIds()
   const wanted = config.LLMProviderIds.length > 0 ? config.LLMProviderIds : served
   const consumers: ConsumerHandle[] = []
+  const deadLetter = queue.getProducer<{ event: AIEventRequest, error: string, provider: string }>(
+    ctx,
+    getDeadletterTopic(QueueTopic.AIQueue)
+  )
 
   for (const cfg of config.AIProviders) {
     if (!served.includes(cfg.id) || !wanted.includes(cfg.id)) continue
     const topic = providerTopic(cfg.id)
     const limiter = new RateLimiter(Math.max(1, cfg.concurrency))
+    // Per message: one failing request must not take the rest of the batch down with it, and it
+    // must not vanish either — it goes to the dead letter topic.
     const handleOne = async (message: ConsumerMessage<AIPipelineMessage>, control?: ConsumerControl): Promise<void> => {
       const { event, level } = message.value
-      await aiControl.processEvent(message.workspace, [event], control, cfg.id, level)
+      try {
+        await aiControl.processEvent(message.workspace, [event], control, cfg.id, level)
+      } catch (err: any) {
+        ctx.error('failed to handle ai event', { error: err.message, provider: cfg.id })
+        await deadLetter?.send(ctx, message.workspace, [{ event, error: err.message, provider: cfg.id }])
+      }
     }
     consumers.push(
       queue.createBatchConsumer<AIPipelineMessage>(
         ctx,
         topic,
-        'ai-bot',
+        providerGroup(cfg.id),
         async (ctx, messages, control) => {
           const hb = setInterval(() => {
             void control?.heartbeat()
@@ -273,8 +333,6 @@ function startLlmRouter (boot: Boot): void {
               )
             )
             await limiter.waitProcessing()
-          } catch (err: any) {
-            ctx.error('failed to handle ai event', { error: err.message, provider: cfg.id })
           } finally {
             clearInterval(hb)
           }
@@ -297,7 +355,7 @@ function startSttIngest (boot: Boot): void {
   const loveConsumer = queue.createConsumer<QueueMeetingMessage>(
     ctx,
     QueueTopic.LoveQueue,
-    'ai-bot',
+    GROUP_STT_INGEST,
     async (ctx, msg) => {
       switch (msg.value.type) {
         case QueueMeetingEvent.started: {
@@ -366,7 +424,7 @@ async function startSttWorker (boot: Boot): Promise<void> {
       transcriptionConsumer = queue.createConsumer<TranscriptionTask>(
         ctx,
         QueueTopic.TranscriptionQueue,
-        'ai-bot-transcription',
+        GROUP_TRANSCRIPTION,
         async (ctx, message, control) => {
           await handleMsg(message, control)
         }
@@ -375,7 +433,7 @@ async function startSttWorker (boot: Boot): Promise<void> {
       transcriptionConsumer = queue.createBatchConsumer<TranscriptionTask>(
         ctx,
         QueueTopic.TranscriptionQueue,
-        'ai-bot-transcription',
+        GROUP_TRANSCRIPTION,
         async (ctx, messages, control) => {
           const i1 = setInterval(() => {
             void control?.heartbeat()
