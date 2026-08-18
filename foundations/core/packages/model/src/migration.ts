@@ -178,6 +178,12 @@ export async function tryMigrate (
   migrations: Migrations[]
 ): Promise<void> {
   const states = client.migrateState.get(plugin) ?? new Set()
+
+  const duplicates = migrations.map((it) => it.state).filter((state, i, all) => all.indexOf(state) !== i)
+  if (duplicates.length > 0) {
+    client.logger.error('duplicate migration states, only the first one runs', { plugin, duplicates })
+  }
+
   for (const migration of migrations) {
     if (states.has(migration.state)) continue
     // Mode mismatch: skip without persisting state, otherwise it'd never re-run.
@@ -202,6 +208,9 @@ export async function tryMigrate (
       _id: generateId()
     }
     await client.create(DOMAIN_MIGRATION, st)
+    // A state repeated in the list would otherwise run again in this same pass - only the DB
+    // knows it is done, and that is read once, before the loop.
+    states.add(migration.state)
   }
 }
 
@@ -216,6 +225,12 @@ export async function tryUpgrade (
   migrations: UpgradeOperations[]
 ): Promise<void> {
   const states = state.get(plugin) ?? new Set()
+
+  const duplicates = migrations.map((it) => it.state).filter((s, i, all) => all.indexOf(s) !== i)
+  if (duplicates.length > 0) {
+    console.error('duplicate upgrade states, only the first one runs', { plugin, duplicates })
+  }
+
   for (const upgrades of migrations) {
     if (states.has(upgrades.state)) continue
     if (upgrades.mode != null && upgrades.mode !== mode) {
@@ -235,6 +250,7 @@ export async function tryUpgrade (
     }
     const tx = new TxOperations(_client, core.account.System)
     await tx.createDoc(core.class.MigrationState, core.space.Configuration, st)
+    states.add(upgrades.state)
   }
 }
 

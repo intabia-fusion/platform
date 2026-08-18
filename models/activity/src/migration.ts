@@ -907,30 +907,6 @@ export const activityOperation: MigrateOperation = {
         }
       },
       {
-        state: 'migrate-employee-space-v1',
-        mode: 'upgrade',
-        func: async () => {
-          await client.update<ActivityMessage>(
-            DOMAIN_ACTIVITY,
-            { space: 'contact:space:Employee' as Ref<Space> },
-            { space: contact.space.Contacts }
-          )
-        }
-      },
-      {
-        state: 'migrate-activity-markup',
-        mode: 'upgrade',
-        func: migrateActivityMarkup
-      },
-      {
-        state: 'move-reactions',
-        mode: 'upgrade',
-        func: async (client: MigrationClient): Promise<void> => {
-          await client.move(DOMAIN_ACTIVITY, { _class: activity.class.Reaction }, DOMAIN_REACTION)
-          await client.move(DOMAIN_ACTIVITY, { _class: activity.class.UserMentionInfo }, DOMAIN_USER_MENTION)
-        }
-      },
-      {
         state: 'accounts-to-social-ids-v2',
         mode: 'upgrade',
         func: migrateAccountsToSocialIds
