@@ -100,6 +100,11 @@
     "RenameStatus": "Rinomina uno stato con un nuovo nome",
     "UpdateTasksStatusRequest": "Lo stato è utilizzato con {total} task, richiederà l'aggiornamento di tutte. Si prega di approvare.",
     "TaskTypes": "Tipi di task",
+    "TaskTypesDiagram": "Gerarchia dei tipi di attività",
+    "SelfRefLegend": "Il tipo può avere sottoattività dello stesso tipo",
+    "RootTaskTooltip": "Un tipo radice non ha genitori e non può avere sottoattività di questo tipo",
+    "NoSubtaskTypesHint": "Per un'attività padre di tipo {type} non esistono tipi di sottoattività adatti. Configura la gerarchia dei tipi nelle impostazioni del progetto per creare una sottoattività.",
+    "NoSubtaskTypesShort": "Nessun tipo di sottoattività",
     "Collections": "Collezioni"
   }
 }

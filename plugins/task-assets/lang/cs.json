@@ -100,6 +100,11 @@
     "RenameStatus": "Přejmenovat stav na nový název",
     "UpdateTasksStatusRequest": "Stav je použit u {total} úkolů, bude třeba je aktualizovat. Prosím schvalte.",
     "TaskTypes": "Typy úkolů",
+    "TaskTypesDiagram": "Hierarchie typů úloh",
+    "SelfRefLegend": "Typ může mít podúlohy stejného typu",
+    "RootTaskTooltip": "Kořenový typ nemá rodiče a nelze u něj vytvářet podúlohy stejného typu",
+    "NoSubtaskTypesHint": "Pro nadřazenou úlohu typu {type} neexistují vhodné typy podúloh. Hierarchii typů nastavíte v nastavení projektu.",
+    "NoSubtaskTypesShort": "Žádné typy podúloh",
     "Collections": "Kolekce"
   }
 }

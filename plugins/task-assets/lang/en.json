@@ -100,6 +100,11 @@
     "RenameStatus": "Rename a status to new name",
     "UpdateTasksStatusRequest": "Status is used with {total} tasks, it will require update of all of them. Please approve.",
     "TaskTypes": "Task types",
+    "TaskTypesDiagram": "Task types hierarchy",
+    "SelfRefLegend": "Type can have subtasks of the same type",
+    "RootTaskTooltip": "A root type has no parents and cannot have subtasks of this type",
+    "NoSubtaskTypesHint": "No suitable subtask types for a parent task of type {type}. Configure the type hierarchy in the project settings to create a subtask.",
+    "NoSubtaskTypesShort": "No subtask types",
     "Collections": "Collections"
   }
 }

@@ -100,6 +100,11 @@
     "RenameStatus": "Durumu yeni isme yeniden adlandır",
     "UpdateTasksStatusRequest": "Durum {total} görevle kullanılıyor, hepsinin güncellenmesini gerektirecek. Lütfen onaylayın.",
     "TaskTypes": "Görev tipleri",
+    "TaskTypesDiagram": "Görev tipi hiyerarşisi",
+    "SelfRefLegend": "Tip, aynı tip alt görevlere sahip olabilir",
+    "RootTaskTooltip": "Kök tipin ebeveyni yoktur ve bu tipte alt görevleri olamaz",
+    "NoSubtaskTypesHint": "{type} tipindeki üst görev için uygun alt görev tipi yok. Alt görev oluşturmak için proje ayarlarında tip hiyerarşisini yapılandırın.",
+    "NoSubtaskTypesShort": "Alt görev tipi yok",
     "Collections": "Koleksiyonlar"
   }
 }

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { SortingOrder } from '@hcengineering/core'
-  import { ButtonIcon, IconAdd, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+  import { ButtonIcon, IconAdd, Label, getCurrentResolvedLocation, navigate, showPopup } from '@hcengineering/ui'
   import { createQuery } from '@hcengineering/presentation'
   import { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
@@ -22,6 +22,7 @@
   import IconLayers from '../icons/Layers.svelte'
   import TaskTypeIcon from '../taskTypes/TaskTypeIcon.svelte'
   import CreateTaskType from '../taskTypes/CreateTaskType.svelte'
+  import TaskTypeDiagramPopup from '../taskTypes/TaskTypeDiagramPopup.svelte'
   import task from '../../plugin'
 
   export let type: ProjectType | undefined
@@ -58,19 +59,32 @@
   <div class="hulyTableAttr-header font-medium-12">
     <IconLayers size={'small'} />
     <span><Label label={task.string.TaskTypes} /></span>
-    <ButtonIcon
-      kind="primary"
-      icon={IconAdd}
-      size="small"
-      dataId={'btnAdd'}
-      {disabled}
-      on:click={(ev) => {
-        if (disabled) {
-          return
-        }
-        $settingsStore = { id: 'createTaskType', component: CreateTaskType, props: { type, descriptor, taskTypes } }
-      }}
-    />
+    <div class="flex-row-center flex-gap-2">
+      <ButtonIcon
+        icon={task.icon.TypeHierarchy}
+        tooltip={{ label: task.string.TaskTypesDiagram, direction: 'bottom' }}
+        size="small"
+        kind="tertiary"
+        disabled={taskTypes.length === 0}
+        on:click={() => {
+          if (taskTypes.length === 0) return
+          showPopup(TaskTypeDiagramPopup, { taskTypes }, 'centered')
+        }}
+      />
+      <ButtonIcon
+        kind="primary"
+        icon={IconAdd}
+        size="small"
+        dataId={'btnAdd'}
+        {disabled}
+        on:click={(ev) => {
+          if (disabled) {
+            return
+          }
+          $settingsStore = { id: 'createTaskType', component: CreateTaskType, props: { type, descriptor, taskTypes } }
+        }}
+      />
+    </div>
   </div>
   {#if taskTypes.length}
     <div class="hulyTableAttr-content task">

@@ -100,6 +100,11 @@
     "RenameStatus": "ステータスを新しい名前に変更",
     "UpdateTasksStatusRequest": "ステータスは{total}個のタスクで使用されており、それらすべての更新が必要です。承認してください。",
     "TaskTypes": "タスクタイプ",
+    "TaskTypesDiagram": "タスクタイプの階層",
+    "SelfRefLegend": "同じタイプのサブタスクを持てるタイプ",
+    "RootTaskTooltip": "ルートタイプには親がなく、このタイプのサブタスクを作成できません",
+    "NoSubtaskTypesHint": "タイプ {type} の親タスクには、サブタックとして利用できるタイプがありません。サブタスクを作成するには、プロジェクト設定でタイプ階層を構成してください。",
+    "NoSubtaskTypesShort": "サブタスクのタイプがありません",
     "Collections": "コレクション"
   }
 }
