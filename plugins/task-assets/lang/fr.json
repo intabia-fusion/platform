@@ -100,6 +100,11 @@
     "RenameStatus": "Renommer un statut en un nouveau nom",
     "UpdateTasksStatusRequest": "Le statut est utilisé avec {total} tâches, cela nécessitera la mise à jour de toutes. Veuillez approuver.",
     "TaskTypes": "Types de tâches",
+    "TaskTypesDiagram": "Hiérarchie des types de tâche",
+    "SelfRefLegend": "Le type peut avoir des sous-tâches du même type",
+    "RootTaskTooltip": "Un type racine n'a pas de parents et ne peut pas avoir de sous-tâches de ce type",
+    "NoSubtaskTypesHint": "Pour une tâche parente de type {type}, aucun type de sous-tâche n'est disponible. Configurez la hiérarchie des types dans les paramètres du projet pour créer une sous-tâche.",
+    "NoSubtaskTypesShort": "Aucun type de sous-tâche",
     "Collections": "Collections"
   }
 }

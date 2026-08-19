@@ -100,6 +100,11 @@
     "RenomearStatus": "Renomear um status para um novo nome",
     "AtualizarPedidoDeStatusDaTarefa": "O status está sendo usado em {total} tarefas e precisará ser atualizado em todas elas. Por favor, confirme.",
     "TaskTypes": "Tipos de Tarefas",
+    "TaskTypesDiagram": "Hierarquia de tipos de tarefa",
+    "SelfRefLegend": "O tipo pode ter subtarefas do mesmo tipo",
+    "RootTaskTooltip": "Um tipo raiz não tem pais e não pode ter subtarefas deste tipo",
+    "NoSubtaskTypesHint": "Para uma tarefa principal do tipo {type}, não há tipos de subtarefa adequados. Configure a hierarquia de tipos nas definições do projeto para criar uma subtarefa.",
+    "NoSubtaskTypesShort": "Sem tipos de subtarefa",
     "Collections": "Coleções"
   }
 }

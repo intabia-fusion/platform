@@ -1,9 +1,32 @@
+<!--
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+-->
 <script lang="ts">
   import { Class, Doc, Ref, toIdMap } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { getClient } from '@hcengineering/presentation'
+  import { getClient, MessageBox } from '@hcengineering/presentation'
   import task, { ProjectType, TaskType } from '@hcengineering/task'
-  import { ButtonKind, ButtonSize, DropdownLabelsIntl, type DropdownIntlItem } from '@hcengineering/ui'
+  import {
+    ButtonKind,
+    ButtonSize,
+    DropdownLabelsIntl,
+    Label,
+    type DropdownIntlItem,
+    Button,
+    showPopup
+  } from '@hcengineering/ui'
+  import plugin from '../../plugin'
   import { createEventDispatcher } from 'svelte'
   import { taskTypeStore } from '../..'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
@@ -51,6 +74,9 @@
     change()
   }
 
+  $: parentTypeName = parentType !== undefined ? ($taskTypeStore.get(parentType)?.name ?? '') : ''
+  $: noChildTypes = parentType !== undefined && items.length === 0
+
   const dispatch = createEventDispatcher()
 
   function change () {
@@ -58,7 +84,21 @@
   }
 </script>
 
-{#if projectType !== undefined && (items.length > 1 || showAlways)}
+{#if projectType !== undefined && noChildTypes}
+  <Button
+    kind={'secondary'}
+    {size}
+    on:click={() => {
+      showPopup(MessageBox, {
+        label: plugin.string.NoSubtaskTypesShort,
+        message: plugin.string.NoSubtaskTypesHint,
+        params: { type: parentTypeName }
+      })
+    }}
+  >
+    <Label slot="content" label={plugin.string.NoSubtaskTypesShort} />
+  </Button>
+{:else if projectType !== undefined && (items.length > 1 || showAlways)}
   <DropdownLabelsIntl
     {focusIndex}
     {kind}
@@ -73,3 +113,10 @@
     on:selected={change}
   />
 {/if}
+
+<style lang="scss">
+  .kind-empty-hint {
+    font-size: 0.75rem;
+    color: var(--theme-text-secondary, #64748b);
+  }
+</style>

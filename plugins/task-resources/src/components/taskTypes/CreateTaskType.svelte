@@ -26,7 +26,18 @@
     createState,
     findStatusAttr
   } from '@hcengineering/task'
-  import { DropdownIntlItem, Icon, IconError, Modal, ModernEditbox, Label, ButtonMenu, Toggle } from '@hcengineering/ui'
+  import {
+    DropdownIntlItem,
+    Icon,
+    IconError,
+    Modal,
+    ModernEditbox,
+    Label,
+    ButtonMenu,
+    Toggle,
+    IconInfo,
+    ButtonIcon
+  } from '@hcengineering/ui'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
 
   import task from '../../plugin'
@@ -252,8 +263,14 @@
     {/if}
 
     <div class="hulyModal-content__settingsSet-line">
-      <span class="label">
+      <span class="label label-with-info">
         <Label label={task.string.RootTaskType} />
+        <ButtonIcon
+          icon={IconInfo}
+          size="extra-small"
+          kind="tertiary"
+          tooltip={{ label: task.string.RootTaskTooltip }}
+        />
       </span>
       <Toggle bind:on={isRootTaskType} />
     </div>
@@ -286,5 +303,11 @@
       font-weight: 400;
       color: var(--global-error-TextColor);
     }
+  }
+
+  .label-with-info {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
   }
 </style>
