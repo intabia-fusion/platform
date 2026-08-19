@@ -62,8 +62,7 @@ export class WorkflowPage {
     this.page.locator(`button[data-id="transition-row"][data-transition-name="${name}"]`)
 
   transitionRows = (): Locator => this.page.locator('button[data-id="transition-row"]')
-  transitionRulesMarker = (name: string): Locator =>
-    this.transitionRow(name).locator('[data-id="transition-rules"]')
+  transitionRulesMarker = (name: string): Locator => this.transitionRow(name).locator('[data-id="transition-rules"]')
 
   deleteWorkflowButton = (): Locator => this.page.locator('button[data-id="btnDeleteWorkflow"]')
 
