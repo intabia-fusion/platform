@@ -19,6 +19,7 @@
     WorkspaceActivityPoint,
     WorkspaceMemberDetails
   } from '@hcengineering/account-client'
+  import { grantsPlan } from '@hcengineering/account-client'
   import { AccountRole } from '@hcengineering/core'
   import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import presentation, {
@@ -56,8 +57,10 @@
 
   export let workspace: WorkspaceInfo
 
+  let destroyed = false
   onDestroy(() => {
     clearTimeout(searchTimer)
+    destroyed = true
   })
 
   const accountClient = getAccountClient()
@@ -149,7 +152,22 @@
   function cancelSubscription (s: Subscription): void {
     withOtp(async (code) => {
       await accountClient.adminCancelSubscription(s.id, code)
+      if (s.type === 'tier') void awaitFreeFallback()
     })
+  }
+
+  // pod-payment creates the free fallback off the queue, after the cancel call returns.
+  // Poll 5x1s; giving up is fine (no free plan configured, or free itself was canceled).
+  async function awaitFreeFallback (): Promise<void> {
+    for (let i = 0; i < 5; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (destroyed) return
+      const subs = await accountClient.getSubscriptions(workspace.uuid, false).catch(() => undefined)
+      if (subs?.some((sub) => sub.type === 'tier' && grantsPlan(sub)) === true) {
+        await load()
+        return
+      }
+    }
   }
 
   function isPerSeatPlan (plan: string): boolean {

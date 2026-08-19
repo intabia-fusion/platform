@@ -29,7 +29,7 @@ import {
   subscriptionEvents,
   type QueuePaymentOperationMessage
 } from '@hcengineering/server-core'
-import { type SubscriptionData } from '@hcengineering/account-client'
+import { SubscriptionType, type SubscriptionData } from '@hcengineering/account-client'
 import { getAccountClient, isFinalizedUserCancel } from './utils'
 import type { SubscriptionPublisher } from './providers'
 import serverToken, { generateToken } from '@hcengineering/server-token'
@@ -157,6 +157,17 @@ export const main = async (): Promise<void> => {
         for (const msg of msgs) {
           try {
             const sub = msg.value.subscription as SubscriptionData
+            // Admin cancel initiates the free fallback, pod-payment is the sole holder of the free-plan config.
+            if (msg.value.type === QueueSubscriptionEvent.AdminCanceled) {
+              if (sub.type === SubscriptionType.Tier) {
+                await createFreeIfNoActiveTier(
+                  sub.workspaceUuid,
+                  sub.providerData?.actionId as string | undefined,
+                  sub.plan
+                )
+              }
+              continue
+            }
             await persistSubscription(sub)
             await logOperation(ctx, sub, msg.value.type === QueueSubscriptionEvent.Canceled)
             // After a user initiated canceling finalized, we create free subscription.
