@@ -510,6 +510,7 @@
       if (!canDrop) {
         dragCard = undefined
         dragCardAvailableCategories = undefined
+        isDragging = false
         return
       }
       let updates: DocumentUpdate<Item> | undefined
@@ -596,7 +597,17 @@
     dragCard = object
     isDragging = true
     dragCardTargetIndex = undefined
-    dragCardAvailableCategories = await getAvailableCategories?.(object)
+    const available = await getAvailableCategories?.(object)
+    if (isDragging) {
+      dragCardAvailableCategories = available
+    }
+  }
+
+  function onDragEnd (): void {
+    isDragging = false
+    dragCard = undefined
+    dragCardAvailableCategories = undefined
+    stopAutoScroll()
   }
   // eslint-disable-next-line
   let dragged: boolean = false
@@ -814,8 +825,8 @@
   class:swimlane-mode={swimLaneMode}
   class:compact
   on:dragover={handleDragMove}
-  on:dragend={stopAutoScroll}
-  on:drop={stopAutoScroll}
+  on:dragend={onDragEnd}
+  on:drop={onDragEnd}
 >
   {#if swimLaneMode}
     <Scroller horizontal bind:divScroll={scrollerEl}>
