@@ -629,7 +629,13 @@
           <span><Label label={workflow.string.WorkflowMapping} /></span>
         </div>
         <div class="flex-row-center gap-2">
-          <ButtonIcon icon={view.icon.Setting} kind="secondary" size="large" on:click={openConfigureWorkflows} />
+          <ButtonIcon
+            icon={view.icon.Setting}
+            kind="secondary"
+            size="large"
+            dataId="btnConfigureWorkflows"
+            on:click={openConfigureWorkflows}
+          />
           {#if hasConfiguredWorkflows}
             <span class="workflows-status-label lower">
               (<Label label={tracker.string.Configured} />)

@@ -16,5 +16,6 @@
 export * from './plugin'
 export { default } from './plugin'
 export * from './schema'
+export * from './transfer'
 export * from './utils'
 export * from './validators'

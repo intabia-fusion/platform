@@ -145,6 +145,7 @@
             </div>
             <div class="col-workflow">
               <ModernDropdownLabels
+                dataId={`workflow-for-${taskType.name}`}
                 items={workflowItems}
                 selected={selectedWfId ?? 'none'}
                 placeholder={ui.string.NotSelected}

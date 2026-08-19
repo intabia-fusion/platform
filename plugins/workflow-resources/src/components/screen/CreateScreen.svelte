@@ -13,7 +13,7 @@
 -->
 <script lang="ts">
   import core, { Class, Doc, Ref } from '@hcengineering/core'
-  import { translate } from '@hcengineering/platform'
+  import { getEmbeddedLabel, translate } from '@hcengineering/platform'
   import presentation, { getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import tracker from '@hcengineering/tracker'
@@ -45,21 +45,24 @@
 
   $: canSave = name.trim().length > 0 && name.length <= 100 && description.length <= 500 && selected != null
 
+  // Task type classes all inherit the "Issue" label, so name them by their task type.
   $: classItems = [
     {
       id: tracker.class.Issue,
       icon: tracker.icon.Issue,
-      label: tracker.string.Issue
+      label: plugin.string.AnyTaskType
     },
-    ...taskTypes.map((t): DropdownIntlItem => {
-      const _clazz = client.getHierarchy().getClass(t.targetClass)
-      return {
-        id: t.targetClass,
-        icon: _clazz.icon === view.ids.IconWithEmoji ? IconWithEmoji : _clazz.icon,
-        iconProps: _clazz.icon === view.ids.IconWithEmoji ? { icon: _clazz.color } : {},
-        label: _clazz.label
-      }
-    })
+    ...taskTypes
+      .filter((t) => t.targetClass !== tracker.class.Issue)
+      .map((t): DropdownIntlItem => {
+        const _clazz = client.getHierarchy().getClass(t.targetClass)
+        return {
+          id: t.targetClass,
+          icon: t.icon === view.ids.IconWithEmoji ? IconWithEmoji : (t.icon ?? _clazz.icon),
+          iconProps: t.icon === view.ids.IconWithEmoji ? { icon: t.color } : {},
+          label: getEmbeddedLabel(t.name)
+        }
+      })
   ]
 
   $: if (selected === undefined) {

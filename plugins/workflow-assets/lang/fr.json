@@ -13,6 +13,7 @@
     "WorkflowSchemeField": "Schéma de flux de travail",
     "Untitled": "Sans titre",
     "AnyStatus": "Tout statut",
+    "AnyTaskType": "Tout type de tâche",
     "Workflows": "Flux de travail",
     "DeleteWorkflow": "Supprimer le flux de travail",
     "DeleteWorkflowConfirm": "Êtes-vous sûr de vouloir supprimer ce flux de travail ?",

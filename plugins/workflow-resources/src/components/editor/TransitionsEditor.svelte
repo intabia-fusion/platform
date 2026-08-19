@@ -86,7 +86,14 @@
   <div class="hulyTableAttr-header font-medium-12">
     <Icon icon={plugin.icon.Transition} size="small" />
     <span><Label label={plugin.string.Transitions} /></span>
-    <ButtonIcon kind="primary" icon={IconAdd} size="small" on:click={addTransition} disabled={readonly} />
+    <ButtonIcon
+      kind="primary"
+      icon={IconAdd}
+      size="small"
+      dataId="btnAddTransition"
+      on:click={addTransition}
+      disabled={readonly}
+    />
   </div>
   <SortableDocListStatic _class={plugin.class.WorkflowTransition} items={transitions}>
     <svelte:fragment slot="object" let:value>
@@ -97,6 +104,8 @@
         <button
           type="button"
           class="hulyTableAttr-content__row"
+          data-id="transition-row"
+          data-transition-name={transition.name}
           class:selected={$settingsStore?.id === transition._id}
           draggable={!readonly}
           on:click={() => {
@@ -108,7 +117,7 @@
           </button>
           <span class="hulyTableAttr-content__title center flex-row-center flex-gap-1">
             {#if rulesPresent}
-              <span use:tooltip={{ label: plugin.string.TransitionRulesConfigured }}>
+              <span data-id="transition-rules" use:tooltip={{ label: plugin.string.TransitionRulesConfigured }}>
                 <Icon icon={plugin.icon.Action} size="x-small" />
               </span>
             {/if}

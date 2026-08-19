@@ -87,6 +87,8 @@
       <button
         type="button"
         class="hulyTableAttr-content__row"
+        data-id="workflow-row"
+        data-workflow-name={workflow.name}
         on:click|stopPropagation={() => {
           navigateToWorkflow(workflow._id)
         }}

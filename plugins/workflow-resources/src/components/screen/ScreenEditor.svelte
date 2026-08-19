@@ -14,7 +14,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
-  import { Asset, translate } from '@hcengineering/platform'
+  import { Asset, getEmbeddedLabel, translate } from '@hcengineering/platform'
   import { createQuery, getClient, IconWithEmoji, MessageBox, reduceCalls } from '@hcengineering/presentation'
   import { Task } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
@@ -135,21 +135,24 @@
     .filter((n): n is string => Boolean(n))
     .join(', ')
 
+  // Task type classes all inherit the "Issue" label, so name them by their task type.
   $: classItems = [
     {
       id: tracker.class.Issue,
       icon: tracker.icon.Issue,
-      label: tracker.string.Issue
+      label: plugin.string.AnyTaskType
     },
-    ...taskTypes.map((t): DropdownIntlItem => {
-      const _clazz = client.getHierarchy().getClass(t.targetClass)
-      return {
-        id: t.targetClass,
-        icon: _clazz.icon === view.ids.IconWithEmoji ? IconWithEmoji : _clazz.icon,
-        iconProps: _clazz.icon === view.ids.IconWithEmoji ? { icon: _clazz.color } : {},
-        label: _clazz.label
-      }
-    })
+    ...taskTypes
+      .filter((t) => t.targetClass !== tracker.class.Issue)
+      .map((t): DropdownIntlItem => {
+        const _clazz = client.getHierarchy().getClass(t.targetClass)
+        return {
+          id: t.targetClass,
+          icon: t.icon === view.ids.IconWithEmoji ? IconWithEmoji : (t.icon ?? _clazz.icon),
+          iconProps: t.icon === view.ids.IconWithEmoji ? { icon: t.color } : {},
+          label: getEmbeddedLabel(t.name)
+        }
+      })
   ]
 
   $: name = localName

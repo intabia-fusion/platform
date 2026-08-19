@@ -73,14 +73,12 @@ export class KanbanBoardPage extends CommonTrackerPage {
       target =
         (await cardInCell.count()) > 0 && (await cardInCell.getAttribute('data-card-id')) !== cardId ? cardInCell : cell
     }
-    await this.ensureVisible(target)
     await this.ensureVisible(this.card(cardId))
     await this.dragPointer(this.card(cardId), target)
   }
 
   async dragCardToSwimLaneCell (cardId: string, laneId: string, targetState: string): Promise<void> {
     const cell = this.swimLaneCell(laneId, targetState)
-    await this.ensureVisible(cell)
     await this.ensureVisible(this.card(cardId))
     // Prefer dropping onto an existing card inside the cell — Svelte's drop handler
     // fires reliably on card-container, while empty cells sometimes miss CDP drag.
@@ -103,13 +101,17 @@ export class KanbanBoardPage extends CommonTrackerPage {
    * Walk the pointer across in steps and jiggle on the target so dragover fires repeatedly.
    */
   private async dragPointer (source: Locator, target: Locator): Promise<void> {
+    await source.hover()
+    await this.page.mouse.down()
+    // The board scrolls horizontally and does not fit five columns, so bring the target into view
+    // only after the card is grabbed: hovering the source scrolls it back and a box measured before
+    // that points outside the viewport, where the pointer never lands.
+    await this.ensureVisible(target)
     const box = await target.boundingBox()
     if (box === null) throw new Error('Drop target has no bounding box')
     const x = box.x + box.width / 2
     const y = box.y + box.height / 2
 
-    await source.hover()
-    await this.page.mouse.down()
     await this.page.mouse.move(x, y, { steps: 10 })
     await this.page.mouse.move(x + 2, y + 2)
     await this.page.mouse.move(x, y)
@@ -120,7 +122,6 @@ export class KanbanBoardPage extends CommonTrackerPage {
     const source = this.card(cardId)
     const target = this.card(targetCardId)
     await this.ensureVisible(source)
-    await this.ensureVisible(target)
     await this.dragPointer(source, target)
   }
 

@@ -13,6 +13,7 @@
     "WorkflowSchemeField": "ワークフロースキーム",
     "Untitled": "無題",
     "AnyStatus": "任意のステータス",
+    "AnyTaskType": "任意のタスクタイプ",
     "Workflows": "ワークフロー",
     "DeleteWorkflow": "ワークフローを削除",
     "DeleteWorkflowConfirm": "このワークフローを削除してもよろしいですか？",

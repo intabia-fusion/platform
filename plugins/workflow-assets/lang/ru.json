@@ -13,6 +13,7 @@
     "WorkflowSchemeField": "Схема воркфлоу",
     "Untitled": "Без названия",
     "AnyStatus": "Любой статус",
+    "AnyTaskType": "Любой тип задачи",
     "Workflows": "Воркфлоу",
     "DeleteWorkflow": "Удалить воркфлоу",
     "DeleteWorkflowConfirm": "Вы уверены, что хотите удалить этот воркфлоу?",

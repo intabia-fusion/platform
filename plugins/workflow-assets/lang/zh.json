@@ -13,6 +13,7 @@
     "WorkflowSchemeField": "工作流方案",
     "Untitled": "无标题",
     "AnyStatus": "任意状态",
+    "AnyTaskType": "任意任务类型",
     "Workflows": "工作流",
     "DeleteWorkflow": "删除工作流",
     "DeleteWorkflowConfirm": "您确定要删除此工作流吗？",

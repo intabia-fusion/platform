@@ -13,10 +13,11 @@
 -->
 <script lang="ts">
   import { Class, Ref, SortingOrder } from '@hcengineering/core'
-  import { IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import { ProjectType, ProjectTypeDescriptor, Task } from '@hcengineering/task'
+  import { taskTypeStore } from '@hcengineering/task-resources'
   import tracker from '@hcengineering/tracker'
   import { ButtonIcon, Icon, IconAdd, Label } from '@hcengineering/ui'
   import { Screen } from '@hcengineering/workflow'
@@ -47,8 +48,11 @@
 
   function getClassLabel (targetClass?: Ref<Class<Task>>): IntlString | undefined {
     if (targetClass == null) return undefined
-    const clazz = client.getHierarchy().findClass(targetClass)
-    return clazz?.label
+    if (targetClass === tracker.class.Issue) return plugin.string.AnyTaskType
+    // Task type classes all inherit the "Issue" label, so name them by their task type.
+    const taskType = Array.from($taskTypeStore.values()).find((t) => t.targetClass === targetClass)
+    if (taskType !== undefined) return getEmbeddedLabel(taskType.name)
+    return client.getHierarchy().findClass(targetClass)?.label
   }
 </script>
 
@@ -79,6 +83,8 @@
       <button
         type="button"
         class="hulyTableAttr-content__row"
+        data-id="screen-row"
+        data-screen-name={screen.name}
         on:click|stopPropagation={() => {
           navigateToScreen(screen._id, false)
         }}

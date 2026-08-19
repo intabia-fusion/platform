@@ -13,6 +13,7 @@
     "WorkflowSchemeField": "Workflow-Schema",
     "Untitled": "Unbenannt",
     "AnyStatus": "Jeder Status",
+    "AnyTaskType": "Beliebiger Aufgabentyp",
     "Workflows": "Workflows",
     "DeleteWorkflow": "Workflow löschen",
     "DeleteWorkflowConfirm": "Sind Sie sicher, dass Sie diesen Workflow löschen möchten?",

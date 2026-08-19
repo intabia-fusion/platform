@@ -61,6 +61,7 @@
   </span>
   <div class="selector flex-grow min-w-0">
     <ModernDropdown
+      dataId="initial-statuses"
       items={initialStatusItems}
       selected={initialStatusItemIds}
       multiselect={true}
