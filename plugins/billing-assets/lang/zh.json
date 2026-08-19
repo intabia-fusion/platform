@@ -164,6 +164,8 @@
     "SectionLLM": "LLM",
     "SectionASR": "ASR",
     "AsrByModel": "按模型 (ASR)",
-    "DirectProvider": "直接提供商"
+    "DirectProvider": "直接提供商",
+    "SetUsed": "设置用量",
+    "ResetAllUsedConfirm": "将清空所有模型池的用量，是否继续？"
   }
 }

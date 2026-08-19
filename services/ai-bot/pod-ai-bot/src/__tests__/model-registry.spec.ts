@@ -14,13 +14,7 @@
 //
 
 import { type AILevel, type AILevelModel, type AIProviderConfig } from '../config'
-import {
-  availableLevels,
-  planMultiplier,
-  providerLevels,
-  registryForFeature,
-  resolveModel
-} from '../llms/modelRegistry'
+import { availableLevels, providerLevels, registryForFeature, resolveModel } from '../llms/modelRegistry'
 
 function lvl (model: string, order: number, multiplier = 1, label = model): AILevelModel {
   return { model, tokenMultiplier: multiplier, order, label }
@@ -149,34 +143,5 @@ describe('providerLevels', () => {
   it('lists served levels weakest -> strongest by order', () => {
     const p = provider('a', 'gigachat', { high: lvl('h', 5), low: lvl('l', 0), max: lvl('x', 9) })
     expect(providerLevels(p)).toEqual(['low', 'high', 'max'])
-  })
-})
-
-describe('planMultiplier', () => {
-  // A level billed higher on a bare free plan: base 0.1, free-no-pkg 0.5.
-  const low = { tokenMultiplier: 0.1, freeMultiplier: 0.5 }
-  // Any level without a free-specific factor.
-  const mid = { tokenMultiplier: 2 }
-
-  it('returns tokenMultiplier when no free factor is set, regardless of plan', () => {
-    expect(planMultiplier(mid, true, false)).toBe(2)
-    expect(planMultiplier(mid, false, true)).toBe(2)
-  })
-
-  it('free + no package -> freeMultiplier', () => {
-    expect(planMultiplier(low, true, false)).toBe(0.5)
-  })
-
-  it('free + package -> base tokenMultiplier', () => {
-    expect(planMultiplier(low, true, true)).toBe(0.1)
-  })
-
-  it('paid -> base tokenMultiplier', () => {
-    expect(planMultiplier(low, false, false)).toBe(0.1)
-    expect(planMultiplier(low, false, true)).toBe(0.1)
-  })
-
-  it('undefined model -> 1', () => {
-    expect(planMultiplier(undefined, true, false)).toBe(1)
   })
 })

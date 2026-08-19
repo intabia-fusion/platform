@@ -29,7 +29,7 @@
   } from '@hcengineering/ui'
   import { translate } from '@hcengineering/platform'
   import aiBotPlugin, { type AITaskProposalMessage } from '@hcengineering/ai-bot'
-  import chunter from '@hcengineering/chunter'
+  import chunter, { type ChatMessage } from '@hcengineering/chunter'
   import contact, { formatName, type Person } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
 

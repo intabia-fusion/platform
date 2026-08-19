@@ -164,6 +164,8 @@
     "SectionLLM": "LLM",
     "SectionASR": "ASR",
     "AsrByModel": "По модели (ASR)",
-    "DirectProvider": "Прямой провайдер"
+    "DirectProvider": "Прямой провайдер",
+    "SetUsed": "Задать расход",
+    "ResetAllUsedConfirm": "Расход по всем пулам моделей будет обнулён. Продолжить?"
   }
 }

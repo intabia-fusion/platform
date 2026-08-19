@@ -236,15 +236,11 @@ export function calculateLimits (
   const baseStorage = tierSub?.limits?.storageLimitGB ?? plan?.storageLimitGB ?? 0
   const pkgStorage = pkgSub?.limits?.storageLimitGB ?? pkg?.storageLimitGB ?? 0
 
-  // Tier token multiplier scales the monthly token cap. AI packages add rolling-window
-  // budget (5h/week) instead, applied on the billing side — not the monthly cap here.
-  const tierMult = tierSub?.limits?.tokenPackageMultiplier ?? plan?.tokenPackageMultiplier ?? 1
-
   return {
     storageLimit: baseStorage * 1e9 + pkgStorage * 1e9,
     trafficLimit: (tierSub?.limits?.trafficLimitGB ?? plan?.trafficLimitGB ?? 0) * 1e9,
     meetingMinutesLimit: tierSub?.limits?.meetingMinutesLimit ?? plan?.meetingMinutesLimit ?? 0,
-    tokenLimit: (tierSub?.limits?.tokenLimit ?? plan?.tokenLimit ?? 0) * 1000 * tierMult,
+    tokenLimit: (tierSub?.limits?.tokenLimit ?? plan?.tokenLimit ?? 0) * 1000,
     usersLimit: tierSub?.limits?.usersLimit ?? plan?.usersLimit ?? 0
   }
 }

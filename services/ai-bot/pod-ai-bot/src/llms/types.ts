@@ -18,12 +18,6 @@ import type { PersonMessage } from '@hcengineering/ai-bot'
 import type { AILevel } from '../config'
 import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
 
-/** Workspace plan context used to resolve the plan-dependent low-fallback billed multiplier. */
-export interface PlanContext {
-  isFree: boolean
-  hasPackages: boolean
-}
-
 /**
  * Simple chat message shape used for conversation context.
  * This intentionally mirrors common LLM SDK message formats.
@@ -182,7 +176,6 @@ export interface LLMProvider {
     skipCache?: boolean,
     reason?: string,
     level?: AILevel,
-    planContext?: PlanContext,
     lang?: string,
     hooks?: ToolLoopHooks
   ) => Promise<ChatCompletionWithToolsResult | undefined>
@@ -205,7 +198,6 @@ export interface LLMProvider {
     skipCache?: boolean,
     reason?: string,
     level?: AILevel,
-    planContext?: PlanContext,
     lang?: string,
     // Text already produced when the model hit its cap: the step must continue it, not restart.
     continueFrom?: string

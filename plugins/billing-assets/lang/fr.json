@@ -164,6 +164,8 @@
     "SectionLLM": "LLM",
     "SectionASR": "ASR",
     "AsrByModel": "Par modèle (ASR)",
-    "DirectProvider": "Fournisseur direct"
+    "DirectProvider": "Fournisseur direct",
+    "SetUsed": "Définir la consommation",
+    "ResetAllUsedConfirm": "La consommation de tous les pools de modèles sera remise à zéro. Continuer ?"
   }
 }

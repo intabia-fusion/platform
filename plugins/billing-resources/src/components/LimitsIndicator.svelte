@@ -89,7 +89,10 @@
   }
 
   $: storageColor = barColor(storageUsed, limits?.storageLimit ?? 0)
-  $: tokenMonthColor = windows !== undefined ? barColor(windows.month.used, windows.month.limit) : undefined
+  // Bought tokens are spent first, so the bar counts them in: against the tier limit alone a
+  // workspace with a balance looked exhausted.
+  $: monthTotal = windows === undefined || windows.month.limit === 0 ? 0 : windows.month.limit + windows.balance
+  $: tokenMonthColor = windows !== undefined ? barColor(windows.month.used, monthTotal) : undefined
 
   onMount(() => {
     addEventListener(workbench.event.NotifyConnection, connectionListener)
@@ -161,7 +164,7 @@
     <Progress color={storageColor} value={storageUsed} max={limits?.storageLimit ?? 0} fallback={0} />
   </div>
   <div class="progress-wrapper">
-    <Progress color={tokenMonthColor} value={windows?.month.used ?? 0} max={windows?.month.limit ?? 0} fallback={0} />
+    <Progress color={tokenMonthColor} value={windows?.month.used ?? 0} max={monthTotal} fallback={0} />
   </div>
 </button>
 

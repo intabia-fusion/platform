@@ -35,8 +35,6 @@ export interface AILevelFeatures {
 export interface AILevelModel {
   model: string // provider-specific model name for this level
   tokenMultiplier: number // billedTokens = (prompt+completion) * tokenMultiplier
-  // Billed factor for free plans without packages. Defaults to tokenMultiplier.
-  freeMultiplier?: number
   displayMultiplier?: number // UI-facing "xN" relative to the base (middle) level; falls back to tokenMultiplier when unset
   order: number // sort key for UI + fallback ladder (lower = weaker/cheaper)
   label: string // UI label shown to the user
@@ -69,8 +67,6 @@ export interface AILevelClass {
   // e.g. a provider-side model not yet available on the current plan. Defaults to enabled.
   enabled?: boolean
   tokenMultiplier: number
-  // Billed factor for free plans without packages. Defaults to tokenMultiplier.
-  freeMultiplier?: number
   displayMultiplier?: number
   // Per-feature availability of this level (unset = allowed). e.g. Базовый -> { talk: false }.
   features?: AILevelFeatures
@@ -349,7 +345,6 @@ const resolveProviderSpec = (
     levels[level] = {
       model,
       tokenMultiplier: cls.tokenMultiplier,
-      freeMultiplier: cls.freeMultiplier,
       displayMultiplier: cls.displayMultiplier,
       order: cls.order,
       label: cls.label,

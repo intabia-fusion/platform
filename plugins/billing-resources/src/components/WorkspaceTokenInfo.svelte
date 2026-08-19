@@ -73,7 +73,7 @@
 
 <div class="flex-row-center flex-gap-2 mt-2">
   <div style:width="8rem">
-    <EditBox bind:value={usedValue} format="number" placeholder={plugin.string.SetLimit} />
+    <EditBox bind:value={usedValue} format="number" kind="default" placeholder={plugin.string.SetUsed} />
   </div>
   <DropdownLabels
     items={levelItems}
@@ -82,6 +82,6 @@
     size="medium"
     label={plugin.string.PickModel}
   />
-  <Button label={plugin.string.SetLimit} kind="regular" disabled={busy} on:click={setUsed} />
+  <Button label={plugin.string.SetUsed} kind="regular" disabled={busy} on:click={setUsed} />
   <Button label={plugin.string.ResetUsed} kind="ghost" disabled={busy} on:click={reset} />
 </div>

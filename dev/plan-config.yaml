@@ -50,7 +50,6 @@ plans:
     usersLimit: 5
     guestsLimit: 50
     windowMonthLimit: 100000
-    tokenPackageMultiplier: 1
     index: 0
     color: Sky
   business:
@@ -105,7 +104,6 @@ plans:
     usersLimit: 0
     # Per-seat AI token window (per-seat plan): effective limit = windowMonthLimit * paid seats.
     windowMonthLimit: 300000
-    tokenPackageMultiplier: 1
     index: 1
     color: Orchid
   corporation:
@@ -168,7 +166,6 @@ plans:
     tokenLimit: 0
     usersLimit: 0
     windowMonthLimit: 0
-    tokenPackageMultiplier: 1
     index: 2
     color: Orange
 # Trial for new workspaces. When set, a new workspace starts on this plan with Trialing status

@@ -68,7 +68,7 @@ import { getTools, type PendingProposal, type ReqCtx } from '../utils/tools'
 import { sanitizeDocumentMarkdown } from '../utils/documentMarkdown'
 import { resolveMemory, type AIMemory } from './memory'
 import { donePatch, failedPatch, queuedRequest } from './aiRequest'
-import { resolveModel, planMultiplier, registryForFeature } from '../llms/modelRegistry'
+import { resolveModel, registryForFeature } from '../llms/modelRegistry'
 import { getWorkspaceWindows } from '../billing'
 import { decideLevel } from './windowLimit'
 import { buildThreadContext, type ContextMessage } from './threadContext'
@@ -1008,7 +1008,6 @@ export class WorkspaceClient {
         true,
         'chat',
         effectiveLevel,
-        { isFree: windows.isFree, hasPackages: windows.hasPackages },
         replyLang,
         this.requestHooks(personUuid, aiRequestId, space)
       )
@@ -1046,7 +1045,7 @@ export class WorkspaceClient {
     }
 
     if (aiRequestId !== undefined) {
-      const multiplier = planMultiplier(resolved.model, windows.isFree, windows.hasPackages)
+      const multiplier = resolved.model.tokenMultiplier
       const patch = donePatch(chatCompletion?.usage, multiplier)
       await this.updateAIRequest(
         personUuid,

@@ -164,6 +164,8 @@
     "SectionLLM": "LLM",
     "SectionASR": "ASR",
     "AsrByModel": "モデル別 (ASR)",
-    "DirectProvider": "直接プロバイダー"
+    "DirectProvider": "直接プロバイダー",
+    "SetUsed": "使用量を設定",
+    "ResetAllUsedConfirm": "すべてのモデルプールの使用量がリセットされます。続けますか?"
   }
 }

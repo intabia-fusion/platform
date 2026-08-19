@@ -164,6 +164,8 @@
     "SectionLLM": "LLM",
     "SectionASR": "ASR",
     "AsrByModel": "Nach Modell (ASR)",
-    "DirectProvider": "Direkter Anbieter"
+    "DirectProvider": "Direkter Anbieter",
+    "SetUsed": "Verbrauch setzen",
+    "ResetAllUsedConfirm": "Der Verbrauch aller Modell-Pools wird zurückgesetzt. Fortfahren?"
   }
 }

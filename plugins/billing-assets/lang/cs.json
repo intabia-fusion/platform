@@ -160,6 +160,8 @@
     "PackageEffPrice": "Efektivní cena za 1000",
     "SectionLLM": "LLM",
     "SectionASR": "ASR",
-    "AsrByModel": "Podle modelu (ASR)"
+    "AsrByModel": "Podle modelu (ASR)",
+    "SetUsed": "Nastavit spotřebu",
+    "ResetAllUsedConfirm": "Spotřeba všech poolů modelů bude vynulována. Pokračovat?"
   }
 }

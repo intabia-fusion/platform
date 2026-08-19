@@ -44,8 +44,6 @@ export interface PlanItem {
   // AI rolling-window limit (billed tokens/month). Bigger plan = bigger window = more
   // AI before the rate-limit kicks in. 0 = unlimited.
   windowMonthLimit?: number
-  // AI token package multiplier (xN). Scales the effective windows. Default 1 = no effect.
-  tokenPackageMultiplier?: number
 
   index: number
   color?: string

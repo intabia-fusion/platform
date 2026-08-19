@@ -14,7 +14,6 @@
 //
 
 import { type AILevel, type AILevelFeatures, type AILevelModel, type AIProviderConfig } from '../config'
-import { type PlanContext } from './types'
 
 export interface ResolvedModel {
   provider: AIProviderConfig
@@ -117,37 +116,21 @@ export function providerLevels (provider: AIProviderConfig): AILevel[] {
 }
 
 /**
- * Plan-dependent billed multiplier: free plan without packages may bill differently, else the
- * base tokenMultiplier applies. Billing outage ('unknown' plan) is treated as PAID.
- */
-export function planMultiplier (
-  m: { tokenMultiplier: number, freeMultiplier?: number } | undefined,
-  isFree: boolean,
-  hasPackages: boolean
-): number {
-  if (m === undefined) return 1
-  if (m.freeMultiplier === undefined || !isFree || hasPackages) return m.tokenMultiplier
-  return m.freeMultiplier
-}
-
-/**
- * Resolve billing metadata for a provider level. modelFallback covers an absent level model id;
- * planContext (if given) resolves the plan-dependent multiplier, else the base tokenMultiplier.
+ * Resolve billing metadata for a provider level. modelFallback covers an absent level model id.
+ * One multiplier per level: a plan-dependent one meant the same tokens were billed differently
+ * depending on which call site remembered to pass the plan, which is how translate and summarize
+ * ended up charged at the paid rate on a free workspace.
  */
 export function billingMetaFor (
   provider: AIProviderConfig,
   level: AILevel | undefined,
   defaultLevel: AILevel,
-  modelFallback: () => string = () => '',
-  planContext?: PlanContext
+  modelFallback: () => string = () => ''
 ): { multiplier: number, modelId: string, providerId: string, level: string } {
   const lvl = level ?? defaultLevel
   const m = provider.levels[lvl] ?? provider.levels[defaultLevel]
   return {
-    multiplier:
-      planContext !== undefined
-        ? planMultiplier(m, planContext.isFree, planContext.hasPackages)
-        : (m?.tokenMultiplier ?? 1),
+    multiplier: m?.tokenMultiplier ?? 1,
     modelId: m?.model ?? modelFallback(),
     providerId: provider.id,
     level: lvl

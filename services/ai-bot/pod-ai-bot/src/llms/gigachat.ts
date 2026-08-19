@@ -33,7 +33,6 @@ import type {
   ChatCompletionWithToolsResult,
   ChatToolStepResult,
   ContextMode,
-  PlanContext,
   ToolCall,
   ToolDefinition,
   ToolLoopHooks,
@@ -93,11 +92,8 @@ export default class GigaChatProvider implements LLMProvider {
   }
 
   /** Billing multiplier + model id for a level (used to bill tokens). */
-  private billingFor (
-    level?: AILevel,
-    planContext?: PlanContext
-  ): { multiplier: number, modelId: string, providerId: string, level: string } {
-    return billingMetaFor(this.provider, level, this.defaultLevel, () => this.modelFor(level), planContext)
+  private billingFor (level?: AILevel): { multiplier: number, modelId: string, providerId: string, level: string } {
+    return billingMetaFor(this.provider, level, this.defaultLevel, () => this.modelFor(level))
   }
 
   async translateHtml (
@@ -186,7 +182,6 @@ export default class GigaChatProvider implements LLMProvider {
     skipCache = true,
     reason = 'chat',
     level?: AILevel,
-    planContext?: PlanContext,
     lang?: string,
     hooks?: ToolLoopHooks
   ): Promise<ChatCompletionWithToolsResult | undefined> {
@@ -210,7 +205,6 @@ export default class GigaChatProvider implements LLMProvider {
           skipCache,
           reason,
           level,
-          planContext,
           lang,
           continueFrom
         )
@@ -240,7 +234,6 @@ export default class GigaChatProvider implements LLMProvider {
     skipCache = true,
     reason = 'chat',
     level?: AILevel,
-    planContext?: PlanContext,
     lang?: string,
     continueFrom?: string
   ): Promise<ChatToolStepResult | undefined> {
@@ -331,7 +324,7 @@ export default class GigaChatProvider implements LLMProvider {
         })
       }
 
-      billUsage(ctx, workspace, usage, this.billingFor(level, planContext), reason, new Date().toISOString())
+      billUsage(ctx, workspace, usage, this.billingFor(level), reason, new Date().toISOString())
 
       const call = (msg as any)?.function_call
       if (choice?.finish_reason === 'function_call' && call?.name != null) {

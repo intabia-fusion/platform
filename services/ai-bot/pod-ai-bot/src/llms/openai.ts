@@ -36,7 +36,6 @@ import type {
   ToolDefinition,
   ToolResult,
   ChatToolStepResult,
-  PlanContext,
   ToolLoopHooks
 } from './types'
 import { totalTokens, usageFromApi } from './types'
@@ -84,11 +83,8 @@ export default class OpenAIProvider implements LLMProvider {
   }
 
   /** Billing multiplier + model id for a level (used to bill tokens). */
-  private billingFor (
-    level?: AILevel,
-    planContext?: PlanContext
-  ): { multiplier: number, modelId: string, providerId: string, level: string } {
-    return billingMetaFor(this.provider, level, this.defaultLevel, () => this.modelFor(level), planContext)
+  private billingFor (level?: AILevel): { multiplier: number, modelId: string, providerId: string, level: string } {
+    return billingMetaFor(this.provider, level, this.defaultLevel, () => this.modelFor(level))
   }
 
   async translateHtml (
@@ -237,7 +233,6 @@ export default class OpenAIProvider implements LLMProvider {
     skipCache = true,
     reason = 'chat',
     level?: AILevel,
-    planContext?: PlanContext,
     lang?: string,
     hooks?: ToolLoopHooks
   ): Promise<ChatCompletionWithToolsResult | undefined> {
@@ -261,7 +256,6 @@ export default class OpenAIProvider implements LLMProvider {
           skipCache,
           reason,
           level,
-          planContext,
           lang,
           continueFrom
         )
@@ -297,7 +291,6 @@ export default class OpenAIProvider implements LLMProvider {
     skipCache = true,
     reason = 'chat',
     level?: AILevel,
-    planContext?: PlanContext,
     lang?: string,
     continueFrom?: string
   ): Promise<ChatToolStepResult | undefined> {
@@ -389,7 +382,7 @@ export default class OpenAIProvider implements LLMProvider {
         ctx,
         workspace,
         usage,
-        this.billingFor(level, planContext),
+        this.billingFor(level),
         reason,
         new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
       )

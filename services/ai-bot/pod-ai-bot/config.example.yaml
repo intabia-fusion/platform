@@ -49,9 +49,7 @@ llm:
       order: 0
       label: Базовый
       description: Локальная модель Intabia, экономичная
-      # Billed factor: free w/o packages = freeMultiplier, otherwise tokenMultiplier.
       tokenMultiplier: 0.1
-      freeMultiplier: 0.5
       displayMultiplier: 0.5
     middle:
       order: 10

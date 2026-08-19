@@ -85,7 +85,7 @@
     showPopup,
     themeStore
   } from '@hcengineering/ui'
-  import view from '@hcengineering/view'
+  import view, { type ObjectPanel } from '@hcengineering/view'
   import { getObjectLinkFragment, ObjectBox } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
@@ -428,6 +428,11 @@
     return value.trim()
   }
 
+  /** Remembers the assistant conversation in the draft, so an unfinished issue reopens with it. */
+  function setAssistConversation (id: Ref<Doc> | undefined): void {
+    object.assistConversation = id
+  }
+
   /**
    * Apply a draft proposed by the AI assistant. The description goes in through the editor's own
    * setContent, so it lands as a regular transaction and Ctrl+Z undoes it like any other edit -
@@ -675,7 +680,8 @@
     dispatch('close')
     if (issue === undefined) return
     const hierarchy = client.getHierarchy()
-    const panel = hierarchy.classHierarchyMixin(issue._class, view.mixin.ObjectPanel)
+    // ObjectPanel.component is AnyComponent; tracker's own `Component` class shadows the name here.
+    const panel = hierarchy.classHierarchyMixin<Doc, ObjectPanel>(issue._class, view.mixin.ObjectPanel)
     const loc = await getObjectLinkFragment(hierarchy, issue, {}, panel?.component ?? view.component.EditDoc)
     navigate(loc)
   }
@@ -986,9 +992,7 @@
         resultClass: tracker.class.Issue,
         session: assistSession,
         conversationId: object.assistConversation,
-        onConversation: (id) => {
-          object.assistConversation = id
-        }
+        onConversation: setAssistConversation
       }}
     />
   </svelte:fragment>

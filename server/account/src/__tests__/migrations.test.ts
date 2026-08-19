@@ -17,46 +17,46 @@ import { getMigrations } from '../collections/postgres/migrations'
 
 const ns = 'global_account'
 
-describe('getMigrations - v39/v40 workspace_purchase dedup + unique index', () => {
+describe('getMigrations - v40/v41 workspace_purchase dedup + unique index', () => {
   const migrations = getMigrations(ns, 'cockroach')
   const ids = migrations.map(([id]) => id)
 
-  it('registers v39 and v40 identifiers', () => {
-    expect(ids).toContain('account_db_v39_workspace_purchase_dedup')
-    expect(ids).toContain('account_db_v40_workspace_purchase_unique')
+  it('registers v40 and v41 identifiers', () => {
+    expect(ids).toContain('account_db_v40_workspace_purchase_dedup')
+    expect(ids).toContain('account_db_v41_workspace_purchase_unique')
   })
 
   it('has no duplicate migration identifiers', () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
-  it('orders v38 (create table) before v39 (dedup) before v40 (unique index)', () => {
-    const v38Idx = ids.indexOf('account_db_v38_workspace_purchase')
-    const v39Idx = ids.indexOf('account_db_v39_workspace_purchase_dedup')
-    const v40Idx = ids.indexOf('account_db_v40_workspace_purchase_unique')
+  it('orders v39 (create table) before v40 (dedup) before v41 (unique index)', () => {
+    const v39CreateIdx = ids.indexOf('account_db_v39_workspace_purchase')
+    const v40Idx = ids.indexOf('account_db_v40_workspace_purchase_dedup')
+    const v41Idx = ids.indexOf('account_db_v41_workspace_purchase_unique')
 
-    expect(v38Idx).toBeGreaterThanOrEqual(0)
-    expect(v39Idx).toBeGreaterThan(v38Idx)
-    expect(v40Idx).toBeGreaterThan(v39Idx)
+    expect(v39CreateIdx).toBeGreaterThanOrEqual(0)
+    expect(v40Idx).toBeGreaterThan(v39CreateIdx)
+    expect(v41Idx).toBeGreaterThan(v40Idx)
   })
 
-  it('v39 is DML-only (dedup) - CockroachDB cannot mix it with the DDL from v40 in one transaction', () => {
-    const [, ddl] = migrations.find(([id]) => id === 'account_db_v39_workspace_purchase_dedup') ?? []
+  it('v40 is DML-only (dedup) - CockroachDB cannot mix it with the DDL from v41 in one transaction', () => {
+    const [, ddl] = migrations.find(([id]) => id === 'account_db_v40_workspace_purchase_dedup') ?? []
     expect(ddl).toBeDefined()
     expect(ddl).toMatch(/DELETE FROM/i)
     expect(ddl).not.toMatch(/CREATE\s+(UNIQUE\s+)?INDEX/i)
     expect(ddl).not.toMatch(/ALTER TABLE/i)
   })
 
-  it('v39 dedups by (payment_id, provider), keeping the oldest row', () => {
-    const [, ddl] = migrations.find(([id]) => id === 'account_db_v39_workspace_purchase_dedup') ?? []
+  it('v40 dedups by (payment_id, provider), keeping the oldest row', () => {
+    const [, ddl] = migrations.find(([id]) => id === 'account_db_v40_workspace_purchase_dedup') ?? []
     expect(ddl).toMatch(/payment_id IS NOT NULL/)
     expect(ddl).toMatch(/DISTINCT ON \(payment_id, provider\)/)
     expect(ddl).toMatch(/ORDER BY payment_id, provider, created_on ASC/)
   })
 
-  it('v40 is DDL-only (unique index) - split from v39 to keep DML/DDL out of the same transaction', () => {
-    const [, ddl] = migrations.find(([id]) => id === 'account_db_v40_workspace_purchase_unique') ?? []
+  it('v41 is DDL-only (unique index) - split from v40 to keep DML/DDL out of the same transaction', () => {
+    const [, ddl] = migrations.find(([id]) => id === 'account_db_v41_workspace_purchase_unique') ?? []
     expect(ddl).toBeDefined()
     expect(ddl).toMatch(/CREATE UNIQUE INDEX/i)
     expect(ddl).not.toMatch(/DELETE FROM/i)
@@ -64,8 +64,8 @@ describe('getMigrations - v39/v40 workspace_purchase dedup + unique index', () =
     expect(ddl).not.toMatch(/INSERT INTO/i)
   })
 
-  it('v40 unique index is partial on payment_id IS NOT NULL (non-payment purchases stay unconstrained)', () => {
-    const [, ddl] = migrations.find(([id]) => id === 'account_db_v40_workspace_purchase_unique') ?? []
+  it('v41 unique index is partial on payment_id IS NOT NULL (non-payment purchases stay unconstrained)', () => {
+    const [, ddl] = migrations.find(([id]) => id === 'account_db_v41_workspace_purchase_unique') ?? []
     expect(ddl).toMatch(
       new RegExp(`ON ${ns}\\.workspace_purchase \\(payment_id, provider\\) WHERE payment_id IS NOT NULL`)
     )

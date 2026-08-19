@@ -291,8 +291,7 @@ export async function createServer (
       meetingMinutesLimit: item.meetingMinutesLimit ?? 0,
       tokenLimit: item.tokenLimit ?? 0,
       usersLimit,
-      windowMonthLimit,
-      tokenPackageMultiplier: item.tokenPackageMultiplier ?? 1
+      windowMonthLimit
     }
   }
 
@@ -1320,6 +1319,25 @@ export async function createServer (
               subscription: isCompleted ? subscriptionData : null
             })
             return
+          }
+
+          // A one-time purchase never becomes a subscription, so the provider has nothing to
+          // report once it settles: its state lives in workspace_purchase. Without this the UI
+          // polls forever on a package that was already granted.
+          const workspace = req.token?.workspace
+          if (workspace !== undefined) {
+            try {
+              const purchases = await accountClient.getPurchases(workspace)
+              const purchase = purchases.find(
+                (p) => p.paymentId === checkoutId && (p.status === 'active' || p.status === 'consumed')
+              )
+              if (purchase !== undefined) {
+                res.status(200).json({ checkoutId, subscriptionId: null, status: 'completed', purchase })
+                return
+              }
+            } catch (err) {
+              ctx.error('Failed to look up purchases for checkout', { checkoutId, err })
+            }
           }
 
           // Subscription not yet found in provider

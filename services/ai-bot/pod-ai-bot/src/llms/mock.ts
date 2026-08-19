@@ -20,13 +20,7 @@ import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFuncti
 import { type AIProviderConfig, type AILevel } from '../config'
 import { billUsage } from '../billing'
 import { billingMetaFor, providerLevels } from './modelRegistry'
-import {
-  type ChatCompletionWithToolsResult,
-  type ChatMessage,
-  type ContextMode,
-  type LLMProvider,
-  type PlanContext
-} from './types'
+import { type ChatCompletionWithToolsResult, type ChatMessage, type ContextMode, type LLMProvider } from './types'
 
 // Deterministic offline provider for tests (fixed usage, no network). endpointConfig.echo=true
 // replies with the received context as markdown for assertions; otherwise replies endpointConfig.reply.
@@ -80,21 +74,12 @@ class MockProvider implements LLMProvider {
     return lines.join('\n\n')
   }
 
-  private billingFor (
-    level?: AILevel,
-    planContext?: PlanContext
-  ): { multiplier: number, modelId: string, providerId: string, level: string } {
-    return billingMetaFor(this.provider, level, this.defaultLevel, () => 'mock', planContext)
+  private billingFor (level?: AILevel): { multiplier: number, modelId: string, providerId: string, level: string } {
+    return billingMetaFor(this.provider, level, this.defaultLevel, () => 'mock')
   }
 
-  private bill (
-    ctx: MeasureContext,
-    workspace: WorkspaceUuid,
-    reason: string,
-    level?: AILevel,
-    planContext?: PlanContext
-  ): void {
-    billUsage(ctx, workspace, this.usage, this.billingFor(level, planContext), reason, new Date().toISOString())
+  private bill (ctx: MeasureContext, workspace: WorkspaceUuid, reason: string, level?: AILevel): void {
+    billUsage(ctx, workspace, this.usage, this.billingFor(level), reason, new Date().toISOString())
   }
 
   async translateHtml (_ctx: MeasureContext, _workspace: WorkspaceUuid, html: string): Promise<string | undefined> {
@@ -122,10 +107,9 @@ class MockProvider implements LLMProvider {
     _skipCache?: boolean,
     reason = 'chat',
     level?: AILevel,
-    planContext?: PlanContext,
     _lang?: string
   ): Promise<ChatCompletionWithToolsResult | undefined> {
-    this.bill(ctx, workspace, reason, level, planContext)
+    this.bill(ctx, workspace, reason, level)
     if (!this.echo) {
       return { completion: this.reply, usage: this.usage }
     }

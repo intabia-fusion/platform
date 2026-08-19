@@ -29,7 +29,6 @@ import type {
   ContextMode,
   ToolDefinition,
   ToolResult,
-  PlanContext,
   ToolLoopHooks
 } from './types'
 
@@ -116,11 +115,8 @@ export default class ServerLLMProvider implements LLMProvider {
   }
 
   /** Billing metadata for a level. */
-  private billingFor (
-    level?: AILevel,
-    planContext?: PlanContext
-  ): { multiplier: number, modelId: string, providerId: string, level: string } {
-    return billingMetaFor(this.provider, level, this.defaultLevel, () => '', planContext)
+  private billingFor (level?: AILevel): { multiplier: number, modelId: string, providerId: string, level: string } {
+    return billingMetaFor(this.provider, level, this.defaultLevel, () => '')
   }
 
   /**
@@ -225,7 +221,6 @@ export default class ServerLLMProvider implements LLMProvider {
     skipCache = true,
     reason = 'chat',
     level?: AILevel,
-    planContext?: PlanContext,
     lang?: string,
     hooks?: ToolLoopHooks
   ): Promise<ChatCompletionWithToolsResult | undefined> {
@@ -279,15 +274,7 @@ export default class ServerLLMProvider implements LLMProvider {
 
       if (result === undefined) return undefined
 
-      billUsage(
-        ctx,
-        workspace,
-        result.usage,
-        this.billingFor(level, planContext),
-        reason,
-        new Date().toISOString(),
-        result.clientId
-      )
+      billUsage(ctx, workspace, result.usage, this.billingFor(level), reason, new Date().toISOString(), result.clientId)
 
       return { completion: result.completion, usage: result.usage, cancelled: result.cancelled }
     } catch (err: any) {

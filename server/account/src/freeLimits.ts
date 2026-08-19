@@ -25,8 +25,7 @@ const DEFAULT_FREE_PLAN = {
   tokenLimit: 100000,
   trafficLimitGB: 0,
   meetingMinutesLimit: 0,
-  windowMonthLimit: 100000,
-  tokenPackageMultiplier: 1
+  windowMonthLimit: 100000
 }
 
 /** Resolve free fallback limits from a partial JSON override merged over the defaults. */
@@ -47,8 +46,7 @@ export function parseFreePlanLimits (raw: string | undefined): TierLimits {
     meetingMinutesLimit: item.meetingMinutesLimit ?? 0,
     tokenLimit: item.tokenLimit ?? 0,
     usersLimit,
-    windowMonthLimit: item.windowMonthLimit ?? 0,
-    tokenPackageMultiplier: item.tokenPackageMultiplier ?? 1
+    windowMonthLimit: item.windowMonthLimit ?? 0
   }
 }
 

@@ -20,10 +20,8 @@ llm:
       order: 0
       label: Базовый
       description: Базовая модель
-      # Billed factor: free without packages = freeMultiplier, otherwise tokenMultiplier.
       # tokenMultiplier bills the on-prem security surcharge, not raw compute cost.
       tokenMultiplier: 2
-      freeMultiplier: 1
       displayMultiplier: 1
       # Small local model: chat only, it handles tool calls poorly.
       features:
@@ -38,7 +36,6 @@ llm:
       # (dev/config-aibot-client.yaml serves low-plus).
       enabled: true
       tokenMultiplier: 1
-      freeMultiplier: 1
       displayMultiplier: 1
     middle:
       order: 10

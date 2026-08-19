@@ -1225,6 +1225,13 @@ class PostgresDB implements BillingDB {
 
   // Clear a workspace's token limit state so it is no longer blocked; recompute repopulates used.
   async resetWorkspaceUsed (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<void> {
+    // The hourly recompute rebuilds `used` from ai_tokens_usage, so clearing only the cached
+    // state made the button look like it did nothing: the block was back within the hour.
+    const periodStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    await this.execute('DELETE FROM billing.ai_tokens_usage WHERE workspace = $1::uuid AND hour >= $2::timestamp', [
+      workspace,
+      periodStart
+    ])
     await this.execute(
       "UPDATE billing.workspace_limit_state SET used = 0, exhausted = false, updated_at = now() WHERE workspace = $1::uuid AND category = 'tokens'",
       [workspace]

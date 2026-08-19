@@ -2127,7 +2127,9 @@ export class PostgresAccountDB implements AccountDB {
       `SELECT * FROM ${table} WHERE workspace_uuid = $1 ORDER BY created_on DESC`,
       [workspace]
     )
-    return (rows as Array<Record<string, any>>).map((r) => convertKeysToCamelCase(r) as WorkspacePurchase)
+    // The table's own converter, not the generic camel-case one: it restores column types
+    // (created_on/activated_on), which the UI otherwise renders as "Invalid date".
+    return (rows as Array<Record<string, any>>).map((r) => this.workspacePurchase.convertToObj(r))
   }
 
   // Lease heartbeat: refresh while the charge is in flight so other pods see the claimer is alive.

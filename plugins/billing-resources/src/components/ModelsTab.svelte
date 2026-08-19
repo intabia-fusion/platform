@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte'
-  import { Button, EditBox, Label, Loading, Progress } from '@hcengineering/ui'
+  import { Button, EditBox, Label, Loading, Progress, showPopup } from '@hcengineering/ui'
+  import { MessageBox } from '@hcengineering/presentation'
   import type { AiModelRegistryEntry, AiTranscriptBreakdown, ProviderPool } from '@hcengineering/billing-client'
   import { getBillingClient } from '../utils'
   import plugin from '../plugin'
@@ -87,11 +88,22 @@
     await reloadPools()
   }
 
-  async function resetAllUsed (): Promise<void> {
-    const client = getBillingClient()
-    if (client === null) return
-    await client.resetPoolUsed(undefined, undefined, true)
-    await reloadPools()
+  // Clears usage for every pool at once and cannot be undone: ask first.
+  function resetAllUsed (): void {
+    showPopup(
+      MessageBox,
+      {
+        label: plugin.string.ResetAllUsed,
+        message: plugin.string.ResetAllUsedConfirm,
+        action: async () => {
+          const client = getBillingClient()
+          if (client === null) return
+          await client.resetPoolUsed(undefined, undefined, true)
+          await reloadPools()
+        }
+      },
+      'top'
+    )
   }
 
   $: poolMap = new Map(pools.map((p) => [poolKey(p.providerId, p.model), p]))

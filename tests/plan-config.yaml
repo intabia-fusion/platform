@@ -31,7 +31,6 @@ plans:
     tokenLimit: 100000
     usersLimit: 5
     windowMonthLimit: 100000
-    tokenPackageMultiplier: 1
     index: -1
     color: Grayish
   start:

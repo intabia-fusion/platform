@@ -164,6 +164,8 @@
     "SectionLLM": "LLM",
     "SectionASR": "ASR",
     "AsrByModel": "By model (ASR)",
-    "DirectProvider": "Direct provider"
+    "DirectProvider": "Direct provider",
+    "SetUsed": "Set used",
+    "ResetAllUsedConfirm": "Usage will be cleared for every model pool. Continue?"
   }
 }

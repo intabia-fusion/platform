@@ -40,8 +40,13 @@
     if (hours < 24) return rtf.format(hours, 'hour')
     return rtf.format(Math.round(ms / 86400000), 'day')
   }
+
+  // 0 stays 0: an unlimited tier window is unlimited whatever the balance is.
+  $: monthTotal = windows === undefined || windows.month.limit === 0 ? 0 : windows.month.limit + windows.balance
 </script>
 
+<!-- Bought tokens are spent before the tier window, so the bar has to include them: measuring
+     against the tier limit alone showed a workspace as full while it still had a balance. -->
 {#if windows !== undefined}
   <div class="flex-col flex-gap-2 mt-2" data-id="tokenWindows">
     <div class="flex-col flex-gap-1">
@@ -52,17 +57,15 @@
         </span>
       </div>
       <Progress
-        color={barColor(windows.month.used, windows.month.limit)}
+        color={barColor(windows.month.used, monthTotal)}
         value={windows.month.used}
-        max={windows.month.limit}
+        max={monthTotal}
         fallback={0}
       />
       <div class="flex-between flex-gap-2 text-sm content-dark-color">
         <span><Label label={plugin.string.TokenWindowMonth} /></span>
         <span class="no-word-wrap">
-          {windows.month.used.toLocaleString('en-US')} / {windows.month.limit > 0
-            ? windows.month.limit.toLocaleString('en-US')
-            : '∞'}
+          {windows.month.used.toLocaleString('en-US')} / {monthTotal > 0 ? monthTotal.toLocaleString('en-US') : '∞'}
         </span>
       </div>
       {#if windows.month.resetAt !== null && windows.month.limit > 0}

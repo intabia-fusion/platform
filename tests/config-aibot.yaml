@@ -16,7 +16,6 @@ llm:
       label: Базовый
       description: Mock (тесты)
       tokenMultiplier: 0.1
-      freeMultiplier: 0.5
       displayMultiplier: 0.5
     middle:
       order: 10

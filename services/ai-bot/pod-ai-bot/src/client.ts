@@ -184,7 +184,6 @@ export const startClient = async (): Promise<void> => {
             request.skipCache,
             request.reason,
             request.level,
-            undefined,
             request.lang,
             request.continueFrom
           )
@@ -202,7 +201,6 @@ export const startClient = async (): Promise<void> => {
           request.skipCache,
           request.reason,
           request.level,
-          undefined,
           request.lang
         )
       }

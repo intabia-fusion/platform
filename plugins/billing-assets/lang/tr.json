@@ -164,6 +164,8 @@
     "SectionLLM": "LLM",
     "SectionASR": "ASR",
     "AsrByModel": "Modele göre (ASR)",
-    "DirectProvider": "Doğrudan sağlayıcı"
+    "DirectProvider": "Doğrudan sağlayıcı",
+    "SetUsed": "Kullanımı ayarla",
+    "ResetAllUsedConfirm": "Tüm model havuzlarının kullanımı sıfırlanacak. Devam edilsin mi?"
   }
 }
