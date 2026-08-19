@@ -40,6 +40,7 @@ import { decodeTokenVerbose } from '@hcengineering/server-token'
 import {
   LimitCategory,
   LimitStatus,
+  subscriptionEvents,
   workspaceEvents,
   type QueueWorkspaceLimitsMessage
 } from '@hcengineering/server-core'
@@ -550,11 +551,33 @@ export async function adminCancelSubscription (
   await logAdminAction(ctx, db, token, 'cancel_subscription', existing.workspaceUuid, existing.plan, {
     subscriptionId: existing.id
   })
+  // Also record it in the payment ledger to keep the billing timeline consistent.
+  try {
+    await db.logPaymentOperation({
+      provider: existing.provider,
+      operation: 'cancel',
+      status: 'ADMIN_CANCELED',
+      paymentId: existing.providerSubscriptionId,
+      orderId: oldProviderData.orderId as string | undefined,
+      subscriptionId: existing.id,
+      workspaceUuid: existing.workspaceUuid,
+      accountUuid: existing.accountUuid,
+      actionId: oldProviderData.actionId as string | undefined,
+      actor: 'admin',
+      amount: existing.amount,
+      raw: { plan: existing.plan, seats: oldProviderData.quantity, type: existing.type, reason: 'ADMIN_CANCELED' },
+      createdOn: now
+    })
+  } catch (err: any) {
+    ctx.error('Failed to log admin cancel to payment ledger', { subscriptionId: existing.id, err })
+  }
 
   if (existing.type === SubscriptionType.Tier) {
     await publishLimitsEvents(ctx, existing.workspaceUuid, [
       workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)
     ])
+    // pod-payment owns the free-plan config, so it decides whether a free fallback follows this cancel.
+    await publishAdminCanceled(ctx, { ...existing, status: SubscriptionStatus.Canceled, canceledAt: now })
   }
 }
 
@@ -1607,6 +1630,23 @@ async function publishLimitsEvents (
     await producer.send(ctx, workspaceUuid, events)
   } catch (err: any) {
     ctx.error('Failed to publish limits events', { workspaceUuid, err })
+  }
+}
+
+/** Tell pod-payment about an operator cancel so it can provision the free fallback plan. */
+async function publishAdminCanceled (ctx: MeasureContext, sub: Subscription): Promise<void> {
+  const producer = getMetadata(accountPlugin.metadata.SubscriptionQueue)
+  if (producer === undefined) {
+    ctx.warn('SubscriptionQueue producer is not configured, free fallback skipped', {
+      subscriptionId: sub.id,
+      workspaceUuid: sub.workspaceUuid
+    })
+    return
+  }
+  try {
+    await producer.send(ctx, sub.workspaceUuid, [subscriptionEvents.adminCanceled(sub, sub.provider)])
+  } catch (err: any) {
+    ctx.error('Failed to publish admin cancel event', { subscriptionId: sub.id, err })
   }
 }
 

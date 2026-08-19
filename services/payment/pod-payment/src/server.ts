@@ -149,7 +149,7 @@ export async function createServer (
 ): Promise<{
     app: Express
     ensureInitialSubscription: (workspace: WorkspaceUuid) => Promise<void>
-    createFreeIfNoActiveTier: (workspace: WorkspaceUuid, actionId?: string) => Promise<void>
+    createFreeIfNoActiveTier: (workspace: WorkspaceUuid, actionId?: string, canceledPlan?: string) => Promise<void>
     persistSubscription: (data: SubscriptionData) => Promise<void>
     close: () => void
   }> {
@@ -370,8 +370,14 @@ export async function createServer (
 
   // Create a free subscription after finalized user-initiated cancelation of a paid subscription
   // actionId of the cancel that dropped the paid tier — the free fallback belongs to that same action.
-  async function createFreeIfNoActiveTier (workspace: WorkspaceUuid, actionId?: string): Promise<void> {
+  // When canceling the free plan, we do not provision another free plan.
+  async function createFreeIfNoActiveTier (
+    workspace: WorkspaceUuid,
+    actionId?: string,
+    canceledPlan?: string
+  ): Promise<void> {
     if (freePlanName === undefined) return
+    if (canceledPlan !== undefined && planConfig.plans?.[canceledPlan]?.free === true) return
     try {
       const existing = await accountClient.getSubscriptions(workspace, false)
       if (hasGrantingTier(existing)) return
