@@ -77,7 +77,7 @@
         <svelte:fragment slot="title">
           <div class="ml-2">Slow SQL</div>
         </svelte:fragment>
-        <SlowSqlStats services={Object.keys(data.data)} />
+        <SlowSqlStats />
       </Expandable>
     {/if}
     {#each Object.entries(data.data).sort((a, b) => a[1].serviceName.localeCompare(b[1].serviceName)) as kv}

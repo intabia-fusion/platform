@@ -1,4 +1,4 @@
-import { childMetrics, newMetrics, recordTopInto, updateMeasure, wipeMetrics } from '../metrics'
+import { childMetrics, newMetrics, recordTopInto, sliceTop, updateMeasure, wipeMetrics } from '../metrics'
 import { platformNow } from '../index'
 
 describe('recordTopInto', () => {
@@ -77,39 +77,35 @@ describe('recordTopInto', () => {
       expect(reg?.evictedCount).toBe(0)
     })
 
-    it('should count a light newcomer as evicted without touching tracked entries', () => {
+    it('should keep both the slowest and the most frequent on compaction', () => {
       const metrics = newMetrics()
-      // Fill cap=3 with max values 10, 20, 30.
-      recordTopInto(metrics, 'sql', 'a', 10, undefined, 3)
-      recordTopInto(metrics, 'sql', 'b', 20, undefined, 3)
-      recordTopInto(metrics, 'sql', 'c', 30, undefined, 3)
+      // cap=8 -> compaction keeps the top 2 by max plus the top 2 by count.
+      const cap = 8
+      recordTopInto(metrics, 'sql', 'slowA', 900, undefined, cap)
+      recordTopInto(metrics, 'sql', 'slowB', 800, undefined, cap)
+      for (let i = 0; i < 20; i++) recordTopInto(metrics, 'sql', 'hotA', 1, undefined, cap)
+      for (let i = 0; i < 15; i++) recordTopInto(metrics, 'sql', 'hotB', 1, undefined, cap)
+      // Filler keys: neither slow nor frequent.
+      for (let i = 0; i < 4; i++) recordTopInto(metrics, 'sql', `filler${i}`, 5, undefined, cap)
+      // The 9th distinct key triggers compaction.
+      recordTopInto(metrics, 'sql', 'newcomer', 7, undefined, cap)
 
-      // Newcomer with value 5 <= lightest max (10) - rolled up, not tracked.
-      recordTopInto(metrics, 'sql', 'd', 5, undefined, 3)
-
-      const reg = metrics.top?.sql
-      expect(Object.keys(reg?.entries ?? {}).sort()).toEqual(['a', 'b', 'c'])
-      expect(reg?.evictedCount).toBe(1)
-      expect(reg?.evictedSum).toBe(5)
-      expect(reg?.totalCount).toBe(4)
-      expect(reg?.totalSum).toBe(65)
+      const kept = Object.keys(metrics.top?.sql.entries ?? {})
+      expect(kept).toEqual(expect.arrayContaining(['slowA', 'slowB', 'hotA', 'hotB', 'newcomer']))
+      expect(kept).not.toContain('filler0')
     })
 
-    it('should evict the lightest tracked entry for a heavier newcomer', () => {
+    it('should roll compacted entries into the registry totals', () => {
       const metrics = newMetrics()
-      recordTopInto(metrics, 'sql', 'a', 10, undefined, 3)
-      recordTopInto(metrics, 'sql', 'a', 8, undefined, 3) // a: count=2 sum=18 max=10
-      recordTopInto(metrics, 'sql', 'b', 20, undefined, 3)
-      recordTopInto(metrics, 'sql', 'c', 30, undefined, 3)
-
-      // Newcomer heavier than lightest max (a.max=10) - evicts 'a' with its full aggregate.
-      recordTopInto(metrics, 'sql', 'd', 15, undefined, 3)
+      const cap = 4
+      for (let i = 0; i < 6; i++) recordTopInto(metrics, 'sql', `q${i}`, 10, undefined, cap)
 
       const reg = metrics.top?.sql
-      expect(Object.keys(reg?.entries ?? {}).sort()).toEqual(['b', 'c', 'd'])
-      expect(reg?.evictedCount).toBe(2) // both 'a' observations
-      expect(reg?.evictedSum).toBe(18)
-      expect(reg?.entries.d.max).toBe(15)
+      let tracked = 0
+      for (const e of Object.values(reg?.entries ?? {})) tracked += e.count
+      expect(tracked + (reg?.evictedCount ?? 0)).toBe(6)
+      expect(reg?.totalCount).toBe(6)
+      expect(reg?.totalSum).toBe(60)
     })
 
     it('should keep registry totals exact across evictions', () => {
@@ -137,6 +133,44 @@ describe('recordTopInto', () => {
       expect(trackedSum + (reg?.evictedSum ?? 0)).toBe(expectedSum)
       expect(Object.keys(reg?.entries ?? {}).length).toBeLessThanOrEqual(10)
     })
+  })
+})
+
+describe('sliceTop', () => {
+  it('should ship the union of the slowest and the most frequent', () => {
+    const metrics = newMetrics()
+    recordTopInto(metrics, 'sql', 'slow', 900)
+    for (let i = 0; i < 50; i++) recordTopInto(metrics, 'sql', 'frequent', 1)
+    recordTopInto(metrics, 'sql', 'middling', 20)
+    recordTopInto(metrics, 'sql', 'middling', 20)
+
+    const sliced = sliceTop(metrics.top ?? {}, 1)
+
+    expect(Object.keys(sliced.sql.entries).sort()).toEqual(['frequent', 'slow'])
+    // Totals describe every observation, not just the shipped ones.
+    expect(sliced.sql.totalCount).toBe(53)
+  })
+
+  it('should drop a sample identical to the key and keep a distinct one', () => {
+    const metrics = newMetrics()
+    recordTopInto(metrics, 'sql', 'SELECT 1', 5, 'SELECT 1')
+    recordTopInto(metrics, 'sql', 'shape', 5, 'SELECT 42 -- real sql')
+
+    const entries = sliceTop(metrics.top ?? {}).sql.entries
+
+    expect(entries['SELECT 1'].sample).toBeUndefined()
+    expect(entries.shape.sample).toBe('SELECT 42 -- real sql')
+  })
+
+  it('should not mutate the source registry', () => {
+    const metrics = newMetrics()
+    recordTopInto(metrics, 'sql', 'a', 900, 'a')
+    recordTopInto(metrics, 'sql', 'b', 1, 'b')
+
+    sliceTop(metrics.top ?? {}, 1)
+
+    expect(Object.keys(metrics.top?.sql.entries ?? {}).sort()).toEqual(['a', 'b'])
+    expect(metrics.top?.sql.entries.a.sample).toBe('a')
   })
 })
 

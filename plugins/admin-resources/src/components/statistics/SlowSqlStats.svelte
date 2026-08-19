@@ -11,25 +11,68 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
-  import presentation, { type ServiceStatistics } from '@hcengineering/presentation'
+  import presentation from '@hcengineering/presentation'
   import { Button, DropdownLabels, ticker } from '@hcengineering/ui'
   import { downloadCsv, fetchStatsJson } from './statsFetch'
-
-  // Service ids (keys of the overview `data.data`) whose SQL registries to merge.
-  export let services: string[] = []
 
   const endpoint = getMetadata(presentation.metadata.StatsUrl)
   const token: string = getMetadata(presentation.metadata.Token) ?? ''
 
-  let kind: 'slowSqlFind' | 'slowSqlTx' = 'slowSqlFind'
+  let kind: 'Find' | 'Tx' = 'Find'
   const kinds = [
-    { id: 'slowSqlFind', label: 'Find (reads)' },
-    { id: 'slowSqlTx', label: 'Tx (writes)' }
+    { id: 'Find', label: 'Find (reads)' },
+    { id: 'Tx', label: 'Tx (writes)' }
+  ]
+
+  let limit = '30'
+  const limits = [
+    { id: '30', label: '30' },
+    { id: '100', label: '100' },
+    { id: '300', label: '300' }
   ]
 
   type SortKey = 'max' | 'p95' | 'p99' | 'avg' | 'count'
   const sortKeys: SortKey[] = ['max', 'p95', 'p99', 'avg', 'count']
-  let sortBy: SortKey = 'p95'
+
+  interface Section {
+    id: 'slow' | 'hot'
+    title: string
+    hint: string
+    // Server-side ranking used to pick which rows we get at all.
+    serverSort: 'max' | 'count'
+    sortBy: SortKey
+    rows: Row[]
+    instances: number
+    totalCalls: number
+    trackedCalls: number
+  }
+
+  // One registry, two views: the heaviest single calls and the ones that run most often.
+  // A 2ms statement executed 50k times never surfaces in the first one.
+  let sections: Section[] = [
+    {
+      id: 'slow',
+      title: 'Slowest',
+      hint: 'by max duration',
+      serverSort: 'max',
+      sortBy: 'p95',
+      rows: [],
+      instances: 0,
+      totalCalls: 0,
+      trackedCalls: 0
+    },
+    {
+      id: 'hot',
+      title: 'Most frequent',
+      hint: 'by call count',
+      serverSort: 'count',
+      sortBy: 'count',
+      rows: [],
+      instances: 0,
+      totalCalls: 0,
+      trackedCalls: 0
+    }
+  ]
 
   interface Row {
     key: string
@@ -80,58 +123,58 @@
     return m != null ? m[1] : 'unknown'
   }
 
-  let rows: Row[] = []
-  let evicted = 0
-  let totalCalls = 0
+  // Pool wait for the current registry: one row, keyed by the SQL registry name.
+  let wait: { count: number, sum: number, max: number, p95: number } | undefined
+  let eventLoop: { lagP50: number, lagP95: number, lagMax: number, threadPool: number } | undefined
 
+  interface TopResponse {
+    instances: number
+    totalCount: number
+    totalSum: number
+    trackedCount: number
+    eventLoop?: { lagP50: number, lagP95: number, lagMax: number, threadPool: number }
+    entries: Array<{ key: string, count: number, sum: number, max: number, le10: number, le100: number, le500: number, sample?: string }>
+  }
+
+  // One request per view - the stats pod merges every live instance for us.
   async function refresh (..._deps: unknown[]): Promise<void> {
-    const merged = new Map<string, Row>()
-    let ev = 0
-    let total = 0
-    await Promise.all(
-      services.map(async (svc) => {
+    const loaded = await Promise.all(
+      sections.map(async (section) => {
         try {
-          const s = await fetchStatsJson<ServiceStatistics>(
-            endpoint + `/api/v1/statistics?token=${token}&name=${encodeURIComponent(svc)}`
-          )
-          const reg = (s?.stats as any)?.top?.[kind]
-          if (reg === undefined) return
-          ev += reg.evictedCount ?? 0
-          total += reg.totalCount ?? 0
-          for (const [key, e] of Object.entries<any>(reg.entries ?? {})) {
-            let r = merged.get(key)
-            if (r === undefined) {
-              r = {
-                key,
-                table: extractTable(key),
-                count: 0,
-                sum: 0,
-                max: 0,
-                le10: 0,
-                le100: 0,
-                le500: 0,
-                sample: e.sample ?? key
-              }
-              merged.set(key, r)
-            }
-            r.count += e.count
-            r.sum += e.sum
-            r.max = Math.max(r.max, e.max)
-            r.le10 += e.le10
-            r.le100 += e.le100
-            r.le500 += e.le500
+          const url =
+            endpoint +
+            `/api/v1/top?token=${token}&registry=slowSql${kind}&sort=${section.serverSort}&limit=${limit}`
+          const r = await fetchStatsJson<TopResponse>(url)
+          eventLoop = r.eventLoop
+          return {
+            ...section,
+            rows: (r.entries ?? []).map((e) => ({ ...e, table: extractTable(e.key), sample: e.sample ?? e.key })),
+            instances: r.instances ?? 0,
+            totalCalls: r.totalCount ?? 0,
+            trackedCalls: r.trackedCount ?? 0
           }
         } catch {
-          // one service may be gone; skip it
+          return section
         }
       })
     )
-    rows = Array.from(merged.values())
-    evicted = ev
-    totalCalls = total
+    sections = loaded
+
+    try {
+      const w = await fetchStatsJson<TopResponse>(
+        endpoint + `/api/v1/top?token=${token}&registry=sqlWait&sort=count&limit=10`
+      )
+      const row = (w.entries ?? []).find((e) => e.key === `slowSql${kind}`)
+      wait =
+        row !== undefined
+          ? { count: row.count, sum: row.sum, max: row.max, p95: percentile(row as unknown as Row, 0.95) }
+          : undefined
+    } catch {
+      wait = undefined
+    }
   }
 
-  $: refresh(services, kind, $ticker).catch(() => {})
+  $: refresh(kind, limit, $ticker).catch(() => {})
 
   function metric (r: Row, key: SortKey): number {
     switch (key) {
@@ -148,15 +191,20 @@
     }
   }
 
-  $: sorted = [...rows].sort((a, b) => metric(b, sortBy) - metric(a, sortBy))
+  const sortRows = (s: Section): Row[] => [...s.rows].sort((a, b) => metric(b, s.sortBy) - metric(a, s.sortBy))
+
+  function sortSection (s: Section, key: SortKey): void {
+    s.sortBy = key
+    sections = sections
+  }
 
   const fmt = (n: number): string => (n >= 100 ? n.toFixed(0) : n.toFixed(1))
 
-  function exportCsv (): void {
+  function exportCsv (s: Section): void {
     downloadCsv(
-      `${kind}.csv`,
+      `sql-${kind.toLowerCase()}-${s.id}.csv`,
       ['max', 'p95', 'p99', 'avg', 'count', 'table', 'sql'],
-      sorted.map((r) => [
+      sortRows(s).map((r) => [
         r.max,
         percentile(r, 0.95),
         percentile(r, 0.99),
@@ -170,59 +218,93 @@
 </script>
 
 <div class="flex-col p-2">
-  <div class="flex-row-center flex-between mb-2">
-    <div class="flex-row-center">
-      <span class="mr-2">Registry:</span>
-      <DropdownLabels bind:selected={kind} items={kinds} />
-      <div class="ml-2">
-        <Button label={getEmbeddedLabel('Download CSV')} kind="regular" size="small" on:click={exportCsv} />
-      </div>
-    </div>
-    <span class="text-sm content-dark-color">
-      {rows.length} shapes · {totalCalls} calls · {evicted} evicted
-    </span>
+  <div class="flex-row-center mb-2">
+    <span class="mr-2">Registry:</span>
+    <DropdownLabels bind:selected={kind} items={kinds} />
+    <span class="ml-4 mr-2">Rows:</span>
+    <DropdownLabels bind:selected={limit} items={limits} />
   </div>
 
-  <table class="slow-sql">
-    <thead>
-      <tr>
-        <!-- click a numeric header to sort by it -->
-        {#each sortKeys as key}
-          <th
-            class="num sortable"
-            class:active={sortBy === key}
-            on:click={() => {
-              sortBy = key
-            }}>{key}</th
-          >
-        {/each}
-        <th class="tbl">table</th>
-        <th class="sql">sql</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each sorted as r (r.key)}
-        {@const p95 = percentile(r, 0.95)}
+  {#if eventLoop !== undefined}
+    <!-- If the lag is high, table timings measure a busy process, not the database. -->
+    <div class="text-sm content-dark-color mb-2">
+      Event loop lag: p50 {fmt(eventLoop.lagP50)}ms · p95 {fmt(eventLoop.lagP95)}ms · max {fmt(eventLoop.lagMax)}ms ·
+      libuv pool {eventLoop.threadPool} threads
+    </div>
+  {/if}
+
+  {#if wait !== undefined}
+    <!-- Separate from the tables: this is queuing for a connection, not statement cost. -->
+    <div class="text-sm content-dark-color mb-2">
+      Pool wait: {wait.count} waits · {(wait.sum / 1000).toFixed(1)}s total · p95 {fmt(wait.p95)}ms · max {fmt(
+        wait.max
+      )}ms
+    </div>
+  {/if}
+
+  {#each sections as section (section.id)}
+    <div class="flex-row-center flex-between mb-2 mt-2">
+      <div class="flex-row-center">
+        <span class="fs-title mr-2">{section.title}</span>
+        <span class="text-sm content-dark-color mr-2">{section.hint}</span>
+        <Button
+          label={getEmbeddedLabel('Download CSV')}
+          kind="regular"
+          size="small"
+          on:click={() => {
+            exportCsv(section)
+          }}
+        />
+      </div>
+      <span class="text-sm content-dark-color">
+        {section.rows.length} shapes · {section.totalCalls} calls · {section.instances} instances{section.totalCalls >
+        section.trackedCalls
+          ? ` · ${section.totalCalls - section.trackedCalls} calls not shown`
+          : ''}
+      </span>
+    </div>
+
+    <table class="slow-sql mb-4">
+      <thead>
         <tr>
-          <td class="num" class:hot={r.max >= 1000}>{fmt(r.max)}</td>
-          <td class="num" class:hot={p95 >= 1000}>{fmt(p95)}</td>
-          <td class="num">{fmt(percentile(r, 0.99))}</td>
-          <td class="num">{fmt(r.count > 0 ? r.sum / r.count : 0)}</td>
-          <td class="num">{r.count}</td>
-          <td class="tbl">{r.table}</td>
-          <!-- click toggles full SQL; title still shows it on hover -->
-          <td
-            class="sql"
-            class:expanded={expanded.has(r.key)}
-            title={r.sample}
-            on:click={() => {
-              toggle(r.key)
-            }}>{r.sample}</td
-          >
+          <!-- click a numeric header to sort by it -->
+          {#each sortKeys as key}
+            <th
+              class="num sortable"
+              class:active={section.sortBy === key}
+              on:click={() => {
+                sortSection(section, key)
+              }}>{key}</th
+            >
+          {/each}
+          <th class="tbl">table</th>
+          <th class="sql">sql</th>
         </tr>
-      {/each}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {#each sortRows(section) as r (r.key)}
+          {@const p95 = percentile(r, 0.95)}
+          <tr>
+            <td class="num" class:hot={r.max >= 1000}>{fmt(r.max)}</td>
+            <td class="num" class:hot={p95 >= 1000}>{fmt(p95)}</td>
+            <td class="num">{fmt(percentile(r, 0.99))}</td>
+            <td class="num">{fmt(r.count > 0 ? r.sum / r.count : 0)}</td>
+            <td class="num">{r.count}</td>
+            <td class="tbl">{r.table}</td>
+            <!-- click toggles full SQL; title still shows it on hover -->
+            <td
+              class="sql"
+              class:expanded={expanded.has(section.id + r.key)}
+              title={r.sample}
+              on:click={() => {
+                toggle(section.id + r.key)
+              }}>{r.sample}</td
+            >
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  {/each}
 </div>
 
 <style lang="scss">

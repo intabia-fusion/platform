@@ -219,6 +219,8 @@ const DB_QUERY_DURATION = 'db.query.duration'
 // write shapes and vice versa.
 const SLOW_SQL_FIND = 'slowSqlFind'
 const SLOW_SQL_TX = 'slowSqlTx'
+// Time spent getting a connection out of the pool, keyed by the registry above.
+const SQL_WAIT = 'sqlWait'
 
 // Slow-SQL top-N collection is on by default; set RECORD_SLOW_SQL=false to
 // disable it entirely (no normalize + no recordTop) to shave per-query overhead.
@@ -247,12 +249,16 @@ abstract class PostgresAdapterBase implements DbAdapter {
   protected readonly _helper: DBCollectionHelper
   protected readonly tableFields = new Map<string, string[]>()
 
-  // Group SQL into a top-N registry keyed by the parametrized statement
-  // (placeholders $N, no literals). Batch VALUES groups collapse to one.
-  protected recordSql (ctx: MeasureContext, registry: string, sql: string, ms: number): void {
+  // Group SQL into a top-N registry keyed by the parametrized statement (placeholders $N).
+  // `ms` is execution only: pool wait goes to SQL_WAIT, or a lookup by primary key reads
+  // as a 170ms statement when the pool is what was busy.
+  protected recordSql (ctx: MeasureContext, registry: string, sql: string, ms: number, waitMs?: number): void {
     if (!RECORD_SLOW_SQL) return
     const key = normalizeSqlKey(sql)
     ctx.recordTop(registry, key, ms, key)
+    if (waitMs !== undefined) {
+      ctx.recordTop(SQL_WAIT, registry, waitMs)
+    }
   }
 
   constructor (
@@ -1782,8 +1788,12 @@ abstract class PostgresAdapterBase implements DbAdapter {
               handleConflicts ? `ON CONFLICT ("workspaceId", _id) DO UPDATE SET ${onConflictStr}` : ''
             };`
             const stStat = platformNow()
-            await this.mgr.retry(ctx.id, this.mgrId, async (client) => await client.execute(query, values.getValues()))
-            this.recordSql(ctx, SLOW_SQL_TX, query, platformNow() - stStat)
+            let stExec = stStat
+            await this.mgr.retry(ctx.id, this.mgrId, async (client) => {
+              stExec = platformNow()
+              return await client.execute(query, values.getValues())
+            })
+            this.recordSql(ctx, SLOW_SQL_TX, query, platformNow() - stExec, stExec - stStat)
           }
         } catch (err: any) {
           ctx.error('failed to upload', { err })
@@ -1808,10 +1818,14 @@ abstract class PostgresAdapterBase implements DbAdapter {
         () => {
           const params = [this.workspaceId, part]
           const stStat = platformNow()
+          let stExec = stStat
           return this.mgr
-            .retry(ctx.id, this.mgrId, (client) => client.execute(query, params))
+            .retry(ctx.id, this.mgrId, (client) => {
+              stExec = platformNow()
+              return client.execute(query, params)
+            })
             .then((r) => {
-              this.recordSql(ctx, SLOW_SQL_TX, query, platformNow() - stStat)
+              this.recordSql(ctx, SLOW_SQL_TX, query, platformNow() - stExec, stExec - stStat)
               return r
             })
         },
@@ -2179,12 +2193,14 @@ export class PostgresAdapter extends PostgresAdapterBase {
             WHERE "workspaceId" = $1::uuid AND "_id" = update_data.__id`
 
               const stStat = platformNow()
-              await this.mgr.retry(ctx.id, this.mgrId, (client) =>
-                _ctx.with('bulk-update', { domain }, () => client.execute(op, data), undefined, {
+              let stExec = stStat
+              await this.mgr.retry(ctx.id, this.mgrId, (client) => {
+                stExec = platformNow()
+                return _ctx.with('bulk-update', { domain }, () => client.execute(op, data), undefined, {
                   metric: DB_QUERY_DURATION
                 })
-              )
-              this.recordSql(_ctx, SLOW_SQL_TX, op, platformNow() - stStat)
+              })
+              this.recordSql(_ctx, SLOW_SQL_TX, op, platformNow() - stExec, stExec - stStat)
             }
           }
           const toRetrieve = operations.filter((it) => it.retrieve)

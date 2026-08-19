@@ -21,6 +21,16 @@ fi
 if [[ " $* " == *" restart "* ]]; then
     echo "=== restart: recreating changed containers, data kept ==="
     docker compose ${COMPOSE_FILES} -p sanity up -d --remove-orphans
+    # nginx resolves upstream IPs at config load, so recreated containers leave it with stale
+    # ones - every proxied call then answers 502 with an HTML body.
+    docker compose ${COMPOSE_FILES} -p sanity restart nginx
+    # Services sharing nginx's network namespace lose it when nginx restarts: they keep running
+    # with no DNS at all. Restart them after, never before.
+    NS_SVCS=$(awk '/^  [a-z0-9_-]+:$/{svc=$1} /network_mode:.*service:nginx/{gsub(":","",svc); print svc}' docker-compose.yaml)
+    if [ -n "$NS_SVCS" ]; then
+        # shellcheck disable=SC2086
+        docker compose ${COMPOSE_FILES} -p sanity restart $NS_SVCS
+    fi
     echo "Waiting for account service..."
     for i in $(seq 1 90); do
         CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \

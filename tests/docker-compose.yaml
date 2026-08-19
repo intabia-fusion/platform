@@ -50,6 +50,7 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - SECRET=secret
       - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       - BRANDING_PATH=/var/cfg/branding.json
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
@@ -198,6 +199,7 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - BRANDING_PATH=/var/cfg/branding.json
       - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
   workspace:
     image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'
@@ -224,6 +226,7 @@ services:
       - ACCOUNTS_DB_URL=${DB_PG_URL}
       - BRANDING_PATH=/var/cfg/branding.json
       - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   nginx:
@@ -314,6 +317,7 @@ services:
       - BRANDING_PATH=/var/cfg/branding.json
       - FULLTEXT_URL=http://fulltext:4710
       - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       - ENABLE_COMPRESSION=true
       - RATE_LIMIT_MAX=25000
       - RATE_LIMIT_WINDOW=1000
@@ -369,6 +373,7 @@ services:
       - REKONI_URL=http://rekoni:4004
       - ACCOUNTS_URL=http://account:3003
       - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
   stats:
     image: 'intabiafusion/stats:${DOCKER_TAG:-latest}'
@@ -419,6 +424,7 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
       - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
       - BRANDING_PATH=/var/cfg/branding.json
     restart: unless-stopped
@@ -440,6 +446,7 @@ services:
       - SECRET=secret
       - ACCOUNTS_URL=http://account:3003
       - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       - STREAM_URL=http://stream:1080/recording
       - DB_URL=${DB_PG_URL}
       - BUCKETS=blobs,eu|http://minio:9000?accessKey=minioadmin&secretKey=minioadmin

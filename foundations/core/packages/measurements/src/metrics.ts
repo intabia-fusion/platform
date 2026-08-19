@@ -1,13 +1,20 @@
 // Basic performance metrics suite.
 
 import { platformNow, type MetricsData } from '.'
-import { type FullParamsType, type Metrics, type ParamsType } from './types'
+import { type FullParamsType, type Metrics, type ParamsType, type TopEntry, type TopRegistry } from './types'
 
 /**
- * Default cap of distinct keys kept per top-N registry.
+ * Local cap per top-N registry. High on purpose: 10k keys cost ~3MB and are cheaper to
+ * record than 30 (no victim scan on every miss); only a slice of it is ever sent out.
  * @public
  */
-export const TOP_N_DEFAULT = 30
+export const TOP_N_DEFAULT = 10000
+
+/**
+ * How many keys per registry leave the process in a metrics snapshot.
+ * @public
+ */
+export const TOP_SLICE_DEFAULT = 30
 
 /**
  * Record a keyed observation into a named top-N registry on the given (root) metrics.
@@ -36,29 +43,8 @@ export function recordTopInto (
 
   let e = reg.entries[key]
   if (e === undefined) {
-    const keys = Object.keys(reg.entries)
-    if (keys.length >= cap) {
-      // Find the lightest tracked entry (smallest max).
-      let minKey = keys[0]
-      let minMax = reg.entries[minKey].max
-      for (let i = 1; i < keys.length; i++) {
-        const m = reg.entries[keys[i]].max
-        if (m < minMax) {
-          minMax = m
-          minKey = keys[i]
-        }
-      }
-      // Newcomer not heavier than the lightest - just count it as evicted.
-      if (value <= minMax) {
-        reg.evictedCount++
-        reg.evictedSum += value
-        return
-      }
-      const ev = reg.entries[minKey]
-      reg.evictedCount += ev.count
-      reg.evictedSum += ev.sum
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-      delete reg.entries[minKey]
+    if (Object.keys(reg.entries).length >= cap) {
+      compactTop(reg, cap)
     }
     e = { count: 0, sum: 0, max: 0, le10: 0, le100: 0, le500: 0, sample }
     reg.entries[key] = e
@@ -72,6 +58,54 @@ export function recordTopInto (
   if (value <= 10) e.le10++
   else if (value <= 100) e.le100++
   else if (value <= 500) e.le500++
+}
+
+// Frees a full registry in one pass, keeping the heaviest and the most frequent quarter:
+// a 2ms statement run 50k times matters as much as one 400ms outlier.
+function compactTop (reg: TopRegistry, cap: number): void {
+  const keys = Object.keys(reg.entries)
+  const quarter = Math.max(1, Math.floor(cap / 4))
+  const keep = new Set<string>()
+  for (const k of [...keys].sort((a, b) => reg.entries[b].max - reg.entries[a].max).slice(0, quarter)) {
+    keep.add(k)
+  }
+  for (const k of [...keys].sort((a, b) => reg.entries[b].count - reg.entries[a].count).slice(0, quarter)) {
+    keep.add(k)
+  }
+  for (const k of keys) {
+    if (keep.has(k)) continue
+    const ev = reg.entries[k]
+    reg.evictedCount += ev.count
+    reg.evictedSum += ev.sum
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete reg.entries[k]
+  }
+}
+
+/**
+ * Union of the top `limit` by max and by count. Totals stay exact, so the receiver can tell
+ * how many calls the slice misses; a `sample` equal to the key is dropped as duplicate.
+ * @public
+ */
+export function sliceTop (
+  top: Record<string, TopRegistry>,
+  limit: number = TOP_SLICE_DEFAULT
+): Record<string, TopRegistry> {
+  const result: Record<string, TopRegistry> = {}
+  for (const [name, reg] of Object.entries(top)) {
+    const keys = Object.keys(reg.entries)
+    const keep = new Set<string>([
+      ...[...keys].sort((a, b) => reg.entries[b].max - reg.entries[a].max).slice(0, limit),
+      ...[...keys].sort((a, b) => reg.entries[b].count - reg.entries[a].count).slice(0, limit)
+    ])
+    const entries: Record<string, TopEntry> = {}
+    for (const k of keep) {
+      const e = reg.entries[k]
+      entries[k] = e.sample === k ? { ...e, sample: undefined } : e
+    }
+    result[name] = { ...reg, entries }
+  }
+  return result
 }
 
 /**
@@ -270,10 +304,11 @@ export function childMetricsSingle (root: Metrics, name: string): Metrics {
   return v
 }
 
-export function metricsClean (m: Metrics): Metrics {
+export function metricsClean (m: Metrics, topSlice: number = TOP_SLICE_DEFAULT): Metrics {
   // clean metrics from measure values.
   return {
     ...m,
+    top: m.top !== undefined ? sliceTop(m.top, topSlice) : undefined,
     measurements: metricsCleanMeasurements(m.measurements)
   }
 }
