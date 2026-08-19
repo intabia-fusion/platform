@@ -140,7 +140,7 @@ export class IssuesPage extends CommonTrackerPage {
   totalFooter = (): Locator => this.page.locator('.antiCard-content >> .footer')
   reportsPopupButton = (): Locator => this.page.locator('#ReportsPopupAddButton')
   createButton = (): Locator => this.page.locator('button:has-text("Create")')
-  spentTimeInput = (): Locator => this.page.locator('[placeholder="Spent time"]')
+  spentTimeInput = (): Locator => this.page.locator('form[id="tracker\\:string\\:TimeSpendReportAdd"] input').first()
 
   timeSpentReports = (): Locator => this.page.getByText('Time spent reports', { exact: true })
   addTimeReport = (): Locator => this.page.locator('text="Add time report"')
@@ -266,7 +266,7 @@ export class IssuesPage extends CommonTrackerPage {
     await this.addTimeReport().waitFor()
   }
 
-  async fillSpentTime (time: number): Promise<void> {
+  async fillSpentTime (time: number | string): Promise<void> {
     await this.spentTimeInput().fill(`${time}`)
   }
 
@@ -474,7 +474,7 @@ export class IssuesPage extends CommonTrackerPage {
     }
     if (data.estimation != null) {
       await this.buttonPopupCreateNewIssueEstimation().click()
-      await this.fillToSelectPopup(this.page, data.estimation)
+      await this.fillEstimationPopup(this.page, data.estimation)
     }
     if (data.milestone != null) {
       await this.buttonPopupCreateNewIssueMilestone().click()

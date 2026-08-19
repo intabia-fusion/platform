@@ -33,6 +33,22 @@ export const DEFAULT_STATUSES_ID = new Map([
   ['Canceled', 'task:statusCategory:Lost']
 ])
 
+export const TEST_ESTIMATIONS = [
+  '0m',
+  '30m',
+  '1h',
+  '1h 15m',
+  '1h 30m',
+  '2h',
+  '7h 45m',
+  '8h',
+  '1d',
+  '1d 1h',
+  '1d 1h 30m',
+  '1w',
+  '1w 2d 3h 15m'
+]
+
 export async function navigate (page: Page): Promise<void> {
   await (await page.goto(`${PlatformURI}/workbench/sanity-ws`))?.finished()
 }
@@ -235,7 +251,7 @@ export function floorFractionDigits (n: number | string, amount: number): number
 
 export async function toTime (value: number): Promise<string> {
   if (value <= 0) {
-    return '0h'
+    return '0m'
   }
 
   return convertEstimation(value)
@@ -277,6 +293,35 @@ export async function performPanelTest (page: Page, statuses: string[], panel: s
   }
 }
 
+const UNIT_HOURS: Record<string, number> = { m: 1 / 60, h: 1, d: 8, w: 40 }
+
+export function parseEstimationInput (input: string): number {
+  const trimmed = input.trim()
+  if (/^\d+(?:[.,]\d+)?$/.test(trimmed)) return parseFloat(trimmed.replace(',', '.'))
+
+  const regex = /(\d+)\s*(w|d|h|m)/g
+  let total = 0
+  let match: RegExpExecArray | null
+  while ((match = regex.exec(trimmed)) !== null) {
+    total += parseInt(match[1], 10) * UNIT_HOURS[match[2]]
+  }
+  return total
+}
+
 export function convertEstimation (estimation: number | string): string {
-  return `${floorFractionDigits(estimation, 3)}h`
+  const hours = typeof estimation === 'number' ? estimation : parseEstimationInput(estimation)
+  if (hours === 0 || Number.isNaN(hours)) return '0m'
+
+  const totalMin = Math.round(hours * 60)
+  const w = Math.floor(totalMin / 2400)
+  const d = Math.floor((totalMin % 2400) / 480)
+  const h = Math.floor((totalMin % 480) / 60)
+  const m = totalMin % 60
+
+  const parts: string[] = []
+  if (w > 0) parts.push(`${w}w`)
+  if (d > 0) parts.push(`${d}d`)
+  if (h > 0) parts.push(`${h}h`)
+  if (m > 0 || parts.length === 0) parts.push(`${m}m`)
+  return parts.join(' ')
 }

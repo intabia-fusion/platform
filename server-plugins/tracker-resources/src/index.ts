@@ -27,7 +27,7 @@ import core, {
   TxUpdateDoc,
   WithLookup
 } from '@hcengineering/core'
-import { getMetadata, IntlString, translate } from '@hcengineering/platform'
+import { getMetadata, IntlString } from '@hcengineering/platform'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import tracker, {
   Component,
@@ -42,6 +42,12 @@ import tracker, {
 } from '@hcengineering/tracker'
 import { workbenchId } from '@hcengineering/workbench'
 import { Presenter, PresenterControl, AttributePresenterFn } from '@hcengineering/server-activity'
+import { formatDuration } from '@hcengineering/tracker'
+
+const timeSpendReportTitlePresenter: Presenter<TimeSpendReport> = async (doc, control) => {
+  const language = control.branding?.defaultLanguage ?? 'en'
+  return formatDuration(doc.value, language)
+}
 
 async function updateSubIssues (
   updateTx: TxUpdateDoc<Issue>,
@@ -516,18 +522,6 @@ const issuePriorityPresenter: AttributePresenterFn = async (
   return {
     intlString: key,
     value
-  }
-}
-
-const timeSpendReportTitlePresenter: Presenter<TimeSpendReport> = async (
-  doc: TimeSpendReport,
-  control: PresenterControl
-): Promise<string> => {
-  const language = control.branding?.defaultLanguage ?? 'en'
-  try {
-    return await translate(tracker.string.TimeSpendHours, { value: doc.value }, language)
-  } catch {
-    return `${doc.value}h`
   }
 }
 

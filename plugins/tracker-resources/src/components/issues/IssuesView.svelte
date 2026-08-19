@@ -31,7 +31,7 @@
 
   import tracker from '../../plugin'
   import CreateIssue from '../CreateIssue.svelte'
-  import { activeProjects, useShowDaysStore } from '../../utils'
+  import { activeProjects } from '../../utils'
   import IssueStatistics from '../milestones/IssueStatistics.svelte'
 
   export let space: Ref<Space> | undefined = undefined
@@ -58,8 +58,6 @@
       label = res
     })
   }
-
-  $: $useShowDaysStore = (viewOptions as any)?.shouldShowDays === true
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
