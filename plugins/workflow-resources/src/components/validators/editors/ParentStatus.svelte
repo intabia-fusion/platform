@@ -20,7 +20,8 @@
   import ui, { DropdownTextItem, Icon, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
   import { StatePresenter } from '@hcengineering/task-resources'
   import { ParentStatusesProps, ParentStatusesValidatorConfig } from '@hcengineering/workflow'
-  import { getClient, reduceCalls } from '@hcengineering/presentation'
+  import { getClient, IconWithEmoji, reduceCalls } from '@hcengineering/presentation'
+  import view from '@hcengineering/view'
 
   import plugin from '../../../plugin'
 
@@ -134,7 +135,11 @@
       <div class="parent-status--row">
         <div class="parent-status--task-type">
           {#if tt.icon}
-            <Icon icon={tt.icon} size="small" />
+            <Icon
+              icon={tt.icon === view.ids.IconWithEmoji ? IconWithEmoji : tt.icon}
+              iconProps={tt.icon === view.ids.IconWithEmoji ? { icon: tt.color } : {}}
+              size="small"
+            />
           {/if}
           <span class="parent-status--task-type-name">{tt.name}</span>
         </div>
