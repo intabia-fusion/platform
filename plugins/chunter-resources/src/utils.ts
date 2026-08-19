@@ -665,7 +665,11 @@ export async function getChatDocTitle (
   }
 }
 
-export async function CommentsApplier (object: Doc, value: Markup | undefined | null): Promise<AttributeApplierResult> {
+export async function CommentsApplier (
+  object: Doc,
+  _value: { message: Markup } | undefined | null
+): Promise<AttributeApplierResult> {
+  const value = _value?.message
   if (value == null || (typeof value === 'string' && value.trim().length === 0) || isEmptyMarkup(value)) {
     return {}
   }
