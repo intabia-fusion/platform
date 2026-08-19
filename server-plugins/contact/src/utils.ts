@@ -277,13 +277,15 @@ export function getAddCollaboratorsTxes (
 ): TxCreateDoc<Collaborator>[] {
   const res: TxCreateDoc<Collaborator>[] = []
   for (const collaborator of collaborators) {
-    const tx = control.txFactory.createTxCreateDoc(core.class.Collaborator, objectSpace, {
+    const createTx = control.txFactory.createTxCreateDoc(core.class.Collaborator, objectSpace, {
       attachedTo: objectId,
       attachedToClass: objectClass,
       collaborator,
       collection: 'collaborators'
     })
-    res.push(tx)
+
+    const tx = control.txFactory.createTxCollectionCUD(objectClass, objectId, objectSpace, 'collaborators', createTx)
+    res.push(tx as TxCreateDoc<Collaborator>)
   }
   return res
 }

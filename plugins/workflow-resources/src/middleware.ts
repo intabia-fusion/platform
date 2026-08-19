@@ -80,7 +80,7 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
     if (!res.proceed) {
       throw new PlatformError(
         new Status(
-          Severity.INFO,
+          Severity.OK,
           platform.status.OK,
           {
             reason: 'Transition canceled by user'
@@ -189,13 +189,9 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
     }
 
     if (Object.keys(screenUpdates).length > 0) {
-      const screenUpdateTx = this.txFactory.createTxUpdateDoc(
-        updateTx.objectClass,
-        updateTx.objectSpace,
-        updateTx.objectId,
-        screenUpdates
-      )
-      extraTxes.unshift(screenUpdateTx)
+      updateTx.operations = {
+        ...screenUpdates
+      }
     }
 
     return { proceed: true, extraTxes }

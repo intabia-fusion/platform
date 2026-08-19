@@ -13,7 +13,20 @@
 // limitations under the License.
 //
 
-import core, { AnyAttribute, Doc, Hierarchy, notEmpty, Ref, RefTo, Status } from '@hcengineering/core'
+import core, {
+  AnyAttribute,
+  AttachedDoc,
+  Doc,
+  Hierarchy,
+  notEmpty,
+  Ref,
+  RefTo,
+  Status,
+  Tx,
+  TxCreateDoc,
+  TxProcessor,
+  TxRemoveDoc
+} from '@hcengineering/core'
 import task, { type Task, TaskType } from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
 import { type IntlString, translate } from '@hcengineering/platform'
@@ -24,14 +37,20 @@ import {
   FieldRequiredProps,
   type ValidationResult,
   ValidatorClient,
+  ValidatorContext,
   ValidatorFunc,
   type WorkflowTransition
 } from './schema'
 
-export function isEmptyAttribute (h: Hierarchy, attribute: AnyAttribute, value: any): boolean {
-  if (value == null) return true
-
+export function isEmptyAttribute (
+  h: Hierarchy,
+  task: Task,
+  attribute: AnyAttribute,
+  value: any,
+  txes: Tx[] = []
+): boolean {
   if (h.isDerived(attribute.type._class, core.class.RefTo)) {
+    if (value == null) return true
     const type = attribute.type as RefTo<Doc>
     if (h.isDerived(type.to, tracker.class.Issue) && value === tracker.ids.NoParent) {
       return true
@@ -39,11 +58,48 @@ export function isEmptyAttribute (h: Hierarchy, attribute: AnyAttribute, value: 
   }
 
   if (h.isDerived(attribute.type._class, core.class.Collection)) {
-    const count = Number(value)
-    if (!Number.isInteger(count) || count <= 0) {
-      return true
+    const createdIds = new Set<string>()
+    const removedIds = new Set<string>()
+
+    for (const it of txes) {
+      if (it._class === core.class.TxCreateDoc) {
+        const createTx = it as TxCreateDoc<AttachedDoc>
+        const doc = TxProcessor.createDoc2Doc(createTx)
+        const attachedTo = doc.attachedTo
+        const collection = doc.collection
+        if (attachedTo === task._id && collection === attribute.name) {
+          createdIds.add(createTx.objectId)
+          removedIds.delete(createTx.objectId)
+        }
+      } else if (it._class === core.class.TxRemoveDoc) {
+        const removeTx = it as TxRemoveDoc<AttachedDoc>
+        const attachedTo = removeTx.attachedTo
+        const collection = removeTx.collection
+        if (attachedTo === task._id && collection === attribute.name) {
+          if (createdIds.has(removeTx.objectId)) {
+            createdIds.delete(removeTx.objectId)
+          } else {
+            removedIds.add(removeTx.objectId)
+          }
+        }
+      }
     }
+
+    if (Array.isArray(value)) {
+      return value.length === 0
+    }
+
+    if (typeof value === 'object' && value !== null) {
+      return Object.keys(value).length === 0
+    }
+
+    const _count = Number(value)
+    const count = Number.isInteger(_count) ? _count : 0
+    const effectiveCount = count + createdIds.size - removedIds.size
+    return effectiveCount <= 0
   }
+
+  if (value == null) return true
 
   if (
     h.isDerived(attribute.type._class, core.class.TypeCollaborativeDoc) ||
@@ -88,7 +144,8 @@ export const FieldRequired: ValidatorFunc = async (
   client: ValidatorClient,
   taskDoc: Task,
   transition: WorkflowTransition,
-  _props: Record<string, any>
+  _props: Record<string, any>,
+  context?: ValidatorContext
 ): Promise<ValidationResult> => {
   const props = _props as FieldRequiredProps | undefined
   const fields = props?.fields ?? []
@@ -107,7 +164,7 @@ export const FieldRequired: ValidatorFunc = async (
     const val = f.mixin != null ? (h.as(taskDoc, f.mixin) as any)[f.fieldKey] : (taskDoc as any)[f.fieldKey]
     if (attribute == null) continue
 
-    if (isEmptyAttribute(h, attribute, val)) {
+    if (isEmptyAttribute(h, taskDoc, attribute, val, context?.txes)) {
       const flow = await getTransitionFlow(client, transition)
       const fieldName = await translate(attribute.label, {})
       return {

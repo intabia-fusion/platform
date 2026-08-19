@@ -35,7 +35,7 @@
   export let screen: Screen
   export let tabs: ScreenTab[] = []
   export let fields: ScreenField[] = []
-  export let object: Doc
+  export let object: Task
 
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   const dispatch = createEventDispatcher<{ close: ScreenModalResult<Task> | null }>()
@@ -121,7 +121,7 @@
             ? hierarchy.findAttribute(field.mixin, field.fieldKey)
             : hierarchy.findAttribute(object._class, field.fieldKey)
 
-        const isEmpty = attr == null ? true : isEmptyAttribute(hierarchy, attr, val)
+        const isEmpty = attr == null ? true : isEmptyAttribute(hierarchy, object, attr, val)
 
         if (isEmpty) {
           missingFields.push(field)

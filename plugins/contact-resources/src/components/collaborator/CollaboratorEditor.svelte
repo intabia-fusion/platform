@@ -51,8 +51,8 @@
       return
     }
 
-    const toAdd: AccountUuid[] = res.filter((a) => !accounts.includes(a))
-    const toRemove: Collaborator[] = collaborators.filter((a) => !res.includes(a.collaborator))
+    const toAdd: AccountUuid[] = Array.from(new Set(res.filter((a) => !accounts.includes(a))))
+    const toRemove: Collaborator[] = Array.from(new Set(collaborators.filter((a) => !res.includes(a.collaborator))))
     for (const account of toAdd) {
       await client.addCollection(core.class.Collaborator, object.space, object._id, object._class, 'collaborators', {
         collaborator: account

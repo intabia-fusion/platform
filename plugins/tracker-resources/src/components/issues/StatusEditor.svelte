@@ -16,7 +16,7 @@
 <script lang="ts">
   import { AttachedData, Ref, WithLookup } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import task, { getTaskTypeStates } from '@hcengineering/task'
+  import { getTaskTypeStates } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import { Issue, IssueDraft, IssueStatus, Project, TrackerEvents } from '@hcengineering/tracker'
   import {
@@ -33,6 +33,7 @@
   import { Analytics } from '@hcengineering/analytics'
   import { createEventDispatcher } from 'svelte'
   import workflow, { ProjectWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
+  import { isInfoError, isOkError } from '@hcengineering/platform'
 
   import tracker from '../../plugin'
   import { activeProjects } from '../../utils'
@@ -73,11 +74,17 @@
     }
 
     if ('_class' in value) {
-      await client.update(value, { status: newStatus })
-      Analytics.handleEvent(TrackerEvents.IssueSetStatus, {
-        issue: value.identifier,
-        status: newStatus
-      })
+      try {
+        await client.update(value, { status: newStatus })
+        Analytics.handleEvent(TrackerEvents.IssueSetStatus, {
+          issue: value.identifier,
+          status: newStatus
+        })
+      } catch (e) {
+        if (!isInfoError(e) && !isOkError(e)) {
+          throw e
+        }
+      }
     }
   }
 

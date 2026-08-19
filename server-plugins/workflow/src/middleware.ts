@@ -71,7 +71,7 @@ export class WorkflowMiddleware extends BaseMiddleware {
           if (cud._class === core.class.TxCreateDoc) {
             await this.validateTaskCreate(ctx, cud as TxCreateDoc<Task>)
           } else if (cud._class === core.class.TxUpdateDoc) {
-            await this.validateTaskUpdate(ctx, cud as TxUpdateDoc<Task>)
+            await this.validateTaskUpdate(ctx, cud as TxUpdateDoc<Task>, txes)
           }
         }
       }
@@ -153,7 +153,11 @@ export class WorkflowMiddleware extends BaseMiddleware {
     }
   }
 
-  private async validateTaskUpdate (ctx: MeasureContext<SessionData>, updateTx: TxUpdateDoc<Task>): Promise<void> {
+  private async validateTaskUpdate (
+    ctx: MeasureContext<SessionData>,
+    updateTx: TxUpdateDoc<Task>,
+    txes: Tx[]
+  ): Promise<void> {
     const toStatus = getUpdatedFieldValue(updateTx.operations, 'status')
     if (toStatus == null) return
 
@@ -219,13 +223,14 @@ export class WorkflowMiddleware extends BaseMiddleware {
     }
 
     const updatedTask = TxProcessor.updateDoc2Doc(oldTask, updateTx)
-    await this.validateTransitionValidators(ctx, transition, updatedTask)
+    await this.validateTransitionValidators(ctx, transition, updatedTask, txes)
   }
 
   private async validateTransitionValidators (
     ctx: MeasureContext<SessionData>,
     transition: WorkflowTransition,
-    taskDoc: Task
+    taskDoc: Task,
+    txes: Tx[]
   ): Promise<void> {
     const validatorConfigs = transition.validators
     if (validatorConfigs == null || validatorConfigs.length === 0) return
@@ -252,7 +257,9 @@ export class WorkflowMiddleware extends BaseMiddleware {
       const executorFn = await getResource(validatorImpl.serverExecutor)
       if (executorFn == null) continue
 
-      const res = await executorFn(client, taskDoc, transition, config.props)
+      const res = await executorFn(client, taskDoc, transition, config.props, {
+        txes
+      })
       if (!res.ok) {
         throw new PlatformError(
           new Status(

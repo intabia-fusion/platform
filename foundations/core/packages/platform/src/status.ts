@@ -97,6 +97,14 @@ export function isPlatformPropagateError (err: unknown): boolean {
   return err instanceof PlatformError && err.status?.options?.propagate === true
 }
 
+export function isInfoError (err: unknown): boolean {
+  return err instanceof PlatformError && err.status?.severity === Severity.INFO
+}
+
+export function isOkError (err: unknown): boolean {
+  return err instanceof PlatformError && err.status?.severity === Severity.OK
+}
+
 /**
  * OK Status
  * @public

@@ -225,6 +225,10 @@
           </div>
         {/if}
       </button>
+    {:else}
+      <div class="empty-placeholder">
+        <Label label={ui.string.NoResults} />
+      </div>
     {/each}
   </Scroller>
 </div>
@@ -246,6 +250,13 @@
   .search-wrapper {
     padding: var(--spacing-1) var(--spacing-1_5);
     border-bottom: 1px solid var(--theme-divider-color);
+  }
+
+  .empty-placeholder {
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    color: var(--global-secondary-TextColor, var(--theme-trans-color, #6b7280));
   }
 
   .hulyPopup-category {
