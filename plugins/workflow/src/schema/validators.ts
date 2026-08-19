@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { Client, Ref, Status } from '@hcengineering/core'
+import { Client, Ref, Status, Tx } from '@hcengineering/core'
 import type { Task, TaskType } from '@hcengineering/task'
 import type { IntlString, Resource } from '@hcengineering/platform'
 
@@ -37,11 +37,16 @@ export type ValidationResult = ValidationSuccess | ValidationError
 
 export type ValidatorClient = Pick<Client, 'findAll' | 'findOne' | 'getHierarchy' | 'getModel'>
 
+export interface ValidatorContext {
+  txes: Tx[]
+}
+
 export type ValidatorFunc = (
   client: ValidatorClient,
   task: Task,
   transition: WorkflowTransition,
-  props: Record<string, any>
+  props: Record<string, any>,
+  context?: ValidatorContext
 ) => Promise<ValidationResult>
 
 export interface ValidatorImpl extends WorkflowValidator {

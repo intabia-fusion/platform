@@ -126,7 +126,11 @@ function createMockControl (findAllImpl: FindAllFn): TriggerControl & { getHiera
         return doc.workflows !== undefined
       },
       as: (doc: any, _class: any) => doc,
-      findAttribute: (_class: any, fieldKey: any) => ({ name: fieldKey, label: fieldKey })
+      findAttribute: (_class: any, fieldKey: any) => ({
+        name: fieldKey,
+        label: fieldKey,
+        type: { _class: core.class.TypeString }
+      })
     } as any,
     getHierarchy () {
       return this.hierarchy
@@ -150,7 +154,11 @@ async function createMockMiddleware (findAllImpl: FindAllFn): Promise<WorkflowMi
       isDerived: (_class: any, base: any) => _class === base || base === task.class.Task,
       hasMixin: (doc: any, _class: any) => doc.workflows !== undefined,
       as: (doc: any, _class: any) => doc,
-      findAttribute: (_class: any, fieldKey: any) => ({ name: fieldKey, label: fieldKey })
+      findAttribute: (_class: any, fieldKey: any) => ({
+        name: fieldKey,
+        label: fieldKey,
+        type: { _class: core.class.TypeString }
+      })
     } as any,
     modelDb: {} as any,
     branding: null,

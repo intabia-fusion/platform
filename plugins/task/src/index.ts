@@ -59,6 +59,7 @@ export interface Task extends AttachedDoc {
   dueDate: Timestamp | null
   comments?: number
   attachments?: number
+  collaborators?: number
   labels?: number
   identifier: string
   rank: Rank

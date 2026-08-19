@@ -39,13 +39,14 @@
   }>()
 
   let search: string = ''
-  const btns: HTMLButtonElement[] = []
+  let btns: HTMLButtonElement[] = []
 
   $: filteredItems = (items ?? []).filter((x) => {
     const trimmed = search.trim()
     if (trimmed.length === 0) return true
     return x.label.toLowerCase().includes(trimmed.toLowerCase())
   })
+  $: btns = btns.slice(0, filteredItems.length)
 
   function isSelected (
     sel: DropdownTextItem['id'] | Array<DropdownTextItem['id']> | undefined,
@@ -158,6 +159,10 @@
           </span>
         {/if}
       </button>
+    {:else}
+      <div class="empty-placeholder">
+        <Label label={plugin.string.NoResults} />
+      </div>
     {/each}
   </Scroller>
 </div>
@@ -166,6 +171,13 @@
   .search-wrapper {
     padding: var(--spacing-1) var(--spacing-1_5);
     border-bottom: 1px solid var(--theme-divider-color);
+  }
+
+  .empty-placeholder {
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    color: var(--global-secondary-TextColor, var(--theme-trans-color, #6b7280));
   }
 
   .hulyPopup-category {

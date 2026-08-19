@@ -35,7 +35,9 @@ import core, {
   type TxUpdateDoc,
   addOperation,
   toFindResult,
-  withContext
+  withContext,
+  type TxCreateDoc,
+  TxProcessor
 } from '@hcengineering/core'
 import { PlatformError, getResource, unknownError } from '@hcengineering/platform'
 import serverCore, {
@@ -462,7 +464,16 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
         if ((isCreateTx || isDeleteTx) && !ctx.contextData.removedMap.has(_id)) {
           // TODO: Why we need attachedTo to be found? It uses attachedTo._class, attachedTo.space only inside
           // We found case for Todos, we could attach a collection with
-          const attachedTo = (await findAll(ctx, _class, { _id }, { limit: 1 }))[0]
+          let attachedTo: Doc | undefined = (await findAll(ctx, _class, { _id }, { limit: 1 }))[0]
+          if (attachedTo == null) {
+            // If the parent doc was created in the same batch, it isn't persisted yet.
+            // Fall back to pending broadcast txes so collection counter updates aren't lost.
+            const createTx = ctx.contextData.broadcast.txes.find(
+              (it) => it._class === core.class.TxCreateDoc && (it as TxCreateDoc<Doc>).objectId === _id
+            )
+            attachedTo = createTx != null ? TxProcessor.createDoc2Doc(createTx as TxCreateDoc<Doc>) : undefined
+          }
+
           if (attachedTo !== undefined) {
             res.push(
               this.getCollectionUpdateTx(

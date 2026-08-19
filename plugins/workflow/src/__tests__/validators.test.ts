@@ -15,12 +15,21 @@
 
 /* eslint-disable @typescript-eslint/unbound-method */
 
-import core, { type Class, type Ref, type Status } from '@hcengineering/core'
+import core, {
+  type AnyAttribute,
+  type AttachedDoc,
+  type Class,
+  Hierarchy,
+  type Ref,
+  type Status,
+  type TxCreateDoc,
+  type TxRemoveDoc
+} from '@hcengineering/core'
 import task, { type Task, type TaskType } from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
 
 import workflow from '../plugin'
-import { FieldRequired, SubtaskStatus, ParentStatus } from '../validators'
+import { FieldRequired, SubtaskStatus, ParentStatus, isEmptyAttribute } from '../validators'
 import type { ValidatorClient, WorkflowTransition } from '../schema'
 
 jest.mock('@hcengineering/platform', () => {
@@ -60,7 +69,7 @@ function createMockValidatorClient (options?: {
     findAttribute,
     as,
     isDerived
-  }
+  } as any as Hierarchy
 
   const findAll = jest.fn().mockImplementation(async (_class: Ref<Class<any>>, query: any) => {
     if (_class === core.class.Status) {
@@ -82,7 +91,7 @@ function createMockValidatorClient (options?: {
   })
 
   return {
-    getHierarchy: () => hierarchy as any,
+    getHierarchy: () => hierarchy,
     findAll,
     findOne: jest.fn(),
     getModel: jest.fn()
@@ -97,60 +106,12 @@ describe('Workflow Validators', () => {
   const taskTypeFeature = 'task-type-feature' as Ref<TaskType>
 
   const dummyTransition: WorkflowTransition = {
-    _id: 'trans-1' as any,
+    _id: 'trans-1',
     name: 'Resolve Task',
     from: [statusOpen, statusInProgress],
     to: statusDone,
     rank: '0'
   } as unknown as WorkflowTransition
-
-  // describe('isEmpty', () => {
-  //   it('should return true for undefined and null', () => {
-  //     expect(isEmpty(undefined)).toBe(true)
-  //     expect(isEmpty(null)).toBe(true)
-  //   })
-  //
-  //   it('should return true for empty or whitespace-only strings', () => {
-  //     expect(isEmpty('')).toBe(true)
-  //     expect(isEmpty('   ')).toBe(true)
-  //     expect(isEmpty('\t\n')).toBe(true)
-  //   })
-  //
-  //   it('should return false for non-empty strings', () => {
-  //     expect(isEmpty('hello')).toBe(false)
-  //     expect(isEmpty('  a  ')).toBe(false)
-  //   })
-  //
-  //   it('should handle arrays correctly', () => {
-  //     expect(isEmpty([])).toBe(true)
-  //     expect(isEmpty([1])).toBe(false)
-  //     expect(isEmpty([null])).toBe(false)
-  //     expect(isEmpty([''])).toBe(false)
-  //   })
-  //
-  //   it('should handle Map and Set instances', () => {
-  //     expect(isEmpty(new Map())).toBe(true)
-  //     expect(isEmpty(new Set())).toBe(true)
-  //     expect(isEmpty(new Map([['key', 'val']]))).toBe(false)
-  //     expect(isEmpty(new Set([1]))).toBe(false)
-  //   })
-  //
-  //   it('should handle plain objects', () => {
-  //     expect(isEmpty({})).toBe(true)
-  //     expect(isEmpty({ key: 'val' })).toBe(false)
-  //     expect(isEmpty({ key: undefined })).toBe(false)
-  //   })
-  //
-  //   it('should handle primitive non-string values correctly', () => {
-  //     expect(isEmpty(0)).toBe(true)
-  //     expect(isEmpty(42)).toBe(false)
-  //     expect(isEmpty(NaN)).toBe(true)
-  //     expect(isEmpty(false)).toBe(false)
-  //     expect(isEmpty(true)).toBe(false)
-  //     expect(isEmpty(Symbol('test'))).toBe(false)
-  //     expect(isEmpty(() => {})).toBe(false)
-  //   })
-  // })
 
   describe('FieldRequired', () => {
     const taskDoc = {
@@ -172,7 +133,7 @@ describe('Workflow Validators', () => {
       const client = createMockValidatorClient()
 
       const result = await FieldRequired(client, taskDoc, dummyTransition, {
-        fields: [{ fieldKey: '' }, { fieldKey: null as any }]
+        fields: [{ fieldKey: '' }, { fieldKey: null }]
       })
 
       expect(result).toEqual({ ok: true })
@@ -346,6 +307,194 @@ describe('Workflow Validators', () => {
       })
       expect(invalidResult.ok).toBe(false)
     })
+
+    describe('Collection attributes', () => {
+      const collectionAttr: AnyAttribute = {
+        _id: 'attr-attachments',
+        _class: core.class.Attribute,
+        attributeOf: task.class.Task,
+        name: 'attachments',
+        label: 'Attachments',
+        type: {
+          _class: core.class.Collection,
+          of: 'attachment:class:Attachment' as Ref<Class<AttachedDoc>>,
+          label: 'Attachments'
+        }
+      } as unknown as AnyAttribute
+
+      function createHierarchy (): Hierarchy {
+        return {
+          isDerived: jest.fn((c: any, parent: any) => c === parent || parent === core.class.Collection),
+          findAttribute: jest.fn(),
+          as: jest.fn()
+        } as any
+      }
+
+      function makeCreateTx (
+        objectId: string,
+        taskId: string = 'task-1',
+        collection: string = 'attachments',
+        objectClass: string = 'attachment:class:Attachment'
+      ): TxCreateDoc<AttachedDoc> {
+        return {
+          _id: `tx-create-${objectId}`,
+          _class: core.class.TxCreateDoc,
+          space: 'space-1',
+          objectId,
+          objectClass,
+          objectSpace: 'space-1',
+          attachedTo: taskId,
+          collection,
+          attributes: {
+            attachedTo: taskId,
+            collection,
+            name: 'file.txt'
+          },
+          modifiedBy: 'user-1',
+          modifiedOn: Date.now()
+        } as any
+      }
+
+      function makeRemoveTx (
+        objectId: string,
+        taskId: string = 'task-1',
+        collection: string = 'attachments',
+        objectClass: string = 'attachment:class:Attachment'
+      ): TxRemoveDoc<AttachedDoc> {
+        return {
+          _id: `tx-remove-${objectId}`,
+          _class: core.class.TxRemoveDoc,
+          space: 'space-1',
+          objectId,
+          objectClass,
+          objectSpace: 'space-1',
+          attachedTo: taskId,
+          collection,
+          modifiedBy: 'user-1',
+          modifiedOn: Date.now()
+        } as any
+      }
+
+      it('should return true (empty) when value is undefined and no txes exist', () => {
+        const h = createHierarchy()
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, undefined, [])).toBe(true)
+      })
+
+      it('should return true (empty) when value is 0 and no txes exist', () => {
+        const h = createHierarchy()
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 0, [])).toBe(true)
+      })
+
+      it('should return true (empty) when value is empty array and no txes exist', () => {
+        const h = createHierarchy()
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, [], [])).toBe(true)
+      })
+
+      it('should return false (not empty) when value is positive number without txes', () => {
+        const h = createHierarchy()
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 1, [])).toBe(false)
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 3, [])).toBe(false)
+      })
+
+      it('should return false (not empty) when value is non-empty array without txes', () => {
+        const h = createHierarchy()
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, ['att-1'], [])).toBe(false)
+      })
+
+      it('should return false (not empty) when value is 0 but txes has TxCreateDoc', () => {
+        const h = createHierarchy()
+        const txes = [makeCreateTx('att-new')]
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 0, txes)).toBe(false)
+      })
+
+      it('should return false (not empty) when value is undefined but txes has TxCreateDoc', () => {
+        const h = createHierarchy()
+        const txes = [makeCreateTx('att-new')]
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, undefined, txes)).toBe(false)
+      })
+
+      it('should return true (empty) when value is 1 but txes has TxRemoveDoc removing the only item', () => {
+        const h = createHierarchy()
+        const txes = [makeRemoveTx('att-1')]
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 1, txes)).toBe(true)
+      })
+
+      it('should return false (not empty) when value is 2 and txes has 1 TxRemoveDoc (1 item remaining)', () => {
+        const h = createHierarchy()
+        const txes = [makeRemoveTx('att-1')]
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 2, txes)).toBe(false)
+      })
+
+      it('should return true (empty) when value is 2 and txes has 2 TxRemoveDocs (0 items remaining)', () => {
+        const h = createHierarchy()
+        const txes = [makeRemoveTx('att-1'), makeRemoveTx('att-2')]
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 2, txes)).toBe(true)
+      })
+
+      it('should return false (not empty) when value is 1 and txes has 1 TxRemoveDoc and 1 TxCreateDoc', () => {
+        const h = createHierarchy()
+        const txes = [makeRemoveTx('att-1'), makeCreateTx('att-2')]
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 1, txes)).toBe(false)
+      })
+
+      it('should return true (empty) when a doc is created and then removed in the same tx batch', () => {
+        const h = createHierarchy()
+        const txes = [makeCreateTx('att-temp'), makeRemoveTx('att-temp')]
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 0, txes)).toBe(true)
+      })
+
+      it('should ignore TxCreateDoc and TxRemoveDoc for different tasks or different collections', () => {
+        const h = createHierarchy()
+        const otherTaskTx = makeCreateTx('att-1', 'other-task-id')
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 0, [otherTaskTx])).toBe(true)
+
+        const otherCollectionTx = makeCreateTx('att-2', 'task-1', 'labels')
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 0, [otherCollectionTx])).toBe(true)
+
+        const otherTaskRemoveTx = makeRemoveTx('att-3', 'other-task-id')
+        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 1, [otherTaskRemoveTx])).toBe(false)
+      })
+
+      it('should validate FieldRequired properly with context.txes', async () => {
+        const client = createMockValidatorClient({
+          attributes: {
+            attachments: collectionAttr
+          }
+        })
+        const clientHierarchy = client.getHierarchy()
+        jest.spyOn(clientHierarchy, 'isDerived').mockImplementation((c: any, parent: any) => {
+          return c === parent || parent === core.class.Collection
+        })
+
+        // Task with empty attachments (undefined) - should fail without txes
+        const taskWithoutAtt = { ...taskDoc, attachments: undefined } as unknown as Task
+        const resultFail = await FieldRequired(client, taskWithoutAtt, dummyTransition, {
+          fields: [{ fieldKey: 'attachments' }]
+        })
+        expect(resultFail.ok).toBe(false)
+
+        // Task with empty attachments + create tx in context - should pass
+        const resultPass = await FieldRequired(
+          client,
+          taskWithoutAtt,
+          dummyTransition,
+          { fields: [{ fieldKey: 'attachments' }] },
+          { txes: [makeCreateTx('att-new')] }
+        )
+        expect(resultPass.ok).toBe(true)
+
+        // Task with 1 attachment + remove tx in context - should fail
+        const taskWith1Att = { ...taskDoc, attachments: 1 } as unknown as Task
+        const resultRemovedFail = await FieldRequired(
+          client,
+          taskWith1Att,
+          dummyTransition,
+          { fields: [{ fieldKey: 'attachments' }] },
+          { txes: [makeRemoveTx('att-1')] }
+        )
+        expect(resultRemovedFail.ok).toBe(false)
+      })
+    })
   })
 
   describe('SubtaskStatus', () => {
@@ -432,7 +581,7 @@ describe('Workflow Validators', () => {
 
       expect(
         await SubtaskStatus(client, taskDoc, dummyTransition, {
-          statuses: { [taskTypeBug]: [null as any] }
+          statuses: { [taskTypeBug]: [null] }
         })
       ).toEqual({ ok: true })
     })
@@ -443,7 +592,7 @@ describe('Workflow Validators', () => {
       })
 
       const result = await SubtaskStatus(client, taskDoc, dummyTransition, {
-        statuses: { [taskTypeBug]: 'not-an-array' as any }
+        statuses: { [taskTypeBug]: 'not-an-array' }
       })
 
       expect(result).toEqual({ ok: true })
@@ -456,13 +605,13 @@ describe('Workflow Validators', () => {
 
       expect(
         await SubtaskStatus(client, taskDoc, dummyTransition, {
-          statuses: { [taskTypeBug]: null as any }
+          statuses: { [taskTypeBug]: null }
         })
       ).toEqual({ ok: true })
 
       expect(
         await SubtaskStatus(client, taskDoc, dummyTransition, {
-          statuses: { [taskTypeBug]: undefined as any }
+          statuses: { [taskTypeBug]: undefined }
         })
       ).toEqual({ ok: true })
     })

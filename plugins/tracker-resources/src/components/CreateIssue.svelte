@@ -506,6 +506,7 @@
         rank: '',
         comments: 0,
         subIssues: 0,
+        collaborators: 0,
         dueDate: object.dueDate,
         parents:
           parentIssue != null
