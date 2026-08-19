@@ -646,18 +646,10 @@ export function reportedTimeApplier (
   value: number | DraftTimeReportPayload | Array<DraftTimeReportPayload | number>
 ): AttributeApplierResult<Issue> {
   const txes: Array<TxCUD<TimeSpendReportDoc>> = []
-  let finalReportedTime = doc.reportedTime ?? 0
-
   const items = Array.isArray(value) ? value : [value]
 
   for (const item of items) {
-    if (typeof item === 'number') {
-      finalReportedTime = item
-    } else if (typeof item === 'object' && item !== null) {
-      if (typeof item.reportedTime === 'number') {
-        finalReportedTime = item.reportedTime
-      }
-
+    if (typeof item === 'object' && item !== null) {
       if (Array.isArray(item.draftReports)) {
         for (const report of item.draftReports) {
           const tx: TxCreateDoc<TimeSpendReportDoc> = {
@@ -733,7 +725,6 @@ export function reportedTimeApplier (
   }
 
   return {
-    update: { reportedTime: finalReportedTime },
     txes
   }
 }
