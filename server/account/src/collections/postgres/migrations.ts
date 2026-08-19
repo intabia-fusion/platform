@@ -103,7 +103,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV34Migration(ns),
     getV35Migration(ns, flavor),
     getV36Migration(ns),
-    getV37Migration(ns)
+    getV37Migration(ns),
+    getV38Migration(ns)
   ]
 }
 
@@ -1100,6 +1101,18 @@ function getV37Migration (ns: string): [string, string] {
          ORDER BY person_uuid, created_on DESC
       ) s
      WHERE s.person_uuid = p.uuid AND p.phone_hint IS NULL;
+    `
+  ]
+}
+
+function getV38Migration (ns: string): [string, string] {
+  return [
+    'account_db_v38_subscription_provider_status_trial_end_idx',
+    /* Trial expiry sweeps ask for (provider, status, trial_end <= now); without this the query
+       scans every trialing row of the provider and filters by date in memory. */
+    `
+    CREATE INDEX IF NOT EXISTS subscription_provider_status_trial_end_idx
+        ON ${ns}.subscription (provider, status, trial_end);
     `
   ]
 }

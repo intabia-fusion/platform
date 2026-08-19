@@ -63,7 +63,7 @@ import type {
   OtpInfo,
   SocialId,
   Subscription,
-  SubscriptionData,
+  SubscriptionUpsert,
   PaymentIntent,
   PaymentOperation,
   PaymentOperationStats,
@@ -1615,7 +1615,7 @@ export async function upsertSubscription (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: SubscriptionData
+  params: SubscriptionUpsert
 ): Promise<void> {
   const { extra } = decodeTokenVerbose(ctx, token)
 
@@ -1624,12 +1624,26 @@ export async function upsertSubscription (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
+  await doUpsertSubscription(ctx, db, params)
+}
+
+async function doUpsertSubscription (ctx: MeasureContext, db: AccountDB, params: SubscriptionUpsert): Promise<void> {
   const { workspaceUuid, provider, providerSubscriptionId } = params
 
   // Verify workspace exists
   const workspace = await getWorkspaceById(db, workspaceUuid)
   if (workspace === null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
+  }
+
+  // account_uuid is NOT NULL with an FK, but a free/trial tier has no payer.
+  if (params.accountUuid == null) {
+    const members = await db.getWorkspaceMembers(workspaceUuid)
+    const owner = members.find((m) => m.role === AccountRole.Owner) ?? members[0]
+    if (owner === undefined) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+    }
+    params = { ...params, accountUuid: owner.person }
   }
 
   // Check if subscription exists by provider + providerSubscriptionId (unique external ID)
@@ -1742,6 +1756,45 @@ export async function upsertSubscription (
   }
 }
 
+/**
+ * Upsert many subscriptions.
+ * Best-effort: every entry is attempted on its own, one bad row cannot sink the rest of the batch.
+ * Callers must treat the result `ok: false` as "this one did not happen".
+ * @public
+ */
+export async function upsertSubscriptionsBulk (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { subscriptions: SubscriptionUpsert[] }
+): Promise<Array<{ id: string, ok: boolean, error?: string }>> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const { subscriptions } = params
+  const results: Array<{ id: string, ok: boolean, error?: string }> = []
+
+  // Sequential on purpose: doUpsertSubscription runs a read-modify-write (stale guard, supersede
+  // cascade) that would race against itself for two entries of the same workspace.
+  for (const sub of subscriptions) {
+    try {
+      await doUpsertSubscription(ctx, db, sub)
+      results.push({ id: sub.id, ok: true })
+    } catch (err: any) {
+      ctx.error('Bulk subscription upsert entry failed', { id: sub.id, workspaceUuid: sub.workspaceUuid, err })
+      results.push({ id: sub.id, ok: false, error: err?.message ?? String(err) })
+    }
+  }
+
+  const failed = results.filter((r) => !r.ok).length
+  ctx.info('Bulk subscription upsert done', { total: results.length, failed })
+  return results
+}
+
 export async function getSubscriptionByProviderId (
   ctx: MeasureContext,
   db: AccountDB,
@@ -1773,6 +1826,7 @@ export async function getSubscriptionByProviderId (
 /**
  * A provider's subscriptions filtered server-side by status (defaults to {active, past_due} — the
  * renewal candidates). Lets schedulers/reconcilers skip loading the whole table or other providers.
+ * `trialEndBefore` narrows further to trials that already ended to sweep them.
  * @public
  */
 export async function getSubscriptionsByProvider (
@@ -1783,6 +1837,7 @@ export async function getSubscriptionsByProvider (
   params: {
     provider: string
     statuses?: SubscriptionStatus[]
+    trialEndBefore?: number
   }
 ): Promise<Subscription[]> {
   const { extra } = decodeTokenVerbose(ctx, token)
@@ -1791,11 +1846,16 @@ export async function getSubscriptionsByProvider (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  const { provider, statuses } = params
-  return await db.subscription.find({
+  const { provider, statuses, trialEndBefore } = params
+  const query: Query<Subscription> = {
     provider,
     status: { $in: statuses ?? [SubscriptionStatus.Active, SubscriptionStatus.PastDue] }
-  })
+  }
+  // A null trial_end never matches $lte, which is what we want: no trial end, nothing to expire.
+  if (trialEndBefore !== undefined) {
+    query.trialEnd = { $lte: trialEndBefore }
+  }
+  return await db.subscription.find(query)
 }
 
 /**
@@ -2216,6 +2276,7 @@ export type AccountServiceMethods =
   | 'getPaymentOperations'
   | 'getPaymentMonthlyStats'
   | 'upsertSubscription'
+  | 'upsertSubscriptionsBulk'
   | 'getAccountWorkspaceBadgeStatuses'
   | 'setWorkspaceBadgeStatuses'
   | 'getAllSubscriptions'
@@ -2289,6 +2350,7 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     getPaymentOperations: wrap(getPaymentOperations),
     getPaymentMonthlyStats: wrap(getPaymentMonthlyStats),
     upsertSubscription: wrap(upsertSubscription),
+    upsertSubscriptionsBulk: wrap(upsertSubscriptionsBulk),
     getAccountWorkspaceBadgeStatuses: wrap(getAccountWorkspaceBadgeStatuses),
     setWorkspaceBadgeStatuses: wrap(setWorkspaceBadgeStatuses),
     getAllSubscriptions: wrap(getAllSubscriptions),
