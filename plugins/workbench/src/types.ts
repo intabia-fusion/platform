@@ -99,7 +99,6 @@ export interface WidgetTab {
   iconComponent?: AnyComponent
   iconProps?: Record<string, any>
   isPinned?: boolean
-  allowedPath?: string
   objectId?: Ref<Doc>
   objectClass?: Ref<Class<Doc>>
   data?: Record<string, any>

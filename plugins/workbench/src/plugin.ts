@@ -91,7 +91,7 @@ export const workbenchPlugin = plugin(workbenchId, {
     SpecialViewAction: '' as ComponentExtensionId
   },
   function: {
-    CreateWidgetTab: '' as Resource<(widget: Widget, tab: WidgetTab, newTab: boolean) => Promise<void>>,
+    CreateWidgetTab: '' as Resource<(widget: Widget, tab: WidgetTab) => Promise<void>>,
     CloseWidgetTab: '' as Resource<(widget: Widget, tab: string) => Promise<void>>,
     CloseWidget: '' as Resource<(widget: Ref<Widget>) => Promise<void>>,
     GetSidebarObject: '' as Resource<() => Partial<Pick<Doc, '_id' | '_class'>>>,

@@ -12,6 +12,7 @@ export class DocumentContentPage extends CommonPage {
   }
 
   readonly buttonDocumentTitle = (): Locator => this.page.locator('div[class*="main-content"] div.title input')
+  readonly buttonOpenInSidebar = (): Locator => this.page.locator('button[data-id="btnOpenInSidebar"]')
   readonly inputContent = (): Locator => this.page.locator('div.textInput div.tiptap')
   readonly selectContent = (): Locator => this.page.locator('div.textInput .select-text')
   readonly inputContentParapraph = (): Locator => this.page.locator('div.textInput div.tiptap > p')

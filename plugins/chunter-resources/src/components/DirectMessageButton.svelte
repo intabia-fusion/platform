@@ -43,7 +43,7 @@
       return
     }
 
-    await openChannelInSidebar(dm, chunter.class.DirectMessage, undefined, undefined, true)
+    await openChannelInSidebar(dm, chunter.class.DirectMessage)
   }
 </script>
 

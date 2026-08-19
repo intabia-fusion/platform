@@ -10,7 +10,7 @@ import {
   navigate,
   languageStore
 } from '@hcengineering/ui'
-import { type Ref, type Doc, type Class, generateId, concatLink } from '@hcengineering/core'
+import { type Ref, type Doc, type Class, concatLink } from '@hcengineering/core'
 import activity, { type ActivityMessage } from '@hcengineering/activity'
 import {
   type Channel,
@@ -24,7 +24,7 @@ import workbench, { type Widget, workbenchId, type LocationData } from '@hcengin
 import { classIcon, getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
 import presentation, { getClient } from '@hcengineering/presentation'
 import view, { encodeObjectURI, decodeObjectURI } from '@hcengineering/view'
-import { createWidgetTab, isElementFromSidebar, sidebarStore } from '@hcengineering/workbench-resources'
+import { closeWidgetTab, createWidgetTab, isElementFromSidebar, sidebarStore } from '@hcengineering/workbench-resources'
 import { type Asset, getMetadata, type IntlString, translate } from '@hcengineering/platform'
 import contact from '@hcengineering/contact'
 import { get } from 'svelte/store'
@@ -254,7 +254,6 @@ export async function openChannelInSidebar (
   _class: Ref<Class<Doc>>,
   doc?: Doc,
   thread?: Ref<ActivityMessage>,
-  newTab = true,
   selectedMessageId?: Ref<ActivityMessage>
 ): Promise<void> {
   const client = getClient()
@@ -295,7 +294,7 @@ export async function openChannelInSidebar (
     }
   }
 
-  createWidgetTab(widget, tab, newTab)
+  createWidgetTab(widget, tab)
 }
 
 export async function openThreadInSidebarChannel (
@@ -314,18 +313,21 @@ export async function openThreadInSidebarChannel (
 }
 
 export async function closeThreadInSidebarChannel (widget: Widget, tab: ChatWidgetTab): Promise<void> {
-  const thread = tab.allowedPath !== undefined ? tab.data.thread : undefined
+  const thread = tab.data.thread
   const newTab: ChatWidgetTab = {
     ...tab,
     objectId: tab.data._id,
     objectClass: tab.data._class,
-    id: tab.id.startsWith('thread_') ? generateId() : tab.id,
+    id: tab.id.startsWith('thread_') ? `chunter_${tab.data._id}` : tab.id,
     name: tab.data.channelName,
-    allowedPath: undefined,
     data: { ...tab.data, thread: undefined, props: undefined }
   }
 
   createWidgetTab(widget, newTab)
+  // Channel tab id is deterministic, so it may already exist - then the thread tab is a leftover.
+  if (newTab.id !== tab.id) {
+    await closeWidgetTab(widget, tab.id)
+  }
   setTimeout(() => {
     removeThreadFromLoc(thread)
   }, 100)
@@ -368,44 +370,6 @@ export async function openThreadInSidebar (
   const lang = get(languageStore)
   const name = (await getChannelName(object._id, object._class, object, lang)) ?? (await translate(titleIntl, {}, lang))
   const tabName = await translate(chunter.string.ThreadIn, { name })
-  const loc = getCurrentLocation()
-
-  const appComponent = loc.path[2]
-  let allowedPath: string
-  if (appComponent === chunterId || appComponent === notificationId) {
-    const special = loc.path[3]
-    const chunterSpecials = ['threads', 'saved', 'browser']
-    if (appComponent === chunterId && chunterSpecials.includes(special)) {
-      allowedPath = loc.path.slice(0, 4).join('/')
-    } else {
-      const providers = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
-      const targetDocLinkId = await getObjectLinkId(providers, message.attachedTo, message.attachedToClass, object)
-      const targetDocUri = encodeObjectURI(targetDocLinkId, message.attachedToClass)
-      const pathCopy = [...loc.path]
-      pathCopy[3] = targetDocUri
-      pathCopy[4] = message._id
-      pathCopy.length = 5
-      allowedPath = pathCopy.join('/')
-    }
-  } else {
-    if (loc.path[2] === chunterId || loc.path[2] === notificationId) {
-      loc.path[4] = message._id
-    }
-    allowedPath = loc.path.join('/')
-  }
-
-  const tabsToClose = currentTabs.filter((t) => t.isPinned !== true && t.allowedPath === allowedPath).map((t) => t.id)
-
-  if (tabsToClose.length > 0) {
-    sidebarStore.update((s) => {
-      const widgetState = s.widgetsState.get(widget._id)
-      if (widgetState === undefined) return s
-
-      const tabs = widgetState.tabs.filter((it) => !tabsToClose.includes(it.id))
-      s.widgetsState.set(widget._id, { ...widgetState, tabs })
-      return { ...s }
-    })
-  }
 
   const tab: ChatWidgetTab = {
     id: 'thread_' + _id,
@@ -413,7 +377,6 @@ export async function openThreadInSidebar (
     icon: chunter.icon.Thread,
     objectId: message._id,
     objectClass: message._class,
-    allowedPath,
     data: {
       _id: object?._id,
       _class: object?._class,
@@ -423,7 +386,7 @@ export async function openThreadInSidebar (
       props
     }
   }
-  createWidgetTab(widget, tab, true)
+  createWidgetTab(widget, tab)
 }
 
 export function removeThreadFromLoc (thread?: Ref<ActivityMessage>): void {
@@ -440,9 +403,7 @@ export function removeThreadFromLoc (thread?: Ref<ActivityMessage>): void {
 }
 
 export function closeChatWidgetTab (tab?: ChatWidgetTab): void {
-  if (tab?.allowedPath !== undefined) {
-    removeThreadFromLoc(tab.data.thread)
-  }
+  removeThreadFromLoc(tab?.data?.thread)
 }
 
 export async function locationDataResolver (loc: Location): Promise<LocationData> {

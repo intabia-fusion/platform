@@ -15,7 +15,7 @@
 import { WorkbenchEvents, type Widget, type WidgetTab } from '@hcengineering/workbench'
 import { type Class, type Doc, getCurrentAccount, type Ref } from '@hcengineering/core'
 import { get, writable } from 'svelte/store'
-import { getCurrentLocation, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
 import { getResource } from '@hcengineering/platform'
 
 import { locationWorkspaceStore } from './utils'
@@ -241,7 +241,7 @@ export function openWidgetTab (widget: Ref<Widget>, tab: string): void {
   })
 }
 
-export function createWidgetTab (widget: Widget, tab: WidgetTab, newTab = false): void {
+export function createWidgetTab (widget: Widget, tab: WidgetTab): void {
   const state = get(sidebarStore)
   const widgetsState = new Map(state.widgetsState)
   const widgetState = widgetsState.get(widget._id)
@@ -252,14 +252,14 @@ export function createWidgetTab (widget: Widget, tab: WidgetTab, newTab = false)
 
   if (opened) {
     newTabs = currentTabs.map((it) => (it.id === tab.id ? { ...tab, isPinned: it.isPinned } : it))
-  } else if (newTab || currentTabs.length === 0) {
-    newTabs = [...currentTabs, tab]
   } else {
-    const current =
-      currentTabs.find(({ id }) => id === widgetState?.tab) ?? currentTabs.find(({ isPinned }) => isPinned === false)
-    const shouldReplace = current !== undefined && current.isPinned !== true
+    // At most one unpinned tab per widget: it gets replaced, pinned ones are never touched.
+    const active = currentTabs.find(({ id }) => id === widgetState?.tab)
+    const replaced =
+      active !== undefined && active.isPinned !== true ? active : currentTabs.find(({ isPinned }) => isPinned !== true)
 
-    newTabs = shouldReplace ? currentTabs.map((it) => (it.id === current?.id ? tab : it)) : [...currentTabs, tab]
+    newTabs =
+      replaced !== undefined ? currentTabs.map((it) => (it.id === replaced.id ? tab : it)) : [...currentTabs, tab]
   }
 
   widgetsState.set(widget._id, {
@@ -286,7 +286,7 @@ export function pinWidgetTab (widget: Widget, tabId: string): void {
   if (widgetState === undefined) return
 
   const tabs = widgetState.tabs
-    .map((it) => (it.id === tabId ? { ...it, isPinned: true, allowedPath: undefined } : it))
+    .map((it) => (it.id === tabId ? { ...it, isPinned: true } : it))
     .sort((a, b) => (a.isPinned === b.isPinned ? 0 : a.isPinned === true ? -1 : 1))
 
   widgetsState.set(widget._id, { ...widgetState, tabs })
@@ -303,15 +303,6 @@ export function unpinWidgetTab (widget: Widget, tabId: string): void {
   const widgetState = widgetsState.get(widget._id)
 
   if (widgetState === undefined) return
-  const tab = widgetState.tabs.find((it) => it.id === tabId)
-
-  if (tab?.allowedPath !== undefined) {
-    const loc = getCurrentLocation()
-    const path = loc.path.join('/')
-    if (!path.startsWith(tab.allowedPath)) {
-      void closeWidgetTab(widget, tabId)
-    }
-  }
 
   const tabs = widgetState.tabs
     .map((it) => (it.id === tabId ? { ...it, isPinned: false } : it))

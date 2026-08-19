@@ -1635,7 +1635,7 @@ export async function openDocInSidebar (doc: Doc): Promise<void> {
   }
 
   const createWidgetTab = await getResource(workbench.function.CreateWidgetTab)
-  await createWidgetTab(widget, tab, false)
+  await createWidgetTab(widget, tab)
 }
 
 export async function openDocFromRef<T extends Doc = Doc> (_class: Ref<Class<T>>, _id: Ref<T>): Promise<boolean> {

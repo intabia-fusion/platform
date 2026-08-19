@@ -525,7 +525,7 @@ export async function startConversationAction (docs?: Employee | Employee[]): Pr
   const dm = await createDirect(client, accounts)
   if (dm == null) return
 
-  await openChannelInSidebar(dm, chunter.class.DirectMessage, undefined, undefined, true)
+  await openChannelInSidebar(dm, chunter.class.DirectMessage)
 }
 
 export async function toggleChannelIcon (channel: Channel, icon?: Asset, emoji?: number | number[]): Promise<void> {
