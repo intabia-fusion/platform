@@ -45,7 +45,16 @@ async function pickSecondRoom (page: Page, exclude: string): Promise<string | nu
 
 async function startOrJoin (page: Page): Promise<void> {
   const connect = page.locator('[data-id="meeting-connect"]').getByRole('button').first()
-  await expect(connect).toBeVisible({ timeout: 10000 })
+  const knock = page.locator('[data-id="meeting-knock"]')
+  // Knock instead of Connect means the client sees a ParticipantInfo of somebody else in the
+  // room: a LiveKit webhook can recreate one right after the drain in beforeEach. Drain again -
+  // clicking the room a second time only deselects it.
+  await expect(async () => {
+    if ((await knock.count()) > 0) {
+      await waitForActiveMeetingsToFinish()
+    }
+    await expect(connect).toBeVisible({ timeout: 5000 })
+  }).toPass({ intervals: [500, 1000, 2000], timeout: 20000 })
   await connect.click()
 }
 

@@ -106,6 +106,29 @@ export class CommonPage {
     if (needOpenNavigator) await this.appsShowMenuButton().click()
   }
 
+  /**
+   * ListCategory folds a category holding more than 20 items whenever localStorage has no state
+   * for it - which is every fresh browser context. Rows inside it are not in the DOM at all, so a
+   * lookup by name waits out the whole test timeout. Categories that grow past the limit on the
+   * sanity workspace: Backlog issues and components without a lead.
+   */
+  async expandCollapsedCategories (): Promise<void> {
+    // Empty categories carry the same class and clicking them changes nothing - skipping them
+    // keeps the retry below able to reach zero.
+    const collapsed = this.page.locator('.categoryHeader.collapsed:not(:has(.chevron.empty))')
+    await expect(async () => {
+      if ((await collapsed.count()) === 0) return
+      // Click them in one pass rather than counting down from the previous total: expanding one
+      // category loads rows that can turn another one from empty into collapsed.
+      await collapsed.evaluateAll((els) => {
+        els.forEach((el) => {
+          ;(el as HTMLElement).click()
+        })
+      })
+      await expect(collapsed).toHaveCount(0, { timeout: 2000 })
+    }).toPass({ intervals: [200, 500], timeout: 15000 })
+  }
+
   async selectMenuItem (page: Page, name: string, fullWordFilter: boolean = false): Promise<void> {
     if (name !== 'first') {
       const filterText = fullWordFilter ? name : name.split(' ')[0]
@@ -117,6 +140,14 @@ export class CommonPage {
         .catch(async () => {
           await page.waitForTimeout(300)
         })
+      // The filter is only the first word, so objects another worker created concurrently share it
+      // and stay in the list. Take the item carrying the whole name when there is one - "first"
+      // picked a teamspace from a parallel test and the document was moved into it.
+      const exact = this.selectPopupListItemFirst().filter({ hasText: name })
+      if ((await exact.count()) > 0) {
+        await exact.first().click()
+        return
+      }
     }
     await this.selectPopupListItemFirst().first().click()
   }
@@ -169,12 +200,24 @@ export class CommonPage {
   }
 
   async checkFromDropdown (page: Page, point: string): Promise<void> {
-    await this.selectPopupSpanLines(point).first().click()
+    const item = this.selectPopupSpanLines(point).first()
+    // A tag created a moment ago can be missing from the list the popup already rendered. Filtering
+    // re-runs the query instead of waiting an unchanged list out. Only the wait is retried - the
+    // click itself toggles selection and must happen once.
+    await expect(async () => {
+      if ((await item.count()) === 0) {
+        await this.selectPopupInput().fill(point)
+      }
+      await expect(item).toBeVisible({ timeout: 5000 })
+    }).toPass({ intervals: [300, 1000], timeout: 30000 })
+    await item.click()
   }
 
   async pressYesDeletePopup (page: Page): Promise<void> {
     await this.viewStringDeleteObjectButtonPrimary().click()
-    await expect(this.viewStringDeleteObjectButtonPrimary()).not.toBeVisible({ timeout: 1000 })
+    // The button turns disabled while the removal is in flight and the form closes only once it
+    // resolves - deleting a component cascades over its issues, which takes longer than a second.
+    await expect(this.viewStringDeleteObjectButtonPrimary()).not.toBeVisible({ timeout: 10000 })
   }
 
   async addNewTagPopup (page: Page, title: string, description: string): Promise<void> {
@@ -276,7 +319,11 @@ export class CommonPage {
 
   async selectFilter (filter: string, filterSecondLevel?: string): Promise<void> {
     await this.buttonFilter().click()
-    await this.selectPopupMenu(filter).click()
+    // The popup re-renders while its options load, so the row can be unstable or detach mid-click.
+    await expect(async () => {
+      if ((await this.selectPopupMenu(filter).count()) === 0) await this.buttonFilter().click()
+      await this.selectPopupMenu(filter).click({ timeout: 5000 })
+    }).toPass({ intervals: [300, 1000], timeout: 30000 })
 
     if (filterSecondLevel !== null && typeof filterSecondLevel === 'string') {
       switch (filter) {

@@ -75,7 +75,12 @@ export class SettingsPage extends CommonPage {
   }
 
   async openSettings (): Promise<void> {
-    await this.settingsButton().click()
+    // The app finishes booting behind the profile menu and the re-render closes it, so the item can
+    // disappear between opening the menu and clicking it.
+    await expect(async () => {
+      if ((await this.settingsButton().count()) === 0) await this.openProfileMenu()
+      await this.settingsButton().click({ timeout: 5000 })
+    }).toPass({ intervals: [300, 1000], timeout: 30000 })
   }
 
   async clickAddSpaceType (): Promise<void> {

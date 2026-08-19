@@ -474,6 +474,11 @@
             }
           }
           loc.path.length = len
+          // Re-check: fetching the default space is awaited, and a click on the navigator made
+          // in the meantime already moved us to another app - do not navigate back over it.
+          if (getCurrentLocation().path[2] !== undefined) {
+            return
+          }
           if (navigate(loc)) {
             return
           }

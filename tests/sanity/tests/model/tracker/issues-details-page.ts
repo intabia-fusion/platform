@@ -179,7 +179,19 @@ export class IssuesDetailsPage extends CommonTrackerPage {
 
   async addExistingLabel (label: string): Promise<void> {
     await this.buttonAddLabel().click()
-    await this.checkFromDropdownWithSearch(this.page, label)
+    await this.selectPopupInput().fill(label)
+    const item = this.selectPopupSpanLines(label)
+    // In a project of a freshly created type the popup can open before the client knows the new
+    // task type class and then lists nothing. Reopen it instead of waiting an empty list out.
+    await expect(async () => {
+      if ((await item.count()) === 0) {
+        await this.closePopups()
+        await this.buttonAddLabel().click()
+        await this.selectPopupInput().fill(label)
+      }
+      await expect(item).toHaveCount(1, { timeout: 5000 })
+    }).toPass({ intervals: [500, 1000], timeout: 30000 })
+    await item.click()
     await this.closePopups()
   }
 
@@ -209,8 +221,12 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       const val = convertEstimation(data.estimation)
       await expect(async () => {
         const curValue = JSON.stringify((await this.textEstimation().allTextContents()).join(' '))
-        await expect(this.textEstimation(), `should be ${JSON.stringify(val)} but it ${curValue})}`).toHaveText(val)
-      }).toPass({ intervals: [100, 200, 500, 1000], timeout: 10000 })
+        // Short inner timeout on purpose: the default 15s outlives the enclosing toPass, so the
+        // retry never happens and the failure carries no value to look at.
+        await expect(this.textEstimation(), `should be ${JSON.stringify(val)} but it ${curValue})}`).toHaveText(val, {
+          timeout: 2000
+        })
+      }).toPass({ intervals: [100, 200, 500, 1000], timeout: 15000 })
     }
     if (data.parentIssue != null) {
       await expect(this.textParentTitle()).toHaveText(data.parentIssue)

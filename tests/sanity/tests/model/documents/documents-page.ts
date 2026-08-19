@@ -138,8 +138,13 @@ export class DocumentsPage extends CommonPage {
   }
 
   async clickAddDocumentIntoDocument (documentTitle: string): Promise<void> {
-    await this.buttonDocumentWrapper(documentTitle).hover()
-    await this.buttonAddDocumentToDocument(documentTitle).click()
+    // The button only exists while the row is hovered, and the navigator keeps re-rendering as
+    // documents arrive - the row moves under the sticky teamspace header and the hover is lost.
+    // Hovering once outside the retry leaves the click waiting out the whole test timeout.
+    await expect(async () => {
+      await this.buttonDocumentWrapper(documentTitle).hover()
+      await this.buttonAddDocumentToDocument(documentTitle).click({ timeout: 3000 })
+    }).toPass({ intervals: [300, 1000], timeout: 30000 })
   }
 
   async openDocumentForTeamspace (spaceName: string, documentName: string): Promise<void> {
