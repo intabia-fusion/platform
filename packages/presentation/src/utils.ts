@@ -84,7 +84,7 @@ let pipeline: PresentationPipeline
 export type TxListener = (tx: Tx[]) => void
 const txListeners: TxListener[] = []
 
-const alwaysDisabled: string[] = ['relation']
+const alwaysDisabled: string[] = ['relation', 'caldav']
 
 /**
  * @public
