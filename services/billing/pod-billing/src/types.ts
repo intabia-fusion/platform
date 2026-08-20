@@ -360,10 +360,16 @@ export interface BillingDB {
   // Admin reset of spent tokens (does not touch limits): per (provider, model) pool, all pools, or a workspace.
   resetProviderPoolUsed: (ctx: MeasureContext, providerId: string, model: string) => Promise<void>
   resetAllProviderPoolsUsed: (ctx: MeasureContext) => Promise<void>
-  resetWorkspaceUsed: (ctx: MeasureContext, workspace: WorkspaceUuid) => Promise<void>
+  resetWorkspaceUsed: (ctx: MeasureContext, workspace: WorkspaceUuid, periodStart: Date) => Promise<void>
   // Admin/test helper: force the workspace token usage to an exact value for the current period
   // by clearing the period's usage rows and inserting a single synthetic record.
-  setWorkspaceUsed: (ctx: MeasureContext, workspace: WorkspaceUuid, value: number, level: string) => Promise<void>
+  setWorkspaceUsed: (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    value: number,
+    level: string,
+    periodStart: Date
+  ) => Promise<void>
 
   // Purchased-token pool (per workspace).
   getTokenBalance: (ctx: MeasureContext, workspace: WorkspaceUuid) => Promise<TokenBalance | undefined>

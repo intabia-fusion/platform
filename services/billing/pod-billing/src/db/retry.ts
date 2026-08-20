@@ -269,12 +269,18 @@ export class RetryDB implements BillingDB {
     await retry(() => this.db.resetAllProviderPoolsUsed(ctx), this.options)
   }
 
-  async resetWorkspaceUsed (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<void> {
-    await retry(() => this.db.resetWorkspaceUsed(ctx, workspace), this.options)
+  async resetWorkspaceUsed (ctx: MeasureContext, workspace: WorkspaceUuid, periodStart: Date): Promise<void> {
+    await retry(() => this.db.resetWorkspaceUsed(ctx, workspace, periodStart), this.options)
   }
 
-  async setWorkspaceUsed (ctx: MeasureContext, workspace: WorkspaceUuid, value: number, level: string): Promise<void> {
-    await retry(() => this.db.setWorkspaceUsed(ctx, workspace, value, level), this.options)
+  async setWorkspaceUsed (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    value: number,
+    level: string,
+    periodStart: Date
+  ): Promise<void> {
+    await retry(() => this.db.setWorkspaceUsed(ctx, workspace, value, level, periodStart), this.options)
   }
 
   async getTokenBalance (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<TokenBalance | undefined> {

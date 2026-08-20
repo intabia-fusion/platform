@@ -426,7 +426,8 @@ export async function handleResetWorkspaceUsed (
     res.status(400).json({ message: 'workspace required' })
     return
   }
-  await db.resetWorkspaceUsed(ctx, workspace)
+  const { periodStart } = await resolveWorkspacePlan(ctx, db, workspace)
+  await db.resetWorkspaceUsed(ctx, workspace, periodStart)
   res.status(204).send()
 }
 
@@ -450,7 +451,8 @@ export async function handleSetWorkspaceUsed (
     return
   }
   const level = typeof body?.level === 'string' && body.level !== '' ? body.level : 'low'
-  await db.setWorkspaceUsed(ctx, workspace, Math.floor(value), level)
+  const { periodStart } = await resolveWorkspacePlan(ctx, db, workspace)
+  await db.setWorkspaceUsed(ctx, workspace, Math.floor(value), level, periodStart)
   res.status(204).send()
 }
 

@@ -268,12 +268,20 @@ export class LoggedDB implements BillingDB {
     await ctx.with('db.resetAllProviderPoolsUsed', {}, () => this.db.resetAllProviderPoolsUsed(ctx))
   }
 
-  async resetWorkspaceUsed (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<void> {
-    await ctx.with('db.resetWorkspaceUsed', {}, () => this.db.resetWorkspaceUsed(ctx, workspace))
+  async resetWorkspaceUsed (ctx: MeasureContext, workspace: WorkspaceUuid, periodStart: Date): Promise<void> {
+    await ctx.with('db.resetWorkspaceUsed', {}, () => this.db.resetWorkspaceUsed(ctx, workspace, periodStart))
   }
 
-  async setWorkspaceUsed (ctx: MeasureContext, workspace: WorkspaceUuid, value: number, level: string): Promise<void> {
-    await ctx.with('db.setWorkspaceUsed', {}, () => this.db.setWorkspaceUsed(ctx, workspace, value, level))
+  async setWorkspaceUsed (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    value: number,
+    level: string,
+    periodStart: Date
+  ): Promise<void> {
+    await ctx.with('db.setWorkspaceUsed', {}, () =>
+      this.db.setWorkspaceUsed(ctx, workspace, value, level, periodStart)
+    )
   }
 
   async getTokenBalance (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<TokenBalance | undefined> {

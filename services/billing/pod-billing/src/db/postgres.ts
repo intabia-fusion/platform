@@ -1224,28 +1224,43 @@ class PostgresDB implements BillingDB {
   }
 
   // Clear a workspace's token limit state so it is no longer blocked; recompute repopulates used.
-  async resetWorkspaceUsed (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<void> {
+  async resetWorkspaceUsed (ctx: MeasureContext, workspace: WorkspaceUuid, periodStart: Date): Promise<void> {
     // The hourly recompute rebuilds `used` from ai_tokens_usage, so clearing only the cached
     // state made the button look like it did nothing: the block was back within the hour.
-    const periodStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     await this.execute('DELETE FROM billing.ai_tokens_usage WHERE workspace = $1::uuid AND hour >= $2::timestamp', [
       workspace,
       periodStart
     ])
+    await this.clearAbsorption(workspace)
     await this.execute(
       "UPDATE billing.workspace_limit_state SET used = 0, exhausted = false, updated_at = now() WHERE workspace = $1::uuid AND category = 'tokens'",
       [workspace]
     )
   }
 
+  // `usedMonth` subtracts what the purchased balance absorbed; leaving a stale counter behind
+  // after wiping the period's usage rows would keep understating usage for the rest of the period.
+  private async clearAbsorption (workspace: WorkspaceUuid): Promise<void> {
+    await this.execute(
+      'UPDATE billing.token_balance SET absorbed_period = 0, absorbed_until = NULL WHERE workspace = $1::uuid',
+      [workspace]
+    )
+  }
+
   // Test helper: make the workspace's token usage exactly `value`. Clears this month's usage rows
   // (the source recompute reads from) and inserts one synthetic record, then updates the cached state.
-  async setWorkspaceUsed (ctx: MeasureContext, workspace: WorkspaceUuid, value: number, level: string): Promise<void> {
-    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  async setWorkspaceUsed (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    value: number,
+    level: string,
+    periodStart: Date
+  ): Promise<void> {
     await this.execute('DELETE FROM billing.ai_tokens_usage WHERE workspace = $1::uuid AND hour >= $2::timestamp', [
       workspace,
-      monthAgo
+      periodStart
     ])
+    await this.clearAbsorption(workspace)
     if (value > 0) {
       await this.execute(
         `INSERT INTO billing.ai_tokens_usage (workspace, hour, reason, total_tokens, raw_tokens, provider_id, model, level)
