@@ -38,11 +38,9 @@
     "NewContextHint": "Archivia questa conversazione e avvia un nuovo contesto per questo oggetto",
     "NewContextConfirm": "Archiviare la conversazione attuale e avviare un nuovo contesto? La discussione attuale rimarrà disponibile, ma l'assistente non la userà più.",
     "AssistIssue": "Yulia IA",
-    "AssistIssueUndo": "Annulla",
     "AssistIssueApply": "Applica",
     "AssistIssueThreadStart": "Bozza di attività{project, select, undefined {} other { in {project}}}",
     "AssistIssueNewContext": "Nuovo contesto",
-    "AssistIssueCreated": "Attività {identifier} creata",
     "AssistIssueApplyAgain": "Applica di nuovo",
     "AssistIssueAppliedMark": "Applicato"
   }

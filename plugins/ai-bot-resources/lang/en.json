@@ -38,11 +38,9 @@
     "NewContextHint": "Archive this conversation and start a fresh context for this object",
     "NewContextConfirm": "Archive the current conversation and start a fresh context? The current discussion stays available but the assistant will no longer use it.",
     "AssistIssue": "Yulia AI",
-    "AssistIssueUndo": "Undo",
     "AssistIssueApply": "Apply",
     "AssistIssueThreadStart": "Task draft{project, select, undefined {} other { in {project}}}",
     "AssistIssueNewContext": "New context",
-    "AssistIssueCreated": "Created issue {identifier}",
     "AssistIssueApplyAgain": "Apply again",
     "AssistIssueAppliedMark": "Applied"
   }

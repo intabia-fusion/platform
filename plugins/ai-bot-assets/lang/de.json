@@ -15,11 +15,9 @@
     "Language": "Sprache",
     "LanguageHint": "Standardsprache für Bot-Antworten (z.B. de, en). Leer = Pod-Standard.",
     "AssistIssue": "Yulia KI",
-    "AssistIssueUndo": "Rückgängig",
     "AssistIssueApply": "Übernehmen",
     "AssistIssueThreadStart": "Aufgabenentwurf{project, select, undefined {} other { in {project}}}",
     "AssistIssueNewContext": "Neuer Kontext",
-    "AssistIssueCreated": "Aufgabe {identifier} erstellt",
     "AssistIssueApplyAgain": "Erneut übernehmen",
     "AssistIssueAppliedMark": "Übernommen"
   }

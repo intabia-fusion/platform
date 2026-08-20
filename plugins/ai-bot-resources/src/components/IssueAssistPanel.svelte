@@ -75,8 +75,6 @@
   let conversation: StartedConversation | undefined = undefined
   let proposal: AITaskProposalMessage | undefined = undefined
   let applied = new Set<Ref<Doc>>()
-  // Snapshot taken right before applying, so one click puts the form back.
-  let previous: IssueDraftFields | undefined = undefined
   let bot: Person | undefined = undefined
   // Guards the reactive open: without it a re-render would start a second thread.
   let opening = false
@@ -263,7 +261,6 @@
 
   function accept (): void {
     if (proposal === undefined) return
-    previous = { title, description: asMarkup(description), subIssues: [...subIssues] }
     // A proposal carries only what the model changed: everything it left out keeps its value,
     // otherwise editing the description alone would wipe the title.
     apply({
@@ -288,12 +285,6 @@
         wrap?.classList.remove('wide')
       }
     }
-  }
-
-  function undo (): void {
-    if (previous === undefined) return
-    apply(previous)
-    previous = undefined
   }
 </script>
 
@@ -340,12 +331,6 @@
             }}
           />
         </div>
-
-        {#if previous !== undefined}
-          <div class="apply-bar">
-            <Button kind={'ghost'} size={'small'} label={aiBot.string.AssistIssueUndo} on:click={undo} />
-          </div>
-        {/if}
       {/if}
     </div>
   </div>
@@ -410,13 +395,6 @@
     flex-direction: column;
     flex-grow: 1;
     min-height: 0;
-  }
-
-  .apply-bar {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-shrink: 0;
   }
 
   .empty {

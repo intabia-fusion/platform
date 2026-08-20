@@ -38,11 +38,9 @@
     "NewContextHint": "Bu görüşmeyi arşivle ve bu nesne için yeni bir bağlam başlat",
     "NewContextConfirm": "Mevcut görüşme arşivlenip yeni bir bağlam başlatılsın mı? Mevcut görüşme erişilebilir kalır, ancak asistan artık onu kullanmayacak.",
     "AssistIssue": "Yulia AI",
-    "AssistIssueUndo": "Geri al",
     "AssistIssueApply": "Uygula",
     "AssistIssueThreadStart": "Görev taslağı{project, select, undefined {} other { - {project}}}",
     "AssistIssueNewContext": "Yeni bağlam",
-    "AssistIssueCreated": "{identifier} görevi oluşturuldu",
     "AssistIssueApplyAgain": "Tekrar uygula",
     "AssistIssueAppliedMark": "Uygulandı"
   }

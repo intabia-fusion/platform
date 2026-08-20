@@ -177,8 +177,6 @@
     "ReleaseSocialId": "Social id sil",
     "Billing": "AI",
     "SortTokens": "Tokene göre",
-    "SortMinutes": "Dakikaya göre",
-    "HeaderTokens": "Token",
-    "HeaderMinutes": "Dakika"
+    "SortMinutes": "Dakikaya göre"
   }
 }

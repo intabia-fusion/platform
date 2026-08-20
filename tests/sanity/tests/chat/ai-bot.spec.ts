@@ -50,6 +50,20 @@ test.describe('ai-bot direct chat', () => {
     await expect(reply).toContainText(question)
   })
 
+  test('bot answers once and does not reply to itself', async ({ page }) => {
+    await openBotDirect(leftSideMenuPage, chunterPage, channelPage)
+
+    await channelPage.sendMessage('один вопрос')
+
+    const messages = page.locator('.hulyComponent .activityMessage')
+    await expect(page.locator('.hulyComponent .activityMessage', { hasText: 'echo' })).toBeVisible({ timeout: 60000 })
+    // The bot's own message lands in the same direct, so a missing self-filter turns one question
+    // into an endless exchange. Settle first, then hold still.
+    await expect(messages).toHaveCount(2, { timeout: 30000 })
+    await page.waitForTimeout(15000)
+    await expect(messages).toHaveCount(2)
+  })
+
   test('direct context carries previous messages', async ({ page }) => {
     await openBotDirect(leftSideMenuPage, chunterPage, channelPage)
 

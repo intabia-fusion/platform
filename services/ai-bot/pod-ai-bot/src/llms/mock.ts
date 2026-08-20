@@ -22,6 +22,9 @@ import { billUsage } from '../billing'
 import { billingMetaFor, providerLevels } from './modelRegistry'
 import { type ChatCompletionWithToolsResult, type ChatMessage, type ContextMode, type LLMProvider } from './types'
 
+// Tool call scripted in the prompt: `call:<tool_name> {json}` on its own line, json optional.
+const TOOL_CALL_RE = /(?:^|\n)\s*call:([a-zA-Z0-9_]+)[ \t]*(\{[\s\S]*?\})?[ \t]*(?=\n|$)/g
+
 // Deterministic offline provider for tests (fixed usage, no network). endpointConfig.echo=true
 // replies with the received context as markdown for assertions; otherwise replies endpointConfig.reply.
 class MockProvider implements LLMProvider {
@@ -74,6 +77,38 @@ class MockProvider implements LLMProvider {
     return lines.join('\n\n')
   }
 
+  // Runs the calls the prompt scripts, so a scenario hits the same tool with the same args.
+  private async runScriptedTools (
+    ctx: MeasureContext,
+    tools: RunnableTools<BaseFunctionsArgs>,
+    prompt: string
+  ): Promise<string[] | undefined> {
+    const calls = [...prompt.matchAll(TOOL_CALL_RE)]
+    if (calls.length === 0) return undefined
+    const byName = new Map<string, any>()
+    for (const tool of tools as any[]) {
+      const name = tool?.function?.name
+      if (typeof name === 'string') byName.set(name, tool)
+    }
+    const lines: string[] = []
+    for (const [, name, rawArgs] of calls) {
+      const tool = byName.get(name)
+      if (tool?.function?.function === undefined) {
+        lines.push(`### tool ${name}\nunavailable`)
+        continue
+      }
+      try {
+        const args = rawArgs !== undefined ? JSON.parse(rawArgs) : {}
+        const result = await tool.function.function(args)
+        lines.push(`### tool ${name}\n${typeof result === 'string' ? result : JSON.stringify(result)}`)
+      } catch (err: any) {
+        ctx.warn('mock tool call failed', { tool: name, error: err?.message })
+        lines.push(`### tool ${name}\nfailed: ${err?.message ?? 'error'}`)
+      }
+    }
+    return lines
+  }
+
   private billingFor (level?: AILevel): { multiplier: number, modelId: string, providerId: string, level: string } {
     return billingMetaFor(this.provider, level, this.defaultLevel, () => 'mock')
   }
@@ -110,6 +145,10 @@ class MockProvider implements LLMProvider {
     _lang?: string
   ): Promise<ChatCompletionWithToolsResult | undefined> {
     this.bill(ctx, workspace, reason, level)
+    const scripted = await this.runScriptedTools(ctx, tools, message.content ?? '')
+    if (scripted !== undefined) {
+      return { completion: ['## tools', ...scripted].join('\n\n'), usage: this.usage }
+    }
     if (!this.echo) {
       return { completion: this.reply, usage: this.usage }
     }

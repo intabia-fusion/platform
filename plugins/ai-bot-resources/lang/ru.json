@@ -38,11 +38,9 @@
     "NewContextHint": "Архивировать текущий диалог и начать новый контекст по этому объекту",
     "NewContextConfirm": "Архивировать текущий диалог и начать новый контекст? Текущее обсуждение останется доступным, но ассистент больше не будет его использовать.",
     "AssistIssue": "ЮляИИ",
-    "AssistIssueUndo": "Вернуть",
     "AssistIssueApply": "Применить",
     "AssistIssueThreadStart": "Черновик задачи{project, select, undefined {} other { в проекте {project}}}",
     "AssistIssueNewContext": "Новый контекст",
-    "AssistIssueCreated": "Создана задача {identifier}",
     "AssistIssueApplyAgain": "Применить снова",
     "AssistIssueAppliedMark": "Применено"
   }

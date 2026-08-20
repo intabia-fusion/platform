@@ -177,8 +177,6 @@
     "ReleaseSocialId": "ソーシャルIDを削除",
     "Billing": "AI",
     "SortTokens": "トークン順",
-    "SortMinutes": "分順",
-    "HeaderTokens": "トークン",
-    "HeaderMinutes": "分"
+    "SortMinutes": "分順"
   }
 }

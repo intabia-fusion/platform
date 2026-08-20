@@ -15,11 +15,9 @@
     "Language": "Idioma",
     "LanguageHint": "Idioma predefinido das respostas do bot (ex.: pt, en). Vazio = predefinição do pod.",
     "AssistIssue": "Yulia IA",
-    "AssistIssueUndo": "Desfazer",
     "AssistIssueApply": "Aplicar",
     "AssistIssueThreadStart": "Rascunho da tarefa{project, select, undefined {} other { em {project}}}",
     "AssistIssueNewContext": "Novo contexto",
-    "AssistIssueCreated": "Tarefa {identifier} criada",
     "AssistIssueApplyAgain": "Aplicar novamente",
     "AssistIssueAppliedMark": "Aplicado"
   }

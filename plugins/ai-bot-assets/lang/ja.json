@@ -15,11 +15,9 @@
     "Language": "言語",
     "LanguageHint": "ボット返答のデフォルト言語（例：ja、en）。空白はポッドのデフォルト。",
     "AssistIssue": "ユリアAI",
-    "AssistIssueUndo": "元に戻す",
     "AssistIssueApply": "適用",
     "AssistIssueThreadStart": "タスクの下書き{project, select, undefined {} other {（{project}）}}",
     "AssistIssueNewContext": "新しいコンテキスト",
-    "AssistIssueCreated": "タスク {identifier} を作成しました",
     "AssistIssueApplyAgain": "もう一度適用",
     "AssistIssueAppliedMark": "適用済み"
   }

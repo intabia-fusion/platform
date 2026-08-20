@@ -92,6 +92,10 @@ import { CollaboratorClient, getClient as getCollaboratorClient } from '@hcengin
 // How long a reply waits for a still-running voice transcription before answering without it.
 const VOICE_TRANSCRIPT_WAIT_MS = 60000
 
+// Loop backstop: replies to one chat allowed inside the window before requests are dropped.
+const REPLY_FLOOD_WINDOW_MS = 60000
+const REPLY_FLOOD_LIMIT = 20
+
 interface LLMHistoryRecord {
   role: 'user' | 'assistant' | 'system'
   content: string
@@ -138,6 +142,8 @@ export class WorkspaceClient {
   primarySocialId: SocialId
   aiPerson: Person | undefined
   personUuidBySocialId = new Map<PersonId, PersonUuid>()
+  // Replies answered per chat inside the current window; see isRepliesFlooding.
+  repliesPerObject = new Map<Ref<Doc>, { since: number, count: number }>()
 
   love: LoveController | undefined
   memoryMap = new Map<PersonUuid, AIMemory>()
@@ -546,6 +552,26 @@ export class WorkspaceClient {
     return { texts, missing: voice.length - texts.length }
   }
 
+  // Backstop for loops the self-check cannot see: no human chat needs this many answers a minute.
+  private isRepliesFlooding (objectId: Ref<Doc>): boolean {
+    const now = Date.now()
+    const seen = this.repliesPerObject.get(objectId)
+    if (seen === undefined || now - seen.since > REPLY_FLOOD_WINDOW_MS) {
+      this.repliesPerObject.set(objectId, { since: now, count: 1 })
+      return false
+    }
+    seen.count++
+    if (seen.count > REPLY_FLOOD_LIMIT) {
+      this.ctx.error('Reply flood detected, dropping the request', {
+        objectId,
+        count: seen.count,
+        windowMs: REPLY_FLOOD_WINDOW_MS
+      })
+      return true
+    }
+    return false
+  }
+
   async processMessageEvent (
     event: AIEventRequest,
     control?: ConsumerControl,
@@ -566,6 +592,16 @@ export class WorkspaceClient {
     const contextMode = objectClass === chunter.class.DirectMessage ? 'direct' : 'thread'
 
     if (personUuid === undefined) {
+      return
+    }
+
+    // Never answer ourselves: the trigger filters by known social ids and can miss one.
+    if (personUuid === this.personUuid) {
+      this.ctx.warn('Skipping own message: the bot must not answer itself', { objectId, user })
+      return
+    }
+
+    if (this.isRepliesFlooding(objectId)) {
       return
     }
 

@@ -523,11 +523,10 @@ export async function handleGetWorkspaceTokenWindows (
   const workspace = getWorkspaceUuid(req)
   const { plan, hasPackages, limitMonth, balance, isFree, periodStart } = await resolveWorkspacePlan(ctx, db, workspace)
   const periodEnd = new Date()
-  const [stats, levels, registry, balanceRow] = await Promise.all([
+  const [stats, levels, registry] = await Promise.all([
     db.getAiTokensStats(ctx, workspace, periodStart, periodEnd),
     db.getWorkspaceLevelUsage(ctx, workspace, periodStart, periodEnd),
-    db.listAiModelRegistry(ctx),
-    db.getTokenBalance(ctx, workspace)
+    db.listAiModelRegistry(ctx)
   ])
   const periodUsage = stats.map((s) => s.totalTokens).reduce((a, b) => a + b, 0)
   const basicLevelLabel = registry.find((r) => r.level === 'low')?.label ?? ''

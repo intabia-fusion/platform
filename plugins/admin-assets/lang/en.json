@@ -148,8 +148,6 @@
     "SortLastVisit": "Last visit",
     "SortTokens": "By tokens",
     "SortMinutes": "By minutes",
-    "HeaderTokens": "Tokens",
-    "HeaderMinutes": "Minutes",
     "MassArchive": "Mass Archive {count}",
     "MassMigrate": "Mass Migrate {count} to {region}",
     "ResetAttempts": "Reset attempts {url}",

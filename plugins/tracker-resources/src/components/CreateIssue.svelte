@@ -697,8 +697,8 @@
     assistSession++
   }
 
+  // Plain "create" is the main button itself, so the dropdown only carries what it cannot do.
   $: createActions = [
-    { id: 'create', label: tracker.string.SaveIssue },
     { id: 'create-open', label: tracker.string.CreateAndOpen },
     { id: 'create-new', label: tracker.string.CreateAndNew }
   ]
@@ -1196,37 +1196,24 @@
   <svelte:fragment slot="buttons">
     <DocCreateExtComponent manager={docCreateManager} kind={'buttons'} space={currentProject} props={extraProps} />
   </svelte:fragment>
-  <svelte:fragment slot="after-buttons" let:handleOkClick let:okProcessing let:focusIndex let:canSave let:okLabel>
-    <DocCreateExtComponent
-      manager={docCreateManager}
-      kind={'createButton'}
-      space={currentProject}
-      props={{
-        ...extraProps,
-        handleOkClick,
-        okProcessing,
-        focusIndex,
-        canSave,
-        okLabel
+  <!-- Rendered directly, not through DocCreateExtComponent: an extension that replaces the create
+       button would drop the create-and-open / create-and-new actions with it. -->
+  <svelte:fragment slot="after-buttons" let:handleOkClick let:okProcessing let:canSave let:okLabel>
+    <ButtonWithDropdown
+      loading={okProcessing}
+      disabled={canSave !== true}
+      label={okLabel}
+      kind={'primary'}
+      size={'large'}
+      justify={'center'}
+      dropdownIcon={IconDropdown}
+      dropdownItems={createActions}
+      mainButtonId={'issue-create-button'}
+      on:click={handleOkClick}
+      on:dropdown-selected={(ev) => {
+        if (ev.detail === 'create-open') void createAndOpen()
+        else if (ev.detail === 'create-new') void createAndNew()
       }}
-    >
-      <ButtonWithDropdown
-        loading={okProcessing}
-        disabled={canSave !== true}
-        label={okLabel}
-        kind={'primary'}
-        size={'large'}
-        justify={'center'}
-        dropdownIcon={IconDropdown}
-        dropdownItems={createActions}
-        mainButtonId={'issue-create-button'}
-        on:click={handleOkClick}
-        on:dropdown-selected={(ev) => {
-          if (ev.detail === 'create-open') void createAndOpen()
-          else if (ev.detail === 'create-new') void createAndNew()
-          else handleOkClick()
-        }}
-      />
-    </DocCreateExtComponent>
+    />
   </svelte:fragment>
 </Card>

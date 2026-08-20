@@ -15,11 +15,9 @@
     "Language": "Language",
     "LanguageHint": "Default language for bot replies (e.g. en, ru). Empty = pod default.",
     "AssistIssue": "Yulia AI",
-    "AssistIssueUndo": "Undo",
     "AssistIssueApply": "Apply",
     "AssistIssueThreadStart": "Task draft{project, select, undefined {} other { in {project}}}",
     "AssistIssueNewContext": "New context",
-    "AssistIssueCreated": "Created issue {identifier}",
     "AssistIssueApplyAgain": "Apply again",
     "AssistIssueAppliedMark": "Applied"
   }

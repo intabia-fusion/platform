@@ -15,11 +15,9 @@
     "Language": "Dil",
     "LanguageHint": "Bot yanıtları için varsayılan dil (ör. tr, en). Boş = pod varsayılanı.",
     "AssistIssue": "Yulia AI",
-    "AssistIssueUndo": "Geri al",
     "AssistIssueApply": "Uygula",
     "AssistIssueThreadStart": "Görev taslağı{project, select, undefined {} other { - {project}}}",
     "AssistIssueNewContext": "Yeni bağlam",
-    "AssistIssueCreated": "{identifier} görevi oluşturuldu",
     "AssistIssueApplyAgain": "Tekrar uygula",
     "AssistIssueAppliedMark": "Uygulandı"
   }

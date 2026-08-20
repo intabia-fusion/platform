@@ -177,8 +177,6 @@
     "ReleaseSocialId": "Social ID löschen",
     "Billing": "AI",
     "SortTokens": "Nach Tokens",
-    "SortMinutes": "Nach Minuten",
-    "HeaderTokens": "Tokens",
-    "HeaderMinutes": "Minuten"
+    "SortMinutes": "Nach Minuten"
   }
 }

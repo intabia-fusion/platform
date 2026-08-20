@@ -49,6 +49,7 @@
     icon={view.icon.Add}
     kind={'ghost'}
     size={'small'}
+    dataId={'btnAiNewContext'}
     showTooltip={{ label: plugin.string.NewContextHint }}
     on:click={newContext}
   />

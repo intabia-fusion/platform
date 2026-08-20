@@ -148,8 +148,6 @@
     "SortLastVisit": "Последний визит",
     "SortTokens": "По токенам",
     "SortMinutes": "По минутам",
-    "HeaderTokens": "Токены",
-    "HeaderMinutes": "Минуты",
     "MassArchive": "Архивировать выбранные ({count})",
     "MassMigrate": "Мигрировать выбранные ({count}) в {region}",
     "ResetAttempts": "Сбросить попытки {url}",

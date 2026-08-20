@@ -38,11 +38,9 @@
     "NewContextHint": "Archivar esta conversación y comenzar un nuevo contexto para este objeto",
     "NewContextConfirm": "¿Archivar la conversación actual e iniciar un nuevo contexto? La conversación actual seguirá disponible, pero el asistente ya no la usará.",
     "AssistIssue": "Yulia IA",
-    "AssistIssueUndo": "Deshacer",
     "AssistIssueApply": "Aplicar",
     "AssistIssueThreadStart": "Borrador de tarea{project, select, undefined {} other { en {project}}}",
     "AssistIssueNewContext": "Nuevo contexto",
-    "AssistIssueCreated": "Tarea {identifier} creada",
     "AssistIssueApplyAgain": "Aplicar de nuevo",
     "AssistIssueAppliedMark": "Aplicado"
   }

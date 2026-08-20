@@ -178,8 +178,6 @@ export default mergeIds(adminId, admin, {
     SortLastVisit: '' as IntlString,
     SortTokens: '' as IntlString,
     SortMinutes: '' as IntlString,
-    HeaderTokens: '' as IntlString,
-    HeaderMinutes: '' as IntlString,
     MassArchive: '' as IntlString,
     MassMigrate: '' as IntlString,
     ResetAttempts: '' as IntlString,

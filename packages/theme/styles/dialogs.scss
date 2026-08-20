@@ -45,23 +45,20 @@
     &.thinHeader:not(.withSub) { padding: 1rem 1.5rem; }
     &:not(.withSub, .thinHeader) { padding: 1.5rem; }
     &.noPadding {
-      // Vertical padding matters only once the header wraps to a second line: below that the
-      // min-height wins and the single-row look is unchanged.
+      // Vertical padding matters only once the header wraps; below that min-height wins.
       padding: .75rem 1.5rem;
       min-height: 4.75rem;
     }
 
     &__title-wrap {
-      // Wraps instead of scrolling sideways: on a narrow dialog the title and its type selector
-      // move to a second line, which beats a hidden horizontal scrollbar in the header.
+      // Wraps instead of scrolling sideways on a narrow dialog.
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       row-gap: .5rem;
       min-width: 0;
 
-      // Without this flex shrinks the items first and only then wraps, so the header ends up a row
-      // of half-clipped labels. max-width keeps a long title ellipsised inside its own line.
+      // Without this flex shrinks before wrapping, leaving a row of half-clipped labels.
       & > * {
         flex-shrink: 0;
         max-width: 100%;
@@ -265,8 +262,8 @@
   &.dialog {
     height: auto;
     max-height: inherit;
-    // The fixed widths below are wider than a phone. `isMobile` is not a fallback here: it comes
-    // from the device, not the viewport, so a narrow window on a desktop still gets `.dialog`.
+    // Fixed widths below are wider than a phone, and `isMobile` comes from the device, not the
+    // viewport - a narrow desktop window still gets `.dialog`.
     max-width: calc(100vw - 1rem);
 
     &.large {   // 720

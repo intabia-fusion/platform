@@ -177,8 +177,6 @@
     "ReleaseSocialId": "Smazat social id",
     "Billing": "Fakturace",
     "SortTokens": "Podle tokenů",
-    "SortMinutes": "Podle minut",
-    "HeaderTokens": "Tokeny",
-    "HeaderMinutes": "Minuty"
+    "SortMinutes": "Podle minut"
   }
 }

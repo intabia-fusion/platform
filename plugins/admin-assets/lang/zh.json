@@ -178,8 +178,6 @@
     "ReplaceSubscriptionConfirm": "工作区已有「{current}」。替换为「{next}」？",
     "Billing": "AI",
     "SortTokens": "按令牌",
-    "SortMinutes": "按分钟",
-    "HeaderTokens": "令牌",
-    "HeaderMinutes": "分钟"
+    "SortMinutes": "按分钟"
   }
 }

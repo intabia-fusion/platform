@@ -177,8 +177,6 @@
     "ReleaseSocialId": "Excluir social id",
     "Billing": "AI",
     "SortTokens": "Por tokens",
-    "SortMinutes": "Por minutos",
-    "HeaderTokens": "Tokens",
-    "HeaderMinutes": "Minutos"
+    "SortMinutes": "Por minutos"
   }
 }

@@ -271,12 +271,8 @@
     max-height: 100%;
   }
 
-  // Set by the aside itself when it wants the full stage (the AI assistant does). Card and panel
-  // then split the row evenly, leaving at most 100px of the viewport free on each side. The max()
-  // keeps a narrow screen usable, where 100px margins would leave almost nothing.
-  // `wide` is set from the outside (by an aside that wants the full stage), so these have to be
-  // :global - svelte drops selectors it cannot find in this component's own markup. The card's
-  // own .antiCard.dialog.large pins a fixed width, hence the extra classes to outweigh it.
+  // Set from the outside by an aside that wants the full stage, hence :global. Card and panel then
+  // split the row, leaving at most 100px free per side; the extra classes outweigh the fixed width.
   :global(.antiCard-wrap.wide) {
     width: max(60vw, 100vw - 200px);
     height: 80vh;

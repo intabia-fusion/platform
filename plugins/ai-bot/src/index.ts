@@ -229,12 +229,10 @@ const aiBot = plugin(aiBotId, {
     DiscussWithAI: '' as IntlString,
     AssistIssue: '' as IntlString,
     AssistIssueThreadStart: '' as IntlString,
-    AssistIssueCreated: '' as IntlString,
     AssistIssueApply: '' as IntlString,
     AssistIssueApplyAgain: '' as IntlString,
     AssistIssueAppliedMark: '' as IntlString,
     AssistIssueNewContext: '' as IntlString,
-    AssistIssueUndo: '' as IntlString,
 
     DiscussFirstMessage: '' as IntlString,
     ProposedEdit: '' as IntlString,

@@ -18,12 +18,8 @@ import { deviceOptionsStore } from '@hcengineering/ui'
 
 import { type AITaskProposalMessage } from '@hcengineering/ai-bot'
 
-/**
- * Whether there is room for the assistant beside the create dialog. `isMobile` alone is not enough:
- * it comes from the device, so a narrow window on a desktop still reports false while the dialog
- * plus a conversation no longer fit. Below this the toggle is hidden too - a button that opens a
- * panel with nowhere to go only crowds an already tight header.
- */
+// Room for the assistant beside the dialog. `isMobile` is not enough: it comes from the device,
+// so a narrow desktop window still reports false. Below this the toggle is hidden too.
 export const ASSIST_MIN_WIDTH = 768
 
 export const issueAssistFits = derived(
@@ -31,14 +27,8 @@ export const issueAssistFits = derived(
   (device) => !device.isMobile && device.docWidth > ASSIST_MIN_WIDTH
 )
 
-/**
- * Whether the create-issue assistant panel is open. The toggle sits in the dialog header and the
- * panel in the card's aside slot — two extension points, so the state lives outside both.
- */
+// Toggle sits in the dialog header, panel in the card's aside slot - state lives outside both.
 export const issueAssistOpened = writable(false)
 
-/**
- * Applies a proposal to the create-issue form. Registered by the assistant panel while it is
- * open; the proposal card calls it, so "apply" sits on the card itself and not in a separate bar.
- */
+// Applies a proposal to the form: registered by the panel, called by the proposal card.
 export const issueDraftApplier = writable<((proposal: AITaskProposalMessage) => void) | undefined>(undefined)
