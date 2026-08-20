@@ -217,13 +217,13 @@
             <ObjectPresenter _class={mixinBase._class} objectId={mixinBase._id} value={mixinBase} />
             <span class="content-halfcontent-color mx-1">·</span>
           {/if}
-          <ObjectPresenter _class={clazzHierarchy._class} objectId={clazzHierarchy._id} value={clazzHierarchy} />
+          <ObjectPresenter _class={clazzHierarchy._class} objectId={clazzHierarchy._id} value={clazz ?? clazzHierarchy} />
         </ModernButton>
       {:else if mixinHeader && clazz !== undefined}
         <div class="flex-row-center flex-gap-2">
           <ModernButton icon={IconSettings} kind={'secondary'} size={'small'} {disabled} hasMenu>
             <Label label={settings.string.MixinColon} />
-            <ObjectPresenter _class={clazz._class} objectId={clazz._id} value={clazz} />
+            <ObjectPresenter _class={clazz._class} objectId={clazz._id} value={clazz ?? clazzHierarchy} />
           </ModernButton>
           {#if hierarchy.hasMixin(clazz, settings.mixin.UserMixin)}
             <ActionIcon icon={IconEdit} size="small" action={editLabel} {disabled} />

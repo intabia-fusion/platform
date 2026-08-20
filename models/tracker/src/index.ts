@@ -706,7 +706,7 @@ function defineSpaceType (builder: Builder): void {
       parent: pluginState.ids.ClassingProjectType,
       statuses: classicStatuses,
       descriptor: tracker.descriptors.Issue,
-      name: 'Issue',
+      name: 'Classic Issue',
       ofClass: tracker.class.Issue,
       targetClass: tracker.class.IssueTaskType,
       statusClass: tracker.class.IssueStatus,
