@@ -303,7 +303,9 @@
     "AddedRelation": "Přidán související úkol {identifier}{value}",
     "RemovedRelation": "Odebrán související úkol {identifier}{value}",
     "CreateAndOpen": "Vytvořit a otevřít",
-    "CreateAndNew": "Vytvořit a začít další"
+    "CreateAndNew": "Vytvořit a začít další",
+    "ExportToCSV": "Export do CSV",
+    "ExportToCSVTooltip": "Exportovat viditelné úkoly do souboru CSV"
   },
   "status": {},
   "emailTemplate": {

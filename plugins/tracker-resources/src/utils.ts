@@ -38,9 +38,12 @@ import core, {
   generateId,
   getCurrentAccount,
   type TxCUD,
-  type TxRemoveDoc
+  type TxRemoveDoc,
+  type AnyAttribute,
+  type RefTo
 } from '@hcengineering/core'
-import { type IntlString } from '@hcengineering/platform'
+import { translateCB, type IntlString } from '@hcengineering/platform'
+import contact from '@hcengineering/contact'
 import { createQuery, getClient, onClient } from '@hcengineering/presentation'
 import task, { getStatusIndex, makeRank, type TaskType, type ProjectType } from '@hcengineering/task'
 import {
@@ -60,12 +63,20 @@ import {
   type Project,
   type TimeSpendReport as TimeSpendReportDoc
 } from '@hcengineering/tracker'
-import { areDatesEqual, isWeekend, PaletteColorIndexes } from '@hcengineering/ui'
+import { areDatesEqual, isWeekend, PaletteColorIndexes, themeStore } from '@hcengineering/ui'
 import { type AttributeApplierResult, type KeyFilter, type ViewletDescriptor } from '@hcengineering/view'
-import { CategoryQuery, ListSelectionProvider, statusStore, type SelectDirection } from '@hcengineering/view-resources'
+import {
+  CategoryQuery,
+  ListSelectionProvider,
+  statusStore,
+  selectionStore,
+  type SelectDirection
+} from '@hcengineering/view-resources'
 import { derived, get, writable } from 'svelte/store'
 import tracker from './plugin'
-import { defaultMilestoneStatuses, defaultPriorities } from './types'
+import { formatDuration } from '@hcengineering/tracker'
+import { getPersonRefByPersonIdCb } from '@hcengineering/contact-resources'
+import { defaultMilestoneStatuses, defaultPriorities, issuePriorities } from './types'
 import { type DraftTimeReportPayload } from './components/issues/timereport/service'
 
 export const activeProjects = derived(taskActiveProjects, (projects) => {
@@ -135,6 +146,34 @@ export const listIssueKanbanStatusOrder = [
   task.statusCategory.Won,
   task.statusCategory.Lost
 ] as const
+
+const INCLUDE_KEYS: string[] = [
+  'identifier',
+  'title',
+  'status',
+  'kind',
+  'priority',
+  'assignee',
+  'dueDate',
+  'component',
+  'milestone',
+  'estimation',
+  'reportedTime',
+  'remainingTime',
+  'number',
+  'createdOn',
+  'modifiedOn'
+]
+
+const CUSTOM_INCLUDE_TYPES: Array<Ref<Class<any>>> = [
+  core.class.TypeString,
+  core.class.TypeHyperlink,
+  core.class.TypeNumber,
+  core.class.TypeDate,
+  core.class.TypeTimestamp,
+  core.class.TypeBoolean,
+  core.class.EnumOf
+]
 
 function getTaskTypesStatusIndex (joinedTaskTypes: TaskType[], status: Ref<Status>): number {
   for (const taskType of joinedTaskTypes) {
@@ -727,4 +766,336 @@ export function reportedTimeApplier (
   return {
     txes
   }
+}
+
+export async function exportIssuesToCSV (query: DocumentQuery<Issue>): Promise<void> {
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+  const lang = get(themeStore).language
+
+  const selected = get(selectionStore).docs.filter((d) => hierarchy.isDerived(d._class, tracker.class.Issue)) as Issue[]
+
+  const issues =
+    selected.length > 0
+      ? selected
+      : await client.findAll(tracker.class.Issue, query, {
+        limit: 10000,
+        sort: { modifiedOn: -1 }
+      })
+
+  const allAttrs = hierarchy.getAllAttributes(tracker.class.Issue)
+  const headers: Array<{ key: string, label: string, attr?: AnyAttribute }> = []
+
+  for (const key of INCLUDE_KEYS) {
+    const attr = allAttrs.get(key)
+    if (attr == null || attr.hidden === true) continue
+
+    const label = await translateIntlString(attr.label, lang)
+    headers.push({ key, label, attr })
+  }
+
+  for (const [key, attr] of allAttrs) {
+    if (INCLUDE_KEYS.includes(key)) continue
+    if (attr.isCustom !== true || attr.hidden === true) continue
+    if (!isExportableCustomAttr(attr)) continue
+
+    const label = await translateIntlString(attr.label, lang)
+    headers.push({ key, label, attr })
+  }
+
+  headers.push({
+    key: 'createdByPerson',
+    label: await translateIntlString(core.string.CreatedBy, lang)
+  })
+
+  headers.push({
+    key: 'parentIssues',
+    label: await translateIntlString(tracker.string.Parent, lang)
+  })
+
+  headers.push({
+    key: 'subIssuesList',
+    label: await translateIntlString(tracker.string.SubIssues, lang)
+  })
+
+  const refCache = await preloadRefValues(issues, headers, client)
+  const createdByName = await preloadCreatedByNames(issues, client)
+
+  const csvRows: string[] = []
+  csvRows.push(headers.map((h) => escapeCsv(h.label)).join(','))
+
+  for (const issue of issues) {
+    const row = await Promise.all(
+      headers.map(async ({ key, attr }) => {
+        if (key === 'createdByPerson') {
+          return createdByName.get(issue.createdBy as string) ?? ''
+        }
+        if (key === 'parentIssues') {
+          return await getParentIssuesNumbers(issue, refCache)
+        }
+        if (key === 'subIssuesList') {
+          return await getSubIssuesNumbers(issue, refCache)
+        }
+
+        const value = (issue as any)[key]
+        return await formatValue(value, attr, lang, refCache)
+      })
+    )
+    csvRows.push(row.map(escapeCsv).join(','))
+  }
+
+  const csv = csvRows.join('\n')
+
+  const filename = `issues_${new Date().toISOString().split('T')[0]}.csv`
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(link.href)
+}
+
+async function translateIntlString (intlStr: IntlString, lang: string): Promise<string> {
+  return await new Promise((resolve) => {
+    translateCB(intlStr, {}, lang, (result) => {
+      resolve(result)
+    })
+  })
+}
+
+function escapeCsv (value: any): string {
+  if (value == null || value === '') return ''
+  const str = String(value)
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return `"${str.replace(/"/g, '""')}"`
+  }
+  return str
+}
+
+async function preloadRefValues (
+  issues: Issue[],
+  headers: Array<{ key: string, label: string, attr?: AnyAttribute }>,
+  client: any
+): Promise<Map<string, Map<Ref<any>, any>>> {
+  const refCache = new Map<string, Map<Ref<any>, any>>()
+  const refLookups: Array<{ classRef: Ref<any>, ids: Set<Ref<any>> }> = []
+
+  for (const { key, attr } of headers) {
+    if (attr?.type == null || attr.type._class !== core.class.RefTo) continue
+
+    const toClass = (attr.type as RefTo<Doc>).to
+    if (toClass == null) continue
+
+    const ids = new Set<Ref<any>>()
+    for (const issue of issues) {
+      const val = (issue as any)[key]
+      if (val != null) ids.add(val)
+    }
+
+    if (ids.size > 0) {
+      refLookups.push({ classRef: toClass, ids })
+    }
+  }
+
+  const personIds = new Set<string>()
+  for (const issue of issues) {
+    if (issue.createdBy != null) {
+      personIds.add(issue.createdBy as string)
+    }
+  }
+
+  const parentIds = new Set<Ref<any>>()
+  for (const issue of issues) {
+    if (issue.attachedTo != null && issue.attachedTo !== tracker.ids.NoParent) {
+      parentIds.add(issue.attachedTo)
+    }
+  }
+  if (parentIds.size > 0) {
+    refLookups.push({ classRef: tracker.class.Issue, ids: parentIds })
+  }
+
+  const subIssueIds = new Set<Ref<any>>()
+  for (const issue of issues) {
+    if (issue.childInfo != null && Array.isArray(issue.childInfo)) {
+      for (const child of issue.childInfo) {
+        if (child.childId != null) subIssueIds.add(child.childId)
+      }
+    }
+  }
+  if (subIssueIds.size > 0) {
+    refLookups.push({ classRef: tracker.class.Issue, ids: subIssueIds })
+  }
+
+  for (const { classRef, ids } of refLookups) {
+    const results = await client.findAll(classRef, { _id: { $in: Array.from(ids) } })
+    const map = new Map<Ref<any>, any>()
+    for (const r of results) {
+      map.set(r._id, r)
+    }
+    refCache.set(classRef, map)
+  }
+
+  return refCache
+}
+
+async function preloadCreatedByNames (issues: Issue[], client: any): Promise<Map<string, string>> {
+  const result = new Map<string, string>()
+  const uniqueIds = [...new Set(issues.map((i) => i.createdBy).filter((id) => id != null))]
+  if (uniqueIds.length === 0) return result
+
+  const pairs: Array<{ personId: string, personRef: Ref<Person> }> = []
+  for (const personId of uniqueIds) {
+    const personRef = await new Promise<Ref<Person> | undefined>((resolve) => {
+      getPersonRefByPersonIdCb(personId, (ref) => {
+        resolve(ref ?? undefined)
+      })
+    })
+    if (personRef != null) pairs.push({ personId: personId as string, personRef })
+  }
+  if (pairs.length === 0) return result
+
+  const persons: Person[] = await client.findAll(contact.class.Person, { _id: { $in: pairs.map((p) => p.personRef) } })
+  const byRef = toIdMap(persons)
+  for (const { personId, personRef } of pairs) {
+    const name = byRef.get(personRef)?.name
+    if (name != null) result.set(personId, name)
+  }
+  return result
+}
+
+async function getParentIssuesNumbers (issue: Issue, refCache: Map<string, Map<Ref<any>, any>>): Promise<string> {
+  const parents: string[] = []
+
+  if (issue.attachedTo != null && issue.attachedTo !== tracker.ids.NoParent) {
+    const parent = refCache.get(tracker.class.Issue)?.get(issue.attachedTo)
+    if (parent?.identifier != null) {
+      parents.push(parent.identifier)
+    }
+  }
+
+  if (issue.parents != null && Array.isArray(issue.parents)) {
+    for (const p of issue.parents) {
+      if (p.parentId != null && p.identifier != null) {
+        if (!parents.includes(p.identifier)) {
+          parents.push(p.identifier)
+        }
+      }
+    }
+  }
+
+  return parents.join('; ')
+}
+
+async function getSubIssuesNumbers (issue: Issue, refCache: Map<string, Map<Ref<any>, any>>): Promise<string> {
+  const subIssues: string[] = []
+
+  if (issue.childInfo != null && Array.isArray(issue.childInfo)) {
+    for (const child of issue.childInfo) {
+      if (child.childId != null) {
+        const subIssue = refCache.get(tracker.class.Issue)?.get(child.childId)
+        if (subIssue?.identifier != null) {
+          subIssues.push(subIssue.identifier)
+        }
+      }
+    }
+  }
+
+  return subIssues.join('; ')
+}
+
+async function formatValue (
+  value: any,
+  attr: AnyAttribute | undefined,
+  lang: string,
+  refCache: Map<string, Map<Ref<any>, any>>
+): Promise<string> {
+  if (value == null || value === '') return ''
+
+  if (attr?.type == null) {
+    return String(value)
+  }
+
+  const type = attr.type
+
+  if (type._class === core.class.RefTo) {
+    const toClass = (type as RefTo<Doc>).to
+
+    if (toClass === tracker.class.IssueStatus) {
+      const status = refCache.get(tracker.class.IssueStatus)?.get(value)
+      return status?.name ?? String(value)
+    }
+
+    if (toClass === tracker.class.Component) {
+      const comp = refCache.get(tracker.class.Component)?.get(value)
+      return comp?.label ?? String(value)
+    }
+
+    if (toClass === tracker.class.Milestone) {
+      const milestone = refCache.get(tracker.class.Milestone)?.get(value)
+      return milestone?.label ?? String(value)
+    }
+
+    if (toClass === task.class.TaskType) {
+      const taskType = refCache.get(task.class.TaskType)?.get(value)
+      return taskType?.name ?? String(value)
+    }
+
+    if (toClass === contact.class.Person || toClass === contact.mixin.Employee) {
+      const person = refCache.get(contact.class.Person)?.get(value)
+      return person?.name ?? String(value)
+    }
+
+    return String(value)
+  }
+
+  if (type._class === tracker.class.TypeIssuePriority) {
+    const priorityEntry = issuePriorities[value as IssuePriority]
+    if (priorityEntry?.label != null) {
+      return await translateIntlString(priorityEntry.label, lang)
+    }
+    return String(value)
+  }
+
+  if (attr.name === 'dueDate' || type._class === core.class.TypeDate) {
+    if (typeof value === 'number' && value > 0) {
+      return new Date(value).toLocaleDateString(lang)
+    }
+    return ''
+  }
+
+  if (type._class === core.class.TypeTimestamp) {
+    if (typeof value === 'number') {
+      if (value > 10000000000000) {
+        const date = new Date(value / 1000000)
+        return date.toLocaleString(lang)
+      } else {
+        const date = new Date(value)
+        return date.toLocaleString(lang)
+      }
+    }
+    return String(value)
+  }
+
+  if (['estimation', 'reportedTime', 'remainingTime'].includes(attr.name)) {
+    return formatDuration(Number(value), lang)
+  }
+
+  if (type._class === core.class.TypeNumber) {
+    return String(value)
+  }
+
+  return String(value)
+}
+
+function isExportableCustomAttr (attr: AnyAttribute): boolean {
+  const typeClass = attr.type._class
+  if (CUSTOM_INCLUDE_TYPES.includes(typeClass)) return true
+
+  if (typeClass === core.class.ArrOf) {
+    const inner = (attr.type as any).of
+    const innerClass = inner != null && typeof inner === 'object' ? inner._class : inner
+    return innerClass !== core.class.RefTo
+  }
+
+  return false
 }
