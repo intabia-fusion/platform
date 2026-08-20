@@ -111,12 +111,39 @@ export function generateToken (
   )
 }
 
+// Verified tokens, keyed by secret+token. A session reuses one token for thousands of REST
+// calls, and the HMAC was 8% of transactor CPU under load. Only successes are cached.
+const verifiedTokens = new Map<string, Token>()
+const TOKEN_CACHE_MAX = 4096
+
+// jwt-simple enforces nbf/exp inside decode, so a cached token has to be re-checked here -
+// otherwise it would outlive its own expiry.
+function isCurrent (t: Token): boolean {
+  const now = Date.now()
+  if (t.nbf !== undefined && now < t.nbf * 1000) return false
+  if (t.exp !== undefined && now > t.exp * 1000) return false
+  return true
+}
+
 /**
  * @public
  */
 export function decodeToken (token: string, verify: boolean = true, secret?: string): Token {
+  const key = verify ? `${secret ?? getSecret()}:${token}` : undefined
+  if (key !== undefined) {
+    const cached = verifiedTokens.get(key)
+    if (cached !== undefined) {
+      if (isCurrent(cached)) return cached
+      verifiedTokens.delete(key)
+    }
+  }
   try {
-    return decode(token, secret ?? getSecret(), !verify)
+    const res: Token = decode(token, secret ?? getSecret(), !verify)
+    if (key !== undefined) {
+      if (verifiedTokens.size >= TOKEN_CACHE_MAX) verifiedTokens.clear()
+      verifiedTokens.set(key, res)
+    }
+    return res
   } catch (err: any) {
     throw new TokenError(err.message)
   }
