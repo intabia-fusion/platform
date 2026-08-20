@@ -530,12 +530,6 @@ export async function handleGetWorkspaceTokenWindows (
     db.getTokenBalance(ctx, workspace)
   ])
   const periodUsage = stats.map((s) => s.totalTokens).reduce((a, b) => a + b, 0)
-  // Usage the balance already paid for does not count against the tier window.
-  const absorbed =
-    balanceRow !== undefined && new Date(balanceRow.periodStart).getTime() === periodStart.getTime()
-      ? balanceRow.absorbedPeriod
-      : 0
-  const usedMonth = Math.max(0, periodUsage - absorbed)
   const basicLevelLabel = registry.find((r) => r.level === 'low')?.label ?? ''
   res.json({
     workspace,
@@ -543,11 +537,13 @@ export async function handleGetWorkspaceTokenWindows (
     isFree,
     basicLevelLabel,
     hasPackages,
+    // The pack is charged once, when the period ends, so during the period it stands still.
     balance,
-    // null = unlimited tier window. Otherwise the block threshold: <= 0 means no tokens left.
-    available: limitMonth === 0 ? null : Math.max(0, limitMonth - usedMonth) + balance,
+    // null = unlimited grant. Otherwise the block threshold: <= 0 means no tokens left.
+    available: limitMonth === 0 ? null : Math.max(0, limitMonth + balance - periodUsage),
     month: {
-      used: usedMonth,
+      // Everything spent this period, whichever pool ends up paying for it.
+      used: periodUsage,
       limit: limitMonth,
       resetAt: addMonth(periodStart).toISOString(),
       levels

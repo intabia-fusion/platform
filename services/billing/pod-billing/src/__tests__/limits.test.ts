@@ -113,7 +113,7 @@ function msg (ref: string, amount = 1): BillingUsageMessage {
 
 describe('LimitsEngine', () => {
   it('ignores duplicate ref', async () => {
-    tierLimits({ tokenLimit: 1000 })
+    tierLimits({ tokenLimit: 1000, windowMonthLimit: 1000 })
     const db = makeDb(0)
     const { engine } = makeEngine(db)
     await engine.processUsageDelta(ctx, msg('r1'))
@@ -123,7 +123,7 @@ describe('LimitsEngine', () => {
   })
 
   it('publishes exhausted on flip, not on repeat', async () => {
-    tierLimits({ tokenLimit: 1000 })
+    tierLimits({ tokenLimit: 1000, windowMonthLimit: 1000 })
     const db = makeDb()
     const { engine, producer } = makeEngine(db)
 
@@ -144,7 +144,7 @@ describe('LimitsEngine', () => {
   })
 
   it('publishes ok when limit grows above usage', async () => {
-    tierLimits({ tokenLimit: 5000 })
+    tierLimits({ tokenLimit: 5000, windowMonthLimit: 5000 })
     const db = makeDb()
     // pre-seed exhausted state from the previous (smaller) plan
     await db.upsertLimitState(ctx, { workspace: WS, category: 'tokens', used: 1001, limitValue: 1000, exhausted: true })
@@ -160,7 +160,7 @@ describe('LimitsEngine', () => {
   })
 
   it('limit 0 = unlimited, never exhausted', async () => {
-    tierLimits({ tokenLimit: 0 })
+    tierLimits({ tokenLimit: 0, windowMonthLimit: 0 })
     const db = makeDb()
     const { engine, producer } = makeEngine(db)
     await engine.processUsageDelta(ctx, msg('r-unlim', 999999))
@@ -169,7 +169,7 @@ describe('LimitsEngine', () => {
 
   it('unpaid tier enforces the free fallback limit', async () => {
     // No active paid tier, but a free fallback caps tokens at 1000 -> crossing it still flips exhausted.
-    unpaidWithFree({ tokenLimit: 1000 })
+    unpaidWithFree({ tokenLimit: 1000, windowMonthLimit: 1000 })
     const db = makeDb()
     const { engine, producer } = makeEngine(db)
     await engine.processUsageDelta(ctx, msg('r1', 1001))
@@ -204,25 +204,38 @@ describe('LimitsEngine', () => {
     function tierWithPeriod (tokenLimit: number): Date {
       const periodStart = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
       getSubscriptionsMock.mockResolvedValue([
-        { type: 'tier', status: 'active', limits: { tokenLimit }, periodStart: periodStart.getTime() }
+        { type: 'tier', status: 'active', limits: { windowMonthLimit: tokenLimit }, periodStart: periodStart.getTime() }
       ])
       return periodStart
     }
 
-    it('spends the balance before the tier window', async () => {
+    it('spends the monthly grant first: staying under it leaves the pack untouched', async () => {
       const periodStart = tierWithPeriod(1000)
-      // 800 tokens used, 500 of them paid from the balance -> 300 charged to the tier window.
       const db = makeDb(800, 0, balanceRow(500, periodStart))
       const { engine } = makeEngine(db)
 
       await engine.recomputeWorkspace(ctx, WS)
 
+      // `used` is the full spend now; the limit it is compared against is grant + pack.
       const state = await db.getLimitState(ctx, WS, 'tokens')
-      expect(state?.used).toBe(300)
+      expect(state?.used).toBe(800)
       expect(state?.exhausted).toBe(false)
       const balance: any = await db.getTokenBalance(ctx, WS)
-      expect(balance.remainingTokens).toBe(0)
-      expect(balance.absorbedPeriod).toBe(500)
+      expect(balance.remainingTokens).toBe(500)
+      expect(balance.absorbedPeriod).toBe(0)
+    })
+
+    it('does not touch the pack mid-period, even over the grant', async () => {
+      const periodStart = tierWithPeriod(1000)
+      const db = makeDb(1200, 0, balanceRow(500, periodStart))
+      const { engine } = makeEngine(db)
+
+      await engine.recomputeWorkspace(ctx, WS)
+
+      // Nothing is written during a period: the pack is charged once, when the period ends.
+      expect(db.updateTokenBalanceAbsorption).not.toHaveBeenCalled()
+      const balance: any = await db.getTokenBalance(ctx, WS)
+      expect(balance.remainingTokens).toBe(500)
     })
 
     it('keeps serving on balance alone once the tier window is spent', async () => {
@@ -254,21 +267,36 @@ describe('LimitsEngine', () => {
       )
     })
 
-    it('restarts the absorbed counter on a new period but keeps the balance', async () => {
+    it('charges the pack for the finished period when the period rolls over', async () => {
       const periodStart = tierWithPeriod(1000)
-      // Balance row still carries last period's counters; only absorbedPeriod must reset.
-      const stale = balanceRow(400, new Date(periodStart.getTime() - 30 * 24 * 60 * 60 * 1000))
-      stale.absorbedPeriod = 900
-      const db = makeDb(500, 0, stale)
+      // makeDb returns the same usage for any range, so the previous period also reads 1300:
+      // 300 over the 1000 grant -> that much comes off the pack.
+      const stale = balanceRow(1000, new Date(periodStart.getTime() - 30 * 24 * 60 * 60 * 1000))
+      const db = makeDb(1300, 0, stale)
       const { engine } = makeEngine(db)
 
       await engine.recomputeWorkspace(ctx, WS)
 
       const balance: any = await db.getTokenBalance(ctx, WS)
-      expect(balance.remainingTokens).toBe(0)
-      expect(balance.absorbedPeriod).toBe(400)
-      const state = await db.getLimitState(ctx, WS, 'tokens')
-      expect(state?.used).toBe(100)
+      expect(balance.remainingTokens).toBe(700)
+      // Stamped with the period start floored to the hour, matching the hourly usage buckets.
+      const expected = new Date(periodStart)
+      expected.setMinutes(0, 0, 0)
+      expect(new Date(balance.periodStart).getTime()).toBe(expected.getTime())
+    })
+
+    it('settles once: a second pass in the same period is a no-op', async () => {
+      const periodStart = tierWithPeriod(1000)
+      const stale = balanceRow(1000, new Date(periodStart.getTime() - 30 * 24 * 60 * 60 * 1000))
+      const db = makeDb(1300, 0, stale)
+      const { engine } = makeEngine(db)
+
+      await engine.recomputeWorkspace(ctx, WS)
+      await engine.recomputeWorkspace(ctx, WS)
+
+      expect(db.updateTokenBalanceAbsorption).toHaveBeenCalledTimes(1)
+      const balance: any = await db.getTokenBalance(ctx, WS)
+      expect(balance.remainingTokens).toBe(700)
     })
   })
 
@@ -321,7 +349,7 @@ describe('LimitsEngine', () => {
   })
 
   it('batch aggregates same workspace/metric into one apply, deduping refs', async () => {
-    tierLimits({ tokenLimit: 1000 })
+    tierLimits({ tokenLimit: 1000, windowMonthLimit: 1000 })
     const db = makeDb()
     const { engine, producer } = makeEngine(db)
     const hb = jest.fn(async () => {})
@@ -340,7 +368,7 @@ describe('LimitsEngine', () => {
   })
 
   it('batch keeps distinct metrics as separate groups (one heartbeat each)', async () => {
-    tierLimits({ tokenLimit: 1000 })
+    tierLimits({ tokenLimit: 1000, windowMonthLimit: 1000 })
     const db = makeDb()
     const { engine } = makeEngine(db)
     const hb = jest.fn(async () => {})

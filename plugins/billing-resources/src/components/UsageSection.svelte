@@ -31,7 +31,6 @@
 
   $: storageUsedBytes = usage?.usage?.storageBytes ?? 0
   $: meetingMinutes = usage?.usage?.meetingMinutes ?? 0
-  $: tokensUsage = usage?.usage?.tokens ?? 0
   $: membersCount = usage?.usage?.membersCount ?? 0
   $: limits = calculateLimits(plan, pkg, tierSub, pkgSub)
 </script>
@@ -52,8 +51,8 @@
         kind={'minutes'}
       />
 
-      <UsageProgress label={plugin.string.TotalTokens} value={tokensUsage} limit={limits.tokenLimit} kind={'items'} />
-
+      <!-- AI tokens live in TokenWindows: `tokenLimit` is 0 on per-seat plans, so this bar showed
+           a limit of zero next to the real one. -->
       <UsageProgress label={plugin.string.MembersUsage} value={membersCount} limit={limits.usersLimit} kind={'items'} />
     {/if}
   </div>

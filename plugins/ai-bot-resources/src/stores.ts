@@ -13,9 +13,23 @@
 // limitations under the License.
 //
 
-import { writable } from 'svelte/store'
+import { derived, writable } from 'svelte/store'
+import { deviceOptionsStore } from '@hcengineering/ui'
 
 import { type AITaskProposalMessage } from '@hcengineering/ai-bot'
+
+/**
+ * Whether there is room for the assistant beside the create dialog. `isMobile` alone is not enough:
+ * it comes from the device, so a narrow window on a desktop still reports false while the dialog
+ * plus a conversation no longer fit. Below this the toggle is hidden too - a button that opens a
+ * panel with nowhere to go only crowds an already tight header.
+ */
+export const ASSIST_MIN_WIDTH = 768
+
+export const issueAssistFits = derived(
+  deviceOptionsStore,
+  (device) => !device.isMobile && device.docWidth > ASSIST_MIN_WIDTH
+)
 
 /**
  * Whether the create-issue assistant panel is open. The toggle sits in the dialog header and the

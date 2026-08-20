@@ -323,7 +323,8 @@ test.describe('billing UI lifecycle (tbank + mock bank)', () => {
     // The grant travels through the purchase event and the billing pod, so poll rather than assume.
     await expect(async () => {
       await openBilling(page, wsUrl)
-      await expect(balance).toContainText('10,000,000', { timeout: 5000 })
+      // Rendered compact ("10M" / "10 млн" depending on locale), so match the digits only.
+      await expect(balance).toContainText('10', { timeout: 5000 })
     }).toPass({ intervals: [2000, 3000, 5000], timeout: 90000 })
 
     // Purchased tokens are spendable on top of the tier window, so available exceeds it.

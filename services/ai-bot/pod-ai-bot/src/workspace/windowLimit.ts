@@ -27,10 +27,12 @@ export interface LimitDecision {
   reason?: 'limit' | 'unavailable'
 }
 
-// Tokens left across both pools; 0 limit = unlimited tier window.
+// Tokens left across both pools; 0 limit = unlimited monthly grant.
+// `used` is the whole period spend and the pack is charged only at period end, so both pools go
+// into one subtraction - clamping the grant first would hide an overspend behind the full pack.
 function available (usage: WindowUsage): number | undefined {
   if (usage.month.limit <= 0) return undefined
-  return Math.max(0, usage.month.limit - usage.month.used) + usage.balance
+  return Math.max(0, usage.month.limit + usage.balance - usage.month.used)
 }
 
 // Out of tokens -> block every plan and offer a top-up. No level downgrade: a cheap on-prem

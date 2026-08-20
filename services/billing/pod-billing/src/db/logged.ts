@@ -299,7 +299,7 @@ export class LoggedDB implements BillingDB {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     remainingTokens: number,
-    absorbedUntil: string,
+    absorbedUntil: string | null,
     absorbedPeriod: number,
     periodStart: string
   ): Promise<void> {

@@ -18,15 +18,7 @@
   import { createQuery } from '@hcengineering/presentation'
   import { jsonToMarkup, markupToText } from '@hcengineering/text'
   import { markdownToMarkup } from '@hcengineering/text-markdown'
-  import {
-    Button,
-    Component,
-    deviceOptionsStore as deviceInfo,
-    IconAdd,
-    IconClose,
-    Label,
-    themeStore
-  } from '@hcengineering/ui'
+  import { Button, Component, IconAdd, Label, themeStore } from '@hcengineering/ui'
   import { translate } from '@hcengineering/platform'
   import aiBotPlugin, { type AITaskProposalMessage } from '@hcengineering/ai-bot'
   import chunter, { type ChatMessage } from '@hcengineering/chunter'
@@ -35,7 +27,7 @@
 
   import aiBot from '../plugin'
   import { aiBotSocialIdentityStore } from '../utils'
-  import { issueAssistOpened, issueDraftApplier } from '../stores'
+  import { issueAssistFits, issueAssistOpened, issueDraftApplier } from '../stores'
   import {
     archiveConversation,
     linkConversationResult,
@@ -306,7 +298,7 @@
 </script>
 
 <!-- Never on mobile: the create dialog plus a conversation leaves no usable space on a phone. -->
-{#if $issueAssistOpened && objectId !== undefined && !$deviceInfo.isMobile}
+{#if $issueAssistOpened && objectId !== undefined && $issueAssistFits}
   <!-- The slot holds the width in the row; the panel itself is absolute, so a long conversation
        scrolls instead of stretching the dialog beside it. -->
   <div class="assist-slot" use:claimWideLayout>
@@ -320,24 +312,16 @@
             <Label label={aiBot.string.AssistIssue} />
           {/if}
         </span>
+        <!-- No close button here: the header toggle next to the dialog's own cross owns that. -->
         <div class="actions">
           <Button
             icon={IconAdd}
             iconProps={{ size: 'small' }}
+            label={aiBot.string.AssistIssueNewContext}
             kind={'ghost'}
             size={'small'}
-            showTooltip={{ label: aiBot.string.AssistIssueNewContext }}
             disabled={conversation === undefined}
             on:click={resetConversation}
-          />
-          <Button
-            icon={IconClose}
-            iconProps={{ size: 'small' }}
-            kind={'ghost'}
-            size={'small'}
-            on:click={() => {
-              issueAssistOpened.set(false)
-            }}
           />
         </div>
       </div>

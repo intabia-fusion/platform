@@ -133,7 +133,7 @@ describe('resolveWorkspacePlan', () => {
 })
 
 describe('handleGetWorkspaceTokenWindows', () => {
-  it('subtracts absorbed balance from used when the balance period matches', async () => {
+  it('reports the whole period spend and leaves the pack untouched mid-period', async () => {
     const periodStartMs = new Date('2026-01-01T00:00:00.000Z').getTime()
     getSubscriptionsMock.mockResolvedValue([
       {
@@ -160,13 +160,14 @@ describe('handleGetWorkspaceTokenWindows', () => {
     await handleGetWorkspaceTokenWindows(ctx, db, [], makeReq(), res)
 
     const body = res.json.mock.calls[0][0]
-    expect(body.month.used).toBe(170) // 200 usage - 30 absorbed
+    // `used` is the whole period spend; the pack is only charged when the period ends, so it stands still.
+    expect(body.month.used).toBe(200)
     expect(body.balance).toBe(50)
-    expect(body.available).toBe(880) // (1000 - 170) + 50
+    expect(body.available).toBe(850) // 1000 grant + 50 pack - 200 spent
     expect(body.basicLevelLabel).toBe('Basic')
   })
 
-  it('ignores absorbed balance when balance.periodStart differs from the current period', async () => {
+  it('reports the whole period spend even when the pack row is from an older period', async () => {
     const periodStartMs = new Date('2026-01-01T00:00:00.000Z').getTime()
     getSubscriptionsMock.mockResolvedValue([
       {
@@ -192,7 +193,7 @@ describe('handleGetWorkspaceTokenWindows', () => {
     await handleGetWorkspaceTokenWindows(ctx, db, [], makeReq(), res)
 
     const body = res.json.mock.calls[0][0]
-    expect(body.month.used).toBe(200) // absorbed not applied
+    expect(body.month.used).toBe(200)
   })
 
   it('available is null when the tier window is unlimited (limitMonth 0)', async () => {

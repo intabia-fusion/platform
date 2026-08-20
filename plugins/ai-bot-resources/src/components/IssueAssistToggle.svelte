@@ -13,17 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { deviceOptionsStore as deviceInfo, ModernButton } from '@hcengineering/ui'
+  import { ModernButton } from '@hcengineering/ui'
   import view from '@hcengineering/view'
 
   import aiBot from '../plugin'
-  import { issueAssistOpened } from '../stores'
+  import { issueAssistFits, issueAssistOpened } from '../stores'
 
   // Toggle lives in the dialog header, the panel itself renders in the card's aside slot; the
   // store is what ties the two places together.
 </script>
 
-{#if !$deviceInfo.isMobile}
+{#if $issueAssistFits}
   <ModernButton
     icon={view.icon.AiStar}
     iconSize={'small'}

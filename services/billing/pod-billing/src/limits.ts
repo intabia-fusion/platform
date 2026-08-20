@@ -41,6 +41,15 @@ import { collectDatalakeStats } from './billing'
 import billingConfig from './config'
 import { type BillingDB, type BillingUsageMessage, type LimitCategory, type UsageMetric } from './types'
 
+/**
+ * What a finished period takes out of the purchased pack: the monthly grant is spent first, so
+ * only the overflow is charged. Staying under the grant costs nothing.
+ */
+export function packCharge (periodUsage: number, limitMonth: number, pack: number): number {
+  if (limitMonth <= 0) return 0 // unlimited grant never overflows
+  return Math.min(pack, Math.max(0, periodUsage - limitMonth))
+}
+
 /** Computes volume-limit state, persists it, and publishes edge-triggered LimitsChanged events. */
 export class LimitsEngine {
   constructor (
@@ -148,20 +157,17 @@ export class LimitsEngine {
     subs: Subscription[]
   ): Promise<void> {
     try {
-      const limitMonth = resolveTierLimits(subs)?.windowMonthLimit ?? billingConfig.WindowMonthLimit
+      const limitMonth = tokenWindowLimit(subs)
       if (limitMonth <= 0) return
       const pkgs = subs.filter((s) => s.type === SubscriptionType.Package && s.status === SubscriptionStatus.Active)
       const periodStart = getPeriodStartDate(grantPeriodAnchor(latestGrantingTier(subs)?.periodStart, pkgs))
       const stats = await this.db.getAiTokensStats(ctx, workspace, periodStart, new Date())
-      const periodUsage = stats.map((s) => s.totalTokens).reduce((a, b) => a + b, 0)
+      const usedNow = stats.map((s) => s.totalTokens).reduce((a, b) => a + b, 0)
       const balance = await this.db.getTokenBalance(ctx, workspace)
-      const absorbed =
-        balance !== undefined && new Date(balance.periodStart).getTime() === periodStart.getTime()
-          ? balance.absorbedPeriod
-          : 0
-      const usedNow = Math.max(0, periodUsage - absorbed)
-      const stepNow = Math.floor(Math.min(100, (usedNow / limitMonth) * 100) / 5)
-      const stepPrev = Math.floor(Math.min(100, (Math.max(0, usedNow - amount) / limitMonth) * 100) / 5)
+      // Step over tier + pack, matching the bar the user actually sees.
+      const total = limitMonth + (balance?.remainingTokens ?? 0)
+      const stepNow = Math.floor(Math.min(100, (usedNow / total) * 100) / 5)
+      const stepPrev = Math.floor(Math.min(100, (Math.max(0, usedNow - amount) / total) * 100) / 5)
       if (stepNow !== stepPrev) {
         await this.producer.send(ctx, workspace, [
           workspaceEvents.limitsChanged(SCLimitCategory.Tokens, LimitStatus.Ok)
@@ -273,10 +279,10 @@ export class LimitsEngine {
       const pkgs = subs.filter((s) => s.type === SubscriptionType.Package && s.status === SubscriptionStatus.Active)
       const periodStart = getPeriodStartDate(grantPeriodAnchor(tier?.periodStart, pkgs))
       const stats = await this.db.getAiTokensStats(ctx, workspace, periodStart, periodEnd)
-      const periodUsage = stats.map((s) => s.totalTokens).reduce((a, b) => a + b, 0)
-      // Purchased tokens are spent first: what the balance covered never reaches the tier window.
-      const absorbed = await this.absorbFromBalance(ctx, workspace, periodStart)
-      return Math.max(0, periodUsage - absorbed)
+      // `used` is the full spend and the limit below is grant + pack, so `used >= limit` is still
+      // exactly "nothing left".
+      await this.settlePreviousPeriod(ctx, workspace, periodStart, tokenWindowLimit(subs))
+      return stats.map((s) => s.totalTokens).reduce((a, b) => a + b, 0)
     }
 
     const periodStart = getPeriodStartDate(tier?.periodStart)
@@ -301,57 +307,55 @@ export class LimitsEngine {
     subs: Subscription[],
     metric: UsageMetric
   ): Promise<number> {
-    const base = getEffectiveLimit(subs, metric)
-    if (metric !== 'tokens' || base === 0) return base
+    if (metric !== 'tokens') return getEffectiveLimit(subs, metric)
+    // Grant + pack. The AI package's own `tokenLimit` is not added: activating one grants into
+    // `token_balance`, so counting it here again would double it.
+    const base = tokenWindowLimit(subs)
+    if (base === 0) return 0
     const balance = await this.db.getTokenBalance(ctx, workspace)
     return base + (balance?.remainingTokens ?? 0)
   }
 
   /**
-   * Spends the purchased balance against unabsorbed usage; returns how much it covered.
+   * Charges the pack for the period that just ended, once. Within a period nothing is written:
+   * everything a reader needs is derivable from usage, the grant and the pack.
+   *
+   * The overflow is measured against today's grant, not the one in force back then - a mid-period
+   * seat change therefore undercharges slightly. Deliberate: it errs in the customer's favour and
+   * saves storing a per-period limit.
    */
-  private async absorbFromBalance (ctx: MeasureContext, workspace: WorkspaceUuid, periodStart: Date): Promise<number> {
+  private async settlePreviousPeriod (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    periodStart: Date,
+    limitMonth: number
+  ): Promise<void> {
     const balance = await this.db.getTokenBalance(ctx, workspace)
-    if (balance === undefined) return 0
+    if (balance === undefined) return
 
-    // A new tier period restarts the absorbed counter; the balance itself carries over.
-    const samePeriod = new Date(balance.periodStart).getTime() === periodStart.getTime()
-    let absorbedPeriod = samePeriod ? balance.absorbedPeriod : 0
-    let remaining = balance.remainingTokens
+    const prevStart = new Date(balance.periodStart)
+    // `period_start` doubles as the idempotency marker: equal means this period is already settled.
+    if (prevStart.getTime() >= periodStart.getTime()) return
 
-    const cursor = balance.absorbedUntil !== null ? new Date(balance.absorbedUntil) : periodStart
-    const from = new Date(Math.max(cursor.getTime(), periodStart.getTime()))
-    const to = truncToHour(new Date())
+    const stats = await this.db.getAiTokensStats(ctx, workspace, prevStart, periodStart)
+    const prevUsage = stats.map((s) => s.totalTokens).reduce((a, b) => a + b, 0)
+    const charge = packCharge(prevUsage, limitMonth, balance.remainingTokens)
 
-    if (remaining > 0 && to.getTime() > from.getTime()) {
-      const stats = await this.db.getAiTokensStats(ctx, workspace, from, to)
-      const newUsage = stats.map((s) => s.totalTokens).reduce((a, b) => a + b, 0)
-      const absorb = Math.min(remaining, newUsage)
-      remaining -= absorb
-      absorbedPeriod += absorb
-    }
-
+    ctx.info('settling token pack for the finished period', { workspace, prevUsage, limitMonth, charge })
     await this.db.updateTokenBalanceAbsorption(
       ctx,
       workspace,
-      remaining,
-      to.toISOString(),
-      absorbedPeriod,
+      balance.remainingTokens - charge,
+      null,
+      charge,
       periodStart.toISOString()
     )
-    return absorbedPeriod
   }
 
   private accountClient (workspace: WorkspaceUuid | undefined): AccountClient {
     const token = generateToken(systemAccountUuid, workspace, { service: 'billing', admin: 'true' })
     return getClient(this.accountsUrl, token)
   }
-}
-
-function truncToHour (date: Date): Date {
-  const result = new Date(date)
-  result.setMinutes(0, 0, 0)
-  return result
 }
 
 function metricToCategory (metric: UsageMetric): LimitCategory {
@@ -385,6 +389,17 @@ function latestGrantingTier (subs: Subscription[]): Subscription | undefined {
 // (no tier, expired trial, unpaid) fall back to the free limits baked into the latest tier.
 export function resolveTierLimits (subs: Subscription[]): TierLimits | undefined {
   return latestGrantingTier(subs)?.limits ?? latestTier(subs)?.freeLimits ?? undefined
+}
+
+/**
+ * The monthly AI grant. Deliberately `windowMonthLimit` and not `tokenLimit`: payment bakes the
+ * per-seat grant into the former (`resolveLimits`), while plans leave `tokenLimit` at 0 - reading
+ * it here made the limit look unlimited and silently disabled token enforcement on per-seat plans.
+ * The token window in `handleGetWorkspaceTokenWindows` has always used this field, so this is also
+ * what the user sees.
+ */
+export function tokenWindowLimit (subs: Subscription[]): number {
+  return resolveTierLimits(subs)?.windowMonthLimit ?? billingConfig.WindowMonthLimit
 }
 
 function getLimitValue (limits: TierLimits | undefined, metric: UsageMetric): number {

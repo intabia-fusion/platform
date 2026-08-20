@@ -162,7 +162,9 @@ export interface LevelUsage {
 }
 
 export interface TokenWindowUsage {
+  // Everything spent this period, whichever pool ends up paying for it.
   used: number
+  // Monthly grant of the plan (per-seat plans: already multiplied by paid seats).
   limit: number
   resetAt: string | null
   levels: LevelUsage[]
@@ -175,9 +177,9 @@ export interface WorkspaceTokenWindows {
   // UI label of the level paid plans keep using over the limit (the 'low' fallback).
   basicLevelLabel: string
   hasPackages: boolean
-  // Tier window for the current period: burns at period end.
+  // Spend against the monthly grant for the current period; the grant burns at period end.
   month: TokenWindowUsage
-  // Purchased tokens (packages + one-time buys): never expire, spent before the tier window.
+  // Purchased tokens left: never expire, charged once at period end for what overflowed the grant.
   balance: number
   // Tokens left across both pools; null = unlimited. <= 0 blocks AI requests.
   available: number | null

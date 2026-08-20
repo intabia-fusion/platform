@@ -321,14 +321,17 @@ export async function createServer (
 
   // Optional trial for new workspaces (plan-config.yaml `trial:`). When absent/malformed, new
   // workspaces get free. Validate numbers so a bad yaml can't yield NaN trialEnd (a dead trial).
-  const trialConfig: { plan: string, days: number, usersLimit: number } | undefined = (() => {
+  const trialConfig: { plan: string, days: number, usersLimit: number, windowMonthLimit?: number } | undefined = (() => {
     const t = planConfig.trial
     if (t?.plan == null || planConfig.plans?.[t.plan] == null) return undefined
     if (!Number.isFinite(t.days) || t.days <= 0 || !Number.isFinite(t.usersLimit) || t.usersLimit < 0) {
       ctx.error('invalid trial config, ignoring', { trial: t })
       return undefined
     }
-    return { plan: t.plan, days: t.days, usersLimit: t.usersLimit }
+    // Flat AI grant for the whole trial. Without it the trial inherits the plan's per-seat window
+    // multiplied by the trial seat cap, which is far more AI than a trial should hand out.
+    const window = Number.isFinite(t.windowMonthLimit) && t.windowMonthLimit >= 0 ? t.windowMonthLimit : undefined
+    return { plan: t.plan, days: t.days, usersLimit: t.usersLimit, windowMonthLimit: window }
   })()
 
   function attachLimits (data: SubscriptionData): SubscriptionData {
@@ -421,6 +424,10 @@ export async function createServer (
     // independent of the plan's per-seat/flat shape. resolveLimits fully-populates or returns undefined.
     const planLimits = resolveLimits(SubscriptionType.Tier, trialConfig.plan, usersLimit)
     const limits = { ...planLimits, usersLimit }
+    // Flat trial AI grant, not the plan's per-seat window times the seat cap.
+    if (trialConfig.windowMonthLimit !== undefined) {
+      limits.windowMonthLimit = trialConfig.windowMonthLimit
+    }
     const data: SubscriptionData = {
       id: subId,
       workspaceUuid: workspace,

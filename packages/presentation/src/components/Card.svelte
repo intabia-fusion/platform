@@ -119,21 +119,29 @@
       <div class="antiCard-header__title-wrap">
         {#if $$slots.header}
           <slot name="header" />
-          <span class="antiCard-header__divider"><IconForward size={'small'} /></span>
         {/if}
         {#if isBack}
           <Button icon={IconBack} kind={'ghost'} size={'small'} on:click={backAction} />
         {/if}
-        <div class="antiCard-header__title" class:accentHeader>
-          {#if $$slots.title}
-            <slot name="title" {label} labelProps={labelProps ?? {}} />
-          {:else}
-            <Label {label} params={labelProps ?? {}} />
+        <!-- Divider and title are one wrap item: on a narrow header the ">" has to travel to the
+             second line with the title it points at, not stay behind on the first. -->
+        <div class="antiCard-header__title-group">
+          {#if $$slots.header}
+            <span class="antiCard-header__divider"><IconForward size={'small'} /></span>
           {/if}
+          <div class="antiCard-header__title" class:accentHeader>
+            {#if $$slots.title}
+              <slot name="title" {label} labelProps={labelProps ?? {}} />
+            {:else}
+              <Label {label} params={labelProps ?? {}} />
+            {/if}
+          </div>
         </div>
       </div>
       {#if $$slots['header-actions']}
-        <div class="ml-4 buttons-group small-gap">
+        <!-- ml-auto, not just a margin: the header is space-between, so without it the actions
+             float in the middle of the gap instead of sitting next to the close button. -->
+        <div class="ml-auto mr-2 buttons-group small-gap">
           <slot name="header-actions" />
         </div>
       {/if}
@@ -264,12 +272,13 @@
   }
 
   // Set by the aside itself when it wants the full stage (the AI assistant does). Card and panel
-  // then split the row evenly and the whole thing keeps 20% of the viewport free on each side.
+  // then split the row evenly, leaving at most 100px of the viewport free on each side. The max()
+  // keeps a narrow screen usable, where 100px margins would leave almost nothing.
   // `wide` is set from the outside (by an aside that wants the full stage), so these have to be
   // :global - svelte drops selectors it cannot find in this component's own markup. The card's
   // own .antiCard.dialog.large pins a fixed width, hence the extra classes to outweigh it.
   :global(.antiCard-wrap.wide) {
-    width: 60vw;
+    width: max(60vw, 100vw - 200px);
     height: 80vh;
   }
 

@@ -38,6 +38,13 @@ describe('decideLevel', () => {
     expect(d).toEqual({ action: 'block', reason: 'limit' })
   })
 
+  it('the overspend eats the pack: 1200 used against a 1000 grant leaves 300 of a 500 pack', () => {
+    // `used` is the whole period spend, so the overspend must come off the pack rather than
+    // being clamped away - otherwise the pack looks full and the block never lands.
+    expect(decideLevel('high', usage(1200, 1000, false, 500))).toEqual({ action: 'proceed', level: 'high' })
+    expect(decideLevel('high', usage(1500, 1000, false, 500))).toEqual({ action: 'block', reason: 'limit' })
+  })
+
   it('billing unavailable -> block regardless of the reported window', () => {
     const d = decideLevel('high', { ...usage(0, 0, false), unavailable: true })
     expect(d).toEqual({ action: 'block', reason: 'unavailable' })

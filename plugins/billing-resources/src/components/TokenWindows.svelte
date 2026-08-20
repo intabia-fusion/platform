@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { WorkspaceTokenWindows } from '@hcengineering/billing-client'
-  import { Label, PaletteColorIndexes, Progress, themeStore } from '@hcengineering/ui'
+  import { formatNumberCompact, Label, PaletteColorIndexes, Progress, themeStore } from '@hcengineering/ui'
   import plugin from '../plugin'
 
   export let windows: WorkspaceTokenWindows | undefined
@@ -41,19 +41,22 @@
     return rtf.format(Math.round(ms / 86400000), 'day')
   }
 
-  // 0 stays 0: an unlimited tier window is unlimited whatever the balance is.
+  // Token counts run to eight digits; full numbers do not fit the row.
+  const fmt = (n: number): string => formatNumberCompact(n, 1)
+
+  // 0 stays 0: an unlimited monthly grant is unlimited whatever the balance is.
   $: monthTotal = windows === undefined || windows.month.limit === 0 ? 0 : windows.month.limit + windows.balance
 </script>
 
-<!-- Bought tokens are spent before the tier window, so the bar has to include them: measuring
-     against the tier limit alone showed a workspace as full while it still had a balance. -->
+<!-- The bar spans grant + pack: the pack is charged at period end, but it is spendable now,
+     so measuring against the grant alone showed a workspace as full while it still had tokens. -->
 {#if windows !== undefined}
   <div class="flex-col flex-gap-2 mt-2" data-id="tokenWindows">
     <div class="flex-col flex-gap-1">
       <div class="flex-between flex-gap-2 text-md">
         <span><Label label={plugin.string.TokenAvailable} /></span>
         <span class="content-dark-color no-word-wrap" data-id="tokenAvailable">
-          {windows.available !== null ? windows.available.toLocaleString('en-US') : '∞'}
+          {windows.available !== null ? fmt(windows.available) : '∞'}
         </span>
       </div>
       <Progress
@@ -65,7 +68,7 @@
       <div class="flex-between flex-gap-2 text-sm content-dark-color">
         <span><Label label={plugin.string.TokenWindowMonth} /></span>
         <span class="no-word-wrap">
-          {windows.month.used.toLocaleString('en-US')} / {monthTotal > 0 ? monthTotal.toLocaleString('en-US') : '∞'}
+          {fmt(windows.month.used)} / {monthTotal > 0 ? fmt(monthTotal) : '∞'}
         </span>
       </div>
       {#if windows.month.resetAt !== null && windows.month.limit > 0}
@@ -76,7 +79,7 @@
       {#if windows.balance > 0}
         <div class="flex-between flex-gap-2 text-sm content-dark-color">
           <span><Label label={plugin.string.TokenPurchased} /></span>
-          <span class="no-word-wrap" data-id="tokenPurchased">{windows.balance.toLocaleString('en-US')}</span>
+          <span class="no-word-wrap" data-id="tokenPurchased">{fmt(windows.balance)}</span>
         </div>
       {/if}
     </div>
