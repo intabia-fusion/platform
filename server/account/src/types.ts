@@ -359,7 +359,8 @@ export type PaymentIntentStatus = 'pending' | 'charged' | 'failed'
 // renewals/checkouts can't double-charge — a second claim hits the existing row instead.
 export interface PaymentIntent {
   id: string
-  claimKey: string // dedup key: 'renew:<sub>:<period>' | 'checkout:<ws>:<type>'
+  // dedup key: 'renew:<sub>:<period>' | 'checkout:<ws>:<type>' | 'checkout:<ws>:purchase:<fingerprint>'
+  claimKey: string
   provider: string
   status: PaymentIntentStatus
   paymentId?: string // provider charge id, set once the charge is issued; webhook links back here

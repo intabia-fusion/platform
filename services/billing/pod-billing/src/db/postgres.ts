@@ -1238,8 +1238,7 @@ class PostgresDB implements BillingDB {
     )
   }
 
-  // `usedMonth` subtracts what the purchased balance absorbed; leaving a stale counter behind
-  // after wiping the period's usage rows would keep understating usage for the rest of the period.
+  // `usedMonth` subtracts what the balance absorbed: a stale counter would understate usage.
   private async clearAbsorption (workspace: WorkspaceUuid): Promise<void> {
     await this.execute(
       'UPDATE billing.token_balance SET absorbed_period = 0, absorbed_until = NULL WHERE workspace = $1::uuid',

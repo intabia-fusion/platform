@@ -279,9 +279,7 @@ export class LoggedDB implements BillingDB {
     level: string,
     periodStart: Date
   ): Promise<void> {
-    await ctx.with('db.setWorkspaceUsed', {}, () =>
-      this.db.setWorkspaceUsed(ctx, workspace, value, level, periodStart)
-    )
+    await ctx.with('db.setWorkspaceUsed', {}, () => this.db.setWorkspaceUsed(ctx, workspace, value, level, periodStart))
   }
 
   async getTokenBalance (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<TokenBalance | undefined> {
