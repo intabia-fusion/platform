@@ -100,7 +100,9 @@
       const colorNum =
         s.color !== undefined && typeof s.color !== 'string'
           ? s.color
-          : (category?.color ?? (s.category ? defaultCategoryColors[s.category] : undefined) ?? getColorNumberByText(s.name))
+          : (category?.color ??
+            (s.category ? defaultCategoryColors[s.category] : undefined) ??
+            getColorNumberByText(s.name))
       const colorDef = getPlatformColorDef(colorNum, isDark)
 
       const fill = sanitizeColor(colorDef.background, isDark ? '#1e293b' : '#f1f5f9')

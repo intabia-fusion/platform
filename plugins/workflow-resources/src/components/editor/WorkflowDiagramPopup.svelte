@@ -137,9 +137,7 @@
     const taskType = effectiveTaskTypeId != null ? $taskTypeStore.get(effectiveTaskTypeId) : undefined
 
     if (taskType?.statuses && taskType.statuses.length > 0) {
-      currentStatuses = taskType.statuses
-        .map((sId) => $statusStore.byId.get(sId))
-        .filter((s): s is Status => s != null)
+      currentStatuses = taskType.statuses.map((sId) => $statusStore.byId.get(sId)).filter((s): s is Status => s != null)
     } else {
       const projectType = $typeStore.get(wfDoc.projectType)
       currentStatuses =
@@ -151,7 +149,8 @@
     void initializeProjectWorkflows()
   }
 
-  $: dropdownItems = availableTaskTypeIds.map<DropdownTextItem | null>((id) => {
+  $: dropdownItems = availableTaskTypeIds
+    .map<DropdownTextItem | null>((id) => {
     const taskType = $taskTypeStore.get(id)
     if (taskType == null) return null
     return {
@@ -160,7 +159,8 @@
       icon: taskType.icon === view.ids.IconWithEmoji ? IconWithEmoji : taskType.icon,
       iconProps: taskType.icon === view.ids.IconWithEmoji ? { icon: taskType.color } : {}
     }
-  }).filter(notEmpty)
+  })
+    .filter(notEmpty)
 
   $: if (currentTaskTypeId != null) {
     const wfId = taskTypeWorkflowMap[currentTaskTypeId] ?? (workflowsMap ? workflowsMap[currentTaskTypeId] : undefined)
