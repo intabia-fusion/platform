@@ -99,6 +99,10 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
     return this.provideFindAll(ctx, _class, query, options)
   }
 
+  // Only the workspace part, and only after someone actually asked for the model: systemTx is
+  // shared by every workspace, so keeping a concatenated copy per pipeline is pure waste.
+  private userModel: Tx[] | undefined
+
   async init (ctx: MeasureContext): Promise<void> {
     if (this.context.adapterManager == null) {
       throw new PlatformError(unknownError('Adapter manager should be configured'))
@@ -121,6 +125,9 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private addModelTx (tx: Tx): void {
+    if (this.userModel !== undefined && !isAccountTx(tx as TxCUD<Doc>)) {
+      this.userModel.push(tx)
+    }
     const h = crypto.createHash('sha1')
     h.update(this.lastHash)
     h.update(JSON.stringify(tx))
@@ -154,15 +161,21 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
           transactions: []
         }
       }
-      const txAdapter = this.context.adapterManager?.getAdapter(DOMAIN_TX, true) as TxAdapter
       return {
         full: true,
         hash: this.lastHash,
-        transactions: this.systemTx.concat(await this.getUserTx(ctx, txAdapter))
+        transactions: await this.getModel(ctx)
       }
     }
-    const txAdapter = this.context.adapterManager?.getAdapter(DOMAIN_TX, true) as TxAdapter
-    return this.systemTx.concat(await this.getUserTx(ctx, txAdapter)).filter((it) => it.modifiedOn > lastModelTx)
+    return (await this.getModel(ctx)).filter((it) => it.modifiedOn > lastModelTx)
+  }
+
+  private async getModel (ctx: MeasureContext): Promise<Tx[]> {
+    if (this.userModel === undefined) {
+      const txAdapter = this.context.adapterManager?.getAdapter(DOMAIN_TX, true) as TxAdapter
+      this.userModel = await this.getUserTx(ctx, txAdapter)
+    }
+    return this.systemTx.concat(this.userModel)
   }
 
   tx (ctx: MeasureContext, tx: Tx[]): Promise<TxMiddlewareResult> {
