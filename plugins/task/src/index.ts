@@ -240,7 +240,8 @@ const task = plugin(taskId, {
     ProjectTypes: '' as IntlString,
     TaskType: '' as IntlString,
     ProjectType: '' as IntlString,
-    Identifier: '' as IntlString
+    Identifier: '' as IntlString,
+    TaskTypesDiagram: '' as IntlString
   },
   class: {
     ProjectTypeDescriptor: '' as Ref<Class<ProjectTypeDescriptor>>,

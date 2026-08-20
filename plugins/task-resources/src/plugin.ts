@@ -66,7 +66,6 @@ export default mergeIds(taskId, task, {
     StatusDelete: '' as IntlString,
     CantStatusDelete: '' as IntlString,
     CantStatusDeleteError: '' as IntlString,
-    TaskTypesDiagram: '' as IntlString,
     RootTaskTooltip: '' as IntlString,
     NoSubtaskTypesHint: '' as IntlString,
     NoSubtaskTypesShort: '' as IntlString,
