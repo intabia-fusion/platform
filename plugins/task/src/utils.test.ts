@@ -15,7 +15,7 @@
 
 import { Ref } from '@hcengineering/core'
 import { ProjectType, TaskType } from './index'
-import { getAllowedChildTaskTypes, getAllowedParentTaskTypes } from './utils'
+import { getAllowedChildTaskTypes, getAllowedParentTaskTypes, getRootTaskTypes } from './utils'
 
 describe('Task type hierarchy helpers', () => {
   const projectType1 = 'proj-1' as Ref<ProjectType>
@@ -25,14 +25,16 @@ describe('Task type hierarchy helpers', () => {
     _id: 'epic' as Ref<TaskType>,
     parent: projectType1,
     name: 'Epic',
-    isRootTaskType: true
+    isRootTaskType: true,
+    allowedAsChildOf: []
   } as any as TaskType
 
   const issue = {
     _id: 'issue' as Ref<TaskType>,
     parent: projectType1,
     name: 'Issue',
-    isRootTaskType: false
+    isRootTaskType: true,
+    allowedAsChildOf: ['epic' as Ref<TaskType>, 'issue' as Ref<TaskType>]
   } as any as TaskType
 
   const subtask = {
@@ -46,25 +48,35 @@ describe('Task type hierarchy helpers', () => {
   const otherProjectTask = {
     _id: 'other-task' as Ref<TaskType>,
     parent: projectType2,
-    name: 'Other Task'
+    name: 'Other Task',
+    isRootTaskType: true,
+    allowedAsChildOf: []
   } as any as TaskType
 
-  const allTaskTypes = [epic, issue, subtask, otherProjectTask]
+  const bug = {
+    _id: 'bug' as Ref<TaskType>,
+    parent: projectType1,
+    name: 'Bug',
+    isRootTaskType: true,
+    allowAnyParent: true
+  } as any as TaskType
+
+  const allTaskTypes = [epic, issue, subtask, bug, otherProjectTask]
 
   describe('getAllowedChildTaskTypes', () => {
-    it('returns allowed child task types for a parent task type', () => {
-      const allowed = getAllowedChildTaskTypes(projectType1, issue._id, allTaskTypes)
-      expect(allowed).toEqual([issue, subtask])
-    })
-
-    it('does not return root task types as child task types', () => {
+    it('returns allowed child task types for an epic', () => {
       const allowed = getAllowedChildTaskTypes(projectType1, epic._id, allTaskTypes)
-      expect(allowed.find((t) => t._id === epic._id)).toBeUndefined()
+      expect(allowed).toEqual([issue, bug])
     })
 
-    it('filters out child task types with restricted parent list that excludes target task type', () => {
+    it('returns allowed child task types for an issue', () => {
+      const allowed = getAllowedChildTaskTypes(projectType1, issue._id, allTaskTypes)
+      expect(allowed).toEqual([issue, subtask, bug])
+    })
+
+    it('returns types with allowAnyParent for subtask', () => {
       const allowed = getAllowedChildTaskTypes(projectType1, subtask._id, allTaskTypes)
-      expect(allowed).toEqual([issue])
+      expect(allowed).toEqual([bug])
     })
   })
 
@@ -79,9 +91,21 @@ describe('Task type hierarchy helpers', () => {
       expect(allowed).toEqual([epic, issue])
     })
 
-    it('returns empty array for root task type', () => {
+    it('returns all scoped types for allowAnyParent type', () => {
+      const allowed = getAllowedParentTaskTypes(projectType1, bug._id, allTaskTypes)
+      expect(allowed).toEqual([epic, issue, subtask, bug])
+    })
+
+    it('returns empty array for root-only task type', () => {
       const allowed = getAllowedParentTaskTypes(projectType1, epic._id, allTaskTypes)
       expect(allowed).toEqual([])
+    })
+  })
+
+  describe('getRootTaskTypes', () => {
+    it('returns task types allowed at root level', () => {
+      const rootTypes = getRootTaskTypes(projectType1, allTaskTypes)
+      expect(rootTypes).toEqual([epic, issue, bug])
     })
   })
 })

@@ -711,6 +711,8 @@ function defineSpaceType (builder: Builder): void {
       targetClass: tracker.class.IssueTaskType,
       statusClass: tracker.class.IssueStatus,
       statusCategories: classicIssueTaskStatuses.map((it) => it.category),
+      isRootTaskType: true,
+      allowAnyParent: true,
       allowedAsChildOf: [tracker.taskTypes.Issue],
       icon: tracker.icon.Issue
     },

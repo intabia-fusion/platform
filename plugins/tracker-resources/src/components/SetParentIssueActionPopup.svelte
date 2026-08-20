@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -42,14 +43,10 @@
 
     const currentType = typesMap.get(effectiveKind)
     if (currentType === undefined) return undefined
-    if (currentType.isRootTaskType === true) return []
 
-    const explicit = currentType.allowedAsChildOf ?? []
-    if (explicit.length > 0) return explicit
+    if (currentType.allowAnyParent === true) return undefined
 
-    const allTypes = Array.from(typesMap.values())
-    const childTypeIds = new Set(allTypes.flatMap((tt) => tt.allowedAsChildOf ?? []))
-    return allTypes.filter((tt) => !childTypeIds.has(tt._id)).map((tt) => tt._id)
+    return currentType.allowedAsChildOf ?? []
   }
 
   const options: FindOptions<Issue> = {

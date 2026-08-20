@@ -105,6 +105,22 @@
     "RootTaskTooltip": "根类型没有父类型，不能创建此类型的子任务",
     "NoSubtaskTypesHint": "类型为 {type} 的父任务没有合适的子任务类型。请在项目设置中配置类型层级以创建子任务。",
     "NoSubtaskTypesShort": "没有子任务类型",
-    "Collections": "集合"
+    "Collections": "集合",
+    "AllowRootTask": "Allow creation without parent",
+    "AllowRootTaskTooltip": "Allows creating tasks of this type as top-level items, not only as subtasks",
+    "AllowedParentTaskTypes": "Can be a subtask of:",
+    "HierarchyRelations": "Hierarchy",
+    "HierarchyWarningNoParentAndNoRoot": "无法创建此类型的任务：已禁用无父任务创建，且未选择任何父类型。",
+    "HierarchyWarningShort": "无法创建任务",
+    "SameTypeNesting": "this type",
+    "SelectAll": "Select all",
+    "ClearAll": "Clear all",
+    "AllowAnyParent": "Any task type",
+    "AllowAnyParentSubtask": "可以是任何任务类型的子任务",
+    "AllowAnyParentTooltip": "Allows creating this task as a subtask of any task type in the project, including future types",
+    "CompactLayout": "紧凑视图",
+    "TaskTypeHierarchyTitle": "{name} 层级",
+    "ShowDetails": "显示详情",
+    "HideDetails": "隐藏详情"
   }
 }

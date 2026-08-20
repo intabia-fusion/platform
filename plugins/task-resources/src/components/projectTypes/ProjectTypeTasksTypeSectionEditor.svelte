@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -37,8 +38,10 @@
     (res) => {
       taskTypes = res
     },
-    { sort: { _id: SortingOrder.Ascending } }
+    { sort: { name: SortingOrder.Ascending } }
   )
+
+  $: sortedTaskTypes = [...taskTypes].sort((a, b) => a.name.localeCompare(b.name))
 
   function handleTaskTypeSelected (id: string | undefined): void {
     const loc = getCurrentResolvedLocation()
@@ -77,7 +80,7 @@
         size="small"
         dataId={'btnAdd'}
         {disabled}
-        on:click={(ev) => {
+        on:click={() => {
           if (disabled) {
             return
           }
@@ -86,9 +89,9 @@
       />
     </div>
   </div>
-  {#if taskTypes.length}
+  {#if sortedTaskTypes.length}
     <div class="hulyTableAttr-content task">
-      {#each taskTypes as taskType}
+      {#each sortedTaskTypes as taskType}
         <button
           class="hulyTableAttr-content__row"
           on:click|stopPropagation={() => {

@@ -105,6 +105,22 @@
     "RootTaskTooltip": "A root type has no parents and cannot have subtasks of this type",
     "NoSubtaskTypesHint": "No suitable subtask types for a parent task of type {type}. Configure the type hierarchy in the project settings to create a subtask.",
     "NoSubtaskTypesShort": "No subtask types",
-    "Collections": "Collections"
+    "Collections": "Collections",
+    "AllowRootTask": "Allow creation without parent",
+    "AllowRootTaskTooltip": "Allows creating tasks of this type as top-level items, not only as subtasks",
+    "AllowedParentTaskTypes": "Can be a subtask of:",
+    "HierarchyRelations": "Hierarchy",
+    "HierarchyWarningNoParentAndNoRoot": "Tasks of this type cannot be created: creation without a parent is disabled and no parent types are selected.",
+    "HierarchyWarningShort": "Tasks cannot be created",
+    "SameTypeNesting": "this type",
+    "SelectAll": "Select all",
+    "ClearAll": "Clear all",
+    "AllowAnyParent": "Any task type",
+    "AllowAnyParentSubtask": "Can be a subtask of any task type",
+    "AllowAnyParentTooltip": "Allows creating this task as a subtask of any task type in the project, including future types",
+    "CompactLayout": "Compact view",
+    "TaskTypeHierarchyTitle": "Hierarchy: {name}",
+    "ShowDetails": "Show details",
+    "HideDetails": "Hide details"
   }
 }

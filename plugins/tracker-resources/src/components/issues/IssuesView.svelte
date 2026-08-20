@@ -76,7 +76,7 @@
         space,
         workflowsMap,
         selectedTaskType: (viewOptions as any)?.taskType,
-        fullSize: true
+        fullSize: false
       },
       'centered'
     )

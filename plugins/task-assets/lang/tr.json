@@ -105,6 +105,22 @@
     "RootTaskTooltip": "Kök tipin ebeveyni yoktur ve bu tipte alt görevleri olamaz",
     "NoSubtaskTypesHint": "{type} tipindeki üst görev için uygun alt görev tipi yok. Alt görev oluşturmak için proje ayarlarında tip hiyerarşisini yapılandırın.",
     "NoSubtaskTypesShort": "Alt görev tipi yok",
-    "Collections": "Koleksiyonlar"
+    "Collections": "Koleksiyonlar",
+    "AllowRootTask": "Allow creation without parent",
+    "AllowRootTaskTooltip": "Allows creating tasks of this type as top-level items, not only as subtasks",
+    "AllowedParentTaskTypes": "Can be a subtask of:",
+    "HierarchyRelations": "Hierarchy",
+    "HierarchyWarningNoParentAndNoRoot": "Bu türdeki görevler oluşturulamaz: üst öğesiz oluşturma devre dışı bırakıldı ve hiçbir üst tür seçilmedi.",
+    "HierarchyWarningShort": "Görevler oluşturulamaz",
+    "SameTypeNesting": "this type",
+    "SelectAll": "Select all",
+    "ClearAll": "Clear all",
+    "AllowAnyParent": "Any task type",
+    "AllowAnyParentSubtask": "Herhangi bir görev türünün alt görevi olabilir",
+    "AllowAnyParentTooltip": "Allows creating this task as a subtask of any task type in the project, including future types",
+    "CompactLayout": "Kompakt görünüm",
+    "TaskTypeHierarchyTitle": "{name} hiyerarşisi",
+    "ShowDetails": "Detayları göster",
+    "HideDetails": "Detayları gizle"
   }
 }

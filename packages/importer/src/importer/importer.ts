@@ -325,6 +325,8 @@ export class WorkspaceImporter {
           statusClass: tracker.class.IssueStatus,
           icon: tracker.icon.Issue,
           color: 0,
+          isRootTaskType: true,
+          allowAnyParent: true,
           allowedAsChildOf: [taskTypeId],
           factory: statuses
         })

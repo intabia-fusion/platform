@@ -25,8 +25,9 @@
   export let onChange: (value: Ref<TaskType>[]) => void
   export let types: TaskType[]
 
-  $: selectedItems = types.filter((p) => value?.includes(p._id))
-  $: items = types.map(
+  $: sortedTypes = [...types].sort((a, b) => a.name.localeCompare(b.name))
+  $: selectedItems = sortedTypes.filter((p) => value?.includes(p._id))
+  $: items = sortedTypes.map(
     (p): DropdownTextItem => ({
       id: p._id,
       label: p.name,
@@ -56,7 +57,7 @@
 
 <div class="hulyModal-content__settingsSet-line" class:has-chips={selectedItems.length > 0}>
   <span class="label">
-    <Label label={task.string.TaskParent} />
+    <Label label={task.string.AllowedParentTaskTypes} />
   </span>
   <ModernDropdownLabels
     kind="secondary"

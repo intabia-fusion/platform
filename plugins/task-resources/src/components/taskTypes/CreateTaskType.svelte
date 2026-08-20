@@ -64,6 +64,8 @@
       ],
       statusClass: core.class.Status,
       statuses: [],
+      isRootTaskType: true,
+      allowAnyParent: true,
       allowedAsChildOf: []
     }
   }
@@ -78,14 +80,12 @@
     )
     .filter((p) => hasResource(p._id as any as Resource<any>))
 
-  let { name, targetClass, statusCategories, statuses, allowedAsChildOf } =
+  let { name, targetClass, statusCategories, statuses } =
     taskType !== undefined ? { ...taskType } : { ...defaultTaskType(type) }
 
-  let isRootTaskType: boolean = taskType?.isRootTaskType ?? false
-
-  $: if (isRootTaskType) {
-    allowedAsChildOf = []
-  }
+  let isRootTaskType: boolean = taskType?.isRootTaskType ?? true
+  let allowAnyParent: boolean = taskType?.allowAnyParent ?? true
+  let allowedAsChildOf: Ref<TaskType>[] = taskType?.allowedAsChildOf ?? []
 
   function findStatusClass (_class: Ref<Class<Task>>): Ref<Class<Status>> | undefined {
     const h = getClient().getHierarchy()
@@ -117,6 +117,12 @@
       errorMessage = task.string.TaskTypeNameAlreadyExists
       return
     }
+
+    if (!isRootTaskType && !allowAnyParent && allowedAsChildOf.length === 0) {
+      errorMessage = task.string.HierarchyWarningNoParentAndNoRoot
+      return
+    }
+
     errorMessage = undefined
 
     const descr = taskTypeDescriptors.find((it) => it._id === taskTypeDescriptor._id)
@@ -130,8 +136,9 @@
       targetClass,
       statusCategories,
       statuses,
-      allowedAsChildOf,
       isRootTaskType,
+      allowAnyParent,
+      allowedAsChildOf,
       statusClass: findStatusClass(ofClass) ?? core.class.Status,
       parent: type._id,
       icon: descr.icon
@@ -264,18 +271,31 @@
 
     <div class="hulyModal-content__settingsSet-line">
       <span class="label label-with-info">
-        <Label label={task.string.RootTaskType} />
+        <Label label={task.string.AllowRootTask} />
         <ButtonIcon
           icon={IconInfo}
           size="extra-small"
           kind="tertiary"
-          tooltip={{ label: task.string.RootTaskTooltip }}
+          tooltip={{ label: task.string.AllowRootTaskTooltip }}
         />
       </span>
       <Toggle bind:on={isRootTaskType} />
     </div>
 
-    {#if !isRootTaskType}
+    <div class="hulyModal-content__settingsSet-line">
+      <span class="label label-with-info">
+        <Label label={task.string.AllowAnyParentSubtask} />
+        <ButtonIcon
+          icon={IconInfo}
+          size="extra-small"
+          kind="tertiary"
+          tooltip={{ label: task.string.AllowAnyParentTooltip }}
+        />
+      </span>
+      <Toggle bind:on={allowAnyParent} />
+    </div>
+
+    {#if !allowAnyParent}
       <TaskTypeRefEditor
         value={allowedAsChildOf}
         types={taskTypes}
@@ -283,6 +303,13 @@
           allowedAsChildOf = evt
         }}
       />
+    {/if}
+
+    {#if !isRootTaskType && !allowAnyParent && allowedAsChildOf.length === 0}
+      <div class="hierarchy-warning-box">
+        <Icon icon={IconError} size="small" />
+        <span><Label label={task.string.HierarchyWarningNoParentAndNoRoot} /></span>
+      </div>
     {/if}
   </div>
 </Modal>
@@ -309,5 +336,19 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
+  }
+
+  .hierarchy-warning-box {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: var(--small-BorderRadius, 0.25rem);
+    color: var(--global-negative-TextColor, #ef4444);
+    font-size: 0.75rem;
+    line-height: 1.25;
+    margin-top: 0.5rem;
   }
 </style>

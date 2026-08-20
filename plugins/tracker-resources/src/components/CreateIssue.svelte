@@ -142,9 +142,9 @@
   $: if (kind !== undefined && parentIssue !== undefined) {
     const taskType = $taskTypeStore.get(kind)
 
-    if (taskType !== undefined) {
+    if (taskType !== undefined && taskType.allowAnyParent !== true) {
       const allowed = taskType.allowedAsChildOf ?? []
-      if (allowed.length > 0 && !allowed.includes(parentIssue.kind)) {
+      if (!allowed.includes(parentIssue.kind)) {
         clearParentIssue()
       }
     }

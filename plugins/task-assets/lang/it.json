@@ -105,6 +105,22 @@
     "RootTaskTooltip": "Un tipo radice non ha genitori e non può avere sottoattività di questo tipo",
     "NoSubtaskTypesHint": "Per un'attività padre di tipo {type} non esistono tipi di sottoattività adatti. Configura la gerarchia dei tipi nelle impostazioni del progetto per creare una sottoattività.",
     "NoSubtaskTypesShort": "Nessun tipo di sottoattività",
-    "Collections": "Collezioni"
+    "Collections": "Collezioni",
+    "AllowRootTask": "Allow creation without parent",
+    "AllowRootTaskTooltip": "Allows creating tasks of this type as top-level items, not only as subtasks",
+    "AllowedParentTaskTypes": "Can be a subtask of:",
+    "HierarchyRelations": "Hierarchy",
+    "HierarchyWarningNoParentAndNoRoot": "Le attività di questo tipo non possono essere create: la creazione senza genitore è disabilitata e non è selezionato alcun tipo genitore.",
+    "HierarchyWarningShort": "Impossibile creare attività",
+    "SameTypeNesting": "this type",
+    "SelectAll": "Select all",
+    "ClearAll": "Clear all",
+    "AllowAnyParent": "Any task type",
+    "AllowAnyParentSubtask": "Può essere una sottoattività di qualsiasi tipo di attività",
+    "AllowAnyParentTooltip": "Allows creating this task as a subtask of any task type in the project, including future types",
+    "CompactLayout": "Vista compatta",
+    "TaskTypeHierarchyTitle": "Gerarchia: {name}",
+    "ShowDetails": "Mostra dettagli",
+    "HideDetails": "Nascondi dettagli"
   }
 }

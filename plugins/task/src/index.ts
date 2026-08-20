@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -110,13 +111,17 @@ export interface TaskType extends Doc, IconProps {
   descriptor: Ref<TaskTypeDescriptor>
 
   name: string
-  // Specify if task is allowed to be used as subtask of following tasks.
+  // Specify if task can be used as root (e.g. without parents).
+  isRootTaskType?: boolean
+
+  // Specify if task is allowed to be a subtask of any task type in the project.
+  allowAnyParent?: boolean
+
+  // Specify which task types this task is allowed to be used as subtask of.
   allowedAsChildOf?: Ref<TaskType>[]
 
   // Show parent tasks block in task editor
   showParentTasks?: boolean
-
-  isRootTaskType?: boolean
 
   ofClass: Ref<Class<Task>> // Base class for task
   targetClass: Ref<Class<Task>> // Class or Mixin mixin to hold all user defined attributes.
