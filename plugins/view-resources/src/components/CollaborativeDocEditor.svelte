@@ -34,7 +34,7 @@
   $: rawValue = getAttribute(client, object, key)
 
   $: if (draft) {
-    if (rawValue != null) {
+    if (rawValue != null && rawValue !== '') {
       if (typeof rawValue === 'string' && rawValue.startsWith('{')) {
         markupContent = rawValue
       } else {
@@ -72,6 +72,7 @@
     maxHeight="none"
     isScrollable={false}
     on:value={handleValueChange}
+    on:changeContent={handleValueChange}
   />
 {:else}
   {#key object._id}

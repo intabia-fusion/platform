@@ -196,7 +196,7 @@
               _u[attrKey] = refId
               ;(_update as Record<string, any>)[field.mixin] = _u
             } else {
-              ;(_update as any)[attrKey] = val
+              ;(_update as any)[attrKey] = refId
             }
           }
         }
