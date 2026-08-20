@@ -37,7 +37,8 @@
     Label,
     createFocusManager,
     getCurrentResolvedLocation,
-    navigate
+    navigate,
+    deviceOptionsStore as deviceInfo
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import {
@@ -203,6 +204,9 @@
   function saveShowAllMixins (showAllMixins: boolean): void {
     localStorage.setItem('issue.showAllMixins', showAllMixins.toString())
   }
+
+  // Mobile header has room for two buttons only: context menu and the properties aside.
+  $: mobileAdaptive = $deviceInfo.isMobile && $deviceInfo.minWidth
 </script>
 
 {#if !embedded && !isSidebar}
@@ -225,7 +229,7 @@
     withoutActivity={false}
     printAside={true}
     adaptive={'default'}
-    useMaxWidth
+    useMaxWidth={mobileAdaptive ? undefined : true}
     bind:content
     bind:innerWidth
     on:open
@@ -271,7 +275,7 @@
     </svelte:fragment>
 
     <svelte:fragment slot="utils">
-      {#if !embedded && issue}
+      {#if !embedded && issue && !mobileAdaptive}
         <Button
           icon={view.icon.DetailsFilled}
           iconProps={{ size: 'medium' }}
@@ -293,6 +297,8 @@
           dataId={'btnMoreActions'}
           on:click={showContextMenu}
         />
+      {/if}
+      {#if !readonly && !mobileAdaptive}
         <CopyToClipboard issueUrl={generateIssueShortLink(issue.identifier)} />
         <Button
           icon={setting.icon.Setting}
@@ -318,17 +324,19 @@
           }}
         />
       {/if}
-      <Button
-        icon={IconMixin}
-        iconProps={{ size: 'medium' }}
-        kind={'icon'}
-        selected={showAllMixins}
-        showTooltip={{ label: tracker.string.AdditionalProperties }}
-        dataId={'btnMixin'}
-        on:click={() => {
-          showAllMixins = !showAllMixins
-        }}
-      />
+      {#if !mobileAdaptive}
+        <Button
+          icon={IconMixin}
+          iconProps={{ size: 'medium' }}
+          kind={'icon'}
+          selected={showAllMixins}
+          showTooltip={{ label: tracker.string.AdditionalProperties }}
+          dataId={'btnMixin'}
+          on:click={() => {
+            showAllMixins = !showAllMixins
+          }}
+        />
+      {/if}
     </svelte:fragment>
 
     {#if hasParentIssue}
