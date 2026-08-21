@@ -477,6 +477,10 @@ function parsePriority (value: unknown): number | undefined {
 
 // Tell the model what is already staged, so it continues the list instead of restarting it.
 function batchReply (added: number, total: number): string {
+  // A plain task has no sub-tasks: "Staged 0 sub-task(s)" reads as a failure and invites a retry.
+  if (total === 0) {
+    return 'Task staged; the card is shown to the user, who creates it. Do NOT repeat its content in your reply.'
+  }
   const base = `Staged ${added} sub-task(s); the card now holds ${total}.`
   if (total >= MAX_SUBTASKS) return `${base} That is the maximum - stop calling this tool.`
   return (

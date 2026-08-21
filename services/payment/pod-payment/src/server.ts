@@ -1352,7 +1352,7 @@ export async function createServer (
               // payment id (a different value for tbank), so match the order id kept in `raw` too.
               const purchase = purchases.find(
                 (p) =>
-                  (p.paymentId === checkoutId || (p.raw?.providerData)?.orderId === checkoutId) &&
+                  (p.paymentId === checkoutId || p.raw?.providerData?.orderId === checkoutId) &&
                   (p.status === 'active' || p.status === 'consumed')
               )
               if (purchase !== undefined) {

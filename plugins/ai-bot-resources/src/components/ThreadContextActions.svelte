@@ -16,13 +16,15 @@
   import { type Doc } from '@hcengineering/core'
   import aiBot, { type AIContextMessage } from '@hcengineering/ai-bot'
   import { getResource } from '@hcengineering/platform'
-  import { Button, showPopup } from '@hcengineering/ui'
+  import { Button, IconDownOutline, showPopup } from '@hcengineering/ui'
   import { MessageBox } from '@hcengineering/presentation'
   import chunter from '@hcengineering/chunter'
   import view from '@hcengineering/view'
 
   import plugin from '../plugin'
   import { resetObjectConversation } from '../conversation'
+  import { downloadMdx, exportConversationMdx } from '../exportChat'
+  import { fetchConversationExport } from '../requests'
 
   // Thread header passes the root message as `value`. Only render for AI context roots.
   export let value: Doc
@@ -42,6 +44,13 @@
       }
     })
   }
+
+  async function exportChat (): Promise<void> {
+    // The pod's own file is the better source: it carries the tool calls the chat never shows.
+    // Falls back to the visible messages when nothing has been written for this thread yet.
+    const mdx = (await fetchConversationExport(root._id)) ?? (await exportConversationMdx(root, root.objectId))
+    downloadMdx(`yulia-${root._id}.mdx`, mdx)
+  }
 </script>
 
 {#if isAIContext}
@@ -52,5 +61,15 @@
     dataId={'btnAiNewContext'}
     showTooltip={{ label: plugin.string.NewContextHint }}
     on:click={newContext}
+  />
+  <Button
+    icon={IconDownOutline}
+    kind={'ghost'}
+    size={'small'}
+    dataId={'btnAiExportChat'}
+    showTooltip={{ label: plugin.string.ExportChatHint }}
+    on:click={() => {
+      void exportChat()
+    }}
   />
 {/if}

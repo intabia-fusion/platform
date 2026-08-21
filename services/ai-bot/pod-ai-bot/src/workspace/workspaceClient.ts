@@ -31,6 +31,7 @@ import chunter, { ChatMessage, ThreadMessage, DirectMessage } from '@hcengineeri
 import contact, {
   AvatarType,
   combineName,
+  type Employee,
   ensureEmployee,
   getFirstName,
   getLastName,
@@ -72,6 +73,16 @@ import { resolveModel, registryForFeature } from '../llms/modelRegistry'
 import { getWorkspaceWindows } from '../billing'
 import { decideLevel } from './windowLimit'
 import { buildThreadContext, type ContextMessage } from './threadContext'
+import {
+  appendTurns,
+  type ConversationSnapshot,
+  parseSnapshot,
+  renderSnapshot,
+  snapshotBlobId,
+  snapshotMessageIds,
+  type SnapshotTurn
+} from './conversationSnapshot'
+import { loadWelcomeMessages, pickWelcome } from '../welcome'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
 import { type IntlString, translate } from '@hcengineering/platform'
@@ -118,6 +129,13 @@ function normalizeForCompare (md: string): string {
 // to 85% of what is nominally free: filling the window to the brim ends in a 422 from the
 // provider, and the request is lost rather than trimmed.
 const CONTEXT_SAFETY = 0.85
+
+// Greeting texts live in welcome.yaml so they can be reworded without a rebuild; read once.
+let welcomeMessages: Record<string, string> | undefined
+
+// Turns kept in a conversation file. Far above what any context window takes - the cap only stops
+// a years-old thread from growing without bound.
+const SNAPSHOT_MAX_TURNS = 500
 
 function contextBudgetFor (level: AILevel): number {
   const caps = resolveLevelCapabilities(level)
@@ -263,6 +281,7 @@ export class WorkspaceClient {
         this.aiPerson
       )
     }
+    await this.backfillWelcomeDirects()
     this.ctx.info('Initialized workspace', { workspace: this.wsIds })
   }
 
@@ -900,6 +919,10 @@ export class WorkspaceClient {
       args
     const level = args.level
 
+    // Stamped before anything is read: the snapshot cursor anchors here, so a message posted while
+    // this turn runs is picked up by the next one instead of falling into the gap.
+    const askedAt = Date.now()
+
     // Memory (assistant/user/shared) lives in a Preference; conversation context
     // now comes from the chunter thread, not from a blob history.
     const memory = await this.getMemory(personUuid)
@@ -965,8 +988,16 @@ export class WorkspaceClient {
         }
       }
 
+      // A thread keeps its own transcript file, written after every reply. Reading it back beats
+      // re-querying (and re-tokenizing) the whole thread; only what arrived after the file's cursor
+      // still has to come from the database. Top-level replies are day-limited and keep the old path.
+      const snapshot = dayLimited ? undefined : await this.loadSnapshot(objectId)
+      const sinceQuery =
+        snapshot !== undefined ? { ...contextQuery, modifiedOn: { $gte: snapshot.cursor } } : contextQuery
+      const alreadyInSnapshot = snapshotMessageIds(snapshot)
+
       const lastMessages =
-        (await this.client?.findAll(chunter.class.ChatMessage, contextQuery, {
+        (await this.client?.findAll(chunter.class.ChatMessage, sinceQuery, {
           limit: 500,
           sort: { modifiedOn: SortingOrder.Descending }
         })) ?? []
@@ -977,7 +1008,18 @@ export class WorkspaceClient {
       const botSocialIds = new Set(this.socialIds.map((it) => it._id))
 
       const contextMessages: ContextMessage[] = []
+      // Tool turns are in the file for the reader, not for the model: the model never saw prior
+      // runs' tool traffic before, and feeding it back would change how it answers.
+      for (const turn of snapshot?.turns ?? []) {
+        if (turn.role === 'tool') continue
+        contextMessages.push({
+          role: turn.role,
+          content: turn.content,
+          tokens: llm.countTokens([{ role: turn.role, content: turn.content }]) ?? 0
+        })
+      }
       for (const msg of lastMessages) {
+        if (alreadyInSnapshot.has(msg._id)) continue
         const msgRole: 'assistant' | 'user' = botSocialIds.has(msg.modifiedBy) ? 'assistant' : 'user'
         // Edit proposals are UI artifacts; feed only the fact it happened, never the proposed body.
         let content: string
@@ -1128,7 +1170,126 @@ export class WorkspaceClient {
     }
     const parseResponse = jsonToMarkup(markdownToMarkup(response, { refUrl: '', imageUrl: '' }))
     // A tool staged a proposal: the reply carries it, so the user gets one message - text + card.
-    await this.writeReply(messageClass, space, objectId, objectClass, event.collection, parseResponse, reqCtx.pending)
+    const replyId = await this.writeReply(
+      messageClass,
+      space,
+      objectId,
+      objectClass,
+      event.collection,
+      parseResponse,
+      reqCtx.pending
+    )
+
+    // The answer is out - freeze this turn so the next one reads the file instead of the thread.
+    // Detached: a storage hiccup must not fail a reply the user already has.
+    if (!event.objectIdIsSpace) {
+      void this.appendSnapshotTurn(objectId, objectClass, {
+        userMessageId: event.messageId,
+        userContent: prompt.content,
+        userAuthor: personUuid,
+        askedAt,
+        toolTranscript: chatCompletion?.toolTranscript,
+        answer: response,
+        replyId
+      })
+    }
+  }
+
+  /** The thread's transcript file as it is stored, for the download button. */
+  async readSnapshotFile (conversation: Ref<Doc>): Promise<string | undefined> {
+    try {
+      const id = snapshotBlobId(conversation)
+      if ((await this.storage.stat(this.ctx, this.wsIds, id)) === undefined) return undefined
+      return Buffer.concat(await this.storage.read(this.ctx, this.wsIds, id)).toString()
+    } catch (err: any) {
+      this.ctx.warn('conversation snapshot read failed', { workspace: this.wsIds.uuid, error: err?.message })
+      return undefined
+    }
+  }
+
+  /** Read the thread's transcript file. Missing or unparseable - the caller falls back to the DB. */
+  private async loadSnapshot (conversation: Ref<Doc>): Promise<ConversationSnapshot | undefined> {
+    try {
+      const id = snapshotBlobId(conversation)
+      if ((await this.storage.stat(this.ctx, this.wsIds, id)) === undefined) return undefined
+      const text = Buffer.concat(await this.storage.read(this.ctx, this.wsIds, id)).toString()
+      return parseSnapshot(text)
+    } catch (err: any) {
+      this.ctx.warn('conversation snapshot read failed', {
+        workspace: this.wsIds.uuid,
+        conversation,
+        error: err?.message
+      })
+      return undefined
+    }
+  }
+
+  /**
+   * Append one completed turn (the request, the tools it triggered, the answer) to the thread file.
+   * Idempotent by the incoming message id, so a redelivered event does not duplicate the turn.
+   */
+  private async appendSnapshotTurn (
+    conversation: Ref<Doc>,
+    conversationClass: Ref<Class<Doc>>,
+    turn: {
+      userMessageId: Ref<Doc>
+      userContent: string
+      userAuthor: PersonUuid
+      askedAt: number
+      toolTranscript?: Array<{ name: string, arguments?: string, content: string }>
+      answer: string
+      replyId?: Ref<Doc>
+    }
+  ): Promise<void> {
+    try {
+      const existing = await this.loadSnapshot(conversation)
+      if (existing?.turns.some((t) => t.messageId === turn.userMessageId) === true) return
+
+      const at = Date.now()
+      const author = (await this.client.findOne(contact.class.Person, { personUuid: turn.userAuthor }))?.name
+      const turns: SnapshotTurn[] = [
+        {
+          role: 'user',
+          // The request's own timestamp, not now: the cursor anchors here, and whatever was posted
+          // while the model was thinking still has to be re-read.
+          author: author ?? turn.userAuthor,
+          at: turn.askedAt,
+          messageId: turn.userMessageId,
+          content: turn.userContent
+        }
+      ]
+      for (const call of turn.toolTranscript ?? []) {
+        turns.push({
+          role: 'tool',
+          author: call.name,
+          at,
+          content: `\`\`\`json\n${JSON.stringify({ arguments: call.arguments, result: call.content })}\n\`\`\``
+        })
+      }
+      turns.push({
+        role: 'assistant',
+        author: this.aiPerson?.name ?? 'assistant',
+        at,
+        messageId: turn.replyId,
+        content: turn.answer
+      })
+
+      const snapshot = appendTurns(
+        existing,
+        conversation,
+        `${conversationClass}:${conversation}`,
+        turns,
+        SNAPSHOT_MAX_TURNS
+      )
+      const data = Buffer.from(renderSnapshot(snapshot))
+      await this.storage.put(this.ctx, this.wsIds, snapshotBlobId(conversation), data, 'text/markdown', data.length)
+    } catch (err: any) {
+      this.ctx.warn('conversation snapshot write failed', {
+        workspace: this.wsIds.uuid,
+        conversation,
+        error: err?.message
+      })
+    }
   }
 
   // Copyright © 2026 Intabia Fusion
@@ -1154,6 +1315,75 @@ export class WorkspaceClient {
       this.ctx.warn('load_thread_history failed', { error: err })
       return 'Failed to load older messages.'
     }
+  }
+
+  // A member became active -> open the Direct with Юля and greet. Without this the chat exists
+  // only after the user finds the "Talk to Yulia" button, so on a fresh workspace the bot looks
+  // absent. An existing Direct is the idempotency guard.
+  async sendWelcomeIfNeeded (person: Ref<Person>): Promise<void> {
+    await this.initPromise
+    const aiAccount = this.aiPerson?.personUuid as AccountUuid | undefined
+    if (aiAccount === undefined) return
+
+    try {
+      const employee = await this.client.findOne(contact.mixin.Employee, { _id: person as Ref<Employee> })
+      const account = employee?.personUuid
+      if (employee?.active !== true || account === undefined || account === aiAccount) return
+      if ((await this.findUserDirect(account)) !== undefined) return
+      await this.sendWelcome(account, aiAccount)
+    } catch (err: any) {
+      this.ctx.warn('welcome failed', { workspace: this.wsIds.uuid, person, error: err?.message })
+    }
+  }
+
+  // Members who joined before the welcome existed have no Direct with Юля at all: the chat used to
+  // appear only when someone pressed "Talk to Yulia". Backfill it on connect.
+  private async backfillWelcomeDirects (): Promise<void> {
+    const aiAccount = this.aiPerson?.personUuid as AccountUuid | undefined
+    if (aiAccount === undefined) return
+
+    try {
+      const directs = await this.client.findAll<DirectMessage>(chunter.class.DirectMessage, { members: aiAccount })
+      const greeted = new Set<AccountUuid>()
+      for (const dm of directs) {
+        if (dm.members.length !== 2) continue
+        const other = dm.members.find((m) => m !== aiAccount)
+        if (other !== undefined) greeted.add(other)
+      }
+
+      const employees = await this.client.findAll(contact.mixin.Employee, { active: true })
+      for (const employee of employees) {
+        const account = employee.personUuid
+        if (account === undefined || account === aiAccount || greeted.has(account)) continue
+        await this.sendWelcome(account, aiAccount)
+      }
+    } catch (err: any) {
+      this.ctx.warn('welcome backfill failed', { workspace: this.wsIds.uuid, error: err?.message })
+    }
+  }
+
+  private async sendWelcome (account: AccountUuid, aiAccount: AccountUuid): Promise<void> {
+    welcomeMessages = welcomeMessages ?? loadWelcomeMessages()
+    const lang = await this.resolveChatLanguage(account, undefined, true)
+    const text = pickWelcome(welcomeMessages, lang)
+    if (text === undefined) return
+    const markup = jsonToMarkup(markdownToMarkup(text, { refUrl: '', imageUrl: '' }))
+    const direct = await this.client.createDoc<DirectMessage>(chunter.class.DirectMessage, core.space.Space, {
+      name: '',
+      description: '',
+      private: true,
+      archived: false,
+      members: [aiAccount, account],
+      type: 'person'
+    })
+    await this.client.addCollection<Doc, ChatMessage>(
+      chunter.class.ChatMessage,
+      direct,
+      direct,
+      chunter.class.DirectMessage,
+      'messages',
+      { message: markup }
+    )
   }
 
   // Find the user's existing Direct chat with Юля (does not create one).
@@ -1206,7 +1436,8 @@ export class WorkspaceClient {
     )
   }
 
-  // Write a bot reply as a ChatMessage or a ThreadMessage under the parent message.
+  // Write a bot reply as a ChatMessage or a ThreadMessage under the parent message. Returns the id
+  // written, which the conversation snapshot records so the next turn does not re-read it.
   private async writeReply (
     messageClass: Ref<Class<Doc>>,
     space: Ref<Space>,
@@ -1215,7 +1446,7 @@ export class WorkspaceClient {
     collection: string,
     markup: string,
     pending?: PendingProposal
-  ): Promise<void> {
+  ): Promise<Ref<Doc> | undefined> {
     // Proposal messages derive from ThreadMessage, so they need the thread parent's object refs.
     // In a Direct there is no parent message and the channel itself plays that role.
     const parent = await this.client.findOne<ChatMessage>(chunter.class.ChatMessage, {
@@ -1227,7 +1458,7 @@ export class WorkspaceClient {
     }
 
     if (pending?.kind === 'edit') {
-      await this.client.addCollection<Doc, AIEditProposalMessage>(
+      return await this.client.addCollection<Doc, AIEditProposalMessage>(
         aiBot.class.AIEditProposalMessage,
         space,
         objectId,
@@ -1242,10 +1473,9 @@ export class WorkspaceClient {
           proposedMarkup: pending.proposedMarkup
         }
       )
-      return
     }
     if (pending?.kind === 'task') {
-      await this.client.addCollection<Doc, AITaskProposalMessage>(
+      return await this.client.addCollection<Doc, AITaskProposalMessage>(
         aiBot.class.AITaskProposalMessage,
         space,
         objectId,
@@ -1260,11 +1490,10 @@ export class WorkspaceClient {
           parent: pending.parent
         }
       )
-      return
     }
 
     if (messageClass === chunter.class.ChatMessage) {
-      await this.client.addCollection<Doc, ChatMessage>(
+      return await this.client.addCollection<Doc, ChatMessage>(
         chunter.class.ChatMessage,
         space,
         objectId,
@@ -1273,7 +1502,7 @@ export class WorkspaceClient {
         { message: markup }
       )
     } else if (messageClass === chunter.class.ThreadMessage && parent !== undefined) {
-      await this.client.addCollection<Doc, ThreadMessage>(
+      return await this.client.addCollection<Doc, ThreadMessage>(
         chunter.class.ThreadMessage,
         space,
         objectId,

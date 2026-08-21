@@ -37,7 +37,19 @@ import serverToken, { generateToken } from '@hcengineering/server-token'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { type AIEventRequest, type ChatVoiceTranscriptionTask } from '@hcengineering/ai-bot'
 import { createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { type MeasureContext, newMetrics, RateLimiter, type SocialId, type WorkspaceUuid } from '@hcengineering/core'
+import core, {
+  type MeasureContext,
+  newMetrics,
+  RateLimiter,
+  type Class,
+  type Doc,
+  type Ref,
+  type SocialId,
+  type Tx,
+  type TxMixin,
+  type WorkspaceUuid
+} from '@hcengineering/core'
+import contact, { type Employee, type Person } from '@hcengineering/contact'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { join } from 'path'
 import {
@@ -57,10 +69,10 @@ import { registerLoaders } from './loaders'
 import { createServer } from './server/server'
 import { TranscriptionQueueTask } from './transcription'
 import { createTranscriptionsSupport } from './transcriptions'
-import { TranscriptionTask } from './types'
+import { type SummaryTask, TranscriptionTask } from './types'
 import { getAccountUuid } from './utils/account'
 import { ClisrServer } from '@intabiafusion/clisr'
-import { QueueMeetingEvent, QueueMeetingMessage } from '@hcengineering/love'
+import love, { type MeetingMinutes, QueueMeetingEvent, QueueMeetingMessage } from '@hcengineering/love'
 
 // Consumer groups are per-role, never one shared 'ai-bot': a single group across topics makes one
 // role's rebalance stall the others, and workspace events would land on a pod that does not serve
@@ -68,9 +80,13 @@ import { QueueMeetingEvent, QueueMeetingMessage } from '@hcengineering/love'
 // Keeps the historical name on purpose: a new group starts at `latest`, and a purchase left
 // unconsumed at deploy time would be dropped — that one is money.
 const GROUP_PURCHASE = 'ai-bot'
+const GROUP_WELCOME = 'ai-bot-welcome'
 const GROUP_EVENT_ROUTER = 'ai-bot-event-router'
 const GROUP_STT_INGEST = 'ai-bot-stt-ingest'
 const GROUP_TRANSCRIPTION = 'ai-bot-transcription'
+const GROUP_SUMMARY = 'ai-bot-summary'
+// Own topic, not AIQueue: a summary is not a chat event and must survive a pod restart.
+const SUMMARY_TOPIC = 'ai-summary'
 const providerGroup = (providerId: string): string => `ai-bot-llm-${providerId}`
 
 // LimitsChanged/Up must reach EVERY pod (each keeps its own 30s window cache and limitsState), so
@@ -230,9 +246,32 @@ function startWorkspaceConsumer (boot: Boot): void {
     }
   )
 
+  // A member became active -> greet them in a Direct. Shared group: exactly one pod must send it.
+  // Every tx of every workspace lands here, so filter before touching a workspace client.
+  const employees = queue.createBatchConsumer<Tx>(
+    ctx,
+    QueueTopic.Tx,
+    GROUP_WELCOME,
+    async (ctx, messages) => {
+      for (const message of messages) {
+        const tx = message.value as TxMixin<Person, Employee>
+        if (tx._class !== core.class.TxMixin) continue
+        if (tx.mixin !== contact.mixin.Employee || tx.attributes?.active !== true) continue
+        try {
+          const wsClient = await aiControl.getWorkspaceClient(message.workspace)
+          await wsClient?.sendWelcomeIfNeeded(tx.objectId)
+        } catch (err: any) {
+          ctx.error('failed to handle employee activation', { error: err.message })
+        }
+      }
+    },
+    { batchSize: 500, batchTimeout: 200 }
+  )
+
   boot.onClose.push(() => {
     void purchases?.close()
     void state?.close()
+    void employees?.close()
   })
 }
 
@@ -356,8 +395,13 @@ function startLlmRouter (boot: Boot): void {
 }
 
 /** stt-ingest: runs in EVERY role; wires the TranscriptionQueue producer and love queue consumer. */
-function startSttIngest (boot: Boot): void {
+async function startSttIngest (boot: Boot): Promise<void> {
   const { ctx, queue, aiControl } = boot
+
+  await queue.createTopic(SUMMARY_TOPIC, 1)
+  const summaryProducer = queue.getProducer<SummaryTask>(ctx, SUMMARY_TOPIC)
+  // The REST /summarize button publishes through the same topic.
+  aiControl.setSummaryProducer(summaryProducer)
 
   const loveConsumer = queue.createConsumer<QueueMeetingMessage>(
     ctx,
@@ -373,6 +417,12 @@ function startSttIngest (boot: Boot): void {
         case QueueMeetingEvent.finished: {
           const wsClient = await aiControl.getWorkspaceClient(msg.workspace)
           await wsClient?.meetingFinished(msg.value.meetingId)
+          // Handed to a queue, not run here: the summary waits for the transcript tail and is
+          // meant to grow into a multi-step job. Holding this consumer that long stalls other
+          // meetings and risks a rebalance; a detached `void` call would be lost on restart.
+          await summaryProducer?.send(ctx, msg.workspace, [
+            { target: msg.value.meetingId, targetClass: love.class.MeetingMinutes }
+          ])
           break
         }
       }
@@ -387,6 +437,66 @@ function startSttIngest (boot: Boot): void {
   boot.onClose.push(() => {
     void loveConsumer?.close()
     void transcriptionProducer?.close()
+    void summaryProducer?.close()
+  })
+}
+
+/** Summaries: own consumer so a slow multi-step summary never blocks the love queue or a REST call. */
+function startSummary (boot: Boot): void {
+  const { ctx, queue, aiControl } = boot
+
+  const deadLetter = queue.getProducer<{ task: SummaryTask, error: string }>(
+    ctx,
+    // Cast: the helper only string-templates the name, but its param is typed as the enum.
+    getDeadletterTopic(SUMMARY_TOPIC as QueueTopic)
+  )
+
+  const consumer = queue.createBatchConsumer<SummaryTask>(
+    ctx,
+    SUMMARY_TOPIC,
+    GROUP_SUMMARY,
+    async (ctx, messages, control) => {
+      // Waiting for the transcript tail takes tens of seconds - keep the group alive meanwhile.
+      const hb = setInterval(() => {
+        void control?.heartbeat()
+      }, 1000)
+      try {
+        await Promise.all(
+          messages.map(async (message) => {
+            const task = message.value
+            try {
+              await retryTransient(
+                async () => {
+                  // Manual runs are an explicit ask: no settings gate, no transcript-tail wait.
+                  if (task.manual === true) {
+                    await aiControl.summarizeMessages(message.workspace, {
+                      lang: task.lang ?? '',
+                      target: task.target as Ref<Doc>,
+                      targetClass: task.targetClass as Ref<Class<Doc>>
+                    })
+                  } else {
+                    await aiControl.autoSummarizeMeeting(message.workspace, task.target as Ref<MeetingMinutes>)
+                  }
+                },
+                { maxRetries: 3, isRetryable: retryNetworkErrors },
+                'summarize'
+              )
+            } catch (err: any) {
+              ctx.error('failed to summarize', { error: err.message, workspace: message.workspace })
+              await deadLetter?.send(ctx, message.workspace, [{ task, error: err.message }])
+            }
+          })
+        )
+      } finally {
+        clearInterval(hb)
+      }
+    },
+    { batchSize: 16 }
+  )
+
+  boot.onClose.push(() => {
+    void consumer?.close()
+    void deadLetter?.close()
   })
 }
 
@@ -520,9 +630,10 @@ export const startQueue = async (): Promise<void> => {
   const boot = await bootstrap('all')
   boot.aiControl.initLLM(boot.clisrServer)
   startWorkspaceConsumer(boot)
-  startSttIngest(boot)
+  await startSttIngest(boot)
   await startEventRouter(boot)
   startLlmRouter(boot)
+  startSummary(boot)
   await startSttWorker(boot)
   await finalize(boot)
 }
@@ -531,7 +642,7 @@ export const startQueue = async (): Promise<void> => {
 export const startEventRouterMode = async (): Promise<void> => {
   const boot = await bootstrap('event-router')
   startWorkspaceConsumer(boot)
-  startSttIngest(boot)
+  await startSttIngest(boot)
   await startEventRouter(boot)
   await finalize(boot)
 }
@@ -544,8 +655,9 @@ export const startLlmRouterMode = async (): Promise<void> => {
   boot.ctx.info('llm-router clisr support', { hasClisr })
   boot.aiControl.initLLM(hasClisr ? boot.clisrServer : undefined)
   startWorkspaceConsumer(boot)
-  startSttIngest(boot)
+  await startSttIngest(boot)
   startLlmRouter(boot)
+  startSummary(boot)
   await finalize(boot)
 }
 
@@ -553,7 +665,7 @@ export const startLlmRouterMode = async (): Promise<void> => {
 export const startSttWorkerMode = async (): Promise<void> => {
   const boot = await bootstrap('stt-worker')
   startWorkspaceConsumer(boot)
-  startSttIngest(boot)
+  await startSttIngest(boot)
   await startSttWorker(boot)
   await finalize(boot)
 }

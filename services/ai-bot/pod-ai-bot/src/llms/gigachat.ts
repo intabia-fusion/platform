@@ -232,7 +232,12 @@ export default class GigaChatProvider implements LLMProvider {
         )
 
       const result = await runToolCalls(ask, execute, MAX_TOOL_ITERATIONS, hooks)
-      return { completion: result?.completion, usage: result?.usage, cancelled: result?.cancelled }
+      return {
+        completion: result?.completion,
+        usage: result?.usage,
+        cancelled: result?.cancelled,
+        toolTranscript: result?.toolTranscript
+      }
     } catch (error) {
       // Rethrow so the pod marks the request failed instead of silently returning no reply.
       ctx.error('GigaChat tools completion failed', { error: (error as any)?.message })

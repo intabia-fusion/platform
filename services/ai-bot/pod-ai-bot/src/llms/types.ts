@@ -66,6 +66,8 @@ export function usageFromApi (usage?: ApiUsage): TokenUsage | undefined {
 export interface ChatCompletionWithToolsResult {
   completion?: string
   usage?: TokenUsage
+  // Tools called while producing this answer, for the conversation snapshot.
+  toolTranscript?: ToolResult[]
   // The user stopped the run: the completion is what one final step could assemble.
   cancelled?: boolean
 }

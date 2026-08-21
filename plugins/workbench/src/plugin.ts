@@ -88,6 +88,7 @@ export const workbenchPlugin = plugin(workbenchId, {
   extensions: {
     WorkbenchExtensions: '' as ComponentExtensionId,
     WorkbenchTabExtensions: '' as ComponentExtensionId,
+    WidgetsBarExtensions: '' as ComponentExtensionId,
     SpecialViewAction: '' as ComponentExtensionId
   },
   function: {

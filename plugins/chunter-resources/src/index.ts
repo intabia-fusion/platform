@@ -61,6 +61,7 @@ import ThreadViewPanel from './components/threads/ThreadViewPanel.svelte'
 import ChatWidget from './components/ChatWidget.svelte'
 import ChatWidgetTab from './components/ChatWidgetTab.svelte'
 import WorkbenchTabExtension from './components/WorkbenchTabExtension.svelte'
+import AIChatButton from './components/AIChatButton.svelte'
 import DirectMessageButton from './components/DirectMessageButton.svelte'
 import EmployeePresenter from './components/ChunterEmployeePresenter.svelte'
 import InlineCommentThread from './components/inline-comment/InlineCommentThread.svelte'
@@ -196,6 +197,7 @@ export default async (): Promise<Resources> => ({
     JoinChannelNotificationPresenter,
     ChatWidget,
     ChatWidgetTab,
+    AIChatButton,
     WorkbenchTabExtension,
     DirectMessageButton,
     EmployeePresenter,

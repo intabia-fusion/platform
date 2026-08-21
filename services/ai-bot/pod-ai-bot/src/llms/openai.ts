@@ -269,7 +269,7 @@ export default class OpenAIProvider implements LLMProvider {
         completion = (completion ?? '').substring(pos + 8)
       }
 
-      return { completion, usage: result?.usage, cancelled: result?.cancelled }
+      return { completion, usage: result?.usage, cancelled: result?.cancelled, toolTranscript: result?.toolTranscript }
     } catch (e) {
       ctx.error('openai tools completion failed', { error: (e as any)?.message })
     }

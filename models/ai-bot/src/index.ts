@@ -118,6 +118,9 @@ export class TAISpaceSettings extends TDoc implements AISpaceSettings {
 
   @Prop(TypeString(), core.string.String)
     sharedPrompt?: string
+
+  @Prop(TypeBoolean(), core.string.Boolean)
+    meetingSummary?: boolean
 }
 
 @Model(aiBot.class.AIContextMessage, chunter.class.ChatMessage)

@@ -276,7 +276,12 @@ export default class ServerLLMProvider implements LLMProvider {
 
       billUsage(ctx, workspace, result.usage, this.billingFor(level), reason, new Date().toISOString(), result.clientId)
 
-      return { completion: result.completion, usage: result.usage, cancelled: result.cancelled }
+      return {
+        completion: result.completion,
+        usage: result.usage,
+        cancelled: result.cancelled,
+        toolTranscript: result.toolTranscript
+      }
     } catch (err: any) {
       const elapsed = Date.now() - startTime
       this.ctx.error('Server LLM createChatCompletionWithTools failed', {

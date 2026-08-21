@@ -37,9 +37,9 @@ export function createPoolNotifier (
     // One unreachable address must not hide the alert from the rest, nor keep the pool unmarked
     // and re-notifying every pass: this fails only when nothing got out at all.
     const sent = await Promise.allSettled(
-      adminEmails.map(
-        async (to) => { await producer.send(ctx, '' as WorkspaceUuid, [{ type: 'email', data: { html, text, subject, to } }], to) }
-      )
+      adminEmails.map(async (to) => {
+        await producer.send(ctx, '' as WorkspaceUuid, [{ type: 'email', data: { html, text, subject, to } }], to)
+      })
     )
     const failed = sent.filter((r) => r.status === 'rejected')
     if (failed.length > 0) {

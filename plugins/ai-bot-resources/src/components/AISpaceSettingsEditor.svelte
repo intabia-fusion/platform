@@ -22,7 +22,7 @@
     type AISpaceSettings
   } from '@hcengineering/ai-bot'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Label, Scroller, TextArea } from '@hcengineering/ui'
+  import { Label, ModernToggle, Scroller, TextArea } from '@hcengineering/ui'
   import { onMount } from 'svelte'
 
   import { getAILevels, getAsrLevels } from '../requests'
@@ -41,6 +41,7 @@
   let levelInfos: AILevelInfo[] = []
   let asrLevelInfos: AsrLevelInfo[] = []
   let sharedPrompt: string = ''
+  let meetingSummary: boolean = true
 
   const query = createQuery()
   query.query(aiBot.class.AISpaceSettings, { attachedTo: { $exists: false } }, (res) => {
@@ -49,6 +50,7 @@
     asrLevel = doc?.asrLevel ?? asrLevel
     language = doc?.language ?? ''
     sharedPrompt = doc?.sharedPrompt ?? ''
+    meetingSummary = doc?.meetingSummary ?? true
   })
 
   onMount(async () => {
@@ -68,7 +70,7 @@
   let saveQueue: Promise<void> = Promise.resolve()
 
   async function save (
-    patch: Partial<Pick<AISpaceSettings, 'level' | 'asrLevel' | 'language' | 'sharedPrompt'>>
+    patch: Partial<Pick<AISpaceSettings, 'level' | 'asrLevel' | 'language' | 'sharedPrompt' | 'meetingSummary'>>
   ): Promise<void> {
     if (readonly) return
     const run = async (): Promise<void> => {
@@ -106,6 +108,11 @@
   function onLanguageChanged (e: CustomEvent<string>): void {
     language = e.detail
     void save({ language: language !== '' ? language : undefined })
+  }
+
+  function onMeetingSummaryChanged (): void {
+    meetingSummary = !meetingSummary
+    void save({ meetingSummary })
   }
 </script>
 
@@ -146,6 +153,14 @@
       <span class="content-dark-color text-sm"><Label label={aiBot.string.LanguageHint} /></span>
       <div class="mt-2">
         <AILanguageSelector value={language} disabled={readonly} on:change={onLanguageChanged} />
+      </div>
+    </div>
+
+    <div class="flex-col flex-gap-2">
+      <span class="fs-title"><Label label={aiBot.string.MeetingSummary} /></span>
+      <span class="content-dark-color text-sm"><Label label={aiBot.string.MeetingSummaryHint} /></span>
+      <div class="mt-2">
+        <ModernToggle size="small" checked={meetingSummary} disabled={readonly} on:change={onMeetingSummaryChanged} />
       </div>
     </div>
 

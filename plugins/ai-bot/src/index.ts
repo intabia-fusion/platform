@@ -81,6 +81,8 @@ export interface AISpaceSettings extends Doc {
   asrLevel?: AsrLevel
   language?: string
   sharedPrompt?: string
+  // Summarize a meeting when it ends. Unset counts as enabled.
+  meetingSummary?: boolean
 }
 
 /** Root message of an object-linked "discuss with Yulia" thread for `objectId`; reused when the button reopens it. */
@@ -224,6 +226,8 @@ const aiBot = plugin(aiBotId, {
     PersonalTab: '' as IntlString,
     SharedPrompt: '' as IntlString,
     SharedPromptHint: '' as IntlString,
+    MeetingSummary: '' as IntlString,
+    MeetingSummaryHint: '' as IntlString,
     PersonalContext: '' as IntlString,
     PersonalContextHint: '' as IntlString,
     DiscussWithAI: '' as IntlString,
@@ -249,7 +253,9 @@ const aiBot = plugin(aiBotId, {
     HideDiff: '' as IntlString,
     NewContext: '' as IntlString,
     NewContextHint: '' as IntlString,
-    NewContextConfirm: '' as IntlString
+    NewContextConfirm: '' as IntlString,
+    ExportChat: '' as IntlString,
+    ExportChatHint: '' as IntlString
   }
 })
 

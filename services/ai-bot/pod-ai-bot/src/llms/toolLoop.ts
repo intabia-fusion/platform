@@ -91,6 +91,8 @@ export function buildToolExecutor (tools: RunnableTools<BaseFunctionsArgs>): Too
 export interface ToolLoopResult {
   completion?: string
   usage?: TokenUsage
+  // Every tool the model called this run, in order - kept for the conversation snapshot.
+  toolTranscript?: ToolResult[]
   // The clisr worker that served the run (from the last reply that carried one). Empty for direct.
   clientId?: string
   // The user stopped the run: the completion is what could be assembled in one final step.
@@ -172,7 +174,8 @@ export async function runToolCalls (
       return {
         completion,
         usage: usageResult(),
-        clientId
+        clientId,
+        toolTranscript: priorToolResults.length > 0 ? priorToolResults : undefined
       }
     }
 
@@ -222,6 +225,7 @@ export async function runToolCalls (
     completion,
     usage: usageResult(),
     clientId,
-    cancelled
+    cancelled,
+    toolTranscript: priorToolResults.length > 0 ? priorToolResults : undefined
   }
 }
