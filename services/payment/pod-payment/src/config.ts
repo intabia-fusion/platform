@@ -51,6 +51,9 @@ export interface Config {
   // Explicit opt-in for the mock provider (activates plans without payment) — never set in production
   AllowMockProvider?: boolean
 
+  // One-shot backfill of the baked AI window on old subscriptions; enable for a single deploy.
+  RunWindowBackfill?: boolean
+
   // Per-IP cap on subscription mutations per 15-min window (raise on test stands that run many in a row)
   SubscriptionRateLimitMax?: number
 
@@ -84,6 +87,7 @@ const config: Config = (() => {
     TrialExpiryHourUtc: parseNumber(process.env.TRIAL_EXPIRY_HOUR_UTC),
     TrialExpiryIntervalMinutes: parseNumber(process.env.TRIAL_EXPIRY_INTERVAL_MINUTES),
     AllowMockProvider: process.env.ALLOW_MOCK_PROVIDER === 'true',
+    RunWindowBackfill: process.env.RUN_WINDOW_BACKFILL === 'true',
     SubscriptionRateLimitMax: parseNumber(process.env.SUBSCRIPTION_RATE_LIMIT_MAX),
     PlanConfigRateLimitMax: parseNumber(process.env.PLAN_CONFIG_RATE_LIMIT_MAX)
   }

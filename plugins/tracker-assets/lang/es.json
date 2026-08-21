@@ -301,7 +301,9 @@
     "AddedBlocker": "Problema bloqueador añadido {identifier}{value}",
     "RemovedBlocker": "Problema bloqueador eliminado {identifier}{value}",
     "AddedRelation": "Problema relacionado añadido {identifier}{value}",
-    "RemovedRelation": "Problema relacionado eliminado {identifier}{value}"
+    "RemovedRelation": "Problema relacionado eliminado {identifier}{value}",
+    "CreateAndOpen": "Crear y abrir",
+    "CreateAndNew": "Crear y empezar otra"
   },
   "status": {},
   "emailTemplate": {

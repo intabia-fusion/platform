@@ -16,7 +16,8 @@ export enum QueueWorkspaceEvent {
   ClearIndex = 'clear-fulltext-index',
   LimitsChanged = 'limits-changed',
   UsageChanged = 'usage-changed',
-  Maintenance = 'maintenance'
+  Maintenance = 'maintenance',
+  PurchaseActivated = 'purchase-activated'
 }
 
 export interface QueueWorkspaceMessage {
@@ -71,6 +72,17 @@ export interface QueueWorkspaceMaintenanceMessage extends QueueWorkspaceMessage 
   message?: string
 }
 
+/** A one-time catalog purchase was paid & activated; the owning pod interprets `effect`. */
+export interface QueueWorkspacePurchaseMessage extends QueueWorkspaceMessage {
+  type: QueueWorkspaceEvent.PurchaseActivated
+
+  sku: string
+  purchaseId: string
+  // Catalog effect key and its magnitude, copied from the purchasable item by payment.
+  effect?: string
+  quantity?: number
+}
+
 export const workspaceEvents = {
   open: (): QueueWorkspaceMessage => ({ type: QueueWorkspaceEvent.Up }),
   down: (): QueueWorkspaceMessage => ({ type: QueueWorkspaceEvent.Down }),
@@ -93,6 +105,18 @@ export const workspaceEvents = {
     type: QueueWorkspaceEvent.UsageChanged,
     category,
     used
+  }),
+  purchaseActivated: (
+    sku: string,
+    purchaseId: string,
+    effect?: string,
+    quantity?: number
+  ): QueueWorkspacePurchaseMessage => ({
+    type: QueueWorkspaceEvent.PurchaseActivated,
+    sku,
+    purchaseId,
+    effect,
+    quantity
   }),
   reindex: (domain: Domain, classes: Ref<Class<Doc>>[]): QueueWorkspaceReindexMessage => ({
     type: QueueWorkspaceEvent.Reindex,

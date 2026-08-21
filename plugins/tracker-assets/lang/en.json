@@ -320,7 +320,9 @@
     "AddedBlocker": "Added blocker {identifier}{value}",
     "RemovedBlocker": "Removed blocker {identifier}{value}",
     "AddedRelation": "Added relation {identifier}{value}",
-    "RemovedRelation": "Removed relation {identifier}{value}"
+    "RemovedRelation": "Removed relation {identifier}{value}",
+    "CreateAndOpen": "Create and open",
+    "CreateAndNew": "Create and start new"
   },
   "status": {},
   "emailTemplate": {

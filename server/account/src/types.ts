@@ -293,6 +293,9 @@ export interface TierLimits {
   meetingMinutesLimit: number
   tokenLimit: number
   usersLimit: number
+  // AI rolling-window limit (billed tokens/month). Bigger plan = bigger window = more
+  // AI before the rate-limit kicks in. 0 = unlimited.
+  windowMonthLimit?: number
 }
 
 export interface Subscription {
@@ -356,7 +359,8 @@ export type PaymentIntentStatus = 'pending' | 'charged' | 'failed'
 // renewals/checkouts can't double-charge — a second claim hits the existing row instead.
 export interface PaymentIntent {
   id: string
-  claimKey: string // dedup key: 'renew:<sub>:<period>' | 'checkout:<ws>:<type>'
+  // dedup key: 'renew:<sub>:<period>' | 'checkout:<ws>:<type>' | 'checkout:<ws>:purchase:<fingerprint>'
+  claimKey: string
   provider: string
   status: PaymentIntentStatus
   paymentId?: string // provider charge id, set once the charge is issued; webhook links back here
@@ -399,6 +403,24 @@ export interface PaymentOperationStats {
   totalAmount: number // kopecks
   totalErrors: number
   workspaces: Array<{ workspaceUuid: string, charges: number, amount: number, errors: number }>
+}
+
+/** One-time catalog purchase (mirrors account-client WorkspacePurchase). */
+export type WorkspacePurchaseStatus = 'pending' | 'active' | 'consumed' | 'failed'
+
+export interface WorkspacePurchase {
+  id?: string // DB-generated on insert
+  workspaceUuid: WorkspaceUuid
+  accountUuid: AccountUuid
+  sku: string
+  category?: string
+  status: WorkspacePurchaseStatus
+  amount?: number // minor units (kopecks)
+  paymentId?: string
+  provider?: string
+  raw?: Record<string, any>
+  createdOn?: Timestamp
+  activatedOn?: Timestamp
 }
 
 export interface PaymentOperationFilter {
@@ -640,6 +662,11 @@ export interface AccountDB {
   getPaymentOperations: (filter: PaymentOperationFilter) => Promise<PaymentOperation[]>
   getPaymentOperationStats: (from: Timestamp, to: Timestamp) => Promise<PaymentOperationStats>
   getPaymentMonthlyStats: (from: Timestamp, to: Timestamp) => Promise<PaymentMonthlyStats[]>
+  // Generic one-time purchases (AI reset, skins, unlocks). createPurchase returns the generated id.
+  // account is domain-agnostic — SKU effects are applied by the owning pod, not here.
+  createPurchase: (purchase: WorkspacePurchase) => Promise<string>
+  updatePurchaseStatus: (id: string, status: WorkspacePurchaseStatus, activatedOn?: Timestamp) => Promise<void>
+  getPurchases: (workspace: WorkspaceUuid) => Promise<WorkspacePurchase[]>
 }
 
 export interface DbCollection<T> {

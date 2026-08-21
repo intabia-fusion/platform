@@ -62,6 +62,8 @@ import type {
   PaymentOperationStats,
   PaymentOperationFilter,
   PaymentMonthlyStats,
+  WorkspacePurchase,
+  WorkspacePurchaseStatus,
   DBFlavor,
   WorkspacePermission,
   AccountWorkspaceBadgeStatus,
@@ -564,6 +566,7 @@ export class PostgresAccountDB implements AccountDB {
   subscription: PostgresDbCollection<Subscription, 'id'>
   paymentIntent: PostgresDbCollection<PaymentIntent, 'id'>
   paymentOperation: PostgresDbCollection<PaymentOperation, 'id'>
+  workspacePurchase: PostgresDbCollection<WorkspacePurchase, 'id'>
   workspacePermission: PostgresDbCollection<WorkspacePermission>
   accountWorkspaceBadgeStatus: PostgresDbCollection<AccountWorkspaceBadgeStatus>
   adminAction: PostgresDbCollection<AdminAction, 'id'>
@@ -644,6 +647,12 @@ export class PostgresAccountDB implements AccountDB {
       withRetryClient
     })
     this.paymentOperation = new PostgresDbCollection<PaymentOperation, 'id'>('payment_operation', client, {
+      ns,
+      idKey: 'id',
+      timestampFields: ['createdOn'],
+      withRetryClient
+    })
+    this.workspacePurchase = new PostgresDbCollection<WorkspacePurchase, 'id'>('workspace_purchase', client, {
       ns,
       idKey: 'id',
       timestampFields: ['createdOn'],
@@ -2078,6 +2087,62 @@ export class PostgresAccountDB implements AccountDB {
       byMonth.set(month, entry)
     }
     return Array.from(byMonth.values()).sort((a, b) => a.month.localeCompare(b.month))
+  }
+
+  // Insert a purchase row, returns the generated id. Idempotent by (payment_id, provider):
+  // a concurrent duplicate hits the unique index and returns the existing row's id.
+  async createPurchase (p: WorkspacePurchase): Promise<string> {
+    const table = this.workspacePurchase.getTableName()
+    const rows = await this.workspacePurchase.unsafe(
+      `INSERT INTO ${table}
+        (workspace_uuid, account_uuid, sku, category, status, amount, payment_id, provider, raw, activated_on)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10)
+       ON CONFLICT (payment_id, provider) WHERE payment_id IS NOT NULL DO NOTHING
+       RETURNING id`,
+      [
+        p.workspaceUuid,
+        p.accountUuid,
+        p.sku,
+        p.category ?? null,
+        p.status,
+        p.amount ?? null,
+        p.paymentId ?? null,
+        p.provider ?? null,
+        p.raw ?? null,
+        p.activatedOn ?? null
+      ]
+    )
+    const inserted = (rows as Array<Record<string, any>>)[0]?.id as string | undefined
+    if (inserted !== undefined) return inserted
+
+    const existing = await this.workspacePurchase.unsafe(
+      `SELECT id FROM ${table} WHERE payment_id = $1 AND provider = $2`,
+      [p.paymentId ?? null, p.provider ?? null]
+    )
+    const id = (existing as Array<Record<string, any>>)[0]?.id as string | undefined
+    if (id === undefined) {
+      throw new Error(`failed to create purchase for payment ${p.paymentId ?? ''}`)
+    }
+    return id
+  }
+
+  async updatePurchaseStatus (id: string, status: WorkspacePurchaseStatus, activatedOn?: number): Promise<void> {
+    const table = this.workspacePurchase.getTableName()
+    await this.workspacePurchase.unsafe(
+      `UPDATE ${table} SET status = $2, activated_on = COALESCE($3, activated_on) WHERE id = $1`,
+      [id, status, activatedOn ?? null]
+    )
+  }
+
+  async getPurchases (workspace: WorkspaceUuid): Promise<WorkspacePurchase[]> {
+    const table = this.workspacePurchase.getTableName()
+    const rows = await this.workspacePurchase.unsafe(
+      `SELECT * FROM ${table} WHERE workspace_uuid = $1 ORDER BY created_on DESC`,
+      [workspace]
+    )
+    // The table's own converter, not the generic camel-case one: it restores column types
+    // (created_on/activated_on), which the UI otherwise renders as "Invalid date".
+    return (rows as Array<Record<string, any>>).map((r) => this.workspacePurchase.convertToObj(r))
   }
 
   // Lease heartbeat: refresh while the charge is in flight so other pods see the claimer is alive.

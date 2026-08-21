@@ -336,6 +336,38 @@ describe('processWebhook (consumer)', () => {
     expect(canceled[0].status).toBe(SubscriptionStatus.Canceled)
   })
 
+  test('CONFIRMED purchase cancels nothing: purchases coexist and share the tier card', async () => {
+    const purchase = {
+      ...activeSub,
+      id: 'purchase_2',
+      type: 'purchase',
+      plan: 'tokens-1m',
+      providerSubscriptionId: 'pay_2',
+      status: SubscriptionStatus.PastDue,
+      providerData: { pending: true, paymentId: 'pay_2' }
+    }
+    const earlierPurchase = {
+      ...purchase,
+      id: 'purchase_1',
+      providerSubscriptionId: 'pay_1',
+      status: SubscriptionStatus.Active
+    }
+    const storage = makeStorage(purchase)
+    storage.getAll = jest.fn().mockResolvedValue([earlierPurchase, activeSub, purchase])
+
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_2', Status: 'CONFIRMED', Amount: 49900 },
+      true
+    )
+
+    const canceled = storage.upsert.mock.calls.filter((c: any[]) => c[0].status === SubscriptionStatus.Canceled)
+    expect(canceled).toHaveLength(0)
+  })
+
   test('delta-upgrade CONFIRMED: activated sub bills the FULL recurring price from the draft, not the delta', async () => {
     const now = Date.now()
     const yearlyEnd = now + 100 * 24 * 3600 * 1000

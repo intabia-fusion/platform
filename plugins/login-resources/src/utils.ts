@@ -515,19 +515,22 @@ export async function checkJoined (inviteId: string): Promise<WorkspaceLoginInfo
   }
 }
 
-export async function joinByInvite (inviteId: string): Promise<WorkspaceLoginInfo | undefined> {
+export async function joinByInvite (inviteId: string): Promise<[Status, WorkspaceLoginInfo | undefined]> {
   const token = getMetadata(presentation.metadata.Token)
 
-  if (token == null) return
+  if (token == null) return [unknownStatus('Not logged in'), undefined]
 
   try {
     const workspaceLoginInfo = await getAccountClient(token).joinByInvite(inviteId)
 
-    return workspaceLoginInfo
+    return [OK, workspaceLoginInfo]
   } catch (err: any) {
-    if (!(err instanceof PlatformError)) {
-      Analytics.handleError(err)
+    if (err instanceof PlatformError) {
+      return [err.status, undefined]
     }
+    Analytics.handleError(err)
+
+    return [unknownError(err), undefined]
   }
 }
 

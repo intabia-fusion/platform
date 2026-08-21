@@ -301,7 +301,9 @@
     "AddedBlocker": "Engelleyen sorun eklendi {identifier}{value}",
     "RemovedBlocker": "Engelleyen sorun kaldırıldı {identifier}{value}",
     "AddedRelation": "İlgili sorun eklendi {identifier}{value}",
-    "RemovedRelation": "İlgili sorun kaldırıldı {identifier}{value}"
+    "RemovedRelation": "İlgili sorun kaldırıldı {identifier}{value}",
+    "CreateAndOpen": "Oluştur ve aç",
+    "CreateAndNew": "Oluştur ve yenisine başla"
   },
   "status": {},
   "emailTemplate": {

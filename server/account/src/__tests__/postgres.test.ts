@@ -1015,6 +1015,67 @@ describe('PostgresAccountDB', () => {
     })
   })
 
+  describe('workspace purchase operations', () => {
+    // A concurrent webhook retry hits the (payment_id, provider) unique index; the insert must
+    // yield the existing row's id instead of throwing.
+    describe('createPurchase', () => {
+      const purchase: any = {
+        workspaceUuid: 'ws-1',
+        accountUuid: 'acc-1',
+        sku: 'ai-tokens',
+        status: 'active',
+        paymentId: 'pay-1',
+        provider: 'tbank'
+      }
+
+      it('returns the inserted id', async () => {
+        mockClient.unsafe.mockResolvedValueOnce([{ id: 'new-id' }])
+        expect(await accountDb.createPurchase(purchase)).toBe('new-id')
+        expect(mockClient.unsafe).toHaveBeenCalledWith(
+          expect.stringContaining('ON CONFLICT (payment_id, provider) WHERE payment_id IS NOT NULL DO NOTHING'),
+          expect.any(Array)
+        )
+      })
+
+      it('falls back to the existing row when the insert conflicts', async () => {
+        mockClient.unsafe.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: 'existing-id' }])
+        expect(await accountDb.createPurchase(purchase)).toBe('existing-id')
+        expect(mockClient.unsafe).toHaveBeenLastCalledWith(expect.stringContaining('SELECT id FROM'), [
+          'pay-1',
+          'tbank'
+        ])
+      })
+
+      it('throws when neither insert nor lookup yields a row', async () => {
+        mockClient.unsafe.mockResolvedValue([])
+        await expect(accountDb.createPurchase(purchase)).rejects.toThrow('failed to create purchase')
+      })
+    })
+
+    // updatePurchaseStatus must not null out activated_on when called without activatedOn
+    // (e.g. a plain status flip) - regression guard for the COALESCE fix.
+    describe('updatePurchaseStatus', () => {
+      it('uses COALESCE so a missing activatedOn keeps the existing column value', async () => {
+        await accountDb.updatePurchaseStatus('purchase-1', 'active')
+
+        expect(mockClient.unsafe).toHaveBeenCalledWith(
+          expect.stringContaining('activated_on = COALESCE($3, activated_on)'),
+          ['purchase-1', 'active', null]
+        )
+      })
+
+      it('passes the given activatedOn through as $3', async () => {
+        await accountDb.updatePurchaseStatus('purchase-1', 'consumed', 12345)
+
+        expect(mockClient.unsafe).toHaveBeenCalledWith(expect.stringContaining('COALESCE($3, activated_on)'), [
+          'purchase-1',
+          'consumed',
+          12345
+        ])
+      })
+    })
+  })
+
   describe('password operations', () => {
     const accountId = 'acc1' as AccountUuid
     const hash: any = {

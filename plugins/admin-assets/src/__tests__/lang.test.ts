@@ -8,6 +8,7 @@ const sameAsEnglish = new Set([
   'Audit',
   'Backup',
   'Backups',
+  'Billing', // tab label is the product term "AI"
   'Blobs',
   'Data',
   'Date',

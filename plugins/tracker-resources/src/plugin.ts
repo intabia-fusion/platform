@@ -100,6 +100,8 @@ export default mergeIds(trackerId, tracker, {
     SelectIssue: '' as IntlString,
     SelectProject: '' as IntlString,
     SaveIssue: '' as IntlString,
+    CreateAndOpen: '' as IntlString,
+    CreateAndNew: '' as IntlString,
     Todo: '' as IntlString,
     Done: '' as IntlString,
     SetPriority: '' as IntlString,

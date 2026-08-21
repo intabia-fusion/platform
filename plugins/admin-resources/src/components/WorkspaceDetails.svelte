@@ -44,6 +44,8 @@
 
   import { onDestroy } from 'svelte'
 
+  import { WorkspaceTokenInfo } from '@hcengineering/billing-resources'
+
   import adminRes from '../plugin'
   import AdminOtpDialog from './AdminOtpDialog.svelte'
   import EditSubscriptionDialog from './EditSubscriptionDialog.svelte'
@@ -313,12 +315,16 @@
           const usersLimit = perSeat ? (seats != null && seats >= 1 ? seats : 1) : (item.usersLimit ?? 0)
           const storageLimitGB =
             item.storagePerUserGB != null ? usersLimit * item.storagePerUserGB : (item.storageLimitGB ?? 0)
+          // Same shape as the payment pod's resolveLimits: a per-seat plan scales its AI window by
+          // seats. Without it every admin-made subscription falls back to the pod's env default.
+          const baseWindow = item.windowMonthLimit ?? 0
           limits = {
             storageLimitGB,
             trafficLimitGB: item.trafficLimitGB ?? 0,
             meetingMinutesLimit: item.meetingMinutesLimit ?? 0,
             tokenLimit: item.tokenLimit ?? 0,
-            usersLimit
+            usersLimit,
+            windowMonthLimit: perSeat ? baseWindow * usersLimit : baseWindow
           }
         }
         const days = periodDays > 0 ? periodDays : 30
@@ -378,6 +384,10 @@
         <div class="content-dark-color">
           <Label label={adminRes.string.UpdatedAt} />: {fmtDate(workspace.usageInfo?.updateTime)}
         </div>
+      </div>
+
+      <div class="mr-8 mb-2">
+        <WorkspaceTokenInfo workspace={workspace.uuid} />
       </div>
 
       <div class="mr-8 mb-2">

@@ -301,7 +301,9 @@
     "AddedBlocker": "Blockierende Aufgabe {identifier}{value} hinzugefügt",
     "RemovedBlocker": "Blockierende Aufgabe {identifier}{value} entfernt",
     "AddedRelation": "Verwandte Aufgabe {identifier}{value} hinzugefügt",
-    "RemovedRelation": "Verwandte Aufgabe {identifier}{value} entfernt"
+    "RemovedRelation": "Verwandte Aufgabe {identifier}{value} entfernt",
+    "CreateAndOpen": "Erstellen und öffnen",
+    "CreateAndNew": "Erstellen und neue anlegen"
   },
   "status": {},
   "emailTemplate": {

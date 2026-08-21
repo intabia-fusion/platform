@@ -141,8 +141,9 @@ async function connectPackage (page: Page, ws: string, pkgKey: string, expect_?:
   } else {
     await payMockCheckout(page, ws)
   }
-  // The connect button for this package disappears once it becomes the current package.
-  await expect(page.locator(`[data-id="packageConnect-${pkgKey}"]`)).toHaveCount(0, { timeout: 20000 })
+  // Once connected, the card's button turns into Disconnect, so the connect id is gone.
+  await expect(page.locator(`[data-id="packageDisconnect-${pkgKey}"]`)).toBeVisible({ timeout: 20000 })
+  await expect(page.locator(`[data-id="packageConnect-${pkgKey}"]`)).toHaveCount(0)
 }
 
 test.describe('billing UI lifecycle (tbank + mock bank)', () => {
@@ -302,5 +303,31 @@ test.describe('billing UI lifecycle (tbank + mock bank)', () => {
     await expect(page.locator('[data-id="uncancelSubscription"]')).toHaveCount(0)
     // Seats stay changeable (buying more is just another one-off payment).
     await expect(page.locator('[data-id="changeSeats"]')).toBeVisible()
+  })
+
+  // Whole one-time token purchase chain: checkout -> PurchaseActivated -> aibot applies the grant
+  // -> billing credits the balance -> the widget shows it. Nothing below is mocked past the bank.
+  test('buying a token pack credits the purchased balance', async ({ page, request }) => {
+    const { wsUrl } = await freshBusinessWorkspace(request, 'tokens')
+    await openBilling(page, wsUrl)
+    await subscribeBusiness(page, wsUrl, 2)
+
+    const balance = page.locator('[data-id="tokenPurchased"]')
+    // Nothing bought yet: the purchased row only renders once the balance is non-zero.
+    await expect(balance).toHaveCount(0)
+
+    await page.locator('[data-id="purchasableBuy-ai-tokens-10m"]').click()
+    await submitCheckoutDialog(page)
+    await payMockCheckout(page, wsUrl)
+
+    // The grant travels through the purchase event and the billing pod, so poll rather than assume.
+    await expect(async () => {
+      await openBilling(page, wsUrl)
+      // Rendered compact ("10M" / "10 млн" depending on locale), so match the digits only.
+      await expect(balance).toContainText('10', { timeout: 5000 })
+    }).toPass({ intervals: [2000, 3000, 5000], timeout: 90000 })
+
+    // Purchased tokens are spendable on top of the tier window, so available exceeds it.
+    await expect(page.locator('[data-id="tokenAvailable"]')).not.toHaveText('0')
   })
 })

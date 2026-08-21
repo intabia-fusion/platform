@@ -20,8 +20,8 @@
   import tracker from '../../plugin'
   import Collapsed from '../icons/Collapsed.svelte'
   import Expanded from '../icons/Expanded.svelte'
-  import IssueTemplateChildEditor from './IssueTemplateChildEditor.svelte'
-  import IssueTemplateChildList from './IssueTemplateChildList.svelte'
+  import SubtaskEditor from './SubtaskEditor.svelte'
+  import SubtaskList from './SubtaskList.svelte'
 
   export let children: IssueTemplateChild[] = []
   export let project: Ref<Project>
@@ -29,6 +29,17 @@
   export let component: Ref<Component> | null = null
   export let isScrollable: boolean = false
   export let maxHeight: 'max' | 'card' | 'limited' | string | undefined = undefined
+  // Pick-list mode + inline bodies: used when the list is a proposal to confirm, not a template.
+  export let selectable: boolean = false
+  export let selected: Array<Ref<Issue>> = []
+  export let showDescription: boolean = false
+  // List viewport. The template dialog is cramped (7.5rem, the old max-h-30); a proposal card in
+  // chat has room and should show ~20 rows before scrolling.
+  export let listHeight: string = '7.5rem'
+  // Frozen list: no adding, no editing, no reordering (e.g. the AI card after the issues exist).
+  export let readonly: boolean = false
+  // Rows that already exist as real issues: checked, locked, marked done.
+  export let doneRows = new Set<Ref<Issue>>()
 
   const dispatch = createEventDispatcher()
 
@@ -68,30 +79,38 @@
     />
   {/if}
 
-  <Button
-    id="add-sub-issue"
-    width="min-content"
-    icon={hasSubIssues ? IconAdd : undefined}
-    label={hasSubIssues ? undefined : tracker.string.AddSubIssues}
-    kind={'ghost'}
-    size={'small'}
-    showTooltip={{ label: tracker.string.AddSubIssues }}
-    on:click={() => {
-      closeTooltip()
-      isCreating = true
-      isCollapsed = false
-    }}
-  />
+  {#if !readonly}
+    <Button
+      id="add-sub-issue"
+      width="min-content"
+      icon={hasSubIssues ? IconAdd : undefined}
+      label={hasSubIssues ? undefined : tracker.string.AddSubIssues}
+      kind={'ghost'}
+      size={'small'}
+      showTooltip={{ label: tracker.string.AddSubIssues }}
+      on:click={() => {
+        closeTooltip()
+        isCreating = true
+        isCollapsed = false
+      }}
+    />
+  {/if}
 </div>
 {#if hasSubIssues}
   <ExpandCollapse isExpanded={!isCollapsed} on:changeContent>
-    <div class="flex-col flex-no-shrink max-h-30 list clear-mins" class:collapsed={isCollapsed}>
+    <div class="flex-col flex-no-shrink list clear-mins" class:collapsed={isCollapsed} style:max-height={listHeight}>
       <Scroller>
-        <IssueTemplateChildList
+        <SubtaskList
           {component}
           {milestone}
+          {selectable}
+          {showDescription}
+          {readonly}
+          {doneRows}
+          bind:selected
           bind:issues={children}
           {project}
+          on:select
           on:move={handleIssueSwap}
           on:update-issue
           on:update-issues
@@ -102,7 +121,7 @@
 {/if}
 {#if isCreating}
   <ExpandCollapse isExpanded={!isCollapsed} on:changeContent>
-    <IssueTemplateChildEditor
+    <SubtaskEditor
       projectId={project}
       {component}
       {milestone}

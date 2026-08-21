@@ -18,6 +18,7 @@ import { AccountUuid, AttachedDoc, Class, Doc, Markup, Mixin, Ref, Space, Timest
 import { MessageNotificationType, type DocNotifyContext } from '@hcengineering/notification'
 import type { Asset, Plugin, Resource } from '@hcengineering/platform'
 import { IntlString, plugin } from '@hcengineering/platform'
+import type { ComponentExtensionId } from '@hcengineering/ui'
 import { AnyComponent } from '@hcengineering/ui'
 import { Action } from '@hcengineering/view'
 import { ChannelProvider as SocialChannelProvider, PersonSpace } from '@hcengineering/contact'
@@ -179,6 +180,13 @@ export default plugin(chunterId, {
     Public: '' as IntlString,
     Private: '' as IntlString,
     NewDirectChat: '' as IntlString,
+    TalkToYulia: '' as IntlString,
+    Transcribing: '' as IntlString,
+    PreparingMic: '' as IntlString,
+    RecordVoice: '' as IntlString,
+    VoiceCancel: '' as IntlString,
+    VoiceAttach: '' as IntlString,
+    VoiceSend: '' as IntlString,
     AddMembers: '' as IntlString,
     CloseConversation: '' as IntlString,
     Starred: '' as IntlString,
@@ -235,6 +243,10 @@ export default plugin(chunterId, {
     ChannelNotification: '' as Ref<MessageNotificationType<ChatMessage>>,
     JoinChannelNotification: '' as Ref<MessageNotificationType<DocUpdateMessage>>,
     ChatWidget: '' as Ref<Widget>
+  },
+  extensions: {
+    // Buttons in the thread header (above the root message). Contributors filter by root class.
+    ThreadHeaderExtension: '' as ComponentExtensionId
   },
   app: {
     Chunter: '' as Ref<Doc>

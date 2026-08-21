@@ -176,6 +176,8 @@ export default mergeIds(adminId, admin, {
     SortBackupDate: '' as IntlString,
     SortBackupSize: '' as IntlString,
     SortLastVisit: '' as IntlString,
+    SortTokens: '' as IntlString,
+    SortMinutes: '' as IntlString,
     MassArchive: '' as IntlString,
     MassMigrate: '' as IntlString,
     ResetAttempts: '' as IntlString,

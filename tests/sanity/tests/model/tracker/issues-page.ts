@@ -50,7 +50,10 @@ export class IssuesPage extends CommonTrackerPage {
     this.page.locator('form[id="tracker:string:NewIssue"] input[type="file"]#file')
 
   textPopupCreateNewIssueFile = (): Locator => this.page.locator('div[class*="attachments"] > div[class*="attachment"]')
-  buttonCreateIssue = (): Locator => this.page.locator('button > span', { hasText: 'Create issue' })
+  // Matches the plain button and the split create/create-and-open one alike.
+  buttonCreateIssue = (): Locator =>
+    this.page.locator('form[id="tracker:string:NewIssue"] button', { hasText: 'Create issue' })
+
   inputSearch = (): Locator => this.page.locator('input[placeholder="Search"]')
   linkSidebarAll = (): Locator => this.page.locator('a[href$="all-issues"]')
   linkSidebarMyIssue = (): Locator => this.page.locator('a[href$="my-issues"]')

@@ -12,15 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import {
+import aiBot, {
   AIEventRequest,
+  type AIContextMessage,
+  type AIEditProposalMessage,
+  type AIPersonalData,
+  type AIRequest,
+  type AITaskProposal,
+  type AITaskProposalMessage,
+  type AudioTranscribe,
   aiBotEmailSocialKey,
   ConnectMeetingRequest,
   DisconnectMeetingRequest,
   IdentityResponse
 } from '@hcengineering/ai-bot'
 import attachment, { Attachment } from '@hcengineering/attachment'
-import chunter, { ChatMessage, ThreadMessage } from '@hcengineering/chunter'
+import chunter, { ChatMessage, ThreadMessage, DirectMessage } from '@hcengineering/chunter'
 import contact, {
   AvatarType,
   combineName,
@@ -30,7 +37,7 @@ import contact, {
   Person,
   SocialIdentity
 } from '@hcengineering/contact'
-import {
+import core, {
   AccountRole,
   AccountUuid,
   Blob,
@@ -46,42 +53,88 @@ import {
   SortingOrder,
   Space,
   Timestamp,
-  toIdMap,
   withContext,
   systemAccountUuid,
   type Account,
+  type Hierarchy,
   type WorkspaceIds
 } from '@hcengineering/core'
 import love, { type MeetingMinutes } from '@hcengineering/love'
+import pulse, { type TypingIndicator } from '@hcengineering/pulse'
 import fs from 'fs'
-import type { LLMProvider, ChatMessage as LLMChatMessage } from '../llms'
-import { getTools } from '../utils/tools'
+import type { LLMProvider, ChatMessage as LLMChatMessage, ContextMode, ToolLoopHooks } from '../llms'
+import type { AILevel } from '../config'
+import { getTools, type PendingProposal, type ReqCtx } from '../utils/tools'
+import { sanitizeDocumentMarkdown } from '../utils/documentMarkdown'
+import { resolveMemory, type AIMemory } from './memory'
+import { donePatch, failedPatch, queuedRequest } from './aiRequest'
+import { resolveModel, registryForFeature } from '../llms/modelRegistry'
+import { getWorkspaceWindows } from '../billing'
+import { decideLevel } from './windowLimit'
+import { buildThreadContext, type ContextMessage } from './threadContext'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
+import { type IntlString, translate } from '@hcengineering/platform'
 import { getAccountClient } from '@hcengineering/server-client'
 import { generateToken } from '@hcengineering/server-token'
 import { ConsumerControl, StorageAdapter } from '@hcengineering/server-core'
-import { jsonToMarkup, markupToText } from '@hcengineering/text'
-import { markdownToMarkup } from '@hcengineering/text-markdown'
+import { jsonToMarkup, markupToJSON, markupToText } from '@hcengineering/text'
+import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
 import tracker, { Issue } from '@hcengineering/tracker'
+import document, { type Document } from '@hcengineering/document'
 import config from '../config'
-import { HistoryRecord } from '../types'
 import { getGlobalPerson } from '../utils/account'
 import { connectPlatform } from '../utils/platform'
 import { LoveController } from './love'
 import { RestClient } from '@hcengineering/api-client'
 import { CollaboratorClient, getClient as getCollaboratorClient } from '@hcengineering/collaborator-client'
 
+// How long a reply waits for a still-running voice transcription before answering without it.
+const VOICE_TRANSCRIPT_WAIT_MS = 60000
+
+// Loop backstop: replies to one chat allowed inside the window before requests are dropped.
+const REPLY_FLOOD_WINDOW_MS = 60000
+const REPLY_FLOOD_LIMIT = 20
+
+// Personal memory is re-read after this; a UI edit shows up on the next request past it.
+const MEMORY_CACHE_TTL_MS = 60000
+
 interface LLMHistoryRecord {
   role: 'user' | 'assistant' | 'system'
   content: string
 }
 
-interface PersonHistoryRecord {
-  assistantMemory: string // Info about assistant: name, behavior style, how to address user
-  userMemory: string // Info about user: preferences, context, personal info
-  sharedContext: string // Shared context: language, timezone, non-personal preferences
-  history: HistoryRecord[]
+// Collapse whitespace for a change-detection compare, so a re-emitted-but-identical document
+// (common with small models) is treated as a no-op regardless of trailing/interior spacing.
+function normalizeForCompare (md: string): string {
+  return md.replace(/\s+/g, ' ').trim()
+}
+
+/**
+ * History budget for a level: the model's own context window minus the room its answer needs,
+ * capped by the pod-wide budget. Falls back to the pod-wide budget when the level says nothing.
+ */
+// Token counts are estimates (tiktoken for a GigaChat model is a guess), so the history is cut
+// to 85% of what is nominally free: filling the window to the brim ends in a 422 from the
+// provider, and the request is lost rather than trimmed.
+const CONTEXT_SAFETY = 0.85
+
+function contextBudgetFor (level: AILevel): number {
+  const caps = resolveLevelCapabilities(level)
+  const contextWindow = caps?.maxContextTokens
+  if (contextWindow === undefined || contextWindow <= 0) return config.MaxContentTokens
+  const reserved = caps?.maxOutputTokens ?? 0
+  const free = Math.floor((contextWindow - reserved) * CONTEXT_SAFETY)
+  return Math.max(1, Math.min(config.MaxContentTokens, free))
+}
+
+/** Capabilities of the level as served by whichever provider serves it. */
+function resolveLevelCapabilities (level: AILevel): { maxContextTokens?: number, maxOutputTokens?: number } | undefined {
+  for (const provider of config.AIProviders) {
+    const caps = provider.levels[level]?.capabilities
+    if (caps !== undefined) return caps
+  }
+  return undefined
 }
 
 export class WorkspaceClient {
@@ -92,9 +145,12 @@ export class WorkspaceClient {
   primarySocialId: SocialId
   aiPerson: Person | undefined
   personUuidBySocialId = new Map<PersonId, PersonUuid>()
+  // Replies answered per chat inside the current window; see isRepliesFlooding.
+  repliesPerObject = new Map<Ref<Doc>, { since: number, count: number }>()
 
   love: LoveController | undefined
-  historyMap = new Map<PersonUuid, PersonHistoryRecord>()
+  memoryMap = new Map<PersonUuid, { at: number, value: AIMemory }>()
+  userSocialIdByPersonUuid = new Map<PersonUuid, PersonId>()
   initPromise: Promise<void> | undefined
 
   collaborator: CollaboratorClient | undefined
@@ -130,11 +186,7 @@ export class WorkspaceClient {
     await ensureEmployee(this.ctx, me, client, this.socialIds, async () => await getGlobalPerson(this.token))
   }
 
-  /**
-   * Remove duplicate AI bot Person records that were left after workspace backup/restore.
-   * Finds all SocialIdentity with aiBotEmailSocialKey, keeps only the Person matching
-   * current personUuid, and removes the rest along with their SocialIdentities.
-   */
+  /** Remove duplicate AI bot Person records left after workspace backup/restore. */
   private async cleanupDuplicatePersons (client: RestClient): Promise<void> {
     try {
       const aiSocialIdentities = await client.findAll<SocialIdentity>(contact.class.SocialIdentity, {
@@ -269,170 +321,298 @@ export class WorkspaceClient {
     }
   }
 
-  private toLlmHistory (history: PersonHistoryRecord, promptTokens: number): Array<LLMHistoryRecord> {
-    const result: Array<{ role: 'user' | 'assistant' | 'system', content: string }> = []
-    let totalTokens = promptTokens
-    const maxRecentMessages = 20 // Keep last 20 messages in full detail
-
-    // Only use recent messages for context
-    const recentMessages = history.history.slice(-maxRecentMessages)
-
-    for (let i = recentMessages.length - 1; i >= 0; i--) {
-      const record = recentMessages[i]
-      const tokens = record.tokens
-
-      if (totalTokens + tokens > config.MaxContentTokens) break
-
-      result.unshift({ content: record.message, role: record.role as 'user' | 'assistant' | 'system' })
-      totalTokens += tokens
-    }
-
-    return result
+  // Resolve the user's primary social id (PersonId) so the bot can write the
+  // user's memory Preference on their behalf (createdBy = user, not the bot).
+  private async getUserSocialId (personUuid: PersonUuid): Promise<PersonId | undefined> {
+    const cached = this.userSocialIdByPersonUuid.get(personUuid)
+    if (cached !== undefined) return cached
+    const ids = await this.client?.findAll<SocialIdentity>(contact.class.SocialIdentity, {
+      attachedTo: personUuid as unknown as Ref<Person>
+    })
+    if (ids === undefined || ids.length === 0) return undefined
+    const primary = pickPrimarySocialId(ids)._id
+    this.userSocialIdByPersonUuid.set(personUuid, primary)
+    return primary
   }
 
-  private async getHistory (personUuid: PersonUuid): Promise<PersonHistoryRecord> {
-    if (this.historyMap.has(personUuid)) {
-      return (
-        this.historyMap.get(personUuid) ?? {
-          assistantMemory: '',
-          userMemory: '',
-          sharedContext: '',
-          history: []
-        }
-      )
-    }
+  // Read the user's AI memory from the Preference document (created on their behalf).
+  private async readMemoryPreference (personUuid: PersonUuid): Promise<AIPersonalData | undefined> {
+    return await this.client?.findOne<AIPersonalData>(aiBot.class.AIPersonalData, {
+      attachedTo: personUuid as AccountUuid
+    })
+  }
 
-    // Try to read a person summary and history.
+  // Typing indicator has a 3s TTL; refresh every 2s. Returns a stop function that clears it.
+  // The typing indicator doubles as a status line: the same doc carries any IntlString, and the
+  // chat renders it in place of "is typing". Lets the pod push a state the UI would otherwise
+  // have to poll for.
+  private async setTypingStatus (objectId: Ref<Doc>, space: Ref<Space>, status: IntlString): Promise<void> {
+    const socialId = this.primarySocialId._id
+    const id = `typing:${objectId}:${socialId}` as Ref<TypingIndicator>
     try {
-      const personHistory: PersonHistoryRecord = JSON.parse(
-        Buffer.concat(await this.storage.read(this.ctx, this.wsIds, 'ai-bot-phr-' + personUuid)).toString()
-      )
-
-      // Migration: add sharedContext if missing
-      if (personHistory.sharedContext === undefined) {
-        personHistory.sharedContext = ''
+      await this.client.updateDoc(pulse.class.TypingIndicator, space, id, { status })
+    } catch {
+      try {
+        await this.client.createDoc(pulse.class.TypingIndicator, space, { objectId, socialId, status }, id)
+      } catch (err) {
+        this.ctx.warn('failed to set typing status', { err })
       }
+    }
+  }
 
-      this.historyMap.set(personUuid, personHistory)
-      return personHistory
-    } catch (err: any) {
-      // Ignore, no history available
+  private startTyping (objectId: Ref<Doc>, space: Ref<Space>): () => Promise<void> {
+    const socialId = this.primarySocialId._id
+    const id = `typing:${objectId}:${socialId}` as Ref<TypingIndicator>
+    const TYPING_REFRESH_MS = 2000 // < 3s TTL (models/pulse TransientTTL)
+
+    const touch = async (): Promise<void> => {
+      try {
+        // Re-create keeps the deterministic id; any CUD tx resets the transient TTL server-side.
+        await this.client.createDoc(
+          pulse.class.TypingIndicator,
+          space,
+          { objectId, socialId, status: chunter.string.IsTyping },
+          id
+        )
+      } catch {
+        // Already exists (still within TTL): bump it via update to reset the TTL window.
+        try {
+          await this.client.updateDoc(pulse.class.TypingIndicator, space, id, { status: chunter.string.IsTyping })
+        } catch (err) {
+          this.ctx.warn('failed to refresh typing', { err })
+        }
+      }
     }
 
-    // We need to load person info
+    void touch()
+    const timer = setInterval(() => {
+      void touch()
+    }, TYPING_REFRESH_MS)
 
-    const personData = await this.client?.findOne(contact.mixin.Employee, { personUuid: personUuid as AccountUuid })
-
-    const v = {
-      assistantMemory: '',
-      userMemory: personData !== undefined ? `User name: ${personData.name}` : '',
-      sharedContext: '',
-      history: []
+    return async () => {
+      clearInterval(timer)
+      try {
+        await this.client.removeDoc(pulse.class.TypingIndicator, space, id)
+      } catch (err) {
+        this.ctx.warn('failed to clear typing', { err })
+      }
     }
-    this.historyMap.set(personUuid, v)
-    return v
   }
 
-  async updateAssistantMemory (user: PersonUuid | undefined, args: Record<string, any>): Promise<void> {
-    if (user === undefined) return
-
-    const currentHistory = await this.getHistory(user)
-    currentHistory.assistantMemory = args.memory ?? currentHistory.assistantMemory
-
-    await this.saveHistory(user, currentHistory)
-  }
-
-  async updateUserMemory (user: PersonUuid | undefined, args: Record<string, any>): Promise<void> {
-    if (user === undefined) return
-
-    const currentHistory = await this.getHistory(user)
-    currentHistory.userMemory = args.memory ?? currentHistory.userMemory
-
-    await this.saveHistory(user, currentHistory)
-  }
-
-  async updateSharedContext (user: PersonUuid | undefined, args: Record<string, any>): Promise<void> {
-    if (user === undefined) return
-
-    const currentHistory = await this.getHistory(user)
-    currentHistory.sharedContext = args.context ?? currentHistory.sharedContext
-
-    await this.saveHistory(user, currentHistory)
-  }
-
-  async getHistoryForUser (user: PersonUuid): Promise<PersonHistoryRecord> {
-    return await this.getHistory(user)
-  }
-
-  async clearHistory (user: PersonUuid | undefined): Promise<void> {
-    if (user === undefined) return
-
-    const currentHistory = await this.getHistory(user)
-    currentHistory.history = []
-
-    await this.saveHistory(user, currentHistory)
-  }
-
-  async getHistorySummary (user: PersonUuid | undefined): Promise<string> {
-    if (user === undefined) return 'No user context available'
-    if (this.llm === undefined) return 'Summary service not available'
-
-    const currentHistory = await this.getHistory(user)
-
-    if (currentHistory.history.length === 0) {
-      return 'No conversation history available yet.'
-    }
-
-    const { summary } = await this.llm.requestSummary(
-      this.ctx,
-      this.wsIds.uuid,
-      currentHistory.assistantMemory + '\n' + currentHistory.userMemory,
-      currentHistory.history
-    )
-
-    return summary ?? 'Failed to generate summary'
-  }
-
-  async saveHistory (personUuid: PersonUuid, history: PersonHistoryRecord): Promise<void> {
-    await this.storage.put(
-      this.ctx,
-      this.wsIds,
-      'ai-bot-phr-' + personUuid,
-      JSON.stringify(history),
-      'application/json'
-    )
-  }
-
-  private async pushHistory (
+  // Direct chats honor the user's personal language override; group chats use the space language.
+  private async resolveChatLanguage (
     personUuid: PersonUuid,
-    message: string,
-    role: 'user' | 'assistant',
-    tokens: number,
-    user: PersonUuid,
-    objectId: Ref<Doc>,
-    objectClass: Ref<Class<Doc>>
-  ): Promise<void> {
-    const currentHistory = (await this.getHistory(personUuid)) ?? []
-    const newRecord: HistoryRecord = {
-      workspace: this.wsIds.uuid,
-      message,
-      objectId,
-      objectClass,
-      role,
-      user,
-      tokens,
-      timestamp: Date.now()
+    space: Ref<Space> | undefined,
+    isDirect: boolean
+  ): Promise<string> {
+    try {
+      if (isDirect) {
+        const personal = await this.readMemoryPreference(personUuid)
+        if (personal?.language !== undefined && personal.language !== '') return personal.language
+      }
+      const settings = await this.client?.findAll(aiBot.class.AISpaceSettings, {})
+      const forSpace = space !== undefined ? settings?.find((s) => s.attachedTo === space) : undefined
+      const wsDefault = settings?.find((s) => s.attachedTo == null)
+      return forSpace?.language ?? wsDefault?.language ?? config.DefaultLanguage
+    } catch {
+      return config.DefaultLanguage
     }
-    currentHistory.history.push({ ...newRecord })
-    this.historyMap.set(personUuid, currentHistory)
+  }
+
+  private async writeMemoryPreference (personUuid: PersonUuid, memory: { personalContext: string }): Promise<void> {
+    const modifiedBy = await this.getUserSocialId(personUuid)
+    const existing = await this.readMemoryPreference(personUuid)
+    if (existing !== undefined) {
+      await this.client.update(existing, { personalContext: memory.personalContext }, false, undefined, modifiedBy)
+      return
+    }
+    await this.client.createDoc<AIPersonalData>(
+      aiBot.class.AIPersonalData,
+      core.space.Workspace,
+      { attachedTo: personUuid as AccountUuid, personalContext: memory.personalContext },
+      undefined,
+      undefined,
+      modifiedBy
+    )
+  }
+
+  /**
+   * Create an AIRequest status doc in the chat's own space. NOT the user's PersonSpace: that one is
+   * private to the user, so the bot account cannot read or write it (the doc was silently never
+   * created). The chat space is visible to both, which is also what the progress UI needs.
+   */
+  async createAIRequest (
+    personUuid: PersonUuid,
+    space: Ref<Space>,
+    seed: { level: AILevel, modelId: string, kind: string, objectId?: Ref<Doc> }
+  ): Promise<Ref<AIRequest> | undefined> {
+    try {
+      const modifiedBy = await this.getUserSocialId(personUuid)
+      return await this.client.createDoc<AIRequest>(
+        aiBot.class.AIRequest,
+        space,
+        { ...queuedRequest(seed.level, seed.modelId, seed.kind), status: 'processing', objectId: seed.objectId },
+        undefined,
+        undefined,
+        modifiedBy
+      )
+    } catch (err: any) {
+      // Status telemetry must never cost the user their answer.
+      this.ctx.warn('failed to create AI request doc', { err: err?.message })
+      return undefined
+    }
+  }
+
+  /**
+   * Live progress + cancel for one request: token counts land on the AIRequest doc (the user sees
+   * them next to "Yulia is typing"), and the user cancelling that doc stops the tool loop.
+   */
+  private requestHooks (
+    personUuid: PersonUuid,
+    id: Ref<AIRequest> | undefined,
+    space: Ref<Space> | undefined
+  ): ToolLoopHooks | undefined {
+    if (id === undefined || space === undefined) return undefined
+    return {
+      onProgress: ({ iteration, usage }) => {
+        void this.updateAIRequest(personUuid, id, space, {
+          iteration,
+          promptTokens: usage.promptTokens,
+          completionTokens: usage.completionTokens
+        }).catch((err) => {
+          this.ctx.warn('failed to report AI request progress', { err: err?.message })
+        })
+      },
+      isCancelled: async () => {
+        try {
+          const doc = await this.client.findOne(aiBot.class.AIRequest, { _id: id })
+          return doc?.status === 'cancelled'
+        } catch (err: any) {
+          this.ctx.warn('failed to read AI request status', { err: err?.message })
+          return false
+        }
+      }
+    }
+  }
+
+  /** Apply a status patch (done/failed) to an AIRequest, on the user's behalf. */
+  async updateAIRequest (
+    personUuid: PersonUuid,
+    id: Ref<AIRequest>,
+    space: Ref<Space>,
+    patch: Partial<AIRequest>
+  ): Promise<void> {
+    const modifiedBy = await this.getUserSocialId(personUuid)
+    await this.client.updateDoc(aiBot.class.AIRequest, space, id, patch, false, undefined, modifiedBy)
+  }
+
+  /** Workspace-wide shared prompt. Never cached: edited in the UI, and the pod has no tx feed. */
+  private async getSharedPrompt (): Promise<string> {
+    const settings = await this.client?.findOne(aiBot.class.AISpaceSettings, { attachedTo: { $exists: false } })
+    return settings?.sharedPrompt ?? ''
+  }
+
+  private async getMemory (personUuid: PersonUuid): Promise<AIMemory> {
+    const cached = this.memoryMap.get(personUuid)
+    // Personal context is edited in the UI too, so the cache only spares repeated reads
+    // within a conversation burst.
+    if (cached !== undefined && Date.now() - cached.at < MEMORY_CACHE_TTL_MS) {
+      return { personalContext: cached.value.personalContext, sharedPrompt: await this.getSharedPrompt() }
+    }
+
+    const pref = await this.readMemoryPreference(personUuid)
+
+    let blobMemory: { userMemory?: string, assistantMemory?: string } | undefined
+    if (pref === undefined) {
+      try {
+        const blob = JSON.parse(
+          Buffer.concat(await this.storage.read(this.ctx, this.wsIds, 'ai-bot-phr-' + personUuid)).toString()
+        )
+        blobMemory = { userMemory: blob.userMemory, assistantMemory: blob.assistantMemory }
+      } catch (err: any) {
+        // No blob: fine.
+      }
+    }
+
+    const personData =
+      pref === undefined && blobMemory === undefined
+        ? await this.client?.findOne(contact.mixin.Employee, { personUuid: personUuid as AccountUuid })
+        : undefined
+
+    const { personalContext, migrate } = resolveMemory(pref, blobMemory, personData?.name)
+    const memory: AIMemory = { personalContext, sharedPrompt: await this.getSharedPrompt() }
+
+    if (migrate) {
+      await this.writeMemoryPreference(personUuid, memory)
+    }
+
+    this.memoryMap.set(personUuid, { at: Date.now(), value: memory })
+    return memory
   }
 
   private async getAttachments (client: RestClient, objectId: Ref<Doc>): Promise<Attachment[]> {
     return await client.findAll(attachment.class.Attachment, { attachedTo: objectId })
   }
 
-  async processMessageEvent (event: AIEventRequest, control?: ConsumerControl): Promise<void> {
-    if (this.llm === undefined) {
+  // Collect the transcript text of voice-note attachments, waiting for any still-transcribing ones
+  // to finish (bounded poll). Failed/empty ones are reported as `missing` so the reply can say so
+  // instead of answering an empty prompt.
+  private async collectVoiceTranscripts (files: Attachment[]): Promise<{ texts: string[], missing: number }> {
+    const voice = files.filter((f) => f._class === aiBot.class.AudioTranscribe) as AudioTranscribe[]
+    if (voice.length === 0) return { texts: [], missing: 0 }
+
+    const deadline = Date.now() + VOICE_TRANSCRIPT_WAIT_MS
+    let pending = voice.filter((v) => v.state === 'pending').map((v) => v._id)
+    while (pending.length > 0 && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const fresh = await this.client.findAll(aiBot.class.AudioTranscribe, { _id: { $in: pending } })
+      const byId = new Map(fresh.map((d) => [d._id, d]))
+      for (const v of voice) {
+        const upd = byId.get(v._id)
+        if (upd !== undefined) v.state = upd.state
+        if (upd?.text !== undefined) v.text = upd.text
+      }
+      pending = voice.filter((v) => v.state === 'pending').map((v) => v._id)
+    }
+
+    const texts = voice.map((v) => (v.text ?? '').trim()).filter((t) => t !== '')
+    return { texts, missing: voice.length - texts.length }
+  }
+
+  // Backstop for loops the self-check cannot see: no human chat needs this many answers a minute.
+  private isRepliesFlooding (objectId: Ref<Doc>): boolean {
+    const now = Date.now()
+    const seen = this.repliesPerObject.get(objectId)
+    if (seen === undefined || now - seen.since > REPLY_FLOOD_WINDOW_MS) {
+      // Windows that already closed carry no state worth keeping.
+      for (const [key, entry] of this.repliesPerObject) {
+        if (now - entry.since > REPLY_FLOOD_WINDOW_MS) this.repliesPerObject.delete(key)
+      }
+      this.repliesPerObject.set(objectId, { since: now, count: 1 })
+      return false
+    }
+    seen.count++
+    if (seen.count > REPLY_FLOOD_LIMIT) {
+      this.ctx.error('Reply flood detected, dropping the request', {
+        objectId,
+        count: seen.count,
+        windowMs: REPLY_FLOOD_WINDOW_MS
+      })
+      return true
+    }
+    return false
+  }
+
+  async processMessageEvent (
+    event: AIEventRequest,
+    control?: ConsumerControl,
+    provider?: LLMProvider,
+    level?: AILevel,
+    providers?: Map<string, LLMProvider>
+  ): Promise<void> {
+    // Per-provider pipeline passes the resolved provider+level; fall back to the default.
+    const llm = provider ?? this.llm
+    if (llm === undefined) {
       throw new Error('LLM provider is not configured')
     }
 
@@ -446,31 +626,306 @@ export class WorkspaceClient {
       return
     }
 
+    // Never answer ourselves: the trigger filters by known social ids and can miss one.
+    if (personUuid === this.personUuid) {
+      this.ctx.warn('Skipping own message: the bot must not answer itself', { objectId, user })
+      return
+    }
+
+    if (this.isRepliesFlooding(objectId)) {
+      return
+    }
+
     this.personUuidBySocialId.set(user, personUuid)
 
     let promptText = markupToText(event.message)
     const files = await this.getAttachments(this.client, event.messageId)
-    if (files.length > 0) {
+    // Voice-note transcripts are part of what the user "said": wait for pending ones to finish,
+    // then fold their text into the prompt. Non-voice attachments stay as file references.
+    const transcripts = await this.collectVoiceTranscripts(files)
+    if (transcripts.texts.length > 0) {
+      promptText += '\n\n' + transcripts.texts.join('\n')
+    }
+    if (transcripts.missing > 0) {
+      promptText += '\n\n[A voice message could not be transcribed - tell the user the transcription failed]'
+    }
+    const otherFiles = files.filter((f) => f._class !== aiBot.class.AudioTranscribe)
+    if (otherFiles.length > 0) {
       promptText += '\n\nAttachments:'
-      for (const file of files) {
+      for (const file of otherFiles) {
         promptText += `\nName:${file.name} FileId:${file.file} Type:${file.type}`
       }
     }
     const prompt: LLMChatMessage = { content: promptText, role: 'user' as const }
-    const promptTokens = this.llm?.countTokens([prompt]) ?? 0
+    const promptTokens = llm.countTokens([prompt]) ?? 0
 
-    const space = (event as any).objectIdIsSpace != null ? (objectId as Ref<Space>) : event.objectSpace
+    const space = event.objectIdIsSpace ? (objectId as Ref<Space>) : event.objectSpace
 
-    const rawHistory = await this.getHistory(personUuid)
-    const history = this.toLlmHistory(rawHistory, promptTokens)
+    // Show "Юля is typing" until the reply is written (or the request bails out early).
+    const stopTyping = this.startTyping(objectId, space)
+    try {
+      await this.generateAndReply(event, {
+        llm,
+        personUuid,
+        contextMode,
+        objectId,
+        objectClass,
+        messageClass,
+        space,
+        prompt,
+        promptTokens,
+        level,
+        providers
+      })
+    } finally {
+      await stopTyping()
+    }
+  }
 
-    await this.pushHistory(personUuid, promptText, 'user', promptTokens, personUuid, objectId, objectClass)
+  // Read a collaborative-doc blob as markdown, preserving structure for the rewrite tool.
+  private async readMarkupBlobAsMarkdown (blob: Ref<Blob>): Promise<string | undefined> {
+    try {
+      const readable = await this.storage.read(this.ctx, this.wsIds, blob)
+      const markup = Buffer.concat(readable as any).toString()
+      return markupToMarkdown(markupToJSON(markup), { refUrl: '', imageUrl: '' })
+    } catch (err: any) {
+      this.ctx.error('failed to read markup blob as markdown', { _id: blob, workspace: this.wsIds.uuid })
+      return undefined
+    }
+  }
 
-    const useHistory = history.filter((it) => it.role !== 'system')
+  // Model hierarchy, cached: getModel() refetches the whole model over HTTP on every call.
+  private hierarchyPromise: Promise<Hierarchy> | undefined
+  private async getHierarchy (): Promise<Hierarchy> {
+    this.hierarchyPromise ??= this.client.getModel().then((m) => m.hierarchy)
+    return await this.hierarchyPromise
+  }
+
+  private async buildDocPrompt (doc: Doc): Promise<string | undefined> {
+    const parts: string[] = []
+    // Current editable body as markdown, delimited so the model can round-trip it via propose_new_document.
+    let body: string | undefined
+    // isDerived, not ===: a task type is its own class derived from Issue (tracker:class:IssueTaskType).
+    const hierarchy = await this.getHierarchy()
+    if (hierarchy.isDerived(doc._class, tracker.class.Issue)) {
+      const is = doc as Issue
+      parts.push(`This conversation is about task ${is.identifier ?? ''}.`)
+      parts.push('TITLE: ' + is.title)
+      body = is.description != null ? await this.readMarkupBlobAsMarkdown(is.description) : undefined
+      // The sub-tasks come with the task itself: asked to review the split, the model used to
+      // propose a fresh list without ever calling list_subtasks.
+      const subs = await this.listSubIssues(is._id)
+      parts.push('EXISTING SUB-TASKS:')
+      parts.push(subs)
+      parts.push(
+        'Those already exist. When the user asks about the split, judge THIS list: say what is ' +
+          'missing, redundant or misnamed. Only propose sub-tasks that are genuinely new, and never ' +
+          'restate the existing ones as a proposal.'
+      )
+    } else if (hierarchy.isDerived(doc._class, document.class.Document)) {
+      const d = doc as Document
+      parts.push('This conversation is about document ' + d.title + '.')
+      parts.push('TITLE: ' + d.title)
+      body = d.content != null ? await this.readMarkupBlobAsMarkdown(d.content) : undefined
+    } else {
+      return undefined
+    }
+    parts.push('This is the current document body (markdown):')
+    parts.push('```markdown\n' + (body ?? '') + '\n```')
+    parts.push(
+      'To change the document, call the propose_new_document tool. Its `markdown` argument must be the ' +
+        'full new body: copy the current body above verbatim, apply ONLY the change the user asked for, ' +
+        'and pass the result.'
+    )
+    parts.push(
+      'STRICT rules for the markdown you pass:\n' +
+        '- Output ONLY the document itself. The document ends where its content ends.\n' +
+        '- Do NOT append examples, alternatives, samples, notes, explanations, or "here is another way".\n' +
+        '- Reproduce code and ```mermaid blocks EXACTLY as in the current body unless the user asked to change them.\n' +
+        '- Do NOT add a new mermaid/code block unless explicitly requested.\n' +
+        '- Do NOT wrap the whole thing in a code fence, and do NOT include the user request or chat text.'
+    )
+    return parts.join('\n')
+  }
+
+  // Collaborative attribute rewritten by the AI edit tool, per source class. Extend alongside
+  // buildDocPrompt when a new source type is linked.
+  private async editTargetAttr (objectClass: Ref<Class<Doc>>): Promise<string | undefined> {
+    const hierarchy = await this.getHierarchy()
+    if (hierarchy.isDerived(objectClass, tracker.class.Issue)) return 'description'
+    if (hierarchy.isDerived(objectClass, document.class.Document)) return 'content'
+    return undefined
+  }
+
+  // Resolve the object an edit-proposal targets from the current thread's root message. The
+  // "Discuss with Yulia" root (AIContextMessage) links to the real source object.
+  async resolveEditTarget (
+    rootId: Ref<Doc>,
+    rootClass: Ref<Class<Doc>>
+  ): Promise<{ targetId: Ref<Doc>, targetClass: Ref<Class<Doc>>, targetAttr: string } | undefined> {
+    const root = await this.client.findOne<Doc>(rootClass, { _id: rootId })
+    if (root === undefined || root._class !== aiBot.class.AIContextMessage) return undefined
+    const link = root as AIContextMessage
+    const targetAttr = await this.editTargetAttr(link.objectClass)
+    if (targetAttr === undefined) return undefined
+    return { targetId: link.objectId, targetClass: link.objectClass, targetAttr }
+  }
+
+  // Rename the linked issue/document. Applied directly (not proposed): a title is one short field,
+  // trivially reversible, and both Issue and Document keep it in `title`.
+  async renameTarget (target: { targetId: Ref<Doc>, targetClass: Ref<Class<Doc>> }, title: string): Promise<boolean> {
+    const doc = await this.client.findOne<Doc>(target.targetClass, { _id: target.targetId })
+    if (doc === undefined) return false
+    if ((doc as any).title === title) return false
+    await this.client.updateDoc(target.targetClass, doc.space, target.targetId, { title } as any)
+    return true
+  }
+
+  // Stage a task proposal. It is not posted here: generateAndReply merges it into the bot's reply
+  // so the text and the card land in one message.
+  async postTaskProposal (
+    ctx: ReqCtx,
+    proposal: {
+      title: string
+      description?: string
+      subtasks?: AITaskProposal[]
+      parent?: Ref<Doc>
+      priority?: number
+      estimation?: number
+      dueDate?: string
+      labels?: string[]
+      // More description parts are coming: the next call appends instead of replacing.
+      awaitingMore?: boolean
+    }
+  ): Promise<boolean> {
+    ctx.pending = { kind: 'task', ...proposal }
+    return true
+  }
+
+  /** Titles of the sub-issues a task already has, normalized for comparison. */
+  async existingSubIssueTitles (parentId: Ref<Doc>): Promise<Set<string>> {
+    const subs = await this.client.findAll<Issue>(
+      tracker.class.Issue,
+      { attachedTo: parentId as Ref<Issue> },
+      { limit: 200, projection: { title: 1 } }
+    )
+    return new Set(subs.map((s) => s.title.trim().toLowerCase().replace(/\s+/g, ' ')))
+  }
+
+  // Compact listing of existing sub-issues for the model; bodies are trimmed.
+  async listSubIssues (parentId: Ref<Doc>, limit = 100): Promise<string> {
+    const subs = await this.client.findAll<Issue>(
+      tracker.class.Issue,
+      { attachedTo: parentId as Ref<Issue> },
+      { limit, sort: { rank: SortingOrder.Ascending } }
+    )
+    if (subs.length === 0) return 'This task has no sub-tasks yet.'
+    const lines = await Promise.all(
+      subs.map(async (s) => {
+        const body = s.description != null ? await this.readMarkupBlobAsMarkdown(s.description) : undefined
+        const short = body?.replace(/\s+/g, ' ').trim().slice(0, 200) ?? ''
+        return `- ${s.identifier} ${s.title}${short !== '' ? ` — ${short}` : ''}`
+      })
+    )
+    return `Existing sub-tasks (${subs.length}):\n${lines.join('\n')}`
+  }
+
+  // The issue this thread is linked to, when it is one - the parent for a split proposal.
+  async resolveLinkedIssue (rootId: Ref<Doc>, rootClass: Ref<Class<Doc>>): Promise<Ref<Doc> | undefined> {
+    const root = await this.client.findOne<Doc>(rootClass, { _id: rootId })
+    if (root === undefined || root._class !== aiBot.class.AIContextMessage) return undefined
+    const link = root as AIContextMessage
+    const hierarchy = await this.getHierarchy()
+    return hierarchy.isDerived(link.objectClass, tracker.class.Issue) ? link.objectId : undefined
+  }
+
+  // Current body of the edit target as markdown, for change detection. Reads the collab blob.
+  private async currentTargetMarkdown (target: {
+    targetId: Ref<Doc>
+    targetClass: Ref<Class<Doc>>
+    targetAttr: string
+  }): Promise<string | undefined> {
+    const doc = await this.client.findOne<Doc>(target.targetClass, { _id: target.targetId })
+    if (doc === undefined) return undefined
+    const blob = (doc as any)[target.targetAttr] as Ref<Blob> | null | undefined
+    if (blob == null) return ''
+    return await this.readMarkupBlobAsMarkdown(blob)
+  }
+
+  /** Stage an edit proposal (see postTaskProposal); returns false if the finished proposal is a no-op. */
+  async postEditProposal (
+    ctx: ReqCtx,
+    target: { targetId: Ref<Doc>, targetClass: Ref<Class<Doc>>, targetAttr: string },
+    markdown: string,
+    hasMore: boolean = false
+  ): Promise<boolean> {
+    const staged = ctx.pending?.kind === 'edit' && ctx.pending.awaitingMore === true ? ctx.pending.markdown : undefined
+    const full = sanitizeDocumentMarkdown(staged !== undefined ? staged + markdown : markdown)
+    // Compare only once the document is complete: an intermediate part always differs.
+    if (!hasMore) {
+      const current = await this.currentTargetMarkdown(target)
+      if (current !== undefined && normalizeForCompare(current) === normalizeForCompare(full)) {
+        ctx.pending = undefined
+        return false
+      }
+    }
+    ctx.pending = {
+      kind: 'edit',
+      ...target,
+      markdown: full,
+      awaitingMore: hasMore,
+      proposedMarkup: jsonToMarkup(markdownToMarkup(full, { refUrl: '', imageUrl: '' }))
+    }
+    return true
+  }
+
+  private async generateAndReply (
+    event: AIEventRequest,
+    args: {
+      llm: LLMProvider
+      personUuid: PersonUuid
+      contextMode: ContextMode
+      objectId: Ref<Doc>
+      objectClass: Ref<Class<Doc>>
+      messageClass: Ref<Class<Doc>>
+      space: Ref<Space>
+      prompt: LLMChatMessage
+      promptTokens: number
+      level?: AILevel
+      providers?: Map<string, LLMProvider>
+    }
+  ): Promise<void> {
+    let { llm } = args
+    const { personUuid, contextMode, objectId, objectClass, messageClass, space, prompt, promptTokens, providers } =
+      args
+    const level = args.level
+
+    // Memory (assistant/user/shared) lives in a Preference; conversation context
+    // now comes from the chunter thread, not from a blob history.
+    const memory = await this.getMemory(personUuid)
+
+    const useHistory: LLMHistoryRecord[] = []
 
     const systemPrompts: LLMHistoryRecord[] = []
 
-    if (contextMode !== 'direct') {
+    // Placed at the END of history, next to the task: small models "lose the middle".
+    let docPrompt: string | undefined
+
+    {
+      // Top-level replies use only today's messages; older ones load via load_thread_history tool.
+      const dayLimited = event.objectIdIsSpace
+      const dayStart = new Date()
+      dayStart.setHours(0, 0, 0, 0)
+      // Exclude the incoming message itself; it is appended separately as the prompt.
+      const contextQuery = dayLimited
+        ? {
+            attachedTo: objectId,
+            attachedToClass: objectClass,
+            _id: { $ne: event.messageId },
+            modifiedOn: { $gte: dayStart.getTime() }
+          }
+        : { attachedTo: objectId, attachedToClass: objectClass, _id: { $ne: event.messageId } }
+
       // Load a message itself
       const msg = await this.client?.findOne<Doc>(objectClass, { _id: objectId })
       if (msg !== undefined) {
@@ -484,96 +939,327 @@ export class WorkspaceClient {
             content: 'Content: ' + markupToText((msg as ChatMessage).message)
           })
         }
-        if (msg._class === tracker.class.Issue) {
-          let _msg = ''
-          const is: Issue = msg as Issue
-
-          _msg += 'Issue title: ' + is.title + '\n'
-
-          if (is.description != null && is.description !== '') {
-            try {
-              const readable = await this.storage.read(this.ctx, this.wsIds, is.description)
-              const markup = Buffer.concat(readable as any).toString()
-              let textContent = markupToText(markup)
-              textContent = textContent
-                .split(/ +|\t+|\f+/)
-                .filter((it) => it)
-                .join(' ')
-                .split(/\n\n+/)
-                .join('\n')
-
-              _msg += 'Content:``` \n' + textContent + '\n ```'
-            } catch (err: any) {
-              this.ctx.error('failed to handle description', { _id: is.description, workspace: this.wsIds.uuid })
-            }
-
-            systemPrompts.push({
-              role: 'system' as const,
-              content: _msg
-            })
+        // "Discuss with Yulia" thread: the root message links to a source object (issue,
+        // document, ...). Load that object so its content is in context, not just the starter.
+        let linked: Doc | undefined
+        if (msg._class === aiBot.class.AIContextMessage) {
+          const link = msg as AIContextMessage
+          linked = await this.client?.findOne<Doc>(link.objectClass, { _id: link.objectId })
+          // Draft the conversation works on (create-issue dialog). Kept off the message body so
+          // the chat stays readable; the model still needs it on every turn.
+          if (link.workingContext !== undefined && link.workingContext.trim() !== '') {
+            systemPrompts.push({ role: 'system' as const, content: link.workingContext })
           }
+        }
+        // Any non-chat source object (issue, document, ...) is described from its class schema.
+        const source = linked ?? (msg._class !== chunter.class.ChatMessage ? msg : undefined)
+        const isChatStarter =
+          source !== undefined &&
+          (source._class === chunter.class.ChatMessage ||
+            source._class === chunter.class.ThreadMessage ||
+            source._class === aiBot.class.AIContextMessage)
+        if (source !== undefined && !isChatStarter) {
+          docPrompt = await this.buildDocPrompt(source)
         }
       }
 
       const lastMessages =
-        (await this.client?.findAll(
-          chunter.class.ChatMessage,
-          { attachedTo: objectId, attachedToClass: objectClass },
-          { limit: 500, sort: { modifiedOn: SortingOrder.Descending } }
-        )) ?? []
+        (await this.client?.findAll(chunter.class.ChatMessage, contextQuery, {
+          limit: 500,
+          sort: { modifiedOn: SortingOrder.Descending }
+        })) ?? []
 
       lastMessages.sort((a, b) => a.modifiedOn - b.modifiedOn)
 
-      const personIds = new Set(lastMessages.map((it) => it.modifiedBy))
+      // Match own social ids to tag messages as 'assistant' vs 'user'.
+      const botSocialIds = new Set(this.socialIds.map((it) => it._id))
 
-      const socialIds = toIdMap(
-        (await this.client?.findAll(contact.class.SocialIdentity, { _id: { $in: Array.from(personIds) as any } })) ?? []
-      )
-
-      const employeesInChannel =
-        (await this.client?.findAll(contact.class.Person, {
-          _id: { $in: Array.from(socialIds.values()).map((it) => it.attachedTo) }
-        })) ?? []
-      const empAsMap = toIdMap(employeesInChannel.filter((it) => it.personUuid !== undefined))
-
+      const contextMessages: ContextMessage[] = []
       for (const msg of lastMessages) {
-        let emp: Person | undefined
-        const sid = socialIds.get(msg.modifiedBy as any)
-        if (sid !== undefined) {
-          emp = empAsMap.get(sid.attachedTo)
+        const msgRole: 'assistant' | 'user' = botSocialIds.has(msg.modifiedBy) ? 'assistant' : 'user'
+        // Edit proposals are UI artifacts; feed only the fact it happened, never the proposed body.
+        let content: string
+        if (msg._class === aiBot.class.AIEditProposalMessage) {
+          const applied = (msg as AIEditProposalMessage).applied === true
+          content = applied
+            ? '[You proposed an edit to the document; the user applied it. The document context above already reflects it.]'
+            : '[You proposed an edit to the document; the user has not applied it yet.]'
+        } else {
+          content = markupToText(msg.message)
         }
-        const msgRole: 'assistant' | 'user' = this.aiPerson?.personUuid === emp?.personUuid ? 'assistant' : 'user'
-        useHistory.push({
+        contextMessages.push({
           role: msgRole,
-          content: markupToText(msg.message)
+          content,
+          tokens: llm.countTokens([{ role: msgRole, content }]) ?? 0
         })
+      }
+
+      // Truncate the thread context to fit the model window (oldest dropped first). The serving
+      // level's own context window wins when it is tighter than the pod-wide budget: a small model
+      // silently drops whatever overflows, so the history must be cut to what it can actually read.
+      const contextBudget = contextBudgetFor(level ?? config.DefaultLevel)
+      useHistory.push(...buildThreadContext(contextMessages, promptTokens, contextBudget))
+
+      // Document goes last (after the chat history, just before the user request) so a small model
+      // sees it adjacent to the task it must act on.
+      if (docPrompt !== undefined) {
+        useHistory.push({ role: 'user' as const, content: docPrompt })
       }
     }
 
-    const tools = getTools(this, contextMode, personUuid as AccountUuid)
-    const chatCompletion = await this.llm?.createChatCompletionWithTools(
-      tools,
-      prompt,
-      contextMode,
-      rawHistory.assistantMemory,
-      rawHistory.userMemory,
-      rawHistory.sharedContext,
-      personUuid as AccountUuid,
-      this.ctx,
-      this.wsIds.uuid,
-      [...systemPrompts, ...useHistory]
-    )
+    // Monthly billed-token window (from billing). Past the limit: paid plans downgrade to
+    // the local low level, free plans are blocked (fallback-eligible levels always serve).
+    const requestedLevel = level ?? config.DefaultLevel
+    // Only levels allowed for this feature take part in routing and window downgrade.
+    const registry = registryForFeature(config.AIProviders, event.feature)
+    const windows = await getWorkspaceWindows(this.ctx, this.wsIds.uuid)
+    // Limits are feature-agnostic: the fallback is searched in the full registry, else a feature
+    // that excludes the fallback-eligible level (low) would hard-block instead of degrading.
+    const decision = decideLevel(requestedLevel, windows)
+    if (decision.action === 'block') {
+      const lang = event.language ?? config.DefaultLanguage
+      const message =
+        decision.reason === 'unavailable' ? aiBot.string.AIServiceUnavailable : aiBot.string.TokenLimitReachedMonth
+      // Replaces "is typing" with the reason right away, so the user reads it while the refusal
+      // message is still being written.
+      await this.setTypingStatus(objectId, space, message)
+      await this.notifyLimit(
+        personUuid,
+        lang,
+        {
+          messageClass,
+          space,
+          objectId,
+          objectClass,
+          collection: event.collection
+        },
+        message
+      )
+      return
+    }
+
+    // Effective level may have been downgraded to a fallback-eligible model. A downgrade serves
+    // from the full registry (degraded answer beats none); the normal path stays feature-narrowed.
+    const effectiveLevel = decision.level ?? requestedLevel
+    const resolved = resolveModel(effectiveLevel, effectiveLevel === requestedLevel ? registry : config.AIProviders)
+
+    // Landed on a different level than requested (window downgrade or a feature-denied level):
+    // switch the LLM instance too, else the original provider would run + bill the wrong level.
+    if (resolved.level !== requestedLevel && providers !== undefined) {
+      const downgraded = providers.get(resolved.provider.id)
+      if (downgraded !== undefined) {
+        llm = downgraded
+      }
+    }
+
+    const aiRequestId = await this.createAIRequest(personUuid, space, {
+      level: resolved.level,
+      modelId: resolved.model.model,
+      kind: 'chat',
+      objectId
+    })
+
+    // Shared with the tools: a proposal tool stages its result here instead of posting a message.
+    const reqCtx: ReqCtx = { objectId, objectClass, space, collection: event.collection, purpose: event.purpose }
+    const tools = getTools(this, contextMode, personUuid as AccountUuid, reqCtx, resolved.model.features, event.purpose)
+    const replyLang = await this.resolveChatLanguage(personUuid, space, contextMode === 'direct')
+    let chatCompletion
+    try {
+      chatCompletion = await llm.createChatCompletionWithTools(
+        tools,
+        prompt,
+        contextMode,
+        memory.sharedPrompt,
+        memory.personalContext,
+        personUuid as AccountUuid,
+        this.ctx,
+        this.wsIds.uuid,
+        [...systemPrompts, ...useHistory],
+        true,
+        'chat',
+        effectiveLevel,
+        replyLang,
+        this.requestHooks(personUuid, aiRequestId, space)
+      )
+    } catch (err: any) {
+      // LLM failed after in-worker retries; swallow instead of rethrow so the queue does not reprocess.
+      this.ctx.error('chat completion failed', { workspace: this.wsIds.uuid, error: err?.message })
+      if (aiRequestId !== undefined) {
+        await this.updateAIRequest(personUuid, aiRequestId, space, failedPatch(err?.message ?? 'error'))
+      }
+      const lang = event.language ?? config.DefaultLanguage
+      await this.notifyLimit(
+        personUuid,
+        lang,
+        { messageClass, space, objectId, objectClass, collection: event.collection },
+        aiBot.string.AIServiceUnavailable
+      )
+      return
+    }
     const response = chatCompletion?.completion
 
     if (response == null) {
+      if (aiRequestId !== undefined) {
+        await this.updateAIRequest(personUuid, aiRequestId, space, failedPatch('empty response'))
+      }
+      // Silence reads as a broken bot: say so instead (e.g. the model kept asking for tools
+      // and never produced text).
+      const lang = event.language ?? config.DefaultLanguage
+      await this.notifyLimit(
+        personUuid,
+        lang,
+        { messageClass, space, objectId, objectClass, collection: event.collection },
+        aiBot.string.AIEmptyResponse
+      )
       return
     }
-    const responseTokens =
-      chatCompletion?.usage ?? this.llm?.countTokens([{ role: 'assistant', content: response }]) ?? 0
 
-    await this.pushHistory(personUuid, response, 'assistant', responseTokens, personUuid, objectId, objectClass)
-
+    if (aiRequestId !== undefined) {
+      const multiplier = resolved.model.tokenMultiplier
+      const patch = donePatch(chatCompletion?.usage, multiplier)
+      await this.updateAIRequest(
+        personUuid,
+        aiRequestId,
+        space,
+        chatCompletion?.cancelled === true ? { ...patch, status: 'cancelled' } : patch
+      )
+    }
     const parseResponse = jsonToMarkup(markdownToMarkup(response, { refUrl: '', imageUrl: '' }))
+    // A tool staged a proposal: the reply carries it, so the user gets one message - text + card.
+    await this.writeReply(messageClass, space, objectId, objectClass, event.collection, parseResponse, reqCtx.pending)
+  }
+
+  // Copyright © 2026 Intabia Fusion
+  // Load earlier messages from the thread/channel for on-demand history retrieval by the LLM tool.
+  async loadThreadHistory (
+    objectId: Ref<Doc>,
+    objectClass: Ref<Class<Doc>>,
+    beforeMs: number,
+    limit: number
+  ): Promise<string> {
+    const clampedLimit = Math.max(1, Math.min(limit, 200))
+    try {
+      const messages = await this.client.findAll(
+        chunter.class.ChatMessage,
+        { attachedTo: objectId, attachedToClass: objectClass, modifiedOn: { $lt: beforeMs } },
+        { limit: clampedLimit, sort: { modifiedOn: SortingOrder.Descending } }
+      )
+      if (messages.length === 0) return 'No older messages found.'
+      // Reverse to chronological order (oldest first).
+      messages.sort((a, b) => a.modifiedOn - b.modifiedOn)
+      return messages.map((m) => markupToText(m.message)).join('\n')
+    } catch (err: any) {
+      this.ctx.warn('load_thread_history failed', { error: err })
+      return 'Failed to load older messages.'
+    }
+  }
+
+  // Find the user's existing Direct chat with Юля (does not create one).
+  private async findUserDirect (personUuid: PersonUuid): Promise<DirectMessage | undefined> {
+    const aiAccount = this.aiPerson?.personUuid as AccountUuid | undefined
+    if (aiAccount === undefined) return undefined
+
+    const wanted = new Set<AccountUuid>([personUuid as AccountUuid, aiAccount])
+    const directs = await this.client.findAll<DirectMessage>(chunter.class.DirectMessage, {})
+    return directs.find((dm) => {
+      const members = new Set(dm.members)
+      return members.size === wanted.size && [...wanted].every((a) => members.has(a))
+    })
+  }
+
+  // Post a notice in the user's Direct chat with Юля, falling back to the request's origin thread.
+  private async notifyLimit (
+    personUuid: PersonUuid,
+    lang: string,
+    fallback: {
+      messageClass: Ref<Class<Doc>>
+      space: Ref<Space>
+      objectId: Ref<Doc>
+      objectClass: Ref<Class<Doc>>
+      collection: string
+    },
+    message: IntlString = aiBot.string.TokenLimitReachedMonth
+  ): Promise<void> {
+    const text = await translate(message, {}, lang)
+    const markup = jsonToMarkup(markdownToMarkup(text, { refUrl: '', imageUrl: '' }))
+    const direct = await this.findUserDirect(personUuid)
+    if (direct !== undefined) {
+      await this.client.addCollection<Doc, ChatMessage>(
+        chunter.class.ChatMessage,
+        direct._id,
+        direct._id,
+        direct._class,
+        'messages',
+        { message: markup }
+      )
+      return
+    }
+    await this.writeReply(
+      fallback.messageClass,
+      fallback.space,
+      fallback.objectId,
+      fallback.objectClass,
+      fallback.collection,
+      markup
+    )
+  }
+
+  // Write a bot reply as a ChatMessage or a ThreadMessage under the parent message.
+  private async writeReply (
+    messageClass: Ref<Class<Doc>>,
+    space: Ref<Space>,
+    objectId: Ref<Doc>,
+    objectClass: Ref<Class<Doc>>,
+    collection: string,
+    markup: string,
+    pending?: PendingProposal
+  ): Promise<void> {
+    // Proposal messages derive from ThreadMessage, so they need the thread parent's object refs.
+    // In a Direct there is no parent message and the channel itself plays that role.
+    const parent = await this.client.findOne<ChatMessage>(chunter.class.ChatMessage, {
+      _id: objectId as Ref<ChatMessage>
+    })
+    const threadRefs = {
+      objectId: parent?.attachedTo ?? objectId,
+      objectClass: parent?.attachedToClass ?? objectClass
+    }
+
+    if (pending?.kind === 'edit') {
+      await this.client.addCollection<Doc, AIEditProposalMessage>(
+        aiBot.class.AIEditProposalMessage,
+        space,
+        objectId,
+        objectClass,
+        collection,
+        {
+          message: markup,
+          ...threadRefs,
+          targetId: pending.targetId,
+          targetClass: pending.targetClass,
+          targetAttr: pending.targetAttr,
+          proposedMarkup: pending.proposedMarkup
+        }
+      )
+      return
+    }
+    if (pending?.kind === 'task') {
+      await this.client.addCollection<Doc, AITaskProposalMessage>(
+        aiBot.class.AITaskProposalMessage,
+        space,
+        objectId,
+        objectClass,
+        collection,
+        {
+          message: markup,
+          ...threadRefs,
+          title: pending.title,
+          description: pending.description,
+          subtasks: pending.subtasks,
+          parent: pending.parent
+        }
+      )
+      return
+    }
 
     if (messageClass === chunter.class.ChatMessage) {
       await this.client.addCollection<Doc, ChatMessage>(
@@ -581,24 +1267,18 @@ export class WorkspaceClient {
         space,
         objectId,
         objectClass,
-        event.collection,
-        { message: parseResponse }
+        collection,
+        { message: markup }
       )
-    } else if (messageClass === chunter.class.ThreadMessage) {
-      const parent = await this.client.findOne<ChatMessage>(chunter.class.ChatMessage, {
-        _id: objectId as Ref<ChatMessage>
-      })
-
-      if (parent !== undefined) {
-        await this.client.addCollection<Doc, ThreadMessage>(
-          chunter.class.ThreadMessage,
-          space,
-          objectId,
-          objectClass,
-          event.collection,
-          { message: parseResponse, objectId: parent.attachedTo, objectClass: parent.attachedToClass }
-        )
-      }
+    } else if (messageClass === chunter.class.ThreadMessage && parent !== undefined) {
+      await this.client.addCollection<Doc, ThreadMessage>(
+        chunter.class.ThreadMessage,
+        space,
+        objectId,
+        objectClass,
+        collection,
+        { message: markup, ...threadRefs }
+      )
     }
   }
 

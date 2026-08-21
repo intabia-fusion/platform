@@ -301,7 +301,9 @@
     "AddedBlocker": "已添加阻塞的问题 {identifier}{value}",
     "RemovedBlocker": "已移除阻塞的问题 {identifier}{value}",
     "AddedRelation": "已添加相关问题 {identifier}{value}",
-    "RemovedRelation": "已移除相关问题 {identifier}{value}"
+    "RemovedRelation": "已移除相关问题 {identifier}{value}",
+    "CreateAndOpen": "创建并打开",
+    "CreateAndNew": "创建并新建下一个"
   },
   "status": {},
   "emailTemplate": {

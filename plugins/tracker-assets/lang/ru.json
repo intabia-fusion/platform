@@ -320,7 +320,9 @@
     "AddedBlocker": "Добавлена блокирующая задача {identifier}{value}",
     "RemovedBlocker": "Удалена блокирующая задача {identifier}{value}",
     "AddedRelation": "Добавлена связь с {identifier}{value}",
-    "RemovedRelation": "Удалена связь с {identifier}{value}"
+    "RemovedRelation": "Удалена связь с {identifier}{value}",
+    "CreateAndOpen": "Создать и открыть",
+    "CreateAndNew": "Создать и начать новую"
   },
   "status": {},
   "emailTemplate": {
