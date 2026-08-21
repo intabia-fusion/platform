@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { floorFractionDigits, themeStore, tooltip } from '@hcengineering/ui'
+  import { themeStore, tooltip } from '@hcengineering/ui'
   import { formatDuration } from '@hcengineering/tracker'
 
   export let id: string | undefined = undefined
@@ -22,8 +22,7 @@
   export let value: number
   export let accent: boolean = false
 
-  $: hours = floorFractionDigits(value, 3)
-  $: label = formatDuration(hours, $themeStore.language)
+  $: label = formatDuration(value, $themeStore.language)
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -33,7 +32,7 @@
   class:link={kind === 'link'}
   class:fs-bold={accent}
   on:click
-  use:tooltip={{ label: getEmbeddedLabel(`${hours}h`) }}
+  use:tooltip={{ label: getEmbeddedLabel(label) }}
 >
   {label}
 </span>
