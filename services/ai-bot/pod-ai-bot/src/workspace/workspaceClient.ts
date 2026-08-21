@@ -934,8 +934,10 @@ export class WorkspaceClient {
           content: 'Document type:' + msg?._class
         })
         if (msg._class === chunter.class.ThreadMessage || msg._class === chunter.class.ChatMessage) {
+          // User-authored content must stay at user level: as a system message it would let the
+          // author override tool-use instructions via prompt injection.
           systemPrompts.push({
-            role: 'system' as const,
+            role: 'user' as const,
             content: 'Content: ' + markupToText((msg as ChatMessage).message)
           })
         }
@@ -948,7 +950,7 @@ export class WorkspaceClient {
           // Draft the conversation works on (create-issue dialog). Kept off the message body so
           // the chat stays readable; the model still needs it on every turn.
           if (link.workingContext !== undefined && link.workingContext.trim() !== '') {
-            systemPrompts.push({ role: 'system' as const, content: link.workingContext })
+            systemPrompts.push({ role: 'user' as const, content: link.workingContext })
           }
         }
         // Any non-chat source object (issue, document, ...) is described from its class schema.

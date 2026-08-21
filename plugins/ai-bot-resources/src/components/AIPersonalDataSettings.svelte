@@ -33,16 +33,33 @@
     language = data?.language ?? ''
   })
 
+  // Serializes saves: while the first createDoc is in flight the live query has not delivered
+  // the doc yet, so a parallel second save would create a duplicate data document.
+  let saveQueue: Promise<void> = Promise.resolve()
+
   async function save (patch: Partial<Pick<AIPersonalData, 'personalContext' | 'language'>>): Promise<void> {
-    if (data !== undefined) {
-      await client.update(data, patch)
-    } else {
-      await client.createDoc(aiBot.class.AIPersonalData, core.space.Workspace, {
+    const run = async (): Promise<void> => {
+      if (data !== undefined) {
+        await client.update(data, patch)
+        return
+      }
+      const id = await client.createDoc(aiBot.class.AIPersonalData, core.space.Workspace, {
         attachedTo: me,
         personalContext: '',
         ...patch
       })
+      // Bridge until the live query delivers the created document; `space` is what update() sends
+      // as the tx object space.
+      data = {
+        _id: id,
+        _class: aiBot.class.AIPersonalData,
+        space: core.space.Workspace,
+        attachedTo: me
+      } as unknown as AIPersonalData
     }
+    const runAll = saveQueue.then(run, run)
+    saveQueue = runAll.catch(() => {})
+    await runAll
   }
 
   function onLanguageChanged (e: CustomEvent<string>): void {

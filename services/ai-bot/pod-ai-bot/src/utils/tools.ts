@@ -443,6 +443,7 @@ const editIssueDraft: ToolFunc = async (workspaceClient, _user, args, reqCtx) =>
   const posted = await workspaceClient.postTaskProposal(reqCtx, {
     title: title !== '' ? title : (staged?.title ?? ''),
     description,
+    // A draft is always a single issue: propose_subtasks is not offered in the issue-draft purpose.
     subtasks: [],
     priority: parsePriority(args?.priority) ?? staged?.priority,
     estimation: typeof args?.estimation === 'number' ? args.estimation : staged?.estimation,

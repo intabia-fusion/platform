@@ -17,6 +17,7 @@ import cors from 'cors'
 import express, { type Express } from 'express'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient, { withRetry } from '@hcengineering/server-client'
+import { withRetry as retryTransient, retryNetworkErrors } from '@hcengineering/retry'
 import {
   ConsumerControl,
   ConsumerHandle,
@@ -309,7 +310,13 @@ function startLlmRouter (boot: Boot): void {
     const handleOne = async (message: ConsumerMessage<AIPipelineMessage>, control?: ConsumerControl): Promise<void> => {
       const { event, level } = message.value
       try {
-        await aiControl.processEvent(message.workspace, [event], control, cfg.id, level)
+        // Network blips get a few attempts before the event is written off; anything else is a
+        // real failure and goes to the dead letter topic straight away.
+        await retryTransient(
+          () => aiControl.processEvent(message.workspace, [event], control, cfg.id, level),
+          { maxRetries: 3, isRetryable: retryNetworkErrors },
+          'processEvent'
+        )
       } catch (err: any) {
         ctx.error('failed to handle ai event', { error: err.message, provider: cfg.id })
         await deadLetter?.send(ctx, message.workspace, [{ event, error: err.message, provider: cfg.id }])
@@ -418,6 +425,14 @@ async function startSttWorker (boot: Boot): Promise<void> {
         )
       } catch (err: any) {
         ctx.error('Failed to process transcription task', { error: err.message, workspace })
+        // Keep the task: the consumer acks regardless, so without this it is simply gone.
+        await transcriptionDeadLetterProducer?.send(ctx, workspace, [
+          {
+            task: raw as unknown as TranscriptionQueueTask,
+            error: err.message,
+            errorType: raw.kind ?? 'transcription'
+          }
+        ])
       }
     }
     if (config.SttProcessingBatch === 1) {

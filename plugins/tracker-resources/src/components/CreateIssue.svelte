@@ -457,16 +457,26 @@
       if (!isNaN(parsed)) object.dueDate = parsed
     }
     if (draft.labels !== undefined) void applyAssistedLabels(draft.labels)
-    object.subIssues = draft.subIssues.map((title) => ({
-      ...getDefaultObject(generateId()),
-      title,
-      description: '',
-      kind: kind ?? ('' as Ref<TaskType>),
-      space: _space as Ref<Project>,
-      subIssues: [],
-      dueDate: null,
-      labels: []
-    }))
+    // Reuse existing rows by title, so a re-apply keeps fields the user already filled in.
+    const prevByTitle = new Map(object.subIssues.map((s) => [s.title, s]))
+    object.subIssues = draft.subIssues.map((title) => {
+      const prev = prevByTitle.get(title)
+      // Consumed, so two draft rows sharing a title get two objects instead of one aliased twice.
+      if (prev !== undefined) {
+        prevByTitle.delete(title)
+        return prev
+      }
+      return {
+        ...getDefaultObject(generateId()),
+        title,
+        description: '',
+        kind: kind ?? ('' as Ref<TaskType>),
+        space: _space as Ref<Project>,
+        subIssues: [],
+        dueDate: null,
+        labels: []
+      }
+    })
   }
 
   let subIssuesComponent: SubIssues

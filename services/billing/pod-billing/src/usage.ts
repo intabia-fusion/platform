@@ -131,8 +131,11 @@ export class UsageWorker {
       } = await this.db.updateProviderPoolState(ctx, pool.providerId, pool.model, used)
 
       if ((crossed80 || crossed100) && this.onPoolThreshold !== undefined) {
+        const percent = crossed100 ? 100 : 80
         try {
-          await this.onPoolThreshold(ctx, updated, crossed100 ? 100 : 80)
+          await this.onPoolThreshold(ctx, updated, percent)
+          // Only now: an unmarked pool re-notifies next pass instead of losing the alert.
+          await this.db.markPoolNotified(ctx, pool.providerId, pool.model, percent)
         } catch (err: any) {
           ctx.error('pool threshold notify failed', { provider: pool.providerId, err })
         }

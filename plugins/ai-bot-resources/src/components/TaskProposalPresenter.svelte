@@ -17,6 +17,7 @@
   import { type Doc, generateId, type Ref, type Space } from '@hcengineering/core'
   import { getResource, translate } from '@hcengineering/platform'
   import { createQuery, getClient, MessageViewer } from '@hcengineering/presentation'
+  import { onDestroy } from 'svelte'
   import { get } from 'svelte/store'
 
   import { issueDraftApplier } from '../stores'
@@ -152,6 +153,13 @@
     clearTimeout(persistTimer)
     persistTimer = setTimeout(doPersist, 300)
   }
+  // Flush, don't drop: closing the panel within the debounce window would otherwise lose the edit.
+  onDestroy(() => {
+    if (persistTimer !== undefined) {
+      clearTimeout(persistTimer)
+      doPersist()
+    }
+  })
 
   function doPersist (): void {
     void patch({

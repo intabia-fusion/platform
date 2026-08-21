@@ -38,7 +38,8 @@ export function renderPrompt (template: string, vars: Record<string, string | un
   let out = template.replace(/\{\{#(\w+)\}\}([\s\S]*?)\{\{\/\1\}\}/g, (_m, key: string, body: string) => {
     const value = vars[key]
     if (value === undefined || value === '') return ''
-    return body.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value)
+    // Function form: a `$&`/`$1` inside a user-authored value must stay literal.
+    return body.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), () => value)
   })
   // Plain placeholders.
   out = out.replace(/\{\{(\w+)\}\}/g, (_m, key: string) => vars[key] ?? '')

@@ -252,6 +252,7 @@
   }
   onDestroy(() => {
     issueDraftApplier.set(undefined)
+    clearTimeout(syncTimer)
   })
 
   function applyProposal (source: AITaskProposalMessage): void {
@@ -266,7 +267,12 @@
     apply({
       title: proposal.title.trim() !== '' ? proposal.title : title,
       description: proposal.description !== undefined ? asMarkup(proposal.description) : asMarkup(description),
-      subIssues: (proposal.subtasks ?? []).map((s) => s.title),
+      // Same rule as title/description: the draft tool never proposes sub-tasks (it always posts an
+      // empty list), so anything but a non-empty list keeps what the user typed in the form.
+      subIssues:
+        proposal.subtasks !== undefined && proposal.subtasks.length > 0
+          ? proposal.subtasks.map((s) => s.title)
+          : subIssues,
       priority: proposal.priority,
       estimation: proposal.estimation,
       dueDate: proposal.dueDate,

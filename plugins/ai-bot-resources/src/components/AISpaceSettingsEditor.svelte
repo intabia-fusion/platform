@@ -63,18 +63,34 @@
     }
   })
 
+  // Serializes saves: while the first createDoc is in flight the live query has not delivered
+  // the doc yet, so a parallel second save would create a duplicate settings document.
+  let saveQueue: Promise<void> = Promise.resolve()
+
   async function save (
     patch: Partial<Pick<AISpaceSettings, 'level' | 'asrLevel' | 'language' | 'sharedPrompt'>>
   ): Promise<void> {
     if (readonly) return
-    if (doc !== undefined) {
-      await client.update(doc, patch)
-    } else {
-      await client.createDoc(aiBot.class.AISpaceSettings, core.space.Workspace, {
+    const run = async (): Promise<void> => {
+      if (doc !== undefined) {
+        await client.update(doc, patch)
+        return
+      }
+      const id = await client.createDoc(aiBot.class.AISpaceSettings, core.space.Workspace, {
         level: level !== '' ? level : (levelInfos[0]?.level ?? 'low'),
         ...patch
       })
+      // Bridge until the live query delivers the created document; `space` is what update() sends
+      // as the tx object space.
+      doc = {
+        _id: id,
+        _class: aiBot.class.AISpaceSettings,
+        space: core.space.Workspace
+      } as unknown as AISpaceSettings
     }
+    const runAll = saveQueue.then(run, run)
+    saveQueue = runAll.catch(() => {})
+    await runAll
   }
 
   function onLevelSelected (e: CustomEvent<string>): void {
