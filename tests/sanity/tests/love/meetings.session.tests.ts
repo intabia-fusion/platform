@@ -7,42 +7,17 @@
 //
 
 import { expect, test, type Page } from '@playwright/test'
-import { PlatformURI } from '../utils'
+
 import { retryIntervals } from '../retry'
-import { closeMeetingContexts, waitForActiveMeetingsToFinish } from './meeting-helpers'
-
-const meetingsWs = 'meetings-ws'
-const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
-
-async function openLove (page: Page): Promise<void> {
-  await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
-  await expect(page.locator('div.floorGrid')).toBeVisible({ timeout: 15000 })
-}
-
-async function clickRoomByName (page: Page, name: string): Promise<void> {
-  await page.locator(`[data-id="room-${name}"]`).first().click()
-}
-
-async function clickFirstAvailableRoom (page: Page): Promise<string | null> {
-  for (const name of ROOM_CANDIDATES) {
-    const room = page.locator(`[data-id="room-${name}"]`).first()
-    if ((await room.count()) === 0) continue
-    await room.click()
-    return name
-  }
-  return null
-}
-
-async function pickSecondRoom (page: Page, exclude: string): Promise<string | null> {
-  for (const name of ROOM_CANDIDATES) {
-    if (name === exclude) continue
-    const room = page.locator(`[data-id="room-${name}"]`).first()
-    if ((await room.count()) === 0) continue
-    await room.click()
-    return name
-  }
-  return null
-}
+import {
+  clickFirstAvailableRoom,
+  clickRoomByName,
+  closeMeetingContexts,
+  openLove,
+  openMeetingMinutes,
+  waitConnected,
+  waitForActiveMeetingsToFinish
+} from './meeting-helpers'
 
 async function startOrJoin (page: Page): Promise<void> {
   const connect = page.locator('[data-id="meeting-connect"]').getByRole('button').first()
@@ -57,18 +32,6 @@ async function startOrJoin (page: Page): Promise<void> {
     await expect(connect).toBeVisible({ timeout: 5000 })
   }).toPass({ intervals: retryIntervals, timeout: 20000 })
   await connect.click()
-}
-
-async function waitConnected (page: Page): Promise<void> {
-  await expect(page.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 30000 })
-}
-
-async function openMeetingMinutes (page: Page, roomName: string): Promise<void> {
-  // The MeetingMinutes link is named "<room> <day> <month> <year>" in the
-  // side activity / room panel.
-  const link = page.getByRole('link', { name: new RegExp(`${roomName}.*20\\d{2}`) }).first()
-  await expect(link).toBeVisible({ timeout: 15000 })
-  await link.click()
 }
 
 export function registerSessionTests (): void {
@@ -157,7 +120,7 @@ export function registerSessionTests (): void {
         await expect(page.locator('[data-id="meeting-widget"]')).toBeHidden({ timeout: 15000 })
         await openLove(page)
 
-        const roomB = await pickSecondRoom(page, roomA as string)
+        const roomB = await clickFirstAvailableRoom(page, [roomA as string])
         test.skip(roomB === null, 'Need a second meeting room for hop test')
 
         await startOrJoin(page)

@@ -327,10 +327,8 @@ export async function getAccount (doNavigate: boolean = true): Promise<LoginInfo
   }
 }
 
-/**
- * Picks up a session that lives in a cookie alone and mirrors it into Token/LastAccount,
- * which the login routing reads - otherwise `selectWorkspace` stays unroutable.
- */
+// Mirrors a cookie-only session into Token/LastAccount, which the login routing reads -
+// without it `selectWorkspace` stays unroutable while the form shows "Signed in as".
 export async function restoreSession (): Promise<LoginInfo | null> {
   const loginInfo = await getAccount(false)
   if (loginInfo?.token != null && getMetadata(presentation.metadata.Token) == null) {

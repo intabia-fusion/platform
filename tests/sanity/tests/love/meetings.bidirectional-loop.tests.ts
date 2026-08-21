@@ -7,19 +7,8 @@
 //
 
 import { expect, test, type Page } from '@playwright/test'
-import { PlatformURI } from '../utils'
-import { closeMeetingContexts, leaveAllMeetings, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
-const meetingsWs = 'meetings-ws'
-
-async function openLove (page: Page): Promise<void> {
-  await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
-  await expect(page.locator('div.floorGrid')).toBeVisible({ timeout: 15000 })
-}
-
-async function waitConnected (page: Page): Promise<void> {
-  await expect(page.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 60000 })
-}
+import { closeMeetingContexts, openLove, waitConnected, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
 async function waitDisconnected (page: Page): Promise<void> {
   await expect(page.locator('[data-id="meeting-widget"]')).toBeHidden({ timeout: 30000 })
@@ -120,7 +109,6 @@ export function registerBidirectionalLoopTests (): void {
           await waitForActiveMeetingsToFinish()
         })
       } finally {
-        await leaveAllMeetings([page2, page3])
         await closeMeetingContexts([
           { ctx: ctx2, pages: [page2] },
           { ctx: ctx3, pages: [page3] }

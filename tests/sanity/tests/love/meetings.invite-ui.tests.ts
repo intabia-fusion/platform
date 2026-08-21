@@ -7,19 +7,14 @@
 //
 
 import { expect, test, type Page } from '@playwright/test'
-import { PlatformURI } from '../utils'
-import { closeMeetingContexts, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
-const meetingsWs = 'meetings-ws'
-
-async function openLove (page: Page): Promise<void> {
-  await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
-  await expect(page.locator('div.floorGrid')).toBeVisible({ timeout: 15000 })
-}
-
-async function waitConnected (page: Page): Promise<void> {
-  await expect(page.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 60000 })
-}
+import {
+  closeMeetingContexts,
+  openLove,
+  startOrJoin,
+  waitConnected,
+  waitForActiveMeetingsToFinish
+} from './meeting-helpers'
 
 async function clickFirstMeetingRoom (page: Page): Promise<void> {
   const room = page
@@ -28,12 +23,6 @@ async function clickFirstMeetingRoom (page: Page): Promise<void> {
     .first()
   await expect(room).toBeVisible({ timeout: 15000 })
   await room.click()
-}
-
-async function startOrJoin (page: Page): Promise<void> {
-  const connect = page.locator('[data-id="meeting-connect"]').first()
-  await expect(connect).toBeVisible({ timeout: 10000 })
-  await connect.click()
 }
 
 async function inviteByLastName (page: Page, lastName: string): Promise<void> {

@@ -6,36 +6,22 @@
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
 
-import { expect, test, type Locator, type Page } from '@playwright/test'
-import { PlatformURI } from '../utils'
-import { closeMeetingContexts, knockAndWaitPending, waitForActiveMeetingsToFinish } from './meeting-helpers'
+import { expect, test, type Page } from '@playwright/test'
 
-const meetingsWs = 'meetings-ws'
-
-async function openLove (page: Page): Promise<void> {
-  await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
-  await expect(page.locator('div.floorGrid')).toBeVisible({ timeout: 15000 })
-}
-
-async function waitConnected (page: Page): Promise<void> {
-  await expect(page.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 30000 })
-}
+import {
+  clickOfficeOf,
+  closeMeetingContexts,
+  knockAndWaitPending,
+  openLove,
+  waitConnected,
+  waitForActiveMeetingsToFinish
+} from './meeting-helpers'
 
 /**
  * Click the room owned by the given person. Personal offices render with
  * `data-id="room-"` (empty name) but display the owner's name inside, so we
  * pick the one whose visible text contains the owner's last name.
  */
-async function clickOfficeOf (page: Page, lastName: string): Promise<Locator> {
-  const office = page
-    .locator('div.floorGrid-room')
-    .filter({ hasText: new RegExp(lastName, 'i') })
-    .first()
-  await expect(office).toBeVisible({ timeout: 15000 })
-  await office.click()
-  return office
-}
-
 /**
  * Start a meeting in the owner's own personal office. There is no Connect
  * button in EditRoom for one's own office; the entry point is the

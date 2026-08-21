@@ -95,13 +95,21 @@ export async function fillIssueForm (page: Page, props: IssueProps): Promise<voi
     })
   }
   if (status !== undefined) {
-    const item = page.locator(`.menu-item:has-text("${status}")`).first()
-    // The state list is rebuilt whenever the task type changes, so a click issued while the popup
-    // is closed or still stale has nothing to land on and waits out the test timeout.
+    const statusItem = page.locator(`.menu-item:has-text("${status}")`).first()
+    // SelectPopup gets a snapshot of the status list (StatusEditor.svelte:96), so a state
+    // renamed moments earlier is absent until the dropdown is reopened.
     await retry(async () => {
-      if ((await item.count()) === 0) await page.click(af + '#status-editor')
-      await item.click({ timeout: 5000 })
+      await page.click(af + '#status-editor')
+      try {
+        await expect(statusItem).toBeVisible({ timeout: 3000 })
+      } catch (err) {
+        if (await page.locator('.selectPopup').isVisible()) {
+          await page.keyboard.press('Escape')
+        }
+        throw err
+      }
     })
+    await statusItem.click()
   }
   if (priority !== undefined) {
     await page.click(af + 'button:has-text("No priority")')

@@ -25,7 +25,13 @@ import love, {
 import { expect, test, type Page } from '@playwright/test'
 import { PlatformURI, PlatformUserSecond } from '../utils'
 import { retryIntervals } from '../retry'
-import { closeMeetingContexts, getSystemRestClient, waitForActiveMeetingsToFinish } from './meeting-helpers'
+import {
+  closeMeetingContexts,
+  getSystemRestClient,
+  openLove,
+  waitConnected,
+  waitForActiveMeetingsToFinish
+} from './meeting-helpers'
 
 const meetingsWs = 'meetings-ws'
 
@@ -115,11 +121,6 @@ async function getGuestUrlViaApi (client: RestClient, meetingId: Ref<MeetingMinu
   return isShortId ? `${front}/meetings/${shortIdOrToken}` : `${front}/meetings?guestToken=${shortIdOrToken}`
 }
 
-async function openLove (page: Page): Promise<void> {
-  await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
-  await expect(page.locator('div.floorGrid')).toBeVisible({ timeout: 15000 })
-}
-
 async function clickRoom (page: Page, name: string): Promise<void> {
   await page.locator(`[data-id="room-${name}"]`).first().click()
 }
@@ -128,10 +129,6 @@ async function startMeeting (page: Page): Promise<void> {
   const connect = page.locator('[data-id="meeting-connect"]').getByRole('button').first()
   await expect(connect).toBeVisible({ timeout: 10000 })
   await connect.click()
-}
-
-async function waitConnected (page: Page): Promise<void> {
-  await expect(page.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 30000 })
 }
 
 export function registerScheduledLinksTests (): void {

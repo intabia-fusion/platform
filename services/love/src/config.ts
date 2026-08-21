@@ -43,6 +43,8 @@ interface Config {
 
   // Polling configuration
   PollingIntervalMs: number
+  DepartureTimeoutSec: number
+  OwnerRejoinGraceSec: number
 }
 
 const envMap: { [key in keyof Config]: string } = {
@@ -70,7 +72,9 @@ const envMap: { [key in keyof Config]: string } = {
   WebHookUrl: 'WEBHOOK_URL',
   UseEgressWebHook: 'USE_EGRESS_WEBHOOK',
 
-  PollingIntervalMs: 'POLLING_INTERVAL_MS'
+  PollingIntervalMs: 'POLLING_INTERVAL_MS',
+  DepartureTimeoutSec: 'DEPARTURE_TIMEOUT_SEC',
+  OwnerRejoinGraceSec: 'OWNER_REJOIN_GRACE_SEC'
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
@@ -96,7 +100,9 @@ const config: Config = (() => {
     Agents: (process.env[envMap.Agents] ?? '').split(','),
     WebHookUrl: process.env[envMap.WebHookUrl] ?? '',
     UseEgressWebHook: process.env[envMap.UseEgressWebHook] === 'true',
-    PollingIntervalMs: parseNumber(process.env[envMap.PollingIntervalMs]) ?? 10000 // Default: 10 seconds
+    PollingIntervalMs: parseNumber(process.env[envMap.PollingIntervalMs]) ?? 10000, // Default: 10 seconds
+    DepartureTimeoutSec: parseNumber(process.env[envMap.DepartureTimeoutSec]) ?? 20,
+    OwnerRejoinGraceSec: parseNumber(process.env[envMap.OwnerRejoinGraceSec]) ?? 15
   }
 
   const optional = ['StorageConfig', 'S3StorageConfig', 'BillingUrl', 'PollingIntervalMs']

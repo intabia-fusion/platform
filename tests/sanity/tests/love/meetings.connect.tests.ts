@@ -7,40 +7,15 @@
 //
 
 import { expect, test, type Page } from '@playwright/test'
-import { PlatformURI } from '../utils'
-import { OfficePage } from '../model/love/office-page'
-import { closeMeetingContexts } from './meeting-helpers'
 
-const meetingsWs = 'meetings-ws'
-const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
-
-async function openLove (page: Page): Promise<OfficePage> {
-  const office = new OfficePage(page)
-  await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
-  await office.navigateToOffice()
-  await expect(office.floorGrid()).toBeVisible({ timeout: 15000 })
-  return office
-}
-
-async function clickFirstAvailableRoom (page: Page): Promise<string | null> {
-  for (const name of ROOM_CANDIDATES) {
-    const room = page.locator(`[data-id="room-${name}"]`).first()
-    if ((await room.count()) === 0) continue
-    await room.click()
-    return name
-  }
-  return null
-}
-
-async function clickRoomByName (page: Page, name: string): Promise<void> {
-  await page.locator(`[data-id="room-${name}"]`).first().click()
-}
-
-async function startOrJoin (page: Page): Promise<void> {
-  const connect = page.locator('[data-id="meeting-connect"]').getByRole('button').first()
-  await expect(connect).toBeVisible({ timeout: 10000 })
-  await connect.click()
-}
+import {
+  clickFirstAvailableRoom,
+  clickRoomByName,
+  closeMeetingContexts,
+  openLove,
+  startOrJoin,
+  waitConnected
+} from './meeting-helpers'
 
 async function inviteByLastName (page: Page, lastName: string): Promise<void> {
   await page.locator('[data-id="invite-button"]').first().click()
@@ -52,11 +27,6 @@ async function inviteByLastName (page: Page, lastName: string): Promise<void> {
   const ok = popup.locator('.hulyModal-footer').getByRole('button', { name: /^Invite$/i })
   await expect(ok).toBeEnabled({ timeout: 5000 })
   await ok.click()
-}
-
-async function waitConnected (page: Page): Promise<void> {
-  // MeetingWidget renders only while $lkSessionConnected === true.
-  await expect(page.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 30000 })
 }
 
 export function registerConnectTests (): void {

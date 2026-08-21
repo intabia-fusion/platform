@@ -5,38 +5,25 @@
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 import { expect, test, type Page } from '@playwright/test'
-import { PlatformURI } from '../utils'
-import { closeMeetingContexts } from './meeting-helpers'
 
-const meetingsWs = 'meetings-ws'
-const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
-
-async function openLove (page: Page): Promise<void> {
-  await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
-  await expect(page.locator('div.floorGrid')).toBeVisible({ timeout: 15000 })
-}
-
-async function clickFirstAvailableRoom (page: Page): Promise<string | null> {
-  for (const name of ROOM_CANDIDATES) {
-    const room = page.locator(`[data-id="room-${name}"]`).first()
-    if ((await room.count()) === 0) continue
-    await room.click()
-    return name
-  }
-  return null
-}
-
-async function startOrJoin (page: Page): Promise<void> {
-  const connect = page.locator('[data-id="meeting-connect"]').getByRole('button').first()
-  await expect(connect).toBeVisible({ timeout: 10000 })
-  await connect.click()
-}
-
-async function waitConnected (page: Page): Promise<void> {
-  await expect(page.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 30000 })
-}
+import {
+  clickFirstAvailableRoom,
+  closeMeetingContexts,
+  occupiedCells,
+  openLove,
+  startOrJoin,
+  waitConnected,
+  waitForActiveMeetingsToFinish
+} from './meeting-helpers'
 
 async function openMeetingMinutes (page: Page, roomName: string): Promise<void> {
   // Pick the link by its href — the floor view also renders a link with
@@ -82,13 +69,37 @@ async function copyGuestLinkViaUi (page: Page): Promise<string> {
     .filter({ hasText: /copy guest link/i })
     .first()
   await expect(copyItem).toBeVisible({ timeout: 5000 })
+
+  // The link lands only after a round-trip for the guest token; until then the clipboard still
+  // holds the previous test's link, which matches the shape and points at a finished meeting.
+  const readClipboard = async (): Promise<string> =>
+    await page.evaluate(async () => await navigator.clipboard.readText())
+  const before = await readClipboard()
   await copyItem.click()
 
-  // Give copyTextToClipboard a tick to settle; then read.
-  await page.waitForTimeout(200)
-  const url = await page.evaluate(async () => await navigator.clipboard.readText())
-  expect(url, 'clipboard did not receive the guest URL').toMatch(/\/meetings(\/|\?)/)
-  return url
+  let url = before
+  const deadline = Date.now() + 15000
+  while (Date.now() < deadline) {
+    url = await readClipboard()
+    if (url !== before && /\/meetings(\/|\?)/.test(url)) return url
+    await page.waitForTimeout(100)
+  }
+  throw new Error(`clipboard did not receive a fresh guest URL, still: ${url}`)
+}
+
+/** Fills the guest form and waits for the connected LiveKit view. */
+async function guestJoin (guest: Page, url: string, first: string, last: string): Promise<void> {
+  await (await guest.goto(url))?.finished()
+  const firstName = guest.locator('input[name="first_name"]')
+  await expect(firstName).toBeVisible({ timeout: 30000 })
+  await firstName.fill(first)
+  await guest.locator('input[name="last_name"]').fill(last)
+  await guest.locator('[data-testid="checkbox-personal-data"]').check()
+  await guest.locator('[data-testid="checkbox-rules"]').check()
+  const joinBtn = guest.getByRole('button', { name: /join meeting/i }).first()
+  await expect(joinBtn).toBeEnabled({ timeout: 10000 })
+  await joinBtn.click()
+  await expect(guest.locator('[data-id="guest-connected"]')).toBeVisible({ timeout: 45000 })
 }
 
 export function registerGuestTests (): void {
@@ -158,6 +169,112 @@ export function registerGuestTests (): void {
         expect(abort, `guest console error: ${abort}`).toBeUndefined()
       } finally {
         // Leave host meeting via standard widget control, then close contexts.
+        await closeMeetingContexts([
+          { ctx: hostCtx, pages: [host] },
+          { ctx: guestCtx, pages: [guest] }
+        ])
+      }
+    })
+
+    test('guest shows up as a participant for the host and disappears on leave', async ({ browser }) => {
+      test.setTimeout(90000)
+      const hostCtx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
+      const guestCtx = await browser.newContext({ storageState: undefined })
+      const host = await hostCtx.newPage()
+      const guest = await guestCtx.newPage()
+      try {
+        await openLove(host)
+        const room = await clickFirstAvailableRoom(host)
+        test.skip(room === null, 'No regular room available for guest test')
+        await startOrJoin(host)
+        await waitConnected(host)
+
+        await openMeetingMinutes(host, room as string)
+        const guestUrl = await copyGuestLinkViaUi(host)
+        await guestJoin(guest, guestUrl, 'Seen', 'Guest')
+
+        // The host side must account for the guest: the room the host is in
+        // now renders two occupied cells on the floor grid.
+        await expect
+          .poll(async () => await occupiedCells(host, room as string), { timeout: 30000 })
+          .toBeGreaterThanOrEqual(2)
+
+        await guest.close()
+
+        // ParticipantInfo for the guest is dropped by the participant_left
+        // webhook once LiveKit's departureTimeout (3s) elapses.
+        await expect.poll(async () => await occupiedCells(host, room as string), { timeout: 30000 }).toBe(1)
+      } finally {
+        await closeMeetingContexts([
+          { ctx: hostCtx, pages: [host] },
+          { ctx: guestCtx, pages: [guest] }
+        ])
+      }
+    })
+
+    test('two guests on the same link land in the same meeting', async ({ browser }) => {
+      test.setTimeout(120000)
+      const hostCtx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
+      const g1Ctx = await browser.newContext({ storageState: undefined })
+      const g2Ctx = await browser.newContext({ storageState: undefined })
+      const host = await hostCtx.newPage()
+      const g1 = await g1Ctx.newPage()
+      const g2 = await g2Ctx.newPage()
+      try {
+        await openLove(host)
+        const room = await clickFirstAvailableRoom(host)
+        test.skip(room === null, 'No regular room available for guest test')
+        await startOrJoin(host)
+        await waitConnected(host)
+
+        await openMeetingMinutes(host, room as string)
+        const guestUrl = await copyGuestLinkViaUi(host)
+
+        await guestJoin(g1, guestUrl, 'First', 'Guest')
+        await guestJoin(g2, guestUrl, 'Second', 'Guest')
+
+        // One shared link, one meeting: host + two guests occupy three cells.
+        await expect
+          .poll(async () => await occupiedCells(host, room as string), { timeout: 30000 })
+          .toBeGreaterThanOrEqual(3)
+      } finally {
+        await closeMeetingContexts([
+          { ctx: hostCtx, pages: [host] },
+          { ctx: g1Ctx, pages: [g1] },
+          { ctx: g2Ctx, pages: [g2] }
+        ])
+      }
+    })
+
+    test('guest link is refused once the meeting has finished', async ({ browser }) => {
+      test.setTimeout(120000)
+      const hostCtx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
+      const guestCtx = await browser.newContext({ storageState: undefined })
+      const host = await hostCtx.newPage()
+      const guest = await guestCtx.newPage()
+      try {
+        await openLove(host)
+        const room = await clickFirstAvailableRoom(host)
+        test.skip(room === null, 'No regular room available for guest test')
+        await startOrJoin(host)
+        await waitConnected(host)
+
+        await openMeetingMinutes(host, room as string)
+        const guestUrl = await copyGuestLinkViaUi(host)
+
+        // Host leaves; the LiveKit room empties and the meeting is finished by
+        // the room_finished webhook after departureTimeout.
+        await host.close()
+        await waitForActiveMeetingsToFinish()
+
+        await (await guest.goto(guestUrl))?.finished()
+
+        // `/guestInfo` reports Finished, so GuestMeetingApp renders the closing
+        // notice instead of the join form - the guest never gets a token.
+        await expect(guest.getByText(/finished/i).first()).toBeVisible({ timeout: 30000 })
+        expect(await guest.locator('input[name="first_name"]').count()).toBe(0)
+        expect(await guest.locator('[data-id="guest-connected"]').count()).toBe(0)
+      } finally {
         await closeMeetingContexts([
           { ctx: hostCtx, pages: [host] },
           { ctx: guestCtx, pages: [guest] }

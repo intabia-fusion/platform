@@ -7,7 +7,7 @@
 //
 
 import { createRestClient, getWorkspaceToken, loadServerConfig, type RestClient } from '@hcengineering/api-client'
-import { systemAccountUuid } from '@hcengineering/core'
+import { type AccountUuid, systemAccountUuid } from '@hcengineering/core'
 import love, {
   MeetingStatus,
   type MeetingMinutes,
@@ -17,15 +17,24 @@ import love, {
 import { generateToken } from '@hcengineering/server-token'
 import { PlatformURI, PlatformUserSecond } from '../utils'
 import { retryIntervals } from '../retry'
-import { expect, type BrowserContext, type Page } from '@playwright/test'
+import { expect, type BrowserContext, type Locator, type Page } from '@playwright/test'
+import { OfficePage } from '../model/love/office-page'
 
 const MEETINGS_WS = 'meetings-ws'
 
 let cachedRestClient: RestClient | undefined
+let cachedAccount: AccountUuid | undefined
 let cachedSystemRestClient: RestClient | undefined
 
 async function getMeetingsRestClient (): Promise<RestClient> {
-  if (cachedRestClient !== undefined) return cachedRestClient
+  return (await getMeetingsUser()).client
+}
+
+/** REST client for PlatformUserSecond plus that account's uuid (needed to write per-account docs). */
+export async function getMeetingsUser (): Promise<{ client: RestClient, account: AccountUuid }> {
+  if (cachedRestClient !== undefined && cachedAccount !== undefined) {
+    return { client: cachedRestClient, account: cachedAccount }
+  }
   const baseUrl = (PlatformURI ?? 'http://localhost:8083').replace(/\/$/, '')
   const config = await loadServerConfig(baseUrl)
   const token = await getWorkspaceToken(
@@ -34,7 +43,24 @@ async function getMeetingsRestClient (): Promise<RestClient> {
     config
   )
   cachedRestClient = createRestClient(token.endpoint, token.workspaceId, token.token)
-  return cachedRestClient
+  cachedAccount = token.info.account
+  return { client: cachedRestClient, account: cachedAccount }
+}
+
+/** Raw workspace JWT for PlatformUserSecond - the same Bearer the browser sends to `/_love/*`. */
+export async function getPlatformToken (): Promise<string> {
+  const baseUrl = (PlatformURI ?? 'http://localhost:8083').replace(/\/$/, '')
+  const config = await loadServerConfig(baseUrl)
+  const token = await getWorkspaceToken(
+    baseUrl,
+    { email: PlatformUserSecond, password: '1234', workspace: MEETINGS_WS },
+    config
+  )
+  return token.token
+}
+
+export function loveEndpoint (): string {
+  return `${(PlatformURI ?? 'http://localhost:8083').replace(/\/$/, '')}/_love`
 }
 
 export async function getSystemRestClient (): Promise<RestClient> {
@@ -149,14 +175,6 @@ export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise
  * the server-side cleanup of ParticipantInfo + MeetingMinutes status.
  * Kept as a thin shim so existing call sites don't have to change.
  */
-export async function leaveIfInMeeting (_page: Page): Promise<void> {
-  // Intentionally empty.
-}
-
-export async function leaveAllMeetings (_pages: Page[]): Promise<void> {
-  // Intentionally empty — see leaveIfInMeeting.
-}
-
 // `sendKnockRequest` returns silently until the employee and their space resolve, so an early
 // click creates nothing. Re-clicking is safe: the apply carries `notMatch` on a pending request.
 export async function knockAndWaitPending (page: Page, timeoutMs = 30000): Promise<void> {
@@ -188,4 +206,120 @@ export async function closeMeetingContexts (entries: Array<{ ctx: BrowserContext
   // to land. Without this the next test sees stale PIs (the owner is "still
   // in a meeting") and floor-grid rendering misses their office.
   await waitForActiveMeetingsToFinish()
+}
+
+export const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
+
+/** Either surface proves the LiveKit session is live: the sidebar widget is not
+ *  rendered when the meeting opens in the main area. */
+export function connectedMarker (page: Page): Locator {
+  return page
+    .locator('[data-id="meeting-widget"], [data-id="control-bar"][data-connected="true"]')
+    .locator('visible=true')
+}
+
+/** Grid cells of a room that currently render a participant avatar. */
+export async function occupiedCells (page: Page, roomName: string): Promise<number> {
+  return await page.locator(`[data-id="room-${roomName}"] .floorGrid-room__field:has(.hulyAvatar-container)`).count()
+}
+
+export async function openLove (page: Page): Promise<OfficePage> {
+  const office = new OfficePage(page)
+  await (await page.goto(`${PlatformURI}/workbench/${MEETINGS_WS}/love`))?.finished()
+  await expect(office.floorGrid()).toBeVisible({ timeout: 15000 })
+  return office
+}
+
+/** Either surface counts as connected, so this also covers a meeting opened in the main area. */
+export async function waitConnected (page: Page, timeout = 60000): Promise<void> {
+  await expect.poll(async () => await connectedMarker(page).count(), { timeout }).toBeGreaterThan(0)
+}
+
+export async function startOrJoin (page: Page, timeout = 30000): Promise<void> {
+  const connect = page.locator('[data-id="meeting-connect"]').getByRole('button').first()
+  await expect(connect).toBeVisible({ timeout })
+  await connect.click()
+}
+
+/** The floor renders a link to the Room next to the one to its MeetingMinutes; pick by the date. */
+export async function openMeetingMinutes (page: Page, roomName: string, pick: 'first' | 'last' = 'last'): Promise<void> {
+  const links = page.getByRole('link', { name: new RegExp(`${roomName}.*20\\d{2}`) })
+  const link = pick === 'first' ? links.first() : links.last()
+  await expect(link).toBeVisible({ timeout: 15000 })
+  await link.click()
+}
+
+export async function clickOfficeOf (page: Page, lastName: string): Promise<Locator> {
+  const office = page
+    .locator('div.floorGrid-room')
+    .filter({ hasText: new RegExp(lastName, 'i') })
+    .first()
+  await expect(office).toBeVisible({ timeout: 15000 })
+  await office.click()
+  return office
+}
+
+export async function joinRoom (page: Page, name: string, timeout = 45000): Promise<void> {
+  await page.locator(`[data-id="room-${name}"]`).first().click()
+  const connect = page.locator('[data-id="meeting-connect"]').getByRole('button').first()
+  await expect(connect).toBeVisible({ timeout: 10000 })
+  await connect.click()
+  await expect.poll(async () => await connectedMarker(page).count(), { timeout }).toBeGreaterThan(0)
+}
+
+/**
+ * Pick a regular room, skipping the ones in `exclude`.
+ *
+ * The candidate list is a fallback, not a choice: all four rooms always exist. But `count()` does
+ * not wait, and under a loaded stand the floor grid paints before its rooms - the first candidate
+ * then reads as absent and the run silently lands on a different room than the one before. That is
+ * what made `workspace-owner` flaky: it drew `All hands` instead of `Meeting Room 1`.
+ */
+export async function firstAvailableRoom (page: Page, exclude: string[] = []): Promise<string | null> {
+  for (const name of ROOM_CANDIDATES) {
+    if (exclude.includes(name)) continue
+    const present = await page
+      .locator(`[data-id="room-${name}"]`)
+      .first()
+      .waitFor({ state: 'attached', timeout: 10000 })
+      .then(() => true)
+      .catch(() => false)
+    if (present) return name
+  }
+  return null
+}
+
+/** The live MeetingMinutes of a room, once the server has created it. */
+export async function waitRoomMeeting (roomName: string, timeoutMs = 30000): Promise<MeetingMinutes> {
+  const sys = await getSystemRestClient()
+  const room = await sys.findOne(love.class.Room, { name: roomName })
+  expect(room).toBeDefined()
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const mm = await sys.findOne<MeetingMinutes>(love.class.MeetingMinutes, {
+      roomId: room?._id,
+      status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
+    })
+    if (mm !== undefined) return mm
+    await new Promise((resolve) => setTimeout(resolve, 200))
+  }
+  throw new Error(`No live MeetingMinutes for room ${roomName}`)
+}
+
+export async function joinFirstAvailableRoom (page: Page, timeout = 45000): Promise<boolean> {
+  const name = await firstAvailableRoom(page)
+  if (name === null) return false
+  await joinRoom(page, name, timeout)
+  return true
+}
+
+export async function clickRoomByName (page: Page, name: string): Promise<void> {
+  await page.locator(`[data-id="room-${name}"]`).first().click()
+}
+
+export async function clickFirstAvailableRoom (page: Page, exclude: string[] = []): Promise<string | null> {
+  const name = await firstAvailableRoom(page, exclude)
+  if (name === null) return null
+  await clickRoomByName(page, name)
+  return name
 }

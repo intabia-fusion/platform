@@ -12,6 +12,11 @@ import { registerAccessTests } from './meetings.access.tests'
 import { registerBidirectionalLoopTests } from './meetings.bidirectional-loop.tests'
 import { registerRefreshReconnectTests } from './meetings.refresh-reconnect.tests'
 import { registerConnectTests } from './meetings.connect.tests'
+import { registerDeviceTests } from './meetings.devices.tests'
+import { registerFinishedTokenTests } from './meetings.finished-token.tests'
+import { registerHostRefreshTests } from './meetings.host-refresh.tests'
+import { registerNetworkTests } from './meetings.network.tests'
+import { registerPresenceTests } from './meetings.presence.tests'
 import { registerGuestTests } from './meetings.guest.tests'
 import { registerInviteTests } from './meetings.invite.tests'
 import { registerInviteUiTests } from './meetings.invite-ui.tests'
@@ -20,10 +25,13 @@ import { registerClientCreateTests } from './meetings.client-create.tests'
 import { registerMeetingsTests } from './meetings.tests'
 import { registerMigrationTests } from './meetings.migration.tests'
 import { registerPrivacyTests } from './meetings.privacy.tests'
+import { registerRecordingTests } from './meetings.recording.tests'
 import { registerScenariosTests } from './meetings.scenarios.tests'
+import { registerScheduledConnectTests } from './meetings.scheduled-connect.tests'
 import { registerScheduledLinksTests } from './meetings.scheduled-links.tests'
 import { registerSessionTests } from './meetings.session.tests'
 import { registerStartTests } from './meetings.start.tests'
+import { registerTransactorRestartTests } from './meetings.transactor-restart.tests'
 import { registerWorkspaceOwnerTests } from './meetings.workspace-owner.tests'
 
 test.describe('love (meetings) — suite', () => {
@@ -36,6 +44,9 @@ test.describe('love (meetings) — suite', () => {
   registerInviteTests()
   registerInviteUiTests()
   registerConnectTests()
+  registerDeviceTests()
+  registerNetworkTests()
+  registerPresenceTests()
   registerKnockOfficeTests()
   registerClientCreateTests()
   registerScenariosTests()
@@ -44,4 +55,9 @@ test.describe('love (meetings) — suite', () => {
   registerRefreshReconnectTests()
   registerGuestTests()
   registerScheduledLinksTests()
+  registerHostRefreshTests()
+  registerScheduledConnectTests()
+  registerFinishedTokenTests()
+  registerTransactorRestartTests()
+  registerRecordingTests()
 })

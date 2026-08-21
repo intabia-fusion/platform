@@ -6,48 +6,19 @@
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
 
-import { expect, test, type Page } from '@playwright/test'
-import { PlatformURI } from '../utils'
-import { closeMeetingContexts, waitForActiveMeetingsToFinish } from './meeting-helpers'
+import { expect, test } from '@playwright/test'
+
+import {
+  clickFirstAvailableRoom,
+  clickRoomByName,
+  closeMeetingContexts,
+  openLove,
+  openMeetingMinutes,
+  startOrJoin,
+  waitConnected,
+  waitForActiveMeetingsToFinish
+} from './meeting-helpers'
 import { retry } from '../retry'
-
-const meetingsWs = 'meetings-ws'
-const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
-
-async function openLove (page: Page): Promise<void> {
-  await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
-  await expect(page.locator('div.floorGrid')).toBeVisible({ timeout: 15000 })
-}
-
-async function clickFirstAvailableRoom (page: Page): Promise<string | null> {
-  for (const name of ROOM_CANDIDATES) {
-    const room = page.locator(`[data-id="room-${name}"]`).first()
-    if ((await room.count()) === 0) continue
-    await room.click()
-    return name
-  }
-  return null
-}
-
-async function clickRoomByName (page: Page, name: string): Promise<void> {
-  await page.locator(`[data-id="room-${name}"]`).first().click()
-}
-
-async function startOrJoin (page: Page): Promise<void> {
-  const connect = page.locator('[data-id="meeting-connect"]').getByRole('button').first()
-  await expect(connect).toBeVisible({ timeout: 10000 })
-  await connect.click()
-}
-
-async function waitConnected (page: Page): Promise<void> {
-  await expect(page.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 30000 })
-}
-
-async function openMeetingMinutes (page: Page, roomName: string): Promise<void> {
-  const link = page.getByRole('link', { name: new RegExp(`${roomName}.*20\\d{2}`) }).last()
-  await expect(link).toBeVisible({ timeout: 15000 })
-  await link.click()
-}
 
 export function registerWorkspaceOwnerTests (): void {
   test.describe('meeting minutes - workspace owner privileges', () => {

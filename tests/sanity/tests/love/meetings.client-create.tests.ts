@@ -6,20 +6,9 @@
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
 
-import { expect, test, type Page } from '@playwright/test'
-import { PlatformURI } from '../utils'
-import { closeMeetingContexts, waitForActiveMeetingsToFinish } from './meeting-helpers'
+import { expect, test } from '@playwright/test'
 
-const meetingsWs = 'meetings-ws'
-
-async function openLove (page: Page): Promise<void> {
-  await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
-  await expect(page.locator('div.floorGrid')).toBeVisible({ timeout: 15000 })
-}
-
-async function waitConnected (page: Page): Promise<void> {
-  await expect(page.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 60000 })
-}
+import { closeMeetingContexts, openLove, waitConnected, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
 /**
  * Reverse-call (client-side create) scenario: caller is NOT in a meeting yet.
