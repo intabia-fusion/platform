@@ -30,7 +30,7 @@ export interface LimitDecision {
 // Tokens left across both pools; 0 limit = unlimited monthly grant.
 // `used` is the whole period spend and the pack is charged only at period end, so both pools go
 // into one subtraction - clamping the grant first would hide an overspend behind the full pack.
-function available (usage: WindowUsage): number | undefined {
+function tokensLeft (usage: WindowUsage): number | undefined {
   if (usage.month.limit <= 0) return undefined
   return Math.max(0, usage.month.limit + usage.balance - usage.month.used)
 }
@@ -42,7 +42,7 @@ export function decideLevel (requested: AILevel, usage: WindowUsage): LimitDecis
   if (usage.unavailable === true) {
     return { action: 'block', reason: 'unavailable' }
   }
-  const left = available(usage)
+  const left = tokensLeft(usage)
   if (left !== undefined && left <= 0) {
     return { action: 'block', reason: 'limit' }
   }

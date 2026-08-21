@@ -1887,7 +1887,7 @@ export async function getSubscriptionsByProvider (
   branding: Branding | null,
   token: string,
   params: {
-    provider: string
+    provider?: string
     statuses?: SubscriptionStatus[]
     trialEndBefore?: number
   }
@@ -1899,8 +1899,9 @@ export async function getSubscriptionsByProvider (
   }
 
   const { provider, statuses, trialEndBefore } = params
+  // No provider = every provider: a sweep that has to touch all subscriptions, whoever sold them.
   const query: Query<Subscription> = {
-    provider,
+    ...(provider !== undefined ? { provider } : {}),
     status: { $in: statuses ?? [SubscriptionStatus.Active, SubscriptionStatus.PastDue] }
   }
   // A null trial_end never matches $lte, which is what we want: no trial end, nothing to expire.

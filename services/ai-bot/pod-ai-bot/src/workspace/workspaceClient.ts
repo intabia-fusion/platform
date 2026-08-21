@@ -340,6 +340,23 @@ export class WorkspaceClient {
   }
 
   // Typing indicator has a 3s TTL; refresh every 2s. Returns a stop function that clears it.
+  // The typing indicator doubles as a status line: the same doc carries any IntlString, and the
+  // chat renders it in place of "is typing". Lets the pod push a state the UI would otherwise
+  // have to poll for.
+  private async setTypingStatus (objectId: Ref<Doc>, space: Ref<Space>, status: IntlString): Promise<void> {
+    const socialId = this.primarySocialId._id
+    const id = `typing:${objectId}:${socialId}` as Ref<TypingIndicator>
+    try {
+      await this.client.updateDoc(pulse.class.TypingIndicator, space, id, { status })
+    } catch {
+      try {
+        await this.client.createDoc(pulse.class.TypingIndicator, space, { objectId, socialId, status }, id)
+      } catch (err) {
+        this.ctx.warn('failed to set typing status', { err })
+      }
+    }
+  }
+
   private startTyping (objectId: Ref<Doc>, space: Ref<Space>): () => Promise<void> {
     const socialId = this.primarySocialId._id
     const id = `typing:${objectId}:${socialId}` as Ref<TypingIndicator>
@@ -989,6 +1006,9 @@ export class WorkspaceClient {
       const lang = event.language ?? config.DefaultLanguage
       const message =
         decision.reason === 'unavailable' ? aiBot.string.AIServiceUnavailable : aiBot.string.TokenLimitReachedMonth
+      // Replaces "is typing" with the reason right away, so the user reads it while the refusal
+      // message is still being written.
+      await this.setTypingStatus(objectId, space, message)
       await this.notifyLimit(
         personUuid,
         lang,

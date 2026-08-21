@@ -780,8 +780,8 @@ class PostgresDB implements BillingDB {
     }
   }
 
-  // Build a "AND hour >= / < " clause from optional start/end, appending to params. `end` is
-  // exclusive so a cursor-driven caller (absorbFromBalance) never counts the boundary hour twice.
+  // Build a "AND hour >= / < " clause from optional start/end. `end` is exclusive so two adjacent
+  // ranges never count the boundary hour twice.
   private hourRange (params: any[], startIndex: number, start?: Date, end?: Date): string {
     let where = ''
     let paramIndex = startIndex

@@ -175,8 +175,9 @@ trial:
   plan: business
   days: 14
   usersLimit: 10
-  # Flat AI grant for the whole trial, instead of the plan's per-seat window times the seat cap.
-  windowMonthLimit: 300000
+  # Flat AI grant for the whole trial. After conversion the plan's per-seat window applies
+  # (business: 300k per paid seat).
+  windowMonthLimit: 1000000
 packages:
   100gb:
     description:

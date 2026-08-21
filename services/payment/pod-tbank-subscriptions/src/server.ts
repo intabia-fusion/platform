@@ -1148,12 +1148,21 @@ export async function processWebhook (
     // First check for a tbank sub with pendingReplacement flag (normal tbank updateSubscriptionPlan flow).
     // Otherwise, cancel any active subscription of the same type in the workspace
     // (handles provider-mismatch path where a new sub was created via createSubscription).
-    const allSubs = await storage.getAll(subscriptionData.workspaceUuid)
-    const oldSub = allSubs.find(
-      (s) =>
-        (s.provider === 'tbank' && s.providerData?.pendingReplacement === true) ||
-        (s.type === subscriptionData.type && s.status === SubscriptionStatus.Active && s.id !== subscriptionData.id)
+    // One-time purchases do not replace each other: several may be active at once, and cancelling
+    // one detaches the card the tier still renews with.
+    const allSubs = (await storage.getAll(subscriptionData.workspaceUuid)).filter(
+      (s) => s.type !== SubscriptionType.Purchase
     )
+    const oldSub =
+      subscriptionData.type === SubscriptionType.Purchase
+        ? undefined
+        : allSubs.find(
+          (s) =>
+            (s.provider === 'tbank' && s.providerData?.pendingReplacement === true) ||
+              (s.type === subscriptionData.type &&
+                s.status === SubscriptionStatus.Active &&
+                s.id !== subscriptionData.id)
+        )
     if (oldSub !== undefined && oldSub !== null) {
       // Report under the NEW purchase's action: dropping the old plan is part of that same intent.
       await cancelSubscription(

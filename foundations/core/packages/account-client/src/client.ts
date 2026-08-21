@@ -326,7 +326,7 @@ export interface AccountClient {
   getAllSubscriptions: () => Promise<SubscriptionInfo[]>
   getSubscriptionByProviderId: (provider: string, providerSubscriptionId: string) => Promise<Subscription | null>
   getSubscriptionsByProvider: (
-    provider: string,
+    provider?: string,
     statuses?: string[],
     trialEndBefore?: number
   ) => Promise<Subscription[]>
@@ -1567,7 +1567,7 @@ class AccountClientImpl implements AccountClient {
   }
 
   async getSubscriptionsByProvider (
-    provider: string,
+    provider?: string,
     statuses?: string[],
     trialEndBefore?: number
   ): Promise<Subscription[]> {

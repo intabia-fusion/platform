@@ -46,6 +46,7 @@ import type { BillingPeriod, CheckoutResponse, PaymentProvider, SubscriptionPubl
 import { ProviderHttpError, SubscribeRequest } from './providers'
 import { startActiveSubscriptionReconciliation } from './reconciliation'
 import { startTrialExpiry } from './trialExpiry'
+import { backfillWindowLimits } from './windowBackfill'
 import { getAccountClient, hasGrantingTier, computePlanPrice, validateSeatQuantity, MAX_SEATS_FALLBACK } from './utils'
 import yaml from 'js-yaml'
 import { existsSync, readFileSync } from 'fs'
@@ -626,6 +627,14 @@ export async function createServer (
     { hourUtc: config.TrialExpiryHourUtc ?? 21, intervalMinutes: config.TrialExpiryIntervalMinutes },
     logOperation
   )
+
+  // Subscriptions predating the baked AI window carry none, and the pod would fall back to its env
+  // default. Idempotent: only fills what is missing, so running it on every start is harmless.
+  void backfillWindowLimits(ctx, accountClient, (sub) =>
+    resolveLimits(sub.type, sub.plan, sub.providerData?.quantity as number | undefined)
+  ).catch((err: any) => {
+    ctx.error('AI window backfill failed', { err })
+  })
 
   // ============ Generic Payment Service Endpoints ============
   // These endpoints are provider-agnostic and work with any payment provider
