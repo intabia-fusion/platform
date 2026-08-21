@@ -31,6 +31,7 @@ export { TaskMiddleware } from './middleware'
 export default plugin(serverTaskId, {
   trigger: {
     OnStateUpdate: '' as Resource<TriggerFunc>,
-    OnTaskTypeUpdate: '' as Resource<TriggerFunc>
+    OnTaskTypeUpdate: '' as Resource<TriggerFunc>,
+    OnTaskTypeRemove: '' as Resource<TriggerFunc>
   }
 })
