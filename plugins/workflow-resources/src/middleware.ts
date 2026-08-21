@@ -190,6 +190,7 @@ export class WorkflowMiddleware extends BasePresentationMiddleware implements Pr
 
     if (Object.keys(screenUpdates).length > 0) {
       updateTx.operations = {
+        ...updateTx.operations,
         ...screenUpdates
       }
     }
