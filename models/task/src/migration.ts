@@ -21,6 +21,7 @@ import {
   DOMAIN_SEQUENCE,
   DOMAIN_STATUS,
   DOMAIN_TX,
+  TxFactory,
   TxOperations,
   generateId,
   groupByArray,
@@ -34,8 +35,10 @@ import {
   type Ref,
   type Space,
   type Status,
+  type Tx,
   type TxCreateDoc,
   type TxCUD,
+  type TxRemoveDoc,
   type TxUpdateDoc,
   TxProcessor
 } from '@hcengineering/core'
@@ -789,6 +792,11 @@ export const taskOperation: MigrateOperation = {
             }
           }
         }
+      },
+      {
+        state: 'delete-orphaned-task-type-classes-v1',
+        mode: 'upgrade',
+        func: deleteOrphanedTaskTypeClasses
       }
     ])
   },
@@ -947,5 +955,62 @@ export async function migrateTaskTypesToClasses (
     }
   } finally {
     await iterator.close()
+  }
+}
+
+export async function deleteOrphanedTaskTypeClasses (client: MigrationClient): Promise<void> {
+  const allTaskTypeTxes = await client.find<TxCUD<TaskType>>(DOMAIN_MODEL_TX, {
+    objectClass: task.class.TaskType
+  })
+
+  const txesByTaskTypeId = groupByArray(allTaskTypeTxes, (it) => it.objectId)
+  const deletedTaskType = new Map<Ref<TaskType>, TaskType>()
+
+  for (const [taskTypeId, docTxes] of txesByTaskTypeId.entries()) {
+    const hasRemoveTx = docTxes.some((it) => it._class === core.class.TxRemoveDoc)
+    if (!hasRemoveTx) continue
+
+    const type = TxProcessor.buildDoc2Doc(docTxes.filter((it) => it._class !== core.class.TxRemoveDoc))
+    if (type == null) continue
+    deletedTaskType.set(taskTypeId, type as TaskType)
+  }
+
+  if (deletedTaskType.size === 0) return
+
+  const txFactory = new TxFactory(core.account.System)
+  const txesToCreate: Tx[] = []
+
+  for (const [, taskType] of deletedTaskType.entries()) {
+    if (taskType.targetClass != null && taskType.targetClass !== taskType.ofClass) {
+      const classRemoveTxes = await client.find<TxRemoveDoc<Class<Doc>>>(DOMAIN_MODEL_TX, {
+        _class: core.class.TxRemoveDoc,
+        objectClass: core.class.Class,
+        objectId: taskType.targetClass
+      })
+      if (classRemoveTxes.length === 0) {
+        txesToCreate.push(txFactory.createTxRemoveDoc(core.class.Class, core.space.Model, taskType.targetClass))
+      }
+
+      const attrTxes = await client.find<TxCreateDoc<Attribute<Doc>>>(DOMAIN_MODEL_TX, {
+        _class: core.class.TxCreateDoc,
+        objectClass: core.class.Attribute,
+        'attributes.attributeOf': taskType.targetClass
+      })
+
+      for (const attrTx of attrTxes) {
+        const attrRemoveTxes = await client.find<TxRemoveDoc<Attribute<Doc>>>(DOMAIN_MODEL_TX, {
+          _class: core.class.TxRemoveDoc,
+          objectClass: core.class.Attribute,
+          objectId: attrTx.objectId
+        })
+        if (attrRemoveTxes.length === 0) {
+          txesToCreate.push(txFactory.createTxRemoveDoc(core.class.Attribute, core.space.Model, attrTx.objectId))
+        }
+      }
+    }
+  }
+
+  if (txesToCreate.length > 0) {
+    await client.create(DOMAIN_MODEL_TX, txesToCreate)
   }
 }

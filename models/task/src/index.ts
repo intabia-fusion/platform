@@ -90,7 +90,8 @@ export {
   migrateDefaultStatusesBase,
   taskOperation,
   migrateMixinToClassInModel,
-  migrateTaskTypesToClasses
+  migrateTaskTypesToClasses,
+  deleteOrphanedTaskTypeClasses
 } from './migration'
 export { default } from './plugin'
 

@@ -36,4 +36,11 @@ export function createModel (builder: Builder): void {
       objectClass: task.class.TaskType
     }
   })
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverTask.trigger.OnTaskTypeRemove,
+    txMatch: {
+      _class: core.class.TxRemoveDoc,
+      objectClass: task.class.TaskType
+    }
+  })
 }
