@@ -20,7 +20,6 @@
 
   export let apps: Application[] = []
   export let active: Ref<Application> | undefined = undefined
-  export let notifyApps = new Set<Ref<Application>>()
 
   const dispatch = createEventDispatcher()
 
@@ -48,9 +47,6 @@
         >
           <div class="icon mr-2"><Icon icon={app.icon} size={'small'} /></div>
           <span class="label overflow-label flex-grow"><Label label={app.label} /></span>
-          {#if notifyApps.has(app._id)}
-            <div class="marker" />
-          {/if}
           <div class="ap-check">
             {#if app._id === active}
               <IconCheck size={'small'} />
@@ -62,14 +58,3 @@
   </div>
   <div class="ap-space x2" />
 </div>
-
-<style lang="scss">
-  .marker {
-    flex-shrink: 0;
-    margin-right: 0.5rem;
-    width: 0.425rem;
-    height: 0.425rem;
-    border-radius: 50%;
-    background-color: var(--highlight-red);
-  }
-</style>

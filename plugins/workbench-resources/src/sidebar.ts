@@ -241,6 +241,10 @@ export function openWidgetTab (widget: Ref<Widget>, tab: string): void {
   })
 }
 
+export function isPreviewTab (tab: WidgetTab | undefined): tab is WidgetTab {
+  return tab !== undefined && tab.isPinned !== true && tab.isKept !== true
+}
+
 export function createWidgetTab (widget: Widget, tab: WidgetTab): void {
   const state = get(sidebarStore)
   const widgetsState = new Map(state.widgetsState)
@@ -251,12 +255,11 @@ export function createWidgetTab (widget: Widget, tab: WidgetTab): void {
   let newTabs: WidgetTab[]
 
   if (opened) {
-    newTabs = currentTabs.map((it) => (it.id === tab.id ? { ...tab, isPinned: it.isPinned } : it))
+    newTabs = currentTabs.map((it) => (it.id === tab.id ? { ...tab, isPinned: it.isPinned, isKept: it.isKept } : it))
   } else {
-    // At most one unpinned tab per widget: it gets replaced, pinned ones are never touched.
+    // At most one preview tab per widget: it gets replaced, kept and pinned ones are never touched.
     const active = currentTabs.find(({ id }) => id === widgetState?.tab)
-    const replaced =
-      active !== undefined && active.isPinned !== true ? active : currentTabs.find(({ isPinned }) => isPinned !== true)
+    const replaced = isPreviewTab(active) ? active : currentTabs.find(isPreviewTab)
 
     newTabs =
       replaced !== undefined ? currentTabs.map((it) => (it.id === replaced.id ? tab : it)) : [...currentTabs, tab]
@@ -286,7 +289,7 @@ export function pinWidgetTab (widget: Widget, tabId: string): void {
   if (widgetState === undefined) return
 
   const tabs = widgetState.tabs
-    .map((it) => (it.id === tabId ? { ...it, isPinned: true } : it))
+    .map((it) => (it.id === tabId ? { ...it, isPinned: true, isKept: true } : it))
     .sort((a, b) => (a.isPinned === b.isPinned ? 0 : a.isPinned === true ? -1 : 1))
 
   widgetsState.set(widget._id, { ...widgetState, tabs })
@@ -304,11 +307,32 @@ export function unpinWidgetTab (widget: Widget, tabId: string): void {
 
   if (widgetState === undefined) return
 
+  // Unpin drops to "kept", not back to preview - the tab would otherwise vanish on the next open.
   const tabs = widgetState.tabs
-    .map((it) => (it.id === tabId ? { ...it, isPinned: false } : it))
+    .map((it) => (it.id === tabId ? { ...it, isPinned: false, isKept: true } : it))
     .sort((a, b) => (a.isPinned === b.isPinned ? 0 : a.isPinned === true ? -1 : 1))
 
   widgetsState.set(widget._id, { ...widgetState, tabs })
+
+  sidebarStore.set({
+    ...state,
+    widgetsState
+  })
+}
+
+/** Promote a preview tab so the next opened object no longer replaces it. */
+export function keepWidgetTab (widget: Widget, tabId: string): void {
+  const state = get(sidebarStore)
+  const widgetsState = new Map(state.widgetsState)
+  const widgetState = widgetsState.get(widget._id)
+
+  if (widgetState === undefined) return
+  if (!isPreviewTab(widgetState.tabs.find((it) => it.id === tabId))) return
+
+  widgetsState.set(widget._id, {
+    ...widgetState,
+    tabs: widgetState.tabs.map((it) => (it.id === tabId ? { ...it, isKept: true } : it))
+  })
 
   sidebarStore.set({
     ...state,

@@ -1612,8 +1612,8 @@ export async function openDoc (hierarchy: Hierarchy, object: Doc): Promise<void>
 }
 
 /**
- * Open `doc` in the right sidebar preview widget, reusing a single 'preview' tab
- * so repeated previews / arrow navigation replace content in place.
+ * Open `doc` in the right sidebar preview widget. The tab id is per document, so a preview tab is
+ * replaced by the next document while kept and pinned tabs survive.
  * @public
  */
 export async function openDocInSidebar (doc: Doc): Promise<void> {
@@ -1627,7 +1627,7 @@ export async function openDocInSidebar (doc: Doc): Promise<void> {
   const icon = classIcon(client, doc._class)
 
   const tab: WidgetTab = {
-    id: 'preview',
+    id: `preview_${doc._id}`,
     objectId: doc._id,
     objectClass: doc._class,
     name,

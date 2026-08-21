@@ -132,29 +132,18 @@
   }
 
   let menuButton: HTMLButtonElement | undefined
-  let notifyApps = new Set<Ref<Application>>()
   let lastApp: Application | undefined
 
   // Inbox has its own bell button next to this one.
   $: allApps = [...topApps, ...midApps, ...bottomApps].filter((it) => it.alias !== notificationId)
   $: currentApp = allApps.find((it) => it._id === active)
   $: if (currentApp !== undefined) lastApp = currentApp
-  // Landing straight in Inbox leaves nothing remembered - fall back to the first app so the button exists.
-  $: displayApp = currentApp ?? lastApp ?? allApps[0]
-
-  $: if (compact) {
-    void Promise.all(
-      allApps.map(async (app) => ({
-        _id: app._id,
-        notify: await showNotify(app, $inboxContextsStore, hasInboxNotifications, $appearancePreferences)
-      }))
-    ).then((res) => {
-      notifyApps = new Set(res.filter((it) => it.notify).map((it) => it._id))
-    })
-  }
+  // Landing straight in Inbox leaves nothing remembered - fall back to the first app so the button
+  // exists. `lastApp` is re-looked-up: it goes stale once the app is hidden from the workspace.
+  $: displayApp = currentApp ?? allApps.find((it) => it._id === lastApp?._id) ?? allApps[0]
 
   function openAppsMenu (): void {
-    showPopup(AppsMenuPopup, { apps: allApps, active, notifyApps }, menuButton)
+    showPopup(AppsMenuPopup, { apps: allApps, active }, menuButton)
   }
 
   function goToApp (app: Application): void {
@@ -170,28 +159,19 @@
 {#if compact}
   <div class="flex-row-center clear-mins compact-apps">
     {#if loaded && displayApp !== undefined}
-      {#if currentApp !== undefined}
-        <ModernButton
-          bind:element={menuButton}
-          icon={displayApp.icon}
-          label={displayApp.label}
-          size={'small'}
-          pressed
-          hasMenu
-          on:click={openAppsMenu}
-        />
-      {:else}
-        <!-- Not in this app right now (e.g. Inbox) - one tap goes back to it. -->
-        <ModernButton
-          icon={displayApp.icon}
-          label={displayApp.label}
-          size={'small'}
-          hasMenu
-          on:click={() => {
-            if (displayApp !== undefined) goToApp(displayApp)
-          }}
-        />
-      {/if}
+      <!-- In this app - opens the menu. Elsewhere (e.g. Inbox) - one tap goes back to it. -->
+      <ModernButton
+        bind:element={menuButton}
+        icon={displayApp.icon}
+        label={displayApp.label}
+        size={'small'}
+        pressed={currentApp !== undefined}
+        hasMenu
+        on:click={() => {
+          if (currentApp !== undefined) openAppsMenu()
+          else if (displayApp !== undefined) goToApp(displayApp)
+        }}
+      />
     {/if}
   </div>
 {:else}

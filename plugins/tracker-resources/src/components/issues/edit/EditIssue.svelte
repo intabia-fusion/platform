@@ -297,32 +297,32 @@
           dataId={'btnMoreActions'}
           on:click={showContextMenu}
         />
-      {/if}
-      {#if !readonly && !mobileAdaptive}
-        <CopyToClipboard issueUrl={generateIssueShortLink(issue.identifier)} />
-        <Button
-          icon={setting.icon.Setting}
-          kind={'icon'}
-          iconProps={{ size: 'medium' }}
-          showTooltip={{ label: setting.string.ClassSetting }}
-          dataId={'btnClassSetting'}
-          on:click={(ev) => {
-            ev.stopPropagation()
-            const loc = getCurrentResolvedLocation()
-            loc.path[2] = settingId
-            if (projectType?._id != null && issue?.kind != null) {
-              loc.path[3] = 'spaceTypes'
-              loc.path[4] = projectType?._id
-              loc.path[5] = 'taskTypes'
-              loc.path[6] = issue?.kind
-              loc.path.length = 7
-            } else {
-              loc.path.length = 3
-            }
-            loc.fragment = undefined
-            navigate(loc)
-          }}
-        />
+        {#if !mobileAdaptive}
+          <CopyToClipboard issueUrl={generateIssueShortLink(issue.identifier)} />
+          <Button
+            icon={setting.icon.Setting}
+            kind={'icon'}
+            iconProps={{ size: 'medium' }}
+            showTooltip={{ label: setting.string.ClassSetting }}
+            dataId={'btnClassSetting'}
+            on:click={(ev) => {
+              ev.stopPropagation()
+              const loc = getCurrentResolvedLocation()
+              loc.path[2] = settingId
+              if (projectType?._id != null && issue?.kind != null) {
+                loc.path[3] = 'spaceTypes'
+                loc.path[4] = projectType?._id
+                loc.path[5] = 'taskTypes'
+                loc.path[6] = issue?.kind
+                loc.path.length = 7
+              } else {
+                loc.path.length = 3
+              }
+              loc.fragment = undefined
+              navigate(loc)
+            }}
+          />
+        {/if}
       {/if}
       {#if !mobileAdaptive}
         <Button

@@ -549,7 +549,8 @@ test.describe('Channel tests', () => {
       await sidebarPage.checkIfChatSidebarTabIsOpen(true, data.channelName)
     })
 
-    await test.step('Open general in sidebar - it replaces the unpinned tab', async () => {
+    await test.step('Open general in sidebar - it replaces the preview tab', async () => {
+      await sidebarPage.checkIfVerticalTabIsPreview(true, data.channelName)
       await channelPage.makeActionWithChannelInMenu('general', 'Open in sidebar')
       await sidebarPage.checkNumberOfVerticalTabs(1)
       await sidebarPage.checkIfSidebarHasVerticalTab(false, data.channelName)
@@ -572,25 +573,44 @@ test.describe('Channel tests', () => {
       await channelPage.makeActionWithChannelInMenu('general', 'Open in sidebar')
       await sidebarPage.checkNumberOfVerticalTabs(2)
       await sidebarPage.checkIfChatSidebarTabIsOpen(true, 'general')
+    })
 
+    await test.step('Unpinning leaves the tab kept, not preview', async () => {
       await sidebarPage.unpinVerticalTab('general')
       await sidebarPage.checkIfVerticalTabIsPinned(false, 'general')
+      await sidebarPage.checkIfVerticalTabIsPreview(false, 'general')
+
+      // Only the preview tab is replaced - the kept one survives.
+      await channelPage.makeActionWithChannelInMenu('random', 'Open in sidebar')
+      await sidebarPage.checkNumberOfVerticalTabs(2)
+      await sidebarPage.checkIfSidebarHasVerticalTab(true, 'general')
+      await sidebarPage.checkIfSidebarHasVerticalTab(true, 'random')
+      await sidebarPage.checkIfSidebarHasVerticalTab(false, data.channelName)
+      await sidebarPage.checkIfVerticalTabIsPreview(true, 'random')
+    })
+
+    await test.step('Double click promotes a preview tab so it is no longer replaced', async () => {
+      await sidebarPage.doubleClickVerticalTab('random')
+      await sidebarPage.checkIfVerticalTabIsPreview(false, 'random')
+
+      await channelPage.makeActionWithChannelInMenu(data.channelName, 'Open in sidebar')
+      await sidebarPage.checkNumberOfVerticalTabs(3)
+      await sidebarPage.checkIfSidebarHasVerticalTab(true, 'general')
+      await sidebarPage.checkIfSidebarHasVerticalTab(true, 'random')
+      await sidebarPage.checkIfSidebarHasVerticalTab(true, data.channelName)
     })
 
     await test.step('Close sidebar tab by close button in vertical tab', async () => {
       await sidebarPage.clickVerticalTab(data.channelName)
       await sidebarPage.closeVerticalTabByCloseButton(data.channelName)
       await sidebarPage.checkIfSidebarHasVerticalTab(false, data.channelName)
-      await sidebarPage.checkIfChatSidebarTabIsOpen(true, 'general')
     })
 
     await test.step('Close sidebar tab by context menu', async () => {
-      await channelPage.makeActionWithChannelInMenu('random', 'Open in sidebar')
-      await sidebarPage.checkNumberOfVerticalTabs(1)
-      await sidebarPage.checkIfSidebarHasVerticalTab(true, 'random')
-      await sidebarPage.checkIfSidebarHasVerticalTab(false, 'general')
       await sidebarPage.closeVerticalTabByRightClick('random')
       await sidebarPage.checkIfSidebarHasVerticalTab(false, 'random')
+      await sidebarPage.closeVerticalTabByRightClick('general')
+      await sidebarPage.checkIfSidebarHasVerticalTab(false, 'general')
     })
 
     await test.step('Sidebar is closed when the last channel tab is gone', async () => {

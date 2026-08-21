@@ -1,19 +1,39 @@
 # Sidebar widget tabs
 
-## Model: one scratch tab per widget
+## Model: three states per tab, like VSCode editors
+
+`WidgetTab` carries two additive flags (`plugins/workbench/src/types.ts`):
+
+| State | Flags | Look (`ModernTab`) | Replaced? |
+| --- | --- | --- | --- |
+| preview | neither | `primary`, italic | yes |
+| kept | `isKept` | `primary` | no |
+| pinned | `isPinned` (+`isKept`) | `secondary`, no close, sorted first | no |
+
+Flags, not a `mode` enum, because widget state is persisted in localStorage per workspace
+(`sidebar.ts` `getSidebarStateFromLocalStorage`) - adding a field needs no migration.
 
 `createWidgetTab(widget, tab)` (`plugins/workbench-resources/src/sidebar.ts`):
 
-- tab with the same `id` exists -> updated in place and focused (`isPinned` preserved)
-- otherwise it replaces the single unpinned tab of that widget (active one first, then any unpinned)
-- no unpinned tab -> appended
+- tab with the same `id` exists -> updated in place and focused (`isPinned`/`isKept` preserved)
+- otherwise it replaces the widget's single **preview** tab (active one first, then any preview)
+- no preview tab -> appended
 
-Pinned tabs are never replaced or auto-closed. Widgets are independent: opening a card does not
-touch the chat widget state, only which widget is active in the sidebar.
+Promotion preview -> kept is a **double click on the tab**, caught by the wrapper in
+`SidebarTabs.svelte` so custom `tabComponent`s (`ChatWidgetTab`, `CardWidgetTab`) get it for free.
+`unpinWidgetTab` drops to kept, not preview - otherwise unpinning would make the tab vanish on the
+next open.
+
+Widgets are independent: opening a card does not touch the chat widget state, only which widget is
+active in the sidebar.
 
 Tab ids must be deterministic per object, otherwise repeated opening produces duplicates:
-`chunter_${_id}` (channel), `thread_${_id}`, `cardId`, `Ref<Blob>` (file), `'preview'` (universal
-doc preview), `'video'`/`'chat'`/`'transcription'` (meeting).
+`chunter_${_id}` (channel), `thread_${_id}`, `cardId`, `Ref<Blob>` (file), `preview_${_id}`
+(universal doc preview - tracker, documents, anything with an `ObjectPanel`),
+`'video'`/`'chat'`/`'transcription'` (meeting).
+
+The universal preview id used to be the literal `'preview'`, which meant tracker and documents
+always reused one tab and had no tab model at all.
 
 ## Removed: allowedPath auto-close
 

@@ -24,7 +24,13 @@ import workbench, { type Widget, workbenchId, type LocationData } from '@hcengin
 import { classIcon, getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
 import presentation, { getClient } from '@hcengineering/presentation'
 import view, { encodeObjectURI, decodeObjectURI } from '@hcengineering/view'
-import { closeWidgetTab, createWidgetTab, isElementFromSidebar, sidebarStore } from '@hcengineering/workbench-resources'
+import {
+  closeWidgetTab,
+  createWidgetTab,
+  isElementFromSidebar,
+  isPreviewTab,
+  sidebarStore
+} from '@hcengineering/workbench-resources'
 import { type Asset, getMetadata, type IntlString, translate } from '@hcengineering/platform'
 import contact from '@hcengineering/contact'
 import { get } from 'svelte/store'
@@ -350,7 +356,7 @@ export async function openThreadInSidebar (
   const currentTabs = sidebar.widgetsState.get(chunter.ids.ChatWidget)?.tabs ?? []
   const currentTab = state != null ? currentTabs.find((t) => t.id === state.tab) : undefined
 
-  if (!force && currentTab != null && (currentTab.isPinned === true || !currentTab.id.startsWith('thread_'))) {
+  if (!force && currentTab != null && (!isPreviewTab(currentTab) || !currentTab.id.startsWith('thread_'))) {
     removeThreadFromLoc(_id)
     return
   }

@@ -165,7 +165,9 @@
 
   const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
 
-  const mobileAdaptive = $deviceInfo.isMobile && $deviceInfo.minWidth
+  // Reactive, not const: it gates whether the sidebar is rendered at all, and PanelInstance sizes
+  // itself off the same breakpoint on every resize - a stale value makes the panel overlap it.
+  $: mobileAdaptive = $deviceInfo.isMobile && $deviceInfo.minWidth
   const defaultNavigator = !(getMetadata(workbench.metadata.NavigationExpandedDefault) ?? true)
   const savedNavigator = localStorage.getItem('hiddenNavigator')
   let hiddenNavigator: boolean = savedNavigator !== null ? savedNavigator === 'true' : defaultNavigator
@@ -681,7 +683,9 @@
     oldNavVisible !== $deviceInfo.navigator.visible ||
     oldASideVisible !== ($sidebarStore.variant !== SidebarVariant.MINI)
   ) {
-    if (mobileAdaptive && $deviceInfo.navigator.float) {
+    // Inlined instead of `mobileAdaptive`: this block writes $deviceInfo, so reading the reactive
+    // var here would be a cycle. Same expression, same dependency this block already has.
+    if ($deviceInfo.isMobile && $deviceInfo.minWidth && $deviceInfo.navigator.float) {
       if ($deviceInfo.navigator.visible && $sidebarStore.variant !== SidebarVariant.MINI) {
         if (oldNavVisible) $deviceInfo.navigator.visible = false
         else $sidebarStore.variant = SidebarVariant.MINI
