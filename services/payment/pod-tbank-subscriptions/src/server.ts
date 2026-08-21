@@ -1051,19 +1051,32 @@ export async function processWebhook (
 ): Promise<void> {
   const typedNotification = notification as unknown as TbankWebhookNotification
 
-  // Money-moved webhooks (CONFIRMED/AUTHORIZED) trigger activation — re-verify against the bank via
-  // GetState so a lost or forged notification can't activate a subscription that wasn't actually paid.
-  // Skipped in dev/mock (verification disabled), where GetState isn't backed by a real bank.
+  // AUTHORIZED/CONFIRMED webhooks trigger activation — re-verify against the bank via GetState.
   if (verified && (typedNotification.Status === 'AUTHORIZED' || typedNotification.Status === 'CONFIRMED')) {
     try {
       const state = await tbank.getPaymentState({ PaymentId: typedNotification.PaymentId })
-      if (state.Success && state.Status !== typedNotification.Status) {
-        ctx.error('TBank webhook status mismatch with GetState, ignoring', {
+      const settled = state.Status === 'AUTHORIZED' || state.Status === 'CONFIRMED'
+      if (!state.Success) {
+        ctx.warn('TBank GetState returned Success:false, proceeding on verified webhook', {
+          paymentId: typedNotification.PaymentId,
+          webhookStatus: typedNotification.Status,
+          errorCode: state.ErrorCode,
+          message: state.Message
+        })
+      } else if (!settled) {
+        ctx.error('TBank webhook status mismatch with GetState, ignoring it', {
           paymentId: typedNotification.PaymentId,
           webhookStatus: typedNotification.Status,
           actualStatus: state.Status
         })
         return
+      } else if (typedNotification.Status === 'CONFIRMED' && state.Status === 'AUTHORIZED') {
+        // Activate anyway — the webhook is signed and says the money settled; alarm for manual review.
+        ctx.error('TBank CONFIRMED webhook but GetState still reports a hold, activating anyway', {
+          paymentId: typedNotification.PaymentId,
+          webhookStatus: typedNotification.Status,
+          actualStatus: state.Status
+        })
       }
     } catch (err) {
       // GetState unreachable — do not block activation on a transient bank outage; the signed
@@ -1105,12 +1118,18 @@ export async function processWebhook (
     }
   })
 
-  if (typedNotification.Status === 'AUTHORIZED' || typedNotification.Status === 'CONFIRMED') {
+  if (typedNotification.Status === 'AUTHORIZED') {
+    ctx.info('TBank AUTHORIZED webhook recorded, waiting for CONFIRMED to activate', {
+      paymentId: typedNotification.PaymentId,
+      subId: sub?.id
+    })
+    return
+  }
+
+  if (typedNotification.Status === 'CONFIRMED') {
     // BEFORE the sub check and duplicate guard: both return early and would leak the claim.
     // Idempotent DELETE, safe on consumer retry.
-    if (typedNotification.Status === 'CONFIRMED') {
-      await storage.releaseCheckout(String(typedNotification.PaymentId))
-    }
+    await storage.releaseCheckout(String(typedNotification.PaymentId))
 
     if (sub === null) {
       ctx.error('TBank webhook received but no pending subscription found', {
@@ -1172,14 +1191,11 @@ export async function processWebhook (
       })
     }
 
-    // Release the claim on CONFIRMED (money settled), freeing the key for a future purchase.
-    // AUTHORIZED is intermediate (and absent for PayType 'O'). Idempotent for duplicate webhooks.
-    if (typedNotification.Status === 'CONFIRMED') {
-      await storage.releaseCheckout(typedNotification.PaymentId)
+    // Release the claim (money settled). Idempotent for duplicate webhooks.
+    await storage.releaseCheckout(typedNotification.PaymentId)
 
-      // Receipt email on settled first payment (new sub / plan change).
-      await notifyPaymentSucceeded(ctx, storage, config, subscriptionData, 'purchase', typedNotification.Amount)
-    }
+    // Receipt email on settled first payment (new sub / plan change).
+    await notifyPaymentSucceeded(ctx, storage, config, subscriptionData, 'purchase', typedNotification.Amount)
   } else if (
     typedNotification.Status === 'REJECTED' ||
     typedNotification.Status === 'REVERSED' ||
