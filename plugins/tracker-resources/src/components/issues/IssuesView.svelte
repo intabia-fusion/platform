@@ -16,8 +16,8 @@
   import { Asset, IntlString, translateCB } from '@hcengineering/platform'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
   import { Issue, Project, TrackerEvents } from '@hcengineering/tracker'
-  import { ButtonMenu, type DropdownIntlItem, IModeSelector, showPopup, themeStore } from '@hcengineering/ui'
-  import { ViewOptions, Viewlet } from '@hcengineering/view'
+  import { ButtonMenu, type DropdownIntlItem, IconMoreH, IModeSelector, showPopup, themeStore } from '@hcengineering/ui'
+  import view, { ViewOptions, Viewlet } from '@hcengineering/view'
   import {
     FilterBar,
     selectionStore,
@@ -182,11 +182,11 @@
   <svelte:fragment slot="actions">
     {#if menuItems.length > 0}
       <ButtonMenu
-        icon={task.icon.TypeHierarchy}
+        icon={IconMoreH}
         kind="secondary"
         size="small"
         noSelection
-        tooltip={{ label: tracker.string.Schemes }}
+        tooltip={{ label: view.string.MoreActions }}
         items={menuItems}
         on:selected={handleMenuSelected}
       />
