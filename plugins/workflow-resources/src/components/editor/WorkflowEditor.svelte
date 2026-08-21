@@ -12,10 +12,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { onDestroy, onMount } from 'svelte'
   import core, { notEmpty, Ref, Status, WithLookup } from '@hcengineering/core'
   import { Asset } from '@hcengineering/platform'
   import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
+  import { clearSettingsStore } from '@hcengineering/setting-resources'
   import task, { ProjectType, TaskType } from '@hcengineering/task'
   import {
     ButtonIcon,
@@ -66,6 +67,10 @@
     return () => {
       window.removeEventListener('resize', updateScreenSize)
     }
+  })
+
+  onDestroy(() => {
+    clearSettingsStore()
   })
 
   const viewModeItems: TabItem[] = [

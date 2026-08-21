@@ -12,6 +12,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { onDestroy } from 'svelte'
   import { SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
@@ -57,6 +58,10 @@
 
   $: isLoading = isWorkflowsLoading || isTaskTypeLoading
   $: addDisabled = disabled || taskTypes.length === 0
+
+  onDestroy(() => {
+    clearSettingsStore()
+  })
 </script>
 
 <div class="hulyTableAttr-header font-medium-12">

@@ -15,10 +15,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { onDestroy } from 'svelte'
   import { Ref, SortingOrder, Status } from '@hcengineering/core'
   import { Asset, getResource, IntlString } from '@hcengineering/platform'
   import { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
-  import { ClassAttributes, settingsStore } from '@hcengineering/setting-resources'
+  import { ClassAttributes, clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import task, { ProjectType, TaskType, calculateStatuses, findStatusAttr } from '@hcengineering/task'
   import {
     ButtonIcon,
@@ -235,6 +236,10 @@
       await f?.(taskType)
     }
   }
+
+  onDestroy(() => {
+    clearSettingsStore()
+  })
 </script>
 
 {#if taskType !== undefined}

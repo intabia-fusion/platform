@@ -12,6 +12,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { onDestroy } from 'svelte'
   import { Class, Ref, SortingOrder } from '@hcengineering/core'
   import { getEmbeddedLabel, IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
@@ -54,6 +55,10 @@
     if (taskType !== undefined) return getEmbeddedLabel(taskType.name)
     return client.getHierarchy().findClass(targetClass)?.label
   }
+
+  onDestroy(() => {
+    clearSettingsStore()
+  })
 </script>
 
 <div class="hulyTableAttr-header font-medium-12">
