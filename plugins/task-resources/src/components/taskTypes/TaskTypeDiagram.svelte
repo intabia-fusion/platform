@@ -15,55 +15,192 @@
   import { onDestroy } from 'svelte'
   import { Ref } from '@hcengineering/core'
   import { TaskType } from '@hcengineering/task'
-  import { IconError, Label, Loading, languageStore, themeStore } from '@hcengineering/ui'
+  import {
+    Button,
+    getColorNumberByText,
+    getPlatformColorDef,
+    IconError,
+    Label,
+    languageStore,
+    Loading,
+    themeStore,
+    Toggle
+  } from '@hcengineering/ui'
   import plugin from '../../plugin'
 
-  export let taskTypes: TaskType[] = []
+  const COMPACT_LAYOUT_STORAGE_KEY = 'task-types-diagram-compact'
 
+  function loadCompactLayoutPreference (): boolean {
+    try {
+      const saved = localStorage.getItem(COMPACT_LAYOUT_STORAGE_KEY)
+      if (saved !== null) {
+        return saved === 'true'
+      }
+    } catch {
+      // Ignore storage errors in restricted contexts
+    }
+    return false
+  }
+
+  function saveCompactLayoutPreference (value: boolean): void {
+    try {
+      localStorage.setItem(COMPACT_LAYOUT_STORAGE_KEY, String(value))
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
+  export let taskTypes: TaskType[] = []
+  export let focusTypeId: Ref<TaskType> | undefined = undefined
+
+  let compactLayout = loadCompactLayoutPreference()
   let imageUrl: string | undefined = undefined
   let errorMsg: string | undefined = undefined
+  let showDetails = false
   let loading = true
   let currentObjectUrl: string | undefined = undefined
   let renderSequence = 0
 
-  $: hasSelfRefs = taskTypes.some((t) => (t.allowedAsChildOf ?? []).includes(t._id))
+  $: saveCompactLayoutPreference(compactLayout)
+
+  $: hasSelfRefs = taskTypes.some((t) => t.allowAnyParent === true || (t.allowedAsChildOf ?? []).includes(t._id))
 
   function sanitizeLabel (str: string): string {
-    if (str === undefined) return ''
-
+    if (str === '') return ''
     return str
       .replace(/"/g, '#quot;')
       .replace(/[\r\n]+/g, ' ')
       .trim()
   }
 
-  function generateMermaidCode (taskTypes: TaskType[]): string {
-    const nodeIds = new Map<Ref<TaskType>, string>()
-    taskTypes.forEach((t, idx) => nodeIds.set(t._id, `tt_${idx}`))
+  function sanitizeColor (color: string | undefined, fallback: string): string {
+    if (color === undefined || color === '') return fallback
+    const trimmed = color.trim()
+    if (trimmed.includes('gradient') || trimmed.includes('(') || trimmed.includes(',')) {
+      const match = trimmed.match(/#(?:[0-9a-fA-F]{3,8})/)
+      if (match !== null) return match[0]
+      return fallback
+    }
+    return trimmed
+  }
 
-    const selfRefs = new Set<Ref<TaskType>>()
-    for (const t of taskTypes) {
-      for (const p of t.allowedAsChildOf ?? []) {
-        if (p === t._id) selfRefs.add(t._id)
+  function sortTaskTypesByHierarchy (taskTypes: TaskType[]): TaskType[] {
+    const map = new Map<Ref<TaskType>, TaskType>()
+    taskTypes.forEach((t) => map.set(t._id, t))
+
+    const depthCache = new Map<Ref<TaskType>, number>()
+    const visiting = new Set<Ref<TaskType>>()
+
+    function getDepth (t: TaskType): number {
+      const cached = depthCache.get(t._id)
+      if (cached !== undefined) return cached
+      if (visiting.has(t._id)) return 0
+
+      if (t.allowAnyParent === true) {
+        return 100 // place universal subtasks at bottom rank
       }
+
+      const parents = (t.allowedAsChildOf ?? []).filter((p) => p !== t._id && map.has(p))
+      if (parents.length === 0) {
+        depthCache.set(t._id, 0)
+        return 0
+      }
+
+      visiting.add(t._id)
+      let maxParentDepth = 0
+      for (const pId of parents) {
+        const parent = map.get(pId)
+        if (parent !== undefined) {
+          maxParentDepth = Math.max(maxParentDepth, getDepth(parent) + 1)
+        }
+      }
+      visiting.delete(t._id)
+
+      depthCache.set(t._id, maxParentDepth)
+      return maxParentDepth
     }
 
-    const lines: string[] = ['flowchart TB']
+    return [...taskTypes].sort((a, b) => {
+      const da = getDepth(a)
+      const db = getDepth(b)
+      if (da !== db) return da - db
+      return a.name.localeCompare(b.name)
+    })
+  }
 
-    for (const t of taskTypes) {
+  function generateMermaidCode (
+    taskTypes: TaskType[],
+    isDark: boolean,
+    compact: boolean,
+    focusId?: Ref<TaskType>
+  ): string {
+    const sortedTypes = sortTaskTypesByHierarchy(taskTypes)
+    const nodeIds = new Map<Ref<TaskType>, string>()
+    sortedTypes.forEach((t, idx) => nodeIds.set(t._id, `tt_${idx}`))
+
+    const lines: string[] = ['---', 'config:', '  layout: elk', '  theme: redux']
+
+    if (compact) {
+      lines.push('  elk:')
+      lines.push('    mergeEdges: true')
+      lines.push('    nodePlacementStrategy: BRANDES_KOEPF')
+    }
+
+    lines.push('---', 'flowchart TB')
+
+    // Task type nodes with platform background/foreground colors
+    for (const t of sortedTypes) {
       const nodeId = nodeIds.get(t._id)
       if (nodeId === undefined) continue
-      lines.push(`  ${nodeId}(["${sanitizeLabel(t.name)}"])`)
+
+      const isSelf = t.allowAnyParent === true || (t.allowedAsChildOf ?? []).includes(t._id)
+      const strokeColor = isDark ? '#f8fafc' : '#0f172a'
+      const icon = isSelf
+        ? ` <span style='display:inline-flex;align-items:center;vertical-align:middle;position:relative;top:-1.5px;margin-left:4px;background:transparent !important;'><svg style='display:block;background:transparent !important;background-color:transparent !important;fill:none !important;border:none !important;' width='14' height='14' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path style='fill:none !important;stroke:${strokeColor} !important;' fill='none' d='M3.26794 12.0431C3.7049 13.4662 4.58316 14.7135 5.77571 15.6046C6.96827 16.4957 8.41333 16.9844 9.90195 17.0001C11.6239 17.0213 13.2935 16.4081 14.5924 15.2774C15.8913 14.1467 16.7287 12.5775 16.9449 10.8691C17.1577 9.16057 16.7333 7.4336 15.753 6.01828C14.7727 4.60295 13.3052 3.59854 11.6309 3.19706C9.95636 2.792 8.19129 3.0168 6.6717 3.82869C5.1521 4.64058 3.98408 5.98286 3.38994 7.60006' stroke='${strokeColor}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path style='fill:none !important;stroke:${strokeColor} !important;' fill='none' d='M3 4V8H7' stroke='${strokeColor}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg></span>`
+        : ''
+      const label = sanitizeLabel(t.name) + icon
+      lines.push(`  ${nodeId}(["${label}"])`)
+
+      const colorNum = t.color !== undefined && typeof t.color !== 'string' ? t.color : getColorNumberByText(t.name)
+      const colorDef = getPlatformColorDef(colorNum, isDark)
+
+      const fill = sanitizeColor(colorDef.background, isDark ? '#1e293b' : '#f1f5f9')
+      const textColor = sanitizeColor(colorDef.color, isDark ? '#f8fafc' : '#0f172a')
+      const stroke = sanitizeColor(colorDef.title, isDark ? '#475569' : '#64748b')
+
+      lines.push(`  style ${nodeId} fill:${fill},color:${textColor},stroke:${stroke},stroke-width:1.5px`)
     }
 
-    for (const t of taskTypes) {
-      const toNode = nodeIds.get(t._id)
+    // Hierarchy relationships (Parent -> Child)
+    let anyCount = 0
+
+    for (const child of sortedTypes) {
+      const toNode = nodeIds.get(child._id)
       if (toNode === undefined) continue
-      for (const parentRef of t.allowedAsChildOf ?? []) {
-        if (parentRef === t._id) continue // петлю больше не рисуем
-        const fromNode = nodeIds.get(parentRef)
-        if (fromNode !== undefined) {
-          lines.push(`  ${fromNode} --> ${toNode}`)
+
+      if (child.allowAnyParent === true) {
+        if (focusId !== undefined && child._id !== focusId) {
+          const fromNode = nodeIds.get(focusId)
+          if (fromNode !== undefined) {
+            lines.push(`  ${fromNode} --> ${toNode}`)
+          }
+        } else {
+          const anyNodeId = `any_${anyCount++}`
+          lines.push(`  ${anyNodeId}(["any"])`)
+          const anyStyle = isDark
+            ? 'fill:none,color:#cbd5e1,stroke:#94a3b8,stroke-width:1px,font-size:8px'
+            : 'fill:none,color:#1e293b,stroke:#242538,stroke-width:1px,font-size:8px'
+          lines.push(`  style ${anyNodeId} ${anyStyle}`)
+          lines.push(`  ${anyNodeId} --> ${toNode}`)
+        }
+      } else {
+        const parents = child.allowedAsChildOf ?? []
+        for (const parentId of parents) {
+          if (parentId === child._id) continue // Self-nesting is indicated by the ⟳ badge
+          const fromNode = nodeIds.get(parentId)
+          if (fromNode !== undefined) {
+            lines.push(`  ${fromNode} --> ${toNode}`)
+          }
         }
       }
     }
@@ -71,78 +208,38 @@
     return lines.join('\n')
   }
 
-  function addSelfRefMarkers (svg: string, isDark: boolean): string {
-    const selfTypes = taskTypes.filter((t) => (t.allowedAsChildOf ?? []).includes(t._id))
-    if (selfTypes.length === 0) return svg
-
-    const holder = document.createElement('div')
-    holder.style.position = 'absolute'
-    holder.style.visibility = 'hidden'
-    document.body.appendChild(holder)
-    try {
-      holder.innerHTML = svg
-      const svgEl = holder.querySelector('svg')
-      if (svgEl === null) return svg
-      const nodeGroups = Array.from(svgEl.querySelectorAll('g.node'))
-      for (const t of selfTypes) {
-        const label = sanitizeLabel(t.name)
-        const node = nodeGroups.find((g) => (g.textContent ?? '').trim() === label)
-        if (node === undefined) {
-          console.warn(
-            'Self-ref marker: node not found:',
-            label,
-            nodeGroups.map((g) => g.getAttribute('id'))
-          )
-          continue
-        }
-        const bbox = (node as SVGGraphicsElement).getBBox()
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-        circle.setAttribute('cx', String(bbox.x + bbox.width))
-        circle.setAttribute('cy', String(bbox.y + bbox.height / 2))
-        circle.setAttribute('r', '5')
-        const dotColor = isDark ? '#ffffff' : '#000000'
-        circle.style.fill = dotColor
-        circle.style.stroke = dotColor
-        node.appendChild(circle)
-      }
-      return svgEl.outerHTML
-    } catch (e) {
-      console.error('addSelfRefMarkers failed:', e)
-      return svg
-    } finally {
-      document.body.removeChild(holder)
-    }
-  }
-
   function getMermaidThemeVariables (isDark: boolean): Record<string, string> {
     const fontFamily = 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    return isDark
-      ? {
-          fontFamily,
-          fontSize: '10px',
-          primaryColor: '#1e293b',
-          primaryTextColor: '#f8fafc',
-          primaryBorderColor: '#475569',
-          lineColor: '#94a3b8',
-          secondaryColor: '#0f172a',
-          tertiaryColor: '#1e293b',
-          edgeLabelBackground: '#1e293b',
-          nodeBorder: '#475569',
-          clusterBkg: '#0f172a'
-        }
-      : {
-          fontFamily,
-          fontSize: '10px',
-          primaryColor: '#f1f5f9',
-          primaryTextColor: '#0f172a',
-          primaryBorderColor: '#64748b',
-          lineColor: '#334155',
-          secondaryColor: '#f8fafc',
-          tertiaryColor: '#e2e8f0',
-          edgeLabelBackground: '#ffffff',
-          nodeBorder: '#64748b',
-          clusterBkg: '#f8fafc'
-        }
+
+    if (isDark) {
+      return {
+        fontFamily,
+        fontSize: '11px',
+        primaryColor: '#1e293b',
+        primaryTextColor: '#f8fafc',
+        primaryBorderColor: '#475569',
+        lineColor: '#94a3b8',
+        secondaryColor: '#0f172a',
+        tertiaryColor: '#1e293b',
+        edgeLabelBackground: '#1e293b',
+        nodeBorder: '#475569',
+        clusterBkg: '#0f172a'
+      }
+    }
+
+    return {
+      fontFamily,
+      fontSize: '11px',
+      primaryColor: '#f1f5f9',
+      primaryTextColor: '#0f172a',
+      primaryBorderColor: '#64748b',
+      lineColor: '#334155',
+      secondaryColor: '#f8fafc',
+      tertiaryColor: '#e2e8f0',
+      edgeLabelBackground: '#ffffff',
+      nodeBorder: '#64748b',
+      clusterBkg: '#f8fafc'
+    }
   }
 
   function svgToPng (blobUrl: string, rawSvg: string): Promise<string> {
@@ -153,8 +250,10 @@
           const parser = new DOMParser()
           const doc = parser.parseFromString(rawSvg, 'image/svg+xml')
           const svgEl = doc.querySelector('svg')
+
           let width = img.width || 800
           let height = img.height || 600
+
           if (svgEl !== null) {
             const viewBox = svgEl.getAttribute('viewBox')
             if (viewBox !== null) {
@@ -163,8 +262,16 @@
                 width = parts[2]
                 height = parts[3]
               }
+            } else {
+              const wAttr = parseFloat(svgEl.getAttribute('width') ?? '')
+              const hAttr = parseFloat(svgEl.getAttribute('height') ?? '')
+              if (wAttr > 0 && hAttr > 0) {
+                width = wAttr
+                height = hAttr
+              }
             }
           }
+
           const scale = 2
           const canvas = document.createElement('canvas')
           canvas.width = Math.ceil(width * scale)
@@ -174,6 +281,7 @@
             resolve(blobUrl)
             return
           }
+
           ctx.scale(scale, scale)
           ctx.drawImage(img, 0, 0, width, height)
           resolve(canvas.toDataURL('image/png'))
@@ -208,44 +316,67 @@
 
     try {
       const isDark = $themeStore.dark
-      const code = generateMermaidCode(taskTypes)
+      const code = generateMermaidCode(taskTypes, isDark, compactLayout, focusTypeId)
 
-      const mermaid = (await import('mermaid')).default
+      const mermaid = (
+        await import(
+          /* webpackChunkName: "vendor-mermaid" */
+          'mermaid'
+        )
+      ).default
+
+      const elkLayouts = (
+        await import(
+          /* webpackChunkName: "vendor-mermaid-elk" */
+          '@mermaid-js/layout-elk'
+        )
+      ).default
+
+      mermaid.registerLayoutLoaders(elkLayouts)
+
       if (seq !== renderSequence) return
 
       const themeVariables = getMermaidThemeVariables(isDark)
+
       mermaid.initialize({
         startOnLoad: false,
         securityLevel: 'antiscript',
         suppressErrorRendering: true,
         theme: 'base',
         fontFamily: themeVariables.fontFamily,
-        fontSize: 13,
+        fontSize: 11,
+        layout: 'elk',
         themeVariables
       })
 
       const elementId = `mermaid-tt-${Math.random().toString(36).substring(2, 9)}`
       const renderResult = await mermaid.render(elementId, code)
+
       if (seq !== renderSequence) return
 
-      const processedSvg = addSelfRefMarkers(renderResult.svg, isDark)
+      const processedSvg = renderResult.svg
       const svgBlob = new Blob([processedSvg], { type: 'image/svg+xml;charset=utf-8' })
       const blobUrl = URL.createObjectURL(svgBlob)
+
       let finalUrl = blobUrl
       try {
         finalUrl = await svgToPng(blobUrl, processedSvg)
-      } catch {}
+      } catch {
+        // Fall back to SVG blob URL
+      }
 
       if (seq !== renderSequence) {
         URL.revokeObjectURL(blobUrl)
         return
       }
+
       revokeObjectUrl()
       if (finalUrl === blobUrl) {
         currentObjectUrl = blobUrl
       } else {
         URL.revokeObjectURL(blobUrl)
       }
+
       imageUrl = finalUrl
     } catch (e: any) {
       if (seq === renderSequence) {
@@ -260,9 +391,13 @@
   }
 
   $: {
-    const _lang = $languageStore
-    const _theme = $themeStore
-    if (taskTypes !== undefined && _lang !== undefined && _theme !== undefined) {
+    if (
+      taskTypes !== undefined &&
+      $languageStore !== undefined &&
+      $themeStore !== undefined &&
+      compactLayout !== undefined
+    ) {
+      void focusTypeId
       void renderDiagram()
     }
   }
@@ -273,12 +408,41 @@
 </script>
 
 <div class="mermaid-wrapper">
-  {#if hasSelfRefs}
-    <div class="diagram-legend">
-      <span class="legend-dot">●</span>
-      <Label label={plugin.string.SelfRefLegend} />
+  <div class="diagram-top-row">
+    {#if hasSelfRefs}
+      <div class="diagram-legend">
+        <span class="legend-badge">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M3.26794 12.0431C3.7049 13.4662 4.58316 14.7135 5.77571 15.6046C6.96827 16.4957 8.41333 16.9844 9.90195 17.0001C11.6239 17.0213 13.2935 16.4081 14.5924 15.2774C15.8913 14.1467 16.7287 12.5775 16.9449 10.8691C17.1577 9.16057 16.7333 7.4336 15.753 6.01828C14.7727 4.60295 13.3052 3.59854 11.6309 3.19706C9.95636 2.792 8.19129 3.0168 6.6717 3.82869C5.1521 4.64058 3.98408 5.98286 3.38994 7.60006"
+              stroke="var(--theme-text-primary, #0f172a)"
+              stroke-width="1.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M3 4V8H7"
+              stroke="var(--theme-text-primary, #0f172a)"
+              stroke-width="1.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+        <span class="legend-text font-normal-12">
+          <Label label={plugin.string.SelfRefLegend} />
+        </span>
+      </div>
+    {/if}
+
+    <div class="diagram-option">
+      <span class="option-label font-normal-12">
+        <Label label={plugin.string.CompactLayout} />
+      </span>
+      <Toggle bind:on={compactLayout} />
     </div>
-  {/if}
+  </div>
+
   <div class="mermaid-center">
     {#if loading}
       <Loading />
@@ -287,12 +451,22 @@
         <div class="diagram-error-icon">
           <IconError size="large" />
         </div>
-        <div class="diagram-error-details">
-          <code>{errorMsg}</code>
+        <div class="diagram-error-title">
+          <Label label={plugin.string.TaskTypesDiagram} />
         </div>
+        <div class="diagram-error-actions">
+          <Button kind="ghost" size="small" on:click={() => (showDetails = !showDetails)}>
+            <Label label={showDetails ? plugin.string.HideDetails : plugin.string.ShowDetails} />
+          </Button>
+        </div>
+        {#if showDetails}
+          <div class="diagram-error-details">
+            <code>{errorMsg}</code>
+          </div>
+        {/if}
       </div>
     {:else if imageUrl}
-      <img src={imageUrl} alt="Task Types Diagram" class="mermaid-image" />
+      <img src={imageUrl} alt="Task Types Hierarchy Diagram" class="mermaid-image" />
     {/if}
   </div>
 </div>
@@ -302,11 +476,55 @@
     position: relative;
     width: 100%;
     height: 100%;
-    padding: 0.75rem;
-    overflow: hidden;
+    min-height: 0;
+    padding: 1rem;
+    overflow: auto;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+  }
+
+  .diagram-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+
+  .diagram-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--small-BorderRadius, 0.375rem);
+    background: var(--global-surface-02-BackgroundColor, rgba(0, 0, 0, 0.03));
+    border: 1px solid var(--theme-border-color, rgba(255, 255, 255, 0.08));
+
+    .legend-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .legend-text {
+      color: var(--theme-text-secondary, #64748b);
+      line-height: 1;
+    }
+  }
+
+  .diagram-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+
+    .option-label {
+      color: var(--theme-text-secondary, #64748b);
+      line-height: 1;
+    }
   }
 
   .mermaid-center {
@@ -317,16 +535,17 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    overflow: auto;
   }
 
   .mermaid-image {
     max-width: 100%;
     max-height: 100%;
-    width: 100%;
-    height: 100%;
+    width: auto;
+    height: auto;
     object-fit: contain;
     display: block;
+    margin: auto;
   }
 
   .diagram-error-state {
@@ -336,10 +555,25 @@
     justify-content: center;
     padding: 1.5rem;
     text-align: center;
+    max-width: 24rem;
+    box-sizing: border-box;
 
     .diagram-error-icon {
       color: var(--negative-button-default, #f44336);
       margin-bottom: 0.5rem;
+    }
+
+    .diagram-error-title {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--theme-text-primary, #f8fafc);
+      margin-bottom: 0.25rem;
+    }
+
+    .diagram-error-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
     }
 
     .diagram-error-details {
@@ -348,10 +582,11 @@
       max-height: 10rem;
       overflow-y: auto;
       background: var(--theme-surface-tertiary, rgba(0, 0, 0, 0.2));
-      border: 1px solid var(--theme-border-color, rgba(0, 0, 0, 0.08));
+      border: 1px solid var(--theme-border-color, rgba(255, 255, 255, 0.08));
       border-radius: 0.375rem;
       padding: 0.5rem 0.75rem;
       text-align: left;
+      box-sizing: border-box;
 
       code {
         font-family: var(--font-family-mono, monospace);
@@ -360,25 +595,6 @@
         white-space: pre-wrap;
         word-break: break-word;
       }
-    }
-  }
-
-  .diagram-legend {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0 0 0.75rem 0.25rem;
-    font-size: 0.875rem;
-    color: var(--theme-text-secondary, #64748b);
-
-    :global(span) {
-      font-size: 0.875rem;
-    }
-
-    .legend-dot {
-      font-size: 1rem;
-      line-height: 1;
-      color: var(--theme-text-primary, #0f172a);
     }
   }
 </style>

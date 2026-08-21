@@ -88,6 +88,8 @@
         statusClass: tracker.class.IssueStatus,
         icon: tracker.icon.Issue,
         color: 0,
+        isRootTaskType: true,
+        allowAnyParent: true,
         allowedAsChildOf: [issueId],
         factory: createStatesData(baseIssueTaskStatuses)
       },
@@ -100,6 +102,8 @@
         statusClass: tracker.class.IssueStatus,
         icon: tracker.icon.Issue,
         color: 0,
+        isRootTaskType: true,
+        allowAnyParent: true,
         allowedAsChildOf: [issueId],
         factory: createStatesData(githubPullRequestStates)
       }

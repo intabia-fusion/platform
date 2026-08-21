@@ -13,8 +13,8 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Doc, Ref, Status } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
+  import { Doc, notEmpty, Ref, Status } from '@hcengineering/core'
+  import { getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { TaskType } from '@hcengineering/task'
   import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
   import {
@@ -29,6 +29,7 @@
   import { statusStore } from '@hcengineering/view-resources'
   import tracker, { type Project } from '@hcengineering/tracker'
   import workflowPlugin, { ProjectWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
+  import view from '@hcengineering/view'
 
   import WorkflowDiagram from './WorkflowDiagram.svelte'
 
@@ -76,61 +77,46 @@
   async function initializeProjectWorkflows (): Promise<void> {
     const seq = ++initSequence
     let initialMap: Record<Ref<TaskType>, Ref<Workflow>> = { ...(workflowsMap ?? {}) }
-    let taskTypes: Ref<TaskType>[] = Object.keys(initialMap) as Ref<TaskType>[]
-    let defaultWorkflowId: Ref<Workflow> | undefined
 
     if (space != null) {
       const projectDoc = await client.findOne(tracker.class.Project, { _id: space })
       if (seq !== initSequence) return
 
-      if (projectDoc != null) {
-        if (hierarchy.hasMixin(projectDoc, workflowPlugin.mixin.ProjectWorkflow)) {
-          const projectWf = hierarchy.as<Doc, ProjectWorkflow>(projectDoc, workflowPlugin.mixin.ProjectWorkflow)
-          if (projectWf?.workflows) {
-            initialMap = { ...projectWf.workflows, ...initialMap }
-          }
-        }
-
-        const projectTypeRef = projectDoc.type
-        if (projectTypeRef) {
-          const projectType = $typeStore.get(projectTypeRef)
-          if (projectType?.tasks && projectType.tasks.length > 0) {
-            taskTypes = projectType.tasks
-          }
-
-          const allWorkflows = await client.findAll<Workflow>(workflowPlugin.class.Workflow, {
-            projectType: projectTypeRef
-          })
-          if (seq !== initSequence) return
-
-          if (allWorkflows.length > 0) {
-            defaultWorkflowId = allWorkflows[0]._id
-          }
+      if (projectDoc != null && hierarchy.hasMixin(projectDoc, workflowPlugin.mixin.ProjectWorkflow)) {
+        const projectWf = hierarchy.as<Doc, ProjectWorkflow>(projectDoc, workflowPlugin.mixin.ProjectWorkflow)
+        if (projectWf?.workflows) {
+          initialMap = { ...initialMap, ...projectWf.workflows }
         }
       }
     }
 
-    if (taskTypes.length === 0 && Object.keys(initialMap).length > 0) {
-      taskTypes = Object.keys(initialMap) as Ref<TaskType>[]
-    }
-
-    const resolvedMap: Record<Ref<TaskType>, Ref<Workflow>> = {}
-    for (const ttId of taskTypes) {
-      resolvedMap[ttId] = initialMap[ttId] ?? defaultWorkflowId ?? Object.values(initialMap)[0]
-    }
-
     if (seq !== initSequence) return
 
-    taskTypeWorkflowMap = resolvedMap
-    availableTaskTypeIds = taskTypes.filter((id) => resolvedMap[id] != null)
+    const resolvedMap: Record<Ref<TaskType>, Ref<Workflow>> = {}
+    for (const [ttId, wfId] of Object.entries(initialMap)) {
+      if (wfId != null) {
+        resolvedMap[ttId as Ref<TaskType>] = wfId
+      }
+    }
 
-    const isCurrentValid = currentTaskTypeId != null && availableTaskTypeIds.includes(currentTaskTypeId)
-    if (availableTaskTypeIds.length > 0 && !isCurrentValid) {
-      currentTaskTypeId = selectedTaskType && resolvedMap[selectedTaskType] ? selectedTaskType : availableTaskTypeIds[0]
+    taskTypeWorkflowMap = resolvedMap
+    availableTaskTypeIds = Object.keys(resolvedMap) as Ref<TaskType>[]
+
+    if (availableTaskTypeIds.length > 0) {
+      if (selectedTaskType != null && resolvedMap[selectedTaskType] != null) {
+        currentTaskTypeId = selectedTaskType
+      } else if (currentTaskTypeId == null || !availableTaskTypeIds.includes(currentTaskTypeId)) {
+        currentTaskTypeId = availableTaskTypeIds[0]
+      }
+    } else {
+      currentTaskTypeId = undefined
+      currentWorkflow = undefined
+      currentStatuses = []
+      currentTransitions = []
     }
   }
 
-  async function loadWorkflow (wfId: Ref<Workflow>): Promise<void> {
+  async function loadWorkflow (wfId: Ref<Workflow>, taskTypeId?: Ref<TaskType>): Promise<void> {
     const seq = ++loadSequence
     const wfDoc = await client.findOne<Workflow>(
       workflowPlugin.class.Workflow,
@@ -147,28 +133,48 @@
     currentWorkflow = wfDoc
     currentTransitions = (wfDoc.$lookup?.transitions ?? []) as WorkflowTransition[]
 
-    const projectType = $typeStore.get(wfDoc.projectType)
-    currentStatuses =
-      projectType?.statuses?.map((s) => $statusStore.byId.get(s._id)).filter((s): s is Status => s != null) ?? []
+    const effectiveTaskTypeId = taskTypeId ?? currentTaskTypeId
+    const taskType = effectiveTaskTypeId != null ? $taskTypeStore.get(effectiveTaskTypeId) : undefined
+
+    if (taskType?.statuses && taskType.statuses.length > 0) {
+      currentStatuses = taskType.statuses.map((sId) => $statusStore.byId.get(sId)).filter((s): s is Status => s != null)
+    } else {
+      const projectType = $typeStore.get(wfDoc.projectType)
+      currentStatuses =
+        projectType?.statuses?.map((s) => $statusStore.byId.get(s._id)).filter((s): s is Status => s != null) ?? []
+    }
   }
 
   $: if (space != null || workflowsMap != null) {
     void initializeProjectWorkflows()
   }
 
-  $: dropdownItems = availableTaskTypeIds.map<DropdownTextItem>((id) => {
+  $: dropdownItems = availableTaskTypeIds
+    .map<DropdownTextItem | null>((id) => {
     const taskType = $taskTypeStore.get(id)
+    if (taskType == null) return null
     return {
       id,
-      label: taskType?.name ?? id
+      label: taskType.name,
+      icon: taskType.icon === view.ids.IconWithEmoji ? IconWithEmoji : taskType.icon,
+      iconProps: taskType.icon === view.ids.IconWithEmoji ? { icon: taskType.color } : {}
     }
   })
+    .filter(notEmpty)
 
   $: if (currentTaskTypeId != null) {
     const wfId = taskTypeWorkflowMap[currentTaskTypeId] ?? (workflowsMap ? workflowsMap[currentTaskTypeId] : undefined)
     if (wfId != null) {
-      void loadWorkflow(wfId)
+      void loadWorkflow(wfId, currentTaskTypeId)
+    } else {
+      currentWorkflow = undefined
+      currentTransitions = []
+      currentStatuses = []
     }
+  } else if (workflow != null) {
+    currentWorkflow = workflow
+    currentTransitions = transitions
+    currentStatuses = statuses
   }
 </script>
 
@@ -191,7 +197,8 @@
           selected={currentTaskTypeId ?? ''}
           kind="secondary"
           size="medium"
-          showDropdownIcon={true}
+          showDropdownIcon={dropdownItems.length > 1}
+          disabled={dropdownItems.length <= 1}
           on:selected={(evt) => {
             handleTaskTypeChange(evt.detail)
           }}

@@ -12,23 +12,51 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { Ref } from '@hcengineering/core'
   import { TaskType } from '@hcengineering/task'
-  import { ButtonIcon, IconClose, Label, Modal } from '@hcengineering/ui'
+  import { ButtonIcon, IconClose, IconMaximize, IconMinimize, Label, Modal } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import plugin from '../../plugin'
   import TaskTypeDiagram from './TaskTypeDiagram.svelte'
 
   export let taskTypes: TaskType[] = []
+  export let focusTypeId: Ref<TaskType> | undefined = undefined
+  export let fullSize = false
 
-  const dispatch = createEventDispatcher()
+  $: focusedTaskType = focusTypeId !== undefined ? taskTypes.find((t) => t._id === focusTypeId) : undefined
+
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  const dispatch = createEventDispatcher<{ close: void, fullsize: boolean }>()
+
+  function handleClose (): void {
+    dispatch('close')
+  }
+
+  function handleToggleFullSize (): void {
+    fullSize = !fullSize
+    dispatch('fullsize', fullSize)
+  }
 </script>
 
-<Modal type="type-component" scrollableContent={false} on:close>
+<Modal type="type-component" scrollableContent={false} on:fullsize on:close>
   <svelte:fragment slot="beforeTitle">
-    <ButtonIcon icon={IconClose} kind="tertiary" size="small" noPrint on:click={() => dispatch('close')} />
+    <ButtonIcon icon={IconClose} kind="tertiary" size="small" noPrint on:click={handleClose} />
     <div class="hulyHeader-divider short no-line no-print" />
-    <Label label={plugin.string.TaskTypesDiagram} />
+    <ButtonIcon
+      icon={!fullSize ? IconMaximize : IconMinimize}
+      kind="tertiary"
+      size="small"
+      noPrint
+      on:click={handleToggleFullSize}
+    />
+    <div class="hulyHeader-divider short no-print" />
+    {#if focusedTaskType !== undefined}
+      <Label label={plugin.string.TaskTypeHierarchyTitle} params={{ name: focusedTaskType.name }} />
+    {:else}
+      <Label label={plugin.string.TaskTypesDiagram} />
+    {/if}
   </svelte:fragment>
 
-  <TaskTypeDiagram {taskTypes} />
+  <TaskTypeDiagram {taskTypes} {focusTypeId} />
 </Modal>

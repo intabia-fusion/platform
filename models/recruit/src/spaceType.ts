@@ -151,6 +151,8 @@ export function defineSpaceType (builder: Builder): void {
         task.statusCategory.Won,
         task.statusCategory.Lost
       ],
+      isRootTaskType: true,
+      allowAnyParent: true,
       icon: plugin.icon.Application
     },
     plugin.taskTypes.Applicant

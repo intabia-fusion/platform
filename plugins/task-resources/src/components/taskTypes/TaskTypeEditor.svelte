@@ -31,7 +31,6 @@
     ModernButton,
     Scroller,
     ToggleWithLabel,
-    Toggle,
     ModernEditbox,
     getCurrentLocation,
     navigate,
@@ -45,7 +44,7 @@
   import plugin from '../../plugin'
   import StatesProjectEditor from '../state/StatesProjectEditor.svelte'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
-  import TaskTypeRefEditorTable from './TaskTypeRefEditorTable.svelte'
+  import TaskTypeHierarchySection from './TaskTypeHierarchySection.svelte'
 
   export let spaceType: ProjectType
   export let objectId: Ref<TaskType>
@@ -73,11 +72,6 @@
   $: color = taskType?.color !== undefined && typeof taskType?.color !== 'string' ? taskType?.color : undefined
   $: descriptor = client.getModel().findAllSync(task.class.TaskTypeDescriptor, { _id: taskType?.descriptor })
   $: states = (taskType?.statuses.map((p) => $statusStore.byId.get(p)).filter((p) => p !== undefined) as Status[]) ?? []
-  $: selectableTaskTypes = taskTypes.filter(
-    (tt) => tt._id === objectId || !(tt.allowedAsChildOf ?? []).includes(objectId)
-  )
-
-  $: isRootTaskType = taskType?.isRootTaskType ?? false
 
   let tasksCounter: number = 0
   let loading: boolean = true
@@ -126,20 +120,6 @@
     if (trimmed !== taskType.name) {
       void client.diffUpdate(taskType, { name: trimmed })
     }
-  }
-
-  async function handleIsRootTaskTypeChange (isRoot: boolean): Promise<void> {
-    if (taskType === undefined || readonly) {
-      return
-    }
-
-    const updates: Partial<TaskType> = { isRootTaskType: isRoot }
-
-    if (isRoot && (taskType.allowedAsChildOf?.length ?? 0) > 0) {
-      updates.allowedAsChildOf = []
-    }
-
-    await client.diffUpdate(taskType, updates)
   }
 
   function isSameString (a: string, b: string): boolean {
@@ -311,36 +291,7 @@
             </div>
           </div>
 
-          <div class="hulyTableAttr-container">
-            <div class="hulyTableAttr-header font-medium-12 root-task-type-header">
-              <span class="label">
-                <Label label={plugin.string.RootTaskType} />
-              </span>
-              <div class="toggle-wrapper">
-                <Toggle
-                  on={isRootTaskType}
-                  disabled={readonly}
-                  on:change={(evt) => {
-                    void handleIsRootTaskTypeChange(evt.detail)
-                  }}
-                />
-              </div>
-            </div>
-
-            {#if !isRootTaskType}
-              <TaskTypeRefEditorTable
-                value={taskType.allowedAsChildOf ?? []}
-                types={selectableTaskTypes}
-                {readonly}
-                onChange={(evt) => {
-                  if (taskType === undefined) {
-                    return
-                  }
-                  void client.diffUpdate(taskType, { allowedAsChildOf: evt })
-                }}
-              />
-            {/if}
-          </div>
+          <TaskTypeHierarchySection {taskType} {taskTypes} {readonly} />
 
           <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
             <ToggleWithLabel
@@ -422,16 +373,6 @@
 {/if}
 
 <style lang="scss">
-  .root-task-type-header {
-    padding: var(--spacing-1_5) var(--spacing-2_5);
-  }
-
-  .toggle-wrapper {
-    margin-right: 0.375rem;
-    display: flex;
-    align-items: center;
-  }
-
   .name {
     width: 100%;
     font-weight: 500;

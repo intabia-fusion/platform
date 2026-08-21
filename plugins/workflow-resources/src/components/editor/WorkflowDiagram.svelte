@@ -13,7 +13,9 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { Status } from '@hcengineering/core'
+  import core, { Status, StatusCategory } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import task from '@hcengineering/task'
   import {
     Button,
     ButtonIcon,
@@ -36,6 +38,14 @@
   export let statuses: Status[] = []
   export let transitions: WorkflowTransition[] = []
   export let embedded = false
+
+  const defaultCategoryColors: Record<string, number> = {
+    [task.statusCategory.UnStarted]: 21,
+    [task.statusCategory.ToDo]: 23,
+    [task.statusCategory.Active]: 11,
+    [task.statusCategory.Won]: 17,
+    [task.statusCategory.Lost]: 22
+  }
 
   let imageUrl: string | undefined = undefined
   let errorMsg: string | undefined = undefined
@@ -72,6 +82,10 @@
     const statusNodeIds = new Map<string, string>()
     statuses.forEach((s, idx) => statusNodeIds.set(s._id, `st_${idx}`))
 
+    const client = getClient()
+    const categories = client.getModel().findAllSync<StatusCategory>(core.class.StatusCategory, {})
+    const categoryMap = new Map(categories.map((c) => [c._id, c]))
+
     const lines: string[] = ['---', 'config:', '  theme: redux', '---', 'flowchart TB']
 
     // Status nodes with platform background/foreground colors
@@ -82,7 +96,13 @@
       const label = sanitizeLabel(s.name)
       lines.push(`  ${nodeId}(["${label}"])`)
 
-      const colorNum = s.color !== undefined && typeof s.color !== 'string' ? s.color : getColorNumberByText(s.name)
+      const category = s.category ? categoryMap.get(s.category) : undefined
+      const colorNum =
+        s.color !== undefined && typeof s.color !== 'string'
+          ? s.color
+          : (category?.color ??
+            (s.category ? defaultCategoryColors[s.category] : undefined) ??
+            getColorNumberByText(s.name))
       const colorDef = getPlatformColorDef(colorNum, isDark)
 
       const fill = sanitizeColor(colorDef.background, isDark ? '#1e293b' : '#f1f5f9')

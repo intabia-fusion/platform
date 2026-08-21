@@ -175,6 +175,7 @@ export default plugin(workflowId, {
     Start: '' as IntlString,
     End: '' as IntlString,
     Workflow: '' as IntlString,
+    WorkflowScheme: '' as IntlString,
     WorkflowSettings: '' as IntlString,
     WorkflowTransition: '' as IntlString,
     WorkflowMapping: '' as IntlString,

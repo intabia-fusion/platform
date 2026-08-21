@@ -22,6 +22,8 @@ import {
   DOMAIN_STATUS,
   DOMAIN_TX,
   TxOperations,
+  generateId,
+  groupByArray,
   toIdMap,
   type Attribute,
   type Class,
@@ -33,6 +35,7 @@ import {
   type Space,
   type Status,
   type TxCreateDoc,
+  type TxCUD,
   type TxUpdateDoc,
   TxProcessor
 } from '@hcengineering/core'
@@ -715,6 +718,74 @@ export const taskOperation: MigrateOperation = {
                   }
                 )
               }
+            }
+          }
+        }
+      },
+      {
+        state: 'migrate-task-type-hierarchy-root-and-any-parent-v1',
+        mode: 'upgrade',
+        func: async (client: MigrationClient) => {
+          const allTxes = await client.find<TxCUD<TaskType>>(DOMAIN_MODEL_TX, {
+            objectClass: task.class.TaskType
+          })
+
+          const txesByObjectId = groupByArray(allTxes, (it) => it.objectId)
+
+          for (const [, docTxes] of txesByObjectId.entries()) {
+            const currentDoc = TxProcessor.buildDoc2Doc<TaskType>(docTxes)
+            if (currentDoc == null) continue
+
+            const isRoot = currentDoc.isRootTaskType
+            const allowedParents = currentDoc.allowedAsChildOf ?? []
+            const allowAnyParent = currentDoc.allowAnyParent
+
+            let needsAllowAnyParent = false
+            if (isRoot !== true && allowedParents.length === 0 && allowAnyParent !== true) {
+              needsAllowAnyParent = true
+            }
+
+            const needsIsRoot = isRoot !== true
+
+            if (!needsAllowAnyParent && !needsIsRoot) {
+              continue
+            }
+
+            const hasUpdateTxes = docTxes.some((t) => t._class === core.class.TxUpdateDoc)
+            const createTx = docTxes.find((t) => t._class === core.class.TxCreateDoc) as
+              | TxCreateDoc<TaskType>
+              | undefined
+
+            if (hasUpdateTxes) {
+              const operations: DocumentUpdate<TaskType> = {}
+              if (needsAllowAnyParent) {
+                operations.allowAnyParent = true
+              }
+              if (needsIsRoot) {
+                operations.isRootTaskType = true
+              }
+
+              const newUpdateTx: TxUpdateDoc<TaskType> = {
+                _id: generateId(),
+                _class: core.class.TxUpdateDoc,
+                space: core.space.Model,
+                objectSpace: core.space.Model,
+                objectClass: task.class.TaskType,
+                objectId: currentDoc._id,
+                modifiedBy: core.account.System,
+                modifiedOn: Date.now(),
+                operations
+              }
+              await client.create(DOMAIN_MODEL_TX, newUpdateTx)
+            } else if (createTx !== undefined) {
+              const updateAttrs: Record<string, any> = {}
+              if (needsAllowAnyParent) {
+                updateAttrs['attributes.allowAnyParent'] = true
+              }
+              if (needsIsRoot) {
+                updateAttrs['attributes.isRootTaskType'] = true
+              }
+              await client.update(DOMAIN_MODEL_TX, { _id: createTx._id }, updateAttrs)
             }
           }
         }

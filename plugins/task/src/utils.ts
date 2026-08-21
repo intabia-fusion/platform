@@ -320,6 +320,9 @@ async function createTaskTypes (
       _statues.add(st)
     }
     const tdata = {
+      isRootTaskType: true,
+      allowAnyParent: true,
+      allowedAsChildOf: [],
       ...data,
       parent: _id,
       statuses
@@ -378,11 +381,7 @@ export function getAllowedChildTaskTypes (
   const scopedTypes = taskTypes.filter((t) => t.parent === projectType)
 
   return scopedTypes.filter((tt) => {
-    if (tt.isRootTaskType === true) return false
-    if (tt.allowedAsChildOf != null && tt.allowedAsChildOf.length > 0) {
-      return tt.allowedAsChildOf.includes(taskType)
-    }
-    return true
+    return tt.allowAnyParent === true || (tt.allowedAsChildOf ?? []).includes(taskType)
   })
 }
 
@@ -399,17 +398,23 @@ export function getAllowedParentTaskTypes (
   const scopedTypes = taskTypes.filter((t) => t.parent === projectType)
   const childTaskType = scopedTypes.find((t) => t._id === taskType)
 
-  if (childTaskType == null || childTaskType.isRootTaskType === true) {
+  if (childTaskType == null) {
     return []
   }
 
-  return scopedTypes.filter((parentTT) => {
-    if (childTaskType.allowedAsChildOf != null && childTaskType.allowedAsChildOf.length > 0) {
-      return childTaskType.allowedAsChildOf.includes(parentTT._id)
-    }
-    if (parentTT.allowedAsChildOf != null && parentTT.allowedAsChildOf.length > 0) {
-      return false
-    }
-    return true
-  })
+  if (childTaskType.allowAnyParent === true) {
+    return scopedTypes
+  }
+
+  const allowedParents = childTaskType.allowedAsChildOf ?? []
+  return scopedTypes.filter((parentTT) => allowedParents.includes(parentTT._id))
+}
+
+/**
+ * Returns task types allowed to be created as root tasks in a project type.
+ *
+ * @public
+ */
+export function getRootTaskTypes (projectType: Ref<ProjectType>, taskTypes: TaskType[]): TaskType[] {
+  return taskTypes.filter((t) => t.parent === projectType && t.isRootTaskType !== false)
 }

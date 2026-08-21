@@ -28,7 +28,7 @@
     "EditStates": "Status bearbeiten",
     "MarkAsDone": "Als erledigt markieren",
     "MarkAsUndone": "Als unerledigt markieren",
-    "Kanban": "Kanban",    
+    "Kanban": "Kanban",
     "ApplicationLabelTask": "Aufgaben",
     "ProjectNamePlaceholder": "Projektname",
     "TaskNamePlaceholder": "Die langweilige Aufgabe",
@@ -105,6 +105,22 @@
     "RootTaskTooltip": "Ein Wurzeltyp hat keine Eltern und kann keine Unteraufgaben dieses Typs haben",
     "NoSubtaskTypesHint": "Für eine übergeordnete Aufgabe vom Typ {type} gibt es keine geeigneten Unteraufgabentypen. Konfigurieren Sie die Typhierarchie in den Projekteinstellungen, um eine Unteraufgabe zu erstellen.",
     "NoSubtaskTypesShort": "Keine Unteraufgabentypen",
-    "Collections": "Sammlungen"
+    "Collections": "Sammlungen",
+    "AllowRootTask": "Allow creation without parent",
+    "AllowRootTaskTooltip": "Allows creating tasks of this type as top-level items, not only as subtasks",
+    "AllowedParentTaskTypes": "Can be a subtask of:",
+    "HierarchyRelations": "Hierarchy",
+    "HierarchyWarningNoParentAndNoRoot": "Aufgaben dieses Typs können nicht erstellt werden: Erstellung ohne übergeordnete Aufgabe ist deaktiviert und es sind keine übergeordneten Typen ausgewählt.",
+    "HierarchyWarningShort": "Aufgaben können nicht erstellt werden",
+    "SameTypeNesting": "this type",
+    "SelectAll": "Select all",
+    "ClearAll": "Clear all",
+    "AllowAnyParent": "Any task type",
+    "AllowAnyParentSubtask": "Kann Unteraufgabe jedes Aufgabentyps sein",
+    "AllowAnyParentTooltip": "Allows creating this task as a subtask of any task type in the project, including future types",
+    "CompactLayout": "Kompakte Ansicht",
+    "TaskTypeHierarchyTitle": "Hierarchie: {name}",
+    "ShowDetails": "Details anzeigen",
+    "HideDetails": "Details ausblenden"
   }
 }

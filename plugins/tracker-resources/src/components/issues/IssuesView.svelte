@@ -16,8 +16,8 @@
   import { Asset, IntlString, translateCB } from '@hcengineering/platform'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
   import { Issue, Project, TrackerEvents } from '@hcengineering/tracker'
-  import { ButtonIcon, IModeSelector, showPopup, themeStore } from '@hcengineering/ui'
-  import { ViewOptions, Viewlet } from '@hcengineering/view'
+  import { ButtonMenu, type DropdownIntlItem, IconMoreH, IModeSelector, showPopup, themeStore } from '@hcengineering/ui'
+  import view, { ViewOptions, Viewlet } from '@hcengineering/view'
   import {
     FilterBar,
     selectionStore,
@@ -26,7 +26,8 @@
     ViewletContentView,
     ViewletSettingButton
   } from '@hcengineering/view-resources'
-  import { type Project as TaskProject } from '@hcengineering/task'
+  import task, { type Project as TaskProject } from '@hcengineering/task'
+  import { TaskTypeDiagramPopup, taskTypeStore } from '@hcengineering/task-resources'
   import workflow, { ProjectWorkflow } from '@hcengineering/workflow'
 
   import tracker from '../../plugin'
@@ -67,6 +68,34 @@
       ? hierarchy.as<TaskProject, ProjectWorkflow>(currentProject, workflow.mixin.ProjectWorkflow).workflows
       : undefined
   $: hasWorkflow = workflowsMap != null && Object.keys(workflowsMap).length > 0
+  $: currentTaskTypes = currentProject?.type
+    ? Array.from($taskTypeStore.values()).filter((t) => t.parent === currentProject.type)
+    : []
+  $: hasTaskTypes = currentTaskTypes.length > 0
+
+  const WORKFLOW_ITEM_ID = 'workflow'
+  const TASK_TYPES_ITEM_ID = 'task-types'
+
+  $: menuItems = [
+    ...(hasWorkflow
+      ? [
+          {
+            id: WORKFLOW_ITEM_ID,
+            label: workflow.string.WorkflowScheme,
+            icon: workflow.icon.Workflow
+          }
+        ]
+      : []),
+    ...(hasTaskTypes
+      ? [
+          {
+            id: TASK_TYPES_ITEM_ID,
+            label: task.string.TaskTypesDiagram,
+            icon: task.icon.TypeHierarchy
+          }
+        ]
+      : [])
+  ] satisfies DropdownIntlItem[]
 
   function openWorkflowDiagram (): void {
     if (workflowsMap == null) return
@@ -75,11 +104,31 @@
       {
         space,
         workflowsMap,
-        selectedTaskType: (viewOptions as any)?.taskType,
-        fullSize: true
+        fullSize: false
       },
       'centered'
     )
+  }
+
+  function openTaskTypeDiagram (): void {
+    if (currentTaskTypes.length === 0) return
+    showPopup(
+      TaskTypeDiagramPopup,
+      {
+        taskTypes: currentTaskTypes,
+        fullSize: false
+      },
+      'centered'
+    )
+  }
+
+  function handleMenuSelected (event?: CustomEvent<string>): void {
+    const action = event?.detail
+    if (action === WORKFLOW_ITEM_ID) {
+      openWorkflowDiagram()
+    } else if (action === TASK_TYPES_ITEM_ID) {
+      openTaskTypeDiagram()
+    }
   }
 
   // Prevent groupBy and swimLaneBy from being the same field.
@@ -120,15 +169,6 @@
 >
   <svelte:fragment slot="header-tools">
     <ViewletSettingButton bind:viewOptions bind:viewlet />
-    {#if hasWorkflow}
-      <ButtonIcon
-        icon={workflow.icon.Workflow}
-        kind="secondary"
-        size="small"
-        tooltip={{ label: workflow.string.Workflow }}
-        on:click={openWorkflowDiagram}
-      />
-    {/if}
   </svelte:fragment>
 
   <svelte:fragment slot="label_selector">
@@ -140,6 +180,17 @@
   </svelte:fragment>
 
   <svelte:fragment slot="actions">
+    {#if menuItems.length > 0}
+      <ButtonMenu
+        icon={IconMoreH}
+        kind="secondary"
+        size="small"
+        noSelection
+        tooltip={{ label: view.string.MoreActions }}
+        items={menuItems}
+        on:selected={handleMenuSelected}
+      />
+    {/if}
     <ComponentExtensions
       extension={tracker.extensions.IssueListHeader}
       props={{ size: 'small', kind: 'tertiary', space }}

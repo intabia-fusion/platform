@@ -53,13 +53,13 @@
       (baseClass === undefined || client.getHierarchy().isDerived(it.targetClass, baseClass))
   )
 
-  $: childItems = allItems.filter((it) => parentType !== undefined && (it.allowedAsChildOf ?? []).includes(parentType))
-
-  $: freeItems = allItems.filter(
-    (it) => (it.allowedAsChildOf ?? []).length === 0 && it.isRootTaskType !== true && it._id !== parentType
+  $: childItems = allItems.filter(
+    (it) => parentType !== undefined && (it.allowAnyParent === true || (it.allowedAsChildOf ?? []).includes(parentType))
   )
 
-  $: items = (parentType === undefined ? allItems : childItems.length > 0 ? childItems : freeItems).map((it) => ({
+  $: rootItems = allItems.filter((it) => it.isRootTaskType !== false)
+
+  $: items = (parentType === undefined ? rootItems : childItems).map((it) => ({
     id: it._id,
     label: getEmbeddedLabel(it.name),
     icon: TaskTypeIcon,
