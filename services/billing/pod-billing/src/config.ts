@@ -28,6 +28,8 @@ export interface Config {
   // Upstream cost per 1000 tokens by key, for the admin cost calculator. Keyed by
   // provider_id or model (whatever ai-bot records). Env: PROVIDER_PRICES=key:rub,...
   ProviderPrices: Record<string, number>
+  // Endpoints that rewrite a workspace's usage rows (reset/set-used). Destructive, dev/test only.
+  AllowTestEndpoints: boolean
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
@@ -59,7 +61,8 @@ const config: Config = (() => {
           return [k.trim(), v === '' ? NaN : Number(v)]
         })
         .filter(([k, v]) => k !== '' && !isNaN(v as number))
-    )
+    ),
+    AllowTestEndpoints: (process.env.ALLOW_TEST_ENDPOINTS ?? 'false').toLowerCase() === 'true'
   }
 
   const missingEnv = (Object.keys(params) as Array<keyof Config>).filter((key) => params[key] === undefined)

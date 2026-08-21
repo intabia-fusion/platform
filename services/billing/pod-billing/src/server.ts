@@ -225,18 +225,21 @@ export async function createServer (
     wrapRequest(ctx, 'addProviderPoolTokens', handleAddProviderPoolTokens)
   )
   app.post('/api/v1/admin/pools/reset', withToken, withAdmin, wrapRequest(ctx, 'resetPoolUsed', handleResetPoolUsed))
-  app.post(
-    '/api/v1/admin/:workspace/reset',
-    withToken,
-    withAdmin,
-    wrapRequest(ctx, 'resetWorkspaceUsed', handleResetWorkspaceUsed)
-  )
-  app.post(
-    '/api/v1/admin/:workspace/set-used',
-    withToken,
-    withAdmin,
-    wrapRequest(ctx, 'setWorkspaceUsed', handleSetWorkspaceUsed)
-  )
+  // Both rewrite the workspace's own usage rows, so they stay off unless a stand opts in.
+  if (config.AllowTestEndpoints) {
+    app.post(
+      '/api/v1/admin/:workspace/reset',
+      withToken,
+      withAdmin,
+      wrapRequest(ctx, 'resetWorkspaceUsed', handleResetWorkspaceUsed)
+    )
+    app.post(
+      '/api/v1/admin/:workspace/set-used',
+      withToken,
+      withAdmin,
+      wrapRequest(ctx, 'setWorkspaceUsed', handleSetWorkspaceUsed)
+    )
+  }
   app.get(
     '/api/v1/admin/registry',
     withToken,

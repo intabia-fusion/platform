@@ -1018,11 +1018,14 @@ class PostgresDB implements BillingDB {
     start: Date,
     end: Date
   ): Promise<Array<{ level: string, label: string, tokens: number }>> {
+    // Label via subquery, not a JOIN: several registry rows may share a level, and joining
+    // them would multiply every usage row before the SUM.
     const sql = `
-    SELECT u.level, MAX(r.label) AS label, SUM(u.total_tokens) AS tokens
+    SELECT u.level,
+      (SELECT MAX(r.label) FROM billing.ai_model_registry r WHERE r.level = u.level) AS label,
+      SUM(u.total_tokens) AS tokens
     FROM billing.ai_tokens_usage u
-    LEFT JOIN billing.ai_model_registry r ON r.level = u.level
-    WHERE u.workspace = $1::uuid AND u.hour >= $2::timestamp AND u.hour <= $3::timestamp
+    WHERE u.workspace = $1::uuid AND u.hour >= $2::timestamp AND u.hour < $3::timestamp
     GROUP BY u.level
     ORDER BY tokens DESC`
     const result = await this.execute(sql, [workspace, start, end])

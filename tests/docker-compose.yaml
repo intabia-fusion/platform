@@ -470,6 +470,8 @@ services:
       - STORAGE_CONFIG=datalake|http://datalake:4031
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - USAGE_UPDATE_INTERVAL=600
+      # Sanity tests drive the workspace token window through reset / set-used.
+      - ALLOW_TEST_ENDPOINTS=true
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
 

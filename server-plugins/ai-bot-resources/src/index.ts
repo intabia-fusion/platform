@@ -215,18 +215,9 @@ function isDirectAvailable (direct: DirectMessage, control: TriggerControl, wsID
 async function applySpaceSettings (control: TriggerControl, event: AIEventRequest): Promise<void> {
   // Set before the lookups: a failed settings read must not leave the feature unset.
   event.feature = 'chat'
-  try {
-    const spaceSetting = (
-      await control.findAll(control.ctx, aiBot.class.AISpaceSettings, { attachedTo: event.objectSpace })
-    )[0]
-    const settings =
-      spaceSetting ??
-      (await control.findAll(control.ctx, aiBot.class.AISpaceSettings, {})).find((s) => s.attachedTo == null)
-    event.level = settings?.level
-    event.language = settings?.language
-  } catch (err: any) {
-    control.ctx.warn('failed to apply AI space settings', { error: err?.message })
-  }
+  const { level, language } = await resolveSpaceLevel(control, event.objectSpace)
+  event.level = level
+  event.language = language
 }
 
 /** Per-thread level (from the AIContextMessage root) overrides the space/workspace level. */
@@ -307,16 +298,16 @@ async function onBotDirectMessageSend (
   }
 }
 
-/** Effective ASR/LLM level+language for a space (space-specific -> workspace-wide default). */
+// Effective ASR/LLM level+language for a space. Per field, not per document: a space that sets
+// only a language still inherits the workspace-wide level.
 async function resolveSpaceLevel (
   control: TriggerControl,
   space: Ref<Space>
 ): Promise<{ level?: string, language?: string }> {
   try {
-    const spaceSetting = (await control.findAll(control.ctx, aiBot.class.AISpaceSettings, { attachedTo: space }))[0]
-    const wsSetting =
-      spaceSetting ??
-      (await control.findAll(control.ctx, aiBot.class.AISpaceSettings, {})).find((s) => s.attachedTo == null)
+    const all = await control.findAll(control.ctx, aiBot.class.AISpaceSettings, {})
+    const spaceSetting = all.find((s) => s.attachedTo === space)
+    const wsSetting = all.find((s) => s.attachedTo == null)
     return { level: spaceSetting?.level ?? wsSetting?.level, language: spaceSetting?.language ?? wsSetting?.language }
   } catch (err: any) {
     control.ctx.warn('failed to resolve space AI level', { error: err?.message })

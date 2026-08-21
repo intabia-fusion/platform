@@ -440,18 +440,18 @@ describe('window step notify (5% fill)', () => {
 describe('getPeriodStartDate', () => {
   // Usage lives in hourly buckets: a period starting at 18:19 must still count its own 18:00
   // bucket, or every purchase silently loses up to an hour of spend from the window.
+  // Floored in UTC, like the hourly buckets themselves: a local floor lands mid-hour in zones
+  // offset by 30/45 minutes (Asia/Kolkata, Asia/Kathmandu).
   it('floors the period start to the hour', () => {
     const start = getPeriodStartDate(Date.UTC(2026, 7, 16, 18, 19, 59, 123))
-    expect(start.getMinutes()).toBe(0)
-    expect(start.getSeconds()).toBe(0)
-    expect(start.getMilliseconds()).toBe(0)
-    expect(start.getHours()).toBe(new Date(Date.UTC(2026, 7, 16, 18, 19, 59)).getHours())
+    expect(start.getTime()).toBe(Date.UTC(2026, 7, 16, 18, 0, 0, 0))
   })
 
-  it('falls back to 30 days ago at midnight when the tier has no period', () => {
+  it('falls back to 30 days ago at UTC midnight when the tier has no period', () => {
     const start = getPeriodStartDate(undefined)
-    expect(start.getHours()).toBe(0)
-    expect(start.getMinutes()).toBe(0)
+    expect(start.getUTCHours()).toBe(0)
+    expect(start.getUTCMinutes()).toBe(0)
+    expect(start.getUTCSeconds()).toBe(0)
   })
 })
 

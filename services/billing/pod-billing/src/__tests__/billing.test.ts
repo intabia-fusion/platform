@@ -55,7 +55,8 @@ const {
   handlePushTranscriptUsage,
   handlePushAiTranscriptData,
   handlePushParticipantSessions,
-  resolveWorkspacePlan
+  resolveWorkspacePlan,
+  clearWorkspacePlanCache
 } = require('../billing')
 /* eslint-enable @typescript-eslint/no-var-requires */
 
@@ -87,6 +88,8 @@ function makeRes (): any {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  // Subscriptions are cached per workspace for a minute; each test sets up its own mock.
+  clearWorkspacePlanCache()
 })
 
 describe('resolveWorkspacePlan', () => {
@@ -126,7 +129,7 @@ describe('resolveWorkspacePlan', () => {
     const result = await resolveWorkspacePlan(ctx, makeDb(), WS)
     // Floored to the hour, since usage is bucketed hourly (see getPeriodStartDate).
     const expected = new Date(pkgEarly)
-    expected.setMinutes(0, 0, 0)
+    expected.setUTCMinutes(0, 0, 0)
     expect(result.periodStart.getTime()).toBe(expected.getTime())
     expect(result.hasPackages).toBe(true)
   })

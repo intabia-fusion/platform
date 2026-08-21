@@ -628,13 +628,15 @@ export async function createServer (
     logOperation
   )
 
-  // Subscriptions predating the baked AI window carry none, and the pod would fall back to its env
-  // default. Idempotent: only fills what is missing, so running it on every start is harmless.
-  void backfillWindowLimits(ctx, accountClient, (sub) =>
-    resolveLimits(sub.type, sub.plan, sub.providerData?.quantity as number | undefined)
-  ).catch((err: any) => {
-    ctx.error('AI window backfill failed', { err })
-  })
+  // Fills the AI window on subscriptions predating it. Reads every active subscription, so it is
+  // one-shot: opt in via RUN_WINDOW_BACKFILL, not on every restart of every replica.
+  if (config.RunWindowBackfill === true) {
+    void backfillWindowLimits(ctx, accountClient, (sub) =>
+      resolveLimits(sub.type, sub.plan, sub.providerData?.quantity as number | undefined)
+    ).catch((err: any) => {
+      ctx.error('AI window backfill failed', { err })
+    })
+  }
 
   // ============ Generic Payment Service Endpoints ============
   // These endpoints are provider-agnostic and work with any payment provider

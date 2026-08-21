@@ -96,6 +96,9 @@ const VOICE_TRANSCRIPT_WAIT_MS = 60000
 const REPLY_FLOOD_WINDOW_MS = 60000
 const REPLY_FLOOD_LIMIT = 20
 
+// Personal memory is re-read after this; a UI edit shows up on the next request past it.
+const MEMORY_CACHE_TTL_MS = 60000
+
 interface LLMHistoryRecord {
   role: 'user' | 'assistant' | 'system'
   content: string
@@ -146,7 +149,7 @@ export class WorkspaceClient {
   repliesPerObject = new Map<Ref<Doc>, { since: number, count: number }>()
 
   love: LoveController | undefined
-  memoryMap = new Map<PersonUuid, AIMemory>()
+  memoryMap = new Map<PersonUuid, { at: number, value: AIMemory }>()
   userSocialIdByPersonUuid = new Map<PersonUuid, PersonId>()
   initPromise: Promise<void> | undefined
 
@@ -503,9 +506,19 @@ export class WorkspaceClient {
     await this.client.updateDoc(aiBot.class.AIRequest, space, id, patch, false, undefined, modifiedBy)
   }
 
+  /** Workspace-wide shared prompt. Never cached: edited in the UI, and the pod has no tx feed. */
+  private async getSharedPrompt (): Promise<string> {
+    const settings = await this.client?.findOne(aiBot.class.AISpaceSettings, { attachedTo: { $exists: false } })
+    return settings?.sharedPrompt ?? ''
+  }
+
   private async getMemory (personUuid: PersonUuid): Promise<AIMemory> {
     const cached = this.memoryMap.get(personUuid)
-    if (cached !== undefined) return cached
+    // Personal context is edited in the UI too, so the cache only spares repeated reads
+    // within a conversation burst.
+    if (cached !== undefined && Date.now() - cached.at < MEMORY_CACHE_TTL_MS) {
+      return { personalContext: cached.value.personalContext, sharedPrompt: await this.getSharedPrompt() }
+    }
 
     const pref = await this.readMemoryPreference(personUuid)
 
@@ -527,16 +540,13 @@ export class WorkspaceClient {
         : undefined
 
     const { personalContext, migrate } = resolveMemory(pref, blobMemory, personData?.name)
-
-    // Fill sharedPrompt from workspace AISpaceSettings.
-    const spaceSettings = await this.client?.findOne(aiBot.class.AISpaceSettings, { attachedTo: { $exists: false } })
-    const memory: AIMemory = { personalContext, sharedPrompt: spaceSettings?.sharedPrompt ?? '' }
+    const memory: AIMemory = { personalContext, sharedPrompt: await this.getSharedPrompt() }
 
     if (migrate) {
       await this.writeMemoryPreference(personUuid, memory)
     }
 
-    this.memoryMap.set(personUuid, memory)
+    this.memoryMap.set(personUuid, { at: Date.now(), value: memory })
     return memory
   }
 
@@ -574,6 +584,10 @@ export class WorkspaceClient {
     const now = Date.now()
     const seen = this.repliesPerObject.get(objectId)
     if (seen === undefined || now - seen.since > REPLY_FLOOD_WINDOW_MS) {
+      // Windows that already closed carry no state worth keeping.
+      for (const [key, entry] of this.repliesPerObject) {
+        if (now - entry.since > REPLY_FLOOD_WINDOW_MS) this.repliesPerObject.delete(key)
+      }
       this.repliesPerObject.set(objectId, { since: now, count: 1 })
       return false
     }

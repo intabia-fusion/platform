@@ -378,6 +378,7 @@ export function billUsage (
 }
 
 const WINDOW_CACHE_TTL_MS = 30 * 1000
+const WINDOW_CACHE_STALE_MS = 5 * 60 * 1000
 const windowCache = new Map<WorkspaceUuid, { at: number, value: WindowUsage }>()
 
 /** Drop a workspace's cached window (billing published a limits change). */
@@ -440,7 +441,13 @@ export async function getWorkspaceWindows (ctx: MeasureContext, workspace: Works
       isFree: w.isFree ?? false,
       hasPackages: w.hasPackages
     }
-    windowCache.set(workspace, { at: Date.now(), value })
+    const now = Date.now()
+    // Evict well past the TTL, not at it: an expired entry is still the stale-if-error fallback
+    // below. A workspace idle this long does not need one.
+    for (const [key, entry] of windowCache) {
+      if (now - entry.at > WINDOW_CACHE_STALE_MS) windowCache.delete(key)
+    }
+    windowCache.set(workspace, { at: now, value })
     return value
   } catch (e) {
     ctx.error('Failed to fetch token windows', { workspace, e })

@@ -422,16 +422,17 @@ function getEffectiveLimit (subs: Subscription[], metric: UsageMetric): number {
 }
 
 /**
- * Start of the usage window, floored to the hour to match hourly usage buckets.
+ * Start of the usage window, floored to the hour to match hourly usage buckets. UTC, like the
+ * buckets themselves: a local floor drifts by half an hour in zones such as Asia/Kolkata.
  */
 export function getPeriodStartDate (periodStart: number | undefined): Date {
   if (periodStart !== undefined) {
     const start = new Date(periodStart)
-    start.setMinutes(0, 0, 0)
+    start.setUTCMinutes(0, 0, 0)
     return start
   }
   const date = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-  date.setHours(0, 0, 0, 0)
+  date.setUTCHours(0, 0, 0, 0)
   return date
 }
 

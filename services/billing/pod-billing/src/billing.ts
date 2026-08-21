@@ -35,6 +35,7 @@ import {
   getClient as getAccountClient,
   grantsPlan,
   isFreePlan,
+  type Subscription,
   SubscriptionStatus,
   SubscriptionType
 } from '@hcengineering/account-client'
@@ -487,7 +488,9 @@ export async function handleGetWorkspaceBreakdown (
   res: Response
 ): Promise<void> {
   const { fromDate, toDate } = parseDateParameters(req)
-  const limit = parseIntParam(req, 'limit')
+  // Each row costs a plan lookup, so an unpaged call would fan out over every workspace that ever
+  // spent a token. Page by default; the caller can ask for more explicitly.
+  const limit = parseIntParam(req, 'limit') ?? 100
   const offset = parseIntParam(req, 'offset')
   const rows = await db.getWorkspaceBreakdown(ctx, fromDate, toDate, limit, offset)
   const augmented = await Promise.all(
@@ -571,6 +574,31 @@ export async function handleAddAiTokens (
   res.json({ applied, amount })
 }
 
+// Subscriptions change on payment events, not per request, so the admin breakdown (one call per
+// listed workspace) reads them from here instead of hitting account N times per page.
+const SUBS_CACHE_TTL_MS = 60 * 1000
+const subsCache = new Map<WorkspaceUuid, { at: number, subs: Subscription[] }>()
+
+/** Drop every cached subscription set (tests; also handy after a manual plan change). */
+export function clearWorkspacePlanCache (): void {
+  subsCache.clear()
+}
+
+async function getSubscriptionsCached (workspace: WorkspaceUuid): Promise<Subscription[]> {
+  const now = Date.now()
+  const cached = subsCache.get(workspace)
+  if (cached !== undefined && now - cached.at < SUBS_CACHE_TTL_MS) return cached.subs
+
+  const token = generateToken(systemAccountUuid, workspace, { service: 'billing', admin: 'true' })
+  const subs = await getAccountClient(billingConfig.AccountsUrl, token).getSubscriptions(workspace, false)
+
+  for (const [key, value] of subsCache) {
+    if (now - value.at >= SUBS_CACHE_TTL_MS) subsCache.delete(key)
+  }
+  subsCache.set(workspace, { at: now, subs })
+  return subs
+}
+
 // Tier window + purchased balance for a workspace. Falls back to env defaults on outage (fail-open).
 export async function resolveWorkspacePlan (
   ctx: MeasureContext,
@@ -585,9 +613,8 @@ export async function resolveWorkspacePlan (
     periodStart: Date
   }> {
   try {
-    const token = generateToken(systemAccountUuid, workspace, { service: 'billing', admin: 'true' })
-    const account = getAccountClient(billingConfig.AccountsUrl, token)
-    const subs = await account.getSubscriptions(workspace, false)
+    // Balance stays uncached: a token grant must show up on the very next read.
+    const subs = await getSubscriptionsCached(workspace)
     const limits = resolveTierLimits(subs)
     // Tier window burns at period end; packages and one-time purchases feed the balance instead.
     const limitMonth = limits?.windowMonthLimit ?? billingConfig.WindowMonthLimit

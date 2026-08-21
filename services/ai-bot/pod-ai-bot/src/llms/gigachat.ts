@@ -44,11 +44,16 @@ import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFuncti
 import { PROMPTS, buildSystemPrompt, CONTINUE_PROMPT } from './prompts'
 import { buildPersonNameMap, buildMessageText, replacePersonRefs } from './summarizeUtils'
 
+// GigaChat tokens live 30 minutes and the client refreshes only lazily (on a 401), so the first
+// request after each expiry pays the OAuth round trip. Refresh ahead of it instead.
+const GIGACHAT_TOKEN_REFRESH_MS = 25 * 60 * 1000
+
 export default class GigaChatProvider implements LLMProvider {
   private readonly client: GigaChat
   private readonly encoding: Tiktoken // js-tiktoken doesn't have a direct encoding for GigaChat models
   private readonly provider: AIProviderConfig
   private readonly defaultLevel: AILevel
+  private readonly tokenTimer: NodeJS.Timeout
 
   constructor (
     readonly ctx: MeasureContext,
@@ -71,6 +76,23 @@ export default class GigaChatProvider implements LLMProvider {
       this.encoding = encodingForModel('gpt-4')
     } catch {
       this.encoding = getEncoding('cl100k_base')
+    }
+
+    void this.refreshToken()
+    this.tokenTimer = setInterval(() => {
+      void this.refreshToken()
+    }, GIGACHAT_TOKEN_REFRESH_MS)
+    // Never a reason to keep the process alive.
+    this.tokenTimer.unref?.()
+  }
+
+  /** Fetch a fresh OAuth token out of band, so no user request waits for the handshake. */
+  private async refreshToken (): Promise<void> {
+    try {
+      await this.client.updateToken()
+    } catch (err: any) {
+      // Not fatal: the next call re-authenticates through the library's own 401 path.
+      this.ctx.warn('GigaChat token refresh failed', { provider: this.provider.id, error: err?.message })
     }
   }
 

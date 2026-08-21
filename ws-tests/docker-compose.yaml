@@ -245,6 +245,7 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - USAGE_UPDATE_INTERVAL=600
+      - ALLOW_TEST_ENDPOINTS=true
     restart: unless-stopped
   workspace:
     image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'

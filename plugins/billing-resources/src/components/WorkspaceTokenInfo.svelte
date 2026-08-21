@@ -49,6 +49,9 @@
     try {
       await client.resetWorkspaceUsed(workspace)
       await reload()
+    } catch (err) {
+      // 404 when the stand runs without ALLOW_TEST_ENDPOINTS.
+      console.error('Failed to reset workspace usage:', err)
     } finally {
       busy = false
     }
@@ -61,6 +64,8 @@
     try {
       await client.setWorkspaceUsed(workspace, Math.max(0, Math.floor(usedValue)), level)
       await reload()
+    } catch (err) {
+      console.error('Failed to set workspace usage:', err)
     } finally {
       busy = false
     }

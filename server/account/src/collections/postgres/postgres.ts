@@ -2089,13 +2089,15 @@ export class PostgresAccountDB implements AccountDB {
     return Array.from(byMonth.values()).sort((a, b) => a.month.localeCompare(b.month))
   }
 
-  // Insert a purchase row, returns the generated id.
+  // Insert a purchase row, returns the generated id. Idempotent by (payment_id, provider):
+  // a concurrent duplicate hits the unique index and returns the existing row's id.
   async createPurchase (p: WorkspacePurchase): Promise<string> {
     const table = this.workspacePurchase.getTableName()
     const rows = await this.workspacePurchase.unsafe(
       `INSERT INTO ${table}
         (workspace_uuid, account_uuid, sku, category, status, amount, payment_id, provider, raw, activated_on)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10)
+       ON CONFLICT (payment_id, provider) WHERE payment_id IS NOT NULL DO NOTHING
        RETURNING id`,
       [
         p.workspaceUuid,
@@ -2110,7 +2112,18 @@ export class PostgresAccountDB implements AccountDB {
         p.activatedOn ?? null
       ]
     )
-    return (rows as Array<Record<string, any>>)[0].id as string
+    const inserted = (rows as Array<Record<string, any>>)[0]?.id as string | undefined
+    if (inserted !== undefined) return inserted
+
+    const existing = await this.workspacePurchase.unsafe(
+      `SELECT id FROM ${table} WHERE payment_id = $1 AND provider = $2`,
+      [p.paymentId ?? null, p.provider ?? null]
+    )
+    const id = (existing as Array<Record<string, any>>)[0]?.id as string | undefined
+    if (id === undefined) {
+      throw new Error(`failed to create purchase for payment ${p.paymentId ?? ''}`)
+    }
+    return id
   }
 
   async updatePurchaseStatus (id: string, status: WorkspacePurchaseStatus, activatedOn?: number): Promise<void> {

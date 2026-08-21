@@ -945,6 +945,8 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - USAGE_UPDATE_INTERVAL=600
       - QUEUE_CONFIG=${QUEUE_CONFIG}
+      # Destructive usage-rewrite endpoints (reset / set-used): dev stand only.
+      - ALLOW_TEST_ENDPOINTS=true
     # Debug: uncomment to enable remote debugging
     # ports:
     #   - 9238:9238
