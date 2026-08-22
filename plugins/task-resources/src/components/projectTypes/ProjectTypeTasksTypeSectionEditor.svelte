@@ -14,6 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { onDestroy } from 'svelte'
   import { SortingOrder } from '@hcengineering/core'
   import { ButtonIcon, IconAdd, Label, getCurrentResolvedLocation, navigate, showPopup } from '@hcengineering/ui'
   import { createQuery } from '@hcengineering/presentation'
@@ -56,6 +57,10 @@
     clearSettingsStore()
     navigate(loc)
   }
+
+  onDestroy(() => {
+    clearSettingsStore()
+  })
 </script>
 
 {#if descriptor !== undefined}
