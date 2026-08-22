@@ -18,7 +18,12 @@ import { getClient } from '../client'
 describe('AccountClient network retries', () => {
   const realFetch = globalThis.fetch
 
+  beforeEach(() => {
+    jest.useFakeTimers()
+  })
+
   afterEach(() => {
+    jest.useRealTimers()
     globalThis.fetch = realFetch
   })
 
@@ -29,9 +34,13 @@ describe('AccountClient network retries', () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     const client = getClient('http://accounts.test', undefined, 60)
-    await new Promise<void>((resolve) => setTimeout(resolve, 120))
+    // Retry window is already over if the deadline is captured at construction time
+    jest.advanceTimersByTime(120)
 
-    await expect(client.getRegionInfo()).rejects.toThrow()
+    const assertion = expect(client.getRegionInfo()).rejects.toThrow()
+    await jest.advanceTimersByTimeAsync(1000)
+    await assertion
+
     expect(fetchMock.mock.calls.length).toBeGreaterThan(1)
   })
 })
