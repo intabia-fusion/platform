@@ -461,7 +461,7 @@ export function filterProjection<T extends Doc> (data: any, projection: Projecti
   return data
 }
 
-// Hot path: called per row of every findAll. Column values are written straight into the
+// Hot path: called per row of every findAll. Column values go straight into a copy of the
 // jsonb payload, so a row costs one object instead of a rest-copy plus two spreads.
 function assignColumns (doc: DBDoc, target: Record<string, any>, schema: Schema): void {
   for (const key in doc) {
@@ -491,8 +491,10 @@ export function parseDocWithProjection<T extends Doc> (
   projection?: Projection<T> | undefined
 ): T {
   // A hash scan selects columns only - no jsonb payload to merge into.
-  const data = doc.data ?? {}
-  const res = projection !== undefined ? filterProjection(data, projection) : data
+  const res = { ...doc.data }
+  if (projection !== undefined) {
+    filterProjection(res, projection)
+  }
   assignColumns(doc, res, getSchema(domain))
   return res as T
 }
@@ -509,7 +511,7 @@ export function toWithLookup<T extends Doc> (doc: T): WithLookup<T> {
 }
 
 export function parseDoc<T extends Doc> (doc: DBDoc, schema: Schema, keepHash: boolean = false): T {
-  const res = doc.data ?? {}
+  const res = { ...doc.data }
   assignColumns(doc, res, schema)
   if (keepHash && doc['%hash%'] !== undefined) {
     res['%hash%'] = doc['%hash%']

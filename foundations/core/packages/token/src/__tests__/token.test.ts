@@ -207,6 +207,33 @@ describe('decodeToken cache', () => {
     expect(() => decodeToken(token)).toThrow()
   })
 
+  it('should keep a hot token alive across an eviction sweep', () => {
+    const hot = generateToken(account, workspace)
+    // A cache hit returns the very object that was stored, a miss decodes a fresh one.
+    const cached = decodeToken(hot)
+    expect(decodeToken(hot)).toBe(cached)
+
+    // Overflow the cache several times over; the hot token is re-set on every hit.
+    for (let i = 0; i < 6000; i++) {
+      decodeToken(generateToken(account, workspace, { n: `${i}` }))
+      if (i % 100 === 0) expect(decodeToken(hot)).toBe(cached)
+    }
+    expect(decodeToken(hot)).toBe(cached)
+  })
+
+  it('should evict a cold token once the cache overflows', () => {
+    const cold = generateToken(account, workspace, { cold: 'true' })
+    const cached = decodeToken(cold)
+
+    for (let i = 0; i < 6000; i++) {
+      decodeToken(generateToken(account, workspace, { m: `${i}` }))
+    }
+    // Same payload, but a re-decoded object - the cold entry was swept.
+    const after = decodeToken(cold)
+    expect(after).not.toBe(cached)
+    expect(after).toEqual(cached)
+  })
+
   it('should not let a tampered token through after a valid one', () => {
     const token = generateToken(account, workspace)
     expect(decodeToken(token).account).toBe(account)
