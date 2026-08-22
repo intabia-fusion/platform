@@ -49,6 +49,8 @@ services:
       - ACCOUNTS_URL=http://account:3003
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - SECRET=secret
+      - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       - BRANDING_PATH=/var/cfg/branding.json
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
@@ -128,6 +130,9 @@ services:
     expose:
       - 9000
       - 9001
+    ports:
+      - 9000:9000
+      - 9001:9001
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
@@ -183,6 +188,9 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - SERVER_SECRET=secret
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
+      # Without it the upgrade queue takes every outdated workspace, and a restored bench dump
+      # (hundreds of them, last_visit NULL) blocks workspace creation for the whole test run.
+      - WS_LIVENESS_DAYS=1
       - WORKSPACE_LIMIT_PER_USER=100
       # Free fallback limits (match the free:true plan in plan-config.yaml). storagePerUserGB scales disk.
       - FREE_PLAN_LIMITS={"usersLimit":5,"storagePerUserGB":2,"tokenLimit":100000,"trafficLimitGB":0,"meetingMinutesLimit":0}
@@ -191,6 +199,7 @@ services:
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - BRANDING_PATH=/var/cfg/branding.json
       - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
   workspace:
     image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'
@@ -217,6 +226,7 @@ services:
       - ACCOUNTS_DB_URL=${DB_PG_URL}
       - BRANDING_PATH=/var/cfg/branding.json
       - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     restart: unless-stopped
   nginx:
@@ -308,6 +318,7 @@ services:
       - BRANDING_PATH=/var/cfg/branding.json
       - FULLTEXT_URL=http://fulltext:4710
       - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       - ENABLE_COMPRESSION=true
       - RATE_LIMIT_MAX=25000
       - RATE_LIMIT_WINDOW=1000
@@ -363,10 +374,13 @@ services:
       - REKONI_URL=http://rekoni:4004
       - ACCOUNTS_URL=http://account:3003
       - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
   stats:
     image: 'intabiafusion/stats:${DOCKER_TAG:-latest}'
     pull_policy: never
+    ports:
+      - 4901:4901
     environment:
       - PORT=4901
       - SERVER_SECRET=secret
@@ -410,6 +424,8 @@ services:
       - FRONT_URL=http://localhost:8083
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - QUEUE_REGION=
+      - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
       - BRANDING_PATH=/var/cfg/branding.json
     restart: unless-stopped
@@ -431,6 +447,7 @@ services:
       - SECRET=secret
       - ACCOUNTS_URL=http://account:3003
       - STATS_URL=http://stats:4901
+      - STATS_TOP_SLICE=200
       - STREAM_URL=http://stream:1080/recording
       - DB_URL=${DB_PG_URL}
       - BUCKETS=blobs,eu|http://minio:9000?accessKey=minioadmin&secretKey=minioadmin

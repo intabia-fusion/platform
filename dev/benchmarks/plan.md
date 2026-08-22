@@ -19,7 +19,6 @@ dev/benchmarks/
     workspace-manager.ts   # Multi-workspace creation via account API
     run.ts                 # CLI entry point: select and run scenarios
     scenarios/
-      01-workspace-setup.ts        # Create projects in a single workspace
       02-rest-throughput.ts         # REST API throughput limits (ramp up clients)
       03-multi-workspace.ts         # Multi-workspace simultaneous stress
       04-ws-throughput.ts           # WebSocket throughput limits
@@ -60,23 +59,8 @@ npx ts-node src/run.ts --url http://localhost:8087 --scenario multi-workspace \
 
 ## Scenarios
 
-### 1. Workspace Setup (`01-workspace-setup.ts`)
-
-Prepare test data. Create N workspaces with M projects each.
-
-**Parameters:**
-- `--workspaces N` (default: 10)
-- `--projects-per-ws M` (default: 50)
-
-**What it measures:**
-- Project creation throughput
-- Account service response time under batch creation
-
-**Expected output:**
-- Projects/sec
-- Latency histogram
-
----
+Sections 4-8 below are the original plan; what actually shipped (read-perf,
+connect-storm, recover-storm, refresh-probe) is documented in `README.md`.
 
 ### 2. REST API Throughput (`02-rest-throughput.ts`)
 

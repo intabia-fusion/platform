@@ -15,10 +15,16 @@
 
 import { parseArgs } from './config'
 import { initPool } from './helpers'
-import { runWorkspaceSetup } from './scenarios/01-workspace-setup'
 import { runRestThroughput } from './scenarios/02-rest-throughput'
 import { runMultiWorkspace } from './scenarios/03-multi-workspace'
+import { runReadPerf } from './scenarios/04-read-perf'
+import { runConnectStorm } from './scenarios/05-connect-storm'
+import { runRecoverStorm } from './scenarios/06-recover-storm'
+import { runRefreshProbe } from './scenarios/07-refresh-probe'
 import { withProfiling, type ProfileGuard } from './profiler'
+
+// Live (WebSocket) scenarios connect on their own - no REST pool, not part of 'all'.
+const LIVE_SCENARIOS = new Set(['read-perf', 'connect-storm', 'recover-storm', 'refresh-probe'])
 
 async function main (): Promise<void> {
   const cfg = parseArgs(process.argv.slice(2))
@@ -32,39 +38,54 @@ async function main (): Promise<void> {
   console.log(`  scenario:  ${cfg.scenario}`)
   console.log('')
 
-  // Start profiling if requested
+  const scenario = cfg.scenario
+  const allResults: any = {}
+
+  // Live scenarios: self-connecting probes, dispatched directly.
+  if (LIVE_SCENARIOS.has(scenario)) {
+    if (scenario === 'read-perf') {
+      const results = await runReadPerf(cfg)
+      allResults.readPerf = results
+      if (results.some((r) => r.bad)) process.exitCode = 1
+    } else if (scenario === 'connect-storm') {
+      allResults.connectStorm = await runConnectStorm(cfg)
+    } else if (scenario === 'recover-storm') {
+      allResults.recoverStorm = await runRecoverStorm(cfg)
+    } else if (scenario === 'refresh-probe') {
+      allResults.refreshProbe = await runRefreshProbe(cfg)
+    }
+    if (cfg.output !== undefined) {
+      const fs = await import('fs')
+      fs.writeFileSync(cfg.output, JSON.stringify(allResults, null, 2))
+      console.log(`\nResults written to ${cfg.output}`)
+    }
+    console.log('\nDone.')
+    return
+  }
+
+  // Start profiling if requested (REST scenarios).
   let profileGuard: ProfileGuard | undefined
   if (cfg.profile && cfg.transactorUrl !== undefined) {
     console.log(`  starting CPU profiling on ${cfg.transactorUrl}...`)
     profileGuard = await withProfiling(cfg.transactorUrl, cfg.profileDir)
   }
 
-  const scenario = cfg.scenario
-  const allResults: any = {}
-
   // Scenarios that need a connection pool (single workspace)
-  if (scenario === 'all' || scenario === 'setup' || scenario === 'rest-throughput') {
+  if (scenario === 'all' || scenario === 'rest-throughput') {
     const pool = await initPool(cfg)
     console.log('  connection pool initialized')
 
-    if (scenario === 'all' || scenario === 'setup') {
-      const projects = await runWorkspaceSetup(cfg, pool)
-      allResults.setup = { projectCount: projects.length }
-    }
-
-    if (scenario === 'all' || scenario === 'rest-throughput') {
-      const results = await runRestThroughput(cfg, pool)
-      allResults.restThroughput = results.map((r) => ({
-        operation: r.operation,
-        clients: r.clientCount,
-        opsPerSec: r.stats.realOpsPerSec,
-        avgMs: r.stats.avgMs,
-        p95Ms: r.stats.p95Ms,
-        p99Ms: r.stats.p99Ms,
-        maxMs: r.stats.maxMs,
-        errors: r.stats.failed
-      }))
-    }
+    const results = await runRestThroughput(cfg, pool)
+    allResults.restThroughput = results.map((r) => ({
+      operation: r.operation,
+      clients: r.clientCount,
+      opsPerSec: r.stats.realOpsPerSec,
+      avgMs: r.stats.avgMs,
+      p95Ms: r.stats.p95Ms,
+      p99Ms: r.stats.p99Ms,
+      maxMs: r.stats.maxMs,
+      errors: r.stats.failed
+    }))
   }
 
   // Multi-workspace scenario (creates its own connections)

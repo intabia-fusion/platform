@@ -741,6 +741,9 @@ function createWebsocketClientSocket (
       if (_compression) {
         sendMsg = await compress(smsg)
       }
+      // Real bytes on the wire, after packing and compression - replaces the old estimate,
+      // which walked the whole result graph just to feed a counter.
+      ctx.measure('clientSendBytes', sendMsg.length)
       const st = platformNow()
       await new Promise<void>((resolve) => {
         const handleErr = (err?: Error): void => {

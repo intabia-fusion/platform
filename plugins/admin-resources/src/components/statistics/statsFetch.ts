@@ -35,3 +35,16 @@ export async function fetchStatsJson<T> (url: string, signal?: AbortSignal): Pro
   }
   return (await res.json()) as T
 }
+
+// Save rows as a CSV file. Values are stringified as-is; quotes are doubled and
+// every cell is quoted, so commas and newlines inside SQL survive the round trip.
+export function downloadCsv (filename: string, header: string[], rows: Array<Array<string | number>>): void {
+  const esc = (v: string | number): string => `"${String(v).replace(/"/g, '""')}"`
+  const csv = [header, ...rows].map((r) => r.map(esc).join(',')).join('\n')
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}

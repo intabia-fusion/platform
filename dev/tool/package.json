@@ -98,6 +98,7 @@
     "@hcengineering/postgres": "workspace:^0.7.22",
     "@hcengineering/account-client": "workspace:^0.7.21",
     "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/love": "workspace:^0.7.0",
     "@hcengineering/recruit": "workspace:^0.7.0",
     "@hcengineering/rekoni": "workspace:^0.7.0",
     "@hcengineering/server-pipeline": "workspace:^0.7.0",

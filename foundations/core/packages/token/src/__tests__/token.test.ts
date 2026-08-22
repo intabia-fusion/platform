@@ -169,3 +169,49 @@ describe('extractCookieToken', () => {
     expect(extractCookieToken('account-metadata-Token=', 'account-metadata-Token')).toBeUndefined()
   })
 })
+
+describe('decodeToken cache', () => {
+  const account = 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa' as PersonUuid
+  const workspace = 'bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb' as WorkspaceUuid
+
+  beforeEach(() => {
+    setMetadata(plugin.metadata.Secret, 'secret')
+    setMetadata(plugin.metadata.Service, undefined)
+  })
+
+  it('should return the same payload on repeated decode', () => {
+    const token = generateToken(account, workspace, { admin: 'true' })
+
+    expect(decodeToken(token)).toEqual(decodeToken(token))
+    expect(decodeToken(token).account).toBe(account)
+  })
+
+  it('should not serve an expired token from the cache', () => {
+    const token = generateToken(account, workspace, undefined, undefined, {
+      exp: Math.floor(Date.now() / 1000) + 1
+    })
+    expect(decodeToken(token).account).toBe(account)
+
+    jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 5000)
+    try {
+      expect(() => decodeToken(token)).toThrow()
+    } finally {
+      jest.spyOn(Date, 'now').mockRestore()
+    }
+  })
+
+  it('should keep tokens of different secrets apart', () => {
+    const token = generateToken(account, workspace, undefined, 'other-secret')
+
+    expect(decodeToken(token, true, 'other-secret').account).toBe(account)
+    expect(() => decodeToken(token)).toThrow()
+  })
+
+  it('should not let a tampered token through after a valid one', () => {
+    const token = generateToken(account, workspace)
+    expect(decodeToken(token).account).toBe(account)
+
+    const [h, p] = token.split('.')
+    expect(() => decodeToken(`${h}.${p}.deadbeef`)).toThrow()
+  })
+})

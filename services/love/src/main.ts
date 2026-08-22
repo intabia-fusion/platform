@@ -299,7 +299,7 @@ export const main = async (): Promise<void> => {
       if (accountUuid !== systemAccountUuid) {
         const wsClient = await WorkspaceClient.create(workspaceId, ctx)
         const meetingDoc = await wsClient.findMeetingById(meetingId)
-        if (meetingDoc !== undefined && meetingDoc.private && !meetingDoc.members.includes(accountUuid)) {
+        if (meetingDoc?.private === true && !meetingDoc.members.includes(accountUuid)) {
           // Owners bypass private-meeting membership; rechecked here in case the client's self-add races or fails.
           let isWorkspaceOwner = false
           try {

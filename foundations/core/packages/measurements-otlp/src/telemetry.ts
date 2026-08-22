@@ -8,6 +8,7 @@ import {
   nullPromise,
   platformNow,
   platformNowDiff,
+  recordTopInto,
   updateMeasure,
   type FullParamsType,
   type MeasureLogger,
@@ -86,6 +87,9 @@ export class OpenTelemetryMetricsContext implements MeasureContext {
   metrics: Metrics
   id?: string
 
+  // Cached root context - avoids walking the parent chain on every record call.
+  readonly root: OpenTelemetryMetricsContext
+
   st = platformNow()
   contextData: object = {}
   isDone = false
@@ -116,6 +120,7 @@ export class OpenTelemetryMetricsContext implements MeasureContext {
     this.name = name
     this.params = params
     this.fullParams = fullParams
+    this.root = (parent as OpenTelemetryMetricsContext)?.root ?? this
     this.metrics = metrics
     this.metrics.namedParams = this.metrics.namedParams ?? {}
     for (const [k, v] of Object.entries(params)) {
@@ -145,6 +150,10 @@ export class OpenTelemetryMetricsContext implements MeasureContext {
       const attrs: Record<string, any> = { ...this.params, ...(labels ?? {}) }
       h.record(ms, attrs)
     }
+  }
+
+  recordTop (registry: string, key: string, value: number, sample?: string): void {
+    recordTopInto(this.root.metrics, registry, key, value, sample)
   }
 
   newChild (

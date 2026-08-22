@@ -698,7 +698,7 @@ describe('PostgresAccountDB', () => {
                AND (s.processing_attempts IS NULL OR s.processing_attempts <= 3)
                AND (s.last_processing_time IS NULL OR s.last_processing_time < $1)
                AND (w.region IS NULL OR w.region = '')
-               ORDER BY s.last_visit DESC
+               ORDER BY (CASE WHEN s.mode IN ('pending-creation', 'creating') THEN 0 ELSE 1 END), s.last_visit DESC
                LIMIT 1`.replace(/\s+/g, ' ')
         )
         expect(mockClient.unsafe.mock.calls[0][1]).toEqual([NOW - processingTimeoutMs])
@@ -758,7 +758,7 @@ describe('PostgresAccountDB', () => {
                AND (s.processing_attempts IS NULL OR s.processing_attempts <= 3)
                AND (s.last_processing_time IS NULL OR s.last_processing_time < $5)
                AND (w.region IS NULL OR w.region = '')
-               ORDER BY s.last_visit DESC
+               ORDER BY (CASE WHEN s.mode IN ('pending-creation', 'creating') THEN 0 ELSE 1 END), s.last_visit DESC
                LIMIT 1`
             .replace(/\s+/g, ' ')
             .replace(/\(\s/g, '(')
@@ -831,7 +831,7 @@ describe('PostgresAccountDB', () => {
                AND (s.processing_attempts IS NULL OR s.processing_attempts <= 3)
                AND (s.last_processing_time IS NULL OR s.last_processing_time < $5)
                AND (w.region IS NULL OR w.region = '')
-               ORDER BY s.last_visit DESC
+               ORDER BY (CASE WHEN s.mode IN ('pending-creation', 'creating') THEN 0 ELSE 1 END), s.last_visit DESC
                LIMIT 1`
             .replace(/\s+/g, ' ')
             .replace(/\(\s/g, '(')
@@ -922,7 +922,7 @@ describe('PostgresAccountDB', () => {
                AND (s.processing_attempts IS NULL OR s.processing_attempts <= 3)
                AND (s.last_processing_time IS NULL OR s.last_processing_time < $5)
                AND (w.region IS NULL OR w.region = '')
-               ORDER BY s.last_visit DESC
+               ORDER BY (CASE WHEN s.mode IN ('pending-creation', 'creating') THEN 0 ELSE 1 END), s.last_visit DESC
                LIMIT 1`
             .replace(/\s+/g, ' ')
             .replace(/\(\s/g, '(')
@@ -976,7 +976,7 @@ describe('PostgresAccountDB', () => {
                AND (s.processing_attempts IS NULL OR s.processing_attempts <= 3)
                AND (s.last_processing_time IS NULL OR s.last_processing_time < $1)
                AND region = $2
-               ORDER BY s.last_visit DESC
+               ORDER BY (CASE WHEN s.mode IN ('pending-creation', 'creating') THEN 0 ELSE 1 END), s.last_visit DESC
                LIMIT 1`
             .replace(/\s+/g, ' ')
             .replace(/\(\s/g, '(')

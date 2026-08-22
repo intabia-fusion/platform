@@ -176,7 +176,15 @@ export class DatalakeImpl implements Datalake {
 
     const data = await this.db.getData(ctx, { hash, location })
 
-    if (data !== null) {
+    // A data row can outlive its object (partial restore, bucket cleanup). Reusing it blindly
+    // would create a blob that 404s on every read, so re-upload instead.
+    let reuse = data !== null
+    if (data !== null && (await bucket.head(ctx, data.filename)) === null) {
+      ctx.warn('data row without object, re-uploading', { workspace, name, hash, filename: data.filename })
+      reuse = false
+    }
+
+    if (reuse) {
       // Nothing to upload, use existing blob
       await this.db.createBlob(ctx, { workspace, name, hash, location })
 

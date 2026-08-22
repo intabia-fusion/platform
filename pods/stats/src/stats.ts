@@ -4,7 +4,7 @@
 //
 
 import { Analytics } from '@hcengineering/analytics'
-import { metricsAggregate, type MeasureContext, type Metrics } from '@hcengineering/core'
+import { metricsAggregate, type MeasureContext, type Metrics, type TopEntry } from '@hcengineering/core'
 import { setMetadata } from '@hcengineering/platform'
 import { RPCHandler } from '@hcengineering/rpc'
 import {
@@ -109,6 +109,10 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
     }
   }, serviceTimeout)
 
+  // Service ids with a pending one-shot wipe request. The service receives the
+  // flag in the reply to its next stats PUT, wipes locally, and we clear it.
+  const pendingWipe = new Set<string>()
+
   const app = new Koa()
   const router = new Router()
 
@@ -182,6 +186,95 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
       req.body = dta
     } catch (err: any) {
       console.error(err, req.host, req.headers, req.ip)
+      req.res.writeHead(404, {})
+      req.res.end()
+    }
+  })
+
+  // Merged view of one top-N registry across every live instance - otherwise the UI pulls
+  // the full metrics tree from each of them (megabytes per tick) and merges client side.
+  router.get('/api/v1/top', (req, res) => {
+    try {
+      const token = (req.query.token as string) ?? extractAuthorizationToken(req.headers)
+      const payload = decodeToken(token)
+      if (payload.extra?.admin !== 'true') {
+        req.res.setHeader('Content-Type', 'application/json')
+        req.body = {}
+        return
+      }
+
+      const registry = (req.query.registry as string) ?? ''
+      const service = req.query.service as string | undefined
+      const sort = req.query.sort === 'count' ? 'count' : 'max'
+      const limit = Math.min(Math.max(parseInt((req.query.limit as string) ?? '30'), 1), 500)
+
+      const merged = new Map<string, TopEntry & { key: string }>()
+      let totalCount = 0
+      let totalSum = 0
+      let instances = 0
+
+      for (const v of statistics.values()) {
+        if (isStale(v)) continue
+        if (service !== undefined && service !== '' && v.serviceName !== service) continue
+        const reg = v.stats?.top?.[registry]
+        if (reg === undefined) continue
+        instances++
+        totalCount += reg.totalCount
+        totalSum += reg.totalSum
+        for (const [key, e] of Object.entries(reg.entries)) {
+          const acc = merged.get(key)
+          if (acc === undefined) {
+            merged.set(key, { ...e, key, sample: e.sample ?? key })
+            continue
+          }
+          acc.count += e.count
+          acc.sum += e.sum
+          acc.le10 += e.le10
+          acc.le100 += e.le100
+          acc.le500 += e.le500
+          // The sample belongs to whichever instance saw the worst hit.
+          if (e.max > acc.max) {
+            acc.max = e.max
+            acc.sample = e.sample ?? key
+          }
+        }
+      }
+
+      const entries = Array.from(merged.values())
+        .sort((a, b) => (sort === 'count' ? b.count - a.count : b.max - a.max))
+        .slice(0, limit)
+
+      // Worst lag across the same instances - tells apart a slow statement from a busy process.
+      let eventLoop: { lagP50: number, lagP95: number, lagMax: number, threadPool: number } | undefined
+      for (const v of statistics.values()) {
+        if (isStale(v) || v.eventLoop === undefined) continue
+        if (service !== undefined && service !== '' && v.serviceName !== service) continue
+        const e = v.eventLoop
+        eventLoop =
+          eventLoop === undefined
+            ? { ...e }
+            : {
+                lagP50: Math.max(eventLoop.lagP50, e.lagP50),
+                lagP95: Math.max(eventLoop.lagP95, e.lagP95),
+                lagMax: Math.max(eventLoop.lagMax, e.lagMax),
+                threadPool: e.threadPool
+              }
+      }
+
+      req.res.setHeader('Content-Type', 'application/json')
+      req.body = {
+        registry,
+        instances,
+        totalCount,
+        totalSum,
+        // totalCount - trackedCount is what the per-instance slices dropped.
+        trackedCount: entries.reduce((p, e) => p + e.count, 0),
+        eventLoop,
+        entries
+      }
+    } catch (err: any) {
+      Analytics.handleError(err)
+      console.error(err)
       req.res.writeHead(404, {})
       req.res.end()
     }
@@ -272,8 +365,10 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
           })
         }
       }
-      req.res.writeHead(200)
-      req.res.end()
+      // Tell the service to wipe its local metrics if a one-shot wipe is pending.
+      const wipe = pendingWipe.delete(serviceName)
+      req.res.setHeader('Content-Type', 'application/json')
+      req.body = { wipe }
     } catch (err: any) {
       console.error(err, req.host, req.headers, req.ip)
       req.res.writeHead(404, {})
@@ -407,7 +502,15 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
 
       switch (operation) {
         case 'wipe-statistics': {
-          statistics.clear()
+          // Optional ?name=<serviceId> targets one service; otherwise all known.
+          const target = (req.query.name as string) ?? ''
+          if (target !== '') {
+            pendingWipe.add(target)
+            statistics.delete(target)
+          } else {
+            for (const k of statistics.keys()) pendingWipe.add(k)
+            statistics.clear()
+          }
           req.res.writeHead(200)
           req.res.end()
           return

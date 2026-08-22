@@ -1106,7 +1106,10 @@ export class PostgresAccountDB implements AccountDB {
     }
 
     sqlChunks.push(`WHERE ${whereChunks.join(' AND ')}`)
-    sqlChunks.push('ORDER BY s.last_visit DESC')
+    // Creation first: it is interactive, while upgrades are background work. Without this a user
+    // waits behind every stale workspace in the region (last_visit is NULL for both, so plain
+    // ordering mixes them).
+    sqlChunks.push(`ORDER BY (CASE WHEN ${pendingCreationSql} THEN 0 ELSE 1 END), s.last_visit DESC`)
     sqlChunks.push('LIMIT 1')
 
     return await this.withRetry(async (rTx) => {

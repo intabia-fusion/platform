@@ -1,8 +1,16 @@
 import type { MeasureContext, Metrics } from '@hcengineering/core'
-import { concatLink, MeasureMetricsContext, metricsClean, newMetrics, systemAccountUuid } from '@hcengineering/core'
+import {
+  concatLink,
+  MeasureMetricsContext,
+  metricsClean,
+  newMetrics,
+  systemAccountUuid,
+  wipeMetrics
+} from '@hcengineering/core'
 import { RPCHandler } from '@hcengineering/rpc'
 import { generateToken } from '@hcengineering/server-token'
 import os from 'os'
+import { monitorEventLoopDelay } from 'perf_hooks'
 
 export interface MemoryStatistics {
   memoryUsed: number
@@ -44,12 +52,38 @@ export interface WorkspaceStatistics {
 
   service?: string
 }
+export interface EventLoopStatistics {
+  // Milliseconds a callback waited past its schedule, over the last report interval.
+  lagP50: number
+  lagP95: number
+  lagMax: number
+  // libuv thread pool - fs/dns/crypto run there, JS itself is single threaded.
+  threadPool: number
+}
+
 export interface ServiceStatistics {
   serviceName: string // A service category
   memory: MemoryStatistics
   cpu: CPUStatistics
+  eventLoop?: EventLoopStatistics
   stats?: Metrics
   workspaces?: WorkspaceStatistics[]
+}
+
+// Enabled once per process; reset after every report so numbers cover one interval.
+const eventLoopDelay = monitorEventLoopDelay({ resolution: 10 })
+eventLoopDelay.enable()
+
+export function getEventLoopInfo (): EventLoopStatistics {
+  const ms = (ns: number): number => Math.round((ns / 1e6) * 100) / 100
+  const info: EventLoopStatistics = {
+    lagP50: ms(eventLoopDelay.percentile(50)),
+    lagP95: ms(eventLoopDelay.percentile(95)),
+    lagMax: ms(eventLoopDelay.max),
+    threadPool: parseInt(process.env.UV_THREADPOOL_SIZE ?? '4')
+  }
+  eventLoopDelay.reset()
+  return info
 }
 
 export function getMemoryInfo (): MemoryStatistics {
@@ -72,6 +106,10 @@ export function getCPUInfo (): CPUStatistics {
 }
 
 const METRICS_UPDATE_INTERVAL = 5000
+
+// Bounds the snapshot only - registries keep counting everything locally.
+// Test stands raise it (STATS_TOP_SLICE=200) to see the whole shape set.
+const TOP_SLICE = parseInt(process.env.STATS_TOP_SLICE ?? '30')
 /**
  * @public
  */
@@ -133,7 +171,8 @@ export function initStatisticsContext (
             serviceName: ops?.serviceName?.() ?? serviceName,
             cpu: getCPUInfo(),
             memory: getMemoryInfo(),
-            stats: metricsContext.metrics !== undefined ? metricsClean(metricsContext.metrics) : undefined,
+            eventLoop: getEventLoopInfo(),
+            stats: metricsContext.metrics !== undefined ? metricsClean(metricsContext.metrics, TOP_SLICE) : undefined,
             workspaces: ops?.getStats?.()
           }
 
@@ -151,6 +190,18 @@ export function initStatisticsContext (
                 },
                 body: statData
               })
+                .then(async (resp) => {
+                  // Stats may instruct a one-shot wipe (pull-based reset).
+                  try {
+                    const reply = (await resp.json()) as { wipe?: boolean }
+                    if (reply?.wipe === true && metricsContext instanceof MeasureMetricsContext) {
+                      wipeMetrics(metricsContext.metrics)
+                      metricsContext.info('statistics wiped on stats request')
+                    }
+                  } catch {
+                    // empty/non-JSON reply - nothing to do
+                  }
+                })
                 .finally(() => {
                   prev = undefined
                 })

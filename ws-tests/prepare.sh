@@ -34,6 +34,14 @@ DB_URL="postgresql://root@localhost:26258/defaultdb?sslmode=disable" node ../ser
 
 ./wait-elastic.sh 9201
 
+# `restore_bench` arg (any position) / RESTORE_BENCH=1 / BENCH_DUMP=<path> restores a
+# full snapshot (DB + blobs) instead of seeding fresh; without an explicit BENCH_DUMP
+# it picks the newest dump in BENCH_BACKUPS.
+if [[ " $* " == *" restore_bench "* ]] || [ "${RESTORE_BENCH:-}" = "1" ] || [ -n "${BENCH_DUMP:-}" ]; then
+    BENCH_BACKUPS="${BENCH_BACKUPS:-$HOME/Develop/private/bench-backups}"
+    echo "restore_bench ENABLED: ${BENCH_DUMP:-newest in $BENCH_BACKUPS}"
+    STAND=ws-tests ../dev/stand-snapshot.sh restore "${BENCH_DUMP:-$BENCH_BACKUPS}"
+else
 echo "Creating user accounts..."
 ./tool.sh create-account admin -f Super -l Admin -p 1234
 ./tool.sh create-account user1 -f John -l Appleseed -p 1234
@@ -99,5 +107,20 @@ echo "Creating workspace api-tests-volume (unlimited at boot; the volume test ti
 ./tool.sh assign-workspace user1 api-tests-volume
 ./tool.sh set-user-role user1 api-tests-volume OWNER
 ./tool.sh set-workspace-plan api-tests-volume business
+fi
+
+# Apply production index set (dump-indexes YAML from the deployment repo) so the
+# stand matches deployed DBs: migration-created composite indexes are not in the
+# model and sync-indexes alone would miss them. Best-effort per index.
+INDEXES_YAML="${INDEXES_YAML:-../../deployment/deployments/indexes.yaml}"
+if [ -f "$INDEXES_YAML" ]; then
+    echo "Applying deployment indexes from $INDEXES_YAML..."
+    # Europe region - PostgreSQL
+    ./tool-europe.sh apply-indexes "$INDEXES_YAML" --apply
+    # America region - CockroachDB (INCLUDE is accepted as alias of STORING)
+    ./tool.sh apply-indexes "$INDEXES_YAML" --apply
+else
+    echo "WARN: $INDEXES_YAML not found, skipping deployment index apply"
+fi
 
 rm -rf ./sanity/.auth

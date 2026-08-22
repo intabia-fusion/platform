@@ -1,3 +1,5 @@
-echo "Downloading profile"
+#!/usr/bin/env bash
+ENDPOINT="${TRANSACTOR_ENDPOINT:-http://localhost:8083/_tr0}"
+echo "Downloading profile from $ENDPOINT"
 current=$(date +%Y%m%d%H%M%S)
-./tool.sh profile http://localhost:3334 stop -o "./profiles/profile-${current}".cpuprofile
+./tool.sh profile "$ENDPOINT" stop -o "./profiles/profile-${current}".cpuprofile

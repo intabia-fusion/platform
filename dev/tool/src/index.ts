@@ -66,7 +66,15 @@ import { getPlatformQueue } from '@hcengineering/kafka'
 import { buildStorageFromConfig, createStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
 import { program, type Command } from 'commander'
 import { updateField } from './workspace'
-import { dumpIndexes, syncIndexes } from './indexes'
+import {
+  DEFAULT_BIG_OPTIONS,
+  DEFAULT_STATUS_DIST,
+  generateBig,
+  generateIssues,
+  type BigGenResult,
+  type GenResult
+} from './gendata'
+import { applyIndexes, dropIndexes, dumpIndexes, syncIndexes } from './indexes'
 import { reportSlowSql } from './slowsql'
 
 import { RatingCalculator, ratingEvents, type QueueRatingMessage } from '@hcengineering/pod-rating'
@@ -80,6 +88,7 @@ import {
   SocialIdType,
   systemAccountEmail,
   systemAccountUuid,
+  type WorkspaceIds,
   type AccountUuid,
   type Data,
   type Doc,
@@ -2031,13 +2040,15 @@ export function devTool (
   program
     .command('stats-slow-sql')
     .description(
-      'Find the slowest SQL queries from stats topResults, grouped by normalized shape. Source is --url (live) or --from <dir> (a stats-dump directory)'
+      'Find the slowest SQL queries from server-side top-N registries. Source is --url (live) or --from <dir> (a stats-dump directory)'
     )
     .option('--url <target>', 'Platform URL (live fetch)')
     .option('--from <dir>', 'Read already dumped per-service JSON files from a directory (stats-dump output)')
     .option('--filter <substr>', 'Only include services whose name contains this substring', '')
     .option('-n, --limit <limit>', 'Number of groups to show', '30')
-    .option('-s, --sort <sort>', 'Sort key: max | sum | count | avg', 'max')
+    .option('-s, --sort <sort>', 'Sort key: max | sum | count | avg | p95 | p99', 'max')
+    .option('--kind <kind>', 'Registry to query: find | tx | both', 'both')
+    .option('--details', 'Show per-query detail cards after the tables', false)
     .option('--json <file>', 'Write full grouped result (with sample SQL) to a file instead of a table')
     .option('--indexes <file>', 'YAML index dump (from dump-indexes) to check whether queries are covered')
     .option('--missing-only', 'With --indexes: show only query shapes missing a leading-column index', false)
@@ -2048,15 +2059,20 @@ export function devTool (
         filter: string
         limit: string
         sort: string
+        kind: string
+        details: boolean
         json?: string
         indexes?: string
         missingOnly: boolean
       }) => {
-        const sort = (['max', 'sum', 'count', 'avg'].includes(opt.sort) ? opt.sort : 'max') as
+        const sort = (['max', 'sum', 'count', 'avg', 'p95', 'p99'].includes(opt.sort) ? opt.sort : 'max') as
           | 'max'
           | 'sum'
           | 'count'
           | 'avg'
+          | 'p95'
+          | 'p99'
+        const kind = (['find', 'tx', 'both'].includes(opt.kind) ? opt.kind : 'both') as 'find' | 'tx' | 'both'
         const serverSecret = process.env.SERVER_SECRET
         await reportSlowSql({
           url: opt.url ?? process.env.PLATFORM_URL,
@@ -2064,6 +2080,8 @@ export function devTool (
           filter: opt.filter,
           limit: Math.min(Math.max(parseInt(opt.limit), 1), 1000),
           sort,
+          kind,
+          details: opt.details,
           json: opt.json,
           indexes: opt.indexes,
           missingOnly: opt.missingOnly,
@@ -2072,6 +2090,48 @@ export function devTool (
         })
       }
     )
+
+  program
+    .command('stats-wipe')
+    .description('Wipe server-side statistics (incl. slow-SQL top-N). One-shot, pull-based per service')
+    .option('--url <target>', 'Stats or platform URL (platform resolves STATS_URL from config.json)')
+    .option('--name <serviceId>', 'Wipe only this serviceId (hostname-service); otherwise all known')
+    .action(async (opt: { url?: string, name?: string }) => {
+      const serverSecret = process.env.SERVER_SECRET
+      if (serverSecret === undefined) {
+        console.error('please provide SERVER_SECRET')
+        process.exit(1)
+      }
+      const base = (opt.url ?? process.env.PLATFORM_URL ?? '').replace('ws:/', 'http:/').replace(/\/+$/, '')
+      if (base === '') {
+        console.error('provide --url or PLATFORM_URL')
+        process.exit(1)
+      }
+      let statsUrl = base
+      try {
+        const cfgResp = await fetch(`${base}/config.json`)
+        if (cfgResp.ok) {
+          const cfg = (await cfgResp.json()) as { STATS_URL?: string }
+          if (cfg.STATS_URL !== undefined && cfg.STATS_URL !== '') {
+            statsUrl = cfg.STATS_URL.replace(/\/+$/, '')
+            console.log(`resolved STATS_URL from config.json: ${statsUrl}`)
+          }
+        }
+      } catch {
+        // direct stats endpoint
+      }
+      const token = generateToken(systemAccountUuid, undefined, { admin: 'true' }, serverSecret)
+      const nameQ = opt.name !== undefined ? `&name=${encodeURIComponent(opt.name)}` : ''
+      const resp = await fetch(`${statsUrl}/api/v1/manage?token=${token}&operation=wipe-statistics${nameQ}`, {
+        method: 'PUT'
+      })
+      if (resp.ok) {
+        console.log(`stats wipe requested${opt.name !== undefined ? ` for ${opt.name}` : ' (all services)'}`)
+      } else {
+        console.error(`stats wipe failed: ${resp.status} ${resp.statusText}`)
+        process.exit(1)
+      }
+    })
 
   program
     .command('generate-persons <workspace>')
@@ -2831,6 +2891,227 @@ export function devTool (
       const { dbUrl, txes } = prepareTools()
       await syncIndexes(toolCtx, dbUrl, txes, file, cmd.apply)
     })
+
+  program
+    .command('drop-indexes')
+    .description('Drop all secondary indexes (keeps primary keys). For benchmarks. Dry-run by default')
+    .option('--keep-unique', 'also keep UNIQUE indexes', false)
+    .option('--apply', 'actually drop (otherwise prints SQL only)', false)
+    .action(async (cmd: { keepUnique: boolean, apply: boolean }) => {
+      const { dbUrl, txes } = prepareTools()
+      await dropIndexes(toolCtx, dbUrl, txes, cmd.keepUnique, cmd.apply)
+    })
+
+  program
+    .command('apply-indexes <file>')
+    .description('Recreate indexes verbatim from a dump-indexes YAML. Restores after drop-indexes. Dry-run by default')
+    .option('--apply', 'actually create (otherwise prints SQL only)', false)
+    .action(async (file: string, cmd: { apply: boolean }) => {
+      const { dbUrl } = prepareTools()
+      await applyIndexes(toolCtx, dbUrl, file, cmd.apply)
+    })
+
+  program
+    .command('generate-data')
+    .description(
+      'QA: batch-create tracker Issues via TxApplyIf (all triggers fire, adapter groups into multi-row INSERT) for load/index benchmarks'
+    )
+    .option('-w, --workspace <name>', 'workspace name or uuid (exact match)')
+    .option('-p, --prefix <prefix>', 'apply to all workspaces whose name starts with prefix')
+    .option('-c, --count <count>', 'issues per workspace', '50000')
+    .option('-b, --batch <batch>', 'concurrent tx per batch', '100')
+    .option('--max-depth <n>', 'sub-issue nesting depth (0=flat)', '0')
+    .option('--unassigned-pct <n>', 'percent of issues left with no assignee', '30')
+    .option('--batch-sweep <list>', 'comma-separated batch sizes; runs --count issues per size to compare fill rate')
+    .action(
+      async (cmd: {
+        workspace?: string
+        prefix?: string
+        count: string
+        batch: string
+        maxDepth?: string
+        unassignedPct?: string
+        batchSweep?: string
+      }) => {
+        const { dbUrl, txes } = prepareTools()
+        const count = Math.max(parseInt(cmd.count), 1)
+        const batches =
+          cmd.batchSweep != null
+            ? cmd.batchSweep
+              .split(',')
+              .map((s) => parseInt(s.trim()))
+              .filter((n) => !isNaN(n) && n > 0)
+            : [Math.min(Math.max(parseInt(cmd.batch), 1), 2000)]
+
+        const targets: WorkspaceIds[] = []
+        await withAccountDatabase(async (accountDb) => {
+          const all = await accountDb.workspace.find({})
+          for (const ws of all) {
+            const match =
+              (cmd.prefix != null && ws.name.startsWith(cmd.prefix)) ||
+              (cmd.workspace != null && (ws.name === cmd.workspace || ws.uuid === cmd.workspace))
+            if (match) {
+              targets.push({ uuid: ws.uuid, url: ws.url ?? '', dataId: ws.dataId })
+            }
+          }
+        })
+        if (targets.length === 0) {
+          console.error('no matching workspaces (use --workspace <name|uuid> or --prefix <pfx>)')
+          return
+        }
+        toolCtx.info('targets', { count: targets.length, uuids: targets.map((t) => t.uuid) })
+
+        const results: GenResult[] = []
+        for (const t of targets) {
+          for (const batch of batches) {
+            const r = await generateIssues(
+              toolCtx.newChild(t.uuid, {}),
+              dbUrl,
+              txes,
+              t,
+              count,
+              batch,
+              Math.max(parseInt(cmd.maxDepth ?? '0'), 0),
+              Math.min(Math.max(parseInt(cmd.unassignedPct ?? '30'), 0), 100)
+            )
+            results.push(r)
+          }
+        }
+        console.log('=== fill rate summary ===')
+        for (const r of results) {
+          console.log(`  batch=${r.batchSize} count=${r.count} ${r.ms}ms ${r.rate}/s ws=${r.workspace}`)
+        }
+      }
+    )
+
+  program
+    .command('generate-big <workspace>')
+    .description(
+      'QA: fill a workspace with a realistic mixed dataset (tasks+comments+updates, meetings+transcripts, channels+messages) and report slow-SQL. Defaults are 1% of target.'
+    )
+    .option('--scale <pct>', 'scale all volumes by this factor of the 1% default (e.g. 100 = full target)', '1')
+    .option('--tasks <n>', 'override task count (spread across --projects)')
+    .option(
+      '--projects <n>',
+      'spread tasks across N tracker projects (long-tailed)',
+      String(DEFAULT_BIG_OPTIONS.projects)
+    )
+    .option(
+      '--cohorts <spec>',
+      'explicit size mix: count:size pairs, e.g. 900:1000,90:10000,10:100000 (overrides --projects/--tasks)'
+    )
+    .option('--meetings <n>', 'override meeting count')
+    .option('--channels <n>', 'override channel count')
+    .option('--comments <n>', 'max comments per task')
+    .option('--updates <n>', 'max attribute updates per task')
+    .option('--threads <pct>', 'percent of channel messages that spawn a thread', String(DEFAULT_BIG_OPTIONS.threadPct))
+    .option('--status-dist <spec>', 'issue status weights, e.g. done=60,cancelled=15,inprogress=15,todo=7,backlog=3')
+    .option('--users <n>', 'bench employees used as creators/assignees', String(DEFAULT_BIG_OPTIONS.users))
+    .option('--batch <n>', 'concurrent tx per batch', String(DEFAULT_BIG_OPTIONS.batch))
+    .option('--json <file>', 'write full result + slow-SQL to a file')
+    .action(
+      async (
+        workspace: string,
+        cmd: {
+          scale: string
+          tasks?: string
+          projects: string
+          cohorts?: string
+          meetings?: string
+          channels?: string
+          comments?: string
+          updates?: string
+          threads: string
+          statusDist?: string
+          users: string
+          batch: string
+          json?: string
+        }
+      ) => {
+        // A stray async trigger rejection would kill a multi-hour bulk fill.
+        // Log and continue - the fill is idempotent and a re-run tops up any gap.
+        process.on('unhandledRejection', (reason: any) => {
+          console.warn(
+            'generate-big: unhandled rejection (continuing):',
+            String(reason?.message ?? reason).slice(0, 140)
+          )
+        })
+        const { dbUrl, txes } = prepareTools()
+        const scale = Math.max(parseFloat(cmd.scale), 0.01)
+        const statusDist = { ...DEFAULT_STATUS_DIST }
+        if (cmd.statusDist != null) {
+          for (const pair of cmd.statusDist.split(',')) {
+            const [k, v] = pair.split('=').map((s) => s.trim())
+            if (k in statusDist && !isNaN(parseFloat(v))) {
+              ;(statusDist as any)[k] = parseFloat(v)
+            }
+          }
+        }
+        const cohorts =
+          cmd.cohorts != null
+            ? cmd.cohorts
+              .split(',')
+              .map((p) => {
+                const [count, size] = p.split(':').map((s) => parseInt(s.trim(), 10))
+                return { count, size }
+              })
+              .filter((c) => !isNaN(c.count) && !isNaN(c.size) && c.count > 0 && c.size > 0)
+            : undefined
+        const opts = {
+          ...DEFAULT_BIG_OPTIONS,
+          cohorts,
+          tasks: cmd.tasks != null ? parseInt(cmd.tasks) : Math.round(DEFAULT_BIG_OPTIONS.tasks * scale),
+          projects: Math.min(Math.max(parseInt(cmd.projects), 1), 5000),
+          meetings: cmd.meetings != null ? parseInt(cmd.meetings) : Math.round(DEFAULT_BIG_OPTIONS.meetings * scale),
+          channels: cmd.channels != null ? parseInt(cmd.channels) : Math.round(DEFAULT_BIG_OPTIONS.channels * scale),
+          commentsPerTaskMax: cmd.comments != null ? parseInt(cmd.comments) : DEFAULT_BIG_OPTIONS.commentsPerTaskMax,
+          updatesPerTaskMax: cmd.updates != null ? parseInt(cmd.updates) : DEFAULT_BIG_OPTIONS.updatesPerTaskMax,
+          threadPct: Math.min(Math.max(parseInt(cmd.threads), 0), 100),
+          statusDist,
+          users: Math.min(Math.max(parseInt(cmd.users), 1), 5000),
+          batch: Math.min(Math.max(parseInt(cmd.batch), 1), 2000)
+        }
+
+        let target: WorkspaceIds | undefined
+        await withAccountDatabase(async (accountDb) => {
+          const all = await accountDb.workspace.find({})
+          for (const ws of all) {
+            if (ws.name === workspace || ws.uuid === workspace) {
+              target = { uuid: ws.uuid, url: ws.url ?? '', dataId: ws.dataId }
+            }
+          }
+        })
+        if (target === undefined) {
+          console.error(`workspace not found: ${workspace} (create it first via UI/account)`)
+          return
+        }
+        toolCtx.info('generating', { ws: target.uuid, ...opts })
+
+        const r: BigGenResult = await generateBig(toolCtx.newChild(target.uuid, {}), dbUrl, txes, target, opts)
+
+        console.log('=== generated ===')
+        console.log(
+          `  projects=${r.projects} tasks=${r.tasks} comments=${r.comments} updates=${r.updates} meetings=${r.meetings} transcripts=${r.transcripts} channels=${r.channels} channelMessages=${r.channelMessages} threadReplies=${r.threadReplies} in ${r.ms}ms`
+        )
+        const printSlow = (title: string, rows: typeof r.slowSqlFind): void => {
+          console.log(`\n=== ${title} (top by max) ===`)
+          console.log('  max(ms)   avg(ms)    count  table')
+          for (const s of rows.slice(0, 15)) {
+            console.log(
+              `  ${s.maxMs.toFixed(2).padStart(8)}  ${s.avgMs.toFixed(2).padStart(8)}  ${String(s.count).padStart(7)}  ${s.table}`
+            )
+          }
+        }
+        printSlow('FIND', r.slowSqlFind)
+        printSlow('TX', r.slowSqlTx)
+
+        if (cmd.json != null) {
+          const fs = await import('node:fs/promises')
+          await fs.writeFile(cmd.json, JSON.stringify(r, null, 2))
+          console.log(`\nwrote ${cmd.json}`)
+        }
+      }
+    )
 
   // program
   // .command('perfomance')
