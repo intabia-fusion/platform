@@ -1175,9 +1175,11 @@ class PostgresDB implements BillingDB {
   }
 
   async markPoolNotified (ctx: MeasureContext, providerId: string, model: string, percent: 80 | 100): Promise<void> {
-    const column = percent === 100 ? 'notified100' : 'notified80'
+    // 100% implies 80%: a pool that jumps straight past both sends one alert, and leaving
+    // notified80 false would fire a stale 80% alert on the next pass.
+    const columns = percent === 100 ? 'notified100 = true, notified80 = true' : 'notified80 = true'
     await this.execute(
-      `UPDATE billing.provider_pool SET ${column} = true
+      `UPDATE billing.provider_pool SET ${columns}
        WHERE provider_id = $1::${this.stringType} AND model = $2::${this.stringType}`,
       [providerId, model]
     )
