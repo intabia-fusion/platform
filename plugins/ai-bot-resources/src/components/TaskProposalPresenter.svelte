@@ -36,6 +36,7 @@
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
 
   import plugin from '../plugin'
+  import { aiBotNameStore } from '../utils'
 
   export let value: AITaskProposalMessage
   // Passed through by the activity feed; forwarded to the message template unchanged.
@@ -311,7 +312,7 @@
             collapsed = !collapsed
           }}
         >
-          <Label label={plugin.string.ProposedTask} />
+          <Label label={plugin.string.ProposedTask} params={{ name: $aiBotNameStore }} />
           {#if value.applied === true}
             <span class="applied"><Label label={plugin.string.AssistIssueAppliedMark} /></span>
           {/if}

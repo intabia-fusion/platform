@@ -39,7 +39,7 @@
 {#if enabled}
   <AppItem
     icon={view.icon.AiStar}
-    label={aiBot.string.AISettings}
+    label={chunter.string.TalkToYulia}
     size="small"
     on:click={() => {
       void openAIChat()

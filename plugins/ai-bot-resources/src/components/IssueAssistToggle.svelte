@@ -18,6 +18,7 @@
 
   import aiBot from '../plugin'
   import { issueAssistFits, issueAssistOpened } from '../stores'
+  import { aiBotNameStore } from '../utils'
 
   // Toggle lives in the dialog header, panel in the card's aside slot; the store ties them.
 </script>
@@ -30,7 +31,7 @@
     kind={$issueAssistOpened ? 'primary' : 'tertiary'}
     pressed={$issueAssistOpened}
     dataId={'btnIssueAssist'}
-    tooltip={{ label: aiBot.string.AssistIssue }}
+    tooltip={{ label: aiBot.string.AssistIssue, props: { name: $aiBotNameStore } }}
     on:click={() => {
       issueAssistOpened.update((v) => !v)
     }}

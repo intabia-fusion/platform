@@ -82,6 +82,8 @@ import {
   snapshotMessageIds,
   type SnapshotTurn
 } from './conversationSnapshot'
+import { botName } from '../llms/prompts'
+import { renderPrompt } from '../llms/promptStore'
 import { loadWelcomeMessages, pickWelcome } from '../welcome'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
@@ -484,7 +486,7 @@ export class WorkspaceClient {
 
   /**
    * Live progress + cancel for one request: token counts land on the AIRequest doc (the user sees
-   * them next to "Yulia is typing"), and the user cancelling that doc stops the tool loop.
+   * them next to the typing indicator), and the user cancelling that doc stops the tool loop.
    */
   private requestHooks (
     personUuid: PersonUuid,
@@ -680,7 +682,7 @@ export class WorkspaceClient {
 
     const space = event.objectIdIsSpace ? (objectId as Ref<Space>) : event.objectSpace
 
-    // Show "Юля is typing" until the reply is written (or the request bails out early).
+    // Show the typing indicator until the reply is written (or the request bails out early).
     const stopTyping = this.startTyping(objectId, space)
     try {
       await this.generateAndReply(event, {
@@ -777,7 +779,7 @@ export class WorkspaceClient {
   }
 
   // Resolve the object an edit-proposal targets from the current thread's root message. The
-  // "Discuss with Yulia" root (AIContextMessage) links to the real source object.
+  // "Discuss with the assistant" root (AIContextMessage) links to the real source object.
   async resolveEditTarget (
     rootId: Ref<Doc>,
     rootClass: Ref<Class<Doc>>
@@ -964,7 +966,7 @@ export class WorkspaceClient {
             content: 'Content: ' + markupToText((msg as ChatMessage).message)
           })
         }
-        // "Discuss with Yulia" thread: the root message links to a source object (issue,
+        // "Discuss with the assistant" thread: the root message links to a source object (issue,
         // document, ...). Load that object so its content is in context, not just the starter.
         let linked: Doc | undefined
         if (msg._class === aiBot.class.AIContextMessage) {
@@ -1317,8 +1319,8 @@ export class WorkspaceClient {
     }
   }
 
-  // A member became active -> open the Direct with Юля and greet. Without this the chat exists
-  // only after the user finds the "Talk to Yulia" button, so on a fresh workspace the bot looks
+  // A member became active -> open the Direct with the bot and greet. Without this the chat exists
+  // only after the user finds the "Talk to the assistant" button, so on a fresh workspace the bot looks
   // absent. An existing Direct is the idempotency guard.
   async sendWelcomeIfNeeded (person: Ref<Person>): Promise<void> {
     await this.initPromise
@@ -1336,8 +1338,8 @@ export class WorkspaceClient {
     }
   }
 
-  // Members who joined before the welcome existed have no Direct with Юля at all: the chat used to
-  // appear only when someone pressed "Talk to Yulia". Backfill it on connect.
+  // Members who joined before the welcome existed have no Direct with the bot at all: the chat used to
+  // appear only when someone pressed "Talk to the assistant". Backfill it on connect.
   private async backfillWelcomeDirects (): Promise<void> {
     const aiAccount = this.aiPerson?.personUuid as AccountUuid | undefined
     if (aiAccount === undefined) return
@@ -1367,7 +1369,8 @@ export class WorkspaceClient {
     const lang = await this.resolveChatLanguage(account, undefined, true)
     const text = pickWelcome(welcomeMessages, lang)
     if (text === undefined) return
-    const markup = jsonToMarkup(markdownToMarkup(text, { refUrl: '', imageUrl: '' }))
+    const greeting = renderPrompt(text, { botName: botName(config.FirstName) })
+    const markup = jsonToMarkup(markdownToMarkup(greeting, { refUrl: '', imageUrl: '' }))
     const direct = await this.client.createDoc<DirectMessage>(chunter.class.DirectMessage, core.space.Space, {
       name: '',
       description: '',
@@ -1386,7 +1389,7 @@ export class WorkspaceClient {
     )
   }
 
-  // Find the user's existing Direct chat with Юля (does not create one).
+  // Find the user's existing Direct chat with the bot (does not create one).
   private async findUserDirect (personUuid: PersonUuid): Promise<DirectMessage | undefined> {
     const aiAccount = this.aiPerson?.personUuid as AccountUuid | undefined
     if (aiAccount === undefined) return undefined
@@ -1399,7 +1402,7 @@ export class WorkspaceClient {
     })
   }
 
-  // Post a notice in the user's Direct chat with Юля, falling back to the request's origin thread.
+  // Post a notice in the user's Direct chat with the bot, falling back to the request's origin thread.
   private async notifyLimit (
     personUuid: PersonUuid,
     lang: string,

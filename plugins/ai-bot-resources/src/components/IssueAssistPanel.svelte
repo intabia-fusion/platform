@@ -26,7 +26,7 @@
   import { Avatar } from '@hcengineering/contact-resources'
 
   import aiBot from '../plugin'
-  import { aiBotSocialIdentityStore } from '../utils'
+  import { aiBotNameStore, aiBotSocialIdentityStore } from '../utils'
   import { issueAssistFits, issueAssistOpened, issueDraftApplier } from '../stores'
   import {
     archiveConversation,
@@ -306,7 +306,7 @@
             <Avatar person={bot} size={'small'} name={bot.name} />
             <span class="name">{formatName(bot.name)}</span>
           {:else}
-            <Label label={aiBot.string.AssistIssue} />
+            <Label label={aiBot.string.AssistIssue} params={{ name: $aiBotNameStore }} />
           {/if}
         </span>
         <!-- No close button here: the header toggle next to the dialog's own cross owns that. -->

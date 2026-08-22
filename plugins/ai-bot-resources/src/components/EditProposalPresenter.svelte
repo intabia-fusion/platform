@@ -26,6 +26,7 @@
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
 
   import plugin from '../plugin'
+  import { aiBotNameStore } from '../utils'
 
   export let value: AIEditProposalMessage
   // Passed through by the activity feed; forwarded to the message template unchanged.
@@ -111,7 +112,7 @@
     {/if}
 
     <div class="proposal">
-      <div class="header"><Label label={plugin.string.ProposedEdit} /></div>
+      <div class="header"><Label label={plugin.string.ProposedEdit} params={{ name: $aiBotNameStore }} /></div>
 
       {#if showDiff}
         <div class="diff">

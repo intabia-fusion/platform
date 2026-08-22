@@ -14,6 +14,7 @@
 //
 
 import path from 'path'
+import { renderPrompt } from '../llms/promptStore'
 import { loadWelcomeMessages, pickWelcome } from '../welcome'
 
 const REPO_WELCOME = path.resolve(__dirname, '../../welcome.yaml')
@@ -45,8 +46,16 @@ describe('pickWelcome', () => {
 describe('loadWelcomeMessages', () => {
   it('loads the repo welcome.yaml with en and ru', () => {
     const messages = loadWelcomeMessages(REPO_WELCOME)
-    expect(messages.en).toContain('Yulia AI')
-    expect(messages.ru).toContain('ЮляИИ')
+    expect(messages.en).toContain('{{botName}}')
+    expect(messages.ru).toContain('{{botName}}')
+  })
+
+  // The greeting must never ship a hardcoded name: it is substituted from the pod config.
+  it('renders the bot name into the greeting', () => {
+    const messages = loadWelcomeMessages(REPO_WELCOME)
+    const text = renderPrompt(messages.ru, { botName: 'Ассистент' })
+    expect(text).toContain('Ассистент')
+    expect(text).not.toContain('{{botName}}')
   })
 
   it('returns empty for a missing file instead of throwing', () => {

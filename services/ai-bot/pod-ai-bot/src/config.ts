@@ -20,7 +20,7 @@ import yaml from 'js-yaml'
 
 import { SttProviderType } from './transcription/types'
 
-/** ЮляИИ quality level id. Data-driven, not an enum: a free-form string defined in the registry. */
+/** Assistant quality level id. Data-driven, not an enum: a free-form string defined in the registry. */
 export type AILevel = string
 
 /** Per-feature availability of a level (unset = allowed). Restricts which features a level serves. */

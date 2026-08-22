@@ -85,7 +85,7 @@ export interface AISpaceSettings extends Doc {
   meetingSummary?: boolean
 }
 
-/** Root message of an object-linked "discuss with Yulia" thread for `objectId`; reused when the button reopens it. */
+/** Root message of an object-linked "discuss with the assistant" thread for `objectId`; reused when the button reopens it. */
 export interface AIContextMessage extends ChatMessage {
   objectId: Ref<Doc>
   objectClass: Ref<Class<Doc>>

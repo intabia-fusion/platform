@@ -14,7 +14,7 @@
     "AILevelTasks": "Správa úkolů",
     "Language": "Jazyk",
     "LanguageHint": "Výchozí jazyk odpovědí bota (např. cs, en). Prázdné = výchozí podu.",
-    "AssistIssue": "Yulia AI",
+    "AssistIssue": "{name}",
     "AssistIssueApply": "Použít",
     "AssistIssueThreadStart": "Návrh úkolu{project, select, undefined {} other { v {project}}}",
     "AssistIssueNewContext": "Nový kontext",

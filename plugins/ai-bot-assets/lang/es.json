@@ -14,7 +14,7 @@
     "AILevelTasks": "Gestión de tareas",
     "Language": "Idioma",
     "LanguageHint": "Idioma predeterminado para las respuestas del bot (p. ej. es, en). Vacío = predeterminado del pod.",
-    "AssistIssue": "Yulia IA",
+    "AssistIssue": "{name}",
     "AssistIssueApply": "Aplicar",
     "AssistIssueThreadStart": "Borrador de tarea{project, select, undefined {} other { en {project}}}",
     "AssistIssueNewContext": "Nuevo contexto",

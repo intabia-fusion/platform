@@ -265,7 +265,7 @@ export function createModel (builder: Builder): void {
     component: aiBot.component.IssueAssistPanel
   })
 
-  // "Discuss with Yulia" button in the object header (issues, documents, etc.).
+  // "Discuss with the assistant" button in the object header (issues, documents, etc.).
   builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
     extension: view.extensions.EditDocTitleExtension,
     component: aiBot.component.DiscussWithAI

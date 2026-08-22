@@ -14,7 +14,7 @@
     "AILevelTasks": "Görev yönetimi",
     "Language": "Dil",
     "LanguageHint": "Bot yanıtları için varsayılan dil (ör. tr, en). Boş = pod varsayılanı.",
-    "AssistIssue": "Yulia AI",
+    "AssistIssue": "{name}",
     "AssistIssueApply": "Uygula",
     "AssistIssueThreadStart": "Görev taslağı{project, select, undefined {} other { - {project}}}",
     "AssistIssueNewContext": "Yeni bağlam",

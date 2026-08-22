@@ -14,7 +14,7 @@
     "AILevelTasks": "タスク管理",
     "Language": "言語",
     "LanguageHint": "ボット返答のデフォルト言語（例：ja、en）。空白はポッドのデフォルト。",
-    "AssistIssue": "ユリアAI",
+    "AssistIssue": "{name}",
     "AssistIssueApply": "適用",
     "AssistIssueThreadStart": "タスクの下書き{project, select, undefined {} other {（{project}）}}",
     "AssistIssueNewContext": "新しいコンテキスト",

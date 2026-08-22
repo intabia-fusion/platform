@@ -14,7 +14,7 @@
     "AILevelTasks": "Gestão de tarefas",
     "Language": "Idioma",
     "LanguageHint": "Idioma padrão das respostas do bot (ex.: pt, en). Vazio = padrão do pod.",
-    "AssistIssue": "Yulia IA",
+    "AssistIssue": "{name}",
     "AssistIssueApply": "Aplicar",
     "AssistIssueThreadStart": "Rascunho da tarefa{project, select, undefined {} other { em {project}}}",
     "AssistIssueNewContext": "Novo contexto",

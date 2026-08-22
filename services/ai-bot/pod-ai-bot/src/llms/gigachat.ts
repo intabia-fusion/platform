@@ -273,7 +273,8 @@ export default class GigaChatProvider implements LLMProvider {
         personalContext,
         systemMessages,
         lang,
-        this.maxTokensFor(level)
+        this.maxTokensFor(level),
+        config.FirstName
       )
 
       const messages: any[] = [

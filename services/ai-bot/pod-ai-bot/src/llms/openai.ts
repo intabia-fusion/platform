@@ -308,7 +308,8 @@ export default class OpenAIProvider implements LLMProvider {
         personalContext,
         systemMessages,
         lang,
-        this.provider.levels[level ?? this.defaultLevel]?.capabilities?.maxOutputTokens
+        this.provider.levels[level ?? this.defaultLevel]?.capabilities?.maxOutputTokens,
+        config.FirstName
       )
 
       const messages: any[] = [
