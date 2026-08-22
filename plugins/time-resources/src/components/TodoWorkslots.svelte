@@ -40,7 +40,7 @@
   // TimeInputBox reports every typed digit, so one time edit used to send one update per digit.
   const saveDelay = 400
   let pending: Record<string, DocumentUpdate<WorkSlot>> = {}
-  const timers = new Map<Ref<WorkSlot>, any>()
+  const timers = new Map<Ref<WorkSlot>, ReturnType<typeof setTimeout>>()
 
   // The rows are rendered from the query result, and while a write is still queued that result is
   // older than what the user just typed. Without this overlay the next keystroke is applied on top
@@ -55,7 +55,9 @@
     timers.delete(slot)
     const workslot = slots.find((s) => s._id === slot)
     if (workslot !== undefined) {
-      void client.update(workslot, update)
+      void client.update(workslot, update).catch((err) => {
+        Analytics.handleError(err)
+      })
     }
   }
 

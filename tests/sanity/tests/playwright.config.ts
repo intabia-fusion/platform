@@ -34,8 +34,10 @@ const config: PlaywrightTestConfig = {
           width: 1440,
           height: 900
         },
+        // First attempt runs untraced; only the retry after a failure carries a trace, so a
+        // green run pays nothing and a real failure still lands with one.
         trace: {
-          mode: 'retain-on-failure',
+          mode: 'on-first-retry',
           snapshots: true,
           screenshots: true,
           sources: true
@@ -57,7 +59,11 @@ const config: PlaywrightTestConfig = {
   globalTimeout: 2_700_000,
   reporter: [
     ['list'],
-    ['html'],
+    // open: 'never' - the default parks a report server on failure and hangs the terminal.
+    ['html', { open: 'never' }],
+    // Machine-readable twin of the html report, consumed by analyze_failures.js.
+    // Relative to this config's directory, so '..' puts it next to package.json.
+    ['json', { outputFile: '../playwright-report.json' }],
     [
       'allure-playwright',
       {

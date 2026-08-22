@@ -223,7 +223,7 @@ export class IssuesDetailsPage extends CommonTrackerPage {
         const curValue = JSON.stringify((await this.textEstimation().allTextContents()).join(' '))
         // Short inner timeout on purpose: the default 15s outlives the enclosing toPass, so the
         // retry never happens and the failure carries no value to look at.
-        await expect(this.textEstimation(), `should be ${JSON.stringify(val)} but it ${curValue})}`).toHaveText(val, {
+        await expect(this.textEstimation(), `should be ${JSON.stringify(val)} but it is ${curValue}`).toHaveText(val, {
           timeout: 2000
         })
       }).toPass({ intervals: [100, 200, 500, 1000], timeout: 15000 })

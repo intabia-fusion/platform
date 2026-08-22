@@ -147,26 +147,69 @@ Keep existing copyright lines, add `Intabia Fusion` line if missing.
 
 ## Sanity tests (Playwright)
 
-Run from `tests/sanity/`. Stand must be up at `localhost:8083` (front) and `localhost:3003` (LOCAL_URL). Tests build their own bundle via setup project. Always use `rushx uitest` (it wires `LOCAL_URL`, `DEV_URL` and the right config). Always pass `--reporter=list --retries=0` — the default html reporter spawns a local server and blocks the terminal (looks like hang), and default retries waste minutes re-running a real failure before showing output.
+Run from `tests/sanity/`. Stand must be up at `localhost:8083`. Always use `rushx uitest` - it
+wires `LOCAL_URL`, `DEV_URL` and the config.
 
 ```bash
 cd tests/sanity
 
-# full suite
-rushx uitest --reporter=list --retries=0
-
-# narrowed
-rushx uitest tests/tracker/kanban.spec.ts --reporter=list --retries=0 --workers=1
-rushx uitest tests/love/meetings.all.spec.ts -g "<title>" --reporter=list --retries=0 --workers=1
+rushx uitest                                   # full suite
+rushx uitest -g "<title>"                      # one test
+rushx uitest tests/tracker/kanban.spec.ts      # one file
+rushx uitest --workers=1                       # serial; sanity tests share workspace state
 ```
 
 Flags:
-- `--reporter=list` — mandatory; no html server pops up at the end.
-- `--retries=0` — mandatory for dev; fail fast instead of 3x re-running the same failure.
-- `--workers=1` — serial; sanity tests share workspace state. Use for love/meeting tests.
+- `--workers=1` - serial. Use for love/meeting tests, they share workspace state.
 - `-g "<name>"` or append `:LINE` to the spec path to run a single test.
 - Extra playwright flags pass through `rushx uitest` unchanged.
 
-Do not run the bare `npx playwright test` — without `rushx uitest`'s env wiring and `-c ./tests/playwright.config.ts` neither dotenv nor `storageState` load and every test fails on login with `BadRequest`.
+Do not run bare `npx playwright test` - without `rushx uitest`'s env wiring and
+`-c ./tests/playwright.config.ts` neither dotenv nor `storageState` load, and every test fails on
+login with `BadRequest`.
+
+### Tracing and retries
+
+`trace: 'on-first-retry'`: the first attempt runs untraced, and only the retry that follows a
+failure carries a trace. A green run pays nothing, a real failure still lands with a full trace -
+so `--retries=0` is no longer needed to keep runs fast. `html` is configured with `open: 'never'`;
+without it the reporter parks a server on failure and hangs the terminal.
+
+Reports after a run: `playwright-report/index.html`, `playwright-report.json` (machine-readable
+twin), `allure-results/`, traces under `test-results/*-retry1/`.
+
+### Reading a failed run
+
+Do not dig through the html report by hand:
+
+```bash
+cd tests/sanity && node analyze_failures.js     # real failures vs flakes, grouped by error
+node analyze_failures.js --all                  # every test, not just the top ones
+```
+
+A test that passed on a retry is a flake; one still red after its retries is a real failure. The
+tool groups both by error class and by file, prints ready-to-paste `show-trace` commands and the
+slowest tests. Locally the suite runs at roughly 7% first-attempt flakiness, so a large flake
+count is normal - what matters is the real-failure number. Local-only failures around
+love/meetings usually mean LiveKit, not a regression; CI is the reference.
+
+### Whole-run profiling
+
+`tests/do-test.sh` brings the stand up, runs the suite and reports hot paths across every pod:
+
+```bash
+cd tests
+./do-test.sh                       # prepare stand, run tests
+./do-test.sh --profile             # + CPU-profile every Node pod, print a hot-path report
+./do-test.sh --profile --heap      # sample allocations instead
+./do-test.sh --no-prepare -g "X"   # reuse a running stand
+./do-test.sh --report-only         # re-report from ./profiles
+```
+
+The service list is generated from the running compose project by `gen-profile-overlay.js`, so a
+branch that adds or drops a pod needs no edit. Profiles land in `tests/profiles/<service>/`; `./profile-report.sh` resolves frames back to source
+through each bundle's source map and refuses to resolve when the bundle on disk no longer matches
+the one the container ran. Collect only via `./profile-collect.sh` or `docker compose stop` - a
+SIGKILL loses the profile. Details in `tests/readme.md`.
 
 For meeting/love-specific test setup (LiveKit, `meetings-ws`, page objects, data-id list), see [`docs/sanity-meetings-tests.md`](docs/sanity-meetings-tests.md).

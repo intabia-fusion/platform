@@ -5,3 +5,4 @@ allure-results
 .auth
 browser-profiles
 .stats-started-at
+playwright-report.json
