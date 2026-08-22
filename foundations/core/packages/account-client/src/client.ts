@@ -1816,11 +1816,11 @@ function withRetry<T, F extends (...args: any[]) => Promise<T>> (
 function withRetryUntilTimeout<T, F extends (...args: any[]) => Promise<T>> (f: F, timeoutMs: number = 5000): F {
   // Deadline per call: the wrapper is built once in the constructor, so capturing it
   // here would kill retries for good once timeoutMs elapsed since client creation.
-  return async function (...params: any[]): Promise<T> {
+  return async function (...params: Parameters<F>): Promise<T> {
     const timeout = Date.now() + timeoutMs
     const shouldFail = (err: any): boolean => !isNetworkError(err) || timeout < Date.now()
     return await withRetry(f, shouldFail)(...params)
-  } as unknown as F
+  } as F
 }
 
 function withRetryUntilMaxAttempts<T, F extends (...args: any[]) => Promise<T>> (f: F, maxAttempts: number = 5): F {
