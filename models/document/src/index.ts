@@ -407,6 +407,20 @@ function defineDocument (builder: Builder): void {
     document.action.UnlockContent
   )
 
+  createAction(builder, {
+    action: view.actionImpl.OpenInSidebar,
+    label: view.string.OpenInSidebar,
+    icon: view.icon.DetailsFilled,
+    input: 'focus',
+    category: document.category.Document,
+    target: document.class.Document,
+    context: {
+      mode: ['context', 'browser'],
+      application: document.app.Documents,
+      group: 'create'
+    }
+  })
+
   // Notifications
 
   builder.mixin(document.class.Document, core.class.Class, activity.mixin.ActivityDoc, {})

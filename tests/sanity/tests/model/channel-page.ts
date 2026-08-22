@@ -50,21 +50,12 @@ export class ChannelPage extends CommonPage {
 
   readonly addMemberToChannelButton = (userName: string): Locator => this.page.getByText(userName)
   readonly joinChannelButton = (): Locator => this.page.getByRole('button', { name: 'Join' })
-  readonly addEmojiButton = (): Locator =>
-    this.page.locator('.activityMessage-actionPopup > button[data-id$="AddReactionAction"]').last()
-
   readonly selectEmoji = (emoji: string): Locator => this.page.getByText(emoji)
-  readonly saveMessageButton = (): Locator =>
-    this.page.locator('.activityMessage-actionPopup > button[data-id$="SaveForLaterAction"]').last()
 
-  readonly pinMessageButton = (): Locator =>
-    this.page.locator('.activityMessage-actionPopup > button[data-id$="PinMessageAction"]').last()
-
-  readonly replyButton = (): Locator =>
-    this.page.locator('.activityMessage-actionPopup > button[data-id="activity:action:Reply"]').last()
-
-  readonly openMoreButton = (): Locator =>
-    this.page.locator('.activityMessage-actionPopup > button[data-id="btnMoreActions"]').last()
+  // Action popup exists in DOM for every message and is only visible while that message is hovered,
+  // so it must be scoped to the message instead of picked globally.
+  readonly messageActionButton = (message: string, dataIdSelector: string): Locator =>
+    this.textMessage(message).locator(`.activityMessage-actionPopup > button[${dataIdSelector}]`)
 
   readonly messageSaveMarker = (): Locator => this.page.locator('.saveMarker')
   readonly saveMessageTab = (): Locator => this.page.getByRole('button', { name: 'Saved' })
@@ -209,7 +200,7 @@ export class ChannelPage extends CommonPage {
 
   async clickOpenMoreButton (message: string): Promise<void> {
     await this.textMessage(message).hover()
-    await this.openMoreButton().click()
+    await this.messageActionButton(message, 'data-id="btnMoreActions"').click()
   }
 
   async clickEditMessageButton (editedMessage: string): Promise<void> {
@@ -246,26 +237,26 @@ export class ChannelPage extends CommonPage {
 
   async addEmoji (textMessage: string, emoji: string): Promise<void> {
     await this.textMessage(textMessage).hover()
-    await this.addEmojiButton().click()
+    await this.messageActionButton(textMessage, 'data-id$="AddReactionAction"').click()
     await this.selectEmoji(emoji).click()
   }
 
   async saveMessage (message: string): Promise<void> {
     await this.textMessage(message).hover()
-    await this.saveMessageButton().click()
+    await this.messageActionButton(message, 'data-id$="SaveForLaterAction"').click()
     await expect(this.messageSaveMarker()).toBeVisible()
   }
 
   async pinMessage (message: string): Promise<void> {
     await this.textMessage(message).hover()
-    await this.pinMessageButton().click()
+    await this.messageActionButton(message, 'data-id$="PinMessageAction"').click()
     await this.pinnedMessageButton().click()
     await expect(this.pinnedMessage(message)).toBeVisible()
   }
 
   async replyMessage (message: string): Promise<void> {
     await this.textMessage(message).hover()
-    await this.replyButton().click()
+    await this.messageActionButton(message, 'data-id="activity:action:Reply"').click()
   }
 
   async sendReply (messageReply: string): Promise<void> {

@@ -26,7 +26,7 @@
       const [_id] = decodeObjectURI(loc.path[3]) ?? []
 
       if (_id !== dm && dm != null) {
-        await openChannelInSidebar(dm, chunter.class.DirectMessage, undefined, undefined, true)
+        await openChannelInSidebar(dm, chunter.class.DirectMessage)
       }
     }
     dispatch('close')

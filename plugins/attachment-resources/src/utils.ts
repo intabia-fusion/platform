@@ -145,7 +145,7 @@ export async function openFilePreviewInSidebar (
     name,
     data: { file, name, contentType, metadata }
   }
-  await createFn(widget, tab, true)
+  await createFn(widget, tab)
 }
 
 export function isAttachment (value: Attachment | BlobType): value is WithLookup<Attachment> {
