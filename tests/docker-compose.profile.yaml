@@ -21,6 +21,16 @@ services:
       - PROFILE_DIR=/profiles/activity
       - NODE_OPTIONS=${PROFILE_NODE_FLAGS:---cpu-prof --cpu-prof-dir}=/profiles/activity --require /profile-preload.js
     volumes: *prof-volumes
+  aibot:
+    environment:
+      - PROFILE_DIR=/profiles/aibot
+      - NODE_OPTIONS=${PROFILE_NODE_FLAGS:---cpu-prof --cpu-prof-dir}=/profiles/aibot --require /profile-preload.js
+    volumes: *prof-volumes
+  aibot_client_llm:
+    environment:
+      - PROFILE_DIR=/profiles/aibot_client_llm
+      - NODE_OPTIONS=${PROFILE_NODE_FLAGS:---cpu-prof --cpu-prof-dir}=/profiles/aibot_client_llm --require /profile-preload.js
+    volumes: *prof-volumes
   analytics:
     environment:
       - PROFILE_DIR=/profiles/analytics
