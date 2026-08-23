@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 TraceX SAS.
 //
 import { MeasureContext } from '@hcengineering/core'
 import puppeteer, { Browser, Page, Viewport } from 'puppeteer'
@@ -90,7 +91,10 @@ export async function print (ctx: MeasureContext, url: string, options?: PrintOp
   try {
     if (kind === 'pdf') {
       await page.emulateMediaType('print')
+      await waitForPrintLayout(page)
       await scrollThrough(page)
+      await waitForImages(page)
+      await waitForMermaidDiagrams(ctx, page)
 
       // Read page header and footer if defined
       const pageHeader = await page.evaluate(() => {
@@ -156,4 +160,70 @@ async function scrollThrough (page: Page): Promise<void> {
     MAX_SCROLLS,
     TIMEOUT_BETWEEN_SCROLLS_MS
   )
+}
+
+async function waitForPrintLayout (page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve) => {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          resolve()
+        })
+      })
+    })
+  })
+}
+
+async function waitForImages (page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const IMAGE_LOAD_TIMEOUT_MS = 10000
+
+    await Promise.all(
+      Array.from(document.images).map(async (image) => {
+        if (!image.complete) {
+          await new Promise<void>((resolve) => {
+            image.addEventListener(
+              'load',
+              () => {
+                resolve()
+              },
+              { once: true }
+            )
+            image.addEventListener(
+              'error',
+              () => {
+                resolve()
+              },
+              { once: true }
+            )
+            window.setTimeout(resolve, IMAGE_LOAD_TIMEOUT_MS)
+          })
+        }
+
+        try {
+          await Promise.race([
+            image.decode(),
+            new Promise<void>((resolve) => window.setTimeout(resolve, IMAGE_LOAD_TIMEOUT_MS))
+          ])
+        } catch {
+          // A failed image request should not prevent the rest of the document from being exported.
+        }
+      })
+    )
+  })
+}
+
+async function waitForMermaidDiagrams (ctx: MeasureContext, page: Page): Promise<void> {
+  try {
+    await page.waitForFunction(
+      () =>
+        Array.from(document.querySelectorAll<HTMLElement>('.proseMermaidDiagram')).every(
+          (diagram) => diagram.dataset.mermaidRenderState !== 'pending'
+        ),
+      { timeout: 10000 }
+    )
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err)
+    ctx.warn('mermaid diagrams were not ready before PDF generation', { message })
+  }
 }

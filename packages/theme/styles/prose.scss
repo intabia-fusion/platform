@@ -1,5 +1,6 @@
 //
 // Copyright © 2022, 2023, 2025 Hardcore Engineering Inc.
+// Copyright © 2026 TraceX SAS.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,6 +17,31 @@
 @use 'sass:meta';
 
 @media print {
+  .proseCodeBlock code,
+  .proseMermaidDiagram > code {
+    overflow-x: visible;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-wrap: break-word;
+  }
+
+  .proseMermaidDiagram .mermaidPreviewContainer {
+    overflow: visible;
+  }
+
+  .proseMermaidDiagram {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  .proseMermaidDiagram .mermaidPreview svg {
+    // Keep diagrams at their natural size unless they exceed the printable area.
+    width: auto !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: 24cm !important;
+  }
+
   table.proseTable {
     border-spacing: 0 !important;
     border-collapse: separate !important;
