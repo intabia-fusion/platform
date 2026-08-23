@@ -141,7 +141,9 @@ export function createServerPipeline (
     const wsMetrics = metricsCtx.newChild('🧲 session', {}, { span: false })
     const conf = getConfig(metrics, dbUrl, wsMetrics, opt, extensions)
 
-    ctx.info('Pipeline created with branding:', { branding })
+    if (branding != null) {
+      ctx.info('Pipeline created with branding:', { branding })
+    }
 
     const middlewares: MiddlewareCreator[] = [
       LookupMiddleware.create,

@@ -88,6 +88,7 @@ import {
   QueueWorkspaceEvent,
   type QueueWorkspaceMessage,
   type QueueWorkspaceMaintenanceMessage,
+  type SendMemo,
   type Session,
   SessionDataImpl,
   type SessionHealth,
@@ -340,9 +341,10 @@ export class TSessionManager implements SessionManager {
   }
 
   private handleWorkspaceTick (): void {
-    this.ctx.measure('sessions', this.sessions.size, { kind: 'total' }, true)
-
     if (this.ticks % ticksPerSecond === 0) {
+      // A gauge does not need the full 20Hz tick rate.
+      this.ctx.measure('sessions', this.sessions.size, { kind: 'total' }, true)
+
       // Let's update workspace statistics every 10 seconds
       this.sendUserWorkspaceStats()
 
@@ -995,6 +997,8 @@ export class TSessionManager implements SessionManager {
     })
     function send (): void {
       const promises: Promise<void>[] = []
+      // Identical bytes go to every socket that is not owed a refresh - pack and compress once.
+      const memo: SendMemo = new Map()
       for (const session of sessions) {
         try {
           const sock = session.socket
@@ -1008,12 +1012,14 @@ export class TSessionManager implements SessionManager {
           // before delivering the current broadcast so client query cache invalidates.
           const pending = sock.takePendingRefresh?.() ?? null
           let outTx = tx
+          let sendMemo: SendMemo | undefined = memo
           if (pending !== null && pending.length > 0) {
             outTx = [buildRefreshTx(pending), ...tx]
+            sendMemo = undefined // this socket gets a different payload
             ctx.measure('broadcast-flushed-refresh', pending.length)
           }
           promises.push(
-            sendResponse(ctx, session.session, sock, { result: outTx }).catch((err) => {
+            sendResponse(ctx, session.session, sock, { result: outTx }, sendMemo).catch((err) => {
               ctx.error('failed to send', err)
             })
           )
@@ -1088,10 +1094,11 @@ export class TSessionManager implements SessionManager {
     const sessions = [...workspace.sessions.values()]
     ctx = ctx.newChild('📭 broadcast', {})
     const send = (): void => {
+      const memo: SendMemo = new Map()
       for (const sessionRef of sessions) {
         const tt = sessionRef.session.getUser()
         if ((target === undefined && !(exclude ?? []).includes(tt)) || (target?.includes(tt) ?? false)) {
-          sessionRef.session.broadcast(ctx, sessionRef.socket, resp)
+          sessionRef.session.broadcast(ctx, sessionRef.socket, resp, memo)
         }
       }
       ctx.end()

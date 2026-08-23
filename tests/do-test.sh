@@ -93,6 +93,7 @@ fi
 
 if [ "$REPORT" = true ]; then
     # Source maps are tens of MB each; the default heap is not enough to hold them.
+    ./archive-report.sh
     node --max-old-space-size=8192 ./profile-report.js ./profiles "$TOP" | tee ./profiles/report.txt
     echo
     echo "Saved: ./profiles/report.txt"

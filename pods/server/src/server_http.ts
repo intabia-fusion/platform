@@ -161,7 +161,15 @@ export function startHttpServer (
 
   const myStream = new MyStream()
 
-  app.use(morgan('short', { stream: myStream }))
+  // One line per REST call buries everything else. Log the ones that failed;
+  // ACCESS_LOG=all brings the rest back when needed.
+  const accessLogAll = process.env.ACCESS_LOG === 'all'
+  app.use(
+    morgan('short', {
+      stream: myStream,
+      skip: (_req, res) => !accessLogAll && res.statusCode < 400
+    })
+  )
 
   const getUsers = (): any => Array.from(sessions.sessions.entries()).map(([k, v]) => v.session.getUser())
 
@@ -727,8 +735,27 @@ function createWebsocketClientSocket (
       }
       ws.send(pongConst)
     },
-    send: async (ctx: MeasureContext, msg, binary, _compression): Promise<void> => {
-      const smsg = rpcHandler.serialize(msg, binary)
+    send: async (ctx: MeasureContext, msg, binary, _compression, memo): Promise<void> => {
+      // A broadcast hands every socket the same bytes, so the first one packs and compresses and
+      // the rest reuse it. A direct response has nobody to share with, so it stays on the plain
+      // path - the memo bookkeeping would be three allocations per send for nothing.
+      let sendMsg: any
+      if (memo !== undefined) {
+        const key = `${binary ? 1 : 0}-${_compression ? 1 : 0}`
+        let pending = memo.get(key)
+        if (pending === undefined) {
+          pending = (async () => {
+            const packed = rpcHandler.serialize(msg, binary)
+            return _compression ? await compress(packed) : packed
+          })()
+          // A closed socket returns before awaiting, so keep the rejection handled.
+          void pending.catch(() => {})
+          memo.set(key, pending)
+        }
+        sendMsg = await pending
+      } else {
+        sendMsg = rpcHandler.serialize(msg, binary)
+      }
       if (ws.readyState !== ws.OPEN || cs.isClosed) {
         return
       }
@@ -738,9 +765,8 @@ function createWebsocketClientSocket (
         await cs.backpressure(ctx)
       }
 
-      let sendMsg = smsg
-      if (_compression) {
-        sendMsg = await compress(smsg)
+      if (memo === undefined && _compression) {
+        sendMsg = await compress(sendMsg)
       }
       // Real bytes on the wire, after packing and compression - replaces the old estimate,
       // which walked the whole result graph just to feed a counter.

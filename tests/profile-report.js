@@ -108,7 +108,11 @@ function selfTimeByFrame (profile, map) {
 }
 
 const services = fs.existsSync(dir)
-  ? fs.readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)
+  ? fs
+      .readdirSync(dir, { withFileTypes: true })
+      // .old-reports and friends are bookkeeping, not services.
+      .filter((d) => d.isDirectory() && !d.name.startsWith('.'))
+      .map((d) => d.name)
   : []
 if (services.length === 0) {
   console.error(`no profiles under ${dir} - run ./prepare-pg.sh --profile, then ./profile-collect.sh`)
