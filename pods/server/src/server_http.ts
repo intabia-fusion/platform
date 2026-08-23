@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -741,6 +742,9 @@ function createWebsocketClientSocket (
       if (_compression) {
         sendMsg = await compress(smsg)
       }
+      // Real bytes on the wire, after packing and compression - replaces the old estimate,
+      // which walked the whole result graph just to feed a counter.
+      ctx.measure('clientSendBytes', typeof sendMsg === 'string' ? Buffer.byteLength(sendMsg) : sendMsg.length)
       const st = platformNow()
       await new Promise<void>((resolve) => {
         const handleErr = (err?: Error): void => {
