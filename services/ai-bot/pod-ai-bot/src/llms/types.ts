@@ -162,6 +162,20 @@ export interface LLMProvider {
   ) => Promise<string | undefined>
 
   /**
+   * Fold the older part of a conversation into a structured summary (see prompts.yaml
+   * `compactConversation`). Optional: a provider without it simply never compacts, and the
+   * window trim keeps behaving as before.
+   */
+  compactConversation?: (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    transcript: string,
+    lang: string,
+    previousSummary?: string,
+    level?: AILevel
+  ) => Promise<string | undefined>
+
+  /**
    * Create a chat completion that can use tools (provider-specific); tools are pre-built and
    * ready to use, callers handle WorkspaceClient context.
    */

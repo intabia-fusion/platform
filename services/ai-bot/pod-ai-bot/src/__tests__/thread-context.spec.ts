@@ -45,12 +45,21 @@ describe('buildThreadContext', () => {
     expect(buildThreadContext(messages, 0, 100)).toEqual([])
   })
 
-  it('caps to 20 newest messages', () => {
+  // The old hard cap of 20 turns hid what a large window could hold; the budget is the only limit
+  // now, and what does not fit is folded into a summary by compaction, not dropped.
+  it('keeps every message that fits the budget, however many', () => {
     const messages = Array.from({ length: 30 }, (_, i) => msg('user', `m${i}`, 1))
     const out = buildThreadContext(messages, 0, 10000)
-    expect(out).toHaveLength(20)
-    expect(out[0].content).toBe('m10') // oldest kept is the 11th (index 10)
-    expect(out[19].content).toBe('m29')
+    expect(out).toHaveLength(30)
+    expect(out[0].content).toBe('m0')
+    expect(out[29].content).toBe('m29')
+  })
+
+  it('still drops the oldest when the budget runs out', () => {
+    const messages = Array.from({ length: 30 }, (_, i) => msg('user', `m${i}`, 1))
+    const out = buildThreadContext(messages, 0, 5)
+    expect(out).toHaveLength(5)
+    expect(out[0].content).toBe('m25')
   })
 
   it('accounts for the incoming prompt tokens', () => {

@@ -23,7 +23,8 @@
  * current state is always re-read - a snapshot of it would go stale the moment someone edits it.
  */
 
-export type SnapshotRole = 'user' | 'assistant' | 'tool'
+/** `summary` is a compaction record: it replaces the turns folded into it. */
+export type SnapshotRole = 'user' | 'assistant' | 'tool' | 'summary'
 
 export interface SnapshotTurn {
   role: SnapshotRole
@@ -46,11 +47,16 @@ export interface ConversationSnapshot {
    * recognized by their message id, so re-reading the answer costs nothing.
    */
   cursor: number
+  /**
+   * `messageId` of the first turn that is still verbatim. Everything before it is represented by
+   * the newest `summary` turn. Absent until the conversation is first compacted.
+   */
+  firstKept?: string
   turns: SnapshotTurn[]
 }
 
 const CHUNK_SEP = '\n\n---\n\n'
-const HEADER = /^## (user|assistant|tool) · (.*?) · (\S+?)(?: · (\S+))?$/
+const HEADER = /^## (user|assistant|tool|summary) · (.*?) · (\S+?)(?: · (\S+))?$/
 
 /** `---` at line start would split the file into a bogus chunk, so it is escaped on write. */
 function escapeBody (body: string): string {
@@ -84,6 +90,7 @@ export function renderSnapshot (snapshot: ConversationSnapshot): string {
     '---',
     `conversation: ${quote(snapshot.conversation)}`,
     ...(snapshot.object !== undefined ? [`object: ${quote(snapshot.object)}`] : []),
+    ...(snapshot.firstKept !== undefined ? [`firstKept: ${quote(snapshot.firstKept)}`] : []),
     `cursor: ${snapshot.cursor}`,
     `turns: ${snapshot.turns.length}`,
     '---'
@@ -129,6 +136,7 @@ export function parseSnapshot (text: string): ConversationSnapshot | undefined {
   return {
     conversation: unquote(conversation),
     object: meta.get('object') !== undefined ? unquote(meta.get('object') as string) : undefined,
+    firstKept: meta.get('firstKept') !== undefined ? unquote(meta.get('firstKept') as string) : undefined,
     cursor: Number.isFinite(cursor) ? cursor : 0,
     turns
   }
@@ -152,7 +160,43 @@ export function appendTurns (
     (max, t) => (t.role === 'user' && t.messageId !== undefined && t.at > max ? t.at : max),
     0
   )
-  return { conversation, object: object ?? snapshot?.object, cursor, turns }
+  return { conversation, object: object ?? snapshot?.object, firstKept: snapshot?.firstKept, cursor, turns }
+}
+
+/**
+ * Record a compaction: the summary becomes a turn of its own and `firstKept` marks where the
+ * verbatim tail begins. Folded turns stay in the file - it is also the transcript a person
+ * downloads - but `contextTurns` stops handing them to the model.
+ */
+export function appendSummary (
+  snapshot: ConversationSnapshot,
+  summary: string,
+  firstKeptId: string | undefined,
+  at: number
+): ConversationSnapshot {
+  return {
+    ...snapshot,
+    firstKept: firstKeptId,
+    turns: [...snapshot.turns, { role: 'summary', author: 'compaction', at, content: summary }]
+  }
+}
+
+/**
+ * What the model gets: the newest summary, then the turns from `firstKept` on. Without a
+ * compaction it is simply every turn.
+ */
+export function contextTurns (snapshot: ConversationSnapshot | undefined): SnapshotTurn[] {
+  if (snapshot === undefined) return []
+  const summaries = snapshot.turns.filter((t) => t.role === 'summary')
+  const summary = summaries[summaries.length - 1]
+  if (summary === undefined) return snapshot.turns.filter((t) => t.role !== 'summary')
+
+  const from =
+    snapshot.firstKept !== undefined ? snapshot.turns.findIndex((t) => t.messageId === snapshot.firstKept) : -1
+  // firstKept gone (edited file, deleted message): fall back to everything after the summary
+  // rather than dropping the tail.
+  const tailStart = from >= 0 ? from : snapshot.turns.indexOf(summary) + 1
+  return [summary, ...snapshot.turns.slice(tailStart).filter((t) => t.role !== 'summary')]
 }
 
 /** Storage object name. Deterministic, so a thread keeps overwriting one file. */

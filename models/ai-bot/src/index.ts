@@ -100,6 +100,15 @@ export class TAIRequest extends TDoc implements AIRequest {
 
   @Prop(TypeNumber(), core.string.Number)
     iteration?: number
+
+  @Prop(TypeNumber(), core.string.Number)
+    contextTokens?: number
+
+  @Prop(TypeNumber(), core.string.Number)
+    contextCompactAt?: number
+
+  @Prop(TypeBoolean(), core.string.Boolean)
+    compacted?: boolean
 }
 
 @Model(aiBot.class.AISpaceSettings, core.class.Doc, DOMAIN_AI)

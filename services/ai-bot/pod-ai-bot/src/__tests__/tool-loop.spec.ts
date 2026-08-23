@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { runToolCalls } from '../llms/toolLoop'
+import { buildToolExecutor, runToolCalls } from '../llms/toolLoop'
 import type { ChatCompletionWithToolsReply } from '../llms/server'
 import type { ToolCall, ToolResult } from '../llms/types'
 
@@ -263,5 +263,87 @@ describe('oversized answer', () => {
     expect(seen[1].some((r) => r.content.includes('has_more=true'))).toBe(true)
     // Tokens burnt on the lost answer are still billed.
     expect(result?.usage?.completionTokens).toBe(4101)
+  })
+})
+
+describe('invented tool calls', () => {
+  it('names the available tools instead of a bare error', async () => {
+    const { execute } = buildToolExecutor([
+      {
+        type: 'function',
+        function: { name: 'propose_task', description: '', parameters: {}, function: async () => 'ok' }
+      }
+    ] as any)
+    const out = await execute({ id: '1', name: 'create_task', arguments: '{}' })
+    expect(out).toContain("tool 'create_task' does not exist")
+    expect(out).toContain('propose_task')
+  })
+
+  // A weak model that keeps inventing burns a full request per round.
+  it('gives up once too many invented calls pile up', async () => {
+    const calls: any[] = []
+    const asks = jest.fn(async (prior: any[], noTools?: boolean) => {
+      calls.push(noTools === true ? 'final' : 'round')
+      if (noTools === true) return { content: 'ответ по собранному' }
+      return { toolCalls: [{ id: 'x', name: 'get_context', arguments: '{}' }] }
+    })
+    const result = await runToolCalls(asks as any, async () => 'unused', 8, undefined, new Set(['propose_task']))
+    expect(result?.completion).toBe('ответ по собранному')
+    // three phantom calls + the final tool-less round, not the full eight
+    expect(calls).toEqual(['round', 'round', 'round', 'final'])
+  })
+
+  // The real reason round-counting failed: a weak model pairs one real call with an invented one,
+  // so no round is ever fully phantom while the loop still pays for each.
+  it('counts invented calls even when a real one rides along', async () => {
+    const rounds: string[] = []
+    const asks = jest.fn(async (prior: any[], noTools?: boolean) => {
+      rounds.push(noTools === true ? 'final' : 'round')
+      if (noTools === true) return { content: 'итог' }
+      return {
+        toolCalls: [
+          { id: `r${rounds.length}`, name: 'propose_task', arguments: '{}' },
+          { id: `g${rounds.length}`, name: 'notify_user', arguments: '{}' }
+        ]
+      }
+    })
+    await runToolCalls(asks as any, async () => 'ok', 8, undefined, new Set(['propose_task']))
+    expect(rounds.filter((r) => r === 'round').length).toBeLessThanOrEqual(3)
+  })
+
+  // The cutoff must not swallow the round that triggered it: the real call in it still has to run.
+  it('executes the round that hits the cutoff', async () => {
+    const executed: string[] = []
+    const asks = jest.fn(async (prior: any[], noTools?: boolean) => {
+      if (noTools === true) return { content: 'итог' }
+      return {
+        toolCalls: [
+          { id: 'real', name: 'propose_task', arguments: '{}' },
+          { id: 'ghost', name: 'notify_user', arguments: '{}' }
+        ]
+      }
+    })
+    await runToolCalls(
+      asks as any,
+      async (call: any) => {
+        executed.push(call.name)
+        return 'ok'
+      },
+      8,
+      undefined,
+      new Set(['propose_task'])
+    )
+    // One invented call per round, so round 3 hits the cutoff - and its real call still ran.
+    expect(executed.filter((n) => n === 'propose_task').length).toBe(3)
+  })
+
+  it('does not interfere when every call is real', async () => {
+    const asks = jest.fn(async (prior: any[], noTools?: boolean) => {
+      if (noTools === true) return { content: 'итог' }
+      if (prior.length < 4) return { toolCalls: [{ id: `b${prior.length}`, name: 'propose_task', arguments: '{}' }] }
+      return { content: 'готово' }
+    })
+    const result = await runToolCalls(asks as any, async () => 'ok', 8, undefined, new Set(['propose_task']))
+    expect(result?.completion).toBe('готово')
   })
 })

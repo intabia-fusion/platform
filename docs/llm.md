@@ -2,6 +2,7 @@
 
 Что делает `services/ai-bot/pod-ai-bot` и как обрабатывает LLM/ASR-запросы.
 Деплой (роли `MODE`, env, реестр провайдеров, масштабирование): `docs/aibot-deployment.md`.
+Внутренности harness (цикл инструментов, каталог тулов, промпты, сравнение с pi): `docs/ai-harness.md`.
 Backlog и отброшенные решения: `foundation-tasks/` (индекс там).
 
 ## Точки входа

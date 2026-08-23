@@ -71,6 +71,13 @@ export interface AIRequest extends Doc {
   objectId?: Ref<Doc>
   // Model<->tool round trips done so far, surfaced as progress while the request runs.
   iteration?: number
+  // How full the conversation context is, so the user can see compaction coming instead of being
+  // surprised by it: tokens the assembled context took, and the level at which the older part gets
+  // folded into a summary.
+  contextTokens?: number
+  contextCompactAt?: number
+  // This request folded the older part of the conversation into a summary.
+  compacted?: boolean
 }
 
 /** Per-space (or workspace-wide when attachedTo is unset) AI settings: level ceiling and reply language. */

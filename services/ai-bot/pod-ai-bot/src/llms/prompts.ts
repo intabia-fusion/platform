@@ -18,7 +18,13 @@
  * override), no built-in fallbacks. See promptStore.ts.
  */
 
-import { loadPromptTemplates, renderPrompt, type PromptTemplates } from './promptStore'
+import {
+  loadLanguageReminders,
+  loadPromptTemplates,
+  renderPrompt,
+  type LanguageReminders,
+  type PromptTemplates
+} from './promptStore'
 
 export interface PromptParams {
   lang?: string
@@ -57,6 +63,17 @@ function nowForPrompt (lang: string): string {
 }
 
 let cached: PromptTemplates | undefined
+let cachedReminders: LanguageReminders | undefined
+
+/**
+ * The reply-language rule, in the target language, to be repeated at the end of the prompt.
+ * Measured on a 10B model: mid-prompt and in English it is honoured about a quarter of the time,
+ * at the end and in the target language about always. Falls back to English, then to nothing.
+ */
+export function languageReminder (lang: string): string {
+  cachedReminders ??= loadLanguageReminders()
+  return cachedReminders[lang] ?? cachedReminders[lang.split('-')[0]] ?? cachedReminders.en ?? ''
+}
 
 /** Load templates once. Throws if prompts.yaml is missing/incomplete. */
 function templates (): PromptTemplates {
@@ -74,6 +91,10 @@ export const PROMPTS = {
 
   CORRECT_TRANSCRIPT: (lang?: string): string => renderPrompt(templates().correctTranscript, { lang: lang ?? '' }),
 
+  /** Fold the older part of a conversation into a structured summary. */
+  COMPACT_CONVERSATION: (lang: string, previousSummary?: string): string =>
+    renderPrompt(templates().compactConversation, { lang, previousSummary: previousSummary ?? '' }),
+
   DIRECT_CHAT_WITH_TOOLS: (params: PromptParams): string => {
     const lang = params.lang ?? DEFAULT_LANG
     return renderPrompt(templates().directChatWithTools, {
@@ -82,6 +103,7 @@ export const PROMPTS = {
       personalContext: params.personalContext ?? '',
       lang,
       outputLimit: params.outputLimit ?? '',
+      languageReminder: languageReminder(lang),
       currentDateTime: params.currentDateTime ?? nowForPrompt(lang)
     })
   },
@@ -93,6 +115,7 @@ export const PROMPTS = {
       sharedPrompt: params.sharedPrompt ?? '',
       lang,
       outputLimit: params.outputLimit ?? '',
+      languageReminder: languageReminder(lang),
       currentDateTime: params.currentDateTime ?? nowForPrompt(lang)
     })
   }

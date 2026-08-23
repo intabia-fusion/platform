@@ -16,6 +16,7 @@ import { Stream } from 'stream'
 import { v4 as uuid } from 'uuid'
 import { type AILevelFeatures } from '../config'
 import config from '../config'
+import { applyToolBudget, type ToolBudget } from './budget'
 import { WorkspaceClient } from '../workspace/workspaceClient'
 
 async function stream2buffer (stream: Stream): Promise<Buffer> {
@@ -145,7 +146,11 @@ async function getFoldersForDocuments (
     res += `Id: ${space._id} Name: ${space.name}\n`
   }
   res += 'Parents:\n'
-  const parents = await client.findAll(document.class.Document, { space: { $in: spaces.map((p) => p._id) } })
+  const parents = await client.findAll(
+    document.class.Document,
+    { space: { $in: spaces.map((p) => p._id) } },
+    { limit: 200 }
+  )
   for (const parent of parents) {
     res += `Id: ${parent._id} Name: ${parent.title}\n`
   }
@@ -202,6 +207,13 @@ export interface ReqCtx {
   purpose?: AIConversationPurpose
   // Filled by the proposal tools, read once the reply text is ready.
   pending?: PendingProposal
+  // Ceiling on what tool results add to the context over one run; see utils/budget.ts.
+  budget?: ToolBudget
+  // Ceiling for a single result. Both are set by the caller from the serving level's window.
+  perCallChars?: number
+  // The linked document did not fit the window, so only an outline is in context. Editing tools
+  // are withheld: a proposal built from a partial body would delete the rest.
+  documentReadOnly?: boolean
 }
 type ToolFunc = (
   workspaceClient: WorkspaceClient,
@@ -781,6 +793,9 @@ registerTool<object>(
   'thread'
 )
 
+/** Tools that replace a document body wholesale; useless and dangerous on a partial body. */
+const WHOLE_BODY_TOOLS = new Set(['propose_new_document', 'edit_issue_draft'])
+
 // Drafting an issue that does not exist yet: the model may only rewrite that draft. propose_task
 // creates a separate issue, sub-task and document tools act on objects that do not exist here.
 const PURPOSE_TOOLS: Record<AIConversationPurpose, Set<string>> = {
@@ -800,6 +815,8 @@ export function getTools (
   for (const tool of tools) {
     const name = tool[0].function.name
     if (allowed !== undefined && (name === undefined || !allowed.has(name))) continue
+    // Partial body in context: offering a rewrite tool invites silent data loss.
+    if (reqCtx?.documentReadOnly === true && name !== undefined && WHOLE_BODY_TOOLS.has(name)) continue
     // Purpose-bound tools stay out of every other conversation.
     if (tool[4] !== undefined && tool[4] !== purpose) continue
     // A level that denies the feature does not get its tools: a weak model would call them and fail.
@@ -809,7 +826,13 @@ export function getTools (
         ...tool[0],
         function: {
           ...tool[0].function,
-          function: (args: any) => tool[1](workspaceClient, user, args, reqCtx)
+          // The budget is applied here, not in each tool: one place, and every new tool is covered
+          // without having to remember about it.
+          function: async (args: any) => {
+            const out = await tool[1](workspaceClient, user, args, reqCtx)
+            if (typeof out !== 'string' || reqCtx?.perCallChars === undefined) return out
+            return applyToolBudget(out, reqCtx.perCallChars, reqCtx.budget)
+          }
         }
       }
       result.push(res)

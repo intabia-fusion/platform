@@ -42,6 +42,10 @@ const OVERSIZE_HINT =
 // Max model<->tool round trips before we force a plain-text answer.
 export const MAX_TOOL_ITERATIONS = 8
 
+// Invented tool names tolerated in one run. A capable model never spends one; a weak one spends
+// them in the first rounds and then keeps going in circles at the price of a request each.
+export const MAX_PHANTOM_CALLS = 3
+
 /** Execute a single tool call (on the pod, where WorkspaceClient context lives). */
 export type ExecuteTool = (call: ToolCall) => Promise<string>
 
@@ -49,6 +53,8 @@ export type ExecuteTool = (call: ToolCall) => Promise<string>
 export interface ToolExecutor {
   toolDefinitions: ToolDefinition[]
   execute: ExecuteTool
+  /** Names the executor can actually run, so the loop can spot an invented call. */
+  knownTools: Set<string>
 }
 
 /** Build serializable tool defs and a local executor from SDK-runnable tools (WorkspaceClient
@@ -70,7 +76,15 @@ export function buildToolExecutor (tools: RunnableTools<BaseFunctionsArgs>): Too
 
   const execute: ExecuteTool = async (call) => {
     const fn = executors.get(call.name)
-    if (fn === undefined) return `Error: unknown tool '${call.name}'`
+    // Weak models invent tool names. Naming what actually exists turns a dead round into a
+    // usable one; the loop also gives up early when they keep inventing (see runToolCalls).
+    if (fn === undefined) {
+      const available = [...executors.keys()]
+      return (
+        `Error: tool '${call.name}' does not exist. Available tools: ${available.length > 0 ? available.join(', ') : 'none'}. ` +
+        'Call one of these, or answer in plain text without calling anything.'
+      )
+    }
     let args: any = {}
     try {
       args = call.arguments === '' ? {} : JSON.parse(call.arguments)
@@ -85,7 +99,7 @@ export function buildToolExecutor (tools: RunnableTools<BaseFunctionsArgs>): Too
     }
   }
 
-  return { toolDefinitions, execute }
+  return { toolDefinitions, execute, knownTools: new Set(executors.keys()) }
 }
 
 export interface ToolLoopResult {
@@ -107,7 +121,8 @@ export async function runToolCalls (
   ask: AskModel,
   execute: ExecuteTool,
   maxIterations: number,
-  hooks?: ToolLoopHooks
+  hooks?: ToolLoopHooks,
+  knownTools?: Set<string>
 ): Promise<ToolLoopResult | undefined> {
   const priorToolResults: ToolResult[] = []
   let promptTokens = 0
@@ -129,6 +144,10 @@ export async function runToolCalls (
 
   let cancelled = false
   let retriedOversize = false
+  // Calls to tools that do not exist, over the whole run. Counting rounds instead was useless:
+  // a weak model mixes one real call with an invented one, so no round is ever fully phantom
+  // while the loop still burns a request per round.
+  let phantomCalls = 0
   for (let iter = 0; iter < maxIterations; iter++) {
     const reply = await ask(priorToolResults)
     if (reply === undefined) {
@@ -186,6 +205,16 @@ export async function runToolCalls (
       break
     }
 
+    // A weak model pairs a real call with an invented one, so the round is executed before the
+    // cutoff applies: otherwise the real call is dropped and the invented one never gets its
+    // "no such tool" feedback.
+    let lastRound = false
+    if (knownTools !== undefined && knownTools.size > 0) {
+      phantomCalls += calls.filter((c) => !knownTools.has(c.name)).length
+      // Still answer: the digest round below builds a reply from whatever was gathered.
+      lastRound = phantomCalls >= MAX_PHANTOM_CALLS
+    }
+
     // Execute the calls on the pod and keep every result: dropping earlier rounds would
     // hide already-fetched data from the model.
     priorToolResults.push(
@@ -198,6 +227,7 @@ export async function runToolCalls (
         }))
       ))
     )
+    if (lastRound) break
   }
 
   // Exhausted iterations, cancelled, or stuck re-requesting the same tool: collapse results into one
