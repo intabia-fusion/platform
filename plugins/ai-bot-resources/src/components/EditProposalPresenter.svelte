@@ -112,7 +112,9 @@
     {/if}
 
     <div class="proposal">
-      <div class="header"><Label label={plugin.string.ProposedEdit} params={{ name: $aiBotNameStore }} /></div>
+      <div class="header" data-id="aiEditProposal">
+        <Label label={plugin.string.ProposedEdit} params={{ name: $aiBotNameStore }} />
+      </div>
 
       {#if showDiff}
         <div class="diff">

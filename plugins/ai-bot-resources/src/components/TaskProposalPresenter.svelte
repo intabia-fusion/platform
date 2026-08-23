@@ -303,7 +303,7 @@
     {/if}
 
     <div class="proposal">
-      <div class="header">
+      <div class="header" data-id="aiTaskProposal">
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <span

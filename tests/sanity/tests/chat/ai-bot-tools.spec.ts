@@ -44,7 +44,9 @@ test.describe('ai-bot tool calls', () => {
       `оформи задачу\ncall:propose_task {"title":"${title}","description":"beans and filters"}`
     )
 
-    const card = page.locator('.hulyComponent .activityMessage', { hasText: 'Julia proposes a task' })
+    const card = page
+      .locator('.hulyComponent .activityMessage')
+      .filter({ has: page.locator('[data-id="aiTaskProposal"]') })
     await expect(card).toBeVisible({ timeout: 60000 })
     // The title lands in an editable field, so it is the input value and not the card's text.
     await expect(card.locator('input').first()).toHaveValue(title, { timeout: 10000 })
@@ -60,7 +62,9 @@ test.describe('ai-bot tool calls', () => {
         '{"title":"Tag the build"}]}'
     )
 
-    const card = page.locator('.hulyComponent .activityMessage', { hasText: 'Julia proposes a task' })
+    const card = page
+      .locator('.hulyComponent .activityMessage')
+      .filter({ has: page.locator('[data-id="aiTaskProposal"]') })
     await expect(card).toBeVisible({ timeout: 60000 })
     await expect(card).toContainText('Write notes', { timeout: 10000 })
     await expect(card).toContainText('Tag the build')
