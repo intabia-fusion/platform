@@ -246,7 +246,7 @@ export const CollaboratorTitlePresenter: Presenter<Collaborator> = async (
 ): Promise<string> => {
   const person = (
     await control.findAll(control.ctx, contact.class.Person, {
-      personUuid: (doc as any).collaborator
+      personUuid: doc.collaborator
     })
   )[0]
   if (person == null) return ''

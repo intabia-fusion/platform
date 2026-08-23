@@ -42,6 +42,7 @@
     "Completed": "Dokončeno",
     "Canceled": "Zrušeno",
     "CreateProject": "Vytvořit projekt",
+    "Configured": "Nakonfigurováno",
     "NewProject": "Nový projekt",
     "ProjectTitle": "Název projektu",
     "ProjectTitlePlaceholder": "Nový projekt",
@@ -235,9 +236,6 @@
     "TimeSpendReportValue": "Strávený čas",
     "TimeSpendReportValueTooltip": "Strávený čas v hodinách",
     "TimeSpendReportDescription": "Popis",
-    "TimeSpendDays": "{value}d",
-    "TimeSpendHours": "{value}h",
-    "TimeSpendMinutes": "{value}m",
     "TimeRangeWeek": "Týden",
     "TimeRangeTwoWeeks": "Dva týdny",
     "TimeRangeMonth": "Měsíc",
@@ -266,7 +264,8 @@
     "EightHoursLength": "Osm hodin",
     "HourLabel": "h",
     "MinuteLabel": "m",
-    "AlreadyReportedThisDay": "Celkem za tento den: {hours}h",
+    "AlreadyReportedThisDay": "Celkem za tento den: {hours}",
+    "DurationParseError": "Čas se nepodařilo rozpoznat. Zadejte ve formátu: {format}",
     "FixToEightHours": "Upravit na 8 h",
     "Saved": "Uloženo...",
     "CreatedIssue": "Úkol vytvořen",
@@ -302,7 +301,9 @@
     "AddedBlocker": "Přidán blokující úkol {identifier}{value}",
     "RemovedBlocker": "Odebrán blokující úkol {identifier}{value}",
     "AddedRelation": "Přidán související úkol {identifier}{value}",
-    "RemovedRelation": "Odebrán související úkol {identifier}{value}"
+    "RemovedRelation": "Odebrán související úkol {identifier}{value}",
+    "CreateAndOpen": "Vytvořit a otevřít",
+    "CreateAndNew": "Vytvořit a začít další"
   },
   "status": {},
   "emailTemplate": {

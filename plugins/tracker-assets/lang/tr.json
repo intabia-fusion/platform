@@ -42,6 +42,7 @@
     "Completed": "Tamamlandı",
     "Canceled": "İptal edildi",
     "CreateProject": "Proje oluştur",
+    "Configured": "Yapılandırıldı",
     "NewProject": "Yeni proje",
     "ProjectTitle": "Proje başlığı",
     "ProjectTitlePlaceholder": "Yeni proje",
@@ -235,9 +236,6 @@
     "TimeSpendReportValue": "Harcanan zaman",
     "TimeSpendReportValueTooltip": "Saat cinsinden harcanan zaman",
     "TimeSpendReportDescription": "Açıklama",
-    "TimeSpendDays": "{value}g",
-    "TimeSpendHours": "{value}s",
-    "TimeSpendMinutes": "{value}dk",
     "TimeRangeWeek": "Hafta",
     "TimeRangeTwoWeeks": "İki hafta",
     "TimeRangeMonth": "Ay",
@@ -266,7 +264,8 @@
     "EightHoursLength": "Sekiz Saat",
     "HourLabel": "s",
     "MinuteLabel": "dk",
-    "AlreadyReportedThisDay": "Bu günün toplamı: {hours}sa",
+    "AlreadyReportedThisDay": "Bu günün toplamı: {hours}",
+    "DurationParseError": "Süre tanınamadı. Biçimde girin: {format}",
     "FixToEightHours": "8 saate ayarla",
     "Saved": "Kaydedildi...",
     "CreatedIssue": "Sorun oluşturuldu",
@@ -302,7 +301,9 @@
     "AddedBlocker": "Engelleyen sorun eklendi {identifier}{value}",
     "RemovedBlocker": "Engelleyen sorun kaldırıldı {identifier}{value}",
     "AddedRelation": "İlgili sorun eklendi {identifier}{value}",
-    "RemovedRelation": "İlgili sorun kaldırıldı {identifier}{value}"
+    "RemovedRelation": "İlgili sorun kaldırıldı {identifier}{value}",
+    "CreateAndOpen": "Oluştur ve aç",
+    "CreateAndNew": "Oluştur ve yenisine başla"
   },
   "status": {},
   "emailTemplate": {

@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -787,8 +788,12 @@ export class LiveQuery implements WithTx, Client {
       } else {
         // $inc is commutative, so an equal-timestamp $inc-only tx (derived counter
         // txes share the parent tx timestamp) is applied locally instead of
-        // re-fetching the doc from the server.
+        // re-fetching the doc from the server — UNLESS the doc was freshly loaded
+        // from the server at this exact modifiedOn timestamp (in which case it already
+        // incorporates the $inc from the database).
+        const isLoadedAtSameTs = q.result.isLoadedAtModifiedOn(tx.objectId, tx.modifiedOn)
         const incOnlyAtSameTime =
+          !isLoadedAtSameTs &&
           updatedDoc.modifiedOn === tx.modifiedOn &&
           tx.operations.$inc != null &&
           Object.keys(tx.operations).every((k) => k === '$inc')
@@ -1696,6 +1701,9 @@ export class LiveQuery implements WithTx, Client {
   }
 
   private async __updateDoc (q: Query, updatedDoc: WithLookup<Doc>, tx: TxUpdateDoc<Doc>): Promise<void> {
+    if (q.result instanceof ResultArray) {
+      q.result.clearLoadedModifiedOn(tx.objectId)
+    }
     TxProcessor.updateDoc2Doc(updatedDoc, tx)
 
     const ops = {

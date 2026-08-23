@@ -220,6 +220,8 @@
     "SelectUsers": "选择用户",
     "ShowInTitle": "在标题中显示",
     "SpaceMembersOnly": "仅限空间成员",
+    "OverrideAttribute": "重写属性",
+    "Required": "必填",
     "Reset": "重置"
   },
   "emailTemplate": {

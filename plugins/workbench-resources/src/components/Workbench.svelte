@@ -165,7 +165,9 @@
 
   const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
 
-  const mobileAdaptive = $deviceInfo.isMobile && $deviceInfo.minWidth
+  // Reactive, not const: it gates whether the sidebar is rendered at all, and PanelInstance sizes
+  // itself off the same breakpoint on every resize - a stale value makes the panel overlap it.
+  $: mobileAdaptive = $deviceInfo.isMobile && $deviceInfo.minWidth
   const defaultNavigator = !(getMetadata(workbench.metadata.NavigationExpandedDefault) ?? true)
   const savedNavigator = localStorage.getItem('hiddenNavigator')
   let hiddenNavigator: boolean = savedNavigator !== null ? savedNavigator === 'true' : defaultNavigator
@@ -681,7 +683,9 @@
     oldNavVisible !== $deviceInfo.navigator.visible ||
     oldASideVisible !== ($sidebarStore.variant !== SidebarVariant.MINI)
   ) {
-    if (mobileAdaptive && $deviceInfo.navigator.float) {
+    // Inlined instead of `mobileAdaptive`: this block writes $deviceInfo, so reading the reactive
+    // var here would be a cycle. Same expression, same dependency this block already has.
+    if ($deviceInfo.isMobile && $deviceInfo.minWidth && $deviceInfo.navigator.float) {
       if ($deviceInfo.navigator.visible && $sidebarStore.variant !== SidebarVariant.MINI) {
         if (oldNavVisible) $deviceInfo.navigator.visible = false
         else $sidebarStore.variant = SidebarVariant.MINI
@@ -866,12 +870,13 @@
         >
           <Logo mini={appsMini} workspace={windowWorkspaceName ?? $resolvedLocationStore.path[1]} />
         </div>
-        <div class="topmenu-container clear-mins flex-no-shrink" class:mini={appsMini}>
+        <!-- Mobile keeps the collapse button in the bar (first), the workspace logo stays pinned top-left. -->
+        <div class="topmenu-container clear-mins flex-no-shrink">
           <AppItem
             icon={TopMenu}
             label={$deviceInfo.navigator.visible ? workbench.string.HideMenu : workbench.string.ShowMenu}
             selected={!$deviceInfo.navigator.visible}
-            size={appsMini ? 'small' : 'medium'}
+            size={'large'}
             on:click={toggleNav}
           />
         </div>
@@ -886,6 +891,7 @@
             <AppItem
               icon={notification.icon.Notifications}
               label={notification.string.Inbox}
+              size={'large'}
               {...inboxProps}
               on:click={inboxProps.onClick}
             />
@@ -895,6 +901,7 @@
           {apps}
           active={currentApplication?._id}
           direction={$deviceInfo.navigator.direction}
+          compact={appsMini}
           {customAppProps}
           on:toggleNav={toggleNav}
         />
@@ -904,12 +911,13 @@
         class:vertical-mobile={$deviceInfo.navigator.direction === 'vertical'}
         class:mini={appsMini}
       >
-        <AppItem
-          icon={IconSettings}
-          label={setting.string.Customize}
-          size={appsMini ? 'small' : 'large'}
-          on:click={() => showPopup(AppSwitcher, { apps }, popupPosition)}
-        />
+        {#if !appsMini}
+          <AppItem
+            icon={IconSettings}
+            label={setting.string.Customize}
+            on:click={() => showPopup(AppSwitcher, { apps }, popupPosition)}
+          />
+        {/if}
         <AppItem
           icon={support.icon.Support}
           label={support.string.ContactUs}
@@ -1086,10 +1094,12 @@
           {/if}
         </div>
       </div>
-      {#if $sidebarStore.variant === SidebarVariant.EXPANDED && !$sidebarStore.float}
-        <Separator name={'main'} index={0} color={'transparent'} separatorSize={0} short />
+      {#if !mobileAdaptive}
+        {#if $sidebarStore.variant === SidebarVariant.EXPANDED && !$sidebarStore.float}
+          <Separator name={'main'} index={0} color={'transparent'} separatorSize={0} short />
+        {/if}
+        <WidgetsBar />
       {/if}
-      <WidgetsBar />
     </div>
   </div>
   <Dock />
@@ -1146,6 +1156,8 @@
     .antiPanel-application.horizontal {
       border-radius: 0 0 var(--medium-BorderRadius) var(--medium-BorderRadius);
       border-top: none;
+      // Bar height is driven by its buttons - without this they sit flush against both edges.
+      padding-block: 0.25rem;
     }
     .antiPanel-application:not(.horizontal) {
       border-radius: var(--medium-BorderRadius) 0 0 var(--medium-BorderRadius);
@@ -1158,9 +1170,11 @@
     display: flex;
     align-items: center;
     z-index: 1;
+    // Must give way to the info-box (help + avatar) instead of pushing it off screen.
+    min-width: 0;
 
     &.portrait {
-      margin-left: 1rem;
+      margin-left: 0.5rem;
 
       .logo-container {
         margin-right: 0.5rem;
@@ -1197,17 +1211,18 @@
     }
     .logo-container.mini {
       left: 4px;
-      width: 1.75rem;
-      height: 1.75rem;
+      width: 2.25rem;
+      height: 2.25rem;
     }
     .topmenu-container.mini {
-      left: calc(1.75rem + 8px);
+      left: calc(2.25rem + 8px);
     }
   }
 
   .info-box {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
 
     &.vertical {
       flex-direction: column;

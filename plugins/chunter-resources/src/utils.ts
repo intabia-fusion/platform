@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,7 +15,11 @@
 //
 import { type ActivityMessage, type ForwardContent, type ForwardedAttachment } from '@hcengineering/activity'
 import aiBot from '@hcengineering/ai-bot'
-import { summarizeMessages as aiSummarizeMessages, translate as aiTranslate } from '@hcengineering/ai-bot-resources'
+import {
+  summarizeMessages as aiSummarizeMessages,
+  translate as aiTranslate,
+  getBotAccount
+} from '@hcengineering/ai-bot-resources'
 import {
   type Channel,
   type ChatMessage,
@@ -30,14 +35,17 @@ import core, {
   type Class,
   type Client,
   type Doc,
+  generateId,
   getCurrentAccount,
   hasAccountRole,
+  type Markup,
   notEmpty,
   type Ref,
   type Space,
   type Timestamp,
   type WithLookup
 } from '@hcengineering/core'
+import { type AttributeApplierResult } from '@hcengineering/view'
 import { type DocNotifyContext, type InboxNotification, type ReadState } from '@hcengineering/notification'
 import {
   InboxNotificationsClientImpl,
@@ -63,7 +71,7 @@ import { isEmptyMarkup } from '@hcengineering/text'
 
 import ChannelIcon from './components/ChannelIcon.svelte'
 import DirectIcon from './components/DirectIcon.svelte'
-import { openChannelInSidebar, resetChunterLocIfEqual } from './navigation'
+import { openChannel, openChannelInSidebar, resetChunterLocIfEqual } from './navigation'
 import chunter from './plugin'
 import {
   replyingToMessageStore,
@@ -521,7 +529,16 @@ export async function startConversationAction (docs?: Employee | Employee[]): Pr
   const dm = await createDirect(client, accounts)
   if (dm == null) return
 
-  await openChannelInSidebar(dm, chunter.class.DirectMessage, undefined, undefined, true)
+  await openChannelInSidebar(dm, chunter.class.DirectMessage)
+}
+
+export async function openBotDirect (): Promise<void> {
+  const botAccount = await getBotAccount()
+  if (botAccount === undefined) return
+  const client = getClient()
+  const dm = await createDirect(client, [getCurrentAccount().uuid, botAccount])
+  if (dm == null) return
+  openChannel(dm, chunter.class.DirectMessage, undefined, true)
 }
 
 export async function toggleChannelIcon (channel: Channel, icon?: Asset, emoji?: number | number[]): Promise<void> {
@@ -659,4 +676,45 @@ export async function getChatDocTitle (
     identifier,
     title
   }
+}
+
+export async function CommentsApplier (
+  object: Doc,
+  _value: { message: Markup } | undefined | null
+): Promise<AttributeApplierResult> {
+  const value = _value?.message
+  if (value == null || (typeof value === 'string' && value.trim().length === 0) || isEmptyMarkup(value)) {
+    return {}
+  }
+  const client = getClient()
+  const txFactory = client.txFactory
+  const id = generateId<ChatMessage>()
+  const modifiedOn = Date.now()
+  const modifiedBy = getCurrentAccount().primarySocialId
+
+  const createDocTx = txFactory.createTxCreateDoc<ChatMessage>(
+    chunter.class.ChatMessage,
+    object.space,
+    {
+      attachedTo: object._id,
+      attachedToClass: object._class,
+      collection: 'comments',
+      message: value
+    },
+    id,
+    modifiedOn,
+    modifiedBy
+  )
+
+  const collectionTx = txFactory.createTxCollectionCUD(
+    object._class,
+    object._id,
+    object.space,
+    'comments',
+    createDocTx,
+    modifiedOn,
+    modifiedBy
+  )
+
+  return { txes: [collectionTx] }
 }

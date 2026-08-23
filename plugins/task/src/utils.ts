@@ -320,6 +320,9 @@ async function createTaskTypes (
       _statues.add(st)
     }
     const tdata = {
+      isRootTaskType: true,
+      allowAnyParent: true,
+      allowedAsChildOf: [],
       ...data,
       parent: _id,
       statuses
@@ -363,4 +366,55 @@ async function createTaskTypes (
     _tasks.push(taskId)
   }
   return hasUpdates
+}
+
+/**
+ * Returns allowed subtask types for a given parent task type in a project type.
+ *
+ * @public
+ */
+export function getAllowedChildTaskTypes (
+  projectType: Ref<ProjectType>,
+  taskType: Ref<TaskType>,
+  taskTypes: TaskType[]
+): TaskType[] {
+  const scopedTypes = taskTypes.filter((t) => t.parent === projectType)
+
+  return scopedTypes.filter((tt) => {
+    return tt.allowAnyParent === true || (tt.allowedAsChildOf ?? []).includes(taskType)
+  })
+}
+
+/**
+ * Returns allowed parent task types for a given child task type in a project type.
+ *
+ * @public
+ */
+export function getAllowedParentTaskTypes (
+  projectType: Ref<ProjectType>,
+  taskType: Ref<TaskType>,
+  taskTypes: TaskType[]
+): TaskType[] {
+  const scopedTypes = taskTypes.filter((t) => t.parent === projectType)
+  const childTaskType = scopedTypes.find((t) => t._id === taskType)
+
+  if (childTaskType == null) {
+    return []
+  }
+
+  if (childTaskType.allowAnyParent === true) {
+    return scopedTypes
+  }
+
+  const allowedParents = childTaskType.allowedAsChildOf ?? []
+  return scopedTypes.filter((parentTT) => allowedParents.includes(parentTT._id))
+}
+
+/**
+ * Returns task types allowed to be created as root tasks in a project type.
+ *
+ * @public
+ */
+export function getRootTaskTypes (projectType: Ref<ProjectType>, taskTypes: TaskType[]): TaskType[] {
+  return taskTypes.filter((t) => t.parent === projectType && t.isRootTaskType !== false)
 }

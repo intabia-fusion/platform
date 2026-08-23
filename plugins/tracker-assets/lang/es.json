@@ -42,6 +42,7 @@
     "Completed": "Completado",
     "Canceled": "Cancelado",
     "CreateProject": "Crear proyecto",
+    "Configured": "Configurado",
     "NewProject": "Nuevo proyecto",
     "ProjectTitle": "Título del proyecto",
     "ProjectTitlePlaceholder": "Nuevo proyecto",
@@ -235,9 +236,6 @@
     "TimeSpendReportValue": "Tiempo empleado",
     "TimeSpendReportValueTooltip": "Tiempo empleado en horas",
     "TimeSpendReportDescription": "Descripción",
-    "TimeSpendDays": "{value}d",
-    "TimeSpendHours": "{value}h",
-    "TimeSpendMinutes": "{value}m",
     "TimeRangeWeek": "Semana",
     "TimeRangeTwoWeeks": "Dos semanas",
     "TimeRangeMonth": "Mes",
@@ -266,7 +264,8 @@
     "EightHoursLength": "Ocho horas",
     "HourLabel": "h",
     "MinuteLabel": "m",
-    "AlreadyReportedThisDay": "Total de este día: {hours}h",
+    "AlreadyReportedThisDay": "Total de este día: {hours}",
+    "DurationParseError": "No se pudo reconocer el tiempo. Introduzca el formato: {format}",
     "FixToEightHours": "Ajustar a 8 h",
     "Saved": "Guardado...",
     "CreatedIssue": "Problema creado",
@@ -302,7 +301,9 @@
     "AddedBlocker": "Problema bloqueador añadido {identifier}{value}",
     "RemovedBlocker": "Problema bloqueador eliminado {identifier}{value}",
     "AddedRelation": "Problema relacionado añadido {identifier}{value}",
-    "RemovedRelation": "Problema relacionado eliminado {identifier}{value}"
+    "RemovedRelation": "Problema relacionado eliminado {identifier}{value}",
+    "CreateAndOpen": "Crear y abrir",
+    "CreateAndNew": "Crear y empezar otra"
   },
   "status": {},
   "emailTemplate": {

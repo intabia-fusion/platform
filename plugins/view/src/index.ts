@@ -24,6 +24,7 @@ import {
   Aggregation,
   AllValuesFunc,
   ArrayEditor,
+  AttrApplier,
   AttrPresenter,
   AttributeEditor,
   AttributeFilter,
@@ -139,7 +140,8 @@ const view = plugin(viewId, {
     LinkPresenter: '' as Ref<Class<LinkPresenter>>,
     FilterMode: '' as Ref<Class<FilterMode>>,
     FilteredView: '' as Ref<Class<FilteredView>>,
-    AttrPresenter: '' as Ref<Class<AttrPresenter>>
+    AttrPresenter: '' as Ref<Class<AttrPresenter>>,
+    AttrApplier: '' as Ref<Class<AttrApplier>>
   },
   action: {
     Delete: '' as Ref<Action>,

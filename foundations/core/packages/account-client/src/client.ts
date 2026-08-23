@@ -59,12 +59,14 @@ import type {
   LicenseInfo,
   SocialId,
   Subscription,
-  SubscriptionData,
+  SubscriptionUpsert,
   PaymentIntent,
   PaymentOperation,
   PaymentOperationStats,
   PaymentOperationFilter,
   PaymentMonthlyStats,
+  WorkspacePurchase,
+  WorkspacePurchaseStatus,
   SubscriptionInfo,
   UserProfile,
   WorkspaceInviteInfo,
@@ -323,7 +325,11 @@ export interface AccountClient {
   getSubscriptions: (workspaceUuid?: WorkspaceUuid | undefined, activeOnly?: boolean) => Promise<Subscription[]>
   getAllSubscriptions: () => Promise<SubscriptionInfo[]>
   getSubscriptionByProviderId: (provider: string, providerSubscriptionId: string) => Promise<Subscription | null>
-  getSubscriptionsByProvider: (provider: string, statuses?: string[]) => Promise<Subscription[]>
+  getSubscriptionsByProvider: (
+    provider?: string,
+    statuses?: string[],
+    trialEndBefore?: number
+  ) => Promise<Subscription[]>
   claimIntent: (
     claimKey: string,
     provider: string,
@@ -339,8 +345,14 @@ export interface AccountClient {
   getPaymentOperationStats: (from: number, to: number) => Promise<PaymentOperationStats>
   getPaymentOperations: (filter: PaymentOperationFilter) => Promise<PaymentOperation[]>
   getPaymentMonthlyStats: (from: number, to: number) => Promise<PaymentMonthlyStats[]>
+  createPurchase: (purchase: WorkspacePurchase) => Promise<string>
+  updatePurchaseStatus: (id: string, status: WorkspacePurchaseStatus, activatedOn?: number) => Promise<void>
+  getPurchases: (workspaceUuid?: WorkspaceUuid) => Promise<WorkspacePurchase[]>
   getSubscriptionById: (subscriptionId: string) => Promise<Subscription | null>
-  upsertSubscription: (subscription: SubscriptionData) => Promise<void>
+  upsertSubscription: (subscription: SubscriptionUpsert) => Promise<void>
+  upsertSubscriptionsBulk: (
+    subscriptions: SubscriptionUpsert[]
+  ) => Promise<Array<{ id: string, ok: boolean, error?: string }>>
   adminCreateSubscription: (params: {
     workspaceUuid: WorkspaceUuid
     plan: string
@@ -1554,12 +1566,17 @@ class AccountClientImpl implements AccountClient {
     })
   }
 
-  async getSubscriptionsByProvider (provider: string, statuses?: string[]): Promise<Subscription[]> {
+  async getSubscriptionsByProvider (
+    provider?: string,
+    statuses?: string[],
+    trialEndBefore?: number
+  ): Promise<Subscription[]> {
     return await this._rpc({
       method: 'getSubscriptionsByProvider',
       params: {
         provider,
-        statuses
+        statuses,
+        trialEndBefore
       }
     })
   }
@@ -1656,6 +1673,27 @@ class AccountClientImpl implements AccountClient {
     })
   }
 
+  async createPurchase (purchase: WorkspacePurchase): Promise<string> {
+    return await this._rpc({
+      method: 'createPurchase',
+      params: { purchase }
+    })
+  }
+
+  async updatePurchaseStatus (id: string, status: WorkspacePurchaseStatus, activatedOn?: number): Promise<void> {
+    await this._rpc({
+      method: 'updatePurchaseStatus',
+      params: { id, status, activatedOn }
+    })
+  }
+
+  async getPurchases (workspaceUuid?: WorkspaceUuid): Promise<WorkspacePurchase[]> {
+    return await this._rpc({
+      method: 'getPurchases',
+      params: { workspaceUuid }
+    })
+  }
+
   async getSubscriptionById (subscriptionId: string): Promise<Subscription | null> {
     return await this._rpc({
       method: 'getSubscriptionById',
@@ -1665,10 +1703,19 @@ class AccountClientImpl implements AccountClient {
     })
   }
 
-  async upsertSubscription (subscription: SubscriptionData): Promise<void> {
+  async upsertSubscription (subscription: SubscriptionUpsert): Promise<void> {
     await this._rpc({
       method: 'upsertSubscription',
       params: subscription
+    })
+  }
+
+  async upsertSubscriptionsBulk (
+    subscriptions: SubscriptionUpsert[]
+  ): Promise<Array<{ id: string, ok: boolean, error?: string }>> {
+    return await this._rpc({
+      method: 'upsertSubscriptionsBulk',
+      params: { subscriptions }
     })
   }
 
@@ -1767,10 +1814,13 @@ function withRetry<T, F extends (...args: any[]) => Promise<T>> (
 }
 
 function withRetryUntilTimeout<T, F extends (...args: any[]) => Promise<T>> (f: F, timeoutMs: number = 5000): F {
-  const timeout = Date.now() + timeoutMs
-  const shouldFail = (err: any): boolean => !isNetworkError(err) || timeout < Date.now()
-
-  return withRetry(f, shouldFail)
+  // Deadline per call: the wrapper is built once in the constructor, so capturing it
+  // here would kill retries for good once timeoutMs elapsed since client creation.
+  return async function (...params: Parameters<F>): Promise<T> {
+    const timeout = Date.now() + timeoutMs
+    const shouldFail = (err: any): boolean => !isNetworkError(err) || timeout < Date.now()
+    return await withRetry(f, shouldFail)(...params)
+  } as F
 }
 
 function withRetryUntilMaxAttempts<T, F extends (...args: any[]) => Promise<T>> (f: F, maxAttempts: number = 5): F {

@@ -40,8 +40,9 @@ import { decodeTokenVerbose } from '@hcengineering/server-token'
 import {
   LimitCategory,
   LimitStatus,
+  subscriptionEvents,
   workspaceEvents,
-  type QueueWorkspaceLimitsMessage
+  type QueueWorkspaceMessage
 } from '@hcengineering/server-core'
 
 import { accountPlugin } from './plugin'
@@ -63,12 +64,14 @@ import type {
   OtpInfo,
   SocialId,
   Subscription,
-  SubscriptionData,
+  SubscriptionUpsert,
   PaymentIntent,
   PaymentOperation,
   PaymentOperationStats,
   PaymentOperationFilter,
   PaymentMonthlyStats,
+  WorkspacePurchase,
+  WorkspacePurchaseStatus,
   Workspace,
   WorkspaceEvent,
   WorkspaceInfoWithStatus,
@@ -550,11 +553,33 @@ export async function adminCancelSubscription (
   await logAdminAction(ctx, db, token, 'cancel_subscription', existing.workspaceUuid, existing.plan, {
     subscriptionId: existing.id
   })
+  // Also record it in the payment ledger to keep the billing timeline consistent.
+  try {
+    await db.logPaymentOperation({
+      provider: existing.provider,
+      operation: 'cancel',
+      status: 'ADMIN_CANCELED',
+      paymentId: existing.providerSubscriptionId,
+      orderId: oldProviderData.orderId as string | undefined,
+      subscriptionId: existing.id,
+      workspaceUuid: existing.workspaceUuid,
+      accountUuid: existing.accountUuid,
+      actionId: oldProviderData.actionId as string | undefined,
+      actor: 'admin',
+      amount: existing.amount,
+      raw: { plan: existing.plan, seats: oldProviderData.quantity, type: existing.type, reason: 'ADMIN_CANCELED' },
+      createdOn: now
+    })
+  } catch (err: any) {
+    ctx.error('Failed to log admin cancel to payment ledger', { subscriptionId: existing.id, err })
+  }
 
   if (existing.type === SubscriptionType.Tier) {
     await publishLimitsEvents(ctx, existing.workspaceUuid, [
       workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)
     ])
+    // pod-payment owns the free-plan config, so it decides whether a free fallback follows this cancel.
+    await publishAdminCanceled(ctx, { ...existing, status: SubscriptionStatus.Canceled, canceledAt: now })
   }
 }
 
@@ -1595,7 +1620,7 @@ export async function findPersonBySocialKey (
 async function publishLimitsEvents (
   ctx: MeasureContext,
   workspaceUuid: WorkspaceUuid,
-  events: QueueWorkspaceLimitsMessage[]
+  events: QueueWorkspaceMessage[]
 ): Promise<void> {
   if (events.length === 0) return
   const producer = getMetadata(accountPlugin.metadata.WorkspaceQueue)
@@ -1610,12 +1635,29 @@ async function publishLimitsEvents (
   }
 }
 
+/** Tell pod-payment about an operator cancel so it can provision the free fallback plan. */
+async function publishAdminCanceled (ctx: MeasureContext, sub: Subscription): Promise<void> {
+  const producer = getMetadata(accountPlugin.metadata.SubscriptionQueue)
+  if (producer === undefined) {
+    ctx.warn('SubscriptionQueue producer is not configured, free fallback skipped', {
+      subscriptionId: sub.id,
+      workspaceUuid: sub.workspaceUuid
+    })
+    return
+  }
+  try {
+    await producer.send(ctx, sub.workspaceUuid, [subscriptionEvents.adminCanceled(sub, sub.provider)])
+  } catch (err: any) {
+    ctx.error('Failed to publish admin cancel event', { subscriptionId: sub.id, err })
+  }
+}
+
 export async function upsertSubscription (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: SubscriptionData
+  params: SubscriptionUpsert
 ): Promise<void> {
   const { extra } = decodeTokenVerbose(ctx, token)
 
@@ -1624,12 +1666,26 @@ export async function upsertSubscription (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
+  await doUpsertSubscription(ctx, db, params)
+}
+
+async function doUpsertSubscription (ctx: MeasureContext, db: AccountDB, params: SubscriptionUpsert): Promise<void> {
   const { workspaceUuid, provider, providerSubscriptionId } = params
 
   // Verify workspace exists
   const workspace = await getWorkspaceById(db, workspaceUuid)
   if (workspace === null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
+  }
+
+  // account_uuid is NOT NULL with an FK, but a free/trial tier has no payer.
+  if (params.accountUuid == null) {
+    const members = await db.getWorkspaceMembers(workspaceUuid)
+    const owner = members.find((m) => m.role === AccountRole.Owner) ?? members[0]
+    if (owner === undefined) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+    }
+    params = { ...params, accountUuid: owner.person }
   }
 
   // Check if subscription exists by provider + providerSubscriptionId (unique external ID)
@@ -1725,6 +1781,16 @@ export async function upsertSubscription (
     })
   }
 
+  // Active AI package grants tokens once per billing period via purchase-activated event.
+  if (params.type === SubscriptionType.Package && params.status === SubscriptionStatus.Active) {
+    const tokens = params.limits?.tokenLimit ?? 0
+    if (tokens > 0 && params.periodStart !== undefined) {
+      await publishLimitsEvents(ctx, workspaceUuid, [
+        workspaceEvents.purchaseActivated(params.plan, `${params.id}:${params.periodStart}`, 'add-ai-tokens', tokens)
+      ])
+    }
+  }
+
   // Payment/plan state is defined by the tier subscription; notify consumers edge-triggered.
   if (params.type === SubscriptionType.Tier) {
     // Refresh the snapshot so consumers re-read free-vs-paid limits without restart. Status matters:
@@ -1740,6 +1806,45 @@ export async function upsertSubscription (
       await publishLimitsEvents(ctx, workspaceUuid, [workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)])
     }
   }
+}
+
+/**
+ * Upsert many subscriptions.
+ * Best-effort: every entry is attempted on its own, one bad row cannot sink the rest of the batch.
+ * Callers must treat the result `ok: false` as "this one did not happen".
+ * @public
+ */
+export async function upsertSubscriptionsBulk (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { subscriptions: SubscriptionUpsert[] }
+): Promise<Array<{ id: string, ok: boolean, error?: string }>> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const { subscriptions } = params
+  const results: Array<{ id: string, ok: boolean, error?: string }> = []
+
+  // Sequential on purpose: doUpsertSubscription runs a read-modify-write (stale guard, supersede
+  // cascade) that would race against itself for two entries of the same workspace.
+  for (const sub of subscriptions) {
+    try {
+      await doUpsertSubscription(ctx, db, sub)
+      results.push({ id: sub.id, ok: true })
+    } catch (err: any) {
+      ctx.error('Bulk subscription upsert entry failed', { id: sub.id, workspaceUuid: sub.workspaceUuid, err })
+      results.push({ id: sub.id, ok: false, error: err?.message ?? String(err) })
+    }
+  }
+
+  const failed = results.filter((r) => !r.ok).length
+  ctx.info('Bulk subscription upsert done', { total: results.length, failed })
+  return results
 }
 
 export async function getSubscriptionByProviderId (
@@ -1773,6 +1878,7 @@ export async function getSubscriptionByProviderId (
 /**
  * A provider's subscriptions filtered server-side by status (defaults to {active, past_due} — the
  * renewal candidates). Lets schedulers/reconcilers skip loading the whole table or other providers.
+ * `trialEndBefore` narrows further to trials that already ended to sweep them.
  * @public
  */
 export async function getSubscriptionsByProvider (
@@ -1781,8 +1887,9 @@ export async function getSubscriptionsByProvider (
   branding: Branding | null,
   token: string,
   params: {
-    provider: string
+    provider?: string
     statuses?: SubscriptionStatus[]
+    trialEndBefore?: number
   }
 ): Promise<Subscription[]> {
   const { extra } = decodeTokenVerbose(ctx, token)
@@ -1791,11 +1898,17 @@ export async function getSubscriptionsByProvider (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  const { provider, statuses } = params
-  return await db.subscription.find({
-    provider,
+  const { provider, statuses, trialEndBefore } = params
+  // No provider = every provider: a sweep that has to touch all subscriptions, whoever sold them.
+  const query: Query<Subscription> = {
+    ...(provider !== undefined ? { provider } : {}),
     status: { $in: statuses ?? [SubscriptionStatus.Active, SubscriptionStatus.PastDue] }
-  })
+  }
+  // A null trial_end never matches $lte, which is what we want: no trial end, nothing to expire.
+  if (trialEndBefore !== undefined) {
+    query.trialEnd = { $lte: trialEndBefore }
+  }
+  return await db.subscription.find(query)
 }
 
 /**
@@ -1933,6 +2046,61 @@ export async function getPaymentMonthlyStats (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
   return await db.getPaymentMonthlyStats(params.from, params.to)
+}
+
+export async function createPurchase (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { purchase: WorkspacePurchase }
+): Promise<string> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.service !== 'payment') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return await db.createPurchase(params.purchase)
+}
+
+export async function updatePurchaseStatus (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { id: string, status: WorkspacePurchaseStatus, activatedOn?: number }
+): Promise<void> {
+  const { extra } = decodeTokenVerbose(ctx, token)
+  // payment activates purchases; the SKU-owning pod (e.g. ai-bot) marks them consumed via an admin token.
+  if (extra?.service !== 'payment' && extra?.admin !== 'true') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  await db.updatePurchaseStatus(params.id, params.status, params.activatedOn)
+}
+
+export async function getPurchases (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { workspaceUuid?: WorkspaceUuid }
+): Promise<WorkspacePurchase[]> {
+  const { account, extra, workspace: tokenWorkspace } = decodeTokenVerbose(ctx, token)
+  // Payment ledger is sensitive: only payment/billing services or admins may target an arbitrary
+  // workspace. A plain service token must not read another workspace's purchase history.
+  const isService =
+    extra?.service === 'payment' ||
+    extra?.service === 'billing' ||
+    extra?.admin === 'true' ||
+    extra?.billingAdmin === 'true'
+  const targetWorkspace = isService ? (params.workspaceUuid ?? tokenWorkspace) : tokenWorkspace
+  if (targetWorkspace === undefined) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  // Any workspace member may read its purchase history (mirrors getSubscriptions gating).
+  if (!isService && (await db.getWorkspaceRole(account, targetWorkspace)) === null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  return await db.getPurchases(targetWorkspace)
 }
 
 /**
@@ -2215,7 +2383,11 @@ export type AccountServiceMethods =
   | 'getPaymentOperationStats'
   | 'getPaymentOperations'
   | 'getPaymentMonthlyStats'
+  | 'createPurchase'
+  | 'updatePurchaseStatus'
+  | 'getPurchases'
   | 'upsertSubscription'
+  | 'upsertSubscriptionsBulk'
   | 'getAccountWorkspaceBadgeStatuses'
   | 'setWorkspaceBadgeStatuses'
   | 'getAllSubscriptions'
@@ -2288,7 +2460,11 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     getPaymentOperationStats: wrap(getPaymentOperationStats),
     getPaymentOperations: wrap(getPaymentOperations),
     getPaymentMonthlyStats: wrap(getPaymentMonthlyStats),
+    createPurchase: wrap(createPurchase),
+    updatePurchaseStatus: wrap(updatePurchaseStatus),
+    getPurchases: wrap(getPurchases),
     upsertSubscription: wrap(upsertSubscription),
+    upsertSubscriptionsBulk: wrap(upsertSubscriptionsBulk),
     getAccountWorkspaceBadgeStatuses: wrap(getAccountWorkspaceBadgeStatuses),
     setWorkspaceBadgeStatuses: wrap(setWorkspaceBadgeStatuses),
     getAllSubscriptions: wrap(getAllSubscriptions),

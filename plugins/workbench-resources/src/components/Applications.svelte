@@ -16,7 +16,14 @@
   import { createEventDispatcher } from 'svelte'
   import core, { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Scroller, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import {
+    Scroller,
+    deviceOptionsStore as deviceInfo,
+    ModernButton,
+    showPopup,
+    getCurrentLocation,
+    navigate
+  } from '@hcengineering/ui'
   import { NavLink } from '@hcengineering/view-resources'
   import type { Application } from '@hcengineering/workbench'
   import workbench from '@hcengineering/workbench'
@@ -25,15 +32,19 @@
   import notification, {
     DocNotifyContext,
     InboxNotification,
-    NotificationAppearancePreference
+    NotificationAppearancePreference,
+    notificationId
   } from '@hcengineering/notification'
 
   import AppItem from './AppItem.svelte'
+  import AppsMenuPopup from './AppsMenuPopup.svelte'
 
   export let active: Ref<Application> | undefined
   export let apps: Application[] = []
   export let direction: 'vertical' | 'horizontal' = 'vertical'
   export let customAppProps: Map<string, any> = new Map<string, any>()
+  // Mobile: a strip of tiny icons is unhittable - collapse it into one button with a menu.
+  export let compact: boolean = false
 
   const dispatch = createEventDispatcher()
 
@@ -119,54 +130,82 @@
     }
     return false
   }
+
+  let menuButton: HTMLButtonElement | undefined
+  let lastApp: Application | undefined
+
+  // Inbox has its own bell button next to this one.
+  $: allApps = [...topApps, ...midApps, ...bottomApps].filter((it) => it.alias !== notificationId)
+  $: currentApp = allApps.find((it) => it._id === active)
+  $: if (currentApp !== undefined) lastApp = currentApp
+  // Landing straight in Inbox leaves nothing remembered - fall back to the first app so the button
+  // exists. `lastApp` is re-looked-up: it goes stale once the app is hidden from the workspace.
+  $: displayApp = currentApp ?? allApps.find((it) => it._id === lastApp?._id) ?? allApps[0]
+
+  function openAppsMenu (): void {
+    showPopup(AppsMenuPopup, { apps: allApps, active }, menuButton)
+  }
+
+  function goToApp (app: Application): void {
+    const loc = getCurrentLocation()
+    loc.path[2] = app.alias
+    loc.path.length = 3
+    loc.fragment = undefined
+    loc.query = undefined
+    navigate(loc)
+  }
 </script>
 
-<div class="flex-{direction === 'horizontal' ? 'row-center' : 'col-center'} clear-mins apps-{direction} relative">
-  {#if loaded}
-    <Scroller
-      invertScroll
-      padding={direction === 'horizontal' ? '.75rem .5rem' : '.5rem .75rem'}
-      gap={direction === 'horizontal' ? 'gap-1' : 'gapV-1'}
-      horizontal={direction === 'horizontal'}
-      contentDirection={direction}
-      align={direction === 'horizontal' ? 'center' : 'start'}
-      buttons={'union'}
-    >
-      {#each topApps as app}
-        {@const customProps = customAppProps.get(app.alias) ?? {}}
-        {#await showNotify(app, $inboxContextsStore, hasInboxNotifications, $appearancePreferences) then notify}
-          <NavLink app={app.alias} shrink={0} disabled={app._id === active}>
-            <AppItem
-              selected={app._id === active}
-              icon={app.icon}
-              label={app.label}
-              navigator={app._id === active && $deviceInfo.navigator.visible}
-              {notify}
-              {...customProps}
-              on:click={getClickHandler(app, customProps)}
-            />
-          </NavLink>
-        {/await}
-      {/each}
-      {#if topApps.length > 0}
-        <div class="divider" />
-      {/if}
-      {#each midApps as app}
-        {@const customProps = customAppProps.get(app.alias) ?? {}}
-        <NavLink app={app.alias} shrink={0} disabled={app._id === active}>
-          <AppItem
-            selected={app._id === active}
-            icon={app.icon}
-            label={app.label}
-            navigator={app._id === active && $deviceInfo.navigator.visible}
-            {...customProps}
-            on:click={getClickHandler(app, customProps)}
-          />
-        </NavLink>
-      {/each}
-      {#if bottomApps.length > 0}
-        <div class="divider" />
-        {#each bottomApps as app}
+{#if compact}
+  <div class="flex-row-center clear-mins compact-apps">
+    {#if loaded && displayApp !== undefined}
+      <!-- In this app - opens the menu. Elsewhere (e.g. Inbox) - one tap goes back to it. -->
+      <ModernButton
+        bind:element={menuButton}
+        icon={displayApp.icon}
+        label={displayApp.label}
+        size={'small'}
+        pressed={currentApp !== undefined}
+        hasMenu
+        on:click={() => {
+          if (currentApp !== undefined) openAppsMenu()
+          else if (displayApp !== undefined) goToApp(displayApp)
+        }}
+      />
+    {/if}
+  </div>
+{:else}
+  <div class="flex-{direction === 'horizontal' ? 'row-center' : 'col-center'} clear-mins apps-{direction} relative">
+    {#if loaded}
+      <Scroller
+        invertScroll
+        padding={direction === 'horizontal' ? '.75rem .5rem' : '.5rem .75rem'}
+        gap={direction === 'horizontal' ? 'gap-1' : 'gapV-1'}
+        horizontal={direction === 'horizontal'}
+        contentDirection={direction}
+        align={direction === 'horizontal' ? 'center' : 'start'}
+        buttons={'union'}
+      >
+        {#each topApps as app}
+          {@const customProps = customAppProps.get(app.alias) ?? {}}
+          {#await showNotify(app, $inboxContextsStore, hasInboxNotifications, $appearancePreferences) then notify}
+            <NavLink app={app.alias} shrink={0} disabled={app._id === active}>
+              <AppItem
+                selected={app._id === active}
+                icon={app.icon}
+                label={app.label}
+                navigator={app._id === active && $deviceInfo.navigator.visible}
+                {notify}
+                {...customProps}
+                on:click={getClickHandler(app, customProps)}
+              />
+            </NavLink>
+          {/await}
+        {/each}
+        {#if topApps.length > 0}
+          <div class="divider" />
+        {/if}
+        {#each midApps as app}
           {@const customProps = customAppProps.get(app.alias) ?? {}}
           <NavLink app={app.alias} shrink={0} disabled={app._id === active}>
             <AppItem
@@ -174,19 +213,46 @@
               icon={app.icon}
               label={app.label}
               navigator={app._id === active && $deviceInfo.navigator.visible}
-              notify={false}
               {...customProps}
               on:click={getClickHandler(app, customProps)}
             />
           </NavLink>
         {/each}
-      {/if}
-      <div class="apps-space-{direction}" />
-    </Scroller>
-  {/if}
-</div>
+        {#if bottomApps.length > 0}
+          <div class="divider" />
+          {#each bottomApps as app}
+            {@const customProps = customAppProps.get(app.alias) ?? {}}
+            <NavLink app={app.alias} shrink={0} disabled={app._id === active}>
+              <AppItem
+                selected={app._id === active}
+                icon={app.icon}
+                label={app.label}
+                navigator={app._id === active && $deviceInfo.navigator.visible}
+                notify={false}
+                {...customProps}
+                on:click={getClickHandler(app, customProps)}
+              />
+            </NavLink>
+          {/each}
+        {/if}
+        <div class="apps-space-{direction}" />
+      </Scroller>
+    {/if}
+  </div>
+{/if}
 
 <style lang="scss">
+  .compact-apps {
+    flex-shrink: 1;
+    min-width: 0;
+    margin: 0 0.5rem;
+    overflow: hidden;
+
+    // Match the plain AppItem buttons (bell, hamburger) sitting next to it.
+    :global(button) {
+      height: 2.25rem;
+    }
+  }
   .apps-horizontal {
     justify-content: center;
     margin: 0 0.5rem 0 0.25rem;

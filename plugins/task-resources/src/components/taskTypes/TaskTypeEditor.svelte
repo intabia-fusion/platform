@@ -15,10 +15,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { onDestroy } from 'svelte'
   import { Ref, SortingOrder, Status } from '@hcengineering/core'
   import { Asset, getResource, IntlString } from '@hcengineering/platform'
   import { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
-  import { ClassAttributes, settingsStore } from '@hcengineering/setting-resources'
+  import { ClassAttributes, clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import task, { ProjectType, TaskType, calculateStatuses, findStatusAttr } from '@hcengineering/task'
   import {
     ButtonIcon,
@@ -31,18 +32,20 @@
     ModernButton,
     Scroller,
     ToggleWithLabel,
-    Toggle,
     ModernEditbox,
     getCurrentLocation,
     navigate,
     showPopup
   } from '@hcengineering/ui'
   import { IconPicker, deleteObjects, statusStore } from '@hcengineering/view-resources'
+  import workflow from '@hcengineering/workflow'
+
+  import TaskTypeTiedWorkflows from './TaskTypeTiedWorkflows.svelte'
   import { taskTypeStore } from '../..'
   import plugin from '../../plugin'
   import StatesProjectEditor from '../state/StatesProjectEditor.svelte'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
-  import TaskTypeRefEditorTable from './TaskTypeRefEditorTable.svelte'
+  import TaskTypeHierarchySection from './TaskTypeHierarchySection.svelte'
 
   export let spaceType: ProjectType
   export let objectId: Ref<TaskType>
@@ -70,11 +73,6 @@
   $: color = taskType?.color !== undefined && typeof taskType?.color !== 'string' ? taskType?.color : undefined
   $: descriptor = client.getModel().findAllSync(task.class.TaskTypeDescriptor, { _id: taskType?.descriptor })
   $: states = (taskType?.statuses.map((p) => $statusStore.byId.get(p)).filter((p) => p !== undefined) as Status[]) ?? []
-  $: selectableTaskTypes = taskTypes.filter(
-    (tt) => tt._id === objectId || !(tt.allowedAsChildOf ?? []).includes(objectId)
-  )
-
-  $: isRootTaskType = taskType?.isRootTaskType ?? false
 
   let tasksCounter: number = 0
   let loading: boolean = true
@@ -125,20 +123,6 @@
     }
   }
 
-  async function handleIsRootTaskTypeChange (isRoot: boolean): Promise<void> {
-    if (taskType === undefined || readonly) {
-      return
-    }
-
-    const updates: Partial<TaskType> = { isRootTaskType: isRoot }
-
-    if (isRoot && (taskType.allowedAsChildOf?.length ?? 0) > 0) {
-      updates.allowedAsChildOf = []
-    }
-
-    await client.diffUpdate(taskType, updates)
-  }
-
   function isSameString (a: string, b: string): boolean {
     return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase()
   }
@@ -187,28 +171,39 @@
     }
   }
 
-  $: canDelete = !loading && tasksCounter === 0 && taskTypes.length > 1
+  let isDeleting = false
+
+  $: canDelete = !loading && !isDeleting && tasksCounter === 0 && taskTypes.length > 1
 
   async function handleDelete (): Promise<void> {
-    if (!canDelete || readonly || taskType == null) {
+    if (!canDelete || readonly || taskType == null || isDeleting) {
       return
     }
+    isDeleting = true
+    try {
+      const tiedWorkflows = await client.findAll(workflow.class.Workflow, { taskType: taskType._id })
 
-    showPopup(MessageBox, {
-      label: plugin.string.Delete,
-      message: plugin.string.Delete,
-      action: async () => {
-        if (taskType == null) {
-          return
+      showPopup(MessageBox, {
+        label: plugin.string.Delete,
+        message: plugin.string.Delete,
+        component: tiedWorkflows.length > 0 ? TaskTypeTiedWorkflows : undefined,
+        componentProps: { workflows: tiedWorkflows },
+        dangerous: true,
+        action: async () => {
+          if (taskType == null) {
+            return
+          }
+
+          await deleteObjects(client, [taskType])
+
+          const loc = getCurrentLocation()
+          loc.path.length -= 2
+          navigate(loc)
         }
-
-        await deleteObjects(client, [taskType])
-
-        const loc = getCurrentLocation()
-        loc.path.length -= 2
-        navigate(loc)
-      }
-    })
+      })
+    } finally {
+      isDeleting = false
+    }
   }
   async function showIssuesOfTaskType (): Promise<void> {
     if (taskType == null) return
@@ -221,6 +216,10 @@
       await f?.(taskType)
     }
   }
+
+  onDestroy(() => {
+    clearSettingsStore()
+  })
 </script>
 
 {#if taskType !== undefined}
@@ -261,7 +260,8 @@
                     icon={IconDelete}
                     size="small"
                     kind="secondary"
-                    disabled={readonly}
+                    loading={isDeleting}
+                    disabled={readonly || isDeleting}
                     on:click={handleDelete}
                   />
                 {/if}
@@ -296,36 +296,7 @@
             </div>
           </div>
 
-          <div class="hulyTableAttr-container">
-            <div class="hulyTableAttr-header font-medium-12 root-task-type-header">
-              <span class="label">
-                <Label label={plugin.string.RootTaskType} />
-              </span>
-              <div class="toggle-wrapper">
-                <Toggle
-                  on={isRootTaskType}
-                  disabled={readonly}
-                  on:change={(evt) => {
-                    void handleIsRootTaskTypeChange(evt.detail)
-                  }}
-                />
-              </div>
-            </div>
-
-            {#if !isRootTaskType}
-              <TaskTypeRefEditorTable
-                value={taskType.allowedAsChildOf ?? []}
-                types={selectableTaskTypes}
-                {readonly}
-                onChange={(evt) => {
-                  if (taskType === undefined) {
-                    return
-                  }
-                  void client.diffUpdate(taskType, { allowedAsChildOf: evt })
-                }}
-              />
-            {/if}
-          </div>
+          <TaskTypeHierarchySection {taskType} {taskTypes} {readonly} />
 
           <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
             <ToggleWithLabel
@@ -407,16 +378,6 @@
 {/if}
 
 <style lang="scss">
-  .root-task-type-header {
-    padding: var(--spacing-1_5) var(--spacing-2_5);
-  }
-
-  .toggle-wrapper {
-    margin-right: 0.375rem;
-    display: flex;
-    align-items: center;
-  }
-
   .name {
     width: 100%;
     font-weight: 500;

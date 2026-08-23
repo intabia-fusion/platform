@@ -705,7 +705,7 @@ export async function openCardInSidebar (cardId: Ref<Card>, doc?: Card): Promise
     name: object.title
   }
 
-  createWidgetTab(widget, tab, false)
+  createWidgetTab(widget, tab)
 }
 
 export function cardCustomLinkMatch (doc: Card): boolean {

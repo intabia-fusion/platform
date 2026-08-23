@@ -17,7 +17,8 @@ import {
   type AccountClient,
   type Subscription,
   type SubscriptionData,
-  SubscriptionStatus
+  SubscriptionStatus,
+  SubscriptionType
 } from '@hcengineering/account-client'
 import { type AccountUuid, type WorkspaceUuid, SocialIdType } from '@hcengineering/core'
 
@@ -81,7 +82,9 @@ export class SubscriptionStorage {
       paymentId?: string
       createdOn: number
     }> {
-    const { claimed, intent } = await this.accountClient.claimIntent(`checkout:${workspaceUuid}:${type}`, 'tbank', {
+    // Purchases accumulate, so their slot is per order: an abandoned SKU must not block another.
+    const slot = type === SubscriptionType.Purchase ? `${type}:${orderFingerprint}` : type
+    const { claimed, intent } = await this.accountClient.claimIntent(`checkout:${workspaceUuid}:${slot}`, 'tbank', {
       workspaceUuid,
       orderFingerprint
     })

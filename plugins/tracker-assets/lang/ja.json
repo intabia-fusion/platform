@@ -42,6 +42,7 @@
     "Completed": "完了",
     "Canceled": "キャンセル",
     "CreateProject": "プロジェクトを作成",
+    "Configured": "設定済み",
     "NewProject": "新しいプロジェクト",
     "ProjectTitle": "プロジェクトタイトル",
     "ProjectTitlePlaceholder": "新しいプロジェクト",
@@ -235,9 +236,6 @@
     "TimeSpendReportValue": "消費時間",
     "TimeSpendReportValueTooltip": "消費時間 (時間)",
     "TimeSpendReportDescription": "説明",
-    "TimeSpendDays": "{value}日",
-    "TimeSpendHours": "{value}時間",
-    "TimeSpendMinutes": "{value}分",
     "TimeRangeWeek": "週",
     "TimeRangeTwoWeeks": "2週間",
     "TimeRangeMonth": "月",
@@ -266,7 +264,8 @@
     "EightHoursLength": "8時間",
     "HourLabel": "時間",
     "MinuteLabel": "分",
-    "AlreadyReportedThisDay": "この日の合計: {hours}時間",
+    "AlreadyReportedThisDay": "この日の合計: {hours}",
+    "DurationParseError": "時間を認識できませんでした。次の形式で入力してください: {format}",
     "FixToEightHours": "8時間に調整",
     "Saved": "保存済み...",
     "CreatedIssue": "イシューを作成しました",
@@ -302,7 +301,9 @@
     "AddedBlocker": "ブロックしているイシュー {identifier}{value} を追加しました",
     "RemovedBlocker": "ブロックしているイシュー {identifier}{value} を削除しました",
     "AddedRelation": "関連するイシュー {identifier}{value} を追加しました",
-    "RemovedRelation": "関連するイシュー {identifier}{value} を削除しました"
+    "RemovedRelation": "関連するイシュー {identifier}{value} を削除しました",
+    "CreateAndOpen": "作成して開く",
+    "CreateAndNew": "作成して次を開始"
   },
   "status": {},
   "emailTemplate": {

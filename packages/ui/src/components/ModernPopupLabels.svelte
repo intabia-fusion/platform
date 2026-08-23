@@ -19,45 +19,60 @@
   import { deviceOptionsStore, resizeObserver } from '..'
   import plugin from '../plugin'
   import type { DropdownTextItem } from '../types'
-  import IconCheck from './icons/Check.svelte'
   import Icon from './Icon.svelte'
-  import Scroller from './Scroller.svelte'
+  import IconCheck from './icons/Check.svelte'
+  import Label from './Label.svelte'
   import ModernEditbox from './ModernEditbox.svelte'
+  import Scroller from './Scroller.svelte'
 
   export let placeholder: IntlString = plugin.string.SearchDots
   export let items: DropdownTextItem[] = []
   export let selected: DropdownTextItem['id'] | Array<DropdownTextItem['id']> | undefined = undefined
   export let multiselect: boolean = false
   export let enableSearch: boolean = true
+  export let params: Record<string, any> = {}
+
+  const dispatch = createEventDispatcher<{
+    update: DropdownTextItem['id'] | Array<DropdownTextItem['id']>
+    close: DropdownTextItem['id']
+    changeContent: undefined
+  }>()
 
   let search: string = ''
-  const dispatch = createEventDispatcher()
-  const btns: HTMLButtonElement[] = []
+  let btns: HTMLButtonElement[] = []
 
   $: filteredItems = (items ?? []).filter((x) => {
-    if (!search.trim()) return true
-    return x.label.toLowerCase().includes(search.toLowerCase().trim())
+    const trimmed = search.trim()
+    if (trimmed.length === 0) return true
+    return x.label.toLowerCase().includes(trimmed.toLowerCase())
   })
+  $: btns = btns.slice(0, filteredItems.length)
 
   function isSelected (
-    selected: DropdownTextItem['id'] | Array<DropdownTextItem['id']> | undefined,
+    sel: DropdownTextItem['id'] | Array<DropdownTextItem['id']> | undefined,
     item: DropdownTextItem
   ): boolean {
-    if (Array.isArray(selected)) {
-      return selected.includes(item.id)
-    } else {
-      return item.id === selected
+    if (Array.isArray(sel)) {
+      return sel.includes(item.id)
     }
+    return item.id === sel
   }
 
   function handleItemClick (item: DropdownTextItem): void {
     if (multiselect && Array.isArray(selected)) {
-      const index = selected.indexOf(item.id)
-      if (index !== -1) {
-        selected.splice(index, 1)
-        selected = [...selected]
+      if (item.exclusive === true) {
+        const index = selected.indexOf(item.id)
+        selected = index !== -1 ? [] : [item.id]
       } else {
-        selected = [...(selected ?? []), item.id]
+        const exclusiveIds = items.filter((it) => it.exclusive === true).map((it) => it.id)
+        const newSelected = selected.filter((id) => !exclusiveIds.includes(id))
+        const index = newSelected.indexOf(item.id)
+        if (index !== -1) {
+          newSelected.splice(index, 1)
+        } else {
+          newSelected.push(item.id)
+        }
+        selected = newSelected
       }
       dispatch('update', selected)
     } else {
@@ -65,15 +80,21 @@
     }
   }
 
-  const keyDown = (ev: KeyboardEvent, n: number): void => {
+  function keyDown (ev: KeyboardEvent, n: number): void {
     if (ev.key === 'ArrowDown') {
       ev.preventDefault()
-      if (n === btns.length - 1) btns[0]?.focus()
-      else btns[n + 1]?.focus()
+      if (n === btns.length - 1) {
+        btns[0]?.focus()
+      } else {
+        btns[n + 1]?.focus()
+      }
     } else if (ev.key === 'ArrowUp') {
       ev.preventDefault()
-      if (n === 0) btns[btns.length - 1]?.focus()
-      else btns[n - 1]?.focus()
+      if (n === 0) {
+        btns[btns.length - 1]?.focus()
+      } else {
+        btns[n - 1]?.focus()
+      }
     }
   }
 </script>
@@ -92,8 +113,21 @@
     </div>
   {/if}
 
-  <Scroller padding={'var(--spacing-0_5)'} gap={'flex-gap-0-5'}>
+  <Scroller padding="var(--spacing-0_5)" gap="flex-gap-0-5">
     {#each filteredItems as item, i (item.id)}
+      {#if item.separatorBefore === true || item.separatorLabel !== undefined}
+        {#if item.separatorLabel !== undefined}
+          <div class="hulyPopup-category">
+            <div class="hulyPopup-line" />
+            <span class="hulyPopup-category-label">
+              <Label label={item.separatorLabel} />
+            </span>
+            <div class="hulyPopup-line" />
+          </div>
+        {:else}
+          <div class="hulyPopup-divider" />
+        {/if}
+      {/if}
       <!-- svelte-ignore a11y-mouse-events-have-key-events -->
       <button
         bind:this={btns[i]}
@@ -125,6 +159,10 @@
           </span>
         {/if}
       </button>
+    {:else}
+      <div class="empty-placeholder">
+        <Label label={plugin.string.NoResults} />
+      </div>
     {/each}
   </Scroller>
 </div>
@@ -133,5 +171,37 @@
   .search-wrapper {
     padding: var(--spacing-1) var(--spacing-1_5);
     border-bottom: 1px solid var(--theme-divider-color);
+  }
+
+  .empty-placeholder {
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    color: var(--global-secondary-TextColor, var(--theme-trans-color, #6b7280));
+  }
+
+  .hulyPopup-category {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    padding: var(--spacing-1_5) var(--spacing-1) var(--spacing-0_5) var(--spacing-1);
+    min-width: 0;
+    overflow: hidden;
+
+    &-label {
+      font-size: 0.625rem;
+      font-weight: 500;
+      color: var(--global-tertiary-TextColor);
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .hulyPopup-line {
+      flex: 1;
+      height: 1px;
+      background-color: var(--theme-popup-divider);
+      min-width: 0.5rem;
+    }
   }
 </style>

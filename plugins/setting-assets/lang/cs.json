@@ -215,6 +215,8 @@
     "SelectUsers": "Vybrat uživatele",
     "ShowInTitle": "Zobrazit v názvu",
     "SpaceMembersOnly": "Pouze členové prostoru",
+    "OverrideAttribute": "Přepsat atribut",
+    "Required": "Povinné",
     "Reset": "Resetovat"
   },
   "emailTemplate": {

@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -74,7 +75,8 @@ import core, {
   type TxOperations,
   type TypedSpace,
   type UserStatus,
-  type WithLookup
+  type WithLookup,
+  type TxCUD
 } from '@hcengineering/core'
 import login from '@hcengineering/login'
 import notification, { type DocNotifyContext, type InboxNotification } from '@hcengineering/notification'
@@ -89,7 +91,7 @@ import {
   type ResolvedLocation,
   type TabItem
 } from '@hcengineering/ui'
-import view, { type Filter, type GrouppingManager } from '@hcengineering/view'
+import view, { type AttributeApplierResult, type Filter, type GrouppingManager } from '@hcengineering/view'
 import { accessDeniedStore, FilterQuery } from '@hcengineering/view-resources'
 import { type LocationData } from '@hcengineering/workbench'
 import { derived, get, type Readable, writable } from 'svelte/store'
@@ -911,3 +913,38 @@ export const BANNED_CHANNEL_PROVIDERS: Array<Ref<ChannelProvider>> = [
   contact.channelProvider.Viber,
   contact.channelProvider.Whatsapp
 ]
+
+export async function collaboratorsApplier (
+  doc: Doc,
+  value: AccountUuid[] | undefined
+): Promise<AttributeApplierResult> {
+  if (!Array.isArray(value)) return {}
+
+  const client = getClient()
+  const txes: Array<TxCUD<Doc>> = []
+
+  const existing = await client.findAll(core.class.Collaborator, { attachedTo: doc._id })
+  const existingAccounts = existing.map((c) => c.collaborator)
+
+  const toAdd = value.filter((a) => !existingAccounts.includes(a))
+  const toRemove = existing.filter((c) => !value.includes(c.collaborator))
+
+  for (const account of toAdd) {
+    const createTx = client.txFactory.createTxCreateDoc(core.class.Collaborator, doc.space, {
+      attachedTo: doc._id,
+      attachedToClass: doc._class,
+      collection: 'collaborators',
+      collaborator: account
+    })
+    const tx = client.txFactory.createTxCollectionCUD(doc._class, doc._id, doc.space, 'collaborators', createTx)
+    txes.push(tx)
+  }
+
+  for (const c of toRemove) {
+    const removeTx = client.txFactory.createTxRemoveDoc(core.class.Collaborator, c.space, c._id)
+    const tx = client.txFactory.createTxCollectionCUD(doc._class, doc._id, doc.space, 'collaborators', removeTx)
+    txes.push(tx)
+  }
+
+  return { txes }
+}

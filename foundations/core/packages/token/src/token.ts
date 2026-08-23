@@ -111,12 +111,52 @@ export function generateToken (
   )
 }
 
+// Verified tokens, keyed by secret+token. A session reuses one token for thousands of REST
+// calls, and the HMAC was 8% of transactor CPU under load. Only successes are cached.
+const verifiedTokens = new Map<string, Token>()
+const TOKEN_CACHE_MAX = 4096
+const TOKEN_CACHE_EVICT = 512
+
+// jwt-simple enforces nbf/exp inside decode, so a cached token has to be re-checked here -
+// otherwise it would outlive its own expiry.
+function isCurrent (t: Token): boolean {
+  const now = Date.now()
+  if (t.nbf !== undefined && now < t.nbf * 1000) return false
+  if (t.exp !== undefined && now > t.exp * 1000) return false
+  return true
+}
+
 /**
  * @public
  */
 export function decodeToken (token: string, verify: boolean = true, secret?: string): Token {
+  const key = verify ? `${secret ?? getSecret()}:${token}` : undefined
+  if (key !== undefined) {
+    const cached = verifiedTokens.get(key)
+    if (cached !== undefined) {
+      verifiedTokens.delete(key)
+      if (isCurrent(cached)) {
+        // Re-insert at the back: eviction walks insertion order, so a token in active use
+        // must not age out just because its session started early.
+        verifiedTokens.set(key, cached)
+        return cached
+      }
+    }
+  }
   try {
-    return decode(token, secret ?? getSecret(), !verify)
+    const res: Token = decode(token, secret ?? getSecret(), !verify)
+    if (key !== undefined) {
+      if (verifiedTokens.size >= TOKEN_CACHE_MAX) {
+        // Map keeps insertion order, so this drops the oldest instead of the whole live pool.
+        let n = TOKEN_CACHE_EVICT
+        for (const k of verifiedTokens.keys()) {
+          verifiedTokens.delete(k)
+          if (--n === 0) break
+        }
+      }
+      verifiedTokens.set(key, res)
+    }
+    return res
   } catch (err: any) {
     throw new TokenError(err.message)
   }

@@ -160,7 +160,7 @@ export const ReferenceExtension = ReferenceNode.extend<ReferenceExtensionOptions
           : undefined
 
       let iconUrl = ''
-      let emojiCode: number | undefined
+      let emojiCode: number | number[] | Ref<Blob> | undefined
 
       if (icon === view.ids.IconWithEmoji) {
         emojiCode = hierarchy.findClass(objectclass)?.color ?? 0

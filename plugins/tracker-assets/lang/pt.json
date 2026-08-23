@@ -42,6 +42,7 @@
     "Completed": "Concluído",
     "Canceled": "Cancelado",
     "CreateProject": "Criar projeto",
+    "Configured": "Configurado",
     "NewProject": "Novo projeto",
     "ProjectTitle": "Título do projeto",
     "ProjectTitlePlaceholder": "Novo projeto",
@@ -235,9 +236,6 @@
     "TimeSpendReportValue": "Tempo gasto",
     "TimeSpendReportValueTooltip": "Tempo gasto em horas",
     "TimeSpendReportDescription": "Descrição",
-    "TimeSpendDays": "{value}d",
-    "TimeSpendHours": "{value}h",
-    "TimeSpendMinutes": "{value}m",
     "TimeRangeWeek": "Semana",
     "TimeRangeTwoWeeks": "Duas semanas",
     "TimeRangeMonth": "Mês",
@@ -266,7 +264,8 @@
     "EightHoursLength": "Oito Horas",
     "HourLabel": "h",
     "MinuteLabel": "m",
-    "AlreadyReportedThisDay": "Total neste dia: {hours}h",
+    "AlreadyReportedThisDay": "Total neste dia: {hours}",
+    "DurationParseError": "Não foi possível reconhecer o tempo. Introduza no formato: {format}",
     "FixToEightHours": "Ajustar para 8 h",
     "Saved": "Guardado...",
     "CreatedIssue": "Problema criado",
@@ -302,7 +301,9 @@
     "AddedBlocker": "Questão bloqueadora adicionada {identifier}{value}",
     "RemovedBlocker": "Questão bloqueadora removida {identifier}{value}",
     "AddedRelation": "Questão relacionada adicionada {identifier}{value}",
-    "RemovedRelation": "Questão relacionada removida {identifier}{value}"
+    "RemovedRelation": "Questão relacionada removida {identifier}{value}",
+    "CreateAndOpen": "Criar e abrir",
+    "CreateAndNew": "Criar e começar outra"
   },
   "status": {},
   "emailTemplate": {

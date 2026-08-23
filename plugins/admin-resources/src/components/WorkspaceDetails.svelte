@@ -19,6 +19,7 @@
     WorkspaceActivityPoint,
     WorkspaceMemberDetails
   } from '@hcengineering/account-client'
+  import { grantsPlan } from '@hcengineering/account-client'
   import { AccountRole } from '@hcengineering/core'
   import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import presentation, {
@@ -43,6 +44,8 @@
 
   import { onDestroy } from 'svelte'
 
+  import { WorkspaceTokenInfo } from '@hcengineering/billing-resources'
+
   import adminRes from '../plugin'
   import AdminOtpDialog from './AdminOtpDialog.svelte'
   import EditSubscriptionDialog from './EditSubscriptionDialog.svelte'
@@ -56,8 +59,10 @@
 
   export let workspace: WorkspaceInfo
 
+  let destroyed = false
   onDestroy(() => {
     clearTimeout(searchTimer)
+    destroyed = true
   })
 
   const accountClient = getAccountClient()
@@ -149,7 +154,22 @@
   function cancelSubscription (s: Subscription): void {
     withOtp(async (code) => {
       await accountClient.adminCancelSubscription(s.id, code)
+      if (s.type === 'tier') void awaitFreeFallback()
     })
+  }
+
+  // pod-payment creates the free fallback off the queue, after the cancel call returns.
+  // Poll 5x1s; giving up is fine (no free plan configured, or free itself was canceled).
+  async function awaitFreeFallback (): Promise<void> {
+    for (let i = 0; i < 5; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (destroyed) return
+      const subs = await accountClient.getSubscriptions(workspace.uuid, false).catch(() => undefined)
+      if (subs?.some((sub) => sub.type === 'tier' && grantsPlan(sub)) === true) {
+        await load()
+        return
+      }
+    }
   }
 
   function isPerSeatPlan (plan: string): boolean {
@@ -295,12 +315,16 @@
           const usersLimit = perSeat ? (seats != null && seats >= 1 ? seats : 1) : (item.usersLimit ?? 0)
           const storageLimitGB =
             item.storagePerUserGB != null ? usersLimit * item.storagePerUserGB : (item.storageLimitGB ?? 0)
+          // Same shape as the payment pod's resolveLimits: a per-seat plan scales its AI window by
+          // seats. Without it every admin-made subscription falls back to the pod's env default.
+          const baseWindow = item.windowMonthLimit ?? 0
           limits = {
             storageLimitGB,
             trafficLimitGB: item.trafficLimitGB ?? 0,
             meetingMinutesLimit: item.meetingMinutesLimit ?? 0,
             tokenLimit: item.tokenLimit ?? 0,
-            usersLimit
+            usersLimit,
+            windowMonthLimit: perSeat ? baseWindow * usersLimit : baseWindow
           }
         }
         const days = periodDays > 0 ? periodDays : 30
@@ -360,6 +384,10 @@
         <div class="content-dark-color">
           <Label label={adminRes.string.UpdatedAt} />: {fmtDate(workspace.usageInfo?.updateTime)}
         </div>
+      </div>
+
+      <div class="mr-8 mb-2">
+        <WorkspaceTokenInfo workspace={workspace.uuid} />
       </div>
 
       <div class="mr-8 mb-2">

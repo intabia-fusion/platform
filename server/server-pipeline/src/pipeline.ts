@@ -78,6 +78,7 @@ import { RatingMiddleware } from '@hcengineering/server-rating'
 import { ChunterMiddleware } from '@hcengineering/server-chunter'
 import { NotificationMiddleware } from '@hcengineering/server-notification'
 import { TaskMiddleware } from '@hcengineering/server-task'
+import { WorkflowMiddleware } from '@hcengineering/server-workflow'
 /**
  * @public
  */
@@ -167,6 +168,7 @@ export function createServerPipeline (
       TaskMiddleware.create,
       IdentifierMiddleware.create, // After ApplyTx to ensure that it pass
       RatingMiddleware.create, // Rating editing restrictions
+      WorkflowMiddleware.create, // Workflow editing restrictions
       TransientMiddleware.create,
       ChunterMiddleware.create,
       NotificationMiddleware.create,

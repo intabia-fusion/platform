@@ -22,6 +22,7 @@ roots:
   - "@hcengineering/api-client"
   - "@hcengineering/account-client"
   - "@hcengineering/task"
+  - "@hcengineering/workflow"
   - "@hcengineering/core"
   - "@hcengineering/document"
   - "@hcengineering/rank"

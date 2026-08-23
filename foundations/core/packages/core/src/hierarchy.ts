@@ -311,6 +311,15 @@ export class Hierarchy {
       const doc = this.attributesById.get(updateTx.objectId)
       if (doc === undefined) return
       this.addAttribute(TxProcessor.updateDoc2Doc(doc, updateTx))
+      // A rename leaves the attribute under its old name otherwise.
+      const attributes = this.attributes.get(doc.attributeOf)
+      if (attributes !== undefined) {
+        for (const [name, attr] of attributes) {
+          if (name !== doc.name && attr._id === doc._id) {
+            attributes.delete(name)
+          }
+        }
+      }
 
       this.classifierProperties.delete(doc.attributeOf)
     } else if (this.isClassifierTx(tx)) {

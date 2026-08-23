@@ -48,12 +48,14 @@ import {
   type Aggregation,
   type AllValuesFunc,
   type ArrayEditor,
+  type AttrApplier,
   type AttrPresenter,
   type AttributeCategory,
   type AttributeEditor,
   type AttributeFilter,
   type AttributeFilterPresenter,
   type AttributePresenter,
+  type AttributeApplierFn,
   type BaseQuery,
   type BuildModelKey,
   type ClassFilters,
@@ -448,6 +450,13 @@ export class TAttrPresenter extends TDoc implements AttrPresenter {
   component!: AnyComponent
 }
 
+@Model(view.class.AttrApplier, core.class.Doc, DOMAIN_MODEL)
+export class TAttrApplier extends TDoc implements AttrApplier {
+  objectClass!: Ref<Class<Doc>>
+  key!: string
+  applier!: Resource<AttributeApplierFn>
+}
+
 @Mixin(view.mixin.CustomObjectLinkProvider, core.class.Class)
 export class TCustomObjectLinkProvider extends TClass implements CustomObjectLinkProvider {
   match!: Resource<(doc: Doc) => boolean>
@@ -500,13 +509,6 @@ export const showColorsViewOption: ViewOptionModel = {
   actionTarget: 'display',
   label: view.string.ShowColors
 }
-export const showDaysViewOption: ViewOptionModel = {
-  key: 'shouldShowDays',
-  type: 'toggle',
-  defaultValue: false,
-  actionTarget: 'display',
-  label: view.string.ShowDays
-}
 
 export function createModel (builder: Builder): void {
   builder.createModel(
@@ -558,6 +560,7 @@ export function createModel (builder: Builder): void {
     TObjectTooltip,
     TObjectIcon,
     TAttrPresenter,
+    TAttrApplier,
     TLinkIdProvider,
     TCustomObjectLinkProvider,
     TBaseQuery,

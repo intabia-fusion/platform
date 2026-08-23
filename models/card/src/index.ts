@@ -162,7 +162,7 @@ export class TCard extends TDoc implements Card {
   @ReadOnly()
     peerId?: string
 
-  @Prop(Collection(chunter.class.ChatMessage), chunter.string.Comments)
+  @Prop(Collection(chunter.class.ChatMessage, chunter.string.Comment), chunter.string.Comments)
     comments?: number
 }
 

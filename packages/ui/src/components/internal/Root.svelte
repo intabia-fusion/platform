@@ -11,7 +11,8 @@
     checkMobile,
     deviceOptionsStore as deviceInfo,
     checkAdaptiveMatching,
-    getLocalWeekStart
+    getLocalWeekStart,
+    ticker1
   } from '../../'
   import { desktopPlatform, getCurrentLocation, location, locationStorageKeyId, navigate } from '../../location'
   import uiPlugin from '../../plugin'
@@ -111,6 +112,7 @@
   let systemAccount = false
   let maintenanceTime = -1
   let maintenanceMessage: string | undefined
+  let statusTime = 0
 
   addEventListener(PlatformEvent, async (_event, _status: Status) => {
     if (_status.code === platform.status.MaintenanceWarning) {
@@ -130,8 +132,22 @@
         return
       }
       status = _status
+      statusTime = Date.now()
     }
   })
+
+  $: if (status !== OK && status.severity !== Severity.OK) {
+    onTick($ticker1)
+  }
+
+  function onTick (_tick: number): void {
+    const timeout = status?.options?.timeout ?? 0
+    if (timeout > 0) {
+      if (Date.now() - statusTime >= timeout) {
+        status = OK
+      }
+    }
+  }
 
   let docWidth: number = window.innerWidth
   let docHeight: number = window.innerHeight

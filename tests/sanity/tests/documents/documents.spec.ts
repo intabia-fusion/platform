@@ -4,6 +4,7 @@ import { NewDocument, NewTeamspace } from '../model/documents/types'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { DocumentsPage } from '../model/documents/documents-page'
 import { DocumentContentPage } from '../model/documents/document-content-page'
+import { SidebarPage } from '../model/sidebar-page'
 
 const retryOptions = { intervals: [100, 200, 1000], timeout: 60000 }
 
@@ -266,5 +267,27 @@ test.describe('Documents tests', () => {
     await page.goto(clipboardContent)
     await documentContentPage.checkDocumentTitle(newDocument.title)
     await documentContentPage.checkDocumentLocked()
+  })
+
+  test('Open document in sidebar', async ({ page }) => {
+    const sidebarPage = new SidebarPage(page)
+    const newDocument: NewDocument = {
+      title: `Sidebar Document-${generateId()}`,
+      space: 'Default'
+    }
+
+    await leftSideMenuPage.clickDocuments()
+    await documentsPage.clickOnButtonCreateDocument()
+    await documentsPage.createDocument(newDocument)
+    await documentsPage.openDocument(newDocument.title)
+    await documentContentPage.checkDocumentTitle(newDocument.title)
+
+    await documentContentPage.buttonOpenInSidebar().click()
+    await sidebarPage.checkIfSidebarIsOpen(true)
+    await expect(sidebarPage.content().getByText(newDocument.title).first()).toBeVisible()
+
+    // Sidebar preview is embedded but must still offer its own close button
+    await sidebarPage.sidebar().locator('#btnPClose').click()
+    await sidebarPage.checkIfSidebarIsOpen(false)
   })
 })

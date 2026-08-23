@@ -59,7 +59,7 @@ import core, {
   type WithLookup
 } from '@hcengineering/core'
 import { type Restrictions } from '@hcengineering/guest'
-import type { Asset, IntlString } from '@hcengineering/platform'
+import type { Asset, IntlString, Resource } from '@hcengineering/platform'
 import { getEmbeddedLabel, getMetadata, getResource, translate } from '@hcengineering/platform'
 import presentation, {
   createQuery,
@@ -88,6 +88,7 @@ import {
 } from '@hcengineering/ui'
 import view, {
   AttributeCategoryOrder,
+  type AttributeApplierFn,
   type AttributeCategory,
   type AttributeModel,
   type AttributePresenter,
@@ -313,6 +314,31 @@ export function getAttrTypePresenter (hierarchy: Hierarchy, type: Type<any>): An
     const typeAny = type as TypeAny
     return typeAny.presenter
   }
+}
+
+export function findAttributeApplier (
+  client: Client,
+  _class: Ref<Class<Doc>>,
+  key: string
+): Resource<AttributeApplierFn> | undefined {
+  const model = client.getModel()
+  const exact = model.findAllSync(view.class.AttrApplier, { objectClass: _class, key })[0]
+  if (exact != null) {
+    return exact.applier
+  }
+
+  const hierarchy = client.getHierarchy()
+  const appliers = model.findAllSync(view.class.AttrApplier, { key })
+  const ancestors = hierarchy.getAncestors(_class)
+
+  for (const ancestorClass of ancestors) {
+    const matched = appliers.find((it) => it.objectClass === ancestorClass)
+    if (matched != null) {
+      return matched.applier
+    }
+  }
+
+  return undefined
 }
 
 export function findAttributePresenter (
@@ -1586,8 +1612,8 @@ export async function openDoc (hierarchy: Hierarchy, object: Doc): Promise<void>
 }
 
 /**
- * Open `doc` in the right sidebar preview widget, reusing a single 'preview' tab
- * so repeated previews / arrow navigation replace content in place.
+ * Open `doc` in the right sidebar preview widget. The tab id is per document, so a preview tab is
+ * replaced by the next document while kept and pinned tabs survive.
  * @public
  */
 export async function openDocInSidebar (doc: Doc): Promise<void> {
@@ -1601,7 +1627,7 @@ export async function openDocInSidebar (doc: Doc): Promise<void> {
   const icon = classIcon(client, doc._class)
 
   const tab: WidgetTab = {
-    id: 'preview',
+    id: `preview_${doc._id}`,
     objectId: doc._id,
     objectClass: doc._class,
     name,
@@ -1609,7 +1635,7 @@ export async function openDocInSidebar (doc: Doc): Promise<void> {
   }
 
   const createWidgetTab = await getResource(workbench.function.CreateWidgetTab)
-  await createWidgetTab(widget, tab, false)
+  await createWidgetTab(widget, tab)
 }
 
 export async function openDocFromRef<T extends Doc = Doc> (_class: Ref<Class<T>>, _id: Ref<T>): Promise<boolean> {

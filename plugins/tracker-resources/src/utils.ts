@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -33,7 +34,11 @@ import core, {
   type TxCreateDoc,
   type TxOperations,
   type TxResult,
-  type TxUpdateDoc
+  type TxUpdateDoc,
+  generateId,
+  getCurrentAccount,
+  type TxCUD,
+  type TxRemoveDoc
 } from '@hcengineering/core'
 import { type IntlString } from '@hcengineering/platform'
 import { createQuery, getClient, onClient } from '@hcengineering/presentation'
@@ -52,14 +57,16 @@ import {
   type Issue,
   type IssueStatus,
   type Milestone,
-  type Project
+  type Project,
+  type TimeSpendReport as TimeSpendReportDoc
 } from '@hcengineering/tracker'
 import { areDatesEqual, isWeekend, PaletteColorIndexes } from '@hcengineering/ui'
-import { type KeyFilter, type ViewletDescriptor } from '@hcengineering/view'
+import { type AttributeApplierResult, type KeyFilter, type ViewletDescriptor } from '@hcengineering/view'
 import { CategoryQuery, ListSelectionProvider, statusStore, type SelectDirection } from '@hcengineering/view-resources'
 import { derived, get, writable } from 'svelte/store'
 import tracker from './plugin'
 import { defaultMilestoneStatuses, defaultPriorities } from './types'
+import { type DraftTimeReportPayload } from './components/issues/timereport/service'
 
 export const activeProjects = derived(taskActiveProjects, (projects) => {
   const client = getClient()
@@ -72,8 +79,6 @@ export * from './types'
 export type ComponentsFilterMode = 'all' | 'backlog' | 'active' | 'closed'
 
 export type MilestoneViewMode = 'all' | 'planned' | 'active' | 'closed'
-
-export const useShowDaysStore = writable<boolean>(false)
 
 export const getIncludedMilestoneStatuses = (mode: MilestoneViewMode): MilestoneStatus[] => {
   switch (mode) {
@@ -635,3 +640,91 @@ onClient(() => {
     }
   )
 })
+
+export function reportedTimeApplier (
+  doc: Issue,
+  value: number | DraftTimeReportPayload | Array<DraftTimeReportPayload | number>
+): AttributeApplierResult<Issue> {
+  const txes: Array<TxCUD<TimeSpendReportDoc>> = []
+  const items = Array.isArray(value) ? value : [value]
+
+  for (const item of items) {
+    if (typeof item === 'object' && item !== null) {
+      if (Array.isArray(item.draftReports)) {
+        for (const report of item.draftReports) {
+          const tx: TxCreateDoc<TimeSpendReportDoc> = {
+            _id: generateId(),
+            _class: core.class.TxCreateDoc,
+            objectId: report._id,
+            objectClass: tracker.class.TimeSpendReport,
+            objectSpace: doc.space,
+            space: core.space.Tx,
+            modifiedOn: Date.now(),
+            modifiedBy: getCurrentAccount().primarySocialId,
+            collection: 'reports',
+            attachedTo: doc._id,
+            attachedToClass: doc._class,
+            attributes: {
+              attachedTo: doc._id,
+              attachedToClass: doc._class,
+              collection: 'reports',
+              date: report.date,
+              description: report.description,
+              value: report.value,
+              employee: report.employee
+            }
+          }
+          txes.push(tx)
+        }
+      }
+
+      if (Array.isArray(item.deletedReportIds)) {
+        for (const id of item.deletedReportIds) {
+          const tx: TxRemoveDoc<TimeSpendReportDoc> = {
+            _id: generateId(),
+            _class: core.class.TxRemoveDoc,
+            objectId: id,
+            objectClass: tracker.class.TimeSpendReport,
+            objectSpace: doc.space,
+            attachedTo: doc._id,
+            attachedToClass: doc._class,
+            space: core.space.Tx,
+            modifiedOn: Date.now(),
+            collection: 'reports',
+            modifiedBy: getCurrentAccount().primarySocialId
+          }
+          txes.push(tx)
+        }
+      }
+
+      if (Array.isArray(item.updatedReports)) {
+        for (const report of item.updatedReports) {
+          const tx: TxUpdateDoc<TimeSpendReportDoc> = {
+            _id: generateId(),
+            _class: core.class.TxUpdateDoc,
+            objectId: report._id,
+            objectClass: tracker.class.TimeSpendReport,
+            space: core.space.Tx,
+            objectSpace: doc.space,
+            attachedTo: doc._id,
+            attachedToClass: doc._class,
+            collection: 'reports',
+            operations: {
+              date: report.date,
+              description: report.description,
+              value: report.value,
+              employee: report.employee
+            },
+            modifiedOn: Date.now(),
+            modifiedBy: getCurrentAccount().primarySocialId
+          }
+          txes.push(tx)
+        }
+      }
+    }
+  }
+
+  return {
+    txes
+  }
+}

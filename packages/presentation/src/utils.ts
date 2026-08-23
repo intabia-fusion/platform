@@ -84,7 +84,7 @@ let pipeline: PresentationPipeline
 export type TxListener = (tx: Tx[]) => void
 const txListeners: TxListener[] = []
 
-const alwaysDisabled: string[] = ['relation']
+const alwaysDisabled: string[] = ['relation', 'caldav']
 
 /**
  * @public
@@ -877,7 +877,16 @@ export function getAttrEditor (type: Type<any>, hierarchy: Hierarchy): AnyCompon
   }
 
   const editorMixin = hierarchy.classHierarchyMixin(attrClass.attrClass, mixin)
-  return editorMixin?.inlineEditor
+  if (editorMixin?.inlineEditor != null) {
+    return editorMixin?.inlineEditor
+  }
+
+  if (attrClass.category === 'inplace') {
+    const editorMixin = hierarchy.classHierarchyMixin(attrClass.attrClass, view.mixin.InlineAttributEditor)
+    return editorMixin?.editor
+  }
+
+  return undefined
 }
 
 export function findAttributeEditorByAttribute (client: Client, attribute: AnyAttribute): AnyComponent | undefined {
@@ -917,10 +926,16 @@ export function findAttributeEditorByAttribute (client: Client, attribute: AnyAt
 
   const editorMixin = hierarchy.classHierarchyMixin(presenterClass.attrClass, mixin)
 
-  if (editorMixin?.inlineEditor === undefined) {
-    return
+  if (editorMixin?.inlineEditor != null) {
+    return editorMixin.inlineEditor
   }
-  return editorMixin.inlineEditor
+
+  if (presenterClass.category === 'inplace') {
+    const editorMixin = hierarchy.classHierarchyMixin(presenterClass.attrClass, view.mixin.InlineAttributEditor)
+    return editorMixin?.editor
+  }
+
+  return undefined
 }
 
 export function findAttributeEditor (

@@ -52,6 +52,7 @@ import {
   type QueueOnlineUserTx,
   type QueueWorkspaceMessage,
   type QueuePaymentOperationMessage,
+  type QueueSubscriptionMessage,
   workspaceEvents
 } from '@hcengineering/server-core'
 
@@ -132,6 +133,10 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
   // Admin-triggered fulltext reindex requests
   const fulltextProducer = platformQueue.getProducer<QueueWorkspaceMessage>(measureCtx, QueueTopic.Fulltext)
   setMetadata(accountPlugin.metadata.FulltextQueue, fulltextProducer)
+
+  // Admin-initiated subscription events consumed by pod-payment (free-plan fallback after a cancel)
+  const subscriptionProducer = platformQueue.getProducer<QueueSubscriptionMessage>(measureCtx, QueueTopic.Subscription)
+  setMetadata(accountPlugin.metadata.SubscriptionQueue, subscriptionProducer)
 
   addStringsLoader(accountId, async (lang: string) => {
     switch (lang) {
@@ -648,6 +653,7 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     onClose?.()
     void notificationProducer.close()
     void crmProducer.close()
+    void subscriptionProducer.close()
     void usersConsumer.close()
     void paymentOperationConsumer.close()
     void platformQueue.shutdown()

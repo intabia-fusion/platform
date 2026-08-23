@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -20,7 +21,10 @@ import {
   DOMAIN_SEQUENCE,
   DOMAIN_STATUS,
   DOMAIN_TX,
+  TxFactory,
   TxOperations,
+  generateId,
+  groupByArray,
   toIdMap,
   type Attribute,
   type Class,
@@ -31,7 +35,10 @@ import {
   type Ref,
   type Space,
   type Status,
+  type Tx,
   type TxCreateDoc,
+  type TxCUD,
+  type TxRemoveDoc,
   type TxUpdateDoc,
   TxProcessor
 } from '@hcengineering/core'
@@ -687,6 +694,109 @@ export const taskOperation: MigrateOperation = {
             }
           }
         }
+      },
+      {
+        state: 'sync-task-type-target-class-icon-v1',
+        mode: 'upgrade',
+        func: async (client: MigrationClient) => {
+          const taskTypes = await client.model.findAll(task.class.TaskType, {})
+
+          for (const tt of taskTypes) {
+            if (tt.icon != null || tt.color != null) {
+              const classTxes = await client.find<TxCreateDoc<Class<Doc>>>(DOMAIN_MODEL_TX, {
+                _class: core.class.TxCreateDoc,
+                objectClass: core.class.Class,
+                objectId: tt.targetClass
+              })
+              for (const classTx of classTxes) {
+                await client.update(
+                  DOMAIN_MODEL_TX,
+                  { _id: classTx._id },
+                  {
+                    attributes: {
+                      ...classTx.attributes,
+                      icon: tt.icon ?? classTx.attributes.icon,
+                      color: tt.color ?? classTx.attributes.color
+                    }
+                  }
+                )
+              }
+            }
+          }
+        }
+      },
+      {
+        state: 'migrate-task-type-hierarchy-root-and-any-parent-v1',
+        mode: 'upgrade',
+        func: async (client: MigrationClient) => {
+          const allTxes = await client.find<TxCUD<TaskType>>(DOMAIN_MODEL_TX, {
+            objectClass: task.class.TaskType
+          })
+
+          const txesByObjectId = groupByArray(allTxes, (it) => it.objectId)
+
+          for (const [, docTxes] of txesByObjectId.entries()) {
+            const currentDoc = TxProcessor.buildDoc2Doc<TaskType>(docTxes)
+            if (currentDoc == null) continue
+
+            const isRoot = currentDoc.isRootTaskType
+            const allowedParents = currentDoc.allowedAsChildOf ?? []
+            const allowAnyParent = currentDoc.allowAnyParent
+
+            let needsAllowAnyParent = false
+            if (isRoot !== true && allowedParents.length === 0 && allowAnyParent !== true) {
+              needsAllowAnyParent = true
+            }
+
+            const needsIsRoot = isRoot !== true
+
+            if (!needsAllowAnyParent && !needsIsRoot) {
+              continue
+            }
+
+            const hasUpdateTxes = docTxes.some((t) => t._class === core.class.TxUpdateDoc)
+            const createTx = docTxes.find((t) => t._class === core.class.TxCreateDoc) as
+              | TxCreateDoc<TaskType>
+              | undefined
+
+            if (hasUpdateTxes) {
+              const operations: DocumentUpdate<TaskType> = {}
+              if (needsAllowAnyParent) {
+                operations.allowAnyParent = true
+              }
+              if (needsIsRoot) {
+                operations.isRootTaskType = true
+              }
+
+              const newUpdateTx: TxUpdateDoc<TaskType> = {
+                _id: generateId(),
+                _class: core.class.TxUpdateDoc,
+                space: core.space.Model,
+                objectSpace: core.space.Model,
+                objectClass: task.class.TaskType,
+                objectId: currentDoc._id,
+                modifiedBy: core.account.System,
+                modifiedOn: Date.now(),
+                operations
+              }
+              await client.create(DOMAIN_MODEL_TX, newUpdateTx)
+            } else if (createTx !== undefined) {
+              const updateAttrs: Record<string, any> = {}
+              if (needsAllowAnyParent) {
+                updateAttrs['attributes.allowAnyParent'] = true
+              }
+              if (needsIsRoot) {
+                updateAttrs['attributes.isRootTaskType'] = true
+              }
+              await client.update(DOMAIN_MODEL_TX, { _id: createTx._id }, updateAttrs)
+            }
+          }
+        }
+      },
+      {
+        state: 'delete-orphaned-task-type-classes-v1',
+        mode: 'upgrade',
+        func: deleteOrphanedTaskTypeClasses
       }
     ])
   },
@@ -845,5 +955,62 @@ export async function migrateTaskTypesToClasses (
     }
   } finally {
     await iterator.close()
+  }
+}
+
+export async function deleteOrphanedTaskTypeClasses (client: MigrationClient): Promise<void> {
+  const allTaskTypeTxes = await client.find<TxCUD<TaskType>>(DOMAIN_MODEL_TX, {
+    objectClass: task.class.TaskType
+  })
+
+  const txesByTaskTypeId = groupByArray(allTaskTypeTxes, (it) => it.objectId)
+  const deletedTaskType = new Map<Ref<TaskType>, TaskType>()
+
+  for (const [taskTypeId, docTxes] of txesByTaskTypeId.entries()) {
+    const hasRemoveTx = docTxes.some((it) => it._class === core.class.TxRemoveDoc)
+    if (!hasRemoveTx) continue
+
+    const type = TxProcessor.buildDoc2Doc(docTxes.filter((it) => it._class !== core.class.TxRemoveDoc))
+    if (type == null) continue
+    deletedTaskType.set(taskTypeId, type as TaskType)
+  }
+
+  if (deletedTaskType.size === 0) return
+
+  const txFactory = new TxFactory(core.account.System)
+  const txesToCreate: Tx[] = []
+
+  for (const [, taskType] of deletedTaskType.entries()) {
+    if (taskType.targetClass != null && taskType.targetClass !== taskType.ofClass) {
+      const classRemoveTxes = await client.find<TxRemoveDoc<Class<Doc>>>(DOMAIN_MODEL_TX, {
+        _class: core.class.TxRemoveDoc,
+        objectClass: core.class.Class,
+        objectId: taskType.targetClass
+      })
+      if (classRemoveTxes.length === 0) {
+        txesToCreate.push(txFactory.createTxRemoveDoc(core.class.Class, core.space.Model, taskType.targetClass))
+      }
+
+      const attrTxes = await client.find<TxCreateDoc<Attribute<Doc>>>(DOMAIN_MODEL_TX, {
+        _class: core.class.TxCreateDoc,
+        objectClass: core.class.Attribute,
+        'attributes.attributeOf': taskType.targetClass
+      })
+
+      for (const attrTx of attrTxes) {
+        const attrRemoveTxes = await client.find<TxRemoveDoc<Attribute<Doc>>>(DOMAIN_MODEL_TX, {
+          _class: core.class.TxRemoveDoc,
+          objectClass: core.class.Attribute,
+          objectId: attrTx.objectId
+        })
+        if (attrRemoveTxes.length === 0) {
+          txesToCreate.push(txFactory.createTxRemoveDoc(core.class.Attribute, core.space.Model, attrTx.objectId))
+        }
+      }
+    }
+  }
+
+  if (txesToCreate.length > 0) {
+    await client.create(DOMAIN_MODEL_TX, txesToCreate)
   }
 }

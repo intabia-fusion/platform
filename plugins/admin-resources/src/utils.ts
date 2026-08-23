@@ -37,6 +37,8 @@ import { navigate, showPopup } from '@hcengineering/ui'
 
 import AdminOtpDialog from './components/AdminOtpDialog.svelte'
 
+export { getBillingClient } from '@hcengineering/billing-resources'
+
 export type WorkspaceInfo = WorkspaceInfoWithStatus & {
   processingAttempts: number
   billingPlan?: string

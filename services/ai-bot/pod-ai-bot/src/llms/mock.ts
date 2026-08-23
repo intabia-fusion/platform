@@ -1,0 +1,176 @@
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+import type { MeasureContext, WorkspaceUuid } from '@hcengineering/core'
+import type { PersonMessage } from '@hcengineering/ai-bot'
+import type { RunnableTools, BaseFunctionsArgs } from 'openai/lib/RunnableFunction'
+
+import { type AIProviderConfig, type AILevel } from '../config'
+import { billUsage } from '../billing'
+import { billingMetaFor, providerLevels } from './modelRegistry'
+import { type ChatCompletionWithToolsResult, type ChatMessage, type ContextMode, type LLMProvider } from './types'
+
+// Tool call scripted in the prompt: `call:<tool_name> {json}` on its own line, json optional.
+const TOOL_CALL_RE = /(?:^|\n)\s*call:([a-zA-Z0-9_]+)[ \t]*(\{[\s\S]*?\})?[ \t]*(?=\n|$)/g
+
+// Deterministic offline provider for tests (fixed usage, no network). endpointConfig.echo=true
+// replies with the received context as markdown for assertions; otherwise replies endpointConfig.reply.
+class MockProvider implements LLMProvider {
+  private readonly reply: string
+  private readonly echo: boolean
+  private readonly usage: { promptTokens: number, completionTokens: number }
+  private readonly defaultLevel: AILevel
+
+  constructor (
+    readonly ctx: MeasureContext,
+    private readonly provider: AIProviderConfig
+  ) {
+    const cfg = provider.endpointConfig ?? {}
+    this.reply = (cfg.reply as string) ?? 'pong'
+    this.echo = cfg.echo === true
+    this.usage = {
+      promptTokens: (cfg.promptTokens as number) ?? 50,
+      completionTokens: (cfg.completionTokens as number) ?? 10
+    }
+    const served = providerLevels(provider)
+    this.defaultLevel = served[served.length - 1] ?? 'low'
+  }
+
+  // Markdown dump of everything the provider received. Section headers are stable so tests
+  // can match on them; `-` marks an absent/empty part.
+  private echoMarkdown (parts: {
+    message?: ChatMessage
+    history?: ChatMessage[]
+    contextMode?: ContextMode
+    sharedPrompt?: string
+    personalContext?: string
+    tools?: string[]
+  }): string {
+    const lines: string[] = ['## echo']
+    lines.push(`### mode\n${parts.contextMode ?? '-'}`)
+    lines.push(`### prompt\n${parts.message?.content ?? '-'}`)
+    const history = (parts.history ?? []).map((m) => `- **${m.role}**: ${m.content ?? ''}`)
+    lines.push(`### history (${history.length})\n${history.length > 0 ? history.join('\n') : '-'}`)
+    lines.push(
+      `### shared\n${parts.sharedPrompt !== undefined && parts.sharedPrompt !== '' ? parts.sharedPrompt : '-'}`
+    )
+    lines.push(
+      `### personal\n${
+        parts.personalContext !== undefined && parts.personalContext !== '' ? parts.personalContext : '-'
+      }`
+    )
+    if (parts.tools !== undefined) {
+      lines.push(`### tools (${parts.tools.length})\n${parts.tools.length > 0 ? parts.tools.join(', ') : '-'}`)
+    }
+    return lines.join('\n\n')
+  }
+
+  // Runs the calls the prompt scripts, so a scenario hits the same tool with the same args.
+  private async runScriptedTools (
+    ctx: MeasureContext,
+    tools: RunnableTools<BaseFunctionsArgs>,
+    prompt: string
+  ): Promise<string[] | undefined> {
+    const calls = [...prompt.matchAll(TOOL_CALL_RE)]
+    if (calls.length === 0) return undefined
+    const byName = new Map<string, any>()
+    for (const tool of tools as any[]) {
+      const name = tool?.function?.name
+      if (typeof name === 'string') byName.set(name, tool)
+    }
+    const lines: string[] = []
+    for (const [, name, rawArgs] of calls) {
+      const tool = byName.get(name)
+      if (tool?.function?.function === undefined) {
+        lines.push(`### tool ${name}\nunavailable`)
+        continue
+      }
+      try {
+        const args = rawArgs !== undefined ? JSON.parse(rawArgs) : {}
+        const result = await tool.function.function(args)
+        lines.push(`### tool ${name}\n${typeof result === 'string' ? result : JSON.stringify(result)}`)
+      } catch (err: any) {
+        ctx.warn('mock tool call failed', { tool: name, error: err?.message })
+        lines.push(`### tool ${name}\nfailed: ${err?.message ?? 'error'}`)
+      }
+    }
+    return lines
+  }
+
+  private billingFor (level?: AILevel): { multiplier: number, modelId: string, providerId: string, level: string } {
+    return billingMetaFor(this.provider, level, this.defaultLevel, () => 'mock')
+  }
+
+  private bill (ctx: MeasureContext, workspace: WorkspaceUuid, reason: string, level?: AILevel): void {
+    billUsage(ctx, workspace, this.usage, this.billingFor(level), reason, new Date().toISOString())
+  }
+
+  async translateHtml (_ctx: MeasureContext, _workspace: WorkspaceUuid, html: string): Promise<string | undefined> {
+    return html
+  }
+
+  async summarizeMessages (
+    _ctx: MeasureContext,
+    _workspace: WorkspaceUuid,
+    _messages: PersonMessage[]
+  ): Promise<string | undefined> {
+    return this.reply
+  }
+
+  async createChatCompletionWithTools (
+    tools: RunnableTools<BaseFunctionsArgs>,
+    message: ChatMessage,
+    contextMode: ContextMode,
+    sharedPrompt: string,
+    personalContext: string,
+    _user: string,
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    history?: ChatMessage[],
+    _skipCache?: boolean,
+    reason = 'chat',
+    level?: AILevel,
+    _lang?: string
+  ): Promise<ChatCompletionWithToolsResult | undefined> {
+    this.bill(ctx, workspace, reason, level)
+    const scripted = await this.runScriptedTools(ctx, tools, message.content ?? '')
+    if (scripted !== undefined) {
+      return { completion: ['## tools', ...scripted].join('\n\n'), usage: this.usage }
+    }
+    if (!this.echo) {
+      return { completion: this.reply, usage: this.usage }
+    }
+    const names = (tools as any[]).map((t) => t?.function?.name ?? t?.name).filter((n) => typeof n === 'string')
+    const completion = this.echoMarkdown({
+      message,
+      history,
+      contextMode,
+      sharedPrompt,
+      personalContext,
+      tools: names
+    })
+    return { completion, usage: this.usage }
+  }
+
+  countTokens (messages: ChatMessage[]): number {
+    // Rough: 1 token per 4 chars, matches the 'approx' tokenizer well enough for tests.
+    return Math.ceil(messages.reduce((n, m) => n + (m.content?.length ?? 0), 0) / 4)
+  }
+}
+
+export function createMockProvider (ctx: MeasureContext, provider: AIProviderConfig): LLMProvider {
+  ctx.info('Mock LLM provider configured', { id: provider.id })
+  return new MockProvider(ctx, provider)
+}

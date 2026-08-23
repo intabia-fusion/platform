@@ -211,6 +211,8 @@
     "SelectUsers": "Selecionar usuários",
     "ShowInTitle": "Mostrar no título",
     "SpaceMembersOnly": "Apenas membros do espaço",
+    "OverrideAttribute": "Sobrescrever atributo",
+    "Required": "Obrigatório",
     "Reset": "Reiniciar"
   },
   "emailTemplate": {

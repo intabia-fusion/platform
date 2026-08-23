@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -216,12 +217,16 @@ export async function Append (
 
 export function Replace (value: string, props: Record<string, string>): string {
   if (typeof value !== 'string') return value
-  return value.replace(props.search, props.replacement)
+  const search = props.search ?? props.from ?? props.target
+  if (search == null) return value
+  return value.replace(search, props.replacement ?? props.to ?? '')
 }
 
 export function ReplaceAll (value: string, props: Record<string, string>): string {
   if (typeof value !== 'string') return value
-  return value.replaceAll(props.search, props.replacement)
+  const search = props.search ?? props.from ?? props.target
+  if (search == null) return value
+  return value.replaceAll(search, props.replacement ?? props.to ?? '')
 }
 
 export function Split (value: string, props: Record<string, string>): string {

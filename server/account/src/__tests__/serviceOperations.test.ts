@@ -25,6 +25,7 @@ import {
 } from '@hcengineering/core'
 import platform, { PlatformError, Status, Severity, getMetadata } from '@hcengineering/platform'
 import { decodeTokenVerbose } from '@hcengineering/server-token'
+import { workspaceEvents, LimitCategory, LimitStatus, QueueWorkspaceEvent } from '@hcengineering/server-core'
 
 import {
   type AccountDB,
@@ -1676,6 +1677,225 @@ describe('upsertSubscription', () => {
       await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, tier({ type: SubscriptionType.Package }))
       expect(mockDb.subscription.find).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe('upsertSubscription - AI package token grant', () => {
+  const mockCtx = {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn()
+  } as unknown as MeasureContext
+
+  const mockBranding = null
+  const mockToken = 'test-token'
+  const workspaceUuid = 'ws-tokens' as WorkspaceUuid
+  const accountUuid = 'acc-tokens' as AccountUuid
+
+  let mockDb: any
+  let getWorkspaceByIdSpy: jest.SpyInstance
+  let mockProducer: { send: jest.Mock }
+
+  function pkg (over: Record<string, any> = {}): any {
+    return {
+      id: 'sub-pkg-1',
+      workspaceUuid,
+      accountUuid,
+      provider: 'polar',
+      providerSubscriptionId: 'polar-pkg-1',
+      type: SubscriptionType.Package,
+      status: SubscriptionStatus.Active,
+      plan: 'ai-500k',
+      periodStart: 1_000,
+      limits: { storageLimitGB: 0, trafficLimitGB: 0, meetingMinutesLimit: 0, tokenLimit: 500_000, usersLimit: 0 },
+      ...over
+    }
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+
+    mockDb = {
+      subscription: {
+        findOne: jest.fn().mockResolvedValue(null),
+        find: jest.fn().mockResolvedValue([]),
+        insertOne: jest.fn(),
+        update: jest.fn()
+      }
+    }
+
+    getWorkspaceByIdSpy = jest.spyOn(utils, 'getWorkspaceById').mockResolvedValue({ uuid: workspaceUuid } as any)
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ extra: { service: 'payment' } })
+
+    mockProducer = { send: jest.fn() }
+    ;(getMetadata as jest.Mock).mockReturnValue(mockProducer)
+  })
+
+  afterAll(() => {
+    getWorkspaceByIdSpy.mockRestore()
+  })
+
+  test('publishes token grant for active package with tokenLimit > 0', async () => {
+    await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg())
+
+    expect(mockProducer.send).toHaveBeenCalledWith(mockCtx, workspaceUuid, [
+      workspaceEvents.purchaseActivated('ai-500k', 'sub-pkg-1:1000', 'add-ai-tokens', 500_000)
+    ])
+  })
+
+  test('does not publish when tokenLimit is 0 (storage package)', async () => {
+    const storageLimits = {
+      storageLimitGB: 100,
+      trafficLimitGB: 0,
+      meetingMinutesLimit: 0,
+      tokenLimit: 0,
+      usersLimit: 0
+    }
+    await upsertSubscription(
+      mockCtx,
+      mockDb,
+      mockBranding,
+      mockToken,
+      pkg({ plan: 'storage-100gb', limits: storageLimits })
+    )
+
+    expect(mockProducer.send).not.toHaveBeenCalled()
+  })
+
+  test('does not publish when limits are missing', async () => {
+    await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ limits: undefined }))
+
+    expect(mockProducer.send).not.toHaveBeenCalled()
+  })
+
+  test('does not publish when status is not Active', async () => {
+    await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ status: SubscriptionStatus.PastDue }))
+
+    expect(mockProducer.send).not.toHaveBeenCalled()
+  })
+
+  test('does not publish when periodStart is undefined', async () => {
+    await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: undefined }))
+
+    expect(mockProducer.send).not.toHaveBeenCalled()
+  })
+
+  test('grantId changes when periodStart changes (renewal grants again)', async () => {
+    await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: 1_000 }))
+    await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: 2_000 }))
+
+    expect(mockProducer.send).toHaveBeenNthCalledWith(1, mockCtx, workspaceUuid, [
+      workspaceEvents.purchaseActivated('ai-500k', 'sub-pkg-1:1000', 'add-ai-tokens', 500_000)
+    ])
+    expect(mockProducer.send).toHaveBeenNthCalledWith(2, mockCtx, workspaceUuid, [
+      workspaceEvents.purchaseActivated('ai-500k', 'sub-pkg-1:2000', 'add-ai-tokens', 500_000)
+    ])
+  })
+
+  test('grantId is stable across a repeated upsert within the same period (idempotent on consumer side)', async () => {
+    await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: 1_000 }))
+    await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: 1_000 }))
+
+    const [, , firstEvents] = mockProducer.send.mock.calls[0]
+    const [, , secondEvents] = mockProducer.send.mock.calls[1]
+    expect(firstEvents[0].purchaseId).toBe(secondEvents[0].purchaseId)
+    expect(firstEvents[0].purchaseId).toBe('sub-pkg-1:1000')
+  })
+
+  test('does not publish the token-grant event for a Tier subscription', async () => {
+    await upsertSubscription(
+      mockCtx,
+      mockDb,
+      mockBranding,
+      mockToken,
+      pkg({ type: SubscriptionType.Tier, plan: 'pro' })
+    )
+
+    // Tier upserts may still publish a plan limitsChanged event, but never purchaseActivated.
+    const purchaseCalls = mockProducer.send.mock.calls.filter(([, , events]) =>
+      events.some((e: any) => e.type === QueueWorkspaceEvent.PurchaseActivated)
+    )
+    expect(purchaseCalls).toHaveLength(0)
+  })
+})
+
+describe('upsertSubscription - tier plan changed event', () => {
+  const mockCtx = {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn()
+  } as unknown as MeasureContext
+
+  const mockBranding = null
+  const mockToken = 'test-token'
+  const workspaceUuid = 'ws-plan' as WorkspaceUuid
+  const accountUuid = 'acc-plan' as AccountUuid
+
+  let mockDb: any
+  let getWorkspaceByIdSpy: jest.SpyInstance
+  let mockProducer: { send: jest.Mock }
+
+  const existingSubscription = {
+    id: 'sub-tier-1',
+    workspaceUuid,
+    provider: 'polar',
+    providerSubscriptionId: 'polar-tier-1',
+    type: SubscriptionType.Tier,
+    status: SubscriptionStatus.Active,
+    plan: 'basic',
+    limits: { storageLimitGB: 10, trafficLimitGB: 10, meetingMinutesLimit: 100, tokenLimit: 1_000, usersLimit: 5 }
+  }
+
+  function tier (over: Record<string, any> = {}): any {
+    return {
+      id: 'sub-tier-1',
+      workspaceUuid,
+      accountUuid,
+      provider: 'polar',
+      providerSubscriptionId: 'polar-tier-1',
+      type: SubscriptionType.Tier,
+      status: SubscriptionStatus.Active,
+      plan: 'basic',
+      limits: { storageLimitGB: 10, trafficLimitGB: 10, meetingMinutesLimit: 100, tokenLimit: 1_000, usersLimit: 5 },
+      ...over
+    }
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+
+    mockDb = {
+      subscription: {
+        findOne: jest.fn().mockResolvedValue(existingSubscription),
+        find: jest.fn().mockResolvedValue([]),
+        insertOne: jest.fn(),
+        update: jest.fn()
+      }
+    }
+
+    getWorkspaceByIdSpy = jest.spyOn(utils, 'getWorkspaceById').mockResolvedValue({ uuid: workspaceUuid } as any)
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ extra: { service: 'payment' } })
+
+    mockProducer = { send: jest.fn() }
+    ;(getMetadata as jest.Mock).mockReturnValue(mockProducer)
+  })
+
+  afterAll(() => {
+    getWorkspaceByIdSpy.mockRestore()
+  })
+
+  test('publishes limitsChanged(Plan, Ok) when the plan actually changed', async () => {
+    await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, tier({ plan: 'pro' }))
+
+    expect(mockProducer.send).toHaveBeenCalledWith(mockCtx, workspaceUuid, [
+      workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)
+    ])
+  })
+
+  test('does not publish limitsChanged when the upsert repeats the same plan/status/limits', async () => {
+    await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, tier())
+
+    expect(mockProducer.send).not.toHaveBeenCalled()
   })
 })
 

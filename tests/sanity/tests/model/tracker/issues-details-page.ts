@@ -27,9 +27,15 @@ export class IssuesDetailsPage extends CommonTrackerPage {
     this.page.locator('//span[text()="Milestone"]/following-sibling::div[1]/div/button')
 
   readonly textEstimation = (): Locator =>
-    this.page.locator('//span[text()="Estimation"]/following-sibling::div[1]/button/span')
+    this.page.locator(
+      '//span[contains(@class, "labelOnPanel") and normalize-space(text())="Estimation"]/following-sibling::div[1]//div[contains(@class, "link-container")]'
+    )
 
-  readonly buttonEstimation = (): Locator => this.page.locator('(//span[text()="Estimation"]/../div/button)[3]')
+  readonly buttonEstimation = (): Locator =>
+    this.page.locator(
+      '//span[contains(@class, "labelOnPanel") and normalize-space(text())="Estimation"]/following-sibling::div[1]//div[contains(@class, "link-container")]'
+    )
+
   readonly buttonCreatedBy = (): Locator =>
     this.page.locator('//span[text()="Created by"]/following-sibling::div[1]/button')
 
@@ -149,7 +155,7 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       } else {
         await this.checkFromDropdownWithSearch(this.page, data.labels)
       }
-      await this.inputTitle().press('Escape')
+      await this.closePopups()
     }
     if (data.component != null) {
       await this.buttonComponent().click()
@@ -165,10 +171,16 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       // and turning the later check into a 10s wait for something that never happens.
       await expect(async () => {
         await this.buttonEstimation().click()
-        await this.fillToSelectPopup(this.page, estimation)
+        await this.fillEstimationPopup(this.page, estimation)
         await expect(this.textEstimation()).toHaveText(convertEstimation(estimation), { timeout: 3000 })
       }).toPass({ intervals: [300, 1000], timeout: 20000 })
     }
+  }
+
+  async addExistingLabel (label: string): Promise<void> {
+    await this.buttonAddLabel().click()
+    await this.checkFromDropdownWithSearch(this.page, label)
+    await this.closePopups()
   }
 
   async checkIssue (data: NewIssue): Promise<void> {

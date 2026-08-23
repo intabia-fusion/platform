@@ -161,6 +161,13 @@ export class CommonPage {
     await this.selectPopupButton().click()
   }
 
+  async fillEstimationPopup (page: Page, input: string): Promise<void> {
+    const form = page.locator('form[id="tracker\\:string\\:Estimation"]')
+    await expect(form.locator('input').first()).toBeVisible()
+    await form.locator('input').first().fill(input)
+    await form.locator('button', { hasText: 'Save' }).click()
+  }
+
   async checkFromDropdown (page: Page, point: string): Promise<void> {
     await this.selectPopupSpanLines(point).first().click()
   }
@@ -207,6 +214,18 @@ export class CommonPage {
     // first - clicking twice is not an option here, the row toggles selection.
     await expect(item).toHaveCount(1, { timeout: 15000 })
     await item.click()
+  }
+
+  // A single Escape can be swallowed while a popup is re-rendering, leaving a modal-overlay that
+  // silently eats every later click. Press until no overlay is left.
+  async closePopups (): Promise<void> {
+    const overlay = this.page.locator('div.modal-overlay')
+    await expect(async () => {
+      while ((await overlay.count()) > 0) {
+        await this.page.keyboard.press('Escape')
+        await expect(overlay).toHaveCount(0, { timeout: 2000 })
+      }
+    }).toPass({ intervals: [200, 500], timeout: 15000 })
   }
 
   async closeNotification (): Promise<void> {
