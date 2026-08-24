@@ -15,23 +15,34 @@
 
 import { type Doc, type Ref } from '@hcengineering/core'
 import { type Editor } from '@tiptap/core'
+import { derived, get, writable, type Readable } from 'svelte/store'
 
 // Mounted collaborative editors keyed by (objectId, attribute), for code outside the editor to reach one.
-const editors = new Map<string, Editor>()
+// A store, not a plain Map: a component showing "open the document" has to learn when one mounts.
+const editors = writable(new Map<string, Editor>())
 
 function editorKey (objectId: Ref<Doc>, attr: string): string {
   return `${objectId}:${attr}`
 }
 
 export function registerEditor (objectId: Ref<Doc>, attr: string, editor: Editor): void {
-  editors.set(editorKey(objectId, attr), editor)
+  editors.update((map) => new Map(map).set(editorKey(objectId, attr), editor))
 }
 
 export function unregisterEditor (objectId: Ref<Doc>, attr: string): void {
-  editors.delete(editorKey(objectId, attr))
+  editors.update((map) => {
+    const next = new Map(map)
+    next.delete(editorKey(objectId, attr))
+    return next
+  })
 }
 
 /** The mounted editor for an object's attribute, or undefined when the document is not open. */
 export function getRegisteredEditor (objectId: Ref<Doc>, attr: string): Editor | undefined {
-  return editors.get(editorKey(objectId, attr))
+  return get(editors).get(editorKey(objectId, attr))
+}
+
+/** Same lookup, but reactive: emits when that editor mounts or unmounts. */
+export function registeredEditor (objectId: Ref<Doc>, attr: string): Readable<Editor | undefined> {
+  return derived(editors, (map) => map.get(editorKey(objectId, attr)))
 }

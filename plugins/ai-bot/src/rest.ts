@@ -18,7 +18,7 @@ import { MeetingMinutes, RoomLanguage } from '@hcengineering/love'
 import { Contact, Person } from '@hcengineering/contact'
 import { ChatMessage } from '@hcengineering/chunter'
 
-/** ЮляИИ quality level id: data-driven string, not a fixed enum; new levels need no code change. */
+/** Assistant quality level id: data-driven string, not a fixed enum; new levels need no code change. */
 export type AILevel = string
 
 /** What an AI conversation was started for (mirrors AIContextMessage.purpose). */
@@ -119,7 +119,7 @@ export interface IdentityResponse {
 
 /** Which AI features a level may serve; unset flag = allowed (default true). */
 export interface AIFeatureFlags {
-  talk?: boolean // "Обсудить с Юлей" (live conversation)
+  talk?: boolean // "Discuss with the assistant" (live conversation)
   chat?: boolean // chat replies
   summary?: boolean // conversation summary
   tasks?: boolean // create tasks from chat

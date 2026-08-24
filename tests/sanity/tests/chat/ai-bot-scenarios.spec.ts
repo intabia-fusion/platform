@@ -78,7 +78,7 @@ test.describe('ai-bot scenarios', () => {
     const proposedTitle = `Follow-up ${generateId()}`
     await sendToAssistant(page, `сделай задачу\ncall:propose_task {"title":"${proposedTitle}"}`)
 
-    const card = page.locator('#sidebar .activityMessage', { hasText: 'Julia proposes a task' })
+    const card = page.locator('#sidebar .activityMessage').filter({ has: page.locator('[data-id="aiTaskProposal"]') })
     await expect(card).toBeVisible({ timeout: 60000 })
     await expect(card.locator('input').first()).toHaveValue(proposedTitle, { timeout: 15000 })
 
@@ -138,7 +138,7 @@ test.describe('ai-bot scenarios', () => {
     const body = `Rewritten by the assistant ${generateId()}`
     await sendToAssistant(page, `перепиши документ\ncall:propose_new_document {"markdown":"# Plan\\n\\n${body}"}`)
 
-    const card = page.locator('#sidebar .activityMessage', { hasText: 'Yulia proposes an edit' })
+    const card = page.locator('#sidebar .activityMessage').filter({ has: page.locator('[data-id="aiEditProposal"]') })
     await expect(card).toBeVisible({ timeout: 60000 })
 
     await test.step('Apply writes the proposal into the open document', async () => {
@@ -171,7 +171,7 @@ test.describe('ai-bot scenarios', () => {
     await panel.locator('g#Send').click()
 
     // The tool only stages the draft; the card's own button is what pushes it into the form.
-    const card = panel.locator('.activityMessage', { hasText: 'Julia proposes a task' })
+    const card = panel.locator('.activityMessage').filter({ has: page.locator('[data-id="aiTaskProposal"]') })
     await expect(card).toBeVisible({ timeout: 60000 })
     await page.mouse.move(0, 0)
     await card.getByRole('button', { name: 'Apply', exact: true }).click()

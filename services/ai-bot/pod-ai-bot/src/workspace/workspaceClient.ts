@@ -31,6 +31,7 @@ import chunter, { ChatMessage, ThreadMessage, DirectMessage } from '@hcengineeri
 import contact, {
   AvatarType,
   combineName,
+  type Employee,
   ensureEmployee,
   getFirstName,
   getLastName,
@@ -72,6 +73,23 @@ import { resolveModel, registryForFeature } from '../llms/modelRegistry'
 import { getWorkspaceWindows } from '../billing'
 import { decideLevel } from './windowLimit'
 import { buildThreadContext, type ContextMessage } from './threadContext'
+import {
+  appendTurns,
+  type ConversationSnapshot,
+  parseSnapshot,
+  renderSnapshot,
+  appendSummary,
+  contextTurns,
+  snapshotBlobId,
+  snapshotMessageIds,
+  type SnapshotTurn
+} from './conversationSnapshot'
+import { buildDocPromptText } from './docPrompt'
+import { isContextOverflow, planCompaction, renderForSummary } from './compaction'
+import { toolBudgets } from '../utils/budget'
+import { botName } from '../llms/prompts'
+import { renderPrompt } from '../llms/promptStore'
+import { loadWelcomeMessages, pickWelcome } from '../welcome'
 
 // Token counting and other LLM operations are delegated to the injected LLM provider
 import { type IntlString, translate } from '@hcengineering/platform'
@@ -118,6 +136,17 @@ function normalizeForCompare (md: string): string {
 // to 85% of what is nominally free: filling the window to the brim ends in a 422 from the
 // provider, and the request is lost rather than trimmed.
 const CONTEXT_SAFETY = 0.85
+
+// Greeting texts live in welcome.yaml so they can be reworded without a rebuild; read once.
+let welcomeMessages: Record<string, string> | undefined
+
+// Turns kept in a conversation file. Far above what any context window takes - the cap only stops
+// a years-old thread from growing without bound.
+const SNAPSHOT_MAX_TURNS = 500
+
+// Share of the level's window the linked document may take. Past it the body is replaced with an
+// outline and editing is refused: a rewrite built from a partial body deletes the rest.
+const DOC_PROMPT_SHARE = 0.45
 
 function contextBudgetFor (level: AILevel): number {
   const caps = resolveLevelCapabilities(level)
@@ -263,6 +292,7 @@ export class WorkspaceClient {
         this.aiPerson
       )
     }
+    await this.backfillWelcomeDirects()
     this.ctx.info('Initialized workspace', { workspace: this.wsIds })
   }
 
@@ -465,7 +495,7 @@ export class WorkspaceClient {
 
   /**
    * Live progress + cancel for one request: token counts land on the AIRequest doc (the user sees
-   * them next to "Yulia is typing"), and the user cancelling that doc stops the tool loop.
+   * them next to the typing indicator), and the user cancelling that doc stops the tool loop.
    */
   private requestHooks (
     personUuid: PersonUuid,
@@ -661,7 +691,7 @@ export class WorkspaceClient {
 
     const space = event.objectIdIsSpace ? (objectId as Ref<Space>) : event.objectSpace
 
-    // Show "Юля is typing" until the reply is written (or the request bails out early).
+    // Show the typing indicator until the reply is written (or the request bails out early).
     const stopTyping = this.startTyping(objectId, space)
     try {
       await this.generateAndReply(event, {
@@ -701,51 +731,41 @@ export class WorkspaceClient {
     return await this.hierarchyPromise
   }
 
-  private async buildDocPrompt (doc: Doc): Promise<string | undefined> {
-    const parts: string[] = []
-    // Current editable body as markdown, delimited so the model can round-trip it via propose_new_document.
-    let body: string | undefined
+  /**
+   * Context block for the linked object. `budgetTokens` is the share of the window the body may
+   * take; over it the body is not truncated but replaced with an outline (see docPrompt.ts), and
+   * the caller is told so it can withhold the editing tools.
+   */
+  private async buildDocPrompt (
+    doc: Doc,
+    countTokens: (text: string) => number,
+    budgetTokens: number
+  ): Promise<{ text: string, oversized: boolean } | undefined> {
     // isDerived, not ===: a task type is its own class derived from Issue (tracker:class:IssueTaskType).
     const hierarchy = await this.getHierarchy()
     if (hierarchy.isDerived(doc._class, tracker.class.Issue)) {
       const is = doc as Issue
-      parts.push(`This conversation is about task ${is.identifier ?? ''}.`)
-      parts.push('TITLE: ' + is.title)
-      body = is.description != null ? await this.readMarkupBlobAsMarkdown(is.description) : undefined
-      // The sub-tasks come with the task itself: asked to review the split, the model used to
-      // propose a fresh list without ever calling list_subtasks.
-      const subs = await this.listSubIssues(is._id)
-      parts.push('EXISTING SUB-TASKS:')
-      parts.push(subs)
-      parts.push(
-        'Those already exist. When the user asks about the split, judge THIS list: say what is ' +
-          'missing, redundant or misnamed. Only propose sub-tasks that are genuinely new, and never ' +
-          'restate the existing ones as a proposal.'
-      )
-    } else if (hierarchy.isDerived(doc._class, document.class.Document)) {
-      const d = doc as Document
-      parts.push('This conversation is about document ' + d.title + '.')
-      parts.push('TITLE: ' + d.title)
-      body = d.content != null ? await this.readMarkupBlobAsMarkdown(d.content) : undefined
-    } else {
-      return undefined
+      const body = (is.description != null ? await this.readMarkupBlobAsMarkdown(is.description) : undefined) ?? ''
+      const oversized = countTokens(body) > budgetTokens
+      return {
+        oversized,
+        text: buildDocPromptText({
+          kind: 'issue',
+          title: is.title,
+          identifier: is.identifier,
+          body,
+          oversized,
+          subtasksListing: await this.listSubIssues(is._id)
+        })
+      }
     }
-    parts.push('This is the current document body (markdown):')
-    parts.push('```markdown\n' + (body ?? '') + '\n```')
-    parts.push(
-      'To change the document, call the propose_new_document tool. Its `markdown` argument must be the ' +
-        'full new body: copy the current body above verbatim, apply ONLY the change the user asked for, ' +
-        'and pass the result.'
-    )
-    parts.push(
-      'STRICT rules for the markdown you pass:\n' +
-        '- Output ONLY the document itself. The document ends where its content ends.\n' +
-        '- Do NOT append examples, alternatives, samples, notes, explanations, or "here is another way".\n' +
-        '- Reproduce code and ```mermaid blocks EXACTLY as in the current body unless the user asked to change them.\n' +
-        '- Do NOT add a new mermaid/code block unless explicitly requested.\n' +
-        '- Do NOT wrap the whole thing in a code fence, and do NOT include the user request or chat text.'
-    )
-    return parts.join('\n')
+    if (hierarchy.isDerived(doc._class, document.class.Document)) {
+      const d = doc as Document
+      const body = (d.content != null ? await this.readMarkupBlobAsMarkdown(d.content) : undefined) ?? ''
+      const oversized = countTokens(body) > budgetTokens
+      return { oversized, text: buildDocPromptText({ kind: 'document', title: d.title, body, oversized }) }
+    }
+    return undefined
   }
 
   // Collaborative attribute rewritten by the AI edit tool, per source class. Extend alongside
@@ -758,7 +778,7 @@ export class WorkspaceClient {
   }
 
   // Resolve the object an edit-proposal targets from the current thread's root message. The
-  // "Discuss with Yulia" root (AIContextMessage) links to the real source object.
+  // "Discuss with the assistant" root (AIContextMessage) links to the real source object.
   async resolveEditTarget (
     rootId: Ref<Doc>,
     rootClass: Ref<Class<Doc>>
@@ -893,12 +913,18 @@ export class WorkspaceClient {
       promptTokens: number
       level?: AILevel
       providers?: Map<string, LLMProvider>
+      // Set on the single retry after a compaction, so it cannot loop.
+      retriedAfterCompaction?: boolean
     }
   ): Promise<void> {
     let { llm } = args
     const { personUuid, contextMode, objectId, objectClass, messageClass, space, prompt, promptTokens, providers } =
       args
     const level = args.level
+
+    // Stamped before anything is read: the snapshot cursor anchors here, so a message posted while
+    // this turn runs is picked up by the next one instead of falling into the gap.
+    const askedAt = Date.now()
 
     // Memory (assistant/user/shared) lives in a Preference; conversation context
     // now comes from the chunter thread, not from a blob history.
@@ -910,6 +936,14 @@ export class WorkspaceClient {
 
     // Placed at the END of history, next to the task: small models "lose the middle".
     let docPrompt: string | undefined
+    // The document did not fit: only its outline is in context, so editing tools are withheld.
+    let documentReadOnly = false
+    // This turn folded the older part of the conversation into a summary.
+    let didCompact = false
+    // Kept for the compact-and-retry path: the provider may still refuse a context we measured as
+    // fitting, and then the only way forward is to fold more of it.
+    let snapshotForRetry: ConversationSnapshot | undefined
+    const retriedAfterCompaction = args.retriedAfterCompaction === true
 
     {
       // Top-level replies use only today's messages; older ones load via load_thread_history tool.
@@ -934,12 +968,14 @@ export class WorkspaceClient {
           content: 'Document type:' + msg?._class
         })
         if (msg._class === chunter.class.ThreadMessage || msg._class === chunter.class.ChatMessage) {
+          // User-authored content must stay at user level: as a system message it would let the
+          // author override tool-use instructions via prompt injection.
           systemPrompts.push({
-            role: 'system' as const,
+            role: 'user' as const,
             content: 'Content: ' + markupToText((msg as ChatMessage).message)
           })
         }
-        // "Discuss with Yulia" thread: the root message links to a source object (issue,
+        // "Discuss with the assistant" thread: the root message links to a source object (issue,
         // document, ...). Load that object so its content is in context, not just the starter.
         let linked: Doc | undefined
         if (msg._class === aiBot.class.AIContextMessage) {
@@ -948,7 +984,7 @@ export class WorkspaceClient {
           // Draft the conversation works on (create-issue dialog). Kept off the message body so
           // the chat stays readable; the model still needs it on every turn.
           if (link.workingContext !== undefined && link.workingContext.trim() !== '') {
-            systemPrompts.push({ role: 'system' as const, content: link.workingContext })
+            systemPrompts.push({ role: 'user' as const, content: link.workingContext })
           }
         }
         // Any non-chat source object (issue, document, ...) is described from its class schema.
@@ -959,12 +995,44 @@ export class WorkspaceClient {
             source._class === chunter.class.ThreadMessage ||
             source._class === aiBot.class.AIContextMessage)
         if (source !== undefined && !isChatStarter) {
-          docPrompt = await this.buildDocPrompt(source)
+          const budget = contextBudgetFor(level ?? config.DefaultLevel)
+          const built = await this.buildDocPrompt(
+            source,
+            (text) => llm.countTokens([{ role: 'user', content: text }]) ?? 0,
+            Math.floor(budget * DOC_PROMPT_SHARE)
+          )
+          docPrompt = built?.text
+          documentReadOnly = built?.oversized === true
         }
       }
 
+      // A thread keeps its own transcript file, written after every reply. Reading it back beats
+      // re-querying (and re-tokenizing) the whole thread; only what arrived after the file's cursor
+      // still has to come from the database. Top-level replies are day-limited and keep the old path.
+      let snapshot = dayLimited ? undefined : await this.loadSnapshot(objectId)
+      const beforeCompaction = snapshot?.firstKept
+      // Compact before assembling: past this point the window trim would silently drop the oldest
+      // turns, and whatever was agreed at the start would go with them.
+      if (snapshot !== undefined) {
+        snapshot = await this.compactIfNeeded(
+          objectId,
+          snapshot,
+          llm,
+          contextBudgetFor(level ?? config.DefaultLevel),
+          event.language ?? config.DefaultLanguage,
+          level,
+          personUuid,
+          space
+        )
+        didCompact = snapshot.firstKept !== beforeCompaction
+        snapshotForRetry = snapshot
+      }
+      const sinceQuery =
+        snapshot !== undefined ? { ...contextQuery, modifiedOn: { $gte: snapshot.cursor } } : contextQuery
+      const alreadyInSnapshot = snapshotMessageIds(snapshot)
+
       const lastMessages =
-        (await this.client?.findAll(chunter.class.ChatMessage, contextQuery, {
+        (await this.client?.findAll(chunter.class.ChatMessage, sinceQuery, {
           limit: 500,
           sort: { modifiedOn: SortingOrder.Descending }
         })) ?? []
@@ -975,7 +1043,22 @@ export class WorkspaceClient {
       const botSocialIds = new Set(this.socialIds.map((it) => it._id))
 
       const contextMessages: ContextMessage[] = []
+      // `contextTurns` hands back the newest summary plus the verbatim tail after it; tool turns
+      // stay in the file for the reader, the model never saw prior runs' tool traffic before.
+      for (const turn of contextTurns(snapshot)) {
+        if (turn.role === 'tool') continue
+        // A summary is context about the conversation, not something anyone said in it.
+        const role: 'user' | 'assistant' = turn.role === 'assistant' ? 'assistant' : 'user'
+        const content =
+          turn.role === 'summary' ? `[Summary of the earlier part of this conversation]\n${turn.content}` : turn.content
+        contextMessages.push({
+          role,
+          content,
+          tokens: llm.countTokens([{ role, content }]) ?? 0
+        })
+      }
       for (const msg of lastMessages) {
+        if (alreadyInSnapshot.has(msg._id)) continue
         const msgRole: 'assistant' | 'user' = botSocialIds.has(msg.modifiedBy) ? 'assistant' : 'user'
         // Edit proposals are UI artifacts; feed only the fact it happened, never the proposed body.
         let content: string
@@ -1059,8 +1142,33 @@ export class WorkspaceClient {
       objectId
     })
 
+    // How full the context is and where compaction kicks in. Written on every request so the user
+    // sees it coming instead of noticing afterwards that the early part of the talk is gone.
+    if (aiRequestId !== undefined) {
+      const budget = contextBudgetFor(resolved.level)
+      const used = useHistory.reduce((sum, m) => sum + (llm.countTokens([m]) ?? 0), promptTokens)
+      await this.updateAIRequest(personUuid, aiRequestId, space, {
+        contextTokens: used,
+        contextCompactAt: Math.max(0, budget - config.CompactionReserveTokens),
+        compacted: didCompact
+      }).catch((err) => {
+        this.ctx.warn('failed to report context fill', { err: err?.message })
+      })
+    }
+
     // Shared with the tools: a proposal tool stages its result here instead of posting a message.
-    const reqCtx: ReqCtx = { objectId, objectClass, space, collection: event.collection, purpose: event.purpose }
+    // Ceilings for what tools may add to the context, derived from the level that actually serves.
+    const budgets = toolBudgets(contextBudgetFor(resolved.level))
+    const reqCtx: ReqCtx = {
+      objectId,
+      objectClass,
+      space,
+      collection: event.collection,
+      purpose: event.purpose,
+      documentReadOnly,
+      perCallChars: budgets.perCall,
+      budget: { maxChars: budgets.perRun, spentChars: 0 }
+    }
     const tools = getTools(this, contextMode, personUuid as AccountUuid, reqCtx, resolved.model.features, event.purpose)
     const replyLang = await this.resolveChatLanguage(personUuid, space, contextMode === 'direct')
     let chatCompletion
@@ -1082,6 +1190,26 @@ export class WorkspaceClient {
         this.requestHooks(personUuid, aiRequestId, space)
       )
     } catch (err: any) {
+      // Token counts are estimates, so the provider can refuse a context we thought fitted. Compact
+      // and retry once: dropping the request would lose an answer over an arithmetic error.
+      if (isContextOverflow(err) && snapshotForRetry !== undefined && !retriedAfterCompaction) {
+        this.ctx.warn('context overflow, compacting and retrying once', { workspace: this.wsIds.uuid })
+        const compacted = await this.compactIfNeeded(
+          objectId,
+          snapshotForRetry,
+          llm,
+          contextBudgetFor(resolved.level),
+          event.language ?? config.DefaultLanguage,
+          resolved.level,
+          personUuid,
+          space,
+          true
+        )
+        if (compacted.firstKept !== snapshotForRetry.firstKept) {
+          await this.generateAndReply(event, { ...args, retriedAfterCompaction: true })
+          return
+        }
+      }
       // LLM failed after in-worker retries; swallow instead of rethrow so the queue does not reprocess.
       this.ctx.error('chat completion failed', { workspace: this.wsIds.uuid, error: err?.message })
       if (aiRequestId !== undefined) {
@@ -1126,7 +1254,200 @@ export class WorkspaceClient {
     }
     const parseResponse = jsonToMarkup(markdownToMarkup(response, { refUrl: '', imageUrl: '' }))
     // A tool staged a proposal: the reply carries it, so the user gets one message - text + card.
-    await this.writeReply(messageClass, space, objectId, objectClass, event.collection, parseResponse, reqCtx.pending)
+    const replyId = await this.writeReply(
+      messageClass,
+      space,
+      objectId,
+      objectClass,
+      event.collection,
+      parseResponse,
+      reqCtx.pending
+    )
+
+    // The answer is out - freeze this turn so the next one reads the file instead of the thread.
+    // Detached: a storage hiccup must not fail a reply the user already has.
+    if (!event.objectIdIsSpace) {
+      void this.appendSnapshotTurn(objectId, objectClass, {
+        userMessageId: event.messageId,
+        userContent: prompt.content,
+        userAuthor: personUuid,
+        askedAt,
+        toolTranscript: chatCompletion?.toolTranscript,
+        answer: response,
+        replyId
+      })
+    }
+  }
+
+  /** The thread's transcript file as it is stored, for the download button. */
+  async readSnapshotFile (conversation: Ref<Doc>): Promise<string | undefined> {
+    try {
+      const id = snapshotBlobId(conversation)
+      if ((await this.storage.stat(this.ctx, this.wsIds, id)) === undefined) return undefined
+      return Buffer.concat(await this.storage.read(this.ctx, this.wsIds, id)).toString()
+    } catch (err: any) {
+      this.ctx.warn('conversation snapshot read failed', { workspace: this.wsIds.uuid, error: err?.message })
+      return undefined
+    }
+  }
+
+  /** Read the thread's transcript file. Missing or unparseable - the caller falls back to the DB. */
+  private async loadSnapshot (conversation: Ref<Doc>): Promise<ConversationSnapshot | undefined> {
+    try {
+      const id = snapshotBlobId(conversation)
+      if ((await this.storage.stat(this.ctx, this.wsIds, id)) === undefined) return undefined
+      const text = Buffer.concat(await this.storage.read(this.ctx, this.wsIds, id)).toString()
+      return parseSnapshot(text)
+    } catch (err: any) {
+      this.ctx.warn('conversation snapshot read failed', {
+        workspace: this.wsIds.uuid,
+        conversation,
+        error: err?.message
+      })
+      return undefined
+    }
+  }
+
+  /**
+   * Append one completed turn (the request, the tools it triggered, the answer) to the thread file.
+   * Idempotent by the incoming message id, so a redelivered event does not duplicate the turn.
+   */
+  private async appendSnapshotTurn (
+    conversation: Ref<Doc>,
+    conversationClass: Ref<Class<Doc>>,
+    turn: {
+      userMessageId: Ref<Doc>
+      userContent: string
+      userAuthor: PersonUuid
+      askedAt: number
+      toolTranscript?: Array<{ name: string, arguments?: string, content: string }>
+      answer: string
+      replyId?: Ref<Doc>
+    }
+  ): Promise<void> {
+    try {
+      const existing = await this.loadSnapshot(conversation)
+      if (existing?.turns.some((t) => t.messageId === turn.userMessageId) === true) return
+
+      const at = Date.now()
+      const author = (await this.client.findOne(contact.class.Person, { personUuid: turn.userAuthor }))?.name
+      const turns: SnapshotTurn[] = [
+        {
+          role: 'user',
+          // The request's own timestamp, not now: the cursor anchors here, and whatever was posted
+          // while the model was thinking still has to be re-read.
+          author: author ?? turn.userAuthor,
+          at: turn.askedAt,
+          messageId: turn.userMessageId,
+          content: turn.userContent
+        }
+      ]
+      for (const call of turn.toolTranscript ?? []) {
+        turns.push({
+          role: 'tool',
+          author: call.name,
+          at,
+          content: `\`\`\`json\n${JSON.stringify({ arguments: call.arguments, result: call.content })}\n\`\`\``
+        })
+      }
+      turns.push({
+        role: 'assistant',
+        author: this.aiPerson?.name ?? 'assistant',
+        at,
+        messageId: turn.replyId,
+        content: turn.answer
+      })
+
+      const snapshot = appendTurns(
+        existing,
+        conversation,
+        `${conversationClass}:${conversation}`,
+        turns,
+        SNAPSHOT_MAX_TURNS
+      )
+      await this.writeSnapshot(conversation, snapshot)
+    } catch (err: any) {
+      this.ctx.warn('conversation snapshot write failed', {
+        workspace: this.wsIds.uuid,
+        conversation,
+        error: err?.message
+      })
+    }
+  }
+
+  private async writeSnapshot (conversation: Ref<Doc>, snapshot: ConversationSnapshot): Promise<void> {
+    const data = Buffer.from(renderSnapshot(snapshot))
+    await this.storage.put(this.ctx, this.wsIds, snapshotBlobId(conversation), data, 'text/markdown', data.length)
+  }
+
+  /**
+   * Fold the older part of the conversation into a summary when it no longer fits the window.
+   * Called before the context is assembled: without it `buildThreadContext` would drop the oldest
+   * turns silently, taking with them whatever was agreed at the start.
+   *
+   * Failure is not fatal - the conversation carries on uncompacted and the window trim applies as
+   * before, so a summarizer hiccup never costs the user their answer.
+   */
+  private async compactIfNeeded (
+    conversation: Ref<Doc>,
+    snapshot: ConversationSnapshot,
+    llm: LLMProvider,
+    budgetTokens: number,
+    lang: string,
+    level: AILevel | undefined,
+    personUuid: PersonUuid,
+    space: Ref<Space>,
+    force = false
+  ): Promise<ConversationSnapshot> {
+    if (llm.compactConversation === undefined) return snapshot
+    const plan = planCompaction({
+      turns: snapshot.turns,
+      firstKept: snapshot.firstKept,
+      countTokens: (text) => llm.countTokens([{ role: 'user', content: text }]) ?? 0,
+      budgetTokens,
+      reserveTokens: config.CompactionReserveTokens,
+      keepRecentTokens: config.CompactionKeepRecentTokens,
+      force
+    })
+    if (!plan.needed) return snapshot
+
+    const previous = [...snapshot.turns].reverse().find((t) => t.role === 'summary')?.content
+    const aiRequestId = await this.createAIRequest(personUuid, space, {
+      level: level ?? config.DefaultLevel,
+      modelId: '',
+      kind: 'compaction',
+      objectId: conversation
+    })
+    try {
+      const summary = await llm.compactConversation(
+        this.ctx,
+        this.wsIds.uuid,
+        renderForSummary(plan.toSummarize),
+        lang,
+        previous,
+        level
+      )
+      if (summary === undefined || summary.trim() === '') return snapshot
+
+      const compacted = appendSummary(snapshot, summary.trim(), plan.firstKeptId, Date.now())
+      await this.writeSnapshot(conversation, compacted)
+      this.ctx.info('conversation compacted', {
+        workspace: this.wsIds.uuid,
+        conversation,
+        folded: plan.toSummarize.length,
+        kept: plan.kept.length
+      })
+      if (aiRequestId !== undefined) {
+        await this.updateAIRequest(personUuid, aiRequestId, space, { status: 'done' })
+      }
+      return compacted
+    } catch (err: any) {
+      this.ctx.warn('conversation compaction failed', { workspace: this.wsIds.uuid, error: err?.message })
+      if (aiRequestId !== undefined) {
+        await this.updateAIRequest(personUuid, aiRequestId, space, failedPatch(err?.message ?? 'error'))
+      }
+      return snapshot
+    }
   }
 
   // Copyright © 2026 Intabia Fusion
@@ -1154,7 +1475,77 @@ export class WorkspaceClient {
     }
   }
 
-  // Find the user's existing Direct chat with Юля (does not create one).
+  // A member became active -> open the Direct with the bot and greet. Without this the chat exists
+  // only after the user finds the "Talk to the assistant" button, so on a fresh workspace the bot looks
+  // absent. An existing Direct is the idempotency guard.
+  async sendWelcomeIfNeeded (person: Ref<Person>): Promise<void> {
+    await this.initPromise
+    const aiAccount = this.aiPerson?.personUuid as AccountUuid | undefined
+    if (aiAccount === undefined) return
+
+    try {
+      const employee = await this.client.findOne(contact.mixin.Employee, { _id: person as Ref<Employee> })
+      const account = employee?.personUuid
+      if (employee?.active !== true || account === undefined || account === aiAccount) return
+      if ((await this.findUserDirect(account)) !== undefined) return
+      await this.sendWelcome(account, aiAccount)
+    } catch (err: any) {
+      this.ctx.warn('welcome failed', { workspace: this.wsIds.uuid, person, error: err?.message })
+    }
+  }
+
+  // Members who joined before the welcome existed have no Direct with the bot at all: the chat used to
+  // appear only when someone pressed "Talk to the assistant". Backfill it on connect.
+  private async backfillWelcomeDirects (): Promise<void> {
+    const aiAccount = this.aiPerson?.personUuid as AccountUuid | undefined
+    if (aiAccount === undefined) return
+
+    try {
+      const directs = await this.client.findAll<DirectMessage>(chunter.class.DirectMessage, { members: aiAccount })
+      const greeted = new Set<AccountUuid>()
+      for (const dm of directs) {
+        if (dm.members.length !== 2) continue
+        const other = dm.members.find((m) => m !== aiAccount)
+        if (other !== undefined) greeted.add(other)
+      }
+
+      const employees = await this.client.findAll(contact.mixin.Employee, { active: true })
+      for (const employee of employees) {
+        const account = employee.personUuid
+        if (account === undefined || account === aiAccount || greeted.has(account)) continue
+        await this.sendWelcome(account, aiAccount)
+      }
+    } catch (err: any) {
+      this.ctx.warn('welcome backfill failed', { workspace: this.wsIds.uuid, error: err?.message })
+    }
+  }
+
+  private async sendWelcome (account: AccountUuid, aiAccount: AccountUuid): Promise<void> {
+    welcomeMessages = welcomeMessages ?? loadWelcomeMessages()
+    const lang = await this.resolveChatLanguage(account, undefined, true)
+    const text = pickWelcome(welcomeMessages, lang)
+    if (text === undefined) return
+    const greeting = renderPrompt(text, { botName: botName(config.FirstName) })
+    const markup = jsonToMarkup(markdownToMarkup(greeting, { refUrl: '', imageUrl: '' }))
+    const direct = await this.client.createDoc<DirectMessage>(chunter.class.DirectMessage, core.space.Space, {
+      name: '',
+      description: '',
+      private: true,
+      archived: false,
+      members: [aiAccount, account],
+      type: 'person'
+    })
+    await this.client.addCollection<Doc, ChatMessage>(
+      chunter.class.ChatMessage,
+      direct,
+      direct,
+      chunter.class.DirectMessage,
+      'messages',
+      { message: markup }
+    )
+  }
+
+  // Find the user's existing Direct chat with the bot (does not create one).
   private async findUserDirect (personUuid: PersonUuid): Promise<DirectMessage | undefined> {
     const aiAccount = this.aiPerson?.personUuid as AccountUuid | undefined
     if (aiAccount === undefined) return undefined
@@ -1167,7 +1558,7 @@ export class WorkspaceClient {
     })
   }
 
-  // Post a notice in the user's Direct chat with Юля, falling back to the request's origin thread.
+  // Post a notice in the user's Direct chat with the bot, falling back to the request's origin thread.
   private async notifyLimit (
     personUuid: PersonUuid,
     lang: string,
@@ -1204,7 +1595,8 @@ export class WorkspaceClient {
     )
   }
 
-  // Write a bot reply as a ChatMessage or a ThreadMessage under the parent message.
+  // Write a bot reply as a ChatMessage or a ThreadMessage under the parent message. Returns the id
+  // written, which the conversation snapshot records so the next turn does not re-read it.
   private async writeReply (
     messageClass: Ref<Class<Doc>>,
     space: Ref<Space>,
@@ -1213,7 +1605,7 @@ export class WorkspaceClient {
     collection: string,
     markup: string,
     pending?: PendingProposal
-  ): Promise<void> {
+  ): Promise<Ref<Doc> | undefined> {
     // Proposal messages derive from ThreadMessage, so they need the thread parent's object refs.
     // In a Direct there is no parent message and the channel itself plays that role.
     const parent = await this.client.findOne<ChatMessage>(chunter.class.ChatMessage, {
@@ -1225,7 +1617,7 @@ export class WorkspaceClient {
     }
 
     if (pending?.kind === 'edit') {
-      await this.client.addCollection<Doc, AIEditProposalMessage>(
+      return await this.client.addCollection<Doc, AIEditProposalMessage>(
         aiBot.class.AIEditProposalMessage,
         space,
         objectId,
@@ -1240,10 +1632,9 @@ export class WorkspaceClient {
           proposedMarkup: pending.proposedMarkup
         }
       )
-      return
     }
     if (pending?.kind === 'task') {
-      await this.client.addCollection<Doc, AITaskProposalMessage>(
+      return await this.client.addCollection<Doc, AITaskProposalMessage>(
         aiBot.class.AITaskProposalMessage,
         space,
         objectId,
@@ -1258,11 +1649,10 @@ export class WorkspaceClient {
           parent: pending.parent
         }
       )
-      return
     }
 
     if (messageClass === chunter.class.ChatMessage) {
-      await this.client.addCollection<Doc, ChatMessage>(
+      return await this.client.addCollection<Doc, ChatMessage>(
         chunter.class.ChatMessage,
         space,
         objectId,
@@ -1271,7 +1661,7 @@ export class WorkspaceClient {
         { message: markup }
       )
     } else if (messageClass === chunter.class.ThreadMessage && parent !== undefined) {
-      await this.client.addCollection<Doc, ThreadMessage>(
+      return await this.client.addCollection<Doc, ThreadMessage>(
         chunter.class.ThreadMessage,
         space,
         objectId,

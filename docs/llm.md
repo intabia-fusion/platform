@@ -1,7 +1,8 @@
-# ЮляИИ (ai-bot): устройство и сценарии
+# Юля ИИ (ai-bot): устройство и сценарии
 
 Что делает `services/ai-bot/pod-ai-bot` и как обрабатывает LLM/ASR-запросы.
 Деплой (роли `MODE`, env, реестр провайдеров, масштабирование): `docs/aibot-deployment.md`.
+Внутренности harness (цикл инструментов, каталог тулов, промпты, сравнение с pi): `docs/ai-harness.md`.
 Backlog и отброшенные решения: `foundation-tasks/` (индекс там).
 
 ## Точки входа
@@ -35,7 +36,7 @@ AIQueue -> event-router: resolveModel(event.level) -> топик llm-<providerId
 
 ## Сценарии (что уже работает)
 
-### 1. Чат с ЮляИИ в Direct
+### 1. Чат с Юля ИИ в Direct
 
 Пишешь top-level сообщение в личный Direct с ботом -> бот отвечает **inline** в том же
 Direct (не тредом). Ответы в треде под сообщением = продолжение того же разговора
@@ -47,9 +48,9 @@ producer `AIQueue`. Контекст top-level ответа = сообщения
 при `event.objectIdIsSpace`, `workspaceClient.ts:712`), старше - по запросу через тул
 `load_thread_history`. Ответ в треде держит полный контекст треда.
 
-### 2. @mention ЮляИИ в каналах/тредах
+### 2. @mention Юля ИИ в каналах/тредах
 
-`@ЮляИИ` в любом канале/треде -> бот отвечает в том же месте. Тот же поток, ветка
+`@Юля ИИ` в любом канале/треде -> бот отвечает в том же месте. Тот же поток, ветка
 по классу родителя.
 
 ### 3. Память (sharedPrompt / personalContext)
@@ -76,7 +77,7 @@ Preference. **Память всегда кладётся в системный �
 
 `/translate` -> `controller.translate`: markup -> HTML -> `llm.translateHtml` -> markup.
 
-### 7. Выбор уровня ЮляИИ (AILevel)
+### 7. Выбор уровня Юля ИИ (AILevel)
 
 Уровень = свойство запроса; пространство задаёт потолок (`AISpaceSettings`). Каталог -
 `GET /levels` (`availableLevels`, сортировка по order, дедуп). ASR-каталог - `GET /asr-levels`.

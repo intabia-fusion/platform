@@ -14,7 +14,7 @@
     "AILevelTasks": "Task management",
     "Language": "Language",
     "LanguageHint": "Default language for bot replies (e.g. en, ru). Empty = pod default.",
-    "AssistIssue": "Yulia AI",
+    "AssistIssue": "{name}",
     "AssistIssueApply": "Apply",
     "AssistIssueThreadStart": "Task draft{project, select, undefined {} other { in {project}}}",
     "AssistIssueNewContext": "New context",

@@ -17,7 +17,7 @@
   import { getClient, MessageViewer } from '@hcengineering/presentation'
   import { markupToJSON, type MarkupNode } from '@hcengineering/text'
   import { Button, Label, showPanel } from '@hcengineering/ui'
-  import { getRegisteredEditor, MarkupDiffViewer } from '@hcengineering/text-editor-resources'
+  import { registeredEditor, MarkupDiffViewer } from '@hcengineering/text-editor-resources'
   import view from '@hcengineering/view'
   import { onMount } from 'svelte'
 
@@ -26,6 +26,7 @@
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
 
   import plugin from '../plugin'
+  import { aiBotNameStore } from '../utils'
 
   export let value: AIEditProposalMessage
   // Passed through by the activity feed; forwarded to the message template unchanged.
@@ -56,23 +57,24 @@
 
   $: proposedNode = markupToJSON(value.proposedMarkup)
 
-  function editorFor (): ReturnType<typeof getRegisteredEditor> {
-    return getRegisteredEditor(value.targetId, value.targetAttr)
-  }
-
-  // The registry is not reactive; re-read on each interaction (and at mount) rather than watch.
-  $: editorOpen = editorFor() !== undefined
+  // Reactive: the document may be opened long after this card was rendered, and the button has to
+  // switch from "open it" to "apply" the moment its editor mounts.
+  $: editorStore = registeredEditor(value.targetId, value.targetAttr)
+  $: editor = $editorStore
+  $: editorOpen = editor !== undefined
 
   // Base for the diff: current document text when open, otherwise the proposal itself (shows the
-  // proposed content with no decorations). Recomputed when toggling so an opened doc gives a real diff.
+  // proposed content with no decorations).
   function computeBase (): void {
-    const ed = editorFor()
-    baseNode = ed !== undefined ? (ed.getJSON() as MarkupNode) : proposedNode
+    baseNode = editor !== undefined ? (editor.getJSON() as MarkupNode) : proposedNode
   }
 
   onMount(() => {
     if (showDiff) computeBase()
   })
+
+  // Opening the document turns a decoration-free preview into a real diff.
+  $: if (showDiff && editor !== undefined) computeBase()
 
   function toggleDiff (): void {
     if (!showDiff) computeBase()
@@ -80,9 +82,8 @@
   }
 
   async function apply (): Promise<void> {
-    const ed = editorFor()
-    if (ed === undefined) return
-    ed.commands.setContent(proposedNode as any)
+    if (editor === undefined) return
+    editor.commands.setContent(proposedNode as any)
     await client.updateDoc(value._class, value.space, value._id, { applied: true } as any)
   }
 
@@ -111,7 +112,9 @@
     {/if}
 
     <div class="proposal">
-      <div class="header"><Label label={plugin.string.ProposedEdit} /></div>
+      <div class="header" data-id="aiEditProposal">
+        <Label label={plugin.string.ProposedEdit} params={{ name: $aiBotNameStore }} />
+      </div>
 
       {#if showDiff}
         <div class="diff">

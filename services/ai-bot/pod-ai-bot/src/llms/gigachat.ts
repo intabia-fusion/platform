@@ -150,6 +150,40 @@ export default class GigaChatProvider implements LLMProvider {
     }
   }
 
+  async compactConversation (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    transcript: string,
+    lang: string,
+    previousSummary?: string,
+    level?: AILevel
+  ): Promise<string | undefined> {
+    if (transcript.trim() === '') return undefined
+    try {
+      const response = await this.client.chat({
+        messages: [
+          { role: 'system', content: PROMPTS.COMPACT_CONVERSATION(lang, previousSummary) },
+          { role: 'user', content: transcript }
+        ],
+        model: this.modelFor(level)
+      })
+      // Compaction is part of the harness: its tokens are billed like any other request, with a
+      // reason of its own so the breakdown shows what compacting costs.
+      billUsage(
+        ctx,
+        workspace,
+        usageFromApi(response.usage),
+        this.billingFor(level),
+        'compaction',
+        new Date().toISOString()
+      )
+      return response.choices?.[0]?.message?.content ?? undefined
+    } catch (e) {
+      ctx.error('gigachat compaction failed', { error: (e as any)?.message })
+      return undefined
+    }
+  }
+
   async summarizeMessages (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
@@ -210,7 +244,7 @@ export default class GigaChatProvider implements LLMProvider {
     try {
       // GigaChat has no SDK auto-loop (unlike OpenAI runTools), so drive the shared tool loop
       // ourselves: extract serializable defs + local executors, then step via chatToolStep.
-      const { toolDefinitions, execute } = buildToolExecutor(tools)
+      const { toolDefinitions, execute, knownTools } = buildToolExecutor(tools)
 
       const ask: AskModel = async (priorToolResults, noTools, continueFrom) =>
         await this.chatToolStep(
@@ -231,8 +265,13 @@ export default class GigaChatProvider implements LLMProvider {
           continueFrom
         )
 
-      const result = await runToolCalls(ask, execute, MAX_TOOL_ITERATIONS, hooks)
-      return { completion: result?.completion, usage: result?.usage, cancelled: result?.cancelled }
+      const result = await runToolCalls(ask, execute, MAX_TOOL_ITERATIONS, hooks, knownTools)
+      return {
+        completion: result?.completion,
+        usage: result?.usage,
+        cancelled: result?.cancelled,
+        toolTranscript: result?.toolTranscript
+      }
     } catch (error) {
       // Rethrow so the pod marks the request failed instead of silently returning no reply.
       ctx.error('GigaChat tools completion failed', { error: (error as any)?.message })
@@ -268,7 +307,8 @@ export default class GigaChatProvider implements LLMProvider {
         personalContext,
         systemMessages,
         lang,
-        this.maxTokensFor(level)
+        this.maxTokensFor(level),
+        config.FirstName
       )
 
       const messages: any[] = [

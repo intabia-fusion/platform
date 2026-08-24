@@ -94,6 +94,12 @@ export function createModel (builder: Builder): void {
     component: chunter.component.WorkbenchTabExtension
   })
 
+  // Last button of the sidebar bar: opens the Direct with the AI assistant.
+  builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
+    extension: workbench.extensions.WidgetsBarExtensions,
+    component: chunter.component.AIChatButton
+  })
+
   builder.mixin(chunter.class.DirectMessage, core.class.Class, core.mixin.TxAccessLevel, {
     createAccessLevel: AccountRole.Guest
   })

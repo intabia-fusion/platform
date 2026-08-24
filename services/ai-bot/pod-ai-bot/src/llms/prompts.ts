@@ -18,10 +18,18 @@
  * override), no built-in fallbacks. See promptStore.ts.
  */
 
-import { loadPromptTemplates, renderPrompt, type PromptTemplates } from './promptStore'
+import {
+  loadLanguageReminders,
+  loadPromptTemplates,
+  renderPrompt,
+  type LanguageReminders,
+  type PromptTemplates
+} from './promptStore'
 
 export interface PromptParams {
   lang?: string
+  /** Display name of the bot (pod config FIRST_NAME); falls back to the default when empty. */
+  botName?: string
   sharedPrompt?: string
   personalContext?: string
   currentDateTime?: string
@@ -36,6 +44,13 @@ export const CONTINUE_PROMPT =
   'Do NOT repeat any text you already sent, do not restate the question, do not add a preamble.'
 
 const DEFAULT_LANG = 'ru'
+const DEFAULT_BOT_NAME = 'Yulia'
+
+/** The name the bot introduces itself with: the pod's configured FIRST_NAME, never hardcoded. */
+export function botName (configured?: string): string {
+  const name = (configured ?? '').trim()
+  return name !== '' ? name : DEFAULT_BOT_NAME
+}
 // Localized request timestamp for the prompt (falls back to ISO on failure). Short form:
 // the full/verbose form gets parroted back verbatim by weaker models.
 function nowForPrompt (lang: string): string {
@@ -48,6 +63,17 @@ function nowForPrompt (lang: string): string {
 }
 
 let cached: PromptTemplates | undefined
+let cachedReminders: LanguageReminders | undefined
+
+/**
+ * The reply-language rule, in the target language, to be repeated at the end of the prompt.
+ * Measured on a 10B model: mid-prompt and in English it is honoured about a quarter of the time,
+ * at the end and in the target language about always. Falls back to English, then to nothing.
+ */
+export function languageReminder (lang: string): string {
+  cachedReminders ??= loadLanguageReminders()
+  return cachedReminders[lang] ?? cachedReminders[lang.split('-')[0]] ?? cachedReminders.en ?? ''
+}
 
 /** Load templates once. Throws if prompts.yaml is missing/incomplete. */
 function templates (): PromptTemplates {
@@ -65,13 +91,19 @@ export const PROMPTS = {
 
   CORRECT_TRANSCRIPT: (lang?: string): string => renderPrompt(templates().correctTranscript, { lang: lang ?? '' }),
 
+  /** Fold the older part of a conversation into a structured summary. */
+  COMPACT_CONVERSATION: (lang: string, previousSummary?: string): string =>
+    renderPrompt(templates().compactConversation, { lang, previousSummary: previousSummary ?? '' }),
+
   DIRECT_CHAT_WITH_TOOLS: (params: PromptParams): string => {
     const lang = params.lang ?? DEFAULT_LANG
     return renderPrompt(templates().directChatWithTools, {
+      botName: botName(params.botName),
       sharedPrompt: params.sharedPrompt ?? '',
       personalContext: params.personalContext ?? '',
       lang,
       outputLimit: params.outputLimit ?? '',
+      languageReminder: languageReminder(lang),
       currentDateTime: params.currentDateTime ?? nowForPrompt(lang)
     })
   },
@@ -79,9 +111,11 @@ export const PROMPTS = {
   THREAD_CHAT_WITH_TOOLS: (params: PromptParams): string => {
     const lang = params.lang ?? DEFAULT_LANG
     return renderPrompt(templates().threadChatWithTools, {
+      botName: botName(params.botName),
       sharedPrompt: params.sharedPrompt ?? '',
       lang,
       outputLimit: params.outputLimit ?? '',
+      languageReminder: languageReminder(lang),
       currentDateTime: params.currentDateTime ?? nowForPrompt(lang)
     })
   }
@@ -94,12 +128,13 @@ export function buildSystemPrompt (
   personalContext: string,
   systemMessages: Array<{ content: string }>,
   lang?: string,
-  maxOutputTokens?: number
+  maxOutputTokens?: number,
+  name?: string
 ): string {
   const outputLimit = describeOutputLimit(maxOutputTokens)
   return isDirectMode
-    ? PROMPTS.DIRECT_CHAT_WITH_TOOLS({ sharedPrompt, personalContext, lang, outputLimit })
-    : PROMPTS.THREAD_CHAT_WITH_TOOLS({ sharedPrompt, lang, outputLimit }) +
+    ? PROMPTS.DIRECT_CHAT_WITH_TOOLS({ sharedPrompt, personalContext, lang, outputLimit, botName: name })
+    : PROMPTS.THREAD_CHAT_WITH_TOOLS({ sharedPrompt, lang, outputLimit, botName: name }) +
         '\n\n' +
         systemMessages.map((it) => it.content).join('\n')
 }

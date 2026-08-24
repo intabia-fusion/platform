@@ -32,6 +32,7 @@ import core, {
   AccountUuid,
   MeasureContext,
   PersonId,
+  type Doc,
   Ref,
   type Space,
   SocialId,
@@ -52,7 +53,7 @@ import { ClisrServer } from '@intabiafusion/clisr'
 import { ConsumerControl, PlatformQueueProducer, StorageAdapter } from '@hcengineering/server-core'
 import { buildStorageFromConfig, storageConfigFrom } from '@hcengineering/server-storage'
 import config, { type AILevel, type AILevelFeatures } from './config'
-import { TranscriptionTask } from './types'
+import { type SummaryTask, TranscriptionTask } from './types'
 import { v4 as uuid } from 'uuid'
 import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
 import { tryAssignToWorkspace } from './utils/account'
@@ -94,6 +95,21 @@ export interface SessionRecordingMetadata {
   size: number
 }
 
+// Poll the transcript counter after a meeting ends: the last STT chunks land seconds later.
+const TRANSCRIPT_SETTLE_ATTEMPTS = 6
+const TRANSCRIPT_SETTLE_DELAY = 5000
+
+/** Auto-summary runs by default; only an explicit `false` in the settings turns it off. */
+export function shouldAutoSummarize (
+  meeting: Pick<MeetingMinutes, 'summary' | 'transcription'>,
+  forSpace?: Pick<AISpaceSettings, 'meetingSummary'>,
+  wsDefault?: Pick<AISpaceSettings, 'meetingSummary'>
+): boolean {
+  if (meeting.summary != null) return false
+  if ((meeting.transcription ?? 0) === 0) return false
+  return forSpace?.meetingSummary ?? wsDefault?.meetingSummary ?? true
+}
+
 export class AIControl {
   private readonly workspaces: Map<WorkspaceUuid, WorkspaceClient> = new Map<WorkspaceUuid, WorkspaceClient>()
   private readonly connectingWorkspaces = new Map<WorkspaceUuid, Promise<void>>()
@@ -104,6 +120,7 @@ export class AIControl {
   // Chunk storage adapter
   readonly chunkStorageAdapter: StorageAdapter
   private transcriptionProducer: PlatformQueueProducer<TranscriptionTask> | undefined
+  private summaryProducer: PlatformQueueProducer<SummaryTask> | undefined
 
   private llm?: LLMProvider // default provider, used by service ops (translate/summarize)
   private providers = new Map<string, LLMProvider>() // per-provider, keyed by provider id (= topic suffix)
@@ -134,6 +151,23 @@ export class AIControl {
 
   setTranscriptionProducer (producer: PlatformQueueProducer<TranscriptionTask>): void {
     this.transcriptionProducer = producer
+  }
+
+  /** The conversation transcript file of a thread, or undefined when nothing was written yet. */
+  async exportConversation (workspace: WorkspaceUuid, conversation: Ref<Doc>): Promise<string | undefined> {
+    const wsClient = await this.getWorkspaceClient(workspace)
+    return await wsClient?.readSnapshotFile(conversation)
+  }
+
+  setSummaryProducer (producer: PlatformQueueProducer<SummaryTask>): void {
+    this.summaryProducer = producer
+  }
+
+  /** Hand a summary to the queue instead of running it inline - see startMeetingSummary. */
+  async queueSummary (workspace: WorkspaceUuid, task: SummaryTask): Promise<boolean> {
+    if (this.summaryProducer === undefined) return false
+    await this.summaryProducer.send(this.ctx, workspace, [task])
+    return true
   }
 
   setLimitsState (state: LimitsState): void {
@@ -452,6 +486,41 @@ export class AIControl {
       text,
       lang
     }
+  }
+
+  /**
+   * A finished meeting summarizes itself, unless the space turned it off. Transcript chunks are
+   * still being consumed when the room closes, so wait until the counter stops growing.
+   * Errors propagate: the caller is the queue consumer, which retries or dead-letters.
+   */
+  async autoSummarizeMeeting (workspace: WorkspaceUuid, meetingId: Ref<MeetingMinutes>): Promise<void> {
+    const wsClient = await this.getWorkspaceClient(workspace)
+    if (wsClient === undefined) return
+
+    const meeting = await this.waitTranscriptSettled(wsClient, meetingId)
+    if (meeting === undefined) return
+
+    const { forSpace, wsDefault } = await this.spaceSettings(workspace, meeting.space)
+    if (!shouldAutoSummarize(meeting, forSpace, wsDefault)) return
+
+    const lang = await this.resolveLanguage(workspace, meeting.space)
+    await this.summarizeMessages(workspace, { lang, target: meetingId, targetClass: love.class.MeetingMinutes })
+  }
+
+  private async waitTranscriptSettled (
+    wsClient: WorkspaceClient,
+    meetingId: Ref<MeetingMinutes>
+  ): Promise<MeetingMinutes | undefined> {
+    let previous = -1
+    for (let attempt = 0; attempt < TRANSCRIPT_SETTLE_ATTEMPTS; attempt++) {
+      const meeting = await wsClient.client.findOne(love.class.MeetingMinutes, { _id: meetingId })
+      if (meeting === undefined) return undefined
+      const count = meeting.transcription ?? 0
+      if (count === previous) return meeting
+      previous = count
+      await new Promise((resolve) => setTimeout(resolve, TRANSCRIPT_SETTLE_DELAY))
+    }
+    return await wsClient.client.findOne(love.class.MeetingMinutes, { _id: meetingId })
   }
 
   async summarizeMessages (

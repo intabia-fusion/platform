@@ -229,7 +229,7 @@ export default class ServerLLMProvider implements LLMProvider {
     try {
       // Extract tool definitions (tools themselves are not serializable) and a local executor
       // bound to them (closures already carry WorkspaceClient context, built in getTools).
-      const { toolDefinitions, execute } = buildToolExecutor(tools)
+      const { toolDefinitions, execute, knownTools } = buildToolExecutor(tools)
 
       const ask = async (
         priorToolResults: ToolResult[],
@@ -259,7 +259,7 @@ export default class ServerLLMProvider implements LLMProvider {
           | undefined
       }
 
-      const result = await runToolCalls(ask, execute, MAX_TOOL_ITERATIONS, hooks)
+      const result = await runToolCalls(ask, execute, MAX_TOOL_ITERATIONS, hooks, knownTools)
 
       const elapsed = Date.now() - startTime
       this.ctx.info('Server LLM createChatCompletionWithTools completed', {
@@ -276,7 +276,12 @@ export default class ServerLLMProvider implements LLMProvider {
 
       billUsage(ctx, workspace, result.usage, this.billingFor(level), reason, new Date().toISOString(), result.clientId)
 
-      return { completion: result.completion, usage: result.usage, cancelled: result.cancelled }
+      return {
+        completion: result.completion,
+        usage: result.usage,
+        cancelled: result.cancelled,
+        toolTranscript: result.toolTranscript
+      }
     } catch (err: any) {
       const elapsed = Date.now() - startTime
       this.ctx.error('Server LLM createChatCompletionWithTools failed', {

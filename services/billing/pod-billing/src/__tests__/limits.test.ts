@@ -67,8 +67,19 @@ function makeDb (tokensUsed = 0, participantMinutes = 0, balance?: any): Billing
   let row = balance
   return {
     getTokenBalance: jest.fn(async () => row),
-    updateTokenBalanceAbsorption: jest.fn(async (_c, _ws, remaining, absorbedUntil, absorbedPeriod, periodStart) => {
-      row = { ...row, remainingTokens: remaining, absorbedUntil, absorbedPeriod, periodStart }
+    settleTokenBalance: jest.fn(async (_c, _ws, charge, absorbedUntil, absorbedPeriod, newPeriodStart) => {
+      // Mirrors the SQL guard: the row moves only while its period_start is still behind.
+      if (row === undefined || new Date(row.periodStart).getTime() >= new Date(newPeriodStart).getTime()) {
+        return false
+      }
+      row = {
+        ...row,
+        remainingTokens: row.remainingTokens - charge,
+        absorbedUntil,
+        absorbedPeriod,
+        periodStart: newPeriodStart
+      }
+      return true
     }),
     accumulateUsageDelta: jest.fn(async (_c, ws, metric, _a, ref) => {
       const key = `${ws}:${metric}:${ref}`
@@ -233,7 +244,7 @@ describe('LimitsEngine', () => {
       await engine.recomputeWorkspace(ctx, WS)
 
       // Nothing is written during a period: the pack is charged once, when the period ends.
-      expect(db.updateTokenBalanceAbsorption).not.toHaveBeenCalled()
+      expect(db.settleTokenBalance).not.toHaveBeenCalled()
       const balance: any = await db.getTokenBalance(ctx, WS)
       expect(balance.remainingTokens).toBe(500)
     })
@@ -281,7 +292,7 @@ describe('LimitsEngine', () => {
       expect(balance.remainingTokens).toBe(700)
       // Stamped with the period start floored to the hour, matching the hourly usage buckets.
       const expected = new Date(periodStart)
-      expected.setMinutes(0, 0, 0)
+      expected.setUTCMinutes(0, 0, 0)
       expect(new Date(balance.periodStart).getTime()).toBe(expected.getTime())
     })
 
@@ -294,7 +305,7 @@ describe('LimitsEngine', () => {
       await engine.recomputeWorkspace(ctx, WS)
       await engine.recomputeWorkspace(ctx, WS)
 
-      expect(db.updateTokenBalanceAbsorption).toHaveBeenCalledTimes(1)
+      expect(db.settleTokenBalance).toHaveBeenCalledTimes(1)
       const balance: any = await db.getTokenBalance(ctx, WS)
       expect(balance.remainingTokens).toBe(700)
     })

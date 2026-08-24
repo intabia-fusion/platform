@@ -220,7 +220,11 @@ export async function createTranscriptionsSupport (
       task: ChatVoiceTranscriptionTask
     ): Promise<void> => {
       const wsClient = await aiControl.getWorkspaceClient(workspace)
-      if (wsClient === undefined) return
+      // Nothing to write the result onto, so fail loudly: swallowing this leaves the attachment
+      // 'pending' forever with no trace of why.
+      if (wsClient === undefined) {
+        throw new Error(`no workspace client for chat-voice transcription ${workspace}`)
+      }
       const client = wsClient.client
       const doc = await client.findOne(aiBot.class.AudioTranscribe, { _id: task.transcribeId as Ref<AudioTranscribe> })
       if (doc === undefined || doc.state !== 'pending') return

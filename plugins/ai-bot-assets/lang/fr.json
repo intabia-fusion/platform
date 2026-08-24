@@ -14,7 +14,7 @@
     "AILevelTasks": "Gestion des tâches",
     "Language": "Langue",
     "LanguageHint": "Langue par défaut des réponses du bot (ex. fr, en). Vide = défaut du pod.",
-    "AssistIssue": "Yulia IA",
+    "AssistIssue": "{name}",
     "AssistIssueApply": "Appliquer",
     "AssistIssueThreadStart": "Brouillon de tâche{project, select, undefined {} other { dans {project}}}",
     "AssistIssueNewContext": "Nouveau contexte",
