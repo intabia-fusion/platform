@@ -236,7 +236,16 @@ export async function checkIssueDraft (page: Page, props: IssueProps): Promise<v
 
 export async function checkIssueFromList (page: Page, issueName: string): Promise<void> {
   await page.click(ViewletSelectors.Board)
-  await expect(page.locator(`.panel-container:has-text("${issueName}")`)).toContainText(issueName)
+  // The board renders a limited number of cards per column, so the issue stays out of the DOM
+  // until every truncated column is expanded.
+  const card = page.locator(`.panel-container:has-text("${issueName}")`)
+  for (let i = 0; i < 50; i++) {
+    if ((await card.count()) > 0) break
+    const showMore = page.locator('button[data-id="btn-kanban-show-more"]').first()
+    if ((await showMore.count()) === 0) break
+    await showMore.click().catch(() => {})
+  }
+  await expect(card).toContainText(issueName)
 }
 
 export async function openIssue (page: Page, name: string): Promise<void> {

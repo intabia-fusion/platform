@@ -130,6 +130,7 @@ export class CommonTrackerPage extends CalendarPage {
     await this.componentNameInput().click()
     await this.componentNameInput().fill(componentName)
     await this.createComponentConfirmButton().click()
+    await this.expandCollapsedCategories()
     await this.page.click(`text=${componentName}`)
   }
 

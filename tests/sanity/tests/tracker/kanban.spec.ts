@@ -573,10 +573,12 @@ test.describe('Kanban board', () => {
       await expect(page.locator('[data-id="kanban-swimlane"]').first()).toBeVisible()
       const ids = await board.swimLanes()
       expect(ids.length).toBeGreaterThan(0)
-      // Pick a lane that is actually rendered with a header.
-      const laneId = await page.locator('[data-id="kanban-swimlane"]').first().getAttribute('data-swimlane-id')
-      expect(laneId).not.toBeNull()
-      if (laneId === null) return
+      // Priority lanes are preseeded and always rendered; the unassigned one exists only while
+      // some issue of this shared project has no priority, so a parallel test can drop it
+      // between reading its id and using it.
+      const laneId = ids.find((id) => id !== '__swim_unassigned__')
+      expect(laneId).toBeDefined()
+      if (laneId === undefined) return
 
       // Toggle from whatever the persisted state is to its opposite, then back.
       const initial = await board.isSwimLaneCollapsed(laneId)
@@ -621,9 +623,11 @@ test.describe('Kanban board', () => {
       const board = new KanbanBoardPage(page)
       await board.setSwimLane('Priority')
 
-      const laneId = await page.locator('[data-id="kanban-swimlane"]').first().getAttribute('data-swimlane-id')
-      expect(laneId).not.toBeNull()
-      if (laneId === null) return
+      // Skip the unassigned lane - it disappears as soon as no issue of this shared project
+      // is left without a priority. Priority lanes are preseeded and stay.
+      const laneId = (await board.swimLanes()).find((id) => id !== '__swim_unassigned__')
+      expect(laneId).toBeDefined()
+      if (laneId === undefined) return
       const wasCollapsed = await board.isSwimLaneCollapsed(laneId)
       if (wasCollapsed) await board.toggleSwimLane(laneId)
       await board.expectSwimLaneCollapsed(laneId, false)

@@ -76,13 +76,21 @@ export function isLoginInfoRequest (info: LoginInfoByToken): info is LoginInfoRe
   return (info as LoginInfoRequest)?.request
 }
 
+// Every account RPC sends this as a header, and resolving it was ~4% of a service's CPU.
+// ponytail: process-lifetime cache, drop it if a client must follow an OS timezone change.
+let cachedTimezone: string | undefined
+let timezoneResolved = false
+
 export function getClientTimezone (): string | undefined {
+  if (timezoneResolved) return cachedTimezone
   try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone
+    cachedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
   } catch (err: any) {
     console.error('Failed to get client timezone', err)
-    return undefined
+    cachedTimezone = undefined
   }
+  timezoneResolved = true
+  return cachedTimezone
 }
 
 const connectionErrorCodes = ['ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND']

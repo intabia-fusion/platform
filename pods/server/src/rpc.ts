@@ -749,7 +749,7 @@ function createClosingSocket (
     close: () => {
       rpcSessions.delete(rawToken)
     },
-    send: async (ctx, msg, binary, compression) => {},
+    send: async (ctx, msg, binary, compression, memo) => {},
     isBackpressure: () => false,
     backpressure: async (ctx) => {},
     sendPong: () => {},

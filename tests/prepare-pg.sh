@@ -16,6 +16,24 @@ else
     COMPOSE_FILES="-f docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml"
 fi
 
+# --profile: run every Node pod under V8's CPU profiler. The overlay is generated from the
+# services this compose actually has - a hardcoded list breaks whenever a branch adds or drops
+# a pod, since compose then sees a service with no image and rejects the project.
+if [ "$1" = "--profile" ] || [ "x$PROFILE" = "xtrue" ]; then
+    ./archive-report.sh
+    mkdir -p ./profiles/.old-reports
+    find ./profiles -mindepth 1 -maxdepth 1 ! -name .old-reports -exec rm -rf {} +
+    if docker compose ${COMPOSE_FILES} -p sanity config --format json |
+        node ./gen-profile-overlay.js > docker-compose.profile.yaml; then
+        COMPOSE_FILES="${COMPOSE_FILES} -f docker-compose.profile.yaml"
+    else
+        echo "Failed to generate the profiling overlay - starting without it"
+        rm -f docker-compose.profile.yaml
+        exit 1
+    fi
+    echo "Profiling enabled. Run the tests, then: ./profile-collect.sh && ./profile-report.sh"
+fi
+
 docker compose ${COMPOSE_FILES} -p sanity kill
 docker compose ${COMPOSE_FILES} -p sanity down --volumes --remove-orphans
 docker compose ${COMPOSE_FILES} -p sanity up -d --force-recreate --renew-anon-volumes --remove-orphans

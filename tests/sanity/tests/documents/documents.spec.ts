@@ -166,6 +166,10 @@ test.describe('Documents tests', () => {
       content = await documentContentPageSecond.addContentToTheNewLine(contentSecondUser)
       await documentContentPageSecond.checkContent(content)
 
+      // The second page is still flushing its changes to the collaborator, and closing the context
+      // mid-flush truncates them - the first user then sees half of what was typed.
+      await documentContentPage.checkContent(content)
+
       await userSecondPage.close()
       await context.close()
     })
@@ -253,8 +257,13 @@ test.describe('Documents tests', () => {
     await leftSideMenuPage.clickDocuments()
     await documentsPage.clickOnButtonCreateDocument()
     await documentsPage.createDocument(newDocument)
-    await context.grantPermissions(['clipboard-read'])
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
     await documentsPage.selectMoreActionOfDocument(newDocument.title, 'Lock')
+    // The clipboard is shared by every context this browser opens, so a link copied by an earlier
+    // test already satisfies the poll below and the test navigates to that link instead.
+    await page.evaluate(async () => {
+      await navigator.clipboard.writeText('')
+    })
     await documentsPage.selectMoreActionOfDocument(newDocument.title, 'Copy link')
     // 'Copy link' writes the clipboard asynchronously - poll until a real URL lands, else goto('')
     let clipboardContent = ''

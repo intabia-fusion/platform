@@ -194,11 +194,12 @@ export class IssuesPage extends CommonTrackerPage {
 
   async reportTime (time: number): Promise<void> {
     const expected = await toTime(time)
+    let submitted = false
     // The dialog can close without persisting the report (the OK click lands over a form that
-    // never saved), leaving the issue at 0h. Verify the value landed and redo the report if not -
-    // the guard above keeps a successful report from being counted twice.
+    // never saved), leaving the issue at 0h. Verify the value landed and redo the report if not.
+    // Only skip once we have submitted here - the editor can still show the previous issue's total.
     await expect(async () => {
-      if ((await this.reportedTimeEditor().innerText()).includes(expected)) return
+      if (submitted && (await this.reportedTimeEditor().innerText()).includes(expected)) return
 
       await this.reportedTimeEditor().click()
       await this.page.waitForSelector('text="Time spent reports"')
@@ -208,6 +209,7 @@ export class IssuesPage extends CommonTrackerPage {
       await this.spentTimeInput().fill(`${time}`)
       await expect(this.createButton()).toBeEnabled()
       await this.createButton().click()
+      submitted = true
       await this.page.waitForSelector('text="Add time report"', { state: 'detached', timeout: 15000 })
       await this.okButton().click()
       await expect(this.reportedTimeEditor()).toContainText(expected, { timeout: 5000 })
@@ -518,8 +520,10 @@ export class IssuesPage extends CommonTrackerPage {
 
   async searchIssueByName (issueName: string): Promise<void> {
     await expect(async () => {
-      await this.inputSearchIcon().click()
-      await this.inputSearch().fill(issueName)
+      // Short per-action timeouts: without them a stuck fill hangs until the test timeout and the
+      // surrounding retry never gets a turn.
+      await this.inputSearchIcon().click({ timeout: 5000 })
+      await this.inputSearch().fill(issueName, { timeout: 5000 })
       const v = await this.inputSearch().inputValue()
       if (v === issueName) {
         await this.inputSearch().press('Enter')
@@ -528,6 +532,7 @@ export class IssuesPage extends CommonTrackerPage {
   }
 
   async openIssueByName (issueName: string): Promise<void> {
+    await this.expandCollapsedCategories()
     await this.issueByName(issueName).click()
   }
 
@@ -573,8 +578,10 @@ export class IssuesPage extends CommonTrackerPage {
 
   async checkAllIssuesByPriority (priorityName: string): Promise<void> {
     await expect(async () => {
-      for await (const locator of iterateLocator(this.issuesList())) {
-        const href = await this.priorityContainer(locator).getAttribute('href')
+      // The list re-renders while the filter settles: re-read the rows every attempt and give up on
+      // a row that lost its icon quickly, or one stale row eats the whole retry budget.
+      for (const row of await this.issuesList().all()) {
+        const href = await this.priorityContainer(row).getAttribute('href', { timeout: 2000 })
         expect(href, { message: `Should contain ${priorityName} but it is ${href}` }).toContain(priorityName)
       }
     }).toPass({
@@ -618,6 +625,9 @@ export class IssuesPage extends CommonTrackerPage {
   private async hoverAttachmentButton (issueName: string): Promise<void> {
     await this.page.mouse.move(0, 0)
     await this.addAttachmentButton(issueName).hover()
+    // The hover can leave the tooltip closed. Callers then block on an element inside it with no
+    // timeout of their own, so their retry loop never gets a turn - fail here instead.
+    await expect(this.page.locator('div.popup-tooltip')).toBeVisible({ timeout: 5000 })
   }
 
   async addAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
@@ -627,7 +637,9 @@ export class IssuesPage extends CommonTrackerPage {
     await expect(async () => {
       await this.hoverAttachmentButton(issueName)
       if (await uploaded.isVisible()) return
-      await this.inputPopupAddAttachmentsFile().setInputFiles(path.join(__dirname, `../../files/${filePath}`))
+      await this.inputPopupAddAttachmentsFile().setInputFiles(path.join(__dirname, `../../files/${filePath}`), {
+        timeout: 5000
+      })
       await expect(uploaded).toBeVisible({ timeout: 10000 })
     }).toPass({ intervals: [500, 1000], timeout: 40000 })
   }

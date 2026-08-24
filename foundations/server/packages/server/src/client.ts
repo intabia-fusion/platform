@@ -54,6 +54,7 @@ import {
   SessionDataImpl,
   type ClientSessionCtx,
   type ConnectionSocket,
+  type SendMemo,
   type OneSecondCounters,
   type Pipeline,
   type Session,
@@ -330,7 +331,7 @@ export class ClientSession implements Session {
     )
   }
 
-  broadcast (ctx: MeasureContext, socket: ConnectionSocket, tx: Tx[]): void {
+  broadcast (ctx: MeasureContext, socket: ConnectionSocket, tx: Tx[], memo?: SendMemo): void {
     if (this.tx.length > 10000) {
       const classes = new Set<Ref<Class<Doc>>>()
       for (const dtx of tx) {
@@ -352,7 +353,7 @@ export class ClientSession implements Session {
         this.useCompression
       )
     } else {
-      void socket.send(ctx, { result: tx }, this.binaryMode, this.useCompression)
+      void socket.send(ctx, { result: tx }, this.binaryMode, this.useCompression, memo)
     }
   }
 

@@ -30,7 +30,9 @@ export const StagingUrl = process.env.STAGING_URL as string
 
 export function generateTestData (): TestData {
   const generateWordStartingWithA = (): string => {
-    const randomWord = faker.lorem.word()
+    // faker's word list contains one-letter words, and a channel named "A" matches every
+    // getByRole({ name }) lookup in the navigator - keep the name long enough to be unique.
+    const randomWord = faker.lorem.word({ length: { min: 5, max: 10 } })
     return 'A' + randomWord.slice(1)
   }
 
@@ -247,17 +249,24 @@ export async function getInviteLink (page: Page): Promise<string | null> {
   const leftSideMenuPage = new LeftSideMenuPage(page)
   // If we don't wait and it's called on inital render initial navigate may close the popup in the middle
   await leftSideMenuPage.appHeader().waitFor({ state: 'visible' })
-  await leftSideMenuPage.openProfileMenu()
-  await leftSideMenuPage.inviteToWorkspace()
-  await leftSideMenuPage.getInviteLink()
-  // Wait for the link to be visible before getting text content with retry
   const linkLocator = page.locator('.antiPopup .link')
+  // Redo the whole chain on retry: when a click lands on a popup that is still mounting, no link is
+  // ever generated and re-checking its visibility alone can only wait the timeout out.
   await expect(async () => {
+    if ((await linkLocator.count()) === 0) {
+      await page.keyboard.press('Escape')
+      await leftSideMenuPage.openProfileMenu()
+      await leftSideMenuPage.inviteToWorkspace()
+      await leftSideMenuPage.getInviteLink()
+    }
     await expect(linkLocator).toBeVisible({ timeout: 5000 })
   }).toPass({ intervals: [200, 500, 1000], timeout: 20000 })
   const linkText = await linkLocator.textContent()
   expect(linkText).not.toBeNull()
-  await leftSideMenuPage.clickOnCloseInvite()
+  // Escape instead of the Close button: with a document open behind, its floating editor toolbar
+  // overlays the button and swallows the click.
+  await page.keyboard.press('Escape')
+  await expect(linkLocator).toHaveCount(0)
   return linkText
 }
 
@@ -296,6 +305,9 @@ export async function loginByToken (page: Page, accountToken: string, ws: Worksp
       localStorage.setItem('login:metadata:LastAccount', account)
       localStorage.setItem('login:metadata:LoginAccount', account)
       localStorage.setItem('login:metadata:LoginEndpoint', endpoint)
+      // Without this notifications stay up for their default 10s and cover the sidebar, so the
+      // next click on it waits the toast out.
+      localStorage.setItem('#platform.notification.timeout', '0')
     },
     [ws.account, ws.endpoint]
   )

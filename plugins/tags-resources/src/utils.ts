@@ -18,7 +18,8 @@ import {
   type TagElement,
   type TagElement as TagElementType,
   type TagReference,
-  TagsEvents
+  TagsEvents,
+  findTagCategory
 } from '@hcengineering/tags'
 import { type ColorDefinition, getColorNumberByText } from '@hcengineering/ui'
 import { type AttributeApplierResult, type Filter } from '@hcengineering/view'
@@ -96,6 +97,18 @@ export async function createTagElement (
   color?: number | null,
   keyTitle?: string
 ): Promise<Ref<TagElement>> {
+  const client = getClient()
+
+  // Callers pick the category from a query that can still be pending when the user submits. There is
+  // no TagCategory with the NoCategory id, and TagsPopup renders tags only inside a category group -
+  // so a tag that falls back to it is stored fine and then never shows up in the list again.
+  if (category == null) {
+    const categories = await client.findAll(tags.class.TagCategory, { targetClass })
+    if (categories.length > 0) {
+      category = findTagCategory(title, categories)
+    }
+  }
+
   const tagElement: Data<TagElement> = {
     title,
     description: description ?? '',
@@ -104,7 +117,6 @@ export async function createTagElement (
     category: category ?? tags.category.NoCategory
   }
 
-  const client = getClient()
   const ref = await client.createDoc<TagElement>(tags.class.TagElement, core.space.Workspace, tagElement)
   Analytics.handleEvent(TagsEvents.TagCreated, { key: keyTitle, id: ref })
   return ref

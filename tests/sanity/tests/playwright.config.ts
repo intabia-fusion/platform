@@ -7,6 +7,22 @@ if (process.env.TESTS_MAX_FAILURES !== undefined) {
   maxFailures = parseInt(process.env.TESTS_MAX_FAILURES)
 }
 
+// 'on-first-retry' traces the retry, which for a flake is the attempt that passed. Locally we
+// want the failing attempt's trace instead; CI wants the cheap one. Override with TRACE_MODE.
+const traceModes = ['on-first-retry', 'retain-on-failure', 'on', 'off', 'on-all-retries'] as const
+type TraceMode = (typeof traceModes)[number]
+
+const isCI = (process.env.CI ?? '') !== ''
+const requested = (process.env.TRACE_MODE ?? '').trim()
+const traceMode: TraceMode = traceModes.includes(requested as TraceMode)
+  ? (requested as TraceMode)
+  : isCI
+    ? 'on-first-retry'
+    : 'retain-on-failure'
+if (requested !== '' && requested !== traceMode) {
+  console.warn(`TRACE_MODE=${JSON.stringify(requested)} is not one of ${traceModes.join(', ')}; using ${traceMode}`)
+}
+
 const config: PlaywrightTestConfig = {
   globalSetup: require.resolve('./global.setup.ts'),
   globalTeardown: require.resolve('./global.teardown.ts'),
@@ -35,7 +51,7 @@ const config: PlaywrightTestConfig = {
           height: 900
         },
         trace: {
-          mode: 'retain-on-failure',
+          mode: traceMode,
           snapshots: true,
           screenshots: true,
           sources: true
@@ -57,7 +73,11 @@ const config: PlaywrightTestConfig = {
   globalTimeout: 2_700_000,
   reporter: [
     ['list'],
-    ['html'],
+    // open: 'never' - the default parks a report server on failure and hangs the terminal.
+    ['html', { open: 'never' }],
+    // Machine-readable twin of the html report, consumed by analyze_failures.js.
+    // Relative to this config's directory, so '..' puts it next to package.json.
+    ['json', { outputFile: '../playwright-report.json' }],
     [
       'allure-playwright',
       {

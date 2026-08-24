@@ -45,8 +45,16 @@ export class DrivesPage extends CommonPage {
   }
 
   async clickButtonDriveContextMenu (drive: Drive, buttonText: ButtonDrivesContextMenu): Promise<void> {
-    await this.cellDriveName(drive.name).click({ button: 'right' })
-    await this.buttonContextMenu(buttonText).click()
+    const item = this.buttonContextMenu(buttonText)
+    // The right click can land while the table is still rendering and open nothing at all, and then
+    // the click below waits out the whole test timeout instead of trying again.
+    await expect(async () => {
+      if ((await item.count()) === 0) {
+        await this.cellDriveName(drive.name).click({ button: 'right' })
+      }
+      await expect(item).toBeVisible({ timeout: 3000 })
+    }).toPass({ intervals: [300, 1000], timeout: 30000 })
+    await item.click()
   }
 
   async createFolder (drive: Drive, folderName: string): Promise<void> {

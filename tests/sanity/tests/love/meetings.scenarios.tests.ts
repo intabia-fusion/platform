@@ -8,7 +8,7 @@
 
 import { expect, test, type Page } from '@playwright/test'
 import { PlatformURI } from '../utils'
-import { closeMeetingContexts, waitForActiveMeetingsToFinish } from './meeting-helpers'
+import { closeMeetingContexts, knockAndWaitPending, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
 const meetingsWs = 'meetings-ws'
 const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
@@ -299,9 +299,8 @@ export function registerScenariosTests (): void {
         await lockedRoom.click()
         const knockBtn = page3.locator('[data-id="meeting-knock"]').first()
         await expect(knockBtn).toBeVisible({ timeout: 60000 })
-        await knockBtn.click()
         // After knocking the button flips to "Cancel knock".
-        await expect(page3.locator('[data-id="meeting-knock-pending"]')).toBeVisible({ timeout: 10000 })
+        await knockAndWaitPending(page3)
 
         // user2 (owner of the private meeting) should see an incoming knock in
         // the KnockingList side panel (no popup, no sound).
