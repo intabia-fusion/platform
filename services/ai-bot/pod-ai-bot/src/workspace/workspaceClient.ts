@@ -981,6 +981,9 @@ export class WorkspaceClient {
     const effectiveLevel = decision.level ?? requestedLevel
     const resolved = resolveModel(effectiveLevel, effectiveLevel === requestedLevel ? registry : config.AIProviders)
 
+    // Every budget below is measured against the level that actually serves.
+    const servedBudget = contextBudgetFor(resolved.level)
+
     // Landed on a different level than requested (window downgrade or a feature-denied level):
     // switch the LLM instance too, else the original provider would run + bill the wrong level.
     if (resolved.level !== requestedLevel && providers !== undefined) {
@@ -1040,11 +1043,10 @@ export class WorkspaceClient {
             source._class === chunter.class.ThreadMessage ||
             source._class === aiBot.class.AIContextMessage)
         if (source !== undefined && !isChatStarter) {
-          const budget = contextBudgetFor(resolved.level)
           const built = await this.buildDocPrompt(
             source,
             (text) => llm.countTokens([{ role: 'user', content: text }]) ?? 0,
-            Math.floor(budget * DOC_PROMPT_SHARE)
+            Math.floor(servedBudget * DOC_PROMPT_SHARE)
           )
           docPrompt = built?.text
           documentReadOnly = built?.oversized === true
@@ -1063,7 +1065,7 @@ export class WorkspaceClient {
           objectId,
           snapshot,
           llm,
-          contextBudgetFor(resolved.level),
+          servedBudget,
           event.language ?? config.DefaultLanguage,
           resolved.level,
           personUuid,
@@ -1125,8 +1127,7 @@ export class WorkspaceClient {
       // Truncate the thread context to fit the model window (oldest dropped first). The serving
       // level's own context window wins when it is tighter than the pod-wide budget: a small model
       // silently drops whatever overflows, so the history must be cut to what it can actually read.
-      const contextBudget = contextBudgetFor(level ?? config.DefaultLevel)
-      useHistory.push(...buildThreadContext(contextMessages, promptTokens, contextBudget))
+      useHistory.push(...buildThreadContext(contextMessages, promptTokens, servedBudget))
 
       // Document goes last (after the chat history, just before the user request) so a small model
       // sees it adjacent to the task it must act on.
@@ -1145,11 +1146,10 @@ export class WorkspaceClient {
     // How full the context is and where compaction kicks in. Written on every request so the user
     // sees it coming instead of noticing afterwards that the early part of the talk is gone.
     if (aiRequestId !== undefined) {
-      const budget = contextBudgetFor(resolved.level)
       const used = useHistory.reduce((sum, m) => sum + (llm.countTokens([m]) ?? 0), promptTokens)
       await this.updateAIRequest(personUuid, aiRequestId, space, {
         contextTokens: used,
-        contextCompactAt: Math.max(0, budget - config.CompactionReserveTokens),
+        contextCompactAt: Math.max(0, servedBudget - config.CompactionReserveTokens),
         compacted: didCompact
       }).catch((err) => {
         this.ctx.warn('failed to report context fill', { err: err?.message })
@@ -1158,7 +1158,7 @@ export class WorkspaceClient {
 
     // Shared with the tools: a proposal tool stages its result here instead of posting a message.
     // Ceilings for what tools may add to the context, derived from the level that actually serves.
-    const budgets = toolBudgets(contextBudgetFor(resolved.level))
+    const budgets = toolBudgets(servedBudget)
     const reqCtx: ReqCtx = {
       objectId,
       objectClass,
@@ -1192,25 +1192,25 @@ export class WorkspaceClient {
     } catch (err: any) {
       // Estimates can under-count, so compact and retry once - but only while the window still
       // serves: the failed call may have used it up, and compacting is another billed call.
-      const stillServes =
-        !isContextOverflow(err) ||
-        decideLevel(resolved.level, await getWorkspaceWindows(this.ctx, this.wsIds.uuid)).action !== 'block'
-      if (isContextOverflow(err) && stillServes && snapshotForRetry !== undefined && !retriedAfterCompaction) {
-        this.ctx.warn('context overflow, compacting and retrying once', { workspace: this.wsIds.uuid })
-        const compacted = await this.compactIfNeeded(
-          objectId,
-          snapshotForRetry,
-          llm,
-          contextBudgetFor(resolved.level),
-          event.language ?? config.DefaultLanguage,
-          resolved.level,
-          personUuid,
-          space,
-          true
-        )
-        if (compacted.firstKept !== snapshotForRetry.firstKept) {
-          await this.generateAndReply(event, { ...args, retriedAfterCompaction: true })
-          return
+      if (isContextOverflow(err) && snapshotForRetry !== undefined && !retriedAfterCompaction) {
+        const windowsNow = await getWorkspaceWindows(this.ctx, this.wsIds.uuid)
+        if (decideLevel(resolved.level, windowsNow).action !== 'block') {
+          this.ctx.warn('context overflow, compacting and retrying once', { workspace: this.wsIds.uuid })
+          const compacted = await this.compactIfNeeded(
+            objectId,
+            snapshotForRetry,
+            llm,
+            servedBudget,
+            event.language ?? config.DefaultLanguage,
+            resolved.level,
+            personUuid,
+            space,
+            true
+          )
+          if (compacted.firstKept !== snapshotForRetry.firstKept) {
+            await this.generateAndReply(event, { ...args, retriedAfterCompaction: true })
+            return
+          }
         }
       }
       // LLM failed after in-worker retries; swallow instead of rethrow so the queue does not reprocess.
