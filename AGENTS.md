@@ -170,13 +170,24 @@ login with `BadRequest`.
 
 ### Tracing and retries
 
-`trace: 'on-first-retry'`: the first attempt runs untraced, and only the retry that follows a
-failure carries a trace. A green run pays nothing, a real failure still lands with a full trace -
-so `--retries=0` is no longer needed to keep runs fast. `html` is configured with `open: 'never'`;
-without it the reporter parks a server on failure and hangs the terminal.
+The trace mode is chosen by environment, override with `TRACE_MODE`:
+
+| Where | Mode | What you get |
+|---|---|---|
+| CI (`CI` set) | `on-first-retry` | Only the retry is traced. A green run pays nothing. |
+| Local | `retain-on-failure` | Every attempt is traced, only the failed ones kept. |
+
+The difference matters when hunting a flake: `on-first-retry` traces the retry, which for a flake
+is the attempt that *passed*, so the trace shows a green run and says nothing about why the first
+one failed. `retain-on-failure` keeps the failing attempt's trace, at the cost of tracing every
+test. Use `TRACE_MODE=retain-on-failure` to get that on CI, `TRACE_MODE=on-first-retry` to skip it
+locally. `--retries=0` is no longer needed to keep runs fast either way.
+
+`html` is configured with `open: 'never'`; without it the reporter parks a server on failure and
+hangs the terminal.
 
 Reports after a run: `playwright-report/index.html`, `playwright-report.json` (machine-readable
-twin), `allure-results/`, traces under `test-results/*-retry1/`.
+twin), `allure-results/`, traces under `test-results/`.
 
 ### Reading a failed run
 
@@ -192,6 +203,16 @@ tool groups both by error class and by file, prints ready-to-paste `show-trace` 
 slowest tests. Locally the suite runs at roughly 7% first-attempt flakiness, so a large flake
 count is normal - what matters is the real-failure number. Local-only failures around
 love/meetings usually mean LiveKit, not a regression; CI is the reference.
+
+The evidence of a run is destroyed by the next one. `test-results/` is wiped when a run starts,
+and *any* invocation through this config rewrites `playwright-report.json` and
+`playwright-report/` - including `playwright test --list`, which leaves a report of 416 skipped
+tests behind. Copy what you need before rerunning:
+
+```bash
+cp -r test-results /tmp/run-$(date +%s)      # error-context.md, screenshots, traces
+cp playwright-report.json /tmp/
+```
 
 ### Whole-run profiling
 

@@ -173,6 +173,11 @@ export class IssuesDetailsPage extends CommonTrackerPage {
         await this.buttonEstimation().click()
         await this.fillEstimationPopup(this.page, estimation)
         await expect(this.textEstimation()).toHaveText(convertEstimation(estimation), { timeout: 3000 })
+        // The write is lost when a previous estimation update is still in flight: the panel renders
+        // the new value optimistically and then falls back to the stored one about 70ms later, and
+        // the server never sees it. Settle before believing the first read, so the retry re-saves.
+        await this.page.waitForTimeout(500)
+        await expect(this.textEstimation()).toHaveText(convertEstimation(estimation), { timeout: 3000 })
       }).toPass({ intervals: [300, 1000], timeout: 20000 })
     }
   }

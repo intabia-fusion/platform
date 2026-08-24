@@ -7,6 +7,15 @@ if (process.env.TESTS_MAX_FAILURES !== undefined) {
   maxFailures = parseInt(process.env.TESTS_MAX_FAILURES)
 }
 
+// 'on-first-retry' traces the retry, which for a flake is the attempt that passed - useless for
+// finding out why the first one failed. 'retain-on-failure' traces every attempt and keeps only
+// the failed ones, which costs time on every test. CI wants the cheap one, a local flake hunt
+// wants the useful one. Override with TRACE_MODE.
+const isCI = (process.env.CI ?? '') !== ''
+const traceMode = (
+  (process.env.TRACE_MODE ?? '') !== '' ? process.env.TRACE_MODE : isCI ? 'on-first-retry' : 'retain-on-failure'
+) as 'on-first-retry' | 'retain-on-failure'
+
 const config: PlaywrightTestConfig = {
   globalSetup: require.resolve('./global.setup.ts'),
   globalTeardown: require.resolve('./global.teardown.ts'),
@@ -34,10 +43,8 @@ const config: PlaywrightTestConfig = {
           width: 1440,
           height: 900
         },
-        // First attempt runs untraced; only the retry after a failure carries a trace, so a
-        // green run pays nothing and a real failure still lands with one.
         trace: {
-          mode: 'on-first-retry',
+          mode: traceMode,
           snapshots: true,
           screenshots: true,
           sources: true

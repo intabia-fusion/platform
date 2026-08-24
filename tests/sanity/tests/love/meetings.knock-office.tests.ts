@@ -8,7 +8,7 @@
 
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { PlatformURI } from '../utils'
-import { closeMeetingContexts, waitForActiveMeetingsToFinish } from './meeting-helpers'
+import { closeMeetingContexts, knockAndWaitPending, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
 const meetingsWs = 'meetings-ws'
 
@@ -94,9 +94,8 @@ export function registerKnockOfficeTests (): void {
         await clickOfficeOf(knocker, ownerLast)
         const knockBtn = knocker.locator('[data-id="meeting-knock"]').first()
         await expect(knockBtn).toBeVisible({ timeout: 30000 })
-        await knockBtn.click()
         // The button flips to "Cancel knock" once the invite-request is created.
-        await expect(knocker.locator('[data-id="meeting-knock-pending"]')).toBeVisible({ timeout: 10000 })
+        await knockAndWaitPending(knocker)
 
         // Owner sees the incoming knock in the KnockingList side panel.
         const knockingItem = owner.locator('[data-id="knocking-item"]').first()

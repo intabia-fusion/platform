@@ -16,7 +16,7 @@ import love, {
 } from '@hcengineering/love'
 import { generateToken } from '@hcengineering/server-token'
 import { PlatformURI, PlatformUserSecond } from '../utils'
-import type { BrowserContext, Page } from '@playwright/test'
+import { expect, type BrowserContext, type Page } from '@playwright/test'
 
 const MEETINGS_WS = 'meetings-ws'
 
@@ -143,6 +143,25 @@ export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise
  * the server-side cleanup of ParticipantInfo + MeetingMinutes status.
  * Kept as a thin shim so existing call sites don't have to change.
  */
+/**
+ * Click Knock and wait until the button flips to "Cancel knock".
+ *
+ * `sendKnockRequest` returns silently when the client has not resolved the current employee or
+ * their personal space yet, so a click made too early creates nothing at all and the panel keeps
+ * showing Knock - waiting on the pending button then burns the whole timeout on a request that
+ * was never sent. Clicking again is safe: the apply carries `notMatch` on an already pending
+ * invite-request, so a second click after a successful one creates no duplicate.
+ */
+export async function knockAndWaitPending (page: Page, timeoutMs = 30000): Promise<void> {
+  const knockBtn = page.locator('[data-id="meeting-knock"]').first()
+  const pending = page.locator('[data-id="meeting-knock-pending"]').first()
+  await expect(async () => {
+    if (await pending.isVisible()) return
+    await knockBtn.click({ timeout: 5000 })
+    await expect(pending).toBeVisible({ timeout: 5000 })
+  }).toPass({ intervals: [500, 1000], timeout: timeoutMs })
+}
+
 export async function leaveIfInMeeting (_page: Page): Promise<void> {
   // Intentionally empty.
 }

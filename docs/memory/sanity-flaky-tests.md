@@ -89,6 +89,7 @@ front0` restart its dependencies too, and they come back on different addresses;
 | `todos.spec.ts:71` | `checkToDo` opened tag popup via `nth-child(2)`, index that shifts once label attached | Label rendered in panel — check it directly |
 | `inbox.spec.ts` | Invite-link chain inlined in 7 tests, bypassing hardened `getInviteLink` and its retry | All 7 call helper |
 | `getInviteLink` | Popup closed via Close button, which editor floating toolbar (`div#tippy-N`) overlays | Escape, then assert link gone |
+| `meetings.scenarios.tests.ts:263` knock | `sendKnockRequest` returns silently when the client has not resolved the employee or their personal space yet, so an early click creates nothing and the panel keeps showing Knock - the wait on `meeting-knock-pending` then burns out on a request never sent | `knockAndWaitPending` retries the click; `apply.notMatch` makes a second one a no-op |
 | `love` re-entry | `meeting-knock` shown instead of `meeting-connect`: `isLockedByPrivateMeeting` true while ParticipantInfo outlives drain (LiveKit webhooks recreate one) | Drain again on seeing knock button — re-clicking room only deselects it (6/6 failures when tried) |
 
 ## Open, do not retry these
