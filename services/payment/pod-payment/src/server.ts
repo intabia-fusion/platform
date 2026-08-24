@@ -358,7 +358,8 @@ export async function createServer (
     if (dup !== undefined) {
       // Pod may have died between createPurchase and the publish below — republish until the
       // consumer marks it consumed. Consumer (ai-bot) dedups by purchaseId, so a redundant publish is safe.
-      if (dup.status !== 'consumed' && dup.id !== undefined) {
+      // Only an active one: a 'failed' or 'pending' purchase has no effect to apply.
+      if (dup.status === 'active' && dup.id !== undefined) {
         await publishPurchaseActivated?.(ctx, data.workspaceUuid, data.plan, dup.id, item?.effect, item?.tokenLimit)
       }
       return
@@ -1347,8 +1348,12 @@ export async function createServer (
           if (workspace !== undefined) {
             try {
               const purchases = await accountClient.getPurchases(workspace)
+              // checkoutId is the provider's checkout/order id, while paymentId is the settled
+              // payment id (a different value for tbank), so match the order id kept in `raw` too.
               const purchase = purchases.find(
-                (p) => p.paymentId === checkoutId && (p.status === 'active' || p.status === 'consumed')
+                (p) =>
+                  (p.paymentId === checkoutId || p.raw?.providerData?.orderId === checkoutId) &&
+                  (p.status === 'active' || p.status === 'consumed')
               )
               if (purchase !== undefined) {
                 res.status(200).json({ checkoutId, subscriptionId: null, status: 'completed', purchase })

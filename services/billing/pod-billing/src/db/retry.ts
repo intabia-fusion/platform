@@ -253,6 +253,10 @@ export class RetryDB implements BillingDB {
     return await retry(() => this.db.updateProviderPoolState(ctx, providerId, model, usedTokens), this.options)
   }
 
+  async markPoolNotified (ctx: MeasureContext, providerId: string, model: string, percent: 80 | 100): Promise<void> {
+    await retry(() => this.db.markPoolNotified(ctx, providerId, model, percent), this.options)
+  }
+
   async replaceAiModelRegistry (ctx: MeasureContext, entries: AiModelRegistryEntry[]): Promise<void> {
     await retry(() => this.db.replaceAiModelRegistry(ctx, entries), this.options)
   }
@@ -296,24 +300,16 @@ export class RetryDB implements BillingDB {
     return await retry(() => this.db.grantAiTokens(ctx, workspace, grantId, amount), this.options)
   }
 
-  async updateTokenBalanceAbsorption (
+  async settleTokenBalance (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
-    remainingTokens: number,
+    charge: number,
     absorbedUntil: string | null,
     absorbedPeriod: number,
-    periodStart: string
-  ): Promise<void> {
-    await retry(
-      () =>
-        this.db.updateTokenBalanceAbsorption(
-          ctx,
-          workspace,
-          remainingTokens,
-          absorbedUntil,
-          absorbedPeriod,
-          periodStart
-        ),
+    newPeriodStart: string
+  ): Promise<boolean> {
+    return await retry(
+      () => this.db.settleTokenBalance(ctx, workspace, charge, absorbedUntil, absorbedPeriod, newPeriodStart),
       this.options
     )
   }

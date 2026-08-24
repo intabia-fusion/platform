@@ -124,17 +124,31 @@ export class PlanningPage extends CalendarPage {
   }
 
   async dragToCalendar (title: string, column: number, time: string, addHalf: boolean = false): Promise<void> {
-    await this.toDosContainer().getByRole('button', { name: title }).hover()
-
     await expect(async () => {
+      // The target time depends on the hour the run starts at, and later hours sit below the fold.
+      // boundingBox() reports coordinates outside the viewport all the same, so the drop would be
+      // aimed at a point the mouse can never reach.
+      await this.selectTimeCell(time, column).scrollIntoViewIfNeeded()
+      // Hover inside the loop: a failed attempt leaves the pointer on the target cell, so the next
+      // mouse.down() would grab nothing and every retry would repeat the same no-op.
+      await this.toDosContainer().getByRole('button', { name: title }).hover()
       await this.page.mouse.down()
-      const boundingBox = await this.selectTimeCell(time, column).boundingBox()
-      expect(boundingBox).toBeTruthy()
-      if (boundingBox != null) {
-        await this.page.mouse.move(boundingBox.x + 10, boundingBox.y + 10)
-        await this.page.mouse.move(boundingBox.x + 10, boundingBox.y + (addHalf ? 40 : 20))
+      try {
+        const boundingBox = await this.selectTimeCell(time, column).boundingBox()
+        expect(boundingBox).toBeTruthy()
+        if (boundingBox != null) {
+          const x = boundingBox.x + 10
+          // Two jumps can both land before the calendar picks the drag up, and then nothing is
+          // dropped and there is no error for the retry to see. Walk the pointer across.
+          await this.page.mouse.move(x, boundingBox.y + 10, { steps: 10 })
+          await this.page.mouse.move(x, boundingBox.y + (addHalf ? 40 : 20), { steps: 5 })
+        }
+      } finally {
         await this.page.mouse.up()
       }
+      // Nothing else in this helper fails when the drop is lost, and then the retry has no reason
+      // to run at all.
+      await expect(this.eventInSchedule(title)).toBeVisible({ timeout: 5000 })
     }).toPass(retryOptions)
   }
 
@@ -144,18 +158,36 @@ export class PlanningPage extends CalendarPage {
     targetTime: string,
     size: 'top' | 'bottom'
   ): Promise<void> {
-    await this.page
-      .locator(`.calendar-element:has-text("${title}") .calendar-element-${size === 'top' ? 'start' : 'end'}`)
-      .hover()
+    const element = this.page.locator(`.calendar-element:has-text("${title}")`)
+    const border = element.locator(`.calendar-element-${size === 'top' ? 'start' : 'end'}`)
 
     await expect(async () => {
+      // Bring the target hour into view first - see dragToCalendar.
+      await this.selectTimeCell(targetTime, column).scrollIntoViewIfNeeded()
+      const before = await element.boundingBox()
+      // Hover inside the loop: a failed attempt leaves the pointer on the target cell, so the next
+      // mouse.down() would grab nothing and every retry would repeat the same no-op.
+      await border.hover()
       await this.page.mouse.down()
-      const boundingBox = await this.selectTimeCell(targetTime, column).boundingBox()
-      expect(boundingBox).toBeTruthy()
-      if (boundingBox != null) {
-        await this.page.mouse.move(boundingBox.x + 10, size === 'bottom' ? boundingBox.y - 8 : boundingBox.y + 5)
+      try {
+        const boundingBox = await this.selectTimeCell(targetTime, column).boundingBox()
+        expect(boundingBox).toBeTruthy()
+        if (boundingBox != null) {
+          const x = boundingBox.x + 10
+          const y = size === 'bottom' ? boundingBox.y - 8 : boundingBox.y + 5
+          // A single jump can land before the resize handler sees the drag, leaving the border where
+          // it was and no error to retry on. Walk the pointer there and nudge it on arrival.
+          await this.page.mouse.move(x, y, { steps: 10 })
+          await this.page.mouse.move(x, y + 1)
+          await this.page.mouse.move(x, y)
+        }
+      } finally {
         await this.page.mouse.up()
       }
+      // A resize that changed nothing has to fail here, or the silent no-op only surfaces much
+      // later as a wrong duration.
+      const after = await element.boundingBox()
+      expect(after?.height).not.toBe(before?.height)
     }).toPass(retryOptions)
   }
 
@@ -236,13 +268,30 @@ export class PlanningPage extends CalendarPage {
     if (data.slots != null) {
       let index = 0
       for (const slot of data.slots) {
-        await (popup
-          ? this.buttonPopupCreateAddSlot().click({ force: true })
-          : this.buttonPanelCreateAddSlot().click({ force: true }))
+        const addSlot = popup ? this.buttonPopupCreateAddSlot() : this.buttonPanelCreateAddSlot()
+        const rows = this.slotRows(popup)
+        const before = await rows.count()
+        // The click is forced, so when it lands on a popup that is still closing - the tag popup
+        // right above is dismissed with Escape - it adds nothing at all and reports success. Then
+        // setTimeSlot waits out the whole test timeout on a row that was never created.
+        await expect(async () => {
+          if ((await rows.count()) === before) {
+            await addSlot.click({ force: true })
+          }
+          await expect(rows).toHaveCount(before + 1, { timeout: 5000 })
+        }).toPass({ intervals: [300, 1000], timeout: 20000 })
         await this.setTimeSlot(index, slot, popup)
         index++
       }
     }
+  }
+
+  private slotRows (popup: boolean): Locator {
+    return this.page.locator(
+      popup
+        ? 'div.popup div.horizontalBox div.end div.scroller-container div.box div.flex-between.min-w-full'
+        : 'div.hulyModal-container div.slots-content div.scroller-container div.box div.flex-between.min-w-full'
+    )
   }
 
   /**
@@ -268,10 +317,7 @@ export class PlanningPage extends CalendarPage {
   }
 
   public async setTimeSlot (rowNumber: number, slot: Slot, popup: boolean = false): Promise<void> {
-    const p = popup
-      ? 'div.popup div.horizontalBox div.end div.scroller-container div.box div.flex-between.min-w-full'
-      : 'div.hulyModal-container div.slots-content div.scroller-container div.box div.flex-between.min-w-full'
-    const row = this.page.locator(p).nth(rowNumber)
+    const row = this.slotRows(popup).nth(rowNumber)
 
     // dateStart
     await row.locator('div.dateEditor-container:first-child > div.min-w-28:first-child .hulyButton').click()
@@ -337,10 +383,7 @@ export class PlanningPage extends CalendarPage {
   }
 
   private async checkTimeSlot (rowNumber: number, slot: Slot, popup: boolean = false): Promise<void> {
-    const p = popup
-      ? 'div.popup div.horizontalBox div.end div.scroller-container div.box div.flex-between.min-w-full'
-      : 'div.hulyModal-container div.slots-content div.scroller-container div.box div.flex-between.min-w-full'
-    const row = this.page.locator(p).nth(rowNumber)
+    const row = this.slotRows(popup).nth(rowNumber)
     // timeStart
     await expect(
       row.locator('div.dateEditor-container:nth-child(1) .hulyButton:last-child div.datetime-input')
@@ -385,9 +428,10 @@ export class PlanningPage extends CalendarPage {
       await expect(this.textPanelVisible()).toHaveText(data.visible)
     }
     if (data.labels != null) {
-      await this.buttonPanelLabelFirst().click()
-      await this.checkPopupItem(data.labels)
-      await this.buttonPanelLabelFirst().click({ force: true })
+      // The label is rendered in the panel itself. Opening the tag popup to check it went through
+      // `div.hulyHeader-titleGroup > button:nth-child(2)`, and that index shifts once a label is
+      // attached, so the click landed on a different button and the popup never appeared.
+      await expect(this.panel().getByText(data.labels)).toBeVisible()
     }
     if (data.slots != null) {
       let index = 0

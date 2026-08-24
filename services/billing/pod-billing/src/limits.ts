@@ -342,14 +342,13 @@ export class LimitsEngine {
     const charge = packCharge(prevUsage, limitMonth, balance.remainingTokens)
 
     ctx.info('settling token pack for the finished period', { workspace, prevUsage, limitMonth, charge })
-    await this.db.updateTokenBalanceAbsorption(
-      ctx,
-      workspace,
-      balance.remainingTokens - charge,
-      null,
-      charge,
-      periodStart.toISOString()
-    )
+    // The write itself re-checks that period_start is still behind: a concurrent settle (or a retry
+    // of a committed one) loses the race and skips instead of charging twice, and the decrement is
+    // relative so a concurrent grantAiTokens cannot be lost.
+    const settled = await this.db.settleTokenBalance(ctx, workspace, charge, null, charge, periodStart.toISOString())
+    if (!settled) {
+      ctx.info('token pack period already settled, skipping', { workspace })
+    }
   }
 
   private accountClient (workspace: WorkspaceUuid | undefined): AccountClient {

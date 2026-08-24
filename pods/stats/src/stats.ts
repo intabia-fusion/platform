@@ -224,8 +224,6 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
       const service = payload.extra?.service != null
       const serviceName = (req.query.name as string) ?? ''
       if (service) {
-        ctx.info('put stats', { service: req.query.name, len: req.request.length })
-
         const contentType = req.headers['content-type']
 
         if (contentType === 'application/octet-stream') {
@@ -242,15 +240,8 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
 
           const rawBody = Buffer.concat(chunks)
 
-          ctx.info('put stats processing octet-stream', { rawBodyLength: rawBody.length })
-
           try {
             const deserialized = rpcHandler.readRequest(rawBody, true)
-            ctx.info('put stats deserialized', {
-              method: deserialized.method,
-              paramsCount: deserialized.params?.length
-            })
-
             if (deserialized.method === 'data') {
               statistics.set(serviceName, {
                 ...(deserialized.params?.[0] as ServiceStatistics),
@@ -265,7 +256,6 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
             throw deserializeErr
           }
         } else {
-          ctx.info('put stats processing json', { bodyType: typeof (req.request as any).body })
           statistics.set(serviceName, {
             ...((req.request as any).body as ServiceStatistics),
             lastUpdate: Date.now()

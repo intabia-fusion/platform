@@ -34,8 +34,19 @@ export function createPoolNotifier (
       (percent === 100 ? 'Requests to this provider are now blocked until you top up.' : 'Consider topping up.')
     const html = `<p>${text}</p>`
 
-    for (const to of adminEmails) {
-      await producer.send(ctx, '' as WorkspaceUuid, [{ type: 'email', data: { html, text, subject, to } }], to)
+    // One unreachable address must not hide the alert from the rest, nor keep the pool unmarked
+    // and re-notifying every pass: this fails only when nothing got out at all.
+    const sent = await Promise.allSettled(
+      adminEmails.map(async (to) => {
+        await producer.send(ctx, '' as WorkspaceUuid, [{ type: 'email', data: { html, text, subject, to } }], to)
+      })
+    )
+    const failed = sent.filter((r) => r.status === 'rejected')
+    if (failed.length > 0) {
+      ctx.warn('pool threshold alert partially failed', { pool: pool.providerId, failed: failed.length })
+    }
+    if (failed.length === sent.length) {
+      throw new Error(`failed to send pool threshold alert for ${pool.providerId}`)
     }
   }
 }

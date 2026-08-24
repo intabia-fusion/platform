@@ -26,7 +26,7 @@ import {
   SummarizeMessagesRequest
 } from '@hcengineering/ai-bot'
 import { extractToken, getAccountClient, readToken } from '@hcengineering/server-client'
-import { AccountRole, MeasureContext, systemAccountUuid } from '@hcengineering/core'
+import { AccountRole, type Doc, MeasureContext, type Ref, systemAccountUuid } from '@hcengineering/core'
 import { isWorkspaceLoginInfo } from '@hcengineering/account-client'
 
 import { ApiError } from './error'
@@ -113,13 +113,44 @@ export function createServer (controller: AIControl, ctx: MeasureContext, app?: 
         throw new ApiError(400)
       }
 
-      const response = await controller.summarizeMessages(token.workspace, req.body as SummarizeMessagesRequest)
-      if (response === undefined) {
-        throw new ApiError(500)
+      const request = req.body as SummarizeMessagesRequest
+      if (request.target === undefined || request.targetClass === undefined) {
+        throw new ApiError(400)
+      }
+      // Same queue as the automatic post-meeting summary: the job is long and about to grow into
+      // several steps, so the button fires it off and the result lands in the document.
+      controller.checkTokensLimit(token.workspace)
+      const queued = await controller.queueSummary(token.workspace, {
+        target: request.target,
+        targetClass: request.targetClass,
+        manual: true,
+        lang: request.lang
+      })
+      if (!queued) {
+        throw new ApiError(503)
       }
 
+      res.status(202)
+      res.json({})
+    })
+  )
+
+  // The conversation transcript, as written after every reply: the download button serves this
+  // file, so what the user gets is exactly what the model is given (tool calls included).
+  app.get(
+    '/conversation/:id/export',
+    wrapRequest(async (req, res, token) => {
+      const conversation = req.params.id
+      if (conversation === undefined || conversation === '') {
+        throw new ApiError(400)
+      }
+      const mdx = await controller.exportConversation(token.workspace, conversation as Ref<Doc>)
+      if (mdx === undefined) {
+        throw new ApiError(404)
+      }
       res.status(200)
-      res.json(response)
+      res.setHeader('Content-Type', 'text/markdown; charset=utf-8')
+      res.send(mdx)
     })
   )
 

@@ -36,7 +36,11 @@ export class SettingsPage extends CommonPage {
 
   selectIconButton = (): Locator => this.page.locator('button[data-id="btnSelectIcon"]')
   emojiSectionButton = (): Locator => this.page.locator('div.popup div.tab', { hasText: 'Emoji' })
-  emojiIconButton = (hasText: string): Locator => this.page.getByRole('button', { name: hasText }).first()
+  // Scoped and exact: a substring match on the accessible name also hit the navigator row of a
+  // task type already carrying this emoji, and being first in DOM order that is what was clicked.
+  emojiIconButton = (hasText: string): Locator =>
+    this.page.locator('.hulyPopup-container').getByRole('button', { name: hasText, exact: true }).first()
+
   taskTypeRow = (value: string): Locator =>
     this.page
       .locator('div.hulyTableAttr-header', { hasText: 'Task types' })
@@ -75,7 +79,12 @@ export class SettingsPage extends CommonPage {
   }
 
   async openSettings (): Promise<void> {
-    await this.settingsButton().click()
+    // The app finishes booting behind the profile menu and the re-render closes it, so the item can
+    // disappear between opening the menu and clicking it.
+    await expect(async () => {
+      if ((await this.settingsButton().count()) === 0) await this.openProfileMenu()
+      await this.settingsButton().click({ timeout: 5000 })
+    }).toPass({ intervals: [300, 1000], timeout: 30000 })
   }
 
   async clickAddSpaceType (): Promise<void> {

@@ -20,7 +20,7 @@ import yaml from 'js-yaml'
 
 import { SttProviderType } from './transcription/types'
 
-/** ЮляИИ quality level id. Data-driven, not an enum: a free-form string defined in the registry. */
+/** Assistant quality level id. Data-driven, not an enum: a free-form string defined in the registry. */
 export type AILevel = string
 
 /** Per-feature availability of a level (unset = allowed). Restricts which features a level serves. */
@@ -172,6 +172,10 @@ interface Config {
 
   MaxContentTokens: number
   MaxHistoryRecords: number
+  // Compaction thresholds, same defaults pi runs with. Reserve is the room left for the answer;
+  // keepRecent is how much of the tail stays verbatim behind the summary.
+  CompactionReserveTokens: number
+  CompactionKeepRecentTokens: number
   Port: number
   LoveEndpoint: string
   BillingUrl: string
@@ -313,6 +317,8 @@ interface YamlConfig {
   }
   limits?: {
     maxContentTokens?: number
+    compactionReserveTokens?: number
+    compactionKeepRecentTokens?: number
     maxHistoryRecords?: number
   }
   debug?: {
@@ -589,6 +595,10 @@ const config: Config = (() => {
     // Limits
     MaxContentTokens: yamlConfig?.limits?.maxContentTokens ?? parseNumber(process.env.MAX_CONTENT_TOKENS) ?? 128 * 100,
     MaxHistoryRecords: yamlConfig?.limits?.maxHistoryRecords ?? parseNumber(process.env.MAX_HISTORY_RECORDS) ?? 500,
+    CompactionReserveTokens:
+      yamlConfig?.limits?.compactionReserveTokens ?? parseNumber(process.env.COMPACTION_RESERVE_TOKENS) ?? 16384,
+    CompactionKeepRecentTokens:
+      yamlConfig?.limits?.compactionKeepRecentTokens ?? parseNumber(process.env.COMPACTION_KEEP_RECENT_TOKENS) ?? 20000,
 
     // Service endpoints
     LoveEndpoint: yamlConfig?.services?.love?.endpoint ?? process.env.LOVE_ENDPOINT ?? '',

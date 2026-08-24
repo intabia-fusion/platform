@@ -14,7 +14,7 @@
     "AILevelTasks": "Управление задачами",
     "Language": "Язык",
     "LanguageHint": "Язык ответов бота (напр. ru, en). Пусто = по умолчанию пода.",
-    "AssistIssue": "ЮляИИ",
+    "AssistIssue": "{name}",
     "AssistIssueApply": "Применить",
     "AssistIssueThreadStart": "Черновик задачи{project, select, undefined {} other { в проекте {project}}}",
     "AssistIssueNewContext": "Новый контекст",

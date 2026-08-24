@@ -649,18 +649,34 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     console.log(`server started on port ${ACCOUNT_PORT}`)
   })
 
+  // Without an explicit exit the process outlives SIGTERM: kafka sockets and koa keep-alive
+  // connections hold the event loop, and the pod only dies when the orchestrator SIGKILLs it.
+  let closing = false
   const close = (): void => {
+    if (closing) return
+    closing = true
     onClose?.()
-    void notificationProducer.close()
-    void crmProducer.close()
-    void subscriptionProducer.close()
-    void usersConsumer.close()
-    void paymentOperationConsumer.close()
-    void platformQueue.shutdown()
-    void accountsDb.then(([, closeAccountsDb]) => {
-      closeAccountsDb()
-    })
+    const closed = Promise.allSettled([
+      notificationProducer.close(),
+      crmProducer.close(),
+      subscriptionProducer.close(),
+      usersConsumer.close(),
+      paymentOperationConsumer.close(),
+      platformQueue.shutdown(),
+      accountsDb.then(([, closeAccountsDb]) => {
+        closeAccountsDb()
+      })
+    ])
     server.close()
+    server.closeAllConnections()
+    // Cap the wait so a stuck client cannot keep the pod alive either.
+    const cap = setTimeout(() => {
+      process.exit(0)
+    }, 5000)
+    cap.unref()
+    void closed.then(() => {
+      process.exit(0)
+    })
   }
 
   process.on('uncaughtException', (e) => {

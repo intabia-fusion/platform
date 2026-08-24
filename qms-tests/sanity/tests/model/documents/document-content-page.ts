@@ -396,7 +396,7 @@ export class DocumentContentPage extends DocumentCommonPage {
 
   async addReviewersFromTeam (anotherReviewer: boolean = false): Promise<void> {
     await this.page.waitForTimeout(500)
-    await this.page.getByText('Team').click()
+    await this.openTeam.click()
     await this.page.getByText('Add member').nth(1).click()
     if (anotherReviewer) {
       await this.page.getByRole('button', { name: 'DK Dirak Kainin' }).click()
@@ -694,7 +694,7 @@ export class DocumentContentPage extends DocumentCommonPage {
 
   async checkTeamMembersReviewerCoauthorApproverNotExists (): Promise<void> {
     await this.page.waitForTimeout(500)
-    await this.page.getByText('Team').click()
+    await this.openTeam.click()
     await this.page.getByText('Add member').first().click()
     await expect(this.page.getByRole('button', { name: 'AJ Appleseed John' })).not.toBeVisible()
     await this.page.keyboard.press('Escape')

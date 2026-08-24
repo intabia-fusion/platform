@@ -37,10 +37,7 @@ export async function PostFunctionsTrigger (txes: TxCUD<Doc>[], control: Trigger
     }
 
     if (tx._class === core.class.TxUpdateDoc) {
-      control.ctx.info('[TransitionPostFunctionsTrigger] Processing update tx', {
-        objectId: tx.objectId,
-        meta: tx.meta
-      })
+      // Only the updates that produced post-functions are worth a line; that log is below.
       const postTxes = await processTaskPostFunctions(tx as TxUpdateDoc<Task>, control)
       if (postTxes != null && postTxes.length > 0) {
         control.ctx.info('[TransitionPostFunctionsTrigger] Executed post-functions resulting in txes', {
@@ -56,8 +53,7 @@ export async function PostFunctionsTrigger (txes: TxCUD<Doc>[], control: Trigger
 async function processTaskPostFunctions (updateTx: TxUpdateDoc<Task>, control: TriggerControl): Promise<Tx[]> {
   const toStatus = updateTx.operations.status
   if (toStatus == null) {
-    control.ctx.info('[PostFunctionsTrigger] Exit: toStatus is null', { objectId: updateTx.objectId })
-    return []
+    return [] // not a status change - nothing for this trigger to do
   }
 
   const fromStatus: Ref<Status> | undefined = updateTx.meta?.fromStatus as Ref<Status> | undefined

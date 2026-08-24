@@ -101,26 +101,39 @@ export class KanbanBoardPage extends CommonTrackerPage {
    * Walk the pointer across in steps and jiggle on the target so dragover fires repeatedly.
    */
   private async dragPointer (source: Locator, target: Locator): Promise<void> {
+    // Bounded wait for the drop target: a card can page out of a column while other tests keep
+    // modifying issues, and then evaluate/boundingBox below block until the whole test times out,
+    // leaving the caller's retry loop no turn at all.
+    await target.waitFor({ state: 'attached', timeout: 5000 })
     await source.hover()
     await this.page.mouse.down()
-    // The board scrolls horizontally and does not fit five columns, so bring the target into view
-    // only after the card is grabbed: hovering the source scrolls it back and a box measured before
-    // that points outside the viewport, where the pointer never lands.
-    await this.ensureVisible(target)
-    const box = await target.boundingBox()
-    if (box === null) throw new Error('Drop target has no bounding box')
-    const x = box.x + box.width / 2
-    const y = box.y + box.height / 2
+    try {
+      // The board scrolls horizontally and does not fit five columns, so bring the target into view
+      // only after the card is grabbed: hovering the source scrolls it back and a box measured
+      // before that points outside the viewport. Scroll through the DOM - scrollIntoViewIfNeeded
+      // waits for the element to be stable, and the board animates for as long as a card is held.
+      await target.evaluate((el) => {
+        el.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+      })
+      const box = await target.boundingBox()
+      if (box === null) throw new Error('Drop target has no bounding box')
+      const x = box.x + box.width / 2
+      const y = box.y + box.height / 2
 
-    await this.page.mouse.move(x, y, { steps: 10 })
-    await this.page.mouse.move(x + 2, y + 2)
-    await this.page.mouse.move(x, y)
-    await this.page.mouse.up()
+      await this.page.mouse.move(x, y, { steps: 10 })
+      await this.page.mouse.move(x + 2, y + 2)
+      await this.page.mouse.move(x, y)
+    } finally {
+      await this.page.mouse.up()
+    }
   }
 
   async dragCardToCard (cardId: string, targetCardId: string): Promise<void> {
     const source = this.card(cardId)
     const target = this.card(targetCardId)
+    // Both cards can be beyond the loaded page of their column - the target no less than the source.
+    await this.revealCard(cardId)
+    await this.revealCard(targetCardId)
     await this.ensureVisible(source)
     await this.dragPointer(source, target)
   }

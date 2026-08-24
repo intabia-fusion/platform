@@ -17,6 +17,7 @@
   import { type Doc, generateId, type Ref, type Space } from '@hcengineering/core'
   import { getResource, translate } from '@hcengineering/platform'
   import { createQuery, getClient, MessageViewer } from '@hcengineering/presentation'
+  import { onDestroy } from 'svelte'
   import { get } from 'svelte/store'
 
   import { issueDraftApplier } from '../stores'
@@ -35,6 +36,7 @@
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
 
   import plugin from '../plugin'
+  import { aiBotNameStore } from '../utils'
 
   export let value: AITaskProposalMessage
   // Passed through by the activity feed; forwarded to the message template unchanged.
@@ -152,6 +154,13 @@
     clearTimeout(persistTimer)
     persistTimer = setTimeout(doPersist, 300)
   }
+  // Flush, don't drop: closing the panel within the debounce window would otherwise lose the edit.
+  onDestroy(() => {
+    if (persistTimer !== undefined) {
+      clearTimeout(persistTimer)
+      doPersist()
+    }
+  })
 
   function doPersist (): void {
     void patch({
@@ -294,7 +303,7 @@
     {/if}
 
     <div class="proposal">
-      <div class="header">
+      <div class="header" data-id="aiTaskProposal">
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <span
@@ -303,7 +312,7 @@
             collapsed = !collapsed
           }}
         >
-          <Label label={plugin.string.ProposedTask} />
+          <Label label={plugin.string.ProposedTask} params={{ name: $aiBotNameStore }} />
           {#if value.applied === true}
             <span class="applied"><Label label={plugin.string.AssistIssueAppliedMark} /></span>
           {/if}

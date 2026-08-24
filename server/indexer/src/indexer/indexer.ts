@@ -237,8 +237,6 @@ export class FullTextIndexPipeline implements FullTextPipeline {
     classes: Ref<Class<Doc>>[],
     control?: ConsumerControl
   ): Promise<void> {
-    ctx.warn('reindex verify document structure', { domain, workspace: this.workspace.uuid })
-
     let processed = 0
     await ctx.with(
       'reindex domain',
@@ -296,7 +294,9 @@ export class FullTextIndexPipeline implements FullTextPipeline {
         workspace: this.workspace.uuid
       }
     )
-    ctx.info('reindex done', { domain, processed })
+    if (processed > 0) {
+      ctx.info('reindex done', { domain, processed })
+    }
   }
 
   async dropWorkspace (control?: ConsumerControl): Promise<void> {

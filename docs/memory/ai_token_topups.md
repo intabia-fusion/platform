@@ -57,3 +57,27 @@ V7-V9 сквошены в одну `ai_token_infra_v2_07` (ветка не ме�
 AI-пакеты остались плоскими (не per-seat): `PackageItem` в `plugins/billing/src/types.ts`
 не имеет `priceMonthlyPerUser`, и в payment нет ветки per-seat для пакетов. Требует
 доработки типа + `resolveLimits`.
+
+## Гвоздь: TIMESTAMP без tz + postgres.js
+
+`token_balance.period_start` / `absorbed_until` — `TIMESTAMP` (без зоны). Драйвер парсит их
+дефолтным `parse: x => new Date(x)`, а строка вида `2026-08-21 18:00:00` в V8 читается как
+**локальное** время. Пишем мы `Date.toISOString()` (UTC wall clock), читаем — сдвинутый инстант.
+На поде вне UTC это ломало и JS-гард `prevStart >= periodStart`, и любой CAS по `period_start`.
+
+Лечится на чтении: `SELECT ... period_start AT TIME ZONE 'UTC' AS period_start` (даёт `+00`,
+который `new Date` разбирает верно). `grantAiTokens` по той же причине пишет
+`now() AT TIME ZONE 'UTC'`, а не `now()` — иначе значение зависит от `TimeZone` сервера.
+
+Списание пакета (`settleTokenBalance`) не сравнивает период на равенство: `WHERE period_start <
+$newPeriodStart` + относительный декремент `remaining_tokens - charge`. Повторный settle и ретрай
+после коммита — no-op, параллельный `grantAiTokens` не затирается.
+
+## Гвоздь: накопительные upsert-ы и ретрай
+
+`pushAiTokensData` / `pushTranscriptUsage` / `pushAiTranscriptData` пишут `col = col + EXCLUDED.col`
+батчами по 100, а `RetryDB` ретраит метод целиком. Половина закоммиченных батчей + ретрай =
+двойной счёт. Отсюда `executeAll()`: один батч выполняется как есть, несколько — в транзакции.
+
+Пороговые алерты пула (`notified80/100`) пишет отдельный `markPoolNotified` ПОСЛЕ успешной
+отправки — иначе падение почты гасило алерт навсегда.

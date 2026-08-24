@@ -125,7 +125,7 @@ class PostgresDB implements BillingDB {
     return db
   }
 
-  async execute<T extends any[] = (Row & Iterable<Row>)[]>(query: string, params?: any[]): Promise<T> {
+  async execute<T extends any[] = (Row & Iterable<Row>)[]>(query: string, params?: any[], sql?: Sql): Promise<T> {
     // Reject non-finite numbers before they reach the driver: a NaN/Infinity usage delta must not
     // corrupt a counter (previously guarded by the manual escaper).
     if (params !== undefined) {
@@ -136,7 +136,23 @@ class PostgresDB implements BillingDB {
       }
     }
     // Native driver bind ($1..$N) — the driver parameterizes, no string interpolation of values.
-    return await this.sql.unsafe<T>(query, params as any)
+    return await (sql ?? this.sql).unsafe<T>(query, params as any)
+  }
+
+  // Accumulating upserts (`col = col + EXCLUDED.col`) are not idempotent, so a batch loop that dies
+  // half way and gets retried at method level would double-count what already committed. One batch
+  // is atomic on its own; several go in a transaction.
+  private async executeAll (statements: Array<{ query: string, params: any[] }>): Promise<void> {
+    if (statements.length === 0) return
+    if (statements.length === 1) {
+      await this.execute(statements[0].query, statements[0].params)
+      return
+    }
+    await this.sql.begin(async (tx) => {
+      for (const st of statements) {
+        await this.execute(st.query, st.params, tx as unknown as Sql)
+      }
+    })
   }
 
   async initSchema (ctx: MeasureContext): Promise<void> {
@@ -492,6 +508,7 @@ class PostgresDB implements BillingDB {
       }
     }
     const deduped = Array.from(aggregated.values())
+    const statements: Array<{ query: string, params: any[] }> = []
 
     for (let i = 0; i < deduped.length; i += BATCH_SIZE) {
       const batch = deduped.slice(i, i + BATCH_SIZE)
@@ -525,8 +542,9 @@ class PostgresDB implements BillingDB {
         last_start_time = GREATEST(billing.ai_transcript_usage.last_start_time, EXCLUDED.last_start_time);
     `
 
-      await this.execute(query, params)
+      statements.push({ query, params })
     }
+    await this.executeAll(statements)
   }
 
   async getAiTranscriptStats (
@@ -637,6 +655,7 @@ class PostgresDB implements BillingDB {
       }
     }
     const deduped = Array.from(aggregated.values())
+    const statements: Array<{ query: string, params: any[] }> = []
 
     for (let i = 0; i < deduped.length; i += BATCH_SIZE) {
       const batch = deduped.slice(i, i + BATCH_SIZE)
@@ -670,8 +689,9 @@ class PostgresDB implements BillingDB {
         total_duration_seconds = billing.ai_transcript_usage_detail.total_duration_seconds
           + EXCLUDED.total_duration_seconds;
     `
-      await this.execute(sql, params)
+      statements.push({ query: sql, params })
     }
+    await this.executeAll(statements)
   }
 
   async getAiTranscriptBreakdown (
@@ -738,6 +758,7 @@ class PostgresDB implements BillingDB {
       }
     }
     const deduped = Array.from(aggregated.values())
+    const statements: Array<{ query: string, params: any[] }> = []
 
     for (let i = 0; i < deduped.length; i += BATCH_SIZE) {
       const batch = deduped.slice(i, i + BATCH_SIZE)
@@ -776,8 +797,9 @@ class PostgresDB implements BillingDB {
         raw_tokens = billing.ai_tokens_usage.raw_tokens + EXCLUDED.raw_tokens;
     `
 
-      await this.execute(sql, params)
+      statements.push({ query: sql, params })
     }
+    await this.executeAll(statements)
   }
 
   // Build a "AND hour >= / < " clause from optional start/end. `end` is exclusive so two adjacent
@@ -1138,28 +1160,29 @@ class PostgresDB implements BillingDB {
       throw new Error(`provider pool not found: ${providerId}/${model}`)
     }
 
-    const { exhausted, reach80, reach100, crossed80, crossed100 } = computePoolTransition(existing, usedTokens)
+    const { exhausted, crossed80, crossed100 } = computePoolTransition(existing, usedTokens)
 
+    // The notified flags are NOT set here: markPoolNotified writes them once the alert is out,
+    // so a failed send is retried on the next pass instead of being lost.
     const sql = `
     UPDATE billing.provider_pool SET
       used_tokens = $3::${this.int8Type},
-      exhausted = $4,
-      notified80 = notified80 OR $5,
-      notified100 = notified100 OR $6
+      exhausted = $4
     WHERE provider_id = $1::${this.stringType} AND model = $2::${this.stringType}`
-    await this.execute(sql, [providerId, model, usedTokens, exhausted, reach80, reach100])
+    await this.execute(sql, [providerId, model, usedTokens, exhausted])
 
-    return {
-      pool: {
-        ...existing,
-        usedTokens,
-        exhausted,
-        notified80: existing.notified80 || reach80,
-        notified100: existing.notified100 || reach100
-      },
-      crossed80,
-      crossed100
-    }
+    return { pool: { ...existing, usedTokens, exhausted }, crossed80, crossed100 }
+  }
+
+  async markPoolNotified (ctx: MeasureContext, providerId: string, model: string, percent: 80 | 100): Promise<void> {
+    // 100% implies 80%: a pool that jumps straight past both sends one alert, and leaving
+    // notified80 false would fire a stale 80% alert on the next pass.
+    const columns = percent === 100 ? 'notified100 = true, notified80 = true' : 'notified80 = true'
+    await this.execute(
+      `UPDATE billing.provider_pool SET ${columns}
+       WHERE provider_id = $1::${this.stringType} AND model = $2::${this.stringType}`,
+      [providerId, model]
+    )
   }
 
   async replaceAiModelRegistry (ctx: MeasureContext, entries: AiModelRegistryEntry[]): Promise<void> {
@@ -1277,7 +1300,15 @@ class PostgresDB implements BillingDB {
   }
 
   async getTokenBalance (ctx: MeasureContext, workspace: WorkspaceUuid): Promise<TokenBalance | undefined> {
-    const result = await this.execute('SELECT * FROM billing.token_balance WHERE workspace = $1::uuid', [workspace])
+    // Read the naive timestamps back as UTC: the driver parses a bare `timestamp` as local time,
+    // so a pod outside UTC would round-trip period_start to a different instant than it wrote.
+    const result = await this.execute(
+      `SELECT workspace, remaining_tokens, absorbed_period,
+        absorbed_until AT TIME ZONE 'UTC' AS absorbed_until,
+        period_start AT TIME ZONE 'UTC' AS period_start
+      FROM billing.token_balance WHERE workspace = $1::uuid`,
+      [workspace]
+    )
     if (result.length === 0) return undefined
     const row = result[0]
     return {
@@ -1305,7 +1336,7 @@ class PostgresDB implements BillingDB {
       RETURNING amount
     )
     INSERT INTO billing.token_balance (workspace, remaining_tokens, absorbed_until, period_start)
-    SELECT $2::uuid, ins.amount, date_trunc('hour', now()), now() FROM ins
+    SELECT $2::uuid, ins.amount, date_trunc('hour', now() AT TIME ZONE 'UTC'), now() AT TIME ZONE 'UTC' FROM ins
     ON CONFLICT (workspace) DO UPDATE SET
       remaining_tokens = billing.token_balance.remaining_tokens + EXCLUDED.remaining_tokens
     RETURNING remaining_tokens`
@@ -1313,23 +1344,28 @@ class PostgresDB implements BillingDB {
     return result.length > 0
   }
 
-  async updateTokenBalanceAbsorption (
+  async settleTokenBalance (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
-    remainingTokens: number,
+    charge: number,
     absorbedUntil: string | null,
     absorbedPeriod: number,
-    periodStart: string
-  ): Promise<void> {
-    await this.execute(
+    newPeriodStart: string
+  ): Promise<boolean> {
+    // Relative decrement + guard on the old period_start (WHERE sees the pre-update row): a second
+    // settle finds it already rolled forward and changes nothing, and a concurrent grant's
+    // increment survives because the balance is never written as an absolute.
+    const result = await this.execute(
       `UPDATE billing.token_balance SET
-        remaining_tokens = $2::${this.int8Type},
+        remaining_tokens = remaining_tokens - $2::${this.int8Type},
         absorbed_until = $3::timestamp,
         absorbed_period = $4::${this.int8Type},
         period_start = $5::timestamp
-      WHERE workspace = $1::uuid`,
-      [workspace, remainingTokens, absorbedUntil, absorbedPeriod, periodStart]
+      WHERE workspace = $1::uuid AND period_start < $5::timestamp
+      RETURNING workspace`,
+      [workspace, charge, absorbedUntil, absorbedPeriod, newPeriodStart]
     )
+    return result.length > 0
   }
 }
 

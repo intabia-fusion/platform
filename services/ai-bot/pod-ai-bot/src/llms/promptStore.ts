@@ -23,11 +23,15 @@ export const PROMPT_KEYS = [
   'summarizeMessages',
   'correctTranscript',
   'directChatWithTools',
-  'threadChatWithTools'
+  'threadChatWithTools',
+  'compactConversation'
 ] as const
 
 export type PromptKey = (typeof PROMPT_KEYS)[number]
 export type PromptTemplates = Record<PromptKey, string>
+
+/** Reply-language rule per language code, written in that language. See prompts.yaml. */
+export type LanguageReminders = Record<string, string>
 
 /**
  * Render a prompt template: `{{#name}}...{{/name}}` blocks are kept only when `vars.name` is
@@ -38,10 +42,28 @@ export function renderPrompt (template: string, vars: Record<string, string | un
   let out = template.replace(/\{\{#(\w+)\}\}([\s\S]*?)\{\{\/\1\}\}/g, (_m, key: string, body: string) => {
     const value = vars[key]
     if (value === undefined || value === '') return ''
-    return body.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value)
+    // Function form: a `$&`/`$1` inside a user-authored value must stay literal.
+    return body.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), () => value)
   })
   // Plain placeholders.
   out = out.replace(/\{\{(\w+)\}\}/g, (_m, key: string) => vars[key] ?? '')
+  return out
+}
+
+/**
+ * The `replyLanguageReminder` map from the same file. Optional: a prompts.yaml without it simply
+ * yields no reminder, and the prompts render without that block.
+ */
+export function loadLanguageReminders (filePath?: string): LanguageReminders {
+  const resolved = filePath ?? defaultPromptsPath()
+  if (!fs.existsSync(resolved)) return {}
+  const raw = yaml.load(fs.readFileSync(resolved, 'utf8'))
+  const map = (raw as Record<string, unknown> | null)?.replyLanguageReminder
+  if (map === null || typeof map !== 'object') return {}
+  const out: LanguageReminders = {}
+  for (const [lang, text] of Object.entries(map as Record<string, unknown>)) {
+    if (typeof text === 'string' && text.trim() !== '') out[lang] = text
+  }
   return out
 }
 

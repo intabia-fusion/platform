@@ -241,6 +241,9 @@ export class DocumentContentPage extends CommonPage {
       // Retry until this exact line is selected - a stale selection is non-empty too.
       const expected = (await loc.textContent()) ?? text
       await expect(async () => {
+        // selectText only sets a DOM selection. After a popup (TOC, menu) took focus the editor is
+        // not focused, so ProseMirror ignores it and the toolbar command applies to nothing.
+        await loc.click()
         await loc.selectText()
         expect(await this.page.evaluate(() => window.getSelection()?.toString() ?? '')).toEqual(expected)
       }).toPass({ timeout: 15000 })

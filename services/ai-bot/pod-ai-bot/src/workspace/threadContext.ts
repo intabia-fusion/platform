@@ -25,18 +25,23 @@ export interface ContextLine {
   content: string
 }
 
-/** Truncate thread messages to fit the model context window, keeping the most recent ones. */
+/**
+ * Truncate thread messages to fit the model context window, keeping the most recent ones.
+ *
+ * The hard cap of 20 turns that used to sit here is gone: it hid whatever a large window could
+ * have held, and what no longer fits is now folded into a summary by compaction rather than
+ * dropped (see workspace/compaction.ts).
+ */
 export function buildThreadContext (
   messages: ContextMessage[],
   promptTokens: number,
   maxContentTokens: number
 ): ContextLine[] {
-  const recent = messages.slice(-20)
   const result: ContextLine[] = []
   let total = promptTokens
 
-  for (let i = recent.length - 1; i >= 0; i--) {
-    const m = recent[i]
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
     if (total + m.tokens > maxContentTokens) break
     result.unshift({ role: m.role, content: m.content })
     total += m.tokens

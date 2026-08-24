@@ -16,7 +16,7 @@ import love, {
 } from '@hcengineering/love'
 import { generateToken } from '@hcengineering/server-token'
 import { PlatformURI, PlatformUserSecond } from '../utils'
-import type { BrowserContext, Page } from '@playwright/test'
+import { expect, type BrowserContext, type Page } from '@playwright/test'
 
 const MEETINGS_WS = 'meetings-ws'
 
@@ -149,6 +149,18 @@ export async function leaveIfInMeeting (_page: Page): Promise<void> {
 
 export async function leaveAllMeetings (_pages: Page[]): Promise<void> {
   // Intentionally empty — see leaveIfInMeeting.
+}
+
+// `sendKnockRequest` returns silently until the employee and their space resolve, so an early
+// click creates nothing. Re-clicking is safe: the apply carries `notMatch` on a pending request.
+export async function knockAndWaitPending (page: Page, timeoutMs = 30000): Promise<void> {
+  const knockBtn = page.locator('[data-id="meeting-knock"]').first()
+  const pending = page.locator('[data-id="meeting-knock-pending"]').first()
+  await expect(async () => {
+    if (await pending.isVisible()) return
+    await knockBtn.click({ timeout: 5000 })
+    await expect(pending).toBeVisible({ timeout: 5000 })
+  }).toPass({ intervals: [500, 1000], timeout: timeoutMs })
 }
 
 /**

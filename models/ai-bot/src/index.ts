@@ -100,6 +100,15 @@ export class TAIRequest extends TDoc implements AIRequest {
 
   @Prop(TypeNumber(), core.string.Number)
     iteration?: number
+
+  @Prop(TypeNumber(), core.string.Number)
+    contextTokens?: number
+
+  @Prop(TypeNumber(), core.string.Number)
+    contextCompactAt?: number
+
+  @Prop(TypeBoolean(), core.string.Boolean)
+    compacted?: boolean
 }
 
 @Model(aiBot.class.AISpaceSettings, core.class.Doc, DOMAIN_AI)
@@ -118,6 +127,9 @@ export class TAISpaceSettings extends TDoc implements AISpaceSettings {
 
   @Prop(TypeString(), core.string.String)
     sharedPrompt?: string
+
+  @Prop(TypeBoolean(), core.string.Boolean)
+    meetingSummary?: boolean
 }
 
 @Model(aiBot.class.AIContextMessage, chunter.class.ChatMessage)
@@ -262,7 +274,7 @@ export function createModel (builder: Builder): void {
     component: aiBot.component.IssueAssistPanel
   })
 
-  // "Discuss with Yulia" button in the object header (issues, documents, etc.).
+  // "Discuss with the assistant" button in the object header (issues, documents, etc.).
   builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
     extension: view.extensions.EditDocTitleExtension,
     component: aiBot.component.DiscussWithAI

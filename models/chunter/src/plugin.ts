@@ -44,6 +44,7 @@ export default mergeIds(chunterId, chunter, {
     JoinChannelNotificationPresenter: '' as AnyComponent,
     WorkbenchTabExtension: '' as AnyComponent,
     DirectMessageButton: '' as AnyComponent,
+    AIChatButton: '' as AnyComponent,
     EmployeePresenter: '' as AnyComponent
   },
   action: {

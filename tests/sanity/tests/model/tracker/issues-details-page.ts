@@ -173,13 +173,30 @@ export class IssuesDetailsPage extends CommonTrackerPage {
         await this.buttonEstimation().click()
         await this.fillEstimationPopup(this.page, estimation)
         await expect(this.textEstimation()).toHaveText(convertEstimation(estimation), { timeout: 3000 })
+        // The write is lost when a previous estimation update is still in flight: the panel renders
+        // the new value optimistically and then falls back to the stored one about 70ms later, and
+        // the server never sees it. Settle before believing the first read, so the retry re-saves.
+        await this.page.waitForTimeout(500)
+        await expect(this.textEstimation()).toHaveText(convertEstimation(estimation), { timeout: 3000 })
       }).toPass({ intervals: [300, 1000], timeout: 20000 })
     }
   }
 
   async addExistingLabel (label: string): Promise<void> {
     await this.buttonAddLabel().click()
-    await this.checkFromDropdownWithSearch(this.page, label)
+    await this.selectPopupInput().fill(label)
+    const item = this.selectPopupSpanLines(label)
+    // In a project of a freshly created type the popup can open before the client knows the new
+    // task type class and then lists nothing. Reopen it instead of waiting an empty list out.
+    await expect(async () => {
+      if ((await item.count()) === 0) {
+        await this.closePopups()
+        await this.buttonAddLabel().click()
+        await this.selectPopupInput().fill(label)
+      }
+      await expect(item).toHaveCount(1, { timeout: 5000 })
+    }).toPass({ intervals: [500, 1000], timeout: 30000 })
+    await item.click()
     await this.closePopups()
   }
 
@@ -209,8 +226,12 @@ export class IssuesDetailsPage extends CommonTrackerPage {
       const val = convertEstimation(data.estimation)
       await expect(async () => {
         const curValue = JSON.stringify((await this.textEstimation().allTextContents()).join(' '))
-        await expect(this.textEstimation(), `should be ${JSON.stringify(val)} but it ${curValue})}`).toHaveText(val)
-      }).toPass({ intervals: [100, 200, 500, 1000], timeout: 10000 })
+        // Short inner timeout on purpose: the default 15s outlives the enclosing toPass, so the
+        // retry never happens and the failure carries no value to look at.
+        await expect(this.textEstimation(), `should be ${JSON.stringify(val)} but it is ${curValue}`).toHaveText(val, {
+          timeout: 2000
+        })
+      }).toPass({ intervals: [100, 200, 500, 1000], timeout: 15000 })
     }
     if (data.parentIssue != null) {
       await expect(this.textParentTitle()).toHaveText(data.parentIssue)

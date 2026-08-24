@@ -66,6 +66,8 @@ export function usageFromApi (usage?: ApiUsage): TokenUsage | undefined {
 export interface ChatCompletionWithToolsResult {
   completion?: string
   usage?: TokenUsage
+  // Tools called while producing this answer, for the conversation snapshot.
+  toolTranscript?: ToolResult[]
   // The user stopped the run: the completion is what one final step could assemble.
   cancelled?: boolean
 }
@@ -156,6 +158,20 @@ export interface LLMProvider {
     workspace: WorkspaceUuid,
     text: string,
     lang?: string,
+    level?: AILevel
+  ) => Promise<string | undefined>
+
+  /**
+   * Fold the older part of a conversation into a structured summary (see prompts.yaml
+   * `compactConversation`). Optional: a provider without it simply never compacts, and the
+   * window trim keeps behaving as before.
+   */
+  compactConversation?: (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    transcript: string,
+    lang: string,
+    previousSummary?: string,
     level?: AILevel
   ) => Promise<string | undefined>
 

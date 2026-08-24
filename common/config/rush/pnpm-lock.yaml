@@ -6,6 +6,11 @@ settings:
 
 pnpmfileChecksum: sha256-E1T7OJ3DLTjpDqf4RdJzK9VDtAxgm4gDEQCLYdHD8nI=
 
+patchedDependencies:
+  kafkajs@2.2.4:
+    hash: ec99008fcb0d6fe23a373d2f78ad735c50799a38ba88be07fb9428b493ea8291
+    path: patches/kafkajs@2.2.4.patch
+
 importers:
 
   .: {}
@@ -4372,7 +4377,7 @@ importers:
         version: link:../../../core/packages/storage
       kafkajs:
         specifier: ^2.2.4
-        version: 2.2.4
+        version: 2.2.4(patch_hash=ec99008fcb0d6fe23a373d2f78ad735c50799a38ba88be07fb9428b493ea8291)
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -29471,7 +29476,7 @@ importers:
         version: 16.6.1
       kafkajs:
         specifier: ^2.2.4
-        version: 2.2.4
+        version: 2.2.4(patch_hash=ec99008fcb0d6fe23a373d2f78ad735c50799a38ba88be07fb9428b493ea8291)
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -38857,7 +38862,7 @@ importers:
         version: 1.2.1
       kafkajs:
         specifier: ^2.2.4
-        version: 2.2.4
+        version: 2.2.4(patch_hash=ec99008fcb0d6fe23a373d2f78ad735c50799a38ba88be07fb9428b493ea8291)
       markdown-it:
         specifier: ^14.0.0
         version: 14.1.0
@@ -61534,7 +61539,7 @@ snapshots:
 
   jwt-simple@0.5.6: {}
 
-  kafkajs@2.2.4: {}
+  kafkajs@2.2.4(patch_hash=ec99008fcb0d6fe23a373d2f78ad735c50799a38ba88be07fb9428b493ea8291): {}
 
   katex@0.16.47:
     dependencies:

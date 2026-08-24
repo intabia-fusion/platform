@@ -123,8 +123,7 @@ export async function migrateDefaultStatusesBase<T extends Task> (
     logger.error('NOT SUPPORTED. EXITING.', '')
     return
   } else if (defaultTypes.length === 0) {
-    logger.log('No default type found. Was custom and already migrated? Nothing to do.', '')
-    return
+    return // already migrated or custom - nothing to do
   }
 
   const defaultType = defaultTypes[0]

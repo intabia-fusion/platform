@@ -252,6 +252,10 @@ export class LoggedDB implements BillingDB {
     )
   }
 
+  async markPoolNotified (ctx: MeasureContext, providerId: string, model: string, percent: 80 | 100): Promise<void> {
+    await ctx.with('db.markPoolNotified', {}, () => this.db.markPoolNotified(ctx, providerId, model, percent))
+  }
+
   async replaceAiModelRegistry (ctx: MeasureContext, entries: AiModelRegistryEntry[]): Promise<void> {
     await ctx.with('db.replaceAiModelRegistry', {}, () => this.db.replaceAiModelRegistry(ctx, entries))
   }
@@ -295,16 +299,16 @@ export class LoggedDB implements BillingDB {
     return await ctx.with('db.grantAiTokens', {}, () => this.db.grantAiTokens(ctx, workspace, grantId, amount))
   }
 
-  async updateTokenBalanceAbsorption (
+  async settleTokenBalance (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
-    remainingTokens: number,
+    charge: number,
     absorbedUntil: string | null,
     absorbedPeriod: number,
-    periodStart: string
-  ): Promise<void> {
-    await ctx.with('db.updateTokenBalanceAbsorption', {}, () =>
-      this.db.updateTokenBalanceAbsorption(ctx, workspace, remainingTokens, absorbedUntil, absorbedPeriod, periodStart)
+    newPeriodStart: string
+  ): Promise<boolean> {
+    return await ctx.with('db.settleTokenBalance', {}, () =>
+      this.db.settleTokenBalance(ctx, workspace, charge, absorbedUntil, absorbedPeriod, newPeriodStart)
     )
   }
 }

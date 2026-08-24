@@ -1,4 +1,4 @@
-# ЮляИИ: контекст разговоров, настройки, модели (FUSIO-886)
+# Юля ИИ: контекст разговоров, настройки, модели (FUSIO-886)
 
 ## Контекст по месту (workspaceClient.processMessageEvent)
 - **Direct top-level**: бот отвечает inline в Direct (ChatMessage в DirectMessage),
@@ -46,7 +46,7 @@
   yaml без stt-секции.
 - env-интерполяции `${VAR}` в yaml НЕТ - секреты литералами.
 
-## UI настроек ЮляИИ (plugins/ai-bot-resources)
+## UI настроек Юля ИИ (plugins/ai-bot-resources)
 - Одна settings-категория `ai-settings` (role Guest), внутри NavItem-навигация
   Основные/Персональные - паттерн billing Settings.svelte (hulyComponent-content__
   container columns + Separator + location path[5]). НЕ TabList.
@@ -86,7 +86,7 @@
   catch -> throw. Pod catch: failedPatch + лог, В ЧАТ НЕ ПИШЕМ, не rethrow. TODO(inbox).
 
 ### Промпты (prompts.yaml + prompts.ts + promptStore.ts)
-- Имя унифицировано "Юля" (было direct=Юля/thread=ЮляИИ), платформа "Intabia Fusion".
+- Имя унифицировано "Юля" (было direct=Юля/thread=Юля ИИ), платформа "Intabia Fusion".
 - Добавлено `{{currentDateTime}}` (nowForPrompt локализ) + `Always reply in {{lang}}`.
 - Язык ответа: `AIPersonalData.language?` (personal override для direct); резолв
   `resolveChatLanguage` в wsClient (direct: personal->space->ws->default; thread: без personal).

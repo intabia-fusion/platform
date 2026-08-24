@@ -220,6 +220,38 @@ export default class OpenAIProvider implements LLMProvider {
     return response.choices?.[0]?.message?.content ?? undefined
   }
 
+  async compactConversation (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    transcript: string,
+    lang: string,
+    previousSummary?: string,
+    level?: AILevel
+  ): Promise<string | undefined> {
+    if (transcript.trim() === '') return undefined
+    const response = await this.client.chat.completions.create({
+      model: this.modelFor(level),
+      messages: [
+        { role: 'system', content: PROMPTS.COMPACT_CONVERSATION(lang, previousSummary) },
+        { role: 'user', content: transcript }
+      ]
+    })
+    const usage = usageFromApi(response.usage)
+    if (totalTokens(usage) !== 0 && usage !== undefined) {
+      // Compaction is part of the harness and its tokens are the workspace's: billed like any
+      // other request, with its own reason so the breakdown shows what compacting costs.
+      billUsage(
+        ctx,
+        workspace,
+        usage,
+        this.billingFor(level),
+        'compaction',
+        new Date((response.created ?? Date.now() / 1000) * 1000).toISOString()
+      )
+    }
+    return response.choices?.[0]?.message?.content ?? undefined
+  }
+
   async createChatCompletionWithTools (
     tools: RunnableTools<BaseFunctionsArgs>,
     message: ChatMessage,
@@ -239,7 +271,7 @@ export default class OpenAIProvider implements LLMProvider {
     try {
       // Shared tool loop instead of the SDK's own `runTools`: only this loop reports per-round
       // progress and honours cancellation. Billing happens inside chatToolStep, per round.
-      const { toolDefinitions, execute } = buildToolExecutor(tools)
+      const { toolDefinitions, execute, knownTools } = buildToolExecutor(tools)
 
       const ask: AskModel = async (priorToolResults, noTools, continueFrom) =>
         await this.chatToolStep(
@@ -260,7 +292,7 @@ export default class OpenAIProvider implements LLMProvider {
           continueFrom
         )
 
-      const result = await runToolCalls(ask, execute, MAX_TOOL_ITERATIONS, hooks)
+      const result = await runToolCalls(ask, execute, MAX_TOOL_ITERATIONS, hooks, knownTools)
 
       // Reasoning models leak their scratchpad; keep only what follows the closing tag.
       let completion = result?.completion
@@ -269,7 +301,7 @@ export default class OpenAIProvider implements LLMProvider {
         completion = (completion ?? '').substring(pos + 8)
       }
 
-      return { completion, usage: result?.usage, cancelled: result?.cancelled }
+      return { completion, usage: result?.usage, cancelled: result?.cancelled, toolTranscript: result?.toolTranscript }
     } catch (e) {
       ctx.error('openai tools completion failed', { error: (e as any)?.message })
     }
@@ -308,7 +340,8 @@ export default class OpenAIProvider implements LLMProvider {
         personalContext,
         systemMessages,
         lang,
-        this.provider.levels[level ?? this.defaultLevel]?.capabilities?.maxOutputTokens
+        this.provider.levels[level ?? this.defaultLevel]?.capabilities?.maxOutputTokens,
+        config.FirstName
       )
 
       const messages: any[] = [
@@ -326,8 +359,8 @@ export default class OpenAIProvider implements LLMProvider {
       // back a structured tool_calls turn, so feed those back as plain text; native callers keep the structured transcript.
       for (const tr of priorToolResults) {
         if (tr.id.startsWith('inline_')) {
-          messages.push({ role: 'assistant', content: `Вызов инструмента ${tr.name}(${tr.arguments ?? '{}'})` })
-          messages.push({ role: 'user', content: `Результат инструмента ${tr.name}:\n${tr.content}` })
+          messages.push({ role: 'assistant', content: `Tool call: ${tr.name}(${tr.arguments ?? '{}'})` })
+          messages.push({ role: 'user', content: `Tool result (${tr.name}):\n${tr.content}` })
           continue
         }
         messages.push({

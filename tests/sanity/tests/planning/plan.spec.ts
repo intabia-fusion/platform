@@ -156,7 +156,9 @@ test.describe('Planning ToDo tests', () => {
     dateEndTomorrow.setDate(dateEndTomorrow.getDate() + 1)
 
     const toDoSeveralSlots: NewToDo = {
-      title: 'Plan work for several days',
+      // Own ToDo, not the seeded one: the test adds two slots and then reads them back by row
+      // index, so any slot left on the ToDo by an earlier run shifts every index by one.
+      title: `Plan work for several days-${generateId()}`,
       slots: [
         {
           dateStart: 'today',
@@ -185,6 +187,7 @@ test.describe('Planning ToDo tests', () => {
     const planningNavigationMenuPage = new PlanningNavigationMenuPage(page)
     await planningNavigationMenuPage.clickOnButtonToDoAll()
 
+    await planningPage.createNewToDo({ title: toDoSeveralSlots.title })
     await planningPage.checkToDoExist(toDoSeveralSlots.title)
     await planningPage.openToDoByName(toDoSeveralSlots.title)
     if (toDoSeveralSlots.slots != null) {

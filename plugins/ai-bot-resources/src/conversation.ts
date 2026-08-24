@@ -181,7 +181,7 @@ export async function archiveConversation (root: StartedConversation): Promise<v
 
 /**
  * Hand the drafting conversation over to the issue it produced: the root points at that issue and
- * loses its draft purpose, so it becomes the object's ordinary "discuss with Yulia" thread -
+ * loses its draft purpose, so it becomes the object's ordinary "discuss with the assistant" thread -
  * pressing that button on the issue reopens this conversation, history and all.
  */
 export async function linkConversationResult (

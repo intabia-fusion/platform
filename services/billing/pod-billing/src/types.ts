@@ -344,14 +344,17 @@ export interface BillingDB {
   upsertProviderPool: (ctx: MeasureContext, config: ProviderPoolConfig) => Promise<void>
   // Top-up: add `delta` purchased tokens to a pool and reopen it (clear exhausted/notify).
   addPurchasedTokens: (ctx: MeasureContext, providerId: string, model: string, delta: number) => Promise<void>
-  // Recompute used/exhausted/notify-flags from getProviderTokenTotals; returns the
-  // updated pool plus whether a threshold (80/100) was newly crossed this pass.
+  // Recompute used/exhausted from getProviderTokenTotals; returns the updated pool plus whether a
+  // threshold (80/100) was newly crossed this pass. Does not touch the notified flags.
   updateProviderPoolState: (
     ctx: MeasureContext,
     providerId: string,
     model: string,
     usedTokens: number
   ) => Promise<{ pool: ProviderPool, crossed80: boolean, crossed100: boolean }>
+  // Records that the threshold alert went out. Written only after a successful send, so a failed
+  // one is re-attempted next pass rather than silently dropped.
+  markPoolNotified: (ctx: MeasureContext, providerId: string, model: string, percent: 80 | 100) => Promise<void>
 
   // aibot model registry: replace-all upsert (startup push) + list for the admin UI.
   replaceAiModelRegistry: (ctx: MeasureContext, entries: AiModelRegistryEntry[]) => Promise<void>
@@ -376,15 +379,17 @@ export interface BillingDB {
   // Atomically add tokens to the balance. Idempotent by grantId (ledger PK): a redelivered
   // purchase event or a repeated package-period grant adds nothing and returns false.
   grantAiTokens: (ctx: MeasureContext, workspace: WorkspaceUuid, grantId: string, amount: number) => Promise<boolean>
-  // Persist the absorption cursor after the hourly recompute spent balance against usage.
-  updateTokenBalanceAbsorption: (
+  // Settle the finished pack period: decrement the balance by charge and roll period_start
+  // forward, only while it is still behind newPeriodStart. A concurrent double settle (or a retry
+  // after a committed attempt) is therefore a no-op; returns false when the row was already settled.
+  settleTokenBalance: (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
-    remainingTokens: number,
+    charge: number,
     absorbedUntil: string | null,
     absorbedPeriod: number,
-    periodStart: string
-  ) => Promise<void>
+    newPeriodStart: string
+  ) => Promise<boolean>
 }
 
 // --- billing-usage queue ---
