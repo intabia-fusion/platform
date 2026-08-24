@@ -191,7 +191,9 @@ export async function runToolCalls (
         }
       }
       return {
-        completion,
+        // An answer lost to the output cap leaves `content` empty: fall back to whatever the model
+        // did say earlier, so the user never gets silence.
+        completion: completion !== undefined && completion !== '' ? completion : lastContent,
         usage: usageResult(),
         clientId,
         toolTranscript: priorToolResults.length > 0 ? priorToolResults : undefined

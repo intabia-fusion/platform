@@ -311,6 +311,18 @@ describe('invented tool calls', () => {
     expect(rounds.filter((r) => r === 'round').length).toBeLessThanOrEqual(3)
   })
 
+  // Silence is the worst possible answer: an output-capped final round must not erase what was said.
+  it('falls back to earlier content when the final answer is lost to the output cap', async () => {
+    let n = 0
+    const asks = jest.fn(async () => {
+      n += 1
+      if (n === 1) return { content: 'начало ответа', toolCalls: [{ id: '1', name: 'propose_task', arguments: '{}' }] }
+      return { content: '', truncated: true }
+    })
+    const result = await runToolCalls(asks as any, async () => 'ok', 8, undefined, new Set(['propose_task']))
+    expect(result?.completion).toBe('начало ответа')
+  })
+
   // The cutoff must not swallow the round that triggered it: the real call in it still has to run.
   it('executes the round that hits the cutoff', async () => {
     const executed: string[] = []

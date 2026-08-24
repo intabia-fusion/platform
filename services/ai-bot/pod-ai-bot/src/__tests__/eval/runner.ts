@@ -454,6 +454,12 @@ function checkExpectations (
     }
   }
 
+  // Any rewrite can come back double-escaped: the body then carries literal \n instead of newlines,
+  // which every `contains` assert happily ignores while the document is in fact garbage.
+  if (doc !== undefined && expect.document?.unchanged !== true) {
+    add('document has no literal \\n', !doc.body.includes('\\n'), doc.body.slice(0, 120))
+  }
+
   if (expect.issues !== undefined) {
     if (expect.issues.count !== undefined) {
       add(
