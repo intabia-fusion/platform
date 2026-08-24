@@ -388,7 +388,11 @@ class WsCache {
 
   public async getDoc<T extends Doc = Doc>(_id: Ref<T>, _class: Ref<Class<T>>): Promise<T | undefined> {
     if (this.docs.has(_id)) return this.docs.get(_id) as T
+    // A tx can name a task type's target mixin that the workspace model no longer has; findOne then
+    // throws "domain not found" and the tx consumer retries that one message forever.
+    if (!this.client.hierarchy.hasClass(_class)) return undefined
     const query = { _id } as unknown as DocumentQuery<T>
+
     const doc = await this.client.findOne(_class, query)
     if (doc !== undefined) {
       this.docs.set(_id, doc)
