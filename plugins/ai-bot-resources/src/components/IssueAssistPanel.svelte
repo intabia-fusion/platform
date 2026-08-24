@@ -187,12 +187,12 @@
     }
   }
 
-  // Starting another draft in the same dialog starts another conversation.
+  // Another draft, another conversation. `stamped` stays: clearing it re-stamps the fresh
+  // conversation with the previous issue.
   $: if (session !== lastSession) {
     lastSession = session
     conversation = undefined
     proposal = undefined
-    stamped = undefined
     onConversation?.(undefined)
   }
 

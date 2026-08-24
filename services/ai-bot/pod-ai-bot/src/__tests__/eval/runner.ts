@@ -97,10 +97,7 @@ export interface Scenario {
   lang?: string
   /** Lowered thresholds so compaction can be exercised without a hundred long turns. */
   compaction?: { budgetTokens?: number, reserveTokens?: number, keepRecentTokens?: number }
-  /**
-   * Pins the context budget for this scenario instead of deriving it from the model window.
-   * A scenario about overflow is meaningless when a wider model quietly fits everything.
-   */
+  /** Pins the context budget: an overflow scenario is meaningless when a wider model fits everything. */
   contextBudgetTokens?: number
   world?: {
     /** `repeat` multiplies the body: the only way to write a document that overflows a window. */
@@ -454,8 +451,7 @@ function checkExpectations (
     }
   }
 
-  // Any rewrite can come back double-escaped: the body then carries literal \n instead of newlines,
-  // which every `contains` assert happily ignores while the document is in fact garbage.
+  // Double-escaped rewrites leave literal \n in the body, which `contains` asserts happily ignore.
   if (doc !== undefined && expect.document?.unchanged !== true) {
     add('document has no literal \\n', !doc.body.includes('\\n'), doc.body.slice(0, 120))
   }

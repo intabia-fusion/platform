@@ -207,9 +207,7 @@ export async function runToolCalls (
       break
     }
 
-    // A weak model pairs a real call with an invented one, so the round is executed before the
-    // cutoff applies: otherwise the real call is dropped and the invented one never gets its
-    // "no such tool" feedback.
+    // Weak models pair a real call with an invented one: run the round, then stop.
     let lastRound = false
     if (knownTools !== undefined && knownTools.size > 0) {
       phantomCalls += calls.filter((c) => !knownTools.has(c.name)).length

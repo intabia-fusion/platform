@@ -945,6 +945,51 @@ export class WorkspaceClient {
     let snapshotForRetry: ConversationSnapshot | undefined
     const retriedAfterCompaction = args.retriedAfterCompaction === true
 
+    // Monthly billed-token window (from billing). Past the limit: paid plans downgrade to
+    // the local low level, free plans are blocked (fallback-eligible levels always serve).
+    const requestedLevel = level ?? config.DefaultLevel
+    // Only levels allowed for this feature take part in routing and window downgrade.
+    const registry = registryForFeature(config.AIProviders, event.feature)
+    const windows = await getWorkspaceWindows(this.ctx, this.wsIds.uuid)
+    // Limits are feature-agnostic: the fallback is searched in the full registry, else a feature
+    // that excludes the fallback-eligible level (low) would hard-block instead of degrading.
+    const decision = decideLevel(requestedLevel, windows)
+    if (decision.action === 'block') {
+      const lang = event.language ?? config.DefaultLanguage
+      const message =
+        decision.reason === 'unavailable' ? aiBot.string.AIServiceUnavailable : aiBot.string.TokenLimitReachedMonth
+      // Replaces "is typing" with the reason right away, so the user reads it while the refusal
+      // message is still being written.
+      await this.setTypingStatus(objectId, space, message)
+      await this.notifyLimit(
+        personUuid,
+        lang,
+        {
+          messageClass,
+          space,
+          objectId,
+          objectClass,
+          collection: event.collection
+        },
+        message
+      )
+      return
+    }
+
+    // Effective level may have been downgraded to a fallback-eligible model. A downgrade serves
+    // from the full registry (degraded answer beats none); the normal path stays feature-narrowed.
+    const effectiveLevel = decision.level ?? requestedLevel
+    const resolved = resolveModel(effectiveLevel, effectiveLevel === requestedLevel ? registry : config.AIProviders)
+
+    // Landed on a different level than requested (window downgrade or a feature-denied level):
+    // switch the LLM instance too, else the original provider would run + bill the wrong level.
+    if (resolved.level !== requestedLevel && providers !== undefined) {
+      const downgraded = providers.get(resolved.provider.id)
+      if (downgraded !== undefined) {
+        llm = downgraded
+      }
+    }
+
     {
       // Top-level replies use only today's messages; older ones load via load_thread_history tool.
       const dayLimited = event.objectIdIsSpace
@@ -995,7 +1040,7 @@ export class WorkspaceClient {
             source._class === chunter.class.ThreadMessage ||
             source._class === aiBot.class.AIContextMessage)
         if (source !== undefined && !isChatStarter) {
-          const budget = contextBudgetFor(level ?? config.DefaultLevel)
+          const budget = contextBudgetFor(resolved.level)
           const built = await this.buildDocPrompt(
             source,
             (text) => llm.countTokens([{ role: 'user', content: text }]) ?? 0,
@@ -1018,9 +1063,9 @@ export class WorkspaceClient {
           objectId,
           snapshot,
           llm,
-          contextBudgetFor(level ?? config.DefaultLevel),
+          contextBudgetFor(resolved.level),
           event.language ?? config.DefaultLanguage,
-          level,
+          resolved.level,
           personUuid,
           space
         )
@@ -1090,51 +1135,6 @@ export class WorkspaceClient {
       }
     }
 
-    // Monthly billed-token window (from billing). Past the limit: paid plans downgrade to
-    // the local low level, free plans are blocked (fallback-eligible levels always serve).
-    const requestedLevel = level ?? config.DefaultLevel
-    // Only levels allowed for this feature take part in routing and window downgrade.
-    const registry = registryForFeature(config.AIProviders, event.feature)
-    const windows = await getWorkspaceWindows(this.ctx, this.wsIds.uuid)
-    // Limits are feature-agnostic: the fallback is searched in the full registry, else a feature
-    // that excludes the fallback-eligible level (low) would hard-block instead of degrading.
-    const decision = decideLevel(requestedLevel, windows)
-    if (decision.action === 'block') {
-      const lang = event.language ?? config.DefaultLanguage
-      const message =
-        decision.reason === 'unavailable' ? aiBot.string.AIServiceUnavailable : aiBot.string.TokenLimitReachedMonth
-      // Replaces "is typing" with the reason right away, so the user reads it while the refusal
-      // message is still being written.
-      await this.setTypingStatus(objectId, space, message)
-      await this.notifyLimit(
-        personUuid,
-        lang,
-        {
-          messageClass,
-          space,
-          objectId,
-          objectClass,
-          collection: event.collection
-        },
-        message
-      )
-      return
-    }
-
-    // Effective level may have been downgraded to a fallback-eligible model. A downgrade serves
-    // from the full registry (degraded answer beats none); the normal path stays feature-narrowed.
-    const effectiveLevel = decision.level ?? requestedLevel
-    const resolved = resolveModel(effectiveLevel, effectiveLevel === requestedLevel ? registry : config.AIProviders)
-
-    // Landed on a different level than requested (window downgrade or a feature-denied level):
-    // switch the LLM instance too, else the original provider would run + bill the wrong level.
-    if (resolved.level !== requestedLevel && providers !== undefined) {
-      const downgraded = providers.get(resolved.provider.id)
-      if (downgraded !== undefined) {
-        llm = downgraded
-      }
-    }
-
     const aiRequestId = await this.createAIRequest(personUuid, space, {
       level: resolved.level,
       modelId: resolved.model.model,
@@ -1190,9 +1190,12 @@ export class WorkspaceClient {
         this.requestHooks(personUuid, aiRequestId, space)
       )
     } catch (err: any) {
-      // Token counts are estimates, so the provider can refuse a context we thought fitted. Compact
-      // and retry once: dropping the request would lose an answer over an arithmetic error.
-      if (isContextOverflow(err) && snapshotForRetry !== undefined && !retriedAfterCompaction) {
+      // Estimates can under-count, so compact and retry once - but only while the window still
+      // serves: the failed call may have used it up, and compacting is another billed call.
+      const stillServes =
+        !isContextOverflow(err) ||
+        decideLevel(resolved.level, await getWorkspaceWindows(this.ctx, this.wsIds.uuid)).action !== 'block'
+      if (isContextOverflow(err) && stillServes && snapshotForRetry !== undefined && !retriedAfterCompaction) {
         this.ctx.warn('context overflow, compacting and retrying once', { workspace: this.wsIds.uuid })
         const compacted = await this.compactIfNeeded(
           objectId,
