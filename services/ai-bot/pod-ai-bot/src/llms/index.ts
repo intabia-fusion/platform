@@ -81,14 +81,19 @@ export function createProvider (
  * Resolve the provider serving the configured default level (for client mode and
  * service ops that are not part of the per-provider pipeline).
  */
-export function createDefaultProvider (ctx: MeasureContext, server?: ClisrServer): LLMProvider | undefined {
+export function createDefaultProvider (
+  ctx: MeasureContext,
+  server?: ClisrServer,
+  built?: Map<string, LLMProvider>
+): LLMProvider | undefined {
   const serves = (cfg: AIProviderConfig): boolean => cfg.levels[config.DefaultLevel] !== undefined
   const cfg = config.AIProviders.find(serves) ?? config.AIProviders[0]
   if (cfg === undefined) {
     ctx.info('No LLM providers configured, disabled')
     return undefined
   }
-  return createProvider(ctx, cfg, server)
+  // Reuse the registry instance: a second one of the same provider means a second auth timer.
+  return built?.get(cfg.id) ?? createProvider(ctx, cfg, server)
 }
 
 /**

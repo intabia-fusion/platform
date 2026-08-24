@@ -141,7 +141,7 @@ export class AIControl {
    */
   initLLM (clisrServer?: ClisrServer): void {
     this.providers = createProvidersFromRegistry(this.ctx, clisrServer)
-    this.llm = createDefaultProvider(this.ctx, clisrServer)
+    this.llm = createDefaultProvider(this.ctx, clisrServer, this.providers)
   }
 
   /** All provider ids in the registry (= per-provider topic suffixes). */
