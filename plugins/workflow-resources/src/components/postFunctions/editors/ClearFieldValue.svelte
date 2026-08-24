@@ -45,7 +45,8 @@
     'reportedTime',
     'attachments',
     'comments',
-    'reports'
+    'reports',
+    'subIssues'
   ]
   const EXCLUDED_TYPES = [
     core.class.TypeMarkup,
