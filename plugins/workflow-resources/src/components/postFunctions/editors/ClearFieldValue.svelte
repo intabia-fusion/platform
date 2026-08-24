@@ -42,7 +42,10 @@
     'space',
     'status',
     'title',
-    'reportedTime'
+    'reportedTime',
+    'attachments',
+    'comments',
+    'reports'
   ]
   const EXCLUDED_TYPES = [
     core.class.TypeMarkup,
@@ -64,14 +67,14 @@
   const updateItems = reduceCalls(async (lang: string): Promise<void> => {
     const res = await getDisplayAttributes(taskType.targetClass, lang, EXCLUDED_FIELDS, EXCLUDED_TYPES)
 
-    const resultItems: DropdownTextItem[] = []
-    const newDisplayAttrs: DisplayAttribute[] = []
+    const _items: DropdownTextItem[] = []
+    const _displayAttributes: DisplayAttribute[] = []
 
     res.forEach((group, groupIdx) => {
       group.regular.forEach((attr, idx) => {
-        newDisplayAttrs.push(attr)
+        _displayAttributes.push(attr)
         const isFirstInGroup = groupIdx > 0 && idx === 0
-        resultItems.push({
+        _items.push({
           id: attr.id,
           label: attr.label,
           icon: attr.icon,
@@ -80,10 +83,24 @@
           separatorLabel: isFirstInGroup ? getEmbeddedLabel(group.classLabel) : undefined
         })
       })
+
+      group.collection.forEach((attr, idx) => {
+        _displayAttributes.push(attr)
+        const isFirstInGroup = groupIdx > 0 && group.regular.length === 0 && idx === 0
+        const isFirstCollection = group.regular.length > 0 && idx === 0
+        _items.push({
+          id: attr.id,
+          label: attr.label,
+          icon: attr.icon,
+          iconProps: attr.iconProps,
+          separatorBefore: isFirstInGroup || isFirstCollection,
+          separatorLabel: isFirstInGroup ? getEmbeddedLabel(group.classLabel) : undefined
+        })
+      })
     })
 
-    displayAttributes = newDisplayAttrs
-    items = resultItems
+    displayAttributes = _displayAttributes
+    items = _items
   })
 
   $: void updateItems($languageStore)

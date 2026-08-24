@@ -13,7 +13,14 @@
 // limitations under the License.
 //
 
-import { DocumentUpdate, groupByArray, MixinUpdate, type Tx } from '@hcengineering/core'
+import core, {
+  AnyAttribute, AttachedDoc, Collection,
+  DocumentUpdate,
+  groupByArray,
+  type Hierarchy,
+  MixinUpdate,
+  type Tx
+} from '@hcengineering/core'
 import { type TriggerControl } from '@hcengineering/server-core'
 import { type Task } from '@hcengineering/task'
 import { type WorkflowTransition, type UpdateFieldValueProps, type ClearFieldValueProps } from '@hcengineering/workflow'
@@ -77,25 +84,45 @@ export async function ClearFieldValue (
   _transition: WorkflowTransition,
   props: ClearFieldValueProps
 ): Promise<Tx[]> {
-  const fields = props?.fields
-  if (fields == null || !Array.isArray(fields) || fields.length === 0) return []
-
-  const fieldsToUpdate = fields.filter((it) => it.fieldKey !== '')
-  if (fieldsToUpdate.length === 0) return []
+  const fields = props.fields ?? []
+  if (fields == null || !Array.isArray(props.fields) || props.fields.length === 0) return []
 
   const h = control.hierarchy
+  const res: Tx[] = []
   const unset: Record<string, true> = {}
 
-  for (const f of fieldsToUpdate) {
-    if (f.mixin == null) {
-      unset[f.fieldKey] = true
-    } else if (h.hasMixin(task, f.mixin)) {
-      unset[`${f.mixin}.${f.fieldKey}`] = true
+  for (const f of fields) {
+    if (f.fieldKey === '' || (f.mixin != null && !h.hasMixin(task, f.mixin))) continue
+
+    const attr = h.findAttribute(f.mixin ?? task._class, f.fieldKey)
+    if (attr != null && isCollectionAttr(h, attr)) {
+      const type = attr.type as Collection<AttachedDoc>
+      const attachedDocs = await control.findAll(control.ctx, type.of, { attachedTo: task._id })
+      for (const it of attachedDocs) {
+        res.push(
+          control.txFactory.createTxCollectionCUD(
+            it.attachedToClass,
+            it.attachedTo,
+            it.space,
+            it.collection,
+            control.txFactory.createTxRemoveDoc(it._class, it.space, it._id)
+          )
+        )
+      }
+    } else {
+      const key = f.mixin != null ? `${f.mixin}.${f.fieldKey}` : f.fieldKey
+      unset[key] = true
     }
   }
 
-  if (Object.keys(unset).length === 0) return []
+  if (Object.keys(unset).length > 0) {
+    res.push(control.txFactory.createTxUpdateDoc(task._class, task.space, task._id, { $unset: unset }))
+  }
 
-  const update: DocumentUpdate<Task> = { $unset: unset }
-  return [control.txFactory.createTxUpdateDoc(task._class, task.space, task._id, update)]
+  return res.map((it) => ({ ...it, space: core.space.Tx }))
+}
+
+function isCollectionAttr (hierarchy: Hierarchy, attr: AnyAttribute | undefined): boolean {
+  if (attr == null) return false
+  return hierarchy.isDerived(attr.type._class, core.class.Collection)
 }

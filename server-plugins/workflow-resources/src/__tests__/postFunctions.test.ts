@@ -348,6 +348,7 @@ describe('Workflow Post-Functions', () => {
     const hierarchy = {
       isDerived: (c: any, target: any) => c === target || target === task.class.Task,
       hasMixin: () => true,
+      findAttribute: () => undefined,
       as: (obj: any, mixin: any) => {
         if (mixin === workflow.mixin.ProjectWorkflow) return project
         if (
@@ -380,5 +381,76 @@ describe('Workflow Post-Functions', () => {
     expect(resultTxes.length).toBe(1)
     const pfTx = resultTxes[0] as TxUpdateDoc<Task>
     expect((pfTx.operations as any).$unset?.resolution).toBe(true)
+  })
+
+  it('should handle ClearFieldValue directly with regular, mixin and collection fields', async () => {
+    const currentTask = createMockTask({
+      _id: 'task-1' as any,
+      _class: task.class.Task,
+      customField: 'value',
+      'custom:mixin': { mixinField: 123 }
+    })
+
+    const collectionDoc = {
+      _id: 'col-doc-1',
+      _class: 'test:class:ColDoc',
+      space: testSpace,
+      attachedTo: 'task-1',
+      attachedToClass: task.class.Task,
+      collection: 'items'
+    }
+
+    const hierarchy = {
+      isDerived: (c: any, target: any) => c === 'core:class:Collection' || target === task.class.Task,
+      hasMixin: (doc: any, mixin: any) => mixin === 'custom:mixin',
+      findAttribute: (cls: any, key: any) => {
+        if (key === 'items') {
+          return { _id: key, name: key, type: { _class: 'core:class:Collection', of: 'test:class:ColDoc' } }
+        }
+        return { _id: key, name: key, type: { _class: 'core:class:String' } }
+      }
+    } as any
+
+    const control: TriggerControl = {
+      ctx: mockCtx,
+      hierarchy,
+      txFactory,
+      modelDb: { findAllSync: () => [] } as any,
+      findAll: jest.fn().mockImplementation(async (ctx, _class, query) => {
+        if (_class === 'test:class:ColDoc') return [collectionDoc]
+        return []
+      })
+    } as any
+
+    const transition: WorkflowTransition = { _id: 't-1' } as any
+
+    const emptyResult = await ClearFieldValue(control, currentTask, transition, { fields: [] })
+    expect(emptyResult).toEqual([])
+
+    const res = await ClearFieldValue(control, currentTask, transition, {
+      fields: [
+        { fieldKey: '', attribute: '' as any },
+        { fieldKey: 'simpleField', attribute: 'simpleField' as any },
+        { fieldKey: 'mixinField', mixin: 'custom:mixin' as any, attribute: 'mixinField' as any },
+        { fieldKey: 'ignoredMixin', mixin: 'other:mixin' as any, attribute: 'ignoredMixin' as any },
+        { fieldKey: 'items', attribute: 'items' as any }
+      ]
+    })
+
+    expect(res.length).toBe(2)
+
+    // Collection remove CUD tx
+    const collectionTx = res[0] as any
+    expect(collectionTx._class).toBe('core:class:TxRemoveDoc')
+    expect(collectionTx.collection).toBe('items')
+    expect(collectionTx.attachedTo).toBe('task-1')
+
+    // Document update with $unset tx
+    const updateTx = res[1] as TxUpdateDoc<Task>
+    expect(updateTx._class).toBe('core:class:TxUpdateDoc')
+    expect((updateTx.operations as any).$unset).toEqual({
+      simpleField: true,
+      'custom:mixin.mixinField': true
+    })
   })
 })
