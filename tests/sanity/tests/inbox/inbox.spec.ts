@@ -240,7 +240,10 @@ test.describe('Inbox tests', () => {
       await userProfilePageSecond.clickOnNotificationsButton()
       await notificationPageSecond.clickMenuItem(MenuItems.CHAT)
       await notificationPageSecond.toggleChatMessage()
-      await page.waitForTimeout(1000)
+      // Joining the workspace adds the user to `general` and `random`, and those notifications land
+      // after the clearAll above. Clear again here so only the message below can fill the inbox.
+      await leftSideMenuPageSecond.clickNotification()
+      await inboxPageSecond.clearAll()
       await leftSideMenuPage.clickChunter()
       await channelPage.clickChannel('general')
       await channelPage.sendMessage('Test message')

@@ -34,7 +34,9 @@ export class InboxPage extends CommonPage {
   }
 
   async checkIfTaskIsPresentInInbox (toDoText: string): Promise<void> {
-    await expect(this.toDoName()).toContainText(toDoText)
+    // Unscoped getByRole('paragraph') now also matches the AI bot's welcome message, so asserting
+    // on the whole set is a strict-mode violation. Assert on the paragraph carrying the text.
+    await expect(this.toDoName().filter({ hasText: toDoText }).first()).toBeVisible()
   }
 
   async clickOnInboxChat (text: string): Promise<void> {
