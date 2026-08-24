@@ -112,7 +112,10 @@ export function isAttributeCompatible (
 
   if (hierarchy.isDerived(srcType._class, core.class.Collection)) return { compatible: false }
 
-  if (hierarchy.isDerived(srcType._class, core.class.ArrOf) && hierarchy.isDerived(targetType._class, core.class.ArrOf)) {
+  if (
+    hierarchy.isDerived(srcType._class, core.class.ArrOf) &&
+    hierarchy.isDerived(targetType._class, core.class.ArrOf)
+  ) {
     const _srcType = srcType as ArrOf<PropertyType>
     const _targetType = targetType as ArrOf<PropertyType>
     if (_srcType.of._class !== _targetType.of._class) return { compatible: false }

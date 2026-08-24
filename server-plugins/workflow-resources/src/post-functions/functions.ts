@@ -14,7 +14,9 @@
 //
 
 import core, {
-  AnyAttribute, AttachedDoc, Collection,
+  AnyAttribute,
+  AttachedDoc,
+  Collection,
   DocumentUpdate,
   groupByArray,
   type Hierarchy,
