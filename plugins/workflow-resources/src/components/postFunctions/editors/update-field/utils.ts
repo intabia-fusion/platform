@@ -12,7 +12,16 @@
 // limitations under the License.
 //
 
-import core, { type AnyAttribute, type Doc, type Hierarchy, type RefTo, type Client } from '@hcengineering/core'
+import core, {
+  type AnyAttribute,
+  type Doc,
+  type Hierarchy,
+  type RefTo,
+  type Client,
+  type ArrOf,
+  type PropertyType,
+  type EnumOf
+} from '@hcengineering/core'
 import workflow, {
   type WorkflowFieldValue,
   type WorkflowValueFunction,
@@ -39,7 +48,13 @@ export const EXCLUDED_FIELDS = new Set([
   'number',
   'reportedTime',
   'space',
-  'status'
+  'status',
+  'attachments',
+  'reports',
+  'comments',
+  'subIssues',
+  'blockedBy',
+  'relations'
 ])
 export const EXCLUDED_TYPES = new Set([
   core.class.TypeMarkup,
@@ -49,7 +64,8 @@ export const EXCLUDED_TYPES = new Set([
   core.class.TypeIdentifier,
   core.class.TypeRank,
   core.class.TypeRecord,
-  core.class.TypeRelation
+  core.class.TypeRelation,
+  core.class.Collection
 ])
 
 export function ensureFieldValue (val: unknown): WorkflowFieldValue {
@@ -93,6 +109,27 @@ export function isAttributeCompatible (
   const targetType = targetAttr.type
 
   if (targetAttr._id === srcAttr._id) return { compatible: true }
+
+  if (hierarchy.isDerived(srcType._class, core.class.Collection)) return { compatible: false }
+
+  if (hierarchy.isDerived(srcType._class, core.class.ArrOf) && hierarchy.isDerived(targetType._class, core.class.ArrOf)) {
+    const _srcType = srcType as ArrOf<PropertyType>
+    const _targetType = targetType as ArrOf<PropertyType>
+    if (_srcType.of._class !== _targetType.of._class) return { compatible: false }
+    if (_srcType.of._class === core.class.EnumOf) {
+      const enumTypeSrc = _srcType.of as EnumOf
+      const enumTypeTarget = _targetType.of as EnumOf
+      if (enumTypeSrc.of !== enumTypeTarget.of) return { compatible: false }
+      return { compatible: true }
+    } else if (_srcType.of._class === core.class.RefTo) {
+      const refSrcType = _srcType.of as RefTo<Doc>
+      const refTargetType = _targetType.of as RefTo<Doc>
+      if (refSrcType.to !== refTargetType.to) return { compatible: false }
+      return { compatible: true }
+    }
+
+    return { compatible: false }
+  }
 
   if (srcType._class === targetType._class) {
     if (hierarchy.isDerived(targetType._class, core.class.RefTo)) {

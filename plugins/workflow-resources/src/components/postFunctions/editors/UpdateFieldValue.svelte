@@ -73,18 +73,22 @@
       const processAttr = (attr: DisplayAttribute, idx: number, isRegular: boolean): void => {
         _displayAttrs.push(attr)
         const isFirstInGroup = groupIdx > 0 && idx === 0 && isRegular
+        const isFirstCollection = group.regular.length > 0 && !isRegular && idx === 0
         _items.push({
           id: attr.id,
           label: attr.label,
           icon: attr.icon,
           iconProps: attr.iconProps,
-          separatorBefore: isFirstInGroup,
+          separatorBefore: isFirstInGroup || isFirstCollection,
           separatorLabel: isFirstInGroup ? getEmbeddedLabel(group.classLabel) : undefined
         })
       }
 
       group.regular.forEach((attr: DisplayAttribute, idx: number) => {
         processAttr(attr, idx, true)
+      })
+      group.collection.forEach((attr, idx) => {
+        processAttr(attr, idx, false)
       })
     })
 
@@ -209,6 +213,7 @@
     const row = rows.find((r) => r.id === rowId)
     if (row?.attribute == null) return
     const options = getContextOptions(client, taskType, row.attribute)
+    console.log(options, row.attribute)
     if (options.length === 0) return
 
     showPopup(
