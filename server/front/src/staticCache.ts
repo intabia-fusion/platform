@@ -29,11 +29,14 @@ interface Entry {
  * store one copy per spelling, so collapse it to the encoding express-static-gzip will pick.
  */
 function chosenEncoding (header: string): string {
+  // Must match express-static-gzip's parsing exactly, or we key an entry under an encoding it
+  // never served: case-sensitive token, numeric q off the first parameter, q <= 0 is a refusal.
   const accepts = (token: string): boolean =>
     header.split(',').some((part) => {
       const [name, ...params] = part.trim().split(';')
-      if (name !== token) return false
-      return !params.some((q) => q.replace(/\s/g, '') === 'q=0')
+      if (name.trim() !== token) return false
+      const q = params[0]?.trim().match(/^q=(.*)$/)
+      return q == null || Number.parseFloat(q[1]) > 0
     })
   if (accepts('br')) return 'br'
   if (accepts('gzip')) return 'gzip'

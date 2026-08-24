@@ -168,6 +168,17 @@ describe('staticMemoryCache', () => {
     expect(run(mw, '/a.js', serve, 'GET', 'br;q=0, gzip').served).toBe(true)
   })
 
+  it('reads q as a number, the way express-static-gzip does', () => {
+    const mw = cache(1024 * 1024, 1024 * 1024)
+    const serve = (res: any): void => {
+      res.end(Buffer.from('brotli-bytes'))
+    }
+    run(mw, '/a.js', serve, 'GET', 'br, gzip')
+    run(mw, '/a.js', serve, 'GET', 'br, gzip')
+    // "q=0.0" is still a refusal; a string compare against "q=0" would miss it.
+    expect(run(mw, '/a.js', serve, 'GET', 'br;q=0.0, gzip').served).toBe(true)
+  })
+
   it('never records a path on its first request', () => {
     const mw = cache(1024 * 1024, 1024 * 1024)
     const serve = (res: any): void => {

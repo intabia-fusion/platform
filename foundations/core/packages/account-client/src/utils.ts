@@ -76,9 +76,8 @@ export function isLoginInfoRequest (info: LoginInfoByToken): info is LoginInfoRe
   return (info as LoginInfoRequest)?.request
 }
 
-// Resolved once: every account RPC sends it as a header, and building a DateTimeFormat to read
-// back its resolved options is expensive enough to show up as ~4% of a service's CPU.
-// ponytail: process-lifetime cache, drop it if a client ever has to follow an OS timezone change.
+// Every account RPC sends this as a header, and resolving it was ~4% of a service's CPU.
+// ponytail: process-lifetime cache, drop it if a client must follow an OS timezone change.
 let cachedTimezone: string | undefined
 let timezoneResolved = false
 

@@ -7,14 +7,21 @@ if (process.env.TESTS_MAX_FAILURES !== undefined) {
   maxFailures = parseInt(process.env.TESTS_MAX_FAILURES)
 }
 
-// 'on-first-retry' traces the retry, which for a flake is the attempt that passed - useless for
-// finding out why the first one failed. 'retain-on-failure' traces every attempt and keeps only
-// the failed ones, which costs time on every test. CI wants the cheap one, a local flake hunt
-// wants the useful one. Override with TRACE_MODE.
+// 'on-first-retry' traces the retry, which for a flake is the attempt that passed. Locally we
+// want the failing attempt's trace instead; CI wants the cheap one. Override with TRACE_MODE.
+const traceModes = ['on-first-retry', 'retain-on-failure', 'on', 'off', 'on-all-retries'] as const
+type TraceMode = (typeof traceModes)[number]
+
 const isCI = (process.env.CI ?? '') !== ''
-const traceMode = (
-  (process.env.TRACE_MODE ?? '') !== '' ? process.env.TRACE_MODE : isCI ? 'on-first-retry' : 'retain-on-failure'
-) as 'on-first-retry' | 'retain-on-failure'
+const requested = (process.env.TRACE_MODE ?? '').trim()
+const traceMode: TraceMode = traceModes.includes(requested as TraceMode)
+  ? (requested as TraceMode)
+  : isCI
+    ? 'on-first-retry'
+    : 'retain-on-failure'
+if (requested !== '' && requested !== traceMode) {
+  console.warn(`TRACE_MODE=${JSON.stringify(requested)} is not one of ${traceModes.join(', ')}; using ${traceMode}`)
+}
 
 const config: PlaywrightTestConfig = {
   globalSetup: require.resolve('./global.setup.ts'),

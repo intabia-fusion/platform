@@ -393,8 +393,8 @@ export class TSessionManager implements SessionManager {
         }
       }
 
-      // The condition does not depend on the session, and it is true once every five minutes -
-      // testing it inside the loop walked every session of every workspace 20 times a second.
+      // Hoisted out of the session loop: true once every five minutes, yet it made the tick walk
+      // every session of every workspace 20 times a second.
       if (this.ticks % (5 * 60 * ticksPerSecond) === workspace.tickHash) {
         for (const s of workspace.sessions.values()) {
           s.session.mins5.find = s.session.current.find
