@@ -393,12 +393,14 @@ export class TSessionManager implements SessionManager {
         }
       }
 
-      for (const s of workspace.sessions) {
-        if (this.ticks % (5 * 60 * ticksPerSecond) === workspace.tickHash) {
-          s[1].session.mins5.find = s[1].session.current.find
-          s[1].session.mins5.tx = s[1].session.current.tx
+      // The condition does not depend on the session, and it is true once every five minutes -
+      // testing it inside the loop walked every session of every workspace 20 times a second.
+      if (this.ticks % (5 * 60 * ticksPerSecond) === workspace.tickHash) {
+        for (const s of workspace.sessions.values()) {
+          s.session.mins5.find = s.session.current.find
+          s.session.mins5.tx = s.session.current.tx
 
-          s[1].session.current = { find: 0, tx: 0 }
+          s.session.current = { find: 0, tx: 0 }
         }
       }
 

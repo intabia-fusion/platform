@@ -76,13 +76,22 @@ export function isLoginInfoRequest (info: LoginInfoByToken): info is LoginInfoRe
   return (info as LoginInfoRequest)?.request
 }
 
+// Resolved once: every account RPC sends it as a header, and building a DateTimeFormat to read
+// back its resolved options is expensive enough to show up as ~4% of a service's CPU.
+// ponytail: process-lifetime cache, drop it if a client ever has to follow an OS timezone change.
+let cachedTimezone: string | undefined
+let timezoneResolved = false
+
 export function getClientTimezone (): string | undefined {
+  if (timezoneResolved) return cachedTimezone
   try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone
+    cachedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
   } catch (err: any) {
     console.error('Failed to get client timezone', err)
-    return undefined
+    cachedTimezone = undefined
   }
+  timezoneResolved = true
+  return cachedTimezone
 }
 
 const connectionErrorCodes = ['ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND']
