@@ -368,6 +368,7 @@ export const deviceOptionsStore = writable<DeviceOptions>({
   size: null,
   sizes: { xs: false, sm: false, md: false, lg: false, xl: false, xxl: false },
   minWidth: false,
+  appsMini: false,
   twoRows: false,
   firstDayOfWeek: 1
 })

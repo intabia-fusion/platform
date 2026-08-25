@@ -79,6 +79,8 @@ export const workbenchPlugin = plugin(workbenchId, {
     PlatformTitle: '' as Metadata<string>,
     ExcludedApplications: '' as Metadata<Ref<Application>[]>,
     ExcludedApplicationsForAnonymous: '' as Metadata<string[]>,
+    // Aliases hidden from the app panel until the user first customizes it themselves.
+    DefaultHiddenApplications: '' as Metadata<string[]>,
     DefaultApplication: '' as Metadata<string>,
     DefaultSpace: '' as Metadata<Ref<Space>>,
     DefaultSpecial: '' as Metadata<string>,

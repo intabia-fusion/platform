@@ -416,6 +416,8 @@ export interface DeviceOptions {
   size: WidthType | null
   sizes: Record<WidthType, boolean>
   minWidth: boolean
+  // Viewport is too narrow for the full app panel - it collapses to compact buttons.
+  appsMini: boolean
   twoRows: boolean
   firstDayOfWeek: number
   theme?: string

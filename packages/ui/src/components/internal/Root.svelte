@@ -215,10 +215,11 @@
   updateDeviceSize()
 
   $: secondRow = checkAdaptiveMatching($deviceInfo.size, 'xs')
-  $: appsMini =
-    $deviceInfo.isMobile &&
-    (($deviceInfo.isPortrait && $deviceInfo.docWidth <= 480) ||
-      (!$deviceInfo.isPortrait && $deviceInfo.docHeight <= 480))
+  // Computed from the local sources, not `$deviceInfo`: this also writes the flag back into the
+  // store, and reading it here would make that a cycle.
+  $: appsMini = isMobile && ((isPortrait && docWidth <= 480) || (!isPortrait && docHeight <= 480))
+  // Shared, so consumers gate on the same breakpoint instead of restating the formula.
+  $: $deviceInfo.appsMini = appsMini
 
   const weekInfoFirstDay: number = getLocalWeekStart()
   const savedFirstDayOfWeek = localStorage.getItem('firstDayOfWeek') ?? 'system'
@@ -237,7 +238,7 @@
 <Theme>
   <div id="ui-root" class:mobile-theme={isMobile}>
     <div class="antiStatusBar">
-      <div class="flex-row-center h-full content-color gap-3 px-4">
+      <div class="flex-row-center h-full content-color gap-3 px-4 py-2">
         {#if desktopPlatform}
           <div class="history-box flex-row-center gap-3">
             <button
@@ -296,7 +297,10 @@
         <div class="flex-row-reverse flex-gap-0-5" style:-webkit-app-region={'no-drag'}>
           <Settings />
           <ConnectionStatus />
-          <Clock />
+          <!-- Mobile: the bar is too narrow for the timezone name plus the clock. -->
+          {#if !appsMini}
+            <Clock />
+          {/if}
           <div class="flex-row-center flex-gap-0-5">
             {#if !secondRow}
               <RootBarExtension position="right" />
@@ -305,7 +309,7 @@
         </div>
       </div>
       {#if secondRow}
-        <div class="flex-between h-full content-color gap-3 px-2 second-row" style:-webkit-app-region={'no-drag'}>
+        <div class="flex-between h-full content-color gap-3 px-1 second-row" style:-webkit-app-region={'no-drag'}>
           <div class="flex-row-center flex-gap-0-5">
             <RootBarExtension position="left" />
           </div>
