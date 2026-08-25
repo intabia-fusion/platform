@@ -64,8 +64,11 @@ export interface WorkflowConstValue extends BaseWorkflowValue<'const'> {
 
 export type WorkflowFieldValue = WorkflowPresetValue | WorkflowThisValue | WorkflowParentValue | WorkflowConstValue
 
+export type CollectionOperation = 'set' | 'add' | 'remove'
+
 export interface UpdateFieldValueConfig extends Field {
   value: WorkflowFieldValue
+  operation?: CollectionOperation
 }
 
 export interface FieldListProps<TField extends Field = Field> {

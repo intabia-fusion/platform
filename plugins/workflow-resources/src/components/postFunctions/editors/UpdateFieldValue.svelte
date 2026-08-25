@@ -25,6 +25,7 @@
     showPopup
   } from '@hcengineering/ui'
   import {
+    CollectionOperation,
     UpdateFieldValueConfig,
     UpdateFieldValuePostFnConfig,
     UpdateFieldValueProps,
@@ -43,7 +44,8 @@
     EXCLUDED_FIELDS,
     EXCLUDED_TYPES,
     getContextOptions,
-    getTransformOptions
+    getTransformOptions,
+    isCollectionAttribute
   } from './update-field/utils'
 
   export let taskType: TaskType
@@ -115,6 +117,7 @@
     attribute: (r.attribute?._id ?? '') as Ref<AnyAttribute>,
     fieldKey: r.fieldKey,
     value: r.value,
+    operation: r.operation,
     mixin: r.mixin
   }))
 
@@ -128,6 +131,7 @@
     used: Set<Ref<AnyAttribute>>,
     items: DropdownTextItem[]
   ): DropdownTextItem[] {
+    if (used.size === 0) return items
     const currentAttrId = currentRow.attribute?._id
 
     return items.filter((item) => item.id === currentAttrId || !used.has(item.id as Ref<AnyAttribute>))
@@ -136,20 +140,22 @@
   function createRow (
     fieldKey = '',
     value: unknown = { type: 'const', value: '' },
-    mixin?: Ref<Class<Mixin<Doc>>>
+    mixin?: Ref<Class<Mixin<Doc>>>,
+    operation?: CollectionOperation
   ): FieldRow {
     return {
       id: generateId(),
       fieldKey,
       value: ensureFieldValue(value),
-      mixin
+      mixin,
+      operation
     }
   }
 
   function initRows (): FieldRow[] {
     const props = config?.props
     if (props?.fields != null && (props?.fields?.length ?? 0) > 0) {
-      return props.fields.map((it) => createRow(it.fieldKey, it.value, it.mixin))
+      return props.fields.map((it) => createRow(it.fieldKey, it.value, it.mixin, it.operation))
     }
     return [createRow()]
   }
@@ -175,9 +181,22 @@
 
     const row = rows.find((r) => r.id === rowId)
     if (row != null && row.fieldKey === key) {
-      row.attribute = attr
-      row.editor = ed
-      rows = [...rows]
+      let changed = false
+      if (row.attribute !== attr) {
+        row.attribute = attr
+        changed = true
+      }
+      if (row.editor !== ed) {
+        row.editor = ed
+        changed = true
+      }
+      if (isCollectionAttribute(hierarchy, attr) && row.operation == null) {
+        row.operation = 'set'
+        changed = true
+      }
+      if (changed) {
+        rows = [...rows]
+      }
     }
   }
 
@@ -187,13 +206,26 @@
     if (attr == null) return
     const row = rows.find((r) => r.id === rowId)
     if (row != null) {
+      const targetClass = attr.mixin ?? taskType?.targetClass
+      const hierarchy = client.getHierarchy()
+      const foundAttr = hierarchy.findAttribute(targetClass, attr.key)
+
       row.fieldKey = attr.key
       row.mixin = attr.mixin
+      row.attribute = foundAttr
       row.editor = undefined
-      row.attribute = undefined
-      row.value = { type: 'const', value: '' }
+      row.operation = attr.collection ? 'add' : undefined
+      row.value = { type: 'const', value: attr.collection ? [] : '' }
       rows = [...rows]
       await loadRowEditor(row.id, attr.key, attr.mixin)
+    }
+  }
+
+  function onRowOperationChange (rowId: string, op: CollectionOperation): void {
+    const row = rows.find((r) => r.id === rowId)
+    if (row != null) {
+      row.operation = op
+      rows = [...rows]
     }
   }
 
@@ -213,7 +245,6 @@
     const row = rows.find((r) => r.id === rowId)
     if (row?.attribute == null) return
     const options = getContextOptions(client, taskType, row.attribute)
-    console.log(options, row.attribute)
     if (options.length === 0) return
 
     showPopup(
@@ -334,7 +365,11 @@
         removeRow(row.id)
       }}
       on:clear={() => {
-        onRowValueChange(row.id, { type: 'const', value: '' })
+        const isCollection = row.attribute != null && isCollectionAttribute(client.getHierarchy(), row.attribute)
+        onRowValueChange(row.id, { type: 'const', value: isCollection ? [] : '' })
+      }}
+      on:operation={(e) => {
+        onRowOperationChange(row.id, e.detail)
       }}
       on:value={(e) => {
         onRowValueChange(row.id, e.detail)

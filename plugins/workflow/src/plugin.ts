@@ -293,7 +293,9 @@ export default plugin(workflowId, {
     FailedToRenderDiagram: '' as IntlString,
     DiagramErrorHint: '' as IntlString,
     ShowDetails: '' as IntlString,
-    HideDetails: '' as IntlString
+    HideDetails: '' as IntlString,
+    Set: '' as IntlString,
+    Action: '' as IntlString
   },
   status: {
     InitialStatusNotAllowed: '' as StatusCode,

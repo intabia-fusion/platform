@@ -160,6 +160,8 @@
     "FailedToRenderDiagram": "ワークフロー図のレンダリングに失敗しました",
     "DiagramErrorHint": "遷移図の生成中にエラーが発生しました。",
     "ShowDetails": "詳細を表示",
-    "HideDetails": "詳細を非表示"
+    "HideDetails": "詳細を非表示",
+    "Set": "置換",
+    "Action": "アクション"
   }
 }

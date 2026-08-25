@@ -160,8 +160,10 @@
     "SetValueFirst": "Сначала укажите значение",
     "FailedToRenderDiagram": "Не удалось отобразить схему воркфлоу",
     "DiagramErrorHint": "Произошла ошибка при генерации схемы переходов.",
-    "ShowDetails": "Показать подробности",
-    "HideDetails": "Скрыть подробности"
+    "ShowDetails": "Показать детали",
+    "HideDetails": "Скрыть детали",
+    "Set": "Заменить",
+    "Action": "Действие"
   },
   "status": {
     "InitialStatusNotAllowed": "Начальный статус не разрешен",

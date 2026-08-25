@@ -20,14 +20,16 @@ import core, {
   type Client,
   type ArrOf,
   type PropertyType,
-  type EnumOf
+  type EnumOf,
+  type Collection,
+  type AttachedDoc
 } from '@hcengineering/core'
 import workflow, {
   type WorkflowFieldValue,
   type WorkflowValueFunction,
   type WorkflowTransformCall
 } from '@hcengineering/workflow'
-import contact, { type Employee } from '@hcengineering/contact'
+import contact from '@hcengineering/contact'
 import { type TaskType } from '@hcengineering/task'
 import { getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
 
@@ -64,8 +66,7 @@ export const EXCLUDED_TYPES = new Set([
   core.class.TypeIdentifier,
   core.class.TypeRank,
   core.class.TypeRecord,
-  core.class.TypeRelation,
-  core.class.Collection
+  core.class.TypeRelation
 ])
 
 export function ensureFieldValue (val: unknown): WorkflowFieldValue {
@@ -76,9 +77,27 @@ export function ensureFieldValue (val: unknown): WorkflowFieldValue {
 
 export function isPersonAttribute (client: Client, attr: AnyAttribute): boolean {
   const hierarchy = client.getHierarchy()
-  if (!hierarchy.isDerived(attr.type._class, core.class.RefTo)) return false
-  const type = attr.type as RefTo<Employee>
-  return hierarchy.isDerived(type.to, contact.class.Person)
+  if (hierarchy.isDerived(attr.type._class, core.class.RefTo)) {
+    const to = (attr.type as RefTo<Doc>).to
+    return hierarchy.isDerived(to, contact.class.Person)
+  }
+  if (attr.type._class === core.class.TypePersonId || attr.type._class === core.class.TypeAccountUuid) return true
+
+  if (hierarchy.isDerived(attr.type._class, core.class.Collection)) {
+    const type = attr.type as Collection<AttachedDoc>
+    return hierarchy.isDerived(type.of, contact.class.Person) || hierarchy.isDerived(type.of, core.class.Collaborator)
+  }
+  if (hierarchy.isDerived(attr.type._class, core.class.ArrOf)) {
+    const type = attr.type as ArrOf<PropertyType>
+    if (hierarchy.isDerived(type.of._class, core.class.RefTo)) {
+      const to = (type.of as RefTo<Doc>).to
+      return hierarchy.isDerived(to, contact.class.Person)
+    }
+    if (type.of._class === core.class.TypePersonId || type.of._class === core.class.TypeAccountUuid) {
+      return true
+    }
+  }
+  return false
 }
 
 export function isDateAttribute (client: Client, attr: AnyAttribute): boolean {
@@ -87,7 +106,7 @@ export function isDateAttribute (client: Client, attr: AnyAttribute): boolean {
   return hierarchy.isDerived(attrType, core.class.TypeDate) || hierarchy.isDerived(attrType, core.class.TypeTimestamp)
 }
 
-export function isExcludedAttribute (hierarchy: Hierarchy, attr: AnyAttribute): boolean {
+export function isExcludedAttribute (attr: AnyAttribute): boolean {
   if (attr.hidden === true) return true
   if (EXCLUDED_FIELDS.has(attr.name)) return true
   if (EXCLUDED_TYPES.has(attr.type._class)) return true
@@ -108,9 +127,14 @@ export function isAttributeCompatible (
   const srcType = srcAttr.type
   const targetType = targetAttr.type
 
-  if (targetAttr._id === srcAttr._id) return { compatible: true }
+  if (
+    hierarchy.isDerived(srcType._class, core.class.Collection) ||
+    hierarchy.isDerived(targetType._class, core.class.Collection)
+  ) {
+    return { compatible: false }
+  }
 
-  if (hierarchy.isDerived(srcType._class, core.class.Collection)) return { compatible: false }
+  if (targetAttr._id === srcAttr._id) return { compatible: true }
 
   if (
     hierarchy.isDerived(srcType._class, core.class.ArrOf) &&
@@ -190,6 +214,7 @@ export function isAttributeCompatible (
 export function hasTransformFunctions (client: Client, attr?: AnyAttribute): boolean {
   if (attr == null) return false
   const hierarchy = client.getHierarchy()
+  if (hierarchy.isDerived(attr.type._class, core.class.Collection)) return false
   const attrClass = attr.type._class
   const allFuncs = client.getModel().findAllSync<WorkflowValueFunction>(workflow.class.WorkflowValueFunction, {})
   return allFuncs.some(
@@ -201,6 +226,9 @@ export function hasTransformFunctions (client: Client, attr?: AnyAttribute): boo
 export function isFieldValueEmpty (val?: WorkflowFieldValue): boolean {
   if (val == null) return true
   if (val.type === 'const') {
+    if (Array.isArray(val.value)) {
+      return val.value.length === 0
+    }
     return val.value == null || val.value === ''
   }
   if (val.type === 'preset') {
@@ -235,7 +263,7 @@ function getDirectFieldOptions (
   const items: ContextOption[] = []
   allAttrs.forEach((srcAttr) => {
     if (type === 'this' && srcAttr._id === attr._id) return
-    if (isExcludedAttribute(hierarchy, srcAttr)) return
+    if (isExcludedAttribute(srcAttr)) return
     const compat = isAttributeCompatible(hierarchy, srcAttr, attr)
     if (compat.compatible && compat.functions == null) {
       items.push({
@@ -266,7 +294,7 @@ function getConversionGroupOptions (
 
   const collectConvertibleItems = (srcAttr: AnyAttribute, isParent: boolean): void => {
     if (!isParent && srcAttr._id === attr._id) return
-    if (isExcludedAttribute(hierarchy, srcAttr)) return
+    if (isExcludedAttribute(srcAttr)) return
     const compat = isAttributeCompatible(hierarchy, srcAttr, attr)
     if (compat.compatible && compat.functions != null && compat.functions.length > 0) {
       const funcCall = compat.functions[0]
@@ -375,6 +403,7 @@ export function getContextOptions (client: Client, taskType: TaskType, attr?: An
 export function getTransformOptions (client: Client, attr?: AnyAttribute): TransformOption[] {
   if (attr == null) return []
   const hierarchy = client.getHierarchy()
+  if (hierarchy.isDerived(attr.type._class, core.class.Collection)) return []
   const allFuncs: WorkflowValueFunction[] = client
     .getModel()
     .findAllSync<WorkflowValueFunction>(workflow.class.WorkflowValueFunction, {})
@@ -394,4 +423,8 @@ export function getTransformOptions (client: Client, attr?: AnyAttribute): Trans
     funcRef: fn._id,
     editor: fn.editor
   }))
+}
+
+export function isCollectionAttribute (h: Hierarchy, attr: AnyAttribute): boolean {
+  return h.isDerived(attr.type._class, core.class.Collection) || h.isDerived(attr.type._class, core.class.ArrOf)
 }
