@@ -143,6 +143,29 @@ export function formatDuration (hours: number, language: string = 'en'): string 
   return visible.map(([value, minutes]) => `${value}${unitLabel(minutes, language)}`).join(' ')
 }
 
+/**
+ * The largest unit that fits plus the next one down: `18w 3d 5h 30m` becomes `18w 3d`, `1d 4h 30m`
+ * becomes `1d 4h`. Lists have no room for four units, and the tooltip still carries the exact value.
+ */
+export function formatDurationCompact (hours: number, language: string = 'en'): string {
+  if (!Number.isFinite(hours) || hours < 0) return ''
+  const totalMin = Math.round(hours * MINUTES_IN_HOUR)
+
+  const units: Array<[number, number]> = [
+    [Math.floor(totalMin / MINUTES_IN_WEEK), MINUTES_IN_WEEK],
+    [Math.floor((totalMin % MINUTES_IN_WEEK) / MINUTES_IN_DAY), MINUTES_IN_DAY],
+    [Math.floor((totalMin % MINUTES_IN_DAY) / MINUTES_IN_HOUR), MINUTES_IN_HOUR],
+    [totalMin % MINUTES_IN_HOUR, 1]
+  ]
+
+  const first = units.findIndex(([value]) => value > 0)
+  if (first === -1) return `0${unitLabel(1, language)}`
+
+  const visible = units.slice(first, first + 2).filter(([value]) => value > 0)
+
+  return visible.map(([value, minutes]) => `${value}${unitLabel(minutes, language)}`).join(' ')
+}
+
 export function durationFormatHint (language: string = 'en'): string {
   return [MINUTES_IN_WEEK, MINUTES_IN_DAY, MINUTES_IN_HOUR, 1]
     .map((minutes) => `1${unitLabel(minutes, language)}`)
