@@ -875,13 +875,12 @@
         >
           <Logo mini={appsMini} workspace={windowWorkspaceName ?? $resolvedLocationStore.path[1]} />
         </div>
-        <!-- Mobile keeps the collapse button in the bar (first), the workspace logo stays pinned top-left. -->
-        <div class="topmenu-container clear-mins flex-no-shrink">
+        <div class="topmenu-container clear-mins flex-no-shrink" class:mini={appsMini}>
           <AppItem
             icon={TopMenu}
             label={$deviceInfo.navigator.visible ? workbench.string.HideMenu : workbench.string.ShowMenu}
             selected={!$deviceInfo.navigator.visible}
-            size={'large'}
+            size={appsMini ? 'small' : 'medium'}
             on:click={toggleNav}
           />
         </div>
@@ -896,7 +895,6 @@
             <AppItem
               icon={notification.icon.Notifications}
               label={notification.string.Inbox}
-              size={'large'}
               {...inboxProps}
               on:click={inboxProps.onClick}
             />
@@ -906,7 +904,6 @@
           {apps}
           active={currentApplication?._id}
           direction={$deviceInfo.navigator.direction}
-          compact={appsMini}
           {customAppProps}
           on:toggleNav={toggleNav}
         />
@@ -916,13 +913,12 @@
         class:vertical-mobile={$deviceInfo.navigator.direction === 'vertical'}
         class:mini={appsMini}
       >
-        {#if !appsMini}
-          <AppItem
-            icon={IconSettings}
-            label={setting.string.Customize}
-            on:click={() => showPopup(AppSwitcher, { apps }, popupPosition)}
-          />
-        {/if}
+        <AppItem
+          icon={IconSettings}
+          label={setting.string.Customize}
+          size={appsMini ? 'small' : 'large'}
+          on:click={() => showPopup(AppSwitcher, { apps }, popupPosition)}
+        />
         <AppItem
           icon={support.icon.Support}
           label={support.string.ContactUs}

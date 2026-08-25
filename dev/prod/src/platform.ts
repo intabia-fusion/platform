@@ -791,6 +791,8 @@ export async function configurePlatform() {
     setMetadata(workbench.metadata.ExcludedApplicationsForAnonymous, [])
   }
 
+  setMetadata(workbench.metadata.DefaultHiddenApplications, ['contact', 'drive'])
+
   setMetadata(setting.metadata.BackupUrl, config.BACKUP_URL ?? '')
 
   await loadAssets()

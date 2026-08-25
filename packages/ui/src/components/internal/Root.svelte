@@ -296,7 +296,10 @@
         <div class="flex-row-reverse flex-gap-0-5" style:-webkit-app-region={'no-drag'}>
           <Settings />
           <ConnectionStatus />
-          <Clock />
+          <!-- Mobile: the bar is too narrow for the timezone name plus the clock. -->
+          {#if !appsMini}
+            <Clock />
+          {/if}
           <div class="flex-row-center flex-gap-0-5">
             {#if !secondRow}
               <RootBarExtension position="right" />
