@@ -40,9 +40,6 @@ export async function PostFunctionsTrigger (txes: TxCUD<Doc>[], control: Trigger
       // Only the updates that produced post-functions are worth a line; that log is below.
       const postTxes = await processTaskPostFunctions(tx as TxUpdateDoc<Task>, control)
       if (postTxes != null && postTxes.length > 0) {
-        control.ctx.info('[TransitionPostFunctionsTrigger] Executed post-functions resulting in txes', {
-          count: postTxes.length
-        })
         result.push(...postTxes)
       }
     }
@@ -58,42 +55,19 @@ async function processTaskPostFunctions (updateTx: TxUpdateDoc<Task>, control: T
 
   const fromStatus: Ref<Status> | undefined = updateTx.meta?.fromStatus as Ref<Status> | undefined
 
-  if (fromStatus == null) {
-    control.ctx.info('[PostFunctionsTrigger] Exit: No from status in tx meta', { objectId: updateTx.objectId })
-    return []
-  }
-
-  if (fromStatus === toStatus) {
-    control.ctx.info('[PostFunctionsTrigger] Exit: fromStatus === toStatus', {
-      objectId: updateTx.objectId,
-      fromStatus,
-      toStatus
-    })
-    return []
-  }
+  if (fromStatus == null) return []
+  if (fromStatus === toStatus) return []
 
   const taskDoc = (await control.findAll(control.ctx, task.class.Task, { _id: updateTx.objectId }, { limit: 1 }))[0]
-  if (taskDoc == null) {
-    control.ctx.info('[PostFunctionsTrigger] Exit: taskDoc not found', { objectId: updateTx.objectId })
-    return []
-  }
+  if (taskDoc == null) return []
 
   const project = (
     await control.findAll(control.ctx, task.class.Project, { _id: taskDoc.space as Ref<Project> }, { limit: 1 })
   )[0]
-  if (project == null) {
-    control.ctx.info('[PostFunctionsTrigger] Exit: project not found', { space: taskDoc.space })
-    return []
-  }
+  if (project == null) return []
 
   const workflowRef = findWorkflowForTaskType(control.hierarchy, project, taskDoc.kind)
-  if (workflowRef == null) {
-    control.ctx.info('[PostFunctionsTrigger] Exit: workflowRef not found', {
-      project: project._id,
-      kind: taskDoc.kind
-    })
-    return []
-  }
+  if (workflowRef == null) return []
 
   const transitions = await control.findAll(control.ctx, workflow.class.WorkflowTransition, {
     attachedTo: workflowRef
@@ -102,36 +76,13 @@ async function processTaskPostFunctions (updateTx: TxUpdateDoc<Task>, control: T
   const allowedTransitions = transitions.filter((t) => {
     return (t.from == null || t.from.length === 0 || t.from.includes(fromStatus)) && t.to === toStatus
   })
-  if (allowedTransitions.length === 0) {
-    control.ctx.info('[PostFunctionsTrigger] Exit: no allowed transitions found', {
-      fromStatus,
-      toStatus,
-      workflowRef,
-      totalTransitions: transitions.length
-    })
-    return []
-  }
+  if (allowedTransitions.length === 0) return []
 
   const transition =
     allowedTransitions.find((t) => t.from != null && t.from.includes(fromStatus)) ??
     allowedTransitions.find((t) => t.from == null || t.from.length === 0)
 
-  if (transition === undefined) {
-    control.ctx.info('[PostFunctionsTrigger] Exit: transition resolution undefined', {
-      fromStatus,
-      toStatus,
-      allowedCount: allowedTransitions.length
-    })
-    return []
-  }
-
-  control.ctx.info('[PostFunctionsTrigger] Matched transition for post-functions', {
-    transitionId: transition._id,
-    name: transition.name,
-    postFunctionsCount: transition.postFunctions?.length ?? 0,
-    fromStatus,
-    toStatus
-  })
+  if (transition === undefined) return []
 
   return await executeTransitionPostFunctions(control, transition, taskDoc)
 }

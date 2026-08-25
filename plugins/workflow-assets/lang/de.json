@@ -160,6 +160,8 @@
     "FailedToRenderDiagram": "Workflow-Diagramm konnte nicht gerendert werden",
     "DiagramErrorHint": "Beim Erstellen des Übergangsdiagramms ist ein Fehler aufgetreten.",
     "ShowDetails": "Details anzeigen",
-    "HideDetails": "Details ausblenden"
+    "HideDetails": "Details ausblenden",
+    "Set": "Ersetzen",
+    "Action": "Aktion"
   }
 }

@@ -160,6 +160,8 @@
     "FailedToRenderDiagram": "无法渲染工作流图表",
     "DiagramErrorHint": "生成转换图表时发生错误。",
     "ShowDetails": "显示详情",
-    "HideDetails": "隐藏详情"
+    "HideDetails": "隐藏详情",
+    "Set": "替换",
+    "Action": "操作"
   }
 }

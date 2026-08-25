@@ -15,13 +15,14 @@
 import { type AnyAttribute, type Class, type Doc, type Mixin, type Ref } from '@hcengineering/core'
 import { type IntlString } from '@hcengineering/platform'
 import { type AnyComponent, type AnySvelteComponent } from '@hcengineering/ui'
-import { type WorkflowFieldValue, type WorkflowValueFunction } from '@hcengineering/workflow'
+import { type CollectionOperation, type WorkflowFieldValue, type WorkflowValueFunction } from '@hcengineering/workflow'
 
 export interface FieldRow {
   id: string
   fieldKey: string
   mixin?: Ref<Class<Mixin<Doc>>>
   value: WorkflowFieldValue
+  operation?: CollectionOperation
 
   attribute?: AnyAttribute
   editor?: AnySvelteComponent

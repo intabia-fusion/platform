@@ -160,6 +160,8 @@
     "FailedToRenderDiagram": "No se pudo representar el diagrama del flujo de trabajo",
     "DiagramErrorHint": "Ocurrió un error al generar el diagrama de transiciones.",
     "ShowDetails": "Mostrar detalles",
-    "HideDetails": "Ocultar detalles"
+    "HideDetails": "Ocultar detalles",
+    "Set": "Reemplazar",
+    "Action": "Acción"
   }
 }

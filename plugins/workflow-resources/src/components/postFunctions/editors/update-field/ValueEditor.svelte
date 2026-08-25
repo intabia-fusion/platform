@@ -13,13 +13,14 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import type { Class, Doc, Ref } from '@hcengineering/core'
+  import { type Class, type Doc, type Ref } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
   import { Button, IconAdd, Label, ModernEditbox } from '@hcengineering/ui'
-  import type { WorkflowConstValue, WorkflowFieldValue } from '@hcengineering/workflow'
+  import type { WorkflowFieldValue } from '@hcengineering/workflow'
 
   import plugin from '../../../../plugin'
   import { ContextOption, FieldRow } from './types'
-  import { ensureFieldValue } from './utils'
+  import { ensureFieldValue, isCollectionAttribute } from './utils'
   import Value from './Value.svelte'
 
   export let _class: Ref<Class<Doc>>
@@ -31,12 +32,32 @@
     context: MouseEvent
   }>()
 
+  const client = getClient()
+  const hierarchy = client.getHierarchy()
+
+  $: isCollection = row.attribute != null && isCollectionAttribute(hierarchy, row.attribute)
+
   function handleEditorChange (val: WorkflowFieldValue | any): void {
     dispatch('value', ensureFieldValue(val))
   }
 
-  function toConstValue (v: WorkflowFieldValue): WorkflowConstValue {
-    return v as WorkflowConstValue
+  let textValue: string = ''
+  $: {
+    const raw = row.value.type === 'const' ? row.value.value : ''
+    textValue = Array.isArray(raw) ? raw.join(', ') : raw != null ? String(raw) : ''
+  }
+
+  function onTextInput (val: string): void {
+    textValue = val
+    if (isCollection) {
+      const items = val
+        .split(',')
+        .map((s: string) => s.trim())
+        .filter((s: string) => s.length > 0)
+      handleEditorChange({ type: 'const', value: items })
+    } else {
+      handleEditorChange({ type: 'const', value: val })
+    }
   }
 </script>
 
@@ -49,7 +70,7 @@
           parsed={row.value}
           {_class}
           on:clear={() => {
-            dispatch('value', { type: 'const', value: '' })
+            dispatch('value', { type: 'const', value: isCollection ? [] : '' })
           }}
         />
       </div>
@@ -65,7 +86,11 @@
           disabled={row.fieldKey === ''}
           type={row.attribute?.type}
           value={row.value.type === 'const' ? row.value.value : row.value}
-          object={{ space: '' }}
+          object={{ space: '', _class: row.mixin ?? row.attribute?.attributeOf ?? _class }}
+          attr={row.attribute}
+          attribute={row.attribute}
+          targetClass={row.mixin ?? row.attribute?.attributeOf ?? _class}
+          draft={true}
           placeholder={plugin.string.Value}
           showNavigate={false}
           onChange={handleEditorChange}
@@ -74,16 +99,16 @@
     {:else if row.value.type === 'const'}
       <div class="editor-content">
         <ModernEditbox
-          bind:value={row.value.value}
+          bind:value={textValue}
           label={plugin.string.Value}
           kind="ghost"
           width="100%"
           disabled={row.fieldKey === ''}
           on:input={() => {
-            handleEditorChange({ type: 'const', value: toConstValue(row.value).value })
+            onTextInput(textValue)
           }}
           on:change={() => {
-            handleEditorChange({ type: 'const', value: toConstValue(row.value).value })
+            onTextInput(textValue)
           }}
         />
       </div>
@@ -129,8 +154,8 @@
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
-      height: 2.375rem;
-      min-height: 2.375rem;
+      height: auto;
+      min-height: 2.25rem;
       border: 1px solid var(--theme-refinput-border, var(--global-subtle-ui-BorderColor));
       border-radius: var(--medium-BorderRadius, 0.375rem);
       background-color: var(--theme-refinput-bg, var(--theme-control-bg, transparent));
@@ -138,10 +163,12 @@
       box-sizing: border-box;
       padding-right: 0.25rem;
       gap: 0.25rem;
+      cursor: pointer;
 
       &.disabled {
         opacity: 0.45;
         pointer-events: none;
+        cursor: default;
         background-color: var(--theme-button-disabled, var(--theme-checkbox-disabled, rgba(0, 0, 0, 0.04)));
       }
 
@@ -154,6 +181,74 @@
         min-width: 0;
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+
+        :global(.value-pill) {
+          width: auto !important;
+          max-width: 100%;
+        }
+
+        :global(button.button-container),
+        :global(.huly-button),
+        :global(.button-base),
+        :global(.antiButton.link),
+        :global(.link-button) {
+          width: 100% !important;
+          justify-content: flex-start !important;
+          border: none !important;
+        }
+
+        :global(.step-container) {
+          margin: 0 !important;
+          display: inline-flex;
+          align-items: center;
+          flex-shrink: 0;
+        }
+
+        :global(.flex-row-center) {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 0.375rem;
+          width: 100%;
+
+          :global(.step-container:has(.tag-button)),
+          :global(.step-container:last-child) {
+            flex: 1;
+            min-width: 4rem;
+            display: flex;
+          }
+
+          :global(.step-container:first-child) {
+            padding-left: 0.5rem;
+          }
+        }
+
+        :global(.listitems-container) {
+          margin: 0 !important;
+          height: 1.75rem;
+        }
+
+        :global(.tag-button) {
+          width: 100% !important;
+          justify-content: flex-start !important;
+          padding: 0 0.5rem 0 0.375rem !important;
+          margin: 0 !important;
+          border-radius: 0.375rem !important;
+          height: 2.25rem !important;
+          border: none;
+          padding-left: 0.75rem !important;
+          color: var(--theme-dark-color);
+          &:hover {
+            background: var(--theme-bg-color);
+            color: var(--theme-content-color);
+          }
+        }
+
+        :global(.tag-button .label) {
+          font-size: 0.8125rem;
+        }
       }
 
       .box-actions {

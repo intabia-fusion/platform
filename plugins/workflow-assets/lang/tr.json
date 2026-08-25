@@ -159,7 +159,9 @@
     "SetValueFirst": "Önce bir değer belirtin",
     "FailedToRenderDiagram": "İş akışı diyagramı oluşturulamadı",
     "DiagramErrorHint": "Geçiş diyagramı oluşturulurken bir hata oluştu.",
-    "ShowDetails": "Detayları göster",
-    "HideDetails": "Detayları gizle"
+    "ShowDetails": "Ayrıntıları göster",
+    "HideDetails": "Ayrıntıları gizle",
+    "Set": "Değiştir",
+    "Action": "Eylem"
   }
 }

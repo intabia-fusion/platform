@@ -14,4 +14,11 @@
 //
 
 export { executeTransitionPostFunctions } from './executor'
-export { UpdateFieldValue, ClearFieldValue } from './functions'
+export {
+  UpdateFieldValue,
+  ClearFieldValue,
+  updateCollectionOrArrField,
+  updateCollectionField,
+  updateArrField,
+  isCollectionOrArrAttribute
+} from './functions'
