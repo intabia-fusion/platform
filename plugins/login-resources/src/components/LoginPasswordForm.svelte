@@ -22,6 +22,9 @@
   import { recoveryAction } from '../actions'
   import type { BottomAction } from '../index'
   import login from '../plugin'
+  import { onDestroy } from 'svelte'
+  import { get } from 'svelte/store'
+  import { sharedEmailStore } from '../emailStore'
 
   export let navigateUrl: string | undefined = undefined
   export let signUpDisabled = false
@@ -43,7 +46,7 @@
   ]
 
   const object = {
-    username: '',
+    username: email !== undefined && email !== '' ? email : get(sharedEmailStore),
     password: ''
   }
 
@@ -79,6 +82,10 @@
       }
     }
   }
+
+  onDestroy(() => {
+    sharedEmailStore.set(object.username ?? '')
+  })
 </script>
 
 <Form

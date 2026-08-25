@@ -22,6 +22,9 @@
   import Label from './internal/Label.svelte'
   import { OtpLoginSteps, goTo, loginOtp } from '../index'
   import type { BottomAction } from '../index'
+  import { onDestroy } from 'svelte'
+  import { get } from 'svelte/store'
+  import { sharedEmailStore } from '../emailStore'
 
   export let navigateUrl: string | undefined = undefined
   export let signUpDisabled = false
@@ -36,7 +39,7 @@
     { id: 'email', name: 'username', i18n: login.string.Email, disabled: email !== undefined && email !== '' }
   ]
   const formData = {
-    username: '' as string
+    username: email !== undefined && email !== '' ? email : get(sharedEmailStore)
   }
 
   $: if (email !== undefined && email !== '' && formData.username === '') {
@@ -64,6 +67,10 @@
   function handleStep (event: CustomEvent<OtpLoginSteps>): void {
     step = event.detail
   }
+
+  onDestroy(() => {
+    sharedEmailStore.set(formData.username ?? '')
+  })
 </script>
 
 {#if step === OtpLoginSteps.Email}

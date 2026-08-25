@@ -27,8 +27,10 @@
   import { OtpLoginSteps, signUp, signUpOtp } from '../index'
   import type { Field } from '../types'
   import OtpForm from './OtpForm.svelte'
-  import { onMount } from 'svelte'
+  import { onMount, onDestroy } from 'svelte'
   import ConsentCheckboxes from './ConsentCheckboxes.svelte'
+  import { get } from 'svelte/store'
+  import { sharedEmailStore } from '../emailStore'
 
   export let signUpDisabled = false
   export let localLoginHidden = false
@@ -74,7 +76,7 @@
   const object = {
     first: '',
     last: '',
-    username: '',
+    username: get(sharedEmailStore),
     password: '',
     password2: '',
     phone: ''
@@ -137,6 +139,10 @@
   }
 
   $: proceedDisabled = !agreedPersonalData || !agreedRules
+
+  onDestroy(() => {
+    sharedEmailStore.set(object.username ?? '')
+  })
 </script>
 
 {#if step === OtpLoginSteps.Email}
