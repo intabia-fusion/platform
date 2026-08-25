@@ -161,9 +161,10 @@ function markAppsCustomized (): void {
 
 /**
  * Aliases hidden on the app panel for a user who has never customized it.
+ * Only while the panel is collapsed: a full-width bar has room for every app.
  */
-export function getDefaultHiddenApps (): string[] {
-  if (isAppsCustomized()) return []
+export function getDefaultHiddenApps (appsMini: boolean): string[] {
+  if (!appsMini || isAppsCustomized()) return []
   return getMetadata(workbench.metadata.DefaultHiddenApplications) ?? []
 }
 

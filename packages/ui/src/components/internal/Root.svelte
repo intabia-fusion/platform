@@ -215,10 +215,11 @@
   updateDeviceSize()
 
   $: secondRow = checkAdaptiveMatching($deviceInfo.size, 'xs')
-  $: appsMini =
-    $deviceInfo.isMobile &&
-    (($deviceInfo.isPortrait && $deviceInfo.docWidth <= 480) ||
-      (!$deviceInfo.isPortrait && $deviceInfo.docHeight <= 480))
+  // Computed from the local sources, not `$deviceInfo`: this also writes the flag back into the
+  // store, and reading it here would make that a cycle.
+  $: appsMini = isMobile && ((isPortrait && docWidth <= 480) || (!isPortrait && docHeight <= 480))
+  // Shared, so consumers gate on the same breakpoint instead of restating the formula.
+  $: $deviceInfo.appsMini = appsMini
 
   const weekInfoFirstDay: number = getLocalWeekStart()
   const savedFirstDayOfWeek = localStorage.getItem('firstDayOfWeek') ?? 'system'

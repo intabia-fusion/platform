@@ -18,7 +18,7 @@
   import { createQuery } from '@hcengineering/presentation'
   import workbench from '@hcengineering/workbench'
   import { getDefaultHiddenApps, hideApplication, isAllowedToRole, showApplication } from '../utils'
-  import { Loading, IconCheck, Label, Icon } from '@hcengineering/ui'
+  import { Loading, IconCheck, Label, Icon, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import { getMetadata } from '@hcengineering/platform'
   // import Drag from './icons/Drag.svelte'
 
@@ -70,10 +70,8 @@
 
   // Defaults count as hidden only until the first toggle, and that toggle rewrites `storedHiddenIds`,
   // so deriving from it keeps the checkmarks in step.
-  $: hiddenAppsIds = [
-    ...storedHiddenIds,
-    ...apps.filter((it) => getDefaultHiddenApps().includes(it.alias)).map((it) => it._id)
-  ]
+  $: defaultHidden = getDefaultHiddenApps($deviceInfo.appsMini)
+  $: hiddenAppsIds = [...storedHiddenIds, ...apps.filter((it) => defaultHidden.includes(it.alias)).map((it) => it._id)]
 
   const me = getCurrentAccount()
 
