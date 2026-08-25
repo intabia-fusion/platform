@@ -8,7 +8,8 @@ import {
   getLocation,
   type Location,
   navigate,
-  languageStore
+  languageStore,
+  deviceOptionsStore
 } from '@hcengineering/ui'
 import { type Ref, type Doc, type Class, concatLink } from '@hcengineering/core'
 import activity, { type ActivityMessage } from '@hcengineering/activity'
@@ -192,6 +193,12 @@ export async function replyToThread (message: ActivityMessage, e: Event): Promis
 
   threadMessagesStore.set(message)
 
+  // No sidebar on a phone: navigate and let ChannelView render the thread in the main panel.
+  if (get(deviceOptionsStore).isMobile) {
+    navigate(await buildThreadLink(loc, message.attachedTo, message.attachedToClass, message._id))
+    return
+  }
+
   if (fromSidebar) {
     const widget = getClient().getModel().findAllSync(workbench.class.Widget, { _id: chunter.ids.ChatWidget })[0]
     const widgetState = get(sidebarStore).widgetsState.get(widget._id)
@@ -347,6 +354,9 @@ export async function openThreadInSidebar (
   props?: Record<string, any>,
   force: boolean = true
 ): Promise<void> {
+  // The main panel shows the thread on a phone (ChannelView), so opening the sidebar is not wanted.
+  if (get(deviceOptionsStore).isMobile) return
+
   const sidebar = get(sidebarStore)
   if (!force && sidebar.widget != null && sidebar.widget !== chunter.ids.ChatWidget) {
     removeThreadFromLoc(_id)
