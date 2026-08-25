@@ -258,6 +258,7 @@ function configureI18n (): void {
   addStringsLoader(documentId, async (lang: string) => await import(`@hcengineering/document-assets/lang/${lang}.json`))
   addStringsLoader(timeId, async (lang: string) => await import(`@hcengineering/time-assets/lang/${lang}.json`))
   addStringsLoader(githubId, async (lang: string) => await import(`@hcengineering/github-assets/lang/${lang}.json`))
+  addStringsLoader(aiBotId, async (lang: string) => await import(`@hcengineering/ai-bot-resources/lang/${lang}.json`))
   addStringsLoader(
     documentsId,
     async (lang: string) => await import(`@hcengineering/controlled-documents-assets/lang/${lang}.json`)
