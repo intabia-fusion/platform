@@ -19,7 +19,7 @@ import workflow, { type WorkflowFieldValue, WorkflowValueFunction } from '@hceng
 
 import tracker from '@hcengineering/tracker'
 import { Class, Doc, Mixin, Ref } from '@hcengineering/core'
-import contact, { SocialIdentityRef } from '@hcengineering/contact'
+import contact, { Person, SocialIdentityRef } from '@hcengineering/contact'
 
 import { applyValueFunctions } from './transforms'
 
@@ -69,15 +69,19 @@ async function evaluateWorkflowValue (
 
 async function evalPreset (preset: string, control: TriggerControl): Promise<any> {
   if (preset === '$currentUser') {
-    return (
-      await control.findAll(control.ctx, contact.class.SocialIdentity, {
-        _id: control.ctx.contextData.account.primarySocialId as SocialIdentityRef
-      })
-    )[0]?.attachedTo
+    return await getCurrentUser(control)
   }
   if (preset === '$now' || preset === '$today') {
     return Date.now()
   }
+}
+
+export async function getCurrentUser (control: TriggerControl): Promise<Ref<Person> | undefined> {
+  return (
+    await control.findAll(control.ctx, contact.class.SocialIdentity, {
+      _id: control.ctx.contextData.account.primarySocialId as SocialIdentityRef
+    })
+  )[0]?.attachedTo
 }
 
 function evalThisField (control: TriggerControl, task: Task, fieldKey: string, mixin?: Ref<Mixin<Doc>>): unknown {

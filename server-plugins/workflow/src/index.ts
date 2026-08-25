@@ -36,7 +36,8 @@ export type PostFunctionFunc = (
   control: TriggerControl,
   task: Task,
   transition: WorkflowTransition,
-  props: Record<string, any>
+  props: Record<string, any>,
+  txes: Tx[]
 ) => Promise<Tx[]>
 
 export interface PostFunctionImpl extends WorkflowPostFunction {

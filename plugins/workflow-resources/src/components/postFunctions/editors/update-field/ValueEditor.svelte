@@ -44,13 +44,16 @@
   let textValue: string = ''
   $: {
     const raw = row.value.type === 'const' ? row.value.value : ''
-    textValue = Array.isArray(raw) ? raw.join(', ') : (raw != null ? String(raw) : '')
+    textValue = Array.isArray(raw) ? raw.join(', ') : raw != null ? String(raw) : ''
   }
 
   function onTextInput (val: string): void {
     textValue = val
     if (isCollection) {
-      const items = val.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0)
+      const items = val
+        .split(',')
+        .map((s: string) => s.trim())
+        .filter((s: string) => s.length > 0)
       handleEditorChange({ type: 'const', value: items })
     } else {
       handleEditorChange({ type: 'const', value: val })
@@ -193,7 +196,7 @@
         :global(.link-button) {
           width: 100% !important;
           justify-content: flex-start !important;
-          border: none  !important;
+          border: none !important;
         }
 
         :global(.step-container) {
@@ -218,7 +221,7 @@
           }
 
           :global(.step-container:first-child) {
-           padding-left: 0.5rem;
+            padding-left: 0.5rem;
           }
         }
 
@@ -237,8 +240,8 @@
           border: none;
           padding-left: 0.75rem !important;
           color: var(--theme-dark-color);
-          &:hover{
-          background: var(--theme-bg-color);
+          &:hover {
+            background: var(--theme-bg-color);
             color: var(--theme-content-color);
           }
         }

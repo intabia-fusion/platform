@@ -124,7 +124,17 @@
   $: canSave = resultFields.length > 0
   $: dispatch('update', { fields: resultFields })
 
-  $: usedAttributes = new Set(rows.map((r) => r.attribute?._id).filter(notEmpty))
+  $: usedAttributes = new Set(
+    rows
+      .filter((r) => {
+        if (r.attribute != null) {
+          return !isCollectionAttribute(client.getHierarchy(), r.attribute)
+        }
+        return false
+      })
+      .map((r) => r.attribute?._id)
+      .filter(notEmpty)
+  )
 
   function getRowAvailableItems (
     currentRow: FieldRow,

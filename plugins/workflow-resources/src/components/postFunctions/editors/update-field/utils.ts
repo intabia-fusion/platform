@@ -134,6 +134,13 @@ export function isAttributeCompatible (
     return { compatible: false }
   }
 
+  if (
+    hierarchy.isDerived(srcType._class, core.class.ArrOf) ||
+    hierarchy.isDerived(targetType._class, core.class.ArrOf)
+  ) {
+    return { compatible: false }
+  }
+
   if (targetAttr._id === srcAttr._id) return { compatible: true }
 
   if (
