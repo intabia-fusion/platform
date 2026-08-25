@@ -1,5 +1,5 @@
 import { type AIConversationPurpose, type AIFeature } from '@hcengineering/ai-bot'
-import { AccountUuid, Class, Doc, MarkupBlobRef, Ref, Space } from '@hcengineering/core'
+import { AccountUuid, Class, Doc, Markup, MarkupBlobRef, Ref, Space } from '@hcengineering/core'
 import document, { Document, getFirstRank, Teamspace } from '@hcengineering/document'
 import { makeRank } from '@hcengineering/rank'
 import { markdownToMarkup } from '@hcengineering/text-markdown'
@@ -179,7 +179,7 @@ export type PendingProposal =
     targetClass: Ref<Class<Doc>>
     targetAttr: string
     // Absent when only the title is proposed.
-    proposedMarkup?: string
+    proposedMarkup?: Markup
     // Raw markdown staged so far; kept so a follow-up part can be appended to it.
     markdown?: string
     // Proposed new title, applied by the user from the card like the body is.

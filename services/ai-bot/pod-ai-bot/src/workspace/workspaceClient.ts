@@ -863,7 +863,11 @@ export class WorkspaceClient {
     asUser?: PersonUuid
   ): Promise<boolean> {
     const doc = await this.clientFor(asUser).findOne<Doc>(target.targetClass, { _id: target.targetId })
-    if (doc === undefined || (doc as any).title === title) return false
+    if (doc === undefined) return false
+    // Whatever the class calls its title: `titleKey` is what the platform renames docs by.
+    const hierarchy = await this.getHierarchy()
+    const titleKey = hierarchy.getClass(target.targetClass).titleKey ?? 'title'
+    if ((doc as unknown as Record<string, unknown>)[titleKey] === title) return false
     // Merge into a body edit staged in the same run, so one card carries both.
     const staged = ctx.pending?.kind === 'edit' ? ctx.pending : undefined
     ctx.pending = { ...(staged ?? { kind: 'edit', ...target }), title }

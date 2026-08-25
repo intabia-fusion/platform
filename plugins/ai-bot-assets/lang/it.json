@@ -19,6 +19,7 @@
     "AssistIssueThreadStart": "Bozza di attività{project, select, undefined {} other { in {project}}}",
     "AssistIssueNewContext": "Nuovo contesto",
     "AssistIssueApplyAgain": "Applica di nuovo",
-    "AssistIssueAppliedMark": "Applicato"
+    "AssistIssueAppliedMark": "Applicato",
+    "ProposedEstimation": "Stima: {hours} h"
   }
 }

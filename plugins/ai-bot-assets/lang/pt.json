@@ -19,6 +19,7 @@
     "AssistIssueThreadStart": "Rascunho da tarefa{project, select, undefined {} other { em {project}}}",
     "AssistIssueNewContext": "Novo contexto",
     "AssistIssueApplyAgain": "Aplicar novamente",
-    "AssistIssueAppliedMark": "Aplicado"
+    "AssistIssueAppliedMark": "Aplicado",
+    "ProposedEstimation": "Estimativa: {hours} h"
   }
 }

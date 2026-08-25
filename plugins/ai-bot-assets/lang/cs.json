@@ -19,6 +19,7 @@
     "AssistIssueThreadStart": "Návrh úkolu{project, select, undefined {} other { v {project}}}",
     "AssistIssueNewContext": "Nový kontext",
     "AssistIssueApplyAgain": "Použít znovu",
-    "AssistIssueAppliedMark": "Použito"
+    "AssistIssueAppliedMark": "Použito",
+    "ProposedEstimation": "Odhad: {hours} h"
   }
 }

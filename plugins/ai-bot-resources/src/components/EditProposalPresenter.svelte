@@ -15,7 +15,7 @@
 <script lang="ts">
   import { type AIEditProposalMessage } from '@hcengineering/ai-bot'
   import { getClient, MessageViewer } from '@hcengineering/presentation'
-  import { markupToJSON, type MarkupNode } from '@hcengineering/text'
+  import { isEmptyMarkup, markupToJSON, type MarkupNode } from '@hcengineering/text'
   import { Button, Label, showPanel } from '@hcengineering/ui'
   import { registeredEditor, MarkupDiffViewer } from '@hcengineering/text-editor-resources'
   import view from '@hcengineering/view'
@@ -56,8 +56,8 @@
   let baseNode: MarkupNode | undefined
 
   // A rename alone carries no body: then there is nothing to diff and no editor to wait for.
-  $: hasBody = value.proposedMarkup !== undefined && value.proposedMarkup !== ''
-  $: proposedNode = hasBody ? markupToJSON(value.proposedMarkup as string) : undefined
+  $: hasBody = !isEmptyMarkup(value.proposedMarkup)
+  $: proposedNode = value.proposedMarkup !== undefined ? markupToJSON(value.proposedMarkup) : undefined
 
   // Reactive: the document may be opened long after this card was rendered, and the button has to
   // switch from "open it" to "apply" the moment its editor mounts.
@@ -86,20 +86,23 @@
   // The body needs the open editor (it owns the collaborative content); the title is a plain field.
   $: canApply = hasBody ? editorOpen : value.proposedTitle !== undefined
 
+  // Whatever the class calls its title: `titleKey` is what the platform renames docs by.
+  async function applyTitle (title: string): Promise<void> {
+    const target = await client.findOne(value.targetClass, { _id: value.targetId })
+    if (target === undefined) return
+    const titleKey = hierarchy.getClass(value.targetClass).titleKey ?? 'title'
+    await client.updateDoc(value.targetClass, target.space, value.targetId, { [titleKey]: title })
+  }
+
   async function apply (): Promise<void> {
-    if (hasBody) {
+    if (hasBody && proposedNode !== undefined) {
       if (editor === undefined) return
       editor.commands.setContent(proposedNode as any)
     }
     if (value.proposedTitle !== undefined && value.proposedTitle !== '') {
-      const target = await client.findOne(value.targetClass, { _id: value.targetId })
-      if (target !== undefined) {
-        await client.updateDoc(value.targetClass, target.space, value.targetId, {
-          title: value.proposedTitle
-        } as any)
-      }
+      await applyTitle(value.proposedTitle)
     }
-    await client.updateDoc(value._class, value.space, value._id, { applied: true } as any)
+    await client.updateDoc(value._class, value.space, value._id, { applied: true })
   }
 
   function openDocument (): void {
