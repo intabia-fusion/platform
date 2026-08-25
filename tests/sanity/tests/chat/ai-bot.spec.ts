@@ -56,12 +56,17 @@ test.describe('ai-bot direct chat', () => {
     await channelPage.sendMessage('один вопрос')
 
     const messages = page.locator('.hulyComponent .activityMessage')
-    await expect(page.locator('.hulyComponent .activityMessage', { hasText: 'echo' })).toBeVisible({ timeout: 60000 })
+    const echo = page.locator('.hulyComponent .activityMessage', { hasText: 'echo' })
     // The bot's own message lands in the same direct, so a missing self-filter turns one question
-    // into an endless exchange. Settle first, then hold still.
-    await expect(messages).toHaveCount(2, { timeout: 30000 })
+    // into an endless exchange - it would echo its own reply.
+    await expect(echo).toHaveCount(1, { timeout: 60000 })
+    // The welcome the bot posts on member join arrives asynchronously, so the total is not a fixed
+    // number. Let it settle, then freeze the count and require it to stay put.
     await page.waitForTimeout(15000)
-    await expect(messages).toHaveCount(2)
+    const settled = await messages.count()
+    await page.waitForTimeout(5000)
+    expect(await messages.count()).toBe(settled)
+    await expect(echo).toHaveCount(1)
   })
 
   test('direct context carries previous messages', async ({ page }) => {

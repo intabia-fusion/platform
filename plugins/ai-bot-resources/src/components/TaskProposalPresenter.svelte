@@ -98,8 +98,9 @@
   })
 
   $: projectItems = projects.map((p): DropdownTextItem => ({ id: p._id, label: `${p.identifier} ${p.name}` }))
-  // Explicit pick wins; otherwise the only project there is, so a single-project workspace needs no choice.
-  $: project = value.project ?? (projects.length === 1 ? projects[0]._id : undefined)
+  // Explicit pick wins; otherwise the first one - same item DropdownLabels auto-selects, so the
+  // shown project and the one the button creates in never disagree.
+  $: project = value.project ?? projects[0]?._id
   // Splitting an existing task: only the sub-task block is shown, there is no new parent to name.
   $: isSplit = value.parent != null
 

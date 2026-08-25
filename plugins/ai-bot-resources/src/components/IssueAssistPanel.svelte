@@ -169,15 +169,22 @@
 
   // The conversation outlives the dialog, so it says what it was for: an issue draft that turned
   // into this issue. `resultId` is what a history view will navigate by.
-  $: if (created !== undefined && conversation !== undefined && stamped !== created.id) {
+  $: if (
+    created !== undefined &&
+    (conversation !== undefined || conversationId !== undefined) &&
+    stamped !== created.id
+  ) {
     stamped = created.id
     void stampResult(created)
   }
 
   async function stampResult (result: { id: Ref<Doc>, identifier: string }): Promise<void> {
-    if (conversation === undefined || resultClass === undefined) return
+    if (resultClass === undefined) return
+    // The panel may never have been opened in this session, but the draft still remembers the thread.
+    const root = conversation ?? (await resumeConversation(conversationId as Ref<ChatMessage>))
+    if (root === undefined) return
     try {
-      await linkConversationResult(conversation, { id: result.id, class: resultClass, label: result.identifier })
+      await linkConversationResult(root, { id: result.id, class: resultClass, label: result.identifier })
       // The thread belongs to the issue now, not to this dialog.
       conversation = undefined
       proposal = undefined
