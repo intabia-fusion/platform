@@ -1208,15 +1208,15 @@
     .logo-container.mini,
     .topmenu-container.mini {
       position: fixed;
-      top: 4px;
+      top: 8px;
     }
     .logo-container.mini {
-      left: 4px;
+      left: 8px;
       width: 2.25rem;
       height: 2.25rem;
     }
     .topmenu-container.mini {
-      left: calc(2.25rem + 8px);
+      left: calc(2.25rem + 12px);
     }
   }
 

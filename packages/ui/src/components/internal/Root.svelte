@@ -238,7 +238,7 @@
 <Theme>
   <div id="ui-root" class:mobile-theme={isMobile}>
     <div class="antiStatusBar">
-      <div class="flex-row-center h-full content-color gap-3 px-4">
+      <div class="flex-row-center h-full content-color gap-3 px-4 py-2">
         {#if desktopPlatform}
           <div class="history-box flex-row-center gap-3">
             <button
@@ -309,7 +309,7 @@
         </div>
       </div>
       {#if secondRow}
-        <div class="flex-between h-full content-color gap-3 px-2 second-row" style:-webkit-app-region={'no-drag'}>
+        <div class="flex-between h-full content-color gap-3 px-1 second-row" style:-webkit-app-region={'no-drag'}>
           <div class="flex-row-center flex-gap-0-5">
             <RootBarExtension position="left" />
           </div>
