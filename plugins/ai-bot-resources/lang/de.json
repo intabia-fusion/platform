@@ -46,6 +46,10 @@
     "AssistIssueThreadStart": "Aufgabenentwurf{project, select, undefined {} other { in {project}}}",
     "AssistIssueNewContext": "Neuer Kontext",
     "AssistIssueApplyAgain": "Erneut übernehmen",
-    "AssistIssueAppliedMark": "Übernommen"
+    "AssistIssueAppliedMark": "Übernommen",
+    "TokenLimitReachedMonth": "Ihre KI-Token sind aufgebraucht. Kaufen Sie weitere in den Workspace-Einstellungen (Einstellungen -> Abonnement) oder warten Sie auf die nächste Periode.",
+    "AIServiceUnavailable": "Der KI-Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.",
+    "AIEmptyResponse": "Ich konnte diesmal keine Antwort erzeugen. Bitte formulieren Sie die Frage um oder versuchen Sie es erneut.",
+    "ProposedEstimation": "Schätzung: {hours} Std."
   }
 }

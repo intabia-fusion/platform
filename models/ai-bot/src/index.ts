@@ -174,7 +174,10 @@ export class TAIEditProposalMessage extends TThreadMessage implements AIEditProp
     targetAttr!: string
 
   @Prop(TypeString(), core.string.String)
-    proposedMarkup!: Markup
+    proposedMarkup?: Markup
+
+  @Prop(TypeString(), core.string.String)
+    proposedTitle?: string
 
   @Prop(TypeBoolean(), core.string.Boolean)
     applied?: boolean

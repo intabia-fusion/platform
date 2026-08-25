@@ -46,6 +46,10 @@
     "AssistIssueThreadStart": "Brouillon de tâche{project, select, undefined {} other { dans {project}}}",
     "AssistIssueNewContext": "Nouveau contexte",
     "AssistIssueApplyAgain": "Appliquer à nouveau",
-    "AssistIssueAppliedMark": "Appliqué"
+    "AssistIssueAppliedMark": "Appliqué",
+    "TokenLimitReachedMonth": "Vos jetons IA sont épuisés. Achetez-en dans les paramètres de l'espace de travail (Paramètres -> Abonnement) ou attendez la période suivante.",
+    "AIServiceUnavailable": "Le service d'IA est temporairement indisponible. Veuillez réessayer plus tard.",
+    "AIEmptyResponse": "Je n'ai pas pu produire de réponse cette fois. Reformulez la question ou réessayez.",
+    "ProposedEstimation": "Estimation : {hours} h"
   }
 }

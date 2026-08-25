@@ -46,6 +46,10 @@
     "AssistIssueThreadStart": "Borrador de tarea{project, select, undefined {} other { en {project}}}",
     "AssistIssueNewContext": "Nuevo contexto",
     "AssistIssueApplyAgain": "Aplicar de nuevo",
-    "AssistIssueAppliedMark": "Aplicado"
+    "AssistIssueAppliedMark": "Aplicado",
+    "TokenLimitReachedMonth": "Se agotaron los tokens de IA. Compre más en la configuración del espacio de trabajo (Configuración -> Suscripción) o espere al siguiente período.",
+    "AIServiceUnavailable": "El servicio de IA no está disponible temporalmente. Inténtelo de nuevo más tarde.",
+    "AIEmptyResponse": "No he podido generar una respuesta esta vez. Reformule la pregunta o inténtelo de nuevo.",
+    "ProposedEstimation": "Estimación: {hours} h"
   }
 }

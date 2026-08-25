@@ -125,8 +125,10 @@ export interface AIEditProposalMessage extends ThreadMessage {
   targetClass: Ref<Class<Doc>>
   // Collaborative attribute being rewritten (e.g. 'description' for an issue, 'content' for a doc).
   targetAttr: string
-  // Whole proposed new content as Markup (JSON string).
-  proposedMarkup: Markup
+  // Whole proposed new content as Markup (JSON string). Absent when only the title is proposed.
+  proposedMarkup?: Markup
+  // Proposed new title. Renaming is a proposal like any other: the bot never writes it itself.
+  proposedTitle?: string
   // Set once the user applied it, to disable the button and mark the message.
   applied?: boolean
 }
@@ -253,6 +255,7 @@ const aiBot = plugin(aiBotId, {
     TaskCreated: '' as IntlString,
     CreateTaskFailed: '' as IntlString,
     SelectProject: '' as IntlString,
+    ProposedEstimation: '' as IntlString,
     ApplyEdit: '' as IntlString,
     EditApplied: '' as IntlString,
     OpenDocument: '' as IntlString,

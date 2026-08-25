@@ -44,6 +44,12 @@
     "AssistIssueThreadStart": "Návrh úkolu{project, select, undefined {} other { v {project}}}",
     "AssistIssueNewContext": "Nový kontext",
     "AssistIssueApplyAgain": "Použít znovu",
-    "AssistIssueAppliedMark": "Použito"
+    "AssistIssueAppliedMark": "Použito",
+    "TokenLimitReachedMonth": "Došly vám AI tokeny. Dokupte je v nastavení pracovního prostoru (Nastavení -> Předplatné) nebo počkejte na další období.",
+    "AIServiceUnavailable": "Služba AI je dočasně nedostupná. Zkuste to prosím později.",
+    "AIEmptyResponse": "Tentokrát se mi nepodařilo vytvořit odpověď. Přeformulujte dotaz nebo to zkuste znovu.",
+    "AsrLevel": "Úroveň přepisu",
+    "AsrLevelHint": "Úroveň kvality přepisu schůzek v tomto prostoru.",
+    "ProposedEstimation": "Odhad: {hours} h"
   }
 }

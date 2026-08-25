@@ -225,7 +225,10 @@ export async function createTranscriptionsSupport (
       if (wsClient === undefined) {
         throw new Error(`no workspace client for chat-voice transcription ${workspace}`)
       }
-      const client = wsClient.client
+      // Under system: the bot is not a member of a personal direct, so its own client sees nothing.
+      // The bot stays the author of the change - only the access comes from the system.
+      const client = wsClient.systemAccessClient()
+      const asBot = wsClient.primarySocialId._id
       const doc = await client.findOne(aiBot.class.AudioTranscribe, { _id: task.transcribeId as Ref<AudioTranscribe> })
       if (doc === undefined || doc.state !== 'pending') return
 
@@ -255,15 +258,15 @@ export async function createTranscriptionsSupport (
 
         const raw = result.text?.trim() ?? ''
         if (raw === '') {
-          await client.update(doc, { state: 'failed' })
+          await client.update(doc, { state: 'failed' }, false, undefined, asBot)
           return
         }
         const corrected = (await aiControl.correctTranscript(workspace, raw, task.language, task.level)) ?? raw
-        await client.update(doc, { text: corrected, state: 'done', lang: result.language })
+        await client.update(doc, { text: corrected, state: 'done', lang: result.language }, false, undefined, asBot)
       } catch (err: any) {
         pctx.error('chat-voice transcription failed', { error: err?.message, blobId: task.blobId })
         try {
-          await client.update(doc, { state: 'failed' })
+          await client.update(doc, { state: 'failed' }, false, undefined, asBot)
         } catch {}
       }
     }

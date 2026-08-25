@@ -46,6 +46,10 @@
     "AssistIssueThreadStart": "任务草稿{project, select, undefined {} other {（{project}）}}",
     "AssistIssueNewContext": "新上下文",
     "AssistIssueApplyAgain": "再次应用",
-    "AssistIssueAppliedMark": "已应用"
+    "AssistIssueAppliedMark": "已应用",
+    "TokenLimitReachedMonth": "AI 令牌已用完。请在工作区设置中购买（设置 -> 订阅）或等待下一个周期。",
+    "AIServiceUnavailable": "AI 服务暂时不可用。请稍后再试。",
+    "AIEmptyResponse": "这次未能生成回答。请换个说法或重试。",
+    "ProposedEstimation": "预估：{hours} 小时"
   }
 }

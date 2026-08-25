@@ -46,6 +46,10 @@
     "AssistIssueThreadStart": "Task draft{project, select, undefined {} other { in {project}}}",
     "AssistIssueNewContext": "New context",
     "AssistIssueApplyAgain": "Apply again",
-    "AssistIssueAppliedMark": "Applied"
+    "AssistIssueAppliedMark": "Applied",
+    "TokenLimitReachedMonth": "You are out of AI tokens. Buy more in the workspace settings (Settings -> Subscription) or wait for the next period.",
+    "AIServiceUnavailable": "The AI service is temporarily unavailable. Please try again later.",
+    "AIEmptyResponse": "I could not produce an answer this time. Please rephrase the question or try again.",
+    "ProposedEstimation": "Estimate: {hours}h"
   }
 }

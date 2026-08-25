@@ -382,7 +382,7 @@ export async function runScenario (scenario: Scenario, opts: RunOptions): Promis
           pending !== undefined
             ? pending.kind === 'task'
               ? { kind: 'task', title: pending.title, subtasks: (pending.subtasks ?? []).length }
-              : { kind: 'edit', markdown: pending.markdown }
+              : { kind: 'edit', title: pending.title, markdown: pending.markdown }
             : undefined,
         answer,
         rounds

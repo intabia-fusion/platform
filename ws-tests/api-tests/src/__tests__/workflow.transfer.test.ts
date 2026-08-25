@@ -725,7 +725,8 @@ describe('workflow import and export', () => {
       const main = reexported.workflows.find((w) => w.name === 'Main')
       expect(main?.transitions?.map((t) => t.to)).toEqual(['Todo', 'InProgress', 'Done'])
       expect(main?.transitions?.[2].validators?.[0].props.statuses).toEqual({ '$taskType:Bug': ['$status:Done'] })
-    })
+      // Two project types plus two projects: the default 5s is not enough on CI.
+    }, 60000)
 
     it('produces a working workflow in the second project type', async () => {
       const source = await freshType()
@@ -748,7 +749,7 @@ describe('workflow import and export', () => {
         await setStatus(targetCtx, issue, 'Backlog')
       })
       expect(err).toContain('ForbiddenTransition')
-    })
+    }, 60000)
 
     it('survives a JSON round trip', async () => {
       const type = await freshType()
