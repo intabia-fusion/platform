@@ -63,6 +63,8 @@ export interface ScenarioExpect {
     count?: number
     titlesMatch?: string
     subtasksOfRoot?: number
+    /** Body of the root task after the run: an issue is edited through its description, not a new task. */
+    rootDescription?: { contains?: string[], notContains?: string[] }
   }
   /** The whole world untouched: for scenarios where the right move is to just answer. */
   worldUnchanged?: boolean
@@ -468,6 +470,15 @@ function checkExpectations (
       const root = world.issues.find((i) => i.parent === undefined)
       const subs = world.issues.filter((i) => i.parent === root?.id).length
       add(`root has ${expect.issues.subtasksOfRoot} sub-tasks`, subs === expect.issues.subtasksOfRoot, `${subs}`)
+    }
+    if (expect.issues.rootDescription !== undefined) {
+      const body = world.issues.find((i) => i.parent === undefined)?.description ?? ''
+      for (const needle of expect.issues.rootDescription.contains ?? []) {
+        add(`root description contains "${needle}"`, body.includes(needle), body.slice(0, 120))
+      }
+      for (const needle of expect.issues.rootDescription.notContains ?? []) {
+        add(`root description lacks "${needle}"`, !body.includes(needle), body.slice(0, 120))
+      }
     }
     if (expect.issues.titlesMatch !== undefined) {
       const re = new RegExp(expect.issues.titlesMatch)

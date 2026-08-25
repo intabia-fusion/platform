@@ -628,6 +628,8 @@ registerTool<object>(
         required: ['title']
       },
       description:
+        'Do NOT call this when the conversation is linked to a task and the user asks to change, extend or ' +
+        'rewrite THAT task: its description is edited with propose_new_document. ' +
         'Propose a new task built from the conversation (a summary of the problem plus what to do). NOTHING IS ' +
         'CREATED by this call: the user gets an editable card and presses the create button themselves, so it is ' +
         'always safe to call. Use when the user asks to create a task or to turn the discussion into one. ' +

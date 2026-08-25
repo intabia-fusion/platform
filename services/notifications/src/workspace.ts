@@ -153,11 +153,23 @@ class Workspace {
     }
 
     if (res.length > 0) {
+      if (tx.meta?.inboxOnly === true) this.keepInboxProviderOnly(res)
       this.lastUpdate = Date.now()
       await this.applyTxes(res)
     }
 
     this.inProgress = false
+  }
+
+  // Push/sound/email/telegram senders filter by allowedProviders, so trimming them leaves the inbox entry alone.
+  private keepInboxProviderOnly (txes: TxCUD<Doc>[]): void {
+    for (const tx of txes) {
+      if (tx._class !== core.class.TxCreateDoc) continue
+      if (!this.hierarchy.isDerived(tx.objectClass, notification.class.InboxNotification)) continue
+      const attrs = (tx as TxCreateDoc<InboxNotification>).attributes
+      const types = attrs.allowedProviders?.[notification.providers.InboxNotificationProvider]
+      attrs.allowedProviders = types !== undefined ? { [notification.providers.InboxNotificationProvider]: types } : {}
+    }
   }
 
   private async applyTxes (txes: TxCUD<Doc>[]): Promise<void> {

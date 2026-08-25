@@ -40,6 +40,8 @@ import { generateId, type KeysByType } from './utils'
 export type TxMeta = {
   // ignore notifications if true, allowed for system account only
   silent?: boolean
+  // keep the inbox entry but suppress push/sound/email/telegram delivery
+  inboxOnly?: boolean
 } & Record<string, string | number | boolean>
 
 /**

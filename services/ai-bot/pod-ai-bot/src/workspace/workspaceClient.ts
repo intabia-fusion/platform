@@ -54,6 +54,7 @@ import core, {
   SortingOrder,
   Space,
   Timestamp,
+  type TxMeta,
   withContext,
   systemAccountUuid,
   type Account,
@@ -1530,21 +1531,35 @@ export class WorkspaceClient {
     if (text === undefined) return
     const greeting = renderPrompt(text, { botName: botName(config.FirstName) })
     const markup = jsonToMarkup(markdownToMarkup(greeting, { refUrl: '', imageUrl: '' }))
-    const direct = await this.client.createDoc<DirectMessage>(chunter.class.DirectMessage, core.space.Space, {
-      name: '',
-      description: '',
-      private: true,
-      archived: false,
-      members: [aiAccount, account],
-      type: 'person'
-    })
+    // The backfill greets every existing member at once, so keep it inbox-only instead of pushing to everyone.
+    const meta: TxMeta = { inboxOnly: true }
+    const direct = await this.client.createDoc<DirectMessage>(
+      chunter.class.DirectMessage,
+      core.space.Space,
+      {
+        name: '',
+        description: '',
+        private: true,
+        archived: false,
+        members: [aiAccount, account],
+        type: 'person'
+      },
+      undefined,
+      undefined,
+      undefined,
+      meta
+    )
     await this.client.addCollection<Doc, ChatMessage>(
       chunter.class.ChatMessage,
       direct,
       direct,
       chunter.class.DirectMessage,
       'messages',
-      { message: markup }
+      { message: markup },
+      undefined,
+      undefined,
+      undefined,
+      meta
     )
   }
 

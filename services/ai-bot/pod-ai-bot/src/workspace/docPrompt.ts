@@ -83,13 +83,25 @@ export function buildDocPromptText (data: DocPromptData): string {
     return parts.join('\n')
   }
 
-  parts.push('This is the current document body (markdown):')
+  const what = data.kind === 'issue' ? "this task's description" : 'the document'
+  parts.push(
+    data.kind === 'issue'
+      ? 'This is the current description of that task (markdown):'
+      : 'This is the current document body (markdown):'
+  )
   parts.push('```markdown\n' + data.body + '\n```')
   parts.push(
-    'To change the document, call the propose_new_document tool. Its `markdown` argument must be the ' +
-      'full new body: copy the current body above verbatim, apply ONLY the change the user asked for, ' +
-      'and pass the result.'
+    `To change ${what} - extend it, rewrite it, fill it in, split it into stages - call the ` +
+      'propose_new_document tool. Its `markdown` argument must be the full new body: copy the current ' +
+      'body above verbatim, apply ONLY the change the user asked for, and pass the result.'
   )
+  if (data.kind === 'issue') {
+    // Asked to extend the description, the model used to call propose_task and offer a second task.
+    parts.push(
+      'propose_task creates a SEPARATE new task and is not how this one is edited: never call it when ' +
+        'the user asks to change the description, title or content of the task above.'
+    )
+  }
   parts.push(
     'STRICT rules for the markdown you pass:\n' +
       '- Output ONLY the document itself. The document ends where its content ends.\n' +
