@@ -21,7 +21,9 @@
     Header,
     BreadcrumbItem,
     Loading,
-    languageStore
+    languageStore,
+    ButtonIcon,
+    IconBack
   } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import activity, { ActivityMessage } from '@hcengineering/activity'
@@ -41,6 +43,8 @@
   export let autofocus = true
   export let readonly: boolean = false
   export let onReply: ((message: ActivityMessage) => void) | undefined = undefined
+  // Mobile opens the thread in the main panel, where breadcrumbs alone are not an obvious way back.
+  export let withBackButton: boolean = false
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -127,7 +131,20 @@
 </script>
 
 {#if showHeader}
-  <Header type={'type-aside'} adaptive={'disabled'} closeOnEscape={false} on:close>
+  <!-- The back button replaces the aside's close cross, so the mobile header is a plain component one. -->
+  <Header type={withBackButton ? 'type-component' : 'type-aside'} adaptive={'disabled'} closeOnEscape={false} on:close>
+    <svelte:fragment slot="beforeTitle">
+      {#if withBackButton}
+        <ButtonIcon
+          icon={IconBack}
+          kind={'tertiary'}
+          size={'small'}
+          on:click={() => {
+            dispatch('close')
+          }}
+        />
+      {/if}
+    </svelte:fragment>
     <Breadcrumbs items={breadcrumbs} on:select={handleBreadcrumbSelect} selected={1} />
     <svelte:fragment slot="actions">
       {#if message !== undefined}
