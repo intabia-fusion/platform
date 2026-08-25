@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { generateId, PlatformSetting, PlatformURI, fillSearch } from '../utils'
+import { retryIntervals } from '../retry'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 import { ComponentsPage } from '../model/tracker/components-page'
 import { NewComponent } from '../model/tracker/types'
@@ -53,7 +54,7 @@ test.describe('Tracker component tests', () => {
     // Wait for the component changes to be saved before navigating away
     await expect(async () => {
       await componentsDetailsPage.checkComponent(editComponent)
-    }).toPass({ intervals: [100, 200, 500], timeout: 10000 })
+    }).toPass({ intervals: retryIntervals, timeout: 10000 })
     await trackerNavigationMenuPage.openComponentsForProject('Default')
     await componentsPage.openComponentByName(editComponent.name)
     await componentsDetailsPage.checkComponent(editComponent)

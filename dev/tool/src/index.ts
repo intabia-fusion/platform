@@ -64,7 +64,7 @@ import { createWorkspace, upgradeWorkspace } from '@hcengineering/workspace-serv
 import { faker } from '@faker-js/faker'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { buildStorageFromConfig, createStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
-import { program, type Command } from 'commander'
+import { Command } from 'commander'
 import { updateField } from './workspace'
 import { dumpIndexes, syncIndexes } from './indexes'
 import { reportSlowSql } from './slowsql'
@@ -101,7 +101,7 @@ import {
   type QueueWorkspaceMessage,
   type StorageAdapter
 } from '@hcengineering/server-core'
-import { getAccountDBUrl, getKvsUrl, getMongoDBUrl } from './__start'
+import { getAccountDBUrl, getKvsUrl, getMongoDBUrl } from './setup'
 // import { fillGithubUsers, fixAccountEmails, renameAccount } from './account'
 import { changeConfiguration } from './configuration'
 
@@ -145,19 +145,24 @@ process.on('exit', () => {
   })
 })
 
+export { prepareTools, registerToolLocations, runToolCommand } from './setup'
+
+export type PrepareTools = () => {
+  dbUrl: string
+  txes: Tx[]
+  version: Data<Version>
+  migrateOperations: [string, MigrateOperation][]
+}
+
+let runtimeReady = false
+
 /**
- * @public
+ * Adapters, server plugins and process-level handlers are global: register them once even when
+ * several programs are built in the same process (see buildToolProgram).
  */
-export function devTool (
-  prepareTools: () => {
-    dbUrl: string
-    txes: Tx[]
-    version: Data<Version>
-    migrateOperations: [string, MigrateOperation][]
-  },
-  extendProgram?: (prog: Command) => void
-): void {
-  const toolCtx = new MeasureMetricsContext('tool', {})
+function initToolRuntime (toolCtx: MeasureMetricsContext): void {
+  if (runtimeReady) return
+  runtimeReady = true
 
   registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
   registerAdapterFactory('postgresql', createPostgresAdapter, true)
@@ -165,6 +170,33 @@ export function devTool (
 
   registerServerPlugins()
   registerStringLoaders()
+
+  process.on('unhandledRejection', (reason, promise) => {
+    toolCtx.error('Unhandled Rejection at:', { reason, promise })
+  })
+
+  process.on('uncaughtException', (error, origin) => {
+    toolCtx.error('Uncaught Exception at:', { origin, error })
+  })
+}
+
+/**
+ * @public
+ */
+export function devTool (prepareTools: PrepareTools, extendProgram?: (prog: Command) => void): void {
+  buildToolProgram(prepareTools, extendProgram).parse(process.argv)
+}
+
+/**
+ * Builds a fresh command tree. Commander keeps parsed options on the command objects, so embedders
+ * running commands concurrently must build one program per invocation.
+ * @public
+ */
+export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (prog: Command) => void): Command {
+  const toolCtx = new MeasureMetricsContext('tool', {})
+  const program = new Command()
+
+  initToolRuntime(toolCtx)
 
   const serverSecret = process.env.SERVER_SECRET
   if (serverSecret === undefined) {
@@ -3117,13 +3149,5 @@ export function devTool (
 
   extendProgram?.(program)
 
-  process.on('unhandledRejection', (reason, promise) => {
-    toolCtx.error('Unhandled Rejection at:', { reason, promise })
-  })
-
-  process.on('uncaughtException', (error, origin) => {
-    toolCtx.error('Uncaught Exception at:', { origin, error })
-  })
-
-  program.parse(process.argv)
+  return program
 }

@@ -1,5 +1,6 @@
 import { type Locator, type Page, expect } from '@playwright/test'
 import { DateDivided } from './types'
+import { retryIntervals } from '../retry'
 
 export class CommonPage {
   readonly page: Page
@@ -126,7 +127,7 @@ export class CommonPage {
         })
       })
       await expect(collapsed).toHaveCount(0, { timeout: 2000 })
-    }).toPass({ intervals: [200, 500], timeout: 15000 })
+    }).toPass({ intervals: retryIntervals, timeout: 15000 })
   }
 
   async selectMenuItem (page: Page, name: string, fullWordFilter: boolean = false): Promise<void> {
@@ -209,7 +210,7 @@ export class CommonPage {
         await this.selectPopupInput().fill(point)
       }
       await expect(item).toBeVisible({ timeout: 5000 })
-    }).toPass({ intervals: [300, 1000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
     await item.click()
   }
 
@@ -268,7 +269,7 @@ export class CommonPage {
         await this.page.keyboard.press('Escape')
         await expect(overlay).toHaveCount(0, { timeout: 2000 })
       }
-    }).toPass({ intervals: [200, 500], timeout: 15000 })
+    }).toPass({ intervals: retryIntervals, timeout: 15000 })
   }
 
   async closeNotification (): Promise<void> {
@@ -323,7 +324,7 @@ export class CommonPage {
     await expect(async () => {
       if ((await this.selectPopupMenu(filter).count()) === 0) await this.buttonFilter().click()
       await this.selectPopupMenu(filter).click({ timeout: 5000 })
-    }).toPass({ intervals: [300, 1000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
 
     if (filterSecondLevel !== null && typeof filterSecondLevel === 'string') {
       switch (filter) {
@@ -429,7 +430,7 @@ export class CommonPage {
     // Retry with timeout as list may update with delay after search/filter
     await expect(async () => {
       await expect(this.linesFromList(text)).toHaveCount(count)
-    }).toPass({ intervals: [100, 200, 500], timeout: 15000 })
+    }).toPass({ intervals: retryIntervals, timeout: 15000 })
   }
 
   async pressEscape (): Promise<void> {

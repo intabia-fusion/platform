@@ -1012,6 +1012,11 @@
       "shouldPublish": false
     },
     {
+      "packageName": "@hcengineering/test-base",
+      "projectFolder": "dev/test-base",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@intabiafusion/api-bundle-builder",
       "projectFolder": "dev/api",
       "shouldPublish": false

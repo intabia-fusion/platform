@@ -131,8 +131,10 @@ test.describe('Chat image container space reservation tests', () => {
       // ==========================================
       // 3. Dimensions after load remain unchanged - Exact expected value assertion
       // ==========================================
-      // Wait 6 seconds for network response completion and canvas loader disappearance
-      await page.waitForTimeout(6000)
+      // The route above holds the image for 5s. Wait for it to actually arrive rather than for a
+      // sleep long enough to cover it - the assertion below is about the size after the load.
+      const imgElement = container.locator('img').first()
+      await expect(imgElement).toBeVisible({ timeout: 15000 })
 
       const boxAfterLoad = await container.boundingBox()
       expect(boxAfterLoad).not.toBeNull()
@@ -140,10 +142,6 @@ test.describe('Chat image container space reservation tests', () => {
       // Dimensions after image load match expected concrete values exactly
       expect(boxAfterLoad?.width).toBeCloseTo(expectedWidth, 1)
       expect(boxAfterLoad?.height).toBeCloseTo(expectedHeight, 1)
-
-      // Image has loaded and is now visible
-      const imgElement = container.locator('img').first()
-      await expect(imgElement).toBeVisible({ timeout: 5000 })
     })
   }
 })

@@ -9,6 +9,7 @@ import { SelectWorkspacePage } from '../model/select-workspace-page'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 import { prepareNewIssueWithOpenStep } from '../tracker/common-steps'
 import { PlatformURI, generateId, generateTestData } from '../utils'
+import { retryIntervals } from '../retry'
 
 // Whole-flow assistant scenarios on the `low` level: the prompt scripts the tool call
 // (`call:<tool> {json}`, llms/mock.ts), the test asserts what the user gets.
@@ -32,7 +33,7 @@ async function openAssistant (page: Page): Promise<void> {
   await expect(async () => {
     await page.locator('[data-id="btnDiscussWithAI"]').click()
     await expect(page.locator('#sidebar div.text-editor-view')).toBeVisible({ timeout: 15000 })
-  }).toPass({ intervals: [1000, 2000, 3000], timeout: 90000 })
+  }).toPass({ intervals: retryIntervals, timeout: 90000 })
 }
 
 /** The assistant thread lives in the chat sidebar, next to whatever object opened it. */

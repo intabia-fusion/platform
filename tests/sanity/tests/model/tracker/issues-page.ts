@@ -2,10 +2,11 @@ import { expect, type Locator } from '@playwright/test'
 import path from 'path'
 import { createIssue, toTime } from '../../tracker/tracker.utils'
 import { attachScreenshot, iterateLocator } from '../../utils'
+import { retryIntervals, waitStable } from '../../retry'
 import { CommonTrackerPage } from './common-tracker-page'
 import { NewIssue } from './types'
 
-const retryOptions = { intervals: [1000, 1500, 2500], timeout: 60000 }
+const retryOptions = { intervals: retryIntervals, timeout: 60000 }
 export class IssuesPage extends CommonTrackerPage {
   modelSelectorAll = (): Locator => this.page.locator('label[data-id="tab-all"]')
   issues = (): Locator => this.page.locator('.antiPanel-navigator').locator('text="Issues"')
@@ -213,7 +214,7 @@ export class IssuesPage extends CommonTrackerPage {
       await this.page.waitForSelector('text="Add time report"', { state: 'detached', timeout: 15000 })
       await this.okButton().click()
       await expect(this.reportedTimeEditor()).toContainText(expected, { timeout: 5000 })
-    }).toPass({ intervals: [1000, 2000], timeout: 45000 })
+    }).toPass({ intervals: retryIntervals, timeout: 45000 })
   }
 
   async verifyReportedTime (time: number): Promise<void> {
@@ -394,7 +395,9 @@ export class IssuesPage extends CommonTrackerPage {
 
     for (let i = 0; i < tabs.length; i++) {
       await tabs[i].click()
-      await this.page.waitForTimeout(3000)
+      // The panel still holds the previous tab's rows for a moment, and the negative branch below
+      // would pass against those. Wait for the list to settle rather than for a fixed 3s.
+      await waitStable(async () => await this.issueListPanel().innerText(), { stableFor: 500, interval: 100 })
       if (presence === checks[i]) {
         await expect(this.issueListPanel()).toContainText(issueName)
       } else {
@@ -641,7 +644,7 @@ export class IssuesPage extends CommonTrackerPage {
         timeout: 5000
       })
       await expect(uploaded).toBeVisible({ timeout: 10000 })
-    }).toPass({ intervals: [500, 1000], timeout: 40000 })
+    }).toPass({ intervals: retryIntervals, timeout: 40000 })
   }
 
   async deleteAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
@@ -664,7 +667,7 @@ export class IssuesPage extends CommonTrackerPage {
     await expect(async () => {
       await this.hoverAttachmentButton(issueName)
       await expect(this.textPopupAddAttachmentsFile().filter({ hasText: filePath })).toBeVisible({ timeout: 5000 })
-    }).toPass({ intervals: [300, 1000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
   }
 
   async checkCommentsCount (issueName: string, count: string): Promise<void> {

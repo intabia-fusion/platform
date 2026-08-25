@@ -9,6 +9,7 @@ import {
   generateTestData,
   getSecondPageByInvite
 } from '../utils'
+import { retryIntervals } from '../retry'
 import { NewDocument, NewTeamspace } from '../model/documents/types'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { DocumentsPage } from '../model/documents/documents-page'
@@ -19,7 +20,7 @@ import { SignUpData } from '../model/common-types'
 import { TestData } from '../chat/types'
 import { faker } from '@faker-js/faker'
 
-const retryOptions = { intervals: [1000, 1500, 2500], timeout: 60000 }
+const retryOptions = { intervals: retryIntervals, timeout: 60000 }
 
 test.describe('Content in the Documents tests', () => {
   let testData: TestData

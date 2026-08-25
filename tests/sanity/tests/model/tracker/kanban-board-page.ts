@@ -15,6 +15,7 @@
 
 import { expect, type Locator } from '@playwright/test'
 import { CommonTrackerPage } from './common-tracker-page'
+import { retryIntervals } from '../../retry'
 
 export class KanbanBoardPage extends CommonTrackerPage {
   column (state: string): Locator {
@@ -92,7 +93,7 @@ export class KanbanBoardPage extends CommonTrackerPage {
   private async ensureVisible (locator: Locator): Promise<void> {
     await expect(async () => {
       await locator.scrollIntoViewIfNeeded({ timeout: 5000 })
-    }).toPass({ intervals: [200, 500], timeout: 15000 })
+    }).toPass({ intervals: retryIntervals, timeout: 15000 })
   }
 
   /**
@@ -177,7 +178,7 @@ export class KanbanBoardPage extends CommonTrackerPage {
             previous = ids
             return stable
           },
-          { timeout: 10000, intervals: [200, 300, 500, 1000] }
+          { timeout: 10000, intervals: retryIntervals }
         )
         .toBe(true)
     }

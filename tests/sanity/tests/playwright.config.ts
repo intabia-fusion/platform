@@ -2,6 +2,8 @@ import { devices, PlaywrightTestConfig } from '@playwright/test'
 import { config as dotenvConfig } from 'dotenv'
 dotenvConfig()
 
+const PlatformURI = process.env.PLATFORM_URI ?? 'http://localhost:8083'
+
 let maxFailures: number | undefined
 if (process.env.TESTS_MAX_FAILURES !== undefined) {
   maxFailures = parseInt(process.env.TESTS_MAX_FAILURES)
@@ -31,6 +33,19 @@ const config: PlaywrightTestConfig = {
     {
       name: 'Platform',
       use: {
+        // A toast lives 10s (packages/ui/src/utils.ts) in the bottom-left corner - on top of
+        // #profile-button. Every click on it then waits the toast out; that cost 166s of the run
+        // and is what timed the flaky tests out. setTestOptions() does the same, but only 8 of
+        // the 85 spec files call it, so put it where every context gets it.
+        storageState: {
+          cookies: [],
+          origins: [
+            {
+              origin: PlatformURI,
+              localStorage: [{ name: '#platform.notification.timeout', value: '0' }]
+            }
+          ]
+        },
         testIdAttribute: 'data-id',
         permissions: ['clipboard-read', 'clipboard-write', 'microphone', 'camera'],
         launchOptions: {
@@ -78,6 +93,8 @@ const config: PlaywrightTestConfig = {
     // Machine-readable twin of the html report, consumed by analyze_failures.js.
     // Relative to this config's directory, so '..' puts it next to package.json.
     ['json', { outputFile: '../playwright-report.json' }],
+    // Per-step timings, which the json reporter drops. Consumed by analyze_steps.js.
+    [require.resolve('./step-reporter.ts')],
     [
       'allure-playwright',
       {

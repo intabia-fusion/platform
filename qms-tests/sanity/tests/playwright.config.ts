@@ -2,6 +2,8 @@ import { devices, PlaywrightTestConfig } from '@playwright/test'
 import { config as dotenvConfig } from 'dotenv'
 dotenvConfig()
 
+const PlatformURI = process.env.PLATFORM_URI ?? 'http://localhost:8083'
+
 let maxFailures: number | undefined
 if (process.env.TESTS_MAX_FAILURES !== undefined) {
   maxFailures = parseInt(process.env.TESTS_MAX_FAILURES)
@@ -13,6 +15,18 @@ const config: PlaywrightTestConfig = {
     {
       name: 'QMS',
       use: {
+        // A toast lives 10s (packages/ui/src/utils.ts) in the bottom-left corner, on top of
+        // #profile-button - every click on it then waits the toast out. setTestOptions() does the
+        // same, but only for the tests that call it.
+        storageState: {
+          cookies: [],
+          origins: [
+            {
+              origin: PlatformURI,
+              localStorage: [{ name: '#platform.notification.timeout', value: '0' }]
+            }
+          ]
+        },
         testIdAttribute: 'data-id',
         permissions: ['clipboard-read', 'clipboard-write'],
         ...devices['Desktop Chrome'],

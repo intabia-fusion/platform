@@ -51,7 +51,9 @@ import { retryTxn, type DBClient } from '@hcengineering/postgres-base'
 
 const loadedDomains = new Set<string>()
 
-let loadedTables = new Set<string>()
+// Keyed by url: one process can talk to several databases (regions), and a table present in one is
+// not present in another.
+const loadedTables = new Map<string, Set<string>>()
 
 export const NumericTypes = [
   core.class.TypeNumber,
@@ -72,32 +74,35 @@ export async function createTables (
   }
   const mapped = filtered.map((p) => translateDomain(p))
   const t = platformNow()
-  loadedTables =
-    loadedTables.size === 0
-      ? new Set(
-        (
-          await ctx.with('load-table', {}, () =>
-            client.unsafe(`
-    SELECT table_name 
+  const cached = loadedTables.get(url)
+  const tables =
+    cached ??
+    new Set(
+      (
+        await ctx.with('load-table', {}, () =>
+          client.unsafe(`
+    SELECT table_name
     FROM information_schema.tables
     WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'system')
     AND table_name NOT LIKE 'pg_%'
     AND table_name NOT LIKE 'cluster_%'
     AND table_name NOT LIKE 'kv_%'
     AND table_name NOT LIKE 'node_%'`)
-          )
-        ).map((it) => it.table_name)
-      )
-      : loadedTables
+        )
+      ).map((it) => it.table_name)
+    )
+  if (cached === undefined) {
+    loadedTables.set(url, tables)
+  }
   console.log('load-table', platformNowDiff(t))
 
-  const domainsToLoad = mapped.filter((it) => loadedTables.has(it))
+  const domainsToLoad = mapped.filter((it) => tables.has(it))
   if (domainsToLoad.length > 0) {
     await ctx.with('load-schemas', {}, () => getTableSchema(client, domainsToLoad))
   }
   const domainsToCreate: string[] = []
   for (const domain of mapped) {
-    if (!loadedTables.has(domain)) {
+    if (!tables.has(domain)) {
       domainsToCreate.push(domain)
     } else {
       loadedDomains.add(url + domain)
@@ -108,6 +113,7 @@ export async function createTables (
     await retryTxn(client, async (client) => {
       for (const domain of domainsToCreate) {
         await ctx.with('create-table', {}, () => createTable(client, domain))
+        tables.add(domain)
         loadedDomains.add(url + domain)
       }
     })

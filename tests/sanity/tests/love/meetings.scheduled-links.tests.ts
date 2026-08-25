@@ -24,6 +24,7 @@ import love, {
 } from '@hcengineering/love'
 import { expect, test, type Page } from '@playwright/test'
 import { PlatformURI, PlatformUserSecond } from '../utils'
+import { retryIntervals } from '../retry'
 import { closeMeetingContexts, getSystemRestClient, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
 const meetingsWs = 'meetings-ws'
@@ -175,7 +176,7 @@ export function registerScheduledLinksTests (): void {
               const mm = await client.findOne<MeetingMinutes>(love.class.MeetingMinutes, { _id: meetingId })
               return mm?.status
             },
-            { timeout: 60000, intervals: [1000] }
+            { timeout: 60000, intervals: retryIntervals }
           )
           .toBe(MeetingStatus.Scheduled)
 

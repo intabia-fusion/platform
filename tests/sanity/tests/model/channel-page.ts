@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { CommonPage } from './common-page'
 import { LinkedChannelTypes } from './types'
+import { retryIntervals } from '../retry'
 
 export class ChannelPage extends CommonPage {
   readonly page: Page
@@ -141,7 +142,7 @@ export class ChannelPage extends CommonPage {
     // Using longer intervals since the popup may need time to load data
     await expect(async () => {
       await expect(mentionLocator).toBeVisible({ timeout: 3000 })
-    }).toPass({ intervals: [100, 200, 500, 1000], timeout: timeoutMs })
+    }).toPass({ intervals: retryIntervals, timeout: timeoutMs })
     await mentionLocator.click()
   }
 
@@ -195,7 +196,7 @@ export class ChannelPage extends CommonPage {
         await this.addMemberPreview().click()
       }
       await expect(item).toBeVisible({ timeout: 5000 })
-    }).toPass({ intervals: [500, 1000, 2000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
     await item.click()
     await this.addButtonPreview().click()
     await expect(this.userAdded(user)).toBeVisible()
@@ -278,7 +279,7 @@ export class ChannelPage extends CommonPage {
     // Wait for the message to appear in sidebar with retry
     await expect(async () => {
       await expect(this.textMessageInSidebar(messageReply, true)).toBeVisible({ timeout: 5000 })
-    }).toPass({ intervals: [100, 200, 500], timeout: 15000 })
+    }).toPass({ intervals: retryIntervals, timeout: 15000 })
   }
 
   async closeAndOpenReplyMessage (): Promise<void> {

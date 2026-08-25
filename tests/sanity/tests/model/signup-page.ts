@@ -3,6 +3,12 @@ import { SignUpData, SignUpOtpData } from './common-types'
 import { CommonPage } from './common-page'
 import { getOtpCode } from '../API/AccountDb'
 
+/** Where sign up lands once it is done: password flow, OTP flow and join link each end elsewhere. */
+const afterSignUp = (url: URL): boolean =>
+  url.pathname.startsWith('/login/selectWorkspace') ||
+  url.pathname.startsWith('/login/createWorkspace') ||
+  url.pathname.startsWith('/workbench/')
+
 export class SignUpPage extends CommonPage {
   readonly page: Page
 
@@ -83,11 +89,19 @@ export class SignUpPage extends CommonPage {
   }
 
   async confirmOtpIfNeeded (email: string): Promise<void> {
-    try {
-      await this.codeInput().waitFor({ state: 'visible', timeout: 5000 })
-    } catch {
-      return
-    }
+    // A stand without OTP never shows the code screen, so a plain wait here pays its full timeout
+    // on every sign up. Race the two outcomes instead and leave as soon as either settles.
+    const otpShown = await Promise.race([
+      this.codeInput()
+        .waitFor({ state: 'visible', timeout: 30000 })
+        .then(() => true)
+        .catch(() => false),
+      this.page
+        .waitForURL(afterSignUp, { timeout: 30000 })
+        .then(() => false)
+        .catch(() => false)
+    ])
+    if (!otpShown) return
     const code = await getOtpCode(email)
     for (let i = 0; i < 6; i++) {
       await this.page.locator(`input[name="otp${i + 1}"]`).fill(code[i])
@@ -96,12 +110,7 @@ export class SignUpPage extends CommonPage {
     // Password sign up ends on the create form, OTP sign up on select workspace, and a sign up
     // through a join link goes straight into the workspace. Callers expect the create form, so take
     // the extra click here rather than in every spec.
-    await this.page.waitForURL(
-      (url) =>
-        url.pathname.startsWith('/login/selectWorkspace') ||
-        url.pathname.startsWith('/login/createWorkspace') ||
-        url.pathname.startsWith('/workbench/')
-    )
+    await this.page.waitForURL(afterSignUp)
     if (this.page.url().includes('/login/selectWorkspace')) {
       await this.page.locator('button > span', { hasText: 'Create workspace' }).click()
       await this.page.waitForURL((url) => url.pathname.startsWith('/login/createWorkspace'))

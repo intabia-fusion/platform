@@ -16,6 +16,7 @@ import love, {
 } from '@hcengineering/love'
 import { generateToken } from '@hcengineering/server-token'
 import { PlatformURI, PlatformUserSecond } from '../utils'
+import { retryIntervals } from '../retry'
 import { expect, type BrowserContext, type Page } from '@playwright/test'
 
 const MEETINGS_WS = 'meetings-ws'
@@ -160,7 +161,7 @@ export async function knockAndWaitPending (page: Page, timeoutMs = 30000): Promi
     if (await pending.isVisible()) return
     await knockBtn.click({ timeout: 5000 })
     await expect(pending).toBeVisible({ timeout: 5000 })
-  }).toPass({ intervals: [500, 1000], timeout: timeoutMs })
+  }).toPass({ intervals: retryIntervals, timeout: timeoutMs })
 }
 
 /**

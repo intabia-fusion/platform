@@ -27,6 +27,7 @@ import {
 } from '../API/TrackerApi'
 import { KanbanBoardPage } from '../model/tracker/kanban-board-page'
 import { PlatformSetting, PlatformURI, generateId } from '../utils'
+import { retryIntervals } from '../retry'
 import { ViewletSelectors } from './tracker.utils'
 
 async function openTrackerBoard (page: import('@playwright/test').Page, projectId: string): Promise<void> {
@@ -122,7 +123,7 @@ test.describe('Kanban board', () => {
           await board.dragCardToColumn(cardId, inProgress)
           return current
         },
-        { timeout: 30000, intervals: [2000] }
+        { timeout: 30000, intervals: retryIntervals }
       )
       .toBe(ctx.statuses.get('In Progress'))
     await board.expectCardInColumn(cardId, inProgress)
@@ -190,7 +191,7 @@ test.describe('Kanban board', () => {
             await board.dragCardToColumn(cardId, target)
             return current
           },
-          { timeout: 30000, intervals: [2000] }
+          { timeout: 30000, intervals: retryIntervals }
         )
         .toBe(target)
       await board.expectCardInColumn(cardId, target)
@@ -306,7 +307,7 @@ test.describe('Kanban board', () => {
             await board.dragCardToSwimLaneCell(stable, stableLaneId, ctx.statuses.get('Todo') as string)
             return current
           },
-          { timeout: 30000, intervals: [2000] }
+          { timeout: 30000, intervals: retryIntervals }
         )
         .toBe(ctx.statuses.get('Todo'))
 
@@ -353,7 +354,7 @@ test.describe('Kanban board', () => {
             await board.dragCardToSwimLaneCell(childA, parentB, todo)
             return at
           },
-          { timeout: 30000, intervals: [2000] }
+          { timeout: 30000, intervals: retryIntervals }
         )
         .toBe(parentB)
     })
@@ -464,7 +465,7 @@ test.describe('Kanban board', () => {
             if (r2 === undefined || r3 === undefined) return false
             return r3 < r2
           },
-          { timeout: 30000, intervals: [2000] }
+          { timeout: 30000, intervals: retryIntervals }
         )
         .toBe(true)
 
@@ -809,7 +810,7 @@ test.describe('Kanban board', () => {
           }
           return current
         },
-        { timeout: 30000, intervals: [2000] }
+        { timeout: 30000, intervals: retryIntervals }
       )
       .toBe(todo)
   })

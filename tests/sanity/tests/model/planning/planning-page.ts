@@ -1,8 +1,9 @@
 import { type Locator, type Page, expect } from '@playwright/test'
 import { NewToDo, Slot } from './types'
 import { CalendarPage } from '../calendar-page'
+import { retryIntervals } from '../../retry'
 
-const retryOptions = { intervals: [1000, 1500, 2500], timeout: 60000 }
+const retryOptions = { intervals: retryIntervals, timeout: 60000 }
 
 export class PlanningPage extends CalendarPage {
   readonly page: Page
@@ -208,7 +209,7 @@ export class PlanningPage extends CalendarPage {
         await this.checkboxToDoInToDos(title).click()
       }
       await expect(toDo).toHaveClass(/isDone/, { timeout: 5000 })
-    }).toPass({ intervals: [100, 200, 500, 1000], timeout: 20000 })
+    }).toPass({ intervals: retryIntervals, timeout: 20000 })
   }
 
   async clickButtonCreateAddSlot (): Promise<void> {
@@ -279,7 +280,7 @@ export class PlanningPage extends CalendarPage {
             await addSlot.click({ force: true })
           }
           await expect(rows).toHaveCount(before + 1, { timeout: 5000 })
-        }).toPass({ intervals: [300, 1000], timeout: 20000 })
+        }).toPass({ intervals: retryIntervals, timeout: 20000 })
         await this.setTimeSlot(index, slot, popup)
         index++
       }
@@ -313,7 +314,7 @@ export class PlanningPage extends CalendarPage {
       await minuteDigit.press('Backspace')
       await minuteDigit.pressSequentially(minutes, { delay: 100 })
       await expect(field.locator('div.datetime-input')).toHaveText(`${hours} : ${minutes}`, { timeout: 3000 })
-    }).toPass({ intervals: [300, 1000], timeout: 20000 })
+    }).toPass({ intervals: retryIntervals, timeout: 20000 })
   }
 
   public async setTimeSlot (rowNumber: number, slot: Slot, popup: boolean = false): Promise<void> {

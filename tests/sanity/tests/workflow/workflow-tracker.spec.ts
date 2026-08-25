@@ -21,6 +21,7 @@ import { NewProjectPage } from '../model/tracker/new-project-page'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 import { ProjectWorkflowsPage, WorkflowPage } from '../model/workflow-page'
 import { createAccountAndWorkspace, generateId, generateTestData, setTestOptions } from '../utils'
+import { retryIntervals } from '../retry'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -105,7 +106,7 @@ test.describe('Workflow in tracker', () => {
       await page.keyboard.press('Escape')
       await navigation.makeActionWithProject(projectName, 'Edit project')
       await expect(projectWorkflows.configuredLabel()).toBeVisible({ timeout: 3000 })
-    }).toPass({ intervals: [500, 1000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
     await page.keyboard.press('Escape')
   })
 
