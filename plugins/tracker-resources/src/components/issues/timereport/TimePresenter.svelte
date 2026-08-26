@@ -15,25 +15,21 @@
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { themeStore, tooltip } from '@hcengineering/ui'
-  import { formatDuration } from '@hcengineering/tracker'
+  import { formatDuration, formatDurationCompact } from '@hcengineering/tracker'
 
   export let id: string | undefined = undefined
   export let kind: 'link' | undefined = undefined
   export let value: number
   export let accent: boolean = false
 
-  $: label = formatDuration(value, $themeStore.language)
+  // Two units are enough to read at a glance; the tooltip keeps the exact value.
+  $: label = formatDurationCompact(value, $themeStore.language)
+  $: full = formatDuration(value, $themeStore.language)
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<span
-  {id}
-  class:link={kind === 'link'}
-  class:fs-bold={accent}
-  on:click
-  use:tooltip={{ label: getEmbeddedLabel(label) }}
->
+<span {id} class:link={kind === 'link'} class:fs-bold={accent} on:click use:tooltip={{ label: getEmbeddedLabel(full) }}>
   {label}
 </span>
 
