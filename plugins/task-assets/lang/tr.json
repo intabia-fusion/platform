@@ -118,7 +118,8 @@
     "AllowAnyParent": "Any task type",
     "AllowAnyParentSubtask": "Herhangi bir görev türünün alt görevi olabilir",
     "AllowAnyParentTooltip": "Allows creating this task as a subtask of any task type in the project, including future types",
-    "CompactLayout": "Kompakt görünüm",
+    "MergeArrows": "Okları birleştir",
+    "GroupAny": "Any grupla",
     "TaskTypeHierarchyTitle": "{name} hiyerarşisi",
     "ShowDetails": "Detayları göster",
     "HideDetails": "Detayları gizle"

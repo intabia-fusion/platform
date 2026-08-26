@@ -118,7 +118,8 @@
     "AllowAnyParent": "Any task type",
     "AllowAnyParentSubtask": "Může být podúkolem jakéhokoli typu úkolu",
     "AllowAnyParentTooltip": "Allows creating this task as a subtask of any task type in the project, including future types",
-    "CompactLayout": "Kompaktní zobrazení",
+    "MergeArrows": "Sloučit šipky",
+    "GroupAny": "Seskupit Any",
     "TaskTypeHierarchyTitle": "Hierarchie: {name}",
     "ShowDetails": "Zobrazit podrobnosti",
     "HideDetails": "Skrýt podrobnosti"

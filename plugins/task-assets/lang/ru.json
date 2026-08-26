@@ -118,7 +118,8 @@
     "AllowAnyParent": "Любой тип задачи",
     "AllowAnyParentSubtask": "Может быть подзадачей для любого типа",
     "AllowAnyParentTooltip": "Позволяет создавать задачу этого типа как подзадачу к любому типу задач в проекте, включая будущие типы",
-    "CompactLayout": "Компактный вид",
+    "MergeArrows": "Объединять стрелки",
+    "GroupAny": "Группировать Any",
     "TaskTypeHierarchyTitle": "Иерархия {name}",
     "ShowDetails": "Показать подробности",
     "HideDetails": "Скрыть подробности"

@@ -118,7 +118,8 @@
     "AllowAnyParent": "Any task type",
     "AllowAnyParentSubtask": "任意のタスクタイプのサブタスクにできる",
     "AllowAnyParentTooltip": "Allows creating this task as a subtask of any task type in the project, including future types",
-    "CompactLayout": "コンパクト表示",
+    "MergeArrows": "矢印を結合",
+    "GroupAny": "Anyをグループ化",
     "TaskTypeHierarchyTitle": "{name}の階層",
     "ShowDetails": "詳細を表示",
     "HideDetails": "詳細を非表示"
