@@ -17,7 +17,8 @@
   import { Asset } from '@hcengineering/platform'
   import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import task, { ProjectType, TaskType } from '@hcengineering/task'
+  import { ProjectType, TaskType } from '@hcengineering/task'
+  import { taskTypeStore } from '@hcengineering/task-resources'
   import {
     ButtonIcon,
     EditBox,
@@ -44,7 +45,7 @@
   export let objectId: Ref<Workflow>
   export let name: string | undefined = undefined
   export let icon: Asset | undefined = undefined
-  export let readonly = true
+  export let readonly = false
 
   const client = getClient()
 
@@ -80,12 +81,10 @@
   ]
 
   const workflowQuery = createQuery()
-  const taskTypesQuery = createQuery()
   const statusesQuery = createQuery()
 
   // Load selected workflow with transitions lookup
   let workflow: WithLookup<Workflow> | undefined
-  let taskType: TaskType | undefined
 
   let isWorkflowLoading = true
   let isStatusesLoading = true
@@ -95,25 +94,22 @@
     { _id: objectId },
     (res) => {
       workflow = res.shift()
-      taskType = workflow?.$lookup?.taskType
       isWorkflowLoading = false
     },
     {
       lookup: {
-        _id: { transitions: plugin.class.WorkflowTransition },
-        taskType: task.class.TaskType
+        _id: { transitions: plugin.class.WorkflowTransition }
       }
     }
   )
 
+  $: taskType = workflow?.taskType != null ? $taskTypeStore.get(workflow.taskType) : undefined
+
   $: name = workflow?.name
   $: icon = plugin.icon.Workflow
 
-  // Load TaskTypes for spaceType
-  let taskTypes: TaskType[] = []
-  $: taskTypesQuery.query(task.class.TaskType, { _id: { $in: spaceType.tasks } }, (res) => {
-    taskTypes = res
-  })
+  // Load TaskTypes for spaceType from reactive store
+  $: taskTypes = Array.from($taskTypeStore.values()).filter((tt) => spaceType.tasks?.includes(tt._id))
 
   // Load Statuses for the selected workflow's task type
   let statuses: Status[] = []

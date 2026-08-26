@@ -107,6 +107,7 @@
         {statuses}
         {config}
         on:update={handlePropsUpdate}
+        on:close
       />
     {/if}
   </div>

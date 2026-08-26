@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import core, { Status } from '@hcengineering/core'
+  import core, { Ref, Status } from '@hcengineering/core'
   import task, { TaskType } from '@hcengineering/task'
   import { WorkflowValidatorConfig } from '@hcengineering/workflow'
   import { getClient, IconWithEmoji } from '@hcengineering/presentation'
   import { Icon, Label } from '@hcengineering/ui'
-  import { StatePresenter } from '@hcengineering/task-resources'
+  import { StatePresenter, taskTypeStore } from '@hcengineering/task-resources'
   import view from '@hcengineering/view'
 
   import plugin from '../../../plugin'
@@ -26,7 +26,6 @@
   export let config: WorkflowValidatorConfig
 
   const client = getClient()
-  const allTaskTypes: TaskType[] = client.getModel().findAllSync(task.class.TaskType, {})
   const allStatuses: Status[] = client.getModel().findAllSync(core.class.Status, {})
 
   interface RowData {
@@ -43,7 +42,7 @@
     const statusesProp = config?.props?.statuses
     if (statusesProp != null && typeof statusesProp === 'object') {
       for (const [ttId, stIds] of Object.entries(statusesProp)) {
-        const tt = allTaskTypes.find((t) => t._id === ttId)
+        const tt = $taskTypeStore.get(ttId as Ref<TaskType>)
         const isAny = stIds === null || (Array.isArray(stIds) && stIds.includes('null'))
         const matchedStatuses =
           Array.isArray(stIds) && !isAny ? allStatuses.filter((s) => (stIds as string[]).includes(s._id)) : []
