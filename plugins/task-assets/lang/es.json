@@ -118,7 +118,8 @@
     "AllowAnyParent": "Any task type",
     "AllowAnyParentSubtask": "Puede ser subtarea de cualquier tipo de tarea",
     "AllowAnyParentTooltip": "Allows creating this task as a subtask of any task type in the project, including future types",
-    "CompactLayout": "Vista compacta",
+    "MergeArrows": "Combinar flechas",
+    "GroupAny": "Agrupar Any",
     "TaskTypeHierarchyTitle": "Jerarquía: {name}",
     "ShowDetails": "Mostrar detalles",
     "HideDetails": "Ocultar detalles"

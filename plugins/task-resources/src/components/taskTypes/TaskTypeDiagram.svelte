@@ -29,6 +29,7 @@
   import plugin from '../../plugin'
 
   const COMPACT_LAYOUT_STORAGE_KEY = 'task-types-diagram-compact'
+  const GROUP_ANY_STORAGE_KEY = 'task-types-diagram-group-any'
 
   function loadCompactLayoutPreference (): boolean {
     try {
@@ -50,10 +51,31 @@
     }
   }
 
+  function loadGroupAnyPreference (): boolean {
+    try {
+      const saved = localStorage.getItem(GROUP_ANY_STORAGE_KEY)
+      if (saved !== null) {
+        return saved === 'true'
+      }
+    } catch {
+      // Ignore storage errors in restricted contexts
+    }
+    return false
+  }
+
+  function saveGroupAnyPreference (value: boolean): void {
+    try {
+      localStorage.setItem(GROUP_ANY_STORAGE_KEY, String(value))
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
   export let taskTypes: TaskType[] = []
   export let focusTypeId: Ref<TaskType> | undefined = undefined
 
   let compactLayout = loadCompactLayoutPreference()
+  let groupAny = loadGroupAnyPreference()
   let imageUrl: string | undefined = undefined
   let errorMsg: string | undefined = undefined
   let showDetails = false
@@ -62,7 +84,9 @@
   let renderSequence = 0
 
   $: saveCompactLayoutPreference(compactLayout)
+  $: saveGroupAnyPreference(groupAny)
 
+  $: hasAnyParents = taskTypes.some((t) => t.allowAnyParent === true)
   $: hasSelfRefs = taskTypes.some((t) => t.allowAnyParent === true || (t.allowedAsChildOf ?? []).includes(t._id))
 
   function sanitizeLabel (str: string): string {
@@ -132,18 +156,24 @@
     taskTypes: TaskType[],
     isDark: boolean,
     compact: boolean,
+    groupAny: boolean,
     focusId?: Ref<TaskType>
   ): string {
     const sortedTypes = sortTaskTypesByHierarchy(taskTypes)
     const nodeIds = new Map<Ref<TaskType>, string>()
     sortedTypes.forEach((t, idx) => nodeIds.set(t._id, `tt_${idx}`))
 
-    const lines: string[] = ['---', 'config:', '  layout: elk', '  theme: redux']
+    const lines: string[] = [
+      '---',
+      'config:',
+      '  layout: elk',
+      '  theme: redux',
+      '  elk:',
+      '    nodePlacementStrategy: BRANDES_KOEPF'
+    ]
 
     if (compact) {
-      lines.push('  elk:')
       lines.push('    mergeEdges: true')
-      lines.push('    nodePlacementStrategy: BRANDES_KOEPF')
     }
 
     lines.push('---', 'flowchart TB')
@@ -168,7 +198,7 @@
       const textColor = sanitizeColor(colorDef.color, isDark ? '#f8fafc' : '#0f172a')
       const stroke = sanitizeColor(colorDef.title, isDark ? '#475569' : '#64748b')
 
-      lines.push(`  style ${nodeId} fill:${fill},color:${textColor},stroke:${stroke},stroke-width:1.5px`)
+      lines.push(`  style ${nodeId} fill:${fill},color:${textColor},stroke:${stroke}`)
     }
 
     // Hierarchy relationships (Parent -> Child)
@@ -179,19 +209,29 @@
       if (toNode === undefined) continue
 
       if (child.allowAnyParent === true) {
-        if (focusId !== undefined && child._id !== focusId) {
-          const fromNode = nodeIds.get(focusId)
-          if (fromNode !== undefined) {
-            lines.push(`  ${fromNode} --> ${toNode}`)
+        if (groupAny) {
+          if (focusId !== undefined && child._id !== focusId) {
+            const fromNode = nodeIds.get(focusId)
+            if (fromNode !== undefined) {
+              lines.push(`  ${fromNode} --> ${toNode}`)
+            }
+          } else {
+            const anyNodeId = `any_${anyCount++}`
+            lines.push(`  ${anyNodeId}(["any"])`)
+            const anyStyle = isDark
+              ? 'fill:#1e293b,color:#cbd5e1,stroke:#94a3b8,stroke-width:1px,font-size:8px'
+              : 'fill:#ffffff,color:#1e293b,stroke:#242538,stroke-width:1px,font-size:8px'
+            lines.push(`  style ${anyNodeId} ${anyStyle}`)
+            lines.push(`  ${anyNodeId} --> ${toNode}`)
           }
         } else {
-          const anyNodeId = `any_${anyCount++}`
-          lines.push(`  ${anyNodeId}(["any"])`)
-          const anyStyle = isDark
-            ? 'fill:none,color:#cbd5e1,stroke:#94a3b8,stroke-width:1px,font-size:8px'
-            : 'fill:none,color:#1e293b,stroke:#242538,stroke-width:1px,font-size:8px'
-          lines.push(`  style ${anyNodeId} ${anyStyle}`)
-          lines.push(`  ${anyNodeId} --> ${toNode}`)
+          for (const parent of sortedTypes) {
+            if (parent._id === child._id) continue
+            const fromNode = nodeIds.get(parent._id)
+            if (fromNode !== undefined) {
+              lines.push(`  ${fromNode} --> ${toNode}`)
+            }
+          }
         }
       } else {
         const parents = child.allowedAsChildOf ?? []
@@ -214,7 +254,7 @@
     if (isDark) {
       return {
         fontFamily,
-        fontSize: '11px',
+        fontSize: '10px',
         primaryColor: '#1e293b',
         primaryTextColor: '#f8fafc',
         primaryBorderColor: '#475569',
@@ -229,7 +269,7 @@
 
     return {
       fontFamily,
-      fontSize: '11px',
+      fontSize: '10px',
       primaryColor: '#f1f5f9',
       primaryTextColor: '#0f172a',
       primaryBorderColor: '#64748b',
@@ -240,6 +280,35 @@
       nodeBorder: '#64748b',
       clusterBkg: '#f8fafc'
     }
+  }
+
+  function getCustomSvgStyles (isDark: boolean): string {
+    const strokeColor = isDark ? '#94a3b8' : '#242538'
+    const fillColor = isDark ? '#1e293b' : '#ffffff'
+    const textColor = isDark ? '#cbd5e1' : '#1e293b'
+
+    return `
+      g.node[id*="any"] {
+        overflow: visible !important;
+      }
+      g.node[id*="any"] rect, g.node[id*="any"] path, [id*="any"] path, [id*="any"] polygon {
+        fill: ${fillColor} !important;
+        fill-opacity: 1 !important;
+        stroke: ${strokeColor} !important;
+        stroke-width: 1px !important;
+      }
+      g.node[id*="any"] text, [id*="any"] text, [id*="any"] .nodeLabel, [id*="any"] span {
+        fill: ${textColor} !important;
+        color: ${textColor} !important;
+        font-size: 8px !important;
+        overflow: visible !important;
+        dominant-baseline: central !important;
+        text-anchor: middle !important;
+      }
+      g.node[id*="any"] foreignObject {
+        overflow: visible !important;
+      }
+    `
   }
 
   function svgToPng (blobUrl: string, rawSvg: string): Promise<string> {
@@ -316,7 +385,7 @@
 
     try {
       const isDark = $themeStore.dark
-      const code = generateMermaidCode(taskTypes, isDark, compactLayout, focusTypeId)
+      const code = generateMermaidCode(taskTypes, isDark, compactLayout, groupAny, focusTypeId)
 
       const mermaid = (
         await import(
@@ -344,7 +413,7 @@
         suppressErrorRendering: true,
         theme: 'base',
         fontFamily: themeVariables.fontFamily,
-        fontSize: 11,
+        fontSize: 13,
         layout: 'elk',
         themeVariables
       })
@@ -354,7 +423,12 @@
 
       if (seq !== renderSequence) return
 
-      const processedSvg = renderResult.svg
+      const customSvgStyles = getCustomSvgStyles(isDark)
+      let processedSvg = renderResult.svg
+      if (processedSvg.includes('</style>')) {
+        processedSvg = processedSvg.replace('</style>', `${customSvgStyles}</style>`)
+      }
+
       const svgBlob = new Blob([processedSvg], { type: 'image/svg+xml;charset=utf-8' })
       const blobUrl = URL.createObjectURL(svgBlob)
 
@@ -395,7 +469,8 @@
       taskTypes !== undefined &&
       $languageStore !== undefined &&
       $themeStore !== undefined &&
-      compactLayout !== undefined
+      compactLayout !== undefined &&
+      groupAny !== undefined
     ) {
       void focusTypeId
       void renderDiagram()
@@ -435,11 +510,22 @@
       </div>
     {/if}
 
-    <div class="diagram-option">
-      <span class="option-label font-normal-12">
-        <Label label={plugin.string.CompactLayout} />
-      </span>
-      <Toggle bind:on={compactLayout} />
+    <div class="diagram-options">
+      {#if hasAnyParents}
+        <div class="diagram-option">
+          <span class="option-label font-normal-12">
+            <Label label={plugin.string.GroupAny} />
+          </span>
+          <Toggle bind:on={groupAny} />
+        </div>
+      {/if}
+
+      <div class="diagram-option">
+        <span class="option-label font-normal-12">
+          <Label label={plugin.string.MergeArrows} />
+        </span>
+        <Toggle bind:on={compactLayout} />
+      </div>
     </div>
   </div>
 
@@ -515,11 +601,18 @@
     }
   }
 
+  .diagram-options {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
+
   .diagram-option {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    margin-left: auto;
 
     .option-label {
       color: var(--theme-text-secondary, #64748b);

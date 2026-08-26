@@ -118,7 +118,8 @@
     "AllowAnyParent": "Any task type",
     "AllowAnyParentSubtask": "可以是任何任务类型的子任务",
     "AllowAnyParentTooltip": "Allows creating this task as a subtask of any task type in the project, including future types",
-    "CompactLayout": "紧凑视图",
+    "MergeArrows": "合并连线",
+    "GroupAny": "分组 Any",
     "TaskTypeHierarchyTitle": "{name} 层级",
     "ShowDetails": "显示详情",
     "HideDetails": "隐藏详情"
