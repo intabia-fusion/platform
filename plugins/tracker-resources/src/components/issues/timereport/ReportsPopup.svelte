@@ -107,8 +107,8 @@
       <Button
         id="ReportsPopupDeleteSelectedButton"
         icon={IconDelete}
-        kind="secondary"
         size="large"
+        showTooltip={{ label: presentation.string.Delete }}
         on:click={() => draftTable?.deleteSelected()}
       />
     {/if}
