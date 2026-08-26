@@ -19,6 +19,7 @@
     "AssistIssueThreadStart": "Aufgabenentwurf{project, select, undefined {} other { in {project}}}",
     "AssistIssueNewContext": "Neuer Kontext",
     "AssistIssueApplyAgain": "Erneut übernehmen",
-    "AssistIssueAppliedMark": "Übernommen"
+    "AssistIssueAppliedMark": "Übernommen",
+    "ProposedEstimation": "Schätzung: {hours} Std."
   }
 }

@@ -40,7 +40,17 @@ import {
   type AudioTranscribeState
 } from '@hcengineering/ai-bot'
 import attachment, { TAttachment } from '@hcengineering/model-attachment'
-import { type Builder, Model, Prop, TypeBoolean, TypeNumber, TypeRef, TypeAny, TypeString } from '@hcengineering/model'
+import {
+  type Builder,
+  Model,
+  Prop,
+  TypeBoolean,
+  TypeMarkup,
+  TypeNumber,
+  TypeRef,
+  TypeAny,
+  TypeString
+} from '@hcengineering/model'
 import core, { TDoc } from '@hcengineering/model-core'
 import chunter, { TChatMessage, TThreadMessage } from '@hcengineering/model-chunter'
 import preference, { TPreference } from '@hcengineering/model-preference'
@@ -173,8 +183,11 @@ export class TAIEditProposalMessage extends TThreadMessage implements AIEditProp
   @Prop(TypeString(), core.string.String)
     targetAttr!: string
 
+  @Prop(TypeMarkup(), core.string.String)
+    proposedMarkup?: Markup
+
   @Prop(TypeString(), core.string.String)
-    proposedMarkup!: Markup
+    proposedTitle?: string
 
   @Prop(TypeBoolean(), core.string.Boolean)
     applied?: boolean

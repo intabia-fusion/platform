@@ -90,6 +90,12 @@ export function buildDocPromptText (data: DocPromptData): string {
       : 'This is the current document body (markdown):'
   )
   parts.push('```markdown\n' + data.body + '\n```')
+  // "Never invent details" in the system prompt otherwise wins and the model asks what to write.
+  parts.push(
+    `Writing ${what} is not inventing facts: it is a draft the user reviews before applying. Asked to ` +
+      'write, extend or detail it, produce a concrete version built from the title and the conversation ' +
+      'instead of asking the user what to put in it.'
+  )
   parts.push(
     `To change ${what} - extend it, rewrite it, fill it in, split it into stages - call the ` +
       'propose_new_document tool. Its `markdown` argument must be the full new body: copy the current ' +

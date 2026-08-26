@@ -15,7 +15,7 @@
 <script lang="ts">
   import { type AIEditProposalMessage } from '@hcengineering/ai-bot'
   import { getClient, MessageViewer } from '@hcengineering/presentation'
-  import { markupToJSON, type MarkupNode } from '@hcengineering/text'
+  import { isEmptyMarkup, markupToJSON, type MarkupNode } from '@hcengineering/text'
   import { Button, Label, showPanel } from '@hcengineering/ui'
   import { registeredEditor, MarkupDiffViewer } from '@hcengineering/text-editor-resources'
   import view from '@hcengineering/view'
@@ -55,7 +55,9 @@
   let showDiff = value.applied !== true
   let baseNode: MarkupNode | undefined
 
-  $: proposedNode = markupToJSON(value.proposedMarkup)
+  // A rename alone carries no body: then there is nothing to diff and no editor to wait for.
+  $: hasBody = !isEmptyMarkup(value.proposedMarkup)
+  $: proposedNode = value.proposedMarkup !== undefined ? markupToJSON(value.proposedMarkup) : undefined
 
   // Reactive: the document may be opened long after this card was rendered, and the button has to
   // switch from "open it" to "apply" the moment its editor mounts.
@@ -70,21 +72,37 @@
   }
 
   onMount(() => {
-    if (showDiff) computeBase()
+    if (showDiff && hasBody) computeBase()
   })
 
   // Opening the document turns a decoration-free preview into a real diff.
-  $: if (showDiff && editor !== undefined) computeBase()
+  $: if (showDiff && hasBody && editor !== undefined) computeBase()
 
   function toggleDiff (): void {
     if (!showDiff) computeBase()
     showDiff = !showDiff
   }
 
+  // The body needs the open editor (it owns the collaborative content); the title is a plain field.
+  $: canApply = hasBody ? editorOpen : value.proposedTitle !== undefined
+
+  // Whatever the class calls its title: `titleKey` is what the platform renames docs by.
+  async function applyTitle (title: string): Promise<void> {
+    const target = await client.findOne(value.targetClass, { _id: value.targetId })
+    if (target === undefined) return
+    const titleKey = hierarchy.getClass(value.targetClass).titleKey ?? 'title'
+    await client.updateDoc(value.targetClass, target.space, value.targetId, { [titleKey]: title })
+  }
+
   async function apply (): Promise<void> {
-    if (editor === undefined) return
-    editor.commands.setContent(proposedNode as any)
-    await client.updateDoc(value._class, value.space, value._id, { applied: true } as any)
+    if (hasBody && proposedNode !== undefined) {
+      if (editor === undefined) return
+      editor.commands.setContent(proposedNode as any)
+    }
+    if (value.proposedTitle !== undefined && value.proposedTitle !== '') {
+      await applyTitle(value.proposedTitle)
+    }
+    await client.updateDoc(value._class, value.space, value._id, { applied: true })
   }
 
   function openDocument (): void {
@@ -116,7 +134,11 @@
         <Label label={plugin.string.ProposedEdit} params={{ name: $aiBotNameStore }} />
       </div>
 
-      {#if showDiff}
+      {#if value.proposedTitle !== undefined && value.proposedTitle !== ''}
+        <div class="title">{value.proposedTitle}</div>
+      {/if}
+
+      {#if showDiff && proposedNode !== undefined}
         <div class="diff">
           <!-- content = proposed (rendered base), comparedVersion = current: added shows green,
                removed shows struck-through red — i.e. old -> new, not new -> old. -->
@@ -125,14 +147,16 @@
       {/if}
 
       <div class="actions">
-        <Button
-          label={showDiff ? plugin.string.HideDiff : plugin.string.PreviewDiff}
-          kind={'ghost'}
-          on:click={toggleDiff}
-        />
+        {#if hasBody}
+          <Button
+            label={showDiff ? plugin.string.HideDiff : plugin.string.PreviewDiff}
+            kind={'ghost'}
+            on:click={toggleDiff}
+          />
+        {/if}
         {#if value.applied === true}
           <Button label={plugin.string.EditApplied} kind={'ghost'} disabled />
-        {:else if editorOpen}
+        {:else if canApply}
           <Button label={plugin.string.ApplyEdit} kind={'primary'} on:click={apply} />
         {:else}
           <Button label={plugin.string.OpenDocument} kind={'primary'} on:click={openDocument} />
@@ -160,6 +184,12 @@
     text-transform: uppercase;
     letter-spacing: 0.02em;
     color: var(--theme-dark-color);
+  }
+
+  .title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--theme-caption-color);
   }
 
   .actions {

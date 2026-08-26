@@ -19,6 +19,7 @@
     "AssistIssueThreadStart": "Brouillon de tâche{project, select, undefined {} other { dans {project}}}",
     "AssistIssueNewContext": "Nouveau contexte",
     "AssistIssueApplyAgain": "Appliquer à nouveau",
-    "AssistIssueAppliedMark": "Appliqué"
+    "AssistIssueAppliedMark": "Appliqué",
+    "ProposedEstimation": "Estimation : {hours} h"
   }
 }

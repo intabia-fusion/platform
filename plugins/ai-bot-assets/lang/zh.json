@@ -19,6 +19,7 @@
     "AssistIssueThreadStart": "任务草稿{project, select, undefined {} other {（{project}）}}",
     "AssistIssueNewContext": "新上下文",
     "AssistIssueApplyAgain": "再次应用",
-    "AssistIssueAppliedMark": "已应用"
+    "AssistIssueAppliedMark": "已应用",
+    "ProposedEstimation": "预估：{hours} 小时"
   }
 }

@@ -46,6 +46,10 @@
     "AssistIssueThreadStart": "Bozza di attività{project, select, undefined {} other { in {project}}}",
     "AssistIssueNewContext": "Nuovo contesto",
     "AssistIssueApplyAgain": "Applica di nuovo",
-    "AssistIssueAppliedMark": "Applicato"
+    "AssistIssueAppliedMark": "Applicato",
+    "TokenLimitReachedMonth": "Token IA esauriti. Acquistane altri nelle impostazioni dello spazio di lavoro (Impostazioni -> Abbonamento) o attendi il periodo successivo.",
+    "AIServiceUnavailable": "Il servizio IA è temporaneamente non disponibile. Riprova più tardi.",
+    "AIEmptyResponse": "Non sono riuscita a produrre una risposta. Riformula la domanda o riprova.",
+    "ProposedEstimation": "Stima: {hours} h"
   }
 }

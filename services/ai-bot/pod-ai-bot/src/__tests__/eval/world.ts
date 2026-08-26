@@ -133,15 +133,23 @@ export class FakeWorkspaceClient {
     return `Existing sub-tasks (${subs.length}):\n${lines.join('\n')}`
   }
 
-  async renameTarget (target: { targetId: Ref<Doc> }, title: string): Promise<boolean> {
-    if (this.world.document !== undefined && this.world.document.id === target.targetId) {
-      if (this.world.document.title === title) return false
-      this.world.document.title = title
-      return true
+  // A rename is staged like any other change; the user applies it (see applyPending).
+  async proposeRename (ctx: ReqCtx, target: EvalLink, title: string): Promise<boolean> {
+    const current =
+      this.world.document !== undefined && this.world.document.id === target.targetId
+        ? this.world.document.title
+        : this.world.issues.find((i) => i.id === target.targetId)?.title
+    if (current === undefined || current === title) return false
+    const staged = ctx.pending?.kind === 'edit' ? ctx.pending : undefined
+    ctx.pending = {
+      ...(staged ?? {
+        kind: 'edit',
+        targetId: target.targetId as Ref<Doc>,
+        targetClass: target.targetClass,
+        targetAttr: target.targetAttr
+      }),
+      title
     }
-    const issue = this.world.issues.find((i) => i.id === target.targetId)
-    if (issue === undefined || issue.title === title) return false
-    issue.title = title
     return true
   }
 
@@ -188,12 +196,14 @@ export function applyPending (world: EvalWorld, pending: PendingProposal | undef
   if (pending === undefined) return []
   if (pending.kind === 'edit') {
     if (world.document !== undefined && world.document.id === pending.targetId) {
-      world.document.body = pending.markdown
+      if (pending.markdown !== undefined) world.document.body = pending.markdown
+      if (pending.title !== undefined) world.document.title = pending.title
       return [`document:${world.document.title}`]
     }
     const issue = world.issues.find((i) => i.id === pending.targetId)
     if (issue !== undefined) {
-      issue.description = pending.markdown
+      if (pending.markdown !== undefined) issue.description = pending.markdown
+      if (pending.title !== undefined) issue.title = pending.title
       return [`issue:${issue.title}`]
     }
     return []

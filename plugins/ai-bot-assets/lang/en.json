@@ -19,6 +19,7 @@
     "AssistIssueThreadStart": "Task draft{project, select, undefined {} other { in {project}}}",
     "AssistIssueNewContext": "New context",
     "AssistIssueApplyAgain": "Apply again",
-    "AssistIssueAppliedMark": "Applied"
+    "AssistIssueAppliedMark": "Applied",
+    "ProposedEstimation": "Estimate: {hours}h"
   }
 }

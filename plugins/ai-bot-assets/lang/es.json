@@ -19,6 +19,7 @@
     "AssistIssueThreadStart": "Borrador de tarea{project, select, undefined {} other { en {project}}}",
     "AssistIssueNewContext": "Nuevo contexto",
     "AssistIssueApplyAgain": "Aplicar de nuevo",
-    "AssistIssueAppliedMark": "Aplicado"
+    "AssistIssueAppliedMark": "Aplicado",
+    "ProposedEstimation": "Estimación: {hours} h"
   }
 }

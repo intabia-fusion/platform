@@ -241,10 +241,17 @@
     if (root === undefined) {
       const rootIssue = await createIssue(client, target, {
         title: value.title,
-        description: toMarkup(value.description)
+        description: toMarkup(value.description),
+        priority: value.priority as IssuePriority | undefined,
+        estimation: value.estimation
       })
       fresh.push(rootIssue)
       root = await client.findOne(tracker.class.Issue, { _id: rootIssue._id })
+      // dueDate is not part of NewIssue; set it on the created issue.
+      if (root !== undefined && value.dueDate != null && value.dueDate !== '') {
+        const due = Date.parse(value.dueDate)
+        if (!isNaN(due)) await client.update(root, { dueDate: due })
+      }
       await flush(rootIssue._id)
     }
 
@@ -333,6 +340,11 @@
           </div>
           {#if value.description != null && value.description !== ''}
             <div class="description"><MessageViewer message={toMarkup(value.description)} /></div>
+          {/if}
+          {#if value.estimation != null && value.estimation > 0}
+            <div class="estimation">
+              <Label label={plugin.string.ProposedEstimation} params={{ hours: value.estimation }} />
+            </div>
           {/if}
         {/if}
       {/if}
@@ -443,6 +455,11 @@
   .description {
     color: var(--theme-content-color);
     font-size: 0.875rem;
+  }
+
+  .estimation {
+    color: var(--theme-dark-color);
+    font-size: 0.8125rem;
   }
 
   .actions {

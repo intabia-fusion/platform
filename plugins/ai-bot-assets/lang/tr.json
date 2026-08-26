@@ -19,6 +19,7 @@
     "AssistIssueThreadStart": "Görev taslağı{project, select, undefined {} other { - {project}}}",
     "AssistIssueNewContext": "Yeni bağlam",
     "AssistIssueApplyAgain": "Tekrar uygula",
-    "AssistIssueAppliedMark": "Uygulandı"
+    "AssistIssueAppliedMark": "Uygulandı",
+    "ProposedEstimation": "Tahmin: {hours} sa"
   }
 }

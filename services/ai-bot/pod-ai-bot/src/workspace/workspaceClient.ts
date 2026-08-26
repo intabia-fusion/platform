@@ -185,6 +185,16 @@ export class WorkspaceClient {
 
   collaborator: CollaboratorClient | undefined
 
+  // AIRequest currently running per chat, so the typing refresh can spot a cancel on its own.
+  private readonly activeRequests = new Map<Ref<Doc>, Ref<AIRequest>>()
+
+  // The bot is not a member of every project, the person discussing the task always is. Reads of the
+  // linked object go under them, so a private project stays readable in their own thread.
+  private readonly userClients = new Map<PersonUuid, RestClient>()
+
+  // Service writes into spaces the bot is not a member of (a voice note in someone's direct).
+  private serviceClient: RestClient | undefined
+
   constructor (
     readonly storage: StorageAdapter,
     readonly transactorUrl: string,
@@ -396,7 +406,14 @@ export class WorkspaceClient {
     const id = `typing:${objectId}:${socialId}` as Ref<TypingIndicator>
     const TYPING_REFRESH_MS = 2000 // < 3s TTL (models/pulse TransientTTL)
 
+    let stopped = false
     const touch = async (): Promise<void> => {
+      if (stopped) return
+      // The tool loop only notices a cancel between rounds, and one round can run for minutes.
+      if (await this.isRequestCancelled(objectId)) {
+        void stop()
+        return
+      }
       try {
         // Re-create keeps the deterministic id; any CUD tx resets the transient TTL server-side.
         await this.client.createDoc(
@@ -415,18 +432,34 @@ export class WorkspaceClient {
       }
     }
 
-    void touch()
     const timer = setInterval(() => {
       void touch()
     }, TYPING_REFRESH_MS)
 
-    return async () => {
+    // Idempotent: a cancel stops it early, the caller's finally still runs.
+    const stop = async (): Promise<void> => {
+      if (stopped) return
+      stopped = true
       clearInterval(timer)
       try {
         await this.client.removeDoc(pulse.class.TypingIndicator, space, id)
       } catch (err) {
         this.ctx.warn('failed to clear typing', { err })
       }
+    }
+
+    void touch()
+    return stop
+  }
+
+  /** The request this chat is currently running was cancelled by the user. */
+  private async isRequestCancelled (objectId: Ref<Doc>): Promise<boolean> {
+    const id = this.activeRequests.get(objectId)
+    if (id === undefined) return false
+    try {
+      return (await this.client.findOne(aiBot.class.AIRequest, { _id: id }))?.status === 'cancelled'
+    } catch {
+      return false
     }
   }
 
@@ -501,7 +534,8 @@ export class WorkspaceClient {
   private requestHooks (
     personUuid: PersonUuid,
     id: Ref<AIRequest> | undefined,
-    space: Ref<Space> | undefined
+    space: Ref<Space> | undefined,
+    onCancelled?: () => Promise<void>
   ): ToolLoopHooks | undefined {
     if (id === undefined || space === undefined) return undefined
     return {
@@ -517,7 +551,11 @@ export class WorkspaceClient {
       isCancelled: async () => {
         try {
           const doc = await this.client.findOne(aiBot.class.AIRequest, { _id: id })
-          return doc?.status === 'cancelled'
+          if (doc?.status !== 'cancelled') return false
+          // Stop "is typing" here, not after the last round: the user pressed cancel and the
+          // wrap-up round still takes seconds, during which the bot looks like it kept going.
+          await onCancelled?.()
+          return true
         } catch (err: any) {
           this.ctx.warn('failed to read AI request status', { err: err?.message })
           return false
@@ -706,11 +744,35 @@ export class WorkspaceClient {
         prompt,
         promptTokens,
         level,
-        providers
+        providers,
+        stopTyping
       })
     } finally {
+      this.activeRequests.delete(objectId)
       await stopTyping()
     }
+  }
+
+  /** System client: for service work in spaces no person acts on behalf of (voice transcription). */
+  systemAccessClient (): RestClient {
+    if (this.serviceClient === undefined) {
+      const token = generateToken(systemAccountUuid, this.wsIds.uuid, { service: 'aibot' })
+      this.serviceClient = connectPlatform(token, this.wsIds.uuid, this.transactorUrl)
+    }
+    return this.serviceClient
+  }
+
+  /** Client reading as `personUuid`; the bot's own when there is nobody to act for. */
+  private clientFor (personUuid: PersonUuid | undefined): RestClient {
+    if (personUuid === undefined || personUuid === this.personUuid) return this.client
+
+    let client = this.userClients.get(personUuid)
+    if (client === undefined) {
+      const token = generateToken(personUuid as AccountUuid, this.wsIds.uuid, { service: 'aibot' })
+      client = connectPlatform(token, this.wsIds.uuid, this.transactorUrl)
+      this.userClients.set(personUuid, client)
+    }
+    return client
   }
 
   // Read a collaborative-doc blob as markdown, preserving structure for the rewrite tool.
@@ -740,7 +802,8 @@ export class WorkspaceClient {
   private async buildDocPrompt (
     doc: Doc,
     countTokens: (text: string) => number,
-    budgetTokens: number
+    budgetTokens: number,
+    asUser?: PersonUuid
   ): Promise<{ text: string, oversized: boolean } | undefined> {
     // isDerived, not ===: a task type is its own class derived from Issue (tracker:class:IssueTaskType).
     const hierarchy = await this.getHierarchy()
@@ -756,7 +819,7 @@ export class WorkspaceClient {
           identifier: is.identifier,
           body,
           oversized,
-          subtasksListing: await this.listSubIssues(is._id)
+          subtasksListing: await this.listSubIssues(is._id, 100, asUser)
         })
       }
     }
@@ -792,13 +855,22 @@ export class WorkspaceClient {
     return { targetId: link.objectId, targetClass: link.objectClass, targetAttr }
   }
 
-  // Rename the linked issue/document. Applied directly (not proposed): a title is one short field,
-  // trivially reversible, and both Issue and Document keep it in `title`.
-  async renameTarget (target: { targetId: Ref<Doc>, targetClass: Ref<Class<Doc>> }, title: string): Promise<boolean> {
-    const doc = await this.client.findOne<Doc>(target.targetClass, { _id: target.targetId })
+  /** Stage a rename. Like every other change it is a proposal: the user applies it from the card. */
+  async proposeRename (
+    ctx: ReqCtx,
+    target: { targetId: Ref<Doc>, targetClass: Ref<Class<Doc>>, targetAttr: string },
+    title: string,
+    asUser?: PersonUuid
+  ): Promise<boolean> {
+    const doc = await this.clientFor(asUser).findOne<Doc>(target.targetClass, { _id: target.targetId })
     if (doc === undefined) return false
-    if ((doc as any).title === title) return false
-    await this.client.updateDoc(target.targetClass, doc.space, target.targetId, { title } as any)
+    // Whatever the class calls its title: `titleKey` is what the platform renames docs by.
+    const hierarchy = await this.getHierarchy()
+    const titleKey = hierarchy.getClass(target.targetClass).titleKey ?? 'title'
+    if ((doc as unknown as Record<string, unknown>)[titleKey] === title) return false
+    // Merge into a body edit staged in the same run, so one card carries both.
+    const staged = ctx.pending?.kind === 'edit' ? ctx.pending : undefined
+    ctx.pending = { ...(staged ?? { kind: 'edit', ...target }), title }
     return true
   }
 
@@ -824,8 +896,8 @@ export class WorkspaceClient {
   }
 
   /** Titles of the sub-issues a task already has, normalized for comparison. */
-  async existingSubIssueTitles (parentId: Ref<Doc>): Promise<Set<string>> {
-    const subs = await this.client.findAll<Issue>(
+  async existingSubIssueTitles (parentId: Ref<Doc>, asUser?: PersonUuid): Promise<Set<string>> {
+    const subs = await this.clientFor(asUser).findAll<Issue>(
       tracker.class.Issue,
       { attachedTo: parentId as Ref<Issue> },
       { limit: 200, projection: { title: 1 } }
@@ -834,8 +906,8 @@ export class WorkspaceClient {
   }
 
   // Compact listing of existing sub-issues for the model; bodies are trimmed.
-  async listSubIssues (parentId: Ref<Doc>, limit = 100): Promise<string> {
-    const subs = await this.client.findAll<Issue>(
+  async listSubIssues (parentId: Ref<Doc>, limit = 100, asUser?: PersonUuid): Promise<string> {
+    const subs = await this.clientFor(asUser).findAll<Issue>(
       tracker.class.Issue,
       { attachedTo: parentId as Ref<Issue> },
       { limit, sort: { rank: SortingOrder.Ascending } }
@@ -861,12 +933,15 @@ export class WorkspaceClient {
   }
 
   // Current body of the edit target as markdown, for change detection. Reads the collab blob.
-  private async currentTargetMarkdown (target: {
-    targetId: Ref<Doc>
-    targetClass: Ref<Class<Doc>>
-    targetAttr: string
-  }): Promise<string | undefined> {
-    const doc = await this.client.findOne<Doc>(target.targetClass, { _id: target.targetId })
+  private async currentTargetMarkdown (
+    target: {
+      targetId: Ref<Doc>
+      targetClass: Ref<Class<Doc>>
+      targetAttr: string
+    },
+    asUser?: PersonUuid
+  ): Promise<string | undefined> {
+    const doc = await this.clientFor(asUser).findOne<Doc>(target.targetClass, { _id: target.targetId })
     if (doc === undefined) return undefined
     const blob = (doc as any)[target.targetAttr] as Ref<Blob> | null | undefined
     if (blob == null) return ''
@@ -878,15 +953,18 @@ export class WorkspaceClient {
     ctx: ReqCtx,
     target: { targetId: Ref<Doc>, targetClass: Ref<Class<Doc>>, targetAttr: string },
     markdown: string,
-    hasMore: boolean = false
+    hasMore: boolean = false,
+    asUser?: PersonUuid
   ): Promise<boolean> {
-    const staged = ctx.pending?.kind === 'edit' && ctx.pending.awaitingMore === true ? ctx.pending.markdown : undefined
+    // A rename staged earlier in the same run rides on the same card and must survive.
+    const prior = ctx.pending?.kind === 'edit' ? ctx.pending : undefined
+    const staged = prior?.awaitingMore === true ? prior.markdown : undefined
     const full = sanitizeDocumentMarkdown(staged !== undefined ? staged + markdown : markdown)
     // Compare only once the document is complete: an intermediate part always differs.
     if (!hasMore) {
-      const current = await this.currentTargetMarkdown(target)
+      const current = await this.currentTargetMarkdown(target, asUser)
       if (current !== undefined && normalizeForCompare(current) === normalizeForCompare(full)) {
-        ctx.pending = undefined
+        ctx.pending = prior?.title !== undefined ? { kind: 'edit', ...target, title: prior.title } : undefined
         return false
       }
     }
@@ -895,7 +973,8 @@ export class WorkspaceClient {
       ...target,
       markdown: full,
       awaitingMore: hasMore,
-      proposedMarkup: jsonToMarkup(markdownToMarkup(full, { refUrl: '', imageUrl: '' }))
+      proposedMarkup: jsonToMarkup(markdownToMarkup(full, { refUrl: '', imageUrl: '' })),
+      title: prior?.title
     }
     return true
   }
@@ -914,6 +993,8 @@ export class WorkspaceClient {
       promptTokens: number
       level?: AILevel
       providers?: Map<string, LLMProvider>
+      // Clears "is typing" the moment a cancel is noticed, before the wrap-up round.
+      stopTyping?: () => Promise<void>
       // Set on the single retry after a compaction, so it cannot loop.
       retriedAfterCompaction?: boolean
     }
@@ -1029,7 +1110,23 @@ export class WorkspaceClient {
         let linked: Doc | undefined
         if (msg._class === aiBot.class.AIContextMessage) {
           const link = msg as AIContextMessage
-          linked = await this.client?.findOne<Doc>(link.objectClass, { _id: link.objectId })
+          linked = await this.clientFor(personUuid).findOne<Doc>(link.objectClass, { _id: link.objectId })
+          if (linked === undefined && link.purpose !== 'issue-draft') {
+            // Deleted, or in a space the asker cannot read. Silently it looks like an unlinked chat.
+            this.ctx.warn('linked object not readable', {
+              workspace: this.wsIds.uuid,
+              root: link._id,
+              objectId: link.objectId,
+              objectClass: link.objectClass
+            })
+            systemPrompts.push({
+              role: 'system' as const,
+              content:
+                'The task or document this conversation is linked to cannot be read (it was deleted, or ' +
+                'you have no access to its space). Say that plainly when asked about it: you cannot quote ' +
+                'or edit it, and you must not guess what it contains.'
+            })
+          }
           // Draft the conversation works on (create-issue dialog). Kept off the message body so
           // the chat stays readable; the model still needs it on every turn.
           if (link.workingContext !== undefined && link.workingContext.trim() !== '') {
@@ -1047,7 +1144,8 @@ export class WorkspaceClient {
           const built = await this.buildDocPrompt(
             source,
             (text) => llm.countTokens([{ role: 'user', content: text }]) ?? 0,
-            Math.floor(servedBudget * DOC_PROMPT_SHARE)
+            Math.floor(servedBudget * DOC_PROMPT_SHARE),
+            personUuid
           )
           docPrompt = built?.text
           documentReadOnly = built?.oversized === true
@@ -1143,6 +1241,8 @@ export class WorkspaceClient {
       kind: 'chat',
       objectId
     })
+    // Lets the typing refresh see a cancel without waiting for the round to end.
+    if (aiRequestId !== undefined) this.activeRequests.set(objectId, aiRequestId)
 
     // How full the context is and where compaction kicks in. Written on every request so the user
     // sees it coming instead of noticing afterwards that the early part of the talk is gone.
@@ -1188,7 +1288,7 @@ export class WorkspaceClient {
         'chat',
         effectiveLevel,
         replyLang,
-        this.requestHooks(personUuid, aiRequestId, space)
+        this.requestHooks(personUuid, aiRequestId, space, args.stopTyping)
       )
     } catch (err: any) {
       // Estimates can under-count, so compact and retry once - but only while the window still
@@ -1647,7 +1747,8 @@ export class WorkspaceClient {
           targetId: pending.targetId,
           targetClass: pending.targetClass,
           targetAttr: pending.targetAttr,
-          proposedMarkup: pending.proposedMarkup
+          proposedMarkup: pending.proposedMarkup,
+          proposedTitle: pending.title
         }
       )
     }
@@ -1664,7 +1765,11 @@ export class WorkspaceClient {
           title: pending.title,
           description: pending.description,
           subtasks: pending.subtasks,
-          parent: pending.parent
+          parent: pending.parent,
+          priority: pending.priority,
+          estimation: pending.estimation,
+          dueDate: pending.dueDate,
+          labels: pending.labels
         }
       )
     }
@@ -1714,6 +1819,7 @@ export class WorkspaceClient {
   }
 
   async close (): Promise<void> {
+    this.userClients.clear()
     this.ctx.info('Closed workspace client: ', { workspace: this.wsIds })
   }
 

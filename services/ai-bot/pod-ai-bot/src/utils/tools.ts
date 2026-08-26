@@ -1,5 +1,5 @@
 import { type AIConversationPurpose, type AIFeature } from '@hcengineering/ai-bot'
-import { AccountUuid, Class, Doc, MarkupBlobRef, Ref, Space } from '@hcengineering/core'
+import { AccountUuid, Class, Doc, Markup, MarkupBlobRef, Ref, Space } from '@hcengineering/core'
 import document, { Document, getFirstRank, Teamspace } from '@hcengineering/document'
 import { makeRank } from '@hcengineering/rank'
 import { markdownToMarkup } from '@hcengineering/text-markdown'
@@ -178,9 +178,12 @@ export type PendingProposal =
     targetId: Ref<Doc>
     targetClass: Ref<Class<Doc>>
     targetAttr: string
-    proposedMarkup: string
+    // Absent when only the title is proposed.
+    proposedMarkup?: Markup
     // Raw markdown staged so far; kept so a follow-up part can be appended to it.
-    markdown: string
+    markdown?: string
+    // Proposed new title, applied by the user from the card like the body is.
+    title?: string
     // The model said more parts are coming, so the next call continues instead of replacing.
     awaitingMore?: boolean
   }
@@ -341,7 +344,7 @@ registerTool<object>(
   'any'
 )
 
-const rewriteDocument: ToolFunc = async (workspaceClient, _user, args, reqCtx) => {
+const rewriteDocument: ToolFunc = async (workspaceClient, user, args, reqCtx) => {
   if (reqCtx === undefined) return 'No conversation context available.'
   if (typeof args?.markdown !== 'string' || args.markdown.trim() === '') {
     return 'No content provided; pass the full new document as markdown.'
@@ -351,12 +354,12 @@ const rewriteDocument: ToolFunc = async (workspaceClient, _user, args, reqCtx) =
     return 'This conversation is not linked to an editable document, so no edit can be proposed.'
   }
   const hasMore = args?.has_more === true
-  const posted = await workspaceClient.postEditProposal(reqCtx, target, args.markdown, hasMore)
+  const posted = await workspaceClient.postEditProposal(reqCtx, target, args.markdown, hasMore, user)
   if (!posted) {
     return 'The new content is identical to the current document — nothing to change. Do NOT call this tool again unless the user asks for a different change.'
   }
   if (hasMore) {
-    const staged = reqCtx.pending?.kind === 'edit' ? reqCtx.pending.markdown.length : 0
+    const staged = reqCtx.pending?.kind === 'edit' ? (reqCtx.pending.markdown?.length ?? 0) : 0
     return (
       `Part staged; the document now holds ${staged} characters. Call this tool again with ONLY the ` +
       'continuation, picking up exactly where the last part ended. Set has_more=false on the final part.'
@@ -502,7 +505,7 @@ function batchReply (added: number, total: number): string {
   )
 }
 
-const splitTask: ToolFunc = async (workspaceClient, _user, args, reqCtx) => {
+const splitTask: ToolFunc = async (workspaceClient, user, args, reqCtx) => {
   if (reqCtx === undefined) return 'No conversation context available.'
   const subtasks = parseSubtasks(args?.subtasks)
   if (subtasks.length === 0) return 'No sub-tasks provided; pass the list to split the task into.'
@@ -513,7 +516,7 @@ const splitTask: ToolFunc = async (workspaceClient, _user, args, reqCtx) => {
   const staged = reqCtx.pending?.kind === 'task' ? reqCtx.pending : undefined
   // Sub-tasks the task already has: proposing them again would create duplicates, and the user
   // asked about the existing split, not for a fresh one.
-  const existing = await workspaceClient.existingSubIssueTitles(parent)
+  const existing = await workspaceClient.existingSubIssueTitles(parent, user)
   const fresh = subtasks.filter((s) => !existing.has(normalizeTitle(s.title)))
   const skipped = subtasks.length - fresh.length
   if (fresh.length === 0) {
@@ -533,12 +536,12 @@ const splitTask: ToolFunc = async (workspaceClient, _user, args, reqCtx) => {
   return skipped > 0 ? `${reply} ${skipped} of them already existed and were dropped.` : reply
 }
 
-const listSubtasks: ToolFunc = async (workspaceClient, _user, _args, reqCtx) => {
+const listSubtasks: ToolFunc = async (workspaceClient, user, _args, reqCtx) => {
   if (reqCtx === undefined) return 'No conversation context available.'
   const parent = await workspaceClient.resolveLinkedIssue(reqCtx.objectId, reqCtx.objectClass)
   if (parent === undefined) return 'This conversation is not linked to a task, so it has no sub-tasks.'
   const staged = reqCtx.pending?.kind === 'task' ? (reqCtx.pending.subtasks ?? []) : []
-  const existing = await workspaceClient.listSubIssues(parent)
+  const existing = await workspaceClient.listSubIssues(parent, 100, user)
   if (staged.length === 0) return existing
   // Staged-but-not-created ones are invisible in the DB; list them too or the model re-proposes them.
   return `${existing}\n\nStaged on the card, not created yet (${staged.length}):\n${staged
@@ -715,7 +718,7 @@ registerTool<object>(
   'tasks'
 )
 
-const renameDocument: ToolFunc = async (workspaceClient, _user, args, reqCtx) => {
+const renameDocument: ToolFunc = async (workspaceClient, user, args, reqCtx) => {
   if (reqCtx === undefined) return 'No conversation context available.'
   const title = typeof args?.title === 'string' ? args.title.trim() : ''
   if (title === '') return 'No title provided.'
@@ -723,8 +726,10 @@ const renameDocument: ToolFunc = async (workspaceClient, _user, args, reqCtx) =>
   if (target === undefined) {
     return 'This conversation is not linked to a document or task, so there is nothing to rename.'
   }
-  const renamed = await workspaceClient.renameTarget(target, title)
-  return renamed ? `Renamed to "${title}".` : 'The title is already that; nothing to rename.'
+  const staged = await workspaceClient.proposeRename(reqCtx, target, title, user)
+  return staged
+    ? 'Proposed the new title to the user; they apply it themselves. Do not repeat it in your reply.'
+    : 'The title is already that; nothing to rename.'
 }
 
 registerTool<object>(
@@ -744,9 +749,10 @@ registerTool<object>(
         required: ['title']
       },
       description:
-        'Rename the linked document or task: changes its title only, never its body. This one IS applied ' +
-        'immediately, but a title is a single short field and the user can undo it, so do not hesitate. Use when ' +
-        'the user asks to rename it or to give it a name. Do not also call propose_new_document for the title.'
+        'Propose a new title for the linked document or task: the title only, never its body. NOTHING IS ' +
+        'CHANGED by this call - the user gets the new title on a card and applies it themselves, so it is ' +
+        'always safe to call. Use when the user asks to rename it or to give it a name. Do not also call ' +
+        'propose_new_document for the title.'
     }
   },
   renameDocument,
