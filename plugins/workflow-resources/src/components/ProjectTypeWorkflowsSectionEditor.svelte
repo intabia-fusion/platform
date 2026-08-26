@@ -13,10 +13,11 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { SortingOrder } from '@hcengineering/core'
+  import { Ref, SortingOrder } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import task, { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
+  import { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
+  import { taskTypeStore } from '@hcengineering/task-resources'
   import { ButtonIcon, Icon, IconAdd, Label } from '@hcengineering/ui'
   import { Workflow } from '@hcengineering/workflow'
 
@@ -29,17 +30,11 @@
   export let descriptor: ProjectTypeDescriptor | undefined = undefined
   export let disabled = true
 
-  const taskTypesQuery = createQuery()
   const workflowsQuery = createQuery()
 
   let isWorkflowsLoading = true
-  let isTaskTypeLoading = true
 
-  let taskTypes: TaskType[] = []
-  $: taskTypesQuery.query(task.class.TaskType, { parent: type._id }, (res) => {
-    taskTypes = res
-    isTaskTypeLoading = false
-  })
+  $: taskTypes = Array.from($taskTypeStore.values()).filter((tt) => tt.parent === type._id)
 
   let workflows: Workflow[] = []
   $: workflowsQuery.query(
@@ -52,11 +47,11 @@
     { sort: { name: SortingOrder.Ascending } }
   )
 
-  function getTaskTypeName (taskTypeId: string): string | undefined {
-    return taskTypes.find((tt) => tt._id === taskTypeId)?.name
+  function getTaskTypeName (taskTypeId: Ref<TaskType>): string | undefined {
+    return $taskTypeStore.get(taskTypeId)?.name
   }
 
-  $: isLoading = isWorkflowsLoading || isTaskTypeLoading
+  $: isLoading = isWorkflowsLoading
   $: addDisabled = disabled || taskTypes.length === 0
 
   onDestroy(() => {
