@@ -29,6 +29,9 @@
   export let noFocusBorder: boolean = false
   export let disabled: boolean = false
   export let wrap: 'soft' | 'hard' | 'off' = 'off'
+  export let limit: number = 0
+
+  $: maxlength = limit === 0 ? null : limit
 
   let input: HTMLTextAreaElement
   let phTranslate: string = ''
@@ -51,6 +54,7 @@
     {wrap}
     class:wrap-soft={wrap !== 'off'}
     placeholder={phTranslate}
+    {maxlength}
     on:keydown
     on:change
     on:keydown
