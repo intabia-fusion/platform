@@ -327,6 +327,20 @@ export async function getAccount (doNavigate: boolean = true): Promise<LoginInfo
   }
 }
 
+/**
+ * Picks up a session that lives in a cookie alone and mirrors it into Token/LastAccount,
+ * which the login routing reads - otherwise `selectWorkspace` stays unroutable.
+ */
+export async function restoreSession (): Promise<LoginInfo | null> {
+  const loginInfo = await getAccount(false)
+  if (loginInfo?.token != null && getMetadata(presentation.metadata.Token) == null) {
+    setMetadata(presentation.metadata.Token, loginInfo.token)
+    setMetadataLocalStorage(login.metadata.LoginAccount, loginInfo.account)
+    setMetadataLocalStorage(login.metadata.LastAccount, loginInfo.account)
+  }
+  return loginInfo
+}
+
 export async function getRegionInfo (doNavigate: boolean = true): Promise<RegionInfo[] | null> {
   const token = getMetadata(presentation.metadata.Token)
   if (token == null) {
