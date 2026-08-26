@@ -26,7 +26,7 @@ import config from './config'
 import { registerLoaders } from './loaders'
 import { createTranscriptionProvider, TranscriptionConfig, TranscriptionOptions } from './transcription'
 import { ClisrClient, createCallbackClient } from '@intabiafusion/clisr'
-import { createDefaultProvider, type LLMRequest } from './llms'
+import { createDefaultProvider, createProvidersFromRegistry, type LLMProvider, type LLMRequest } from './llms'
 import { resolveModel } from './llms/modelRegistry'
 import { resolveTranscriptionConfig } from './transcription/asrRegistry'
 
@@ -76,7 +76,13 @@ export const startClient = async (): Promise<void> => {
   let llmEnabled = false
 
   // LLM_PROVIDER=none opts a worker out of LLM even when the shared registry yaml has an `llm:` block.
-  const llmProvider = config.LLMProvider === 'none' ? undefined : createDefaultProvider(ctx)
+  const providers = config.LLMProvider === 'none' ? new Map<string, LLMProvider>() : createProvidersFromRegistry(ctx)
+  const llmProvider = config.LLMProvider === 'none' ? undefined : createDefaultProvider(ctx, undefined, providers)
+  // The provider serving the request's level; the default level's one when nobody serves it.
+  function providerFor (level?: string): LLMProvider | undefined {
+    const cfg = config.AIProviders.find((c) => c.levels[level ?? config.DefaultLevel] !== undefined)
+    return (cfg !== undefined ? providers.get(cfg.id) : undefined) ?? llmProvider
+  }
 
   // Resolve the concrete endpoint + model this client serves a request with (for logging).
   function resolveTarget (level?: string): { endpoint: string, model: string } {
@@ -117,7 +123,7 @@ export const startClient = async (): Promise<void> => {
       })
     }
     try {
-      const result = await dispatchLLMRequest(ctx, request)
+      const result = await dispatchLLMRequest(ctx, request, level)
       // Tag tool-loop steps with this worker's id so the router can attribute usage per client.
       if (config.ClientId !== '' && request.method === 'createChatCompletionWithTools' && result != null) {
         result.clientId = config.ClientId
@@ -150,7 +156,8 @@ export const startClient = async (): Promise<void> => {
     }
   }
 
-  async function dispatchLLMRequest (ctx: MeasureContext, request: LLMRequest): Promise<any> {
+  async function dispatchLLMRequest (ctx: MeasureContext, request: LLMRequest, level?: string): Promise<any> {
+    const llmProvider = providerFor(level)
     if (llmProvider === undefined) {
       throw new Error('LLM provider is not configured')
     }

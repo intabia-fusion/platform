@@ -4,8 +4,11 @@ import { DocumentsPage } from '../model/documents/documents-page'
 import { IssuesPage } from '../model/tracker/issues-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
+import { NewProjectPage } from '../model/tracker/new-project-page'
+import { type NewProject } from '../model/tracker/types'
 import { prepareNewIssueWithOpenStep } from '../tracker/common-steps'
-import { createAccountAndWorkspace, generateId, generateTestData } from '../utils'
+import { generateProjectId } from '../tracker/tracker.utils'
+import { PlatformURI, createAccountAndWorkspace, generateId, generateTestData } from '../utils'
 import { retryIntervals } from '../retry'
 
 // Whole-flow assistant scenarios on the `low` level: the prompt scripts the tool call
@@ -44,6 +47,23 @@ async function sendToAssistant (page: Page, text: string): Promise<void> {
   await expect(input).toBeVisible({ timeout: 30000 })
   await input.fill(text)
   await page.locator('#sidebar g#Send').click()
+}
+
+/** A brand new teamspace + document, opened with the assistant thread beside it. */
+async function openFreshDocumentWithAssistant (page: Page, menu: LeftSideMenuPage): Promise<void> {
+  const documentsPage = new DocumentsPage(page)
+  const teamspace = { title: `Teamspace-${generateId()}`, description: 'ai', autoJoin: true }
+  const document = { title: `Document-${generateId()}`, space: teamspace.title }
+
+  await menu.clickDocuments()
+  await documentsPage.checkTeamspaceNotExist(teamspace.title)
+  await documentsPage.createNewTeamspace(teamspace)
+  await documentsPage.clickOnButtonCreateDocument()
+  await documentsPage.createDocument(document)
+  await documentsPage.openDocument(document.title)
+  await new DocumentContentPage(page).checkDocumentTitle(document.title)
+
+  await openAssistant(page)
 }
 
 test.describe('ai-bot scenarios', () => {
@@ -102,6 +122,10 @@ test.describe('ai-bot scenarios', () => {
     await expect(page.locator('#sidebar .activityMessage', { hasText: 'первое сообщение' })).toBeVisible({
       timeout: 60000
     })
+    // Unscripted text gets the mock's menu of available calls, not an answer.
+    await expect(page.locator('#sidebar .activityMessage', { hasText: 'Мок-модель' })).toBeVisible({
+      timeout: 60000
+    })
 
     // The button only shows up for an AI context root, so its presence is part of the assertion.
     await page.locator('#sidebar [data-id="btnAiNewContext"]').click()
@@ -114,20 +138,7 @@ test.describe('ai-bot scenarios', () => {
   })
 
   test('proposed document edit lands in the document once applied', async ({ page }) => {
-    const documentsPage = new DocumentsPage(page)
-    const documentContentPage = new DocumentContentPage(page)
-    const teamspace = { title: `Teamspace-${generateId()}`, description: 'ai', autoJoin: true }
-    const document = { title: `Document-${generateId()}`, space: teamspace.title }
-
-    await leftSideMenuPage.clickDocuments()
-    await documentsPage.checkTeamspaceNotExist(teamspace.title)
-    await documentsPage.createNewTeamspace(teamspace)
-    await documentsPage.clickOnButtonCreateDocument()
-    await documentsPage.createDocument(document)
-    await documentsPage.openDocument(document.title)
-    await documentContentPage.checkDocumentTitle(document.title)
-
-    await openAssistant(page)
+    await openFreshDocumentWithAssistant(page, leftSideMenuPage)
 
     const body = `Rewritten by the assistant ${generateId()}`
     await sendToAssistant(page, `перепиши документ\ncall:propose_new_document {"markdown":"# Plan\\n\\n${body}"}`)
@@ -166,9 +177,134 @@ test.describe('ai-bot scenarios', () => {
     // The tool only stages the draft; the card's own button is what pushes it into the form.
     const card = panel.locator('.activityMessage').filter({ has: page.locator('[data-id="aiTaskProposal"]') })
     await expect(card).toBeVisible({ timeout: 60000 })
+
+    // Nothing is created from a draft card - the dialog behind it owns the project, so the card
+    // must not offer its own project selector.
+    await expect(card.locator('[id="space.selector"]')).toHaveCount(0)
+
     await page.mouse.move(0, 0)
     await card.getByRole('button', { name: 'Apply', exact: true }).click()
 
     await expect(issuesPage.inputPopupCreateNewIssueTitle()).toHaveValue(drafted, { timeout: 30000 })
+  })
+
+  test('project picked on the proposal card survives a reload', async ({ page }) => {
+    const projectId = generateProjectId()
+    const target: NewProject = { title: `AiTarget-${projectId}`, identifier: projectId }
+    const issueTitle = `Issue for project pick ${generateId()}`
+
+    await leftSideMenuPage.clickTracker()
+    await openDefaultProject(page)
+
+    await test.step('A second project, so the card has something to switch to', async () => {
+      const trackerNavigationMenuPage = new TrackerNavigationMenuPage(page)
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await new NewProjectPage(page).createNewProject(target)
+      await trackerNavigationMenuPage.checkProjectExist(target.title)
+      await openDefaultProject(page)
+    })
+
+    await prepareNewIssueWithOpenStep(page, {
+      title: issueTitle,
+      description: 'project pick',
+      projectName: DEFAULT_PROJECT
+    })
+
+    await openAssistant(page)
+    await sendToAssistant(page, `сделай задачу\ncall:propose_task {"title":"Pick ${generateId()}"}`)
+
+    const card = page.locator('#sidebar .activityMessage').filter({ has: page.locator('[data-id="aiTaskProposal"]') })
+    await expect(card).toBeVisible({ timeout: 60000 })
+
+    const selector = card.locator('[id="space.selector"]')
+    await expect(selector).toBeVisible({ timeout: 30000 })
+
+    await page.mouse.move(0, 0)
+    await selector.click()
+    await page.locator('div.selectPopup div.list-item', { hasText: target.title }).click()
+    await expect(selector).toContainText(target.title, { timeout: 15000 })
+
+    await test.step('The pick is stored on the message, not just in the component', async () => {
+      await page.reload()
+      await openAssistant(page)
+      const reloaded = page
+        .locator('#sidebar .activityMessage')
+        .filter({ has: page.locator('[data-id="aiTaskProposal"]') })
+      await expect(reloaded.locator('[id="space.selector"]')).toContainText(target.title, { timeout: 60000 })
+    })
+  })
+
+  test('task proposal card folds and unfolds from its caption', async ({ page }) => {
+    const issueTitle = `Issue for fold ${generateId()}`
+
+    await leftSideMenuPage.clickTracker()
+    await openDefaultProject(page)
+    await prepareNewIssueWithOpenStep(page, {
+      title: issueTitle,
+      description: 'fold scenario',
+      projectName: DEFAULT_PROJECT
+    })
+
+    await openAssistant(page)
+
+    const proposedTitle = `Foldable ${generateId()}`
+    await sendToAssistant(page, `сделай задачу\ncall:propose_task {"title":"${proposedTitle}"}`)
+
+    const card = page.locator('#sidebar .activityMessage').filter({ has: page.locator('[data-id="aiTaskProposal"]') })
+    await expect(card).toBeVisible({ timeout: 60000 })
+
+    const body = card.locator('[data-id="aiTaskProposalBody"]')
+    await expect(body).toBeVisible({ timeout: 15000 })
+
+    // The caption is the Expandable header: clicking it collapses the body, clicking again restores it.
+    // ExpandCollapse keeps the node mounted and toggles `hidden`, so assert visibility, not count.
+    await page.mouse.move(0, 0)
+    await card.locator('[data-id="aiTaskProposal"]').click()
+    await expect(body).toBeHidden({ timeout: 15000 })
+
+    await card.locator('[data-id="aiTaskProposal"]').click()
+    await expect(body).toBeVisible({ timeout: 15000 })
+  })
+
+  test('a long proposed document is cropped behind show more', async ({ page }) => {
+    await openFreshDocumentWithAssistant(page, leftSideMenuPage)
+
+    // ShowMore crops at 240px, so the proposal has to be clearly taller than that. No braces in
+    // the text: the mock matches the tool arguments up to the first closing brace.
+    const marker = `Tail ${generateId()}`
+    const long = [...Array(40).keys()].map((i) => `Paragraph ${i} of a long rewrite`).join('\\n\\n')
+    await sendToAssistant(page, `перепиши документ\ncall:propose_new_document {"markdown":"${long}\\n\\n${marker}"}`)
+
+    const card = page.locator('#sidebar .activityMessage').filter({ has: page.locator('[data-id="aiEditProposal"]') })
+    await expect(card).toBeVisible({ timeout: 60000 })
+
+    const showMore = card.locator('.showMore')
+    await expect(showMore).toContainText('Show more', { timeout: 30000 })
+
+    await test.step('Expanding reveals the end of the proposal', async () => {
+      await page.mouse.move(0, 0)
+      await showMore.click()
+      await expect(showMore).toContainText('Show less', { timeout: 15000 })
+      await expect(card).toContainText(marker, { timeout: 15000 })
+    })
+  })
+
+  test('AI level cards switch the workspace level', async ({ page }) => {
+    await (await page.goto(`${PlatformURI}/workbench/${data.workspaceName}/setting/ai-settings/basic`))?.finished()
+
+    // Levels come from the router (GET /levels), so the cards appear only once it has answered.
+    const low = page.locator('[data-id="btnAiLevel-low"]')
+    const middle = page.locator('[data-id="btnAiLevel-middle"]')
+    await expect(low).toBeVisible({ timeout: 30000 })
+    await expect(low).toHaveClass(/pressed/, { timeout: 15000 })
+
+    await middle.click()
+    await expect(middle).toHaveClass(/pressed/, { timeout: 15000 })
+    await expect(low).not.toHaveClass(/pressed/, { timeout: 15000 })
+
+    await test.step('The pick survives a reload', async () => {
+      await (await page.goto(`${PlatformURI}/workbench/${data.workspaceName}/setting/ai-settings/basic`))?.finished()
+      await expect(page.locator('[data-id="btnAiLevel-middle"]')).toHaveClass(/pressed/, { timeout: 30000 })
+    })
   })
 })

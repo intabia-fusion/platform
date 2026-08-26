@@ -15352,9 +15352,6 @@ importers:
       '@hcengineering/ai-bot':
         specifier: workspace:^0.7.0
         version: link:../ai-bot
-      '@hcengineering/analytics-collector':
-        specifier: workspace:^0.7.0
-        version: link:../analytics-collector
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../chunter
@@ -15394,6 +15391,9 @@ importers:
       '@hcengineering/view':
         specifier: workspace:^0.7.0
         version: link:../view
+      '@hcengineering/view-resources':
+        specifier: workspace:^0.7.0
+        version: link:../view-resources
       svelte:
         specifier: ^4.2.20
         version: 4.2.20

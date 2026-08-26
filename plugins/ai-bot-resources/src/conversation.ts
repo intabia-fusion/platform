@@ -13,13 +13,16 @@
 // limitations under the License.
 //
 
-import { type AccountUuid, type Class, type Doc, getCurrentAccount, type Markup, type Ref } from '@hcengineering/core'
-import chunter, {
-  type ChatMessage,
-  createAndGetDirect,
-  type DirectMessage,
-  type ThreadMessage
-} from '@hcengineering/chunter'
+import {
+  type AccountUuid,
+  type Class,
+  type Doc,
+  generateId,
+  getCurrentAccount,
+  type Markup,
+  type Ref
+} from '@hcengineering/core'
+import chunter, { type ChatMessage, createAndGetDirect, type DirectMessage } from '@hcengineering/chunter'
 import aiBot, { type AIContextMessage } from '@hcengineering/ai-bot'
 import contact from '@hcengineering/contact'
 import { getClient } from '@hcengineering/presentation'
@@ -58,46 +61,6 @@ function originMention (origin: ConversationOrigin): string {
   return `[](ref://?_class=${cls}&_id=${id}&label=${label})`
 }
 
-/** Posts a top-level message in the user's Direct with the bot; the server trigger replies in a thread under it. */
-export async function startAIConversation (
-  message: Markup,
-  origin?: ConversationOrigin
-): Promise<StartedConversation | undefined> {
-  const me = getCurrentAccount().uuid
-  const botAccount = await getBotAccount()
-  if (botAccount === undefined) return undefined
-
-  const client = getClient()
-  const direct = await createAndGetDirect(client, [me, botAccount])
-  if (direct === undefined) return undefined
-
-  // Convert markdown to Markup with refUrl='ref://' so the origin link parses as a reference node.
-  const md = origin !== undefined ? `${originMention(origin)}\n\n${message}` : message
-  const body: Markup = jsonToMarkup(markdownToMarkup(md, { refUrl: 'ref://', imageUrl: '' }))
-
-  // With origin: AIContextMessage, so the trigger recognizes the thread starter and skips a top-level reply.
-  const messageId =
-    origin !== undefined
-      ? await client.addCollection<DirectMessage, AIContextMessage>(
-        aiBot.class.AIContextMessage,
-        direct._id,
-        direct._id,
-        chunter.class.DirectMessage,
-        'messages',
-        { message: body, objectId: origin.objectId, objectClass: origin.objectClass, direct: direct._id }
-      )
-      : await client.addCollection<DirectMessage, ChatMessage>(
-        chunter.class.ChatMessage,
-        direct._id,
-        direct._id,
-        chunter.class.DirectMessage,
-        'messages',
-        { message: body }
-      )
-
-  return { direct, messageId }
-}
-
 /**
  * Start (or continue) the assistant conversation behind the create-issue dialog. The thread is an
  * ordinary Direct conversation with the bot, tagged `purpose: 'issue-draft'` so history views can
@@ -116,6 +79,21 @@ export async function startIssueDraftConversation (
   const direct = await createAndGetDirect(client, [me, botAccount])
   if (direct === undefined) return undefined
 
+  // Draft roots nobody wrote into yet: one is reused, the rest are leftovers of earlier dialogs.
+  // Whatever this pass misses goes on the next one.
+  const roots = await client.findAll(aiBot.class.AIContextMessage, {
+    space: direct._id,
+    purpose: 'issue-draft',
+    archived: { $ne: true },
+    resultId: { $exists: false }
+  })
+  const [reuse, ...stale] = roots.filter((r) => (r.replies ?? 0) === 0)
+  for (const r of stale) await client.remove(r)
+  if (reuse !== undefined) {
+    await client.diffUpdate(reuse, { message, objectId: origin.objectId, objectClass: origin.objectClass })
+    return { direct, messageId: reuse._id }
+  }
+
   const messageId = await client.addCollection<DirectMessage, AIContextMessage>(
     aiBot.class.AIContextMessage,
     direct._id,
@@ -132,26 +110,6 @@ export async function startIssueDraftConversation (
   )
 
   return { direct, messageId }
-}
-
-/**
- * Post a follow-up into an existing conversation thread; the bot replies in the same thread.
- * `objectId`/`objectClass` point at the Direct, not at the root message — the server trigger
- * routes on them, and anything else means the bot never sees the message.
- */
-export async function postToConversation (
-  root: StartedConversation,
-  message: Markup
-): Promise<Ref<ChatMessage> | undefined> {
-  const client = getClient()
-  return await client.addCollection<ChatMessage, ThreadMessage>(
-    chunter.class.ThreadMessage,
-    root.direct._id,
-    root.messageId,
-    aiBot.class.AIContextMessage,
-    'replies',
-    { message, objectId: root.direct._id, objectClass: chunter.class.DirectMessage }
-  )
 }
 
 /**
@@ -202,7 +160,7 @@ export async function linkConversationResult (
       message,
       // Draft rules no longer apply: the issue exists, so the thread gets the full toolset back.
       $unset: { purpose: 1, workingContext: 1 }
-    } as any
+    }
   )
 }
 
@@ -242,12 +200,48 @@ export async function resetObjectConversation (
   firstMessage: Markup
 ): Promise<StartedConversation | undefined> {
   const client = getClient()
-  await client.updateDoc<AIContextMessage>(root._class, root.space, root._id, { archived: true })
-  return await startAIConversation(firstMessage, {
-    objectId: root.objectId,
-    objectClass: root.objectClass,
-    label: ''
+  await client.update(root, { archived: true })
+  // Straight to the server-side guarded create: a client-side lookup can still return the root just archived.
+  const direct = await client.findOne(chunter.class.DirectMessage, { _id: root.direct as Ref<DirectMessage> })
+  if (direct === undefined) return undefined
+  const origin: ConversationOrigin = { objectId: root.objectId, objectClass: root.objectClass, label: '' }
+  return await createObjectContext(direct, origin, firstMessage)
+}
+
+/** Atomic get-or-create via apply()/notMatch(): two quick clicks must not leave two live roots on one object. */
+async function createObjectContext (
+  direct: DirectMessage,
+  origin: ConversationOrigin,
+  firstMessage: Markup
+): Promise<StartedConversation | undefined> {
+  const client = getClient()
+  const messageId = generateId<AIContextMessage>()
+  // refUrl='ref://' so the origin mention parses as a reference node.
+  const body = jsonToMarkup(
+    markdownToMarkup(`${originMention(origin)}\n\n${firstMessage}`, { refUrl: 'ref://', imageUrl: '' })
+  )
+  const ops = client.apply(`ai_context_${origin.objectId}`)
+  ops.notMatch(aiBot.class.AIContextMessage, {
+    space: direct._id,
+    objectId: origin.objectId,
+    archived: { $ne: true }
   })
+  await ops.addCollection<DirectMessage, AIContextMessage>(
+    aiBot.class.AIContextMessage,
+    direct._id,
+    direct._id,
+    chunter.class.DirectMessage,
+    'messages',
+    { message: body, objectId: origin.objectId, objectClass: origin.objectClass, direct: direct._id },
+    messageId
+  )
+
+  const { result } = await ops.commit()
+  if (result) return { direct, messageId }
+
+  // notMatch failed on fresh server data: someone got there first, so take their root.
+  const existing = await findObjectConversation(origin.objectId)
+  return existing !== undefined ? { direct, messageId: existing._id } : undefined
 }
 
 /**
@@ -258,13 +252,20 @@ export async function openOrStartObjectConversation (
   origin: ConversationOrigin,
   firstMessage: Markup
 ): Promise<StartedConversation | undefined> {
+  const client = getClient()
   const existing = await findObjectConversation(origin.objectId)
   if (existing !== undefined) {
-    const client = getClient()
     const direct = await client.findOne(chunter.class.DirectMessage, { _id: existing.direct as Ref<DirectMessage> })
     if (direct !== undefined) {
       return { direct, messageId: existing._id }
     }
   }
-  return await startAIConversation(firstMessage, origin)
+
+  const me = getCurrentAccount().uuid
+  const botAccount = await getBotAccount()
+  if (botAccount === undefined) return undefined
+  const direct = await createAndGetDirect(client, [me, botAccount])
+  if (direct === undefined) return undefined
+
+  return await createObjectContext(direct, origin, firstMessage)
 }

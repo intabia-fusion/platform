@@ -26,11 +26,16 @@
   let personalContext = ''
   let language = ''
 
+  // A re-delivered document must not wipe text typed but not yet blurred.
+  let storedContext: string | undefined
   const query = createQuery()
   query.query(aiBot.class.AIPersonalData, { attachedTo: me }, (res) => {
     data = res[0]
-    personalContext = data?.personalContext ?? ''
     language = data?.language ?? ''
+    if (data?.personalContext !== storedContext) {
+      storedContext = data?.personalContext
+      personalContext = data?.personalContext ?? ''
+    }
   })
 
   // Serializes saves: while the first createDoc is in flight the live query has not delivered
@@ -48,14 +53,8 @@
         personalContext: '',
         ...patch
       })
-      // Bridge until the live query delivers the created document; `space` is what update() sends
-      // as the tx object space.
-      data = {
-        _id: id,
-        _class: aiBot.class.AIPersonalData,
-        space: core.space.Workspace,
-        attachedTo: me
-      } as unknown as AIPersonalData
+      // Read back: the live query may not have delivered it yet, the next queued save needs a real doc.
+      data = await client.findOne(aiBot.class.AIPersonalData, { _id: id })
     }
     const runAll = saveQueue.then(run, run)
     saveQueue = runAll.catch(() => {})
