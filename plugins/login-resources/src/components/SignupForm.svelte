@@ -49,8 +49,8 @@
     fields = [
       { id: 'given-name', name: 'first', i18n: login.string.FirstName },
       { id: 'family-name', name: 'last', i18n: login.string.LastName },
-      { id: 'email', name: 'username', i18n: login.string.Email },
-      { id: 'phone-number', name: 'phone', i18n: login.string.PhoneNumber, optional: true }
+      { id: 'email', name: 'username', i18n: login.string.Email, inputmode: 'email' },
+      { id: 'phone-number', name: 'phone', i18n: login.string.PhoneNumber, optional: true, inputmode: 'tel' }
     ]
 
     if (withPassword) {
@@ -233,5 +233,19 @@
     border: solid var(--login-button-text-color, var(--primary-button-color, #ffffff));
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
+  }
+
+  @media (max-width: 600px) {
+    .check-label {
+      align-items: flex-start;
+      font-size: 0.875rem;
+      line-height: 1.35;
+    }
+
+    /* Larger hit area on touch screens without changing the visual box size. */
+    .check-label input[type='checkbox'] {
+      margin: 0.15rem 0;
+      outline-offset: 0.5rem;
+    }
   }
 </style>
