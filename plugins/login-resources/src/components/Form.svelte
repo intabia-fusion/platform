@@ -369,7 +369,7 @@
 
   @media (max-width: 600px) {
     .container {
-      // Inner Scroller (LoginAppBase) handles overflow; hiding it here clips tall forms.
+      // The page scrolls as a whole; clipping here would hide tall forms.
       overflow: visible;
 
       .main-heading {

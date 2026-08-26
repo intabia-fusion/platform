@@ -424,7 +424,7 @@
       gap: 0.125rem;
       min-height: 3.5rem;
     }
-    /* Outer Scroller owns the overflow; clipping here would hide content. */
+    /* The page scrolls as a whole; clipping here would hide content. */
     .container {
       overflow: visible;
     }
