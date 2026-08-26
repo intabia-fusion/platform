@@ -22,9 +22,8 @@
   import { recoveryAction } from '../actions'
   import type { BottomAction } from '../index'
   import login from '../plugin'
+  import { fetchMetadataLocalStorage, setMetadataLocalStorage } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
-  import { get } from 'svelte/store'
-  import { sharedEmailStore } from '../emailStore'
 
   export let navigateUrl: string | undefined = undefined
   export let signUpDisabled = false
@@ -46,7 +45,7 @@
   ]
 
   const object = {
-    username: email !== undefined && email !== '' ? email : get(sharedEmailStore),
+    username: email ?? fetchMetadataLocalStorage(login.metadata.AuthEmail) ?? '',
     password: ''
   }
 
@@ -66,6 +65,10 @@
         const [loginStatus, result] = await doLogin(object.username, object.password)
         status = loginStatus
 
+        if (result != null) {
+          setMetadataLocalStorage(login.metadata.AuthEmail, null)
+        }
+
         if (onLogin !== undefined) {
           void onLogin(result, status)
         } else {
@@ -84,7 +87,7 @@
   }
 
   onDestroy(() => {
-    sharedEmailStore.set(object.username ?? '')
+    setMetadataLocalStorage(login.metadata.AuthEmail, object.username ?? '')
   })
 </script>
 

@@ -255,6 +255,7 @@ export async function logOut (): Promise<void> {
   setMetadata(presentation.metadata.WorkspaceDataId, null)
   setMetadataLocalStorage(login.metadata.LoginEndpoint, null)
   setMetadataLocalStorage(login.metadata.LoginAccount, null)
+  setMetadataLocalStorage(login.metadata.AuthEmail, null)
 
   void closeClient()
 }

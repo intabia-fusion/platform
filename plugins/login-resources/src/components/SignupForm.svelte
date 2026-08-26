@@ -29,8 +29,7 @@
   import OtpForm from './OtpForm.svelte'
   import { onMount, onDestroy } from 'svelte'
   import ConsentCheckboxes from './ConsentCheckboxes.svelte'
-  import { get } from 'svelte/store'
-  import { sharedEmailStore } from '../emailStore'
+  import { fetchMetadataLocalStorage, setMetadataLocalStorage } from '@hcengineering/ui'
 
   export let signUpDisabled = false
   export let localLoginHidden = false
@@ -76,7 +75,7 @@
   const object = {
     first: '',
     last: '',
-    username: get(sharedEmailStore),
+    username: fetchMetadataLocalStorage(login.metadata.AuthEmail) ?? '',
     password: '',
     password2: '',
     phone: ''
@@ -112,6 +111,10 @@
 
         status = loginStatus
 
+        if (result != null) {
+          setMetadataLocalStorage(login.metadata.AuthEmail, null)
+        }
+
         if (onSignUp !== undefined) {
           void onSignUp(result, status)
         } else if (result != null) {
@@ -141,7 +144,7 @@
   $: proceedDisabled = !agreedPersonalData || !agreedRules
 
   onDestroy(() => {
-    sharedEmailStore.set(object.username ?? '')
+    setMetadataLocalStorage(login.metadata.AuthEmail, object.username ?? '')
   })
 </script>
 
