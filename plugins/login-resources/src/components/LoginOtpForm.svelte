@@ -33,7 +33,13 @@
   export let signedInAs: string | undefined = undefined
 
   $: fields = [
-    { id: 'email', name: 'username', i18n: login.string.Email, disabled: email !== undefined && email !== '' }
+    {
+      id: 'email',
+      name: 'username',
+      i18n: login.string.Email,
+      inputmode: 'email' as const,
+      disabled: email !== undefined && email !== ''
+    }
   ]
   const formData = {
     username: '' as string
