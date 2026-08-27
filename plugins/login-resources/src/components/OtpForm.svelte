@@ -373,7 +373,7 @@
   }
 
   .status {
-    height: 2.375rem;
+    min-height: 2.375rem;
   }
 
   .footer {
@@ -427,11 +427,6 @@
     /* The page scrolls as a whole; clipping here would hide content. */
     .container {
       overflow: visible;
-    }
-    /* Fixed height clips a wrapped error message on narrow screens. */
-    .status {
-      height: auto;
-      min-height: 2.375rem;
     }
     .header .description {
       flex-wrap: wrap;
