@@ -107,7 +107,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV38Migration(ns),
     getV39Migration(ns, flavor),
     getV40Migration(ns),
-    getV41Migration(ns)
+    getV41Migration(ns),
+    getV42Migration(ns, flavor)
   ]
 }
 
@@ -1181,6 +1182,18 @@ function getV41Migration (ns: string): [string, string] {
     `
     CREATE UNIQUE INDEX IF NOT EXISTS workspace_purchase_payment_provider_unique
       ON ${ns}.workspace_purchase (payment_id, provider) WHERE payment_id IS NOT NULL;
+    `
+  ]
+}
+
+function getV42Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+
+  return [
+    'account_db_v42_add_workspace_language',
+    `
+    ALTER TABLE ${ns}.workspace
+    ADD COLUMN IF NOT EXISTS language ${types.string};
     `
   ]
 }

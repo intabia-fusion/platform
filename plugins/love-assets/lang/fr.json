@@ -162,6 +162,9 @@
     "SpeakingWhileMutedAlert": "M'alerter quand je parle avec le micro coupé",
     "SwitchWorkspaceInMeeting": "Vous êtes en réunion",
     "SwitchWorkspaceLeaveMeeting": "Changer d'espace de travail vous déconnectera de la réunion en cours.",
-    "SwitchWorkspaceEndsMeeting": "Ceci est votre bureau : changer d'espace de travail vous déconnectera et mettra fin à la réunion pour tout le monde."
+    "SwitchWorkspaceEndsMeeting": "Ceci est votre bureau : changer d'espace de travail vous déconnectera et mettra fin à la réunion pour tout le monde.",
+    "AllHands": "Réunion générale",
+    "MeetingRoomNum": "Salle de réunion {number}",
+    "VoiceRoomNum": "Salle vocale {number}"
   }
 }

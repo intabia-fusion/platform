@@ -100,7 +100,7 @@ async function createDefaultFloor (tx: TxOperations): Promise<void> {
   }
 }
 
-async function createRooms (client: MigrationUpgradeClient): Promise<void> {
+async function createRooms (client: MigrationUpgradeClient, language?: string): Promise<void> {
   const tx = new TxOperations(client, core.account.System)
   const rooms = await client.findAll(love.class.Room, {})
   for (const room of rooms) {
@@ -108,10 +108,12 @@ async function createRooms (client: MigrationUpgradeClient): Promise<void> {
   }
   const employees = await client.findAll(contact.mixin.Employee, { active: true })
 
-  const data = createDefaultRooms(
+  const data = await createDefaultRooms(
     employees.map((p) => p._id),
     true,
-    false
+    false,
+    false,
+    language
   )
   for (const room of data) {
     const _class = isOffice(room) ? love.class.Office : love.class.Room
@@ -522,7 +524,14 @@ export const loveOperation: MigrateOperation = {
       }
     ])
   },
-  async upgrade (state: Map<string, Set<string>>, client: () => Promise<MigrationUpgradeClient>, mode): Promise<void> {
+  async upgrade (
+    state: Map<string, Set<string>>,
+    client: () => Promise<MigrationUpgradeClient>,
+    mode,
+    context?: { language?: string }
+  ): Promise<void> {
+    const language = context?.language
+
     await tryUpgrade(mode, state, client, loveId, [
       {
         state: 'initial-defaults',
@@ -533,7 +542,9 @@ export const loveOperation: MigrateOperation = {
       },
       {
         state: 'createRooms_v2',
-        func: createRooms
+        func: async (client) => {
+          await createRooms(client, language)
+        }
       },
 
       {

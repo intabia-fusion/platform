@@ -162,6 +162,9 @@
     "SpeakingWhileMutedAlert": "Avisar quando eu falar com o microfone mudo",
     "SwitchWorkspaceInMeeting": "Está numa reunião",
     "SwitchWorkspaceLeaveMeeting": "Mudar de espaço de trabalho irá desligá-lo da reunião atual.",
-    "SwitchWorkspaceEndsMeeting": "Este é o seu escritório: mudar de espaço de trabalho irá desligá-lo e terminar a reunião para todos."
+    "SwitchWorkspaceEndsMeeting": "Este é o seu escritório: mudar de espaço de trabalho irá desligá-lo e terminar a reunião para todos.",
+    "AllHands": "Reunião geral",
+    "MeetingRoomNum": "Sala de reuniões {number}",
+    "VoiceRoomNum": "Sala de voz {number}"
   }
 }

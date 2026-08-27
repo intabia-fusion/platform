@@ -17,12 +17,13 @@
   import { type RegionInfo } from '@hcengineering/account-client'
   import { OK, Severity, Status, getEmbeddedLabel } from '@hcengineering/platform'
   import { LoginInfo } from '@hcengineering/login'
-  import { ButtonMenu, getCurrentLocation, navigate } from '@hcengineering/ui'
+  import { ButtonMenu, getCurrentLocation, navigate, languageStore } from '@hcengineering/ui'
   import { workbenchId } from '@hcengineering/workbench'
   import { onMount } from 'svelte'
   import login from '../plugin'
   import { createWorkspace, getAccount, getRegionInfo, goTo, setLoginInfo, getAccountDisplayName } from '../utils'
   import Form from './Form.svelte'
+  import { get } from 'svelte/store'
 
   const fields = [
     {
@@ -60,8 +61,9 @@
     i18n: login.string.CreateWorkspace,
     func: async () => {
       status = new Status(Severity.INFO, login.status.ConnectingToServer, {})
+      const language = get(languageStore)
 
-      const [loginStatus, result] = await createWorkspace(object.workspace, selectedRegion ?? '')
+      const [loginStatus, result] = await createWorkspace(object.workspace, selectedRegion ?? '', language)
       status = loginStatus
 
       if (result != null) {

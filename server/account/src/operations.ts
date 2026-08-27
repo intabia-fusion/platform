@@ -580,10 +580,11 @@ export async function createWorkspace (
   params: {
     workspaceName: string
     region?: string
+    language?: string
   },
   meta?: Meta
 ): Promise<WorkspaceLoginInfo> {
-  const { workspaceName, region } = params
+  const { workspaceName, region, language } = params
 
   if (workspaceName == null || workspaceName.length === 0) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -621,7 +622,17 @@ export async function createWorkspace (
     )
   }
 
-  const { workspaceUuid, workspaceUrl } = await createWorkspaceRecord(ctx, db, branding, workspaceName, account, region)
+  const { workspaceUuid, workspaceUrl } = await createWorkspaceRecord(
+    ctx,
+    db,
+    branding,
+    workspaceName,
+    account,
+    region,
+    'pending-creation',
+    undefined,
+    language
+  )
 
   await db.assignWorkspace(account, workspaceUuid, AccountRole.Owner)
 

@@ -18,7 +18,9 @@
     Header,
     getFormattedDate,
     resizeObserver,
-    deviceOptionsStore as deviceInfo
+    deviceOptionsStore as deviceInfo,
+    languageStore,
+    getCurrentLocale
   } from '@hcengineering/ui'
   import { ToDo, WorkSlot } from '@hcengineering/time'
   import time from '../plugin'
@@ -97,7 +99,7 @@
     if (areDatesEqual(day, tomorrow)) return time.string.Tomorrow
     const isCurrentYear = day.getFullYear() === new Date().getFullYear()
     return getEmbeddedLabel(
-      day.toLocaleDateString('default', {
+      day.toLocaleDateString(getCurrentLocale(), {
         month: 'long',
         day: 'numeric',
         year: isCurrentYear ? undefined : 'numeric'
@@ -174,6 +176,8 @@
   }
 
   $: isToday = areDatesEqual(currentDate, new Date($ticker))
+
+  $: lang = $languageStore
 </script>
 
 <div
@@ -185,7 +189,9 @@
 >
   <Header adaptive={'disabled'}>
     <div class="heading-medium-20 line-height-auto overflow-label">
-      <Label label={time.string.Schedule} />: <Label label={getTitle(currentDate, $ticker)} />
+      {#key lang}
+        <Label label={time.string.Schedule} />: <Label label={getTitle(currentDate, $ticker)} />
+      {/key}
     </div>
     <svelte:fragment slot="actions">
       <ButtonIcon
@@ -196,20 +202,22 @@
           inc(-1)
         }}
       />
-      <ButtonBase
-        icon={IconSun}
-        label={showLabel ? time.string.TodayColon : undefined}
-        title={showLabel ? getFormattedDate(todayDate.getTime(), { weekday: 'short', day: 'numeric' }) : undefined}
-        type={showLabel ? 'type-button' : 'type-button-icon'}
-        kind={'secondary'}
-        size={'small'}
-        inheritFont
-        hasMenu
-        disabled={isToday}
-        on:click={() => {
-          inc(0)
-        }}
-      />
+      {#key lang}
+        <ButtonBase
+          icon={IconSun}
+          label={showLabel ? time.string.TodayColon : undefined}
+          title={showLabel ? getFormattedDate(todayDate.getTime(), { weekday: 'short', day: 'numeric' }) : undefined}
+          type={showLabel ? 'type-button' : 'type-button-icon'}
+          kind={'secondary'}
+          size={'small'}
+          inheritFont
+          hasMenu
+          disabled={isToday}
+          on:click={() => {
+            inc(0)
+          }}
+        />
+      {/key}
       <ButtonIcon
         icon={IconChevronRight}
         kind={'secondary'}

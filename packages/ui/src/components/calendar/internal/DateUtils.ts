@@ -12,7 +12,8 @@
 // limitations under the License.
 
 import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz'
-import { type TimeZone, capitalizeFirstLetter } from '../../..'
+import { type TimeZone, capitalizeFirstLetter, languageStore } from '../../..'
+import { get } from 'svelte/store'
 
 export const DAYS_IN_WEEK = 7
 
@@ -32,6 +33,16 @@ export function firstDay (date: Date, firstDay: number = 1): Date {
   return result
 }
 
+export function getCurrentLocale (): string {
+  const appLang = get(languageStore)
+
+  if (appLang !== '' && appLang.length > 0) {
+    return appLang
+  }
+
+  return new Intl.NumberFormat().resolvedOptions().locale
+}
+
 export function getWeek (date: Date): number {
   const onejan = new Date(date.getFullYear(), 0, 1)
   return Math.ceil(((date.getTime() - onejan.getTime()) / MILLISECONDS_IN_DAY + onejan.getDay() + 1) / DAYS_IN_WEEK)
@@ -42,8 +53,7 @@ export function daysInMonth (date: Date): number {
 }
 
 export function getWeekDayName (weekDay: Date, weekFormat: 'narrow' | 'short' | 'long' | undefined = 'short'): string {
-  const locale = new Intl.NumberFormat().resolvedOptions().locale
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(getCurrentLocale(), {
     weekday: weekFormat
   }).format(weekDay)
 }
@@ -92,8 +102,7 @@ export function isWeekend (date: Date): boolean {
 
 export function getMonthName (date: Date, option: 'narrow' | 'short' | 'long' | 'numeric' | '2-digit' = 'long'): string {
   try {
-    const locale = new Intl.NumberFormat().resolvedOptions().locale
-    return new Intl.DateTimeFormat(locale, { month: option }).format(date)
+    return new Intl.DateTimeFormat(getCurrentLocale(), { month: option }).format(date)
   } catch (err) {
     console.error(err)
     return ''
@@ -156,7 +165,9 @@ export const getDueDateIconModifier = (
 }
 
 export function getFormattedDate (value: number | null, options?: Intl.DateTimeFormatOptions): string {
-  return value === null ? '' : new Date(value).toLocaleString('default', options ?? { month: 'short', day: 'numeric' })
+  return value === null
+    ? ''
+    : new Date(value).toLocaleString(getCurrentLocale(), options ?? { month: 'short', day: 'numeric' })
 }
 
 export const getTimeZoneName = (

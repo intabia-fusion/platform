@@ -162,6 +162,9 @@
     "SpeakingWhileMutedAlert": "Upozornit, když mluvím s vypnutým mikrofonem",
     "SwitchWorkspaceInMeeting": "Jste ve schůzce",
     "SwitchWorkspaceLeaveMeeting": "Přepnutí pracovního prostoru vás odpojí od aktuální schůzky.",
-    "SwitchWorkspaceEndsMeeting": "Toto je vaše kancelář: přepnutí pracovního prostoru vás odpojí a ukončí schůzku pro všechny."
+    "SwitchWorkspaceEndsMeeting": "Toto je vaše kancelář: přepnutí pracovního prostoru vás odpojí a ukončí schůzku pro všechny.",
+    "AllHands": "Celofiremní schůzka",
+    "MeetingRoomNum": "Zasedací místnost {number}",
+    "VoiceRoomNum": "Hlasová místnost {number}"
   }
 }

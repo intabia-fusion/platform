@@ -162,6 +162,9 @@
     "SpeakingWhileMutedAlert": "Warnen, wenn ich bei stummem Mikrofon spreche",
     "SwitchWorkspaceInMeeting": "Sie befinden sich in einem Meeting",
     "SwitchWorkspaceLeaveMeeting": "Beim Wechsel des Arbeitsbereichs werden Sie vom laufenden Meeting getrennt.",
-    "SwitchWorkspaceEndsMeeting": "Dies ist Ihr Büro: Beim Wechsel des Arbeitsbereichs werden Sie getrennt und das Meeting für alle beendet."
+    "SwitchWorkspaceEndsMeeting": "Dies ist Ihr Büro: Beim Wechsel des Arbeitsbereichs werden Sie getrennt und das Meeting für alle beendet.",
+    "AllHands": "All-Hands-Meeting",
+    "MeetingRoomNum": "Besprechungsraum {number}",
+    "VoiceRoomNum": "Audioraum {number}"
   }
 }

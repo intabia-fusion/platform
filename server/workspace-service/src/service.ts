@@ -240,6 +240,8 @@ export class WorkspaceWorker {
       const wsId = ws.uuid
       const token = generateToken(systemAccountUuid, wsId, { service: 'workspace' })
       const accountClient = getAccountClient(this.accountsUrl, token)
+      const language = ws.language ?? 'en'
+
       const handleWsEventWithRetry = (
         event: 'ping' | 'create-started' | 'progress' | 'create-done',
         version: Data<Version>,
@@ -262,7 +264,9 @@ export class WorkspaceWorker {
           this.migrationOperation,
           accountClient,
           this.workspaceQueue,
-          handleWsEventWithRetry
+          handleWsEventWithRetry,
+          false,
+          language
         )
       } else {
         // The previous attempth failed during init script and we cannot really retry it.
