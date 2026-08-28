@@ -51,6 +51,7 @@ export default plugin(loginId, {
     LastAccount: '' as Metadata<string>,
     LoginEndpoint: '' as Metadata<string>,
     LoginAccount: '' as Metadata<string>,
+    AuthEmail: '' as Metadata<string>,
     DisableSignUp: '' as Metadata<boolean>,
     HideLocalLogin: '' as Metadata<boolean>,
     LoginTheme: '' as Metadata<string>,
