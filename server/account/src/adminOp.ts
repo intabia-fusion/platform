@@ -15,29 +15,22 @@
 
 import { type MeasureContext } from '@hcengineering/core'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
-import { decodeTokenVerbose, type Token } from '@hcengineering/server-token'
+import {
+  ADMIN_SESSION_TTL_SEC,
+  decodeTokenVerbose,
+  hasAdminSession,
+  isHumanAdmin,
+  type Token
+} from '@hcengineering/server-token'
 
-import { isHumanAdmin } from './admin'
 import { type AccountDB } from './types'
 import { getAdminEmailSocialId, logAdminAction, verifyAdminOtp } from './utils'
-
-/** How long a `/admin` session stays valid after the second factor was presented. */
-export const ADMIN_SESSION_TTL_SEC = parseInt(process.env.ADMIN_SESSION_TTL_SEC ?? '43200')
 
 const OTP_FAIL_WINDOW_SEC = 300
 const OTP_FAIL_LIMIT = 5
 
 function forbidden (): PlatformError {
   return new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-}
-
-/** Seconds since the session's second factor, or undefined if the token carries none. */
-export function adminSessionAge (extra: Record<string, any> | undefined): number | undefined {
-  const mfaAt = extra?.mfaAt
-  if (mfaAt == null) return undefined
-  const at = typeof mfaAt === 'number' ? mfaAt : parseInt(String(mfaAt))
-  if (!Number.isFinite(at)) return undefined
-  return Math.floor(Date.now() / 1000) - at
 }
 
 /**
@@ -51,8 +44,7 @@ export function requireAdminSession (ctx: MeasureContext, token: string): Token 
   if (extra?.admin !== 'true' && extra?.billingAdmin !== 'true') {
     throw forbidden()
   }
-  const age = adminSessionAge(extra)
-  if (age === undefined || age > ADMIN_SESSION_TTL_SEC) {
+  if (!hasAdminSession(decoded, ADMIN_SESSION_TTL_SEC)) {
     throw forbidden()
   }
   return decoded

@@ -14,6 +14,7 @@
 */
 
 import { type ServerConfig } from '@hcengineering/api-client'
+import { getClient as getAccountClient, type AccountClient } from '@hcengineering/account-client'
 
 export const STAND_URL = 'http://localhost:8083'
 export const TRANSACTOR_URL = `${STAND_URL}/_tr`
@@ -69,4 +70,16 @@ export function isRefused (r: RpcResult): boolean {
 
 export function payloadOf (token: string): Record<string, any> {
   return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString('utf-8'))
+}
+
+/**
+ * Account client acting as the stand's human admin with an open `/admin` session.
+ * Machine tokens cannot pass admin mutations any more, so tests must log in as a person.
+ */
+export async function adminSessionClient (config: ServerConfig): Promise<AccountClient> {
+  const login = await rpc(config, undefined, 'login', { email: 'admin', password: '1234' })
+  if (login.error != null) throw new Error(`admin login failed: ${JSON.stringify(login.error)}`)
+  const session = await rpc(config, login.result.token, 'verifyAdminSession', { otpCode: DEV_OTP })
+  if (session.error != null) throw new Error(`admin session failed: ${JSON.stringify(session.error)}`)
+  return getAccountClient(config.ACCOUNTS_URL, session.result.token)
 }

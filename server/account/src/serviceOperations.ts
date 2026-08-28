@@ -35,7 +35,7 @@ import {
   systemAccountUuid
 } from '@hcengineering/core'
 import platform, { getMetadata, PlatformError, Severity, Status, unknownError } from '@hcengineering/platform'
-import { decodeTokenVerbose, generateToken, type Token } from '@hcengineering/server-token'
+import { decodeTokenVerbose, generateToken, isHumanAdmin, type Token } from '@hcengineering/server-token'
 
 import {
   LimitCategory,
@@ -45,7 +45,6 @@ import {
   type QueueWorkspaceMessage
 } from '@hcengineering/server-core'
 
-import { isHumanAdmin } from './admin'
 import { requireAdminOp, requireAdminSession, verifyAdminOtpLimited } from './adminOp'
 import { accountPlugin } from './plugin'
 import { SubscriptionStatus, SubscriptionType } from './types'
@@ -266,6 +265,21 @@ export async function verifyAdminSession (
   return { account, token: generateToken(account, undefined, { ...extra, mfaAt }) }
 }
 
+/**
+ * Confirms an operator's intent to export a report. The pages themselves are readable by an admin
+ * session; this records the intent under a second factor so an unusual export is visible afterwards.
+ */
+export async function adminConfirmExport (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { kind: string, filter?: Record<string, any>, otpCode: string }
+): Promise<void> {
+  await requireAdminOp(ctx, db, token, 'export_report', params.otpCode, params.kind)
+  await logAdminAction(ctx, db, token, 'export_report', params.kind, undefined, { filter: params.filter })
+}
+
 export async function listAdminActions (
   ctx: MeasureContext,
   db: AccountDB,
@@ -346,7 +360,7 @@ export async function adminUpdateWorkspaceRole (
   token: string,
   params: { workspace: WorkspaceUuid, targetAccount: AccountUuid, role: AccountRole, otpCode: string }
 ): Promise<void> {
-  await requireAdminOp(ctx, db, token, 'update_role', params.otpCode)
+  await requireAdminOp(ctx, db, token, 'update_workspace_role', params.otpCode)
   const { workspace, targetAccount, role } = params
   if (!assignableRoles.includes(role)) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -369,7 +383,7 @@ export async function adminAddWorkspaceMember (
   token: string,
   params: { workspace: WorkspaceUuid, email: string, role: AccountRole, otpCode: string }
 ): Promise<void> {
-  await requireAdminOp(ctx, db, token, 'add_member', params.otpCode)
+  await requireAdminOp(ctx, db, token, 'add_workspace_member', params.otpCode)
   const { workspace, email, role } = params
   if (!assignableRoles.includes(role)) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -402,11 +416,60 @@ export async function adminReindexWorkspace (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: { workspace: WorkspaceUuid }
+  params: { workspace: WorkspaceUuid, otpCode: string }
 ): Promise<void> {
-  checkAdmin(ctx, token)
+  await requireAdminOp(ctx, db, token, 'reindex', params.otpCode, params.workspace)
   await sendReindex(ctx, params.workspace)
   ctx.info('admin: reindex requested', { workspace: params.workspace })
+  await logAdminAction(ctx, db, token, 'reindex', params.workspace)
+}
+
+/**
+ * Broadcasts a global maintenance warning. Replaces the account `PUT /api/v1/manage?operation=maintenance`
+ * endpoint, which carried the token in the query string and had no audit trail.
+ */
+export async function adminSetMaintenance (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { timeoutMinutes: number, message?: string, otpCode: string }
+): Promise<void> {
+  await requireAdminOp(ctx, db, token, 'set_maintenance', params.otpCode)
+  const producer = getMetadata(accountPlugin.metadata.WorkspaceQueue)
+  if (producer === undefined) {
+    throw new PlatformError(unknownError('Workspace queue is not configured'))
+  }
+  // Global event: every transactor consumes the workspace topic in its own group,
+  // the workspace key carries no meaning here.
+  const nilWorkspace = '00000000-0000-0000-0000-000000000000' as WorkspaceUuid
+  await producer.send(ctx, nilWorkspace, [workspaceEvents.maintenance(params.timeoutMinutes, params.message)])
+  ctx.info('admin: maintenance broadcast', { timeoutMinutes: params.timeoutMinutes })
+  await logAdminAction(ctx, db, token, 'set_maintenance', undefined, undefined, {
+    timeoutMinutes: params.timeoutMinutes,
+    message: params.message
+  })
+}
+
+/**
+ * Drops every live session of a workspace. Previously the admin panel fanned this out to each
+ * transactor from the browser; now one queued event reaches whichever transactor holds the workspace.
+ */
+export async function adminForceCloseWorkspace (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { workspace: WorkspaceUuid, otpCode: string }
+): Promise<void> {
+  await requireAdminOp(ctx, db, token, 'force_close', params.otpCode, params.workspace)
+  const producer = getMetadata(accountPlugin.metadata.WorkspaceQueue)
+  if (producer === undefined) {
+    throw new PlatformError(unknownError('Workspace queue is not configured'))
+  }
+  await producer.send(ctx, params.workspace, [workspaceEvents.forceClose()])
+  ctx.info('admin: force close requested', { workspace: params.workspace })
+  await logAdminAction(ctx, db, token, 'force_close', params.workspace)
 }
 
 export async function adminReindexAllWorkspaces (
@@ -414,14 +477,15 @@ export async function adminReindexAllWorkspaces (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  _params: Record<string, unknown>
+  params: { otpCode: string }
 ): Promise<number> {
-  checkAdmin(ctx, token)
+  await requireAdminOp(ctx, db, token, 'reindex_all', params.otpCode)
   const workspaces = await getWorkspaces(db, false, null, 'active')
   for (const ws of workspaces) {
     await sendReindex(ctx, ws.uuid)
   }
   ctx.info('admin: reindex-all requested', { count: workspaces.length })
+  await logAdminAction(ctx, db, token, 'reindex_all', undefined, undefined, { count: workspaces.length })
   return workspaces.length
 }
 
@@ -432,7 +496,7 @@ export async function adminRemoveWorkspaceMember (
   token: string,
   params: { workspace: WorkspaceUuid, targetAccount: AccountUuid, otpCode: string }
 ): Promise<void> {
-  await requireAdminOp(ctx, db, token, 'remove_member', params.otpCode)
+  await requireAdminOp(ctx, db, token, 'remove_workspace_member', params.otpCode)
   const { workspace, targetAccount } = params
   await ensureNotLastOwner(db, workspace, targetAccount)
   await db.unassignWorkspace(targetAccount, workspace)
@@ -652,9 +716,9 @@ export async function adminUpdateWorkspaceName (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: { workspace: WorkspaceUuid, name: string }
+  params: { workspace: WorkspaceUuid, name: string, otpCode: string }
 ): Promise<void> {
-  checkAdmin(ctx, token)
+  await requireAdminOp(ctx, db, token, 'rename_workspace', params.otpCode, params.workspace)
   const name = params.name.trim()
   if (name.length === 0) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -675,9 +739,9 @@ export async function adminUpdateWorkspaceDisabledFeatures (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: { workspace: WorkspaceUuid, features: string[] }
+  params: { workspace: WorkspaceUuid, features: string[], otpCode: string }
 ): Promise<void> {
-  checkAdmin(ctx, token)
+  await requireAdminOp(ctx, db, token, 'set_disabled_features', params.otpCode, params.workspace)
   const ws = await getWorkspaceById(db, params.workspace)
   if (ws == null) {
     throw new PlatformError(
@@ -689,6 +753,7 @@ export async function adminUpdateWorkspaceDisabledFeatures (
     workspace: params.workspace,
     features: params.features
   })
+  await logAdminAction(ctx, db, token, 'set_disabled_features', params.workspace, params.features.join(', '))
 }
 
 export async function adminUpdateWorkspaceUrl (
@@ -725,10 +790,7 @@ export async function getTransactorEndpoints (
   branding: Branding | null,
   token: string
 ): Promise<TransactorEndpointInfo[]> {
-  const { extra } = decodeTokenVerbose(ctx, token)
-  if (extra?.admin !== 'true') {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-  }
+  checkAdmin(ctx, token)
   const config = getRegionConfig()
   const res: TransactorEndpointInfo[] = []
   for (const [region, eps] of Object.entries(config.regions)) {
@@ -747,15 +809,19 @@ export async function listAccounts (
   params: { search?: string, skip?: number, limit?: number, sort?: AccountsSortKey, filter?: AccountsFilter }
 ): Promise<AccountAggregatedInfo[]> {
   const { extra } = decodeTokenVerbose(ctx, token)
-  const isAdmin = extra?.admin === 'true' || extra?.billingAdmin === 'true'
 
-  if (!isAdmin && extra?.service !== 'workspace') {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  if (extra?.service !== 'workspace') {
+    checkAdminRead(ctx, token)
   }
 
   const { skip, limit, search, sort, filter } = params
 
-  return await db.listAccounts(search, skip, limit, sort, filter)
+  const accounts = await db.listAccounts(search, skip, limit, sort, filter)
+  if (extra?.service === undefined) {
+    // Reading other people's emails and activity is PII access: record who looked at what.
+    await logAdminAction(ctx, db, token, 'read_accounts', undefined, search, { filter, count: accounts.length })
+  }
+  return accounts
 }
 
 export async function performWorkspaceOperation (
@@ -781,9 +847,9 @@ export async function performWorkspaceOperation (
     }
   }
 
-  // Destructive operations by a human admin require an emailed OTP.
+  // Every workspace operation by a human admin requires an emailed OTP and lands in the audit trail.
   // System/service tokens (backup/workspace/tool) run unattended and are exempt.
-  if (isAdminUser && ['delete', 'archive', 'migrate-to'].includes(event)) {
+  if (isAdminUser) {
     await requireAdminOp(ctx, db, token, `workspace_${event}`, otpCode ?? '')
   }
 
@@ -2242,11 +2308,7 @@ export async function getAllSubscriptions (
   token: string,
   params: Record<string, unknown>
 ): Promise<any[]> {
-  const { extra } = decodeTokenVerbose(ctx, token)
-
-  if (extra?.admin !== 'true' && extra?.billingAdmin !== 'true') {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-  }
+  checkAdminRead(ctx, token)
 
   const subscriptions = await db.subscription.find({})
 
@@ -2292,15 +2354,13 @@ export async function adminCreateSubscription (
     limits?: Subscription['limits']
     periodDays?: number
     trialEnd?: number // when set (with status=Trialing), makes this a real trial subscription
+    otpCode: string
   }
 ): Promise<void> {
-  const { account, extra } = decodeTokenVerbose(ctx, token)
-
-  if (extra?.admin !== 'true') {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-  }
+  const { account } = await requireAdminOp(ctx, db, token, 'create_subscription', params.otpCode, params.workspaceUuid)
 
   await createManualSubscription(ctx, db, account, params)
+  await logAdminAction(ctx, db, token, 'create_subscription', params.workspaceUuid, params.plan)
 }
 
 /**
@@ -2422,6 +2482,9 @@ export type AccountServiceMethods =
   | 'getAccountActivityStats'
   | 'requestAdminOperationOtp'
   | 'verifyAdminSession'
+  | 'adminSetMaintenance'
+  | 'adminForceCloseWorkspace'
+  | 'adminConfirmExport'
   | 'adminUpdateWorkspaceRole'
   | 'adminAddWorkspaceMember'
   | 'adminRemoveWorkspaceMember'
@@ -2500,6 +2563,9 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     getAccountActivityStats: wrap(getAccountActivityStats),
     requestAdminOperationOtp: wrap(requestAdminOperationOtp),
     verifyAdminSession: wrap(verifyAdminSession),
+    adminSetMaintenance: wrap(adminSetMaintenance),
+    adminForceCloseWorkspace: wrap(adminForceCloseWorkspace),
+    adminConfirmExport: wrap(adminConfirmExport),
     adminUpdateWorkspaceRole: wrap(adminUpdateWorkspaceRole),
     adminAddWorkspaceMember: wrap(adminAddWorkspaceMember),
     adminRemoveWorkspaceMember: wrap(adminRemoveWorkspaceMember),

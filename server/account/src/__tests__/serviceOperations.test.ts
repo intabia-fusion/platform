@@ -68,6 +68,9 @@ jest.mock('@hcengineering/platform', () => {
 
 // Mock server-token
 jest.mock('@hcengineering/server-token', () => ({
+  isHumanAdmin: jest.requireActual('@hcengineering/server-token').isHumanAdmin,
+  hasAdminSession: jest.requireActual('@hcengineering/server-token').hasAdminSession,
+  ADMIN_SESSION_TTL_SEC: jest.requireActual('@hcengineering/server-token').ADMIN_SESSION_TTL_SEC,
   decodeTokenVerbose: jest.fn(),
   generateToken: jest.fn()
 }))
@@ -1912,6 +1915,8 @@ describe('adminCreateSubscription', () => {
 
   let mockDb: any
   let getWorkspaceByIdSpy: jest.SpyInstance
+  let verifyOtpSpy: jest.SpyInstance
+  let logSpy: jest.SpyInstance
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -1922,20 +1927,29 @@ describe('adminCreateSubscription', () => {
         update: jest.fn()
       },
       account: { findOne: jest.fn().mockResolvedValue({ uuid: 'admin-acc' }) },
-      getWorkspaceMembers: jest.fn().mockResolvedValue([])
+      getWorkspaceMembers: jest.fn().mockResolvedValue([]),
+      adminAction: { find: jest.fn().mockResolvedValue([]) },
+      otp: { deleteMany: jest.fn() }
     }
     getWorkspaceByIdSpy = jest.spyOn(utils, 'getWorkspaceById').mockResolvedValue({ uuid: workspaceUuid } as any)
-    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: 'admin-acc', extra: { admin: 'true' } })
+    verifyOtpSpy = jest.spyOn(utils, 'verifyAdminOtp').mockResolvedValue(undefined)
+    logSpy = jest.spyOn(utils, 'logAdminAction').mockResolvedValue(undefined)
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: 'admin-acc',
+      extra: { admin: 'true', mfaAt: String(Math.floor(Date.now() / 1000)) }
+    })
   })
 
   afterAll(() => {
     getWorkspaceByIdSpy.mockRestore()
+    verifyOtpSpy.mockRestore()
+    logSpy.mockRestore()
   })
 
   test('rejects non-admin token', async () => {
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: 'u', extra: {} })
     await expect(
-      adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, { workspaceUuid, plan: 'team' })
+      adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, { workspaceUuid, plan: 'team', otpCode: '1' })
     ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {})))
     expect(mockDb.subscription.insertOne).not.toHaveBeenCalled()
   })
@@ -1947,7 +1961,11 @@ describe('adminCreateSubscription', () => {
       { id: 'c', provider: 'old', providerData: {}, status: SubscriptionStatus.Canceled }
     ])
 
-    await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, { workspaceUuid, plan: 'team' })
+    await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      workspaceUuid,
+      plan: 'team',
+      otpCode: '1'
+    })
 
     expect(mockDb.subscription.find).toHaveBeenCalledWith({ workspaceUuid, type: 'tier' })
     // 'c' is already canceled -> skipped; 'a' and 'b' get canceled.
@@ -1972,7 +1990,8 @@ describe('adminCreateSubscription', () => {
     await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
       workspaceUuid,
       plan: 'team',
-      status: SubscriptionStatus.PastDue
+      status: SubscriptionStatus.PastDue,
+      otpCode: '1'
     })
     expect(mockDb.subscription.insertOne).toHaveBeenCalledWith(expect.objectContaining({ status: 'past_due' }))
   })
@@ -1984,7 +2003,11 @@ describe('adminCreateSubscription', () => {
       { person: 'owner-1', role: AccountRole.Owner }
     ])
 
-    await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, { workspaceUuid, plan: 'team' })
+    await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      workspaceUuid,
+      plan: 'team',
+      otpCode: '1'
+    })
 
     expect(mockDb.subscription.insertOne).toHaveBeenCalledWith(expect.objectContaining({ accountUuid: 'owner-1' }))
   })
@@ -1995,7 +2018,8 @@ describe('adminCreateSubscription', () => {
     await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
       workspaceUuid,
       plan: 'team',
-      status: SubscriptionStatus.PastDue
+      status: SubscriptionStatus.PastDue,
+      otpCode: '1'
     })
     const inserted = mockDb.subscription.insertOne.mock.calls[0][0]
     expect(inserted.freeLimits).toBeUndefined()

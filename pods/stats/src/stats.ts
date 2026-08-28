@@ -15,7 +15,7 @@ import {
   type ServiceStatistics,
   type WorkspaceStatistics
 } from '@hcengineering/server-core'
-import serverToken, { decodeToken, type Token } from '@hcengineering/server-token'
+import serverToken, { decodeToken, hasAdminSession, isHumanAdmin, type Token } from '@hcengineering/server-token'
 import cors from '@koa/cors'
 import type { IncomingHttpHeaders } from 'http'
 import Koa from 'koa'
@@ -79,12 +79,14 @@ const extractAuthorizationToken = (headers: IncomingHttpHeaders): string | undef
   }
 }
 
+// The CLI reaches stats with a `tool` service token; a human operator needs a fresh `/admin` second
+// factor. Tokens come from the Authorization header only - a query string token ends up in proxy logs.
+const isStatsAdmin = (payload: Token): boolean =>
+  payload.extra?.service === 'tool' || (isHumanAdmin(payload) && hasAdminSession(payload))
+
 /**
  * @public
  */
-// The CLI reaches stats with a `tool` service token; a human admin reaches it with `admin: 'true'`.
-const isStatsAdmin = (payload: Token): boolean => payload.extra?.admin === 'true' || payload.extra?.service === 'tool'
-
 export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
   const servicePort = parseInt(process.env.PORT ?? '4900')
   ctx.info('Starting stats service')
@@ -132,7 +134,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
 
   router.get('/api/v1/overview', (req, res) => {
     try {
-      const token = (req.query.token as string) ?? extractAuthorizationToken(req.headers)
+      const token = extractAuthorizationToken(req.headers) ?? ''
       const payload = decodeToken(token)
       const admin = isStatsAdmin(payload)
       if (!admin) {
@@ -192,7 +194,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
 
   router.get('/api/v1/statistics', (req, res) => {
     try {
-      const token = (req.query.token as string) ?? extractAuthorizationToken(req.headers)
+      const token = extractAuthorizationToken(req.headers) ?? ''
       const payload = decodeToken(token)
       const admin = isStatsAdmin(payload)
       ctx.info('get stats', { admin, service: req.query.name })
@@ -222,7 +224,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
 
   router.put('/api/v1/statistics', async (req, res) => {
     try {
-      const token = (req.query.token as string) ?? extractAuthorizationToken(req.headers)
+      const token = extractAuthorizationToken(req.headers) ?? ''
       const payload = decodeToken(token)
       const service = payload.extra?.service != null
       const serviceName = (req.query.name as string) ?? ''
@@ -276,7 +278,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
 
   router.get('/api/v1/analytics', (req, res) => {
     try {
-      const token = (req.query.token as string) ?? extractAuthorizationToken(req.headers)
+      const token = extractAuthorizationToken(req.headers) ?? ''
       const payload = decodeToken(token)
       if (!isStatsAdmin(payload)) {
         req.res.writeHead(401, {})
@@ -388,7 +390,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
 
   router.put('/api/v1/manage', async (req, res) => {
     try {
-      const token = (req.query.token as string) ?? extractAuthorizationToken(req.headers)
+      const token = extractAuthorizationToken(req.headers) ?? ''
       const payload = decodeToken(token)
       if (!isStatsAdmin(payload)) {
         req.res.writeHead(404, {})

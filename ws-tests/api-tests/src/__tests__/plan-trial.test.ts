@@ -24,6 +24,7 @@ import {
   type Subscription
 } from '@hcengineering/account-client'
 import { generateToken } from '@hcengineering/server-token'
+import { adminSessionClient, DEV_OTP } from './admin.fixtures'
 
 /** Admin RPCs demand a second factor stamped within ADMIN_SESSION_TTL_SEC. */
 const adminMfaAt = (): string => String(Math.floor(Date.now() / 1000))
@@ -50,11 +51,7 @@ describe('plan-trial', () => {
     workspaceUuid = ws.uuid
     const paymentToken = generateToken(systemAccountUuid, workspaceUuid, { service: 'payment' }, 'secret')
     account = getAccountClient(config.ACCOUNTS_URL, paymentToken)
-    // adminCreateSubscription requires an admin token bound to the workspace.
-    admin = getAccountClient(
-      config.ACCOUNTS_URL,
-      generateToken(systemAccountUuid, workspaceUuid, { admin: 'true', mfaAt: adminMfaAt() }, 'secret')
-    )
+    admin = await adminSessionClient(config)
     const members = await account.getWorkspaceMembers()
     const owner = members.find((m) => m.role === 'OWNER') ?? members[0]
     if (owner === undefined) throw new Error(`No members in workspace: ${wsName}`)
@@ -170,6 +167,7 @@ describe('plan-trial', () => {
 
   it('admin can create a trial (status=trialing, trialEnd) that grants the plan', async () => {
     await admin.adminCreateSubscription({
+      otpCode: DEV_OTP,
       workspaceUuid,
       plan: 'business',
       type: 'tier',

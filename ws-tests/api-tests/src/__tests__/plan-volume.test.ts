@@ -14,12 +14,7 @@
 */
 
 import { getWorkspaceToken, loadServerConfig, type ServerConfig, type WorkspaceToken } from '@hcengineering/api-client'
-import { systemAccountUuid } from '@hcengineering/core'
-import { getClient as getAccountClient } from '@hcengineering/account-client'
-import { generateToken } from '@hcengineering/server-token'
-
-/** Admin RPCs demand a second factor stamped within ADMIN_SESSION_TTL_SEC. */
-const adminMfaAt = (): string => String(Math.floor(Date.now() / 1000))
+import { adminSessionClient, DEV_OTP } from './admin.fixtures'
 
 // Volume (disk) limit e2e: datalake emits storage deltas to billing-usage, pod-billing
 // recomputes used vs subscription.limits.storageLimitGB and publishes LimitsChanged{disk};
@@ -42,10 +37,9 @@ describe('plan-volume', () => {
   }, 30000)
 
   async function setStorageLimitGB (storageLimitGB: number): Promise<void> {
-    const adminExtra = { admin: 'true', mfaAt: adminMfaAt() }
-    const adminToken = generateToken(systemAccountUuid, owner.workspaceId, adminExtra, 'secret')
-    const adminClient = getAccountClient(config.ACCOUNTS_URL, adminToken)
+    const adminClient = await adminSessionClient(config)
     await adminClient.adminCreateSubscription({
+      otpCode: DEV_OTP,
       workspaceUuid: owner.workspaceId,
       plan: 'business',
       limits: {

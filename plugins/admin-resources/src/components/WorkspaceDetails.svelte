@@ -54,6 +54,7 @@
   import {
     fmtAmount,
     getAccountClient,
+    requestAdminOtpCode,
     getWorkspaceActivityStats,
     loadPlanOptions,
     type PlanOptions,
@@ -139,12 +140,8 @@
   }
 
   function reindex (): void {
-    showPopup(MessageBox, {
-      label: adminRes.string.Reindex,
-      message: adminRes.string.PleaseConfirm,
-      action: async () => {
-        await accountClient.adminReindexWorkspace(workspace.uuid)
-      }
+    withOtp(async (code) => {
+      await accountClient.adminReindexWorkspace(workspace.uuid, code)
     })
   }
 
@@ -216,20 +213,17 @@
     featureChecked = Object.fromEntries(featureOptions.map((f) => [f, override.includes(f)]))
     editingDisabledFeatures = true
   }
-  async function saveName (): Promise<void> {
+  function saveName (): void {
     const name = nameValue.trim()
     if (name.length === 0 || name === workspace.name) {
       editingName = false
       return
     }
-    try {
-      await accountClient.adminUpdateWorkspaceName(workspace.uuid, name)
+    withOtp(async (code) => {
+      await accountClient.adminUpdateWorkspaceName(workspace.uuid, name, code)
       workspace = { ...workspace, name }
-    } catch (err) {
-      console.error('Failed to rename workspace:', err)
-    } finally {
-      editingName = false
-    }
+    })
+    editingName = false
   }
   function saveUrl (): void {
     const url = urlValue.trim().toLowerCase()
@@ -244,16 +238,13 @@
     })
     editingUrl = false
   }
-  async function saveDisabledFeatures (): Promise<void> {
+  function saveDisabledFeatures (): void {
     const features = featureOptions.filter((f) => featureChecked[f])
-    try {
-      await accountClient.adminUpdateWorkspaceDisabledFeatures(workspace.uuid, features)
+    withOtp(async (code) => {
+      await accountClient.adminUpdateWorkspaceDisabledFeatures(workspace.uuid, features, code)
       workspace = { ...workspace, disabledFeaturesOverride: features }
-    } catch (err) {
-      console.error('Failed to update disabled features override:', err)
-    } finally {
-      editingDisabledFeatures = false
-    }
+    })
+    editingDisabledFeatures = false
   }
 
   let subscriptions: Subscription[] = []
@@ -320,6 +311,11 @@
     isCreating = true
 
     const doCreate = async (): Promise<void> => {
+      const code = await requestAdminOtpCode()
+      if (code === undefined) {
+        isCreating = false
+        return
+      }
       try {
         const item = planItem
         let limits: any
@@ -342,6 +338,7 @@
         const days = periodDays > 0 ? periodDays : 30
         const trialActive = asTrial && inferredType === 'tier'
         await accountClient.adminCreateSubscription({
+          otpCode: code,
           workspaceUuid: workspace.uuid as any,
           plan: selectedPlan,
           type: inferredType as any,

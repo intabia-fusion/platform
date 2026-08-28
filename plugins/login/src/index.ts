@@ -124,7 +124,7 @@ export default plugin(loginId, {
       navigateUrl?: string
     ) => Promise<string>
     >,
-    LeaveWorkspace: '' as Resource<(account: string) => Promise<LoginInfo | null>>,
+    LeaveWorkspace: '' as Resource<(account: string, otpCode?: string) => Promise<LoginInfo | null>>,
     ChangePassword: '' as Resource<(oldPassword: string, password: string) => Promise<void>>,
     SelectWorkspace: '' as Resource<
     (

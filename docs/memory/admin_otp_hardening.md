@@ -61,3 +61,33 @@
   Query-вариант пока принимается, снимается в A2.
 - Фолбэк по тестам: `admin-otp.test.ts` удалён (его контракт противоположен кейсу 6); в `plan-*.test.ts`
   подделанные админ-токены получили `mfaAt` - они читают через `checkAdminRead`.
+
+## A2 - покрытие (сделано)
+
+- Под `requireAdminOp` доехали: `adminReindexWorkspace`, `adminReindexAllWorkspaces`,
+  `adminUpdateWorkspaceName`, `adminUpdateWorkspaceDisabledFeatures`, `adminCreateSubscription`,
+  `deleteAccount` и **все** события `performWorkspaceOperation` для human-admin (раньше только
+  delete/archive/migrate-to). Добавлен аудит там, где его не было: `reindex`, `reindex_all`,
+  `set_disabled_features`, `create_subscription`, `export_report`, `read_accounts`.
+- Имена действий в гейте выровнены с именами в `logAdminAction` (`update_workspace_role` и т.д.):
+  гейт пишет их в `forbidden.attempted`, расхождение читалось бы как другая операция.
+- `QueueWorkspaceEvent.ForceClose` + consumer в `sessionManager` -> `forceClose(wsId)`. Клиент больше
+  не рассылает force-close по всем транзакторам из браузера, а зовёт `adminForceCloseWorkspace`.
+- `adminSetMaintenance` вместо `PUT /api/v1/manage?operation=maintenance` на account. Endpoint удалён
+  целиком - других операций у него не было.
+- `isHumanAdmin`/`hasAdminSession`/`ADMIN_SESSION_TTL_SEC` переехали в `@hcengineering/server-token`:
+  подам нужен тот же предикат, а account-пакет им недоступен.
+- Транзактор и stats: токен **только** из `Authorization`. `GET /api/v1/profiling` получил гейт
+  (раньше пускал любой валидный токен). Гейт = `systemAccountUuid || (isHumanAdmin && hasAdminSession)`,
+  без обращения к БД. Все серверные и CLI-вызовы (`server/tool`, `workspace-service`, `dev/tool`,
+  `dev/benchmarks`, `slowsql`) переведены на заголовок.
+- `force-maintenance` **оставлен**: план считал его дублем `maintenance`, но это per-workspace
+  операция (`sessionManager.forceMaintenance`), а `maintenance` - глобальное предупреждение.
+- Самообслуживание под user-OTP: `deleteWorkspace` всегда, `leaveWorkspace` только когда уходишь сам
+  (удаление другого участника остаётся ролевым - иначе сломался бы штатный сценарий админа воркспейса).
+  Новый `requestOperationOtp` для обычного пользователя + `OperationOtpDialog` в `setting-resources`.
+- `getPersonInfo` намеренно **не** аудируется: панель резолвит участников по одному в цикле, запись на
+  каждый вызов утопила бы журнал. Аудит стоит на страничных чтениях (`listAccounts`) и на выгрузках.
+- Фолбэк по тестам: `plan-*.test.ts` больше не подделывают админ-токен - общий хелпер
+  `adminSessionClient()` логинится человеком и открывает сессию. Юнит-моки `@hcengineering/server-token`
+  должны подмешивать настоящие `isHumanAdmin`/`hasAdminSession` через `jest.requireActual`.

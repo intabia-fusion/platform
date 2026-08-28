@@ -136,6 +136,8 @@ import {
   updatePasswordAgingRule,
   updateWorkspaceRole,
   logAdminAction,
+  requestAdminOtp,
+  verifyAdminOtp,
   verifyAllowedRole,
   verifyAllowedServices,
   verifyPassword,
@@ -1529,7 +1531,7 @@ export async function leaveWorkspace (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: { account: AccountUuid }
+  params: { account: AccountUuid, otpCode?: string }
 ): Promise<LoginInfo | null> {
   const { account: targetAccount } = params
 
@@ -1547,6 +1549,12 @@ export async function leaveWorkspace (
 
   const initiatorRole = await db.getWorkspaceRole(account, workspace)
   const targetRole = await db.getWorkspaceRole(targetAccount, workspace)
+
+  if (account === targetAccount) {
+    // Leaving on your own is not undoable by yourself: confirm with a code sent to your email.
+    // Removing someone else stays role-gated - it is the workspace admin's routine action.
+    await verifyAdminOtp(ctx, db, token, params.otpCode ?? '')
+  }
 
   if (account !== targetAccount) {
     if (initiatorRole == null || getRolePower(initiatorRole) < getRolePower(AccountRole.Maintainer)) {
@@ -1655,11 +1663,26 @@ export async function updateWorkspaceName (
   )
 }
 
+/**
+ * Sends a confirmation code to the caller's verified email. Used before self-service destructive
+ * actions (leaving a workspace, deleting one); the admin panel has its own entry point.
+ */
+export async function requestOperationOtp (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  _params: Record<string, unknown>
+): Promise<OtpInfo> {
+  return await requestAdminOtp(ctx, db, branding, token)
+}
+
 export async function deleteWorkspace (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
-  token: string
+  token: string,
+  params: { otpCode: string }
 ): Promise<void> {
   const { account, workspace } = decodeTokenVerbose(ctx, token)
   const role = await db.getWorkspaceRole(account, workspace)
@@ -1668,6 +1691,9 @@ export async function deleteWorkspace (
     ctx.error('Need to be an owner to delete a workspace', { workspace, account, role })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
+
+  // Irreversible for everyone in the workspace: confirm with a code sent to the owner's email.
+  await verifyAdminOtp(ctx, db, token, params?.otpCode ?? '')
 
   await db.workspaceStatus.update(
     { workspaceUuid: workspace },
@@ -3209,6 +3235,7 @@ export type AccountMethods =
   | 'changeUsername'
   | 'updateWorkspaceName'
   | 'deleteWorkspace'
+  | 'requestOperationOtp'
   | 'getRegionInfo'
   | 'getLicenseInfo'
   | 'getUserWorkspaces'
@@ -3287,6 +3314,7 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
     changeUsername: wrap(changeUsername),
     updateWorkspaceName: wrap(updateWorkspaceName),
     deleteWorkspace: wrap(deleteWorkspace),
+    requestOperationOtp: wrap(requestOperationOtp),
     updateWorkspaceRole: wrap(updateWorkspaceRole),
     isAllowReadOnlyGuests: wrap(isAllowReadOnlyGuests),
     updateAllowReadOnlyGuests: wrap(updateAllowReadOnlyGuests),

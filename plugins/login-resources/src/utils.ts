@@ -703,8 +703,8 @@ export async function changeUsername (first: string, last: string): Promise<void
   }
 }
 
-export async function leaveWorkspace (account: AccountUuid): Promise<LoginInfo | null> {
-  return await getAccountClient().leaveWorkspace(account)
+export async function leaveWorkspace (account: AccountUuid, otpCode?: string): Promise<LoginInfo | null> {
+  return await getAccountClient().leaveWorkspace(account, otpCode)
 }
 
 export async function sendInvite (email: string, role: AccountRole): Promise<void> {

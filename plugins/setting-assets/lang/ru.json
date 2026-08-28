@@ -227,6 +227,12 @@
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Интеграция с {doc} была отключена",
     "IntegrationDisabledNotificationHtml": "<p>Интеграция с {doc} была отключена</p> <p>{link}</p>",
-    "IntegrationDisabledNotificationSubject": "Интеграция с {doc} была отключена"
+    "IntegrationDisabledNotificationSubject": "Интеграция с {doc} была отключена",
+    "ConfirmOperation": "Подтверждение операции",
+    "Confirm": "Подтвердить",
+    "OtpCode": "Код",
+    "OtpSent": "Код отправлен на вашу почту",
+    "OtpSendFailed": "Не удалось отправить код",
+    "SendCode": "Отправить код"
   }
 }

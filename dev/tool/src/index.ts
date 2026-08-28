@@ -1902,12 +1902,14 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
     .action(async (endpoint: string, mode: string, opt: { output: string }) => {
       const token = generateToken(systemAccountUuid, undefined, { service: 'tool' })
       if (mode === 'start') {
-        await fetch(`${endpoint}/api/v1/manage?token=${token}&operation=profile-start`, {
-          method: 'PUT'
+        await fetch(`${endpoint}/api/v1/manage?operation=profile-start`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` }
         })
       } else {
-        const resp = await fetch(`${endpoint}/api/v1/manage?token=${token}&operation=profile-stop`, {
-          method: 'PUT'
+        const resp = await fetch(`${endpoint}/api/v1/manage?operation=profile-stop`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` }
         })
         if (resp.ok) {
           const bdir = dirname(opt.output)
@@ -1962,9 +1964,9 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
       const token = generateToken(systemAccountUuid, undefined, { service: 'tool' }, serverSecret)
 
       const limit = Math.min(Math.max(parseInt(opt.limit), 1), 1000)
-      const url = `${statsUrl}/api/v1/analytics?limit=${limit}&sort=${opt.sort}&source=${opt.source}&token=${token}`
-      console.log(`GET ${statsUrl}/api/v1/analytics?limit=${limit}&sort=${opt.sort}&source=${opt.source}&token=<jwt>`)
-      const resp = await fetch(url)
+      const url = `${statsUrl}/api/v1/analytics?limit=${limit}&sort=${opt.sort}&source=${opt.source}`
+      console.log(`GET ${statsUrl}/api/v1/analytics?limit=${limit}&sort=${opt.sort}&source=${opt.source}`)
+      const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       if (!resp.ok) {
         const text = await resp.text().catch(() => '')
         console.error(`failed to fetch analytics: ${resp.status} ${resp.statusText}\n${text}`)
@@ -2037,7 +2039,7 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
       }
       const token = generateToken(systemAccountUuid, undefined, { service: 'tool' }, serverSecret)
 
-      const overviewResp = await fetch(`${statsUrl}/api/v1/overview?token=${token}`)
+      const overviewResp = await fetch(`${statsUrl}/api/v1/overview`, { headers: { Authorization: `Bearer ${token}` } })
       if (!overviewResp.ok) {
         console.error(`failed to fetch overview: ${overviewResp.status} ${overviewResp.statusText}`)
         return
@@ -2058,7 +2060,9 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
       let failed = 0
       for (const service of services) {
         try {
-          const resp = await fetch(`${statsUrl}/api/v1/statistics?name=${encodeURIComponent(service)}&token=${token}`)
+          const resp = await fetch(`${statsUrl}/api/v1/statistics?name=${encodeURIComponent(service)}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
           if (!resp.ok) {
             console.error(`  ${service}: ${resp.status} ${resp.statusText}`)
             failed++

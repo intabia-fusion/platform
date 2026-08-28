@@ -1,4 +1,11 @@
-import { AccountRole, AccountUuid, MeasureContext, PersonUuid, WorkspaceUuid } from '@hcengineering/core'
+import {
+  AccountRole,
+  AccountUuid,
+  MeasureContext,
+  PersonUuid,
+  systemAccountUuid,
+  WorkspaceUuid
+} from '@hcengineering/core'
 import { getMetadata } from '@hcengineering/platform'
 import { decode, encode } from 'jwt-simple'
 import { validate } from 'uuid'
@@ -195,4 +202,26 @@ export function extractCookieToken (cookieHeader: string | undefined, cookieName
   if (tokenCookie === undefined) return undefined
   const value = tokenCookie.split('=').slice(1).join('=').trim()
   return value.length > 0 ? value : undefined
+}
+
+/**
+ * A human admin: the account signed in with an admin email. Service and system tokens are excluded
+ * even when they carry `admin: 'true'`, so a machine token can never pass an admin gate.
+ */
+export function isHumanAdmin (token: Pick<Token, 'account' | 'extra'>): boolean {
+  return token.extra?.admin === 'true' && token.account !== systemAccountUuid && token.extra?.service === undefined
+}
+
+/** Default lifetime of an `/admin` session opened with a second factor. */
+export const ADMIN_SESSION_TTL_SEC = parseInt(process.env.ADMIN_SESSION_TTL_SEC ?? '43200')
+
+/**
+ * True while the token carries a second factor (`extra.mfaAt`, seconds since epoch) stamped less
+ * than `ttlSec` ago. Stateless: pods gate management endpoints on it without an account DB.
+ */
+export function hasAdminSession (token: Pick<Token, 'extra'>, ttlSec: number = ADMIN_SESSION_TTL_SEC): boolean {
+  const mfaAt = token.extra?.mfaAt
+  if (mfaAt == null) return false
+  const at = typeof mfaAt === 'number' ? mfaAt : parseInt(String(mfaAt))
+  return Number.isFinite(at) && Math.floor(Date.now() / 1000) - at <= ttlSec
 }

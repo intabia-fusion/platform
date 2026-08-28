@@ -486,12 +486,9 @@
             label={adminRes.string.ReindexAll}
             size={'small'}
             on:click={() => {
-              showPopup(MessageBox, {
-                label: adminRes.string.ReindexAll,
-                message: adminRes.string.PleaseConfirm,
-                action: async () => {
-                  await getAccountClient().adminReindexAllWorkspaces()
-                }
+              void requestAdminOtpCode().then(async (code) => {
+                if (code === undefined) return
+                await getAccountClient().adminReindexAllWorkspaces(code)
               })
             }}
           />

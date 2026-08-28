@@ -43,13 +43,16 @@ jest.mock('@hcengineering/platform', () => {
 })
 
 jest.mock('@hcengineering/server-token', () => ({
+  isHumanAdmin: jest.requireActual('@hcengineering/server-token').isHumanAdmin,
+  hasAdminSession: jest.requireActual('@hcengineering/server-token').hasAdminSession,
+  ADMIN_SESSION_TTL_SEC: jest.requireActual('@hcengineering/server-token').ADMIN_SESSION_TTL_SEC,
   decodeTokenVerbose: jest.fn(),
   generateToken: jest.fn()
 }))
 
 const forbidden = new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
 
-const mockCtx = { error: jest.fn(), info: jest.fn() } as unknown as MeasureContext
+const mockCtx = { error: jest.fn(), info: jest.fn(), warn: jest.fn() } as unknown as MeasureContext
 const mockBranding = null
 const mockToken = 'test-token'
 

@@ -51,7 +51,6 @@ describe('admin-gates', () => {
   /** Token after verifyAdminSession: carries extra.mfaAt. */
   let adminSession: string
   let billingLogin: string
-  let userLogin: string
 
   beforeAll(async () => {
     config = await loadServerConfig(STAND_URL)
@@ -64,7 +63,6 @@ describe('admin-gates', () => {
     adminLogin = adminInfo.token
     adminAccount = adminInfo.account
     billingLogin = (await login('billing')).token
-    userLogin = (await login('user1')).token
     adminSession = await openAdminSession(adminLogin)
   }, 60000)
 
@@ -197,7 +195,7 @@ describe('admin-gates', () => {
         name: 'adminUpdateWorkspaceRole',
         method: 'adminUpdateWorkspaceRole',
         params: { workspace: wsUuid, targetAccount: memberAccount, role: AccountRole.Maintainer },
-        audit: 'update_role',
+        audit: 'update_workspace_role',
         revert: async () => {
           await rpc(config, adminSession, 'adminUpdateWorkspaceRole', {
             workspace: wsUuid,
@@ -256,9 +254,14 @@ describe('admin-gates', () => {
         method: 'performWorkspaceOperation',
         params: { workspaceId: wsUuid, event: 'delete' }
       },
-      { name: 'adminSetMaintenance', method: 'adminSetMaintenance', params: { timeout: 0, message: '' } },
+      { name: 'adminSetMaintenance', method: 'adminSetMaintenance', params: { timeoutMinutes: -1 } },
       { name: 'adminForceCloseWorkspace', method: 'adminForceCloseWorkspace', params: { workspace: wsUuid } },
-      { name: 'adminConfirmExport', method: 'adminConfirmExport', params: { kind: 'accounts', filter: {} } }
+      { name: 'adminConfirmExport', method: 'adminConfirmExport', params: { kind: 'accounts', filter: {} } },
+      {
+        name: 'adminCreateSubscription',
+        method: 'adminCreateSubscription',
+        params: { workspaceUuid: wsUuid, plan: 'free' }
+      }
     ]
   }
 
@@ -297,10 +300,12 @@ describe('admin-gates', () => {
     expect((await auditActions('export_report')).length).toBeGreaterThan(0)
   }, 30000)
 
-  it('12. workspace owner confirms delete/leave with an OTP code (A2)', async () => {
-    // Gate only: the success path destroys a workspace and is covered by sanity.
-    expect(isRefused(await rpc(config, userLogin, 'deleteWorkspace', { workspace: wsUuid, otpCode: '' }))).toBe(true)
-    expect(isRefused(await rpc(config, userLogin, 'leaveWorkspace', { workspace: wsUuid, otpCode: '' }))).toBe(true)
+  it('12. workspace owner confirms delete/self-leave with an OTP code (A2)', async () => {
+    // Gate only: the success path destroys a workspace / drops the owner, covered by sanity.
+    expect(isRefused(await rpc(config, owner.token, 'deleteWorkspace', { otpCode: '' }))).toBe(true)
+    expect(
+      isRefused(await rpc(config, owner.token, 'leaveWorkspace', { account: owner.info.account, otpCode: '' }))
+    ).toBe(true)
   })
 
   // ---------------------------------------------------------------- A2: management endpoints
@@ -310,25 +315,27 @@ describe('admin-gates', () => {
     return res.status
   }
 
-  it('9. account /api/v1/manage takes the token from the header only (A2)', async () => {
-    const url = `${config.ACCOUNTS_URL}/api/v1/manage?token=${adminSession}`
-    expect(await head(url, { method: 'PUT' })).toBe(401)
+  it('9. the account management endpoint is gone; maintenance is an audited RPC (A2)', async () => {
+    const url = `${config.ACCOUNTS_URL}/api/v1/manage?operation=maintenance&token=${adminSession}`
+    expect(await head(url, { method: 'PUT' })).toBe(404)
 
-    const withHeader = `${config.ACCOUNTS_URL}/api/v1/manage?operation=maintenance`
-    // adminLogin has no mfaAt: forbidden. maintenance itself has moved to an RPC.
-    expect([403, 404]).toContain(
-      await head(withHeader, { method: 'PUT', headers: { Authorization: `Bearer ${adminLogin}` } })
-    )
+    await requestOtp()
+    const viaRpc = await rpc(config, adminSession, 'adminSetMaintenance', { timeoutMinutes: -1, otpCode: DEV_OTP })
+    expect(viaRpc.error).toBeUndefined()
   })
 
   it('10. transactor and stats management endpoints reject query tokens (A2)', async () => {
-    expect(await head(`${TRANSACTOR_URL}/api/v1/profiling?token=${adminSession}`)).toBe(401)
+    // A query string token is ignored now: nothing decodes and the endpoint 404s.
+    expect(await head(`${TRANSACTOR_URL}/api/v1/profiling?token=${adminSession}`)).toBe(404)
     expect(
       await head(`${TRANSACTOR_URL}/api/v1/manage?token=${adminSession}&operation=profile-start`, { method: 'PUT' })
-    ).toBe(401)
-    expect(await head(`${STATS_URL}/api/v1/manage?token=${adminSession}&operation=wipe`, { method: 'PUT' })).toBe(401)
+    ).toBe(404)
+    expect(await head(`${STATS_URL}/api/v1/manage?token=${adminSession}&operation=wipe`, { method: 'PUT' })).toBe(404)
 
-    // Header + fresh admin session is the only accepted form.
+    // A login token without a second factor is refused; the session token passes.
+    expect(
+      await head(`${TRANSACTOR_URL}/api/v1/profiling`, { headers: { Authorization: `Bearer ${adminLogin}` } })
+    ).toBe(404)
     expect(
       await head(`${TRANSACTOR_URL}/api/v1/profiling`, { headers: { Authorization: `Bearer ${adminSession}` } })
     ).toBe(200)

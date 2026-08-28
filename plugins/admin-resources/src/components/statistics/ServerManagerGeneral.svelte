@@ -20,7 +20,7 @@
   import presentation from '@hcengineering/presentation'
   import { Button, DropdownLabels, EditBox, IconArrowLeft, IconArrowRight, ticker } from '@hcengineering/ui'
 
-  import { getAccountClient, adminFetch } from '../../utils'
+  import { adminFetch, getAccountClient, requestAdminOtpCode } from '../../utils'
 
   const token: string = getMetadata(presentation.metadata.Token) ?? ''
 
@@ -44,12 +44,23 @@
   }))
   $: endpoint = selectedTransactor.replace(/^ws/, 'http').replace(/\/$/, '')
 
+  // Maintenance is a global broadcast: an audited, OTP-gated account RPC, not a raw endpoint.
+  async function setMaintenance (timeoutMinutes: number, message: string | undefined): Promise<void> {
+    const code = await requestAdminOtpCode()
+    if (code === undefined) return
+    try {
+      await getAccountClient().adminSetMaintenance(timeoutMinutes, message, code)
+    } catch (err) {
+      console.error('Failed to set maintenance warning:', err)
+    }
+  }
+
   let profiling = false
   async function fetchProfiling (time: number): Promise<void> {
     if (endpoint === '') return
     try {
-      const res = await fetch(endpoint + '/api/v1/profiling', {
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }
+      const res = await adminFetch(endpoint + '/api/v1/profiling', {
+        headers: { 'Content-Type': 'application/json' }
       })
       profiling = (await res.json())?.profiling ?? false
     } catch (err) {
@@ -92,16 +103,7 @@
         icon={IconArrowRight}
         label={getEmbeddedLabel('Set maintenance warning')}
         on:click={() => {
-          const accounts = getMetadata(login.metadata.AccountsUrl) ?? ''
-          if (accounts !== '') {
-            void fetch(concatLink(accounts, `/api/v1/manage?operation=maintenance&timeout=${warningTimeout}`), {
-              method: 'PUT',
-              body: JSON.stringify({ message: maintenanceMessage }),
-              headers: {
-                'Content-Type': 'application/json;charset=utf-8'
-              }
-            })
-          }
+          void setMaintenance(warningTimeout, maintenanceMessage)
         }}
       />
     </div>
@@ -114,12 +116,7 @@
       icon={IconArrowLeft}
       label={getEmbeddedLabel('Clear warning')}
       on:click={() => {
-        const accounts = getMetadata(login.metadata.AccountsUrl) ?? ''
-        if (accounts !== '') {
-          void adminFetch(concatLink(accounts, '/api/v1/manage?operation=maintenance&timeout=-1'), {
-            method: 'PUT'
-          })
-        }
+        void setMaintenance(-1, undefined)
       }}
     />
   </div>
