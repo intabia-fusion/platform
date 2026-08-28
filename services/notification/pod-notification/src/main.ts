@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,16 +19,38 @@ import { PushSubscription, type PushData } from '@hcengineering/notification'
 import type { Request, Response } from 'express'
 import webpush, { WebPushError } from 'web-push'
 import config from './config'
+import { apnsConfigured, Delivery, fcmConfigured, PushKind, pushTarget, sendApns, sendFcm } from './mobile'
 import { createServer, listen } from './server'
 import { Endpoint } from './types'
 
 const errorMessages = ['expired', 'Unregistered', 'No such subscription']
+
+/**
+ * Native clients subscribe with a device token instead of a Web Push endpoint,
+ * so the transport is chosen per subscription. The caller is unaware of the
+ * split: it still posts one list and deletes whatever comes back dead.
+ */
 async function sendPushToSubscription (
+  webpushInitDone: boolean,
   subscriptions: PushSubscription[],
   data: PushData
 ): Promise<Ref<PushSubscription>[]> {
   const result: Ref<PushSubscription>[] = []
   for (const subscription of subscriptions) {
+    const target = pushTarget(subscription.endpoint)
+    if (target.kind === PushKind.Apns) {
+      if (apnsConfigured() && (await sendApns(target.token, data)) === Delivery.Gone) {
+        result.push(subscription._id)
+      }
+      continue
+    }
+    if (target.kind === PushKind.Fcm) {
+      if (fcmConfigured() && (await sendFcm(target.token, data)) === Delivery.Gone) {
+        result.push(subscription._id)
+      }
+      continue
+    }
+    if (!webpushInitDone) continue
     try {
       await webpush.sendNotification(subscription, JSON.stringify(data), {
         TTL: config.TTL
@@ -89,12 +112,7 @@ export const main = async (): Promise<void> => {
           res.status(400).send({ err: "'subscriptions' is missing" })
           return
         }
-        if (!webpushInitDone) {
-          res.json({ result: [] }).end()
-          return
-        }
-
-        const result = await sendPushToSubscription(subscriptions, data)
+        const result = await sendPushToSubscription(webpushInitDone, subscriptions, data)
         res.json({ result }).end()
       }
     }
