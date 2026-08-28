@@ -46,9 +46,11 @@ import {
 } from '@hcengineering/server-core'
 
 import { requireAdminOp, requireAdminSession, verifyAdminOtpLimited } from './adminOp'
+
 import { accountPlugin } from './plugin'
 import { SubscriptionStatus, SubscriptionType } from './types'
 import type {
+  WorkspaceLoginInfo,
   AccountAggregatedInfo,
   AccountsFilter,
   AccountsSortKey,
@@ -97,6 +99,8 @@ import {
   getRegions,
   getRolePower,
   getSocialIdByKey,
+  EndpointKind,
+  getEndpoint,
   getWorkspaceById,
   getWorkspaceByUrl,
   getWorkspacesInfoWithStatusByIds,
@@ -113,6 +117,9 @@ import {
   doReleaseSocialId,
   publishMembersChanged
 } from './utils'
+
+/** An impersonation session is for a quick look, not for working: it dies in half an hour. */
+const IMPERSONATION_TTL_SEC = 1800
 
 // Note: it is IMPORTANT to always destructure params passed here to avoid sending extra params
 // to the database layer when searching/inserting as they may contain SQL injection
@@ -470,6 +477,66 @@ export async function adminForceCloseWorkspace (
   await producer.send(ctx, params.workspace, [workspaceEvents.forceClose()])
   ctx.info('admin: force close requested', { workspace: params.workspace })
   await logAdminAction(ctx, db, token, 'force_close', params.workspace)
+}
+
+/**
+ * Opens a read-only session inside a workspace as one of its members, so an operator can see exactly
+ * what that person sees. The token carries `impersonatedBy` and `readonly`; the transactor refuses
+ * every write, so an operator can never act as the user.
+ */
+export async function adminImpersonate (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { workspace: WorkspaceUuid, account: AccountUuid, otpCode: string }
+): Promise<WorkspaceLoginInfo> {
+  const { account: adminAccount } = await requireAdminOp(
+    ctx,
+    db,
+    token,
+    'impersonate',
+    params.otpCode,
+    params.workspace
+  )
+
+  const workspace = await getWorkspaceById(db, params.workspace)
+  if (workspace == null) {
+    throw new PlatformError(
+      new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid: params.workspace })
+    )
+  }
+
+  // Only a real member can be impersonated: this is "see their screen", not "get in anywhere".
+  const role = await db.getWorkspaceRole(params.account, params.workspace)
+  if (role == null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+
+  const exp = Math.floor(Date.now() / 1000) + IMPERSONATION_TTL_SEC
+  const impersonated = generateToken(
+    params.account,
+    workspace.uuid,
+    { impersonatedBy: adminAccount, readonly: 'true' },
+    undefined,
+    { exp }
+  )
+
+  await logAdminAction(ctx, db, token, 'impersonate', params.workspace, workspace.name, {
+    target: params.account,
+    role
+  })
+
+  return {
+    account: params.account,
+    token: impersonated,
+    endpoint: getEndpoint(workspace.uuid, workspace.region, EndpointKind.External),
+    workspace: workspace.uuid,
+    workspaceUrl: workspace.url,
+    workspaceDataId: workspace.dataId,
+    role,
+    disabledFeaturesOverride: workspace.disabledFeaturesOverride
+  }
 }
 
 export async function adminReindexAllWorkspaces (
@@ -1339,12 +1406,11 @@ export async function addSocialIdToPerson (
   const { person, type, value, confirmed, displayValue } = params
   const { extra } = decodeTokenVerbose(ctx, token)
 
-  if (extra?.admin !== 'true') {
-    verifyAllowedServices(
-      ['github', 'telegram-bot', 'gmail', 'tool', 'workspace', 'hulygram', 'google-calendar', 'ai-assistant'],
-      extra
-    )
-  }
+  // Services only: attaching an identity to a person is not an admin-panel action.
+  verifyAllowedServices(
+    ['github', 'telegram-bot', 'gmail', 'tool', 'workspace', 'hulygram', 'google-calendar', 'ai-assistant'],
+    extra
+  )
 
   if (person == null || person === '' || !Object.values(SocialIdType).includes(type) || value == null || value === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -2485,6 +2551,7 @@ export type AccountServiceMethods =
   | 'adminSetMaintenance'
   | 'adminForceCloseWorkspace'
   | 'adminConfirmExport'
+  | 'adminImpersonate'
   | 'adminUpdateWorkspaceRole'
   | 'adminAddWorkspaceMember'
   | 'adminRemoveWorkspaceMember'
@@ -2566,6 +2633,7 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     adminSetMaintenance: wrap(adminSetMaintenance),
     adminForceCloseWorkspace: wrap(adminForceCloseWorkspace),
     adminConfirmExport: wrap(adminConfirmExport),
+    adminImpersonate: wrap(adminImpersonate),
     adminUpdateWorkspaceRole: wrap(adminUpdateWorkspaceRole),
     adminAddWorkspaceMember: wrap(adminAddWorkspaceMember),
     adminRemoveWorkspaceMember: wrap(adminRemoveWorkspaceMember),

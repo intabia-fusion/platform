@@ -236,6 +236,8 @@ export interface AccountClient {
   adminForceCloseWorkspace: (workspace: WorkspaceUuid, otpCode: string) => Promise<void>
   /** Records the operator's intent to export a report; the audit entry is the point. */
   adminConfirmExport: (kind: string, filter: Record<string, any> | undefined, otpCode: string) => Promise<void>
+  /** Read-only session inside a workspace as one of its members. */
+  adminImpersonate: (workspace: WorkspaceUuid, account: AccountUuid, otpCode: string) => Promise<WorkspaceLoginInfo>
   adminUpdateWorkspaceRole: (
     workspace: WorkspaceUuid,
     targetAccount: AccountUuid,
@@ -1090,6 +1092,10 @@ class AccountClientImpl implements AccountClient {
 
   async adminConfirmExport (kind: string, filter: Record<string, any> | undefined, otpCode: string): Promise<void> {
     await this.rpc({ method: 'adminConfirmExport' as const, params: { kind, filter, otpCode } })
+  }
+
+  async adminImpersonate (workspace: WorkspaceUuid, account: AccountUuid, otpCode: string): Promise<WorkspaceLoginInfo> {
+    return await this.rpc({ method: 'adminImpersonate' as const, params: { workspace, account, otpCode } })
   }
 
   async adminUpdateWorkspaceRole (

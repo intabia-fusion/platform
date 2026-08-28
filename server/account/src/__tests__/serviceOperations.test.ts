@@ -124,12 +124,10 @@ describe('addSocialIdToPerson', () => {
     )
   })
 
-  test('should allow admin to add social id', async () => {
+  test('should refuse an admin token: attaching an identity is a service action', async () => {
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
       extra: { admin: 'true' }
     })
-    const newSocialId = 'new-social-id' as PersonId
-    addSocialIdSpy.mockResolvedValue(newSocialId)
 
     const params = {
       person: 'test-person' as PersonUuid,
@@ -139,17 +137,10 @@ describe('addSocialIdToPerson', () => {
       displayValue: 'test-display-value'
     }
 
-    const result = await addSocialIdToPerson(mockCtx, mockDb, mockBranding, mockToken, params)
-
-    expect(result).toBe(newSocialId)
-    expect(addSocialIdSpy).toHaveBeenCalledWith(
-      mockDb,
-      params.person,
-      params.type,
-      params.value,
-      params.confirmed,
-      params.displayValue
+    await expect(addSocialIdToPerson(mockCtx, mockDb, mockBranding, mockToken, params)).rejects.toThrow(
+      new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
     )
+    expect(addSocialIdSpy).not.toHaveBeenCalled()
   })
 
   test('should throw error for unauthorized service', async () => {

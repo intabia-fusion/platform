@@ -371,10 +371,14 @@ describe('admin-gates', () => {
     ).toBe(true)
   })
 
-  it('14. adminImpersonate is OTP-gated, scoped and short lived (A3)', async () => {
+  it('14. adminImpersonate is OTP-gated, scoped, read-only and short lived (A3)', async () => {
     expect(
       isRefused(
-        await rpc(config, adminSession, 'adminImpersonate', { workspace: wsUuid, account: memberAccount, otpCode: '' })
+        await rpc(config, adminSession, 'adminImpersonate', {
+          workspace: wsUuid,
+          account: memberAccount,
+          otpCode: ''
+        })
       )
     ).toBe(true)
 
@@ -389,9 +393,15 @@ describe('admin-gates', () => {
     expect(payload.account).toBe(memberAccount)
     expect(payload.workspace).toBe(wsUuid)
     expect(payload.extra?.impersonatedBy).toBe(adminAccount)
-    expect(payload.exp - payload.iat).toBeLessThanOrEqual(1800)
+    expect(payload.extra?.readonly).toBe('true')
+    expect(payload.exp - Math.floor(Date.now() / 1000)).toBeLessThanOrEqual(1800)
 
-    // Not a member of the target workspace -> refused.
+    // The workbench re-exchanges the token through selectWorkspace: read-only must survive that.
+    const reselected = await rpc(config, impersonated.result.token, 'selectWorkspace', { workspaceUrl: wsName })
+    expect(reselected.error).toBeUndefined()
+    expect(payloadOf(reselected.result.token).extra?.readonly).toBe('true')
+
+    // Impersonating someone who is not a member is refused.
     await requestOtp()
     expect(
       isRefused(

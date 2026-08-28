@@ -188,6 +188,8 @@
     "SortMinutes": "按分钟",
     "AdminSessionTitle": "Admin access confirmation",
     "AdminSessionHint": "Enter the code sent to your admin email to open an administration session.",
-    "AdminSessionRejected": "Wrong or expired code"
+    "AdminSessionRejected": "Wrong or expired code",
+    "Impersonate": "View as",
+    "ImpersonateHint": "Open a read-only session as this member. Writes are refused; the action is audited."
   }
 }

@@ -3326,17 +3326,19 @@ describe('merge specified persons', () => {
       expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
     })
 
-    test('should merge for a global admin token', async () => {
+    test('should refuse a global admin token that is not a workspace maintainer', async () => {
       ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
         account: callerUuid,
         extra: { admin: 'true' }
       })
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(null)
       const spy = jest.spyOn(utils, 'doMergePersons').mockResolvedValue()
 
-      await mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)
+      await expect(mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).rejects.toThrow(
+        new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      )
 
-      expect(spy).toHaveBeenCalledWith(mockDb, primaryPerson, secondaryPerson)
-      expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
+      expect(spy).not.toHaveBeenCalled()
     })
   })
 
@@ -3399,14 +3401,14 @@ describe('merge specified persons', () => {
       expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
     })
 
-    test('should allow a global admin token', async () => {
+    test('should refuse a global admin token that is not a workspace maintainer', async () => {
       ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
         account: callerUuid,
         extra: { admin: 'true' }
       })
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(null)
 
-      expect(await canMergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).toBe(true)
-      expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
+      expect(await canMergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).toBe(false)
     })
   })
 })

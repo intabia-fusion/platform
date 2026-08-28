@@ -91,3 +91,76 @@
 - Фолбэк по тестам: `plan-*.test.ts` больше не подделывают админ-токен - общий хелпер
   `adminSessionClient()` логинится человеком и открывает сессию. Юнит-моки `@hcengineering/server-token`
   должны подмешивать настоящие `isHumanAdmin`/`hasAdminSession` через `jest.requireActual`.
+
+## A3 - эскалации и impersonation (сделано)
+
+Решение пользователя: **админ под impersonation только читает**, писать не нужно.
+
+- Снято: admin-эскалация в `selectWorkspace` (`utils.ts`), в `verifyAllowedRole`, в `getWorkspaceInfo`
+  и `getLoginInfoByToken` (`role = AccountRole.Admin` для не-участника), в `verifyMergePersonsAuthority`
+  (сервисы `tool`/`workspace` остались), в `addSocialIdToPerson` (теперь только сервисы),
+  в `ConfigurationMiddleware` (домен конфигурации - только Owner, `SessionData.admin` там больше не читается).
+- `adminImpersonate(workspace, account, otpCode)` через `requireAdminOp`: цель обязана быть участником,
+  токен = `{ impersonatedBy, readonly: 'true' }`, `exp` 1800, аудит `impersonate`.
+- Запрет записи реализован **одной проверкой в `ClientSession.txRaw`** (`extra.readonly === 'true'`),
+  а не новым полем в `SessionData`: сессия и так не пишет ничего, включая derived tx, и заодно
+  ужесточается read-only-гость, у которого тот же claim.
+- `SessionData.impersonatedBy` **не добавлял**: писать нельзя, значит атрибутировать нечего; кто и куда
+  заходил, видно в `admin_action` и в самом токене.
+- Клиент: кнопка «Смотреть как» в строке участника (`WorkspaceDetails.svelte`) -> токен ->
+  `setMetadata(Token)` + `navigate([workbenchId, url])`. Auth-куку не трогаем, поэтому возврат в `/admin`
+  восстанавливает админ-сессию из куки - для этого в `AdminApp` добавлен один повтор `getLoginInfoByToken`
+  перед редиректом на логин.
+- `selectWorkspace` копирует `extra` и `exp`, поэтому повторный обмен токена при заходе в workbench
+  сохраняет и `readonly`, и получасовой срок.
+- Известное следствие: кнопка «открыть воркспейс» в списке работает только если админ реально участник.
+  Для остальных случаев - «Смотреть как».
+- Юнит-тесты, кодировавшие снятые эскалации, переписаны на отказ (merge x2, addSocialIdToPerson).
+
+## A4 - права админа в продуктовом UI (сделано)
+
+`isAdminUser()` (клиентская проверка `extra.admin` в токене) больше не используется нигде, кроме
+самой админки. Она давала права Owner в UI, которых сервер после A3 уже не признаёт - расхождение
+кончалось бы «кнопка есть, запрос падает».
+
+Снято:
+- `workbench-resources/index.ts` - `IsOwner` теперь только по роли Owner.
+- `Navigator.svelte` - админ больше не видит все пространства воркспейса, запрос всегда по `members`.
+- `Workbench.svelte` - отключённый аккаунт отключён и для админа.
+- `SelectWorkspaceMenu.svelte` - убран операторский оверлей (регион, размер бэкапа, дни простоя, url,
+  число активных сессий) и опрос транзактора `/api/v1/statistics` раз в тик, который его кормил.
+  Поиск по воркспейсам оставлен без гейта и показывается при списке длиннее восьми.
+- `view-resources/utils.ts` - удаление чужих объектов только для Owner.
+- `contact-resources/DeleteConfirmationPopup` - то же.
+- `tracker-resources/ProjectPresenter` - открыть проект можно, только будучи его участником.
+- `hr-resources/MonthView` - правка прошедших дат только для Owner.
+- `setting-resources/WorkspaceSettings` - `adminOnly`-категории скрыты всегда (ни одна категория в
+  коде такой флаг не ставит, так что видимого эффекта нет); в `Configure.svelte` убран мёртвый импорт.
+
+`isAdminUser`/`isBillingAdminUser` в `packages/presentation` остаются - на них держится вход в `/admin`.
+
+Пять ошибок `svelte-check` в `hr-resources` - в файлах департаментов, к правке отношения не имеют.
+
+## A5 - фичи воркспейса и CLI (сделано)
+
+- `WorkspaceDetails.svelte`: список override переехал под `Expandable`. В свёрнутом виде - сводка
+  (текущий override или `-`), внутри - скроллируемый список чекбоксов и `Save`. Режим «Edit»
+  выброшен: список считается реактивно из `DisabledFeatures` + текущего override, отдельного
+  состояния `editingDisabledFeatures` больше нет. billingAdmin видит чекбоксы `readonly`.
+- `dev/tool configure`: `--disable` теперь принимает список и `*` (симметрично `--enable`); пустая
+  опция больше не даёт `['']`; `catch { console.trace }` убран, ошибка выходит наружу и процесс
+  падает с ненулевым кодом; описание команды исправлено с «clean archived spaces».
+
+## Sanity (сделано)
+
+- `ws-tests/sanity/tests/model/admin.page.ts`: `gotoAdmin()` проходит форму второго фактора
+  (`openAdminSession`, тот же dev-код) и ждёт вкладки. Селектор кода тот же, что у per-op диалога:
+  `input[placeholder="Code"]` + кнопка `Confirm`.
+- Новый `ws-tests/sanity/tests/workspace/impersonate.spec.ts`: владелец создаёт задачу, админ входит
+  через «View as», видит её и НЕ может создать свою (транзактор режет запись read-only сессии).
+- `tests/sanity/tests/API/Billing.ts`: `getAdmin()` теперь открывает админ-сессию через
+  `verifyAdminSession`, все `adminCreateSubscription` получили `otpCode`. Без этого падал
+  `_phase:validate` пакета `@hcengineering/tests-sanity`.
+
+Проверено: `rush fast-build:lint --to @hcengineering/prod` и по каждому поду - 0 ошибок.
+Прогон playwright не делал: стенд `ws-tests` не поднят.

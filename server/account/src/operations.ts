@@ -1819,10 +1819,7 @@ export async function getWorkspaceInfo (
   const skipAssignmentCheck = isGuest || account === systemAccountUuid
 
   if (!skipAssignmentCheck) {
-    let role = await db.getWorkspaceRole(account, workspaceUuid)
-    if (role === null && isAdmin) {
-      role = AccountRole.Admin
-    }
+    const role = await db.getWorkspaceRole(account, workspaceUuid)
 
     if (role == null) {
       ctx.warn('Not a member of the workspace', { workspaceUuid, account })
@@ -2033,10 +2030,7 @@ export async function getLoginInfoByToken (
       } satisfies WorkspaceLoginInfo
     }
 
-    let role = await getWorkspaceRole(db, accountUuid, workspace.uuid)
-    if (role === null && isAdmin) {
-      role = AccountRole.Admin
-    }
+    const role = await getWorkspaceRole(db, accountUuid, workspace.uuid)
 
     if (role == null) {
       // User might have been removed from the workspace
@@ -2723,10 +2717,10 @@ async function verifyMergePersonsAuthority (
   secondaryPerson: PersonUuid,
   shouldThrow = true
 ): Promise<boolean> {
-  // Global admins and the tool/workspace services act on behalf of the whole installation,
-  // the same way the account level merge (mergeSpecifiedAccounts) allows them to.
+  // The tool/workspace services act on behalf of the whole installation. A global admin does not:
+  // merging identities from the admin panel would be an unaudited cross-workspace write.
   // Note this must precede the workspace check below: such tokens carry no workspace.
-  if (extra?.admin === 'true' || verifyAllowedServices(['tool', 'workspace'], extra, false)) {
+  if (verifyAllowedServices(['tool', 'workspace'], extra, false)) {
     return true
   }
 

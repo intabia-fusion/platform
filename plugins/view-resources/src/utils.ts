@@ -68,7 +68,6 @@ import presentation, {
   getFiltredKeys,
   getRawLiveQuery,
   hasResource,
-  isAdminUser,
   type KeyedAttribute
 } from '@hcengineering/presentation'
 import { type CollaborationUser } from '@hcengineering/text-editor'
@@ -789,7 +788,6 @@ export async function deleteObjects (client: TxOperations, objects: Doc[], skipC
     for (const d of objects) {
       byClass.set(d._class, [...(byClass.get(d._class) ?? []), d])
     }
-    const adminUser = isAdminUser()
     for (const [cl, docs] of byClass.entries()) {
       const realDocs = await client.findAll(cl, { _id: { $in: docs.map((it: Doc) => it._id) } })
       const notAllowed = realDocs.filter((p) => !socialStrings.has(p.createdBy as PersonId))
@@ -797,7 +795,7 @@ export async function deleteObjects (client: TxOperations, objects: Doc[], skipC
       if (notAllowed.length > 0) {
         console.error('You are not allowed to delete this object', notAllowed)
       }
-      if (currentAcc.role === AccountRole.Owner || adminUser) {
+      if (currentAcc.role === AccountRole.Owner) {
         realObjects.push(...realDocs)
       } else {
         realObjects.push(...realDocs.filter((p) => socialStrings.has(p.createdBy as PersonId)))
@@ -826,7 +824,7 @@ export async function deleteObjects (client: TxOperations, objects: Doc[], skipC
 
 export async function canDeleteAsCreator (client: TxOperations, object: Doc): Promise<boolean> {
   const currentAcc = getCurrentAccount()
-  if (currentAcc.role === AccountRole.Owner || isAdminUser()) return true
+  if (currentAcc.role === AccountRole.Owner) return true
   const socialStrings = new Set(await getAllSocialStringsByPersonRef(client, getCurrentEmployee()))
   return socialStrings.has(object.createdBy as PersonId)
 }

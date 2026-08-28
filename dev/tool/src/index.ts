@@ -2393,7 +2393,7 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
 
   program
     .command('configure <workspace>')
-    .description('clean archived spaces')
+    .description('list or toggle plugin configuration of a workspace')
     .option('--enable <enable>', 'Enable plugin configuration', '')
     .option('--disable <disable>', 'Disable plugin configuration', '')
     .option('--list', 'List plugin states', false)

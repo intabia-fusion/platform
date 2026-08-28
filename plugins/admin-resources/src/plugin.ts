@@ -165,6 +165,8 @@ export default mergeIds(adminId, admin, {
     RemoveMember: '' as IntlString,
     Add: '' as IntlString,
     Reindex: '' as IntlString,
+    Impersonate: '' as IntlString,
+    ImpersonateHint: '' as IntlString,
     ReindexAll: '' as IntlString,
     CreateWorkspace: '' as IntlString,
     Edit: '' as IntlString,

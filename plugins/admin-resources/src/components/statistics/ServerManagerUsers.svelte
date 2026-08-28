@@ -1,6 +1,6 @@
 <script lang="ts">
   import { groupByArray, systemAccountUuid, type PersonInfo, type PersonUuid, WorkspaceUuid } from '@hcengineering/core'
-    import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
+  import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import presentation, { isAdminUser, type OverviewStatistics } from '@hcengineering/presentation'
   import { Button, CheckBox, ticker, Expandable } from '@hcengineering/ui'
   import { FixedColumn } from '@hcengineering/view-resources'

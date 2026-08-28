@@ -52,9 +52,30 @@
     token = getMetadata(presentation.metadata.Token)
   }
 
-  // Logged in but neither full admin nor read-only billing admin - send to the regular login
+  // Logged in but neither full admin nor read-only billing admin. This is also what an
+  // impersonation session looks like on the way back, so try the auth cookie before bailing out.
   $: notAdmin = !restoring && token != null && !isAdminUser() && !isBillingAdminUser()
   $: if (notAdmin) {
+    void restoreFromCookie()
+  }
+
+  let cookieRestoreTried = false
+  async function restoreFromCookie (): Promise<void> {
+    if (cookieRestoreTried) {
+      navigate({ path: [loginId] }, true)
+      return
+    }
+    cookieRestoreTried = true
+    try {
+      const info = await getAccountClient(null).getLoginInfoByToken()
+      if (info != null && 'token' in info && info.token != null) {
+        setMetadata(presentation.metadata.Token, info.token)
+        token = info.token
+        return
+      }
+    } catch (err: any) {
+      // fall through to the login form
+    }
     navigate({ path: [loginId] }, true)
   }
 

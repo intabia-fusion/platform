@@ -47,7 +47,7 @@ import {
   type WorkspaceDataId,
   type WorkspaceIds
 } from '@hcengineering/core'
-import { PlatformError, unknownError } from '@hcengineering/platform'
+import platform, { PlatformError, Severity, Status, unknownError } from '@hcengineering/platform'
 import {
   BackupClientOps,
   createBroadcastEvent,
@@ -259,6 +259,10 @@ export class ClientSession implements Session {
       broadcastPromise: Promise<void>
       asyncsPromise: Promise<void> | undefined
     }> {
+    // Read-only sessions (guests, operator impersonation) never write, not even derived tx.
+    if (this.token.extra?.readonly === 'true') {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    }
     this.lastRequest = Date.now()
     this.total.tx++
     this.current.tx++
