@@ -193,6 +193,8 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - SERVER_SECRET=secret
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
+      # Read-only admin panel access: admin-gates tests assert reads pass and mutations are refused.
+      - BILLING_EMAILS=billing
       - STATS_URL=http://stats:4901
       - WORKSPACE_LIMIT_PER_USER=100
       - DB_URL=${DB_PG_URL}

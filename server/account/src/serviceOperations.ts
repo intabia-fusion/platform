@@ -31,8 +31,7 @@ import {
   type AccountUuid,
   type UsageStatus,
   type Timestamp,
-  readOnlyGuestAccountUuid,
-  systemAccountUuid
+  readOnlyGuestAccountUuid
 } from '@hcengineering/core'
 import platform, { getMetadata, PlatformError, Severity, Status, unknownError } from '@hcengineering/platform'
 import { decodeTokenVerbose } from '@hcengineering/server-token'
@@ -45,6 +44,7 @@ import {
   type QueueWorkspaceMessage
 } from '@hcengineering/server-core'
 
+import { isHumanAdmin } from './admin'
 import { accountPlugin } from './plugin'
 import { SubscriptionStatus, SubscriptionType } from './types'
 import type {
@@ -137,7 +137,7 @@ export async function listWorkspaces (
 
   if (
     // 'love' polls recently visited workspaces to find meetings left hanging after a restart.
-    !['tool', 'backup', 'admin', 'github', 'workspace', 'love'].includes(extra?.service) &&
+    !['tool', 'backup', 'admin', 'github', 'workspace', 'love', 'billing'].includes(extra?.service) &&
     extra?.admin !== 'true' &&
     extra?.billingAdmin !== 'true'
   ) {
@@ -754,7 +754,7 @@ export async function performWorkspaceOperation (
   const { workspaceId, event, params, otpCode } = parameters
   const { extra, workspace, account } = decodeTokenVerbose(ctx, token)
 
-  const isAdminUser = extra?.admin === 'true' && account !== systemAccountUuid && extra?.service === undefined
+  const isAdminUser = isHumanAdmin({ account, extra })
 
   if (extra?.admin !== 'true') {
     if (event !== 'unarchive' || workspaceId !== workspace) {
@@ -2114,8 +2114,8 @@ export async function updatePurchaseStatus (
   params: { id: string, status: WorkspacePurchaseStatus, activatedOn?: number }
 ): Promise<void> {
   const { extra } = decodeTokenVerbose(ctx, token)
-  // payment activates purchases; the SKU-owning pod (e.g. ai-bot) marks them consumed via an admin token.
-  if (extra?.service !== 'payment' && extra?.admin !== 'true') {
+  // payment activates purchases; the SKU-owning pod marks them consumed.
+  if (!['payment', 'ai-bot'].includes(extra?.service)) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
   await db.updatePurchaseStatus(params.id, params.status, params.activatedOn)
@@ -2275,13 +2275,34 @@ export async function adminCreateSubscription (
     trialEnd?: number // when set (with status=Trialing), makes this a real trial subscription
   }
 ): Promise<void> {
-  const tokenDecoded = decodeTokenVerbose(ctx, token)
-  const { account, extra } = tokenDecoded
+  const { account, extra } = decodeTokenVerbose(ctx, token)
 
   if (extra?.admin !== 'true') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
+  await createManualSubscription(ctx, db, account, params)
+}
+
+/**
+ * Replaces the live subscription of the given type with a manual one. Shared by the admin RPC and by
+ * the `set-workspace-plan` CLI, which writes to the account DB directly instead of holding an admin token.
+ * @public
+ */
+export async function createManualSubscription (
+  ctx: MeasureContext,
+  db: AccountDB,
+  account: AccountUuid,
+  params: {
+    workspaceUuid: WorkspaceUuid
+    plan: string
+    type?: SubscriptionType
+    status?: SubscriptionStatus
+    limits?: Subscription['limits']
+    periodDays?: number
+    trialEnd?: number
+  }
+): Promise<void> {
   const {
     workspaceUuid,
     plan,

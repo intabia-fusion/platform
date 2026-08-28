@@ -3,7 +3,9 @@ import { getTransactorEndpoint } from '@hcengineering/server-client'
 import { generateToken } from '@hcengineering/server-token'
 
 export function getToolToken (workspace?: WorkspaceUuid): string {
-  return generateToken(systemAccountUuid, workspace, { service: 'tool', admin: 'true' })
+  // No admin flag: account gates the tool by `service`, and selectWorkspace already grants the
+  // system account Admin role. `admin: 'true'` is minted on human login only.
+  return generateToken(systemAccountUuid, workspace, { service: 'tool' })
 }
 
 export async function getWorkspaceTransactorEndpoint (

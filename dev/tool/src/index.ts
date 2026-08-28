@@ -24,6 +24,9 @@ import accountPlugin, {
   getWorkspacesInfoWithStatusByIds,
   signUpByEmail,
   updateWorkspaceInfo,
+  createManualSubscription,
+  type SubscriptionStatus,
+  type SubscriptionType,
   type AccountDB,
   type Workspace
 } from '@hcengineering/account'
@@ -520,14 +523,23 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
             meetingMinutesLimit: parseInt(cmd.meetingMinutes),
             windowMonthLimit: parseInt(cmd.windowMonth)
           }
-          const accountClient = getAccountClient(getToolToken())
-          await accountClient.adminCreateSubscription({
-            workspaceUuid: ws.uuid,
-            plan,
-            type: cmd.type,
-            status: cmd.status,
-            limits
-          })
+          // Direct DB write: the CLI holds no admin token. Same code path as the admin RPC.
+          const queue = getPlatformQueue('tool', ws.region ?? '')
+          setMetadata(
+            accountPlugin.metadata.WorkspaceQueue,
+            queue.getProducer<QueueWorkspaceMessage>(toolCtx, QueueTopic.Workspace)
+          )
+          try {
+            await createManualSubscription(toolCtx, db, systemAccountUuid, {
+              workspaceUuid: ws.uuid,
+              plan,
+              type: cmd.type as SubscriptionType,
+              status: cmd.status as SubscriptionStatus,
+              limits
+            })
+          } finally {
+            await queue.shutdown()
+          }
           console.log(`plan '${plan}' (${cmd.status}) set for workspace '${workspace}'`, limits)
         })
       }
@@ -1871,8 +1883,7 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
   program
     .command('generate-token <name> <workspace>')
     .description('generate token')
-    .option('--admin', 'Generate token with admin access', false)
-    .action(async (name: string, workspace: string, opt: { admin: boolean }) => {
+    .action(async (name: string, workspace: string) => {
       await withAccountDatabase(async (db) => {
         if (name === systemAccountEmail) {
           name = systemAccountUuid
@@ -1880,9 +1891,7 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
         const wsByUrl = await db.workspace.findOne({ url: workspace })
         const account = await db.socialId.findOne({ value: name })
         console.log(
-          generateToken(account?.personUuid ?? (name as AccountUuid), wsByUrl?.uuid ?? (workspace as WorkspaceUuid), {
-            ...(opt.admin ? { admin: 'true' } : {})
-          })
+          generateToken(account?.personUuid ?? (name as AccountUuid), wsByUrl?.uuid ?? (workspace as WorkspaceUuid))
         )
       })
     })
@@ -1891,7 +1900,7 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
     .description('Enable or disable profiling')
     .option('-o, --output <output>', 'Output file', 'profile.cpuprofile')
     .action(async (endpoint: string, mode: string, opt: { output: string }) => {
-      const token = generateToken(systemAccountUuid, undefined, { admin: 'true' })
+      const token = generateToken(systemAccountUuid, undefined, { service: 'tool' })
       if (mode === 'start') {
         await fetch(`${endpoint}/api/v1/manage?token=${token}&operation=profile-start`, {
           method: 'PUT'
@@ -1950,7 +1959,7 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
         throw new Error('please provide SERVER_SECRET')
       }
 
-      const token = generateToken(systemAccountUuid, undefined, { admin: 'true' }, serverSecret)
+      const token = generateToken(systemAccountUuid, undefined, { service: 'tool' }, serverSecret)
 
       const limit = Math.min(Math.max(parseInt(opt.limit), 1), 1000)
       const url = `${statsUrl}/api/v1/analytics?limit=${limit}&sort=${opt.sort}&source=${opt.source}&token=${token}`
@@ -2026,7 +2035,7 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
       if (serverSecret === undefined) {
         throw new Error('please provide SERVER_SECRET')
       }
-      const token = generateToken(systemAccountUuid, undefined, { admin: 'true' }, serverSecret)
+      const token = generateToken(systemAccountUuid, undefined, { service: 'tool' }, serverSecret)
 
       const overviewResp = await fetch(`${statsUrl}/api/v1/overview?token=${token}`)
       if (!overviewResp.ok) {
@@ -2108,7 +2117,7 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
           indexes: opt.indexes,
           missingOnly: opt.missingOnly,
           serverSecret,
-          makeToken: () => generateToken(systemAccountUuid, undefined, { admin: 'true' }, serverSecret ?? '')
+          makeToken: () => generateToken(systemAccountUuid, undefined, { service: 'tool' }, serverSecret ?? '')
         })
       }
     )
@@ -2120,9 +2129,7 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
     .option('--count <count>', 'Number of persons to generate', '1000')
     .action(async (workspace: string, opt: { admin: boolean, count: string }) => {
       const count = parseInt(opt.count)
-      const token = generateToken(systemAccountUuid, workspace as WorkspaceUuid, {
-        ...(opt.admin ? { admin: 'true', service: 'tool' } : { service: 'tool' })
-      })
+      const token = generateToken(systemAccountUuid, workspace as WorkspaceUuid, { service: 'tool' })
       const endpoint = await getTransactorEndpoint(token, 'external')
       const client = createRestClient(endpoint, workspace, token)
       for (let i = 0; i < count; i++) {

@@ -21,5 +21,7 @@ export * from './utils'
 export * from './types'
 export * from './region-config'
 export * from './freeLimits'
+export { createManualSubscription } from './serviceOperations'
+export { isHumanAdmin } from './admin'
 
 export default accountPlugin

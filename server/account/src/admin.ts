@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+import { systemAccountUuid } from '@hcengineering/core'
+
 const ADMIN_EMAILS = new Set((process.env.ADMIN_EMAILS?.split(',') ?? []).map((e) => e.trim()))
 // Read-only admin panel access: sees everything, cannot mutate.
 const BILLING_EMAILS = new Set((process.env.BILLING_EMAILS?.split(',') ?? []).map((e) => e.trim()))
@@ -22,4 +24,12 @@ export function isAdminEmail (email: string): boolean {
 
 export function isBillingAdminEmail (email: string): boolean {
   return BILLING_EMAILS.has(email.trim())
+}
+
+/**
+ * A human admin: the account signed in with an admin email. Service and system tokens are excluded
+ * even when they carry `admin: 'true'`, so they can never pass an OTP-gated admin operation.
+ */
+export function isHumanAdmin (token: { account?: string, extra?: Record<string, any> }): boolean {
+  return token.extra?.admin === 'true' && token.account !== systemAccountUuid && token.extra?.service === undefined
 }

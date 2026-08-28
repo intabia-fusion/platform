@@ -265,7 +265,7 @@ export async function handleGetLargestSpaces (
   res: Response
 ): Promise<void> {
   const workspace = getWorkspaceUuid(req)
-  const token = generateToken(systemAccountUuid, workspace, { service: 'billing', admin: 'true' })
+  const token = generateToken(systemAccountUuid, workspace, { service: 'billing' })
 
   const client = await getClient(token, workspace)
 
@@ -589,7 +589,7 @@ async function getSubscriptionsCached (workspace: WorkspaceUuid): Promise<Subscr
   const cached = subsCache.get(workspace)
   if (cached !== undefined && now - cached.at < SUBS_CACHE_TTL_MS) return cached.subs
 
-  const token = generateToken(systemAccountUuid, workspace, { service: 'billing', admin: 'true' })
+  const token = generateToken(systemAccountUuid, workspace, { service: 'billing' })
   const subs = await getAccountClient(billingConfig.AccountsUrl, token).getSubscriptions(workspace, false)
 
   for (const [key, value] of subsCache) {

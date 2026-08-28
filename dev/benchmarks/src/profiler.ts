@@ -20,7 +20,8 @@ import { dirname, resolve } from 'path'
 import { existsSync } from 'fs'
 
 function getAdminToken (): string {
-  return generateToken(systemAccountUuid, undefined, { admin: 'true' })
+  // Transactor /api/v1/manage accepts the system account; no admin flag needed.
+  return generateToken(systemAccountUuid, undefined, { service: 'tool' })
 }
 
 export async function startProfile (transactorUrl: string): Promise<void> {
