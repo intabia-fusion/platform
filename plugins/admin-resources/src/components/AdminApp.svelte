@@ -14,11 +14,12 @@
 -->
 <script lang="ts">
   import login, { loginId } from '@hcengineering/login'
-  import { getMetadata, setMetadata } from '@hcengineering/platform'
+  import { getMetadata, setMetadata, translate } from '@hcengineering/platform'
   import presentation, { isAdminUser, isBillingAdminUser } from '@hcengineering/presentation'
-  import { Component, Loading, location, navigate } from '@hcengineering/ui'
+  import { Component, Loading, location, navigate, themeStore } from '@hcengineering/ui'
   import { onMount } from 'svelte'
 
+  import adminRes from '../plugin'
   import { getAccountClient } from '../utils'
   import AdminPanel from './AdminPanel.svelte'
 
@@ -40,6 +41,10 @@
       }
     }
     restoring = false
+  })
+
+  $: void translate(adminRes.string.AdminPanelTitle, {}, $themeStore.language).then((title) => {
+    document.title = title
   })
 
   $: if ($location !== undefined && !restoring) {

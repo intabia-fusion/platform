@@ -26,7 +26,7 @@
     type BillingPeriod,
     PaymentError
   } from '@hcengineering/payment-client'
-  import { type PlanItem, type PlanConfig, type PackageItem } from '@hcengineering/billing'
+  import { type PlanItem, type PlanConfig, type PackageItem, planChargeKopecks } from '@hcengineering/billing'
   import { getMetadata, translate, getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { MessageBox, getClient, addTxListener, removeTxListener } from '@hcengineering/presentation'
   import core, {
@@ -498,29 +498,16 @@
     return item?.priceMonthlyPerUser != null ? Number(item.priceMonthlyPerUser) : NaN
   }
 
-  // Yearly discount factor for a plan (e.g. 15% -> 0.85). 1 when no discount.
-  function discountFactor (item: PlanItem | undefined): number {
-    const p = item?.yearlyDiscount ?? 0
-    return 1 - p / 100
-  }
-
   // Effective monthly price (per seat if applicable)
   function monthly (base: number, item: PlanItem | undefined, period: BillingPeriod): number {
     if (period !== 'yearly') return base
-    return Math.round(base * discountFactor(item))
+    const yd = item?.yearlyDiscount ?? 0
+    return Math.round(base * (1 - yd / 100))
   }
 
-  // Full amount charged for a plan in the given period (monthly/yearly with discount), at an
-  // explicit seat count. Flat plans ignore seats.
+  // Full amount charged for a plan in the given period, in whole rubles (the dialogs display rubles).
   function planChargeFor (item: PlanItem | undefined, seats: number, period: BillingPeriod): number {
-    if (item == null || item.free === true) return 0
-    const perUser = monthlyPerUserBase(item)
-    if (Number.isFinite(perUser)) {
-      return period === 'yearly' ? monthly(perUser, item, period) * 12 * seats : perUser * seats
-    }
-    const n = Number(item.priceMonthly)
-    if (!Number.isFinite(n)) return 0
-    return period === 'yearly' ? monthly(n, item, period) : n
+    return planChargeKopecks(item, seats, period) / 100
   }
 
   // Downgrade to the free plan moves no money: keep the plain confirmation box, no seats/period/recurrent.
@@ -673,16 +660,9 @@
   // Full recurring price (kopecks) for the current plan at a given seat count and the active period.
   // Mirrors planChargeFor but pinned to the current plan and its stored period, in kopecks.
   function recurringPriceForCurrent (seats: number): number {
-    if (currentPlan == null || typeof currentPlan === 'string' || currentPlan.free === true) return 0
+    if (currentPlan == null || typeof currentPlan === 'string') return 0
     const period: BillingPeriod = currentSubscription?.providerData?.period === 'yearly' ? 'yearly' : 'monthly'
-    const perUser = monthlyPerUserBase(currentPlan)
-    if (Number.isFinite(perUser)) {
-      const rub = period === 'yearly' ? monthly(perUser, currentPlan, period) * 12 * seats : perUser * seats
-      return Math.round(rub * 100)
-    }
-    const n = Number(currentPlan.priceMonthly)
-    if (!Number.isFinite(n)) return 0
-    return Math.round((period === 'yearly' ? monthly(n, currentPlan, period) : n) * 100)
+    return planChargeKopecks(currentPlan, seats, period)
   }
 
   // Open the seat-change dialog for the active per-seat tier; confirm applies via updateSubscriptionPlan

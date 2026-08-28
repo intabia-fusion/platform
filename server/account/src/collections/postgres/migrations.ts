@@ -960,7 +960,7 @@ function getV31Migration (ns: string, flavor: DBFlavor): [string, string] {
     CREATE TABLE IF NOT EXISTS ${ns}.payment_operation (
         id ${types.string} NOT NULL DEFAULT gen_random_uuid()::TEXT,
         provider ${types.string} NOT NULL,
-        operation ${types.string} NOT NULL, -- init_charge | webhook | charge_recurrent | cancel | refund
+        operation ${types.string} NOT NULL, -- init_charge | webhook | charge_recurrent | cancel | refund | update
         status ${types.string}, -- provider/webhook status (CONFIRMED|REJECTED|...) or success/failed
         payment_id ${types.string}, -- provider charge id
         order_id ${types.string},

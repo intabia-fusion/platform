@@ -363,7 +363,7 @@ export interface PaymentIntent {
 }
 
 /** Append-only payment audit row (immutable). */
-export type PaymentOperationKind = 'init_charge' | 'webhook' | 'charge_recurrent' | 'cancel' | 'refund'
+export type PaymentOperationKind = 'init_charge' | 'webhook' | 'charge_recurrent' | 'cancel' | 'refund' | 'update'
 /** Who drove this row: the workspace user, our scheduler, the bank callback, or an admin. */
 export type PaymentActor = 'user' | 'system' | 'provider' | 'admin'
 export interface PaymentOperation {
