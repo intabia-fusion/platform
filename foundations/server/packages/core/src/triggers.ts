@@ -65,6 +65,11 @@ export class Triggers {
 
     const trigger = t.trigger
     const func = getResource(trigger)
+    // Old backups carry triggers whose resource is gone; nothing awaits `op` until one fires, so a
+    // dead one would only ever show up as an unhandled rejection. `op` stays rejected either way.
+    void func.catch((err) => {
+      console.error(`trigger ${trigger} is not resolvable`, err)
+    })
     const isAsync = t.isAsync === true
     this.triggers.push({
       // addDerived expands the query in place, and the document belongs to a model shared across workspaces.

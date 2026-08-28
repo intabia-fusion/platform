@@ -2,6 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test'
 import { SignUpData, SignUpOtpData } from './common-types'
 import { CommonPage } from './common-page'
 import { getOtpCode } from '../API/AccountDb'
+import { retryIntervals } from '../retry'
 
 /** Where sign up lands once it is done: password flow, OTP flow and join link each end elsewhere. */
 const afterSignUp = (url: URL): boolean =>
@@ -89,19 +90,15 @@ export class SignUpPage extends CommonPage {
   }
 
   async confirmOtpIfNeeded (email: string): Promise<void> {
-    // A stand without OTP never shows the code screen, so a plain wait here pays its full timeout
-    // on every sign up. Race the two outcomes instead and leave as soon as either settles.
-    const otpShown = await Promise.race([
-      this.codeInput()
-        .waitFor({ state: 'visible', timeout: 30000 })
-        .then(() => true)
-        .catch(() => false),
-      this.page
-        .waitForURL(afterSignUp, { timeout: 30000 })
-        .then(() => false)
-        .catch(() => false)
-    ])
-    if (!otpShown) return
+    // A stand without OTP never shows the code screen. Polling both outcomes leaves as soon as one
+    // of them holds; racing two waitFors instead left the loser burning its whole timeout.
+    await expect
+      .poll(async () => (await this.codeInput().isVisible()) || afterSignUp(new URL(this.page.url())), {
+        intervals: retryIntervals,
+        timeout: 30000
+      })
+      .toBe(true)
+    if (!(await this.codeInput().isVisible())) return
     const code = await getOtpCode(email)
     for (let i = 0; i < 6; i++) {
       await this.page.locator(`input[name="otp${i + 1}"]`).fill(code[i])

@@ -487,13 +487,15 @@ export class PlanningPage extends CalendarPage {
   }
 
   public async deleteTimeSlot (rowNumber: number): Promise<void> {
-    const row = this.page
-      .locator(
-        'div.hulyModal-container div.slots-content div.scroller-container div.box div.flex-between.min-w-full button[data-id="btnDelete"]'
-      )
-      .nth(rowNumber)
-    await row.click()
+    const rows = this.page.locator(
+      'div.hulyModal-container div.slots-content div.scroller-container div.box div.flex-between.min-w-full'
+    )
+    const before = await rows.count()
+    await rows.nth(rowNumber).locator('button[data-id="btnDelete"]').click()
     await this.pressYesDeletePopup(this.page)
+    // The confirmation closes before the removal round trip lands, and the caller closes the card
+    // right after - a slot that never went away would only surface later, in the calendar.
+    await expect(rows).toHaveCount(before - 1)
   }
 
   public async checkTimeSlotEndDate (rowNumber: number, dateEnd: string): Promise<void> {

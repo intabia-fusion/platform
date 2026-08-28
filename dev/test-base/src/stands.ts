@@ -307,11 +307,6 @@ export function mergeStands (base: StandConfig, ...others: StandConfig[]): Stand
   return { ...base, accounts, workspaces, cleanup, post: () => post.flatMap((it) => it()) }
 }
 
-/**
- * `full` runs the sanity and the QMS suites against one stand: qms-tests needs a subset of the
- * services tests/ already brings up. ws-tests stays separate - it needs a second (europe) region.
- * @public
- */
 /** Same stand with the America region moved onto CockroachDB, to keep that path covered. */
 const wsCockroach: StandConfig = {
   ...ws,
@@ -321,6 +316,11 @@ const wsCockroach: StandConfig = {
   waitPorts: [...(ws.waitPorts ?? []), ['localhost', 26258]]
 }
 
+/**
+ * `full` runs the sanity and the QMS suites against one stand: qms-tests needs a subset of the
+ * services tests/ already brings up. ws-tests stays separate - it needs a second (europe) region.
+ * @public
+ */
 export const stands: Record<string, StandConfig> = {
   sanity,
   ws,

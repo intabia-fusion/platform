@@ -23,6 +23,7 @@ describe('action logs', () => {
   const original = process.stdout.write.bind(process.stdout)
   let printed = ''
   let action: typeof logModule.action
+  let parallel: typeof logModule.parallel
 
   beforeAll(() => {
     // The console spy goes in before log.ts is loaded, so it sits under the stream patch and sees
@@ -36,6 +37,7 @@ describe('action logs', () => {
       const log: typeof logModule = require('../log')
       log.initLogs(dir)
       action = log.action
+      parallel = log.parallel
     })
   })
 
@@ -72,6 +74,46 @@ describe('action logs', () => {
     expect(fileFor('broken-step')).toContain('why it broke')
     expect(printed).toContain('why it broke')
     expect(printed).toContain('broken-step FAILED')
+  })
+
+  it('still routes a write that outlives its action', async () => {
+    let release: () => void = () => {}
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let tail: Promise<void> | undefined
+
+    await action('late-step', async () => {
+      process.stdout.write('during\n')
+      tail = gate.then(() => {
+        process.stdout.write('after\n')
+      })
+    })
+    release()
+    await tail
+
+    expect(fileFor('late-step')).toContain('during')
+    expect(fileFor('late-step')).toContain('after')
+  })
+
+  it('rejects only once every started item has settled', async () => {
+    const finished: number[] = []
+    let active = 0
+
+    await expect(
+      parallel([0, 1, 2, 3, 4], 2, async (item) => {
+        active++
+        await new Promise((resolve) => setTimeout(resolve, item === 0 ? 0 : 20))
+        active--
+        if (item === 0) throw new Error('boom')
+        finished.push(item)
+        return item
+      })
+    ).rejects.toThrow('boom')
+
+    expect(active).toBe(0)
+    // Item 1 was already in flight when 0 failed; the rest of the queue is never started.
+    expect(finished).toEqual([1])
   })
 
   it('routes concurrent actions into their own files', async () => {

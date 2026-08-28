@@ -9,18 +9,14 @@ if (process.env.TESTS_MAX_FAILURES !== undefined) {
   maxFailures = parseInt(process.env.TESTS_MAX_FAILURES)
 }
 
-// 'on-first-retry' traces the retry, which for a flake is the attempt that passed. Locally we
-// want the failing attempt's trace instead; CI wants the cheap one. Override with TRACE_MODE.
+// A run that stays green needs no trace, and a stable failure is reproduced by the retry anyway.
+// Tracing every attempt costs the whole run, so it is opt-in: TRACE_MODE=retain-on-failure when
+// hunting a flake, which is the only case where the failing attempt's trace is the one you need.
 const traceModes = ['on-first-retry', 'retain-on-failure', 'on', 'off', 'on-all-retries'] as const
 type TraceMode = (typeof traceModes)[number]
 
-const isCI = (process.env.CI ?? '') !== ''
 const requested = (process.env.TRACE_MODE ?? '').trim()
-const traceMode: TraceMode = traceModes.includes(requested as TraceMode)
-  ? (requested as TraceMode)
-  : isCI
-    ? 'on-first-retry'
-    : 'retain-on-failure'
+const traceMode: TraceMode = traceModes.includes(requested as TraceMode) ? (requested as TraceMode) : 'on-first-retry'
 if (requested !== '' && requested !== traceMode) {
   console.warn(`TRACE_MODE=${JSON.stringify(requested)} is not one of ${traceModes.join(', ')}; using ${traceMode}`)
 }

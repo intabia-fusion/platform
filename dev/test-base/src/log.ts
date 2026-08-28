@@ -14,7 +14,7 @@
 //
 
 import { AsyncLocalStorage } from 'async_hooks'
-import { appendFileSync, mkdirSync, readFileSync, rmSync } from 'fs'
+import { closeSync, mkdirSync, openSync, readFileSync, rmSync, writeSync } from 'fs'
 import { relative, resolve } from 'path'
 
 const startedAt = Date.now()
@@ -33,6 +33,38 @@ interface Sink {
 }
 
 const sinks = new AsyncLocalStorage<Sink>()
+
+/**
+ * One open descriptor per action log: subprocess output arrives chunk by chunk and reopening the
+ * file per chunk is the cost. Reopened on demand, so a write after the action closed it still lands.
+ */
+const handles = new Map<string, number>()
+
+function fdFor (file: string): number {
+  let fd = handles.get(file)
+  if (fd === undefined) {
+    fd = openSync(file, 'a')
+    handles.set(file, fd)
+  }
+  return fd
+}
+
+function closeFd (file: string): void {
+  const fd = handles.get(file)
+  if (fd === undefined) return
+  handles.delete(file)
+  closeSync(fd)
+}
+
+/** writeSync may write only part of the buffer; appendFileSync used to loop for us. */
+function writeAll (file: string, data: string | Buffer): void {
+  const buf = typeof data === 'string' ? Buffer.from(data) : data
+  const fd = fdFor(file)
+  let off = 0
+  while (off < buf.length) {
+    off += writeSync(fd, buf, off)
+  }
+}
 
 let logsDir: string | undefined
 let actionNo = 0
@@ -62,7 +94,7 @@ function patchStreams (): void {
     stream.write = ((chunk: any, ...rest: any[]): boolean => {
       const sink = sinks.getStore()
       if (sink === undefined) return original(chunk, ...rest)
-      appendFileSync(sink.file, typeof chunk === 'string' ? chunk : Buffer.from(chunk))
+      writeAll(sink.file, chunk)
       const cb = rest.find((it) => typeof it === 'function')
       cb?.()
       return true
@@ -112,7 +144,7 @@ export async function action<T> (name: string, fn: () => Promise<T>): Promise<T>
   if (logsDir === undefined) return await fn()
   const file = logFile(name)
   const from = Date.now()
-  appendFileSync(file, `# ${name}\n`)
+  writeAll(file, `# ${name}\n`)
   // A hung command otherwise prints nothing at all: its own output goes to the file, and the line
   // that names it is only written once it returns.
   const ticker = setInterval(() => {
@@ -129,6 +161,7 @@ export async function action<T> (name: string, fn: () => Promise<T>): Promise<T>
     throw err
   } finally {
     clearInterval(ticker)
+    closeFd(file)
   }
 }
 
@@ -156,14 +189,23 @@ export async function parallel<T, R> (items: T[], limit: number, fn: (item: T) =
   const results: R[] = new Array(items.length)
   let next = 0
 
+  // Fail-fast, but never leave a sibling unawaited: the caller exits the process, and a tool
+  // command killed mid-write leaves a half-created account behind.
+  let failure: any
   const worker = async (): Promise<void> => {
-    while (true) {
+    while (failure === undefined) {
       const idx = next++
       if (idx >= items.length) return
-      results[idx] = await fn(items[idx])
+      try {
+        results[idx] = await fn(items[idx])
+      } catch (err) {
+        failure ??= err
+        return
+      }
     }
   }
 
   await Promise.all(Array.from({ length: Math.min(Math.max(limit, 1), items.length) }, worker))
+  if (failure !== undefined) throw failure
   return results
 }

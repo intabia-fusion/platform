@@ -47,8 +47,6 @@ import { serverTrackerId } from '@hcengineering/server-tracker'
 import { serverViewId } from '@hcengineering/server-view'
 import { serverWorkflowId } from '@hcengineering/server-workflow'
 
-import { buildToolProgram } from '.'
-
 let locationsRegistered = false
 
 /**
@@ -108,23 +106,12 @@ export function prepareTools (): {
 }
 
 /**
- * Runs a single tool command in the current process. Env is read per command, so callers may point
- * separate commands at different regions/databases.
- * @public
- */
-export async function runToolCommand (args: string[]): Promise<void> {
-  registerToolLocations()
-  await buildToolProgram(prepareTools).parseAsync(['node', 'tool', ...args])
-}
-
-/**
  * @public
  */
 export function getMongoDBUrl (): string {
   const url = process.env.MONGO_URL
   if (url === undefined) {
-    console.error('please provide mongo DB URL')
-    process.exit(1)
+    throw new Error('please provide MONGO_URL')
   }
   return url
 }
@@ -135,8 +122,7 @@ export function getMongoDBUrl (): string {
 export function getAccountDBUrl (): string {
   const url = process.env.ACCOUNT_DB_URL
   if (url === undefined) {
-    console.error('please provide mongo ACCOUNT_DB_URL')
-    process.exit(1)
+    throw new Error('please provide ACCOUNT_DB_URL')
   }
   return url
 }
@@ -147,8 +133,7 @@ export function getAccountDBUrl (): string {
 export function getKvsUrl (): string {
   const url = process.env.KVS_URL
   if (url === undefined) {
-    console.error('please provide KVS_URL')
-    process.exit(1)
+    throw new Error('please provide KVS_URL')
   }
   return url
 }

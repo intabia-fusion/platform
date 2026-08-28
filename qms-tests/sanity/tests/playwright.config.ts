@@ -4,6 +4,9 @@ dotenvConfig()
 
 const PlatformURI = process.env.PLATFORM_URI ?? 'http://localhost:8083'
 
+// Tracing every attempt costs the whole run; TRACE_MODE=retain-on-failure when hunting a flake.
+const traceMode = (process.env.TRACE_MODE ?? 'on-first-retry') as 'on-first-retry'
+
 let maxFailures: number | undefined
 if (process.env.TESTS_MAX_FAILURES !== undefined) {
   maxFailures = parseInt(process.env.TESTS_MAX_FAILURES)
@@ -36,7 +39,7 @@ const config: PlaywrightTestConfig = {
           height: 900
         },
         trace: {
-          mode: 'retain-on-failure',
+          mode: traceMode,
           snapshots: true,
           screenshots: true,
           sources: true

@@ -225,6 +225,9 @@ export async function prepareStand (cfg: StandConfig): Promise<void> {
   const up = phase('docker up', async () => {
     await composeUp(compose)
   })
+  // Held until the await below: if the warmup throws first, `up` is never awaited and its rejection
+  // would otherwise surface as an unhandled one.
+  up.catch(() => {})
   applyEnv(envFor(cfg))
   await phase('tool warmup', async () => {
     warmupTool()

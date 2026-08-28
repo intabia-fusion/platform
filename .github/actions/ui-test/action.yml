@@ -98,6 +98,33 @@ runs:
         cd ./${{ inputs.test-folder }}/sanity
         node ../../common/scripts/install-run-rushx.js uitest
 
+    # Written by the json reporter and step-reporter.ts; only tests/sanity configures both, the
+    # other suites skip the blocks below.
+    - name: Test report summary
+      if: always()
+      shell: bash
+      run: |
+        cd ./${{ inputs.test-folder }}/sanity
+        {
+          echo "## UI tests: ${{ inputs.artifact-name-suffix }}"
+          if [ -f playwright-report.json ]; then
+            echo '<details><summary>What broke</summary>'
+            echo
+            echo '```'
+            node ../../tests/sanity/analyze_failures.js playwright-report.json || true
+            echo '```'
+            echo '</details>'
+          fi
+          if [ -f step-report.ndjson ]; then
+            echo '<details><summary>Where the time went</summary>'
+            echo
+            echo '```'
+            node ../../tests/sanity/analyze_steps.js step-report.ndjson --top 20 || true
+            echo '```'
+            echo '</details>'
+          fi
+        } >> "$GITHUB_STEP_SUMMARY"
+
     - name: Download profile
       if: inputs.enable-profiling == 'true'
       shell: bash
@@ -135,7 +162,10 @@ runs:
       uses: actions/upload-artifact@v5
       with:
         name: playwright-results-${{ inputs.artifact-name-suffix }}
-        path: ./${{ inputs.test-folder }}/sanity/playwright-report/
+        path: |
+          ./${{ inputs.test-folder }}/sanity/playwright-report/
+          ./${{ inputs.test-folder }}/sanity/playwright-report.json
+          ./${{ inputs.test-folder }}/sanity/step-report.ndjson
 
     - name: Upload Logs
       if: always()

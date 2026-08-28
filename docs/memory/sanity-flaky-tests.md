@@ -107,3 +107,17 @@ tests leave in All Issues.
 ~2070s CPU over ~7.6 min wall on 6 workers. Clicks 49%, expects 19%. Context/page creation 2%, so **reusing browser windows across tests is not a lever** — cost is page load and individual actions.
 
 `love` is longest single-worker unit (292s): 67s waiting for `div.floorGrid` after `goto` plus 17s in `goto` itself across ~79 SPA cold boots, 52.7s in in-app Love nav click (`office-page.ts:37`, 32 clicks averaging 1.65s — slower than full page load), 19.7s in one Start/Join click.
+
+**Tracing every attempt roughly double a local run.** A full trace (snapshots + screenshots +
+sources) is written for every test and thrown away on pass — 17.9MB per kept one. So the default is
+`on-first-retry` everywhere now: green run pay nothing, stable failure is traced by its own retry.
+`TRACE_MODE=retain-on-failure` only for the run where you chase a flake — `on-first-retry` trace the
+attempt that *passed* and tell nothing about the first one. Same knob in all three sanity configs.
+
+**`Promise.race` of two `waitFor`s bill the loser.** `confirmOtpIfNeeded` raced the code screen
+against the post-signup URL; the losing wait keep burning to its own timeout and Playwright record
+the full duration — 98.8s over 9 sign ups, p50 7.9s. `expect.poll` over both conditions leave as
+soon as one hold and start nothing that outlives the check.
+
+**`step-reporter.ts` is not a cost.** 18836 rows / 4MB per run, one `appendFileSync` per test in the
+main process; steps already cross the IPC for html and allure. Analyse with `node analyze_steps.js`.
