@@ -184,6 +184,9 @@
     "AuditTitle": "Administrator actions",
     "Target": "Target",
     "ReleaseSocialId": "Delete social id",
-    "Billing": "AI"
+    "Billing": "AI",
+    "AdminSessionTitle": "Admin access confirmation",
+    "AdminSessionHint": "Enter the code sent to your admin email to open an administration session.",
+    "AdminSessionRejected": "Wrong or expired code"
   }
 }

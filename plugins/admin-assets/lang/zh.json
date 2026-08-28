@@ -185,6 +185,9 @@
     "ReplaceSubscriptionConfirm": "工作区已有「{current}」。替换为「{next}」？",
     "Billing": "AI",
     "SortTokens": "按令牌",
-    "SortMinutes": "按分钟"
+    "SortMinutes": "按分钟",
+    "AdminSessionTitle": "Admin access confirmation",
+    "AdminSessionHint": "Enter the code sent to your admin email to open an administration session.",
+    "AdminSessionRejected": "Wrong or expired code"
   }
 }

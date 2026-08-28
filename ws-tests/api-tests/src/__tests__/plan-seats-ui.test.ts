@@ -33,6 +33,9 @@ import { getClient as getAccountClient } from '@hcengineering/account-client'
 import contact, { type Employee, ensureEmployee } from '@hcengineering/contact'
 import { generateToken } from '@hcengineering/server-token'
 
+/** Admin RPCs demand a second factor stamped within ADMIN_SESSION_TTL_SEC. */
+const adminMfaAt = (): string => String(Math.floor(Date.now() / 1000))
+
 // Reproduces the SANITY "seat downgrade read-only" UI check at the API level: after a downgrade
 // the UI's checkIsLimited must mark the over-limit member seatless. checkIsLimited reads
 // usageInfo.membersCount + the active subscription limits + the employee seat order. This test
@@ -56,7 +59,8 @@ describe('plan-seats-ui', () => {
   }, 30000)
 
   async function setUsersLimit (usersLimit: number): Promise<void> {
-    const adminToken = generateToken(systemAccountUuid, owner.workspaceId, { admin: 'true' }, 'secret')
+    const adminExtra = { admin: 'true', mfaAt: adminMfaAt() }
+    const adminToken = generateToken(systemAccountUuid, owner.workspaceId, adminExtra, 'secret')
     const adminClient = getAccountClient(config.ACCOUNTS_URL, adminToken)
     await adminClient.adminCreateSubscription({
       workspaceUuid: owner.workspaceId,

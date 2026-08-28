@@ -226,6 +226,8 @@ export interface AccountClient {
   getWorkspaceMembersInfo: (workspace: WorkspaceUuid) => Promise<WorkspaceMemberDetails[]>
   getAccountActivityStats: (account: AccountUuid, from: number) => Promise<AccountActivityStats>
   requestAdminOperationOtp: () => Promise<OtpInfo>
+  /** Consumes the admin second factor and returns a token stamped with `mfaAt`. */
+  verifyAdminSession: (otpCode: string) => Promise<{ account: AccountUuid, token: string }>
   adminUpdateWorkspaceRole: (
     workspace: WorkspaceUuid,
     targetAccount: AccountUuid,
@@ -1059,6 +1061,10 @@ class AccountClientImpl implements AccountClient {
 
   async requestAdminOperationOtp (): Promise<OtpInfo> {
     return await this.rpc({ method: 'requestAdminOperationOtp' as const, params: {} })
+  }
+
+  async verifyAdminSession (otpCode: string): Promise<{ account: AccountUuid, token: string }> {
+    return await this.rpc({ method: 'verifyAdminSession' as const, params: { otpCode } })
   }
 
   async adminUpdateWorkspaceRole (

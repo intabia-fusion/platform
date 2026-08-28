@@ -45,6 +45,7 @@ import {
 } from '@hcengineering/server-token'
 
 import { isAdminEmail, isBillingAdminEmail } from './admin'
+import { requireAdminOp } from './adminOp'
 import { accountPlugin, type CrmNotification } from './plugin'
 import { getFreePlanLimits } from './freeLimits'
 import { type AccountServiceMethods, getServiceMethods } from './serviceOperations'
@@ -134,7 +135,6 @@ import {
   updateAllowReadOnlyGuests,
   updatePasswordAgingRule,
   updateWorkspaceRole,
-  verifyAdminOtp,
   logAdminAction,
   verifyAllowedRole,
   verifyAllowedServices,
@@ -2637,13 +2637,7 @@ export async function deleteAccount (
   token: string,
   params: { uuid?: AccountUuid, otpCode?: string }
 ): Promise<void> {
-  const { account, extra } = decodeTokenVerbose(ctx, token)
-
-  const isAdmin = extra?.admin === 'true'
-
-  if (!isAdmin) {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-  }
+  const { account } = decodeTokenVerbose(ctx, token)
 
   const { uuid } = params
 
@@ -2651,8 +2645,8 @@ export async function deleteAccount (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
-  // Irreversible identity purge — require an emailed OTP confirmation.
-  await verifyAdminOtp(ctx, db, token, params.otpCode ?? '')
+  // Irreversible identity purge — human admin, fresh session, emailed OTP confirmation.
+  await requireAdminOp(ctx, db, token, 'delete_account', params.otpCode ?? '', uuid)
 
   if (uuid === account) {
     // Admin must not delete their own account (would also break the OTP-email lookup).

@@ -184,6 +184,9 @@
     "ReleaseSocialId": "Social id sil",
     "Billing": "AI",
     "SortTokens": "Tokene göre",
-    "SortMinutes": "Dakikaya göre"
+    "SortMinutes": "Dakikaya göre",
+    "AdminSessionTitle": "Admin access confirmation",
+    "AdminSessionHint": "Enter the code sent to your admin email to open an administration session.",
+    "AdminSessionRejected": "Wrong or expired code"
   }
 }

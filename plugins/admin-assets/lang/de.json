@@ -184,6 +184,9 @@
     "ReleaseSocialId": "Social ID löschen",
     "Billing": "AI",
     "SortTokens": "Nach Tokens",
-    "SortMinutes": "Nach Minuten"
+    "SortMinutes": "Nach Minuten",
+    "AdminSessionTitle": "Admin access confirmation",
+    "AdminSessionHint": "Enter the code sent to your admin email to open an administration session.",
+    "AdminSessionRejected": "Wrong or expired code"
   }
 }

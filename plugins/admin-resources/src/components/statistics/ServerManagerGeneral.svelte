@@ -20,7 +20,7 @@
   import presentation from '@hcengineering/presentation'
   import { Button, DropdownLabels, EditBox, IconArrowLeft, IconArrowRight, ticker } from '@hcengineering/ui'
 
-  import { getAccountClient } from '../../utils'
+  import { getAccountClient, adminFetch } from '../../utils'
 
   const token: string = getMetadata(presentation.metadata.Token) ?? ''
 
@@ -64,7 +64,7 @@
     link.style.display = 'none'
     link.setAttribute('target', '_blank')
     const json = await (
-      await fetch(endpoint + `/api/v1/manage?token=${token}&operation=profile-stop`, {
+      await adminFetch(endpoint + '/api/v1/manage?operation=profile-stop', {
         method: 'PUT'
       })
     ).json()
@@ -94,16 +94,13 @@
         on:click={() => {
           const accounts = getMetadata(login.metadata.AccountsUrl) ?? ''
           if (accounts !== '') {
-            void fetch(
-              concatLink(accounts, `/api/v1/manage?token=${token}&operation=maintenance&timeout=${warningTimeout}`),
-              {
-                method: 'PUT',
-                body: JSON.stringify({ message: maintenanceMessage }),
-                headers: {
-                  'Content-Type': 'application/json;charset=utf-8'
-                }
+            void fetch(concatLink(accounts, `/api/v1/manage?operation=maintenance&timeout=${warningTimeout}`), {
+              method: 'PUT',
+              body: JSON.stringify({ message: maintenanceMessage }),
+              headers: {
+                'Content-Type': 'application/json;charset=utf-8'
               }
-            )
+            })
           }
         }}
       />
@@ -119,7 +116,7 @@
       on:click={() => {
         const accounts = getMetadata(login.metadata.AccountsUrl) ?? ''
         if (accounts !== '') {
-          void fetch(concatLink(accounts, `/api/v1/manage?token=${token}&operation=maintenance&timeout=-1`), {
+          void adminFetch(concatLink(accounts, '/api/v1/manage?operation=maintenance&timeout=-1'), {
             method: 'PUT'
           })
         }
@@ -137,7 +134,7 @@
           label={getEmbeddedLabel('Profile server')}
           disabled={endpoint === ''}
           on:click={() => {
-            void fetch(endpoint + `/api/v1/manage?token=${token}&operation=profile-start`, {
+            void adminFetch(endpoint + '/api/v1/manage?operation=profile-start', {
               method: 'PUT'
             })
             void fetchProfiling(0)

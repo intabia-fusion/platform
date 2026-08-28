@@ -25,6 +25,9 @@ import {
 } from '@hcengineering/account-client'
 import { generateToken } from '@hcengineering/server-token'
 
+/** Admin RPCs demand a second factor stamped within ADMIN_SESSION_TTL_SEC. */
+const adminMfaAt = (): string => String(Math.floor(Date.now() / 1000))
+
 // Uses api-tests-unpaid (created without a plan). Drives the account subscription store directly
 // via a payment-service token to assert the provider-agnostic trial invariant: activating a paid
 // Business tier supersedes an active trial, and a Trialing tier is visible/plan-granting on read.
@@ -40,7 +43,7 @@ describe('plan-trial', () => {
     config = await loadServerConfig('http://localhost:8083')
     const listAdmin = getAccountClient(
       config.ACCOUNTS_URL,
-      generateToken(systemAccountUuid, undefined, { admin: 'true' }, 'secret')
+      generateToken(systemAccountUuid, undefined, { admin: 'true', mfaAt: adminMfaAt() }, 'secret')
     )
     const ws = (await listAdmin.listWorkspaces()).find((w) => w.url === wsName)
     if (ws == null) throw new Error(`Workspace not found: ${wsName}`)
@@ -50,7 +53,7 @@ describe('plan-trial', () => {
     // adminCreateSubscription requires an admin token bound to the workspace.
     admin = getAccountClient(
       config.ACCOUNTS_URL,
-      generateToken(systemAccountUuid, workspaceUuid, { admin: 'true' }, 'secret')
+      generateToken(systemAccountUuid, workspaceUuid, { admin: 'true', mfaAt: adminMfaAt() }, 'secret')
     )
     const members = await account.getWorkspaceMembers()
     const owner = members.find((m) => m.role === 'OWNER') ?? members[0]

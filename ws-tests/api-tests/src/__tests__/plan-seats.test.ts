@@ -37,6 +37,9 @@ import { ensureEmployee } from '@hcengineering/contact'
 import { generateToken } from '@hcengineering/server-token'
 import drivePlugin, { type Drive } from '@hcengineering/drive'
 
+/** Admin RPCs demand a second factor stamped within ADMIN_SESSION_TTL_SEC. */
+const adminMfaAt = (): string => String(Math.floor(Date.now() / 1000))
+
 // Workspace api-tests-seats boots with business (10 seats) so user1(OWNER)/user2/user3 all onboard.
 // The test then sets usersLimit=2: seats go by role priority (Owner first), then account uuid — the
 // owner plus one user are seated, the other user is downgraded to read-only. Asserts seat enforcement
@@ -68,7 +71,8 @@ describe('plan-seats', () => {
   }, 30000)
 
   async function setUsersLimit (usersLimit: number): Promise<void> {
-    const adminToken = generateToken(systemAccountUuid, owner.workspaceId, { admin: 'true' }, 'secret')
+    const adminExtra = { admin: 'true', mfaAt: adminMfaAt() }
+    const adminToken = generateToken(systemAccountUuid, owner.workspaceId, adminExtra, 'secret')
     const adminClient = getAccountClient(config.ACCOUNTS_URL, adminToken)
     await adminClient.adminCreateSubscription({
       workspaceUuid: owner.workspaceId,

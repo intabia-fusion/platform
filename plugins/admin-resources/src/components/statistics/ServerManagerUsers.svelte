@@ -6,9 +6,8 @@
   import { Button, CheckBox, ticker, Expandable } from '@hcengineering/ui'
   import { FixedColumn } from '@hcengineering/view-resources'
 
-  import { getAccountClient, listWorkspacesPaged } from '../../utils'
+  import { getAccountClient, listWorkspacesPaged, adminFetch } from '../../utils'
 
-  const token: string = getMetadata(presentation.metadata.Token) ?? ''
   const endpoint = getMetadata(presentation.metadata.StatsUrl)
 
   // Force-close must hit the transactor holding the workspace; we don't know which one,
@@ -24,7 +23,7 @@
   function forceClose (wsId: string): void {
     for (const t of transactors) {
       const url = t.external.replace(/^ws/, 'http').replace(/\/$/, '')
-      void fetch(url + `/api/v1/manage?token=${token}&operation=force-close&wsId=${wsId}`, { method: 'PUT' })
+      void adminFetch(url + `/api/v1/manage?operation=force-close&wsId=${wsId}`, { method: 'PUT' })
     }
   }
 
@@ -72,7 +71,7 @@
   })
 
   async function fetchStats (time: number): Promise<void> {
-    await fetch(endpoint + `/api/v1/overview?token=${token}`, {})
+    await adminFetch(endpoint + '/api/v1/overview')
       .then(async (json) => {
         data = await json.json()
       })

@@ -184,6 +184,9 @@
     "ReleaseSocialId": "ソーシャルIDを削除",
     "Billing": "AI",
     "SortTokens": "トークン順",
-    "SortMinutes": "分順"
+    "SortMinutes": "分順",
+    "AdminSessionTitle": "Admin access confirmation",
+    "AdminSessionHint": "Enter the code sent to your admin email to open an administration session.",
+    "AdminSessionRejected": "Wrong or expired code"
   }
 }

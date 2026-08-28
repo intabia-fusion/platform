@@ -20,8 +20,9 @@
   import { onMount } from 'svelte'
 
   import adminRes from '../plugin'
-  import { getAccountClient } from '../utils'
+  import { getAccountClient, hasAdminSession } from '../utils'
   import AdminPanel from './AdminPanel.svelte'
+  import AdminSessionGate from './AdminSessionGate.svelte'
 
   // Fresh page load has no token metadata: restore session from auth cookie,
   // else render the login form in place (successful login populates the token).
@@ -56,6 +57,10 @@
   $: if (notAdmin) {
     navigate({ path: [loginId] }, true)
   }
+
+  // Second factor: every admin RPC refuses a token without a fresh `mfaAt`.
+  let sessionTick = 0
+  $: hasSession = sessionTick >= 0 && token != null && hasAdminSession()
 </script>
 
 {#if restoring}
@@ -64,6 +69,13 @@
   <Component is={login.component.LoginApp} />
 {:else if notAdmin}
   <Loading />
+{:else if !hasSession}
+  <AdminSessionGate
+    on:opened={() => {
+      token = getMetadata(presentation.metadata.Token)
+      sessionTick++
+    }}
+  />
 {:else}
   <AdminPanel />
 {/if}

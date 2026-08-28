@@ -388,7 +388,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
 
   router.put('/api/v1/manage', async (req, res) => {
     try {
-      const token = req.query.token as string
+      const token = (req.query.token as string) ?? extractAuthorizationToken(req.headers)
       const payload = decodeToken(token)
       if (!isStatsAdmin(payload)) {
         req.res.writeHead(404, {})

@@ -23,5 +23,6 @@ export * from './region-config'
 export * from './freeLimits'
 export { createManualSubscription } from './serviceOperations'
 export { isHumanAdmin } from './admin'
+export * from './adminOp'
 
 export default accountPlugin

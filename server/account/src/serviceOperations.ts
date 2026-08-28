@@ -31,10 +31,11 @@ import {
   type AccountUuid,
   type UsageStatus,
   type Timestamp,
-  readOnlyGuestAccountUuid
+  readOnlyGuestAccountUuid,
+  systemAccountUuid
 } from '@hcengineering/core'
 import platform, { getMetadata, PlatformError, Severity, Status, unknownError } from '@hcengineering/platform'
-import { decodeTokenVerbose } from '@hcengineering/server-token'
+import { decodeTokenVerbose, generateToken, type Token } from '@hcengineering/server-token'
 
 import {
   LimitCategory,
@@ -45,6 +46,7 @@ import {
 } from '@hcengineering/server-core'
 
 import { isHumanAdmin } from './admin'
+import { requireAdminOp, requireAdminSession, verifyAdminOtpLimited } from './adminOp'
 import { accountPlugin } from './plugin'
 import { SubscriptionStatus, SubscriptionType } from './types'
 import type {
@@ -108,7 +110,6 @@ import {
   doMergeAccounts,
   assignableRoles,
   requestAdminOtp,
-  verifyAdminOtp,
   logAdminAction,
   doReleaseSocialId,
   publishMembersChanged
@@ -148,7 +149,7 @@ export async function listWorkspaces (
 }
 
 function checkAdmin (ctx: MeasureContext, token: string): void {
-  const { extra } = decodeTokenVerbose(ctx, token)
+  const { extra } = requireAdminSession(ctx, token)
   if (extra?.admin !== 'true') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
@@ -156,10 +157,18 @@ function checkAdmin (ctx: MeasureContext, token: string): void {
 
 // Read-only admin gate: full admin OR billing (view-only) tokens pass.
 function checkAdminRead (ctx: MeasureContext, token: string): void {
-  const { extra } = decodeTokenVerbose(ctx, token)
-  if (extra?.admin !== 'true' && extra?.billingAdmin !== 'true') {
+  requireAdminSession(ctx, token)
+}
+
+// Before the session exists: the caller may still ask for an OTP and open one.
+function checkHumanAdminLogin (ctx: MeasureContext, token: string): Token {
+  const decoded = decodeTokenVerbose(ctx, token)
+  const { account, extra } = decoded
+  const isAdminEmail = extra?.admin === 'true' || extra?.billingAdmin === 'true'
+  if (!isAdminEmail || account === systemAccountUuid || extra?.service !== undefined) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
+  return decoded
 }
 
 export async function listWorkspacesPaged (
@@ -235,8 +244,26 @@ export async function requestAdminOperationOtp (
   token: string,
   _params: Record<string, unknown>
 ): Promise<OtpInfo> {
-  checkAdmin(ctx, token)
+  checkHumanAdminLogin(ctx, token)
   return await requestAdminOtp(ctx, db, branding, token)
+}
+
+/**
+ * Opens an admin session: consumes the second factor and returns a token stamped with `mfaAt`.
+ * Every other admin entry point demands that stamp and refuses it once ADMIN_SESSION_TTL_SEC passes.
+ */
+export async function verifyAdminSession (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { otpCode: string }
+): Promise<{ account: AccountUuid, token: string }> {
+  const { account, extra } = checkHumanAdminLogin(ctx, token)
+  await verifyAdminOtpLimited(ctx, db, token, params.otpCode)
+  const mfaAt = String(Math.floor(Date.now() / 1000))
+  await logAdminAction(ctx, db, token, 'admin_session')
+  return { account, token: generateToken(account, undefined, { ...extra, mfaAt }) }
 }
 
 export async function listAdminActions (
@@ -258,8 +285,7 @@ export async function adminReleaseSocialId (
   token: string,
   params: { personUuid: PersonUuid, type: SocialIdType, value: string, otpCode: string }
 ): Promise<void> {
-  checkAdmin(ctx, token)
-  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  await requireAdminOp(ctx, db, token, 'release_social_id', params.otpCode)
   const { account } = decodeTokenVerbose(ctx, token)
   const { personUuid, type, value } = params
 
@@ -281,8 +307,7 @@ export async function adminDeletePerson (
   token: string,
   params: { personUuid: PersonUuid, otpCode: string }
 ): Promise<void> {
-  checkAdmin(ctx, token)
-  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  await requireAdminOp(ctx, db, token, 'delete_person', params.otpCode)
   const { personUuid } = params
 
   const person = await db.person.findOne({ uuid: personUuid })
@@ -321,8 +346,7 @@ export async function adminUpdateWorkspaceRole (
   token: string,
   params: { workspace: WorkspaceUuid, targetAccount: AccountUuid, role: AccountRole, otpCode: string }
 ): Promise<void> {
-  checkAdmin(ctx, token)
-  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  await requireAdminOp(ctx, db, token, 'update_role', params.otpCode)
   const { workspace, targetAccount, role } = params
   if (!assignableRoles.includes(role)) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -345,8 +369,7 @@ export async function adminAddWorkspaceMember (
   token: string,
   params: { workspace: WorkspaceUuid, email: string, role: AccountRole, otpCode: string }
 ): Promise<void> {
-  checkAdmin(ctx, token)
-  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  await requireAdminOp(ctx, db, token, 'add_member', params.otpCode)
   const { workspace, email, role } = params
   if (!assignableRoles.includes(role)) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -409,8 +432,7 @@ export async function adminRemoveWorkspaceMember (
   token: string,
   params: { workspace: WorkspaceUuid, targetAccount: AccountUuid, otpCode: string }
 ): Promise<void> {
-  checkAdmin(ctx, token)
-  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  await requireAdminOp(ctx, db, token, 'remove_member', params.otpCode)
   const { workspace, targetAccount } = params
   await ensureNotLastOwner(db, workspace, targetAccount)
   await db.unassignWorkspace(targetAccount, workspace)
@@ -441,8 +463,7 @@ export async function adminUpdateSubscription (
     otpCode: string
   }
 ): Promise<void> {
-  checkAdmin(ctx, token)
-  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  await requireAdminOp(ctx, db, token, 'update_subscription', params.otpCode)
   const { subscriptionId, seats, periodEndMs, amount, windowMonthLimit } = params
 
   const existing = await db.subscription.findOne({ id: subscriptionId })
@@ -574,8 +595,7 @@ export async function adminCancelSubscription (
   token: string,
   params: { subscriptionId: string, otpCode: string }
 ): Promise<void> {
-  checkAdmin(ctx, token)
-  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  await requireAdminOp(ctx, db, token, 'cancel_subscription', params.otpCode)
   const existing = await db.subscription.findOne({ id: params.subscriptionId })
   if (existing == null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -678,8 +698,7 @@ export async function adminUpdateWorkspaceUrl (
   token: string,
   params: { workspace: WorkspaceUuid, url: string, otpCode: string }
 ): Promise<void> {
-  checkAdmin(ctx, token)
-  await verifyAdminOtp(ctx, db, token, params.otpCode)
+  await requireAdminOp(ctx, db, token, 'change_workspace_url', params.otpCode)
   const url = params.url.trim().toLowerCase()
   if (url.length === 0) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -765,7 +784,7 @@ export async function performWorkspaceOperation (
   // Destructive operations by a human admin require an emailed OTP.
   // System/service tokens (backup/workspace/tool) run unattended and are exempt.
   if (isAdminUser && ['delete', 'archive', 'migrate-to'].includes(event)) {
-    await verifyAdminOtp(ctx, db, token, otpCode ?? '')
+    await requireAdminOp(ctx, db, token, `workspace_${event}`, otpCode ?? '')
   }
 
   const workspaceUuids = Array.isArray(workspaceId) ? workspaceId : [workspaceId]
@@ -2402,6 +2421,7 @@ export type AccountServiceMethods =
   | 'getWorkspaceMembersInfo'
   | 'getAccountActivityStats'
   | 'requestAdminOperationOtp'
+  | 'verifyAdminSession'
   | 'adminUpdateWorkspaceRole'
   | 'adminAddWorkspaceMember'
   | 'adminRemoveWorkspaceMember'
@@ -2479,6 +2499,7 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     getWorkspaceMembersInfo: wrap(getWorkspaceMembersInfo),
     getAccountActivityStats: wrap(getAccountActivityStats),
     requestAdminOperationOtp: wrap(requestAdminOperationOtp),
+    verifyAdminSession: wrap(verifyAdminSession),
     adminUpdateWorkspaceRole: wrap(adminUpdateWorkspaceRole),
     adminAddWorkspaceMember: wrap(adminAddWorkspaceMember),
     adminRemoveWorkspaceMember: wrap(adminRemoveWorkspaceMember),

@@ -37,3 +37,27 @@
 - Убрана опция `generate-token --admin` в `dev/tool`: после A1 такой токен всё равно бесполезен (нет `mfaAt`).
 
 Не сломано: `*-real.test.ts` в `server/account` падают и на чистом develop (нужна живая БД).
+
+## A1 - админ-сессия (сделано)
+
+- `server/account/src/adminOp.ts`: `requireAdminSession` (admin|billingAdmin + свежий `extra.mfaAt`,
+  `ADMIN_SESSION_TTL_SEC`, дефолт 12 ч), `verifyAdminOtpLimited` (5 неудач за 300 с по строкам
+  `admin_action.otp_failed` -> сброс живого OTP + `Forbidden`), `requireAdminOp`.
+- Отступление от плана: вместо `adminOp(…, fn)` сделан **гейт** `requireAdminOp(…)`. Вызывающие уже
+  пишут свой `logAdminAction` после работы; обёртка над `fn` потребовала бы переписать 10 функций
+  с лишним уровнем вложенности при том же порядке проверок.
+- `checkAdmin`/`checkAdminRead` теперь идут через `requireAdminSession` - 20 call sites не тронуты.
+  Отдельный `checkHumanAdminLogin` для двух точек, работающих ДО сессии: `requestAdminOperationOtp`
+  и `verifyAdminSession`.
+- `verifyAdminSession(otpCode)` -> токен с `extra.mfaAt`, аудит `admin_session`. `PUT /cookie`
+  сохраняет `extra`, поэтому сессия переживает перезагрузку страницы.
+- 10 мутаций переведены на `requireAdminOp`; `deleteAccount` тоже (его собственная admin-проверка
+  выброшена как дубль).
+- Клиент: `hasAdminSession()`/`openAdminSession()` в `admin-resources/utils.ts`, `AdminSessionGate.svelte`,
+  `AdminApp` показывает форму кода до открытия сессии.
+- `?token=` в query убран в 14 местах: `adminFetch()` в `admin-resources/utils.ts` кладёт
+  `Authorization`, `fetchStatsJson` ходит через него; `SelectWorkspaceMenu.svelte` правлен инлайном.
+  Серверам заголовок уже понятен, кроме stats `PUT /manage` - добавлен `extractAuthorizationToken`.
+  Query-вариант пока принимается, снимается в A2.
+- Фолбэк по тестам: `admin-otp.test.ts` удалён (его контракт противоположен кейсу 6); в `plan-*.test.ts`
+  подделанные админ-токены получили `mfaAt` - они читают через `checkAdminRead`.

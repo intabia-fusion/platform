@@ -184,6 +184,9 @@
     "ReleaseSocialId": "Smazat social id",
     "Billing": "Fakturace",
     "SortTokens": "Podle tokenů",
-    "SortMinutes": "Podle minut"
+    "SortMinutes": "Podle minut",
+    "AdminSessionTitle": "Admin access confirmation",
+    "AdminSessionHint": "Enter the code sent to your admin email to open an administration session.",
+    "AdminSessionRejected": "Wrong or expired code"
   }
 }

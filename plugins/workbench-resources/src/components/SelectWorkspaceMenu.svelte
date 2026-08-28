@@ -148,7 +148,7 @@
   let data: any
   onDestroy(
     ticker.subscribe(() => {
-      void fetch(endpoint + `/api/v1/statistics?token=${token}`, {})
+      void fetch(endpoint + '/api/v1/statistics', { headers: { Authorization: `Bearer ${token}` } })
         .then(async (json) => {
           data = await json.json()
         })

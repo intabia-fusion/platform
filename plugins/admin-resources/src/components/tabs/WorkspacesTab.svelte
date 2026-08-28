@@ -70,7 +70,8 @@
     performWorkspaceOperationWithOtp,
     requestAdminOtpCode,
     type PlanOptions,
-    type WorkspaceInfo
+    type WorkspaceInfo,
+    adminFetch
   } from '../../utils'
 
   export let refreshTick: number = 0
@@ -320,12 +321,10 @@
 
   let backupable: WorkspaceInfo[] = []
 
-  const token: string = getMetadata(presentation.metadata.Token) ?? ''
-
   const endpoint = getMetadata(presentation.metadata.StatsUrl)
 
   async function fetchStats (time: number): Promise<void> {
-    await fetch(endpoint + `/api/v1/overview?token=${token}`, {})
+    await adminFetch(endpoint + '/api/v1/overview')
       .then(async (json) => {
         data = await json.json()
       })
