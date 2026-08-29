@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
+import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { SignUpData } from '../model/common-types'
-import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import {
   createAccount,
   createAccountAndWorkspace,
@@ -15,7 +15,6 @@ import {
 test.describe.configure({ mode: 'parallel' })
 
 test.describe('Check direct messages channels', () => {
-  let leftSideMenuPage: LeftSideMenuPage
   let chunterPage: ChunterPage
   let channelPage: ChannelPage
   let newUser2: SignUpData
@@ -25,12 +24,11 @@ test.describe('Check direct messages channels', () => {
     data = generateTestData()
     newUser2 = generateUser()
 
-    leftSideMenuPage = new LeftSideMenuPage(page)
     chunterPage = new ChunterPage(page)
     channelPage = new ChannelPage(page)
     // Straight into the workspace from the account token: the login form plus the workspace
     // picker are three page loads and cost about a second per test.
-    await createAccountAndWorkspace(page, request, data)
+    await createAccountAndWorkspace(page, request, data, 'chunter')
   })
 
   test('User can create/close/reacreate direct chat with employee', async ({ request, page, browser }) => {
@@ -43,7 +41,6 @@ test.describe('Check direct messages channels', () => {
     await leftSideMenuPageSecond.clickChunter()
 
     await test.step('Create a direct chat', async () => {
-      await leftSideMenuPage.clickChunter()
       await chunterPage.createDirectChat(newUser2)
     })
 

@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test'
 import { generateId, iterateLocator, PlatformSetting, PlatformURI } from '../utils'
-import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { IssuesPage } from '../model/tracker/issues-page'
 import { NewIssue } from '../model/tracker/types'
 import { DateDivided } from '../model/types'
@@ -15,16 +14,14 @@ test.describe('Tracker filters tests', () => {
   // Opening every filtered issue makes the test scale with leftover data; a handful proves the filter.
   const issuesToCheck = 5
 
-  let leftSideMenuPage: LeftSideMenuPage
   let issuesPage: IssuesPage
   let issuesDetailsPage: IssuesDetailsPage
 
   test.beforeEach(async ({ page }) => {
-    leftSideMenuPage = new LeftSideMenuPage(page)
     issuesPage = new IssuesPage(page)
     issuesDetailsPage = new IssuesDetailsPage(page)
 
-    await (await page.goto(`${PlatformURI}/workbench/sanity-ws`))?.finished()
+    await (await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker`))?.finished()
   })
 
   // TODO: We need to split them into separate one's and fix.
@@ -42,8 +39,6 @@ test.describe('Tracker filters tests', () => {
       duedate: 'today',
       filePath: 'cat.jpeg'
     }
-
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
     await issuesPage.createNewIssue(newIssue)
@@ -138,8 +133,6 @@ test.describe('Tracker filters tests', () => {
       duedate: 'today',
       filePath: 'cat.jpeg'
     }
-
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
     await issuesPage.createNewIssue(newIssue)
@@ -255,8 +248,6 @@ test.describe('Tracker filters tests', () => {
   })
 
   test('Priority filter', async () => {
-    await leftSideMenuPage.clickTracker()
-
     await issuesPage.clickModelSelectorAll()
 
     for (const priority of PRIORITIES) {
@@ -272,7 +263,6 @@ test.describe('Tracker filters tests', () => {
 
   test('Created by filter', async () => {
     const createdBy = 'Appleseed John'
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
 
@@ -290,7 +280,6 @@ test.describe('Tracker filters tests', () => {
 
   test('Component filter', async () => {
     const defaultComponent = 'Default component'
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
 
@@ -317,7 +306,6 @@ test.describe('Tracker filters tests', () => {
   test('Title filter', async () => {
     const firstSearch = 'issue'
     const secondSearch = 'done'
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
 
@@ -347,7 +335,6 @@ test.describe('Tracker filters tests', () => {
 
   test('Modified by filter', async () => {
     const modifierName = 'Appleseed John'
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
 
@@ -387,8 +374,6 @@ test.describe('Tracker filters tests', () => {
       description: 'Issue for the Milestone filter',
       milestone: filterMilestoneName
     }
-
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
     await issuesPage.createNewIssue(milestoneIssue)
@@ -467,7 +452,6 @@ test.describe('Tracker filters tests', () => {
       duedate: 'nextMonth'
     }
 
-    await leftSideMenuPage.clickTracker()
     await issuesPage.clickModelSelectorAll()
     await issuesPage.createNewIssue(dueDateOverdueIssue)
     await issuesPage.createNewIssue(dueDateTodayIssue)

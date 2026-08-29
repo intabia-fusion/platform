@@ -90,6 +90,7 @@ sanity-nginx-1` after any `--force-recreate`.
 | `documents-print-preview.spec` | Retrying the *fetch* — the blob never changes | Retry the print action |
 | `mentions.spec` | Mention popup fills categories one by one; its overlay blocks `g#Send` | Settle the item count, assert the popup closed |
 | `component.spec` Edit a component | Description typed into ProseMirror overwritten by the panel's query callback | Verify each field inside `editComponent` - retrying the whole edit reopens the lead popup and fails there instead |
+| `kanban.spec` drag sequences | `expect.poll` read the status *before* the drag and returned it, so every successful drop still cost one more interval; `retryIntervals` then fell back to its 3s tail. A drop that lands while findOne still reports the old status also leaves the card out of the DOM, and the throw from `ensureVisible` killed the whole poll | `dragUntilStatus` reads after the drag, swallows its error, and polls at `[100, 200, 300, 500]` - 45.9s to 3.0s |
 | `todos.spec` Edit a ToDo | The todo list re-orders while another worker adds slots, so the click opened a neighbouring row and every check read that card | `openToDoByName` asserts the panel title and retries the click |
 | `meetings.scenarios` knock / re-entry | `sendKnockRequest` silently no-ops; ParticipantInfo outlives the drain | Retry the click; drain again on seeing Knock |
 
@@ -98,6 +99,27 @@ sanity-nginx-1` after any `--force-recreate`.
 **`subissues.spec.ts:153`.** Moving the issue closes the panel; reopening from the list renders the
 identifier as a breadcrumb instead of `div.title.not-active` — 4 failures in 20 versus 1 flake in a
 full run. Reverted. Needs a locator matching both renderings.
+
+## Wall time is packing, not just work
+
+`meetings.all.spec.ts` imports all 17 `love/*.tests.ts`, so with `fullyParallel: false` love is one
+sequential ~178s job - twice the next file. It used to start ~82s in and finish at 276s while the
+other four workers idled from 190s. Giving it its own project (`Love` declared **before** `Platform`,
+`testMatch: /love\//` vs `testIgnore: /love\//`, `use` shared through `platformUse`) puts it at the
+head of the queue: love now runs 0.1s -> 162.9s and **wall went 276s -> 238s**. Packing is near the
+ceiling now (1114s of worker busy over 238s = 4.68 effective workers), so further wall cuts have to
+come out of the work itself.
+
+**Do not try to parallelise inside love.** `waitForActiveMeetingsToFinish` does not just clean up
+after itself - it force-finishes every `MeetingMinutes` and deletes every `ParticipantInfo` /
+`UserMeetingInvite` in the workspace (no room filter), then *waits until none are left*. Two love
+files in parallel kill each other's meetings. 12 of 17 reach it via `closeMeetingContexts`;
+`session` and `bidirectional-loop` also call it mid-test. Only `access`, `migration`, `privacy` and
+`meetings.tests` are safe to split out (13.2s of 178s) - and after the project split love is no
+longer the critical path, so that buys nothing.
+
+`meetings.start.tests.ts` creates real meetings and has **no cleanup at all** - it only works because
+the aggregator runs it before files whose `beforeEach` drains. Any reordering leaves a live meeting.
 
 ## Where the time goes
 
@@ -112,6 +134,21 @@ packing (5 workers already give 4.2x). Cutting wall time means cutting work.
 | `tab-all` (`clickModelSelectorAll`) | 40.2s in 122 |
 | love widget waits (`meeting-widget` 35s, `floorGrid` 25s) | 60s |
 | context + page creation | 31s |
+
+**A click on the icon of the app that is already open toggles the navigator shut**, and every later
+lookup in it waits out its timeout on a panel that is not there. `LeftSideMenuPage.openApp` returns
+early when `pathname.split('/')[3]` already names the app, so all eight `click<App>` helpers are
+idempotent. Same shape one level down: a navigator group renders a moment after the app, and a
+`isVisible()` read in that gap makes a caller press the hamburger and hide the panel it wanted
+(`ai-bot-scenarios.openDefaultProject`).
+
+**Open the app from the url, not from the sidebar.** `loginByToken` / `createAccountAndWorkspace`
+take an optional app alias (`chunter`, `tracker`, `document`, `contact`, `notification`, `time`,
+`love`); specs on `PlatformSetting` just extend their own `goto`. Measured: the opening click costs
+~913ms, the app segment in the url ~55ms - 141 such clicks were 128.8s of the run. Converted: all of
+`chat/*`, `documents/*`, `love/*` (already had `navigateToOffice`'s early return), `tracker/filter`,
+`inbox` (also moved off the login form). Pick the alias the *first* step needs, not the one the file
+is named after - `dynamic-issues-chats` opens the tracker first and only then the chat.
 
 **Token login instead of the form.** `loginByToken` / `createAccountAndWorkspace` in `utils.ts`.
 Measured: form + picker ~1.1s, token + `goto /workbench/<ws>` **490ms**, and

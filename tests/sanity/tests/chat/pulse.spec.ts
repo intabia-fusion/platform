@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
-import { ChannelPage } from '../model/channel-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
+import { ChannelPage } from '../model/channel-page'
 import { SignUpData } from '../model/common-types'
 import {
   createAccount,
@@ -14,7 +14,6 @@ import {
 test.describe.configure({ mode: 'parallel' })
 
 test.describe('Pulse — typing indicator and document presence', () => {
-  let leftSideMenuPage: LeftSideMenuPage
   let channelPage: ChannelPage
   let newUser2: SignUpData
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
@@ -23,11 +22,10 @@ test.describe('Pulse — typing indicator and document presence', () => {
     data = generateTestData()
     newUser2 = generateUser()
 
-    leftSideMenuPage = new LeftSideMenuPage(page)
     channelPage = new ChannelPage(page)
     // Straight into the workspace from the account token: the login form plus the workspace
     // picker are three page loads and cost about a second per test.
-    await createAccountAndWorkspace(page, request, data)
+    await createAccountAndWorkspace(page, request, data, 'chunter')
   })
 
   test('Second user sees typing indicator while first user types in general channel', async ({
@@ -43,7 +41,6 @@ test.describe('Pulse — typing indicator and document presence', () => {
     const channelPageSecond = new ChannelPage(page2)
     const leftSideMenuPageSecond = new LeftSideMenuPage(page2)
 
-    await leftSideMenuPage.clickChunter()
     await channelPage.clickChooseChannel('general')
 
     await leftSideMenuPageSecond.clickChunter()
@@ -67,7 +64,6 @@ test.describe('Pulse — typing indicator and document presence', () => {
     const linkText = await getInviteLink(page)
     await createAccount(request, newUser2)
 
-    await leftSideMenuPage.clickChunter()
     await channelPage.clickChooseChannel('general')
 
     // Presence avatars on page1 should be empty (only self — filtered out)

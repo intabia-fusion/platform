@@ -28,7 +28,6 @@ test.describe('Content in the Documents tests', () => {
   let testTeamspace: NewTeamspace
   let testDocument: NewDocument
 
-  let leftSideMenuPage: LeftSideMenuPage
   let documentsPage: DocumentsPage
   let documentContentPage: DocumentContentPage
 
@@ -38,7 +37,6 @@ test.describe('Content in the Documents tests', () => {
   let documentContentSecondPage: DocumentContentPage
 
   test.beforeEach(async ({ page, request }) => {
-    leftSideMenuPage = new LeftSideMenuPage(page)
     documentsPage = new DocumentsPage(page)
     documentContentPage = new DocumentContentPage(page)
     testTeamspace = {
@@ -52,9 +50,8 @@ test.describe('Content in the Documents tests', () => {
     }
 
     testData = generateTestData()
-    await createAccountAndWorkspace(page, request, testData)
+    await createAccountAndWorkspace(page, request, testData, 'document')
 
-    await leftSideMenuPage.clickDocuments()
     await documentsPage.checkTeamspaceNotExist(testTeamspace.title)
     await documentsPage.createNewTeamspace(testTeamspace)
     await documentsPage.clickOnButtonCreateDocument()

@@ -1,7 +1,7 @@
 import { test } from '@playwright/test'
+import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { ChannelPage } from '../model/channel-page'
 import { SignUpData } from '../model/common-types'
-import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import {
   createAccount,
   createAccountAndWorkspace,
@@ -33,7 +33,7 @@ test.describe('Dynamic issues chats', () => {
 
     // Straight into the workspace from the account token: the login form plus the workspace
     // picker are three page loads and cost about a second per test.
-    await createAccountAndWorkspace(page, request, data)
+    await createAccountAndWorkspace(page, request, data, 'tracker')
   })
 
   test('User can create issue for himself and see linked chat', async ({ page, browser, request }) => {

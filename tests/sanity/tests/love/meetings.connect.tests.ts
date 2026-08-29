@@ -16,7 +16,7 @@ const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice
 
 async function openLove (page: Page): Promise<OfficePage> {
   const office = new OfficePage(page)
-  await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}`))?.finished()
+  await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
   await office.navigateToOffice()
   await expect(office.floorGrid()).toBeVisible({ timeout: 15000 })
   return office

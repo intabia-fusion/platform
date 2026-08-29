@@ -304,7 +304,12 @@ export async function reLogin (page: Page, data: TestData): Promise<void> {
  * cookie present it fetches the token via getAccount() on first load, so one navigation replaces
  * three page loads.
  */
-export async function loginByToken (page: Page, accountToken: string, ws: WorkspaceLoginInfo): Promise<void> {
+export async function loginByToken (
+  page: Page,
+  accountToken: string,
+  ws: WorkspaceLoginInfo,
+  app?: string
+): Promise<void> {
   await page.context().addCookies([{ name: 'account-metadata-Token', value: accountToken, url: PlatformURI }])
   await page.context().addInitScript(
     ([account, endpoint]) => {
@@ -317,15 +322,24 @@ export async function loginByToken (page: Page, accountToken: string, ws: Worksp
     },
     [ws.account, ws.endpoint]
   )
-  await (await page.goto(`${PlatformURI}/workbench/${ws.workspaceUrl}`))?.finished()
+  // Landing straight on the app costs the same as the bare workbench url and saves the ~900ms
+  // the left-menu click spends loading the same chunk afterwards.
+  await (
+    await page.goto(`${PlatformURI}/workbench/${ws.workspaceUrl}${app !== undefined ? `/${app}` : ''}`)
+  )?.finished()
 }
 
-export async function createAccountAndWorkspace (page: Page, request: APIRequestContext, data: TestData): Promise<void> {
+export async function createAccountAndWorkspace (
+  page: Page,
+  request: APIRequestContext,
+  data: TestData,
+  app?: string
+): Promise<void> {
   const api: ApiEndpoint = new ApiEndpoint(request)
   await api.createAccount(data.userName, '1234', data.firstName, data.lastName)
   const ws = await api.createWorkspaceWithLogin(data.workspaceName, data.userName, '1234')
   const token = await api.loginAndGetToken(data.userName, '1234')
-  await loginByToken(page, token, ws)
+  await loginByToken(page, token, ws, app)
 }
 
 export const convertDate = (date: Date): { day: string, month: string, year: string } => {

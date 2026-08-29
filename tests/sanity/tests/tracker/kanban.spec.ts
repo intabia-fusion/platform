@@ -48,6 +48,36 @@ async function openTrackerBoard (page: import('@playwright/test').Page, projectI
     .waitFor({ state: 'visible', timeout: 10000 })
 }
 
+// The drop reaches the server in ~100ms, but the status was read *before* the drag and
+// retryIntervals falls back to a 3s tail - three drops cost 44s, 35s of it pure sleep.
+const dragIntervals = [100, 200, 300, 500]
+
+async function dragUntilStatus (
+  client: TxOperations,
+  cardId: Ref<Issue>,
+  target: string,
+  drag: () => Promise<void>
+): Promise<void> {
+  const status = async (): Promise<string | undefined> =>
+    (await client.findOne(tracker.class.Issue, { _id: cardId }))?.status as string | undefined
+  await expect
+    .poll(
+      async () => {
+        if ((await status()) === target) return target
+        try {
+          await drag()
+        } catch (err) {
+          // The drop can already have landed while findOne still reports the old status - the card
+          // is then gone from the DOM and the drag throws. Let the next read settle it.
+          console.error('drag failed:', err)
+        }
+        return await status()
+      },
+      { timeout: 30000, intervals: dragIntervals }
+    )
+    .toBe(target)
+}
+
 test.use({ storageState: PlatformSetting })
 
 test.describe('Kanban board', () => {
@@ -115,17 +145,9 @@ test.describe('Kanban board', () => {
     // Retry the drag if the drop event was lost (HTML5 drag in headless can be flaky
     // under parallel load). Verify by polling the backend, not just the DOM, since
     // panelDragOver shows the card in the target column optimistically.
-    await expect
-      .poll(
-        async () => {
-          const current = (await client.findOne(tracker.class.Issue, { _id: cardId }))?.status as string | undefined
-          if (current === ctx.statuses.get('In Progress')) return current
-          await board.dragCardToColumn(cardId, inProgress)
-          return current
-        },
-        { timeout: 30000, intervals: retryIntervals }
-      )
-      .toBe(ctx.statuses.get('In Progress'))
+    await dragUntilStatus(client, cardId, inProgress, async () => {
+      await board.dragCardToColumn(cardId, inProgress)
+    })
     await board.expectCardInColumn(cardId, inProgress)
   })
 
@@ -183,17 +205,9 @@ test.describe('Kanban board', () => {
     await board.expectCardInColumn(cardId, backlog)
 
     for (const target of [todo, inProgress, done]) {
-      await expect
-        .poll(
-          async () => {
-            const current = (await client.findOne(tracker.class.Issue, { _id: cardId }))?.status as string | undefined
-            if (current === target) return current
-            await board.dragCardToColumn(cardId, target)
-            return current
-          },
-          { timeout: 30000, intervals: retryIntervals }
-        )
-        .toBe(target)
+      await dragUntilStatus(client, cardId, target, async () => {
+        await board.dragCardToColumn(cardId, target)
+      })
       await board.expectCardInColumn(cardId, target)
     }
   })
@@ -299,17 +313,9 @@ test.describe('Kanban board', () => {
         .getAttribute('data-swimlane-id')
       expect(stableLaneId).not.toBeNull()
       if (stableLaneId === null) return
-      await expect
-        .poll(
-          async () => {
-            const current = (await client.findOne(tracker.class.Issue, { _id: stable }))?.status as string | undefined
-            if (current === ctx.statuses.get('Todo')) return current
-            await board.dragCardToSwimLaneCell(stable, stableLaneId, ctx.statuses.get('Todo') as string)
-            return current
-          },
-          { timeout: 30000, intervals: retryIntervals }
-        )
-        .toBe(ctx.statuses.get('Todo'))
+      await dragUntilStatus(client, stable, ctx.statuses.get('Todo') as string, async () => {
+        await board.dragCardToSwimLaneCell(stable, stableLaneId, ctx.statuses.get('Todo') as string)
+      })
 
       const afterOrder = await board.swimLanes()
       // Priority lanes that existed before must keep the same relative order.
@@ -795,24 +801,10 @@ test.describe('Kanban board', () => {
     await board.revealCard(c2)
 
     // Drag c1 onto c2: status should change to Todo (state-only update — rank stays).
-    await expect
-      .poll(
-        async () => {
-          const current = (await client.findOne(tracker.class.Issue, { _id: c1 }))?.status as string | undefined
-          if (current === todo) return current
-          await board.revealCard(c1)
-          try {
-            await board.dragCardToCard(c1, c2)
-          } catch (err) {
-            // Reported, not rethrown: a bare catch leaves the 30s timeout with no cause to read.
-            // Log the error itself so the stack survives into CI output.
-            console.error('dragCardToCard failed:', err)
-          }
-          return current
-        },
-        { timeout: 30000, intervals: retryIntervals }
-      )
-      .toBe(todo)
+    await dragUntilStatus(client, c1, todo, async () => {
+      await board.revealCard(c1)
+      await board.dragCardToCard(c1, c2)
+    })
   })
 
   test('legacy drop on self does not bump modifiedOn', async ({ page }) => {

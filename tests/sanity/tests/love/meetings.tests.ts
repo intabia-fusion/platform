@@ -13,7 +13,7 @@ export function registerMeetingsTests (): void {
 
     test.beforeEach(async ({ page }) => {
       officePage = new OfficePage(page)
-      await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}`))?.finished()
+      await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
     })
 
     test('navigate-to-office', async ({ page }) => {

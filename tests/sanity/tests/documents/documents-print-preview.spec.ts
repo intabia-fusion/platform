@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { generateId, PlatformSetting, PlatformURI } from '../utils'
 import { NewDocument } from '../model/documents/types'
-import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { DocumentsPage } from '../model/documents/documents-page'
 import { DocumentContentPage } from '../model/documents/document-content-page'
 import { PDFParse } from 'pdf-parse'
@@ -20,15 +19,13 @@ const TITLES_TO_CHECK = [
 ]
 
 test.describe('Открытие pdf-preview документов через print сервис', () => {
-  let leftSideMenuPage: LeftSideMenuPage
   let documentsPage: DocumentsPage
   let documentContentPage: DocumentContentPage
 
   test.beforeEach(async ({ page }) => {
-    leftSideMenuPage = new LeftSideMenuPage(page)
     documentsPage = new DocumentsPage(page)
     documentContentPage = new DocumentContentPage(page)
-    await page.goto(`${PlatformURI}/workbench/sanity-ws`)
+    await page.goto(`${PlatformURI}/workbench/sanity-ws/document`)
   })
 
   for (const { label, title } of TITLES_TO_CHECK) {
@@ -48,7 +45,6 @@ test.describe('Открытие pdf-preview документов через prin
       const newDocument: NewDocument = { title: uniqueTitle, space: 'Default' }
 
       await test.step('Создание и открытие документа', async () => {
-        await leftSideMenuPage.clickDocuments()
         await documentsPage.clickOnButtonCreateDocument()
         await documentsPage.createDocument(newDocument)
         await documentsPage.openDocument(newDocument.title)

@@ -18,7 +18,12 @@ const DEFAULT_PROJECT = 'Default'
 
 async function openDefaultProject (page: Page): Promise<void> {
   const projectsGroup = page.locator('#navGroup-tree-projects')
-  if (!(await projectsGroup.isVisible())) {
+  // The group renders a moment after the app itself; toggling the navigator in that gap hides it.
+  const shown = await projectsGroup
+    .waitFor({ state: 'visible', timeout: 10000 })
+    .then(() => true)
+    .catch(() => false)
+  if (!shown) {
     await page.locator('.topmenu-container button').click()
     await expect(projectsGroup).toBeVisible({ timeout: 15000 })
   }
@@ -50,13 +55,12 @@ test.describe('ai-bot scenarios', () => {
     leftSideMenuPage = new LeftSideMenuPage(page)
     // Straight into the workspace from the account token: the login form plus the workspace
     // picker are three page loads and cost about a second per test.
-    await createAccountAndWorkspace(page, request, data)
+    await createAccountAndWorkspace(page, request, data, 'tracker')
   })
 
   test('assistant button in the issue editor opens a thread and proposes a task', async ({ page }) => {
     const issueTitle = `Issue for assist ${generateId()}`
 
-    await leftSideMenuPage.clickTracker()
     await openDefaultProject(page)
     await prepareNewIssueWithOpenStep(page, {
       title: issueTitle,
@@ -86,7 +90,6 @@ test.describe('ai-bot scenarios', () => {
   test('new context button resets the assistant thread', async ({ page }) => {
     const issueTitle = `Issue for context ${generateId()}`
 
-    await leftSideMenuPage.clickTracker()
     await openDefaultProject(page)
     await prepareNewIssueWithOpenStep(page, {
       title: issueTitle,
@@ -147,7 +150,6 @@ test.describe('ai-bot scenarios', () => {
   test('assistant panel in the create-issue dialog rewrites the draft', async ({ page }) => {
     const issuesPage = new IssuesPage(page)
 
-    await leftSideMenuPage.clickTracker()
     await openDefaultProject(page)
     await issuesPage.clickButtonCreateNewIssue()
 

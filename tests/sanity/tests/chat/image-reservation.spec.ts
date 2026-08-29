@@ -17,24 +17,21 @@ import { expect, test } from '@playwright/test'
 import path from 'path'
 
 import { ChunterPage } from '../model/chunter-page'
-import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { createAccountAndWorkspace, generateTestData } from '../utils'
 
 test.describe('Chat image container space reservation tests', () => {
   // Ensure deterministic DPR = 1
   test.use({ deviceScaleFactor: 1 })
-  let leftSideMenuPage: LeftSideMenuPage
   let chunterPage: ChunterPage
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
 
   test.beforeEach(async ({ page, request }) => {
     data = generateTestData()
 
-    leftSideMenuPage = new LeftSideMenuPage(page)
     chunterPage = new ChunterPage(page)
     // Straight into the workspace from the account token: the login form plus the workspace
     // picker are three page loads and cost about a second per test.
-    await createAccountAndWorkspace(page, request, data)
+    await createAccountAndWorkspace(page, request, data, 'chunter')
   })
 
   const testImages = [
@@ -82,7 +79,6 @@ test.describe('Chat image container space reservation tests', () => {
         await route.continue()
       })
 
-      await leftSideMenuPage.clickChunter()
       await chunterPage.clickAddChannel()
       await chunterPage.createChannel(data.channelName, true)
 

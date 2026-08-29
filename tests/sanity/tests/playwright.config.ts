@@ -21,56 +21,69 @@ if (requested !== '' && requested !== traceMode) {
   console.warn(`TRACE_MODE=${JSON.stringify(requested)} is not one of ${traceModes.join(', ')}; using ${traceMode}`)
 }
 
+// love drives the wall time: meetings.all.spec.ts pulls in all 17 love files, so it is one
+// sequential ~178s job. Its own project puts it at the head of the queue instead of ~80s in,
+// where it used to finish alone while the other workers idled.
+const platformUse: PlaywrightTestConfig['use'] = {
+  // A toast lives 10s (packages/ui/src/utils.ts) in the bottom-left corner - on top of
+  // #profile-button. Every click on it then waits the toast out; that cost 166s of the run
+  // and is what timed the flaky tests out. setTestOptions() does the same, but only 8 of
+  // the 85 spec files call it, so put it where every context gets it.
+  storageState: {
+    cookies: [],
+    origins: [
+      {
+        origin: PlatformURI,
+        localStorage: [{ name: '#platform.notification.timeout', value: '0' }]
+      }
+    ]
+  },
+  testIdAttribute: 'data-id',
+  permissions: ['clipboard-read', 'clipboard-write', 'microphone', 'camera'],
+  launchOptions: {
+    args: [
+      '--use-fake-ui-for-media-stream',
+      '--use-fake-device-for-media-stream',
+      '--autoplay-policy=no-user-gesture-required',
+      // WebRTC ICE: on Linux CI runners mDNS .local hostnames don't
+      // resolve, which kills DTLS handshake. Disable mDNS obfuscation so
+      // LiveKit gets a real loopback/host IP candidate.
+      '--disable-features=WebRtcHideLocalIpsWithMdns'
+    ]
+  },
+  ...devices['Desktop Chrome'],
+  screenshot: 'only-on-failure',
+  viewport: {
+    width: 1440,
+    height: 900
+  },
+  trace: {
+    mode: traceMode,
+    snapshots: true,
+    screenshots: true,
+    sources: true
+  },
+  contextOptions: {
+    reducedMotion: 'reduce'
+  }
+}
+
 const config: PlaywrightTestConfig = {
   globalSetup: require.resolve('./global.setup.ts'),
   globalTeardown: require.resolve('./global.teardown.ts'),
   projects: [
     { name: 'setup', testMatch: /.*\.setup\.ts/ },
     {
+      name: 'Love',
+      testMatch: /love\/.*\.spec\.ts/,
+      use: platformUse,
+      fullyParallel: false,
+      dependencies: ['setup']
+    },
+    {
       name: 'Platform',
-      use: {
-        // A toast lives 10s (packages/ui/src/utils.ts) in the bottom-left corner - on top of
-        // #profile-button. Every click on it then waits the toast out; that cost 166s of the run
-        // and is what timed the flaky tests out. setTestOptions() does the same, but only 8 of
-        // the 85 spec files call it, so put it where every context gets it.
-        storageState: {
-          cookies: [],
-          origins: [
-            {
-              origin: PlatformURI,
-              localStorage: [{ name: '#platform.notification.timeout', value: '0' }]
-            }
-          ]
-        },
-        testIdAttribute: 'data-id',
-        permissions: ['clipboard-read', 'clipboard-write', 'microphone', 'camera'],
-        launchOptions: {
-          args: [
-            '--use-fake-ui-for-media-stream',
-            '--use-fake-device-for-media-stream',
-            '--autoplay-policy=no-user-gesture-required',
-            // WebRTC ICE: on Linux CI runners mDNS .local hostnames don't
-            // resolve, which kills DTLS handshake. Disable mDNS obfuscation so
-            // LiveKit gets a real loopback/host IP candidate.
-            '--disable-features=WebRtcHideLocalIpsWithMdns'
-          ]
-        },
-        ...devices['Desktop Chrome'],
-        screenshot: 'only-on-failure',
-        viewport: {
-          width: 1440,
-          height: 900
-        },
-        trace: {
-          mode: traceMode,
-          snapshots: true,
-          screenshots: true,
-          sources: true
-        },
-        contextOptions: {
-          reducedMotion: 'reduce'
-        }
-      },
+      testIgnore: /love\//,
+      use: platformUse,
       fullyParallel: false,
       dependencies: ['setup']
     }
