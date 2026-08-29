@@ -5,6 +5,7 @@ import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { DocumentsPage } from '../model/documents/documents-page'
 import { DocumentContentPage } from '../model/documents/document-content-page'
 import { PDFParse } from 'pdf-parse'
+import { retry } from '../retry'
 
 test.use({ storageState: PlatformSetting })
 
@@ -54,31 +55,33 @@ test.describe('Открытие pdf-preview документов через prin
         await documentContentPage.checkDocumentTitle(newDocument.title)
       })
 
-      await test.step('Вызов print-превью', async () => {
-        await documentsPage.moreActionsOnDocument(newDocument.title, PRINT_ACTION_LABEL)
-      })
-
-      await test.step('Проверка заголовка документа в теле PDF', async () => {
+      await test.step('Вызов print-превью и проверка заголовка в теле PDF', async () => {
         const pdfPreview = page.locator('iframe[src*="blob"]').first()
-        await expect(pdfPreview).toBeVisible({ timeout: 30000 })
+        // Called right after creation the print service can return a pdf holding only the page
+        // footer, and that blob never changes - ask for the print again, not for the blob.
+        await retry(async () => {
+          if (await pdfPreview.isVisible()) await page.keyboard.press('Escape')
+          await documentsPage.moreActionsOnDocument(newDocument.title, PRINT_ACTION_LABEL)
+          await expect(pdfPreview).toBeVisible({ timeout: 30000 })
 
-        const srcRaw = await pdfPreview.getAttribute('src')
-        expect(srcRaw).toBeTruthy()
-        const src = (srcRaw as string).split('#')[0]
+          const srcRaw = await pdfPreview.getAttribute('src')
+          expect(srcRaw).toBeTruthy()
+          const src = (srcRaw as string).split('#')[0]
 
-        const pdfResponse = await page.request.get(src)
-        expect(pdfResponse.ok()).toBeTruthy()
+          const pdfResponse = await page.request.get(src)
+          expect(pdfResponse.ok()).toBeTruthy()
 
-        const parser = new PDFParse({ data: new Uint8Array(await pdfResponse.body()) })
-        try {
-          const result = await parser.getText()
-          const text = result.text.replace(/\s+/g, ' ').trim()
-          // Only the base title is asserted: the print service truncates long headers,
-          // so the uniqueness suffix may not survive into the PDF.
-          expect(text).toContain(title)
-        } finally {
-          await parser.destroy()
-        }
+          const parser = new PDFParse({ data: new Uint8Array(await pdfResponse.body()) })
+          try {
+            const result = await parser.getText()
+            const text = result.text.replace(/\s+/g, ' ').trim()
+            // Only the base title is asserted: the print service truncates long headers,
+            // so the uniqueness suffix may not survive into the PDF.
+            expect(text).toContain(title)
+          } finally {
+            await parser.destroy()
+          }
+        }, 90000)
       })
 
       await test.step('Проверка отсутствия ошибок в запросах print/datalake', async () => {

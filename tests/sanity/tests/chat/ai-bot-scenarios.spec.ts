@@ -1,14 +1,11 @@
 import { expect, test, type Page } from '@playwright/test'
-import { ApiEndpoint } from '../API/Api'
 import { DocumentContentPage } from '../model/documents/document-content-page'
 import { DocumentsPage } from '../model/documents/documents-page'
 import { IssuesPage } from '../model/tracker/issues-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
-import { LoginPage } from '../model/login-page'
-import { SelectWorkspacePage } from '../model/select-workspace-page'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 import { prepareNewIssueWithOpenStep } from '../tracker/common-steps'
-import { PlatformURI, generateId, generateTestData } from '../utils'
+import { createAccountAndWorkspace, generateId, generateTestData } from '../utils'
 import { retryIntervals } from '../retry'
 
 // Whole-flow assistant scenarios on the `low` level: the prompt scripts the tool call
@@ -46,21 +43,14 @@ async function sendToAssistant (page: Page, text: string): Promise<void> {
 
 test.describe('ai-bot scenarios', () => {
   let leftSideMenuPage: LeftSideMenuPage
-  let loginPage: LoginPage
-  let api: ApiEndpoint
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
 
   test.beforeEach(async ({ page, request }) => {
     data = generateTestData()
     leftSideMenuPage = new LeftSideMenuPage(page)
-    loginPage = new LoginPage(page)
-    api = new ApiEndpoint(request)
-    await api.createAccount(data.userName, '1234', data.firstName, data.lastName)
-    await api.createWorkspaceWithLogin(data.workspaceName, data.userName, '1234')
-    await (await page.goto(`${PlatformURI}`))?.finished()
-    await loginPage.login(data.userName, '1234')
-    const swp = new SelectWorkspacePage(page)
-    await swp.selectWorkspace(data.workspaceName)
+    // Straight into the workspace from the account token: the login form plus the workspace
+    // picker are three page loads and cost about a second per test.
+    await createAccountAndWorkspace(page, request, data)
   })
 
   test('assistant button in the issue editor opens a thread and proposes a task', async ({ page }) => {

@@ -2,7 +2,7 @@ import { expect, type Locator } from '@playwright/test'
 import path from 'path'
 import { createIssue, toTime } from '../../tracker/tracker.utils'
 import { attachScreenshot, iterateLocator } from '../../utils'
-import { retryIntervals, waitStable } from '../../retry'
+import { retry, retryIntervals, waitStable } from '../../retry'
 import { CommonTrackerPage } from './common-tracker-page'
 import { NewIssue } from './types'
 
@@ -648,16 +648,24 @@ export class IssuesPage extends CommonTrackerPage {
   }
 
   async deleteAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
-    await this.hoverAttachmentButton(issueName)
-    await this.deleteAttachmentLink(filePath).hover()
-    await this.deleteAttachmentLink(filePath).click()
-    await expect(this.textPopupAddAttachmentsFile().filter({ hasText: filePath })).toBeVisible({ visible: false })
+    const item = this.textPopupAddAttachmentsFile().filter({ hasText: filePath })
+    // Same hover tooltip as the check below, and it can stay closed - one closed tooltip failed the
+    // whole test. Removing an attachment that is already gone is a no-op, so retry the pair.
+    await retry(async () => {
+      await this.hoverAttachmentButton(issueName)
+      if (!(await item.isVisible())) return
+      await this.deleteAttachmentLink(filePath).hover()
+      await this.deleteAttachmentLink(filePath).click()
+      await expect(item).toBeVisible({ visible: false })
+    })
   }
 
   async checkCannotDeleteAttachmentToIssue (issueName: string, filePath: string): Promise<void> {
-    await this.hoverAttachmentButton(issueName)
-    await this.deleteAttachmentLink(filePath).hover()
-    await expect(this.deleteAttachmentLink(filePath)).not.toBeVisible()
+    await retry(async () => {
+      await this.hoverAttachmentButton(issueName)
+      await this.deleteAttachmentLink(filePath).hover()
+      await expect(this.deleteAttachmentLink(filePath)).not.toBeVisible()
+    })
   }
 
   // The attachment list is a hover tooltip on a DocNavLink. Clicking the link runs NavLink's

@@ -298,13 +298,20 @@ test.describe('Tracker filters tests', () => {
     await issuesPage.inputSearch().press('Escape')
 
     await issuesPage.checkFilter('Component', 'is')
+    let checked = 0
     for await (const issue of iterateLocator(issuesPage.issuesList(), issuesToCheck)) {
-      await issue.locator('span.list > a').click()
+      const link = issue.locator('span.list > a')
+      // Other workers keep modifying issues in the shared workspace, so a row can leave the list
+      // between the count and the click. Waiting the whole test timeout on it is the flake.
+      if ((await link.count()) === 0) continue
+      await link.click({ timeout: 10000 })
 
       await issuesDetailsPage.checkIfButtonComponentHasTextDefaultComponent(defaultComponent)
 
       await issuesDetailsPage.clickCloseIssueButton()
+      checked++
     }
+    expect(checked).toBeGreaterThan(0)
   })
 
   test('Title filter', async () => {
@@ -358,11 +365,18 @@ test.describe('Tracker filters tests', () => {
       const text = await issuesPage.issuesList().nth(i).locator('span.list > a').textContent()
       if (text != null && text.trim() !== '') titles.push(text.trim())
     }
+    let checked = 0
     for (const title of titles) {
-      await issuesPage.issuesList().locator('span.list > a', { hasText: title }).first().click()
+      const link = issuesPage.issuesList().locator('span.list > a', { hasText: title }).first()
+      // A title sampled a moment ago can leave this filter: parallel workers keep touching issues
+      // in the shared workspace, and the list is sorted by modification.
+      if ((await link.count()) === 0) continue
+      await link.click({ timeout: 10000 })
       await issuesDetailsPage.checkIfButtonCreatedByHaveRealName(modifierName)
       await issuesDetailsPage.clickCloseIssueButton()
+      checked++
     }
+    expect(checked).toBeGreaterThan(0)
   })
 
   // TODO: We need to split them into separate one's and fix.

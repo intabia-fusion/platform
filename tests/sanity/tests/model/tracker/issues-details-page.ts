@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test'
 import { CommonTrackerPage } from './common-tracker-page'
 import { Issue, NewIssue } from './types'
 import { convertEstimation } from '../../tracker/tracker.utils'
-import { retryIntervals } from '../../retry'
+import { retry, retryIntervals } from '../../retry'
 
 export class IssuesDetailsPage extends CommonTrackerPage {
   readonly page: Page
@@ -177,6 +177,7 @@ export class IssuesDetailsPage extends CommonTrackerPage {
         // The write is lost when a previous estimation update is still in flight: the panel renders
         // the new value optimistically and then falls back to the stored one about 70ms later, and
         // the server never sees it. Settle before believing the first read, so the retry re-saves.
+        // 200ms was not enough: `Edit an issue` then read the previous value (1d instead of 0m).
         await this.page.waitForTimeout(500)
         await expect(this.textEstimation()).toHaveText(convertEstimation(estimation), { timeout: 3000 })
       }).toPass({ intervals: retryIntervals, timeout: 20000 })
@@ -299,8 +300,15 @@ export class IssuesDetailsPage extends CommonTrackerPage {
 
   async moreActionOnIssueWithSecondLevel (actionFirst: string, actionSecond: string): Promise<void> {
     await this.buttonMoreActions().click()
-    await this.antiPopupSubMenueBtn(actionFirst).hover()
-    await this.antiPopupSubMenueBtn(actionFirst).click()
+    // The submenu is gated by MouseSpeedTracker (see openSubmenu): a fast hover then click leaves
+    // the parent marked active with nothing under it, and the second-level click then waits out
+    // the whole test timeout.
+    await retry(async () => {
+      if (await this.popupSpanLabel(actionSecond).isVisible()) return
+      await this.antiPopupSubMenueBtn(actionFirst).hover()
+      await this.antiPopupSubMenueBtn(actionFirst).click()
+      await expect(this.popupSpanLabel(actionSecond)).toBeVisible({ timeout: 3000 })
+    })
     await this.selectFromDropdown(this.page, actionSecond)
   }
 

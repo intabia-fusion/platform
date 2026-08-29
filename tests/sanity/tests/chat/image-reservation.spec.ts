@@ -16,20 +16,15 @@
 import { expect, test } from '@playwright/test'
 import path from 'path'
 
-import { ApiEndpoint } from '../API/Api'
 import { ChunterPage } from '../model/chunter-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
-import { LoginPage } from '../model/login-page'
-import { SelectWorkspacePage } from '../model/select-workspace-page'
-import { PlatformURI, generateTestData } from '../utils'
+import { createAccountAndWorkspace, generateTestData } from '../utils'
 
 test.describe('Chat image container space reservation tests', () => {
   // Ensure deterministic DPR = 1
   test.use({ deviceScaleFactor: 1 })
   let leftSideMenuPage: LeftSideMenuPage
   let chunterPage: ChunterPage
-  let loginPage: LoginPage
-  let api: ApiEndpoint
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
 
   test.beforeEach(async ({ page, request }) => {
@@ -37,14 +32,9 @@ test.describe('Chat image container space reservation tests', () => {
 
     leftSideMenuPage = new LeftSideMenuPage(page)
     chunterPage = new ChunterPage(page)
-    loginPage = new LoginPage(page)
-    api = new ApiEndpoint(request)
-    await api.createAccount(data.userName, '1234', data.firstName, data.lastName)
-    await api.createWorkspaceWithLogin(data.workspaceName, data.userName, '1234')
-    await (await page.goto(`${PlatformURI}`))?.finished()
-    await loginPage.login(data.userName, '1234')
-    const swp = new SelectWorkspacePage(page)
-    await swp.selectWorkspace(data.workspaceName)
+    // Straight into the workspace from the account token: the login form plus the workspace
+    // picker are three page loads and cost about a second per test.
+    await createAccountAndWorkspace(page, request, data)
   })
 
   const testImages = [
@@ -84,9 +74,11 @@ test.describe('Chat image container space reservation tests', () => {
     test(`Verify image loading flow for ${description}: 1) space reserved immediately, 2) preview exists, 3) dimensions unchanged after load`, async ({
       page
     }) => {
-      // Intercept preview image render requests (_preview/image) to delay load by 5 seconds
+      // Intercept preview image render requests (_preview/image) to delay the load. 2.5s is enough:
+      // the "reserved before load" checks below run within ~1.5s of sending, and every extra second
+      // here is paid by all five variants of this test.
       await page.route('**/_preview/image/**', async (route) => {
-        await new Promise((resolve) => setTimeout(resolve, 5000))
+        await new Promise((resolve) => setTimeout(resolve, 2500))
         await route.continue()
       })
 

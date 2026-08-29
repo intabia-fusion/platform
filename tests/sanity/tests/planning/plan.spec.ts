@@ -67,6 +67,14 @@ test.describe('Planning ToDo tests', () => {
 
     await planningPage.checkToDoExist(toDoSeveralSlots.title)
     await planningPage.openToDoByName(toDoSeveralSlots.title)
+    // Counts below are absolute on a seeded todo, so a leftover slot makes this unpassable.
+    // Dropping one needs a reload or the next slot never reaches the calendar (UBERF-4273).
+    if (await planningPage.clearTimeSlots()) {
+      await planningPage.clickButtonCardClose()
+      await page.reload()
+      await planningNavigationMenuPage.clickOnButtonToDoAll()
+      await planningPage.openToDoByName(toDoSeveralSlots.title)
+    }
 
     if (toDoSeveralSlots.slots != null) {
       await planningPage.clickButtonCreateAddSlot()
@@ -123,6 +131,14 @@ test.describe('Planning ToDo tests', () => {
     const planningPage = new PlanningPage(page)
     await planningPage.checkToDoExist(deleteTimeSlot.title)
     await planningPage.openToDoByName(deleteTimeSlot.title)
+    // A failed attempt leaves its slot behind and the counts below are absolute, so retries would
+    // only report 2 and 3. The reload is the one the test already does after its delete.
+    if (await planningPage.clearTimeSlots()) {
+      await planningPage.clickButtonCardClose()
+      await page.reload()
+      await planningNavigationMenuPage.clickOnButtonToDoAll()
+      await planningPage.openToDoByName(deleteTimeSlot.title)
+    }
 
     if (deleteTimeSlot.slots != null) {
       await planningPage.clickButtonCreateAddSlot()

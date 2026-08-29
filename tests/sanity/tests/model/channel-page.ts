@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { CommonPage } from './common-page'
 import { LinkedChannelTypes } from './types'
-import { retryIntervals } from '../retry'
+import { retry, retryIntervals } from '../retry'
 
 export class ChannelPage extends CommonPage {
   readonly page: Page
@@ -166,10 +166,15 @@ export class ChannelPage extends CommonPage {
     changed: string,
     autoJoin: boolean = false
   ): Promise<void> {
-    await this.privateOrPublicChangeButton(change, autoJoin).click()
-    await expect(this.privateOrPublicPopupButton(YesNo)).toBeVisible({ timeout: 5000 })
-    await this.privateOrPublicPopupButton(YesNo).click()
-    await expect(this.privateOrPublicChangeButton(changed, autoJoin)).toBeVisible()
+    // The new value lands through a server round trip that can lose the race with the panel
+    // re-render, leaving the old one on the button. Picking the same value again is idempotent.
+    await retry(async () => {
+      if (await this.privateOrPublicChangeButton(changed, autoJoin).isVisible()) return
+      await this.privateOrPublicChangeButton(change, autoJoin).click({ timeout: 5000 })
+      await expect(this.privateOrPublicPopupButton(YesNo)).toBeVisible({ timeout: 5000 })
+      await this.privateOrPublicPopupButton(YesNo).click()
+      await expect(this.privateOrPublicChangeButton(changed, autoJoin)).toBeVisible({ timeout: 5000 })
+    })
   }
 
   async clickDeleteMessageButton (): Promise<void> {
@@ -211,15 +216,26 @@ export class ChannelPage extends CommonPage {
   }
 
   async clickOpenMoreButton (message: string): Promise<void> {
-    await this.textMessage(message).hover()
-    await this.messageActionButton(message, 'data-id="btnMoreActions"').click()
+    await this.clickMessageAction(message, 'data-id="btnMoreActions"')
+  }
+
+  // The action popup exists only while the message is hovered, and a list that re-renders right
+  // after drops it - the click then waits out the whole test timeout on an invisible button.
+  private async clickMessageAction (message: string, dataIdSelector: string): Promise<void> {
+    const button = this.messageActionButton(message, dataIdSelector)
+    await retry(async () => {
+      await this.textMessage(message).hover()
+      await expect(button).toBeVisible({ timeout: 2000 })
+      await button.click({ timeout: 5000 })
+    })
   }
 
   async clickEditMessageButton (editedMessage: string): Promise<void> {
     await this.editMessageButton().click()
-    // Wait for the text editor to be focused/ready
+    // Best effort - the result is swallowed and typing works without focus landing here, so a
+    // long timeout only buys waiting.
     await expect(this.inputMessage().locator('div.tiptap'))
-      .toBeFocused({ timeout: 5000 })
+      .toBeFocused({ timeout: 1500 })
       .catch(() => {})
     await this.page.keyboard.type(editedMessage)
   }
@@ -248,27 +264,23 @@ export class ChannelPage extends CommonPage {
   }
 
   async addEmoji (textMessage: string, emoji: string): Promise<void> {
-    await this.textMessage(textMessage).hover()
-    await this.messageActionButton(textMessage, 'data-id$="AddReactionAction"').click()
+    await this.clickMessageAction(textMessage, 'data-id$="AddReactionAction"')
     await this.selectEmoji(emoji).click()
   }
 
   async saveMessage (message: string): Promise<void> {
-    await this.textMessage(message).hover()
-    await this.messageActionButton(message, 'data-id$="SaveForLaterAction"').click()
+    await this.clickMessageAction(message, 'data-id$="SaveForLaterAction"')
     await expect(this.messageSaveMarker()).toBeVisible()
   }
 
   async pinMessage (message: string): Promise<void> {
-    await this.textMessage(message).hover()
-    await this.messageActionButton(message, 'data-id$="PinMessageAction"').click()
+    await this.clickMessageAction(message, 'data-id$="PinMessageAction"')
     await this.pinnedMessageButton().click()
     await expect(this.pinnedMessage(message)).toBeVisible()
   }
 
   async replyMessage (message: string): Promise<void> {
-    await this.textMessage(message).hover()
-    await this.messageActionButton(message, 'data-id="activity:action:Reply"').click()
+    await this.clickMessageAction(message, 'data-id="activity:action:Reply"')
   }
 
   async sendReply (messageReply: string): Promise<void> {

@@ -115,6 +115,7 @@ export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise
   const client = await getMeetingsRestClient()
   await Promise.all([forceFinishAllMeetings(), drainPendingInvites()])
   const deadline = Date.now() + timeoutMs
+  let left = 'nothing'
   while (Date.now() < deadline) {
     const [meetings, participants, invites] = await Promise.all([
       client.findAll<MeetingMinutes>(
@@ -134,8 +135,12 @@ export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise
       client.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, {}, { limit: 1 })
     ])
     if (meetings.length === 0 && participants.length === 0 && invites.length === 0) return
+    left = `meetings=${meetings.length} participants=${participants.length} invites=${invites.length}`
     await new Promise((resolve) => setTimeout(resolve, 150))
   }
+  // Falling out of the loop leaves the next test on dirty state - it then fails seconds later on
+  // some unrelated locator with nothing pointing back here.
+  console.warn(`[love] cleanup did not settle in ${timeoutMs}ms, still there: ${left}`)
 }
 
 /**

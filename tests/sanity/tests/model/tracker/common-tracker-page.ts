@@ -178,7 +178,9 @@ export class CommonTrackerPage extends CalendarPage {
   }
 
   async checkActivityContentExist (activityContent: string): Promise<void> {
-    await expect(this.textActivityContent().filter({ hasText: activityContent })).toBeVisible()
+    // hasText matches a substring, so one status change plus its grouped copy are two hits and the
+    // strict locator throws. Presence is what is checked here - same as checkActivityExist.
+    await expect(this.textActivityContent().filter({ hasText: activityContent }).first()).toBeVisible()
   }
 
   async openLinkFromActivitiesByText (linkText: string): Promise<void> {

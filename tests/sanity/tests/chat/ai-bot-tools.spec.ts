@@ -1,12 +1,9 @@
 import { expect, test } from '@playwright/test'
 import { openBotDirect } from '../API/AiBot'
-import { ApiEndpoint } from '../API/Api'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
-import { LoginPage } from '../model/login-page'
-import { SelectWorkspacePage } from '../model/select-workspace-page'
-import { PlatformURI, generateTestData } from '../utils'
+import { createAccountAndWorkspace, generateTestData } from '../utils'
 
 // Tool scenarios on the `low` level: the prompt scripts the call (`call:<tool> {json}`), so the
 // same tool runs with the same arguments every time.
@@ -17,8 +14,6 @@ test.describe('ai-bot tool calls', () => {
   let leftSideMenuPage: LeftSideMenuPage
   let chunterPage: ChunterPage
   let channelPage: ChannelPage
-  let loginPage: LoginPage
-  let api: ApiEndpoint
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
 
   test.beforeEach(async ({ page, request }) => {
@@ -26,14 +21,9 @@ test.describe('ai-bot tool calls', () => {
     leftSideMenuPage = new LeftSideMenuPage(page)
     chunterPage = new ChunterPage(page)
     channelPage = new ChannelPage(page)
-    loginPage = new LoginPage(page)
-    api = new ApiEndpoint(request)
-    await api.createAccount(data.userName, '1234', data.firstName, data.lastName)
-    await api.createWorkspaceWithLogin(data.workspaceName, data.userName, '1234')
-    await (await page.goto(`${PlatformURI}`))?.finished()
-    await loginPage.login(data.userName, '1234')
-    const swp = new SelectWorkspacePage(page)
-    await swp.selectWorkspace(data.workspaceName)
+    // Straight into the workspace from the account token: the login form plus the workspace
+    // picker are three page loads and cost about a second per test.
+    await createAccountAndWorkspace(page, request, data)
   })
 
   test('propose_task posts a task proposal card', async ({ page }) => {

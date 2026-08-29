@@ -4,11 +4,9 @@ import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { SignUpData } from '../model/common-types'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
-import { LoginPage } from '../model/login-page'
-import { SelectWorkspacePage } from '../model/select-workspace-page'
 import { SidebarPage } from '../model/sidebar-page'
 import {
-  PlatformURI,
+  createAccountAndWorkspace,
   generateTestData,
   getInviteLink,
   generateUser,
@@ -23,7 +21,6 @@ test.describe('Channel tests', () => {
   let chunterPage: ChunterPage
   let channelPage: ChannelPage
   let sidebarPage: SidebarPage
-  let loginPage: LoginPage
   let api: ApiEndpoint
   let newUser2: SignUpData
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
@@ -35,15 +32,11 @@ test.describe('Channel tests', () => {
     leftSideMenuPage = new LeftSideMenuPage(page)
     chunterPage = new ChunterPage(page)
     channelPage = new ChannelPage(page)
-    loginPage = new LoginPage(page)
     sidebarPage = new SidebarPage(page)
     api = new ApiEndpoint(request)
-    await api.createAccount(data.userName, '1234', data.firstName, data.lastName)
-    await api.createWorkspaceWithLogin(data.workspaceName, data.userName, '1234')
-    await (await page.goto(`${PlatformURI}`))?.finished()
-    await loginPage.login(data.userName, '1234')
-    const swp = new SelectWorkspacePage(page)
-    await swp.selectWorkspace(data.workspaceName)
+    // Straight into the workspace from the account token: the login form plus the workspace picker
+    // are three page loads and cost about a second per test.
+    await createAccountAndWorkspace(page, request, data)
   })
 
   test('Create new private channel and check if the messages stays on it', async ({ browser, page }) => {

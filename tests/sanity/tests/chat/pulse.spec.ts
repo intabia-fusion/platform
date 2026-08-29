@@ -1,13 +1,10 @@
 import { expect, test } from '@playwright/test'
-import { ApiEndpoint } from '../API/Api'
 import { ChannelPage } from '../model/channel-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
-import { LoginPage } from '../model/login-page'
-import { SelectWorkspacePage } from '../model/select-workspace-page'
 import { SignUpData } from '../model/common-types'
 import {
-  PlatformURI,
   createAccount,
+  createAccountAndWorkspace,
   generateTestData,
   generateUser,
   getInviteLink,
@@ -19,8 +16,6 @@ test.describe.configure({ mode: 'parallel' })
 test.describe('Pulse — typing indicator and document presence', () => {
   let leftSideMenuPage: LeftSideMenuPage
   let channelPage: ChannelPage
-  let loginPage: LoginPage
-  let api: ApiEndpoint
   let newUser2: SignUpData
   let data: { workspaceName: string, userName: string, firstName: string, lastName: string, channelName: string }
 
@@ -30,14 +25,9 @@ test.describe('Pulse — typing indicator and document presence', () => {
 
     leftSideMenuPage = new LeftSideMenuPage(page)
     channelPage = new ChannelPage(page)
-    loginPage = new LoginPage(page)
-    api = new ApiEndpoint(request)
-    await api.createAccount(data.userName, '1234', data.firstName, data.lastName)
-    await api.createWorkspaceWithLogin(data.workspaceName, data.userName, '1234')
-    await (await page.goto(`${PlatformURI}`))?.finished()
-    await loginPage.login(data.userName, '1234')
-    const swp = new SelectWorkspacePage(page)
-    await swp.selectWorkspace(data.workspaceName)
+    // Straight into the workspace from the account token: the login form plus the workspace
+    // picker are three page loads and cost about a second per test.
+    await createAccountAndWorkspace(page, request, data)
   })
 
   test('Second user sees typing indicator while first user types in general channel', async ({

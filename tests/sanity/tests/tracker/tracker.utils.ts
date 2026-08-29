@@ -1,5 +1,6 @@
 import { expect, Page } from '@playwright/test'
 import { generateId, PlatformURI } from '../utils'
+import { retry } from '../retry'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 
 export interface IssueProps {
@@ -94,8 +95,13 @@ export async function fillIssueForm (page: Page, props: IssueProps): Promise<voi
     })
   }
   if (status !== undefined) {
-    await page.click(af + '#status-editor')
-    await page.click(`.menu-item:has-text("${status}")`)
+    const item = page.locator(`.menu-item:has-text("${status}")`).first()
+    // The state list is rebuilt whenever the task type changes, so a click issued while the popup
+    // is closed or still stale has nothing to land on and waits out the test timeout.
+    await retry(async () => {
+      if ((await item.count()) === 0) await page.click(af + '#status-editor')
+      await item.click({ timeout: 5000 })
+    })
   }
   if (priority !== undefined) {
     await page.click(af + 'button:has-text("No priority")')

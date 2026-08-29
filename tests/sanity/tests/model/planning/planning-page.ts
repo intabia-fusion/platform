@@ -1,7 +1,7 @@
 import { type Locator, type Page, expect } from '@playwright/test'
 import { NewToDo, Slot } from './types'
 import { CalendarPage } from '../calendar-page'
-import { retryIntervals } from '../../retry'
+import { retry, retryIntervals, waitStable } from '../../retry'
 
 const retryOptions = { intervals: retryIntervals, timeout: 60000 }
 
@@ -189,6 +189,13 @@ export class PlanningPage extends CalendarPage {
       // later as a wrong duration.
       const after = await element.boundingBox()
       expect(after?.height).not.toBe(before?.height)
+      // Changed is not the same as right: if the grid scrolled between the cell lookup and the
+      // drop, the border lands a row off and the duration comes out wrong with nothing to retry on.
+      const cell = await this.selectTimeCell(targetTime, column).boundingBox()
+      if (cell != null && after != null) {
+        const edge = size === 'bottom' ? after.y + after.height : after.y
+        expect(Math.abs(edge - cell.y)).toBeLessThan(cell.height / 2)
+      }
     }).toPass(retryOptions)
   }
 
@@ -396,7 +403,13 @@ export class PlanningPage extends CalendarPage {
   }
 
   async openToDoByName (toDoName: string): Promise<void> {
-    await this.page.locator(`button.hulyToDoLine-container:has-text("${toDoName}")`).click()
+    const row = this.page.locator(`button.hulyToDoLine-container:has-text("${toDoName}")`).first()
+    // The list re-orders while other workers add slots, so a click can land on a neighbouring row
+    // and every later check then reads a different todo's card.
+    await retry(async () => {
+      await row.click()
+      await expect(this.textPanelToDoTitle()).toHaveValue(toDoName, { timeout: 3000 })
+    })
   }
 
   async checkToDoNotExist (toDoName: string): Promise<void> {
@@ -444,12 +457,17 @@ export class PlanningPage extends CalendarPage {
   }
 
   async deleteToDoByName (toDoName: string): Promise<void> {
-    await this.page.locator('button.hulyToDoLine-container div[class$="overflow-label"]', { hasText: toDoName }).hover()
-    await this.page
+    const line = this.page
       .locator('button.hulyToDoLine-container div[class$="overflow-label"]', { hasText: toDoName })
       .locator('xpath=..')
-      .locator('div.hulyToDoLine-statusPriority button.hulyToDoLine-dragbox')
-      .click({ button: 'right' })
+    const dragbox = line.locator('div.hulyToDoLine-statusPriority button.hulyToDoLine-dragbox')
+    // The dragbox is rendered only while the line is hovered, and a list re-render right after the
+    // hover drops it - the click then waits out the whole test timeout on an invisible button.
+    await retry(async () => {
+      await line.hover()
+      await expect(dragbox).toBeVisible({ timeout: 2000 })
+      await dragbox.click({ button: 'right', timeout: 5000 })
+    })
     await this.buttonMenuDelete().click()
     await this.pressYesDeletePopup(this.page)
   }
@@ -481,16 +499,49 @@ export class PlanningPage extends CalendarPage {
   }
 
   async checkToDoExistInCalendar (toDoName: string, count: number): Promise<void> {
-    await expect(
-      this.page.locator('div.calendar-element > div.event-container >> div[class*="label"]', { hasText: toDoName })
-    ).toHaveCount(count)
+    const events = this.page.locator('div.calendar-element > div.event-container >> div[class*="label"]', {
+      hasText: toDoName
+    })
+    // The calendar keeps a stale event after a slot change (UBERF-4273, which the test already
+    // reloads around for the add path). Reload once rather than fail on a view that is only out of
+    // date - what has to hold is the state after the reload.
+    try {
+      await expect(events).toHaveCount(count, { timeout: 7000 })
+    } catch {
+      await this.page.reload()
+      await expect(events).toHaveCount(count, { timeout: 15000 })
+    }
+  }
+
+  /**
+   * Drops every slot the open card has. These tests assert absolute counts on seeded todos, so a
+   * slot left by a previous run - or by a retry of the same test - makes them pass only once.
+   */
+  public async clearTimeSlots (): Promise<boolean> {
+    const rows = this.slotRows(false)
+    // count() does not wait, and a card that just opened reports zero slots.
+    let left = await waitStable(async () => await rows.count(), { stableFor: 300, interval: 100, timeout: 10000 })
+    const had = left > 0
+    while (left > 0) {
+      await this.deleteTimeSlot(0)
+      left--
+    }
+    await expect(rows).toHaveCount(0)
+    return had
   }
 
   public async deleteTimeSlot (rowNumber: number): Promise<void> {
     const rows = this.page.locator(
       'div.hulyModal-container div.slots-content div.scroller-container div.box div.flex-between.min-w-full'
     )
-    const before = await rows.count()
+    // count() does not wait: read before the slots render it returns 0, and the check below then
+    // waits out its timeout on a count of -1 that can never arrive.
+    const before = await waitStable(async () => await rows.count(), {
+      stableFor: 300,
+      interval: 100,
+      timeout: 10000
+    })
+    expect(before).toBeGreaterThan(rowNumber)
     await rows.nth(rowNumber).locator('button[data-id="btnDelete"]').click()
     await this.pressYesDeletePopup(this.page)
     // The confirmation closes before the removal round trip lands, and the caller closes the card
