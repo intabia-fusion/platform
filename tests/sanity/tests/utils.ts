@@ -304,6 +304,18 @@ export async function reLogin (page: Page, data: TestData): Promise<void> {
  * cookie present it fetches the token via getAccount() on first load, so one navigation replaces
  * three page loads.
  */
+// Pushes the analytics batch out before a context closes - tests are shorter than the 10s ping
+// tick and the 5s batch timer, so without this most ws traffic is never reported.
+export async function flushTelemetry (page: Page): Promise<void> {
+  try {
+    await page.evaluate(async () => {
+      await (window as any).__analyticsFlush?.()
+    })
+  } catch {
+    // Page already gone, or an older bundle without the hook.
+  }
+}
+
 export async function loginByToken (
   page: Page,
   accountToken: string,

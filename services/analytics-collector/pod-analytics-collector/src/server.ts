@@ -303,8 +303,12 @@ export function createServer (ctx: MeasureContext): Express {
   // a normal "name" subtree visible in stats.
   const clientCtx = ctx.newChild('client', {})
   const recordClient = (name: string, value: number, labels: Record<string, string | number | boolean>): void => {
+    // end() takes no argument, so end(value) recorded a ~0ms duration instead of the value.
     const child = clientCtx.newChild(name, labels, { span: 'disable' })
-    child.end(value)
+    if (child.metrics !== undefined) {
+      child.metrics.value += value
+      child.metrics.operations++
+    }
   }
 
   app.post(

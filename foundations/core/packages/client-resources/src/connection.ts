@@ -320,6 +320,14 @@ class Connection implements ClientConnection {
   }
 
   async close (): Promise<void> {
+    // Last report before the socket goes: a short-lived page never reaches the 10s ping tick.
+    void broadcastEvent(ConnectionStatsEvent, {
+      sent: this.sentCount,
+      received: this.receivedCount,
+      sentBytes: this.sentBytes,
+      receivedBytes: this.receivedBytes,
+      latency: this.latency
+    })
     this.closed = true
     clearTimeout(this.openAction)
     clearTimeout(this.dialTimer)
@@ -411,7 +419,6 @@ class Connection implements ClientConnection {
   receivedBytes = 0
   latency = 0 // ping/pong round-trip, ms
   private lastPingSent = 0
-
   handleMsg (
     socketId: number,
     resp: Response<any>,

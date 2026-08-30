@@ -58,6 +58,11 @@ export class AnalyticsCollectorProvider implements AnalyticProvider {
   }
 
   private registerExceptionHandlers (): void {
+    // A page that closes before the 5s timer would otherwise drop its whole batch.
+    window.addEventListener('pagehide', () => {
+      void this.sendEvents()
+    })
+
     // Capture unhandled errors
     window.addEventListener('error', (event) => {
       this.handleError(event.error ?? new Error(event.message))
