@@ -478,7 +478,10 @@ describe('PostgresAccountDB', () => {
       expect(mockClient).toHaveBeenCalledWith(
         'global_account' // Verify schema name
       )
-      expect(mockClient.mock.calls[3][0].map((s: string) => s.replace(/\s+/g, ' ')).join('')).toBe(
+      expect(mockClient.mock.calls[1][0].map((s: string) => s.replace(/\s+/g, ' ')).join('')).toBe(
+        ' SELECT applied_at, ddl FROM ._account_applied_migrations WHERE identifier =  AND applied_at IS NOT NULL '
+      )
+      expect(mockClient.mock.calls[5][0].map((s: string) => s.replace(/\s+/g, ' ')).join('')).toBe(
         ' INSERT INTO ._account_applied_migrations (identifier, ddl, last_processed_at) VALUES (, , NOW()) ON CONFLICT (identifier) DO NOTHING '
       )
       expect(mockClient).toHaveBeenCalledWith(

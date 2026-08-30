@@ -12,7 +12,7 @@ export function registerPrivacyTests (): void {
 
     test.beforeEach(async ({ page }) => {
       officePage = new OfficePage(page)
-      await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}`))?.finished()
+      await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
       await officePage.navigateToOffice()
       await expect(officePage.floorGrid()).toBeVisible({ timeout: 15000 })
     })
@@ -22,7 +22,7 @@ export function registerPrivacyTests (): void {
       const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
       const page2 = await ctx.newPage()
       try {
-        await (await page2.goto(`${PlatformURI}/workbench/${meetingsWs}`))?.finished()
+        await (await page2.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
         const office2 = new OfficePage(page2)
         const mm2 = new MeetingMinutesPage(page2)
         await office2.navigateToOffice()

@@ -64,7 +64,7 @@ import { createWorkspace, upgradeWorkspace } from '@hcengineering/workspace-serv
 import { faker } from '@faker-js/faker'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { buildStorageFromConfig, createStorageFromConfig, storageConfigFromEnv } from '@hcengineering/server-storage'
-import { program, type Command } from 'commander'
+import { Command } from 'commander'
 import { updateField } from './workspace'
 import { dumpIndexes, syncIndexes } from './indexes'
 import { reportSlowSql } from './slowsql'
@@ -101,7 +101,7 @@ import {
   type QueueWorkspaceMessage,
   type StorageAdapter
 } from '@hcengineering/server-core'
-import { getAccountDBUrl, getKvsUrl, getMongoDBUrl } from './__start'
+import { getAccountDBUrl, getKvsUrl, getMongoDBUrl, prepareTools, registerToolLocations } from './setup'
 // import { fillGithubUsers, fixAccountEmails, renameAccount } from './account'
 import { changeConfiguration } from './configuration'
 
@@ -145,19 +145,24 @@ process.on('exit', () => {
   })
 })
 
+export { prepareTools, registerToolLocations } from './setup'
+
+export type PrepareTools = () => {
+  dbUrl: string
+  txes: Tx[]
+  version: Data<Version>
+  migrateOperations: [string, MigrateOperation][]
+}
+
+let runtimeReady = false
+
 /**
- * @public
+ * Adapters, server plugins and process-level handlers are global: register them once even when
+ * several programs are built in the same process (see buildToolProgram).
  */
-export function devTool (
-  prepareTools: () => {
-    dbUrl: string
-    txes: Tx[]
-    version: Data<Version>
-    migrateOperations: [string, MigrateOperation][]
-  },
-  extendProgram?: (prog: Command) => void
-): void {
-  const toolCtx = new MeasureMetricsContext('tool', {})
+function initToolRuntime (toolCtx: MeasureMetricsContext): void {
+  if (runtimeReady) return
+  runtimeReady = true
 
   registerTxAdapterFactory('postgresql', createPostgresTxAdapter, true)
   registerAdapterFactory('postgresql', createPostgresAdapter, true)
@@ -166,16 +171,56 @@ export function devTool (
   registerServerPlugins()
   registerStringLoaders()
 
+  process.on('unhandledRejection', (reason, promise) => {
+    toolCtx.error('Unhandled Rejection at:', { reason, promise })
+  })
+
+  process.on('uncaughtException', (error, origin) => {
+    toolCtx.error('Uncaught Exception at:', { origin, error })
+  })
+}
+
+/**
+ * @public
+ */
+export function devTool (prepareTools: PrepareTools, extendProgram?: (prog: Command) => void): void {
+  buildToolProgram(prepareTools, extendProgram).parse(process.argv)
+}
+
+/**
+ * Runs a single tool command in the current process; env is read per command, so callers may point
+ * separate commands at different regions. Commander throws instead of exiting the embedder.
+ * @public
+ */
+export async function runToolCommand (args: string[]): Promise<void> {
+  registerToolLocations()
+  const program = buildToolProgram(prepareTools)
+  // Commander resolves a bad argument on the sub-command, so every one of them needs the override.
+  for (const cmd of [program, ...program.commands]) {
+    cmd.exitOverride()
+  }
+  await program.parseAsync(['node', 'tool', ...args])
+}
+
+/**
+ * Builds a fresh command tree. Commander keeps parsed options on the command objects, so embedders
+ * running commands concurrently must build one program per invocation.
+ * @public
+ */
+export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (prog: Command) => void): Command {
+  const toolCtx = new MeasureMetricsContext('tool', {})
+  const program = new Command()
+
+  initToolRuntime(toolCtx)
+
   const serverSecret = process.env.SERVER_SECRET
   if (serverSecret === undefined) {
-    console.error('please provide server secret')
-    process.exit(1)
+    throw new Error('please provide server secret')
   }
 
   const accountsUrl = process.env.ACCOUNTS_URL
   if (accountsUrl === undefined) {
-    console.error('please provide accounts url.')
-    process.exit(1)
+    throw new Error('please provide accounts url.')
   }
 
   const transactorUrl = process.env.TRANSACTOR_URL
@@ -1137,8 +1182,7 @@ export function devTool (
     .action(async (cmd: { timeout: string, workspace: string, region: string, dry: boolean, skip: string }) => {
       const bucketName = process.env.BUCKET_NAME
       if (bucketName === '' || bucketName == null) {
-        console.error('please provide butket name env')
-        process.exit(1)
+        throw new Error('please provide BUCKET_NAME')
       }
 
       const skipWorkspaces = new Set(cmd.skip.split(',').map((it) => it.trim()))
@@ -1883,8 +1927,7 @@ export function devTool (
     .action(async (opt: { limit: string, sort: string, source: string, url?: string, json?: string }) => {
       const base = (opt.url ?? process.env.PLATFORM_URL ?? '').replace('ws:/', 'http:/').replace(/\/+$/, '')
       if (base === '') {
-        console.log('Please provide url for a platform to retrieve statistics')
-        process.exit(1)
+        throw new Error('please provide PLATFORM_URL or --url')
       }
       let statsUrl = base
       // Try to resolve STATS_URL from the platform config.json. If target is already
@@ -1904,8 +1947,7 @@ export function devTool (
 
       const serverSecret = process.env.SERVER_SECRET
       if (serverSecret === undefined) {
-        console.error('please provide server secret')
-        process.exit(1)
+        throw new Error('please provide SERVER_SECRET')
       }
 
       const token = generateToken(systemAccountUuid, undefined, { admin: 'true' }, serverSecret)
@@ -1964,8 +2006,7 @@ export function devTool (
     .action(async (opt: { out: string, filter: string, url?: string }) => {
       const base = (opt.url ?? process.env.PLATFORM_URL ?? '').replace('ws:/', 'http:/').replace(/\/+$/, '')
       if (base === '') {
-        console.log('Please provide url for a platform to retrieve statistics')
-        process.exit(1)
+        throw new Error('please provide PLATFORM_URL or --url')
       }
       let statsUrl = base
       try {
@@ -1983,8 +2024,7 @@ export function devTool (
 
       const serverSecret = process.env.SERVER_SECRET
       if (serverSecret === undefined) {
-        console.error('please provide server secret')
-        process.exit(1)
+        throw new Error('please provide SERVER_SECRET')
       }
       const token = generateToken(systemAccountUuid, undefined, { admin: 'true' }, serverSecret)
 
@@ -2533,8 +2573,7 @@ export function devTool (
     .action(async (workspace: string) => {
       const fulltextUrl = process.env.FULLTEXT_URL
       if (fulltextUrl === undefined) {
-        console.error('please provide FULLTEXT_URL')
-        process.exit(1)
+        throw new Error('please provide FULLTEXT_URL')
       }
 
       await withAccountDatabase(async (db) => {
@@ -2559,8 +2598,7 @@ export function devTool (
     .action(async () => {
       const fulltextUrl = process.env.FULLTEXT_URL
       if (fulltextUrl === undefined) {
-        console.error('please provide FULLTEXT_URL')
-        process.exit(1)
+        throw new Error('please provide FULLTEXT_URL')
       }
 
       let workspaces: Workspace[] = []
@@ -3000,8 +3038,7 @@ export function devTool (
     .action(async (workspace, accsRoot, cmd: { suffix: string, region: string, branding: string, force: boolean }) => {
       const bucketName = process.env.BUCKET_NAME
       if (bucketName === '' || bucketName == null) {
-        console.error('please provide bucket name env')
-        process.exit(1)
+        throw new Error('please provide BUCKET_NAME')
       }
 
       const backupStorageConfig = storageConfigFromEnv(process.env.BACKUP_STORAGE)
@@ -3117,13 +3154,5 @@ export function devTool (
 
   extendProgram?.(program)
 
-  process.on('unhandledRejection', (reason, promise) => {
-    toolCtx.error('Unhandled Rejection at:', { reason, promise })
-  })
-
-  process.on('uncaughtException', (error, origin) => {
-    toolCtx.error('Uncaught Exception at:', { origin, error })
-  })
-
-  program.parse(process.argv)
+  return program
 }

@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test'
 import { generateId, iterateLocator, PlatformSetting, PlatformURI } from '../utils'
-import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { IssuesPage } from '../model/tracker/issues-page'
 import { NewIssue } from '../model/tracker/types'
 import { DateDivided } from '../model/types'
@@ -15,16 +14,14 @@ test.describe('Tracker filters tests', () => {
   // Opening every filtered issue makes the test scale with leftover data; a handful proves the filter.
   const issuesToCheck = 5
 
-  let leftSideMenuPage: LeftSideMenuPage
   let issuesPage: IssuesPage
   let issuesDetailsPage: IssuesDetailsPage
 
   test.beforeEach(async ({ page }) => {
-    leftSideMenuPage = new LeftSideMenuPage(page)
     issuesPage = new IssuesPage(page)
     issuesDetailsPage = new IssuesDetailsPage(page)
 
-    await (await page.goto(`${PlatformURI}/workbench/sanity-ws`))?.finished()
+    await (await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker`))?.finished()
   })
 
   // TODO: We need to split them into separate one's and fix.
@@ -42,8 +39,6 @@ test.describe('Tracker filters tests', () => {
       duedate: 'today',
       filePath: 'cat.jpeg'
     }
-
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
     await issuesPage.createNewIssue(newIssue)
@@ -138,8 +133,6 @@ test.describe('Tracker filters tests', () => {
       duedate: 'today',
       filePath: 'cat.jpeg'
     }
-
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
     await issuesPage.createNewIssue(newIssue)
@@ -255,8 +248,6 @@ test.describe('Tracker filters tests', () => {
   })
 
   test('Priority filter', async () => {
-    await leftSideMenuPage.clickTracker()
-
     await issuesPage.clickModelSelectorAll()
 
     for (const priority of PRIORITIES) {
@@ -272,7 +263,6 @@ test.describe('Tracker filters tests', () => {
 
   test('Created by filter', async () => {
     const createdBy = 'Appleseed John'
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
 
@@ -290,7 +280,6 @@ test.describe('Tracker filters tests', () => {
 
   test('Component filter', async () => {
     const defaultComponent = 'Default component'
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
 
@@ -298,19 +287,25 @@ test.describe('Tracker filters tests', () => {
     await issuesPage.inputSearch().press('Escape')
 
     await issuesPage.checkFilter('Component', 'is')
+    let checked = 0
     for await (const issue of iterateLocator(issuesPage.issuesList(), issuesToCheck)) {
-      await issue.locator('span.list > a').click()
+      const link = issue.locator('span.list > a')
+      // Other workers keep modifying issues in the shared workspace, so a row can leave the list
+      // between the count and the click. Waiting the whole test timeout on it is the flake.
+      if ((await link.count()) === 0) continue
+      await link.click({ timeout: 10000 })
 
       await issuesDetailsPage.checkIfButtonComponentHasTextDefaultComponent(defaultComponent)
 
       await issuesDetailsPage.clickCloseIssueButton()
+      checked++
     }
+    expect(checked).toBeGreaterThan(0)
   })
 
   test('Title filter', async () => {
     const firstSearch = 'issue'
     const secondSearch = 'done'
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
 
@@ -340,7 +335,6 @@ test.describe('Tracker filters tests', () => {
 
   test('Modified by filter', async () => {
     const modifierName = 'Appleseed John'
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
 
@@ -358,11 +352,18 @@ test.describe('Tracker filters tests', () => {
       const text = await issuesPage.issuesList().nth(i).locator('span.list > a').textContent()
       if (text != null && text.trim() !== '') titles.push(text.trim())
     }
+    let checked = 0
     for (const title of titles) {
-      await issuesPage.issuesList().locator('span.list > a', { hasText: title }).first().click()
+      const link = issuesPage.issuesList().locator('span.list > a', { hasText: title }).first()
+      // A title sampled a moment ago can leave this filter: parallel workers keep touching issues
+      // in the shared workspace, and the list is sorted by modification.
+      if ((await link.count()) === 0) continue
+      await link.click({ timeout: 10000 })
       await issuesDetailsPage.checkIfButtonCreatedByHaveRealName(modifierName)
       await issuesDetailsPage.clickCloseIssueButton()
+      checked++
     }
+    expect(checked).toBeGreaterThan(0)
   })
 
   // TODO: We need to split them into separate one's and fix.
@@ -373,8 +374,6 @@ test.describe('Tracker filters tests', () => {
       description: 'Issue for the Milestone filter',
       milestone: filterMilestoneName
     }
-
-    await leftSideMenuPage.clickTracker()
 
     await issuesPage.clickModelSelectorAll()
     await issuesPage.createNewIssue(milestoneIssue)
@@ -453,7 +452,6 @@ test.describe('Tracker filters tests', () => {
       duedate: 'nextMonth'
     }
 
-    await leftSideMenuPage.clickTracker()
     await issuesPage.clickModelSelectorAll()
     await issuesPage.createNewIssue(dueDateOverdueIssue)
     await issuesPage.createNewIssue(dueDateTodayIssue)

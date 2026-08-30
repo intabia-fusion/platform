@@ -1,28 +1,26 @@
 import { test, expect } from '@playwright/test'
 import { generateId, getSecondPage, PlatformSetting, PlatformURI } from '../utils'
+import { retryIntervals } from '../retry'
 import { NewDocument, NewTeamspace } from '../model/documents/types'
-import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { DocumentsPage } from '../model/documents/documents-page'
 import { DocumentContentPage } from '../model/documents/document-content-page'
 import { SidebarPage } from '../model/sidebar-page'
 
-const retryOptions = { intervals: [100, 200, 1000], timeout: 60000 }
+const retryOptions = { intervals: retryIntervals, timeout: 60000 }
 
 test.use({
   storageState: PlatformSetting
 })
 
 test.describe('Documents tests', () => {
-  let leftSideMenuPage: LeftSideMenuPage
   let documentsPage: DocumentsPage
   let documentContentPage: DocumentContentPage
 
   test.beforeEach(async ({ page }) => {
-    leftSideMenuPage = new LeftSideMenuPage(page)
     documentsPage = new DocumentsPage(page)
     documentContentPage = new DocumentContentPage(page)
 
-    await page.goto(`${PlatformURI}/workbench/sanity-ws`)
+    await page.goto(`${PlatformURI}/workbench/sanity-ws/document`)
   })
 
   test('Create a document', async () => {
@@ -31,7 +29,6 @@ test.describe('Documents tests', () => {
       space: 'Default'
     }
 
-    await leftSideMenuPage.clickDocuments()
     await documentsPage.clickOnButtonCreateDocument()
     await documentsPage.createDocument(newDocument)
     await documentsPage.openDocument(newDocument.title)
@@ -47,7 +44,6 @@ test.describe('Documents tests', () => {
       space: 'Default'
     }
 
-    await leftSideMenuPage.clickDocuments()
     await documentsPage.clickOnButtonCreateDocument()
     await documentsPage.createDocument(editDocument)
     await documentsPage.openDocument(editDocument.title)
@@ -73,7 +69,6 @@ test.describe('Documents tests', () => {
       private: false
     }
 
-    await leftSideMenuPage.clickDocuments()
     await documentsPage.checkTeamspaceNotExist(moveTeamspace.title)
     await documentsPage.createNewTeamspace(moveTeamspace)
     await documentsPage.checkTeamspaceExist(moveTeamspace.title)
@@ -107,7 +102,6 @@ test.describe('Documents tests', () => {
     }
 
     await test.step('Create a parent document by button "+" in left menu documents list', async () => {
-      await leftSideMenuPage.clickDocuments()
       await documentsPage.checkTeamspaceNotExist(parentTeamspace.title)
       await documentsPage.createNewTeamspace(parentTeamspace)
       await documentsPage.checkTeamspaceExist(parentTeamspace.title)
@@ -140,7 +134,6 @@ test.describe('Documents tests', () => {
       space: 'Default'
     }
 
-    await leftSideMenuPage.clickDocuments()
     await documentsPage.openTeamspace(colDocument.space)
     await documentsPage.clickOnButtonCreateDocument()
     await documentsPage.createDocument(colDocument)
@@ -154,9 +147,7 @@ test.describe('Documents tests', () => {
     await test.step('User2. Add content second user', async () => {
       const { page: userSecondPage, context } = await getSecondPage(browser)
 
-      await userSecondPage.goto(`${PlatformURI}/workbench/sanity-ws`)
-      const leftSideMenuPageSecond = new LeftSideMenuPage(userSecondPage)
-      await leftSideMenuPageSecond.clickDocuments()
+      await userSecondPage.goto(`${PlatformURI}/workbench/sanity-ws/document`)
       const documentsPageSecond = new DocumentsPage(userSecondPage)
       await documentsPageSecond.openTeamspace(colDocument.space)
       await documentsPageSecond.openDocument(colDocument.title)
@@ -187,7 +178,6 @@ test.describe('Documents tests', () => {
       space: 'Default'
     }
 
-    await leftSideMenuPage.clickDocuments()
     await documentsPage.clickOnButtonCreateDocument()
     await documentsPage.createDocument(linkDocument)
     await documentsPage.openDocument(linkDocument.title)
@@ -210,8 +200,6 @@ test.describe('Documents tests', () => {
     }
 
     await test.step('Create two documents and reference one from the other', async () => {
-      await leftSideMenuPage.clickDocuments()
-
       await documentsPage.clickOnButtonCreateDocument()
       await documentsPage.createDocument(targetDocument)
       await documentsPage.openDocument(targetDocument.title)
@@ -227,13 +215,9 @@ test.describe('Documents tests', () => {
       await documentContentPage.addContentToTheNewLine(targetDocumentUrl)
       await documentContentPage.addRandomLines(5)
       await documentContentPage.checkReferenceInTheText(targetDocument.title)
-
-      await leftSideMenuPage.clickDocuments()
     })
 
     await test.step('Rename the document and check sync', async () => {
-      await leftSideMenuPage.clickDocuments()
-
       const targetDocumentSecondTitle = `Updated Reference Document Title-${generateId()}`
 
       await documentsPage.openDocument(targetDocument.title)
@@ -254,7 +238,6 @@ test.describe('Documents tests', () => {
       space: 'Default'
     }
 
-    await leftSideMenuPage.clickDocuments()
     await documentsPage.clickOnButtonCreateDocument()
     await documentsPage.createDocument(newDocument)
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
@@ -285,7 +268,6 @@ test.describe('Documents tests', () => {
       space: 'Default'
     }
 
-    await leftSideMenuPage.clickDocuments()
     await documentsPage.clickOnButtonCreateDocument()
     await documentsPage.createDocument(newDocument)
     await documentsPage.openDocument(newDocument.title)

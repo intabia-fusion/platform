@@ -1,5 +1,6 @@
 import { type Locator, type Page, expect } from '@playwright/test'
 import { DateDivided } from './types'
+import { retryIntervals, waitStable } from '../retry'
 
 export class CommonPage {
   readonly page: Page
@@ -126,7 +127,7 @@ export class CommonPage {
         })
       })
       await expect(collapsed).toHaveCount(0, { timeout: 2000 })
-    }).toPass({ intervals: [200, 500], timeout: 15000 })
+    }).toPass({ intervals: retryIntervals, timeout: 15000 })
   }
 
   async selectMenuItem (page: Page, name: string, fullWordFilter: boolean = false): Promise<void> {
@@ -209,7 +210,7 @@ export class CommonPage {
         await this.selectPopupInput().fill(point)
       }
       await expect(item).toBeVisible({ timeout: 5000 })
-    }).toPass({ intervals: [300, 1000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
     await item.click()
   }
 
@@ -228,11 +229,9 @@ export class CommonPage {
   }
 
   async selectAssignee (page: Page, name: string): Promise<void> {
-    if (name !== 'first') {
-      await this.selectPopupInput().fill(name.split(' ')[0])
-      await expect(this.selectPopupListItemFirst()).toHaveCount(1)
-    }
-    await this.selectPopupListItemFirst().first().click()
+    // Same popup and same trap as selectMenuItem: the filter is only the first word, so a member
+    // sharing it leaves two rows and demanding exactly one just fails.
+    await this.selectMenuItem(page, name)
   }
 
   async checkExistNewNotification (): Promise<void> {
@@ -268,7 +267,7 @@ export class CommonPage {
         await this.page.keyboard.press('Escape')
         await expect(overlay).toHaveCount(0, { timeout: 2000 })
       }
-    }).toPass({ intervals: [200, 500], timeout: 15000 })
+    }).toPass({ intervals: retryIntervals, timeout: 15000 })
   }
 
   async closeNotification (): Promise<void> {
@@ -290,7 +289,16 @@ export class CommonPage {
   }
 
   async selectMention (mentionName: string, categoryName?: string): Promise<void> {
+    // The popup fills its categories one after another (Employees, then Cards): a click issued while
+    // the list still grows selects nothing, and the popup then stays open with its overlay over the
+    // send button - the next click waits out the whole test timeout.
+    await waitStable(async () => await this.page.locator('form.mentionPoup div.list-item').count(), {
+      stableFor: 500,
+      interval: 100,
+      timeout: 15000
+    })
     await this.mentionPopupListItem(mentionName, categoryName).first().click()
+    await expect(this.page.locator('form.mentionPoup')).toHaveCount(0, { timeout: 5000 })
   }
 
   async selectListItem (name: string): Promise<void> {
@@ -323,7 +331,7 @@ export class CommonPage {
     await expect(async () => {
       if ((await this.selectPopupMenu(filter).count()) === 0) await this.buttonFilter().click()
       await this.selectPopupMenu(filter).click({ timeout: 5000 })
-    }).toPass({ intervals: [300, 1000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
 
     if (filterSecondLevel !== null && typeof filterSecondLevel === 'string') {
       switch (filter) {
@@ -429,7 +437,7 @@ export class CommonPage {
     // Retry with timeout as list may update with delay after search/filter
     await expect(async () => {
       await expect(this.linesFromList(text)).toHaveCount(count)
-    }).toPass({ intervals: [100, 200, 500], timeout: 15000 })
+    }).toPass({ intervals: retryIntervals, timeout: 15000 })
   }
 
   async pressEscape (): Promise<void> {

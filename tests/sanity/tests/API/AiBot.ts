@@ -5,6 +5,7 @@ import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { LocalUrl } from '../utils'
+import { retryIntervals } from '../retry'
 
 // ai-bot REST through nginx (/_aibot), sibling of LOCAL_URL's /_account.
 const aiBotUrl = (): string => LocalUrl.replace(/_account\/?$/, '_aibot')
@@ -22,7 +23,7 @@ export async function openBotDirect (
   await leftSideMenuPage.clickChunter()
   await expect(async () => {
     await chunterPage.createDirectChat(BOT)
-  }).toPass({ intervals: [1000, 2000, 3000], timeout: 60000 })
+  }).toPass({ intervals: retryIntervals, timeout: 60000 })
   await channelPage.clickChooseChannel(BOT_DIRECT)
 }
 

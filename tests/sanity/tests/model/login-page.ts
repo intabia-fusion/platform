@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { PlatformURI } from '../utils'
+import { retryIntervals } from '../retry'
 
 export class LoginPage {
   readonly page: Page
@@ -97,7 +98,7 @@ export class LoginPage {
       // Using retry pattern as error message may take time to appear
       await expect(async () => {
         await expect(this.invalidCredentialsMessage()).toBeVisible({ timeout: 3000 })
-      }).toPass({ intervals: [500, 1000, 2000, 3000], timeout: 25000 })
+      }).toPass({ intervals: retryIntervals, timeout: 25000 })
     }
   }
 

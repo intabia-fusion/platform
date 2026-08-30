@@ -704,6 +704,23 @@ export class PostgresAccountDB implements AccountDB {
     let updateInterval: NodeJS.Timeout | null = null
     let executed = false
 
+    // Every process reopening the account DB replays this list. Reading an applied migration without
+    // FOR UPDATE keeps concurrent openers off each other's lock and its retryIntervalMs sleep.
+    const applied = await this.client`
+      SELECT applied_at, ddl
+      FROM ${this.client(this.ns)}._account_applied_migrations
+      WHERE identifier = ${name} AND applied_at IS NOT NULL
+    `
+    if (applied.length > 0) {
+      if (applied[0].ddl !== ddl) {
+        console.error(
+          `Migration ${name} was applied with different DDL than the current build defines. ` +
+            'Existing migrations must never be modified — add a new one instead.'
+        )
+      }
+      return
+    }
+
     const executeMigration = async (client: Sql): Promise<void> => {
       updateInterval = setInterval(() => {
         this.client`

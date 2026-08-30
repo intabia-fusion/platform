@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { ButtonDrivesContextMenu, Drive } from './types'
 import { CommonPage } from '../common-page'
+import { retryIntervals } from '../../retry'
 
 export class DrivesPage extends CommonPage {
   page: Page
@@ -53,7 +54,7 @@ export class DrivesPage extends CommonPage {
         await this.cellDriveName(drive.name).click({ button: 'right' })
       }
       await expect(item).toBeVisible({ timeout: 3000 })
-    }).toPass({ intervals: [300, 1000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
     await item.click()
   }
 
@@ -77,7 +78,7 @@ export class DrivesPage extends CommonPage {
       await this.popupSubmitButton().click()
       await this.popupArchive().waitFor({ state: 'detached' })
       await expect(archived).toBeVisible({ timeout: 5000 })
-    }).toPass({ intervals: [500, 1000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
   }
 
   async unarchiveDrive (drive: Drive): Promise<void> {
@@ -88,7 +89,7 @@ export class DrivesPage extends CommonPage {
       await this.popupSubmitButton().click()
       await this.popupArchive().waitFor({ state: 'detached' })
       await expect(archived).toBeHidden({ timeout: 5000 })
-    }).toPass({ intervals: [500, 1000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
   }
 
   async disableHideArchived (): Promise<void> {

@@ -9,6 +9,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { PlatformURI } from '../utils'
 import { closeMeetingContexts, waitForActiveMeetingsToFinish } from './meeting-helpers'
+import { retry } from '../retry'
 
 const meetingsWs = 'meetings-ws'
 const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
@@ -99,9 +100,13 @@ export function registerWorkspaceOwnerTests (): void {
 
         // user1 opens the same room. As workspace owner they must see the
         // Connect button (not Knock) because middleware grants them access.
-        await clickRoomByName(page1, room as string)
         const connect = page1.locator('[data-id="meeting-connect"]').getByRole('button').first()
-        await expect(connect).toBeVisible({ timeout: 15000 })
+        // Until the privacy flip reaches user1 the panel renders Knock and Connect does not exist,
+        // so waiting on it alone only burns the timeout. Re-open the room until the view settles.
+        await retry(async () => {
+          await clickRoomByName(page1, room as string)
+          await expect(connect).toBeVisible({ timeout: 3000 })
+        }, 30000)
         await connect.click()
 
         // Successful self-join: the meeting widget renders on user1's page

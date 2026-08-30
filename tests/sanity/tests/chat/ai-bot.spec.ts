@@ -8,6 +8,7 @@ import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { LoginPage } from '../model/login-page'
 import { SelectWorkspacePage } from '../model/select-workspace-page'
 import { PlatformURI, generateTestData } from '../utils'
+import { waitStable, retryIntervals } from '../retry'
 
 // Base ai-bot suite on the `low` level: mock provider in echo mode (tests/config-aibot.yaml)
 // replies with the received context as markdown, so we assert what actually reached the model.
@@ -61,10 +62,8 @@ test.describe('ai-bot direct chat', () => {
     // into an endless exchange - it would echo its own reply.
     await expect(echo).toHaveCount(1, { timeout: 60000 })
     // The welcome the bot posts on member join arrives asynchronously, so the total is not a fixed
-    // number. Let it settle, then freeze the count and require it to stay put.
-    await page.waitForTimeout(15000)
-    const settled = await messages.count()
-    await page.waitForTimeout(5000)
+    // number. Wait for the count to stop moving instead of sleeping out the slowest case.
+    const settled = await waitStable(async () => await messages.count(), { stableFor: 5000 })
     expect(await messages.count()).toBe(settled)
     await expect(echo).toHaveCount(1)
   })
@@ -82,7 +81,7 @@ test.describe('ai-bot direct chat', () => {
     await expect(async () => {
       const last = page.locator('.hulyComponent .activityMessage', { hasText: 'history' }).last()
       await expect(last).toContainText('первое сообщение', { timeout: 5000 })
-    }).toPass({ intervals: [1000, 2000, 3000], timeout: 60000 })
+    }).toPass({ intervals: retryIntervals, timeout: 60000 })
   })
 
   test('tool definitions reach the model', async ({ page }) => {
@@ -116,7 +115,7 @@ test.describe('ai-bot direct chat', () => {
         await expect(page.locator('.hulyComponent .activityMessage', { hasText: blockText })).toBeVisible({
           timeout: 10000
         })
-      }).toPass({ intervals: [2000, 3000, 5000], timeout: 120000 })
+      }).toPass({ intervals: retryIntervals, timeout: 120000 })
     })
   })
 })

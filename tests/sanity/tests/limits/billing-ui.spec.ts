@@ -1,6 +1,7 @@
 import { expect, test, type Page, type APIRequestContext } from '@playwright/test'
 import { type WorkspaceUuid } from '@hcengineering/core'
 import { PlatformSetting, PlatformURI, generateId } from '../utils'
+import { retryIntervals } from '../retry'
 import { setWorkspacePlanByUuid, getTierSubscription } from '../API/Billing'
 import { ApiEndpoint } from '../API/Api'
 
@@ -178,7 +179,7 @@ test.describe('billing UI lifecycle (tbank + mock bank)', () => {
       const tier = await getTierSubscription(workspace)
       expect(tier?.status).toBe('active')
       expect(tier?.plan).toBe('business')
-    }).toPass({ intervals: [1000, 2000, 3000], timeout: 20000 })
+    }).toPass({ intervals: retryIntervals, timeout: 20000 })
 
     // The active card reflects the purchase: Business name, Active status, a price, a renewal date,
     // and the seat-change action.
@@ -197,13 +198,13 @@ test.describe('billing UI lifecycle (tbank + mock bank)', () => {
     await changeSeats(page, wsUrl, 6, 'charge')
     await expect(async () => {
       expect((await getTierSubscription(workspace))?.usersLimit).toBe(6)
-    }).toPass({ intervals: [1000, 2000, 3000], timeout: 20000 })
+    }).toPass({ intervals: retryIntervals, timeout: 20000 })
 
     // Down: 6 -> 2 (above the single owner member), preview shows the renewal-date shift, no charge.
     await changeSeats(page, wsUrl, 2, 'extend')
     await expect(async () => {
       expect((await getTierSubscription(workspace))?.usersLimit).toBe(2)
-    }).toPass({ intervals: [1000, 2000, 3000], timeout: 20000 })
+    }).toPass({ intervals: retryIntervals, timeout: 20000 })
   })
 
   test('seat count cannot go below the current member count', async ({ page, request }) => {
@@ -277,7 +278,7 @@ test.describe('billing UI lifecycle (tbank + mock bank)', () => {
       const tier = await getTierSubscription(workspace)
       expect(tier?.status).toBe('active')
       expect(tier?.plan).toBe('business')
-    }).toPass({ intervals: [1000, 2000, 3000], timeout: 20000 })
+    }).toPass({ intervals: retryIntervals, timeout: 20000 })
 
     // The active card labels the amount as a yearly charge (not monthly).
     await expect(page.locator('[data-id="currentTierAmount"]')).toContainText(/Yearly|В год/)
@@ -296,7 +297,7 @@ test.describe('billing UI lifecycle (tbank + mock bank)', () => {
       expect(tier?.providerData?.recurrent).toBe(false)
       // No RebillId -> nothing for the renewal scheduler to charge.
       expect(tier?.providerData?.rebillId).toBeUndefined()
-    }).toPass({ intervals: [1000, 2000, 3000], timeout: 20000 })
+    }).toPass({ intervals: retryIntervals, timeout: 20000 })
 
     // Cancel means "do not renew" — meaningless here, so the action is gone.
     await expect(page.locator('[data-id="cancelSubscription"]')).toHaveCount(0)
@@ -325,7 +326,7 @@ test.describe('billing UI lifecycle (tbank + mock bank)', () => {
       await openBilling(page, wsUrl)
       // Rendered compact ("10M" / "10 млн" depending on locale), so match the digits only.
       await expect(balance).toContainText('10', { timeout: 5000 })
-    }).toPass({ intervals: [2000, 3000, 5000], timeout: 90000 })
+    }).toPass({ intervals: retryIntervals, timeout: 90000 })
 
     // Purchased tokens are spendable on top of the tier window, so available exceeds it.
     await expect(page.locator('[data-id="tokenAvailable"]')).not.toHaveText('0')

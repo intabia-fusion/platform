@@ -11,7 +11,7 @@ export function registerMigrationTests (): void {
 
     test.beforeEach(async ({ page }) => {
       officePage = new OfficePage(page)
-      await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}`))?.finished()
+      await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
     })
 
     test('floor and rooms restored from backup', async ({ page }) => {

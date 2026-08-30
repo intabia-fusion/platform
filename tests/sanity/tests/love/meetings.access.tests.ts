@@ -9,7 +9,7 @@ export function registerAccessTests (): void {
     test.use({ storageState: PlatformSetting })
     test.beforeEach(async ({ page }) => {
       const office = new OfficePage(page)
-      await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}`))?.finished()
+      await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
       await office.navigateToOffice()
       await expect(office.floorGrid()).toBeVisible({ timeout: 15000 })
     })
@@ -18,12 +18,12 @@ export function registerAccessTests (): void {
       const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
       const page2 = await ctx.newPage()
       try {
-        await (await page2.goto(`${PlatformURI}/workbench/${meetingsWs}`))?.finished()
+        await (await page2.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
         const office2 = new OfficePage(page2)
         await office2.navigateToOffice()
         await expect(office2.floorGrid()).toBeVisible({ timeout: 15000 })
-        const rooms = page2.locator('div.floorGrid-room')
-        expect(await rooms.count()).toBeGreaterThan(0)
+        // count() does not wait, and the rooms render a frame after floorGrid itself.
+        await expect(page2.locator('div.floorGrid-room').first()).toBeVisible({ timeout: 15000 })
       } finally {
         await page2.close()
         await ctx.close()
@@ -34,7 +34,7 @@ export function registerAccessTests (): void {
       const ctx = await browser.newContext({ storageState: '.auth/storageThird.json' })
       const page3 = await ctx.newPage()
       try {
-        await (await page3.goto(`${PlatformURI}/workbench/${meetingsWs}`))?.finished()
+        await (await page3.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
         const office3 = new OfficePage(page3)
         await office3.navigateToOffice()
         await expect(office3.floorGrid()).toBeVisible({ timeout: 15000 })

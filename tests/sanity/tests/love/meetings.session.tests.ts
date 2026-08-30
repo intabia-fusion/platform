@@ -8,6 +8,7 @@
 
 import { expect, test, type Page } from '@playwright/test'
 import { PlatformURI } from '../utils'
+import { retryIntervals } from '../retry'
 import { closeMeetingContexts, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
 const meetingsWs = 'meetings-ws'
@@ -54,7 +55,7 @@ async function startOrJoin (page: Page): Promise<void> {
       await waitForActiveMeetingsToFinish()
     }
     await expect(connect).toBeVisible({ timeout: 5000 })
-  }).toPass({ intervals: [500, 1000, 2000], timeout: 20000 })
+  }).toPass({ intervals: retryIntervals, timeout: 20000 })
   await connect.click()
 }
 

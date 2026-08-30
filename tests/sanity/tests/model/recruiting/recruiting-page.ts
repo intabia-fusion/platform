@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test'
+import { retryIntervals } from '../../retry'
 
 export class RecruitingPage {
   page: Page
@@ -87,7 +88,7 @@ export class RecruitingPage {
     await expect(async () => {
       await option.click({ timeout: 5000 })
       await expect(option).toHaveCount(0, { timeout: 3000 })
-    }).toPass({ intervals: [500, 1000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
   }
 
   async clickGoToVacanciesPopupOption (): Promise<void> {

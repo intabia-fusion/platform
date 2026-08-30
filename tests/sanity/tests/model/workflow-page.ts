@@ -14,6 +14,7 @@
 //
 
 import { expect, type Locator, type Page } from '@playwright/test'
+import { retry } from '../retry'
 
 export type RuleCategory = 'requests' | 'validators' | 'postFunctions'
 
@@ -102,7 +103,7 @@ export class WorkflowPage {
   }
 
   async createWorkflow (name: string, taskType?: string): Promise<void> {
-    await this.addWorkflowButton().click()
+    await this.openAside(this.addWorkflowButton())
     await this.asideNameInput().fill(name)
     if (taskType !== undefined) {
       await this.taskTypeDropdown().click()
@@ -113,7 +114,7 @@ export class WorkflowPage {
   }
 
   async createScreen (name: string, targetClass?: string): Promise<void> {
-    await this.addScreenButton().click()
+    await this.openAside(this.addScreenButton())
     await this.asideNameInput().fill(name)
     if (targetClass !== undefined) {
       await this.screenClassDropdown().click()
@@ -121,6 +122,19 @@ export class WorkflowPage {
     }
     await this.asideButton('Create').click()
     await expect(this.screenRow(name)).toBeVisible()
+  }
+
+  // Both asides carry a Create button, so a leftover one from the previous step cannot be told
+  // apart by the footer - close whatever is open and open ours from scratch.
+  private async openAside (button: Locator): Promise<void> {
+    await retry(async () => {
+      if (await this.asideModal().isVisible()) {
+        await this.page.keyboard.press('Escape')
+        await expect(this.asideModal()).toHaveCount(0, { timeout: 3000 })
+      }
+      await button.click()
+      await expect(this.asideButton('Create')).toBeVisible({ timeout: 3000 })
+    })
   }
 
   async screenClassOptions (): Promise<string[]> {

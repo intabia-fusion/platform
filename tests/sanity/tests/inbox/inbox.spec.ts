@@ -5,28 +5,25 @@ import { ChannelPage } from '../model/channel-page'
 import { SignUpData } from '../model/common-types'
 import { InboxPage } from '../model/inbox.ts/inbox-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
-import { LoginPage } from '../model/login-page'
 import { PlanningPage } from '../model/planning/planning-page'
 import { MenuItems, NotificationsPage } from '../model/profile/notifications-page'
 import { UserProfilePage } from '../model/profile/user-profile-page'
-import { SelectWorkspacePage } from '../model/select-workspace-page'
 import { SignInJoinPage } from '../model/signin-page'
 import { TeamPage } from '../model/team-page'
 import { IssuesDetailsPage } from '../model/tracker/issues-details-page'
 import { createNewIssueData, prepareNewIssueWithOpenStep } from '../tracker/common-steps'
 import {
   attachScreenshot,
+  createAccountAndWorkspace,
   generateId,
   generateTestData,
   getInviteLink,
   getTimeForPlanner,
-  PlatformURI,
   setTestOptions
 } from '../utils'
 
 test.describe('Inbox tests', () => {
   let leftSideMenuPage: LeftSideMenuPage
-  let loginPage: LoginPage
   let issuesDetailsPage: IssuesDetailsPage
   let inboxPage: InboxPage
   let api: ApiEndpoint
@@ -42,19 +39,13 @@ test.describe('Inbox tests', () => {
       password: '1234'
     }
     leftSideMenuPage = new LeftSideMenuPage(page)
-    loginPage = new LoginPage(page)
     issuesDetailsPage = new IssuesDetailsPage(page)
     inboxPage = new InboxPage(page)
     api = new ApiEndpoint(request)
-    await api.createAccount(data.userName, '1234', data.firstName, data.lastName)
     await api.createAccount(newUser2.email, newUser2.password, newUser2.firstName, newUser2.lastName)
-    await api.createWorkspaceWithLogin(data.workspaceName, data.userName, '1234')
-    await (await page.goto(`${PlatformURI}`))?.finished()
-    await setTestOptions(page)
-    await loginPage.login(data.userName, '1234')
-    const swp = new SelectWorkspacePage(page)
-    await swp.selectWorkspace(data.workspaceName)
-    // await (await page.goto(`${PlatformURI}/workbench/${data.workspaceName}`))?.finished()
+    // Straight into the workspace from the account token: the login form plus the workspace
+    // picker are three page loads and cost about a second per test.
+    await createAccountAndWorkspace(page, request, data, 'tracker')
   })
 
   test('User is able to create a task, assign a himself and see it inside the inbox', async ({ page }) => {

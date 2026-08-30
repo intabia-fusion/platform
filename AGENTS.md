@@ -170,18 +170,20 @@ login with `BadRequest`.
 
 ### Tracing and retries
 
-The trace mode is chosen by environment, override with `TRACE_MODE`:
+`on-first-retry` everywhere, local and CI alike. A green run then pays nothing, and a failure that
+reproduces is traced by its own retry. Override with `TRACE_MODE` (`retain-on-failure`, `on`,
+`off`, `on-all-retries`); an unknown value warns and falls back to the default.
 
-| Where | Mode | What you get |
-|---|---|---|
-| CI (`CI` set) | `on-first-retry` | Only the retry is traced. A green run pays nothing. |
-| Local | `retain-on-failure` | Every attempt is traced, only the failed ones kept. |
+**Turn tracing up when hunting a flake.** `on-first-retry` traces the retry, which for a flake is
+the attempt that *passed* — the trace shows a green run and says nothing about why the first one
+failed. `TRACE_MODE=retain-on-failure` keeps the failing attempt's trace instead, at the cost of
+recording every test: a full trace (`snapshots` + `screenshots` + `sources`, ~18MB per test) is
+written for all of them and thrown away on pass. That is the whole reason it is not the default —
+it roughly doubles a local run. Turn it on for the run where you are chasing the flake, off again
+after.
 
-The difference matters when hunting a flake: `on-first-retry` traces the retry, which for a flake
-is the attempt that *passed*, so the trace shows a green run and says nothing about why the first
-one failed. `retain-on-failure` keeps the failing attempt's trace, at the cost of tracing every
-test. Use `TRACE_MODE=retain-on-failure` to get that on CI, `TRACE_MODE=on-first-retry` to skip it
-locally. `--retries=0` is no longer needed to keep runs fast either way.
+`--retries=0` is no longer needed to keep runs fast either way. The same default and the same
+`TRACE_MODE` override apply to `qms-tests/sanity` and `ws-tests/sanity`.
 
 `html` is configured with `open: 'never'`; without it the reporter parks a server on failure and
 hangs the terminal.

@@ -10,6 +10,7 @@ import { LeftSideMenuPage } from './model/left-side-menu-page'
 import { LoginPage } from './model/login-page'
 import { SelectWorkspacePage } from './model/select-workspace-page'
 import { SignInJoinPage } from './model/signin-page'
+import { waitStable } from './retry'
 
 export const PlatformURI = process.env.PLATFORM_URI as string
 export const PlatformTransactor = process.env.PLATFORM_TRANSACTOR as string
@@ -185,7 +186,9 @@ export function expectToContainsOrdered (val: Locator, text: string[], timeout?:
  * data other tests leave behind - otherwise the test slows down as the stand fills up.
  */
 export async function * iterateLocator (locator: Locator, limit?: number): AsyncGenerator<Locator> {
-  const total = await locator.count()
+  // count() never waits: read right after a filter is applied it still sees the pre-filter rows,
+  // and every nth() yielded then points at a row that is about to be replaced.
+  const total = await waitStable(async () => await locator.count(), { stableFor: 500, interval: 100, timeout: 15000 })
   const max = limit !== undefined ? Math.min(limit, total) : total
   for (let index = 0; index < max; index++) {
     yield locator.nth(index)
@@ -252,6 +255,7 @@ export async function getInviteLink (page: Page): Promise<string | null> {
   const linkLocator = page.locator('.antiPopup .link')
   // Redo the whole chain on retry: when a click lands on a popup that is still mounting, no link is
   // ever generated and re-checking its visibility alone can only wait the timeout out.
+  let linkText: string | null = null
   await expect(async () => {
     if ((await linkLocator.count()) === 0) {
       await page.keyboard.press('Escape')
@@ -260,8 +264,10 @@ export async function getInviteLink (page: Page): Promise<string | null> {
       await leftSideMenuPage.getInviteLink()
     }
     await expect(linkLocator).toBeVisible({ timeout: 5000 })
+    // Read it here: the popup can close between the check and the read, and an unbounded
+    // textContent() then waits out the whole test timeout instead of redoing the chain.
+    linkText = await linkLocator.textContent({ timeout: 5000 })
   }).toPass({ intervals: [200, 500, 1000], timeout: 20000 })
-  const linkText = await linkLocator.textContent()
   expect(linkText).not.toBeNull()
   // Escape instead of the Close button: with a document open behind, its floating editor toolbar
   // overlays the button and swallows the click.
@@ -298,7 +304,12 @@ export async function reLogin (page: Page, data: TestData): Promise<void> {
  * cookie present it fetches the token via getAccount() on first load, so one navigation replaces
  * three page loads.
  */
-export async function loginByToken (page: Page, accountToken: string, ws: WorkspaceLoginInfo): Promise<void> {
+export async function loginByToken (
+  page: Page,
+  accountToken: string,
+  ws: WorkspaceLoginInfo,
+  app?: string
+): Promise<void> {
   await page.context().addCookies([{ name: 'account-metadata-Token', value: accountToken, url: PlatformURI }])
   await page.context().addInitScript(
     ([account, endpoint]) => {
@@ -311,15 +322,24 @@ export async function loginByToken (page: Page, accountToken: string, ws: Worksp
     },
     [ws.account, ws.endpoint]
   )
-  await (await page.goto(`${PlatformURI}/workbench/${ws.workspaceUrl}`))?.finished()
+  // Landing straight on the app costs the same as the bare workbench url and saves the ~900ms
+  // the left-menu click spends loading the same chunk afterwards.
+  await (
+    await page.goto(`${PlatformURI}/workbench/${ws.workspaceUrl}${app !== undefined ? `/${app}` : ''}`)
+  )?.finished()
 }
 
-export async function createAccountAndWorkspace (page: Page, request: APIRequestContext, data: TestData): Promise<void> {
+export async function createAccountAndWorkspace (
+  page: Page,
+  request: APIRequestContext,
+  data: TestData,
+  app?: string
+): Promise<void> {
   const api: ApiEndpoint = new ApiEndpoint(request)
   await api.createAccount(data.userName, '1234', data.firstName, data.lastName)
   const ws = await api.createWorkspaceWithLogin(data.workspaceName, data.userName, '1234')
   const token = await api.loginAndGetToken(data.userName, '1234')
-  await loginByToken(page, token, ws)
+  await loginByToken(page, token, ws, app)
 }
 
 export const convertDate = (date: Date): { day: string, month: string, year: string } => {

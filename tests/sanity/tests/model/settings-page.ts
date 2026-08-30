@@ -1,6 +1,7 @@
 import { expect, type Locator } from '@playwright/test'
 import { CommonPage } from './common-page'
 import { SpaceTypes } from './types'
+import { retryIntervals } from '../retry'
 
 export class SettingsPage extends CommonPage {
   profileButton = (): Locator => this.page.locator('#profile-button')
@@ -84,7 +85,7 @@ export class SettingsPage extends CommonPage {
     await expect(async () => {
       if ((await this.settingsButton().count()) === 0) await this.openProfileMenu()
       await this.settingsButton().click({ timeout: 5000 })
-    }).toPass({ intervals: [300, 1000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
   }
 
   async clickAddSpaceType (): Promise<void> {
