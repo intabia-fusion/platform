@@ -709,10 +709,18 @@ export async function requestAdminOtp (
   token: string
 ): Promise<OtpInfo> {
   if (getAdminOtpDevCode() !== undefined) {
+    await logAdminAction(ctx, db, token, 'otp_issued')
     return { sent: true, retryOn: Date.now() }
   }
   const sid = await getAdminEmailSocialId(ctx, db, token)
-  return await sendOtp(ctx, db, branding, sid, ADMIN_OTP_TTL_SEC, true)
+  const before = (await db.otp.find({ socialId: sid._id }, { createdOn: 'descending' }, 1))[0]?.createdOn
+  const info = await sendOtp(ctx, db, branding, sid, ADMIN_OTP_TTL_SEC, true)
+  const after = (await db.otp.find({ socialId: sid._id }, { createdOn: 'descending' }, 1))[0]?.createdOn
+  // Only a really new code restarts the attempt budget; a throttled re-request returns the old one.
+  if (after !== before) {
+    await logAdminAction(ctx, db, token, 'otp_issued')
+  }
+  return info
 }
 
 export async function verifyAdminOtp (

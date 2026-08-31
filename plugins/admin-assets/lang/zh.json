@@ -157,7 +157,7 @@
     "MassMigrate": "批量迁移 {count} 个至 {region}",
     "ResetAttempts": "重置尝试次数 {url}",
     "UnarchiveWorkspace": "取消归档 {url}",
-    "ReplaceSubscriptionConfirm": "工作区已有“{current}”。替换为“{next}”？",
+    "ReplaceSubscriptionConfirm": "工作区已有「{current}」。替换为「{next}」？",
     "Period90d": "90天",
     "Period365d": "一年",
     "MonthlyFinance": "每月财务",
@@ -182,14 +182,13 @@
     "AuditTitle": "管理员操作",
     "Target": "对象",
     "ReleaseSocialId": "删除 social id",
-    "ReplaceSubscriptionConfirm": "工作区已有「{current}」。替换为「{next}」？",
     "Billing": "AI",
     "SortTokens": "按令牌",
     "SortMinutes": "按分钟",
-    "AdminSessionTitle": "Admin access confirmation",
-    "AdminSessionHint": "Enter the code sent to your admin email to open an administration session.",
-    "AdminSessionRejected": "Wrong or expired code",
-    "Impersonate": "View as",
-    "ImpersonateHint": "Open a read-only session as this member. Writes are refused; the action is audited."
+    "AdminSessionTitle": "管理员访问确认",
+    "AdminSessionHint": "请输入发送到管理员邮箱的验证码以开启管理会话。",
+    "AdminSessionRejected": "验证码错误或已过期",
+    "Impersonate": "以其身份查看",
+    "ImpersonateHint": "以该成员身份打开只读会话。写入将被拒绝，该操作会记录到审计日志。"
   }
 }

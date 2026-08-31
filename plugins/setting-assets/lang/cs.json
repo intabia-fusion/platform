@@ -217,17 +217,17 @@
     "SpaceMembersOnly": "Pouze členové prostoru",
     "OverrideAttribute": "Přepsat atribut",
     "Required": "Povinné",
-    "Reset": "Resetovat"
+    "Reset": "Resetovat",
+    "ConfirmOperation": "Potvrzení operace",
+    "Confirm": "Potvrdit",
+    "OtpCode": "Kód",
+    "OtpSent": "Kód byl odeslán na váš e-mail",
+    "OtpSendFailed": "Kód se nepodařilo odeslat",
+    "SendCode": "Odeslat kód"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",
     "IntegrationDisabledNotificationHtml": "<p>Integration with {doc} was disabled</p> <p>{link}</p>",
-    "IntegrationDisabledNotificationSubject": "Integration with {doc} was disabled",
-    "ConfirmOperation": "Confirm operation",
-    "Confirm": "Confirm",
-    "OtpCode": "Code",
-    "OtpSent": "A code has been sent to your email",
-    "OtpSendFailed": "Failed to send the code",
-    "SendCode": "Send code"
+    "IntegrationDisabledNotificationSubject": "Integration with {doc} was disabled"
   }
 }

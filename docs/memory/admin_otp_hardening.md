@@ -164,3 +164,49 @@
 
 Проверено: `rush fast-build:lint --to @hcengineering/prod` и по каждому поду - 0 ошибок.
 Прогон playwright не делал: стенд `ws-tests` не поднят.
+
+## CI-разбор PR #390 (сделано)
+
+`test`, `uitest-pg`, `uitest-workspaces` были красные. Четыре независимые причины:
+
+- **Локали.** `admin-assets/lang/*`: пять новых ключей (`AdminSessionTitle`, `AdminSessionHint`,
+  `AdminSessionRejected`, `Impersonate`, `ImpersonateHint`) лежали по-английски в 10 локалях -
+  `lang.test.ts` («every locale translates its strings») падал. Переведены. Заодно `zh.json` имел
+  дубль ключа `ReplaceSubscriptionConfirm`, JSON-перезапись его схлопнула (побеждало и раньше
+  второе значение, поведение не изменилось).
+- **Секция строк.** Шесть ключей per-op диалога (`ConfirmOperation`, `Confirm`, `OtpCode`, `OtpSent`,
+  `OtpSendFailed`, `SendCode`) были записаны в `setting-assets/lang/*` в секцию `emailTemplate`, а
+  `plugins/setting/src/index.ts` объявляет их в `string`. `setting.string.*` не резолвился -
+  в UI (и в селекторе sanity `input[placeholder="Code"]`) вышел бы сырой id. Ключи перенесены в
+  `string` и переведены. Тест `setting-assets` этого не ловит: там только `makeLocalesTest`
+  (паритет ключей), проверки перевода нет.
+- **Стенд sanity.** `tests/docker-compose.yaml` не задавал `ADMIN_OTP_DEV_CODE`, поэтому
+  `Billing.ts:getAdmin()` получал `InvalidOtp` - 19 упавших тестов в `uitest-pg`
+  (`limits/*`, `chat/ai-bot.spec.ts`). Добавлено `ADMIN_OTP_DEV_CODE=000000` (в `ws-tests` уже было).
+- **Бюджет попыток OTP был глобальным по актору.** `verifyAdminOtpLimited` считал `otp_failed` за
+  последние 300 с и не сбрасывался ничем: кейс 4 намеренно сжигает 5 попыток, после чего аккаунт
+  `admin` оставался в Forbidden весь оставшийся окно - падали кейсы 4, 5, 9, 11, 14, 15 и все
+  `plan-*.test.ts` (они логинятся тем же `admin`). Теперь бюджет привязан к коду: `requestAdminOtp`
+  пишет аудит `otp_issued` (в dev-режиме - всегда, в проде - только когда `sendOtp` реально вставил
+  новую строку, сравнением `createdOn` до/после), а лимитер считает `otp_failed` новее последнего
+  `otp_issued`. Перебор не ускоряется: выпуск кода throttled через `OTP_RETRY_DELAY`.
+- **Кейс 13 проверял не то.** `getWorkspaceInfo` берёт воркспейс из токена, а не из параметров;
+  у админ-сессии воркспейса нет, так что «чтения открыты» проверялось несуществующим путём.
+  Заменено на `listWorkspacesPaged({ search: wsName })` - настоящее чтение админ-панели.
+
+## Флак billing-ui «connect a package, upgrade to a bigger one, then downgrade»
+
+Снимок падения (`test-results/.../error-context.md`): после оплаты pkg-100mb карточка 10 MB всё ещё
+`Disconnect`, 100 MB - `Connect`, и так все 20 с. Две настоящие причины:
+
+- **`upsertSubscription` публиковал `limitsChanged` только для `SubscriptionType.Tier`.** Пакет меняет
+  те же эффективные лимиты, но не уведомлял никого: `Subscriptions.svelte` перечитывает подписки
+  только на mount, по tx `WorkspaceEvent.LimitsChanged` или через опрос `?checkoutId=`. Значит открытая
+  страница биллинга (и host-map `PlanLimitsBootMiddleware`) держала до-покупочное состояние до ручного
+  reload. Условие расширено на любой тип подписки; `LimitCategory.Plan` потребители трактуют как
+  «перечитай», даталейк слушает только Disk/Payment, так что новых блокировок не появляется.
+- **`CONFIRMED` на mock-банке не является барьером.** `POST /mock-checkout/:id/pay` ставит статус и
+  зовёт `void this.deliver(...)` - fire-and-forget, ответ уходит раньше вебхука. Тест ждал этот текст,
+  затем шёл на биллинг через `page.goto`, выбрасывая `successUrl` с `checkoutId` (то есть штатный путь
+  опроса продукта). Финальная проверка в `connectPackage` завёрнута в `toPass` с повторным
+  `openBilling`.

@@ -222,17 +222,17 @@
     "SpaceMembersOnly": "仅限空间成员",
     "OverrideAttribute": "重写属性",
     "Required": "必填",
-    "Reset": "重置"
+    "Reset": "重置",
+    "ConfirmOperation": "确认操作",
+    "Confirm": "确认",
+    "OtpCode": "验证码",
+    "OtpSent": "验证码已发送到您的邮箱",
+    "OtpSendFailed": "验证码发送失败",
+    "SendCode": "发送验证码"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",
     "IntegrationDisabledNotificationHtml": "<p>Integration with {doc} was disabled</p> <p>{link}</p>",
-    "IntegrationDisabledNotificationSubject": "Integration with {doc} was disabled",
-    "ConfirmOperation": "Confirm operation",
-    "Confirm": "Confirm",
-    "OtpCode": "Code",
-    "OtpSent": "A code has been sent to your email",
-    "OtpSendFailed": "Failed to send the code",
-    "SendCode": "Send code"
+    "IntegrationDisabledNotificationSubject": "Integration with {doc} was disabled"
   }
 }

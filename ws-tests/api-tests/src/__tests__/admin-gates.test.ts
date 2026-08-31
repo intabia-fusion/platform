@@ -347,8 +347,10 @@ describe('admin-gates', () => {
     const foreign = await rpc(config, adminSession, 'selectWorkspace', { workspaceUrl: wsName })
     expect(isForbidden(foreign)).toBe(true)
 
-    // Reads stay open for the admin panel.
-    expect((await rpc(config, adminSession, 'getWorkspaceInfo', { workspace: wsUuid })).error).toBeUndefined()
+    // Reads stay open for the admin panel: the workspace is listed even though the admin is no member.
+    const listed = await rpc(config, adminSession, 'listWorkspacesPaged', { search: wsName, limit: 10 })
+    expect(listed.error).toBeUndefined()
+    expect(listed.result.workspaces.some((w: any) => w.uuid === wsUuid)).toBe(true)
 
     expect(isForbidden(await rpc(config, adminSession, 'createInviteLink', { workspace: wsUuid }))).toBe(true)
     expect(isForbidden(await rpc(config, adminSession, 'createAccessLink', { workspace: wsUuid }))).toBe(true)

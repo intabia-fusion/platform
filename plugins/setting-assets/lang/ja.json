@@ -222,17 +222,17 @@
     "SpaceMembersOnly": "スペースメンバーのみ",
     "OverrideAttribute": "属性をオーバーライド",
     "Required": "必須",
-    "Reset": "リセット"
+    "Reset": "リセット",
+    "ConfirmOperation": "操作の確認",
+    "Confirm": "確認",
+    "OtpCode": "コード",
+    "OtpSent": "メールにコードを送信しました",
+    "OtpSendFailed": "コードを送信できませんでした",
+    "SendCode": "コードを送信"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",
     "IntegrationDisabledNotificationHtml": "<p>Integration with {doc} was disabled</p> <p>{link}</p>",
-    "IntegrationDisabledNotificationSubject": "Integration with {doc} was disabled",
-    "ConfirmOperation": "Confirm operation",
-    "Confirm": "Confirm",
-    "OtpCode": "Code",
-    "OtpSent": "A code has been sent to your email",
-    "OtpSendFailed": "Failed to send the code",
-    "SendCode": "Send code"
+    "IntegrationDisabledNotificationSubject": "Integration with {doc} was disabled"
   }
 }

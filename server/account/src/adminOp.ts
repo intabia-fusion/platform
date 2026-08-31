@@ -51,8 +51,9 @@ export function requireAdminSession (ctx: MeasureContext, token: string): Token 
 }
 
 /**
- * Consumes an admin OTP with a per-actor attempt limit. Hitting the limit drops the outstanding
- * code, so a burst of guesses cannot be resumed - the admin has to request a new one.
+ * Consumes an admin OTP with a per-code attempt limit. Hitting the limit drops the outstanding
+ * code, so a burst of guesses cannot be resumed - the admin has to request a new one, and issuing
+ * one is itself throttled by OTP_RETRY_DELAY.
  */
 export async function verifyAdminOtpLimited (
   ctx: MeasureContext,
@@ -62,7 +63,10 @@ export async function verifyAdminOtpLimited (
 ): Promise<void> {
   const { account } = decodeTokenVerbose(ctx, token)
   const since = Date.now() - OTP_FAIL_WINDOW_SEC * 1000
-  const failures = await db.adminAction.find({ actor: account, action: 'otp_failed', createdOn: { $gt: since } })
+  const recent = await db.adminAction.find({ actor: account, createdOn: { $gt: since } })
+  // A freshly issued code starts its own budget: guesses against the previous one do not carry over.
+  const issuedOn = recent.reduce((ts, a) => (a.action === 'otp_issued' ? Math.max(ts, a.createdOn) : ts), 0)
+  const failures = recent.filter((a) => a.action === 'otp_failed' && a.createdOn > issuedOn)
 
   if (failures.length >= OTP_FAIL_LIMIT) {
     // Drop the outstanding code as well: guessing must not be resumable within the same window.

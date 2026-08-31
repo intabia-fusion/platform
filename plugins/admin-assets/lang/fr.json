@@ -185,10 +185,10 @@
     "Billing": "AI",
     "SortTokens": "Par tokens",
     "SortMinutes": "Par minutes",
-    "AdminSessionTitle": "Admin access confirmation",
-    "AdminSessionHint": "Enter the code sent to your admin email to open an administration session.",
-    "AdminSessionRejected": "Wrong or expired code",
-    "Impersonate": "View as",
-    "ImpersonateHint": "Open a read-only session as this member. Writes are refused; the action is audited."
+    "AdminSessionTitle": "Confirmation de l'accès administrateur",
+    "AdminSessionHint": "Saisissez le code envoyé à votre e-mail d'administrateur pour ouvrir une session d'administration.",
+    "AdminSessionRejected": "Code incorrect ou expiré",
+    "Impersonate": "Voir en tant que",
+    "ImpersonateHint": "Ouvre une session en lecture seule au nom de ce membre. Les écritures sont refusées ; l'action est auditée."
   }
 }

@@ -1986,20 +1986,18 @@ async function doUpsertSubscription (ctx: MeasureContext, db: AccountDB, params:
     }
   }
 
-  // Payment/plan state is defined by the tier subscription; notify consumers edge-triggered.
-  if (params.type === SubscriptionType.Tier) {
-    // Refresh the snapshot so consumers re-read free-vs-paid limits without restart. Status matters:
-    // active<->unpaid flips the effective limits (paid vs free fallback) even with the same plan.
-    const wasActive = existing?.status === SubscriptionStatus.Active
-    const isActive = params.status === SubscriptionStatus.Active
-    const planChanged =
-      existing === null ||
-      existing.plan !== params.plan ||
-      wasActive !== isActive ||
-      JSON.stringify(existing.limits ?? null) !== JSON.stringify(params.limits ?? null)
-    if (planChanged) {
-      await publishLimitsEvents(ctx, workspaceUuid, [workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)])
-    }
+  // Refresh the snapshot so consumers re-read the effective limits without restart. Status matters:
+  // active<->unpaid flips them (paid vs free fallback) even with the same plan. A package adds to the
+  // same limits, so it has to notify too - otherwise an open billing page keeps the pre-purchase card.
+  const wasActive = existing?.status === SubscriptionStatus.Active
+  const isActive = params.status === SubscriptionStatus.Active
+  const planChanged =
+    existing === null ||
+    existing.plan !== params.plan ||
+    wasActive !== isActive ||
+    JSON.stringify(existing.limits ?? null) !== JSON.stringify(params.limits ?? null)
+  if (planChanged) {
+    await publishLimitsEvents(ctx, workspaceUuid, [workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)])
   }
 }
 

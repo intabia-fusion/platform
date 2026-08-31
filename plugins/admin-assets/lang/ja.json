@@ -185,10 +185,10 @@
     "Billing": "AI",
     "SortTokens": "トークン順",
     "SortMinutes": "分順",
-    "AdminSessionTitle": "Admin access confirmation",
-    "AdminSessionHint": "Enter the code sent to your admin email to open an administration session.",
-    "AdminSessionRejected": "Wrong or expired code",
-    "Impersonate": "View as",
-    "ImpersonateHint": "Open a read-only session as this member. Writes are refused; the action is audited."
+    "AdminSessionTitle": "管理者アクセスの確認",
+    "AdminSessionHint": "管理セッションを開始するには、管理者メールに送信されたコードを入力してください。",
+    "AdminSessionRejected": "コードが正しくないか、有効期限が切れています",
+    "Impersonate": "として表示",
+    "ImpersonateHint": "このメンバーとして読み取り専用セッションを開きます。書き込みは拒否され、操作は監査に記録されます。"
   }
 }

@@ -185,10 +185,10 @@
     "Billing": "AI",
     "SortTokens": "Tokene göre",
     "SortMinutes": "Dakikaya göre",
-    "AdminSessionTitle": "Admin access confirmation",
-    "AdminSessionHint": "Enter the code sent to your admin email to open an administration session.",
-    "AdminSessionRejected": "Wrong or expired code",
-    "Impersonate": "View as",
-    "ImpersonateHint": "Open a read-only session as this member. Writes are refused; the action is audited."
+    "AdminSessionTitle": "Yönetici erişimi onayı",
+    "AdminSessionHint": "Yönetim oturumu açmak için yönetici e-postanıza gönderilen kodu girin.",
+    "AdminSessionRejected": "Kod yanlış veya süresi dolmuş",
+    "Impersonate": "Farklı görüntüle",
+    "ImpersonateHint": "Bu üye adına salt okunur bir oturum açar. Yazma işlemleri reddedilir; işlem denetim kaydına yazılır."
   }
 }

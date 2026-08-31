@@ -222,17 +222,17 @@
     "SpaceMembersOnly": "Solo membri dello spazio",
     "OverrideAttribute": "Sovrascrivi attributo",
     "Required": "Obbligatorio",
-    "Reset": "Reset"
+    "Reset": "Reset",
+    "ConfirmOperation": "Conferma operazione",
+    "Confirm": "Conferma",
+    "OtpCode": "Codice",
+    "OtpSent": "Un codice è stato inviato alla tua e-mail",
+    "OtpSendFailed": "Invio del codice non riuscito",
+    "SendCode": "Invia codice"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",
     "IntegrationDisabledNotificationHtml": "<p>Integration with {doc} was disabled</p> <p>{link}</p>",
-    "IntegrationDisabledNotificationSubject": "Integration with {doc} was disabled",
-    "ConfirmOperation": "Confirm operation",
-    "Confirm": "Confirm",
-    "OtpCode": "Code",
-    "OtpSent": "A code has been sent to your email",
-    "OtpSendFailed": "Failed to send the code",
-    "SendCode": "Send code"
+    "IntegrationDisabledNotificationSubject": "Integration with {doc} was disabled"
   }
 }

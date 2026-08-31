@@ -1730,6 +1730,13 @@ describe('upsertSubscription - AI package token grant', () => {
     getWorkspaceByIdSpy.mockRestore()
   })
 
+  /** Token grants only: a package upsert also publishes limitsChanged, which these cases ignore. */
+  function grants (): any[] {
+    return mockProducer.send.mock.calls
+      .flatMap((c: any[]) => c[2])
+      .filter((e: any) => e.type === 'purchase-activated')
+  }
+
   test('publishes token grant for active package with tokenLimit > 0', async () => {
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg())
 
@@ -1754,35 +1761,33 @@ describe('upsertSubscription - AI package token grant', () => {
       pkg({ plan: 'storage-100gb', limits: storageLimits })
     )
 
-    expect(mockProducer.send).not.toHaveBeenCalled()
+    expect(grants()).toEqual([])
   })
 
   test('does not publish when limits are missing', async () => {
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ limits: undefined }))
 
-    expect(mockProducer.send).not.toHaveBeenCalled()
+    expect(grants()).toEqual([])
   })
 
   test('does not publish when status is not Active', async () => {
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ status: SubscriptionStatus.PastDue }))
 
-    expect(mockProducer.send).not.toHaveBeenCalled()
+    expect(grants()).toEqual([])
   })
 
   test('does not publish when periodStart is undefined', async () => {
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: undefined }))
 
-    expect(mockProducer.send).not.toHaveBeenCalled()
+    expect(grants()).toEqual([])
   })
 
   test('grantId changes when periodStart changes (renewal grants again)', async () => {
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: 1_000 }))
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: 2_000 }))
 
-    expect(mockProducer.send).toHaveBeenNthCalledWith(1, mockCtx, workspaceUuid, [
-      workspaceEvents.purchaseActivated('ai-500k', 'sub-pkg-1:1000', 'add-ai-tokens', 500_000)
-    ])
-    expect(mockProducer.send).toHaveBeenNthCalledWith(2, mockCtx, workspaceUuid, [
+    expect(grants()).toEqual([
+      workspaceEvents.purchaseActivated('ai-500k', 'sub-pkg-1:1000', 'add-ai-tokens', 500_000),
       workspaceEvents.purchaseActivated('ai-500k', 'sub-pkg-1:2000', 'add-ai-tokens', 500_000)
     ])
   })
@@ -1791,10 +1796,9 @@ describe('upsertSubscription - AI package token grant', () => {
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: 1_000 }))
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: 1_000 }))
 
-    const [, , firstEvents] = mockProducer.send.mock.calls[0]
-    const [, , secondEvents] = mockProducer.send.mock.calls[1]
-    expect(firstEvents[0].purchaseId).toBe(secondEvents[0].purchaseId)
-    expect(firstEvents[0].purchaseId).toBe('sub-pkg-1:1000')
+    const [first, second] = grants()
+    expect(first.purchaseId).toBe(second.purchaseId)
+    expect(first.purchaseId).toBe('sub-pkg-1:1000')
   })
 
   test('does not publish the token-grant event for a Tier subscription', async () => {
@@ -1891,6 +1895,20 @@ describe('upsertSubscription - tier plan changed event', () => {
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, tier())
 
     expect(mockProducer.send).not.toHaveBeenCalled()
+  })
+
+  test('publishes limitsChanged for a package too: it raises the same effective limits', async () => {
+    await upsertSubscription(
+      mockCtx,
+      mockDb,
+      mockBranding,
+      mockToken,
+      tier({ id: 'sub-pkg-1', type: SubscriptionType.Package, plan: 'pkg-100mb' })
+    )
+
+    expect(mockProducer.send).toHaveBeenCalledWith(mockCtx, workspaceUuid, [
+      workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)
+    ])
   })
 })
 

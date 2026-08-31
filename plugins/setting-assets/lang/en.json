@@ -222,17 +222,17 @@
     "ShowInTitle": "Show in title",
     "SpaceMembersOnly": "Space members only",
     "OverrideAttribute": "Override attribute",
-    "Required": "Required"
-  },
-  "emailTemplate": {
-    "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",
-    "IntegrationDisabledNotificationHtml": "<p>Integration with {doc} was disabled</p> <p>{link}</p>",
-    "IntegrationDisabledNotificationSubject": "Integration with {doc} was disabled",
+    "Required": "Required",
     "ConfirmOperation": "Confirm operation",
     "Confirm": "Confirm",
     "OtpCode": "Code",
     "OtpSent": "A code has been sent to your email",
     "OtpSendFailed": "Failed to send the code",
     "SendCode": "Send code"
+  },
+  "emailTemplate": {
+    "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",
+    "IntegrationDisabledNotificationHtml": "<p>Integration with {doc} was disabled</p> <p>{link}</p>",
+    "IntegrationDisabledNotificationSubject": "Integration with {doc} was disabled"
   }
 }
