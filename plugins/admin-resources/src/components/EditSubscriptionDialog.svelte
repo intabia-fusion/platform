@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { Subscription } from '@hcengineering/account-client'
-  import { type PlanItem, type PackageItem, currencyOf, planChargeKopecks } from '@hcengineering/billing'
+  import { type PlanItem, type PackageItem, currencyOf, planCharge } from '@hcengineering/billing'
   import { Card } from '@hcengineering/presentation'
   import { Button, EditBox, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
@@ -51,7 +51,7 @@
     subscription.willCancelAt == null &&
     !isTrial
 
-  $: canRecalc = planItem != null && planChargeKopecks(planItem, Math.round(seats), period) > 0
+  $: canRecalc = planItem != null && planCharge(planItem, Math.round(seats), period) > 0
   $: periodChanged = periodEndDate !== '' && periodEndDate !== initialEndDate
   $: periodMs = periodChanged ? new Date(periodEndDate + 'T' + timeOfDayUTC(endMs)).getTime() : undefined
   $: movedToPast = periodMs != null && periodMs <= Date.now() && (endMs == null || endMs > Date.now())
@@ -72,7 +72,7 @@
   }
 
   function recalcPrice (): void {
-    amountRub = Math.round(planChargeKopecks(planItem, Math.round(seats), period) / 100)
+    amountRub = Math.round(planCharge(planItem, Math.round(seats), period) / 100)
   }
 
   async function save (): Promise<void> {

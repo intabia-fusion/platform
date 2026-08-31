@@ -25,14 +25,12 @@ export interface PricedItem {
 }
 
 /**
- * Full price in KOPECKS for a plan-config item at the given seats/period. Config prices are in whole
- * rubles: per-seat = priceMonthlyPerUser * seats, yearly applies yearlyDiscount over 12 months.
- * Flat plans ignore seats. Free / missing items are 0.
- *
+ * Full price in minor units (kopecks) for a plan-config item at the given seats/period. The
+ * config prices are whole rubles; callers that display the result divide by 100.
  * Server-side twin: computePlanPrice in services/payment/pod-payment/src/utils.ts. Kept separate on
  * purpose — a pod must not depend on a UI package. Change both or they drift.
  */
-export function planChargeKopecks (item: PricedItem | undefined, seats: number, period: 'monthly' | 'yearly'): number {
+export function planCharge (item: PricedItem | undefined, seats: number, period: 'monthly' | 'yearly'): number {
   if (item == null || item.free === true) return 0
   const isYearly = period === 'yearly'
   const yd = Number(item.yearlyDiscount ?? 0)

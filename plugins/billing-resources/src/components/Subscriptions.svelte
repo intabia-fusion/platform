@@ -26,7 +26,7 @@
     type BillingPeriod,
     PaymentError
   } from '@hcengineering/payment-client'
-  import { type PlanItem, type PlanConfig, type PackageItem, planChargeKopecks } from '@hcengineering/billing'
+  import { type PlanItem, type PlanConfig, type PackageItem, planCharge } from '@hcengineering/billing'
   import { getMetadata, translate, getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { MessageBox, getClient, addTxListener, removeTxListener } from '@hcengineering/presentation'
   import core, {
@@ -507,7 +507,7 @@
 
   // Full amount charged for a plan in the given period, in whole rubles (the dialogs display rubles).
   function planChargeFor (item: PlanItem | undefined, seats: number, period: BillingPeriod): number {
-    return planChargeKopecks(item, seats, period) / 100
+    return planCharge(item, seats, period) / 100
   }
 
   // Downgrade to the free plan moves no money: keep the plain confirmation box, no seats/period/recurrent.
@@ -662,7 +662,7 @@
   function recurringPriceForCurrent (seats: number): number {
     if (currentPlan == null || typeof currentPlan === 'string') return 0
     const period: BillingPeriod = currentSubscription?.providerData?.period === 'yearly' ? 'yearly' : 'monthly'
-    return planChargeKopecks(currentPlan, seats, period)
+    return planCharge(currentPlan, seats, period)
   }
 
   // Open the seat-change dialog for the active per-seat tier; confirm applies via updateSubscriptionPlan
