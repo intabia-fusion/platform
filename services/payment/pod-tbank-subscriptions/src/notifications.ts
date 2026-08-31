@@ -436,7 +436,7 @@ export async function notifyPaymentSucceeded (
       `${l.plan}: ${planRu} (${typeRu})`,
       `${l.charged}: ${formatAmount(chargedAmount ?? sub.amount)}`,
       // Showing both upgrade delta and the recurring price for the team.
-      ...(chargedAmount !== undefined && chargedAmount !== sub.amount
+      ...(chargedAmount !== undefined && sub.amount != null && chargedAmount !== Number(sub.amount)
         ? [`${l.regularPrice}: ${formatAmount(sub.amount)}`]
         : []),
       `${l.kind}: ${kindRu}`,

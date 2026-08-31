@@ -46,10 +46,13 @@
 
   import { WorkspaceTokenInfo } from '@hcengineering/billing-resources'
 
+  import { currencyOf } from '@hcengineering/billing'
+
   import adminRes from '../plugin'
   import AdminOtpDialog from './AdminOtpDialog.svelte'
   import EditSubscriptionDialog from './EditSubscriptionDialog.svelte'
   import {
+    fmtAmount,
     getAccountClient,
     getWorkspaceActivityStats,
     loadPlanOptions,
@@ -146,9 +149,14 @@
   }
 
   function editSubscription (s: Subscription): void {
-    showPopup(EditSubscriptionDialog, { subscription: s, perSeatPlan: isPerSeatPlan(s.plan) }, undefined, (changed) => {
-      if (changed === true) void load()
-    })
+    showPopup(
+      EditSubscriptionDialog,
+      { subscription: s, perSeatPlan: isPerSeatPlan(s.plan), planItem: planConfigItem(s.plan) },
+      undefined,
+      (changed) => {
+        if (changed === true) void load()
+      }
+    )
   }
 
   function cancelSubscription (s: Subscription): void {
@@ -173,8 +181,12 @@
   }
 
   function isPerSeatPlan (plan: string): boolean {
-    const item = plans?.config?.plans?.[plan] ?? plans?.config?.packages?.[plan]
-    return item?.priceMonthlyPerUser != null
+    return planConfigItem(plan)?.priceMonthlyPerUser != null
+  }
+
+  // Plan-config entry backing a subscription — carries price and currency. Absent for manual plans.
+  function planConfigItem (plan: string): any {
+    return plans?.config?.plans?.[plan] ?? plans?.config?.packages?.[plan]
   }
 
   // Workspace name/url editing
@@ -622,6 +634,7 @@
               <th><Label label={adminRes.string.Status} /></th>
               <th><Label label={adminRes.string.Provider} /></th>
               <th><Label label={adminRes.string.Users} /></th>
+              <th><Label label={adminRes.string.Amount} /></th>
               <th><Label label={adminRes.string.CreatedOn} /></th>
               <th><Label label={adminRes.string.PeriodEnd} /></th>
               <th></th>
@@ -635,6 +648,7 @@
                 <td>{s.status}</td>
                 <td>{s.provider}</td>
                 <td>{s.limits?.usersLimit ?? '-'}</td>
+                <td>{fmtAmount(s.amount, currencyOf(planConfigItem(s.plan)))}</td>
                 <td>{fmtDate(s.createdOn)}</td>
                 <td>{fmtDate(s.status === 'trialing' ? (s.trialEnd ?? s.periodEnd) : s.periodEnd)}</td>
                 <td>

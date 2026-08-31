@@ -108,6 +108,14 @@ export async function getAllSubscriptions (): Promise<SubscriptionInfo[]> {
   return await safe(async () => await getAccountClient().getAllSubscriptions(), [])
 }
 
+/** Money for display: kopecks -> "1 500 ₽" */
+export function fmtAmount (kopecks: number | string | undefined, currency: string = '₽'): string {
+  // amount is INT8 — the PG driver returns it as a string.
+  const n = Number(kopecks)
+  if (kopecks == null || !Number.isFinite(n)) return '-'
+  return `${Math.round(n / 100).toLocaleString('ru')} ${currency}`
+}
+
 export interface PlanOptions {
   keys: string[]
   labels: Record<string, string>

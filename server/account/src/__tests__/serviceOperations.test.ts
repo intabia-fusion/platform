@@ -51,6 +51,7 @@ import {
   addIntegrationSecret,
   upsertSubscription,
   adminCreateSubscription,
+  adminUpdateSubscription,
   getPersonInfo
 } from '../serviceOperations'
 
@@ -1998,6 +1999,248 @@ describe('adminCreateSubscription', () => {
     })
     const inserted = mockDb.subscription.insertOne.mock.calls[0][0]
     expect(inserted.freeLimits).toBeUndefined()
+  })
+})
+
+describe('adminUpdateSubscription', () => {
+  const mockCtx = {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn()
+  } as unknown as MeasureContext
+  const mockBranding = null
+  const mockToken = 'admin-token'
+  const otpCode = '123456'
+  const workspaceUuid = 'ws-1' as WorkspaceUuid
+
+  // A live tbank subscription with a bound card — the case the supersede pattern used to break.
+  const tbankSub = {
+    id: 'sub-1',
+    workspaceUuid,
+    accountUuid: 'acc-1' as AccountUuid,
+    provider: 'tbank',
+    providerSubscriptionId: 'tbank_8983976039',
+    providerCheckoutId: 'm8tvd8-1-msep7d72',
+    type: SubscriptionType.Tier,
+    status: SubscriptionStatus.Active,
+    plan: 'business',
+    amount: 149700,
+    limits: { storageLimitGB: 15, trafficLimitGB: 0, meetingMinutesLimit: 0, tokenLimit: 0, usersLimit: 3 },
+    periodStart: 1000,
+    periodEnd: 2000,
+    createdOn: 1000,
+    updatedOn: 1000,
+    providerData: { rebillId: '1785848580972', recurrent: true, quantity: 3, period: 'monthly', modifiedAt: 1000 }
+  }
+
+  let mockDb: any
+  let verifyOtpSpy: jest.SpyInstance
+  let logAdminActionSpy: jest.SpyInstance
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockDb = {
+      subscription: {
+        findOne: jest.fn().mockResolvedValue({ ...tbankSub, providerData: { ...tbankSub.providerData } }),
+        insertOne: jest.fn(),
+        update: jest.fn()
+      },
+      logPaymentOperation: jest.fn()
+    }
+    verifyOtpSpy = jest.spyOn(utils, 'verifyAdminOtp').mockResolvedValue(undefined)
+    logAdminActionSpy = jest.spyOn(utils, 'logAdminAction').mockResolvedValue(undefined)
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: 'admin-acc', extra: { admin: 'true' } })
+    ;(getMetadata as jest.Mock).mockReturnValue(undefined)
+  })
+
+  afterAll(() => {
+    verifyOtpSpy.mockRestore()
+    logAdminActionSpy.mockRestore()
+  })
+
+  test('edits the row in place, never inserting a second one', async () => {
+    await adminUpdateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      subscriptionId: 'sub-1',
+      seats: 5,
+      otpCode
+    })
+
+    expect(mockDb.subscription.insertOne).not.toHaveBeenCalled()
+    expect(mockDb.subscription.update).toHaveBeenCalledTimes(1)
+    expect(mockDb.subscription.update).toHaveBeenCalledWith({ id: 'sub-1' }, expect.anything())
+  })
+
+  test('keeps provider and providerSubscriptionId so the subscription stays in the tbank cycles', async () => {
+    await adminUpdateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      subscriptionId: 'sub-1',
+      seats: 5,
+      otpCode
+    })
+
+    const patch = mockDb.subscription.update.mock.calls[0][1]
+    // The old supersede inserted a fresh row with provider 'manual' + a new providerSubscriptionId,
+    // dropping the subscription out of renewal, expiry mail and webhook lookup.
+    expect(patch.provider).toBeUndefined()
+    expect(patch.providerSubscriptionId).toBeUndefined()
+    expect(patch.status).toBeUndefined()
+    expect(patch.canceledAt).toBeUndefined()
+    expect(patch.providerData.rebillId).toBe('1785848580972')
+    expect(patch.providerData.reason).toBe('ADMIN_EDITED')
+  })
+
+  test('mirrors seats into providerData.quantity (renewal and ledger read it, not limits)', async () => {
+    await adminUpdateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      subscriptionId: 'sub-1',
+      seats: 5,
+      otpCode
+    })
+
+    const patch = mockDb.subscription.update.mock.calls[0][1]
+    expect(patch.limits.usersLimit).toBe(5)
+    // 15GB / 3 seats = 5GB per seat
+    expect(patch.limits.storageLimitGB).toBe(25)
+    expect(patch.providerData.quantity).toBe(5)
+  })
+
+  test('applies a new amount and records both sides in the ledger', async () => {
+    await adminUpdateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      subscriptionId: 'sub-1',
+      seats: 5,
+      amount: 249500,
+      otpCode
+    })
+
+    expect(mockDb.subscription.update.mock.calls[0][1].amount).toBe(249500)
+    expect(mockDb.logPaymentOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: 'tbank',
+        operation: 'update',
+        status: 'ADMIN_EDITED',
+        actor: 'admin',
+        amount: 249500,
+        subscriptionId: 'sub-1',
+        raw: expect.objectContaining({ seatsBefore: 3, seatsAfter: 5, amountBefore: 149700, amountAfter: 249500 })
+      })
+    )
+  })
+
+  test('applies windowMonthLimit and keeps the seat changes from the same edit', async () => {
+    await adminUpdateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      subscriptionId: 'sub-1',
+      seats: 5,
+      windowMonthLimit: 1500000,
+      otpCode
+    })
+
+    const patch = mockDb.subscription.update.mock.calls[0][1]
+    // The window branch runs after the seats branch: both must survive.
+    expect(patch.limits.windowMonthLimit).toBe(1500000)
+    expect(patch.limits.usersLimit).toBe(5)
+    expect(patch.limits.storageLimitGB).toBe(25)
+    expect(mockDb.logPaymentOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ raw: expect.objectContaining({ windowAfter: 1500000 }) })
+    )
+  })
+
+  test('applies windowMonthLimit on its own, without a seat change', async () => {
+    await adminUpdateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      subscriptionId: 'sub-1',
+      windowMonthLimit: 900000,
+      otpCode
+    })
+
+    const patch = mockDb.subscription.update.mock.calls[0][1]
+    expect(patch.limits.windowMonthLimit).toBe(900000)
+    // Untouched limits carry over from the existing row.
+    expect(patch.limits.usersLimit).toBe(3)
+    expect(patch.limits.storageLimitGB).toBe(15)
+  })
+
+  test('rejects a negative or fractional windowMonthLimit', async () => {
+    for (const windowMonthLimit of [-1, 100.5]) {
+      await expect(
+        adminUpdateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+          subscriptionId: 'sub-1',
+          windowMonthLimit,
+          otpCode
+        })
+      ).rejects.toThrow()
+    }
+    expect(mockDb.subscription.update).not.toHaveBeenCalled()
+  })
+
+  test('leaves amount alone when the admin did not touch it', async () => {
+    await adminUpdateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      subscriptionId: 'sub-1',
+      periodEndMs: 5000,
+      otpCode
+    })
+
+    const patch = mockDb.subscription.update.mock.calls[0][1]
+    expect(patch.amount).toBeUndefined()
+    expect(patch.periodEnd).toBe(5000)
+    expect(mockDb.logPaymentOperation).toHaveBeenCalledWith(expect.objectContaining({ amount: 149700 }))
+  })
+
+  test('mirrors periodEnd into trialEnd for a trial', async () => {
+    mockDb.subscription.findOne.mockResolvedValue({
+      ...tbankSub,
+      status: SubscriptionStatus.Trialing,
+      providerData: { ...tbankSub.providerData }
+    })
+
+    await adminUpdateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      subscriptionId: 'sub-1',
+      periodEndMs: 5000,
+      otpCode
+    })
+
+    const patch = mockDb.subscription.update.mock.calls[0][1]
+    expect(patch.periodEnd).toBe(5000)
+    expect(patch.trialEnd).toBe(5000)
+  })
+
+  test('rejects a negative or fractional amount (renewal charges it verbatim)', async () => {
+    for (const amount of [-1, 100.5]) {
+      await expect(
+        adminUpdateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+          subscriptionId: 'sub-1',
+          amount,
+          otpCode
+        })
+      ).rejects.toThrow(PlatformError)
+    }
+    expect(mockDb.subscription.update).not.toHaveBeenCalled()
+  })
+
+  test('rejects editing a canceled subscription', async () => {
+    mockDb.subscription.findOne.mockResolvedValue({ ...tbankSub, status: SubscriptionStatus.Canceled })
+    await expect(
+      adminUpdateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+        subscriptionId: 'sub-1',
+        seats: 5,
+        otpCode
+      })
+    ).rejects.toThrow(PlatformError)
+    expect(mockDb.subscription.update).not.toHaveBeenCalled()
+  })
+
+  test('no-ops when nothing changed', async () => {
+    await adminUpdateSubscription(mockCtx, mockDb, mockBranding, mockToken, { subscriptionId: 'sub-1', otpCode })
+    expect(mockDb.subscription.update).not.toHaveBeenCalled()
+    expect(mockDb.logPaymentOperation).not.toHaveBeenCalled()
+  })
+
+  test('a failing ledger write does not roll back the edit', async () => {
+    mockDb.logPaymentOperation.mockRejectedValue(new Error('ledger down'))
+    await expect(
+      adminUpdateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+        subscriptionId: 'sub-1',
+        seats: 5,
+        otpCode
+      })
+    ).resolves.toBeUndefined()
+    expect(mockDb.subscription.update).toHaveBeenCalledTimes(1)
   })
 })
 

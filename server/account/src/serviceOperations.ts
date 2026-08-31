@@ -419,40 +419,12 @@ export async function adminRemoveWorkspaceMember (
   await publishMembersChanged(ctx, workspace)
 }
 
-// Supersede a live subscription: keep the old row as a canceled record (history) and insert
-// a new one carrying the edits. Returns the new subscription id.
-async function supersedeSubscription (
-  ctx: MeasureContext,
-  db: AccountDB,
-  existing: Subscription,
-  overrides: Partial<Subscription>,
-  reason: string
-): Promise<string> {
-  const now = Date.now()
-  const oldProviderData: Record<string, any> = (existing.providerData as Record<string, any>) ?? {}
-  await db.subscription.update(
-    { id: existing.id },
-    {
-      status: SubscriptionStatus.Canceled,
-      canceledAt: now,
-      updatedOn: now,
-      providerData: { ...oldProviderData, pending: false, status: reason, modifiedAt: now }
-    }
-  )
-  const subId = generateId()
-  const { id, createdOn, updatedOn, canceledAt, ...rest } = existing
-  await db.subscription.insertOne({
-    ...rest,
-    ...overrides,
-    id: subId,
-    providerSubscriptionId: subId,
-    provider: 'manual',
-    createdOn: now,
-    updatedOn: now,
-    providerData: { ...oldProviderData, supersedes: existing.id, reason }
-  })
-  ctx.info('admin: subscription superseded', { oldId: existing.id, newId: subId, reason })
-  return subId
+const emptyTierLimits: TierLimits = {
+  storageLimitGB: 0,
+  trafficLimitGB: 0,
+  meetingMinutesLimit: 0,
+  tokenLimit: 0,
+  usersLimit: 0
 }
 
 export async function adminUpdateSubscription (
@@ -460,11 +432,18 @@ export async function adminUpdateSubscription (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: { subscriptionId: string, seats?: number, periodEndMs?: number, otpCode: string }
+  params: {
+    subscriptionId: string
+    seats?: number
+    periodEndMs?: number
+    amount?: number
+    windowMonthLimit?: number
+    otpCode: string
+  }
 ): Promise<void> {
   checkAdmin(ctx, token)
   await verifyAdminOtp(ctx, db, token, params.otpCode)
-  const { subscriptionId, seats, periodEndMs } = params
+  const { subscriptionId, seats, periodEndMs, amount, windowMonthLimit } = params
 
   const existing = await db.subscription.findOne({ id: subscriptionId })
   if (existing == null) {
@@ -474,47 +453,112 @@ export async function adminUpdateSubscription (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
-  const overrides: Partial<Subscription> = {}
+  const updates: Partial<Subscription> = {}
   if (seats != null) {
     if (!Number.isFinite(seats) || seats < 1) {
       throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
     }
-    const emptyLimits: TierLimits = {
-      storageLimitGB: 0,
-      trafficLimitGB: 0,
-      meetingMinutesLimit: 0,
-      tokenLimit: 0,
-      usersLimit: 0
-    }
-    const baseLimits = existing.limits ?? emptyLimits
+    const baseLimits = existing.limits ?? emptyTierLimits
     const perUserStorage =
       existing.limits != null && (existing.limits.usersLimit ?? 0) > 0
         ? Math.round((existing.limits.storageLimitGB ?? 0) / existing.limits.usersLimit)
         : 0
-    overrides.limits = {
+    updates.limits = {
       ...baseLimits,
       usersLimit: Math.round(seats),
       storageLimitGB: perUserStorage > 0 ? perUserStorage * Math.round(seats) : (baseLimits.storageLimitGB ?? 0)
     }
   }
+  if (windowMonthLimit != null) {
+    // The admin UI computes new token limits and sends the value
+    if (!Number.isInteger(windowMonthLimit) || windowMonthLimit < 0) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+    }
+    updates.limits = { ...(updates.limits ?? existing.limits ?? emptyTierLimits), windowMonthLimit }
+  }
+  if (amount != null) {
+    if (!Number.isInteger(amount) || amount < 0) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+    }
+    updates.amount = amount
+  }
   if (periodEndMs != null) {
     if (!Number.isFinite(periodEndMs)) {
       throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
     }
-    overrides.periodEnd = Math.round(periodEndMs)
+    updates.periodEnd = Math.round(periodEndMs)
     // For a trial the UI/limits key off trialEnd, so keep it in sync with the edited period end.
     if (existing.status === SubscriptionStatus.Trialing) {
-      overrides.trialEnd = Math.round(periodEndMs)
+      updates.trialEnd = Math.round(periodEndMs)
     }
   }
-  if (Object.keys(overrides).length === 0) return
+  if (Object.keys(updates).length === 0) return
 
-  await supersedeSubscription(ctx, db, existing, overrides, 'ADMIN_EDITED')
+  const now = Date.now()
+  const oldProviderData: Record<string, any> = (existing.providerData as Record<string, any>) ?? {}
+  // Updating the row in db instead of inserting new row: PaymentId stays the same.
+  await db.subscription.update(
+    { id: existing.id },
+    {
+      ...updates,
+      updatedOn: now,
+      providerData: {
+        ...oldProviderData,
+        // Renewal and the ledger read seats from quantity, not from limits.
+        ...(seats != null && { quantity: Math.round(seats) }),
+        reason: 'ADMIN_EDITED',
+        modifiedAt: now
+      }
+    }
+  )
+  ctx.info('admin: subscription updated', {
+    id: existing.id,
+    workspaceUuid: existing.workspaceUuid,
+    seats,
+    periodEndMs,
+    amount,
+    windowMonthLimit
+  })
   await logAdminAction(ctx, db, token, 'update_subscription', existing.workspaceUuid, existing.plan, {
     subscriptionId,
     seats,
-    periodEndMs
+    periodEndMs,
+    amount,
+    windowMonthLimit
   })
+  // Also record it in the payment ledger to keep the billing timeline consistent.
+  try {
+    await db.logPaymentOperation({
+      provider: existing.provider,
+      operation: 'update',
+      status: 'ADMIN_EDITED',
+      paymentId: existing.providerSubscriptionId,
+      orderId: oldProviderData.orderId as string | undefined,
+      subscriptionId: existing.id,
+      workspaceUuid: existing.workspaceUuid,
+      accountUuid: existing.accountUuid,
+      actionId: oldProviderData.actionId as string | undefined,
+      actor: 'admin',
+      // The new recurring price, or the unchanged one when the edit left it alone.
+      amount: updates.amount ?? (existing.amount != null ? Number(existing.amount) : undefined),
+      raw: {
+        plan: existing.plan,
+        type: existing.type,
+        reason: 'ADMIN_EDITED',
+        seatsBefore: oldProviderData.quantity ?? existing.limits?.usersLimit,
+        seatsAfter: seats,
+        periodEndBefore: existing.periodEnd,
+        periodEndAfter: updates.periodEnd,
+        windowBefore: existing.limits?.windowMonthLimit,
+        windowAfter: windowMonthLimit,
+        amountBefore: existing.amount != null ? Number(existing.amount) : undefined,
+        amountAfter: updates.amount
+      },
+      createdOn: now
+    })
+  } catch (err: any) {
+    ctx.error('Failed to log admin subscription edit to payment ledger', { subscriptionId: existing.id, err })
+  }
 
   if (existing.type === SubscriptionType.Tier) {
     await publishLimitsEvents(ctx, existing.workspaceUuid, [

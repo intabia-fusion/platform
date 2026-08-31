@@ -245,7 +245,9 @@ export interface AccountClient {
     subscriptionId: string,
     otpCode: string,
     seats?: number,
-    periodEndMs?: number
+    periodEndMs?: number,
+    amount?: number,
+    windowMonthLimit?: number
   ) => Promise<void>
   adminCancelSubscription: (subscriptionId: string, otpCode: string) => Promise<void>
   adminUpdateWorkspaceName: (workspace: WorkspaceUuid, name: string) => Promise<void>
@@ -1124,11 +1126,13 @@ class AccountClientImpl implements AccountClient {
     subscriptionId: string,
     otpCode: string,
     seats?: number,
-    periodEndMs?: number
+    periodEndMs?: number,
+    amount?: number,
+    windowMonthLimit?: number
   ): Promise<void> {
     await this.rpc({
       method: 'adminUpdateSubscription' as const,
-      params: { subscriptionId, seats, periodEndMs, otpCode }
+      params: { subscriptionId, seats, periodEndMs, amount, windowMonthLimit, otpCode }
     })
   }
 
