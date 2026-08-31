@@ -48,8 +48,9 @@ async function dockerGet (urlPath) {
 // Docker reports counters, not rates - keep the previous tick and emit deltas.
 const previous = new Map()
 
-function sample (stats, now) {
-  const name = (stats.name ?? '').replace(/^\//, '')
+// `one-shot=true` leaves stats.name empty on dockerd 28 (it is filled on Docker Desktop), so the
+// name comes from /containers/json instead - without it every container shares one delta bucket.
+function sample (stats, now, name) {
   const cpuTotal = stats.cpu_stats?.cpu_usage?.total_usage ?? 0
   const onlineCpus = stats.cpu_stats?.online_cpus ?? 0
   const mem = stats.memory_stats ?? {}
@@ -90,6 +91,8 @@ function sample (stats, now) {
   }
 }
 
+const nameOf = (c) => ((c.Names ?? [])[0] ?? c.Id).replace(/^\//, '')
+
 async function main () {
   const out = arg('out', 'docker.ndjson')
   const interval = Number(arg('interval', '1000'))
@@ -121,9 +124,9 @@ async function main () {
     )
     const now = Date.now()
     let lines = ''
-    for (const stats of results) {
-      if (stats === undefined) continue
-      const row = sample(stats, now)
+    for (let i = 0; i < results.length; i++) {
+      if (results[i] === undefined) continue
+      const row = sample(results[i], now, nameOf(containers[i]))
       if (row !== undefined) lines += JSON.stringify(row) + '\n'
     }
     if (lines !== '') stream.write(lines)

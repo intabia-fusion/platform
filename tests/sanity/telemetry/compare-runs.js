@@ -130,24 +130,24 @@ function main () {
     `${(fpA.sha ?? '?').slice(0, 7)} -> ${(fpB.sha ?? '?').slice(0, 7)}  (${fpA.env ?? '?'}, ${fpA.cpuCount ?? '?'} cpu, ${fpA.workers ?? '?'} workers)`
   )
 
-  console.log('\nСчётчики - зависят от кода, любое изменение значимо')
+  console.log('\nCounters - properties of the code, any change is significant')
   for (const [k, v] of Object.entries(result.counters)) {
     console.log(
       `  ${k.padEnd(20)} ${String(v.from).padStart(12)} -> ${String(v.to).padStart(12)}  ${fmtPct(v.pct).padStart(8)}`
     )
   }
 
-  console.log('\nВремя и ресурсы - шумят на shared runners')
+  console.log('\nTime and resources - noisy on shared runners')
   for (const [k, v] of Object.entries(result.timings)) {
     console.log(
       `  ${k.padEnd(20)} ${String(v.from).padStart(12)} -> ${String(v.to).padStart(12)}  ${fmtPct(v.pct).padStart(8)}`
     )
   }
 
-  table('Запросы по сервисам', result.services)
-  table('Запросы по путям', result.paths)
-  table('Файлы тестов, с', result.files)
-  table('CPU контейнеров, с', result.containers)
+  table('Requests by service', result.services)
+  table('Requests by path', result.paths)
+  table('Test files, s', result.files)
+  table('Container CPU, s', result.containers)
 }
 
 main()

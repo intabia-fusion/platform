@@ -99,8 +99,8 @@ function main () {
   const wall = result.wallSec
   if (wall !== undefined) {
     console.log(
-      `\nПорог для сравнения сборок: разница меньше ${Math.ceil(wall.spreadPct)}% по времени - шум. ` +
-        'Счётчики значимы при любом изменении.'
+      `\nThreshold for comparing builds: a time difference below ${Math.ceil(wall.spreadPct)}% is noise. ` +
+        'Counters are significant at any change.'
     )
   }
 }

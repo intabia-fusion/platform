@@ -434,6 +434,7 @@ jobs:
           prepare-script: ./prepare-qms.sh
           build-package: "@hcengineering/qms-tests-sanity"
           artifact-name-suffix: qms
+          container-prefix: "qms-"
           enable-profiling: "false"
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 

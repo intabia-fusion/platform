@@ -36,6 +36,9 @@ const PALETTE = [
   '#eeca3b', '#b279a2', '#ff9da6', '#9d755d', '#bab0ac'
 ]
 
+// Past the palette the golden angle keeps neighbouring bands apart - 30+ pods repeat 10 colours.
+const bandColor = (i) => (i < PALETTE.length ? PALETTE[i] : `hsl(${Math.round((i * 137.508) % 360)} 52% 56%)`)
+
 function readSeries (dockerPath) {
   if (!fs.existsSync(dockerPath)) return undefined
   const byTs = new Map()
@@ -98,7 +101,7 @@ function stackedChart (series, keys, pick, opts) {
       const ts = series.stamps[n]
       bottom += `L${x(ts).toFixed(1)},${y(running.get(ts) - (series.byTs.get(ts)[key] !== undefined ? pick(series.byTs.get(ts)[key]) : 0)).toFixed(1)} `
     }
-    bands += `<path d="${top}${bottom}Z" fill="${PALETTE[i % PALETTE.length]}" fill-opacity="0.85"/>`
+    bands += `<path d="${top}${bottom}Z" fill="${bandColor(i)}" fill-opacity="0.85"/>`
   })
 
   let grid = ''
@@ -118,7 +121,7 @@ function stackedChart (series, keys, pick, opts) {
   const legend = keys
     .map(
       (k, i) =>
-        `<span class="key"><i style="background:${PALETTE[i % PALETTE.length]}"></i>${esc(k.replace(/^sanity-/, '').replace(/-1$/, ''))}</span>`
+        `<span class="key"><i style="background:${bandColor(i)}"></i>${esc(k.replace(/^sanity-/, '').replace(/-1$/, ''))}</span>`
     )
     .join('')
 
@@ -186,28 +189,30 @@ function main () {
   const fp = run.fingerprint ?? {}
   const t = run.totals ?? {}
 
-  const topNames = (run.docker?.containers ?? []).slice(0, 8).map((c) => c.name)
+  // Every pod, not a top slice: the charts are stacked, so a quiet container costs a thin band
+  // and the sum stays honest.
+  const topNames = (run.docker?.containers ?? []).map((c) => c.name)
 
   const cards = [
-    ['Wall', fmtSec(t.wallSec ?? 0), 'от первого до последнего теста'],
-    ['Work', fmtSec(t.workSec ?? 0), 'сумма шагов всех воркеров'],
-    ['Тесты', `${t.expected ?? 0}`, `${t.flaky ?? 0} flaky, ${t.unexpected ?? 0} упало, ${t.skipped ?? 0} пропущено`],
-    ['Ретраи', fmtSec(t.retrySec ?? 0), `${t.attempts ?? 0} попыток всего`]
+    ['Wall', fmtSec(t.wallSec ?? 0), 'first test start to last test end'],
+    ['Work', fmtSec(t.workSec ?? 0), 'steps summed over every worker'],
+    ['Tests', `${t.expected ?? 0}`, `${t.flaky ?? 0} flaky, ${t.unexpected ?? 0} failed, ${t.skipped ?? 0} skipped`],
+    ['Retries', fmtSec(t.retrySec ?? 0), `${t.attempts ?? 0} attempts in total`]
   ]
   if ((run.workerRestarts ?? 0) > 0) {
-    cards.push(['Воркеры упали', `${run.workerRestarts}`, 'Playwright поднимал новый процесс'])
+    cards.push(['Workers died', `${run.workerRestarts}`, 'Playwright started a replacement process'])
   }
   cards.push(...[
   ])
   if (run.docker !== undefined) {
     cards.push(
-      ['CPU', `${fmtSec(run.docker.totals.cpuSeconds)}`, 'суммарно по контейнерам'],
-      ['Память', fmtBytes(run.docker.totals.memPeak), 'сумма пиков по контейнерам'],
-      ['Сеть', fmtBytes(run.docker.totals.rx + run.docker.totals.tx), 'rx+tx за прогон'],
+      ['CPU', `${fmtSec(run.docker.totals.cpuSeconds)}`, 'summed over containers'],
+      ['Memory', fmtBytes(run.docker.totals.memPeak), 'peaks summed over containers'],
+      ['Network', fmtBytes(run.docker.totals.rx + run.docker.totals.tx), 'rx+tx over the run'],
       [
-        'Диск',
+        'Disk',
         fmtBytes((run.docker.totals.diskRead ?? 0) + (run.docker.totals.diskWrite ?? 0)),
-        `чтение ${fmtBytes(run.docker.totals.diskRead ?? 0)}, запись ${fmtBytes(run.docker.totals.diskWrite ?? 0)}`
+        `${fmtBytes(run.docker.totals.diskRead ?? 0)} read, ${fmtBytes(run.docker.totals.diskWrite ?? 0)} written`
       ]
     )
   }
@@ -217,7 +222,8 @@ function main () {
     idle: Math.max(0, (t.wallSec ?? 0) - w.busySec)
   }))
 
-  const html = `<title>Sanity run - ${esc(fp.branch ?? 'local')} ${esc((fp.sha ?? '').slice(0, 7))}</title>
+  const html = `<meta charset="utf-8">
+<title>Sanity run - ${esc(fp.branch ?? 'local')} ${esc((fp.sha ?? '').slice(0, 7))}</title>
 <style>
   :root { --bg:#fff; --fg:#1a1a1a; --muted:#6b7280; --line:#e5e7eb; --card:#f9fafb; --accent:#4c78a8; }
   @media (prefers-color-scheme: dark) {
@@ -253,7 +259,7 @@ function main () {
 <div class="sub">
   ${esc(fp.env ?? 'local')}${fp.host !== undefined ? ' / ' + esc(fp.host) : ''} -
   ${esc(fp.cpuModel ?? '?')} x${esc(fp.cpuCount ?? '?')}, ${fmtBytes(fp.memTotal ?? 0)} RAM,
-  docker ${esc(fp.docker ?? '?')}, ${esc(fp.workers ?? '?')} воркеров - ${esc(run.generatedAt)}
+  docker ${esc(fp.docker ?? '?')}, ${esc(fp.workers ?? '?')} workers - ${esc(run.generatedAt)}
 </div>
 
 <div class="cards">
@@ -262,40 +268,40 @@ function main () {
 
 ${
   series !== undefined
-    ? `<h2>CPU по контейнерам</h2>
+    ? `<h2>CPU by container</h2>
 ${stackedChart(series, topNames, (r) => r.cpu, { unit: '%', height: 240 })}
 
-<h2>Память по контейнерам</h2>
+<h2>Memory by container</h2>
 ${stackedChart(series, topNames, (r) => r.mem, { unit: ' GB', scale: 1 / 1024 ** 3, height: 240 })}
 
-<h2>Сеть, байт за секунду</h2>
+<h2>Network, bytes per second</h2>
 ${stackedChart(series, topNames, (r) => r.rx + r.tx, { unit: ' MB', scale: 1 / 1024 ** 2, height: 200 })}
 
-<h2>Диск, байт за секунду</h2>
+<h2>Disk, bytes per second</h2>
 ${stackedChart(series, topNames, (r) => (r.dr ?? 0) + (r.dw ?? 0), { unit: ' MB', scale: 1 / 1024 ** 2, height: 200 })}`
-    : '<h2>Нагрузка контейнеров</h2><p class="empty">docker.ndjson рядом с run.json не найден - сэмплер не запускался.</p>'
+    : '<h2>Container load</h2><p class="empty">No docker.ndjson next to run.json - the sampler never ran.</p>'
 }
 
-<h2>Упаковка воркеров</h2>
-<div class="sub">Занятость против wall: разрыв - простой в хвосте прогона.</div>
-${barList(workerRows, (w) => w.busySec, (w) => `worker ${w.index}`, (w) => `${w.busySec}s / до ${w.endedSec}s`)}
+<h2>Worker packing</h2>
+<div class="sub">Busy time against wall clock: the gap is idle tail at the end of the run.</div>
+${barList(workerRows, (w) => w.busySec, (w) => `worker ${w.index}`, (w) => `${w.busySec}s / ends ${w.endedSec}s`)}
 
-<h2>Файлы тестов по времени</h2>
+<h2>Test files by time</h2>
 ${barList((run.files ?? []).slice(0, 20), (f) => f.seconds, (f) => f.file, (f) => `${f.seconds}s`)}
 
 ${
   (run.flaky ?? []).length > 0
     ? `<h2>Flaky</h2>
-<div class="wrap"><table><tr><th>Тест</th><th>Файл</th><th class="num">Попыток</th><th class="num">Время</th></tr>
+<div class="wrap"><table><tr><th>Test</th><th>File</th><th class="num">Attempts</th><th class="num">Time</th></tr>
 ${run.flaky.map((f) => `<tr><td>${esc(f.title)}</td><td>${esc(f.file)}</td><td class="num">${f.attempts}</td><td class="num">${f.seconds}s</td></tr>`).join('')}
 </table></div>`
-    : '<h2>Flaky</h2><p class="empty">Нет.</p>'
+    : '<h2>Flaky</h2><p class="empty">None.</p>'
 }
 
 ${
   (run.failed ?? []).length > 0
-    ? `<h2>Упавшие</h2>
-<div class="wrap"><table><tr><th>Тест</th><th>Файл</th><th class="num">Попыток</th></tr>
+    ? `<h2>Failed</h2>
+<div class="wrap"><table><tr><th>Test</th><th>File</th><th class="num">Attempts</th></tr>
 ${run.failed.map((f) => `<tr><td>${esc(f.title)}</td><td>${esc(f.file)}</td><td class="num">${f.attempts}</td></tr>`).join('')}
 </table></div>`
     : ''
@@ -303,37 +309,37 @@ ${run.failed.map((f) => `<tr><td>${esc(f.title)}</td><td>${esc(f.file)}</td><td 
 
 ${
   run.stats !== undefined
-    ? `<h2>Клиент -> сервер</h2>
-<div class="sub">Браузерные счётчики через analytics-collector. Байты - размер на проводе, после сжатия.</div>
+    ? `<h2>Client to server</h2>
+<div class="sub">Browser counters via analytics-collector. Bytes are on the wire, after compression.</div>
 ${
   (run.stats.client ?? []).length > 0
-    ? `<div class="wrap"><table><tr><th>Метрика</th><th class="num">Отсчётов</th><th class="num">Сумма</th><th class="num">Среднее</th></tr>
+    ? `<div class="wrap"><table><tr><th>Metric</th><th class="num">Reports</th><th class="num">Total</th><th class="num">Average</th></tr>
 ${run.stats.client.map((c) => `<tr><td>${esc(c.metric)}</td><td class="num">${c.operations}</td><td class="num">${Math.round(c.total)}</td><td class="num">${c.avg}</td></tr>`).join('')}
 </table></div>`
-    : '<p class="empty">Нет client.* метрик: фронт собран без отправки клиентских счётчиков, либо analytics-collector не сконфигурирован.</p>'
+    : '<p class="empty">No client.* metrics: the front bundle ships without client counters, or analytics-collector is not configured.</p>'
 }
 
-<h2>Сервисы: запросы и время</h2>
-<div class="sub">Всего ${esc(run.stats.totals?.operations ?? 0)} операций, ${esc(Math.round((run.stats.totals?.timeMs ?? 0) / 1000))}s суммарно.</div>
+<h2>Services: requests and time</h2>
+<div class="sub">${esc(run.stats.totals?.operations ?? 0)} operations, ${esc(Math.round((run.stats.totals?.timeMs ?? 0) / 1000))}s in total.</div>
 ${barList((run.stats.services ?? []).slice(0, 15), (x) => x.operations, (x) => x.service, (x) => `${x.operations} / ${Math.round(x.timeMs / 1000)}s`)}
 
 ${
   statsSeries !== undefined
-    ? `<h2>Запросы в секунду, по сервисам</h2>
-<div class="sub">Разрешение ряда не лучше, чем интервал отправки статистики сервисами (по умолчанию
-10s, в тестах 1s) - всплески короче него не видны.</div>
+    ? `<h2>Requests per second, by service</h2>
+<div class="sub">The series is no finer than the stats push interval (10s by default, 1s under test) -
+spikes shorter than that are invisible.</div>
 ${stackedChart(statsSeries.series, statsSeries.top, (r) => r.ops, { unit: '/s', height: 220 })}`
     : ''
 }
 
-<h2>Больше всего вызовов</h2>
-<div class="sub">Сортировка по числу обращений: N+1 виден здесь раньше, чем в задержках.</div>
-<div class="wrap"><table><tr><th>Сервис</th><th>Путь</th><th class="num">Вызовов</th><th class="num">Время</th><th class="num">Среднее</th></tr>
+<h2>Most called</h2>
+<div class="sub">Sorted by call count: an N+1 shows up here before it shows up in latency.</div>
+<div class="wrap"><table><tr><th>Service</th><th>Path</th><th class="num">Calls</th><th class="num">Time</th><th class="num">Average</th></tr>
 ${(run.stats.topByOps ?? []).map((e) => `<tr><td>${esc(e.service)}</td><td>${esc(e.path)}</td><td class="num">${e.operations}</td><td class="num">${Math.round(e.total / 1000)}s</td><td class="num">${e.avg}</td></tr>`).join('')}
 </table></div>
 
-<h2>Самые дорогие пути</h2>
-<div class="wrap"><table><tr><th>Сервис</th><th>Путь</th><th class="num">Вызовов</th><th class="num">Время</th><th class="num">Среднее</th></tr>
+<h2>Most expensive paths</h2>
+<div class="wrap"><table><tr><th>Service</th><th>Path</th><th class="num">Calls</th><th class="num">Time</th><th class="num">Average</th></tr>
 ${(run.stats.top ?? []).map((e) => `<tr><td>${esc(e.service)}</td><td>${esc(e.path)}</td><td class="num">${e.operations}</td><td class="num">${Math.round(e.total / 1000)}s</td><td class="num">${e.avg}</td></tr>`).join('')}
 </table></div>`
     : ''
@@ -341,9 +347,9 @@ ${(run.stats.top ?? []).map((e) => `<tr><td>${esc(e.service)}</td><td>${esc(e.pa
 
 ${
   run.docker !== undefined
-    ? `<h2>Контейнеры</h2>
+    ? `<h2>Containers</h2>
 <div class="wrap"><table>
-<tr><th>Контейнер</th><th class="num">CPU, с</th><th class="num">CPU сред.</th><th class="num">CPU пик</th><th class="num">Память сред.</th><th class="num">Память пик</th><th class="num">Сеть rx</th><th class="num">Сеть tx</th><th class="num">Диск чт.</th><th class="num">Диск зап.</th></tr>
+<tr><th>Container</th><th class="num">CPU, s</th><th class="num">CPU avg</th><th class="num">CPU peak</th><th class="num">Mem avg</th><th class="num">Mem peak</th><th class="num">Net rx</th><th class="num">Net tx</th><th class="num">Disk read</th><th class="num">Disk write</th></tr>
 ${run.docker.containers
   .map(
     (c) =>

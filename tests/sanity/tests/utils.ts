@@ -250,8 +250,12 @@ export async function uploadFile (page: Page, fileName: string, fileUploadTestId
 
 export async function getInviteLink (page: Page): Promise<string | null> {
   const leftSideMenuPage = new LeftSideMenuPage(page)
-  // If we don't wait and it's called on inital render initial navigate may close the popup in the middle
-  await leftSideMenuPage.appHeader().waitFor({ state: 'visible' })
+  // Settle the initial render, or a navigate closes the popup mid-flight. Bounded and optional:
+  // a freshly created workspace has no nav panel, and the toPass loop below retries anyway.
+  await leftSideMenuPage
+    .appHeader()
+    .waitFor({ state: 'visible', timeout: 5000 })
+    .catch(() => {})
   const linkLocator = page.locator('.antiPopup .link')
   // Redo the whole chain on retry: when a click lands on a popup that is still mounting, no link is
   // ever generated and re-checking its visibility alone can only wait the timeout out.

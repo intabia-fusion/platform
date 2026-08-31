@@ -315,9 +315,7 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
       }
       // `known: false` after a stats restart tells the service to send the full tree again.
       req.res.writeHead(200, { 'Content-Type': 'application/json' })
-      req.res.end(
-        JSON.stringify({ ...policyFor(serviceName), known: existing !== undefined, reset: resetGeneration })
-      )
+      req.res.end(JSON.stringify({ ...policyFor(serviceName), known: existing !== undefined, reset: resetGeneration }))
     } catch (err: any) {
       console.error(err, req.host, req.ip)
       req.res.writeHead(404, {})

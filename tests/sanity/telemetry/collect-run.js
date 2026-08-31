@@ -189,7 +189,9 @@ function summariseStats (statsPath) {
   for (const e of entries) {
     const svc = byService.get(e.service) ?? { service: e.service, operations: 0, timeMs: 0 }
     svc.operations += e.operations ?? 0
-    svc.timeMs += e.total ?? 0
+    // `client/*` carries browser-reported values, not server time - summing it made the collector
+    // look like it spent an hour of a six-minute run.
+    if (!String(e.path ?? '').startsWith('client/')) svc.timeMs += e.total ?? 0
     byService.set(e.service, svc)
   }
   return {
