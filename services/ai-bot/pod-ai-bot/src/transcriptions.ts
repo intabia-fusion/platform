@@ -24,7 +24,7 @@ import love, { parseRoomName } from '@hcengineering/love'
 import { Person } from '@hcengineering/contact'
 import { ChatMessage } from '@hcengineering/chunter'
 import { PlatformQueueProducer } from '@hcengineering/server-core'
-import { TranscriptionConfig, TranscriptionQueueTask } from './transcription/types'
+import { AudioFormat, TranscriptionConfig, TranscriptionQueueTask } from './transcription/types'
 import { ClisrServer } from '@intabiafusion/clisr'
 import { createTranscriptionProvider } from './transcription'
 import { resolveTranscriptionConfig } from './transcription/asrRegistry'
@@ -234,9 +234,9 @@ export async function createTranscriptionsSupport (
 
       try {
         const audio = await aiControl.storageAdapter.read(pctx, wsClient.wsIds, task.blobId)
-        // ponytail: webm/opus is sent as 'ogg' (both opus); server ASR decodes via ffmpeg.
-        // Add real webm handling to AudioFormat if a provider rejects the container.
-        const audioFormat = task.audioFormat === 'wav' ? 'wav' : 'ogg'
+        // Container as recorded: providers name the file by it. openai/deepgram unverified,
+        // see foundation-tasks TSK-2026-08-29-401.
+        const audioFormat: AudioFormat = task.audioFormat ?? 'ogg'
         const resolved = await resolveProvider(pctx, workspace)
         const asrProvider = resolved?.provider ?? provider
         const asrLevel = resolved?.level ?? config.AsrDefaultLevel
