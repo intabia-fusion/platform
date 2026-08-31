@@ -1,7 +1,13 @@
 // Copyright © 2025 Andrey Sobolev (haiodo@gmail.com)
 
 import { MeasureContext } from '@hcengineering/core'
-import { AUDIO_FORMAT_INFO, TranscriptionOptions, TranscriptionProvider, TranscriptionResult, AudioFormat } from '../types'
+import {
+  AUDIO_FORMAT_INFO,
+  TranscriptionOptions,
+  TranscriptionProvider,
+  TranscriptionResult,
+  AudioFormat
+} from '../types'
 
 /**
  * Deepgram pre-recorded API response structure

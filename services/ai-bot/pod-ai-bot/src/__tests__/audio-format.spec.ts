@@ -16,8 +16,7 @@
 import { AUDIO_FORMAT_INFO, type AudioFormat } from '../transcription/types'
 
 // The MIME the browser records with, as OnAudioTranscribe reads it off the attachment.
-const fromMime = (type: string): AudioFormat =>
-  (['ogg', 'mp4', 'wav'] as const).find((f) => type.includes(f)) ?? 'webm'
+const fromMime = (type: string): AudioFormat => (['ogg', 'mp4', 'wav'] as const).find((f) => type.includes(f)) ?? 'webm'
 
 describe('audio format', () => {
   it('maps a recorded MIME to the format the trigger queues', () => {

@@ -1,7 +1,13 @@
 // Copyright © 2025 Andrey Sobolev (haiodo@gmail.com)
 
 import { concatLink, MeasureContext } from '@hcengineering/core'
-import { AUDIO_FORMAT_INFO, TranscriptionOptions, TranscriptionProvider, TranscriptionResult, AudioFormat } from '../types'
+import {
+  AUDIO_FORMAT_INFO,
+  TranscriptionOptions,
+  TranscriptionProvider,
+  TranscriptionResult,
+  AudioFormat
+} from '../types'
 
 /**
  * OpenAI Whisper API response with verbose JSON format
