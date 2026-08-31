@@ -183,6 +183,9 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - SERVER_SECRET=secret
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
+      # Whole suite hits account through one nginx, so it shares a single per-IP bucket.
+      - ACCOUNT_RATE_LIMIT_AUTH=0
+      - ACCOUNT_RATE_LIMIT_GENERAL=0
       - WORKSPACE_LIMIT_PER_USER=100
       # Free fallback limits (match the free:true plan in plan-config.yaml). storagePerUserGB scales disk.
       - FREE_PLAN_LIMITS={"usersLimit":5,"storagePerUserGB":2,"tokenLimit":100000,"trafficLimitGB":0,"meetingMinutesLimit":0}

@@ -2185,6 +2185,16 @@ export async function getPerson (
   return person
 }
 
+// A social key is just `type:value`, so an email is enough to probe whether an account exists.
+// Regular callers resolve only their own; system/admin/services keep the lookup migrations need.
+function canLookUpForeignSocialIds (account: PersonUuid | undefined, extra: any): boolean {
+  return (
+    account === systemAccountUuid ||
+    extra?.admin === 'true' ||
+    verifyAllowedServices(['workspace', 'tool'], extra, false)
+  )
+}
+
 export async function findPersonBySocialId (
   ctx: MeasureContext,
   db: AccountDB,
@@ -2198,11 +2208,16 @@ export async function findPersonBySocialId (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
-  decodeTokenVerbose(ctx, token)
+  const { account: caller, extra } = decodeTokenVerbose(ctx, token)
 
   const socialIdObj = await db.socialId.findOne({ _id: socialId })
 
   if (socialIdObj == null) {
+    return
+  }
+
+  // Answer as if absent, not Forbidden - a distinct error still reveals that the id is taken.
+  if (socialIdObj.personUuid !== caller && !canLookUpForeignSocialIds(caller, extra)) {
     return
   }
 
@@ -2225,7 +2240,7 @@ export async function findSocialIdBySocialKey (
   params: { socialKey: string, requireAccount?: boolean }
 ): Promise<PersonId | undefined> {
   const { socialKey, requireAccount } = params
-  decodeTokenVerbose(ctx, token)
+  const { account: caller, extra } = decodeTokenVerbose(ctx, token)
 
   if (socialKey == null || socialKey === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -2234,6 +2249,11 @@ export async function findSocialIdBySocialKey (
   const socialIdObj = await db.socialId.findOne({ key: socialKey })
 
   if (socialIdObj == null) {
+    return
+  }
+
+  // See findPersonBySocialId: stay indistinguishable from "no such social id".
+  if (socialIdObj.personUuid !== caller && !canLookUpForeignSocialIds(caller, extra)) {
     return
   }
 
@@ -3124,10 +3144,18 @@ export async function hasWorkspacePermission (
   }
 ): Promise<boolean> {
   const { accountId, permission } = params
-  const { workspace } = decodeTokenVerbose(ctx, token)
+  const { account, workspace, extra } = decodeTokenVerbose(ctx, token)
 
   if (workspace === null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid: workspace }))
+  }
+
+  // Same rule as getWorkspacePermissions: self is free, probing others takes Maintainer+.
+  if (accountId !== account) {
+    const accRole = account === systemAccountUuid ? AccountRole.Owner : await db.getWorkspaceRole(account, workspace)
+    if (!verifyAllowedRole(accRole, AccountRole.Maintainer, extra, false)) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    }
   }
 
   return await db.hasWorkspacePermission(accountId, workspace, permission)
