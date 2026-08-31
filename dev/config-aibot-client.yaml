@@ -5,6 +5,7 @@
 # from THIS registry, then calls the local OpenAI-compatible endpoint (LM Studio /
 # llama.cpp on the host). Both LLM and ASR are configured here (no legacy STT_* env).
 #   low -> small local model (chat only), low-plus -> bigger local model (tools/tasks)
+#   mock -> deterministic offline provider, needs no model server (see docs/aibot-mock-testing.md)
 #   default -> local whisper (ASR)
 #
 # Switching models for a test run: either point ${CLISR_MODEL} at another model, or park
@@ -28,6 +29,13 @@ llm:
         talk: false
         summary: false
         tasks: false
+    mock:
+      order: 1
+      label: Мок
+      description: Детерминированный мок, модель не нужна
+      # Test level: costs nothing, so a UI run does not eat the workspace token window.
+      tokenMultiplier: 0
+      displayMultiplier: 0
     low-plus:
       order: 5
       label: Базовый+
@@ -55,6 +63,21 @@ llm:
           capabilities:
             tools: true
             maxContextTokens: 16576
+
+    # Deterministic offline provider on its own level (one provider per level). See docs/aibot-mock-testing.md.
+    - id: mock
+      provider: mock
+      concurrency: 4
+      batch: 1
+      endpointConfig:
+        echo: true
+        promptTokens: 50
+        completionTokens: 10
+      serves:
+        mock:
+          model: mock-model
+          capabilities:
+            maxContextTokens: 32768
 
     # Parked alternative endpoint (e.g. llama.cpp on another port). Flip `enabled` here
     # and on the provider above to switch the whole client to it.

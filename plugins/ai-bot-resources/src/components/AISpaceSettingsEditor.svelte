@@ -43,14 +43,19 @@
   let sharedPrompt: string = ''
   let meetingSummary: boolean = true
 
+  // A re-delivered document must not wipe text typed but not yet blurred.
+  let storedPrompt: string | undefined
   const query = createQuery()
   query.query(aiBot.class.AISpaceSettings, { attachedTo: { $exists: false } }, (res) => {
     doc = res[0]
     level = doc?.level ?? level
     asrLevel = doc?.asrLevel ?? asrLevel
     language = doc?.language ?? ''
-    sharedPrompt = doc?.sharedPrompt ?? ''
     meetingSummary = doc?.meetingSummary ?? true
+    if (doc?.sharedPrompt !== storedPrompt) {
+      storedPrompt = doc?.sharedPrompt
+      sharedPrompt = doc?.sharedPrompt ?? ''
+    }
   })
 
   onMount(async () => {
@@ -82,13 +87,8 @@
         level: level !== '' ? level : (levelInfos[0]?.level ?? 'low'),
         ...patch
       })
-      // Bridge until the live query delivers the created document; `space` is what update() sends
-      // as the tx object space.
-      doc = {
-        _id: id,
-        _class: aiBot.class.AISpaceSettings,
-        space: core.space.Workspace
-      } as unknown as AISpaceSettings
+      // Read back: the live query may not have delivered it yet, the next queued save needs a real doc.
+      doc = await client.findOne(aiBot.class.AISpaceSettings, { _id: id })
     }
     const runAll = saveQueue.then(run, run)
     saveQueue = runAll.catch(() => {})

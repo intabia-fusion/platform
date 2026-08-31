@@ -18,6 +18,17 @@ TypeScript/Svelte 4 monorepo. Rush.js (pnpm), Node 24 (`.nvmrc`; rush.json accep
 
 Projects sit 2-3 levels deep, each with its own `package.json`.
 
+## UI Components
+
+Before writing a new `.svelte` component, check [`docs/ui-components/`](docs/ui-components/README.md): catalogs of
+`@hcengineering/ui`, `@hcengineering/presentation` and `plugins/view-resources` (purpose + key props per component,
+"which of the similar ones" guide, `view.component.*` registry) and the two ways to reuse a component across plugins
+without a dependency cycle.
+
+The catalog is maintained with the code, in the same PR: adding, renaming or removing an exported component (or its
+key props, or a `view.component.*` id) in those three packages updates the matching table row; a new component that
+overlaps an existing one gets a bullet in "Выбор между похожими". Rules in the catalog README.
+
 ## Build & Validation
 
 Use `rush fast-build:*`. All accept `--to PKG` to scope to a package + dependencies.
@@ -236,3 +247,7 @@ the one the container ran. Collect only via `./profile-collect.sh` or `docker co
 SIGKILL loses the profile. Details in `tests/readme.md`.
 
 For meeting/love-specific test setup (LiveKit, `meetings-ws`, page objects, data-id list), see [`docs/sanity-meetings-tests.md`](docs/sanity-meetings-tests.md).
+
+For AI bot testing on the deterministic mock provider (how to enable it, the `call:<tool> {json}`
+prompt protocol, ready-to-paste prompts for task/edit proposals, data-id list), see
+[`docs/aibot-mock-testing.md`](docs/aibot-mock-testing.md).

@@ -107,7 +107,7 @@ describe('mock provider scripted tool calls', () => {
     const completion = await complete(provider, [tool('edit_issue_draft', () => 'ok')], 'call:no_such_tool {}')
 
     expect(completion).toContain('no_such_tool')
-    expect(completion).toContain('unavailable')
+    expect(completion).toContain('does not exist')
   })
 
   it('reports a throwing tool instead of failing the run', async () => {
@@ -120,12 +120,88 @@ describe('mock provider scripted tool calls', () => {
     expect(completion).toContain('boom')
   })
 
-  it('keeps echoing when the prompt scripts no calls', async () => {
+  it('lists the available calls and echoes when the prompt scripts none', async () => {
     const provider = makeProvider()
+    const draft = tool('edit_issue_draft', () => 'ok')
+    draft.function.description = 'Edit the issue the user is drafting. NOTHING IS CREATED.'
+    draft.function.parameters = {
+      type: 'object',
+      properties: { title: { type: 'string' }, priority: { type: 'string', enum: ['none', 'high'] } }
+    }
 
-    const completion = await complete(provider, [tool('edit_issue_draft', () => 'ok')], 'какая сегодня погода')
+    const completion = await complete(provider, [draft], 'какая сегодня погода')
 
+    expect(completion).toContain('**propose_issue <название>**')
+    expect(completion).toContain('**split_issues <N>** (здесь недоступно) - разбить задачу')
+    expect(completion).toContain('- `edit_issue_draft`: title (string), priority (none|high)')
     expect(completion).toContain('## echo')
     expect(completion).toContain('какая сегодня погода')
+  })
+
+  it('maps scenario commands onto the tools the context offers', async () => {
+    const provider = makeProvider(false)
+    const step = async (tools: string[], prompt: string): Promise<any> => {
+      const defs = tools.map((name) => ({ name, description: '', parameters: { type: 'object' } }))
+      const res = await provider.chatToolStep(
+        ctx,
+        workspace,
+        { role: 'user', content: prompt },
+        'direct',
+        '',
+        '',
+        'u',
+        defs,
+        []
+      )
+      return res.toolCalls?.map((c: any) => ({ name: c.name, args: JSON.parse(c.arguments) }))
+    }
+
+    expect(await step(['propose_new_document', 'propose_task'], 'propose_text\n# Plan\n\nBody')).toEqual([
+      { name: 'propose_new_document', args: { markdown: '# Plan\n\nBody' } }
+    ])
+    expect(await step(['edit_issue_draft'], 'propose_text\nNew body')).toEqual([
+      { name: 'edit_issue_draft', args: { description: 'New body' } }
+    ])
+    expect((await step(['propose_task'], 'propose_issue Настроить мониторинг'))[0].args).toMatchObject({
+      title: 'Настроить мониторинг',
+      priority: 'medium'
+    })
+    const split = (await step(['propose_subtasks'], 'split_issues 3'))[0]
+    expect(split.name).toBe('propose_subtasks')
+    expect(split.args.subtasks).toHaveLength(3)
+    expect(split.args.subtasks[0]).toMatchObject({
+      title: expect.stringMatching(/^1\. /),
+      estimation: expect.any(Number)
+    })
+    // No fitting tool here: falls through to the help instead of calling anything.
+    expect(await step(['load_thread_history'], 'split_issues 3')).toBeUndefined()
+  })
+
+  // The clisr worker path: the pod drives chatToolStep and executes the calls itself.
+  it('chatToolStep hands scripted calls to the pod and reports their results next round', async () => {
+    const provider = makeProvider(false)
+    const defs = [{ name: 'propose_task', description: 'Propose a task.', parameters: { type: 'object' } }]
+    const step = (prior: any[], prompt: string): Promise<any> =>
+      provider.chatToolStep(ctx, workspace, { role: 'user', content: prompt }, 'direct', '', '', 'u', defs, prior)
+
+    const first = await step([], 'сделай\ncall:propose_task {"title":"X"}')
+    expect(first.content).toBeUndefined()
+    expect(first.toolCalls).toEqual([{ id: 'mock-0', name: 'propose_task', arguments: '{"title":"X"}' }])
+
+    const second = await step([{ id: 'mock-0', name: 'propose_task', content: 'proposed' }], 'сделай')
+    expect(second.toolCalls).toBeUndefined()
+    expect(second.content).toContain('### tool propose_task\nproposed')
+
+    const menu = await step([], 'привет')
+    expect(menu.content).toContain('- `propose_task`: без параметров')
+  })
+
+  it('lists the available calls without echo when echo is off', async () => {
+    const provider = makeProvider(false)
+
+    const completion = await complete(provider, [tool('propose_task', () => 'ok')], 'привет')
+
+    expect(completion).toContain('- `propose_task`: без параметров')
+    expect(completion).not.toContain('## echo')
   })
 })

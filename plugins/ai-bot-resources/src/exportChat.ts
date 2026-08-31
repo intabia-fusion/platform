@@ -55,10 +55,11 @@ function messageBody (message: ChatMessage): string {
  */
 export async function exportConversationMdx (root: ChatMessage, title: string): Promise<string> {
   const client = getClient()
+  const limit = 1000
   const replies = await client.findAll(
     chunter.class.ChatMessage,
     { attachedTo: root._id as Ref<Doc> },
-    { sort: { createdOn: SortingOrder.Ascending }, limit: 1000 }
+    { sort: { createdOn: SortingOrder.Ascending }, limit }
   )
   const botSocialId = get(aiBotSocialIdentityStore)?._id
 
@@ -68,6 +69,8 @@ export async function exportConversationMdx (root: ChatMessage, title: string): 
       `title: ${frontmatterValue(title)}`,
       `exported: ${new Date().toISOString()}`,
       `messages: ${replies.length + 1}`,
+      // Say so rather than hand over a silently cut transcript.
+      ...(replies.length === limit ? [`truncated: ${limit}`] : []),
       '---'
     ].join('\n')
   ]

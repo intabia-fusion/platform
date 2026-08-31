@@ -17,7 +17,8 @@ import contact, { getFirstName, type Person, type SocialIdentity } from '@hcengi
 import { createQuery, onClient } from '@hcengineering/presentation'
 import { aiBotEmailSocialKey } from '@hcengineering/ai-bot'
 
-export const aiBotSocialIdentityStore = writable<SocialIdentity>()
+// Empty until the query resolves, and empty again if the bot has not been provisioned yet.
+export const aiBotSocialIdentityStore = writable<SocialIdentity | undefined>(undefined)
 /** First name of the bot as the pod created it (FIRST_NAME), for labels that name the assistant. */
 export const aiBotNameStore = writable<string>('')
 const identityQuery = createQuery(true)

@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import { type AILevelInfo } from '@hcengineering/ai-bot'
+  import { ModernButton } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let levels: AILevelInfo[] = []
@@ -31,19 +32,19 @@
 <div class="cards">
   {#each levels as info (info.level)}
     {@const active = info.level === selected}
-    <button
-      type="button"
-      class="level-chip"
-      class:active
-      class:disabled
+    <ModernButton
+      title={info.label}
+      size={'small'}
+      kind={active ? 'primary' : 'tertiary'}
+      pressed={active}
       {disabled}
+      dataId={`btnAiLevel-${info.level}`}
       on:click={() => {
         select(info.level)
       }}
     >
-      <span class="title">{info.label}</span>
-      <span class="content-dark-color text-xs multiplier">×{info.displayMultiplier ?? info.tokenMultiplier}</span>
-    </button>
+      <span class="content-dark-color text-xs">×{info.displayMultiplier ?? info.tokenMultiplier}</span>
+    </ModernButton>
   {/each}
 </div>
 
@@ -54,37 +55,5 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
-  }
-
-  .level-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    flex-shrink: 0;
-    padding: 0.375rem 0.75rem;
-    background-color: var(--theme-button-default);
-    border: 1px solid var(--theme-divider-color);
-    border-radius: var(--small-BorderRadius);
-    cursor: pointer;
-    white-space: nowrap;
-
-    &:hover:not(.disabled) {
-      background-color: var(--theme-button-hovered);
-    }
-
-    &.active {
-      border-color: var(--primary-button-default);
-      background-color: var(--theme-button-pressed);
-    }
-
-    &.disabled {
-      cursor: default;
-      opacity: 0.6;
-    }
-
-    .title {
-      font-weight: 500;
-      color: var(--theme-caption-color);
-    }
   }
 </style>

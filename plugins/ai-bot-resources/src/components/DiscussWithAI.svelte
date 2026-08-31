@@ -17,6 +17,7 @@
   import { Button, type ButtonKind, type ButtonSize } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'
   import view from '@hcengineering/view'
+  import { getDocIdentifier, getDocTitle } from '@hcengineering/view-resources'
   import chunter from '@hcengineering/chunter'
   import { getResource, translate } from '@hcengineering/platform'
 
@@ -31,7 +32,7 @@
   const client = getClient()
 
   async function discuss (): Promise<void> {
-    const label = getObjectLabel(value)
+    const label = await getObjectLabel(value)
     const firstMessage = await translate(plugin.string.DiscussFirstMessage, { label })
     const started = await openOrStartObjectConversation(
       { objectId: value._id, objectClass: value._class, label },
@@ -43,10 +44,12 @@
     await openThread(started.messageId, undefined, started.direct)
   }
 
-  // Best-effort display name: identifier/title/name, else the class label.
-  function getObjectLabel (doc: Doc): string {
-    const anyDoc = doc as any
-    return anyDoc.identifier ?? anyDoc.title ?? anyDoc.name ?? client.getHierarchy().getClass(doc._class).label
+  // Platform's own providers: the identifier when the class has one (FUSIO-123), else the title.
+  async function getObjectLabel (doc: Doc): Promise<string> {
+    const named =
+      (await getDocIdentifier(client, doc._id, doc._class, doc)) ??
+      (await getDocTitle(client, doc._id, doc._class, doc))
+    return named ?? (await translate(client.getHierarchy().getClass(doc._class).label, {}))
   }
 </script>
 

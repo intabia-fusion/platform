@@ -102,7 +102,7 @@ export async function connectMeeting (
 
   try {
     const req: ConnectMeetingRequest = { meetingId, transcription: options.transcription ?? false, language }
-    await fetch(concatLink(url, 'love/connect'), {
+    const resp = await fetch(concatLink(url, 'love/connect'), {
       method: 'POST',
       headers: {
         Authorization: 'Bearer ' + token,
@@ -110,6 +110,9 @@ export async function connectMeeting (
       },
       body: JSON.stringify(req)
     })
+    if (!resp.ok) {
+      console.error('Failed to connect the assistant to the meeting', resp.status)
+    }
   } catch (error) {
     console.error(error)
     return undefined
@@ -176,7 +179,7 @@ export async function disconnectMeeting (meetingId: Ref<MeetingMinutes>): Promis
 
   try {
     const req: DisconnectMeetingRequest = { meetingId }
-    await fetch(concatLink(url, 'love/disconnect'), {
+    const resp = await fetch(concatLink(url, 'love/disconnect'), {
       method: 'POST',
       headers: {
         Authorization: 'Bearer ' + token,
@@ -184,6 +187,9 @@ export async function disconnectMeeting (meetingId: Ref<MeetingMinutes>): Promis
       },
       body: JSON.stringify(req)
     })
+    if (!resp.ok) {
+      console.error('Failed to disconnect the assistant from the meeting', resp.status)
+    }
   } catch (error) {
     console.error(error)
     return undefined

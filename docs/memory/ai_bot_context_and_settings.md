@@ -113,3 +113,18 @@
 - TokenWindows.svelte: `detailed` prop (admin) -> per-level разбивка level:tokens(%);
   compact -> сжатая строка. resetTime -> относительное "через N" (Intl.RelativeTimeFormat).
 - LimitsIndicator: 2 полоски (диск+токены/мес, убрана meeting-минуты).
+
+### Корни контекстов (FUSIO-1271)
+- issue-draft корень создаётся на открытие панели ассистента (`$issueAssistOpened` глобальный),
+  не на первое сообщение (инпут живёт в chunter ThreadView, без корня писать нечем).
+  Против "туч": `startIssueDraftConversation` переиспользует пустой корень (`replies==0`,
+  без `resultId`, не archived) и удаляет остальные пустые; при `session++` (create-and-new)
+  панель закрывается. Кнопка "Новый контекст" disabled пока `replies==0`.
+- `resetObjectConversation`: archive -> сразу `createObjectContext` (server-side `notMatch`).
+  НЕ через `findObjectConversation`: `client.findAll` идёт в кэш LiveQuery, `archived:true`
+  доезжает broadcast'ом позже резолва `update()` -> lookup вернёт только что заархивированный
+  корень (CI: "new context button resets" 3/3 fail).
+- Mock через clisr-воркер: нужен `chatToolStep` (сервер гоняет `runToolCalls`, ждёт
+  `content`/`toolCalls`); без него fallback `createChatCompletionWithTools([] as any)` -> 0 тулов
+  и `completion`, которое loop не читает -> в чат ничего. Прямой путь мока = тот же
+  `chatToolStep` + `runToolCalls`.

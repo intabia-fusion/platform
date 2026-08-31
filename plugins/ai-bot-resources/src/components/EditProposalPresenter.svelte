@@ -14,9 +14,10 @@
 -->
 <script lang="ts">
   import { type AIEditProposalMessage } from '@hcengineering/ai-bot'
+  import { type Doc, type DocumentUpdate } from '@hcengineering/core'
   import { getClient, MessageViewer } from '@hcengineering/presentation'
   import { isEmptyMarkup, markupToJSON, type MarkupNode } from '@hcengineering/text'
-  import { Button, Label, showPanel } from '@hcengineering/ui'
+  import { Button, Label, ShowMore, showPanel } from '@hcengineering/ui'
   import { registeredEditor, MarkupDiffViewer } from '@hcengineering/text-editor-resources'
   import view from '@hcengineering/view'
   import { onMount } from 'svelte'
@@ -91,18 +92,19 @@
     const target = await client.findOne(value.targetClass, { _id: value.targetId })
     if (target === undefined) return
     const titleKey = hierarchy.getClass(value.targetClass).titleKey ?? 'title'
-    await client.updateDoc(value.targetClass, target.space, value.targetId, { [titleKey]: title })
+    const update: DocumentUpdate<Doc> = { [titleKey]: title }
+    await client.diffUpdate(target, update)
   }
 
   async function apply (): Promise<void> {
     if (hasBody && proposedNode !== undefined) {
       if (editor === undefined) return
-      editor.commands.setContent(proposedNode as any)
+      editor.commands.setContent(proposedNode)
     }
     if (value.proposedTitle !== undefined && value.proposedTitle !== '') {
       await applyTitle(value.proposedTitle)
     }
-    await client.updateDoc(value._class, value.space, value._id, { applied: true })
+    await client.diffUpdate(value, { applied: true })
   }
 
   function openDocument (): void {
@@ -142,7 +144,9 @@
         <div class="diff">
           <!-- content = proposed (rendered base), comparedVersion = current: added shows green,
                removed shows struck-through red — i.e. old -> new, not new -> old. -->
-          <MarkupDiffViewer content={proposedNode} comparedVersion={baseNode} objectClass={value.targetClass} />
+          <ShowMore>
+            <MarkupDiffViewer content={proposedNode} comparedVersion={baseNode} objectClass={value.targetClass} />
+          </ShowMore>
         </div>
       {/if}
 

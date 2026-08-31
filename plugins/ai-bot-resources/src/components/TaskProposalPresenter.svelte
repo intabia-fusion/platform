@@ -14,14 +14,14 @@
 -->
 <script lang="ts">
   import { type AIContextMessage, type AITaskProposal, type AITaskProposalMessage } from '@hcengineering/ai-bot'
-  import { type Doc, generateId, type Ref, type Space } from '@hcengineering/core'
+  import core, { type Doc, generateId, getCurrentAccount, type Ref, type Space } from '@hcengineering/core'
   import { getResource, translate } from '@hcengineering/platform'
-  import { createQuery, getClient, MessageViewer } from '@hcengineering/presentation'
+  import { createQuery, getClient, MessageViewer, SpaceSelector } from '@hcengineering/presentation'
   import { onDestroy } from 'svelte'
   import { get } from 'svelte/store'
 
   import { issueDraftApplier } from '../stores'
-  import { jsonToMarkup, markupToJSON, type MarkupNode } from '@hcengineering/text'
+  import { jsonToMarkup, markupToJSON, type MarkupNode, MarkupNodeType } from '@hcengineering/text'
   import { markdownToMarkup } from '@hcengineering/text-markdown'
   import tracker, {
     type CreatedIssue,
@@ -30,7 +30,7 @@
     type IssueTemplateChild,
     type Project
   } from '@hcengineering/tracker'
-  import { Button, Component, DropdownLabels, type DropdownTextItem, EditBox, Label } from '@hcengineering/ui'
+  import { Button, Component, EditBox, Expandable, Label } from '@hcengineering/ui'
   import { ActivityMessageTemplate } from '@hcengineering/activity-resources'
   import { type Person } from '@hcengineering/contact'
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
@@ -62,17 +62,19 @@
     person = undefined
   }
 
-  let projects: Project[] = []
-  const projectsQuery = createQuery()
   const rootQuery = createQuery()
 
   // A proposal made while drafting an issue in the create dialog belongs to that dialog: the
   // issue is created there, from the form the user can still edit. Creating it from the card too
   // would produce a second, half-edited issue.
   let isDraftSession = false
-  // Applied proposals fold away: the thread keeps the history without a wall of repeated text.
-  let collapsed = false
-  $: collapsed = value.applied === true
+  // Applied proposals fold; tracked by flip only, so a re-delivered `value` does not undo a manual unfold.
+  let expanded = value.applied !== true
+  let lastApplied = value.applied
+  $: if (value.applied !== lastApplied) {
+    lastApplied = value.applied
+    expanded = value.applied !== true
+  }
 
   // No title check here: the model often changes the description only, and the panel keeps
   // whatever the proposal leaves out.
@@ -80,9 +82,7 @@
     const applier = get(issueDraftApplier)
     if (applier === undefined) return
     applier(value)
-    if (value.applied !== true) {
-      await client.update(value, { applied: true })
-    }
+    await client.diffUpdate(value, { applied: true })
   }
 
   $: rootQuery.query(
@@ -93,16 +93,22 @@
     },
     { limit: 1 }
   )
-  projectsQuery.query(tracker.class.Project, { archived: false }, (res) => {
-    projects = res
-  })
 
-  $: projectItems = projects.map((p): DropdownTextItem => ({ id: p._id, label: `${p.identifier} ${p.name}` }))
-  // Explicit pick wins; otherwise the first one - same item DropdownLabels auto-selects, so the
-  // shown project and the one the button creates in never disagree.
-  $: project = value.project ?? projects[0]?._id
+  // Bound to SpaceSelector, which auto-selects the first project; the pick is stored so a reload keeps it.
+  let project: Ref<Space> | undefined = value.project
+  $: if (project !== undefined && project !== value.project) void client.diffUpdate(value, { project })
+  // Constant: SpaceSelect re-resolves on every new query object.
+  const projectQuery = { archived: false, members: getCurrentAccount().uuid }
   // Splitting an existing task: only the sub-task block is shown, there is no new parent to name.
   $: isSplit = value.parent != null
+
+  // Local copy: a re-delivered `value` must not wipe text typed but not yet blurred.
+  let title = value.title
+  let lastStoredTitle = value.title
+  $: if (value.title !== lastStoredTitle) {
+    lastStoredTitle = value.title
+    title = value.title
+  }
 
   const toMarkup = (md?: string): string =>
     md != null && md.trim() !== '' ? jsonToMarkup(markdownToMarkup(md, { refUrl: 'ref://', imageUrl: '' })) : ''
@@ -144,10 +150,6 @@
   // Rows already turned into issues: shown as done, not selectable.
   $: createdRows = new Set(children.filter((_, i) => value.subtasks?.[i]?.createdId != null).map((c) => c.id))
 
-  async function patch (data: Partial<AITaskProposalMessage>): Promise<void> {
-    await client.updateDoc(value._class, value.space, value._id, data as any)
-  }
-
   // Edits inside the control are written back so they survive a reload. Debounced: the control
   // fires an event per edited field.
   let persistTimer: ReturnType<typeof setTimeout> | undefined
@@ -163,8 +165,9 @@
     }
   })
 
+  // diffUpdate: an edit that changes nothing writes no transaction.
   function doPersist (): void {
-    void patch({
+    void client.diffUpdate(value, {
       subtasks: children.map((c, i) => ({
         title: c.title,
         description: c.description !== '' ? c.description : undefined,
@@ -173,10 +176,6 @@
         createdId: value.subtasks?.[i]?.createdId
       }))
     })
-  }
-
-  function onProjectSelected (e: CustomEvent<string>): void {
-    void patch({ project: e.detail as Ref<Space> })
   }
 
   function onSelect (e: CustomEvent<Array<Ref<Issue>>>): void {
@@ -192,8 +191,9 @@
   $: created = (value.createdIds?.length ?? 0) > 0 && pendingRows.length === 0
 
   async function create (): Promise<void> {
-    const target = projects.find((p) => p._id === project)
-    if (target === undefined || creating) return
+    if (project === undefined || creating) return
+    const target = await client.findOne(tracker.class.Project, { _id: project as Ref<Project> })
+    if (target === undefined) return
     creating = true
     failure = undefined
     try {
@@ -223,10 +223,10 @@
 
     // Persist after every issue: a failure midway must not lose what was already created.
     const flush = async (rootId?: Ref<Doc>): Promise<void> => {
-      await patch({
+      await client.diffUpdate(value, {
         subtasks,
         createdIds: [...priorCreatedIds, ...fresh.map((i) => i._id)],
-        project: target._id as Ref<Space>,
+        project: target._id,
         ...(rootId !== undefined ? { createdRootId: rootId } : {})
       })
     }
@@ -240,7 +240,7 @@
 
     if (root === undefined) {
       const rootIssue = await createIssue(client, target, {
-        title: value.title,
+        title,
         description: toMarkup(value.description),
         priority: value.priority as IssuePriority | undefined,
         estimation: value.estimation
@@ -287,9 +287,9 @@
     const base: MarkupNode =
       value.message !== undefined && value.message !== ''
         ? markupToJSON(value.message)
-        : ({ type: 'doc', content: [] } as unknown as MarkupNode)
+        : { type: MarkupNodeType.doc, content: [] }
     base.content = [...(base.content ?? []), ...(links.content ?? [])]
-    await patch({ message: jsonToMarkup(base) })
+    await client.diffUpdate(value, { message: jsonToMarkup(base) })
   }
 </script>
 
@@ -311,62 +311,57 @@
     {/if}
 
     <div class="proposal">
-      <div class="header" data-id="aiTaskProposal">
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <span
-          class="caption"
-          on:click={() => {
-            collapsed = !collapsed
-          }}
-        >
-          <Label label={plugin.string.ProposedTask} params={{ name: $aiBotNameStore }} />
-          {#if value.applied === true}
-            <span class="applied"><Label label={plugin.string.AssistIssueAppliedMark} /></span>
-          {/if}
-        </span>
-      </div>
+      <Expandable bind:expanded contentColor>
+        <svelte:fragment slot="title">
+          <span class="caption" data-id="aiTaskProposal">
+            <Label label={plugin.string.ProposedTask} params={{ name: $aiBotNameStore }} />
+            {#if value.applied === true}
+              <span class="applied"><Label label={plugin.string.AssistIssueAppliedMark} /></span>
+            {/if}
+          </span>
+        </svelte:fragment>
 
-      {#if !collapsed}
-        {#if !isSplit}
-          <div class="title">
-            <EditBox
-              bind:value={value.title}
-              placeholder={plugin.string.TaskTitle}
-              disabled={created}
-              fullSize
-              on:blur={() => patch({ title: value.title })}
-            />
-          </div>
-          {#if value.description != null && value.description !== ''}
-            <div class="description"><MessageViewer message={toMarkup(value.description)} /></div>
-          {/if}
-          {#if value.estimation != null && value.estimation > 0}
-            <div class="estimation">
-              <Label label={plugin.string.ProposedEstimation} params={{ hours: value.estimation }} />
+        <div class="body" data-id="aiTaskProposalBody">
+          {#if !isSplit}
+            <div class="title">
+              <EditBox
+                bind:value={title}
+                placeholder={plugin.string.TaskTitle}
+                disabled={created}
+                fullSize
+                on:blur={() => client.diffUpdate(value, { title })}
+              />
             </div>
+            {#if value.description != null && value.description !== ''}
+              <div class="description"><MessageViewer message={toMarkup(value.description)} /></div>
+            {/if}
+            {#if value.estimation != null && value.estimation > 0}
+              <div class="estimation">
+                <Label label={plugin.string.ProposedEstimation} params={{ hours: value.estimation }} />
+              </div>
+            {/if}
           {/if}
-        {/if}
-      {/if}
-      {#if project !== undefined && children.length > 0 && !collapsed}
-        <!-- The tracker sub-task control, rendered through the registry (no tracker-resources import). -->
-        <Component
-          is={tracker.component.SubtaskSection}
-          props={{
-            children,
-            project,
-            selectable: !created,
-            selected,
-            doneRows: createdRows,
-            showDescription: true,
-            listHeight: '40rem',
-            readonly: created
-          }}
-          on:select={onSelect}
-          on:update-issues={persistChildren}
-          on:update-issue={persistChildren}
-        />
-      {/if}
+          {#if project !== undefined && children.length > 0}
+            <!-- The tracker sub-task control, rendered through the registry (no tracker-resources import). -->
+            <Component
+              is={tracker.component.SubtaskSection}
+              props={{
+                children,
+                project,
+                selectable: !created,
+                selected,
+                doneRows: createdRows,
+                showDescription: true,
+                listHeight: '40rem',
+                readonly: created
+              }}
+              on:select={onSelect}
+              on:update-issues={persistChildren}
+              on:update-issue={persistChildren}
+            />
+          {/if}
+        </div>
+      </Expandable>
 
       {#if failure !== undefined}
         <div class="failure">
@@ -378,37 +373,34 @@
       <div class="actions">
         {#if created}
           <Button label={plugin.string.TaskCreated} kind={'ghost'} disabled />
-        {:else}
-          {#if projectItems.length > 1}
-            <DropdownLabels
-              items={projectItems}
-              selected={project}
-              kind={'regular'}
-              size={'small'}
-              showDropdownIcon
-              placeholder={plugin.string.SelectProject}
-              on:selected={onProjectSelected}
-            />
-          {/if}
-          {#if isDraftSession}
-            <!-- Applying belongs on the card, next to what is being applied. The button shows up
-                 only where there is a form to apply to: in the chat sidebar there is none. -->
-            {#if $issueDraftApplier !== undefined}
-              <Button
-                label={value.applied === true ? plugin.string.AssistIssueApplyAgain : plugin.string.AssistIssueApply}
-                kind={value.applied === true ? 'regular' : 'primary'}
-                on:click={applyToDraft}
-              />
-            {/if}
-          {:else}
+        {:else if isDraftSession}
+          <!-- Nothing is created here: the create dialog owns the project, and applying belongs on
+                 the card next to what is applied. The button shows up only where a form exists. -->
+          {#if $issueDraftApplier !== undefined}
             <Button
-              label={plugin.string.CreateTask}
-              kind={'primary'}
-              loading={creating}
-              disabled={creating || project === undefined || (!isSplit && value.title.trim() === '')}
-              on:click={create}
+              label={value.applied === true ? plugin.string.AssistIssueApplyAgain : plugin.string.AssistIssueApply}
+              kind={value.applied === true ? 'regular' : 'primary'}
+              on:click={applyToDraft}
             />
           {/if}
+        {:else}
+          <SpaceSelector
+            _class={tracker.class.Project}
+            query={projectQuery}
+            label={core.string.Space}
+            bind:space={project}
+            focus={false}
+            clearInvalidValue={true}
+            kind={'regular'}
+            size={'large'}
+          ></SpaceSelector>
+          <Button
+            label={plugin.string.CreateTask}
+            kind={'primary'}
+            loading={creating}
+            disabled={creating || project === undefined || (!isSplit && title.trim() === '')}
+            on:click={create}
+          />
         {/if}
       </div>
     </div>
@@ -432,18 +424,16 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    cursor: pointer;
   }
 
   .applied {
     color: var(--theme-halfcontent-color);
   }
 
-  .header {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    color: var(--theme-dark-color);
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
   }
 
   .title {

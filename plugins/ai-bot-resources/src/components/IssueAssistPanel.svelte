@@ -20,7 +20,7 @@
   import { markdownToMarkup } from '@hcengineering/text-markdown'
   import { Button, Component, IconAdd, Label, themeStore } from '@hcengineering/ui'
   import { translate } from '@hcengineering/platform'
-  import aiBotPlugin, { type AITaskProposalMessage } from '@hcengineering/ai-bot'
+  import aiBotPlugin, { type AIContextMessage, type AITaskProposalMessage } from '@hcengineering/ai-bot'
   import chunter, { type ChatMessage } from '@hcengineering/chunter'
   import contact, { formatName, type Person } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
@@ -91,6 +91,20 @@
     void openConversation()
   }
 
+  // An empty thread has nothing to reset: the button waits for the first message.
+  let rootReplies = 0
+  const rootQuery = createQuery()
+  $: if (conversation !== undefined) {
+    rootQuery.query(
+      aiBotPlugin.class.AIContextMessage,
+      { _id: conversation.messageId as Ref<AIContextMessage> },
+      (res) => {
+        rootReplies = res[0]?.replies ?? 0
+      },
+      { limit: 1 }
+    )
+  }
+
   $: if ($aiBotSocialIdentityStore !== undefined) {
     botQuery.query(
       contact.class.Person,
@@ -159,7 +173,7 @@
 
   // Editing the form updates the root, so the next question is answered against what is on screen
   // and not against the draft as it was when the panel opened.
-  let syncTimer: any
+  let syncTimer: ReturnType<typeof setTimeout> | undefined
   $: if (conversation !== undefined && (title !== undefined || description !== undefined || subIssues.length >= 0)) {
     clearTimeout(syncTimer)
     syncTimer = setTimeout(() => {
@@ -201,6 +215,8 @@
     conversation = undefined
     proposal = undefined
     onConversation?.(undefined)
+    // The next issue may not need the assistant: closed, one click away.
+    issueAssistOpened.set(false)
   }
 
   async function syncContext (): Promise<void> {
@@ -245,12 +261,21 @@
 
   /** Archive the current conversation and start fresh, like "New context" in a thread header. */
   async function resetConversation (): Promise<void> {
-    if (conversation === undefined) return
+    if (conversation === undefined || objectId === undefined || objectClass === undefined) return
     await archiveConversation(conversation)
-    conversation = undefined
     proposal = undefined
     applied = new Set()
-    onConversation?.(undefined)
+    // Straight to a fresh root, never through the reactive resume: the LiveQuery cache learns about
+    // `archived` from the broadcast, after update() resolves, so a resume would reopen the old one.
+    conversation = await startIssueDraftConversation(await rootText(), {
+      objectId,
+      objectClass,
+      label: projectName ?? ''
+    })
+    onConversation?.(conversation?.messageId)
+    if (conversation !== undefined) {
+      await updateConversationContext(conversation, buildWorkingContext())
+    }
   }
 
   // The apply button lives on the proposal card in the thread; this is what it calls.
@@ -324,7 +349,7 @@
             label={aiBot.string.AssistIssueNewContext}
             kind={'ghost'}
             size={'small'}
-            disabled={conversation === undefined}
+            disabled={conversation === undefined || rootReplies === 0}
             on:click={resetConversation}
           />
         </div>
@@ -408,13 +433,5 @@
     flex-direction: column;
     flex-grow: 1;
     min-height: 0;
-  }
-
-  .empty {
-    display: flex;
-    align-items: center;
-    flex-grow: 1;
-    color: var(--theme-dark-color);
-    font-size: 0.8125rem;
   }
 </style>

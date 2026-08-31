@@ -66,7 +66,7 @@ test.describe('ai-bot tool calls', () => {
     await channelPage.sendMessage('call:no_such_tool {}')
 
     // The sent message repeats the tool name, so match the reply by what only it can contain.
-    const reply = page.locator('.hulyComponent .activityMessage', { hasText: 'unavailable' })
+    const reply = page.locator('.hulyComponent .activityMessage', { hasText: 'does not exist' })
     await expect(reply).toBeVisible({ timeout: 60000 })
     await expect(reply).toContainText('no_such_tool')
   })
