@@ -266,7 +266,8 @@ const task = plugin(taskId, {
     TaskState: '' as Asset,
     Dashboard: '' as Asset,
     TypeHierarchy: '' as Asset,
-    Export: '' as Asset
+    Export: '' as Asset,
+    Import: '' as Asset
   },
   global: {
     // Global task root, if not attached to some other object.

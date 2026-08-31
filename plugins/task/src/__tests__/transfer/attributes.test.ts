@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { PropertyType, Ref, Type } from '@hcengineering/core'
+import type { PropertyType, Ref, Type, WorkspaceUuid } from '@hcengineering/core'
 import type { Asset, IntlString } from '@hcengineering/platform'
 import {
   isEnumOfType,
@@ -26,6 +26,7 @@ import {
   exportAttributes,
   createCustomAttributes,
   findOrCreateEnum,
+  ProjectType,
   TaskType,
   type TaskTypeExportConfig
 } from '../../index'
@@ -343,6 +344,8 @@ describe('Attribute transfer helpers (attributes.ts)', () => {
         mode: 'single',
         taskTypeName: 'Test Issue',
         taskTypeId: 'issue-id' as Ref<TaskType>,
+        workspace: 'ws-1' as WorkspaceUuid,
+        projectTypeId: 'proj-1' as Ref<ProjectType>,
         taskTypes: [
           {
             id: 'issue-id' as Ref<TaskType>,
@@ -456,6 +459,8 @@ describe('Attribute transfer helpers (attributes.ts)', () => {
         mode: 'single',
         taskTypeName: 'Test Issue',
         taskTypeId: 'issue-id' as Ref<TaskType>,
+        workspace: 'ws-1' as WorkspaceUuid,
+        projectTypeId: 'proj-1' as Ref<ProjectType>,
         taskTypes: [
           {
             id: 'issue-id' as Ref<TaskType>,

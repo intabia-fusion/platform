@@ -104,7 +104,7 @@ async function createImportedMixins (
       {
         extends: targetClassId,
         kind: ClassifierKind.MIXIN,
-        label: getEmbeddedLabel(mixinCfg.label),
+        label: mixinCfg.label,
         icon: mixinCfg.icon
       },
       mixinDocId
@@ -140,7 +140,11 @@ async function createTargetClass (
       kind: ClassifierKind.CLASS,
       label: getEmbeddedLabel(typeName),
       icon: entry.icon ?? ofClassObj?.icon,
-      color: entry.color ?? ofClassObj?.color
+      color: entry.color ?? ofClassObj?.color,
+      shortLabel: ofClassObj.shortLabel,
+      sortingKey: ofClassObj.sortingKey,
+      filteringKey: ofClassObj.filteringKey,
+      titleKey: ofClassObj.titleKey
     },
     targetClassId
   )

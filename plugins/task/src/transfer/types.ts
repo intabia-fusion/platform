@@ -23,10 +23,11 @@ import type {
   Ref,
   Status,
   StatusCategory,
-  Type
+  Type,
+  WorkspaceUuid
 } from '@hcengineering/core'
 import type { Asset, IntlString } from '@hcengineering/platform'
-import type { TaskType, TaskTypeDescriptor } from '../index'
+import type { ProjectType, TaskType, TaskTypeDescriptor } from '../index'
 
 /**
  * @public
@@ -100,6 +101,8 @@ export interface TaskTypeExportConfig {
   mode: 'single' | 'hierarchy'
   taskTypeName: string
   taskTypeId: Ref<TaskType>
+  workspace: WorkspaceUuid
+  projectTypeId: Ref<ProjectType>
   taskTypes: TaskTypeConfigEntry[]
 }
 
@@ -140,6 +143,8 @@ export interface TaskTypeExportOptions {
   mode: 'single' | 'hierarchy'
   taskTypeName: string
   taskTypeId: Ref<TaskType>
+  workspace: WorkspaceUuid
+  projectTypeId?: Ref<ProjectType>
 }
 
 /**

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { ClassifierKind, type Ref } from '@hcengineering/core'
+import core, { ClassifierKind, type Ref, type WorkspaceUuid } from '@hcengineering/core'
 import type { IntlString } from '@hcengineering/platform'
 
 import { ProjectType, TaskType, exportTaskTypeConfig } from '../../index'
@@ -21,6 +21,7 @@ import { TaskTypeConfigVersion } from '../../transfer'
 
 describe('Export transfer helpers (export.ts)', () => {
   const projectType1 = 'proj-1' as Ref<ProjectType>
+  const ws1 = 'ws-1' as WorkspaceUuid
 
   const epic = {
     _id: 'epic' as Ref<TaskType>,
@@ -92,17 +93,20 @@ describe('Export transfer helpers (export.ts)', () => {
     const config = await exportTaskTypeConfig(mockClient, [issue], {
       mode: 'single',
       taskTypeName: 'Issue',
-      taskTypeId: 'issue' as Ref<TaskType>
+      taskTypeId: 'issue' as Ref<TaskType>,
+      workspace: ws1
     })
 
     expect(config.version).toBe(TaskTypeConfigVersion)
     expect(config.mode).toBe('single')
     expect(config.taskTypeName).toBe('Issue')
     expect(config.taskTypeId).toBe('issue')
+    expect(config.workspace).toBe(ws1)
+    expect(config.projectTypeId).toBe(projectType1)
     expect(config.taskTypes.length).toBe(1)
     expect(config.taskTypes[0].id).toBe('issue')
     expect(config.taskTypes[0].name).toBe('Issue')
-    expect(config.taskTypes[0].allowedAsChildOf).toEqual(['issue'])
+    expect(config.taskTypes[0].allowedAsChildOf).toEqual(['epic', 'issue'])
     expect(config.taskTypes[0].statuses).toEqual([
       { id: 'st-open', name: 'Open', color: 1, category: 'UnStarted' },
       { id: 'st-done', name: 'Done', color: 2, category: 'Done' }
@@ -127,9 +131,13 @@ describe('Export transfer helpers (export.ts)', () => {
     const config = await exportTaskTypeConfig(mockClient, [epic, issue], {
       mode: 'hierarchy',
       taskTypeName: 'Issue',
-      taskTypeId: 'issue' as Ref<TaskType>
+      taskTypeId: 'issue' as Ref<TaskType>,
+      workspace: 'test-workspace-uuid' as WorkspaceUuid,
+      projectTypeId: projectType1
     })
 
+    expect(config.workspace).toBe('test-workspace-uuid')
+    expect(config.projectTypeId).toBe(projectType1)
     expect(config.taskTypes.length).toBe(2)
     const epicCfg = config.taskTypes.find((t) => t.id === 'epic')
     const issueCfg = config.taskTypes.find((t) => t.id === 'issue')
@@ -172,7 +180,8 @@ describe('Export transfer helpers (export.ts)', () => {
     const config = await exportTaskTypeConfig(mixinMockClient, [issue], {
       mode: 'single',
       taskTypeName: 'Issue',
-      taskTypeId: 'issue' as Ref<TaskType>
+      taskTypeId: 'issue' as Ref<TaskType>,
+      workspace: ws1
     })
 
     expect(config.taskTypes[0].mixins).toBeDefined()
@@ -194,7 +203,7 @@ describe('Export transfer helpers (export.ts)', () => {
     ])
   })
 
-  it('exports task type with missing parent in selection and undefined optional fields', async () => {
+  it('exports task type and preserves allowedAsChildOf even if parent is not in exported selection', async () => {
     const isolated = {
       _id: 'isolated' as Ref<TaskType>,
       parent: projectType1,
@@ -210,10 +219,11 @@ describe('Export transfer helpers (export.ts)', () => {
     const config = await exportTaskTypeConfig(emptyMockClient, [isolated], {
       mode: 'single',
       taskTypeName: 'Isolated',
-      taskTypeId: 'isolated' as Ref<TaskType>
+      taskTypeId: 'isolated' as Ref<TaskType>,
+      workspace: ws1
     })
 
-    expect(config.taskTypes[0].allowedAsChildOf).toBeUndefined()
+    expect(config.taskTypes[0].allowedAsChildOf).toEqual(['unselected-parent'])
     expect(config.taskTypes[0].statusCategories).toEqual([])
     expect(config.taskTypes[0].attributes).toBeUndefined()
     expect(config.taskTypes[0].mixins).toBeUndefined()

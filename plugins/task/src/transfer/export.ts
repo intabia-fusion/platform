@@ -88,8 +88,7 @@ async function exportSingleTaskType (
 
   let allowedAsChildOf: Array<Ref<TaskType>> | undefined
   if (tt.allowedAsChildOf !== undefined && tt.allowedAsChildOf.length > 0) {
-    const parentIds = tt.allowedAsChildOf.filter((pId) => selectedTypeIds.has(pId))
-    allowedAsChildOf = parentIds.length > 0 ? parentIds : undefined
+    allowedAsChildOf = [...tt.allowedAsChildOf]
   }
 
   return {
@@ -120,7 +119,8 @@ export async function exportTaskTypeConfig (
   selectedTypes: TaskType[],
   options: TaskTypeExportOptions
 ): Promise<TaskTypeExportConfig> {
-  const { mode, taskTypeName, taskTypeId } = options
+  const { mode, taskTypeName, taskTypeId, workspace } = options
+  const projectTypeId = options.projectTypeId ?? selectedTypes[0]?.parent
   const selectedTypeIds = new Set<Ref<TaskType>>(selectedTypes.map((t) => t._id))
 
   const allWorkspaceStatuses = await client.findAll(core.class.Status, {})
@@ -137,6 +137,8 @@ export async function exportTaskTypeConfig (
     mode,
     taskTypeName,
     taskTypeId,
+    workspace,
+    projectTypeId,
     taskTypes: entries
   }
 }

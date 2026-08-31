@@ -82,7 +82,8 @@
     "TaskCreated": "Создана задача",
     "TaskType": "Тип задачи",
     "ManageProjects": "Управление проектами",
-    "Export": "Экспортировать",
+    "Import": "Импорт",
+    "Export": "Экспорт",
     "CreateProjectType": "Создать тип проекта",
     "ClassicProject": "Классический проект",
     "LastSave": "Последнее сохранение",
@@ -144,9 +145,10 @@
     "ImportTaskType": "Импорт типа задачи",
     "ImportTaskTypesDialogTitle": "Импортировать типы задач",
     "SelectTaskTypeFile": "Выбрать файл конфигурации (.json)",
-    "InvalidTaskTypeFile": "Неверный формат файла конфигурации типов задач",
+    "InvalidTaskTypeFile": "Неверный формат файла",
+    "InvalidFileType": "Неверный тип файла",
     "ImportTaskTypesHint": "Выберите типы задач для импорта в текущий тип проекта.",
-    "TaskTypeAlreadyExists": "Уже существует",
+    "TaskTypeAlreadyExists": "С таким именем уже существует",
     "ChangeFile": "Сменить файл",
     "CopyToClipboard": "Копировать в буфер",
     "PasteFromClipboard": "Вставить из буфера",
@@ -155,11 +157,22 @@
     "InvalidFormat": "Неверный формат данных",
     "ClipboardEmpty": "Буфер обмена пуст",
     "ClipboardReadError": "Не удалось прочитать буфер обмена",
-    "IncompatibleAttributesWarning": "Некоторые атрибуты ссылаются на отсутствующие в рабочем пространстве классы и будут пропущены:"
+    "ImportFromFile": "Из файла...",
+    "ImportFromClipboard": "Из буфера обмена",
+    "FileReadError": "Не удалось прочитать файл конфигурации",
+    "IncompatibleAttributesWarning": "Некоторые атрибуты ссылаются на отсутствующие в рабочем пространстве классы и будут пропущены:",
+    "PasteJsonPlaceholder": "Вставьте конфигурацию...",
+    "OrUploadFile": "или выберите файл (.json)"
   },
   "status": {
     "AssigneeRequired": "Назначение обязательно",
     "ClipboardCopyError": "Не удалось скопировать в буфер обмена",
-    "ExportTaskTypeError": "Не удалось экспортировать тип задачи"
+    "ExportTaskTypeError": "Не удалось экспортировать тип задачи",
+    "ImportTaskTypeError": "Не удалось импортировать типы задач",
+    "InvalidTaskTypeFile": "Неверный формат файла",
+    "InvalidFileType": "Неверный тип файла",
+    "InvalidFormat": "Неверный формат данных",
+    "ClipboardEmpty": "Буфер обмена пуст",
+    "ClipboardReadError": "Не удалось прочитать буфер обмена"
   }
 }

@@ -13,13 +13,21 @@
 // limitations under the License.
 //
 
-import core, { type PropertyType, type Ref, type Status, type StatusCategory, type Type } from '@hcengineering/core'
+import core, {
+  type PropertyType,
+  type Ref,
+  type Status,
+  type StatusCategory,
+  type Type,
+  type WorkspaceUuid
+} from '@hcengineering/core'
 import type { Asset, IntlString } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
 import task, { ProjectType, TaskType, type TaskTypeExportConfig, importTaskTypeConfig } from '../../index'
 
 describe('Import transfer helpers (import.ts)', () => {
   const projectType1 = 'proj-1' as Ref<ProjectType>
+  const ws1 = 'ws-1' as WorkspaceUuid
 
   const stringType: Type<PropertyType> = {
     icon: 'core:icon:TypeString' as Asset,
@@ -82,6 +90,8 @@ describe('Import transfer helpers (import.ts)', () => {
       mode: 'single',
       taskTypeName: 'Issue',
       taskTypeId: 'issue-id' as Ref<TaskType>,
+      workspace: ws1,
+      projectTypeId: projectType1,
       taskTypes: [
         {
           id: 'issue-id' as Ref<TaskType>,
@@ -164,6 +174,8 @@ describe('Import transfer helpers (import.ts)', () => {
       mode: 'hierarchy',
       taskTypeName: 'Epic',
       taskTypeId: 'epic-id' as Ref<TaskType>,
+      workspace: ws1,
+      projectTypeId: projectType1,
       taskTypes: [
         {
           id: 'epic-id' as Ref<TaskType>,
@@ -228,6 +240,8 @@ describe('Import transfer helpers (import.ts)', () => {
       mode: 'single',
       taskTypeName: 'Task With Statuses',
       taskTypeId: 'old-task-id' as Ref<TaskType>,
+      workspace: ws1,
+      projectTypeId: projectType1,
       taskTypes: [
         {
           id: 'old-task-id' as Ref<TaskType>,
@@ -286,6 +300,8 @@ describe('Import transfer helpers (import.ts)', () => {
       mode: 'single',
       taskTypeName: 'Task With Enum',
       taskTypeId: 'enum-task-id' as Ref<TaskType>,
+      workspace: ws1,
+      projectTypeId: projectType1,
       taskTypes: [
         {
           id: 'enum-task-id' as Ref<TaskType>,
@@ -372,6 +388,8 @@ describe('Import transfer helpers (import.ts)', () => {
       mode: 'single',
       taskTypeName: 'Task With Reused Enum',
       taskTypeId: 'reused-enum-task-id' as Ref<TaskType>,
+      workspace: ws1,
+      projectTypeId: projectType1,
       taskTypes: [
         {
           id: 'reused-enum-task-id' as Ref<TaskType>,
@@ -446,6 +464,8 @@ describe('Import transfer helpers (import.ts)', () => {
       mode: 'single',
       taskTypeName: 'Task With Mixins',
       taskTypeId: 'mixin-task-id' as Ref<TaskType>,
+      workspace: ws1,
+      projectTypeId: projectType1,
       taskTypes: [
         {
           id: 'mixin-task-id' as Ref<TaskType>,
@@ -477,7 +497,7 @@ describe('Import transfer helpers (import.ts)', () => {
 
     const mixinDoc = createdDocs.find((d) => d._class === core.class.Mixin)
     expect(mixinDoc).toBeDefined()
-    expect(mixinDoc.label).toBe('embedded:embedded:Custom Fields')
+    expect(mixinDoc.label).toBe('Custom Fields')
     expect(mixinDoc.extends).toBe(`${result.importedTaskTypes[0]._id}:type:class`)
 
     const editableMixin = createdMixins.find(
@@ -505,6 +525,8 @@ describe('Import transfer helpers (import.ts)', () => {
       mode: 'single',
       taskTypeName: 'Task',
       taskTypeId: 'task-id' as Ref<TaskType>,
+      workspace: ws1,
+      projectTypeId: projectType1,
       taskTypes: []
     }
 
@@ -556,6 +578,8 @@ describe('Import transfer helpers (import.ts)', () => {
       mode: 'single',
       taskTypeName: 'Task',
       taskTypeId: 'task-id' as Ref<TaskType>,
+      workspace: ws1,
+      projectTypeId: projectType1,
       taskTypes: [
         {
           id: 'task-id' as Ref<TaskType>,
@@ -618,6 +642,8 @@ describe('Import transfer helpers (import.ts)', () => {
       mode: 'hierarchy',
       taskTypeName: 'Parent Type',
       taskTypeId: 'old-parent-id' as Ref<TaskType>,
+      workspace: ws1,
+      projectTypeId: projectType1,
       taskTypes: [
         {
           id: 'old-parent-id' as Ref<TaskType>,
@@ -690,6 +716,8 @@ describe('Import transfer helpers (import.ts)', () => {
       mode: 'single',
       taskTypeName: 'Task Missing ofClass',
       taskTypeId: 'task-id' as Ref<TaskType>,
+      workspace: ws1,
+      projectTypeId: projectType1,
       taskTypes: [
         {
           id: 'task-id' as Ref<TaskType>,
@@ -752,6 +780,8 @@ describe('Import transfer helpers (import.ts)', () => {
       mode: 'single',
       taskTypeName: 'New Task',
       taskTypeId: 'new-task-id' as Ref<TaskType>,
+      workspace: ws1,
+      projectTypeId: projectType1,
       taskTypes: [
         {
           id: 'new-task-id' as Ref<TaskType>,

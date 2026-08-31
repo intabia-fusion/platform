@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -128,9 +129,10 @@
   }
 
   .side {
-    flex: 0 0 12rem;
-    padding: 1.5rem;
+    flex: 0 0 14rem;
+    padding: 1.5rem 1rem 1.5rem 1.5rem;
     min-width: 0;
+    border-right: 1px solid var(--theme-dialog-border-color);
   }
 
   .content {

@@ -26,5 +26,6 @@ loadMetadata(task.icon, {
   TaskState: `${icons}#task-state`,
   Dashboard: `${icons}#dashboard`,
   TypeHierarchy: `${icons}#type-hierarchy`,
-  Export: `${icons}#export`
+  Export: `${icons}#export`,
+  Import: `${icons}#import`
 })

@@ -26,8 +26,6 @@ import core, {
   TxOperations,
   Type
 } from '@hcengineering/core'
-import { getEmbeddedLabel } from '@hcengineering/platform'
-
 import type { IncompatibleAttributeItem, TaskTypeAttributeConfig, TaskTypeExportConfig } from './types'
 
 /**
@@ -250,7 +248,7 @@ export async function createCustomAttributes (
     await client.createDoc(core.class.Attribute, core.space.Model, {
       attributeOf: targetClass,
       name: attr.name,
-      label: getEmbeddedLabel(attr.label),
+      label: attr.label,
       type: typeObj,
       required: attr.required ?? false,
       defaultValue: attr.defaultValue,
