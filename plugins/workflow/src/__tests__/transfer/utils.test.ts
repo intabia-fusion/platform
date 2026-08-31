@@ -18,10 +18,7 @@
 import type { AnyAttribute, Ref } from '@hcengineering/core'
 
 import workflow from '../../plugin'
-import {
-  clearWorkflowConfig,
-  extractRuleFieldReferences
-} from '../../transfer/utils'
+import { clearWorkflowConfig, extractRuleFieldReferences } from '../../transfer/utils'
 import { createMockTx, projectTypeId } from './fixtures'
 
 describe('transfer/utils', () => {
@@ -83,13 +80,7 @@ describe('transfer/utils', () => {
       const fields = extractRuleFieldReferences(workflow.postFunction.UpdateFieldValue, updateProps)
       // 3 target fields + 2 source fields ('this' and 'parent') = 5 field references
       expect(fields).toHaveLength(5)
-      expect(fields.map((f) => f.fieldKey)).toEqual([
-        'target1',
-        'sourceThis',
-        'target2',
-        'sourceParent',
-        'target3'
-      ])
+      expect(fields.map((f) => f.fieldKey)).toEqual(['target1', 'sourceThis', 'target2', 'sourceParent', 'target3'])
     })
   })
 

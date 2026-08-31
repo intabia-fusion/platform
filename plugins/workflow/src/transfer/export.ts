@@ -15,13 +15,14 @@
 
 import core, {
   type AnyAttribute,
+  type Doc,
   Hierarchy,
   type Ref,
   SortingOrder,
   type Status,
   type TxOperations
 } from '@hcengineering/core'
-import task from '@hcengineering/task'
+import task, { type ProjectType } from '@hcengineering/task'
 
 import workflow from '../plugin'
 import type {
@@ -32,15 +33,11 @@ import type {
   WorkflowRule,
   WorkflowRuleConfig
 } from '../schema'
-import {
-  NameResolver,
-  TaskTypeToken,
-  buildResolver,
-  remap
-} from './resolver'
+import { NameResolver, StatusToken, TaskTypeToken, buildResolver, identifierOf, remap } from './resolver'
 import { extractRuleFieldReferences } from './utils'
 import {
   type AttributeConfig,
+  type ProjectWorkflowsConfig,
   type RuleConfig,
   type ScreenConfig,
   type ScreenTabConfig,
@@ -51,13 +48,8 @@ import {
   WorkflowConfigVersion
 } from './types'
 
-function isScreenRequestConfig (
-  h: Hierarchy,
-  rule: WorkflowRuleConfig<WorkflowRequest>
-): rule is ScreenRequestConfig {
-  return (
-    h.isDerived(rule.ruleClass, workflow.class.WorkflowRequest) && rule.rule === workflow.request.ScreenRequest
-  )
+function isScreenRequestConfig (h: Hierarchy, rule: WorkflowRuleConfig<WorkflowRequest>): rule is ScreenRequestConfig {
+  return h.isDerived(rule.ruleClass, workflow.class.WorkflowRequest) && rule.rule === workflow.request.ScreenRequest
 }
 
 function exportRules<TRule extends WorkflowRule> (
@@ -111,10 +103,18 @@ export async function exportWorkflow (
   if (referencedScreenRefs.size > 0) {
     const screenDocs = await client.findAll(workflow.class.Screen, { _id: { $in: Array.from(referencedScreenRefs) } })
     for (const sc of screenDocs) {
-      const tabs = await client.findAll(workflow.class.ScreenTab, { attachedTo: sc._id }, { sort: { rank: SortingOrder.Ascending } })
+      const tabs = await client.findAll(
+        workflow.class.ScreenTab,
+        { attachedTo: sc._id },
+        { sort: { rank: SortingOrder.Ascending } }
+      )
       const tabConfigs: ScreenTabConfig[] = []
       for (const tab of tabs) {
-        const fields = await client.findAll(workflow.class.ScreenField, { attachedTo: tab._id }, { sort: { rank: SortingOrder.Ascending } })
+        const fields = await client.findAll(
+          workflow.class.ScreenField,
+          { attachedTo: tab._id },
+          { sort: { rank: SortingOrder.Ascending } }
+        )
         tabConfigs.push({
           name: tab.name,
           fields: fields.map((f) => ({
@@ -228,5 +228,110 @@ export async function exportWorkflow (
     statuses: statusConfigs.length > 0 ? statusConfigs : undefined,
     attributes: attributeConfigs.length > 0 ? attributeConfigs : undefined,
     workflows: [workflowEntry]
+  }
+}
+
+/**
+ * Reads every workflow, screen and project mapping of a project type into a portable JSON config.
+ */
+export async function exportWorkflowConfig (
+  client: TxOperations,
+  projectTypeId: Ref<ProjectType>,
+  options: WorkflowExportOptions
+): Promise<WorkflowConfig> {
+  const resolver = await buildResolver(client, projectTypeId)
+  const nameOf = (ref: Ref<Doc>, prefix: string): string =>
+    resolver.toToken.get(ref)?.slice(prefix.length) ?? (ref as string)
+
+  const screenDocs = await client.findAll(workflow.class.Screen, { projectType: projectTypeId })
+  const screens: ScreenConfig[] = []
+  for (const sc of screenDocs) {
+    const tabs = await client.findAll(
+      workflow.class.ScreenTab,
+      { attachedTo: sc._id },
+      { sort: { rank: SortingOrder.Ascending } }
+    )
+    const tabConfigs: ScreenTabConfig[] = []
+    for (const tab of tabs) {
+      const fields = await client.findAll(
+        workflow.class.ScreenField,
+        { attachedTo: tab._id },
+        { sort: { rank: SortingOrder.Ascending } }
+      )
+      tabConfigs.push({
+        name: tab.name,
+        fields: fields.map((f) => ({
+          attribute: f.attribute,
+          fieldKey: f.fieldKey,
+          mixin: f.mixin,
+          required: f.required
+        }))
+      })
+    }
+    screens.push({
+      id: sc._id,
+      name: sc.name,
+      description: sc.description,
+      targetClass: sc.targetClass,
+      tabs: tabConfigs
+    })
+  }
+
+  const workflowDocs = await client.findAll(workflow.class.Workflow, { projectType: projectTypeId })
+  const workflows: WorkflowConfigEntry[] = []
+  for (const wf of workflowDocs) {
+    const transitions = await client.findAll(
+      workflow.class.WorkflowTransition,
+      { attachedTo: wf._id },
+      { sort: { rank: SortingOrder.Ascending } }
+    )
+    const taskTypeName = nameOf(wf.taskType, TaskTypeToken)
+    workflows.push({
+      id: wf._id,
+      name: wf.name,
+      taskTypeName,
+      taskTypeId: wf.taskType,
+      initialStatuses: wf.initialStatuses?.map((s) => nameOf(s, StatusToken)) as unknown as Ref<Status>[],
+      transitions: transitions.map((t) => ({
+        id: t._id,
+        name: t.name,
+        from: t.from == null ? null : (t.from.map((s) => nameOf(s, StatusToken)) as unknown as Ref<Status>[]),
+        to: nameOf(t.to, StatusToken) as unknown as Ref<Status>,
+        requests: exportRules(t.requests, resolver),
+        validators: exportRules(t.validators, resolver),
+        postFunctions: exportRules(t.postFunctions, resolver)
+      }))
+    })
+  }
+
+  const wfNames = new Map<string, string>(workflowDocs.map((w) => [w._id, w.name]))
+  const ttNames = new Map<string, string>()
+  for (const [ref, token] of resolver.toToken) {
+    if (token.startsWith(TaskTypeToken)) ttNames.set(ref, token.slice(TaskTypeToken.length))
+  }
+  const projectDocs = await client.findAll(task.class.Project, { type: projectTypeId })
+  const projects: ProjectWorkflowsConfig[] = []
+  for (const p of projectDocs) {
+    const mapping = client.getHierarchy().as(p, workflow.mixin.ProjectWorkflow).workflows
+    if (mapping === undefined) continue
+    const entries: Record<string, string> = {}
+    for (const [ttRef, wfRef] of Object.entries(mapping)) {
+      const ttName = ttNames.get(ttRef)
+      const wfName = wfNames.get(wfRef as string)
+      if (ttName !== undefined && wfName !== undefined) entries[ttName] = wfName
+    }
+    if (Object.keys(entries).length > 0) {
+      projects.push({ project: p._id, identifier: identifierOf(p), workflows: entries })
+    }
+  }
+
+  return {
+    version: WorkflowConfigVersion,
+    exportDate: new Date().toISOString(),
+    workspace: options?.workspace ?? ('' as any),
+    projectTypeId,
+    screens: screens.length > 0 ? screens : undefined,
+    workflows,
+    projects: projects.length > 0 ? projects : undefined
   }
 }

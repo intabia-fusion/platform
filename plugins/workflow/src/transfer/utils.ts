@@ -17,12 +17,7 @@ import core, { type Ref, type TxOperations } from '@hcengineering/core'
 import { type ProjectType } from '@hcengineering/task'
 
 import workflow from '../plugin'
-import type {
-  Field,
-  FieldListProps,
-  UpdateFieldValueProps,
-  WorkflowRule
-} from '../schema'
+import type { Field, FieldListProps, UpdateFieldValueProps, WorkflowRule } from '../schema'
 
 /**
  * @internal
@@ -49,10 +44,7 @@ export async function clearWorkflowConfig (client: TxOperations, projectTypeId: 
  * Extracts all field references (attributes) used by a specific workflow rule
  * based on its concrete rule type and schema.
  */
-export function extractRuleFieldReferences (
-  ruleId: Ref<WorkflowRule>,
-  props: Record<string, any> | undefined
-): Field[] {
+export function extractRuleFieldReferences (ruleId: Ref<WorkflowRule>, props: Record<string, any> | undefined): Field[] {
   if (props == null) return []
 
   if (ruleId === workflow.validator.FieldRequired || ruleId === workflow.postFunction.ClearFieldValue) {

@@ -13,11 +13,7 @@
 // limitations under the License.
 //
 
-import core, {
-  type Doc,
-  type Ref,
-  type TxOperations
-} from '@hcengineering/core'
+import core, { type Doc, type Ref, type TxOperations } from '@hcengineering/core'
 import task, { type Project, type ProjectType } from '@hcengineering/task'
 
 import workflow from '../plugin'
@@ -39,7 +35,7 @@ export class NameResolver {
   readonly toToken = new Map<Ref<Doc>, DocToken>()
   readonly fromToken = new Map<DocToken, Ref<Doc>>()
 
-  add<T extends Doc> (prefix: TokenPrefix, ref: Ref<T>, name: string): void {
+  add<T extends Doc>(prefix: TokenPrefix, ref: Ref<T>, name: string): void {
     const token: DocToken = `${prefix}${name}`
     if (!this.toToken.has(ref)) this.toToken.set(ref, token)
     // Two docs can share a name; pick the smallest ref so the same config always resolves the same
@@ -48,12 +44,12 @@ export class NameResolver {
     if (current === undefined || ref < current) this.fromToken.set(token, ref)
   }
 
-  getName<T extends Doc> (ref: Ref<T>, prefix: TokenPrefix): string {
+  getName<T extends Doc>(ref: Ref<T>, prefix: TokenPrefix): string {
     const token = this.toToken.get(ref)
     return token !== undefined && token.startsWith(prefix) ? token.slice(prefix.length) : (ref as string)
   }
 
-  getRef<T extends Doc> (prefix: TokenPrefix, name: string): Ref<T> | undefined {
+  getRef<T extends Doc>(prefix: TokenPrefix, name: string): Ref<T> | undefined {
     return this.fromToken.get(`${prefix}${name}`) as Ref<T> | undefined
   }
 
@@ -61,7 +57,7 @@ export class NameResolver {
     return this.toToken.has(ref)
   }
 
-  setRef<T extends Doc> (prefix: TokenPrefix, name: string, ref: Ref<T>): void {
+  setRef<T extends Doc>(prefix: TokenPrefix, name: string, ref: Ref<T>): void {
     const token: DocToken = `${prefix}${name}`
     this.fromToken.set(token, ref)
     if (!this.toToken.has(ref)) {

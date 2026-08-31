@@ -14,7 +14,8 @@
 //
 
 import core, {
-  type AnyAttribute, ArrOf,
+  type AnyAttribute,
+  ArrOf,
   Doc,
   EnumOf,
   type Hierarchy,
@@ -332,8 +333,6 @@ function hasScreensInConfig (config: WorkflowConfig): boolean {
   }
 
   return config.workflows.some((w) =>
-    w.transitions?.some((t) =>
-      t.requests?.some((r) => r.rule === workflow.request.ScreenRequest)
-    )
+    w.transitions?.some((t) => t.requests?.some((r) => r.rule === workflow.request.ScreenRequest))
   )
 }

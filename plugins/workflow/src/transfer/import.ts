@@ -165,7 +165,7 @@ export function importRules<TRule extends WorkflowRule> (
       throw new Error(`Workflow import: could not resolve rule references: ${unresolved.join(', ')}`)
     }
     importedRules.push({
-      id: r.id ?? ('rule-' + generateId()),
+      id: r.id ?? 'rule-' + generateId(),
       rule: r.rule,
       ruleClass: r.ruleClass,
       props: remappedProps
@@ -287,9 +287,7 @@ async function importScreens (
           continue
         }
         const attributeRef =
-          attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined
-            ? attrRes.targetAttributeId
-            : f.attribute
+          attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined ? attrRes.targetAttributeId : f.attribute
         const fieldKey =
           attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined
             ? (targetAttributeById.get(attrRes.targetAttributeId)?.name ?? f.fieldKey)
@@ -494,11 +492,7 @@ export async function importWorkflowConfig (
       const importedValidators = importRules(t.validators, resolver, attrResolutions, targetAttributeById)
       const importedPostFunctions = importRules(t.postFunctions, resolver, attrResolutions, targetAttributeById)
 
-      if (
-        importedRequests !== undefined ||
-        importedValidators !== undefined ||
-        importedPostFunctions !== undefined
-      ) {
+      if (importedRequests !== undefined || importedValidators !== undefined || importedPostFunctions !== undefined) {
         await client.updateCollection(
           workflow.class.WorkflowTransition,
           core.space.Workspace,
@@ -517,14 +511,7 @@ export async function importWorkflowConfig (
   }
 
   // Restore project mappings if the config has any and projects exist in the workspace
-  await restoreProjectWorkflows(
-    client,
-    projectTypeId,
-    config.projects,
-    workflowByName,
-    existingByName,
-    resolver
-  )
+  await restoreProjectWorkflows(client, projectTypeId, config.projects, workflowByName, existingByName, resolver)
 
   return result
 }

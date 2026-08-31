@@ -30,13 +30,7 @@ import {
   StatusToken,
   TaskTypeToken
 } from '../../transfer/resolver'
-import {
-  createMockTx,
-  projectTypeId,
-  statusDoneId,
-  statusOpenId,
-  taskTypeId
-} from './fixtures'
+import { createMockTx, projectTypeId, statusDoneId, statusOpenId, taskTypeId } from './fixtures'
 
 describe('NameResolver', () => {
   it('adds and retrieves mappings correctly', () => {

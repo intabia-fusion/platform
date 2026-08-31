@@ -15,15 +15,7 @@
 
 import workflow from '../../plugin'
 import { exportWorkflow } from '../../transfer'
-import {
-  createMockTx,
-  projectTypeId,
-  statusDoneId,
-  statusOpenId,
-  taskTypeId,
-  workflowId,
-  ws1
-} from './fixtures'
+import { createMockTx, projectTypeId, statusDoneId, statusOpenId, taskTypeId, workflowId, ws1 } from './fixtures'
 
 describe('Workflow Export', () => {
   describe('exportSingleWorkflow', () => {

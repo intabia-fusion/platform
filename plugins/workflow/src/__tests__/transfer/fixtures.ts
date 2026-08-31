@@ -131,7 +131,10 @@ export function createMockTx (store: { docs?: Doc[] } = {}): TxOperations {
     as: (doc: any) => doc,
     getAllAttributes: jest.fn().mockReturnValue(attrMap),
     hasMixin: jest.fn().mockReturnValue(false),
-    isDerived: jest.fn((child: any, parent: any) => child === parent || child === workflow.class.WorkflowRequest || parent === workflow.class.WorkflowRequest)
+    isDerived: jest.fn(
+      (child: any, parent: any) =>
+        child === parent || child === workflow.class.WorkflowRequest || parent === workflow.class.WorkflowRequest
+    )
   } as unknown as Hierarchy
 
   const client: Partial<TxOperations> = {

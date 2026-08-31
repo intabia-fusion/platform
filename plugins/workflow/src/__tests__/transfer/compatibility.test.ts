@@ -15,11 +15,7 @@
 
 import core from '@hcengineering/core'
 
-import {
-  checkWorkflowCompatibility,
-  exportWorkflow,
-  isAttributeTypeCompatible
-} from '../../transfer'
+import { checkWorkflowCompatibility, exportWorkflow, isAttributeTypeCompatible } from '../../transfer'
 import {
   createMockTx,
   projectTypeId,
