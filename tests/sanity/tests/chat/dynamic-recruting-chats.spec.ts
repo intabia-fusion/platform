@@ -1,4 +1,4 @@
-import { test } from '@playwright/test'
+import { test } from '../fixtures'
 import { ChannelPage } from '../model/channel-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { createAccountAndWorkspace, generateId, generateTestData } from '../utils'

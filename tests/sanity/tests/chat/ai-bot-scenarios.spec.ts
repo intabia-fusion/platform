@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../fixtures'
 import { DocumentContentPage } from '../model/documents/document-content-page'
 import { DocumentsPage } from '../model/documents/documents-page'
 import { IssuesPage } from '../model/tracker/issues-page'

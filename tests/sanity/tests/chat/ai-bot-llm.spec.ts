@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures'
 import { ApiEndpoint } from '../API/Api'
 import { openBotDirect, setWorkspaceAiLevel } from '../API/AiBot'
 import { ChannelPage } from '../model/channel-page'

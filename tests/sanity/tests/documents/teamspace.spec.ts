@@ -1,4 +1,4 @@
-import { test } from '@playwright/test'
+import { test } from '../fixtures'
 import { TestData } from '../chat/types'
 import { SignUpData } from '../model/common-types'
 import { DocumentsPage } from '../model/documents/documents-page'

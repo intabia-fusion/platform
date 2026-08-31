@@ -1,4 +1,4 @@
-import { test } from '@playwright/test'
+import { test } from '../fixtures'
 import { LoginPage } from '../model/login-page'
 import { generateId } from '../utils'
 import { SelectWorkspacePage } from '../model/select-workspace-page'

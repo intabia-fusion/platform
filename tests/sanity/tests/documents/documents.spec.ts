@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../fixtures'
 import { generateId, getSecondPage, PlatformSetting, PlatformURI } from '../utils'
 import { retryIntervals } from '../retry'
 import { NewDocument, NewTeamspace } from '../model/documents/types'

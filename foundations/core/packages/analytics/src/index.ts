@@ -73,7 +73,11 @@ export const Analytics = {
   },
 
   async flush (): Promise<void> {
-    await Promise.all(providers.map(async (provider) => await (provider.flush?.() ?? Promise.resolve())))
+    await Promise.all(
+      providers.map(async (provider) => {
+        await provider.flush?.()
+      })
+    )
   },
 
   navigate (path: string): void {

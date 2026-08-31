@@ -20,6 +20,21 @@ cd "$ROOT"
 PATH="$ROOT/node_modules/.bin:$PATH"
 export PATH
 
+# fast-build serves a cached bundle happily, and a stale one yields metrics for absent code.
+FRONT_CONTAINER="${FRONT_CONTAINER:-sanity-front0-1}"
+if [ "${BUNDLE_CHECK:-1}" = "1" ]; then
+  # Markers of the client telemetry path - bump when it changes again.
+  for marker in __analyticsFlush __connStatsPush; do
+    if docker exec "$FRONT_CONTAINER" sh -c "grep -q '$marker' /app/dist/bundle.*.js" 2>/dev/null; then
+      continue
+    fi
+    echo "[telemetry] $FRONT_CONTAINER serves a stale bundle: no $marker marker in /app/dist" >&2
+    echo "[telemetry] drop the 'bundle' and 'docker-build' phases from .fast-build-cache.json and rebuild" >&2
+    echo "[telemetry] BUNDLE_CHECK=0 skips this check" >&2
+    exit 1
+  done
+fi
+
 STAMP="$(date +%Y%m%d-%H%M%S)"
 OUT="runs/${STAMP}"
 mkdir -p "$OUT"

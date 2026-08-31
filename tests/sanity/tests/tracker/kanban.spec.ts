@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures'
 import tracker, { type Issue } from '@hcengineering/tracker'
 import { type Ref, type TxOperations } from '@hcengineering/core'
 import {

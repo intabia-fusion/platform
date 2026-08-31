@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../fixtures'
 import { generateId, PlatformSetting, PlatformURI } from '../utils'
 import { NewDocument } from '../model/documents/types'
 import { DocumentsPage } from '../model/documents/documents-page'

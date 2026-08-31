@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures'
 import path from 'path'
 
 import { ChunterPage } from '../model/chunter-page'

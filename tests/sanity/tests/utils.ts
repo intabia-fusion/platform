@@ -307,6 +307,8 @@ export async function reLogin (page: Page, data: TestData): Promise<void> {
 // Pushes the analytics batch out before a context closes - tests are shorter than the 10s ping
 // tick and the 5s batch timer, so without this most ws traffic is never reported.
 export async function flushTelemetry (page: Page): Promise<void> {
+  // The flush is a round trip to the collector per context - CLIENT_TELEMETRY=0 measures its cost.
+  if (process.env.CLIENT_TELEMETRY === '0') return
   try {
     await page.evaluate(async () => {
       await (window as any).__analyticsFlush?.()

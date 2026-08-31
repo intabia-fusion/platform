@@ -133,6 +133,9 @@ addEventListener('connection-stats', async (_event: string, data: any) => {
 // analytics batch. This lets a teardown push the last numbers out explicitly.
 if (typeof window !== 'undefined') {
   ;(window as any).__analyticsFlush = async (): Promise<void> => {
+    // Without this the batch carries whatever the last 10s ping tick caught - on a short
+    // test, nothing.
+    await (globalThis as any).__connStatsPush?.()
     await Analytics.flush()
   }
 }
