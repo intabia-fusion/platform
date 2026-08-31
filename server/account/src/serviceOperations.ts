@@ -873,7 +873,14 @@ export async function listAccounts (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: { search?: string, skip?: number, limit?: number, sort?: AccountsSortKey, filter?: AccountsFilter }
+  params: {
+    search?: string
+    skip?: number
+    limit?: number
+    sort?: AccountsSortKey
+    filter?: AccountsFilter
+    order?: 'asc' | 'desc'
+  }
 ): Promise<AccountAggregatedInfo[]> {
   const { extra } = decodeTokenVerbose(ctx, token)
 
@@ -881,9 +888,9 @@ export async function listAccounts (
     checkAdminRead(ctx, token)
   }
 
-  const { skip, limit, search, sort, filter } = params
+  const { skip, limit, search, sort, filter, order } = params
 
-  const accounts = await db.listAccounts(search, skip, limit, sort, filter)
+  const accounts = await db.listAccounts(search, skip, limit, sort, filter, order)
   if (extra?.service === undefined) {
     // Reading other people's emails and activity is PII access: record who looked at what.
     await logAdminAction(ctx, db, token, 'read_accounts', undefined, search, { filter, count: accounts.length })
@@ -1210,6 +1217,17 @@ export async function updateWorkspaceInfo (
       break
     case 'archiving-clean-done':
       update.mode = 'archived'
+      update.processingProgress = 100
+      break
+    // Without these two the worker drops the DB while the row stays in pending-deletion: every
+    // re-pick bumps processing_attempts and past the retry cap the workspace falls out for good.
+    case 'delete-started':
+      update.mode = 'deleting'
+      update.processingAttempts = 0
+      update.processingProgress = progress
+      break
+    case 'delete-done':
+      update.mode = 'deleted'
       update.processingProgress = 100
       break
     case 'ping':

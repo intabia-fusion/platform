@@ -189,6 +189,12 @@
     "AdminSessionHint": "Inserisci il codice inviato all'e-mail dell'amministratore per aprire una sessione di amministrazione.",
     "AdminSessionRejected": "Codice errato o scaduto",
     "Impersonate": "Visualizza come",
-    "ImpersonateHint": "Apre una sessione di sola lettura come questo membro. Le scritture sono rifiutate; l'azione viene registrata nell'audit."
+    "ImpersonateHint": "Apre una sessione di sola lettura come questo membro. Le scritture sono rifiutate; l'azione viene registrata nell'audit.",
+    "Attempts": "Tentativi",
+    "Progress": "Avanzamento",
+    "Actions": "Azioni",
+    "NoTrial": "Senza prova",
+    "Sessions": "Sessioni",
+    "Ops5m": "Operazioni (5 min)"
   }
 }

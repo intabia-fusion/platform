@@ -352,8 +352,18 @@ describe('admin-gates', () => {
     expect(listed.error).toBeUndefined()
     expect(listed.result.workspaces.some((w: any) => w.uuid === wsUuid)).toBe(true)
 
-    expect(isForbidden(await rpc(config, adminSession, 'createInviteLink', { workspace: wsUuid }))).toBe(true)
-    expect(isForbidden(await rpc(config, adminSession, 'createAccessLink', { workspace: wsUuid }))).toBe(true)
+    // Workspace-scoped RPCs read the workspace from the token, so forge one: the escalation used to
+    // live in verifyAllowedRole, and selectWorkspace no longer hands out such a token.
+    const adminInWs = generateToken(
+      adminAccount,
+      wsUuid,
+      { admin: 'true', mfaAt: String(Math.floor(Date.now() / 1000)) },
+      'secret'
+    )
+    expect(
+      isForbidden(await rpc(config, adminInWs, 'createInviteLink', { email: 'x@example.com', role: AccountRole.User }))
+    ).toBe(true)
+    expect(isForbidden(await rpc(config, adminInWs, 'createAccessLink', { role: AccountRole.User }))).toBe(true)
     expect(
       isForbidden(
         await rpc(config, adminSession, 'mergeSpecifiedPersons', {
@@ -427,7 +437,8 @@ describe('admin-gates', () => {
     })
     expect(set.error).toBeUndefined()
 
-    const info = await rpc(config, owner.token, 'getLoginInfoByToken', {})
+    // selectWorkspace is what carries the override to the client; getLoginInfoByToken never had it.
+    const info = await rpc(config, (await login('user1')).token, 'selectWorkspace', { workspaceUrl: wsName })
     expect(info.result?.disabledFeaturesOverride).toEqual(['invites'])
 
     await requestOtp()

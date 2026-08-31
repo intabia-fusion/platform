@@ -149,7 +149,7 @@ describe('billing read-only admin - read access', () => {
     const filter = { noWorkspaces: true, inactiveDays: 7 }
     await listAccounts(mockCtx, db, mockBranding, mockToken, { search: 'a@b.c', limit: 10, filter })
 
-    expect(listFn).toHaveBeenCalledWith('a@b.c', undefined, 10, undefined, filter)
+    expect(listFn).toHaveBeenCalledWith('a@b.c', undefined, 10, undefined, filter, undefined)
   })
 
   test('getPaymentOperations: billing allowed, regular forbidden', async () => {

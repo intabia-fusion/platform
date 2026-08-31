@@ -164,9 +164,11 @@ export interface AccountAggregatedInfo extends AccountInfo, Person {
   registeredOn?: number
   // False for an unfinished signup: person + social ids exist, but no account row yet
   hasAccount?: boolean
+  // Earliest email social id - what the admin list shows and sorts by
+  primaryEmail?: string
 }
 
-export type AccountsSortKey = 'name' | 'lastVisit' | 'registeredOn'
+export type AccountsSortKey = 'name' | 'lastVisit' | 'registeredOn' | 'workspaces' | 'email'
 
 /** Admin audit trail entry. Duplicated in server/account/src/types.ts - change both */
 export interface AdminAction {
@@ -448,6 +450,7 @@ export interface WorkspacesPagedQuery {
   attemptsGte?: number
   billingPlan?: string
   billingStatus?: string
+  billingStatusNot?: string
   billingExpired?: boolean
   sort?: WorkspacesSortKey
   order?: 'asc' | 'desc'

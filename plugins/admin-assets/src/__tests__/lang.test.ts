@@ -5,6 +5,7 @@ const langs = ['cs', 'de', 'es', 'fr', 'it', 'ja', 'pt', 'pt-br', 'ru', 'tr', 'z
 // Keys whose English wording is also correct in at least one of the locales above
 // (loanwords and internationalisms). A newly added key does not belong here - translate it instead.
 const sameAsEnglish = new Set([
+  'Actions', // fr
   'Audit',
   'Backup',
   'Backups',
@@ -30,6 +31,7 @@ const sameAsEnglish = new Set([
   'Role',
   'Service',
   'Services',
+  'Sessions', // fr
   'SortName',
   'Status',
   'Total',

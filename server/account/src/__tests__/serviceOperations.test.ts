@@ -52,7 +52,8 @@ import {
   upsertSubscription,
   adminCreateSubscription,
   adminUpdateSubscription,
-  getPersonInfo
+  getPersonInfo,
+  updateWorkspaceInfo
 } from '../serviceOperations'
 
 // Mock platform
@@ -1732,9 +1733,7 @@ describe('upsertSubscription - AI package token grant', () => {
 
   /** Token grants only: a package upsert also publishes limitsChanged, which these cases ignore. */
   function grants (): any[] {
-    return mockProducer.send.mock.calls
-      .flatMap((c: any[]) => c[2])
-      .filter((e: any) => e.type === 'purchase-activated')
+    return mockProducer.send.mock.calls.flatMap((c: any[]) => c[2]).filter((e: any) => e.type === 'purchase-activated')
   }
 
   test('publishes token grant for active package with tokenLimit > 0', async () => {
@@ -2078,11 +2077,16 @@ describe('adminUpdateSubscription', () => {
         insertOne: jest.fn(),
         update: jest.fn()
       },
-      logPaymentOperation: jest.fn()
+      logPaymentOperation: jest.fn(),
+      adminAction: { find: jest.fn().mockResolvedValue([]) },
+      otp: { deleteMany: jest.fn() }
     }
     verifyOtpSpy = jest.spyOn(utils, 'verifyAdminOtp').mockResolvedValue(undefined)
     logAdminActionSpy = jest.spyOn(utils, 'logAdminAction').mockResolvedValue(undefined)
-    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: 'admin-acc', extra: { admin: 'true' } })
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: 'admin-acc',
+      extra: { admin: 'true', mfaAt: String(Math.floor(Date.now() / 1000)) }
+    })
     ;(getMetadata as jest.Mock).mockReturnValue(undefined)
   })
 
@@ -2324,5 +2328,54 @@ describe('getPersonInfo', () => {
     const result = await getPersonInfo(mockCtx, mockDb, mockBranding, mockToken, { account })
 
     expect(result.phoneHint).toBeUndefined()
+  })
+})
+
+describe('updateWorkspaceInfo - delete events', () => {
+  const mockCtx = { error: jest.fn(), info: jest.fn(), warn: jest.fn() } as unknown as MeasureContext
+  const mockBranding = null
+  const mockToken = 'test-token'
+  const workspaceUuid = 'ws-1' as WorkspaceUuid
+  const version = { major: 0, minor: 7, patch: 0 }
+
+  let mockDb: any
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockDb = {
+      workspace: { exists: jest.fn().mockResolvedValue(true), update: jest.fn() },
+      workspaceStatus: { findOne: jest.fn().mockResolvedValue(null), update: jest.fn() }
+    }
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ extra: { service: 'workspace' } })
+  })
+
+  // The worker drops the DB and reports these; without their own cases the mode stayed
+  // 'pending-deletion' and every re-pick bumped processing_attempts until the retry cap.
+  it('moves the workspace to deleting and clears the attempts', async () => {
+    await updateWorkspaceInfo(mockCtx, mockDb, mockBranding, mockToken, {
+      workspaceUuid,
+      event: 'delete-started',
+      version,
+      progress: 0
+    })
+
+    expect(mockDb.workspaceStatus.update).toHaveBeenCalledWith(
+      { workspaceUuid },
+      expect.objectContaining({ mode: 'deleting', processingAttempts: 0 })
+    )
+  })
+
+  it('moves the workspace to deleted when the worker is done', async () => {
+    await updateWorkspaceInfo(mockCtx, mockDb, mockBranding, mockToken, {
+      workspaceUuid,
+      event: 'delete-done',
+      version,
+      progress: 100
+    })
+
+    expect(mockDb.workspaceStatus.update).toHaveBeenCalledWith(
+      { workspaceUuid },
+      expect.objectContaining({ mode: 'deleted', processingProgress: 100 })
+    )
   })
 })

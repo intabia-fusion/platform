@@ -194,7 +194,8 @@ export interface AccountClient {
     skip?: number,
     limit?: number,
     sort?: AccountsSortKey,
-    filter?: AccountsFilter
+    filter?: AccountsFilter,
+    order?: 'asc' | 'desc'
   ) => Promise<AccountAggregatedInfo[]>
   getTransactorEndpoints: () => Promise<TransactorEndpointInfo[]>
   deleteAccount: (uuid: AccountUuid, otpCode?: string) => Promise<void>
@@ -1345,11 +1346,12 @@ class AccountClientImpl implements AccountClient {
     skip?: number,
     limit?: number,
     sort?: AccountsSortKey,
-    filter?: AccountsFilter
+    filter?: AccountsFilter,
+    order?: 'asc' | 'desc'
   ): Promise<AccountAggregatedInfo[]> {
     const request = {
       method: 'listAccounts' as const,
-      params: { search, skip, limit, sort, filter }
+      params: { search, skip, limit, sort, filter, order }
     }
 
     return await this.rpc(request)

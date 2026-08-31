@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, EditBox, Label, ticker1 } from '@hcengineering/ui'
+  import { Button, EditBox, Label, Popup, ticker1 } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import adminRes from '../plugin'
@@ -95,9 +95,14 @@
   </div>
 </div>
 
+<!-- The panel owns the popup host, and it is not mounted yet: without this the status-bar
+     settings (and any other popup) silently do nothing on this screen. -->
+<Popup />
+
 <style lang="scss">
   .gate {
     justify-content: center;
+    width: 100%;
     height: 100%;
     padding: 2rem;
   }

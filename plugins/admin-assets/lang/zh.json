@@ -189,6 +189,12 @@
     "AdminSessionHint": "请输入发送到管理员邮箱的验证码以开启管理会话。",
     "AdminSessionRejected": "验证码错误或已过期",
     "Impersonate": "以其身份查看",
-    "ImpersonateHint": "以该成员身份打开只读会话。写入将被拒绝，该操作会记录到审计日志。"
+    "ImpersonateHint": "以该成员身份打开只读会话。写入将被拒绝，该操作会记录到审计日志。",
+    "Attempts": "尝试次数",
+    "Progress": "进度",
+    "Actions": "操作",
+    "NoTrial": "排除试用",
+    "Sessions": "会话数",
+    "Ops5m": "操作数（5 分钟）"
   }
 }

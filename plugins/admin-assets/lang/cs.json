@@ -189,6 +189,12 @@
     "AdminSessionHint": "Zadejte kód zaslaný na e-mail správce a otevřete administrátorskou relaci.",
     "AdminSessionRejected": "Neplatný nebo vypršelý kód",
     "Impersonate": "Zobrazit jako",
-    "ImpersonateHint": "Otevře relaci pouze pro čtení jménem tohoto člena. Zápis je zamítnut, akce se zaznamenává do auditu."
+    "ImpersonateHint": "Otevře relaci pouze pro čtení jménem tohoto člena. Zápis je zamítnut, akce se zaznamenává do auditu.",
+    "Attempts": "Pokusy",
+    "Progress": "Průběh",
+    "Actions": "Akce",
+    "NoTrial": "Bez zkušební verze",
+    "Sessions": "Relace",
+    "Ops5m": "Operace (5 min)"
   }
 }

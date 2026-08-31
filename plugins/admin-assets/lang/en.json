@@ -189,6 +189,12 @@
     "AdminSessionHint": "Enter the code sent to your admin email to open an administration session.",
     "AdminSessionRejected": "Wrong or expired code",
     "Impersonate": "View as",
-    "ImpersonateHint": "Open a read-only session as this member. Writes are refused; the action is audited."
+    "ImpersonateHint": "Open a read-only session as this member. Writes are refused; the action is audited.",
+    "Attempts": "Attempts",
+    "Progress": "Progress",
+    "Actions": "Actions",
+    "NoTrial": "No trial",
+    "Sessions": "Sessions",
+    "Ops5m": "Ops (5 min)"
   }
 }

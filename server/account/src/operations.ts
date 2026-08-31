@@ -1699,7 +1699,9 @@ export async function deleteWorkspace (
     { workspaceUuid: workspace },
     {
       isDisabled: true,
-      mode: 'pending-deletion'
+      mode: 'pending-deletion',
+      // A workspace that had already exhausted its retries would never be picked up again.
+      processingAttempts: 0
     }
   )
 }
@@ -2670,6 +2672,7 @@ export async function deleteAccount (
 
   if (uuid === account) {
     // Admin must not delete their own account (would also break the OTP-email lookup).
+    ctx.warn('Refusing to delete an account: the admin is deleting themselves', { uuid })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
@@ -2679,6 +2682,7 @@ export async function deleteAccount (
     const members = await db.getWorkspaceMembers(ws.uuid)
     const owners = members.filter((m) => m.role === AccountRole.Owner)
     if (owners.length === 1 && owners[0].person === uuid) {
+      ctx.warn('Refusing to delete an account: sole owner of a workspace', { uuid, workspace: ws.uuid, url: ws.url })
       throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
     }
   }

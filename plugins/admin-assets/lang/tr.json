@@ -189,6 +189,12 @@
     "AdminSessionHint": "Yönetim oturumu açmak için yönetici e-postanıza gönderilen kodu girin.",
     "AdminSessionRejected": "Kod yanlış veya süresi dolmuş",
     "Impersonate": "Farklı görüntüle",
-    "ImpersonateHint": "Bu üye adına salt okunur bir oturum açar. Yazma işlemleri reddedilir; işlem denetim kaydına yazılır."
+    "ImpersonateHint": "Bu üye adına salt okunur bir oturum açar. Yazma işlemleri reddedilir; işlem denetim kaydına yazılır.",
+    "Attempts": "Denemeler",
+    "Progress": "İlerleme",
+    "Actions": "İşlemler",
+    "NoTrial": "Denemesiz",
+    "Sessions": "Oturumlar",
+    "Ops5m": "İşlemler (5 dk)"
   }
 }
