@@ -142,14 +142,10 @@ export function createMockTx (store: { docs?: Doc[] } = {}): TxOperations {
     )
   } as unknown as Hierarchy
 
-  const client: Partial<TxOperations> = {
+  const client: Partial<TxOperations> & { commit: any } = {
     getHierarchy: () => mockHierarchy,
-    apply: jest.fn(() => ({
-      removeDoc: jest.fn(),
-      createDoc: jest.fn(),
-      updateDoc: jest.fn(),
-      commit: jest.fn()
-    })) as any,
+    apply: jest.fn((): any => client),
+    commit: jest.fn(async () => ({ result: true, time: 0, serverTime: 0 })),
     findOne: jest.fn(async (_cls: Ref<Class<Doc>>, query: any): Promise<any> => {
       if (query._id !== undefined) return allDocs.find((d) => d._id === query._id)
       if (query.projectType !== undefined && query.name !== undefined) {
@@ -196,6 +192,52 @@ export function createMockTx (store: { docs?: Doc[] } = {}): TxOperations {
           )
         }
         return allDocs.filter((d) => d._class === workflow.class.Screen)
+      }
+      if (cls === workflow.class.ScreenTab) {
+        if (query.attachedTo?.$in !== undefined) {
+          return allDocs.filter(
+            (d) => d._class === workflow.class.ScreenTab && query.attachedTo.$in.includes((d as any).attachedTo)
+          )
+        }
+        if (query.attachedTo !== undefined) {
+          return allDocs.filter(
+            (d) => d._class === workflow.class.ScreenTab && (d as any).attachedTo === query.attachedTo
+          )
+        }
+        return allDocs.filter((d) => d._class === workflow.class.ScreenTab)
+      }
+      if (cls === workflow.class.ScreenField) {
+        if (query.attachedTo?.$in !== undefined) {
+          return allDocs.filter(
+            (d) => d._class === workflow.class.ScreenField && query.attachedTo.$in.includes((d as any).attachedTo)
+          )
+        }
+        if (query.attachedTo !== undefined) {
+          return allDocs.filter(
+            (d) => d._class === workflow.class.ScreenField && (d as any).attachedTo === query.attachedTo
+          )
+        }
+        return allDocs.filter((d) => d._class === workflow.class.ScreenField)
+      }
+      if (cls === core.class.Enum) {
+        if (query._id?.$in !== undefined) {
+          return allDocs.filter((d) => d._class === core.class.Enum && query._id.$in.includes(d._id))
+        }
+        return allDocs.filter((d) => d._class === core.class.Enum)
+      }
+      if (cls === core.class.Attribute) {
+        if (query._id?.$in !== undefined) {
+          return allDocs.filter((d) => d._class === core.class.Attribute && query._id.$in.includes(d._id))
+        }
+        if (query.name?.$in !== undefined) {
+          return allDocs.filter((d) => d._class === core.class.Attribute && query.name.$in.includes((d as any).name))
+        }
+        if (query.attributeOf !== undefined) {
+          return allDocs.filter(
+            (d) => d._class === core.class.Attribute && (d as any).attributeOf === query.attributeOf
+          )
+        }
+        return allDocs.filter((d) => d._class === core.class.Attribute)
       }
       if (cls === task.class.Project) {
         if (query.type !== undefined) {

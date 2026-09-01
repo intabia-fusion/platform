@@ -261,7 +261,7 @@
     "UseExistingScreen": "Использовать существующий",
     "CreateCopy": "Создать копию",
     "ScreenStructureMatches": "Совпадает с экраном «{name}»",
-    "ScreenMatchesExisting": "Уже существует (совпадает)",
+    "ScreenMatchesExisting": "Уже есть в системе",
     "ScreenSkippedTransitionsWarning": "Экран не будет открываться при переходах: {transitions}",
     "AttributesToCreate": "Атрибуты для создания",
     "AttributesToCreateDescription": "Следующие атрибуты будут созданы в типе задачи «{name}»:",

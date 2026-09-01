@@ -16,8 +16,10 @@
 import core, {
   type AnyAttribute,
   ArrOf,
+  type Class,
   ClassifierKind,
   Doc,
+  type Enum,
   EnumOf,
   type Hierarchy,
   type PropertyType,
@@ -47,7 +49,7 @@ import type {
   WorkflowCompatibilityReport,
   WorkflowConfig
 } from './types'
-import { extractRuleFieldReferences } from './utils'
+import { extractRuleFieldReferences, getEnumRefFromType } from './utils'
 
 /**
  * Checks a workflow configuration for compatibility against a target TaskType (statuses & attributes).
@@ -91,13 +93,13 @@ async function checkScreensCompatibility (
     existingByName.set(s.name.toLowerCase(), s)
   }
 
-  const screenIds = new Set(existingScreens.map((s) => s._id))
-  const allTabs = await client.findAll(workflow.class.ScreenTab, {})
-  const existingTabs = allTabs.filter((t) => screenIds.has(t.attachedTo))
+  const screenIds = Array.from(new Set(existingScreens.map((s) => s._id)))
+  const existingTabs =
+    screenIds.length > 0 ? await client.findAll(workflow.class.ScreenTab, { attachedTo: { $in: screenIds } }) : []
 
-  const tabIds = new Set(existingTabs.map((t) => t._id))
-  const allFields = await client.findAll(workflow.class.ScreenField, {})
-  const existingFields = allFields.filter((f) => tabIds.has(f.attachedTo))
+  const tabIds = Array.from(new Set(existingTabs.map((t) => t._id)))
+  const existingFields =
+    tabIds.length > 0 ? await client.findAll(workflow.class.ScreenField, { attachedTo: { $in: tabIds } }) : []
 
   const hierarchy = client.getHierarchy()
   const allAttributes = hierarchy.getAllAttributes(targetTaskType.targetClass, core.class.Doc)
@@ -144,11 +146,7 @@ async function checkScreensCompatibility (
         const impField = impFields[j]
         const extField = extFields[j]
         const impKey = (impField.fieldKey ?? (impField.attribute as string)).trim().toLowerCase()
-        const extKey = (
-          extField.fieldKey ??
-          attrById.get(extField.attribute)?.name ??
-          (extField.attribute as string)
-        )
+        const extKey = (extField.fieldKey ?? attrById.get(extField.attribute)?.name ?? (extField.attribute as string))
           .trim()
           .toLowerCase()
         if (impKey !== extKey) return false
@@ -460,7 +458,8 @@ export function isAttributeTypeCompatible (
   hierarchy: Hierarchy,
   sourceType: Type<PropertyType> | undefined,
   targetType: Type<PropertyType> | undefined,
-  visited = new Set<string>()
+  visited = new Set<Ref<Class<Doc>>>(),
+  enumMapping?: Map<Ref<Enum>, Ref<Enum>>
 ): boolean {
   if (sourceType === undefined || targetType === undefined) {
     return true
@@ -482,7 +481,9 @@ export function isAttributeTypeCompatible (
       const srcOf = (sourceType as EnumOf).of
       const tgtOf = (targetType as EnumOf).of
       if (srcOf !== undefined && tgtOf !== undefined) {
-        return srcOf === tgtOf
+        if (srcOf === tgtOf) return true
+        if (enumMapping !== undefined && enumMapping.get(srcOf) === tgtOf) return true
+        return false
       }
       return true
     }
@@ -490,7 +491,7 @@ export function isAttributeTypeCompatible (
     if (sourceType._class === core.class.ArrOf) {
       const srcOf = (sourceType as ArrOf<Doc>).of
       const tgtOf = (targetType as ArrOf<Doc>).of
-      return isAttributeTypeCompatible(hierarchy, srcOf, tgtOf, visited)
+      return isAttributeTypeCompatible(hierarchy, srcOf, tgtOf, visited, enumMapping)
     }
     return true
   } catch {
@@ -511,9 +512,18 @@ function checkAttributesCompatibility (
   const allTargetAttributes = hierarchy.getAllAttributes(targetClass)
   const attributesByKey = new Map<string, AnyAttribute>()
   const attributesById = new Map<Ref<AnyAttribute>, AnyAttribute>()
-  for (const attr of allTargetAttributes.values()) {
+  const attributesByLabel = new Map<string, AnyAttribute>()
+
+  const registerAttr = (attr: AnyAttribute): void => {
     attributesByKey.set(attr.name, attr)
     attributesById.set(attr._id, attr)
+    if (attr.label !== undefined) {
+      attributesByLabel.set(attr.label, attr)
+    }
+  }
+
+  for (const attr of allTargetAttributes.values()) {
+    registerAttr(attr)
   }
 
   try {
@@ -521,8 +531,7 @@ function checkAttributesCompatibility (
     for (const m of descendants) {
       if (hierarchy.getClass(m).kind === ClassifierKind.MIXIN) {
         for (const attr of hierarchy.getAllAttributes(m).values()) {
-          attributesByKey.set(attr.name, attr)
-          attributesById.set(attr._id, attr)
+          registerAttr(attr)
         }
       }
     }
@@ -545,36 +554,33 @@ function checkAttributesCompatibility (
   const result: AttributeCompatibilityItem[] = []
 
   for (const [fieldKey, info] of attributeUsages) {
-    const matchedAttr =
-      attributesByKey.get(fieldKey) ??
-      (info.sourceAttributeId !== undefined ? attributesById.get(info.sourceAttributeId) : undefined)
-
     const attrConfig =
       (info.sourceAttributeId !== undefined ? configAttributeById.get(info.sourceAttributeId) : undefined) ??
       configAttributeByName.get(fieldKey)
 
+    const rawLabel = attrConfig?.label ?? info.label
+
+    const matchedAttr =
+      attributesByKey.get(fieldKey) ??
+      (info.sourceAttributeId !== undefined ? attributesById.get(info.sourceAttributeId) : undefined) ??
+      (rawLabel !== undefined ? attributesByLabel.get(rawLabel) : undefined)
+
     const sourceType = attrConfig?.type
     const isResolvable = isAttributeTypeResolvable(hierarchy, sourceType)
 
-    let isMatched = false
-    let unresolvable = false
-    let unresolvableReason: IntlString | undefined
-
-    if (!isResolvable) {
-      isMatched = false
-      unresolvable = true
-      unresolvableReason = workflow.string.UnresolvableTypeMissingClass
-    } else if (matchedAttr !== undefined) {
-      if (isAttributeTypeCompatible(hierarchy, sourceType, matchedAttr.type)) {
-        isMatched = true
-      } else {
-        // Conflicting type -> will be auto-created with unique key
-        isMatched = true
+    const enumMapping = new Map<Ref<Enum>, Ref<Enum>>()
+    if (matchedAttr !== undefined) {
+      const srcEnum = getEnumRefFromType(sourceType)
+      const tgtEnum = getEnumRefFromType(matchedAttr.type)
+      if (srcEnum !== undefined && tgtEnum !== undefined) {
+        enumMapping.set(srcEnum, tgtEnum)
       }
-    } else {
-      // Missing attribute -> will be auto-created with exact key
-      isMatched = true
     }
+
+    const isCompatible =
+      isResolvable &&
+      matchedAttr !== undefined &&
+      isAttributeTypeCompatible(hierarchy, sourceType, matchedAttr.type, new Set(), enumMapping)
 
     result.push({
       fieldKey,
@@ -582,10 +588,10 @@ function checkAttributesCompatibility (
       label: matchedAttr?.label ?? attrConfig?.label ?? info.label,
       sourceType,
       ruleTypes: Array.from(info.ruleTypes),
-      isMatched,
-      targetAttributeId: matchedAttr?._id,
-      unresolvable,
-      unresolvableReason
+      isMatched: isCompatible,
+      targetAttributeId: isCompatible ? matchedAttr?._id : undefined,
+      unresolvable: !isResolvable,
+      unresolvableReason: !isResolvable ? workflow.string.UnresolvableTypeMissingClass : undefined
     })
   }
 

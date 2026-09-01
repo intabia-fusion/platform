@@ -125,6 +125,95 @@ describe('Workflow Export', () => {
       expect(config.workflows[0].transitions).toBeDefined()
     })
 
+    it('exports enums referenced by screen field attributes', async () => {
+      const enumId = 'enum-color-1' as any
+      const enumDoc = {
+        _id: enumId,
+        _class: 'core:class:Enum',
+        name: 'color',
+        enumValues: ['red', 'white', 'black']
+      }
+      const attrId = 'attr-custom-color' as any
+      const attrDoc = {
+        _id: attrId,
+        _class: 'core:class:Attribute',
+        name: 'custom_color_field',
+        label: 'embedded:embedded:select-color',
+        type: {
+          _class: 'core:class:EnumOf',
+          of: enumId
+        },
+        isCustom: true,
+        attributeOf: 'tracker:class:Issue'
+      }
+      const screenId = 'screen-enum' as any
+      const screenDoc = {
+        _id: screenId,
+        _class: workflow.class.Screen,
+        name: 'Enum Screen',
+        projectType: projectTypeId,
+        targetClass: 'tracker:class:Issue'
+      }
+      const tabId = 'tab-enum' as any
+      const tabDoc = {
+        _id: tabId,
+        _class: workflow.class.ScreenTab,
+        attachedTo: screenId,
+        name: 'General'
+      }
+      const fieldDoc = {
+        _id: 'field-enum' as any,
+        _class: workflow.class.ScreenField,
+        attachedTo: tabId,
+        attribute: attrId,
+        fieldKey: 'custom_color_field',
+        required: true,
+        rank: '0|i00000:'
+      }
+      const transWithScreen = {
+        _id: 'trans-enum',
+        _class: workflow.class.WorkflowTransition,
+        attachedTo: workflowId,
+        name: 'Resolve',
+        from: [statusOpenId],
+        to: statusDoneId,
+        rank: '0|i00003:',
+        requests: [
+          {
+            id: 'req-screen-enum',
+            rule: workflow.request.ScreenRequest,
+            ruleClass: workflow.class.WorkflowRequest,
+            props: { screen: screenId }
+          }
+        ]
+      }
+
+      const client = createMockTx({
+        docs: [enumDoc as any, attrDoc as any, screenDoc as any, tabDoc as any, fieldDoc as any, transWithScreen as any]
+      })
+
+      const config = await exportWorkflow(client, workflowId, {
+        workspace: ws1,
+        projectTypeId
+      })
+
+      expect(config.enums).toBeDefined()
+      expect(config.enums).toHaveLength(1)
+      expect(config.enums?.[0]).toEqual({
+        id: enumId,
+        name: 'color',
+        enumValues: ['red', 'white', 'black']
+      })
+      expect(config.attributes).toContainEqual(
+        expect.objectContaining({
+          id: attrId,
+          name: 'custom_color_field',
+          enumName: 'color',
+          enumValues: ['red', 'white', 'black']
+        })
+      )
+    })
+
     it('works identically via exportWorkflow alias', async () => {
       const client = createMockTx()
       const config = await exportWorkflow(client, workflowId, {

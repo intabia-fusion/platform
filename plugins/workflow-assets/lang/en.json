@@ -260,7 +260,7 @@
     "UseExistingScreen": "Use existing",
     "CreateCopy": "Create copy",
     "ScreenStructureMatches": "Matches screen «{name}»",
-    "ScreenMatchesExisting": "Already exists (matches)",
+    "ScreenMatchesExisting": "Already exists",
     "ScreenSkippedTransitionsWarning": "Screen will not be displayed during transitions: {transitions}",
     "AttributesToCreate": "Attributes to create",
     "AttributesToCreateDescription": "The following attributes will be created in \"{name}\" task type:",

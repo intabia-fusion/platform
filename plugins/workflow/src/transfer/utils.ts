@@ -157,7 +157,7 @@ export async function findOrCreateEnum (
 
   const matched =
     existingEnums.find((e) => e.name === enumName && isMatchingValues(e)) ??
-    existingEnums.find((e) => isMatchingValues(e)) ??
+    (enumValues.length > 0 ? existingEnums.find((e) => isMatchingValues(e)) : undefined) ??
     existingEnums.find((e) => e.name === enumName)
 
   if (matched !== undefined) return matched._id

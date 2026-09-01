@@ -101,14 +101,18 @@ export function remap (value: any, dict: Map<any, any> | ReadonlyMap<any, any>, 
 export async function buildResolver (client: TxOperations, projectTypeId: Ref<ProjectType>): Promise<NameResolver> {
   const resolver = new NameResolver()
 
-  const [taskTypes, allStatuses, screens] = await Promise.all([
-    client.findAll(task.class.TaskType, { parent: projectTypeId }),
+  const [allTaskTypes, allStatuses, screens] = await Promise.all([
+    client.findAll(task.class.TaskType, {}),
     client.findAll(core.class.Status, {}),
     client.findAll(workflow.class.Screen, { projectType: projectTypeId })
   ])
 
-  for (const tt of taskTypes) {
-    resolver.add(TaskTypeToken, tt._id, tt.name)
+  for (const tt of allTaskTypes) {
+    if (tt.parent === projectTypeId) {
+      resolver.setRef(TaskTypeToken, tt.name, tt._id)
+    } else {
+      resolver.add(TaskTypeToken, tt._id, tt.name)
+    }
   }
 
   for (const st of allStatuses) {

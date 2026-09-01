@@ -32,6 +32,7 @@
   export let submitLabel: IntlString
   export let steps: ReadonlyArray<IWizardStep>
   export let selectedStep: string
+  export let width: string | undefined = undefined
 
   const dispatch = createEventDispatcher()
 
@@ -71,7 +72,16 @@
   }
 </script>
 
-<ModernDialog {loading} {label} {canSubmit} noContentPadding={true} scrollableContent={false} on:submit on:close>
+<ModernDialog
+  {width}
+  {loading}
+  {label}
+  {canSubmit}
+  noContentPadding={true}
+  scrollableContent={false}
+  on:submit
+  on:close
+>
   <div class="root">
     <div class="side">
       <Scroller>

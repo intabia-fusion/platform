@@ -14,10 +14,11 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { type Ref, type Status } from '@hcengineering/core'
+  import { Severity, Status as PlatformStatus, setPlatformStatus } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { type ProjectType, type TaskType } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
-  import { type IWizardStep, ModernWizardDialog } from '@hcengineering/ui'
+  import { closePopup, type IWizardStep, ModernWizardDialog } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'
   import workflow, {
     checkWorkflowCompatibility,
@@ -81,10 +82,14 @@
   // --- Wizard Navigation State ---
   let selectedStep = initialConfig != null ? 'general' : 'file'
 
-  $: activeAttributesToCreate = (report?.attributes.filter((a) => !a.unresolvable && a.targetAttributeId === undefined) ?? [])
-    .filter((a) => getAttributeUsageLocations(a.fieldKey, a.sourceAttributeId, parsedConfig, screenResolutions).length > 0)
-  $: activeUnresolvableAttrs = (report?.attributes.filter((a) => a.unresolvable) ?? [])
-    .filter((a) => getAttributeUsageLocations(a.fieldKey, a.sourceAttributeId, parsedConfig, screenResolutions).length > 0)
+  $: activeAttributesToCreate = (
+    report?.attributes.filter((a) => !a.unresolvable && a.targetAttributeId === undefined) ?? []
+  ).filter(
+    (a) => getAttributeUsageLocations(a.fieldKey, a.sourceAttributeId, parsedConfig, screenResolutions).length > 0
+  )
+  $: activeUnresolvableAttrs = (report?.attributes.filter((a) => a.unresolvable) ?? []).filter(
+    (a) => getAttributeUsageLocations(a.fieldKey, a.sourceAttributeId, parsedConfig, screenResolutions).length > 0
+  )
 
   // --- Step Configuration ---
   $: steps = ((): IWizardStep[] => {
@@ -108,7 +113,9 @@
 
   $: canProceed = ((): boolean => {
     if (selectedStep === 'file') return parsedConfig != null || hasRawJsonText
-    if (selectedStep === 'general') { return parsedConfig != null && workflowName.trim() !== '' && selectedTaskTypeId !== undefined }
+    if (selectedStep === 'general') {
+      return parsedConfig != null && workflowName.trim() !== '' && selectedTaskTypeId !== undefined
+    }
     if (selectedStep === 'statuses') return !hasDuplicateTargetStatuses(statusMap)
     return true
   })()
@@ -199,12 +206,18 @@
       const firstWf = parsedConfig.workflows[0]
       const createdId =
         (firstWf !== undefined ? result.workflows[firstWf.id] : undefined) ?? Object.values(result.workflows)[0]
+      closePopup()
       dispatch('close')
       if (createdId !== undefined) {
         navigateToWorkflow(createdId)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to import workflow', err)
+      await setPlatformStatus(
+        new PlatformStatus(Severity.ERROR, plugin.string.InvalidWorkflowFile, {}, undefined, {
+          timeout: 4000
+        })
+      )
     } finally {
       isSaving = false
     }
@@ -212,6 +225,7 @@
 </script>
 
 <ModernWizardDialog
+  width="56rem"
   loading={isSaving}
   label={plugin.string.Import}
   submitLabel={plugin.string.Import}
@@ -221,7 +235,10 @@
   {selectedStep}
   on:stepChanged={handleStepChanged}
   on:submit={handleSubmit}
-  on:close={() => dispatch('close')}
+  on:close={() => {
+    closePopup()
+    dispatch('close')
+  }}
 >
   <div class="root">
     {#if selectedStep === 'file'}

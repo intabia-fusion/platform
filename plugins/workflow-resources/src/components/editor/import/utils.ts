@@ -17,6 +17,7 @@ import core, {
   type Class,
   type Doc,
   type Hierarchy,
+  type PersonId,
   type PropertyType,
   type Ref,
   type Status,
@@ -65,7 +66,12 @@ export function parseWorkflowConfig (text: string, sourceName?: string): ParseCo
       return { ok: false, error: 'InvalidFormat' }
     }
     const validWorkflows = json.workflows.filter(
-      (w: any) => w != null && typeof w.name === 'string' && w.name.trim() !== ''
+      (w: unknown): w is { name: string } =>
+        w != null &&
+        typeof w === 'object' &&
+        'name' in w &&
+        typeof (w as { name: unknown }).name === 'string' &&
+        (w as { name: string }).name.trim() !== ''
     )
     if (validWorkflows.length === 0) {
       return { ok: false, error: 'InvalidFormat' }
@@ -148,7 +154,7 @@ export function computeInitialScreenResolutions (
   const res: Record<string, ScreenResolutionConfig> = {}
   for (const sc of screens ?? []) {
     const reportItem = screenReport?.find((r) => r.sourceScreenId === sc.id || r.name === sc.name)
-    if (reportItem?.isExactMatch && reportItem.matchingScreenId !== undefined) {
+    if (reportItem?.isExactMatch === true && reportItem.matchingScreenId !== undefined) {
       res[sc.id] = {
         action: 'replace',
         targetScreenId: reportItem.matchingScreenId
@@ -168,22 +174,16 @@ export function getFieldIntlLabel (
   parsedConfig: WorkflowConfig | null,
   targetTaskType: TaskType | undefined,
   hierarchy: Hierarchy,
-  attributeRef?: string
+  attributeRef?: Ref<AnyAttribute>
 ): IntlString {
   const attrReport = report?.attributes.find(
-    (a) =>
-      a.fieldKey === fieldKey ||
-      (a.sourceAttributeId as string) === fieldKey ||
-      (attributeRef != null && (a.sourceAttributeId as string) === attributeRef)
+    (a) => a.fieldKey === fieldKey || (attributeRef !== undefined && a.sourceAttributeId === attributeRef)
   )
   if (attrReport?.label != null && attrReport.label !== '') {
     return attrReport.label
   }
   const attrCfg = parsedConfig?.attributes?.find(
-    (a) =>
-      a.name === fieldKey ||
-      a.id === fieldKey ||
-      (attributeRef != null && (a.id === attributeRef || a.name === attributeRef))
+    (a) => a.name === fieldKey || (attributeRef !== undefined && a.id === attributeRef)
   )
   if (attrCfg?.label != null && attrCfg.label !== '') {
     return attrCfg.label
@@ -209,25 +209,21 @@ export function getFieldIntlLabel (
   for (const sc of parsedConfig?.screens ?? []) {
     for (const tab of sc.tabs ?? []) {
       for (const f of tab.fields ?? []) {
-        if (
-          (f.fieldKey === fieldKey || (attributeRef != null && f.attribute === attributeRef)) &&
-          f.attribute != null
-        ) {
-          const byAttrId = parsedConfig?.attributes?.find((a: any) => a.id === f.attribute || a.name === f.attribute)
-          if (byAttrId?.label != null && byAttrId.label !== '') {
-            return byAttrId.label
+        if (f.fieldKey === fieldKey || (attributeRef !== undefined && f.attribute === attributeRef)) {
+          if (f.attribute !== undefined) {
+            const byAttrId = parsedConfig?.attributes?.find((a) => a.id === f.attribute)
+            if (byAttrId?.label != null && byAttrId.label !== '') {
+              return byAttrId.label
+            }
           }
         }
       }
     }
   }
 
-  for (const m of (parsedConfig as any)?.mixins ?? []) {
+  for (const m of parsedConfig?.mixins ?? []) {
     const byMixin = m.attributes?.find(
-      (a: any) =>
-        a.name === fieldKey ||
-        a.id === fieldKey ||
-        (attributeRef != null && (a.id === attributeRef || a.name === attributeRef))
+      (a) => a.name === fieldKey || (attributeRef !== undefined && a.id === attributeRef)
     )
     if (byMixin?.label != null && byMixin.label !== '') {
       return byMixin.label
@@ -240,7 +236,7 @@ export function getFieldIntlLabel (
 export function getTransitionsUsingScreen (
   sc: ScreenConfig,
   parsedConfig: WorkflowConfig | null,
-  anyStatusLabel: string = 'Любой статус'
+  anyStatusLabel?: string
 ): string[] {
   const transitionsList: string[] = []
   const cleanScreenId = (sc.id as string).replace('$screen:', '').toLowerCase()
@@ -253,7 +249,7 @@ export function getTransitionsUsingScreen (
 
   for (const wf of parsedConfig?.workflows ?? []) {
     for (const t of wf.transitions ?? []) {
-      const checkRule = (r: { props?: Record<string, any> } | undefined): boolean => {
+      const checkRule = (r: { props?: Record<string, unknown> } | undefined): boolean => {
         if (r?.props == null) return false
         const screenProp = (r.props.screen ?? r.props.screenId ?? r.props.screenName) as string | undefined
         if (screenProp == null) return false
@@ -272,17 +268,20 @@ export function getTransitionsUsingScreen (
       ) {
         let fromStr = ''
         if (t.from === null || t.from === undefined || t.from.length === 0) {
-          fromStr = anyStatusLabel
+          fromStr = anyStatusLabel ?? ''
         } else {
-          fromStr = t.from
-            .map((f) => statusMap.get(f) ?? (f as string).split(':').pop() ?? f)
-            .join(', ')
+          fromStr = t.from.map((f) => statusMap.get(f) ?? (f as string).split(':').pop() ?? f).join(', ')
         }
         const toStr = statusMap.get(t.to) ?? (t.to as string).split(':').pop() ?? t.to
 
-        const transitionLabel = t.name
-          ? `«${t.name}» (${fromStr} → ${toStr})`
-          : `${fromStr} → ${toStr}`
+        const transitionLabel =
+          t.name !== ''
+            ? fromStr !== ''
+              ? `«${t.name}» (${fromStr} → ${toStr})`
+              : `«${t.name}» (→ ${toStr})`
+            : fromStr !== ''
+              ? `${fromStr} → ${toStr}`
+              : `→ ${toStr}`
 
         transitionsList.push(transitionLabel)
       }
@@ -305,11 +304,11 @@ export function getSourceStatusDoc (
       _class: core.class.Status,
       space: core.space.Model,
       modifiedOn: Date.now(),
-      modifiedBy: '' as any,
+      modifiedBy: '' as PersonId,
       name: item.sourceName,
-      category: item.sourceCategory as any,
+      category: item.sourceCategory,
       color: item.sourceColor,
-      ofAttribute: '' as any
+      ofAttribute: '' as unknown as Ref<AnyAttribute>
     }
     return syntheticStatus
   }
@@ -354,10 +353,7 @@ export function getAttributeUsageLocations (
     let usedInScreen = false
     for (const tab of sc.tabs ?? []) {
       for (const f of tab.fields ?? []) {
-        if (
-          f.fieldKey === fieldKey ||
-          (sourceAttributeId !== undefined && (f.attribute === sourceAttributeId || (f.attribute as string) === fieldKey))
-        ) {
+        if (f.fieldKey === fieldKey || (sourceAttributeId !== undefined && f.attribute === sourceAttributeId)) {
           usedInScreen = true
           break
         }
@@ -372,13 +368,14 @@ export function getAttributeUsageLocations (
   // 2. Transitions (validators, postFunctions)
   for (const wf of parsedConfig.workflows ?? []) {
     for (const t of wf.transitions ?? []) {
-      const checkRuleList = (rules: Array<{ rule: Ref<WorkflowRule>, props?: Record<string, any> }> | undefined): void => {
+      const checkRuleList = (
+        rules: Array<{ rule: Ref<WorkflowRule>, props?: Record<string, unknown> }> | undefined
+      ): void => {
         for (const r of rules ?? []) {
           const refs = extractRuleFieldReferences(r.rule, r.props)
           const matches = refs.some(
             (ref) =>
-              ref.fieldKey === fieldKey ||
-              (sourceAttributeId !== undefined && (ref.attribute === sourceAttributeId || (ref.attribute as string) === fieldKey))
+              ref.fieldKey === fieldKey || (sourceAttributeId !== undefined && ref.attribute === sourceAttributeId)
           )
           if (matches) {
             result.push({
@@ -403,7 +400,7 @@ export function resolveAttributeItemIcon (
   parsedConfig: WorkflowConfig | null,
   hierarchy: Hierarchy,
   targetClass?: Ref<Class<Doc>>
-): { icon?: Asset, iconProps?: Record<string, any> } {
+): { icon?: Asset, iconProps?: Record<string, unknown> } {
   // 1. Try finding in local hierarchy if attribute exists in targetClass
   if (targetClass != null) {
     const localAttr = hierarchy.findAttribute(targetClass, item.fieldKey)
@@ -415,7 +412,7 @@ export function resolveAttributeItemIcon (
   // 2. Find attribute in parsedConfig
   let attrConfig: AttributeConfig | undefined
   for (const ac of parsedConfig?.attributes ?? []) {
-    if (ac.name === item.fieldKey || ac.id === item.sourceAttributeId) {
+    if (ac.name === item.fieldKey || (item.sourceAttributeId !== undefined && ac.id === item.sourceAttributeId)) {
       attrConfig = ac
       break
     }
@@ -423,7 +420,7 @@ export function resolveAttributeItemIcon (
   if (attrConfig == null) {
     for (const m of parsedConfig?.mixins ?? []) {
       for (const ac of m.attributes ?? []) {
-        if (ac.name === item.fieldKey || ac.id === item.sourceAttributeId) {
+        if (ac.name === item.fieldKey || (item.sourceAttributeId !== undefined && ac.id === item.sourceAttributeId)) {
           attrConfig = ac
           break
         }
@@ -436,10 +433,15 @@ export function resolveAttributeItemIcon (
   if (type != null) {
     const syntheticAttr: AnyAttribute = {
       _id: (item.sourceAttributeId ?? attrConfig?.id ?? item.fieldKey) as Ref<AnyAttribute>,
+      _class: core.class.Attribute,
+      space: core.space.Model,
+      modifiedOn: 0,
+      modifiedBy: '' as PersonId,
+      attributeOf: targetClass ?? core.class.Doc,
       name: item.fieldKey,
-      label: item.fieldKey,
+      label: getEmbeddedLabel(item.fieldKey),
       type
-    } as any
+    }
 
     return getAttributeIcon(hierarchy, syntheticAttr)
   }

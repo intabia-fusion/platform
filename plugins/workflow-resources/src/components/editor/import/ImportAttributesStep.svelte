@@ -12,12 +12,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Ref } from '@hcengineering/core'
-  import { getEmbeddedLabel, translate } from '@hcengineering/platform'
+  import core, { type Ref } from '@hcengineering/core'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import type { ProjectType, TaskType } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
-  import { Icon, IconError, Label, languageStore } from '@hcengineering/ui'
+  import { Icon, IconError, Label } from '@hcengineering/ui'
   import type {
     AttributeResolutionConfig,
     ScreenResolutionConfig,
@@ -39,29 +39,17 @@
   const hierarchy = client.getHierarchy()
 
   $: targetTaskType = selectedTaskTypeId ? $taskTypeStore.get(selectedTaskTypeId) : undefined
+  $: targetTaskTypeName = targetTaskType?.name ?? parsedConfig?.workflows?.[0]?.taskTypeName ?? ''
 
-  let targetTaskTypeName = ''
-  $: void updateTargetTaskTypeName(targetTaskType, parsedConfig, $languageStore)
+  $: attributesToCreate = (
+    report?.attributes.filter((a) => !a.unresolvable && a.targetAttributeId === undefined) ?? []
+  ).filter(
+    (a) => getAttributeUsageLocations(a.fieldKey, a.sourceAttributeId, parsedConfig, screenResolutions).length > 0
+  )
 
-  async function updateTargetTaskTypeName (
-    tt: TaskType | undefined,
-    config: WorkflowConfig | null,
-    lang: string
-  ): Promise<void> {
-    if (tt?.name != null) {
-      targetTaskTypeName = await translate(tt.name, {}, lang)
-    } else if (config?.workflows?.[0]?.taskTypeName) {
-      targetTaskTypeName = await translate(config.workflows[0].taskTypeName as any, {}, lang)
-    } else {
-      targetTaskTypeName = ''
-    }
-  }
-
-  $: attributesToCreate = (report?.attributes.filter((a) => !a.unresolvable && a.targetAttributeId === undefined) ?? [])
-    .filter((a) => getAttributeUsageLocations(a.fieldKey, a.sourceAttributeId, parsedConfig, screenResolutions).length > 0)
-
-  $: unresolvableAttrs = (report?.attributes.filter((a) => a.unresolvable) ?? [])
-    .filter((a) => getAttributeUsageLocations(a.fieldKey, a.sourceAttributeId, parsedConfig, screenResolutions).length > 0)
+  $: unresolvableAttrs = (report?.attributes.filter((a) => a.unresolvable) ?? []).filter(
+    (a) => getAttributeUsageLocations(a.fieldKey, a.sourceAttributeId, parsedConfig, screenResolutions).length > 0
+  )
 
   $: hasSkippedAttributes = attributesToCreate.some((a) => attributeResolutions[a.fieldKey]?.action === 'skip')
 
@@ -101,7 +89,12 @@
         {#each attributesToCreate as item (item.fieldKey)}
           {@const currentRes = attributeResolutions[item.fieldKey] ?? { action: 'create' }}
           {@const isSkipped = currentRes.action === 'skip'}
-          {@const usages = getAttributeUsageLocations(item.fieldKey, item.sourceAttributeId, parsedConfig, screenResolutions)}
+          {@const usages = getAttributeUsageLocations(
+            item.fieldKey,
+            item.sourceAttributeId,
+            parsedConfig,
+            screenResolutions
+          )}
           {@const screenUsages = usages.filter((u) => u.type === 'screen')}
           {@const ruleUsages = usages.filter((u) => u.type === 'rule')}
           {@const iconInfo = resolveAttributeItemIcon(item, parsedConfig, hierarchy)}
@@ -110,7 +103,7 @@
             <div class="attribute-card-header flex-between flex-row-center flex-gap-2">
               <div class="flex-row-center flex-gap-2 flex-grow min-w-0">
                 <div class="attr-icon-box flex-center">
-                  <Icon icon={iconInfo?.icon ?? plugin.icon.Attribute} iconProps={iconInfo?.iconProps} size="small" />
+                  <Icon icon={iconInfo?.icon ?? core.icon.TypeString} iconProps={iconInfo?.iconProps} size="small" />
                 </div>
                 <div class="flex-col min-w-0">
                   <span class="attr-name font-medium-14">
@@ -125,7 +118,9 @@
                   type="button"
                   class="action-btn"
                   class:selected={!isSkipped}
-                  on:click={() => setAttributeAction(item.fieldKey, 'create', item.label)}
+                  on:click={() => {
+                    setAttributeAction(item.fieldKey, 'create', item.label)
+                  }}
                 >
                   <Label label={plugin.string.ActionCreate} />
                 </button>
@@ -133,7 +128,9 @@
                   type="button"
                   class="action-btn"
                   class:selected={isSkipped}
-                  on:click={() => setAttributeAction(item.fieldKey, 'skip', item.label)}
+                  on:click={() => {
+                    setAttributeAction(item.fieldKey, 'skip', item.label)
+                  }}
                 >
                   <Label label={plugin.string.ActionSkip} />
                 </button>
@@ -156,7 +153,8 @@
                     <span class="text-secondary"><Label label={plugin.string.UsedInRules} /></span>
                     {#each ruleUsages as r}
                       <span class="usage-badge rule-badge">
-                        {r.transitionName} {#if r.ruleTitle}(<Label label={r.ruleTitle} />){/if}
+                        {r.transitionName}
+                        {#if r.ruleTitle}(<Label label={r.ruleTitle} />){/if}
                       </span>
                     {/each}
                   </div>
@@ -184,7 +182,12 @@
 
       <div class="unresolvable-list flex-col flex-gap-2">
         {#each unresolvableAttrs as item (item.fieldKey)}
-          {@const usages = getAttributeUsageLocations(item.fieldKey, item.sourceAttributeId, parsedConfig, screenResolutions)}
+          {@const usages = getAttributeUsageLocations(
+            item.fieldKey,
+            item.sourceAttributeId,
+            parsedConfig,
+            screenResolutions
+          )}
           {@const screenUsages = usages.filter((u) => u.type === 'screen')}
           {@const ruleUsages = usages.filter((u) => u.type === 'rule')}
           {@const iconInfo = resolveAttributeItemIcon(item, parsedConfig, hierarchy)}
@@ -193,7 +196,7 @@
             <div class="flex-between flex-row-center flex-gap-2">
               <div class="flex-row-center flex-gap-2">
                 <div class="attr-icon-box flex-center">
-                  <Icon icon={iconInfo?.icon ?? plugin.icon.Attribute} iconProps={iconInfo?.iconProps} size="small" />
+                  <Icon icon={iconInfo?.icon ?? core.icon.TypeString} iconProps={iconInfo?.iconProps} size="small" />
                 </div>
                 <span class="font-medium-14">
                   <Label label={item.label ?? getEmbeddedLabel(item.fieldKey)} />
@@ -216,7 +219,10 @@
                     <li>{sc.screenName}</li>
                   {/each}
                   {#each ruleUsages as r}
-                    <li>{r.transitionName} {#if r.ruleTitle}(<Label label={r.ruleTitle} />){/if}</li>
+                    <li>
+                      {r.transitionName}
+                      {#if r.ruleTitle}(<Label label={r.ruleTitle} />){/if}
+                    </li>
                   {/each}
                 </ul>
               </div>
@@ -269,7 +275,9 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    transition: opacity 0.2s ease, border-color 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      border-color 0.2s ease;
 
     &.skipped {
       opacity: 0.75;

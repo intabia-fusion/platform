@@ -17,10 +17,10 @@
 
 import core, { type Ref, type Status } from '@hcengineering/core'
 import { getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
-import task from '@hcengineering/task'
+import task, { type TaskType } from '@hcengineering/task'
 
 import workflow from '../../plugin'
-import type { Screen, WorkflowTransition } from '../../schema'
+import type { Screen, Workflow, WorkflowTransition } from '../../schema'
 import { importWorkflowConfig, type WorkflowConfig } from '../../transfer'
 import {
   createMockTx,
@@ -562,6 +562,68 @@ describe('Workflow Import', () => {
     )
   })
 
+  it('correctly maps task type tokens in SubtaskStatus validator', async () => {
+    const bugTaskTypeId = 'bug-tt-id' as Ref<TaskType>
+    const storyTaskTypeId = 'story-tt-id' as Ref<TaskType>
+    const statusDoneId = 'status-done' as Ref<Status>
+
+    const client = createMockTx({
+      docs: [
+        { _id: bugTaskTypeId, _class: task.class.TaskType, name: 'Bug', parent: 'other-project-type' as any } as any,
+        {
+          _id: storyTaskTypeId,
+          _class: task.class.TaskType,
+          name: 'Story',
+          parent: 'other-project-type' as any
+        } as any,
+        { _id: statusDoneId, _class: core.class.Status, name: 'Done' } as any
+      ]
+    })
+
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: '2026-08-31T00:00:00.000Z',
+      workspace: ws1,
+      projectTypeId,
+      statuses: [{ id: statusDoneId, name: 'Done', color: 1, category: 'cat-done' as any }],
+      workflows: [
+        {
+          id: 'wf-with-subtask-status' as Ref<Workflow>,
+          name: 'Wf with Subtask Validator',
+          taskTypeName: 'Bug',
+          taskTypeId: bugTaskTypeId,
+          transitions: [
+            {
+              id: 'trans-subtask' as Ref<WorkflowTransition>,
+              name: 'Resolve',
+              from: [statusDoneId],
+              to: statusDoneId,
+              validators: [
+                {
+                  id: 'rule-subtask',
+                  rule: workflow.validator.SubtaskStatus,
+                  ruleClass: workflow.class.WorkflowValidator,
+                  props: {
+                    statuses: {
+                      '$taskType:Bug': ['$status:Done'],
+                      '$taskType:Story': ['$status:Done']
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+    const result = await importWorkflowConfig(client, projectTypeId, config, {
+      targetTaskTypeId,
+      statusMap: { [statusDoneId]: statusDoneId }
+    })
+    expect(result.workflows['wf-with-subtask-status' as Ref<Workflow>]).toBeDefined()
+  })
+
   it('creates missing mixins and mixin attributes on import', async () => {
     const client = createMockTx()
     const mixinId = 'mixin-1' as any
@@ -1002,5 +1064,46 @@ describe('Workflow Import', () => {
       })
     )
   })
-})
 
+  it('atomically commits transactions on success and does not commit on error', async () => {
+    const client = createMockTx()
+
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: new Date().toISOString(),
+      workspace: ws1,
+      projectTypeId,
+      workflows: [
+        {
+          id: workflowId,
+          name: 'Atomic Wf',
+          taskTypeName: 'Bug',
+          taskTypeId
+        }
+      ]
+    }
+
+    await importWorkflowConfig(client, projectTypeId, config)
+    expect((client as any).commit).toHaveBeenCalledTimes(1)
+
+    // On error, commit must not be called
+    const failingConfig: WorkflowConfig = {
+      version: 1,
+      exportDate: new Date().toISOString(),
+      workspace: ws1,
+      projectTypeId,
+      workflows: [
+        {
+          id: 'invalid-wf' as any,
+          name: 'Failing Wf',
+          taskTypeName: 'NonExistentTaskType',
+          taskTypeId: 'non-existent' as any
+        }
+      ]
+    }
+
+    const failingClient = createMockTx()
+    await expect(importWorkflowConfig(failingClient, projectTypeId, failingConfig)).rejects.toThrow()
+    expect((failingClient as any).commit).not.toHaveBeenCalled()
+  })
+})

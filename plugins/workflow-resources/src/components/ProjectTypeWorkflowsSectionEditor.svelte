@@ -15,7 +15,7 @@
   import { onDestroy } from 'svelte'
   import { Ref, SortingOrder } from '@hcengineering/core'
   import { Severity, Status as PlatformStatus, setPlatformStatus } from '@hcengineering/platform'
-  import { copyTextToClipboard, createQuery, getClient, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import task, { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
@@ -26,11 +26,10 @@
     Icon,
     IconAdd,
     IconCopy,
-    IconShare,
     Label,
     showPopup
   } from '@hcengineering/ui'
-  import { exportWorkflow, type Workflow, type WorkflowConfig } from '@hcengineering/workflow'
+  import type { Workflow, WorkflowConfig } from '@hcengineering/workflow'
 
   import { navigateToWorkflow } from '../location'
   import plugin from '../plugin'
@@ -74,19 +73,6 @@
     {
       id: 'clipboard',
       label: plugin.string.ImportFromClipboard,
-      icon: IconCopy
-    }
-  ]
-
-  const exportActions: DropdownIntlItem[] = [
-    {
-      id: 'file',
-      label: plugin.string.ExportToFile,
-      icon: task.icon.Export
-    },
-    {
-      id: 'clipboard',
-      label: plugin.string.CopyToClipboard,
       icon: IconCopy
     }
   ]
@@ -198,49 +184,6 @@
     }
   }
 
-  async function handleExportAction (wf: Workflow, event?: CustomEvent): Promise<void> {
-    if (event == null || wf == null) return
-    const actionId = event.detail
-    if (actionId === 'file') {
-      try {
-        const config = await exportWorkflow(client, wf._id, {
-          workspace: getCurrentWorkspaceUuid(),
-          projectTypeId: type._id
-        })
-        const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `${wf.name}.workflow.json`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-      } catch (err) {
-        console.error('Failed to export workflow', err)
-        await setPlatformStatus(
-          new PlatformStatus(Severity.ERROR, plugin.string.InvalidWorkflowFile, {}, undefined, { timeout: 5000 })
-        )
-      }
-    } else if (actionId === 'clipboard') {
-      try {
-        const config = await exportWorkflow(client, wf._id, {
-          workspace: getCurrentWorkspaceUuid(),
-          projectTypeId: type._id
-        })
-        await copyTextToClipboard(JSON.stringify(config, null, 2))
-        await setPlatformStatus(
-          new PlatformStatus(Severity.INFO, plugin.string.CopiedToClipboard, {}, undefined, { timeout: 3000 })
-        )
-      } catch (err) {
-        console.error('Failed to copy workflow to clipboard', err)
-        await setPlatformStatus(
-          new PlatformStatus(Severity.ERROR, plugin.string.ClipboardReadError, {}, undefined, { timeout: 5000 })
-        )
-      }
-    }
-  }
-
   $: isLoading = isWorkflowsLoading
   $: addDisabled = disabled || taskTypes.length === 0
 
@@ -290,7 +233,7 @@
       {@const taskTypeName = getTaskTypeName(workflow.taskType)}
       <button
         type="button"
-        class="hulyTableAttr-content__row row-with-actions"
+        class="hulyTableAttr-content__row"
         data-id="workflow-row"
         data-workflow-name={workflow.name}
         on:click|stopPropagation={() => {
@@ -310,19 +253,6 @@
             <Label label={plugin.string.UnknownTaskType} />
           {/if}
         </span>
-        <span class="row-action-btn flex-row-center flex-gap-1" on:click|stopPropagation>
-          <ButtonMenu
-            icon={IconShare}
-            size="small"
-            kind="secondary"
-            tooltip={{ label: plugin.string.Export, direction: 'bottom' }}
-            noSelection
-            items={exportActions}
-            on:selected={(e) => {
-              void handleExportAction(workflow, e)
-            }}
-          />
-        </span>
       </button>
     {/each}
   </div>
@@ -338,20 +268,6 @@
     justify-content: flex-start;
     align-items: center;
     text-align: left;
-  }
-
-  .row-with-actions {
-    position: relative;
-
-    .row-action-btn {
-      margin-left: auto;
-      opacity: 0;
-      transition: opacity 0.15s;
-    }
-
-    &:hover .row-action-btn {
-      opacity: 1;
-    }
   }
 
   .type-label {

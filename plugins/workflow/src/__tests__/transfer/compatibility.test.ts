@@ -184,9 +184,7 @@ describe('Workflow Compatibility Check', () => {
     expect(
       isAttributeTypeResolvable(hierarchy, { _class: core.class.EnumOf, of: 'custom:non-existent:enum' } as any)
     ).toBe(true)
-    expect(
-      isAttributeTypeResolvable(hierarchy, { _class: core.class.RefTo, to: 'core:class:Doc' } as any)
-    ).toBe(true)
+    expect(isAttributeTypeResolvable(hierarchy, { _class: core.class.RefTo, to: 'core:class:Doc' } as any)).toBe(true)
     expect(
       isAttributeTypeResolvable(hierarchy, { _class: core.class.RefTo, to: 'non:existent:Class' as any } as any)
     ).toBe(false)

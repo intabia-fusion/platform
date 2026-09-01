@@ -21,6 +21,7 @@ import core, {
   type Enum,
   Hierarchy,
   type Mixin,
+  notEmpty,
   type Ref,
   SortingOrder,
   type Status,
@@ -45,6 +46,7 @@ import {
   type ProjectWorkflowsConfig,
   type RuleConfig,
   type ScreenConfig,
+  type ScreenFieldConfig,
   type ScreenTabConfig,
   type StatusConfig,
   type WorkflowConfig,
@@ -59,11 +61,61 @@ async function resolveEnumInfoForAttributes (
   client: TxOperations,
   attributes: AttributeConfig[]
 ): Promise<Map<Ref<Enum>, Enum>> {
-  const enumIds = attributes.map((a) => getEnumRefFromType(a.type)).filter((id): id is Ref<Enum> => id !== undefined)
+  const enumIds = attributes.map((a) => getEnumRefFromType(a.type)).filter(notEmpty)
   if (enumIds.length === 0) return new Map()
 
-  const enumDocs = await client.findAll(core.class.Enum, { _id: { $in: Array.from(new Set(enumIds)) } })
-  const enumMap = new Map<Ref<Enum>, Enum>(enumDocs.map((e) => [e._id, e]))
+  const enumMap = new Map<Ref<Enum>, Enum>()
+  const modelDb =
+    typeof (client as any).getModel === 'function'
+      ? (client as any).getModel()
+      : typeof (client as any).model === 'object'
+        ? (client as any).model
+        : undefined
+
+  if (modelDb !== undefined) {
+    try {
+      if (typeof modelDb.findAllSync === 'function') {
+        const allModelEnums = modelDb.findAllSync(core.class.Enum, {}) as Enum[]
+        for (const doc of allModelEnums) {
+          enumMap.set(doc._id, doc)
+        }
+      }
+    } catch {}
+
+    for (const id of enumIds) {
+      if (!enumMap.has(id)) {
+        try {
+          const doc = (typeof modelDb.findObject === 'function' ? modelDb.findObject(id) : undefined) as
+            | Enum
+            | undefined
+          if (doc !== undefined) {
+            enumMap.set(doc._id, doc)
+          }
+        } catch {}
+      }
+    }
+  }
+
+  const remainingIds = enumIds.filter((id) => !enumMap.has(id))
+  if (remainingIds.length > 0) {
+    try {
+      const enumDocs = await client.findAll(core.class.Enum, {})
+      for (const doc of enumDocs) {
+        enumMap.set(doc._id, doc)
+      }
+    } catch {}
+
+    for (const id of remainingIds) {
+      if (!enumMap.has(id)) {
+        try {
+          const doc = await client.findOne(core.class.Enum, { _id: id })
+          if (doc !== undefined) {
+            enumMap.set(doc._id, doc)
+          }
+        } catch {}
+      }
+    }
+  }
 
   for (const attr of attributes) {
     const enumRef = getEnumRefFromType(attr.type)
@@ -94,6 +146,83 @@ function exportRules<TRule extends WorkflowRule> (
     rule: r.rule,
     ruleClass: r.ruleClass,
     props: remap(r.props ?? {}, resolver.toToken)
+  }))
+}
+
+/**
+ * Exports screen documents and their tabs/fields into portable ScreenConfig array.
+ */
+async function exportScreenConfigs (
+  client: TxOperations,
+  screenDocs: Screen[],
+  onField?: (f: ScreenFieldConfig) => void
+): Promise<ScreenConfig[]> {
+  const screens: ScreenConfig[] = []
+  for (const sc of screenDocs) {
+    const tabs = await client.findAll(
+      workflow.class.ScreenTab,
+      { attachedTo: sc._id },
+      { sort: { rank: SortingOrder.Ascending } }
+    )
+    const tabConfigs: ScreenTabConfig[] = []
+    for (const tab of tabs) {
+      const fields = await client.findAll(
+        workflow.class.ScreenField,
+        { attachedTo: tab._id },
+        { sort: { rank: SortingOrder.Ascending } }
+      )
+      const fieldConfigs: ScreenFieldConfig[] = fields.map((f) => {
+        const fc: ScreenFieldConfig = {
+          attribute: f.attribute,
+          fieldKey: f.fieldKey,
+          mixin: f.mixin,
+          required: f.required
+        }
+        onField?.(fc)
+        return fc
+      })
+      tabConfigs.push({
+        name: tab.name,
+        fields: fieldConfigs
+      })
+    }
+    screens.push({
+      id: sc._id,
+      name: sc.name,
+      description: sc.description,
+      targetClass: sc.targetClass,
+      tabs: tabConfigs
+    })
+  }
+  return screens
+}
+
+/**
+ * Collects and builds WorkflowEnumConfig array for referenced enums across attributes and mixins.
+ */
+async function collectWorkflowEnumConfigs (
+  client: TxOperations,
+  attributeConfigs: AttributeConfig[] | undefined,
+  mixinConfigs: WorkflowMixinConfig[] | undefined
+): Promise<WorkflowEnumConfig[] | undefined> {
+  const allReferencedEnums = new Map<Ref<Enum>, Enum>()
+  if (attributeConfigs !== undefined && attributeConfigs.length > 0) {
+    for (const [k, v] of await resolveEnumInfoForAttributes(client, attributeConfigs)) {
+      allReferencedEnums.set(k, v)
+    }
+  }
+  for (const m of mixinConfigs ?? []) {
+    if (m.attributes !== undefined && m.attributes.length > 0) {
+      for (const [k, v] of await resolveEnumInfoForAttributes(client, m.attributes)) {
+        allReferencedEnums.set(k, v)
+      }
+    }
+  }
+  if (allReferencedEnums.size === 0) return undefined
+  return Array.from(allReferencedEnums.values()).map((e) => ({
+    id: e._id,
+    name: e.name,
+    enumValues: e.enumValues
   }))
 }
 
@@ -130,40 +259,10 @@ export async function exportWorkflow (
     }
   }
 
-  const screens: ScreenConfig[] = []
+  let screens: ScreenConfig[] | undefined
   if (referencedScreenRefs.size > 0) {
     const screenDocs = await client.findAll(workflow.class.Screen, { _id: { $in: Array.from(referencedScreenRefs) } })
-    for (const sc of screenDocs) {
-      const tabs = await client.findAll(
-        workflow.class.ScreenTab,
-        { attachedTo: sc._id },
-        { sort: { rank: SortingOrder.Ascending } }
-      )
-      const tabConfigs: ScreenTabConfig[] = []
-      for (const tab of tabs) {
-        const fields = await client.findAll(
-          workflow.class.ScreenField,
-          { attachedTo: tab._id },
-          { sort: { rank: SortingOrder.Ascending } }
-        )
-        tabConfigs.push({
-          name: tab.name,
-          fields: fields.map((f) => ({
-            attribute: f.attribute,
-            fieldKey: f.fieldKey,
-            mixin: f.mixin,
-            required: f.required
-          }))
-        })
-      }
-      screens.push({
-        id: sc._id,
-        name: sc.name,
-        description: sc.description,
-        targetClass: sc.targetClass,
-        tabs: tabConfigs
-      })
-    }
+    screens = await exportScreenConfigs(client, screenDocs)
   }
 
   const workflowEntry: WorkflowConfigEntry = {
@@ -232,11 +331,13 @@ export async function exportWorkflow (
   })
 
   const referencedAttributeIds = new Set<Ref<AnyAttribute>>()
+  const referencedFieldKeys = new Set<string>()
   const referencedMixinIds = new Set<Ref<Mixin<Doc>>>()
-  for (const sc of screens) {
+  for (const sc of screens ?? []) {
     for (const tab of sc.tabs ?? []) {
       for (const f of tab.fields ?? []) {
-        referencedAttributeIds.add(f.attribute)
+        if (f.attribute !== undefined) referencedAttributeIds.add(f.attribute)
+        if (f.fieldKey !== undefined) referencedFieldKeys.add(f.fieldKey)
         if (f.mixin !== undefined) {
           referencedMixinIds.add(f.mixin)
         }
@@ -247,45 +348,41 @@ export async function exportWorkflow (
   for (const t of transitions) {
     for (const r of [...(t.validators ?? []), ...(t.postFunctions ?? [])]) {
       for (const f of extractRuleFieldReferences(r.rule, r.props)) {
-        if (f.attribute !== undefined) {
-          referencedAttributeIds.add(f.attribute)
-        }
+        if (f.attribute !== undefined) referencedAttributeIds.add(f.attribute)
+        if (f.fieldKey !== undefined) referencedFieldKeys.add(f.fieldKey)
       }
     }
   }
 
-  const targetClass = taskTypeDoc?.targetClass ?? task.class.Task
-  const attributeConfigs = await collectAttributeConfigs(client, referencedAttributeIds, [targetClass])
-  const mixinConfigs = await exportMixins(client, [targetClass], referencedMixinIds)
+  const targetClasses = Array.from(
+    new Set(
+      [
+        taskTypeDoc?.targetClass ?? task.class.Task,
+        ...(screens ?? []).map((s) => s.targetClass),
+        taskTypeDoc?.targetClass
+      ].filter((c): c is Ref<Class<Doc>> => c !== undefined)
+    )
+  )
 
-  const allReferencedEnums = new Map<Ref<Enum>, Enum>()
-  for (const [k, v] of await resolveEnumInfoForAttributes(client, attributeConfigs)) {
-    allReferencedEnums.set(k, v)
-  }
-  for (const m of mixinConfigs ?? []) {
-    if (m.attributes !== undefined) {
-      for (const [k, v] of await resolveEnumInfoForAttributes(client, m.attributes)) {
-        allReferencedEnums.set(k, v)
-      }
-    }
-  }
-
-  const enumConfigs = Array.from(allReferencedEnums.values()).map((e) => ({
-    id: e._id,
-    name: e.name,
-    enumValues: e.enumValues
-  }))
+  const attributeConfigs = await collectAttributeConfigs(
+    client,
+    referencedAttributeIds,
+    referencedFieldKeys,
+    targetClasses
+  )
+  const mixinConfigs = await exportMixins(client, targetClasses, referencedMixinIds)
+  const enumConfigs = await collectWorkflowEnumConfigs(client, attributeConfigs, mixinConfigs)
 
   return {
     version: WorkflowConfigVersion,
     exportDate: new Date().toISOString(),
     workspace: options.workspace,
     projectTypeId: options.projectTypeId,
-    screens: screens.length > 0 ? screens : undefined,
+    screens: screens !== undefined && screens.length > 0 ? screens : undefined,
     statuses: statusConfigs.length > 0 ? statusConfigs : undefined,
     attributes: attributeConfigs.length > 0 ? attributeConfigs : undefined,
     mixins: mixinConfigs,
-    enums: enumConfigs.length > 0 ? enumConfigs : undefined,
+    enums: enumConfigs,
     workflows: [workflowEntry]
   }
 }
@@ -353,9 +450,10 @@ async function exportMixins (
 async function collectAttributeConfigs (
   client: TxOperations,
   referencedAttributeIds: Set<Ref<AnyAttribute>>,
+  referencedFieldKeys: Set<string>,
   targetClasses: Array<Ref<Class<Doc>>>
 ): Promise<AttributeConfig[]> {
-  if (referencedAttributeIds.size === 0) return []
+  if (referencedAttributeIds.size === 0 && referencedFieldKeys.size === 0) return []
 
   const hierarchy = client.getHierarchy()
   const attributeById = new Map<Ref<AnyAttribute>, AnyAttribute>()
@@ -383,20 +481,24 @@ async function collectAttributeConfigs (
   }
 
   try {
-    const attrDocs = await client.findAll(core.class.Attribute, {
-      _id: { $in: Array.from(referencedAttributeIds) }
-    })
-    for (const attr of attrDocs) {
-      attributeById.set(attr._id, attr)
-      attributeByName.set(attr.name, attr)
+    if (referencedAttributeIds.size > 0) {
+      const attrDocs = await client.findAll(core.class.Attribute, {
+        _id: { $in: Array.from(referencedAttributeIds) }
+      })
+      for (const attr of attrDocs) {
+        attributeById.set(attr._id, attr)
+        attributeByName.set(attr.name, attr)
+      }
     }
 
-    const nameAttrDocs = await client.findAll(core.class.Attribute, {
-      name: { $in: Array.from(referencedAttributeIds as unknown as string[]) }
-    })
-    for (const attr of nameAttrDocs) {
-      attributeById.set(attr._id, attr)
-      attributeByName.set(attr.name, attr)
+    if (referencedFieldKeys.size > 0) {
+      const nameAttrDocs = await client.findAll(core.class.Attribute, {
+        name: { $in: Array.from(referencedFieldKeys) }
+      })
+      for (const attr of nameAttrDocs) {
+        attributeById.set(attr._id, attr)
+        attributeByName.set(attr.name, attr)
+      }
     }
   } catch {}
 
@@ -404,7 +506,24 @@ async function collectAttributeConfigs (
   const addedIds = new Set<string>()
 
   for (const id of referencedAttributeIds) {
-    const attr = attributeById.get(id) ?? attributeByName.get(id as string)
+    const attr = attributeById.get(id)
+    if (attr !== undefined && !addedIds.has(attr._id)) {
+      addedIds.add(attr._id)
+      const isMixin = hierarchy.isDerived(attr.attributeOf, core.class.Mixin)
+      result.push({
+        id: attr._id,
+        name: attr.name,
+        label: attr.label,
+        type: attr.type,
+        isCustom: attr.isCustom ?? isMixin,
+        mixin: isMixin ? (attr.attributeOf as Ref<Mixin<Doc>>) : undefined,
+        attributeOf: attr.attributeOf
+      })
+    }
+  }
+
+  for (const key of referencedFieldKeys) {
+    const attr = attributeByName.get(key)
     if (attr !== undefined && !addedIds.has(attr._id)) {
       addedIds.add(attr._id)
       const isMixin = hierarchy.isDerived(attr.attributeOf, core.class.Mixin)
@@ -436,48 +555,18 @@ export async function exportWorkflowConfig (
     resolver.toToken.get(ref)?.slice(prefix.length) ?? (ref as string)
 
   const referencedAttributeIds = new Set<Ref<AnyAttribute>>()
+  const referencedFieldKeys = new Set<string>()
   const referencedMixinIds = new Set<Ref<Mixin<Doc>>>()
   const statusIds = new Set<Ref<Status>>()
 
   const screenDocs = await client.findAll(workflow.class.Screen, { projectType: projectTypeId })
-  const screens: ScreenConfig[] = []
-  for (const sc of screenDocs) {
-    const tabs = await client.findAll(
-      workflow.class.ScreenTab,
-      { attachedTo: sc._id },
-      { sort: { rank: SortingOrder.Ascending } }
-    )
-    const tabConfigs: ScreenTabConfig[] = []
-    for (const tab of tabs) {
-      const fields = await client.findAll(
-        workflow.class.ScreenField,
-        { attachedTo: tab._id },
-        { sort: { rank: SortingOrder.Ascending } }
-      )
-      tabConfigs.push({
-        name: tab.name,
-        fields: fields.map((f) => {
-          referencedAttributeIds.add(f.attribute)
-          if (f.mixin !== undefined) {
-            referencedMixinIds.add(f.mixin)
-          }
-          return {
-            attribute: f.attribute,
-            fieldKey: f.fieldKey,
-            mixin: f.mixin,
-            required: f.required
-          }
-        })
-      })
+  const screens = await exportScreenConfigs(client, screenDocs, (f) => {
+    if (f.attribute !== undefined) referencedAttributeIds.add(f.attribute)
+    if (f.fieldKey !== undefined) referencedFieldKeys.add(f.fieldKey)
+    if (f.mixin !== undefined) {
+      referencedMixinIds.add(f.mixin)
     }
-    screens.push({
-      id: sc._id,
-      name: sc.name,
-      description: sc.description,
-      targetClass: sc.targetClass,
-      tabs: tabConfigs
-    })
-  }
+  })
 
   const workflowDocs = await client.findAll(workflow.class.Workflow, { projectType: projectTypeId })
   const workflows: WorkflowConfigEntry[] = []
@@ -494,9 +583,8 @@ export async function exportWorkflowConfig (
       for (const f of t.from ?? []) statusIds.add(f)
       for (const r of [...(t.validators ?? []), ...(t.postFunctions ?? [])]) {
         for (const f of extractRuleFieldReferences(r.rule, r.props)) {
-          if (f.attribute !== undefined) {
-            referencedAttributeIds.add(f.attribute)
-          }
+          if (f.attribute !== undefined) referencedAttributeIds.add(f.attribute)
+          if (f.fieldKey !== undefined) referencedFieldKeys.add(f.fieldKey)
         }
       }
     }
@@ -542,26 +630,14 @@ export async function exportWorkflowConfig (
     )
   )
 
-  const attributeConfigs = await collectAttributeConfigs(client, referencedAttributeIds, targetClasses)
+  const attributeConfigs = await collectAttributeConfigs(
+    client,
+    referencedAttributeIds,
+    referencedFieldKeys,
+    targetClasses
+  )
   const mixinConfigs = await exportMixins(client, targetClasses, referencedMixinIds)
-
-  const allReferencedEnums = new Map<Ref<Enum>, Enum>()
-  for (const [k, v] of await resolveEnumInfoForAttributes(client, attributeConfigs)) {
-    allReferencedEnums.set(k, v)
-  }
-  for (const m of mixinConfigs ?? []) {
-    if (m.attributes !== undefined) {
-      for (const [k, v] of await resolveEnumInfoForAttributes(client, m.attributes)) {
-        allReferencedEnums.set(k, v)
-      }
-    }
-  }
-
-  const enumConfigs = Array.from(allReferencedEnums.values()).map((e) => ({
-    id: e._id,
-    name: e.name,
-    enumValues: e.enumValues
-  }))
+  const enumConfigs = await collectWorkflowEnumConfigs(client, attributeConfigs, mixinConfigs)
 
   const wfNames = new Map<string, string>(workflowDocs.map((w) => [w._id, w.name]))
   const ttNames = new Map<string, string>()
@@ -593,7 +669,7 @@ export async function exportWorkflowConfig (
     statuses: statusConfigs.length > 0 ? statusConfigs : undefined,
     attributes: attributeConfigs.length > 0 ? attributeConfigs : undefined,
     mixins: mixinConfigs,
-    enums: enumConfigs.length > 0 ? enumConfigs : undefined,
+    enums: enumConfigs,
     workflows,
     projects: projects.length > 0 ? projects : undefined
   }

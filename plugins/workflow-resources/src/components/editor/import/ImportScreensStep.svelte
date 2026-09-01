@@ -13,14 +13,15 @@
 -->
 <script lang="ts">
   import type { Class, Ref } from '@hcengineering/core'
-  import { getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, translate, type IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { ProjectType, TaskType } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import tracker from '@hcengineering/tracker'
-  import { Icon, IconError, Label, ModernDropdown, tooltip } from '@hcengineering/ui'
+  import { Icon, IconError, Label, ModernDropdown, languageStore, tooltip } from '@hcengineering/ui'
   import workflow, {
     type Screen,
+    type ScreenConfig,
     type ScreenResolutionConfig,
     type WorkflowCompatibilityReport,
     type WorkflowConfig
@@ -38,6 +39,11 @@
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
+  let anyStatusLabel = ''
+  $: void translate(plugin.string.AnyStatus, {}, $languageStore).then((l) => {
+    anyStatusLabel = l
+  })
+
   let allExistingScreens: Screen[] = []
   const screensQuery = createQuery()
   $: screensQuery.query(workflow.class.Screen, { projectType: projectType._id }, (res) => {
@@ -47,56 +53,28 @@
   $: targetTaskType = selectedTaskTypeId !== undefined ? $taskTypeStore.get(selectedTaskTypeId) : undefined
 
   function getClassLabel (sc: ScreenConfig): IntlString | undefined {
-    const targetClass = sc.targetClass
-    if (targetClass == null || targetClass === '') return undefined
+    if (sc.targetClass == null || sc.targetClass === '') return undefined
 
-    const cleanTarget = targetClass.split(':').pop() ?? targetClass
-
-    // 1. If screen is attached to base Issue class (Any task type)
-    if (
-      targetClass === tracker.class.Issue ||
-      cleanTarget === 'Issue' ||
-      targetClass === 'tracker:class:Issue'
-    ) {
+    // 1. If screen is attached to base Issue class, it applies to Any task type
+    if (sc.targetClass === tracker.class.Issue) {
       return plugin.string.AnyTaskType
     }
 
-    // 2. If screen was attached to a specific task type and targetTaskType is selected on Step 2
+    // 2. If target task type is selected for this import, use its name
     if (targetTaskType !== undefined) {
       return getEmbeddedLabel(targetTaskType.name)
     }
 
-    // 3. Otherwise find matching task type in current project or all task types
-    const projectTaskTypes = Array.from($taskTypeStore.values()).filter(
-      (t) => t.parent === projectType._id
-    )
-    const allTaskTypes = Array.from($taskTypeStore.values())
-
-    for (const pool of [projectTaskTypes, allTaskTypes]) {
-      const match = pool.find(
-        (t) =>
-          t.targetClass === targetClass ||
-          t.targetClass.split(':').pop() === cleanTarget ||
-          (typeof t.name === 'string' && t.name.toLowerCase() === cleanTarget.toLowerCase()) ||
-          (typeof t.name === 'object' &&
-            t.name != null &&
-            Object.values(t.name).some(
-              (v) => typeof v === 'string' && v.toLowerCase() === cleanTarget.toLowerCase()
-            ))
-      )
-      if (match !== undefined) return getEmbeddedLabel(match.name)
+    // 3. Match task type by targetClass
+    const match = Array.from($taskTypeStore.values()).find((t) => t.targetClass === sc.targetClass)
+    if (match !== undefined) {
+      return getEmbeddedLabel(match.name)
     }
 
-    // 4. Hierarchy class lookup
-    const fromHierarchy = hierarchy.findClass(targetClass as Ref<Class<any>>)?.label
-    if (fromHierarchy != null && fromHierarchy !== '') return fromHierarchy
-
-    const fromTrackerHierarchy = hierarchy.findClass(
-      ('tracker:class:' + cleanTarget) as Ref<Class<any>>
-    )?.label
-    if (fromTrackerHierarchy != null && fromTrackerHierarchy !== '') return fromTrackerHierarchy
-
-    return getEmbeddedLabel(cleanTarget)
+    // 4. Hierarchy class lookup or fallback
+    return (
+      hierarchy.findClass(sc.targetClass)?.label ?? getEmbeddedLabel(sc.targetClass.split(':').pop() ?? sc.targetClass)
+    )
   }
 </script>
 
@@ -108,40 +86,23 @@
 
     <div class="screens-detailed-list flex-col flex-gap-3">
       {#each parsedConfig.screens as sc (sc.name)}
-        {@const usedTransitions = getTransitionsUsingScreen(sc, parsedConfig)}
+        {@const usedTransitions = getTransitionsUsingScreen(sc, parsedConfig, anyStatusLabel)}
         {@const currentRes = screenResolutions[sc.id] ?? screenResolutions[sc.name] ?? { action: 'copy' }}
         {@const reportItem = report?.screens?.find((r) => r.sourceScreenId === sc.id || r.name === sc.name)}
         {@const isExactMatch = reportItem?.isExactMatch === true}
         {@const classLabel = getClassLabel(sc)}
         <div class="screen-detail-card" class:disabled={currentRes.action === 'skip'}>
           <!-- Screen Card Header -->
-          <div class="screen-header-row flex-between flex-row-center flex-gap-2">
-            <div class="flex-row-center flex-gap-2 flex-grow min-w-0 screen-main-info">
+          <div class="screen-header-row flex-row-center flex-between flex-gap-2">
+            <div class="flex-row-center flex-gap-2 min-w-0 screen-main-info">
               <div class="screen-icon-box flex-center">
                 <Icon icon={plugin.icon.Screen} size="small" />
               </div>
-              <div class="flex-col min-w-0">
-                <div class="flex-row-center flex-gap-2 flex-wrap">
-                  <span class="font-medium-14 screen-title">{sc.name}</span>
-                  {#if isExactMatch}
-                    <span class="exact-match-badge font-regular-12">
-                      <Label label={plugin.string.ScreenMatchesExisting} />
-                    </span>
-                  {/if}
-                  {#if classLabel}
-                    <span class="screen-class">
-                      <Label label={classLabel} />
-                    </span>
-                  {/if}
-                </div>
-                {#if sc.description}
-                  <span class="font-regular-12 text-secondary mt-0-5">{sc.description}</span>
-                {/if}
-              </div>
+              <span class="font-medium-14 screen-title" title={sc.name}>{sc.name}</span>
             </div>
 
             <!-- Segmented Action Switch (Contextual) + Warning on Skip -->
-            <div class="flex-row-center flex-gap-2 flex-shrink-0">
+            <div class="screen-actions-wrapper flex-row-center flex-gap-2 flex-shrink-0">
               {#if currentRes.action === 'skip' && usedTransitions.length > 0}
                 <div
                   class="screen-skipped-warning flex-center"
@@ -236,6 +197,25 @@
             </div>
           </div>
 
+          <!-- Matching Info / Description Row -->
+          {#if classLabel || isExactMatch || sc.description}
+            <div class="screen-sub-row flex-row-center flex-gap-2 flex-wrap">
+              {#if classLabel}
+                <span class="screen-class flex-shrink-0" title={classLabel}>
+                  <Label label={classLabel} />
+                </span>
+              {/if}
+              {#if isExactMatch}
+                <span class="exact-match-badge font-regular-12">
+                  <Label label={plugin.string.ScreenMatchesExisting} />
+                </span>
+              {/if}
+              {#if sc.description}
+                <span class="font-regular-12 text-secondary">{sc.description}</span>
+              {/if}
+            </div>
+          {/if}
+
           <!-- Target screen select if 'replace' is selected and NOT an exact match -->
           {#if !isExactMatch && currentRes.action === 'replace'}
             <div class="screen-replace-target-row flex-between flex-row-center flex-gap-2">
@@ -272,7 +252,7 @@
                     </div>
 
                     <div class="fields-grid">
-                      {#each sc.tabs[0].fields as f (f.fieldKey)}
+                      {#each sc.tabs[0].fields ?? [] as f (f.fieldKey)}
                         <div class="field-pill flex-row-center">
                           <span class="field-label">
                             <Label
@@ -363,7 +343,9 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease;
 
     &.disabled {
       background-color: var(--theme-button-hover-bg, rgba(0, 0, 0, 0.02));
@@ -379,7 +361,25 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: nowrap;
     gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .screen-main-info {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .screen-sub-row {
+    margin-top: -0.25rem;
+  }
+
+  .screen-actions-wrapper {
+    flex-shrink: 0;
+    margin-left: auto;
   }
 
   .screen-icon-box {
@@ -395,12 +395,16 @@
     color: var(--theme-content-color, #1a1a1a);
     font-weight: 500;
     font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .screen-class {
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
+    max-width: 18rem;
     font-size: 0.75rem;
     font-weight: 600;
     line-height: 1rem;
@@ -410,6 +414,8 @@
     background-color: var(--text-editor-selected-node-background, rgba(76, 56, 189, 0.12));
     color: var(--primary-color-purple-02, #6452db);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .exact-match-badge {
@@ -453,16 +459,18 @@
     gap: 2px;
     border: 1px solid var(--theme-divider-color, rgba(0, 0, 0, 0.06));
     flex-shrink: 0;
+    max-width: 100%;
 
     .action-btn {
       border: none;
       background: transparent;
-      padding: 0.25rem 0.625rem;
+      padding: 0.25rem 0.5rem;
       border-radius: 0.375rem;
       font-size: 0.75rem;
       font-weight: 500;
       color: var(--theme-secondary-color, #666);
       cursor: pointer;
+      white-space: nowrap;
       transition: all 0.15s ease;
 
       &:hover:not(.selected):not([disabled]) {
