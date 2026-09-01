@@ -17,18 +17,21 @@ import core, {
   AnyAttribute,
   AttachedDoc,
   Doc,
+  DocumentUpdate,
   Hierarchy,
   notEmpty,
   Ref,
   RefTo,
   Status,
   Tx,
+  type TxCUD,
   TxCreateDoc,
   TxProcessor,
-  TxRemoveDoc
+  TxRemoveDoc,
+  TxUpdateDoc
 } from '@hcengineering/core'
 import task, { type Task, TaskType } from '@hcengineering/task'
-import tracker from '@hcengineering/tracker'
+import tracker, { type Issue, type TimeSpendReport } from '@hcengineering/tracker'
 import { type IntlString, translate } from '@hcengineering/platform'
 import { isEmptyMarkup } from '@hcengineering/text'
 
@@ -42,19 +45,24 @@ import {
   type WorkflowTransition
 } from './schema'
 
-export function isEmptyAttribute (
+export async function isEmptyAttribute (
   h: Hierarchy,
   task: Task,
   attribute: AnyAttribute,
   value: any,
-  txes: Tx[] = []
-): boolean {
+  txes: Tx[] = [],
+  client?: ValidatorClient
+): Promise<boolean> {
   if (h.isDerived(attribute.type._class, core.class.RefTo)) {
     if (value == null) return true
     const type = attribute.type as RefTo<Doc>
     if (h.isDerived(type.to, tracker.class.Issue) && value === tracker.ids.NoParent) {
       return true
     }
+  }
+
+  if (h.isDerived(attribute.type._class, tracker.class.TypeReportedTime)) {
+    return await isEmptyReportedTime(h, task, value, txes, client)
   }
 
   if (h.isDerived(attribute.type._class, core.class.Collection)) {
@@ -111,6 +119,121 @@ export function isEmptyAttribute (
   return isEmptyValue(value)
 }
 
+/**
+ * `reportedTime` on an issue is maintained by a server trigger that sums up attached
+ * `TimeSpendReport` documents. When time is reported during a transition screen or in a batch tx,
+ * new `TimeSpendReport` records are created in `txes` while the task's own `reportedTime`
+ * attribute has not been updated by the trigger yet. We compute the effective reported time
+ * by combining the task's base time (or draft payload) with any report CUD operations in `txes`.
+ */
+async function isEmptyReportedTime (
+  h: Hierarchy,
+  task: Task,
+  value: any,
+  txes: Tx[],
+  client?: ValidatorClient
+): Promise<boolean> {
+  const createdReports = new Map<string, number>()
+  const updatedPastReports = new Map<Ref<TimeSpendReport>, number>()
+  const removedPastReportIds: Array<Ref<TimeSpendReport>> = []
+
+  for (const _tx of txes) {
+    if (!TxProcessor.isExtendsCUD(_tx._class)) continue
+
+    const tx = _tx as TxCUD<Doc>
+
+    if (tx.attachedTo !== task._id) continue
+    if (tx.objectClass !== tracker.class.TimeSpendReport && tx.collection !== 'reports') continue
+
+    if (tx._class === core.class.TxCreateDoc) {
+      const createTx = tx as TxCreateDoc<TimeSpendReport>
+      const report = TxProcessor.createDoc2Doc(createTx)
+
+      createdReports.set(createTx.objectId, parseNumber(report.value))
+    } else if (tx._class === core.class.TxUpdateDoc) {
+      const updateTx = tx as TxUpdateDoc<TimeSpendReport>
+      const newVal = getUpdatedFieldValue(updateTx.operations, 'value')
+
+      if (newVal != null) {
+        if (createdReports.has(updateTx.objectId)) {
+          createdReports.set(updateTx.objectId, parseNumber(newVal))
+        } else {
+          updatedPastReports.set(updateTx.objectId, parseNumber(newVal))
+        }
+      }
+    } else if (tx._class === core.class.TxRemoveDoc) {
+      const removeTx = tx as TxRemoveDoc<TimeSpendReport>
+
+      if (createdReports.has(removeTx.objectId)) {
+        createdReports.delete(removeTx.objectId)
+      } else {
+        removedPastReportIds.push(removeTx.objectId)
+      }
+    }
+  }
+
+  let createdSum = 0
+  for (const v of createdReports.values()) {
+    createdSum += v
+  }
+
+  let pastDelta = 0
+  if (client != null && (removedPastReportIds.length > 0 || updatedPastReports.size > 0)) {
+    const pastIds = [...removedPastReportIds, ...Array.from(updatedPastReports.keys())]
+    const pastDocs = await client.findAll(tracker.class.TimeSpendReport, { _id: { $in: pastIds } })
+    for (const doc of pastDocs) {
+      if (removedPastReportIds.includes(doc._id)) {
+        pastDelta -= parseNumber((doc as any).value)
+      }
+      const newReportVal = updatedPastReports.get(doc._id)
+      if (newReportVal !== undefined) {
+        pastDelta += newReportVal - parseNumber(doc.value)
+      }
+    }
+  }
+
+  let baseValue = 0
+  if (typeof value === 'number') {
+    baseValue = isNaN(value) ? 0 : value
+  } else if (typeof value === 'object' && value !== null) {
+    if ('reportedTime' in value && typeof value.reportedTime === 'number') {
+      baseValue = isNaN(value.reportedTime) ? 0 : value.reportedTime
+    } else if ('value' in value && typeof value.value === 'number') {
+      baseValue = isNaN(value.value) ? 0 : value.value
+    } else if (Array.isArray(value.draftReports)) {
+      for (const r of value.draftReports) {
+        baseValue += parseNumber(r.value)
+      }
+    } else {
+      baseValue = parseNumber((task as Issue).reportedTime)
+    }
+  } else {
+    baseValue = parseNumber((task as Issue).reportedTime)
+  }
+
+  const effectiveReportedTime = baseValue + createdSum + pastDelta
+  return effectiveReportedTime <= 0 || isNaN(effectiveReportedTime)
+}
+
+function parseNumber (val: unknown): number {
+  const num = Number(val)
+  return isNaN(num) ? 0 : num
+}
+
+function getUpdatedFieldValue<T extends Doc, K extends keyof T> (
+  operations: DocumentUpdate<T>,
+  field: K
+): T[K] | undefined {
+  if (field in operations) {
+    return (operations as any)[field]
+  }
+  const setOps = (operations as any).$set
+  if (setOps != null && typeof setOps === 'object' && field in setOps) {
+    return setOps[field]
+  }
+  return undefined
+}
+
 function isEmptyValue (value: any): boolean {
   if (value === undefined || value === null) {
     return true
@@ -164,7 +287,7 @@ export const FieldRequired: ValidatorFunc = async (
     const val = f.mixin != null ? (h.as(taskDoc, f.mixin) as any)[f.fieldKey] : (taskDoc as any)[f.fieldKey]
     if (attribute == null) continue
 
-    if (isEmptyAttribute(h, taskDoc, attribute, val, context?.txes)) {
+    if (await isEmptyAttribute(h, taskDoc, attribute, val, context?.txes, client)) {
       const flow = await getTransitionFlow(client, transition)
       const fieldName = await translate(attribute.label, {})
       return {
