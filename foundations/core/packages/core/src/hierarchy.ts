@@ -457,16 +457,18 @@ export class Hierarchy {
   }
 
   private txCreateDoc (tx: TxCreateDoc<Doc>, doc?: Doc): void {
+    const isClassifier = this.isClassifierTx(tx)
+    if (!isClassifier && tx.objectClass !== core.class.Attribute) return
     // Without an instance the hierarchy owns its copy again (callers may replay a tx after addTxes).
     if (doc !== undefined) this.externallyOwned.add(tx.objectId)
     else this.externallyOwned.delete(tx.objectId)
     this.removed.delete(tx.objectId)
-    if (this.isClassifierTx(tx)) {
+    if (isClassifier) {
       const _id = tx.objectId as Ref<Classifier>
       if (this.parent?.hasClassifier(_id) === true) this.parentOverridden = true
       this.classifiers.set(_id, (doc as Classifier) ?? TxProcessor.createDoc2Doc(tx as TxCreateDoc<Classifier>))
       this.invalidateChains()
-    } else if (tx.objectClass === core.class.Attribute) {
+    } else {
       const createTx = tx as TxCreateDoc<AnyAttribute>
       this.addAttribute((doc as AnyAttribute) ?? TxProcessor.createDoc2Doc(createTx))
     }

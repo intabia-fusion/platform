@@ -47,7 +47,7 @@ function attrTx (
   )
 }
 
-function shared (): { h: Hierarchy, db: ModelDb } {
+function shared (freeze = true): { h: Hierarchy, db: ModelDb } {
   const h = new Hierarchy()
   const db = new ModelDb(h)
   db.addTxes(
@@ -60,7 +60,7 @@ function shared (): { h: Hierarchy, db: ModelDb } {
     ],
     true
   )
-  db.freeze()
+  if (freeze) db.freeze()
   return { h, db }
 }
 
@@ -261,5 +261,33 @@ describe('shared model edge cases', () => {
       )
     }).toThrow()
     expect(base.h.getClass(test.class.Task).label).not.toBe('x')
+  })
+
+  it('owner-first order (model.tx, then hierarchy.tx) moves a renamed attribute to its new name', async () => {
+    const rename = factory.createTxUpdateDoc(
+      core.class.Attribute,
+      core.space.Model,
+      'attr-sys' as Ref<AnyAttribute>,
+      {
+        name: 'g'
+      } as any
+    )
+    const base = shared()
+    for (const { h, db } of [shared(false), overlay(base)]) {
+      await db.tx(rename)
+      h.tx(rename)
+      expect(h.findAttribute(test.class.Task, 'f')).toBeUndefined()
+      expect(h.findAttribute(test.class.Task, 'g')).toBe(db.findObject('attr-sys' as Ref<AnyAttribute>))
+    }
+    expect(base.h.findAttribute(test.class.Task, 'f')?._id).toBe('attr-sys')
+  })
+
+  it('tracks ownership only for classifiers and attributes', () => {
+    const h = new Hierarchy()
+    const db = new ModelDb(h)
+    db.addTxes(ctx, genMinModel(), true)
+    const owned = (h as any).externallyOwned as Set<string>
+    expect(owned.size).toBe((h as any).classifiers.size + (h as any).attributesById.size)
+    expect(db.findAllSync(core.class.Doc, {}).length).toBeGreaterThan(owned.size)
   })
 })

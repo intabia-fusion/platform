@@ -274,3 +274,15 @@ Harness бенчмарков переехал из `server-middleware/src/tests/
   делают `hierarchy.tx` -> `ownClassifier`.
 - `@hcengineering/measurements` прописан в `dependencies` у `models/all` и `middleware`, хотя bench
   нужен только тестам.
+- **Порядок `hierarchy.tx` -> `model.tx` в парных сайтах** (`core/src/client.ts` `tx`/`updateFromRemote`,
+  `server/indexer/src/indexer/indexer.ts` `processTransactions`) ломал rename атрибута из загруженной
+  модели: иерархия пропускает update для `externallyOwned`, но `addAttribute(doc)` и чистка старого имени
+  шли по ещё не обновлённому `doc.name` -> фантом под старым именем. Простая перестановка (`model.tx`,
+  потом `hierarchy.tx`) даёт отставание иерархии на микротаск: два неожиданных `client.tx` (create класса,
+  create документа этого класса) -> `ancestors not found`, tx не уходит на сервер. Итог: клиент зовёт
+  `model.addTxes(ctx, [tx], true)` - синхронно, один инстанс на модель и иерархию, как `ModelMiddleware.tx`
+  на сервере; `ClientImpl` получил `MeasureContext`. indexer оставлен парой в порядке model -> hierarchy.
+  Тесты: `client.test.ts` (`client model transactions`: rename атрибута из `loadModel` и рантайм-созданного,
+  unawaited-пара) и `sharedModelEdge.test.ts` (standalone + overlay).
+- `txCreateDoc` клал в `externallyOwned` каждый model-документ (2799 на ws) - теперь только
+  классификаторы/атрибуты, тест `tracks ownership only for classifiers and attributes`.
