@@ -235,7 +235,7 @@ export const startClient = async (): Promise<void> => {
     },
     onConnect: async (event) => {
       if (transcriptionEnabled) {
-        await client.request('transcription', [true])
+        await client.request('transcription', [true, config.SttCapacity])
       }
       if (llmEnabled) {
         await client.request('llm', [true])
@@ -266,7 +266,7 @@ export const startClient = async (): Promise<void> => {
       }
       transcriptionEnabled = true
       // Inform aibot client is enabled for transcriptions
-      await client.request('transcription', [true])
+      await client.request('transcription', [true, config.SttCapacity])
     } catch (err: any) {
       ctx.warn('Failed to create transcription provider', { error: err.message })
     }
