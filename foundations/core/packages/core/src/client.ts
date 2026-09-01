@@ -436,19 +436,7 @@ export function buildModel (
     txes = modelFilter(txes)
   }
 
-  ctx.withSync('build hierarchy', {}, () => {
-    for (const tx of txes) {
-      try {
-        hierarchy.tx(tx)
-      } catch (err: any) {
-        ctx.warn('failed to apply model transaction, skipping', {
-          _id: tx._id,
-          _class: tx._class,
-          message: err?.message
-        })
-      }
-    }
-  })
+  // addTxes feeds the hierarchy itself, a separate pass would just deserialize everything twice.
   ctx.withSync('build model', {}, (ctx) => {
     model.addTxes(ctx, txes, false)
   })

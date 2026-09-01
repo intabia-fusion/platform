@@ -630,6 +630,13 @@ describe('hierarchy', () => {
     )
   })
 
+  it('should handle getDescendants unknown class', async () => {
+    const hierarchy = prepare()
+
+    // Trigger match rules keep referencing classes removed at runtime, so this must not throw
+    expect(hierarchy.getDescendants('class:NonExistent' as any)).toEqual([])
+  })
+
   it('should handle getDomain error case', async () => {
     const hierarchy = prepare()
 

@@ -4491,6 +4491,9 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../../core/packages/core
+      '@hcengineering/measurements':
+        specifier: workspace:^0.7.18
+        version: link:../../../core/packages/measurements
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../../core/packages/platform
@@ -5429,6 +5432,9 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
+      '@hcengineering/measurements':
+        specifier: workspace:^0.7.18
+        version: link:../../foundations/core/packages/measurements
       '@hcengineering/model':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/model

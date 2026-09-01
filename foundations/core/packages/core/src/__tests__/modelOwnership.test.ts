@@ -25,6 +25,7 @@ import { TxFactory } from '../tx'
 const ctx = new MeasureMetricsContext('test', {})
 const factory = new TxFactory(core.account.System)
 
+const CHILD = 'test:class:Child' as Ref<Class<Doc>>
 const PARENT = 'test:class:Parent' as Ref<Class<Doc>>
 
 function classTx (_id: Ref<Class<Obj>>, ext: Ref<Class<Obj>>): Tx {
@@ -46,12 +47,50 @@ function baseModel (): Tx[] {
 }
 
 describe('hierarchy derives chains regardless of tx order', () => {
+  // A class declared before its parent used to freeze a truncated ancestor chain forever.
+  it('links a class created before its parent', () => {
+    const h = new Hierarchy()
+    for (const tx of [...baseModel(), classTx(CHILD, PARENT), classTx(PARENT, core.class.Doc)]) {
+      h.tx(tx)
+    }
+
+    expect(h.getAncestors(CHILD)).toEqual([CHILD, PARENT, core.class.Doc, core.class.Obj])
+    expect(h.isDerived(CHILD, core.class.Doc)).toBe(true)
+    expect(h.getDescendants(core.class.Doc)).toContain(CHILD)
+  })
+
+  it('gives the same chains as the in-order model', () => {
+    const inOrder = new Hierarchy()
+    for (const tx of [...baseModel(), classTx(PARENT, core.class.Doc), classTx(CHILD, PARENT)]) inOrder.tx(tx)
+    const outOfOrder = new Hierarchy()
+    for (const tx of [...baseModel(), classTx(CHILD, PARENT), classTx(PARENT, core.class.Doc)]) outOfOrder.tx(tx)
+
+    expect(outOfOrder.getAncestors(CHILD)).toEqual(inOrder.getAncestors(CHILD))
+    expect([...outOfOrder.getDescendants(core.class.Doc)].sort()).toEqual(
+      [...inOrder.getDescendants(core.class.Doc)].sort()
+    )
+  })
+
   it('keeps unknown classifiers non-derived instead of throwing', () => {
     const h = new Hierarchy()
     for (const tx of baseModel()) h.tx(tx)
 
     expect(h.isDerived('no:such:class' as Ref<Class<Doc>>, core.class.Doc)).toBe(false)
     expect(() => h.getAncestors('no:such:class' as Ref<Class<Doc>>)).toThrow()
+  })
+
+  it('drops chains of a removed classifier', () => {
+    const h = new Hierarchy()
+    for (const tx of [...baseModel(), classTx(PARENT, core.class.Doc), classTx(CHILD, PARENT)]) h.tx(tx)
+    expect(h.getDescendants(core.class.Doc)).toContain(CHILD)
+
+    h.tx(factory.createTxRemoveDoc(core.class.Class, core.space.Model, CHILD))
+
+    expect(h.getDescendants(core.class.Doc)).not.toContain(CHILD)
+    expect(h.isDerived(CHILD, core.class.Doc)).toBe(false)
+    // Queries keep referencing removed classes (trigger match rules do), so this must not throw.
+    expect(h.getDescendants(CHILD)).toEqual([])
+    expect(h.getDescendants('never:existed:class' as Ref<Class<Doc>>)).toEqual([])
   })
 })
 
@@ -64,6 +103,13 @@ describe('ModelDb owns model documents', () => {
     return { h, db }
   }
 
+  it('shares one instance between ModelDb and Hierarchy', () => {
+    const { h, db } = build([...baseModel(), classTx(PARENT, core.class.Doc)])
+
+    expect(db.findObject(PARENT)).toBe(h.getClass(PARENT))
+    expect(db.findObject(core.class.Doc)).toBe(h.getClass(core.class.Doc))
+  })
+
   it('indexes a document whose class is created later', () => {
     const { db } = build(baseModel())
 
@@ -73,6 +119,20 @@ describe('ModelDb owns model documents', () => {
       core.class.Class
     ])
     expect(db.findAllSync(core.class.Doc, { _id: core.class.Obj })).toHaveLength(1)
+  })
+
+  it('applies an update to a shared classifier exactly once', () => {
+    const txes = [...baseModel(), classTx(PARENT, core.class.Doc)]
+    const { h, db } = build(txes)
+
+    db.addTxes(
+      ctx,
+      [factory.createTxUpdateDoc(core.class.Class, core.space.Model, PARENT, { label: 'renamed' as any })],
+      true
+    )
+
+    expect((db.findObject(PARENT) as any).label).toBe('renamed')
+    expect(h.getClass(PARENT).label).toBe('renamed')
   })
 
   it('does not double-apply $push on a shared classifier', () => {

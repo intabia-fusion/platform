@@ -35,6 +35,7 @@ import {
   LowLevelMiddleware,
   MarkDerivedEntryMiddleware,
   ModelMiddleware,
+  sharedSystemModel,
   ModifiedMiddleware,
   IdentifierMiddleware,
   NormalizeTxMiddleware,
@@ -115,6 +116,17 @@ function addMessagesToFullText (fulltext: MiddlewareCreator): MiddlewareCreator 
   }
 }
 
+/** System model is identical for every workspace: built once, each workspace overlays its own txes. */
+function buildSharedModel (ctx: MeasureContext, txes: Tx[]): { hierarchy?: Hierarchy, model?: ModelDb } {
+  if (!sharedSystemModel) return {}
+  const hierarchy = new Hierarchy()
+  const model = new ModelDb(hierarchy)
+  model.addTxes(ctx, txes, true)
+  // Frozen: every workspace reads these documents, a direct write would corrupt the neighbours.
+  model.freeze()
+  return { hierarchy, model }
+}
+
 /**
  * @public
  */
@@ -136,6 +148,8 @@ export function createServerPipeline (
   },
   extensions?: Partial<DbConfiguration>
 ): PipelineFactory {
+  const shared = buildSharedModel(metrics, model)
+
   return (ctx, workspace, broadcast, branding) => {
     const metricsCtx = opt.usePassedCtx === true ? ctx : metrics
     const wsMetrics = metricsCtx.newChild('🧲 session', {}, { span: false })
@@ -194,13 +208,13 @@ export function createServerPipeline (
       DomainTxMiddleware.create,
       ...(opt.queue !== undefined ? [QueueMiddleware.create(opt.queue)] : []),
       DBAdapterInitMiddleware.create,
-      ModelMiddleware.create(model),
+      ModelMiddleware.create(model, undefined, shared.model !== undefined),
       DBAdapterMiddleware.create(conf), // Configure DB adapters
       BroadcastMiddleware.create(broadcast)
     ]
 
-    const hierarchy = new Hierarchy()
-    const modelDb = new ModelDb(hierarchy)
+    const hierarchy = new Hierarchy(shared.hierarchy)
+    const modelDb = new ModelDb(hierarchy, shared.model)
     const contextVars = opt.pipelineContextVars ?? {}
     const context: PipelineContext = {
       workspace,
@@ -234,6 +248,9 @@ export function createBackupPipeline (
     externalStorage: StorageAdapter
   }
 ): PipelineFactory {
+  // Backup walks workspace by workspace - the system model is built once for all of them.
+  const shared = buildSharedModel(metrics, systemTx)
+
   return (ctx, workspace, broadcast, branding) => {
     const metricsCtx = opt.usePassedCtx === true ? ctx : metrics
     const wsMetrics = metricsCtx.newChild('🧲 backup', {}, { span: false })
@@ -248,12 +265,12 @@ export function createBackupPipeline (
       // ConnectionMgrMiddleware.create,
       DomainFindMiddleware.create,
       DBAdapterInitMiddleware.create,
-      ModelMiddleware.create(systemTx),
+      ModelMiddleware.create(systemTx, undefined, shared.model !== undefined),
       DBAdapterMiddleware.create(conf)
     ]
 
-    const hierarchy = new Hierarchy()
-    const modelDb = new ModelDb(hierarchy)
+    const hierarchy = new Hierarchy(shared.hierarchy)
+    const modelDb = new ModelDb(hierarchy, shared.model)
     const context: PipelineContext = {
       workspace,
       branding,

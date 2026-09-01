@@ -3154,7 +3154,15 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
             dataId: ws.dataId,
             url: ws.url
           }
-          const calculator = await RatingCalculator.create(toolCtx, txes, wsIds, dbUrl, async () => '')
+          const calculator = await RatingCalculator.create(
+            toolCtx,
+            txes,
+            undefined,
+            undefined,
+            wsIds,
+            dbUrl,
+            async () => ''
+          )
 
           await calculator.recalculateAll(toolCtx)
 

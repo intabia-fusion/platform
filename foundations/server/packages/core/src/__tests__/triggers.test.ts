@@ -18,7 +18,7 @@ import core, {
   DOMAIN_MODEL,
   Hierarchy,
   MeasureMetricsContext,
-  type ModelDb,
+  ModelDb,
   TxFactory,
   type Class,
   type Data,
@@ -49,49 +49,49 @@ function classTx (_id: Ref<Class<Obj>>, ext: Ref<Class<Obj>> | undefined): Tx {
 }
 
 describe('Triggers', () => {
-  it('does not expand txMatch inside the model document', async () => {
+  it('does not expand txMatch inside the shared model document', async () => {
     addLocation(serverCoreId, async () => ({ default: async () => ({ trigger: { OnTrigger: async () => [] } }) }))
 
     const h = new Hierarchy()
-    for (const tx of [
-      classTx(core.class.Obj, undefined),
-      classTx(core.class.Doc as Ref<Class<Obj>>, core.class.Obj),
-      classTx(core.class.Class as Ref<Class<Obj>>, core.class.Doc as Ref<Class<Obj>>),
-      classTx(core.class.Tx as Ref<Class<Obj>>, core.class.Doc as Ref<Class<Obj>>),
-      classTx(core.class.TxCUD as Ref<Class<Obj>>, core.class.Tx as Ref<Class<Obj>>),
-      classTx(core.class.TxCreateDoc as Ref<Class<Obj>>, core.class.TxCUD as Ref<Class<Obj>>),
-      classTx(BASE as Ref<Class<Obj>>, core.class.Doc as Ref<Class<Obj>>),
-      classTx(DERIVED as Ref<Class<Obj>>, BASE as Ref<Class<Obj>>)
-    ]) {
-      h.tx(tx)
-    }
-
-    // The instance a ModelDb hands out of its own storage, without a copy.
+    const db = new ModelDb(h)
     const txMatch: DocumentQuery<Tx> = { objectClass: BASE }
-    const trigger = {
-      _id: 'test:trigger:One' as Ref<Doc>,
-      _class: serverCore.class.Trigger,
-      space: core.space.Model,
-      modifiedBy: core.account.System,
-      modifiedOn: 0,
-      trigger: `${serverCoreId}:trigger:OnTrigger`,
-      txMatch
-    }
-    const model = { findAllSync: () => [trigger] } as unknown as ModelDb
+    db.addTxes(
+      ctx,
+      [
+        classTx(core.class.Obj, undefined),
+        classTx(core.class.Doc as Ref<Class<Obj>>, core.class.Obj),
+        classTx(core.class.Class as Ref<Class<Obj>>, core.class.Doc as Ref<Class<Obj>>),
+        classTx(core.class.Tx as Ref<Class<Obj>>, core.class.Doc as Ref<Class<Obj>>),
+        classTx(core.class.TxCUD as Ref<Class<Obj>>, core.class.Tx as Ref<Class<Obj>>),
+        classTx(core.class.TxCreateDoc as Ref<Class<Obj>>, core.class.TxCUD as Ref<Class<Obj>>),
+        classTx(serverCore.class.Trigger as Ref<Class<Obj>>, core.class.Doc as Ref<Class<Obj>>),
+        classTx(BASE as Ref<Class<Obj>>, core.class.Doc as Ref<Class<Obj>>),
+        classTx(DERIVED as Ref<Class<Obj>>, BASE as Ref<Class<Obj>>),
+        factory.createTxCreateDoc(serverCore.class.Trigger, core.space.Model, {
+          trigger: `${serverCoreId}:trigger:OnTrigger` as any,
+          txMatch
+        } as any)
+      ],
+      true
+    )
+    // Shared model: a workspace must not be able to write into it.
+    db.freeze()
 
     const triggers = new Triggers(h)
-    triggers.init(model)
+    triggers.init(db)
     const control = {
       hierarchy: h,
-      modelDb: model,
+      modelDb: db,
       txes: [],
       workspace: { uuid: 'ws' },
       apply: async () => ({})
     } as unknown as Omit<TriggerControl, 'txFactory'>
+    const tx = factory.createTxCreateDoc(DERIVED, core.space.Model, {} as any)
 
-    // Expanding the query used to write $in back into the trigger document of the model.
-    await triggers.apply(ctx, [factory.createTxCreateDoc(DERIVED, core.space.Model, {} as any)], control, 'sync')
+    // Expanding the query used to write $in back into the frozen trigger document.
+    await triggers.apply(ctx, [tx], control, 'sync')
 
-    expect(trigger.txMatch.objectClass).toBe(BASE)
+    const stored = db.findAllSync(serverCore.class.Trigger, {})[0] as any
+    expect(stored.txMatch.objectClass).toBe(BASE)
   })
 })

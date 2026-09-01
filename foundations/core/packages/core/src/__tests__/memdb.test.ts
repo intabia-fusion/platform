@@ -797,6 +797,36 @@ describe('memdb', () => {
     )
   })
 
+  it('addTxes should warn and continue when applying a transaction to the hierarchy fails', async () => {
+    const hierarchy = new Hierarchy()
+    for (const tx of txes) hierarchy.tx(tx)
+    const model = new ModelDb(hierarchy)
+    for (const tx of txes) await model.tx(tx)
+    const ctx = { warn: jest.fn() } as any
+
+    const spy = jest.spyOn(hierarchy, 'tx').mockImplementationOnce(() => {
+      throw new Error('boom')
+    })
+
+    const newSpaceTx = createDoc(core.class.Space, {
+      name: 'X',
+      description: '',
+      private: false,
+      members: [],
+      archived: false
+    })
+    model.addTxes(ctx, [newSpaceTx], false)
+
+    expect(ctx.warn).toHaveBeenCalledWith(
+      'failed to apply model transaction to hierarchy, skipping',
+      expect.objectContaining({ _id: newSpaceTx._id })
+    )
+    // the document itself must still be applied to the model despite the hierarchy failure
+    expect(model.getObject(newSpaceTx.objectId as Ref<Doc>)).toBeDefined()
+
+    spy.mockRestore()
+  })
+
   it('txUpdateDoc via tx() should swallow errors for a missing document', async () => {
     const { model } = await createModel()
 
