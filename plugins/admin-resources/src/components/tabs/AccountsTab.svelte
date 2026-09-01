@@ -64,6 +64,15 @@
 
   // Reactive: a plain function called with a constant key would never be re-evaluated.
   $: sortMark = (key: AccountsSortKey): string => (sortKey === key ? (sortAsc ? ' ↑' : ' ↓') : '')
+  $: ariaSort = (key: AccountsSortKey): 'ascending' | 'descending' | 'none' =>
+    sortKey === key ? (sortAsc ? 'ascending' : 'descending') : 'none'
+
+  function sortOnKey (e: KeyboardEvent, key: AccountsSortKey): void {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      sortBy(key)
+    }
+  }
 
   let noWorkspaces = false
   let pendingOnly = false
@@ -274,53 +283,73 @@
   <table class="accounts-table">
     <thead>
       <tr>
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <th
           class="sortable"
           class:sorted={sortKey === 'name'}
+          aria-sort={ariaSort('name')}
+          tabindex="0"
           on:click={() => {
             sortBy('name')
+          }}
+          on:keydown={(e) => {
+            sortOnKey(e, 'name')
           }}
         >
           <Label label={adminRes.string.Accounts} />{sortMark('name')}
         </th>
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <th
           class="sortable"
           class:sorted={sortKey === 'email'}
+          aria-sort={ariaSort('email')}
+          tabindex="0"
           on:click={() => {
             sortBy('email')
+          }}
+          on:keydown={(e) => {
+            sortOnKey(e, 'email')
           }}
         >
           <Label label={adminRes.string.Email} />{sortMark('email')}
         </th>
         <th><Label label={adminRes.string.SocialIds} /></th>
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <th
           class="sortable"
           class:sorted={sortKey === 'workspaces'}
+          aria-sort={ariaSort('workspaces')}
+          tabindex="0"
           on:click={() => {
             sortBy('workspaces')
+          }}
+          on:keydown={(e) => {
+            sortOnKey(e, 'workspaces')
           }}
         >
           <Label label={adminRes.string.Workspaces} />{sortMark('workspaces')}
         </th>
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <th
           class="sortable"
           class:sorted={sortKey === 'registeredOn'}
+          aria-sort={ariaSort('registeredOn')}
+          tabindex="0"
           on:click={() => {
             sortBy('registeredOn')
+          }}
+          on:keydown={(e) => {
+            sortOnKey(e, 'registeredOn')
           }}
         >
           <Label label={adminRes.string.CreatedOn} />{sortMark('registeredOn')}
         </th>
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <th
           class="sortable"
           class:sorted={sortKey === 'lastVisit'}
+          aria-sort={ariaSort('lastVisit')}
+          tabindex="0"
           on:click={() => {
             sortBy('lastVisit')
+          }}
+          on:keydown={(e) => {
+            sortOnKey(e, 'lastVisit')
           }}
         >
           <Label label={adminRes.string.LastVisit} />{sortMark('lastVisit')}
@@ -403,6 +432,10 @@
     th.sortable {
       cursor: pointer;
       user-select: none;
+    }
+    th.sortable:focus-visible {
+      outline: 2px solid var(--primary-button-default);
+      outline-offset: -2px;
     }
     th.sorted {
       color: var(--theme-caption-color);

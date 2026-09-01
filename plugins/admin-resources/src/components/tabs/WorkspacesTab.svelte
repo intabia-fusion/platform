@@ -120,6 +120,15 @@
   // Reactive on purpose: a plain function called with a constant argument would never be
   // re-evaluated, so every marker but the initial one stayed empty.
   $: sortMark = (rule: SortingRule): string => (sortingRule === rule ? (sortAsc ? ' ↑' : ' ↓') : '')
+  $: ariaSort = (rule: SortingRule): 'ascending' | 'descending' | 'none' =>
+    sortingRule === rule ? (sortAsc ? 'ascending' : 'descending') : 'none'
+
+  function sortOnKey (e: KeyboardEvent, rule: SortingRule): void {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      sortBy(rule)
+    }
+  }
 
   // Activity sorts the current page by live stats; the rest are server-side
   const serverSort: Record<SortingRule, WorkspacesSortKey | undefined> = {
@@ -606,23 +615,31 @@
       <table class="workspaces-table">
         <thead>
           <tr>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
             <th
               class="sortable"
               class:sorted={sortingRule === SortingRule.Name}
+              aria-sort={ariaSort(SortingRule.Name)}
+              tabindex="0"
               on:click={() => {
                 sortBy(SortingRule.Name)
+              }}
+              on:keydown={(e) => {
+                sortOnKey(e, SortingRule.Name)
               }}
             >
               <Label label={adminRes.string.Workspace} />{sortMark(SortingRule.Name)}
             </th>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
             <th
               class="sortable"
               class:sorted={sortingRule === SortingRule.Activity}
+              aria-sort={ariaSort(SortingRule.Activity)}
+              tabindex="0"
               title="Open sessions right now"
               on:click={() => {
                 sortBy(SortingRule.Activity)
+              }}
+              on:keydown={(e) => {
+                sortOnKey(e, SortingRule.Activity)
               }}
             >
               <Label label={adminRes.string.Sessions} />{sortMark(SortingRule.Activity)}
@@ -631,66 +648,90 @@
               <Label label={adminRes.string.Ops5m} />
             </th>
             <th><Label label={adminRes.string.Region} /></th>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
             <th
               class="sortable"
               class:sorted={sortingRule === SortingRule.LastVisit}
+              aria-sort={ariaSort(SortingRule.LastVisit)}
+              tabindex="0"
               on:click={() => {
                 sortBy(SortingRule.LastVisit)
+              }}
+              on:keydown={(e) => {
+                sortOnKey(e, SortingRule.LastVisit)
               }}
             >
               <Label label={adminRes.string.LastVisit} />{sortMark(SortingRule.LastVisit)}
             </th>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
             <th
               class="sortable"
               class:sorted={sortingRule === SortingRule.Members}
+              aria-sort={ariaSort(SortingRule.Members)}
+              tabindex="0"
               on:click={() => {
                 sortBy(SortingRule.Members)
+              }}
+              on:keydown={(e) => {
+                sortOnKey(e, SortingRule.Members)
               }}
             >
               <Label label={adminRes.string.Members} />{sortMark(SortingRule.Members)}
             </th>
             <th><Label label={adminRes.string.Mode} /></th>
             <th><Label label={adminRes.string.Plan} /></th>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
             <th
               class="sortable"
               class:sorted={sortingRule === SortingRule.Tokens}
+              aria-sort={ariaSort(SortingRule.Tokens)}
+              tabindex="0"
               on:click={() => {
                 sortBy(SortingRule.Tokens)
+              }}
+              on:keydown={(e) => {
+                sortOnKey(e, SortingRule.Tokens)
               }}
             >
               <Label label={adminRes.string.AITokens} />{sortMark(SortingRule.Tokens)}
             </th>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
             <th
               class="sortable"
               class:sorted={sortingRule === SortingRule.Minutes}
+              aria-sort={ariaSort(SortingRule.Minutes)}
+              tabindex="0"
               on:click={() => {
                 sortBy(SortingRule.Minutes)
+              }}
+              on:keydown={(e) => {
+                sortOnKey(e, SortingRule.Minutes)
               }}
             >
               <Label label={adminRes.string.MeetingMinutes} />{sortMark(SortingRule.Minutes)}
             </th>
             <th><Label label={adminRes.string.Attempts} /></th>
             <th><Label label={adminRes.string.Progress} /></th>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
             <th
               class="sortable"
               class:sorted={sortingRule === SortingRule.BackupSize}
+              aria-sort={ariaSort(SortingRule.BackupSize)}
+              tabindex="0"
               on:click={() => {
                 sortBy(SortingRule.BackupSize)
+              }}
+              on:keydown={(e) => {
+                sortOnKey(e, SortingRule.BackupSize)
               }}
             >
               <Label label={adminRes.string.SortBackupSize} />{sortMark(SortingRule.BackupSize)}
             </th>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
             <th
               class="sortable"
               class:sorted={sortingRule === SortingRule.BackupDate}
+              aria-sort={ariaSort(SortingRule.BackupDate)}
+              tabindex="0"
               on:click={() => {
                 sortBy(SortingRule.BackupDate)
+              }}
+              on:keydown={(e) => {
+                sortOnKey(e, SortingRule.BackupDate)
               }}
             >
               <Label label={adminRes.string.LastBackup} />{sortMark(SortingRule.BackupDate)}
@@ -988,6 +1029,10 @@
     th.sortable {
       cursor: pointer;
       user-select: none;
+    }
+    th.sortable:focus-visible {
+      outline: 2px solid var(--primary-button-default);
+      outline-offset: -2px;
     }
     th.sorted {
       color: var(--theme-caption-color);

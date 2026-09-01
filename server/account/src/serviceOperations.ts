@@ -31,8 +31,7 @@ import {
   type AccountUuid,
   type UsageStatus,
   type Timestamp,
-  readOnlyGuestAccountUuid,
-  systemAccountUuid
+  readOnlyGuestAccountUuid
 } from '@hcengineering/core'
 import platform, { getMetadata, PlatformError, Severity, Status, unknownError } from '@hcengineering/platform'
 import { decodeTokenVerbose, generateToken, isHumanAdmin, type Token } from '@hcengineering/server-token'
@@ -45,7 +44,7 @@ import {
   type QueueWorkspaceMessage
 } from '@hcengineering/server-core'
 
-import { requireAdminOp, requireAdminSession, verifyAdminOtpLimited } from './adminOp'
+import { isHumanAdminLogin, requireAdminOp, requireAdminSession, verifyAdminOtpLimited } from './adminOp'
 
 import { accountPlugin } from './plugin'
 import { SubscriptionStatus, SubscriptionType } from './types'
@@ -169,9 +168,7 @@ function checkAdminRead (ctx: MeasureContext, token: string): void {
 // Before the session exists: the caller may still ask for an OTP and open one.
 function checkHumanAdminLogin (ctx: MeasureContext, token: string): Token {
   const decoded = decodeTokenVerbose(ctx, token)
-  const { account, extra } = decoded
-  const isAdminEmail = extra?.admin === 'true' || extra?.billingAdmin === 'true'
-  if (!isAdminEmail || account === systemAccountUuid || extra?.service !== undefined) {
+  if (!isHumanAdminLogin(decoded)) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
   return decoded

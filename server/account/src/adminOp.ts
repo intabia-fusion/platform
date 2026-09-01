@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type MeasureContext } from '@hcengineering/core'
+import { type MeasureContext, systemAccountUuid } from '@hcengineering/core'
 import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import {
   ADMIN_SESSION_TTL_SEC,
@@ -34,14 +34,22 @@ function forbidden (): PlatformError {
 }
 
 /**
+ * An admin (or read-only billing admin) signed in as a person. Machine tokens are excluded even when
+ * they carry `admin: 'true'`, the same rule `isHumanAdmin` applies to mutations.
+ */
+export function isHumanAdminLogin ({ account, extra }: Token): boolean {
+  const isAdminEmail = extra?.admin === 'true' || extra?.billingAdmin === 'true'
+  return isAdminEmail && account !== systemAccountUuid && extra?.service === undefined
+}
+
+/**
  * Every `/admin` entry point, read or write. Requires an admin (or read-only billing admin) token
  * whose second factor is still fresh: `verifyAdminSession` stamps `extra.mfaAt`, and a plain login
  * token - or one older than ADMIN_SESSION_TTL_SEC - is refused.
  */
 export function requireAdminSession (ctx: MeasureContext, token: string): Token {
   const decoded = decodeTokenVerbose(ctx, token)
-  const { extra } = decoded
-  if (extra?.admin !== 'true' && extra?.billingAdmin !== 'true') {
+  if (!isHumanAdminLogin(decoded)) {
     throw forbidden()
   }
   if (!hasAdminSession(decoded, ADMIN_SESSION_TTL_SEC)) {
