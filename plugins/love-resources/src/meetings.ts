@@ -9,7 +9,7 @@ import love, {
   isScheduledJoinable,
   type MeetingMinutes
 } from '@hcengineering/love'
-import presentation, { getClient, MessageBox, onClient } from '@hcengineering/presentation'
+import presentation, { getClient, onClient } from '@hcengineering/presentation'
 import {
   getLiveKitEndpoint,
   getRoomName,
@@ -26,12 +26,9 @@ import {
   myConnectingSessionId,
   meetings,
   currentMeetingMinutes,
-  currentRoom,
   waitForOfficeLoaded,
   withConnectingToMeeting
 } from './stores'
-import { showPopup } from '@hcengineering/ui'
-import lovePlugin from './plugin'
 import { getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import { getMetadata } from '@hcengineering/platform'
@@ -469,26 +466,3 @@ onClient(() => {
     })
   })
 })
-
-/** Leaving the workspace drops the LiveKit session, and in an office it ends the meeting for everyone. */
-export async function confirmSwitchWorkspace (): Promise<boolean> {
-  if (!get(lkSessionConnected)) return true
-  const room = get(currentRoom)
-  const endsMeeting = room !== undefined && isOffice(room) && room.person === getCurrentEmployee()
-  return await new Promise<boolean>((resolve) => {
-    showPopup(
-      MessageBox,
-      {
-        label: lovePlugin.string.SwitchWorkspaceInMeeting,
-        message: endsMeeting
-          ? lovePlugin.string.SwitchWorkspaceEndsMeeting
-          : lovePlugin.string.SwitchWorkspaceLeaveMeeting,
-        dangerous: endsMeeting
-      },
-      undefined,
-      (result?: boolean) => {
-        resolve(result === true)
-      }
-    )
-  })
-}

@@ -345,7 +345,11 @@ export class WebhookProcessor {
       // Find and remove PendingRecording first (do this regardless of file save result)
       const pendingRecording = await wsClient.findPendingRecordingByEgressId(egressId)
       if (pendingRecording !== undefined) {
-        await wsClient.updateMeetingRecordingState(meeting, RecordingState.Finished)
+        // `recordingState` tracks the video recording only: the audio (transcription) egress ends
+        // on its own schedule and used to clear the flag while the video egress kept writing.
+        if (pendingRecording.format === 'video') {
+          await wsClient.updateMeetingRecordingState(meeting, RecordingState.Finished)
+        }
         await wsClient.removePendingRecording(pendingRecording)
         this.ctx.info('[Webhook] Removed PendingRecording after egress ended', {
           egressId,

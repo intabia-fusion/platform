@@ -11,12 +11,8 @@
   } from 'livekit-client'
   import { onDestroy, onMount } from 'svelte'
   import { subscribeToIncomingInvites, unsubscribeFromIncomingInvites } from '../invites'
-  import {
-    reconnectToCurrentMeeting,
-    reconnectingToMeeting,
-    cancelReconnect,
-    confirmSwitchWorkspace
-  } from '../meetings'
+  import { reconnectToCurrentMeeting, reconnectingToMeeting, cancelReconnect } from '../meetings'
+  import { confirmSwitchWorkspace } from '../switchWorkspaceGuard'
   import { addLeaveWorkspaceGuard } from '@hcengineering/presentation'
   import { lkIsConnecting, lkReconnected, lkSessionConnected } from '../liveKitClient'
   import love from '../plugin'

@@ -244,6 +244,22 @@ describe('RecordingProcessor.startRecording', () => {
     expect(egressClient.startRoomCompositeEgress).not.toHaveBeenCalled()
   })
 
+  it('repairs a meeting whose recordingState lags behind the live egress (defect: button stuck on start)', async () => {
+    wsClient.findMeetingById.mockResolvedValue({ ...meeting, recordingState: RecordingState.NotStarted })
+    wsClient.findPendingRecordingsByMeeting.mockResolvedValue([
+      { format: 'video', status: 'active', egressId: 'EG_0', startedAt: Date.now() }
+    ])
+
+    await processor.startRecording(roomName, TEST_IDS.workspace, meeting._id, wsLoginInfo, 'All hands')
+
+    // Without this the client keeps reading `None`, renders a red button and routes every press
+    // back into /startRecord -> 409 forever.
+    expect(wsClient.updateMeetingRecordingState).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: meeting._id }),
+      RecordingState.Recording
+    )
+  })
+
   it('two users pressing record at once start one egress and the loser is told (defect: read-then-create race)', async () => {
     let release: (v: { egressId: string }) => void = () => {}
     const gate = new Promise<{ egressId: string }>((resolve) => {

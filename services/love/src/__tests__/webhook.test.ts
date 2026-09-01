@@ -15,7 +15,14 @@
 import { WebhookProcessor } from '../webhook'
 import { WorkspaceClient } from '../workspaceClient'
 import { MeasureContext, Ref, WorkspaceUuid } from '@hcengineering/core'
-import { MeetingMinutes, MeetingStatus, ParsedRoomName, QueueMeetingEvent, Room } from '@hcengineering/love'
+import {
+  MeetingMinutes,
+  MeetingStatus,
+  ParsedRoomName,
+  QueueMeetingEvent,
+  RecordingState,
+  Room
+} from '@hcengineering/love'
 import { Person } from '@hcengineering/contact'
 import { WebhookEvent } from 'livekit-server-sdk'
 
@@ -70,7 +77,10 @@ describe('WebhookProcessor - Meeting Lifecycle', () => {
       addActivityToMeeting: jest.fn(),
       findPersonRefById: jest.fn(),
       getPersonIdByPersonRef: jest.fn(),
-      findOfficeOwner: jest.fn()
+      findOfficeOwner: jest.fn(),
+      findPendingRecordingByEgressId: jest.fn(),
+      removePendingRecording: jest.fn(),
+      updateMeetingRecordingState: jest.fn()
     } as unknown as jest.Mocked<WorkspaceClient>
 
     // Mock WorkspaceClient.create to return mockWsClient
@@ -116,6 +126,39 @@ describe('WebhookProcessor - Meeting Lifecycle', () => {
       await processor.processEvent(event as WebhookEvent, roomName)
 
       expect(mockEventProducer.send).toHaveBeenCalled()
+    })
+  })
+
+  describe('egress_ended event', () => {
+    // Same shape the other suites use: plain mocks, so eslint sees no unbound method reference.
+    const ws = (): Record<string, jest.Mock> => mockWsClient as unknown as Record<string, jest.Mock>
+
+    function endedEvent (): WebhookEvent {
+      return {
+        event: 'egress_ended',
+        egressInfo: { egressId: 'EG_1', fileResults: [] }
+      } as unknown as WebhookEvent
+    }
+
+    it('keeps the recording flag when the audio egress ends (defect: audio end stops the video button)', async () => {
+      mockWsClient.findMeetingById.mockResolvedValue(createMockMeeting() as MeetingMinutes)
+      ws().findPendingRecordingByEgressId.mockResolvedValue({ _id: 'rec-audio', format: 'audio' })
+
+      await processor.processEvent(endedEvent(), createMockRoomName())
+
+      // The video egress is still writing; clearing the flag leaves the button red while
+      // every press routes to /startRecord.
+      expect(ws().updateMeetingRecordingState).not.toHaveBeenCalled()
+      expect(ws().removePendingRecording).toHaveBeenCalled()
+    })
+
+    it('clears the recording flag when the video egress ends', async () => {
+      mockWsClient.findMeetingById.mockResolvedValue(createMockMeeting() as MeetingMinutes)
+      ws().findPendingRecordingByEgressId.mockResolvedValue({ _id: 'rec-video', format: 'video' })
+
+      await processor.processEvent(endedEvent(), createMockRoomName())
+
+      expect(ws().updateMeetingRecordingState).toHaveBeenCalledWith(expect.anything(), RecordingState.Finished)
     })
   })
 

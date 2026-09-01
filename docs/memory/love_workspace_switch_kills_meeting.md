@@ -35,6 +35,8 @@ setMicrophoneEnabled(false)])` реджектился и `currentMediaSession.cl
 Серверную логику `closeRoomIfOwnerGone` не трогали — вместо этого перед сменой
 пространства показывается подтверждение (guard `addLeaveWorkspaceGuard` /
 `canLeaveWorkspace` в `packages/presentation/src/utils.ts`, реализация
-`confirmSwitchWorkspace` в `love-resources/src/meetings.ts`). Владельцу офиса
+`confirmSwitchWorkspace` в `love-resources/src/switchWorkspaceGuard.ts` - отдельный модуль,
+потому что `@hcengineering/ui` тянет `.svelte`, а jest их не парсит: импорт из `meetings.ts`
+ронял три существующих теста). Владельцу офиса
 текст говорит, что встреча завершится для всех. Точки входа смены пространства:
 `AccountPopup.svelte` и `SelectWorkspaceMenu.svelte`.
