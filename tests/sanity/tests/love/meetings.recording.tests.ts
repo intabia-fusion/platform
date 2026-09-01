@@ -165,10 +165,20 @@ export function registerRecordingTests (): void {
         await joinRoom(page, roomName as string)
 
         const meeting = await waitRoomMeeting(roomName as string)
-        const button = page.locator('[data-id="transcription-button"]').locator('visible=true').first()
-        test.skip((await button.count()) === 0, 'Transcription is not allowed on this stand')
 
-        await button.click()
+        // Straight at love's endpoint: the button routes through ai-bot, whose transcription
+        // provider is not deployed on the stand, and that has nothing to do with what is asserted.
+        const token = await getPlatformToken()
+        const transcription = async (on: boolean): Promise<number> => {
+          const res = await fetch(`${loveEndpoint()}/transcription`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ meetingId: meeting._id, transcription: on })
+          })
+          return res.status
+        }
+
+        expect(await transcription(true)).toBe(200)
         await expect
           .poll(async () => (await meetingState(meeting._id))?.transcriptionState, { timeout: 30000 })
           .toBe(TranscriptionState.Transcribing)
@@ -178,7 +188,7 @@ export function registerRecordingTests (): void {
           .toBe(1)
 
         await page.waitForTimeout(STOP_COOLDOWN_MS)
-        await button.click()
+        expect(await transcription(false)).toBe(200)
         await expect
           .poll(async () => (await meetingState(meeting._id))?.transcriptionState, { timeout: 30000 })
           .toBe(TranscriptionState.Finished)
