@@ -1,11 +1,6 @@
 import { devices, PlaywrightTestConfig } from '@playwright/test'
 import { config as dotenvConfig } from 'dotenv'
-import { cpus } from 'os'
 dotenvConfig()
-
-// Four to six: the default of half the cores left a 4-vCPU runner with two, and past six the
-// stand is the bottleneck. CLI --workers still wins.
-const workers = Math.min(6, Math.max(4, Math.floor(cpus().length / 2)))
 
 const PlatformURI = process.env.PLATFORM_URI ?? 'http://localhost:8083'
 
@@ -95,7 +90,6 @@ const config: PlaywrightTestConfig = {
       dependencies: ['setup']
     }
   ],
-  workers,
   retries: 2,
   timeout: 60000,
   maxFailures,
