@@ -457,6 +457,14 @@ UI: `OutgoingInvitePopup`, `IncomingInvitePopup`, `InviteButton`
   egress глушится сразу. Webhook `egress_started` только логирует;
   `egress_updated` обновляет размер; `egress_ended` сохраняет файл в storage,
   вешает на митинг и удаляет `PendingRecording`.
+- Polling каждый цикл сверяет `listEgress({ active: true })` с `PendingRecording`
+  и глушит egress, за которым не стоит ни одной строки: старт мог свалиться по
+  таймауту уже после того, как LiveKit его принял. Проверить руками:
+
+  ```js
+  new EgressClient(url, key, secret).listEgress({ active: true })
+  ```
+
 - `/transcription` сам пишет `transcriptionState` на `MeetingMinutes`
   (`Transcribing` / `Finished`). Кнопки записи и транскрипции читают состояние
   из документов, а не из room metadata: флаг в metadata идёт через очередь и

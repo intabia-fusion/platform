@@ -17,7 +17,7 @@ import { MeasureContext, Ref, WorkspaceUuid } from '@hcengineering/core'
 import { Person } from '@hcengineering/contact'
 import { MeetingMinutes, parseRoomName } from '@hcengineering/love'
 import { PlatformQueueProducer } from '@hcengineering/server-core'
-import { RoomServiceClient, ParticipantInfo as LiveKitParticipant, Room } from 'livekit-server-sdk'
+import { EgressClient, RoomServiceClient, ParticipantInfo as LiveKitParticipant, Room } from 'livekit-server-sdk'
 import { WorkspaceClient } from './workspaceClient'
 import { parseMetadata, parseParticipantMetadata, updateMetadata } from './utils'
 import { type BillingMessage } from './queue'
@@ -76,6 +76,8 @@ export class LiveKitPollingService {
   private readonly knownWorkspaces = new Set<WorkspaceUuid>()
   private readonly lastCleanupTime = new Map<WorkspaceUuid, number>()
   private static readonly CLEANUP_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
+  /** An egress younger than this may simply be between the egress call and the row update. */
+  private static readonly ORPHAN_EGRESS_GRACE_MS = 60_000
 
   // Draining finishes every meeting of every workspace, so the bar is high: a LiveKit
   // restart or a network blip must not clear the whole installation.
@@ -89,7 +91,8 @@ export class LiveKitPollingService {
     ctx: MeasureContext,
     roomClient: RoomServiceClient,
     config: PollingConfig,
-    private readonly billingProducer?: PlatformQueueProducer<BillingMessage>
+    private readonly billingProducer?: PlatformQueueProducer<BillingMessage>,
+    private readonly egressClient?: EgressClient
   ) {
     this.ctx = ctx
     this.roomClient = roomClient
@@ -291,6 +294,8 @@ export class LiveKitPollingService {
         }
       }
 
+      await this.stopOrphanEgresses()
+
       // We need to check workspaces added to check for un finished meetings.
       const wtc = Array.from(this.workspacesToCheck)
       this.workspacesToCheck.clear()
@@ -434,6 +439,38 @@ export class LiveKitPollingService {
     } catch (err: any) {
       this.ctx.warn('[PollingService] Failed to close the room after the owner left', {
         roomName: state.roomName,
+        error: err?.message ?? String(err)
+      })
+    }
+  }
+
+  /**
+   * An egress nobody tracks keeps burning CPU and writing to storage: it happens when the start
+   * call times out after LiveKit already accepted it, so the reservation is dropped on our side.
+   */
+  private async stopOrphanEgresses (): Promise<void> {
+    if (this.egressClient === undefined) return
+    try {
+      const active = await this.egressClient.listEgress({ active: true })
+      for (const info of active) {
+        const parsed = parseRoomName(info.roomName ?? '')
+        if (parsed === undefined) continue
+        const startedAtMs = Number(info.startedAt) / 1_000_000
+        if (startedAtMs > 0 && Date.now() - startedAtMs < LiveKitPollingService.ORPHAN_EGRESS_GRACE_MS) continue
+
+        const wsClient = await WorkspaceClient.create(parsed.workspace, this.ctx)
+        const tracked = await wsClient.findPendingRecordingsByMeeting(parsed.meetingId)
+        if (tracked.some((it) => it.egressId === info.egressId)) continue
+
+        this.ctx.warn('[PollingService] Stopping an egress no PendingRecording tracks', {
+          egressId: info.egressId,
+          roomName: info.roomName,
+          meetingId: parsed.meetingId
+        })
+        await this.egressClient.stopEgress(info.egressId)
+      }
+    } catch (err: any) {
+      this.ctx.warn('[PollingService] Failed to reconcile active egresses', {
         error: err?.message ?? String(err)
       })
     }

@@ -552,7 +552,8 @@ export const main = async (): Promise<void> => {
       projectKey: config.LiveKitProject,
       ownerRejoinGraceMs: config.OwnerRejoinGraceSec * 1000
     },
-    billingProducer
+    billingProducer,
+    egressClient
   )
   pollingService.start()
 

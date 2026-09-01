@@ -46,6 +46,7 @@ function createMockWsClient (): Record<string, jest.Mock> {
     checkUnfinishedMeetings: jest.fn().mockResolvedValue(undefined),
     finishMeeting: jest.fn().mockResolvedValue(undefined),
     findParticipantInfosByMeeting: jest.fn().mockResolvedValue([]),
+    findPendingRecordingsByMeeting: jest.fn().mockResolvedValue([]),
     removeParticipantInfoById: jest.fn().mockResolvedValue(undefined),
     findPersonRefById: jest.fn().mockResolvedValue(undefined),
     findMeetingById: jest.fn().mockResolvedValue({ _id: meetingId, roomId: 'office-1' }),
@@ -388,6 +389,65 @@ describe('LiveKitPollingService.poll', () => {
     // First room's listParticipants threw, but the second room's state must still be recorded.
     expect((service as any).roomStates.has(roomName)).toBe(false)
     expect((service as any).roomStates.has(otherRoomName)).toBe(true)
+  })
+})
+
+describe('orphan egresses', () => {
+  const GRACE_MS = 60_000
+  let roomClient: ReturnType<typeof createMockRoomClient>
+  let wsClient: Record<string, jest.Mock>
+  let egressClient: { listEgress: jest.Mock, stopEgress: jest.Mock }
+  let service: LiveKitPollingService
+
+  /** `startedAt` is nanoseconds in the LiveKit protocol. */
+  const egress = (egressId: string, ageMs: number): any => ({
+    egressId,
+    roomName,
+    startedAt: BigInt((Date.now() - ageMs) * 1_000_000)
+  })
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    roomClient = createMockRoomClient()
+    wsClient = createMockWsClient()
+    egressClient = { listEgress: jest.fn().mockResolvedValue([]), stopEgress: jest.fn().mockResolvedValue(undefined) }
+    ;(WorkspaceClient.create as jest.Mock).mockResolvedValue(wsClient)
+
+    service = new LiveKitPollingService(
+      createMockContext(),
+      roomClient as any,
+      { intervalMs: 1000, projectKey: 'test-project', ownerRejoinGraceMs: 15000 },
+      undefined,
+      egressClient as any
+    )
+    ;(service as any).isRunning = true
+  })
+
+  it('stops an egress no PendingRecording knows about', async () => {
+    egressClient.listEgress.mockResolvedValue([egress('EG_orphan', GRACE_MS + 1000)])
+    wsClient.findPendingRecordingsByMeeting.mockResolvedValue([])
+
+    await (service as any).poll()
+
+    expect(egressClient.stopEgress).toHaveBeenCalledWith('EG_orphan')
+  })
+
+  it('leaves a tracked egress alone', async () => {
+    egressClient.listEgress.mockResolvedValue([egress('EG_tracked', GRACE_MS + 1000)])
+    wsClient.findPendingRecordingsByMeeting.mockResolvedValue([{ _id: 'pr-1', egressId: 'EG_tracked' }])
+
+    await (service as any).poll()
+
+    expect(egressClient.stopEgress).not.toHaveBeenCalled()
+  })
+
+  it('leaves a fresh egress alone - its row may still be on the way', async () => {
+    egressClient.listEgress.mockResolvedValue([egress('EG_fresh', 1000)])
+    wsClient.findPendingRecordingsByMeeting.mockResolvedValue([])
+
+    await (service as any).poll()
+
+    expect(egressClient.stopEgress).not.toHaveBeenCalled()
   })
 })
 
