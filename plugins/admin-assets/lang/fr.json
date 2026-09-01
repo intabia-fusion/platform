@@ -182,7 +182,7 @@
     "AuditTitle": "Actions des administrateurs",
     "Target": "Cible",
     "ReleaseSocialId": "Supprimer le social id",
-    "Billing": "AI",
+    "AI": "AI",
     "SortTokens": "Par tokens",
     "SortMinutes": "Par minutes",
     "AdminSessionTitle": "Confirmation de l'accès administrateur",

@@ -182,7 +182,7 @@
     "AuditTitle": "管理员操作",
     "Target": "对象",
     "ReleaseSocialId": "删除 social id",
-    "Billing": "AI",
+    "AI": "AI",
     "SortTokens": "按令牌",
     "SortMinutes": "按分钟",
     "AdminSessionTitle": "管理员访问确认",

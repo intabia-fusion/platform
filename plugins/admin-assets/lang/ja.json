@@ -182,7 +182,7 @@
     "AuditTitle": "管理者の操作",
     "Target": "対象",
     "ReleaseSocialId": "ソーシャルIDを削除",
-    "Billing": "AI",
+    "AI": "AI",
     "SortTokens": "トークン順",
     "SortMinutes": "分順",
     "AdminSessionTitle": "管理者アクセスの確認",

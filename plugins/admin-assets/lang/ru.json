@@ -184,7 +184,7 @@
     "AuditTitle": "Действия администраторов",
     "Target": "Объект",
     "ReleaseSocialId": "Удалить social id",
-    "Billing": "AI",
+    "AI": "AI",
     "AdminSessionTitle": "Подтверждение доступа администратора",
     "AdminSessionHint": "Введите код, отправленный на почту администратора, чтобы открыть сессию администрирования.",
     "AdminSessionRejected": "Неверный или просроченный код",
