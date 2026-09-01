@@ -20,8 +20,9 @@
   import { onMount } from 'svelte'
 
   import adminRes from '../plugin'
-  import { getAccountClient } from '../utils'
+  import { getAccountClient, hasAdminSession } from '../utils'
   import AdminPanel from './AdminPanel.svelte'
+  import AdminSessionGate from './AdminSessionGate.svelte'
 
   // Fresh page load has no token metadata: restore session from auth cookie,
   // else render the login form in place (successful login populates the token).
@@ -51,11 +52,36 @@
     token = getMetadata(presentation.metadata.Token)
   }
 
-  // Logged in but neither full admin nor read-only billing admin - send to the regular login
+  // Logged in but neither full admin nor read-only billing admin. This is also what an
+  // impersonation session looks like on the way back, so try the auth cookie before bailing out.
   $: notAdmin = !restoring && token != null && !isAdminUser() && !isBillingAdminUser()
   $: if (notAdmin) {
+    void restoreFromCookie()
+  }
+
+  let cookieRestoreTried = false
+  async function restoreFromCookie (): Promise<void> {
+    if (cookieRestoreTried) {
+      navigate({ path: [loginId] }, true)
+      return
+    }
+    cookieRestoreTried = true
+    try {
+      const info = await getAccountClient(null).getLoginInfoByToken()
+      if (info != null && 'token' in info && info.token != null) {
+        setMetadata(presentation.metadata.Token, info.token)
+        token = info.token
+        return
+      }
+    } catch (err: any) {
+      // fall through to the login form
+    }
     navigate({ path: [loginId] }, true)
   }
+
+  // Second factor: every admin RPC refuses a token without a fresh `mfaAt`.
+  let sessionTick = 0
+  $: hasSession = sessionTick >= 0 && token != null && hasAdminSession()
 </script>
 
 {#if restoring}
@@ -64,6 +90,13 @@
   <Component is={login.component.LoginApp} />
 {:else if notAdmin}
   <Loading />
+{:else if !hasSession}
+  <AdminSessionGate
+    on:opened={() => {
+      token = getMetadata(presentation.metadata.Token)
+      sessionTick++
+    }}
+  />
 {:else}
   <AdminPanel />
 {/if}

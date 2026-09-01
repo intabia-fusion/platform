@@ -15,7 +15,7 @@
 <script lang="ts">
   import { getCurrentEmployee, Person } from '@hcengineering/contact'
   import { AccountRole, Doc, getCurrentAccount, PersonId, Ref, uniqueNotEmpty } from '@hcengineering/core'
-  import { Card, isAdminUser } from '@hcengineering/presentation'
+  import { Card } from '@hcengineering/presentation'
   import ui, { Button, Label } from '@hcengineering/ui'
   import { ObjectPresenter } from '@hcengineering/view-resources'
   import view from '@hcengineering/view-resources/src/plugin'
@@ -44,8 +44,7 @@
   $: canDelete =
     (skipCheck ||
       (creators !== undefined && creators.length === 1 && creators[0] === me) ||
-      getCurrentAccount().role === AccountRole.Owner ||
-      isAdminUser()) &&
+      getCurrentAccount().role === AccountRole.Owner) &&
     canDeleteExtra
   $: label = canDelete ? (title ?? view.string.DeleteObject) : view.string.DeletePopupNoPermissionTitle
 </script>

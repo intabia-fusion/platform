@@ -314,6 +314,6 @@ function getPeriodStartDate (subscription: Subscription | undefined): Date {
 }
 
 function getAccountClient (accountsUrl: string, workspace: WorkspaceUuid | undefined): AccountClient {
-  const token = generateToken(systemAccountUuid, workspace, { service: 'billing', admin: 'true' })
+  const token = generateToken(systemAccountUuid, workspace, { service: 'billing' })
   return getClient(accountsUrl, token)
 }

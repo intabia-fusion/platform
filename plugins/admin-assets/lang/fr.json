@@ -182,8 +182,19 @@
     "AuditTitle": "Actions des administrateurs",
     "Target": "Cible",
     "ReleaseSocialId": "Supprimer le social id",
-    "Billing": "AI",
+    "AI": "AI",
     "SortTokens": "Par tokens",
-    "SortMinutes": "Par minutes"
+    "SortMinutes": "Par minutes",
+    "AdminSessionTitle": "Confirmation de l'accès administrateur",
+    "AdminSessionHint": "Saisissez le code envoyé à votre e-mail d'administrateur pour ouvrir une session d'administration.",
+    "AdminSessionRejected": "Code incorrect ou expiré",
+    "Impersonate": "Voir en tant que",
+    "ImpersonateHint": "Ouvre une session en lecture seule au nom de ce membre. Les écritures sont refusées ; l'action est auditée.",
+    "Attempts": "Tentatives",
+    "Progress": "Progression",
+    "Actions": "Actions",
+    "NoTrial": "Sans essai",
+    "Sessions": "Sessions",
+    "Ops5m": "Opérations (5 min)"
   }
 }

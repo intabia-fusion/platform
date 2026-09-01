@@ -182,8 +182,19 @@
     "AuditTitle": "Administratoraktionen",
     "Target": "Ziel",
     "ReleaseSocialId": "Social ID löschen",
-    "Billing": "AI",
+    "AI": "AI",
     "SortTokens": "Nach Tokens",
-    "SortMinutes": "Nach Minuten"
+    "SortMinutes": "Nach Minuten",
+    "AdminSessionTitle": "Bestätigung des Administratorzugriffs",
+    "AdminSessionHint": "Geben Sie den an Ihre Administrator-E-Mail gesendeten Code ein, um eine Administrationssitzung zu öffnen.",
+    "AdminSessionRejected": "Falscher oder abgelaufener Code",
+    "Impersonate": "Anzeigen als",
+    "ImpersonateHint": "Öffnet eine schreibgeschützte Sitzung als dieses Mitglied. Schreibzugriffe werden abgelehnt; die Aktion wird protokolliert.",
+    "Attempts": "Versuche",
+    "Progress": "Fortschritt",
+    "Actions": "Aktionen",
+    "NoTrial": "Ohne Testphase",
+    "Sessions": "Sitzungen",
+    "Ops5m": "Operationen (5 Min.)"
   }
 }

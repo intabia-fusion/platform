@@ -52,7 +52,7 @@ import {
   type SessionManager,
   type StorageAdapter
 } from '@hcengineering/server-core'
-import { decodeToken, type Token } from '@hcengineering/server-token'
+import { decodeToken, hasAdminSession, isHumanAdmin, type Token } from '@hcengineering/server-token'
 import 'bufferutil'
 import cors from 'cors'
 import express, { type Response as ExpressResponse, type NextFunction, type Request } from 'express'
@@ -86,6 +86,13 @@ const catchError = (fn: RequestHandler) => (req: Request, res: ExpressResponse, 
     }
   })()
 }
+
+// Management endpoints take the token from the Authorization header only: a token in the query
+// string leaks into proxy access logs and browser history. The system account covers unattended
+// tooling; a human operator needs a fresh `/admin` second factor.
+const bearerToken = (req: { headers: Record<string, any> }): string => (req.headers.authorization ?? '').split(' ')[1]
+const isOperator = (payload: Token): boolean =>
+  payload.account === systemAccountUuid || (isHumanAdmin(payload) && hasAdminSession(payload))
 
 let profiling = false
 const rpcHandler = new RPCHandler()
@@ -201,9 +208,8 @@ export function startHttpServer (
 
   app.get('/api/v1/statistics', (req, res) => {
     try {
-      const token = (req.query.token as string) ?? (req.headers.authorization ?? '').split(' ')[1]
-      const payload = decodeToken(token)
-      const admin = payload.extra?.admin === 'true'
+      const payload = decodeToken(bearerToken(req))
+      const admin = isOperator(payload)
       const jsonData = {
         ...getStatistics(ctx, sessions, admin),
         users: getUsers(),
@@ -227,8 +233,12 @@ export function startHttpServer (
 
   app.get('/api/v1/profiling', (req, res) => {
     try {
-      const token = (req.query.token as string) ?? (req.headers.authorization ?? '').split(' ')[1]
-      decodeToken(token)
+      const payload = decodeToken(bearerToken(req))
+      if (!isOperator(payload)) {
+        res.writeHead(404, {})
+        res.end()
+        return
+      }
       const jsonData = {
         profiling
       }
@@ -244,10 +254,9 @@ export function startHttpServer (
   })
   app.put('/api/v1/manage', (req, res) => {
     try {
-      const token = (req.query.token as string) ?? (req.headers.authorization ?? '').split(' ')[1]
-      const payload = decodeToken(token)
+      const payload = decodeToken(bearerToken(req))
 
-      if (payload.extra?.admin !== 'true' && payload.account !== systemAccountUuid) {
+      if (!isOperator(payload)) {
         console.warn('Non admin attempt to maintenance action', { payload })
         res.writeHead(404, {})
         res.end()

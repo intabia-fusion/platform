@@ -52,7 +52,8 @@ import {
   upsertSubscription,
   adminCreateSubscription,
   adminUpdateSubscription,
-  getPersonInfo
+  getPersonInfo,
+  updateWorkspaceInfo
 } from '../serviceOperations'
 
 // Mock platform
@@ -68,6 +69,9 @@ jest.mock('@hcengineering/platform', () => {
 
 // Mock server-token
 jest.mock('@hcengineering/server-token', () => ({
+  isHumanAdmin: jest.requireActual('@hcengineering/server-token').isHumanAdmin,
+  hasAdminSession: jest.requireActual('@hcengineering/server-token').hasAdminSession,
+  ADMIN_SESSION_TTL_SEC: jest.requireActual('@hcengineering/server-token').ADMIN_SESSION_TTL_SEC,
   decodeTokenVerbose: jest.fn(),
   generateToken: jest.fn()
 }))
@@ -121,12 +125,10 @@ describe('addSocialIdToPerson', () => {
     )
   })
 
-  test('should allow admin to add social id', async () => {
+  test('should refuse an admin token: attaching an identity is a service action', async () => {
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
       extra: { admin: 'true' }
     })
-    const newSocialId = 'new-social-id' as PersonId
-    addSocialIdSpy.mockResolvedValue(newSocialId)
 
     const params = {
       person: 'test-person' as PersonUuid,
@@ -136,17 +138,10 @@ describe('addSocialIdToPerson', () => {
       displayValue: 'test-display-value'
     }
 
-    const result = await addSocialIdToPerson(mockCtx, mockDb, mockBranding, mockToken, params)
-
-    expect(result).toBe(newSocialId)
-    expect(addSocialIdSpy).toHaveBeenCalledWith(
-      mockDb,
-      params.person,
-      params.type,
-      params.value,
-      params.confirmed,
-      params.displayValue
+    await expect(addSocialIdToPerson(mockCtx, mockDb, mockBranding, mockToken, params)).rejects.toThrow(
+      new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
     )
+    expect(addSocialIdSpy).not.toHaveBeenCalled()
   })
 
   test('should throw error for unauthorized service', async () => {
@@ -1736,6 +1731,11 @@ describe('upsertSubscription - AI package token grant', () => {
     getWorkspaceByIdSpy.mockRestore()
   })
 
+  /** Token grants only: a package upsert also publishes limitsChanged, which these cases ignore. */
+  function grants (): any[] {
+    return mockProducer.send.mock.calls.flatMap((c: any[]) => c[2]).filter((e: any) => e.type === 'purchase-activated')
+  }
+
   test('publishes token grant for active package with tokenLimit > 0', async () => {
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg())
 
@@ -1760,35 +1760,33 @@ describe('upsertSubscription - AI package token grant', () => {
       pkg({ plan: 'storage-100gb', limits: storageLimits })
     )
 
-    expect(mockProducer.send).not.toHaveBeenCalled()
+    expect(grants()).toEqual([])
   })
 
   test('does not publish when limits are missing', async () => {
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ limits: undefined }))
 
-    expect(mockProducer.send).not.toHaveBeenCalled()
+    expect(grants()).toEqual([])
   })
 
   test('does not publish when status is not Active', async () => {
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ status: SubscriptionStatus.PastDue }))
 
-    expect(mockProducer.send).not.toHaveBeenCalled()
+    expect(grants()).toEqual([])
   })
 
   test('does not publish when periodStart is undefined', async () => {
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: undefined }))
 
-    expect(mockProducer.send).not.toHaveBeenCalled()
+    expect(grants()).toEqual([])
   })
 
   test('grantId changes when periodStart changes (renewal grants again)', async () => {
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: 1_000 }))
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: 2_000 }))
 
-    expect(mockProducer.send).toHaveBeenNthCalledWith(1, mockCtx, workspaceUuid, [
-      workspaceEvents.purchaseActivated('ai-500k', 'sub-pkg-1:1000', 'add-ai-tokens', 500_000)
-    ])
-    expect(mockProducer.send).toHaveBeenNthCalledWith(2, mockCtx, workspaceUuid, [
+    expect(grants()).toEqual([
+      workspaceEvents.purchaseActivated('ai-500k', 'sub-pkg-1:1000', 'add-ai-tokens', 500_000),
       workspaceEvents.purchaseActivated('ai-500k', 'sub-pkg-1:2000', 'add-ai-tokens', 500_000)
     ])
   })
@@ -1797,10 +1795,9 @@ describe('upsertSubscription - AI package token grant', () => {
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: 1_000 }))
     await upsertSubscription(mockCtx, mockDb, mockBranding, mockToken, pkg({ periodStart: 1_000 }))
 
-    const [, , firstEvents] = mockProducer.send.mock.calls[0]
-    const [, , secondEvents] = mockProducer.send.mock.calls[1]
-    expect(firstEvents[0].purchaseId).toBe(secondEvents[0].purchaseId)
-    expect(firstEvents[0].purchaseId).toBe('sub-pkg-1:1000')
+    const [first, second] = grants()
+    expect(first.purchaseId).toBe(second.purchaseId)
+    expect(first.purchaseId).toBe('sub-pkg-1:1000')
   })
 
   test('does not publish the token-grant event for a Tier subscription', async () => {
@@ -1898,6 +1895,20 @@ describe('upsertSubscription - tier plan changed event', () => {
 
     expect(mockProducer.send).not.toHaveBeenCalled()
   })
+
+  test('publishes limitsChanged for a package too: it raises the same effective limits', async () => {
+    await upsertSubscription(
+      mockCtx,
+      mockDb,
+      mockBranding,
+      mockToken,
+      tier({ id: 'sub-pkg-1', type: SubscriptionType.Package, plan: 'pkg-100mb' })
+    )
+
+    expect(mockProducer.send).toHaveBeenCalledWith(mockCtx, workspaceUuid, [
+      workspaceEvents.limitsChanged(LimitCategory.Plan, LimitStatus.Ok)
+    ])
+  })
 })
 
 describe('adminCreateSubscription', () => {
@@ -1912,6 +1923,8 @@ describe('adminCreateSubscription', () => {
 
   let mockDb: any
   let getWorkspaceByIdSpy: jest.SpyInstance
+  let verifyOtpSpy: jest.SpyInstance
+  let logSpy: jest.SpyInstance
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -1922,20 +1935,29 @@ describe('adminCreateSubscription', () => {
         update: jest.fn()
       },
       account: { findOne: jest.fn().mockResolvedValue({ uuid: 'admin-acc' }) },
-      getWorkspaceMembers: jest.fn().mockResolvedValue([])
+      getWorkspaceMembers: jest.fn().mockResolvedValue([]),
+      adminAction: { find: jest.fn().mockResolvedValue([]) },
+      otp: { deleteMany: jest.fn() }
     }
     getWorkspaceByIdSpy = jest.spyOn(utils, 'getWorkspaceById').mockResolvedValue({ uuid: workspaceUuid } as any)
-    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: 'admin-acc', extra: { admin: 'true' } })
+    verifyOtpSpy = jest.spyOn(utils, 'verifyAdminOtp').mockResolvedValue(undefined)
+    logSpy = jest.spyOn(utils, 'logAdminAction').mockResolvedValue(undefined)
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: 'admin-acc',
+      extra: { admin: 'true', mfaAt: String(Math.floor(Date.now() / 1000)) }
+    })
   })
 
   afterAll(() => {
     getWorkspaceByIdSpy.mockRestore()
+    verifyOtpSpy.mockRestore()
+    logSpy.mockRestore()
   })
 
   test('rejects non-admin token', async () => {
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: 'u', extra: {} })
     await expect(
-      adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, { workspaceUuid, plan: 'team' })
+      adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, { workspaceUuid, plan: 'team', otpCode: '1' })
     ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {})))
     expect(mockDb.subscription.insertOne).not.toHaveBeenCalled()
   })
@@ -1947,7 +1969,11 @@ describe('adminCreateSubscription', () => {
       { id: 'c', provider: 'old', providerData: {}, status: SubscriptionStatus.Canceled }
     ])
 
-    await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, { workspaceUuid, plan: 'team' })
+    await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      workspaceUuid,
+      plan: 'team',
+      otpCode: '1'
+    })
 
     expect(mockDb.subscription.find).toHaveBeenCalledWith({ workspaceUuid, type: 'tier' })
     // 'c' is already canceled -> skipped; 'a' and 'b' get canceled.
@@ -1972,7 +1998,8 @@ describe('adminCreateSubscription', () => {
     await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
       workspaceUuid,
       plan: 'team',
-      status: SubscriptionStatus.PastDue
+      status: SubscriptionStatus.PastDue,
+      otpCode: '1'
     })
     expect(mockDb.subscription.insertOne).toHaveBeenCalledWith(expect.objectContaining({ status: 'past_due' }))
   })
@@ -1984,7 +2011,11 @@ describe('adminCreateSubscription', () => {
       { person: 'owner-1', role: AccountRole.Owner }
     ])
 
-    await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, { workspaceUuid, plan: 'team' })
+    await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
+      workspaceUuid,
+      plan: 'team',
+      otpCode: '1'
+    })
 
     expect(mockDb.subscription.insertOne).toHaveBeenCalledWith(expect.objectContaining({ accountUuid: 'owner-1' }))
   })
@@ -1995,7 +2026,8 @@ describe('adminCreateSubscription', () => {
     await adminCreateSubscription(mockCtx, mockDb, mockBranding, mockToken, {
       workspaceUuid,
       plan: 'team',
-      status: SubscriptionStatus.PastDue
+      status: SubscriptionStatus.PastDue,
+      otpCode: '1'
     })
     const inserted = mockDb.subscription.insertOne.mock.calls[0][0]
     expect(inserted.freeLimits).toBeUndefined()
@@ -2045,11 +2077,16 @@ describe('adminUpdateSubscription', () => {
         insertOne: jest.fn(),
         update: jest.fn()
       },
-      logPaymentOperation: jest.fn()
+      logPaymentOperation: jest.fn(),
+      adminAction: { find: jest.fn().mockResolvedValue([]) },
+      otp: { deleteMany: jest.fn() }
     }
     verifyOtpSpy = jest.spyOn(utils, 'verifyAdminOtp').mockResolvedValue(undefined)
     logAdminActionSpy = jest.spyOn(utils, 'logAdminAction').mockResolvedValue(undefined)
-    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: 'admin-acc', extra: { admin: 'true' } })
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+      account: 'admin-acc',
+      extra: { admin: 'true', mfaAt: String(Math.floor(Date.now() / 1000)) }
+    })
     ;(getMetadata as jest.Mock).mockReturnValue(undefined)
   })
 
@@ -2291,5 +2328,54 @@ describe('getPersonInfo', () => {
     const result = await getPersonInfo(mockCtx, mockDb, mockBranding, mockToken, { account })
 
     expect(result.phoneHint).toBeUndefined()
+  })
+})
+
+describe('updateWorkspaceInfo - delete events', () => {
+  const mockCtx = { error: jest.fn(), info: jest.fn(), warn: jest.fn() } as unknown as MeasureContext
+  const mockBranding = null
+  const mockToken = 'test-token'
+  const workspaceUuid = 'ws-1' as WorkspaceUuid
+  const version = { major: 0, minor: 7, patch: 0 }
+
+  let mockDb: any
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockDb = {
+      workspace: { exists: jest.fn().mockResolvedValue(true), update: jest.fn() },
+      workspaceStatus: { findOne: jest.fn().mockResolvedValue(null), update: jest.fn() }
+    }
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ extra: { service: 'workspace' } })
+  })
+
+  // The worker drops the DB and reports these; without their own cases the mode stayed
+  // 'pending-deletion' and every re-pick bumped processing_attempts until the retry cap.
+  it('moves the workspace to deleting and clears the attempts', async () => {
+    await updateWorkspaceInfo(mockCtx, mockDb, mockBranding, mockToken, {
+      workspaceUuid,
+      event: 'delete-started',
+      version,
+      progress: 0
+    })
+
+    expect(mockDb.workspaceStatus.update).toHaveBeenCalledWith(
+      { workspaceUuid },
+      expect.objectContaining({ mode: 'deleting', processingAttempts: 0 })
+    )
+  })
+
+  it('moves the workspace to deleted when the worker is done', async () => {
+    await updateWorkspaceInfo(mockCtx, mockDb, mockBranding, mockToken, {
+      workspaceUuid,
+      event: 'delete-done',
+      version,
+      progress: 100
+    })
+
+    expect(mockDb.workspaceStatus.update).toHaveBeenCalledWith(
+      { workspaceUuid },
+      expect.objectContaining({ mode: 'deleted', processingProgress: 100 })
+    )
   })
 })

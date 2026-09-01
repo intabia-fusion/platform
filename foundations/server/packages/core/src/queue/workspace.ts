@@ -17,6 +17,7 @@ export enum QueueWorkspaceEvent {
   LimitsChanged = 'limits-changed',
   UsageChanged = 'usage-changed',
   Maintenance = 'maintenance',
+  ForceClose = 'force-close',
   PurchaseActivated = 'purchase-activated'
 }
 
@@ -127,5 +128,6 @@ export const workspaceEvents = {
     type: QueueWorkspaceEvent.Maintenance,
     timeoutMinutes,
     message
-  })
+  }),
+  forceClose: (): QueueWorkspaceMessage => ({ type: QueueWorkspaceEvent.ForceClose })
 }

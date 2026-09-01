@@ -45,6 +45,7 @@ import {
 } from '@hcengineering/server-token'
 
 import { isAdminEmail, isBillingAdminEmail } from './admin'
+import { requireAdminOp } from './adminOp'
 import { accountPlugin, type CrmNotification } from './plugin'
 import { getFreePlanLimits } from './freeLimits'
 import { type AccountServiceMethods, getServiceMethods } from './serviceOperations'
@@ -134,8 +135,9 @@ import {
   updateAllowReadOnlyGuests,
   updatePasswordAgingRule,
   updateWorkspaceRole,
-  verifyAdminOtp,
   logAdminAction,
+  requestAdminOtp,
+  verifyAdminOtp,
   verifyAllowedRole,
   verifyAllowedServices,
   verifyPassword,
@@ -1529,7 +1531,7 @@ export async function leaveWorkspace (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: { account: AccountUuid }
+  params: { account: AccountUuid, otpCode?: string }
 ): Promise<LoginInfo | null> {
   const { account: targetAccount } = params
 
@@ -1547,6 +1549,12 @@ export async function leaveWorkspace (
 
   const initiatorRole = await db.getWorkspaceRole(account, workspace)
   const targetRole = await db.getWorkspaceRole(targetAccount, workspace)
+
+  if (account === targetAccount) {
+    // Leaving on your own is not undoable by yourself: confirm with a code sent to your email.
+    // Removing someone else stays role-gated - it is the workspace admin's routine action.
+    await verifyAdminOtp(ctx, db, token, params.otpCode ?? '')
+  }
 
   if (account !== targetAccount) {
     if (initiatorRole == null || getRolePower(initiatorRole) < getRolePower(AccountRole.Maintainer)) {
@@ -1655,11 +1663,26 @@ export async function updateWorkspaceName (
   )
 }
 
+/**
+ * Sends a confirmation code to the caller's verified email. Used before self-service destructive
+ * actions (leaving a workspace, deleting one); the admin panel has its own entry point.
+ */
+export async function requestOperationOtp (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  _params: Record<string, unknown>
+): Promise<OtpInfo> {
+  return await requestAdminOtp(ctx, db, branding, token)
+}
+
 export async function deleteWorkspace (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
-  token: string
+  token: string,
+  params: { otpCode: string }
 ): Promise<void> {
   const { account, workspace } = decodeTokenVerbose(ctx, token)
   const role = await db.getWorkspaceRole(account, workspace)
@@ -1669,11 +1692,16 @@ export async function deleteWorkspace (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
+  // Irreversible for everyone in the workspace: confirm with a code sent to the owner's email.
+  await verifyAdminOtp(ctx, db, token, params?.otpCode ?? '')
+
   await db.workspaceStatus.update(
     { workspaceUuid: workspace },
     {
       isDisabled: true,
-      mode: 'pending-deletion'
+      mode: 'pending-deletion',
+      // A workspace that had already exhausted its retries would never be picked up again.
+      processingAttempts: 0
     }
   )
 }
@@ -1793,10 +1821,7 @@ export async function getWorkspaceInfo (
   const skipAssignmentCheck = isGuest || account === systemAccountUuid
 
   if (!skipAssignmentCheck) {
-    let role = await db.getWorkspaceRole(account, workspaceUuid)
-    if (role === null && isAdmin) {
-      role = AccountRole.Admin
-    }
+    const role = await db.getWorkspaceRole(account, workspaceUuid)
 
     if (role == null) {
       ctx.warn('Not a member of the workspace', { workspaceUuid, account })
@@ -2007,10 +2032,7 @@ export async function getLoginInfoByToken (
       } satisfies WorkspaceLoginInfo
     }
 
-    let role = await getWorkspaceRole(db, accountUuid, workspace.uuid)
-    if (role === null && isAdmin) {
-      role = AccountRole.Admin
-    }
+    const role = await getWorkspaceRole(db, accountUuid, workspace.uuid)
 
     if (role == null) {
       // User might have been removed from the workspace
@@ -2637,13 +2659,7 @@ export async function deleteAccount (
   token: string,
   params: { uuid?: AccountUuid, otpCode?: string }
 ): Promise<void> {
-  const { account, extra } = decodeTokenVerbose(ctx, token)
-
-  const isAdmin = extra?.admin === 'true'
-
-  if (!isAdmin) {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
-  }
+  const { account } = decodeTokenVerbose(ctx, token)
 
   const { uuid } = params
 
@@ -2651,11 +2667,12 @@ export async function deleteAccount (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
-  // Irreversible identity purge — require an emailed OTP confirmation.
-  await verifyAdminOtp(ctx, db, token, params.otpCode ?? '')
+  // Irreversible identity purge — human admin, fresh session, emailed OTP confirmation.
+  await requireAdminOp(ctx, db, token, 'delete_account', params.otpCode ?? '', uuid)
 
   if (uuid === account) {
     // Admin must not delete their own account (would also break the OTP-email lookup).
+    ctx.warn('Refusing to delete an account: the admin is deleting themselves', { uuid })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
@@ -2665,6 +2682,7 @@ export async function deleteAccount (
     const members = await db.getWorkspaceMembers(ws.uuid)
     const owners = members.filter((m) => m.role === AccountRole.Owner)
     if (owners.length === 1 && owners[0].person === uuid) {
+      ctx.warn('Refusing to delete an account: sole owner of a workspace', { uuid, workspace: ws.uuid, url: ws.url })
       throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
     }
   }
@@ -2703,10 +2721,10 @@ async function verifyMergePersonsAuthority (
   secondaryPerson: PersonUuid,
   shouldThrow = true
 ): Promise<boolean> {
-  // Global admins and the tool/workspace services act on behalf of the whole installation,
-  // the same way the account level merge (mergeSpecifiedAccounts) allows them to.
+  // The tool/workspace services act on behalf of the whole installation. A global admin does not:
+  // merging identities from the admin panel would be an unaudited cross-workspace write.
   // Note this must precede the workspace check below: such tokens carry no workspace.
-  if (extra?.admin === 'true' || verifyAllowedServices(['tool', 'workspace'], extra, false)) {
+  if (verifyAllowedServices(['tool', 'workspace'], extra, false)) {
     return true
   }
 
@@ -3215,6 +3233,7 @@ export type AccountMethods =
   | 'changeUsername'
   | 'updateWorkspaceName'
   | 'deleteWorkspace'
+  | 'requestOperationOtp'
   | 'getRegionInfo'
   | 'getLicenseInfo'
   | 'getUserWorkspaces'
@@ -3293,6 +3312,7 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
     changeUsername: wrap(changeUsername),
     updateWorkspaceName: wrap(updateWorkspaceName),
     deleteWorkspace: wrap(deleteWorkspace),
+    requestOperationOtp: wrap(requestOperationOtp),
     updateWorkspaceRole: wrap(updateWorkspaceRole),
     isAllowReadOnlyGuests: wrap(isAllowReadOnlyGuests),
     updateAllowReadOnlyGuests: wrap(updateAllowReadOnlyGuests),

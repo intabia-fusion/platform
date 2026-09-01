@@ -33,6 +33,7 @@ import {
   type WorkspaceDataId,
   type WorkspaceUuid,
   type WorkspaceInfo,
+  type WorkspaceUpdateEvent,
   type IntegrationKind
 } from '@hcengineering/core'
 import type { EndpointInfo } from './utils'
@@ -466,6 +467,7 @@ export interface WorkspacesPagedQuery {
   attemptsGte?: number
   billingPlan?: string // current tier plan
   billingStatus?: string // current tier subscription status (e.g. 'trialing')
+  billingStatusNot?: string // exclude a status, e.g. paid Business without the trials
   billingExpired?: boolean // has tier subscription, none of them active/trialing
   sort?: WorkspacesSortKey
   order?: 'asc' | 'desc'
@@ -614,7 +616,8 @@ export interface AccountDB {
     skip?: number,
     limit?: number,
     sort?: AccountsSortKey,
-    filter?: AccountsFilter
+    filter?: AccountsFilter,
+    order?: 'asc' | 'desc'
   ) => Promise<AccountAggregatedInfo[]>
   listAdminActions: (query: AdminActionsQuery) => Promise<AdminActionsResult>
   listWorkspacesPaged: (query: WorkspacesPagedQuery) => Promise<WorkspacesPagedResult>
@@ -713,24 +716,8 @@ export type AccountMethodHandler = (
   meta?: Record<string, any>
 ) => Promise<any>
 
-export type WorkspaceEvent =
-  | 'ping'
-  | 'create-started'
-  | 'upgrade-started'
-  | 'progress'
-  | 'create-done'
-  | 'upgrade-done'
-  | 'migrate-backup-started' // -> state = 'migration-backup'
-  | 'restore-started'
-  | 'restore-done'
-  | 'migrate-backup-done' // -> state = 'migration-pending-cleaning'
-  | 'migrate-clean-started' // -> state = 'migration-cleaning'
-  | 'migrate-clean-done' // -> state = 'pending-restoring'
-  | 'archiving-backup-started' // -> state = 'archiving'
-  | 'archiving-backup-done' // -> state = 'archiving-pending-cleaning'
-  | 'archiving-clean-started'
-  | 'archiving-clean-done'
-  | 'archiving-done'
+// Alias, not a copy: a local duplicate had already drifted and silently dropped the delete events.
+export type WorkspaceEvent = WorkspaceUpdateEvent
 export type WorkspaceOperation = 'create' | 'upgrade' | 'all' | 'all+backup'
 export interface LoginInfo {
   account: AccountUuid
@@ -830,7 +817,7 @@ export interface AccountAggregatedInfo extends Omit<Account, 'hash' | 'salt'>, P
   hasAccount?: boolean
 }
 
-export type AccountsSortKey = 'name' | 'lastVisit' | 'registeredOn'
+export type AccountsSortKey = 'name' | 'lastVisit' | 'registeredOn' | 'workspaces' | 'email'
 
 /** Server-side filters for listAccounts. Duplicated in account-client/src/types.ts - change both */
 export interface AccountsFilter {

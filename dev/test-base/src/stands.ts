@@ -145,7 +145,9 @@ const ws: StandConfig = {
     { name: 'user2', first: 'Kainin', last: 'Dirak' },
     { name: 'user3', first: 'Muffin', last: 'Muram' },
     // user4 has no workspace membership: used to test the account-side join-time seat hard-cap.
-    { name: 'user4', first: 'Seat', last: 'Joiner' }
+    { name: 'user4', first: 'Seat', last: 'Joiner' },
+    // billing is a read-only admin (BILLING_EMAILS): sees the admin panel, cannot mutate.
+    { name: 'billing', first: 'Bill', last: 'Reader' }
   ],
   workspaces: [
     {

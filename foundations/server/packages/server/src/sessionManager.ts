@@ -219,6 +219,9 @@ export class TSessionManager implements SessionManager {
             }
             this.broadcast(ctx, null, msg.workspace, [tx], undefined)
           }
+        } else if (m.type === QueueWorkspaceEvent.ForceClose) {
+          // Operator dropped every session of this workspace; whichever transactor holds it acts.
+          await this.forceClose(msg.workspace)
         } else if (m.type === QueueWorkspaceEvent.Maintenance) {
           // Global maintenance warning from the account service; workspace key is not meaningful here
           const mm = m as QueueWorkspaceMaintenanceMessage

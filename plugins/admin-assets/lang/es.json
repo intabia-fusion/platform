@@ -182,8 +182,19 @@
     "AuditTitle": "Acciones de administradores",
     "Target": "Objetivo",
     "ReleaseSocialId": "Eliminar social id",
-    "Billing": "AI",
+    "AI": "AI",
     "SortTokens": "Por tokens",
-    "SortMinutes": "Por minutos"
+    "SortMinutes": "Por minutos",
+    "AdminSessionTitle": "Confirmación de acceso de administrador",
+    "AdminSessionHint": "Introduce el código enviado al correo del administrador para abrir una sesión de administración.",
+    "AdminSessionRejected": "Código incorrecto o caducado",
+    "Impersonate": "Ver como",
+    "ImpersonateHint": "Abre una sesión de solo lectura como este miembro. La escritura se rechaza; la acción queda registrada en la auditoría.",
+    "Attempts": "Intentos",
+    "Progress": "Progreso",
+    "Actions": "Acciones",
+    "NoTrial": "Sin prueba",
+    "Sessions": "Sesiones",
+    "Ops5m": "Operaciones (5 min)"
   }
 }

@@ -210,7 +210,13 @@
     "SpaceMembersOnly": "Solo miembros del espacio",
     "OverrideAttribute": "Sobrescribir atributo",
     "Required": "Requerido",
-    "Reset": "Reiniciar"
+    "Reset": "Reiniciar",
+    "ConfirmOperation": "Confirmar operación",
+    "Confirm": "Confirmar",
+    "OtpCode": "Código",
+    "OtpSent": "Se ha enviado un código a tu correo",
+    "OtpSendFailed": "No se pudo enviar el código",
+    "SendCode": "Enviar código"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

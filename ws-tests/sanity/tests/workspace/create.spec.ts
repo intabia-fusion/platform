@@ -269,6 +269,9 @@ test.describe('Workspace tests', () => {
       await userProfilePage2.clickLeaveWorkspaceCancelButton()
       await userProfilePage2.clickLeaveWorkspaceButton()
       await userProfilePage2.clickLeaveWorkspaceConfirmButton()
+      // Leaving on your own is confirmed with an emailed code; the stand uses ADMIN_OTP_DEV_CODE.
+      await page2.locator('input[placeholder="Code"]').fill('000000')
+      await page2.getByRole('button', { name: 'Confirm', exact: true }).click()
       await expect(page2.locator('form')).toContainText('Select workspace')
       await expect(page2.getByText(newWorkspaceName)).toHaveCount(0)
     } finally {

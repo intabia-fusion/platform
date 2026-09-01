@@ -71,6 +71,9 @@ jest.mock('@hcengineering/platform', () => {
 
 // Mock server-token
 jest.mock('@hcengineering/server-token', () => ({
+  isHumanAdmin: jest.requireActual('@hcengineering/server-token').isHumanAdmin,
+  hasAdminSession: jest.requireActual('@hcengineering/server-token').hasAdminSession,
+  ADMIN_SESSION_TTL_SEC: jest.requireActual('@hcengineering/server-token').ADMIN_SESSION_TTL_SEC,
   decodeTokenVerbose: jest.fn(),
   decodeToken: jest.fn(),
   generateToken: jest.fn().mockImplementation((account, workspace, extra, _, options) => {
@@ -1595,6 +1598,19 @@ describe('account operations', () => {
     })
 
     describe('leaveWorkspace', () => {
+      // Self-leave consumes a user OTP; the code path itself is covered in utils tests.
+      let verifyOtpSpy: jest.SpyInstance
+      beforeEach(() => {
+        verifyOtpSpy = jest.spyOn(utils, 'verifyAdminOtp').mockImplementation(async (_c, _d, _t, code) => {
+          if (code == null || code === '') {
+            throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
+          }
+        })
+      })
+      afterEach(() => {
+        verifyOtpSpy.mockRestore()
+      })
+
       test('should forbid maintainer from removing owner from workspace', async () => {
         ;(mockDb.getWorkspaceRole as jest.Mock).mockImplementation(async (accountId: AccountUuid) => {
           if (accountId === maintainerAccount) return AccountRole.Maintainer
@@ -1621,8 +1637,23 @@ describe('account operations', () => {
         ])
 
         await expect(
-          leaveWorkspace(mockCtx, mockDb, mockBranding, mockToken, { account: ownerAccount })
+          leaveWorkspace(mockCtx, mockDb, mockBranding, mockToken, { account: ownerAccount, otpCode: '000000' })
         ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {})))
+
+        expect(mockDb.unassignWorkspace).not.toHaveBeenCalled()
+      })
+
+      test('should refuse a self-leave without a confirmation code', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
+          account: ownerAccount,
+          workspace: mockWorkspace.uuid,
+          extra: {}
+        })
+        ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Owner)
+
+        await expect(
+          leaveWorkspace(mockCtx, mockDb, mockBranding, mockToken, { account: ownerAccount })
+        ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {})))
 
         expect(mockDb.unassignWorkspace).not.toHaveBeenCalled()
       })
@@ -1644,7 +1675,10 @@ describe('account operations', () => {
           lastName: 'User'
         })
 
-        const result = await leaveWorkspace(mockCtx, mockDb, mockBranding, mockToken, { account: ownerAccount })
+        const result = await leaveWorkspace(mockCtx, mockDb, mockBranding, mockToken, {
+          account: ownerAccount,
+          otpCode: '000000'
+        })
 
         expect(mockDb.unassignWorkspace).toHaveBeenCalledWith(ownerAccount, mockWorkspace.uuid)
         expect(result).toEqual({
@@ -3292,17 +3326,19 @@ describe('merge specified persons', () => {
       expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
     })
 
-    test('should merge for a global admin token', async () => {
+    test('should refuse a global admin token that is not a workspace maintainer', async () => {
       ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
         account: callerUuid,
         extra: { admin: 'true' }
       })
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(null)
       const spy = jest.spyOn(utils, 'doMergePersons').mockResolvedValue()
 
-      await mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)
+      await expect(mergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).rejects.toThrow(
+        new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      )
 
-      expect(spy).toHaveBeenCalledWith(mockDb, primaryPerson, secondaryPerson)
-      expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
+      expect(spy).not.toHaveBeenCalled()
     })
   })
 
@@ -3365,14 +3401,14 @@ describe('merge specified persons', () => {
       expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
     })
 
-    test('should allow a global admin token', async () => {
+    test('should refuse a global admin token that is not a workspace maintainer', async () => {
       ;(decodeTokenVerbose as jest.Mock).mockReturnValue({
         account: callerUuid,
         extra: { admin: 'true' }
       })
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(null)
 
-      expect(await canMergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).toBe(true)
-      expect(mockDb.getWorkspaceRole).not.toHaveBeenCalled()
+      expect(await canMergeSpecifiedPersons(mockCtx, mockDb, mockBranding, 'test-token', params)).toBe(false)
     })
   })
 })

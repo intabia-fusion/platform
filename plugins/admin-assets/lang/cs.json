@@ -182,8 +182,19 @@
     "AuditTitle": "Akce administrátorů",
     "Target": "Cíl",
     "ReleaseSocialId": "Smazat social id",
-    "Billing": "Fakturace",
+    "AI": "AI",
     "SortTokens": "Podle tokenů",
-    "SortMinutes": "Podle minut"
+    "SortMinutes": "Podle minut",
+    "AdminSessionTitle": "Potvrzení přístupu správce",
+    "AdminSessionHint": "Zadejte kód zaslaný na e-mail správce a otevřete administrátorskou relaci.",
+    "AdminSessionRejected": "Neplatný nebo vypršelý kód",
+    "Impersonate": "Zobrazit jako",
+    "ImpersonateHint": "Otevře relaci pouze pro čtení jménem tohoto člena. Zápis je zamítnut, akce se zaznamenává do auditu.",
+    "Attempts": "Pokusy",
+    "Progress": "Průběh",
+    "Actions": "Akce",
+    "NoTrial": "Bez zkušební verze",
+    "Sessions": "Relace",
+    "Ops5m": "Operace (5 min)"
   }
 }

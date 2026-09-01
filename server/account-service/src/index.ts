@@ -21,13 +21,7 @@ import accountEn from '@hcengineering/account/lang/en.json'
 import accountRu from '@hcengineering/account/lang/ru.json'
 import { Analytics } from '@hcengineering/analytics'
 import { registerProviders } from '@hcengineering/auth-providers'
-import {
-  metricsAggregate,
-  type Branding,
-  type BrandingMap,
-  type MeasureContext,
-  type WorkspaceUuid
-} from '@hcengineering/core'
+import { metricsAggregate, type Branding, type BrandingMap, type MeasureContext } from '@hcengineering/core'
 import platform, { Severity, Status, addStringsLoader, setMetadata, unknownStatus } from '@hcengineering/platform'
 import serverToken, {
   decodeToken,
@@ -52,8 +46,7 @@ import {
   type QueueOnlineUserTx,
   type QueueWorkspaceMessage,
   type QueuePaymentOperationMessage,
-  type QueueSubscriptionMessage,
-  workspaceEvents
+  type QueueSubscriptionMessage
 } from '@hcengineering/server-core'
 
 import { handlePresenceBatch } from './presence'
@@ -455,42 +448,6 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
     ctx.res.writeHead(204)
     ctx.res.end()
-  })
-
-  router.put('/api/v1/manage', async (req, res) => {
-    try {
-      const token = (req.query.token as string) ?? extractToken(req.headers)
-      const payload = decodeToken(token)
-      if (payload.extra?.admin !== 'true') {
-        req.res.writeHead(404, {})
-        req.res.end()
-        return
-      }
-
-      const operation = req.query.operation
-
-      switch (operation) {
-        case 'maintenance': {
-          const timeMinutes = parseInt((req.query.timeout as string) ?? '5')
-          const message = (req.request.body as any)?.message
-          // Global event: every transactor consumes the workspace topic in its own group,
-          // the workspace key carries no meaning here
-          const nilWorkspace = '00000000-0000-0000-0000-000000000000' as WorkspaceUuid
-          await workspaceProducer.send(measureCtx, nilWorkspace, [workspaceEvents.maintenance(timeMinutes, message)])
-
-          req.res.writeHead(200)
-          req.res.end()
-          return
-        }
-      }
-
-      req.res.writeHead(404, {})
-      req.res.end()
-    } catch (err: any) {
-      Analytics.handleError(err)
-      req.res.writeHead(404, {})
-      req.res.end()
-    }
   })
 
   router.post('rpc', '/', async (ctx) => {

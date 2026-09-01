@@ -142,8 +142,13 @@ async function connectPackage (page: Page, ws: string, pkgKey: string, expect_?:
   } else {
     await payMockCheckout(page, ws)
   }
-  // Once connected, the card's button turns into Disconnect, so the connect id is gone.
-  await expect(page.locator(`[data-id="packageDisconnect-${pkgKey}"]`)).toBeVisible({ timeout: 20000 })
+  // Once connected, the card's button turns into Disconnect, so the connect id is gone. The mock bank
+  // fires the confirmation webhook fire-and-forget, so activation can land after this page load -
+  // reload until the card flips instead of betting on a single render.
+  await expect(async () => {
+    await openBilling(page, ws)
+    await expect(page.locator(`[data-id="packageDisconnect-${pkgKey}"]`)).toBeVisible({ timeout: 3000 })
+  }).toPass({ intervals: retryIntervals, timeout: 30000 })
   await expect(page.locator(`[data-id="packageConnect-${pkgKey}"]`)).toHaveCount(0)
 }
 

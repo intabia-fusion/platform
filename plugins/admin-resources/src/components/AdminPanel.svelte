@@ -74,7 +74,7 @@
     { id: 'payments', labelIntl: adminRes.string.Payments },
     { id: 'statistics', labelIntl: adminRes.string.Statistics },
     { id: 'audit', labelIntl: adminRes.string.Audit },
-    { id: 'billing', labelIntl: adminRes.string.Billing }
+    { id: 'billing', labelIntl: adminRes.string.AI }
   ]
 
   // Tab lives in the URL (/admin/<tab>) so it survives reload and is deep-linkable.
