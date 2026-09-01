@@ -153,7 +153,9 @@ export const main = async (): Promise<void> => {
   app.use(express.json())
 
   const roomClient = new RoomServiceClient(config.LiveKitHost, config.ApiKey, config.ApiSecret)
-  const egressClient = new EgressClient(config.LiveKitHost, config.ApiKey, config.ApiSecret)
+  const egressClient = new EgressClient(config.LiveKitHost, config.ApiKey, config.ApiSecret, {
+    requestTimeout: config.EgressRequestTimeoutSec
+  })
 
   const eventProducer = queue.getProducer<QueueMeetingMessage>(ctx, QueueTopic.LoveQueue)
   const billingProducer = queue.getProducer<BillingMessage>(ctx, QueueTopic.BillingUsage)
