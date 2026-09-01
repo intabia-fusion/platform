@@ -246,8 +246,4 @@ through each bundle's source map and refuses to resolve when the bundle on disk 
 the one the container ran. Collect only via `./profile-collect.sh` or `docker compose stop` - a
 SIGKILL loses the profile. Details in `tests/readme.md`.
 
-For meeting/love-specific test setup (LiveKit, `meetings-ws`, page objects, data-id list), see [`docs/sanity-meetings-tests.md`](docs/sanity-meetings-tests.md).
-
-For AI bot testing on the deterministic mock provider (how to enable it, the `call:<tool> {json}`
-prompt protocol, ready-to-paste prompts for task/edit proposals, data-id list), see
-[`docs/aibot-mock-testing.md`](docs/aibot-mock-testing.md).
+For everything love/meetings (model, protocols, defects, test setup with LiveKit and `meetings-ws`), see [`docs/love.md`](docs/love.md).

@@ -5,42 +5,27 @@
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 import { expect, test, type Page } from '@playwright/test'
-import { PlatformURI } from '../utils'
-import { closeMeetingContexts, knockAndWaitPending, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
-const meetingsWs = 'meetings-ws'
-const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
-
-async function openLove (page: Page): Promise<void> {
-  await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
-  await expect(page.locator('div.floorGrid')).toBeVisible({ timeout: 15000 })
-}
-
-async function clickRoomByName (page: Page, name: string): Promise<void> {
-  await page.locator(`[data-id="room-${name}"]`).first().click()
-}
-
-async function clickFirstAvailableRoom (page: Page): Promise<string | null> {
-  for (const name of ROOM_CANDIDATES) {
-    const room = page.locator(`[data-id="room-${name}"]`).first()
-    if ((await room.count()) === 0) continue
-    await room.click()
-    return name
-  }
-  return null
-}
-
-async function startOrJoin (page: Page): Promise<void> {
-  const connect = page.locator('[data-id="meeting-connect"]').getByRole('button').first()
-  await expect(connect).toBeVisible({ timeout: 10000 })
-  await connect.click()
-}
-
-async function waitConnected (page: Page): Promise<void> {
-  await expect(page.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 30000 })
-}
+import {
+  clickFirstAvailableRoom,
+  clickRoomByName,
+  closeMeetingContexts,
+  knockAndWaitPending,
+  openLove,
+  openMeetingMinutes,
+  startOrJoin,
+  waitConnected,
+  waitForActiveMeetingsToFinish
+} from './meeting-helpers'
 
 async function inviteByLastNames (page: Page, lastNames: string[]): Promise<void> {
   await page.locator('[data-id="invite-button"]').first().click()
@@ -57,23 +42,11 @@ async function inviteByLastNames (page: Page, lastNames: string[]): Promise<void
   await ok.click()
 }
 
-async function openMeetingMinutes (page: Page, roomName: string): Promise<void> {
-  // Use the most recent MeetingMinutes link for this room. Earlier tests may
-  // have left finished/pending meetings on the side panel; their links
-  // outrank the freshly-created one if we pick `.first()`. The newest
-  // entry — and the only one with an Active/Pending status — is `.last()`.
-  const link = page.getByRole('link', { name: new RegExp(`${roomName}.*20\\d{2}`) }).last()
-  await expect(link).toBeVisible({ timeout: 15000 })
-  await link.click()
-}
-
 export function registerScenariosTests (): void {
   test.describe('meeting minutes - extended scenarios', () => {
     test.beforeEach(async () => {
-      // Drain any stale Active/Pending MeetingMinutes left from previous specs.
-      // Without this `clickFirstAvailableRoom` + `startOrJoin` joins an existing
-      // Pending meeting owned by another account, which breaks owner-only flows
-      // (e.g. `meeting-toggle-private` only renders for the meeting owner).
+      // Without this the room join lands in a meeting owned by somebody else, and owner-only
+      // controls never render.
       await waitForActiveMeetingsToFinish()
     })
 
@@ -149,14 +122,11 @@ export function registerScenariosTests (): void {
         const toggle = page2.locator('[data-id="meeting-toggle-private"]').first()
         await expect(toggle).toBeVisible({ timeout: 10000 })
         await toggle.click()
-        // user3's widget stays active (no page reload — that would tear down
-        // the LiveKit session). The invite-button is inside the connected
-        // meeting widget on page3.
+        // No page reload here - that would tear down the LiveKit session.
         await expect(page3.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 10000 })
 
-        // user3 tries to invite user1 (Appleseed) into the now-private meeting.
-        // user3 is a member but NOT an owner, so `sendInvites` refuses on the
-        // client (warning toast) and creates no invite-request at all.
+        // user3 is a member but not an owner, so `sendInvites` refuses on the client and
+        // creates no invite-request at all.
         await inviteByLastNames(page3, ['Appleseed'])
 
         // No invite-request was created: sender (user3) gets no outgoing trigger
@@ -269,6 +239,15 @@ export function registerScenariosTests (): void {
       const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
       const page2 = await ctx2.newPage()
       const page3 = await ctx3.newPage()
+
+      // Auto-join gives up silently (`joinOrCreateMeetingByInvite` returns false and only warns),
+      // and the knocker is left with a manual Join button - which reads as a bare timeout here.
+      const knockerLog: string[] = []
+      page3.on('pageerror', (err) => knockerLog.push(`pageerror: ${err.message}`))
+      page3.on('console', (msg) => {
+        if (msg.type() === 'error' || msg.type() === 'warning') knockerLog.push(`${msg.type()}: ${msg.text()}`)
+      })
+
       try {
         await openLove(page2)
         await openLove(page3)
@@ -286,13 +265,8 @@ export function registerScenariosTests (): void {
         // propagated to the server.
         await expect(toggle).toHaveText(/Open room/i, { timeout: 30000 })
 
-        // user3 (outsider) opens the private room directly and clicks Knock.
-        // The room is locked (private + outsider has no access), so the
-        // EditRoom panel renders the `meeting-knock` button instead of Connect.
-        // We don't gate on the busy-badge here — it derives from a join of
-        // SecurityChange + ParticipantInfo broadcast that can lag in CI; the
-        // EditRoom panel reads the same data and resolves to the knock button
-        // as soon as both arrive, which is what the test really cares about.
+        // Gate on the knock button, not the busy badge: the badge derives from a join that can
+        // lag in CI, while the panel resolves as soon as both sources arrive.
         await openLove(page3)
         const lockedRoom = page3.locator(`[data-id="room-${room as string}"]`).first()
         await expect(lockedRoom).toBeVisible({ timeout: 10000 })
@@ -312,7 +286,12 @@ export function registerScenariosTests (): void {
 
         // user3 should be auto-joined to user2's meeting (their widget switches
         // rooms; we only verify the widget stays connected).
-        await expect(page3.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 30000 })
+        try {
+          await expect(page3.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 30000 })
+        } catch (err) {
+          const log = knockerLog.length > 0 ? knockerLog.join('\n') : '(nothing)'
+          throw new Error(`Knocker never auto-joined. Knocker console:\n${log}`)
+        }
       } finally {
         await closeMeetingContexts([
           { ctx: ctx2, pages: [page2] },

@@ -5,21 +5,17 @@
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 import { expect, test, type Page } from '@playwright/test'
-import { PlatformURI } from '../utils'
-import { closeMeetingContexts, leaveAllMeetings, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
-const meetingsWs = 'meetings-ws'
-
-async function openLove (page: Page): Promise<void> {
-  await (await page.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
-  await expect(page.locator('div.floorGrid')).toBeVisible({ timeout: 15000 })
-}
-
-async function waitConnected (page: Page): Promise<void> {
-  await expect(page.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 60000 })
-}
+import { closeMeetingContexts, openLove, waitConnected, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
 async function waitDisconnected (page: Page): Promise<void> {
   await expect(page.locator('[data-id="meeting-widget"]')).toBeHidden({ timeout: 30000 })
@@ -59,17 +55,8 @@ export function registerBidirectionalLoopTests (): void {
     })
 
     /**
-     * Forward + reverse call in a single run. The user reported that the
-     * FIRST call works but the SECOND reverse call leaves the caller stuck
-     * (no widget, stale outgoing trigger). This test reproduces that flow
-     * end-to-end in one pass; use Playwright's `--repeat-each=N` flag to
-     * stress the client-create + auto-join path when investigating
-     * concurrency reports:
-     *
-     *   npx playwright test -c ./tests/playwright.config.ts \
-     *     tests/love/meetings.all.spec.ts \
-     *     -g "back-to-back" --repeat-each=10 \
-     *     --reporter=list --retries=0 --workers=1
+     * Forward then reverse call in one pass: the second, reverse call used to leave the caller
+     * stuck. Stress it with `--repeat-each=N -g "back-to-back" --workers=1`.
      */
     test('back-to-back: Dirak -> Muram, then Muram -> Dirak — both auto-join', async ({ browser }) => {
       test.setTimeout(180000)
@@ -90,22 +77,17 @@ export function registerBidirectionalLoopTests (): void {
           await waitConnected(page3)
           await expect(page2.locator('[data-id="outgoing-invite-trigger"]')).toBeHidden({ timeout: 15000 })
           await expect(page3.locator('[data-id="incoming-invite-trigger"]')).toBeHidden({ timeout: 15000 })
-          // Caller (Dirak) leaves their own office meeting — server closes
-          // the LiveKit room and disconnects Muram automatically (no manual
-          // leave on page3).
+          // The server closes the room on the office owner leaving, so Muram drops with no
+          // manual leave.
           await leaveMeeting(page2)
           await waitDisconnected(page3)
           await waitForActiveMeetingsToFinish()
-          // Re-open the love floor on both pages: after leaving the meeting
-          // both clients land on the MeetingMinutes Summary panel which
-          // covers the floor grid and intercepts hover/click events.
+          // After leaving, both clients land on the Summary panel, which covers the floor grid.
           await openLove(page2)
           await openLove(page3)
         })
 
-        // Reverse direction — the path the user reported as broken after
-        // the first call. Caller (Muram) must auto-join, recipient (Dirak)
-        // must accept and join, both widgets must appear.
+        // The reverse direction: caller must auto-join, recipient accepts, both widgets appear.
         await test.step('reverse: Muram -> Dirak', async () => {
           await callPerson(page3, /Dirak/i)
           await acceptIncoming(page2)
@@ -120,7 +102,6 @@ export function registerBidirectionalLoopTests (): void {
           await waitForActiveMeetingsToFinish()
         })
       } finally {
-        await leaveAllMeetings([page2, page3])
         await closeMeetingContexts([
           { ctx: ctx2, pages: [page2] },
           { ctx: ctx3, pages: [page3] }

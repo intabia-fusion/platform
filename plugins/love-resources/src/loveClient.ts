@@ -53,34 +53,27 @@ export class LoveClient {
     try {
       const endpoint = this.getLoveEndpoint()
       const token = getPlatformToken()
-      if (mm.recordingState === RecordingState.Recording) {
-        await fetch(concatLink(endpoint, '/stopRecord'), {
-          method: 'POST',
-          headers: {
-            Authorization: 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            meetingId: mm._id,
-            title: mm.name
-          })
+      const path = mm.recordingState === RecordingState.Recording ? '/stopRecord' : '/startRecord'
+      const res = await fetch(concatLink(endpoint, path), {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          meetingId: mm._id,
+          title: mm.name
         })
-      } else {
-        await fetch(concatLink(endpoint, '/startRecord'), {
-          method: 'POST',
-          headers: {
-            Authorization: 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            meetingId: mm._id,
-            title: mm.name
-          })
-        })
+      })
+      // 409 means somebody else already flipped it, or the flip is still settling - the
+      // document carries the real state, so surface it instead of failing silently.
+      if (!res.ok) {
+        throw new LoveServiceError(res.status, `${path} failed: ${res.status}`)
       }
     } catch (err: any) {
       Analytics.handleError(err)
       console.error(err)
+      throw err
     }
   }
 
