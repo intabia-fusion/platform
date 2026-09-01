@@ -28,8 +28,6 @@ test.describe('Admin impersonation', () => {
       description: 'Created by the owner, read by the operator',
       status: 'In Progress',
       priority: 'Urgent',
-      createLabel: false,
-      labels: '',
       component: 'No component',
       estimation: '2',
       milestone: 'No Milestone',

@@ -65,7 +65,6 @@
     getRegionInfo,
     listWorkspacesPaged,
     loadPlanOptions,
-    performWorkspaceOperation,
     performWorkspaceOperationWithOtp,
     requestAdminOtpCode,
     type PlanOptions,
@@ -87,7 +86,7 @@
     window.open(url, '_blank')
   }
 
-  // Destructive events (delete/archive/migrate-to) require an emailed OTP code; ask before running.
+  // Every workspace operation requires an emailed OTP code; ask before running.
   async function otpGuardedOp (ws: string | string[], event: WorkspaceUserOperation, ...params: any[]): Promise<void> {
     const code = await requestAdminOtpCode()
     if (code === undefined) return
@@ -861,7 +860,7 @@
                                 labelProps: { url: workspace.url },
                                 message: adminRes.string.PleaseConfirm,
                                 action: async () => {
-                                  await performWorkspaceOperation(workspace.uuid, 'reset-attempts')
+                                  await otpGuardedOp(workspace.uuid, 'reset-attempts')
                                 }
                               })
                             }}
@@ -931,7 +930,7 @@
                                 labelProps: { url: workspace.url },
                                 message: adminRes.string.PleaseConfirm,
                                 action: async () => {
-                                  await performWorkspaceOperation(workspace.uuid, 'unarchive')
+                                  await otpGuardedOp(workspace.uuid, 'unarchive')
                                 }
                               })
                             }}
