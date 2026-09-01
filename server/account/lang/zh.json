@@ -40,6 +40,12 @@
     "AccountDeletionCancelledHTML": "<p>您 <b>{app}</b> 账户的删除已取消 - 账户已重新激活。</p><p>感谢您继续留在我们这里！</p><p>您提交删除的工作区仍按计划保留，每个都需要单独恢复：<a href={link}>{link}</a></p>",
     "WorkspaceDeletionCancelledSubject": "工作区 {ws} 将不会被删除",
     "WorkspaceDeletionCancelledText": "工作区 {ws}（{url}）的删除已被取消。{state, select, archived {它已被归档 - 任何所有者都可以恢复它：{link}} restoring {它正在从归档中恢复，很快将重新可用：{link}} other {它已完全恢复可用：{link}}}\n\n感谢您继续留在我们这里！",
-    "WorkspaceDeletionCancelledHTML": "<p>工作区 <b>{ws}</b>（{url}）的删除已被取消。</p><p>{state, select, archived {它已被归档 - 任何所有者都可以恢复它：<a href={link}>{link}</a>} restoring {它正在从归档中恢复，很快将重新可用：<a href={link}>{link}</a>} other {它已完全恢复可用：<a href={link}>{link}</a>}}</p><p>感谢您继续留在我们这里！</p>"
+    "WorkspaceDeletionCancelledHTML": "<p>工作区 <b>{ws}</b>（{url}）的删除已被取消。</p><p>{state, select, archived {它已被归档 - 任何所有者都可以恢复它：<a href={link}>{link}</a>} restoring {它正在从归档中恢复，很快将重新可用：<a href={link}>{link}</a>} other {它已完全恢复可用：<a href={link}>{link}</a>}}</p><p>感谢您继续留在我们这里！</p>",
+    "ApiKeyCreatedSubject": "{ws} 中已签发新的 API 密钥",
+    "ApiKeyCreatedText": "{ws} 中已签发一个新的 API 密钥。\n\n名称：{name}\n密钥：{masked}\n允许的操作：{ops}\n{hasExpiry, select, yes {到期时间：{expiresOn}} other {永不过期}}\n签发人：{actor}\n\n如果您没有预期到这一操作，请立即在工作区设置中撤销该密钥。",
+    "ApiKeyCreatedHTML": "<p>{ws} 中已签发一个新的 API 密钥。</p><p>名称：{name}<br/>密钥：{masked}<br/>允许的操作：{ops}<br/>{hasExpiry, select, yes {到期时间：{expiresOn}} other {永不过期}}<br/>签发人：{actor}</p><p>如果您没有预期到这一操作，请立即在工作区设置中撤销该密钥。</p>",
+    "ApiKeyRevokedSubject": "{ws} 中的 API 密钥已被撤销",
+    "ApiKeyRevokedText": "{ws} 中的一个 API 密钥已被撤销。\n\n名称：{name}\n密钥：{masked}\n撤销人：{actor}",
+    "ApiKeyRevokedHTML": "<p>{ws} 中的一个 API 密钥已被撤销。</p><p>名称：{name}<br/>密钥：{masked}<br/>撤销人：{actor}</p>"
   }
 }

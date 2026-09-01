@@ -190,6 +190,7 @@ export default mergeIds(adminId, admin, {
     Edit: '' as IntlString,
     Save: '' as IntlString,
     DisabledFeaturesOverride: '' as IntlString,
+    MaxApiKeys: '' as IntlString,
     EditSubscription: '' as IntlString,
     AdminPanelTitle: '' as IntlString,
     PricePerPeriod: '' as IntlString,

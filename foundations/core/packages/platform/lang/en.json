@@ -27,6 +27,7 @@
     "WorkspaceReadOnly": "This workspace is read-only right now.",
     "InviteNotFound": "Invitation with email:{email} not found.",
     "WorkspaceLimitReached": "You have reached the workspace limit. Please contact us...",
+    "ApiKeyLimitReached": "You have reached the limit of {limit} API keys for this workspace.",
     "ReadOnlyAccount": "Anonymous Guest Demo",
     "SystemAccount": "System account",
     "SocialIdAlreadyExists": "Social ID already exists"

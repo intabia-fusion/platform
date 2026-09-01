@@ -40,6 +40,12 @@
     "AccountDeletionCancelledHTML": "<p>Smazání vašeho účtu <b>{app}</b> bylo zrušeno - účet je znovu aktivní.</p><p>Děkujeme, že s námi zůstáváte!</p><p>Pracovní prostory, které jste poslali ke smazání, zůstávají naplánované - každý je potřeba obnovit samostatně: <a href={link}>{link}</a></p>",
     "WorkspaceDeletionCancelledSubject": "Pracovní prostor {ws} nebude smazán",
     "WorkspaceDeletionCancelledText": "Smazání pracovního prostoru {ws} ({url}) bylo zrušeno. {state, select, archived {Už byl archivován - kterýkoli vlastník ho může obnovit: {link}} restoring {Obnovuje se z archivu a brzy bude opět dostupný: {link}} other {Je opět plně dostupný: {link}}}\n\nDěkujeme, že s námi zůstáváte!",
-    "WorkspaceDeletionCancelledHTML": "<p>Smazání pracovního prostoru <b>{ws}</b> ({url}) bylo zrušeno.</p><p>{state, select, archived {Už byl archivován - kterýkoli vlastník ho může obnovit: <a href={link}>{link}</a>} restoring {Obnovuje se z archivu a brzy bude opět dostupný: <a href={link}>{link}</a>} other {Je opět plně dostupný: <a href={link}>{link}</a>}}</p><p>Děkujeme, že s námi zůstáváte!</p>"
+    "WorkspaceDeletionCancelledHTML": "<p>Smazání pracovního prostoru <b>{ws}</b> ({url}) bylo zrušeno.</p><p>{state, select, archived {Už byl archivován - kterýkoli vlastník ho může obnovit: <a href={link}>{link}</a>} restoring {Obnovuje se z archivu a brzy bude opět dostupný: <a href={link}>{link}</a>} other {Je opět plně dostupný: <a href={link}>{link}</a>}}</p><p>Děkujeme, že s námi zůstáváte!</p>",
+    "ApiKeyCreatedSubject": "Byl vydán nový API klíč v {ws}",
+    "ApiKeyCreatedText": "V {ws} byl vydán nový API klíč.\n\nNázev: {name}\nKlíč: {masked}\nPovolené operace: {ops}\n{hasExpiry, select, yes {Platnost do: {expiresOn}} other {Bez omezení platnosti}}\nVydal: {actor}\n\nPokud jste to neočekávali, klíč okamžitě zrušte v nastavení workspace.",
+    "ApiKeyCreatedHTML": "<p>V <b>{ws}</b> byl vydán nový API klíč.</p><p>Název: {name}<br/>Klíč: {masked}<br/>Povolené operace: {ops}<br/>{hasExpiry, select, yes {Platnost do: {expiresOn}} other {Bez omezení platnosti}}<br/>Vydal: {actor}</p><p>Pokud jste to neočekávali, klíč okamžitě zrušte v nastavení workspace.</p>",
+    "ApiKeyRevokedSubject": "API klíč byl zrušen v {ws}",
+    "ApiKeyRevokedText": "V {ws} byl zrušen API klíč.\n\nNázev: {name}\nKlíč: {masked}\nZrušil: {actor}",
+    "ApiKeyRevokedHTML": "<p>V <b>{ws}</b> byl zrušen API klíč.</p><p>Název: {name}<br/>Klíč: {masked}<br/>Zrušil: {actor}</p>"
   }
 }

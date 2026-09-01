@@ -27,6 +27,7 @@
     "WorkspaceReadOnly": "Bu çalışma alanı şu anda salt okunur.",
     "InviteNotFound": "E-mail:{email} ile ilgili davet bulunamadı.",
     "WorkspaceLimitReached": "Çalışma alanı limitine ulaştınız. Lütfen bizimle iletişime geçin...",
+    "ApiKeyLimitReached": "Bu çalışma alanı için {limit} API anahtarı sınırına ulaştınız.",
     "ReadOnlyAccount": "Anonim Misafir Demo",
     "SystemAccount": "Sistem hesabı",
     "SocialIdAlreadyExists": "Sosyal ID zaten mevcut"

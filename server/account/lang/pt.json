@@ -40,6 +40,12 @@
     "AccountDeletionCancelledHTML": "<p>A eliminação da sua conta <b>{app}</b> foi cancelada - a conta está novamente ativa.</p><p>Obrigado por continuar connosco!</p><p>Os espaços de trabalho que enviou para eliminação continuam agendados - cada um tem de ser restaurado separadamente: <a href={link}>{link}</a></p>",
     "WorkspaceDeletionCancelledSubject": "O espaço de trabalho {ws} não será eliminado",
     "WorkspaceDeletionCancelledText": "A eliminação do espaço de trabalho {ws} ({url}) foi cancelada. {state, select, archived {Já foi arquivado - qualquer proprietário pode restaurá-lo: {link}} restoring {Está a ser restaurado a partir do arquivo e estará disponível novamente em breve: {link}} other {Está totalmente disponível novamente: {link}}}\n\nObrigado por continuar connosco!",
-    "WorkspaceDeletionCancelledHTML": "<p>A eliminação do espaço de trabalho <b>{ws}</b> ({url}) foi cancelada.</p><p>{state, select, archived {Já foi arquivado - qualquer proprietário pode restaurá-lo: <a href={link}>{link}</a>} restoring {Está a ser restaurado a partir do arquivo e estará disponível novamente em breve: <a href={link}>{link}</a>} other {Está totalmente disponível novamente: <a href={link}>{link}</a>}}</p><p>Obrigado por continuar connosco!</p>"
+    "WorkspaceDeletionCancelledHTML": "<p>A eliminação do espaço de trabalho <b>{ws}</b> ({url}) foi cancelada.</p><p>{state, select, archived {Já foi arquivado - qualquer proprietário pode restaurá-lo: <a href={link}>{link}</a>} restoring {Está a ser restaurado a partir do arquivo e estará disponível novamente em breve: <a href={link}>{link}</a>} other {Está totalmente disponível novamente: <a href={link}>{link}</a>}}</p><p>Obrigado por continuar connosco!</p>",
+    "ApiKeyCreatedSubject": "Nova chave de API emitida em {ws}",
+    "ApiKeyCreatedText": "Foi emitida uma nova chave de API em {ws}.\n\nNome: {name}\nChave: {masked}\nOperações permitidas: {ops}\n{hasExpiry, select, yes {Expira em: {expiresOn}} other {Sem expiração}}\nEmitida por: {actor}\n\nSe não esperava isto, revogue a chave nas definições do workspace.",
+    "ApiKeyCreatedHTML": "<p>Foi emitida uma nova chave de API em <b>{ws}</b>.</p><p>Nome: {name}<br/>Chave: {masked}<br/>Operações permitidas: {ops}<br/>{hasExpiry, select, yes {Expira em: {expiresOn}} other {Sem expiração}}<br/>Emitida por: {actor}</p><p>Se não esperava isto, revogue a chave nas definições do workspace.</p>",
+    "ApiKeyRevokedSubject": "Chave de API revogada em {ws}",
+    "ApiKeyRevokedText": "Uma chave de API foi revogada em {ws}.\n\nNome: {name}\nChave: {masked}\nRevogada por: {actor}",
+    "ApiKeyRevokedHTML": "<p>Uma chave de API foi revogada em <b>{ws}</b>.</p><p>Nome: {name}<br/>Chave: {masked}<br/>Revogada por: {actor}</p>"
   }
 }

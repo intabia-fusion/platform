@@ -28,6 +28,7 @@
     "WorkspaceReadOnly": "Пространство сейчас доступно только для чтения.",
     "InviteNotFound": "Приглашение с электронной почтой:{email} не найдено.",
     "WorkspaceLimitReached": "Вы достигли лимита рабочих пространств. Свяжитесь с нами...",
+    "ApiKeyLimitReached": "Достигнут лимит API-ключей воркспейса: {limit}.",
     "ReadOnlyAccount": "Анонимное гостевое демо",
     "SystemAccount": "Системный аккаунт",
     "SocialIdAlreadyExists": "Социальный ID уже существует"
