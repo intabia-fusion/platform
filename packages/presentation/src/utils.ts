@@ -1062,6 +1062,22 @@ export function setPresentationCookie (token: string, workspaceUuid: WorkspaceUu
   }
 }
 
+// Leaving the workspace tears down anything workspace-scoped (a live meeting, most notably),
+// so a plugin can register a guard here and ask the user before the switch happens.
+const leaveWorkspaceGuards = new Set<() => Promise<boolean>>()
+
+export function addLeaveWorkspaceGuard (guard: () => Promise<boolean>): () => void {
+  leaveWorkspaceGuards.add(guard)
+  return () => leaveWorkspaceGuards.delete(guard)
+}
+
+export async function canLeaveWorkspace (): Promise<boolean> {
+  for (const guard of leaveWorkspaceGuards) {
+    if (!(await guard())) return false
+  }
+  return true
+}
+
 export const upgradeDownloadProgress = writable(-1)
 
 export function setDownloadProgress (percent: number): void {
