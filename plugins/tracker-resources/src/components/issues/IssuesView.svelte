@@ -43,7 +43,7 @@
   export let modeSelectorProps: IModeSelector | undefined = undefined
 
   export let viewlet: WithLookup<Viewlet> | undefined = undefined
-  const viewlets: WithLookup<Viewlet>[] | undefined = undefined
+  let viewlets: Array<WithLookup<Viewlet>> = []
   let viewOptions: ViewOptions | undefined
 
   let search = ''
@@ -161,7 +161,7 @@
   bind:search
   showLabelSelector={$$slots.label_selector}
   viewletQuery={{ attachTo: tracker.class.Issue, variant: { $exists: false } }}
-  {viewlets}
+  bind:viewlets
   {label}
   {space}
   {resultQuery}
@@ -214,15 +214,17 @@
 />
 <slot name="afterHeader" />
 {#if viewlet !== undefined && viewOptions !== undefined}
-  <ViewletContentView
-    _class={tracker.class.Issue}
-    {viewlet}
-    query={resultQuery}
-    {space}
-    {viewOptions}
-    createItemDialog={CreateIssue}
-    createItemLabel={tracker.string.AddIssueTooltip}
-    createItemEvent={TrackerEvents.IssuePlusButtonClicked}
-    createItemDialogProps={{ shouldSaveDraft: true }}
-  />
+  {#key viewlet._id}
+    <ViewletContentView
+      _class={tracker.class.Issue}
+      {viewlet}
+      query={resultQuery}
+      {space}
+      {viewOptions}
+      createItemDialog={CreateIssue}
+      createItemLabel={tracker.string.AddIssueTooltip}
+      createItemEvent={TrackerEvents.IssuePlusButtonClicked}
+      createItemDialogProps={{ shouldSaveDraft: true }}
+    />
+  {/key}
 {/if}

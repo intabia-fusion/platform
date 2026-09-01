@@ -38,8 +38,13 @@
   import notification from '@hcengineering/notification'
   import { ActionContext, createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
   import tags from '@hcengineering/tags'
-  import { DocWithRank, getStates, TaskType, Project as TaskProject } from '@hcengineering/task'
-  import { getTaskKanbanResultQuery, typeStore, updateTaskKanbanCategories } from '@hcengineering/task-resources'
+  import task, { DocWithRank, getStates, TaskType, Project as TaskProject } from '@hcengineering/task'
+  import {
+    getTaskKanbanResultQuery,
+    taskTypeStore,
+    typeStore,
+    updateTaskKanbanCategories
+  } from '@hcengineering/task-resources'
   import {
     Component as TrackerComponent,
     Issue,
@@ -140,7 +145,7 @@
     accentColors = accentColors
   }
 
-  $: dontUpdateRank = orderBy[0] !== IssuesOrdering.Manual
+  $: dontUpdateRank = orderBy ? orderBy[0] !== IssuesOrdering.Manual : false
 
   $: currentSpace = space ?? tracker.project.DefaultProject
   let currentProject: Project | undefined
@@ -625,22 +630,34 @@
     }
 
     if (groupByKey === IssuesGrouping.Status) {
-      const space = await client.findOne(tracker.class.Project, { _id: issue.space })
-      if (space != null) {
-        const transitions = await getWorkflowTransitions(issue.space, issue.kind)
-        if (transitions != null) {
-          const allowed = new Set<string>()
-          if (issue.status != null) {
-            allowed.add(issue.status)
-          }
-          for (const t of transitions) {
-            if (t.from == null || t.from.length === 0 || (issue.status != null && t.from.includes(issue.status))) {
-              allowed.add(t.to)
+      if (issue.kind != null) {
+        const taskType =
+          $taskTypeStore.get(issue.kind) ?? (await client.findOne(task.class.TaskType, { _id: issue.kind }))
+        if (taskType?.statuses != null && taskType.statuses.length > 0) {
+          if (issue.space != null) {
+            const transitions = await getWorkflowTransitions(issue.space, issue.kind)
+            if (transitions != null) {
+              const allowed = new Set<string>()
+              if (issue.status != null) {
+                allowed.add(issue.status)
+              }
+              for (const t of transitions) {
+                if (t.from == null || t.from.length === 0 || (issue.status != null && t.from.includes(issue.status))) {
+                  allowed.add(t.to)
+                }
+              }
+              return taskType.statuses.filter((s) => allowed.has(s))
             }
           }
-          return Array.from(allowed)
+          return taskType.statuses
         }
-        return getStates(space, $typeStore, $statusStore.byId).map(({ _id }) => _id)
+      }
+
+      if (issue.space != null) {
+        const space = await client.findOne(tracker.class.Project, { _id: issue.space })
+        if (space != null) {
+          return getStates(space, $typeStore, $statusStore.byId).map(({ _id }) => _id)
+        }
       }
     }
 

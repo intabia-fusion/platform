@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -358,8 +359,7 @@ function defineApplication (
                 ['all', tracker.string.All, {}],
                 ['active', tracker.string.Active, {}],
                 ['backlog', tracker.string.Backlog, {}]
-              ],
-              allProjectsTypes: true
+              ]
             }
           },
           {
@@ -659,6 +659,7 @@ function defineSpaceType (builder: Builder): void {
       icon: tracker.icon.Issue,
       name: tracker.string.Issue,
       statusCategoriesFunc: tracker.function.GetIssueStatusCategories,
+      defaultStatusesFunc: tracker.function.GetIssueDefaultStatuses,
       openTasks: tracker.function.OpenIssuesOfTaskType
     },
     tracker.descriptors.Issue
