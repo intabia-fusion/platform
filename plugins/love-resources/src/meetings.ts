@@ -238,7 +238,9 @@ async function connectToMeeting (mm: MeetingMinutes, room?: Room): Promise<void>
   if (getCurrentAccount().role === AccountRole.ReadOnlyGuest) {
     return
   }
-  if (currentMeeting === mm._id) {
+  // `currentMeeting` outlives the LiveKit session (a workspace switch disconnects without
+  // `leaveMeeting()`), and a stale ref would silently reject every rejoin of the same meeting.
+  if (currentMeeting === mm._id && get(lkSessionConnected)) {
     return
   }
 

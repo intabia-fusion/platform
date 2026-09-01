@@ -1,5 +1,5 @@
 import { concatLink } from '@hcengineering/core'
-import love, { RecordingState, type MeetingMinutes, type Room } from '@hcengineering/love'
+import love, { type MeetingMinutes, type Room } from '@hcengineering/love'
 import { getMetadata } from '@hcengineering/platform'
 import { getPlatformToken } from './utils'
 import { getCurrentEmployee } from '@hcengineering/contact'
@@ -49,11 +49,13 @@ export class LoveClient {
     }
   }
 
-  async record (mm: MeetingMinutes): Promise<void> {
+  // `isRecording` comes from the caller: the server treats a live PendingRecording as running
+  // long before `recordingState` flips, so deciding on the flag alone sends start into a 409.
+  async record (mm: MeetingMinutes, isRecording: boolean): Promise<void> {
     try {
       const endpoint = this.getLoveEndpoint()
       const token = getPlatformToken()
-      const path = mm.recordingState === RecordingState.Recording ? '/stopRecord' : '/startRecord'
+      const path = isRecording ? '/stopRecord' : '/startRecord'
       const res = await fetch(concatLink(endpoint, path), {
         method: 'POST',
         headers: {

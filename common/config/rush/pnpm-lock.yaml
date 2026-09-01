@@ -17113,6 +17113,9 @@ importers:
       '@hcengineering/billing-resources':
         specifier: workspace:^0.7.0
         version: link:../billing-resources
+      '@hcengineering/chunter':
+        specifier: workspace:^0.7.0
+        version: link:../chunter
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../contact

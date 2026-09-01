@@ -127,6 +127,7 @@ export class LiveKitClient {
     }
     try {
       const setupMediaSession = async (): Promise<void> => {
+        this.closeMediaSession()
         this.currentMediaSession = await useMedia({
           state: {
             camera: this.currentSessionSupportsVideo ? { enabled: $myPreferences?.camEnabled ?? true } : undefined,
@@ -171,9 +172,7 @@ export class LiveKitClient {
     } catch (error) {
       console.error('[LiveKitClient.connect] Connection failed', { error, state: this.liveKitRoom.state })
       lkIsConnecting.set(false)
-      this.currentMediaSession?.close()
-      this.currentMediaSession?.removeAllListeners()
-      this.currentMediaSession = undefined
+      this.closeMediaSession()
       throw error
     }
   }
@@ -183,13 +182,22 @@ export class LiveKitClient {
     screenSharingState.set(ScreenSharingState.Inactive)
     clearTimeout(this.lastParticipantNotificationTimeout)
     const me = this.liveKitRoom.localParticipant
-    await Promise.all([me.setScreenShareEnabled(false), me.setCameraEnabled(false), me.setMicrophoneEnabled(false)])
-    await this.liveKitRoom.disconnect()
-    this.currentSessionSupportsVideo = false
+    try {
+      await Promise.all([me.setScreenShareEnabled(false), me.setCameraEnabled(false), me.setMicrophoneEnabled(false)])
+      await this.liveKitRoom.disconnect()
+    } finally {
+      this.currentSessionSupportsVideo = false
+      this.closeMediaSession()
+    }
+    console.log('[LiveKitClient.disconnect] Disconnected', { state: this.liveKitRoom.state })
+  }
+
+  // Every leak of this registers a second entry in the global media `sessions` store, and the
+  // aggregated mic state is an OR across all of them - a stale one freezes the mic button.
+  private closeMediaSession (): void {
     this.currentMediaSession?.close()
     this.currentMediaSession?.removeAllListeners()
     this.currentMediaSession = undefined
-    console.log('[LiveKitClient.disconnect] Disconnected', { state: this.liveKitRoom.state })
   }
 
   async awaitConnect (): Promise<void> {

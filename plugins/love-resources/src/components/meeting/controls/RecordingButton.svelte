@@ -39,7 +39,7 @@
 
     inFlight = true
     try {
-      await loveClient.record(mm)
+      await loveClient.record(mm, isVideoRecording)
     } catch (err) {
       console.error('[RecordingButton] toggle failed', err)
     } finally {

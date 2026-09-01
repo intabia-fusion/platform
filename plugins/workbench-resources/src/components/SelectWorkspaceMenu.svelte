@@ -22,7 +22,12 @@
   } from '@hcengineering/core'
   import login from '@hcengineering/login'
   import { getMetadata, getResource } from '@hcengineering/platform'
-  import presentation, { createQuery, hasResource, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
+  import presentation, {
+    canLeaveWorkspace,
+    createQuery,
+    hasResource,
+    getCurrentWorkspaceUuid
+  } from '@hcengineering/presentation'
   import {
     closePopup,
     getCurrentLocation,
@@ -74,9 +79,12 @@
   async function clickHandler (e: MouseEvent, wsUrl: string): Promise<void> {
     if (!e.metaKey && !e.ctrlKey) {
       e.preventDefault()
-      closePopup()
-      closePopup()
       const current = getCurrentLocation()
+      if (wsUrl !== current.path[1]) {
+        if (!(await canLeaveWorkspace())) return
+      }
+      closePopup()
+      closePopup()
       if (wsUrl !== current.path[1]) {
         let last: Location | undefined
         try {

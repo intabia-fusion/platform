@@ -113,6 +113,11 @@ export class RecordingProcessor {
         existingEgressId: activeVideoRecording.egressId,
         status: activeVideoRecording.status
       })
+      // The document is what clients read. If it lagged behind the live egress, every press of
+      // the (already red) button would keep routing to /startRecord - repair it here.
+      if (meetingDoc.recordingState !== RecordingState.Recording) {
+        await wsClient.updateMeetingRecordingState(meetingDoc, RecordingState.Recording)
+      }
       return { started: false, reason: 'already-running' }
     }
 
