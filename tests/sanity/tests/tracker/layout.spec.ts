@@ -1,5 +1,5 @@
 import tracker from '@hcengineering/tracker'
-import { Page, expect, test } from '@playwright/test'
+import { Page, expect, test } from '../fixtures'
 import { connectTracker } from '../API/TrackerApi'
 import { IssuesPage } from '../model/tracker/issues-page'
 import { PlatformSetting, expectToContainsOrdered, fillSearch, generateId } from '../utils'

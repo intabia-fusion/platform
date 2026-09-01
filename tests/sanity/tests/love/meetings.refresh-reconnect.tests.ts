@@ -17,6 +17,7 @@ import { expect, test, type Page } from '@playwright/test'
 
 import {
   clickFirstAvailableRoom,
+  clickRoomByName,
   closeMeetingContexts,
   openLove,
   waitConnected,
@@ -40,6 +41,10 @@ export function registerRefreshReconnectTests (): void {
 
       const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
       const page = await ctx.newPage()
+      // A second participant keeps the room alive: the last one to leave ends the meeting within
+      // seconds, so a solo reload raced the shutdown instead of testing the reconnect.
+      const otherCtx = await browser.newContext({ storageState: '.auth/storageThird.json' })
+      const otherPage = await otherCtx.newPage()
       try {
         await openLove(page)
 
@@ -48,6 +53,11 @@ export function registerRefreshReconnectTests (): void {
 
         await startMeeting(page)
         await waitConnected(page)
+
+        await openLove(otherPage)
+        await clickRoomByName(otherPage, room as string)
+        await startMeeting(otherPage)
+        await waitConnected(otherPage)
 
         const anchorBefore = await page.evaluate(() => sessionStorage.getItem('love.activeMeeting'))
         expect(anchorBefore).not.toBeNull()
@@ -60,7 +70,10 @@ export function registerRefreshReconnectTests (): void {
         const anchorAfter = await page.evaluate(() => sessionStorage.getItem('love.activeMeeting'))
         expect(anchorAfter).toBe(anchorBefore)
       } finally {
-        await closeMeetingContexts([{ ctx, pages: [page] }])
+        await closeMeetingContexts([
+          { ctx, pages: [page] },
+          { ctx: otherCtx, pages: [otherPage] }
+        ])
       }
     })
 

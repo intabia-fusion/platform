@@ -62,6 +62,9 @@ const config: PlaywrightTestConfig = {
   reporter: [
     ['list'],
     ['html'],
+    // Consumed by analyze_failures.js and the telemetry collector in CI.
+    ['json', { outputFile: '../playwright-report.json' }],
+    [require.resolve('../../../tests/sanity/tests/step-reporter.ts')],
     [
       'allure-playwright',
       {

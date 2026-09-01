@@ -5,7 +5,7 @@
 // section), so if that test is un-skipped these two assertions must be
 // dropped.
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures'
 import { createAccountAndWorkspace, generateTestData } from '../utils'
 import { faker } from '@faker-js/faker'
 import { WorkspaceSettingsPage, ButtonType } from '../model/workspace/workspace-settings-page'

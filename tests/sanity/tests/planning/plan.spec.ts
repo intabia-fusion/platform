@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures'
 import {
   generateId,
   PlatformSetting,
@@ -40,23 +40,25 @@ test.describe('Planning ToDo tests', () => {
       slots: [
         {
           dateStart: 'today',
-          timeStart: '1000',
+          // Early hours: the other specs book 09:00-18:30, and an event under 44px wide renders
+          // no contents at all (EventElement.svelte), so an overlapping slot cannot be asserted.
+          timeStart: '0200',
           dateEnd: {
             day: dateEnd.getDate().toString(),
             month: (dateEnd.getMonth() + 1).toString(),
             year: dateEnd.getFullYear().toString()
           },
-          timeEnd: '1400'
+          timeEnd: '0300'
         },
         {
           dateStart: 'today',
-          timeStart: '1500',
+          timeStart: '0700',
           dateEnd: {
             day: dateEnd.getDate().toString(),
             month: (dateEnd.getMonth() + 1).toString(),
             year: dateEnd.getFullYear().toString()
           },
-          timeEnd: '1800'
+          timeEnd: '0800'
         }
       ]
     }
@@ -115,13 +117,15 @@ test.describe('Planning ToDo tests', () => {
       slots: [
         {
           dateStart: 'today',
-          timeStart: '0900',
+          // Early hours: the other specs book 09:00-18:30, and an event under 44px wide renders
+          // no contents at all (EventElement.svelte), so an overlapping slot cannot be asserted.
+          timeStart: '0500',
           dateEnd: {
             day: dateEnd.getDate().toString(),
             month: (dateEnd.getMonth() + 1).toString(),
             year: dateEnd.getFullYear().toString()
           },
-          timeEnd: '1800'
+          timeEnd: '0600'
         }
       ]
     }

@@ -56,7 +56,7 @@ export class ChannelPage extends CommonPage {
   // Action popup exists in DOM for every message and is only visible while that message is hovered,
   // so it must be scoped to the message instead of picked globally.
   readonly messageActionButton = (message: string, dataIdSelector: string): Locator =>
-    this.textMessage(message).locator(`.activityMessage-actionPopup > button[${dataIdSelector}]`)
+    this.textMessage(message).last().locator(`.activityMessage-actionPopup > button[${dataIdSelector}]`)
 
   readonly messageSaveMarker = (): Locator => this.page.locator('.saveMarker')
   readonly saveMessageTab = (): Locator => this.page.getByRole('button', { name: 'Saved' })
@@ -219,12 +219,12 @@ export class ChannelPage extends CommonPage {
     await this.clickMessageAction(message, 'data-id="btnMoreActions"')
   }
 
-  // The action popup exists only while the message is hovered, and a list that re-renders right
-  // after drops it - the click then waits out the whole test timeout on an invisible button.
+  // The action popup lives only while the message is hovered, and a re-render drops it.
+  // last(): dozens of specs send 'Test message' here, and the newest is the one just sent.
   private async clickMessageAction (message: string, dataIdSelector: string): Promise<void> {
     const button = this.messageActionButton(message, dataIdSelector)
     await retry(async () => {
-      await this.textMessage(message).hover()
+      await this.textMessage(message).last().hover()
       await expect(button).toBeVisible({ timeout: 2000 })
       await button.click({ timeout: 5000 })
     })
@@ -259,8 +259,12 @@ export class ChannelPage extends CommonPage {
   }
 
   async clickChooseChannel (channel: string): Promise<void> {
-    await expect(this.chooseChannel(channel)).toBeVisible()
-    await this.chooseChannel(channel).click()
+    // The navigator re-renders while a chat is being added, and the click then waits out the test
+    // on an element that has already been detached.
+    await retry(async () => {
+      await expect(this.chooseChannel(channel)).toBeVisible({ timeout: 5000 })
+      await this.chooseChannel(channel).click({ timeout: 5000 })
+    })
   }
 
   async addEmoji (textMessage: string, emoji: string): Promise<void> {

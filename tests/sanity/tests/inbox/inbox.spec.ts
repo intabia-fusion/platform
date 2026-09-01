@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker'
-import { test } from '@playwright/test'
+import { test } from '../fixtures'
 import { ApiEndpoint } from '../API/Api'
 import { ChannelPage } from '../model/channel-page'
 import { SignUpData } from '../model/common-types'

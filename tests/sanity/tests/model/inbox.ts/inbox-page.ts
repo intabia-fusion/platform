@@ -1,5 +1,6 @@
 import { expect, type Locator } from '@playwright/test'
 import { CommonPage } from '../common-page'
+import { retryIntervals } from '../../retry'
 
 export class InboxPage extends CommonPage {
   readonly taskName = (taskName: string): Locator => this.page.getByRole('paragraph').getByTitle(taskName)
@@ -10,6 +11,8 @@ export class InboxPage extends CommonPage {
   readonly inboxChat = (text: string): Locator => this.page.getByText(text)
   readonly issueTitle = (issueTitle: string): Locator => this.page.getByText(issueTitle).first()
   readonly menuButton = (): Locator => this.page.locator('[data-id="inbox_menu-button"]')
+  readonly notificationCard = (): Locator =>
+    this.page.getByRole('listbox', { name: 'Inbox notifications' }).locator('div.card')
 
   // ACTIONS
 
@@ -67,11 +70,15 @@ export class InboxPage extends CommonPage {
     await expect(this.inboxChat(text).nth(1)).toBeVisible()
   }
 
+  // Notifications from a fresh join keep landing after the click, so clear until the list stays
+  // empty instead of assuming one pass emptied it.
   async clearAll (): Promise<void> {
-    await this.menuButton().click()
-    await this.page.getByRole('button', { name: 'Clear all' }).click()
-    await expect(this.page.getByText('Remove all notifications?').nth(0)).toBeVisible()
-
-    await this.page.getByRole('button', { name: 'Ok' }).click()
+    await expect(async () => {
+      await this.menuButton().click()
+      await this.page.getByRole('button', { name: 'Clear all' }).click()
+      await expect(this.page.getByText('Remove all notifications?').nth(0)).toBeVisible()
+      await this.page.getByRole('button', { name: 'Ok' }).click()
+      await expect(this.notificationCard()).toHaveCount(0, { timeout: 3000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
   }
 }

@@ -235,30 +235,38 @@ export class TSessionManager implements SessionManager {
       QueueTopic.OnlineUserTx,
       this.transactorId,
       async (ctx, msg) => {
-        const { workspaceUuid, tx, account } = msg.value
-        const workspace = this.workspaces.get(workspaceUuid)
-        if (workspace == null) return
+        const { tx, account } = msg.value
+        // The message names an account, so sessions are the index - a workspace without one
+        // had nothing to apply anyway.
+        const targets = new Set<WorkspaceUuid>()
+        for (const { session } of this.sessions.values()) {
+          if (session.getUser() === account) {
+            targets.add(session.workspace.uuid)
+          }
+        }
 
-        const session = this.getUserSession(workspaceUuid, account)
-        if (session == null) return
+        for (const workspaceUuid of targets) {
+          const workspace = this.workspaces.get(workspaceUuid)
+          if (workspace == null) continue
 
-        await workspace.with(async (pipeline) => {
-          ctx.contextData = new SessionDataImpl(
-            systemAccount,
-            'online-user-tx',
-            true,
-            { txes: [], targets: {}, queue: [], sessions: {} },
-            workspace.wsId,
-            true,
-            undefined,
-            undefined,
-            pipeline.context.modelDb,
-            new Map(),
-            'transactor'
-          )
-          await pipeline.tx(ctx, [tx])
-          await pipeline.handleBroadcast(ctx)
-        })
+          await workspace.with(async (pipeline) => {
+            ctx.contextData = new SessionDataImpl(
+              systemAccount,
+              'online-user-tx',
+              true,
+              { txes: [], targets: {}, queue: [], sessions: {} },
+              workspace.wsId,
+              true,
+              undefined,
+              undefined,
+              pipeline.context.modelDb,
+              new Map(),
+              'transactor'
+            )
+            await pipeline.tx(ctx, [tx])
+            await pipeline.handleBroadcast(ctx)
+          })
+        }
       }
     )
 

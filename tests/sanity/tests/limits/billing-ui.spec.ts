@@ -1,4 +1,4 @@
-import { expect, test, type Page, type APIRequestContext } from '@playwright/test'
+import { expect, test, type Page, type APIRequestContext } from '../fixtures'
 import { type WorkspaceUuid } from '@hcengineering/core'
 import { PlatformSetting, PlatformURI, generateId } from '../utils'
 import { retryIntervals } from '../retry'

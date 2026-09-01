@@ -1,5 +1,5 @@
 import { SignUpData } from '../model/common-types'
-import { test, type APIRequestContext, type Page } from '@playwright/test'
+import { test, type APIRequestContext, type Page } from '../fixtures'
 import { generateId, loginByToken, uploadFile } from '../utils'
 import { ApiEndpoint } from '../API/Api'
 import { UserProfilePage } from '../model/profile/user-profile-page'

@@ -288,10 +288,6 @@ export class IssuesPage extends CommonTrackerPage {
     await this.closeButton().click()
   }
 
-  async clickIssuesIndex (index: number): Promise<void> {
-    await this.issuesButton().nth(index).click()
-  }
-
   async clickIssues (): Promise<void> {
     await this.issuesButton().click()
   }

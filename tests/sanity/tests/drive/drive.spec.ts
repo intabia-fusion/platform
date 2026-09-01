@@ -1,4 +1,4 @@
-import { test } from '@playwright/test'
+import { test } from '../fixtures'
 import { generateId, PlatformSetting, PlatformURI, uploadFile } from '../utils'
 import { Drive } from '../model/drive/types'
 import { faker } from '@faker-js/faker'

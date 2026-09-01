@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { test } from '@playwright/test'
+import { test } from '../fixtures'
 
 import { registerAccessTests } from './meetings.access.tests'
 import { registerBidirectionalLoopTests } from './meetings.bidirectional-loop.tests'

@@ -1,4 +1,4 @@
-import { test } from '@playwright/test'
+import { test } from '../fixtures'
 import { createAccountAndWorkspace, generateId, generateTestData } from '../utils'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { faker } from '@faker-js/faker'

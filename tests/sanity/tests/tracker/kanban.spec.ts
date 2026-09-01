@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures'
 import tracker, { type Issue } from '@hcengineering/tracker'
 import { type Ref, type TxOperations } from '@hcengineering/core'
 import {
@@ -71,9 +71,15 @@ async function dragUntilStatus (
           // is then gone from the DOM and the drag throws. Let the next read settle it.
           console.error('drag failed:', err)
         }
+        // The drop shows up optimistically; wait for the tx before paying for another drag, which
+        // would otherwise start from the card's new position and cost seconds of scrolling.
+        for (const wait of retryIntervals) {
+          if ((await status()) === target) return target
+          await new Promise((resolve) => setTimeout(resolve, wait))
+        }
         return await status()
       },
-      { timeout: 30000, intervals: dragIntervals }
+      { timeout: 60000, intervals: dragIntervals }
     )
     .toBe(target)
 }
@@ -190,6 +196,8 @@ test.describe('Kanban board', () => {
   })
 
   test('drag a card across multiple columns sequentially', async ({ page }) => {
+    // Three drags, each retrying until the backend confirms - past the default 60s under load.
+    test.slow()
     const cardId = await createIssue(client, ctx, {
       title: `${titlePrefix}seq-1`,
       status: 'Backlog'
