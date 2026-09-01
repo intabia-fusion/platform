@@ -28,21 +28,32 @@ function arg (name, fallback) {
 
 const b64url = (buf) => Buffer.from(buf).toString('base64url')
 
+// service:'tool' is the service lane of isStatsAdmin; the admin lane also wants a fresh
+// second factor (extra.mfaAt), and a token without one is refused as 404.
 function adminToken () {
   const header = b64url(JSON.stringify({ typ: 'JWT', alg: 'HS256' }))
   const payload = b64url(
-    JSON.stringify({ extra: { admin: 'true' }, account: '00000000-0000-0000-0000-000000000000' })
+    JSON.stringify({
+      extra: { admin: 'true', service: 'tool' },
+      account: '00000000-0000-0000-0000-000000000000'
+    })
   )
   const sig = b64url(crypto.createHmac('sha256', SERVER_SECRET).update(`${header}.${payload}`).digest())
   return `${header}.${payload}.${sig}`
 }
 
+// /api/v1/manage and /api/v1/analytics read the token from the Authorization header only - in the
+// query it is ignored and the endpoint answers 404.
+function authHeader () {
+  return { Authorization: `Bearer ${adminToken()}` }
+}
+
 // The stats port is not published to the host, so fall back to running the request inside it.
 async function callViaDocker (urlPath, method) {
   const url = new URL(urlPath, `http://localhost:${STATS_INNER_PORT}`)
-  url.searchParams.set('token', adminToken())
+  const init = { method, headers: authHeader() }
   const script =
-    `fetch(${JSON.stringify(url.toString())},{method:${JSON.stringify(method)}})` +
+    `fetch(${JSON.stringify(url.toString())},${JSON.stringify(init)})` +
     '.then(async (r)=>{if(!r.ok)throw new Error("status "+r.status);process.stdout.write(await r.text())})' +
     '.catch((e)=>{console.error(e.message);process.exit(1)})'
   const out = execFileSync('docker', ['exec', STATS_CONTAINER, 'node', '-e', script], {
@@ -54,9 +65,8 @@ async function callViaDocker (urlPath, method) {
 
 async function call (urlPath, method) {
   const url = new URL(urlPath, STATS_URL)
-  url.searchParams.set('token', adminToken())
   try {
-    const res = await fetch(url, { method })
+    const res = await fetch(url, { method, headers: authHeader() })
     if (!res.ok) throw new Error(`${method} ${url.pathname} -> ${res.status}`)
     const text = await res.text()
     return text === '' ? undefined : JSON.parse(text)
