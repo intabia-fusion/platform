@@ -253,15 +253,8 @@ export async function createServer (
         return { plans: {}, packages: {}, purchasables: {} }
       }
       const content = readFileSync(configPath, 'utf-8')
-      const loaded = yaml.load(content) as any
-      // windowMonthLimit 0/missing means "unlimited" by convention — flag paid plans that forgot it.
-      for (const [name, item] of Object.entries<any>(loaded?.plans ?? {})) {
-        const isPaid = item?.free !== true && (item?.priceMonthlyPerUser != null || item?.priceMonthly != null)
-        if (isPaid && (item?.windowMonthLimit == null || item.windowMonthLimit === 0)) {
-          ctx.warn('paid plan has no windowMonthLimit configured, AI window will be unlimited', { plan: name })
-        }
-      }
-      return loaded
+      // windowMonthLimit is required on every plan — config.ts refuses to start the pod without it.
+      return yaml.load(content) as any
     } catch (err: any) {
       ctx.error('Failed to load plan config', { err })
       return { plans: {}, packages: {}, purchasables: {} }
