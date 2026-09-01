@@ -180,6 +180,7 @@ asr:                         # зеркалит llm:
 |-----|------------|
 | `STT_PROVIDER` | опт-аут: `none` = отключить ASR (в client-режиме). Иначе провайдер из реестра |
 | `STT_BATCH` | размер батча транскрипции |
+| `STT_CAPACITY` | сколько чанков роутер держит в полёте на воркер, дефолт 4. Работает только при `STT_BATCH > 1` |
 | `VAD_RMS_THRESHOLD`, `VAD_SPEECH_RATIO_THRESHOLD` | VAD |
 | `DEEPGRAM_API_KEY`, `DEEPGRAM_PROJECT_ID`, `DEEPGRAM_TAG`, `DEEPGRAM_POLL_INTERVAL_MINUTES` | Deepgram |
 

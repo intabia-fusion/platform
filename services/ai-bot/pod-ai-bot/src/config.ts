@@ -228,6 +228,9 @@ interface Config {
   // present. Actual provider/model come from AsrProviders. Env: STT_PROVIDER.
   SttProvider: SttProviderType
   SttProcessingBatch: number // If defined will consume messages by bulks and pass to transcriber
+  // Chunks the router keeps in flight on this worker. Inert while SttProcessingBatch is 1.
+  // Env: STT_CAPACITY, yaml `asr.capacity`.
+  SttCapacity: number
 
   // ASR provider registry (mirrors AIProviders). Built from yaml `asr.models`+`asr.providers`.
   AsrProviders: AsrProviderConfig[]
@@ -287,6 +290,7 @@ interface YamlConfig {
   asr?: {
     defaultLevel?: AsrLevel
     batch?: number
+    capacity?: number
     models?: Partial<Record<AsrLevel, AsrLevelClass>>
     providers?: AsrProviderSpec[]
   }
@@ -615,6 +619,7 @@ const config: Config = (() => {
     // ASR opt-out switch ('none' disables) + batch. Provider/model come from AsrProviders.
     SttProvider: (process.env.STT_PROVIDER ?? '') as SttProviderType,
     SttProcessingBatch: yamlConfig?.asr?.batch ?? parseInt(process.env.STT_BATCH ?? '1'),
+    SttCapacity: yamlConfig?.asr?.capacity ?? parseNumber(process.env.STT_CAPACITY) ?? 4,
 
     AsrProviders: buildAsrRegistry(yamlConfig),
     AsrDefaultLevel: yamlConfig?.asr?.defaultLevel ?? 'default',
