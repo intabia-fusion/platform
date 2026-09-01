@@ -330,7 +330,14 @@ interface YamlConfig {
   }
 }
 
-const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
+// A non-numeric env value falls through to the caller's default instead of poisoning it with NaN.
+const parseNumber = (str: string | undefined): number | undefined => {
+  if (str === undefined) {
+    return undefined
+  }
+  const value = Number(str)
+  return Number.isFinite(value) ? value : undefined
+}
 
 /** Merge new-schema (models+serves) entries into the legacy AIProviderConfig shape. */
 const resolveProviderSpec = (

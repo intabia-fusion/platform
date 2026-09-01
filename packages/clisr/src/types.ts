@@ -158,8 +158,9 @@ export function formatId (format: WireFormat): string {
 }
 
 export function parseFormatId (id: string): WireFormat | undefined {
-  const [codec, compression = 'none'] = id.split('/')
-  if (wireCodecs[codec] === undefined || !supportedCompressions.includes(compression)) {
+  const parts = id.split('/')
+  const [codec, compression = 'none'] = parts
+  if (parts.length > 2 || wireCodecs[codec] === undefined || !supportedCompressions.includes(compression)) {
     return undefined
   }
   return { codec, compression }

@@ -67,6 +67,11 @@ describe('format ids', () => {
     expect(parseFormatId('json/brotli')).toBeUndefined()
   })
 
+  it('rejects an id with extra segments instead of silently taking the first two', () => {
+    expect(parseFormatId('json/snappy/extra')).toBeUndefined()
+    expect(negotiateFormat(['json/snappy/extra'])).toEqual(legacyWireFormat)
+  })
+
   it('does not resolve prototype keys as codecs', () => {
     // The id comes from the peer's hello; `wireCodecs.constructor` must not look like a codec.
     for (const id of ['constructor', 'toString', '__proto__', 'valueOf']) {
