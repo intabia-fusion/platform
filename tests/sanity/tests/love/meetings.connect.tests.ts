@@ -5,6 +5,13 @@
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 import { expect, test, type Page } from '@playwright/test'
 
@@ -157,9 +164,7 @@ export function registerConnectTests (): void {
         await startOrJoin(page2)
         await waitConnected(page2)
 
-        // user3 opens the same room. After user2 started a meeting the button
-        // text flips from "Start meeting" to "Join meeting" — selector is the
-        // same data-id, so we can reuse startOrJoin.
+        // The button flips from "Start meeting" to "Join meeting" under the same data-id.
         await clickRoomByName(page3, room as string)
         await startOrJoin(page3)
         await waitConnected(page3)

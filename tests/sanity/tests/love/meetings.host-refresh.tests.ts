@@ -23,9 +23,7 @@ import {
   waitForActiveMeetingsToFinish
 } from './meeting-helpers'
 
-// Personal offices render as `data-id="room-"` with the owner's name inside, so pick by
-// visible text. Mirrors `meetings.knock-office.tests.ts`.
-/** Starts a meeting in the owner's own office via the avatar popup's `start-own-meeting`. */
+// Personal offices carry an empty `data-id="room-"`, so pick by the visible owner name.
 async function connectToOwnOffice (page: Page): Promise<void> {
   const office = page.locator('div.floorGrid-room.myOffice').first()
   await expect(office).toBeVisible({ timeout: 15000 })

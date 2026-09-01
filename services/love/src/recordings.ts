@@ -82,9 +82,8 @@ export class RecordingProcessor {
     wsLoginInfo: WorkspaceLoginInfo,
     meetingTitle: string
   ): Promise<StartRecordingVerdict> {
-    // Egress writes straight to S3 (bypasses the datalake gate) — don't start a recording
-    // that would land on a workspace already out of disk or unpaid. Skip, not throw: this also
-    // runs from the queue consumer (auto-record), where a throw would trigger endless redelivery.
+    // Egress writes straight to S3, past the datalake gate. Skip rather than throw: the queue
+    // consumer calls this too, and a throw there means endless redelivery.
     if (this.limitsState?.isExhausted(workspaceId) === true) {
       this.ctx.warn('Cannot start recording: workspace disk/payment limit exhausted', { workspaceId, roomName })
       return { started: false, reason: 'limits-exhausted' }

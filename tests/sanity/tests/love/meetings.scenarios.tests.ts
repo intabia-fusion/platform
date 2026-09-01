@@ -5,6 +5,13 @@
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 import { expect, test, type Page } from '@playwright/test'
 
@@ -38,10 +45,8 @@ async function inviteByLastNames (page: Page, lastNames: string[]): Promise<void
 export function registerScenariosTests (): void {
   test.describe('meeting minutes - extended scenarios', () => {
     test.beforeEach(async () => {
-      // Drain any stale Active/Pending MeetingMinutes left from previous specs.
-      // Without this `clickFirstAvailableRoom` + `startOrJoin` joins an existing
-      // Pending meeting owned by another account, which breaks owner-only flows
-      // (e.g. `meeting-toggle-private` only renders for the meeting owner).
+      // Without this the room join lands in a meeting owned by somebody else, and owner-only
+      // controls never render.
       await waitForActiveMeetingsToFinish()
     })
 
@@ -117,14 +122,11 @@ export function registerScenariosTests (): void {
         const toggle = page2.locator('[data-id="meeting-toggle-private"]').first()
         await expect(toggle).toBeVisible({ timeout: 10000 })
         await toggle.click()
-        // user3's widget stays active (no page reload — that would tear down
-        // the LiveKit session). The invite-button is inside the connected
-        // meeting widget on page3.
+        // No page reload here - that would tear down the LiveKit session.
         await expect(page3.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 10000 })
 
-        // user3 tries to invite user1 (Appleseed) into the now-private meeting.
-        // user3 is a member but NOT an owner, so `sendInvites` refuses on the
-        // client (warning toast) and creates no invite-request at all.
+        // user3 is a member but not an owner, so `sendInvites` refuses on the client and
+        // creates no invite-request at all.
         await inviteByLastNames(page3, ['Appleseed'])
 
         // No invite-request was created: sender (user3) gets no outgoing trigger
@@ -263,13 +265,8 @@ export function registerScenariosTests (): void {
         // propagated to the server.
         await expect(toggle).toHaveText(/Open room/i, { timeout: 30000 })
 
-        // user3 (outsider) opens the private room directly and clicks Knock.
-        // The room is locked (private + outsider has no access), so the
-        // EditRoom panel renders the `meeting-knock` button instead of Connect.
-        // We don't gate on the busy-badge here — it derives from a join of
-        // SecurityChange + ParticipantInfo broadcast that can lag in CI; the
-        // EditRoom panel reads the same data and resolves to the knock button
-        // as soon as both arrive, which is what the test really cares about.
+        // Gate on the knock button, not the busy badge: the badge derives from a join that can
+        // lag in CI, while the panel resolves as soon as both sources arrive.
         await openLove(page3)
         const lockedRoom = page3.locator(`[data-id="room-${room as string}"]`).first()
         await expect(lockedRoom).toBeVisible({ timeout: 10000 })

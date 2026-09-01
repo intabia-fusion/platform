@@ -57,9 +57,8 @@ export const UNFINISHED_MEETING_GRACE_MS = 60_000
 export class WorkspaceClient {
   private client!: RestClient
 
-  // Static cache for workspace clients
-  // Serialises seat allocation per meeting: unsynchronised, concurrent joins read the same
-  // snapshot and pick one cell. Static - meeting refs are globally unique.
+  // Serialises seat allocation per meeting: concurrent joins would read the same snapshot
+  // and pick one cell. Static, since meeting refs are globally unique.
   private static readonly seatQueue = new Map<Ref<MeetingMinutes>, Promise<unknown>>()
 
   private static readonly workspaces = new Map<WorkspaceUuid, WorkspaceClient>()

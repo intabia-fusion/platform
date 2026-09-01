@@ -5,6 +5,13 @@
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 import { expect, test, type Page } from '@playwright/test'
 
@@ -17,22 +24,9 @@ import {
   waitForActiveMeetingsToFinish
 } from './meeting-helpers'
 
-/**
- * Click the room owned by the given person. Personal offices render with
- * `data-id="room-"` (empty name) but display the owner's name inside, so we
- * pick the one whose visible text contains the owner's last name.
- */
-/**
- * Start a meeting in the owner's own personal office. There is no Connect
- * button in EditRoom for one's own office; the entry point is the
- * PersonActionPopup that opens on a click on one's own avatar inside the
- * office cell. The popup renders a "Start meeting" action (data-id
- * `start-own-meeting`) — clicking it calls createMeeting(office).
- */
+/** Personal offices render with an empty `data-id="room-"`, so pick by the visible owner name. */
 async function connectToOwnOffice (page: Page, _lastName: string): Promise<void> {
-  // Use the `myOffice` CSS class instead of filtering by the resolved owner
-  // name — the office label is resolved asynchronously via
-  // `getPersonByPersonRef`, so the name filter is flaky on cold render.
+  // By CSS class, not owner name: the label resolves asynchronously and is flaky on cold render.
   const office = page.locator('div.floorGrid-room.myOffice').first()
   await expect(office).toBeVisible({ timeout: 15000 })
   const avatarCell = office.locator('.floorGrid-room__field').first()
@@ -65,18 +59,13 @@ export function registerKnockOfficeTests (): void {
         await openLove(owner)
         await openLove(knocker)
 
-        // storageSecond = Dirak Kainin. The personal office on the floor is
-        // titled with the owner's last name; we filter the floor grid by
-        // that name to find it. The office has `startPrivate: true`, so
-        // `createMeeting` will mint a private MeetingMinutes — the
-        // precondition for knock-flow detection.
+        // The office has `startPrivate: true`, so the meeting is private - the precondition for
+        // the knock flow.
         const ownerLast = 'Dirak'
 
         await connectToOwnOffice(owner, ownerLast)
 
-        // Knocker reopens the office on their side. They are not a member of
-        // the (now private) office meeting, so EditRoom renders the Knock
-        // button instead of Connect.
+        // Not a member of the now-private meeting, so EditRoom renders Knock instead of Connect.
         await clickOfficeOf(knocker, ownerLast)
         const knockBtn = knocker.locator('[data-id="meeting-knock"]').first()
         await expect(knockBtn).toBeVisible({ timeout: 30000 })
@@ -88,13 +77,8 @@ export function registerKnockOfficeTests (): void {
         await expect(knockingItem).toBeVisible({ timeout: 30000 })
         await knockingItem.locator('[data-id="knock-accept"]').click()
 
-        // After accept the server pushes the knocker into the meeting members
-        // and syncs `status: 'accepted' + meeting` onto the knocker's
-        // invite-request. The knocker's client auto-joins via
-        // `checkAndJoinIfRecipientJoined` -> `joinOrCreateMeetingByInvite`,
-        // which retries the `/getToken` call until the membership write
-        // propagates (avoids the 403 race). The meeting widget on the
-        // knocker side is the signal that the LiveKit room connected.
+        // The knocker auto-joins via `joinOrCreateMeetingByInvite`, which retries `/getToken`
+        // until the membership write propagates; the widget is the signal it connected.
         await expect(knocker.locator('[data-id="meeting-widget"]')).toBeVisible({ timeout: 60000 })
       } finally {
         await closeMeetingContexts([

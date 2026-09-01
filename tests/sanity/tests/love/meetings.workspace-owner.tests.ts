@@ -5,6 +5,13 @@
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 import { expect, test } from '@playwright/test'
 
@@ -27,23 +34,8 @@ export function registerWorkspaceOwnerTests (): void {
     })
 
     /**
-     * Workspace owner (user1 = Appleseed John, `storage.json`) must be able
-     * to join a private meeting hosted by a different account (user2 = Dirak
-     * Kainin), even though they were never explicitly invited.
-     *
-     * Flow:
-     *   - user2 starts a meeting in a regular room (becomes its owner).
-     *   - user2 closes the room (private = true). Members = [user2] only.
-     *   - user1 clicks the same room.
-     *   - Server middleware sees AccountRole.Owner → bypasses owners-only
-     *     enforcement; the recipient's `/getToken` accepts the request
-     *     because the workspace owner is implicitly allowed everywhere.
-     *   - user1 sees Connect (not Knock); on click they self-add to members
-     *     and the LiveKit widget appears.
-     *
-     * Verifications:
-     *   - user1 sees the meeting widget (proves LiveKit connection).
-     *   - user2 sees user1 as a participant (covers the members $push).
+     * A workspace owner joins a private meeting hosted by somebody else without an invite:
+     * middleware bypasses the owners-only check, so they get Connect and self-add to members.
      */
     test('workspace owner can self-join a private meeting hosted by another user', async ({ browser }) => {
       test.setTimeout(90000)
@@ -80,9 +72,7 @@ export function registerWorkspaceOwnerTests (): void {
         }, 30000)
         await connect.click()
 
-        // Successful self-join: the meeting widget renders on user1's page
-        // (LiveKit accepted the token after middleware added them as a
-        // member; if the owner-bypass were broken we'd get 403 here).
+        // The widget proves LiveKit accepted the token; a broken owner-bypass would give 403.
         await waitConnected(page1)
         // user2's widget must still be present — joining the same meeting
         // must not kick the original owner out.

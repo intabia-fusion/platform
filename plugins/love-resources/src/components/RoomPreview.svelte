@@ -125,7 +125,9 @@
   }
 
   $: _info = prepareInfo(info ?? [])
-  $: void persistPlaces(_info, info ?? [], $meetings)
+  $: persistPlaces(_info, info ?? [], $meetings).catch((err) => {
+    console.error('[RoomPreview] failed to persist places', err)
+  })
 
   const me = getCurrentEmployee()
   $: myName = $myEmployeeStore?.name

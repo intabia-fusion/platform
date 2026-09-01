@@ -13,13 +13,8 @@ export interface ParsedRoomName {
 }
 
 /**
- * Parse LiveKit room name to extract workspace and meeting ID.
- *
- * Room name format: `${workspaceUuid}_${meetingMinutesId}` produced by `getRoomName`.
- * Both components are generated identifiers that never contain `_`:
- *   - workspace: UUID v4 (hex + `-`)
- *   - meetingId: `Ref<MeetingMinutes>` (24 hex chars from `generateId`)
- * So the single `_` is always the separator and there are exactly 2 parts.
+ * Splits `${workspaceUuid}_${meetingMinutesId}` from `getRoomName`. Neither id ever contains
+ * `_`, so the first one is always the separator.
  */
 export function parseRoomName (roomName: string): ParsedRoomName | undefined {
   const sepIdx = roomName.indexOf('_')

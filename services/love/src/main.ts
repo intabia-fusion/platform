@@ -428,7 +428,8 @@ export const main = async (): Promise<void> => {
         workspaceId,
         meetingId,
         wsLoginInfo,
-        req.body.name ?? 'recording'
+        // The client sends `title`; `name` stays for older callers and the sanity tests.
+        req.body.title ?? req.body.name ?? 'recording'
       )
       if (!verdict.started) {
         // 409 so the second person to press the button sees the refusal instead of a fake success.

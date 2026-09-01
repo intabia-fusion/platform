@@ -5,6 +5,13 @@
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 import { expect, test, type Page } from '@playwright/test'
 
@@ -23,10 +30,8 @@ async function inviteByLastName (page: Page, lastName: string): Promise<void> {
   const search = popup.getByPlaceholder(/Search/i)
   await expect(search).toBeVisible({ timeout: 5000 })
   await search.fill(lastName)
-  // UsersList re-queries on every keystroke and the row can detach
-  // mid-click when an incoming invite-response simultaneously re-renders
-  // the popup stack. Retry up to 5x — each retry re-resolves the locator,
-  // so the new DOM node is picked up before clicking.
+  // UsersList re-queries on every keystroke, so the row can detach mid-click; each retry
+  // re-resolves the locator.
   let clicked = false
   for (let attempt = 0; attempt < 5 && !clicked; attempt++) {
     const row = popup.locator('button.row').filter({ hasText: lastName }).first()

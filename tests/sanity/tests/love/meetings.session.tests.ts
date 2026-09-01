@@ -5,6 +5,13 @@
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 import { expect, test, type Page } from '@playwright/test'
 
@@ -22,9 +29,8 @@ import {
 async function startOrJoin (page: Page): Promise<void> {
   const connect = page.locator('[data-id="meeting-connect"]').getByRole('button').first()
   const knock = page.locator('[data-id="meeting-knock"]')
-  // Knock instead of Connect means the client sees a ParticipantInfo of somebody else in the
-  // room: a LiveKit webhook can recreate one right after the drain in beforeEach. Drain again -
-  // clicking the room a second time only deselects it.
+  // Knock instead of Connect means a foreign ParticipantInfo is back - a webhook can
+  // recreate one right after the drain in `beforeEach`.
   await expect(async () => {
     if ((await knock.count()) > 0) {
       await waitForActiveMeetingsToFinish()
@@ -61,9 +67,8 @@ export function registerSessionTests (): void {
         await startOrJoin(page3)
         await waitConnected(page3)
 
-        // Open the MeetingMinutes detail page on user2 side and look for the
-        // "Joined meeting" activity entry. Activity entries contain the system
-        // text and the participant name, so we just check the system text.
+        // Activity entries carry the system text plus the participant name; the system
+        // text alone is enough here.
         await openMeetingMinutes(page2, room as string)
         await expect(page2.getByText(/Joined meeting/i).first()).toBeVisible({ timeout: 30000 })
       } finally {

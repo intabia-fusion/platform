@@ -26,9 +26,8 @@ import {
 } from './meeting-helpers'
 
 async function openMeetingMinutes (page: Page, roomName: string): Promise<void> {
-  // Pick the link by its href — the floor view also renders a link with
-  // the same visible name pointing to the Room itself, and clicking it
-  // would land us on a page without the EditDoc header.
+  // By href: the floor renders a same-named link to the Room itself, which lands on a
+  // page without the EditDoc header.
   const link = page
     .locator('a[href*="MeetingMinutes"]')
     .filter({ hasText: new RegExp(`${roomName}.*20\\d{2}`) })
@@ -38,32 +37,18 @@ async function openMeetingMinutes (page: Page, roomName: string): Promise<void> 
   await expect(page.locator('div.hulyHeader-container').first()).toBeVisible({ timeout: 15000 })
 }
 
-/**
- * Drives the host UI through the same action a real user would invoke:
- * EditDoc header's More Actions button -> "Copy guest link". The action
- * writes the resolved URL to the system clipboard, which the test then
- * reads back. Playwright pre-grants clipboard permissions in
- * `playwright.config.ts`, and the host page is focused while the test
- * runs, so the clipboard read succeeds even though it fails when the
- * page loses focus.
- */
+/** Goes through the real UI action, which writes the link to the system clipboard.
+ *  Playwright pre-grants the permission and the host page stays focused. */
 async function copyGuestLinkViaUi (page: Page): Promise<string> {
-  // Header actions live in `hulyHeader-buttonsGroup.actions`; the
-  // editor body has additional `btnMoreActions` buttons (one per
-  // attachment etc.), so we scope to the header to pick the right one.
-  // The EditDoc renders TWO `.hulyHeader-buttonsGroup.actions` blocks (the
-  // floor-view header + the panel header); the one we need is the panel
-  // header that hosts the More Actions button.
+  // The body carries its own `btnMoreActions` buttons and EditDoc renders two header
+  // blocks, so scope to the header and take the first.
   const moreActions = page
     .locator('.hulyHeader-container .hulyHeader-buttonsGroup.actions [data-id="btnMoreActions"]')
     .first()
   await expect(moreActions).toBeVisible({ timeout: 15000 })
   await moreActions.click()
 
-  // The actions menu renders as `.antiPopup` containing `button.ap-menuItem`s.
-  // The video-meeting widget also renders as `.antiPopup`, so we cannot
-  // narrow by class alone — pick the popup that actually contains the
-  // "Copy guest link" item.
+  // The meeting widget is an `.antiPopup` too, so pick the popup by the item it holds.
   const copyItem = page
     .locator('.antiPopup button.ap-menuItem')
     .filter({ hasText: /copy guest link/i })
@@ -116,9 +101,8 @@ export function registerGuestTests (): void {
       const host = await hostCtx.newPage()
       const guest = await guestCtx.newPage()
 
-      // Surface guest-side runtime errors directly into the test failure so a
-      // regression like "could not establish signal connection: Abort handler
-      // called" is attributed clearly.
+      // Surfaces guest-side runtime errors in the failure, so a signal-connection
+      // regression is attributed instead of reading as a bare timeout.
       const guestErrors: string[] = []
       guest.on('pageerror', (err) => guestErrors.push(err.message))
       guest.on('console', (msg) => {
@@ -138,11 +122,8 @@ export function registerGuestTests (): void {
         await openMeetingMinutes(host, room as string)
         const guestUrl = await copyGuestLinkViaUi(host)
 
-        // Guest navigates to the link, fills in name and joins. Permissions are
-        // pre-warmed by the popup before LiveKit signal connect — the test stand
-        // launches Chromium with --use-fake-ui-for-media-stream, so the
-        // permission prompt resolves instantly, but the same code path also
-        // covers production where the dialog may hang.
+        // The stand runs Chromium with --use-fake-ui-for-media-stream, so the prompt
+        // resolves instantly - the same path covers a hanging dialog in production.
         await (await guest.goto(guestUrl))?.finished()
 
         const first = guest.locator('input[name="first_name"]')

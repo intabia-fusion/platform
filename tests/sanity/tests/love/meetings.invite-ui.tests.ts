@@ -5,6 +5,13 @@
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 import { expect, test, type Page } from '@playwright/test'
 
@@ -168,13 +175,10 @@ export function registerInviteUiTests (): void {
         await expect(popup).toBeVisible({ timeout: 5000 })
         await recipient.locator('[data-id="invite-join"]').click()
 
-        // Right after accept the meeting is created by the caller's client.
-        // Recipient should briefly see the awaiting-meeting trigger before
-        // auto-joining via the live-query on MeetingMinutes.
+        // The caller's client creates the meeting, so the recipient may flash the awaiting
+        // trigger before auto-joining.
         const awaiting = recipient.locator('[data-id="awaiting-meeting-trigger"]')
-        // Either the awaiting trigger flashed in OR the recipient is already
-        // in the meeting — both are valid endpoints; we mainly test that no
-        // stale incoming-invite-trigger lingers.
+        // Both endpoints are valid; what matters is that no stale incoming trigger lingers.
         const settled = Promise.race([
           awaiting.waitFor({ state: 'visible', timeout: 5000 }).then(() => 'awaiting'),
           recipient

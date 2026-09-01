@@ -77,7 +77,7 @@ describe('RecordingProcessor.startRecording', () => {
   let wsClient: Record<string, any>
   let processor: RecordingProcessor
 
-  // The verdict contract these tests pin down; both methods still return void today.
+  // The verdict contract these tests pin down.
   type StartVerdict = { started: true } | { started: false, reason: string }
   type StopVerdict = { stopped: true } | { stopped: false, reason: string }
   const verdict = (

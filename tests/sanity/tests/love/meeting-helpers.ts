@@ -5,6 +5,13 @@
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
 //
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 import { createRestClient, getWorkspaceToken, loadServerConfig, type RestClient } from '@hcengineering/api-client'
 import { type AccountUuid, systemAccountUuid } from '@hcengineering/core'
@@ -77,11 +84,8 @@ export async function getSystemRestClient (): Promise<RestClient> {
   return cachedSystemRestClient
 }
 
-/**
- * Active drain of leftover UserMeetingInvite documents — bypasses the 30s
- * TransientTTL. Uses a system-token REST client because invites live in
- * per-user PersonSpaces (only the owner — or system — can removeDoc).
- */
+/** Drains leftover invites past their 30s TTL. Needs a system token: invites live in
+ *  per-user PersonSpaces, where only the owner or system may removeDoc. */
 async function drainPendingInvites (): Promise<void> {
   try {
     const sys = await getSystemRestClient()
@@ -95,15 +99,8 @@ async function drainPendingInvites (): Promise<void> {
   }
 }
 
-/**
- * Force-finish every Active/Pending MeetingMinutes and drop all ParticipantInfo
- * straight from the transactor — skips the 3s LK departureTimeout + the
- * room_finished webhook entirely. The love service's own finishMeeting() does
- * exactly this on receiving the webhook, but in tests we don't need to
- * exercise that path; we just want a clean slate for the next test.
- */
-// Scheduled belongs here too: the meetings store only filters out Finished, so a leftover
-// Scheduled meeting keeps EditRoom.connect() joining it instead of starting a new one.
+/** Force-finishes every non-Finished meeting through the transactor: the `room_finished`
+ *  webhook is not the path tests care about, and a leftover Scheduled one hijacks Connect. */
 async function forceFinishAllMeetings (): Promise<void> {
   try {
     const sys = await getSystemRestClient()
@@ -129,14 +126,8 @@ async function forceFinishAllMeetings (): Promise<void> {
   }
 }
 
-/**
- * Poll the transactor (via REST) until no MeetingMinutes is Active or
- * Pending — i.e. the previous test's meeting has been Finished by the
- * LiveKit `room_finished` webhook (which fires after the 3s
- * departureTimeout). Reusing the still-Pending meeting in the next test
- * would carry over the prior owners/members and break owner-only and
- * locked-room checks.
- */
+/** Waits until no meeting is Active or Pending: a leftover one carries its owners and
+ *  members into the next test and breaks owner-only and locked-room checks. */
 export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise<void> {
   const client = await getMeetingsRestClient()
   await Promise.all([forceFinishAllMeetings(), drainPendingInvites()])
@@ -149,15 +140,11 @@ export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise
         { status: { $in: [MeetingStatus.Active, MeetingStatus.Pending, MeetingStatus.Scheduled] } },
         { limit: 1 }
       ),
-      // Drain *all* ParticipantInfo — a leftover PI in a non-Reception room
-      // makes the office owner appear "in a meeting" on the next test's
-      // floor grid (the office cell renders without the resolved name) and
-      // also tricks the server's knock detection.
+      // A leftover row makes the office owner look "in a meeting" on the next test's floor
+      // grid and fools the server's knock detection.
       client.findAll<ParticipantInfo>(love.class.ParticipantInfo, {}, { limit: 1 }),
-      // Drain UserMeetingInvite — stale invites from a previous test (a
-      // request/response that wasn't cleaned up because the meeting was
-      // never created or the recipient's accept tx was lost) trip up
-      // toHaveCount/toBeHidden assertions in subsequent tests.
+      // Stale invites from a previous test trip up `toHaveCount`/`toBeHidden` in the next
+      // one.
       client.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, {}, { limit: 1 })
     ])
     if (meetings.length === 0 && participants.length === 0 && invites.length === 0) return
@@ -169,12 +156,6 @@ export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise
   console.warn(`[love] cleanup did not settle in ${timeoutMs}ms, still there: ${left}`)
 }
 
-/**
- * No-op in the new lifecycle: the page is about to close anyway, and the
- * LiveKit `participant_left` webhook (fired on socket disconnect) drives
- * the server-side cleanup of ParticipantInfo + MeetingMinutes status.
- * Kept as a thin shim so existing call sites don't have to change.
- */
 // `sendKnockRequest` returns silently until the employee and their space resolve, so an early
 // click creates nothing. Re-clicking is safe: the apply carries `notMatch` on a pending request.
 export async function knockAndWaitPending (page: Page, timeoutMs = 30000): Promise<void> {
@@ -187,24 +168,16 @@ export async function knockAndWaitPending (page: Page, timeoutMs = 30000): Promi
   }).toPass({ intervals: retryIntervals, timeout: timeoutMs })
 }
 
-/**
- * Test teardown helper: leave any active meeting on each page, then close
- * pages and contexts. Use in `finally` of every meeting test that opened
- * extra contexts. This avoids leaving LiveKit sessions half-closed between
- * tests, which causes DTLS handshake timeouts on the next connect().
- */
+/** Closes pages and contexts in `finally`. A half-closed LiveKit session causes DTLS
+ *  handshake timeouts on the next connect. */
 export async function closeMeetingContexts (entries: Array<{ ctx: BrowserContext, pages: Page[] }>): Promise<void> {
-  // Close every page in parallel; the sequential loop was adding ~200-400ms
-  // per extra context. Page.close drives the WS disconnect which the love
-  // service relies on to fire the `participant_left` webhook — but the
-  // webhook fires asynchronously anyway, so we don't need to serialise.
+  // In parallel: the sequential loop cost 200-400ms per context, and the webhook that
+  // `Page.close` triggers fires asynchronously anyway.
   const allPages = entries.flatMap((e) => e.pages)
   await Promise.all(allPages.map((p) => p.close().catch(() => undefined)))
   await Promise.all(entries.map(({ ctx }) => ctx.close().catch(() => undefined)))
-  // Server-side: wait for the LiveKit `room_finished` webhook to fire, the
-  // meeting to be marked Finished and the resulting ParticipantInfo cleanup
-  // to land. Without this the next test sees stale PIs (the owner is "still
-  // in a meeting") and floor-grid rendering misses their office.
+  // Wait for `room_finished` and its ParticipantInfo cleanup, or the next test sees the
+  // owner as "still in a meeting" and the floor grid misses their office.
   await waitForActiveMeetingsToFinish()
 }
 
@@ -267,14 +240,8 @@ export async function joinRoom (page: Page, name: string, timeout = 45000): Prom
   await expect.poll(async () => await connectedMarker(page).count(), { timeout }).toBeGreaterThan(0)
 }
 
-/**
- * Pick a regular room, skipping the ones in `exclude`.
- *
- * The candidate list is a fallback, not a choice: all four rooms always exist. But `count()` does
- * not wait, and under a loaded stand the floor grid paints before its rooms - the first candidate
- * then reads as absent and the run silently lands on a different room than the one before. That is
- * what made `workspace-owner` flaky: it drew `All hands` instead of `Meeting Room 1`.
- */
+/** Waits for each candidate: `count()` does not, and under load the grid paints before its
+ *  rooms, so a run silently lands on a different room than the one before. */
 export async function firstAvailableRoom (page: Page, exclude: string[] = []): Promise<string | null> {
   for (const name of ROOM_CANDIDATES) {
     if (exclude.includes(name)) continue
