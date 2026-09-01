@@ -13,14 +13,15 @@
   limitations under the License.
 */
 
-import { type TxOperations } from '@hcengineering/core'
+import { type AnyAttribute, generateId, type Ref, type TxOperations } from '@hcengineering/core'
 import workflow, {
   clearWorkflowConfig,
   exportWorkflowConfig,
-  importWorkflowConfig,
+  importWorkflowConfig as rawImportWorkflowConfig,
+  type Screen,
   type WorkflowConfig
 } from '@hcengineering/workflow'
-import task, { type Project } from '@hcengineering/task'
+import task, { type Project, type ProjectType } from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
 
 import {
@@ -36,13 +37,28 @@ import {
 } from './workflow.fixtures'
 
 const Statuses = ['Backlog', 'Todo', 'InProgress', 'Done']
+const wsUuid = 'test-workspace-uuid' as any
 
-describe('workflow import and export', () => {
+async function importWorkflowConfig (
+  client: TxOperations,
+  projectTypeId: Ref<ProjectType>,
+  config: any,
+  resolution?: any
+): Promise<any> {
+  return await rawImportWorkflowConfig(client, projectTypeId, config as WorkflowConfig, resolution)
+}
+
+describe('workflow config transfer', () => {
   let client: TxOperations
+  let type: ProjectTypeContext
 
   beforeAll(async () => {
     client = await connect()
-  }, 60000)
+    type = await createProjectTypeWith(client, [
+      { name: 'Issue', statuses: Statuses },
+      { name: 'Bug', statuses: Statuses }
+    ])
+  })
 
   async function freshType (): Promise<ProjectTypeContext> {
     return await createProjectTypeWith(client, [
@@ -51,14 +67,13 @@ describe('workflow import and export', () => {
     ])
   }
 
-  function field (key: string): { attribute: string, fieldKey: string } {
+  function field (key: string): { attribute: Ref<AnyAttribute>, fieldKey: string } {
     const attr = client.getHierarchy().getAttribute(tracker.class.Issue, key)
     return { attribute: attr._id, fieldKey: key }
   }
 
   describe('workflows', () => {
     it('imports a workflow and finds it by name', async () => {
-      const type = await freshType()
       const res = await importWorkflowConfig(client, type.projectTypeId, {
         version: 1,
         workflows: [{ name: 'Main', taskType: 'Issue' }]
@@ -149,7 +164,7 @@ describe('workflow import and export', () => {
 
     it('reuses a workflow with the same name instead of duplicating it', async () => {
       const type = await freshType()
-      const config: WorkflowConfig = { version: 1, workflows: [{ name: 'Main', taskType: 'Issue' }] }
+      const config: any = { version: 1, workflows: [{ name: 'Main', taskType: 'Issue' }] }
       const first = await importWorkflowConfig(client, type.projectTypeId, config)
       const second = await importWorkflowConfig(client, type.projectTypeId, config)
       expect(second.workflows.Main).toEqual(first.workflows.Main)
@@ -301,21 +316,22 @@ describe('workflow import and export', () => {
 
   describe('screens', () => {
     const screenConfig = {
+      id: 'screen-closing' as Ref<Screen>,
       name: 'Closing screen',
       description: 'Fields to fill when closing',
-      targetClass: tracker.class.Issue as string,
+      targetClass: tracker.class.Issue,
       tabs: [
         {
           name: 'General',
           fields: [
-            { ...{ attribute: '', fieldKey: '' }, required: true },
-            { ...{ attribute: '', fieldKey: '' }, required: false }
+            { ...{ attribute: '' as Ref<AnyAttribute>, fieldKey: '' }, required: true },
+            { ...{ attribute: '' as Ref<AnyAttribute>, fieldKey: '' }, required: false }
           ]
         }
       ]
     }
 
-    function config (): WorkflowConfig {
+    function config (): any {
       return {
         version: 1,
         screens: [
@@ -546,7 +562,10 @@ describe('workflow import and export', () => {
   describe('export', () => {
     it('exports an empty project type', async () => {
       const type = await freshType()
-      const config = await exportWorkflowConfig(client, type.projectTypeId)
+      const config = await exportWorkflowConfig(client, type.projectTypeId, {
+        workspace: wsUuid,
+        projectTypeId: generateId()
+      })
       expect(config.version).toEqual(1)
       expect(config.workflows).toEqual([])
       expect(config.screens).toBeUndefined()
@@ -557,17 +576,26 @@ describe('workflow import and export', () => {
       const type = await freshType()
       await importWorkflowConfig(client, type.projectTypeId, {
         version: 1,
+        exportDate: '2026-08-31T00:00:00.000Z',
+        workspace: wsUuid,
+        projectTypeId: type.projectTypeId,
         workflows: [{ name: 'Main', taskType: 'Bug' }]
       })
-      const config = await exportWorkflowConfig(client, type.projectTypeId)
+      const config = await exportWorkflowConfig(client, type.projectTypeId, {
+        workspace: wsUuid,
+        projectTypeId: generateId()
+      })
       expect(config.workflows).toHaveLength(1)
-      expect(config.workflows[0].taskType).toEqual('Bug')
+      expect(config.workflows[0].taskTypeName).toEqual('Bug')
     })
 
     it('exports transitions by status name', async () => {
       const type = await freshType()
       await importWorkflowConfig(client, type.projectTypeId, {
         version: 1,
+        exportDate: '2026-08-31T00:00:00.000Z',
+        workspace: wsUuid,
+        projectTypeId: type.projectTypeId,
         workflows: [
           {
             name: 'Main',
@@ -576,7 +604,10 @@ describe('workflow import and export', () => {
           }
         ]
       })
-      const config = await exportWorkflowConfig(client, type.projectTypeId)
+      const config = await exportWorkflowConfig(client, type.projectTypeId, {
+        workspace: wsUuid,
+        projectTypeId: generateId()
+      })
       expect(config.workflows[0].transitions).toEqual([{ name: 'Start', from: ['Backlog', 'Todo'], to: 'InProgress' }])
     })
 
@@ -585,10 +616,16 @@ describe('workflow import and export', () => {
       const ctx = await createProject(type, 'Backlog')
       await importWorkflowConfig(client, type.projectTypeId, {
         version: 1,
+        exportDate: '2026-08-31T00:00:00.000Z',
+        workspace: wsUuid,
+        projectTypeId: type.projectTypeId,
         workflows: [{ name: 'Main', taskType: 'Issue' }],
         projects: [{ identifier: ctx.identifier, workflows: { Issue: 'Main' } }]
       })
-      const config = await exportWorkflowConfig(client, type.projectTypeId)
+      const config = await exportWorkflowConfig(client, type.projectTypeId, {
+        workspace: wsUuid,
+        projectTypeId: generateId()
+      })
       expect(config.projects).toEqual([{ identifier: ctx.identifier, workflows: { Issue: 'Main' } }])
     })
 
@@ -596,6 +633,9 @@ describe('workflow import and export', () => {
       const type = await freshType()
       await importWorkflowConfig(client, type.projectTypeId, {
         version: 1,
+        exportDate: '2026-08-31T00:00:00.000Z',
+        workspace: wsUuid,
+        projectTypeId: type.projectTypeId,
         workflows: [
           {
             name: 'Main',
@@ -617,7 +657,10 @@ describe('workflow import and export', () => {
           }
         ]
       })
-      const config = await exportWorkflowConfig(client, type.projectTypeId)
+      const config = await exportWorkflowConfig(client, type.projectTypeId, {
+        workspace: wsUuid,
+        projectTypeId: generateId()
+      })
       const props = config.workflows[0].transitions?.[0].validators?.[0].props
       expect(props?.statuses).toEqual({ '$taskType:Bug': ['$status:Done'] })
     })
@@ -626,8 +669,12 @@ describe('workflow import and export', () => {
       const type = await freshType()
       await importWorkflowConfig(client, type.projectTypeId, {
         version: 1,
+        exportDate: '2026-08-31T00:00:00.000Z',
+        workspace: wsUuid,
+        projectTypeId: type.projectTypeId,
         screens: [
           {
+            id: 'screen-closing' as Ref<Screen>,
             name: 'Closing screen',
             targetClass: tracker.class.Issue,
             tabs: [{ name: 'General', fields: [{ ...field('dueDate'), required: true }] }]
@@ -635,7 +682,10 @@ describe('workflow import and export', () => {
         ],
         workflows: []
       })
-      const config = await exportWorkflowConfig(client, type.projectTypeId)
+      const config = await exportWorkflowConfig(client, type.projectTypeId, {
+        workspace: wsUuid,
+        projectTypeId: generateId()
+      })
       expect(config.screens).toHaveLength(1)
       expect(config.screens?.[0].tabs?.[0].fields?.[0]).toEqual({
         ...field('dueDate'),
@@ -646,10 +696,14 @@ describe('workflow import and export', () => {
   })
 
   describe('round trip', () => {
-    const full = (identifier: string): WorkflowConfig => ({
+    const full = (identifier: string, ptId: Ref<ProjectType> = type.projectTypeId): any => ({
       version: 1,
+      exportDate: '2026-08-31T00:00:00.000Z',
+      workspace: wsUuid,
+      projectTypeId: ptId,
       screens: [
         {
+          id: 'screen-closing' as Ref<Screen>,
           name: 'Closing screen',
           description: 'Fill before closing',
           targetClass: tracker.class.Issue,
@@ -693,14 +747,20 @@ describe('workflow import and export', () => {
     it('exports what it imported', async () => {
       const type = await freshType()
       const ctx = await createProject(type, 'Backlog')
-      const source = full(ctx.identifier)
+      const source = full(ctx.identifier, type.projectTypeId)
       await importWorkflowConfig(client, type.projectTypeId, source)
-      const exported = await exportWorkflowConfig(client, type.projectTypeId)
+      const exported = await exportWorkflowConfig(client, type.projectTypeId, {
+        workspace: wsUuid,
+        projectTypeId: generateId()
+      })
 
-      expect(exported.workflows.map((w) => w.name).sort()).toEqual(['Bugs', 'Main'])
-      const main = exported.workflows.find((w) => w.name === 'Main')
+      expect(exported.workflows.map((w: any) => w.name).sort((a: string, b: string) => a.localeCompare(b))).toEqual([
+        'Bugs',
+        'Main'
+      ])
+      const main = exported.workflows.find((w: any) => w.name === 'Main')
       expect(main?.initialStatuses).toEqual(['Backlog'])
-      expect(main?.transitions?.map((t) => t.name)).toEqual(['Plan', 'Start', 'Close'])
+      expect(main?.transitions?.map((t: any) => t.name)).toEqual(['Plan', 'Start', 'Close'])
       expect(main?.transitions?.[2].from).toBeNull()
       expect(exported.projects).toEqual([{ identifier: ctx.identifier, workflows: { Issue: 'Main', Bug: 'Bugs' } }])
       expect(exported.screens?.[0].name).toEqual('Closing screen')
@@ -709,21 +769,31 @@ describe('workflow import and export', () => {
     it('reimports an exported config into a second project type', async () => {
       const source = await freshType()
       const sourceCtx = await createProject(source, 'Backlog')
-      await importWorkflowConfig(client, source.projectTypeId, full(sourceCtx.identifier))
-      const exported = await exportWorkflowConfig(client, source.projectTypeId)
+      await importWorkflowConfig(client, source.projectTypeId, full(sourceCtx.identifier, source.projectTypeId))
+      const exported = await exportWorkflowConfig(client, source.projectTypeId, {
+        workspace: wsUuid,
+        projectTypeId: generateId()
+      })
 
       const target = await freshType()
       const targetCtx = await createProject(target, 'Backlog')
-      const retargeted: WorkflowConfig = {
+      const retargeted: any = {
         ...exported,
+        projectTypeId: target.projectTypeId,
         projects: [{ identifier: targetCtx.identifier, workflows: { Issue: 'Main', Bug: 'Bugs' } }]
       }
       await importWorkflowConfig(client, target.projectTypeId, retargeted)
 
-      const reexported = await exportWorkflowConfig(client, target.projectTypeId)
-      expect(reexported.workflows.map((w) => w.name).sort()).toEqual(['Bugs', 'Main'])
-      const main = reexported.workflows.find((w) => w.name === 'Main')
-      expect(main?.transitions?.map((t) => t.to)).toEqual(['Todo', 'InProgress', 'Done'])
+      const reexported = await exportWorkflowConfig(client, target.projectTypeId, {
+        workspace: wsUuid,
+        projectTypeId: generateId()
+      })
+      expect(reexported.workflows.map((w: any) => w.name).sort((a: string, b: string) => a.localeCompare(b))).toEqual([
+        'Bugs',
+        'Main'
+      ])
+      const main = reexported.workflows.find((w: any) => w.name === 'Main')
+      expect(main?.transitions?.map((t: any) => t.to)).toEqual(['Todo', 'InProgress', 'Done'])
       expect(main?.transitions?.[2].validators?.[0].props.statuses).toEqual({ '$taskType:Bug': ['$status:Done'] })
       // Two project types plus two projects: the default 5s is not enough on CI.
     }, 60000)
@@ -731,13 +801,17 @@ describe('workflow import and export', () => {
     it('produces a working workflow in the second project type', async () => {
       const source = await freshType()
       const sourceCtx = await createProject(source, 'Backlog')
-      await importWorkflowConfig(client, source.projectTypeId, full(sourceCtx.identifier))
-      const exported = await exportWorkflowConfig(client, source.projectTypeId)
+      await importWorkflowConfig(client, source.projectTypeId, full(sourceCtx.identifier, source.projectTypeId))
+      const exported = await exportWorkflowConfig(client, source.projectTypeId, {
+        workspace: wsUuid,
+        projectTypeId: generateId()
+      })
 
       const target = await freshType()
       const targetCtx = await createProject(target, 'Backlog')
       await importWorkflowConfig(client, target.projectTypeId, {
         ...exported,
+        projectTypeId: target.projectTypeId,
         projects: [{ identifier: targetCtx.identifier, workflows: { Issue: 'Main' } }]
       })
 
@@ -754,13 +828,20 @@ describe('workflow import and export', () => {
     it('survives a JSON round trip', async () => {
       const type = await freshType()
       const ctx = await createProject(type, 'Backlog')
-      await importWorkflowConfig(client, type.projectTypeId, full(ctx.identifier))
-      const exported = await exportWorkflowConfig(client, type.projectTypeId)
+      await importWorkflowConfig(client, type.projectTypeId, full(ctx.identifier, type.projectTypeId))
+      const exported = await exportWorkflowConfig(client, type.projectTypeId, {
+        workspace: wsUuid,
+        projectTypeId: generateId()
+      })
       const revived = JSON.parse(JSON.stringify(exported))
       expect(revived.workflows).toHaveLength(2)
 
       const target = await freshType()
-      const res = await importWorkflowConfig(client, target.projectTypeId, { ...revived, projects: undefined })
+      const res = await importWorkflowConfig(client, target.projectTypeId, {
+        ...revived,
+        projectTypeId: target.projectTypeId,
+        projects: undefined
+      })
       expect(Object.keys(res.workflows).sort()).toEqual(['Bugs', 'Main'])
     })
   })
@@ -770,7 +851,12 @@ describe('workflow import and export', () => {
       const type = await freshType()
       await importWorkflowConfig(client, type.projectTypeId, {
         version: 1,
-        screens: [{ name: 'S', targetClass: tracker.class.Issue, tabs: [{ name: 'General' }] }],
+        exportDate: '2026-08-31T00:00:00.000Z',
+        workspace: wsUuid,
+        projectTypeId: type.projectTypeId,
+        screens: [
+          { id: 'screen-s' as Ref<Screen>, name: 'S', targetClass: tracker.class.Issue, tabs: [{ name: 'General' }] }
+        ],
         workflows: [{ name: 'Main', taskType: 'Issue', transitions: [{ name: 'A', from: null, to: 'Done' }] }]
       })
       await clearWorkflowConfig(client, type.projectTypeId)
@@ -784,6 +870,9 @@ describe('workflow import and export', () => {
       for (const type of [kept, dropped]) {
         await importWorkflowConfig(client, type.projectTypeId, {
           version: 1,
+          exportDate: '2026-08-31T00:00:00.000Z',
+          workspace: wsUuid,
+          projectTypeId: type.projectTypeId,
           workflows: [{ name: `Main ${uniqueSuffix()}`, taskType: 'Issue' }]
         })
       }
@@ -795,11 +884,17 @@ describe('workflow import and export', () => {
       const type = await freshType()
       await importWorkflowConfig(client, type.projectTypeId, {
         version: 1,
+        exportDate: '2026-08-31T00:00:00.000Z',
+        workspace: wsUuid,
+        projectTypeId: type.projectTypeId,
         workflows: [{ name: 'Main', taskType: 'Issue', transitions: [{ name: 'A', from: ['Backlog'], to: 'Todo' }] }]
       })
       await clearWorkflowConfig(client, type.projectTypeId)
       const res = await importWorkflowConfig(client, type.projectTypeId, {
         version: 1,
+        exportDate: '2026-08-31T00:00:00.000Z',
+        workspace: wsUuid,
+        projectTypeId: type.projectTypeId,
         workflows: [{ name: 'Main', taskType: 'Issue', transitions: [{ name: 'B', from: ['Backlog'], to: 'Done' }] }]
       })
       const transitions = await client.findAll(workflow.class.WorkflowTransition, { attachedTo: res.workflows.Main })

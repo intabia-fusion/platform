@@ -14,24 +14,38 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { Ref, SortingOrder } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
+  import { Severity, Status as PlatformStatus, setPlatformStatus } from '@hcengineering/platform'
+  import { copyTextToClipboard, createQuery, getClient, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
+  import task, { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
-  import { ButtonIcon, Icon, IconAdd, Label } from '@hcengineering/ui'
-  import { Workflow } from '@hcengineering/workflow'
+  import {
+    ButtonIcon,
+    ButtonMenu,
+    type DropdownIntlItem,
+    Icon,
+    IconAdd,
+    IconCopy,
+    IconShare,
+    Label,
+    showPopup
+  } from '@hcengineering/ui'
+  import { exportWorkflow, type Workflow, type WorkflowConfig } from '@hcengineering/workflow'
 
   import { navigateToWorkflow } from '../location'
   import plugin from '../plugin'
   import CreateWorkflow from './CreateWorkflow.svelte'
+  import ImportWorkflowPopup from './editor/ImportWorkflowPopup.svelte'
   import IconWorkflow from './icon/Workflow.svelte'
 
   export let type: ProjectType
   export let descriptor: ProjectTypeDescriptor | undefined = undefined
   export let disabled = true
 
+  const client = getClient()
   const workflowsQuery = createQuery()
 
+  let fileInput: HTMLInputElement | undefined
   let isWorkflowsLoading = true
 
   $: taskTypes = Array.from($taskTypeStore.values()).filter((tt) => tt.parent === type._id)
@@ -51,6 +65,182 @@
     return $taskTypeStore.get(taskTypeId)?.name
   }
 
+  const importActions: DropdownIntlItem[] = [
+    {
+      id: 'file',
+      label: plugin.string.ImportFromFile,
+      icon: task.icon.Import
+    },
+    {
+      id: 'clipboard',
+      label: plugin.string.ImportFromClipboard,
+      icon: IconCopy
+    }
+  ]
+
+  const exportActions: DropdownIntlItem[] = [
+    {
+      id: 'file',
+      label: plugin.string.ExportToFile,
+      icon: task.icon.Export
+    },
+    {
+      id: 'clipboard',
+      label: plugin.string.CopyToClipboard,
+      icon: IconCopy
+    }
+  ]
+
+  async function handleImportAction (event?: CustomEvent): Promise<void> {
+    if (event == null || disabled || type === undefined) return
+    const actionId = event.detail
+    if (actionId === 'file') {
+      fileInput?.click()
+    } else if (actionId === 'clipboard') {
+      try {
+        if (typeof navigator?.clipboard?.readText !== 'function') {
+          showPopup(
+            ImportWorkflowPopup,
+            {
+              projectType: type
+            },
+            'center'
+          )
+          return
+        }
+        const text = await navigator.clipboard.readText()
+        if (text.trim() === '') {
+          showPopup(
+            ImportWorkflowPopup,
+            {
+              projectType: type
+            },
+            'center'
+          )
+          return
+        }
+        let parsed: WorkflowConfig | null = null
+        try {
+          const json = JSON.parse(text)
+          if (json != null && typeof json === 'object' && Array.isArray(json.workflows) && json.workflows.length > 0) {
+            parsed = json as WorkflowConfig
+          }
+        } catch {
+          parsed = null
+        }
+        showPopup(
+          ImportWorkflowPopup,
+          {
+            projectType: type,
+            initialText: text,
+            initialConfig: parsed,
+            initialFileName: parsed != null ? 'Clipboard' : ''
+          },
+          'center'
+        )
+      } catch {
+        showPopup(
+          ImportWorkflowPopup,
+          {
+            projectType: type
+          },
+          'center'
+        )
+      }
+    }
+  }
+
+  async function handleFileInputChange (e: Event): Promise<void> {
+    const target = e.target as HTMLInputElement
+    const file = target?.files?.[0]
+    if (file == null || disabled || type === undefined) return
+    try {
+      if (!file.name.toLowerCase().endsWith('.json')) {
+        await setPlatformStatus(
+          new PlatformStatus(Severity.ERROR, plugin.string.InvalidWorkflowFile, {}, undefined, { timeout: 4000 })
+        )
+        return
+      }
+
+      const text = await file.text()
+      let parsed: WorkflowConfig
+      try {
+        parsed = JSON.parse(text) as WorkflowConfig
+      } catch {
+        await setPlatformStatus(
+          new PlatformStatus(Severity.ERROR, plugin.string.InvalidWorkflowFile, {}, undefined, { timeout: 4000 })
+        )
+        return
+      }
+      if (parsed.version == null || !Array.isArray(parsed.workflows) || parsed.workflows.length === 0) {
+        await setPlatformStatus(
+          new PlatformStatus(Severity.ERROR, plugin.string.InvalidWorkflowFile, {}, undefined, { timeout: 4000 })
+        )
+        return
+      }
+      showPopup(
+        ImportWorkflowPopup,
+        {
+          projectType: type,
+          initialConfig: parsed,
+          initialFileName: file.name
+        },
+        'center'
+      )
+    } catch (err) {
+      await setPlatformStatus(
+        new PlatformStatus(Severity.ERROR, plugin.string.InvalidWorkflowFile, {}, undefined, { timeout: 4000 })
+      )
+    } finally {
+      if (fileInput !== undefined) {
+        fileInput.value = ''
+      }
+    }
+  }
+
+  async function handleExportAction (wf: Workflow, event?: CustomEvent): Promise<void> {
+    if (event == null || wf == null) return
+    const actionId = event.detail
+    if (actionId === 'file') {
+      try {
+        const config = await exportWorkflow(client, wf._id, {
+          workspace: getCurrentWorkspaceUuid(),
+          projectTypeId: type._id
+        })
+        const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${wf.name}.workflow.json`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      } catch (err) {
+        console.error('Failed to export workflow', err)
+        await setPlatformStatus(
+          new PlatformStatus(Severity.ERROR, plugin.string.InvalidWorkflowFile, {}, undefined, { timeout: 5000 })
+        )
+      }
+    } else if (actionId === 'clipboard') {
+      try {
+        const config = await exportWorkflow(client, wf._id, {
+          workspace: getCurrentWorkspaceUuid(),
+          projectTypeId: type._id
+        })
+        await copyTextToClipboard(JSON.stringify(config, null, 2))
+        await setPlatformStatus(
+          new PlatformStatus(Severity.INFO, plugin.string.CopiedToClipboard, {}, undefined, { timeout: 3000 })
+        )
+      } catch (err) {
+        console.error('Failed to copy workflow to clipboard', err)
+        await setPlatformStatus(
+          new PlatformStatus(Severity.ERROR, plugin.string.ClipboardReadError, {}, undefined, { timeout: 5000 })
+        )
+      }
+    }
+  }
+
   $: isLoading = isWorkflowsLoading
   $: addDisabled = disabled || taskTypes.length === 0
 
@@ -59,25 +249,39 @@
   })
 </script>
 
+<input type="file" accept=".json" bind:this={fileInput} style="display: none;" on:change={handleFileInputChange} />
 <div class="hulyTableAttr-header font-medium-12">
   <Icon icon={plugin.icon.Workflows} size="small" />
   <span><Label label={plugin.string.Workflows} /></span>
-  <ButtonIcon
-    kind="primary"
-    icon={IconAdd}
-    size="small"
-    dataId="btnAddWorkflow"
-    disabled={addDisabled}
-    loading={isLoading}
-    tooltip={taskTypes.length === 0 ? { label: plugin.string.TaskTypeRequired } : undefined}
-    on:click={() => {
-      if (disabled) return
-      if ($settingsStore.id !== 'createWorkflow') {
-        clearSettingsStore()
-      }
-      $settingsStore = { id: 'createWorkflow', component: CreateWorkflow, props: { type, taskTypes } }
-    }}
-  />
+  <div class="header-actions flex-row-center flex-gap-1">
+    <ButtonMenu
+      icon={task.icon.Import}
+      tooltip={{ label: plugin.string.Import, direction: 'bottom' }}
+      size="small"
+      kind="tertiary"
+      dataId="btnImportWorkflows"
+      {disabled}
+      noSelection
+      items={importActions}
+      on:selected={handleImportAction}
+    />
+    <ButtonIcon
+      kind="primary"
+      icon={IconAdd}
+      size="small"
+      dataId="btnAddWorkflow"
+      disabled={addDisabled}
+      loading={isLoading}
+      tooltip={taskTypes.length === 0 ? { label: plugin.string.TaskTypeRequired } : undefined}
+      on:click={() => {
+        if (disabled) return
+        if ($settingsStore.id !== 'createWorkflow') {
+          clearSettingsStore()
+        }
+        $settingsStore = { id: 'createWorkflow', component: CreateWorkflow, props: { type, taskTypes } }
+      }}
+    />
+  </div>
 </div>
 
 {#if workflows.length > 0 && !isLoading}
@@ -86,7 +290,7 @@
       {@const taskTypeName = getTaskTypeName(workflow.taskType)}
       <button
         type="button"
-        class="hulyTableAttr-content__row"
+        class="hulyTableAttr-content__row row-with-actions"
         data-id="workflow-row"
         data-workflow-name={workflow.name}
         on:click|stopPropagation={() => {
@@ -106,17 +310,48 @@
             <Label label={plugin.string.UnknownTaskType} />
           {/if}
         </span>
+        <span class="row-action-btn flex-row-center flex-gap-1" on:click|stopPropagation>
+          <ButtonMenu
+            icon={IconShare}
+            size="small"
+            kind="secondary"
+            tooltip={{ label: plugin.string.Export, direction: 'bottom' }}
+            noSelection
+            items={exportActions}
+            on:selected={(e) => {
+              void handleExportAction(workflow, e)
+            }}
+          />
+        </span>
       </button>
     {/each}
   </div>
 {/if}
 
 <style lang="scss">
+  .header-actions {
+    margin-left: auto;
+  }
+
   .hulyTableAttr-content__row {
     width: 100%;
     justify-content: flex-start;
     align-items: center;
     text-align: left;
+  }
+
+  .row-with-actions {
+    position: relative;
+
+    .row-action-btn {
+      margin-left: auto;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    &:hover .row-action-btn {
+      opacity: 1;
+    }
   }
 
   .type-label {

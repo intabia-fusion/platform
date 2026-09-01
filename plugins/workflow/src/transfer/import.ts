@@ -14,21 +14,36 @@
 //
 
 import core, {
+  ClassifierKind,
   generateId,
   type AnyAttribute,
   type Class,
   type Doc,
+  type Hierarchy,
+  type Mixin,
+  type PropertyType,
   type Ref,
   type Status,
-  type TxOperations
+  type TxOperations,
+  type Type
 } from '@hcengineering/core'
-import { getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
-import task, { type Project, type ProjectType, type TaskType } from '@hcengineering/task'
+import { getEmbeddedLabel } from '@hcengineering/platform'
+import setting from '@hcengineering/setting'
+import task, {
+  calculateStatuses,
+  createState,
+  findStatusAttr,
+  type Project,
+  type ProjectType,
+  type TaskType
+} from '@hcengineering/task'
+import tracker from '@hcengineering/tracker'
 
 import workflow from '../plugin'
 import type {
   Field,
   FieldListProps,
+  Screen,
   UpdateFieldValueConfig,
   UpdateFieldValueProps,
   Workflow,
@@ -37,7 +52,10 @@ import type {
   WorkflowTransition
 } from '../schema'
 import { addScreenField, addScreenTab, addTransition, createWorkflow, setWorkflow } from '../utils'
+import { collectAttributeUsages, isAttributeTypeCompatible, isAttributeTypeResolvable } from './compatibility'
+import { findOrCreateEnum, getEnumRefFromType } from './utils'
 import {
+  AttributeToken,
   NameResolver,
   ScreenToken,
   StatusToken,
@@ -48,12 +66,16 @@ import {
   requireRef
 } from './resolver'
 import {
+  type AttributeConfig,
   type AttributeResolutionConfig,
   type ImportResult,
+  type ProjectWorkflowsConfig,
   type RuleConfig,
+  type ScreenResolutionConfig,
   type StatusConfig,
   type WorkflowConfig,
-  type WorkflowImportResolution
+  type WorkflowImportResolution,
+  type WorkflowMixinConfig
 } from './types'
 
 type StatusResolver = (sourceId: Ref<Status>) => Ref<Status> | undefined
@@ -62,8 +84,23 @@ export function filterAndRemapRuleProps (
   ruleId: Ref<WorkflowRule>,
   props: Record<string, any>,
   attrResolutions: Record<string, AttributeResolutionConfig>,
-  targetAttributeById?: Map<Ref<AnyAttribute>, AnyAttribute>
+  targetAttributeById?: Map<Ref<AnyAttribute>, AnyAttribute>,
+  screenResolutions?: Record<string, ScreenResolutionConfig>,
+  resolver?: NameResolver
 ): { valid: boolean, props: Record<string, any> } {
+  if (ruleId === workflow.request.ScreenRequest) {
+    const screenProp =
+      (props as { screen?: string, screenId?: string }).screen ?? (props as { screenId?: string }).screenId
+    if (screenProp !== undefined && screenResolutions !== undefined) {
+      const cleanKey = screenProp.replace('$screen:', '')
+      const screenRes = screenResolutions[cleanKey] ?? screenResolutions[screenProp]
+      if (screenRes?.action === 'skip') {
+        return { valid: false, props }
+      }
+    }
+    return { valid: true, props }
+  }
+
   if (ruleId === workflow.validator.FieldRequired || ruleId === workflow.postFunction.ClearFieldValue) {
     const ruleProps = props as FieldListProps
     if (ruleProps.fields === undefined) {
@@ -76,12 +113,18 @@ export function filterAndRemapRuleProps (
       if (res?.action === 'skip') {
         continue
       }
-      if (res?.action === 'map' && res.targetAttributeId !== undefined) {
-        const targetKey = targetAttributeById?.get(res.targetAttributeId)?.name ?? f.fieldKey
-        filteredFields.push({ ...f, attribute: res.targetAttributeId, fieldKey: targetKey })
-      } else {
-        filteredFields.push(f)
-      }
+      const targetAttr =
+        (res?.action === 'map' && res.targetAttributeId !== undefined ? res.targetAttributeId : undefined) ??
+        resolver?.getRef<AnyAttribute>(AttributeToken, f.attribute) ??
+        resolver?.getRef<AnyAttribute>(AttributeToken, f.fieldKey) ??
+        f.attribute
+      const targetKey =
+        (res?.action === 'map' && res.targetAttributeId !== undefined
+          ? targetAttributeById?.get(res.targetAttributeId)?.name
+          : undefined) ??
+        targetAttributeById?.get(targetAttr)?.name ??
+        f.fieldKey
+      filteredFields.push({ ...f, attribute: targetAttr, fieldKey: targetKey })
     }
 
     if (filteredFields.length === 0) {
@@ -104,12 +147,17 @@ export function filterAndRemapRuleProps (
         continue
       }
 
-      let targetAttr = f.attribute
-      let targetKey = f.fieldKey
-      if (res?.action === 'map' && res.targetAttributeId !== undefined) {
-        targetAttr = res.targetAttributeId
-        targetKey = targetAttributeById?.get(res.targetAttributeId)?.name ?? f.fieldKey
-      }
+      const targetAttr =
+        (res?.action === 'map' && res.targetAttributeId !== undefined ? res.targetAttributeId : undefined) ??
+        resolver?.getRef<AnyAttribute>(AttributeToken, f.attribute) ??
+        resolver?.getRef<AnyAttribute>(AttributeToken, f.fieldKey) ??
+        f.attribute
+      const targetKey =
+        (res?.action === 'map' && res.targetAttributeId !== undefined
+          ? targetAttributeById?.get(res.targetAttributeId)?.name
+          : undefined) ??
+        targetAttributeById?.get(targetAttr)?.name ??
+        f.fieldKey
 
       let updatedVal = f.value
       if (f.value.type === 'this' || f.value.type === 'parent') {
@@ -118,10 +166,20 @@ export function filterAndRemapRuleProps (
         if (sourceRes?.action === 'skip') {
           continue
         }
-        if (sourceRes?.action === 'map' && sourceRes.targetAttributeId !== undefined) {
-          const srcTargetKey = targetAttributeById?.get(sourceRes.targetAttributeId)?.name ?? sourceVal.fieldKey
-          updatedVal = { ...sourceVal, attribute: sourceRes.targetAttributeId, fieldKey: srcTargetKey }
-        }
+        const srcTargetAttr =
+          (sourceRes?.action === 'map' && sourceRes.targetAttributeId !== undefined
+            ? sourceRes.targetAttributeId
+            : undefined) ??
+          resolver?.getRef<AnyAttribute>(AttributeToken, sourceVal.attribute) ??
+          resolver?.getRef<AnyAttribute>(AttributeToken, sourceVal.fieldKey) ??
+          sourceVal.attribute
+        const srcTargetKey =
+          (sourceRes?.action === 'map' && sourceRes.targetAttributeId !== undefined
+            ? targetAttributeById?.get(sourceRes.targetAttributeId)?.name
+            : undefined) ??
+          targetAttributeById?.get(srcTargetAttr)?.name ??
+          sourceVal.fieldKey
+        updatedVal = { ...sourceVal, attribute: srcTargetAttr, fieldKey: srcTargetKey }
       }
 
       filteredFields.push({
@@ -146,14 +204,22 @@ export function importRules<TRule extends WorkflowRule> (
   rules: RuleConfig<TRule>[] | undefined,
   resolver: NameResolver,
   attrResolutions?: Record<string, AttributeResolutionConfig>,
-  targetAttributeById?: Map<Ref<AnyAttribute>, AnyAttribute>
+  targetAttributeById?: Map<Ref<AnyAttribute>, AnyAttribute>,
+  screenResolutions?: Record<string, ScreenResolutionConfig>
 ): WorkflowRuleConfig<TRule>[] | undefined {
   if (rules === undefined || rules.length === 0) return undefined
   const importedRules: WorkflowRuleConfig<TRule>[] = []
   for (const r of rules) {
     let currentProps = r.props ?? {}
-    if (attrResolutions !== undefined) {
-      const filtered = filterAndRemapRuleProps(r.rule, currentProps, attrResolutions, targetAttributeById)
+    if (attrResolutions !== undefined || screenResolutions !== undefined || targetAttributeById !== undefined) {
+      const filtered = filterAndRemapRuleProps(
+        r.rule,
+        currentProps,
+        attrResolutions ?? {},
+        targetAttributeById,
+        screenResolutions,
+        resolver
+      )
       if (!filtered.valid) {
         continue
       }
@@ -210,28 +276,25 @@ function createStatusResolver (
 }
 
 /**
- * Creates missing custom attributes on the target class if specified in attributeResolutions.
+ * Generates a unique attribute name on the target class if name already exists.
  */
-async function createCustomAttributes (
-  client: TxOperations,
+function getUniqueAttributeName (
+  hierarchy: Hierarchy,
   targetClass: Ref<Class<Doc>>,
-  attrResolutions: Record<string, AttributeResolutionConfig>
-): Promise<void> {
-  for (const [fieldKey, attrRes] of Object.entries(attrResolutions)) {
-    if (attrRes.action === 'create') {
-      const createdAttrId = 'custom' + generateId()
-      const attrLabel: IntlString = attrRes.label ?? getEmbeddedLabel(fieldKey)
-      await client.createDoc(core.class.Attribute, core.space.Model, {
-        attributeOf: targetClass,
-        name: createdAttrId,
-        label: attrLabel,
-        type: attrRes.type ?? { _class: core.class.TypeString },
-        isCustom: true
-      })
-      attrRes.targetAttributeId = createdAttrId as Ref<AnyAttribute>
-      attrRes.action = 'map'
-    }
+  baseName: string,
+  createdNames: Set<string>
+): string {
+  if (hierarchy.findAttribute(targetClass, baseName) === undefined && !createdNames.has(baseName)) {
+    return baseName
   }
+  let counter = 1
+  while (
+    hierarchy.findAttribute(targetClass, `${baseName}_${counter}`) !== undefined ||
+    createdNames.has(`${baseName}_${counter}`)
+  ) {
+    counter++
+  }
+  return `${baseName}_${counter}`
 }
 
 /**
@@ -256,6 +319,343 @@ async function getUniqueScreenName (
   return `${baseName} (${counter})`
 }
 
+async function resolveAttributeTypeEnums (
+  client: TxOperations,
+  type: Type<PropertyType> | undefined,
+  config: WorkflowConfig,
+  attrConfig?: AttributeConfig
+): Promise<Type<PropertyType> | undefined> {
+  if (type === undefined) return undefined
+
+  const enumRef = getEnumRefFromType(type)
+  if (enumRef === undefined) return type
+
+  const enumConfig = config.enums?.find(
+    (e) => e.id === enumRef || (attrConfig?.enumName !== undefined && e.name === attrConfig.enumName)
+  )
+  const enumName = attrConfig?.enumName ?? enumConfig?.name ?? (attrConfig?.name ?? 'CustomEnum')
+  const enumValues = attrConfig?.enumValues ?? enumConfig?.enumValues ?? []
+
+  const targetEnumId = await findOrCreateEnum(client, enumName, enumValues)
+
+  if (type._class === core.class.EnumOf) {
+    return {
+      ...(type as any),
+      of: targetEnumId
+    } as Type<PropertyType>
+  }
+
+  if (type._class === core.class.ArrOf && (type as any).of?._class === core.class.EnumOf) {
+    return {
+      ...(type as any),
+      of: {
+        ...(type as any).of,
+        of: targetEnumId
+      }
+    } as Type<PropertyType>
+  }
+
+  return type
+}
+
+/**
+ * Creates custom mixins and their attributes for an imported workflow's target class.
+ */
+async function createImportedMixins (
+  client: TxOperations,
+  targetClassId: Ref<Class<Doc>>,
+  mixins: WorkflowMixinConfig[] | undefined,
+  config: WorkflowConfig,
+  attrResolutions: Record<string, AttributeResolutionConfig>,
+  targetAttributeById: Map<Ref<AnyAttribute>, AnyAttribute>,
+  mixinIdMapping: Map<Ref<Mixin<Doc>>, Ref<Mixin<Doc>>>,
+  resolver: NameResolver,
+  createdAttrNames: Set<string>
+): Promise<void> {
+  if (mixins == null || mixins.length === 0) return
+
+  const hierarchy = client.getHierarchy()
+  const existingMixins = await client.findAll(core.class.Class, {
+    extends: targetClassId,
+    kind: ClassifierKind.MIXIN
+  })
+  const existingMixinByName = new Map<string, Ref<Mixin<Doc>>>()
+  for (const m of existingMixins) {
+    if (m.label != null) {
+      existingMixinByName.set(String(m.label).toLowerCase(), m._id as Ref<Mixin<Doc>>)
+    }
+  }
+
+  for (const mixinCfg of mixins) {
+    const existingRef =
+      existingMixinByName.get(String(mixinCfg.label).toLowerCase()) ??
+      (existingMixins.find((m) => m._id === mixinCfg.id)?._id as Ref<Mixin<Doc>> | undefined)
+
+    let mixinDocId: Ref<Mixin<Doc>>
+    if (existingRef !== undefined) {
+      mixinDocId = existingRef
+    } else {
+      mixinDocId = generateId<Mixin<Doc>>()
+      await client.createDoc(
+        core.class.Mixin,
+        core.space.Model,
+        {
+          extends: targetClassId,
+          kind: ClassifierKind.MIXIN,
+          label: mixinCfg.label,
+          icon: mixinCfg.icon,
+          color: mixinCfg.color
+        },
+        mixinDocId
+      )
+
+      await client.createMixin(mixinDocId, core.class.Class, core.space.Model, setting.mixin.Editable, {
+        value: true
+      } as any)
+      await client.createMixin(mixinDocId, core.class.Class, core.space.Model, setting.mixin.UserMixin, {})
+    }
+
+    mixinIdMapping.set(mixinCfg.id, mixinDocId)
+
+    // Process attributes on this mixin
+    for (const attr of mixinCfg.attributes ?? []) {
+      const attrRes = attrResolutions[attr.name] ?? attrResolutions[attr.id]
+      if (attrRes?.action === 'skip') continue
+
+      if (!isAttributeTypeResolvable(hierarchy, attr.type)) {
+        continue
+      }
+
+      const existingAttr = hierarchy.findAttribute(mixinDocId, attr.name)
+      if (existingAttr !== undefined && isAttributeTypeCompatible(hierarchy, attr.type, existingAttr.type)) {
+        resolver.add(AttributeToken, existingAttr._id, attr.name)
+        resolver.setRef(AttributeToken, attr.id as string, existingAttr._id)
+        resolver.setRef(AttributeToken, attr.name, existingAttr._id)
+        targetAttributeById.set(attr.id, existingAttr)
+        targetAttributeById.set(existingAttr._id, existingAttr)
+        if (attrRes !== undefined) {
+          attrRes.targetAttributeId = existingAttr._id
+          attrRes.action = 'map'
+        }
+      } else {
+        const finalName =
+          existingAttr !== undefined
+            ? getUniqueAttributeName(hierarchy, mixinDocId, attr.name, createdAttrNames)
+            : attr.name
+        const attrLabel = attrRes?.label ?? attr.label ?? getEmbeddedLabel(finalName)
+        const finalType =
+          (await resolveAttributeTypeEnums(client, attr.type, config, attr)) ?? { _class: core.class.TypeString }
+        const createdAttrId = await client.createDoc(core.class.Attribute, core.space.Model, {
+          attributeOf: mixinDocId,
+          name: finalName,
+          label: attrLabel,
+          type: finalType,
+          isCustom: true
+        })
+
+        createdAttrNames.add(finalName)
+        resolver.add(AttributeToken, createdAttrId, finalName)
+        resolver.setRef(AttributeToken, attr.id as string, createdAttrId)
+        resolver.setRef(AttributeToken, attr.name, createdAttrId)
+        const attrDoc = {
+          _id: createdAttrId,
+          name: finalName,
+          label: attrLabel,
+          type: finalType,
+          attributeOf: mixinDocId,
+          isCustom: true
+        } as any
+        targetAttributeById.set(attr.id, attrDoc)
+        targetAttributeById.set(createdAttrId, attrDoc)
+        if (attrRes !== undefined) {
+          attrRes.targetAttributeId = createdAttrId
+          attrRes.action = 'map'
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Automatically creates or binds custom attributes on the target task type class.
+ */
+async function autoCreateTargetClassAttributes (
+  client: TxOperations,
+  targetClass: Ref<Class<Doc>>,
+  config: WorkflowConfig,
+  attrResolutions: Record<string, AttributeResolutionConfig>,
+  targetAttributeById: Map<Ref<AnyAttribute>, AnyAttribute>,
+  resolver: NameResolver,
+  createdAttrNames: Set<string>,
+  screenResolutions?: Record<string, ScreenResolutionConfig>
+): Promise<void> {
+  const hierarchy = client.getHierarchy()
+
+  const configAttributesMap = new Map<string, AttributeConfig>()
+  for (const ac of config.attributes ?? []) {
+    configAttributesMap.set(ac.name, ac)
+    if (ac.id !== undefined) {
+      configAttributesMap.set(ac.id as string, ac)
+    }
+  }
+
+  const allConfigUsages = collectAttributeUsages(config)
+  const activeUsages = collectAttributeUsages(config, screenResolutions)
+
+  for (const [fieldKey, usage] of activeUsages) {
+    const attrRes =
+      attrResolutions[fieldKey] ??
+      (usage.sourceAttributeId !== undefined ? attrResolutions[usage.sourceAttributeId] : undefined)
+    if (attrRes?.action === 'skip') continue
+
+    const attrConfig =
+      configAttributesMap.get(fieldKey) ??
+      (usage.sourceAttributeId !== undefined ? configAttributesMap.get(usage.sourceAttributeId as string) : undefined)
+    const attrId = usage.sourceAttributeId ?? (fieldKey as Ref<AnyAttribute>)
+    const attrName = attrConfig?.name ?? fieldKey
+    const attrType = attrConfig?.type
+    const attrLabel = attrRes?.label ?? attrConfig?.label ?? usage.label
+
+    if (
+      resolver.getRef(AttributeToken, attrId as string) !== undefined ||
+      resolver.getRef(AttributeToken, attrName) !== undefined
+    ) {
+      continue
+    }
+
+    if (!isAttributeTypeResolvable(hierarchy, attrType)) {
+      continue
+    }
+
+    if (attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined) {
+      resolver.setRef(AttributeToken, attrId as string, attrRes.targetAttributeId)
+      resolver.setRef(AttributeToken, attrName, attrRes.targetAttributeId)
+      continue
+    }
+
+    const existingAttr = hierarchy.findAttribute(targetClass, attrName)
+    if (existingAttr !== undefined) {
+      if (isAttributeTypeCompatible(hierarchy, attrType, existingAttr.type)) {
+        resolver.add(AttributeToken, existingAttr._id, attrName)
+        resolver.setRef(AttributeToken, attrId as string, existingAttr._id)
+        resolver.setRef(AttributeToken, attrName, existingAttr._id)
+        targetAttributeById.set(attrId, existingAttr)
+        targetAttributeById.set(existingAttr._id, existingAttr)
+        continue
+      }
+      const finalName = getUniqueAttributeName(hierarchy, targetClass, attrName, createdAttrNames)
+      const finalLabel = attrLabel ?? getEmbeddedLabel(finalName)
+      const finalType =
+        (await resolveAttributeTypeEnums(client, attrType, config, attrConfig)) ?? { _class: core.class.TypeString }
+      const createdAttrId = await client.createDoc(core.class.Attribute, core.space.Model, {
+        attributeOf: targetClass,
+        name: finalName,
+        label: finalLabel,
+        type: finalType,
+        isCustom: true
+      })
+
+      createdAttrNames.add(finalName)
+      resolver.add(AttributeToken, createdAttrId, finalName)
+      resolver.setRef(AttributeToken, attrId as string, createdAttrId)
+      resolver.setRef(AttributeToken, attrName, createdAttrId)
+      const attrDoc = {
+        _id: createdAttrId,
+        name: finalName,
+        label: finalLabel,
+        type: finalType,
+        attributeOf: targetClass,
+        isCustom: true
+      } as any
+      targetAttributeById.set(attrId, attrDoc)
+      targetAttributeById.set(createdAttrId, attrDoc)
+    } else {
+      const finalLabel = attrLabel ?? getEmbeddedLabel(attrName)
+      const finalType =
+        (await resolveAttributeTypeEnums(client, attrType, config, attrConfig)) ?? { _class: core.class.TypeString }
+      const createdAttrId = await client.createDoc(core.class.Attribute, core.space.Model, {
+        attributeOf: targetClass,
+        name: attrName,
+        label: finalLabel,
+        type: finalType,
+        isCustom: true
+      })
+
+      createdAttrNames.add(attrName)
+      resolver.add(AttributeToken, createdAttrId, attrName)
+      resolver.setRef(AttributeToken, attrId as string, createdAttrId)
+      resolver.setRef(AttributeToken, attrName, createdAttrId)
+      const attrDoc = {
+        _id: createdAttrId,
+        name: attrName,
+        label: finalLabel,
+        type: finalType,
+        attributeOf: targetClass,
+        isCustom: true
+      } as any
+      targetAttributeById.set(attrId, attrDoc)
+      targetAttributeById.set(createdAttrId, attrDoc)
+    }
+  }
+
+  for (const ac of config.attributes ?? []) {
+    const attrRes = attrResolutions[ac.name] ?? (ac.id !== undefined ? attrResolutions[ac.id] : undefined)
+    if (attrRes?.action === 'skip') continue
+
+    const wasUsedInConfig = allConfigUsages.has(ac.name) || (ac.id !== undefined && allConfigUsages.has(ac.id as string))
+    const isUsedInActive = activeUsages.has(ac.name) || (ac.id !== undefined && activeUsages.has(ac.id as string))
+    if (wasUsedInConfig && !isUsedInActive) {
+      continue
+    }
+
+    if (
+      resolver.getRef(AttributeToken, ac.id as string) !== undefined ||
+      resolver.getRef(AttributeToken, ac.name) !== undefined
+    ) {
+      continue
+    }
+    if (!isAttributeTypeResolvable(hierarchy, ac.type)) {
+      continue
+    }
+    const existingAttr = hierarchy.findAttribute(targetClass, ac.name)
+    if (existingAttr !== undefined && isAttributeTypeCompatible(hierarchy, ac.type, existingAttr.type)) {
+      resolver.add(AttributeToken, existingAttr._id, ac.name)
+      resolver.setRef(AttributeToken, ac.id as string, existingAttr._id)
+      resolver.setRef(AttributeToken, ac.name, existingAttr._id)
+      targetAttributeById.set(ac.id, existingAttr)
+      targetAttributeById.set(existingAttr._id, existingAttr)
+    } else {
+      const finalName =
+        existingAttr !== undefined ? getUniqueAttributeName(hierarchy, targetClass, ac.name, createdAttrNames) : ac.name
+      const finalLabel = ac.label ?? getEmbeddedLabel(finalName)
+      const finalType =
+        (await resolveAttributeTypeEnums(client, ac.type, config, ac)) ?? { _class: core.class.TypeString }
+      const createdAttrId = await client.createDoc(core.class.Attribute, core.space.Model, {
+        attributeOf: targetClass,
+        name: finalName,
+        label: finalLabel,
+        type: finalType,
+        isCustom: true
+      })
+
+      createdAttrNames.add(finalName)
+      resolver.add(AttributeToken, createdAttrId, finalName)
+      resolver.setRef(AttributeToken, ac.id as string, createdAttrId)
+      resolver.setRef(AttributeToken, ac.name, createdAttrId)
+      const attrDoc = {
+        _id: createdAttrId,
+        name: finalName,
+        label: finalLabel,
+        type: finalType,
+        attributeOf: targetClass,
+        isCustom: true
+      } as any
+      targetAttributeById.set(ac.id, attrDoc)
+      targetAttributeById.set(createdAttrId, attrDoc)
+    }
+  }
+}
+
 /**
  * Imports screens and screen tabs/fields into the target project type.
  */
@@ -266,18 +666,89 @@ async function importScreens (
   targetClass: Ref<Class<Doc>>,
   attrResolutions: Record<string, AttributeResolutionConfig>,
   targetAttributeById: Map<Ref<AnyAttribute>, AnyAttribute>,
+  mixinIdMapping: Map<Ref<Mixin<Doc>>, Ref<Mixin<Doc>>>,
   resolver: NameResolver,
-  result: ImportResult
+  result: ImportResult,
+  resolution?: WorkflowImportResolution
 ): Promise<void> {
-  for (const sc of config.screens ?? []) {
-    const uniqueName = await getUniqueScreenName(client, projectTypeId, sc.name)
+  const existingScreens = await client.findAll(workflow.class.Screen, { projectType: projectTypeId })
+  const existingByName = new Map<string, (typeof existingScreens)[0]>()
+  for (const s of existingScreens) {
+    existingByName.set(s.name.toLowerCase(), s)
+  }
 
-    const screenId = await client.createDoc(workflow.class.Screen, core.space.Workspace, {
-      name: uniqueName,
-      description: sc.description,
-      projectType: projectTypeId,
-      targetClass: targetClass ?? sc.targetClass
-    })
+  for (const sc of config.screens ?? []) {
+    const screenRes =
+      resolution?.screenResolutions?.[sc.id] ??
+      resolution?.screenResolutions?.[sc.name] ??
+      (resolution?.copyScreens === false ? { action: 'skip' } : { action: 'copy' })
+
+    if (screenRes.action === 'skip') {
+      continue
+    }
+
+    let screenId: Ref<Screen>
+
+    const screenTargetClass =
+      sc.targetClass === tracker.class.Issue || (sc.targetClass as string) === 'tracker:class:Issue'
+        ? tracker.class.Issue
+        : (targetClass ?? sc.targetClass)
+
+    if (screenRes.action === 'replace') {
+      const targetScreen =
+        (screenRes.targetScreenId !== undefined
+          ? await client.findOne(workflow.class.Screen, { _id: screenRes.targetScreenId })
+          : undefined) ?? existingByName.get(sc.name.toLowerCase())
+
+      if (targetScreen !== undefined) {
+        screenId = targetScreen._id
+        await client.updateDoc(workflow.class.Screen, core.space.Workspace, screenId, {
+          description: sc.description,
+          targetClass: screenTargetClass
+        })
+
+        // Remove existing tabs & fields
+        const existingTabs = await client.findAll(workflow.class.ScreenTab, { attachedTo: screenId })
+        for (const t of existingTabs) {
+          const existingFields = await client.findAll(workflow.class.ScreenField, { attachedTo: t._id })
+          for (const f of existingFields) {
+            await client.removeCollection(
+              workflow.class.ScreenField,
+              core.space.Workspace,
+              f._id,
+              t._id,
+              workflow.class.ScreenTab,
+              'fields'
+            )
+          }
+          await client.removeCollection(
+            workflow.class.ScreenTab,
+            core.space.Workspace,
+            t._id,
+            screenId,
+            workflow.class.Screen,
+            'tabs'
+          )
+        }
+      } else {
+        const uniqueName = await getUniqueScreenName(client, projectTypeId, sc.name)
+        screenId = await client.createDoc(workflow.class.Screen, core.space.Workspace, {
+          name: uniqueName,
+          description: sc.description,
+          projectType: projectTypeId,
+          targetClass: screenTargetClass
+        })
+      }
+    } else {
+      // action === 'copy'
+      const uniqueName = await getUniqueScreenName(client, projectTypeId, sc.name)
+      screenId = await client.createDoc(workflow.class.Screen, core.space.Workspace, {
+        name: uniqueName,
+        description: sc.description,
+        projectType: projectTypeId,
+        targetClass: screenTargetClass
+      })
+    }
 
     for (const tab of sc.tabs ?? []) {
       const tabId = await addScreenTab(client, screenId, tab.name)
@@ -287,15 +758,24 @@ async function importScreens (
           continue
         }
         const attributeRef =
-          attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined ? attrRes.targetAttributeId : f.attribute
+          (attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined
+            ? attrRes.targetAttributeId
+            : undefined) ??
+          resolver.getRef<AnyAttribute>(AttributeToken, f.attribute) ??
+          resolver.getRef<AnyAttribute>(AttributeToken, f.fieldKey) ??
+          targetAttributeById.get(f.attribute)?._id ??
+          f.attribute
         const fieldKey =
-          attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined
-            ? (targetAttributeById.get(attrRes.targetAttributeId)?.name ?? f.fieldKey)
-            : f.fieldKey
+          (attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined
+            ? targetAttributeById.get(attrRes.targetAttributeId)?.name
+            : undefined) ??
+          targetAttributeById.get(attributeRef)?.name ??
+          f.fieldKey
+        const mixinRef = f.mixin !== undefined ? (mixinIdMapping.get(f.mixin) ?? f.mixin) : undefined
         await addScreenField(client, tabId, {
           attribute: attributeRef,
           fieldKey,
-          mixin: f.mixin,
+          mixin: mixinRef,
           required: f.required
         })
       }
@@ -312,7 +792,7 @@ async function importScreens (
 async function restoreProjectWorkflows (
   client: TxOperations,
   projectTypeId: Ref<ProjectType>,
-  projectsConfig: WorkflowConfig['projects'],
+  projectsConfig: ProjectWorkflowsConfig[] | undefined,
   workflowByName: Map<string, Ref<Workflow>>,
   existingByName: Map<string, Workflow>,
   resolver: NameResolver
@@ -377,27 +857,53 @@ export async function importWorkflowConfig (
   const targetAttributeById = new Map<Ref<AnyAttribute>, AnyAttribute>()
   for (const attr of allTargetAttributes.values()) {
     targetAttributeById.set(attr._id, attr)
+    resolver.add(AttributeToken, attr._id, attr.name)
+    resolver.setRef(AttributeToken, attr.name, attr._id)
   }
 
-  if (targetTaskType !== undefined && Object.keys(attrResolutions).length > 0) {
-    await createCustomAttributes(client, targetClass, attrResolutions)
+  const createdAttrNames = new Set<string>()
+  const mixinIdMapping = new Map<Ref<Mixin<Doc>>, Ref<Mixin<Doc>>>()
+  if (targetTaskType !== undefined) {
+    if (config.mixins !== undefined && config.mixins.length > 0) {
+      await createImportedMixins(
+        client,
+        targetClass,
+        config.mixins,
+        config,
+        attrResolutions,
+        targetAttributeById,
+        mixinIdMapping,
+        resolver,
+        createdAttrNames
+      )
+    }
+    await autoCreateTargetClassAttributes(
+      client,
+      targetClass,
+      config,
+      attrResolutions,
+      targetAttributeById,
+      resolver,
+      createdAttrNames,
+      resolution?.screenResolutions
+    )
   }
 
   const result: ImportResult = { screens: {}, workflows: {}, transitions: {} }
 
-  // Import screens if not disabled
-  if (resolution === undefined || resolution.copyScreens !== false) {
-    await importScreens(
-      client,
-      projectTypeId,
-      config,
-      targetClass,
-      attrResolutions,
-      targetAttributeById,
-      resolver,
-      result
-    )
-  }
+  // Import screens according to screen resolutions
+  await importScreens(
+    client,
+    projectTypeId,
+    config,
+    targetClass,
+    attrResolutions,
+    targetAttributeById,
+    mixinIdMapping,
+    resolver,
+    result,
+    resolution
+  )
 
   // Pre-index config statuses once
   const configStatusById = new Map<Ref<Status>, StatusConfig>()
@@ -427,6 +933,64 @@ export async function importWorkflowConfig (
     workflowByName.set(wfName, workflowId)
 
     const currentTaskType = await client.findOne(task.class.TaskType, { _id: taskTypeId })
+
+    if (resolution?.createMissingStatuses === true && currentTaskType !== undefined && config.statuses !== undefined) {
+      const existingStatusIds = new Set(currentTaskType.statuses ?? [])
+      const updatedStatuses = [...(currentTaskType.statuses ?? [])]
+      let taskTypeUpdated = false
+
+      if (resolution.statusMap === undefined) {
+        resolution.statusMap = {}
+      }
+
+      const statusAttr =
+        findStatusAttr(hierarchy, currentTaskType.targetClass) ?? hierarchy.getAttribute(task.class.Task, 'status')
+
+      for (const sc of config.statuses) {
+        const mappedTargetId = resolution.statusMap[sc.id]
+        if (mappedTargetId === undefined) {
+          const createdStatusId = await createState(
+            client,
+            core.class.Status,
+            {
+              name: sc.name,
+              color: sc.color,
+              category: sc.category,
+              ofAttribute: statusAttr._id
+            },
+            sc.id
+          )
+
+          if (!existingStatusIds.has(createdStatusId)) {
+            updatedStatuses.push(createdStatusId)
+            existingStatusIds.add(createdStatusId)
+            taskTypeUpdated = true
+          }
+
+          resolution.statusMap[sc.id] = createdStatusId
+          resolver.setRef(StatusToken, sc.id, createdStatusId)
+        }
+      }
+
+      if (taskTypeUpdated) {
+        await client.updateDoc(task.class.TaskType, core.space.Model, currentTaskType._id, {
+          statuses: updatedStatuses
+        })
+        currentTaskType.statuses = updatedStatuses
+
+        const prjType = await client.findOne(task.class.ProjectType, { _id: projectTypeId })
+        if (prjType !== undefined) {
+          const allTaskTypes = await client.findAll(task.class.TaskType, { _id: { $in: prjType.tasks } })
+          const taskTypeMap = new Map(allTaskTypes.map((tt) => [tt._id, tt]))
+          taskTypeMap.set(currentTaskType._id, { ...currentTaskType, statuses: updatedStatuses })
+          const calcStatuses = calculateStatuses(prjType, taskTypeMap, [])
+          await client.updateDoc(task.class.ProjectType, core.space.Model, prjType._id, {
+            statuses: calcStatuses
+          })
+        }
+      }
+    }
+
     let targetStatusDocs: Status[] = []
     if (currentTaskType?.statuses !== undefined && currentTaskType.statuses.length > 0) {
       targetStatusDocs = await client.findAll(core.class.Status, { _id: { $in: currentTaskType.statuses } })
@@ -488,9 +1052,28 @@ export async function importWorkflowConfig (
       const transitionId = existingTrans?._id ?? (await addTransition(client, workflowId, t.name, from, to))
       result.transitions[t.id] = transitionId
 
-      const importedRequests = importRules(t.requests, resolver, attrResolutions, targetAttributeById)
-      const importedValidators = importRules(t.validators, resolver, attrResolutions, targetAttributeById)
-      const importedPostFunctions = importRules(t.postFunctions, resolver, attrResolutions, targetAttributeById)
+      const screenResolutions = resolution?.screenResolutions as Record<string, ScreenResolutionConfig> | undefined
+      const importedRequests = importRules(
+        t.requests,
+        resolver,
+        attrResolutions,
+        targetAttributeById,
+        screenResolutions
+      )
+      const importedValidators = importRules(
+        t.validators,
+        resolver,
+        attrResolutions,
+        targetAttributeById,
+        screenResolutions
+      )
+      const importedPostFunctions = importRules(
+        t.postFunctions,
+        resolver,
+        attrResolutions,
+        targetAttributeById,
+        screenResolutions
+      )
 
       if (importedRequests !== undefined || importedValidators !== undefined || importedPostFunctions !== undefined) {
         await client.updateCollection(

@@ -130,6 +130,11 @@ export function createMockTx (store: { docs?: Doc[] } = {}): TxOperations {
   const mockHierarchy = {
     as: (doc: any) => doc,
     getAllAttributes: jest.fn().mockReturnValue(attrMap),
+    findAttribute: jest.fn((cls: any, name: any) => attrMap.get(name)),
+    getAttribute: jest.fn((cls: any, name: any) => attrMap.get(name)),
+    getDescendants: jest.fn().mockReturnValue([]),
+    getClass: jest.fn((cls: any) => ({ kind: 'class' })),
+    hasClass: jest.fn((cls: any) => cls !== 'non:existent:Class'),
     hasMixin: jest.fn().mockReturnValue(false),
     isDerived: jest.fn(
       (child: any, parent: any) =>

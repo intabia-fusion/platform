@@ -13,7 +13,18 @@
 // limitations under the License.
 //
 
-import core, { type Ref, type TxOperations } from '@hcengineering/core'
+import core, {
+  type ArrOf,
+  type Class,
+  type Doc,
+  type Enum,
+  type EnumOf,
+  type PropertyType,
+  type Ref,
+  type RefTo,
+  type TxOperations,
+  type Type
+} from '@hcengineering/core'
 import { type ProjectType } from '@hcengineering/task'
 
 import workflow from '../plugin'
@@ -72,4 +83,87 @@ export function extractRuleFieldReferences (ruleId: Ref<WorkflowRule>, props: Re
   }
 
   return []
+}
+
+/**
+ * Type guard to check if a type object is EnumOf.
+ */
+export function isEnumOfType (type: Type<PropertyType> | undefined): type is EnumOf {
+  return type?._class === core.class.EnumOf
+}
+
+/**
+ * Type guard to check if a type object is ArrOf.
+ */
+export function isArrOfType (type: Type<PropertyType> | undefined): type is ArrOf<PropertyType> {
+  return type?._class === core.class.ArrOf
+}
+
+/**
+ * Type guard to check if a type object is RefTo.
+ */
+export function isRefToType (type: Type<PropertyType> | undefined): type is RefTo<Doc> {
+  return type?._class === core.class.RefTo
+}
+
+/**
+ * Extracts Enum reference from a Type object if present (e.g. EnumOf or ArrOf<EnumOf>).
+ */
+export function getEnumRefFromType (type: Type<PropertyType> | undefined): Ref<Enum> | undefined {
+  if (type === undefined) return undefined
+
+  if (isEnumOfType(type)) {
+    return type.of
+  }
+
+  if (isArrOfType(type) && isEnumOfType(type.of)) {
+    return type.of.of
+  }
+
+  return undefined
+}
+
+/**
+ * Extracts referenced Class ID from a RefTo or ArrOf<RefTo> type object.
+ */
+export function getRefToClassFromType (type: Type<PropertyType> | undefined): Ref<Class<Doc>> | undefined {
+  if (type === undefined) return undefined
+
+  if (isRefToType(type)) {
+    return type.to
+  }
+
+  if (isArrOfType(type) && isRefToType(type.of)) {
+    return type.of.to
+  }
+
+  return undefined
+}
+
+/**
+ * Finds an existing enum matching the requested values or creates a new one.
+ */
+export async function findOrCreateEnum (
+  client: TxOperations,
+  enumName: string,
+  enumValues: string[]
+): Promise<Ref<Enum>> {
+  const existingEnums = await client.findAll(core.class.Enum, {})
+
+  const isMatchingValues = (e: Enum): boolean =>
+    e.enumValues !== undefined &&
+    e.enumValues.length === enumValues.length &&
+    e.enumValues.every((v) => enumValues.includes(v))
+
+  const matched =
+    existingEnums.find((e) => e.name === enumName && isMatchingValues(e)) ??
+    existingEnums.find((e) => isMatchingValues(e)) ??
+    existingEnums.find((e) => e.name === enumName)
+
+  if (matched !== undefined) return matched._id
+
+  return await client.createDoc(core.class.Enum, core.space.Model, {
+    name: enumName,
+    enumValues
+  })
 }

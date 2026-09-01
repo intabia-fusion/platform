@@ -16,6 +16,7 @@
 import core, {
   type AnyAttribute,
   ArrOf,
+  ClassifierKind,
   Doc,
   EnumOf,
   type Hierarchy,
@@ -23,6 +24,7 @@ import core, {
   type Ref,
   RefTo,
   type Status,
+  type StatusCategory,
   type TxOperations,
   type Type
 } from '@hcengineering/core'
@@ -30,11 +32,15 @@ import { getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
 import task, { type TaskType } from '@hcengineering/task'
 
 import workflow from '../plugin'
+import type { Screen, ScreenField, ScreenTab } from '../schema'
 
 import type {
   AttributeCompatibilityItem,
   AttributeConfig,
   AttributeUsageSource,
+  ScreenCompatibilityItem,
+  ScreenConfig,
+  ScreenResolutionConfig,
   StatusCompatibilityItem,
   StatusConfig,
   TransitionCompatibilityItem,
@@ -59,14 +65,134 @@ export async function checkWorkflowCompatibility (
   const statuses = await checkStatusesCompatibility(client, config, targetTaskType)
   const attributes = checkAttributesCompatibility(client, config, targetTaskType)
   const transitions = extractTransitionsReport(config)
+  const screens = await checkScreensCompatibility(client, config, targetTaskType)
   const hasScreens = hasScreensInConfig(config)
 
   return {
     statuses,
     attributes,
     transitions,
+    screens: screens.length > 0 ? screens : undefined,
     hasScreens
   }
+}
+
+/**
+ * Checks screens in the workflow config against existing screens in the target project type using structure/signature matching.
+ */
+async function checkScreensCompatibility (
+  client: TxOperations,
+  config: WorkflowConfig,
+  targetTaskType: TaskType
+): Promise<ScreenCompatibilityItem[]> {
+  const existingScreens = await client.findAll(workflow.class.Screen, { projectType: targetTaskType.parent })
+  const existingByName = new Map<string, (typeof existingScreens)[0]>()
+  for (const s of existingScreens) {
+    existingByName.set(s.name.toLowerCase(), s)
+  }
+
+  const screenIds = new Set(existingScreens.map((s) => s._id))
+  const allTabs = await client.findAll(workflow.class.ScreenTab, {})
+  const existingTabs = allTabs.filter((t) => screenIds.has(t.attachedTo))
+
+  const tabIds = new Set(existingTabs.map((t) => t._id))
+  const allFields = await client.findAll(workflow.class.ScreenField, {})
+  const existingFields = allFields.filter((f) => tabIds.has(f.attachedTo))
+
+  const hierarchy = client.getHierarchy()
+  const allAttributes = hierarchy.getAllAttributes(targetTaskType.targetClass, core.class.Doc)
+  const attrById = new Map<Ref<AnyAttribute>, AnyAttribute>()
+  for (const attr of allAttributes.values()) {
+    attrById.set(attr._id, attr)
+  }
+
+  const tabsByScreen = new Map<Ref<Screen>, ScreenTab[]>()
+  for (const t of existingTabs) {
+    const list = tabsByScreen.get(t.attachedTo) ?? []
+    list.push(t)
+    tabsByScreen.set(t.attachedTo, list)
+  }
+
+  const fieldsByTab = new Map<Ref<ScreenTab>, ScreenField[]>()
+  for (const f of existingFields) {
+    const list = fieldsByTab.get(f.attachedTo) ?? []
+    list.push(f)
+    fieldsByTab.set(f.attachedTo, list)
+  }
+
+  function isScreenSignatureMatch (sc: ScreenConfig, existing: Screen): boolean {
+    if (sc.targetClass !== undefined && existing.targetClass !== undefined && sc.targetClass !== existing.targetClass) {
+      return false
+    }
+
+    const impTabs = sc.tabs ?? []
+    const extTabs = tabsByScreen.get(existing._id) ?? []
+    if (impTabs.length !== extTabs.length) return false
+
+    for (let i = 0; i < impTabs.length; i++) {
+      const impTab = impTabs[i]
+      const extTab = extTabs[i]
+      if (impTab.name.trim().toLowerCase() !== extTab.name.trim().toLowerCase()) {
+        return false
+      }
+
+      const impFields = impTab.fields ?? []
+      const extFields = fieldsByTab.get(extTab._id) ?? []
+      if (impFields.length !== extFields.length) return false
+
+      for (let j = 0; j < impFields.length; j++) {
+        const impField = impFields[j]
+        const extField = extFields[j]
+        const impKey = (impField.fieldKey ?? (impField.attribute as string)).trim().toLowerCase()
+        const extKey = (
+          extField.fieldKey ??
+          attrById.get(extField.attribute)?.name ??
+          (extField.attribute as string)
+        )
+          .trim()
+          .toLowerCase()
+        if (impKey !== extKey) return false
+        if (Boolean(impField.required) !== Boolean(extField.required)) return false
+      }
+    }
+    return true
+  }
+
+  const result: ScreenCompatibilityItem[] = []
+  for (const sc of config.screens ?? []) {
+    let totalFields = 0
+    for (const t of sc.tabs ?? []) {
+      totalFields += t.fields?.length ?? 0
+    }
+
+    // 1. Try exact signature match with the same name first
+    let match = existingScreens.find(
+      (s) => s.name.trim().toLowerCase() === sc.name.trim().toLowerCase() && isScreenSignatureMatch(sc, s)
+    )
+    // 2. If not found, try any exact signature match
+    if (match === undefined) {
+      match = existingScreens.find((s) => isScreenSignatureMatch(sc, s))
+    }
+
+    const existingByNameDoc = existingByName.get(sc.name.toLowerCase())
+    const isExactMatch = match !== undefined
+    const isExisting = isExactMatch || existingByNameDoc !== undefined
+
+    result.push({
+      sourceScreenId: sc.id,
+      name: sc.name,
+      targetClass: sc.targetClass,
+      description: sc.description,
+      tabsCount: sc.tabs?.length ?? 0,
+      fieldsCount: totalFields,
+      isExisting,
+      existingScreenId: match?._id ?? existingByNameDoc?._id,
+      isExactMatch,
+      matchingScreenId: match?._id,
+      matchingScreenName: match?.name
+    })
+  }
+  return result
 }
 
 /**
@@ -74,6 +200,11 @@ export async function checkWorkflowCompatibility (
  */
 function collectSourceStatusIds (config: WorkflowConfig): Set<Ref<Status>> {
   const ids = new Set<Ref<Status>>()
+  if (Array.isArray(config.statuses)) {
+    for (const s of config.statuses) {
+      if (s?.id !== undefined) ids.add(s.id)
+    }
+  }
   for (const wf of config.workflows) {
     for (const s of wf.initialStatuses ?? []) ids.add(s)
     for (const t of wf.transitions ?? []) {
@@ -93,6 +224,12 @@ async function checkStatusesCompatibility (
   targetTaskType: TaskType
 ): Promise<StatusCompatibilityItem[]> {
   const allWorkspaceStatuses = await client.findAll(core.class.Status, {})
+  const allCategories = await client.findAll(core.class.StatusCategory, {})
+  const categoryOrderMap = new Map<Ref<StatusCategory>, number>()
+  for (const cat of allCategories) {
+    categoryOrderMap.set(cat._id, cat.order)
+  }
+
   const workspaceStatusById = new Map<Ref<Status>, Status>()
   const workspaceStatusByName = new Map<string, Status>()
   for (const st of allWorkspaceStatuses) {
@@ -102,54 +239,116 @@ async function checkStatusesCompatibility (
     }
   }
 
-  const targetStatusIds = new Set(targetTaskType.statuses ?? [])
-  const targetStatusDocs = allWorkspaceStatuses.filter((s) => targetStatusIds.has(s._id))
+  const targetStatusIds = targetTaskType.statuses ?? []
+  const targetStatusDocs = targetStatusIds
+    .map((id) => workspaceStatusById.get(id))
+    .filter((s): s is Status => s !== undefined)
 
   const configStatusById = new Map<Ref<Status>, StatusConfig>()
   const configStatusByName = new Map<string, StatusConfig>()
-  for (const sc of config.statuses ?? []) {
-    configStatusById.set(sc.id, sc)
-    configStatusByName.set(sc.name, sc)
+  const configStatusOrder = new Map<Ref<Status>, number>()
+  if (Array.isArray(config.statuses)) {
+    config.statuses.forEach((sc, idx) => {
+      configStatusById.set(sc.id, sc)
+      configStatusByName.set(sc.name, sc)
+      configStatusOrder.set(sc.id, idx)
+    })
   }
 
-  const sourceStatusIds = collectSourceStatusIds(config)
-  const usedTargetStatusIds = new Set<Ref<Status>>()
-  const result: StatusCompatibilityItem[] = []
+  const sourceStatusIds = Array.from(collectSourceStatusIds(config))
 
+  // Sort source status IDs to preserve:
+  // 1) Category order
+  // 2) Original order from config.statuses (or task type status order)
+  sourceStatusIds.sort((a, b) => {
+    const stConfigA = configStatusById.get(a) ?? configStatusByName.get(a as string)
+    const stDocA = workspaceStatusById.get(a) ?? workspaceStatusByName.get(a as string)
+    const catA = stConfigA?.category ?? stDocA?.category
+    const catOrderA = catA !== undefined ? (categoryOrderMap.get(catA) ?? 9999) : 9999
+
+    const stConfigB = configStatusById.get(b) ?? configStatusByName.get(b as string)
+    const stDocB = workspaceStatusById.get(b) ?? workspaceStatusByName.get(b as string)
+    const catB = stConfigB?.category ?? stDocB?.category
+    const catOrderB = catB !== undefined ? (categoryOrderMap.get(catB) ?? 9999) : 9999
+
+    if (catOrderA !== catOrderB) {
+      return catOrderA - catOrderB
+    }
+
+    const idxA = configStatusOrder.get(a)
+    const idxB = configStatusOrder.get(b)
+    if (idxA !== undefined && idxB !== undefined) {
+      return idxA - idxB
+    }
+    if (idxA !== undefined) return -1
+    if (idxB !== undefined) return 1
+
+    const nameA = stConfigA?.name ?? stDocA?.name ?? (a as string)
+    const nameB = stConfigB?.name ?? stDocB?.name ?? (b as string)
+    return nameA.localeCompare(nameB)
+  })
+
+  // Multi-pass matching: Exact ID -> Exact Name -> Category
+  const matchedTargetBySourceId = new Map<Ref<Status>, Ref<Status>>()
+  const usedTargetStatusIds = new Set<Ref<Status>>()
+
+  // Pass 1: Match by ID
+  for (const sourceStatusId of sourceStatusIds) {
+    const matchedDoc = targetStatusDocs.find((t) => !usedTargetStatusIds.has(t._id) && t._id === sourceStatusId)
+    if (matchedDoc !== undefined) {
+      matchedTargetBySourceId.set(sourceStatusId, matchedDoc._id)
+      usedTargetStatusIds.add(matchedDoc._id)
+    }
+  }
+
+  // Pass 2: Match by exact Name (case-insensitive)
+  for (const sourceStatusId of sourceStatusIds) {
+    if (matchedTargetBySourceId.has(sourceStatusId)) continue
+    const stConfig = configStatusById.get(sourceStatusId) ?? configStatusByName.get(sourceStatusId as string)
+    const stDoc = workspaceStatusById.get(sourceStatusId) ?? workspaceStatusByName.get(sourceStatusId as string)
+    const sourceName = (stConfig?.name ?? stDoc?.name ?? (sourceStatusId as string)).trim().toLowerCase()
+    if (sourceName !== '') {
+      const matchedDoc = targetStatusDocs.find(
+        (t) => !usedTargetStatusIds.has(t._id) && t.name.trim().toLowerCase() === sourceName
+      )
+      if (matchedDoc !== undefined) {
+        matchedTargetBySourceId.set(sourceStatusId, matchedDoc._id)
+        usedTargetStatusIds.add(matchedDoc._id)
+      }
+    }
+  }
+
+  // Pass 3: Match by Category (first available from same category in target status list)
+  for (const sourceStatusId of sourceStatusIds) {
+    if (matchedTargetBySourceId.has(sourceStatusId)) continue
+    const stConfig = configStatusById.get(sourceStatusId) ?? configStatusByName.get(sourceStatusId as string)
+    const stDoc = workspaceStatusById.get(sourceStatusId) ?? workspaceStatusByName.get(sourceStatusId as string)
+    const sourceCategory = stConfig?.category ?? stDoc?.category
+    if (sourceCategory !== undefined) {
+      const matchedDoc = targetStatusDocs.find((t) => !usedTargetStatusIds.has(t._id) && t.category === sourceCategory)
+      if (matchedDoc !== undefined) {
+        matchedTargetBySourceId.set(sourceStatusId, matchedDoc._id)
+        usedTargetStatusIds.add(matchedDoc._id)
+      }
+    }
+  }
+
+  const result: StatusCompatibilityItem[] = []
   for (const sourceStatusId of sourceStatusIds) {
     const stConfig = configStatusById.get(sourceStatusId) ?? configStatusByName.get(sourceStatusId as string)
     const stDoc = workspaceStatusById.get(sourceStatusId) ?? workspaceStatusByName.get(sourceStatusId as string)
     const sourceName = stConfig?.name ?? stDoc?.name ?? (sourceStatusId as string)
     const sourceCategory = stConfig?.category ?? stDoc?.category
     const sourceColor = stConfig?.color ?? stDoc?.color ?? 0
-
-    // Priority 1: Match by ID
-    let matchedDoc = targetStatusDocs.find((t) => !usedTargetStatusIds.has(t._id) && t._id === sourceStatusId)
-
-    // Priority 2: Match by Name
-    if (matchedDoc === undefined && sourceName !== '') {
-      matchedDoc = targetStatusDocs.find(
-        (t) => !usedTargetStatusIds.has(t._id) && t.name.toLowerCase() === sourceName.toLowerCase()
-      )
-    }
-
-    // Priority 3: Match by Category (first available from same category)
-    if (matchedDoc === undefined && sourceCategory !== undefined) {
-      matchedDoc = targetStatusDocs.find((t) => !usedTargetStatusIds.has(t._id) && t.category === sourceCategory)
-    }
-
-    const isMatched = matchedDoc !== undefined
-    if (matchedDoc !== undefined) {
-      usedTargetStatusIds.add(matchedDoc._id)
-    }
+    const targetStatusId = matchedTargetBySourceId.get(sourceStatusId)
 
     result.push({
       sourceStatusId,
       sourceName,
       sourceColor,
       sourceCategory,
-      isMatched,
-      targetStatusId: matchedDoc?._id
+      isMatched: targetStatusId !== undefined,
+      targetStatusId
     })
   }
 
@@ -165,7 +364,10 @@ interface FieldUsage {
 /**
  * Collects all field references from screens and rule properties across the workflow configuration.
  */
-function collectAttributeUsages (config: WorkflowConfig): Map<string, FieldUsage> {
+export function collectAttributeUsages (
+  config: WorkflowConfig,
+  screenResolutions?: Record<string, ScreenResolutionConfig>
+): Map<string, FieldUsage> {
   const attributeMap = new Map<string, FieldUsage>()
 
   const addFieldRef = (
@@ -194,6 +396,10 @@ function collectAttributeUsages (config: WorkflowConfig): Map<string, FieldUsage
   }
 
   for (const sc of config.screens ?? []) {
+    const screenRes = screenResolutions?.[sc.id] ?? screenResolutions?.[sc.name]
+    if (screenRes?.action === 'skip') {
+      continue
+    }
     for (const tab of sc.tabs ?? []) {
       for (const f of tab.fields ?? []) {
         addFieldRef(f.fieldKey, f.attribute, 'ScreenField')
@@ -215,12 +421,46 @@ function collectAttributeUsages (config: WorkflowConfig): Map<string, FieldUsage
 }
 
 /**
+ * Checks whether an attribute type is resolvable within the current workspace hierarchy.
+ */
+export function isAttributeTypeResolvable (
+  hierarchy: Hierarchy,
+  type: Type<PropertyType> | undefined,
+  visited = new Set<Type<PropertyType>>()
+): boolean {
+  if (type === undefined) return true
+  if (visited.has(type)) return true
+  visited.add(type)
+
+  try {
+    if (type._class === core.class.RefTo) {
+      const to = (type as RefTo<Doc>).to
+      if (to !== undefined && !hierarchy.hasClass(to)) {
+        return false
+      }
+    }
+    if (type._class === core.class.EnumOf) {
+      // Enums are documents in Model space and are created on import if missing
+      return true
+    }
+    if (type._class === core.class.ArrOf) {
+      const of = (type as ArrOf<Doc>).of
+      return isAttributeTypeResolvable(hierarchy, of, visited)
+    }
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
  * Checks whether two attribute types are strictly compatible.
  */
 export function isAttributeTypeCompatible (
   hierarchy: Hierarchy,
   sourceType: Type<PropertyType> | undefined,
-  targetType: Type<PropertyType> | undefined
+  targetType: Type<PropertyType> | undefined,
+  visited = new Set<string>()
 ): boolean {
   if (sourceType === undefined || targetType === undefined) {
     return true
@@ -228,29 +468,34 @@ export function isAttributeTypeCompatible (
   if (sourceType._class !== targetType._class) {
     return false
   }
-  // RefTo comparison
-  if (sourceType._class === core.class.RefTo) {
-    const srcTo = (sourceType as RefTo<Doc>).to
-    const tgtTo = (targetType as RefTo<Doc>).to
-    if (srcTo !== undefined && tgtTo !== undefined) {
-      return srcTo === tgtTo || hierarchy.isDerived(srcTo, tgtTo)
+  try {
+    // RefTo comparison
+    if (sourceType._class === core.class.RefTo) {
+      const srcTo = (sourceType as RefTo<Doc>).to
+      const tgtTo = (targetType as RefTo<Doc>).to
+      if (srcTo !== undefined && tgtTo !== undefined) {
+        return srcTo === tgtTo || hierarchy.isDerived(srcTo, tgtTo)
+      }
     }
-  }
-  // EnumOf comparison
-  if (sourceType._class === core.class.EnumOf) {
-    const srcOf = (sourceType as EnumOf).of
-    const tgtOf = (targetType as EnumOf).of
-    if (srcOf !== undefined && tgtOf !== undefined) {
-      return srcOf === tgtOf
+    // EnumOf comparison
+    if (sourceType._class === core.class.EnumOf) {
+      const srcOf = (sourceType as EnumOf).of
+      const tgtOf = (targetType as EnumOf).of
+      if (srcOf !== undefined && tgtOf !== undefined) {
+        return srcOf === tgtOf
+      }
+      return true
     }
+    // ArrOf comparison
+    if (sourceType._class === core.class.ArrOf) {
+      const srcOf = (sourceType as ArrOf<Doc>).of
+      const tgtOf = (targetType as ArrOf<Doc>).of
+      return isAttributeTypeCompatible(hierarchy, srcOf, tgtOf, visited)
+    }
+    return true
+  } catch {
+    return false
   }
-  // ArrOf comparison
-  if (sourceType._class === core.class.ArrOf) {
-    const srcOf = (sourceType as ArrOf<Doc>).of
-    const tgtOf = (targetType as ArrOf<Doc>).of
-    return isAttributeTypeCompatible(hierarchy, srcOf, tgtOf)
-  }
-  return true
 }
 
 /**
@@ -263,7 +508,7 @@ function checkAttributesCompatibility (
 ): AttributeCompatibilityItem[] {
   const hierarchy = client.getHierarchy()
   const targetClass = targetTaskType.targetClass
-  const allTargetAttributes = hierarchy.getAllAttributes(targetClass, core.class.Doc)
+  const allTargetAttributes = hierarchy.getAllAttributes(targetClass)
   const attributesByKey = new Map<string, AnyAttribute>()
   const attributesById = new Map<Ref<AnyAttribute>, AnyAttribute>()
   for (const attr of allTargetAttributes.values()) {
@@ -271,11 +516,29 @@ function checkAttributesCompatibility (
     attributesById.set(attr._id, attr)
   }
 
+  try {
+    const descendants = hierarchy.getDescendants(targetClass)
+    for (const m of descendants) {
+      if (hierarchy.getClass(m).kind === ClassifierKind.MIXIN) {
+        for (const attr of hierarchy.getAllAttributes(m).values()) {
+          attributesByKey.set(attr.name, attr)
+          attributesById.set(attr._id, attr)
+        }
+      }
+    }
+  } catch {}
+
   const configAttributeById = new Map<Ref<AnyAttribute>, AttributeConfig>()
   const configAttributeByName = new Map<string, AttributeConfig>()
   for (const ac of config.attributes ?? []) {
     configAttributeById.set(ac.id, ac)
     configAttributeByName.set(ac.name, ac)
+  }
+  for (const m of config.mixins ?? []) {
+    for (const ac of m.attributes ?? []) {
+      configAttributeById.set(ac.id, ac)
+      configAttributeByName.set(ac.name, ac)
+    }
   }
 
   const attributeUsages = collectAttributeUsages(config)
@@ -291,6 +554,27 @@ function checkAttributesCompatibility (
       configAttributeByName.get(fieldKey)
 
     const sourceType = attrConfig?.type
+    const isResolvable = isAttributeTypeResolvable(hierarchy, sourceType)
+
+    let isMatched = false
+    let unresolvable = false
+    let unresolvableReason: IntlString | undefined
+
+    if (!isResolvable) {
+      isMatched = false
+      unresolvable = true
+      unresolvableReason = workflow.string.UnresolvableTypeMissingClass
+    } else if (matchedAttr !== undefined) {
+      if (isAttributeTypeCompatible(hierarchy, sourceType, matchedAttr.type)) {
+        isMatched = true
+      } else {
+        // Conflicting type -> will be auto-created with unique key
+        isMatched = true
+      }
+    } else {
+      // Missing attribute -> will be auto-created with exact key
+      isMatched = true
+    }
 
     result.push({
       fieldKey,
@@ -298,8 +582,10 @@ function checkAttributesCompatibility (
       label: matchedAttr?.label ?? attrConfig?.label ?? info.label,
       sourceType,
       ruleTypes: Array.from(info.ruleTypes),
-      isMatched: matchedAttr !== undefined,
-      targetAttributeId: matchedAttr?._id
+      isMatched,
+      targetAttributeId: matchedAttr?._id,
+      unresolvable,
+      unresolvableReason
     })
   }
 

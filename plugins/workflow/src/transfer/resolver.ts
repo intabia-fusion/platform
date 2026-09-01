@@ -21,15 +21,17 @@ import workflow from '../plugin'
 export const StatusToken = '$status:'
 export const TaskTypeToken = '$taskType:'
 export const ScreenToken = '$screen:'
+export const AttributeToken = '$attr:'
 
-export type TokenPrefix = typeof StatusToken | typeof TaskTypeToken | typeof ScreenToken
+export type TokenPrefix = typeof StatusToken | typeof TaskTypeToken | typeof ScreenToken | typeof AttributeToken
 
 /** Prefixed name tokens used in rule properties trees (props) */
 export type StatusTokenString = `${typeof StatusToken}${string}`
 export type TaskTypeTokenString = `${typeof TaskTypeToken}${string}`
 export type ScreenTokenString = `${typeof ScreenToken}${string}`
+export type AttributeTokenString = `${typeof AttributeToken}${string}`
 
-export type DocToken = StatusTokenString | TaskTypeTokenString | ScreenTokenString
+export type DocToken = StatusTokenString | TaskTypeTokenString | ScreenTokenString | AttributeTokenString
 
 export class NameResolver {
   readonly toToken = new Map<Ref<Doc>, DocToken>()
@@ -128,7 +130,8 @@ export function identifierOf (project: Project): string {
 const KIND_BY_PREFIX: Record<TokenPrefix, string> = {
   [StatusToken]: 'status',
   [TaskTypeToken]: 'task type',
-  [ScreenToken]: 'screen'
+  [ScreenToken]: 'screen',
+  [AttributeToken]: 'attribute'
 }
 
 export function requireRef<T extends Doc> (

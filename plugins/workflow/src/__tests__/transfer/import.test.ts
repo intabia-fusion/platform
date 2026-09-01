@@ -561,4 +561,446 @@ describe('Workflow Import', () => {
       'Workflow import: could not resolve rule references: $status:NonExistentStatus'
     )
   })
+
+  it('creates missing mixins and mixin attributes on import', async () => {
+    const client = createMockTx()
+    const mixinId = 'mixin-1' as any
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: '2026-08-31T00:00:00.000Z',
+      workspace: ws1,
+      projectTypeId,
+      mixins: [
+        {
+          id: mixinId,
+          label: getEmbeddedLabel('Custom Mixin'),
+          attributes: [
+            {
+              id: 'attr-m-1' as any,
+              name: 'mixinField',
+              label: getEmbeddedLabel('Mixin Field'),
+              type: { _class: core.class.TypeString, label: getEmbeddedLabel('String') },
+              isCustom: true
+            }
+          ]
+        }
+      ],
+      screens: [
+        {
+          id: 'screen-1' as any,
+          name: 'Screen with Mixin',
+          targetClass: 'tracker:class:Issue' as any,
+          tabs: [
+            {
+              name: 'General',
+              fields: [
+                {
+                  attribute: 'attr-m-1' as any,
+                  fieldKey: 'mixinField',
+                  mixin: mixinId,
+                  required: false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      workflows: [
+        {
+          id: workflowId,
+          name: 'Bug Workflow',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          transitions: []
+        }
+      ]
+    }
+
+    const result = await importWorkflowConfig(client, projectTypeId, config, {
+      targetTaskTypeId
+    })
+
+    expect(result.workflows[workflowId]).toBeDefined()
+    expect(client.createDoc).toHaveBeenCalledWith(
+      core.class.Mixin,
+      core.space.Model,
+      expect.objectContaining({
+        label: getEmbeddedLabel('Custom Mixin')
+      }),
+      expect.any(String)
+    )
+    expect(client.createDoc).toHaveBeenCalledWith(
+      core.class.Attribute,
+      core.space.Model,
+      expect.objectContaining({
+        isCustom: true
+      })
+    )
+  })
+
+  it('handles screen resolution actions (copy, replace, skip)', async () => {
+    const client = createMockTx()
+    const screenId1 = 'screen-1' as any
+    const screenId2 = 'screen-2' as any
+    const existingScreenId = 'screen-existing' as any
+
+    ;(client.findAll as jest.Mock).mockImplementation(async (_cls: any, query: any) => {
+      if (_cls === workflow.class.Screen) {
+        return [
+          {
+            _id: existingScreenId,
+            name: 'Existing Screen',
+            projectType: projectTypeId,
+            targetClass: 'tracker:class:Issue'
+          }
+        ]
+      }
+      return []
+    })
+
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: '2026-08-31T00:00:00.000Z',
+      workspace: ws1,
+      projectTypeId,
+      screens: [
+        {
+          id: screenId1,
+          name: 'Existing Screen',
+          targetClass: 'tracker:class:Issue' as any,
+          tabs: [{ name: 'General', fields: [] }]
+        },
+        {
+          id: screenId2,
+          name: 'Skipped Screen',
+          targetClass: 'tracker:class:Issue' as any,
+          tabs: [{ name: 'Details', fields: [] }]
+        }
+      ],
+      workflows: [
+        {
+          id: workflowId,
+          name: 'Test Workflow',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          transitions: []
+        }
+      ]
+    }
+
+    const result = await importWorkflowConfig(client, projectTypeId, config, {
+      targetTaskTypeId,
+      screenResolutions: {
+        [screenId1]: { action: 'replace', targetScreenId: existingScreenId },
+        [screenId2]: { action: 'skip' }
+      }
+    })
+
+    expect(result.screens[screenId1]).toBe(existingScreenId)
+    expect(result.screens[screenId2]).toBeUndefined()
+    expect(client.updateDoc).toHaveBeenCalledWith(
+      workflow.class.Screen,
+      core.space.Workspace,
+      existingScreenId,
+      expect.any(Object)
+    )
+  })
+
+  it('auto-creates custom attributes with exact key from import', async () => {
+    const client = createMockTx()
+    const customKey = 'my_custom_field'
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: '2026-08-31T00:00:00.000Z',
+      workspace: ws1,
+      projectTypeId,
+      attributes: [
+        {
+          id: 'attr-custom-1' as any,
+          name: customKey,
+          label: getEmbeddedLabel('My Custom Field'),
+          type: { _class: core.class.TypeString, label: getEmbeddedLabel('String') },
+          isCustom: true
+        }
+      ],
+      workflows: [
+        {
+          id: workflowId,
+          name: 'Wf with custom key',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          transitions: []
+        }
+      ]
+    }
+
+    await importWorkflowConfig(client, projectTypeId, config, {
+      targetTaskTypeId
+    })
+
+    expect(client.createDoc).toHaveBeenCalledWith(
+      core.class.Attribute,
+      core.space.Model,
+      expect.objectContaining({
+        name: customKey,
+        isCustom: true
+      })
+    )
+  })
+
+  it('binds to existing attribute when key and type match', async () => {
+    const client = createMockTx()
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: '2026-08-31T00:00:00.000Z',
+      workspace: ws1,
+      projectTypeId,
+      attributes: [
+        {
+          id: 'attr-assignee' as any,
+          name: 'assignee',
+          label: getEmbeddedLabel('Assignee'),
+          type: { _class: core.class.RefTo, to: core.class.Doc, label: getEmbeddedLabel('Doc') } as any,
+          isCustom: false
+        }
+      ],
+      workflows: [
+        {
+          id: workflowId,
+          name: 'Wf with existing assignee',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          transitions: []
+        }
+      ]
+    }
+
+    const result = await importWorkflowConfig(client, projectTypeId, config, {
+      targetTaskTypeId
+    })
+
+    expect(result.workflows[workflowId]).toBeDefined()
+    // Should NOT create doc for assignee attribute because it already exists
+    expect(client.createDoc).not.toHaveBeenCalledWith(
+      core.class.Attribute,
+      core.space.Model,
+      expect.objectContaining({ name: 'assignee' })
+    )
+  })
+
+  it('does not create attribute when action is "skip" and strips related rule fields', async () => {
+    const client = createMockTx()
+    const customKey = 'skipped_field'
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: '2026-08-31T00:00:00.000Z',
+      workspace: ws1,
+      projectTypeId,
+      attributes: [
+        {
+          id: 'attr-skipped' as any,
+          name: customKey,
+          label: getEmbeddedLabel('Skipped Field'),
+          type: { _class: core.class.TypeString, label: getEmbeddedLabel('String') },
+          isCustom: true
+        }
+      ],
+      workflows: [
+        {
+          id: workflowId,
+          name: 'Wf with skipped field',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          transitions: [
+            {
+              id: 'trans-skip-1' as Ref<WorkflowTransition>,
+              name: 'Step With Skipped Field',
+              from: [statusOpenId],
+              to: statusDoneId,
+              validators: [
+                {
+                  id: 'rule-val-skip',
+                  rule: workflow.validator.FieldRequired,
+                  ruleClass: workflow.class.WorkflowValidator,
+                  props: {
+                    fields: [
+                      {
+                        attribute: 'attr-skipped' as any,
+                        fieldKey: customKey
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+    const result = await importWorkflowConfig(client, projectTypeId, config, {
+      targetTaskTypeId,
+      attributeResolutions: {
+        [customKey]: { action: 'skip' }
+      }
+    })
+
+    expect(result.workflows[workflowId]).toBeDefined()
+    // Should NOT create doc for skipped field
+    expect(client.createDoc).not.toHaveBeenCalledWith(
+      core.class.Attribute,
+      core.space.Model,
+      expect.objectContaining({ name: customKey })
+    )
+  })
+
+  it('does not create attribute when it is only used in a screen that is skipped', async () => {
+    const client = createMockTx()
+    const screenOnlyKey = 'screen_only_field'
+    const screenId = 'screen-1' as Ref<Screen>
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: '2026-08-31T00:00:00.000Z',
+      workspace: ws1,
+      projectTypeId,
+      screens: [
+        {
+          id: screenId,
+          name: 'My Screen',
+          targetClass: task.class.Task,
+          tabs: [
+            {
+              name: 'General',
+              fields: [
+                {
+                  attribute: 'attr-screen-only' as any,
+                  fieldKey: screenOnlyKey,
+                  required: false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      attributes: [
+        {
+          id: 'attr-screen-only' as any,
+          name: screenOnlyKey,
+          label: getEmbeddedLabel('Screen Only Field'),
+          type: { _class: core.class.TypeString, label: getEmbeddedLabel('String') },
+          isCustom: true
+        }
+      ],
+      workflows: [
+        {
+          id: workflowId,
+          name: 'Wf with screen only field',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          transitions: []
+        }
+      ]
+    }
+
+    const result = await importWorkflowConfig(client, projectTypeId, config, {
+      targetTaskTypeId,
+      screenResolutions: {
+        [screenId]: { action: 'skip' }
+      }
+    })
+
+    expect(result.workflows[workflowId]).toBeDefined()
+    // Attribute should NOT be created because the only screen using it was skipped
+    expect(client.createDoc).not.toHaveBeenCalledWith(
+      core.class.Attribute,
+      core.space.Model,
+      expect.objectContaining({ name: screenOnlyKey })
+    )
+  })
+
+  it('creates custom enum and binds EnumOf attribute when importing workflow with custom enum', async () => {
+    const client = createMockTx()
+    const enumFieldKey = 'select-color'
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: '2026-08-31T00:00:00.000Z',
+      workspace: ws1,
+      projectTypeId,
+      enums: [
+        {
+          id: 'old-enum-id' as any,
+          name: 'Colors',
+          enumValues: ['Red', 'Green', 'Blue']
+        }
+      ],
+      attributes: [
+        {
+          id: 'attr-enum-1' as any,
+          name: enumFieldKey,
+          label: getEmbeddedLabel('Color Selection'),
+          type: { _class: core.class.EnumOf, of: 'old-enum-id' } as any,
+          enumName: 'Colors',
+          enumValues: ['Red', 'Green', 'Blue'],
+          isCustom: true
+        }
+      ],
+      workflows: [
+        {
+          id: workflowId,
+          name: 'Wf with Enum',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          transitions: [
+            {
+              id: 'trans-1' as Ref<WorkflowTransition>,
+              name: 'Step',
+              from: [statusOpenId],
+              to: statusDoneId,
+              validators: [
+                {
+                  id: 'rule-val-1',
+                  rule: workflow.validator.FieldRequired,
+                  ruleClass: workflow.class.WorkflowValidator,
+                  props: {
+                    fields: [{ fieldKey: enumFieldKey, attribute: 'attr-enum-1' as any }]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+    const result = await importWorkflowConfig(client, projectTypeId, config, {
+      targetTaskTypeId,
+      attributeResolutions: {
+        [enumFieldKey]: {
+          action: 'create',
+          label: getEmbeddedLabel('Color Selection')
+        }
+      }
+    })
+
+    expect(result.workflows[workflowId]).toBeDefined()
+    expect(client.createDoc).toHaveBeenCalledWith(
+      core.class.Enum,
+      core.space.Model,
+      expect.objectContaining({
+        name: 'Colors',
+        enumValues: ['Red', 'Green', 'Blue']
+      })
+    )
+    expect(client.createDoc).toHaveBeenCalledWith(
+      core.class.Attribute,
+      core.space.Model,
+      expect.objectContaining({
+        name: enumFieldKey,
+        type: expect.objectContaining({
+          _class: core.class.EnumOf
+        })
+      })
+    )
+  })
 })
+

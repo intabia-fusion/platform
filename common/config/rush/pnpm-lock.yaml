@@ -28438,6 +28438,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/setting':
+        specifier: workspace:^0.7.0
+        version: link:../setting
       '@hcengineering/task':
         specifier: workspace:^0.7.0
         version: link:../task

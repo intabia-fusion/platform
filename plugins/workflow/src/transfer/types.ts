@@ -15,8 +15,10 @@
 
 import type {
   AnyAttribute,
+  Blob,
   Class,
   Doc,
+  Enum,
   Mixin,
   PropertyType,
   Ref,
@@ -25,7 +27,7 @@ import type {
   Type,
   WorkspaceUuid
 } from '@hcengineering/core'
-import type { IntlString } from '@hcengineering/platform'
+import type { Asset, IntlString } from '@hcengineering/platform'
 import type { Project, ProjectType, TaskType } from '@hcengineering/task'
 import type {
   Screen,
@@ -61,6 +63,24 @@ export interface AttributeConfig {
   label: IntlString
   type: Type<PropertyType>
   isCustom?: boolean
+  mixin?: Ref<Mixin<Doc>>
+  attributeOf?: Ref<Class<Doc>>
+  enumName?: string
+  enumValues?: string[]
+}
+
+export interface WorkflowMixinConfig {
+  id: Ref<Mixin<Doc>>
+  label: IntlString
+  icon?: Asset
+  color?: number | number[] | Ref<Blob>
+  attributes?: AttributeConfig[]
+}
+
+export interface WorkflowEnumConfig {
+  id: Ref<Enum>
+  name: string
+  enumValues: string[]
 }
 
 export interface WorkflowConfig {
@@ -71,6 +91,8 @@ export interface WorkflowConfig {
   screens?: ScreenConfig[]
   statuses?: StatusConfig[]
   attributes?: AttributeConfig[]
+  mixins?: WorkflowMixinConfig[]
+  enums?: WorkflowEnumConfig[]
   workflows: WorkflowConfigEntry[]
   projects?: ProjectWorkflowsConfig[]
 }
@@ -166,6 +188,8 @@ export interface AttributeCompatibilityItem {
   ruleTypes: AttributeUsageSource[]
   isMatched: boolean
   targetAttributeId?: Ref<AnyAttribute>
+  unresolvable?: boolean
+  unresolvableReason?: IntlString
 }
 
 export interface TransitionCompatibilityItem {
@@ -180,10 +204,32 @@ export interface TransitionResolutionConfig {
   targetToStatusId?: Ref<Status>
 }
 
+export type ScreenResolutionAction = 'copy' | 'replace' | 'skip'
+
+export interface ScreenResolutionConfig {
+  action: ScreenResolutionAction
+  targetScreenId?: Ref<Screen>
+}
+
+export interface ScreenCompatibilityItem {
+  sourceScreenId: Ref<Screen>
+  name: string
+  targetClass: Ref<Class<Doc>>
+  description?: string
+  tabsCount: number
+  fieldsCount: number
+  isExisting: boolean
+  existingScreenId?: Ref<Screen>
+  isExactMatch?: boolean
+  matchingScreenId?: Ref<Screen>
+  matchingScreenName?: string
+}
+
 export interface WorkflowCompatibilityReport {
   statuses: StatusCompatibilityItem[]
   attributes: AttributeCompatibilityItem[]
   transitions: TransitionCompatibilityItem[]
+  screens?: ScreenCompatibilityItem[]
   hasScreens: boolean
 }
 
@@ -205,8 +251,12 @@ export interface WorkflowImportResolution {
   transitionResolutions?: Record<Ref<WorkflowTransition>, TransitionResolutionConfig>
   /** Attribute resolutions by fieldKey */
   attributeResolutions?: Record<string, AttributeResolutionConfig>
+  /** Screen resolutions by screen ID or name */
+  screenResolutions?: Record<Ref<Screen> | string, ScreenResolutionConfig>
   /** Whether to copy missing screens (default: true) */
   copyScreens?: boolean
+  /** Whether to create missing statuses in the target task type (default: false) */
+  createMissingStatuses?: boolean
   /** Workflow name override */
   name?: string
 }

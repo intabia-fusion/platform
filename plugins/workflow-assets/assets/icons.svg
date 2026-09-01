@@ -95,4 +95,12 @@
         <path d="M15.088 13.328L17.925 8.742" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round"/>
     </symbol>
+
+    <!-- Атрибут / Поле (Attribute) -->
+    <symbol id="attribute" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
+        <path d="M7 8H17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M7 12H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M7 16H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
 </svg>

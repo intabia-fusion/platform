@@ -15,7 +15,12 @@
 
 import core from '@hcengineering/core'
 
-import { checkWorkflowCompatibility, exportWorkflow, isAttributeTypeCompatible } from '../../transfer'
+import {
+  checkWorkflowCompatibility,
+  exportWorkflow,
+  isAttributeTypeCompatible,
+  isAttributeTypeResolvable
+} from '../../transfer'
 import {
   createMockTx,
   projectTypeId,
@@ -174,5 +179,80 @@ describe('Workflow Compatibility Check', () => {
         { _class: core.class.RefTo, to: 'core:class:Doc' } as any
       )
     ).toBe(true)
+
+    // isAttributeTypeResolvable
+    expect(
+      isAttributeTypeResolvable(hierarchy, { _class: core.class.EnumOf, of: 'custom:non-existent:enum' } as any)
+    ).toBe(true)
+    expect(
+      isAttributeTypeResolvable(hierarchy, { _class: core.class.RefTo, to: 'core:class:Doc' } as any)
+    ).toBe(true)
+    expect(
+      isAttributeTypeResolvable(hierarchy, { _class: core.class.RefTo, to: 'non:existent:Class' as any } as any)
+    ).toBe(false)
+  })
+
+  it('matches screens by structure/signature', async () => {
+    const client = createMockTx()
+    const screenId = 'screen-match-1' as any
+    const tabId = 'tab-match-1' as any
+    const existingScreen = {
+      _id: screenId,
+      _class: 'workflow:class:Screen' as any,
+      name: 'Existing Screen',
+      projectType: projectTypeId,
+      targetClass: 'core:class:Doc' as any
+    }
+    const existingTab = {
+      _id: tabId,
+      _class: 'workflow:class:ScreenTab' as any,
+      attachedTo: screenId,
+      name: 'General'
+    }
+    const existingField = {
+      _id: 'field-1' as any,
+      _class: 'workflow:class:ScreenField' as any,
+      attachedTo: tabId,
+      fieldKey: 'assignee',
+      required: true
+    }
+
+    client.findAll = jest.fn().mockImplementation((cls: any) => {
+      if (cls === 'workflow:class:Screen') return Promise.resolve([existingScreen])
+      if (cls === 'workflow:class:ScreenTab') return Promise.resolve([existingTab])
+      if (cls === 'workflow:class:ScreenField') return Promise.resolve([existingField])
+      return Promise.resolve([])
+    })
+
+    const config = await exportWorkflow(client, workflowId, {
+      workspace: ws1,
+      projectTypeId
+    })
+
+    config.screens = [
+      {
+        id: 'screen-cfg-1' as any,
+        name: 'My Screen',
+        targetClass: 'core:class:Doc' as any,
+        tabs: [
+          {
+            name: 'General',
+            fields: [
+              {
+                attribute: 'attr-assignee' as any,
+                fieldKey: 'assignee',
+                required: true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+
+    const report = await checkWorkflowCompatibility(client, config, targetTaskTypeId)
+    expect(report.screens).toBeDefined()
+    expect(report.screens?.[0].isExactMatch).toBe(true)
+    expect(report.screens?.[0].matchingScreenId).toBe(screenId)
+    expect(report.screens?.[0].matchingScreenName).toBe('Existing Screen')
   })
 })
