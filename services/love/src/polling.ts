@@ -17,7 +17,13 @@ import { MeasureContext, Ref, WorkspaceUuid } from '@hcengineering/core'
 import { Person } from '@hcengineering/contact'
 import { MeetingMinutes, parseRoomName } from '@hcengineering/love'
 import { PlatformQueueProducer } from '@hcengineering/server-core'
-import { EgressClient, RoomServiceClient, ParticipantInfo as LiveKitParticipant, Room } from 'livekit-server-sdk'
+import {
+  EgressClient,
+  type EgressInfo,
+  RoomServiceClient,
+  ParticipantInfo as LiveKitParticipant,
+  Room
+} from 'livekit-server-sdk'
 import { WorkspaceClient } from './workspaceClient'
 import { parseMetadata, parseParticipantMetadata, updateMetadata } from './utils'
 import { type BillingMessage } from './queue'
@@ -450,17 +456,31 @@ export class LiveKitPollingService {
    */
   private async stopOrphanEgresses (): Promise<void> {
     if (this.egressClient === undefined) return
+    let active: EgressInfo[]
     try {
-      const active = await this.egressClient.listEgress({ active: true })
-      for (const info of active) {
-        const parsed = parseRoomName(info.roomName ?? '')
-        if (parsed === undefined) continue
-        const startedAtMs = Number(info.startedAt) / 1_000_000
-        if (startedAtMs > 0 && Date.now() - startedAtMs < LiveKitPollingService.ORPHAN_EGRESS_GRACE_MS) continue
+      active = await this.egressClient.listEgress({ active: true })
+    } catch (err: any) {
+      this.ctx.warn('[PollingService] Failed to list active egresses', { error: err?.message ?? String(err) })
+      return
+    }
 
+    const grace = LiveKitPollingService.ORPHAN_EGRESS_GRACE_MS
+    for (const info of active) {
+      const parsed = parseRoomName(info.roomName ?? '')
+      if (parsed === undefined) continue
+      const startedAtMs = Number(info.startedAt) / 1_000_000
+      if (startedAtMs <= 0 || Date.now() - startedAtMs < grace) continue
+
+      // One unreachable workspace must not stop the sweep, and a failed lookup must not read as
+      // "nothing tracks this egress" - that would kill a live recording.
+      try {
         const wsClient = await WorkspaceClient.create(parsed.workspace, this.ctx)
         const tracked = await wsClient.findPendingRecordingsByMeeting(parsed.meetingId)
-        if (tracked.some((it) => it.egressId === info.egressId)) continue
+        // A row still waiting for its egressId belongs to a start that is under way.
+        const claimed = tracked.some(
+          (it) => it.egressId === info.egressId || (it.egressId === undefined && Date.now() - it.startedAt < grace)
+        )
+        if (claimed) continue
 
         this.ctx.warn('[PollingService] Stopping an egress no PendingRecording tracks', {
           egressId: info.egressId,
@@ -468,11 +488,13 @@ export class LiveKitPollingService {
           meetingId: parsed.meetingId
         })
         await this.egressClient.stopEgress(info.egressId)
+      } catch (err: any) {
+        this.ctx.warn('[PollingService] Failed to reconcile an active egress', {
+          egressId: info.egressId,
+          roomName: info.roomName,
+          error: err?.message ?? String(err)
+        })
       }
-    } catch (err: any) {
-      this.ctx.warn('[PollingService] Failed to reconcile active egresses', {
-        error: err?.message ?? String(err)
-      })
     }
   }
 

@@ -441,6 +441,41 @@ describe('orphan egresses', () => {
     expect(egressClient.stopEgress).not.toHaveBeenCalled()
   })
 
+  it('leaves an egress alone while its reservation is still waiting for an egressId', async () => {
+    egressClient.listEgress.mockResolvedValue([egress('EG_starting', GRACE_MS + 1000)])
+    wsClient.findPendingRecordingsByMeeting.mockResolvedValue([{ _id: 'pr-1', startedAt: Date.now() - 1000 }])
+
+    await (service as any).poll()
+
+    expect(egressClient.stopEgress).not.toHaveBeenCalled()
+  })
+
+  it('keeps the egress when the lookup fails instead of reading it as untracked', async () => {
+    egressClient.listEgress.mockResolvedValue([egress('EG_live', GRACE_MS + 1000)])
+    wsClient.findPendingRecordingsByMeeting.mockRejectedValue(new Error('transactor down'))
+
+    await (service as any).poll()
+
+    expect(egressClient.stopEgress).not.toHaveBeenCalled()
+  })
+
+  it('keeps sweeping after one workspace fails', async () => {
+    egressClient.listEgress.mockResolvedValue([
+      {
+        egressId: 'EG_broken',
+        roomName: 'ws-a_meeting-a',
+        startedAt: BigInt((Date.now() - GRACE_MS - 1000) * 1_000_000)
+      },
+      egress('EG_orphan2', GRACE_MS + 1000)
+    ])
+    wsClient.findPendingRecordingsByMeeting.mockRejectedValueOnce(new Error('workspace gone')).mockResolvedValue([])
+
+    await (service as any).poll()
+
+    expect(egressClient.stopEgress).toHaveBeenCalledTimes(1)
+    expect(egressClient.stopEgress).toHaveBeenCalledWith('EG_orphan2')
+  })
+
   it('leaves a fresh egress alone - its row may still be on the way', async () => {
     egressClient.listEgress.mockResolvedValue([egress('EG_fresh', 1000)])
     wsClient.findPendingRecordingsByMeeting.mockResolvedValue([])

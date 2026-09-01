@@ -729,16 +729,9 @@ export class WorkspaceClient {
   /**
    * Find all PendingRecording entries for a given meeting.
    */
+  /** Throws on failure: every caller reads an empty list as "no recording is running". */
   async findPendingRecordingsByMeeting (meeting: Ref<MeetingMinutes>): Promise<PendingRecording[]> {
-    try {
-      return await this.client.findAll(love.class.PendingRecording, { attachedTo: meeting })
-    } catch (err: any) {
-      this.ctx.error('[WorkspaceClient.findPendingRecordingsByMeeting] Failed', {
-        error: err?.message ?? String(err),
-        meeting
-      })
-      return []
-    }
+    return await this.client.findAll(love.class.PendingRecording, { attachedTo: meeting })
   }
 
   /**
