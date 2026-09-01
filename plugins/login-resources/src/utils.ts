@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -166,15 +167,19 @@ export async function signUpOtp (
   try {
     const otpInfo = await getAccountClient(null).signUpOtp(email, first, last, phone)
 
-    Analytics.handleEvent('signUpOtp', { email, ok: true })
+    Analytics.handleEvent(LoginEvents.SignUpOtp, { email, ok: true })
 
     return [OK, otpInfo]
   } catch (err: any) {
     if (err instanceof PlatformError) {
+      Analytics.handleEvent(LoginEvents.SignUpOtp, { email, ok: false })
       await handleStatusError('Sign up error', err.status)
 
       return [err.status, null]
     } else {
+      Analytics.handleEvent(LoginEvents.SignUpOtp, { email, ok: false })
+      Analytics.handleError(err)
+
       return [unknownError(err), null]
     }
   }
