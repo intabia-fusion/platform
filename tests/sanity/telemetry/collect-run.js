@@ -256,7 +256,8 @@ function main () {
     projects.set(r.project ?? '-', p)
   }
 
-  // A test is flaky when it failed at least once and still ended up passing.
+  // A test is flaky when it failed at least once and still ended up passing. Counting attempts
+  // alone overstates it: a serial group is retried whole, so its passing tests get two attempts.
   const byTest = new Map()
   for (const r of runs) {
     const key = `${r.file} :: ${r.title}`
@@ -266,7 +267,7 @@ function main () {
     byTest.set(key, t)
   }
   const flaky = [...byTest.values()]
-    .filter((t) => t.statuses.length > 1 && t.statuses.includes('passed'))
+    .filter((t) => t.statuses.includes('passed') && t.statuses.some((st) => st !== 'passed' && st !== 'skipped'))
     .map((t) => ({ file: t.file, title: t.title, attempts: t.statuses.length, seconds: round(t.duration / 1000) }))
     .sort((a, b) => b.seconds - a.seconds)
   const failed = [...byTest.values()]

@@ -251,7 +251,8 @@ function main () {
   table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
   th, td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--line); }
   th { color: var(--muted); font-weight: 500; }
-  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  th.num, td.num { text-align: right; }
+  td.num { font-variant-numeric: tabular-nums; }
   .wrap { overflow-x: auto; }
   .empty { color: var(--muted); font-style: italic; }
 </style>

@@ -248,11 +248,26 @@ export class PlanningPage extends CalendarPage {
         : this.inputPanelCreateDescription().fill(data.description))
     }
     if (data.duedate != null) {
-      await (popup ? this.buttonPopupCreateDueDate().click() : this.buttonPanelCreateDueDate().click())
-      if (data.duedate === 'today') {
-        await this.clickButtonDatePopupToday()
+      const setDueDate = async (): Promise<void> => {
+        await (popup ? this.buttonPopupCreateDueDate().click() : this.buttonPanelCreateDueDate().click())
+        if (data.duedate === 'today') {
+          await this.clickButtonDatePopupToday()
+        } else {
+          await this.selectMenuItem(this.page, data.duedate as string)
+        }
+      }
+      if (popup || data.duedate !== 'today') {
+        await setDueDate()
       } else {
-        await this.selectMenuItem(this.page, data.duedate)
+        // A click into a still-mounting popup selects nothing and reports success, leaving the
+        // seeded date in place - the test then only passed on a stand a previous run had edited.
+        const now = new Date()
+        const today = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`
+        await expect(async () => {
+          if (((await this.textPanelDueDate().textContent()) ?? '').includes(today)) return
+          await setDueDate()
+          await expect(this.textPanelDueDate()).toContainText(today, { timeout: 3000 })
+        }).toPass({ intervals: retryIntervals, timeout: 30000 })
       }
     }
     if (data.priority != null) {
@@ -369,25 +384,33 @@ export class PlanningPage extends CalendarPage {
     // slot fits one day. Once it spans two days that click merely focuses the field and a separate
     // date button appears, so date and time have to be set one by one.
     const endContainer = row.locator('div.dateEditor-container.difference')
-    const endDateButton = endContainer.locator('button.hulyButton')
-    if ((await endDateButton.count()) === 0) {
-      await endContainer.locator('div.hulyButton').click()
-      await this.fillSelectDatePopup(slot.dateEnd.day, slot.dateEnd.month, slot.dateEnd.year, slot.timeEnd)
-      return
-    }
+    const endShown = endContainer.locator('.hulyButton > div:first-child')
+    const wanted = `${slot.timeEnd.substring(0, 2)} : ${slot.timeEnd.substring(2)}`
 
-    await endDateButton.click()
-    // Picks the day within the month already shown - callers only ever use the current month.
-    // Add month navigation here if a test ever needs an end date outside it.
-    await this.page
-      .locator('div.popup div.calendar button.day')
-      .filter({ has: this.page.locator(`text="${slot.dateEnd.day}"`) })
-      .click()
-    const endDigits = endContainer.locator('div.hulyButton span.digit')
-    await endDigits.first().focus()
-    await endDigits.first().pressSequentially(slot.timeEnd.substring(0, 2), { delay: 100 })
-    await endDigits.last().focus()
-    await endDigits.last().pressSequentially(slot.timeEnd.substring(2), { delay: 100 })
+    // The typing silently does nothing when it lands on a field that is still settling, and the
+    // slot then keeps its default end - a 07:00-13:30 slot instead of 07:00-08:00.
+    await expect(async () => {
+      if (((await endShown.first().textContent()) ?? '').trim() === wanted) return
+      const endDateButton = endContainer.locator('button.hulyButton')
+      if ((await endDateButton.count()) === 0) {
+        await endContainer.locator('div.hulyButton').click()
+        await this.fillSelectDatePopup(slot.dateEnd.day, slot.dateEnd.month, slot.dateEnd.year, slot.timeEnd)
+      } else {
+        await endDateButton.click()
+        // Picks the day within the month already shown - callers only ever use the current month.
+        // Add month navigation here if a test ever needs an end date outside it.
+        await this.page
+          .locator('div.popup div.calendar button.day')
+          .filter({ has: this.page.locator(`text="${slot.dateEnd.day}"`) })
+          .click()
+        const endDigits = endContainer.locator('div.hulyButton span.digit')
+        await endDigits.first().focus()
+        await endDigits.first().pressSequentially(slot.timeEnd.substring(0, 2), { delay: 100 })
+        await endDigits.last().focus()
+        await endDigits.last().pressSequentially(slot.timeEnd.substring(2), { delay: 100 })
+      }
+      await expect(endShown.first()).toHaveText(wanted, { timeout: 3000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
   }
 
   private async checkTimeSlot (rowNumber: number, slot: Slot, popup: boolean = false): Promise<void> {
@@ -502,15 +525,14 @@ export class PlanningPage extends CalendarPage {
     const events = this.page.locator('div.calendar-element > div.event-container >> div[class*="label"]', {
       hasText: toDoName
     })
-    // The calendar keeps a stale event after a slot change (UBERF-4273, which the test already
-    // reloads around for the add path). Reload once rather than fail on a view that is only out of
-    // date - what has to hold is the state after the reload.
-    try {
-      await expect(events).toHaveCount(count, { timeout: 7000 })
-    } catch {
-      await this.page.reload()
-      await expect(events).toHaveCount(count, { timeout: 15000 })
-    }
+    // The calendar keeps a stale event after a slot change (UBERF-4273), and one reload is not
+    // always enough under parallel load - reload until the view catches up.
+    await expect(async () => {
+      await expect(events).toHaveCount(count, { timeout: 7000 }).catch(async (err) => {
+        await this.page.reload()
+        throw err
+      })
+    }).toPass({ intervals: [1000, 2000, 3000], timeout: 45000 })
   }
 
   /**
