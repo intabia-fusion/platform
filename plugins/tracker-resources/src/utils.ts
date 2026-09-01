@@ -655,7 +655,7 @@ export function reportedTimeApplier (
           const tx: TxCreateDoc<TimeSpendReportDoc> = {
             _id: generateId(),
             _class: core.class.TxCreateDoc,
-            objectId: report._id,
+            objectId: String(report._id).startsWith('draft_') ? generateId() : report._id,
             objectClass: tracker.class.TimeSpendReport,
             objectSpace: doc.space,
             space: core.space.Tx,
