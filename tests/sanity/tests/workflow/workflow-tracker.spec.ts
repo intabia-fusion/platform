@@ -67,7 +67,7 @@ test.describe('Workflow in tracker', () => {
     await workflows.createWorkflow(workflowName)
     await workflows.openWorkflow(workflowName)
     await workflows.addTransition('Plan', ['Backlog'], 'Todo')
-    await workflows.addTransition('Start', ['Todo'], 'New state')
+    await workflows.addTransition('Start', ['Todo'], 'In Progress')
   })
 
   test.afterAll(async () => {
@@ -123,8 +123,8 @@ test.describe('Workflow in tracker', () => {
     const options = await page.locator('div.selectPopup div.list-item span.overflow-label').allTextContents()
     await page.keyboard.press('Escape')
     expect(options.map((it) => it.trim())).toEqual(expect.arrayContaining(['Todo']))
-    expect(options.map((it) => it.trim())).not.toContain('Won')
-    expect(options.map((it) => it.trim())).not.toContain('Lost')
+    expect(options.map((it) => it.trim())).not.toContain('Done')
+    expect(options.map((it) => it.trim())).not.toContain('Canceled')
   })
 
   test('applies an allowed transition', async () => {
@@ -138,7 +138,7 @@ test.describe('Workflow in tracker', () => {
       (it) => it.trim()
     )
     await page.keyboard.press('Escape')
-    expect(options).toEqual(expect.arrayContaining(['New state']))
+    expect(options).toEqual(expect.arrayContaining(['In Progress']))
     expect(options).not.toContain('Backlog')
   })
 
@@ -162,6 +162,6 @@ test.describe('Workflow in tracker', () => {
       (it) => it.trim()
     )
     await page.keyboard.press('Escape')
-    expect(options).toEqual(expect.arrayContaining(['Backlog', 'Todo', 'New state', 'Won', 'Lost']))
+    expect(options).toEqual(expect.arrayContaining(['Backlog', 'Todo', 'In Progress', 'Done', 'Canceled']))
   })
 })
