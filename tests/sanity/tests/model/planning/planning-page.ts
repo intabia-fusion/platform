@@ -528,10 +528,12 @@ export class PlanningPage extends CalendarPage {
     // The calendar keeps a stale event after a slot change (UBERF-4273), and one reload is not
     // always enough under parallel load - reload until the view catches up.
     await expect(async () => {
-      await expect(events).toHaveCount(count, { timeout: 7000 }).catch(async (err) => {
-        await this.page.reload()
-        throw err
-      })
+      await expect(events)
+        .toHaveCount(count, { timeout: 7000 })
+        .catch(async (err) => {
+          await this.page.reload()
+          throw err
+        })
     }).toPass({ intervals: [1000, 2000, 3000], timeout: 45000 })
   }
 
