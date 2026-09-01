@@ -20,6 +20,7 @@ import {
   clickRoomByName,
   closeMeetingContexts,
   knockAndWaitPending,
+  loveWindow,
   openLove,
   openMeetingMinutes,
   startOrJoin,
@@ -55,14 +56,9 @@ export function registerScenariosTests (): void {
     }) => {
       test.setTimeout(60000)
 
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await openLove(page2)
-        await openLove(page3)
-
         const room = await clickFirstAvailableRoom(page2)
         test.skip(room === null, 'No regular room available')
         await startOrJoin(page2)
@@ -92,17 +88,10 @@ export function registerScenariosTests (): void {
     test('non-owner of a private meeting cannot invite — recipient gets nothing', async ({ browser }) => {
       test.setTimeout(60000)
 
-      const ctx1 = await browser.newContext({ storageState: '.auth/storage.json' }) // user1 (workspace owner, but not the meeting owner)
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page1 = await ctx1.newPage()
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx1, page: page1 } = await loveWindow(browser, 'first') // user1 (workspace owner, but not the meeting owner)
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await openLove(page1)
-        await openLove(page2)
-        await openLove(page3)
-
         // user2 starts a public meeting and invites user3 to bring them into members
         const room = await clickFirstAvailableRoom(page2)
         test.skip(room === null, 'No regular room available')
@@ -147,17 +136,10 @@ export function registerScenariosTests (): void {
     }) => {
       test.setTimeout(60000)
 
-      const ctx1 = await browser.newContext({ storageState: '.auth/storage.json' })
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page1 = await ctx1.newPage()
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx1, page: page1 } = await loveWindow(browser, 'first')
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await openLove(page1)
-        await openLove(page2)
-        await openLove(page3)
-
         const room = await clickFirstAvailableRoom(page2)
         test.skip(room === null, 'No regular room available')
         await startOrJoin(page2)
@@ -199,14 +181,9 @@ export function registerScenariosTests (): void {
     }) => {
       test.setTimeout(60000)
 
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await openLove(page2)
-        await openLove(page3)
-
         const room = await clickFirstAvailableRoom(page2)
         test.skip(room === null, 'No regular room available')
         await startOrJoin(page2)
@@ -235,10 +212,8 @@ export function registerScenariosTests (): void {
     }) => {
       test.setTimeout(60000)
 
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
 
       // Auto-join gives up silently (`joinOrCreateMeetingByInvite` returns false and only warns),
       // and the knocker is left with a manual Join button - which reads as a bare timeout here.

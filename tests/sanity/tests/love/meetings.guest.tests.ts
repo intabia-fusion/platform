@@ -18,6 +18,7 @@ import { expect, test, type Page } from '@playwright/test'
 import {
   clickFirstAvailableRoom,
   closeMeetingContexts,
+  loveWindow,
   occupiedCells,
   openLove,
   startOrJoin,
@@ -95,10 +96,9 @@ export function registerGuestTests (): void {
       test.setTimeout(60000)
 
       // Host context — must already have storage state with login.
-      const hostCtx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
       // Guest context — fully anonymous (no storage, no token).
       const guestCtx = await browser.newContext({ storageState: undefined })
-      const host = await hostCtx.newPage()
+      const { ctx: hostCtx, page: host } = await loveWindow(browser, 'second')
       const guest = await guestCtx.newPage()
 
       // Surfaces guest-side runtime errors in the failure, so a signal-connection
@@ -159,12 +159,10 @@ export function registerGuestTests (): void {
 
     test('guest shows up as a participant for the host and disappears on leave', async ({ browser }) => {
       test.setTimeout(90000)
-      const hostCtx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
       const guestCtx = await browser.newContext({ storageState: undefined })
-      const host = await hostCtx.newPage()
+      const { ctx: hostCtx, page: host } = await loveWindow(browser, 'second')
       const guest = await guestCtx.newPage()
       try {
-        await openLove(host)
         const room = await clickFirstAvailableRoom(host)
         test.skip(room === null, 'No regular room available for guest test')
         await startOrJoin(host)
@@ -195,14 +193,12 @@ export function registerGuestTests (): void {
 
     test('two guests on the same link land in the same meeting', async ({ browser }) => {
       test.setTimeout(120000)
-      const hostCtx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
       const g1Ctx = await browser.newContext({ storageState: undefined })
       const g2Ctx = await browser.newContext({ storageState: undefined })
-      const host = await hostCtx.newPage()
+      const { ctx: hostCtx, page: host } = await loveWindow(browser, 'second')
       const g1 = await g1Ctx.newPage()
       const g2 = await g2Ctx.newPage()
       try {
-        await openLove(host)
         const room = await clickFirstAvailableRoom(host)
         test.skip(room === null, 'No regular room available for guest test')
         await startOrJoin(host)
@@ -229,12 +225,10 @@ export function registerGuestTests (): void {
 
     test('guest link is refused once the meeting has finished', async ({ browser }) => {
       test.setTimeout(120000)
-      const hostCtx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
       const guestCtx = await browser.newContext({ storageState: undefined })
-      const host = await hostCtx.newPage()
+      const { ctx: hostCtx, page: host } = await loveWindow(browser, 'second')
       const guest = await guestCtx.newPage()
       try {
-        await openLove(host)
         const room = await clickFirstAvailableRoom(host)
         test.skip(room === null, 'No regular room available for guest test')
         await startOrJoin(host)

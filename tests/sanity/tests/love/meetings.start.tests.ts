@@ -15,7 +15,7 @@
 
 import { expect, test, type Page } from '@playwright/test'
 import { PlatformSetting } from '../utils'
-import { openLove } from './meeting-helpers'
+import { loveWindow, openLove } from './meeting-helpers'
 
 async function clickFirstAvailableRegularRoom (page: Page): Promise<string | null> {
   const candidates = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
@@ -46,11 +46,8 @@ export function registerStartTests (): void {
       page
     }) => {
       await openLove(page)
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page2 = await ctx.newPage()
+      const { ctx, page: page2 } = await loveWindow(browser, 'second')
       try {
-        await openLove(page2)
-
         const name = await clickFirstAvailableRegularRoom(page)
         test.skip(name === null, 'No regular room available')
         const connect = page.getByRole('button', { name: /Start meeting|Join meeting/i }).first()

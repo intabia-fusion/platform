@@ -15,7 +15,7 @@
 
 import { expect, test } from '@playwright/test'
 
-import { closeMeetingContexts, openLove, waitConnected, waitForActiveMeetingsToFinish } from './meeting-helpers'
+import { closeMeetingContexts, loveWindow, waitConnected, waitForActiveMeetingsToFinish } from './meeting-helpers'
 
 /**
  * Reverse call: the caller is in no meeting yet and invites from the recipient's office cell.
@@ -35,16 +35,12 @@ export function registerClientCreateTests (): void {
 
       // Caller = storageSecond (Dirak Kainin), Recipient = storageThird
       // (Muram Muffin). Both have a personal Office in the seeded floor.
-      const callerCtx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const recipientCtx = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const caller = await callerCtx.newPage()
-      const recipient = await recipientCtx.newPage()
+      const { ctx: callerCtx, page: caller } = await loveWindow(browser, 'second')
+      const { ctx: recipientCtx, page: recipient } = await loveWindow(browser, 'third')
 
       try {
         // Recipient logs in first so they appear "online" — their avatar in
         // the office cell is what the caller will click.
-        await openLove(recipient)
-        await openLove(caller)
 
         // The avatar sits at the office's (0,0) seat and opens PersonActionPopup with Invite.
         const muramOffice = caller.locator('div.floorGrid-room').filter({ hasText: /Muram/i }).first()

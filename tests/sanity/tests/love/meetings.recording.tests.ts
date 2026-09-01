@@ -29,6 +29,7 @@ import {
   getSystemRestClient,
   joinRoom,
   loveEndpoint,
+  loveWindow,
   openLove,
   waitForActiveMeetingsToFinish,
   waitRoomMeeting
@@ -68,10 +69,8 @@ export function registerRecordingTests (): void {
     test('recording start writes a PendingRecording and a plate, stop clears both', async ({ browser }) => {
       test.setTimeout(180000)
 
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page = await ctx.newPage()
+      const { ctx, page } = await loveWindow(browser, 'second')
       try {
-        await openLove(page)
         const roomName = await firstAvailableRoom(page)
         test.skip(roomName === null, 'No regular room available')
         await joinRoom(page, roomName as string)
@@ -106,8 +105,7 @@ export function registerRecordingTests (): void {
     test('two concurrent /startRecord calls produce a single recording', async ({ browser }) => {
       test.setTimeout(180000)
 
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page = await ctx.newPage()
+      const { ctx, page } = await loveWindow(browser, 'second')
       let meeting: MeetingMinutes | undefined
       try {
         await openLove(page)
@@ -156,10 +154,8 @@ export function registerRecordingTests (): void {
     test('transcription toggle flips transcriptionState both ways', async ({ browser }) => {
       test.setTimeout(120000)
 
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page = await ctx.newPage()
+      const { ctx, page } = await loveWindow(browser, 'second')
       try {
-        await openLove(page)
         const roomName = await firstAvailableRoom(page)
         test.skip(roomName === null, 'No regular room available')
         await joinRoom(page, roomName as string)

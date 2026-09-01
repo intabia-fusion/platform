@@ -24,7 +24,7 @@ import love, {
 import { generateToken } from '@hcengineering/server-token'
 import { PlatformURI, PlatformUserSecond } from '../utils'
 import { retryIntervals } from '../retry'
-import { expect, type BrowserContext, type Locator, type Page } from '@playwright/test'
+import { expect, type Browser, type BrowserContext, type Locator, type Page } from '@playwright/test'
 import { OfficePage } from '../model/love/office-page'
 
 const MEETINGS_WS = 'meetings-ws'
@@ -101,7 +101,7 @@ async function drainPendingInvites (): Promise<void> {
 
 /** Force-finishes every non-Finished meeting through the transactor: the `room_finished`
  *  webhook is not the path tests care about, and a leftover Scheduled one hijacks Connect. */
-async function forceFinishAllMeetings (): Promise<void> {
+async function forceFinishAllMeetings (): Promise<number> {
   try {
     const sys = await getSystemRestClient()
     const [meetings, participants] = await Promise.all([
@@ -121,16 +121,21 @@ async function forceFinishAllMeetings (): Promise<void> {
       ),
       ...participants.map((p) => sys.removeDoc(love.class.ParticipantInfo, p.space, p._id).catch(() => undefined))
     ])
+    return meetings.length + participants.length
   } catch {
     // Best-effort; polling loop below covers the slow path.
+    return 0
   }
 }
 
-/** Waits until no meeting is Active or Pending: a leftover one carries its owners and
- *  members into the next test and breaks owner-only and locked-room checks. */
-export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise<void> {
+/**
+ * Waits until no meeting is Active or Pending: a leftover one carries its owners and members into
+ * the next test and breaks owner-only and locked-room checks. Returns whether anything had to be
+ * finished - a client watching such a meeting navigates to its MeetingMinutes shortly after.
+ */
+export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise<boolean> {
   const client = await getMeetingsRestClient()
-  await Promise.all([forceFinishAllMeetings(), drainPendingInvites()])
+  const [finished] = await Promise.all([forceFinishAllMeetings(), drainPendingInvites()])
   const deadline = Date.now() + timeoutMs
   let left = 'nothing'
   while (Date.now() < deadline) {
@@ -147,13 +152,14 @@ export async function waitForActiveMeetingsToFinish (timeoutMs = 20000): Promise
       // one.
       client.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, {}, { limit: 1 })
     ])
-    if (meetings.length === 0 && participants.length === 0 && invites.length === 0) return
+    if (meetings.length === 0 && participants.length === 0 && invites.length === 0) return finished > 0
     left = `meetings=${meetings.length} participants=${participants.length} invites=${invites.length}`
     await new Promise((resolve) => setTimeout(resolve, 150))
   }
   // Falling out of the loop leaves the next test on dirty state - it then fails seconds later on
   // some unrelated locator with nothing pointing back here.
   console.warn(`[love] cleanup did not settle in ${timeoutMs}ms, still there: ${left}`)
+  return true
 }
 
 // `sendKnockRequest` returns silently until the employee and their space resolve, so an early
@@ -169,16 +175,28 @@ export async function knockAndWaitPending (page: Page, timeoutMs = 30000): Promi
 }
 
 /** Closes pages and contexts in `finally`. A half-closed LiveKit session causes DTLS
- *  handshake timeouts on the next connect. */
+ *  handshake timeouts on the next connect. Windows from `loveWindow` are shared by the whole
+ *  suite: those are rolled back instead of closed. */
 export async function closeMeetingContexts (entries: Array<{ ctx: BrowserContext, pages: Page[] }>): Promise<void> {
+  const sharedCtx = new Set<BrowserContext>()
+  const sharedPage = new Set<Page>()
+  for (const w of loveWindows.values()) {
+    sharedCtx.add(w.ctx)
+    sharedPage.add(w.page)
+  }
   // In parallel: the sequential loop cost 200-400ms per context, and the webhook that
   // `Page.close` triggers fires asynchronously anyway.
-  const allPages = entries.flatMap((e) => e.pages)
+  const allPages = entries.flatMap((e) => e.pages).filter((p) => !sharedPage.has(p))
   await Promise.all(allPages.map((p) => p.close().catch(() => undefined)))
-  await Promise.all(entries.map(({ ctx }) => ctx.close().catch(() => undefined)))
+  await Promise.all(
+    entries
+      .map(({ ctx }) => ctx)
+      .filter((ctx) => !sharedCtx.has(ctx))
+      .map((ctx) => ctx.close().catch(() => undefined))
+  )
   // Wait for `room_finished` and its ParticipantInfo cleanup, or the next test sees the
   // owner as "still in a meeting" and the floor grid misses their office.
-  await waitForActiveMeetingsToFinish()
+  await resetLoveWindows()
 }
 
 export const ROOM_CANDIDATES = ['Meeting Room 1', 'Meeting Room 2', 'All hands', 'Voice only room']
@@ -201,6 +219,133 @@ export async function openLove (page: Page): Promise<OfficePage> {
   await (await page.goto(`${PlatformURI}/workbench/${MEETINGS_WS}/love`))?.finished()
   await expect(office.floorGrid()).toBeVisible({ timeout: 15000 })
   return office
+}
+
+export type LoveUser = 'first' | 'second' | 'third'
+
+const LOVE_STORAGE: Record<LoveUser, string> = {
+  first: '.auth/storage.json',
+  second: '.auth/storageSecond.json',
+  third: '.auth/storageThird.json'
+}
+
+export interface LoveWindow {
+  ctx: BrowserContext
+  page: Page
+}
+
+const loveWindows = new Map<LoveUser, LoveWindow>()
+
+/**
+ * One window per user, kept for the whole suite and already sitting on the floor. A fresh context
+ * costs a full SPA boot - 129ms of navigation plus 845ms until the floor grid paints - and the
+ * suite opened 92 of them, a quarter of its wall time. The love project runs sequentially, so a
+ * shared window is safe; `closeMeetingContexts` rolls it back instead of closing it.
+ */
+export async function loveWindow (browser: Browser, user: LoveUser): Promise<LoveWindow> {
+  const existing = loveWindows.get(user)
+  if (existing !== undefined && !existing.page.isClosed()) {
+    await ensureOffice(existing.page)
+    return existing
+  }
+  const ctx = await browser.newContext({ storageState: LOVE_STORAGE[user] })
+  const page = await ctx.newPage()
+  const win = { ctx, page }
+  loveWindows.set(user, win)
+  await openLove(page)
+  return win
+}
+
+/** Back to the floor. Already there means the app is booted, which is the whole point. */
+async function ensureOffice (page: Page): Promise<void> {
+  if (onOffice(page)) {
+    await expect(new OfficePage(page).floorGrid()).toBeVisible({ timeout: 15000 })
+    return
+  }
+  await openLove(page)
+}
+
+/** A modal a test left open covers the leave button, and the click is then swallowed. */
+async function dismissPopups (page: Page): Promise<void> {
+  const open = page.locator('.hulyModal-container, .antiPopup, .modal-overlay').locator('visible=true')
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if ((await open.count().catch(() => 0)) === 0) return
+    await page.keyboard.press('Escape').catch(() => undefined)
+  }
+}
+
+/**
+ * Leaves whatever meeting the window is in. Closing the context used to do this implicitly; a
+ * live LiveKit session left behind is force-finished by the server instead, and the client then
+ * navigates to the MeetingMinutes page in the middle of the next test.
+ * Returns whether there was one - only such a window can be navigated away later.
+ */
+async function leaveMeeting (page: Page): Promise<boolean> {
+  if (page.isClosed()) return false
+  await dismissPopups(page)
+  const leave = page.locator('[data-id="meeting-leave"]').first()
+  if (!(await leave.isVisible().catch(() => false))) return false
+  try {
+    // Retried as a whole: a popup can reopen between the dismiss and the click.
+    await expect(async () => {
+      if ((await connectedMarker(page).count()) === 0) return
+      await dismissPopups(page)
+      await leave.click({ timeout: 5000 })
+      expect(await connectedMarker(page).count()).toBe(0)
+    }).toPass({ intervals: retryIntervals, timeout: 20000 })
+  } catch {
+    // The server-side cleanup is the backstop.
+  }
+  return true
+}
+
+function onOffice (page: Page): boolean {
+  return /\/love(\?|#|$|\/)/.test(page.url())
+}
+
+/**
+ * Puts the window back on the floor and keeps it there. Finishing a meeting makes its client
+ * navigate to the MeetingMinutes page, and that navigation lands after the server call returns -
+ * restoring the floor once is not enough, the next test then clicks a room that is not on screen.
+ */
+async function settleOnOffice (page: Page, mayNavigate: boolean): Promise<void> {
+  if (page.isClosed()) return
+  await dismissPopups(page)
+  if (!mayNavigate) {
+    await ensureOffice(page).catch(() => undefined)
+    return
+  }
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await ensureOffice(page).catch(() => undefined)
+    // The client reacts to the finish over its websocket, so the navigation lands in tens of ms;
+    // this is paid on every window of every test, so it stays as short as it can be.
+    await page.waitForTimeout(150)
+    if (onOffice(page)) return
+  }
+  await ensureOffice(page).catch(() => undefined)
+}
+
+/** Per-test teardown: leave meetings, drain the server, then restore the floor - in that order. */
+export async function resetLoveWindows (): Promise<void> {
+  const left = new Map<Page, boolean>()
+  for (const { page } of loveWindows.values()) {
+    left.set(page, await leaveMeeting(page))
+  }
+  // A test that left through the UI still leaves the meeting doc behind, and finishing it here is
+  // what makes its client navigate away - so the late navigation follows the server change, not
+  // the UI leave, and every window has to be watched when the cleanup changed anything.
+  const finished = await waitForActiveMeetingsToFinish()
+  for (const { page } of loveWindows.values()) {
+    await settleOnOffice(page, finished || (left.get(page) ?? false))
+  }
+}
+
+/** Suite teardown. */
+export async function closeLoveWindows (): Promise<void> {
+  const entries = [...loveWindows.values()]
+  loveWindows.clear()
+  await Promise.all(entries.map(({ page }) => page.close().catch(() => undefined)))
+  await Promise.all(entries.map(({ ctx }) => ctx.close().catch(() => undefined)))
 }
 
 /** Either surface counts as connected, so this also covers a meeting opened in the main area. */

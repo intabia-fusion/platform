@@ -19,7 +19,7 @@ import {
   clickFirstAvailableRoom,
   clickRoomByName,
   closeMeetingContexts,
-  openLove,
+  loveWindow,
   openMeetingMinutes,
   startOrJoin,
   waitConnected,
@@ -40,15 +40,10 @@ export function registerWorkspaceOwnerTests (): void {
     test('workspace owner can self-join a private meeting hosted by another user', async ({ browser }) => {
       test.setTimeout(90000)
 
-      const ctx1 = await browser.newContext({ storageState: '.auth/storage.json' }) // workspace owner (user1)
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' }) // meeting owner (user2)
-      const page1 = await ctx1.newPage()
-      const page2 = await ctx2.newPage()
+      const { ctx: ctx1, page: page1 } = await loveWindow(browser, 'first') // workspace owner (user1)
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second') // meeting owner (user2)
 
       try {
-        await openLove(page1)
-        await openLove(page2)
-
         // user2 starts a public meeting and becomes its owner.
         const room = await clickFirstAvailableRoom(page2)
         test.skip(room === null, 'No regular room available')

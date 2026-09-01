@@ -16,6 +16,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import {
   clickOfficeOf,
+  closeLoveWindows,
   closeMeetingContexts,
   connectedMarker,
   knockAndWaitPending,
@@ -36,8 +37,17 @@ async function connectToOwnOffice (page: Page): Promise<void> {
   await expect.poll(async () => await connectedMarker(page).count(), { timeout: 30000 }).toBeGreaterThan(0)
 }
 
+// Own contexts, not the shared windows: the test reloads the host mid-meeting, the same shape
+// that made `refresh-reconnect` flaky on a reused window (90s timeout, then green on retry).
 export function registerHostRefreshTests (): void {
   test.describe('meeting minutes - office owner refresh', () => {
+    // The shared windows hold a live session for the same accounts this test signs in as, and two
+    // sessions per user break presence and departure checks. Drop them; the next shared test pays
+    // one boot to get its window back.
+    test.beforeAll(async () => {
+      await closeLoveWindows()
+    })
+
     test.beforeEach(async () => {
       await waitForActiveMeetingsToFinish()
     })

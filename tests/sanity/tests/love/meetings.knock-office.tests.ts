@@ -19,7 +19,7 @@ import {
   clickOfficeOf,
   closeMeetingContexts,
   knockAndWaitPending,
-  openLove,
+  loveWindow,
   waitConnected,
   waitForActiveMeetingsToFinish
 } from './meeting-helpers'
@@ -49,16 +49,11 @@ export function registerKnockOfficeTests (): void {
 
       // Owner — uses storageSecond. The personal office is named after this
       // person, so we filter the floor grid by their last name to find it.
-      const ownerCtx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
       // Knocker — a different account. Storage third has a separate person.
-      const knockerCtx = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const owner = await ownerCtx.newPage()
-      const knocker = await knockerCtx.newPage()
+      const { ctx: ownerCtx, page: owner } = await loveWindow(browser, 'second')
+      const { ctx: knockerCtx, page: knocker } = await loveWindow(browser, 'third')
 
       try {
-        await openLove(owner)
-        await openLove(knocker)
-
         // The office has `startPrivate: true`, so the meeting is private - the precondition for
         // the knock flow.
         const ownerLast = 'Dirak'

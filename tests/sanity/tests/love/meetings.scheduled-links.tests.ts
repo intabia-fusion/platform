@@ -28,6 +28,7 @@ import { retryIntervals } from '../retry'
 import {
   closeMeetingContexts,
   getSystemRestClient,
+  loveWindow,
   openLove,
   waitConnected,
   waitForActiveMeetingsToFinish
@@ -155,10 +156,8 @@ export function registerScheduledLinksTests (): void {
       const meetingId = await createScheduledMeeting(client, 'Meeting Room 1', 60 * 60 * 1000)
 
       // Same account as the REST client above (PlatformUserSecond).
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page = await ctx.newPage()
+      const { ctx, page } = await loveWindow(browser, 'second')
       try {
-        await openLove(page)
         await clickRoom(page, 'Meeting Room 1')
         await startMeeting(page)
         await waitConnected(page)

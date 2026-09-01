@@ -27,6 +27,7 @@ import {
   firstAvailableRoom,
   getSystemRestClient,
   joinRoom,
+  loveWindow,
   openLove,
   waitForActiveMeetingsToFinish
 } from './meeting-helpers'
@@ -44,8 +45,7 @@ export function registerScheduledConnectTests (): void {
     }) => {
       test.setTimeout(60000)
 
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page = await ctx.newPage()
+      const { ctx, page } = await loveWindow(browser, 'second')
       const sys = await getSystemRestClient()
       let scheduledId: Ref<MeetingMinutes> | undefined
 

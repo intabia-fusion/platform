@@ -15,7 +15,13 @@
 
 import { expect, test, type Page } from '@playwright/test'
 
-import { closeMeetingContexts, openLove, waitConnected, waitForActiveMeetingsToFinish } from './meeting-helpers'
+import {
+  closeMeetingContexts,
+  loveWindow,
+  openLove,
+  waitConnected,
+  waitForActiveMeetingsToFinish
+} from './meeting-helpers'
 
 async function waitDisconnected (page: Page): Promise<void> {
   await expect(page.locator('[data-id="meeting-widget"]')).toBeHidden({ timeout: 30000 })
@@ -61,15 +67,10 @@ export function registerBidirectionalLoopTests (): void {
     test('back-to-back: Dirak -> Muram, then Muram -> Dirak — both auto-join', async ({ browser }) => {
       test.setTimeout(180000)
 
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
 
       try {
-        await openLove(page2)
-        await openLove(page3)
-
         await test.step('forward: Dirak -> Muram', async () => {
           await callPerson(page2, /Muram/i)
           await acceptIncoming(page3)

@@ -16,7 +16,13 @@
 import { expect, test, type Page } from '@playwright/test'
 import core from '@hcengineering/core'
 import love, { type DevicesPreference } from '@hcengineering/love'
-import { closeMeetingContexts, getMeetingsUser, joinFirstAvailableRoom, openLove } from './meeting-helpers'
+import {
+  closeLoveWindows,
+  closeMeetingContexts,
+  getMeetingsUser,
+  joinFirstAvailableRoom,
+  openLove
+} from './meeting-helpers'
 
 interface MicRequest {
   deviceId: string | null
@@ -95,8 +101,17 @@ async function setStartMuted (muted: boolean): Promise<() => Promise<void>> {
   }
 }
 
+// Own contexts, not the shared windows: `installMediaShim` is an addInitScript that replaces
+// enumerateDevices, and it cannot be removed from a window later tests keep using.
 export function registerDeviceTests (): void {
   test.describe('meeting minutes - audio device selection', () => {
+    // The shared windows hold a live session for the same accounts this test signs in as, and two
+    // sessions per user break presence and departure checks. Drop them; the next shared test pays
+    // one boot to get its window back.
+    test.beforeAll(async () => {
+      await closeLoveWindows()
+    })
+
     test('muted join still publishes the stored microphone on unmute', async ({ browser }) => {
       test.setTimeout(90000)
       const restore = await setStartMuted(true)
