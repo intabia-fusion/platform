@@ -211,7 +211,8 @@
     "NewSubIssue": "Aggiungi subissue...",
     "AddLabel": "Aggiungi etichetta",
     "DeleteIssue": "Elimina {issueCount, plural, =1 {issue} other {# issue}}",
-    "DeleteIssueConfirm": "Vuoi eliminare {issueCount, plural, =1 {issue} other {issue}}{subIssueCount, plural, =0 {?} =1 { e subissue?} other { e subissue?}}",
+    "DeleteIssueConfirm": "Vuoi davvero eliminare {issueCount, plural, =1 {l'attività} one {# attività} other {# attività}}?",
+    "DeleteIssueWithSubIssuesConfirm": "{subIssueCount, plural, one {La seguente sottoattività sarà scollegata dall'attività genitore} other {Le seguenti sottoattività saranno scollegate dall'attività genitore}}:",
     "Milestone": "Traguardo",
     "NoMilestone": "Nessun traguardo",
     "MoveToMilestone": "Seleziona traguardo",
@@ -303,7 +304,9 @@
     "AddedRelation": "Issue correlata aggiunta {identifier}{value}",
     "RemovedRelation": "Issue correlata rimossa {identifier}{value}",
     "CreateAndOpen": "Crea e apri",
-    "CreateAndNew": "Crea e inizia una nuova"
+    "CreateAndNew": "Crea e inizia una nuova",
+    "ExportToCSV": "Esporta in CSV",
+    "ExportToCSVTooltip": "Esporta le attività visibili in file CSV"
   },
   "status": {},
   "emailTemplate": {

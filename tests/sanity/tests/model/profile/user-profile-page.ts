@@ -1,4 +1,5 @@
 import { expect, Page, Locator } from '@playwright/test'
+import { retryIntervals } from '../../retry'
 
 export class UserProfilePage {
   private readonly page: Page
@@ -60,7 +61,7 @@ export class UserProfilePage {
     await expect(async () => {
       if ((await this.settings().count()) === 0) await this.openProfileMenu()
       await this.settings().click({ timeout: 5000 })
-    }).toPass({ intervals: [300, 1000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
   }
 
   async clickConfigure (): Promise<void> {

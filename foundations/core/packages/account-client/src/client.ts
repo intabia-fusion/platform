@@ -113,7 +113,7 @@ export interface AccountClient {
     navigateUrl?: string,
     expHours?: number
   ) => Promise<string>
-  leaveWorkspace: (account: AccountUuid) => Promise<LoginInfo | null>
+  leaveWorkspace: (account: AccountUuid, otpCode?: string) => Promise<LoginInfo | null>
   changeUsername: (first: string, last: string) => Promise<void>
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>
   signUpJoin: (
@@ -176,7 +176,9 @@ export interface AccountClient {
   ) => Promise<{ guestPerson: Person, guestSocialIds: SocialId[] } | undefined>
   updateAllowGuestSignUp: (guestSignUpAllowed: boolean) => Promise<void>
   updateWorkspaceName: (name: string) => Promise<void>
-  deleteWorkspace: () => Promise<void>
+  deleteWorkspace: (otpCode: string) => Promise<void>
+  /** Sends a confirmation code to the caller's verified email. */
+  requestOperationOtp: () => Promise<OtpInfo>
   findPersonBySocialKey: (socialKey: string, requireAccount?: boolean) => Promise<PersonUuid | undefined>
   findPersonBySocialId: (socialId: PersonId, requireAccount?: boolean) => Promise<PersonUuid | undefined>
   findSocialIdBySocialKey: (socialKey: string) => Promise<PersonId | undefined>
@@ -192,7 +194,8 @@ export interface AccountClient {
     skip?: number,
     limit?: number,
     sort?: AccountsSortKey,
-    filter?: AccountsFilter
+    filter?: AccountsFilter,
+    order?: 'asc' | 'desc'
   ) => Promise<AccountAggregatedInfo[]>
   getTransactorEndpoints: () => Promise<TransactorEndpointInfo[]>
   deleteAccount: (uuid: AccountUuid, otpCode?: string) => Promise<void>
@@ -226,6 +229,16 @@ export interface AccountClient {
   getWorkspaceMembersInfo: (workspace: WorkspaceUuid) => Promise<WorkspaceMemberDetails[]>
   getAccountActivityStats: (account: AccountUuid, from: number) => Promise<AccountActivityStats>
   requestAdminOperationOtp: () => Promise<OtpInfo>
+  /** Consumes the admin second factor and returns a token stamped with `mfaAt`. */
+  verifyAdminSession: (otpCode: string) => Promise<{ account: AccountUuid, token: string }>
+  /** Global maintenance warning; timeoutMinutes < 0 clears it. */
+  adminSetMaintenance: (timeoutMinutes: number, message: string | undefined, otpCode: string) => Promise<void>
+  /** Drops every live session of a workspace on whichever transactor holds it. */
+  adminForceCloseWorkspace: (workspace: WorkspaceUuid, otpCode: string) => Promise<void>
+  /** Records the operator's intent to export a report; the audit entry is the point. */
+  adminConfirmExport: (kind: string, filter: Record<string, any> | undefined, otpCode: string) => Promise<void>
+  /** Read-only session inside a workspace as one of its members. */
+  adminImpersonate: (workspace: WorkspaceUuid, account: AccountUuid, otpCode: string) => Promise<WorkspaceLoginInfo>
   adminUpdateWorkspaceRole: (
     workspace: WorkspaceUuid,
     targetAccount: AccountUuid,
@@ -239,17 +252,19 @@ export interface AccountClient {
     otpCode: string
   ) => Promise<void>
   adminRemoveWorkspaceMember: (workspace: WorkspaceUuid, targetAccount: AccountUuid, otpCode: string) => Promise<void>
-  adminReindexWorkspace: (workspace: WorkspaceUuid) => Promise<void>
-  adminReindexAllWorkspaces: () => Promise<number>
+  adminReindexWorkspace: (workspace: WorkspaceUuid, otpCode: string) => Promise<void>
+  adminReindexAllWorkspaces: (otpCode: string) => Promise<number>
   adminUpdateSubscription: (
     subscriptionId: string,
     otpCode: string,
     seats?: number,
-    periodEndMs?: number
+    periodEndMs?: number,
+    amount?: number,
+    windowMonthLimit?: number
   ) => Promise<void>
   adminCancelSubscription: (subscriptionId: string, otpCode: string) => Promise<void>
-  adminUpdateWorkspaceName: (workspace: WorkspaceUuid, name: string) => Promise<void>
-  adminUpdateWorkspaceDisabledFeatures: (workspace: WorkspaceUuid, features: string[]) => Promise<void>
+  adminUpdateWorkspaceName: (workspace: WorkspaceUuid, name: string, otpCode: string) => Promise<void>
+  adminUpdateWorkspaceDisabledFeatures: (workspace: WorkspaceUuid, features: string[], otpCode: string) => Promise<void>
   adminUpdateWorkspaceUrl: (workspace: WorkspaceUuid, url: string, otpCode: string) => Promise<void>
   adminReleaseSocialId: (personUuid: PersonUuid, type: SocialIdType, value: string, otpCode: string) => Promise<void>
   adminDeletePerson: (personUuid: PersonUuid, otpCode: string) => Promise<void>
@@ -361,6 +376,7 @@ export interface AccountClient {
     limits?: Subscription['limits']
     periodDays?: number
     trialEnd?: number
+    otpCode: string
   }) => Promise<void>
 
   batchAssignWorkspacePermission: (params: { accountIds: AccountUuid[], permission: string }) => Promise<void>
@@ -620,10 +636,10 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
-  async leaveWorkspace (account: AccountUuid): Promise<LoginInfo | null> {
+  async leaveWorkspace (account: AccountUuid, otpCode?: string): Promise<LoginInfo | null> {
     const request = {
       method: 'leaveWorkspace' as const,
-      params: { account }
+      params: { account, otpCode }
     }
 
     return await this.rpc(request)
@@ -958,13 +974,17 @@ class AccountClientImpl implements AccountClient {
     await this.rpc(request)
   }
 
-  async deleteWorkspace (): Promise<void> {
+  async deleteWorkspace (otpCode: string): Promise<void> {
     const request = {
       method: 'deleteWorkspace' as const,
-      params: {}
+      params: { otpCode }
     }
 
     await this.rpc(request)
+  }
+
+  async requestOperationOtp (): Promise<OtpInfo> {
+    return await this.rpc({ method: 'requestOperationOtp' as const, params: {} })
   }
 
   async findPersonBySocialKey (socialString: string, requireAccount?: boolean): Promise<PersonUuid | undefined> {
@@ -1059,6 +1079,26 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc({ method: 'requestAdminOperationOtp' as const, params: {} })
   }
 
+  async verifyAdminSession (otpCode: string): Promise<{ account: AccountUuid, token: string }> {
+    return await this.rpc({ method: 'verifyAdminSession' as const, params: { otpCode } })
+  }
+
+  async adminSetMaintenance (timeoutMinutes: number, message: string | undefined, otpCode: string): Promise<void> {
+    await this.rpc({ method: 'adminSetMaintenance' as const, params: { timeoutMinutes, message, otpCode } })
+  }
+
+  async adminForceCloseWorkspace (workspace: WorkspaceUuid, otpCode: string): Promise<void> {
+    await this.rpc({ method: 'adminForceCloseWorkspace' as const, params: { workspace, otpCode } })
+  }
+
+  async adminConfirmExport (kind: string, filter: Record<string, any> | undefined, otpCode: string): Promise<void> {
+    await this.rpc({ method: 'adminConfirmExport' as const, params: { kind, filter, otpCode } })
+  }
+
+  async adminImpersonate (workspace: WorkspaceUuid, account: AccountUuid, otpCode: string): Promise<WorkspaceLoginInfo> {
+    return await this.rpc({ method: 'adminImpersonate' as const, params: { workspace, account, otpCode } })
+  }
+
   async adminUpdateWorkspaceRole (
     workspace: WorkspaceUuid,
     targetAccount: AccountUuid,
@@ -1085,12 +1125,12 @@ class AccountClientImpl implements AccountClient {
     await this.rpc({ method: 'adminRemoveWorkspaceMember' as const, params: { workspace, targetAccount, otpCode } })
   }
 
-  async adminReindexWorkspace (workspace: WorkspaceUuid): Promise<void> {
-    await this.rpc({ method: 'adminReindexWorkspace' as const, params: { workspace } })
+  async adminReindexWorkspace (workspace: WorkspaceUuid, otpCode: string): Promise<void> {
+    await this.rpc({ method: 'adminReindexWorkspace' as const, params: { workspace, otpCode } })
   }
 
-  async adminReindexAllWorkspaces (): Promise<number> {
-    return await this.rpc({ method: 'adminReindexAllWorkspaces' as const, params: {} })
+  async adminReindexAllWorkspaces (otpCode: string): Promise<number> {
+    return await this.rpc({ method: 'adminReindexAllWorkspaces' as const, params: { otpCode } })
   }
 
   async performWorkspaceOperation (
@@ -1124,11 +1164,13 @@ class AccountClientImpl implements AccountClient {
     subscriptionId: string,
     otpCode: string,
     seats?: number,
-    periodEndMs?: number
+    periodEndMs?: number,
+    amount?: number,
+    windowMonthLimit?: number
   ): Promise<void> {
     await this.rpc({
       method: 'adminUpdateSubscription' as const,
-      params: { subscriptionId, seats, periodEndMs, otpCode }
+      params: { subscriptionId, seats, periodEndMs, amount, windowMonthLimit, otpCode }
     })
   }
 
@@ -1136,12 +1178,19 @@ class AccountClientImpl implements AccountClient {
     await this.rpc({ method: 'adminCancelSubscription' as const, params: { subscriptionId, otpCode } })
   }
 
-  async adminUpdateWorkspaceName (workspace: WorkspaceUuid, name: string): Promise<void> {
-    await this.rpc({ method: 'adminUpdateWorkspaceName' as const, params: { workspace, name } })
+  async adminUpdateWorkspaceName (workspace: WorkspaceUuid, name: string, otpCode: string): Promise<void> {
+    await this.rpc({ method: 'adminUpdateWorkspaceName' as const, params: { workspace, name, otpCode } })
   }
 
-  async adminUpdateWorkspaceDisabledFeatures (workspace: WorkspaceUuid, features: string[]): Promise<void> {
-    await this.rpc({ method: 'adminUpdateWorkspaceDisabledFeatures' as const, params: { workspace, features } })
+  async adminUpdateWorkspaceDisabledFeatures (
+    workspace: WorkspaceUuid,
+    features: string[],
+    otpCode: string
+  ): Promise<void> {
+    await this.rpc({
+      method: 'adminUpdateWorkspaceDisabledFeatures' as const,
+      params: { workspace, features, otpCode }
+    })
   }
 
   async adminReleaseSocialId (
@@ -1297,11 +1346,12 @@ class AccountClientImpl implements AccountClient {
     skip?: number,
     limit?: number,
     sort?: AccountsSortKey,
-    filter?: AccountsFilter
+    filter?: AccountsFilter,
+    order?: 'asc' | 'desc'
   ): Promise<AccountAggregatedInfo[]> {
     const request = {
       method: 'listAccounts' as const,
-      params: { search, skip, limit, sort, filter }
+      params: { search, skip, limit, sort, filter, order }
     }
 
     return await this.rpc(request)
@@ -1727,6 +1777,7 @@ class AccountClientImpl implements AccountClient {
     limits?: Subscription['limits']
     periodDays?: number
     trialEnd?: number
+    otpCode: string
   }): Promise<void> {
     await this._rpc({
       method: 'adminCreateSubscription',

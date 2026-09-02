@@ -3,6 +3,7 @@ import { NewDocument, NewTeamspace } from './types'
 import { CommonPage } from '../common-page'
 import { DocumentCreatePopup } from './document-create-popup'
 import { DocumentMovePopup } from './document-move-popup'
+import { retryIntervals } from '../../retry'
 
 export class DocumentsPage extends CommonPage {
   readonly page: Page
@@ -119,7 +120,7 @@ export class DocumentsPage extends CommonPage {
     await expect(async () => {
       await header.hover()
       await tools.click({ timeout: 5000 })
-    }).toPass({ intervals: [300, 1000], timeout: 20000 })
+    }).toPass({ intervals: retryIntervals, timeout: 20000 })
     await this.selectFromDropdown(this.page, action)
   }
 
@@ -144,7 +145,7 @@ export class DocumentsPage extends CommonPage {
     await expect(async () => {
       await this.buttonDocumentWrapper(documentTitle).hover()
       await this.buttonAddDocumentToDocument(documentTitle).click({ timeout: 3000 })
-    }).toPass({ intervals: [300, 1000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
   }
 
   async openDocumentForTeamspace (spaceName: string, documentName: string): Promise<void> {

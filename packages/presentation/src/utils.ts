@@ -62,7 +62,7 @@ import core, {
   type WithLookup,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import { getMetadata, getResource } from '@hcengineering/platform'
+import { addEventListener, getMetadata, getResource } from '@hcengineering/platform'
 import { LiveQuery as LQ } from '@hcengineering/query'
 import { type AnyComponent, type AnySvelteComponent, getRawCurrentLocation, workspaceId } from '@hcengineering/ui'
 import view, { type AttributeCategory, type AttributeEditor } from '@hcengineering/view'
@@ -110,6 +110,34 @@ export function removeTxListener (l: TxListener): void {
 export const uiContext = new MeasureMetricsContext('client-ui', {})
 uiContext.externalMetricSink = (name, value, labels) => {
   Analytics.handleMetric(name, value, labels)
+}
+
+// Connection traffic, reported by the ws client through ConnectionStatsEvent. Counters there are
+// cumulative, so send deltas; bytes are compressed, i.e. what actually went over the wire.
+const wsTraffic = { sent: 0, received: 0, sentBytes: 0, receivedBytes: 0 }
+addEventListener('connection-stats', async (_event: string, data: any) => {
+  const names = { sent: 'sent', received: 'received', sentBytes: 'sent_bytes', receivedBytes: 'received_bytes' }
+  for (const key of ['sent', 'received', 'sentBytes', 'receivedBytes'] as const) {
+    const value = (data?.[key] ?? 0) - wsTraffic[key]
+    wsTraffic[key] = data?.[key] ?? 0
+    if (value > 0) {
+      uiContext.measure(`client.ws.${names[key]}`, value)
+    }
+  }
+  if (typeof data?.latency === 'number' && data.latency > 0) {
+    uiContext.measure('client.ws.latency_ms', data.latency)
+  }
+})
+
+// Tests close a context seconds after opening it, long before the 10s ping tick and the 5s
+// analytics batch. This lets a teardown push the last numbers out explicitly.
+if (typeof window !== 'undefined') {
+  ;(window as any).__analyticsFlush = async (): Promise<void> => {
+    // Without this the batch carries whatever the last 10s ping tick caught - on a short
+    // test, nothing.
+    await (globalThis as any).__connStatsPush?.()
+    await Analytics.flush()
+  }
 }
 
 // Browser memory sampler (Chromium-only). Emits client.memory.* gauges every 30s.
@@ -1060,6 +1088,22 @@ export function setPresentationCookie (token: string, workspaceUuid: WorkspaceUu
     const normalized = path.startsWith('/') ? path : `/${path}`
     document.cookie = `${cookieName}=${cookieValue}; path=${normalized}`
   }
+}
+
+// Leaving the workspace tears down anything workspace-scoped (a live meeting, most notably),
+// so a plugin can register a guard here and ask the user before the switch happens.
+const leaveWorkspaceGuards = new Set<() => Promise<boolean>>()
+
+export function addLeaveWorkspaceGuard (guard: () => Promise<boolean>): () => void {
+  leaveWorkspaceGuards.add(guard)
+  return () => leaveWorkspaceGuards.delete(guard)
+}
+
+export async function canLeaveWorkspace (): Promise<boolean> {
+  for (const guard of leaveWorkspaceGuards) {
+    if (!(await guard())) return false
+  }
+  return true
 }
 
 export const upgradeDownloadProgress = writable(-1)

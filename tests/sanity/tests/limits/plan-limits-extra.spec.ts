@@ -1,6 +1,7 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures'
 import { AccountRole } from '@hcengineering/core'
 import { PlatformSetting, PlatformURI, PlatformUserSecond, generateId, getSecondPage } from '../utils'
+import { retryIntervals } from '../retry'
 import { addStoragePackage, assignMember, setWorkspacePlanByUuid } from '../API/Billing'
 import { ApiEndpoint } from '../API/Api'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
@@ -112,7 +113,7 @@ test.describe('unpaid stays usable', () => {
       await expect(page.locator('[data-id="billingLimitsIndicator"]')).toBeVisible({ timeout: 5000 })
       await expect(page.locator('[data-id="billingFreePlanBanner"]')).toBeHidden({ timeout: 5000 })
       await expect(page.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 5000 })
-    }).toPass({ intervals: [2000, 3000, 5000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
   })
 
   test('a directly-canceled tier is not a hard read-only (no billing read-only banner)', async ({ page, request }) => {
@@ -130,7 +131,7 @@ test.describe('unpaid stays usable', () => {
     await expect(async () => {
       await (await page.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
       await expect(page.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 5000 })
-    }).toPass({ intervals: [2000, 3000, 5000], timeout: 30000 })
+    }).toPass({ intervals: retryIntervals, timeout: 30000 })
   })
 })
 
@@ -196,7 +197,7 @@ test.describe('seat downgrade read-only', () => {
       await (await memberPage.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
       await expect(memberPage.locator('[data-id="billingLimitsIndicator"]')).toBeVisible({ timeout: 5000 })
       await expect(memberPage.locator('[data-id="billingReadOnlyBanner"]')).toBeHidden({ timeout: 5000 })
-    }).toPass({ intervals: [2000, 3000, 5000], timeout: 40000 })
+    }).toPass({ intervals: retryIntervals, timeout: 40000 })
 
     // Downgrade to a single seat.
     await setWorkspacePlanByUuid(wsInfo.workspace, 'start', { users: 1 })
@@ -205,7 +206,7 @@ test.describe('seat downgrade read-only', () => {
     await expect(async () => {
       await (await memberPage.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()
       await expect(memberPage.locator('[data-id="billingReadOnlyBanner"]')).toBeVisible({ timeout: 5000 })
-    }).toPass({ intervals: [2000, 3000, 5000], timeout: 40000 })
+    }).toPass({ intervals: retryIntervals, timeout: 40000 })
 
     // The owner keeps the seat -> no banner.
     await (await ownerPage.goto(`${PlatformURI}/workbench/${wsUrl}`))?.finished()

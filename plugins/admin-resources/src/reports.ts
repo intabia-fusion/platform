@@ -20,7 +20,7 @@ import type {
   WorkspaceInfoWithBilling
 } from '@hcengineering/account-client'
 
-import { getAccountClient, getAllSubscriptions, listWorkspacesPaged } from './utils'
+import { getAccountClient, getAllSubscriptions, listWorkspacesPaged, requestAdminOtpCode } from './utils'
 
 const PAGE = 1000
 
@@ -532,6 +532,11 @@ const builders: Record<ReportId, (opts?: ReportOptions) => Promise<Report>> = {
 }
 
 export async function downloadReport (id: ReportId, format: ReportFormat, opts?: ReportOptions): Promise<void> {
+  // Bulk PII leaves the panel here: confirm with a second factor so the export is auditable.
+  const code = await requestAdminOtpCode()
+  if (code === undefined) return
+  await getAccountClient().adminConfirmExport(id, opts as Record<string, any> | undefined, code)
+
   const report = await builders[id](opts)
   if (format === 'csv') {
     downloadCsv(report)

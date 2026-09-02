@@ -16,6 +16,7 @@
 import { type MeasureContext } from '@hcengineering/core'
 import {
   SubscriptionStatus,
+  SubscriptionType,
   type AccountClient,
   type Subscription,
   type SubscriptionData,
@@ -31,7 +32,8 @@ export type LimitsResolver = (sub: Subscription) => SubscriptionData['limits'] |
 /**
  * Subscriptions written before `windowMonthLimit` was baked in carry no AI window, so the pod falls
  * back to its env default - usually far off the plan. Recompute it from the plan config for every
- * subscription that is missing one.
+ * subscription that is missing one, and for those left at 0 by a plan config that had no
+ * `windowMonthLimit`.
  */
 export async function backfillWindowLimits (
   ctx: MeasureContext,
@@ -44,15 +46,54 @@ export async function backfillWindowLimits (
     SubscriptionStatus.Trialing
   ])
 
+  ctx.info('AI window backfill started', { candidates: subs.length })
+
   const writes: SubscriptionUpsert[] = []
+  // Skip reasons per plan - they explain the gap between `candidates` and `toUpdate` in the logs.
+  // skippedNoWindow covers both an unknown plan and a resolver that declined to compute a window.
+  const skippedSet = new Map<string, number>()
+  const skippedNoWindow = new Map<string, number>()
+  let skippedNotTier = 0
   for (const sub of subs) {
-    // A window that is already set stays as it is: a trial or a hand-made subscription may
-    // deliberately differ from the plan.
-    if (sub.limits?.windowMonthLimit != null) continue
+    // The AI window lives on the tier only.
+    if (sub.type !== SubscriptionType.Tier) {
+      skippedNotTier++
+      continue
+    }
     const limits = resolveLimits(sub)
-    if (limits?.windowMonthLimit == null) continue
-    writes.push({ ...sub, limits } as unknown as SubscriptionUpsert)
+    if (limits?.windowMonthLimit == null) {
+      skippedNoWindow.set(sub.plan, (skippedNoWindow.get(sub.plan) ?? 0) + 1)
+      continue
+    }
+    // A window that is already set stays as it is.
+    // Exception: a window = 0 on a plan that grants a finite window - it was set as 0 by misconfiguration.
+    const stored = sub.limits?.windowMonthLimit
+    if (stored != null && !(stored === 0 && limits.windowMonthLimit > 0)) {
+      skippedSet.set(sub.plan, (skippedSet.get(sub.plan) ?? 0) + 1)
+      continue
+    }
+    ctx.info('AI window backfill: will set', {
+      workspace: sub.workspaceUuid,
+      plan: sub.plan,
+      status: sub.status,
+      quantity: sub.providerData?.quantity,
+      from: stored,
+      to: limits.windowMonthLimit
+    })
+    // Only the AI token window is rewritten.
+    writes.push({
+      ...sub,
+      limits: { ...sub.limits, windowMonthLimit: limits.windowMonthLimit }
+    } as unknown as SubscriptionUpsert)
   }
+
+  ctx.info('AI window backfill plan', {
+    candidates: subs.length,
+    toUpdate: writes.length,
+    skippedNotTier,
+    skippedAlreadySet: Object.fromEntries(skippedSet),
+    skippedNoWindowFromPlan: Object.fromEntries(skippedNoWindow)
+  })
 
   if (writes.length === 0) {
     ctx.info('AI window backfill: nothing to do', { checked: subs.length })
@@ -60,6 +101,7 @@ export async function backfillWindowLimits (
   }
 
   let updated = 0
+  let failed = 0
   for (let i = 0; i < writes.length; i += BATCH_SIZE) {
     const batch = writes.slice(i, i + BATCH_SIZE)
     const results = await accountClient.upsertSubscriptionsBulk(batch)
@@ -67,8 +109,11 @@ export async function backfillWindowLimits (
     for (const result of results) {
       const write = byId.get(result.id)
       if (!result.ok) {
+        failed++
         ctx.error('AI window backfill failed for subscription', {
+          id: result.id,
           workspace: write?.workspaceUuid,
+          plan: write?.plan,
           error: result.error
         })
         continue
@@ -77,6 +122,6 @@ export async function backfillWindowLimits (
     }
   }
 
-  ctx.info('AI window backfill done', { checked: subs.length, updated })
+  ctx.info('AI window backfill done', { checked: subs.length, updated, failed })
   return updated
 }

@@ -22,6 +22,8 @@
   import { recoveryAction } from '../actions'
   import type { BottomAction } from '../index'
   import login from '../plugin'
+  import { fetchMetadataLocalStorage, setMetadataLocalStorage } from '@hcengineering/ui'
+  import { onDestroy } from 'svelte'
 
   export let navigateUrl: string | undefined = undefined
   export let signUpDisabled = false
@@ -33,7 +35,13 @@
   export let signedInAs: string | undefined = undefined
 
   $: fields = [
-    { id: 'email', name: 'username', i18n: login.string.Email, disabled: email !== undefined && email !== '' },
+    {
+      id: 'email',
+      name: 'username',
+      i18n: login.string.Email,
+      inputmode: 'email' as const,
+      disabled: email !== undefined && email !== ''
+    },
     {
       id: 'current-password',
       name: 'password',
@@ -43,7 +51,7 @@
   ]
 
   const object = {
-    username: '',
+    username: email ?? fetchMetadataLocalStorage(login.metadata.AuthEmail) ?? '',
     password: ''
   }
 
@@ -63,6 +71,10 @@
         const [loginStatus, result] = await doLogin(object.username, object.password)
         status = loginStatus
 
+        if (result != null) {
+          setMetadataLocalStorage(login.metadata.AuthEmail, null)
+        }
+
         if (onLogin !== undefined) {
           void onLogin(result, status)
         } else {
@@ -79,6 +91,10 @@
       }
     }
   }
+
+  onDestroy(() => {
+    setMetadataLocalStorage(login.metadata.AuthEmail, object.username ?? '')
+  })
 </script>
 
 <Form

@@ -403,7 +403,7 @@ export async function applyPurchase (
     ctx.error('add-ai-tokens purchase without an amount, ignoring', { workspace, purchaseId })
     return
   }
-  const token = generateToken(systemAccountUuid, workspace, { service: 'ai-bot', admin: 'true' })
+  const token = generateToken(systemAccountUuid, workspace, { service: 'ai-bot' })
   const billingClient = getBillingClient(config.BillingUrl, token)
   const { applied } = await billingClient.addAiTokens(workspace, purchaseId, quantity)
   invalidateWorkspaceWindows(workspace)
@@ -431,7 +431,7 @@ export async function getWorkspaceWindows (ctx: MeasureContext, workspace: Works
     return cached.value
   }
   try {
-    const token = generateToken(systemAccountUuid, workspace, { service: 'ai-bot', admin: 'true' })
+    const token = generateToken(systemAccountUuid, workspace, { service: 'ai-bot' })
     const billingClient = getBillingClient(config.BillingUrl, token)
     const w = await billingClient.getWorkspaceTokenWindows(workspace)
     const value: WindowUsage = {
@@ -497,7 +497,7 @@ export async function pushTokensData (ctx: MeasureContext, data: AiTokensData[],
 }
 
 function adminBillingClient (): BillingClient {
-  const token = generateToken(systemAccountUuid, undefined, { service: 'ai-bot', admin: 'true' })
+  const token = generateToken(systemAccountUuid, undefined, { service: 'ai-bot' })
   return getBillingClient(config.BillingUrl, token)
 }
 

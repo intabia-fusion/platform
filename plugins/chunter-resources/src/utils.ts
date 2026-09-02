@@ -23,6 +23,7 @@ import {
 import {
   type Channel,
   type ChatMessage,
+  chunterId,
   createDirect,
   type DirectMessage,
   type ThreadMessage
@@ -46,7 +47,12 @@ import core, {
   type WithLookup
 } from '@hcengineering/core'
 import { type AttributeApplierResult } from '@hcengineering/view'
-import { type DocNotifyContext, type InboxNotification, type ReadState } from '@hcengineering/notification'
+import {
+  type DocNotifyContext,
+  type InboxNotification,
+  notificationId,
+  type ReadState
+} from '@hcengineering/notification'
 import {
   InboxNotificationsClientImpl,
   isActivityNotification,
@@ -59,6 +65,7 @@ import {
   type AnySvelteComponent,
   closePopup,
   closeTooltip,
+  getCurrentLocation,
   type IconSize,
   languageStore,
   showPopup
@@ -80,7 +87,7 @@ import {
   translatingMessagesStore
 } from './stores'
 import ForwardMessageDialog from './components/ForwardMessageDialog.svelte'
-import view from '@hcengineering/view'
+import view, { decodeObjectURI } from '@hcengineering/view'
 
 export async function getDmName (client: Client, space?: DirectMessage): Promise<string> {
   if (space === undefined) {
@@ -530,6 +537,27 @@ export async function startConversationAction (docs?: Employee | Employee[]): Pr
   if (dm == null) return
 
   await openChannelInSidebar(dm, chunter.class.DirectMessage)
+}
+
+export async function openDirectForPerson (person: Person, forceSidebar = false): Promise<void> {
+  const client = getClient()
+  if (!client.getHierarchy().hasMixin(person, contact.mixin.Employee)) return
+  if (!(person as Employee).active || person.personUuid == null) return
+
+  const dm = await createDirect(client, [getCurrentAccount().uuid, person.personUuid as AccountUuid])
+  if (dm == null) return
+
+  const loc = getCurrentLocation()
+  const [openedId] = decodeObjectURI(loc.path[3]) ?? []
+  if (openedId === dm) return
+
+  // Chat apps show the direct inline; elsewhere the sidebar keeps the user where they were.
+  const app = loc.path[2]
+  if (!forceSidebar && (app === chunterId || app === notificationId)) {
+    openChannel(dm, chunter.class.DirectMessage, undefined, true)
+  } else {
+    await openChannelInSidebar(dm, chunter.class.DirectMessage)
+  }
 }
 
 export async function openBotDirect (): Promise<void> {

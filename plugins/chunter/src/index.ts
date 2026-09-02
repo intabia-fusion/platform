@@ -21,7 +21,7 @@ import { IntlString, plugin } from '@hcengineering/platform'
 import type { ComponentExtensionId } from '@hcengineering/ui'
 import { AnyComponent } from '@hcengineering/ui'
 import { Action } from '@hcengineering/view'
-import { ChannelProvider as SocialChannelProvider, PersonSpace } from '@hcengineering/contact'
+import { ChannelProvider as SocialChannelProvider, Person, PersonSpace } from '@hcengineering/contact'
 import { Widget, WidgetTab } from '@hcengineering/workbench'
 
 /**
@@ -283,6 +283,7 @@ export default plugin(chunterId, {
       newTab?: boolean,
       selectedMessageId?: Ref<ActivityMessage>
     ) => Promise<void>
-    >
+    >,
+    OpenDirectForPerson: '' as Resource<(person: Person) => Promise<void>>
   }
 })

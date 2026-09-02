@@ -222,7 +222,13 @@
     "SpaceMembersOnly": "Nur Bereichsmitglieder",
     "OverrideAttribute": "Attribut überschreiben",
     "Required": "Erforderlich",
-    "Reset": "Zurücksetzen"
+    "Reset": "Zurücksetzen",
+    "ConfirmOperation": "Vorgang bestätigen",
+    "Confirm": "Bestätigen",
+    "OtpCode": "Code",
+    "OtpSent": "Ein Code wurde an Ihre E-Mail-Adresse gesendet",
+    "OtpSendFailed": "Code konnte nicht gesendet werden",
+    "SendCode": "Code senden"
   },
   "emailTemplate": {
     "IntegrationDisabledNotificationText": "Integration with {doc} was disabled",

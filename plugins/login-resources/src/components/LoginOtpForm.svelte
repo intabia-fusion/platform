@@ -22,6 +22,8 @@
   import Label from './internal/Label.svelte'
   import { OtpLoginSteps, goTo, loginOtp } from '../index'
   import type { BottomAction } from '../index'
+  import { fetchMetadataLocalStorage, setMetadataLocalStorage } from '@hcengineering/ui'
+  import { onDestroy } from 'svelte'
 
   export let navigateUrl: string | undefined = undefined
   export let signUpDisabled = false
@@ -33,10 +35,16 @@
   export let signedInAs: string | undefined = undefined
 
   $: fields = [
-    { id: 'email', name: 'username', i18n: login.string.Email, disabled: email !== undefined && email !== '' }
+    {
+      id: 'email',
+      name: 'username',
+      i18n: login.string.Email,
+      inputmode: 'email' as const,
+      disabled: email !== undefined && email !== ''
+    }
   ]
   const formData = {
-    username: '' as string
+    username: email ?? fetchMetadataLocalStorage(login.metadata.AuthEmail) ?? ''
   }
 
   $: if (email !== undefined && email !== '' && formData.username === '') {
@@ -64,6 +72,10 @@
   function handleStep (event: CustomEvent<OtpLoginSteps>): void {
     step = event.detail
   }
+
+  onDestroy(() => {
+    setMetadataLocalStorage(login.metadata.AuthEmail, formData.username ?? '')
+  })
 </script>
 
 {#if step === OtpLoginSteps.Email}

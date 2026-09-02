@@ -29,8 +29,9 @@
   // Thread header passes the root message as `value`. Only render for AI context roots.
   export let value: Doc
 
-  $: isAIContext = value._class === aiBot.class.AIContextMessage
   $: root = value as AIContextMessage
+  // A draft thread is reset from the create-issue dialog, which owns the draft; not from here.
+  $: isAIContext = value._class === aiBot.class.AIContextMessage && root.purpose !== 'issue-draft'
 
   function newContext (): void {
     showPopup(MessageBox, {
@@ -60,6 +61,7 @@
     size={'small'}
     dataId={'btnAiNewContext'}
     showTooltip={{ label: plugin.string.NewContextHint }}
+    disabled={(root.replies ?? 0) === 0}
     on:click={newContext}
   />
   <Button

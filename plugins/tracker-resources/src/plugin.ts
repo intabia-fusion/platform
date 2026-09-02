@@ -122,6 +122,7 @@ export default mergeIds(trackerId, tracker, {
     DeleteProject: '' as IntlString,
     DeleteIssue: '' as IntlString,
     DeleteIssueConfirm: '' as IntlString,
+    DeleteIssueWithSubIssuesConfirm: '' as IntlString,
     ArchiveProjectName: '' as IntlString,
     ArchiveProjectConfirm: '' as IntlString,
     DeleteProjectConfirm: '' as IntlString,
@@ -332,7 +333,10 @@ export default mergeIds(trackerId, tracker, {
     EditRelatedTargets: '' as IntlString,
     RelatedIssueTargetDescription: '' as IntlString,
     ClassicIssue: '' as IntlString,
-    ClassicIssues: '' as IntlString
+    ClassicIssues: '' as IntlString,
+    Parent: '' as IntlString,
+    ExportToCSV: '' as IntlString,
+    ExportToCSVTooltip: '' as IntlString
   },
   component: {
     NopeComponent: '' as AnyComponent,

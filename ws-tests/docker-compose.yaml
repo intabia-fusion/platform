@@ -28,15 +28,12 @@ services:
       - STREAM_REGION=
       - STREAM_QUEUE_CONFIG=${QUEUE_CONFIG}
     restart: unless-stopped
-  cockroach:
-    image: cockroachdb/cockroach:v24.1.2
-    command: start-single-node --insecure
-    ports:
-      - '26258:26257'
-    restart: unless-stopped
   postgres:
     image: postgres:18.1
     command: ['postgres', '-p', '5433']
+    # Both regions share this instance, each in its own database - see postgres-init/.
+    volumes:
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
     extra_hosts:
       - 'huly.local:host-gateway'
     healthcheck:
@@ -131,8 +128,6 @@ services:
     depends_on:
       minio:
         condition: service_healthy
-      cockroach:
-        condition: service_started
       stats:
         condition: service_started
       account:
@@ -143,7 +138,7 @@ services:
       - ACCOUNTS_URL=http://account:3003
       - STATS_URL=http://stats:4901
       - STREAM_URL=http://stream:1080/recording
-      - DB_URL=${DB_EU_URL}
+      - DB_URL=${DB_PG_URL}
       - BUCKETS=blobs,eu|http://minio:9000?accessKey=minioadmin&secretKey=minioadmin
       - QUEUE_CONFIG=${QUEUE_CONFIG}
     restart: unless-stopped
@@ -185,13 +180,10 @@ services:
     image: 'intabiafusion/account:${DOCKER_TAG:-latest}'
     pull_policy: never
     depends_on:
-      cockroach:
-        condition: service_started
       postgres:
         condition: service_healthy
     links:
       - minio
-      - cockroach
       - postgres
     volumes:
       - ./branding-test.json:/var/cfg/branding.json
@@ -201,6 +193,8 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - SERVER_SECRET=secret
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
+      # Read-only admin panel access: admin-gates tests assert reads pass and mutations are refused.
+      - BILLING_EMAILS=billing
       - STATS_URL=http://stats:4901
       - WORKSPACE_LIMIT_PER_USER=100
       - DB_URL=${DB_PG_URL}
@@ -251,7 +245,6 @@ services:
     image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'
     pull_policy: never
     links:
-      - cockroach
       - minio
       - stats
     volumes:
@@ -280,7 +273,6 @@ services:
         condition: service_healthy
     links:
       - postgres
-      - cockroach
       - minio
       - stats
     volumes:
@@ -351,7 +343,6 @@ services:
     image: 'intabiafusion/transactor:${DOCKER_TAG:-latest}'
     pull_policy: never
     links:
-      - cockroach
       - minio
       - account
       - stats
@@ -421,7 +412,6 @@ services:
     restart: unless-stopped
     links:
       - elastic
-      - cockroach
       - rekoni
     environment:
       - PORT=4710

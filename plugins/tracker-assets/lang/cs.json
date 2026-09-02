@@ -211,7 +211,8 @@
     "NewSubIssue": "Přidat podúkol...",
     "AddLabel": "Přidat štítek",
     "DeleteIssue": "Smazat {issueCount, plural, =1 {úkol} other {# úkolů}}",
-    "DeleteIssueConfirm": "Chcete smazat {issueCount, plural, =1 {úkol} other {úkoly}}{subIssueCount, plural, =0 {?} =1 { a podúkol?} other { a podúkoly?}}",
+    "DeleteIssueConfirm": "Opravdu chcete odstranit {issueCount, plural, =1 {úkol} one {# úkol} few {# úkoly} other {# úkolů}}?",
+    "DeleteIssueWithSubIssuesConfirm": "{subIssueCount, plural, one {Následující podúkol bude odpojen od nadřazeného úkolu} other {Následující podúkoly budou odpojeny od nadřazeného úkolu}}:",
     "Milestone": "Milník",
     "NoMilestone": "Žádný milník",
     "MoveToMilestone": "Vybrat milník",
@@ -303,7 +304,9 @@
     "AddedRelation": "Přidán související úkol {identifier}{value}",
     "RemovedRelation": "Odebrán související úkol {identifier}{value}",
     "CreateAndOpen": "Vytvořit a otevřít",
-    "CreateAndNew": "Vytvořit a začít další"
+    "CreateAndNew": "Vytvořit a začít další",
+    "ExportToCSV": "Export do CSV",
+    "ExportToCSVTooltip": "Exportovat viditelné úkoly do souboru CSV"
   },
   "status": {},
   "emailTemplate": {

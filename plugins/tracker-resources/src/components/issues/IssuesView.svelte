@@ -32,7 +32,7 @@
 
   import tracker from '../../plugin'
   import CreateIssue from '../CreateIssue.svelte'
-  import { activeProjects } from '../../utils'
+  import { activeProjects, exportIssuesToCSV } from '../../utils'
   import IssueStatistics from '../milestones/IssueStatistics.svelte'
 
   export let space: Ref<Space> | undefined = undefined
@@ -75,6 +75,7 @@
 
   const WORKFLOW_ITEM_ID = 'workflow'
   const TASK_TYPES_ITEM_ID = 'task-types'
+  const EXPORT_CSV_ITEM_ID = 'export-scv'
 
   $: menuItems = [
     ...(hasWorkflow
@@ -94,7 +95,14 @@
             icon: task.icon.TypeHierarchy
           }
         ]
-      : [])
+      : []),
+    ...[
+      {
+        id: EXPORT_CSV_ITEM_ID,
+        label: tracker.string.ExportToCSV,
+        icon: tracker.icon.Export
+      }
+    ]
   ] satisfies DropdownIntlItem[]
 
   function openWorkflowDiagram (): void {
@@ -128,6 +136,8 @@
       openWorkflowDiagram()
     } else if (action === TASK_TYPES_ITEM_ID) {
       openTaskTypeDiagram()
+    } else if (action === EXPORT_CSV_ITEM_ID) {
+      void exportIssuesToCSV(resultQuery)
     }
   }
 

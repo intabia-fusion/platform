@@ -15,6 +15,7 @@
 
 import { expect, type Locator } from '@playwright/test'
 import { CommonTrackerPage } from './common-tracker-page'
+import { retryIntervals, waitStable } from '../../retry'
 
 export class KanbanBoardPage extends CommonTrackerPage {
   column (state: string): Locator {
@@ -92,7 +93,7 @@ export class KanbanBoardPage extends CommonTrackerPage {
   private async ensureVisible (locator: Locator): Promise<void> {
     await expect(async () => {
       await locator.scrollIntoViewIfNeeded({ timeout: 5000 })
-    }).toPass({ intervals: [200, 500], timeout: 15000 })
+    }).toPass({ intervals: retryIntervals, timeout: 15000 })
   }
 
   /**
@@ -115,7 +116,14 @@ export class KanbanBoardPage extends CommonTrackerPage {
       await target.evaluate((el) => {
         el.scrollIntoView({ block: 'nearest', inline: 'nearest' })
       })
-      const box = await target.boundingBox()
+      // The board keeps scrolling for a frame or two after scrollIntoView, so a box read right away
+      // points where the target no longer is - and the drop then lands on the neighbouring column.
+      const raw = await waitStable(async () => JSON.stringify(await target.boundingBox()), {
+        stableFor: 200,
+        interval: 50,
+        timeout: 5000
+      })
+      const box = JSON.parse(raw)
       if (box === null) throw new Error('Drop target has no bounding box')
       const x = box.x + box.width / 2
       const y = box.y + box.height / 2
@@ -177,7 +185,7 @@ export class KanbanBoardPage extends CommonTrackerPage {
             previous = ids
             return stable
           },
-          { timeout: 10000, intervals: [200, 300, 500, 1000] }
+          { timeout: 10000, intervals: retryIntervals }
         )
         .toBe(true)
     }

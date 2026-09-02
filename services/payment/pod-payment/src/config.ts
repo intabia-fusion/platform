@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 import { config as dotenvConfig } from 'dotenv'
+import { existsSync, readFileSync } from 'fs'
+import * as yaml from 'js-yaml'
 
 dotenvConfig()
 
@@ -66,6 +68,29 @@ export interface Config {
 const parseNumber = (str: string | undefined): number | undefined =>
   str !== undefined && str !== '' ? Number(str) : undefined
 
+/**
+ * `windowMonthLimit` 0 means "unlimited", and a missing key resolves to 0.
+ * Require it explicitly.
+ */
+function validatePlanConfig (path: string): void {
+  if (!existsSync(path)) {
+    throw Error(`Plan config file not found: ${path}`)
+  }
+  const parsed = yaml.load(readFileSync(path, 'utf-8')) as any
+  const noWindow = Object.entries<any>(parsed?.plans ?? {})
+    .filter(([, plan]) => plan?.windowMonthLimit == null)
+    .map(([name]) => name)
+  if (noWindow.length > 0) {
+    throw Error(
+      `Plan config: windowMonthLimit missing for plans: ${noWindow.join(', ')}. Set 0 explicitly for unlimited.`
+    )
+  }
+  // A trial without its own window inherits the plan's per-seat one times the trial seat cap.
+  if (parsed?.trial != null && parsed.trial.windowMonthLimit == null) {
+    throw Error('Plan config: trial.windowMonthLimit missing. Set 0 explicitly for unlimited.')
+  }
+}
+
 const config: Config = (() => {
   const params: Partial<Config> = {
     Port: parseNumber(process.env.PORT) ?? 4040,
@@ -73,7 +98,7 @@ const config: Config = (() => {
     AccountsUrl: process.env.ACCOUNTS_URL,
     FrontUrl: process.env.FRONT_URL,
     Provider: process.env.PROVIDER,
-    PlanConfig: process.env.PLAN_CONFIG ?? '',
+    PlanConfig: process.env.PLAN_CONFIG,
     UseSandbox: process.env.USE_SANDBOX === 'true',
     PolarAccessToken: process.env.POLAR_ACCESS_TOKEN,
     PolarWebhookSecret: process.env.POLAR_WEBHOOK_SECRET,
@@ -98,6 +123,8 @@ const config: Config = (() => {
   if (missingEnv.length > 0) {
     throw Error(`Missing config for attributes: ${missingEnv.join(', ')}`)
   }
+
+  validatePlanConfig(params.PlanConfig as string)
 
   return params as Config
 })()

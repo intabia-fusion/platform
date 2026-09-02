@@ -704,6 +704,23 @@ export class PostgresAccountDB implements AccountDB {
     let updateInterval: NodeJS.Timeout | null = null
     let executed = false
 
+    // Every process reopening the account DB replays this list. Reading an applied migration without
+    // FOR UPDATE keeps concurrent openers off each other's lock and its retryIntervalMs sleep.
+    const applied = await this.client`
+      SELECT applied_at, ddl
+      FROM ${this.client(this.ns)}._account_applied_migrations
+      WHERE identifier = ${name} AND applied_at IS NOT NULL
+    `
+    if (applied.length > 0) {
+      if (applied[0].ddl !== ddl) {
+        console.error(
+          `Migration ${name} was applied with different DDL than the current build defines. ` +
+            'Existing migrations must never be modified — add a new one instead.'
+        )
+      }
+      return
+    }
+
     const executeMigration = async (client: Sql): Promise<void> => {
       updateInterval = setInterval(() => {
         this.client`
@@ -1192,7 +1209,8 @@ export class PostgresAccountDB implements AccountDB {
     skip?: number,
     limit?: number,
     sort?: AccountsSortKey,
-    filter?: AccountsFilter
+    filter?: AccountsFilter,
+    order?: 'asc' | 'desc'
   ): Promise<AccountAggregatedInfo[]> {
     const sqlChunks: string[] = [
       `
@@ -1233,9 +1251,19 @@ export class PostgresAccountDB implements AccountDB {
               'verifiedOn', s.verified_on,
               'displayValue', s.display_value
             ))
-            FROM ${this.socialId.getTableName()} s
-            WHERE s.person_uuid = p.uuid AND s.is_deleted = FALSE
+            FROM (
+              SELECT * FROM ${this.socialId.getTableName()} s2
+              WHERE s2.person_uuid = p.uuid AND s2.is_deleted = FALSE
+              ORDER BY s2.created_on ASC NULLS LAST, s2._id
+            ) s
           ) as social_ids,
+          (
+            SELECT s.value
+            FROM ${this.socialId.getTableName()} s
+            WHERE s.person_uuid = p.uuid AND s.type = 'email' AND s.is_deleted = FALSE
+            ORDER BY s.created_on ASC NULLS LAST, s._id
+            LIMIT 1
+          ) as primary_email,
           (
             SELECT jsonb_agg(jsonb_build_object(
               'uuid', w.uuid,
@@ -1252,6 +1280,11 @@ export class PostgresAccountDB implements AccountDB {
             INNER JOIN ${this.getWsMembersTableName()} m ON m.workspace_uuid = w.uuid
             WHERE m.account_uuid = p.uuid
           ) as workspaces,
+          (
+            SELECT COUNT(*)
+            FROM ${this.getWsMembersTableName()} m3
+            WHERE m3.account_uuid = p.uuid
+          ) as workspaces_count,
           (
             SELECT MAX(ws.last_visit)
             FROM ${this.workspaceStatus.getTableName()} ws
@@ -1299,10 +1332,17 @@ export class PostgresAccountDB implements AccountDB {
 
     const orderBy: Record<AccountsSortKey, string> = {
       name: 'first_name',
-      lastVisit: 'last_visit DESC NULLS LAST',
-      registeredOn: 'registered_on DESC NULLS LAST'
+      lastVisit: 'last_visit',
+      registeredOn: 'registered_on',
+      // Counting members is an index-only scan; jsonb_array_length would build every workspace
+      // object for every row just to measure it (~2x on 50k accounts).
+      workspaces: 'workspaces_count',
+      email: 'primary_email'
     }
-    sqlChunks.push(`ORDER BY ${orderBy[sort ?? 'name'] ?? orderBy.name}`)
+    // Names and emails read A-Z by default, the rest newest/biggest first.
+    const dir = order ?? (sort === undefined || sort === 'name' || sort === 'email' ? 'asc' : 'desc')
+    const dirSql = dir === 'asc' ? 'ASC' : 'DESC'
+    sqlChunks.push(`ORDER BY ${orderBy[sort ?? 'name'] ?? orderBy.name} ${dirSql} NULLS LAST`)
 
     if (limit !== undefined) {
       sqlChunks.push(`LIMIT $${paramIndex}`)
@@ -1434,6 +1474,11 @@ export class PostgresAccountDB implements AccountDB {
     if (query.billingStatus !== undefined && query.billingStatus !== '') {
       where.push(`bs.status = $${idx}`)
       values.push(query.billingStatus)
+      idx++
+    }
+    if (query.billingStatusNot !== undefined && query.billingStatusNot !== '') {
+      where.push(`(bs.status IS NULL OR bs.status <> $${idx})`)
+      values.push(query.billingStatusNot)
       idx++
     }
     if (query.billingExpired === true) {

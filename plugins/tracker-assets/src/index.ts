@@ -65,5 +65,7 @@ loadMetadata(tracker.icon, {
   CopyBranch: `${icons}#copyBranch`,
   Duplicate: `${icons}#duplicate`,
   TimeReport: `${icons}#timeReport`,
-  Estimation: `${icons}#estimation`
+  Estimation: `${icons}#estimation`,
+  Export: `${icons}#export`,
+  More: `${icons}#more`
 })

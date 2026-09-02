@@ -211,7 +211,8 @@
     "NewSubIssue": "Adicionar sub-tarefa...",
     "AddLabel": "Adicionar etiqueta",
     "DeleteIssue": "Apagar {issueCount, plural, =1 {tarefa} other {# tarefas}}",
-    "DeleteIssueConfirm": "Deseja apagar {issueCount, plural, =1 {tarefa} other {tarefas}}{subIssueCount, plural, =0 {?} =1 { e sub-tarefa?} other { e sub-tarefas?}}",
+    "DeleteIssueConfirm": "Tem certeza de que deseja excluir {issueCount, plural, =1 {a tarefa} one {# tarefa} other {# tarefas}}?",
+    "DeleteIssueWithSubIssuesConfirm": "{subIssueCount, plural, one {A seguinte subtarefa será desvinculada da tarefa pai} other {As seguintes subtarefas serão desvinculadas da tarefa pai}}:",
     "Milestone": "Objetivo",
     "NoMilestone": "Sem objetivo",
     "MoveToMilestone": "Selecionar Objetivo",
@@ -303,7 +304,9 @@
     "AddedRelation": "Questão relacionada adicionada {identifier}{value}",
     "RemovedRelation": "Questão relacionada removida {identifier}{value}",
     "CreateAndOpen": "Criar e abrir",
-    "CreateAndNew": "Criar e começar outra"
+    "CreateAndNew": "Criar e começar outra",
+    "ExportToCSV": "Exportar para CSV",
+    "ExportToCSVTooltip": "Exportar tarefas visíveis para arquivo CSV"
   },
   "status": {},
   "emailTemplate": {

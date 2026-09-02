@@ -352,7 +352,7 @@ export class LimitsEngine {
   }
 
   private accountClient (workspace: WorkspaceUuid | undefined): AccountClient {
-    const token = generateToken(systemAccountUuid, workspace, { service: 'billing', admin: 'true' })
+    const token = generateToken(systemAccountUuid, workspace, { service: 'billing' })
     return getClient(this.accountsUrl, token)
   }
 }

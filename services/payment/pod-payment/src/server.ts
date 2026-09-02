@@ -253,15 +253,8 @@ export async function createServer (
         return { plans: {}, packages: {}, purchasables: {} }
       }
       const content = readFileSync(configPath, 'utf-8')
-      const loaded = yaml.load(content) as any
-      // windowMonthLimit 0/missing means "unlimited" by convention — flag paid plans that forgot it.
-      for (const [name, item] of Object.entries<any>(loaded?.plans ?? {})) {
-        const isPaid = item?.free !== true && (item?.priceMonthlyPerUser != null || item?.priceMonthly != null)
-        if (isPaid && (item?.windowMonthLimit == null || item.windowMonthLimit === 0)) {
-          ctx.warn('paid plan has no windowMonthLimit configured, AI window will be unlimited', { plan: name })
-        }
-      }
-      return loaded
+      // windowMonthLimit is required on every plan — config.ts refuses to start the pod without it.
+      return yaml.load(content) as any
     } catch (err: any) {
       ctx.error('Failed to load plan config', { err })
       return { plans: {}, packages: {}, purchasables: {} }
@@ -632,9 +625,26 @@ export async function createServer (
   // Fills the AI window on subscriptions predating it. Reads every active subscription, so it is
   // one-shot: opt in via RUN_WINDOW_BACKFILL, not on every restart of every replica.
   if (config.RunWindowBackfill === true) {
-    void backfillWindowLimits(ctx, accountClient, (sub) =>
-      resolveLimits(sub.type, sub.plan, sub.providerData?.quantity as number | undefined)
-    ).catch((err: any) => {
+    void backfillWindowLimits(ctx, accountClient, (sub) => {
+      // A trial gets the flat grant, like in createTrialSubscription.
+      if (sub.status === SubscriptionStatus.Trialing && trialConfig?.windowMonthLimit !== undefined) {
+        const limits = resolveLimits(sub.type, sub.plan, sub.providerData?.quantity as number | undefined)
+        return limits != null ? { ...limits, windowMonthLimit: trialConfig.windowMonthLimit } : limits
+      }
+      // createManualSubscription writes no quantity -> using usersLimit instead.
+      const seats = (sub.providerData?.quantity as number | undefined) ?? sub.limits?.usersLimit
+      // Unknown seats on a per-seat plan -> skip.
+      if (planConfig.plans?.[sub.plan]?.priceMonthlyPerUser != null && (seats == null || seats === 0)) {
+        ctx.warn('AI window backfill: per-seat plan with unknown seats, skipping', {
+          workspace: sub.workspaceUuid,
+          plan: sub.plan,
+          status: sub.status,
+          provider: sub.provider
+        })
+        return undefined
+      }
+      return resolveLimits(sub.type, sub.plan, seats)
+    }).catch((err: any) => {
       ctx.error('AI window backfill failed', { err })
     })
   }

@@ -121,7 +121,7 @@
             ? hierarchy.findAttribute(field.mixin, field.fieldKey)
             : hierarchy.findAttribute(object._class, field.fieldKey)
 
-        const isEmpty = attr == null ? true : isEmptyAttribute(hierarchy, object, attr, val)
+        const isEmpty = attr == null ? true : await isEmptyAttribute(hierarchy, object, attr, val)
 
         if (isEmpty) {
           missingFields.push(field)

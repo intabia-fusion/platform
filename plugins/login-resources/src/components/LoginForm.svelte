@@ -22,10 +22,10 @@
     type BottomAction,
     doLoginAsGuest,
     doLoginNavigate,
-    getAccount,
     getAccountClient,
     getAccountDisplayName,
-    LoginMethods
+    LoginMethods,
+    restoreSession
   } from '../index'
   import LoginPasswordForm from './LoginPasswordForm.svelte'
   import LoginOtpForm from './LoginOtpForm.svelte'
@@ -71,7 +71,7 @@
   let signedInAs: string | undefined
 
   onMount(async () => {
-    const account = await getAccount(false)
+    const account = await restoreSession()
     if (account?.token != null) {
       signedInAs = getAccountDisplayName(account)
     }

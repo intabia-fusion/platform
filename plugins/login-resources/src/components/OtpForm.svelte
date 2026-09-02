@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { deviceOptionsStore as deviceInfo, TimeLeft, IconBack } from '@hcengineering/ui'
+  import { deviceOptionsStore as deviceInfo, TimeLeft, IconBack, setMetadataLocalStorage } from '@hcengineering/ui'
   import FormButton from './internal/FormButton.svelte'
   import { OK, Severity, Status } from '@hcengineering/platform'
   import Label from './internal/Label.svelte'
@@ -72,6 +72,10 @@
     const otp = otpData.otp1 + otpData.otp2 + otpData.otp3 + otpData.otp4 + otpData.otp5 + otpData.otp6
     const [loginStatus, result] = await doValidateOtp(loginState === 'signup', email, otp, password)
     status = loginStatus
+
+    if (result != null) {
+      setMetadataLocalStorage(login.metadata.AuthEmail, null)
+    }
 
     if (onLogin !== undefined) {
       void onLogin(result, status)
@@ -373,7 +377,7 @@
   }
 
   .status {
-    height: 2.375rem;
+    min-height: 2.375rem;
   }
 
   .footer {
@@ -427,11 +431,6 @@
     /* The page scrolls as a whole; clipping here would hide content. */
     .container {
       overflow: visible;
-    }
-    /* Fixed height clips a wrapped error message on narrow screens. */
-    .status {
-      height: auto;
-      min-height: 2.375rem;
     }
     .header .description {
       flex-wrap: wrap;

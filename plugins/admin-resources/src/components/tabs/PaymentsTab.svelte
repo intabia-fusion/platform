@@ -27,7 +27,8 @@
     getPaymentOperationStats,
     getPaymentMonthlyStats,
     getAllSubscriptions,
-    listWorkspacesPaged
+    listWorkspacesPaged,
+    fmtAmount
   } from '../../utils'
 
   export let refreshTick: number = 0
@@ -71,7 +72,7 @@
   let hasMore = false
   let loading = true
 
-  const OPS: PaymentOperationKind[] = ['init_charge', 'webhook', 'charge_recurrent', 'cancel', 'refund']
+  const OPS: PaymentOperationKind[] = ['init_charge', 'webhook', 'charge_recurrent', 'cancel', 'refund', 'update']
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
   function opFilterParams (offset: number): any {
@@ -131,15 +132,14 @@
     await load()
   }
 
-  function fmtAmount (kopecks: number | string | undefined): string {
-    // amount is INT8 — the PG driver returns it as a string.
-    const n = Number(kopecks)
-    if (kopecks == null || !Number.isFinite(n)) return '-'
-    return `${Math.round(n / 100).toLocaleString('ru')} ₽`
-  }
   function fmtDate (ms: number | string | undefined): string {
     const n = Number(ms)
     return ms != null && Number.isFinite(n) ? new Date(n).toLocaleString('ru') : '-'
+  }
+  // Day precision: period ends are what the admin edits, the time of day is noise in a one-line label.
+  function fmtDay (ms: number | string | undefined): string {
+    const n = Number(ms)
+    return ms != null && Number.isFinite(n) ? new Date(n).toLocaleDateString('ru') : '-'
   }
   function fmtTime (ms: number | string | undefined): string {
     const n = Number(ms)
@@ -158,6 +158,19 @@
       // logging payment operations.
       if (op.provider === 'trial') return 'Пробный период истёк'
       return 'Подписка отменена'
+    }
+    if (op.operation === 'update') {
+      // Name what the admin actually changed - three bare "edited" rows in a row tell nothing apart.
+      const r = rawOf(op)
+      const parts: string[] = []
+      if (r.seatsAfter != null) parts.push(`места: ${r.seatsBefore ?? '?'} -> ${r.seatsAfter}`)
+      if (r.amountAfter != null) parts.push(`цена: ${fmtAmount(r.amountBefore)} -> ${fmtAmount(r.amountAfter)}`)
+      // Rows written before the time-of-day fix moved periodEnd within the same day; at day precision
+      // that reads as "21.09 -> 21.09". Show the component only when the date actually differs.
+      const dayBefore = fmtDay(r.periodEndBefore)
+      const dayAfter = fmtDay(r.periodEndAfter)
+      if (r.periodEndAfter != null && dayBefore !== dayAfter) parts.push(`до: ${dayBefore} -> ${dayAfter}`)
+      return parts.length > 0 ? `Правка админом (${parts.join(', ')})` : 'Правка админом'
     }
     if (op.operation === 'charge_recurrent') {
       if (st === 'success') return 'Продление оплачено'

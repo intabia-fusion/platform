@@ -15,7 +15,7 @@
 <script lang="ts">
   import { type AccountAggregatedInfo, type AccountsFilter, type AccountsSortKey } from '@hcengineering/account-client'
   import { type AccountUuid, reduceCalls } from '@hcengineering/core'
-  import { type IntlString, getEmbeddedLabel, translate } from '@hcengineering/platform'
+  import { getEmbeddedLabel, translate } from '@hcengineering/platform'
   import { copyTextToClipboard, isAdminUser, isBillingAdminUser } from '@hcengineering/presentation'
   import {
     Button,
@@ -50,15 +50,29 @@
   let accounts: AccountAggregatedInfo[] = []
 
   let sortKey: AccountsSortKey = 'lastVisit'
-  const sortLabels: Record<AccountsSortKey, IntlString> = {
-    name: adminRes.string.SortName,
-    lastVisit: adminRes.string.SortLastVisit,
-    registeredOn: adminRes.string.SortRegistered
+  let sortAsc = false
+
+  // Names and emails read A-Z, every other column starts from the biggest/most recent.
+  function sortBy (key: AccountsSortKey): void {
+    if (sortKey === key) {
+      sortAsc = !sortAsc
+      return
+    }
+    sortKey = key
+    sortAsc = key === 'name' || key === 'email'
   }
-  let sortTitle = ''
-  $: void translate(sortLabels[sortKey], {}, $themeStore.language).then((t) => {
-    sortTitle = t
-  })
+
+  // Reactive: a plain function called with a constant key would never be re-evaluated.
+  $: sortMark = (key: AccountsSortKey): string => (sortKey === key ? (sortAsc ? ' ↑' : ' ↓') : '')
+  $: ariaSort = (key: AccountsSortKey): 'ascending' | 'descending' | 'none' =>
+    sortKey === key ? (sortAsc ? 'ascending' : 'descending') : 'none'
+
+  function sortOnKey (e: KeyboardEvent, key: AccountsSortKey): void {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      sortBy(key)
+    }
+  }
 
   let noWorkspaces = false
   let pendingOnly = false
@@ -85,11 +99,11 @@
   }
 
   const loadAccounts = reduceCalls(async (search?: string, skip?: number, limit?: number): Promise<void> => {
-    accounts = await accountClient.listAccounts(search, skip, limit, sortKey, filter)
+    accounts = await accountClient.listAccounts(search, skip, limit, sortKey, filter, sortAsc ? 'asc' : 'desc')
   })
 
   let prevKey = ''
-  $: key = `${refreshTick}:${sortKey}:${String(noWorkspaces)}:${String(pendingOnly)}:${inactiveDays ?? ''}`
+  $: key = `${refreshTick}:${sortKey}:${String(sortAsc)}:${String(noWorkspaces)}:${String(pendingOnly)}:${inactiveDays ?? ''}`
   $: if (key !== prevKey) {
     if (prevKey !== '') accountSkip = 0
     prevKey = key
@@ -180,7 +194,7 @@
   }
 
   function primaryEmail (account: AccountAggregatedInfo): string {
-    return account.socialIds.find((s) => s.type === 'email')?.value ?? account.socialIds[0]?.value ?? '-'
+    return account.primaryEmail ?? account.socialIds[0]?.value ?? '-'
   }
 </script>
 
@@ -215,17 +229,6 @@
     on:click={async () => {
       accountSkip += accountLimit
       await loadAccounts(accountSearch, accountSkip, accountLimit)
-    }}
-  />
-
-  <span class="ml-4 mr-1"><Label label={adminRes.string.SortingOrder} /></span>
-  <ButtonMenu
-    selected={sortKey}
-    autoSelectionIfOne
-    title={sortTitle}
-    items={Object.entries(sortLabels).map(([id, label]) => ({ id, label }))}
-    on:selected={(it) => {
-      sortKey = it.detail
     }}
   />
 </div>
@@ -280,12 +283,77 @@
   <table class="accounts-table">
     <thead>
       <tr>
-        <th><Label label={adminRes.string.Accounts} /></th>
-        <th><Label label={adminRes.string.Email} /></th>
+        <th
+          class="sortable"
+          class:sorted={sortKey === 'name'}
+          aria-sort={ariaSort('name')}
+          tabindex="0"
+          on:click={() => {
+            sortBy('name')
+          }}
+          on:keydown={(e) => {
+            sortOnKey(e, 'name')
+          }}
+        >
+          <Label label={adminRes.string.Accounts} />{sortMark('name')}
+        </th>
+        <th
+          class="sortable"
+          class:sorted={sortKey === 'email'}
+          aria-sort={ariaSort('email')}
+          tabindex="0"
+          on:click={() => {
+            sortBy('email')
+          }}
+          on:keydown={(e) => {
+            sortOnKey(e, 'email')
+          }}
+        >
+          <Label label={adminRes.string.Email} />{sortMark('email')}
+        </th>
         <th><Label label={adminRes.string.SocialIds} /></th>
-        <th><Label label={adminRes.string.Workspaces} /></th>
-        <th><Label label={adminRes.string.CreatedOn} /></th>
-        <th><Label label={adminRes.string.LastVisit} /></th>
+        <th
+          class="sortable"
+          class:sorted={sortKey === 'workspaces'}
+          aria-sort={ariaSort('workspaces')}
+          tabindex="0"
+          on:click={() => {
+            sortBy('workspaces')
+          }}
+          on:keydown={(e) => {
+            sortOnKey(e, 'workspaces')
+          }}
+        >
+          <Label label={adminRes.string.Workspaces} />{sortMark('workspaces')}
+        </th>
+        <th
+          class="sortable"
+          class:sorted={sortKey === 'registeredOn'}
+          aria-sort={ariaSort('registeredOn')}
+          tabindex="0"
+          on:click={() => {
+            sortBy('registeredOn')
+          }}
+          on:keydown={(e) => {
+            sortOnKey(e, 'registeredOn')
+          }}
+        >
+          <Label label={adminRes.string.CreatedOn} />{sortMark('registeredOn')}
+        </th>
+        <th
+          class="sortable"
+          class:sorted={sortKey === 'lastVisit'}
+          aria-sort={ariaSort('lastVisit')}
+          tabindex="0"
+          on:click={() => {
+            sortBy('lastVisit')
+          }}
+          on:keydown={(e) => {
+            sortOnKey(e, 'lastVisit')
+          }}
+        >
+          <Label label={adminRes.string.LastVisit} />{sortMark('lastVisit')}
+        </th>
         <th></th>
       </tr>
     </thead>
@@ -360,6 +428,17 @@
       text-align: left;
       padding: 0.35rem 1rem 0.35rem 0;
       border-bottom: 1px solid var(--theme-divider-color, #8883);
+    }
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+    th.sortable:focus-visible {
+      outline: 2px solid var(--primary-button-default);
+      outline-offset: -2px;
+    }
+    th.sorted {
+      color: var(--theme-caption-color);
     }
     .group-row td {
       font-weight: 600;

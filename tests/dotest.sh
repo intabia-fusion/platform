@@ -6,5 +6,6 @@ rush update
 rush fast-build:validate
 rush fast-build:docker
 ./prepare-pg.sh
+./tool-pg.sh sync-indexes indexes.yaml --apply
 pushd sanity
-rushx uitest --workers 5
+rushx uitest:telemetry --workers 5

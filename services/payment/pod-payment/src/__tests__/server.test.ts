@@ -48,7 +48,13 @@ process.env.SECRET = 'test-secret'
 process.env.ACCOUNTS_URL = 'https://accounts.example.test'
 process.env.FRONT_URL = 'https://front.example.test'
 process.env.PROVIDER = 'stripe'
-process.env.PLAN_CONFIG = ''
+process.env.PLAN_CONFIG = '/fake/plan-config.yaml'
+
+// config.ts validates the plan config at import time (every plan needs an explicit windowMonthLimit),
+// and fs is mocked above — feed it a valid file before requiring the module.
+const fsMock = jest.requireMock('fs')
+fsMock.existsSync.mockReturnValue(true)
+fsMock.readFileSync.mockReturnValue('plans:\n  business:\n    windowMonthLimit: 1000\n')
 
 // Required after the env above: server.ts builds its rate limiters from the config singleton at
 // import time, and that throws when the vars are missing.
@@ -425,38 +431,5 @@ describe('updatePlan -> resolveLimits (via attachLimits on the persisted respons
   })
 })
 
-describe('plan-config validation: paid plan missing windowMonthLimit', () => {
-  it('warns when a paid plan has no windowMonthLimit (0/missing silently means unlimited)', async () => {
-    ;(readFileSync as jest.Mock).mockReturnValue(`
-plans:
-  business:
-    priceMonthlyPerUser: 500
-    windowMonthLimit: 1000
-  broken:
-    priceMonthlyPerUser: 300
-packages: {}
-purchasables: {}
-`)
-    const ctx = makeCtx()
-    await createServer(ctx, config, publish, logOperation, publishPurchaseActivated)
-
-    expect(ctx.warn).toHaveBeenCalledWith('paid plan has no windowMonthLimit configured, AI window will be unlimited', {
-      plan: 'broken'
-    })
-    expect(ctx.warn).not.toHaveBeenCalledWith(expect.anything(), { plan: 'business' })
-  })
-
-  it('does not warn for a free plan without windowMonthLimit', async () => {
-    ;(readFileSync as jest.Mock).mockReturnValue(`
-plans:
-  free:
-    free: true
-packages: {}
-purchasables: {}
-`)
-    const ctx = makeCtx()
-    await createServer(ctx, config, publish, logOperation, publishPurchaseActivated)
-
-    expect(ctx.warn).not.toHaveBeenCalled()
-  })
-})
+// A plan missing windowMonthLimit no longer warns here — config.ts refuses to start the pod at all.
+// See config.test.ts.

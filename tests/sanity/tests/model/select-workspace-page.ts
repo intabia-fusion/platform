@@ -54,6 +54,10 @@ export class SelectWorkspacePage extends CommonPage {
     }
     // Creation shows a progress screen first; callers expect to be inside the workspace.
     await this.page.waitForURL((url) => url.pathname.startsWith('/workbench/'))
+    // The url flips before the workspace is built - under load the progress screen stays for a
+    // while, and the caller's first click then waits out its own timeout on a workbench that is
+    // not there yet (WorkbenchApp.svelte renders it inside AppLoading).
+    await expect(this.page.getByText('Creation in progress')).toHaveCount(0, { timeout: 120000 })
   }
 
   async checkIfWorkspaceExists (workspace: string): Promise<void> {

@@ -27,8 +27,9 @@
   import { OtpLoginSteps, signUp, signUpOtp } from '../index'
   import type { Field } from '../types'
   import OtpForm from './OtpForm.svelte'
-  import { onMount } from 'svelte'
+  import { onMount, onDestroy } from 'svelte'
   import ConsentCheckboxes from './ConsentCheckboxes.svelte'
+  import { fetchMetadataLocalStorage, setMetadataLocalStorage } from '@hcengineering/ui'
 
   export let signUpDisabled = false
   export let localLoginHidden = false
@@ -74,7 +75,7 @@
   const object = {
     first: '',
     last: '',
-    username: '',
+    username: fetchMetadataLocalStorage(login.metadata.AuthEmail) ?? '',
     password: '',
     password2: '',
     phone: ''
@@ -110,6 +111,10 @@
 
         status = loginStatus
 
+        if (result != null) {
+          setMetadataLocalStorage(login.metadata.AuthEmail, null)
+        }
+
         if (onSignUp !== undefined) {
           void onSignUp(result, status)
         } else if (result != null) {
@@ -137,6 +142,10 @@
   }
 
   $: proceedDisabled = !agreedPersonalData || !agreedRules
+
+  onDestroy(() => {
+    setMetadataLocalStorage(login.metadata.AuthEmail, object.username ?? '')
+  })
 </script>
 
 {#if step === OtpLoginSteps.Email}

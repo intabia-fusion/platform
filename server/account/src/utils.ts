@@ -709,10 +709,18 @@ export async function requestAdminOtp (
   token: string
 ): Promise<OtpInfo> {
   if (getAdminOtpDevCode() !== undefined) {
+    await logAdminAction(ctx, db, token, 'otp_issued')
     return { sent: true, retryOn: Date.now() }
   }
   const sid = await getAdminEmailSocialId(ctx, db, token)
-  return await sendOtp(ctx, db, branding, sid, ADMIN_OTP_TTL_SEC, true)
+  const before = (await db.otp.find({ socialId: sid._id }, { createdOn: 'descending' }, 1))[0]?.createdOn
+  const info = await sendOtp(ctx, db, branding, sid, ADMIN_OTP_TTL_SEC, true)
+  const after = (await db.otp.find({ socialId: sid._id }, { createdOn: 'descending' }, 1))[0]?.createdOn
+  // Only a really new code restarts the attempt budget; a throttled re-request returns the old one.
+  if (after !== before) {
+    await logAdminAction(ctx, db, token, 'otp_issued')
+  }
+  return info
 }
 
 export async function verifyAdminOtp (
@@ -961,10 +969,9 @@ export async function selectWorkspace (
     }
   }
 
+  // No admin escalation here: a global admin who is not a member cannot open the workspace.
+  // The audited path is adminImpersonate, which opens a read-only session as a real member.
   let role = await db.getWorkspaceRole(accountUuid, workspace.uuid)
-  if (role == null && extra?.admin === 'true') {
-    role = AccountRole.Admin
-  }
   let account = await db.account.findOne({ uuid: accountUuid })
 
   if ((role == null || account == null) && workspace.allowReadOnlyGuest) {
@@ -2001,7 +2008,9 @@ export function verifyAllowedRole (
   extra: any,
   shouldThrow = true
 ): boolean {
-  const ok = extra?.admin === 'true' || (callerRole != null && getRolePower(callerRole) >= getRolePower(minRole))
+  // Role is decided by workspace membership only. A global admin changes roles through the
+  // audited, OTP-gated adminUpdateWorkspaceRole, never by carrying the admin flag into a workspace.
+  const ok = callerRole != null && getRolePower(callerRole) >= getRolePower(minRole)
 
   if (!ok && shouldThrow) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))

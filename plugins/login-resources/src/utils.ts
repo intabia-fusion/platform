@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -166,15 +167,19 @@ export async function signUpOtp (
   try {
     const otpInfo = await getAccountClient(null).signUpOtp(email, first, last, phone)
 
-    Analytics.handleEvent('signUpOtp', { email, ok: true })
+    Analytics.handleEvent(LoginEvents.SignUpOtp, { email, ok: true })
 
     return [OK, otpInfo]
   } catch (err: any) {
     if (err instanceof PlatformError) {
+      Analytics.handleEvent(LoginEvents.SignUpOtp, { email, ok: false })
       await handleStatusError('Sign up error', err.status)
 
       return [err.status, null]
     } else {
+      Analytics.handleEvent(LoginEvents.SignUpOtp, { email, ok: false })
+      Analytics.handleError(err)
+
       return [unknownError(err), null]
     }
   }
@@ -325,6 +330,18 @@ export async function getAccount (doNavigate: boolean = true): Promise<LoginInfo
       return null
     }
   }
+}
+
+// Mirrors a cookie-only session into Token/LastAccount, which the login routing reads -
+// without it `selectWorkspace` stays unroutable while the form shows "Signed in as".
+export async function restoreSession (): Promise<LoginInfo | null> {
+  const loginInfo = await getAccount(false)
+  if (loginInfo?.token != null && getMetadata(presentation.metadata.Token) == null) {
+    setMetadata(presentation.metadata.Token, loginInfo.token)
+    setMetadataLocalStorage(login.metadata.LoginAccount, loginInfo.account)
+    setMetadataLocalStorage(login.metadata.LastAccount, loginInfo.account)
+  }
+  return loginInfo
 }
 
 export async function getRegionInfo (doNavigate: boolean = true): Promise<RegionInfo[] | null> {
@@ -703,8 +720,8 @@ export async function changeUsername (first: string, last: string): Promise<void
   }
 }
 
-export async function leaveWorkspace (account: AccountUuid): Promise<LoginInfo | null> {
-  return await getAccountClient().leaveWorkspace(account)
+export async function leaveWorkspace (account: AccountUuid, otpCode?: string): Promise<LoginInfo | null> {
+  return await getAccountClient().leaveWorkspace(account, otpCode)
 }
 
 export async function sendInvite (email: string, role: AccountRole): Promise<void> {

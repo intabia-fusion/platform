@@ -31,14 +31,7 @@
   import notification, { DocNotifyContext, InboxNotification, notificationId } from '@hcengineering/notification'
   import { BrowserNotificatator, InboxNotificationsClientImpl } from '@hcengineering/notification-resources'
   import { broadcastEvent, getMetadata, getResource, IntlString, translate } from '@hcengineering/platform'
-  import {
-    ActionContext,
-    ComponentExtensions,
-    createQuery,
-    getClient,
-    isAdminUser,
-    reduceCalls
-  } from '@hcengineering/presentation'
+  import { ActionContext, ComponentExtensions, createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import support, { SupportStatus } from '@hcengineering/support'
   import {
@@ -827,7 +820,7 @@
   }
 </script>
 
-{#if $myEmployeeStore && deactivated && !isAdminUser()}
+{#if $myEmployeeStore && deactivated}
   <div class="flex-col-center justify-center h-full flex-grow">
     <h1><Label label={workbench.string.AccountDisabled} /></h1>
     <Label label={workbench.string.AccountDisabledDescr} />
@@ -842,7 +835,7 @@
       }}
     />
   </div>
-{:else if $myEmployeeStore || account.role === AccountRole.Owner || isAdminUser()}
+{:else if $myEmployeeStore || account.role === AccountRole.Owner}
   <ActionHandler {currentSpace} />
   <svg class="svg-mask">
     <clipPath id="notify-normal">

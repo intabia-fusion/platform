@@ -1,5 +1,6 @@
 import { expect, Page } from '@playwright/test'
 import { generateId, PlatformURI } from '../utils'
+import { retry } from '../retry'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 
 export interface IssueProps {
@@ -94,8 +95,23 @@ export async function fillIssueForm (page: Page, props: IssueProps): Promise<voi
     })
   }
   if (status !== undefined) {
-    await page.click(af + '#status-editor')
-    await page.click(`.menu-item:has-text("${status}")`)
+    const statusItem = page.locator(`.menu-item:has-text("${status}")`).first()
+    // SelectPopup gets a snapshot of the status list (StatusEditor.svelte:96), so a state
+    // renamed moments earlier is absent until the dropdown is reopened.
+    // Clicking outside the retry could land after the popup closed again, so the whole
+    // open-wait-click sequence lives in one attempt.
+    await retry(async () => {
+      await page.click(af + '#status-editor')
+      try {
+        await expect(statusItem).toBeVisible({ timeout: 3000 })
+        await statusItem.click()
+      } catch (err) {
+        if (await page.locator('.selectPopup').isVisible()) {
+          await page.keyboard.press('Escape')
+        }
+        throw err
+      }
+    })
   }
   if (priority !== undefined) {
     await page.click(af + 'button:has-text("No priority")')
