@@ -33,7 +33,7 @@ import { getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import { getMetadata } from '@hcengineering/platform'
 import { sendInvites } from './invites'
-import { lkIsConnecting, lkSessionConnected } from './liveKitClient'
+import { lkIsConnecting, lkSessionConnected, lkSessionEnded } from './liveKitClient'
 
 export let currentMeetingRoom: Ref<Room> | undefined
 export let currentMeeting: Ref<MeetingMinutes> | undefined
@@ -452,6 +452,24 @@ export function cancelReconnect (): void {
 }
 
 onClient(() => {
+  // Inside onClient: at module scope this runs while `liveKitClient` is still evaluating - the two
+  // modules import each other - and reading the store then throws before the office ever renders.
+  //
+  // A server-side end is final: the room is gone. Keeping the anchor sends the client back into a
+  // meeting that no longer exists on the next store tick, and `connectToMeeting` navigates it to
+  // that meeting's minutes page on the way - out of the office, with nothing to connect to.
+  let lastSessionEnd: number | undefined
+  lkSessionEnded.subscribe((value) => {
+    if (lastSessionEnd === undefined || value === lastSessionEnd) {
+      lastSessionEnd = value
+      return
+    }
+    lastSessionEnd = value
+    currentMeeting = undefined
+    currentMeetingRoom = undefined
+    forgetActiveMeeting()
+  })
+
   void waitForOfficeLoaded().then(() => {
     void reconnectToCurrentMeeting()
     // Either store may populate after `officeLoaded` resolves; the loop is guarded
