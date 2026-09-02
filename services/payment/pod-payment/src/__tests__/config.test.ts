@@ -97,6 +97,51 @@ plans:
     expect(() => require('../config')).toThrow(/windowMonthLimit missing for plans: start, corporation/)
   })
 
+  it('refuses to start when a trial block has no windowMonthLimit', () => {
+    // Without it the trial inherits business's per-seat window times the trial seat cap: on prod that
+    // was 300000 * 1000 = 300M tokens handed to a 14-day trial.
+    process.env.PLAN_CONFIG = writeConfig(`
+plans:
+  business:
+    priceMonthlyPerUser: 499
+    windowMonthLimit: 300000
+trial:
+  plan: business
+  days: 14
+  usersLimit: 1000
+`)
+
+    expect(() => require('../config')).toThrow(/trial.windowMonthLimit missing/)
+  })
+
+  it('accepts a config with no trial block at all', () => {
+    // Dropping `trial:` is a supported setup: new workspaces go straight to the free plan.
+    process.env.PLAN_CONFIG = writeConfig(`
+plans:
+  business:
+    priceMonthlyPerUser: 499
+    windowMonthLimit: 300000
+`)
+
+    expect(() => require('../config')).not.toThrow()
+  })
+
+  it('accepts a trial that sets its window', () => {
+    process.env.PLAN_CONFIG = writeConfig(`
+plans:
+  business:
+    priceMonthlyPerUser: 499
+    windowMonthLimit: 300000
+trial:
+  plan: business
+  days: 14
+  usersLimit: 1000
+  windowMonthLimit: 1000000
+`)
+
+    expect(() => require('../config')).not.toThrow()
+  })
+
   it('refuses to start when the plan config file is absent', () => {
     process.env.PLAN_CONFIG = join(dir, 'does-not-exist.yaml')
 
