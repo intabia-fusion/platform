@@ -186,7 +186,6 @@ import contact from '@hcengineering/contact'
 import { createIssue } from './createIssue'
 
 export { default as AssigneeEditor } from './components/issues/AssigneeEditor.svelte'
-export { default as SubIssueList } from './components/issues/edit/SubIssueList.svelte'
 export { default as IssueStatusIcon } from './components/issues/IssueStatusIcon.svelte'
 export { default as StatusPresenter } from './components/issues/StatusPresenter.svelte'
 
@@ -259,29 +258,40 @@ async function editProject (project: Project | undefined): Promise<void> {
 }
 
 async function deleteIssue (issue: Issue | Issue[]): Promise<void> {
-  const issueCount = Array.isArray(issue) ? issue.length : 1
-  let subissues: number = 0
-  if (Array.isArray(issue)) {
-    issue.forEach((it) => {
-      subissues += it.subIssues
-    })
-  } else {
-    subissues = issue.subIssues
-  }
+  const issueArray = Array.isArray(issue) ? issue : [issue]
+  const issueCount = issueArray.length
+  const issueIds = issueArray.map((it) => it._id)
+
+  const allSubIssues = await getClient().findAll<Issue>(tracker.class.Issue, {
+    attachedTo: { $in: issueIds }
+  })
+
+  const subissues = allSubIssues.length
+  const hasSubIssues = subissues > 0
+
   showPopup(contact.component.DeleteConfirmationPopup, {
     object: issue,
     title: tracker.string.DeleteIssue,
     titleParams: { issueCount },
     confirmation: tracker.string.DeleteIssueConfirm,
-    confirmationParams: { issueCount, subIssueCount: subissues },
+    confirmationParams: { issueCount },
+    extraConfirmation: hasSubIssues ? tracker.string.DeleteIssueWithSubIssuesConfirm : undefined,
+    extraConfirmationParams: hasSubIssues ? { subIssueCount: subissues } : undefined,
+    extraObjects: hasSubIssues ? allSubIssues : undefined,
     deleteAction: async () => {
-      const objs = Array.isArray(issue) ? issue : [issue]
-
       const target = await getTargetObjectFromUrl(getCurrentLocation())
-      const deletingFromTargetIssuePage = objs.some((obj) => obj._id === target?._id)
+      const deletingFromTargetIssuePage = issueArray.some((obj) => obj._id === target?._id)
 
       try {
-        await deleteObjects(getClient(), objs as unknown as Doc[])
+        if (allSubIssues.length > 0) {
+          const ops = getClient().apply()
+          for (const subIssue of allSubIssues) {
+            await ops.update(subIssue, { attachedTo: tracker.ids.NoParent })
+          }
+          await ops.commit()
+        }
+
+        await deleteObjects(getClient(), issueArray as unknown as Doc[])
       } catch (err: any) {
         Analytics.handleError(err)
       }
