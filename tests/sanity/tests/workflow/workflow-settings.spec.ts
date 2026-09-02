@@ -81,17 +81,17 @@ test.describe('Workflow settings', () => {
   })
 
   test('adds a second transition', async () => {
-    await workflows.addTransition('Start', ['Todo'], 'New state')
+    await workflows.addTransition('Start', ['Todo'], 'In Progress')
     await expect(workflows.transitionRows()).toHaveCount(2)
   })
 
   test('adds a transition from any status', async () => {
-    await workflows.addTransition('Cancel', 'Any status', 'Lost')
+    await workflows.addTransition('Cancel', 'Any status', 'Canceled')
     await expect(workflows.transitionRow('Cancel')).toContainText('Any status')
   })
 
   test('rejects a self transition', async () => {
-    await workflows.fillTransition('Loop', ['Won'], 'Won')
+    await workflows.fillTransition('Loop', ['Done'], 'Done')
     await expect(workflows.errorRow()).toContainText('itself is not allowed')
     await expect(workflows.popupButton('Create')).toBeDisabled()
     await page.keyboard.press('Escape')

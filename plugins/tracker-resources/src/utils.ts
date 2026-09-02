@@ -73,6 +73,7 @@ import {
   type SelectDirection
 } from '@hcengineering/view-resources'
 import { derived, get, writable } from 'svelte/store'
+
 import tracker from './plugin'
 import { formatDuration } from '@hcengineering/tracker'
 import { getPersonRefByPersonIdCb } from '@hcengineering/contact-resources'
@@ -207,7 +208,9 @@ export async function issueStatusSort (
   const joinedProjectsTypes = get(typesOfJoinedProjectsStore) ?? []
   const taskTypes = get(taskTypeStore)
   const joinedTaskTypes = Array.from(taskTypes.values()).filter(
-    (taskType) => joinedProjectsTypes.includes(taskType.parent) && taskType.ofClass === tracker.class.Issue
+    (taskType) =>
+      (joinedProjectsTypes.length === 0 || joinedProjectsTypes.includes(taskType.parent)) &&
+      taskType.ofClass === tracker.class.Issue
   )
   const taskTypeId = get(selectedTaskTypeStore) ?? (joinedTaskTypes.length === 1 ? joinedTaskTypes[0]?._id : undefined)
   const taskType = taskTypeId !== undefined ? taskTypes.get(taskTypeId) : undefined
@@ -215,55 +218,41 @@ export async function issueStatusSort (
   const statuses = get(statusStore).byId
   // TODO: How we track category updates.
 
-  if (viewletDescriptorId === tracker.viewlet.Kanban) {
-    value.sort((a, b) => {
-      const aVal = statuses.get(a)
-      const bVal = statuses.get(b)
-      const res =
-        listIssueKanbanStatusOrder.indexOf(aVal?.category as Ref<StatusCategory>) -
-        listIssueKanbanStatusOrder.indexOf(bVal?.category as Ref<StatusCategory>)
-      if (res === 0) {
-        if (taskType != null) {
-          const aIndex = taskType.statuses.findIndex((p) => p === a)
-          const bIndex = taskType.statuses.findIndex((p) => p === b)
-          return aIndex - bIndex
-        }
-        if (type != null) {
-          const aIndex = getStatusIndex(type, taskTypes, a)
-          const bIndex = getStatusIndex(type, taskTypes, b)
-          return aIndex - bIndex
-        }
-        const aIndex = getTaskTypesStatusIndex(joinedTaskTypes, a)
-        const bIndex = getTaskTypesStatusIndex(joinedTaskTypes, b)
-        return aIndex - bIndex
+  const isKanban = viewletDescriptorId === tracker.viewlet.Kanban
+  const order = isKanban ? listIssueKanbanStatusOrder : listIssueStatusOrder
+
+  value.sort((a, b) => {
+    const aVal = statuses.get(a)
+    const bVal = statuses.get(b)
+    const aCatIndex = aVal?.category != null ? order.indexOf(aVal.category) : -1
+    const bCatIndex = bVal?.category != null ? order.indexOf(bVal.category) : -1
+    const aCat = aCatIndex >= 0 ? aCatIndex : order.length
+    const bCat = bCatIndex >= 0 ? bCatIndex : order.length
+    const res = aCat - bCat
+    if (res === 0) {
+      if (taskType != null) {
+        const aIndex = taskType.statuses.findIndex((p) => p === a)
+        const bIndex = taskType.statuses.findIndex((p) => p === b)
+        if (aIndex >= 0 && bIndex >= 0) return aIndex - bIndex
+        if (aIndex >= 0) return -1
+        if (bIndex >= 0) return 1
       }
-      return res
-    })
-  } else {
-    value.sort((a, b) => {
-      const aVal = statuses.get(a) as IssueStatus
-      const bVal = statuses.get(b) as IssueStatus
-      const res =
-        listIssueStatusOrder.indexOf(aVal?.category as Ref<StatusCategory>) -
-        listIssueStatusOrder.indexOf(bVal?.category as Ref<StatusCategory>)
-      if (res === 0) {
-        if (taskType != null) {
-          const aIndex = taskType.statuses.findIndex((p) => p === a)
-          const bIndex = taskType.statuses.findIndex((p) => p === b)
-          return aIndex - bIndex
-        }
-        if (type != null) {
-          const aIndex = getStatusIndex(type, taskTypes, a)
-          const bIndex = getStatusIndex(type, taskTypes, b)
-          return aIndex - bIndex
-        }
-        const aIndex = getTaskTypesStatusIndex(joinedTaskTypes, a)
-        const bIndex = getTaskTypesStatusIndex(joinedTaskTypes, b)
-        return aIndex - bIndex
+      if (type != null) {
+        const aIndex = getStatusIndex(type, taskTypes, a)
+        const bIndex = getStatusIndex(type, taskTypes, b)
+        if (aIndex >= 0 && bIndex >= 0) return aIndex - bIndex
+        if (aIndex >= 0) return -1
+        if (bIndex >= 0) return 1
       }
-      return res
-    })
-  }
+      const aIndex = getTaskTypesStatusIndex(joinedTaskTypes, a)
+      const bIndex = getTaskTypesStatusIndex(joinedTaskTypes, b)
+      if (aIndex >= 0 && bIndex >= 0) return aIndex - bIndex
+      if (aIndex >= 0) return -1
+      if (bIndex >= 0) return 1
+      return (aVal?.name ?? '').localeCompare(bVal?.name ?? '')
+    }
+    return res
+  })
   return value
 }
 
@@ -622,6 +611,20 @@ export function getIssueStatusCategories (project: ProjectType): Array<Ref<Statu
       task.statusCategory.Won,
       task.statusCategory.Lost
     ]
+  }
+}
+
+export function getIssueDefaultStatuses (project: ProjectType): Array<Ref<Status>> {
+  if (project.classic) {
+    return [
+      tracker.status.Backlog,
+      tracker.status.Todo,
+      tracker.status.InProgress,
+      tracker.status.Done,
+      tracker.status.Canceled
+    ]
+  } else {
+    return [tracker.status.Backlog, tracker.status.InProgress, tracker.status.Done, tracker.status.Canceled]
   }
 }
 

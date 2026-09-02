@@ -95,13 +95,18 @@ export function getTaskTypeStates (
  * @public
  */
 export function getStatusIndex (type: ProjectType, taskTypes: IdMap<TaskType>, status: Ref<Status>): number {
-  return (
-    type.tasks
-      .map((it) => taskTypes.get(it))
-      .flatMap((it) => it?.statuses.indexOf(status))
-      .filter((it) => (it ?? 0) >= 0)
-      .reduce((p, c) => (p ?? 0) + (c ?? 0), 0) ?? -1
-  )
+  if (type.statuses !== undefined && type.statuses.length > 0) {
+    const idx = type.statuses.findIndex((s) => s._id === status)
+    if (idx >= 0) return idx
+  }
+  for (const taskId of type.tasks ?? []) {
+    const taskType = taskTypes.get(taskId)
+    const idx = taskType?.statuses?.indexOf(status)
+    if (idx !== undefined && idx >= 0) {
+      return idx
+    }
+  }
+  return -1
 }
 
 /**

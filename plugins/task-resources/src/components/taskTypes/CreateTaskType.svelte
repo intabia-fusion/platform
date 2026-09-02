@@ -144,33 +144,46 @@
       icon: descr.icon
     }
 
-    if (taskType === undefined && descr.statusCategoriesFunc !== undefined) {
-      const f = await getResource(descr.statusCategoriesFunc)
-      if (f !== undefined) {
-        _taskType.statusCategories = f(type)
+    if (taskType === undefined) {
+      if (descr.statusCategoriesFunc !== undefined) {
+        const f = await getResource(descr.statusCategoriesFunc)
+        if (f !== undefined) {
+          _taskType.statusCategories = f(type)
+        }
+      }
+      if (descr.defaultStatusesFunc !== undefined) {
+        const f = await getResource(descr.defaultStatusesFunc)
+        if (f !== undefined) {
+          _taskType.statuses = f(type)
+        }
       }
     }
 
     const taskTypeId: Ref<TaskType> = taskType?._id ?? generateId()
-    const categories = toIdMap(
-      await client.findAll(core.class.StatusCategory, { _id: { $in: _taskType.statusCategories } })
-    )
-    const statusAttr =
-      findStatusAttr(client.getHierarchy(), ofClass) ?? client.getHierarchy().getAttribute(task.class.Task, 'status')
-    for (const st of _taskType.statusCategories) {
-      const std = categories.get(st)
-      if (std !== undefined) {
-        const s = await createState(client, _taskType.statusClass, {
-          name: std.defaultStatusName,
-          ofAttribute: statusAttr._id,
-          category: std._id
-        })
-        _taskType.statuses.push(s)
-        if (type.statuses.find((it) => it._id === s) === undefined) {
-          await client.update(type, {
-            $push: { statuses: { _id: s, taskType: taskTypeId } }
+    if (_taskType.statuses.length === 0) {
+      const categories = toIdMap(
+        await client.findAll(core.class.StatusCategory, { _id: { $in: _taskType.statusCategories } })
+      )
+      const statusAttr =
+        findStatusAttr(client.getHierarchy(), ofClass) ?? client.getHierarchy().getAttribute(task.class.Task, 'status')
+      for (const st of _taskType.statusCategories) {
+        const std = categories.get(st)
+        if (std !== undefined) {
+          const s = await createState(client, _taskType.statusClass, {
+            name: std.defaultStatusName,
+            ofAttribute: statusAttr._id,
+            category: std._id
           })
+          _taskType.statuses.push(s)
         }
+      }
+    }
+
+    for (const s of _taskType.statuses) {
+      if (type.statuses.find((it) => it._id === s) === undefined) {
+        await client.update(type, {
+          $push: { statuses: { _id: s, taskType: taskTypeId } }
+        })
       }
     }
 

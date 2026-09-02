@@ -162,6 +162,7 @@ export class TTaskTypeDescriptor extends TDoc implements TaskTypeDescriptor {
   // If specified, will allow to be created by users, system type overwize
   allowCreate!: boolean
   statusCategoriesFunc?: Resource<(project: ProjectType) => Ref<StatusCategory>[]>
+  defaultStatusesFunc?: Resource<(project: ProjectType) => Ref<Status>[]>
 }
 
 @Mixin(task.mixin.TaskTypeClass, core.class.Class)

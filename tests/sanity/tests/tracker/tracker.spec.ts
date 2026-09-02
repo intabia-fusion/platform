@@ -196,7 +196,7 @@ test.describe('Tracker tests', () => {
     await issuesPage.openViewOptionsAndToggleShouldShowAll()
   })
 
-  test.describe('TaskKindSelector tests', () => {
+  test.describe('Task types in Kanban', () => {
     let settingsPage: SettingsPage
 
     const taskTypeName = `Bug-${generateId(4)}`
@@ -214,43 +214,17 @@ test.describe('Tracker tests', () => {
       await page.waitForLoadState('networkidle')
     })
 
-    test('task-type-selection-persists-after-popup-close', async ({ page }) => {
-      await page.click(ViewletSelectors.Board)
-
-      await page.click('button[data-id="btnSelectTaskType"]')
-      await page.waitForSelector(`.menu-item:has-text("${taskTypeName}")`)
-      await page.click(`.menu-item:has-text("${taskTypeName}")`)
-
-      await expect(page.locator('button[data-id="btnSelectTaskType"]')).toContainText(taskTypeName)
-
-      await page.click('button:has-text("New issue")')
-      await page.waitForSelector('form.antiCard')
-      await page.keyboard.press('Escape')
-      await page.waitForSelector('form.antiCard', { state: 'detached' })
-
-      await expect(page.locator('button[data-id="btnSelectTaskType"]')).toContainText(taskTypeName)
-    })
-
-    test('task-type-filter-cleared-on-switch-to-list', async ({ page }) => {
+    test('all task types are displayed together on kanban board', async ({ page }) => {
       const issueDefault = getIssueName('default-type')
       const issueBug = getIssueName('bug-type')
       await createIssue(page, { name: issueDefault })
       await createIssue(page, { name: issueBug, taskType: taskTypeName })
 
       await page.click(ViewletSelectors.Board)
-      await page.click('button[data-id="btnSelectTaskType"]')
-      await page.click(`.menu-item:has-text("${taskTypeName}")`)
+      await page.locator('[data-id="kanban-column"]').first().waitFor({ state: 'visible', timeout: 10000 })
 
+      await expect(page.locator('.panel-container').filter({ hasText: issueDefault })).toBeVisible()
       await expect(page.locator('.panel-container').filter({ hasText: issueBug })).toBeVisible()
-      await expect(page.locator('.panel-container').filter({ hasText: issueDefault })).toHaveCount(0)
-
-      const issuesPage = new IssuesPage(page)
-      await page.click(ViewletSelectors.Table)
-
-      await issuesPage.searchIssueByName(issueDefault)
-      await expect(page.locator('.list-container')).toContainText(issueDefault)
-      await issuesPage.searchIssueByName(issueBug)
-      await expect(page.locator('.list-container')).toContainText(issueBug)
     })
   })
 })
