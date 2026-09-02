@@ -189,7 +189,11 @@ class ClientImpl implements Client, BackupClient {
       this.appliedModelTransactions.add(tx._id)
     }
     // We need to handle it on server, before performing local live query updates.
-    return await this.conn.tx(tx)
+    const result = await this.conn.tx(tx)
+    // The connection notifies local tx handlers (live queries) without awaiting them.
+    // Give them a turn before the caller issues the next tx, or their updates are coalesced.
+    await Promise.resolve()
+    return result
   }
 
   async updateFromRemote (...tx: Tx[]): Promise<void> {
