@@ -656,6 +656,67 @@ describe('Workflow Import', () => {
     expect(result.workflows[workflowId]).toBeDefined()
   })
 
+  it('drops transitions when source or target status has no mapped replacement in resolution', async () => {
+    const statusAId = 'status-a' as Ref<Status>
+    const statusBId = 'status-b' as Ref<Status>
+    const statusUnmappedId = 'status-unmapped' as Ref<Status>
+
+    const client = createMockTx({
+      docs: [
+        { _id: statusAId, _class: core.class.Status, name: 'StatusA' } as any,
+        { _id: statusBId, _class: core.class.Status, name: 'StatusB' } as any
+      ]
+    })
+
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: '2026-08-31T00:00:00.000Z',
+      workspace: ws1,
+      projectTypeId,
+      workflows: [
+        {
+          id: 'wf-test' as Ref<Workflow>,
+          name: 'Wf Drop Transition Test',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          transitions: [
+            {
+              id: 'trans-valid' as Ref<WorkflowTransition>,
+              name: 'Valid Transition',
+              from: [statusAId],
+              to: statusBId
+            },
+            {
+              id: 'trans-unmapped-from' as Ref<WorkflowTransition>,
+              name: 'Unmapped From Transition',
+              from: [statusUnmappedId],
+              to: statusBId
+            },
+            {
+              id: 'trans-unmapped-to' as Ref<WorkflowTransition>,
+              name: 'Unmapped To Transition',
+              from: [statusAId],
+              to: statusUnmappedId
+            }
+          ]
+        }
+      ]
+    }
+
+    const result = await importWorkflowConfig(client, projectTypeId, config, {
+      targetTaskTypeId,
+      statusMap: {
+        [statusAId]: statusAId,
+        [statusBId]: statusBId
+        // statusUnmappedId is explicitly not mapped
+      }
+    })
+
+    expect(result.transitions['trans-valid' as Ref<WorkflowTransition>]).toBeDefined()
+    expect(result.transitions['trans-unmapped-from' as Ref<WorkflowTransition>]).toBeUndefined()
+    expect(result.transitions['trans-unmapped-to' as Ref<WorkflowTransition>]).toBeUndefined()
+  })
+
   it('throws error on unresolved rule references in importRules', async () => {
     const client = createMockTx()
     const config: WorkflowConfig = {

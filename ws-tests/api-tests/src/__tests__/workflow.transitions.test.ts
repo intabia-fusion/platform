@@ -83,6 +83,7 @@ describe('workflow transitions', () => {
       exportDate: new Date().toISOString(),
       workspace: wsUuid,
       projectTypeId: type.projectTypeId,
+      statuses: Statuses.map((s) => ({ id: type.statuses[s], name: s, color: 0 })),
       workflows: [
         {
           id: wfId,
@@ -307,6 +308,7 @@ describe('workflow transitions', () => {
       exportDate: new Date().toISOString(),
       workspace: wsUuid,
       projectTypeId: type.projectTypeId,
+      statuses: Statuses.map((s) => ({ id: type.statuses[s], name: s, color: 0 })),
       workflows: [
         {
           id: generateId(),
@@ -390,6 +392,7 @@ describe('workflow transitions', () => {
       exportDate: new Date().toISOString(),
       workspace: wsUuid,
       projectTypeId: type.projectTypeId,
+      statuses: Statuses.map((s) => ({ id: type.statuses[s], name: s, color: 0 })),
       workflows: [{ id: generateId(), name, taskTypeName: 'Issue', taskTypeId: type.taskTypes.Issue }],
       projects: [{ project: other.projectId, identifier: other.identifier, workflows: { Issue: name } }]
     })
@@ -506,6 +509,7 @@ describe('workflow transitions', () => {
       exportDate: new Date().toISOString(),
       workspace: wsUuid,
       projectTypeId: type.projectTypeId,
+      statuses: Statuses.map((s) => ({ id: type.statuses[s], name: s, color: 0 })),
       workflows: [
         {
           id: generateId(),

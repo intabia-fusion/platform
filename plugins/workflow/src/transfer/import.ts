@@ -1221,26 +1221,30 @@ export async function importWorkflowConfig (
 
       let from: Ref<Status>[] | null = null
       if (t.from != null) {
-        const resolvedFrom: Ref<Status>[] = []
-        let hasUnresolved = false
-        for (const s of t.from) {
-          const resolved = resolveStatus(s)
-          if (resolved === undefined) {
-            if (resolution === undefined) {
-              throw new Error(`Workflow import: unknown status "${s}"`)
+        if (t.from.length === 0) {
+          from = []
+        } else {
+          const resolvedFrom: Ref<Status>[] = []
+          let hasUnresolved = false
+          for (const s of t.from) {
+            const resolved = resolveStatus(s)
+            if (resolved === undefined) {
+              if (resolution === undefined) {
+                throw new Error(`Workflow import: unknown status "${s}"`)
+              }
+              hasUnresolved = true
+            } else {
+              resolvedFrom.push(resolved)
             }
-            hasUnresolved = true
-          } else {
-            resolvedFrom.push(resolved)
           }
+          if (hasUnresolved && resolution !== undefined) {
+            continue
+          }
+          if (resolvedFrom.length === 0) {
+            continue
+          }
+          from = Array.from(new Set(resolvedFrom))
         }
-        if (hasUnresolved && resolution !== undefined) {
-          continue
-        }
-        if (resolvedFrom.length === 0) {
-          continue
-        }
-        from = Array.from(new Set(resolvedFrom))
       }
 
       const existingTrans = existingTransByName.get(t.name)

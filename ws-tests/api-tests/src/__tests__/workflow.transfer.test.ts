@@ -119,14 +119,9 @@ function makeConfig (
 
 describe('workflow config transfer', () => {
   let client: TxOperations
-  let type: ProjectTypeContext
 
   beforeAll(async () => {
     client = await connect()
-    type = await createProjectTypeWith(client, [
-      { name: 'Issue', statuses: Statuses },
-      { name: 'Bug', statuses: Statuses }
-    ])
   })
 
   async function freshType (): Promise<ProjectTypeContext> {
@@ -143,6 +138,7 @@ describe('workflow config transfer', () => {
 
   describe('workflows', () => {
     it('imports a workflow and finds it by name', async () => {
+      const type = await freshType()
       const wfId = generateId<Workflow>()
       const res = await importWorkflowConfig(
         client,

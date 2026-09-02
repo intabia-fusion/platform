@@ -111,6 +111,7 @@ describe('workflow post-functions', () => {
       exportDate: new Date().toISOString(),
       workspace: wsUuid,
       projectTypeId: type.projectTypeId,
+      statuses: Statuses.map((s) => ({ id: type.statuses[s], name: s, color: 0 })),
       workflows: [
         {
           id: generateId(),

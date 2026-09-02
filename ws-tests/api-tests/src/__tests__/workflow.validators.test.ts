@@ -95,6 +95,7 @@ describe('workflow validators', () => {
       exportDate: new Date().toISOString(),
       workspace: wsUuid,
       projectTypeId: type.projectTypeId,
+      statuses: Statuses.map((s) => ({ id: type.statuses[s], name: s, color: 0 })),
       workflows: [
         {
           id: generateId(),
@@ -129,6 +130,7 @@ describe('workflow validators', () => {
       exportDate: new Date().toISOString(),
       workspace: wsUuid,
       projectTypeId: type.projectTypeId,
+      statuses: Statuses.map((s) => ({ id: type.statuses[s], name: s, color: 0 })),
       workflows: [
         {
           id: generateId(),

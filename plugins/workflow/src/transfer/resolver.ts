@@ -117,11 +117,17 @@ export async function buildResolver (client: TxOperations, projectTypeId: Ref<Pr
     }
   }
 
+  // First add external task types
+  for (const tt of allTaskTypes) {
+    if (tt.parent !== projectTypeId) {
+      resolver.add(TaskTypeToken, tt._id, tt.name)
+    }
+  }
+
+  // Then add current project type task types with absolute priority
   for (const tt of allTaskTypes) {
     if (tt.parent === projectTypeId) {
       resolver.setRef(TaskTypeToken, tt.name, tt._id)
-    } else {
-      resolver.add(TaskTypeToken, tt._id, tt.name)
     }
   }
 
