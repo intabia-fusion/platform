@@ -25532,6 +25532,9 @@ importers:
       '@hcengineering/rank':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/rank
+      '@hcengineering/setting':
+        specifier: workspace:^0.7.0
+        version: link:../setting
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
@@ -28499,6 +28502,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/setting':
+        specifier: workspace:^0.7.0
+        version: link:../setting
       '@hcengineering/task':
         specifier: workspace:^0.7.0
         version: link:../task
