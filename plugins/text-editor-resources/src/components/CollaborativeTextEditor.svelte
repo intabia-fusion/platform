@@ -439,7 +439,7 @@
           width: 20,
           height: 20,
           marginX: 8,
-          className: 'tiptap-left-menu',
+          className: 'tiptap-left-menu no-print',
           icon: view.icon.Add,
           iconProps: {
             className: 'svg-tiny',

@@ -91,7 +91,7 @@ function LeftMenu (options: LeftMenuOptions): Plugin {
     key: new PluginKey('left-menu'),
     view: (view) => {
       leftMenuElement = document.createElement('div')
-      leftMenuElement.classList.add(options.className) // Style externally with CSS
+      leftMenuElement.className = options.className // Style externally with CSS
       leftMenuElement.style.position = 'absolute'
       hideLeftMenu()
 

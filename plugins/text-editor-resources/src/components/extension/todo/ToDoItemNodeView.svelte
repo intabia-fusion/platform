@@ -215,17 +215,17 @@
     class:focused
   >
     {#if todoable}
-      <div class="flex-center assignee" contenteditable="false">
+      <div class="flex-center assignee" class:cursor-pointer={!readonly} contenteditable="false">
         <Component
           is={contact.component.EmployeePresenter}
           props={{
             value: userId,
-            disabled: readonly,
             avatarSize: 'card',
             shouldShowName: false,
-            shouldShowPlaceholder: true,
+            shouldShowPlaceholder: !readonly,
             onEmployeeEdit: handleAssigneeEdit
           }}
+          disabled={readonly}
         />
       </div>
     {/if}
@@ -243,7 +243,6 @@
     .assignee {
       z-index: 50;
       width: 1.25rem;
-      cursor: pointer;
     }
     .assignee,
     .todo-check {

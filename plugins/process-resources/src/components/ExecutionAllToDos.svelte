@@ -42,9 +42,9 @@
     <div class="flex-row-center flex-gap-2">
       <Component
         is={contact.component.EmployeePresenter}
+        disabled
         props={{
           value: todo.user,
-          disabled: true,
           avatarSize: 'card',
           shouldShowName: false,
           shouldShowPlaceholder: true

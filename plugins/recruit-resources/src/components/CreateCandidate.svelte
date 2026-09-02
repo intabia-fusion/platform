@@ -707,8 +707,8 @@
       <div class="antiComponent antiEmphasized w-full flex-grow mt-2">
         <Component
           is={tags.component.TagsEditor}
+          disabled={loading}
           props={{
-            disabled: loading,
             focusIndex: 102,
             items: object.skills,
             key,

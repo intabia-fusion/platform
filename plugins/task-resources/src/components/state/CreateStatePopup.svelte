@@ -426,9 +426,9 @@
         {:else}
           <Component
             is={emojiPlugin.component.EmojiPopup}
+            disabled={readonly}
             props={{
               selected: Array.isArray(color) ? fromCodePoint(...color) : color ? fromCodePoint(color) : undefined,
-              disabled: readonly,
               kind: 'default'
             }}
             on:close={(evt) => {
