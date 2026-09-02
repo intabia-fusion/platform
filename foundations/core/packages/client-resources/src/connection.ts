@@ -637,8 +637,6 @@ class Connection implements ClientConnection {
           resp.id,
           'error: ',
           resp.error,
-          'result: ',
-          resp.result,
           this.workspace,
           this.user
         )
