@@ -120,10 +120,10 @@
                   <button
                     type="button"
                     class="action-btn"
-                    class:selected={currentRes.action === 'replace'}
+                    class:selected={currentRes.action === 'copy' && currentRes.targetScreenId !== undefined}
                     on:click={() => {
                       screenResolutions[sc.id] = {
-                        action: 'replace',
+                        action: 'copy',
                         targetScreenId: reportItem?.matchingScreenId
                       }
                       screenResolutions = { ...screenResolutions }
@@ -134,9 +134,9 @@
                   <button
                     type="button"
                     class="action-btn"
-                    class:selected={currentRes.action === 'copy'}
+                    class:selected={currentRes.action === 'copy' && currentRes.targetScreenId === undefined}
                     on:click={() => {
-                      screenResolutions[sc.id] = { ...currentRes, action: 'copy' }
+                      screenResolutions[sc.id] = { action: 'copy', targetScreenId: undefined }
                       screenResolutions = { ...screenResolutions }
                     }}
                   >
@@ -147,7 +147,7 @@
                     class="action-btn"
                     class:selected={currentRes.action === 'skip'}
                     on:click={() => {
-                      screenResolutions[sc.id] = { ...currentRes, action: 'skip' }
+                      screenResolutions[sc.id] = { action: 'skip' }
                       screenResolutions = { ...screenResolutions }
                     }}
                   >
@@ -159,34 +159,18 @@
                     class="action-btn"
                     class:selected={currentRes.action === 'copy'}
                     on:click={() => {
-                      screenResolutions[sc.id] = { ...currentRes, action: 'copy' }
+                      screenResolutions[sc.id] = { action: 'copy', targetScreenId: undefined }
                       screenResolutions = { ...screenResolutions }
                     }}
                   >
                     <Label label={plugin.string.ActionCreate} />
                   </button>
-                  {#if allExistingScreens.length > 0}
-                    <button
-                      type="button"
-                      class="action-btn"
-                      class:selected={currentRes.action === 'replace'}
-                      on:click={() => {
-                        screenResolutions[sc.id] = {
-                          action: 'replace',
-                          targetScreenId: currentRes.targetScreenId ?? allExistingScreens[0]?._id
-                        }
-                        screenResolutions = { ...screenResolutions }
-                      }}
-                    >
-                      <Label label={plugin.string.ActionReplace} />
-                    </button>
-                  {/if}
                   <button
                     type="button"
                     class="action-btn"
                     class:selected={currentRes.action === 'skip'}
                     on:click={() => {
-                      screenResolutions[sc.id] = { ...currentRes, action: 'skip' }
+                      screenResolutions[sc.id] = { action: 'skip' }
                       screenResolutions = { ...screenResolutions }
                     }}
                   >
@@ -213,29 +197,6 @@
               {#if sc.description}
                 <span class="font-regular-12 text-secondary">{sc.description}</span>
               {/if}
-            </div>
-          {/if}
-
-          <!-- Target screen select if 'replace' is selected and NOT an exact match -->
-          {#if !isExactMatch && currentRes.action === 'replace'}
-            <div class="screen-replace-target-row flex-between flex-row-center flex-gap-2">
-              <span class="font-regular-12 text-secondary">
-                <Label label={plugin.string.SelectTargetScreen} />:
-              </span>
-              <div class="replace-dropdown-wrapper">
-                <ModernDropdown
-                  items={allExistingScreens.map((s) => ({
-                    id: s._id,
-                    label: getEmbeddedLabel(s.name),
-                    icon: plugin.icon.Screen
-                  }))}
-                  bind:selected={screenResolutions[sc.id].targetScreenId}
-                  placeholder={plugin.string.SelectTargetScreen}
-                  autoSelect={true}
-                  justify="left"
-                  width="100%"
-                />
-              </div>
             </div>
           {/if}
 

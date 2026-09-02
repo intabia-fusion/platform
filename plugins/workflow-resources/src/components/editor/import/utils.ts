@@ -156,7 +156,7 @@ export function computeInitialScreenResolutions (
     const reportItem = screenReport?.find((r) => r.sourceScreenId === sc.id || r.name === sc.name)
     if (reportItem?.isExactMatch === true && reportItem.matchingScreenId !== undefined) {
       res[sc.id] = {
-        action: 'replace',
+        action: 'copy',
         targetScreenId: reportItem.matchingScreenId
       }
     } else {

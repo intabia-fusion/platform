@@ -204,7 +204,7 @@ export interface TransitionResolutionConfig {
   targetToStatusId?: Ref<Status>
 }
 
-export type ScreenResolutionAction = 'copy' | 'replace' | 'skip'
+export type ScreenResolutionAction = 'copy' | 'skip'
 
 export interface ScreenResolutionConfig {
   action: ScreenResolutionAction

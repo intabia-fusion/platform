@@ -394,6 +394,140 @@ describe('Workflow Import', () => {
     )
   })
 
+  it('reuses existing screen if signature matches when resolution is undefined', async () => {
+    const existingScreen: Screen = {
+      _id: 'existing-screen-1' as Ref<Screen>,
+      _class: workflow.class.Screen,
+      name: 'Resolution Screen',
+      projectType: projectTypeId,
+      targetClass: task.class.Task,
+      space: core.space.Workspace,
+      modifiedOn: 0,
+      modifiedBy: '' as any
+    }
+
+    const client = createMockTx({ docs: [existingScreen] })
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: '2026-08-31T00:00:00.000Z',
+      workspace: ws1,
+      projectTypeId,
+      screens: [
+        {
+          id: 'screen-2' as Ref<Screen>,
+          name: 'Resolution Screen',
+          targetClass: task.class.Task,
+          tabs: []
+        }
+      ],
+      workflows: [
+        {
+          id: workflowId,
+          name: 'Wf with matching screen',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          transitions: []
+        }
+      ]
+    }
+
+    const res = await importWorkflowConfig(client, projectTypeId, config)
+    expect(res.screens['screen-2' as Ref<Screen>]).toBe('existing-screen-1')
+    expect(client.createDoc).not.toHaveBeenCalledWith(workflow.class.Screen, core.space.Workspace, expect.anything())
+  })
+
+  it('reuses existing screen if signature matches even with different name', async () => {
+    const existingScreen: Screen = {
+      _id: 'existing-screen-1' as Ref<Screen>,
+      _class: workflow.class.Screen,
+      name: 'Custom Screen Name',
+      projectType: projectTypeId,
+      targetClass: task.class.Task,
+      space: core.space.Workspace,
+      modifiedOn: 0,
+      modifiedBy: '' as any
+    }
+
+    const client = createMockTx({ docs: [existingScreen] })
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: '2026-08-31T00:00:00.000Z',
+      workspace: ws1,
+      projectTypeId,
+      screens: [
+        {
+          id: 'screen-2' as Ref<Screen>,
+          name: 'Different Name',
+          targetClass: task.class.Task,
+          tabs: []
+        }
+      ],
+      workflows: [
+        {
+          id: workflowId,
+          name: 'Wf with matching signature screen',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          transitions: []
+        }
+      ]
+    }
+
+    const res = await importWorkflowConfig(client, projectTypeId, config)
+    expect(res.screens['screen-2' as Ref<Screen>]).toBe('existing-screen-1')
+  })
+
+  it('prefers screen with matching name when multiple screens match signature', async () => {
+    const screenA: Screen = {
+      _id: 'screen-a' as Ref<Screen>,
+      _class: workflow.class.Screen,
+      name: 'Alpha Screen',
+      projectType: projectTypeId,
+      targetClass: task.class.Task,
+      space: core.space.Workspace,
+      modifiedOn: 0,
+      modifiedBy: '' as any
+    }
+    const screenB: Screen = {
+      _id: 'screen-b' as Ref<Screen>,
+      _class: workflow.class.Screen,
+      name: 'Beta Screen',
+      projectType: projectTypeId,
+      targetClass: task.class.Task,
+      space: core.space.Workspace,
+      modifiedOn: 0,
+      modifiedBy: '' as any
+    }
+
+    const client = createMockTx({ docs: [screenA, screenB] })
+    const config: WorkflowConfig = {
+      version: 1,
+      exportDate: '2026-08-31T00:00:00.000Z',
+      workspace: ws1,
+      projectTypeId,
+      screens: [
+        {
+          id: 'screen-req' as Ref<Screen>,
+          name: 'Beta Screen',
+          targetClass: task.class.Task,
+          tabs: []
+        }
+      ],
+      workflows: [
+        {
+          id: workflowId,
+          name: 'Wf with name preference',
+          taskTypeName: 'Bug',
+          taskTypeId,
+          transitions: []
+        }
+      ]
+    }
+
+    const res = await importWorkflowConfig(client, projectTypeId, config)
+    expect(res.screens['screen-req' as Ref<Screen>]).toBe('screen-b')
+  })
+
   it('remaps target and source attribute references in UpdateFieldValue post-function', async () => {
     const client = createMockTx()
     const config: WorkflowConfig = {
@@ -753,18 +887,17 @@ describe('Workflow Import', () => {
     const result = await importWorkflowConfig(client, projectTypeId, config, {
       targetTaskTypeId,
       screenResolutions: {
-        [screenId1]: { action: 'replace', targetScreenId: existingScreenId },
+        [screenId1]: { action: 'copy', targetScreenId: existingScreenId },
         [screenId2]: { action: 'skip' }
       }
     })
 
     expect(result.screens[screenId1]).toBe(existingScreenId)
     expect(result.screens[screenId2]).toBeUndefined()
-    expect(client.updateDoc).toHaveBeenCalledWith(
+    expect(client.createDoc).not.toHaveBeenCalledWith(
       workflow.class.Screen,
       core.space.Workspace,
-      existingScreenId,
-      expect.any(Object)
+      expect.objectContaining({ name: 'Screen 1' })
     )
   })
 

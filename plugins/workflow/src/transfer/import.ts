@@ -25,6 +25,7 @@ import core, {
   type Mixin,
   type PropertyType,
   type Ref,
+  SortingOrder,
   type Status,
   type TxOperations,
   type Type
@@ -54,7 +55,7 @@ import type {
   WorkflowRuleConfig,
   WorkflowTransition
 } from '../schema'
-import { addScreenField, addScreenTab, addTransition, createWorkflow, setWorkflow } from '../utils'
+import { addScreenField, addScreenTab, addTransition, createWorkflow } from '../utils'
 import { collectAttributeUsages, isAttributeTypeCompatible, isAttributeTypeResolvable } from './compatibility'
 import { findOrCreateEnum, getEnumRefFromType, isArrOfType, isEnumOfType } from './utils'
 import {
@@ -74,11 +75,13 @@ import {
   type ImportResult,
   type ProjectWorkflowsConfig,
   type RuleConfig,
+  type ScreenConfig,
   type ScreenResolutionConfig,
   type StatusConfig,
   type WorkflowConfig,
   type WorkflowImportResolution,
-  type WorkflowMixinConfig
+  type WorkflowMixinConfig,
+  WorkflowConfigVersion
 } from './types'
 
 type StatusResolver = (sourceId: Ref<Status>) => Ref<Status> | undefined
@@ -116,11 +119,16 @@ export function filterAndRemapRuleProps (
       if (res?.action === 'skip') {
         continue
       }
-      const targetAttr =
-        (res?.action === 'map' && res.targetAttributeId !== undefined ? res.targetAttributeId : undefined) ??
-        resolver?.getRef<AnyAttribute>(AttributeToken, f.attribute) ??
-        resolver?.getRef<AnyAttribute>(AttributeToken, f.fieldKey) ??
-        f.attribute
+      let targetAttr: Ref<AnyAttribute> = f.attribute
+      if (res?.action === 'map' && res.targetAttributeId !== undefined) {
+        targetAttr = res.targetAttributeId
+      } else if (typeof f.attribute === 'string' && f.attribute.startsWith(AttributeToken)) {
+        targetAttr =
+          resolver?.getRef<AnyAttribute>(AttributeToken, f.attribute.slice(AttributeToken.length)) ?? f.attribute
+      } else if (f.attribute === undefined) {
+        targetAttr = resolver?.getRef<AnyAttribute>(AttributeToken, f.fieldKey) ?? f.attribute
+      }
+
       const targetKey =
         (res?.action === 'map' && res.targetAttributeId !== undefined
           ? targetAttributeById?.get(res.targetAttributeId)?.name
@@ -145,22 +153,18 @@ export function filterAndRemapRuleProps (
 
     const filteredFields: UpdateFieldValueConfig[] = []
     for (const f of ruleProps.fields) {
-      const res = attrResolutions[f.fieldKey]
-      if (res?.action === 'skip') {
+      const attrRes = attrResolutions[f.fieldKey]
+      if (attrRes?.action === 'skip') {
         continue
       }
 
-      const targetAttr =
-        (res?.action === 'map' && res.targetAttributeId !== undefined ? res.targetAttributeId : undefined) ??
-        resolver?.getRef<AnyAttribute>(AttributeToken, f.attribute) ??
-        resolver?.getRef<AnyAttribute>(AttributeToken, f.fieldKey) ??
-        f.attribute
-      const targetKey =
-        (res?.action === 'map' && res.targetAttributeId !== undefined
-          ? targetAttributeById?.get(res.targetAttributeId)?.name
-          : undefined) ??
-        targetAttributeById?.get(targetAttr)?.name ??
-        f.fieldKey
+      let targetAttr: Ref<AnyAttribute> = f.attribute
+      let targetKey: string = f.fieldKey
+
+      if (attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined) {
+        targetAttr = attrRes.targetAttributeId
+        targetKey = targetAttributeById?.get(attrRes.targetAttributeId)?.name ?? f.fieldKey
+      }
 
       let updatedVal = f.value
       if (f.value.type === 'this' || f.value.type === 'parent') {
@@ -258,7 +262,9 @@ export function importRules<TRule extends WorkflowRule> (
     const unresolved: string[] = []
     const remappedProps = remap(currentProps, resolver.fromToken, unresolved)
     if (unresolved.length > 0) {
-      throw new Error(`Workflow import: could not resolve rule references: ${unresolved.join(', ')}`)
+      throw new Error(
+        `Workflow import: could not resolve rule references: ${unresolved.join(', ')} (unresolved references ${unresolved.join(', ')})`
+      )
     }
     importedRules.push({
       id: r.id ?? 'rule-' + generateId(),
@@ -277,6 +283,7 @@ function createStatusResolver (
   targetStatusDocs: Status[],
   configStatusById: Map<Ref<Status>, StatusConfig>,
   configStatusByName: Map<string, StatusConfig>,
+  resolver?: NameResolver,
   wfRes?: WorkflowImportResolution
 ): StatusResolver {
   return (sourceId: Ref<Status>): Ref<Status> | undefined => {
@@ -290,7 +297,10 @@ function createStatusResolver (
     }
     // 3. Case-insensitive name match in target task type
     const stConfig = configStatusById.get(sourceId) ?? configStatusByName.get(sourceId)
-    const srcName = stConfig?.name ?? sourceId
+    const srcName =
+      stConfig?.name ??
+      (resolver !== undefined && resolver.hasRef(sourceId) ? resolver.getName(sourceId, StatusToken) : undefined) ??
+      (sourceId as string)
     if (srcName !== '') {
       const byName = targetStatusDocs.find((t) => t.name.toLowerCase() === srcName.toLowerCase())
       if (byName !== undefined) return byName._id
@@ -706,6 +716,92 @@ async function autoCreateTargetClassAttributes (
   }
 }
 
+async function isScreenSignatureMatching (
+  client: TxOperations,
+  existingScreen: Screen,
+  configScreen: ScreenConfig,
+  screenTargetClass: Ref<Class<Doc>>,
+  attrResolutions: Record<string, AttributeResolutionConfig>,
+  targetAttributeById: Map<Ref<AnyAttribute>, AnyAttribute>
+): Promise<boolean> {
+  const existingTabs = await client.findAll(
+    workflow.class.ScreenTab,
+    { attachedTo: existingScreen._id },
+    { sort: { rank: SortingOrder.Ascending } }
+  )
+  const configTabs = configScreen.tabs ?? []
+  if (existingTabs.length !== configTabs.length) {
+    return false
+  }
+
+  for (let i = 0; i < existingTabs.length; i++) {
+    const et = existingTabs[i]
+    const ct = configTabs[i]
+    if (et.name !== ct.name) {
+      return false
+    }
+
+    const existingFields = await client.findAll(
+      workflow.class.ScreenField,
+      { attachedTo: et._id },
+      { sort: { rank: SortingOrder.Ascending } }
+    )
+    const configFields = ct.fields ?? []
+    if (existingFields.length !== configFields.length) {
+      return false
+    }
+
+    for (let j = 0; j < existingFields.length; j++) {
+      const ef = existingFields[j]
+      const cf = configFields[j]
+
+      if (ef.required !== cf.required) {
+        return false
+      }
+
+      const attrRes = attrResolutions[cf.fieldKey]
+      const expectedFieldKey =
+        (attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined
+          ? targetAttributeById.get(attrRes.targetAttributeId)?.name
+          : undefined) ?? cf.fieldKey
+
+      if (ef.fieldKey !== expectedFieldKey) {
+        return false
+      }
+    }
+  }
+
+  return true
+}
+
+async function findMatchingScreen (
+  client: TxOperations,
+  existingScreens: Screen[],
+  sc: ScreenConfig,
+  screenTargetClass: Ref<Class<Doc>>,
+  attrResolutions: Record<string, AttributeResolutionConfig>,
+  targetAttributeById: Map<Ref<AnyAttribute>, AnyAttribute>
+): Promise<Screen | undefined> {
+  // 1. Try exact signature match with the same name first
+  for (const s of existingScreens) {
+    if (
+      s.name.trim().toLowerCase() === sc.name.trim().toLowerCase() &&
+      (await isScreenSignatureMatching(client, s, sc, screenTargetClass, attrResolutions, targetAttributeById))
+    ) {
+      return s
+    }
+  }
+
+  // 2. If not found by name, try any exact signature match
+  for (const s of existingScreens) {
+    if (await isScreenSignatureMatching(client, s, sc, screenTargetClass, attrResolutions, targetAttributeById)) {
+      return s
+    }
+  }
+
+  return undefined
+}
+
 /**
  * Imports screens and screen tabs/fields into the target project type.
  */
@@ -721,19 +817,15 @@ async function importScreens (
   result: ImportResult,
   resolution?: WorkflowImportResolution
 ): Promise<void> {
+  const hierarchy = client.getHierarchy()
   const existingScreens = await client.findAll(workflow.class.Screen, { projectType: projectTypeId })
-  const existingByName = new Map<string, (typeof existingScreens)[0]>()
-  for (const s of existingScreens) {
-    existingByName.set(s.name.toLowerCase(), s)
-  }
 
   for (const sc of config.screens ?? []) {
     const screenRes =
-      resolution?.screenResolutions?.[sc.id] ??
-      resolution?.screenResolutions?.[sc.name] ??
-      (resolution?.copyScreens === false ? { action: 'skip' } : { action: 'copy' })
+      (sc.id !== undefined ? resolution?.screenResolutions?.[sc.id] : undefined) ??
+      resolution?.screenResolutions?.[sc.name]
 
-    if (screenRes.action === 'skip') {
+    if (screenRes?.action === 'skip' || (resolution?.copyScreens === false && screenRes === undefined)) {
       continue
     }
 
@@ -744,42 +836,31 @@ async function importScreens (
         ? tracker.class.Issue
         : (targetClass ?? sc.targetClass)
 
-    if (screenRes.action === 'replace') {
-      const targetScreen =
-        (screenRes.targetScreenId !== undefined
-          ? await client.findOne(workflow.class.Screen, { _id: screenRes.targetScreenId })
-          : undefined) ?? existingByName.get(sc.name.toLowerCase())
+    let isNewScreen = false
 
-      if (targetScreen !== undefined) {
-        screenId = targetScreen._id
-        await client.updateDoc(workflow.class.Screen, core.space.Workspace, screenId, {
-          description: sc.description,
-          targetClass: screenTargetClass
-        })
-
-        // Remove existing tabs & fields
-        const existingTabs = await client.findAll(workflow.class.ScreenTab, { attachedTo: screenId })
-        for (const t of existingTabs) {
-          const existingFields = await client.findAll(workflow.class.ScreenField, { attachedTo: t._id })
-          for (const f of existingFields) {
-            await client.removeCollection(
-              workflow.class.ScreenField,
-              core.space.Workspace,
-              f._id,
-              t._id,
-              workflow.class.ScreenTab,
-              'fields'
-            )
-          }
-          await client.removeCollection(
-            workflow.class.ScreenTab,
-            core.space.Workspace,
-            t._id,
-            screenId,
-            workflow.class.Screen,
-            'tabs'
-          )
-        }
+    if (screenRes?.targetScreenId !== undefined) {
+      screenId = screenRes.targetScreenId
+    } else if (screenRes?.action === 'copy' || resolution?.copyScreens === true) {
+      const uniqueName = await getUniqueScreenName(client, projectTypeId, sc.name)
+      screenId = await client.createDoc(workflow.class.Screen, core.space.Workspace, {
+        name: uniqueName,
+        description: sc.description,
+        projectType: projectTypeId,
+        targetClass: screenTargetClass
+      })
+      isNewScreen = true
+    } else {
+      // resolution is undefined or screenRes not specified: check signature
+      const matchingScreen = await findMatchingScreen(
+        client,
+        existingScreens,
+        sc,
+        screenTargetClass,
+        attrResolutions,
+        targetAttributeById
+      )
+      if (matchingScreen !== undefined) {
+        screenId = matchingScreen._id
       } else {
         const uniqueName = await getUniqueScreenName(client, projectTypeId, sc.name)
         screenId = await client.createDoc(workflow.class.Screen, core.space.Workspace, {
@@ -788,55 +869,58 @@ async function importScreens (
           projectType: projectTypeId,
           targetClass: screenTargetClass
         })
+        isNewScreen = true
       }
-    } else {
-      // action === 'copy'
-      const uniqueName = await getUniqueScreenName(client, projectTypeId, sc.name)
-      screenId = await client.createDoc(workflow.class.Screen, core.space.Workspace, {
-        name: uniqueName,
-        description: sc.description,
-        projectType: projectTypeId,
-        targetClass: screenTargetClass
-      })
     }
 
-    let tabRank = makeRank(undefined, undefined)
-    for (const tab of sc.tabs ?? []) {
-      const tabId = await addScreenTab(client, screenId, tab.name, tabRank)
-      tabRank = makeRank(tabRank, undefined)
-      let fieldRank = makeRank(undefined, undefined)
-      for (const f of tab.fields ?? []) {
-        const attrRes = attrResolutions[f.fieldKey]
-        if (attrRes?.action === 'skip') {
-          continue
+    if (isNewScreen) {
+      let tabRank = makeRank(undefined, undefined)
+      for (const tab of sc.tabs ?? []) {
+        const tabId = await addScreenTab(client, screenId, tab.name, tabRank)
+        tabRank = makeRank(tabRank, undefined)
+        let fieldRank = makeRank(undefined, undefined)
+        for (const f of tab.fields ?? []) {
+          const attrRes = attrResolutions[f.fieldKey]
+          if (attrRes?.action === 'skip') {
+            continue
+          }
+          let attributeRef: Ref<AnyAttribute>
+          if (attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined) {
+            attributeRef = attrRes.targetAttributeId
+          } else if (
+            f.attribute !== undefined &&
+            hierarchy.findAttribute(screenTargetClass, f.fieldKey)?._id === f.attribute
+          ) {
+            attributeRef = f.attribute
+          } else if (f.attribute !== undefined && targetAttributeById.has(f.attribute)) {
+            attributeRef = f.attribute
+          } else {
+            attributeRef =
+              resolver.getRef<AnyAttribute>(AttributeToken, f.attribute) ??
+              resolver.getRef<AnyAttribute>(AttributeToken, f.fieldKey) ??
+              hierarchy.findAttribute(screenTargetClass, f.fieldKey)?._id ??
+              f.attribute
+          }
+          const fieldKey =
+            (attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined
+              ? targetAttributeById.get(attrRes.targetAttributeId)?.name
+              : undefined) ??
+            targetAttributeById.get(attributeRef)?.name ??
+            f.fieldKey
+          const mixinRef = f.mixin !== undefined ? (mixinIdMapping.get(f.mixin) ?? f.mixin) : undefined
+          await addScreenField(
+            client,
+            tabId,
+            {
+              attribute: attributeRef,
+              fieldKey,
+              mixin: mixinRef,
+              required: f.required
+            },
+            fieldRank
+          )
+          fieldRank = makeRank(fieldRank, undefined)
         }
-        const attributeRef =
-          (attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined
-            ? attrRes.targetAttributeId
-            : undefined) ??
-          resolver.getRef<AnyAttribute>(AttributeToken, f.attribute) ??
-          resolver.getRef<AnyAttribute>(AttributeToken, f.fieldKey) ??
-          targetAttributeById.get(f.attribute)?._id ??
-          f.attribute
-        const fieldKey =
-          (attrRes?.action === 'map' && attrRes.targetAttributeId !== undefined
-            ? targetAttributeById.get(attrRes.targetAttributeId)?.name
-            : undefined) ??
-          targetAttributeById.get(attributeRef)?.name ??
-          f.fieldKey
-        const mixinRef = f.mixin !== undefined ? (mixinIdMapping.get(f.mixin) ?? f.mixin) : undefined
-        await addScreenField(
-          client,
-          tabId,
-          {
-            attribute: attributeRef,
-            fieldKey,
-            mixin: mixinRef,
-            required: f.required
-          },
-          fieldRank
-        )
-        fieldRank = makeRank(fieldRank, undefined)
       }
     }
 
@@ -862,15 +946,31 @@ async function restoreProjectWorkflows (
 
   const projects = await client.findAll(task.class.Project, { type: projectTypeId })
   const projectByIdent = new Map<string, Project>(projects.map((p) => [identifierOf(p), p]))
+  const hierarchy = client.getHierarchy()
   for (const pw of projectsConfig) {
     const p = (await client.findOne(task.class.Project, { _id: pw.project })) ?? projectByIdent.get(pw.identifier)
-    if (p === undefined) continue
+    if (p === undefined) {
+      throw new Error(`Workflow import: unknown project "${pw.identifier}"`)
+    }
+    const current = (await client.findOne(task.class.Project, { _id: p._id })) ?? p
+    const currentMappings = hierarchy.as(current, workflow.mixin.ProjectWorkflow).workflows ?? {}
+    const newMappings: Record<Ref<TaskType>, Ref<Workflow>> = { ...currentMappings }
     for (const [ttName, wfName] of Object.entries(pw.workflows)) {
-      const taskTypeId = resolver.getRef<TaskType>(TaskTypeToken, ttName)
+      const taskTypeId = requireRef<TaskType>(resolver, TaskTypeToken, ttName)
       const workflowId = workflowByName.get(wfName) ?? existingByName.get(wfName)?._id
-      if (taskTypeId === undefined || workflowId === undefined) continue
-      const current = (await client.findOne(task.class.Project, { _id: p._id })) ?? p
-      await setWorkflow(client, current, taskTypeId, workflowId)
+      if (workflowId === undefined) {
+        throw new Error(`Workflow import: unknown workflow "${wfName}"`)
+      }
+      newMappings[taskTypeId] = workflowId
+    }
+    if (!hierarchy.hasMixin(current, workflow.mixin.ProjectWorkflow)) {
+      await client.createMixin(current._id, current._class, current.space, workflow.mixin.ProjectWorkflow, {
+        workflows: newMappings
+      })
+    } else {
+      await client.updateMixin(current._id, current._class, current.space, workflow.mixin.ProjectWorkflow, {
+        workflows: newMappings
+      })
     }
   }
 }
@@ -884,6 +984,10 @@ export async function importWorkflowConfig (
   config: WorkflowConfig,
   resolution?: WorkflowImportResolution
 ): Promise<ImportResult> {
+  if (config.version !== WorkflowConfigVersion) {
+    throw new Error(`Workflow import: unsupported version ${config.version}`)
+  }
+
   const op = client.apply()
 
   const existingWfs = await client.findAll(workflow.class.Workflow, { projectType: projectTypeId })
@@ -993,13 +1097,12 @@ export async function importWorkflowConfig (
       (wf.taskTypeId !== undefined && resolution?.taskTypeMap?.[wf.taskTypeId] !== undefined
         ? resolution.taskTypeMap[wf.taskTypeId]
         : undefined) ??
-      (wf.taskTypeId !== undefined && resolver.hasRef(wf.taskTypeId)
-        ? wf.taskTypeId
-        : requireRef<TaskType>(resolver, TaskTypeToken, rawTaskType))
+      requireRef<TaskType>(resolver, TaskTypeToken, rawTaskType)
 
     const workflowId = existing?._id ?? (await createWorkflow(op, projectTypeId, taskTypeId, wfName))
     result.workflows[wf.id] = workflowId
     workflowByName.set(wfName, workflowId)
+    workflowByName.set(wf.name, workflowId)
 
     const currentTaskType = await client.findOne(task.class.TaskType, { _id: taskTypeId })
 
@@ -1065,13 +1168,23 @@ export async function importWorkflowConfig (
       targetStatusDocs = await client.findAll(core.class.Status, { _id: { $in: currentTaskType.statuses } })
     }
 
-    const resolveStatus = createStatusResolver(targetStatusDocs, configStatusById, configStatusByName, resolution)
+    const resolveStatus = createStatusResolver(
+      targetStatusDocs,
+      configStatusById,
+      configStatusByName,
+      resolver,
+      resolution
+    )
 
     if (wf.initialStatuses !== undefined) {
       const initialStatuses: Ref<Status>[] = []
       for (const s of wf.initialStatuses) {
         const resolved = resolveStatus(s)
-        if (resolved !== undefined) {
+        if (resolved === undefined) {
+          if (resolution === undefined) {
+            throw new Error(`Workflow import: unknown status "${s}"`)
+          }
+        } else {
           initialStatuses.push(resolved)
         }
       }
@@ -1087,7 +1200,7 @@ export async function importWorkflowConfig (
 
     let transitionRank = makeRank(undefined, undefined)
     for (const t of wf.transitions ?? []) {
-      const tRes = resolution?.transitionResolutions?.[t.id]
+      const tRes = t.id !== undefined ? resolution?.transitionResolutions?.[t.id] : undefined
       if (tRes?.action === 'skip') {
         continue
       }
@@ -1100,17 +1213,29 @@ export async function importWorkflowConfig (
       }
 
       if (to === undefined) {
+        if (resolution === undefined) {
+          throw new Error(`Workflow import: unknown status "${t.to}"`)
+        }
         continue
       }
 
       let from: Ref<Status>[] | null = null
       if (t.from != null) {
         const resolvedFrom: Ref<Status>[] = []
+        let hasUnresolved = false
         for (const s of t.from) {
           const resolved = resolveStatus(s)
-          if (resolved !== undefined) {
+          if (resolved === undefined) {
+            if (resolution === undefined) {
+              throw new Error(`Workflow import: unknown status "${s}"`)
+            }
+            hasUnresolved = true
+          } else {
             resolvedFrom.push(resolved)
           }
+        }
+        if (hasUnresolved && resolution !== undefined) {
+          continue
         }
         if (resolvedFrom.length === 0) {
           continue

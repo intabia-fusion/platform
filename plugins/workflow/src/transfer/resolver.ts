@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { type Doc, type Ref, type TxOperations } from '@hcengineering/core'
+import core, { type Doc, type Ref, type Status, type TxOperations } from '@hcengineering/core'
 import task, { type Project, type ProjectType } from '@hcengineering/task'
 
 import workflow from '../plugin'
@@ -107,6 +107,16 @@ export async function buildResolver (client: TxOperations, projectTypeId: Ref<Pr
     client.findAll(workflow.class.Screen, { projectType: projectTypeId })
   ])
 
+  const currentTaskTypes = allTaskTypes.filter((tt) => tt.parent === projectTypeId)
+  const currentStatusIds = new Set<Ref<Status>>()
+  for (const tt of currentTaskTypes) {
+    if (Array.isArray(tt.statuses)) {
+      for (const s of tt.statuses) {
+        currentStatusIds.add(s)
+      }
+    }
+  }
+
   for (const tt of allTaskTypes) {
     if (tt.parent === projectTypeId) {
       resolver.setRef(TaskTypeToken, tt.name, tt._id)
@@ -115,8 +125,22 @@ export async function buildResolver (client: TxOperations, projectTypeId: Ref<Pr
     }
   }
 
+  // First add all external/global statuses
   for (const st of allStatuses) {
-    resolver.add(StatusToken, st._id, st.name)
+    if (!currentStatusIds.has(st._id)) {
+      resolver.add(StatusToken, st._id, st.name)
+    }
+  }
+
+  // Then add current project type statuses with priority (picking smallest ID among them)
+  for (const st of allStatuses) {
+    if (currentStatusIds.has(st._id)) {
+      const token = `${StatusToken}${st.name}` as const
+      const current = resolver.fromToken.get(token)
+      if (current === undefined || !currentStatusIds.has(current as Ref<Status>) || st._id < (current as Ref<Status>)) {
+        resolver.setRef(StatusToken, st.name, st._id)
+      }
+    }
   }
 
   for (const sc of screens) {
