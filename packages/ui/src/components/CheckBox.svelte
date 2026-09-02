@@ -63,7 +63,24 @@
     bind:checked
     on:change|capture={handleValueChanged}
   />
-  <div class="checkSVG" />
+  <div class="checkSVG">
+    <svg
+      class="printCheckMark"
+      viewBox={kind === 'todo' ? '0 0 16 16' : '0 0 14 14'}
+      aria-hidden="true"
+      focusable="false"
+    >
+      {#if kind === 'todo'}
+        <path
+          d="M11.6 5.5c.2.2.2.6 0 .8l-4.3 4.3c-.2.2-.6.2-.8 0l-2.1-2c-.2-.2-.6-.2-.8 0-.2-.2-.6-.2-.8 0l1.7 1.7 3.9-3.9c.2-.3.6-.3.8-.1z"
+        />
+      {:else if symbol === 'check'}
+        <path d="M6 10.2 2.7 7l1-.9L6 8.4l4.5-4.6.9 1z" />
+      {:else}
+        <path d="M3 6.4h8v1.2H3z" />
+      {/if}
+    </svg>
+  </div>
 </label>
 
 <style lang="scss">
@@ -80,6 +97,10 @@
 
     .checkSVG {
       position: relative;
+
+      .printCheckMark {
+        display: none;
+      }
 
       &::after {
         position: absolute;
@@ -241,6 +262,25 @@
       }
       &.checked .checkSVG::after {
         background-color: var(--global-subtle-BackgroundColor);
+      }
+    }
+
+    @media print {
+      .checkSVG {
+        background-color: transparent !important;
+      }
+
+      .checkSVG::after {
+        display: none;
+      }
+
+      &.checked .printCheckMark {
+        display: block;
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        fill: currentColor;
       }
     }
 
