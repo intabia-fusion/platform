@@ -626,12 +626,24 @@ export async function createServer (
   // one-shot: opt in via RUN_WINDOW_BACKFILL, not on every restart of every replica.
   if (config.RunWindowBackfill === true) {
     void backfillWindowLimits(ctx, accountClient, (sub) => {
-      const limits = resolveLimits(sub.type, sub.plan, sub.providerData?.quantity as number | undefined)
       // A trial gets the flat grant, like in createTrialSubscription.
-      if (limits != null && sub.status === SubscriptionStatus.Trialing && trialConfig?.windowMonthLimit !== undefined) {
-        return { ...limits, windowMonthLimit: trialConfig.windowMonthLimit }
+      if (sub.status === SubscriptionStatus.Trialing && trialConfig?.windowMonthLimit !== undefined) {
+        const limits = resolveLimits(sub.type, sub.plan, sub.providerData?.quantity as number | undefined)
+        return limits != null ? { ...limits, windowMonthLimit: trialConfig.windowMonthLimit } : limits
       }
-      return limits
+      // createManualSubscription writes no quantity -> using usersLimit instead.
+      const seats = (sub.providerData?.quantity as number | undefined) ?? sub.limits?.usersLimit
+      // Unknown seats on a per-seat plan -> skip.
+      if (planConfig.plans?.[sub.plan]?.priceMonthlyPerUser != null && (seats == null || seats === 0)) {
+        ctx.warn('AI window backfill: per-seat plan with unknown seats, skipping', {
+          workspace: sub.workspaceUuid,
+          plan: sub.plan,
+          status: sub.status,
+          provider: sub.provider
+        })
+        return undefined
+      }
+      return resolveLimits(sub.type, sub.plan, seats)
     }).catch((err: any) => {
       ctx.error('AI window backfill failed', { err })
     })
