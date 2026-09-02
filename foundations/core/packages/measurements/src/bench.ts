@@ -15,8 +15,6 @@
 
 /* eslint-disable no-console */
 
-import { performance } from 'perf_hooks'
-
 export interface BenchOptions {
   // target wall-clock budget for the measured phase (ms)
   budgetMs?: number
@@ -41,7 +39,11 @@ export interface BenchResult {
   heapDeltaMB: number
 }
 
-const ENABLED = process.env.BENCH === '1' || process.env.BENCH === 'true'
+// Node-only bits, kept optional so the package stays isomorphic.
+const nodeGlobal = globalThis as any
+const heapUsed = (): number => nodeGlobal.process?.memoryUsage?.().heapUsed ?? 0
+const benchEnv = nodeGlobal.process?.env?.BENCH
+const ENABLED = benchEnv === '1' || benchEnv === 'true'
 
 function pct (sorted: number[], q: number): number {
   if (sorted.length === 0) return 0
@@ -64,8 +66,8 @@ export async function bench (
     await fn()
   }
 
-  if (global.gc != null) global.gc()
-  const heapBefore = process.memoryUsage().heapUsed
+  nodeGlobal.gc?.()
+  const heapBefore = heapUsed()
 
   const samples: number[] = []
   const startWall = performance.now()
@@ -79,7 +81,7 @@ export async function bench (
     if (i >= minIters && performance.now() - startWall >= budgetMs) break
   }
   const totalMs = performance.now() - startWall
-  const heapAfter = process.memoryUsage().heapUsed
+  const heapAfter = heapUsed()
 
   samples.sort((a, b) => a - b)
   const mean = samples.reduce((s, v) => s + v, 0) / samples.length
@@ -119,6 +121,10 @@ export function printResult (r: BenchResult): void {
 
 /**
  * Gate jest describe block: only run when BENCH=1 env is set.
- * Keeps `jest` fast in regular runs.
+ * `describe` comes from globalThis: this module is bundled into non-jest code
+ * through @hcengineering/core, where the jest globals are neither typed nor present.
  */
-export const describeBench: jest.Describe = ENABLED ? describe : describe.skip
+export function describeBench (name: string, fn: () => void): void {
+  const describeFn = nodeGlobal.describe
+  ;(ENABLED ? describeFn : describeFn.skip)(name, fn)
+}

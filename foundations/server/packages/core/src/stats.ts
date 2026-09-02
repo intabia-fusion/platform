@@ -12,6 +12,9 @@ export interface MemoryStatistics {
   memoryRSS: number
   freeMem: number
   totalMem: number
+
+  // Heap at process start; (memoryUsed - memoryBaseline) / workspaces is the honest per-workspace cost.
+  memoryBaseline: number
 }
 export interface CPUStatistics {
   usage: number
@@ -52,9 +55,13 @@ export interface ServiceStatistics {
   workspaces?: WorkspaceStatistics[]
 }
 
+/** Heap at process start: (memoryUsed - memoryBaseline) / workspaces is the honest per-workspace cost. */
+export const memoryBaseline = Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100
+
 export function getMemoryInfo (): MemoryStatistics {
   const memU = process.memoryUsage()
   return {
+    memoryBaseline,
     memoryUsed: Math.round((memU.heapUsed / 1024 / 1024) * 100) / 100,
     memoryRSS: Math.round((memU.rss / 1024 / 1024) * 100) / 100,
     memoryTotal: Math.round((memU.heapTotal / 1024 / 1024) * 100) / 100,

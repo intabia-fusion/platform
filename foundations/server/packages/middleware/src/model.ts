@@ -47,6 +47,14 @@ const isAccountTx = (it: TxCUD<Doc>): boolean =>
   ['core:class:Account', 'contact:class:PersonAccount'].includes(it.objectClass)
 
 /**
+ * Kill-switch for the shared system model. `SHARED_SYSTEM_MODEL=false` gives every workspace
+ * its own hierarchy and model again, at the memory cost the sharing was introduced to remove.
+ *
+ * @public
+ */
+export const sharedSystemModel = process.env.SHARED_SYSTEM_MODEL !== 'false'
+
+/**
  * @public
  */
 export class ModelMiddleware extends BaseMiddleware implements Middleware {
@@ -57,7 +65,9 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
     context: PipelineContext,
     next: Middleware | undefined,
     readonly systemTx: Tx[],
-    readonly filter?: (h: Hierarchy, model: Tx[]) => Tx[]
+    readonly filter?: (h: Hierarchy, model: Tx[]) => Tx[],
+    // System model already applied to a shared parent of this workspace's model.
+    readonly systemModelShared: boolean = false
   ) {
     super(context, next)
   }
@@ -68,16 +78,21 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
     context: PipelineContext,
     next: Middleware | undefined,
     systemTx: Tx[],
-    filter?: (h: Hierarchy, model: Tx[]) => Tx[]
+    filter?: (h: Hierarchy, model: Tx[]) => Tx[],
+    systemModelShared: boolean = false
   ): Promise<Middleware> {
-    const middleware = new ModelMiddleware(context, next, systemTx, filter)
+    const middleware = new ModelMiddleware(context, next, systemTx, filter, systemModelShared)
     await middleware.init(ctx)
     return middleware
   }
 
-  static create (tx: Tx[], filter?: (h: Hierarchy, model: Tx[]) => Tx[]): MiddlewareCreator {
+  static create (
+    tx: Tx[],
+    filter?: (h: Hierarchy, model: Tx[]) => Tx[],
+    systemModelShared: boolean = false
+  ): MiddlewareCreator {
     return (ctx, context, next) => {
-      return this.doCreate(ctx, context, next, tx, filter)
+      return this.doCreate(ctx, context, next, tx, filter, systemModelShared)
     }
   }
 
@@ -164,15 +179,22 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
     // Prime the cache with the fetch we just did - the first client will loadModel right away.
     this.userModel = { txs: userTx, at: Date.now() }
     const model = this.systemTx.concat(userTx)
-    for (const tx of model) {
-      try {
-        this.context.hierarchy.tx(tx)
-      } catch (err: any) {
-        ctx.warn('failed to apply model transaction, skipping', { tx: JSON.stringify(tx), err })
+    // Shared system model: the system part is already applied to the parent, so only workspace txes are left.
+    const toApply = this.systemModelShared ? userTx : model
+    let fmodel = model
+    if (this.filter !== undefined) {
+      // Hierarchy must see every class even when matching documents are dropped from ModelDb.
+      for (const tx of toApply) {
+        try {
+          this.context.hierarchy.tx(tx)
+        } catch (err: any) {
+          ctx.warn('failed to apply model transaction, skipping', { tx: JSON.stringify(tx), err })
+        }
       }
+      fmodel = this.filter(this.context.hierarchy, toApply)
     }
-    const fmodel = this.applyFilter(model)
-    this.context.modelDb.addTxes(ctx, fmodel, true)
+    // addTxes feeds the hierarchy itself, so an extra pass would just deserialize everything twice.
+    this.context.modelDb.addTxes(ctx, this.filter !== undefined ? fmodel : toApply, true)
 
     this.setModel(fmodel)
     // Only once init cannot fail any more: a middleware that threw never reaches the pipeline,
@@ -280,9 +302,9 @@ export class ModelMiddleware extends BaseMiddleware implements Middleware {
     const modelTxes = tx.filter((it) => it.objectSpace === core.space.Model)
     if (modelTxes.length > 0) {
       for (const t of modelTxes) {
-        this.context.hierarchy.tx(t)
         this.addModelTx(t)
       }
+      // addTxes keeps the hierarchy in step; applying it here too would double the update.
       this.context.modelDb.addTxes(ctx, modelTxes, true)
     }
     return this.provideTx(ctx, tx)

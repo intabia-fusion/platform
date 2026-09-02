@@ -56,9 +56,7 @@ export class Worker {
     ctx: MeasureContext,
     private readonly modelTxes: Tx[]
   ) {
-    for (const tx of modelTxes) {
-      this.sysHierarchy.tx(tx)
-    }
+    // addTxes feeds sysHierarchy itself, a separate pass would just deserialize everything twice.
     this.sysModel.addTxes(ctx, modelTxes, true)
 
     this.storage = buildStorageFromConfig(storageConfigFrom(config.StorageConfig))

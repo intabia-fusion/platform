@@ -15,7 +15,7 @@
 
 import core, { type Class, type Doc, DOMAIN_TX, type Ref, type Tx, TxFactory } from '@hcengineering/core'
 import { ModelMiddleware } from '../../model'
-import { bench, describeBench } from './bench'
+import { bench, describeBench } from '@hcengineering/measurements'
 import { createHarness, genCoreModel, makeNextMiddleware } from './harness'
 
 const factory = new TxFactory(core.account.System)

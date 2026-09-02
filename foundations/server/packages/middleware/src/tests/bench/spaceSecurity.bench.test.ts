@@ -26,7 +26,7 @@ import core, {
 } from '@hcengineering/core'
 import type { Middleware } from '@hcengineering/server-core'
 import { SpaceSecurityMiddleware } from '../../spaceSecurity'
-import { bench, describeBench } from './bench'
+import { bench, describeBench } from '@hcengineering/measurements'
 import { type BenchHarness, createHarness, makeNextMiddleware, makeSpaces } from './harness'
 
 describeBench('SpaceSecurityMiddleware.findAll bench', () => {

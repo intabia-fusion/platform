@@ -85,8 +85,8 @@ class Workspace {
       const domain = this.hierarchy.getDomain(tx.objectClass)
 
       if (domain === 'model') {
+        // addTxes keeps the hierarchy in step, applying it here too would double $push/$inc.
         this.model.addTxes(this.ctx, [tx], true)
-        this.hierarchy.tx(tx)
       }
 
       this.cache.tx(tx)
