@@ -116,6 +116,26 @@ describe('backfillWindowLimits', () => {
     expect(accountClient.upsertSubscriptionsBulk).not.toHaveBeenCalled()
   })
 
+  it('gives a trial the flat grant, not the per-seat window times its seat cap', async () => {
+    // A trial's seat cap lands in providerData.quantity, so a resolver that scaled by seats would
+    // hand a 14-day trial a window hundreds of times the paid plan's.
+    const trial = {
+      ...sub('a', { usersLimit: 1000, windowMonthLimit: 0 }),
+      status: SubscriptionStatus.Trialing,
+      providerData: { quantity: 1000 }
+    }
+    const accountClient = client([trial])
+
+    // Mirrors the pod's resolver: the trial grant overrides the scaled window.
+    const updated = await backfillWindowLimits(ctx, accountClient, (s: any) => ({
+      ...resolve(s),
+      windowMonthLimit: s.status === SubscriptionStatus.Trialing ? 1000000 : resolve(s).windowMonthLimit
+    }))
+
+    expect(updated).toBe(1)
+    expect(accountClient.upsertSubscriptionsBulk.mock.calls[0][0][0].limits.windowMonthLimit).toBe(1000000)
+  })
+
   it('skips a plan the config no longer knows', async () => {
     const accountClient = client([sub('a', undefined, 'unknown')])
 
