@@ -21,6 +21,7 @@ import {
   firstAvailableRoom,
   getMeetingsUser,
   joinRoom,
+  loveWindow,
   occupiedCells,
   openLove,
   waitForActiveMeetingsToFinish
@@ -37,12 +38,9 @@ export function registerPresenceTests (): void {
   test.describe('meeting minutes - presence on the floor grid', () => {
     test('two participants occupy two distinct cells', async ({ browser }) => {
       test.setTimeout(120000)
-      const ctxA = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctxB = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const pageA = await ctxA.newPage()
-      const pageB = await ctxB.newPage()
+      const { ctx: ctxA, page: pageA } = await loveWindow(browser, 'second')
+      const { ctx: ctxB, page: pageB } = await loveWindow(browser, 'third')
       try {
-        await openLove(pageA)
         const room = await firstAvailableRoom(pageA)
         test.skip(room === null, 'No regular room available')
         await joinRoom(pageA, room as string)
@@ -66,10 +64,8 @@ export function registerPresenceTests (): void {
       test.setTimeout(90000)
       const { client } = await getMeetingsUser()
       const created: Array<Ref<ParticipantInfo>> = []
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page = await ctx.newPage()
+      const { ctx, page } = await loveWindow(browser, 'second')
       try {
-        await openLove(page)
         const roomName = await firstAvailableRoom(page)
         test.skip(roomName === null, 'No regular room available')
 

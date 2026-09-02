@@ -18,6 +18,7 @@ import { expect, test, type Page } from '@playwright/test'
 import {
   clickFirstAvailableRoom,
   clickRoomByName,
+  closeLoveWindows,
   closeMeetingContexts,
   openLove,
   waitConnected,
@@ -30,8 +31,19 @@ async function startMeeting (page: Page): Promise<void> {
   await connect.click()
 }
 
+// Own contexts, not the shared windows: these tests reload the page and assert on the
+// sessionStorage reconnect anchor. On a reused window the pooled page was seen closed under a
+// running test ('Target page, context or browser has been closed'), and a stale anchor from an
+// earlier test would change what a reload is supposed to restore.
 export function registerRefreshReconnectTests (): void {
   test.describe('meeting minutes - refresh reconnect', () => {
+    // The shared windows hold a live session for the same accounts this test signs in as, and two
+    // sessions per user break presence and departure checks. Drop them; the next shared test pays
+    // one boot to get its window back.
+    test.beforeAll(async () => {
+      await closeLoveWindows()
+    })
+
     test.beforeEach(async () => {
       await waitForActiveMeetingsToFinish()
     })

@@ -20,6 +20,7 @@ import {
   clickFirstAvailableRoom,
   clickRoomByName,
   closeMeetingContexts,
+  loveWindow,
   openLove,
   openMeetingMinutes,
   waitConnected,
@@ -50,14 +51,9 @@ export function registerSessionTests (): void {
     test('activity feed shows "Joined meeting" entry after a participant connects', async ({ browser }) => {
       test.setTimeout(60000)
 
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await openLove(page2)
-        await openLove(page3)
-
         const room = await clickFirstAvailableRoom(page2)
         test.skip(room === null, 'No regular room available')
         await startOrJoin(page2)
@@ -82,10 +78,8 @@ export function registerSessionTests (): void {
     test('re-entry: leave then start again in the same room — widget reappears', async ({ browser }) => {
       test.setTimeout(60000)
 
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page = await ctx.newPage()
+      const { ctx, page } = await loveWindow(browser, 'second')
       try {
-        await openLove(page)
         const room = await clickFirstAvailableRoom(page)
         test.skip(room === null, 'No regular room available')
         await startOrJoin(page)
@@ -111,10 +105,8 @@ export function registerSessionTests (): void {
     test('room hop: leaving room A and connecting to room B switches the active meeting', async ({ browser }) => {
       test.setTimeout(60000)
 
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page = await ctx.newPage()
+      const { ctx, page } = await loveWindow(browser, 'second')
       try {
-        await openLove(page)
         const roomA = await clickFirstAvailableRoom(page)
         test.skip(roomA === null, 'No regular room available')
         await startOrJoin(page)

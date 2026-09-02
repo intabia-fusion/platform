@@ -17,7 +17,7 @@ import { expect, test, type Page } from '@playwright/test'
 
 import {
   closeMeetingContexts,
-  openLove,
+  loveWindow,
   startOrJoin,
   waitConnected,
   waitForActiveMeetingsToFinish
@@ -65,13 +65,9 @@ export function registerInviteUiTests (): void {
 
     test('A1 invite labels: sender → "You are inviting", recipient → "Knocking"', async ({ browser }) => {
       test.setTimeout(60000)
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await openLove(page2)
-        await openLove(page3)
         await clickFirstMeetingRoom(page2)
         await startOrJoin(page2)
         await waitConnected(page2)
@@ -97,13 +93,9 @@ export function registerInviteUiTests (): void {
 
     test('A1 popup: recipient sees "asking you to join" + Join/Reject buttons', async ({ browser }) => {
       test.setTimeout(60000)
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await openLove(page2)
-        await openLove(page3)
         await clickFirstMeetingRoom(page2)
         await startOrJoin(page2)
         await waitConnected(page2)
@@ -129,13 +121,9 @@ export function registerInviteUiTests (): void {
 
     test('A1 sender popup: clicking trigger opens outgoing-invite-popup with Cancel', async ({ browser }) => {
       test.setTimeout(60000)
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await openLove(page2)
-        await openLove(page3)
         await clickFirstMeetingRoom(page2)
         await startOrJoin(page2)
         await waitConnected(page2)
@@ -158,14 +146,9 @@ export function registerInviteUiTests (): void {
 
     test('A2 awaiting panel: recipient sees "Waiting for ..." after accept w/o meeting', async ({ browser }) => {
       test.setTimeout(60000)
-      const callerCtx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const recipientCtx = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const caller = await callerCtx.newPage()
-      const recipient = await recipientCtx.newPage()
+      const { ctx: callerCtx, page: caller } = await loveWindow(browser, 'second')
+      const { ctx: recipientCtx, page: recipient } = await loveWindow(browser, 'third')
       try {
-        await openLove(recipient)
-        await openLove(caller)
-
         await callPerson(caller, /Muram/i)
 
         const incoming = recipient.locator('[data-id="incoming-invite-trigger"]')
@@ -199,13 +182,9 @@ export function registerInviteUiTests (): void {
 
     test('A decline → call-declined toast on sender; both triggers go away', async ({ browser }) => {
       test.setTimeout(60000)
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await openLove(page2)
-        await openLove(page3)
         await clickFirstMeetingRoom(page2)
         await startOrJoin(page2)
         await waitConnected(page2)
@@ -230,13 +209,9 @@ export function registerInviteUiTests (): void {
 
     test('A cancel by sender → recipient incoming disappears', async ({ browser }) => {
       test.setTimeout(60000)
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await openLove(page2)
-        await openLove(page3)
         await clickFirstMeetingRoom(page2)
         await startOrJoin(page2)
         await waitConnected(page2)

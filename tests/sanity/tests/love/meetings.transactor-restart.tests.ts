@@ -20,6 +20,7 @@ import { getWorkspaceToken, loadServerConfig } from '@hcengineering/api-client'
 import love, { type ParticipantInfo, type Room } from '@hcengineering/love'
 import { PlatformURI, PlatformUserSecond } from '../utils'
 import {
+  closeLoveWindows,
   closeMeetingContexts,
   firstAvailableRoom,
   getSystemRestClient,
@@ -55,8 +56,17 @@ async function forceCloseWorkspaceSession (workspaceId: WorkspaceUuid): Promise<
   }
 }
 
+// Own contexts, not the shared windows: the test restarts the transactor, and a window left
+// mid-reconnect would be inherited by every test after it.
 export function registerTransactorRestartTests (): void {
   test.describe('meeting minutes - participant presence across a workspace session restart', () => {
+    // The shared windows hold a live session for the same accounts this test signs in as, and two
+    // sessions per user break presence and departure checks. Drop them; the next shared test pays
+    // one boot to get its window back.
+    test.beforeAll(async () => {
+      await closeLoveWindows()
+    })
+
     // force-close drops the shared `meetings-ws` session, and with it DOMAIN_TRANSIENT for every
     // other love test in that workspace. Manual only: LOVE_MANUAL_TESTS=true.
     test.skip(process.env.LOVE_MANUAL_TESTS !== 'true', 'Restarts the shared workspace session')

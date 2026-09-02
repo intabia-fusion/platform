@@ -16,6 +16,7 @@
 import { expect, test } from '@playwright/test'
 import { PlatformSetting, PlatformURI } from '../utils'
 import { OfficePage } from '../model/love/office-page'
+import { loveWindow } from './meeting-helpers'
 import { MeetingMinutesPage } from '../model/love/meeting-minutes-page'
 
 const meetingsWs = 'meetings-ws'
@@ -34,8 +35,7 @@ export function registerPrivacyTests (): void {
 
     test('non-owner does not see privacy toggle on someone else office', async ({ browser, page }) => {
       // First, capture the rooms layout from the owner side to know what to click as user2.
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page2 = await ctx.newPage()
+      const { ctx, page: page2 } = await loveWindow(browser, 'second')
       try {
         await (await page2.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
         const office2 = new OfficePage(page2)

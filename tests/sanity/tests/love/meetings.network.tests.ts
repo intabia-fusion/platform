@@ -14,7 +14,13 @@
 //
 
 import { expect, test, type BrowserContext, type CDPSession, type Page } from '@playwright/test'
-import { closeMeetingContexts, connectedMarker, joinFirstAvailableRoom, openLove } from './meeting-helpers'
+import {
+  closeLoveWindows,
+  closeMeetingContexts,
+  connectedMarker,
+  joinFirstAvailableRoom,
+  openLove
+} from './meeting-helpers'
 import { routeLiveKitThroughProxy, startLiveKitProxy, type LiveKitProxy } from './network-helpers'
 
 /** LiveKit signal state as the client sees it, read straight off the SDK room. */
@@ -69,8 +75,18 @@ async function setOffline (ctx: BrowserContext, page: Page, offline: boolean): P
   })
 }
 
+// Own contexts, not the shared windows: `routeLiveKitThroughProxy` rewrites LIVEKIT_WS in
+// config.json and CDP puts the context offline. Both outlive the test on a reused window and
+// would pin every later test to a proxy that is already closed.
 export function registerNetworkTests (): void {
   test.describe('meeting minutes - degraded link to LiveKit', () => {
+    // The shared windows hold a live session for the same accounts this test signs in as, and two
+    // sessions per user break presence and departure checks. Drop them; the next shared test pays
+    // one boot to get its window back.
+    test.beforeAll(async () => {
+      await closeLoveWindows()
+    })
+
     let proxy: LiveKitProxy | undefined
 
     test.afterEach(async () => {

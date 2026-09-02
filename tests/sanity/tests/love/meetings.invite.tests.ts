@@ -19,7 +19,7 @@ import {
   ROOM_CANDIDATES,
   clickFirstAvailableRoom,
   closeMeetingContexts,
-  openLove,
+  loveWindow,
   startOrJoin,
   waitConnected
 } from './meeting-helpers'
@@ -63,14 +63,9 @@ export function registerInviteTests (): void {
     test('user3 rejects invite — neither side ends up in a meeting', async ({ browser }) => {
       test.setTimeout(60000)
 
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await openLove(page2)
-        await openLove(page3)
-
         const room = await clickFirstAvailableRoom(page2)
         test.skip(room === null, 'No regular room available')
         await startOrJoin(page2)
@@ -100,14 +95,9 @@ export function registerInviteTests (): void {
     }) => {
       test.setTimeout(60000)
 
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await openLove(page2)
-        await openLove(page3)
-
         // user2 starts a meeting and invites user3
         const room2 = await clickFirstAvailableRoom(page2)
         test.skip(room2 === null, 'No regular room available')
@@ -147,10 +137,8 @@ export function registerInviteTests (): void {
     test('self-invite: my own user is not present in the invite picker (skipCurrentAccount)', async ({ browser }) => {
       test.setTimeout(60000)
 
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page = await ctx.newPage()
+      const { ctx, page } = await loveWindow(browser, 'second')
       try {
-        await openLove(page)
         const room = await clickFirstAvailableRoom(page)
         test.skip(room === null, 'No regular room available')
         await startOrJoin(page)
@@ -172,14 +160,9 @@ export function registerInviteTests (): void {
     test('invite UI: sender sees "You are inviting", recipient sees "is asking you to join"', async ({ browser }) => {
       test.setTimeout(60000)
 
-      const ctx2 = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const ctx3 = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page2 = await ctx2.newPage()
-      const page3 = await ctx3.newPage()
+      const { ctx: ctx2, page: page2 } = await loveWindow(browser, 'second')
+      const { ctx: ctx3, page: page3 } = await loveWindow(browser, 'third')
       try {
-        await openLove(page2)
-        await openLove(page3)
-
         const room = await clickFirstAvailableRoom(page2)
         test.skip(room === null, 'No regular room available')
         await startOrJoin(page2)

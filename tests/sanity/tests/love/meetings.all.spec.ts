@@ -14,6 +14,7 @@
 //
 
 import { test } from '../fixtures'
+import { closeLoveWindows } from './meeting-helpers'
 
 import { registerAccessTests } from './meetings.access.tests'
 import { registerBidirectionalLoopTests } from './meetings.bidirectional-loop.tests'
@@ -42,6 +43,12 @@ import { registerTransactorRestartTests } from './meetings.transactor-restart.te
 import { registerWorkspaceOwnerTests } from './meetings.workspace-owner.tests'
 
 test.describe('love (meetings) — suite', () => {
+  // The per-user windows are shared by every test here; `closeMeetingContexts` rolls them back
+  // after each one, this only tears them down at the end.
+  test.afterAll(async () => {
+    await closeLoveWindows()
+  })
+
   registerMeetingsTests()
   registerAccessTests()
   registerMigrationTests()

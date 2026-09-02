@@ -16,6 +16,7 @@
 import { expect, test } from '@playwright/test'
 import { PlatformSetting, PlatformURI } from '../utils'
 import { OfficePage } from '../model/love/office-page'
+import { loveWindow } from './meeting-helpers'
 
 const meetingsWs = 'meetings-ws'
 
@@ -30,8 +31,7 @@ export function registerAccessTests (): void {
     })
 
     test('user2 sees the floor (autoJoin worked for restored spaces)', async ({ browser }) => {
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page2 = await ctx.newPage()
+      const { ctx, page: page2 } = await loveWindow(browser, 'second')
       try {
         await (await page2.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
         const office2 = new OfficePage(page2)
@@ -46,8 +46,7 @@ export function registerAccessTests (): void {
     })
 
     test('user3 (no workspace owner role) can also see floor', async ({ browser }) => {
-      const ctx = await browser.newContext({ storageState: '.auth/storageThird.json' })
-      const page3 = await ctx.newPage()
+      const { ctx, page: page3 } = await loveWindow(browser, 'third')
       try {
         await (await page3.goto(`${PlatformURI}/workbench/${meetingsWs}/love`))?.finished()
         const office3 = new OfficePage(page3)
