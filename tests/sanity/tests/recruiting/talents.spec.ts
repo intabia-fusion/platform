@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures'
 import { NavigationMenuPage } from '../model/recruiting/navigation-menu-page'
 import { TalentDetailsPage } from '../model/recruiting/talent-details-page'
 import { TalentsPage } from '../model/recruiting/talents-page'

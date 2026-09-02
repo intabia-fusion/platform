@@ -76,14 +76,18 @@ function validatePlanConfig (path: string): void {
   if (!existsSync(path)) {
     throw Error(`Plan config file not found: ${path}`)
   }
-  const plans = (yaml.load(readFileSync(path, 'utf-8')) as any)?.plans ?? {}
-  const noWindow = Object.entries<any>(plans)
+  const parsed = yaml.load(readFileSync(path, 'utf-8')) as any
+  const noWindow = Object.entries<any>(parsed?.plans ?? {})
     .filter(([, plan]) => plan?.windowMonthLimit == null)
     .map(([name]) => name)
   if (noWindow.length > 0) {
     throw Error(
       `Plan config: windowMonthLimit missing for plans: ${noWindow.join(', ')}. Set 0 explicitly for unlimited.`
     )
+  }
+  // A trial without its own window inherits the plan's per-seat one times the trial seat cap.
+  if (parsed?.trial != null && parsed.trial.windowMonthLimit == null) {
+    throw Error('Plan config: trial.windowMonthLimit missing. Set 0 explicitly for unlimited.')
   }
 }
 

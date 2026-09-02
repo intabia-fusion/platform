@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures'
 import { openBotDirect } from '../API/AiBot'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'

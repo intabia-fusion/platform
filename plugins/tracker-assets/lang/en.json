@@ -211,7 +211,8 @@
     "NewSubIssue": "Add sub-issue...",
     "AddLabel": "Add label",
     "DeleteIssue": "Delete {issueCount, plural, =1 {issue} other {# issues}}",
-    "DeleteIssueConfirm": "Do you want to delete {issueCount, plural, =1 {issue} other {issues}}{subIssueCount, plural, =0 {?} =1 { and sub-issue?} other { and sub-issues?}}",
+    "DeleteIssueConfirm": "Do you really want to delete {issueCount, plural, =1 {issue} one {# issue} other {# issues}}?",
+    "DeleteIssueWithSubIssuesConfirm": "{subIssueCount, plural, one {The following sub-issue will be unlinked from its parent} other {The following sub-issues will be unlinked from their parent}}:",
     "Milestone": "Milestone",
     "NoMilestone": "No Milestone",
     "MoveToMilestone": "Select Milestone",
@@ -322,7 +323,9 @@
     "AddedRelation": "Added relation {identifier}{value}",
     "RemovedRelation": "Removed relation {identifier}{value}",
     "CreateAndOpen": "Create and open",
-    "CreateAndNew": "Create and start new"
+    "CreateAndNew": "Create and start new",
+    "ExportToCSV": "Export to CSV",
+    "ExportToCSVTooltip": "Export visible issues to CSV file"
   },
   "status": {},
   "emailTemplate": {

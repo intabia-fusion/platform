@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures'
 import { AccountRole } from '@hcengineering/core'
 import { PlatformSetting, PlatformURI, PlatformUserSecond, generateId, getSecondPage } from '../utils'
 import { retryIntervals } from '../retry'

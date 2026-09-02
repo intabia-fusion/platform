@@ -60,7 +60,7 @@ import core, {
   type WorkspaceInfoWithStatus,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import platform, { Severity, Status, UNAUTHORIZED, unknownError } from '@hcengineering/platform'
+import platform, { PlatformError, Severity, Status, UNAUTHORIZED, unknownError } from '@hcengineering/platform'
 import {
   type HelloRequest,
   type HelloResponse,
@@ -235,30 +235,38 @@ export class TSessionManager implements SessionManager {
       QueueTopic.OnlineUserTx,
       this.transactorId,
       async (ctx, msg) => {
-        const { workspaceUuid, tx, account } = msg.value
-        const workspace = this.workspaces.get(workspaceUuid)
-        if (workspace == null) return
+        const { tx, account } = msg.value
+        // The message names an account, so sessions are the index - a workspace without one
+        // had nothing to apply anyway.
+        const targets = new Set<WorkspaceUuid>()
+        for (const { session } of this.sessions.values()) {
+          if (session.getUser() === account) {
+            targets.add(session.workspace.uuid)
+          }
+        }
 
-        const session = this.getUserSession(workspaceUuid, account)
-        if (session == null) return
+        for (const workspaceUuid of targets) {
+          const workspace = this.workspaces.get(workspaceUuid)
+          if (workspace == null) continue
 
-        await workspace.with(async (pipeline) => {
-          ctx.contextData = new SessionDataImpl(
-            systemAccount,
-            'online-user-tx',
-            true,
-            { txes: [], targets: {}, queue: [], sessions: {} },
-            workspace.wsId,
-            true,
-            undefined,
-            undefined,
-            pipeline.context.modelDb,
-            new Map(),
-            'transactor'
-          )
-          await pipeline.tx(ctx, [tx])
-          await pipeline.handleBroadcast(ctx)
-        })
+          await workspace.with(async (pipeline) => {
+            ctx.contextData = new SessionDataImpl(
+              systemAccount,
+              'online-user-tx',
+              true,
+              { txes: [], targets: {}, queue: [], sessions: {} },
+              workspace.wsId,
+              true,
+              undefined,
+              undefined,
+              pipeline.context.modelDb,
+              new Map(),
+              'transactor'
+            )
+            await pipeline.tx(ctx, [tx])
+            await pipeline.handleBroadcast(ctx)
+          })
+        }
       }
     )
 
@@ -840,7 +848,8 @@ export class TSessionManager implements SessionManager {
               versionMinor: workspaceInfo.versionMinor,
               versionPatch: workspaceInfo.versionPatch
             },
-            role: AccountRole.Owner,
+            // Placeholder only: createSession takes the role from account.workspaces, never from here.
+            role: AccountRole.ReadOnlyGuest,
             endpoint: { externalUrl: '', internalUrl: '', region: workspaceInfo.region ?? '' },
             collaboratorEndpoint: { externalUrl: '', internalUrl: '', region: workspaceInfo.region ?? '' },
             progress: workspaceInfo.processingProgress,
@@ -1549,6 +1558,18 @@ export class TSessionManager implements SessionManager {
     return this.limitter.checkRateLimit(service.getUser() + (service.token.extra?.service ?? ''))
   }
 
+  private reportRequestError (ctx: MeasureContext, err: any, opts: { method?: string, request?: unknown }): void {
+    if (err instanceof PlatformError && err.status.code !== platform.status.UnknownError) {
+      // Forbidden/Unauthorized etc are business outcomes, not faults: count them, don't log a stack.
+      ctx.measure('request-rejected', 1, { code: err.status.code, method: opts.method })
+      return
+    }
+    Analytics.handleError(err)
+    if (LOGGING_ENABLED) {
+      this.ctx.error('error handle request', { error: err, request: opts.request })
+    }
+  }
+
   async handleRequest<S extends Session>(
     requestCtx: MeasureContext,
     service: S,
@@ -1665,16 +1686,12 @@ export class TSessionManager implements SessionManager {
           })
         )
       } catch (err: any) {
-        Analytics.handleError(err)
-        if (LOGGING_ENABLED) {
-          this.ctx.error('error handle request', { error: err, request })
-        }
+        this.reportRequestError(requestCtx, err, { method: request.method, request })
         await ws.send(
           requestCtx,
           {
             id: request.id,
-            error: unknownError(err),
-            result: JSON.parse(JSON.stringify(err?.stack))
+            error: unknownError(err)
           },
           service.binaryMode,
           service.useCompression
@@ -1736,16 +1753,12 @@ export class TSessionManager implements SessionManager {
           })
         )
       } catch (err: any) {
-        Analytics.handleError(err)
-        if (LOGGING_ENABLED) {
-          this.ctx.error('error handle request', { error: err })
-        }
+        this.reportRequestError(requestCtx, err, { method })
         await ws.send(
           requestCtx,
           {
             id: reqId,
-            error: unknownError(err),
-            result: JSON.parse(JSON.stringify(err?.stack))
+            error: unknownError(err)
           },
           service.binaryMode,
           service.useCompression

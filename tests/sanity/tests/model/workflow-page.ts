@@ -104,24 +104,39 @@ export class WorkflowPage {
 
   async createWorkflow (name: string, taskType?: string): Promise<void> {
     await this.openAside(this.addWorkflowButton())
-    await this.asideNameInput().fill(name)
+    await this.fillAsideName(name)
     if (taskType !== undefined) {
       await this.taskTypeDropdown().click()
       await this.dropdownRow(taskType).click()
     }
-    await this.asideButton('Create').click()
+    await this.clickAsideCreate()
     await expect(this.workflowRow(name)).toBeVisible()
   }
 
   async createScreen (name: string, targetClass?: string): Promise<void> {
     await this.openAside(this.addScreenButton())
-    await this.asideNameInput().fill(name)
+    await this.fillAsideName(name)
     if (targetClass !== undefined) {
       await this.screenClassDropdown().click()
       await this.dropdownRow(targetClass).click()
     }
-    await this.asideButton('Create').click()
+    await this.clickAsideCreate()
     await expect(this.screenRow(name)).toBeVisible()
+  }
+
+  // A reopened aside drops what was typed, and Create stays disabled on an empty name - the click
+  // then waits out the whole test instead of failing.
+  private async fillAsideName (name: string): Promise<void> {
+    await retry(async () => {
+      await this.asideNameInput().fill(name)
+      await expect(this.asideNameInput()).toHaveValue(name, { timeout: 3000 })
+    })
+  }
+
+  private async clickAsideCreate (): Promise<void> {
+    const create = this.asideButton('Create')
+    await expect(create).toBeEnabled({ timeout: 15000 })
+    await create.click()
   }
 
   // Both asides carry a Create button, so a leftover one from the previous step cannot be told

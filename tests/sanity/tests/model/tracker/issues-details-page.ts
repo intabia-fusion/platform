@@ -295,7 +295,11 @@ export class IssuesDetailsPage extends CommonTrackerPage {
   async fillSearchForIssueModal (issueTitle: string): Promise<void> {
     await this.buttonIssueOnSearchForIssueModal().click()
     await this.inputSearchOnSearchForIssueModal().fill(issueTitle)
-    await this.popupListItems(issueTitle).click()
+    // Wait for the list to re-filter: clicking while the pre-filter rows are still there either
+    // hits a strict-mode violation or links the wrong issue, and the relation check fails later.
+    const item = this.popupListItems(issueTitle)
+    await expect(item).toHaveCount(1, { timeout: 15000 })
+    await item.click()
   }
 
   async moreActionOnIssueWithSecondLevel (actionFirst: string, actionSecond: string): Promise<void> {

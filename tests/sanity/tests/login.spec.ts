@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 import { PlatformUser, checkIfUrlContains } from './utils'
 import { retryIntervals } from './retry'
 import { LoginPage } from './model/login-page'

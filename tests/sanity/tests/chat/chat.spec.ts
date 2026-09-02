@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures'
 import { ApiEndpoint } from '../API/Api'
 import { ChannelPage } from '../model/channel-page'
 import { ChunterPage } from '../model/chunter-page'

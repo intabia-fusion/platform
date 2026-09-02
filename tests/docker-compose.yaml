@@ -185,7 +185,7 @@ services:
       - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
       # Dev/testing only: fixed admin-operation OTP code (email delivery is off in tests). NEVER set in prod.
       - ADMIN_OTP_DEV_CODE=000000
-      - WORKSPACE_LIMIT_PER_USER=100
+      - WORKSPACE_LIMIT_PER_USER=10000
       # Free fallback limits (match the free:true plan in plan-config.yaml). storagePerUserGB scales disk.
       - FREE_PLAN_LIMITS={"usersLimit":5,"storagePerUserGB":2,"tokenLimit":100000,"trafficLimitGB":0,"meetingMinutesLimit":0}
       - DB_URL=${DB_PG_URL}

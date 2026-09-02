@@ -56,8 +56,8 @@
   "dependencies": {
     "@deepgram/sdk": "^4.11.2",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
-    "@livekit/agents": "^1.2.1",
-    "@livekit/rtc-node": "^0.13.24",
+    "@livekit/agents": "^1.7.0",
+    "@livekit/rtc-node": "^0.13.34",
     "dotenv": "^16.4.5",
     "jwt-simple": "^0.5.6",
     "uuid": "^8.3.2",

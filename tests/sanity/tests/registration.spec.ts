@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { type PersonUuid, systemAccountUuid } from '@hcengineering/core'
 import { generateToken } from '@hcengineering/server-token'

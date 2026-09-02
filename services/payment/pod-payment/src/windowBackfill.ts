@@ -49,9 +49,10 @@ export async function backfillWindowLimits (
   ctx.info('AI window backfill started', { candidates: subs.length })
 
   const writes: SubscriptionUpsert[] = []
-  // Skip reasons per plan — they explain the gap between `candidates` and `toUpdate` in the logs.
+  // Skip reasons per plan - they explain the gap between `candidates` and `toUpdate` in the logs.
+  // skippedNoWindow covers both an unknown plan and a resolver that declined to compute a window.
   const skippedSet = new Map<string, number>()
-  const skippedNoPlan = new Map<string, number>()
+  const skippedNoWindow = new Map<string, number>()
   let skippedNotTier = 0
   for (const sub of subs) {
     // The AI window lives on the tier only.
@@ -61,12 +62,11 @@ export async function backfillWindowLimits (
     }
     const limits = resolveLimits(sub)
     if (limits?.windowMonthLimit == null) {
-      skippedNoPlan.set(sub.plan, (skippedNoPlan.get(sub.plan) ?? 0) + 1)
+      skippedNoWindow.set(sub.plan, (skippedNoWindow.get(sub.plan) ?? 0) + 1)
       continue
     }
-    // A window that is already set stays as it is: a trial or a hand-made subscription may
-    // deliberately differ from the plan. The one exception is a stored 0 on a plan that grants a
-    // finite window — that 0 came from a config missing windowMonthLimit, not from a real intent.
+    // A window that is already set stays as it is.
+    // Exception: a window = 0 on a plan that grants a finite window - it was set as 0 by misconfiguration.
     const stored = sub.limits?.windowMonthLimit
     if (stored != null && !(stored === 0 && limits.windowMonthLimit > 0)) {
       skippedSet.set(sub.plan, (skippedSet.get(sub.plan) ?? 0) + 1)
@@ -92,7 +92,7 @@ export async function backfillWindowLimits (
     toUpdate: writes.length,
     skippedNotTier,
     skippedAlreadySet: Object.fromEntries(skippedSet),
-    skippedPlanNotInConfig: Object.fromEntries(skippedNoPlan)
+    skippedNoWindowFromPlan: Object.fromEntries(skippedNoWindow)
   })
 
   if (writes.length === 0) {

@@ -589,7 +589,9 @@ const pluginState = plugin(trackerId, {
     Home: '' as Asset,
     RedCircle: '' as Asset,
 
-    Priority: '' as Asset
+    Priority: '' as Asset,
+    Export: '' as Asset,
+    More: '' as Asset
   },
   category: {
     Other: '' as Ref<TagCategory>,

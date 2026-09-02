@@ -23,7 +23,8 @@ import core, {
   type Ref,
   type Status,
   type TxCreateDoc,
-  type TxRemoveDoc
+  type TxRemoveDoc,
+  type TxUpdateDoc
 } from '@hcengineering/core'
 import task, { type Task, type TaskType } from '@hcengineering/task'
 import tracker from '@hcengineering/tracker'
@@ -375,84 +376,84 @@ describe('Workflow Validators', () => {
         } as any
       }
 
-      it('should return true (empty) when value is undefined and no txes exist', () => {
+      it('should return true (empty) when value is undefined and no txes exist', async () => {
         const h = createHierarchy()
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, undefined, [])).toBe(true)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, undefined, [])).toBe(true)
       })
 
-      it('should return true (empty) when value is 0 and no txes exist', () => {
+      it('should return true (empty) when value is 0 and no txes exist', async () => {
         const h = createHierarchy()
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 0, [])).toBe(true)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, 0, [])).toBe(true)
       })
 
-      it('should return true (empty) when value is empty array and no txes exist', () => {
+      it('should return true (empty) when value is empty array and no txes exist', async () => {
         const h = createHierarchy()
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, [], [])).toBe(true)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, [], [])).toBe(true)
       })
 
-      it('should return false (not empty) when value is positive number without txes', () => {
+      it('should return false (not empty) when value is positive number without txes', async () => {
         const h = createHierarchy()
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 1, [])).toBe(false)
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 3, [])).toBe(false)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, 1, [])).toBe(false)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, 3, [])).toBe(false)
       })
 
-      it('should return false (not empty) when value is non-empty array without txes', () => {
+      it('should return false (not empty) when value is non-empty array without txes', async () => {
         const h = createHierarchy()
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, ['att-1'], [])).toBe(false)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, ['att-1'], [])).toBe(false)
       })
 
-      it('should return false (not empty) when value is 0 but txes has TxCreateDoc', () => {
-        const h = createHierarchy()
-        const txes = [makeCreateTx('att-new')]
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 0, txes)).toBe(false)
-      })
-
-      it('should return false (not empty) when value is undefined but txes has TxCreateDoc', () => {
+      it('should return false (not empty) when value is 0 but txes has TxCreateDoc', async () => {
         const h = createHierarchy()
         const txes = [makeCreateTx('att-new')]
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, undefined, txes)).toBe(false)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, 0, txes)).toBe(false)
       })
 
-      it('should return true (empty) when value is 1 but txes has TxRemoveDoc removing the only item', () => {
+      it('should return false (not empty) when value is undefined but txes has TxCreateDoc', async () => {
+        const h = createHierarchy()
+        const txes = [makeCreateTx('att-new')]
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, undefined, txes)).toBe(false)
+      })
+
+      it('should return true (empty) when value is 1 but txes has TxRemoveDoc removing the only item', async () => {
         const h = createHierarchy()
         const txes = [makeRemoveTx('att-1')]
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 1, txes)).toBe(true)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, 1, txes)).toBe(true)
       })
 
-      it('should return false (not empty) when value is 2 and txes has 1 TxRemoveDoc (1 item remaining)', () => {
+      it('should return false (not empty) when value is 2 and txes has 1 TxRemoveDoc (1 item remaining)', async () => {
         const h = createHierarchy()
         const txes = [makeRemoveTx('att-1')]
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 2, txes)).toBe(false)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, 2, txes)).toBe(false)
       })
 
-      it('should return true (empty) when value is 2 and txes has 2 TxRemoveDocs (0 items remaining)', () => {
+      it('should return true (empty) when value is 2 and txes has 2 TxRemoveDocs (0 items remaining)', async () => {
         const h = createHierarchy()
         const txes = [makeRemoveTx('att-1'), makeRemoveTx('att-2')]
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 2, txes)).toBe(true)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, 2, txes)).toBe(true)
       })
 
-      it('should return false (not empty) when value is 1 and txes has 1 TxRemoveDoc and 1 TxCreateDoc', () => {
+      it('should return false (not empty) when value is 1 and txes has 1 TxRemoveDoc and 1 TxCreateDoc', async () => {
         const h = createHierarchy()
         const txes = [makeRemoveTx('att-1'), makeCreateTx('att-2')]
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 1, txes)).toBe(false)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, 1, txes)).toBe(false)
       })
 
-      it('should return true (empty) when a doc is created and then removed in the same tx batch', () => {
+      it('should return true (empty) when a doc is created and then removed in the same tx batch', async () => {
         const h = createHierarchy()
         const txes = [makeCreateTx('att-temp'), makeRemoveTx('att-temp')]
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 0, txes)).toBe(true)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, 0, txes)).toBe(true)
       })
 
-      it('should ignore TxCreateDoc and TxRemoveDoc for different tasks or different collections', () => {
+      it('should ignore TxCreateDoc and TxRemoveDoc for different tasks or different collections', async () => {
         const h = createHierarchy()
         const otherTaskTx = makeCreateTx('att-1', 'other-task-id')
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 0, [otherTaskTx])).toBe(true)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, 0, [otherTaskTx])).toBe(true)
 
         const otherCollectionTx = makeCreateTx('att-2', 'task-1', 'labels')
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 0, [otherCollectionTx])).toBe(true)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, 0, [otherCollectionTx])).toBe(true)
 
         const otherTaskRemoveTx = makeRemoveTx('att-3', 'other-task-id')
-        expect(isEmptyAttribute(h, taskDoc, collectionAttr, 1, [otherTaskRemoveTx])).toBe(false)
+        expect(await isEmptyAttribute(h, taskDoc, collectionAttr, 1, [otherTaskRemoveTx])).toBe(false)
       })
 
       it('should validate FieldRequired properly with context.txes', async () => {
@@ -493,6 +494,217 @@ describe('Workflow Validators', () => {
           { txes: [makeRemoveTx('att-1')] }
         )
         expect(resultRemovedFail.ok).toBe(false)
+      })
+    })
+
+    describe('TypeReportedTime attribute', () => {
+      const reportedTimeAttr: AnyAttribute = {
+        _id: 'tracker:class:Issue_reportedTime',
+        _class: core.class.Attribute,
+        attributeOf: tracker.class.Issue,
+        name: 'reportedTime',
+        label: 'ReportedTime',
+        type: {
+          _class: tracker.class.TypeReportedTime,
+          label: 'ReportedTime',
+          icon: 'core:icon:Time'
+        }
+      } as unknown as AnyAttribute
+
+      function createHierarchy (): Hierarchy {
+        return {
+          isDerived: jest.fn((c: any, parent: any) => c === parent || parent === tracker.class.TypeReportedTime),
+          findAttribute: jest.fn(),
+          as: jest.fn()
+        } as any
+      }
+
+      function makeCreateReportTx (
+        objectId: string,
+        taskId: string = 'task-1',
+        value: number = 8
+      ): TxCreateDoc<AttachedDoc> {
+        return {
+          _id: `tx-create-${objectId}`,
+          _class: core.class.TxCreateDoc,
+          space: 'space-1',
+          objectId,
+          objectClass: tracker.class.TimeSpendReport,
+          objectSpace: 'space-1',
+          attachedTo: taskId,
+          collection: 'reports',
+          attributes: {
+            attachedTo: taskId,
+            collection: 'reports',
+            value
+          },
+          modifiedBy: 'user-1',
+          modifiedOn: Date.now()
+        } as any
+      }
+
+      function makeUpdateReportTx (
+        objectId: string,
+        taskId: string = 'task-1',
+        value: number = 4
+      ): TxUpdateDoc<AttachedDoc> {
+        return {
+          _id: `tx-update-${objectId}`,
+          _class: core.class.TxUpdateDoc,
+          space: 'space-1',
+          objectId,
+          objectClass: tracker.class.TimeSpendReport,
+          objectSpace: 'space-1',
+          attachedTo: taskId,
+          collection: 'reports',
+          operations: {
+            value
+          },
+          modifiedBy: 'user-1',
+          modifiedOn: Date.now()
+        } as any
+      }
+
+      function makeRemoveReportTx (objectId: string, taskId: string = 'task-1'): TxRemoveDoc<AttachedDoc> {
+        return {
+          _id: `tx-remove-${objectId}`,
+          _class: core.class.TxRemoveDoc,
+          space: 'space-1',
+          objectId,
+          objectClass: tracker.class.TimeSpendReport,
+          objectSpace: 'space-1',
+          attachedTo: taskId,
+          collection: 'reports',
+          modifiedBy: 'user-1',
+          modifiedOn: Date.now()
+        } as any
+      }
+
+      it('should return true (empty) when value is 0 and no txes exist', async () => {
+        const h = createHierarchy()
+        expect(await isEmptyAttribute(h, taskDoc, reportedTimeAttr, 0, [])).toBe(true)
+      })
+
+      it('should return true (empty) when value is undefined and task has 0 reportedTime', async () => {
+        const h = createHierarchy()
+        const taskWithZeroTime = { ...taskDoc, reportedTime: 0 } as unknown as Task
+        expect(await isEmptyAttribute(h, taskWithZeroTime, reportedTimeAttr, undefined, [])).toBe(true)
+      })
+
+      it('should return false (not empty) when value is positive number without txes', async () => {
+        const h = createHierarchy()
+        expect(await isEmptyAttribute(h, taskDoc, reportedTimeAttr, 5, [])).toBe(false)
+      })
+
+      it('should return false (not empty) when value is 0 but txes has TxCreateDoc for TimeSpendReport', async () => {
+        const h = createHierarchy()
+        const txes = [makeCreateReportTx('rep-1', 'task-1', 8)]
+        expect(await isEmptyAttribute(h, taskDoc, reportedTimeAttr, 0, txes)).toBe(false)
+      })
+
+      it('should return true (empty) when value is 0 and txes has TxCreateDoc with value 0', async () => {
+        const h = createHierarchy()
+        const txes = [makeCreateReportTx('rep-1', 'task-1', 0)]
+        expect(await isEmptyAttribute(h, taskDoc, reportedTimeAttr, 0, txes)).toBe(true)
+      })
+
+      it('should return true (empty) when report is created and then removed in the same tx batch', async () => {
+        const h = createHierarchy()
+        const txes = [makeCreateReportTx('rep-1', 'task-1', 8), makeRemoveReportTx('rep-1', 'task-1')]
+        expect(await isEmptyAttribute(h, taskDoc, reportedTimeAttr, 0, txes)).toBe(true)
+      })
+
+      it('should return false (not empty) when report is created and updated in the same tx batch', async () => {
+        const h = createHierarchy()
+        const txes = [makeCreateReportTx('rep-1', 'task-1', 8), makeUpdateReportTx('rep-1', 'task-1', 4)]
+        expect(await isEmptyAttribute(h, taskDoc, reportedTimeAttr, 0, txes)).toBe(false)
+      })
+
+      it('should ignore TimeSpendReport txes for other tasks', async () => {
+        const h = createHierarchy()
+        const otherTx = makeCreateReportTx('rep-1', 'other-task', 8)
+        expect(await isEmptyAttribute(h, taskDoc, reportedTimeAttr, 0, [otherTx])).toBe(true)
+      })
+
+      it('should return true (empty) when past report is removed resulting in 0 reported time', async () => {
+        const h = createHierarchy()
+        const mockClient = {
+          findAll: jest.fn().mockResolvedValue([{ _id: 'rep-past-1', value: 5 }])
+        } as unknown as ValidatorClient
+        const taskWithPastTime = { ...taskDoc, reportedTime: 5 } as unknown as Task
+        const txes = [makeRemoveReportTx('rep-past-1', 'task-1')]
+        expect(await isEmptyAttribute(h, taskWithPastTime, reportedTimeAttr, 5, txes, mockClient)).toBe(true)
+      })
+
+      it('should return false (not empty) when past report is removed but remaining time > 0', async () => {
+        const h = createHierarchy()
+        const mockClient = {
+          findAll: jest.fn().mockResolvedValue([{ _id: 'rep-past-1', value: 5 }])
+        } as unknown as ValidatorClient
+        const taskWithPastTime = { ...taskDoc, reportedTime: 8 } as unknown as Task
+        const txes = [makeRemoveReportTx('rep-past-1', 'task-1')]
+        expect(await isEmptyAttribute(h, taskWithPastTime, reportedTimeAttr, 8, txes, mockClient)).toBe(false)
+      })
+
+      it('should return false (not empty) when past report is updated to new positive value', async () => {
+        const h = createHierarchy()
+        const mockClient = {
+          findAll: jest.fn().mockResolvedValue([{ _id: 'rep-past-1', value: 5 }])
+        } as unknown as ValidatorClient
+        const taskWithPastTime = { ...taskDoc, reportedTime: 5 } as unknown as Task
+        const txes = [makeUpdateReportTx('rep-past-1', 'task-1', 2)]
+        expect(await isEmptyAttribute(h, taskWithPastTime, reportedTimeAttr, 5, txes, mockClient)).toBe(false)
+      })
+
+      it('should return true (empty) when past report is updated to 0', async () => {
+        const h = createHierarchy()
+        const mockClient = {
+          findAll: jest.fn().mockResolvedValue([{ _id: 'rep-past-1', value: 5 }])
+        } as unknown as ValidatorClient
+        const taskWithPastTime = { ...taskDoc, reportedTime: 5 } as unknown as Task
+        const txes = [makeUpdateReportTx('rep-past-1', 'task-1', 0)]
+        expect(await isEmptyAttribute(h, taskWithPastTime, reportedTimeAttr, 5, txes, mockClient)).toBe(true)
+      })
+
+      it('should support DraftTimeReportPayload object value', async () => {
+        const h = createHierarchy()
+        expect(await isEmptyAttribute(h, taskDoc, reportedTimeAttr, { reportedTime: 8 }, [])).toBe(false)
+        expect(await isEmptyAttribute(h, taskDoc, reportedTimeAttr, { reportedTime: 0 }, [])).toBe(true)
+        expect(await isEmptyAttribute(h, taskDoc, reportedTimeAttr, { draftReports: [{ value: 5 }] }, [])).toBe(false)
+      })
+
+      it('should validate FieldRequired properly with reportedTime and context.txes', async () => {
+        const client = createMockValidatorClient({
+          attributes: {
+            reportedTime: reportedTimeAttr
+          },
+          statuses: [
+            { _id: statusOpen, name: 'Backlog' },
+            { _id: statusDone, name: 'Todo' }
+          ]
+        })
+        const clientHierarchy = client.getHierarchy()
+        jest.spyOn(clientHierarchy, 'isDerived').mockImplementation((c: any, parent: any) => {
+          return c === parent || parent === tracker.class.TypeReportedTime
+        })
+
+        const taskWithZeroTime = { ...taskDoc, reportedTime: 0 } as unknown as Task
+
+        // Fails without txes
+        const resultFail = await FieldRequired(client, taskWithZeroTime, dummyTransition, {
+          fields: [{ fieldKey: 'reportedTime' }]
+        })
+        expect(resultFail.ok).toBe(false)
+
+        // Passes with TxCreateDoc<TimeSpendReport> in context.txes
+        const resultPass = await FieldRequired(
+          client,
+          taskWithZeroTime,
+          dummyTransition,
+          { fields: [{ fieldKey: 'reportedTime' }] },
+          { txes: [makeCreateReportTx('rep-1', 'task-1', 8)] }
+        )
+        expect(resultPass.ok).toBe(true)
       })
     })
   })

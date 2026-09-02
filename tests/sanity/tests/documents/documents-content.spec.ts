@@ -1,4 +1,4 @@
-import { test, type Page, expect } from '@playwright/test'
+import { test, type Page, expect } from '../fixtures'
 import {
   generateId,
   getTimeForPlanner,

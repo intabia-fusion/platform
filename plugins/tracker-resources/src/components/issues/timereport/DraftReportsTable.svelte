@@ -86,6 +86,7 @@
     (a, b) => (b.date ?? 0) - (a.date ?? 0)
   )
 
+  $: draftIdSet = new Set<string>(draftReports.map((r) => r._id))
   $: checkedSet = new Set<string>(selectedReports.map((r) => r._id))
   $: allItemsSelected = allReports.length > 0 && checkedSet.size === allReports.length
 
@@ -186,7 +187,7 @@
           </tr>
         {:else}
           {#each allReports as report (report._id)}
-            {@const isDraft = String(report._id).startsWith('draft_')}
+            {@const isDraft = draftIdSet.has(report._id)}
             <tr
               class="antiTable-body__row row-item"
               class:draft-row={isDraft}

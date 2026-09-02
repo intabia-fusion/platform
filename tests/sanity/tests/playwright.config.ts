@@ -84,6 +84,8 @@ const config: PlaywrightTestConfig = {
       name: 'Platform',
       testIgnore: /love\//,
       use: platformUse,
+      // Measured alternatives are worse: per-test scheduling 382.9s, a separate lane for the
+      // heavy tracker specs 346.4s, this 314.2s.
       fullyParallel: false,
       dependencies: ['setup']
     }

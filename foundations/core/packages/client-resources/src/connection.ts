@@ -192,6 +192,12 @@ class Connection implements ClientConnection {
 
     this.installVisibilityHandler()
 
+    if (typeof globalThis !== 'undefined') {
+      ;(globalThis as any).__connStatsPush = async () => {
+        await this.reportStats()
+      }
+    }
+
     this.scheduleOpen(this.ctx, false)
   }
 
@@ -285,13 +291,7 @@ class Connection implements ClientConnection {
       }
 
       if (!this.closed) {
-        void broadcastEvent(ConnectionStatsEvent, {
-          sent: this.sentCount,
-          received: this.receivedCount,
-          sentBytes: this.sentBytes,
-          receivedBytes: this.receivedBytes,
-          latency: this.latency
-        })
+        void this.reportStats()
         const sinceLastPong = platformNow() - this.pingResponse
         if (sinceLastPong > pingTimeout * 2 && this.requests.size > 0) {
           console.log('[conn] ping tick - no pong but pending requests', {
@@ -319,7 +319,21 @@ class Connection implements ClientConnection {
     }, pingTimeout)
   }
 
+  // Cumulative traffic counters for client.ws.* metrics. On globalThis too: the tick is 10s
+  // and a test page lives seconds, so a teardown asks explicitly - see __analyticsFlush.
+  async reportStats (): Promise<void> {
+    await broadcastEvent(ConnectionStatsEvent, {
+      sent: this.sentCount,
+      received: this.receivedCount,
+      sentBytes: this.sentBytes,
+      receivedBytes: this.receivedBytes,
+      latency: this.latency
+    })
+  }
+
   async close (): Promise<void> {
+    // Last report before the socket goes: a short-lived page never reaches the 10s ping tick.
+    void this.reportStats()
     this.closed = true
     clearTimeout(this.openAction)
     clearTimeout(this.dialTimer)
@@ -411,7 +425,6 @@ class Connection implements ClientConnection {
   receivedBytes = 0
   latency = 0 // ping/pong round-trip, ms
   private lastPingSent = 0
-
   handleMsg (
     socketId: number,
     resp: Response<any>,
@@ -624,8 +637,6 @@ class Connection implements ClientConnection {
           resp.id,
           'error: ',
           resp.error,
-          'result: ',
-          resp.result,
           this.workspace,
           this.user
         )

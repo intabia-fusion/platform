@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures'
 import { CommonTrackerPage } from '../model/tracker/common-tracker-page'
 import { IssuesDetailsPage } from '../model/tracker/issues-details-page'
 import { IssuesPage } from '../model/tracker/issues-page'
@@ -14,6 +14,7 @@ import {
   performPanelTest
 } from './tracker.utils'
 import { SettingsPage } from '../model/settings-page'
+import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 test.use({
   storageState: PlatformSetting
 })
@@ -151,7 +152,9 @@ test.describe('Tracker tests', () => {
     const issuesPage = new IssuesPage(page)
     const issueName = 'Draft issue'
     await navigate(page)
-    await issuesPage.clickIssuesIndex(2)
+    // Name the project, not a position: nth(2) meant the third project's Issues, which exists
+    // only once other specs have created one.
+    await new TrackerNavigationMenuPage(page).issuesLinkForProject('Default').click()
     await issuesPage.clickNewIssue()
     await issuesPage.clickAndFillIssueName(issueName)
     await issuesPage.clickAndFillIssueDescription(issueName)

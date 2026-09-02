@@ -250,8 +250,12 @@ export async function uploadFile (page: Page, fileName: string, fileUploadTestId
 
 export async function getInviteLink (page: Page): Promise<string | null> {
   const leftSideMenuPage = new LeftSideMenuPage(page)
-  // If we don't wait and it's called on inital render initial navigate may close the popup in the middle
-  await leftSideMenuPage.appHeader().waitFor({ state: 'visible' })
+  // Settle the initial render, or a navigate closes the popup mid-flight. Bounded and optional:
+  // a freshly created workspace has no nav panel, and the toPass loop below retries anyway.
+  await leftSideMenuPage
+    .appHeader()
+    .waitFor({ state: 'visible', timeout: 5000 })
+    .catch(() => {})
   const linkLocator = page.locator('.antiPopup .link')
   // Redo the whole chain on retry: when a click lands on a popup that is still mounting, no link is
   // ever generated and re-checking its visibility alone can only wait the timeout out.
@@ -304,6 +308,20 @@ export async function reLogin (page: Page, data: TestData): Promise<void> {
  * cookie present it fetches the token via getAccount() on first load, so one navigation replaces
  * three page loads.
  */
+// Pushes the analytics batch out before a context closes - tests are shorter than the 10s ping
+// tick and the 5s batch timer, so without this most ws traffic is never reported.
+export async function flushTelemetry (page: Page): Promise<void> {
+  // The flush is a round trip to the collector per context - CLIENT_TELEMETRY=0 measures its cost.
+  if (process.env.CLIENT_TELEMETRY === '0') return
+  try {
+    await page.evaluate(async () => {
+      await (window as any).__analyticsFlush?.()
+    })
+  } catch {
+    // Page already gone, or an older bundle without the hook.
+  }
+}
+
 export async function loginByToken (
   page: Page,
   accountToken: string,

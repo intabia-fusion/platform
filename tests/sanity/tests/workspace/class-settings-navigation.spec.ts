@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../fixtures'
 import { createAccountAndWorkspace, generateId, generateTestData } from '../utils'
 import { ContractPage } from '../model/contacts/contract-page'
 import { UserProfilePage } from '../model/profile/user-profile-page'

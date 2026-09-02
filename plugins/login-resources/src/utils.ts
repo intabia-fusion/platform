@@ -332,6 +332,18 @@ export async function getAccount (doNavigate: boolean = true): Promise<LoginInfo
   }
 }
 
+// Mirrors a cookie-only session into Token/LastAccount, which the login routing reads -
+// without it `selectWorkspace` stays unroutable while the form shows "Signed in as".
+export async function restoreSession (): Promise<LoginInfo | null> {
+  const loginInfo = await getAccount(false)
+  if (loginInfo?.token != null && getMetadata(presentation.metadata.Token) == null) {
+    setMetadata(presentation.metadata.Token, loginInfo.token)
+    setMetadataLocalStorage(login.metadata.LoginAccount, loginInfo.account)
+    setMetadataLocalStorage(login.metadata.LastAccount, loginInfo.account)
+  }
+  return loginInfo
+}
+
 export async function getRegionInfo (doNavigate: boolean = true): Promise<RegionInfo[] | null> {
   const token = getMetadata(presentation.metadata.Token)
   if (token == null) {

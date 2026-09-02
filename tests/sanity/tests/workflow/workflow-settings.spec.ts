@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../fixtures'
 import { SettingsPage } from '../model/settings-page'
 import { WorkflowPage } from '../model/workflow-page'
 import { createAccountAndWorkspace, generateId, generateTestData, setTestOptions } from '../utils'

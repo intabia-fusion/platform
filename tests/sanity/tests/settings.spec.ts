@@ -1,4 +1,4 @@
-import { test } from '@playwright/test'
+import { test } from './fixtures'
 import { PlatformSetting, PlatformURI, generateId } from './utils'
 import { UserProfilePage } from './model/profile/user-profile-page'
 import { TemplatePage } from './model/tracker/templates-page'
@@ -56,7 +56,13 @@ test.describe('settings tests', () => {
   })
 
   test('customize-task-types', async ({ page }) => {
-    const taskTypeName = `Bug-${generateId(4)}`
+    // The test edits the shared 'Default' space type, and its statuses live on the space type,
+    // not on the task type. A fixed new name collides with the one a previous run left behind:
+    // the rename then merges into that status and the state keeps its old name.
+    const suffix = generateId(4)
+    const taskTypeName = `Bug-${suffix}`
+    const attentionState = `Needs Attention ${suffix}`
+    const reviewState = `Under Review ${suffix}`
     await settingsPage.navigateToWorkspace(platformUri)
     await settingsPage.openProfileMenu()
     await settingsPage.openSettings()
@@ -67,12 +73,14 @@ test.describe('settings tests', () => {
     await settingsPage.checkOpened('Default', taskTypeName)
     await settingsPage.changeIcon()
     await settingsPage.checkState('Todo')
-    await settingsPage.changeState('Todo', 'Needs Attention', 'Firework')
+    await settingsPage.changeState('Todo', attentionState, 'Firework')
+    await settingsPage.checkState(attentionState)
     await settingsPage.checkState('In Progress')
-    await settingsPage.changeState('In Progress', 'Under Review', 'Sunshine')
+    await settingsPage.changeState('In Progress', reviewState, 'Sunshine')
+    await settingsPage.checkState(reviewState)
     const issuesPage = new IssuesPage(page)
     await issuesPage.clickOnApplicationButton()
-    await issuesPage.createAndOpenIssue('Minor bug', 'Appleseed John', 'Needs Attention', taskTypeName)
+    await issuesPage.createAndOpenIssue('Minor bug', 'Appleseed John', attentionState, taskTypeName)
   })
 
   // TODO: Need rework.

@@ -212,7 +212,19 @@ export class WorkspaceClient {
       this.ctx.info('create collaborator client', { endpoint: this.collaboratorEndpoint })
       this.collaborator = getCollaboratorClient(this.wsIds.uuid, this.token, this.collaboratorEndpoint)
     }
-    this.initPromise = this.initClient()
+    void this.ensureInited().catch(() => {})
+  }
+
+  /** A workspace touched while it is upgrading answers 403; a cached rejection would leave the
+   *  bot blind to it until the pod restarts, so the next caller re-runs the init. */
+  private async ensureInited (): Promise<void> {
+    if (this.initPromise === undefined) {
+      this.initPromise = this.initClient().catch((err) => {
+        this.initPromise = undefined
+        throw err
+      })
+    }
+    await this.initPromise
   }
 
   private async ensureEmployee (client: RestClient): Promise<void> {
@@ -1583,7 +1595,7 @@ export class WorkspaceClient {
   // only after the user finds the "Talk to the assistant" button, so on a fresh workspace the bot looks
   // absent. An existing Direct is the idempotency guard.
   async sendWelcomeIfNeeded (person: Ref<Person>): Promise<void> {
-    await this.initPromise
+    await this.ensureInited()
     const aiAccount = this.aiPerson?.personUuid as AccountUuid | undefined
     if (aiAccount === undefined) return
 
@@ -1796,7 +1808,7 @@ export class WorkspaceClient {
   }
 
   async meetingStarted (meetingId: Ref<MeetingMinutes>): Promise<void> {
-    await this.initPromise
+    await this.ensureInited()
     if (this.love !== undefined) {
       const mm = await this.love.getMeeting(meetingId)
       if (mm !== undefined) {
@@ -1814,7 +1826,7 @@ export class WorkspaceClient {
   }
 
   async meetingFinished (meetingId: Ref<MeetingMinutes>): Promise<void> {
-    await this.initPromise
+    await this.ensureInited()
     await this.love?.disconnect(meetingId)
   }
 
@@ -1824,7 +1836,7 @@ export class WorkspaceClient {
   }
 
   async loveConnect (request: ConnectMeetingRequest): Promise<void> {
-    await this.initPromise
+    await this.ensureInited()
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return
@@ -1833,7 +1845,7 @@ export class WorkspaceClient {
   }
 
   async loveDisconnect (request: DisconnectMeetingRequest): Promise<void> {
-    await this.initPromise
+    await this.ensureInited()
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return
@@ -1849,7 +1861,7 @@ export class WorkspaceClient {
     participant: Ref<Person>,
     meeting: Ref<MeetingMinutes>
   ): Promise<void> {
-    await this.initPromise
+    await this.ensureInited()
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return
@@ -1877,7 +1889,7 @@ export class WorkspaceClient {
     endTimeSec: number,
     blobId: string
   ): Promise<Ref<ChatMessage> | undefined> {
-    await this.initPromise
+    await this.ensureInited()
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return undefined
@@ -1896,7 +1908,7 @@ export class WorkspaceClient {
     messageId: Ref<ChatMessage>,
     text: string | null
   ): Promise<boolean> {
-    await this.initPromise
+    await this.ensureInited()
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return false
@@ -1916,7 +1928,7 @@ export class WorkspaceClient {
     meeting: Ref<MeetingMinutes>,
     timestamp: Timestamp
   ): Promise<boolean> {
-    await this.initPromise
+    await this.ensureInited()
     if (this.love === undefined) {
       this.ctx.error('Love controller is not initialized')
       return false
@@ -1926,7 +1938,7 @@ export class WorkspaceClient {
   }
 
   async getLoveIdentity (): Promise<IdentityResponse | undefined> {
-    await this.initPromise
+    await this.ensureInited()
     if (this.love === undefined) {
       this.ctx.error('Love is not initialized')
       return

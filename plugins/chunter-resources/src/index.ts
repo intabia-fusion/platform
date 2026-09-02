@@ -97,6 +97,7 @@ import {
   DirectLabelProvider,
   forwardMessage,
   replyToMessage,
+  openDirectForPerson,
   CommentsApplier
 } from './utils'
 import DeleteMessageConfirmationPopup from './components/DeleteMessageConfirmationPopup.svelte'
@@ -228,6 +229,7 @@ export default async (): Promise<Resources> => ({
     GetMessageLink: getMessageLocation,
     CloseChatWidgetTab: closeChatWidgetTab,
     OpenChannelInSidebar: openChannelInSidebar,
+    OpenDirectForPerson: openDirectForPerson,
     CanTranslateMessage: canTranslateMessage,
     CanSummarizeMessages: canSummarizeMessages,
     OpenThreadInSidebar: openThreadInSidebar,

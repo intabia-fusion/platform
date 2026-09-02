@@ -113,13 +113,26 @@ async function clisrHandshake (
   ctx: MeasureContext,
   method: string,
   ops: unknown[],
-  session: { options: { transcription?: boolean, llm?: boolean } }
+  session: { options: { transcription?: boolean, llm?: boolean, capacity?: number } }
 ): Promise<Record<string, never>> {
   if (method === 'transcription') {
     session.options.transcription = ops[0] as boolean
+    // How many chunks the worker takes at once: the dispatcher keeps that many in flight so the
+    // worker's own ASR batcher always has something to group.
+    const capacity = ops[1]
+    if (typeof capacity === 'number' && capacity > 0) {
+      session.options.capacity = capacity
+    }
   }
   if (method === 'llm') {
     session.options.llm = ops[0] as boolean
+  }
+  // The budget is per session, not per method: a worker serving both shares it, and busy LLM
+  // calls would starve transcription. The shipped topology keeps them in separate pods.
+  if (session.options.llm === true && session.options.transcription === true && session.options.capacity != null) {
+    ctx.warn('worker serves both llm and transcription, they share one capacity budget', {
+      capacity: session.options.capacity
+    })
   }
   return {}
 }

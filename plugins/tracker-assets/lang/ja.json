@@ -211,7 +211,8 @@
     "NewSubIssue": "子イシューを追加...",
     "AddLabel": "ラベルを追加",
     "DeleteIssue": "{issueCount, plural, =1 {イシュー} other {イシュー}} を削除",
-    "DeleteIssueConfirm": "{issueCount, plural, =1 {イシュー} other {イシュー}}{subIssueCount, plural, =0 {?} =1 { と子イシュー?} other { と子イシュー?}} を削除しますか？",
+    "DeleteIssueConfirm": "{issueCount, plural, other {# 件の課題}}を削除してもよろしいですか？",
+    "DeleteIssueWithSubIssuesConfirm": "次のサブ課題は親課題からリンク解除されます:",
     "Milestone": "マイルストーン",
     "NoMilestone": "マイルストーンなし",
     "MoveToMilestone": "マイルストーンを選択",
@@ -303,7 +304,9 @@
     "AddedRelation": "関連するイシュー {identifier}{value} を追加しました",
     "RemovedRelation": "関連するイシュー {identifier}{value} を削除しました",
     "CreateAndOpen": "作成して開く",
-    "CreateAndNew": "作成して次を開始"
+    "CreateAndNew": "作成して次を開始",
+    "ExportToCSV": "CSV エクスポート",
+    "ExportToCSVTooltip": "表示中のタスクを CSV ファイルにエクスポート"
   },
   "status": {},
   "emailTemplate": {

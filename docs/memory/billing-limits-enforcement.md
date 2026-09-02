@@ -1,6 +1,6 @@
 # Billing limits enforcement (FUSIO-740)
 
-Состояние после коммита 277d851f4e. Полный статус: `foundation-tasks/billing-limits.md`.
+Состояние после коммита 277d851f4e.
 
 ## Багфиксы при тестировании (2026-06-10)
 
