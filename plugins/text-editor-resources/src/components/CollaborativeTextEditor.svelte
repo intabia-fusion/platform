@@ -558,7 +558,7 @@
   style="display: none"
   on:change={fileSelected}
 />
-<div class="editorPopupContainer" bind:this={editorPopupContainer}></div>
+<div class="editorPopupContainer no-print" bind:this={editorPopupContainer}></div>
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
