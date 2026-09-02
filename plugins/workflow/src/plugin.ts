@@ -359,7 +359,6 @@ export default plugin(workflowId, {
     Tab: '' as IntlString,
     Show: '' as IntlString,
     Hide: '' as IntlString,
-    CopyWorkflowToClipboard: '' as IntlString,
     PasteFromClipboard: '' as IntlString,
     ClipboardSource: '' as IntlString,
     CopiedToClipboard: '' as IntlString,
