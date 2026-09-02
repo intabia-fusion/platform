@@ -1753,7 +1753,7 @@ export class TSessionManager implements SessionManager {
           })
         )
       } catch (err: any) {
-        this.reportRequestError(requestCtx, err, {})
+        this.reportRequestError(requestCtx, err, { method })
         await ws.send(
           requestCtx,
           {
