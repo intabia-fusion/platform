@@ -303,7 +303,9 @@
     "AddedRelation": "Issue liée ajoutée {identifier}{value}",
     "RemovedRelation": "Issue liée retirée {identifier}{value}",
     "CreateAndOpen": "Créer et ouvrir",
-    "CreateAndNew": "Créer et en commencer une autre"
+    "CreateAndNew": "Créer et en commencer une autre",
+    "ExportToCSV": "Exporter en CSV",
+    "ExportToCSVTooltip": "Exporter les tâches visibles vers un fichier CSV"
   },
   "status": {},
   "emailTemplate": {

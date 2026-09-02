@@ -303,7 +303,9 @@
     "AddedRelation": "関連するイシュー {identifier}{value} を追加しました",
     "RemovedRelation": "関連するイシュー {identifier}{value} を削除しました",
     "CreateAndOpen": "作成して開く",
-    "CreateAndNew": "作成して次を開始"
+    "CreateAndNew": "作成して次を開始",
+    "ExportToCSV": "CSV エクスポート",
+    "ExportToCSVTooltip": "表示中のタスクを CSV ファイルにエクスポート"
   },
   "status": {},
   "emailTemplate": {

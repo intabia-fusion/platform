@@ -322,7 +322,9 @@
     "AddedRelation": "Added relation {identifier}{value}",
     "RemovedRelation": "Removed relation {identifier}{value}",
     "CreateAndOpen": "Create and open",
-    "CreateAndNew": "Create and start new"
+    "CreateAndNew": "Create and start new",
+    "ExportToCSV": "Export to CSV",
+    "ExportToCSVTooltip": "Export visible issues to CSV file"
   },
   "status": {},
   "emailTemplate": {

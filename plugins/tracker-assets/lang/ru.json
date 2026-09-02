@@ -322,7 +322,9 @@
     "AddedRelation": "Добавлена связь с {identifier}{value}",
     "RemovedRelation": "Удалена связь с {identifier}{value}",
     "CreateAndOpen": "Создать и открыть",
-    "CreateAndNew": "Создать и начать новую"
+    "CreateAndNew": "Создать и начать новую",
+    "ExportToCSV": "Экспорт в CSV",
+    "ExportToCSVTooltip": "Экспортировать отображаемые задачи в CSV файл"
   },
   "status": {},
   "emailTemplate": {

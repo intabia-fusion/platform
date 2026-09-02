@@ -303,7 +303,9 @@
     "AddedRelation": "Issue correlata aggiunta {identifier}{value}",
     "RemovedRelation": "Issue correlata rimossa {identifier}{value}",
     "CreateAndOpen": "Crea e apri",
-    "CreateAndNew": "Crea e inizia una nuova"
+    "CreateAndNew": "Crea e inizia una nuova",
+    "ExportToCSV": "Esporta in CSV",
+    "ExportToCSVTooltip": "Esporta le attività visibili in file CSV"
   },
   "status": {},
   "emailTemplate": {

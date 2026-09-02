@@ -303,7 +303,9 @@
     "AddedRelation": "已添加相关问题 {identifier}{value}",
     "RemovedRelation": "已移除相关问题 {identifier}{value}",
     "CreateAndOpen": "创建并打开",
-    "CreateAndNew": "创建并新建下一个"
+    "CreateAndNew": "创建并新建下一个",
+    "ExportToCSV": "出导为 CSV",
+    "ExportToCSVTooltip": "将可见任务导出为 CSV 文件"
   },
   "status": {},
   "emailTemplate": {

@@ -303,7 +303,9 @@
     "AddedRelation": "İlgili sorun eklendi {identifier}{value}",
     "RemovedRelation": "İlgili sorun kaldırıldı {identifier}{value}",
     "CreateAndOpen": "Oluştur ve aç",
-    "CreateAndNew": "Oluştur ve yenisine başla"
+    "CreateAndNew": "Oluştur ve yenisine başla",
+    "ExportToCSV": "CSV'ye Aktar",
+    "ExportToCSVTooltip": "Görünen görevleri CSV dosyasına aktar"
   },
   "status": {},
   "emailTemplate": {

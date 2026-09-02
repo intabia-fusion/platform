@@ -303,7 +303,9 @@
     "AddedRelation": "Verwandte Aufgabe {identifier}{value} hinzugefügt",
     "RemovedRelation": "Verwandte Aufgabe {identifier}{value} entfernt",
     "CreateAndOpen": "Erstellen und öffnen",
-    "CreateAndNew": "Erstellen und neue anlegen"
+    "CreateAndNew": "Erstellen und neue anlegen",
+    "ExportToCSV": "Als CSV exportieren",
+    "ExportToCSVTooltip": "Sichtbare Aufgaben in CSV-Datei exportieren"
   },
   "status": {},
   "emailTemplate": {
