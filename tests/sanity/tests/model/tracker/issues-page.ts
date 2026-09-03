@@ -158,6 +158,8 @@ export class IssuesPage extends CommonTrackerPage {
   timeReportCreationArea = (): Locator =>
     this.page.locator('[id="tracker\\:string\\:TimeSpendReportAdd"] >> text=Add time report')
 
+  reportedTimeSpan = (): Locator => this.page.locator('.reported-container >> span').first()
+
   estimationSpan = (): Locator => this.page.locator('.estimation-container >> span').first()
   okButton = (): Locator => this.page.getByRole('button', { name: 'Ok', exact: true })
   newIssueButton = (): Locator => this.page.locator('#tracker-string-NewIssue')
@@ -180,6 +182,10 @@ export class IssuesPage extends CommonTrackerPage {
   async navigateToIssues (): Promise<void> {
     await this.page.click('text="Issues"')
     await this.page.keyboard.press('Escape')
+  }
+
+  async checkReportedTime (count: number): Promise<void> {
+    await expect(this.reportedTimeSpan()).toContainText(await toTime(count))
   }
 
   async createAndOpenIssue (name: string, assignee: string, status: string, taskType?: string): Promise<void> {
