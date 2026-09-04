@@ -170,7 +170,8 @@ export async function updateModel (
   pipeline: Pipeline,
   logger: ModelLogger = consoleModelLogger,
   progress: (value: number) => Promise<void>,
-  mode: MigrateMode
+  mode: MigrateMode,
+  language?: string
 ): Promise<void> {
   logger.log('connecting to transactor', { workspaceId })
 
@@ -190,8 +191,9 @@ export async function updateModel (
       let i = 0
       for (const op of migrateOperations) {
         const st = platformNow()
+        const context = { language }
         await ctx.with(op[0], {}, async () => {
-          await op[1].upgrade(migrateState, async () => connection, mode)
+          await op[1].upgrade(migrateState, async () => connection, mode, context)
         })
         const tdelta = platformNowDiff(st)
         if (tdelta > SLOW_OP_MS) {

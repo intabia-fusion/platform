@@ -156,7 +156,7 @@ export interface AccountClient {
   updateLastVisit: (workspaces: WorkspaceUuid[]) => Promise<void>
   getRegionInfo: () => Promise<RegionInfo[]>
   getLicenseInfo: () => Promise<LicenseInfo>
-  createWorkspace: (name: string, region?: string) => Promise<WorkspaceLoginInfo>
+  createWorkspace: (name: string, region?: string, language?: string) => Promise<WorkspaceLoginInfo>
   signUpOtp: (email: string, first: string, last: string, phone?: string) => Promise<OtpInfo>
   /**
    * Deprecated. Only to be used for dev setups without mail service.
@@ -795,10 +795,10 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
-  async createWorkspace (workspaceName: string, region?: string): Promise<WorkspaceLoginInfo> {
+  async createWorkspace (workspaceName: string, region?: string, language?: string): Promise<WorkspaceLoginInfo> {
     const request = {
       method: 'createWorkspace' as const,
-      params: { workspaceName, region }
+      params: { workspaceName, region, language }
     }
 
     return await this.rpc(request)

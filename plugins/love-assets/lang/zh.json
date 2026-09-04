@@ -162,6 +162,9 @@
     "SpeakingWhileMutedAlert": "静音时说话提醒我",
     "SwitchWorkspaceInMeeting": "您正在会议中",
     "SwitchWorkspaceLeaveMeeting": "切换工作区将断开您与当前会议的连接。",
-    "SwitchWorkspaceEndsMeeting": "这是您的办公室：切换工作区会断开您的连接并为所有人结束会议。"
+    "SwitchWorkspaceEndsMeeting": "这是您的办公室：切换工作区会断开您的连接并为所有人结束会议。",
+    "AllHands": "全员会议",
+    "MeetingRoomNum": "会议室 {number}",
+    "VoiceRoomNum": "语音房间 {number}"
   }
 }

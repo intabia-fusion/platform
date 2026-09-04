@@ -162,6 +162,9 @@
     "SpeakingWhileMutedAlert": "Предупреждать, когда говорю при выключенном микрофоне",
     "SwitchWorkspaceInMeeting": "Вы находитесь во встрече",
     "SwitchWorkspaceLeaveMeeting": "Переключение пространства отключит вас от текущей встречи.",
-    "SwitchWorkspaceEndsMeeting": "Это ваш офис: переключение пространства отключит вас и завершит встречу для всех участников."
+    "SwitchWorkspaceEndsMeeting": "Это ваш офис: переключение пространства отключит вас и завершит встречу для всех участников.",
+    "AllHands": "Общая встреча",
+    "MeetingRoomNum": "Переговорная {number}",
+    "VoiceRoomNum": "Голосовая комната {number}"
   }
 }

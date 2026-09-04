@@ -153,6 +153,7 @@ export interface Workspace {
   createdBy?: PersonUuid
   billingAccount?: PersonUuid
   createdOn?: Timestamp
+  language?: string
 }
 
 export interface OTP {

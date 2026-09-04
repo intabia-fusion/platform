@@ -162,6 +162,9 @@
     "SpeakingWhileMutedAlert": "Mikrofon kapalıyken konuştuğumda uyar",
     "SwitchWorkspaceInMeeting": "Bir toplantıdasınız",
     "SwitchWorkspaceLeaveMeeting": "Çalışma alanını değiştirmek sizi mevcut toplantıdan koparacak.",
-    "SwitchWorkspaceEndsMeeting": "Burası sizin ofisiniz: çalışma alanını değiştirmek sizi koparır ve toplantıyı herkes için sonlandırır."
+    "SwitchWorkspaceEndsMeeting": "Burası sizin ofisiniz: çalışma alanını değiştirmek sizi koparır ve toplantıyı herkes için sonlandırır.",
+    "AllHands": "Genel toplantı",
+    "MeetingRoomNum": "Toplantı Odası {number}",
+    "VoiceRoomNum": "Sesli Oda {number}"
   }
 }

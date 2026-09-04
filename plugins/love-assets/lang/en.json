@@ -162,6 +162,9 @@
     "SpeakingWhileMutedAlert": "Alert me when I speak while muted",
     "SwitchWorkspaceInMeeting": "You are in a meeting",
     "SwitchWorkspaceLeaveMeeting": "Switching the workspace will disconnect you from the current meeting.",
-    "SwitchWorkspaceEndsMeeting": "This is your office: switching the workspace will disconnect you and end the meeting for everyone."
+    "SwitchWorkspaceEndsMeeting": "This is your office: switching the workspace will disconnect you and end the meeting for everyone.",
+    "AllHands": "All hands",
+    "MeetingRoomNum": "Meeting Room {number}",
+    "VoiceRoomNum": "Voice Room {number}"
   }
 }

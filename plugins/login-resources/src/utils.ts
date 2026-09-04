@@ -187,7 +187,8 @@ export async function signUpOtp (
 
 export async function createWorkspace (
   workspaceName: string,
-  region?: string
+  region?: string,
+  language?: string
 ): Promise<[Status, WorkspaceLoginInfo | null]> {
   const token = getMetadata(presentation.metadata.Token)
   if (token == null) {
@@ -200,7 +201,7 @@ export async function createWorkspace (
   }
 
   try {
-    const workspaceLoginInfo = await getAccountClient(token).createWorkspace(workspaceName, region)
+    const workspaceLoginInfo = await getAccountClient(token).createWorkspace(workspaceName, region, language)
 
     Analytics.handleEvent(LoginEvents.CreateWorkspace, { name: workspaceName, ok: true })
 
