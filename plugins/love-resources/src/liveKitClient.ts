@@ -1,5 +1,6 @@
 import {
   ConnectionState,
+  DisconnectReason,
   type RemoteParticipant,
   Room as LKRoom,
   RoomEvent,
@@ -40,6 +41,10 @@ export enum ScreenSharingState {
 export const screenSharingState = writable<ScreenSharingState>(ScreenSharingState.Inactive)
 export const lkSessionConnected = writable<boolean>(false)
 export const lkReconnected = writable<number>(0)
+
+// Bumped when the server ended this session for good - the room was deleted or we were removed.
+// Reconnecting then lands in a meeting that no longer exists.
+export const lkSessionEnded = writable<number>(0)
 
 export const lkIsConnecting = writable<boolean>(false)
 
@@ -236,9 +241,18 @@ export class LiveKitClient {
     lkReconnected.update((v) => v + 1)
   }
 
-  onDisconnected = (): void => {
+  onDisconnected = (reason?: DisconnectReason): void => {
     lkSessionConnected.set(false)
     lkIsConnecting.set(false)
+    // A network drop or a refresh is transient and must stay reconnectable; these three mean the
+    // meeting is over on the server side.
+    if (
+      reason === DisconnectReason.ROOM_DELETED ||
+      reason === DisconnectReason.ROOM_CLOSED ||
+      reason === DisconnectReason.PARTICIPANT_REMOVED
+    ) {
+      lkSessionEnded.update((v) => v + 1)
+    }
     this.liveKitRoom.off(RoomEvent.ParticipantConnected, this.onParticipantConnected)
     this.liveKitRoom.off(RoomEvent.ParticipantDisconnected, this.onParticipantDisconnected)
     this.liveKitRoom.off(RoomEvent.TrackSubscribed, this.onTrackSubscribed)
