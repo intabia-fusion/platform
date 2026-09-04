@@ -91,6 +91,9 @@ export interface RoomMetadata {
 
   /** When the office owner left. Set by the love webhook, cleared once they are back. */
   ownerLeftAt?: number
+
+  /** When the last human left an agent-only room. Set by the love polling, cleared once anyone is back. */
+  humansLeftAt?: number
 }
 
 export interface ParticipantMetadata {
