@@ -33,8 +33,14 @@ node common/scripts/outdated-bench.js fast-equals                 # сравни
 Серверные сценарии - async: экспортируют `{ cases, teardown }`, кейс помечается `{ async: true, concurrency: N }` (N операций в полёте). HTTP-сценарии (express/koa) держат клиента и сервер в одном процессе и упираются в undici (~24 ops/ms при concurrency 32 и 128 одинаково) - различия меньше ~10% там не значимы, для роутера нужен внешний нагрузчик. ROUNDS/ROUND_MS настраиваются.
 Замеры 2026-09-05: fast-equals 6.0.3 быстрее 5.x на 7-31%; fast-copy 4.x медленнее 3.x на 9-23%; uuid 11 v4() в 4 раза быстрее 8.3.2 (parse() -22%, но parse в репо не используется); lru-cache 11.5.2 медленнее на чтении; msgpackr 2.1.0 pack -6%; ws 8.21.3 == 8.18.2; express 5.2.1 == 4.21.2 и koa 3.2.1 == 2.15.4 (в пределах шума стенда).
 
+## Node
+
+Минимальная версия Node - 24, `rush.json` `nodeSupportedVersionRange` = `>=24.0.0 <25.0.0` (было `>=20`). На других мажорах не тестируем. Категория `node` в отчёте автоматически ограничена этим мажором, поэтому `@types/node` предлагается 24.x.
+
 ## Грабли
 
 - скан должен идти по всем package.json дерева, а не по `rush.json` projects и не по фильтру `@hcengineering/`: часть пакетов в скоупе `@intabiafusion/`, а `foundations/net` и `foundations/core` - вложенные rush-workspace, которых нет в корневом rush.json. Иначе часть файлов не бампается и `rush check` падает с mis-matching dependencies.
 - сбор release notes нельзя обрывать на первой версии ниже текущей: ws публикует бэкпорты 7.x/6.x/5.x между релизами 8.x, из-за чего ноты обрывались на двух записях. Сейчас прерывание только после 10 подряд более старых релизов.
+- postgres 3.4.8 сузил `TransactionSql`: он больше не присваивается к `Sql` (нет CLOSE/END/PostgresError/options). Ломается всё, что принимает `client: postgres.Sql`, а получает клиента из `begin()`/`retryTxn`. Починено алиасом `SqlClient = Sql | TransactionSql` в `server/account/src/collections/postgres/postgres.ts:82` и union-параметрами в `foundations/server/packages/postgres/src/utils.ts`, `services/worker/src/db.ts:94`.
+- image-size 2.x: подпуть `image-size/fromFile` наш moduleResolution не резолвит (TS2307) - читать файл самим и звать `imageSize(buffer)`.
 - обновление OTel до 0.222 сломало `new BatchLogRecordProcessor(exporter, opts)` - теперь экспортёр внутри options (`measurements-otlp/src/telemetry.ts`).

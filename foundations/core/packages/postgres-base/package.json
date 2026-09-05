@@ -43,7 +43,7 @@
     "eslint-plugin-n": "^15.4.0"
   },
   "dependencies": {
-    "postgres": "^3.4.7"
+    "postgres": "^3.4.9"
   },
   "repository": "https://github.com/hcengineering/huly.utils",
   "exports": {

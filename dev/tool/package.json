@@ -180,7 +180,7 @@
     "libphonenumber-js": "^1.9.46",
     "mime-types": "~3.0.2",
     "mongodb": "^6.16.0",
-    "postgres": "^3.4.7",
+    "postgres": "^3.4.9",
     "ws": "^8.21.3",
     "bufferutil": "^4.1.0",
     "utf-8-validate": "^6.0.6",
