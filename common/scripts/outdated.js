@@ -234,7 +234,7 @@ function collectDeps () {
   for (const file of files) {
     const rel = path.relative(ROOT, file)
     const json = JSON.parse(fs.readFileSync(file, 'utf8'))
-    for (const [kind, field] of [['prod', 'dependencies'], ['dev', 'devDependencies']]) {
+    for (const [kind, field] of [['prod', 'dependencies'], ['prod', 'optionalDependencies'], ['dev', 'devDependencies']]) {
       for (const [name, range] of Object.entries(json[field] ?? {})) {
         if (workspaceNames.has(name) || String(range).startsWith('workspace:')) continue
         if (SKIP.some((s) => name.startsWith(s))) continue
@@ -259,16 +259,19 @@ async function releaseNotes (pkg, repo, cur, latest) {
   for (let page = 1; page <= MAX_PAGES; page++) {
     const rels = await cached(`gh_${repo}_releases_p${page}`, async () => (await gh(`repos/${repo}/releases?per_page=100&page=${page}`)) ?? [])
     if (!Array.isArray(rels) || rels.length === 0) break
-    let below = false
+    let belowStreak = 0
     for (const rel of rels) {
       const tag = String(rel.tag_name ?? '')
       const prefix = tag.replace(/[@/]?v?\d.*$/, '')
       if (prefix.length > 0 && prefix !== base && prefix !== pkg) continue // sibling package in a monorepo
       const v = tag.replace(/.*[@/]/, '').replace(/^v/, '')
       if (cmp(v, cur) <= 0) {
-        below = true
-        break
+        // maintenance branches (ws ships 7.x/6.x backports between 8.x releases) are interleaved,
+        // so only a run of older releases means we are past the range
+        if (++belowStreak >= 10) break
+        continue
       }
+      belowStreak = 0
       if (cmp(v, latest) > 0) continue
       if (out.length >= MAX_RELEASES) {
         out.push(`\n... обрезано на ${MAX_RELEASES} релизах`)
@@ -276,7 +279,7 @@ async function releaseNotes (pkg, repo, cur, latest) {
       }
       out.push(`\n### ${tag}\n${String(rel.body ?? '').split('\n').slice(0, 60).join('\n')}`)
     }
-    if (below) break
+    if (belowStreak >= 10) break
   }
   return out
 }

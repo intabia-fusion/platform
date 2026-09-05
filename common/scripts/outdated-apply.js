@@ -27,7 +27,7 @@ const fs = require('fs')
 const path = require('path')
 
 const DEPS_DIR = path.join(process.cwd(), 'combined_dependencies')
-const FIELDS = ['dependencies', 'devDependencies', 'peerDependencies']
+const FIELDS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']
 
 const args = process.argv.slice(2)
 const dry = args.includes('--dry')

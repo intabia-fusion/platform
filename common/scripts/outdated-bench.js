@@ -15,7 +15,9 @@
 //
 
 // Compares two published versions of a dependency on repo-shaped workloads before upgrading.
-// Scenario per package: common/scripts/bench/<package>.js, exporting (module) => [{ name, run }].
+// Scenario per package: common/scripts/bench/<package>.js, exporting (module) => [{ name, run }]
+// or an async (module) => { cases, teardown } for servers/sockets. A case may set
+// { async: true, concurrency: N } to be measured with N operations in flight.
 //
 // Usage:
 //   node common/scripts/outdated-bench.js fast-equals              # current (upgrade_plan.tsv) vs latest
@@ -65,6 +67,19 @@ function round (fn, ms) {
   return n / (performance.now() - t0)
 }
 
+// Async cases (servers, sockets): ops/ms too, measured with `concurrency` in flight.
+async function roundAsync (fn, ms, concurrency) {
+  for (let i = 0; i < 20; i++) await fn()
+  const t0 = performance.now()
+  const end = t0 + ms
+  let n = 0
+  while (performance.now() < end) {
+    await Promise.all(Array.from({ length: concurrency }, () => fn()))
+    n += concurrency
+  }
+  return n / (performance.now() - t0)
+}
+
 async function benchOne (pkg, versions) {
   const scenarioFile = path.join(BENCH_DIR, `${pkg.replace('/', '__')}.js`)
   if (!fs.existsSync(scenarioFile)) {
@@ -78,23 +93,35 @@ async function benchOne (pkg, versions) {
   const { default: load } = await import(require('url').pathToFileURL(loaderFile).href)
   const scenario = require(scenarioFile)
   const suites = []
+  const teardowns = []
   for (let i = 0; i < versions.length; i++) {
     const ns = await load(`bench${i}`)
-    suites.push(scenario(Object.keys(ns).length === 1 && ns.default !== undefined ? ns.default : ns))
+    const result = await scenario(Object.keys(ns).length === 1 && ns.default !== undefined ? ns.default : ns)
+    suites.push(Array.isArray(result) ? result : result.cases)
+    if (!Array.isArray(result) && result.teardown !== undefined) teardowns.push(result.teardown)
   }
 
   console.log(`\n${pkg}: ${versions.join(' vs ')} (best of ${ROUNDS} x ${ROUND_MS}ms, ops/ms)\n`)
   console.log('case'.padEnd(26), ...versions.map((v) => v.padStart(20)))
   for (let c = 0; c < suites[0].length; c++) {
     const best = versions.map(() => 0)
+    const spec = suites[0][c]
     for (let r = 0; r < ROUNDS; r++) {
-      for (let v = 0; v < suites.length; v++) best[v] = Math.max(best[v], round(suites[v][c].run, ROUND_MS))
+      for (let v = 0; v < suites.length; v++) {
+        const case_ = suites[v][c]
+        const ops =
+          case_.async === true
+            ? await roundAsync(case_.run, ROUND_MS, case_.concurrency ?? 1)
+            : round(case_.run, ROUND_MS)
+        best[v] = Math.max(best[v], ops)
+      }
     }
     console.log(
-      suites[0][c].name.padEnd(26),
+      spec.name.padEnd(26),
       ...best.map((b) => `${b.toFixed(1)} (${(b / best[0]).toFixed(2)}x)`.padStart(20))
     )
   }
+  for (const t of teardowns) await t()
 }
 
 async function main () {
