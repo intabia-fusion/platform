@@ -100,11 +100,11 @@
     "express": "^4.21.2",
     "fast-equals": "^6.0.3",
     "form-data": "^4.0.0",
-    "js-tiktoken": "^1.0.14",
+    "js-tiktoken": "^1.0.21",
     "js-yaml": "^5.4.1",
     "openai": "^7.10.0",
     "uuid": "^11.1.1",
     "ws": "^8.21.3",
-    "gigachat": "~0.0.18"
+    "gigachat": "~0.0.20"
   }
 }

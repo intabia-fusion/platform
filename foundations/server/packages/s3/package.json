@@ -39,10 +39,10 @@
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/server-core": "workspace:^0.7.18",
     "@hcengineering/storage": "workspace:^0.7.17",
-    "@aws-sdk/client-s3": "^3.738.0",
-    "@aws-sdk/s3-request-presigner": "^3.738.0",
-    "@aws-sdk/lib-storage": "^3.738.0",
-    "@smithy/node-http-handler": "^4.0.2"
+    "@aws-sdk/client-s3": "^3.1127.0",
+    "@aws-sdk/s3-request-presigner": "^3.1127.0",
+    "@aws-sdk/lib-storage": "^3.1127.0",
+    "@smithy/node-http-handler": "^4.12.1"
   },
   "repository": "https://github.com/hcengineering/huly.server",
   "publishConfig": {
