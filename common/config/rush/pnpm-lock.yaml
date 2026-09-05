@@ -2230,8 +2230,8 @@ importers:
         specifier: ^6.16.0
         version: 6.20.0(gcp-metadata@5.3.0(encoding@0.1.13))(snappy@7.4.2)(socks@2.8.7)
       msgpackr:
-        specifier: ^1.12.1
-        version: 1.12.1
+        specifier: ^2.1.0
+        version: 2.1.0
       msgpackr-extract:
         specifier: ^3.0.4
         version: 3.0.4
@@ -3351,8 +3351,8 @@ importers:
         specifier: workspace:^0.7.19
         version: link:../platform
       msgpackr:
-        specifier: ^1.12.1
-        version: 1.12.1
+        specifier: ^2.1.0
+        version: 2.1.0
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -13244,8 +13244,8 @@ importers:
         specifier: ^1.12.0
         version: 1.12.0
       msgpackr:
-        specifier: ^1.12.1
-        version: 1.12.1
+        specifier: ^2.1.0
+        version: 2.1.0
       msgpackr-extract:
         specifier: ^3.0.4
         version: 3.0.4
@@ -29832,8 +29832,8 @@ importers:
         specifier: ^1.12.0
         version: 1.12.0
       msgpackr:
-        specifier: ^1.12.1
-        version: 1.12.1
+        specifier: ^2.1.0
+        version: 2.1.0
       msgpackr-extract:
         specifier: ^3.0.4
         version: 3.0.4
@@ -49170,8 +49170,8 @@ packages:
     resolution: {integrity: sha512-4kmO/MdyUIkLIvTPr8VHLil4AtoKIoniWPIEk5+CDy0xnWC84azhSFmuJ7PxZdsYtiP5kEeQsORAVIeMgxT+Hw==}
     hasBin: true
 
-  msgpackr@1.12.1:
-    resolution: {integrity: sha512-4EUH9tQHnMmEgzW/MdAP0KIfa1T9AF+htl0ffe2n5vb2EKn9y2co8ccpgWko6S52Jy1PQZKwRnx5/KkYjtd9MQ==}
+  msgpackr@2.1.0:
+    resolution: {integrity: sha512-p/pBCVO63CsvvpkomUnNNag6+n38rULuDA6HHe70o2gtC8ODI52foF/4ko2qQcp6OiErJXTmrZeXmsGGHsIQNQ==}
 
   multicast-dns@7.2.5:
     resolution: {integrity: sha512-2eznPJP8z2BFLX50tf0LuODrpINqP1RVIm/CObbTcBRITQgmC/TjcREF1NeTBzIcR5XO/ukWo+YHOjBbFwIupg==}
@@ -61443,7 +61443,7 @@ snapshots:
       '@msgpackr-extract/msgpackr-extract-linux-x64': 3.0.4
       '@msgpackr-extract/msgpackr-extract-win32-x64': 3.0.4
 
-  msgpackr@1.12.1:
+  msgpackr@2.1.0:
     optionalDependencies:
       msgpackr-extract: 3.0.4
 

@@ -21,10 +21,17 @@ node common/scripts/outdated-bench.js fast-equals                 # сравни
 - монорепо-теги вида `effector-react@23.3.0` отфильтровываются по basename, иначе в ноты попадают релизы соседних пакетов.
 - `--category` выбирает набор зависимостей, но правит версии во всех package.json: rush check требует единую версию по репо. Замена текстовая, форматирование сохраняется. После применения пишется `combined_dependencies/verify.sh` (`rush update` + `rush fast-build:lint --to <затронутые>`).
 
+## Статус на 2026-09-05 (пауза)
+
+Обновлено и собрано (полный `rush fast-build:lint` зелёный, 461 пакет): категории `core`, `dbs`, `content`, `node` (@types/node 24.13.3, 307 файлов), `ws 8.21.3`, `postgres 3.4.9`, `msgpackr 2.1.0`, `openai 7.10.0`, `js-yaml 5.4.1`, `dompurify`, `on-headers`, `node-forge`, `gigachat`, `js-tiktoken`, `@aws-sdk/*`. Коммиты делает пользователь сам.
+Не тронуто: `web` (27, express/koa/body-parser сознательно отложены), `build` (31, esbuild вынесен в foundation-tasks `docs/infra/2026-09-05-001-esbuild-upgrade-verification.md`), `test` (22), `integrations` (20), `content` хвост (19), `ui` (12), `lint` (12, prettier переформатирует всё), `desktop` (8, отдельным шагом), `collaboration-server` (6), `svelte` (5), `livekit` (2).
+В рабочей копии на момент паузы: правки `dependency-pins.json` (снят msgpackr, добавлен tar-stream) + `pnpm-lock.yaml`.
+
 ## Пины (не обновлять выше)
 
 `common/config/dependency-pins.json` - `maxMajor` или точная `maxVersion` + причина. outdated.js режет предлагаемый latest по пину и печатает причину в UPGRADE.md; apply не может уйти выше.
-Текущие: fast-copy<=3 (v4 на 9-23% медленнее), svelte<=4 (runes), uuid<=11 (12+ ESM-only), intl-messageformat<=10 (11 ESM-only), lru-cache<=11.1.0 (в 11.5.2 get(hit) 0.86x, get(miss) 0.52x), dotenv<=16 (17 печатает 'injecting env' в stdout), msgpackr<=1 (сетевой формат, обновлять клиент+сервер синхронно).
+Текущие: fast-copy<=3 (v4 на 9-23% медленнее), svelte<=4 (runes), uuid<=11 (12+ ESM-only), intl-messageformat<=10 (11 ESM-only), lru-cache<=11.1.0 (в 11.5.2 get(hit) 0.86x, get(miss) 0.52x), dotenv<=16 (17 печатает 'injecting env' в stdout), tar-stream<=3.1.9 (3.2 кладёт собственные .d.ts поверх @types/tar-stream, они опираются на streamx без типов - `Pack` теряет `Readable`, ломается `server/backup`).
+Пин msgpackr снят 2026-09-05: его обоснование не подтвердилось - 2.0 убирает только недокументированный `randomAccessStructure`/struct.js (у нас лишь `Packr`), проводной формат тот же, а повторный бенч 1.12.1 vs 2.1.0 дал паритет. Урок: пин ставить только с проверенной причиной, "на всякий случай" - нет.
 
 ## Бенчи зависимостей
 
@@ -43,4 +50,6 @@ node common/scripts/outdated-bench.js fast-equals                 # сравни
 - сбор release notes нельзя обрывать на первой версии ниже текущей: ws публикует бэкпорты 7.x/6.x/5.x между релизами 8.x, из-за чего ноты обрывались на двух записях. Сейчас прерывание только после 10 подряд более старых релизов.
 - postgres 3.4.8 сузил `TransactionSql`: он больше не присваивается к `Sql` (нет CLOSE/END/PostgresError/options). Ломается всё, что принимает `client: postgres.Sql`, а получает клиента из `begin()`/`retryTxn`. Починено алиасом `SqlClient = Sql | TransactionSql` в `server/account/src/collections/postgres/postgres.ts:82` и union-параметрами в `foundations/server/packages/postgres/src/utils.ts`, `services/worker/src/db.ts:94`.
 - image-size 2.x: подпуть `image-size/fromFile` наш moduleResolution не резолвит (TS2307) - читать файл самим и звать `imageSize(buffer)`.
+- `rush fast-build:lint --to a --to b` берёт ТОЛЬКО последний `--to`: параметр объявлен `string` в command-line.json, rush форвардит одно значение. Список передавать одним флагом через запятую: `--to a,b,c` (compile_all.js его разбирает). Иначе проверка молча сужается до одного пакета.
+- `@types/node` держать одной версией по репо: две копии (22 и 24) ломают типы сторонних пакетов (`tar-stream`/`Pack`). В 24 удалён устаревший `Dirent.path` -> `parentPath`.
 - обновление OTel до 0.222 сломало `new BatchLogRecordProcessor(exporter, opts)` - теперь экспортёр внутри options (`measurements-otlp/src/telemetry.ts`).

@@ -48,7 +48,7 @@
     "@hcengineering/rpc": "workspace:^0.7.17",
     "utf-8-validate": "^6.0.6",
     "bufferutil": "^4.1.0",
-    "msgpackr": "^1.12.1",
+    "msgpackr": "^2.1.0",
     "msgpackr-extract": "^3.0.4",
     "snappy": "^7.4.2",
     "morgan": "^1.12.0",

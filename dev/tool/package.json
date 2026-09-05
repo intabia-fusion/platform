@@ -184,7 +184,7 @@
     "ws": "^8.21.3",
     "bufferutil": "^4.1.0",
     "utf-8-validate": "^6.0.6",
-    "msgpackr": "^1.12.1",
+    "msgpackr": "^2.1.0",
     "msgpackr-extract": "^3.0.4",
     "@hcengineering/kafka": "workspace:^0.7.19",
     "@hcengineering/api-client": "workspace:^0.7.18",
