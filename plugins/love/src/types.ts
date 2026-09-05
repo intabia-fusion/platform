@@ -271,4 +271,10 @@ export interface UserMeetingInvite extends Doc {
    * auto-joins the meeting.
    */
   acceptedSessionId?: string
+  /**
+   * Sender's browser session ID set when the request is created. Multi-tab
+   * guard for the sender: only the tab that started the call reacts to the
+   * accept (joins, or creates the A2 meeting).
+   */
+  senderSessionId?: string
 }
