@@ -15,7 +15,7 @@
 
 import { type WorkspaceUuid, hashWorkspace } from '@hcengineering/core'
 import { readFileSync } from 'fs'
-import yaml from 'js-yaml'
+import * as yaml from 'js-yaml'
 
 import { type EndpointInfo, EndpointKind } from './utils'
 import { type RegionInfo } from './types'
