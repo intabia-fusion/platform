@@ -16,7 +16,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import yaml from 'js-yaml'
+import * as yaml from 'js-yaml'
 
 const useColor = process.env.NO_COLOR === undefined && process.stdout.isTTY
 const wrap = (code: string) => (s: string) => (useColor ? `\u001b[${code}m${s}\u001b[0m` : s)

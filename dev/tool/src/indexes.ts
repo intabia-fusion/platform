@@ -24,7 +24,7 @@ import {
 } from '@hcengineering/postgres'
 import { existsSync, readFileSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
-import yaml from 'js-yaml'
+import * as yaml from 'js-yaml'
 import type postgres from 'postgres'
 import { buildModel } from './mdiff'
 
