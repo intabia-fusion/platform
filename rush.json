@@ -2694,6 +2694,16 @@
       "packageName": "@hcengineering/pod-notifications",
       "projectFolder": "services/notifications",
       "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/pod-webhook",
+      "projectFolder": "services/webhook/pod-webhook",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/pod-webhook-mock",
+      "projectFolder": "services/webhook/pod-webhook-mock",
+      "shouldPublish": false
     }
     // ,
     // {
