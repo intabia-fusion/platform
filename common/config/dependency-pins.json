@@ -28,6 +28,10 @@
     "msgpackr": {
       "maxMajor": 1,
       "reason": "формат сериализации между клиентом и сервером - обновлять синхронно; бенч 2.1.0: pack -6%"
+    },
+    "tar-stream": {
+      "maxVersion": "3.1.9",
+      "reason": "3.2 добавил собственные .d.ts поверх @types/tar-stream: они опираются на streamx без типов, Pack теряет Readable API (pipe) - ломает server/backup"
     }
   }
 }

@@ -27,6 +27,20 @@ const fs = require('fs')
 const path = require('path')
 
 const DEPS_DIR = path.join(process.cwd(), 'combined_dependencies')
+// packages capped at an exact version must not be written with ^: the range would let the cap slip
+const PINNED_EXACT = new Set(
+  Object.entries(
+    (() => {
+      try {
+        return JSON.parse(fs.readFileSync(path.join(process.cwd(), 'common/config/dependency-pins.json'), 'utf8')).pins ?? {}
+      } catch (err) {
+        return {}
+      }
+    })()
+  )
+    .filter(([, pin]) => pin.maxVersion !== undefined)
+    .map(([name]) => name)
+)
 const FIELDS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']
 
 const args = process.argv.slice(2)
@@ -79,7 +93,7 @@ for (const file of files) {
     for (const field of FIELDS) {
       const cur = json[field]?.[name]
       if (cur === undefined || cur.startsWith('workspace:')) continue
-      const prefix = /^[\^~]/.exec(cur)?.[0] ?? '^'
+      const prefix = PINNED_EXACT.has(name) ? '~' : /^[\^~]/.exec(cur)?.[0] ?? '^'
       const next = `${prefix}${version}`
       if (cur === next) continue
       // Text replace keeps original formatting intact
@@ -103,7 +117,8 @@ for (const file of files) {
 console.log(`${dry ? '[dry] ' : ''}${changed} package.json files ${dry ? 'would change' : 'updated'}`)
 
 if (touchedNames.length > 0) {
-  const to = touchedNames.map((n) => `--to ${n}`).join(' ')
+  // fast-build takes one --to with a comma-separated list: rush forwards only the last --to flag
+  const to = `--to ${touchedNames.join(',')}`
   const verify = ['#!/usr/bin/env bash', 'set -e', 'rush update', `rush fast-build:lint ${to}`, ''].join('\n')
   if (!dry) fs.writeFileSync(path.join(DEPS_DIR, 'verify.sh'), verify)
   console.log(`\ncheck (${touchedNames.length} workspace packages)${dry ? '' : ', also written to combined_dependencies/verify.sh'}:`)
