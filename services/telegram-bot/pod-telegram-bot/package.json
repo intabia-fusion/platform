@@ -78,7 +78,7 @@
     "@hcengineering/api-client": "workspace:^0.7.18",
     "@telegraf/entity": "^0.5.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "htmlparser2": "^9.0.0",
     "mongodb": "^6.16.0",

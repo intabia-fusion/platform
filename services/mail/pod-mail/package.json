@@ -63,7 +63,7 @@
     "@hcengineering/kafka": "workspace:^0.7.19",
     "@intabiafusion/clisr": "workspace:^0.7.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "lru-cache": "^11.1.0",
     "nodemailer": "^6.10.0"

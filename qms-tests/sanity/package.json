@@ -43,7 +43,7 @@
     "@faker-js/faker": "^8.4.1"
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "cross-env": "~7.0.3"
   }
 }

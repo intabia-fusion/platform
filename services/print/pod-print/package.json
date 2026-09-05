@@ -61,7 +61,7 @@
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/account-client": "workspace:^0.7.21",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "puppeteer": "^24.17.1",
     "mammoth": "^1.9.0",

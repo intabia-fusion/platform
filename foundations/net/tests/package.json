@@ -38,7 +38,7 @@
     "ts-jest": "^29.1.1",
     "typescript": "^5.9.3",
     "@types/body-parser": "~1.19.2",
-    "@types/morgan": "~1.9.9"
+    "@types/morgan": "~1.9.10"
   },
   "dependencies": {
     "@hcengineering/network-core": "workspace:^0.7.10",

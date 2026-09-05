@@ -45,7 +45,7 @@
     "@hcengineering/analytics-collector": "workspace:^0.7.0",
     "@hcengineering/presentation": "workspace:^0.7.0",
     "@hcengineering/core": "workspace:^0.7.24",
-    "ua-parser-js": "^2.0.4",
+    "ua-parser-js": "^2.0.10",
     "@hcengineering/ui": "workspace:^0.7.0",
     "@hcengineering/rpc": "workspace:^0.7.17",
     "snappyjs": "^0.7.0"

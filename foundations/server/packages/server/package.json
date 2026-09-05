@@ -43,7 +43,7 @@
     "@hcengineering/rpc": "workspace:^0.7.17",
     "@hcengineering/server-core": "workspace:^0.7.18",
     "@hcengineering/server-token": "workspace:^0.7.17",
-    "utf-8-validate": "^6.0.4"
+    "utf-8-validate": "^6.0.6"
   },
   "repository": "https://github.com/hcengineering/huly.server",
   "publishConfig": {
