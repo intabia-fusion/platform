@@ -58,7 +58,7 @@
     "commander": "^15.0.0",
     "mime-types": "~3.0.2",
     "csvtojson": "^2.0.14",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^5.4.1",
     "image-size": "^2.0.2",
     "uuid": "^11.1.1"
   },

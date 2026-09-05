@@ -284,7 +284,7 @@
     "electron-updater": "^6.3.4",
     "livekit-client": "^2.22.0",
     "@hcengineering/server-backup": "workspace:^0.7.0",
-    "ws": "^8.18.2"
+    "ws": "^8.21.3"
   },
   "productName": "Platform Desktop",
   "description": "Platform Desktop experience",

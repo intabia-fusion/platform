@@ -44,7 +44,7 @@
     "@hcengineering/account-client": "workspace:^0.7.21",
     "@hcengineering/server-core": "workspace:^0.7.18",
     "@hcengineering/server-token": "workspace:^0.7.17",
-    "ws": "^8.18.2"
+    "ws": "^8.21.3"
   },
   "repository": "https://github.com/hcengineering/huly.server",
   "publishConfig": {

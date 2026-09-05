@@ -29,10 +29,12 @@ node common/scripts/outdated-bench.js fast-equals                 # сравни
 ## Бенчи зависимостей
 
 `common/scripts/outdated-bench.js <pkg> [verA verB] | --all` ставит обе версии рядом (alias `bench0`/`bench1` в `combined_dependencies/bench`, ESM грузится через loader.mjs) и меряет best-of-N интерливингом - фоновая нагрузка может только замедлить раунд, поэтому лучший раунд каждой версии сопоставим.
-Сценарий: `common/scripts/bench/<pkg>.js`, экспорт `(module) => [{ name, run }]`, фикстуры в `bench/_data.js` (Doc-объекты, markup-дерево, 200 доков). Есть: fast-equals, fast-copy, uuid, lru-cache, msgpackr. ROUNDS/ROUND_MS настраиваются.
-Замеры 2026-09-05: fast-equals 6.0.3 быстрее 5.x на 7-31%; fast-copy 4.x медленнее 3.x на 9-23%; uuid 11 v4() в 4 раза быстрее 8.3.2 (parse() -22%, но parse в репо не используется); lru-cache 11.5.2 медленнее на чтении; msgpackr 2.1.0 pack -6%.
+Сценарий: `common/scripts/bench/<pkg>.js`, экспорт `(module) => [{ name, run }]`, фикстуры в `bench/_data.js` (Doc-объекты, markup-дерево, 200 доков). Есть: fast-equals, fast-copy, uuid, lru-cache, msgpackr, ws, express, koa.
+Серверные сценарии - async: экспортируют `{ cases, teardown }`, кейс помечается `{ async: true, concurrency: N }` (N операций в полёте). HTTP-сценарии (express/koa) держат клиента и сервер в одном процессе и упираются в undici (~24 ops/ms при concurrency 32 и 128 одинаково) - различия меньше ~10% там не значимы, для роутера нужен внешний нагрузчик. ROUNDS/ROUND_MS настраиваются.
+Замеры 2026-09-05: fast-equals 6.0.3 быстрее 5.x на 7-31%; fast-copy 4.x медленнее 3.x на 9-23%; uuid 11 v4() в 4 раза быстрее 8.3.2 (parse() -22%, но parse в репо не используется); lru-cache 11.5.2 медленнее на чтении; msgpackr 2.1.0 pack -6%; ws 8.21.3 == 8.18.2; express 5.2.1 == 4.21.2 и koa 3.2.1 == 2.15.4 (в пределах шума стенда).
 
 ## Грабли
 
 - скан должен идти по всем package.json дерева, а не по `rush.json` projects и не по фильтру `@hcengineering/`: часть пакетов в скоупе `@intabiafusion/`, а `foundations/net` и `foundations/core` - вложенные rush-workspace, которых нет в корневом rush.json. Иначе часть файлов не бампается и `rush check` падает с mis-matching dependencies.
+- сбор release notes нельзя обрывать на первой версии ниже текущей: ws публикует бэкпорты 7.x/6.x/5.x между релизами 8.x, из-за чего ноты обрывались на двух записях. Сейчас прерывание только после 10 подряд более старых релизов.
 - обновление OTel до 0.222 сломало `new BatchLogRecordProcessor(exporter, opts)` - теперь экспортёр внутри options (`measurements-otlp/src/telemetry.ts`).

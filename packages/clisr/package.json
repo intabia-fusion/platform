@@ -41,7 +41,7 @@
     "@types/express": "^4.17.13"
   },
   "dependencies": {
-    "ws": "^8.18.2",
+    "ws": "^8.21.3",
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/measurements": "workspace:^0.7.18",
     "@hcengineering/analytics": "workspace:^0.7.17",
