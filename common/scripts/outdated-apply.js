@@ -18,7 +18,7 @@
 // Version data comes from combined_dependencies/upgrade_plan.tsv (see outdated.js).
 // Usage:
 //   node common/scripts/outdated-apply.js <package> <version> [--dry]
-//   node common/scripts/outdated-apply.js [--category ui] [--bump patch] [--dry]
+//   node common/scripts/outdated-apply.js [--category ui] [--bump patch] [--except pkg1,pkg2] [--dry]
 // --category selects dependencies of that category (see UPGRADE.md), but bumps them
 // everywhere: rush check requires a single version per dependency across the repo.
 // Writes combined_dependencies/verify.sh with the check commands for touched packages.
@@ -34,6 +34,7 @@ const dry = args.includes('--dry')
 const opt = (flag) => (args.includes(flag) ? args[args.indexOf(flag) + 1] : undefined)
 const category = opt('--category')
 const bump = opt('--bump')
+const except = (opt('--except') ?? '').split(',').filter((x) => x.length > 0)
 const positional = args.filter((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--'))
 
 function plan () {
@@ -51,7 +52,7 @@ if (positional.length === 2) {
   targets = [[positional[0], positional[1]]]
 } else if (category !== undefined || bump !== undefined) {
   targets = plan()
-    .filter((r) => (category === undefined || r.category === category) && (bump === undefined || r.kind === bump))
+    .filter((r) => (category === undefined || r.category === category) && (bump === undefined || r.kind === bump) && !except.includes(r.name))
     .map((r) => [r.name, r.latest])
 } else {
   console.error('usage: outdated-apply.js <package> <version> [--dry] | [--category <name>] [--bump <patch|minor|major>] [--dry]')

@@ -48,8 +48,12 @@ const SECURITY =
 const NAME_RULES = [
   // node runtime + its typings: bump in lockstep with the Node version the repo targets
   [/^node$|^@tsconfig\/node/i, 'node'],
-  [/^fast-(equals|copy)$/i, 'core'],
+  [/^@opentelemetry\//i, 'otel'],
   [/^@hocuspocus\/|^yjs$|^y-[a-z]|^lib0$/i, 'collaboration-server'],
+  [/^livekit|^@livekit\//i, 'livekit'],
+  [/^(openai|gigachat|js-tiktoken)$|^@deepgram\//i, 'ai'],
+  [/^(mongodb|bson|postgres|pg|minio|snappy|snappyjs)$|^@elastic\/|^@aws-sdk\/(client-s3|lib-storage|s3-request-presigner)|^@smithy\//i, 'dbs'],
+  [/^(uuid|morgan|fast-equals|fast-copy|hash-it|lru-cache|dotenv|commander|zod|big-integer|filesize|lexorank|msgpackr|msgpackr-extract|winston|utf-8-validate|bufferutil)$|^@node-rs\//i, 'core'],
   [/eslint|prettier/i, 'lint'],
   [/^electron|^@electron\//i, 'desktop'],
   [/^@?storybook|^@storybook\/|^(@playwright\/)?playwright|jest|^@testing-library|^allure|^@faker-js\/|^smee-client/i, 'test'],
@@ -58,9 +62,14 @@ const NAME_RULES = [
     /webpack|-loader$|^node-loader|postcss|^sass|autoprefixer|browserslist|^esbuild|^typescript$|^assemblyscript|^svgo|tailwindcss|^cross-env|^@tsconfig\/|^update-browserslist|^fork-ts|^copy-|^compression-|^mini-css|^style-|^css-|^html-webpack|^@vercel\/webpack/i,
     'build'
   ],
+  [/^(express|koa|cors|ws|body-parser|on-headers|compression|qs|cookies|http-proxy|request|form-data)$|^express-|^koa-|^koa\/|^@koa\//i, 'web'],
   [
-    /^(openai|gigachat|stripe|googleapis|google-auth-library|gaxios|telegram|nodemailer|octokit|maxmind|openid-client|passport)|^@(deepgram|polar-sh|telegraf|octokit|livekit\/agents)\//i,
-    'services'
+    /^(googleapis|google-auth-library|gaxios|octokit|telegram|stripe|nodemailer|openid-client|maxmind|puppeteer|oembed-providers|graphql)$|^@(octokit|telegraf|polar-sh)\/|^@aws-sdk\/client-ses|^passport/i,
+    'integrations'
+  ],
+  [
+    /^(pdf-lib|pdfjs-dist|mammoth|docx4js|node-poppler|jimp|sharp|turndown|markdown-it|htmlparser2|domhandler|domutils|cheerio|sanitize-html|dompurify|html-to-text|csv-parse|csv-stringify|csvtojson|archiver|tar|tar-stream|autolinker|highlight\.js|image-size|mime|mime-types|slugify|js-yaml|heic-decode|puppeteer|node-forge)$|^@signpdf\//i,
+    'content'
   ]
 ]
 
@@ -82,9 +91,21 @@ function nameCategory (name) {
   return NAME_RULES.find(([re]) => re.test(target))?.[1]
 }
 
-const CATEGORIES = ['core', 'ui', 'svelte', 'server', 'collaboration-server', 'services', 'desktop', 'node', 'build', 'lint', 'test']
+const CATEGORIES = ['core', 'ui', 'svelte', 'web', 'dbs', 'ai', 'livekit', 'otel', 'collaboration-server', 'integrations', 'content', 'server', 'services', 'desktop', 'node', 'build', 'lint', 'test']
 
 // --- semver ------------------------------------------------------------------
+
+function listPackageFiles (dir, acc = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === 'node_modules' || entry.name.startsWith('.') || entry.name === 'combined_dependencies') continue
+    const full = path.join(dir, entry.name)
+    if (entry.isDirectory()) listPackageFiles(full, acc)
+    else if (entry.name === 'package.json') acc.push(full)
+  }
+  return acc
+}
+
+const stripJsonComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
 
 function parse (v) {
   const m = /^[^\d]*(\d+)\.(\d+)\.(\d+)(?:[-+](.*))?$/.exec(String(v).trim())
@@ -119,7 +140,7 @@ const isStable = (v) => parse(v)?.pre === undefined
 function nodeTargetMajor () {
   if (process.env.NODE_TARGET_MAJOR !== undefined) return Number(process.env.NODE_TARGET_MAJOR)
   try {
-    const range = JSON.parse(fs.readFileSync(path.join(ROOT, 'rush.json'), 'utf8').replace(/^\s*\/\/.*$/gm, '')).nodeSupportedVersionRange
+    const range = JSON.parse(stripJsonComments(fs.readFileSync(path.join(ROOT, 'rush.json'), 'utf8'))).nodeSupportedVersionRange
     const max = /<\s*(\d+)\./.exec(range ?? '')
     if (max !== null) return Number(max[1]) - 1
   } catch (err) {
@@ -128,6 +149,19 @@ function nodeTargetMajor () {
   return Number(process.versions.node.split('.')[0])
 }
 const NODE_MAJOR = nodeTargetMajor()
+
+// Deliberate holds: common/config/dependency-pins.json
+const PINS = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(ROOT, 'common/config/dependency-pins.json'), 'utf8')).pins ?? {}
+  } catch (err) {
+    return {}
+  }
+})()
+
+function capMajor (versions, max, fallback) {
+  return versions.filter((v) => isStable(v) && parse(v).major <= max).sort(cmp).pop() ?? fallback
+}
 
 // --- cache -------------------------------------------------------------------
 
@@ -183,31 +217,26 @@ async function npmMeta (pkg) {
 
 // --- workspace scan ----------------------------------------------------------
 
-function listPackageFiles (dir, acc = []) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue
-    const full = path.join(dir, entry.name)
-    if (entry.isDirectory()) listPackageFiles(full, acc)
-    else if (entry.name === 'package.json') acc.push(full)
-  }
-  return acc
-}
-
 function collectDeps () {
   const deps = new Map()
+  const workspaceNames = new Set()
+  // every package.json in the tree: rush.json misses nested workspaces (foundations/net, foundations/core)
   const files = listPackageFiles(ROOT).filter((f) => {
     try {
-      return JSON.parse(fs.readFileSync(f, 'utf8')).name?.startsWith('@hcengineering/') === true
+      return JSON.parse(fs.readFileSync(f, 'utf8')).name !== undefined
     } catch (err) {
       return false
     }
   })
   for (const file of files) {
+    workspaceNames.add(JSON.parse(fs.readFileSync(file, 'utf8')).name)
+  }
+  for (const file of files) {
     const rel = path.relative(ROOT, file)
     const json = JSON.parse(fs.readFileSync(file, 'utf8'))
     for (const [kind, field] of [['prod', 'dependencies'], ['dev', 'devDependencies']]) {
       for (const [name, range] of Object.entries(json[field] ?? {})) {
-        if (name.startsWith('@hcengineering/') || String(range).startsWith('workspace:')) continue
+        if (workspaceNames.has(name) || String(range).startsWith('workspace:')) continue
         if (SKIP.some((s) => name.startsWith(s))) continue
         const d = deps.get(name) ?? { ranges: new Set(), prod: 0, dev: 0, byPath: new Map() }
         d.ranges.add(range)
@@ -335,10 +364,10 @@ async function main () {
       done++
       if (done % 25 === 0) console.log(`  meta ${done}/${names.length}`)
       let latest = (meta.versions ?? []).filter(isStable).sort(cmp).pop() ?? meta.latest
-      if (nameCategory(name) === 'node') {
-        // pin typings to the Node major in use
-        latest = (meta.versions ?? []).filter((v) => isStable(v) && parse(v).major <= NODE_MAJOR).sort(cmp).pop() ?? latest
-      }
+      if (nameCategory(name) === 'node') latest = capMajor(meta.versions ?? [], NODE_MAJOR, latest)
+      const pin = PINS[name]
+      if (pin?.maxMajor !== undefined) latest = capMajor(meta.versions ?? [], pin.maxMajor, latest)
+      if (pin?.maxVersion !== undefined) latest = (meta.versions ?? []).filter((v) => isStable(v) && cmp(v, pin.maxVersion) <= 0).sort(cmp).pop() ?? latest
       if (latest === undefined || parse(current) === undefined) continue
       const bump = bumpKind(current, latest)
       if (bump === 'same' || cmp(latest, current) <= 0) continue
@@ -354,6 +383,7 @@ async function main () {
         prod: d.prod,
         dev: d.dev,
         repo: meta.repo,
+        pin,
         between: meta.versions.filter((v) => cmp(v, current) > 0 && cmp(v, latest) <= 0).sort(cmp),
         breaking: [],
         security: [],
@@ -388,7 +418,7 @@ async function main () {
 
   const md = ['# Отчёт по обновлению зависимостей', '']
   md.push(`Сгенерировано: ${new Date().toISOString().slice(0, 16).replace('T', ' ')}. Пакетов в отчёте: ${rows.length}.`)
-  md.push(`Целевой Node: ${NODE_MAJOR} (категория node ограничена этим мажором). Пропущены префиксы: ${SKIP.join(', ')}. Кэш: \`combined_dependencies/cache\` (TTL ${TTL_MS / 86400_000} дн., сброс \`--force\`).`)
+  md.push(`Целевой Node: ${NODE_MAJOR} (категория node ограничена этим мажором). Заморожено пинами: ${Object.keys(PINS).length} (common/config/dependency-pins.json). Пропущены префиксы: ${SKIP.join(', ')}. Кэш: \`combined_dependencies/cache\` (TTL ${TTL_MS / 86400_000} дн., сброс \`--force\`).`)
   md.push('', 'Колонки breaking/security - число строк-совпадений по маркерам в changelog, не приговор: смотри детали.', '')
   md.push('| категория | всего | patch | minor | major | c security |', '|---|---|---|---|---|---|')
   for (const s of CATEGORIES) {
@@ -426,6 +456,7 @@ async function main () {
     )
     if (r.security.length > 0) md.push('**security:**', '```', ...r.security, '```')
     if (r.breaking.length > 0) md.push('**breaking-маркеры:**', '```', ...r.breaking, '```')
+    if (r.pin !== undefined) md.push(`**пин:** не выше ${r.pin.maxVersion ?? `${r.pin.maxMajor}.x`} - ${r.pin.reason}`, '')
     if (r.security.length === 0 && r.breaking.length === 0) md.push('_маркеров breaking/security не найдено_')
     md.push('')
   }
