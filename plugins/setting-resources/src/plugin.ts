@@ -210,7 +210,6 @@ export default mergeIds(settingId, setting, {
 
     WebhookAccess: '' as IntlString,
     WebhookIncomingAccess: '' as IntlString,
-    WebhookConstruct: '' as IntlString,
     WebhookConstructHint: '' as IntlString,
     WebhookConstructOperation: '' as IntlString,
     WebhookConstructTarget: '' as IntlString,
@@ -265,6 +264,11 @@ export default mergeIds(settingId, setting, {
     WebhookDelete: '' as IntlString,
     WebhookDeleteConfirm: '' as IntlString,
     WebhookEventDeliveredCount: '' as IntlString,
+    WebhookEventIssueTimeReported: '' as IntlString,
+    WebhookEventIssueTimeReportUpdated: '' as IntlString,
+    WebhookExamples: '' as IntlString,
+    WebhookExamplesIncoming: '' as IntlString,
+    WebhookExamplesOutgoing: '' as IntlString,
     ApiKeyOperationCounts: '' as IntlString
   }
 })
