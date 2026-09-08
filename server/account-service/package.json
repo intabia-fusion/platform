@@ -59,6 +59,7 @@
     "@koa/cors": "catalog:",
     "@hcengineering/server-token": "workspace:^0.7.17",
     "@hcengineering/analytics": "workspace:^0.7.17",
-    "@hcengineering/pulse": "workspace:^0.7.0"
+    "@hcengineering/pulse": "workspace:^0.7.0",
+    "@hcengineering/rpc": "workspace:^0.7.17"
   }
 }
