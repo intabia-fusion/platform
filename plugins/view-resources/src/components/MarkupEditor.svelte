@@ -30,6 +30,7 @@
   export let justify: 'left' | 'center' = 'center'
   export let width: string | undefined = 'fit-content'
   export let kitOptions: Partial<EditorKitOptions> = { reference: true, emoji: true }
+  export let isScrollable: boolean = true
 
   let shown: boolean = false
 </script>
@@ -68,9 +69,11 @@
     content={value}
     {placeholder}
     alwaysEdit
+    previewUnlimit
     {kitOptions}
     mode={2}
     {readonly}
+    {isScrollable}
     on:value={(e) => {
       onChange(e.detail)
     }}
