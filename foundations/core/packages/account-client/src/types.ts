@@ -553,7 +553,6 @@ export interface CanDeleteAccountResult {
 /**
  * Integration API key write operation, `<domain>:<action>`. No write is granted by default; reading
  * the workspace is implicit and limited only by `spaces`.
- * Duplicated in server/account/src/apiKeys.ts - change both
  */
 export type ApiKeyOperation =
   | 'issue:create'
