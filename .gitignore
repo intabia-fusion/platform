@@ -124,3 +124,4 @@ get-model-bundle.js
 tests/sanity/step-report.ndjson
 
 .profile-tests
+.tmp-shots/
