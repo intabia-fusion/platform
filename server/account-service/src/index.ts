@@ -24,6 +24,7 @@ import accountEn from '@hcengineering/account/lang/en.json'
 import accountEs from '@hcengineering/account/lang/es.json'
 import accountFr from '@hcengineering/account/lang/fr.json'
 import accountIt from '@hcengineering/account/lang/it.json'
+import accountJa from '@hcengineering/account/lang/ja.json'
 import accountPtBr from '@hcengineering/account/lang/pt-br.json'
 import accountPt from '@hcengineering/account/lang/pt.json'
 import accountRu from '@hcengineering/account/lang/ru.json'
@@ -75,6 +76,7 @@ const accountStrings: Record<string, Record<string, Record<string, string>>> = {
   es: accountEs,
   fr: accountFr,
   it: accountIt,
+  ja: accountJa,
   'pt-br': accountPtBr,
   pt: accountPt,
   ru: accountRu,
