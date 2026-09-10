@@ -126,6 +126,9 @@ sanity-nginx-1` after any `--force-recreate`.
 | `template.spec` | Fresh template below the fold of a collapsed, virtualised assignee group | `expandCollapsedCategories` + scroll inside a retry; `beforeAll` drops old templates |
 | `template-details` labels | New tag past `TagsPopup`'s 50-item cut | Type it into the popup search |
 | `billing-ui.spec` seats / packages | Bank webhook is fire-and-forget and lands late on a loaded stand | 20/30s waits raised to 45/60s |
+| `calendar-rsvp.spec` tally | The organiser's event popup reads the master's summary when it opens, so a popup opened before the server aggregated the participant's answer never refreshes - two attempts in a row waited out 15s on `1 going` | Reopen the popup inside `retry` until the tally is there (60s bound) |
+| `calendar-participants.spec` busy mark | The hour was picked as free in the *colleague's* widget and clicked in mine, where my own event covered it - the click was swallowed by that event | `clickFreeCellInBothWidgets` picks an hour free on both sides |
+| all `calendar/*.spec` | Nothing dropped the events, and the widget shows a single day: after a few runs every hour was taken and `clickFreeCellInWidget` threw `no free hour left` - not flaky any more, just dead | `beforeAll` calls `dropStaleCalendarEvents(<own title prefixes>)` (`API/CalendarApi.ts`), in both accounts |
 | `workflow-settings.spec` second workflow | The close Escape started tore down the aside opened right after it - the first `fill` landed, then the input was gone | `openAside` waits for the name input and re-checks it after 200ms |
 
 ## Open, do not retry these
@@ -304,3 +307,24 @@ an HTML body. nginx logged no 5xx on `/_account` that second, so what served the
 `<method> answered <status> with <first 120 chars>`. `selectWorkspace` and the `getWorkspaceInfo`
 poll are retried (both are reads, 15s / 60s bounded), so one bad answer costs a poll instead of the
 test; the poll also has a deadline now instead of `while (true)`.
+
+## Calendar specs and the shared day
+
+The widget renders one day, so every hour booked by an earlier run is an hour no spec can click.
+Each calendar spec now drops **only its own** title prefixes in `beforeAll` - the four specs run on
+separate workers (`fullyParallel: false` keeps a *file* on one worker, not the directory), and a
+spec dropping another's titles would delete events that one is using.
+
+`calendar-recurring.spec` "Cancelling one occurrence" reads "the colleague is no longer busy", which
+only holds while that hour carries nothing but its own series. Running the same file twice at once -
+a background full run plus a targeted `--repeat-each` - breaks it every time and means nothing:
+under `fullyParallel: false` a real run schedules the file once. Load-test the other calendar specs
+that way, not this one.
+
+## Love specs leave their data behind too
+
+`meetings-ws` не чистится между прогонами: love-спеки, создающие события/`PermanentMeeting`/сессии,
+дропают **свои** титулы в `beforeAll` через `dropStaleMeetings` (`love/meeting-helpers.ts`).
+В воркспейсе три аккаунта - `findOne(PersonSpace, {})` без фильтра пишет в чужой space.
+
+Корни ревью FUSIO-1307: [[love-meeting-links]].
