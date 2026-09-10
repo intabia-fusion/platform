@@ -165,6 +165,9 @@ export default mergeIds(settingId, setting, {
     SpaceMembersOnly: '' as IntlString,
     LastOwnerLeaveTitle: '' as IntlString,
     LastOwnerLeaveMessage: '' as IntlString,
+    DeleteAccount: '' as IntlString,
+    DeleteAccountConfirm: '' as IntlString,
+    DeleteAccountBlocked: '' as IntlString<{ workspaces: string }>,
     OverrideAttribute: '' as IntlString,
     Required: '' as IntlString
   }

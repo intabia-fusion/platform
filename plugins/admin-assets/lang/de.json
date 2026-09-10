@@ -195,6 +195,9 @@
     "Actions": "Aktionen",
     "NoTrial": "Ohne Testphase",
     "Sessions": "Sitzungen",
-    "Ops5m": "Operationen (5 Min.)"
+    "Ops5m": "Operationen (5 Min.)",
+    "CancelDeletion": "Löschung abbrechen",
+    "DeletionScheduled": "Löschung am {date}",
+    "DeleteNow": "Sofort löschen"
   }
 }
