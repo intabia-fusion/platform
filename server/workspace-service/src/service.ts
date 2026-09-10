@@ -606,7 +606,9 @@ export class WorkspaceWorker {
           SkipWorkspaces: '',
           Interval: 0,
           Parallel: 1,
-          KeepSnapshots: 7 * 12
+          KeepSnapshots: 7 * 12,
+          // One-shot backup of a single workspace: retention cleanup is the backup pod's job.
+          DeletedRetentionDays: 0
         },
         pipelineFactory,
         (ctx, workspace, branding, externalStorage) => {

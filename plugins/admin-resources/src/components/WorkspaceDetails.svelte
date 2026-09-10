@@ -27,7 +27,8 @@
     copyTextToClipboard,
     isAdminUser,
     isBillingAdminUser,
-    MessageBox
+    MessageBox,
+    OtpConfirmDialog
   } from '@hcengineering/presentation'
   import {
     Button,
@@ -55,9 +56,9 @@
   import { currencyOf } from '@hcengineering/billing'
 
   import adminRes from '../plugin'
-  import AdminOtpDialog from './AdminOtpDialog.svelte'
   import EditSubscriptionDialog from './EditSubscriptionDialog.svelte'
   import {
+    adminOtpProps,
     fmtAmount,
     getAccountClient,
     requestAdminOtpCode,
@@ -82,7 +83,7 @@
 
   // Destructive member operations require an emailed OTP code
   function withOtp (action: (otpCode: string) => Promise<void>): void {
-    showPopup(AdminOtpDialog, {}, undefined, (code) => {
+    showPopup(OtpConfirmDialog, adminOtpProps(), undefined, (code) => {
       if (typeof code === 'string' && code.length > 0) {
         void action(code)
           .then(() => {

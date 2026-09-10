@@ -48,7 +48,13 @@ import { pbkdf2Sync, randomBytes } from 'crypto'
 import otpGenerator from 'otp-generator'
 
 import { Analytics } from '@hcengineering/analytics'
-import { decodeTokenVerbose, generateToken, type PermissionsGrant, TokenError } from '@hcengineering/server-token'
+import {
+  decodeTokenVerbose,
+  generateToken,
+  isHumanAdmin,
+  type PermissionsGrant,
+  TokenError
+} from '@hcengineering/server-token'
 import { PostgresAccountDB } from './collections/postgres/postgres'
 import { accountPlugin } from './plugin'
 import {
@@ -84,7 +90,8 @@ import {
   type WorkspaceLoginInfo,
   type WorkspaceStatus
 } from './types'
-import { isAdminEmail, isBillingAdminEmail } from './admin'
+import { getBillingAdminEmails, isAdminEmail, isBillingAdminEmail } from './admin'
+import { isReadOnlyPending } from './deletion'
 
 export const GUEST_ACCOUNT = 'b6996120-416f-49cd-841e-e4a5d2e49c9b' as PersonUuid
 
@@ -669,7 +676,7 @@ export function getAdminOtpDevCode (): string | undefined {
   return code != null && code !== '' ? code : undefined
 }
 
-export async function getAdminEmailSocialId (ctx: MeasureContext, db: AccountDB, token: string): Promise<SocialId> {
+export async function getCallerEmailSocialId (ctx: MeasureContext, db: AccountDB, token: string): Promise<SocialId> {
   const { account } = decodeTokenVerbose(ctx, token)
   // Deterministic: pick the earliest verified email so OTP always goes to a trusted address.
   const emails = (
@@ -682,28 +689,35 @@ export async function getAdminEmailSocialId (ctx: MeasureContext, db: AccountDB,
   return sid
 }
 
-export async function requestAdminOtp (
+/**
+ * Sends a code to the caller's own verified email. The admin panel and the self-service actions
+ * (leave, delete) share it; only the admin ones belong in the audit trail.
+ */
+export async function sendOperationOtp (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
   token: string
 ): Promise<OtpInfo> {
+  const audit = isHumanAdmin(decodeTokenVerbose(ctx, token))
   if (getAdminOtpDevCode() !== undefined) {
-    await logAdminAction(ctx, db, token, 'otp_issued')
+    if (audit) {
+      await logAdminAction(ctx, db, token, 'otp_issued')
+    }
     return { sent: true, retryOn: Date.now() }
   }
-  const sid = await getAdminEmailSocialId(ctx, db, token)
+  const sid = await getCallerEmailSocialId(ctx, db, token)
   const before = (await db.otp.find({ socialId: sid._id }, { createdOn: 'descending' }, 1))[0]?.createdOn
   const info = await sendOtp(ctx, db, branding, sid, ADMIN_OTP_TTL_SEC, true)
   const after = (await db.otp.find({ socialId: sid._id }, { createdOn: 'descending' }, 1))[0]?.createdOn
   // Only a really new code restarts the attempt budget; a throttled re-request returns the old one.
-  if (after !== before) {
+  if (audit && after !== before) {
     await logAdminAction(ctx, db, token, 'otp_issued')
   }
   return info
 }
 
-export async function verifyAdminOtp (
+export async function verifyOperationOtp (
   ctx: MeasureContext,
   db: AccountDB,
   token: string,
@@ -719,7 +733,7 @@ export async function verifyAdminOtp (
     }
     return
   }
-  const sid = await getAdminEmailSocialId(ctx, db, token)
+  const sid = await getCallerEmailSocialId(ctx, db, token)
   // Atomic consume: only the caller that deletes the row succeeds. Prevents one code
   // confirming two concurrent ops; each wrong guess deletes nothing (no reuse).
   const ok = await db.consumeOtp(sid._id, otpCode)
@@ -983,6 +997,12 @@ export async function selectWorkspace (
       ctx.error('Selecting a disabled workspace', { workspaceUrl, accountUuid })
 
       throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUrl }))
+    }
+
+    // Scheduled for deletion: open for taking the data out, closed for writing.
+    if (isReadOnlyPending(wsStatus)) {
+      extra ??= {}
+      extra.readonly = 'true'
     }
   }
 
@@ -2045,6 +2065,41 @@ export async function sendEmail (info: EmailInfo, ctx: MeasureContext): Promise<
     ],
     to
   )
+}
+
+function escapeHtml (value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+/**
+ * Deleting a workspace is irreversible for everyone in it, and an owner can do it without an admin
+ * ever being involved - so the people who watch the account get told out of band.
+ */
+export async function notifyWorkspaceDeleted (
+  ctx: MeasureContext,
+  db: AccountDB,
+  token: string,
+  workspace: { uuid: WorkspaceUuid, name: string, url: string }
+): Promise<void> {
+  const recipients = getBillingAdminEmails()
+  if (recipients.length === 0) return
+
+  try {
+    const { account } = decodeTokenVerbose(ctx, token)
+    // A retired social id carries a mangled value, an unverified one was never proven to be theirs.
+    const emails = (await db.socialId.find({ personUuid: account, type: SocialIdType.EMAIL })).filter(
+      (sid) => sid.isDeleted !== true && sid.verifiedOn != null
+    )
+    const actor = emails.sort((a, b) => (a.createdOn ?? 0) - (b.createdOn ?? 0))[0]?.value ?? account
+    const subject = `Workspace deleted: ${workspace.name}`
+    const text = `${actor} deleted workspace "${workspace.name}" (${workspace.url}, ${workspace.uuid}) at ${new Date().toISOString()}.`
+
+    for (const to of recipients) {
+      await sendEmail({ to, subject, text, html: `<p>${escapeHtml(text)}</p>` }, ctx)
+    }
+  } catch (err) {
+    ctx.warn('Failed to notify billing admins about a workspace deletion', { workspace: workspace.uuid, err })
+  }
 }
 
 export function sanitizeEmail (email: string): string {

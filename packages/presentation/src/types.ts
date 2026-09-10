@@ -22,6 +22,19 @@ export type * from './components/breadcrumbs/types'
 /**
  * @public
  */
+/** Props of `OtpConfirmDialog`; the dialog is opened through `showPopup`, which is untyped. */
+export interface OtpConfirmProps {
+  label: IntlString
+  okLabel: IntlString
+  codeLabel: IntlString
+  sendLabel: IntlString
+  sentLabel: IntlString
+  failedLabel: IntlString
+  message?: IntlString
+  codeLength?: number
+  requestCode: () => Promise<{ retryOn: number }>
+}
+
 export interface ObjectSearchResult {
   doc: Doc
   component?: AnySvelteComponent
