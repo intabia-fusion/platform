@@ -125,7 +125,6 @@
     "CancelAccountDeletion": "Cancelar exclusão",
     "KeepAccountDeletion": "Deixar como está",
     "AccountDeletionCancelled": "Exclusão da conta cancelada.",
-    "CopyToClipboard": "Copiar",
     "DeleteAccount": "Excluir conta",
     "DeleteAccountConfirm": "A conta será marcada para exclusão e removida definitivamente em 21 dias. Entrando antes disso, você poderá cancelar. Continuar?",
     "CodeSent": "Um código de confirmação foi enviado para seu e-mail."

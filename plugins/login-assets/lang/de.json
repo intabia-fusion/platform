@@ -125,7 +125,6 @@
     "CancelAccountDeletion": "Löschung abbrechen",
     "KeepAccountDeletion": "So belassen",
     "AccountDeletionCancelled": "Löschung des Kontos abgebrochen.",
-    "CopyToClipboard": "Kopieren",
     "DeleteAccount": "Konto löschen",
     "DeleteAccountConfirm": "Das Konto wird zur Löschung vorgemerkt und in 21 Tagen endgültig entfernt. Wenn Sie sich vorher anmelden, können Sie die Löschung abbrechen. Fortfahren?",
     "CodeSent": "Ein Bestätigungscode wurde an Ihre E-Mail gesendet.",

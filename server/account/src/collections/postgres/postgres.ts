@@ -461,7 +461,7 @@ export class AccountPostgresDbCollection
     ns?: string,
     withRetryClient?: PostgresDbCollectionOptions<Account, 'uuid'>['withRetryClient']
   ) {
-    super('account', client, { idKey: 'uuid', ns, withRetryClient })
+    super('account', client, { idKey: 'uuid', ns, timestampFields: ['deleteOn'], withRetryClient })
   }
 
   getPasswordsTableName (): string {
@@ -592,7 +592,7 @@ export class PostgresAccountDB implements AccountDB {
     })
     this.workspaceStatus = new PostgresDbCollection<WorkspaceStatus>('workspace_status', client, {
       ns,
-      timestampFields: ['lastProcessingTime', 'lastVisit'],
+      timestampFields: ['lastProcessingTime', 'lastVisit', 'deleteOn'],
       withRetryClient
     })
     this.workspace = new PostgresDbCollection<Workspace, 'uuid'>('workspace', client, {

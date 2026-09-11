@@ -127,7 +127,6 @@
     "AccountDeletionScheduledDesc": "Your account will be deleted on {date}. Cancel the deletion to keep it. Workspaces you scheduled stay scheduled - restore each of them separately.",
     "CancelAccountDeletion": "Cancel deletion",
     "KeepAccountDeletion": "Leave as is",
-    "AccountDeletionCancelled": "Account deletion cancelled.",
-    "CopyToClipboard": "Copy"
+    "AccountDeletionCancelled": "Account deletion cancelled."
   }
 }

@@ -125,7 +125,6 @@
     "CancelAccountDeletion": "取消删除",
     "KeepAccountDeletion": "保持不变",
     "AccountDeletionCancelled": "已取消删除账户。",
-    "CopyToClipboard": "复制",
     "DeleteAccount": "删除账户",
     "DeleteAccountConfirm": "账户将被标记为删除，并在 21 天后彻底移除。在此之前登录即可取消。是否继续?",
     "CodeSent": "确认码已发送到您的邮箱。"

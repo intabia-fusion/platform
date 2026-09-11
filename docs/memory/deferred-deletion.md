@@ -40,4 +40,24 @@
 ## Конфигурация
 
 `DELETION_GRACE_DAYS` (21), `DELETION_READONLY_DAYS` (7) - account-service.
-`DELETED_RETENTION_DAYS` (было 7, стало 1) - backup pod; отрицательное выключает чистку архива.
+`DELETED_RETENTION_DAYS` (было 7, стало 1) - backup pod; 0 и меньше выключает чистку архива,
+этим пользуется одноразовый пайплайн workspace-service.
+
+## CI PR #434
+
+**Бесконечный reload страницы логина (uitest-pg, uitest-qms).** Дублирующийся IntlString: я добавил
+`Copied` в `plugins/login/src/index.ts`, а он уже объявлен в mergeIds
+`plugins/login-resources/src/plugin.ts:44`. `identify()` падает с
+`Error: 'identify' overwrites 'Copied' for login:string`, следом `failed to load login
+TypeError: t.default is not a function`, и `LoadHelper` (`dev/prod/src/platform.ts:440`) после 5
+попыток делает `location.reload()` - по кругу. Проверять новые строки на пересечение с mergeIds
+соответствующего *-resources.
+
+Диагностируется так: собрать `dev/prod` (`rushx package`), `docker cp dist/. sanity-front0-1:/app/dist/`
+и открыть страницу - в консоли видно всё сразу. По логам CI не видно ничего: артефакты Playwright
+консоль браузера не сохраняют, а в логах account-пода запросов от браузера просто нет.
+
+**BIGINT приезжает строкой.** `delete_on` не был в `timestampFields` коллекций, поэтому
+`workspaceStatus`/`account` отдавали `deleteOn` как `"1791056586129"`. В UI это `new Date(строка)` -
+Invalid Date. Лечится добавлением поля в `timestampFields` (`postgres.ts:464` и `:595`), после чего
+отсутствующее значение приезжает как `null`, а не `undefined`.

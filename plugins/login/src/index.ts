@@ -113,8 +113,6 @@ export default plugin(loginId, {
     CancelAccountDeletion: '' as IntlString,
     KeepAccountDeletion: '' as IntlString,
     AccountDeletionCancelled: '' as IntlString,
-    CopyToClipboard: '' as IntlString,
-    Copied: '' as IntlString,
     PasswordExpiredDesc: '' as IntlString,
     Downloads: '' as IntlString,
     BackLabel: '' as IntlString,

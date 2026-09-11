@@ -125,7 +125,6 @@
     "CancelAccountDeletion": "削除を取り消す",
     "KeepAccountDeletion": "そのままにする",
     "AccountDeletionCancelled": "アカウントの削除を取り消しました。",
-    "CopyToClipboard": "コピー",
     "DeleteAccount": "アカウントを削除",
     "DeleteAccountConfirm": "アカウントは削除予定となり、21日後に完全に削除されます。それまでにログインすれば取り消せます。続行しますか?",
     "CodeSent": "確認コードをメールに送信しました。"

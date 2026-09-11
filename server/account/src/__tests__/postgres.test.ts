@@ -345,7 +345,8 @@ describe('AccountPostgresDbCollection', () => {
     ) WHERE "uuid" = $1`,
         ['acc1']
       )
-      expect(result).toEqual(mockResult)
+      // Every timestamp column is normalised, so an absent delete_on comes back as null.
+      expect(result).toEqual(mockResult.map((r) => ({ ...r, deleteOn: null })))
     })
 
     it('should convert buffer fields from database', async () => {

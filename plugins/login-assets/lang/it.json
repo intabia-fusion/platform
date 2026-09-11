@@ -125,7 +125,6 @@
     "CancelAccountDeletion": "Annulla eliminazione",
     "KeepAccountDeletion": "Lascia com'è",
     "AccountDeletionCancelled": "Eliminazione dell'account annullata.",
-    "CopyToClipboard": "Copia",
     "DeleteAccount": "Elimina account",
     "DeleteAccountConfirm": "L'account sarà contrassegnato per l'eliminazione e rimosso definitivamente tra 21 giorni. Accedendo prima potrai annullare. Continuare?",
     "CodeSent": "Un codice di conferma è stato inviato alla tua email."

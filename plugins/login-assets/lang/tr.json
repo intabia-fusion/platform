@@ -125,7 +125,6 @@
     "CancelAccountDeletion": "Silmeyi iptal et",
     "KeepAccountDeletion": "Olduğu gibi bırak",
     "AccountDeletionCancelled": "Hesap silme işlemi iptal edildi.",
-    "CopyToClipboard": "Kopyala",
     "DeleteAccount": "Hesabı sil",
     "DeleteAccountConfirm": "Hesap silinmek üzere işaretlenecek ve 21 gün sonra kalıcı olarak kaldırılacak. Bundan önce giriş yaparsanız iptal edebilirsiniz. Devam edilsin mi?",
     "CodeSent": "E-postanıza bir onay kodu gönderildi."

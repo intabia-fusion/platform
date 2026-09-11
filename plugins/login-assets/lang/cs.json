@@ -125,7 +125,6 @@
     "CancelAccountDeletion": "Zrušit smazání",
     "KeepAccountDeletion": "Ponechat beze změny",
     "AccountDeletionCancelled": "Smazání účtu bylo zrušeno.",
-    "CopyToClipboard": "Kopírovat",
     "DeleteAccount": "Smazat účet",
     "DeleteAccountConfirm": "Účet bude označen ke smazání a za 21 dní nenávratně odstraněn. Pokud se do té doby přihlásíte, můžete smazání zrušit. Pokračovat?",
     "CodeSent": "Potvrzovací kód byl odeslán na váš e-mail.",

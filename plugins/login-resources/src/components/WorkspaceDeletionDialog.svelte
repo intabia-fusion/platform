@@ -69,7 +69,7 @@
           <div class="select-text anti-component p-3 border-b-1 border-divider-color">{backupLink}</div>
         </div>
         <Button
-          label={copiedLink ? login.string.Copied : login.string.CopyToClipboard}
+          label={copiedLink ? login.string.Copied : login.string.Copy}
           on:click={() => {
             copy(backupLink, (v) => (copiedLink = v))
           }}
@@ -78,7 +78,7 @@
       <div class="flex-row-center flex-between">
         <Label label={setting.string.BackupBearerTokenInfo} />
         <Button
-          label={copiedToken ? login.string.Copied : login.string.CopyToClipboard}
+          label={copiedToken ? login.string.Copied : login.string.Copy}
           on:click={() => {
             copy(token, (v) => (copiedToken = v))
           }}

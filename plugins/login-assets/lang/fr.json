@@ -125,7 +125,6 @@
     "CancelAccountDeletion": "Annuler la suppression",
     "KeepAccountDeletion": "Laisser tel quel",
     "AccountDeletionCancelled": "Suppression du compte annulée.",
-    "CopyToClipboard": "Copier",
     "DeleteAccount": "Supprimer le compte",
     "DeleteAccountConfirm": "Le compte sera marqué pour suppression et définitivement effacé dans 21 jours. Si vous vous connectez avant, vous pourrez annuler. Continuer ?",
     "CodeSent": "Un code de confirmation a été envoyé à votre adresse e-mail."
