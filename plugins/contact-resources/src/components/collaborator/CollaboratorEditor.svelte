@@ -25,6 +25,7 @@
   export let onChange: (value: AccountUuid[]) => void = () => {}
   export let draft = false
   export let width: string | undefined = undefined
+  export let readonly = false
 
   let collaborators: Collaborator[] = []
 
@@ -73,4 +74,4 @@
   }
 </script>
 
-<AccountArrayEditor label={core.string.Collaborators} value={accounts} onChange={change} {width} />
+<AccountArrayEditor label={core.string.Collaborators} value={accounts} onChange={change} {width} {readonly} />

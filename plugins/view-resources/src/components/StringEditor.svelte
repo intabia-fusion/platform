@@ -45,6 +45,7 @@
     {size}
     {justify}
     {width}
+    disabled={readonly}
     showTooltip={{ label }}
     on:click={(ev) => {
       if (!shown && !readonly) {

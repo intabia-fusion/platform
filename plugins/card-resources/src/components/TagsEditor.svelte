@@ -123,7 +123,7 @@
   {#if activeTags.length > 0 || dropdownItems.length > 0}
     <div class="divider" />
     <div class="tags p-1 gap-1">
-      {#if dropdownTags && activeTags.length > 0}
+      {#if !readonly && dropdownTags && activeTags.length > 0}
         <CircleButton
           id={id ? `${id}-dropdown` : undefined}
           icon={IconDownOutline}
