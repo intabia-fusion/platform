@@ -175,7 +175,7 @@
       await accountClient.mergeSpecifiedPersons(targetPerson.personUuid, sourcePerson.personUuid)
     }
 
-    // Ok now we could safely remove source person.
+    // Safe to remove source person now that refs are updated and the merge is committed.
     await client.remove(sourcePerson)
 
     dispatch('close')

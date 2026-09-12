@@ -140,21 +140,6 @@
   async function share (): Promise<void> {
     // TODO: FIXME
     throw new Error('Not implemented')
-    // const selectedMessages = messages.filter((m) => selected.has(m._id as unknown as Ref<SharedTelegramMessage>))
-    // await client.addCollection(
-    //   telegram.class.SharedMessages,
-    //   object.space,
-    //   object._id,
-    //   object._class,
-    //   'sharedTelegramMessages',
-    //   {
-    //     messages: convertMessages(selectedMessages, $personAccountByIdStore)
-    //   }
-    // )
-    // if (channel !== undefined) {
-    //   await inboxClient.forceReadDoc(channel._id, channel._class)
-    // }
-    // clear()
   }
 
   function clear (): void {
@@ -163,15 +148,6 @@
     selected = selected
   }
 
-  // function convertMessages (messages: TelegramMessage[], accounts: IdMap<PersonAccount>): SharedTelegramMessage[] {
-  //   return messages.map((m) => {
-  //     return {
-  //       ...m,
-  //       _id: m._id as unknown as Ref<SharedTelegramMessage>,
-  //       sender: getName(m, accounts)
-  //     }
-  //   })
-  // }
 
   async function onConnectClose (res: any): Promise<void> {
     if (res?.value) {

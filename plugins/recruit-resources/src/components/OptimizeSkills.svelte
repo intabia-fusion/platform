@@ -30,13 +30,8 @@
 
   const dispatch = createEventDispatcher()
 
-  // const query = createQuery()
-  // const elementsQuery = createQuery()
-  // const refsQuery = createQuery()
-
   let categories: TagCategory[] = []
   let elements: TagElement[] = []
-  // let refs: TagReference[] = []
 
   let loading1: boolean = false
   let loading2: boolean = false
@@ -523,7 +518,7 @@
               })
             } else {
               updateClasses.add(a._class)
-              // Let's remove and add new tag reference
+              // remove and add new tag reference
               await ops.remove(a)
               updateClasses.add(tags.class.TagReference)
               await ops.addCollection(tags.class.TagReference, a.space, a.attachedTo, a.attachedToClass, a.collection, {

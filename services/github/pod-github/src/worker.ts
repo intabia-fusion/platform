@@ -561,7 +561,7 @@ export class GithubWorker implements IntegrationManager {
   }
 
   async syncUserData (ctx: MeasureContext): Promise<void> {
-    // Let's sync information about users and send some details
+    // Sync user info and send details.
     const accounts = await ctx.with('find-social-id', {}, () =>
       this._client.findAll(contact.class.SocialIdentity, {
         type: SocialIdType.GITHUB

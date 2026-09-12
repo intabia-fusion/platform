@@ -104,7 +104,8 @@ describe('prorateSeats', () => {
   })
 
   it('floors a fractional-ruble upgrade charge down to whole rubles', () => {
-    // Craft a partial period so the credit produces a fractional-ruble delta, then assert it is floored.
+    // Craft a partial period so the credit produces a fractional-ruble delta, then assert it
+    // is floored.
     const res = prorateSeats({
       oldAmount: kop(1000),
       oldSeats: 1,

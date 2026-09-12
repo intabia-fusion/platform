@@ -73,7 +73,7 @@ export function estimateDocSize (_obj: any): number {
     }
     visited.add(obj)
 
-    // Use Object.keys to only iterate over own properties (not prototype chain)
+    // Own properties only — inherited ones would inflate the size calculation.
     const keys = Object.keys(obj)
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i]

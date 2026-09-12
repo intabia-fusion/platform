@@ -1100,8 +1100,8 @@ export function setPresentationCookie (token: string, workspaceUuid: WorkspaceUu
   }
 }
 
-// Leaving the workspace tears down anything workspace-scoped (a live meeting, most notably),
-// so a plugin can register a guard here and ask the user before the switch happens.
+// Leaving the workspace tears down anything workspace-scoped (a live meeting, in particular), so a
+// plugin can register a guard here.
 const leaveWorkspaceGuards = new Set<() => Promise<boolean>>()
 
 export function addLeaveWorkspaceGuard (guard: () => Promise<boolean>): () => void {

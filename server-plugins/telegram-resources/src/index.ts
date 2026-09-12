@@ -127,17 +127,6 @@ export async function GetCurrentEmployeeTG (
   control: TriggerControl,
   context: Record<string, Doc>
 ): Promise<string | undefined> {
-  // TODO: FIXME
-  // const account = await control.modelDb.findOne(contact.class.PersonAccount, {
-  //   _id: control.txFactory.account as PersonId
-  // })
-  // if (account === undefined) return
-  // const employee = (
-  //   await control.findAll(control.ctx, contact.mixin.Employee, { _id: account.person as Ref<Employee> })
-  // )[0]
-  // if (employee !== undefined) {
-  //   return await getContactChannel(control, employee, contact.channelProvider.Telegram)
-  // }
 
   return undefined
 }
@@ -146,37 +135,10 @@ export async function GetIntegrationOwnerTG (
   control: TriggerControl,
   context: Record<string, Doc>
 ): Promise<string | undefined> {
-  // TODO: FIXME
-  // const value = context[setting.class.Integration] as Integration
-  // if (value === undefined) return
-  // const account = await control.modelDb.findOne(contact.class.PersonAccount, {
-  //   _id: value.modifiedBy as PersonId
-  // })
-  // if (account === undefined) return
-  // const employee = (
-  //   await control.findAll(control.ctx, contact.mixin.Employee, { _id: account.person as Ref<Employee> })
-  // )[0]
-  // if (employee !== undefined) {
-  //   return await getContactChannel(control, employee, contact.channelProvider.Telegram)
-  // }
 
   return undefined
 }
 
-// async function getContactChannel (
-//   control: TriggerControl,
-//   value: Contact,
-//   provider: Ref<ChannelProvider>
-// ): Promise<string | undefined> {
-//   if (value === undefined) return
-//   const res = (
-//     await control.findAll(control.ctx, contact.class.Channel, {
-//       attachedTo: value._id,
-//       provider
-//     })
-//   )[0]
-//   return res?.value ?? ''
-// }
 
 function activityMessageToHtml (message: ActivityMessage): string | undefined {
   if (message.message === undefined) return undefined

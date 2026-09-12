@@ -556,9 +556,6 @@ export class DocumentContentPage extends DocumentCommonPage {
 
   async fillTeamspaceFormManager (spaceName: string): Promise<void> {
     await this.page.getByPlaceholder('New teamspace').fill(spaceName)
-    // await this.page.getByRole('button', { name: 'DK Dirak Kainin' }).first().click()
-    // await this.page.getByRole('button', { name: 'DK Dirak Kainin' }).nth(2).click()
-    // await this.page.keyboard.press('Escape')
     await this.page.waitForTimeout(1000)
     await this.createButton.click()
   }
@@ -787,10 +784,8 @@ export class DocumentContentPage extends DocumentCommonPage {
     await this.page.getByText(text).click()
     await this.page.getByText(text).dblclick()
 
-    // NOTE: without the resize the menu popup might be placed in a wrong place initially
-    // and only update its position on the button click (MouseDown) which leads
-    // to the MouseUp land not on the button and the click handler is not triggered
-    // Resize event ensures that the menu popup is placed correctly before clicking
+    // Dispatch resize before click: the popup shifts between MouseDown and MouseUp, missing
+    // the target.
     await this.page.evaluate(() => {
       window.dispatchEvent(new Event('resize'))
     })

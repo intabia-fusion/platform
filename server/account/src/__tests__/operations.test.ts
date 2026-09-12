@@ -1531,7 +1531,7 @@ describe('account operations', () => {
         })
 
         expect(result.sent).toBe(true)
-        // No email is sent and nothing is created: the login form must not become a sign up form.
+        // No email is sent; the login form must not become a sign-up form.
         expect(utils.sendOtp).not.toHaveBeenCalled()
       })
 
@@ -2505,14 +2505,6 @@ describe('account operations', () => {
           email: mockEmail
         })
 
-        // expect(global.fetch).toHaveBeenCalledWith(`${mailUrl}/send`, {
-        //   method: 'post',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //     Authorization: `Bearer ${mailAuth}`
-        //   },
-        //   body: expect.stringContaining(mockEmail)
-        // })
       })
 
       test('should fail if email not found', async () => {

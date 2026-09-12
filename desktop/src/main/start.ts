@@ -334,8 +334,7 @@ function runTheApp (): void {
     handleAuthRedirects(mainWindow)
     handleWillDownload(mainWindow)
 
-    // In this example, only windows with the `about:blank` url will be created.
-    // All other urls will be blocked.
+    // Example: only about:blank windows are created; all other urls are blocked.
     hookOpenWindow(mainWindow)
 
     function minimizeToTrayIsOn (): boolean {

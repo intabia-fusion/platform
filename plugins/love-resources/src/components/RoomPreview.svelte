@@ -36,7 +36,6 @@
   import { IntlString } from '@hcengineering/platform'
   import { lkSessionConnected } from '../liveKitClient'
   import { AccountUuid, clone, getCurrentAccount, Ref } from '@hcengineering/core'
-  // import RoomLanguage from './RoomLanguage.svelte'
   import PersonActionPopup from './PersonActionPopup.svelte'
 
   export let room: Room
@@ -188,7 +187,7 @@
       if (meeting === undefined) {
         await openDoc(hierarchy, room)
       } else {
-        // We have active meeting, let's connect to it.
+        // We have active meeting, connect to it.
         await openDoc(hierarchy, meeting)
       }
     } else {

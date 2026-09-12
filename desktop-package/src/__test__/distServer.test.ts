@@ -365,9 +365,8 @@ describe('electron-updater DataSplitter compatibility', () => {
 })
 
 describe('resilience', () => {
-  // A read that fails after the response started (EACCES, ENOENT, EMFILE under
-  // load) used to surface as an unhandled 'error' and take the whole process
-  // down, killing every other in-flight download with it.
+  // Read failure after response started (EACCES, ENOENT, EMFILE) used to crash the process,
+  // killing all in-flight downloads.
   const canTestPermissions = process.getuid === undefined || process.getuid() !== 0
   const maybe = canTestPermissions ? it : it.skip
 
@@ -404,9 +403,8 @@ describe('resilience', () => {
     }
   })
 
-  // A client that stops reading fills the socket buffer, so res.write() returns
-  // false. If it then dies, 'drain' never fires: awaiting it alone strands the
-  // handler and leaks the open file handle until the process restarts.
+  // Stalled client fills socket buffer, res.write() returns false. If it dies, 'drain' never
+  // fires: handler strands and leaks the file handle.
   async function stalledThenDead (rawPath: string, headers: Record<string, string> = {}): Promise<void> {
     const addr = server.address() as { port: number }
     await new Promise<void>((resolve) => {

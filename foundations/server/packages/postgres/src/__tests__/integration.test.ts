@@ -616,7 +616,6 @@ describe('PostgreSQL Integration Tests (Real Database)', () => {
     let nestedCommentId: Ref<TaskComment>
 
     beforeEach(async () => {
-      // Create parent task
       parentTaskId = await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
         name: 'Parent Task',
         description: 'Has nested structure',
@@ -1711,7 +1710,6 @@ describe('PostgreSQL Integration Tests (Real Database)', () => {
     })
   })
 
-  // Run shared integration tests
   runSharedIntegrationTests('PostgreSQL', () => ({
     client,
     operations,

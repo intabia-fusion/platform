@@ -62,9 +62,7 @@ interface ParsingIgnoreRule {
 type HandlerRecord = (state: MarkdownParseState, tok: Token) => void
 type HandlersRecord = Record<string, HandlerRecord>
 
-// ****************************************************************
 // Markdown parser
-// ****************************************************************
 function isText (a: MarkupNode, b: MarkupNode): boolean {
   return (a.type === MarkupNodeType.text || a.type === MarkupNodeType.reference) && b.type === MarkupNodeType.text
 }
@@ -833,10 +831,6 @@ function findListItemCloseToken (tokens: Token[], open: number): number {
   return -1
 }
 
-// todo token structure
-// tokens[i].type === list_item_open
-// tokens[i + 1].type === paragraph
-// tokens[i + 2].type === inline
 function isTodoListItem (tokens: Token[], pos: number): boolean {
   return (
     isListItemToken(tokens[pos]) &&

@@ -166,8 +166,8 @@ export class WebhookProcessor {
       if (event.event === 'participant_joined') {
         await this.handleParticipantJoined(personRef, participant, roomName, wsClient)
       } else {
-        // participant_left -> remove any ParticipantInfo records for this person or by name as fallback
-        // Skip only for truly unknown identities
+        // participant_left -> remove ParticipantInfo records for this person, by name as fallback.
+        // Skip only for unknown identities.
         await this.handleParticipantLeft(wsClient, personRef, participant, roomName)
       }
     }

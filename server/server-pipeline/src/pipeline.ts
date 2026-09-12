@@ -182,7 +182,7 @@ export function createServerPipeline (
       ApplyTxMiddleware.create, // Extract apply
       VersioningMiddleware.create,
       TaskMiddleware.create,
-      IdentifierMiddleware.create, // After ApplyTx to ensure that it pass
+      IdentifierMiddleware.create, // After ApplyTx
       RatingMiddleware.create, // Rating editing restrictions
       WorkflowMiddleware.create, // Workflow editing restrictions
       TransientMiddleware.create,

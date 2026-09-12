@@ -58,12 +58,8 @@ export function transformPolarSubscriptionToData (subscription: any): Subscripti
     return null
   }
 
-  // With supporter subscriptions of type pay-what-you-want the actual plan should be
-  // determined by the amount paid as it's not possible to define maximum sum for these products.
-  // E.g. one can pay 1000$ using start supporter product which will correspond to 'start' plan
-  // in metadata but should be treated like 'business' plan in actual subscription.
-  // Conditions are hardcoded for now.
-  // TODO: take from model
+  // Pay-what-you-want: the plan is derived from the amount paid (e.g. $1000 via the 'start' product
+  // acts as 'business'). Conditions are hardcoded; take them from the model later.
   let actualPlan = subscriptionPlan
   const amount = subscription.amount as number | undefined
   if (amount !== undefined) {

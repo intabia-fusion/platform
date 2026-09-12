@@ -108,7 +108,6 @@ class MockWebSocket implements ClientSocket {
         return
       }
 
-      // Parse RPC message
       const rpcMessage = JSON.parse(message)
 
       // Handle hello request

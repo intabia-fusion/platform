@@ -155,9 +155,8 @@ test.describe('limits indicator', () => {
   })
 })
 
-// NOTE: flat-tier plan switch (storage-mini <-> storage-medium) via UI was removed. Those are
-// test-only synthetic plans (priceMonthly, not per-user) that the tbank provider's catalog does not
-// carry — tbank handles the real per-seat business tier + add-on packages, covered in billing-ui.spec.ts.
+// Flat-tier plan switch via UI is removed: those are test-only synthetic plans, real per-seat tiers
+// are covered in billing-ui.spec.ts.
 
 // ── F. seat downgrade puts the over-limit member into read-only ──────────────
 // A FRESH workspace per run (no shared state): user1 OWNER + user2 USER, plan usersLimit=2 so both

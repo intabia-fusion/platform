@@ -43,10 +43,8 @@ function getContentType(filePath: string): string {
 }
 
 function getCorsHeaders(req: http.IncomingMessage): Record<string, string> {
-  // Return a minimal but useful set of CORS headers. If Origin is a concrete
-  // origin (not the literal "null") we echo it so credentials can be supported.
-  // When Origin is missing or "null"/"undefined" we fall back to a wildcard
-  // origin which is safe for anonymous cross-origin requests.
+  // Echo concrete origins to support credentials; fall back to wildcard for
+  // missing/null/undefined origins.
   const rawOrigin = req.headers.origin
   const origin = typeof rawOrigin === 'string' ? rawOrigin : String(rawOrigin ?? '')
   const headers: Record<string, string> = {
@@ -123,9 +121,8 @@ function parseRanges(range: string, size: number): ByteRange[] | undefined {
 }
 
 /**
- * Pipe a file stream into the response. A client that walks away mid-download must
- * not surface as an unhandled 'error' event: that kills the process and with it
- * every other in-flight download.
+ * A client that walks away mid-download must not surface as an unhandled 'error' event: it
+ * kills the process and every other in-flight download.
  */
 function pipeToResponse(stream: fs.ReadStream, res: http.ServerResponse): void {
   const onResponseError = (err: Error): void => {
@@ -168,9 +165,8 @@ async function writeMultipart(
   res.on('error', onError)
 
   /**
-   * Write one chunk, waiting for backpressure to clear. Returns false once the
-   * response is gone: a client that stops reading and then disappears never emits
-   * 'drain', so waiting on it alone leaks this promise and the open file handle.
+   * Returns false when the response is gone. A disappeared client never emits 'drain', so
+   * waiting on it alone leaks the promise and file handle.
    */
   const write = async (chunk: Buffer): Promise<boolean> => {
     if (closed || res.destroyed) return false
@@ -190,9 +186,8 @@ async function writeMultipart(
     })
   }
 
-  // Copy each part by hand instead of stream.pipe(res, { end: false }): pipe registers
-  // its own 'close'/'drain'/'error' listeners on the response and only removes them on
-  // unpipe, so a 1000-part batch would leave thousands behind.
+  // Copy by hand instead of stream.pipe: pipe registers 'close'/'drain'/'error' on res and
+  // only removes them on unpipe, leaking listeners per part.
   try {
     let bodyBytes = 0
     const expectedBytes = parts.reduce((sum, p) => sum + (p.end - p.start + 1), 0)
@@ -241,9 +236,8 @@ async function writeMultipart(
 }
 
 /**
- * Resolve a request path inside DIST_DIR, or undefined when it would escape.
- * Checked with path.relative rather than a prefix test so a sibling directory
- * ("/app/distX") cannot pass as a match for "/app/dist".
+ * Use path.relative instead of a prefix test to prevent sibling directory bypass (e.g.,
+ * "/app/distX" matching "/app/dist").
  */
 function resolveWithinDist(requestPath: string): string | undefined {
   const root = path.resolve(DIST_DIR)
@@ -440,14 +434,7 @@ export interface DownloadArtifact {
    * Populated heuristically based on filename patterns and platform.
    */
   arch?: string
-  /**
-   * Human-friendly platform + architecture label for UI, e.g. 'macOS - Apple Silicon'
-   * Examples:
-   *  - 'macOS - Apple Silicon' (arch: 'arm64')
-   *  - 'macOS - Intel' (arch: 'x64')
-   *  - 'Windows - x64', 'Windows - x86', 'Windows - ARM64'
-   *  - 'Linux - x64', 'Linux - ARM64', 'Linux - x86'
-   */
+  /** Platform + arch label for UI, e.g. 'macOS - Apple Silicon'. */
   archLabel?: string
   sha512?: string
   blockmap?: string
@@ -468,9 +455,8 @@ let cachedDownloadsEtag: string | null = null
 let cachedDownloadsLastModified: string | null = null
 
 /**
- * Normalize a download URL or path so it can be used in the UI.
- * If the value is an absolute http(s) url it's returned untouched,
- * otherwise we ensure it starts with a `/` so it can be resolved by the server.
+ * Normalize for UI use. Absolute URLs pass through; relative paths get a leading slash for
+ * server resolution.
  */
 function normalizeDownloadUrl(value: string | undefined): string | undefined {
   if (!value) return undefined
@@ -545,12 +531,8 @@ function loadDownloads(): { platforms: PlatformDownloads[]; lastUpdated: string 
         console.log('[server.loadDownloads] Failed to read/parse manifest', { file: filename, error: err })
       }
 
-      // Extract platform and optional variant from manifest filename.
-      // Examples:
-      //  - latest.yml              -> platform = 'windows', variant = 'x64'
-      //  - latest-linux.yml        -> platform = 'linux', variant = 'x64'
-      //  - latest-linux-x64.yml    -> platform = 'linux', variant = 'x64'
-      //  - latest-mac.yml          -> platform = 'mac', variant = undefined
+      // Parse platform and optional variant from the manifest filename
+      // (latest.yml -> windows, latest-linux-x64.yml -> linux/x64, latest-mac.yml -> mac).
       const base = filename.replace(/^latest-?/, '').replace(/\.(yml|yaml)$/i, '')
       let platform = 'windows'
       let variant: string | undefined = undefined
@@ -565,9 +547,8 @@ function loadDownloads(): { platforms: PlatformDownloads[]; lastUpdated: string 
       if (/mac(?:os)?/.test(platform)) platform = 'mac'
       if (/linux/.test(platform)) platform = 'linux'
       if (/win/.test(platform) || filename === 'latest.yml') platform = 'windows'
-      // Default variants when manifest filename does not include explicit arch
-      // - latest-linux.yml  -> assume amd64
-      // - latest.yml        -> assume amd64 (windows)
+      // Default variant to x64 when filename has no explicit arch (latest-linux.yml,
+      // latest.yml)
       if (platform === 'linux' && !variant) variant = 'x64'
       if (platform === 'windows' && /^(latest\.ya?ml)$/i.test(filename) && !variant) variant = 'x64'
       const version = parsed?.version ?? parsed?.appVersion ?? parsed?.version
@@ -592,19 +573,15 @@ function loadDownloads(): { platforms: PlatformDownloads[]; lastUpdated: string 
 
         const f = (a.filename ?? '').toLowerCase()
 
-        // If manifest contains a variant, use it as a hint but do not blindly
-        // prefer it over strong filename signals. It's common for manifests to
-        // be named e.g. `latest-windows-x64.yml` and still include artifacts
-        // that are for other architectures; in that case prefer filename
-        // heuristics (e.g. `-arm64` in the artifact name).
+        // Manifest variant is a hint, not authoritative. Filename signals take priority when
+        // they contradict the variant.
         if (variant) {
           const v = String(variant).toLowerCase()
           const variantIsArm = /(arm64|aarch64)/.test(v)
           const variantIsX64 = /(x64|x86_64|amd64)/.test(v)
 
-          // Detect if filename provides a stronger signal and contradicts the
-          // manifest-level variant. If so, skip using the manifest variant and
-          // fall back to filename-based heuristics below.
+          // Filename provides a stronger signal than the manifest variant. If they contradict,
+          // skip the manifest variant.
           const filenameSuggestsArm = f.includes('arm') || f.includes('arm64') || f.includes('aarch64')
           const filenameSuggestsX86 = f.includes('x86') && !f.includes('x64')
           const filenameSuggestsX64 = f.includes('x64')
@@ -692,9 +669,8 @@ function handleRequest (req: http.IncomingMessage, res: http.ServerResponse): vo
   const method = req.method ?? 'GET'
   const url = req.url ?? '/'
 
-  // Request/response logging - diagnoses update failures: which manifest was
-  // fetched, range (blockmap differential download), status, bytes actually sent
-  // and whether the client aborted mid-download.
+  // Diagnoses update failures: manifest, range (blockmap differential), status, bytes sent,
+  // client abort.
   const startedAt = Date.now()
   const bytesAtStart = req.socket?.bytesWritten ?? 0
   console.log(

@@ -166,8 +166,7 @@
   }
 
   function onDragStart (event: DragEvent, object: Ref<Document>): void {
-    // no prevent default to leverage default rendering
-    // event.preventDefault()
+    // no preventDefault to keep default rendering
     if (event.dataTransfer === null || event.target === null) {
       return
     }

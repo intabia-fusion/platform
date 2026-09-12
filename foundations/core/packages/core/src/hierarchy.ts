@@ -550,10 +550,7 @@ export class Hierarchy {
     }
   }
 
-  /**
-   * Check if passed _class is derived from `from` class.
-   * It will iterate over parents.
-   */
+  /** Check if passed _class is derived from `from` class. */
   isDerived<T extends Obj>(_class: Ref<Class<T>>, from: Ref<Class<T>>): boolean {
     const cached = this.ancestors.get(_class)
     if (cached !== undefined) {

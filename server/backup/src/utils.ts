@@ -139,7 +139,7 @@ export async function backupSize (storage: BackupStorage): Promise<void> {
     }
   }
 
-  // Let's calculate data size for backup
+  // calculate data size for backup
   for (const sn of backupInfo.snapshots) {
     for (const [, d] of Object.entries(sn.domains)) {
       await addFileSize(d.snapshot)
@@ -230,7 +230,7 @@ export async function backupDownload (storage: BackupStorage, storeIn: string, s
   }
 
   await downloadFile(infoFile, true)
-  // Let's calculate data size for backup
+  // calculate data size for backup
   for (const sn of backupInfo.snapshots) {
     for (const [k, d] of Object.entries(sn.domains)) {
       console.log('processing', sn.date, k)
@@ -538,7 +538,6 @@ export async function compactBackup (
 
           const tmpFile = join(tmpRoot, basename(storageFile) + '.tmp')
           const tempFile = createWriteStream(tmpFile)
-          // const dataStream = await storage.write(storageFile)
 
           const sizePass = new PassThrough()
           let sz = 0
@@ -1063,7 +1062,6 @@ export async function loadDigest (
       break
     }
   }
-  // ctx.info('load-digest', { domain, snapshots: snapshots.length, documents: result.size })
   return result
 }
 export async function verifyDigest (
@@ -1536,7 +1534,7 @@ export async function rebuildSizeInfo (
     }
   }
 
-  // Let's calculate data size for backup
+  // calculate data size for backup
   for (const sn of backupInfo.snapshots) {
     for (const [, d] of Object.entries(sn.domains)) {
       await addFileSize(d.snapshot)

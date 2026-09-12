@@ -46,13 +46,8 @@ export const DEFAULT_RETRY_OPTIONS: RetryOptions = {
 }
 
 /**
- * Executes an operation with exponential backoff retry
- *
- * @param operation - Async operation to execute
- * @param options - Retry configuration options
- * @param operationName - Name of the operation for logging
- * @returns The result of the operation
- * @throws The last error encountered after all retries have been exhausted
+ * Retries transient failures with exponential backoff and jitter to avoid thundering herd on
+ * recovery. Caller options merge over DEFAULT_RETRY_OPTIONS.
  */
 export async function withRetry<T> (
   operation: () => Promise<T>,

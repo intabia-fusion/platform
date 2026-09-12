@@ -277,7 +277,7 @@ export class ClientSession implements Session {
     } finally {
       onEnd?.()
     }
-    // Send result immideately
+    // Send result immediately
     await ctx.sendResponse(ctx.requestId, result)
 
     // We need to broadcast all collected transactions

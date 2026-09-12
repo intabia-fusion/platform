@@ -218,7 +218,7 @@ export class RatingCalculator {
 
     result.ratingDomains = new Map(getRatingDomains(hierarchy, modelDb))
 
-    // Let's check if workspace was calculated rating's if not we should do it.
+    // Check if the workspace rating is calculated; if not, calculate it.
 
     const migrationState = await result.pipeline.findAll<MigrationState>(ctx, core.class.MigrationState, {
       plugin: ratingId
@@ -249,7 +249,6 @@ export class RatingCalculator {
   }
 
   async recalculateAll (ctx: MeasureContext, control?: ConsumerControl): Promise<void> {
-    // We need to iterate over all transactions and recalculate rating for each document and each person
 
     ctx.info('START RERANK ALL for', {
       uuid: this.pipeline.context.workspace.uuid,

@@ -14,9 +14,8 @@
   limitations under the License.
 */
 
-// Keeps package.json in step with the catalog in pnpm-workspace.yaml: any literal version for a
-// catalogued dependency is drift, and `--fix` rewrites it to "catalog:". A literal that disagrees
-// with the catalog is rewritten too, but reported loudly — bump the catalog if that was intended.
+// Syncs package.json literal versions with pnpm-workspace.yaml catalog; `--fix` rewrites drift
+// to "catalog:". Bump the catalog if a literal was intentional.
 
 const { readFileSync, writeFileSync, existsSync } = require('fs')
 const { join } = require('path')
