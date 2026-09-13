@@ -18,8 +18,8 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
   stream:
-    image: 'intabiafusion/stream:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/stream:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     environment:
       - STREAM_ENDPOINT_URL=datalake://datalake:4031
       - STREAM_BASE_URL=http://localhost:8083/_stream
@@ -50,8 +50,8 @@ services:
     restart: unless-stopped
 
   db-migrator:
-    image: 'intabiafusion/db-migrator:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/db-migrator:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     depends_on:
       postgres:
         condition: service_healthy
@@ -123,8 +123,8 @@ services:
       interval: 5s
       retries: 10
   datalake:
-    image: 'intabiafusion/datalake:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/datalake:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     depends_on:
       minio:
         condition: service_healthy
@@ -143,7 +143,7 @@ services:
       - QUEUE_CONFIG=${QUEUE_CONFIG}
     restart: unless-stopped
   elastic-plugins:
-    image: intabiafusion/elastic-plugins:8.19.1-slim
+    image: "${DOCKER_NAMESPACE:-intabiafusion}/elastic-plugins:8.19.1-slim"
     command:
       - sh
       - -c
@@ -177,8 +177,8 @@ services:
       retries: 10
       test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
   account:
-    image: 'intabiafusion/account:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/account:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     depends_on:
       postgres:
         condition: service_healthy
@@ -192,7 +192,7 @@ services:
       - ACCOUNT_PORT=3003
       - QUEUE_CONFIG=${QUEUE_CONFIG}
       - SERVER_SECRET=secret
-      - ADMIN_EMAILS=admin,${PLATFORM_ADMIN_EMAILS}
+      - ADMIN_EMAILS=admin,admin2,${PLATFORM_ADMIN_EMAILS}
       # Read-only admin panel access: admin-gates tests assert reads pass and mutations are refused.
       - BILLING_EMAILS=billing
       - STATS_URL=http://stats:4901
@@ -213,15 +213,15 @@ services:
       - OTP_RETRY_DELAY=1
     restart: unless-stopped
   stats:
-    image: 'intabiafusion/stats:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/stats:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     environment:
       - PORT=4901
       - SERVER_SECRET=secret
     restart: unless-stopped
   billing:
-    image: 'intabiafusion/billing:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/billing:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     depends_on:
       postgres:
         condition: service_healthy
@@ -242,8 +242,8 @@ services:
       - ALLOW_TEST_ENDPOINTS=true
     restart: unless-stopped
   workspace:
-    image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/workspace:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     links:
       - minio
       - stats
@@ -266,8 +266,8 @@ services:
       # - INIT_WORKSPACE=huly
     restart: unless-stopped
   workspace_europe:
-    image: 'intabiafusion/workspace:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/workspace:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     depends_on:
       postgres:
         condition: service_healthy
@@ -293,8 +293,8 @@ services:
       # - INIT_WORKSPACE=huly
     restart: unless-stopped
   collaborator:
-    image: 'intabiafusion/collaborator:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/collaborator:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     links:
       - minio
       - transactor
@@ -307,8 +307,8 @@ services:
       - STATS_URL=http://stats:4901
     restart: unless-stopped
   front:
-    image: 'intabiafusion/front:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/front:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     links:
       - account
       - minio
@@ -340,8 +340,8 @@ services:
       # OTP is on here so tests drive the real sign in flow; they read the code from account_db.
     restart: unless-stopped
   transactor:
-    image: 'intabiafusion/transactor:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/transactor:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     links:
       - minio
       - account
@@ -368,8 +368,8 @@ services:
       - RATE_LIMIT_MAX=25000
       - RATE_LIMIT_WINDOW=1000
   transactor-europe:
-    image: 'intabiafusion/transactor:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/transactor:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     depends_on:
       postgres:
         condition: service_healthy
@@ -401,14 +401,14 @@ services:
       - RATE_LIMIT_WINDOW=1000
     restart: unless-stopped
   rekoni:
-    image: 'intabiafusion/rekoni-service:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/rekoni-service:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     restart: unless-stopped
     environment:
       - STATS_URL=http://stats:4901
   fulltext:
-    image: 'intabiafusion/fulltext:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/fulltext:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     restart: unless-stopped
     links:
       - elastic
@@ -425,8 +425,8 @@ services:
       - REKONI_URL=http://rekoni:4004
       - ACCOUNTS_URL=http://account:3003
   fulltext-europe:
-    image: 'intabiafusion/fulltext:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/fulltext:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     depends_on:
       postgres:
         condition: service_healthy
@@ -448,8 +448,8 @@ services:
       - ACCOUNTS_URL=http://account:3003
     restart: unless-stopped
   aiBot:
-    image: 'intabiafusion/ai-bot:${DOCKER_TAG:-latest}'
-    pull_policy: never
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/ai-bot:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     restart: unless-stopped
@@ -472,7 +472,7 @@ services:
       - OPENAI_BASE_URL=http://host.docker.internal:1234/v1/
       - CHUNK_STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin&rootBucket=chunks
   activity:
-    image: 'intabiafusion/activity:${DOCKER_TAG:-latest}'
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/activity:${DOCKER_TAG:-latest}"
     depends_on:
       redpanda:
         condition: service_started

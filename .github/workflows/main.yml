@@ -740,8 +740,8 @@ jobs:
         run: |
           set -euo pipefail
           cd desktop-package
-          ../common/scripts/docker_build.sh intabiafusion/desktop-distro
-          ../common/scripts/docker_tag.sh intabiafusion/desktop-distro
+          ../common/scripts/docker_build.sh desktop-distro
+          ../common/scripts/docker_tag.sh desktop-distro
         env:
           DOCKER_CLI_HINTS: false
           DOCKER_BUILDKIT: 1

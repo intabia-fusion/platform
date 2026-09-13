@@ -82,14 +82,26 @@ export async function composeDown (opts: ComposeOptions): Promise<void> {
 }
 
 /**
+ * `docker compose up` pulls missing images and retries nothing, so a layer download reset by the
+ * registry CDN takes the whole stand down with it. Layers that did land are cached, so a retry
+ * resumes rather than starts over.
  * @public
  */
-export async function composeUp (opts: ComposeOptions): Promise<void> {
-  await exec(
-    'docker',
-    [...composeArgs(opts), 'up', '-d', '--force-recreate', '--renew-anon-volumes', '--remove-orphans'],
-    { cwd: opts.cwd, prefix: 'compose up' }
-  )
+export async function composeUp (opts: ComposeOptions, attempts = 3, retryDelayMs = 5000): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await exec(
+        'docker',
+        [...composeArgs(opts), 'up', '-d', '--force-recreate', '--renew-anon-volumes', '--remove-orphans'],
+        { cwd: opts.cwd, prefix: attempt === 1 ? 'compose up' : `compose up (retry ${attempt - 1})` }
+      )
+      return
+    } catch (err: unknown) {
+      if (attempt >= attempts) throw err
+      log(`compose up failed (attempt ${attempt}/${attempts}), retrying: ${(err as Error).message}`)
+      await new Promise<void>((resolve) => setTimeout(resolve, retryDelayMs))
+    }
+  }
 }
 
 /**

@@ -147,7 +147,9 @@ const ws: StandConfig = {
     // user4 has no workspace membership: used to test the account-side join-time seat hard-cap.
     { name: 'user4', first: 'Seat', last: 'Joiner' },
     // billing is a read-only admin (BILLING_EMAILS): sees the admin panel, cannot mutate.
-    { name: 'billing', first: 'Bill', last: 'Reader' }
+    { name: 'billing', first: 'Bill', last: 'Reader' },
+    // admin-gates burns the admin OTP rate limit, so it runs on its own admin.
+    { name: 'admin2', first: 'Gate', last: 'Admin' }
   ],
   workspaces: [
     {

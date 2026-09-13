@@ -1,0 +1,376 @@
+stages:
+  - bundle
+  - check
+  - test
+  - docker
+  - uitest
+  - package
+  - push
+  - deploy
+
+variables:
+  # Shown with these hints on the "Run pipeline" page; the deploy jobs pick them up from there,
+  # so a manual deploy needs no typing. GitLab 15.8 has no per-job description yet.
+  CICD_ENV_VERSION:
+    value: ""
+    description: "Версия для стенда, например v0.8.44. Пусто - тег коммита, иначе его sha"
+  CICD_DEPLOY_REGISTRY:
+    value: ""
+    options: ["", "docker.io"]
+    description: "Реестр, ИЗ которого стенд тянет образы. Пусто - тот же, что у сборки"
+  CICD_SELFHOST_REF:
+    value: ""
+    description: "Ветка, тег или sha platform-selfhost. Пусто - значение из конфига стенда"
+  # Version comes from `git describe --tags`, so the checkout must carry history and tags.
+  # clone, not fetch: `git clean` trips over stand log dirs left by a previous uitest job.
+  GIT_STRATEGY: clone
+  GIT_DEPTH: 300
+  GIT_FETCH_EXTRA_FLAGS: --tags
+  # FastZIP config
+  FF_USE_FASTZIP: 'true'
+  FASTZIP_ARCHIVER_BUFFER_SIZE: '16'
+  CACHE_COMPRESSION_LEVEL: 'fastest'
+  # NPM config
+  CI_NPM_CACHE_FOLDER: '.cache/npm'
+  NPM_CONFIG_CACHE: "${CI_PROJECT_DIR}/${CI_NPM_CACHE_FOLDER}"
+  NPM_REGISTRY: 'https://nexus.intabia.ru/repository/npm-proxy/'
+  # Puppeteer config
+  CI_PUPPETEER_CACHE_FOLDER: '.cache/puppeteer'
+  PUPPETEER_CACHE_DIR: "${CI_PROJECT_DIR}/${CI_PUPPETEER_CACHE_FOLDER}"
+  PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false'
+  # Docker config
+  DOCKER_CLI_HINTS: 'false'
+  DOCKER_BUILDKIT: '1'
+  DOCKER_EXTRA: '--platform=linux/amd64'
+  # DOCKER_REGISTRY and DOCKER_NAMESPACE come from the project CI variables.
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_TAG =~ /^[vs]/
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH =~ /^cicd/
+
+.build_output: &build_output
+  artifacts:
+    expire_in: 2 hours
+    paths:
+      - desktop
+      - desktop-package
+      - foundations
+      - dev
+      - models
+      - packages
+      - plugins
+      - pods
+      - server
+      - server-plugins
+      - services
+      - tests
+      - ws-tests
+      - qms-tests
+
+.configure_npm:
+  script:
+    - npm set cache ${NPM_CONFIG_CACHE}
+    - |
+      # npm defaults to a 5-minute per-request timeout, so one nexus stall cost a job 35 minutes
+      # on a command that normally takes 5 seconds. Cap it: worst case is now about 3 minutes.
+      cat <<EOF > .npmrc
+      registry=${NPM_REGISTRY}
+      audit=false
+      fetch-timeout=60000
+      fetch-retries=2
+      fetch-retry-mintimeout=2000
+      fetch-retry-maxtimeout=20000
+      EOF
+    - |
+      # corepack pulls @pnpm/exe from a URL the nexus npm proxy rejects (400), so use npm
+      pnpm_version=$(node -p "require('./package.json').packageManager.split('@')[1]")
+      corepack disable pnpm 2>/dev/null || true
+      if [ "$(pnpm --version 2>/dev/null)" != "$pnpm_version" ]; then
+        npm install -g "pnpm@$pnpm_version"
+      fi
+      pnpm --version
+
+.docker_login:
+  script:
+    - docker login $CICD_DOCKER_REGISTRY_URL -u $CICD_DOCKER_REGISTRY_USER_PUSH -p $CICD_DOCKER_REGISTRY_PASSWORD_PUSH
+    - |
+      if [ -n "$DOCKER_HUB_TOKEN" ]; then
+        echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+      fi
+
+# One stand per host: fixed ports. Per-host lock, not resource_group, so runners stay parallel.
+.lock_stand:
+  script:
+    - |
+      exec 9>/tmp/foundation-stand.lock
+      echo "Waiting for the stand lock on $(hostname)..."
+      flock 9
+      echo "Stand lock acquired"
+    # Safe only under the lock: a previous job on this host may still own these containers.
+    - docker ps -q | xargs -r docker stop
+
+# Runner shells are non-interactive, so an rc file that returns early never exports nvm.
+# `nvm install` reads .nvmrc, so a freshly provisioned runner picks up the right node itself.
+.load_nvm:
+  script:
+    - |
+      export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+      if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+        echo "nvm is not installed on runner $(hostname): $NVM_DIR/nvm.sh is missing" >&2
+        exit 1
+      fi
+      . "$NVM_DIR/nvm.sh"
+      nvm install
+      nvm use
+      node --version
+
+.linux:
+  tags:
+    - shell
+    - ubuntu
+  interruptible: true
+  cache:
+    - key: foundation-linux
+      paths:
+        - .cache
+  before_script:
+    - source ~/.bashrc || true
+    - !reference [.load_nvm, script]
+    - !reference [.configure_npm, script]
+
+.macos:
+  tags:
+    - shell
+    - macos
+  interruptible: true
+  cache:
+    - key: foundation-macos
+      paths:
+        - .cache
+  before_script:
+    - source ~/.zshrc || true
+    - !reference [.load_nvm, script]
+    - !reference [.configure_npm, script]
+
+bundle:
+  stage: bundle
+  extends: .linux
+  <<: *build_output
+  script:
+    - ./ci_bundle.sh
+
+svelte-check:
+  stage: check
+  extends: .linux
+  needs:
+    - bundle
+  script:
+    - ./ci_svelte_check.sh
+
+format-check:
+  stage: check
+  extends: .linux
+  needs:
+    - bundle
+  script:
+    - ./ci_format_check.sh
+
+test:
+  stage: test
+  extends: .linux
+  needs:
+    - bundle
+  variables:
+    DB_URL: "postgresql://postgres:postgres@localhost:5433/postgres"
+    ELASTIC_URL: "http://localhost:9201"
+    MONGO_URL: "mongodb://localhost:27018"
+  before_script:
+    - !reference [.linux, before_script]
+    - !reference [.lock_stand, script]
+    - !reference [.docker_login, script]
+  script:
+    - ./ci_test.sh
+
+# Builds and publishes every image by commit sha; the stands below pull them from there.
+docker-build:
+  stage: docker
+  extends: .linux
+  needs:
+    - bundle
+  timeout: 90m
+  before_script:
+    - !reference [.linux, before_script]
+    - !reference [.docker_login, script]
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        export DOCKER_EXTRA='--platform=linux/amd64,linux/arm64'
+      fi
+  script:
+    - ./ci_docker_build.sh
+
+.uitest:
+  stage: uitest
+  extends: .linux
+  needs:
+    - bundle
+    - docker-build
+  timeout: 90m
+  variables:
+    # Stands pull the exact images docker-build published for this commit.
+    DOCKER_TAG: "${CI_COMMIT_SHA}"
+    DOCKER_PULL_POLICY: "missing"
+  before_script:
+    - !reference [.linux, before_script]
+    - !reference [.lock_stand, script]
+    - !reference [.docker_login, script]
+  script:
+    - ./ci_uitest.sh
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - ${test_folder}/sanity/playwright-report/
+      - ${test_folder}/sanity/playwright-report.json
+      - ${test_folder}/sanity/step-report.ndjson
+      - ${test_folder}/sanity/logs/
+      - ${test_folder}/api-tests/playwright-report/
+
+uitest:pg:
+  extends: .uitest
+  variables:
+    test_folder: "tests"
+    prepare_script: "./prepare-pg.sh"
+    build_package: "@hcengineering/tests-sanity"
+    run_api_tests: "false"
+    enable_profiling: "false"
+
+uitest:workspace:
+  extends: .uitest
+  variables:
+    test_folder: "ws-tests"
+    prepare_script: "./prepare.sh"
+    build_package: "@hcengineering/tests-ws-sanity"
+    run_api_tests: "true"
+    enable_profiling: "false"
+
+uitest:qms:
+  extends: .uitest
+  variables:
+    test_folder: "qms-tests"
+    prepare_script: "./prepare-qms.sh"
+    build_package: "@hcengineering/qms-tests-sanity"
+    run_api_tests: "false"
+    enable_profiling: "false"
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: on_success
+
+uitest:cockroach:
+  extends: .uitest
+  when: manual
+  allow_failure: true
+  variables:
+    test_folder: "tests"
+    prepare_script: "./prepare-cockroach.sh"
+    build_package: "@hcengineering/tests-sanity"
+    run_api_tests: "false"
+    enable_profiling: "true"
+
+package-desktop:
+  stage: package
+  extends: .macos
+  needs: []
+  timeout: 60m
+  before_script:
+    - !reference [.macos, before_script]
+    - !reference [.docker_login, script]
+  script:
+    - ./ci_package_desktop.sh
+    - echo "RELEASE_TAG=$(node common/scripts/show_tag.js)" >> build.env
+    - echo "BUILD_REV=$(git rev-parse HEAD)" >> build.env
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - ./desktop-package/deploy/
+    reports:
+      dotenv: build.env
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^[vs]/
+    - when: manual
+      allow_failure: true
+
+# Marks the commit images as a release. Manual on purpose: a green pipeline is not a release.
+release-tag:
+  stage: push
+  extends: .linux
+  needs:
+    - docker-build
+  when: manual
+  before_script:
+    - !reference [.linux, before_script]
+    - !reference [.docker_login, script]
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        export DOCKER_EXTRA='--platform=linux/amd64,linux/arm64'
+      fi
+  script:
+    - ./ci_push_release.sh
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^[vs]/
+
+push-desktop-images:
+  stage: push
+  extends: .linux
+  needs:
+    - bundle
+    - package-desktop
+  before_script:
+    - !reference [.linux, before_script]
+    - !reference [.docker_login, script]
+  script:
+    - ./ci_push_desktop.sh
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - when: on_success
+
+.deploy_dev:
+  stage: deploy
+  # .linux for the nexus npm registry: ci_deploy.sh reads the stand config through npx js-yaml.
+  extends: .linux
+  parallel:
+    matrix:
+      - ENV: [dev1, dev2, dev3]
+  interruptible: false
+  needs:
+    - docker-build
+  when: manual
+  environment:
+    name: $ENV
+  before_script:
+    - !reference [.linux, before_script]
+    # Both are overridable from "Run job with variables": CICD_ENV_VERSION to install a released
+    # tag instead of this commit, DOCKER_REGISTRY='' to pull it from Docker Hub instead of ours.
+    - export CICD_ENV_VERSION="${CICD_ENV_VERSION:-${CI_COMMIT_TAG:-$CI_COMMIT_SHA}}"
+    # What "Run job with variables" resolved to.
+    - |
+      echo "Deploying to $ENV"
+      echo "  version:      $CICD_ENV_VERSION"
+      echo "  registry:     ${CICD_DEPLOY_REGISTRY:-${DOCKER_REGISTRY:-docker.io}}/${DOCKER_NAMESPACE:-intabiafusion}"
+      echo "  selfhost ref: ${CICD_SELFHOST_REF:-<from the stand config>}"
+
+# Wipes configs and volumes, then installs the stand from scratch on this commit's images.
+clean-deploy-dev:
+  extends: .deploy_dev
+  script:
+    - ./ci_deploy.sh clean
+
+# Pulls this commit's images and restarts the stand, keeping data.
+migration-deploy-dev:
+  extends: .deploy_dev
+  script:
+    - ./ci_deploy.sh update

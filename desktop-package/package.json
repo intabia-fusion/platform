@@ -15,8 +15,8 @@
     "format": "echo done",
     "bump": "bump-package-version",
     "bundle:server": "node ../common/scripts/esbuild.js --entry=src/server.ts --keep-names=true --sourcemap=external --minify",
-    "dist-docker-build": "pnpm run bundle:server && node ../common/scripts/run_in_bash.js ../common/scripts/docker_build.sh intabiafusion/desktop-distro",
-    "dist-docker-push": "pnpm run bundle:server && pnpm run docker:build && ../common/scripts/run_in_bash.js ../common/scripts/docker_tag.sh intabiafusion/desktop-distro",
+    "dist-docker-build": "pnpm run bundle:server && node ../common/scripts/run_in_bash.js ../common/scripts/docker_build.sh desktop-distro",
+    "dist-docker-push": "pnpm run bundle:server && pnpm run docker:build && ../common/scripts/run_in_bash.js ../common/scripts/docker_tag.sh desktop-distro",
     "test": "jest --forceExit",
     "verify-manifests": "node scripts/verify-manifests.js"
   },

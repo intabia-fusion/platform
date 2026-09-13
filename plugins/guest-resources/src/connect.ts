@@ -17,6 +17,7 @@ import { getMetadata, getResource, setMetadata } from '@hcengineering/platform'
 import presentation, {
   loadServerConfig,
   refreshClient,
+  releaseVersion,
   setClient,
   setPresentationCookie,
   upgradeDownloadProgress
@@ -98,17 +99,21 @@ export async function connect (title: string): Promise<Client | undefined> {
   _client = await clientFactory(exchangedToken, workspaceLoginInfo.endpoint, {
     onHello: (serverVersion?: string) => {
       const frontVersion = getMetadata(presentation.metadata.FrontVersion)
+      // Compare release versions only: server bundles carry a build commit suffix that
+      // desktop builds do not have.
+      const serverRelease = serverVersion !== undefined ? releaseVersion(serverVersion) : undefined
+      const frontRelease = frontVersion !== undefined ? releaseVersion(frontVersion) : undefined
       if (
-        serverVersion !== undefined &&
-        serverVersion !== '' &&
-        frontVersion !== undefined &&
-        frontVersion !== serverVersion
+        serverRelease !== undefined &&
+        serverRelease !== '' &&
+        frontRelease !== undefined &&
+        frontRelease !== serverRelease
       ) {
-        const reloaded = localStorage.getItem(`versionUpgrade:s${serverVersion}:f${frontVersion}`)
+        const reloaded = localStorage.getItem(`versionUpgrade:s${serverRelease}:f${frontRelease}`)
         const isUpgrading = get(upgradeDownloadProgress) >= 0
 
         if (reloaded === null) {
-          localStorage.setItem(`versionUpgrade:s${serverVersion}:f${frontVersion}`, 't')
+          localStorage.setItem(`versionUpgrade:s${serverRelease}:f${frontRelease}`, 't')
           // It might have been refreshed manually and download has started - do not reload
           if (!isUpgrading) {
             location.reload()
@@ -186,7 +191,10 @@ export async function connect (title: string): Promise<Client | undefined> {
             const currentFrontVersion = getMetadata(presentation.metadata.FrontVersion)
             if (currentFrontVersion !== undefined) {
               const frontConfig = await loadServerConfig(concatLink(frontUrl, '/config.json'))
-              if (frontConfig?.version !== undefined && frontConfig.version !== currentFrontVersion) {
+              if (
+                frontConfig?.version !== undefined &&
+                releaseVersion(frontConfig.version as string) !== releaseVersion(currentFrontVersion)
+              ) {
                 location.reload()
               }
             }
