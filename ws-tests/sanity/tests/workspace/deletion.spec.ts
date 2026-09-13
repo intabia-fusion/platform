@@ -17,6 +17,10 @@ test.describe('Workspace and account deletion', () => {
     const accountUuid: string = created.result.account
     const workspaceInfo = await api.createWorkspaceWithLogin(wsId, email, '1234')
 
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+    await loginPage.login('admin', '1234')
+
     const adminPage = new AdminPage(page)
     await adminPage.gotoAdmin()
 
@@ -24,6 +28,8 @@ test.describe('Workspace and account deletion', () => {
 
     await test.step('schedule the workspace', async () => {
       await adminPage.openWorkspacesTab()
+      // The Delete button lives behind the same "Enable deletion" checkbox as on the Accounts tab.
+      await adminPage.toggleFilter('Enable deletion')
       await adminPage.searchWorkspace(workspaceInfo.workspace)
       await row.getByRole('button', { name: 'Delete' }).click()
       await adminPage.confirmOtp()
@@ -68,7 +74,7 @@ test.describe('Workspace and account deletion', () => {
     await test.step('the link is hidden while the person still owns a workspace', async () => {
       await userProfilePage.openProfileMenu()
       await userProfilePage.clickSelectWorkspace()
-      await expect(page.getByText('Delete account', { exact: true })).toHaveCount(0)
+      await expect(page.locator('[data-id="delete-account"]')).toHaveCount(0)
       await selectWorkspacePage.selectWorkspace(wsId)
     })
 
@@ -84,14 +90,14 @@ test.describe('Workspace and account deletion', () => {
     })
 
     await test.step('schedule the account from the workspace list', async () => {
-      const link = page.getByText('Delete account', { exact: true })
+      const link = page.locator('[data-id="delete-account"]')
       await expect(link).toBeVisible({ timeout: 30000 })
       await link.click()
 
       const code = page.locator('input[placeholder="Enter code"]')
       await code.waitFor({ state: 'visible' })
       await code.fill('000000')
-      await page.getByRole('button', { name: 'Delete account', exact: true }).click()
+      await page.locator('.antiCard').getByRole('button', { name: 'Delete account', exact: true }).click()
 
       await page.waitForURL((url) => url.pathname.startsWith('/login'), { timeout: 60000 })
     })

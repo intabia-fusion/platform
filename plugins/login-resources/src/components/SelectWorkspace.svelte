@@ -369,7 +369,7 @@
       </div>
       {#if canDeleteAccount}
         <div class="delete-account">
-          <button type="button" on:click={handleDeleteAccount}>
+          <button type="button" data-id="delete-account" on:click={handleDeleteAccount}>
             <Label label={login.string.DeleteAccount} />
           </button>
         </div>
