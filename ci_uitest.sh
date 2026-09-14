@@ -14,10 +14,16 @@ echo "run_api_tests: ${run_api_tests:-false}"
 echo "run_backup_tests: ${run_backup_tests:-false}"
 echo "enable_profiling: ${enable_profiling:-false}"
 
+# A stand left running recreates its bind mounts as root and breaks the next checkout.
+# Safe under the stand lock the job holds - see .lock_stand.
+trap 'docker ps -q | xargs -r docker stop >/dev/null 2>&1 || true' EXIT
+
 pnpm install --frozen-lockfile
 
 # Stand images are pulled from the registry by DOCKER_TAG, so any runner can host a suite.
 export LIVEKIT_MODE="docker"
+# The job owns the host under the stand lock, so other stands here are leftovers.
+export STAND_CLEAN_OTHERS="true"
 cd "${project_dir}/${test_folder}"
 ${prepare_script}
 
@@ -74,8 +80,5 @@ fi
 if [[ -f step-report.ndjson ]]; then
     node "${project_dir}/tests/sanity/analyze_steps.js" step-report.ndjson --top 20 || true
 fi
-
-# Under the stand lock, unlike after_script.
-docker ps -q | xargs -r docker stop || true
 
 exit $uitest_status

@@ -28,6 +28,7 @@ describe('composeUp', () => {
   const dir = resolve(mkdtempSync(resolve(tmpdir(), 'test-base-docker-')), 'prepare')
   const original = process.stdout.write.bind(process.stdout)
   let composeUp: typeof dockerModule.composeUp
+  let removeStaleStands: typeof dockerModule.removeStaleStands
 
   beforeAll(() => {
     process.stdout.write = (() => true) as any
@@ -36,7 +37,9 @@ describe('composeUp', () => {
       const log: typeof logModule = require('../log')
       log.initLogs(dir)
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      composeUp = (require('../docker') as typeof dockerModule).composeUp
+      const docker = require('../docker') as typeof dockerModule
+      composeUp = docker.composeUp
+      removeStaleStands = docker.removeStaleStands
     })
   })
 
@@ -70,5 +73,15 @@ describe('composeUp', () => {
 
     await expect(composeUp(opts, 3, 1)).rejects.toThrow('exited with code 1')
     expect(spawn).toHaveBeenCalledTimes(3)
+  })
+
+  it('brings every other stand down by project, and survives one that is not there', async () => {
+    spawn.mockImplementationOnce(() => child(0)).mockImplementationOnce(() => child(1))
+
+    await removeStaleStands(['sanity', 'gone'], '/tmp')
+
+    expect(spawn).toHaveBeenCalledTimes(2)
+    expect(spawn.mock.calls[0][1]).toEqual(['compose', '-p', 'sanity', 'down', '--volumes', '--remove-orphans'])
+    expect(spawn.mock.calls[1][1]).toEqual(['compose', '-p', 'gone', 'down', '--volumes', '--remove-orphans'])
   })
 })
