@@ -820,7 +820,13 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     const newQuery = { ...query }
     const account = ctx.contextData.account
     if (!isSystem(account, ctx)) {
-      newQuery.spaces = this.getAllAllowedSpaces(account, false, true)
+      const allowed = this.getAllAllowedSpaces(account, false, true)
+      if (query.spaces !== undefined) {
+        const allowedSet = new Set(allowed)
+        newQuery.spaces = query.spaces.filter((s) => allowedSet.has(s))
+      } else {
+        newQuery.spaces = allowed
+      }
     }
     return await this.provideSearchFulltext(ctx, newQuery, options)
   }

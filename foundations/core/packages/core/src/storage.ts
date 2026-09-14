@@ -291,6 +291,8 @@ export interface SearchHighlightOptions {
  */
 export interface SearchOptions {
   searchIn?: 'title' | 'content' | 'all'
+  /** Ranks by how well a document matches instead of demanding every word, and forgives typos. */
+  fuzzy?: boolean
   viewerId?: string
   limit?: number
   cursor?: string
