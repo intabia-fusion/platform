@@ -21,11 +21,17 @@ import core, {
   Data,
   MeasureContext,
   Ref,
+  TxFactory,
   generateId,
   systemAccountUuid,
   type AccountUuid,
   type Blob,
+  type Doc,
+  type DocumentClassQuery,
+  type DocumentQuery,
   type PersonId,
+  type Timestamp,
+  type TxApplyResult,
   type WorkspaceUuid,
   DocumentUpdate,
   SocialIdType
@@ -56,6 +62,7 @@ export const UNFINISHED_MEETING_GRACE_MS = 60_000
 
 export class WorkspaceClient {
   private client!: RestClient
+  private socialId?: PersonId
 
   // Serialises seat allocation per meeting: concurrent joins would read the same snapshot
   // and pick one cell. Static, since meeting refs are globally unique.
@@ -238,16 +245,21 @@ export class WorkspaceClient {
     const rearm = scheduledAt != null && Date.now() < scheduledAt + SCHEDULED_MEETING_WINDOW_MS
 
     const endTs = meetingEnd ?? Date.now()
+    // Finished twice - room_finished webhook, then polling seeing the room gone: keep the first end.
     const upd: DocumentUpdate<MeetingMinutes> = rearm
       ? { status: MeetingStatus.Scheduled }
-      : { status: MeetingStatus.Finished, meetingEnd: endTs }
+      : meeting.status === MeetingStatus.Finished
+        ? {}
+        : { status: MeetingStatus.Finished, meetingEnd: endTs }
     if (meeting.transcriptionState === TranscriptionState.Transcribing) {
       upd.transcriptionState = TranscriptionState.Finished
     }
     if (meeting.recordingState === RecordingState.Recording) {
       upd.recordingState = RecordingState.Finished
     }
-    await this.client.update(meeting, upd)
+    if (Object.keys(upd).length > 0) {
+      await this.client.update(meeting, upd)
+    }
     if (rearm) {
       this.ctx.info('Re-armed scheduled meeting instead of finishing', {
         meeting: meeting._id,
@@ -266,9 +278,21 @@ export class WorkspaceClient {
   private async cleanupInvitesForMeeting (meeting: Ref<MeetingMinutes>, roomId: Ref<Room> | undefined): Promise<void> {
     try {
       const byMeeting = await this.client.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, { meeting })
-      const byRoom: UserMeetingInvite[] =
+      // A knock carries only the room, so it belongs to whichever meeting is live there now. A late
+      // second finish of the previous meeting used to wipe the knocks of the next one.
+      const liveInRoom =
         roomId !== undefined
-          ? await this.client.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, { room: roomId })
+          ? await this.client.findOne(love.class.MeetingMinutes, {
+            roomId,
+            _id: { $ne: meeting },
+            status: { $in: [MeetingStatus.Active, MeetingStatus.Pending] }
+          })
+          : undefined
+      const byRoom: UserMeetingInvite[] =
+        roomId !== undefined && liveInRoom === undefined
+          ? (await this.client.findAll<UserMeetingInvite>(love.class.UserMeetingInvite, { room: roomId })).filter(
+              (it) => it.meeting == null || it.meeting === meeting
+            )
           : []
       const seen = new Set<Ref<UserMeetingInvite>>()
       const all = [...byMeeting, ...byRoom].filter((it) => {
@@ -691,13 +715,18 @@ export class WorkspaceClient {
 
   // PendingRecording management
 
-  /** Create a PendingRecording document when recording starts (from /startRecord endpoint). */
+  /**
+   * Reserves the meeting+format slot before the egress call. The running-recording check and the
+   * insert reach the transactor as one TxApplyIf under a per-slot scope, so two callers racing - two
+   * love replicas included - cannot both pass. `undefined` when the slot is taken or the write failed.
+   */
   async createPendingRecording (params: {
     meeting: Ref<MeetingMinutes>
     format: RecordingFormat
     roomName: string
     name: string
-    egressId?: string
+    /** A reservation still waiting for its egress id holds the slot only if it is younger than this. */
+    reservedAfter: Timestamp
   }): Promise<Ref<PendingRecording> | undefined> {
     try {
       const meetingDoc = await this.client.findOne(love.class.MeetingMinutes, { _id: params.meeting })
@@ -706,21 +735,47 @@ export class WorkspaceClient {
         return undefined
       }
 
-      const docId = await this.client.addCollection(
-        love.class.PendingRecording,
-        meetingDoc._id,
-        meetingDoc._id,
+      this.socialId ??= (await this.client.getAccount()).primarySocialId
+      const factory = new TxFactory(this.socialId)
+      const create = factory.createTxCollectionCUD(
         meetingDoc._class,
+        meetingDoc._id,
+        meetingDoc._id,
         'recordings',
-        {
+        factory.createTxCreateDoc<PendingRecording>(love.class.PendingRecording, meetingDoc._id, {
           format: params.format,
           startedAt: Date.now(),
           roomName: params.roomName,
           name: params.name,
-          egressId: params.egressId,
           status: 'active'
-        }
+        } as unknown as Data<PendingRecording>)
       )
+      // Same predicate as RecordingProcessor.findRunningRecording, split in two: notMatch has no $or.
+      const holding: DocumentQuery<PendingRecording> = {
+        attachedTo: meetingDoc._id,
+        format: params.format,
+        status: { $in: ['active', 'completed'] }
+      }
+      const applyIf = factory.createTxApplyIf(
+        core.space.Tx,
+        `love:recording:${meetingDoc._id}:${params.format}`,
+        [],
+        [
+          { _class: love.class.PendingRecording, query: { ...holding, egressId: { $exists: true } } },
+          { _class: love.class.PendingRecording, query: { ...holding, startedAt: { $gt: params.reservedAfter } } }
+        ] as Array<DocumentClassQuery<Doc>>,
+        [create],
+        undefined
+      )
+      const result = (await this.client.tx(applyIf)) as TxApplyResult
+      if (!result.success) {
+        this.ctx.info('[WorkspaceClient.createPendingRecording] Slot already held', {
+          meeting: params.meeting,
+          format: params.format
+        })
+        return undefined
+      }
+      const docId = create.objectId as Ref<PendingRecording>
       this.ctx.info('[WorkspaceClient.createPendingRecording] Created', {
         docId,
         meeting: params.meeting,

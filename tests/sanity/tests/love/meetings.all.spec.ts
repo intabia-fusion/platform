@@ -14,7 +14,7 @@
 //
 
 import { test } from '../fixtures'
-import { closeLoveWindows } from './meeting-helpers'
+import { closeLoveWindows, disableRoomAutoTranscription } from './meeting-helpers'
 
 import { registerAccessTests } from './meetings.access.tests'
 import { registerMultiTabTests } from './meetings.multitab.tests'
@@ -44,6 +44,11 @@ import { registerTransactorRestartTests } from './meetings.transactor-restart.te
 import { registerWorkspaceOwnerTests } from './meetings.workspace-owner.tests'
 
 test.describe('love (meetings) — suite', () => {
+  // Without this every meeting here gets an ai-bot participant, see the helper.
+  test.beforeAll(async () => {
+    await disableRoomAutoTranscription()
+  })
+
   // The per-user windows are shared by every test here; `closeMeetingContexts` rolls them back
   // after each one, this only tears them down at the end.
   test.afterAll(async () => {

@@ -24,7 +24,9 @@ export async function openBotDirect (
   await expect(async () => {
     await chunterPage.createDirectChat(BOT)
   }).toPass({ intervals: retryIntervals, timeout: 60000 })
-  await channelPage.clickChooseChannel(BOT_DIRECT)
+  // createDirectChat already opens the chat. Its navigator entry appears only once the
+  // DocNotifyContext arrives, which these tests do not need and which lags behind.
+  await channelPage.waitOpenedChannel(BOT_DIRECT)
 }
 
 /** Set the workspace-wide AI level (AISpaceSettings). Uses a system token. */

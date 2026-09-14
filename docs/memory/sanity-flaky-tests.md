@@ -373,3 +373,192 @@ popup closed.
 **Wall time drifts up across a series** (346 -> 402s over 10 runs, 341 -> 366s over 5). The growth
 is spread across every file rather than sitting in one test, which is accumulated workspace data,
 not a regression from any fix. `dotest.sh` still runs no `restore-pg.sh`.
+
+## Round of 2026-09-14: four flakes, two roots
+
+10-прогонная серия дала 4 повторяющихся флака. Два корня, оба общие.
+
+### Blink отбрасывает drop, узел которого пересоздали (kanban, 7 флаков из 18)
+
+`drag card between columns` (4/10) и `drag child between parent lanes` (3/10). В отчёте были только
+`Test timeout of 60000ms exceeded` - `dragUntilStatus` держал `timeout: 60000` при таком же таймауте
+теста, поэтому poll никогда не успевал доложить свою ошибку. Шаговый отчёт показал бимодальность:
+либо 1 попытка за 0.7s, либо 7-13 подряд неудачных по ~2.9s каждая (полный таймаут ожидания
+`__dropSeen`), потом успех.
+
+Диагностика (добавлена в `dragPointer`: bubble-слушатель `dragover`, который читает состояние уже
+после хендлеров приложения) назвала виновника:
+
+```
+drop was not delivered to cell "|tracker:status:InProgress" (landed on "null",
+ last dragover "|tracker:status:InProgress" of 6, 2994ms ago, dragend false;
+ last dragover state: prevented=true drop=copy allowed=all on card-labels meta svelte-107ie1v)
+```
+
+`prevented=true`, `dropEffect=copy` - геометрия и preventDefault в порядке. Виновата последняя
+часть: `on card-labels` - точка сброса попадала **внутрь содержимого карточки**. Blink запоминает
+узел последнего `dragover` и доставляет `drop` именно ему; Svelte пересоздаёт содержимое карточки на
+любой чужой tx в том же проекте, узел отсоединяется - и `drop` не приходит вообще, `dragend` тоже
+(поэтому `dragend false`, а не "drop ушёл не туда").
+
+Отсюда и старая запись "целиться в карточку, а не в центр колонки": центр колонки попадал в контент
+карточки - тот же самый отказ, просто описанный как симптом.
+
+Починка (`tests/model/tracker/kanban-board-page.ts`):
+- `dragCardToColumn` / `dragCardToSwimLaneCell` целятся в саму колонку/ячейку, вся логика "выбрать
+  карточку внутри" удалена;
+- `visiblePointOf` ищет внутри видимой части цели точку, под которой нет `[data-id="kanban-card"]`
+  (падинги колонки и Scroller переживают перерисовки), и только при неудаче берёт центр;
+- цикл подталкивания требует *свежий* `dragover` (счётчик вырос), а не липкое `__dragOverCell` -
+  раньше устаревшее значение с прошлой перерисовки отпускало кнопку сразу;
+- если за 20 подталкиваний ни одного `dragover` - отдельная ошибка "drag session died", а не 3
+  секунды ожидания дропа и `page.reload()`.
+
+Тест (`tests/tracker/kanban.spec.ts`): `dragUntilStatus` обобщён в `dragUntilField(read, target,
+drag)`, таймаут 40s (меньше таймаута теста, чтобы poll успел доложить), в текст падения
+подставляется последняя ошибка drag. `drag child between parent lanes` переведён на этот хелпер -
+его собственный poll возвращал `attachedTo`, прочитанный **до** перетаскивания.
+
+Воспроизведение: в одиночку и под нагрузкой chat/documents тест зелёный 6/6. Нужна нагрузка именно
+**tracker**-спеками - они пишут в тот же проект, отсюда перерисовки:
+`--project=Platform tracker/ --grep-invert "Kanban board" --workers 5 --repeat-each 4`.
+Под ней до правки 3 из 10 падали, после - 0 из 10 и 0 из 18 (три drag-теста по 6 повторов).
+
+### Имя воркспейса из faker сталкивается, и тест уходит на форму логина
+
+`AI level cards switch the workspace level` (3/10) падал на `btnAiLevel-low` "element(s) not found".
+Прошлый разбор списал это на `getAILevels()`, который глотает ошибку и возвращает `[]`. Трейс
+показал другое: запроса `/levels` в сети **нет вообще**, а снимок страницы - это форма логина.
+
+`generateTestData()` брал `workspaceName: faker.lorem.word()`. Список слов faker конечен, а
+`createWorkspace` на стороне аккаунта при коллизии url выдаёт воркспейсу **свой** url
+(`server/account/src/utils.ts:1328`, `<base>-<generateId>`). Тесты же строят url из
+`data.workspaceName`, а не из возвращённого `ws.workspaceUrl` - и уходят в чужой воркспейс, то есть
+на логин. На стенде в момент разбора: 278 воркспейсов из 945 имели `url <> name` (29%).
+
+Починка: `workspaceName` в `tests/utils.ts` получил суффикс (`generateId(8)` в `generateTestData`,
+`faker.string.alphanumeric(8)` у модульной константы - там `generateId` ещё в TDZ). Под нагрузкой до
+правки 5 из 8 падали, после - 8 из 8 зелёных дважды.
+
+Это третий случай той же формы после `Save`-коллизии и `IntegrationAlreadyExists`: **слово faker -
+не идентификатор**.
+
+### Поиск, который молча не искал (issues.spec "Delete an issue", 2/10)
+
+`searchIssueByName` (`tests/model/tracker/issues-page.ts`) нажимал Enter только если
+`inputValue()` совпал с введённым, иначе **возвращался успешно**. Список оставался
+неотфильтрованным, и `openIssueByName` 30 секунд искал строку среди всех задач проекта. Теперь
+несовпадение бросает исключение, и обрамляющий `toPass` повторяет ввод. `openIssueByName` вдобавок
+раскрывает свёрнутые категории внутри retry, а не один раз до него: чужой tx перерисовывает список
+и сворачивает их обратно.
+
+### Колонка доски показывает первые десять (tracker.spec "issues-status-display", 1/10)
+
+`performPanelTest` проверял, что колонка доски содержит только что созданную задачу. При
+накопленных данных колонка рендерит `10 / 64`, и задачи в DOM просто нет. Теперь жмёт "Show more" в
+этой колонке, пока текст не появится.
+
+### Проверка серии (2026-09-14, чистый стенд)
+
+Стенд пересоздан `./prepare-pg.sh` (перед этим `./restore-pg.sh` оказался бесполезен: он сбрасывает
+данные sanity-ws/meetings-ws, но накопленные воркспейсы в account DB остаются - 998 штук), затем три
+прогона с `restore` между ними.
+
+```
+stamp             wall    work   passed  flaky  failed
+20260914-150431   462.8  2076.1      417      1       0
+20260914-151231   454.4  2052.6      416      1       0
+20260914-152018   489.2    2228      416      0       0
+```
+
+Все четыре разобранных флака исчезли. Остались только love/LiveKit (`meetings.session` и
+`meetings.presence`, по одному разу) - они и раньше плавали от прогона к прогону на Mac-хосте.
+
+Время не выросло, а упало там, где чинили: `kanban.spec` 144.1 -> 107.2s (-36.9),
+`ai-bot-scenarios` 100.2 -> 81.8s (-18.4), `tracker.spec` 70.3 -> 63.0s (-7.4). Wall 481.8 -> 462.8s.
+
+### ai-bot заходит в каждый love-митинг и ломает счётчики (2026-09-15)
+
+Прогон из 15 повторов дал два верхних флака, и оба свелись к одному источнику - ai-bot.
+
+`meetings.recording` "transcription toggle flips transcriptionState both ways" (5/15) всегда падал
+на `Expected 1, Received 2` - два активных `PendingRecording` формата `audio` на один митинг. Логи
+`sanity-love-1` в окне падения:
+
+```
+10:13:41.402  updateMeetingTranscriptionState state:1
+10:13:41.405  updateMeetingTranscriptionState state:1   <- второй /transcription, 3 мс спустя
+10:13:41.499  createPendingRecording format:audio  docId ...163
+10:13:41.518  createPendingRecording format:audio  docId ...167
+```
+
+Второй `/transcription(true)` шлёт ai-bot: у комнат meetings-ws стоит `startWithTranscription`,
+бот видит старт митинга (`autoTranscribe: true`) и зовёт `startTranscription`
+(`services/ai-bot/pod-ai-bot/src/workspace/love.ts:107`). Оба вызова успели прочитать
+`findRunningRecording` до того, как хоть один записал резервацию.
+
+Корень продуктовый: `startRecording` (видео) сериализован через `startInFlight`, а
+`startAudioRecording` - нет, то есть тот самый check-then-act, который чинили для видео в FUSIO-1242.
+Починка: резервация `PendingRecording` одним `TxApplyIf` для обоих форматов, работает и между
+репликами (см. [love_recording_button_stuck.md](love_recording_button_stuck.md)). Юнит-тест "two starts racing before any reservation"
+(`src/__tests__/recordings.test.ts`) падает без правки и проходит с ней; существовавший тест гонку не
+ловил - он стартовал второй вызов уже после того, как первый дошёл до egress.
+
+`meetings.presence` "two participants occupy two distinct cells" (3/15) падал на
+`Expected 2, Received 3`: третья занятая ячейка - участник ai-bot (`AI participant create applied
+x=2,y=0` ровно внутри окна падения). Тот же источник ломает и `meetings.guest`
+"guest shows up as a participant" (`Expected 1, Received 2`).
+
+Починка тестов: `disableRoomAutoTranscription()` в `meeting-helpers.ts` снимает
+`startWithTranscription` у `ROOM_CANDIDATES`, вызывается один раз в `beforeAll` сьюта
+(`meetings.all.spec.ts`). Ни один love-тест не проверяет транскрипцию, включённую настройкой
+комнаты - `meetings.recording` бьёт в `/transcription` напрямую. После этого за прогон ноль строк
+`AI participant` и ноль `Starting audio recording` - заодно ушёл лишний egress на каждый митинг.
+Настройка живёт в воркспейсе, после `./prepare-pg.sh` возвращается, поэтому именно `beforeAll`.
+
+`meetings.invite-ui` (2 падения из 15) - другое: клик по комнате перехватывал
+`div.panel-instance` поверх floor grid. Локальный `clickFirstMeetingRoom` в спеке дублировал
+`clickRoomByName` из хелперов, но без его защиты (Escape, при неудаче `openLove`). Удалён,
+тесты переведены на `clickFirstAvailableRoom`.
+
+Проверка: presence 4/4, transcription 4/4, весь проект Love 66 passed / 1 skipped (4.3m).
+Правка love-сервиса на стенд не выкатывалась (нужен образ), её держит юнит-тест.
+
+## Серия 2026-09-15, 10 прогонов: второе завершение митинга стирает knock-и следующего
+
+`meetings.knock-office` "repeated knocks ... never stack" (2/10) падал на второй проверке
+`toHaveCount(1)` после `waitForTimeout(5000)` - `Received: 0`: первая проверка прошла, потом элемент
+исчез. Логи `sanity-love-1` в обоих окнах одинаковые:
+
+```
+07:45:09.292  Marked meeting as finished  de43   <- room_finished webhook, count 0
+07:45:09.452  Activated meeting           de92   <- владелец снова в своём офисе, knock-и идут сюда
+07:45:15.113  [PollingService] Room no longer exists  de43
+07:45:15.245  Dropped invites for finished meeting  de43  count:2   <- knock-и de92
+```
+
+Корень в `services/love/src/workspaceClient.ts`: `finishMeeting` вызывается и вебхуком, и polling,
+второй вызов не проверял `Finished`, а `cleanupInvitesForMeeting` удалял инвайты **по комнате**. У
+knock-а есть только `room` (митинг ставит триггер после accept), так что это инвайты того митинга,
+который живёт в комнате сейчас. Починка: повторный `finishMeeting` не трогает документ (заодно не
+переписывает `meetingEnd`), удаление по комнате пропускается, если там есть другой Active/Pending
+митинг, и берёт только инвайты без `meeting` или с этим `meeting`. Юнит-тесты в
+`finishMeeting.test.ts` без правки падают. `meetings.scenarios` knock-to-join (1/10, "Knocker never
+auto-joined") по логам того же вида: повторное завершение `b4e0` в 07:14:14 удалило 1 инвайт посреди
+теста; что комната та же - из лога не видно. На стенд попадёт только с образом love.
+
+Остальное по одному разу:
+
+- **`template.spec` Edit a Template**: `Expected "0m" Received "8h"` 15s в `checkTemplate`.
+  `editTemplate` проверял кнопку сразу после Save и ловил оптимистичный рендер; затем значение
+  откатилось. Та же форма, что `issues-details-page.setEstimation`. Теперь после `toHaveText` ждём,
+  пока текст простоит 500ms, и сверяем ещё раз внутри того же retry.
+- **`workflow-settings` second workflow**: шаги показывают, что `openAside` прошёл свою проверку
+  через 200ms, `fill` и `toHaveValue` прошли, а затем aside исчез - 30s `toBeEnabled` на "element(s)
+  not found". Кто закрыл - не установлено (трейса нет, `test-results` перезаписан следующим прогоном).
+  `createInAside` теперь при пропавшем aside открывает форму заново (до 3 раз), а перед повтором
+  ждёт строку 3s - aside закрывается и после успешного Create.
+- **`inbox.spec` turn off notification** ('Channel general' остался в inbox) и **`direct-chat`**
+  (`modal-overlay` не ушёл за 5s после Create) - причина не установлена, артефакты перезаписаны.
+  Замечено: `chatMessageToggle` - позиционный `.grid > div:nth-child(7)` без проверки состояния;
+  комментарий в `createDirectChat` говорит "Retried by the caller", но спека его не ретраит.

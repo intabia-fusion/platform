@@ -44,6 +44,9 @@ export class ChannelPage extends CommonPage {
   readonly chooseChannel = (channel: string): Locator =>
     this.page.locator('div.antiPanel-navigator').getByRole('button', { name: channel })
 
+  readonly openedChannelHeader = (channel: string): Locator =>
+    this.page.locator('.hulyHeader-container .hulyHeader-titleGroup').filter({ hasText: channel }).first()
+
   readonly closePopupWindow = (): Locator => this.page.locator('.notifyPopup button[data-id="btnNotifyClose"]')
   readonly openAddMemberToChannel = (userName: string): Locator => this.page.getByRole('button', { name: userName })
   readonly addMemberToChannelTableButton = (userName: string, channel: string): Locator =>
@@ -260,6 +263,11 @@ export class ChannelPage extends CommonPage {
 
   async checkIfMessageIsCopied (message: string): Promise<void> {
     expect(await this.getClipboardCopyMessage()).toContain(message)
+  }
+
+  /** The chat is open when its header carries the name; the navigator entry can lag behind. */
+  async waitOpenedChannel (channel: string): Promise<void> {
+    await expect(this.openedChannelHeader(channel)).toBeVisible({ timeout: 30000 })
   }
 
   async clickChooseChannel (channel: string): Promise<void> {

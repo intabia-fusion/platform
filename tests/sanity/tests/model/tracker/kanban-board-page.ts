@@ -70,22 +70,10 @@ export class KanbanBoardPage extends CommonTrackerPage {
   async dragCardToColumn (cardId: string, targetState: string): Promise<void> {
     // Works in both legacy column and swim-lane modes by picking whichever drop target exists.
     const legacy = this.column(targetState)
-    let target
-    if ((await legacy.count()) > 0) {
-      // Aim at a card, not at the column's centre: with a full column that centre lands inside some
-      // card's content, and the drop is never delivered there.
-      const cardInColumn = legacy.locator('[data-id="kanban-card"]').first()
-      target =
-        (await cardInColumn.count()) > 0 && (await cardInColumn.getAttribute('data-card-id')) !== cardId
-          ? cardInColumn
-          : legacy
-    } else {
-      const cell = this.page.locator(`[data-id="kanban-swimlane-cell"][data-state="${targetState}"]`).first()
-      // Prefer dropping onto a card inside the cell — drop handler is more reliable on cards.
-      const cardInCell = cell.locator('[data-id="kanban-card"]').first()
-      target =
-        (await cardInCell.count()) > 0 && (await cardInCell.getAttribute('data-card-id')) !== cardId ? cardInCell : cell
-    }
+    const target =
+      (await legacy.count()) > 0
+        ? legacy
+        : this.page.locator(`[data-id="kanban-swimlane-cell"][data-state="${targetState}"]`).first()
     // Cards past the cell's initial limit are not rendered, and issues other specs create in the
     // same project push ours out - `scrollIntoViewIfNeeded` then waits for a node that is not there.
     await this.revealCard(cardId)
@@ -94,15 +82,9 @@ export class KanbanBoardPage extends CommonTrackerPage {
   }
 
   async dragCardToSwimLaneCell (cardId: string, laneId: string, targetState: string): Promise<void> {
-    const cell = this.swimLaneCell(laneId, targetState)
     await this.revealCard(cardId)
     await this.ensureVisible(this.card(cardId))
-    // Prefer dropping onto an existing card inside the cell — Svelte's drop handler
-    // fires reliably on card-container, while empty cells sometimes miss CDP drag.
-    const cardInCell = cell.locator('[data-id="kanban-card"]').first()
-    const target =
-      (await cardInCell.count()) > 0 && (await cardInCell.getAttribute('data-card-id')) !== cardId ? cardInCell : cell
-    await this.dragPointer(this.card(cardId), target)
+    await this.dragPointer(this.card(cardId), this.swimLaneCell(laneId, targetState))
   }
 
   /** Through the DOM: `scrollIntoViewIfNeeded` waits for a stable element, and the board keeps
@@ -116,8 +98,12 @@ export class KanbanBoardPage extends CommonTrackerPage {
     }).toPass({ intervals: retryIntervals, timeout: 15000 })
   }
 
-  /** The centre of the part of the target that is on screen: a swim lane cell is taller than the
-   *  window, and its own centre then sits below the fold where the pointer hits nothing. */
+  /** A point on the part of the target that is on screen and is *not* covered by a card. Blink
+   *  remembers the node the last dragover reached and delivers the drop to that node; Svelte
+   *  re-creates a card's content on every write another spec makes to the same project, so a point
+   *  on card content leaves the drop with a detached node - no drop event, no dragend, no error.
+   *  A cell's own padding survives those re-renders. A swim lane cell is also taller than the
+   *  window, so its geometric centre can sit below the fold where the pointer hits nothing. */
   private async visiblePointOf (target: Locator): Promise<{ x: number, y: number }> {
     // The board keeps scrolling for a frame or two after scrollIntoView, so a box read right away
     // points where the target no longer is - and the drop then lands on the neighbouring column.
@@ -136,7 +122,23 @@ export class KanbanBoardPage extends CommonTrackerPage {
     if (right <= left || bottom <= top) {
       throw new Error(`drop target is off screen: box ${raw}, viewport ${JSON.stringify(view)}`)
     }
-    return { x: (left + right) / 2, y: (top + bottom) / 2 }
+    const centre = { x: (left + right) / 2, y: (top + bottom) / 2 }
+    const free = await target.evaluate(
+      (el, { rect, zone }) => {
+        for (const y of [rect.cy, rect.top + 6, rect.bottom - 6, (rect.top + rect.cy) / 2]) {
+          for (const x of [rect.left + 3, rect.right - 3, rect.left + 6, rect.right - 6, rect.cx]) {
+            const node = document.elementFromPoint(x, y)
+            if (node === null) continue
+            if (node.closest('[data-id="kanban-card"]') !== null) continue
+            if (node.closest(zone) !== el) continue
+            return { x, y }
+          }
+        }
+        return null
+      },
+      { rect: { left, right, top, bottom, cx: centre.x, cy: centre.y }, zone: DROP_ZONE }
+    )
+    return free ?? centre
   }
 
   /**
@@ -200,15 +202,29 @@ export class KanbanBoardPage extends CommonTrackerPage {
         w.__dragOverCell = null
         w.__dragOvers = 0
         w.__dragEnded = false
+        w.__dragOverTs = 0
         w.__dragOverHandler = (e: Event): void => {
           const cell = (e.target as HTMLElement)?.closest?.(zone)
           w.__dragOvers++
+          w.__dragOverTs = Date.now()
           w.__dragOverCell =
             cell == null
               ? 'outside'
               : `${cell.getAttribute('data-swimlane-id') ?? ''}|${cell.getAttribute('data-state') ?? ''}`
         }
         document.addEventListener('dragover', w.__dragOverHandler, true)
+        // Bubble phase, so it reads what the board's own handlers left behind: Chromium ignores a
+        // drop whose last dragover was not prevented or resolved to dropEffect "none".
+        w.__dragOverAfterHandler = (e: Event): void => {
+          const dt = (e as DragEvent).dataTransfer
+          w.__dragOverAfter = `prevented=${String(e.defaultPrevented)} drop=${String(
+            dt?.dropEffect
+          )} allowed=${String(dt?.effectAllowed)} on ${String((e.target as HTMLElement)?.className ?? '')}`.slice(
+            0,
+            200
+          )
+        }
+        document.addEventListener('dragover', w.__dragOverAfterHandler, false)
         // A drag the browser has already ended cannot deliver a drop however long we nudge.
         document.addEventListener(
           'dragend',
@@ -266,15 +282,39 @@ export class KanbanBoardPage extends CommonTrackerPage {
       }
       // The browser turns a synthesized mousemove into dragover a tick later, and a release that
       // overtakes it ends the drag with no drop at all. Nudge until the cell has really seen one.
+      // `__dragOverCell` is sticky, so a dragover from before the last board re-render satisfied
+      // this loop even when the browser had already dropped the drag: count the events instead and
+      // demand one raised by *these* nudges.
+      const before = await this.page.evaluate(() => (window as any).__dragOvers as number)
+      let fresh = false
       for (let attempt = 0; attempt < (wanted === null ? 0 : 20); attempt++) {
         const state = await this.page.evaluate(() => {
           const w = window as any
-          return { cell: w.__dragOverCell, ended: w.__dragEnded }
+          return { cell: w.__dragOverCell, ended: w.__dragEnded, overs: w.__dragOvers as number }
         })
-        if (state.cell === wanted || state.ended === true) break
+        if (state.ended === true) break
+        if (state.cell === wanted && state.overs > before) {
+          fresh = true
+          break
+        }
         await this.page.mouse.move(x + (attempt % 2 === 0 ? 2 : -2), y)
         await this.page.mouse.move(x, y)
         await this.page.waitForTimeout(50)
+      }
+      // No dragover at all for a whole second of nudging means the browser is not dragging any
+      // more - releasing would only burn the 3s drop poll and the caller's reload.
+      if (wanted !== null && !fresh) {
+        const live = await this.page.evaluate(() => {
+          const w = window as any
+          return { overs: w.__dragOvers as number, ended: w.__dragEnded as boolean }
+        })
+        if (live.overs === before) {
+          throw new Error(
+            `drag session died before the release: no dragover in 20 nudges over cell "${String(wanted)}" ` +
+              `(${String(live.overs)} in total, dragend ${String(live.ended)}, ` +
+              `source still in DOM: ${String((await source.count()) > 0)})`
+          )
+        }
       }
       await this.page.mouse.up()
       released = true
@@ -287,7 +327,15 @@ export class KanbanBoardPage extends CommonTrackerPage {
       const after = await this.page.evaluate(() => {
         const w = window as any
         document.removeEventListener('dragover', w.__dragOverHandler, true)
-        return { seen: w.__dropSeen, cell: w.__dragOverCell, overs: w.__dragOvers, ended: w.__dragEnded }
+        document.removeEventListener('dragover', w.__dragOverAfterHandler, false)
+        return {
+          seen: w.__dropSeen,
+          cell: w.__dragOverCell,
+          overs: w.__dragOvers,
+          ended: w.__dragEnded,
+          sinceOver: w.__dragOverTs === 0 ? -1 : Date.now() - w.__dragOverTs,
+          lastOver: w.__dragOverAfter
+        }
       })
       if (after.seen !== wanted) {
         // A lost drop leaves the board mid-drag: the card keeps its `dragged` class and every later
@@ -298,7 +346,8 @@ export class KanbanBoardPage extends CommonTrackerPage {
         }
         throw new Error(
           `drop was not delivered to cell "${String(wanted)}" (landed on "${String(after.seen)}", ` +
-            `last dragover "${String(after.cell)}" of ${String(after.overs)}, dragend ${String(after.ended)})`
+            `last dragover "${String(after.cell)}" of ${String(after.overs)}, ${String(after.sinceOver)}ms ago, ` +
+            `dragend ${String(after.ended)}; last dragover state: ${String(after.lastOver)})`
         )
       }
     } finally {
